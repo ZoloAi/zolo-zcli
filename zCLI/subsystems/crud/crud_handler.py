@@ -308,12 +308,6 @@ def zTables(table, fields, cur, conn):
             
             foreign_keys.append(fk_clause)
     
-    # Add composite primary key as table-level constraint
-    if composite_pk:
-        pk_columns = ", ".join(composite_pk)
-        field_defs.append(f"PRIMARY KEY ({pk_columns})")
-        logger.info("Adding composite PRIMARY KEY (%s)", pk_columns)
-
     # ════════════════════════════════════════════════════════════
     # Add RGB Weak Nuclear Force columns to every table
     # ════════════════════════════════════════════════════════════
@@ -322,7 +316,17 @@ def zTables(table, fields, cur, conn):
     field_defs.append("weak_force_b INTEGER DEFAULT 255")  # Blue: Migration criticality (255=migrated, 0=missing)
     logger.info("Added RGB weak nuclear force columns to table: %s", table)
 
-    all_defs = field_defs + foreign_keys
+    # ════════════════════════════════════════════════════════════
+    # Add composite primary key as table-level constraint
+    # (Must come AFTER all column definitions)
+    # ════════════════════════════════════════════════════════════
+    table_constraints = []
+    if composite_pk:
+        pk_columns = ", ".join(composite_pk)
+        table_constraints.append(f"PRIMARY KEY ({pk_columns})")
+        logger.info("Adding composite PRIMARY KEY (%s)", pk_columns)
+
+    all_defs = field_defs + table_constraints + foreign_keys
     ddl = f"CREATE TABLE {table} ({', '.join(all_defs)});"
 
     logger.info("Executing DDL: %s", ddl)

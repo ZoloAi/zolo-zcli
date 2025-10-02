@@ -282,7 +282,10 @@ class CommandExecutor:
                 "test_composite_pk.py",
                 "test_where.py",
                 "test_indexes.py",
-                "test_upsert.py"
+                "test_upsert.py",
+                "test_rgb_phase1.py",
+                "test_rgb_phase2.py",
+                "test_rgb_phase3.py"
             ]
             
             print("\n[TEST] Running CRUD Test Suite...")

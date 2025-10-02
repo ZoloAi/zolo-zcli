@@ -144,6 +144,155 @@ class ZMigrate:
         
         zData["conn"].commit()
     
+    def _apply_rgb_decay(self, zData):
+        """Apply time-based decay to R and G components."""
+        cur = zData["cursor"]
+        
+        # Get all user tables (exclude zCLI internal tables)
+        cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'z%'")
+        user_tables = [row[0] for row in cur.fetchall()]
+        
+        total_rows_affected = 0
+        
+        for table in user_tables:
+            # R: Natural decay (data gets "older" over time)
+            # G: Access frequency decay (popularity fades)
+            cur.execute(f"""
+                UPDATE {table} SET 
+                    weak_force_r = MAX(0, weak_force_r - 1),  -- Natural aging
+                    weak_force_g = MAX(0, weak_force_g - 0.5) -- Access frequency fades
+                WHERE weak_force_r > 0 OR weak_force_g > 0
+            """)
+            
+            rows_affected = cur.rowcount
+            total_rows_affected += rows_affected
+            
+            if rows_affected > 0:
+                logger.debug("Applied RGB decay to %d rows in table '%s'", rows_affected, table)
+        
+        zData["conn"].commit()
+        logger.info("⏰ Applied RGB time decay to %d total rows across %d tables", total_rows_affected, len(user_tables))
+        
+        return total_rows_affected
+    
+    def get_rgb_health_report(self, zData):
+        """Generate RGB health report using migration history."""
+        cur = zData["cursor"]
+        
+        # Get all user tables (exclude zCLI internal tables)
+        cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'z%'")
+        user_tables = [row[0] for row in cur.fetchall()]
+        
+        rgb_health = {}
+        
+        for table_name in user_tables:
+            # Get current RGB state
+            cur.execute(f"SELECT AVG(weak_force_r), AVG(weak_force_g), AVG(weak_force_b) FROM {table_name}")
+            result = cur.fetchone()
+            
+            if result and result[0] is not None:  # Table has data
+                avg_r, avg_g, avg_b = result
+                health_score = self._calculate_health_score(avg_r, avg_g, avg_b)
+                
+                # Get migration history for this table
+                cur.execute("""
+                    SELECT COUNT(*), AVG(criticality_level), MAX(applied_at)
+                    FROM zMigrations 
+                    WHERE target_table = ?
+                """, (table_name,))
+                
+                mig_result = cur.fetchone()
+                migration_count = mig_result[0] if mig_result[0] else 0
+                avg_criticality = mig_result[1] if mig_result[1] else 0
+                last_migration = mig_result[2] if mig_result[2] else None
+                
+                rgb_health[table_name] = {
+                    "avg_rgb": (round(avg_r, 2), round(avg_g, 2), round(avg_b, 2)),
+                    "health_score": round(health_score, 3),
+                    "migration_count": migration_count,
+                    "avg_criticality": round(avg_criticality, 2) if avg_criticality else 0,
+                    "last_migration": last_migration,
+                    "status": self._get_table_status(health_score, avg_r, avg_g, avg_b)
+                }
+        
+        return rgb_health
+    
+    def _calculate_health_score(self, r, g, b):
+        """Calculate overall health score from RGB values."""
+        # Normalize to 0-1 range, with higher values being better
+        # White (255,255,255) = 1.0, Black (0,0,0) = 0.0
+        return (r + g + b) / 765.0
+    
+    def _get_table_status(self, health_score, r, g, b):
+        """Get human-readable status based on RGB values."""
+        if health_score >= 0.8:
+            return "EXCELLENT"
+        elif health_score >= 0.6:
+            return "GOOD"
+        elif health_score >= 0.4:
+            return "FAIR"
+        elif health_score >= 0.2:
+            return "POOR"
+        else:
+            return "CRITICAL"
+    
+    def suggest_migrations_for_rgb_health(self, zData, threshold=0.3):
+        """Suggest migrations based on RGB health analysis."""
+        cur = zData["cursor"]
+        
+        suggestions = []
+        health_report = self.get_rgb_health_report(zData)
+        
+        for table_name, health_data in health_report.items():
+            health_score = health_data["health_score"]
+            avg_r, avg_g, avg_b = health_data["avg_rgb"]
+            
+            if health_score < threshold:
+                # Low health score - suggest improvements
+                suggestions.append({
+                    "table": table_name,
+                    "issue": f"Low health score ({health_score:.2f})",
+                    "rgb_state": f"R={avg_r}, G={avg_g}, B={avg_b}",
+                    "suggestions": self._generate_health_suggestions(avg_r, avg_g, avg_b),
+                    "priority": "HIGH" if health_score < 0.2 else "MEDIUM"
+                })
+            
+            elif avg_b < 100:  # Low migration stability
+                suggestions.append({
+                    "table": table_name,
+                    "issue": f"Low migration stability (B={avg_b})",
+                    "rgb_state": f"R={avg_r}, G={avg_g}, B={avg_b}",
+                    "suggestions": ["Consider running schema migrations", "Check for missing migrations"],
+                    "priority": "MEDIUM"
+                })
+            
+            elif avg_g < 50:  # Low access frequency
+                suggestions.append({
+                    "table": table_name,
+                    "issue": f"Low access frequency (G={avg_g})",
+                    "rgb_state": f"R={avg_r}, G={avg_g}, B={avg_b}",
+                    "suggestions": ["Data may be unused", "Consider archiving old data"],
+                    "priority": "LOW"
+                })
+        
+        return suggestions
+    
+    def _generate_health_suggestions(self, r, g, b):
+        """Generate specific suggestions based on RGB values."""
+        suggestions = []
+        
+        if r < 50:
+            suggestions.append("Data is aging - consider refreshing or archiving")
+        if g < 50:
+            suggestions.append("Low usage - data may be stale or unused")
+        if b < 100:
+            suggestions.append("Migration issues - check schema consistency")
+        
+        if not suggestions:
+            suggestions.append("RGB values are healthy")
+        
+        return suggestions
+    
     def detect_changes(self, zForm, zData):
         """
         Detect schema changes between YAML and database.
