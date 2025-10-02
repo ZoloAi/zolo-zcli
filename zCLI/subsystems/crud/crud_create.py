@@ -124,11 +124,11 @@ def zCreate_sqlite(zRequest, zForm, zData, walker=None):
     is_valid, errors = validator.validate_create(table, values_dict)
     
     if not is_valid:
-        logger.error("❌ Validation failed for table '%s'", table)
+        logger.error("[FAIL] Validation failed for table '%s'", table)
         display_validation_errors(errors, walker=walker)
         return False
     
-    logger.info("✅ Validation passed - proceeding with insert")
+    logger.info("[OK] Validation passed - proceeding with insert")
     # ═══════════════════════════════════════════════════════════
 
     if not fields or not values or len(fields) != len(values):

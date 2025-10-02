@@ -50,6 +50,18 @@ Utilities:
 
 ───────────────────────────────────────────────────────────────
 
+Authentication:
+  auth login                      - Login with Zolo credentials
+  auth logout                     - Logout and clear credentials
+  auth status                     - Show authentication status
+  
+  Examples:
+    auth login
+    auth status
+    auth logout
+
+───────────────────────────────────────────────────────────────
+
 Session Management:
   session info                    - Show session information
   session set <key> <value>       - Set session value
@@ -78,11 +90,15 @@ Walker (UI Mode):
 ───────────────────────────────────────────────────────────────
 
 Testing:
-  test run                       - Run full test suite
+  test run                       - Run core test suite (79 tests)
+  test crud                      - Run CRUD test suite only
+  test all                       - Run ALL tests (core + CRUD)
   test session                   - Quick session isolation test
   
   Examples:
     test run
+    test crud
+    test all
     test session
 
 ───────────────────────────────────────────────────────────────
@@ -141,11 +157,36 @@ Session Management Help:
 Testing Help:
 
   test run
-    Run the full zCLI test suite to validate session isolation
-    and subsystem functionality
+    Run the core zCLI test suite (79 tests)
+    Tests: Session isolation, subsystem integration, zParser,
+           plugin loading, version management
+    
+  test crud
+    Run CRUD test suite only (4 test files)
+    Tests: Validation, JOIN operations, direct operations
+    
+  test all
+    Run ALL test suites (core + CRUD)
+    Comprehensive test coverage of entire framework
     
   test session
     Quick test to verify current shell has unique session ID
+    Useful for debugging session isolation
+""",
+            "auth": """
+Authentication Help:
+
+  auth login
+    Authenticate with your Zolo credentials
+    Credentials are stored locally in ~/.zolo/credentials
+    
+  auth logout
+    Clear stored credentials and logout
+    
+  auth status
+    Display current authentication status and user information
+    
+  Note: Authentication is required to use zCLI
 """,
         }
         

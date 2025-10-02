@@ -66,6 +66,8 @@ class CommandExecutor:
                 return self.execute_open(parsed)
             elif command_type == "test":
                 return self.execute_test(parsed)
+            elif command_type == "auth":
+                return self.execute_auth(parsed)
             else:
                 return {"error": f"Unknown command type: {command_type}"}
         
@@ -238,7 +240,7 @@ class CommandExecutor:
             logger.info("Running zCLI test suite...")
             test_path = os.path.join(
                 os.path.dirname(__file__),
-                "zCLI_Test.py"
+                "../../tests/test_core.py"
             )
             
             try:
@@ -263,6 +265,89 @@ class CommandExecutor:
             except Exception as e:
                 return {"error": f"Failed to run tests: {str(e)}"}
         
+        elif action == "crud":
+            # Run CRUD tests only
+            logger.info("Running CRUD test suite...")
+            crud_test_dir = os.path.join(
+                os.path.dirname(__file__),
+                "../../tests/crud"
+            )
+            
+            crud_tests = [
+                "test_validation.py",
+                "test_join.py",
+                "test_zApps_crud.py",
+                "test_direct_operations.py"
+            ]
+            
+            print("\n[TEST] Running CRUD Test Suite...")
+            print("=" * 70)
+            
+            all_passed = True
+            for test_file in crud_tests:
+                test_path = os.path.join(crud_test_dir, test_file)
+                if not os.path.exists(test_path):
+                    print(f"[WARN] Test file not found: {test_file}")
+                    continue
+                
+                print(f"\n[>>] Running {test_file}...")
+                try:
+                    result = subprocess.run(
+                        [sys.executable, test_path],
+                        capture_output=True,
+                        text=True,
+                        timeout=60
+                    )
+                    
+                    print(result.stdout)
+                    if result.stderr:
+                        print(result.stderr)
+                    
+                    if result.returncode != 0:
+                        all_passed = False
+                        
+                except Exception as e:
+                    print(f"[X] Error running {test_file}: {e}")
+                    all_passed = False
+            
+            print("\n" + "=" * 70)
+            if all_passed:
+                return {"success": "All CRUD tests passed!"}
+            else:
+                return {"error": "Some CRUD tests failed. See output above."}
+        
+        elif action == "all":
+            # Run ALL tests (core + CRUD)
+            logger.info("Running ALL test suites...")
+            
+            print("\n[TEST] Running COMPLETE Test Suite (Core + CRUD)...")
+            print("=" * 70)
+            
+            # Run core tests first
+            print("\n[1/2] Running Core Tests...")
+            core_result = self.execute_test({"action": "run", "args": [], "options": {}})
+            
+            # Run CRUD tests
+            print("\n[2/2] Running CRUD Tests...")
+            crud_result = self.execute_test({"action": "crud", "args": [], "options": {}})
+            
+            # Summary
+            print("\n" + "=" * 70)
+            print("[SUMMARY] Complete Test Suite Results")
+            print("=" * 70)
+            
+            core_passed = "success" in core_result
+            crud_passed = "success" in crud_result
+            
+            print(f"Core Tests:  {'[PASS]' if core_passed else '[FAIL]'}")
+            print(f"CRUD Tests:  {'[PASS]' if crud_passed else '[FAIL]'}")
+            print("=" * 70)
+            
+            if core_passed and crud_passed:
+                return {"success": "All tests passed (Core + CRUD)!"}
+            else:
+                return {"error": "Some tests failed. See output above."}
+        
         elif action == "session":
             # Quick session test - verify current instance has unique session
             session_id = self.zcli.session.get("zS_id")
@@ -273,4 +358,36 @@ class CommandExecutor:
             }
         
         else:
-            return {"error": f"Unknown test action: {action}. Use 'test run' or 'test session'"}
+            return {"error": f"Unknown test action: {action}. Use: test run | test all | test crud | test session"}
+    
+    def execute_auth(self, parsed):
+        """
+        Execute authentication commands like 'auth login', 'auth logout', 'auth status'.
+        
+        Args:
+            parsed: Parsed command dictionary
+            
+        Returns:
+            Authentication operation result
+        """
+        action = parsed["action"]
+        args = parsed.get("args", [])
+        
+        logger.debug("Executing auth command: %s", action)
+        
+        if action == "login":
+            # Handle login - optionally with username/password from args
+            username = args[0] if len(args) > 0 else None
+            password = args[1] if len(args) > 1 else None
+            return self.zcli.auth.login(username, password)
+        
+        elif action == "logout":
+            # Handle logout
+            return self.zcli.auth.logout()
+        
+        elif action == "status":
+            # Show authentication status
+            return self.zcli.auth.status()
+        
+        else:
+            return {"error": f"Unknown auth action: {action}"}

@@ -1,8 +1,24 @@
 #!/usr/bin/env python3
-"""Simple test for Phase 1 validation - Email and Password rules"""
+# tests/crud/test_validation.py — CRUD Validation Test Suite
+# ───────────────────────────────────────────────────────────────
+
+"""
+CRUD Validation Test Suite - Phase 1 Features
+
+Tests email format validation, password length rules, required fields,
+and validation error handling.
+
+Usage:
+    python tests/crud/test_validation.py
+"""
 
 import sys
 import os
+
+# Add project root to path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
 from zCLI.subsystems.crud import RuleValidator, display_validation_errors
 
@@ -52,9 +68,9 @@ print(f"\nData: {valid_data}")
 is_valid, errors = validator.validate_create("zUsers", valid_data)
 
 if is_valid:
-    print("✅ PASS: Valid data accepted")
+    print("[PASS] Valid data accepted")
 else:
-    print(f"❌ FAIL: Valid data rejected with errors: {errors}")
+    print(f"[FAIL] Valid data rejected with errors: {errors}")
 
 print("\n" + "─" * 70)
 print("TEST 2: Invalid Email")
@@ -70,10 +86,10 @@ print(f"\nData: {invalid_email_data}")
 is_valid, errors = validator.validate_create("zUsers", invalid_email_data)
 
 if not is_valid and "email" in errors:
-    print(f"✅ PASS: Invalid email rejected")
-    print(f"   Error: {errors['email']}")
+    print(f"[PASS] Invalid email rejected")
+    print(f"       Error: {errors['email']}")
 else:
-    print(f"❌ FAIL: Invalid email was accepted")
+    print(f"[FAIL] Invalid email was accepted")
 
 print("\n" + "─" * 70)
 print("TEST 3: Password Too Short")
@@ -89,10 +105,10 @@ print(f"\nData: {short_password_data}")
 is_valid, errors = validator.validate_create("zUsers", short_password_data)
 
 if not is_valid and "password" in errors:
-    print(f"✅ PASS: Short password rejected")
+    print(f"[PASS] Short password rejected")
     print(f"   Error: {errors['password']}")
 else:
-    print(f"❌ FAIL: Short password was accepted")
+    print(f"[FAIL] Short password was accepted")
 
 print("\n" + "─" * 70)
 print("TEST 4: Multiple Validation Errors")
@@ -108,12 +124,12 @@ print(f"\nData: {multiple_errors_data}")
 is_valid, errors = validator.validate_create("zUsers", multiple_errors_data)
 
 if not is_valid and "email" in errors and "password" in errors:
-    print(f"✅ PASS: Multiple errors detected")
+    print(f"[PASS] Multiple errors detected")
     print(f"   Errors:")
     for field, error in errors.items():
         print(f"     • {field}: {error}")
 else:
-    print(f"❌ FAIL: Not all errors detected")
+    print(f"[FAIL] Not all errors detected")
     if errors:
         print(f"   Detected: {errors}")
 
@@ -130,12 +146,12 @@ print(f"\nData: {missing_fields_data}")
 is_valid, errors = validator.validate_create("zUsers", missing_fields_data)
 
 if not is_valid and "email" in errors and "password" in errors:
-    print(f"✅ PASS: Missing fields detected")
+    print(f"[PASS] Missing fields detected")
     print(f"   Errors:")
     for field, error in errors.items():
         print(f"     • {field}: {error}")
 else:
-    print(f"❌ FAIL: Missing fields not detected")
+    print(f"[FAIL] Missing fields not detected")
 
 print("\n" + "─" * 70)
 print("TEST 6: Password Exactly 4 Characters (Boundary Test)")
@@ -151,9 +167,9 @@ print(f"\nData: {boundary_password_data}")
 is_valid, errors = validator.validate_create("zUsers", boundary_password_data)
 
 if is_valid:
-    print(f"✅ PASS: Minimum length password accepted")
+    print(f"[PASS] Minimum length password accepted")
 else:
-    print(f"❌ FAIL: Valid password rejected with errors: {errors}")
+    print(f"[FAIL] Valid password rejected with errors: {errors}")
 
 print("\n" + "─" * 70)
 print("TEST 7: Various Email Formats")
@@ -183,21 +199,21 @@ for email, should_be_valid in email_tests:
     
     if should_be_valid:
         if is_valid:
-            print(f"  ✓ '{email}' correctly accepted")
+            print(f"  [+] '{email}' correctly accepted")
         else:
-            print(f"  ✗ '{email}' incorrectly rejected")
+            print(f"  [-] '{email}' incorrectly rejected")
             all_passed = False
     else:
         if not is_valid and "email" in errors:
-            print(f"  ✓ '{email}' correctly rejected")
+            print(f"  [+] '{email}' correctly rejected")
         else:
-            print(f"  ✗ '{email}' incorrectly accepted")
+            print(f"  [-] '{email}' incorrectly accepted")
             all_passed = False
 
 if all_passed:
-    print("\n✅ PASS: All email format tests passed")
+    print("\n[PASS] All email format tests passed")
 else:
-    print("\n❌ FAIL: Some email format tests failed")
+    print("\n[FAIL] Some email format tests failed")
 
 print("\n" + "=" * 70)
 print("TEST 8: Pause Behavior (Terminal vs GUI Mode)")
@@ -209,39 +225,39 @@ class MockWalker:
         self.zSession = {"zMode": mode}
         self.session = self.zSession
 
-print("\n📝 Testing Terminal mode detection:")
+print("\n[*] Testing Terminal mode detection:")
 mock_terminal = MockWalker("Terminal")
 from zCLI.subsystems.zSession import zSession as global_zSession
 target_session = mock_terminal.zSession if (mock_terminal and hasattr(mock_terminal, 'zSession')) else global_zSession
 session_mode = target_session.get("zMode", "Terminal")
 
 if session_mode == "Terminal":
-    print("✅ PASS: Terminal mode detected - pause will be triggered")
+    print("[PASS] Terminal mode detected - pause will be triggered")
 else:
-    print("❌ FAIL: Terminal mode not detected")
+    print("[FAIL] Terminal mode not detected")
 
-print("\n📝 Testing GUI mode detection:")
+print("\n[*] Testing GUI mode detection:")
 mock_gui = MockWalker("GUI")
 target_session_gui = mock_gui.zSession if (mock_gui and hasattr(mock_gui, 'zSession')) else global_zSession
 session_mode_gui = target_session_gui.get("zMode", "Terminal")
 
 if session_mode_gui != "Terminal":
-    print("✅ PASS: GUI mode detected - pause will be skipped")
+    print("[PASS] GUI mode detected - pause will be skipped")
 else:
-    print("❌ FAIL: Should not be in Terminal mode for GUI")
+    print("[FAIL] Should not be in Terminal mode for GUI")
 
 print("\n" + "=" * 70)
-print("📊 VALIDATION TEST SUMMARY")
+print("[SUMMARY] VALIDATION TEST SUMMARY")
 print("=" * 70)
-print("\n✅ Phase 1 Validation Features Working:")
-print("  ✓ Email format validation (regex-based)")
-print("  ✓ Password minimum length validation")
-print("  ✓ Required field validation")
-print("  ✓ Multiple error detection")
-print("  ✓ Custom error messages")
-print("  ✓ Boundary condition handling")
-print("  ✓ Terminal mode pause (user-friendly)")
-print("  ✓ GUI mode no-pause (for AJAX flow)")
-print("\n🎉 Phase 1 Successfully Implemented!")
+print("\n[OK] Phase 1 Validation Features Working:")
+print("  [+] Email format validation (regex-based)")
+print("  [+] Password minimum length validation")
+print("  [+] Required field validation")
+print("  [+] Multiple error detection")
+print("  [+] Custom error messages")
+print("  [+] Boundary condition handling")
+print("  [+] Terminal mode pause (user-friendly)")
+print("  [+] GUI mode no-pause (for AJAX flow)")
+print("\n[SUCCESS] Phase 1 Successfully Implemented!")
 print("=" * 70)
 

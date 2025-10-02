@@ -61,16 +61,16 @@ class InteractiveShell:
                     self._display_result(result)
             
             except KeyboardInterrupt:
-                print("\n👋 Goodbye!")
+                print("\n[~] Goodbye!")
                 break
             
             except EOFError:
-                print("\n👋 Goodbye!")
+                print("\n[~] Goodbye!")
                 break
             
             except Exception as e:
                 logger.error("Shell error: %s", e)
-                print(f"❌ Error: {e}")
+                print(f"[X] Error: {e}")
         
         logger.info("Exiting zCLI shell...")
     
@@ -88,7 +88,7 @@ class InteractiveShell:
         
         # Exit commands
         if cmd_lower in ["exit", "quit", "q"]:
-            print("👋 Goodbye!")
+            print("[~] Goodbye!")
             self.running = False
             return True
         
@@ -130,12 +130,12 @@ class InteractiveShell:
         if isinstance(result, dict):
             # Check for special keys
             if "error" in result:
-                print(f"❌ Error: {result['error']}")
+                print(f"[X] Error: {result['error']}")
             elif "success" in result:
-                print(f"✅ {result['success']}")
+                print(f"[OK] {result['success']}")
                 # Show additional info if present
                 if "note" in result:
-                    print(f"   ℹ️  {result['note']}")
+                    print(f"     [i] {result['note']}")
             else:
                 # Display as JSON via display subsystem
                 self.zcli.display.handle({"event": "zJSON", "payload": result})
@@ -164,7 +164,7 @@ def launch_zCLI_shell():
     """Launch zCLI shell from within the UI"""
     from zCLI.zCore.zCLI import zCLI
     
-    print("\n🚀 Launching zCLI Shell from UI...")
+    print("\n[>>] Launching zCLI Shell from UI...")
     print("Type 'exit' to return to UI menu")
     print("=" * 50)
     

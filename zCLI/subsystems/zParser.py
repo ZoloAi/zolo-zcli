@@ -114,25 +114,25 @@ def zExpr_eval(expr):
         "indent": 1
     })
 
-    logger.info("📨 Received expr: %s", expr)
+    logger.info("[>>] Received expr: %s", expr)
     expr = expr.strip()
 
     try:
         if expr.startswith("{") or expr.startswith("["):
-            logger.info("📘 Detected dict/list format — using json.loads()")
+            logger.info("[Data] Detected dict/list format — using json.loads()")
             converted = json.loads(expr.replace("'", '"'))
-            logger.info("✅ Parsed value: %s", converted)
+            logger.info("[OK] Parsed value: %s", converted)
             return converted
 
         if expr.startswith('"') and expr.endswith('"'):
-            logger.info("🔤 Detected quoted string — stripping quotes")
+            logger.info("[Str] Detected quoted string — stripping quotes")
             return expr[1:-1]
 
-        logger.error("❌ Unsupported format in zExpr_eval.")
+        logger.error("[FAIL] Unsupported format in zExpr_eval.")
         raise ValueError("Unsupported format for zExpr_eval.")
 
     except Exception as e:
-        logger.error("❌ zExpr_eval failed: %s", e)
+        logger.error("[FAIL] zExpr_eval failed: %s", e)
         return None
 
 
@@ -176,7 +176,7 @@ def handle_zRef(ref_expr: str, base_path: str = None):
     })
 
     if not (isinstance(ref_expr, str) and ref_expr.startswith("zRef(") and ref_expr.endswith(")")):
-        logger.warning("⚠️ Invalid zRef format: %s", ref_expr)
+        logger.warning("[WARN] Invalid zRef format: %s", ref_expr)
         return None
 
     try:
@@ -190,17 +190,17 @@ def handle_zRef(ref_expr: str, base_path: str = None):
         yaml_path = os.path.join(base_path or os.getcwd(), *file_parts) + ".yaml"
 
         if not os.path.exists(yaml_path):
-            logger.error("❌ zRef file not found: %s", yaml_path)
+            logger.error("[FAIL] zRef file not found: %s", yaml_path)
             return None
 
         with open(yaml_path, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
 
-        logger.info("📥 zRef: %s → %s", yaml_path, final_key)
+        logger.info("[Load] zRef: %s → %s", yaml_path, final_key)
         return data.get(final_key)
 
     except (ValueError, FileNotFoundError, yaml.YAMLError, OSError) as e:
-        logger.error("❌ zRef error in %s: %s", ref_expr, e)
+        logger.error("[FAIL] zRef error in %s: %s", ref_expr, e)
         return None
 
 

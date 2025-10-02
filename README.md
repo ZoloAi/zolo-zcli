@@ -2,22 +2,51 @@
 
 A YAML-driven CLI framework for interactive applications, providing both shell and UI modes with comprehensive session management and plugin support.
 
+**🔐 Authentication Required** - zCLI is a private Zolo product. Contact admin@zolo.dev for access.
+
 ## 🚀 Quick Start
 
-### Installation
+### Installation (Authorized Users Only)
+
+zCLI is distributed via private GitHub repository. You must have repository access to install.
 
 ```bash
-pip install zolo-zcli
+# Install from private GitHub (requires authentication)
+pip install git+ssh://git@github.com/ZoloAi/zolo-zcli.git
+
+# Or with personal access token
+pip install git+https://TOKEN@github.com/ZoloAi/zolo-zcli.git
+```
+
+### First-Time Setup
+
+After installation, authenticate with your Zolo credentials:
+
+```bash
+# Start shell and login
+zolo-zcli --shell
+
+# At the prompt, login with your credentials
+zCLI> auth login
+Username: your_username
+Password: ********
+✅ Logged in as: your_username (zUser)
 ```
 
 ### Basic Usage
 
 ```bash
-# Start interactive shell mode
-zolo-zcli --shell
-
 # Show version
 zolo-zcli --version
+
+# Start interactive shell mode (authentication required)
+zolo-zcli --shell
+
+# Check authentication status
+zCLI> auth status
+
+# Use zCLI commands
+zCLI> crud read zUsers --limit 10
 ```
 
 ### Python API
@@ -104,12 +133,18 @@ The framework includes a comprehensive test suite with 79 tests covering:
 
 Run tests:
 ```bash
-# Via CLI
+# Via CLI shell
 zolo-zcli --shell
 > test run
 
-# Via Python
-from zCLI.zCore.zCLI_Test import run_all_tests
+# Directly from command line
+python tests/test_core.py
+
+# Or via pytest (if installed)
+pytest tests/
+
+# Programmatically
+from tests.test_core import run_all_tests
 run_all_tests()
 ```
 

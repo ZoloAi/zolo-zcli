@@ -26,6 +26,7 @@ class CommandParser:
             "walker": self._parse_walker_command,
             "open": self._parse_open_command,
             "test": self._parse_test_command,
+            "auth": self._parse_auth_command,
         }
     
     def parse_command(self, command: str):
@@ -215,6 +216,27 @@ class CommandParser:
         
         return {
             "type": "test",
+            "action": action,
+            "args": args,
+            "options": {}
+        }
+    
+    def _parse_auth_command(self, parts):
+        """Parse auth commands like 'auth login', 'auth logout', 'auth status'"""
+        if len(parts) < 2:
+            return {"error": "Auth command requires action (login, logout, status)"}
+        
+        action = parts[1].lower()
+        valid_actions = ["login", "logout", "status"]
+        
+        if action not in valid_actions:
+            return {"error": f"Invalid auth action: {action}. Use: {', '.join(valid_actions)}"}
+        
+        # Extract any additional arguments (e.g., username, server URL)
+        args = parts[2:] if len(parts) > 2 else []
+        
+        return {
+            "type": "auth",
             "action": action,
             "args": args,
             "options": {}

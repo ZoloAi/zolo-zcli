@@ -7,6 +7,59 @@ import sys
 from typing import Optional
 
 
+# ANSI color codes for log formatting
+class LogColors:
+    """Colors specifically for system logs."""
+    LOG_PREFIX = "\033[38;5;248m"  # Medium gray for log metadata (readable on dark bg)
+    DEBUG = "\033[38;5;250m"        # Light gray for debug
+    INFO = "\033[38;5;39m"          # Bright blue for info
+    WARNING = "\033[38;5;214m"      # Orange for warnings
+    ERROR = "\033[38;5;196m"        # Bright red for errors
+    CRITICAL = "\033[38;5;201m"     # Magenta for critical
+    RESET = "\033[0m"
+    BOLD = "\033[1m"
+
+
+class ColoredFormatter(logging.Formatter):
+    """
+    Custom formatter that adds visual markers and colors to log messages.
+    Distinguishes system logs from regular terminal output.
+    """
+    
+    # Log level to color mapping
+    LEVEL_COLORS = {
+        'DEBUG': LogColors.DEBUG,
+        'INFO': LogColors.INFO,
+        'WARNING': LogColors.WARNING,
+        'ERROR': LogColors.ERROR,
+        'CRITICAL': LogColors.CRITICAL,
+    }
+    
+    def format(self, record):
+        """Format log record with colors and visual markers."""
+        # Get color for this log level
+        level_color = self.LEVEL_COLORS.get(record.levelname, LogColors.INFO)
+        
+        # Format timestamp and metadata in medium gray (readable on dark backgrounds)
+        timestamp = self.formatTime(record, self.datefmt)
+        metadata = f"{LogColors.LOG_PREFIX}[{timestamp}]{LogColors.RESET}"
+        
+        # Format log level with its color and bold
+        level = f"{level_color}{LogColors.BOLD}[{record.levelname}]{LogColors.RESET}"
+        
+        # Format location in medium gray (readable on dark backgrounds)
+        location = f"{LogColors.LOG_PREFIX}{record.name}:{record.lineno}{LogColors.RESET}"
+        
+        # Message in level color
+        message = f"{level_color}{record.getMessage()}{LogColors.RESET}"
+        
+        # Add visual marker for system logs
+        marker = f"{LogColors.LOG_PREFIX}●{LogColors.RESET}"
+        
+        # Combine: ● [timestamp] [LEVEL] location | message
+        return f"{marker} {metadata} {level} {location} | {message}"
+
+
 class zCLILogger:
     """
     Self-contained logger for zCLI package.
@@ -19,15 +72,14 @@ class zCLILogger:
         self._setup_logger()
     
     def _setup_logger(self):
-        """Setup the logger with basic configuration."""
+        """Setup the logger with colored formatter and visual markers."""
         if not self.logger.handlers:
             # Create console handler
             handler = logging.StreamHandler(sys.stdout)
             
-            # Create formatter
-            formatter = logging.Formatter(
-                '%(asctime)s [%(levelname)s] %(name)s:%(lineno)d | %(message)s',
-                datefmt='%Y-%m-%d %H:%M:%S'
+            # Create colored formatter with visual markers
+            formatter = ColoredFormatter(
+                datefmt='%H:%M:%S'  # Shorter time format for cleaner logs
             )
             handler.setFormatter(formatter)
             

@@ -95,7 +95,7 @@ def _handle_display(event, obj):
         pagination = obj.get("pagination", {})
         
         indent_str = "  " * indent
-        print(f"{indent_str}⏸️  {message}")
+        print(f"{indent_str}[||] {message}")
         
         # Check if we have pagination info and multiple pages
         if pagination and pagination.get("has_more_pages"):
@@ -104,7 +104,7 @@ def _handle_display(event, obj):
             offset = pagination.get("offset", 0)
             result_count = pagination.get("result_count", 0)
             
-            print(f"{indent_str}📄 Page {current_page} (showing {result_count} results)")
+            print(f"{indent_str}[Page] {current_page} (showing {result_count} results)")
             print(f"{indent_str}   [N] Next Page")
             if current_page > 1:
                 print(f"{indent_str}   [P] Previous Page")
@@ -530,34 +530,57 @@ def _normalize_field_def(field_def):
 # ════════════════════════════════════════════════════════════════════
 
 class Colors:
-    LOADER     = "\033[30;106m"
-    EXTERNAL   = "\033[30;103m"
-    ZFUNC      = "\033[97;41m"
-    ZCRUMB     = "\033[38;5;154m"
-    MAIN       = "\033[30;48;5;120m"
-    SUB        = "\033[30;48;5;223m"
-    HORIZONTALS= "\033[96m"
-    DISPATCH   = "\033[30;48;5;215m"
-    ZDIALOG    = "\033[97;45m"
-    PARSER     = "\033[38;5;88m"
-    SCHEMA     = "\033[97;48;5;65m"
-    SUBLOADER  = "\033[38;5;214m"
-    TRAN       = "\033[30;48;5;179m"
-    MENU       = "\033[30;48;5;250m"
-    ZLINK      = "\033[30;48;5;99m"
-    ZWIZARD    = "\033[38;5;154;48;5;57m"
-    ZCRUD      = "\033[97;48;5;94m"
-    ZDISPLAY   = "\033[97;48;5;239m"
-    RESET      = "\033[0m"
-    PEACH      = "\033[38;5;223m"
-    CYAN       = "\033[96m"
-    RED        = "\033[91m"
-    BLUE       = "\033[94m"
-    GREEN      = "\033[92m"
-    YELLOW     = "\033[93m"
-    MAGENTA    = "\033[95m"
-    WARNING    = "\033[31;48;5;178m"
-    ERROR      = "\033[97;48;5;124m"
+    """
+    ANSI color codes for zCLI terminal output.
+    
+    Organized by category:
+    - Subsystem colors (for headers/markers)
+    - Walker colors (for UI mode)
+    - Standard colors (for general use)
+    - Status colors (for errors/warnings)
+    """
+    
+    # ═══════════════════════════════════════════════════════════
+    # Subsystem Colors (for zCLI subsystems)
+    # ═══════════════════════════════════════════════════════════
+    ZCRUD      = "\033[97;48;5;94m"    # Brown background, white text (CRUD operations)
+    ZFUNC      = "\033[97;41m"         # Red background, white text (Function execution)
+    ZDIALOG    = "\033[97;45m"         # Magenta background, white text (Dialogs)
+    ZWIZARD    = "\033[38;5;154;48;5;57m"  # Purple background (Multi-step wizards)
+    ZDISPLAY   = "\033[97;48;5;239m"   # Dark gray background (Display operations)
+    PARSER     = "\033[38;5;88m"       # Dark red text (YAML/expression parsing)
+    SCHEMA     = "\033[97;48;5;65m"    # Green background, white text (Schema operations)
+    EXTERNAL   = "\033[30;103m"        # Yellow background, black text (External API calls)
+    
+    # ═══════════════════════════════════════════════════════════
+    # Walker Colors (for UI mode / menu navigation)
+    # ═══════════════════════════════════════════════════════════
+    MAIN       = "\033[30;48;5;120m"   # Light green background (Main walker)
+    SUB        = "\033[30;48;5;223m"   # Light yellow background (Sub menus)
+    MENU       = "\033[30;48;5;250m"   # Gray background (Menu rendering)
+    DISPATCH   = "\033[30;48;5;215m"   # Peach background (Dispatch/routing)
+    ZLINK      = "\033[30;48;5;99m"    # Purple background (Link navigation)
+    ZCRUMB     = "\033[38;5;154m"      # Bright green text (Breadcrumbs)
+    LOADER     = "\033[30;106m"        # Cyan background, black text (File loading)
+    SUBLOADER  = "\033[38;5;214m"      # Orange text (Sub-file loading)
+    
+    # ═══════════════════════════════════════════════════════════
+    # Standard Colors (general purpose)
+    # ═══════════════════════════════════════════════════════════
+    GREEN      = "\033[92m"            # Bright green (Success, labels)
+    YELLOW     = "\033[93m"            # Bright yellow (Highlights, secondary labels)
+    MAGENTA    = "\033[95m"            # Bright magenta (Special data, cache)
+    CYAN       = "\033[96m"            # Bright cyan (Info, defaults)
+    RED        = "\033[91m"            # Bright red (Errors, warnings in logs)
+    PEACH      = "\033[38;5;223m"      # Peach/tan (Debug messages)
+    RESET      = "\033[0m"             # Reset to default terminal color
+    
+    # ═══════════════════════════════════════════════════════════
+    # Status Colors (for errors and special states)
+    # ═══════════════════════════════════════════════════════════
+    ERROR      = "\033[97;48;5;124m"   # Dark red background, white text (Error states)
+    WARNING    = "\033[31;48;5;178m"   # Orange background, red text (Warnings - currently unused)
+    RETURN     = "\033[38;5;214m"      # Orange text (Return value markers)
 
 def display_log_message(level, message):
     color = {

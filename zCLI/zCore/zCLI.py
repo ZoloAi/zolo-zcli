@@ -16,6 +16,7 @@ from zCLI.subsystems.zSocket import ZSocket
 from zCLI.subsystems.zDialog import ZDialog
 from zCLI.subsystems.zWizard import ZWizard
 from zCLI.subsystems.zOpen import ZOpen
+from zCLI.subsystems.zAuth import ZAuth
 
 # Import walker subsystems (for UI mode)
 from zCLI.walker.zCrumbs import zCrumbs
@@ -89,6 +90,7 @@ class zCLI:
         self.dialog = ZDialog(self)
         self.wizard = ZWizard(self)
         self.open = ZOpen(self)
+        self.auth = ZAuth(self)
         self.parser = CommandParser(self)
 
         # Initialize shell and command executor

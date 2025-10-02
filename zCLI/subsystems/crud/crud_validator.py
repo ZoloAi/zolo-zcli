@@ -83,8 +83,8 @@ class RuleValidator:
             # Check if field is required
             is_required = field_def.get('required', False)
             if is_required and field_name not in data:
-                # Skip if field has auto-generation (source)
-                if 'source' in field_def:
+                # Skip if field has auto-generation (source) or default value
+                if 'source' in field_def or 'default' in field_def:
                     continue
                 errors[field_name] = f"{field_name} is required"
         

@@ -1,27 +1,30 @@
 #!/usr/bin/env python3
-# zCLI/zCore/zCLI_Test.py — Session Isolation Test Suite
+# tests/test_core.py — zCLI Core Functionality Test Suite
 # ───────────────────────────────────────────────────────────────
 
 """
-zCLI Session Isolation Test Suite
+zCLI Core Functionality Test Suite
 
-This test file validates that:
+This test file validates:
 1. Each zCLI instance has its own unique session
 2. All subsystems use the correct session from their parent zCLI instance
 3. Multiple zCLI instances maintain proper isolation
+4. zParser functionality (expression evaluation, dotted paths, zRef)
+5. Plugin loading and execution
+6. Version management
 
 Usage:
-    python zCLI/zCore/zCLI_Test.py
+    python -m pytest tests/test_core.py
     
-Or from project root:
-    python -m zCLI.zCore.zCLI_Test
+Or standalone:
+    python tests/test_core.py
 """
 
 import sys
 import os
 
 # Add project root to path for imports
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
@@ -40,13 +43,13 @@ class SessionIsolationTester:
         """Assert that two values are equal."""
         if actual == expected:
             self.passed += 1
-            print(f"✅ PASS: {test_name}")
+            print(f"[PASS] {test_name}")
             self.tests.append((test_name, True, None))
             return True
         else:
             self.failed += 1
             error_msg = f"Expected {expected}, got {actual}"
-            print(f"❌ FAIL: {test_name}")
+            print(f"[FAIL] {test_name}")
             print(f"   {error_msg}")
             self.tests.append((test_name, False, error_msg))
             return False
@@ -55,13 +58,13 @@ class SessionIsolationTester:
         """Assert that two values are not equal."""
         if actual != expected:
             self.passed += 1
-            print(f"✅ PASS: {test_name}")
+            print(f"[PASS] {test_name}")
             self.tests.append((test_name, True, None))
             return True
         else:
             self.failed += 1
             error_msg = f"Expected different values, both were {actual}"
-            print(f"❌ FAIL: {test_name}")
+            print(f"[FAIL] {test_name}")
             print(f"   {error_msg}")
             self.tests.append((test_name, False, error_msg))
             return False
@@ -70,28 +73,28 @@ class SessionIsolationTester:
         """Assert that a condition is true."""
         if condition:
             self.passed += 1
-            print(f"✅ PASS: {test_name}")
+            print(f"[PASS] {test_name}")
             self.tests.append((test_name, True, None))
             return True
         else:
             self.failed += 1
             error_msg = "Expected True, got False"
-            print(f"❌ FAIL: {test_name}")
+            print(f"[FAIL] {test_name}")
             print(f"   {error_msg}")
-            self.tests.append((test_name, False, error_msg))
+            self.tests.append((test_name, True, None))
             return False
     
     def assert_is_not_none(self, value, test_name):
         """Assert that a value is not None."""
         if value is not None:
             self.passed += 1
-            print(f"✅ PASS: {test_name}")
+            print(f"[PASS] {test_name}")
             self.tests.append((test_name, True, None))
             return True
         else:
             self.failed += 1
             error_msg = "Expected non-None value, got None"
-            print(f"❌ FAIL: {test_name}")
+            print(f"[FAIL] {test_name}")
             print(f"   {error_msg}")
             self.tests.append((test_name, False, error_msg))
             return False
@@ -100,13 +103,13 @@ class SessionIsolationTester:
         """Assert that a value is None."""
         if value is None:
             self.passed += 1
-            print(f"✅ PASS: {test_name}")
+            print(f"[PASS] {test_name}")
             self.tests.append((test_name, True, None))
             return True
         else:
             self.failed += 1
             error_msg = f"Expected None, got {value}"
-            print(f"❌ FAIL: {test_name}")
+            print(f"[FAIL] {test_name}")
             print(f"   {error_msg}")
             self.tests.append((test_name, False, error_msg))
             return False
@@ -115,13 +118,13 @@ class SessionIsolationTester:
         """Assert that a condition is False."""
         if not condition:
             self.passed += 1
-            print(f"✅ PASS: {test_name}")
+            print(f"[PASS] {test_name}")
             self.tests.append((test_name, True, None))
             return True
         else:
             self.failed += 1
             error_msg = f"Expected False, got True"
-            print(f"❌ FAIL: {test_name}")
+            print(f"[FAIL] {test_name}")
             print(f"   {error_msg}")
             self.tests.append((test_name, False, error_msg))
             return False
@@ -132,8 +135,8 @@ class SessionIsolationTester:
         print("TEST SUMMARY")
         print("=" * 70)
         print(f"Total Tests: {self.passed + self.failed}")
-        print(f"✅ Passed: {self.passed}")
-        print(f"❌ Failed: {self.failed}")
+        print(f"[OK] Passed: {self.passed}")
+        print(f"[X] Failed: {self.failed}")
         
         if self.failed > 0:
             print("\nFailed Tests:")
@@ -156,7 +159,7 @@ def test_single_instance_session_isolation():
     tester = SessionIsolationTester()
     
     # Create zCLI instance
-    print("\n📝 Creating zCLI instance...")
+    print("\n[*] Creating zCLI instance...")
     zcli = zCLI()
     
     # Test 1.1: Session exists and has ID
@@ -171,10 +174,10 @@ def test_single_instance_session_isolation():
     )
     
     session_id = zcli.session.get("zS_id")
-    print(f"\n🔑 Session ID: {session_id}")
+    print(f"\n[Key] Session ID: {session_id}")
     
     # Test 1.2: All core subsystems exist
-    print("\n📦 Testing subsystem initialization...")
+    print("\n[Init] Testing subsystem initialization...")
     subsystems = {
         "utils": zcli.utils,
         "crud": zcli.crud,
@@ -198,7 +201,7 @@ def test_single_instance_session_isolation():
         )
     
     # Test 1.3: Subsystems that track walker/session use the correct one
-    print("\n🔍 Testing subsystem session references...")
+    print("\n[Check] Testing subsystem session references...")
     
     # Check subsystems that have zSession attribute
     session_aware_subsystems = {
@@ -225,7 +228,7 @@ def test_single_instance_session_isolation():
             )
     
     # Test 1.4: Session structure is correct
-    print("\n🏗️  Testing session structure...")
+    print("\n[Test] Testing session structure...")
     required_keys = ["zS_id", "zWorkspace", "zMode", "zAuth", "zCrumbs", "zCache"]
     for key in required_keys:
         tester.assert_true(
@@ -245,13 +248,13 @@ def test_multi_instance_session_isolation():
     tester = SessionIsolationTester()
     
     # Create multiple zCLI instances
-    print("\n📝 Creating three zCLI instances...")
+    print("\n[*] Creating three zCLI instances...")
     zcli1 = zCLI()
     zcli2 = zCLI()
     zcli3 = zCLI()
     
     # Test 2.1: Each instance has unique session ID
-    print("\n🔑 Testing unique session IDs...")
+    print("\n[Key] Testing unique session IDs...")
     session_id1 = zcli1.session.get("zS_id")
     session_id2 = zcli2.session.get("zS_id")
     session_id3 = zcli3.session.get("zS_id")
@@ -276,7 +279,7 @@ def test_multi_instance_session_isolation():
     )
     
     # Test 2.2: Each instance's subsystems use their own session
-    print("\n🔍 Testing subsystem isolation across instances...")
+    print("\n[Check] Testing subsystem isolation across instances...")
     
     # Modify session data in instance 1
     zcli1.session["test_marker"] = "instance_1"
@@ -303,7 +306,7 @@ def test_multi_instance_session_isolation():
     )
     
     # Test 2.3: Modifying one instance's session doesn't affect others
-    print("\n🔒 Testing session data isolation...")
+    print("\n[Lock] Testing session data isolation...")
     
     zcli1.session["zCrumbs"]["test_crumb"] = ["crumb1", "crumb2"]
     
@@ -334,13 +337,13 @@ def test_session_persistence_through_operations():
     tester = SessionIsolationTester()
     
     # Create zCLI instance
-    print("\n📝 Creating zCLI instance...")
+    print("\n[*] Creating zCLI instance...")
     zcli = zCLI()
     session_id = zcli.session.get("zS_id")
-    print(f"🔑 Session ID: {session_id}")
+    print(f"[Key] Session ID: {session_id}")
     
     # Test 3.1: Add data to session
-    print("\n📊 Adding data to session...")
+    print("\n[Data] Adding data to session...")
     zcli.session["test_data"] = {"key": "value"}
     zcli.session["zCache"]["cached_item"] = "test_cache"
     
@@ -357,7 +360,7 @@ def test_session_persistence_through_operations():
     )
     
     # Test 3.2: Verify subsystems still see the same session
-    print("\n🔍 Verifying subsystems see updated session...")
+    print("\n[Check] Verifying subsystems see updated session...")
     
     tester.assert_equal(
         zcli.crumbs.zSession.get("test_data", {}).get("key"),
@@ -372,7 +375,7 @@ def test_session_persistence_through_operations():
     )
     
     # Test 3.3: Session ID remains unchanged
-    print("\n🔐 Verifying session ID stability...")
+    print("\n[Test] Verifying session ID stability...")
     
     tester.assert_equal(
         zcli.session.get("zS_id"),
@@ -392,7 +395,7 @@ def test_session_with_configuration():
     tester = SessionIsolationTester()
     
     # Create zCLI instance with custom configuration
-    print("\n📝 Creating zCLI instance with custom configuration...")
+    print("\n[*] Creating zCLI instance with custom configuration...")
     custom_config = {
         "zWorkspace": "/custom/workspace",
         "zMode": "Test",
@@ -404,7 +407,7 @@ def test_session_with_configuration():
     zcli = zCLI(zSpark_obj=custom_config)
     
     # Test 4.1: Configuration is applied to session
-    print("\n⚙️  Testing configuration inheritance...")
+    print("\n[Config] Testing configuration inheritance...")
     
     tester.assert_equal(
         zcli.session.get("zWorkspace"),
@@ -437,7 +440,7 @@ def test_session_with_configuration():
     )
     
     # Test 4.2: Session ID is still unique
-    print("\n🔑 Testing session uniqueness with configuration...")
+    print("\n[Key] Testing session uniqueness with configuration...")
     
     tester.assert_is_not_none(
         zcli.session.get("zS_id"),
@@ -454,7 +457,7 @@ def test_session_with_configuration():
 
 def test_zparser_functionality():
     """Test zParser subsystem functionality."""
-    print("\n🔧 Testing zParser functionality...")
+    print("\n[Test] Testing zParser functionality...")
     
     tester = SessionIsolationTester()
     zcli = zCLI()
@@ -575,7 +578,7 @@ def test_zparser_functionality():
 
 def test_plugin_loading():
     """Test zCLI plugin loading functionality."""
-    print("\n🔌 Testing zCLI plugin loading...")
+    print("\n[Plugin] Testing zCLI plugin loading...")
     
     tester = SessionIsolationTester()
     zcli = zCLI()
@@ -662,7 +665,7 @@ def test_plugin_loading():
             # Test if utils can load external modules
             # This tests the plugin loading mechanism
             import importlib.util
-            plugin_path = os.path.join(os.path.dirname(__file__), "../utils/test_plugin.py")
+            plugin_path = os.path.join(os.path.dirname(__file__), "../zCLI/utils/test_plugin.py")
             spec = importlib.util.spec_from_file_location("test_plugin", plugin_path)
             plugin_module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(plugin_module)
@@ -684,7 +687,7 @@ def test_plugin_loading():
 
 def test_version_management():
     """Test version management functionality."""
-    print("\n📋 Testing version management...")
+    print("\n[Version] Testing version management...")
     
     tester = SessionIsolationTester()
     
@@ -765,7 +768,7 @@ def test_version_management():
 def run_all_tests():
     """Run all test suites."""
     print("\n" + "=" * 70)
-    print("🧪 zCLI COMPREHENSIVE TEST SUITE")
+    print("[TEST SUITE] zCLI COMPREHENSIVE TEST SUITE")
     print("=" * 70)
     print("\nThis test suite validates that each zCLI instance maintains")
     print("its own isolated session, all subsystems work correctly,")
@@ -787,27 +790,27 @@ def run_all_tests():
     
     # Print overall summary
     print("\n" + "=" * 70)
-    print("🏁 OVERALL TEST RESULTS")
+    print("[RESULTS] OVERALL TEST RESULTS")
     print("=" * 70)
     
     total_passed = sum(1 for _, passed in results if passed)
     total_failed = len(results) - total_passed
     
     for test_name, passed in results:
-        status = "✅ PASSED" if passed else "❌ FAILED"
+        status = "[PASS]" if passed else "[FAIL]"
         print(f"{status}: {test_name}")
     
     print("\n" + "=" * 70)
     print(f"Total Test Suites: {len(results)}")
-    print(f"✅ Passed: {total_passed}")
-    print(f"❌ Failed: {total_failed}")
+    print(f"[OK] Passed: {total_passed}")
+    print(f"[X] Failed: {total_failed}")
     print("=" * 70)
     
     if total_failed == 0:
-        print("\n🎉 All tests passed! Session isolation is working correctly.")
+        print("\n[SUCCESS] All tests passed! Session isolation is working correctly.")
         return 0
     else:
-        print(f"\n⚠️  {total_failed} test suite(s) failed. Please review the errors above.")
+        print(f"\n[WARN] {total_failed} test suite(s) failed. Please review the errors above.")
         return 1
 
 

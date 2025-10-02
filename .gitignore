@@ -181,3 +181,13 @@ Desktop.ini
 *.db
 *.sqlite
 logs/
+
+# zCLI credentials (stored in user home directory)
+# Note: Actual credentials are in ~/.zolo/ not in project
+.zolo/
+**/credentials
+
+# Test data
+tests/test_data.db
+tests/**/*.db
+tests/**/*.sqlite

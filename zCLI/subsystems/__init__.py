@@ -29,6 +29,7 @@ from .zSession import zSession, create_session
 from .zSocket import ZSocket
 from .zOpen import ZOpen
 from .zUtils import ZUtils
+from .zAuth import ZAuth, check_authentication
 
 __all__ = [
     # CRUD
@@ -49,5 +50,7 @@ __all__ = [
     "ZSocket",
     "ZOpen",
     "ZUtils",
+    "ZAuth",
+    "check_authentication",
 ]
 
