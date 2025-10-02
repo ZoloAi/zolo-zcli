@@ -277,7 +277,8 @@ class CommandExecutor:
                 "test_validation.py",
                 "test_join.py",
                 "test_zApps_crud.py",
-                "test_direct_operations.py"
+                "test_direct_operations.py",
+                "test_migration.py"
             ]
             
             print("\n[TEST] Running CRUD Test Suite...")

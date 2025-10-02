@@ -30,6 +30,7 @@ from .zSocket import ZSocket
 from .zOpen import ZOpen
 from .zUtils import ZUtils
 from .zAuth import ZAuth, check_authentication
+from .zMigrate import ZMigrate, auto_migrate_schema, detect_schema_changes
 
 __all__ = [
     # CRUD
@@ -52,5 +53,8 @@ __all__ = [
     "ZUtils",
     "ZAuth",
     "check_authentication",
+    "ZMigrate",
+    "auto_migrate_schema",
+    "detect_schema_changes",
 ]
 
