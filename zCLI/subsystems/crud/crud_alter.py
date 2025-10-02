@@ -26,9 +26,60 @@ Table Recreation Pattern (for old SQLite):
 from zCLI.utils.logger import logger
 from zCLI.subsystems.zDisplay import handle_zDisplay
 import sqlite3
+import datetime
 
 
-def zAlterTable(zRequest, zForm, zData):
+def _log_migration_with_rgb(migration_type, target_table, target_column, success, zData, criticality_level=2, new_table_name=None):
+    """Log migration to zMigrations table with RGB impact tracking."""
+    try:
+        from ..zMigrate import ZMigrate
+        migrator = ZMigrate()
+        
+        # Ensure migrations table exists
+        migrator._ensure_migrations_table(zData)
+        
+        cur = zData["cursor"]
+        migration_id = f"mig_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        applied_at = datetime.datetime.now(datetime.UTC).isoformat()
+        
+        # Calculate RGB impact based on operation type and criticality
+        rgb_impacts = {
+            "drop_column": {"r": -5, "g": -10, "b": 15 * criticality_level},
+            "rename_column": {"r": -2, "g": 0, "b": 8 * criticality_level},
+            "rename_table": {"r": -20, "g": -30, "b": 20 * criticality_level}
+        }
+        
+        impact = rgb_impacts.get(migration_type, {"r": 0, "g": 0, "b": 5 * criticality_level})
+        
+        # Log to migrations table
+        cur.execute("""
+            INSERT INTO zMigrations 
+            (id, migration_type, target_table, target_column, applied_at, status, 
+             rgb_impact_r, rgb_impact_g, rgb_impact_b, criticality_level)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            migration_id, migration_type, target_table, target_column, applied_at, 
+            "success" if success else "failed",
+            impact["r"], impact["g"], impact["b"], criticality_level
+        ))
+        
+        zData["conn"].commit()
+        logger.info("✅ Migration logged with RGB tracking: %s", migration_id)
+        
+        # Update RGB values on target table
+        # For rename_table operations, use the new table name if available
+        table_for_rgb_update = new_table_name if migration_type == "rename_table" and new_table_name else target_table
+        
+        if success:
+            migrator._update_rgb_on_migration(table_for_rgb_update, migration_type, True, zData)
+        else:
+            migrator._update_rgb_on_migration(table_for_rgb_update, migration_type, False, zData)
+            
+    except Exception as e:
+        logger.error("Failed to log migration with RGB tracking: %s", e)
+
+
+def zAlterTable(zRequest, zForm, zData, walker=None):
     """
     ALTER TABLE operations handler.
     
@@ -71,15 +122,15 @@ def zAlterTable(zRequest, zForm, zData):
     
     data_type = zData.get("type")
     if data_type == "sqlite":
-        return zAlterTable_sqlite(zRequest, zForm, zData)
+        return zAlterTable_sqlite(zRequest, zForm, zData, walker)
     elif data_type == "postgresql":
-        return zAlterTable_postgres(zRequest, zForm, zData)
+        return zAlterTable_postgres(zRequest, zForm, zData, walker)
     
     logger.warning("zAlterTable not implemented for data type: %s", data_type)
     return False
 
 
-def zAlterTable_sqlite(zRequest, zForm, zData):
+def zAlterTable_sqlite(zRequest, zForm, zData, walker=None):
     """ALTER TABLE implementation for SQLite."""
     cur = zData["cursor"]
     conn = zData["conn"]
@@ -103,12 +154,18 @@ def zAlterTable_sqlite(zRequest, zForm, zData):
             logger.error("DROP COLUMN requires 'column' field")
             return False
         
+        success = False
         if sqlite_version >= (3, 35, 0):
             # Modern SQLite supports DROP COLUMN directly
-            return _drop_column_native(table, column, cur, conn)
+            success = _drop_column_native(table, column, cur, conn)
         else:
             # Old SQLite requires table recreation
-            return _drop_column_recreate(table, column, cur, conn, zForm)
+            success = _drop_column_recreate(table, column, cur, conn, zForm)
+        
+        # Log migration with RGB tracking
+        _log_migration_with_rgb("drop_column", table, column, success, zData, criticality_level=3)
+        
+        return success
     
     elif operation == "rename_column":
         old_name = zRequest.get("old_name")
@@ -118,12 +175,18 @@ def zAlterTable_sqlite(zRequest, zForm, zData):
             logger.error("RENAME COLUMN requires 'old_name' and 'new_name'")
             return False
         
+        success = False
         if sqlite_version >= (3, 25, 0):
             # Modern SQLite supports RENAME COLUMN directly
-            return _rename_column_native(table, old_name, new_name, cur, conn)
+            success = _rename_column_native(table, old_name, new_name, cur, conn)
         else:
             # Old SQLite requires table recreation
-            return _rename_column_recreate(table, old_name, new_name, cur, conn, zForm)
+            success = _rename_column_recreate(table, old_name, new_name, cur, conn, zForm)
+        
+        # Log migration with RGB tracking
+        _log_migration_with_rgb("rename_column", table, old_name, success, zData, criticality_level=2)
+        
+        return success
     
     elif operation == "rename_table":
         new_table_name = zRequest.get("new_table_name")
@@ -132,7 +195,12 @@ def zAlterTable_sqlite(zRequest, zForm, zData):
             logger.error("RENAME TABLE requires 'new_table_name'")
             return False
         
-        return _rename_table(table, new_table_name, cur, conn)
+        success = _rename_table(table, new_table_name, cur, conn)
+        
+        # Log migration with RGB tracking
+        _log_migration_with_rgb("rename_table", table, None, success, zData, criticality_level=4, new_table_name=new_table_name)
+        
+        return success
     
     else:
         logger.error("Unknown ALTER TABLE operation: %s", operation)

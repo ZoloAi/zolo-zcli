@@ -16,6 +16,66 @@ Future: DROP COLUMN, RENAME, TYPE changes, indexes, etc.
 
 from zCLI.utils.logger import logger
 
+# ═══════════════════════════════════════════════════════════════════
+# Ghost Migration Table Schema for RGB Tracking
+# ═══════════════════════════════════════════════════════════════════
+MIGRATION_TABLE_SCHEMA = {
+    "id": {
+        "type": "TEXT",
+        "primary_key": True,
+        "description": "Migration identifier"
+    },
+    "migration_type": {
+        "type": "TEXT",
+        "not_null": True,
+        "description": "Type of migration (add_column, drop_column, etc.)"
+    },
+    "target_table": {
+        "type": "TEXT",
+        "not_null": True,
+        "description": "Target table name"
+    },
+    "target_column": {
+        "type": "TEXT",
+        "description": "Target column name (null for table-level operations)"
+    },
+    "description": {
+        "type": "TEXT",
+        "description": "Human readable description"
+    },
+    "applied_at": {
+        "type": "TEXT",
+        "not_null": True,
+        "description": "ISO timestamp when applied"
+    },
+    "status": {
+        "type": "TEXT",
+        "default": "success",
+        "description": "Migration status (success, failed, rolled_back)"
+    },
+    # RGB Impact Tracking
+    "rgb_impact_r": {
+        "type": "int",
+        "default": 0,
+        "description": "Impact on Red component (time freshness)"
+    },
+    "rgb_impact_g": {
+        "type": "int",
+        "default": 0,
+        "description": "Impact on Green component (access frequency)"
+    },
+    "rgb_impact_b": {
+        "type": "int",
+        "default": 10,
+        "description": "Impact on Blue component (migration stability)"
+    },
+    "criticality_level": {
+        "type": "int",
+        "default": 1,
+        "description": "1=low, 2=medium, 3=high, 4=critical"
+    }
+}
+
 
 class ZMigrate:
     """
@@ -33,6 +93,56 @@ class ZMigrate:
         """
         self.walker = walker
         self.logger = logger
+    
+    def _ensure_migrations_table(self, zData):
+        """Create zMigrations table using zCLI's zTables function."""
+        if zData["type"] == "sqlite":
+            from .crud.crud_handler import zTables
+            
+            # Check if table exists first
+            cur = zData["cursor"]
+            cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='zMigrations'")
+            if not cur.fetchone():
+                # Create using zCLI's table creation system
+                zTables("zMigrations", MIGRATION_TABLE_SCHEMA, zData["cursor"], zData["conn"])
+                logger.info("✅ Created zMigrations table using zCLI schema")
+    
+    def _update_rgb_on_access(self, table, row_id, zData):
+        """Update RGB values when row is accessed."""
+        cur = zData["cursor"]
+        
+        # R: Reset to 255 (fresh access) - will decay over time
+        # G: Increment access frequency (with decay)
+        cur.execute(f"""
+            UPDATE {table} SET 
+                weak_force_r = 255,  -- Reset to fresh (will decay over time)
+                weak_force_g = MIN(255, weak_force_g + 5)  -- Increment access frequency
+            WHERE id = ?
+        """, (row_id,))
+        
+        zData["conn"].commit()
+        logger.debug("🌈 Updated RGB on access: %s.%s", table, row_id)
+    
+    def _update_rgb_on_migration(self, table, migration_type, success, zData):
+        """Update B component based on migration results."""
+        cur = zData["cursor"]
+        
+        if success:
+            # Migration success = increase B (more stable)
+            cur.execute(f"""
+                UPDATE {table} SET 
+                    weak_force_b = MIN(255, weak_force_b + 10)
+            """)
+            logger.info("✅ Migration success - B increased for %s", table)
+        else:
+            # Migration failure = decrease B (less stable)
+            cur.execute(f"""
+                UPDATE {table} SET 
+                    weak_force_b = MAX(0, weak_force_b - 20)
+            """)
+            logger.warning("❌ Migration failed - B decreased for %s", table)
+        
+        zData["conn"].commit()
     
     def detect_changes(self, zForm, zData):
         """

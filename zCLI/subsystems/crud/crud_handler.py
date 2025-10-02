@@ -63,6 +63,7 @@ def handle_zData(zCRUD_Preped):
     from .crud_update import zUpdate
     from .crud_delete import zDelete, zTruncate, zListTables
     from .crud_upsert import zUpsert
+    from .crud_alter import zAlterTable
     
     handle_zDisplay({
         "event": "header",
@@ -111,6 +112,8 @@ def handle_zData(zCRUD_Preped):
                 results = zDelete(zCRUD_Preped["zRequest"], zCRUD_Preped["zForm"], zData)
             elif action == "upsert":
                 results = zUpsert(zCRUD_Preped["zRequest"], zCRUD_Preped["zForm"], zData, walker=zCRUD_Preped.get("walker"))
+            elif action == "alter_table":
+                results = zAlterTable(zCRUD_Preped["zRequest"], zCRUD_Preped["zForm"], zData, walker=zCRUD_Preped.get("walker"))
             elif action == "truncate":
                 results = zTruncate(zCRUD_Preped["zRequest"], zCRUD_Preped["zForm"], zData)
             else:
@@ -310,6 +313,14 @@ def zTables(table, fields, cur, conn):
         pk_columns = ", ".join(composite_pk)
         field_defs.append(f"PRIMARY KEY ({pk_columns})")
         logger.info("Adding composite PRIMARY KEY (%s)", pk_columns)
+
+    # ════════════════════════════════════════════════════════════
+    # Add RGB Weak Nuclear Force columns to every table
+    # ════════════════════════════════════════════════════════════
+    field_defs.append("weak_force_r INTEGER DEFAULT 255")  # Red: Natural decay over time (255=fresh, 0=ancient)
+    field_defs.append("weak_force_g INTEGER DEFAULT 0")    # Green: Access frequency (255=popular, 0=unused)
+    field_defs.append("weak_force_b INTEGER DEFAULT 255")  # Blue: Migration criticality (255=migrated, 0=missing)
+    logger.info("Added RGB weak nuclear force columns to table: %s", table)
 
     all_defs = field_defs + foreign_keys
     ddl = f"CREATE TABLE {table} ({', '.join(all_defs)});"
