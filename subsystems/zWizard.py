@@ -1,0 +1,48 @@
+from zCLI.utils.logger import logger
+from zCLI.subsystems.zDisplay import handle_zDisplay
+from zCLI.walker.zDispatch import handle_zDispatch
+from zCLI.subsystems.zSession import zSession
+import re
+
+
+class ZWizard:
+    def __init__(self, walker=None):
+        self.walker = walker
+        self.zSession = getattr(walker, "zSession", zSession)
+        self.logger = getattr(walker, "logger", logger) if walker else logger
+
+    def handle(self, zWizard_obj):
+        """Execute a sequence of steps, storing results in zHat."""
+        handle_zDisplay({
+            "event": "header",
+            "label": "Handle zWizard",
+            "style": "full",
+            "color": "ZWIZARD",
+            "indent": 1,
+        })
+
+        zHat = []
+        for step_key, step_value in zWizard_obj.items():
+            handle_zDisplay({
+                "event": "header",
+                "label": f"zWizard step: {step_key}",
+                "style": "single",
+                "color": "ZWIZARD",
+                "indent": 2,
+            })
+
+            if isinstance(step_value, str):
+                def repl(match):
+                    idx = int(match.group(1))
+                    return repr(zHat[idx]) if idx < len(zHat) else "None"
+                step_value = re.sub(r"zHat\[(\d+)\]", repl, step_value)
+
+            result = handle_zDispatch(step_key, step_value, walker=self.walker)
+            zHat.append(result)
+
+        self.logger.info("zWizard completed with zHat: %s", zHat)
+        return zHat
+
+
+def handle_zWizard(zWizard_obj, walker=None):
+    return ZWizard(walker).handle(zWizard_obj)
