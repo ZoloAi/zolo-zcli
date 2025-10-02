@@ -62,6 +62,7 @@ def handle_zData(zCRUD_Preped):
     from .crud_read import zRead, zSearch
     from .crud_update import zUpdate
     from .crud_delete import zDelete, zTruncate, zListTables
+    from .crud_upsert import zUpsert
     
     handle_zDisplay({
         "event": "header",
@@ -108,6 +109,8 @@ def handle_zData(zCRUD_Preped):
                 results = zUpdate(zCRUD_Preped["zRequest"], zCRUD_Preped["zForm"], zData)
             elif action == "delete":
                 results = zDelete(zCRUD_Preped["zRequest"], zCRUD_Preped["zForm"], zData)
+            elif action == "upsert":
+                results = zUpsert(zCRUD_Preped["zRequest"], zCRUD_Preped["zForm"], zData, walker=zCRUD_Preped.get("walker"))
             elif action == "truncate":
                 results = zTruncate(zCRUD_Preped["zRequest"], zCRUD_Preped["zForm"], zData)
             else:

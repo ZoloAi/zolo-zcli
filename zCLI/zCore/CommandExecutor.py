@@ -281,7 +281,8 @@ class CommandExecutor:
                 "test_migration.py",
                 "test_composite_pk.py",
                 "test_where.py",
-                "test_indexes.py"
+                "test_indexes.py",
+                "test_upsert.py"
             ]
             
             print("\n[TEST] Running CRUD Test Suite...")

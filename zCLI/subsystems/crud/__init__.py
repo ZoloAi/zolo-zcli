@@ -66,6 +66,10 @@ from .crud_delete import (
     zListTables
 )
 
+from .crud_upsert import (
+    zUpsert
+)
+
 __all__ = [
     # Main class and handler
     "ZCRUD",
@@ -98,6 +102,7 @@ __all__ = [
     "zUpdate",
     "zDelete",
     "zDelete_sqlite",
+    "zUpsert",
     "zTruncate",
     "zTruncate_sqlite",
     "zListTables",
