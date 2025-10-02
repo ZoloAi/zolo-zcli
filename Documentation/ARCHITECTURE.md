@@ -1,11 +1,30 @@
 # zCLI Architecture Diagram
 
-## 🏗️ Complete System Flow
+## 🔐 Distribution & Access Control
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
+│              Private GitHub Repository                          │
+│              github.com/ZoloAi/zolo-zcli                       │
+│                                                                 │
+│  Access Control: Repository collaborators only                 │
+│  Installation: pip install git+ssh://git@github.com/...        │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+                  GitHub SSH Authentication
+                            │
+                            ▼
+        ┌───────────────────────────────────────┐
+        │         pip install (Private)         │
+        │  • Requires GitHub SSH key            │
+        │  • Validates repository access        │
+        │  • Installs zolo-zcli package         │
+        └───────────────────┬───────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
 │                    zolo-zcli Package                            │
-│              (Installed Python Package)                        │
+│              (Installed Python Package v1.0.0)                 │
 └───────────────────────────┬─────────────────────────────────────┘
                             │
                             ▼
@@ -25,6 +44,7 @@
         │ • Session mgmt│   │ • Session mgmt   │
         │ • Mode detect │   │ • Plugin loading │
         │ • Subsystems  │   │ • Subsystems     │
+        │ • zAuth ready │   │ • zAuth ready    │
         └───────┬───────┘   └─────────┬────────┘
                 │                     │
                 ▼                     ▼
@@ -42,6 +62,8 @@
         │ CommandExecutor│   │ zWalker          │
         │ • Command parse│   │ • YAML parsing   │
         │ • Route to subs│   │ • Menu navigation│
+        │ • Test runner  │   │ • zDispatch      │
+        │ • Auth commands│   │ • zDialog        │
         └───────┬───────┘   └─────────┬────────┘
                 │                     │
                 │                     ▼
@@ -58,7 +80,8 @@
         ┌─────────────────────────────────────┐
         │        CRUD Operations              │
         │  • handle_zCRUD (entry point)      │
-        │  • Validation & schema loading     │
+        │  • Validation (required + defaults)│
+        │  • Schema loading                  │
         │  • Database connection             │
         │  • Operation routing               │
         └───────────────┬─────────────────────┘
@@ -69,9 +92,9 @@
         │  Routes to specific operations:       │
         │  • create  → crud_create.py           │
         │  • read    → crud_read.py             │
-        │  • update  → crud_update.py  ◄────────┼─ Focus
-        │  • delete  → crud_delete.py  ◄────────┼─ Focus
-        │  • search  → crud_read.py             │
+        │  • update  → crud_update.py           │
+        │  • delete  → crud_delete.py           │
+        │  • search  → crud_read.py (alias)     │
         │  • truncate→ crud_delete.py           │
         └───────────────┬───────────────────────┘
                         │
@@ -79,18 +102,19 @@
             │           │           │
             ▼           ▼           ▼
     ┌──────────┐  ┌─────────┐  ┌──────────┐
-    │  zUpdate │  │ zDelete │  │ (others) │
-    └────┬─────┘  └────┬────┘  └──────────┘
-         │             │
-         │   ┌─────────┴─────────┐
-         │   │                   │
-         ▼   ▼                   ▼
+    │ zCreate  │  │ zUpdate │  │ zDelete  │
+    │ +defaults│  │ +WHERE  │  │ +WHERE   │
+    └────┬─────┘  └────┬────┘  └────┬─────┘
+         │             │             │
+         │   ┌─────────┴─────────┐   │
+         │   │                   │   │
+         ▼   ▼                   ▼   ▼
     ┌────────────────┐    ┌──────────────┐
     │ Build SQL:     │    │ Build SQL:   │
-    │ UPDATE table   │    │ DELETE FROM  │
-    │ SET f1=?, f2=? │    │ WHERE ...    │
-    │ WHERE ...      │    └──────┬───────┘
-    └────────┬───────┘           │
+    │ INSERT with    │    │ UPDATE/DELETE│
+    │ auto-defaults  │    │ WHERE params │
+    │ (now, id, etc) │    │ (?, ?, ?)    │
+    └────────┬───────┘    └──────┬───────┘
              │                   │
              └────────┬──────────┘
                       │
@@ -108,21 +132,29 @@
 
 ## 🚪 Entry Points & Usage Patterns
 
-### 1. Terminal Command (Shell Mode)
+### 1. Installation (Private Repository)
 ```bash
-# Install the package
-pip install zolo-zcli
+# Install from private GitHub (requires SSH key configured)
+pip install git+ssh://git@github.com/ZoloAi/zolo-zcli.git
 
+# Or install specific version
+pip install git+ssh://git@github.com/ZoloAi/zolo-zcli.git@v1.0.0
+```
+
+### 2. Terminal Command (Shell Mode)
+```bash
 # Start interactive shell (no YAML needed)
 zolo-zcli --shell
 
 # Inside shell, run commands directly
 > crud read zApps
+> auth login     # Optional: for extended features
+> test all       # Run all tests
 > help
 > exit
 ```
 
-### 2. Python Import (Both Modes)
+### 3. Python Import (Both Modes)
 ```python
 from zCLI import zCLI
 
@@ -137,9 +169,12 @@ cli = zCLI({
     "zMode": "UI"
 })
 cli.run_interactive()
+
+# Authentication is optional (for extended features like zCloud)
+cli.auth.login()  # Only if needed
 ```
 
-### 3. Python Script (Both Modes)
+### 4. Python Script (Both Modes)
 ```python
 # my_app.py
 from zCLI import zCLI
@@ -152,6 +187,7 @@ zcli.run_interactive()
 **Key Distinction**:
 - **Shell Mode**: Direct commands, no YAML files needed
 - **UI Mode**: YAML-driven menus, requires zSpark configuration
+- **zAuth**: Optional subsystem for apps that need user authentication
 
 ---
 
@@ -239,54 +275,78 @@ UI Config (YAML)              zFunc Call                Python Function
 
 ---
 
-## 📦 Complete zCLI Module Structure
+## 📦 Complete zCLI Package Structure
 
 ```
-zCLI/
+zolo-zcli/
 │
-├── zCore/ ──────────────────────► Core Engine & Interfaces
-│   ├── zCLI.py                  # Main engine (subsystem orchestration)
-│   ├── Shell.py                 # Interactive shell interface
-│   ├── CommandExecutor.py       # Command execution logic
-│   ├── CommandParser.py         # Command parsing
-│   └── Help.py                  # Help system
+├── zCLI/ ───────────────────────► Main Package
+│   │
+│   ├── zCore/ ──────────────────► Core Engine & Interfaces
+│   │   ├── zCLI.py              # Main engine (subsystem orchestration)
+│   │   ├── Shell.py             # Interactive shell interface
+│   │   ├── CommandExecutor.py   # Command execution logic
+│   │   ├── CommandParser.py     # Command parsing
+│   │   ├── Help.py              # Help system
+│   │   └── main.py              # Entry point (zolo-zcli command)
+│   │
+│   ├── subsystems/ ─────────────► Shared Subsystems
+│   │   ├── zSession.py          # Session management & isolation
+│   │   ├── zAuth.py             # Authentication (optional feature) 🔑
+│   │   ├── zUtils.py            # Core utilities (ID gen, plugins)
+│   │   ├── zParser.py           # YAML & expression parsing
+│   │   ├── zSchema.py           # Schema building & DDL generation
+│   │   ├── zDisplay.py          # UI rendering & formatting
+│   │   ├── zDialog.py           # Form dialogs & user input
+│   │   ├── zFunc.py             # Function execution
+│   │   ├── zSocket.py           # WebSocket communication
+│   │   ├── zWizard.py           # Multi-step workflows
+│   │   ├── zOpen.py             # File operations
+│   │   └── crud/ ───────────────► Database Operations
+│   │       ├── __init__.py      # Package exports
+│   │       ├── crud_handler.py  # Core infrastructure
+│   │       ├── crud_validator.py# Validation engine (rules + defaults)
+│   │       ├── crud_create.py   # INSERT operations (auto-defaults)
+│   │       ├── crud_read.py     # SELECT operations
+│   │       ├── crud_update.py   # UPDATE operations
+│   │       ├── crud_delete.py   # DELETE operations
+│   │       └── crud_join.py     # JOIN support (auto & manual)
+│   │
+│   ├── walker/ ─────────────────► UI/Walker Mode Components
+│   │   ├── zWalker.py           # Main walker engine
+│   │   ├── zDispatch.py         # Request routing
+│   │   ├── zMenu.py             # Menu navigation
+│   │   ├── zLink.py             # Link handling
+│   │   ├── zLoader.py           # YAML file loading
+│   │   └── zCrumbs.py           # Breadcrumb navigation
+│   │
+│   ├── utils/ ──────────────────► Utility Modules
+│   │   ├── logger.py            # Self-contained logging (color-coded)
+│   │   └── test_plugin.py       # Plugin testing example
+│   │
+│   └── version.py               # Version management
 │
-├── subsystems/ ─────────────────► Shared Subsystems
-│   ├── zSession.py              # Session management & isolation
-│   ├── zUtils.py                # Core utilities (ID gen, plugins)
-│   ├── zParser.py               # YAML & expression parsing
-│   ├── zDisplay.py              # UI rendering & formatting
-│   ├── zDialog.py               # Form dialogs & user input
-│   ├── zFunc.py                 # Function execution
-│   ├── zSocket.py               # WebSocket communication
-│   ├── zWizard.py               # Multi-step workflows
-│   ├── zOpen.py                 # File operations
-│   └── crud/ ───────────────────► Database Operations
-│       ├── __init__.py          # Package exports
-│       ├── crud_handler.py      # Core infrastructure
-│       ├── crud_validator.py    # Validation engine
-│       ├── crud_create.py       # INSERT operations
-│       ├── crud_read.py         # SELECT operations
-│       ├── crud_update.py       # UPDATE operations ⭐
-│       ├── crud_delete.py       # DELETE operations ⭐
-│       └── crud_join.py         # JOIN support
-│
-├── walker/ ─────────────────────► UI/Walker Mode Components
-│   ├── zWalker.py               # Main walker engine
-│   ├── zDispatch.py             # Request routing
-│   ├── zMenu.py                 # Menu navigation
-│   ├── zLink.py                 # Link handling
-│   ├── zLoader.py               # YAML file loading
-│   └── zCrumbs.py               # Breadcrumb navigation
-│
-├── utils/ ──────────────────────► Utility Modules
-│   ├── logger.py                # Self-contained logging
-│   └── test_plugin.py           # Plugin testing
+├── tests/ ──────────────────────► Centralized Test Suite
+│   ├── test_core.py             # Core tests (79 tests)
+│   ├── fixtures.py              # Test database fixtures
+│   ├── schemas/
+│   │   └── schema.test.yaml     # Test schema (isolated)
+│   └── crud/
+│       ├── test_validation.py   # Validation rules testing
+│       ├── test_join.py         # JOIN operations testing
+│       ├── test_zApps_crud.py   # Full CRUD workflow
+│       └── test_direct_operations.py  # Direct function tests
 │
 ├── Documentation/ ──────────────► Architecture & Guides
-├── pyproject.toml               # Package configuration
-├── version.py                   # Version management
-└── README.md                    # Package overview
+│   ├── ARCHITECTURE.md          # This file
+│   ├── AUTHENTICATION_GUIDE.md  # zAuth subsystem guide
+│   ├── INSTALL.md               # Installation instructions
+│   ├── TESTING_COMMANDS.md      # Test suite documentation
+│   └── (other guides)
+│
+├── pyproject.toml               # Package configuration & dependencies
+├── README.md                    # Package overview
+└── .gitignore                   # Excludes venv/, test DBs, credentials
 ```
 
 ### Core Infrastructure (crud_handler.py)
@@ -297,25 +357,87 @@ zCLI/
 ├── handle_zData()              # Operation router
 ├── zDataConnect()              # DB connection
 ├── zEnsureTables()             # Schema validation
-└── resolve_source()            # Auto-generation
+├── resolve_source()            # Auto-generation (ID, timestamps)
+└── RuleValidator               # Validation engine (from crud_validator.py)
 ```
 
 ### Operation Handlers
 
 ```
-crud_update.py ⭐               crud_delete.py ⭐
-├── zUpdate()                   ├── zDelete()
-│   ├── Parse values (SET)      │   ├── zDelete_sqlite()
-│   ├── Parse where (WHERE)     │   ├── Parse where (WHERE)
-│   ├── Build SQL               │   ├── Build SQL
-│   └── Execute & return count  │   ├── Execute & return count
-└── SQLite implementation       ├── zTruncate()
-                                └── zListTables()
+crud_create.py                   crud_update.py
+├── zCreate_sqlite()            ├── zUpdate()
+├── Auto-populate defaults:     │   ├── Parse values (SET)
+│   • id: generate_id(zX)       │   ├── Parse where (WHERE)
+│   • created_at: now           │   ├── Build SQL
+│   • version: "1.0.0"          │   └── Execute & return count
+│   • role: zUser               └── SQLite implementation
+└── Validation check            
+
+crud_delete.py                   crud_read.py
+├── zDelete_sqlite()            ├── zRead_sqlite()
+├── Parse WHERE clause          ├── SELECT with fields
+├── Build parameterized SQL     ├── JOIN support (auto/manual)
+├── Execute & return count      ├── WHERE filtering
+├── zTruncate()                 └── ORDER BY, LIMIT
+└── zListTables()
+```
+
+### Validation Engine (crud_validator.py)
+
+```
+RuleValidator class
+├── validate_create()           # Pre-insert validation
+│   ├── Check required fields
+│   ├── Skip fields with 'source' or 'default'
+│   ├── Validate rules (min_length, format, etc.)
+│   └── Return errors or success
+│
+├── _validate_field()           # Field-level validation
+│   ├── Email format (regex)
+│   ├── Password length
+│   ├── Pattern matching
+│   └── Custom error messages
+│
+└── Format validators
+    ├── _validate_email()
+    ├── _validate_url()
+    └── _validate_phone()
 ```
 
 ---
 
-## 🔐 Security Architecture
+## 🔐 Access & Security Architecture
+
+### Access Control Model
+
+```
+GitHub Private Repository (ZoloAi/zolo-zcli)
+         │
+         │ Collaborators only
+         │
+         ▼
+   pip install (SSH)
+         │
+         │ Package installed
+         │
+         ▼
+   zolo-zcli available ✅
+         │
+         │ No auth required
+         │
+         ▼
+   Full zCLI access
+         │
+         │ Optional: for extended features
+         │
+         ▼
+   auth login (zCloud, etc.)
+```
+
+**Single-Layer Access**:
+- ✅ GitHub collaborator = Full zCLI access
+- ✅ zAuth is **optional feature** for apps extending zCLI
+- ✅ Basic usage requires no authentication
 
 ### Session Isolation
 
@@ -343,9 +465,7 @@ zCLI Instance 1              zCLI Instance 2
 - ✅ No shared state
 - ✅ Better testing isolation
 
----
-
-## 🔐 Security Architecture
+### SQL Injection Protection
 
 ```
 User Input ──► Validation ──► Parameterization ──► Database
@@ -356,10 +476,11 @@ Example:
   ❌ WRONG: f"DELETE FROM zApps WHERE id = '{user_id}'"
   ✅ RIGHT: cursor.execute("DELETE FROM zApps WHERE id = ?", [user_id])
   
-  SQL Injection Protection:
+  Protection Mechanisms:
   • All values passed as parameters (?)
   • SQLite escapes values automatically
   • No string concatenation in SQL
+  • Validation before execution
 ```
 
 ---
@@ -435,12 +556,38 @@ Response = 1  # Integer: number of rows updated
 ## 🧪 Test Architecture
 
 ```
-test_validation.py ──────► Tests validation rules (Phase 1)
-test_join.py ────────────► Tests JOIN operations (Phase 2)
-test_direct_operations.py► Tests DELETE & UPDATE directly
-test_zApps_crud.py ───────► Tests full workflow with zApps
+tests/
+├── test_core.py ────────────────► Core zCLI Tests (79 tests)
+│   ├── Session isolation
+│   ├── Multi-instance testing
+│   ├── zParser functionality
+│   ├── Plugin loading
+│   └── Version management
+│
+├── fixtures.py ─────────────────► Test Database Utilities
+│   ├── TestDatabase() context manager
+│   ├── Auto setup/teardown
+│   ├── Isolated test.db
+│   └── Schema loading
+│
+├── schemas/
+│   └── schema.test.yaml ────────► Test Schema (Isolated)
+│       ├── zUsers, zApps, zUserApps
+│       ├── Auto-defaults (id, created_at)
+│       └── Meta: points to tests/test_data.db
+│
+└── crud/
+    ├── test_validation.py ──────► Validation Rules (Phase 1)
+    ├── test_join.py ────────────► JOIN Operations (Phase 2)
+    ├── test_zApps_crud.py ──────► Full CRUD Workflow
+    └── test_direct_operations.py► Direct Function Testing
 
-Each test is independent and can run standalone.
+Test Execution:
+  zCLI> test run   # Core tests only (79 tests)
+  zCLI> test crud  # All CRUD tests (4 suites)
+  zCLI> test all   # Complete suite (Core + CRUD)
+  
+Each test is independent, uses isolated database, self-contained.
 ```
 
 ---
@@ -448,40 +595,62 @@ Each test is independent and can run standalone.
 ## 🚀 Deployment View
 
 ```
-Production Environment
-┌────────────────────────────────────────────┐
-│  Terminal Interface         UI Interface   │
-│  ┌──────────────┐          ┌────────────┐ │
-│  │ zCLI Shell   │          │ zWalker    │ │
-│  │ (Python CLI) │          │ (YAML UI)  │ │
-│  └──────┬───────┘          └──────┬─────┘ │
-│         │                         │       │
-│         └─────────┬───────────────┘       │
-│                   │                       │
-│                   ▼                       │
-│         ┌──────────────────┐              │
-│         │   zCLI Core      │              │
-│         │ • Session mgmt   │              │
-│         │ • Subsystem mgmt │              │
-│         │ • Plugin loading │              │
-│         └────────┬─────────┘              │
-│                  │                        │
-│                  ▼                        │
-│         ┌──────────────────┐              │
-│         │   CRUD Layer     │              │
-│         │  (subsystems/)   │              │
-│         └────────┬─────────┘              │
-│                  │                        │
-│                  ▼                        │
-│         ┌──────────────────┐              │
-│         │  SQLite Database │              │
-│         │  Session Isolated│              │
-│         └──────────────────┘              │
-└────────────────────────────────────────────┘
+User Environment
+┌────────────────────────────────────────────────────────────┐
+│                                                            │
+│  Installation (One-time)                                   │
+│  ┌──────────────────────────────────────────────┐         │
+│  │ GitHub SSH Auth → pip install via Git        │         │
+│  │ Creates: zolo-zcli command in PATH            │         │
+│  └──────────────────────────────────────────────┘         │
+│                                                            │
+│  Runtime Usage (Repeatable)                                │
+│  ┌────────────────────────────────────────────────────┐   │
+│  │  Terminal Interface       UI Interface             │   │
+│  │  ┌──────────────┐        ┌────────────┐           │   │
+│  │  │ zCLI Shell   │        │ zWalker    │           │   │
+│  │  │ (Commands)   │        │ (YAML UI)  │           │   │
+│  │  └──────┬───────┘        └──────┬─────┘           │   │
+│  │         │                       │                 │   │
+│  │         └───────────┬───────────┘                 │   │
+│  │                     │                             │   │
+│  │                     ▼                             │   │
+│  │           ┌──────────────────┐                    │   │
+│  │           │   zCLI Core      │                    │   │
+│  │           │ • Session mgmt   │                    │   │
+│  │           │ • Subsystem mgmt │                    │   │
+│  │           │ • Plugin loading │                    │   │
+│  │           │ • zAuth (ready)  │                    │   │
+│  │           └────────┬─────────┘                    │   │
+│  │                    │                              │   │
+│  │                    ▼                              │   │
+│  │           ┌──────────────────┐                    │   │
+│  │           │   CRUD Layer     │                    │   │
+│  │           │  • Validation    │                    │   │
+│  │           │  • Auto-defaults │                    │   │
+│  │           │  • SQL building  │                    │   │
+│  │           └────────┬─────────┘                    │   │
+│  │                    │                              │   │
+│  │                    ▼                              │   │
+│  │           ┌──────────────────┐                    │   │
+│  │           │  SQLite Database │                    │   │
+│  │           │  Session Isolated│                    │   │
+│  │           └──────────────────┘                    │   │
+│  └────────────────────────────────────────────────────┘   │
+│                                                            │
+│  Optional: Extended Features                               │
+│  ┌────────────────────────────────────────────────────┐   │
+│  │  zAuth subsystem (for zCloud, etc.)                │   │
+│  │  • auth login → Connects to backend                │   │
+│  │  • Stored in ~/.zolo/credentials                   │   │
+│  │  • Used by apps extending zCLI                     │   │
+│  └────────────────────────────────────────────────────┘   │
+└────────────────────────────────────────────────────────────┘
 
 Both interfaces use the same zCLI core engine.
 Session isolation ensures complete data separation.
 Plugin system enables extensibility.
+No authentication required for basic usage.
 ```
 
 ---
@@ -562,11 +731,45 @@ Phase 4: Advanced Features
 ├── Audit logging (who/when)
 ├── Row-level permissions
 └── Field-level encryption
+
+Phase 5: Extended Auth Features
+├── OAuth integration
+├── API token management
+├── Role-based command access
+└── Session expiration
 ```
 
 ---
 
-**Last Updated**: January 2025  
-**Status**: zCLI Package Architecture ✅  
-**Version**: 1.0.0
+## 📊 Current Status
+
+**Version**: 1.0.0 (Released)  
+**Distribution**: Private GitHub Repository  
+**Installation**: `pip install git+ssh://git@github.com/ZoloAi/zolo-zcli.git@v1.0.0`  
+**Test Coverage**: 79 core tests + 4 CRUD test suites  
+**Status**: ✅ Production Ready
+
+### Key Features Implemented
+
+- ✅ Interactive shell mode
+- ✅ CRUD operations (CREATE, READ, UPDATE, DELETE)
+- ✅ Validation engine (rules + auto-defaults)
+- ✅ JOIN support (auto & manual)
+- ✅ Session isolation
+- ✅ Plugin system
+- ✅ zAuth subsystem (optional)
+- ✅ Test fixtures & isolated testing
+- ✅ Comprehensive documentation
+
+### Access Model
+
+- **Installation**: GitHub repository collaborators only
+- **Usage**: No authentication required
+- **zAuth**: Available for apps extending zCLI (zCloud, etc.)
+
+---
+
+**Last Updated**: October 2, 2025  
+**Architecture Status**: ✅ Current & Validated  
+**Maintainer**: Gal Nachshon (gal@zolo.media)
 
