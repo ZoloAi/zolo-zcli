@@ -5,7 +5,8 @@ from zCLI.utils.logger import logger
 from zCLI.subsystems.zDisplay import handle_zDisplay
 from zCLI.subsystems.zSession import zSession
 from .crud_handler import build_order_clause
-from .crud_join import build_join_clause, build_select_with_tables, build_where_with_tables
+from .crud_join import build_join_clause, build_select_with_tables
+from .crud_where import build_where_clause
 
 
 def zRead(zRequest, zForm, zData, walker=None):
@@ -59,17 +60,9 @@ def zRead(zRequest, zForm, zData, walker=None):
     select_clause = "*" if fields == ["*"] or not fields else ", ".join(fields)
     logger.info("Select clause: %s", select_clause)
 
-    # ── 3) WHERE filters
+    # ── 3) WHERE filters (Advanced operators support)
     filters = zRequest.get("where") or zRequest.get("filters")
-    where_clause = ""
-    params = []
-    if isinstance(filters, dict) and filters:
-        conditions = []
-        for key, value in filters.items():
-            col = key.split(".")[-1]
-            conditions.append(f"{col} = ?")
-            params.append(value)
-        where_clause = " WHERE " + " AND ".join(conditions)
+    where_clause, params = build_where_clause(filters)
     logger.info("WHERE clause: %s | params: %s", where_clause or "<none>", params)
     
     # ── 4) ORDER BY
@@ -236,9 +229,9 @@ def zReadJoin(zRequest, zForm, zData, walker=None):
     select_clause = build_select_with_tables(raw_fields, tables)
     logger.info("SELECT clause: %s", select_clause)
     
-    # ── 4) Build WHERE clause (supports table-qualified fields)
+    # ── 4) Build WHERE clause (supports table-qualified fields and advanced operators)
     filters = zRequest.get("where") or zRequest.get("filters")
-    where_clause, params = build_where_with_tables(filters)
+    where_clause, params = build_where_clause(filters)
     logger.info("WHERE clause: %s | params: %s", where_clause or "<none>", params)
     
     # ── 5) ORDER BY

@@ -712,13 +712,13 @@ def test_version_management():
         
         tester.assert_equal(
             version,
-            "1.0.1",
+            "1.2.0",
             "Version string is correct"
         )
         
         tester.assert_equal(
             version_info,
-            (1, 0, 1),
+            (1, 2, 0),
             "Version info tuple is correct"
         )
         
@@ -730,7 +730,7 @@ def test_version_management():
         
         tester.assert_equal(
             package_info["version"],
-            "1.0.1",
+            "1.2.0",
             "Package info version matches"
         )
         
@@ -746,13 +746,13 @@ def test_version_management():
         
         tester.assert_equal(
             __version__,
-            "1.0.1",
+            "1.2.0",
             "Module-level __version__ is correct"
         )
         
         tester.assert_equal(
             __version_info__,
-            (1, 0, 1),
+            (1, 2, 0),
             "Module-level __version_info__ is correct"
         )
         

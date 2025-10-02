@@ -12,6 +12,7 @@ Supports:
 """
 
 from zCLI.utils.logger import logger
+from .crud_where import build_where_clause as build_where_with_tables  # Re-export for compatibility
 
 
 def build_join_clause(tables, joins=None, schema=None, auto_join=False):
@@ -227,33 +228,3 @@ def build_select_with_tables(fields, tables):
             select_parts.append(field)
     
     return ", ".join(select_parts)
-
-
-def build_where_with_tables(filters):
-    """
-    Build WHERE clause supporting table-qualified fields.
-    
-    Args:
-        filters: Dictionary of field:value pairs (fields may include table prefix)
-        
-    Returns:
-        tuple: (where_clause, params)
-        
-    Example:
-        filters = {"zUsers.role": "admin", "zApps.type": "web"}
-        Returns: (" WHERE zUsers.role = ? AND zApps.type = ?", ["admin", "web"])
-    """
-    if not filters or not isinstance(filters, dict):
-        return "", []
-    
-    conditions = []
-    params = []
-    
-    for key, value in filters.items():
-        # Keep table qualifier if present
-        conditions.append(f"{key} = ?")
-        params.append(value)
-    
-    where_clause = " WHERE " + " AND ".join(conditions) if conditions else ""
-    return where_clause, params
-

@@ -60,7 +60,8 @@ class ZMigrate:
         
         # Compare with YAML schema
         changes = {
-            "new_columns": {}
+            "new_columns": {},
+            "new_indexes": {}
         }
         
         for table_name, table_fields in zForm.items():
@@ -92,6 +93,26 @@ class ZMigrate:
             if new_cols:
                 changes["new_columns"][table_name] = new_cols
                 logger.info("[Migration] Found %d new columns in table '%s'", len(new_cols), table_name)
+            
+            # Check for new indexes
+            if "indexes" in table_fields:
+                yaml_indexes = table_fields["indexes"]
+                if isinstance(yaml_indexes, list):
+                    # Get existing indexes from database
+                    existing_indexes = self._get_table_indexes(table_name, zData)
+                    existing_idx_names = {idx["name"] for idx in existing_indexes}
+                    
+                    # Find new indexes
+                    new_indexes = []
+                    for idx_def in yaml_indexes:
+                        if isinstance(idx_def, dict):
+                            idx_name = idx_def.get("name")
+                            if idx_name and idx_name not in existing_idx_names:
+                                new_indexes.append(idx_def)
+                    
+                    if new_indexes:
+                        changes["new_indexes"][table_name] = new_indexes
+                        logger.info("[Migration] Found %d new indexes for table '%s'", len(new_indexes), table_name)
         
         return changes
     
@@ -107,7 +128,7 @@ class ZMigrate:
         Returns:
             bool: True if successful, False otherwise
         """
-        if not changes.get("new_columns"):
+        if not changes.get("new_columns") and not changes.get("new_indexes"):
             logger.info("[Migration] No changes to apply")
             return True
         
@@ -135,16 +156,23 @@ class ZMigrate:
         """
         changes = self.detect_changes(zForm, zData)
         
-        if not changes.get("new_columns"):
+        if not changes.get("new_columns") and not changes.get("new_indexes"):
             return {"status": "no_changes", "message": "Schema is up to date"}
         
         success = self.apply_migrations(changes, zForm, zData)
         
         if success:
             total_cols = sum(len(cols) for cols in changes["new_columns"].values())
+            total_idxs = sum(len(idxs) for idxs in changes["new_indexes"].values())
+            message_parts = []
+            if total_cols > 0:
+                message_parts.append(f"{total_cols} new column(s)")
+            if total_idxs > 0:
+                message_parts.append(f"{total_idxs} new index(es)")
+            
             return {
                 "status": "success",
-                "message": f"Added {total_cols} new columns",
+                "message": f"Added {', '.join(message_parts)}",
                 "changes": changes
             }
         else:
@@ -206,6 +234,78 @@ class ZMigrate:
             logger.debug("[Migration] Table '%s' has %d columns", table, len(columns))
         
         return schema
+    
+    def _get_table_indexes(self, table_name, zData):
+        """
+        Get list of indexes for a specific table.
+        
+        Args:
+            table_name (str): Table name
+            zData: Database connection object
+        
+        Returns:
+            list: List of index info dicts
+        """
+        if zData["type"] == "sqlite":
+            return self._get_sqlite_indexes(table_name, zData)
+        elif zData["type"] == "postgresql":
+            return self._get_postgres_indexes(table_name, zData)
+        return []
+    
+    def _get_sqlite_indexes(self, table_name, zData):
+        """Get indexes for a table in SQLite."""
+        cur = zData["cursor"]
+        indexes = []
+        
+        # Get index list for table
+        cur.execute(f"PRAGMA index_list({table_name})")
+        index_rows = cur.fetchall()
+        
+        for row in index_rows:
+            # PRAGMA index_list returns: (seq, name, unique, origin, partial)
+            seq, name, unique, origin, partial = row
+            
+            # Skip auto-created indexes for UNIQUE and PRIMARY KEY constraints
+            if origin in ('u', 'pk'):
+                continue
+            
+            # Get index columns
+            cur.execute(f"PRAGMA index_info({name})")
+            index_cols = [col_row[2] for col_row in cur.fetchall()]
+            
+            indexes.append({
+                "name": name,
+                "columns": index_cols,
+                "unique": bool(unique),
+                "partial": bool(partial)
+            })
+        
+        return indexes
+    
+    def _get_postgres_indexes(self, table_name, zData):
+        """Get indexes for a table in PostgreSQL."""
+        cur = zData["cursor"]
+        
+        cur.execute("""
+            SELECT indexname, indexdef
+            FROM pg_indexes
+            WHERE tablename = %s
+            AND schemaname = 'public'
+        """, (table_name,))
+        
+        indexes = []
+        for row in cur.fetchall():
+            idx_name, idx_def = row
+            # Skip primary key and unique constraint indexes
+            if idx_name.endswith('_pkey') or 'UNIQUE' in idx_def.upper():
+                continue
+            
+            indexes.append({
+                "name": idx_name,
+                "definition": idx_def
+            })
+        
+        return indexes
     
     def _introspect_postgres(self, zData):
         """
@@ -283,9 +383,19 @@ class ZMigrate:
                     cur.execute(sql)
                     logger.info("[Migration] ✅ Added column '%s' to table '%s'", col_name, table_name)
             
-            # Commit all changes
+            # Commit all column changes
             conn.commit()
-            logger.info("[Migration] All migrations applied successfully")
+            logger.info("[Migration] All column migrations applied successfully")
+            
+            # Apply index changes
+            if changes.get("new_indexes"):
+                logger.info("[Migration] Creating new indexes...")
+                for table_name, new_indexes in changes["new_indexes"].items():
+                    # Import here to avoid circular dependency
+                    from .crud.crud_handler import _create_indexes
+                    _create_indexes(table_name, new_indexes, cur, conn)
+                logger.info("[Migration] All index migrations applied successfully")
+            
             return True
             
         except Exception as e:

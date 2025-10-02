@@ -279,7 +279,9 @@ class CommandExecutor:
                 "test_zApps_crud.py",
                 "test_direct_operations.py",
                 "test_migration.py",
-                "test_composite_pk.py"
+                "test_composite_pk.py",
+                "test_where.py",
+                "test_indexes.py"
             ]
             
             print("\n[TEST] Running CRUD Test Suite...")

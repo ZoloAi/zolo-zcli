@@ -3,6 +3,7 @@
 
 from zCLI.utils.logger import logger
 from zCLI.subsystems.zDisplay import handle_zDisplay
+from .crud_where import build_where_clause
 
 
 def zUpdate(zRequest, zForm, zData):
@@ -46,15 +47,10 @@ def zUpdate(zRequest, zForm, zData):
 
     set_clause = ", ".join(set_parts)
 
+    # Build WHERE clause with advanced operators support
     filters = zRequest.get("where") or zRequest.get("filters")
-    where_clause = ""
-    if isinstance(filters, dict) and filters:
-        conds = []
-        for key, val in filters.items():
-            col = key.split(".")[-1]
-            conds.append(f"{col} = ?")
-            params.append(val)
-        where_clause = " WHERE " + " AND ".join(conds)
+    where_clause, where_params = build_where_clause(filters)
+    params.extend(where_params)
 
     sql = f"UPDATE {table} SET {set_clause}{where_clause};"
     logger.info("Executing SQL: %s | params: %s", sql, params)

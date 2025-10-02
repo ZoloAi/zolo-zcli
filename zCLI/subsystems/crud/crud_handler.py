@@ -315,6 +315,85 @@ def zTables(table, fields, cur, conn):
     cur.execute(ddl)
     conn.commit()
     logger.info("Table created: %s", table)
+    
+    # ════════════════════════════════════════════════════════════
+    # Create indexes if specified
+    # ════════════════════════════════════════════════════════════
+    if "indexes" in fields:
+        indexes = fields["indexes"]
+        if isinstance(indexes, list):
+            _create_indexes(table, indexes, cur, conn)
+
+
+def _create_indexes(table, indexes, cur, conn):
+    """
+    Create indexes for a table.
+    
+    Args:
+        table (str): Table name
+        indexes (list): List of index definitions
+        cur: Database cursor
+        conn: Database connection
+        
+    Index definition format:
+        {
+            "name": "idx_users_email",
+            "columns": ["email"],
+            "unique": false,           # Optional
+            "where": "status = 'active'"  # Optional (partial index)
+            "expression": "LOWER(email)"  # Optional (expression index)
+        }
+    """
+    logger.info("Creating %d index(es) for table: %s", len(indexes), table)
+    
+    for idx_def in indexes:
+        if not isinstance(idx_def, dict):
+            logger.warning("Invalid index definition (not a dict): %s", idx_def)
+            continue
+        
+        idx_name = idx_def.get("name")
+        columns = idx_def.get("columns")
+        expression = idx_def.get("expression")
+        unique = idx_def.get("unique", False)
+        where_clause = idx_def.get("where")
+        
+        if not idx_name:
+            logger.warning("Index definition missing 'name', skipping: %s", idx_def)
+            continue
+        
+        # Build CREATE INDEX statement
+        unique_keyword = "UNIQUE " if unique else ""
+        
+        if expression:
+            # Expression index
+            index_target = f"({expression})"
+        elif columns:
+            # Regular or composite index
+            if isinstance(columns, list):
+                index_target = f"({', '.join(columns)})"
+            else:
+                index_target = f"({columns})"
+        else:
+            logger.warning("Index '%s' has neither 'columns' nor 'expression', skipping", idx_name)
+            continue
+        
+        # Build full CREATE INDEX statement
+        create_idx = f"CREATE {unique_keyword}INDEX {idx_name} ON {table}{index_target}"
+        
+        # Add WHERE clause for partial index
+        if where_clause:
+            create_idx += f" WHERE {where_clause}"
+        
+        create_idx += ";"
+        
+        try:
+            logger.info("Creating index: %s", create_idx)
+            cur.execute(create_idx)
+            conn.commit()
+            logger.info("✅ Index created: %s", idx_name)
+        except Exception as e:
+            logger.error("Failed to create index '%s': %s", idx_name, e)
+            # Don't fail table creation if index creation fails
 
 
 def resolve_source(source, walker=None):
