@@ -6,6 +6,8 @@ A YAML-driven CLI framework for interactive applications, providing both shell a
 
 ## 🚀 Quick Start
 
+📘 **[Full Installation Guide](INSTALL.md)** - Detailed setup instructions, troubleshooting, and authentication
+
 ### Installation (Authorized Users Only)
 
 zCLI is distributed via private GitHub repository. You must have repository access to install.

@@ -47,8 +47,8 @@ authors = [
 # Long description file (README.md will be used as package description)
 readme = "README.md"
 
-# License information
-license = {text = "Private - All Rights Reserved"}
+# License information (SPDX identifier)
+license = "LicenseRef-Proprietary"
 
 # Minimum Python version required
 requires-python = ">=3.8"
@@ -104,10 +104,12 @@ zolo-zcli = "zCLI.zCore.main:main"
 # -----------------------------------------------------------------------------
 # PROJECT URLs
 # -----------------------------------------------------------------------------
-# Links to project resources (shown on PyPI)
+# Links to project resources (update with your actual GitHub repo)
 [project.urls]
-Homepage = "https://github.com/ZoloAi/zcli"
-Documentation = "https://github.com/ZoloAi/zcli#readme"
+Homepage = "https://github.com/ZoloAi/zolo-zcli"
+Documentation = "https://github.com/ZoloAi/zolo-zcli#readme"
+Repository = "https://github.com/ZoloAi/zolo-zcli"
+"Bug Tracker" = "https://github.com/ZoloAi/zolo-zcli/issues"
 
 # -----------------------------------------------------------------------------
 # PACKAGE DISCOVERY

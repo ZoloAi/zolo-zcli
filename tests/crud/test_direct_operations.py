@@ -76,7 +76,7 @@ def run_direct_operations_tests():
         print("─" * 80)
         
         import datetime
-        now = datetime.datetime.utcnow().isoformat()
+        now = datetime.datetime.now(datetime.UTC).isoformat()
         
         create_request_1 = {
             "tables": ["zApps"],
