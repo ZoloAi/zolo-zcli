@@ -94,27 +94,37 @@ def handle_zData(zCRUD_Preped):
     # Initialize results to handle cases where tables are missing
     results = None
 
-    if action == "list_tables":
-        results = zListTables(zCRUD_Preped["zForm"], zData)
-    elif zEnsureTables(zCRUD_Preped["zForm"], zData, action, zCRUD_Preped["zRequest"]):
-        if action == "create":
-            results = zCreate(zCRUD_Preped["zRequest"], zCRUD_Preped["zForm"], zData, walker=zCRUD_Preped.get("walker"))
-        elif action in ["read"]:
-            results = zRead(zCRUD_Preped["zRequest"], zCRUD_Preped["zForm"], zData, walker=zCRUD_Preped.get("walker"))
-        elif action == "search":
-            results = zSearch(zCRUD_Preped["zRequest"], zCRUD_Preped["zForm"], zData)
-        elif action == "update":
-            results = zUpdate(zCRUD_Preped["zRequest"], zCRUD_Preped["zForm"], zData)
-        elif action == "delete":
-            results = zDelete(zCRUD_Preped["zRequest"], zCRUD_Preped["zForm"], zData)
-        elif action == "truncate":
-            results = zTruncate(zCRUD_Preped["zRequest"], zCRUD_Preped["zForm"], zData)
+    try:
+        if action == "list_tables":
+            results = zListTables(zCRUD_Preped["zForm"], zData)
+        elif zEnsureTables(zCRUD_Preped["zForm"], zData, action, zCRUD_Preped["zRequest"]):
+            if action == "create":
+                results = zCreate(zCRUD_Preped["zRequest"], zCRUD_Preped["zForm"], zData, walker=zCRUD_Preped.get("walker"))
+            elif action in ["read"]:
+                results = zRead(zCRUD_Preped["zRequest"], zCRUD_Preped["zForm"], zData, walker=zCRUD_Preped.get("walker"))
+            elif action == "search":
+                results = zSearch(zCRUD_Preped["zRequest"], zCRUD_Preped["zForm"], zData)
+            elif action == "update":
+                results = zUpdate(zCRUD_Preped["zRequest"], zCRUD_Preped["zForm"], zData)
+            elif action == "delete":
+                results = zDelete(zCRUD_Preped["zRequest"], zCRUD_Preped["zForm"], zData)
+            elif action == "truncate":
+                results = zTruncate(zCRUD_Preped["zRequest"], zCRUD_Preped["zForm"], zData)
+            else:
+                results = None
         else:
-            results = None
-    else:
-        # Tables are missing and action is not 'tables'
-        logger.error("Required tables missing for action '%s'", action)
-        results = "error"
+            # Tables are missing and action is not 'tables'
+            logger.error("Required tables missing for action '%s'", action)
+            results = "error"
+    finally:
+        # Always close the database connection to release locks
+        if zData and zData.get("conn"):
+            try:
+                zData["conn"].commit()  # Commit any pending transactions
+                zData["conn"].close()
+                logger.debug("Database connection closed")
+            except Exception as e:
+                logger.warning("Error closing database connection: %s", e)
 
     return results
 
@@ -234,8 +244,23 @@ def zTables(table, fields, cur, conn):
 
     field_defs = []
     foreign_keys = []
+    
+    # Check for composite primary key (table-level)
+    composite_pk = None
+    if "primary_key" in fields:
+        pk_value = fields["primary_key"]
+        if isinstance(pk_value, list) and len(pk_value) > 0:
+            composite_pk = pk_value
+            logger.info("Composite primary key detected: %s", composite_pk)
 
     for field_name, attrs in fields.items():
+        # Skip the primary_key definition itself (not a column)
+        if field_name == "primary_key":
+            continue
+        
+        if not isinstance(attrs, dict):
+            continue
+        
         field_type = "TEXT"
         raw_type = str(attrs.get("type", "str")).strip()
 
@@ -250,7 +275,8 @@ def zTables(table, fields, cur, conn):
 
         column = f"{field_name} {field_type}"
 
-        if attrs.get("pk"):
+        # Only add column-level PRIMARY KEY if no composite PK
+        if attrs.get("pk") and not composite_pk:
             column += " PRIMARY KEY"
         if attrs.get("unique"):
             column += " UNIQUE"
@@ -275,6 +301,12 @@ def zTables(table, fields, cur, conn):
                     logger.warning("Invalid on_delete action '%s' for field '%s'. Ignoring.", on_delete, field_name)
             
             foreign_keys.append(fk_clause)
+    
+    # Add composite primary key as table-level constraint
+    if composite_pk:
+        pk_columns = ", ".join(composite_pk)
+        field_defs.append(f"PRIMARY KEY ({pk_columns})")
+        logger.info("Adding composite PRIMARY KEY (%s)", pk_columns)
 
     all_defs = field_defs + foreign_keys
     ddl = f"CREATE TABLE {table} ({', '.join(all_defs)});"
