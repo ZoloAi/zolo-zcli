@@ -257,12 +257,28 @@ def zSession_view(zDisplay_Obj):
     def g_auth(key, default=None):
         return g("zAuth", {}).get(key, default)
     print(f"{Colors.GREEN}zSession_ID:{Colors.RESET} {g('zS_id')}")
+    print(f"{Colors.GREEN}zMode:{Colors.RESET} {g('zMode')}")
+    
+    # Add machine information
+    zMachine = g('zMachine', {})
+    if zMachine:
+        print(f"\n{Colors.GREEN}zMachine:{Colors.RESET}")
+        print(f"  {Colors.YELLOW}platform:{Colors.RESET} {zMachine.get('platform')}")
+        print(f"  {Colors.YELLOW}environment:{Colors.RESET} {zMachine.get('environment')}")
+        print(f"  {Colors.YELLOW}architecture:{Colors.RESET} {zMachine.get('architecture')}")
+        print(f"  {Colors.YELLOW}python_version:{Colors.RESET} {zMachine.get('python_version')}")
+        print(f"  {Colors.YELLOW}zcli_version:{Colors.RESET} {zMachine.get('zcli_version')}")
+        
+        capabilities = zMachine.get('capabilities', {})
+        print(f"  {Colors.YELLOW}capabilities:{Colors.RESET}")
+        for cap, available in capabilities.items():
+            status = "YES" if available else "NO"
+            print(f"    {cap}: {status}")
 
-    print(f"{Colors.GREEN}zWorkspace:{Colors.RESET} {g('zWorkspace')}")
+    print(f"\n{Colors.GREEN}zWorkspace:{Colors.RESET} {g('zWorkspace')}")
     print(f"{Colors.GREEN}zVaFile_path:{Colors.RESET} {g('zVaFile_path')}")
     print(f"{Colors.GREEN}zVaFilename:{Colors.RESET} {g('zVaFilename')}")
     print(f"{Colors.GREEN}zBlock:{Colors.RESET} {g('zBlock')}")
-    print(f"{Colors.GREEN}zMode:{Colors.RESET} {g('zMode')}")
 
     print(f"\n{Colors.GREEN}zAuth:{Colors.RESET}")
     print(f"  {Colors.YELLOW}id:{Colors.RESET} {g_auth('id')}")

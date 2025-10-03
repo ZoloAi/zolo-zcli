@@ -126,7 +126,7 @@ class zCLI:
         """
         Initialize the session with minimal required fields.
         
-        For shell mode: Only zS_id and zMode are set
+        For shell mode: Only zS_id, zMode, and zMachine are set
         For walker mode: Additional fields will be populated by zWalker
         
         This ensures minimal session initialization while providing
@@ -134,6 +134,9 @@ class zCLI:
         """
         # Set session ID - always required
         self.session["zS_id"] = self.utils.generate_id("zS")
+        
+        # Detect machine type and capabilities
+        self.session["zMachine"] = self.utils.detect_machine_type()
         
         # Set zMode based on interface mode
         if self.ui_mode:
@@ -146,6 +149,7 @@ class zCLI:
         logger.debug("Session initialized:")
         logger.debug("  zS_id: %s", self.session["zS_id"])
         logger.debug("  zMode: %s", self.session["zMode"])
+        logger.debug("  zMachine: %s", self.session["zMachine"])
 
     # ───────────────────────────────────────────────────────────────
     # Public API Methods
