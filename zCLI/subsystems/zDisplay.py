@@ -261,6 +261,7 @@ def zSession_view(zDisplay_Obj):
     print(f"{Colors.GREEN}zWorkspace:{Colors.RESET} {g('zWorkspace')}")
     print(f"{Colors.GREEN}zVaFile_path:{Colors.RESET} {g('zVaFile_path')}")
     print(f"{Colors.GREEN}zVaFilename:{Colors.RESET} {g('zVaFilename')}")
+    print(f"{Colors.GREEN}zBlock:{Colors.RESET} {g('zBlock')}")
     print(f"{Colors.GREEN}zMode:{Colors.RESET} {g('zMode')}")
 
     print(f"\n{Colors.GREEN}zAuth:{Colors.RESET}")

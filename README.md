@@ -1,10 +1,8 @@
-# zCLI Framework v1.3.0 🚀
+# Zolo-zCLI
 
-A powerful CLI framework that uses YAML for configuration and routing, featuring an interactive shell, TUI mode, comprehensive CRUD operations, and a revolutionary **quantum-inspired data integrity system**. Built for rapid development of command-line tools with rich interactive features and session persistence.
+> **`zolo-zcli` is a powerful universal framework that combines traditional CLI commands with declarative configuration files (YAML/JSON), enabling rapid development of both command-line tools and web applications with unified backend/frontend architecture.**
 
 **🔐 Authentication Required** - zCLI is a private Zolo product. Contact gal@zolo.media for access.
-
-**🌈 NEW in v1.3.0:** UPSERT operations, Full ALTER TABLE support, Migration history tracking, and RGB Weak Nuclear Force System for automatic data health monitoring!
 
 ## 🚀 Quick Start
 
@@ -12,7 +10,7 @@ A powerful CLI framework that uses YAML for configuration and routing, featuring
 
 ### Installation (Authorized Users Only)
 
-zCLI is distributed via private GitHub repository. You must have repository access to install.
+`zolo-zcli` is distributed via private GitHub repository. You must have repository access to install.
 
 ```bash
 # Install latest version (v1.3.0)
@@ -56,30 +54,3 @@ cli.run_interactive()
 - **YAML Configuration**: Drive UI and behavior through YAML files
 - **Interactive Input**: Built-in input handling for fields, menus and confirmations
 - **Color Support**: Rich ANSI color system for terminal output
-
-### Subsystems
-- **CRUD Operations**: Complete database management with advanced features
-  - ✅ Create, Read, Update, Delete
-  - ✅ **UPSERT** (v1.3.0) - Atomic insert-or-update
-  - ✅ JOIN support with nested relationships
-  - ✅ Advanced WHERE operators (LIKE, IN, BETWEEN, OR)
-  - ✅ Composite primary keys
-  - ✅ Index support (simple, composite, unique, partial)
-- **Schema Migration**: Automatic schema evolution
-  - ✅ **ADD COLUMN** - Automatic detection and migration
-  - ✅ **DROP COLUMN** (v1.3.0) - Safe column removal
-  - ✅ **RENAME COLUMN** (v1.3.0) - Column renaming
-  - ✅ **RENAME TABLE** (v1.3.0) - Table renaming
-  - ✅ **Migration History** (v1.3.0) - Complete audit trail
-- **RGB System** (v1.3.0): Quantum-inspired data integrity monitoring
-  - 🔴 Time freshness tracking
-  - 🟢 Access frequency monitoring
-  - 🔵 Migration stability analysis
-  - 📊 Health analytics and reporting
-  - 💡 Intelligent migration suggestions
-- **Display System**: Terminal UI rendering with consistent styling and formatting
-- **Parser System**: YAML schema validation and expression parsing
-- **Socket System**: WebSocket support for real-time communication
-- **Authentication**: Built-in auth system for apps extending beyond zCLI
-- **Logger**: Structured logging with color-coded output levels
-

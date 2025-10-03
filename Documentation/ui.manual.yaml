@@ -1,0 +1,5 @@
+# zUI/ui.zVaF.yaml
+
+zManual:
+  ~Root*: ["SQLab", "zCloud", "$zApps", "zWizard_Test", "^zSession", "^zCLI_Shell", "stop"]
+

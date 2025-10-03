@@ -103,11 +103,11 @@ class zCLI:
         # Load plugins if specified
         self._load_plugins()
 
+        # Determine interface mode (needed for session initialization)
+        self.ui_mode = bool(self.zSpark_obj.get("zVaFile") or self.zSpark_obj.get("zVaFilename"))
+
         # Initialize session
         self._init_session()
-
-        # Determine interface mode
-        self.ui_mode = bool(self.zSpark_obj.get("zVaFile") or self.zSpark_obj.get("zVaFilename"))
 
         logger.info("zCLI Core initialized - UI Mode: %s", self.ui_mode)
 
@@ -124,46 +124,27 @@ class zCLI:
 
     def _init_session(self):
         """
-        Initialize the session with configuration from zSpark_obj.
+        Initialize the session with minimal required fields.
         
-        Uses zSpark_obj as the single source of truth, with portable fallbacks:
-        - zWorkspace: Defaults to current working directory (os.getcwd())
-        - zMode: Defaults to "Terminal"
-        - zVaFile_path: Defaults to "@" (workspace-relative)
+        For shell mode: Only zS_id and zMode are set
+        For walker mode: Additional fields will be populated by zWalker
         
-        No hardcoded machine-specific paths are used.
+        This ensures minimal session initialization while providing
+        required defaults for each mode.
         """
-        # Set session ID
+        # Set session ID - always required
         self.session["zS_id"] = self.utils.generate_id("zS")
-
-        # Set session defaults from zSpark_obj with portable fallbacks
-        if self.zSpark_obj:
-            # Use 'or' operator to handle None values from environment variables
-            # Fallback to current working directory instead of hardcoded path
-            self.session["zWorkspace"] = self.zSpark_obj.get("zWorkspace") or os.getcwd()
-            self.session["zVaFile_path"] = self.zSpark_obj.get("zVaFile_path") or "@"
-            self.session["zVaFilename"] = self.zSpark_obj.get("zVaFilename")
-            self.session["zBlock"] = self.zSpark_obj.get("zBlock")
-            self.session["zMode"] = self.zSpark_obj.get("zMode") or "Terminal"
-
-            # Initialize first crumb if we have all required components
-            if all([
-                self.session["zVaFile_path"],
-                self.session["zVaFilename"],
-                self.session["zBlock"]
-            ]):
-                path = self.session['zVaFile_path']
-                filename = self.session['zVaFilename']
-                block = self.session['zBlock']
-                default_zCrumb = f"{path}.{filename}.{block}"
-                self.session["zCrumbs"][default_zCrumb] = []
+        
+        # Set zMode based on interface mode
+        if self.ui_mode:
+            # Walker mode - zMode will be set by zWalker from config
+            self.session["zMode"] = None
         else:
-            # Minimal defaults for shell mode (no config provided)
-            self.session["zWorkspace"] = os.getcwd()
+            # Shell mode - always Terminal
             self.session["zMode"] = "Terminal"
 
         logger.debug("Session initialized:")
-        logger.debug("  zWorkspace: %s", self.session["zWorkspace"])
+        logger.debug("  zS_id: %s", self.session["zS_id"])
         logger.debug("  zMode: %s", self.session["zMode"])
 
     # ───────────────────────────────────────────────────────────────

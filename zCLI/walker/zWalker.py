@@ -143,8 +143,8 @@ class zWalker:
             self.session["zS_id"] = self.utils.generate_id("zS")
         
         # Populate session BEFORE displaying it
-        # Note: zCLI already initialized these in _init_session(), 
-        # but walker may need to update/override them
+        # Note: zCLI already initialized minimal session, 
+        # but walker needs to populate configuration fields
         self.session["zWorkspace"] = self.zSpark_obj["zWorkspace"]
         self.session["zVaFile_path"] = self.zSpark_obj["zVaFile_path"] or "@"
         self.session["zVaFilename"] = self.zSpark_obj["zVaFilename"]

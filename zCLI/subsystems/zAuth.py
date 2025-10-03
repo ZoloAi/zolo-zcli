@@ -45,8 +45,8 @@ class ZAuth:
         # Ensure credentials directory exists
         self.credentials_dir.mkdir(parents=True, exist_ok=True)
         
-        # Load existing credentials into zSession on initialization
-        self._restore_session_from_credentials()
+        # Note: Credentials are NOT automatically restored on initialization
+        # Users must explicitly login to populate zSession authentication
     
     def login(self, username=None, password=None, server_url=None):
         """
@@ -99,52 +99,23 @@ class ZAuth:
         # No valid authentication method
         logger.warning("[FAIL] Authentication failed: Invalid credentials")
         print("\n[FAIL] Authentication failed: Invalid credentials")
-        print("       Hint: Use admin/admin for local development\n")
+        print("       No authentication method available\n")
         return {"status": "fail", "reason": "Invalid credentials"}
     
     def _authenticate_local(self, username, password):
         """
-        Authenticate against local hardcoded users (for development/testing).
+        Authenticate against local backend (disabled - no hardcoded users).
         
         Args:
             username: Username
             password: Password
         
         Returns:
-            dict: User credentials if valid, None otherwise
+            None: Always returns None as hardcoded users have been removed
         """
-        # Hardcoded users for local development
-        LOCAL_USERS = {
-            "admin": {
-                "password": "admin",
-                "role": "zAdmin",
-                "user_id": "zU_local_admin",
-                "api_key": "zAPI_local_dev_key_admin_" + "0" * 20
-            },
-            "builder": {
-                "password": "builder",
-                "role": "zBuilder",
-                "user_id": "zU_local_builder",
-                "api_key": "zAPI_local_dev_key_builder_" + "0" * 20
-            },
-            "user": {
-                "password": "user",
-                "role": "zUser",
-                "user_id": "zU_local_user",
-                "api_key": "zAPI_local_dev_key_user_" + "0" * 20
-            }
-        }
-        
-        if username in LOCAL_USERS and LOCAL_USERS[username]["password"] == password:
-            user_data = LOCAL_USERS[username]
-            return {
-                "username": username,
-                "role": user_data["role"],
-                "user_id": user_data["user_id"],
-                "api_key": user_data["api_key"],
-                "server_url": "local"
-            }
-        
+        # Hardcoded users have been removed for security
+        # Authentication must go through proper backend systems
+        logger.debug("Local authentication disabled - no hardcoded users available")
         return None
     
     def _authenticate_remote(self, username, password, server_url=None):
