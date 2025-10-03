@@ -116,7 +116,7 @@ class zCrumbs:
         if self.walker and hasattr(self.walker, "loader"):
             zFile_parsed = self.walker.loader.handle()
         else:
-            from zCLI.walker.zLoader import handle_zLoader as _handle
+            from zCLI.subsystems.zLoader import handle_zLoader as _handle
             zFile_parsed = _handle(session=self.zSession)
         active_zBlock_dict = zFile_parsed.get(self.zSession["zBlock"], {})
         zBlock_keys = list(active_zBlock_dict.keys())

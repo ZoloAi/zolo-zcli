@@ -17,6 +17,7 @@ from zCLI.subsystems.zDialog import ZDialog
 from zCLI.subsystems.zWizard import ZWizard
 from zCLI.subsystems.zOpen import ZOpen
 from zCLI.subsystems.zAuth import ZAuth
+from zCLI.subsystems.zLoader import ZLoader
 
 # Import walker subsystems (for UI mode)
 from zCLI.walker.zCrumbs import zCrumbs
@@ -91,13 +92,14 @@ class zCLI:
         self.wizard = ZWizard(self)
         self.open = ZOpen(self)
         self.auth = ZAuth(self)
+        self.loader = ZLoader(self)
         self.parser = CommandParser(self)
 
         # Initialize shell and command executor
         self.shell = InteractiveShell(self)
         self.executor = CommandExecutor(self)
 
-        # Note: dispatch, menu, link, loader are walker-specific
+        # Note: dispatch, menu, link are walker-specific
         # They are instantiated by zWalker when in UI mode
 
         # Load plugins if specified

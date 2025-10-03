@@ -4,7 +4,6 @@ from zCLI.utils.logger import logger
 from zCLI.subsystems.zDisplay import handle_zDisplay
 
 # Walker-specific subsystems (always needed)
-from zCLI.walker.zLoader import ZLoader
 from zCLI.walker.zDispatch import ZDispatch
 from zCLI.walker.zMenu import ZMenu
 from zCLI.walker.zLink import ZLink
@@ -62,8 +61,10 @@ class zWalker:
         self.open = zcli.open
         self.utils = zcli.utils
         
+        # Use shared loader instance from zCLI
+        self.loader = zcli.loader
+        
         # Create walker-specific subsystems (need access to walker methods like zBlock_loop)
-        self.loader = ZLoader(self)
         self.dispatch = ZDispatch(self)
         self.menu = ZMenu(self)
         self.link = ZLink(self)
@@ -85,6 +86,7 @@ class zWalker:
         from zCLI.subsystems.zUtils import ZUtils
         from zCLI.subsystems.zFunc import ZFunc
         from zCLI.subsystems.zOpen import ZOpen
+        from zCLI.subsystems.zLoader import ZLoader
         
         self.zcli = None
         self.zSpark_obj = zSpark_obj

@@ -13,7 +13,7 @@ import os
 import yaml
 from zCLI.utils.logger import logger
 from zCLI.subsystems.zParser import parse_dotted_path
-from zCLI.walker.zLoader import handle_zLoader
+from zCLI.subsystems.zLoader import handle_zLoader
 from zCLI.subsystems.zSession import zSession
 from zCLI.subsystems.zDisplay import Colors, print_line
 # ------------------------------------------------------------------------

@@ -369,7 +369,7 @@ def render_zConv(zDisplay_Obj):
                 logger.info("Field '%s' entered as: %s", field, user_input)
                 zConv[field] = user_input
     else:
-        from zCLI.walker.zLoader import handle_zLoader
+        from zCLI.subsystems.zLoader import handle_zLoader
         model_raw = handle_zLoader(model, walker=walker)
         logger.info("model_raw:\n%s", model_raw)
 

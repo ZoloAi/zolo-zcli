@@ -1,3 +1,6 @@
+# zCLI/subsystems/zLoader.py — File Loading and Parsing Subsystem
+# ───────────────────────────────────────────────────────────────
+
 import os
 import yaml
 import json
@@ -5,20 +8,52 @@ from zCLI.utils.logger import logger
 from zCLI.subsystems.zSession import zSession
 from zCLI.subsystems.zDisplay import handle_zDisplay
 
+
 class ZLoader:
-    def __init__(self, walker):
-        self.walker = walker
-        self.logger = getattr(walker, "logger", logger)
-        # Bind the walker's session for contextual loading and caching
-        self.zSession = getattr(walker, "zSession", zSession)
+    """
+    zLoader - File Loading and Parsing Subsystem
+    
+    Handles loading, parsing, and caching of YAML/JSON configuration files (zVaFiles).
+    Supports zPath resolution with workspace-relative (@) and absolute (~) paths.
+    
+    Key Features:
+    - zPath resolution and file discovery
+    - YAML/JSON parsing with error handling
+    - Intelligent caching system
+    - Session-aware file loading
+    - Support for UI and Schema file types
+    """
+    
+    def __init__(self, zcli_or_walker):
+        """
+        Initialize zLoader subsystem.
+        
+        Args:
+            zcli_or_walker: zCLI instance (new) or walker instance (legacy)
+        """
+        # Detect if we received a zCLI instance or walker instance
+        if hasattr(zcli_or_walker, 'session') and hasattr(zcli_or_walker, 'crud'):
+            # NEW: zCLI instance
+            self.zcli = zcli_or_walker
+            self.walker = None
+            self.logger = getattr(zcli_or_walker, "logger", logger)
+            self.zSession = getattr(zcli_or_walker, "session", zSession)
+        else:
+            # LEGACY: walker instance
+            self.zcli = None
+            self.walker = zcli_or_walker
+            self.logger = getattr(zcli_or_walker, "logger", logger)
+            self.zSession = getattr(zcli_or_walker, "zSession", zSession)
 
     def _cache_get(self, key, default=None):
+        """Get value from session cache."""
         try:
             return self.zSession["zCache"].get(key, default)
         except Exception:
             return default
 
     def _cache_set(self, key, value):
+        """Set value in session cache."""
         try:
             self.zSession["zCache"][key] = value
         except Exception:
@@ -26,6 +61,15 @@ class ZLoader:
         return value
 
     def handle(self, zPath=None):
+        """
+        Main entry point for file loading and parsing.
+        
+        Args:
+            zPath: Path to load (optional, uses session values if not provided)
+            
+        Returns:
+            Parsed file content (dict) or "error" on failure
+        """
         handle_zDisplay({
             "event": "header",
             "label": "zLoader",
@@ -33,27 +77,27 @@ class ZLoader:
             "color": "LOADER",
             "indent": 1,
         })
-        logger.debug("zFile_zObj: %s", zPath)
+        self.logger.debug("zFile_zObj: %s", zPath)
 
         zVaFile_fullpath, zVaFilename = self.zPath_decoder(zPath)
 
         # Identify file and extension
         zFilePath_identified, zFile_extension = self.identify_zFile(zVaFilename, zVaFile_fullpath)
-        logger.debug("zFilePath_identified!\n%s", zFilePath_identified)
+        self.logger.debug("zFilePath_identified!\n%s", zFilePath_identified)
 
         # Cache key based on fully identified file path
         cache_key = f"zloader:parsed:{zFilePath_identified}"
         cached = self._cache_get(cache_key)
         if cached is not None:
-            logger.debug("Cache hit for %s", cache_key)
+            self.logger.debug("Cache hit for %s", cache_key)
             return cached
 
         # Load & parse
         zFile_raw = self.load_zFile(zFilePath_identified)
-        logger.debug("\nzFile Raw: %s", zFile_raw)
+        self.logger.debug("\nzFile Raw: %s", zFile_raw)
 
         result = self.parse_zFile(zFile_raw, zFile_extension)
-        logger.debug("zLoader parse result:\n%s", result)
+        self.logger.debug("zLoader parse result:\n%s", result)
 
         handle_zDisplay({
             "event": "header",
@@ -65,9 +109,24 @@ class ZLoader:
         return self._cache_set(cache_key, result)
 
     # ─────────────────────────────────────────────────────────────────────────
-    # Class helper methods (session-aware)
+    # Core Methods
     # ─────────────────────────────────────────────────────────────────────────
+    
     def zPath_decoder(self, zPath=None):
+        """
+        Decode zPath into filesystem path components.
+        
+        Supports:
+        - @.path.to.file.Block → workspace-relative paths
+        - ~.absolute.path.Block → absolute paths  
+        - path.to.file.Block → relative paths (inconsistent behavior)
+        
+        Args:
+            zPath: Path to decode (optional, uses session values if not provided)
+            
+        Returns:
+            Tuple of (full_path, filename)
+        """
         handle_zDisplay({
             "event": "header",
             "label": "zPath decoder",
@@ -85,69 +144,79 @@ class ZLoader:
                 else [zVaFile_path]
             )
             zFileName = self.zSession["zVaFilename"]
-            logger.debug("\nzWorkspace: %s", zWorkspace)
-            logger.debug("\nzRelPath: %s", zRelPath)
-            logger.debug("\nzFileName: %s", zFileName)
+            self.logger.debug("\nzWorkspace: %s", zWorkspace)
+            self.logger.debug("\nzRelPath: %s", zRelPath)
+            self.logger.debug("\nzFileName: %s", zFileName)
 
             os_RelPath = os.path.join(*zRelPath[1:]) if len(zRelPath) > 1 else ""
-            logger.debug("\nos_RelPath: %s", os_RelPath)
+            self.logger.debug("\nos_RelPath: %s", os_RelPath)
 
             zVaFile_basepath = os.path.join(zWorkspace, os_RelPath)
-            logger.debug("\nzVaFile path: %s", zVaFile_basepath)
+            self.logger.debug("\nzVaFile path: %s", zVaFile_basepath)
 
         else:
             zPath_parts = zPath.lstrip(".").split(".")
-            logger.debug("\nparts: %s", zPath_parts)
+            self.logger.debug("\nparts: %s", zPath_parts)
 
             zBlock = zPath_parts[-1]
-            logger.debug("\nzBlock: %s", zBlock)
+            self.logger.debug("\nzBlock: %s", zBlock)
 
             zPath_2_zFile = zPath_parts[:-1]
-            logger.debug("\nzPath_2_zFile: %s", zPath_2_zFile)
+            self.logger.debug("\nzPath_2_zFile: %s", zPath_2_zFile)
 
-            # Last 3 → file name
+            # Last 2 → file name (type.name)
             zFileName = ".".join(zPath_2_zFile[-2:])
-            logger.debug("zFileName: %s", zFileName)
+            self.logger.debug("zFileName: %s", zFileName)
 
             # Remaining parts (before filename)
             zRelPath_parts = zPath_parts[:-3]
-            logger.debug("zRelPath_parts: %s", zRelPath_parts)
+            self.logger.debug("zRelPath_parts: %s", zRelPath_parts)
 
             # Fork on symbol
             symbol = zRelPath_parts[0] if zRelPath_parts else None
-            logger.debug("symbol: %s", symbol)
+            self.logger.debug("symbol: %s", symbol)
 
             if symbol == "@":
-                logger.debug("↪ '@' → workspace-relative path")
+                self.logger.debug("↪ '@' → workspace-relative path")
                 rel_base_parts = zRelPath_parts[1:]
                 zVaFile_basepath = os.path.join(zWorkspace, *rel_base_parts)
-                logger.debug("\nzVaFile path: %s", zVaFile_basepath)
+                self.logger.debug("\nzVaFile path: %s", zVaFile_basepath)
             elif symbol == "~":
-                logger.debug("↪ '~' → absolute path")
+                self.logger.debug("↪ '~' → absolute path")
                 rel_base_parts = zRelPath_parts[1:]
                 # For absolute we assume rel_base_parts already contain absolute base
                 zVaFile_basepath = os.path.join(*rel_base_parts) if rel_base_parts else ""
             else:
-                logger.debug("↪ no symbol → treat whole as relative")
+                self.logger.debug("↪ no symbol → treat whole as relative")
                 zVaFile_basepath = os.path.join(*zRelPath_parts) if zRelPath_parts else ""
 
         zVaFile_fullpath = os.path.join(zVaFile_basepath, zFileName)
-        logger.debug("zVaFile path + zVaFilename:\n%s", zVaFile_fullpath)
+        self.logger.debug("zVaFile path + zVaFilename:\n%s", zVaFile_fullpath)
 
         return zVaFile_fullpath, zFileName
 
     def identify_zFile(self, filename, full_zFilePath):
+        """
+        Identify file type and find actual file path with extension.
+        
+        Args:
+            filename: Base filename (e.g., "ui.manual")
+            full_zFilePath: Full path without extension
+            
+        Returns:
+            Tuple of (found_path, extension)
+        """
         FILE_TYPES = [".json", ".yaml", ".yml"]
 
         # Detect type
         if filename.startswith("ui."):
-            logger.debug("File Type: zUI")
+            self.logger.debug("File Type: zUI")
             zFile_type = "zUI"
         elif filename.startswith("schema."):
-            logger.debug("File Type: zSchema")
+            self.logger.debug("File Type: zSchema")
             zFile_type = "zSchema"
         else:
-            logger.debug("File Type: zOther")
+            self.logger.debug("File Type: zOther")
             zFile_type = "zOther"
 
         # Extension
@@ -159,13 +228,13 @@ class ZLoader:
             if os.path.exists(candidate):
                 found_path = candidate
                 zFile_extension = ext
-                logger.debug("zFile extension: %s", ext)
+                self.logger.debug("zFile extension: %s", ext)
                 break
 
         # If no match found
         if not found_path and zFile_extension not in FILE_TYPES:
             msg = f"No zFile found for base path: {full_zFilePath} (tried .json/.yaml/.yml)"
-            logger.error(msg)
+            self.logger.error(msg)
             raise FileNotFoundError(msg)
 
         handle_zDisplay({
@@ -179,7 +248,16 @@ class ZLoader:
         return found_path, zFile_extension
 
     def load_zFile(self, full_path):
-        logger.debug("Opening file: %s", full_path)
+        """
+        Load raw file content from filesystem.
+        
+        Args:
+            full_path: Full path to file
+            
+        Returns:
+            Raw file content as string
+        """
+        self.logger.debug("Opening file: %s", full_path)
 
         handle_zDisplay({
             "event": "header",
@@ -192,14 +270,24 @@ class ZLoader:
         try:
             with open(full_path, "r", encoding="utf-8") as f:
                 zFile_raw = f.read()
-            logger.debug("File read successfully (%d bytes)", len(zFile_raw))
+            self.logger.debug("File read successfully (%d bytes)", len(zFile_raw))
         except Exception as e:
-            logger.exception("Failed to read file at %s", full_path)  # traceback included
+            self.logger.exception("Failed to read file at %s", full_path)  # traceback included
             raise RuntimeError(f"Unable to load zFile: {full_path}") from e
 
         return zFile_raw
 
     def parse_zFile(self, zFile_raw, zFile_extension):
+        """
+        Parse raw file content based on extension.
+        
+        Args:
+            zFile_raw: Raw file content
+            zFile_extension: File extension (.json, .yaml, .yml)
+            
+        Returns:
+            Parsed data structure or "error"
+        """
         handle_zDisplay({
             "event": "header",
             "label": "Parsing",
@@ -208,41 +296,47 @@ class ZLoader:
             "indent": 2,
         })
 
-        logger.debug("Starting parse of zFile (extension: %s)", zFile_extension)
+        self.logger.debug("Starting parse of zFile (extension: %s)", zFile_extension)
 
         if zFile_extension == ".json":
             try:
                 parsed = json.loads(zFile_raw)
-                logger.debug("JSON parsed successfully!\nType: %s,\nKeys: %s",
+                self.logger.debug("JSON parsed successfully!\nType: %s,\nKeys: %s",
                             type(parsed).__name__,
                             list(parsed.keys()) if isinstance(parsed, dict) else "N/A")
                 return parsed
             except Exception as e:
-                logger.exception("Failed to parse JSON")  # full traceback
+                self.logger.exception("Failed to parse JSON")  # full traceback
                 raise ValueError("Unable to parse JSON zFile") from e
 
         elif zFile_extension in [".yaml", ".yml"]:
             try:
                 parsed = yaml.safe_load(zFile_raw)
-                logger.debug("YAML parsed successfully!\nType: %s,\nzBlock(s): %s",
+                self.logger.debug("YAML parsed successfully!\nType: %s,\nzBlock(s): %s",
                             type(parsed).__name__,
                             list(parsed.keys()) if isinstance(parsed, dict) else "N/A")
                 return parsed
             except Exception as e:
-                logger.error("Failed to parse YAML: %s", e)
+                self.logger.error("Failed to parse YAML: %s", e)
                 raise ValueError("Unable to parse YAML zFile") from e
 
-        logger.warning("Unsupported file extension for parsing: %s", zFile_extension)
+        self.logger.warning("Unsupported file extension for parsing: %s", zFile_extension)
         return "error"
 
-def handle_zLoader(zPath=None, walker=None, session=None):
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Backward Compatibility Functions
+# ─────────────────────────────────────────────────────────────────────────────
+
+def handle_zLoader(zPath=None, walker=None, session=None, zcli=None):
     """
-    Load and parse a YAML/JSON file.
+    Backward-compatible function for file loading.
     
     Args:
         zPath: Path to the file (optional, uses session values if not provided)
-        walker: Walker instance to get session from (optional)
-        session: Session dict to use (optional, defaults to global zSession)
+        walker: Walker instance to get session from (optional, deprecated)
+        session: Session dict to use (optional)
+        zcli: zCLI instance to use (preferred)
     """
     handle_zDisplay({
         "event": "header",
@@ -255,16 +349,22 @@ def handle_zLoader(zPath=None, walker=None, session=None):
 
     # Determine which session to use
     target_session = None
-    if walker and hasattr(walker, 'zSession'):
+    if zcli and hasattr(zcli, 'session'):
+        # NEW: Use zCLI instance
+        target_session = zcli.session
+    elif walker and hasattr(walker, 'zSession'):
+        # LEGACY: Use walker's session
         target_session = walker.zSession
     elif session is not None:
+        # FALLBACK: Use provided session
         target_session = session
     else:
-        target_session = zSession  # Fall back to global for backward compatibility
+        # FINAL FALLBACK: Use global session
+        target_session = zSession
 
     zVaFile_fullpath, zVaFilename = zPath_decoder(zPath, session=target_session)
 
-    # 2️⃣ zFile analysis
+    # File analysis
     zFilePath_identified, zFile_extension = identify_zFile(zVaFilename, zVaFile_fullpath)
     logger.debug("zFilePath_identified!\n%s", zFilePath_identified)
 
@@ -283,18 +383,13 @@ def handle_zLoader(zPath=None, walker=None, session=None):
     })
     return result
 
+
 # ─────────────────────────────────────────────────────────────────────────────
-# Helper Functions
+# Standalone Helper Functions (for backward compatibility)
 # ─────────────────────────────────────────────────────────────────────────────
 
 def zPath_decoder(zPath=None, session=None):
-    """
-    Decode a zPath into filesystem path components.
-    
-    Args:
-        zPath: Path to decode (optional, uses session values if not provided)
-        session: Session dict to use (optional, defaults to global zSession)
-    """
+    """Standalone zPath decoder function."""
     handle_zDisplay({
         "event": "header",
         "label": "zPath decoder",
@@ -335,7 +430,7 @@ def zPath_decoder(zPath=None, session=None):
         zPath_2_zFile = zPath_parts[:-1]
         logger.debug("\nzPath_2_zFile: %s", zPath_2_zFile)
 
-        # Last 3 → file name
+        # Last 2 → file name (type.name)
         zFileName = ".".join(zPath_2_zFile[-2:])
         logger.debug("zFileName: %s", zFileName)
 
@@ -364,7 +459,9 @@ def zPath_decoder(zPath=None, session=None):
 
     return zVaFile_fullpath, zFileName
 
+
 def identify_zFile(filename, full_zFilePath):
+    """Standalone file identification function."""
     FILE_TYPES = [".json", ".yaml", ".yml"]
 
     # Detect type
@@ -405,7 +502,9 @@ def identify_zFile(filename, full_zFilePath):
 
     return found_path, zFile_extension
 
+
 def load_zFile(full_path):
+    """Standalone file loading function."""
     logger.debug("Opening file: %s", full_path)
 
     handle_zDisplay({
@@ -426,7 +525,9 @@ def load_zFile(full_path):
 
     return zFile_raw
 
+
 def parse_zFile(zFile_raw, zFile_extension):
+    """Standalone file parsing function."""
     handle_zDisplay({
         "event": "header",
         "label": "Parsing",

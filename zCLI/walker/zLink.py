@@ -122,7 +122,7 @@ def handle_zLink(zHorizontal, walker=None):
         TempWalker = type("_TempWalker", (), {"zSession": zSession})
         walker = TempWalker()
         # Provide loader if missing
-        from zCLI.walker.zLoader import ZLoader
+        from zCLI.subsystems.zLoader import ZLoader
         setattr(walker, "loader", ZLoader(walker))
         # Crumbs is required for navigation
         from zCLI.walker.zCrumbs import zCrumbs

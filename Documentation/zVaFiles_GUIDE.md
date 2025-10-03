@@ -132,6 +132,37 @@ zVaF:
 - **Optional permissions:** Can include permission checks for secure navigation
 - **Return navigation:** Use `zBack` or link back to parent UI
 
+### zOpen:
+Opens files and URLs with intelligent fallbacks based on machine capabilities and environment detection.
+
+**Syntax:**
+```yaml
+zKey_name: "zOpen(path_or_url)"
+```
+
+**Examples:**
+```yaml
+# URL opening (intelligent fallbacks)
+OpenWebsite: "zOpen(https://example.com)"
+
+# Local file opening
+OpenReadme: "zOpen(/path/to/readme.txt)"
+OpenHTML: "zOpen(/path/to/index.html)"
+
+# zPath opening
+OpenManual: "zOpen(@.docs.manual.html)"
+OpenConfig: "zOpen(@.config.settings.yaml)"
+```
+
+**Key Points:**
+- **Intelligent URL handling:** Uses browser if available, falls back to curl on headless systems
+- **File type detection:** Automatically routes HTML files to browser, text files to editor
+- **zPath integration:** Supports workspace-relative (`@`) and absolute (`~`) paths
+- **Machine capability aware:** Uses streamlined capabilities (browser, imports, default_text_editor)
+- **Environment detection:** Different behavior for GUI vs headless systems
+- **Graceful fallbacks:** Displays content or URL info when opening fails
+- **Universal support:** Works across all platforms (Windows, macOS, Linux)
+
 ### zFunc:
 Executes Python functions directly within a zKey. Used for calling specific functions without user interaction.
 
