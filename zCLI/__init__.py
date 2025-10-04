@@ -3,7 +3,7 @@
 
 # Import the zCLI Core and Walker
 from .zCore.zCLI import zCLI
-from .walker.zWalker import zWalker
+from .subsystems.zWalker.zWalker import zWalker
 
 # Export the main interfaces
 __all__ = ["zCLI", "zWalker"]

@@ -115,7 +115,7 @@ class ZDialog:
             elif "model" not in submit_dict:
                 submit_dict["model"] = zContext.get("model")
 
-            from zCLI.walker.zDispatch import zLauncher  # local import to avoid cycle
+            from zCLI.subsystems.zWalker.zWalker_modules.zDispatch import zLauncher  # local import to avoid cycle
             self.logger.info("Dispatching dict onSubmit via zLauncher: %s", submit_dict)
             # Pass walker so downstream uses proper context when available
             result = zLauncher(submit_dict, walker=self.walker)

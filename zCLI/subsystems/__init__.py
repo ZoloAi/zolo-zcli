@@ -1,61 +1,16 @@
-# zCLI/subsystems/__init__.py — Shared Subsystems Package
+# zCLI/subsystems/__init__.py — Subsystems Package
 # ───────────────────────────────────────────────────────────────
 """
-Shared Subsystems Package
+Subsystems Package
 
-This package contains subsystems used by both Shell and Walker modes:
-- zCRUD: Database operations (CRUD)
-- zFunc: Function execution
-- zDisplay: UI rendering and display
-- zDialog: Interactive dialogs
-- zWizard: Multi-step wizards
-- zParser: YAML/config parsing
-- zSchema: Schema validation
-- zSession: Session management
-- zSocket: WebSocket communication
-- zOpen: File/URL opening
-- zUtils: Utility functions
+This package contains shared subsystems used across zCLI:
+- Core subsystems (Session, Display, Dialog, etc.)
+- Specialized subsystems (CRUD, Parser, Shell, Open, etc.)
+
+Note: Walker-specific modules (zDispatch, zMenu, zLink, zCrumbs) 
+      are in zCLI.zWalker package, not here.
 """
 
-# Import subsystem classes for convenient access
-from .zCRUD import ZCRUD, handle_zCRUD
-from .zFunc import ZFunc, handle_zFunc
-from .zDisplay import ZDisplay, handle_zDisplay
-from .zDialog import ZDialog
-from .zWizard import ZWizard
-from .zParser import ZParser
-from .zSchema import load_schema_ref
-from .zSession import zSession, create_session
-from .zSocket import ZSocket
-from .zOpen import ZOpen, handle_zOpen
-from .zUtils import ZUtils
-from .zAuth import ZAuth, check_authentication
-from .zMigrate import ZMigrate, auto_migrate_schema, detect_schema_changes
-
-__all__ = [
-    # CRUD
-    "ZCRUD",
-    "handle_zCRUD",
-    
-    # Core subsystems
-    "ZFunc",
-    "handle_zFunc",
-    "ZDisplay",
-    "handle_zDisplay",
-    "ZDialog",
-    "ZWizard",
-    "ZParser",
-    "load_schema_ref",
-    "zSession",
-    "create_session",
-    "ZSocket",
-    "ZOpen",
-    "handle_zOpen",
-    "ZUtils",
-    "ZAuth",
-    "check_authentication",
-    "ZMigrate",
-    "auto_migrate_schema",
-    "detect_schema_changes",
-]
+# This file exists to make subsystems a proper Python package
+# Individual subsystems are imported directly where needed
 

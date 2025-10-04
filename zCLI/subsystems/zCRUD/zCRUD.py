@@ -58,12 +58,12 @@ def handle_zCRUD(zRequest, walker=None):
 
 def handle_zData(zCRUD_Preped):
     # Import CRUD operations here to avoid circular imports
-    from .crud_create import zCreate
-    from .crud_read import zRead, zSearch
-    from .crud_update import zUpdate
-    from .crud_delete import zDelete, zTruncate, zListTables
-    from .crud_upsert import zUpsert
-    from .crud_alter import zAlterTable
+    from .zCRUD_modules.crud_create import zCreate
+    from .zCRUD_modules.crud_read import zRead, zSearch
+    from .zCRUD_modules.crud_update import zUpdate
+    from .zCRUD_modules.crud_delete import zDelete, zTruncate, zListTables
+    from .zCRUD_modules.crud_upsert import zUpsert
+    from .zCRUD_modules.crud_alter import zAlterTable
     
     handle_zDisplay({
         "event": "header",

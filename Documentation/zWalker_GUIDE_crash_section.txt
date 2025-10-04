@@ -1,0 +1,101 @@
+---
+
+## Crash Recovery
+
+### Built-in Safety Menu
+
+Walker includes a built-in crash recovery system that prevents complete failure when errors occur during navigation.
+
+**How it works:**
+
+When an exception occurs during zKey dispatch (e.g., missing file, function error, parse error), Walker automatically:
+
+1. **Catches the exception** and stores error details
+2. **Displays crash notification** with error message
+3. **Launches safety reboot menu** with three options:
+   - **Restart Walker** - Restart from original zSpark configuration
+   - **View Error** - Display full traceback for debugging
+   - **Quit to Shell** - Return to Shell mode gracefully
+
+**Example Crash Recovery Flow:**
+
+```
+User navigates to broken zKey
+↓
+Exception occurs (e.g., file not found, function error)
+↓
+┌────────────────────────────────────────────────────────────┐
+│ ⚠️  WALKER CRASH DETECTED                                  │
+├────────────────────────────────────────────────────────────┤
+│ Error: FileNotFoundError: ui.missing.yaml not found        │
+└────────────────────────────────────────────────────────────┘
+
+  [0] Restart Walker
+  [1] View Error
+  [2] Quit to Shell
+Select an option by number: 1
+
+┌────────────────────────────────────────────────────────────┐
+│ 🔍 CRASH DETAILS                                           │
+├────────────────────────────────────────────────────────────┤
+│ Error: FileNotFoundError: ui.missing.yaml not found        │
+│                                                            │
+│ Traceback:                                                 │
+│ File "zWalker.py", line 296, in zBlock_loop              │
+│   result = self.dispatch.handle(zKey, zHorizontal)        │
+│ ...                                                        │
+└────────────────────────────────────────────────────────────┘
+
+Press Enter to return to reboot menu...
+```
+
+**Options:**
+
+1. **Restart Walker** (`^Restart Walker`)
+   - Clears crash context
+   - Restarts from original zSpark configuration
+   - Reloads UI file from session
+   - Returns to starting zBlock
+   - Useful for transient errors or after fixing issues
+
+2. **View Error** (`^View Error`)
+   - Displays complete traceback
+   - Shows error message details
+   - Pauses for review
+   - Returns to reboot menu
+   - Useful for debugging
+
+3. **Quit to Shell** (`Quit to Shell`)
+   - Returns to Shell mode gracefully
+   - Preserves session state
+   - No data loss
+   - Can run `walker run` again to retry
+   - Useful when error requires code changes
+
+**Key Features:**
+
+- ✅ **No process crash** - Shell remains active
+- ✅ **Session preserved** - Same zS_id, zAuth, zWorkspace
+- ✅ **Built-in menu** - Uses existing menu system, no external file needed
+- ✅ **Full diagnostics** - Complete traceback available
+- ✅ **Easy restart** - One-click return to working state
+- ✅ **Graceful exit** - Clean return to Shell for debugging
+
+**When Crashes Are Caught:**
+
+- File not found errors
+- Function execution failures
+- Parse errors in UI files
+- Missing schema or model files
+- Permission errors
+- Any unexpected exception during zKey dispatch
+
+**When Crashes Are NOT Caught:**
+
+- Errors during Walker initialization (`run()` method before loop starts)
+- Python syntax errors in UI YAML files
+- Critical system errors (memory, disk full)
+- Keyboard interrupts (Ctrl+C) - handled separately
+
+> **Note:** Crash recovery is only available when running Walker from Shell via `walker run` command. Standalone Walker mode will still exit on crashes.
+

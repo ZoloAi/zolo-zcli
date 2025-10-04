@@ -13,14 +13,20 @@ This package provides database operations for zCLI:
 - List: Show available tables
 
 Architecture:
-- crud_handler.py: Core infrastructure (ZCRUD class, connections, validation)
-- crud_create.py: Create operations
-- crud_read.py: Read and search operations
-- crud_update.py: Update operations
-- crud_delete.py: Delete, truncate, and list operations
+- zCRUD.py: Core infrastructure (ZCRUD class, connections, validation)
+- zCRUD_modules/: Component modules for specific operations
+  - crud_create.py: Create operations
+  - crud_read.py: Read and search operations
+  - crud_update.py: Update operations
+  - crud_delete.py: Delete, truncate, and list operations
+  - crud_upsert.py: Upsert operations
+  - crud_join.py: JOIN support
+  - crud_where.py: WHERE clause builder
+  - crud_validator.py: Validation engine
+  - crud_alter.py: ALTER TABLE operations
 """
 
-from .crud_handler import (
+from .zCRUD import (
     ZCRUD,
     handle_zCRUD,
     handle_zData,
@@ -31,34 +37,34 @@ from .crud_handler import (
     build_order_clause
 )
 
-from .crud_validator import (
+from .zCRUD_modules.crud_validator import (
     RuleValidator,
     display_validation_errors
 )
 
-from .crud_create import (
+from .zCRUD_modules.crud_create import (
     zCreate,
     zCreate_sqlite
 )
 
-from .crud_read import (
+from .zCRUD_modules.crud_read import (
     zRead,
     zReadJoin,
     zSearch,
     zSearch_sqlite
 )
 
-from .crud_join import (
+from .zCRUD_modules.crud_join import (
     build_join_clause,
     build_select_with_tables,
     build_where_with_tables
 )
 
-from .crud_update import (
+from .zCRUD_modules.crud_update import (
     zUpdate
 )
 
-from .crud_delete import (
+from .zCRUD_modules.crud_delete import (
     zDelete,
     zDelete_sqlite,
     zTruncate,
@@ -66,7 +72,7 @@ from .crud_delete import (
     zListTables
 )
 
-from .crud_upsert import (
+from .zCRUD_modules.crud_upsert import (
     zUpsert
 )
 

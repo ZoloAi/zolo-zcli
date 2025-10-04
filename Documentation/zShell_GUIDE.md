@@ -83,6 +83,37 @@ session get zWorkspace
 
 > **Note:** Each zCLI instance maintains its own isolated session. Session commands operate on the current instance's session, not a global shared session.
 
+### zWalker Integration
+Launch Walker mode from Shell:
+
+```bash
+# Walker command
+walker run                      # Launch Walker using session config
+
+# Configuration workflow
+session set zWorkspace /path/to/project
+session set zVaFilename ui.main
+session set zVaFile_path @
+session set zBlock Root
+walker run                      # Now launch Walker
+```
+
+**How it works:**
+1. Configure session with required Walker fields
+2. Run `walker run` to launch Walker UI mode
+3. Walker uses the same session (zS_id, zAuth, zWorkspace)
+4. Type `exit` in Walker to return to Shell
+5. Shell resumes with the same session
+
+**Required Session Fields:**
+- `zWorkspace` - Project workspace path
+- `zVaFilename` - UI YAML filename (e.g., `ui.main`. **Note:** Without file extention)
+- `zVaFile_path` - UI file path (default: `@`)
+- `zBlock` - Starting block name (default: `Root`)
+
+> **Note:** Walker and Shell share the same session, enabling seamless mode switching with preserved authentication and context.
+
+
 ### File Operations
 Access file operations through zOpen subsystem:
 
@@ -109,6 +140,23 @@ open www.example.com            # URLs (https:// is auto-added)
 > - **No prefix**: Regular paths (relative or absolute, expanded with `os.path`)
 > - **URL**: Opens in browser based on machine capabilities
 
+### Function Execution
+Execute utility functions through zFunc subsystem:
+
+```bash
+# ID generation
+func generate_id <prefix>
+func generate_id zU
+func generate_id zApp
+
+# API key generation
+func generate_API <prefix>
+func generate_API zApp
+
+# Custom functions
+func <function_name> [args]
+func my_custom_function arg1 arg2
+```
 
 ### CRUD Operations
 Direct database operations through zCRUD subsystem:
@@ -137,23 +185,6 @@ crud search <table> [options]
 crud search zUsers --query "name LIKE '%john%'"
 ```
 
-### Function Execution
-Execute utility functions through zFunc subsystem:
-
-```bash
-# ID generation
-func generate_id <prefix>
-func generate_id zU
-func generate_id zApp
-
-# API key generation
-func generate_API <prefix>
-func generate_API zApp
-
-# Custom functions
-func <function_name> [args]
-func my_custom_function arg1 arg2
-```
 
 ### Utility Commands
 Access utility functions through zUtils subsystem:
@@ -175,36 +206,6 @@ auth login --username admin     # Login with username
 auth logout                     # Logout current user
 auth status                     # Show authentication status
 ```
-
-### Walker Integration
-Launch Walker mode from Shell:
-
-```bash
-# Walker command
-walker run                      # Launch Walker using session config
-
-# Configuration workflow
-session set zWorkspace /path/to/project
-session set zVaFilename ui.main.yaml
-session set zVaFile_path @
-session set zBlock Root
-walker run                      # Now launch Walker
-```
-
-**How it works:**
-1. Configure session with required Walker fields
-2. Run `walker run` to launch Walker UI mode
-3. Walker uses the same session (zS_id, zAuth, zWorkspace)
-4. Type `exit` in Walker to return to Shell
-5. Shell resumes with the same session
-
-**Required Session Fields:**
-- `zWorkspace` - Project workspace path
-- `zVaFilename` - UI YAML filename (e.g., `ui.main.yaml`)
-- `zVaFile_path` - UI file path (default: `@`)
-- `zBlock` - Starting block name (default: `Root`)
-
-> **Note:** Walker and Shell share the same session, enabling seamless mode switching with preserved authentication and context.
 
 ---
 

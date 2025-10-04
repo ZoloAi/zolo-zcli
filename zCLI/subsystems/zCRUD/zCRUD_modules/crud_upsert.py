@@ -103,7 +103,7 @@ def zUpsert_sqlite(zRequest, zForm, zData, walker=None):
     data_dict = dict(zip(fields, values))
     
     # Populate auto-generated fields and defaults (same as CREATE)
-    from .crud_handler import resolve_source
+    from ..zCRUD import resolve_source
     import datetime
     
     table_schema = zForm.get(table, {})

@@ -81,7 +81,7 @@ class ZDispatch:
         logger.info("\nResolved modifiers: %s on key: %s", modifiers, zKey)
 
         if "*" in modifiers:
-            from zCLI.walker.zMenu import handle_zMenu
+            from .zMenu import handle_zMenu
             is_anchor = "~" in modifiers
             logger.debug("* Modifier detected for %s — invoking menu (anchor=%s)", zKey, is_anchor)
             active_zBlock = next(reversed(self.zSession["zCrumbs"]))
@@ -143,7 +143,7 @@ class ZDispatch:
                 return handle_zFunc(zHorizontal, walker=self.walker)
 
             if zHorizontal.startswith("zLink("):
-                from zCLI.walker.zLink import handle_zLink
+                from .zLink import handle_zLink
                 logger.info("Detected zLink request")
                 handle_zDisplay({"event":"header","label":" → Handle zLink","style":"single","color":"DISPATCH","indent":4})
                 return handle_zLink(zHorizontal, walker=self.walker)
@@ -188,7 +188,7 @@ class ZDispatch:
                 return result
 
             if "zLink" in zHorizontal:
-                from zCLI.walker.zLink import handle_zLink
+                from .zLink import handle_zLink
                 logger.info("Detected zLink")
                 return handle_zLink(zHorizontal, walker=self.walker)
 

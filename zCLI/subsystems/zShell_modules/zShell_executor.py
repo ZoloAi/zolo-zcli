@@ -216,7 +216,7 @@ class CommandExecutor:
             
             # Import and launch Walker
             try:
-                from zCLI.walker.zWalker import zWalker
+                from zCLI.subsystems.zWalker.zWalker import zWalker
                 logger.info("Creating zWalker instance from zCLI...")
                 walker = zWalker(self.zcli)
                 

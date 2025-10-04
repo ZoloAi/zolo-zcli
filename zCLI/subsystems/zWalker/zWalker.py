@@ -4,10 +4,10 @@ from zCLI.utils.logger import logger
 from zCLI.subsystems.zDisplay import handle_zDisplay
 
 # Walker-specific subsystems (always needed)
-from zCLI.walker.zDispatch import ZDispatch
-from zCLI.walker.zMenu import ZMenu
-from zCLI.walker.zLink import ZLink
-from zCLI.walker.zCrumbs import zCrumbs
+from zCLI.subsystems.zWalker.zWalker_modules.zDispatch import ZDispatch
+from zCLI.subsystems.zWalker.zWalker_modules.zMenu import ZMenu
+from zCLI.subsystems.zWalker.zWalker_modules.zLink import ZLink
+from zCLI.subsystems.zWalker.zWalker_modules.zCrumbs import zCrumbs
 
 # Legacy mode subsystems (imported lazily when needed)
 # - zSession, ZDisplay, ZUtils, ZFunc, ZOpen

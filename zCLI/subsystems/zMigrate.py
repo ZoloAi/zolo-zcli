@@ -97,7 +97,7 @@ class ZMigrate:
     def _ensure_migrations_table(self, zData):
         """Create zMigrations table using zCLI's zTables function."""
         if zData["type"] == "sqlite":
-            from .crud.crud_handler import zTables
+            from .zCRUD.zCRUD import zTables
             
             # Check if table exists first
             cur = zData["cursor"]
@@ -651,7 +651,7 @@ class ZMigrate:
                 logger.info("[Migration] Creating new indexes...")
                 for table_name, new_indexes in changes["new_indexes"].items():
                     # Import here to avoid circular dependency
-                    from .crud.crud_handler import _create_indexes
+                    from .zCRUD.zCRUD import _create_indexes
                     _create_indexes(table_name, new_indexes, cur, conn)
                 logger.info("[Migration] All index migrations applied successfully")
             

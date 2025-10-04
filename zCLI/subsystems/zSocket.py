@@ -148,7 +148,7 @@ class ZSocket:
                 zHorizontal = data.get("zHorizontal") or zKey
 
                 if zKey:
-                    from zCLI.walker.zDispatch import handle_zDispatch
+                    from zCLI.subsystems.zWalker.zWalker_modules.zDispatch import handle_zDispatch
                     self.logger.debug(f"[zSocket] ▶ Dispatching CLI cmd: {zKey}")
                     try:
                         # pass walker so dispatch/CRUD use walker context

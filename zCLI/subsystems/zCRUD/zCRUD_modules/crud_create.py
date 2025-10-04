@@ -3,7 +3,7 @@
 
 from zCLI.utils.logger import logger
 from zCLI.subsystems.zDisplay import handle_zDisplay
-from .crud_handler import resolve_source
+from ..zCRUD import resolve_source
 from .crud_validator import RuleValidator, display_validation_errors
 
 

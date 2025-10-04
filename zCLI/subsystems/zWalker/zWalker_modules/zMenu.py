@@ -185,7 +185,7 @@ def handle_zMenu(zMenu_obj, walker=None):
         walker = TempWalker()
         # Provide loader/dispatch fallbacks if missing
         from zCLI.subsystems.zLoader import ZLoader
-        from zCLI.walker.zDispatch import ZDispatch
+        from .zDispatch import ZDispatch
         setattr(walker, "loader", ZLoader(walker))
         setattr(walker, "dispatch", ZDispatch(walker))
     return ZMenu(walker).handle(zMenu_obj)

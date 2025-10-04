@@ -125,6 +125,6 @@ def handle_zLink(zHorizontal, walker=None):
         from zCLI.subsystems.zLoader import ZLoader
         setattr(walker, "loader", ZLoader(walker))
         # Crumbs is required for navigation
-        from zCLI.walker.zCrumbs import zCrumbs
+        from .zCrumbs import zCrumbs
         setattr(walker, "zCrumbs", zCrumbs())
     return ZLink(walker).handle(zHorizontal)

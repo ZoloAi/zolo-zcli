@@ -4,7 +4,7 @@
 from zCLI.utils.logger import logger
 from zCLI.subsystems.zDisplay import handle_zDisplay
 from zCLI.subsystems.zSession import zSession
-from .crud_handler import build_order_clause
+from ..zCRUD import build_order_clause
 from .crud_join import build_join_clause, build_select_with_tables
 from .crud_where import build_where_clause
 

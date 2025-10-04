@@ -174,7 +174,7 @@ class zCLI:
         """
         if self.ui_mode:
             logger.info("Starting zCLI in UI mode via zWalker...")
-            from zCLI.walker.zWalker import zWalker  # pylint: disable=import-outside-toplevel
+            from zCLI.subsystems.zWalker.zWalker import zWalker  # pylint: disable=import-outside-toplevel
             walker = zWalker(self)  # Pass zCLI instance
             return walker.run()
 
