@@ -20,7 +20,7 @@ class InteractiveShell:
     
     def __init__(self, zcli):
         """
-        Initialize interactive shell.
+        Initialize shell interface.
         
         Args:
             zcli: Parent zCLI instance
@@ -33,7 +33,7 @@ class InteractiveShell:
     
     def run(self):
         """Main shell loop - handles user input and command execution."""
-        logger.info("Starting zCLI interactive shell...")
+        logger.info("Starting zCLI shell...")
         
         # Show welcome message
         print(self.help_system.get_welcome_message())
@@ -170,7 +170,7 @@ def launch_zCLI_shell():
     
     # Create zCLI instance in shell mode
     cli = zCLI()
-    cli.run_interactive()
+    cli.run_shell()
     
     print("\n" + "=" * 50)
     print("🔄 Returning to UI menu...")

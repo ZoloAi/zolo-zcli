@@ -1,7 +1,7 @@
 # zCLI/subsystems/zShell.py — Core zShell Handler
 # ───────────────────────────────────────────────────────────────
 """
-Core zShell handler for interactive shell mode.
+Core zShell handler for shell mode.
 
 This module serves as the main handler for zShell functionality,
 delegating to specialized modules within zShell_modules/.
@@ -19,8 +19,8 @@ class ZShell:
     """
     Core zShell Handler.
     
-    Manages interactive shell mode and delegates to specialized modules:
-    - InteractiveShell: Main shell interface and user interaction
+    Manages shell mode and delegates to specialized modules:
+    - InteractiveShell: REPL interface and user interaction loop
     - CommandExecutor: Command parsing and execution engine
     - HelpSystem: Documentation and help system
     """
@@ -42,8 +42,8 @@ class ZShell:
         
         logger.debug("zShell handler initialized")
     
-    def run_interactive(self):
-        """Run interactive shell mode."""
+    def run_shell(self):
+        """Run shell mode."""
         return self.interactive.run()
     
     def execute_command(self, command):

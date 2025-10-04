@@ -248,3 +248,28 @@ zKey_example:
 
 >**Note:** For **zolo-zcli** `zWizard` documentation: see [zWizard_GUIDE.md](/Documentation/zWizard_GUIDE.md)
 
+---
+
+## Shell Integration
+
+Walker can launch zShell mode for advanced operations, debugging, or direct command execution. This allows you to drop into Shell mode from a menu, execute commands, and return to the Walker interface.
+
+**Function:** `zShell()`
+
+Add a menu option to launch Shell:
+
+```yaml
+zVaF:
+  MainMenu*: ["Database", "Settings", "^Launch Shell"]
+    ^Launch Shell: "zShell()"
+```
+
+#### Important Notes
+
+- Shell inherits the same session as Walker (same `zS_id`)
+- Shell operates on the same `zWorkspace` and `zAuth` context
+- All subsystems (CRUD, zFunc, zAuth) remain accessible
+- Type `exit`, `quit`, or `q` to return to Walker
+- Walker resumes exactly where it left off
+
+>**Note:** For more information on Shell commands and usage, see [zShell_GUIDE.md](zShell_GUIDE.md)

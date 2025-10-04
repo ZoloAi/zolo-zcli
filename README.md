@@ -29,7 +29,7 @@ pip install git+https://TOKEN@github.com/ZoloAi/zolo-zcli.git@v1.3.0
 # Show version
 zolo-zcli --version
 
-# Start interactive shell mode (authentication required)
+# Start shell mode (authentication required)
 zolo-zcli --shell
 ```
 
@@ -41,8 +41,8 @@ from zCLI import zCLI
 # Create a zCLI instance
 cli = zCLI()
 
-# Start interactive shell
-cli.run_interactive()
+# Start shell mode
+cli.run_shell()
 ```
 
 ## 📋 Features

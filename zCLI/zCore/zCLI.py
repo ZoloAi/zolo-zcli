@@ -21,7 +21,6 @@ from zCLI.subsystems.zLoader import ZLoader
 
 # Import zCore components
 from zCLI.subsystems.zShell import ZShell
-from zCLI.subsystems.zShell import ZShell
 
 
 class zCLI:
@@ -158,13 +157,13 @@ class zCLI:
         """
         return self.shell.execute_command(command)
 
-    def run_interactive(self):
+    def run_shell(self):
         """
-        Run interactive shell mode.
+        Run shell mode.
         
-        Delegates to InteractiveShell for the REPL interface.
+        Explicitly launches Shell mode regardless of configuration.
         """
-        return self.shell.run_interactive()
+        return self.shell.run_shell()
 
     def run(self):
         """
@@ -179,5 +178,5 @@ class zCLI:
             walker = zWalker(self)  # Pass zCLI instance
             return walker.run()
 
-        logger.info("Starting zCLI in interactive shell mode...")
-        return self.run_interactive()
+        logger.info("Starting zCLI in shell mode...")
+        return self.run_shell()

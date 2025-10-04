@@ -29,10 +29,10 @@ def main():
     args = parser.parse_args()
     
     if args.shell:
-        # Shell mode - start interactive shell
+        # Shell mode - start shell
         logger.info("Starting zCLI Shell mode...")
         cli = zCLI()
-        cli.run_interactive()
+        cli.run_shell()
     else:
         # Default: show help
         parser.print_help()

@@ -67,9 +67,9 @@ The core engine (`zCLI/zCore/zCLI.py`) is the central hub that manages all subsy
 
 **`run()`** - Main entry point that automatically chooses Shell or Walker mode
 - **UI Mode:** Lazy-loads zWalker and delegates to `walker.run()`
-- **Shell Mode:** Delegates to `run_interactive()` for InteractiveShell
+- **Shell Mode:** Delegates to `run_shell()` for InteractiveShell
 
-**`run_interactive()`** - Explicitly runs in Shell mode via InteractiveShell
+**`run_shell()`** - Explicitly runs in Shell mode via InteractiveShell
 
 **`run_command(command)`** - Execute single command (useful for API/scripting)
 
@@ -92,7 +92,7 @@ from zCLI import zCLI
 
 # Simple shell mode - minimal configuration
 cli = zCLI()
-cli.run()  # Starts interactive shell
+cli.run()  # Starts shell mode
 ```
 
 **Walker Mode (UI Interface):**

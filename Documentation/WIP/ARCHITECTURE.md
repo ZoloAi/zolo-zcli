@@ -160,7 +160,7 @@ from zCLI import zCLI
 
 # Shell Mode (no configuration)
 cli = zCLI()
-cli.run_interactive()
+cli.run_shell()
 
 # UI Mode (with zSpark configuration)
 cli = zCLI({
@@ -168,7 +168,7 @@ cli = zCLI({
     "zVaFilename": "ui.yaml",
     "zMode": "UI"
 })
-cli.run_interactive()
+cli.run_shell()
 
 # Authentication is optional (for extended features like zCloud)
 cli.auth.login()  # Only if needed
@@ -181,7 +181,7 @@ from zCLI import zCLI
 
 # Can use shell mode or UI mode depending on configuration
 zcli = zCLI(zSpark_config)  # or None for shell mode
-zcli.run_interactive()
+zcli.run_shell()
 ```
 
 **Key Distinction**:
@@ -203,7 +203,7 @@ zcli = zCLI({                  "zWorkspace": "/path",
   "zVaFilename": "ui.yaml"      "zMode": "UI"
   "zMode": "UI"               })
 })                           │
-zcli.run_interactive()       │
+zcli.run_shell()       │
                              ▼
                     zWalker loads YAML config
                              │
@@ -243,7 +243,7 @@ $ zolo-zcli --shell        zcli = zCLI()  # No zSpark needed
 
 **Usage Patterns**:
 - ✅ **Terminal**: `zolo-zcli --shell` (pure command-line)
-- ✅ **Python Script**: `zcli.run_interactive()` (programmatic shell)
+- ✅ **Python Script**: `zcli.run_shell()` (programmatic shell)
 - ✅ **Direct Commands**: No YAML configuration needed
 
 ---

@@ -12,22 +12,20 @@
 
 ### Core Components
 
-zShell consists of three main components working together:
+zShell follows the registry pattern and consists of a main handler that delegates to specialized modules:
 
 #### **ZShell** (`zCLI/subsystems/zShell.py`)
 - **Purpose:** Main shell handler that delegates to specialized modules
-- **Features:** Command prompt, input handling, session management, error handling
+- **Features:** Component management, method delegation, unified interface
 - **Integration:** Uses registry pattern with zShell_modules/ for component management
 
 #### **zShell_modules/** (`zCLI/subsystems/zShell_modules/`)
 - **Purpose:** Registry containing specialized shell components
-- **Features:** Command type detection, subsystem routing, result formatting
 - **Components:**
-
-  - **zShell_interactive.py**: InteractiveShell class and launch function
-- **zShell_executor.py**: CommandExecutor class for command parsing and execution
-- **Features:** Command help, usage examples, quick tips, welcome messages
-- **Integration:** Provides context-aware help for all command types
+  - **zShell_interactive.py**: InteractiveShell class and launch_zCLI_shell function
+  - **zShell_executor.py**: CommandExecutor class for command parsing and execution
+  - **zShell_help.py**: HelpSystem class for documentation and help
+- **Pattern:** Follows same registry structure as zOpen_modules/ and zParser_modules/
 
 ---
 
@@ -41,7 +39,7 @@ from zCLI import zCLI
 
 # Automatically starts in Shell mode
 cli = zCLI()
-cli.run()  # Starts interactive shell
+cli.run()  # Starts shell mode
 ```
 
 ### Manual Shell Mode
@@ -51,7 +49,7 @@ Explicitly start shell mode from Walker or other contexts:
 from zCLI import zCLI
 
 cli = zCLI()
-cli.run_interactive()  # Explicitly start shell mode
+cli.run_shell()  # Explicitly start shell mode
 ```
 
 ### Command-Line Launch
@@ -65,6 +63,52 @@ zolo-zcli --shell
 ---
 
 ## Command Types
+### zSession Management
+Manage zSession state and configuration:
+
+```bash
+# Session information
+session info                    # Display current session state
+
+# Session manipulation
+session set <key> <value>       # Set session field value
+session get <key>               # Get session field value
+
+# Examples
+session set zWorkspace /path/to/project
+session set zMode Terminal
+session get zAuth
+session get zWorkspace
+```
+
+> **Note:** Each zCLI instance maintains its own isolated session. Session commands operate on the current instance's session, not a global shared session.
+
+### File Operations
+Access file operations through zOpen subsystem:
+
+```bash
+# File operations
+open <path>                     # Open file, URL, or zPath
+
+# Regular filesystem paths
+open /path/to/file.html         # Absolute filesystem path
+open ./relative/file.txt        # Relative filesystem path
+
+# zPath notation
+open @.path.to.file.html        # @ = relative to zWorkspace in zSession
+open ~.etc.hosts.txt            # ~ = absolute from filesystem root
+
+# URLs
+open https://example.com        # HTTP/HTTPS URLs
+open www.example.com            # URLs (https:// is auto-added)
+```
+
+> **Path Resolution:**
+> - **`@` prefix**: Workspace-relative paths (requires `zWorkspace` in zSession)
+> - **`~` prefix**: Absolute filesystem paths (from root `/`)
+> - **No prefix**: Regular paths (relative or absolute, expanded with `os.path`)
+> - **URL**: Opens in browser based on machine capabilities
+
 
 ### CRUD Operations
 Direct database operations through zCRUD subsystem:
@@ -121,20 +165,6 @@ utils hash_password mypassword
 utils validate_email user@example.com
 ```
 
-### Session Management
-Manage zSession state and configuration:
-
-```bash
-# Session information
-session info                    # Display current session state
-session set workspace /path     # Set workspace path
-session set mode Terminal       # Set session mode
-
-# Session debugging
-session debug                   # Enable debug mode
-session clear                   # Clear session cache
-```
-
 ### Authentication
 Manage user authentication through zAuth subsystem:
 
@@ -146,25 +176,17 @@ auth logout                     # Logout current user
 auth status                     # Show authentication status
 ```
 
-### File Operations
-Access file operations through zOpen subsystem:
-
-```bash
-# File operations
-open <path>                     # Open file with default editor
-open /path/to/file.txt
-open @schema.users              # Open using zPath
-```
-
 ### Walker Integration
 Launch Walker mode from Shell:
 
 ```bash
 # Walker commands
 walker load <ui_file>           # Load Walker with UI file
-walker load ui.main             # Load main UI file
-walker load @.menus.ui.main     # Load with zPath
+walker load ui.main.yaml        # Load UI YAML file
+walker load @.menus.ui.main.yaml # Load with zPath (workspace-relative)
 ```
+
+> **Note:** Walker integration is currently limited. The `walker load` command is recognized but full UI reloading from shell is not yet implemented.
 
 ---
 
@@ -224,177 +246,3 @@ Shell provides comprehensive error handling:
 - **Continue Operation:** Shell continues running after errors
 - **Logging:** All errors are logged for debugging
 
----
-
-## Session Integration
-
-### Session State
-Shell automatically manages session state:
-
-```bash
-# Session is automatically initialized with:
-# - zS_id: Unique session identifier
-# - zMode: "Terminal" (Shell mode)
-# - zMachine: Auto-detected capabilities
-# - All other fields remain None until populated
-```
-
-### Progressive Population
-Session fields are populated as needed:
-
-```bash
-# Authentication populates zAuth
-auth login
-# Session now contains: zAuth fields
-
-# CRUD operations may populate workspace
-crud read zUsers
-# Session may contain: zWorkspace (if needed)
-```
-
-### Session Isolation
-Each shell instance has isolated session:
-- **Independent State:** No shared state between shell instances
-- **Parallel Execution:** Multiple shells can run simultaneously
-- **Clean Startup:** Each shell starts with minimal session
-
----
-
-## Integration Examples
-
-### Basic Shell Usage
-```python
-from zCLI import zCLI
-
-# Start shell mode
-cli = zCLI()
-cli.run()  # Interactive shell
-
-# Or run single commands
-result = cli.run_command("crud read zUsers --limit 5")
-print(result)
-```
-
-### Shell with Configuration
-```python
-from zCLI import zCLI
-
-# Shell with workspace and plugins
-cli = zCLI({
-    "zWorkspace": "/path/to/project",
-    "plugins": ["plugins.custom_utils"],
-    "logger": "debug"
-})
-cli.run_interactive()
-```
-
-### Shell from Walker
-```python
-# Launch shell from Walker UI
-from zCLI.zCore.Shell import launch_zCLI_shell
-
-result = launch_zCLI_shell()
-# Returns to Walker after shell exit
-```
-
----
-
-## Best Practices
-
-### Command Structure
-- **Clear Syntax:** Use consistent command structure
-- **Descriptive Names:** Choose clear, descriptive command names
-- **Proper Options:** Use standard option formats (--option, --flag)
-- **Help Integration:** Include help for all commands
-
-### Error Handling
-- **Validate Input:** Check command syntax before execution
-- **Provide Feedback:** Give clear success/error messages
-- **Log Issues:** Log errors for debugging and monitoring
-- **Graceful Degradation:** Handle errors without crashing
-
-### Session Management
-- **Minimal Initialization:** Only populate session fields as needed
-- **State Isolation:** Ensure each shell instance is independent
-- **Progressive Population:** Add fields based on user actions
-- **Clean Exit:** Properly clean up on shell exit
-
----
-
-## Troubleshooting
-
-### Common Issues
-
-**Shell Not Starting:**
-- Check zCLI installation and imports
-- Verify no conflicting configurations
-- Check for Python path issues
-
-**Command Not Found:**
-- Verify command syntax and spelling
-- Check if command requires authentication
-- Ensure required subsystems are available
-
-**Session Issues:**
-- Check session isolation between instances
-- Verify session field population
-- Check for session state corruption
-
-### Debug Commands
-```bash
-# Session debugging
-session info                    # View current session state
-session debug                   # Enable debug logging
-
-# Command debugging
-help <command>                  # Get command help
-tips                           # View quick tips
-
-# System debugging
-# Check logs for detailed error information
-```
-
----
-
-## Advanced Usage
-
-### Scripting Integration
-```python
-from zCLI import zCLI
-
-# Programmatic shell usage
-cli = zCLI({"zWorkspace": "/project/path"})
-
-# Execute multiple commands
-commands = [
-    "auth login",
-    "crud read zUsers --limit 10",
-    "func generate_id zU"
-]
-
-for cmd in commands:
-    result = cli.run_command(cmd)
-    print(f"Command: {cmd}")
-    print(f"Result: {result}")
-    print("-" * 40)
-```
-
-### Custom Command Integration
-```python
-# Extend shell with custom commands
-class CustomCommandExecutor(CommandExecutor):
-    def execute_custom(self, parsed):
-        # Handle custom command logic
-        return {"success": "Custom command executed"}
-
-# Use custom executor
-cli = zCLI()
-cli.executor = CustomCommandExecutor(cli)
-```
-
----
-
-**Related Documentation:**
-- [zCLI Core Engine](zolo-zcli_GUIDE.md) - Shell integration in zCLI
-- [zSession Guide](zSession_GUIDE.md) - Session management in Shell mode
-- [zWalker Guide](zWalker_GUIDE.md) - Switching between Shell and Walker modes
