@@ -20,8 +20,8 @@ from zCLI.subsystems.zLoader import ZLoader
 
 
 # Import zCore components
-from zCLI.zCore.Shell import InteractiveShell
-from zCLI.zCore.CommandExecutor import CommandExecutor
+from zCLI.subsystems.zShell import ZShell
+from zCLI.subsystems.zShell import ZShell
 
 
 class zCLI:
@@ -85,8 +85,8 @@ class zCLI:
         self.loader = ZLoader(self)
 
         # Initialize shell and command executor
-        self.shell = InteractiveShell(self)
-        self.executor = CommandExecutor(self)
+        self.shell = ZShell(self)
+        # self.executor now accessed via self.shell.executor
 
         # Note: dispatch, menu, link are walker-specific
         # They are instantiated by zWalker when in UI mode
@@ -156,7 +156,7 @@ class zCLI:
         Returns:
             Command execution result
         """
-        return self.executor.execute(command)
+        return self.shell.execute_command(command)
 
     def run_interactive(self):
         """
@@ -164,7 +164,7 @@ class zCLI:
         
         Delegates to InteractiveShell for the REPL interface.
         """
-        return self.shell.run()
+        return self.shell.run_interactive()
 
     def run(self):
         """

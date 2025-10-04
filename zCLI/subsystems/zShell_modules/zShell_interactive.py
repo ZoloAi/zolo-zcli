@@ -2,8 +2,8 @@
 # ───────────────────────────────────────────────────────────────
 
 from zCLI.utils.logger import logger
-from zCLI.zCore.Help import HelpSystem
-from zCLI.zCore.CommandExecutor import CommandExecutor
+from .zShell_help import HelpSystem
+from .zShell_executor import CommandExecutor
 
 
 class InteractiveShell:

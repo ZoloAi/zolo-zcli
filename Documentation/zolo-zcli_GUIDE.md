@@ -77,13 +77,12 @@ The core engine (`zCLI/zCore/zCLI.py`) is the central hub that manages all subsy
 
 Key configuration values (typically from .env):
 - `zWorkspace`: Project workspace path (defaults to current working directory)
-- `zMode`: Operating mode (defaults to "Terminal" for Shell mode)
-- `zVaFilename`: UI file for Walker mode (triggers UI mode when present)
 - `zVaFile_path`: Path to UI file (optional)
+- `zVaFilename`: UI file for Walker mode (triggers UI mode when present)
 - `zBlock`: Starting block in UI file (optional)
+- `zMode`: Operating mode (defaults to "Terminal" for Shell mode)
 - `plugins`: List of plugin paths to load (optional)
-- `debug`: Enable debug logging (optional)
-- `cache`: Enable session caching (optional)
+- `logger`: Enable debug logging (optional)
 
 #### Usage Examples:
 
@@ -96,19 +95,6 @@ cli = zCLI()
 cli.run()  # Starts interactive shell
 ```
 
-**Shell Mode with Configuration:**
-```python
-from zCLI import zCLI
-
-# Shell mode with workspace and plugins
-cli = zCLI({
-    "zWorkspace": "/path/to/my/project",
-    "plugins": ["plugins.custom_utils", "plugins.data_helpers"],
-    "debug": True
-})
-cli.run()  # Starts interactive shell with custom workspace and plugins
-```
-
 **Walker Mode (UI Interface):**
 ```python
 from zCLI import zCLI
@@ -116,54 +102,14 @@ from zCLI import zCLI
 # Complete Walker mode configuration
 cli = zCLI({
     "zWorkspace": "/path/to/my/project",
-    "zMode": "UI",
-    "zVaFilename": "ui.main.yaml",
-    "zVaFile_path": "menus",
+    "zVaFile_path": "@.menus",
+    "zVaFilename": "ui.main",
     "zBlock": "MainMenu",
+    "zMode": "UI",
     "plugins": ["plugins.ui_helpers"],
-    "debug": True,
-    "cache": True
+    "logger": "debug"
 })
 cli.run()  # Starts Walker UI interface
-```
-
-**API/Scripting Mode:**
-```python
-from zCLI import zCLI
-
-# For programmatic usage without interactive interface
-cli = zCLI({
-    "zWorkspace": "/path/to/my/project",
-    "plugins": ["plugins.batch_operations"]
-})
-
-# Execute single commands
-result = cli.run_command("crud read users --limit 10")
-print(f"Found {len(result)} users")
-
-# Access subsystems directly
-schema_data = cli.loader.handle("@schema.users")
-user_count = cli.crud.count("users")
-```
-
-**Advanced Configuration with Environment Variables:**
-```python
-import os
-from zCLI import zCLI
-
-# Load from environment variables
-config = {
-    "zWorkspace": os.getenv("ZOLO_WORKSPACE", "/default/workspace"),
-    "zVaFilename": os.getenv("ZOLO_UI_FILE"),
-    "zVaFile_path": os.getenv("ZOLO_UI_PATH", "menus"),
-    "zBlock": os.getenv("ZOLO_START_BLOCK", "MainMenu"),
-    "plugins": os.getenv("ZOLO_PLUGINS", "").split(",") if os.getenv("ZOLO_PLUGINS") else [],
-    "debug": os.getenv("ZOLO_DEBUG", "false").lower() == "true",
-    "cache": os.getenv("ZOLO_CACHE", "true").lower() == "true"
-}
-
-cli = zCLI(config)
-cli.run()
 ```
 
 ---
