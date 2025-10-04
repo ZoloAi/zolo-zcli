@@ -4,7 +4,7 @@
 Shared Subsystems Package
 
 This package contains subsystems used by both Shell and Walker modes:
-- crud: Database operations (CRUD)
+- zCRUD: Database operations (CRUD)
 - zFunc: Function execution
 - zDisplay: UI rendering and display
 - zDialog: Interactive dialogs
@@ -18,7 +18,7 @@ This package contains subsystems used by both Shell and Walker modes:
 """
 
 # Import subsystem classes for convenient access
-from .crud import ZCRUD, handle_zCRUD
+from .zCRUD import ZCRUD, handle_zCRUD
 from .zFunc import ZFunc, handle_zFunc
 from .zDisplay import ZDisplay, handle_zDisplay
 from .zDialog import ZDialog

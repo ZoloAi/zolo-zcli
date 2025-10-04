@@ -274,7 +274,7 @@ class ZAuth:
         
         try:
             # Validate via Flask API (using CRUD subsystem)
-            from zCLI.subsystems.crud import handle_zCRUD
+            from zCLI.subsystems.zCRUD import handle_zCRUD
             
             result = handle_zCRUD({
                 "action": "read",

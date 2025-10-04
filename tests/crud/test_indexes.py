@@ -25,7 +25,7 @@ if project_root not in sys.path:
 import sqlite3
 import yaml
 from tests.fixtures import TestDatabase
-from zCLI.subsystems.crud import handle_zCRUD, zTables
+from zCLI.subsystems.zCRUD import handle_zCRUD, zTables
 
 
 def test_indexes():

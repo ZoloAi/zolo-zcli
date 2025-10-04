@@ -21,7 +21,7 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 from tests.fixtures import TestDatabase, count_rows, TEST_SCHEMA_PATH
-from zCLI.subsystems.crud import handle_zCRUD
+from zCLI.subsystems.zCRUD import handle_zCRUD
 import yaml
 
 

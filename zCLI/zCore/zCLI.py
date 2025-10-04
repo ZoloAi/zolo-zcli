@@ -8,7 +8,7 @@ from zCLI.subsystems.zSession import create_session
 
 # Import all subsystems from the subsystems package
 from zCLI.subsystems.zUtils import ZUtils
-from zCLI.subsystems.crud import ZCRUD
+from zCLI.subsystems.zCRUD import ZCRUD
 from zCLI.subsystems.zFunc import ZFunc
 from zCLI.subsystems.zDisplay import ZDisplay
 from zCLI.subsystems.zParser import ZParser
@@ -19,8 +19,6 @@ from zCLI.subsystems.zOpen import ZOpen
 from zCLI.subsystems.zAuth import ZAuth
 from zCLI.subsystems.zLoader import ZLoader
 
-# Import walker subsystems (for UI mode)
-from zCLI.walker.zCrumbs import zCrumbs
 
 # Import zCore components
 from zCLI.zCore.CommandParser import CommandParser
@@ -30,41 +28,32 @@ from zCLI.zCore.CommandExecutor import CommandExecutor
 
 class zCLI:
     """
-    Core zCLI Engine - Single source of truth for all subsystems.
-    
-    zCLI is the primary engine that manages all subsystems (CRUD, Func, Dialog, etc.)
-    and provides two interface modes:
-    - Shell mode: Direct command execution via InteractiveShell
-    - Walker mode: YAML-driven menu navigation via zWalker
-    
-    All subsystems are instantiated once here to avoid duplication.
-    
-    Architecture:
-    - zCLI: Core initialization and subsystem management
+    Core zCLI Engine manages all subsystems and provides two modes:
     - Shell: Interactive command-line interface
-    - CommandExecutor: Command parsing and execution logic
-    - Help: Documentation and help system
-    
-    Configuration:
-    - zSpark_obj is the ONLY source of truth for configuration
-    - All paths and settings come from zSpark_obj (typically from .env)
-    - Fallbacks use portable defaults (e.g., os.getcwd()) not hardcoded paths
+    - Walker: Menu-driven interface using YAML files
     """
 
     def __init__(self, zSpark_obj=None):
         """
-        Initialize the zCLI core engine.
-        
+        Initialize a new zCLI instance.
+
         Args:
-            zSpark_obj: Optional configuration object. If provided with zVaFile,
-                       will enable UI mode via zWalker.
-                       
-                       Key configuration values (typically from .env):
-                       - zWorkspace: Project workspace path (defaults to cwd)
-                       - zMode: Operating mode (defaults to "Terminal")
-                       - zVaFilename: UI file for walker mode (optional)
-                       - zVaFile_path: Path to UI file (optional)
-                       - zBlock: Starting block in UI file (optional)
+            zSpark_obj (dict, optional): Configuration options including:
+                - zWorkspace: Project root directory (default: current dir)
+                - zMode: "Terminal" (Shell) or "UI" (Walker) mode
+                - zVaFilename: UI menu YAML file for Walker mode
+                - zVaFile_path: UI file directory
+                - zBlock: Starting menu block
+
+        Example:
+            # Shell mode
+            cli = zCLI()
+
+            # Walker mode
+            cli = zCLI({
+                "zVaFilename": "ui.main.yaml",
+                "zBlock": "MainMenu"
+            })
         """
         self.zSpark_obj = zSpark_obj or {}
 
@@ -73,12 +62,7 @@ class zCLI:
 
         # Create instance-specific session for isolation
         # Each zCLI instance gets its own session, enabling:
-        # - Multi-user support
-        # - Parallel execution
-        # - Better testing (no shared state)
         self.session = create_session()
-        # Also set zSession attribute for legacy subsystems that expect it
-        self.zSession = self.session
 
         # Initialize core subsystems (single source of truth)
         self.utils = ZUtils(self)
@@ -86,7 +70,6 @@ class zCLI:
         self.funcs = ZFunc(self)
         self.display = ZDisplay(self)
         self.zparser = ZParser(self)
-        self.crumbs = zCrumbs(self)
         self.socket = ZSocket(self)
         self.dialog = ZDialog(self)
         self.wizard = ZWizard(self)
@@ -106,7 +89,7 @@ class zCLI:
         self._load_plugins()
 
         # Determine interface mode (needed for session initialization)
-        self.ui_mode = bool(self.zSpark_obj.get("zVaFile") or self.zSpark_obj.get("zVaFilename"))
+        self.ui_mode = bool(self.zSpark_obj.get("zVaFilename"))
 
         # Initialize session
         self._init_session()
@@ -204,18 +187,3 @@ class zCLI:
         return walker.run()
 
 
-# ───────────────────────────────────────────────────────────────
-# Legacy compatibility function
-# ───────────────────────────────────────────────────────────────
-
-def create_zCLI(zSpark_obj=None):
-    """
-    Legacy entry point for backward compatibility.
-    
-    Args:
-        zSpark_obj: Configuration object (optional)
-    
-    Returns:
-        zCLI instance
-    """
-    return zCLI(zSpark_obj)

@@ -2,9 +2,9 @@
 
 ## Introduction
 
-**zLoader** is the file loading and parsing subsystem that handles YAML/JSON configuration files (zVaFiles) throughout `zolo-zcli`. It provides intelligent caching, zPath resolution, and seamless integration with both Shell and Walker modes.
+**zLoader** is the zVaFile loading and parsing subsystem that handles YAML/JSON formats throughout `zolo-zcli`. It provides intelligent caching, file discovery, and seamless integration with both Shell and Walker modes.
 
-> **Note:** zLoader is a shared subsystem used by both Shell and Walker modes for loading UI zVaFiles, schema zVaFiles, and other configuration files.
+> **Note:** zLoader is a shared subsystem used by both Shell and Walker modes for loading UI zVaFiles, schema zVaFiles, and other configuration files. zPath resolution is handled by the zParser subsystem.
 
 ---
 
@@ -12,7 +12,7 @@
 
 ### Core Responsibilities:
 - **File Loading:** Reads YAML/JSON files from the filesystem
-- **zPath Resolution:** Converts zPath syntax to actual file paths
+- **File Discovery:** Finds files with proper extensions (.yaml, .yml, .json)
 - **File Type Detection:** Identifies UI vs Schema files automatically
 - **Intelligent Caching:** Session-based caching for performance
 - **Error Handling:** Comprehensive error handling with detailed logging
@@ -20,12 +20,15 @@
 ### Integration Points:
 - **zWalker:** Loads UI zVaFiles for menu navigation and interface rendering
 - **zCRUD:** Loads schema zVaFiles for data model validation and database operations
-- **zParser:** Provides zPath resolution for cross-file references
+- **zParser:** Uses zParser for zPath resolution (consolidated approach)
 - **zSession:** Manages caching and session-aware file loading
 
 ---
 
-## zPath Resolution
+## zPath Resolution Integration
+
+### zParser Integration:
+zLoader uses **zParser** for all zPath resolution to maintain a single source of truth and avoid code duplication.
 
 ### Path Syntax:
 ```
@@ -36,19 +39,21 @@
 ### Examples:
 ```yaml
 # UI files
-@.Zolo.ui.manual.Root          # → ui.manual.yaml (Root block)
-@.Zolo.ui.dashboard.Main       # → ui.dashboard.yaml (Main block)
+@.ui.manual.Root              # → ui.manual.yaml (Root block)
+@.ui.dashboard.Main           # → ui.dashboard.yaml (Main block)
 
 # Schema files  
-@.Zolo.schema.users.Users      # → schema.users.yaml (Users table)
-@.Zolo.schema.products.Items   # → schema.products.yaml (Items table)
+@.schema.users.Users          # → schema.users.yaml (Users table)
+@.schema.products.Items       # → schema.products.yaml (Items table)
 ```
 
 ### Resolution Process:
-1. **Parse zPath:** Split path into components
-2. **Identify Symbol:** `@` (workspace-relative) or `~` (absolute)
-3. **Build File Path:** Combine workspace/path with filename
-4. **File Discovery:** Find actual file with extension (.yaml, .yml, .json)
+1. **zParser Integration:** zLoader calls `zcli.zparser.zPath_decoder()`
+2. **Path Parsing:** zParser handles path component splitting and symbol identification
+3. **File Path Building:** zParser combines workspace/path with filename
+4. **File Discovery:** zLoader finds actual file with extension (.yaml, .yml, .json)
+
+> **Note:** For complete zPath resolution documentation, see [zParser_GUIDE.md](/Documentation/zParser_GUIDE.md)
 
 ---
 
@@ -158,13 +163,15 @@ target_block = target_file.get(target_block_name, {})
 
 **File Not Found:**
 - Check zPath syntax and file existence
-- Verify workspace configuration
-- Confirm correct file extensions
+- Verify workspace configuration in zSession
+- Confirm correct file extensions (.yaml, .yml, .json)
+- Check zParser path resolution (see zParser_GUIDE.md)
 
 **Parsing Errors:**
 - Validate YAML/JSON syntax
 - Check file encoding (must be UTF-8)
 - Verify file permissions
+- Review zParser error messages for path issues
 
 **Cache Issues:**
 - Clear session cache if needed
@@ -174,7 +181,40 @@ target_block = target_file.get(target_block_name, {})
 ### Debug Information:
 - Enable debug logging for detailed zLoader operations
 - Check zSession cache contents
-- Verify zPath resolution steps
+- Verify zPath resolution via zParser
+- Review zParser debug output for path parsing issues
+
+---
+
+## zLoader/zParser Architecture
+
+### Separation of Concerns:
+**zLoader** focuses on file operations:
+- File loading and discovery
+- YAML/JSON parsing
+- Intelligent caching
+- File type detection
+
+**zParser** handles path resolution:
+- zPath syntax parsing
+- Workspace-relative and absolute path resolution
+- Expression evaluation
+- Dotted path processing
+
+### Integration Benefits:
+- **Single source of truth** for zPath resolution
+- **No code duplication** between subsystems
+- **Clear architectural boundaries**
+- **Easier maintenance** and debugging
+- **Backward compatibility** maintained
+
+### Usage Pattern:
+```python
+# zLoader uses zParser for path resolution
+zVaFile_fullpath, zVaFilename = self.zcli.zparser.zPath_decoder(zPath)
+# zLoader handles file discovery and loading
+zFilePath_identified, zFile_extension = self.identify_zFile(zVaFilename, zVaFile_fullpath)
+```
 
 ---
 
@@ -188,4 +228,4 @@ target_block = target_file.get(target_block_name, {})
 
 ---
 
-**zLoader** is the foundation of zolo-zcli's file-based configuration system, enabling rapid development through efficient YAML/JSON file loading and intelligent caching.
+**zLoader** is the foundation of zolo-zcli's file-based configuration system, working seamlessly with zParser to provide efficient YAML/JSON file loading, intelligent caching, and robust path resolution.

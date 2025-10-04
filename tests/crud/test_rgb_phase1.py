@@ -5,7 +5,7 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
-from zCLI.subsystems.crud.crud_handler import zTables
+from zCLI.subsystems.zCRUD.crud_handler import zTables
 import sqlite3
 import tempfile
 

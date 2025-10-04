@@ -101,6 +101,65 @@ class ZParser:
 
         return zVaFile_fullpath, zFileName
 
+    def identify_zFile(self, filename, full_zFilePath):
+        """
+        Identify file type and find actual file path with extension.
+        
+        This method completes the path resolution process by:
+        1. Detecting file type (UI, Schema, Other) from filename prefix
+        2. Finding actual file with supported extension (.json, .yaml, .yml)
+        
+        Args:
+            filename: Base filename (e.g., "ui.manual")
+            full_zFilePath: Full path without extension
+            
+        Returns:
+            Tuple of (found_path, extension)
+            
+        Raises:
+            FileNotFoundError: If no file found with supported extensions
+        """
+        FILE_TYPES = [".json", ".yaml", ".yml"]
+
+        # Detect type from filename prefix
+        if filename.startswith("ui."):
+            self.logger.debug("File Type: zUI")
+            zFile_type = "zUI"
+        elif filename.startswith("schema."):
+            self.logger.debug("File Type: zSchema")
+            zFile_type = "zSchema"
+        else:
+            self.logger.debug("File Type: zOther")
+            zFile_type = "zOther"
+
+        # Try to find file with supported extensions
+        found_path = None
+        zFile_extension = None
+
+        for ext in FILE_TYPES:
+            candidate = full_zFilePath + ext
+            if os.path.exists(candidate):
+                found_path = candidate
+                zFile_extension = ext
+                self.logger.debug("zFile extension: %s", ext)
+                break
+
+        # If no match found, raise error
+        if not found_path and zFile_extension not in FILE_TYPES:
+            msg = f"No zFile found for base path: {full_zFilePath} (tried .json/.yaml/.yml)"
+            self.logger.error(msg)
+            raise FileNotFoundError(msg)
+
+        handle_zDisplay({
+            "event": "header",
+            "label": f"Type: {zFile_type}|{zFile_extension}",
+            "style": "single",
+            "color": "SUBLOADER",
+            "indent": 2,
+        })
+
+        return found_path, zFile_extension
+
 
 def zPath_decoder(zPath=None, zType=None, walker=None):
     """Wrapper function for ZParser.zPath_decoder"""

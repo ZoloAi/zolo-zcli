@@ -82,10 +82,11 @@ class ZLoader:
         })
         self.logger.debug("zFile_zObj: %s", zPath)
 
-        # Use zParser for path resolution (consolidated approach)
+        # Use zParser for path resolution and file discovery (consolidated approach)
         if self.zcli:
             # NEW: zCLI instance - use zParser subsystem
             zVaFile_fullpath, zVaFilename = self.zcli.zparser.zPath_decoder(zPath)
+            zFilePath_identified, zFile_extension = self.zcli.zparser.identify_zFile(zVaFilename, zVaFile_fullpath)
         else:
             # LEGACY: walker instance - create temporary zParser
             from zCLI.subsystems.zParser import ZParser
@@ -93,9 +94,7 @@ class ZLoader:
             temp_parser.zSession = self.zSession
             temp_parser.logger = self.logger
             zVaFile_fullpath, zVaFilename = temp_parser.zPath_decoder(zPath)
-
-        # Identify file and extension
-        zFilePath_identified, zFile_extension = self.identify_zFile(zVaFilename, zVaFile_fullpath)
+            zFilePath_identified, zFile_extension = temp_parser.identify_zFile(zVaFilename, zVaFile_fullpath)
         self.logger.debug("zFilePath_identified!\n%s", zFilePath_identified)
 
         # Cache key based on fully identified file path
@@ -126,57 +125,6 @@ class ZLoader:
     # ─────────────────────────────────────────────────────────────────────────
     
 
-    def identify_zFile(self, filename, full_zFilePath):
-        """
-        Identify file type and find actual file path with extension.
-        
-        Args:
-            filename: Base filename (e.g., "ui.manual")
-            full_zFilePath: Full path without extension
-            
-        Returns:
-            Tuple of (found_path, extension)
-        """
-        FILE_TYPES = [".json", ".yaml", ".yml"]
-
-        # Detect type
-        if filename.startswith("ui."):
-            self.logger.debug("File Type: zUI")
-            zFile_type = "zUI"
-        elif filename.startswith("schema."):
-            self.logger.debug("File Type: zSchema")
-            zFile_type = "zSchema"
-        else:
-            self.logger.debug("File Type: zOther")
-            zFile_type = "zOther"
-
-        # Extension
-        found_path = None
-        zFile_extension = None
-
-        for ext in FILE_TYPES:
-            candidate = full_zFilePath + ext
-            if os.path.exists(candidate):
-                found_path = candidate
-                zFile_extension = ext
-                self.logger.debug("zFile extension: %s", ext)
-                break
-
-        # If no match found
-        if not found_path and zFile_extension not in FILE_TYPES:
-            msg = f"No zFile found for base path: {full_zFilePath} (tried .json/.yaml/.yml)"
-            self.logger.error(msg)
-            raise FileNotFoundError(msg)
-
-        handle_zDisplay({
-            "event": "header",
-            "label": f"Type: {zFile_type}|{zFile_extension}",
-            "style": "single",
-            "color": "SUBLOADER",
-            "indent": 2,
-        })
-
-        return found_path, zFile_extension
 
     def load_zFile(self, full_path):
         """
@@ -300,8 +248,8 @@ def handle_zLoader(zPath=None, walker=None, session=None, zcli=None):
     temp_parser.logger = logger
     zVaFile_fullpath, zVaFilename = temp_parser.zPath_decoder(zPath)
 
-    # File analysis
-    zFilePath_identified, zFile_extension = identify_zFile(zVaFilename, zVaFile_fullpath)
+    # File discovery via zParser
+    zFilePath_identified, zFile_extension = temp_parser.identify_zFile(zVaFilename, zVaFile_fullpath)
     logger.debug("zFilePath_identified!\n%s", zFilePath_identified)
 
     zFile_raw = load_zFile(zFilePath_identified)
@@ -326,47 +274,6 @@ def handle_zLoader(zPath=None, walker=None, session=None, zcli=None):
 
 
 
-def identify_zFile(filename, full_zFilePath):
-    """Standalone file identification function."""
-    FILE_TYPES = [".json", ".yaml", ".yml"]
-
-    # Detect type
-    if filename.startswith("ui."):
-        logger.debug("File Type: zUI")
-        zFile_type = "zUI"
-    elif filename.startswith("schema."):
-        logger.debug("File Type: zSchema")
-        zFile_type = "zSchema"
-    else:
-        logger.debug("File Type: zOther")
-        zFile_type = "zOther"
-
-    # Extension
-    found_path = None
-
-    for ext in FILE_TYPES:
-        candidate = full_zFilePath + ext
-        if os.path.exists(candidate):
-            found_path = candidate
-            zFile_extension = ext
-            logger.debug("zFile extension: %s", ext)
-            break
-
-    # If no match found
-    if not found_path and zFile_extension not in FILE_TYPES:
-        msg = f"No zFile found for base path: {full_zFilePath} (tried .json/.yaml/.yml)"
-        logger.error(msg)
-        raise FileNotFoundError(msg)
-
-    handle_zDisplay({
-        "event": "header",
-        "label": f"Type: {zFile_type}|{zFile_extension}",
-        "style": "single",
-        "color": "SUBLOADER",
-        "indent": 2,
-    })
-
-    return found_path, zFile_extension
 
 
 def load_zFile(full_path):
