@@ -34,7 +34,7 @@ class ZParser:
             "indent": 2,
         })
 
-        zWorkspace = self.zSession.get("zWorkspace", os.getcwd())
+        zWorkspace = self.zSession.get("zWorkspace") or os.getcwd()
         
         if not zPath and zType == "zUI":
             # Handle UI mode path resolution
@@ -65,17 +65,23 @@ class ZParser:
             zPath_2_zFile = zPath_parts[:-1]
             logger.info("\nzPath_2_zFile: %s", zPath_2_zFile)
 
-            # Last 3 → file name
-            zFileName = ".".join(zPath_2_zFile[-2:])
+            # Extract file name (last 2 parts, or just last part if only 2 total)
+            if len(zPath_2_zFile) == 2:
+                zFileName = zPath_2_zFile[-1]  # Just the filename part
+            else:
+                zFileName = ".".join(zPath_2_zFile[-2:])  # Last 2 parts
             logger.info("zFileName: %s", zFileName)
 
             # Remaining parts (before filename)
-            zRelPath_parts = zPath_parts[:-3]
+            zRelPath_parts = zPath_parts[:-2]
             logger.info("zRelPath_parts: %s", zRelPath_parts)
 
             # Fork on symbol
             symbol = zRelPath_parts[0] if zRelPath_parts else None
             logger.info("symbol: %s", symbol)
+            
+            # Initialize zVaFile_basepath
+            zVaFile_basepath = ""
 
             if symbol == "@":
                 logger.info("↪ '@' → workspace-relative path")
