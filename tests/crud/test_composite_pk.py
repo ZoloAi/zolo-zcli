@@ -302,7 +302,12 @@ def test_composite_primary_key():
             print(f"[Cleanup] Removed test schema: {schema_path}")
 
 
+def main():
+    """Run composite primary key tests."""
+    return test_composite_primary_key()
+
+
 if __name__ == "__main__":
-    success = test_composite_primary_key()
-    sys.exit(0 if success else 1)
+    import sys
+    sys.exit(0 if main() else 1)
 

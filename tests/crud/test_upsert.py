@@ -22,7 +22,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from tests.fixtures import TestDatabase
+from tests.fixtures import TestDatabase, TEST_SCHEMA_PATH
 from zCLI.subsystems.zCRUD import handle_zCRUD
 
 
@@ -42,7 +42,7 @@ def test_upsert():
         result = handle_zCRUD({
             "action": "upsert",
             "tables": ["zUsers"],
-            "model": "tests/schemas/schema.test.yaml",
+            "model": TEST_SCHEMA_PATH,
             "fields": ["id", "username", "email", "password", "role"],
             "values": ["zU_test001", "testuser", "test@example.com", "pass123", "zUser"]
         })
@@ -54,7 +54,7 @@ def test_upsert():
         users = handle_zCRUD({
             "action": "read",
             "tables": ["zUsers"],
-            "model": "tests/schemas/schema.test.yaml",
+            "model": TEST_SCHEMA_PATH,
             "fields": ["id", "username", "email"],
             "where": {"id": "zU_test001"}
         })
@@ -71,7 +71,7 @@ def test_upsert():
         result = handle_zCRUD({
             "action": "upsert",
             "tables": ["zUsers"],
-            "model": "tests/schemas/schema.test.yaml",
+            "model": TEST_SCHEMA_PATH,
             "fields": ["id", "username", "email", "password", "role"],
             "values": ["zU_test001", "updated_user", "updated@example.com", "newpass", "zBuilder"]
         })
@@ -83,7 +83,7 @@ def test_upsert():
         users = handle_zCRUD({
             "action": "read",
             "tables": ["zUsers"],
-            "model": "tests/schemas/schema.test.yaml",
+            "model": TEST_SCHEMA_PATH,
             "fields": ["id", "username", "email", "role"],
             "where": {"id": "zU_test001"}
         })
@@ -103,7 +103,7 @@ def test_upsert():
         handle_zCRUD({
             "action": "create",
             "tables": ["zUsers"],
-            "model": "tests/schemas/schema.test.yaml",
+            "model": TEST_SCHEMA_PATH,
             "fields": ["id", "username", "email", "password", "role"],
             "values": ["zU_test002", "user2", "user2@example.com", "pass456", "zUser"]
         })
@@ -112,7 +112,7 @@ def test_upsert():
         result = handle_zCRUD({
             "action": "upsert",
             "tables": ["zUsers"],
-            "model": "tests/schemas/schema.test.yaml",
+            "model": TEST_SCHEMA_PATH,
             "fields": ["id", "username", "email", "password", "role"],
             "values": ["zU_test002", "should_not_update", "newemail@example.com", "newpass", "zAdmin"],
             "on_conflict": {
@@ -128,7 +128,7 @@ def test_upsert():
         users = handle_zCRUD({
             "action": "read",
             "tables": ["zUsers"],
-            "model": "tests/schemas/schema.test.yaml",
+            "model": TEST_SCHEMA_PATH,
             "fields": ["id", "username", "email", "role"],
             "where": {"id": "zU_test002"}
         })
@@ -149,7 +149,7 @@ def test_upsert():
         handle_zCRUD({
             "action": "create",
             "tables": ["zUsers"],
-            "model": "tests/schemas/schema.test.yaml",
+            "model": TEST_SCHEMA_PATH,
             "fields": ["id", "username", "email", "password", "role"],
             "values": ["zU_test004", "simple_user", "simple@example.com", "pass", "zUser"]
         })
@@ -158,7 +158,7 @@ def test_upsert():
         result = handle_zCRUD({
             "action": "upsert",
             "tables": ["zUsers"],
-            "model": "tests/schemas/schema.test.yaml",
+            "model": TEST_SCHEMA_PATH,
             "fields": ["id", "username", "email", "password", "role"],
             "values": ["zU_test004", "updated_simple", "simple@example.com", "newpass", "zAdmin"]
         })
@@ -170,7 +170,7 @@ def test_upsert():
         users = handle_zCRUD({
             "action": "read",
             "tables": ["zUsers"],
-            "model": "tests/schemas/schema.test.yaml",
+            "model": TEST_SCHEMA_PATH,
             "fields": ["id", "username", "role"],
             "where": {"id": "zU_test004"}
         })
@@ -189,7 +189,7 @@ def test_upsert():
             result = handle_zCRUD({
                 "action": "upsert",
                 "tables": ["zUsers"],
-                "model": "tests/schemas/schema.test.yaml",
+                "model": TEST_SCHEMA_PATH,
                 "fields": ["id", "username", "email", "password", "role"],
                 "values": ["zU_batch", f"batch_user_v{i}", "batch@example.com", "pass", "zUser"]
             })
@@ -199,7 +199,7 @@ def test_upsert():
         users = handle_zCRUD({
             "action": "read",
             "tables": ["zUsers"],
-            "model": "tests/schemas/schema.test.yaml",
+            "model": TEST_SCHEMA_PATH,
             "fields": ["id", "username"],
             "where": {"id": "zU_batch"}
         })
@@ -217,7 +217,7 @@ def test_upsert():
         result = handle_zCRUD({
             "action": "upsert",
             "tables": ["zUsers"],
-            "model": "tests/schemas/schema.test.yaml",
+            "model": TEST_SCHEMA_PATH,
             "fields": ["id", "username", "email", "password", "role"],
             "values": ["zU_invalid", "invaliduser", "not-an-email", "pass1234", "zUser"]
         })
@@ -245,13 +245,19 @@ def test_upsert():
         return True
 
 
-if __name__ == "__main__":
+def main():
+    """Run all UPSERT tests."""
     try:
         success = test_upsert()
-        sys.exit(0 if success else 1)
+        return success
     except Exception as e:
         print(f"\n[X] Test failed with error: {e}")
         import traceback
         traceback.print_exc()
-        sys.exit(1)
+        return False
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(0 if main() else 1)
 

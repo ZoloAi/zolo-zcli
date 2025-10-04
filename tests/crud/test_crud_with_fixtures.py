@@ -164,18 +164,22 @@ def test_create_read_update_delete():
     # Database automatically cleaned up when exiting context
 
 
-if __name__ == "__main__":
+def main():
+    """Run CRUD with fixtures tests."""
     print("\n" + "=" * 70)
     print("[EXAMPLE] CRUD Test with Fixtures Template")
     print("=" * 70)
     print("\nThis demonstrates the pattern for self-contained tests:")
-    print("  1. Create test database from schema.test.yaml")
+    print("  1. Create test database from test_schema.yaml")
     print("  2. Run test operations")
     print("  3. Verify results")
     print("  4. Automatic cleanup")
     print("=" * 70)
     
-    success = test_create_read_update_delete()
-    
-    sys.exit(0 if success else 1)
+    return test_create_read_update_delete()
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(0 if main() else 1)
 

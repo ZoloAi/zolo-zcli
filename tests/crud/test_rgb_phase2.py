@@ -232,7 +232,8 @@ def test_alter_table_integration():
         if os.path.exists(db_path):
             os.unlink(db_path)
 
-if __name__ == "__main__":
+def main():
+    """Run all RGB Phase 2 tests."""
     print("🧪 Testing RGB Phase 2 - ALTER TABLE Integration")
     print("=" * 60)
     
@@ -243,6 +244,13 @@ if __name__ == "__main__":
         print("✅ ALTER TABLE operations integrated with RGB tracking")
         print("🌈 Full ALTER TABLE support operational!")
         print("📊 Migration history with RGB impact tracking working!")
+        return True
     else:
         print("\n❌ Phase 2 tests failed!")
         print("Check the implementation and try again")
+        return False
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(0 if main() else 1)

@@ -354,7 +354,8 @@ def test_comprehensive_rgb_system():
         if os.path.exists(db_path):
             os.unlink(db_path)
 
-if __name__ == "__main__":
+def main():
+    """Run all RGB Phase 3 tests."""
     print("🧪 Testing RGB Phase 3 - Advanced Features")
     print("=" * 60)
     
@@ -376,6 +377,13 @@ if __name__ == "__main__":
         print("✅ Migration suggestions functional!")
         print("🌈 Complete quantum weak nuclear force system operational!")
         print("🚀 zCLI v1.3.0 ready for release!")
+        return True
     else:
         print("\n❌ Phase 3 tests failed!")
         print("Check the implementation and try again")
+        return False
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(0 if main() else 1)

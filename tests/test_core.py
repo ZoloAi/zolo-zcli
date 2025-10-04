@@ -184,14 +184,13 @@ def test_single_instance_session_isolation():
         "funcs": zcli.funcs,
         "display": zcli.display,
         "zparser": zcli.zparser,
-        "crumbs": zcli.crumbs,
         "socket": zcli.socket,
         "dialog": zcli.dialog,
         "wizard": zcli.wizard,
         "open": zcli.open,
-        "parser": zcli.parser,
         "shell": zcli.shell,
-        "executor": zcli.executor,
+        "auth": zcli.auth,
+        "loader": zcli.loader,
     }
     
     for name, subsystem in subsystems.items():
@@ -203,9 +202,8 @@ def test_single_instance_session_isolation():
     # Test 1.3: Subsystems that track walker/session use the correct one
     print("\n[Check] Testing subsystem session references...")
     
-    # Check subsystems that have zSession attribute
+    # Check subsystems that have zSession attribute (crumbs is Walker-specific, not in zCLI)
     session_aware_subsystems = {
-        "crumbs": zcli.crumbs,
         "dialog": zcli.dialog,
         "funcs": zcli.funcs,
     }
@@ -286,23 +284,23 @@ def test_multi_instance_session_isolation():
     zcli2.session["test_marker"] = "instance_2"
     zcli3.session["test_marker"] = "instance_3"
     
-    # Verify each subsystem sees its own instance's session
+    # Verify each subsystem sees its own instance's session (test dialog instead of crumbs)
     tester.assert_equal(
-        zcli1.crumbs.zSession.get("test_marker"),
+        zcli1.dialog.zSession.get("test_marker"),
         "instance_1",
-        "Instance 1's crumbs subsystem sees instance 1's session"
+        "Instance 1's dialog subsystem sees instance 1's session"
     )
     
     tester.assert_equal(
-        zcli2.crumbs.zSession.get("test_marker"),
+        zcli2.dialog.zSession.get("test_marker"),
         "instance_2",
-        "Instance 2's crumbs subsystem sees instance 2's session"
+        "Instance 2's dialog subsystem sees instance 2's session"
     )
     
     tester.assert_equal(
-        zcli3.crumbs.zSession.get("test_marker"),
+        zcli3.dialog.zSession.get("test_marker"),
         "instance_3",
-        "Instance 3's crumbs subsystem sees instance 3's session"
+        "Instance 3's dialog subsystem sees instance 3's session"
     )
     
     # Test 2.3: Modifying one instance's session doesn't affect others
@@ -363,9 +361,9 @@ def test_session_persistence_through_operations():
     print("\n[Check] Verifying subsystems see updated session...")
     
     tester.assert_equal(
-        zcli.crumbs.zSession.get("test_data", {}).get("key"),
+        zcli.dialog.zSession.get("test_data", {}).get("key"),
         "value",
-        "Crumbs subsystem sees updated session data"
+        "Dialog subsystem sees updated session data"
     )
     
     tester.assert_equal(

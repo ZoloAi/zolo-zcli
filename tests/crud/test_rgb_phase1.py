@@ -193,7 +193,8 @@ def test_rgb_updates():
         if os.path.exists(db_path):
             os.unlink(db_path)
 
-if __name__ == "__main__":
+def main():
+    """Run all RGB Phase 1 tests."""
     print("🧪 Testing RGB Phase 1 - Column Auto-Addition")
     print("=" * 50)
     
@@ -213,6 +214,13 @@ if __name__ == "__main__":
         print("\n🎉 Phase 1.3 tests passed!")
         print("✅ RGB columns, zMigrations table, and RGB updates working correctly")
         print("🌈 Quantum weak nuclear force system operational!")
+        return True
     else:
         print("\n❌ Phase 1.3 tests failed!")
         print("Check the implementation and try again")
+        return False
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(0 if main() else 1)

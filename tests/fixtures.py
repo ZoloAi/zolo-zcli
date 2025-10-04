@@ -17,12 +17,12 @@ from pathlib import Path
 
 # Test database location
 TEST_DB_PATH = os.path.join(os.path.dirname(__file__), "test_data.db")
-TEST_SCHEMA_PATH = os.path.join(os.path.dirname(__file__), "schemas/schema.test.yaml")
+TEST_SCHEMA_PATH = os.path.join(os.path.dirname(__file__), "schemas/test_schema.yaml")
 
 
 def setup_test_database():
     """
-    Create test database from schema.test.yaml.
+    Create test database from test_schema.yaml.
     
     Returns:
         str: Path to test database

@@ -23,7 +23,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from tests.fixtures import TestDatabase
+from tests.fixtures import TestDatabase, TEST_SCHEMA_PATH
 from zCLI.subsystems.zCRUD import handle_zCRUD
 import datetime
 
@@ -49,7 +49,7 @@ def test_advanced_where():
         result = handle_zCRUD({
             "action": "read",
             "tables": ["zUsers"],
-            "model": "tests/schemas/schema.test.yaml",
+            "model": TEST_SCHEMA_PATH,
             "fields": ["username", "role"],
             "where": {"id": {">": "zU_00000002"}}
         })
@@ -61,7 +61,7 @@ def test_advanced_where():
         result = handle_zCRUD({
             "action": "read",
             "tables": ["zUsers"],
-            "model": "tests/schemas/schema.test.yaml",
+            "model": TEST_SCHEMA_PATH,
             "fields": ["username"],
             "where": {"id": {">=": "zU_00000002"}}
         })
@@ -73,7 +73,7 @@ def test_advanced_where():
         result = handle_zCRUD({
             "action": "read",
             "tables": ["zUsers"],
-            "model": "tests/schemas/schema.test.yaml",
+            "model": TEST_SCHEMA_PATH,
             "fields": ["username", "role"],
             "where": {"role": {"!=": "zAdmin"}}
         })
@@ -89,7 +89,7 @@ def test_advanced_where():
         result = handle_zCRUD({
             "action": "read",
             "tables": ["zUsers"],
-            "model": "tests/schemas/schema.test.yaml",
+            "model": TEST_SCHEMA_PATH,
             "fields": ["username", "role"],
             "where": {"role": ["zAdmin", "zBuilder"]}
         })
@@ -107,7 +107,7 @@ def test_advanced_where():
         result = handle_zCRUD({
             "action": "read",
             "tables": ["zUsers"],
-            "model": "tests/schemas/schema.test.yaml",
+            "model": TEST_SCHEMA_PATH,
             "fields": ["username", "email"],
             "where": {"email": {"LIKE": "%test%"}}
         })
@@ -126,7 +126,7 @@ def test_advanced_where():
         handle_zCRUD({
             "action": "create",
             "tables": ["zUsers"],
-            "model": "tests/schemas/schema.test.yaml",
+            "model": TEST_SCHEMA_PATH,
             "fields": ["username", "email", "password", "role"],
             "values": ["null_test", "null@test.com", "pass123", "zUser"]
         })
@@ -135,7 +135,7 @@ def test_advanced_where():
         result = handle_zCRUD({
             "action": "read",
             "tables": ["zUsers"],
-            "model": "tests/schemas/schema.test.yaml",
+            "model": TEST_SCHEMA_PATH,
             "fields": ["username", "email"],
             "where": {"email": {"IS NOT": None}}
         })
@@ -151,7 +151,7 @@ def test_advanced_where():
         result = handle_zCRUD({
             "action": "read",
             "tables": ["zUsers"],
-            "model": "tests/schemas/schema.test.yaml",
+            "model": TEST_SCHEMA_PATH,
             "fields": ["username", "role"],
             "where": {
                 "OR": [
@@ -172,7 +172,7 @@ def test_advanced_where():
         result = handle_zCRUD({
             "action": "read",
             "tables": ["zUsers"],
-            "model": "tests/schemas/schema.test.yaml",
+            "model": TEST_SCHEMA_PATH,
             "fields": ["username", "role"],
             "where": {
                 "role": {"!=": "zUser"},
@@ -195,7 +195,7 @@ def test_advanced_where():
         all_users = handle_zCRUD({
             "action": "read",
             "tables": ["zUsers"],
-            "model": "tests/schemas/schema.test.yaml",
+            "model": TEST_SCHEMA_PATH,
             "fields": ["id"]
         })
         if len(all_users) >= 2:
@@ -206,7 +206,7 @@ def test_advanced_where():
             result = handle_zCRUD({
                 "action": "read",
                 "tables": ["zUsers"],
-                "model": "tests/schemas/schema.test.yaml",
+                "model": TEST_SCHEMA_PATH,
                 "fields": ["username", "id"],
                 "where": {"id": {"BETWEEN": [min_id, max_id]}}
             })
@@ -224,7 +224,7 @@ def test_advanced_where():
         updated = handle_zCRUD({
             "action": "update",
             "tables": ["zUsers"],
-            "model": "tests/schemas/schema.test.yaml",
+            "model": TEST_SCHEMA_PATH,
             "values": {"role": "zBuilder"},
             "where": {"username": {"LIKE": "%test%"}}
         })
@@ -240,7 +240,7 @@ def test_advanced_where():
         deleted = handle_zCRUD({
             "action": "delete",
             "tables": ["zUsers"],
-            "model": "tests/schemas/schema.test.yaml",
+            "model": TEST_SCHEMA_PATH,
             "where": {"username": {"IN": ["null_test"]}}
         })
         print(f"[DELETE] Deleted {deleted} user(s) with IN operator")
@@ -255,7 +255,7 @@ def test_advanced_where():
         result = handle_zCRUD({
             "action": "read",
             "tables": ["zUsers"],
-            "model": "tests/schemas/schema.test.yaml",
+            "model": TEST_SCHEMA_PATH,
             "fields": ["username", "id"],
             "where": {
                 "id": {">": "zU_00000001"},
@@ -302,7 +302,7 @@ def _create_test_data(db_path):
         handle_zCRUD({
             "action": "create",
             "tables": ["zUsers"],
-            "model": "tests/schemas/schema.test.yaml",
+            "model": TEST_SCHEMA_PATH,
             "fields": list(user.keys()),
             "values": list(user.values())
         })
@@ -310,13 +310,19 @@ def _create_test_data(db_path):
     print(f"[OK] Created {len(test_users)} test users")
 
 
-if __name__ == "__main__":
+def main():
+    """Run all WHERE clause tests."""
     try:
         success = test_advanced_where()
-        sys.exit(0 if success else 1)
+        return success
     except Exception as e:
         print(f"\n[X] Test failed with error: {e}")
         import traceback
         traceback.print_exc()
-        sys.exit(1)
+        return False
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(0 if main() else 1)
 

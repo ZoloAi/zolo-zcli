@@ -81,14 +81,12 @@ zUserApps:
     type: str
     fk: zUsers.id
     on_delete: CASCADE
-    source: test.schemas.schema.test.zUsers
     required: true
 
   app_id:
     type: str
     fk: zApps.id
     on_delete: CASCADE
-    source: test.schemas.schema.test.zApps
     required: true
 
   role:

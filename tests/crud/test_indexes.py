@@ -410,13 +410,18 @@ def test_indexes():
             print(f"[Cleanup] Removed test schema: {schema_path}")
 
 
-if __name__ == "__main__":
+def main():
+    """Run index management tests."""
     try:
-        success = test_indexes()
-        sys.exit(0 if success else 1)
+        return test_indexes()
     except Exception as e:
         print(f"\n[X] Test failed with error: {e}")
         import traceback
         traceback.print_exc()
-        sys.exit(1)
+        return False
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(0 if main() else 1)
 

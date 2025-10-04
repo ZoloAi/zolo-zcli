@@ -107,15 +107,11 @@ Walker (UI Mode):
 ───────────────────────────────────────────────────────────────
 
 Testing:
-  test run                       - Run core test suite (79 tests)
-  test crud                      - Run CRUD test suite only
-  test all                       - Run ALL tests (core + CRUD)
+  test run                       - Run all test suites (Core + CRUD + RGB)
   test session                   - Quick session isolation test
   
   Examples:
     test run
-    test crud
-    test all
     test session
 
 ───────────────────────────────────────────────────────────────

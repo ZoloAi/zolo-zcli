@@ -277,7 +277,7 @@ class CommandExecutor:
     
     def execute_test(self, parsed):
         """
-        Execute test commands like 'test run' or 'test session'.
+        Execute test commands using the unified test runner.
         
         Args:
             parsed: Parsed command dictionary
@@ -290,20 +290,48 @@ class CommandExecutor:
         
         action = parsed["action"]
         
-        if action == "run":
-            # Run the full test suite
-            logger.info("Running zCLI test suite...")
-            test_path = os.path.join(
+        # Find project root and test runner
+        # Strategy: Look for tests/ directory starting from current working directory
+        cwd = os.getcwd()
+        test_runner = None
+        
+        # First try: from current working directory
+        if os.path.exists(os.path.join(cwd, "tests", "run_tests.py")):
+            test_runner = os.path.join(cwd, "tests", "run_tests.py")
+        
+        # Second try: walk up from current directory to find tests/
+        elif not test_runner:
+            search_path = cwd
+            for _ in range(5):  # Search up to 5 levels
+                candidate = os.path.join(search_path, "tests", "run_tests.py")
+                if os.path.exists(candidate):
+                    test_runner = candidate
+                    break
+                parent = os.path.dirname(search_path)
+                if parent == search_path:  # Reached filesystem root
+                    break
+                search_path = parent
+        
+        # Third try: relative to this file (fallback)
+        if not test_runner:
+            test_runner = os.path.abspath(os.path.join(
                 os.path.dirname(__file__),
-                "../../tests/test_core.py"
-            )
+                "../../../tests/run_tests.py"
+            ))
+        
+        if action == "run":
+            # Run all tests using unified runner
+            logger.info("Running all zCLI test suites...")
+            
+            if not os.path.exists(test_runner):
+                return {"error": f"Test runner not found at: {test_runner}"}
             
             try:
                 result = subprocess.run(
-                    [sys.executable, test_path],
+                    [sys.executable, test_runner],
                     capture_output=True,
                     text=True,
-                    timeout=60
+                    timeout=120
                 )
                 
                 # Print the test output
@@ -320,97 +348,6 @@ class CommandExecutor:
             except Exception as e:
                 return {"error": f"Failed to run tests: {str(e)}"}
         
-        elif action == "crud":
-            # Run CRUD tests only
-            logger.info("Running CRUD test suite...")
-            crud_test_dir = os.path.join(
-                os.path.dirname(__file__),
-                "../../tests/crud"
-            )
-            
-            crud_tests = [
-                "test_validation.py",
-                "test_join.py",
-                "test_zApps_crud.py",
-                "test_direct_operations.py",
-                "test_migration.py",
-                "test_composite_pk.py",
-                "test_where.py",
-                "test_indexes.py",
-                "test_upsert.py",
-                "test_rgb_phase1.py",
-                "test_rgb_phase2.py",
-                "test_rgb_phase3.py"
-            ]
-            
-            print("\n[TEST] Running CRUD Test Suite...")
-            print("=" * 70)
-            
-            all_passed = True
-            for test_file in crud_tests:
-                test_path = os.path.join(crud_test_dir, test_file)
-                if not os.path.exists(test_path):
-                    print(f"[WARN] Test file not found: {test_file}")
-                    continue
-                
-                print(f"\n[>>] Running {test_file}...")
-                try:
-                    result = subprocess.run(
-                        [sys.executable, test_path],
-                        capture_output=True,
-                        text=True,
-                        timeout=60
-                    )
-                    
-                    print(result.stdout)
-                    if result.stderr:
-                        print(result.stderr)
-                    
-                    if result.returncode != 0:
-                        all_passed = False
-                        
-                except Exception as e:
-                    print(f"[X] Error running {test_file}: {e}")
-                    all_passed = False
-            
-            print("\n" + "=" * 70)
-            if all_passed:
-                return {"success": "All CRUD tests passed!"}
-            else:
-                return {"error": "Some CRUD tests failed. See output above."}
-        
-        elif action == "all":
-            # Run ALL tests (core + CRUD)
-            logger.info("Running ALL test suites...")
-            
-            print("\n[TEST] Running COMPLETE Test Suite (Core + CRUD)...")
-            print("=" * 70)
-            
-            # Run core tests first
-            print("\n[1/2] Running Core Tests...")
-            core_result = self.execute_test({"action": "run", "args": [], "options": {}})
-            
-            # Run CRUD tests
-            print("\n[2/2] Running CRUD Tests...")
-            crud_result = self.execute_test({"action": "crud", "args": [], "options": {}})
-            
-            # Summary
-            print("\n" + "=" * 70)
-            print("[SUMMARY] Complete Test Suite Results")
-            print("=" * 70)
-            
-            core_passed = "success" in core_result
-            crud_passed = "success" in crud_result
-            
-            print(f"Core Tests:  {'[PASS]' if core_passed else '[FAIL]'}")
-            print(f"CRUD Tests:  {'[PASS]' if crud_passed else '[FAIL]'}")
-            print("=" * 70)
-            
-            if core_passed and crud_passed:
-                return {"success": "All tests passed (Core + CRUD)!"}
-            else:
-                return {"error": "Some tests failed. See output above."}
-        
         elif action == "session":
             # Quick session test - verify current instance has unique session
             session_id = self.zcli.session.get("zS_id")
@@ -421,7 +358,7 @@ class CommandExecutor:
             }
         
         else:
-            return {"error": f"Unknown test action: {action}. Use: test run | test all | test crud | test session"}
+            return {"error": f"Unknown test action: {action}. Use: test run | test session"}
     
     def execute_auth(self, parsed):
         """
