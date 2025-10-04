@@ -7,9 +7,10 @@ from zCLI.subsystems.zDisplay import handle_zDisplay
 from zCLI.walker.zDispatch import ZDispatch
 from zCLI.walker.zMenu import ZMenu
 from zCLI.walker.zLink import ZLink
+from zCLI.walker.zCrumbs import zCrumbs
 
 # Legacy mode subsystems (imported lazily when needed)
-# - zSession, ZDisplay, zCrumbs, ZUtils, ZFunc, ZOpen
+# - zSession, ZDisplay, ZUtils, ZFunc, ZOpen
 
 
 class zWalker:
@@ -48,14 +49,13 @@ class zWalker:
         Creates walker-specific subsystems that need walker methods.
         """
         self.zcli = zcli
-        self.zSpark_obj = zcli.zSpark_obj
+        self.zSpark_obj = zcli.zspark_obj  # ← Fixed: use lowercase 'zspark_obj'
         
         # Use zCLI's core subsystems (single source of truth)
         self.logger = zcli.logger
         self.session = zcli.session
         # Also set zSession attribute for legacy subsystems that expect it
         self.zSession = zcli.session
-        self.zCrumbs = zcli.crumbs
         self.display = zcli.display
         self.func = zcli.funcs
         self.open = zcli.open
@@ -65,6 +65,7 @@ class zWalker:
         self.loader = zcli.loader
         
         # Create walker-specific subsystems (need access to walker methods like zBlock_loop)
+        self.zCrumbs = zCrumbs(self)  # ← Fixed: zCrumbs is Walker-specific, create it here
         self.dispatch = ZDispatch(self)
         self.menu = ZMenu(self)
         self.link = ZLink(self)
@@ -82,7 +83,6 @@ class zWalker:
         # Lazy imports for legacy mode only
         from zCLI.subsystems.zSession import zSession
         from zCLI.subsystems.zDisplay import ZDisplay
-        from zCLI.walker.zCrumbs import zCrumbs
         from zCLI.subsystems.zUtils import ZUtils
         from zCLI.subsystems.zFunc import ZFunc
         from zCLI.subsystems.zOpen import ZOpen

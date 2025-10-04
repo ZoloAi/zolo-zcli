@@ -82,10 +82,14 @@ class ZLoader:
         })
         self.logger.debug("zFile_zObj: %s", zPath)
 
+        # Determine if we should use session values (UI file loading)
+        # When zPath is None and session has zVaFilename, use session values
+        zType = "zUI" if not zPath and self.zSession.get("zVaFilename") else None
+
         # Use zParser for path resolution and file discovery (consolidated approach)
         if self.zcli:
             # NEW: zCLI instance - use zParser subsystem
-            zVaFile_fullpath, zVaFilename = self.zcli.zparser.zPath_decoder(zPath)
+            zVaFile_fullpath, zVaFilename = self.zcli.zparser.zPath_decoder(zPath, zType)
             zFilePath_identified, zFile_extension = self.zcli.zparser.identify_zFile(zVaFilename, zVaFile_fullpath)
         else:
             # LEGACY: walker instance - create temporary zParser
@@ -93,7 +97,7 @@ class ZLoader:
             temp_parser = ZParser()
             temp_parser.zSession = self.zSession
             temp_parser.logger = self.logger
-            zVaFile_fullpath, zVaFilename = temp_parser.zPath_decoder(zPath)
+            zVaFile_fullpath, zVaFilename = temp_parser.zPath_decoder(zPath, zType)
             zFilePath_identified, zFile_extension = temp_parser.identify_zFile(zVaFilename, zVaFile_fullpath)
         self.logger.debug("zFilePath_identified!\n%s", zFilePath_identified)
 
@@ -241,12 +245,15 @@ def handle_zLoader(zPath=None, walker=None, session=None, zcli=None):
         # FINAL FALLBACK: Use global session
         target_session = zSession
 
+    # Determine if we should use session values (UI file loading)
+    zType = "zUI" if not zPath and target_session.get("zVaFilename") else None
+
     # Use zParser for path resolution (consolidated approach)
     from zCLI.subsystems.zParser import ZParser
     temp_parser = ZParser()
     temp_parser.zSession = target_session
     temp_parser.logger = logger
-    zVaFile_fullpath, zVaFilename = temp_parser.zPath_decoder(zPath)
+    zVaFile_fullpath, zVaFilename = temp_parser.zPath_decoder(zPath, zType)
 
     # File discovery via zParser
     zFilePath_identified, zFile_extension = temp_parser.identify_zFile(zVaFilename, zVaFile_fullpath)

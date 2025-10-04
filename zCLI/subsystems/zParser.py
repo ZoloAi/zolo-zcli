@@ -21,10 +21,29 @@ class ZParser:
     - Expression evaluation and utilities
     """
     
-    def __init__(self, walker=None):
-        self.walker = walker
-        self.zSession = getattr(walker, "zSession", zSession)
-        self.logger = getattr(walker, "logger", logger) if walker else logger
+    def __init__(self, zcli_or_walker=None):
+        """
+        Initialize zParser.
+        
+        Args:
+            zcli_or_walker: zCLI instance (new) or walker instance (legacy) or None
+        """
+        # Detect what we received and get the session
+        if zcli_or_walker is None:
+            # No parent, use global session
+            self.walker = None
+            self.zSession = zSession
+            self.logger = logger
+        elif hasattr(zcli_or_walker, 'session') and hasattr(zcli_or_walker, 'crud'):
+            # NEW: zCLI instance (has 'session' and 'crud')
+            self.walker = None
+            self.zSession = zcli_or_walker.session  # ← Use 'session' attribute
+            self.logger = zcli_or_walker.logger
+        else:
+            # LEGACY: walker instance (has 'zSession')
+            self.walker = zcli_or_walker
+            self.zSession = getattr(zcli_or_walker, "zSession", zSession)
+            self.logger = getattr(zcli_or_walker, "logger", logger)
 
     def zPath_decoder(self, zPath=None, zType=None):
         """Resolve dotted paths to file paths."""

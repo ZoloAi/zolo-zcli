@@ -180,13 +180,31 @@ auth status                     # Show authentication status
 Launch Walker mode from Shell:
 
 ```bash
-# Walker commands
-walker load <ui_file>           # Load Walker with UI file
-walker load ui.main.yaml        # Load UI YAML file
-walker load @.menus.ui.main.yaml # Load with zPath (workspace-relative)
+# Walker command
+walker run                      # Launch Walker using session config
+
+# Configuration workflow
+session set zWorkspace /path/to/project
+session set zVaFilename ui.main.yaml
+session set zVaFile_path @
+session set zBlock Root
+walker run                      # Now launch Walker
 ```
 
-> **Note:** Walker integration is currently limited. The `walker load` command is recognized but full UI reloading from shell is not yet implemented.
+**How it works:**
+1. Configure session with required Walker fields
+2. Run `walker run` to launch Walker UI mode
+3. Walker uses the same session (zS_id, zAuth, zWorkspace)
+4. Type `exit` in Walker to return to Shell
+5. Shell resumes with the same session
+
+**Required Session Fields:**
+- `zWorkspace` - Project workspace path
+- `zVaFilename` - UI YAML filename (e.g., `ui.main.yaml`)
+- `zVaFile_path` - UI file path (default: `@`)
+- `zBlock` - Starting block name (default: `Root`)
+
+> **Note:** Walker and Shell share the same session, enabling seamless mode switching with preserved authentication and context.
 
 ---
 
@@ -245,4 +263,5 @@ Shell provides comprehensive error handling:
 - **Detailed Messages:** Clear error descriptions for troubleshooting
 - **Continue Operation:** Shell continues running after errors
 - **Logging:** All errors are logged for debugging
+
 

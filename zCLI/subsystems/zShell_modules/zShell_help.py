@@ -65,10 +65,14 @@ Authentication:
 Session Management:
   session info                    - Show session information
   session set <key> <value>       - Set session value
+  session get <key>               - Get session value
   
   Examples:
     session info
-    session set zMode Terminal
+    session set zWorkspace /path/to/project
+    session set zVaFilename ui.main.yaml
+    session set zVaFile_path @
+    session set zBlock Root
 
 ───────────────────────────────────────────────────────────────
 
@@ -82,10 +86,23 @@ File & URL Operations:
 ───────────────────────────────────────────────────────────────
 
 Walker (UI Mode):
-  walker load <ui_file>           - Load UI file for menu mode
+  walker run                      - Launch Walker from session config
+  
+  Required session fields:
+    - zWorkspace                  - Project workspace path
+    - zVaFilename                 - UI YAML filename
+    - zVaFile_path                - UI file path (default: @)
+    - zBlock                      - Starting block (default: Root)
   
   Examples:
-    walker load ui.zCloud.yaml
+    # Configure session first
+    session set zWorkspace /path/to/project
+    session set zVaFilename ui.main.yaml
+    session set zVaFile_path @
+    session set zBlock Root
+    
+    # Then launch Walker
+    walker run
 
 ───────────────────────────────────────────────────────────────
 
@@ -152,6 +169,31 @@ Session Management Help:
     
   session set <key> <value>
     Set a session variable
+    
+  session get <key>
+    Get a session variable value
+""",
+            "walker": """
+Walker Mode Help:
+
+  walker run
+    Launch Walker UI mode using session configuration
+    
+  Required session fields:
+    - zWorkspace      Project workspace path
+    - zVaFilename     UI YAML filename (e.g., ui.main.yaml)
+    - zVaFile_path    UI file path (default: @)
+    - zBlock          Starting block (default: Root)
+  
+  Example workflow:
+    1. session set zWorkspace /path/to/project
+    2. session set zVaFilename ui.main.yaml
+    3. session set zVaFile_path @
+    4. session set zBlock Root
+    5. walker run
+  
+  The Walker will use your current session (same zS_id, zAuth, etc.)
+  Type 'exit' in Walker to return to Shell mode.
 """,
             "test": """
 Testing Help:
