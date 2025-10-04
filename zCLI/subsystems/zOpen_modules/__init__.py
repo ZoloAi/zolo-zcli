@@ -1,24 +1,15 @@
-# zCLI/subsystems/zOpen/__init__.py — zOpen Package Exports
+# zCLI/subsystems/zOpen_modules/__init__.py — zOpen Registry Package
 # ───────────────────────────────────────────────────────────────
 """
-zOpen Operations Package
+zOpen Registry Package
 
-This package provides file and URL opening operations for zCLI:
-- URL: Open HTTP/HTTPS URLs with intelligent fallbacks
-- File: Open local files (HTML, text, etc.)
-- zPath: Resolve and open zPath references
-
-Architecture:
-- zOpen_handler.py: Core infrastructure (ZOpen class, session management)
+This package serves as a registry for zOpen specialized modules:
 - zOpen_url.py: URL opening with browser/curl fallbacks
-- zOpen_file.py: Local file opening
+- zOpen_file.py: Local file opening operations
 - zOpen_path.py: zPath resolution and opening
-"""
 
-from .zOpen_handler import (
-    ZOpen,
-    handle_zOpen
-)
+Note: The main ZOpen class and handle_zOpen function are now in zOpen.py
+"""
 
 from .zOpen_url import (
     zOpen_url,
@@ -38,10 +29,6 @@ from .zOpen_path import (
 )
 
 __all__ = [
-    # Main class and handler
-    "ZOpen",
-    "handle_zOpen",
-    
     # URL operations
     "zOpen_url",
     "zOpen_url_browser", 

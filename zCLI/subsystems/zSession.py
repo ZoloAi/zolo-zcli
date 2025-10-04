@@ -1,30 +1,6 @@
 import requests
-import hashlib
-import secrets
 from zCLI.utils.logger import logger
 from zCLI.subsystems.zDisplay import handle_zDisplay
-
-
-def ensure_hex_password(password: str) -> str:
-    """
-    Self-contained password hashing function.
-    Converts password to hex hash if not already hex.
-    
-    Args:
-        password: Password string to process
-        
-    Returns:
-        str: Hex-encoded password hash
-    """
-    if not password:
-        return ""
-    
-    # If already hex-like (even length, only hex chars), return as-is
-    if len(password) % 2 == 0 and all(c in '0123456789abcdefABCDEF' for c in password):
-        return password.lower()
-    
-    # Hash the password and return hex
-    return hashlib.sha256(password.encode('utf-8')).hexdigest()
 
 def create_session():
     """
@@ -101,9 +77,6 @@ def zSession_Login(data, url=None, session=None):
 
     # Include current session mode so server can distinguish CLI vs Web
     data.setdefault("mode", target_session.get("zMode"))
-
-    if "password" in data:
-        data["password"] = ensure_hex_password(data["password"])
 
     logger.info("[>>] Sending request to %s", url)
     logger.debug("└── Payload: %s", data)

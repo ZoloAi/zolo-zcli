@@ -83,32 +83,8 @@ def zCreate_sqlite(zRequest, zForm, zData, walker=None):
             fields.append(f_name)
             values.append(default_val)
 
-    # Normalize passwords using walker's utils if present
-    logger.debug("Password normalization check: walker=%s, has_utils=%s", walker, hasattr(walker, "utils") if walker else False)
-    if walker and hasattr(walker, "utils"):
-        logger.debug("Starting password normalization for fields: %s", fields)
-        normalized_values = []
-        for f, v in zip(fields, values):
-            fname = f.lower()
-            logger.debug("Checking field '%s' (lower: '%s') for password normalization", f, fname)
-            if any(token in fname for token in ["password", "pwd", "pass_hash"]):
-                logger.debug("Normalizing password field '%s' with value '%s'", f, v)
-                if hasattr(walker.utils, "ensure_hex_password"):
-                    v = walker.utils.ensure_hex_password(str(v) if v is not None else "")
-                    logger.debug("Password normalized via walker.utils")
-                else:
-                    # Fallback to self-contained function
-                    try:
-                        from zCLI.subsystems.zSession import ensure_hex_password
-                        v = ensure_hex_password(str(v) if v is not None else "")
-                        logger.debug("Password normalized via self-contained function")
-                    except Exception as e:
-                        logger.error("Password normalization failed: %s", e)
-                logger.debug("Final password value: '%s'", v)
-            normalized_values.append(v)
-        values = normalized_values
-    else:
-        logger.debug("Password normalization skipped: walker=%s, has_utils=%s", walker, hasattr(walker, "utils") if walker else False)
+    # Password normalization removed - zCRUD should handle raw data
+    # Authentication and password hashing should be handled by zCloud/zAuth
 
     logger.info("Preparing to insert row into table: %s", table)
     logger.info("Fields: %s", fields)

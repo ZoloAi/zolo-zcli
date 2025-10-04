@@ -42,8 +42,8 @@ class CommandExecutor:
             return None
         
         try:
-            # Parse the command
-            parsed = self.zcli.parser.parse_command(command)
+            # Parse the command using zParser
+            parsed = self.zcli.zparser.parse_command(command)
             
             # Check for parsing errors
             if "error" in parsed:

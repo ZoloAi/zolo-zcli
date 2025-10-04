@@ -2,7 +2,6 @@
 # ───────────────────────────────────────────────────────────────
 """Core zCLI Engine - Single source of truth for all subsystems."""
 
-import os
 from zCLI.utils.logger import logger
 from zCLI.subsystems.zSession import create_session
 
@@ -21,7 +20,6 @@ from zCLI.subsystems.zLoader import ZLoader
 
 
 # Import zCore components
-from zCLI.zCore.CommandParser import CommandParser
 from zCLI.zCore.Shell import InteractiveShell
 from zCLI.zCore.CommandExecutor import CommandExecutor
 
@@ -49,13 +47,22 @@ class zCLI:
             # Shell mode
             cli = zCLI()
 
-            # Walker mode
+            # Walker mode with complete zSpark configuration
             cli = zCLI({
-                "zVaFilename": "ui.main.yaml",
-                "zBlock": "MainMenu"
+                "zWorkspace": "/path/to/project",  # Project root directory
+                "zMode": "UI",                     # UI mode for Walker interface
+                "zVaFilename": "ui.main.yaml",     # UI menu YAML file
+                "zVaFile_path": "menus",           # UI file directory
+                "zBlock": "MainMenu",              # Starting menu block
+                "plugins": [                        # Optional plugin paths
+                    "plugins.custom_utils",
+                    "plugins.extra_commands" 
+                ],
+                "debug": True,                     # Enable debug logging
+                "cache": True                      # Enable session caching
             })
         """
-        self.zSpark_obj = zSpark_obj or {}
+        self.zspark_obj = zSpark_obj or {}
 
         # Initialize logger
         self.logger = logger
@@ -76,7 +83,6 @@ class zCLI:
         self.open = ZOpen(self)
         self.auth = ZAuth(self)
         self.loader = ZLoader(self)
-        self.parser = CommandParser(self)
 
         # Initialize shell and command executor
         self.shell = InteractiveShell(self)
@@ -89,7 +95,7 @@ class zCLI:
         self._load_plugins()
 
         # Determine interface mode (needed for session initialization)
-        self.ui_mode = bool(self.zSpark_obj.get("zVaFilename"))
+        self.ui_mode = bool(self.zspark_obj.get("zVaFilename"))
 
         # Initialize session
         self._init_session()
@@ -99,12 +105,12 @@ class zCLI:
     def _load_plugins(self):
         """Load utility plugins from zSpark_obj if provided."""
         try:
-            plugin_paths = self.zSpark_obj.get("plugins") or []
+            plugin_paths = self.zspark_obj.get("plugins") or []
             if isinstance(plugin_paths, (list, tuple)):
                 self.utils.load_plugins(plugin_paths)
             elif isinstance(plugin_paths, str):
                 self.utils.load_plugins([plugin_paths])
-        except Exception as e:
+        except (ImportError, AttributeError, TypeError) as e:
             logger.warning("Failed to load plugins: %s", e)
 
     def _init_session(self):
@@ -119,10 +125,10 @@ class zCLI:
         """
         # Set session ID - always required
         self.session["zS_id"] = self.utils.generate_id("zS")
-        
+
         # Detect machine type and capabilities
         self.session["zMachine"] = self.utils.detect_machine_type()
-        
+
         # Set zMode based on interface mode
         if self.ui_mode:
             # Walker mode - zMode will be set by zWalker from config
@@ -169,21 +175,9 @@ class zCLI:
         """
         if self.ui_mode:
             logger.info("Starting zCLI in UI mode via zWalker...")
-            return self._run_walker()
-        else:
-            logger.info("Starting zCLI in interactive shell mode...")
-            return self.run_interactive()
+            from zCLI.walker.zWalker import zWalker  # pylint: disable=import-outside-toplevel
+            walker = zWalker(self)  # Pass zCLI instance
+            return walker.run()
 
-    def _run_walker(self):
-        """
-        Run in UI/menu navigation mode using zWalker.
-        zWalker receives the zCLI instance and uses its subsystems.
-        
-        Returns:
-            Walker execution result
-        """
-        from zCLI.walker.zWalker import zWalker
-        walker = zWalker(self)  # Pass zCLI instance
-        return walker.run()
-
-
+        logger.info("Starting zCLI in interactive shell mode...")
+        return self.run_interactive()

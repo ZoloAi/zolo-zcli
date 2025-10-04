@@ -27,7 +27,7 @@ from .zParser import ZParser
 from .zSchema import load_schema_ref
 from .zSession import zSession, create_session
 from .zSocket import ZSocket
-from .zOpen import ZOpen
+from .zOpen import ZOpen, handle_zOpen
 from .zUtils import ZUtils
 from .zAuth import ZAuth, check_authentication
 from .zMigrate import ZMigrate, auto_migrate_schema, detect_schema_changes
@@ -50,6 +50,7 @@ __all__ = [
     "create_session",
     "ZSocket",
     "ZOpen",
+    "handle_zOpen",
     "ZUtils",
     "ZAuth",
     "check_authentication",
