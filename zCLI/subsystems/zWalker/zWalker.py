@@ -193,8 +193,32 @@ class zWalker:
         }.items():
             logger.info("  %s: %s", k, v)
 
-        zFile_parsed = self.loader.handle()
-        logger.debug("zFile parsed:\n%s", zFile_parsed)
+        # Load and parse UI file with enhanced validation
+        zFile_raw = self.loader.handle()
+        logger.debug("zFile raw data:\n%s", zFile_raw)
+        
+        # Use shared zVaFile parsing for UI files
+        if hasattr(self, 'zcli') and self.zcli:
+            # NEW: Use zCLI's zParser for enhanced UI parsing
+            zFile_parsed_result = self.zcli.zparser.parse_zva_file(zFile_raw, "zUI", session=self.session)
+            
+            # Extract the actual UI data from parsed result
+            if "zblocks" in zFile_parsed_result:
+                # Convert back to legacy format for Walker compatibility
+                zFile_parsed = {}
+                for zblock_name, zblock_data in zFile_parsed_result["zblocks"].items():
+                    if "items" in zblock_data:
+                        zFile_parsed[zblock_name] = zblock_data["items"]
+                    else:
+                        zFile_parsed[zblock_name] = zblock_data
+            else:
+                # Fallback to raw data if parsing failed
+                zFile_parsed = zFile_raw
+        else:
+            # LEGACY: Use basic parsing (fallback)
+            zFile_parsed = zFile_raw
+            
+        logger.debug("zFile parsed with validation:\n%s", zFile_parsed)
 
         # Pulls active zBlock from zCrumbs
         active_zBlock_dict = zFile_parsed[self.session["zBlock"]]

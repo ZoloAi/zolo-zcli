@@ -21,9 +21,9 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 from tests.fixtures import TestDatabase, count_rows, TEST_SCHEMA_PATH
-from zCLI.subsystems.zCRUD.zCRUD_modules.crud_delete import zDelete_sqlite
-from zCLI.subsystems.zCRUD.zCRUD_modules.crud_update import zUpdate
-from zCLI.subsystems.zCRUD.zCRUD_modules.crud_create import zCreate_sqlite
+from zCLI.subsystems.zData.zData_modules.operations import (
+    zDelete_sqlite, zUpdate, zCreate_sqlite
+)
 import sqlite3
 
 

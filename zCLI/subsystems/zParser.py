@@ -9,6 +9,10 @@ from zCLI.subsystems.zSession import zSession
 from .zParser_modules.zParser_zPath import zPath_decoder as zPath_decoder_func, identify_zFile as identify_zFile_func
 from .zParser_modules.zParser_commands import parse_command as parse_command_func
 from .zParser_modules.zParser_utils import zExpr_eval, parse_dotted_path, handle_zRef, handle_zParser
+from .zParser_modules.zParser_zVaFile import (
+    parse_zva_file, validate_zva_structure, extract_zva_metadata,
+    parse_ui_file, parse_schema_file, validate_ui_structure, validate_schema_structure
+)
 
 
 class ZParser:
@@ -72,6 +76,35 @@ class ZParser:
     def handle_zParser(self, zFile_raw, walker=None):
         """Placeholder function for zParser handler."""
         return handle_zParser(zFile_raw, walker)
+
+    # zVaFile parsing methods
+    def parse_zva_file(self, data, file_type, file_path=None, session=None):
+        """Parse zVaFile with type-specific logic and validation."""
+        return parse_zva_file(data, file_type, file_path, session)
+
+    def validate_zva_structure(self, data, file_type, file_path=None):
+        """Validate zVaFile structure based on type."""
+        return validate_zva_structure(data, file_type, file_path)
+
+    def extract_zva_metadata(self, data, file_type):
+        """Extract metadata from zVaFiles."""
+        return extract_zva_metadata(data, file_type)
+
+    def parse_ui_file(self, data, file_path=None, session=None):
+        """Parse UI file with UI-specific logic and validation."""
+        return parse_ui_file(data, file_path, session)
+
+    def parse_schema_file(self, data, file_path=None, session=None):
+        """Parse schema file with schema-specific logic and validation."""
+        return parse_schema_file(data, file_path, session)
+
+    def validate_ui_structure(self, data, file_path=None):
+        """Validate UI file structure."""
+        return validate_ui_structure(data, file_path)
+
+    def validate_schema_structure(self, data, file_path=None):
+        """Validate schema file structure."""
+        return validate_schema_structure(data, file_path)
 
 
 # Export main components
