@@ -159,6 +159,16 @@ def run_rgb_tests():
     return failed == 0
 
 
+def run_walker_tests():
+    """Run zWalker test suite."""
+    print("\n" + "="*80)
+    print("WALKER TEST SUITE")
+    print("="*80)
+    
+    from tests import test_walker
+    return run_test_suite(test_walker, "zWalker Tests")
+
+
 def run_all_tests():
     """Run all test suites."""
     print("\n" + "🧪 " * 40)
@@ -169,6 +179,7 @@ def run_all_tests():
         'Core': run_core_tests(),
         'CRUD': run_crud_tests(),
         'RGB': run_rgb_tests(),
+        'Walker': run_walker_tests(),
     }
     
     print("\n" + "="*80)
@@ -197,6 +208,7 @@ def main():
     parser.add_argument('--core', action='store_true', help='Run core tests only')
     parser.add_argument('--crud', action='store_true', help='Run CRUD tests only')
     parser.add_argument('--rgb', action='store_true', help='Run RGB tests only')
+    parser.add_argument('--walker', action='store_true', help='Run Walker tests only')
     parser.add_argument('--verbose', '-v', action='store_true', help='Verbose output')
     
     args = parser.parse_args()
@@ -207,6 +219,8 @@ def main():
         success = run_crud_tests()
     elif args.rgb:
         success = run_rgb_tests()
+    elif args.walker:
+        success = run_walker_tests()
     else:
         success = run_all_tests()
     

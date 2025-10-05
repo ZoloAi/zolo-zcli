@@ -1,0 +1,83 @@
+# zCLI/UI/ui.test.yaml
+# Test UI file for zWalker navigation tests
+
+Root:
+  zMenu:
+    - MainMenu
+    - Settings
+    - $SubMenuLink
+    - stop
+
+MainMenu:
+  zMenu:
+    - ViewUsers
+    - CreateUser
+    - DeleteUser
+
+Settings:
+  zMenu:
+    - Config
+    - About
+
+SubMenuLink:
+  zMenu:
+    - SubOption1
+    - SubOption2
+    - DeepLink
+
+DeepLink:
+  zMenu:
+    - DeepOption1
+    - DeepOption2
+
+ViewUsers:
+  zDisplay:
+    message: "Viewing all users"
+    type: info
+
+CreateUser:
+  zDialog:
+    model: "@.schemas.test_schema.zUsers"
+    fields: ["username", "email", "password", "role"]
+    onSubmit:
+      action: create
+      model: "@.schemas.test_schema.zUsers"
+
+DeleteUser:
+  zDialog:
+    model: "@.schemas.test_schema.zUsers"
+    fields: ["id"]
+    onSubmit:
+      action: delete
+      model: "@.schemas.test_schema.zUsers"
+
+Config:
+  zDisplay:
+    message: "Configuration settings"
+    type: info
+
+About:
+  zDisplay:
+    message: "zCLI Test Application v1.0"
+    type: info
+
+SubOption1:
+  zDisplay:
+    message: "Sub Option 1 Selected"
+    type: success
+
+SubOption2:
+  zDisplay:
+    message: "Sub Option 2 Selected"
+    type: success
+
+DeepOption1:
+  zDisplay:
+    message: "Deep Option 1 - Three levels deep!"
+    type: success
+
+DeepOption2:
+  zDisplay:
+    message: "Deep Option 2 - Three levels deep!"
+    type: success
+
