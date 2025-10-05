@@ -99,6 +99,7 @@ def run_crud_tests():
         ('tests.crud.test_validation_wrapper', 'Validation Rules'),
         ('tests.crud.test_migration', 'Schema Migrations'),
         ('tests.crud.test_zApps_crud', 'zApps CRUD Operations'),
+        ('tests.crud.test_csv_adapter', 'CSV Adapter (pandas)'),
     ]
     
     passed = 0

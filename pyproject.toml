@@ -79,6 +79,7 @@ dependencies = [
     "python-dotenv>=1.0", # For loading .env files with environment variables
     "websockets>=15.0",   # For WebSocket communication (zSocket subsystem)
     "requests>=2.32",     # For HTTP requests (zSession subsystem)
+    "pandas>=2.0",        # For CSV backend support (zData subsystem)
 ]
 
 # -----------------------------------------------------------------------------

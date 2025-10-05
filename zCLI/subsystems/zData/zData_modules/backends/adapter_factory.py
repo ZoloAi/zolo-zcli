@@ -96,13 +96,14 @@ def _register_builtin_adapters():
     except ImportError as e:
         logger.warning("Failed to register SQLite adapter: %s", e)
     
-    # Future adapters will be registered here
-    # try:
-    #     from .csv_adapter import CSVAdapter
-    #     AdapterFactory.register_adapter("csv", CSVAdapter)
-    # except ImportError as e:
-    #     logger.warning("Failed to register CSV adapter: %s", e)
+    # CSV adapter (requires pandas)
+    try:
+        from .csv_adapter import CSVAdapter
+        AdapterFactory.register_adapter("csv", CSVAdapter)
+    except ImportError as e:
+        logger.warning("Failed to register CSV adapter (pandas not installed): %s", e)
     
+    # Future adapters
     # try:
     #     from .postgresql_adapter import PostgreSQLAdapter
     #     AdapterFactory.register_adapter("postgresql", PostgreSQLAdapter)
