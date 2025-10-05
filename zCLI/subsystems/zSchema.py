@@ -1,18 +1,20 @@
-# zCore/zSyntax/zSchema.py — Schema Parser (zData + UI Unification Planned)
+# zCLI/subsystems/zSchema.py — Schema Parser (zData + UI Unification)
 # ----------------------------------------------------------------
 # Unifies the parsing of declarative schemas across:
 # - zData: SQL-facing data definitions (with db_path, pk, etc.)
 # - zUI:    CLI and dialog interfaces (with source, default, enum, etc.)
 # Responsibilities:
 # - Parse shorthand and expanded field types
-# - Resolve dotted path zSchema(...) and zRef(...) calls
-# - Load schema file and extract table/field definitions
+# - Schema-specific parsing and validation
+# - SQL DDL generation from parsed schemas
+# - Foreign key resolution and validation
+# 
+# Uses zParser for path resolution and zLoader for file operations
+# to maintain clear separation of concerns and eliminate redundancies.
 # ----------------------------------------------------------------
 
-import os
-import yaml
 from zCLI.utils.logger import logger
-from zCLI.subsystems.zParser import parse_dotted_path
+from zCLI.subsystems.zParser import parse_dotted_path, ZParser
 from zCLI.subsystems.zLoader import handle_zLoader
 from zCLI.subsystems.zSession import zSession
 from zCLI.subsystems.zDisplay import Colors, print_line
@@ -21,9 +23,11 @@ from zCLI.subsystems.zDisplay import Colors, print_line
 def load_schema_ref(ref_expr, session=None):
     """
     Resolves a dotted schema path into a structured schema dict.
+    
+    Uses zParser for path resolution and zLoader for file operations.
 
     Accepts:
-    - Dotted path string (e.g., "zApp.schema.users")
+    - Dotted path string (e.g., "zApp.schema.users.zUsers")
     - session: Optional session dict (defaults to global zSession)
 
     Returns:
@@ -36,6 +40,7 @@ def load_schema_ref(ref_expr, session=None):
         logger.error("❌ Invalid input: expected dotted string, got %r", type(ref_expr))
         return None
 
+    # Use zParser for dotted path parsing
     parsed = parse_dotted_path(ref_expr)
     if not parsed["is_valid"]:
         logger.error("❌ Invalid dotted path: %s (%s)", ref_expr, parsed.get("error"))
@@ -47,59 +52,96 @@ def load_schema_ref(ref_expr, session=None):
 
     # Use provided session or fall back to global
     target_session = session if session is not None else zSession
-    zEngine_path = target_session.get("zEngine_path") if target_session else None
-
-    result = resolve_schema_file(parts, table, zEngine_path)
-    if result:
-        print_line(Colors.RETURN, "load_schema_ref Return", "~", indent=6)
-        return result
+    
+    # Use zParser for path resolution (replacing custom resolve_schema_file logic)
+    try:
+        zparser = ZParser()
+        # Ensure session has correct workspace path for zParser
+        if target_session.get("zEngine_path") and not target_session.get("zWorkspace"):
+            target_session["zWorkspace"] = target_session["zEngine_path"]
+        zparser.zSession = target_session
+        zparser.logger = logger
+        
+        # Build file path from parts (zParser handles the complex path logic)
+        file_path = ".".join(parts[:-1]) if len(parts) > 1 else parts[0]
+        zVaFile_fullpath, zVaFilename = zparser.zPath_decoder(file_path)
+        zFilePath_identified, _ = zparser.identify_zFile(zVaFilename, zVaFile_fullpath)
+        
+        logger.info("🔎 Resolved file path: %s", zFilePath_identified)
+        
+        # Use zLoader for file loading and parsing
+        data = handle_zLoader(zFilePath_identified, session=target_session)
+        if data == "error" or not data:
+            logger.error("❌ Failed to load schema file: %s", zFilePath_identified)
+            return None
+            
+        # Parse schema structure and extract table
+        parsed_schema = parse_schema_structure(data, table)
+        if parsed_schema:
+            print_line(Colors.RETURN, "load_schema_ref Return", "~", indent=6)
+            return parsed_schema
+            
+    except (OSError, ValueError, FileNotFoundError) as e:
+        logger.error("❌ Error resolving schema path: %s", e)
 
     logger.error("❌ Failed to resolve schema: %s", ref_expr)
     return None
 
-def resolve_schema_file(parts, table, root_path):
+def parse_schema_structure(data, table):
     """
-    Given path parts and table name, attempts to locate and parse schema YAML file.
-    Tries both:
-        1. nested:   a/b/c.yaml (from parts[-3], parts[-2])
-        2. fallback: a/b/table.yaml
-
+    Parses YAML data structure and extracts schema for a specific table.
+    
+    Args:
+        data (dict): Loaded YAML data from zLoader
+        table (str): Table name to extract
+        
     Returns:
-        dict | None: schema block for the given table, or None if not found
+        dict | None: Schema block for the given table, or None if not found
     """
-    print_line(Colors.SCHEMA, "resolve_schema_file", "single", indent=1)
+    print_line(Colors.SCHEMA, "parse_schema_structure", "single", indent=1)
+    logger.info("📨 Parsing schema structure for table: %s", table)
 
-    # Try nested: a/b/c.yaml
-    if len(parts) >= 3:
-        file = f"{parts[-3]}.{parts[-2]}.yaml"
-        path = os.path.join(root_path, *parts[:-3], file)
-        logger.info("🔎 Trying dotted file path: %s", path)
-        if os.path.exists(path):
-            parsed = parse_schema_file(path)
-            if table in parsed:
-                logger.info("✅ Matched table key: %s", table)
-                return parsed[table]
+    if not isinstance(data, dict):
+        logger.error("❌ Invalid data structure: expected dict, got %s", type(data).__name__)
+        return None
 
-    # Fallback: a/b/table.yaml
-    fallback = os.path.join(root_path, *parts[:-1], parts[-1] + ".yaml")
-    logger.info("🔎 Trying fallback file path: %s", fallback)
-    if os.path.exists(fallback):
-        parsed = parse_schema_file(fallback)
-        if table in parsed:
-            logger.info("✅ Matched table key in fallback: %s", table)
-            return parsed[table]
+    # Check if table exists in data
+    if table not in data:
+        logger.error("❌ Table '%s' not found in schema data", table)
+        return None
 
-    logger.error("❌ Could not resolve schema for table: %s", table)
-    return None
+    fields = data[table]
+    if not isinstance(fields, dict):
+        logger.error("❌ Table '%s' has invalid structure: expected dict, got %s", table, type(fields).__name__)
+        return None
+
+    logger.debug("🧱 Parsing table: %s", table)
+    schema = {k: parse_field_block(v) for k, v in fields.items()}
+    logger.debug("✅ Parsed schema for table '%s': %r", table, schema)
+
+    result = {
+        "table": table,
+        "schema": schema
+    }
+
+    # Inject shared metadata if present
+    if "db_path" in data:
+        result["db_path"] = data["db_path"]
+        logger.debug("🔗 Added shared db_path: %s", data["db_path"])
+
+    if "meta" in data:
+        result["meta"] = data["meta"]
+        logger.debug("📎 Added shared meta: %r", data["meta"])
+
+    logger.info("✅ Final parsed schema for table '%s': %r", table, result)
+    return result
 
 # ------------------------------------------------------------------------
 def parse_schema_file(path):
     """
     Parses a YAML schema file and converts it into structured table definitions.
-
-    Reads a YAML file containing one or more table schemas. Each table maps to a dict of fields.
-    Field types are parsed using parse_field_block().  
-    Shared metadata like "db_path" and "meta" at the root level are injected into all tables.
+    
+    Uses zLoader for file loading and YAML parsing to eliminate redundancy.
 
     Args:
         path (str): Full path to the YAML schema file.
@@ -120,7 +162,12 @@ def parse_schema_file(path):
     logger.info("📨 Attempting to load schema file: %s", path)
 
     try:
+        # Use zLoader for file loading and YAML parsing
         data = handle_zLoader(path)
+        if data == "error" or not data:
+            logger.error("❌ Failed to load schema file: %s", path)
+            return {}
+
         logger.debug("📂 Successfully loaded YAML file: %s", path)
 
         parsed = {}
@@ -138,6 +185,7 @@ def parse_schema_file(path):
                 "schema": schema
             }
 
+        # Inject shared metadata into all tables
         if "db_path" in data:
             logger.debug("🔗 Shared db_path found — applying to all tables.")
             for table_def in parsed.values():
@@ -153,7 +201,7 @@ def parse_schema_file(path):
 
         return parsed
 
-    except (OSError, yaml.YAMLError) as e:
+    except (OSError, ValueError, FileNotFoundError) as e:
         logger.error("❌ Failed to parse schema from %s: %s", path, e)
         return {}
 
@@ -404,7 +452,7 @@ def resolve_fk_fields(schema: dict, db_path: str) -> dict:
 
             logger.info(f"✅ Resolved {len(options)} FK options for '{field}'")
 
-        except Exception as e:
+        except (sqlite3.Error, OSError, ValueError) as e:
             logger.error(f"❌ FK resolution failed for '{field}': {e}")
 
     return resolved

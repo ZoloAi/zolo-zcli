@@ -272,7 +272,9 @@ zVaF:
 - Type `exit`, `quit`, or `q` to return to Walker
 - Walker resumes exactly where it left off
 
->**Note:** For more information on Shell commands and usage, see [zShell_GUIDE.md](zShell_GUIDE.md)---
+>**Note:** For more information on Shell commands and usage, see [zShell_GUIDE.md](zShell_GUIDE.md)
+
+---
 
 ## Crash Recovery
 
