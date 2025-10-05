@@ -1,9 +1,18 @@
-# zCLI/subsystems/zLoader.py — File Loading and Parsing Subsystem
+# zCLI/subsystems/zLoader.py — File Loading and Caching Subsystem
 # ───────────────────────────────────────────────────────────────
 
+"""
+zLoader - File Loading and Caching Subsystem
+
+Streamlined to focus on:
+- File I/O (reading from disk)
+- Caching (session-based performance optimization)
+- Integration with zParser (delegates path resolution and parsing)
+
+YAML/JSON parsing is now handled by zParser to eliminate duplication.
+"""
+
 import os
-import yaml
-import json
 from zCLI.utils.logger import logger
 from zCLI.subsystems.zSession import zSession
 from zCLI.subsystems.zDisplay import handle_zDisplay
@@ -11,18 +20,16 @@ from zCLI.subsystems.zDisplay import handle_zDisplay
 
 class ZLoader:
     """
-    zLoader - File Loading and Parsing Subsystem
+    zLoader - File Loading and Caching Subsystem
     
-    Handles loading, parsing, and caching of YAML/JSON configuration files (zVaFiles).
-    Uses zParser for zPath resolution to avoid code duplication.
+    Handles file I/O and caching for YAML/JSON configuration files (zVaFiles).
+    Delegates path resolution and parsing to zParser.
     
     Key Features:
-    - File discovery and type detection
-    - YAML/JSON parsing with error handling
+    - File reading from disk (I/O layer)
     - Intelligent caching system
     - Session-aware file loading
-    - Support for UI and Schema file types
-    - zPath resolution via zParser subsystem
+    - Integration with zParser for path resolution and parsing
     """
     
     def __init__(self, zcli_or_walker):
@@ -65,7 +72,7 @@ class ZLoader:
         """
         Main entry point for file loading and parsing.
         
-        Uses zParser for zPath resolution to maintain single source of truth.
+        Uses zParser for path resolution and parsing to maintain single source of truth.
         
         Args:
             zPath: Path to load (optional, uses session values if not provided)
@@ -108,11 +115,18 @@ class ZLoader:
             self.logger.debug("Cache hit for %s", cache_key)
             return cached
 
-        # Load & parse
+        # Load raw file content (zLoader responsibility)
         zFile_raw = self.load_zFile(zFilePath_identified)
         self.logger.debug("\nzFile Raw: %s", zFile_raw)
 
-        result = self.parse_zFile(zFile_raw, zFile_extension)
+        # Parse using zParser (NEW: delegates to zParser)
+        if self.zcli:
+            result = self.zcli.zparser.parse_file_content(zFile_raw, zFile_extension)
+        else:
+            # LEGACY: Use zParser directly
+            from zCLI.subsystems.zParser_modules.zParser_file import parse_file_content
+            result = parse_file_content(zFile_raw, zFile_extension)
+        
         self.logger.debug("zLoader parse result:\n%s", result)
 
         handle_zDisplay({
@@ -127,12 +141,12 @@ class ZLoader:
     # ─────────────────────────────────────────────────────────────────────────
     # Core Methods
     # ─────────────────────────────────────────────────────────────────────────
-    
-
 
     def load_zFile(self, full_path):
         """
         Load raw file content from filesystem.
+        
+        This is zLoader's core responsibility: File I/O.
         
         Args:
             full_path: Full path to file
@@ -155,56 +169,10 @@ class ZLoader:
                 zFile_raw = f.read()
             self.logger.debug("File read successfully (%d bytes)", len(zFile_raw))
         except Exception as e:
-            self.logger.error("Failed to read file at %s: %s", full_path, e)  # traceback included
+            self.logger.error("Failed to read file at %s: %s", full_path, e)
             raise RuntimeError(f"Unable to load zFile: {full_path}") from e
 
         return zFile_raw
-
-    def parse_zFile(self, zFile_raw, zFile_extension):
-        """
-        Parse raw file content based on extension.
-        
-        Args:
-            zFile_raw: Raw file content
-            zFile_extension: File extension (.json, .yaml, .yml)
-            
-        Returns:
-            Parsed data structure or "error"
-        """
-        handle_zDisplay({
-            "event": "header",
-            "label": "Parsing",
-            "style": "single",
-            "color": "SUBLOADER",
-            "indent": 2,
-        })
-
-        self.logger.debug("Starting parse of zFile (extension: %s)", zFile_extension)
-
-        if zFile_extension == ".json":
-            try:
-                parsed = json.loads(zFile_raw)
-                self.logger.debug("JSON parsed successfully!\nType: %s,\nKeys: %s",
-                            type(parsed).__name__,
-                            list(parsed.keys()) if isinstance(parsed, dict) else "N/A")
-                return parsed
-            except Exception as e:
-                self.logger.error("Failed to parse JSON: %s", e)  # full traceback
-                raise ValueError("Unable to parse JSON zFile") from e
-
-        elif zFile_extension in [".yaml", ".yml"]:
-            try:
-                parsed = yaml.safe_load(zFile_raw)
-                self.logger.debug("YAML parsed successfully!\nType: %s,\nzBlock(s): %s",
-                            type(parsed).__name__,
-                            list(parsed.keys()) if isinstance(parsed, dict) else "N/A")
-                return parsed
-            except Exception as e:
-                self.logger.error("Failed to parse YAML: %s", e)
-                raise ValueError("Unable to parse YAML zFile") from e
-
-        self.logger.warning("Unsupported file extension for parsing: %s", zFile_extension)
-        return "error"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -259,10 +227,13 @@ def handle_zLoader(zPath=None, walker=None, session=None, zcli=None):
     zFilePath_identified, zFile_extension = temp_parser.identify_zFile(zVaFilename, zVaFile_fullpath)
     logger.debug("zFilePath_identified!\n%s", zFilePath_identified)
 
+    # Read file (zLoader responsibility)
     zFile_raw = load_zFile(zFilePath_identified)
     logger.debug("\nzFile Raw: %s", zFile_raw)
 
-    result = parse_zFile(zFile_raw, zFile_extension)
+    # Parse using zParser (NEW: delegates to zParser)
+    from zCLI.subsystems.zParser_modules.zParser_file import parse_file_content
+    result = parse_file_content(zFile_raw, zFile_extension)
     logger.debug("zLoader parse result:\n%s", result)
 
     handle_zDisplay({
@@ -275,16 +246,18 @@ def handle_zLoader(zPath=None, walker=None, session=None, zcli=None):
     return result
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Standalone Helper Functions (for backward compatibility)
-# ─────────────────────────────────────────────────────────────────────────────
-
-
-
-
-
 def load_zFile(full_path):
-    """Standalone file loading function."""
+    """
+    Standalone file reading function.
+    
+    This is zLoader's core responsibility: File I/O.
+    
+    Args:
+        full_path: Full path to file
+        
+    Returns:
+        Raw file content as string
+    """
     logger.debug("Opening file: %s", full_path)
 
     handle_zDisplay({
@@ -300,45 +273,7 @@ def load_zFile(full_path):
             zFile_raw = f.read()
         logger.debug("File read successfully (%d bytes)", len(zFile_raw))
     except Exception as e:
-        logger.exception("Failed to read file at %s", full_path)  # traceback included
+        logger.exception("Failed to read file at %s", full_path)
         raise RuntimeError(f"Unable to load zFile: {full_path}") from e
 
     return zFile_raw
-
-
-def parse_zFile(zFile_raw, zFile_extension):
-    """Standalone file parsing function."""
-    handle_zDisplay({
-        "event": "header",
-        "label": "Parsing",
-        "style": "single",
-        "color": "SUBLOADER",
-        "indent": 2,
-    })
-
-    logger.debug("Starting parse of zFile (extension: %s)", zFile_extension)
-
-    if zFile_extension == ".json":
-        try:
-            parsed = json.loads(zFile_raw)
-            logger.debug("JSON parsed successfully!\nType: %s,\nKeys: %s",
-                        type(parsed).__name__,
-                        list(parsed.keys()) if isinstance(parsed, dict) else "N/A")
-            return parsed
-        except Exception as e:
-            logger.exception("Failed to parse JSON")  # full traceback
-            raise ValueError("Unable to parse JSON zFile") from e
-
-    elif zFile_extension in [".yaml", ".yml"]:
-        try:
-            parsed = yaml.safe_load(zFile_raw)
-            logger.debug("YAML parsed successfully!\nType: %s,\nzBlock(s): %s",
-                        type(parsed).__name__,
-                        list(parsed.keys()) if isinstance(parsed, dict) else "N/A")
-            return parsed
-        except Exception as e:
-            logger.error("Failed to parse YAML: %s", e)
-            raise ValueError("Unable to parse YAML zFile") from e
-
-    logger.warning("Unsupported file extension for parsing: %s", zFile_extension)
-    return "error"

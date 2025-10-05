@@ -1,6 +1,6 @@
 # zCLI/subsystems/zParser.py — Core zParser Handler
 # ───────────────────────────────────────────────────────────────
-"""Core zParser handler for path resolution, command parsing, and utilities."""
+"""Core zParser handler for path resolution, command parsing, file parsing, and utilities."""
 
 from zCLI.utils.logger import logger
 from zCLI.subsystems.zSession import zSession
@@ -13,16 +13,21 @@ from .zParser_modules.zParser_zVaFile import (
     parse_zva_file, validate_zva_structure, extract_zva_metadata,
     parse_ui_file, parse_schema_file, validate_ui_structure, validate_schema_structure
 )
+from .zParser_modules.zParser_file import (
+    parse_file_content, parse_yaml, parse_json, detect_format, parse_file_by_path, parse_json_expr
+)
 
 
 class ZParser:
     """
-    Core zParser class that handles path resolution, command parsing, and utilities.
+    Core zParser class that handles path resolution, command parsing, file parsing, and utilities.
     
     Provides unified parsing functionality through registry modules:
     - zPath resolution and file discovery
     - Command parsing for shell commands
+    - File parsing (YAML/JSON)
     - Expression evaluation and utilities
+    - zVaFile parsing and validation
     """
     
     def __init__(self, zcli_or_walker=None):
@@ -49,6 +54,10 @@ class ZParser:
             self.zSession = getattr(zcli_or_walker, "zSession", zSession)
             self.logger = getattr(zcli_or_walker, "logger", logger)
 
+    # ═══════════════════════════════════════════════════════════
+    # Path Resolution
+    # ═══════════════════════════════════════════════════════════
+    
     def zPath_decoder(self, zPath=None, zType=None):
         """Resolve dotted paths to file paths."""
         return zPath_decoder_func(self.zSession, zPath, zType)
@@ -57,10 +66,46 @@ class ZParser:
         """Identify file type and find actual file path with extension."""
         return identify_zFile_func(filename, full_zFilePath, self.logger)
 
+    # ═══════════════════════════════════════════════════════════
+    # Command Parsing
+    # ═══════════════════════════════════════════════════════════
+    
     def parse_command(self, command: str):
         """Parse shell commands into structured format."""
         return parse_command_func(command, self.logger)
 
+    # ═══════════════════════════════════════════════════════════
+    # File Parsing (YAML/JSON)
+    # ═══════════════════════════════════════════════════════════
+    
+    def parse_file_content(self, raw_content, file_extension=None):
+        """Parse raw file content (YAML/JSON) into Python objects."""
+        return parse_file_content(raw_content, file_extension)
+    
+    def parse_yaml(self, raw_content):
+        """Parse YAML content."""
+        return parse_yaml(raw_content)
+    
+    def parse_json(self, raw_content):
+        """Parse JSON content."""
+        return parse_json(raw_content)
+    
+    def detect_format(self, raw_content):
+        """Auto-detect file format from content."""
+        return detect_format(raw_content)
+    
+    def parse_file_by_path(self, file_path):
+        """Load and parse file in one call."""
+        return parse_file_by_path(file_path)
+    
+    def parse_json_expr(self, expr):
+        """Parse JSON-like expression strings."""
+        return parse_json_expr(expr)
+
+    # ═══════════════════════════════════════════════════════════
+    # Expression Evaluation
+    # ═══════════════════════════════════════════════════════════
+    
     def zExpr_eval(self, expr):
         """Evaluate JSON expressions."""
         return zExpr_eval(expr)
@@ -77,7 +122,10 @@ class ZParser:
         """Placeholder function for zParser handler."""
         return handle_zParser(zFile_raw, walker)
 
-    # zVaFile parsing methods
+    # ═══════════════════════════════════════════════════════════
+    # zVaFile Parsing
+    # ═══════════════════════════════════════════════════════════
+    
     def parse_zva_file(self, data, file_type, file_path=None, session=None):
         """Parse zVaFile with type-specific logic and validation."""
         return parse_zva_file(data, file_type, file_path, session)
