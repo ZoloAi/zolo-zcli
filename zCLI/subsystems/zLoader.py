@@ -21,7 +21,7 @@ NOT for external files (that's zOpen).
 from zCLI.utils.logger import logger
 from zCLI.subsystems.zSession import zSession
 from zCLI.subsystems.zDisplay import handle_zDisplay
-from zCLI.subsystems.zLoader_modules import LoaderCache, load_file_raw
+from zCLI.subsystems.zLoader_modules import SmartCache, load_file_raw
 
 
 class ZLoader:
@@ -67,7 +67,7 @@ class ZLoader:
             self.zSession = getattr(zcli_or_walker, "zSession", zSession)
         
         # Initialize cache
-        self.cache = LoaderCache(self.zSession)
+        self.cache = SmartCache(self.zSession, namespace="files", max_size=100)
 
     def handle(self, zPath=None):
         """
@@ -115,8 +115,8 @@ class ZLoader:
         self.logger.debug("zFilePath_identified!\n%s", zFilePath_identified)
 
         # Step 2: Check cache
-        cache_key = f"zloader:parsed:{zFilePath_identified}"
-        cached = self.cache.get(cache_key)
+        cache_key = f"parsed:{zFilePath_identified}"
+        cached = self.cache.get(cache_key, filepath=zFilePath_identified)
         if cached is not None:
             handle_zDisplay({
                 "event": "header",
@@ -149,7 +149,7 @@ class ZLoader:
             "color": "LOADER",
             "indent": 1,
         })
-        return self.cache.set(cache_key, result)
+        return self.cache.set(cache_key, result, filepath=zFilePath_identified)
 
 
 # ─────────────────────────────────────────────────────────────────────────────

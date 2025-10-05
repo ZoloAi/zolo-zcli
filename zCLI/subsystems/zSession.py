@@ -26,7 +26,7 @@ def create_session():
             "API_Key": None
         },
         "zCrumbs": {},
-        "zCache": {},
+        "zCache": {"files": {}, "data": {}},
     }
 
 # Global session for backward compatibility

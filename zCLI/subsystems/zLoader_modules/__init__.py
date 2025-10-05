@@ -3,10 +3,10 @@
 zLoader Modules - Modular components for file loading and caching
 """
 
-from .loader_cache import LoaderCache
+from .smart_cache import SmartCache
 from .loader_io import load_file_raw
 
 __all__ = [
-    "LoaderCache",
+    "SmartCache",
     "load_file_raw",
 ]
