@@ -82,7 +82,7 @@ class ZSocket:
         
         # Validate token against database
         try:
-            from zCLI.subsystems.zCRUD import handle_zCRUD
+            from zCLI.subsystems.zData import handle_zCRUD
             result = handle_zCRUD({
                 "action": "read",
                 "model": "@.zCloud.schemas.schema.zIndex.zUsers",

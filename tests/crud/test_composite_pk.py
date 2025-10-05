@@ -21,7 +21,7 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 from tests.fixtures import TestDatabase
-from zCLI.subsystems.zCRUD import handle_zCRUD, zTables
+from zCLI.subsystems.zData import handle_zCRUD, zTables
 import sqlite3
 import yaml
 

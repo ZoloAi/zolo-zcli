@@ -5,7 +5,7 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
-from zCLI.subsystems.zCRUD.zCRUD import zTables, handle_zData
+from zCLI.subsystems.zData.zData_modules.infrastructure import zTables, handle_zData
 import sqlite3
 import tempfile
 import yaml

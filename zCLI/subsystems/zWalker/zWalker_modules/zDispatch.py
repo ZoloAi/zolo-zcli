@@ -169,7 +169,7 @@ class ZDispatch:
                 return "zBack" if self.walker else zHat
 
             if zHorizontal.startswith("zRead("):
-                from zCLI.subsystems.zCRUD import handle_zCRUD
+                from zCLI.subsystems.zData import handle_zCRUD
                 logger.info("Detected zRead request (string)")
                 handle_zDisplay({"event":"header","label":" → Handle zRead (string)","style":"single","color":"DISPATCH","indent":4})
 
@@ -200,7 +200,7 @@ class ZDispatch:
                 return "zBack" if self.walker else zHat
 
             if "zRead" in zHorizontal:
-                from zCLI.subsystems.zCRUD import handle_zCRUD
+                from zCLI.subsystems.zData import handle_zCRUD
                 logger.info("Detected zRead (dict)")
                 handle_zDisplay({"event":"header","label":" → Handle zRead (dict)","style":"single","color":"DISPATCH","indent":4})
                 req = zHorizontal.get("zRead") or {}
@@ -212,7 +212,7 @@ class ZDispatch:
 
             maybe_crud = {"action","model","tables","fields","values","filters","where","order_by","limit","offset"}
             if any(k in zHorizontal for k in maybe_crud) and "model" in zHorizontal:
-                from zCLI.subsystems.zCRUD import handle_zCRUD
+                from zCLI.subsystems.zData import handle_zCRUD
                 req = dict(zHorizontal)
                 req.setdefault("action", "read")
                 logger.info("Detected generic CRUD dict → %s", req)

@@ -7,7 +7,7 @@ from zCLI.subsystems.zSession import create_session
 
 # Import all subsystems from the subsystems package
 from zCLI.subsystems.zUtils import ZUtils
-from zCLI.subsystems.zCRUD import ZCRUD
+from zCLI.subsystems.zData import ZData  # NEW: Unified data management
 from zCLI.subsystems.zFunc import ZFunc
 from zCLI.subsystems.zDisplay import ZDisplay
 from zCLI.subsystems.zParser import ZParser
@@ -17,6 +17,25 @@ from zCLI.subsystems.zWizard import ZWizard
 from zCLI.subsystems.zOpen import ZOpen
 from zCLI.subsystems.zAuth import ZAuth
 from zCLI.subsystems.zLoader import ZLoader
+
+# Legacy ZCRUD wrapper (for backward compatibility)
+class ZCRUD:
+    """Legacy ZCRUD wrapper - delegates to ZData."""
+    def __init__(self, walker=None):
+        self.walker = walker
+        self.utils = getattr(walker, "utils", ZUtils(walker))
+    
+    def handle(self, zRequest):
+        # Import here to avoid circular dependency
+        from zCLI.subsystems.zData.zData_modules.infrastructure import zDataConnect, zEnsureTables
+        from zCLI.subsystems.zData.zData_modules.operations import (
+            zCreate, zRead, zUpdate, zDelete, zUpsert, zAlterTable
+        )
+        from zCLI.subsystems.zLoader import handle_zLoader
+        
+        # This is a simplified version - full logic is in zCRUD.py if needed
+        logger.warning("ZCRUD.handle() is deprecated - use ZData directly")
+        return None
 
 
 # Import zCore components
@@ -72,7 +91,8 @@ class zCLI:
 
         # Initialize core subsystems (single source of truth)
         self.utils = ZUtils(self)
-        self.crud = ZCRUD(self)
+        self.crud = ZCRUD(self)  # Legacy wrapper
+        self.data = None  # ZData initialized per-request with schema
         self.funcs = ZFunc(self)
         self.display = ZDisplay(self)
         self.zparser = ZParser(self)

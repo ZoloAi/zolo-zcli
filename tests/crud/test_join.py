@@ -20,7 +20,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from zCLI.subsystems.zCRUD import build_join_clause, build_select_with_tables, build_where_with_tables
+from zCLI.subsystems.zData.zData_modules.operations import build_join_clause, build_select_with_tables, build_where_with_tables
 
 print("=" * 70)
 print("Testing Phase 2: JOIN Support")

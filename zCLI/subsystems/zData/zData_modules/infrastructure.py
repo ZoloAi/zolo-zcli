@@ -1,138 +1,34 @@
-# zCLI/crud/crud_handler.py — Core CRUD Infrastructure
-# ───────────────────────────────────────────────────────────────
+# zCLI/subsystems/zData/zData_modules/infrastructure.py
+# ----------------------------------------------------------------
+# Infrastructure functions for data management (moved from zCRUD.py).
+# 
+# Functions:
+# - zDataConnect: Create database connections
+# - zEnsureTables: Ensure tables exist in database
+# - zTables: Create tables with schema
+# - resolve_source: Resolve field source expressions
+# - build_order_clause: Build ORDER BY SQL clause
+# ----------------------------------------------------------------
 
 import re
 from zCLI.utils.logger import logger
 from zCLI.subsystems.zDisplay import handle_zDisplay
-from zCLI.subsystems.zLoader import handle_zLoader
 from zCLI.subsystems.zFunc import handle_zFunc
-from zCLI.subsystems.zSession import zSession
 from zCLI.subsystems.zUtils import ZUtils
 
 
-class ZCRUD:
-    def __init__(self, walker=None):
-        self.walker = walker
-        # utils for id/password generation
-        self.utils = getattr(walker, "utils", ZUtils(walker))
-
-    def handle(self, zRequest):
-        return handle_zCRUD(zRequest, walker=self.walker)
-
-def handle_zCRUD(zRequest, walker=None):
-    handle_zDisplay({
-        "event": "header",
-        "style": "full",
-        "label": "Preping zCRUD Request",
-        "color": "ZCRUD",
-        "indent": 1
-    })
-
-    if not isinstance(zRequest, dict):
-        logger.warning("zCRUD input is not a dict: %s", type(zRequest))
-        raise TypeError("zCRUD input must be a dict")
-
-    # Allow wrapping the request under a top-level "zCRUD" key
-    if "zCRUD" in zRequest and isinstance(zRequest["zCRUD"], dict):
-        logger.debug("Unwrapping nested 'zCRUD' request")
-        zRequest = zRequest["zCRUD"]
-
-    logger.info("zCRUD request keys: %s", list(zRequest.keys()))
-    model_path = zRequest.get("model")
-    if not model_path:
-        # Try to pull model from a provided context
-        model_path = zRequest.get("context", {}).get("model")
-        if model_path:
-            zRequest["model"] = model_path
-    logger.info("zCRUD model_path: %s", model_path)
-
-    if not model_path:
-        logger.error("zCRUD missing 'model' in request; received: %s", zRequest)
-        return "error"
-
-    zForm = handle_zLoader(model_path, walker=walker)
-    logger.info("zForm (parsed). %s", zForm)
-
-    zCRUD_Preped = {"zRequest": zRequest, "zForm": zForm, "walker": walker}
-    return handle_zData(zCRUD_Preped)
-
-def handle_zData(zCRUD_Preped):
-    # Import CRUD operations from new zData location
-    from zCLI.subsystems.zData.zData_modules.operations import (
-        zCreate, zRead, zSearch, zUpdate, zDelete, zTruncate, 
-        zListTables, zUpsert, zAlterTable
-    )
-    
-    handle_zDisplay({
-        "event": "header",
-        "style": "full",
-        "label": "Handle zData",
-        "color": "ZCRUD",
-        "indent": 1
-    })
-
-    meta = zCRUD_Preped["zForm"].get("Meta", {})
-    Data_Type = meta.get("Data_Type")
-    Data_Path = meta.get("Data_path")
-
-    logger.info("Data Type: %s", Data_Type)
-    logger.info("Data Path: %s", Data_Path)
-
-    zData = zDataConnect(Data_Type, Data_Path, zCRUD_Preped["zForm"])
-    logger.info("zData: %s", zData)
-
-    if zData["ready"] and zData["conn"]:
-        zData["cursor"] = zData["conn"].cursor()
-        logger.info("Cursor created for %s", zData["type"])
-    else:
-        logger.error("zData not ready — cannot create cursor.")
-        return "error"
-
-    action = zCRUD_Preped["zRequest"].get("action")
-    logger.info("🎬 zCRUD action detected: %s", action)
-
-    # Initialize results to handle cases where tables are missing
-    results = None
-
-    try:
-        if action == "list_tables":
-            results = zListTables(zCRUD_Preped["zForm"], zData)
-        elif zEnsureTables(zCRUD_Preped["zForm"], zData, action, zCRUD_Preped["zRequest"]):
-            if action == "create":
-                results = zCreate(zCRUD_Preped["zRequest"], zCRUD_Preped["zForm"], zData, walker=zCRUD_Preped.get("walker"))
-            elif action in ["read"]:
-                results = zRead(zCRUD_Preped["zRequest"], zCRUD_Preped["zForm"], zData, walker=zCRUD_Preped.get("walker"))
-            elif action == "search":
-                results = zSearch(zCRUD_Preped["zRequest"], zCRUD_Preped["zForm"], zData)
-            elif action == "update":
-                results = zUpdate(zCRUD_Preped["zRequest"], zCRUD_Preped["zForm"], zData)
-            elif action == "delete":
-                results = zDelete(zCRUD_Preped["zRequest"], zCRUD_Preped["zForm"], zData)
-            elif action == "upsert":
-                results = zUpsert(zCRUD_Preped["zRequest"], zCRUD_Preped["zForm"], zData, walker=zCRUD_Preped.get("walker"))
-            elif action == "alter_table":
-                results = zAlterTable(zCRUD_Preped["zRequest"], zCRUD_Preped["zForm"], zData, walker=zCRUD_Preped.get("walker"))
-            elif action == "truncate":
-                results = zTruncate(zCRUD_Preped["zRequest"], zCRUD_Preped["zForm"], zData)
-            else:
-                results = None
-        else:
-            # Tables are missing and action is not 'tables'
-            logger.error("Required tables missing for action '%s'", action)
-            results = "error"
-    finally:
-        # Always close the database connection to release locks
-        if zData and zData.get("conn"):
-            try:
-                zData["conn"].commit()  # Commit any pending transactions
-                zData["conn"].close()
-                logger.debug("Database connection closed")
-            except Exception as e:
-                logger.warning("Error closing database connection: %s", e)
-
-    return results
-
 def zDataConnect(Data_Type, Data_Path, zForm):
+    """
+    Create a database connection based on data type.
+    
+    Args:
+        Data_Type (str): Type of database ("sqlite", "csv", "postgresql")
+        Data_Path (str): Path to database file/directory
+        zForm (dict): Parsed schema with Meta information
+        
+    Returns:
+        dict: Connection info with keys: ready, type, conn, path, meta
+    """
     handle_zDisplay({
         "event": "header",
         "style": "single",
@@ -181,7 +77,20 @@ def zDataConnect(Data_Type, Data_Path, zForm):
 
     return result
 
+
 def zEnsureTables(zForm, zData, action, zRequest=None):
+    """
+    Ensure required tables exist in the database.
+    
+    Args:
+        zForm (dict): Parsed schema
+        zData (dict): Database connection info
+        action (str): Current action being performed
+        zRequest (dict): Optional request with table specifications
+        
+    Returns:
+        bool: True if all tables exist/created, False otherwise
+    """
     handle_zDisplay({
         "event": "header",
         "style": "single",
@@ -237,7 +146,17 @@ def zEnsureTables(zForm, zData, action, zRequest=None):
 
     return all_tables_ok
 
+
 def zTables(table, fields, cur, conn):
+    """
+    Create a table with the given schema.
+    
+    Args:
+        table (str): Table name
+        fields (dict): Field definitions from schema
+        cur: Database cursor
+        conn: Database connection
+    """
     handle_zDisplay({
         "event": "header",
         "style": "single",
@@ -413,12 +332,20 @@ def _create_indexes(table, indexes, cur, conn):
 
 
 def resolve_source(source, walker=None):
-    """Evaluate a field's `source` expression for auto-generated values.
+    """
+    Evaluate a field's `source` expression for auto-generated values.
 
     Strategy:
     1) If walker has utils, try invoking a matching util method first.
     2) Fallbacks for known generator names (generate_id / generate_API).
     3) As a last resort, support legacy zFunc(...) expression via handle_zFunc.
+    
+    Args:
+        source (str): Source expression from schema
+        walker: Optional walker with utils
+        
+    Returns:
+        Generated value or None
     """
     if not isinstance(source, str):
         return None
@@ -516,8 +443,17 @@ def resolve_source(source, walker=None):
 
     return None
 
+
 def build_order_clause(order_by):
-    """Construct an ORDER BY clause from various input formats."""
+    """
+    Construct an ORDER BY clause from various input formats.
+    
+    Args:
+        order_by: String, dict, or list specifying order
+        
+    Returns:
+        str: ORDER BY clause (empty string if no ordering)
+    """
     if not order_by:
         return ""
 
@@ -544,3 +480,89 @@ def build_order_clause(order_by):
         return " ORDER BY " + ", ".join(terms)
     return ""
 
+
+def handle_zData(zCRUD_Preped):
+    """
+    Legacy handle_zData function that takes zCRUD_Preped dict.
+    
+    This is the old signature used by some tests.
+    
+    Args:
+        zCRUD_Preped (dict): Dict with keys: zRequest, zForm, walker
+        
+    Returns:
+        Result of the operation
+    """
+    from zCLI.subsystems.zDisplay import handle_zDisplay
+    
+    # Import CRUD operations
+    from zCLI.subsystems.zData.zData_modules.operations import (
+        zCreate, zRead, zSearch, zUpdate, zDelete, zTruncate, 
+        zListTables, zUpsert, zAlterTable
+    )
+    
+    handle_zDisplay({
+        "event": "header",
+        "style": "full",
+        "label": "Handle zData",
+        "color": "ZCRUD",
+        "indent": 1
+    })
+
+    meta = zCRUD_Preped["zForm"].get("Meta", {})
+    Data_Type = meta.get("Data_Type")
+    Data_Path = meta.get("Data_path")
+
+    logger.info("Data Type: %s", Data_Type)
+    logger.info("Data Path: %s", Data_Path)
+
+    zData = zDataConnect(Data_Type, Data_Path, zCRUD_Preped["zForm"])
+    logger.info("zData: %s", zData)
+
+    if zData["ready"] and zData["conn"]:
+        zData["cursor"] = zData["conn"].cursor()
+        logger.info("Cursor created for %s", zData["type"])
+    else:
+        logger.error("zData not ready — cannot create cursor.")
+        return "error"
+
+    action = zCRUD_Preped["zRequest"].get("action")
+    logger.info("🎬 zCRUD action detected: %s", action)
+
+    # Initialize results to handle cases where tables are missing
+    results = None
+
+    try:
+        if action == "list_tables":
+            results = zListTables(zCRUD_Preped["zForm"], zData)
+        elif zEnsureTables(zCRUD_Preped["zForm"], zData, action, zCRUD_Preped["zRequest"]):
+            if action == "create":
+                results = zCreate(zCRUD_Preped["zRequest"], zCRUD_Preped["zForm"], zData, walker=zCRUD_Preped.get("walker"))
+            elif action in ["read"]:
+                results = zRead(zCRUD_Preped["zRequest"], zCRUD_Preped["zForm"], zData, walker=zCRUD_Preped.get("walker"))
+            elif action == "search":
+                results = zSearch(zCRUD_Preped["zRequest"], zCRUD_Preped["zForm"], zData)
+            elif action == "update":
+                results = zUpdate(zCRUD_Preped["zRequest"], zCRUD_Preped["zForm"], zData)
+            elif action == "delete":
+                results = zDelete(zCRUD_Preped["zRequest"], zCRUD_Preped["zForm"], zData)
+            elif action == "upsert":
+                results = zUpsert(zCRUD_Preped["zRequest"], zCRUD_Preped["zForm"], zData, walker=zCRUD_Preped.get("walker"))
+            elif action == "alter_table":
+                results = zAlterTable(zCRUD_Preped["zRequest"], zCRUD_Preped["zForm"], zData, walker=zCRUD_Preped.get("walker"))
+            elif action == "truncate":
+                results = zTruncate(zCRUD_Preped["zRequest"], zCRUD_Preped["zForm"], zData)
+            else:
+                results = None
+        else:
+            # Tables are missing and action is not 'tables'
+            logger.error("Required tables missing for action '%s'", action)
+            results = "error"
+    finally:
+        if zData.get("conn"):
+            try:
+                zData["conn"].close()
+            except Exception as e:
+                logger.error("Error closing database connection: %s", e)
+
+    return results

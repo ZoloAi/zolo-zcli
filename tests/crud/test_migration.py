@@ -22,7 +22,7 @@ if project_root not in sys.path:
 import sqlite3
 import yaml
 from zCLI.subsystems.zMigrate import ZMigrate, auto_migrate_schema
-from zCLI.subsystems.zCRUD import handle_zCRUD
+from zCLI.subsystems.zData import handle_zCRUD
 
 
 def test_add_column_migration():
