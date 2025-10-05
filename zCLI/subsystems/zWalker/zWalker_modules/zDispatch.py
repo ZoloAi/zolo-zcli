@@ -165,7 +165,6 @@ class ZDispatch:
                     logger.error("Failed to parse zWizard payload: %s", e)
                     return None
                 zHat = handle_zWizard(wizard_obj, walker=self.walker)
-                self.zSession["zCache"]["zHat"] = zHat
                 return "zBack" if self.walker else zHat
 
             if zHorizontal.startswith("zRead("):
@@ -196,7 +195,6 @@ class ZDispatch:
                 from zCLI.subsystems.zWizard import handle_zWizard
                 logger.info("Detected zWizard (dict)")
                 zHat = handle_zWizard(zHorizontal["zWizard"], walker=self.walker)
-                self.zSession["zCache"]["zHat"] = zHat
                 return "zBack" if self.walker else zHat
 
             if "zRead" in zHorizontal:

@@ -2,34 +2,47 @@
 # ───────────────────────────────────────────────────────────────
 
 """
-zLoader - File Loading and Caching Subsystem
+zLoader - zVaFile Middleware Subsystem
 
-Streamlined to focus on:
+Purpose:
+- Middleware layer between Shell/Walker and zVaFiles (UI, Schema, Config)
+- Session-aware file loading with intelligent caching
+- Integration with zParser for path resolution and parsing
+
+Key Responsibilities:
 - File I/O (reading from disk)
 - Caching (session-based performance optimization)
-- Integration with zParser (delegates path resolution and parsing)
+- zPath resolution (via zParser)
+- Content parsing (via zParser)
 
-YAML/JSON parsing is now handled by zParser to eliminate duplication.
+NOT for external files (that's zOpen).
 """
 
-import os
 from zCLI.utils.logger import logger
 from zCLI.subsystems.zSession import zSession
 from zCLI.subsystems.zDisplay import handle_zDisplay
+from zCLI.subsystems.zLoader_modules import LoaderCache, load_file_raw
 
 
 class ZLoader:
     """
-    zLoader - File Loading and Caching Subsystem
+    zLoader - zVaFile Middleware Subsystem
     
-    Handles file I/O and caching for YAML/JSON configuration files (zVaFiles).
-    Delegates path resolution and parsing to zParser.
+    Middleware layer for loading and caching zVaFiles (UI, Schema, Config).
+    Used by Shell and Walker for session-aware file operations.
     
     Key Features:
     - File reading from disk (I/O layer)
-    - Intelligent caching system
+    - Intelligent caching system (session-scoped)
     - Session-aware file loading
     - Integration with zParser for path resolution and parsing
+    
+    Architecture:
+        Shell/Walker → zLoader (middleware) → zVaFiles
+                          ↓
+                    [Caching Layer]
+                    [Session-aware]
+                    [zPath resolution]
     """
     
     def __init__(self, zcli_or_walker):
@@ -52,27 +65,20 @@ class ZLoader:
             self.walker = zcli_or_walker
             self.logger = getattr(zcli_or_walker, "logger", logger)
             self.zSession = getattr(zcli_or_walker, "zSession", zSession)
-
-    def _cache_get(self, key, default=None):
-        """Get value from session cache."""
-        try:
-            return self.zSession["zCache"].get(key, default)
-        except Exception:
-            return default
-
-    def _cache_set(self, key, value):
-        """Set value in session cache."""
-        try:
-            self.zSession["zCache"][key] = value
-        except Exception:
-            pass
-        return value
+        
+        # Initialize cache
+        self.cache = LoaderCache(self.zSession)
 
     def handle(self, zPath=None):
         """
-        Main entry point for file loading and parsing.
+        Main entry point for zVaFile loading and parsing.
         
-        Uses zParser for path resolution and parsing to maintain single source of truth.
+        Workflow:
+        1. Resolve zPath using zParser (path resolution)
+        2. Check cache for parsed content
+        3. If cache miss: read raw file (I/O)
+        4. Parse content using zParser (parsing)
+        5. Cache and return result
         
         Args:
             zPath: Path to load (optional, uses session values if not provided)
@@ -93,7 +99,7 @@ class ZLoader:
         # When zPath is None and session has zVaFilename, use session values
         zType = "zUI" if not zPath and self.zSession.get("zVaFilename") else None
 
-        # Use zParser for path resolution and file discovery (consolidated approach)
+        # Step 1: Use zParser for path resolution and file discovery
         if self.zcli:
             # NEW: zCLI instance - use zParser subsystem
             zVaFile_fullpath, zVaFilename = self.zcli.zparser.zPath_decoder(zPath, zType)
@@ -108,18 +114,24 @@ class ZLoader:
             zFilePath_identified, zFile_extension = temp_parser.identify_zFile(zVaFilename, zVaFile_fullpath)
         self.logger.debug("zFilePath_identified!\n%s", zFilePath_identified)
 
-        # Cache key based on fully identified file path
+        # Step 2: Check cache
         cache_key = f"zloader:parsed:{zFilePath_identified}"
-        cached = self._cache_get(cache_key)
+        cached = self.cache.get(cache_key)
         if cached is not None:
-            self.logger.debug("Cache hit for %s", cache_key)
+            handle_zDisplay({
+                "event": "header",
+                "label": "zLoader return (cached)",
+                "style": "~",
+                "color": "LOADER",
+                "indent": 1,
+            })
             return cached
 
-        # Load raw file content (zLoader responsibility)
-        zFile_raw = self.load_zFile(zFilePath_identified)
+        # Step 3: Load raw file content (zLoader I/O responsibility)
+        zFile_raw = load_file_raw(zFilePath_identified)
         self.logger.debug("\nzFile Raw: %s", zFile_raw)
 
-        # Parse using zParser (NEW: delegates to zParser)
+        # Step 4: Parse using zParser (delegates to zParser)
         if self.zcli:
             result = self.zcli.zparser.parse_file_content(zFile_raw, zFile_extension)
         else:
@@ -129,6 +141,7 @@ class ZLoader:
         
         self.logger.debug("zLoader parse result:\n%s", result)
 
+        # Step 5: Cache and return
         handle_zDisplay({
             "event": "header",
             "label": "zLoader return",
@@ -136,43 +149,7 @@ class ZLoader:
             "color": "LOADER",
             "indent": 1,
         })
-        return self._cache_set(cache_key, result)
-
-    # ─────────────────────────────────────────────────────────────────────────
-    # Core Methods
-    # ─────────────────────────────────────────────────────────────────────────
-
-    def load_zFile(self, full_path):
-        """
-        Load raw file content from filesystem.
-        
-        This is zLoader's core responsibility: File I/O.
-        
-        Args:
-            full_path: Full path to file
-            
-        Returns:
-            Raw file content as string
-        """
-        self.logger.debug("Opening file: %s", full_path)
-
-        handle_zDisplay({
-            "event": "header",
-            "label": "Reading",
-            "style": "single",
-            "color": "SUBLOADER",
-            "indent": 2,
-        })
-
-        try:
-            with open(full_path, "r", encoding="utf-8") as f:
-                zFile_raw = f.read()
-            self.logger.debug("File read successfully (%d bytes)", len(zFile_raw))
-        except Exception as e:
-            self.logger.error("Failed to read file at %s: %s", full_path, e)
-            raise RuntimeError(f"Unable to load zFile: {full_path}") from e
-
-        return zFile_raw
+        return self.cache.set(cache_key, result)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -188,6 +165,9 @@ def handle_zLoader(zPath=None, walker=None, session=None, zcli=None):
         walker: Walker instance to get session from (optional, deprecated)
         session: Session dict to use (optional)
         zcli: zCLI instance to use (preferred)
+        
+    Returns:
+        Parsed file content (dict) or "error" on failure
     """
     handle_zDisplay({
         "event": "header",
@@ -227,11 +207,11 @@ def handle_zLoader(zPath=None, walker=None, session=None, zcli=None):
     zFilePath_identified, zFile_extension = temp_parser.identify_zFile(zVaFilename, zVaFile_fullpath)
     logger.debug("zFilePath_identified!\n%s", zFilePath_identified)
 
-    # Read file (zLoader responsibility)
-    zFile_raw = load_zFile(zFilePath_identified)
+    # Read file (zLoader I/O responsibility)
+    zFile_raw = load_file_raw(zFilePath_identified)
     logger.debug("\nzFile Raw: %s", zFile_raw)
 
-    # Parse using zParser (NEW: delegates to zParser)
+    # Parse using zParser (delegates to zParser)
     from zCLI.subsystems.zParser_modules.zParser_file import parse_file_content
     result = parse_file_content(zFile_raw, zFile_extension)
     logger.debug("zLoader parse result:\n%s", result)
@@ -246,9 +226,10 @@ def handle_zLoader(zPath=None, walker=None, session=None, zcli=None):
     return result
 
 
+# Legacy function alias (kept for backward compatibility)
 def load_zFile(full_path):
     """
-    Standalone file reading function.
+    Standalone file reading function (legacy).
     
     This is zLoader's core responsibility: File I/O.
     
@@ -258,22 +239,4 @@ def load_zFile(full_path):
     Returns:
         Raw file content as string
     """
-    logger.debug("Opening file: %s", full_path)
-
-    handle_zDisplay({
-        "event": "header",
-        "label": "Reading",
-        "style": "single",
-        "color": "SUBLOADER",
-        "indent": 2,
-    })
-
-    try:
-        with open(full_path, "r", encoding="utf-8") as f:
-            zFile_raw = f.read()
-        logger.debug("File read successfully (%d bytes)", len(zFile_raw))
-    except Exception as e:
-        logger.exception("Failed to read file at %s", full_path)
-        raise RuntimeError(f"Unable to load zFile: {full_path}") from e
-
-    return zFile_raw
+    return load_file_raw(full_path)
