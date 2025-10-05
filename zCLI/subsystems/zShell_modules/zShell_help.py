@@ -30,6 +30,19 @@ CRUD Operations:
 
 ───────────────────────────────────────────────────────────────
 
+Resource Loading:
+  load <zPath>                    - Load and pin resource to cache
+  load --show                     - Show loaded resources
+  load --clear [pattern]          - Clear loaded resources
+  
+  Examples:
+    load @.schemas.schema
+    load @.ui.admin
+    load --show
+    load --clear schema:*
+
+───────────────────────────────────────────────────────────────
+
 Functions:
   func <function_name> [args]     - Execute function
   func generate_id <prefix>       - Generate ID with prefix

@@ -11,7 +11,7 @@ Purpose:
 
 Key Responsibilities:
 - File I/O (reading from disk)
-- Caching (session-based performance optimization)
+- Three-tier caching (loaded → files → disk)
 - zPath resolution (via zParser)
 - Content parsing (via zParser)
 
@@ -21,7 +21,7 @@ NOT for external files (that's zOpen).
 from zCLI.utils.logger import logger
 from zCLI.subsystems.zSession import zSession
 from zCLI.subsystems.zDisplay import handle_zDisplay
-from zCLI.subsystems.zLoader_modules import SmartCache, load_file_raw
+from zCLI.subsystems.zLoader_modules import SmartCache, LoadedCache, load_file_raw
 
 
 class ZLoader:
@@ -33,16 +33,20 @@ class ZLoader:
     
     Key Features:
     - File reading from disk (I/O layer)
-    - Intelligent caching system (session-scoped)
+    - Three-tier caching system:
+      1. loaded: User-pinned resources (highest priority, never auto-evict)
+      2. files: Auto-cached files (LRU eviction, mtime checking)
+      3. disk: Load from filesystem
     - Session-aware file loading
     - Integration with zParser for path resolution and parsing
     
     Architecture:
         Shell/Walker → zLoader (middleware) → zVaFiles
                           ↓
-                    [Caching Layer]
-                    [Session-aware]
-                    [zPath resolution]
+                    [Three-Tier Cache]
+                    1. Loaded (pinned)
+                    2. Files (LRU)
+                    3. Disk (I/O)
     """
     
     def __init__(self, zcli_or_walker):
@@ -66,8 +70,9 @@ class ZLoader:
             self.logger = getattr(zcli_or_walker, "logger", logger)
             self.zSession = getattr(zcli_or_walker, "zSession", zSession)
         
-        # Initialize cache
+        # Initialize caches
         self.cache = SmartCache(self.zSession, namespace="files", max_size=100)
+        self.loaded_cache = LoadedCache(self.zSession)
 
     def handle(self, zPath=None):
         """
@@ -75,10 +80,11 @@ class ZLoader:
         
         Workflow:
         1. Resolve zPath using zParser (path resolution)
-        2. Check cache for parsed content
-        3. If cache miss: read raw file (I/O)
-        4. Parse content using zParser (parsing)
-        5. Cache and return result
+        2. Check loaded cache (user-pinned, highest priority)
+        3. Check files cache (auto-cached, with mtime check)
+        4. If both miss: read raw file (I/O)
+        5. Parse content using zParser (parsing)
+        6. Cache in files (auto-cache) and return
         
         Args:
             zPath: Path to load (optional, uses session values if not provided)
@@ -114,7 +120,21 @@ class ZLoader:
             zFilePath_identified, zFile_extension = temp_parser.identify_zFile(zVaFilename, zVaFile_fullpath)
         self.logger.debug("zFilePath_identified!\n%s", zFilePath_identified)
 
-        # Step 2: Check cache
+        # Step 2: Check loaded cache (PRIORITY 1 - User-pinned)
+        loaded_key = f"parsed:{zFilePath_identified}"
+        loaded = self.loaded_cache.get(loaded_key)
+        if loaded is not None:
+            handle_zDisplay({
+                "event": "header",
+                "label": "zLoader return (loaded)",
+                "style": "~",
+                "color": "LOADER",
+                "indent": 1,
+            })
+            self.logger.debug("[Priority 1] Loaded cache hit: %s", loaded_key)
+            return loaded
+
+        # Step 3: Check files cache (PRIORITY 2 - Auto-cached)
         cache_key = f"parsed:{zFilePath_identified}"
         cached = self.cache.get(cache_key, filepath=zFilePath_identified)
         if cached is not None:
@@ -125,13 +145,15 @@ class ZLoader:
                 "color": "LOADER",
                 "indent": 1,
             })
+            self.logger.debug("[Priority 2] Files cache hit: %s", cache_key)
             return cached
 
-        # Step 3: Load raw file content (zLoader I/O responsibility)
+        # Step 4: Load raw file content (PRIORITY 3 - Disk I/O)
+        self.logger.debug("[Priority 3] Cache miss - loading from disk")
         zFile_raw = load_file_raw(zFilePath_identified)
         self.logger.debug("\nzFile Raw: %s", zFile_raw)
 
-        # Step 4: Parse using zParser (delegates to zParser)
+        # Step 5: Parse using zParser (delegates to zParser)
         if self.zcli:
             result = self.zcli.zparser.parse_file_content(zFile_raw, zFile_extension)
         else:
@@ -141,7 +163,7 @@ class ZLoader:
         
         self.logger.debug("zLoader parse result:\n%s", result)
 
-        # Step 5: Cache and return
+        # Step 6: Cache in files (auto-cache) and return
         handle_zDisplay({
             "event": "header",
             "label": "zLoader return",
