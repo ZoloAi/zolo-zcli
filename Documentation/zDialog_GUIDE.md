@@ -63,7 +63,10 @@ zDialog.handle(zHorizontal)
     ↓
 zLoader.handle(model)  ← Load schema
     ↓
-SmartCache["files"]    ← Cache schema
+Three-Tier Cache:
+  1. loaded (user-pinned) ← Check first
+  2. files (auto-cached)  ← Check second
+  3. disk (load from fs)  ← Fallback
     ↓
 zDisplay.render_zConv()  ← Render form
     ↓
@@ -91,20 +94,27 @@ model: "@.schemas.schema.zUsers"
 
 1. **zDialog receives:** `"@.schemas.schema.zUsers"`
 2. **zLoader resolves:** `/workspace/schemas/schema.yaml`
-3. **zLoader loads:** Entire schema file (all tables)
+3. **zLoader checks caches:**
+   - Priority 1: `zCache["loaded"]` (user-pinned)
+   - Priority 2: `zCache["files"]` (auto-cached)
+   - Priority 3: Load from disk
 4. **zLoader caches:** In `zCache["files"]["parsed:/workspace/schemas/schema.yaml"]`
 5. **zDialog extracts:** `zUsers` table definition
 
 ### Caching Behavior:
 
 ```python
-# First dialog with this model
-zDialog → zLoader → Read file → Parse YAML → Cache → Return
+# First dialog with model (not loaded)
+zDialog → zLoader → Check loaded → Miss → Check files → Miss → Load from disk
 # Time: ~50ms
 
-# Subsequent dialogs with same model
-zDialog → zLoader → Check cache → Return cached
+# Subsequent dialogs with same model (auto-cached)
+zDialog → zLoader → Check loaded → Miss → Check files → HIT!
 # Time: ~1ms (50x faster!)
+
+# After user pins with 'load' command
+zDialog → zLoader → Check loaded → HIT! (Priority 1)
+# Time: ~0.5ms (100x faster, no mtime check needed!)
 ```
 
 ---
@@ -485,28 +495,32 @@ zUsers:
 
 ## Performance & Caching
 
-### Schema Caching:
+### Three-Tier Cache System:
 
 ```python
-# First dialog with model
-zDialog → zLoader → Read schema.yaml → Parse → Cache
-# Time: ~50ms
+# Tier 1: User-pinned (loaded cache)
+load @.schemas.schema  # ← Pin to cache
+zDialog → zLoader → Check loaded → HIT! (Priority 1)
+# Time: ~0.5ms (no mtime check, highest priority)
 
-# Second dialog with same model
-zDialog → zLoader → Return from cache (mtime checked)
-# Time: ~1ms
+# Tier 2: Auto-cached (files cache)
+zDialog → zLoader → Check loaded → Miss → Check files → HIT!
+# Time: ~1ms (with mtime check)
 
-# If schema modified externally
-zDialog → zLoader → Detect stale (mtime changed) → Reload
-# Time: ~50ms (automatic freshness!)
+# Tier 3: Disk I/O
+zDialog → zLoader → Check loaded → Miss → Check files → Miss → Load
+# Time: ~50ms (read + parse)
 ```
 
 ### Cache Benefits:
 
-- ✅ **50x faster** for repeated dialogs
-- ✅ **Automatic freshness** via mtime checking
+- ✅ **100x faster** for user-pinned resources (loaded cache)
+- ✅ **50x faster** for auto-cached files (files cache)
+- ✅ **Automatic freshness** via mtime checking (files cache only)
+- ✅ **User control** via `load` command (loaded cache)
 - ✅ **Session-scoped** (isolated per user)
-- ✅ **LRU eviction** (max 100 files)
+- ✅ **LRU eviction** (max 100 files in auto-cache)
+- ✅ **No auto-eviction** for user-pinned resources
 
 ---
 
@@ -561,6 +575,78 @@ def conditional_create(zConv):
             "values": zConv
         })
 ```
+
+
+---
+
+## Resource Loading (Shell)
+
+### `load` Command:
+
+The `load` command pins resources to the highest-priority cache tier, ensuring instant access without mtime checks or LRU eviction.
+
+#### **Load Schema:**
+```bash
+# Load and pin schema
+load @.schemas.schema
+
+# Output:
+# ✅ Loaded schema: @.schemas.schema (3 tables)
+```
+
+#### **Load UI File:**
+```bash
+# Load and pin UI file
+load @.ui.admin
+
+# Output:
+# ✅ Loaded ui: @.ui.admin (5 blocks)
+```
+
+#### **Show Loaded Resources:**
+```bash
+load --show
+
+# Output:
+# ══════════════════════════════════════════════════════════════════
+# Loaded Resources (Pinned in Cache)
+# ══════════════════════════════════════════════════════════════════
+# 
+# SCHEMA:
+#   • parsed:/workspace/schemas/schema.yaml
+#     Path: /workspace/schemas/schema.yaml
+#     Loaded: 5 minutes ago
+# 
+# UI:
+#   • parsed:/workspace/ui/admin.yaml
+#     Path: /workspace/ui/admin.yaml
+#     Loaded: 2 minutes ago
+# ══════════════════════════════════════════════════════════════════
+# Total: 2 pinned resources
+```
+
+#### **Clear Loaded Resources:**
+```bash
+# Clear specific pattern
+load --clear schema:*
+
+# Clear all loaded
+load --clear
+```
+
+### Benefits of Loading:
+
+- ✅ **Highest priority** - Checked before auto-cache
+- ✅ **Never evicted** - Persists until manually cleared
+- ✅ **No mtime checks** - Instant access (assumes user manages freshness)
+- ✅ **Explicit control** - User decides what to pin
+
+### Use Cases:
+
+1. **Frequent schemas** - Pin schemas used in multiple dialogs
+2. **Development** - Pin schema being actively edited
+3. **Performance** - Pre-load resources before operations
+4. **Workflow** - Load at session start, clear at end
 
 ---
 
