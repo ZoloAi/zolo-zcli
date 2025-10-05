@@ -21,7 +21,7 @@ if project_root not in sys.path:
 
 import sqlite3
 import yaml
-from zCLI.subsystems.zMigrate import ZMigrate, auto_migrate_schema
+from zCLI.subsystems.zData.zData_modules.migration import ZMigrate, auto_migrate_schema
 from zCLI.subsystems.zData import handle_zCRUD
 
 

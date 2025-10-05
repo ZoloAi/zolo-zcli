@@ -32,7 +32,7 @@ import datetime
 def _log_migration_with_rgb(migration_type, target_table, target_column, success, zData, criticality_level=2, new_table_name=None):
     """Log migration to zMigrations table with RGB impact tracking."""
     try:
-        from zCLI.subsystems.zMigrate import ZMigrate
+        from zCLI.subsystems.zData.zData_modules.migration import ZMigrate
         migrator = ZMigrate()
         
         # Ensure migrations table exists

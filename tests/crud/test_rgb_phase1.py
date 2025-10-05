@@ -93,7 +93,7 @@ def test_migration_table_creation():
         }
         
         # Initialize migrator and ensure migration table
-        from zCLI.subsystems.zMigrate import ZMigrate
+        from zCLI.subsystems.zData.zData_modules.migration import ZMigrate
         migrator = ZMigrate()
         migrator._ensure_migrations_table(zData)
         
@@ -153,7 +153,7 @@ def test_rgb_updates():
         conn.commit()
         
         # Test RGB update on access
-        from zCLI.subsystems.zMigrate import ZMigrate
+        from zCLI.subsystems.zData.zData_modules.migration import ZMigrate
         migrator = ZMigrate()
         
         # Update RGB on access

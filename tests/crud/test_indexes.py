@@ -308,7 +308,7 @@ def test_indexes():
         }
         
         # Run auto-migration
-        from zCLI.subsystems.zMigrate import auto_migrate_schema
+        from zCLI.subsystems.zData.zData_modules.migration import auto_migrate_schema
         
         zData = {
             "type": "sqlite",

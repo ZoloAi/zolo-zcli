@@ -8,6 +8,9 @@ from .zData_modules.infrastructure import (
     zTables, zDataConnect, zEnsureTables, resolve_source, build_order_clause,
     handle_zData  # Legacy handle_zData with zCRUD_Preped signature
 )
+from .zData_modules.migration import (
+    ZMigrate, auto_migrate_schema, detect_schema_changes
+)
 
 # Legacy ZCRUD compatibility
 def handle_zCRUD(zRequest, walker=None):
@@ -119,4 +122,8 @@ __all__ = [
     "zEnsureTables",
     "resolve_source",
     "build_order_clause",
+    # Migration functions
+    "ZMigrate",
+    "auto_migrate_schema",
+    "detect_schema_changes",
 ]

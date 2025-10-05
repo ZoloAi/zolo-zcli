@@ -137,7 +137,7 @@ def zEnsureTables(zForm, zData, action, zRequest=None):
     # After ensuring tables exist, check if schema has evolved
     # and add any missing columns automatically
     try:
-        from zCLI.subsystems.zMigrate import auto_migrate_schema
+        from zCLI.subsystems.zData.zData_modules.migration import auto_migrate_schema
         auto_migrate_schema(zForm, zData)
     except Exception as e:
         logger.warning("[Migration] Auto-migration failed: %s", e)
