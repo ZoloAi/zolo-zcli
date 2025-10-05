@@ -1,14 +1,20 @@
 # zCLI/subsystems/zDisplay_modules/display_input.py
 """
-Input handling for zDisplay - User input collection
+Input handling for zDisplay - User input collection (now uses InputFactory)
 """
 
 from zCLI.utils.logger import logger
+from .input import InputFactory
 
 
 def handle_input(zInput_Obj, walker=None):
     """
-    Handle various input events.
+    Handle various input events using appropriate InputAdapter.
+    
+    Now uses InputFactory to select the correct input adapter based on mode:
+    - Terminal: Blocking input() calls
+    - WebSocket: Async message-based input
+    - REST: Preloaded data
     
     Supported events:
     - break: Pause for user (press Enter)
@@ -23,25 +29,39 @@ def handle_input(zInput_Obj, walker=None):
     Returns:
         User input or None
     """
-    event = zInput_Obj["event"]
+    # Get session from walker
+    session = None
+    if walker:
+        session = getattr(walker, "session", None) or getattr(walker, "zSession", None)
+    
+    # Create appropriate input adapter
+    input_adapter = InputFactory.create(session)
+    
+    event = zInput_Obj.get("event")
 
     if event == "break":
-        input("Press Enter to continue...")
-        return None
+        return input_adapter.pause()
     
     if event == "while":
-        resp = input("\nPress Enter to retry or \nType 'stop' to cancel: ").strip().lower()
-        return "stop" if resp == "stop" else "retry"
+        return input_adapter.collect_retry_or_stop()
     
     if event == "input":
-        user_input = input("Select an option by number: ").strip()
-        print("\n")
-        return user_input
+        # Menu selection - return raw input for backward compatibility
+        # The calling code (zMenu) will validate the input
+        # For Terminal: returns user input string
+        # For WebSocket/REST: returns choice index as string
+        options = zInput_Obj.get("options", [])
+        if options:
+            choice_idx = input_adapter.collect_menu_choice(options)
+            return str(choice_idx)
+        else:
+            # Fallback: collect as field
+            return input_adapter.collect_field_input("choice", "int", "Select an option by number")
     
     if event == "field":
         field = zInput_Obj.get("field", "value")
         input_type = zInput_Obj.get("input_type", "string")
-        user_input = input(f"{field} ({input_type}): ").strip()
-        return user_input
+        return input_adapter.collect_field_input(field, input_type)
 
+    logger.warning("[handle_input] Unknown event: %s", event)
     return None
