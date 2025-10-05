@@ -1,8 +1,0 @@
-Line 51: Change from:
-    self.zSpark_obj = zcli.zSpark_obj
-
-To:
-    self.zSpark_obj = zcli.zspark_obj
-
-Reason: zCLI stores config as 'zspark_obj' (lowercase 's'), not 'zSpark_obj'
-

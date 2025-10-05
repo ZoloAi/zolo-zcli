@@ -13,7 +13,6 @@ Handles:
 
 import os
 import json
-import requests
 from pathlib import Path
 from getpass import getpass
 from zCLI.utils.logger import logger
