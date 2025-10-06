@@ -129,7 +129,9 @@ class ZLoader:
         self.logger.debug("zFilePath_identified!\n%s", zFilePath_identified)
 
         # Step 2: Check loaded cache (PRIORITY 1 - User-pinned)
-        loaded_key = f"parsed:{zFilePath_identified}"
+        # Use zPath for cache key instead of OS path
+        zPath_key = f"{self.zSession.get('zVaFile_path', '@')}.{zVaFilename}"
+        loaded_key = f"parsed:{zPath_key}"
         loaded = self.loaded_cache.get(loaded_key)
         if loaded is not None:
             self.display.handle({
@@ -143,7 +145,8 @@ class ZLoader:
             return loaded
 
         # Step 3: Check files cache (PRIORITY 2 - Auto-cached)
-        cache_key = f"parsed:{zFilePath_identified}"
+        # Use zPath for cache key
+        cache_key = f"parsed:{zPath_key}"
         cached = self.cache.get(cache_key, filepath=zFilePath_identified)
         if cached is not None:
             self.display.handle({

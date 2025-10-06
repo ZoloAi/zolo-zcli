@@ -181,6 +181,12 @@ class ZDispatch:
                 return result
 
         elif isinstance(zHorizontal, dict):
+            # Check if zHorizontal IS a display object (has "event" field)
+            if "event" in zHorizontal:
+                logger.info("Detected zDisplay (direct)")
+                self.walker.display.handle(zHorizontal)
+                return None  # zDisplay doesn't return a navigation result
+            
             # Check if wrapped in zDisplay key
             if "zDisplay" in zHorizontal:
                 logger.info("Detected zDisplay (wrapped)")

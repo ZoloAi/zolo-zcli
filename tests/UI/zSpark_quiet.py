@@ -13,6 +13,7 @@ zSpark_config = {
     "zVaFilename": "ui.zolo",  # UI file name (without .yaml extension)
     "zBlock": "zVaF",  # Starting block in UI file
     "zMode": "Terminal",  # Terminal mode
+    "logger": "prod",
     "debug": False  # Hide system messages (sysmsg) - clean production UI
 }
 

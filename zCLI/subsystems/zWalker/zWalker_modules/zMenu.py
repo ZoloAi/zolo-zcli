@@ -38,7 +38,7 @@ class ZMenu:
         logger.debug("zMenu options:\n%s", zMenu_obj["zHorizontal"])
 
         zMenu_pairs = list(enumerate(zMenu_obj["zHorizontal"]))
-        self.walker.display.handle({"event": "zCrumbs"}) #Aesthetic
+        self.walker.display.handle({"event": "zCrumbs"})
         self.walker.display.handle({
             "event": "zMenu",
             "menu": zMenu_pairs
@@ -95,9 +95,9 @@ class ZMenu:
             logger.debug("\nnew_zTrail: %s", new_zTrail)
 
             self.zSession["zCrumbs"][new_zTrail] = []
-            self.walker.display.handle({"event": "zCrumbs"})
 
-            raw_zFile = self.walker.loader.handle(new_zTrail)
+            # Delta link - reload same file (cache will return it instantly)
+            raw_zFile = self.walker.loader.handle()
             logger.debug("\nraw_zFile: %s", raw_zFile)
             # Resolve selected block name to an available key in YAML (handles simple plural/singular mismatches)
             target_block = selected_cleaned
@@ -161,12 +161,8 @@ class ZMenu:
 
             return self.walker.zBlock_loop(active_zBlock_dict, zBlock_keys)
 
-        if next(reversed(self.zSession["zCrumbs"])) == original_zCrumb:
-            raw_zFile = self.walker.loader.handle()
-            selected_parsed = selected
-        else:
-            raw_zFile = self.walker.loader.handle(next(reversed(self.zSession["zCrumbs"])))
-            selected_parsed = selected
+        raw_zFile = self.walker.loader.handle()
+        selected_parsed = selected
         try:
             selected_parsed = raw_zFile[active_zBlock][selected]
             logger.debug("selected parsed from vertical: %s", selected_parsed)

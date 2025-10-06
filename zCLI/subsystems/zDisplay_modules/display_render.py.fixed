@@ -1,0 +1,58 @@
+# zCLI/subsystems/zDisplay_modules/display_render.py
+"""
+Rendering functions for zDisplay - Headers, menus, tables, markers, sessions
+"""
+
+import json
+from zCLI.utils.logger import logger
+from .display_colors import Colors, print_line
+
+
+def render_marker(zDisplay_Obj):
+    """Render zMarker (in/out markers)."""
+    _, _, direction = zDisplay_Obj["event"].partition(".")
+    direction = direction.lower() or "out"
+    color = "GREEN" if direction == "in" else "MAGENTA"
+    label = f"zMarker ({direction})"
+    print()
+    print_line(color, label, "full", 0)
+    print()
+
+
+def render_header(zDisplay_Obj):
+    """Render zHeader (section headers)."""
+    print_line(
+        zDisplay_Obj["color"],
+        zDisplay_Obj["label"],
+        zDisplay_Obj["style"],
+        zDisplay_Obj["indent"]
+    )
+
+
+def render_text(zDisplay_Obj):
+    """Render text paragraph with line break support."""
+    value = zDisplay_Obj.get("value", "")
+    color = zDisplay_Obj.get("color", "RESET")
+    indent = zDisplay_Obj.get("indent", 0)
+    pause = zDisplay_Obj.get("pause", False)
+    
+    # Support both \n and <br> for line breaks
+    text = value.replace("<br>", "\n")
+    
+    color_code = getattr(Colors, color, Colors.RESET)
+    indent_str = "  " * indent
+    
+    # Bracketed text with line breaks
+    print()
+    print(f"{indent_str}┌{'─' * 60}┐")
+    for line in text.split("\n"):
+        print(f"{indent_str}│ {color_code}{line}{Colors.RESET}")
+    print(f"{indent_str}└{'─' * 60}┘")
+    print()
+    
+    # Pause if requested
+    if pause:
+        input(f"{indent_str}Press Enter to continue...")
+
+
+def render_menu(zDisplay_Obj):

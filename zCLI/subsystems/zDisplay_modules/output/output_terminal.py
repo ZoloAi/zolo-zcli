@@ -48,7 +48,7 @@ class TerminalOutput(OutputAdapter):
         pagination = obj.get("pagination", {})
         
         indent_str = "  " * indent
-        print(f"{indent_str}[||] {message}")
+        print(f"{indent_str}* {message}")
         
         # Check if we have pagination
         if pagination:

@@ -30,14 +30,28 @@ def render_header(zDisplay_Obj):
 
 
 def render_text(zDisplay_Obj):
-    """Render text paragraph."""
-    text = zDisplay_Obj.get("value", "")
+    """Render text paragraph with simple line separators."""
+    value = zDisplay_Obj.get("value", "")
     color = zDisplay_Obj.get("color", "RESET")
     indent = zDisplay_Obj.get("indent", 0)
+    pause = zDisplay_Obj.get("pause", False)
+    
+    # Support \n and <br> for line breaks
+    text = value.replace("<br>", "\n")
     
     color_code = getattr(Colors, color, Colors.RESET)
-    print(f"{'  ' * indent}{color_code}{text}{Colors.RESET}")
-
+    indent_str = "  " * indent
+    
+    # Simple separators
+    print()
+    print(f"{indent_str}{'-' * 60}")
+    print(f"{indent_str}{color_code}{text}{Colors.RESET}")
+    print(f"{indent_str}{'-' * 60}")
+    print()
+    
+    # Pause if requested
+    if pause:
+        input(f"{indent_str}Press Enter to continue...")
 
 def render_menu(zDisplay_Obj):
     """Render zMenu (numbered menu options)."""
@@ -135,8 +149,18 @@ def render_session(zDisplay_Obj):
         files_cache = cache.get('files', {})
         print(f"  {Colors.CYAN}files:{Colors.RESET} ({len(files_cache)} cached)")
         if files_cache:
-            for idx, cache_key in enumerate(list(files_cache.keys())[:5]):
-                print(f"    - {cache_key}")
+            for cache_key, cache_entry in list(files_cache.items())[:5]:
+                # Show complete structure of cached data
+                cached_data = cache_entry.get("data", {}) if isinstance(cache_entry, dict) else cache_entry
+                
+                if isinstance(cached_data, dict):
+                    # Show all top-level keys (blocks)
+                    blocks = list(cached_data.keys())
+                    total_keys = sum(len(v) if isinstance(v, dict) else 1 for v in cached_data.values())
+                    print(f"    - {cache_key}")
+                    print(f"      └─ {len(blocks)} blocks, {total_keys} total keys (complete file cached)")
+                else:
+                    print(f"    - {cache_key}: {type(cached_data).__name__}")
             if len(files_cache) > 5:
                 print(f"    ... and {len(files_cache) - 5} more")
         

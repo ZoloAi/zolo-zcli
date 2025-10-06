@@ -6,20 +6,175 @@ zVaF:
   #    model: ""
   #    fields: [username, password]
   #    onSubmit: zFunc(@.zCLI.subsystems.zSession.zSession_Login, zConv)
-  zDisplay:
-    event: header
-    label: "Test Section Header"
-    style: full      # Options: "full", "single", "~"
-    color: MAIN      # Options: MAIN, INFO, SUCCESS, ERROR, etc.
-    indent: 0        # Indentation level (0, 1, 2, ...)
+  step_1:
+    zDisplay:
+      event: header
+      label: "Zolo Testing and Orientation"
+      style: full      # Options: "full", "single", "~"
+      color: MAIN      # Options: MAIN, INFO, SUCCESS, ERROR, etc.
+      indent: 0        # Indentation level (0, 1, 2, ...)
+
+  step_2:  
+    zDisplay:
+      event: text
+      value: |
+        Hello! You've reached step 2 of the zolo-zcli Test Suite.
+        
+        Why step 2 and not step 1?
+        Because step 1 was the header above - "Zolo Testing and Orientation" - which proves that zDisplay's header event is working correctly!
+
+        Now you're seeing this text event in action, complete with line breaks and simple dash separators. And when you press Enter below, that'll prove the pause feature works too.
+
+        Vertical Navigation Explained:
+        The walker processed step_1 (header) first, dispatched it, then automatically moved to step_2 (this text).
+        This top-to-bottom sequential processing is called "vertical navigation" - the core mechanism of zWalker.
+        
+        You also saw your zSession displayed at the start. zSession is your walker's state container - it holds your workspace path, navigation breadcrumbs (zCrumbs), auth info, and all the context needed for this UI session. Think of it as your session's memory.
+
+        √ zDisplay header event - Working
+        √ zDisplay text event - Working  
+        √ Vertical zKey navigation (step_1 → step_2 sequentially) - Working
+        ○ Pause input - About to be confirmed!
+      pause: true
     
-  zDisplay:
-    event: text
-    value: "Test Section Text"
-    
-  ~Root*: ["SQLab", "zCloud", "$zApps", "zWizard_Test", "^zSession", "^zCLI_Shell", "stop"]
+  step_3.1:
+    zDisplay:
+      event: text
+      value: |
+        The pause feature is working!
+        this time, in step 3, the pause setting was set to false,
+        so the walker did not pause for this text zDisplay.
+
+        √ Pause input
+      color: GREEN
+      pause: false
+  
+  step_3.2:
+    zDisplay:
+      event: pause
+      message: |
+        This is an independent Pause input.
+        Press Enter to continue...
+      indent: 0  # Optional indentation
+
+  step_4:
+    zDisplay:
+      event: zSession
+  
+  step_5:
+    zDisplay:
+      event: text
+      value: |
+        Deep Dive: zSession Explained
+        
+        You just saw your zSession displayed above. Let's break down what you're looking at:
+        
+        zCache - The Three-Tier Caching System:
+        Notice it now shows '(1 cached)' under files? That's the complete parsed ui.zolo file stored in memory.
+        When you first ran this walker, zLoader read the YAML from disk and parsed it.
+        Now it's cached in zSession, so any subsequent navigation (like zLink or zBack) won't need to reload or reparse - instant lookup!
+        
+        The cache shows: @.tests.UI.ui.zolo
+        This confirms the entire file structure is in memory, ready for instant access.
+        
+        zCrumbs - Navigation Breadcrumbs:
+        Right now you see '@.tests.UI.ui.zolo.zVaF' with a trail showing [step_1, step_2, step_3, step_4, step_5].
+        These breadcrumbs track your vertical walk through the UI - every zKey you've visited.
+        
+        √ zCache files - Operational (1 cached)
+        √ zCrumbs breadcrumb tracking - Operational
+        √ Session-aware caching - Confirmed
+      pause: true
+
+  step_6.1:
+    zDisplay:
+      event: text
+      value: |
+        Transition: From Vertical to Horizontal Navigation
+        
+        Up until now, the walker has been moving automatically through steps (vertical navigation).
+        Each zKey was processed sequentially: step_1 → step_2 → step_3 → ... → step_6.1
+        
+        What's Next: Interactive Menu (Horizontal Navigation)
+        After you press Enter, you'll see step_6.2 - your first interactive menu!
+        The menu will show numbered options you can choose from.
+        
+        Menu Breakdown:
+        ● ^zSession - View your session again (notice the cache will still show 1 file!)
+        ● $Section_2 - Delta link to another section in THIS file
+        ● stop - Exit the walker
+        
+        The ~ prefix means "anchor mode" - the menu won't have an auto-back option.
+        The * suffix means "interactive menu" - you choose what happens next!
+        
+        This is where horizontal navigation begins - you're now in control!
+      color: CYAN
+      pause: true
+
+  ~step_6.2*: ["^zSession", "$Section_2", "stop"]
+  ^zSession: 
+    zDisplay:
+      event: zSession
+
+
+Section_2:
+  step_1:
+    zDisplay:
+      event: text
+      value: |
+        Welcome to Section_2!
+        
+        You just experienced a Delta Link ($Section_2).
+        
+        What just happened?
+        From the menu in step_6.2, you selected "$Section_2". The $ prefix indicates a delta link - navigation to a DIFFERENT zBlock within the SAME UI file (ui.zolo.yaml).
+        
+        Unlike zLink which navigates to different files, delta links keep you in the current file but jump to a different section/block. Think of it like navigating between chapters in the same document.
+        
+        Notice in your breadcrumbs:
+        You should see TWO scopes now - the original '@.tests.UI.ui.zolo.zVaF' trail AND a new '@.tests.UI.ui.zolo.Section_2' trail. Each zBlock gets its own breadcrumb trail!
+        
+        The cache still shows just 1 file - because we're still in ui.zolo, just a different block. No need to reload or reparse anything. Delta links are instant!
+        
+        ● Delta link ($) navigation - Working
+        ● Multi-block breadcrumb tracking - Working
+        ● Same-file block switching - Confirmed
+      pause: true
+
+  ~Root*: ["^zSession", "^About_zCrumbs", "^Func_Example", "menu_example"]
+  ^About_zCrumbs:
+    zDisplay:
+      event: text
+      value: |
+        Understanding zCrumbs: Navigation Breadcrumbs Explained
+        
+        Look at the breadcrumbs displayed above the menu. You should see TWO scope trails:
+        
+        1. @.tests.UI.ui.zolo.zVaF[step_1 > step_2 > step_3.1 > step_3.2 > step_4 > step_5 > step_6.1 > ~step_6.2* > $Section_2]
+           This is your ORIGINAL journey through the zVaF block. Every step you walked through is recorded here.
+        
+        2. @.tests.UI.ui.zolo.Section_2[step_1 > ~Root*]
+           This is your NEW journey in Section_2 after the delta link. You've been through step_1, the Root menu, and now you're at About_zCrumbs.
+        
+        Why Two Scopes?
+        Each zBlock (zVaF, Section_2) gets its own breadcrumb trail. This allows zBack to intelligently navigate - it knows which block you're in and where you came from within that block.
+        
+        How It Works:
+        As the walker processes each zKey vertically, it adds the key name to the trail. When you select from menus, that selection is added too. The trail is your complete navigation history within each block.
+        
+        This is how zWalker implements intelligent back-navigation and maintains context!
+        
+        ● Multi-scope breadcrumb tracking - Confirmed
+        ● Vertical walk trail recording - Working
+        ● Menu selection tracking - Working
+      pause: true
 
   ^zSession: "zFunc(@.zCLI.subsystems.zSession.View_zSession)"
+  ^Func_Example: "zFunc(@.zCLI.subsystems.zFunc_Example.Func_Example)"
+  menu_example: ["option1", "option2"]
+  option1: "zFunc(@.zCLI.subsystems.zFunc_Example.Func_Example)"
+  option2: "zFunc(@.zCLI.subsystems.zFunc_Example.Func_Example)"
+
 
   ^zCLI_Shell: "zFunc(@.zCLI.zCore.Shell.launch_zCLI_shell)"
 
