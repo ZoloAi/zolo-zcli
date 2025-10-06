@@ -61,14 +61,19 @@ def zPath_decoder(zSession, zPath=None, zType=None, display=None):
         logger.info("\nzPath_2_zFile: %s", zPath_2_zFile)
 
         # Extract file name (last 2 parts, or just last part if only 2 total)
-        if len(zPath_2_zFile) == 2:
+        if len(zPath_2_zFile) == 1:
+            zFileName = zPath_2_zFile[0]
+            filename_parts_count = 1
+        elif len(zPath_2_zFile) == 2:
             zFileName = zPath_2_zFile[-1]  # Just the filename part
+            filename_parts_count = 1
         else:
             zFileName = ".".join(zPath_2_zFile[-2:])  # Last 2 parts
+            filename_parts_count = 2
         logger.info("zFileName: %s", zFileName)
 
         # Remaining parts (before filename)
-        zRelPath_parts = zPath_parts[:-2]
+        zRelPath_parts = zPath_2_zFile[:-filename_parts_count]
         logger.info("zRelPath_parts: %s", zRelPath_parts)
 
         # Fork on symbol
