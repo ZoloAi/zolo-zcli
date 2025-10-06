@@ -23,6 +23,7 @@ import sys
 import os
 import tempfile
 import shutil
+from collections import OrderedDict
 from pathlib import Path
 
 # Add project root to path
@@ -489,10 +490,77 @@ def test_link_initialization():
     return tester
 
 
-def test_ui_file_loading():
-    """Test 9: UI file loading and parsing."""
+def test_zlink_updates_session_and_cache():
+    """Test 9: zLink updates session context and caches new file."""
     print("\n" + "=" * 70)
-    print("Test 9: UI File Loading and Parsing")
+    print("Test 9: zLink Session + Cache Update")
+    print("=" * 70)
+
+    tester = WalkerTestSuite()
+
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
+    walker = None
+    try:
+        zcli = zCLI()
+        zspark_obj = {
+            "zWorkspace": project_root,
+            "zVaFilename": "ui.zolo",
+            "zVaFile_path": "@.tests.UI",
+            "zBlock": "zVaF",
+            "logger": "info",
+        }
+        zcli.zspark_obj = zspark_obj
+        walker = zWalker(zcli)
+
+        walker.session["zWorkspace"] = project_root
+        walker.session["zVaFile_path"] = "@.tests.UI"
+        walker.session["zVaFilename"] = "ui.zolo"
+        walker.session["zBlock"] = "zVaF"
+        walker.session.setdefault("zMode", "UI")
+
+        # Reset breadcrumbs and caches to a clean state
+        walker.session["zCrumbs"] = {"@.tests.UI.ui.zolo.zVaF": []}
+        walker.session.setdefault("zCache", {})
+        walker.session["zCache"]["files"] = OrderedDict()
+        walker.session["zCache"].setdefault("loaded", OrderedDict())
+        walker.session["zCache"].setdefault("data", OrderedDict())
+
+        walker.link.handle("zLink(@.tests.UI.ui.zoloP2.zVaF)")
+
+        new_scope = "@.tests.UI.ui.zoloP2.zVaF"
+        tester.assert_in(new_scope, walker.session["zCrumbs"], "zLink adds new crumb scope")
+        tester.assert_true(
+            walker.session["zCrumbs"][new_scope] and walker.session["zCrumbs"][new_scope][0] == "step_1",
+            "zLink seeds crumb trail with first key",
+        )
+        tester.assert_equal(
+            walker.session["zVaFilename"],
+            "ui.zoloP2",
+            "Session zVaFilename updated after zLink",
+        )
+        tester.assert_equal(
+            walker.session["zVaFile_path"],
+            "@.tests.UI",
+            "Session zVaFile_path updated after zLink",
+        )
+        tester.assert_in(
+            "parsed:@.tests.UI.ui.zoloP2",
+            walker.session["zCache"]["files"],
+            "zLink caches newly loaded file",
+        )
+    finally:
+        # Ensure we don't leak cached state between tests
+        if walker is not None:
+            walker.session["zCache"]["files"].clear()
+
+    return tester
+
+
+def test_ui_file_loading():
+    """Test 10: UI file loading and parsing."""
+    print("\n" + "=" * 70)
+    print("Test 10: UI File Loading and Parsing")
     print("=" * 70)
     
     tester = WalkerTestSuite()
@@ -538,9 +606,9 @@ def test_ui_file_loading():
 
 
 def test_crumbs_trail_navigation():
-    """Test 10: zCrumbs trail navigation with zBack."""
+    """Test 11: zCrumbs trail navigation with zBack."""
     print("\n" + "=" * 70)
-    print("Test 10: zCrumbs Trail Navigation")
+    print("Test 11: zCrumbs Trail Navigation")
     print("=" * 70)
     
     tester = WalkerTestSuite()
@@ -590,9 +658,9 @@ def test_crumbs_trail_navigation():
 
 
 def test_crumbs_nested_scopes():
-    """Test 11: zCrumbs nested scope management."""
+    """Test 12: zCrumbs nested scope management."""
     print("\n" + "=" * 70)
-    print("Test 11: zCrumbs Nested Scope Management")
+    print("Test 12: zCrumbs Nested Scope Management")
     print("=" * 70)
     
     tester = WalkerTestSuite()
@@ -661,9 +729,9 @@ def test_crumbs_nested_scopes():
 
 
 def test_menu_structure():
-    """Test 12: Menu structure and zBack injection."""
+    """Test 13: Menu structure and zBack injection."""
     print("\n" + "=" * 70)
-    print("Test 12: Menu Structure and zBack Injection")
+    print("Test 13: Menu Structure and zBack Injection")
     print("=" * 70)
     
     tester = WalkerTestSuite()
@@ -720,9 +788,9 @@ def test_menu_structure():
 
 
 def test_navigation_flow():
-    """Test 13: Complete navigation flow simulation."""
+    """Test 14: Complete navigation flow simulation."""
     print("\n" + "=" * 70)
-    print("Test 13: Complete Navigation Flow Simulation")
+    print("Test 14: Complete Navigation Flow Simulation")
     print("=" * 70)
     
     tester = WalkerTestSuite()

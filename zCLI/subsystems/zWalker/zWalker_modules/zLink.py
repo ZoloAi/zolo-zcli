@@ -29,9 +29,6 @@ class ZLink:
             print("Permission denied for this section.")
             return "stop"
 
-        zFile_parsed = self.walker.loader.handle(zLink_path)
-        logger.debug("zFile_parsed: %s", zFile_parsed)
-
         selected_zBlock = zLink_path.split(".")[-1]
 
         path_to_file = zLink_path.rsplit(".", 1)[0]
@@ -45,6 +42,17 @@ class ZLink:
             self.zSession["zVaFilename"] = path_to_file
         self.zSession["zBlock"] = selected_zBlock
 
+        zFile_parsed = self.walker.loader.handle(zLink_path)
+        logger.debug("zFile_parsed: %s", zFile_parsed)
+
+        if selected_zBlock not in zFile_parsed:
+            logger.error(
+                "zBlock '%s' not found in loaded file for path '%s'",
+                selected_zBlock,
+                zLink_path,
+            )
+            return "stop"
+
         active_zBlock_dict = zFile_parsed[selected_zBlock]
         zBlock_keys = list(active_zBlock_dict.keys())
 
@@ -52,7 +60,13 @@ class ZLink:
             logger.error("❌ No walker instance provided to ZLink.")
             return "stop"
 
+        if not zBlock_keys:
+            logger.error("No keys found in zBlock '%s' for path '%s'", selected_zBlock, zLink_path)
+            return "stop"
+
         self.walker.zCrumbs.handle_zCrumbs(zLink_path, zBlock_keys[0])
+        if hasattr(self.walker, "display"):
+            self.walker.display.handle({"event": "zCrumbs"})
 
         return self.walker.zBlock_loop(active_zBlock_dict, zBlock_keys)
 
