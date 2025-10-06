@@ -301,16 +301,16 @@ def parse_ui_zblock(zblock_name, zblock_data, session=None):  # pylint: disable=
 
     # Process each item in the zBlock
     for item_name, item_data in zblock_data.items():
-        if not isinstance(item_data, dict):
-            logger.warning("⚠️ Skipping invalid UI item '%s': expected dict, got %s", 
-                         item_name, type(item_data).__name__)
-            continue
-
-        # Identify UI construct type
-        construct_type = identify_ui_construct(item_data)
-        if construct_type:
-            parsed_zblock["constructs"][construct_type].append(item_name)
-            logger.debug("🔧 Found %s construct: %s", construct_type, item_name)
+        # zKeys can be strings (zFunc, zLink), lists (menus), or dicts (zWizard, zDialog)
+        # Accept all types - validation happens in dispatch
+        
+        # Identify UI construct type (only for dict items)
+        construct_type = None
+        if isinstance(item_data, dict):
+            construct_type = identify_ui_construct(item_data)
+            if construct_type:
+                parsed_zblock["constructs"][construct_type].append(item_name)
+                logger.debug("🔧 Found %s construct: %s", construct_type, item_name)
         
         # Parse and validate the item
         parsed_item = parse_ui_item(item_name, item_data, construct_type, session)
@@ -344,7 +344,7 @@ def parse_ui_item(item_name, item_data, construct_type, session=None):  # pylint
     
     Args:
         item_name: Name of the UI item
-        item_data: Item data dictionary
+        item_data: Item data (can be string, list, or dict)
         construct_type: Type of UI construct
         session: Optional session for context
         
@@ -361,23 +361,24 @@ def parse_ui_item(item_name, item_data, construct_type, session=None):  # pylint
         "errors": []
     }
 
-    # Type-specific validation
-    if construct_type == "zFunc":
-        validation_result = validate_zfunc_item(item_data)
-    elif construct_type == "zLink":
-        validation_result = validate_zlink_item(item_data)
-    elif construct_type == "zDialog":
-        validation_result = validate_zdialog_item(item_data)
-    elif construct_type == "zMenu":
-        validation_result = validate_zmenu_item(item_data)
-    elif construct_type == "zWizard":
-        validation_result = validate_zwizard_item(item_data)
-    else:
-        validation_result = {"valid": True, "errors": [], "warnings": []}
-
-    parsed_item["validated"] = validation_result["valid"]
-    parsed_item["errors"] = validation_result["errors"]
-    parsed_item["warnings"] = validation_result.get("warnings", [])
+    # Type-specific validation (only for dict items with constructs)
+    if isinstance(item_data, dict) and construct_type:
+        if construct_type == "zFunc":
+            validation_result = validate_zfunc_item(item_data)
+        elif construct_type == "zLink":
+            validation_result = validate_zlink_item(item_data)
+        elif construct_type == "zDialog":
+            validation_result = validate_zdialog_item(item_data)
+        elif construct_type == "zMenu":
+            validation_result = validate_zmenu_item(item_data)
+        elif construct_type == "zWizard":
+            validation_result = validate_zwizard_item(item_data)
+        else:
+            validation_result = {"valid": True, "errors": [], "warnings": []}
+            
+        parsed_item["validated"] = validation_result["valid"]
+        parsed_item["errors"] = validation_result["errors"]
+        parsed_item["warnings"] = validation_result.get("warnings", [])
 
     return parsed_item
 

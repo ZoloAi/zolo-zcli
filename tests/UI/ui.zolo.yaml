@@ -1,0 +1,34 @@
+# zUI/ui.zVaF.yaml
+
+zVaF:
+  #zLogin!:
+  #  zDialog:
+  #    model: ""
+  #    fields: [username, password]
+  #    onSubmit: zFunc(@.zCLI.subsystems.zSession.zSession_Login, zConv)
+  #zDisplay:
+  #  event: header
+  #  label: "Test Section Header"
+  #  style: full      # Options: "full", "single", "~"
+  #  color: MAIN      # Options: MAIN, INFO, SUCCESS, ERROR, etc.
+  #  indent: 0        # Indentation level (0, 1, 2, ...)
+    
+  ~Root*: ["SQLab", "zCloud", "$zApps", "zWizard_Test", "^zSession", "^zCLI_Shell", "stop"]
+
+  ^zSession: "zFunc(@.zCLI.subsystems.zSession.View_zSession)"
+
+  ^zCLI_Shell: "zFunc(@.zCLI.zCore.Shell.launch_zCLI_shell)"
+
+  SQLab: 'zLink(@.zLab.ui.zLabCLI.zLabCLI)'
+
+  zCloud: 'zLink(@.zCloud.ui.zCloud.zCloud)'
+
+  zWizard_Test:
+    zWizard:
+      stepOne: "zFunc(@.zLab.utils.zWizard_Test.step_one)"
+      stepTwo: "zFunc(@.zLab.utils.zWizard_Test.step_two)"
+      stepThree: "zFunc(@.zLab.utils.zWizard_Test.step_three, {zHat[0], zHat[1]})"
+
+zApps:
+  Root*: ["^zTimer"]
+  ^zTimer: "zOpen(@.zProducts.zTimer.index.html)"

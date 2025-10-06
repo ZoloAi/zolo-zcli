@@ -208,7 +208,11 @@ class zWalker:
                 zFile_parsed = {}
                 for zblock_name, zblock_data in zFile_parsed_result["zblocks"].items():
                     if "items" in zblock_data:
-                        zFile_parsed[zblock_name] = zblock_data["items"]
+                        # Extract the actual 'data' from each wrapped item
+                        zFile_parsed[zblock_name] = {
+                            key: item["data"] if isinstance(item, dict) and "data" in item else item
+                            for key, item in zblock_data["items"].items()
+                        }
                     else:
                         zFile_parsed[zblock_name] = zblock_data
             else:
