@@ -25,7 +25,7 @@ def handle_submit(submit_expr, zContext, walker=None):
         Result of submission (varies by handler)
     """
     handle_zDisplay({
-        "event": "header",
+        "event": "sysmsg",
         "label": "zSubmit",
         "style": "single",
         "color": "ZDIALOG",
@@ -85,7 +85,7 @@ def handle_dict_submit(submit_dict, zContext, walker=None):
     result = zLauncher(submit_dict, walker=walker)
 
     handle_zDisplay({
-        "event": "header",
+        "event": "sysmsg",
         "label": "zSubmit Return",
         "style": "~",
         "color": "ZDIALOG",
@@ -93,7 +93,7 @@ def handle_dict_submit(submit_dict, zContext, walker=None):
     })
 
     handle_zDisplay({
-        "event": "header",
+        "event": "sysmsg",
         "label": "zDialog Return",
         "style": "~",
         "color": "ZDIALOG",
@@ -136,7 +136,7 @@ def handle_string_submit(submit_expr, zContext, walker=None):
     logger.info("Final zSubmit to execute: %s", submit_expr)
     
     handle_zDisplay({
-        "event": "header",
+        "event": "sysmsg",
         "label": " → Handle zFunc",
         "style": "single",
         "color": "DISPATCH",
@@ -147,7 +147,7 @@ def handle_string_submit(submit_expr, zContext, walker=None):
     logger.debug("zSubmit result: %s", result)
     
     handle_zDisplay({
-        "event": "header",
+        "event": "sysmsg",
         "label": "zSubmit Return",
         "style": "~",
         "color": "ZDIALOG",
@@ -155,7 +155,7 @@ def handle_string_submit(submit_expr, zContext, walker=None):
     })
 
     handle_zDisplay({
-        "event": "header",
+        "event": "sysmsg",
         "label": "zDialog Return",
         "style": "~",
         "color": "ZDIALOG",

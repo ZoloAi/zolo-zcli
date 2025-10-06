@@ -109,7 +109,7 @@ def zAlterTable(zRequest, zForm, zData, walker=None):
         }
     """
     handle_zDisplay({
-        "event": "header",
+        "event": "sysmsg",
         "style": "single",
         "label": "zAlterTable",
         "color": "ZCRUD",

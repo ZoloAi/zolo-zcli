@@ -11,7 +11,7 @@ from .crud_where import build_where_clause
 
 def zRead(zRequest, zForm, zData, walker=None):
     handle_zDisplay({
-        "event": "header",
+        "event": "sysmsg",
         "style": "single",
         "label": "zRead",
         "color": "ZCRUD",
@@ -190,7 +190,7 @@ def zReadJoin(zRequest, zForm, zData, walker=None):
         list: Query results
     """
     handle_zDisplay({
-        "event": "header",
+        "event": "sysmsg",
         "style": "single",
         "label": "zRead (JOIN)",
         "color": "ZCRUD",
@@ -319,7 +319,7 @@ def zReadJoin(zRequest, zForm, zData, walker=None):
 
 def zSearch(zRequest, zForm, zData):
     handle_zDisplay({
-        "event": "header",
+        "event": "sysmsg",
         "style": "single",
         "label": "zSearch",
         "color": "ZCRUD",

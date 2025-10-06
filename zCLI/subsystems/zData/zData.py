@@ -269,7 +269,7 @@ def handle_zData(request, schema, session=None):
         Result of the operation
     """
     handle_zDisplay({
-        "event": "header",
+        "event": "sysmsg",
         "style": "full",
         "label": "Handle zData",
         "color": "ZCRUD",

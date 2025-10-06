@@ -11,8 +11,8 @@ class ZLink:
         self.logger = getattr(walker, "logger", logger)
 
     def handle(self, zHorizontal):
-        handle_zDisplay({
-            "event": "header",
+        self.walker.display.handle({
+            "event": "sysmsg",
             "label": "Handle zLink",
             "style": "full",
             "color": "ZLINK",
@@ -57,8 +57,8 @@ class ZLink:
         return self.walker.zBlock_loop(active_zBlock_dict, zBlock_keys)
 
     def parse_zLink_expression(self, expr):
-        handle_zDisplay({
-            "event": "header",
+        self.walker.display.handle({
+            "event": "sysmsg",
             "label": "zLink Parsing",
             "style": "single",
             "color": "ZLINK",
@@ -90,8 +90,8 @@ class ZLink:
         return zLink_path, required
 
     def check_zLink_permissions(self, required):
-        handle_zDisplay({
-            "event": "header",
+        self.walker.display.handle({
+            "event": "sysmsg",
             "label": "zLink Auth",
             "style": "single",
             "color": "ZLINK",

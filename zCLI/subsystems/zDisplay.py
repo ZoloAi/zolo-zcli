@@ -74,6 +74,32 @@ class ZDisplay:
         if not self.output:
             self.output = OutputFactory.create(self.session or {"zMode": "Terminal"})
         return self.output
+    
+    def _should_show_sysmsg(self):
+        """
+        Check if system messages should be displayed.
+        
+        System messages visibility is controlled by:
+        1. zSpark config (walker-specific, highest priority)
+        2. Machine deployment setting (fallback)
+        
+        Returns:
+            bool: True if sysmsg should be shown
+        """
+        # Check walker session for debug/deployment setting (zSpark override)
+        if self.session:
+            # First check for explicit debug flag in session (from zSpark)
+            debug = self.session.get("debug")
+            if debug is not None:
+                return debug  # Explicit True/False from zSpark
+            
+            # Fallback to deployment mode from machine config
+            deployment = self.session.get("zMachine", {}).get("deployment", "dev")
+            if deployment == "prod":
+                return False
+        
+        # Default: show in dev mode
+        return True
 
     async def _broadcast(self, obj):
         """Broadcast object via WebSocket (legacy)."""
@@ -100,6 +126,14 @@ class ZDisplay:
         
         if event == "header":
             return output.render_header(obj)
+        elif event == "text":
+            from zCLI.subsystems.zDisplay_modules.display_render import render_text
+            return render_text(obj)
+        elif event == "sysmsg":
+            # System message - only shown based on walker's debug setting
+            if self._should_show_sysmsg():
+                return output.render_header(obj)
+            return None  # Skip if debug is disabled
         elif event == "zMenu":
             return output.render_menu(obj)
         elif event == "zDialog":

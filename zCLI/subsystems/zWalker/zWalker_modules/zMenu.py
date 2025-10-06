@@ -10,8 +10,8 @@ class ZMenu:
         self.logger = getattr(walker, "logger", logger)
 
     def handle(self, zMenu_obj):
-        handle_zDisplay({
-            "event": "header",
+        self.walker.display.handle({
+            "event": "sysmsg",
             "label": "Handle zMenu",
             "style": "full",
             "color": "MENU",
@@ -38,8 +38,8 @@ class ZMenu:
         logger.debug("zMenu options:\n%s", zMenu_obj["zHorizontal"])
 
         zMenu_pairs = list(enumerate(zMenu_obj["zHorizontal"]))
-        handle_zDisplay({"event": "zCrumbs"}) #Aesthetic
-        handle_zDisplay({
+        self.walker.display.handle({"event": "zCrumbs"}) #Aesthetic
+        self.walker.display.handle({
             "event": "zMenu",
             "menu": zMenu_pairs
         })
@@ -75,8 +75,8 @@ class ZMenu:
         logger.debug("active_zBlock: %s", active_zBlock)
 
         if selected in ("zBack", "stop"):
-            handle_zDisplay({
-                "event": "header",
+            self.walker.display.handle({
+                "event": "sysmsg",
                 "label": "zMenu return",
                 "style": "~",
                 "color": "MENU",
@@ -95,7 +95,7 @@ class ZMenu:
             logger.debug("\nnew_zTrail: %s", new_zTrail)
 
             self.zSession["zCrumbs"][new_zTrail] = []
-            handle_zDisplay({"event": "zCrumbs"})
+            self.walker.display.handle({"event": "zCrumbs"})
 
             raw_zFile = self.walker.loader.handle(new_zTrail)
             logger.debug("\nraw_zFile: %s", raw_zFile)
@@ -112,8 +112,8 @@ class ZMenu:
                 if not target_block:
                     available = list(raw_zFile.keys()) if isinstance(raw_zFile, dict) else []
                     logger.error("Requested block '%s' not found in YAML. Available: %s", selected_cleaned, available)
-                    handle_zDisplay({
-                        "event": "header",
+                    self.walker.display.handle({
+                        "event": "sysmsg",
                         "label": f"Missing block: {selected_cleaned}",
                         "style": "full",
                         "color": "ERROR",
@@ -151,8 +151,8 @@ class ZMenu:
             if not zBlock_keys:
                 logger.error("No vertical keys found — cannot proceed with walk.")
                 print("Fatal: zNode contains no keys. Exiting.")
-                return handle_zDisplay({
-                        "event": "header",
+                return self.walker.display.handle({
+                        "event": "sysmsg",
                         "label": "You've reached a dead end!",
                         "style": "full",
                         "color": "ERROR",

@@ -30,7 +30,7 @@ def zDataConnect(Data_Type, Data_Path, zForm):
         dict: Connection info with keys: ready, type, conn, path, meta
     """
     handle_zDisplay({
-        "event": "header",
+        "event": "sysmsg",
         "style": "single",
         "label": "zDataConnect",
         "color": "ZCRUD",
@@ -48,7 +48,7 @@ def zDataConnect(Data_Type, Data_Path, zForm):
     if Data_Type == "sqlite":
         try:
             import sqlite3
-            handle_zDisplay({"event": "header",
+            handle_zDisplay({"event": "sysmsg",
                 "style": "single",
                 "label": "SQLite",
                 "color": "ZCRUD",
@@ -92,7 +92,7 @@ def zEnsureTables(zForm, zData, action, zRequest=None):
         bool: True if all tables exist/created, False otherwise
     """
     handle_zDisplay({
-        "event": "header",
+        "event": "sysmsg",
         "style": "single",
         "label": "zEnsureTables",
         "color": "ZCRUD",
@@ -158,7 +158,7 @@ def zTables(table, fields, cur, conn):
         conn: Database connection
     """
     handle_zDisplay({
-        "event": "header",
+        "event": "sysmsg",
         "style": "single",
         "label": "zTables",
         "color": "ZCRUD",
@@ -502,7 +502,7 @@ def handle_zData(zCRUD_Preped):
     )
     
     handle_zDisplay({
-        "event": "header",
+        "event": "sysmsg",
         "style": "full",
         "label": "Handle zData",
         "color": "ZCRUD",

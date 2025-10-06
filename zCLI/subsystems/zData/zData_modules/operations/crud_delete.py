@@ -8,7 +8,7 @@ from .crud_where import build_where_clause
 
 def zDelete(zRequest, zForm, zData):
     handle_zDisplay({
-        "event": "header",
+        "event": "sysmsg",
         "style": "single",
         "label": "zDelete",
         "color": "ZCRUD",
@@ -61,7 +61,7 @@ def zDelete_sqlite(zRequest, zForm, zData):
 
 def zTruncate(zRequest, zForm, zData):
     handle_zDisplay({
-        "event": "header",
+        "event": "sysmsg",
         "style": "single",
         "label": "zTruncate",
         "color": "ZCRUD",
@@ -110,7 +110,7 @@ def zTruncate_sqlite(zRequest, zForm, zData):
 
 def zListTables(zForm, zData):
     handle_zDisplay({
-        "event": "header",
+        "event": "sysmsg",
         "style": "single",
         "label": "zListTables",
         "color": "ZCRUD",

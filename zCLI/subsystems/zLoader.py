@@ -70,6 +70,14 @@ class ZLoader:
             self.logger = getattr(zcli_or_walker, "logger", logger)
             self.zSession = getattr(zcli_or_walker, "zSession", zSession)
         
+        # Get display instance for rendering
+        if self.zcli:
+            self.display = self.zcli.display
+        elif self.walker:
+            self.display = self.walker.display
+        else:
+            self.display = None
+        
         # Initialize caches
         self.cache = SmartCache(self.zSession, namespace="files", max_size=100)
         self.loaded_cache = LoadedCache(self.zSession)
@@ -92,8 +100,8 @@ class ZLoader:
         Returns:
             Parsed file content (dict) or "error" on failure
         """
-        handle_zDisplay({
-            "event": "header",
+        self.display.handle({
+            "event": "sysmsg",
             "label": "zLoader",
             "style": "full",
             "color": "LOADER",
@@ -124,8 +132,8 @@ class ZLoader:
         loaded_key = f"parsed:{zFilePath_identified}"
         loaded = self.loaded_cache.get(loaded_key)
         if loaded is not None:
-            handle_zDisplay({
-                "event": "header",
+            self.display.handle({
+                "event": "sysmsg",
                 "label": "zLoader return (loaded)",
                 "style": "~",
                 "color": "LOADER",
@@ -138,8 +146,8 @@ class ZLoader:
         cache_key = f"parsed:{zFilePath_identified}"
         cached = self.cache.get(cache_key, filepath=zFilePath_identified)
         if cached is not None:
-            handle_zDisplay({
-                "event": "header",
+            self.display.handle({
+                "event": "sysmsg",
                 "label": "zLoader return (cached)",
                 "style": "~",
                 "color": "LOADER",
@@ -150,7 +158,7 @@ class ZLoader:
 
         # Step 4: Load raw file content (PRIORITY 3 - Disk I/O)
         self.logger.debug("[Priority 3] Cache miss - loading from disk")
-        zFile_raw = load_file_raw(zFilePath_identified)
+        zFile_raw = load_file_raw(zFilePath_identified, self.display)
         self.logger.debug("\nzFile Raw: %s", zFile_raw)
 
         # Step 5: Parse using zParser (delegates to zParser)
@@ -164,8 +172,8 @@ class ZLoader:
         self.logger.debug("zLoader parse result:\n%s", result)
 
         # Step 6: Cache in files (auto-cache) and return
-        handle_zDisplay({
-            "event": "header",
+        self.display.handle({
+            "event": "sysmsg",
             "label": "zLoader return",
             "style": "~",
             "color": "LOADER",
@@ -191,8 +199,8 @@ def handle_zLoader(zPath=None, walker=None, session=None, zcli=None):
     Returns:
         Parsed file content (dict) or "error" on failure
     """
-    handle_zDisplay({
-        "event": "header",
+    self.display.handle({
+        "event": "sysmsg",
         "label": "zLoader",
         "style": "full",
         "color": "LOADER",
@@ -230,7 +238,7 @@ def handle_zLoader(zPath=None, walker=None, session=None, zcli=None):
     logger.debug("zFilePath_identified!\n%s", zFilePath_identified)
 
     # Read file (zLoader I/O responsibility)
-    zFile_raw = load_file_raw(zFilePath_identified)
+    zFile_raw = load_file_raw(zFilePath_identified, display=None)
     logger.debug("\nzFile Raw: %s", zFile_raw)
 
     # Parse using zParser (delegates to zParser)
@@ -238,8 +246,8 @@ def handle_zLoader(zPath=None, walker=None, session=None, zcli=None):
     result = parse_file_content(zFile_raw, zFile_extension)
     logger.debug("zLoader parse result:\n%s", result)
 
-    handle_zDisplay({
-        "event": "header",
+    self.display.handle({
+        "event": "sysmsg",
         "label": "zLoader return",
         "style": "~",
         "color": "LOADER",
@@ -261,4 +269,4 @@ def load_zFile(full_path):
     Returns:
         Raw file content as string
     """
-    return load_file_raw(full_path)
+    return load_file_raw(full_path, display=None)

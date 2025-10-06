@@ -12,8 +12,8 @@ class ZDispatch:
         self.logger = getattr(walker, "logger", logger)
 
     def handle(self, zKey, zHorizontal):
-        handle_zDisplay({
-            "event": "header",
+        self.walker.display.handle({
+            "event": "sysmsg",
             "label": "handle zDispatch",
             "style": "full",
             "color": "DISPATCH",
@@ -42,8 +42,8 @@ class ZDispatch:
         return result
 
     def prefix_checker(self, zKey):
-        handle_zDisplay({
-            "event": "header",
+        self.walker.display.handle({
+            "event": "sysmsg",
             "label": "Prefix Checker",
             "style": "single",
             "color": "DISPATCH",
@@ -56,8 +56,8 @@ class ZDispatch:
         return pre_modifiers
 
     def suffix_checker(self, zKey):
-        handle_zDisplay({
-            "event": "header",
+        self.walker.display.handle({
+            "event": "sysmsg",
             "label": "Suffix Checker",
             "style": "single",
             "color": "DISPATCH",
@@ -70,8 +70,8 @@ class ZDispatch:
         return suf_modifiers
 
     def process_modifiers(self, modifiers, zKey, zHorizontal):
-        handle_zDisplay({
-            "event": "header",
+        self.walker.display.handle({
+            "event": "sysmsg",
             "label": "Process Modifiers",
             "style": "single",
             "color": "DISPATCH",
@@ -99,8 +99,8 @@ class ZDispatch:
             return "zBack"
 
         if "!" in modifiers:
-            handle_zDisplay({
-                "event": "header",
+            self.walker.display.handle({
+                "event": "sysmsg",
                 "label": "zRequired",
                 "style": "single",
                 "color": "DISPATCH",
@@ -116,8 +116,8 @@ class ZDispatch:
                     return "stop"
                 result = self.zLauncher(zHorizontal)
             logger.info("Requirement '%s' satisfied.", zKey)
-            handle_zDisplay({
-                "event": "header",
+            self.walker.display.handle({
+                "event": "sysmsg",
                 "label": "zRequired Return",
                 "style": "~",
                 "color": "DISPATCH",
@@ -128,8 +128,8 @@ class ZDispatch:
         return self.zLauncher(zHorizontal)
 
     def zLauncher(self, zHorizontal):
-        handle_zDisplay({
-            "event": "header",
+        self.walker.display.handle({
+            "event": "sysmsg",
             "label": "zLauncher",
             "style": "single",
             "color": "DISPATCH",
@@ -139,25 +139,25 @@ class ZDispatch:
         if isinstance(zHorizontal, str):
             if zHorizontal.startswith("zFunc("):
                 logger.info("Detected zFunc request")
-                handle_zDisplay({"event":"header","label":" → Handle zFunc","style":"single","color":"DISPATCH","indent":5})
+                self.walker.display.handle({"event":"sysmsg","label":" → Handle zFunc","style":"single","color":"DISPATCH","indent":5})
                 return handle_zFunc(zHorizontal, walker=self.walker)
 
             if zHorizontal.startswith("zLink("):
                 from .zLink import handle_zLink
                 logger.info("Detected zLink request")
-                handle_zDisplay({"event":"header","label":" → Handle zLink","style":"single","color":"DISPATCH","indent":4})
+                self.walker.display.handle({"event":"sysmsg","label":" → Handle zLink","style":"single","color":"DISPATCH","indent":4})
                 return handle_zLink(zHorizontal, walker=self.walker)
 
             if zHorizontal.startswith("zOpen("):
                 logger.info("Detected zOpen request")
-                handle_zDisplay({"event":"header","label":" → Handle zOpen","style":"single","color":"DISPATCH","indent":4})
+                self.walker.display.handle({"event":"sysmsg","label":" → Handle zOpen","style":"single","color":"DISPATCH","indent":4})
                 result = self.walker.open.handle(zHorizontal)
                 return result
 
             if zHorizontal.startswith("zWizard("):
                 from zCLI.subsystems.zWizard import handle_zWizard
                 logger.info("Detected zWizard request")
-                handle_zDisplay({"event":"header","label":" → Handle zWizard","style":"single","color":"DISPATCH","indent":4})
+                self.walker.display.handle({"event":"sysmsg","label":" → Handle zWizard","style":"single","color":"DISPATCH","indent":4})
                 inner = zHorizontal[len("zWizard("):-1].strip()
                 try:
                     wizard_obj = eval(inner, {}, {})
@@ -170,7 +170,7 @@ class ZDispatch:
             if zHorizontal.startswith("zRead("):
                 from zCLI.subsystems.zData import handle_zCRUD
                 logger.info("Detected zRead request (string)")
-                handle_zDisplay({"event":"header","label":" → Handle zRead (string)","style":"single","color":"DISPATCH","indent":4})
+                self.walker.display.handle({"event":"sysmsg","label":" → Handle zRead (string)","style":"single","color":"DISPATCH","indent":4})
 
                 inner = zHorizontal[len("zRead("):-1].strip()
                 req = {"action": "read"}
@@ -181,6 +181,18 @@ class ZDispatch:
                 return result
 
         elif isinstance(zHorizontal, dict):
+            # Check if zHorizontal IS a display object (has "event" field)
+            if "event" in zHorizontal:
+                logger.info("Detected zDisplay (direct)")
+                self.walker.display.handle(zHorizontal)
+                return None  # zDisplay doesn't return a navigation result
+            
+            # Check if wrapped in zDisplay key
+            if "zDisplay" in zHorizontal:
+                logger.info("Detected zDisplay (wrapped)")
+                self.walker.display.handle(zHorizontal["zDisplay"])
+                return None  # zDisplay doesn't return a navigation result
+            
             if "zDialog" in zHorizontal:
                 logger.info("Detected zDialog")
                 result = handle_zDialog(zHorizontal, walker=self.walker)
@@ -200,7 +212,7 @@ class ZDispatch:
             if "zRead" in zHorizontal:
                 from zCLI.subsystems.zData import handle_zCRUD
                 logger.info("Detected zRead (dict)")
-                handle_zDisplay({"event":"header","label":" → Handle zRead (dict)","style":"single","color":"DISPATCH","indent":4})
+                self.walker.display.handle({"event":"sysmsg","label":" → Handle zRead (dict)","style":"single","color":"DISPATCH","indent":4})
                 req = zHorizontal.get("zRead") or {}
                 if isinstance(req, str):
                     req = {"model": req}
@@ -214,7 +226,7 @@ class ZDispatch:
                 req = dict(zHorizontal)
                 req.setdefault("action", "read")
                 logger.info("Detected generic CRUD dict → %s", req)
-                handle_zDisplay({"event":"header","label":" → Handle zCRUD (dict)","style":"single","color":"DISPATCH","indent":4})
+                self.walker.display.handle({"event":"sysmsg","label":" → Handle zCRUD (dict)","style":"single","color":"DISPATCH","indent":4})
                 return handle_zCRUD(req, walker=self.walker)
 
         return None

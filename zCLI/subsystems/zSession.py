@@ -68,7 +68,7 @@ def zSession_Login(data, url=None, session=None):
     target_session = session if session is not None else zSession
     
     handle_zDisplay({
-        "event": "header",
+        "event": "sysmsg",
         "label": "send_to_server",
         "style": "~",
         "color": "EXTERNAL",

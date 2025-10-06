@@ -72,7 +72,7 @@ class ZDialog:
             zConv (collected data) or submission result
         """
         handle_zDisplay({
-            "event": "header",
+            "event": "sysmsg",
             "label": "zDialog",
             "style": "full",
             "color": "ZDIALOG",

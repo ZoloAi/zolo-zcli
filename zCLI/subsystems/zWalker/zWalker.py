@@ -152,15 +152,19 @@ class zWalker:
         self.session["zVaFilename"] = self.zSpark_obj["zVaFilename"]
         self.session["zBlock"] = self.zSpark_obj["zBlock"]
         self.session["zMode"] = self.zSpark_obj["zMode"]
+        
+        # Override debug setting from zSpark (controls sysmsg visibility)
+        if "debug" in self.zSpark_obj:
+            self.session["debug"] = self.zSpark_obj["debug"]
 
         # NOW display the session (after it's populated)
-        handle_zDisplay({
+        self.display.handle({
             "event": "zSession",
             "zSession": self.session  # Pass walker's session explicitly
         })
 
-        handle_zDisplay({
-            "event": "header",
+        self.display.handle({
+            "event": "sysmsg",
             "label": f"Running: {self.zSpark_obj.get('zSpark') or 'zSpark'}",
             "style": "full",
             "color": "MAIN",
@@ -170,8 +174,8 @@ class zWalker:
         for zSpark_key, zSpark_value in self.zSpark_obj.items():
             logger.debug("\n%s = %r", zSpark_key, zSpark_value)
 
-        handle_zDisplay({
-            "event": "header",
+        self.display.handle({
+            "event": "sysmsg",
             "label": "zWalker",
             "style": "single",
             "color": "MAIN",
@@ -242,9 +246,9 @@ class zWalker:
         if not zBlock_keys:
             logger.error("No vertical keys found — cannot proceed with walk.")
             print("Fatal: zNode contains no keys. Exiting.")
-            return handle_zDisplay(
+            return self.display.handle(
                 {
-                    "event": "header",
+                    "event": "sysmsg",
                     "label": "You've reached a dead end!",
                     "style": "full",
                     "color": "ERROR",
@@ -254,9 +258,9 @@ class zWalker:
 
         self.zBlock_loop(active_zBlock_dict, zBlock_keys)
 
-        return handle_zDisplay(
+        return self.display.handle(
             {
-                "event": "header",
+                "event": "sysmsg",
                 "label": "You've reached your destination!",
                 "style": "full",
                 "color": "MAIN",
@@ -267,9 +271,9 @@ class zWalker:
     # ─────────────────────────────────────────────────────────────────────────
     def zBlock_loop(self, active_zBlock_dict, zBlock_keys, zKey=None):
         # 🔷 Display the start of the vertical walk for the current zBlock
-        handle_zDisplay(
+        self.display.handle(
             {
-                "event": "header",
+                "event": "sysmsg",
                 "label": f"zBlock: {self.session['zBlock']}",
                 "style": "single",
                 "color": "MAIN",
@@ -288,9 +292,9 @@ class zWalker:
             logger.debug("Processing zKey: %s", zKey)
 
             # 🔹 Display horizontal section for current key
-            handle_zDisplay(
+            self.display.handle(
                 {
-                    "event": "header",
+                    "event": "sysmsg",
                     "label": f"zKey: {zKey}",
                     "style": "single",
                     "color": "MAIN",
@@ -329,9 +333,9 @@ class zWalker:
                 logger.error(
                     "zError for key '%s': %s\n📍 Traceback:\n%s", zKey, e, tb_str
                 )
-                handle_zDisplay(
+                self.display.handle(
                     {
-                        "event": "header",
+                        "event": "sysmsg",
                         "label": f"Dispatch error for: {zKey}",
                         "style": "full",
                         "color": "ERROR",
@@ -347,9 +351,9 @@ class zWalker:
 
             elif result == "stop":
                 logger.debug("Dispatch returned stop after key: %s", zKey)
-                handle_zDisplay(
+                self.display.handle(
                     {
-                        "event": "header",
+                        "event": "sysmsg",
                         "label": "You've stopped the system!",
                         "style": "full",
                         "color": "MAIN",
@@ -360,9 +364,9 @@ class zWalker:
 
             elif result == "error" or "":
                 logger.info("Error after key: %s", zKey)
-                handle_zDisplay(
+                self.display.handle(
                     {
-                        "event": "header",
+                        "event": "sysmsg",
                         "label": "Error Returned",
                         "style": "~",
                         "color": "MAIN",
@@ -374,9 +378,9 @@ class zWalker:
             else:
                 # ➡️ Move on to the next vertical key
                 logger.debug("Continuing to next zKey after: %s", zKey)
-                handle_zDisplay(
+                self.display.handle(
                     {
-                        "event": "header",
+                        "event": "sysmsg",
                         "label": "process_keys → next zKey",
                         "style": "single",
                         "color": "MAIN",

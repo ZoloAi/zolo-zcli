@@ -234,7 +234,7 @@ def display_validation_errors(errors, walker=None):
     error_text = "\n".join(error_list)
     
     handle_zDisplay({
-        "event": "header",
+        "event": "sysmsg",
         "label": "❌ Validation Failed",
         "style": "full",
         "color": "ERROR",
@@ -244,7 +244,7 @@ def display_validation_errors(errors, walker=None):
     print(f"\n{error_text}\n")
     
     handle_zDisplay({
-        "event": "header",
+        "event": "sysmsg",
         "label": "",
         "style": "~",
         "color": "ERROR",

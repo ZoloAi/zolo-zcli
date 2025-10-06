@@ -23,7 +23,7 @@ def handle_zCRUD(zRequest, walker=None):
     from zCLI.subsystems.zDisplay import handle_zDisplay
     
     handle_zDisplay({
-        "event": "header",
+        "event": "sysmsg",
         "style": "full",
         "label": "Preping zCRUD Request",
         "color": "ZCRUD",

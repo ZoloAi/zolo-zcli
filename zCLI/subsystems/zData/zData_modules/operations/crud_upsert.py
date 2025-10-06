@@ -49,7 +49,7 @@ def zUpsert(zRequest, zForm, zData, walker=None):
         bool: True if successful, False otherwise
     """
     handle_zDisplay({
-        "event": "header",
+        "event": "sysmsg",
         "style": "single",
         "label": "zUpsert",
         "color": "ZCRUD",

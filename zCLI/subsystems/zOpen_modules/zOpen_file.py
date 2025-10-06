@@ -141,7 +141,7 @@ def zOpen_text_display(path, logger):
             content = f.read()
         
         handle_zDisplay({
-            "event": "header",
+            "event": "sysmsg",
             "label": f"File Content: {os.path.basename(path)}",
             "style": "~",
             "color": "INFO",

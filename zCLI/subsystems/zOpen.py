@@ -39,7 +39,7 @@ class ZOpen:
             "zBack" on success, "stop" on failure
         """
         handle_zDisplay({
-            "event": "header",
+            "event": "sysmsg",
             "label": "Handle zOpen",
             "style": "full",
             "color": "ZOPEN",

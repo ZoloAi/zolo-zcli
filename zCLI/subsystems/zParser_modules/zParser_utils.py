@@ -15,7 +15,7 @@ def zExpr_eval(expr):
     Converts string representations to Python objects.
     """
     handle_zDisplay({
-        "event": "header",
+        "event": "sysmsg",
         "label": "zExpr Evaluation",
         "style": "single",
         "color": "PARSER",
@@ -76,7 +76,7 @@ def handle_zRef(ref_expr, base_path=None):
     Uses provided base_path or falls back to current working directory.
     """
     handle_zDisplay({
-        "event": "header",
+        "event": "sysmsg",
         "label": "handle_zRef",
         "style": "single",
         "color": "PARSER",
@@ -118,7 +118,7 @@ def handle_zParser(zFile_raw, walker=None):
     Currently just returns True for compatibility.
     """
     handle_zDisplay({
-        "event": "header",
+        "event": "sysmsg",
         "label": "zParser",
         "style": "full",
         "color": "PARSER",

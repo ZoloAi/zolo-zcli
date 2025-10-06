@@ -22,7 +22,7 @@ from zCLI.utils.logger import logger
 from zCLI.subsystems.zDisplay import Colors, print_line
 
 
-def parse_zva_file(data, file_type, file_path=None, session=None):
+def parse_zva_file(data, file_type, file_path=None, session=None, display=None):
     """
     Main entry point for zVaFile parsing and validation.
     
@@ -31,11 +31,21 @@ def parse_zva_file(data, file_type, file_path=None, session=None):
         file_type: "zUI", "zSchema", or "zOther"
         file_path: Optional file path for error context
         session: Optional session for context
+        display: Optional display instance for rendering
         
     Returns:
         dict: Parsed and validated zVaFile data
     """
-    print_line(Colors.SCHEMA, "parse_zva_file", "single", indent=6)
+    if display:
+        display.handle({
+            "event": "sysmsg",
+            "label": "parse_zva_file",
+            "style": "single",
+            "color": "SCHEMA",
+            "indent": 6
+        })
+    else:
+        print_line(Colors.SCHEMA, "parse_zva_file", "single", indent=6)
     logger.info("📨 Parsing zVaFile (type: %s, path: %s)", file_type, file_path or "unknown")
 
     if not isinstance(data, dict):
@@ -138,7 +148,7 @@ def validate_ui_structure(data, file_path=None):  # pylint: disable=unused-argum
             zblock_count += 1
             
             # Check for common UI constructs
-            ui_constructs = ["zFunc", "zLink", "zDialog", "zMenu", "zWizard"]
+            ui_constructs = ["zFunc", "zLink", "zDialog", "zMenu", "zWizard", "zDisplay"]
             has_ui_construct = any(construct in value for construct in ui_constructs)
             
             if not has_ui_construct:
@@ -295,7 +305,8 @@ def parse_ui_zblock(zblock_name, zblock_data, session=None):  # pylint: disable=
             "zLink": [],
             "zDialog": [],
             "zMenu": [],
-            "zWizard": []
+            "zWizard": [],
+            "zDisplay": []
         }
     }
 
@@ -327,9 +338,9 @@ def identify_ui_construct(item_data):
         item_data: Item data dictionary
         
     Returns:
-        str: Construct type ("zFunc", "zLink", "zDialog", "zMenu", "zWizard") or None
+        str: Construct type ("zFunc", "zLink", "zDialog", "zMenu", "zWizard", "zDisplay") or None
     """
-    ui_constructs = ["zFunc", "zLink", "zDialog", "zMenu", "zWizard"]
+    ui_constructs = ["zFunc", "zLink", "zDialog", "zMenu", "zWizard", "zDisplay"]
     
     for construct in ui_constructs:
         if construct in item_data:
@@ -373,6 +384,8 @@ def parse_ui_item(item_name, item_data, construct_type, session=None):  # pylint
             validation_result = validate_zmenu_item(item_data)
         elif construct_type == "zWizard":
             validation_result = validate_zwizard_item(item_data)
+        elif construct_type == "zDisplay":
+            validation_result = validate_zdisplay_item(item_data)
         else:
             validation_result = {"valid": True, "errors": [], "warnings": []}
             
@@ -439,6 +452,23 @@ def validate_zwizard_item(item_data):
         errors.append("zWizard item missing 'zWizard' key")
     elif not isinstance(item_data["zWizard"], dict):
         errors.append("zWizard value must be a dictionary")
+    
+    return {"valid": len(errors) == 0, "errors": errors}
+
+
+def validate_zdisplay_item(item_data):
+    """Validate zDisplay item structure."""
+    errors = []
+    
+    if "zDisplay" not in item_data:
+        errors.append("zDisplay item missing 'zDisplay' key")
+    elif not isinstance(item_data["zDisplay"], dict):
+        errors.append("zDisplay value must be a dictionary")
+    else:
+        # Check for required event field
+        display_obj = item_data["zDisplay"]
+        if "event" not in display_obj:
+            errors.append("zDisplay item missing required 'event' field")
     
     return {"valid": len(errors) == 0, "errors": errors}
 
@@ -669,7 +699,8 @@ def extract_ui_metadata(data):
             "zLink": 0,
             "zDialog": 0,
             "zMenu": 0,
-            "zWizard": 0
+            "zWizard": 0,
+            "zDisplay": 0
         },
         "total_items": 0
     }

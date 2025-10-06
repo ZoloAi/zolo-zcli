@@ -102,7 +102,7 @@ def zOpen_url_headless(url, capabilities, logger):
                 if logger:
                     logger.info("Successfully fetched URL content via curl")
                 handle_zDisplay({
-                    "event": "header",
+                    "event": "sysmsg",
                     "label": "URL Content (via curl)",
                     "style": "~",
                     "color": "INFO",
@@ -144,7 +144,7 @@ def zOpen_url_display(url, logger):
         logger.warning("Unable to open URL. Displaying information instead.")
     
     handle_zDisplay({
-        "event": "header",
+        "event": "sysmsg",
         "label": "URL Information",
         "style": "~",
         "color": "INFO",

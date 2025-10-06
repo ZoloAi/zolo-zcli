@@ -7,7 +7,7 @@ from zCLI.utils.logger import logger
 from zCLI.subsystems.zDisplay import handle_zDisplay
 
 
-def load_file_raw(full_path):
+def load_file_raw(full_path, display=None):
     """
     Load raw file content from filesystem.
     
@@ -16,6 +16,7 @@ def load_file_raw(full_path):
     
     Args:
         full_path: Full path to file
+        display: Optional display instance for rendering
         
     Returns:
         Raw file content as string
@@ -25,13 +26,22 @@ def load_file_raw(full_path):
     """
     logger.debug("Opening file: %s", full_path)
 
-    handle_zDisplay({
-        "event": "header",
-        "label": "Reading",
-        "style": "single",
-        "color": "SUBLOADER",
-        "indent": 2,
-    })
+    if display:
+        display.handle({
+            "event": "sysmsg",
+            "label": "Reading",
+            "style": "single",
+            "color": "SUBLOADER",
+            "indent": 2,
+        })
+    else:
+        handle_zDisplay({
+            "event": "sysmsg",
+            "label": "Reading",
+            "style": "single",
+            "color": "SUBLOADER",
+            "indent": 2,
+        })
 
     try:
         with open(full_path, "r", encoding="utf-8") as f:

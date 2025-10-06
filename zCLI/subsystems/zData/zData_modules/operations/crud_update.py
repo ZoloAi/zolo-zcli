@@ -8,7 +8,7 @@ from .crud_where import build_where_clause
 
 def zUpdate(zRequest, zForm, zData):
     handle_zDisplay({
-        "event": "header",
+        "event": "sysmsg",
         "style": "single",
         "label": "zUpdate",
         "color": "ZCRUD",

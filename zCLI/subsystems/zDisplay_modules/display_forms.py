@@ -23,7 +23,7 @@ def render_zConv(zDisplay_Obj):
     from zCLI.subsystems.zDisplay import handle_zDisplay
     
     handle_zDisplay({
-        "event": "header",
+        "event": "sysmsg",
         "label": "Render zConv",
         "style": "single",
         "color": "ZDISPLAY",
@@ -188,7 +188,7 @@ def render_zConv(zDisplay_Obj):
     from zCLI.subsystems.zDisplay import handle_zDisplay
     
     handle_zDisplay({
-        "event": "header",
+        "event": "sysmsg",
         "label": "zConv Return",
         "style": "~",
         "color": "ZDISPLAY",

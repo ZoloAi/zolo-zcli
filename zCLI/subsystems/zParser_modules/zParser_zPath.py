@@ -7,18 +7,27 @@ from zCLI.utils.logger import logger
 from zCLI.subsystems.zDisplay import handle_zDisplay
 
 
-def zPath_decoder(zSession, zPath=None, zType=None):
+def zPath_decoder(zSession, zPath=None, zType=None, display=None):
     """
     Resolve dotted paths to file paths.
     Works with any workspace directory, not hardcoded project structure.
     """
-    handle_zDisplay({
-        "event": "header",
-        "label": "zPath decoder",
-        "style": "single",
-        "color": "SUBLOADER",
-        "indent": 2,
-    })
+    if display:
+        display.handle({
+            "event": "sysmsg",
+            "label": "zPath decoder",
+            "style": "single",
+            "color": "SUBLOADER",
+            "indent": 2,
+        })
+    else:
+        handle_zDisplay({
+            "event": "sysmsg",
+            "label": "zPath decoder",
+            "style": "single",
+            "color": "SUBLOADER",
+            "indent": 2,
+        })
 
     zWorkspace = zSession.get("zWorkspace") or os.getcwd()
     
@@ -88,7 +97,7 @@ def zPath_decoder(zSession, zPath=None, zType=None):
     return zVaFile_fullpath, zFileName
 
 
-def identify_zFile(filename, full_zFilePath, logger):
+def identify_zFile(filename, full_zFilePath, logger, display=None):
     """
     Identify file type and find actual file path with extension.
     
@@ -100,6 +109,7 @@ def identify_zFile(filename, full_zFilePath, logger):
         filename: Base filename (e.g., "ui.manual")
         full_zFilePath: Full path without extension
         logger: Logger instance
+        display: Optional display instance for rendering
         
     Returns:
         Tuple of (found_path, extension)
@@ -138,12 +148,21 @@ def identify_zFile(filename, full_zFilePath, logger):
         logger.error(msg)
         raise FileNotFoundError(msg)
 
-    handle_zDisplay({
-        "event": "header",
-        "label": f"Type: {zFile_type}|{zFile_extension}",
-        "style": "single",
-        "color": "SUBLOADER",
-        "indent": 2,
-    })
+    if display:
+        display.handle({
+            "event": "sysmsg",
+            "label": f"Type: {zFile_type}|{zFile_extension}",
+            "style": "single",
+            "color": "SUBLOADER",
+            "indent": 2,
+        })
+    else:
+        handle_zDisplay({
+            "event": "sysmsg",
+            "label": f"Type: {zFile_type}|{zFile_extension}",
+            "style": "single",
+            "color": "SUBLOADER",
+            "indent": 2,
+        })
 
     return found_path, zFile_extension

@@ -14,7 +14,7 @@ class ZFunc:
 
     def handle(self, zHorizontal, zContext=None):
         handle_zDisplay({
-            "event": "header",
+            "event": "sysmsg",
             "label": f"{zHorizontal}",
             "style": "single",
             "color": "ZFUNC",
@@ -126,7 +126,7 @@ class ZFunc:
                 "indent": 0,
             })
             handle_zDisplay({
-                "event": "header",
+                "event": "sysmsg",
                 "label": "",
                 "color": "CYAN",
                 "style": "~",
@@ -138,7 +138,7 @@ class ZFunc:
             })
 
             handle_zDisplay({
-                "event": "header",
+                "event": "sysmsg",
                 "label": "zFunction Return",
                 "style": "~",
                 "color": "ZFUNC",
@@ -153,7 +153,7 @@ class ZFunc:
 
     def parse_args(self, arg_str, zContext):
         handle_zDisplay({
-            "event": "header",
+            "event": "sysmsg",
             "label": "Parse Arguments",
             "style": "single",
             "color": "ZFUNC",
@@ -194,7 +194,7 @@ class ZFunc:
 
     def split_args(self, arg_str):
         handle_zDisplay({
-            "event": "header",
+            "event": "sysmsg",
             "label": "Split Arguments",
             "style": "single",
             "color": "ZFUNC",
@@ -224,7 +224,7 @@ class ZFunc:
 
     def resolve_callable(self, file_path, func_name):
         handle_zDisplay({
-            "event": "header",
+            "event": "sysmsg",
             "label": "Resolve Callable",
             "style": "single",
             "color": "ZFUNC",

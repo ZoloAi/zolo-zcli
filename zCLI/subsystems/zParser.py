@@ -43,16 +43,19 @@ class ZParser:
             self.walker = None
             self.zSession = zSession
             self.logger = logger
+            self.display = None
         elif hasattr(zcli_or_walker, 'session') and hasattr(zcli_or_walker, 'crud'):
             # NEW: zCLI instance (has 'session' and 'crud')
             self.walker = None
             self.zSession = zcli_or_walker.session  # ← Use 'session' attribute
             self.logger = zcli_or_walker.logger
+            self.display = zcli_or_walker.display
         else:
             # LEGACY: walker instance (has 'zSession')
             self.walker = zcli_or_walker
             self.zSession = getattr(zcli_or_walker, "zSession", zSession)
             self.logger = getattr(zcli_or_walker, "logger", logger)
+            self.display = getattr(zcli_or_walker, "display", None)
 
     # ═══════════════════════════════════════════════════════════
     # Path Resolution
@@ -60,11 +63,11 @@ class ZParser:
     
     def zPath_decoder(self, zPath=None, zType=None):
         """Resolve dotted paths to file paths."""
-        return zPath_decoder_func(self.zSession, zPath, zType)
+        return zPath_decoder_func(self.zSession, zPath, zType, self.display)
 
     def identify_zFile(self, filename, full_zFilePath):
         """Identify file type and find actual file path with extension."""
-        return identify_zFile_func(filename, full_zFilePath, self.logger)
+        return identify_zFile_func(filename, full_zFilePath, self.logger, self.display)
 
     # ═══════════════════════════════════════════════════════════
     # Command Parsing
@@ -128,7 +131,7 @@ class ZParser:
     
     def parse_zva_file(self, data, file_type, file_path=None, session=None):
         """Parse zVaFile with type-specific logic and validation."""
-        return parse_zva_file(data, file_type, file_path, session)
+        return parse_zva_file(data, file_type, file_path, session, self.display)
 
     def validate_zva_structure(self, data, file_type, file_path=None):
         """Validate zVaFile structure based on type."""

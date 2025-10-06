@@ -29,6 +29,16 @@ def render_header(zDisplay_Obj):
     )
 
 
+def render_text(zDisplay_Obj):
+    """Render text paragraph."""
+    text = zDisplay_Obj.get("value", "")
+    color = zDisplay_Obj.get("color", "RESET")
+    indent = zDisplay_Obj.get("indent", 0)
+    
+    color_code = getattr(Colors, color, Colors.RESET)
+    print(f"{'  ' * indent}{color_code}{text}{Colors.RESET}")
+
+
 def render_menu(zDisplay_Obj):
     """Render zMenu (numbered menu options)."""
     print("\n")
@@ -39,7 +49,7 @@ def render_menu(zDisplay_Obj):
 def render_session(zDisplay_Obj):
     """Render zSession view (session information)."""
     render_header({
-        "event": "header",
+        "event": "sysmsg",
         "label": "View_zSession",
         "color": "EXTERNAL",
         "style": "~",

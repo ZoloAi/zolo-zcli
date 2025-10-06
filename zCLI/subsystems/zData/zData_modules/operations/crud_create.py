@@ -9,7 +9,7 @@ from .crud_validator import RuleValidator, display_validation_errors
 
 def zCreate(zRequest, zForm, zData, walker=None):
     handle_zDisplay({
-        "event": "header",
+        "event": "sysmsg",
         "style": "single",
         "label": "zCreate",
         "color": "ZCRUD",

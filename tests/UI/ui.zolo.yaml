@@ -6,12 +6,16 @@ zVaF:
   #    model: ""
   #    fields: [username, password]
   #    onSubmit: zFunc(@.zCLI.subsystems.zSession.zSession_Login, zConv)
-  #zDisplay:
-  #  event: header
-  #  label: "Test Section Header"
-  #  style: full      # Options: "full", "single", "~"
-  #  color: MAIN      # Options: MAIN, INFO, SUCCESS, ERROR, etc.
-  #  indent: 0        # Indentation level (0, 1, 2, ...)
+  zDisplay:
+    event: header
+    label: "Test Section Header"
+    style: full      # Options: "full", "single", "~"
+    color: MAIN      # Options: MAIN, INFO, SUCCESS, ERROR, etc.
+    indent: 0        # Indentation level (0, 1, 2, ...)
+    
+  zDisplay:
+    event: text
+    value: "Test Section Text"
     
   ~Root*: ["SQLab", "zCloud", "$zApps", "zWizard_Test", "^zSession", "^zCLI_Shell", "stop"]
 

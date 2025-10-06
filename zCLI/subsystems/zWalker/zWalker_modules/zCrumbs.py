@@ -13,8 +13,8 @@ class zCrumbs:
         self.logger = getattr(walker, "logger", logger) if walker else logger
 
     def handle_zCrumbs(self, zBlock, zKey):
-        handle_zDisplay({
-            "event": "header",
+        self.walker.display.handle({
+            "event": "sysmsg",
             "label": "Handle zCrumbs",
             "style": "full",
             "color": "ZCRUMB",
@@ -45,8 +45,8 @@ class zCrumbs:
         logger.debug("\nCurrent zTrail: %s", zBlock_crumbs)
 
     def handle_zBack(self):
-        handle_zDisplay({
-            "event": "header",
+        self.walker.display.handle({
+            "event": "sysmsg",
             "label": "zBack",
             "style": "full",
             "color": "ZCRUMB",
@@ -97,7 +97,7 @@ class zCrumbs:
             if trail:
                 trail.pop()
                 logger.debug("parent trail (post second pop): %s", trail)
-        handle_zDisplay({"event": "zCrumbs"})  # Aesthetic
+        self.walker.display.handle({"event": "zCrumbs"})  # Aesthetic
 
         if trail == [] and active_zCrumb == original_zCrumb:
             logger.debug("Root scope reached; crumb cleared but scope preserved.")

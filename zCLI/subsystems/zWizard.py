@@ -14,7 +14,7 @@ class ZWizard:
     def handle(self, zWizard_obj):
         """Execute a sequence of steps, storing results in zHat."""
         handle_zDisplay({
-            "event": "header",
+            "event": "sysmsg",
             "label": "Handle zWizard",
             "style": "full",
             "color": "ZWIZARD",
@@ -24,7 +24,7 @@ class ZWizard:
         zHat = []
         for step_key, step_value in zWizard_obj.items():
             handle_zDisplay({
-                "event": "header",
+                "event": "sysmsg",
                 "label": f"zWizard step: {step_key}",
                 "style": "single",
                 "color": "ZWIZARD",
