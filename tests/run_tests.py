@@ -169,6 +169,16 @@ def run_walker_tests():
     return run_test_suite(test_walker, "zWalker Tests")
 
 
+def run_config_tests():
+    """Run zConfig test suite."""
+    print("\n" + "="*80)
+    print("CONFIG TEST SUITE")
+    print("="*80)
+    
+    from tests import test_config
+    return run_test_suite(test_config, "zConfig Tests")
+
+
 def run_all_tests():
     """Run all test suites."""
     print("\n" + "🧪 " * 40)
@@ -177,6 +187,7 @@ def run_all_tests():
     
     results = {
         'Core': run_core_tests(),
+        'Config': run_config_tests(),
         'CRUD': run_crud_tests(),
         'RGB': run_rgb_tests(),
         'Walker': run_walker_tests(),
@@ -206,6 +217,7 @@ def main():
     
     parser = argparse.ArgumentParser(description='zCLI Test Runner')
     parser.add_argument('--core', action='store_true', help='Run core tests only')
+    parser.add_argument('--config', action='store_true', help='Run config tests only')
     parser.add_argument('--crud', action='store_true', help='Run CRUD tests only')
     parser.add_argument('--rgb', action='store_true', help='Run RGB tests only')
     parser.add_argument('--walker', action='store_true', help='Run Walker tests only')
@@ -215,6 +227,8 @@ def main():
     
     if args.core:
         success = run_core_tests()
+    elif args.config:
+        success = run_config_tests()
     elif args.crud:
         success = run_crud_tests()
     elif args.rgb:

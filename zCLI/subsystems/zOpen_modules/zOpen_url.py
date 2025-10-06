@@ -8,11 +8,14 @@ from zCLI.subsystems.zDisplay import handle_zDisplay
 
 def zOpen_url(url, zSession, logger):
     """
-    Handle URL opening with intelligent fallbacks based on machine capabilities.
+    Handle URL opening using user's preferred browser.
+    
+    Uses machine.yaml preferences:
+    - browser: User's preferred browser
     
     Args:
         url: URL to open
-        zSession: Session with machine capabilities
+        zSession: Session with machine configuration
         logger: Logger instance
         
     Returns:
@@ -21,48 +24,54 @@ def zOpen_url(url, zSession, logger):
     if logger:
         logger.info("opening url: %s", url)
     
-    # Get machine capabilities from zSession
+    # Get machine configuration
     zMachine = zSession.get("zMachine", {})
-    capabilities = zMachine.get("capabilities", {})
-    environment = zMachine.get("environment", "unknown")
+    browser = zMachine.get("browser")
     
-    if logger:
-        logger.debug("Machine capabilities: %s", capabilities)
-        logger.debug("Environment: %s", environment)
+    if logger and browser:
+        logger.info("Using browser: %s", browser)
     
-    # Strategy 1: Try browser if available
-    if capabilities.get("browser", False):
-        return zOpen_url_browser(url, logger)
+    # Try to open with user's preferred browser
+    if browser and browser != "unknown":
+        return zOpen_url_browser(url, browser, logger)
     
-    # Strategy 2: Fallback to headless methods
-    if environment == "headless" or not capabilities.get("browser", False):
-        return zOpen_url_headless(url, capabilities, logger)
-    
-    # Strategy 3: Display URL info if all else fails
-    return zOpen_url_display(url, logger)
+    # Fallback to system default browser
+    return zOpen_url_browser(url, None, logger)
 
 
-def zOpen_url_browser(url, logger):
+def zOpen_url_browser(url, browser, logger):
     """
-    Open URL in browser.
+    Open URL in specified or default browser.
     
     Args:
         url: URL to open
+        browser: Preferred browser name (or None for system default)
         logger: Logger instance
         
     Returns:
         "zBack" on success, "stop" on failure
     """
     try:
+        if browser and browser not in ("unknown", "Safari", "Edge"):
+            # Try to use specific browser if available
+            import shutil
+            if shutil.which(browser):
+                subprocess.run([browser, url], check=False)
+                if logger:
+                    logger.info("Successfully opened URL in %s", browser)
+                return "zBack"
+        
+        # Fallback to system default browser (webbrowser module)
         success = webbrowser.open(url)
         if success:
             if logger:
-                logger.info("Successfully opened URL in browser")
+                logger.info("Successfully opened URL in system default browser")
             return "zBack"
         else:
             if logger:
                 logger.warning("Browser failed to open URL")
             return "stop"
+    
     except Exception as e:
         if logger:
             logger.warning("Browser error: %s", e)

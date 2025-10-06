@@ -2,12 +2,15 @@ import requests
 from zCLI.utils.logger import logger
 from zCLI.subsystems.zDisplay import handle_zDisplay
 
-def create_session():
+def create_session(machine_config=None):
     """
     Factory function to create a new session instance.
     
     This allows each zCLI instance to have its own isolated session,
     enabling multi-user support and parallel execution.
+    
+    Args:
+        machine_config: Machine configuration dict (from zConfig)
     
     Returns:
         dict: A new session dictionary with default values
@@ -19,6 +22,7 @@ def create_session():
         "zVaFilename": None,
         "zBlock": None,
         "zMode": None,
+        "zMachine": machine_config or {},  # Machine-level config (static per machine)
         "zAuth": {
             "id": None,
             "username": None,

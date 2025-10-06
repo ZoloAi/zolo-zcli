@@ -73,11 +73,15 @@ def zOpen_html(path, logger):
 
 def zOpen_text(path, zSession, logger):
     """
-    Open text files using available text editor/viewer.
+    Open text files using user's preferred text editor.
+    
+    Uses machine.yaml preferences:
+    - text_editor: For .txt, .md files
+    - ide: For .py, .js, .json, .yaml files
     
     Args:
         path: Text file path
-        zSession: Session with machine capabilities
+        zSession: Session with machine configuration
         logger: Logger instance
         
     Returns:
@@ -86,33 +90,44 @@ def zOpen_text(path, zSession, logger):
     if logger:
         logger.info("opening text file: %s", path)
     
-    # Get machine capabilities
+    # Get machine configuration
     zMachine = zSession.get("zMachine", {})
-    capabilities = zMachine.get("capabilities", {})
     
-    # Try to open with default text editor if available
-    if capabilities.get("default_text_editor", False):
-        try:
-            import subprocess
-            # Try to open with system default text editor
-            if os.name == 'nt':  # Windows
-                try:
-                    os.startfile(path)  # type: ignore
-                except AttributeError:
-                    # Fallback for systems without startfile
-                    subprocess.run(['notepad', path], check=True)
-            elif os.name == 'posix':  # Unix/Linux/macOS
-                subprocess.run(['open', path], check=True)  # macOS
-                # Note: Linux would use xdg-open, but we'll handle that in capabilities
-            if logger:
-                logger.info("Successfully opened text file with default editor")
-            return "zBack"
-        except Exception as e:
-            if logger:
-                logger.warning("Failed to open with default editor: %s", e)
+    # Choose editor based on file type
+    _, ext = os.path.splitext(path.lower())
     
-    # Fallback: Display file content
-    return zOpen_text_display(path, logger)
+    if ext in ['.py', '.js', '.json', '.yaml', '.yml']:
+        # Code files: prefer IDE
+        editor = zMachine.get("ide") or zMachine.get("text_editor", "nano")
+    else:
+        # Text files: use text editor
+        editor = zMachine.get("text_editor", "nano")
+    
+    if logger:
+        logger.info("Using editor: %s", editor)
+    
+    # Try to open with editor
+    try:
+        import subprocess
+        
+        if os.name == 'nt':  # Windows
+            try:
+                os.startfile(path)  # type: ignore
+            except AttributeError:
+                subprocess.run([editor, path], check=False)
+        else:  # Unix/Linux/macOS
+            subprocess.run([editor, path], check=False)
+        
+        if logger:
+            logger.info("Successfully opened file with %s", editor)
+        return "zBack"
+    
+    except Exception as e:
+        if logger:
+            logger.warning("Failed to open with editor %s: %s", editor, e)
+        
+        # Fallback: Display file content
+        return zOpen_text_display(path, logger)
 
 
 def zOpen_text_display(path, logger):

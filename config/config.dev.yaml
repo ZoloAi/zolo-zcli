@@ -1,0 +1,25 @@
+# config/config.dev.yaml
+# Development environment overrides
+
+Meta:
+  environment: "dev"
+  description: "Development configuration with relaxed security"
+
+zSocket:
+  security:
+    require_auth: false            # Optional auth for local dev
+    allowed_origins:               # Allow common dev ports
+      - "http://localhost:3000"
+      - "http://localhost:5173"
+      - "http://127.0.0.1:3000"
+  
+  limits:
+    max_connections: 50            # Lower for dev
+    rate_limit_per_minute: 1000    # Relaxed for dev
+
+zData:
+  backends:
+    default: "sqlite"              # Use SQLite for dev
+    sqlite:
+      path: "./dev_data.db"        # Separate dev database
+
