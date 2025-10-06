@@ -1,0 +1,24 @@
+# zUI/ui.zVaF.yaml
+
+zVaF:
+  step_1:
+    zDisplay:
+      event: header
+      label: "Zolo Testing and Orientation Part 2"
+      style: full      # Options: "full", "single", "~"
+      color: MAIN      # Options: MAIN, INFO, SUCCESS, ERROR, etc.
+      indent: 0        # Indentation level (0, 1, 2, ...)
+
+
+#  ^zCLI_Shell: "zFunc(@.zCLI.zCore.Shell.launch_zCLI_shell)"
+#
+#  SQLab: 'zLink(@.zLab.ui.zLabCLI.zLabCLI)'
+#
+#  zCloud: 'zLink(@.zCloud.ui.zCloud.zCloud)'
+#
+#  zWizard_Test:
+#    zWizard:
+#      stepOne: "zFunc(@.zLab.utils.zWizard_Test.step_one)"
+#      stepTwo: "zFunc(@.zLab.utils.zWizard_Test.step_two)"
+#      stepThree: "zFunc(@.zLab.utils.zWizard_Test.step_three, {zHat[0], zHat[1]})"
+#

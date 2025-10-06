@@ -1,11 +1,6 @@
 # zUI/ui.zVaF.yaml
 
 zVaF:
-  #zLogin!:
-  #  zDialog:
-  #    model: ""
-  #    fields: [username, password]
-  #    onSubmit: zFunc(@.zCLI.subsystems.zSession.zSession_Login, zConv)
   step_1:
     zDisplay:
       event: header
@@ -136,12 +131,12 @@ Section_2:
         
         The cache still shows just 1 file - because we're still in ui.zolo, just a different block. No need to reload or reparse anything. Delta links are instant!
         
-        ● Delta link ($) navigation - Working
-        ● Multi-block breadcrumb tracking - Working
-        ● Same-file block switching - Confirmed
+        √ Delta link ($) navigation - Working
+        √ Multi-block breadcrumb tracking - Working
+        √ Same-file block switching - Confirmed
       pause: true
 
-  ~Root*: ["^zSession", "^About_zCrumbs", "^Func_Example", "menu_example"]
+  ~step_2*: ["^zSession", "^About_zCrumbs", "^Func_Example", "$Section_3", "stop"]
   ^About_zCrumbs:
     zDisplay:
       event: text
@@ -170,24 +165,25 @@ Section_2:
       pause: true
 
   ^zSession: "zFunc(@.zCLI.subsystems.zSession.View_zSession)"
-  ^Func_Example: "zFunc(@.zCLI.subsystems.zFunc_Example.Func_Example)"
-  menu_example: ["option1", "option2"]
-  option1: "zFunc(@.zCLI.subsystems.zFunc_Example.Func_Example)"
-  option2: "zFunc(@.zCLI.subsystems.zFunc_Example.Func_Example)"
+  ^Func_Example: "zFunc(@.tests.utils.zFunc_Example.Func_Example)"
 
+Section_3:
+  step_1:
+    zDisplay:
+      event: text
+      value: |
+        Welcome to Section_3: Testing zBack Navigation
+        
+        Next you'll see a menu with a zBack option.
+        When you select zBack, it will return you to this text zDisplay.
+        
+        This demonstrates zBack's intelligent navigation - it knows where you came from!
+      color: CYAN
+      pause: true
 
-  ^zCLI_Shell: "zFunc(@.zCLI.zCore.Shell.launch_zCLI_shell)"
+  step_2*: ["$Section_4"]
 
-  SQLab: 'zLink(@.zLab.ui.zLabCLI.zLabCLI)'
-
-  zCloud: 'zLink(@.zCloud.ui.zCloud.zCloud)'
-
-  zWizard_Test:
-    zWizard:
-      stepOne: "zFunc(@.zLab.utils.zWizard_Test.step_one)"
-      stepTwo: "zFunc(@.zLab.utils.zWizard_Test.step_two)"
-      stepThree: "zFunc(@.zLab.utils.zWizard_Test.step_three, {zHat[0], zHat[1]})"
-
-zApps:
-  Root*: ["^zTimer"]
-  ^zTimer: "zOpen(@.zProducts.zTimer.index.html)"
+Section_4:
+  step_1*: ["^About_zLink", "Part_2"]
+  Part_2: "zLink(@.tests.UI.ui.zoloP2.zVaF)"
+  
