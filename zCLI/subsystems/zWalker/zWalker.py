@@ -346,7 +346,7 @@ class zWalker:
 
             # ⛔ Graceful halt triggered by logic
             if result == "zBack":
-                active_zBlock_dict, zBlock_keys, zKey = self.zCrumbs.handle_zBack()
+                active_zBlock_dict, zBlock_keys, zKey = self.zCrumbs.handle_zBack(show_banner=False)
                 return self.zBlock_loop(active_zBlock_dict, zBlock_keys, zKey)
 
             elif result == "stop":
