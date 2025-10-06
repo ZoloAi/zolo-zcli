@@ -32,9 +32,8 @@ zMachine:
   # ═══════════════════════════════════════════════════════════
   # Customize these to your preferred tools!
   
-  text_editor: "nano"            # nano, vim, nvim, emacs, cursor, code
-  browser: "firefox"             # firefox, chrome, safari, Arc, brave
-  ide: "vim"                     # cursor, code (vscode), subl, atom
+  browser: "firefox"             # Chrome, Firefox, Safari, Arc, Brave, Edge
+  ide: "code"                    # cursor, code (vscode), subl, atom, vim
   terminal: "xterm-256color"     # Terminal emulator type
   shell: "/bin/bash"             # bash, zsh, fish
   

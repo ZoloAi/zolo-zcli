@@ -21,7 +21,7 @@ class MachineConfig:
     
     Contains:
     - Machine identity (hostname, OS, deployment type)
-    - User tool preferences (editor, browser, IDE)
+    - User tool preferences (browser, IDE)
     - System capabilities (CPU, memory)
     - Deployment information (datacenter, role, cluster)
     
@@ -87,7 +87,6 @@ class MachineConfig:
             "role": os.getenv("ZOLO_ROLE", "development"),
             
             # User tools (system defaults, user can override)
-            "text_editor": self._detect_editor(),
             "browser": self._detect_browser(),
             "ide": self._detect_ide(),
             "terminal": os.getenv("TERM", "unknown"),
@@ -103,42 +102,12 @@ class MachineConfig:
         
         return machine
     
-    def _detect_editor(self):
-        """
-        Detect system default text editor.
-        
-        Checks (in order):
-        1. EDITOR env var
-        2. VISUAL env var
-        3. Common editors in PATH
-        4. Fallback to nano
-        
-        Returns:
-            Editor command
-        """
-        # Check environment variables
-        for var in ["EDITOR", "VISUAL"]:
-            editor = os.getenv(var)
-            if editor:
-                logger.debug("[MachineConfig] Editor from env var %s: %s", var, editor)
-                return editor
-        
-        # Check for common editors in PATH
-        for editor in ["vim", "nvim", "nano", "emacs", "vi"]:
-            if shutil.which(editor):
-                logger.debug("[MachineConfig] Found editor in PATH: %s", editor)
-                return editor
-        
-        # Fallback
-        logger.debug("[MachineConfig] Using fallback editor: nano")
-        return "nano"
-    
     def _detect_browser(self):
         """
         Detect system default browser.
         
         Returns:
-            Browser name
+            Browser name (or command)
         """
         system = platform.system()
         
@@ -147,35 +116,144 @@ class MachineConfig:
         if browser_env:
             return browser_env
         
-        # OS-specific defaults
-        if system == "Darwin":  # macOS
+        # macOS: Query LaunchServices for actual default
+        if system == "Darwin":
+            try:
+                import subprocess
+                
+                # Method 1: Check LaunchServices database for http handler
+                result = subprocess.run(
+                    ['defaults', 'read', 'com.apple.LaunchServices/com.apple.launchservices.secure', 'LSHandlers'],
+                    capture_output=True,
+                    text=True,
+                    timeout=5
+                )
+                
+                # Parse for common browsers
+                output_lower = result.stdout.lower()
+                browser_mapping = {
+                    'google.chrome': 'Chrome',
+                    'chrome': 'Chrome',
+                    'firefox': 'Firefox',
+                    'safari': 'Safari',
+                    'arc': 'Arc',
+                    'brave': 'Brave',
+                    'edge': 'Edge',
+                    'opera': 'Opera',
+                }
+                
+                for key, name in browser_mapping.items():
+                    if key in output_lower:
+                        logger.debug("[MachineConfig] Found default browser via LaunchServices: %s", name)
+                        return name
+                
+            except Exception as e:
+                logger.debug("[MachineConfig] Could not query LaunchServices: %s", e)
+            
+            # Fallback: Safari is macOS default
             return "Safari"
+            
         elif system == "Linux":
-            # Check for common browsers
-            for browser in ["firefox", "chromium", "google-chrome", "brave-browser"]:
+            # Try xdg-settings first (most reliable on Linux)
+            try:
+                import subprocess
+                result = subprocess.run(
+                    ['xdg-settings', 'get', 'default-web-browser'],
+                    capture_output=True,
+                    text=True,
+                    timeout=5
+                )
+                if result.returncode == 0:
+                    browser_desktop = result.stdout.strip()
+                    # Convert .desktop file to friendly name
+                    if 'firefox' in browser_desktop.lower():
+                        return "firefox"
+                    elif 'chrome' in browser_desktop.lower():
+                        return "google-chrome"
+                    elif 'chromium' in browser_desktop.lower():
+                        return "chromium"
+                    elif 'brave' in browser_desktop.lower():
+                        return "brave-browser"
+            except Exception:
+                pass
+            
+            # Fallback: Check for common browsers in PATH
+            for browser in ["firefox", "google-chrome", "chromium", "brave-browser"]:
                 if shutil.which(browser):
                     return browser
-            return "firefox"  # Fallback
+            return "firefox"  # Final fallback
+            
         elif system == "Windows":
+            # TODO: Query Windows registry for default browser
+            # For now, fallback to Edge (Windows 10/11 default)
             return "Edge"
         
         return "unknown"
     
     def _detect_ide(self):
         """
-        Detect IDE/code editor.
+        Detect IDE/code editor for all file types.
+        
+        Priority:
+        1. IDE-specific env vars (IDE, VISUAL_EDITOR, EDITOR, VISUAL)
+        2. Modern GUI IDEs (cursor, code, fleet, zed)
+        3. Classic IDEs (subl, atom, webstorm, pycharm, idea)
+        4. macOS: Xcode (xed)
+        5. Fallback to simple editors (nano, vim)
         
         Returns:
             IDE command
         """
-        # Check for common IDEs
-        for ide in ["cursor", "code", "subl", "atom"]:
+        # Check IDE/editor env vars
+        for var in ["IDE", "VISUAL_EDITOR", "EDITOR", "VISUAL"]:
+            ide_env = os.getenv(var)
+            if ide_env:
+                logger.debug("[MachineConfig] IDE from env var %s: %s", var, ide_env)
+                return ide_env
+        
+        # Check for modern GUI IDEs (prioritized by popularity/modernity)
+        modern_ides = [
+            "cursor",       # Cursor AI editor (very modern)
+            "code",         # VS Code (most popular)
+            "fleet",        # JetBrains Fleet (new)
+            "zed",          # Zed editor (modern, fast)
+        ]
+        
+        for ide in modern_ides:
             if shutil.which(ide):
-                logger.debug("[MachineConfig] Found IDE: %s", ide)
+                logger.debug("[MachineConfig] Found modern IDE: %s", ide)
                 return ide
         
-        # Fallback to text editor
-        return self._detect_editor()
+        # Check for classic IDEs
+        classic_ides = [
+            "subl",         # Sublime Text
+            "atom",         # Atom (discontinued but still used)
+            "webstorm",     # JetBrains WebStorm
+            "pycharm",      # JetBrains PyCharm
+            "idea",         # IntelliJ IDEA
+        ]
+        
+        for ide in classic_ides:
+            if shutil.which(ide):
+                logger.debug("[MachineConfig] Found classic IDE: %s", ide)
+                return ide
+        
+        # macOS-specific: Check for Xcode
+        if platform.system() == "Darwin":
+            if shutil.which("xed"):  # Xcode command-line tool
+                logger.debug("[MachineConfig] Found Xcode (xed)")
+                return "xed"
+        
+        # Fallback to simple editors
+        simple_editors = ["nano", "vim", "nvim", "vi"]
+        for editor in simple_editors:
+            if shutil.which(editor):
+                logger.debug("[MachineConfig] Falling back to simple editor: %s", editor)
+                return editor
+        
+        # Final fallback
+        logger.debug("[MachineConfig] Using final fallback: nano")
+        return "nano"
     
     def _get_memory_gb(self):
         """
@@ -201,6 +279,18 @@ class MachineConfig:
                         if line.startswith("MemTotal:"):
                             kb = int(line.split()[1])
                             return int(kb / (1024 * 1024))
+            
+            # macOS: use sysctl
+            elif platform.system() == "Darwin":
+                import subprocess
+                result = subprocess.run(
+                    ["sysctl", "-n", "hw.memsize"],
+                    capture_output=True,
+                    text=True,
+                    check=True
+                )
+                memory_bytes = int(result.stdout.strip())
+                return int(memory_bytes / (1024 ** 3))
         except Exception:
             pass
         
@@ -254,8 +344,7 @@ zMachine:
   role: "{self.machine.get('role')}"              # development, production, testing
   
   # Tool Preferences (customize these to your liking!)
-  text_editor: "{self.machine.get('text_editor')}"  # vim, nano, cursor, code, etc.
-  browser: "{self.machine.get('browser')}"          # firefox, chrome, Arc, Safari, etc.
+  browser: "{self.machine.get('browser')}"          # Chrome, Firefox, Arc, Safari, etc.
   ide: "{self.machine.get('ide')}"                  # cursor, code, subl, etc.
   terminal: "{self.machine.get('terminal')}"        # Terminal emulator
   shell: "{self.machine.get('shell')}"              # bash, zsh, fish, etc.

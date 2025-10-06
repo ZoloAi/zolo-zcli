@@ -17,6 +17,7 @@ from zCLI.subsystems.zWizard import ZWizard
 from zCLI.subsystems.zOpen import ZOpen
 from zCLI.subsystems.zAuth import ZAuth
 from zCLI.subsystems.zLoader import ZLoader
+from zCLI.subsystems.zExport import ZExport
 
 # Legacy ZCRUD wrapper (for backward compatibility)
 class ZCRUD:
@@ -85,9 +86,13 @@ class zCLI:
         # Initialize logger
         self.logger = logger
 
-        # Create instance-specific session for isolation
+        # Initialize zConfig FIRST (provides machine config)
+        from zCLI.subsystems.zConfig import ZConfig
+        self.config = ZConfig()
+        
+        # Create instance-specific session with machine config
         # Each zCLI instance gets its own session, enabling:
-        self.session = create_session()
+        self.session = create_session(machine_config=self.config.get_machine())
 
         # Initialize core subsystems (single source of truth)
         self.utils = ZUtils(self)
@@ -102,6 +107,7 @@ class zCLI:
         self.open = ZOpen(self)
         self.auth = ZAuth(self)
         self.loader = ZLoader(self)
+        self.export = ZExport(self)
 
         # Initialize shell and command executor
         self.shell = ZShell(self)
@@ -136,17 +142,19 @@ class zCLI:
         """
         Initialize the session with minimal required fields.
         
-        For shell mode: Only zS_id, zMode, and zMachine are set
+        For shell mode: Only zS_id and zMode are set
         For walker mode: Additional fields will be populated by zWalker
         
         This ensures minimal session initialization while providing
         required defaults for each mode.
+        
+        Note: zMachine is already set in create_session() from zConfig
         """
         # Set session ID - always required
         self.session["zS_id"] = self.utils.generate_id("zS")
 
-        # Detect machine type and capabilities
-        self.session["zMachine"] = self.utils.detect_machine_type()
+        # zMachine already set in create_session() from zConfig ✅
+        # No need to call detect_machine_type() - it's from machine.yaml now!
 
         # Set zMode based on interface mode
         if self.ui_mode:
@@ -159,7 +167,7 @@ class zCLI:
         logger.debug("Session initialized:")
         logger.debug("  zS_id: %s", self.session["zS_id"])
         logger.debug("  zMode: %s", self.session["zMode"])
-        logger.debug("  zMachine: %s", self.session["zMachine"])
+        logger.debug("  zMachine hostname: %s", self.session["zMachine"].get("hostname"))
 
     # ───────────────────────────────────────────────────────────────
     # Public API Methods

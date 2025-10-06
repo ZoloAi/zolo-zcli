@@ -39,6 +39,7 @@ def parse_command(command, logger):
         "open": _parse_open_command,
         "test": _parse_test_command,
         "auth": _parse_auth_command,
+        "export": _parse_export_command,
     }
     
     if command_type not in commands:
@@ -242,4 +243,48 @@ def _parse_auth_command(parts):
         "action": action,
         "args": args,
         "options": {}
+    }
+
+
+def _parse_export_command(parts):
+    """
+    Parse export commands like 'export machine text_editor cursor'.
+    
+    Syntax:
+        export machine [key] [value]     # Update machine config
+        export machine --show            # Show current machine config
+        export machine --reset [key]     # Reset to auto-detected defaults
+        export config [key] [value]      # Update config (future)
+        
+    Args:
+        parts: Command parts list
+        
+    Returns:
+        Dict with parsed export command
+    """
+    if len(parts) < 2:
+        return {"error": "Export command requires target (machine, config)"}
+    
+    target = parts[1].lower()
+    valid_targets = ["machine", "config"]
+    
+    if target not in valid_targets:
+        return {"error": f"Invalid export target: {target}. Use: {', '.join(valid_targets)}"}
+    
+    # Check for flags (--show, --reset)
+    options = {}
+    args = []
+    
+    for part in parts[2:]:
+        if part.startswith("--"):
+            flag = part[2:]
+            options[flag] = True
+        else:
+            args.append(part)
+    
+    return {
+        "type": "export",
+        "action": target,
+        "args": args,
+        "options": options
     }

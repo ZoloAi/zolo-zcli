@@ -62,21 +62,38 @@ def render_session(zDisplay_Obj):
     print(f"{Colors.GREEN}zSession_ID:{Colors.RESET} {g('zS_id')}")
     print(f"{Colors.GREEN}zMode:{Colors.RESET} {g('zMode')}")
     
-    # Add machine information
+    # Add machine information (from machine.yaml)
     zMachine = g('zMachine', {})
     if zMachine:
-        print(f"\n{Colors.GREEN}zMachine:{Colors.RESET}")
-        print(f"  {Colors.YELLOW}platform:{Colors.RESET} {zMachine.get('platform')}")
-        print(f"  {Colors.YELLOW}environment:{Colors.RESET} {zMachine.get('environment')}")
+        print(f"\n{Colors.GREEN}zMachine:{Colors.RESET} (from machine.yaml)")
+        
+        # Identity
+        print(f"  {Colors.YELLOW}os:{Colors.RESET} {zMachine.get('os')}")
+        print(f"  {Colors.YELLOW}hostname:{Colors.RESET} {zMachine.get('hostname')}")
         print(f"  {Colors.YELLOW}architecture:{Colors.RESET} {zMachine.get('architecture')}")
         print(f"  {Colors.YELLOW}python_version:{Colors.RESET} {zMachine.get('python_version')}")
-        print(f"  {Colors.YELLOW}zcli_version:{Colors.RESET} {zMachine.get('zcli_version')}")
         
-        capabilities = zMachine.get('capabilities', {})
-        print(f"  {Colors.YELLOW}capabilities:{Colors.RESET}")
-        for cap, available in capabilities.items():
-            status = "YES" if available else "NO"
-            print(f"    {cap}: {status}")
+        # Deployment
+        print(f"  {Colors.YELLOW}deployment:{Colors.RESET} {zMachine.get('deployment')}")
+        print(f"  {Colors.YELLOW}role:{Colors.RESET} {zMachine.get('role')}")
+        
+        # Tool Preferences (streamlined - no text_editor)
+        print(f"\n  {Colors.CYAN}Tool Preferences:{Colors.RESET}")
+        print(f"    browser: {zMachine.get('browser')}")
+        print(f"    ide: {zMachine.get('ide')}")
+        print(f"    shell: {zMachine.get('shell')}")
+        
+        # System Capabilities
+        if zMachine.get('cpu_cores') or zMachine.get('memory_gb'):
+            print(f"\n  {Colors.CYAN}System:{Colors.RESET}")
+            if zMachine.get('cpu_cores'):
+                print(f"    cpu_cores: {zMachine.get('cpu_cores')}")
+            if zMachine.get('memory_gb'):
+                print(f"    memory_gb: {zMachine.get('memory_gb')}")
+        
+        # zcli version (if available)
+        if zMachine.get('zcli_version'):
+            print(f"\n  {Colors.YELLOW}zcli_version:{Colors.RESET} {zMachine.get('zcli_version')}")
 
     print(f"\n{Colors.GREEN}zWorkspace:{Colors.RESET} {g('zWorkspace')}")
     print(f"{Colors.GREEN}zVaFile_path:{Colors.RESET} {g('zVaFile_path')}")
@@ -89,11 +106,45 @@ def render_session(zDisplay_Obj):
     print(f"  {Colors.YELLOW}role:{Colors.RESET} {g_auth('role')}")
     print(f"  {Colors.YELLOW}API_Key:{Colors.RESET} {g_auth('API_Key')}")
 
+    # Show breadcrumb trails
     print(f"\n{Colors.GREEN}zCrumbs:{Colors.RESET}")
-    print(f"  {Colors.MAGENTA}{g('zCrumbs', {})}{Colors.RESET}")
+    crumbs = g('zCrumbs', {})
+    if crumbs:
+        for scope, trail in crumbs.items():
+            trail_str = " > ".join(trail) if trail else "(empty)"
+            print(f"  {Colors.YELLOW}{scope}:{Colors.RESET} {trail_str}")
+    else:
+        print(f"  {Colors.MAGENTA}(no breadcrumbs){Colors.RESET}")
 
-    print(f"\n{Colors.GREEN}zCache:{Colors.RESET}")
-    print(f"  {Colors.MAGENTA}{g('zCache', {})}{Colors.RESET}")
+    # Show 3-tier cache with actual contents
+    print(f"\n{Colors.GREEN}zCache:{Colors.RESET} (3-tier)")
+    cache = g('zCache', {})
+    
+    if cache:
+        # Files cache (LRU auto-managed)
+        files_cache = cache.get('files', {})
+        print(f"  {Colors.CYAN}files:{Colors.RESET} ({len(files_cache)} cached)")
+        if files_cache:
+            for idx, cache_key in enumerate(list(files_cache.keys())[:5]):
+                print(f"    - {cache_key}")
+            if len(files_cache) > 5:
+                print(f"    ... and {len(files_cache) - 5} more")
+        
+        # Loaded cache (user-pinned)
+        loaded_cache = cache.get('loaded', {})
+        print(f"  {Colors.CYAN}loaded:{Colors.RESET} ({len(loaded_cache)} pinned)")
+        if loaded_cache:
+            for cache_key in loaded_cache.keys():
+                print(f"    - {cache_key}")
+        
+        # Data cache (runtime)
+        data_cache = cache.get('data', {})
+        print(f"  {Colors.CYAN}data:{Colors.RESET} ({len(data_cache)} runtime)")
+        if data_cache:
+            for cache_key in data_cache.keys():
+                print(f"    - {cache_key}")
+    else:
+        print(f"  {Colors.MAGENTA}(empty){Colors.RESET}")
 
 
 def render_json(zDisplay_Obj):

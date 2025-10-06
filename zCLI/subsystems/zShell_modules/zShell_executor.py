@@ -70,6 +70,8 @@ class CommandExecutor:
                 return self.execute_load(parsed)
             elif command_type == "auth":
                 return self.execute_auth(parsed)
+            elif command_type == "export":
+                return self.execute_export(parsed)
             else:
                 return {"error": f"Unknown command type: {command_type}"}
         
@@ -531,3 +533,42 @@ class CommandExecutor:
             print(f"\n✅ Cleared all {count} loaded resources")
         
         return {"status": "success", "cleared": count}
+    
+    def execute_export(self, parsed):
+        """
+        Execute export commands like 'export machine text_editor cursor'.
+        
+        Args:
+            parsed: Parsed command dictionary with:
+                - target: 'machine' or 'config'
+                - key: Config key to update
+                - value: New value for the key
+                - options: Command options (e.g., --show, --reset)
+                
+        Returns:
+            Export operation result
+        """
+        target = parsed.get("action")  # 'machine' or 'config'
+        args = parsed.get("args", [])
+        options = parsed.get("options", {})
+        
+        # Check for flags
+        show = options.get("show", False)
+        reset = options.get("reset", False)
+        
+        # Parse key and value from args
+        # For --reset, args[0] is the key to reset
+        # For normal update, args[0] is key, args[1] is value
+        key = args[0] if len(args) > 0 else None
+        value = args[1] if len(args) > 1 else None
+        
+        # Call zExport handler
+        success = self.zcli.export.handle(
+            target=target,
+            key=key,
+            value=value,
+            show=show,
+            reset=reset
+        )
+        
+        return {"status": "success" if success else "error"}

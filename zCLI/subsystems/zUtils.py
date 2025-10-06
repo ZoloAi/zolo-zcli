@@ -45,147 +45,49 @@ class ZUtils:
 
     def detect_machine_type(self) -> dict:
         """
-        Detect system environment and machine capabilities.
+        Get machine information from zConfig.
+        
+        This method now returns machine config from machine.yaml
+        instead of re-detecting on every call.
         
         Returns:
-            dict: Machine type information including:
-                - platform: Operating system (Linux, Darwin, Windows)
-                - environment: GUI/Headless detection
-                - capabilities: Streamlined capability detection:
-                    - default_IDE: GUI IDE (VS Code, Atom, Sublime) or vim
-                    - default_text_editor: GUI editor (gedit, kate, notepad) or less
-                    - imports: git AND (curl OR wget) for downloading/cloning
-                    - browser: Web browser (requires GUI on Unix systems)
-                - architecture: System architecture
-                - python_version: Python version
-                - zcli_version: zolo-zcli framework version
+            dict: Machine information from machine.yaml
         """
-        # Get zolo-zcli version
         try:
-            from zCLI.version import get_version
-            zcli_version = get_version()
-        except ImportError:
-            zcli_version = "unknown"
+            # Get machine config from zConfig
+            from zCLI.subsystems.zConfig import get_config
+            config = get_config()
+            machine = config.get_machine()
+            
+            # Add zcli version
+            try:
+                from zCLI.version import get_version
+                machine['zcli_version'] = get_version()
+            except ImportError:
+                machine['zcli_version'] = "unknown"
+            
+            return machine
         
-        machine_info = {
-            "platform": platform.system(),
-            "architecture": platform.machine(),
-            "python_version": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
-            "zcli_version": zcli_version,
-            "environment": "unknown",
-            "capabilities": {
-                "default_IDE": False,
-                "default_text_editor": False,
-                "imports": False,
-                "browser": False
+        except Exception as e:
+            # Fallback if zConfig not available
+            logger.warning("[zUtils] zConfig not available, using minimal fallback: %s", e)
+            
+            try:
+                from zCLI.version import get_version
+                zcli_version = get_version()
+            except ImportError:
+                zcli_version = "unknown"
+            
+            return {
+                "os": platform.system(),
+                "hostname": socket.gethostname(),
+                "architecture": platform.machine(),
+                "python_version": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
+                "zcli_version": zcli_version,
+                "deployment": "dev",
+                "text_editor": "nano",
+                "browser": "unknown",
             }
-        }
-        
-        # Detect environment (GUI vs Headless)
-        gui_available = False
-        if machine_info["platform"] == "Linux":
-            # Check for DISPLAY environment variable (X11)
-            if os.environ.get('DISPLAY'):
-                machine_info["environment"] = "gui"
-                gui_available = True
-            else:
-                machine_info["environment"] = "headless"
-        elif machine_info["platform"] == "Darwin":  # macOS
-            machine_info["environment"] = "gui"  # macOS typically has GUI
-            gui_available = True
-        elif machine_info["platform"] == "Windows":
-            machine_info["environment"] = "gui"  # Windows typically has GUI
-            gui_available = True
-        
-        # 1. Detect default_IDE (GUI IDE or vim)
-        if gui_available:
-            # Check for GUI IDEs
-            gui_ide_found = False
-            for ide in ['code', 'code-insiders', 'atom', 'sublime_text']:
-                try:
-                    subprocess.run([ide, '--version'], 
-                                 capture_output=True, check=True, timeout=2)
-                    gui_ide_found = True
-                    break
-                except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
-                    pass
-            
-            if gui_ide_found:
-                machine_info["capabilities"]["default_IDE"] = True
-        
-        # Check for vim (universal IDE)
-        if not machine_info["capabilities"]["default_IDE"]:
-            try:
-                subprocess.run(['vim', '--version'], 
-                             capture_output=True, check=True, timeout=2)
-                machine_info["capabilities"]["default_IDE"] = True
-            except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
-                # Fallback to checking EDITOR environment variable
-                editor = os.environ.get('EDITOR', '').lower()
-                if editor and any(name in editor for name in ['vim', 'nano', 'emacs', 'code']):
-                    machine_info["capabilities"]["default_IDE"] = True
-        
-        # 2. Detect default_text_editor (GUI editor or less)
-        if gui_available:
-            # Check for GUI text editors
-            gui_editor_found = False
-            for editor in ['gedit', 'kate', 'notepad', 'textedit']:
-                try:
-                    subprocess.run([editor, '--version'], 
-                                 capture_output=True, check=True, timeout=2)
-                    gui_editor_found = True
-                    break
-                except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
-                    pass
-            
-            if gui_editor_found:
-                machine_info["capabilities"]["default_text_editor"] = True
-        
-        # Check for less (universal text viewer/editor)
-        if not machine_info["capabilities"]["default_text_editor"]:
-            try:
-                subprocess.run(['less', '--version'], 
-                             capture_output=True, check=True, timeout=2)
-                machine_info["capabilities"]["default_text_editor"] = True
-            except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
-                pass
-        
-        # 3. Detect imports capability (git AND curl OR wget)
-        git_available = False
-        download_available = False
-        
-        # Check for git
-        try:
-            subprocess.run(['git', '--version'], 
-                         capture_output=True, check=True, timeout=2)
-            git_available = True
-        except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
-            pass
-        
-        # Check for curl or wget
-        for tool in ['curl', 'wget']:
-            try:
-                subprocess.run([tool, '--version'], 
-                             capture_output=True, check=True, timeout=2)
-                download_available = True
-                break
-            except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
-                pass
-        
-        if git_available and download_available:
-            machine_info["capabilities"]["imports"] = True
-        
-        # 4. Detect browser (must have GUI on Unix systems)
-        if gui_available:
-            try:
-                import webbrowser
-                browser = webbrowser.get()
-                if browser and hasattr(browser, 'name') and browser.name:
-                    machine_info["capabilities"]["browser"] = True
-            except Exception:
-                pass
-        
-        return machine_info
 
     def load_plugins(self, plugin_paths):
         """

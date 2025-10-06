@@ -73,11 +73,10 @@ def zOpen_html(path, logger):
 
 def zOpen_text(path, zSession, logger):
     """
-    Open text files using user's preferred text editor.
+    Open all text files using user's preferred IDE.
     
-    Uses machine.yaml preferences:
-    - text_editor: For .txt, .md files
-    - ide: For .py, .js, .json, .yaml files
+    Uses machine.yaml preference:
+    - ide: For all file types (.txt, .md, .py, .js, .json, .yaml, etc.)
     
     Args:
         path: Text file path
@@ -93,20 +92,13 @@ def zOpen_text(path, zSession, logger):
     # Get machine configuration
     zMachine = zSession.get("zMachine", {})
     
-    # Choose editor based on file type
-    _, ext = os.path.splitext(path.lower())
-    
-    if ext in ['.py', '.js', '.json', '.yaml', '.yml']:
-        # Code files: prefer IDE
-        editor = zMachine.get("ide") or zMachine.get("text_editor", "nano")
-    else:
-        # Text files: use text editor
-        editor = zMachine.get("text_editor", "nano")
+    # Use IDE for all text files
+    editor = zMachine.get("ide", "nano")
     
     if logger:
-        logger.info("Using editor: %s", editor)
+        logger.info("Using IDE: %s", editor)
     
-    # Try to open with editor
+    # Try to open with IDE
     try:
         import subprocess
         
@@ -124,7 +116,7 @@ def zOpen_text(path, zSession, logger):
     
     except Exception as e:
         if logger:
-            logger.warning("Failed to open with editor %s: %s", editor, e)
+            logger.warning("Failed to open with IDE %s: %s", editor, e)
         
         # Fallback: Display file content
         return zOpen_text_display(path, logger)
@@ -132,7 +124,7 @@ def zOpen_text(path, zSession, logger):
 
 def zOpen_text_display(path, logger):
     """
-    Display text file content when editor opening fails.
+    Display text file content when IDE opening fails.
     
     Args:
         path: Text file path
