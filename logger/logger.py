@@ -65,6 +65,10 @@ class Logger:
             
             # Set default level
             self.logger.setLevel(self._default_level)
+            
+            # Disable propagation to prevent duplicate logs
+            # Each logger has its own handler, so propagation is not needed
+            self.logger.propagate = False
     
     def debug(self, message: str, *args, **kwargs):
         """Log debug message."""

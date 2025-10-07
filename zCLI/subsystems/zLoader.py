@@ -126,9 +126,7 @@ class ZLoader:
         else:
             # LEGACY: walker instance - create temporary zParser
             from zCLI.subsystems.zParser import ZParser
-            temp_parser = ZParser()
-            temp_parser.zSession = self.zSession
-            temp_parser.logger = self.logger
+            temp_parser = ZParser(self.walker)  # Pass walker instance
             zVaFile_fullpath, zVaFilename = temp_parser.zPath_decoder(zPath, zType)
             zFilePath_identified, zFile_extension = temp_parser.identify_zFile(zVaFilename, zVaFile_fullpath)
         self.logger.debug("zFilePath_identified!\n%s", zFilePath_identified)
@@ -235,9 +233,13 @@ def handle_zLoader(zPath=None, walker=None, session=None, zcli=None):
 
     # Use zParser for path resolution (consolidated approach)
     from zCLI.subsystems.zParser import ZParser
-    temp_parser = ZParser()
-    temp_parser.zSession = target_session
-    temp_parser.logger = Logger.get_logger()
+    # Create a temporary object with session for ZParser
+    class TempSession:
+        def __init__(self, session):
+            self.zSession = session
+            self.logger = Logger.get_logger()
+    
+    temp_parser = ZParser(TempSession(target_session))
     zVaFile_fullpath, zVaFilename = temp_parser.zPath_decoder(zPath, zType)
 
     # File discovery via zParser

@@ -40,6 +40,8 @@ def parse_command(command, logger):
         "test": _parse_test_command,
         "auth": _parse_auth_command,
         "export": _parse_export_command,
+        "config": _parse_config_command,
+        "load": _parse_load_command,
     }
     
     if command_type not in commands:
@@ -287,4 +289,43 @@ def _parse_export_command(parts):
         "action": target,
         "args": args,
         "options": options
+    }
+
+
+def _parse_config_command(parts):
+    """Parse config commands like 'config check', 'config get path', 'config set path value'"""
+    if len(parts) < 2:
+        return {"error": "Config command requires action (check, get, set, list, reload, validate, export, import)"}
+    
+    action = parts[1].lower()
+    valid_actions = ["check", "get", "set", "list", "reload", "validate", "export", "import"]
+    
+    if action not in valid_actions:
+        return {"error": f"Invalid config action: {action}. Use: {', '.join(valid_actions)}"}
+    
+    # Extract arguments and options
+    args = parts[2:] if len(parts) > 2 else []
+    options = {}
+    
+    return {
+        "type": "config",
+        "action": action,
+        "args": args,
+        "options": options
+    }
+
+
+def _parse_load_command(parts):
+    """Parse load commands like 'load @.zProducts.zTimer' or 'load path/to/file.yaml'"""
+    if len(parts) < 2:
+        return {"error": "Load command requires path"}
+    
+    # The path is everything after "load", rejoined if it was split
+    path = " ".join(parts[1:])
+    
+    return {
+        "type": "load",
+        "action": "load",
+        "args": [path],
+        "options": {}
     }

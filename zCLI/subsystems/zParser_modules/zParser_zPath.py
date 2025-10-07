@@ -6,6 +6,9 @@ import os
 from logger import Logger
 from zCLI.subsystems.zDisplay import handle_zDisplay
 
+# Logger instance
+logger = Logger.get_logger(__name__)
+
 
 def zPath_decoder(zSession, zPath=None, zType=None, display=None):
     """
@@ -80,6 +83,13 @@ def zPath_decoder(zSession, zPath=None, zType=None, display=None):
 
         if symbol == "@":
             logger.info("↪ '@' → workspace-relative path")
+            
+            # Validate workspace is properly configured
+            if not zSession.get("zWorkspace"):
+                logger.warning("⚠️ '@' path requested but no workspace configured in zSession")
+                logger.warning("   Use 'session set zWorkspace <path>' to configure workspace")
+                logger.warning("   Falling back to current working directory: %s", zWorkspace)
+            
             rel_base_parts = zRelPath_parts[1:]
             zVaFile_basepath = os.path.join(zWorkspace, *rel_base_parts)
             logger.info("\nzVaFile path: %s", zVaFile_basepath)

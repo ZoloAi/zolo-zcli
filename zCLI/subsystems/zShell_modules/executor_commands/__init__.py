@@ -18,6 +18,7 @@ from .auth_executor import execute_auth
 from .load_executor import execute_load
 from .export_executor import execute_export
 from .utils_executor import execute_utils
+from .config_executor import execute_config
 
 __all__ = [
     "execute_crud",
@@ -29,5 +30,6 @@ __all__ = [
     "execute_auth",
     "execute_load",
     "execute_export",
-    "execute_utils"
+    "execute_utils",
+    "execute_config"
 ]
