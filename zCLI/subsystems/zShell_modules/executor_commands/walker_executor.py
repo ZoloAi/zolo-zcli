@@ -1,0 +1,86 @@
+# zCLI/subsystems/zShell_modules/executor_commands/walker_executor.py
+# ───────────────────────────────────────────────────────────────
+"""Walker command execution for zCLI."""
+
+from logger import Logger
+
+# Logger instance
+logger = Logger.get_logger(__name__)
+
+
+def execute_walker(zcli, parsed):
+    """
+    Execute walker commands like 'walker run'.
+    
+    Args:
+        zcli: zCLI instance
+        parsed: Parsed command dictionary
+        
+    Returns:
+        Walker command result
+    """
+    action = parsed["action"]
+    
+    if action == "run":
+        # Launch Walker using session's zVaF configuration
+        logger.info("Launching Walker from session configuration...")
+        
+        # Validate required session fields
+        required_fields = ["zWorkspace", "zVaFilename", "zVaFile_path", "zBlock"]
+        missing = []
+        
+        for field in required_fields:
+            if not zcli.session.get(field):
+                missing.append(field)
+        
+        if missing:
+            return {
+                "error": f"Missing required session fields: {', '.join(missing)}",
+                "note": "Use 'session set <field> <value>' to configure Walker"
+            }
+        
+        # Build zSpark configuration from session
+        zcli.zspark_obj.update({
+            "zWorkspace": zcli.session["zWorkspace"],
+            "zVaFilename": zcli.session["zVaFilename"],
+            "zVaFile_path": zcli.session.get("zVaFile_path", "@"),
+            "zBlock": zcli.session.get("zBlock", "Root"),
+            "zMode": zcli.session.get("zMode", "Terminal")
+        })
+        
+        # Set UI mode
+        zcli.ui_mode = True
+        
+        # Import and launch Walker
+        try:
+            from zCLI.subsystems.zWalker.zWalker import zWalker
+            logger.info("Creating zWalker instance from zCLI...")
+            walker = zWalker(zcli)
+            
+            logger.info("Starting Walker UI mode...")
+            result = walker.run()
+            
+            # After Walker exits normally, return to shell
+            logger.info("Walker exited normally, returning to Shell mode...")
+            zcli.ui_mode = False
+            
+            return {"success": "Walker session completed", "result": result}
+            
+        except SystemExit as e:
+            # Walker called sys.exit() - this is normal for "stop" or completion
+            logger.info("Walker exited via sys.exit(%s), returning to Shell mode...", e.code)
+            zcli.ui_mode = False
+            
+            # Determine if it was a normal exit or error
+            if e.code == 0 or e.code is None:
+                return {"success": "Walker exited normally"}
+            else:
+                return {"note": f"Walker exited with code {e.code}"}
+            
+        except Exception as e:
+            logger.error("Failed to launch Walker: %s", e, exc_info=True)
+            zcli.ui_mode = False
+            return {"error": f"Walker launch failed: {str(e)}"}
+    
+    else:
+        return {"error": f"Unknown walker command: {action}. Use: walker run"}

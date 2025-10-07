@@ -1,0 +1,33 @@
+# zCLI/subsystems/zShell_modules/executor_commands/__init__.py
+# ───────────────────────────────────────────────────────────────
+"""
+Executor Commands Registry - Modular command execution for zCLI.
+
+This package contains specialized command executors that were extracted
+from the monolithic zShell_executor.py for better organization.
+"""
+
+# Import command executors
+from .crud_executor import execute_crud
+from .func_executor import execute_func
+from .session_executor import execute_session
+from .walker_executor import execute_walker
+from .open_executor import execute_open
+from .test_executor import execute_test
+from .auth_executor import execute_auth
+from .load_executor import execute_load
+from .export_executor import execute_export
+from .utils_executor import execute_utils
+
+__all__ = [
+    "execute_crud",
+    "execute_func", 
+    "execute_session",
+    "execute_walker",
+    "execute_open",
+    "execute_test",
+    "execute_auth",
+    "execute_load",
+    "execute_export",
+    "execute_utils"
+]

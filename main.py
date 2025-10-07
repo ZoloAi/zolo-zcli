@@ -30,7 +30,7 @@ def main() -> None:
 
     # Initialize logging first so it applies to main and everything that follows
     set_log_level(args.log_level)
-    
+
     # Get logger instance for main
     main_logger = Logger.get_logger("main")
 

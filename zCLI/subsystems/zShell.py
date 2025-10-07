@@ -13,7 +13,10 @@ from logger import Logger
 logger = Logger.get_logger(__name__)
 
 # Import specialized modules from zShell_modules registry
-from .zShell_modules.zShell_interactive import InteractiveShell as InteractiveShell_func, launch_zCLI_shell as launch_zCLI_shell_func
+from .zShell_modules.zShell_interactive import (
+    InteractiveShell as InteractiveShell_func,
+    launch_zCLI_shell as launch_zCLI_shell_func
+)
 from .zShell_modules.zShell_executor import CommandExecutor as CommandExecutor_func
 from .zShell_modules.zShell_help import HelpSystem as HelpSystem_func
 
