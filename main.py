@@ -12,7 +12,7 @@ def main() -> None:
 
     parser = argparse.ArgumentParser(
         description="Zolo zCLI Framework - YAML-driven CLI for interactive applications",
-        prog="zolo-zcli",
+        prog="zolo",
     )
     parser.add_argument("--shell", action="store_true", help="Start zCLI shell mode")
     parser.add_argument(
