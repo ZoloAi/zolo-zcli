@@ -8,7 +8,10 @@
 
 import sqlite3
 from .base_adapter import BaseDataAdapter
-from logger import logger
+from logger import Logger
+
+# Logger instance
+logger = Logger.get_logger(__name__)
 
 
 class SQLiteAdapter(BaseDataAdapter):

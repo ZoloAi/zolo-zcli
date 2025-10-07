@@ -15,7 +15,7 @@
 # - Schema: Schema parsing and validation
 # ----------------------------------------------------------------
 
-from logger import logger
+from logger import Logger
 from zCLI.subsystems.zDisplay import handle_zDisplay, Colors, print_line
 from zCLI.subsystems.zParser import parse_dotted_path, ZParser
 from zCLI.subsystems.zLoader import handle_zLoader
@@ -476,7 +476,7 @@ def load_schema_ref(ref_expr, session=None):
         if target_session.get("zEngine_path") and not target_session.get("zWorkspace"):
             target_session["zWorkspace"] = target_session["zEngine_path"]
         zparser.zSession = target_session
-        zparser.logger = logger
+        zparser.logger = Logger.get_logger()
         
         # Build file path from parts (zParser handles the complex path logic)
         file_path = ".".join(parts[:-1]) if len(parts) > 1 else parts[0]

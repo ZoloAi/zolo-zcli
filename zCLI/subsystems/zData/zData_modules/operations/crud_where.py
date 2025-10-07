@@ -39,7 +39,10 @@ Examples:
     # SQL: WHERE (status = ? OR priority >= ?)
 """
 
-from logger import logger
+from logger import Logger
+
+# Logger instance
+logger = Logger.get_logger(__name__)
 
 
 def build_where_clause(filters, table_prefix=None):

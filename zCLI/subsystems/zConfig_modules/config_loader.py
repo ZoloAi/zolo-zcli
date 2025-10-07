@@ -8,7 +8,10 @@ Loads config from multiple sources and merges them with priority.
 import os
 import yaml
 from pathlib import Path
-from logger import logger
+from logger import Logger
+
+# Logger instance
+logger = Logger.get_logger(__name__)
 
 
 class ConfigLoader:

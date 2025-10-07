@@ -1,9 +1,12 @@
 import os
 import importlib.util
 
-from logger import logger
+from logger import Logger
 from zCLI.subsystems.zDisplay import handle_zDisplay, handle_zInput
 from zCLI.subsystems.zSession import zSession
+
+# Logger instance
+logger = Logger.get_logger(__name__)
 
 
 class ZFunc:

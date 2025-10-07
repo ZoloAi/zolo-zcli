@@ -20,7 +20,10 @@ Example Usage:
 
 import yaml
 from pathlib import Path
-from logger import logger
+from logger import Logger
+
+# Logger instance
+logger = Logger.get_logger(__name__)
 
 
 class ZExport:

@@ -7,7 +7,7 @@
 # - parse_type(): Parse type strings with defaults and legacy markers
 # ----------------------------------------------------------------
 
-from logger import logger
+from logger import Logger
 
 
 def parse_type(raw_type):

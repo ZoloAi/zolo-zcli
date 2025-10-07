@@ -10,7 +10,7 @@ Unlike the automatic 'files' cache, entries here:
 """
 
 import time
-from logger import logger
+from logger import Logger
 
 
 class LoadedCache:
@@ -35,7 +35,7 @@ class LoadedCache:
             session: zSession dict
         """
         self.session = session
-        self.logger = logger
+        self.logger = Logger.get_logger()
         self._ensure_namespace()
     
     def _ensure_namespace(self):

@@ -3,7 +3,7 @@
 Output adapter base class and factory for multi-mode rendering
 """
 
-from logger import logger
+from logger import Logger
 
 
 class OutputMode:
@@ -31,7 +31,7 @@ class OutputAdapter:
             session: zSession dict for context
         """
         self.session = session
-        self.logger = logger
+        self.logger = Logger.get_logger()
     
     # ═══════════════════════════════════════════════════════════
     # Abstract Methods (must be implemented by subclasses)

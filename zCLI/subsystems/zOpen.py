@@ -3,7 +3,7 @@
 """Core zOpen handler for file and URL opening operations."""
 
 from urllib.parse import urlparse
-from logger import logger
+from logger import Logger
 from zCLI.subsystems.zDisplay import handle_zDisplay
 from zCLI.subsystems.zSession import zSession
 
@@ -11,6 +11,9 @@ from zCLI.subsystems.zSession import zSession
 from .zOpen_modules.zOpen_url import zOpen_url
 from .zOpen_modules.zOpen_file import zOpen_file
 from .zOpen_modules.zOpen_path import zOpen_zPath
+
+# Logger instance
+logger = Logger.get_logger(__name__)
 
 
 class ZOpen:

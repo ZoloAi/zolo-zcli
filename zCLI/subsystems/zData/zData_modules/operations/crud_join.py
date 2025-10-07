@@ -11,7 +11,7 @@ Supports:
 - Multi-table queries with proper field aliasing
 """
 
-from logger import logger
+from logger import Logger
 from .crud_where import build_where_clause as build_where_with_tables  # Re-export for compatibility
 
 

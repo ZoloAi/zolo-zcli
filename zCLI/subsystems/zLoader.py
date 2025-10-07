@@ -18,10 +18,13 @@ Key Responsibilities:
 NOT for external files (that's zOpen).
 """
 
-from logger import logger
+from logger import Logger
 from zCLI.subsystems.zSession import zSession
 from zCLI.subsystems.zDisplay import handle_zDisplay
 from zCLI.subsystems.zLoader_modules import SmartCache, LoadedCache, load_file_raw
+
+# Logger instance
+logger = Logger.get_logger(__name__)
 
 
 class ZLoader:
@@ -233,7 +236,7 @@ def handle_zLoader(zPath=None, walker=None, session=None, zcli=None):
     from zCLI.subsystems.zParser import ZParser
     temp_parser = ZParser()
     temp_parser.zSession = target_session
-    temp_parser.logger = logger
+    temp_parser.logger = Logger.get_logger()
     zVaFile_fullpath, zVaFilename = temp_parser.zPath_decoder(zPath, zType)
 
     # File discovery via zParser

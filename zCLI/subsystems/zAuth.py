@@ -15,7 +15,7 @@ import os
 import json
 from pathlib import Path
 from getpass import getpass
-from logger import logger
+from logger import Logger
 from zCLI.subsystems.zSession import zSession_Login
 
 
@@ -35,7 +35,7 @@ class ZAuth:
         """
         self.walker = walker
         self.zSession = walker.session if walker else None
-        self.logger = logger
+        self.logger = Logger.get_logger()
         
         # Credentials file location
         self.credentials_dir = Path.home() / ".zolo"

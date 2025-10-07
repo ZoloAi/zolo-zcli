@@ -2,7 +2,7 @@
 
 import argparse
 
-from logger import logger, set_log_level
+from logger import Logger, set_log_level
 from zCLI.version import get_version
 
 
@@ -30,9 +30,12 @@ def main() -> None:
 
     # Initialize logging first so it applies to main and everything that follows
     set_log_level(args.log_level)
+    
+    # Get logger instance for main
+    main_logger = Logger.get_logger("main")
 
     if args.shell:
-        logger.info("Starting zCLI Shell mode...")
+        main_logger.info("Starting zCLI Shell mode...")
         from zCLI.zCore.zCLI import zCLI  # Import after logging init
         cli = zCLI()
         cli.run_shell()

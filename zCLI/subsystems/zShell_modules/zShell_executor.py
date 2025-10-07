@@ -2,7 +2,7 @@
 # ───────────────────────────────────────────────────────────────
 
 import sys
-from logger import logger
+from logger import Logger
 
 
 class CommandExecutor:
@@ -26,7 +26,7 @@ class CommandExecutor:
             zcli: Parent zCLI instance with access to all subsystems
         """
         self.zcli = zcli
-        self.logger = logger
+        self.logger = Logger.get_logger()
     
     def execute(self, command: str):
         """

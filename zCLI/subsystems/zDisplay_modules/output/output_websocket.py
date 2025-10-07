@@ -8,7 +8,10 @@ TODO: Implement when zCloud frontend is ready
 import json
 import asyncio
 from .output_adapter import OutputAdapter
-from logger import logger
+from logger import Logger
+
+# Logger instance
+logger = Logger.get_logger(__name__)
 
 
 class WebSocketOutput(OutputAdapter):

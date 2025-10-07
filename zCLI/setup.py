@@ -15,7 +15,10 @@ This runs automatically on first import of zConfig.
 
 import os
 from pathlib import Path
-from logger import logger
+from logger import Logger
+
+# Logger instance
+logger = Logger.get_logger(__name__)
 
 
 def ensure_config_directories():

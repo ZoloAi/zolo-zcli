@@ -5,7 +5,7 @@
 import os
 import json
 import yaml
-from logger import logger
+from logger import Logger
 from zCLI.subsystems.zDisplay import handle_zDisplay
 
 

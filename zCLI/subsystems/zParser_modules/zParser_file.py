@@ -14,7 +14,7 @@
 
 import yaml
 import json
-from logger import logger
+from logger import Logger
 
 
 def parse_file_content(raw_content, file_extension=None):

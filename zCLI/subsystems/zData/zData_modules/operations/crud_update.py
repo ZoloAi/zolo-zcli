@@ -1,7 +1,10 @@
 # zCLI/crud/crud_update.py — Update Operations
 # ───────────────────────────────────────────────────────────────
 
-from logger import logger
+from logger import Logger
+
+# Logger instance
+logger = Logger.get_logger(__name__)
 from zCLI.subsystems.zDisplay import handle_zDisplay
 from .crud_where import build_where_clause
 

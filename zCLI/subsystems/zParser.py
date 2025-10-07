@@ -2,7 +2,7 @@
 # ───────────────────────────────────────────────────────────────
 """Core zParser handler for path resolution, command parsing, file parsing, and utilities."""
 
-from logger import logger
+from logger import Logger
 from zCLI.subsystems.zSession import zSession
 
 # Import zParser modules from registry
@@ -42,7 +42,7 @@ class ZParser:
             # No parent, use global session
             self.walker = None
             self.zSession = zSession
-            self.logger = logger
+            self.logger = Logger.get_logger()
             self.display = None
         elif hasattr(zcli_or_walker, 'session') and hasattr(zcli_or_walker, 'crud'):
             # NEW: zCLI instance (has 'session' and 'crud')

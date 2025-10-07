@@ -1,6 +1,6 @@
 import os
 import sys
-from logger import logger
+from logger import Logger
 from zCLI.subsystems.zDisplay import handle_zDisplay
 
 def Func_Example(session=None):

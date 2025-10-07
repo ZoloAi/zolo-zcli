@@ -1,9 +1,12 @@
 # zCLI/zCore/Shell.py — Interactive Shell Mode
 # ───────────────────────────────────────────────────────────────
 
-from logger import logger
+from logger import Logger
 from .zShell_help import HelpSystem
 from .zShell_executor import CommandExecutor
+
+# Logger instance
+logger = Logger.get_logger(__name__)
 
 
 class InteractiveShell:
@@ -26,7 +29,7 @@ class InteractiveShell:
             zcli: Parent zCLI instance
         """
         self.zcli = zcli
-        self.logger = logger
+        self.logger = Logger.get_logger()
         self.executor = CommandExecutor(zcli)
         self.help_system = HelpSystem()
         self.running = False

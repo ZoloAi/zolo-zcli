@@ -6,7 +6,7 @@ Smart Cache - Unified caching with automatic invalidation and LRU eviction
 import os
 import time
 from collections import OrderedDict
-from logger import logger
+from logger import Logger
 
 
 class SmartCache:
@@ -32,7 +32,7 @@ class SmartCache:
         self.session = session
         self.namespace = namespace
         self.max_size = max_size
-        self.logger = logger
+        self.logger = Logger.get_logger()
         
         # Statistics
         self.stats = {

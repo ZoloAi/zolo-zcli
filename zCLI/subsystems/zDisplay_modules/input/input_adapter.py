@@ -3,7 +3,10 @@
 Input adapter base class and factory for multi-mode input collection
 """
 
-from logger import logger
+from logger import Logger
+
+# Logger instance
+logger = Logger.get_logger(__name__)
 
 
 class InputMode:
@@ -40,7 +43,7 @@ class InputAdapter:
             session: zSession dict for context
         """
         self.session = session
-        self.logger = logger
+        self.logger = Logger.get_logger()
     
     # ═══════════════════════════════════════════════════════════
     # Abstract Methods (must be implemented by subclasses)

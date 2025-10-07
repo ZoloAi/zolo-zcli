@@ -7,7 +7,10 @@ This module serves as the main handler for zShell functionality,
 delegating to specialized modules within zShell_modules/.
 """
 
-from logger import logger
+from logger import Logger
+
+# Logger instance
+logger = Logger.get_logger(__name__)
 
 # Import specialized modules from zShell_modules registry
 from .zShell_modules.zShell_interactive import InteractiveShell as InteractiveShell_func, launch_zCLI_shell as launch_zCLI_shell_func
@@ -33,7 +36,7 @@ class ZShell:
             zcli: Parent zCLI instance
         """
         self.zcli = zcli
-        self.logger = logger
+        self.logger = Logger.get_logger()
         
         # Initialize shell components
         self.interactive = InteractiveShell_func(zcli)

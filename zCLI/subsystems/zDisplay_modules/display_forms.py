@@ -3,7 +3,7 @@
 Form rendering for zDisplay - Interactive form collection (render_zConv)
 """
 
-from logger import logger
+from logger import Logger
 from .display_input import handle_input as handle_zInput
 
 

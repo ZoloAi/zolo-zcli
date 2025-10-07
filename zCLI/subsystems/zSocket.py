@@ -9,7 +9,10 @@ import os
 from websockets.server import serve  # ✅ New API
 from websockets.legacy.server import WebSocketServerProtocol
 from websockets import exceptions as ws_exceptions
-from logger import logger  # ✅ Central logger
+from logger import Logger  # ✅ Central logger
+
+# Logger instance
+logger = Logger.get_logger(__name__)
 
 # lazy import for CLI handlers to avoid heavy imports during module load
 

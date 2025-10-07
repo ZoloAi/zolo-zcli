@@ -18,7 +18,7 @@ def handle_zCRUD(zRequest, walker=None):
     Legacy handle_zCRUD function - delegates to handle_zData.
     Kept for backward compatibility with existing code.
     """
-    from logger import logger
+    from logger import Logger
     from zCLI.subsystems.zLoader import handle_zLoader
     from zCLI.subsystems.zDisplay import handle_zDisplay
     
@@ -31,26 +31,26 @@ def handle_zCRUD(zRequest, walker=None):
     })
 
     if not isinstance(zRequest, dict):
-        logger.warning("zCRUD input is not a dict: %s", type(zRequest))
+        Logger.get_logger(__name__).warning("zCRUD input is not a dict: %s", type(zRequest))
         raise TypeError("zCRUD input must be a dict")
 
     # Allow wrapping the request under a top-level "zCRUD" key
     if "zCRUD" in zRequest and isinstance(zRequest["zCRUD"], dict):
-        logger.debug("Unwrapping nested 'zCRUD' request")
+        Logger.get_logger(__name__).debug("Unwrapping nested 'zCRUD' request")
         zRequest = zRequest["zCRUD"]
 
     model_path = zRequest.get("model")
     if not model_path:
-        logger.error("zCRUD missing 'model' in request")
+        Logger.get_logger(__name__).error("zCRUD missing 'model' in request")
         return "error"
 
     # Load schema
     zForm = handle_zLoader(model_path)
     if zForm == "error":
-        logger.error("Failed to load schema from model: %s", model_path)
+        Logger.get_logger(__name__).error("Failed to load schema from model: %s", model_path)
         return "error"
 
-    logger.info("zForm (parsed). %s", zForm)
+    Logger.get_logger(__name__).info("zForm (parsed). %s", zForm)
 
     # Delegate to new zData infrastructure
     from .zData_modules.infrastructure import zDataConnect, zEnsureTables
@@ -71,7 +71,7 @@ def handle_zCRUD(zRequest, walker=None):
     if zData["ready"] and zData["conn"]:
         zData["cursor"] = zData["conn"].cursor()
     else:
-        logger.error("zData not ready — cannot create cursor.")
+        Logger.get_logger(__name__).error("zData not ready — cannot create cursor.")
         return "error"
 
     action = zRequest.get("action")
@@ -100,14 +100,14 @@ def handle_zCRUD(zRequest, walker=None):
             else:
                 results = None
         else:
-            logger.error("Required tables missing for action '%s'", action)
+            Logger.get_logger(__name__).error("Required tables missing for action '%s'", action)
             results = "error"
     finally:
         if zData.get("conn"):
             try:
                 zData["conn"].close()
             except Exception as e:
-                logger.error("Error closing database connection: %s", e)
+                Logger.get_logger(__name__).error("Error closing database connection: %s", e)
 
     return results
 

@@ -1,8 +1,11 @@
-from logger import logger
+from logger import Logger
 from zCLI.subsystems.zDisplay import handle_zDisplay
 from zCLI.subsystems.zWalker.zWalker_modules.zDispatch import handle_zDispatch
 from zCLI.subsystems.zSession import zSession
 import re
+
+# Logger instance
+logger = Logger.get_logger(__name__)
 
 
 class ZWizard:

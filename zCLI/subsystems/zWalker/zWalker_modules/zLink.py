@@ -1,4 +1,7 @@
-from logger import logger
+from logger import Logger
+
+# Logger instance
+logger = Logger.get_logger(__name__)
 from zCLI.subsystems.zSession import zSession
 from zCLI.subsystems.zDisplay import handle_zDisplay
 from zCLI.subsystems.zParser import zExpr_eval

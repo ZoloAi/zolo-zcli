@@ -1,6 +1,6 @@
 import traceback
 import sys
-from logger import logger
+from logger import Logger
 from zCLI.subsystems.zDisplay import handle_zDisplay
 
 # Walker-specific subsystems (always needed)
@@ -97,7 +97,7 @@ class zWalker:
         self.zSession = zSession
         
         # Attach logger instance for children to use
-        self.logger = logger
+        self.logger = Logger.get_logger()
         
         # Instantiate subsystems (legacy duplication)
         self.zCrumbs = zCrumbs(self)
@@ -130,14 +130,14 @@ class zWalker:
         try:
             level_str = str(self.zSpark_obj.get("logger", "info")).strip().lower()
             if level_str == "debug":
-                self.logger.setLevel(10)  # logging.DEBUG
+                self.logger.set_level(10)  # logging.DEBUG
             elif level_str == "prod":
-                self.logger.setLevel(30)  # logging.WARNING (quieter in prod)
+                self.logger.set_level(30)  # logging.WARNING (quieter in prod)
             else:
-                self.logger.setLevel(20)  # logging.INFO
+                self.logger.set_level(20)  # logging.INFO
         except Exception:
             # Fallback to INFO if anything goes wrong
-            self.logger.setLevel(20)
+            self.logger.set_level(20)
 
     def run(self):
         # 🔑 Initialize session id (only if not already set by zCLI)

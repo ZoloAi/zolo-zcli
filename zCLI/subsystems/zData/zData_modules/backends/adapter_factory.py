@@ -5,7 +5,7 @@
 # Supports dynamic registration of custom adapters for extensibility.
 # ----------------------------------------------------------------
 
-from logger import logger
+from logger import Logger
 
 
 class AdapterFactory:
@@ -31,7 +31,7 @@ class AdapterFactory:
             adapter_class: Adapter class that inherits from BaseDataAdapter
         """
         cls._adapters[data_type.lower()] = adapter_class
-        logger.info("Registered adapter for data type: %s", data_type)
+        Logger.get_logger("AdapterFactory").info("Registered adapter for data type: %s", data_type)
     
     @classmethod
     def create_adapter(cls, data_type, config):

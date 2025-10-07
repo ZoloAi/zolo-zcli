@@ -14,7 +14,7 @@ Handles:
 Future: DROP COLUMN, RENAME, TYPE changes, indexes, etc.
 """
 
-from logger import logger
+from logger import Logger
 
 # ═══════════════════════════════════════════════════════════════════
 # Ghost Migration Table Schema for RGB Tracking
@@ -92,7 +92,7 @@ class ZMigrate:
             walker: Optional zCLI instance for context
         """
         self.walker = walker
-        self.logger = logger
+        self.logger = Logger.get_logger()
     
     def _ensure_migrations_table(self, zData):
         """Create zMigrations table using zCLI's zTables function."""

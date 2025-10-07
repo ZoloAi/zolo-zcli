@@ -9,7 +9,10 @@
 import os
 from pathlib import Path
 from .base_adapter import BaseDataAdapter
-from logger import logger
+from logger import Logger
+
+# Logger instance
+logger = Logger.get_logger(__name__)
 
 try:
     import pandas as pd
