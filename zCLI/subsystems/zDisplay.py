@@ -20,7 +20,9 @@ Key Responsibilities:
 
 import json
 import asyncio
-from zCLI.utils.logger import logger
+from zCLI.utils.logger import get_logger
+
+logger = get_logger(__name__)
 from zCLI.subsystems.zSocket import broadcast
 from zCLI.subsystems.zDisplay_modules import (
     normalize_field_def, pick_fk_value, split_required,

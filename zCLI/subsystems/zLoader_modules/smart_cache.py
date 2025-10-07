@@ -6,7 +6,9 @@ Smart Cache - Unified caching with automatic invalidation and LRU eviction
 import os
 import time
 from collections import OrderedDict
-from zCLI.utils.logger import logger
+from zCLI.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class SmartCache:

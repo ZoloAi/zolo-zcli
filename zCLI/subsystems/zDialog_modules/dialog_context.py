@@ -3,7 +3,9 @@
 Context management for zDialog - Handles context creation and placeholder injection
 """
 
-from zCLI.utils.logger import logger
+from zCLI.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 def create_dialog_context(model, fields, zConv=None):

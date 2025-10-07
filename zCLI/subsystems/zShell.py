@@ -7,7 +7,9 @@ This module serves as the main handler for zShell functionality,
 delegating to specialized modules within zShell_modules/.
 """
 
-from zCLI.utils.logger import logger
+from zCLI.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 # Import specialized modules from zShell_modules registry
 from .zShell_modules.zShell_interactive import InteractiveShell as InteractiveShell_func, launch_zCLI_shell as launch_zCLI_shell_func
@@ -33,14 +35,18 @@ class ZShell:
             zcli: Parent zCLI instance
         """
         self.zcli = zcli
-        self.logger = logger
+        parent_logger = getattr(zcli, "logger", None)
+        if parent_logger:
+            self.logger = parent_logger.getChild(self.__class__.__name__)
+        else:
+            self.logger = logger
         
         # Initialize shell components
         self.interactive = InteractiveShell_func(zcli)
         self.executor = CommandExecutor_func(zcli)
         self.help_system = HelpSystem_func()
         
-        logger.debug("zShell handler initialized")
+        self.logger.debug("zShell handler initialized")
     
     def run_shell(self):
         """Run shell mode."""

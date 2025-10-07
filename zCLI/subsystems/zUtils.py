@@ -10,6 +10,10 @@ import platform
 import subprocess
 import sys
 
+from zCLI.utils.logger import get_logger
+
+logger = get_logger(__name__)
+
 
 class ZUtils:
     """

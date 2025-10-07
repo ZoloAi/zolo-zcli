@@ -14,7 +14,9 @@
 
 import yaml
 import json
-from zCLI.utils.logger import logger
+from zCLI.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 def parse_file_content(raw_content, file_extension=None):

@@ -8,7 +8,9 @@
 
 import sqlite3
 from .base_adapter import BaseDataAdapter
-from zCLI.utils.logger import logger
+from zCLI.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class SQLiteAdapter(BaseDataAdapter):

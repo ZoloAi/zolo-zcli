@@ -2,7 +2,9 @@
 # ───────────────────────────────────────────────────────────────
 
 import sys
-from zCLI.utils.logger import logger
+from zCLI.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class CommandExecutor:
@@ -26,7 +28,11 @@ class CommandExecutor:
             zcli: Parent zCLI instance with access to all subsystems
         """
         self.zcli = zcli
-        self.logger = logger
+        parent_logger = getattr(zcli, "logger", None)
+        if parent_logger:
+            self.logger = parent_logger.getChild(self.__class__.__name__)
+        else:
+            self.logger = logger
     
     def execute(self, command: str):
         """
@@ -76,7 +82,7 @@ class CommandExecutor:
                 return {"error": f"Unknown command type: {command_type}"}
         
         except Exception as e:
-            logger.error("Command execution failed: %s", e)
+            self.logger.error("Command execution failed: %s", e)
             return {"error": str(e)}
     
     def execute_crud(self, parsed):
@@ -104,7 +110,7 @@ class CommandExecutor:
             **parsed.get("options", {})
         }
         
-        logger.debug("Executing CRUD: %s on %s", action, table)
+        self.logger.debug("Executing CRUD: %s on %s", action, table)
         return self.zcli.crud.handle(zRequest)
     
     def execute_func(self, parsed):
@@ -123,7 +129,7 @@ class CommandExecutor:
         # Format as zFunc expression
         func_expr = f"zFunc({func_name}({','.join(args)}))"
         
-        logger.debug("Executing function: %s", func_expr)
+        self.logger.debug("Executing function: %s", func_expr)
         return self.zcli.funcs.handle(func_expr)
     
     def execute_utils(self, parsed):
@@ -140,7 +146,7 @@ class CommandExecutor:
         args = parsed["args"]
         
         if hasattr(self.zcli.utils, action):
-            logger.debug("Executing utility: %s", action)
+            self.logger.debug("Executing utility: %s", action)
             return getattr(self.zcli.utils, action)(*args)
         else:
             return {"error": f"Unknown utility: {action}"}
@@ -167,7 +173,7 @@ class CommandExecutor:
         elif action == "set" and len(args) >= 2:
             key, value = args[0], args[1]
             self.zcli.session[key] = value
-            logger.info("Session updated: %s = %s", key, value)
+            self.logger.info("Session updated: %s = %s", key, value)
             return {"success": f"Set {key} = {value}"}
         elif action == "get" and len(args) >= 1:
             key = args[0]
@@ -190,7 +196,7 @@ class CommandExecutor:
         
         if action == "run":
             # Launch Walker using session's zVaF configuration
-            logger.info("Launching Walker from session configuration...")
+            self.logger.info("Launching Walker from session configuration...")
             
             # Validate required session fields
             required_fields = ["zWorkspace", "zVaFilename", "zVaFile_path", "zBlock"]
@@ -221,21 +227,21 @@ class CommandExecutor:
             # Import and launch Walker
             try:
                 from zCLI.subsystems.zWalker.zWalker import zWalker
-                logger.info("Creating zWalker instance from zCLI...")
+                self.logger.info("Creating zWalker instance from zCLI...")
                 walker = zWalker(self.zcli)
                 
-                logger.info("Starting Walker UI mode...")
+                self.logger.info("Starting Walker UI mode...")
                 result = walker.run()
                 
                 # After Walker exits normally, return to shell
-                logger.info("Walker exited normally, returning to Shell mode...")
+                self.logger.info("Walker exited normally, returning to Shell mode...")
                 self.zcli.ui_mode = False
                 
                 return {"success": "Walker session completed", "result": result}
                 
             except SystemExit as e:
                 # Walker called sys.exit() - this is normal for "stop" or completion
-                logger.info("Walker exited via sys.exit(%s), returning to Shell mode...", e.code)
+                self.logger.info("Walker exited via sys.exit(%s), returning to Shell mode...", e.code)
                 self.zcli.ui_mode = False
                 
                 # Determine if it was a normal exit or error
@@ -245,7 +251,7 @@ class CommandExecutor:
                     return {"note": f"Walker exited with code {e.code}"}
                 
             except Exception as e:
-                logger.error("Failed to launch Walker: %s", e, exc_info=True)
+                self.logger.error("Failed to launch Walker: %s", e, exc_info=True)
                 self.zcli.ui_mode = False
                 return {"error": f"Walker launch failed: {str(e)}"}
         
@@ -271,7 +277,7 @@ class CommandExecutor:
         # Format as zOpen() expression
         zHorizontal = f"zOpen({path})"
         
-        logger.info("Opening: %s", path)
+        self.logger.info("Opening: %s", path)
         result = self.zcli.open.handle(zHorizontal)
         
         if result == "zBack":
@@ -325,7 +331,7 @@ class CommandExecutor:
         
         if action == "run":
             # Run all tests using unified runner
-            logger.info("Running all zCLI test suites...")
+            self.logger.info("Running all zCLI test suites...")
             
             if not os.path.exists(test_runner):
                 return {"error": f"Test runner not found at: {test_runner}"}
@@ -377,7 +383,7 @@ class CommandExecutor:
         action = parsed["action"]
         args = parsed.get("args", [])
         
-        logger.debug("Executing auth command: %s", action)
+        self.logger.debug("Executing auth command: %s", action)
         
         if action == "login":
             # Handle login - optionally with username/password from args
@@ -473,7 +479,7 @@ class CommandExecutor:
                 items = list(result.keys())
                 item_type = "blocks"
             
-            logger.info("✅ Loaded %s: %s (%d %s)", resource_type, zPath, len(items), item_type)
+            self.logger.info("✅ Loaded %s: %s (%d %s)", resource_type, zPath, len(items), item_type)
             
             return {
                 "status": "success",
@@ -484,7 +490,7 @@ class CommandExecutor:
             }
             
         except Exception as e:
-            logger.error("Failed to load %s: %s", zPath, e)
+            self.logger.error("Failed to load %s: %s", zPath, e)
             return {"error": str(e)}
     
     def show_loaded_resources(self):

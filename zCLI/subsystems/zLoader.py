@@ -18,7 +18,9 @@ Key Responsibilities:
 NOT for external files (that's zOpen).
 """
 
-from zCLI.utils.logger import logger
+from zCLI.utils.logger import get_logger
+
+logger = get_logger(__name__)
 from zCLI.subsystems.zSession import zSession
 from zCLI.subsystems.zDisplay import handle_zDisplay
 from zCLI.subsystems.zLoader_modules import SmartCache, LoadedCache, load_file_raw
@@ -134,7 +136,7 @@ class ZLoader:
         loaded_key = f"parsed:{zPath_key}"
         loaded = self.loaded_cache.get(loaded_key)
         if loaded is not None:
-            self.display.handle({
+            handle_zDisplay({
                 "event": "sysmsg",
                 "label": "zLoader return (loaded)",
                 "style": "~",
@@ -149,7 +151,7 @@ class ZLoader:
         cache_key = f"parsed:{zPath_key}"
         cached = self.cache.get(cache_key, filepath=zFilePath_identified)
         if cached is not None:
-            self.display.handle({
+            handle_zDisplay({
                 "event": "sysmsg",
                 "label": "zLoader return (cached)",
                 "style": "~",
@@ -202,7 +204,7 @@ def handle_zLoader(zPath=None, walker=None, session=None, zcli=None):
     Returns:
         Parsed file content (dict) or "error" on failure
     """
-    self.display.handle({
+    handle_zDisplay({
         "event": "sysmsg",
         "label": "zLoader",
         "style": "full",
@@ -249,7 +251,7 @@ def handle_zLoader(zPath=None, walker=None, session=None, zcli=None):
     result = parse_file_content(zFile_raw, zFile_extension)
     logger.debug("zLoader parse result:\n%s", result)
 
-    self.display.handle({
+    handle_zDisplay({
         "event": "sysmsg",
         "label": "zLoader return",
         "style": "~",

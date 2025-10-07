@@ -11,7 +11,9 @@ Supports:
 - Multi-table queries with proper field aliasing
 """
 
-from zCLI.utils.logger import logger
+from zCLI.utils.logger import get_logger
+
+logger = get_logger(__name__)
 from .crud_where import build_where_clause as build_where_with_tables  # Re-export for compatibility
 
 

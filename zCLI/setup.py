@@ -15,7 +15,9 @@ This runs automatically on first import of zConfig.
 
 import os
 from pathlib import Path
-from zCLI.utils.logger import logger
+from zCLI.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 def ensure_config_directories():

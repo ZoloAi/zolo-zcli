@@ -2,7 +2,10 @@
 # ───────────────────────────────────────────────────────────────
 """Core zCLI Engine - Single source of truth for all subsystems."""
 
-from zCLI.utils.logger import logger
+import logging
+from typing import Optional
+
+from zCLI.utils.logger import get_logger
 from zCLI.subsystems.zSession import create_session
 
 # Import all subsystems from the subsystems package
@@ -20,6 +23,9 @@ from zCLI.subsystems.zLoader import ZLoader
 from zCLI.subsystems.zExport import ZExport
 
 # Legacy ZCRUD wrapper (for backward compatibility)
+module_logger = get_logger(__name__)
+
+
 class ZCRUD:
     """Legacy ZCRUD wrapper - delegates to ZData."""
     def __init__(self, walker=None):
@@ -35,7 +41,7 @@ class ZCRUD:
         from zCLI.subsystems.zLoader import handle_zLoader
         
         # This is a simplified version - full logic is in zCRUD.py if needed
-        logger.warning("ZCRUD.handle() is deprecated - use ZData directly")
+        module_logger.warning("ZCRUD.handle() is deprecated - use ZData directly")
         return None
 
 
@@ -50,7 +56,7 @@ class zCLI:
     - Walker: Menu-driven interface using YAML files
     """
 
-    def __init__(self, zSpark_obj=None):
+    def __init__(self, zSpark_obj=None, logger: Optional[logging.Logger] = None):
         """
         Initialize a new zCLI instance.
 
@@ -84,7 +90,7 @@ class zCLI:
         self.zspark_obj = zSpark_obj or {}
 
         # Initialize logger
-        self.logger = logger
+        self.logger = logger or get_logger("zCLI")
 
         # Initialize zConfig FIRST (provides machine config)
         from zCLI.subsystems.zConfig import ZConfig
@@ -125,7 +131,7 @@ class zCLI:
         # Initialize session
         self._init_session()
 
-        logger.info("zCLI Core initialized - UI Mode: %s", self.ui_mode)
+        self.logger.info("zCLI Core initialized - UI Mode: %s", self.ui_mode)
 
     def _load_plugins(self):
         """Load utility plugins from zSpark_obj if provided."""
@@ -136,7 +142,7 @@ class zCLI:
             elif isinstance(plugin_paths, str):
                 self.utils.load_plugins([plugin_paths])
         except (ImportError, AttributeError, TypeError) as e:
-            logger.warning("Failed to load plugins: %s", e)
+            self.logger.warning("Failed to load plugins: %s", e)
 
     def _init_session(self):
         """
@@ -164,10 +170,10 @@ class zCLI:
             # Shell mode - always Terminal
             self.session["zMode"] = "Terminal"
 
-        logger.debug("Session initialized:")
-        logger.debug("  zS_id: %s", self.session["zS_id"])
-        logger.debug("  zMode: %s", self.session["zMode"])
-        logger.debug("  zMachine hostname: %s", self.session["zMachine"].get("hostname"))
+        self.logger.debug("Session initialized:")
+        self.logger.debug("  zS_id: %s", self.session["zS_id"])
+        self.logger.debug("  zMode: %s", self.session["zMode"])
+        self.logger.debug("  zMachine hostname: %s", self.session["zMachine"].get("hostname"))
 
     # ───────────────────────────────────────────────────────────────
     # Public API Methods
@@ -201,10 +207,10 @@ class zCLI:
             Result from walker or shell execution
         """
         if self.ui_mode:
-            logger.info("Starting zCLI in UI mode via zWalker...")
+            self.logger.info("Starting zCLI in UI mode via zWalker...")
             from zCLI.subsystems.zWalker.zWalker import zWalker  # pylint: disable=import-outside-toplevel
             walker = zWalker(self)  # Pass zCLI instance
             return walker.run()
 
-        logger.info("Starting zCLI in shell mode...")
+        self.logger.info("Starting zCLI in shell mode...")
         return self.run_shell()

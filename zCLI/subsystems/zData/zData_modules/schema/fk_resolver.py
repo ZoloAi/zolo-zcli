@@ -7,7 +7,9 @@
 # ----------------------------------------------------------------
 
 import sqlite3
-from zCLI.utils.logger import logger
+from zCLI.utils.logger import get_logger
+
+logger = get_logger(__name__)
 from zCLI.subsystems.zParser import handle_zRef
 from zCLI.subsystems.zDisplay import Colors, print_line
 

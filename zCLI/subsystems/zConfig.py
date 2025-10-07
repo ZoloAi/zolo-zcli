@@ -22,7 +22,9 @@ Philosophy: Everything is a zVaFile (including config!)
 """
 
 import os
-from zCLI.utils.logger import logger
+from zCLI.utils.logger import get_logger
+
+logger = get_logger(__name__)
 from zCLI.subsystems.zConfig_modules import ZConfigPaths, ConfigLoader
 from zCLI.subsystems.zConfig_modules.machine_config import MachineConfig
 

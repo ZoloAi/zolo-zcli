@@ -1,4 +1,6 @@
-from zCLI.utils.logger import logger
+from zCLI.utils.logger import get_logger
+
+logger = get_logger(__name__)
 from zCLI.subsystems.zSession import zSession
 from zCLI.subsystems.zDialog import handle_zDialog
 from zCLI.subsystems.zFunc import handle_zFunc

@@ -15,7 +15,9 @@ import os
 import json
 from pathlib import Path
 from getpass import getpass
-from zCLI.utils.logger import logger
+from zCLI.utils.logger import get_logger
+
+logger = get_logger(__name__)
 from zCLI.subsystems.zSession import zSession_Login
 
 
@@ -35,7 +37,11 @@ class ZAuth:
         """
         self.walker = walker
         self.zSession = walker.session if walker else None
-        self.logger = logger
+        parent_logger = getattr(walker, "logger", None)
+        if parent_logger:
+            self.logger = parent_logger.getChild(self.__class__.__name__)
+        else:
+            self.logger = logger
         
         # Credentials file location
         self.credentials_dir = Path.home() / ".zolo"
@@ -78,9 +84,9 @@ class ZAuth:
                     "role": local_result["role"],
                     "API_Key": local_result["api_key"]
                 })
-                logger.debug("Updated zSession['zAuth']: %s", self.zSession["zAuth"])
+                self.logger.debug("Updated zSession['zAuth']: %s", self.zSession["zAuth"])
             
-            logger.info("[OK] Local authentication successful: %s (role=%s)", 
+            self.logger.info("[OK] Local authentication successful: %s (role=%s)", 
                       local_result["username"], local_result["role"])
             
             print(f"\n[OK] Logged in as: {local_result['username']} ({local_result['role']})")
@@ -96,7 +102,7 @@ class ZAuth:
             return self._authenticate_remote(username, password, server_url)
         
         # No valid authentication method
-        logger.warning("[FAIL] Authentication failed: Invalid credentials")
+        self.logger.warning("[FAIL] Authentication failed: Invalid credentials")
         print("\n[FAIL] Authentication failed: Invalid credentials")
         print("       No authentication method available\n")
         return {"status": "fail", "reason": "Invalid credentials"}
@@ -114,7 +120,7 @@ class ZAuth:
         """
         # Hardcoded users have been removed for security
         # Authentication must go through proper backend systems
-        logger.debug("Local authentication disabled - no hardcoded users available")
+        self.logger.debug("Local authentication disabled - no hardcoded users available")
         return None
     
     def _authenticate_remote(self, username, password, server_url=None):
@@ -134,7 +140,7 @@ class ZAuth:
             server_url = os.getenv("ZOLO_API_URL", "http://localhost:5000")
         
         # Authenticate via Flask API
-        logger.info("[*] Authenticating with remote server: %s", server_url)
+        self.logger.info("[*] Authenticating with remote server: %s", server_url)
         
         try:
             result = zSession_Login(
@@ -157,7 +163,7 @@ class ZAuth:
                 
                 self._save_credentials(credentials)
                 
-                logger.info("[OK] Remote authentication successful: %s (role=%s)", 
+                self.logger.info("[OK] Remote authentication successful: %s (role=%s)", 
                           credentials["username"], credentials["role"])
                 
                 print(f"\n[OK] Logged in as: {credentials['username']} ({credentials['role']})")
@@ -168,12 +174,12 @@ class ZAuth:
                 return {"status": "success", "user": credentials}
             
             else:
-                logger.warning("[FAIL] Remote authentication failed")
+                self.logger.warning("[FAIL] Remote authentication failed")
                 print("\n[FAIL] Authentication failed: Invalid credentials\n")
                 return {"status": "fail", "reason": "Invalid credentials"}
         
         except Exception as e:
-            logger.error("[ERROR] Remote authentication error: %s", e)
+            self.logger.error("[ERROR] Remote authentication error: %s", e)
             print(f"\n[ERROR] Error connecting to remote server: {e}\n")
             return {"status": "error", "reason": str(e)}
     
@@ -187,7 +193,7 @@ class ZAuth:
         try:
             if self.credentials_file.exists():
                 self.credentials_file.unlink()
-                logger.info("[*] Logged out - credentials removed")
+                self.logger.info("[*] Logged out - credentials removed")
                 print("\n[OK] Logged out successfully\n")
             else:
                 print("\n[WARN] Not currently logged in\n")
@@ -204,7 +210,7 @@ class ZAuth:
             return {"status": "success"}
         
         except Exception as e:
-            logger.error("Error during logout: %s", e)
+            self.logger.error("Error during logout: %s", e)
             return {"status": "error", "reason": str(e)}
     
     def status(self):
@@ -285,14 +291,14 @@ class ZAuth:
             
             if result and len(result) > 0:
                 user = result[0]
-                logger.info("[OK] API key validated for: %s", user.get("username"))
+                self.logger.info("[OK] API key validated for: %s", user.get("username"))
                 return {"valid": True, "user": user}
             else:
-                logger.warning("[FAIL] Invalid API key")
+                self.logger.warning("[FAIL] Invalid API key")
                 return {"valid": False, "reason": "Invalid API key"}
         
         except Exception as e:
-            logger.error("Error validating API key: %s", e)
+            self.logger.error("Error validating API key: %s", e)
             return {"valid": False, "reason": str(e)}
     
     def _save_credentials(self, credentials):
@@ -304,10 +310,10 @@ class ZAuth:
             # Set file permissions to user-only (600)
             os.chmod(self.credentials_file, 0o600)
             
-            logger.debug("Credentials saved to: %s", self.credentials_file)
+            self.logger.debug("Credentials saved to: %s", self.credentials_file)
         
         except Exception as e:
-            logger.error("Error saving credentials: %s", e)
+            self.logger.error("Error saving credentials: %s", e)
             raise
     
     def _load_credentials(self):
@@ -319,11 +325,11 @@ class ZAuth:
             with open(self.credentials_file, 'r') as f:
                 credentials = json.load(f)
             
-            logger.debug("Credentials loaded from: %s", self.credentials_file)
+            self.logger.debug("Credentials loaded from: %s", self.credentials_file)
             return credentials
         
         except Exception as e:
-            logger.error("Error loading credentials: %s", e)
+            self.logger.error("Error loading credentials: %s", e)
             return None
     
     def _restore_session_from_credentials(self):
@@ -344,7 +350,7 @@ class ZAuth:
                 "API_Key": credentials.get("api_key")
             })
             
-            logger.debug("Restored zSession from saved credentials: %s", 
+            self.logger.debug("Restored zSession from saved credentials: %s", 
                         credentials.get("username"))
 
 

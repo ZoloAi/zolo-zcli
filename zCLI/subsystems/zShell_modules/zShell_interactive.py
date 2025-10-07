@@ -1,7 +1,9 @@
 # zCLI/zCore/Shell.py — Interactive Shell Mode
 # ───────────────────────────────────────────────────────────────
 
-from zCLI.utils.logger import logger
+from zCLI.utils.logger import get_logger
+
+logger = get_logger(__name__)
 from .zShell_help import HelpSystem
 from .zShell_executor import CommandExecutor
 
@@ -26,14 +28,18 @@ class InteractiveShell:
             zcli: Parent zCLI instance
         """
         self.zcli = zcli
-        self.logger = logger
+        parent_logger = getattr(zcli, "logger", None)
+        if parent_logger:
+            self.logger = parent_logger.getChild(self.__class__.__name__)
+        else:
+            self.logger = logger
         self.executor = CommandExecutor(zcli)
         self.help_system = HelpSystem()
         self.running = False
     
     def run(self):
         """Main shell loop - handles user input and command execution."""
-        logger.info("Starting zCLI shell...")
+        self.logger.info("Starting zCLI shell...")
         
         # Show welcome message
         print(self.help_system.get_welcome_message())
@@ -69,10 +75,10 @@ class InteractiveShell:
                 break
             
             except Exception as e:
-                logger.error("Shell error: %s", e)
+                self.logger.error("Shell error: %s", e)
                 print(f"[X] Error: {e}")
         
-        logger.info("Exiting zCLI shell...")
+        self.logger.info("Exiting zCLI shell...")
     
     def _handle_special_commands(self, command):
         """

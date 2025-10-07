@@ -39,7 +39,9 @@ Examples:
     # SQL: WHERE (status = ? OR priority >= ?)
 """
 
-from zCLI.utils.logger import logger
+from zCLI.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 def build_where_clause(filters, table_prefix=None):

@@ -8,6 +8,10 @@ from .zData_modules.infrastructure import (
     zTables, zDataConnect, zEnsureTables, resolve_source, build_order_clause,
     handle_zData  # Legacy handle_zData with zCRUD_Preped signature
 )
+from zCLI.utils.logger import get_logger
+
+logger = get_logger(__name__)
+
 from .zData_modules.migration import (
     ZMigrate, auto_migrate_schema, detect_schema_changes
 )
@@ -18,7 +22,7 @@ def handle_zCRUD(zRequest, walker=None):
     Legacy handle_zCRUD function - delegates to handle_zData.
     Kept for backward compatibility with existing code.
     """
-    from zCLI.utils.logger import logger
+
     from zCLI.subsystems.zLoader import handle_zLoader
     from zCLI.subsystems.zDisplay import handle_zDisplay
     

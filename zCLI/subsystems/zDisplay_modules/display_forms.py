@@ -3,7 +3,9 @@
 Form rendering for zDisplay - Interactive form collection (render_zConv)
 """
 
-from zCLI.utils.logger import logger
+from zCLI.utils.logger import get_logger
+
+logger = get_logger(__name__)
 from .display_input import handle_input as handle_zInput
 
 

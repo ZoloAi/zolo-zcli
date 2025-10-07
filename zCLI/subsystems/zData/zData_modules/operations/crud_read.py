@@ -1,7 +1,9 @@
 # zCLI/crud/crud_read.py — Read and Search Operations
 # ───────────────────────────────────────────────────────────────
 
-from zCLI.utils.logger import logger
+from zCLI.utils.logger import get_logger
+
+logger = get_logger(__name__)
 from zCLI.subsystems.zDisplay import handle_zDisplay
 from zCLI.subsystems.zSession import zSession
 from zCLI.subsystems.zData.zData_modules.infrastructure import build_order_clause

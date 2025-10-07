@@ -1,6 +1,8 @@
 import traceback
 import sys
-from zCLI.utils.logger import logger
+from zCLI.utils.logger import get_logger
+
+logger = get_logger(__name__)
 from zCLI.subsystems.zDisplay import handle_zDisplay
 
 # Walker-specific subsystems (always needed)
@@ -52,7 +54,11 @@ class zWalker:
         self.zSpark_obj = zcli.zspark_obj  # ← Fixed: use lowercase 'zspark_obj'
         
         # Use zCLI's core subsystems (single source of truth)
-        self.logger = zcli.logger
+        parent_logger = getattr(zcli, "logger", None)
+        if parent_logger:
+            self.logger = parent_logger.getChild(self.__class__.__name__)
+        else:
+            self.logger = logger
         self.session = zcli.session
         # Also set zSession attribute for legacy subsystems that expect it
         self.zSession = zcli.session
@@ -73,7 +79,7 @@ class zWalker:
         # Configure logger level
         self._configure_logger()
         
-        logger.info("zWalker initialized from zCLI instance (new architecture)")
+        self.logger.info("zWalker initialized from zCLI instance (new architecture)")
     
     def _init_from_spark(self, zSpark_obj):
         """
@@ -123,7 +129,7 @@ class zWalker:
         # Configure logger level
         self._configure_logger()
         
-        logger.warning("zWalker initialized from zSpark_obj (legacy mode - consider using zCLI)")
+        self.logger.warning("zWalker initialized from zSpark_obj (legacy mode - consider using zCLI)")
     
     def _configure_logger(self):
         """Configure logger level from zSpark_obj.logger setting."""
@@ -172,7 +178,7 @@ class zWalker:
         })
 
         for zSpark_key, zSpark_value in self.zSpark_obj.items():
-            logger.debug("\n%s = %r", zSpark_key, zSpark_value)
+            self.logger.debug("\n%s = %r", zSpark_key, zSpark_value)
 
         self.display.handle({
             "event": "sysmsg",
@@ -186,7 +192,7 @@ class zWalker:
         default_zCrumb = f"{self.session['zVaFile_path']}.{self.session['zVaFilename']}.{self.session['zBlock']}"
         self.session["zCrumbs"][default_zCrumb] = []
 
-        logger.info("zSession Defaults Stored:")
+        self.logger.info("zSession Defaults Stored:")
         for k, v in {
             "zWorkspace": self.session["zWorkspace"],
             "zVaFile_path": self.session["zVaFile_path"],
@@ -195,11 +201,11 @@ class zWalker:
             "zMode": self.session["zMode"],
             "zCrumbs": self.session["zCrumbs"],
         }.items():
-            logger.info("  %s: %s", k, v)
+            self.logger.info("  %s: %s", k, v)
 
         # Load and parse UI file with enhanced validation
         zFile_raw = self.loader.handle()
-        logger.debug("zFile raw data:\n%s", zFile_raw)
+        self.logger.debug("zFile raw data:\n%s", zFile_raw)
         
         # Use shared zVaFile parsing for UI files
         if hasattr(self, 'zcli') and self.zcli:
@@ -226,25 +232,25 @@ class zWalker:
             # LEGACY: Use basic parsing (fallback)
             zFile_parsed = zFile_raw
             
-        logger.debug("zFile parsed with validation:\n%s", zFile_parsed)
+        self.logger.debug("zFile parsed with validation:\n%s", zFile_parsed)
 
         # Pulls active zBlock from zCrumbs
         active_zBlock_dict = zFile_parsed[self.session["zBlock"]]
-        logger.debug(
+        self.logger.debug(
             "active zBlock (%s) dict:\n %s",
             self.session["zBlock"],
             active_zBlock_dict,
         )
 
         zBlock_keys = list(active_zBlock_dict.keys())
-        logger.debug(
+        self.logger.debug(
             "\n%s zKeys:\n   %s",
             next(reversed(self.session['zCrumbs'])),
             "\n   ".join(f"└─ {k}" for k in zBlock_keys),
         )
 
         if not zBlock_keys:
-            logger.error("No vertical keys found — cannot proceed with walk.")
+            self.logger.error("No vertical keys found — cannot proceed with walk.")
             print("Fatal: zNode contains no keys. Exiting.")
             return self.display.handle(
                 {
@@ -289,7 +295,7 @@ class zWalker:
         # 🔁 Iterate through each vertical key in the current zBlock
         while idx < len(zBlock_keys):
             zKey = zBlock_keys[idx]
-            logger.debug("Processing zKey: %s", zKey)
+            self.logger.debug("Processing zKey: %s", zKey)
 
             # 🔹 Display horizontal section for current key
             self.display.handle(
@@ -303,11 +309,11 @@ class zWalker:
             )
 
             active_zBlock = next(reversed(self.session["zCrumbs"]))
-            logger.debug("active_zBlock: %s", active_zBlock)
+            self.logger.debug("active_zBlock: %s", active_zBlock)
 
             # 📄 Get the horizontal content linked to this vertical key
             zHorizontal = active_zBlock_dict[zKey]
-            logger.debug("\nWalking zHorizontal:\n%s", zHorizontal)
+            self.logger.debug("\nWalking zHorizontal:\n%s", zHorizontal)
 
             # 🥨 Track breadcrumb trail for navigation/history
             if not (isinstance(zHorizontal, dict) and "zWizard" in zHorizontal):
@@ -317,11 +323,11 @@ class zWalker:
                     if zKey in active_zBlock_dict:
                         self.zCrumbs.handle_zCrumbs(active_zBlock, zKey)
                     else:
-                        logger.warning("Skipping invalid crumb: %s not in %s", zKey, active_zBlock)
+                        self.logger.warning("Skipping invalid crumb: %s not in %s", zKey, active_zBlock)
                 else:
-                    logger.debug("Skipping duplicate crumb: %s already last in %s", zKey, active_zBlock)
+                    self.logger.debug("Skipping duplicate crumb: %s already last in %s", zKey, active_zBlock)
             else:
-                logger.debug("zWizard key detected; breadcrumb tracking skipped for %s", zKey)
+                self.logger.debug("zWizard key detected; breadcrumb tracking skipped for %s", zKey)
 
             # 🚀 Try dispatching the logic tied to this key (e.g. zFunc, zLink, zDialog...)
             try:
@@ -330,7 +336,7 @@ class zWalker:
             # ❌ Catch any unexpected errors during dispatch and halt the loop
             except Exception as e:
                 tb_str = traceback.format_exc()
-                logger.error(
+                self.logger.error(
                     "zError for key '%s': %s\n📍 Traceback:\n%s", zKey, e, tb_str
                 )
                 self.display.handle(
@@ -350,7 +356,7 @@ class zWalker:
                 return self.zBlock_loop(active_zBlock_dict, zBlock_keys, zKey)
 
             elif result == "stop":
-                logger.debug("Dispatch returned stop after key: %s", zKey)
+                self.logger.debug("Dispatch returned stop after key: %s", zKey)
                 self.display.handle(
                     {
                         "event": "sysmsg",
@@ -363,7 +369,7 @@ class zWalker:
                 sys.exit()  # ⛔ Exit loop cleanly
 
             elif result == "error" or "":
-                logger.info("Error after key: %s", zKey)
+                self.logger.info("Error after key: %s", zKey)
                 self.display.handle(
                     {
                         "event": "sysmsg",
@@ -377,7 +383,7 @@ class zWalker:
 
             else:
                 # ➡️ Move on to the next vertical key
-                logger.debug("Continuing to next zKey after: %s", zKey)
+                self.logger.debug("Continuing to next zKey after: %s", zKey)
                 self.display.handle(
                     {
                         "event": "sysmsg",
