@@ -100,8 +100,8 @@ dev = [
 # -----------------------------------------------------------------------------
 # This creates the 'zolo-zcli' command that users can run from terminal
 [project.scripts]
-# When user types 'zolo-zcli', it calls the main() function in zCLI.zCore.main
-zolo-zcli = "zCLI.zCore.main:main"
+# When user types 'zolo-zcli', it calls the main() function in main
+zolo-zcli = "main:main"
 
 # -----------------------------------------------------------------------------
 # PROJECT URLs
