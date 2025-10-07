@@ -2,7 +2,7 @@
 # ───────────────────────────────────────────────────────────────
 
 # Import the zCLI Core and Walker
-from .zCore.zCLI import zCLI
+from .zCLI import zCLI
 from .subsystems.zWalker.zWalker import zWalker
 
 # Export the main interfaces

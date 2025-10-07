@@ -1,23 +1,23 @@
-# zCLI/zCore/zCLI.py — Core zCLI Engine
+# zCLI/zCLI.py — Core zCLI Engine
 # ───────────────────────────────────────────────────────────────
 """Core zCLI Engine - Single source of truth for all subsystems."""
 
 from logger import Logger
-from zCLI.subsystems.zSession import create_session
+from .subsystems.zSession import create_session
 
 # Import all subsystems from the subsystems package
-from zCLI.subsystems.zUtils import ZUtils
-from zCLI.subsystems.zData import ZData  # NEW: Unified data management
-from zCLI.subsystems.zFunc import ZFunc
-from zCLI.subsystems.zDisplay import ZDisplay
-from zCLI.subsystems.zParser import ZParser
-from zCLI.subsystems.zSocket import ZSocket
-from zCLI.subsystems.zDialog import ZDialog
-from zCLI.subsystems.zWizard import ZWizard
-from zCLI.subsystems.zOpen import ZOpen
-from zCLI.subsystems.zAuth import ZAuth
-from zCLI.subsystems.zLoader import ZLoader
-from zCLI.subsystems.zExport import ZExport
+from .subsystems.zUtils import ZUtils
+from .subsystems.zData import ZData  # NEW: Unified data management
+from .subsystems.zFunc import ZFunc
+from .subsystems.zDisplay import ZDisplay
+from .subsystems.zParser import ZParser
+from .subsystems.zSocket import ZSocket
+from .subsystems.zDialog import ZDialog
+from .subsystems.zWizard import ZWizard
+from .subsystems.zOpen import ZOpen
+from .subsystems.zAuth import ZAuth
+from .subsystems.zLoader import ZLoader
+from .subsystems.zExport import ZExport
 
 # Legacy ZCRUD wrapper (for backward compatibility)
 class ZCRUD:
@@ -28,19 +28,19 @@ class ZCRUD:
     
     def handle(self, zRequest):
         # Import here to avoid circular dependency
-        from zCLI.subsystems.zData.zData_modules.infrastructure import zDataConnect, zEnsureTables
-        from zCLI.subsystems.zData.zData_modules.operations import (
+        from .subsystems.zData.zData_modules.infrastructure import zDataConnect, zEnsureTables
+        from .subsystems.zData.zData_modules.operations import (
             zCreate, zRead, zUpdate, zDelete, zUpsert, zAlterTable
         )
-        from zCLI.subsystems.zLoader import handle_zLoader
+        from .subsystems.zLoader import handle_zLoader
         
         # This is a simplified version - full logic is in zCRUD.py if needed
         self.logger.warning("ZCRUD.handle() is deprecated - use ZData directly")
         return None
 
 
-# Import zCore components
-from zCLI.subsystems.zShell import ZShell
+# Import shell components
+from .subsystems.zShell import ZShell
 
 
 class zCLI:
@@ -87,7 +87,7 @@ class zCLI:
         self.logger = Logger.get_logger("zCLI")
 
         # Initialize zConfig FIRST (provides machine config)
-        from zCLI.subsystems.zConfig import ZConfig
+        from .subsystems.zConfig import ZConfig
         self.config = ZConfig()
         
         # Create instance-specific session with machine config
@@ -202,7 +202,7 @@ class zCLI:
         """
         if self.ui_mode:
             self.logger.info("Starting zCLI in UI mode via zWalker...")
-            from zCLI.subsystems.zWalker.zWalker import zWalker  # pylint: disable=import-outside-toplevel
+            from .subsystems.zWalker.zWalker import zWalker  # pylint: disable=import-outside-toplevel
             walker = zWalker(self)  # Pass zCLI instance
             return walker.run()
 

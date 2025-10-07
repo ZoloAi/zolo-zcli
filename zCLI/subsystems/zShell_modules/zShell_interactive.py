@@ -165,7 +165,7 @@ class InteractiveShell:
 
 def launch_zCLI_shell():
     """Launch zCLI shell from within the UI"""
-    from zCLI.zCore.zCLI import zCLI
+    from zCLI.zCLI import zCLI
     
     print("\n[>>] Launching zCLI Shell from UI...")
     print("Type 'exit' to return to UI menu")

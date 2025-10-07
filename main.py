@@ -36,7 +36,7 @@ def main() -> None:
 
     if args.shell:
         main_logger.info("Starting zCLI Shell mode...")
-        from zCLI.zCore.zCLI import zCLI  # Import after logging init
+        from zCLI import zCLI  # Import after logging init
         cli = zCLI()
         cli.run_shell()
     else:
