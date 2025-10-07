@@ -100,8 +100,8 @@ dev = [
 # -----------------------------------------------------------------------------
 # This creates the 'zolo-zcli' command that users can run from terminal
 [project.scripts]
-# When user types 'zolo-zcli', it calls the main() function in zCLI.zCore.main
-zolo-zcli = "zCLI.zCore.main:main"
+# When user types 'zolo-zcli', it calls the main() function in main
+zolo-zcli = "main:main"
 
 # -----------------------------------------------------------------------------
 # PROJECT URLs
@@ -120,6 +120,9 @@ Repository = "https://github.com/ZoloAi/zolo-zcli"
 [tool.setuptools.packages.find]
 where = ["."]           # Look in current directory (zCLI/)
 include = ["zCLI*"]     # Include all packages starting with "zCLI"
+
+[tool.setuptools]
+py-modules = ["main"]
 
 # Version configuration - read from version.py
 [tool.setuptools.dynamic]
