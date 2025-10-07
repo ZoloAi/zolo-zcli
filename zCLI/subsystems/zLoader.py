@@ -19,7 +19,7 @@ NOT for external files (that's zOpen).
 """
 
 from logger import Logger
-from zCLI.subsystems.zSession import zSession
+# Global session import removed - use instance-based sessions
 from zCLI.subsystems.zDisplay import handle_zDisplay
 from zCLI.subsystems.zLoader_modules import SmartCache, LoadedCache, load_file_raw
 
@@ -65,13 +65,15 @@ class ZLoader:
             self.zcli = zcli_or_walker
             self.walker = None
             self.logger = getattr(zcli_or_walker, "logger", logger)
-            self.zSession = getattr(zcli_or_walker, "session", zSession)
+            self.zSession = zcli_or_walker.session
         else:
             # LEGACY: walker instance
             self.zcli = None
             self.walker = zcli_or_walker
             self.logger = getattr(zcli_or_walker, "logger", logger)
-            self.zSession = getattr(zcli_or_walker, "zSession", zSession)
+            self.zSession = getattr(zcli_or_walker, "zSession", None)
+            if not self.zSession:
+                raise ValueError("Walker instance must have a session")
         
         # Get display instance for rendering
         if self.zcli:
@@ -226,8 +228,7 @@ def handle_zLoader(zPath=None, walker=None, session=None, zcli=None):
         # FALLBACK: Use provided session
         target_session = session
     else:
-        # FINAL FALLBACK: Use global session
-        target_session = zSession
+        raise ValueError("handle_zLoader requires a zCLI instance, walker, or session parameter")
 
     # Determine if we should use session values (UI file loading)
     zType = "zUI" if not zPath and target_session.get("zVaFilename") else None

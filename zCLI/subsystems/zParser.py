@@ -3,7 +3,6 @@
 """Core zParser handler for path resolution, command parsing, file parsing, and utilities."""
 
 from logger import Logger
-from zCLI.subsystems.zSession import zSession
 
 # Logger instance
 logger = Logger.get_logger(__name__)
@@ -42,11 +41,7 @@ class ZParser:
         """
         # Detect what we received and get the session
         if zcli_or_walker is None:
-            # No parent, use global session
-            self.walker = None
-            self.zSession = zSession
-            self.logger = Logger.get_logger()
-            self.display = None
+            raise ValueError("ZParser requires a zCLI or walker instance")
         elif hasattr(zcli_or_walker, 'session') and hasattr(zcli_or_walker, 'crud'):
             # NEW: zCLI instance (has 'session' and 'crud')
             self.walker = None
@@ -56,7 +51,9 @@ class ZParser:
         else:
             # LEGACY: walker instance (has 'zSession')
             self.walker = zcli_or_walker
-            self.zSession = getattr(zcli_or_walker, "zSession", zSession)
+            self.zSession = getattr(zcli_or_walker, "zSession", None)
+            if not self.zSession:
+                raise ValueError("Walker instance must have a session")
             self.logger = getattr(zcli_or_walker, "logger", logger)
             self.display = getattr(zcli_or_walker, "display", None)
 

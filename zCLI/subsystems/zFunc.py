@@ -3,8 +3,6 @@ import importlib.util
 
 from logger import Logger
 from zCLI.subsystems.zDisplay import handle_zDisplay, handle_zInput
-from zCLI.subsystems.zSession import zSession
-
 # Logger instance
 logger = Logger.get_logger(__name__)
 
@@ -12,7 +10,9 @@ logger = Logger.get_logger(__name__)
 class ZFunc:
     def __init__(self, walker=None):
         self.walker = walker
-        self.zSession = getattr(walker, "zSession", zSession)
+        self.zSession = getattr(walker, "session", None)
+        if not self.zSession:
+            raise ValueError("ZFunc requires a walker with a session")
         self.logger = getattr(walker, "logger", logger) if walker else logger
 
     def handle(self, zHorizontal, zContext=None):

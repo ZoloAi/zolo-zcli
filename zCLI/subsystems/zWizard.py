@@ -1,7 +1,7 @@
 from logger import Logger
 from zCLI.subsystems.zDisplay import handle_zDisplay
 from zCLI.subsystems.zWalker.zWalker_modules.zDispatch import handle_zDispatch
-from zCLI.subsystems.zSession import zSession
+# Global session import removed - use instance-based sessions
 import re
 
 # Logger instance
@@ -11,7 +11,9 @@ logger = Logger.get_logger(__name__)
 class ZWizard:
     def __init__(self, walker=None):
         self.walker = walker
-        self.zSession = getattr(walker, "zSession", zSession)
+        self.zSession = getattr(walker, "zSession", None)
+        if not self.zSession:
+            raise ValueError("ZWizard requires a walker with a session")
         self.logger = getattr(walker, "logger", logger) if walker else logger
 
     def handle(self, zWizard_obj):

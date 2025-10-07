@@ -2,14 +2,16 @@ from logger import Logger
 
 # Logger instance
 logger = Logger.get_logger(__name__)
-from zCLI.subsystems.zSession import zSession
+# Global session import removed - use instance-based sessions
 from zCLI.subsystems.zDisplay import handle_zDisplay, handle_zInput
 
 
 class ZMenu:
     def __init__(self, walker):
         self.walker = walker
-        self.zSession = getattr(walker, "zSession", zSession)
+        self.zSession = getattr(walker, "zSession", None)
+        if not self.zSession:
+            raise ValueError("ZMenu requires a walker with a session")
         self.logger = getattr(walker, "logger", logger)
 
     def handle(self, zMenu_obj):
@@ -180,8 +182,7 @@ class ZMenu:
 
 def handle_zMenu(zMenu_obj, walker=None):
     if walker is None:
-        TempWalker = type("_TempWalker", (), {"zSession": zSession})
-        walker = TempWalker()
+        raise ValueError("handle_zMenu requires a walker parameter")
         # Provide loader/dispatch fallbacks if missing
         from zCLI.subsystems.zLoader import ZLoader
         from .zDispatch import ZDispatch

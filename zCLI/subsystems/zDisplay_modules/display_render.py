@@ -7,6 +7,9 @@ import json
 from logger import Logger
 from .display_colors import Colors, print_line
 
+# Logger instance
+logger = Logger.get_logger(__name__)
+
 
 def render_marker(zDisplay_Obj):
     """Render zMarker (in/out markers)."""

@@ -19,7 +19,7 @@ from logger import Logger
 from zCLI.subsystems.zDisplay import handle_zDisplay, Colors, print_line
 from zCLI.subsystems.zParser import parse_dotted_path, ZParser
 from zCLI.subsystems.zLoader import handle_zLoader
-from zCLI.subsystems.zSession import zSession
+# Global session import removed - use instance-based sessions
 from .zData_modules.backends.adapter_factory import AdapterFactory
 from .zData_modules.schema import parse_field_block
 
@@ -444,7 +444,7 @@ def load_schema_ref(ref_expr, session=None):
 
     Args:
         ref_expr (str): Dotted path string (e.g., "zApp.schema.users.zUsers")
-        session (dict): Optional session dict (defaults to global zSession)
+        session (dict): Required session dict
 
     Returns:
         dict | None: schema content or None if not found
@@ -466,8 +466,10 @@ def load_schema_ref(ref_expr, session=None):
     table = parsed["table"]
     logger.info("🧩 Parsed zTable from ref_expr: %s", table)
 
-    # Use provided session or fall back to global
-    target_session = session if session is not None else zSession
+    # Use provided session
+    if session is None:
+        raise ValueError("load_schema_ref requires a session parameter")
+    target_session = session
     
     # Use zParser for path resolution
     try:

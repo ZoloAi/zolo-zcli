@@ -5,7 +5,7 @@
 from urllib.parse import urlparse
 from logger import Logger
 from zCLI.subsystems.zDisplay import handle_zDisplay
-from zCLI.subsystems.zSession import zSession
+# Global session import removed - use instance-based sessions
 
 # Import zOpen modules from registry
 from .zOpen_modules.zOpen_url import zOpen_url
@@ -28,7 +28,9 @@ class ZOpen:
     
     def __init__(self, walker=None):
         self.walker = walker
-        self.zSession = getattr(walker, "zSession", zSession)
+        self.zSession = getattr(walker, "zSession", None)
+        if not self.zSession:
+            raise ValueError("ZOpen requires a walker with a session")
         self.logger = getattr(walker, "logger", logger) if walker else logger
 
     def handle(self, zHorizontal):
@@ -80,8 +82,7 @@ class ZOpen:
 def handle_zOpen(zHorizontal, walker=None):
     """Standalone function for zOpen operations."""
     if walker is None:
-        TempWalker = type("_TempWalker", (), {"zSession": zSession})
-        walker = TempWalker()
+        raise ValueError("handle_zOpen requires a walker parameter")
     return ZOpen(walker).handle(zHorizontal)
 
 

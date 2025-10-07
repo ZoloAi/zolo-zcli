@@ -36,9 +36,8 @@ def create_session(machine_config=None):
         "zCache": {"files": {}, "loaded": {}, "data": {}},
     }
 
-# Global session for backward compatibility
-# Legacy code can still import and use this global zSession
-zSession = create_session()
+# Global session removed for modern architecture
+# Use instance-based sessions via zCLI.session instead
 
 def View_zSession(session=None):
     """

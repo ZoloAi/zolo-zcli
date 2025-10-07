@@ -2,7 +2,7 @@ from logger import Logger
 
 # Logger instance
 logger = Logger.get_logger(__name__)
-from zCLI.subsystems.zSession import zSession
+# Global session import removed - use instance-based sessions
 from zCLI.subsystems.zDisplay import handle_zDisplay
 
 
@@ -12,7 +12,9 @@ class zCrumbs:
     def __init__(self, walker=None):
         # Walker is optional for backward compatibility
         self.walker = walker
-        self.zSession = getattr(walker, "zSession", zSession)
+        self.zSession = getattr(walker, "zSession", None)
+        if not self.zSession:
+            raise ValueError("zCrumbs requires a walker with a session")
         self.logger = getattr(walker, "logger", logger) if walker else logger
 
     def handle_zCrumbs(self, zBlock, zKey):

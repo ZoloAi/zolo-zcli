@@ -7,7 +7,7 @@ from .subsystems.zSession import create_session
 
 # Import all subsystems from the subsystems package
 from .subsystems.zUtils import ZUtils
-from .subsystems.zData import ZData  # NEW: Unified data management
+from .subsystems.zData import ZData
 from .subsystems.zFunc import ZFunc
 from .subsystems.zDisplay import ZDisplay
 from .subsystems.zParser import ZParser
@@ -21,7 +21,6 @@ from .subsystems.zExport import ZExport
 
 # Import shell components
 from .subsystems.zShell import ZShell
-
 
 class zCLI:
     """
@@ -73,6 +72,8 @@ class zCLI:
         # Create instance-specific session with machine config
         # Each zCLI instance gets its own session, enabling:
         self.session = create_session(machine_config=self.config.get_machine())
+        # Provide backward compatibility alias
+        self.zSession = self.session
 
         # Initialize core subsystems (single source of truth)
         self.utils = ZUtils(self)

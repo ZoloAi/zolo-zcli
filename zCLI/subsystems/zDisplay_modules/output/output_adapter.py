@@ -5,6 +5,9 @@ Output adapter base class and factory for multi-mode rendering
 
 from logger import Logger
 
+# Logger instance
+logger = Logger.get_logger(__name__)
+
 
 class OutputMode:
     """Output mode constants."""

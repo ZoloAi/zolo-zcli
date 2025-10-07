@@ -2,7 +2,7 @@ from logger import Logger
 
 # Logger instance
 logger = Logger.get_logger(__name__)
-from zCLI.subsystems.zSession import zSession
+# Global session import removed - use instance-based sessions
 from zCLI.subsystems.zDialog import handle_zDialog
 from zCLI.subsystems.zFunc import handle_zFunc
 from zCLI.subsystems.zDisplay import handle_zDisplay, handle_zInput
@@ -11,7 +11,9 @@ from zCLI.subsystems.zDisplay import handle_zDisplay, handle_zInput
 class ZDispatch:
     def __init__(self, walker):
         self.walker = walker
-        self.zSession = getattr(walker, "zSession", zSession)
+        self.zSession = getattr(walker, "zSession", None)
+        if not self.zSession:
+            raise ValueError("ZDispatch requires a walker with a session")
         self.logger = getattr(walker, "logger", logger)
 
     def handle(self, zKey, zHorizontal):
@@ -231,24 +233,25 @@ class ZDispatch:
 
 def handle_zDispatch(zKey, zHorizontal, walker=None):
     if walker is None:
-        TempWalker = type("_TempWalker", (), {"zSession": zSession})
-        walker = TempWalker()
+        raise ValueError("handle_zDispatch requires a walker parameter")
     return ZDispatch(walker).handle(zKey, zHorizontal)
 
-def prefix_checker(zKey):
-    return ZDispatch(type("_TempWalker", (), {"zSession": zSession})()).prefix_checker(zKey)
+def prefix_checker(zKey, session=None):
+    if session is None:
+        raise ValueError("prefix_checker requires a session parameter")
+    return ZDispatch(type("_TempWalker", (), {"zSession": session})()).prefix_checker(zKey)
 
-def suffix_checker(zKey):
-    return ZDispatch(type("_TempWalker", (), {"zSession": zSession})()).suffix_checker(zKey)
+def suffix_checker(zKey, session=None):
+    if session is None:
+        raise ValueError("suffix_checker requires a session parameter")
+    return ZDispatch(type("_TempWalker", (), {"zSession": session})()).suffix_checker(zKey)
 
 def process_modifiers(modifiers, zKey, zHorizontal, walker=None):
     if walker is None:
-        TempWalker = type("_TempWalker", (), {"zSession": zSession})
-        walker = TempWalker()
+        raise ValueError("process_modifiers requires a walker parameter")
     return ZDispatch(walker).process_modifiers(modifiers, zKey, zHorizontal)
 
 def zLauncher(zHorizontal, walker=None):
     if walker is None:
-        TempWalker = type("_TempWalker", (), {"zSession": zSession})
-        walker = TempWalker()
+        raise ValueError("zLauncher requires a walker parameter")
     return ZDispatch(walker).zLauncher(zHorizontal)

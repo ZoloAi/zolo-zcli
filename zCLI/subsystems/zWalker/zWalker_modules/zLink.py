@@ -2,7 +2,7 @@ from logger import Logger
 
 # Logger instance
 logger = Logger.get_logger(__name__)
-from zCLI.subsystems.zSession import zSession
+# Global session import removed - use instance-based sessions
 from zCLI.subsystems.zDisplay import handle_zDisplay
 from zCLI.subsystems.zParser import zExpr_eval
 
@@ -10,7 +10,9 @@ from zCLI.subsystems.zParser import zExpr_eval
 class ZLink:
     def __init__(self, walker):
         self.walker = walker
-        self.zSession = getattr(walker, "zSession", zSession)
+        self.zSession = getattr(walker, "zSession", None)
+        if not self.zSession:
+            raise ValueError("ZLink requires a walker with a session")
         self.logger = getattr(walker, "logger", logger)
 
     def handle(self, zHorizontal):
@@ -122,8 +124,7 @@ class ZLink:
 
 def handle_zLink(zHorizontal, walker=None):
     if walker is None:
-        TempWalker = type("_TempWalker", (), {"zSession": zSession})
-        walker = TempWalker()
+        raise ValueError("handle_zLink requires a walker parameter")
         # Provide loader if missing
         from zCLI.subsystems.zLoader import ZLoader
         setattr(walker, "loader", ZLoader(walker))

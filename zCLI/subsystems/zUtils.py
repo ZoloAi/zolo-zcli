@@ -10,6 +10,11 @@ import platform
 import subprocess
 import sys
 
+from logger import Logger
+
+# Logger instance
+logger = Logger.get_logger(__name__)
+
 
 class ZUtils:
     """
