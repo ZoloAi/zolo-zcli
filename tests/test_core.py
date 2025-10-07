@@ -180,7 +180,6 @@ def test_single_instance_session_isolation():
     print("\n[Init] Testing subsystem initialization...")
     subsystems = {
         "utils": zcli.utils,
-        "crud": zcli.crud,
         "funcs": zcli.funcs,
         "display": zcli.display,
         "zparser": zcli.zparser,

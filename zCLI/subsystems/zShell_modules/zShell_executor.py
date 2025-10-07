@@ -105,7 +105,11 @@ class CommandExecutor:
         }
         
         logger.debug("Executing CRUD: %s on %s", action, table)
-        return self.zcli.crud.handle(zRequest)
+        # Use modern zData interface instead of legacy crud
+        from ..zData import ZData
+        if not self.zcli.data:
+            self.zcli.data = ZData(self.zcli)
+        return self.zcli.data.handle_request(zRequest)
     
     def execute_func(self, parsed):
         """

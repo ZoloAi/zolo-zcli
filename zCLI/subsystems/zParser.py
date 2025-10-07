@@ -5,6 +5,9 @@
 from logger import Logger
 from zCLI.subsystems.zSession import zSession
 
+# Logger instance
+logger = Logger.get_logger(__name__)
+
 # Import zParser modules from registry
 from .zParser_modules.zParser_zPath import zPath_decoder as zPath_decoder_func, identify_zFile as identify_zFile_func
 from .zParser_modules.zParser_commands import parse_command as parse_command_func
