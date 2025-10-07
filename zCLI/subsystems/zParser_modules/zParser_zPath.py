@@ -60,15 +60,21 @@ def zPath_decoder(zSession, zPath=None, zType=None, display=None):
         zPath_2_zFile = zPath_parts[:-1]
         logger.info("\nzPath_2_zFile: %s", zPath_2_zFile)
 
-        # Extract file name (last 2 parts, or just last part if only 2 total)
-        if len(zPath_2_zFile) == 2:
-            zFileName = zPath_2_zFile[-1]  # Just the filename part
+        # Extract filename parts and resolve base path separately so the first
+        # segment of the filename (e.g. ``ui`` in ``ui.zoloP2``) isn't treated
+        # as part of the directory path.
+        if len(zPath_2_zFile) >= 2:
+            filename_parts = zPath_2_zFile[-2:]
+            base_path_parts = zPath_2_zFile[:-2]
         else:
-            zFileName = ".".join(zPath_2_zFile[-2:])  # Last 2 parts
+            filename_parts = zPath_2_zFile[-1:]
+            base_path_parts = zPath_2_zFile[:-1]
+
+        zFileName = ".".join(filename_parts)
         logger.info("zFileName: %s", zFileName)
 
         # Remaining parts (before filename)
-        zRelPath_parts = zPath_parts[:-2]
+        zRelPath_parts = base_path_parts
         logger.info("zRelPath_parts: %s", zRelPath_parts)
 
         # Fork on symbol
