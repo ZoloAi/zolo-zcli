@@ -9,7 +9,7 @@
 import os
 from pathlib import Path
 from .base_adapter import BaseDataAdapter
-from zCLI.utils.logger import logger
+from logger import logger
 
 try:
     import pandas as pd

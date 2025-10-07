@@ -15,7 +15,7 @@ import os
 import json
 from pathlib import Path
 from getpass import getpass
-from zCLI.utils.logger import logger
+from logger import logger
 from zCLI.subsystems.zSession import zSession_Login
 
 

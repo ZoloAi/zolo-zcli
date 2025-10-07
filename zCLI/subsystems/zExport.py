@@ -20,7 +20,7 @@ Example Usage:
 
 import yaml
 from pathlib import Path
-from zCLI.utils.logger import logger
+from logger import logger
 
 
 class ZExport:

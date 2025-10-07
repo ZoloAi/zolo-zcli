@@ -7,7 +7,7 @@ This module serves as the main handler for zShell functionality,
 delegating to specialized modules within zShell_modules/.
 """
 
-from zCLI.utils.logger import logger
+from logger import logger
 
 # Import specialized modules from zShell_modules registry
 from .zShell_modules.zShell_interactive import InteractiveShell as InteractiveShell_func, launch_zCLI_shell as launch_zCLI_shell_func

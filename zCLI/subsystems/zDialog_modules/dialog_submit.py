@@ -3,7 +3,7 @@
 Submission handling for zDialog - Processes onSubmit expressions
 """
 
-from zCLI.utils.logger import logger
+from logger import logger
 from zCLI.subsystems.zDisplay import handle_zDisplay
 from .dialog_context import inject_placeholders
 

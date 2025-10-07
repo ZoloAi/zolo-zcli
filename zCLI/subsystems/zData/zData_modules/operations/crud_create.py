@@ -1,7 +1,7 @@
 # zCLI/crud/crud_create.py — Create Operations
 # ───────────────────────────────────────────────────────────────
 
-from zCLI.utils.logger import logger
+from logger import logger
 from zCLI.subsystems.zDisplay import handle_zDisplay
 from zCLI.subsystems.zData.zData_modules.infrastructure import resolve_source
 from .crud_validator import RuleValidator, display_validation_errors

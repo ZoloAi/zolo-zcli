@@ -1,7 +1,7 @@
 # zCLI/zCore/Shell.py — Interactive Shell Mode
 # ───────────────────────────────────────────────────────────────
 
-from zCLI.utils.logger import logger
+from logger import logger
 from .zShell_help import HelpSystem
 from .zShell_executor import CommandExecutor
 

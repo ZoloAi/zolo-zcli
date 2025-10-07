@@ -3,7 +3,7 @@
 """Core zOpen handler for file and URL opening operations."""
 
 from urllib.parse import urlparse
-from zCLI.utils.logger import logger
+from logger import logger
 from zCLI.subsystems.zDisplay import handle_zDisplay
 from zCLI.subsystems.zSession import zSession
 

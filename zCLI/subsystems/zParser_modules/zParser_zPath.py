@@ -3,7 +3,7 @@
 """zPath resolution and file discovery functionality."""
 
 import os
-from zCLI.utils.logger import logger
+from logger import logger
 from zCLI.subsystems.zDisplay import handle_zDisplay
 
 

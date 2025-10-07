@@ -1,6 +1,6 @@
 import traceback
 import sys
-from zCLI.utils.logger import logger
+from logger import logger
 from zCLI.subsystems.zDisplay import handle_zDisplay
 
 # Walker-specific subsystems (always needed)

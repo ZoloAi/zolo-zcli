@@ -18,7 +18,7 @@
 # - validate_schema_structure(): Schema file structure validation
 # ----------------------------------------------------------------
 
-from zCLI.utils.logger import logger
+from logger import logger
 from zCLI.subsystems.zDisplay import Colors, print_line
 
 

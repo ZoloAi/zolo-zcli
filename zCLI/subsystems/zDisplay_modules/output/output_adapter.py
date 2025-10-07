@@ -3,7 +3,7 @@
 Output adapter base class and factory for multi-mode rendering
 """
 
-from zCLI.utils.logger import logger
+from logger import logger
 
 
 class OutputMode:

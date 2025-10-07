@@ -3,7 +3,7 @@
 File I/O operations for zLoader - Raw file reading from disk
 """
 
-from zCLI.utils.logger import logger
+from logger import logger
 from zCLI.subsystems.zDisplay import handle_zDisplay
 
 

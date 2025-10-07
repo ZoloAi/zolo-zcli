@@ -14,7 +14,7 @@ Handles:
 Future: DROP COLUMN, RENAME, TYPE changes, indexes, etc.
 """
 
-from zCLI.utils.logger import logger
+from logger import logger
 
 # ═══════════════════════════════════════════════════════════════════
 # Ghost Migration Table Schema for RGB Tracking

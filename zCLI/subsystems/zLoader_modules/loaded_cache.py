@@ -10,7 +10,7 @@ Unlike the automatic 'files' cache, entries here:
 """
 
 import time
-from zCLI.utils.logger import logger
+from logger import logger
 
 
 class LoadedCache:

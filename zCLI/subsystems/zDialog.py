@@ -17,7 +17,7 @@ Key Responsibilities:
 - Submission handling (dict or string expressions)
 """
 
-from zCLI.utils.logger import logger
+from logger import logger
 from zCLI.subsystems.zDisplay import handle_zDisplay
 from zCLI.subsystems.zSession import zSession
 from zCLI.subsystems.zDialog_modules import create_dialog_context, handle_submit

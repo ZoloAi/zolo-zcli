@@ -2,7 +2,7 @@
 # ───────────────────────────────────────────────────────────────
 """Core zCLI Engine - Single source of truth for all subsystems."""
 
-from zCLI.utils.logger import logger
+from logger import logger
 from zCLI.subsystems.zSession import create_session
 
 # Import all subsystems from the subsystems package

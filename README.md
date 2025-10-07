@@ -54,3 +54,4 @@ cli.run_shell()
 - **YAML Configuration**: Drive UI and behavior through YAML files
 - **Interactive Input**: Built-in input handling for fields, menus and confirmations
 - **Color Support**: Rich ANSI color system for terminal output
+

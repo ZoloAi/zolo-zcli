@@ -1,7 +1,7 @@
 # zCLI/crud/crud_delete.py — Delete, Truncate, and List Operations
 # ───────────────────────────────────────────────────────────────
 
-from zCLI.utils.logger import logger
+from logger import logger
 from zCLI.subsystems.zDisplay import handle_zDisplay
 from .crud_where import build_where_clause
 

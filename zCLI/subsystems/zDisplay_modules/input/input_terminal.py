@@ -4,7 +4,7 @@ Terminal input adapter - Blocking input() calls (current implementation)
 """
 
 from .input_adapter import InputAdapter
-from zCLI.utils.logger import logger
+from logger import logger
 
 
 class TerminalInput(InputAdapter):

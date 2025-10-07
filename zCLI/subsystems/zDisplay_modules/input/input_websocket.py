@@ -8,7 +8,7 @@ TODO: Implement when zCloud frontend is ready
 import json
 import asyncio
 from .input_adapter import InputAdapter
-from zCLI.utils.logger import logger
+from logger import logger
 
 
 class WebSocketInput(InputAdapter):

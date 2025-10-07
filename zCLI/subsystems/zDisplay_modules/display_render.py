@@ -4,7 +4,7 @@ Rendering functions for zDisplay - Headers, menus, tables, markers, sessions
 """
 
 import json
-from zCLI.utils.logger import logger
+from logger import logger
 from .display_colors import Colors, print_line
 
 

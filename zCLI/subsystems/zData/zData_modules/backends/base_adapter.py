@@ -7,7 +7,7 @@
 # ----------------------------------------------------------------
 
 from abc import ABC, abstractmethod
-from zCLI.utils.logger import logger
+from logger import logger
 
 
 class BaseDataAdapter(ABC):

@@ -6,7 +6,7 @@ TODO: Implement when REST API wrapper is created
 """
 
 from .output_adapter import OutputAdapter
-from zCLI.utils.logger import logger
+from logger import logger
 
 
 class RESTOutput(OutputAdapter):

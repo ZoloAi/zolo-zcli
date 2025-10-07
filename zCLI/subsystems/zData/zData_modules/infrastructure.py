@@ -11,7 +11,7 @@
 # ----------------------------------------------------------------
 
 import re
-from zCLI.utils.logger import logger
+from logger import logger
 from zCLI.subsystems.zDisplay import handle_zDisplay
 from zCLI.subsystems.zFunc import handle_zFunc
 from zCLI.subsystems.zUtils import ZUtils

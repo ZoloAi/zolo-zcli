@@ -5,7 +5,7 @@
 # Supports dynamic registration of custom adapters for extensibility.
 # ----------------------------------------------------------------
 
-from zCLI.utils.logger import logger
+from logger import logger
 
 
 class AdapterFactory:

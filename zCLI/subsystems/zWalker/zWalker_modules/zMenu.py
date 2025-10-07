@@ -1,4 +1,4 @@
-from zCLI.utils.logger import logger
+from logger import logger
 from zCLI.subsystems.zSession import zSession
 from zCLI.subsystems.zDisplay import handle_zDisplay, handle_zInput
 

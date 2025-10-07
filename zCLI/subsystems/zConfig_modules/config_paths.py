@@ -8,7 +8,7 @@ Uses platformdirs for OS-native paths with dotfile fallback.
 import platform
 from pathlib import Path
 from platformdirs import user_config_dir, site_config_dir, user_data_dir, user_cache_dir
-from zCLI.utils.logger import logger
+from logger import logger
 
 
 class ZConfigPaths:

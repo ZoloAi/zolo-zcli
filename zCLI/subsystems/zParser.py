@@ -2,7 +2,7 @@
 # ───────────────────────────────────────────────────────────────
 """Core zParser handler for path resolution, command parsing, file parsing, and utilities."""
 
-from zCLI.utils.logger import logger
+from logger import logger
 from zCLI.subsystems.zSession import zSession
 
 # Import zParser modules from registry

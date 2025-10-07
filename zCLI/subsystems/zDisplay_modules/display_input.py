@@ -3,7 +3,7 @@
 Input handling for zDisplay - User input collection (now uses InputFactory)
 """
 
-from zCLI.utils.logger import logger
+from logger import logger
 from .input import InputFactory
 
 

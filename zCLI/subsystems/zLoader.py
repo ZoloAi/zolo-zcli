@@ -18,7 +18,7 @@ Key Responsibilities:
 NOT for external files (that's zOpen).
 """
 
-from zCLI.utils.logger import logger
+from logger import logger
 from zCLI.subsystems.zSession import zSession
 from zCLI.subsystems.zDisplay import handle_zDisplay
 from zCLI.subsystems.zLoader_modules import SmartCache, LoadedCache, load_file_raw

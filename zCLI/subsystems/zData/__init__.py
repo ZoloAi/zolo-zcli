@@ -18,7 +18,7 @@ def handle_zCRUD(zRequest, walker=None):
     Legacy handle_zCRUD function - delegates to handle_zData.
     Kept for backward compatibility with existing code.
     """
-    from zCLI.utils.logger import logger
+    from logger import logger
     from zCLI.subsystems.zLoader import handle_zLoader
     from zCLI.subsystems.zDisplay import handle_zDisplay
     

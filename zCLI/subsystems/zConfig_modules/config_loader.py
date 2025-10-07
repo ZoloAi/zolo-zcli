@@ -8,7 +8,7 @@ Loads config from multiple sources and merges them with priority.
 import os
 import yaml
 from pathlib import Path
-from zCLI.utils.logger import logger
+from logger import logger
 
 
 class ConfigLoader:

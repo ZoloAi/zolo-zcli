@@ -3,7 +3,7 @@
 Input adapter base class and factory for multi-mode input collection
 """
 
-from zCLI.utils.logger import logger
+from logger import logger
 
 
 class InputMode:

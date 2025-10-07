@@ -2,7 +2,7 @@
 # ───────────────────────────────────────────────────────────────
 
 import sys
-from zCLI.utils.logger import logger
+from logger import logger
 
 
 class CommandExecutor:

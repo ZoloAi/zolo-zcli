@@ -1,5 +1,5 @@
 import requests
-from zCLI.utils.logger import logger
+from logger import logger
 from zCLI.subsystems.zDisplay import handle_zDisplay
 
 def create_session(machine_config=None):

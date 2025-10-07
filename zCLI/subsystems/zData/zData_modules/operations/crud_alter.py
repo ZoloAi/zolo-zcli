@@ -23,7 +23,7 @@ Table Recreation Pattern (for old SQLite):
 4. ALTER TABLE new_table RENAME TO old_table
 """
 
-from zCLI.utils.logger import logger
+from logger import logger
 from zCLI.subsystems.zDisplay import handle_zDisplay
 import sqlite3
 import datetime

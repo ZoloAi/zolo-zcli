@@ -15,7 +15,7 @@
 # - Schema: Schema parsing and validation
 # ----------------------------------------------------------------
 
-from zCLI.utils.logger import logger
+from logger import logger
 from zCLI.subsystems.zDisplay import handle_zDisplay, Colors, print_line
 from zCLI.subsystems.zParser import parse_dotted_path, ZParser
 from zCLI.subsystems.zLoader import handle_zLoader

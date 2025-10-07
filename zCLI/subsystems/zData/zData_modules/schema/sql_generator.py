@@ -7,7 +7,7 @@
 # - map_schema_type(): Map schema types to SQL types
 # ----------------------------------------------------------------
 
-from zCLI.utils.logger import logger
+from logger import logger
 from zCLI.subsystems.zDisplay import Colors, print_line
 
 
