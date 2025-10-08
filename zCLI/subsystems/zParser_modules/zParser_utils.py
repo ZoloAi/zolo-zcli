@@ -6,21 +6,28 @@ import os
 import json
 import yaml
 from logger import Logger
-from zCLI.subsystems.zDisplay import handle_zDisplay
+
+# Logger instance
+logger = Logger.get_logger(__name__)
 
 
-def zExpr_eval(expr):
+def zExpr_eval(expr, display=None):
     """
     Evaluate JSON expressions.
     Converts string representations to Python objects.
+    
+    Args:
+        expr: Expression string to evaluate
+        display: Optional display instance for rendering
     """
-    handle_zDisplay({
-        "event": "sysmsg",
-        "label": "zExpr Evaluation",
-        "style": "single",
-        "color": "PARSER",
-        "indent": 1
-    })
+    if display:
+        display.handle({
+            "event": "sysmsg",
+            "label": "zExpr Evaluation",
+            "style": "single",
+            "color": "PARSER",
+            "indent": 1
+        })
 
     logger.info("[>>] Received expr: %s", expr)
     expr = expr.strip()
@@ -39,7 +46,7 @@ def zExpr_eval(expr):
         logger.error("[FAIL] Unsupported format in zExpr_eval.")
         raise ValueError("Unsupported format for zExpr_eval.")
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         logger.error("[FAIL] zExpr_eval failed: %s", e)
         return None
 
@@ -70,18 +77,24 @@ def parse_dotted_path(ref_expr):
     }
 
 
-def handle_zRef(ref_expr, base_path=None):
+def handle_zRef(ref_expr, base_path=None, display=None):
     """
     Handle zRef expressions to load YAML data.
     Uses provided base_path or falls back to current working directory.
+    
+    Args:
+        ref_expr: zRef expression string
+        base_path: Optional base path for resolution
+        display: Optional display instance for rendering
     """
-    handle_zDisplay({
-        "event": "sysmsg",
-        "label": "handle_zRef",
-        "style": "single",
-        "color": "PARSER",
-        "indent": 6,
-    })
+    if display:
+        display.handle({
+            "event": "sysmsg",
+            "label": "handle_zRef",
+            "style": "single",
+            "color": "PARSER",
+            "indent": 6,
+        })
 
     if not (isinstance(ref_expr, str) and ref_expr.startswith("zRef(") and ref_expr.endswith(")")):
         logger.warning("[WARN] Invalid zRef format: %s", ref_expr)
@@ -112,16 +125,24 @@ def handle_zRef(ref_expr, base_path=None):
         return None
 
 
-def handle_zParser(zFile_raw, walker=None):
+def handle_zParser(zFile_raw, display=None):  # pylint: disable=unused-argument
     """
     Placeholder function for zParser handler.
     Currently just returns True for compatibility.
+    
+    Args:
+        zFile_raw: Raw file data to process
+        display: Optional display instance for rendering
+        
+    Returns:
+        bool: Always returns True (placeholder)
     """
-    handle_zDisplay({
-        "event": "sysmsg",
-        "label": "zParser",
-        "style": "full",
-        "color": "PARSER",
-        "indent": 0,
-    })
+    if display:
+        display.handle({
+            "event": "sysmsg",
+            "label": "zParser",
+            "style": "full",
+            "color": "PARSER",
+            "indent": 0,
+        })
     return True

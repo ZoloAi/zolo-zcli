@@ -119,10 +119,10 @@ def check_config_system(zcli):
         package_config_dir = package_root / "config"
 
         default_configs = [
-            "config.default.yaml",
-            "config.dev.yaml", 
-            "config.prod.yaml",
-            "machine.default.yaml"
+            "zConfig.default.yaml",
+            "zConfig.dev.yaml", 
+            "zConfig.prod.yaml",
+            "zConfig.machine.yaml"
         ]
 
         for config_file in default_configs:

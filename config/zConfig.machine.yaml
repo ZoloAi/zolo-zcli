@@ -1,4 +1,4 @@
-# config/machine.default.yaml
+# config/zConfig.machine.yaml
 # Default machine configuration template
 # This file is auto-generated on first run and placed in ~/.zolo-zcli/machine.yaml
 

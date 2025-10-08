@@ -506,7 +506,7 @@ def test_ui_file_loading():
         zcli = zCLI()
         zspark_obj = {
             "zWorkspace": project_root,
-            "zVaFilename": "ui.test.yaml",
+            "zVaFilename": "zUI.test.yaml",
             "zVaFile_path": "@.UI",
             "zBlock": "Root",
             "logger": "info"
@@ -516,18 +516,18 @@ def test_ui_file_loading():
         
         # Populate session
         walker.session["zWorkspace"] = project_root
-        walker.session["zVaFilename"] = "ui.test.yaml"
+        walker.session["zVaFilename"] = "zUI.test.yaml"
         walker.session["zVaFile_path"] = "@.UI"
         
         # Test that loader can construct the path
         tester.assert_not_none(walker.loader, "Walker has loader")
         tester.assert_equal(walker.session.get("zWorkspace"), project_root,
                            "Session has correct workspace")
-        tester.assert_equal(walker.session.get("zVaFilename"), "ui.test.yaml",
+        tester.assert_equal(walker.session.get("zVaFilename"), "zUI.test.yaml",
                            "Session has correct filename")
         
         # Test UI file exists
-        ui_file = os.path.join(test_ui_path, "ui.test.yaml")
+        ui_file = os.path.join(test_ui_path, "zUI.test.yaml")
         tester.assert_true(os.path.exists(ui_file),
                           "UI test file exists")
         

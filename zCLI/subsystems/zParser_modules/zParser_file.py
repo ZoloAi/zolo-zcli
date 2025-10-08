@@ -1,20 +1,24 @@
-# zCLI/subsystems/zParser_modules/zParser_file.py — File Parsing Module
-# ----------------------------------------------------------------
-# Centralized YAML/JSON parsing for all file types.
-# 
-# This module consolidates all YAML/JSON parsing logic that was previously
-# duplicated across zLoader and zParser_utils.
-# 
-# Functions:
-# - parse_file_content(): Main entry point for parsing file content
-# - parse_yaml(): Parse YAML content
-# - parse_json(): Parse JSON content
-# - detect_format(): Auto-detect file format
-# ----------------------------------------------------------------
+"""File Parsing Module - Centralized YAML/JSON parsing for all file types.
 
-import yaml
+This module consolidates all YAML/JSON parsing logic that was previously
+duplicated across zLoader and zParser_utils.
+
+Functions:
+    parse_file_content(): Main entry point for parsing file content
+    parse_yaml(): Parse YAML content
+    parse_json(): Parse JSON content
+    detect_format(): Auto-detect file format
+    parse_file_by_path(): Load and parse file in one call
+    parse_json_expr(): Parse JSON-like expression strings
+"""
+
+import os
 import json
+import yaml
 from logger import Logger
+
+# Logger instance
+logger = Logger.get_logger(__name__)
 
 
 def parse_file_content(raw_content, file_extension=None):
@@ -33,12 +37,12 @@ def parse_file_content(raw_content, file_extension=None):
     if not raw_content:
         logger.warning("Empty content provided for parsing")
         return None
-    
+
     # Auto-detect format if no extension provided
     if not file_extension:
         file_extension = detect_format(raw_content)
         logger.debug("Auto-detected format: %s", file_extension)
-    
+
     # Route to appropriate parser
     if file_extension == ".json":
         return parse_json(raw_content)
@@ -47,7 +51,6 @@ def parse_file_content(raw_content, file_extension=None):
     else:
         logger.error("Unsupported file extension: %s", file_extension)
         return None
-
 
 def parse_yaml(raw_content):
     """
@@ -68,7 +71,7 @@ def parse_yaml(raw_content):
     except yaml.YAMLError as e:
         logger.error("Failed to parse YAML: %s", e)
         return None
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         logger.error("Unexpected error parsing YAML: %s", e)
         return None
 
@@ -92,10 +95,9 @@ def parse_json(raw_content):
     except json.JSONDecodeError as e:
         logger.error("Failed to parse JSON: %s", e)
         return None
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         logger.error("Unexpected error parsing JSON: %s", e)
         return None
-
 
 def detect_format(raw_content):
     """
@@ -109,24 +111,23 @@ def detect_format(raw_content):
     """
     if not raw_content:
         return None
-    
+
     # Trim whitespace for detection
     content = raw_content.strip()
-    
+
     # JSON detection - starts with { or [
     if content.startswith('{') or content.startswith('['):
         logger.debug("Detected JSON format (starts with { or [)")
         return ".json"
-    
+
     # YAML detection - contains : or - patterns
     if ':' in content or content.startswith('-'):
         logger.debug("Detected YAML format (contains : or starts with -)")
         return ".yaml"
-    
+
     # Default to YAML (most common in zolo-zcli)
     logger.debug("Could not detect format, defaulting to YAML")
     return ".yaml"
-
 
 def parse_file_by_path(file_path):
     """
@@ -138,26 +139,24 @@ def parse_file_by_path(file_path):
     Returns:
         Parsed data structure or None on error
     """
-    import os
-    
+
     if not os.path.exists(file_path):
         logger.error("File not found: %s", file_path)
         return None
-    
+
     # Determine extension
     _, ext = os.path.splitext(file_path)
-    
+
     # Read file
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             raw_content = f.read()
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         logger.error("Failed to read file %s: %s", file_path, e)
         return None
-    
+
     # Parse content
     return parse_file_content(raw_content, ext)
-
 
 # ═══════════════════════════════════════════════════════════
 # Expression Parsing (for zExpr_eval compatibility)
@@ -179,6 +178,6 @@ def parse_json_expr(expr):
         # Handle single quotes (common in Python expressions)
         normalized = expr.replace("'", '"')
         return json.loads(normalized)
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         logger.debug("Failed to parse JSON expression: %s", e)
         return None

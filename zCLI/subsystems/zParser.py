@@ -30,49 +30,52 @@ class ZParser:
     - File parsing (YAML/JSON)
     - Expression evaluation and utilities
     - zVaFile parsing and validation
-    """
     
-    def __init__(self, zcli_or_walker=None):
+    Modern Architecture:
+    - Requires zCLI instance for initialization
+    - Session-aware operations through zCLI.session
+    - Integrated logging via zCLI.logger
+    - Display integration via zCLI.display
+    """
+
+    def __init__(self, zcli):
         """
         Initialize zParser.
         
         Args:
-            zcli_or_walker: zCLI instance (new) or walker instance (legacy) or None
+            zcli: zCLI instance (required)
+            
+        Raises:
+            ValueError: If zcli is not provided or invalid
         """
-        # Detect what we received and get the session
-        if zcli_or_walker is None:
-            raise ValueError("ZParser requires a zCLI or walker instance")
-        elif hasattr(zcli_or_walker, 'session') and hasattr(zcli_or_walker, 'crud'):
-            # NEW: zCLI instance (has 'session' and 'crud')
-            self.walker = None
-            self.zSession = zcli_or_walker.session  # ← Use 'session' attribute
-            self.logger = zcli_or_walker.logger
-            self.display = zcli_or_walker.display
-        else:
-            # LEGACY: walker instance (has 'zSession')
-            self.walker = zcli_or_walker
-            self.zSession = getattr(zcli_or_walker, "zSession", None)
-            if not self.zSession:
-                raise ValueError("Walker instance must have a session")
-            self.logger = getattr(zcli_or_walker, "logger", logger)
-            self.display = getattr(zcli_or_walker, "display", None)
+        if zcli is None:
+            raise ValueError("ZParser requires a zCLI instance")
+
+        if not hasattr(zcli, 'session'):
+            raise ValueError("Invalid zCLI instance: missing 'session' attribute")
+
+        # Modern architecture: zCLI instance provides all dependencies
+        self.zcli = zcli
+        self.zSession = zcli.session
+        self.logger = zcli.logger
+        self.display = zcli.display
 
     # ═══════════════════════════════════════════════════════════
     # Path Resolution
     # ═══════════════════════════════════════════════════════════
-    
+
     def zPath_decoder(self, zPath=None, zType=None):
         """Resolve dotted paths to file paths."""
         return zPath_decoder_func(self.zSession, zPath, zType, self.display)
 
     def identify_zFile(self, filename, full_zFilePath):
         """Identify file type and find actual file path with extension."""
-        return identify_zFile_func(filename, full_zFilePath, self.logger, self.display)
+        return identify_zFile_func(filename, full_zFilePath, self.display)
 
     # ═══════════════════════════════════════════════════════════
     # Command Parsing
     # ═══════════════════════════════════════════════════════════
-    
+
     def parse_command(self, command: str):
         """Parse shell commands into structured format."""
         return parse_command_func(command, self.logger)
@@ -80,27 +83,27 @@ class ZParser:
     # ═══════════════════════════════════════════════════════════
     # File Parsing (YAML/JSON)
     # ═══════════════════════════════════════════════════════════
-    
+
     def parse_file_content(self, raw_content, file_extension=None):
         """Parse raw file content (YAML/JSON) into Python objects."""
         return parse_file_content(raw_content, file_extension)
-    
+
     def parse_yaml(self, raw_content):
         """Parse YAML content."""
         return parse_yaml(raw_content)
-    
+
     def parse_json(self, raw_content):
         """Parse JSON content."""
         return parse_json(raw_content)
-    
+
     def detect_format(self, raw_content):
         """Auto-detect file format from content."""
         return detect_format(raw_content)
-    
+
     def parse_file_by_path(self, file_path):
         """Load and parse file in one call."""
         return parse_file_by_path(file_path)
-    
+
     def parse_json_expr(self, expr):
         """Parse JSON-like expression strings."""
         return parse_json_expr(expr)
@@ -108,10 +111,10 @@ class ZParser:
     # ═══════════════════════════════════════════════════════════
     # Expression Evaluation
     # ═══════════════════════════════════════════════════════════
-    
+
     def zExpr_eval(self, expr):
         """Evaluate JSON expressions."""
-        return zExpr_eval(expr)
+        return zExpr_eval(expr, self.display)
 
     def parse_dotted_path(self, ref_expr):
         """Parse a dotted path into useful parts."""
@@ -119,16 +122,16 @@ class ZParser:
 
     def handle_zRef(self, ref_expr, base_path=None):
         """Handle zRef expressions to load YAML data."""
-        return handle_zRef(ref_expr, base_path)
+        return handle_zRef(ref_expr, base_path, self.display)
 
-    def handle_zParser(self, zFile_raw, walker=None):
+    def handle_zParser(self, zFile_raw):
         """Placeholder function for zParser handler."""
-        return handle_zParser(zFile_raw, walker)
+        return handle_zParser(zFile_raw, self.display)
 
     # ═══════════════════════════════════════════════════════════
     # zVaFile Parsing
     # ═══════════════════════════════════════════════════════════
-    
+
     def parse_zva_file(self, data, file_type, file_path=None, session=None):
         """Parse zVaFile with type-specific logic and validation."""
         return parse_zva_file(data, file_type, file_path, session, self.display)

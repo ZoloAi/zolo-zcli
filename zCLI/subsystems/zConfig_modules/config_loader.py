@@ -19,8 +19,8 @@ class ConfigLoader:
     Configuration loader with hierarchical merging.
     
     Loads configuration from:
-    1. Package defaults (config/config.default.yaml)
-    2. Environment-specific package config (config/config.{env}.yaml)
+    1. Package defaults (config/zConfig.default.yaml)
+    2. Environment-specific package config (config/zConfig.{env}.yaml)
     3. System config (OS-specific path)
     4. User config (OS-specific path)
     5. Project config (current directory)
@@ -74,7 +74,7 @@ class ConfigLoader:
             # Get package config directory
             import zCLI
             package_root = Path(zCLI.__file__).parent.parent
-            default_config = package_root / "config" / "config.default.yaml"
+            default_config = package_root / "config" / "zConfig.default.yaml"
             
             if default_config.exists():
                 self._load_config_file(default_config, "package-defaults")

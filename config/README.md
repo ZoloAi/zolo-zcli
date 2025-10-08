@@ -4,9 +4,10 @@ This directory contains default configuration files that are included in the zol
 
 ## Files
 
-- **config.default.yaml** - Base configuration with all default values
-- **config.dev.yaml** - Development environment overrides
-- **config.prod.yaml** - Production environment overrides
+- **zConfig.default.yaml** - Base configuration with all default values
+- **zConfig.dev.yaml** - Development environment overrides
+- **zConfig.prod.yaml** - Production environment overrides
+- **zConfig.machine.yaml** - Machine configuration template (auto-generated to `~/.zolo-zcli/machine.yaml`)
 
 ## Security Notice
 
@@ -75,6 +76,6 @@ Priority (highest to lowest):
 2. Project config (`./config.yaml`)
 3. User config (OS-specific location)
 4. System config (OS-specific location)
-5. Package environment config (`config.{env}.yaml`)
-6. Package defaults (`config.default.yaml`)
+5. Package environment config (`zConfig.{env}.yaml`)
+6. Package defaults (`zConfig.default.yaml`)
 

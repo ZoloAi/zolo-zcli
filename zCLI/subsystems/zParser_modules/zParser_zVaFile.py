@@ -4,9 +4,10 @@
 # 
 # Provides:
 # - Common zVaFile operations (currently scattered across subsystems)
-# - UI-specific parsing (currently missing)
-# - Schema-specific parsing (consolidated from zSchema_modules)
-# - Shared validation logic (currently missing for UI)
+# - UI-specific parsing (for zUI.* files)
+# - Schema-specific parsing (for zSchema.* files)
+# - Config parsing (for zConfig.* files)
+# - Shared validation logic
 # 
 # Functions:
 # - parse_zva_file(): Main entry point for zVaFile parsing
@@ -19,7 +20,9 @@
 # ----------------------------------------------------------------
 
 from logger import Logger
-from zCLI.subsystems.zDisplay import Colors, print_line
+
+# Logger instance
+logger = Logger.get_logger(__name__)
 
 
 def parse_zva_file(data, file_type, file_path=None, session=None, display=None):
@@ -44,8 +47,7 @@ def parse_zva_file(data, file_type, file_path=None, session=None, display=None):
             "color": "SCHEMA",
             "indent": 6
         })
-    else:
-        print_line(Colors.SCHEMA, "parse_zva_file", "single", indent=6)
+    
     logger.info("📨 Parsing zVaFile (type: %s, path: %s)", file_type, file_path or "unknown")
 
     if not isinstance(data, dict):
@@ -595,8 +597,8 @@ def parse_shorthand_field(field_str):
     """
     logger.debug("🔧 Parsing shorthand field: %s", field_str)
     
-    # Import field parsing from zSchema_modules
-    from zCLI.subsystems.zSchema_modules.field_parser import parse_type
+    # Import field parsing from zData schema modules
+    from zCLI.subsystems.zData.zData_modules.schema.field_parser import parse_type
     
     try:
         parsed_type = parse_type(field_str)
@@ -628,8 +630,8 @@ def parse_detailed_field(field_dict):
     """
     logger.debug("🔧 Parsing detailed field: %s", field_dict)
     
-    # Import field parsing from zSchema_modules
-    from zCLI.subsystems.zSchema_modules.field_parser import parse_field_block
+    # Import field parsing from zData schema modules
+    from zCLI.subsystems.zData.zData_modules.schema.field_parser import parse_field_block
     
     try:
         parsed_field = parse_field_block(field_dict)
