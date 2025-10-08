@@ -338,18 +338,21 @@ def _create_indexes(table, indexes, cur, conn):
             # Don't fail table creation if index creation fails
 
 
-def resolve_source(source, walker=None):
+def resolve_source(source, walker=None, table=None, field=None, zData=None):
     """
     Evaluate a field's `source` expression for auto-generated values.
 
     Strategy:
     1) If walker has utils, try invoking a matching util method first.
-    2) Fallbacks for known generator names (generate_id / generate_API).
+    2) Fallbacks for known generator names (generate_id / generate_API / zIncremental).
     3) As a last resort, support legacy zFunc(...) expression via handle_zFunc.
     
     Args:
         source (str): Source expression from schema
         walker: Optional walker with utils
+        table (str): Optional table name (for context-aware generators)
+        field (str): Optional field name (for context-aware generators)
+        zData (dict): Optional database connection (for query-based generators)
         
     Returns:
         Generated value or None
@@ -437,6 +440,35 @@ def resolve_source(source, walker=None):
         except Exception as e:
             logger.error("zRand fallback failed: %s", e)
             return None
+
+    # zIncremental: Auto-increment primary key by querying MAX(field) + 1
+    if expr == "zIncremental" or expr.startswith("zIncremental("):
+        if not table or not field:
+            logger.warning("zIncremental requires table and field context")
+            return None
+        
+        if not zData or "cursor" not in zData:
+            logger.warning("zIncremental requires database connection (zData)")
+            return None
+        
+        try:
+            cur = zData["cursor"]
+            # Query for the maximum value in this field
+            query = f"SELECT MAX({field}) FROM {table}"
+            logger.debug("zIncremental query: %s", query)
+            cur.execute(query)
+            result = cur.fetchone()
+            
+            max_val = result[0] if result and result[0] is not None else 0
+            next_id = max_val + 1
+            logger.info("zIncremental: MAX(%s.%s) = %s, returning %s", table, field, max_val, next_id)
+            return next_id
+            
+        except Exception as e:
+            logger.error("zIncremental failed for %s.%s: %s", table, field, e)
+            # Fall back to 1 if table doesn't exist yet (first insert)
+            logger.info("zIncremental fallback: returning 1 (table may not exist yet)")
+            return 1
 
     # 3) Legacy zFunc(...) pattern – sanitize {prefix} → 'prefix' and dispatch
     if expr.startswith("zFunc("):

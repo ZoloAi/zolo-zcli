@@ -9,7 +9,7 @@ PinnedResources:
   id:
     type: int
     primary_key: true
-    auto_increment: true
+    source: zIncremental
   
   key:
     type: str
@@ -46,6 +46,11 @@ PinnedResources:
     type: int
     description: "Size of cached data in bytes"
   
+  data:
+    type: str
+    required: true
+    description: "JSON-serialized parsed data (the actual cached content)"
+  
   persistent:
     type: bool
     default: true
@@ -58,7 +63,7 @@ CachedFiles:
   id:
     type: int
     primary_key: true
-    auto_increment: true
+    source: zIncremental
   
   key:
     type: str
@@ -98,6 +103,11 @@ CachedFiles:
   size_bytes:
     type: int
     description: "Size of cached data in bytes"
+  
+  data:
+    type: str
+    required: true
+    description: "JSON-serialized parsed file content"
 
 # ═══════════════════════════════════════════════════════════
 # Tier 3: Schema Resources (Temporary CRUD)
@@ -106,7 +116,7 @@ SchemaResources:
   id:
     type: int
     primary_key: true
-    auto_increment: true
+    source: zIncremental
   
   key:
     type: str
@@ -145,6 +155,11 @@ SchemaResources:
   field_count:
     type: int
     description: "Total number of fields across all tables"
+  
+  data:
+    type: str
+    required: true
+    description: "JSON-serialized parsed schema"
 
 # ═══════════════════════════════════════════════════════════
 # Cache Statistics (Global Metrics)
@@ -153,7 +168,7 @@ CacheStats:
   id:
     type: int
     primary_key: true
-    auto_increment: true
+    source: zIncremental
   
   tier:
     type: str

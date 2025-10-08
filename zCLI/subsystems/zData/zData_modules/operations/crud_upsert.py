@@ -120,7 +120,7 @@ def zUpsert_sqlite(zRequest, zForm, zData, walker=None):
         
         # Handle 'source' fields (auto-generated values)
         if "source" in field_def:
-            generated_value = resolve_source(field_def["source"], walker=walker)
+            generated_value = resolve_source(field_def["source"], walker=walker, table=table, field=field_name, zData=zData)
             if generated_value:
                 data_dict[field_name] = generated_value
         

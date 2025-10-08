@@ -6,6 +6,9 @@ from zCLI.subsystems.zDisplay import handle_zDisplay
 from zCLI.subsystems.zData.zData_modules.infrastructure import resolve_source
 from .crud_validator import RuleValidator, display_validation_errors
 
+# Logger instance
+logger = Logger.get_logger(__name__)
+
 
 def zCreate(zRequest, zForm, zData, walker=None):
     handle_zDisplay({
@@ -68,7 +71,7 @@ def zCreate_sqlite(zRequest, zForm, zData, walker=None):
 
         # 1) Try source-based generation first
         src = attrs.get("source")
-        gen_val = resolve_source(src, walker=walker) if src else None
+        gen_val = resolve_source(src, walker=walker, table=table, field=f_name, zData=zData) if src else None
         if gen_val is not None:
             fields.append(f_name)
             values.append(gen_val)
