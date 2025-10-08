@@ -39,12 +39,15 @@ zLoader uses **zParser** for all zPath resolution to maintain a single source of
 ### Examples:
 ```yaml
 # UI files
-@.ui.manual.Root              # → ui.manual.yaml (Root block)
-@.ui.dashboard.Main           # → ui.dashboard.yaml (Main block)
+@.zUI.manual.Root              # → zUI.manual.yaml (Root block)
+@.zUI.dashboard.Main           # → zUI.dashboard.yaml (Main block)
 
 # Schema files  
-@.schema.users.Users          # → schema.users.yaml (Users table)
-@.schema.products.Items       # → schema.products.yaml (Items table)
+@.zSchema.users.Users          # → zSchema.users.yaml (Users table)
+@.zSchema.products.Items       # → zSchema.products.yaml (Items table)
+
+# Config files
+@.zConfig.settings.General     # → zConfig.settings.yaml (General block)
 ```
 
 ### Resolution Process:
@@ -59,22 +62,27 @@ zLoader uses **zParser** for all zPath resolution to maintain a single source of
 
 ## File Type Detection
 
-### Supported File Types:
-- **UI Files:** Must start with `ui.` (e.g., `ui.manual.yaml`)
-- **Schema Files:** Must start with `schema.` (e.g., `schema.users.yaml`)
-- **Other Files:** Generic configuration files
+### zVaFile Types:
+- **UI Files:** Must start with `zUI.` (e.g., `zUI.manual.yaml`)
+- **Schema Files:** Must start with `zSchema.` (e.g., `zSchema.users.yaml`)
+- **Config Files:** Must start with `zConfig.` (e.g., `zConfig.settings.yaml`)
+- **Other Files:** Non-zVaFiles with explicit extensions
 
-### Supported Extensions:
+### Supported Extensions (zVaFiles only):
 - `.yaml` **(recommended)**
 - `.yml`
 - `.json`
 
+**Note:** The 'z' prefix with camelCase ensures unambiguous detection and prevents conflicts with folder names like `ui/`, `schema/`, or `config/`.
+
 ### Detection Logic:
 ```python
-if filename.startswith("ui."):
+if filename.startswith("zUI."):
     file_type = "zUI"
-elif filename.startswith("schema."):
+elif filename.startswith("zSchema."):
     file_type = "zSchema"
+elif filename.startswith("zConfig."):
+    file_type = "zConfig"
 else:
     file_type = "zOther"
 ```
@@ -106,26 +114,37 @@ Priority 3: disk (Filesystem I/O)
 **Usage:**
 ```bash
 # Pin frequently-used schema
-load @.schemas.schema
+load @.schemas.zSchema.users
 
 # Pin UI file
-load @.ui.admin
+load @.zUI.admin
 
-# Show loaded resources
-load --show
+# Show all cache tiers
+load show
+
+# Show only pinned resources
+load show pinned
+
+# Show auto-cache statistics
+load show cached
+
+# Show specific resource type
+load show schemas
+load show ui
+load show config
 
 # Clear loaded resources
-load --clear
+load clear [pattern]
 ```
 
 **Storage:**
 ```python
 zCache["loaded"] = {
-    "parsed:/workspace/schemas/schema.yaml": {
+    "parsed:/workspace/schemas/zSchema.users.yaml": {
         "data": {...},
         "loaded_at": 1234567890,
         "type": "schema",
-        "filepath": "/workspace/schemas/schema.yaml"
+        "filepath": "/workspace/schemas/zSchema.users.yaml"
     }
 }
 ```
@@ -143,7 +162,7 @@ zCache["loaded"] = {
 **Storage:**
 ```python
 zCache["files"] = OrderedDict({
-    "parsed:/workspace/ui/main.yaml": {
+    "parsed:/workspace/zUI.main.yaml": {
         "data": {...},
         "mtime": 1234567890,
         "accessed_at": 1234567900,
@@ -194,39 +213,59 @@ def handle(self, zPath):
 
 ---
 
-## Resource Loading Command
+## Resource Loading Commands
 
 ### `load` Command (Shell):
 
-Pin frequently-used resources to the highest-priority cache tier.
+Manage resources and inspect cache tiers.
 
 #### **Syntax:**
 ```bash
-load <zPath>              # Load and pin resource
-load --show               # Show loaded resources
-load --clear [pattern]    # Clear loaded resources
+# Loading
+load <zPath>                    # Load and pin resource
+
+# Viewing
+load show                       # Show all 3 cache tiers
+load show pinned                # Show Tier 1 (pinned resources)
+load show cached                # Show Tier 2 (auto-cache stats)
+load show schemas/ui/config     # Show specific resource type
+
+# Clearing
+load clear [pattern]            # Clear loaded resources
 ```
 
 #### **Examples:**
 ```bash
 # Load schema
-load @.schemas.schema
-# Output: ✅ Loaded schema: @.schemas.schema (3 tables)
+load @.schemas.zSchema.users
+# Output: ✅ Loaded schema: @.schemas.zSchema.users (3 tables)
 
 # Load UI file
-load @.ui.admin
-# Output: ✅ Loaded ui: @.ui.admin (5 blocks)
+load @.zUI.admin
+# Output: ✅ Loaded ui: @.zUI.admin (5 blocks)
 
-# Show what's loaded
-load --show
-# Output: Lists all pinned resources with metadata
+# Show all cache tiers
+load show
+# Output: Displays all 3 tiers with statistics
 
-# Clear specific
-load --clear schema:*
+# Show only pinned resources
+load show pinned
+# Output: Lists Tier 1 resources with paths and age
+
+# Show auto-cache statistics
+load show cached
+# Output: Hit rate, evictions, size, etc.
+
+# Show only schema resources
+load show schemas
+# Output: Filtered list of schema resources
+
+# Clear specific pattern
+load clear schema:*
 # Output: ✅ Cleared 1 loaded resources matching 'schema:*'
 
 # Clear all
-load --clear
+load clear
 # Output: ✅ Cleared all 2 loaded resources
 ```
 
@@ -235,29 +274,41 @@ load --clear
 1. **Frequent Schemas:**
    ```bash
    # Pin schema at session start
-   load @.schemas.schema
+   load @.schemas.zSchema.users
    
    # All CRUD operations use pinned schema (instant!)
-   crud read zUsers
-   crud create zApps
+   crud read Users
+   crud create Apps
    ```
 
 2. **Development Workflow:**
    ```bash
    # Pin schema being edited
-   load @.schemas.schema
+   load @.schemas.zSchema.users
    
    # Edit schema externally
    # Reload to get fresh version
-   load --clear @.schemas.schema
-   load @.schemas.schema
+   load clear schema:*
+   load @.schemas.zSchema.users
    ```
 
-3. **Performance Optimization:**
+3. **Cache Inspection:**
+   ```bash
+   # Check what's loaded
+   load show pinned
+   
+   # Monitor auto-cache performance
+   load show cached
+   
+   # View specific type
+   load show schemas
+   ```
+
+4. **Performance Optimization:**
    ```bash
    # Pre-load resources before operations
-   load @.schemas.schema
-   load @.ui.admin
+   load @.schemas.zSchema.users
+   load @.zUI.admin
    
    # All subsequent access is instant
    ```
@@ -291,7 +342,7 @@ active_zBlock = zFile_parsed.get(self.zSession["zBlock"], {})
 ### zCRUD Integration:
 ```python
 # Load schema file for data validation
-schema_data = self.loader.handle("@.schema.users.Users")
+schema_data = self.loader.handle("@.zSchema.users.Users")
 field_definitions = schema_data.get("Users", {})
 ```
 

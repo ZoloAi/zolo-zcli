@@ -26,7 +26,7 @@ def zDataConnect(Data_Type, Data_Path, zForm):
     
     Args:
         Data_Type (str): Type of database ("sqlite", "csv", "postgresql")
-        Data_Path (str): Path to database file/directory
+        Data_Path (str): Path to database file/directory (supports ~.zMachine.* syntax)
         zForm (dict): Parsed schema with Meta information
         
     Returns:
@@ -39,6 +39,10 @@ def zDataConnect(Data_Type, Data_Path, zForm):
         "color": "ZCRUD",
         "indent": 2
     })
+
+    # Resolve ~.zMachine.* paths to OS-specific locations
+    from ..zData import resolve_zmachine_path
+    Data_Path = resolve_zmachine_path(Data_Path)
 
     result = {
         "ready": False,

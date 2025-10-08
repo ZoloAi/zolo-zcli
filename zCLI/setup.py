@@ -13,7 +13,6 @@ Handles first-run initialization:
 This runs automatically on first import of zConfig.
 """
 
-import os
 from pathlib import Path
 from logger import Logger
 
@@ -46,11 +45,21 @@ def ensure_config_directories():
             user_config.mkdir(parents=True, exist_ok=True)
             logger.info("[Setup] Created user config directory: %s", user_config)
         
-        # Create user data directory
+        # Create user data directory with zMachine subdirectories
         user_data = paths.user_data_dir
         if not user_data.exists():
             user_data.mkdir(parents=True, exist_ok=True)
             logger.info("[Setup] Created user data directory: %s", user_data)
+        
+        # Create zMachine subdirectories for organized storage
+        # Config: User-specific configuration overrides
+        # Cache: Temporary data and cache files (cache.csv for load command)
+        zmachine_subdirs = ["Config", "Cache"]
+        for subdir in zmachine_subdirs:
+            subdir_path = user_data / subdir
+            if not subdir_path.exists():
+                subdir_path.mkdir(parents=True, exist_ok=True)
+                logger.info("[Setup] Created zMachine.%s: %s", subdir, subdir_path)
         
         # Create user cache directory
         user_cache = paths.user_cache_dir
@@ -61,7 +70,7 @@ def ensure_config_directories():
         logger.info("[Setup] Config directories ensured")
         return True
     
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except,unused-import
         logger.error("[Setup] Failed to create config directories: %s", e)
         return False
 

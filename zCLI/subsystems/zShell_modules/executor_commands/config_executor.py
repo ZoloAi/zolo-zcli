@@ -99,6 +99,24 @@ def check_config_system(zcli):
         required=True
     )
 
+    # Check 3.5: User data directory with zMachine subdirectories
+    user_data_dir = paths_info.get("user_data", "N/A")
+    results["checks"]["user_data"] = check_directory(
+        user_data_dir,
+        "User data directory",
+        required=True
+    )
+    
+    # Check zMachine subdirectories
+    if user_data_dir and user_data_dir != "N/A":
+        for subdir in ["Config", "Cache"]:
+            subdir_path = f"{user_data_dir}/{subdir}"
+            results["checks"][f"zmachine_{subdir.lower()}"] = check_directory(
+                subdir_path,
+                f"zMachine.{subdir} subdirectory",
+                required=True
+            )
+
     # Check 4: Machine config file
     user_config_dir = paths_info.get("user_config_active", "")
     if user_config_dir and user_config_dir != "N/A":

@@ -166,14 +166,45 @@ python3 -c "from zCLI.version import get_version; print(get_version())"
 
 ## 🗑️ Uninstalling
 
+### Standard Uninstall (Keep Data)
+
+Remove the package but preserve your configuration and data:
+
 ```bash
-pip uninstall zolo-zcli
+zolo uninstall --keep-data
 ```
 
-Your authentication credentials will remain in `~/.zolo/credentials` unless you delete them manually:
+Your data will be preserved at:
+- **Config:** `~/.zolo-zcli/` or `~/Library/Application Support/zolo-zcli/`
+- **Data:** Databases, CSVs in `Data/` subdirectory
+- **Cache:** Temporary files in `Cache/` subdirectory
+
+### Clean Uninstall (Remove Everything)
+
+⚠️ **WARNING:** This removes ALL user data, configuration, and databases!
 
 ```bash
-rm -rf ~/.zolo
+zolo uninstall --clean
+```
+
+This will:
+- Remove the zolo-zcli package
+- Delete all configuration files
+- Delete all databases and CSVs
+- Delete all cached data
+
+**This action CANNOT be undone!**
+
+### Manual Cleanup
+
+If you uninstalled via pip and want to remove user data:
+
+```bash
+# Remove user data directories
+rm -rf ~/Library/Application\ Support/zolo-zcli  # macOS
+rm -rf ~/.config/zolo-zcli                       # Linux
+rm -rf ~/Library/Caches/zolo-zcli                # macOS cache
+rm -rf ~/.cache/zolo-zcli                        # Linux cache
 ```
 
 ---

@@ -23,6 +23,51 @@ from zCLI.subsystems.zLoader import handle_zLoader
 from .zData_modules.backends.adapter_factory import AdapterFactory
 from .zData_modules.schema import parse_field_block
 
+# Logger instance
+logger = Logger.get_logger(__name__)
+
+
+def resolve_zmachine_path(data_path, config_paths=None):
+    """
+    Resolve ~.zMachine.* path references to actual OS-specific paths.
+    
+    Supports:
+    - ~.zMachine.Config/file.yaml → {user_data_dir}/Config/file.yaml
+    - ~.zMachine.Cache/file.csv → {user_data_dir}/Cache/file.csv
+    
+    The user_data_dir resolves to:
+    - Linux:   ~/.local/share/zolo-zcli
+    - macOS:   ~/Library/Application Support/zolo-zcli
+    - Windows: %LOCALAPPDATA%/zolo-zcli
+    
+    Args:
+        data_path: Path string from schema Meta
+        config_paths: Optional ZConfigPaths instance (will create if None)
+        
+    Returns:
+        str: Resolved absolute path
+    """
+    if not isinstance(data_path, str) or not data_path.startswith("~.zMachine."):
+        # Not a zMachine path, return as-is
+        return data_path
+    
+    # Get config paths
+    if not config_paths:
+        from zCLI.subsystems.zConfig_modules import ZConfigPaths
+        config_paths = ZConfigPaths()
+    
+    # Extract the subpath after ~.zMachine.
+    # Example: "~.zMachine.Data/cache.csv" → "Data/cache.csv"
+    subpath = data_path[len("~.zMachine."):]
+    
+    # Build full path using user_data_dir as base
+    base_dir = config_paths.user_data_dir
+    full_path = base_dir / subpath
+    
+    logger.debug("[zMachine Path] %s → %s", data_path, full_path)
+    
+    return str(full_path)
+
 
 class ZData:
     """
@@ -67,6 +112,9 @@ class ZData:
         meta = self.schema.get("Meta", {})
         data_type = meta.get("Data_Type", "sqlite")
         data_path = meta.get("Data_path", "data/default.db")
+        
+        # Resolve ~.zMachine.* paths to OS-specific locations
+        data_path = resolve_zmachine_path(data_path)
         
         logger.info("Initializing %s adapter for: %s", data_type, data_path)
         

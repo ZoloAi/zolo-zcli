@@ -13,10 +13,12 @@ def execute_load(zcli, parsed):
     Execute load command to pin resources to cache.
     
     Commands:
-      load @.schemas.schema          - Load and pin schema
-      load @.ui.admin                - Load and pin UI file
-      load --show                    - Show loaded resources
-      load --clear [pattern]         - Clear loaded resources
+      load <zPath>                   - Load and pin resource
+      load show                      - Show all cache tiers
+      load show pinned               - Show Tier 1 (pinned resources)
+      load show cached               - Show Tier 2 (auto-cache stats)
+      load show schemas/ui/config    - Show specific resource type
+      load clear [pattern]           - Clear loaded resources
     
     Args:
         zcli: zCLI instance
@@ -25,22 +27,36 @@ def execute_load(zcli, parsed):
     Returns:
         Load operation result
     """
-    action = parsed.get("action")
     args = parsed.get("args", [])
-    options = parsed.get("options", {})
     
-    # Handle --show flag
-    if options.get("show") or action == "show":
-        return show_loaded_resources(zcli)
-    
-    # Handle --clear flag
-    if options.get("clear") or action == "clear":
-        pattern = args[0] if args else None
-        return clear_loaded_resources(zcli, pattern)
+    # Check if first arg is a subcommand (show/clear)
+    if args and args[0] in ["show", "clear"]:
+        subcommand = args[0]
+        remaining_args = args[1:]
+        
+        if subcommand == "show":
+            # Handle show variants
+            if not remaining_args:
+                # load show - show all tiers
+                return show_all_cache_tiers(zcli)
+            elif remaining_args[0] == "pinned":
+                # load show pinned - show Tier 1 only
+                return show_pinned_resources(zcli)
+            elif remaining_args[0] == "cached":
+                # load show cached - show Tier 2 only
+                return show_cached_stats(zcli)
+            elif remaining_args[0] in ["schemas", "ui", "config"]:
+                # load show schemas/ui/config - filter by type
+                return show_resources_by_type(zcli, remaining_args[0])
+            else:
+                return {"error": f"Unknown show option: {remaining_args[0]}"}
+        elif subcommand == "clear":
+            pattern = remaining_args[0] if remaining_args else None
+            return clear_loaded_resources(zcli, pattern)
     
     # Load resource
     if not args:
-        return {"error": "Usage: load <zPath> or load --show or load --clear"}
+        return {"error": "Usage: load <zPath> | load show | load clear [pattern]"}
     
     zPath = args[0]
     
@@ -51,23 +67,19 @@ def execute_load(zcli, parsed):
         if result == "error" or result is None:
             return {"error": f"Failed to load: {zPath}"}
         
-        # Determine resource type from zPath
-        if "schema" in zPath:
+        # Determine resource type using proper zVaFile detection
+        if "zSchema." in zPath:
             resource_type = "schema"
-            key_prefix = "schema"
-        elif "ui" in zPath:
+        elif "zUI." in zPath:
             resource_type = "ui"
-            key_prefix = "ui"
-        else:
+        elif "zConfig." in zPath:
             resource_type = "config"
-            key_prefix = "config"
+        else:
+            resource_type = "other"
         
         # Get resolved filepath from zParser
-        if hasattr(zcli, 'zparser'):
-            zVaFile_fullpath, zVaFilename = zcli.zparser.zPath_decoder(zPath, None)
-            zFilePath_identified, _ = zcli.zparser.identify_zFile(zVaFilename, zVaFile_fullpath)
-        else:
-            zFilePath_identified = zPath
+        zVaFile_fullpath, zVaFilename = zcli.zparser.zPath_decoder(zPath, None)
+        zFilePath_identified, _ = zcli.zparser.identify_zFile(zVaFilename, zVaFile_fullpath)
         
         # Pin to loaded cache
         loaded_key = f"parsed:{zFilePath_identified}"
@@ -96,28 +108,104 @@ def execute_load(zcli, parsed):
             "count": len(items)
         }
         
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         logger.error("Failed to load %s: %s", zPath, e)
         return {"error": str(e)}
 
 
-def show_loaded_resources(zcli):
-    """Show all loaded resources."""
-    resources = zcli.loader.loaded_cache.list_loaded()
+def show_all_cache_tiers(zcli):
+    """Show all three cache tiers."""
+    print("\n" + "=" * 70)
+    print("Cache System - Three Tiers")
+    print("=" * 70)
     
-    if not resources:
-        print("\nNo resources currently loaded.")
+    total_items = 0
+    
+    # ═══════════════════════════════════════════════════════════
+    # TIER 1: Loaded Cache (User-Pinned)
+    # ═══════════════════════════════════════════════════════════
+    print("\n╔═══ Tier 1: Loaded Cache (User-Pinned) ═══╗")
+    
+    loaded_resources = zcli.loader.loaded_cache.list_loaded()
+    
+    if loaded_resources:
+        # Group by type
+        by_type = {}
+        for res in loaded_resources:
+            res_type = res.get("type", "unknown")
+            if res_type not in by_type:
+                by_type[res_type] = []
+            by_type[res_type].append(res)
+        
+        for res_type, items in by_type.items():
+            print(f"\n{res_type.upper()}:")
+            
+            for item in items:
+                age_mins = int(item["age"] / 60)
+                print(f"  • {item['key']}")
+                print(f"    Path: {item.get('filepath', 'N/A')}")
+                print(f"    Age: {age_mins} minutes")
+        
+        total_items += len(loaded_resources)
+        print(f"\nTotal: {len(loaded_resources)} pinned resources")
+    else:
+        print("  (empty - use 'load <zPath>' to pin resources)")
+    
+    # ═══════════════════════════════════════════════════════════
+    # TIER 2: Smart Cache (Auto-Cached Files)
+    # ═══════════════════════════════════════════════════════════
+    print("\n╔═══ Tier 2: Smart Cache (Auto-Cached Files) ═══╗")
+    
+    # Get files cache statistics
+    if hasattr(zcli.loader, 'files_cache'):
+        files_stats = zcli.loader.files_cache.get_stats()
+        
+        print(f"  Size: {files_stats.get('size', 0)}/{files_stats.get('max_size', 0)}")
+        print(f"  Hit Rate: {files_stats.get('hit_rate', '0%')}")
+        print(f"  Hits: {files_stats.get('hits', 0)} | Misses: {files_stats.get('misses', 0)}")
+        print(f"  Evictions: {files_stats.get('evictions', 0)} | Invalidations: {files_stats.get('invalidations', 0)}")
+        
+        total_items += files_stats.get('size', 0)
+    else:
+        print("  (not initialized)")
+    
+    # ═══════════════════════════════════════════════════════════
+    # TIER 3: Disk I/O
+    # ═══════════════════════════════════════════════════════════
+    print("\n╔═══ Tier 3: Disk I/O (Fallback) ═══╗")
+    print("  Loads directly from filesystem when not cached")
+    print("  No eviction - always available")
+    
+    # Summary
+    print("\n" + "=" * 70)
+    print(f"Total Cached Items: {total_items}")
+    print("=" * 70 + "\n")
+    
+    return {
+        "status": "success",
+        "tier1_count": len(loaded_resources),
+        "tier2_count": files_stats.get('size', 0) if hasattr(zcli.loader, 'files_cache') else 0,
+        "total": total_items
+    }
+
+
+def show_pinned_resources(zcli):
+    """Show only Tier 1 (pinned/loaded) resources."""
+    print("\n" + "=" * 70)
+    print("Tier 1: Loaded Cache (User-Pinned)")
+    print("=" * 70)
+    
+    loaded_resources = zcli.loader.loaded_cache.list_loaded()
+    
+    if not loaded_resources:
+        print("\nNo pinned resources.")
         print("Use 'load <zPath>' to pin resources to cache.")
         return {"status": "empty"}
     
-    print("\n" + "=" * 70)
-    print("Loaded Resources (Pinned in Cache)")
-    print("=" * 70)
-    
     # Group by type
     by_type = {}
-    for res in resources:
-        res_type = res["type"]
+    for res in loaded_resources:
+        res_type = res.get("type", "unknown")
         if res_type not in by_type:
             by_type[res_type] = []
         by_type[res_type].append(res)
@@ -128,14 +216,74 @@ def show_loaded_resources(zcli):
             age_mins = int(item["age"] / 60)
             print(f"  • {item['key']}")
             print(f"    Path: {item.get('filepath', 'N/A')}")
-            print(f"    Loaded: {age_mins} minutes ago")
+            print(f"    Age: {age_mins} minutes")
     
+    print(f"\n{'=' * 70}")
+    print(f"Total: {len(loaded_resources)} pinned resources")
+    print("=" * 70 + "\n")
+    
+    return {"status": "success", "count": len(loaded_resources)}
+
+
+def show_cached_stats(zcli):
+    """Show only Tier 2 (smart cache) statistics."""
     print("\n" + "=" * 70)
-    print(f"Total: {len(resources)} pinned resources")
-    print("Use 'load --clear [pattern]' to remove")
+    print("Tier 2: Smart Cache (Auto-Cached Files)")
     print("=" * 70)
     
-    return {"status": "success", "count": len(resources), "resources": resources}
+    if not hasattr(zcli.loader, 'files_cache'):
+        print("\nSmart cache not initialized.")
+        return {"status": "not_initialized"}
+    
+    files_stats = zcli.loader.files_cache.get_stats()
+    
+    print(f"\nNamespace: {files_stats.get('namespace', 'N/A')}")
+    print(f"Size: {files_stats.get('size', 0)}/{files_stats.get('max_size', 0)} entries")
+    print("\nPerformance:")
+    print(f"  Hit Rate: {files_stats.get('hit_rate', '0%')}")
+    print(f"  Hits: {files_stats.get('hits', 0)}")
+    print(f"  Misses: {files_stats.get('misses', 0)}")
+    print("\nMaintenance:")
+    print(f"  Evictions: {files_stats.get('evictions', 0)} (LRU)")
+    print(f"  Invalidations: {files_stats.get('invalidations', 0)} (mtime)")
+    
+    print("\n" + "=" * 70 + "\n")
+    
+    return {"status": "success", "stats": files_stats}
+
+
+def show_resources_by_type(zcli, resource_type):
+    """Show resources filtered by type (schemas, ui, config)."""
+    # Normalize type name
+    type_map = {
+        "schemas": "schema",
+        "ui": "ui", 
+        "config": "config"
+    }
+    filter_type = type_map.get(resource_type, resource_type)
+    
+    print("\n" + "=" * 70)
+    print(f"Resources: {filter_type.upper()}")
+    print("=" * 70)
+    
+    loaded_resources = zcli.loader.loaded_cache.list_loaded()
+    filtered = [r for r in loaded_resources if r.get("type") == filter_type]
+    
+    if not filtered:
+        print(f"\nNo {filter_type} resources loaded.")
+        print(f"Use 'load @.{filter_type}s.{filter_type}' to load {filter_type} resources.")
+        return {"status": "empty"}
+    
+    print(f"\nFound {len(filtered)} {filter_type} resource(s):\n")
+    for item in filtered:
+        age_mins = int(item["age"] / 60)
+        print(f"  • {item['key']}")
+        print(f"    Path: {item.get('filepath', 'N/A')}")
+        print(f"    Age: {age_mins} minutes")
+    
+    print("\n" + "=" * 70 + "\n")
+    
+    return {"status": "success", "type": filter_type, "count": len(filtered)}
 
 
 def clear_loaded_resources(zcli, pattern=None):

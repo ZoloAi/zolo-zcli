@@ -316,16 +316,17 @@ def _parse_config_command(parts):
 
 
 def _parse_load_command(parts):
-    """Parse load commands like 'load @.zProducts.zTimer' or 'load path/to/file.yaml'"""
+    """Parse load commands like 'load @.zUI.manual' or 'load show pinned'"""
     if len(parts) < 2:
-        return {"error": "Load command requires path"}
+        return {"error": "Load command requires arguments"}
     
-    # The path is everything after "load", rejoined if it was split
-    path = " ".join(parts[1:])
+    # Keep args as separate parts for subcommands (show/clear)
+    # e.g., "load show pinned" → args: ["show", "pinned"]
+    args = parts[1:]
     
     return {
         "type": "load",
         "action": "load",
-        "args": [path],
+        "args": args,
         "options": {}
     }
