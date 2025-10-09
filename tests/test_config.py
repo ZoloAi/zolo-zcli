@@ -32,6 +32,17 @@ if project_root not in sys.path:
 from zCLI.subsystems.zConfig import ZConfig
 from zCLI.subsystems.zConfig_modules import ZConfigPaths
 
+# ANSI Color codes
+class Colors:
+    GREEN = '\033[92m'
+    RED = '\033[91m'
+    YELLOW = '\033[93m'
+    BLUE = '\033[94m'
+    MAGENTA = '\033[95m'
+    CYAN = '\033[96m'
+    RESET = '\033[0m'
+    BOLD = '\033[1m'
+
 
 class ConfigTestSuite:
     """Test suite for zConfig subsystem."""
@@ -45,13 +56,13 @@ class ConfigTestSuite:
         """Assert that two values are equal."""
         if actual == expected:
             self.passed += 1
-            print(f"[PASS] {test_name}")
+            print(f"{Colors.GREEN}[PASS]{Colors.RESET} {test_name}")
             self.tests.append((test_name, True, None))
             return True
         else:
             self.failed += 1
             error_msg = f"Expected {expected}, got {actual}"
-            print(f"[FAIL] {test_name}")
+            print(f"{Colors.RED}[FAIL]{Colors.RESET} {test_name}")
             print(f"   {error_msg}")
             self.tests.append((test_name, False, error_msg))
             return False
@@ -60,13 +71,13 @@ class ConfigTestSuite:
         """Assert that a value is not None."""
         if value is not None:
             self.passed += 1
-            print(f"[PASS] {test_name}")
+            print(f"{Colors.GREEN}[PASS]{Colors.RESET} {test_name}")
             self.tests.append((test_name, True, None))
             return True
         else:
             self.failed += 1
             error_msg = "Expected non-None value, got None"
-            print(f"[FAIL] {test_name}")
+            print(f"{Colors.RED}[FAIL]{Colors.RESET} {test_name}")
             print(f"   {error_msg}")
             self.tests.append((test_name, False, error_msg))
             return False
@@ -75,13 +86,13 @@ class ConfigTestSuite:
         """Assert that a condition is true."""
         if condition:
             self.passed += 1
-            print(f"[PASS] {test_name}")
+            print(f"{Colors.GREEN}[PASS]{Colors.RESET} {test_name}")
             self.tests.append((test_name, True, None))
             return True
         else:
             self.failed += 1
             error_msg = "Expected True, got False"
-            print(f"[FAIL] {test_name}")
+            print(f"{Colors.RED}[FAIL]{Colors.RESET} {test_name}")
             print(f"   {error_msg}")
             self.tests.append((test_name, False, error_msg))
             return False
@@ -90,13 +101,13 @@ class ConfigTestSuite:
         """Assert that item is in container."""
         if item in container:
             self.passed += 1
-            print(f"[PASS] {test_name}")
+            print(f"{Colors.GREEN}[PASS]{Colors.RESET} {test_name}")
             self.tests.append((test_name, True, None))
             return True
         else:
             self.failed += 1
             error_msg = f"Expected {item} to be in {container}"
-            print(f"[FAIL] {test_name}")
+            print(f"{Colors.RED}[FAIL]{Colors.RESET} {test_name}")
             print(f"   {error_msg}")
             self.tests.append((test_name, False, error_msg))
             return False
@@ -132,7 +143,7 @@ def test_config_initialization():
                         "Package defaults loaded")
         
     except Exception as e:
-        print(f"❌ Test crashed: {e}")
+        print(f"{Colors.RED}❌ Test crashed: {e}{Colors.RESET}")
         import traceback
         traceback.print_exc()
     
@@ -177,7 +188,7 @@ def test_config_values():
                               "Can get nested config value")
         
     except Exception as e:
-        print(f"❌ Test crashed: {e}")
+        print(f"{Colors.RED}❌ Test crashed: {e}{Colors.RESET}")
         import traceback
         traceback.print_exc()
     
@@ -224,7 +235,7 @@ def test_environment_switching():
                           "Dev and prod have different max_connections")
         
     except Exception as e:
-        print(f"❌ Test crashed: {e}")
+        print(f"{Colors.RED}❌ Test crashed: {e}{Colors.RESET}")
         import traceback
         traceback.print_exc()
     
@@ -277,7 +288,7 @@ def test_cross_platform_paths():
                         "Path info contains OS")
         
     except Exception as e:
-        print(f"❌ Test crashed: {e}")
+        print(f"{Colors.RED}❌ Test crashed: {e}{Colors.RESET}")
         import traceback
         traceback.print_exc()
     
@@ -337,7 +348,7 @@ zSocket:
         os.chdir(original_cwd)
         
     except Exception as e:
-        print(f"❌ Test crashed: {e}")
+        print(f"{Colors.RED}❌ Test crashed: {e}{Colors.RESET}")
         import traceback
         traceback.print_exc()
     
@@ -390,7 +401,7 @@ def test_secret_management():
         del os.environ["ZOLO_JWT_SECRET"]
         
     except Exception as e:
-        print(f"❌ Test crashed: {e}")
+        print(f"{Colors.RED}❌ Test crashed: {e}{Colors.RESET}")
         import traceback
         traceback.print_exc()
         
@@ -442,7 +453,7 @@ def test_env_var_overrides():
         del os.environ["WEBSOCKET_MAX_CONNECTIONS"]
         
     except Exception as e:
-        print(f"❌ Test crashed: {e}")
+        print(f"{Colors.RED}❌ Test crashed: {e}{Colors.RESET}")
         import traceback
         traceback.print_exc()
         
@@ -485,7 +496,7 @@ def test_paths_info():
                           "Config sources is a list")
         
     except Exception as e:
-        print(f"❌ Test crashed: {e}")
+        print(f"{Colors.RED}❌ Test crashed: {e}{Colors.RESET}")
         import traceback
         traceback.print_exc()
     
@@ -526,7 +537,7 @@ def test_deep_merge():
                         "Network section has port (from defaults)")
         
     except Exception as e:
-        print(f"❌ Test crashed: {e}")
+        print(f"{Colors.RED}❌ Test crashed: {e}{Colors.RESET}")
         import traceback
         traceback.print_exc()
     
@@ -569,7 +580,7 @@ def test_config_all_sections():
                         "zSocket has timeouts section")
         
     except Exception as e:
-        print(f"❌ Test crashed: {e}")
+        print(f"{Colors.RED}❌ Test crashed: {e}{Colors.RESET}")
         import traceback
         traceback.print_exc()
     
@@ -597,8 +608,8 @@ def test_machine_config():
                               "Machine has OS")
         tester.assert_not_none(config.get_machine("hostname"),
                               "Machine has hostname")
-        tester.assert_not_none(config.get_machine("text_editor"),
-                              "Machine has text_editor")
+        tester.assert_not_none(config.get_machine("ide"),
+                              "Machine has IDE")
         tester.assert_not_none(config.get_machine("browser"),
                               "Machine has browser")
         
@@ -613,12 +624,12 @@ def test_machine_config():
                               "Machine has deployment type")
         
         # Test tool preferences exist
-        editor = config.get_machine("text_editor")
-        tester.assert_true(isinstance(editor, str) and len(editor) > 0,
-                          "Machine text_editor is non-empty string")
+        ide = config.get_machine("ide")
+        tester.assert_true(isinstance(ide, str) and len(ide) > 0,
+                          "Machine IDE is non-empty string")
         
     except Exception as e:
-        print(f"❌ Test crashed: {e}")
+        print(f"{Colors.RED}❌ Test crashed: {e}{Colors.RESET}")
         import traceback
         traceback.print_exc()
     
@@ -654,7 +665,7 @@ def test_machine_file_creation():
                               "Machine config loaded")
         
     except Exception as e:
-        print(f"❌ Test crashed: {e}")
+        print(f"{Colors.RED}❌ Test crashed: {e}{Colors.RESET}")
         import traceback
         traceback.print_exc()
     
@@ -691,7 +702,7 @@ def run_all_tests():
             all_passed += tester.passed
             all_failed += tester.failed
         except Exception as e:
-            print(f"\n❌ Test function {test_func.__name__} crashed: {e}")
+            print(f"\n{Colors.RED}❌ Test function {test_func.__name__} crashed: {e}{Colors.RESET}")
             import traceback
             traceback.print_exc()
             all_failed += 1
@@ -700,15 +711,15 @@ def run_all_tests():
     print("\n" + "=" * 70)
     print("ZCONFIG TEST RESULTS")
     print("=" * 70)
-    print(f"[OK] Passed: {all_passed}")
-    print(f"[X] Failed: {all_failed}")
+    print(f"{Colors.GREEN}[OK]{Colors.RESET} Passed: {all_passed}")
+    print(f"{Colors.RED}[X]{Colors.RESET} Failed: {all_failed}")
     print("=" * 70)
     
     if all_failed > 0:
-        print(f"\n[WARN] {all_failed} test(s) failed. Please review the errors above.")
+        print(f"\n{Colors.YELLOW}[WARN]{Colors.RESET} {all_failed} test(s) failed. Please review the errors above.")
         return False
     else:
-        print("\n✅ All zConfig tests passed!")
+        print(f"\n{Colors.GREEN}✅ All zConfig tests passed!{Colors.RESET}")
         return True
 
 

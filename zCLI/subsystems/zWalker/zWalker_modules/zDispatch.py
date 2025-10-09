@@ -173,7 +173,6 @@ class ZDispatch:
                 return "zBack" if self.walker else zHat
 
             if zHorizontal.startswith("zRead("):
-                from zCLI.subsystems.zData import handle_zCRUD
                 logger.info("Detected zRead request (string)")
                 self.walker.display.handle({"event":"sysmsg","label":" → Handle zRead (string)","style":"single","color":"DISPATCH","indent":4})
 
@@ -182,7 +181,7 @@ class ZDispatch:
                 if inner:
                     req["model"] = inner
                 logger.info("Dispatching zRead (string) with request: %s", req)
-                result = handle_zCRUD(req, walker=self.walker)
+                result = self.walker.data.handle_request(req)
                 return result
 
         elif isinstance(zHorizontal, dict):
@@ -209,7 +208,6 @@ class ZDispatch:
                 return "zBack" if self.walker else zHat
 
             if "zRead" in zHorizontal:
-                from zCLI.subsystems.zData import handle_zCRUD
                 logger.info("Detected zRead (dict)")
                 self.walker.display.handle({"event":"sysmsg","label":" → Handle zRead (dict)","style":"single","color":"DISPATCH","indent":4})
                 req = zHorizontal.get("zRead") or {}
@@ -217,16 +215,15 @@ class ZDispatch:
                     req = {"model": req}
                 req.setdefault("action", "read")
                 logger.info("Dispatching zRead (dict) with request: %s", req)
-                return handle_zCRUD(req, walker=self.walker)
+                return self.walker.data.handle_request(req)
 
             maybe_crud = {"action","model","tables","fields","values","filters","where","order_by","limit","offset"}
             if any(k in zHorizontal for k in maybe_crud) and "model" in zHorizontal:
-                from zCLI.subsystems.zData import handle_zCRUD
                 req = dict(zHorizontal)
                 req.setdefault("action", "read")
                 logger.info("Detected generic CRUD dict → %s", req)
                 self.walker.display.handle({"event":"sysmsg","label":" → Handle zCRUD (dict)","style":"single","color":"DISPATCH","indent":4})
-                return handle_zCRUD(req, walker=self.walker)
+                return self.walker.data.handle_request(req)
 
         return None
 

@@ -85,8 +85,12 @@ class ZSocket:
         
         # Validate token against database
         try:
-            from zCLI.subsystems.zData import handle_zCRUD
-            result = handle_zCRUD({
+            if not self.walker:
+                self.logger.error("[zSocket] Cannot validate: No zCLI instance available")
+                await ws.close(code=1008, reason="Server configuration error")
+                return None
+            
+            result = self.walker.data.handle_request({
                 "action": "read",
                 "model": "@.zCloud.schemas.schema.zIndex.zUsers",
                 "fields": ["id", "username", "role"],

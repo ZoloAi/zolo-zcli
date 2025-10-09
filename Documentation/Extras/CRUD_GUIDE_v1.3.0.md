@@ -67,7 +67,7 @@ zCLI's CRUD subsystem provides **complete database operations** through a unifie
 
 ```bash
 # Start zCLI shell
-zolo-zcli --shell
+zolo shell
 
 # CREATE - Add a new record
 zCLI> crud create zUsers --username "john" --email "john@example.com"

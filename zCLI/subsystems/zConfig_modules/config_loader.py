@@ -95,7 +95,7 @@ class ConfigLoader:
             # Get package config directory
             import zCLI
             package_root = Path(zCLI.__file__).parent.parent
-            env_config = package_root / "config" / f"config.{self.environment}.yaml"
+            env_config = package_root / "config" / f"zConfig.{self.environment}.yaml"
             
             if env_config.exists():
                 self._load_config_file(env_config, f"package-{self.environment}")

@@ -2,33 +2,119 @@
 
 ## Introduction
 
-**zCRUD** is the comprehensive database operations subsystem of zolo-zcli. It provides a unified YAML-driven interface for all database operations including CREATE, READ, UPDATE, DELETE, UPSERT, schema management, and advanced querying capabilities. zCRUD supports both Shell Mode and Walker Mode operations with automatic validation, schema migration, and data integrity monitoring.
+**zData** (conceptually referred to as zCRUD in user-facing documentation) is the comprehensive database operations subsystem of zolo-zcli. It provides a unified YAML-driven interface for all database operations including CREATE, READ, UPDATE, DELETE, UPSERT, schema management, and advanced querying capabilities. zData supports both Shell Mode and Walker Mode operations with automatic validation, schema migration, and data integrity monitoring across multiple backend types.
 
-### zCRUD Architecture
+### zData Architecture
 
-**zCRUD** follows the modular architecture pattern with a main handler that delegates to specialized modules:
+**zData** follows a modular adapter pattern with specialized components for extensibility:
 
 ```
-zCLI/subsystems/zCRUD/
-├── zCRUD.py                    # Main handler (was crud_handler.py)
-└── zCRUD_modules/              # Specialized operation modules
-    ├── crud_create.py          # INSERT operations
-    ├── crud_read.py            # SELECT/query operations  
-    ├── crud_update.py          # UPDATE operations
-    ├── crud_delete.py          # DELETE operations
-    ├── crud_upsert.py          # UPSERT operations
-    ├── crud_join.py            # JOIN support
-    ├── crud_where.py           # WHERE clause builder
-    ├── crud_validator.py       # Validation engine
-    ├── crud_alter.py           # ALTER TABLE operations
-    └── __init__.py             # Module exports
+zCLI/subsystems/zData/
+├── zData.py                    # Main ZData class & public API
+├── __init__.py                 # Public exports & legacy handle_zCRUD wrapper
+└── zData_modules/
+    ├── backends/               # Backend adapter implementations
+    │   ├── adapter_factory.py  # Factory for creating backend adapters
+    │   ├── base_adapter.py     # Abstract base adapter interface
+    │   ├── sqlite_adapter.py   # SQLite backend implementation
+    │   └── csv_adapter.py      # CSV backend implementation
+    ├── operations/             # CRUD operation handlers
+    │   ├── crud_create.py      # INSERT operations
+    │   ├── crud_read.py        # SELECT/query operations
+    │   ├── crud_update.py      # UPDATE operations
+    │   ├── crud_delete.py      # DELETE operations
+    │   ├── crud_upsert.py      # UPSERT operations
+    │   ├── crud_join.py        # JOIN support
+    │   ├── crud_where.py       # WHERE clause builder
+    │   ├── crud_validator.py   # Validation engine
+    │   ├── crud_alter.py       # ALTER TABLE operations
+    │   └── __init__.py         # Operation exports
+    ├── schema/                 # Schema parsing & validation
+    │   ├── field_parser.py     # Field definition parser
+    │   ├── fk_resolver.py      # Foreign key resolver
+    │   └── sql_generator.py    # SQL DDL generator
+    ├── migration.py            # ZMigrate & auto-migration system
+    ├── infrastructure.py       # Core infrastructure (zTables, zDataConnect, etc.)
+    └── zMemory.py             # Memory/cache management
+```
+
+---
+
+## API Usage
+
+**zData** uses the modern zCLI instance-based architecture:
+
+### Class-Based API (via zCLI Instance)
+
+All CRUD operations are accessed through the `zcli.data` instance:
+
+```python
+from zCLI.zCLI import zCLI
+
+# Initialize zCLI (ZData is automatically initialized)
+zcli = zCLI()
+
+# Execute CRUD operations via handle_request
+zRequest = {
+    "action": "create",
+    "model": "@.path.to.schema.zUsers",
+    "tables": ["zUsers"],
+    "fields": ["username", "email"],
+    "values": ["john", "john@example.com"]
+}
+result = zcli.data.handle_request(zRequest)
+
+# Read operations
+zRequest = {
+    "action": "read",
+    "model": "@.path.to.schema.zUsers",
+    "tables": ["zUsers"],
+    "where": {"role": "admin"},
+    "limit": 10
+}
+records = zcli.data.handle_request(zRequest)
+
+# Update operations
+zRequest = {
+    "action": "update",
+    "model": "@.path.to.schema.zUsers",
+    "tables": ["zUsers"],
+    "values": {"role": "admin"},
+    "where": {"username": "john"}
+}
+zcli.data.handle_request(zRequest)
+```
+
+**Benefits of Instance-Based API:**
+- Integrated with zCLI ecosystem
+- Automatic session management
+- Access to loader, display, and other subsystems
+- Consistent with other subsystem patterns (zParser, zDisplay, etc.)
+
+### From Within Subsystems
+
+When building subsystems, access data through the walker/zcli instance:
+
+```python
+class MySubsystem:
+    def __init__(self, zcli):
+        self.zcli = zcli
+    
+    def my_method(self):
+        # Access zData through zcli instance
+        result = self.zcli.data.handle_request({
+            "action": "read",
+            "model": "@.path.to.schema",
+            "tables": ["MyTable"]
+        })
+        return result
 ```
 
 ---
 
 ## zPath Resolution
 
-**zCRUD** uses `zPath` syntax for referencing schema files and database configurations:
+**zData** uses `zPath` syntax for referencing schema files and database configurations:
 
 ### Schema Path Structure
 
@@ -291,7 +377,7 @@ weak_force_b INTEGER DEFAULT 255  -- Blue: Migration criticality (255=migrated, 
 
 **Health Analytics:**
 ```python
-from zCLI.subsystems.zMigrate import ZMigrate
+from zCLI.subsystems.zData.zData_modules.migration import ZMigrate
 
 migrator = ZMigrate()
 health = migrator.get_rgb_health_report(zData)
@@ -501,17 +587,19 @@ zCRUD provides comprehensive error handling:
 
 ## Supported Databases
 
-| Database | Status | Notes |
-|----------|--------|-------|
-| **SQLite** | ✅ Full | All features supported |
-| **PostgreSQL** | 🔜 Planned | v2.0+ |
-| **MySQL** | 🔜 Planned | v2.0+ |
+| Backend | Status | Adapter | Notes |
+|---------|--------|---------|-------|
+| **SQLite** | ✅ Full | `sqlite_adapter.py` | All features supported including RGB, indexes, foreign keys |
+| **CSV** | ✅ Full | `csv_adapter.py` | File-based operations, schema validation |
+| **PostgreSQL** | 🔜 Planned | - | v2.0+ |
+| **MySQL** | 🔜 Planned | - | v2.0+ |
 
 **Current Implementation:**
-- SQLite with full feature support
-- Foreign key constraints enabled
-- Transaction support with rollback
-- Automatic connection management
+- **SQLite**: Full CRUD with RGB tracking, foreign key constraints, transaction support, indexes
+- **CSV**: File-based storage with schema validation and basic CRUD operations
+- **Adapter Pattern**: Easy to extend for new database backends
+- Automatic connection management across all backends
+- Backend selection via `Meta.Data_Type` in schema files
 
 ---
 
@@ -592,4 +680,6 @@ For detailed feature documentation, see:
 
 ---
 
-**zCRUD v1.3.0 - Comprehensive database operations with quantum-inspired data integrity** 🌈
+**zData (CRUD Operations) v1.4.0 - Comprehensive database operations with quantum-inspired data integrity** 🌈
+
+**Documentation Updated**: v1.4.0 - Reflects actual zData subsystem architecture with adapter pattern

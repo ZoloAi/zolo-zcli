@@ -106,7 +106,7 @@ pip install --upgrade git+ssh://git@github.com/ZoloAi/zolo-zcli.git@v1.3.0
 ### **Verify Installation:**
 ```bash
 zolo-zcli --version  # Should show: 1.3.0
-zolo-zcli --shell
+zolo shell
 > test all           # All tests should pass
 ```
 

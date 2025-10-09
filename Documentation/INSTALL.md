@@ -123,7 +123,7 @@ After installation, verify that zCLI is working:
 zolo-zcli --version
 
 # Start the interactive shell
-zolo-zcli --shell
+zolo shell
 ```
 
 You should see:

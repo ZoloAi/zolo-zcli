@@ -35,8 +35,5 @@ def execute_crud(zcli, parsed):
     }
     
     logger.debug("Executing CRUD: %s on %s", action, table)
-    # Use modern zData interface instead of legacy crud
-    from ...zData import ZData
-    if not zcli.data:
-        zcli.data = ZData(zcli)
+    # Use modern zData interface through zcli.data
     return zcli.data.handle_request(zRequest)

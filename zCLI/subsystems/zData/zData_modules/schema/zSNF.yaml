@@ -1,0 +1,91 @@
+  zSNF:
+    type: zForm
+    id_format: "zSNF_[n]"
+
+    zMeta:
+      type: table
+      id:
+        type: string
+        primary_key: true
+        source: "zFunction(generate_id:zMeta)"
+        description: "zM_{n} - unique ID for the metadata record"
+      name:
+        type: string
+        constraints: [not_null]
+        description: "Name of the workspace"
+      created_at:
+        type: datetime
+        default: "zFunction(now)"
+        description: "Creation timestamp (ISO format)"
+      root_path:
+        type: string
+        constraints: [not_null]
+        description: "Root path of the workspace (e.g., /Users/you/Desktop/zM_xxx/)"
+      default_verse:
+        type: string
+        description: "Optional pointer to the default zVerse (e.g., zV_{n})"
+      description:
+        type: string
+        description: "Optional description of the workspace"
+    zProjects:
+      type: table
+      id:
+        type: string
+        primary_key: true
+        source: "zFunction(generate_id:zProject)"
+      project_name:
+        type: string
+        constraints: [not_null]
+      created_at:
+        type: datetime
+        default: "zFunction(now)"
+      project_type:
+        type: enum
+        options: [web_app, api, mobile_app]
+        default: web_app
+      language_stack:
+        type: array
+        items: [string]
+        default: ["html", "js", "css"]
+      creator:
+        type: enum
+        options: [zGod, zBuilder, zClient, Zolo]
+        default: zClient
+      path:
+        type: string
+        constraints: [not_null]
+      status:
+        type: enum
+        options: [active, archived]
+        default: active
+      zVerses:
+        type: array
+        items: [zVerse]
+        description: "List of zVerses related to this project"
+          
+    zMC:  # zMemoryCell
+      id_format: "zMC_[n]"
+      type: zAtom
+      description: "A unit of memory containing structural quarks (protons), historical bindings (neutrons), and reactive emissions (electrons)."
+      properties:
+        protons:
+          type: list
+          items: { type: zQuark }
+          description: "Defines the content, data, logic, or executable truth in this memory cell."
+      neutrons:
+        type: list
+        items:
+          type: zQuark
+          structure:
+            up: zQF.particles.charm  # Always present
+            down: [zQF.particles.down, null]  # Optional secondary stabilizer
+            charm: zQF.particles.charm  # May repeat if multiple binding points needed
+            meta:
+              origin_zPhoton: "zP_[n]"           # Where it was triggered from
+              tick: "t[n]"                       # Tick time (timestamp or logical clock)
+              state: ["pending", "committed"]   # zMC internal state
+              context: ["zVerse", "zMultiverse", null]
+        electrons:
+          type: list
+          items: { type: zLepton }
+          description: "Reactive emissions (zElectrons, zMuons, zTaus) resulting from interpretation and reflex."

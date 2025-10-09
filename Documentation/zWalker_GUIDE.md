@@ -2,9 +2,9 @@
 
 ## Introduction
 
-**zWalker relies on UI `zVaFiles`** which are defined and configured and fired via `$ zolo-zcli --shell` or a `zSpark` object in Python or Javascript scripts. These specialized UI files contain the navigation structure, menus, that power zWalker's interactive experiences.
+**zWalker relies on UI `zVaFiles`** which are defined and configured and fired via `$ zolo shell` or a `zSpark` object in Python or Javascript scripts. These specialized UI files contain the navigation structure, menus, that power zWalker's interactive experiences.
 
-> **Note:** When using `$ zolo-zcli --shell`, manual configuration of a `zWalker` `zSession` is required - see [zShell_GUIDE.md](/Documentation/zShell_GUIDE.md) for details.
+> **Note:** When using `$ zolo shell`, manual configuration of a `zWalker` `zSession` is required - see [zShell_GUIDE.md](/Documentation/zShell_GUIDE.md) for details.
 
 ### zSpark
 

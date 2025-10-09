@@ -30,7 +30,7 @@ pip install git+https://TOKEN@github.com/ZoloAi/zolo-zcli.git@v1.3.0
 zolo-zcli --version
 
 # Start shell mode (authentication required)
-zolo-zcli --shell
+zolo-zcli shell
 ```
 
 ### Python API

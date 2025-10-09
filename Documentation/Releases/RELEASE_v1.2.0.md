@@ -243,7 +243,7 @@ finally:
 
 3. **Run tests** to verify:
    ```bash
-   zolo-zcli --shell
+   zolo shell
    > test all
    ```
 

@@ -43,10 +43,10 @@ ZOLO_SSL_KEY_PATH="/path/to/key.pem"
 ### Select environment:
 ```bash
 # Development (default)
-zolo-zcli --shell
+zolo shell
 
 # Production
-ZOLO_ENV=prod zolo-zcli --shell
+ZOLO_ENV=prod zolo shell
 ```
 
 ### Override with user config:

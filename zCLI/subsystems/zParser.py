@@ -8,7 +8,11 @@ from logger import Logger
 logger = Logger.get_logger(__name__)
 
 # Import zParser modules from registry
-from .zParser_modules.zParser_zPath import zPath_decoder as zPath_decoder_func, identify_zFile as identify_zFile_func
+from .zParser_modules.zParser_zPath import (
+    zPath_decoder as zPath_decoder_func, 
+    identify_zFile as identify_zFile_func,
+    resolve_zmachine_path as resolve_zmachine_path_func
+)
 from .zParser_modules.zParser_commands import parse_command as parse_command_func
 from .zParser_modules.zParser_utils import zExpr_eval, parse_dotted_path, handle_zRef, handle_zParser
 from .zParser_modules.zParser_zVaFile import (
@@ -71,6 +75,10 @@ class ZParser:
     def identify_zFile(self, filename, full_zFilePath):
         """Identify file type and find actual file path with extension."""
         return identify_zFile_func(filename, full_zFilePath, self.display)
+    
+    def resolve_zmachine_path(self, data_path, config_paths=None):
+        """Resolve ~.zMachine.* path references to OS-specific paths."""
+        return resolve_zmachine_path_func(data_path, config_paths)
 
     # ═══════════════════════════════════════════════════════════
     # Command Parsing

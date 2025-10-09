@@ -12,111 +12,12 @@ from .zData_modules.migration import (
     ZMigrate, auto_migrate_schema, detect_schema_changes
 )
 
-# Legacy ZCRUD compatibility
-def handle_zCRUD(zRequest, walker=None):
-    """
-    Legacy handle_zCRUD function - delegates to handle_zData.
-    Kept for backward compatibility with existing code.
-    """
-    from logger import Logger
-    from zCLI.subsystems.zLoader import handle_zLoader
-    from zCLI.subsystems.zDisplay import handle_zDisplay
-    
-    handle_zDisplay({
-        "event": "sysmsg",
-        "style": "full",
-        "label": "Preping zCRUD Request",
-        "color": "ZCRUD",
-        "indent": 1
-    })
-
-    if not isinstance(zRequest, dict):
-        Logger.get_logger(__name__).warning("zCRUD input is not a dict: %s", type(zRequest))
-        raise TypeError("zCRUD input must be a dict")
-
-    # Allow wrapping the request under a top-level "zCRUD" key
-    if "zCRUD" in zRequest and isinstance(zRequest["zCRUD"], dict):
-        Logger.get_logger(__name__).debug("Unwrapping nested 'zCRUD' request")
-        zRequest = zRequest["zCRUD"]
-
-    model_path = zRequest.get("model")
-    if not model_path:
-        Logger.get_logger(__name__).error("zCRUD missing 'model' in request")
-        return "error"
-
-    # Load schema
-    zForm = handle_zLoader(model_path)
-    if zForm == "error":
-        Logger.get_logger(__name__).error("Failed to load schema from model: %s", model_path)
-        return "error"
-
-    Logger.get_logger(__name__).info("zForm (parsed). %s", zForm)
-
-    # Delegate to new zData infrastructure
-    from .zData_modules.infrastructure import zDataConnect, zEnsureTables
-    from .zData_modules.operations import (
-        zCreate, zRead, zSearch, zUpdate, zDelete, zTruncate,
-        zListTables, zUpsert, zAlterTable
-    )
-    
-    zCRUD_Preped = {"zRequest": zRequest, "zForm": zForm, "walker": walker}
-    
-    # Call the old handle_zData logic
-    meta = zForm.get("Meta", {})
-    Data_Type = meta.get("Data_Type")
-    Data_Path = meta.get("Data_path")
-
-    zData = zDataConnect(Data_Type, Data_Path, zForm)
-    
-    if zData["ready"] and zData["conn"]:
-        zData["cursor"] = zData["conn"].cursor()
-    else:
-        Logger.get_logger(__name__).error("zData not ready — cannot create cursor.")
-        return "error"
-
-    action = zRequest.get("action")
-    results = None
-
-    try:
-        if action == "list_tables":
-            results = zListTables(zForm, zData)
-        elif zEnsureTables(zForm, zData, action, zRequest):
-            if action == "create":
-                results = zCreate(zRequest, zForm, zData, walker=walker)
-            elif action in ["read"]:
-                results = zRead(zRequest, zForm, zData, walker=walker)
-            elif action == "search":
-                results = zSearch(zRequest, zForm, zData)
-            elif action == "update":
-                results = zUpdate(zRequest, zForm, zData)
-            elif action == "delete":
-                results = zDelete(zRequest, zForm, zData)
-            elif action == "upsert":
-                results = zUpsert(zRequest, zForm, zData, walker=walker)
-            elif action == "alter_table":
-                results = zAlterTable(zRequest, zForm, zData, walker=walker)
-            elif action == "truncate":
-                results = zTruncate(zRequest, zForm, zData)
-            else:
-                results = None
-        else:
-            Logger.get_logger(__name__).error("Required tables missing for action '%s'", action)
-            results = "error"
-    finally:
-        if zData.get("conn"):
-            try:
-                zData["conn"].close()
-            except Exception as e:
-                Logger.get_logger(__name__).error("Error closing database connection: %s", e)
-
-    return results
-
-
 __all__ = [
+    # Modern class-based API
     "ZData", 
-    "handle_zData", 
     "load_schema_ref", 
-    "handle_zCRUD",
+    # Legacy infrastructure functions (for internal operations module)
+    "handle_zData", 
     "zTables",
     "zDataConnect",
     "zEnsureTables",

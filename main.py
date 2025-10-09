@@ -14,11 +14,7 @@ def main() -> None:
         prog="zolo",
     )
     
-    # Create subparsers for commands
-    subparsers = parser.add_subparsers(dest="command", help="Available commands")
-    
-    # Shell command (default if no subcommand)
-    parser.add_argument("--shell", action="store_true", help="Start zCLI shell mode")
+    # Global arguments
     parser.add_argument(
         "--log-level",
         default="INFO",
@@ -29,6 +25,19 @@ def main() -> None:
         "--version",
         action="version",
         version=f"zolo-zcli {get_version()}",
+    )
+    
+    # Create subparsers for commands
+    subparsers = parser.add_subparsers(dest="command", help="Available commands")
+    
+    # Shell subcommand
+    shell_parser = subparsers.add_parser(
+        "shell",
+        help="Start interactive zCLI shell"
+    )
+    shell_parser.add_argument(
+        "--config",
+        help="Path to custom config file (optional)"
     )
     
     # Uninstall subcommand
@@ -57,7 +66,13 @@ def main() -> None:
     main_logger = Logger.get_logger("main")
 
     # Handle subcommands
-    if args.command == "uninstall":
+    if args.command == "shell":
+        main_logger.info("Starting zCLI Shell mode...")
+        from zCLI import zCLI  # Import after logging init
+        cli = zCLI()
+        cli.run_shell()
+    
+    elif args.command == "uninstall":
         from zCLI.uninstall import uninstall_clean, uninstall_keep_data
         
         if args.clean:
@@ -66,14 +81,12 @@ def main() -> None:
             # Default to keep-data
             return uninstall_keep_data()
     
-    # Default behavior: shell mode
-    if args.shell:
+    else:
+        # No command specified - default to shell mode
         main_logger.info("Starting zCLI Shell mode...")
         from zCLI import zCLI  # Import after logging init
         cli = zCLI()
         cli.run_shell()
-    else:
-        parser.print_help()
 
 
 if __name__ == "__main__":

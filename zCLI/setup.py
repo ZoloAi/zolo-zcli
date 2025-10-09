@@ -106,7 +106,7 @@ def print_installation_info():
         print(f"    {paths.user_config_dir / 'machine.yaml'}")
     print()
     print("Next Steps:")
-    print("  1. Run: zolo-zcli --shell")
+    print("  1. Run: zolo shell")
     print("  2. Customize: Edit machine.yaml to set preferred editor/browser")
     print("  3. Learn: See Documentation/ for guides")
     print("=" * 70)

@@ -1,96 +1,68 @@
-# zCLI/subsystems/zData/zData.py — Unified Data Management Subsystem
-# ----------------------------------------------------------------
-# Main handler for unified data management across multiple backends.
-# 
-# Provides a clean API for:
-# - Schema loading and validation
-# - Connection management
-# - CRUD operations (create, read, update, delete, upsert)
-# - Schema migrations
-# - Multi-backend support (SQLite, CSV, PostgreSQL, etc.)
-# 
-# Architecture:
-# - Adapters: Backend-specific implementations (SQLite, CSV, etc.)
-# - Operations: CRUD logic that works across all backends
-# - Schema: Schema parsing and validation
-# ----------------------------------------------------------------
+"""Unified Data Management Subsystem for zCLI.
+
+Main handler for unified data management across multiple backends.
+
+Provides a clean API for:
+    - Schema loading and validation
+    - Connection management
+    - CRUD operations (create, read, update, delete, upsert)
+    - Schema migrations
+    - Multi-backend support (SQLite, CSV, PostgreSQL, etc.)
+
+Architecture:
+    - Adapters: Backend-specific implementations (SQLite, CSV, etc.)
+    - Operations: CRUD logic that works across all backends
+    - Schema: Schema parsing and validation
+"""
 
 from logger import Logger
-from zCLI.subsystems.zDisplay import handle_zDisplay, Colors, print_line
-from zCLI.subsystems.zParser import parse_dotted_path, ZParser
-from zCLI.subsystems.zLoader import handle_zLoader
-# Global session import removed - use instance-based sessions
 from .zData_modules.backends.adapter_factory import AdapterFactory
 from .zData_modules.schema import parse_field_block
 
 # Logger instance
 logger = Logger.get_logger(__name__)
 
-
-def resolve_zmachine_path(data_path, config_paths=None):
-    """
-    Resolve ~.zMachine.* path references to actual OS-specific paths.
-    
-    Supports:
-    - ~.zMachine.Config/file.yaml → {user_data_dir}/Config/file.yaml
-    - ~.zMachine.Cache/file.csv → {user_data_dir}/Cache/file.csv
-    
-    The user_data_dir resolves to:
-    - Linux:   ~/.local/share/zolo-zcli
-    - macOS:   ~/Library/Application Support/zolo-zcli
-    - Windows: %LOCALAPPDATA%/zolo-zcli
-    
-    Args:
-        data_path: Path string from schema Meta
-        config_paths: Optional ZConfigPaths instance (will create if None)
-        
-    Returns:
-        str: Resolved absolute path
-    """
-    if not isinstance(data_path, str) or not data_path.startswith("~.zMachine."):
-        # Not a zMachine path, return as-is
-        return data_path
-    
-    # Get config paths
-    if not config_paths:
-        from zCLI.subsystems.zConfig_modules import ZConfigPaths
-        config_paths = ZConfigPaths()
-    
-    # Extract the subpath after ~.zMachine.
-    # Example: "~.zMachine.Data/cache.csv" → "Data/cache.csv"
-    subpath = data_path[len("~.zMachine."):]
-    
-    # Build full path using user_data_dir as base
-    base_dir = config_paths.user_data_dir
-    full_path = base_dir / subpath
-    
-    logger.debug("[zMachine Path] %s → %s", data_path, full_path)
-    
-    return str(full_path)
-
-
 class ZData:
     """
     Unified data management subsystem.
     
     Handles schema, connections, and CRUD operations across multiple backends.
+    
+    Modern Architecture:
+    - Requires zCLI instance for initialization
+    - Session-aware operations through zCLI.session
+    - Integrated logging via zCLI.logger
+    - Display integration via zCLI.display
+    - Loader integration via zCLI.loader
     """
     
-    def __init__(self, schema=None, session=None):
+    def __init__(self, zcli):
         """
         Initialize ZData instance.
         
         Args:
-            schema (dict): Parsed schema dictionary
-            session (dict): Session context
+            zcli: zCLI instance (required)
+            
+        Raises:
+            ValueError: If zcli is not provided or invalid
         """
-        self.session = session
-        self.schema = schema
+        if zcli is None:
+            raise ValueError("ZData requires a zCLI instance")
+        
+        if not hasattr(zcli, 'session'):
+            raise ValueError("Invalid zCLI instance: missing 'session' attribute")
+        
+        # Modern architecture: zCLI instance provides all dependencies
+        self.zcli = zcli
+        self.session = zcli.session
+        self.logger = zcli.logger
+        self.display = zcli.display
+        self.loader = zcli.loader
+        
+        # Data state
+        self.schema = None
         self.adapter = None
         self._connected = False
-        
-        if schema:
-            self._initialize_adapter()
     
     def load_schema(self, schema):
         """
@@ -105,7 +77,7 @@ class ZData:
     def _initialize_adapter(self):
         """Initialize backend adapter based on schema Meta."""
         if not self.schema:
-            logger.error("Cannot initialize adapter without schema")
+            self.logger.error("Cannot initialize adapter without schema")
             return
         
         # Extract connection config from schema
@@ -113,10 +85,10 @@ class ZData:
         data_type = meta.get("Data_Type", "sqlite")
         data_path = meta.get("Data_path", "data/default.db")
         
-        # Resolve ~.zMachine.* paths to OS-specific locations
-        data_path = resolve_zmachine_path(data_path)
+        # Resolve ~.zMachine.* paths to OS-specific locations via zParser
+        data_path = self.zcli.zparser.resolve_zmachine_path(data_path)
         
-        logger.info("Initializing %s adapter for: %s", data_type, data_path)
+        self.logger.info("Initializing %s adapter for: %s", data_type, data_path)
         
         # Create appropriate adapter
         try:
@@ -128,11 +100,89 @@ class ZData:
             # Connect
             self.adapter.connect()
             self._connected = True
-            logger.info("✅ Connected to %s backend: %s", data_type, data_path)
+            self.logger.info("✅ Connected to %s backend: %s", data_type, data_path)
             
         except Exception as e:
-            logger.error("Failed to initialize adapter: %s", e)
+            self.logger.error("Failed to initialize adapter: %s", e)
             raise
+    
+    def handle_request(self, request):
+        """
+        Main entry point for data operations.
+        
+        This method processes CRUD requests using the modern zData architecture.
+        
+        Args:
+            request (dict): Request with action, model, and parameters
+                - action: CRUD operation (create, read, update, delete, upsert)
+                - model: zPath to schema file
+                - tables: List of table names
+                - fields, values, where, etc.: Operation-specific parameters
+                
+        Returns:
+            Result of the operation
+        """
+        # Display system message
+        self.display.handle({
+            "event": "sysmsg",
+            "style": "full",
+            "label": "zData Request",
+            "color": "ZCRUD",
+            "indent": 1
+        })
+        
+        # Load schema from model if not already loaded
+        model_path = request.get("model")
+        if model_path and not self.schema:
+            self.logger.info("Loading schema from: %s", model_path)
+            schema = self.loader.handle(model_path)
+            if schema == "error" or not schema:
+                self.logger.error("Failed to load schema from: %s", model_path)
+                return "error"
+            self.load_schema(schema)
+        
+        if not self.is_connected():
+            self.logger.error("Failed to connect to backend")
+            return "error"
+        
+        # Get action from request
+        action = request.get("action")
+        self.logger.info("🎬 zData action: %s", action)
+        
+        # Ensure tables exist (unless action is list_tables)
+        if action != "list_tables":
+            tables = request.get("tables")
+            if not self.ensure_tables(tables):
+                self.logger.error("Failed to ensure tables for action: %s", action)
+                return "error"
+        
+        # Route to appropriate operation
+        try:
+            if action == "list_tables":
+                result = self.list_tables()
+            elif action == "create":
+                result = self._handle_create(request)
+            elif action == "read":
+                result = self._handle_read(request)
+            elif action == "update":
+                result = self._handle_update(request)
+            elif action == "delete":
+                result = self._handle_delete(request)
+            elif action == "upsert":
+                result = self._handle_upsert(request)
+            else:
+                self.logger.error("Unknown action: %s", action)
+                result = "error"
+        except Exception as e:
+            self.logger.error("Error executing %s: %s", action, e)
+            import traceback
+            traceback.print_exc()
+            result = "error"
+        finally:
+            # Clean up connection
+            self.disconnect()
+        
+        return result
     
     def ensure_tables(self, tables=None):
         """
@@ -145,7 +195,7 @@ class ZData:
             bool: True if all tables exist/created successfully
         """
         if not self.adapter:
-            logger.error("No adapter initialized")
+            self.logger.error("No adapter initialized")
             return False
         
         # Determine which tables to ensure
@@ -299,212 +349,149 @@ class ZData:
         if not self.adapter:
             raise RuntimeError("No adapter initialized")
         return self.adapter.list_tables()
-
-
-def handle_zData(request, schema, session=None):
-    """
-    Main entry point for data operations.
     
-    This function provides backward compatibility with existing zCRUD interface
-    while using the new zData architecture internally.
+    # ═══════════════════════════════════════════════════════════
+    # Internal Operation Handlers
+    # ═══════════════════════════════════════════════════════════
     
-    Args:
-        request (dict): Request with action and parameters
-        schema (dict): Parsed schema
-        session (dict): Optional session context
+    def _handle_create(self, request):
+        """Handle CREATE operation."""
+        tables = request.get("tables", [])
+        if not tables:
+            model = request.get("model")
+            if isinstance(model, str):
+                tables = [model.split(".")[-1]]
         
-    Returns:
-        Result of the operation
-    """
-    handle_zDisplay({
-        "event": "sysmsg",
-        "style": "full",
-        "label": "Handle zData",
-        "color": "ZCRUD",
-        "indent": 1
-    })
+        if not tables:
+            self.logger.error("No table specified for CREATE")
+            return False
+        
+        table = tables[0]
+        fields = request.get("fields", [])
+        values = request.get("values")
+        
+        # Handle dict values
+        if isinstance(values, dict):
+            if not fields:
+                fields = list(values.keys())
+            values = [values[f] for f in fields]
+        
+        row_id = self.insert(table, fields, values)
+        self.logger.info("✅ Created row with ID: %s", row_id)
+        return True
     
-    # Initialize ZData with schema
-    zdata = ZData(schema=schema, session=session)
+    def _handle_read(self, request):
+        """Handle READ operation."""
+        tables = request.get("tables", [])
+        if not tables:
+            model = request.get("model")
+            if isinstance(model, str):
+                tables = [model.split(".")[-1]]
+        
+        if not tables:
+            self.logger.error("No table specified for READ")
+            return []
+        
+        table = tables[0]
+        fields = request.get("fields")
+        where = request.get("where")
+        order = request.get("order")
+        limit = request.get("limit")
+        
+        rows = self.select(table, fields, where, None, order, limit)
+        self.logger.info("✅ Read %d rows", len(rows))
+        return rows
     
-    if not zdata.is_connected():
-        logger.error("Failed to connect to backend")
-        return "error"
+    def _handle_update(self, request):
+        """Handle UPDATE operation."""
+        tables = request.get("tables", [])
+        if not tables:
+            self.logger.error("No table specified for UPDATE")
+            return False
+        
+        table = tables[0]
+        fields = request.get("fields", [])
+        values = request.get("values", [])
+        where = request.get("where")
+        
+        count = self.update(table, fields, values, where)
+        self.logger.info("✅ Updated %d rows", count)
+        return count > 0
     
-    # Get action from request
-    action = request.get("action")
-    logger.info("🎬 zData action detected: %s", action)
+    def _handle_delete(self, request):
+        """Handle DELETE operation."""
+        tables = request.get("tables", [])
+        if not tables:
+            self.logger.error("No table specified for DELETE")
+            return False
+        
+        table = tables[0]
+        where = request.get("where")
+        
+        count = self.delete(table, where)
+        self.logger.info("✅ Deleted %d rows", count)
+        return count > 0
     
-    # Ensure tables exist (unless action is list_tables)
-    if action != "list_tables":
-        tables = request.get("tables")
-        if not zdata.ensure_tables(tables):
-            logger.error("Failed to ensure tables for action: %s", action)
-            return "error"
-    
-    # Route to appropriate operation
-    try:
-        if action == "list_tables":
-            result = zdata.list_tables()
-        elif action == "create":
-            result = _handle_create(request, zdata)
-        elif action == "read":
-            result = _handle_read(request, zdata)
-        elif action == "update":
-            result = _handle_update(request, zdata)
-        elif action == "delete":
-            result = _handle_delete(request, zdata)
-        elif action == "upsert":
-            result = _handle_upsert(request, zdata)
-        else:
-            logger.error("Unknown action: %s", action)
-            result = "error"
-    except Exception as e:
-        logger.error("Error executing %s: %s", action, e)
-        import traceback
-        traceback.print_exc()
-        result = "error"
-    finally:
-        # Clean up
-        zdata.disconnect()
-    
-    return result
+    def _handle_upsert(self, request):
+        """Handle UPSERT operation."""
+        tables = request.get("tables", [])
+        if not tables:
+            self.logger.error("No table specified for UPSERT")
+            return False
+        
+        table = tables[0]
+        fields = request.get("fields", [])
+        values = request.get("values")
+        conflict_fields = request.get("conflict_fields", [fields[0]] if fields else [])
+        
+        # Handle dict values
+        if isinstance(values, dict):
+            if not fields:
+                fields = list(values.keys())
+            values = [values[f] for f in fields]
+        
+        row_id = self.upsert(table, fields, values, conflict_fields)
+        self.logger.info("✅ Upserted row with ID: %s", row_id)
+        return True
 
 
 # ═══════════════════════════════════════════════════════════
-# Operation Handlers (Temporary - will move to operations module)
+# Utility Functions
 # ═══════════════════════════════════════════════════════════
 
-def _handle_create(request, zdata):
-    """Handle CREATE operation."""
-    tables = request.get("tables", [])
-    if not tables:
-        model = request.get("model")
-        if isinstance(model, str):
-            tables = [model.split(".")[-1]]
+def load_schema_ref(ref_expr, zcli=None):
+    """Resolve a dotted schema path into a structured schema dict.
     
-    if not tables:
-        logger.error("No table specified for CREATE")
-        return False
-    
-    table = tables[0]
-    fields = request.get("fields", [])
-    values = request.get("values")
-    
-    # Handle dict values
-    if isinstance(values, dict):
-        if not fields:
-            fields = list(values.keys())
-        values = [values[f] for f in fields]
-    
-    row_id = zdata.insert(table, fields, values)
-    logger.info("✅ Created row with ID: %s", row_id)
-    return True
-
-
-def _handle_read(request, zdata):
-    """Handle READ operation."""
-    tables = request.get("tables", [])
-    if not tables:
-        model = request.get("model")
-        if isinstance(model, str):
-            tables = [model.split(".")[-1]]
-    
-    if not tables:
-        logger.error("No table specified for READ")
-        return []
-    
-    table = tables[0]
-    fields = request.get("fields")
-    where = request.get("where")
-    order = request.get("order")
-    limit = request.get("limit")
-    
-    rows = zdata.select(table, fields, where, None, order, limit)
-    logger.info("✅ Read %d rows", len(rows))
-    return rows
-
-
-def _handle_update(request, zdata):
-    """Handle UPDATE operation."""
-    tables = request.get("tables", [])
-    if not tables:
-        logger.error("No table specified for UPDATE")
-        return False
-    
-    table = tables[0]
-    fields = request.get("fields", [])
-    values = request.get("values", [])
-    where = request.get("where")
-    
-    count = zdata.update(table, fields, values, where)
-    logger.info("✅ Updated %d rows", count)
-    return count > 0
-
-
-def _handle_delete(request, zdata):
-    """Handle DELETE operation."""
-    tables = request.get("tables", [])
-    if not tables:
-        logger.error("No table specified for DELETE")
-        return False
-    
-    table = tables[0]
-    where = request.get("where")
-    
-    count = zdata.delete(table, where)
-    logger.info("✅ Deleted %d rows", count)
-    return count > 0
-
-
-def _handle_upsert(request, zdata):
-    """Handle UPSERT operation."""
-    tables = request.get("tables", [])
-    if not tables:
-        logger.error("No table specified for UPSERT")
-        return False
-    
-    table = tables[0]
-    fields = request.get("fields", [])
-    values = request.get("values")
-    conflict_fields = request.get("conflict_fields", [])
-    
-    # Handle dict values
-    if isinstance(values, dict):
-        if not fields:
-            fields = list(values.keys())
-        values = [values[f] for f in fields]
-    
-    row_id = zdata.upsert(table, fields, values, conflict_fields)
-    logger.info("✅ Upserted row with ID: %s", row_id)
-    return True
-
-
-# ═══════════════════════════════════════════════════════════
-# Schema Reference Loading (moved from zSchema.py)
-# ═══════════════════════════════════════════════════════════
-
-def load_schema_ref(ref_expr, session=None):
-    """
-    Resolves a dotted schema path into a structured schema dict.
-    
-    Uses zParser for path resolution and zLoader for file operations.
+    DEPRECATED: This function requires a zCLI instance to work properly.
+    Use zcli.loader.handle() instead for loading schemas.
 
     Args:
         ref_expr (str): Dotted path string (e.g., "zApp.schema.users.zUsers")
-        session (dict): Required session dict
+        zcli: zCLI instance (required for modern usage)
 
     Returns:
         dict | None: schema content or None if not found
     """
-    print_line(Colors.SCHEMA, "load_schema_ref", "single", indent=6)
+    if zcli is None:
+        logger.error("load_schema_ref requires a zCLI instance. Use zcli.loader.handle() instead.")
+        return None
+    
+    # Use zcli.display for output
+    zcli.display.handle({
+        "event": "sysmsg",
+        "style": "single",
+        "label": "load_schema_ref",
+        "color": "SCHEMA",
+        "indent": 6
+    })
     logger.info("📨 Received ref_expr: %r", ref_expr)
 
     if not isinstance(ref_expr, str):
         logger.error("❌ Invalid input: expected dotted string, got %r", type(ref_expr))
         return None
 
-    # Use zParser for dotted path parsing
+    # Use zParser utility from zParser modules
+    from zCLI.subsystems.zParser_modules.zParser_utils import parse_dotted_path
     parsed = parse_dotted_path(ref_expr)
     if not parsed["is_valid"]:
         logger.error("❌ Invalid dotted path: %s (%s)", ref_expr, parsed.get("error"))
@@ -514,29 +501,17 @@ def load_schema_ref(ref_expr, session=None):
     table = parsed["table"]
     logger.info("🧩 Parsed zTable from ref_expr: %s", table)
 
-    # Use provided session
-    if session is None:
-        raise ValueError("load_schema_ref requires a session parameter")
-    target_session = session
-    
-    # Use zParser for path resolution
+    # Use zCLI instance for path resolution
     try:
-        zparser = ZParser()
-        # Ensure session has correct workspace path for zParser
-        if target_session.get("zEngine_path") and not target_session.get("zWorkspace"):
-            target_session["zWorkspace"] = target_session["zEngine_path"]
-        zparser.zSession = target_session
-        zparser.logger = Logger.get_logger()
-        
         # Build file path from parts (zParser handles the complex path logic)
         file_path = ".".join(parts[:-1]) if len(parts) > 1 else parts[0]
-        zVaFile_fullpath, zVaFilename = zparser.zPath_decoder(file_path)
-        zFilePath_identified, _ = zparser.identify_zFile(zVaFilename, zVaFile_fullpath)
+        zVaFile_fullpath, zVaFilename = zcli.zparser.zPath_decoder(file_path)
+        zFilePath_identified, _ = zcli.zparser.identify_zFile(zVaFilename, zVaFile_fullpath)
         
         logger.info("🔎 Resolved file path: %s", zFilePath_identified)
         
         # Use zLoader for file loading and parsing
-        data = handle_zLoader(zFilePath_identified, session=target_session)
+        data = zcli.loader.handle(zFilePath_identified)
         if data == "error" or not data:
             logger.error("❌ Failed to load schema file: %s", zFilePath_identified)
             return None
@@ -551,7 +526,14 @@ def load_schema_ref(ref_expr, session=None):
             "schema": {k: parse_field_block(v) for k, v in data[table].items()}
         }
         
-        print_line(Colors.RETURN, "load_schema_ref Return", "~", indent=6)
+        # Use zcli.display for return message
+        zcli.display.handle({
+            "event": "sysmsg",
+            "style": "~",
+            "label": "load_schema_ref Return",
+            "color": "RETURN",
+            "indent": 6
+        })
         return parsed_schema
             
     except (OSError, ValueError, FileNotFoundError) as e:

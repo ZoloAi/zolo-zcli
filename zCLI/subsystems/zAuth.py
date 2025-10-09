@@ -272,10 +272,12 @@ class ZAuth:
             server_url = os.getenv("ZOLO_API_URL", "http://localhost:5000")
         
         try:
-            # Validate via Flask API (using CRUD subsystem)
-            from zCLI.subsystems.zData import handle_zCRUD
+            # Validate via Flask API (using zData subsystem)
+            if not self.walker:
+                logger.error("Cannot validate API key: No zCLI instance available")
+                return {"valid": False, "reason": "No zCLI instance"}
             
-            result = handle_zCRUD({
+            result = self.walker.data.handle_request({
                 "action": "read",
                 "model": "@.zCloud.schemas.schema.zIndex.zUsers",
                 "fields": ["id", "username", "role"],

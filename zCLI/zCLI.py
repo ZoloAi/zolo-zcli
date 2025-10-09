@@ -76,17 +76,18 @@ class zCLI:
         self.zSession = self.session
 
         # Initialize core subsystems (single source of truth)
+        # Note: Order matters! ZData depends on display and loader
         self.utils = ZUtils(self)
-        self.data = None  # ZData initialized per-request with schema
-        self.funcs = ZFunc(self)
         self.display = ZDisplay(self)
+        self.loader = ZLoader(self)
         self.zparser = ZParser(self)
+        self.data = ZData(self)  # ZData subsystem (initialized after display/loader)
+        self.funcs = ZFunc(self)
         self.socket = ZSocket(self)
         self.dialog = ZDialog(self)
         self.wizard = ZWizard(self)
         self.open = ZOpen(self)
         self.auth = ZAuth(self)
-        self.loader = ZLoader(self)
         self.export = ZExport(self)
 
         # Initialize shell and command executor

@@ -57,7 +57,7 @@ Launch shell mode directly from command line:
 
 ```bash
 # Shell mode via command line
-zolo-zcli --shell
+zolo shell
 ```
 
 ---
