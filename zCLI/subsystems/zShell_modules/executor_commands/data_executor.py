@@ -22,16 +22,20 @@ def execute_data(zcli, parsed):
     action = parsed["action"]
     table = parsed["args"][0] if parsed["args"] else None
     
+    # Get options (will be parsed properly in ClassicalData.handle_request)
+    options = parsed.get("options", {})
+    
     # Set default model path if not provided
-    model_path = parsed.get("options", {}).get("model")
+    model_path = options.get("model")
     if not model_path and table:
         model_path = f"@.zCloud.schemas.schema.zIndex.{table}"
     
+    # Build request - don't spread options directly to avoid overwriting tables
     zRequest = {
         "action": action,
         "tables": [table] if table else [],
         "model": model_path,
-        **parsed.get("options", {})
+        "options": options  # Pass options separately for proper parsing
     }
     
     logger.debug("Executing data operation: %s on %s", action, table)

@@ -105,10 +105,23 @@ class ClassicalData:
         action = request.get("action")
         self.logger.info("🎬 Classical data action: %s", action)
         
+        # Parse tables from options (handles comma-separated strings)
+        tables = request.get("tables", [])
+        tables_option = request.get("options", {}).get("tables")
+        if tables_option:
+            if isinstance(tables_option, str):
+                if tables_option.lower() == "all":
+                    # Get all tables from schema
+                    tables = [k for k in self.schema.keys() if k not in ("Meta", "db_path")]
+                else:
+                    # Parse comma-separated list
+                    tables = [t.strip() for t in tables_option.split(",")]
+                # Update request with parsed tables
+                request["tables"] = tables
+        
         # Ensure tables exist (unless action is list_tables)
         if action != "list_tables":
-            tables = request.get("tables")
-            if not self.ensure_tables(tables):
+            if not self.ensure_tables(tables if tables else None):
                 self.logger.error("Failed to ensure tables for action: %s", action)
                 return "error"
         
@@ -281,29 +294,35 @@ class ClassicalData:
     # ═══════════════════════════════════════════════════════════
     
     def _handle_create(self, request):
-        """Handle CREATE operation."""
+        """
+        Handle CREATE operation.
+        
+        Tables are already parsed and created by handle_request.
+        This handles data insertion if values are provided.
+        """
         tables = request.get("tables", [])
-        if not tables:
-            model = request.get("model")
-            if isinstance(model, str):
-                tables = [model.split(".")[-1]]
-        
-        if not tables:
-            self.logger.error("No table specified for CREATE")
-            return False
-        
-        table = tables[0]
         fields = request.get("fields", [])
         values = request.get("values")
         
-        # Handle dict values
-        if isinstance(values, dict):
-            if not fields:
-                fields = list(values.keys())
-            values = [values[f] for f in fields]
+        if not tables:
+            self.logger.error("No tables specified")
+            return False
         
-        row_id = self.insert(table, fields, values)
-        self.logger.info("✅ Created row with ID: %s", row_id)
+        # If values provided, insert into the first table
+        if values:
+            table = tables[0]
+            # Handle dict values
+            if isinstance(values, dict):
+                if not fields:
+                    fields = list(values.keys())
+                values = [values[f] for f in fields]
+            
+            row_id = self.insert(table, fields, values)
+            self.logger.info("✅ Inserted row with ID: %s", row_id)
+            return True
+        
+        # No values - tables were already created by ensure_tables
+        self.logger.info("✅ Created %d table structure(s)", len(tables))
         return True
     
     def _handle_read(self, request):
