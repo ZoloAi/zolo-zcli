@@ -1,8 +1,19 @@
 # zCLI/subsystems/zData/zData_modules/operations/__init__.py
 # ----------------------------------------------------------------
-# CRUD operations package for zData subsystem.
+# LEGACY/DEPRECATED CRUD operations package.
 # 
-# Provides all CRUD operations that work across multiple backends.
+# ⚠️  DEPRECATION WARNING: This module contains legacy operation functions
+# ⚠️  that are kept only for backward compatibility with old tests.
+# ⚠️  
+# ⚠️  DO NOT USE in new code. Use the modern ZData class instead:
+# ⚠️  from zCLI.subsystems.zData import ZData
+# ⚠️
+# ⚠️  Modern API examples:
+# ⚠️  - zCreate → ZData.insert()
+# ⚠️  - zRead → ZData.select()
+# ⚠️  - zUpdate → ZData.update()
+# ⚠️  - zDelete → ZData.delete()
+# ⚠️  - zUpsert → ZData.upsert()
 # ----------------------------------------------------------------
 
 # Import CRUD operations

@@ -1,13 +1,20 @@
 # zCLI/subsystems/zData/zData_modules/infrastructure.py
 # ----------------------------------------------------------------
-# Infrastructure functions for data management (moved from zCRUD.py).
+# LEGACY/DEPRECATED Infrastructure functions for data management.
 # 
-# Functions:
-# - zDataConnect: Create database connections
-# - zEnsureTables: Ensure tables exist in database
-# - zTables: Create tables with schema
-# - resolve_source: Resolve field source expressions
-# - build_order_clause: Build ORDER BY SQL clause
+# ⚠️  DEPRECATION WARNING: This module contains legacy functions that are 
+# ⚠️  kept only for backward compatibility with old tests.
+# ⚠️  
+# ⚠️  DO NOT USE in new code. Use the modern ZData class instead:
+# ⚠️  from zCLI.subsystems.zData import ZData
+# ⚠️
+# ⚠️  Legacy functions in this module:
+# ⚠️  - zDataConnect: Use ZData class with adapters instead
+# ⚠️  - zEnsureTables: Use ZData.ensure_tables() instead
+# ⚠️  - zTables: Use adapter.create_table() instead
+# ⚠️  - resolve_source: Internal implementation detail
+# ⚠️  - build_order_clause: Internal implementation detail
+# ⚠️  - handle_zData: Use ZData.handle_request() instead
 # ----------------------------------------------------------------
 
 import re
