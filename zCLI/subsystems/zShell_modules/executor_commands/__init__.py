@@ -8,7 +8,7 @@ from the monolithic zShell_executor.py for better organization.
 """
 
 # Import command executors
-from .crud_executor import execute_crud
+from .data_executor import execute_data
 from .func_executor import execute_func
 from .session_executor import execute_session
 from .walker_executor import execute_walker
@@ -21,7 +21,7 @@ from .utils_executor import execute_utils
 from .config_executor import execute_config
 
 __all__ = [
-    "execute_crud",
+    "execute_data",
     "execute_func", 
     "execute_session",
     "execute_walker",

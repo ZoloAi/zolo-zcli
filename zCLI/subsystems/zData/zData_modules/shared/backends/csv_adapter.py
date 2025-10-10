@@ -175,6 +175,12 @@ class CSVAdapter(BaseDataAdapter):
         """Insert a row into a CSV table."""
         df = self._load_table(table)
         
+        # Handle None values
+        if values is None:
+            values = []
+        if fields is None:
+            fields = []
+        
         # Create new row with RGB defaults
         new_row = {field: value for field, value in zip(fields, values)}
         

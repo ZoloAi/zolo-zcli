@@ -8,7 +8,7 @@ logger = Logger.get_logger(__name__)
 
 # Import modular command executors
 from .executor_commands import (
-    execute_crud, execute_func, execute_session, execute_walker,
+    execute_data, execute_func, execute_session, execute_walker,
     execute_open, execute_test, execute_auth, execute_load, 
     execute_export, execute_utils, execute_config
 )
@@ -42,7 +42,7 @@ class CommandExecutor:
         Parse and execute a shell command.
         
         Args:
-            command: Command string like "crud read users --limit 10"
+            command: Command string like "data read users --limit 10"
         
         Returns:
             Command execution result
@@ -61,8 +61,8 @@ class CommandExecutor:
             # Execute based on command type
             command_type = parsed.get("type")
             
-            if command_type == "crud":
-                return execute_crud(self.zcli, parsed)
+            if command_type == "data":
+                return execute_data(self.zcli, parsed)
             elif command_type == "func":
                 return execute_func(self.zcli, parsed)
             elif command_type == "utils":
@@ -86,6 +86,6 @@ class CommandExecutor:
             else:
                 return {"error": f"Unknown command type: {command_type}"}
         
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             self.logger.error("Command execution failed: %s", e)
             return {"error": str(e)}

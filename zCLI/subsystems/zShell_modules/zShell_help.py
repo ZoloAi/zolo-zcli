@@ -12,21 +12,21 @@ class HelpSystem:
                     zCLI Shell Commands
 ═══════════════════════════════════════════════════════════════
 
-CRUD Operations:
-  crud read <table> [options]     - Read data from table
-  crud create <table> [options]   - Create new record
-  crud update <table> [options]   - Update existing record
-  crud delete <table> [options]   - Delete record
-  crud search <table> [options]   - Search in table
+Data Operations:
+  data read <table> [options]     - Read data from table
+  data create <table> [options]   - Create new record
+  data update <table> [options]   - Update existing record
+  data delete <table> [options]   - Delete record
+  data search <table> [options]   - Search in table
   
   Options:
     --limit N                     - Limit results to N records
     --model PATH                  - Specify schema model path
 
   Examples:
-    crud read zUsers
-    crud read zUsers --limit 10
-    crud create zUsers --model @.zCloud.schemas.schema.zIndex.zUsers
+    data read zUsers
+    data read zUsers --limit 10
+    data create zUsers --model @.zCloud.schemas.schema.zIndex.zUsers
 
 ───────────────────────────────────────────────────────────────
 
@@ -142,22 +142,22 @@ General:
     def show_command_help(command_type):
         """Show help for a specific command type."""
         help_sections = {
-            "crud": """
-CRUD Operations Help:
+            "data": """
+Data Operations Help:
   
-  crud read <table> [--limit N] [--model PATH]
+  data read <table> [--limit N] [--model PATH]
     Read records from a table
     
-  crud create <table> [--model PATH]
+  data create <table> [--model PATH]
     Create a new record (will prompt for fields)
     
-  crud update <table> [--model PATH]
+  data update <table> [--model PATH]
     Update an existing record
     
-  crud delete <table> [--model PATH]
+  data delete <table> [--model PATH]
     Delete a record
     
-  crud search <table> [--model PATH]
+  data search <table> [--model PATH]
     Search for records
 """,
             "func": """
@@ -212,8 +212,8 @@ Testing Help:
     Tests: Session isolation, subsystem integration, zParser,
            plugin loading, version management
     
-  test crud
-    Run CRUD test suite only (4 test files)
+  test data
+    Run data operations test suite only (4 test files)
     Tests: Validation, JOIN operations, direct operations
     
   test all

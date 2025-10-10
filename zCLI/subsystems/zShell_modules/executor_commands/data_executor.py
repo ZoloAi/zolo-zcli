@@ -1,6 +1,6 @@
-# zCLI/subsystems/zShell_modules/executor_commands/crud_executor.py
+# zCLI/subsystems/zShell_modules/executor_commands/data_executor.py
 # ───────────────────────────────────────────────────────────────
-"""CRUD command execution for zCLI."""
+"""Data command execution for zCLI."""
 
 from logger import Logger
 
@@ -8,16 +8,16 @@ from logger import Logger
 logger = Logger.get_logger(__name__)
 
 
-def execute_crud(zcli, parsed):
+def execute_data(zcli, parsed):
     """
-    Execute CRUD commands like 'crud read users --limit 10'.
+    Execute data commands like 'data read users --limit 10'.
     
     Args:
         zcli: zCLI instance
         parsed: Parsed command dictionary
         
     Returns:
-        CRUD operation result
+        Data operation result
     """
     action = parsed["action"]
     table = parsed["args"][0] if parsed["args"] else None
@@ -34,6 +34,7 @@ def execute_crud(zcli, parsed):
         **parsed.get("options", {})
     }
     
-    logger.debug("Executing CRUD: %s on %s", action, table)
+    logger.debug("Executing data operation: %s on %s", action, table)
     # Use modern zData interface through zcli.data
     return zcli.data.handle_request(zRequest)
+

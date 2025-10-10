@@ -53,9 +53,26 @@ class ClassicalData:
 
         data_type = meta["Data_Type"]
         data_path = meta["Data_path"]
-
-        # Resolve ~.zMachine.* paths to OS-specific locations via zParser
-        data_path = self.zcli.zparser.resolve_zmachine_path(data_path)
+        
+        # Resolve special paths via zParser
+        if data_path.startswith("~.zMachine."):
+            # Resolve ~.zMachine.* paths to OS-specific locations
+            data_path = self.zcli.zparser.resolve_zmachine_path(data_path)
+        elif data_path.startswith("@"):
+            # Resolve @ zPaths to absolute paths (for folders/directories)
+            from pathlib import Path
+            
+            # Get workspace or default to current working directory
+            workspace = self.zcli.session.get("zWorkspace")
+            if not workspace:
+                workspace = Path.cwd()
+            else:
+                workspace = Path(workspace)
+            
+            # Remove @ prefix and build path from workspace
+            path_parts = data_path[1:].strip(".").split(".")
+            data_path = str(workspace / "/".join(path_parts))
+            self.logger.info("Resolved @ path to: %s", data_path)
 
         self.logger.info("Initializing %s adapter for: %s", data_type, data_path)
 

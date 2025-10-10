@@ -8,7 +8,7 @@ def parse_command(command, logger):
     Parse shell commands into structured format.
     
     Supports commands like:
-    - crud read users --limit 10 --where "role=admin"
+    - data read users --limit 10 --where "role=admin"
     - func generate_id zU
     - utils hash_password mypass
     - session set mode zGUI
@@ -31,7 +31,7 @@ def parse_command(command, logger):
     
     # Command patterns
     commands = {
-        "crud": _parse_crud_command,
+        "data": _parse_data_command,
         "func": _parse_func_command,
         "utils": _parse_utils_command,
         "session": _parse_session_command,
@@ -49,7 +49,7 @@ def parse_command(command, logger):
     
     try:
         return commands[command_type](parts)
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         logger.error("Command parsing failed: %s", e)
         return {"error": f"Parse error: {str(e)}"}
 
@@ -92,16 +92,16 @@ def _split_command(command):
     return parts
 
 
-def _parse_crud_command(parts):
-    """Parse CRUD commands like 'crud read users --limit 10'"""
+def _parse_data_command(parts):
+    """Parse data commands like 'data read users --limit 10'"""
     if len(parts) < 2:
-        return {"error": "CRUD command requires action"}
+        return {"error": "Data command requires action"}
     
     action = parts[1].lower()
     valid_actions = ["read", "create", "update", "delete", "search", "tables"]
     
     if action not in valid_actions:
-        return {"error": f"Invalid CRUD action: {action}"}
+        return {"error": f"Invalid data action: {action}"}
     
     # Extract arguments and options
     args = []
@@ -126,7 +126,7 @@ def _parse_crud_command(parts):
             i += 1
     
     return {
-        "type": "crud",
+        "type": "data",
         "action": action,
         "args": args,
         "options": options
