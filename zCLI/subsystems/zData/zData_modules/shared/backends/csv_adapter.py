@@ -92,13 +92,12 @@ class CSVAdapter(BaseDataAdapter):
                 columns.append(field_name)
                 self.schemas[table_name][field_name] = {"type": attrs}
         
-        # Add RGB columns
-        columns.extend(["weak_force_r", "weak_force_g", "weak_force_b"])
-        self.schemas[table_name]["weak_force_r"] = {"type": "int", "default": 255}
-        self.schemas[table_name]["weak_force_g"] = {"type": "int", "default": 0}
-        self.schemas[table_name]["weak_force_b"] = {"type": "int", "default": 255}
-        
-        logger.info("Added RGB weak nuclear force columns to table: %s", table_name)
+        # RGB Weak Nuclear Force columns removed (quantum paradigm feature)
+        # TODO: Re-enable in quantum paradigm:
+        # columns.extend(["weak_force_r", "weak_force_g", "weak_force_b"])
+        # self.schemas[table_name]["weak_force_r"] = {"type": "int", "default": 255}
+        # self.schemas[table_name]["weak_force_g"] = {"type": "int", "default": 0}
+        # self.schemas[table_name]["weak_force_b"] = {"type": "int", "default": 255}
         
         # Create empty DataFrame with columns
         df = pd.DataFrame(columns=columns)
@@ -180,16 +179,17 @@ class CSVAdapter(BaseDataAdapter):
         if fields is None:
             fields = []
         
-        # Create new row with RGB defaults
+        # Create new row
         new_row = {field: value for field, value in zip(fields, values)}
         
-        # Add RGB defaults if not provided
-        if "weak_force_r" not in new_row:
-            new_row["weak_force_r"] = 255
-        if "weak_force_g" not in new_row:
-            new_row["weak_force_g"] = 0
-        if "weak_force_b" not in new_row:
-            new_row["weak_force_b"] = 255
+        # RGB defaults removed (quantum paradigm feature)
+        # TODO: Re-enable in quantum paradigm:
+        # if "weak_force_r" not in new_row:
+        #     new_row["weak_force_r"] = 255
+        # if "weak_force_g" not in new_row:
+        #     new_row["weak_force_g"] = 0
+        # if "weak_force_b" not in new_row:
+        #     new_row["weak_force_b"] = 255
         
         # Use helper method to append row (avoids FutureWarning)
         df = self._append_row_to_df(df, new_row)

@@ -100,9 +100,8 @@ class SQLAdapter(BaseDataAdapter):
                 if fk_clause:
                     foreign_keys.append(fk_clause)
 
-        # Add RGB Weak Nuclear Force columns to every table
-        field_defs.extend(self._get_rgb_columns())
-        logger.info("Added RGB weak nuclear force columns to table: %s", table_name)
+        # RGB Weak Nuclear Force columns removed (quantum paradigm feature)
+        # TODO: Re-enable in quantum paradigm - see _get_rgb_columns() stub below
 
         # Add composite primary key as table-level constraint
         table_constraints = []
@@ -197,8 +196,9 @@ class SQLAdapter(BaseDataAdapter):
         """Update rows in a table."""
         cur = self.get_cursor()
 
-        # Build SET clause
-        set_clause = ", ".join([f"{field} = ?" for field in fields])
+        # Build SET clause with dialect-specific placeholders
+        placeholder = self._get_single_placeholder()
+        set_clause = ", ".join([f"{field} = {placeholder}" for field in fields])
         sql = f"UPDATE {table} SET {set_clause}"
         params = list(values)
 
@@ -265,15 +265,25 @@ class SQLAdapter(BaseDataAdapter):
 
     def _get_rgb_columns(self):
         """
+        [QUANTUM PARADIGM STUB - NOT USED IN CLASSICAL]
+        
         Get RGB weak nuclear force column definitions.
+        
+        RGB Weak Nuclear Force Theory:
+        - Red (weak_force_r): Natural decay - starts at 255, decreases over time
+        - Green (weak_force_g): Access frequency - starts at 0, increases with use
+        - Blue (weak_force_b): Migration criticality - starts at 255, modified by importance
+        
+        When implementing quantum paradigm, uncomment and use:
+        return [
+            "weak_force_r INTEGER DEFAULT 255",
+            "weak_force_g INTEGER DEFAULT 0",
+            "weak_force_b INTEGER DEFAULT 255",
+        ]
         
         Override in subclass if dialect needs different syntax.
         """
-        return [
-            "weak_force_r INTEGER DEFAULT 255",  # Red: Natural decay
-            "weak_force_g INTEGER DEFAULT 0",    # Green: Access frequency
-            "weak_force_b INTEGER DEFAULT 255",  # Blue: Migration criticality
-        ]
+        return []  # Classical paradigm: no RGB columns
 
     def _build_foreign_key_clause(self, field_name, attrs):
         """Build FOREIGN KEY clause."""
@@ -305,17 +315,18 @@ class SQLAdapter(BaseDataAdapter):
         """
         conditions = []
         params = []
+        placeholder = self._get_single_placeholder()
 
         for field, value in where.items():
             if isinstance(value, dict):
                 # Complex condition (e.g., {"$gt": 5})
                 for op, val in value.items():
                     sql_op = self._map_operator(op)
-                    conditions.append(f"{field} {sql_op} ?")
+                    conditions.append(f"{field} {sql_op} {placeholder}")
                     params.append(val)
             else:
                 # Simple equality
-                conditions.append(f"{field} = ?")
+                conditions.append(f"{field} = {placeholder}")
                 params.append(value)
 
         where_clause = " AND ".join(conditions) if conditions else "1=1"
@@ -402,9 +413,19 @@ class SQLAdapter(BaseDataAdapter):
         
         Override in subclass:
         - SQLite/MySQL: "?, ?, ?"
-        - PostgreSQL: "$1, $2, $3"
+        - PostgreSQL: "%s, %s, %s"
         """
         return ", ".join(["?" for _ in range(count)])
+
+    def _get_single_placeholder(self):
+        """
+        Get a single parameter placeholder.
+        
+        Override in subclass:
+        - SQLite/MySQL: "?"
+        - PostgreSQL: "%s"
+        """
+        return "?"
 
     def _get_last_insert_id(self, cursor):
         """

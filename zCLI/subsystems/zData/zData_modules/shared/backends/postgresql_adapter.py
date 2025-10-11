@@ -161,12 +161,82 @@ class PostgreSQLAdapter(SQLAdapter):
     
     def create_table(self, table_name, schema):
         """
-        Create table and update project info.
+        Create table with PostgreSQL-specific features.
         
-        Overrides SQLAdapter.create_table to add project info update.
+        Handles SERIAL for integer primary keys and updates project info.
         """
-        # Call parent implementation
-        super().create_table(table_name, schema)
+        logger.info("Creating table: %s", table_name)
+
+        cur = self.get_cursor()
+        field_defs = []
+        foreign_keys = []
+
+        # Check for composite primary key
+        composite_pk = None
+        if "primary_key" in schema:
+            pk_value = schema["primary_key"]
+            if isinstance(pk_value, list) and len(pk_value) > 0:
+                composite_pk = pk_value
+                logger.info("Composite primary key detected: %s", composite_pk)
+
+        # Process each field
+        for field_name, attrs in schema.items():
+            if field_name in ["primary_key", "indexes"]:
+                continue
+
+            if not isinstance(attrs, dict):
+                continue
+
+            # Map type
+            field_type = self._map_field_type(attrs.get("type", "str"))
+            
+            # PostgreSQL: Use SERIAL for integer primary keys (auto-increment)
+            if attrs.get("pk") and not composite_pk:
+                if attrs.get("type") in ["int", "integer"]:
+                    field_type = "SERIAL"
+                    column = f"{field_name} {field_type} PRIMARY KEY"
+                else:
+                    column = f"{field_name} {field_type} PRIMARY KEY"
+            else:
+                column = f"{field_name} {field_type}"
+                
+            # Add constraints (not needed for SERIAL PKs)
+            if not (attrs.get("pk") and field_type == "SERIAL"):
+                if attrs.get("unique"):
+                    column += " UNIQUE"
+                if attrs.get("required") is True:
+                    column += " NOT NULL"
+
+            field_defs.append(column)
+
+            # Handle foreign keys
+            if "fk" in attrs:
+                fk_clause = self._build_foreign_key_clause(field_name, attrs)
+                if fk_clause:
+                    foreign_keys.append(fk_clause)
+
+        # RGB Weak Nuclear Force columns removed (quantum paradigm feature)
+        # TODO: Re-enable in quantum paradigm - see _get_rgb_columns() stub below
+
+        # Add composite primary key as table-level constraint
+        table_constraints = []
+        if composite_pk:
+            pk_columns = ", ".join(composite_pk)
+            table_constraints.append(f"PRIMARY KEY ({pk_columns})")
+            logger.info("Adding composite PRIMARY KEY (%s)", pk_columns)
+
+        # Build and execute DDL
+        all_defs = field_defs + table_constraints + foreign_keys
+        ddl = f"CREATE TABLE {table_name} ({', '.join(all_defs)});"
+
+        logger.info("Executing DDL: %s", ddl)
+        cur.execute(ddl)
+        self.connection.commit()
+        logger.info("Table created: %s", table_name)
+
+        # Create indexes if specified
+        if "indexes" in schema:
+            self._create_indexes(table_name, schema["indexes"])
         
         # Update project info file with new table
         self.update_project_info()
@@ -312,9 +382,17 @@ class PostgreSQLAdapter(SQLAdapter):
         """
         Get parameter placeholders for PostgreSQL query.
         
-        PostgreSQL uses $1, $2, $3... instead of ?
+        psycopg2 uses %s placeholders (DB-API 2.0 standard), not $1, $2, $3.
         """
-        return ", ".join([f"${i+1}" for i in range(count)])
+        return ", ".join(["%s" for _ in range(count)])
+    
+    def _get_single_placeholder(self):
+        """
+        Get a single parameter placeholder for PostgreSQL.
+        
+        psycopg2 uses %s (DB-API 2.0 standard).
+        """
+        return "%s"
     
     def _get_last_insert_id(self, cursor):
         """
@@ -349,15 +427,20 @@ class PostgreSQLAdapter(SQLAdapter):
     
     def _get_rgb_columns(self):
         """
+        [QUANTUM PARADIGM STUB - NOT USED IN CLASSICAL]
+        
         Get RGB weak nuclear force column definitions for PostgreSQL.
         
         PostgreSQL uses SMALLINT instead of INTEGER for space efficiency.
-        """
+        
+        When implementing quantum paradigm, uncomment and use:
         return [
             "weak_force_r SMALLINT DEFAULT 255",
             "weak_force_g SMALLINT DEFAULT 0",
             "weak_force_b SMALLINT DEFAULT 255",
         ]
+        """
+        return []  # Classical paradigm: no RGB columns
     
     def _write_project_info(self):
         """
