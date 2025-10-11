@@ -312,6 +312,110 @@ class ClassicalData:
     # Internal Operation Handlers
     # ═══════════════════════════════════════════════════════════
     
+    def _parse_where_clause(self, where_str):
+        """
+        Parse WHERE clause string into adapter-compatible dict format.
+        
+        Supported formats:
+          - "field=value"       → {"field": "value"}
+          - "field>value"       → {"field": {"$gt": value}}
+          - "field>=value"      → {"field": {"$gte": value}}
+          - "field<value"       → {"field": {"$lt": value}}
+          - "field<=value"      → {"field": {"$lte": value}}
+          - "field!=value"      → {"field": {"$ne": value}}
+        
+        Args:
+            where_str (str): WHERE clause string from command line
+            
+        Returns:
+            dict: WHERE conditions in adapter format
+        """
+        if not where_str:
+            return None
+        
+        where_dict = {}
+        
+        # Support multiple conditions separated by AND (future enhancement)
+        # For now, support single condition
+        condition = where_str.strip()
+        
+        # Parse operator and split field/value
+        if ">=" in condition:
+            field, value = condition.split(">=", 1)
+            field = field.strip()
+            value = value.strip()
+            where_dict[field] = {"$gte": self._parse_value(value)}
+        elif "<=" in condition:
+            field, value = condition.split("<=", 1)
+            field = field.strip()
+            value = value.strip()
+            where_dict[field] = {"$lte": self._parse_value(value)}
+        elif "!=" in condition:
+            field, value = condition.split("!=", 1)
+            field = field.strip()
+            value = value.strip()
+            where_dict[field] = {"$ne": self._parse_value(value)}
+        elif ">" in condition:
+            field, value = condition.split(">", 1)
+            field = field.strip()
+            value = value.strip()
+            where_dict[field] = {"$gt": self._parse_value(value)}
+        elif "<" in condition:
+            field, value = condition.split("<", 1)
+            field = field.strip()
+            value = value.strip()
+            where_dict[field] = {"$lt": self._parse_value(value)}
+        elif "=" in condition:
+            field, value = condition.split("=", 1)
+            field = field.strip()
+            value = value.strip()
+            where_dict[field] = self._parse_value(value)
+        else:
+            self.logger.warning("Could not parse WHERE clause: %s", where_str)
+            return None
+        
+        self.logger.debug("Parsed WHERE clause: %s → %s", where_str, where_dict)
+        return where_dict
+    
+    def _parse_value(self, value_str):
+        """
+        Parse value string to appropriate Python type.
+        
+        Args:
+            value_str (str): Value string from command line
+            
+        Returns:
+            Parsed value (int, float, bool, or str)
+        """
+        value_str = value_str.strip()
+        
+        # Try to convert to number
+        try:
+            # Try int first
+            if "." not in value_str:
+                return int(value_str)
+            # Try float
+            return float(value_str)
+        except ValueError:
+            pass
+        
+        # Check for boolean
+        if value_str.lower() in ("true", "yes", "1"):
+            return True
+        if value_str.lower() in ("false", "no", "0"):
+            return False
+        
+        # Check for null
+        if value_str.lower() in ("null", "none"):
+            return None
+        
+        # Return as string (remove quotes if present)
+        if (value_str.startswith('"') and value_str.endswith('"')) or \
+           (value_str.startswith("'") and value_str.endswith("'")):
+            return value_str[1:-1]
+        
+        return value_str
+    
     def _handle_create_table(self, request):
         """
         Handle CREATE TABLE operation.
@@ -476,7 +580,17 @@ class ClassicalData:
         return True
     
     def _handle_read(self, request):
-        """Handle READ operation."""
+        """
+        Handle READ operation (query/select rows).
+        
+        By default reads all rows from the table.
+        Supports optional WHERE, ORDER BY, and LIMIT clauses.
+        
+        WHERE syntax examples:
+          - data read users --where "age=30"
+          - data read users --where "age>25"
+          - data read users --where "name=Alice"
+        """
         tables = request.get("tables", [])
         if not tables:
             model = request.get("model")
@@ -485,46 +599,121 @@ class ClassicalData:
         
         if not tables:
             self.logger.error("No table specified for READ")
-            return []
+            return False
         
         table = tables[0]
+        
+        # Check if table exists
+        if not self.adapter.table_exists(table):
+            self.logger.error("❌ Table '%s' does not exist", table)
+            return False
+        
+        # Parse query options
         fields = request.get("fields")
-        where = request.get("where")
         order = request.get("order")
         limit = request.get("limit")
         
+        # Parse WHERE clause from options
+        options = request.get("options", {})
+        where_str = options.get("where")
+        where = self._parse_where_clause(where_str) if where_str else None
+        
+        # Execute query
         rows = self.select(table, fields, where, None, order, limit)
-        self.logger.info("✅ Read %d rows", len(rows))
-        return rows
+        
+        # Display results using zDisplay
+        if rows:
+            self.zcli.display.handle({
+                "event": "zTable",
+                "table": table,
+                "rows": rows
+            })
+            self.logger.info("✅ Read %d row(s) from %s", len(rows), table)
+        else:
+            self.logger.info("✅ Read 0 rows from %s (table is empty or no matches)", table)
+        
+        return True
     
     def _handle_update(self, request):
-        """Handle UPDATE operation."""
+        """
+        Handle UPDATE operation (modify existing rows).
+        
+        Syntax: data update <table> --model <schema> --field value --where "condition"
+        Example: data update users --model @.schema --email "new@email.com" --where id=1
+        """
         tables = request.get("tables", [])
         if not tables:
             self.logger.error("No table specified for UPDATE")
             return False
         
         table = tables[0]
-        fields = request.get("fields", [])
-        values = request.get("values", [])
-        where = request.get("where")
         
+        # Check if table exists
+        if not self.adapter.table_exists(table):
+            self.logger.error("❌ Table '%s' does not exist", table)
+            return False
+        
+        options = request.get("options", {})
+        
+        # Reserved option names that aren't table fields
+        reserved_options = {"model", "limit", "where", "order", "offset", "tables", "joins"}
+        
+        # Extract field/value pairs from options
+        updates_dict = {k: v for k, v in options.items() if k not in reserved_options}
+        
+        if not updates_dict:
+            self.logger.error("No fields to update. Use --field_name value syntax")
+            return False
+        
+        fields = list(updates_dict.keys())
+        values = list(updates_dict.values())
+        
+        # Parse WHERE clause
+        where_str = options.get("where")
+        where = self._parse_where_clause(where_str) if where_str else None
+        
+        if not where:
+            self.logger.warning("⚠️ UPDATE without WHERE clause will modify ALL rows!")
+        
+        # Execute update
         count = self.update(table, fields, values, where)
-        self.logger.info("✅ Updated %d rows", count)
+        
+        self.logger.info("✅ Updated %d row(s) in %s", count, table)
         return count > 0
     
     def _handle_delete(self, request):
-        """Handle DELETE operation."""
+        """
+        Handle DELETE operation (remove rows from table).
+        
+        Syntax: data delete <table> --model <schema> --where "condition"
+        Example: data delete users --model @.schema --where id=1
+        
+        WARNING: DELETE without WHERE clause will remove ALL rows!
+        """
         tables = request.get("tables", [])
         if not tables:
             self.logger.error("No table specified for DELETE")
             return False
         
         table = tables[0]
-        where = request.get("where")
         
+        # Check if table exists
+        if not self.adapter.table_exists(table):
+            self.logger.error("❌ Table '%s' does not exist", table)
+            return False
+        
+        # Parse WHERE clause from options
+        options = request.get("options", {})
+        where_str = options.get("where")
+        where = self._parse_where_clause(where_str) if where_str else None
+        
+        if not where:
+            self.logger.warning("⚠️ DELETE without WHERE clause will remove ALL rows from '%s'!", table)
+        
+        # Execute delete
         count = self.delete(table, where)
-        self.logger.info("✅ Deleted %d rows", count)
+        
+        self.logger.info("✅ Deleted %d row(s) from %s", count, table)
         return count > 0
     
     def _handle_upsert(self, request):

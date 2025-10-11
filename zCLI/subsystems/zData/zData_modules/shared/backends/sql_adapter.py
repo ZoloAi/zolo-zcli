@@ -187,7 +187,15 @@ class SQLAdapter(BaseDataAdapter):
 
         logger.debug("Executing SELECT: %s with params: %s", sql, params)
         cur.execute(sql, params)
-        rows = cur.fetchall()
+        raw_rows = cur.fetchall()
+
+        # Convert rows to dicts for consistent display across backends
+        # Get column names from cursor description
+        if raw_rows and cur.description:
+            column_names = [desc[0] for desc in cur.description]
+            rows = [dict(zip(column_names, row)) for row in raw_rows]
+        else:
+            rows = []
 
         logger.info("Selected %d rows from %s", len(rows), table)
         return rows
