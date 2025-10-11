@@ -416,6 +416,93 @@ class ClassicalData:
         
         return value_str
     
+    def _extract_table_from_request(self, request, operation_name, check_exists=True):
+        """
+        Extract and validate table name from request.
+        
+        Centralizes the common pattern of extracting table name from request
+        and optionally validating its existence.
+        
+        Args:
+            request (dict): Request dictionary
+            operation_name (str): Name of operation (for error messages)
+            check_exists (bool): Whether to validate table exists (default: True)
+            
+        Returns:
+            str: Table name, or None if extraction/validation failed
+        """
+        tables = request.get("tables", [])
+        if not tables:
+            model = request.get("model")
+            if isinstance(model, str):
+                tables = [model.split(".")[-1]]
+        
+        if not tables:
+            self.logger.error("No table specified for %s", operation_name)
+            return None
+        
+        table = tables[0]
+        
+        if check_exists and not self.adapter.table_exists(table):
+            self.logger.error("❌ Table '%s' does not exist", table)
+            return None
+        
+        return table
+    
+    def _extract_where_clause(self, request, warn_if_missing=False):
+        """
+        Extract and parse WHERE clause from request options.
+        
+        Centralizes WHERE clause parsing logic used across READ, UPDATE, DELETE.
+        
+        Args:
+            request (dict): Request dictionary
+            warn_if_missing (bool): Whether to log warning if no WHERE clause (default: False)
+            
+        Returns:
+            dict or None: Parsed WHERE clause dictionary
+        """
+        options = request.get("options", {})
+        where_str = options.get("where")
+        where = self._parse_where_clause(where_str) if where_str else None
+        
+        if warn_if_missing and not where:
+            self.logger.warning("⚠️ No WHERE clause - operation will affect ALL rows!")
+        
+        return where
+    
+    def _extract_field_values(self, request, operation_name):
+        """
+        Extract field/value pairs from request options, filtering out reserved keywords.
+        
+        Centralizes the pattern of extracting data fields from command-line options
+        while excluding system/query keywords.
+        
+        Args:
+            request (dict): Request dictionary
+            operation_name (str): Name of operation (for error messages)
+            
+        Returns:
+            tuple: (fields list, values list) or (None, None) if no fields found
+        """
+        options = request.get("options", {})
+        
+        # Reserved option names that aren't table fields
+        reserved_options = {"model", "limit", "where", "order", "offset", "tables", "joins"}
+        
+        # Extract field/value pairs
+        fields_dict = {k: v for k, v in options.items() if k not in reserved_options}
+        
+        if not fields_dict:
+            self.logger.error("No fields provided for %s. Use --field_name value syntax", operation_name)
+            return None, None
+        
+        return list(fields_dict.keys()), list(fields_dict.values())
+    
+    # ═══════════════════════════════════════════════════════════
+    # Internal Operation Handlers
+    # ═══════════════════════════════════════════════════════════
+    
     def _handle_create_table(self, request):
         """
         Handle CREATE TABLE operation.
@@ -473,23 +560,9 @@ class ClassicalData:
         Displays column names and types without querying data.
         Pure schema inspection, no data operations.
         """
-        tables = request.get("tables", [])
-        
-        if not tables:
-            # Try to infer from model
-            model = request.get("model")
-            if isinstance(model, str):
-                tables = [model.split(".")[-1]]
-        
-        if not tables:
-            self.logger.error("No table specified for HEAD")
-            return False
-        
-        table = tables[0]
-        
-        # Check if table exists
-        if not self.adapter.table_exists(table):
-            self.logger.error("Table '%s' does not exist", table)
+        # Extract and validate table name
+        table = self._extract_table_from_request(request, "HEAD", check_exists=True)
+        if not table:
             return False
         
         # Get table schema from our loaded schema
@@ -538,42 +611,20 @@ class ClassicalData:
         
         Unlike create, this does NOT create tables - it errors if table doesn't exist.
         """
-        tables = request.get("tables", [])
+        # Extract and validate table name
+        table = self._extract_table_from_request(request, "INSERT", check_exists=True)
+        if not table:
+            return False
+        
+        # Extract field/value pairs from command-line options
         fields = request.get("fields", [])
         values = request.get("values")
-        options = request.get("options", {})
         
-        if not tables:
-            self.logger.error("No table specified for INSERT")
-            return False
-        
-        table = tables[0]
-        
-        # Check if table exists
-        if not self.adapter.table_exists(table):
-            self.logger.error("❌ Table '%s' does not exist. Create it first with 'data create %s'", table, table)
-            return False
-        
-        # If no explicit values, try to extract from options (command-line arguments)
+        # If no explicit values, extract from options
         if not values:
-            # Reserved option names that aren't table fields
-            reserved_options = {"model", "limit", "where", "order", "offset", "tables", "joins"}
-            
-            # Extract field/value pairs from options
-            values_dict = {k: v for k, v in options.items() if k not in reserved_options}
-            
-            if not values_dict:
-                self.logger.error("No values provided for INSERT. Use --field_name value syntax")
-                return False
-            
-            # Convert to dict format for further processing
-            values = values_dict
-        
-        # Handle dict values
-        if isinstance(values, dict):
+            fields, values = self._extract_field_values(request, "INSERT")
             if not fields:
-                fields = list(values.keys())
-            values = [values[f] for f in fields]
+                return False
         
         row_id = self.insert(table, fields, values)
         self.logger.info("✅ Inserted row with ID: %s", row_id)
@@ -591,21 +642,9 @@ class ClassicalData:
           - data read users --where "age>25"
           - data read users --where "name=Alice"
         """
-        tables = request.get("tables", [])
-        if not tables:
-            model = request.get("model")
-            if isinstance(model, str):
-                tables = [model.split(".")[-1]]
-        
-        if not tables:
-            self.logger.error("No table specified for READ")
-            return False
-        
-        table = tables[0]
-        
-        # Check if table exists
-        if not self.adapter.table_exists(table):
-            self.logger.error("❌ Table '%s' does not exist", table)
+        # Extract and validate table name
+        table = self._extract_table_from_request(request, "READ", check_exists=True)
+        if not table:
             return False
         
         # Parse query options
@@ -613,10 +652,8 @@ class ClassicalData:
         order = request.get("order")
         limit = request.get("limit")
         
-        # Parse WHERE clause from options
-        options = request.get("options", {})
-        where_str = options.get("where")
-        where = self._parse_where_clause(where_str) if where_str else None
+        # Extract WHERE clause
+        where = self._extract_where_clause(request, warn_if_missing=False)
         
         # Execute query
         rows = self.select(table, fields, where, None, order, limit)
@@ -641,39 +678,18 @@ class ClassicalData:
         Syntax: data update <table> --model <schema> --field value --where "condition"
         Example: data update users --model @.schema --email "new@email.com" --where id=1
         """
-        tables = request.get("tables", [])
-        if not tables:
-            self.logger.error("No table specified for UPDATE")
+        # Extract and validate table name
+        table = self._extract_table_from_request(request, "UPDATE", check_exists=True)
+        if not table:
             return False
         
-        table = tables[0]
-        
-        # Check if table exists
-        if not self.adapter.table_exists(table):
-            self.logger.error("❌ Table '%s' does not exist", table)
+        # Extract field/value pairs to update
+        fields, values = self._extract_field_values(request, "UPDATE")
+        if not fields:
             return False
         
-        options = request.get("options", {})
-        
-        # Reserved option names that aren't table fields
-        reserved_options = {"model", "limit", "where", "order", "offset", "tables", "joins"}
-        
-        # Extract field/value pairs from options
-        updates_dict = {k: v for k, v in options.items() if k not in reserved_options}
-        
-        if not updates_dict:
-            self.logger.error("No fields to update. Use --field_name value syntax")
-            return False
-        
-        fields = list(updates_dict.keys())
-        values = list(updates_dict.values())
-        
-        # Parse WHERE clause
-        where_str = options.get("where")
-        where = self._parse_where_clause(where_str) if where_str else None
-        
-        if not where:
-            self.logger.warning("⚠️ UPDATE without WHERE clause will modify ALL rows!")
+        # Extract WHERE clause with warning if missing
+        where = self._extract_where_clause(request, warn_if_missing=True)
         
         # Execute update
         count = self.update(table, fields, values, where)
@@ -690,25 +706,13 @@ class ClassicalData:
         
         WARNING: DELETE without WHERE clause will remove ALL rows!
         """
-        tables = request.get("tables", [])
-        if not tables:
-            self.logger.error("No table specified for DELETE")
+        # Extract and validate table name
+        table = self._extract_table_from_request(request, "DELETE", check_exists=True)
+        if not table:
             return False
         
-        table = tables[0]
-        
-        # Check if table exists
-        if not self.adapter.table_exists(table):
-            self.logger.error("❌ Table '%s' does not exist", table)
-            return False
-        
-        # Parse WHERE clause from options
-        options = request.get("options", {})
-        where_str = options.get("where")
-        where = self._parse_where_clause(where_str) if where_str else None
-        
-        if not where:
-            self.logger.warning("⚠️ DELETE without WHERE clause will remove ALL rows from '%s'!", table)
+        # Extract WHERE clause with warning if missing
+        where = self._extract_where_clause(request, warn_if_missing=True)
         
         # Execute delete
         count = self.delete(table, where)
@@ -717,22 +721,23 @@ class ClassicalData:
         return count > 0
     
     def _handle_upsert(self, request):
-        """Handle UPSERT operation."""
-        tables = request.get("tables", [])
-        if not tables:
-            self.logger.error("No table specified for UPSERT")
+        """Handle UPSERT operation (insert or update if conflict)."""
+        # Extract and validate table name (no existence check needed for upsert)
+        table = self._extract_table_from_request(request, "UPSERT", check_exists=False)
+        if not table:
             return False
         
-        table = tables[0]
+        # Extract field/value pairs
         fields = request.get("fields", [])
         values = request.get("values")
-        conflict_fields = request.get("conflict_fields", [fields[0]] if fields else [])
         
-        # Handle dict values
-        if isinstance(values, dict):
+        # If no explicit values, extract from options
+        if not values:
+            fields, values = self._extract_field_values(request, "UPSERT")
             if not fields:
-                fields = list(values.keys())
-            values = [values[f] for f in fields]
+                return False
+        
+        conflict_fields = request.get("conflict_fields", [fields[0]] if fields else [])
         
         row_id = self.upsert(table, fields, values, conflict_fields)
         self.logger.info("✅ Upserted row with ID: %s", row_id)
