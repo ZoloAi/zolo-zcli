@@ -119,8 +119,17 @@ class ClassicalData:
                 # Update request with parsed tables
                 request["tables"] = tables
         
-        # Ensure tables exist (unless action is list_tables)
-        if action != "list_tables":
+        # Ensure tables exist for specific actions
+        # - create: ensures tables (creates if missing)
+        # - insert: does NOT ensure tables (errors if missing)
+        # - read/update/delete/upsert: ensure tables exist
+        if action == "create":
+            # Create action ensures tables
+            if not self.ensure_tables(tables if tables else None):
+                self.logger.error("Failed to create tables for action: %s", action)
+                return "error"
+        elif action not in ["list_tables", "insert"]:
+            # Other actions also ensure tables exist
             if not self.ensure_tables(tables if tables else None):
                 self.logger.error("Failed to ensure tables for action: %s", action)
                 return "error"
@@ -130,7 +139,9 @@ class ClassicalData:
             if action == "list_tables":
                 result = self.list_tables()
             elif action == "create":
-                result = self._handle_create(request)
+                result = self._handle_create_table(request)
+            elif action == "insert":
+                result = self._handle_insert(request)
             elif action == "read":
                 result = self._handle_read(request)
             elif action == "update":
@@ -293,36 +304,68 @@ class ClassicalData:
     # Internal Operation Handlers
     # ═══════════════════════════════════════════════════════════
     
-    def _handle_create(self, request):
+    def _handle_create_table(self, request):
         """
-        Handle CREATE operation.
+        Handle CREATE TABLE operation.
         
-        Tables are already parsed and created by handle_request.
-        This handles data insertion if values are provided.
+        Tables are already created by ensure_tables in handle_request.
+        This just confirms creation.
+        """
+        tables = request.get("tables", [])
+        
+        if not tables:
+            self.logger.error("No tables specified for CREATE")
+            return False
+        
+        # Tables were already created by ensure_tables
+        self.logger.info("✅ Created %d table structure(s)", len(tables))
+        return True
+    
+    def _handle_insert(self, request):
+        """
+        Handle INSERT operation (insert row into existing table).
+        
+        Unlike create, this does NOT create tables - it errors if table doesn't exist.
         """
         tables = request.get("tables", [])
         fields = request.get("fields", [])
         values = request.get("values")
+        options = request.get("options", {})
         
         if not tables:
-            self.logger.error("No tables specified")
+            self.logger.error("No table specified for INSERT")
             return False
         
-        # If values provided, insert into the first table
-        if values:
-            table = tables[0]
-            # Handle dict values
-            if isinstance(values, dict):
-                if not fields:
-                    fields = list(values.keys())
-                values = [values[f] for f in fields]
-            
-            row_id = self.insert(table, fields, values)
-            self.logger.info("✅ Inserted row with ID: %s", row_id)
-            return True
+        table = tables[0]
         
-        # No values - tables were already created by ensure_tables
-        self.logger.info("✅ Created %d table structure(s)", len(tables))
+        # Check if table exists
+        if not self.adapter.table_exists(table):
+            self.logger.error("❌ Table '%s' does not exist. Create it first with 'data create %s'", table, table)
+            return False
+        
+        # If no explicit values, try to extract from options (command-line arguments)
+        if not values:
+            # Reserved option names that aren't table fields
+            reserved_options = {"model", "limit", "where", "order", "offset", "tables", "joins"}
+            
+            # Extract field/value pairs from options
+            values_dict = {k: v for k, v in options.items() if k not in reserved_options}
+            
+            if not values_dict:
+                self.logger.error("No values provided for INSERT. Use --field_name value syntax")
+                return False
+            
+            # Convert to dict format for further processing
+            values = values_dict
+        
+        # Handle dict values
+        if isinstance(values, dict):
+            if not fields:
+                fields = list(values.keys())
+            values = [values[f] for f in fields]
+        
+        row_id = self.insert(table, fields, values)
+        self.logger.info("✅ Inserted row with ID: %s", row_id)
         return True
     
     def _handle_read(self, request):

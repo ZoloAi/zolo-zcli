@@ -1,0 +1,59 @@
+# zSchema.csv_demo.yaml
+# Simple schema for testing CSV adapter functionality
+# ────────────────────────────────────────────────────────────────
+
+Meta:
+  Data_Type: postgresql
+  Data_path: "@.tests.zData_tests.postgresql_demo"
+  Data_Paradigm: classical
+  Description: Demo schema for postgresql adapter testing
+
+# Simple users table
+users:
+  id:
+    type: int
+    pk: true
+  name:
+    type: str
+    required: true
+  email:
+    type: str
+  age:
+    type: int
+  status:
+    type: str
+    default: active
+
+# Simple posts table (user_id is just a number, no FK enforcement)
+posts:
+  id:
+    type: int
+    pk: true
+  user_id:
+    type: int
+    # Note: CSV doesn't enforce FK relationships
+  title:
+    type: str
+    required: true
+  content:
+    type: str
+  published:
+    type: str
+    # Will store as string in CSV
+
+# Simple products table for testing
+products:
+  id:
+    type: int
+    pk: true
+  name:
+    type: str
+    required: true
+  price:
+    type: float
+  stock:
+    type: int
+    default: 0
+  category:
+    type: str
+

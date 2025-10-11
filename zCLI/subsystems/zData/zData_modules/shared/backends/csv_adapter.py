@@ -6,7 +6,6 @@
 # Each table is stored as a separate CSV file in the specified directory.
 # ----------------------------------------------------------------
 
-import os
 from pathlib import Path
 from .base_adapter import BaseDataAdapter
 from logger import Logger

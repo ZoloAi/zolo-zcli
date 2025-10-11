@@ -93,12 +93,12 @@ def _split_command(command):
 
 
 def _parse_data_command(parts):
-    """Parse data commands like 'data read users --limit 10'"""
+    """Parse data commands like 'data read users --limit 10' or 'data insert users --name Alice'"""
     if len(parts) < 2:
         return {"error": "Data command requires action"}
     
     action = parts[1].lower()
-    valid_actions = ["read", "create", "update", "delete", "search", "tables"]
+    valid_actions = ["read", "create", "insert", "update", "delete", "search", "tables"]
     
     if action not in valid_actions:
         return {"error": f"Invalid data action: {action}"}
