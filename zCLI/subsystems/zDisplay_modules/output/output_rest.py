@@ -100,6 +100,22 @@ class RESTOutput(OutputAdapter):
             "row_count": len(obj.get("rows", []))
         })
     
+    def render_table_schema(self, obj):
+        """Accumulate table schema as response data."""
+        self.logger.debug("[RESTOutput] render_table_schema - %s", obj.get("table"))
+        
+        # Set as primary data
+        self.response["data"] = {
+            "table": obj.get("table"),
+            "columns": obj.get("columns", [])
+        }
+        
+        # Log event
+        self._log_event("table_schema", {
+            "table": obj.get("table"),
+            "column_count": len(obj.get("columns", []))
+        })
+    
     def render_form(self, obj):
         """
         Forms not supported in REST mode.

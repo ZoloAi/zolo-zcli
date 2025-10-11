@@ -124,6 +124,7 @@ class ClassicalData:
         # Ensure tables exist for specific actions
         # - create: ensures tables (creates if missing)
         # - drop: does NOT ensure tables (drops existing tables)
+        # - head: does NOT ensure tables (just checks and shows error if missing)
         # - insert: does NOT ensure tables (errors if missing)
         # - read/update/delete/upsert: ensure tables exist
         if action == "create":
@@ -131,7 +132,7 @@ class ClassicalData:
             if not self.ensure_tables(tables if tables else None):
                 self.logger.error("Failed to create tables for action: %s", action)
                 return "error"
-        elif action not in ["list_tables", "insert", "drop"]:
+        elif action not in ["list_tables", "insert", "drop", "head"]:
             # Other actions also ensure tables exist
             if not self.ensure_tables(tables if tables else None):
                 self.logger.error("Failed to ensure tables for action: %s", action)
@@ -145,6 +146,8 @@ class ClassicalData:
                 result = self._handle_create_table(request)
             elif action == "drop":
                 result = self._handle_drop(request)
+            elif action == "head":
+                result = self._handle_head(request)
             elif action == "insert":
                 result = self._handle_insert(request)
             elif action == "read":
@@ -357,6 +360,72 @@ class ClassicalData:
             return False
         
         self.logger.info("✅ Dropped %d table(s): %s", len(dropped), ", ".join(dropped))
+        return True
+    
+    def _handle_head(self, request):
+        """
+        Handle HEAD operation - show table schema/columns only.
+        
+        Displays column names and types without querying data.
+        Pure schema inspection, no data operations.
+        """
+        tables = request.get("tables", [])
+        
+        if not tables:
+            # Try to infer from model
+            model = request.get("model")
+            if isinstance(model, str):
+                tables = [model.split(".")[-1]]
+        
+        if not tables:
+            self.logger.error("No table specified for HEAD")
+            return False
+        
+        table = tables[0]
+        
+        # Check if table exists
+        if not self.adapter.table_exists(table):
+            self.logger.error("Table '%s' does not exist", table)
+            return False
+        
+        # Get table schema from our loaded schema
+        table_schema = self.schema.get(table, {})
+        
+        if not table_schema:
+            self.logger.error("No schema found for table '%s'", table)
+            return False
+        
+        # Extract column information
+        columns = []
+        for field_name, attrs in table_schema.items():
+            if field_name in ["primary_key", "indexes"]:
+                continue
+            
+            if isinstance(attrs, dict):
+                col_info = {
+                    "name": field_name,
+                    "type": attrs.get("type", "str"),
+                    "required": attrs.get("required", False),
+                    "pk": attrs.get("pk", False),
+                    "default": attrs.get("default")
+                }
+                columns.append(col_info)
+            elif isinstance(attrs, str):
+                columns.append({
+                    "name": field_name,
+                    "type": attrs,
+                    "required": False,
+                    "pk": False
+                })
+        
+        # Display using zDisplay
+        self.zcli.display.handle({
+            "event": "zTableSchema",
+            "table": table,
+            "columns": columns
+        })
+        
+        self.logger.info("✅ HEAD %s: %d columns", table, len(columns))
         return True
     
     def _handle_insert(self, request):

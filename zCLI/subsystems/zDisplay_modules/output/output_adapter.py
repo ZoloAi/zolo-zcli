@@ -52,6 +52,10 @@ class OutputAdapter:
         """Render data table."""
         raise NotImplementedError(f"{self.__class__.__name__} must implement render_table()")
     
+    def render_table_schema(self, obj):
+        """Render table schema (columns and types)."""
+        raise NotImplementedError(f"{self.__class__.__name__} must implement render_table_schema()")
+    
     def render_form(self, obj):
         """Render interactive form."""
         raise NotImplementedError(f"{self.__class__.__name__} must implement render_form()")

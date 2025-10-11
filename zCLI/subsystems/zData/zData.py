@@ -98,17 +98,16 @@ class ZData:
             "indent": 1
         })
 
-        # Load schema from model if not already loaded OR if disconnected
+        # Load schema from model
+        # Note: Schemas are NOT cached by zLoader, so always load fresh
         model_path = request.get("model")
         if model_path:
-            # Always reload if we're disconnected (handler exists but connection is gone)
-            if not self.schema or not self.is_connected():
-                self.logger.info("Loading schema from: %s", model_path)
-                schema = self.loader.handle(model_path)
-                if schema == "error" or not schema:
-                    self.logger.error("Failed to load schema from: %s", model_path)
-                    return "error"
-                self.load_schema(schema)  # Load schema into handler (ClassicalData or QuantumData)
+            self.logger.info("Loading schema from: %s", model_path)
+            schema = self.loader.handle(model_path)
+            if schema == "error" or not schema:
+                self.logger.error("Failed to load schema from: %s", model_path)
+                return "error"
+            self.load_schema(schema)  # Load schema into handler (ClassicalData or QuantumData)
 
         # Validate successful schema load
         if not self.handler:

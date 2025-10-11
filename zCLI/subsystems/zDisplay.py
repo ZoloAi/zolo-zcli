@@ -147,6 +147,8 @@ class ZDisplay:
             return output.render_json(obj)
         elif event == "zTable":
             return output.render_table(obj)
+        elif event == "zTableSchema":
+            return output.render_table_schema(obj)
         elif event == "zCrumbs":
             # Auto-inject walker's session if not provided
             if "zSession" not in obj and self.session:

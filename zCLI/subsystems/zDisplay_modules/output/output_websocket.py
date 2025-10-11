@@ -126,6 +126,15 @@ class WebSocketOutput(OutputAdapter):
             "pagination": obj.get("pagination")
         })
     
+    def render_table_schema(self, obj):
+        """Broadcast table schema to frontend."""
+        self.logger.debug("[WebSocketOutput] render_table_schema - %s", obj.get("table"))
+        self._broadcast_sync({
+            "type": "table_schema",
+            "table": obj.get("table"),
+            "columns": obj.get("columns", [])
+        })
+    
     def render_form(self, obj):
         """
         TODO: Broadcast form to frontend and handle async input.

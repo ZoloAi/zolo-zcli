@@ -14,6 +14,7 @@ from ..display_render import (
     render_table as _render_table,
     print_crumbs as _print_crumbs
 )
+from ..display_schema import render_table_schema as _render_table_schema
 from ..display_forms import render_zConv as _render_zConv
 
 
@@ -36,6 +37,10 @@ class TerminalOutput(OutputAdapter):
     def render_table(self, obj):
         """Render data table to terminal."""
         _render_table(obj)
+    
+    def render_table_schema(self, obj):
+        """Render table schema to terminal."""
+        _render_table_schema(obj)
     
     def render_form(self, obj):
         """Render interactive form to terminal."""

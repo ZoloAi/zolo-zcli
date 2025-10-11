@@ -131,36 +131,42 @@ class ZLoader:
             zFilePath_identified, zFile_extension = temp_parser.identify_zFile(zVaFilename, zVaFile_fullpath)
         self.logger.debug("zFilePath_identified!\n%s", zFilePath_identified)
 
-        # Step 2: Check loaded cache (PRIORITY 1 - User-pinned)
-        # Use zPath for cache key instead of OS path
-        zPath_key = f"{self.zSession.get('zVaFile_path', '@')}.{zVaFilename}"
-        loaded_key = f"parsed:{zPath_key}"
-        loaded = self.loaded_cache.get(loaded_key)
-        if loaded is not None:
-            self.display.handle({
-                "event": "sysmsg",
-                "label": "zLoader return (loaded)",
-                "style": "~",
-                "color": "LOADER",
-                "indent": 1,
-            })
-            self.logger.debug("[Priority 1] Loaded cache hit: %s", loaded_key)
-            return loaded
+        # Detect if this is a zSchema file (should not be cached)
+        is_schema = "zSchema" in zVaFilename or zFile_extension == ".yaml|zSchema"
+        
+        if not is_schema:
+            # Step 2: Check loaded cache (PRIORITY 1 - User-pinned)
+            # Use zPath for cache key instead of OS path
+            zPath_key = f"{self.zSession.get('zVaFile_path', '@')}.{zVaFilename}"
+            loaded_key = f"parsed:{zPath_key}"
+            loaded = self.loaded_cache.get(loaded_key)
+            if loaded is not None:
+                self.display.handle({
+                    "event": "sysmsg",
+                    "label": "zLoader return (loaded)",
+                    "style": "~",
+                    "color": "LOADER",
+                    "indent": 1,
+                })
+                self.logger.debug("[Priority 1] Loaded cache hit: %s", loaded_key)
+                return loaded
 
-        # Step 3: Check files cache (PRIORITY 2 - Auto-cached)
-        # Use zPath for cache key
-        cache_key = f"parsed:{zPath_key}"
-        cached = self.cache.get(cache_key, filepath=zFilePath_identified)
-        if cached is not None:
-            self.display.handle({
-                "event": "sysmsg",
-                "label": "zLoader return (cached)",
-                "style": "~",
-                "color": "LOADER",
-                "indent": 1,
-            })
-            self.logger.debug("[Priority 2] Files cache hit: %s", cache_key)
-            return cached
+            # Step 3: Check files cache (PRIORITY 2 - Auto-cached)
+            # Use zPath for cache key
+            cache_key = f"parsed:{zPath_key}"
+            cached = self.cache.get(cache_key, filepath=zFilePath_identified)
+            if cached is not None:
+                self.display.handle({
+                    "event": "sysmsg",
+                    "label": "zLoader return (cached)",
+                    "style": "~",
+                    "color": "LOADER",
+                    "indent": 1,
+                })
+                self.logger.debug("[Priority 2] Files cache hit: %s", cache_key)
+                return cached
+        else:
+            self.logger.debug("[zSchema] Skipping cache - schemas are loaded fresh each time")
 
         # Step 4: Load raw file content (PRIORITY 3 - Disk I/O)
         self.logger.debug("[Priority 3] Cache miss - loading from disk")
@@ -177,7 +183,7 @@ class ZLoader:
         
         self.logger.debug("zLoader parse result:\n%s", result)
 
-        # Step 6: Cache in files (auto-cache) and return
+        # Step 6: Return result (cache only if not a schema)
         self.display.handle({
             "event": "sysmsg",
             "label": "zLoader return",
@@ -185,6 +191,13 @@ class ZLoader:
             "color": "LOADER",
             "indent": 1,
         })
+        
+        # Don't cache schemas - they should be loaded fresh each time
+        if is_schema:
+            self.logger.debug("[zSchema] Not caching - returning fresh data")
+            return result
+        
+        # Cache other resources (UI, configs, etc.)
         return self.cache.set(cache_key, result, filepath=zFilePath_identified)
 
 
@@ -205,7 +218,7 @@ def handle_zLoader(zPath=None, walker=None, session=None, zcli=None):
     Returns:
         Parsed file content (dict) or "error" on failure
     """
-    self.display.handle({
+    handle_zDisplay({
         "event": "sysmsg",
         "label": "zLoader",
         "style": "full",
@@ -255,7 +268,7 @@ def handle_zLoader(zPath=None, walker=None, session=None, zcli=None):
     result = parse_file_content(zFile_raw, zFile_extension)
     logger.debug("zLoader parse result:\n%s", result)
 
-    self.display.handle({
+    handle_zDisplay({
         "event": "sysmsg",
         "label": "zLoader return",
         "style": "~",
