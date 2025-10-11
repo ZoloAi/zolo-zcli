@@ -5,6 +5,7 @@
 Meta:
   Data_Type: csv
   Data_path: "@.tests.zData_tests.csv_demo"
+  Data_Label: "csv_demo"
   Data_Paradigm: classical
   Description: Demo schema for CSV adapter testing
 

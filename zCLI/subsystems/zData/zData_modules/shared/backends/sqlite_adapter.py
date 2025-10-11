@@ -30,7 +30,11 @@ class SQLiteAdapter(SQLAdapter):
     def connect(self):
         """Establish SQLite connection."""
         try:
-            self.connection = sqlite3.connect(self.db_path)
+            # Ensure parent directory exists
+            self._ensure_directory()
+            
+            # Convert Path to string for sqlite3.connect()
+            self.connection = sqlite3.connect(str(self.db_path))
             self.connection.row_factory = sqlite3.Row  # Enable dict-like access
             self.connection.execute("PRAGMA foreign_keys = ON;")  # Enable FK support
             logger.info("Connected to SQLite: %s", self.db_path)

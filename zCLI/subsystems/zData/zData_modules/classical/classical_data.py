@@ -53,6 +53,7 @@ class ClassicalData:
 
         data_type = meta["Data_Type"]
         data_path = meta["Data_path"]
+        data_label = meta.get("Data_Label", "data")  # Default to "data" if not specified
         
         # Resolve special paths via zParser
         if data_path.startswith("~.zMachine."):
@@ -74,12 +75,13 @@ class ClassicalData:
             data_path = str(workspace / "/".join(path_parts))
             self.logger.info("Resolved @ path to: %s", data_path)
 
-        self.logger.info("Initializing %s adapter for: %s", data_type, data_path)
+        self.logger.info("Initializing %s adapter for: %s (label: %s)", data_type, data_path, data_label)
 
         # Create appropriate adapter
         try:
             self.adapter = AdapterFactory.create_adapter(data_type, {
                 "path": data_path,
+                "label": data_label,
                 "meta": meta
             })
 
@@ -313,12 +315,13 @@ class ClassicalData:
         """
         tables = request.get("tables", [])
         
+        # If no tables specified, get all tables from schema (create all)
         if not tables:
-            self.logger.error("No tables specified for CREATE")
-            return False
+            tables = [k for k in self.schema.keys() if k not in ("Meta", "db_path")]
+            self.logger.info("No specific tables requested - created all %d tables from schema", len(tables))
         
         # Tables were already created by ensure_tables
-        self.logger.info("✅ Created %d table structure(s)", len(tables))
+        self.logger.info("✅ Created %d table structure(s): %s", len(tables), ", ".join(tables))
         return True
     
     def _handle_insert(self, request):

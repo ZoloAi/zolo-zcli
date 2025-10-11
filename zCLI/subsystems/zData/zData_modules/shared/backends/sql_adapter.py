@@ -25,7 +25,8 @@ class SQLAdapter(BaseDataAdapter):
 
     def __init__(self, config):
         super().__init__(config)
-        self.db_path = config.get("path")
+        # Construct db_path from folder + label
+        self.db_path = self.base_path / f"{self.data_label}.db"
 
     # ═══════════════════════════════════════════════════════════
     # Connection Management (must be implemented by subclass)

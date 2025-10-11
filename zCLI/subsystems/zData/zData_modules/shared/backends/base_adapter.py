@@ -7,6 +7,7 @@
 # ----------------------------------------------------------------
 
 from abc import ABC, abstractmethod
+from pathlib import Path
 from logger import Logger
 
 # Logger instance
@@ -27,14 +28,21 @@ class BaseDataAdapter(ABC):
             
             Args:
                 config (dict): Backend configuration with keys:
-                    - path: Database/file path
+                    - path: Database/file directory path
+                    - label: Database/file name
                     - meta: Additional metadata from schema
         """
         self.config = config
         self.connection = None
         self.cursor = None
+        
+        # Standardized path handling: path is always a directory
+        self.base_path = Path(config.get("path", "."))
+        self.data_label = config.get("label", "data")
+        
         logger.debug("Initializing %s adapter with config: %s", 
                     self.__class__.__name__, config)
+        logger.debug("Base path: %s, Data label: %s", self.base_path, self.data_label)
 
     # ═══════════════════════════════════════════════════════════
     # Connection Management
@@ -246,6 +254,17 @@ class BaseDataAdapter(ABC):
     # ═══════════════════════════════════════════════════════════
     # Helper Methods (Optional - can be overridden)
     # ═══════════════════════════════════════════════════════════
+
+    def _ensure_directory(self, path=None):
+        """
+        Ensure directory exists for data storage.
+        
+        Args:
+            path: Path to ensure (defaults to self.base_path)
+        """
+        target_path = Path(path) if path else self.base_path
+        target_path.mkdir(parents=True, exist_ok=True)
+        logger.debug("Ensured directory exists: %s", target_path)
 
     def is_connected(self):
         """

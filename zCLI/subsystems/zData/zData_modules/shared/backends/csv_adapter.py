@@ -6,7 +6,6 @@
 # Each table is stored as a separate CSV file in the specified directory.
 # ----------------------------------------------------------------
 
-from pathlib import Path
 from .base_adapter import BaseDataAdapter
 from logger import Logger
 
@@ -29,7 +28,7 @@ class CSVAdapter(BaseDataAdapter):
             raise ImportError("pandas is required for CSV adapter. Install with: pip install pandas")
         
         super().__init__(config)
-        self.base_path = Path(config.get("path", "data/csv"))
+        # base_path and data_label inherited from BaseDataAdapter
         self.tables = {}  # Cache of loaded DataFrames
         self.schemas = {}  # Store table schemas
     
@@ -40,7 +39,8 @@ class CSVAdapter(BaseDataAdapter):
     def connect(self):
         """Ensure base directory exists."""
         try:
-            self.base_path.mkdir(parents=True, exist_ok=True)
+            # Use inherited directory creation method
+            self._ensure_directory()
             logger.info("Connected to CSV backend: %s", self.base_path)
             self.connection = True  # CSV doesn't have a real connection
             return True
