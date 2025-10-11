@@ -10,7 +10,7 @@ logger = Logger.get_logger(__name__)
 from .executor_commands import (
     execute_data, execute_func, execute_session, execute_walker,
     execute_open, execute_test, execute_auth, execute_load, 
-    execute_export, execute_utils, execute_config
+    execute_export, execute_utils, execute_config, execute_comm
 )
 
 
@@ -83,6 +83,8 @@ class CommandExecutor:
                 return execute_export(self.zcli, parsed)
             elif command_type == "config":
                 return execute_config(self.zcli, parsed)
+            elif command_type == "comm":
+                return execute_comm(self.zcli, parsed)
             else:
                 return {"error": f"Unknown command type: {command_type}"}
         

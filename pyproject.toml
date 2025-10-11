@@ -74,12 +74,12 @@ keywords = ["cli", "framework", "yaml", "interactive", "shell"]
 # DEPENDENCIES
 # -----------------------------------------------------------------------------
 # These packages will be automatically installed when someone installs zCLI
+# Core dependencies work with SQLite (built into Python, no extra install needed)
 dependencies = [
     "PyYAML>=6.0",        # For parsing YAML configuration files
     "python-dotenv>=1.0", # For loading .env files with environment variables
     "websockets>=15.0",   # For WebSocket communication (zSocket subsystem)
     "requests>=2.32",     # For HTTP requests (zSession subsystem)
-    "pandas>=2.0",        # For CSV backend support (zData subsystem)
     "platformdirs>=4.0",  # For cross-platform config/data directory paths (zConfig subsystem)
 ]
 
@@ -88,6 +88,19 @@ dependencies = [
 # -----------------------------------------------------------------------------
 # These are only installed when specifically requested
 [project.optional-dependencies]
+# Backend-specific dependencies
+csv = [
+    "pandas>=2.0",        # For CSV backend support
+]
+postgresql = [
+    "psycopg2-binary>=2.9", # For PostgreSQL database connections
+]
+# Install all backends - install with: pip install zolo-zcli[all]
+all = [
+    "pandas>=2.0",
+    "psycopg2-binary>=2.9",
+]
+
 # Development dependencies - install with: pip install zolo-zcli[dev]
 dev = [
     "pytest>=7.0",        # For running tests

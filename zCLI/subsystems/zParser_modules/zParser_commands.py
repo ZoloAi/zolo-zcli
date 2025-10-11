@@ -42,6 +42,7 @@ def parse_command(command, logger):
         "export": _parse_export_command,
         "config": _parse_config_command,
         "load": _parse_load_command,
+        "comm": _parse_comm_command,
     }
     
     if command_type not in commands:
@@ -329,4 +330,45 @@ def _parse_load_command(parts):
         "action": "load",
         "args": args,
         "options": {}
+    }
+
+
+def _parse_comm_command(parts):
+    """Parse comm commands like 'comm start postgresql', 'comm status'"""
+    if len(parts) < 2:
+        return {"error": "Comm command requires action (start, stop, status, restart, info)"}
+    
+    action = parts[1].lower()
+    valid_actions = ["start", "stop", "status", "restart", "info", "install"]
+    
+    if action not in valid_actions:
+        return {"error": f"Invalid comm action: {action}. Use: {', '.join(valid_actions)}"}
+    
+    # Extract arguments and options
+    args = []
+    options = {}
+    
+    i = 2
+    while i < len(parts):
+        part = parts[i]
+        
+        if part.startswith("--"):
+            # Option
+            opt_name = part[2:]
+            if i + 1 < len(parts) and not parts[i + 1].startswith("--"):
+                options[opt_name] = parts[i + 1]
+                i += 2
+            else:
+                options[opt_name] = True
+                i += 1
+        else:
+            # Argument
+            args.append(part)
+            i += 1
+    
+    return {
+        "type": "comm",
+        "action": action,
+        "args": args,
+        "options": options
     }
