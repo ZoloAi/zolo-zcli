@@ -123,6 +123,7 @@ class ClassicalData:
         
         # Ensure tables exist for specific actions
         # - create: ensures tables (creates if missing)
+        # - drop: does NOT ensure tables (drops existing tables)
         # - insert: does NOT ensure tables (errors if missing)
         # - read/update/delete/upsert: ensure tables exist
         if action == "create":
@@ -130,7 +131,7 @@ class ClassicalData:
             if not self.ensure_tables(tables if tables else None):
                 self.logger.error("Failed to create tables for action: %s", action)
                 return "error"
-        elif action not in ["list_tables", "insert"]:
+        elif action not in ["list_tables", "insert", "drop"]:
             # Other actions also ensure tables exist
             if not self.ensure_tables(tables if tables else None):
                 self.logger.error("Failed to ensure tables for action: %s", action)
@@ -142,6 +143,8 @@ class ClassicalData:
                 result = self.list_tables()
             elif action == "create":
                 result = self._handle_create_table(request)
+            elif action == "drop":
+                result = self._handle_drop(request)
             elif action == "insert":
                 result = self._handle_insert(request)
             elif action == "read":
@@ -322,6 +325,38 @@ class ClassicalData:
         
         # Tables were already created by ensure_tables
         self.logger.info("✅ Created %d table structure(s): %s", len(tables), ", ".join(tables))
+        return True
+    
+    def _handle_drop(self, request):
+        """
+        Handle DROP TABLE operation.
+        
+        Drops one or more tables from the database.
+        """
+        tables = request.get("tables", [])
+        
+        if not tables:
+            self.logger.error("No table specified for DROP")
+            return False
+        
+        # Drop each table
+        dropped = []
+        for table in tables:
+            # Check if table exists
+            if not self.adapter.table_exists(table):
+                self.logger.warning("Table '%s' does not exist, skipping", table)
+                continue
+            
+            # Drop the table
+            self.adapter.drop_table(table)
+            dropped.append(table)
+            self.logger.info("✅ Dropped table: %s", table)
+        
+        if not dropped:
+            self.logger.error("No tables were dropped")
+            return False
+        
+        self.logger.info("✅ Dropped %d table(s): %s", len(dropped), ", ".join(dropped))
         return True
     
     def _handle_insert(self, request):

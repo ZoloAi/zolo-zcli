@@ -36,14 +36,13 @@ def register_builtin_adapters():
     except ImportError as e:
         logger.warning("Failed to register CSV adapter (pandas not installed): %s", e)
     
-    # PostgreSQL adapter (stub - not yet fully implemented)
-    # Uncomment when ready to use:
-    # try:
-    #     from .postgresql_adapter import PostgreSQLAdapter
-    #     AdapterFactory.register_adapter("postgresql", PostgreSQLAdapter)
-    #     logger.debug("✅ Registered PostgreSQL adapter")
-    # except (ImportError, NotImplementedError) as e:
-    #     logger.warning("PostgreSQL adapter not available: %s", e)
+    # PostgreSQL adapter (requires psycopg2)
+    try:
+        from .postgresql_adapter import PostgreSQLAdapter
+        AdapterFactory.register_adapter("postgresql", PostgreSQLAdapter)
+        logger.debug("✅ Registered PostgreSQL adapter")
+    except ImportError as e:
+        logger.warning("PostgreSQL adapter not available (psycopg2 not installed): %s", e)
     #
     # # MySQL adapter
     # try:

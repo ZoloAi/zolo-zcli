@@ -99,7 +99,7 @@ def _parse_data_command(parts):
         return {"error": "Data command requires action"}
     
     action = parts[1].lower()
-    valid_actions = ["read", "create", "insert", "update", "delete", "search", "tables"]
+    valid_actions = ["read", "create", "insert", "update", "delete", "drop", "search", "tables"]
     
     if action not in valid_actions:
         return {"error": f"Invalid data action: {action}"}

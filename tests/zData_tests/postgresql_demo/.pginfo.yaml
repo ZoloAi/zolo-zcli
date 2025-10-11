@@ -1,0 +1,17 @@
+project:
+  name: demo
+  created: '2025-10-11T13:27:47.930992'
+connection:
+  database: demo
+  host: localhost
+  port: 5432
+  user: galnachshon
+  connection_string: postgresql://galnachshon@localhost:5432/demo
+server:
+  data_directory: /opt/homebrew/var/postgresql@14
+  version: '14.19'
+tables:
+- posts
+- products
+schema_version: 1
+last_updated: '2025-10-11T13:27:47.945614'

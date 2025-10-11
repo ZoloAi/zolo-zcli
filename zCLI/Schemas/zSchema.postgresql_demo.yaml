@@ -5,8 +5,15 @@
 Meta:
   Data_Type: postgresql
   Data_path: "@.tests.zData_tests.postgresql_demo"
+  Data_Label: "demo"
   Data_Paradigm: classical
   Description: Demo schema for postgresql adapter testing
+  
+  # PostgreSQL connection settings (optional, defaults auto-detected)
+  # Data_Host: "localhost"      # Default: localhost
+  # Data_Port: 5432             # Default: 5432
+  # Data_User: null             # Default: auto-detect system username (macOS/Homebrew)
+  # Data_Password: null         # Default: null (no password for local)
 
 # Simple users table
 users:
