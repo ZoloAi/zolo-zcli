@@ -63,39 +63,33 @@ class SQLiteAdapter(SQLAdapter):
         return self.cursor
     
     # ═══════════════════════════════════════════════════════════
-    # Schema Operations
+    # Schema Operations (mostly inherited from SQLAdapter)
     # ═══════════════════════════════════════════════════════════
-    # create_table() inherited from SQLAdapter
+    # create_table() - inherited from SQLAdapter
+    # drop_table() - inherited from SQLAdapter  
+    # alter_table() - inherited from SQLAdapter with SQLite-specific overrides below
     
-    def alter_table(self, table_name, changes):
-        """Alter an existing table structure."""
-        cur = self.get_cursor()
+    def _build_add_column_sql(self, table_name, column_name, column_def):
+        """
+        Build ADD COLUMN SQL for SQLite.
         
-        # SQLite has limited ALTER TABLE support
-        # We can only ADD COLUMN, not DROP or MODIFY
-        if "add_columns" in changes:
-            for column_name, column_def in changes["add_columns"].items():
-                field_type = self._map_field_type(column_def.get("type", "str"))
-                sql = f"ALTER TABLE {table_name} ADD COLUMN {column_name} {field_type}"
-                
-                if column_def.get("required"):
-                    # SQLite requires a default for NOT NULL columns when adding
-                    default = column_def.get("default", "NULL")
-                    sql += f" DEFAULT {default}"
-                
-                logger.info("Executing ALTER TABLE: %s", sql)
-                cur.execute(sql)
-            
-            self.connection.commit()
-            logger.info("Altered table: %s", table_name)
+        SQLite requires a DEFAULT value for NOT NULL columns when adding.
+        """
+        field_type = self._map_field_type(column_def.get("type", "str"))
+        sql = f"ALTER TABLE {table_name} ADD COLUMN {column_name} {field_type}"
+        
+        # SQLite-specific: Handle required columns (need default)
+        if column_def.get("required"):
+            default = column_def.get("default", "NULL")
+            sql += f" DEFAULT {default}"
+        elif column_def.get("default") is not None:
+            sql += f" DEFAULT {column_def['default']}"
+        
+        return sql
     
-    def drop_table(self, table_name):
-        """Drop a table."""
-        cur = self.get_cursor()
-        sql = f"DROP TABLE IF EXISTS {table_name}"
-        logger.info("Dropping table: %s", table_name)
-        cur.execute(sql)
-        self.connection.commit()
+    def _supports_drop_column(self):
+        """SQLite has limited ALTER TABLE support - cannot DROP COLUMN."""
+        return False
     
     def table_exists(self, table_name):
         """Check if a table exists."""

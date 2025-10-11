@@ -123,6 +123,92 @@ class SQLAdapter(BaseDataAdapter):
         if "indexes" in schema:
             self._create_indexes(table_name, schema["indexes"])
 
+    def drop_table(self, table_name):
+        """
+        Drop a table from the database.
+        
+        Shared implementation for SQL databases.
+        Override _after_drop_table() for subclass-specific cleanup.
+        """
+        cur = self.get_cursor()
+        sql = f"DROP TABLE IF EXISTS {table_name}"
+        logger.info("Dropping table: %s", table_name)
+        cur.execute(sql)
+        self.connection.commit()
+        
+        # Hook for subclass-specific cleanup
+        self._after_drop_table(table_name)
+    
+    def _after_drop_table(self, table_name):
+        """
+        Hook for subclass-specific cleanup after dropping a table.
+        
+        Override in subclass if needed (e.g., PostgreSQL updates .pginfo.yaml).
+        Default: no additional cleanup needed.
+        """
+        # Default: no additional cleanup
+        return
+    
+    def alter_table(self, table_name, changes):
+        """
+        Alter table structure (shared SQL implementation).
+        
+        Supports:
+        - add_columns: Add new columns
+        - drop_columns: Remove columns (PostgreSQL only, SQLite limited)
+        
+        Override _build_add_column_sql() for dialect-specific syntax.
+        """
+        cur = self.get_cursor()
+        
+        # Handle ADD COLUMN
+        if "add_columns" in changes:
+            for column_name, column_def in changes["add_columns"].items():
+                sql = self._build_add_column_sql(table_name, column_name, column_def)
+                logger.info("Executing ALTER TABLE: %s", sql)
+                cur.execute(sql)
+            self.connection.commit()
+            logger.info("Altered table (add columns): %s", table_name)
+        
+        # Handle DROP COLUMN (if supported by dialect)
+        if "drop_columns" in changes:
+            if self._supports_drop_column():
+                for column_name in changes["drop_columns"]:
+                    sql = f"ALTER TABLE {table_name} DROP COLUMN {column_name}"
+                    logger.info("Executing ALTER TABLE: %s", sql)
+                    cur.execute(sql)
+                self.connection.commit()
+                logger.info("Altered table (drop columns): %s", table_name)
+            else:
+                logger.warning("DROP COLUMN not supported by this SQL dialect")
+    
+    def _build_add_column_sql(self, table_name, column_name, column_def):
+        """
+        Build ADD COLUMN SQL statement.
+        
+        Override in subclass for dialect-specific requirements.
+        Default implementation works for most SQL databases.
+        """
+        field_type = self._map_field_type(column_def.get("type", "str"))
+        sql = f"ALTER TABLE {table_name} ADD COLUMN {column_name} {field_type}"
+        
+        # Add DEFAULT if specified
+        if column_def.get("default") is not None:
+            default = column_def.get("default")
+            sql += f" DEFAULT {default}"
+        
+        return sql
+    
+    def _supports_drop_column(self):
+        """
+        Check if this SQL dialect supports DROP COLUMN.
+        
+        Override in subclass:
+        - PostgreSQL: True
+        - SQLite: False (limited ALTER TABLE support)
+        """
+        return True  # Most SQL databases support DROP COLUMN
+
     def table_exists(self, table_name):
         """Check if a table exists (must be overridden for dialect)."""
         raise NotImplementedError("Subclass must implement table_exists()")

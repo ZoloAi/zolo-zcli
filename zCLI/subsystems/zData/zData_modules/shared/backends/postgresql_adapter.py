@@ -269,43 +269,18 @@ class PostgreSQLAdapter(SQLAdapter):
         logger.debug("Found %d tables: %s", len(tables), tables)
         return tables
     
-    def alter_table(self, table_name, changes):
-        """Alter table structure."""
-        cur = self.get_cursor()
-        
-        # PostgreSQL ALTER TABLE is similar to SQLite
-        if "add_columns" in changes:
-            for column_name, column_def in changes["add_columns"].items():
-                field_type = self._map_field_type(column_def.get("type", "str"))
-                sql_stmt = f"ALTER TABLE {table_name} ADD COLUMN {column_name} {field_type}"
-                
-                if column_def.get("default") is not None:
-                    default = column_def.get("default")
-                    sql_stmt += f" DEFAULT {default}"
-                
-                logger.info("Executing ALTER TABLE: %s", sql_stmt)
-                cur.execute(sql_stmt)
-            
-            self.connection.commit()
-            logger.info("Altered table: %s", table_name)
-        
-        if "drop_columns" in changes:
-            for column_name in changes["drop_columns"]:
-                sql_stmt = f"ALTER TABLE {table_name} DROP COLUMN {column_name}"
-                logger.info("Executing ALTER TABLE: %s", sql_stmt)
-                cur.execute(sql_stmt)
-            
-            self.connection.commit()
+    # ═══════════════════════════════════════════════════════════
+    # Schema Operations (mostly inherited from SQLAdapter)
+    # ═══════════════════════════════════════════════════════════
+    # alter_table() - inherited from SQLAdapter (PostgreSQL supports DROP COLUMN)
+    # drop_table() - inherited from SQLAdapter with hook override below
     
-    def drop_table(self, table_name):
-        """Drop a table and update project info."""
-        cur = self.get_cursor()
-        sql_stmt = f"DROP TABLE IF EXISTS {table_name}"
-        logger.info("Dropping table: %s", table_name)
-        cur.execute(sql_stmt)
-        self.connection.commit()
+    def _after_drop_table(self, table_name):
+        """
+        PostgreSQL-specific cleanup after dropping a table.
         
-        # Update project info file
+        Updates the .pginfo.yaml tracking file.
+        """
         self.update_project_info()
     
     # ═══════════════════════════════════════════════════════════

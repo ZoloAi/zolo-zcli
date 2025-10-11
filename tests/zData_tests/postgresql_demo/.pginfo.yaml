@@ -1,6 +1,6 @@
 project:
   name: demo
-  created: '2025-10-11T20:00:56.776230'
+  created: '2025-10-11T21:46:19.777869'
 connection:
   database: demo
   host: localhost
@@ -15,4 +15,4 @@ tables:
 - products
 - users
 schema_version: 1
-last_updated: '2025-10-11T20:00:56.779526'
+last_updated: '2025-10-11T21:46:19.779584'
