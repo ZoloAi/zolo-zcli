@@ -82,9 +82,11 @@ class ZData:
             Args:
                 request (dict): Request with action, model, and parameters
                     - action: zData operation (create, read, update, delete, upsert)
-                    - model: zPath to schema file
+                    - model: zPath to schema file (or None if using cached schema)
                     - tables: List of table names
                     - fields, values, where, etc.: Operation-specific parameters
+                    - options._schema_cached: Pre-parsed schema from alias (optional)
+                    - options._alias_name: Alias name for logging (optional)
                     
             Returns:
                 Result of the operation
@@ -98,16 +100,29 @@ class ZData:
             "indent": 1
         })
 
-        # Load schema from model
-        # Note: Schemas are NOT cached by zLoader, so always load fresh
-        model_path = request.get("model")
-        if model_path:
-            self.logger.info("Loading schema from: %s", model_path)
-            schema = self.loader.handle(model_path)
-            if schema == "error" or not schema:
-                self.logger.error("Failed to load schema from: %s", model_path)
+        # Check if schema is pre-parsed (from alias)
+        options = request.get("options", {})
+        cached_schema = options.get("_schema_cached")
+        alias_name = options.get("_alias_name")
+        
+        if cached_schema:
+            # Use pre-parsed schema from alias
+            self.logger.info("Using cached schema from alias: $%s", alias_name)
+            self.load_schema(cached_schema)
+        else:
+            # Load schema from model path
+            # Note: Schemas are NOT cached by zLoader, so always load fresh
+            model_path = request.get("model")
+            if model_path:
+                self.logger.info("Loading schema from: %s", model_path)
+                schema = self.loader.handle(model_path)
+                if schema == "error" or not schema:
+                    self.logger.error("Failed to load schema from: %s", model_path)
+                    return "error"
+                self.load_schema(schema)  # Load schema into handler (ClassicalData or QuantumData)
+            else:
+                self.logger.error("No schema provided (model path or cached schema required)")
                 return "error"
-            self.load_schema(schema)  # Load schema into handler (ClassicalData or QuantumData)
 
         # Validate successful schema load
         if not self.handler:

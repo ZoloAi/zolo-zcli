@@ -14,9 +14,11 @@ def execute_load(zcli, parsed):
     
     Commands:
       load <zPath>                   - Load and pin resource
+      load <zPath> --as <alias>      - Load and pin with alias (use with $alias)
       load show                      - Show all cache tiers
       load show pinned               - Show Tier 1 (pinned resources)
       load show cached               - Show Tier 2 (auto-cache stats)
+      load show aliases              - Show all aliases
       load show schemas/ui/config    - Show specific resource type
       load clear [pattern]           - Clear loaded resources
     
@@ -28,6 +30,7 @@ def execute_load(zcli, parsed):
         Load operation result
     """
     args = parsed.get("args", [])
+    options = parsed.get("options", {})
     
     # Check if first arg is a subcommand (show/clear)
     if args and args[0] in ["show", "clear"]:
@@ -45,6 +48,9 @@ def execute_load(zcli, parsed):
             elif remaining_args[0] == "cached":
                 # load show cached - show Tier 2 only
                 return show_cached_stats(zcli)
+            elif remaining_args[0] == "aliases":
+                # load show aliases - show all aliases
+                return show_aliases(zcli)
             elif remaining_args[0] in ["schemas", "ui", "config"]:
                 # load show schemas/ui/config - filter by type
                 return show_resources_by_type(zcli, remaining_args[0])
@@ -56,16 +62,40 @@ def execute_load(zcli, parsed):
     
     # Load resource
     if not args:
-        return {"error": "Usage: load <zPath> | load show | load clear [pattern]"}
+        return {"error": "Usage: load <zPath> [--as <alias>] | load show | load clear [pattern]"}
     
     zPath = args[0]
+    alias = options.get("as")
     
     try:
-        # Load via zLoader (uses SmartCache)
-        result = zcli.loader.handle(zPath)
-        
-        if result == "error" or result is None:
-            return {"error": f"Failed to load: {zPath}"}
+        # For aliases, we want to bypass the "no schema caching" rule
+        # Load directly without going through handle() to ensure schemas are cached
+        if alias:
+            # Load raw file
+            from zCLI.subsystems.zLoader_modules import load_file_raw
+            
+            # Get resolved filepath from zParser
+            zVaFile_fullpath, zVaFilename = zcli.zparser.zPath_decoder(zPath, None)
+            zFilePath_identified, zFile_extension = zcli.zparser.identify_zFile(zVaFilename, zVaFile_fullpath)
+            
+            # Read raw content
+            zFile_raw = load_file_raw(zFilePath_identified, zcli.display)
+            
+            # Parse content
+            result = zcli.zparser.parse_file_content(zFile_raw, zFile_extension)
+            
+            if result == "error" or result is None:
+                return {"error": f"Failed to load: {zPath}"}
+        else:
+            # Traditional load via zLoader (uses SmartCache)
+            result = zcli.loader.handle(zPath)
+            
+            if result == "error" or result is None:
+                return {"error": f"Failed to load: {zPath}"}
+            
+            # Get resolved filepath from zParser
+            zVaFile_fullpath, zVaFilename = zcli.zparser.zPath_decoder(zPath, None)
+            zFilePath_identified, _ = zcli.zparser.identify_zFile(zVaFilename, zVaFile_fullpath)
         
         # Determine resource type using proper zVaFile detection
         if "zSchema." in zPath:
@@ -77,16 +107,20 @@ def execute_load(zcli, parsed):
         else:
             resource_type = "other"
         
-        # Get resolved filepath from zParser
-        zVaFile_fullpath, zVaFilename = zcli.zparser.zPath_decoder(zPath, None)
-        zFilePath_identified, _ = zcli.zparser.identify_zFile(zVaFilename, zVaFile_fullpath)
-        
         # Pin to loaded cache
-        loaded_key = f"parsed:{zFilePath_identified}"
+        if alias:
+            # Store with alias key
+            loaded_key = f"alias:{alias}"
+            display_name = f"${alias}"
+        else:
+            # Store with filepath key
+            loaded_key = f"parsed:{zFilePath_identified}"
+            display_name = zPath
+        
         zcli.loader.loaded_cache.load(
             loaded_key,
             result,
-            filepath=zFilePath_identified,
+            filepath=zPath,  # Store original zPath for reference
             resource_type=resource_type
         )
         
@@ -98,12 +132,17 @@ def execute_load(zcli, parsed):
             items = list(result.keys())
             item_type = "blocks"
         
-        logger.info("✅ Loaded %s: %s (%d %s)", resource_type, zPath, len(items), item_type)
+        if alias:
+            logger.info("✅ Loaded and aliased %s: %s → %s (%d %s)", 
+                       resource_type, zPath, display_name, len(items), item_type)
+        else:
+            logger.info("✅ Loaded %s: %s (%d %s)", resource_type, zPath, len(items), item_type)
         
         return {
             "status": "success",
             "type": resource_type,
             "path": zPath,
+            "alias": alias,
             "items": items,
             "count": len(items)
         }
@@ -284,6 +323,47 @@ def show_resources_by_type(zcli, resource_type):
     print("\n" + "=" * 70 + "\n")
     
     return {"status": "success", "type": filter_type, "count": len(filtered)}
+
+
+def show_aliases(zcli):
+    """Show all defined aliases (resources loaded with --as flag)."""
+    print("\n" + "=" * 70)
+    print("Defined Aliases")
+    print("=" * 70)
+    
+    loaded_resources = zcli.loader.loaded_cache.list_loaded()
+    aliases = [r for r in loaded_resources if r.get("key", "").startswith("alias:")]
+    
+    if not aliases:
+        print("\nNo aliases defined.")
+        print("Use 'load <zPath> --as <alias>' to create an alias.")
+        print("\nExample:")
+        print("  load @.zCLI.Schemas.zSchema.sqlite_demo --as sqlite_demo")
+        print("  data read users --model $sqlite_demo")
+        return {"status": "empty"}
+    
+    # Group by type
+    by_type = {}
+    for alias_res in aliases:
+        res_type = alias_res.get("type", "unknown")
+        if res_type not in by_type:
+            by_type[res_type] = []
+        by_type[res_type].append(alias_res)
+    
+    for res_type, items in by_type.items():
+        print(f"\n{res_type.upper()}:")
+        for item in items:
+            alias_name = item['key'].replace("alias:", "")
+            age_mins = int(item["age"] / 60)
+            print(f"  ${alias_name}")
+            print(f"    → {item.get('filepath', 'N/A')}")
+            print(f"    Age: {age_mins} minutes")
+    
+    print(f"\n{'=' * 70}")
+    print(f"Total: {len(aliases)} alias(es)")
+    print("=" * 70 + "\n")
+    
+    return {"status": "success", "count": len(aliases), "aliases": aliases}
 
 
 def clear_loaded_resources(zcli, pattern=None):

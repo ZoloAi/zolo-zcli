@@ -317,19 +317,41 @@ def _parse_config_command(parts):
 
 
 def _parse_load_command(parts):
-    """Parse load commands like 'load @.zUI.manual' or 'load show pinned'"""
+    """
+    Parse load commands like 'load @.zUI.manual' or 'load @.zSchema.demo --as my_schema'.
+    
+    Supports options like --as for aliasing.
+    """
     if len(parts) < 2:
         return {"error": "Load command requires arguments"}
     
-    # Keep args as separate parts for subcommands (show/clear)
-    # e.g., "load show pinned" → args: ["show", "pinned"]
-    args = parts[1:]
+    # Extract arguments and options
+    args = []
+    options = {}
+    
+    i = 1
+    while i < len(parts):
+        part = parts[i]
+        
+        if part.startswith("--"):
+            # Option
+            opt_name = part[2:]
+            if i + 1 < len(parts) and not parts[i + 1].startswith("--"):
+                options[opt_name] = parts[i + 1]
+                i += 2
+            else:
+                options[opt_name] = True
+                i += 1
+        else:
+            # Argument
+            args.append(part)
+            i += 1
     
     return {
         "type": "load",
         "action": "load",
         "args": args,
-        "options": {}
+        "options": options
     }
 
 

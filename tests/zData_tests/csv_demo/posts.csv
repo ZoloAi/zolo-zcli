@@ -1,8 +1,5 @@
-posts.id,posts.user_id,posts.title,posts.content,posts.published
-,1,"""Updated Title""","""Updated content""",
-,3,CSV Title,CSV test content,
-,0,Hi,Short,
-,1,Valid Title Here,This is a longer content that meets the minimum length requirement,
-,5,Valid Post Title,This is enough content to pass validation rules,
-,1,CSV Post One,This is the first CSV post with enough content,
-,2,CSV Post Two,This is the second CSV post with enough content,
+posts.posts.id,posts.posts.user_id,posts.posts.title,posts.posts.content,posts.posts.status
+,1,Alice First Post,Hello from Alice,published
+,1,Alice Second Post,More from Alice,draft
+,2,Bob Post,Hello from Bob,published
+,3,Charlie Post,Hello from Charlie,draft
