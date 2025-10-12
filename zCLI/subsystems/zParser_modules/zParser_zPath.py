@@ -23,7 +23,7 @@ def resolve_zmachine_path(data_path, config_paths=None):
     
     Args:
         data_path: Path string from schema Meta
-        config_paths: Optional ZConfigPaths instance (will create if None)
+        config_paths: Optional zConfigPaths instance (will create if None)
         
     Returns:
         str: Resolved absolute path
@@ -34,8 +34,8 @@ def resolve_zmachine_path(data_path, config_paths=None):
     
     # Get config paths
     if not config_paths:
-        from zCLI.subsystems.zConfig_modules import ZConfigPaths
-        config_paths = ZConfigPaths()
+        from zCLI.subsystems.zConfig_modules import zConfigPaths
+        config_paths = zConfigPaths()
     
     # Extract the subpath after ~.zMachine.
     # Example: "~.zMachine.Data/cache.csv" → "Data/cache.csv"

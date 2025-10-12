@@ -14,7 +14,7 @@ from logger import Logger
 logger = Logger.get_logger(__name__)
 
 
-class ZConfigPaths:
+class zConfigPaths:
     """
     Cross-platform path resolver for zolo-zcli configuration.
     
@@ -35,7 +35,7 @@ class ZConfigPaths:
         self.app_author = "zolo"
         self.os_type = platform.system()  # 'Linux', 'Darwin', 'Windows'
         
-        logger.debug("[ZConfigPaths] Initialized for OS: %s", self.os_type)
+        logger.debug("[zConfigPaths] Initialized for OS: %s", self.os_type)
     
     # ═══════════════════════════════════════════════════════════
     # System Paths (requires admin/root)
@@ -199,7 +199,7 @@ class ZConfigPaths:
         config_dir = self.user_config_dir_native
         if not config_dir.exists():
             config_dir.mkdir(parents=True, exist_ok=True)
-            logger.info("[ZConfigPaths] Created user config directory: %s", config_dir)
+            logger.info("[zConfigPaths] Created user config directory: %s", config_dir)
         
         return config_dir
     

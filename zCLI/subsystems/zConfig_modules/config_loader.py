@@ -45,7 +45,7 @@ class ConfigLoader:
         Load configuration from all sources.
         
         Args:
-            paths_resolver: ZConfigPaths instance for path resolution
+            paths_resolver: zConfigPaths instance for path resolution
             
         Returns:
             Merged configuration dict

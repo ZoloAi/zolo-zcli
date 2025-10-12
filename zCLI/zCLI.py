@@ -42,10 +42,10 @@ class zCLI:
         # Initialize logger
         self.logger = Logger.get_logger("zCLI")
 
-        # Import ZConfig here to avoid circular dependency (ZConfig may import other subsystems)
+        # Import zConfig here to avoid circular dependency (zConfig may import other subsystems)
         # Initialize zConfig FIRST (provides machine config for session creation)
-        from .subsystems.zConfig import ZConfig
-        self.config = ZConfig()
+        from .subsystems.zConfig import zConfig
+        self.config = zConfig(zcli=self)
 
         # Create instance-specific session with machine config
         self.session = create_session(machine_config=self.config.get_machine())

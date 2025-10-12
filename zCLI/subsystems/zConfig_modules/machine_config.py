@@ -41,7 +41,7 @@ class MachineConfig:
         Initialize machine configuration.
         
         Args:
-            paths: ZConfigPaths instance for path resolution
+            paths: zConfigPaths instance for path resolution
         """
         self.paths = paths
         self.machine = {}
