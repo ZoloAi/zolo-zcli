@@ -1,12 +1,12 @@
 # zCLI/subsystems/zData/zData_modules/shared/__init__.py
-# ----------------------------------------------------------------
-# Shared infrastructure package for zData subsystem.
-# 
-# Contains components used by both classical and quantum data handlers:
-# - Adapter factory and backend adapters
-# - Connection management
-# - Base classes
-# ----------------------------------------------------------------
+"""Shared infrastructure for both classical and quantum paradigms."""
 
-__all__ = []
+from .parsers import parse_where_clause, parse_value
+from .data_operations import DataOperations
+
+__all__ = [
+    "parse_where_clause",
+    "parse_value",
+    "DataOperations",
+]
 

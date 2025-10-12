@@ -1,55 +1,23 @@
-"""
-    Factory for creating backend adapters based on data type.
-
-    Provides the core mechanism for adapter instantiation.
-    Registration of adapters is handled in adapter_registry.py.
-"""
+"""Factory for creating backend adapters based on schema data type."""
 
 from logger import Logger
 
-# Logger instance
 logger = Logger.get_logger(__name__)
 
 class AdapterFactory:
-    """
-        Factory for creating backend adapters.
-        
-        Provides a centralized way to instantiate the correct adapter
-        based on the data type specified in the schema.
-    """
+    """Factory for creating backend adapters (SQLite, PostgreSQL, CSV)."""
 
-    # Registry of available adapters
     _adapters = {}
 
     @classmethod
     def register_adapter(cls, data_type, adapter_class):
-        """
-            Register a custom adapter.
-            
-            This allows plugins or extensions to add support for new backends.
-            
-            Args:
-                data_type (str): Data type identifier (e.g., "sqlite", "csv")
-                adapter_class: Adapter class that inherits from BaseDataAdapter
-        """
+        """Register adapter for a data type (enables plugin extensions)."""
         cls._adapters[data_type.lower()] = adapter_class
         Logger.get_logger("AdapterFactory").info("Registered adapter for data type: %s", data_type)
 
     @classmethod
     def create_adapter(cls, data_type, config):
-        """
-            Create appropriate adapter based on data type.
-            
-            Args:
-                data_type (str): Data type from schema (e.g., "sqlite", "csv")
-                config (dict): Configuration for the adapter
-                
-            Returns:
-                BaseDataAdapter: Instantiated adapter
-                
-            Raises:
-                ValueError: If data type is not supported
-        """
+        """Create adapter instance for specified data type."""
         logger.debug("Creating adapter for data type: %s", data_type)
 
         adapter_class = cls._adapters.get(data_type.lower())
@@ -67,23 +35,10 @@ class AdapterFactory:
 
     @classmethod
     def list_adapters(cls):
-        """
-            List all registered adapters.
-            
-            Returns:
-                list: List of registered data type identifiers
-        """
+        """List all registered adapter types."""
         return list(cls._adapters.keys())
 
     @classmethod
     def is_supported(cls, data_type):
-        """
-            Check if a data type is supported.
-            
-            Args:
-                data_type (str): Data type to check
-                
-            Returns:
-                bool: True if supported, False otherwise
-        """
+        """Check if data type is supported."""
         return data_type.lower() in cls._adapters

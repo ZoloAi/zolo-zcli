@@ -1,8 +1,8 @@
 """Unified data management with dual-paradigm support (classical/quantum)."""
 
 from logger import Logger
-from .zData_modules.classical import ClassicalData
-from .zData_modules.quantum import QuantumData
+from .zData_modules.paradigms.classical import ClassicalData
+from .zData_modules.paradigms.quantum import QuantumData
 
 # Logger instance
 logger = Logger.get_logger(__name__)
@@ -96,7 +96,7 @@ class zData:
             self.handler = existing_handler
             self.schema = existing_handler.schema
             self.paradigm = self._detect_paradigm(self.schema)
-            self.logger.info("♻️  Reusing connection for $%s", alias_name)
+            self.logger.info("Reusing connection for $%s", alias_name)
             return True
 
         # First use in wizard - create and store connection

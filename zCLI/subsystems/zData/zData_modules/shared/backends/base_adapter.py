@@ -1,287 +1,108 @@
 # zCLI/subsystems/zData/zData_modules/shared/backends/base_adapter.py
-# ----------------------------------------------------------------
-# Abstract base class for all data backend adapters.
-
-# Defines the interface that all backend implementations must follow.
-# This ensures consistent behavior across SQLite, CSV, PostgreSQL, etc.
-# ----------------------------------------------------------------
+"""Abstract base class defining the interface for all data backend adapters."""
 
 from abc import ABC, abstractmethod
 from pathlib import Path
 from logger import Logger
 
-# Logger instance
 logger = Logger.get_logger(__name__)
 
 
-class BaseDataAdapter(ABC):
-    """
-        Abstract base class for all data backend adapters.
-        
-        All backend implementations (SQLite, CSV, PostgreSQL, etc.) must
-        inherit from this class and implement all abstract methods.
-    """
+class BaseDataAdapter(ABC):  # pylint: disable=unnecessary-pass
+    """Abstract base class for all backend adapters (SQLite, PostgreSQL, CSV)."""
 
     def __init__(self, config):
-        """
-            Initialize adapter with configuration.
-            
-            Args:
-                config (dict): Backend configuration with keys:
-                    - path: Database/file directory path
-                    - label: Database/file name
-                    - meta: Additional metadata from schema
-        """
+        """Initialize adapter with config (path, label, meta)."""
         self.config = config
         self.connection = None
         self.cursor = None
-        
-        # Standardized path handling: path is always a directory
         self.base_path = Path(config.get("path", "."))
         self.data_label = config.get("label", "data")
-        
+
         logger.debug("Initializing %s adapter with config: %s", 
                     self.__class__.__name__, config)
         logger.debug("Base path: %s, Data label: %s", self.base_path, self.data_label)
 
-    # ═══════════════════════════════════════════════════════════
-    # Connection Management
-    # ═══════════════════════════════════════════════════════════
-
     @abstractmethod
     def connect(self):
-        """
-        Establish connection to the data backend.
-        
-        Returns:
-            Connection object or True if successful
-        """
-        pass
+        """Establish connection to backend."""
 
     @abstractmethod
     def disconnect(self):
-        """Close connection to the data backend."""
-        pass
+        """Close connection to backend."""
 
     @abstractmethod
     def get_cursor(self):
-        """
-            Get or create a cursor for executing operations.
-            
-            Returns:
-                Cursor object for the backend
-        """
-        pass
-
-    # ═══════════════════════════════════════════════════════════
-    # Schema Operations
-    # ═══════════════════════════════════════════════════════════
+        """Get or create cursor for executing operations."""
 
     @abstractmethod
     def create_table(self, table_name, schema):
-        """
-        Create a table with the given schema.
-        
-        Args:
-            table_name (str): Name of the table
-            schema (dict): Field definitions from parsed schema
-        """
-        pass
+        """Create table with given schema."""
 
     @abstractmethod
     def alter_table(self, table_name, changes):
-        """
-        Alter an existing table structure.
-        
-        Args:
-            table_name (str): Name of the table
-            changes (dict): Changes to apply (add_columns, drop_columns, etc.)
-        """
-        pass
+        """Alter existing table structure."""
 
     @abstractmethod
     def drop_table(self, table_name):
-        """
-        Drop a table.
-        
-        Args:
-            table_name (str): Name of the table to drop
-        """
-        pass
+        """Drop table."""
 
     @abstractmethod
     def table_exists(self, table_name):
-        """
-        Check if a table exists.
-        
-        Args:
-            table_name (str): Name of the table
-            
-        Returns:
-            bool: True if table exists, False otherwise
-        """
-        pass
+        """Check if table exists."""
 
     @abstractmethod
     def list_tables(self):
-        """
-        List all tables in the database.
-        
-        Returns:
-            list: List of table names
-        """
-        pass
-
-    # ═══════════════════════════════════════════════════════════
-    # CRUD Operations
-    # ═══════════════════════════════════════════════════════════
+        """List all tables in database."""
 
     @abstractmethod
     def insert(self, table, fields, values):
-        """
-        Insert a row into a table.
-        
-        Args:
-            table (str): Table name
-            fields (list): List of field names
-            values (list): List of values corresponding to fields
-            
-        Returns:
-            int: ID of inserted row (or row count for backends without IDs)
-        """
-        pass
+        """Insert row into table."""
 
     @abstractmethod
-    def select(self, table, fields=None, where=None, joins=None, order=None, limit=None):
-        """
-        Select rows from a table.
-        
-        Args:
-            table (str): Table name
-            fields (list): List of field names to select (None or ["*"] for all)
-            where (dict): WHERE clause conditions
-            joins (list): JOIN specifications
-            order (dict): ORDER BY specifications
-            limit (int): Maximum number of rows to return
-            
-        Returns:
-            list: List of rows (as dicts or tuples depending on backend)
-        """
-        pass
+    def select(self, table, fields=None, **kwargs):
+        """Select rows from table."""
 
     @abstractmethod
     def update(self, table, fields, values, where):
-        """
-        Update rows in a table.
-        
-        Args:
-            table (str): Table name
-            fields (list): List of field names to update
-            values (list): List of new values
-            where (dict): WHERE clause conditions
-            
-        Returns:
-            int: Number of rows updated
-        """
-        pass
+        """Update rows in table."""
 
     @abstractmethod
     def delete(self, table, where):
-        """
-        Delete rows from a table.
-        
-        Args:
-            table (str): Table name
-            where (dict): WHERE clause conditions
-            
-        Returns:
-            int: Number of rows deleted
-        """
-        pass
+        """Delete rows from table."""
 
     @abstractmethod
     def upsert(self, table, fields, values, conflict_fields):
-        """
-        Insert or update a row (UPSERT operation).
-        
-        Args:
-            table (str): Table name
-            fields (list): List of field names
-            values (list): List of values
-            conflict_fields (list): Fields to check for conflicts
-            
-        Returns:
-            int: ID of inserted/updated row
-        """
-        pass
-
-    # ═══════════════════════════════════════════════════════════
-    # Type Mapping
-    # ═══════════════════════════════════════════════════════════
+        """Insert or update row (UPSERT operation)."""
 
     @abstractmethod
     def map_type(self, abstract_type):
-        """
-        Map abstract schema type to backend-specific type.
-        
-        Args:
-            abstract_type (str): Abstract type (e.g., "str", "int", "datetime")
-            
-        Returns:
-            str: Backend-specific type (e.g., "TEXT", "INTEGER", "TIMESTAMP")
-        """
-        pass
-
-    # ═══════════════════════════════════════════════════════════
-    # Transaction Management
-    # ═══════════════════════════════════════════════════════════
+        """Map abstract schema type to backend-specific type."""
 
     @abstractmethod
     def begin_transaction(self):
-        """Begin a transaction."""
-        pass
+        """Begin transaction."""
 
     @abstractmethod
     def commit(self):
-        """Commit the current transaction."""
-        pass
+        """Commit current transaction."""
 
     @abstractmethod
     def rollback(self):
-        """Rollback the current transaction."""
-        pass
-
-    # ═══════════════════════════════════════════════════════════
-    # Helper Methods (Optional - can be overridden)
-    # ═══════════════════════════════════════════════════════════
+        """Rollback current transaction."""
 
     def _ensure_directory(self, path=None):
-        """
-        Ensure directory exists for data storage.
-        
-        Args:
-            path: Path to ensure (defaults to self.base_path)
-        """
+        """Ensure directory exists for data storage."""
         target_path = Path(path) if path else self.base_path
         target_path.mkdir(parents=True, exist_ok=True)
         logger.debug("Ensured directory exists: %s", target_path)
 
     def is_connected(self):
-        """
-        Check if adapter is connected.
-        
-        Returns:
-            bool: True if connected, False otherwise
-        """
+        """Check if adapter is connected."""
         return self.connection is not None
 
     def get_connection_info(self):
-        """
-        Get connection information for logging/debugging.
-        
-        Returns:
-            dict: Connection information
-        """
+        """Get connection information for logging/debugging."""
         return {
             "adapter": self.__class__.__name__,
             "connected": self.is_connected(),

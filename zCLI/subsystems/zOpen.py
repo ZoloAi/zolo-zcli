@@ -26,12 +26,23 @@ class ZOpen:
     - Environment (GUI vs headless)
     """
     
-    def __init__(self, walker=None):
-        self.walker = walker
-        self.zSession = getattr(walker, "zSession", None)
-        if not self.zSession:
-            raise ValueError("ZOpen requires a walker with a session")
-        self.logger = getattr(walker, "logger", logger) if walker else logger
+    def __init__(self, zcli_or_walker=None):
+        # Accept either zcli instance (shell mode) or walker (UI mode)
+        if hasattr(zcli_or_walker, 'session'):
+            # Modern zCLI instance
+            self.zcli = zcli_or_walker
+            self.walker = None
+            self.zSession = zcli_or_walker.session
+            self.logger = zcli_or_walker.logger
+        elif hasattr(zcli_or_walker, 'zSession'):
+            # Legacy walker instance
+            self.walker = zcli_or_walker
+            self.zcli = None
+            self.zSession = zcli_or_walker.zSession
+            self.logger = getattr(zcli_or_walker, "logger", logger)
+        else:
+            # No valid instance
+            raise ValueError("ZOpen requires a zCLI instance or walker with session")
 
     def handle(self, zHorizontal):
         """

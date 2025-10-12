@@ -1,36 +1,18 @@
-"""
-Base SQL adapter for relational databases.
-
-Provides common SQL operations and query building logic that is shared
-across SQL-based backends (SQLite, PostgreSQL, MySQL, etc.).
-
-Specific SQL dialects override methods as needed for their syntax.
-"""
+"""Base SQL adapter providing shared operations for relational databases."""
 
 from abc import abstractmethod
-from .base_adapter import BaseDataAdapter
 from logger import Logger
+from .base_adapter import BaseDataAdapter
 
-# Logger instance
 logger = Logger.get_logger(__name__)
 
-
 class SQLAdapter(BaseDataAdapter):
-    """
-    Base class for SQL-based database adapters.
-    
-    Provides common SQL operations and query building that work across
-    most SQL databases. Subclasses override dialect-specific methods.
-    """
+    """Base class for SQL-based adapters (SQLite, PostgreSQL, MySQL)."""
 
     def __init__(self, config):
         super().__init__(config)
         # Construct db_path from folder + label
         self.db_path = self.base_path / f"{self.data_label}.db"
-
-    # ═══════════════════════════════════════════════════════════
-    # Connection Management (must be implemented by subclass)
-    # ═══════════════════════════════════════════════════════════
 
     @abstractmethod
     def connect(self):
@@ -44,20 +26,11 @@ class SQLAdapter(BaseDataAdapter):
 
     @abstractmethod
     def get_cursor(self):
-        """Get or create a cursor (dialect-specific)."""
+        """Get or create cursor (dialect-specific)."""
         raise NotImplementedError
 
-    # ═══════════════════════════════════════════════════════════
-    # Schema Operations (shared logic with overridable methods)
-    # ═══════════════════════════════════════════════════════════
-
     def create_table(self, table_name, schema):
-        """
-        Create a table with the given schema.
-        
-        Uses shared logic for most SQL databases. Subclasses can override
-        for dialect-specific features.
-        """
+        """Create table with given schema."""
         logger.info("Creating table: %s", table_name)
 
         cur = self.get_cursor()
@@ -100,9 +73,6 @@ class SQLAdapter(BaseDataAdapter):
                 if fk_clause:
                     foreign_keys.append(fk_clause)
 
-        # RGB Weak Nuclear Force columns removed (quantum paradigm feature)
-        # TODO: Re-enable in quantum paradigm - see _get_rgb_columns() stub below
-
         # Add composite primary key as table-level constraint
         table_constraints = []
         if composite_pk:
@@ -124,43 +94,23 @@ class SQLAdapter(BaseDataAdapter):
             self._create_indexes(table_name, schema["indexes"])
 
     def drop_table(self, table_name):
-        """
-        Drop a table from the database.
-        
-        Shared implementation for SQL databases.
-        Override _after_drop_table() for subclass-specific cleanup.
-        """
+        """Drop table from database."""
         cur = self.get_cursor()
         sql = f"DROP TABLE IF EXISTS {table_name}"
         logger.info("Dropping table: %s", table_name)
         cur.execute(sql)
         self.connection.commit()
-        
+
         # Hook for subclass-specific cleanup
         self._after_drop_table(table_name)
-    
+
     def _after_drop_table(self, table_name):
-        """
-        Hook for subclass-specific cleanup after dropping a table.
-        
-        Override in subclass if needed (e.g., PostgreSQL updates .pginfo.yaml).
-        Default: no additional cleanup needed.
-        """
-        # Default: no additional cleanup
-        return
-    
+        """Hook for subclass-specific cleanup after dropping table."""
+
     def alter_table(self, table_name, changes):
-        """
-        Alter table structure (shared SQL implementation).
-        
-        Supports:
-        - add_columns: Add new columns
-        - drop_columns: Remove columns (PostgreSQL only, SQLite limited)
-        
-        Override _build_add_column_sql() for dialect-specific syntax.
-        """
+        """Alter table structure (add/drop columns)."""
         cur = self.get_cursor()
-        
+
         # Handle ADD COLUMN
         if "add_columns" in changes:
             for column_name, column_def in changes["add_columns"].items():
@@ -169,7 +119,7 @@ class SQLAdapter(BaseDataAdapter):
                 cur.execute(sql)
             self.connection.commit()
             logger.info("Altered table (add columns): %s", table_name)
-        
+
         # Handle DROP COLUMN (if supported by dialect)
         if "drop_columns" in changes:
             if self._supports_drop_column():
@@ -181,48 +131,33 @@ class SQLAdapter(BaseDataAdapter):
                 logger.info("Altered table (drop columns): %s", table_name)
             else:
                 logger.warning("DROP COLUMN not supported by this SQL dialect")
-    
+
     def _build_add_column_sql(self, table_name, column_name, column_def):
-        """
-        Build ADD COLUMN SQL statement.
-        
-        Override in subclass for dialect-specific requirements.
-        Default implementation works for most SQL databases.
-        """
+        """Build ADD COLUMN SQL statement."""
         field_type = self._map_field_type(column_def.get("type", "str"))
         sql = f"ALTER TABLE {table_name} ADD COLUMN {column_name} {field_type}"
-        
+
         # Add DEFAULT if specified
         if column_def.get("default") is not None:
             default = column_def.get("default")
             sql += f" DEFAULT {default}"
-        
+
         return sql
-    
+
     def _supports_drop_column(self):
-        """
-        Check if this SQL dialect supports DROP COLUMN.
-        
-        Override in subclass:
-        - PostgreSQL: True
-        - SQLite: False (limited ALTER TABLE support)
-        """
+        """Check if SQL dialect supports DROP COLUMN."""
         return True  # Most SQL databases support DROP COLUMN
 
     def table_exists(self, table_name):
-        """Check if a table exists (must be overridden for dialect)."""
+        """Check if table exists (must be overridden)."""
         raise NotImplementedError("Subclass must implement table_exists()")
 
     def list_tables(self):
-        """List all tables (must be overridden for dialect)."""
+        """List all tables (must be overridden)."""
         raise NotImplementedError("Subclass must implement list_tables()")
 
-    # ═══════════════════════════════════════════════════════════
-    # CRUD Operations (shared SQL logic)
-    # ═══════════════════════════════════════════════════════════
-
     def insert(self, table, fields, values):
-        """Insert a row into a table."""
+        """Insert row into table."""
         cur = self.get_cursor()
         placeholders = self._get_placeholders(len(fields))
         sql = f"INSERT INTO {table} ({', '.join(fields)}) VALUES ({placeholders})"
@@ -235,39 +170,31 @@ class SQLAdapter(BaseDataAdapter):
         logger.info("Inserted row into %s with ID: %s", table, row_id)
         return row_id
 
-    def select(self, table, fields=None, where=None, joins=None, order=None, limit=None, auto_join=False, schema=None):
-        """
-        Select rows from a table with optional JOIN support.
-        
-        Args:
-            table: Table name (str) or list of tables for multi-table query
-            fields: List of fields (may include table prefixes like "users.name")
-            where: WHERE conditions dict
-            joins: List of join definitions for manual joins
-            order: ORDER BY clause
-            limit: LIMIT value
-            auto_join: If True, automatically detect joins from FK relationships
-            schema: Schema dict (required for auto_join)
-        
-        Returns:
-            list: List of row dicts
-        """
+    def select(self, table, fields=None, **kwargs):
+        """Select rows from table(s) with optional JOIN support."""
+        where = kwargs.get('where')
+        joins = kwargs.get('joins')
+        order = kwargs.get('order')
+        limit = kwargs.get('limit')
+        auto_join = kwargs.get('auto_join', False)
+        schema = kwargs.get('schema')
+
         cur = self.get_cursor()
-        
+
         # Handle multi-table queries
         tables = [table] if isinstance(table, str) else table
         is_multi_table = len(tables) > 1 or joins
-        
+
         if is_multi_table:
             # Build FROM clause with JOINs
-            from_clause, joined_tables = self._build_join_clause(
+            from_clause, _ = self._build_join_clause(
                 tables, joins=joins, schema=schema, auto_join=auto_join
             )
-            
+
             # Build SELECT clause with table qualifiers for multi-table
             select_clause = self._build_select_clause(fields, tables)
-            
-            logger.info("🔗 Multi-table query: %s", " + ".join(tables))
+
+            logger.info("[JOIN] Multi-table query: %s", " + ".join(tables))
         else:
             # Single table query (existing logic)
             from_clause = table
@@ -308,7 +235,7 @@ class SQLAdapter(BaseDataAdapter):
         return rows
 
     def update(self, table, fields, values, where):
-        """Update rows in a table."""
+        """Update rows in table."""
         cur = self.get_cursor()
 
         # Build SET clause with dialect-specific placeholders
@@ -332,7 +259,7 @@ class SQLAdapter(BaseDataAdapter):
         return rows_affected
 
     def delete(self, table, where):
-        """Delete rows from a table."""
+        """Delete rows from table."""
         cur = self.get_cursor()
 
         sql = f"DELETE FROM {table}"
@@ -352,53 +279,23 @@ class SQLAdapter(BaseDataAdapter):
         logger.info("Deleted %d rows from %s", rows_affected, table)
         return rows_affected
 
-    # ═══════════════════════════════════════════════════════════
-    # Transaction Management (shared)
-    # ═══════════════════════════════════════════════════════════
-
     def begin_transaction(self):
-        """Begin a transaction."""
+        """Begin transaction."""
         if self.connection:
             self.connection.execute("BEGIN")
             logger.debug("Transaction started")
 
     def commit(self):
-        """Commit the current transaction."""
+        """Commit current transaction."""
         if self.connection:
             self.connection.commit()
             logger.debug("Transaction committed")
 
     def rollback(self):
-        """Rollback the current transaction."""
+        """Rollback current transaction."""
         if self.connection:
             self.connection.rollback()
             logger.debug("Transaction rolled back")
-
-    # ═══════════════════════════════════════════════════════════
-    # Helper Methods (shared, can be overridden)
-    # ═══════════════════════════════════════════════════════════
-
-    def _get_rgb_columns(self):
-        """
-        [QUANTUM PARADIGM STUB - NOT USED IN CLASSICAL]
-        
-        Get RGB weak nuclear force column definitions.
-        
-        RGB Weak Nuclear Force Theory:
-        - Red (weak_force_r): Natural decay - starts at 255, decreases over time
-        - Green (weak_force_g): Access frequency - starts at 0, increases with use
-        - Blue (weak_force_b): Migration criticality - starts at 255, modified by importance
-        
-        When implementing quantum paradigm, uncomment and use:
-        return [
-            "weak_force_r INTEGER DEFAULT 255",
-            "weak_force_g INTEGER DEFAULT 0",
-            "weak_force_b INTEGER DEFAULT 255",
-        ]
-        
-        Override in subclass if dialect needs different syntax.
-        """
-        return []  # Classical paradigm: no RGB columns
 
     def _build_foreign_key_clause(self, field_name, attrs):
         """Build FOREIGN KEY clause."""
@@ -422,20 +319,7 @@ class SQLAdapter(BaseDataAdapter):
         return fk_clause
 
     def _build_where_clause(self, where):
-        """
-        Build WHERE clause from dict with advanced operator support.
-        
-        Supported formats:
-          - {"field": value}                    → field = value
-          - {"field": {"$gt": 5}}              → field > 5
-          - {"field": [1, 2, 3]}               → field IN (1, 2, 3)
-          - {"field": {"$like": "%pattern%"}}  → field LIKE '%pattern%'
-          - {"field": None}                    → field IS NULL
-          - {"$or": [{...}, {...}]}            → (cond1 OR cond2)
-        
-        Returns:
-            tuple: (where_clause, params)
-        """
+        """Build WHERE clause from dict with operator support."""
         conditions = []
         params = []
 
@@ -448,12 +332,12 @@ class SQLAdapter(BaseDataAdapter):
                         conditions.append(f"({or_conditions})")
                         params.extend(or_params)
                 continue
-            
+
             # Handle IS NULL
             if value is None:
                 conditions.append(f"{field} IS NULL")
                 continue
-            
+
             # Handle IN operator (list values)
             if isinstance(value, list):
                 if value:
@@ -461,57 +345,62 @@ class SQLAdapter(BaseDataAdapter):
                     conditions.append(f"{field} IN ({placeholders})")
                     params.extend(value)
                 continue
-            
+
             # Handle complex operators (dict values)
             if isinstance(value, dict):
-                for op, val in value.items():
-                    if op.upper() == "$LIKE" or op.upper() == "LIKE":
-                        conditions.append(f"{field} LIKE {self._get_single_placeholder()}")
-                        params.append(val)
-                    elif op.upper() == "$IN" or op.upper() == "IN":
-                        if isinstance(val, list) and val:
-                            placeholders = ", ".join([self._get_single_placeholder() for _ in val])
-                            conditions.append(f"{field} IN ({placeholders})")
-                            params.extend(val)
-                    elif op.upper() == "$NULL" or (op.upper() == "IS" and val is None):
-                        conditions.append(f"{field} IS NULL")
-                    elif op.upper() == "$NOTNULL" or (op.upper() == "IS NOT" and val is None):
-                        conditions.append(f"{field} IS NOT NULL")
-                    else:
-                        sql_op = self._map_operator(op)
-                        conditions.append(f"{field} {sql_op} {self._get_single_placeholder()}")
-                        params.append(val)
+                cond, cond_params = self._build_operator_condition(field, value)
+                if cond:
+                    conditions.append(cond)
+                    params.extend(cond_params)
                 continue
-            
+
             # Simple equality
             conditions.append(f"{field} = {self._get_single_placeholder()}")
             params.append(value)
 
         where_clause = " AND ".join(conditions) if conditions else "1=1"
         return where_clause, params
-    
+
+    def _build_operator_condition(self, field, value_dict):
+        """Build condition from operator dict."""
+        conditions = []
+        params = []
+
+        for op, val in value_dict.items():
+            op_upper = op.upper()
+
+            if op_upper in ("$LIKE", "LIKE"):
+                conditions.append(f"{field} LIKE {self._get_single_placeholder()}")
+                params.append(val)
+            elif op_upper in ("$IN", "IN") and isinstance(val, list) and val:
+                placeholders = ", ".join([self._get_single_placeholder() for _ in val])
+                conditions.append(f"{field} IN ({placeholders})")
+                params.extend(val)
+            elif op_upper == "$NULL" or (op_upper == "IS" and val is None):
+                conditions.append(f"{field} IS NULL")
+            elif op_upper == "$NOTNULL" or (op_upper == "IS NOT" and val is None):
+                conditions.append(f"{field} IS NOT NULL")
+            else:
+                sql_op = self._map_operator(op)
+                conditions.append(f"{field} {sql_op} {self._get_single_placeholder()}")
+                params.append(val)
+
+        return " AND ".join(conditions), params
+
     def _build_or_conditions(self, or_list):
-        """
-        Build OR conditions from list of condition dicts.
-        
-        Args:
-            or_list (list): List of condition dictionaries
-            
-        Returns:
-            tuple: (or_clause, params)
-        """
+        """Build OR conditions from list of condition dicts."""
         or_conditions = []
         or_params = []
-        
+
         for condition_dict in or_list:
             if not isinstance(condition_dict, dict):
                 continue
-            
+
             conds, cond_params = self._build_where_clause(condition_dict)
             if conds and conds != "1=1":
                 or_conditions.append(conds)
                 or_params.extend(cond_params)
-        
+
         or_clause = " OR ".join(or_conditions)
         return or_clause, or_params
 
@@ -542,219 +431,170 @@ class SQLAdapter(BaseDataAdapter):
                 parts.append(f"{field} {dir_str}")
             return ", ".join(parts)
         return ""
-    
+
     def _build_select_clause(self, fields, tables):
-        """
-        Build SELECT clause with table qualifiers for multi-table queries.
-        
-        Args:
-            fields: List of field names (may include table prefixes like "users.name")
-            tables: List of tables involved in the query
-            
-        Returns:
-            str: SELECT clause
-        """
+        """Build SELECT clause with table qualifiers for multi-table queries."""
         if not fields or fields == ["*"]:
             # For *, use table.* for each table to avoid ambiguity
             if len(tables) > 1:
                 return ", ".join([f"{table}.*" for table in tables])
             return "*"
-        
+
         # Fields may already have table prefixes, just join them
         return ", ".join(fields)
-    
+
     def _build_join_clause(self, tables, joins=None, schema=None, auto_join=False):
-        """
-        Build JOIN clause for multi-table queries.
-        
-        Supports:
-          - Manual JOINs with explicit ON clauses
-          - Auto-JOINs based on foreign key relationships
-          - INNER, LEFT, RIGHT, FULL OUTER, and CROSS joins
-        
-        Args:
-            tables: List of table names to join
-            joins: List of join definitions (manual joins)
-            schema: Schema dictionary for auto-join detection
-            auto_join: If True, automatically detect joins from foreign keys
-            
-        Returns:
-            tuple: (from_clause, joined_tables)
-        """
+        """Build JOIN clause for multi-table queries (manual or auto-detected)."""
         if not tables or len(tables) < 2:
             # Single table - no joins needed
             return tables[0] if tables else "", []
-        
+
         base_table = tables[0]
         from_clause = base_table
         joined_tables = []
-        
+
         if auto_join and schema:
             # Auto-detect joins from foreign key relationships
-            logger.info("🔗 Auto-joining tables based on foreign key relationships")
+            logger.info("[JOIN] Auto-joining tables based on FK relationships")
             from_clause, joined_tables = self._build_auto_join(tables, schema, base_table)
         elif joins:
             # Manual join definitions
-            logger.info("🔗 Building manual JOIN clauses")
+            logger.info("[JOIN] Building manual JOIN clauses")
             from_clause, joined_tables = self._build_manual_join(base_table, joins)
         else:
             # Multiple tables but no join specification - use CROSS JOIN
-            logger.warning("⚠️ Multiple tables without JOIN specification - using CROSS JOIN")
+            logger.warning("[JOIN] Multiple tables without JOIN specification - using CROSS JOIN")
             join_parts = [f"CROSS JOIN {table}" for table in tables[1:]]
             from_clause = f"{base_table} {' '.join(join_parts)}"
             joined_tables = tables[1:]
-        
+
         logger.debug("Built FROM clause: %s", from_clause)
         return from_clause, joined_tables
-    
+
     def _build_manual_join(self, base_table, joins):
-        """
-        Build JOIN clause from manual join definitions.
-        
-        Args:
-            base_table: First table in the FROM clause
-            joins: List of join definitions
-                Format: [{"type": "INNER", "table": "posts", "on": "users.id = posts.user_id"}]
-            
-        Returns:
-            tuple: (from_clause, joined_tables)
-        """
+        """Build JOIN clause from manual join definitions."""
         from_clause = base_table
         joined_tables = []
-        
+
         for join_def in joins:
             join_type = join_def.get("type", "INNER").upper()
             table = join_def.get("table")
             on_clause = join_def.get("on")
-            
+
             if not table or not on_clause:
-                logger.warning("⚠️ Skipping invalid join definition: %s", join_def)
+                logger.warning("[JOIN] Skipping invalid join definition: %s", join_def)
                 continue
-            
+
             # Validate join type
             valid_types = ["INNER", "LEFT", "RIGHT", "FULL", "CROSS"]
             if join_type not in valid_types:
-                logger.warning("⚠️ Invalid join type '%s', using INNER", join_type)
+                logger.warning("[JOIN] Invalid join type '%s', using INNER", join_type)
                 join_type = "INNER"
-            
+
             # Handle FULL OUTER JOIN
             if join_type == "FULL":
                 join_type = "FULL OUTER"
-            
+
             # Build join clause
             if join_type == "CROSS":
                 from_clause += f" CROSS JOIN {table}"
             else:
                 from_clause += f" {join_type} JOIN {table} ON {on_clause}"
-            
+
             joined_tables.append(table)
             logger.debug("  Added %s JOIN %s", join_type, table)
-        
+
         return from_clause, joined_tables
-    
+
     def _build_auto_join(self, tables, schema, base_table):
-        """
-        Auto-detect and build JOIN clauses from foreign key relationships.
-        
-        Analyzes schema to find FK relationships and builds appropriate JOIN clauses.
-        
-        Args:
-            tables: List of tables to join
-            schema: Schema dictionary with FK definitions
-            base_table: Starting table
-            
-        Returns:
-            tuple: (from_clause, joined_tables)
-        """
+        """Auto-detect and build JOIN clauses from FK relationships."""
         from_clause = base_table
         joined_tables = []
         remaining_tables = [t for t in tables if t != base_table]
-        
-        # Try to join each remaining table
+
         for table in remaining_tables:
-            join_found = False
-            
-            # Check if this table has FK to base table or already joined tables
-            table_schema = schema.get(table, {})
-            
-            for field_name, field_def in table_schema.items():
+            # Try forward join (table has FK to joined tables)
+            join_clause = self._try_forward_join_sql(table, base_table, joined_tables, schema)
+
+            # Try reverse join (joined table has FK to this table)
+            if not join_clause:
+                join_clause = self._try_reverse_join_sql(table, base_table, joined_tables, schema)
+
+            if join_clause:
+                from_clause += join_clause
+                joined_tables.append(table)
+            else:
+                logger.warning("[JOIN] Could not auto-detect join for table: %s", table)
+
+        return from_clause, joined_tables
+
+    def _try_forward_join_sql(self, table, base_table, joined_tables, schema):
+        """Try to join table that has FK to already-joined tables."""
+        table_schema = schema.get(table, {})
+
+        for field_name, field_def in table_schema.items():
+            if not isinstance(field_def, dict):
+                continue
+
+            fk = field_def.get("fk")
+            if not fk:
+                continue
+
+            try:
+                ref_table, ref_column = fk.split(".", 1)
+            except ValueError:
+                continue
+
+            if ref_table == base_table or ref_table in joined_tables:
+                on_clause = f"{table}.{field_name} = {ref_table}.{ref_column}"
+                logger.debug("  Auto-detected: INNER JOIN %s ON %s", table, on_clause)
+                return f" INNER JOIN {table} ON {on_clause}"
+
+        return None
+
+    def _try_reverse_join_sql(self, table, base_table, joined_tables, schema):
+        """Try to join when already-joined table has FK to this table."""
+        for already_joined in [base_table] + joined_tables:
+            joined_schema = schema.get(already_joined, {})
+
+            for field_name, field_def in joined_schema.items():
                 if not isinstance(field_def, dict):
                     continue
-                
+
                 fk = field_def.get("fk")
                 if not fk:
                     continue
-                
-                # Parse FK: "users.id" -> table: users, column: id
+
                 try:
                     ref_table, ref_column = fk.split(".", 1)
                 except ValueError:
                     continue
-                
-                # Check if referenced table is base or already joined
-                if ref_table == base_table or ref_table in joined_tables:
-                    # Found a join!
-                    on_clause = f"{table}.{field_name} = {ref_table}.{ref_column}"
-                    from_clause += f" INNER JOIN {table} ON {on_clause}"
-                    joined_tables.append(table)
-                    join_found = True
-                    logger.debug("  Auto-detected: INNER JOIN %s ON %s", table, on_clause)
-                    break
-            
-            # Also check reverse: does base/joined table have FK to this table?
-            if not join_found:
-                for already_joined in [base_table] + joined_tables:
-                    joined_schema = schema.get(already_joined, {})
-                    
-                    for field_name, field_def in joined_schema.items():
-                        if not isinstance(field_def, dict):
-                            continue
-                        
-                        fk = field_def.get("fk")
-                        if not fk:
-                            continue
-                        
-                        try:
-                            ref_table, ref_column = fk.split(".", 1)
-                        except ValueError:
-                            continue
-                        
-                        if ref_table == table:
-                            # Found reverse join!
-                            on_clause = f"{already_joined}.{field_name} = {table}.{ref_column}"
-                            from_clause += f" INNER JOIN {table} ON {on_clause}"
-                            joined_tables.append(table)
-                            join_found = True
-                            logger.debug("  Auto-detected (reverse): INNER JOIN %s ON %s", table, on_clause)
-                            break
-                    
-                    if join_found:
-                        break
-            
-            if not join_found:
-                logger.warning("⚠️ Could not auto-detect join for table: %s", table)
-        
-        return from_clause, joined_tables
+
+                if ref_table == table:
+                    on_clause = f"{already_joined}.{field_name} = {table}.{ref_column}"
+                    logger.debug("  Auto-detected (reverse): INNER JOIN %s ON %s", table, on_clause)
+                    return f" INNER JOIN {table} ON {on_clause}"
+
+        return None
 
     def _map_field_type(self, raw_type):
-        """Map field type string to SQL type (can be overridden)."""
+        """Map field type string to SQL type."""
         raw_type = str(raw_type).strip()
 
         if raw_type.startswith("str"):
             return "TEXT"
-        elif raw_type.startswith("int"):
+        if raw_type.startswith("int"):
             return "INTEGER"
-        elif raw_type.startswith("float"):
+        if raw_type.startswith("float"):
             return "REAL"
-        elif raw_type.startswith("datetime"):
+        if raw_type.startswith("datetime"):
             return "TEXT"
-        elif raw_type.startswith("bool"):
+        if raw_type.startswith("bool"):
             return "INTEGER"
-        else:
-            return self.map_type(raw_type)
+        return self.map_type(raw_type)
 
     def _create_indexes(self, table_name, indexes):
-        """Create indexes for a table (can be overridden)."""
+        """Create indexes for table."""
         cur = self.get_cursor()
 
         for idx_spec in indexes:
@@ -779,36 +619,14 @@ class SQLAdapter(BaseDataAdapter):
 
         self.connection.commit()
 
-    # ═══════════════════════════════════════════════════════════
-    # Dialect-Specific Methods (must be overridden)
-    # ═══════════════════════════════════════════════════════════
-
     def _get_placeholders(self, count):
-        """
-        Get parameter placeholders for SQL query.
-        
-        Override in subclass:
-        - SQLite/MySQL: "?, ?, ?"
-        - PostgreSQL: "%s, %s, %s"
-        """
+        """Get parameter placeholders (?, ?, ? or %s, %s, %s)."""
         return ", ".join(["?" for _ in range(count)])
 
     def _get_single_placeholder(self):
-        """
-        Get a single parameter placeholder.
-        
-        Override in subclass:
-        - SQLite/MySQL: "?"
-        - PostgreSQL: "%s"
-        """
+        """Get single parameter placeholder (? or %s)."""
         return "?"
 
     def _get_last_insert_id(self, cursor):
-        """
-        Get last inserted row ID.
-        
-        Override in subclass if needed:
-        - SQLite: cursor.lastrowid
-        - PostgreSQL: RETURNING clause or currval()
-        """
+        """Get last inserted row ID (override for PostgreSQL RETURNING)."""
         return cursor.lastrowid

@@ -21,6 +21,8 @@ disable=
     too-many-arguments,        # Complex data operations need many args
     too-many-locals,           # Complex functions may need many locals
     import-outside-toplevel,   # Allow imports inside methods (e.g., ZConfig in __init__)
+    unnecessary-lambda,        # Allow lambdas for action maps and lazy evaluation
+    unnecessary-pass,          # Allow pass in abstract methods
 
 [BASIC]
 # Regular expression matching correct module names
