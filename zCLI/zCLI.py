@@ -10,7 +10,7 @@ from .subsystems.zUtils import zUtils
 from .subsystems.zData import ZData
 from .subsystems.zFunc import ZFunc
 from .subsystems.zDisplay import ZDisplay
-from .subsystems.zParser import ZParser
+from .subsystems.zParser import zParser
 from .subsystems.zSocket import ZSocket
 from .subsystems.zDialog import ZDialog
 from .subsystems.zWizard import ZWizard
@@ -55,7 +55,7 @@ class zCLI:
         self.utils = zUtils(self)
         self.display = ZDisplay(self)
         self.loader = ZLoader(self)
-        self.zparser = ZParser(self)
+        self.zparser = zParser(self)
         self.data = ZData(self)  # ZData subsystem (initialized after display/loader)
         self.funcs = ZFunc(self)
         self.socket = ZSocket(self)

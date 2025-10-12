@@ -3,11 +3,6 @@
 """Core zParser handler for path resolution, command parsing, file parsing, and utilities."""
 
 from logger import Logger
-
-# Logger instance
-logger = Logger.get_logger(__name__)
-
-# Import zParser modules from registry
 from .zParser_modules.zParser_zPath import (
     zPath_decoder as zPath_decoder_func, 
     identify_zFile as identify_zFile_func,
@@ -23,37 +18,16 @@ from .zParser_modules.zParser_file import (
     parse_file_content, parse_yaml, parse_json, detect_format, parse_file_by_path, parse_json_expr
 )
 
+# Logger instance
+logger = Logger.get_logger(__name__)
 
-class ZParser:
-    """
-    Core zParser class that handles path resolution, command parsing, file parsing, and utilities.
-    
-    Provides unified parsing functionality through registry modules:
-    - zPath resolution and file discovery
-    - Command parsing for shell commands
-    - File parsing (YAML/JSON)
-    - Expression evaluation and utilities
-    - zVaFile parsing and validation
-    
-    Modern Architecture:
-    - Requires zCLI instance for initialization
-    - Session-aware operations through zCLI.session
-    - Integrated logging via zCLI.logger
-    - Display integration via zCLI.display
-    """
+class zParser:
+    """Core zParser class for path resolution, command parsing, file parsing, and utilities."""
 
     def __init__(self, zcli):
-        """
-        Initialize zParser.
-        
-        Args:
-            zcli: zCLI instance (required)
-            
-        Raises:
-            ValueError: If zcli is not provided or invalid
-        """
+        """Initialize zParser with zCLI instance."""
         if zcli is None:
-            raise ValueError("ZParser requires a zCLI instance")
+            raise ValueError("zParser requires a zCLI instance")
 
         if not hasattr(zcli, 'session'):
             raise ValueError("Invalid zCLI instance: missing 'session' attribute")
@@ -75,7 +49,7 @@ class ZParser:
     def identify_zFile(self, filename, full_zFilePath):
         """Identify file type and find actual file path with extension."""
         return identify_zFile_func(filename, full_zFilePath, self.display)
-    
+
     def resolve_zmachine_path(self, data_path, config_paths=None):
         """Resolve ~.zMachine.* path references to OS-specific paths."""
         return resolve_zmachine_path_func(data_path, config_paths)
@@ -170,4 +144,4 @@ class ZParser:
 
 
 # Export main components
-__all__ = ["ZParser"]
+__all__ = ["zParser"]
