@@ -1,22 +1,24 @@
+# zCLI/subsystems/zSession.py — Session Management Subsystem
+# ───────────────────────────────────────────────────────────────
+"""
+Provides session factory and authentication for zCLI instances.
+Enables multi-user support and parallel execution.
+"""
+
 import requests
 from logger import Logger
+from zCLI.subsystems.zDisplay import handle_zDisplay
 
 # Logger instance
 logger = Logger.get_logger(__name__)
-from zCLI.subsystems.zDisplay import handle_zDisplay
 
 def create_session(machine_config=None):
-    """
-    Factory function to create a new session instance.
-    
-    This allows each zCLI instance to have its own isolated session,
-    enabling multi-user support and parallel execution.
+    """Create isolated session instance for zCLI.
     
     Args:
         machine_config: Machine configuration dict (from zConfig)
-    
     Returns:
-        dict: A new session dictionary with default values
+        dict: New session with default values
     """
     return {
         "zS_id": None,
@@ -46,41 +48,23 @@ def create_session(machine_config=None):
         },
     }
 
-# Global session removed for modern architecture
-# Use instance-based sessions via zCLI.session instead
-
 def View_zSession(session=None):
-    """
-    Display the current session information.
-    
-    Args:
-        session: Session dict to display (required)
-    """
+    """Display current session information."""
     if session is None:
         raise ValueError("View_zSession requires a session parameter")
-    
+
     handle_zDisplay({
         "event": "zSession",
         "zSession": session
     })
 
 def zSession_Login(data, url=None, session=None):
-    """
-    Authenticate and update session with user credentials.
-    
-    Args:
-        data: Authentication data (username, password, etc.)
-        url: Authentication endpoint URL (optional)
-        session: Session instance to update (required)
-    
-    Returns:
-        dict: Authentication result or None on failure
-    """
+    """Authenticate and update session with user credentials."""
     if session is None:
         raise ValueError("zSession_Login requires a session parameter")
-    
+
     target_session = session
-    
+
     handle_zDisplay({
         "event": "sysmsg",
         "label": "send_to_server",

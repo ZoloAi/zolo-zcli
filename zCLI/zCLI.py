@@ -1,6 +1,6 @@
 # zCLI/zCLI.py — Core zCLI Engine
 # ───────────────────────────────────────────────────────────────
-"""Core zCLI Engine - Single source of truth for all subsystems."""
+"""Single source of truth for all subsystems."""
 
 from logger import Logger
 from .subsystems.zSession import create_session
@@ -31,49 +31,24 @@ class zCLI:
 
     def __init__(self, zSpark_obj=None):
         """
-        Initialize a new zCLI instance.
+        Initialize zCLI instance in Shell or Walker/UI mode.
 
         Args:
-            zSpark_obj (dict, optional): Configuration options including:
-                - zWorkspace: Project root directory (default: current dir)
-                - zMode: "Terminal" (Shell) or "UI" (Walker) mode
-                - zVaFilename: UI menu YAML file for Walker mode
-                - zVaFile_path: UI file directory
-                - zBlock: Starting menu block
-
-        Example:
-            # Shell mode
-            cli = zCLI()
-
-            # Walker mode with complete zSpark configuration
-            cli = zCLI({
-                "zWorkspace": "/path/to/project",  # Project root directory
-                "zMode": "UI",                     # UI mode for Walker interface
-                "zVaFilename": "ui.main.yaml",     # UI menu YAML file
-                "zVaFile_path": "menus",           # UI file directory
-                "zBlock": "MainMenu",              # Starting menu block
-                "plugins": [                        # Optional plugin paths
-                    "plugins.custom_utils",
-                    "plugins.extra_commands" 
-                ],
-                "debug": True,                     # Enable debug logging
-                "cache": True                      # Enable session caching
-            })
+            zSpark_obj: Configuration dict for Walker/UI mode (optional).
+                       See Documentation/zolo-zcli_GUIDE.md for details.
         """
         self.zspark_obj = zSpark_obj or {}
 
         # Initialize logger
         self.logger = Logger.get_logger("zCLI")
 
-        # Initialize zConfig FIRST (provides machine config)
+        # Import ZConfig here to avoid circular dependency (ZConfig may import other subsystems)
+        # Initialize zConfig FIRST (provides machine config for session creation)
         from .subsystems.zConfig import ZConfig
         self.config = ZConfig()
-        
+
         # Create instance-specific session with machine config
-        # Each zCLI instance gets its own session, enabling:
         self.session = create_session(machine_config=self.config.get_machine())
-        # Provide backward compatibility alias
-        self.zSession = self.session
 
         # Initialize core subsystems (single source of truth)
         # Note: Order matters! ZData depends on display and loader
@@ -92,10 +67,6 @@ class zCLI:
 
         # Initialize shell and command executor
         self.shell = ZShell(self)
-        # self.executor now accessed via self.shell.executor
-
-        # Note: dispatch, menu, link are walker-specific
-        # They are instantiated by zWalker when in UI mode
 
         # Load plugins if specified
         self._load_plugins()
@@ -109,7 +80,8 @@ class zCLI:
         self.logger.info("zCLI Core initialized - UI Mode: %s", self.ui_mode)
 
     def _load_plugins(self):
-        """Load utility plugins from zSpark_obj if provided."""
+        """ Load utility plugins (Python modules) from zSpark_obj if provided.
+            Uses zUtils, not zLoader."""
         try:
             plugin_paths = self.zspark_obj.get("plugins") or []
             if isinstance(plugin_paths, (list, tuple)):
@@ -121,21 +93,11 @@ class zCLI:
 
     def _init_session(self):
         """
-        Initialize the session with minimal required fields.
-        
-        For shell mode: Only zS_id and zMode are set
-        For walker mode: Additional fields will be populated by zWalker
-        
-        This ensures minimal session initialization while providing
-        required defaults for each mode.
-        
-        Note: zMachine is already set in create_session() from zConfig
+        Initialize session with zS_id and zMode.
+        Walker mode populates additional fields later.
         """
         # Set session ID - always required
         self.session["zS_id"] = self.utils.generate_id("zS")
-
-        # zMachine already set in create_session() from zConfig ✅
-        # No need to call detect_machine_type() - it's from machine.yaml now!
 
         # Set zMode based on interface mode
         if self.ui_mode:
@@ -155,36 +117,20 @@ class zCLI:
     # ───────────────────────────────────────────────────────────────
 
     def run_command(self, command: str):
-        """
-        Execute a single command (useful for API, testing, or scripting).
-        
-        Args:
-            command: Command string like "crud read users --limit 10"
-        
-        Returns:
-            Command execution result
-        """
+        """Execute single command string. Returns command result."""
         return self.shell.execute_command(command)
 
     def run_shell(self):
-        """
-        Run shell mode.
-        
-        Explicitly launches Shell mode regardless of configuration.
-        """
+        """Explicitly run shell mode."""
         return self.shell.run_shell()
 
     def run(self):
-        """
-        Main entry point - determines whether to run in UI mode or shell mode.
-        
-        Returns:
-            Result from walker or shell execution
-        """
+        """Main entry point - determines whether to run in UI mode or shell mode."""
         if self.ui_mode:
             self.logger.info("Starting zCLI in UI mode via zWalker...")
-            from .subsystems.zWalker.zWalker import zWalker  # pylint: disable=import-outside-toplevel
-            walker = zWalker(self)  # Pass zCLI instance
+            # Import zWalker only when needed (lazy loading - Walker not used in shell mode)
+            from .subsystems.zWalker.zWalker import zWalker
+            walker = zWalker(self)
             return walker.run()
 
         self.logger.info("Starting zCLI in shell mode...")
