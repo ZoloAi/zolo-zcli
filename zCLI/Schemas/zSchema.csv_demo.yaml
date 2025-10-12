@@ -33,11 +33,18 @@ posts:
   user_id:
     type: int
     # Note: CSV doesn't enforce FK relationships
+    rules:
+      min: 1
   title:
     type: str
     required: true
+    rules:
+      min_length: 5
+      max_length: 200
   content:
     type: str
+    rules:
+      min_length: 10
   published:
     type: str
     # Will store as string in CSV

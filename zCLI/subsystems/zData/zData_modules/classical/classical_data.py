@@ -7,6 +7,7 @@
 
 from logger import Logger
 from ..shared.backends.adapter_factory import AdapterFactory
+from ..shared.validator import DataValidator
 
 # Logger instance
 logger = Logger.get_logger(__name__)
@@ -32,6 +33,10 @@ class ClassicalData:
         self.logger = zcli.logger
         self.adapter = None
         self._connected = False
+        
+        # Initialize validator with schema (excluding Meta section)
+        schema_tables = {k: v for k, v in schema.items() if k != "Meta"}
+        self.validator = DataValidator(schema_tables)
 
         # Initialize adapter
         self._initialize_adapter()
@@ -497,7 +502,29 @@ class ClassicalData:
             self.logger.error("No fields provided for %s. Use --field_name value syntax", operation_name)
             return None, None
         
-        return list(fields_dict.keys()), list(fields_dict.values())
+        # Parse values to strip quotes and convert types
+        fields = list(fields_dict.keys())
+        values = [self._parse_value(str(v)) for v in fields_dict.values()]
+        
+        return fields, values
+    
+    def _display_validation_errors(self, table, errors):
+        """
+        Display validation errors in a user-friendly format.
+        
+        Args:
+            table (str): Table name
+            errors (dict): Dictionary of field:error_message pairs
+        """
+        self.logger.error("❌ Validation failed for table '%s' with %d error(s)", table, len(errors))
+        
+        # Format errors for logging and display
+        error_lines = [f"❌ Validation Failed for table '{table}':"]
+        for field, message in errors.items():
+            error_lines.append(f"  • {field}: {message}")
+        
+        # Print directly to maintain simplicity
+        print("\n" + "\n".join(error_lines) + "\n")
     
     # ═══════════════════════════════════════════════════════════
     # Internal Operation Handlers
@@ -626,6 +653,15 @@ class ClassicalData:
             if not fields:
                 return False
         
+        # Build data dictionary for validation
+        data = dict(zip(fields, values))
+        
+        # Validate data before inserting
+        is_valid, errors = self.validator.validate_insert(table, data)
+        if not is_valid:
+            self._display_validation_errors(table, errors)
+            return False
+        
         row_id = self.insert(table, fields, values)
         self.logger.info("✅ Inserted row with ID: %s", row_id)
         return True
@@ -686,6 +722,15 @@ class ClassicalData:
         # Extract field/value pairs to update
         fields, values = self._extract_field_values(request, "UPDATE")
         if not fields:
+            return False
+        
+        # Build data dictionary for validation
+        data = dict(zip(fields, values))
+        
+        # Validate data before updating
+        is_valid, errors = self.validator.validate_update(table, data)
+        if not is_valid:
+            self._display_validation_errors(table, errors)
             return False
         
         # Extract WHERE clause with warning if missing

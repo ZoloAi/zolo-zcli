@@ -15,7 +15,7 @@ Meta:
   # Data_User: null             # Default: auto-detect system username (macOS/Homebrew)
   # Data_Password: null         # Default: null (no password for local)
 
-# Simple users table
+# Simple users table with validation rules
 users:
   id:
     type: int
@@ -23,10 +23,19 @@ users:
   name:
     type: str
     required: true
+    rules:
+      min_length: 2
+      max_length: 100
   email:
     type: str
+    rules:
+      format: email
+      max_length: 255
   age:
     type: int
+    rules:
+      min: 0
+      max: 150
   status:
     type: str
     default: active
