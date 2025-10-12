@@ -234,24 +234,31 @@ class ClassicalData:
             raise RuntimeError("No adapter initialized")
         return self.adapter.insert(table, fields, values)
     
-    def select(self, table, fields=None, where=None, joins=None, order=None, limit=None):
+    def select(self, table, fields=None, where=None, joins=None, order=None, limit=None, auto_join=False):
         """
-        Select rows.
+        Select rows with optional JOIN support.
         
         Args:
-            table (str): Table name
-            fields (list): Field names to select
-            where (dict): WHERE conditions
-            joins (list): JOIN specifications
-            order (dict): ORDER BY specifications
-            limit (int): LIMIT
+            table: Table name (str) or list of tables for multi-table query
+            fields: Field names to select (may include table prefixes like "users.name")
+            where: WHERE conditions dict
+            joins: JOIN specifications (list of dicts with type, table, on)
+            order: ORDER BY specifications
+            limit: LIMIT value
+            auto_join: If True, automatically detect joins from FK relationships
             
         Returns:
             list: Rows
         """
         if not self.adapter:
             raise RuntimeError("No adapter initialized")
-        return self.adapter.select(table, fields, where, joins, order, limit)
+        
+        # Pass schema (excluding Meta) for auto-join detection
+        schema_tables = {k: v for k, v in self.schema.items() if k != "Meta"}
+        return self.adapter.select(
+            table, fields, where, joins, order, limit,
+            auto_join=auto_join, schema=schema_tables
+        )
     
     def update(self, table, fields, values, where):
         """
@@ -322,12 +329,23 @@ class ClassicalData:
         Parse WHERE clause string into adapter-compatible dict format.
         
         Supported formats:
-          - "field=value"       → {"field": "value"}
-          - "field>value"       → {"field": {"$gt": value}}
-          - "field>=value"      → {"field": {"$gte": value}}
-          - "field<value"       → {"field": {"$lt": value}}
-          - "field<=value"      → {"field": {"$lte": value}}
-          - "field!=value"      → {"field": {"$ne": value}}
+          Basic operators:
+            - "field=value"           → {"field": "value"}
+            - "field>value"           → {"field": {"$gt": value}}
+            - "field>=value"          → {"field": {"$gte": value}}
+            - "field<value"           → {"field": {"$lt": value}}
+            - "field<=value"          → {"field": {"$lte": value}}
+            - "field!=value"          → {"field": {"$ne": value}}
+          
+          Advanced operators:
+            - "field IS NULL"         → {"field": None}
+            - "field IS NOT NULL"     → {"field": {"$notnull": True}}
+            - "field IN val1,val2"    → {"field": [val1, val2]}
+            - "field LIKE %pattern%"  → {"field": {"$like": "%pattern%"}}
+            - "field=null"            → {"field": None}
+          
+          OR conditions:
+            - "age>25 OR status=active"  → {"$or": [{"age": {">": 25}}, {"status": "active"}]}
         
         Args:
             where_str (str): WHERE clause string from command line
@@ -338,13 +356,42 @@ class ClassicalData:
         if not where_str:
             return None
         
-        where_dict = {}
-        
-        # Support multiple conditions separated by AND (future enhancement)
-        # For now, support single condition
         condition = where_str.strip()
         
-        # Parse operator and split field/value
+        # Handle OR conditions
+        if " OR " in condition.upper():
+            return self._parse_or_where(condition)
+        
+        # Handle IS NULL / IS NOT NULL
+        if " IS NOT NULL" in condition.upper():
+            field = condition.upper().replace(" IS NOT NULL", "").strip()
+            return {field.lower(): {"$notnull": True}}
+        
+        if " IS NULL" in condition.upper():
+            field = condition.upper().replace(" IS NULL", "").strip()
+            return {field.lower(): None}
+        
+        # Handle IN operator
+        if " IN " in condition.upper():
+            parts = condition.split(" IN ", 1)
+            if len(parts) == 2:
+                field = parts[0].strip()
+                values_str = parts[1].strip()
+                # Parse comma-separated values
+                values = [self._parse_value(v.strip()) for v in values_str.split(",")]
+                return {field: values}
+        
+        # Handle LIKE operator
+        if " LIKE " in condition.upper():
+            parts = condition.split(" LIKE ", 1)
+            if len(parts) == 2:
+                field = parts[0].strip()
+                pattern = parts[1].strip()
+                return {field: {"$like": pattern}}
+        
+        where_dict = {}
+        
+        # Parse standard comparison operators
         if ">=" in condition:
             field, value = condition.split(">=", 1)
             field = field.strip()
@@ -374,13 +421,110 @@ class ClassicalData:
             field, value = condition.split("=", 1)
             field = field.strip()
             value = value.strip()
-            where_dict[field] = self._parse_value(value)
+            # Special handling for null
+            parsed_value = self._parse_value(value)
+            where_dict[field] = parsed_value
         else:
             self.logger.warning("Could not parse WHERE clause: %s", where_str)
             return None
         
         self.logger.debug("Parsed WHERE clause: %s → %s", where_str, where_dict)
         return where_dict
+    
+    def _parse_or_where(self, where_str):
+        """
+        Parse OR WHERE conditions.
+        
+        Args:
+            where_str (str): WHERE string with OR (e.g., "age>25 OR status=active")
+            
+        Returns:
+            dict: WHERE conditions with $or key
+        """
+        # Split by OR (case-insensitive)
+        import re
+        or_parts = re.split(r'\s+OR\s+', where_str, flags=re.IGNORECASE)
+        
+        or_conditions = []
+        for part in or_parts:
+            part = part.strip()
+            if part and " OR " not in part.upper():
+                # Parse each part (avoiding infinite recursion)
+                parsed = self._parse_single_where(part)
+                if parsed:
+                    or_conditions.append(parsed)
+        
+        if not or_conditions:
+            return None
+        
+        # If only one condition, return it directly
+        if len(or_conditions) == 1:
+            return or_conditions[0]
+        
+        return {"$or": or_conditions}
+    
+    def _parse_single_where(self, condition):
+        """
+        Parse a single WHERE condition (no OR support).
+        
+        Used internally to avoid recursion in OR parsing.
+        
+        Args:
+            condition (str): Single condition string
+            
+        Returns:
+            dict: Parsed condition
+        """
+        condition = condition.strip()
+        
+        # Handle IS NULL / IS NOT NULL
+        if " IS NOT NULL" in condition.upper():
+            field = condition.upper().replace(" IS NOT NULL", "").strip()
+            return {field.lower(): {"$notnull": True}}
+        
+        if " IS NULL" in condition.upper():
+            field = condition.upper().replace(" IS NULL", "").strip()
+            return {field.lower(): None}
+        
+        # Handle IN operator
+        if " IN " in condition.upper():
+            parts = condition.split(" IN ", 1)
+            if len(parts) == 2:
+                field = parts[0].strip()
+                values_str = parts[1].strip()
+                values = [self._parse_value(v.strip()) for v in values_str.split(",")]
+                return {field: values}
+        
+        # Handle LIKE operator
+        if " LIKE " in condition.upper():
+            parts = condition.split(" LIKE ", 1)
+            if len(parts) == 2:
+                field = parts[0].strip()
+                pattern = parts[1].strip()
+                return {field: {"$like": pattern}}
+        
+        # Parse standard comparison operators
+        if ">=" in condition:
+            field, value = condition.split(">=", 1)
+            return {field.strip(): {"$gte": self._parse_value(value.strip())}}
+        elif "<=" in condition:
+            field, value = condition.split("<=", 1)
+            return {field.strip(): {"$lte": self._parse_value(value.strip())}}
+        elif "!=" in condition:
+            field, value = condition.split("!=", 1)
+            return {field.strip(): {"$ne": self._parse_value(value.strip())}}
+        elif ">" in condition:
+            field, value = condition.split(">", 1)
+            return {field.strip(): {"$gt": self._parse_value(value.strip())}}
+        elif "<" in condition:
+            field, value = condition.split("<", 1)
+            return {field.strip(): {"$lt": self._parse_value(value.strip())}}
+        elif "=" in condition:
+            field, value = condition.split("=", 1)
+            parsed_value = self._parse_value(value.strip())
+            return {field.strip(): parsed_value}
+        
+        return None
     
     def _parse_value(self, value_str):
         """
@@ -469,6 +613,14 @@ class ClassicalData:
         """
         options = request.get("options", {})
         where_str = options.get("where")
+        
+        # Strip surrounding quotes if present (from command-line parsing)
+        if where_str:
+            where_str = where_str.strip()
+            if (where_str.startswith('"') and where_str.endswith('"')) or \
+               (where_str.startswith("'") and where_str.endswith("'")):
+                where_str = where_str[1:-1]
+        
         where = self._parse_where_clause(where_str) if where_str else None
         
         if warn_if_missing and not where:
@@ -668,42 +820,68 @@ class ClassicalData:
     
     def _handle_read(self, request):
         """
-        Handle READ operation (query/select rows).
+        Handle READ operation (query/select rows) with JOIN support.
         
-        By default reads all rows from the table.
-        Supports optional WHERE, ORDER BY, and LIMIT clauses.
+        Supports:
+          - Single table: data read users --where "age>25"
+          - Multi-table: data read users,posts --auto-join
+          - Manual JOIN: data read users,posts --join "type=INNER,table=posts,on=users.id=posts.user_id"
         
         WHERE syntax examples:
           - data read users --where "age=30"
-          - data read users --where "age>25"
-          - data read users --where "name=Alice"
+          - data read users --where "age>25 OR status=active"
+          - data read users,posts --auto-join --where "posts.status=published"
         """
-        # Extract and validate table name
-        table = self._extract_table_from_request(request, "READ", check_exists=True)
-        if not table:
+        # Extract table(s) - may be single or comma-separated list
+        tables = request.get("tables", [])
+        if not tables:
+            model = request.get("model")
+            if isinstance(model, str):
+                # Check if model has comma (multi-table)
+                table_name = model.split(".")[-1]
+                if "," in table_name:
+                    tables = [t.strip() for t in table_name.split(",")]
+                else:
+                    tables = [table_name]
+        
+        if not tables:
+            self.logger.error("No table specified for READ")
             return False
+        
+        # Validate all tables exist
+        for tbl in tables:
+            if not self.adapter.table_exists(tbl):
+                self.logger.error("❌ Table '%s' does not exist", tbl)
+                return False
+        
+        # Determine if multi-table query
+        is_multi_table = len(tables) > 1
         
         # Parse query options
         fields = request.get("fields")
         order = request.get("order")
         limit = request.get("limit")
-        
-        # Extract WHERE clause
         where = self._extract_where_clause(request, warn_if_missing=False)
         
-        # Execute query
-        rows = self.select(table, fields, where, None, order, limit)
+        # Extract JOIN options
+        joins = request.get("joins")  # Manual join definitions
+        auto_join = request.get("auto_join", False)  # Auto-detect from FK
         
-        # Display results using zDisplay
+        # Execute SELECT (single or multi-table)
+        table_arg = tables[0] if len(tables) == 1 else tables
+        rows = self.select(table_arg, fields, where, joins, order, limit, auto_join=auto_join)
+        
+        # Display results
+        table_display = " + ".join(tables) if is_multi_table else tables[0]
         if rows:
             self.zcli.display.handle({
                 "event": "zTable",
-                "table": table,
+                "table": table_display,
                 "rows": rows
             })
-            self.logger.info("✅ Read %d row(s) from %s", len(rows), table)
+            self.logger.info("✅ Read %d row(s) from %s", len(rows), table_display)
         else:
-            self.logger.info("✅ Read 0 rows from %s (table is empty or no matches)", table)
+            self.logger.info("✅ Read 0 rows from %s (table is empty or no matches)", table_display)
         
         return True
     

@@ -202,9 +202,38 @@ class CSVAdapter(BaseDataAdapter):
         logger.info("Inserted row into CSV table %s (row %d)", table, row_id)
         return row_id
     
-    def select(self, table, fields=None, where=None, joins=None, order=None, limit=None):
-        """Select rows from a CSV table."""
-        df = self._load_table(table)
+    def select(self, table, fields=None, where=None, joins=None, order=None, limit=None, auto_join=False, schema=None):
+        """
+        Select rows from CSV table(s) with optional JOIN support.
+        
+        Args:
+            table: Table name (str) or list of tables for multi-table query
+            fields: List of fields (may include table prefixes like "users.name")
+            where: WHERE conditions dict
+            joins: List of join definitions for manual joins
+            order: ORDER BY clause
+            limit: LIMIT value
+            auto_join: If True, automatically detect joins from FK relationships
+            schema: Schema dict (required for auto_join)
+        
+        Returns:
+            list: List of row dicts
+        """
+        # Handle multi-table queries
+        tables = [table] if isinstance(table, str) else table
+        is_multi_table = len(tables) > 1 or joins
+        
+        if is_multi_table:
+            # Multi-table query with JOINs
+            logger.info("🔗 Multi-table CSV query: %s", " + ".join(tables))
+            df = self._join_tables(tables, joins=joins, schema=schema, auto_join=auto_join)
+            
+            # Resolve field names for multi-table (handle table prefixes)
+            if fields and fields != ["*"]:
+                fields = self._resolve_field_names(fields, df.columns.tolist())
+        else:
+            # Single table query
+            df = self._load_table(table)
         
         # Apply WHERE filtering
         if where:
@@ -225,10 +254,11 @@ class CSVAdapter(BaseDataAdapter):
         if limit:
             df = df.head(limit)
         
-        # Convert to list of dicts (compatible with SQLite format)
+        # Convert to list of dicts (compatible with SQL format)
         rows = df.to_dict('records')
         
-        logger.info("Selected %d rows from CSV table %s", len(rows), table)
+        table_name = " + ".join(tables) if is_multi_table else table
+        logger.info("Selected %d rows from %s", len(rows), table_name)
         return rows
     
     def update(self, table, fields, values, where):
@@ -474,7 +504,15 @@ class CSVAdapter(BaseDataAdapter):
     
     def _create_where_mask(self, df, where):
         """
-        Create a boolean mask for WHERE clause filtering.
+        Create a boolean mask for WHERE clause filtering with advanced operator support.
+        
+        Supported formats:
+          - {"field": value}                    → field = value
+          - {"field": {"$gt": 5}}              → field > 5
+          - {"field": [1, 2, 3]}               → field IN (1, 2, 3)
+          - {"field": {"$like": "%pattern%"}}  → field LIKE '%pattern%'
+          - {"field": None}                    → field IS NULL
+          - {"$or": [{...}, {...}]}            → (cond1 OR cond2)
         
         Args:
             df (DataFrame): DataFrame to filter
@@ -489,38 +527,86 @@ class CSVAdapter(BaseDataAdapter):
         mask = pd.Series([True] * len(df), index=df.index)
         
         for field, condition in where.items():
+            # Handle OR conditions
+            if field.upper() in ("$OR", "OR"):
+                if isinstance(condition, list) and condition:
+                    or_mask = self._create_or_mask(df, condition)
+                    mask = mask & or_mask
+                continue
+            
+            # Handle field-level conditions
             if field not in df.columns:
                 logger.warning("Field '%s' not in table columns", field)
                 continue
             
+            # Handle IS NULL
+            if condition is None:
+                mask = mask & df[field].isna()
+                continue
+            
+            # Handle IN operator (list values)
+            if isinstance(condition, list):
+                mask = mask & df[field].isin(condition)
+                continue
+            
+            # Handle complex operators (dict values)
             if isinstance(condition, dict):
-                # Complex condition (e.g., {"$gt": 5})
                 for op, value in condition.items():
-                    if op == "$eq" or op == "=":
+                    op_upper = op.upper()
+                    
+                    if op_upper == "$EQ" or op == "=":
                         mask = mask & (df[field] == value)
-                    elif op == "$ne" or op == "!=":
+                    elif op_upper == "$NE" or op == "!=":
                         mask = mask & (df[field] != value)
-                    elif op == "$gt" or op == ">":
+                    elif op_upper == "$GT" or op == ">":
                         mask = mask & (df[field] > value)
-                    elif op == "$gte" or op == ">=":
+                    elif op_upper == "$GTE" or op == ">=":
                         mask = mask & (df[field] >= value)
-                    elif op == "$lt" or op == "<":
+                    elif op_upper == "$LT" or op == "<":
                         mask = mask & (df[field] < value)
-                    elif op == "$lte" or op == "<=":
+                    elif op_upper == "$LTE" or op == "<=":
                         mask = mask & (df[field] <= value)
-                    elif op == "$like":
-                        # Convert SQL LIKE to pandas string contains
+                    elif op_upper == "$LIKE" or op_upper == "LIKE":
+                        # Convert SQL LIKE to pandas regex
                         pattern = value.replace("%", ".*").replace("_", ".")
                         mask = mask & df[field].astype(str).str.match(pattern, na=False)
-                    elif op == "$in":
-                        mask = mask & df[field].isin(value)
+                    elif op_upper == "$IN" or op_upper == "IN":
+                        if isinstance(value, list):
+                            mask = mask & df[field].isin(value)
+                    elif op_upper == "$NULL" or (op_upper == "IS" and value is None):
+                        mask = mask & df[field].isna()
+                    elif op_upper == "$NOTNULL" or (op_upper == "IS NOT" and value is None):
+                        mask = mask & df[field].notna()
                     else:
                         logger.warning("Unsupported operator: %s", op)
-            else:
-                # Simple equality
-                mask = mask & (df[field] == condition)
+                continue
+            
+            # Simple equality
+            mask = mask & (df[field] == condition)
         
         return mask
+    
+    def _create_or_mask(self, df, or_list):
+        """
+        Create OR mask from list of condition dicts.
+        
+        Args:
+            df (DataFrame): DataFrame to filter
+            or_list (list): List of condition dictionaries
+            
+        Returns:
+            pd.Series: Boolean OR mask
+        """
+        or_mask = pd.Series([False] * len(df), index=df.index)
+        
+        for condition_dict in or_list:
+            if not isinstance(condition_dict, dict):
+                continue
+            
+            cond_mask = self._create_where_mask(df, condition_dict)
+            or_mask = or_mask | cond_mask
+        
+        return or_mask
     
     def _apply_where_filter(self, df, where):
         """Apply WHERE clause filtering to DataFrame."""
@@ -574,6 +660,245 @@ class CSVAdapter(BaseDataAdapter):
                 df = df.sort_values(by=sort_fields, ascending=sort_ascending)
         
         return df
+    
+    # ═══════════════════════════════════════════════════════════
+    # JOIN Support (Multi-table Queries)
+    # ═══════════════════════════════════════════════════════════
+    
+    def _join_tables(self, tables, joins=None, schema=None, auto_join=False):
+        """
+        Join multiple CSV tables using pandas merge.
+        
+        Args:
+            tables: List of table names to join
+            joins: List of join definitions (manual joins)
+            schema: Schema dict for auto-join detection
+            auto_join: If True, automatically detect joins from FK relationships
+            
+        Returns:
+            DataFrame: Joined DataFrame
+        """
+        if not tables or len(tables) < 2:
+            return self._load_table(tables[0]) if tables else pd.DataFrame()
+        
+        # Load base table
+        base_table = tables[0]
+        result_df = self._load_table(base_table)
+        
+        # Add table prefix to columns to avoid conflicts
+        result_df.columns = [f"{base_table}.{col}" for col in result_df.columns]
+        
+        # Join remaining tables
+        remaining_tables = tables[1:]
+        
+        if auto_join and schema:
+            # Auto-detect joins from FK relationships
+            logger.info("🔗 Auto-joining CSV tables based on FK relationships")
+            result_df = self._auto_join_csv(result_df, base_table, remaining_tables, schema)
+        elif joins:
+            # Manual join definitions
+            logger.info("🔗 Building manual JOINs for CSV")
+            result_df = self._manual_join_csv(result_df, base_table, joins)
+        else:
+            # Cross join (Cartesian product)
+            logger.warning("⚠️ Multiple tables without JOIN specification - using CROSS JOIN")
+            for table_name in remaining_tables:
+                right_df = self._load_table(table_name)
+                right_df.columns = [f"{table_name}.{col}" for col in right_df.columns]
+                result_df['_join_key'] = 1
+                right_df['_join_key'] = 1
+                result_df = result_df.merge(right_df, on='_join_key', how='outer')
+                result_df = result_df.drop('_join_key', axis=1)
+        
+        return result_df
+    
+    def _auto_join_csv(self, base_df, base_table, remaining_tables, schema):
+        """
+        Auto-join CSV tables based on foreign key relationships.
+        
+        Args:
+            base_df: Base DataFrame (already loaded with prefixed columns)
+            base_table: Base table name
+            remaining_tables: List of tables to join
+            schema: Schema dictionary with FK definitions
+            
+        Returns:
+            DataFrame: Joined DataFrame
+        """
+        result_df = base_df
+        joined_tables = [base_table]
+        
+        for table_name in remaining_tables:
+            join_found = False
+            table_schema = schema.get(table_name, {})
+            right_df = self._load_table(table_name)
+            right_df.columns = [f"{table_name}.{col}" for col in right_df.columns]
+            
+            # Check if this table has FK to base or already joined tables
+            for field_name, field_def in table_schema.items():
+                if not isinstance(field_def, dict):
+                    continue
+                
+                fk = field_def.get("fk")
+                if not fk:
+                    continue
+                
+                # Parse FK: "users.id" -> table: users, column: id
+                try:
+                    ref_table, ref_column = fk.split(".", 1)
+                except ValueError:
+                    continue
+                
+                # Check if referenced table is in our joined set
+                if ref_table in joined_tables:
+                    # Found a join!
+                    left_on = f"{ref_table}.{ref_column}"
+                    right_on = f"{table_name}.{field_name}"
+                    
+                    if left_on in result_df.columns and right_on in right_df.columns:
+                        result_df = result_df.merge(
+                            right_df,
+                            left_on=left_on,
+                            right_on=right_on,
+                            how='inner'
+                        )
+                        joined_tables.append(table_name)
+                        join_found = True
+                        logger.debug("  Auto-detected CSV JOIN: %s.%s = %s.%s", 
+                                   ref_table, ref_column, table_name, field_name)
+                        break
+            
+            # Check reverse: does base/joined table have FK to this table?
+            if not join_found:
+                for already_joined in joined_tables:
+                    joined_schema = schema.get(already_joined, {})
+                    
+                    for field_name, field_def in joined_schema.items():
+                        if not isinstance(field_def, dict):
+                            continue
+                        
+                        fk = field_def.get("fk")
+                        if not fk:
+                            continue
+                        
+                        try:
+                            ref_table, ref_column = fk.split(".", 1)
+                        except ValueError:
+                            continue
+                        
+                        if ref_table == table_name:
+                            # Found reverse join!
+                            left_on = f"{already_joined}.{field_name}"
+                            right_on = f"{table_name}.{ref_column}"
+                            
+                            if left_on in result_df.columns and right_on in right_df.columns:
+                                result_df = result_df.merge(
+                                    right_df,
+                                    left_on=left_on,
+                                    right_on=right_on,
+                                    how='inner'
+                                )
+                                joined_tables.append(table_name)
+                                join_found = True
+                                logger.debug("  Auto-detected CSV JOIN (reverse): %s.%s = %s.%s",
+                                           already_joined, field_name, table_name, ref_column)
+                                break
+                    
+                    if join_found:
+                        break
+            
+            if not join_found:
+                logger.warning("⚠️ Could not auto-detect join for CSV table: %s", table_name)
+        
+        return result_df
+    
+    def _manual_join_csv(self, base_df, base_table, joins):
+        """
+        Perform manual joins on CSV tables.
+        
+        Args:
+            base_df: Base DataFrame (already loaded with prefixed columns)
+            base_table: Base table name
+            joins: List of join definitions
+                Format: [{"type": "INNER", "table": "posts", "on": "users.id = posts.user_id"}]
+        
+        Returns:
+            DataFrame: Joined DataFrame
+        """
+        result_df = base_df
+        
+        for join_def in joins:
+            join_type = join_def.get("type", "INNER").lower()
+            table_name = join_def.get("table")
+            on_clause = join_def.get("on")
+            
+            if not table_name or not on_clause:
+                logger.warning("⚠️ Skipping invalid CSV join: %s", join_def)
+                continue
+            
+            # Load right table
+            right_df = self._load_table(table_name)
+            right_df.columns = [f"{table_name}.{col}" for col in right_df.columns]
+            
+            # Parse ON clause: "users.id = posts.user_id"
+            try:
+                left_part, right_part = on_clause.split("=", 1)
+                left_on = left_part.strip()
+                right_on = right_part.strip()
+                
+                # Map SQL join types to pandas how parameter
+                how_map = {
+                    "inner": "inner",
+                    "left": "left",
+                    "right": "right",
+                    "full": "outer",
+                    "cross": "cross"
+                }
+                how = how_map.get(join_type, "inner")
+                
+                # Perform merge
+                if how == "cross":
+                    result_df['_join_key'] = 1
+                    right_df['_join_key'] = 1
+                    result_df = result_df.merge(right_df, on='_join_key', how='outer')
+                    result_df = result_df.drop('_join_key', axis=1)
+                else:
+                    result_df = result_df.merge(
+                        right_df,
+                        left_on=left_on,
+                        right_on=right_on,
+                        how=how
+                    )
+                
+                logger.debug("  Added CSV %s JOIN %s", join_type.upper(), table_name)
+            except Exception as e:
+                logger.error("Failed to parse CSV join ON clause '%s': %s", on_clause, e)
+        
+        return result_df
+    
+    def _resolve_field_names(self, fields, available_columns):
+        """
+        Resolve field names for multi-table queries.
+        
+        Args:
+            fields: List of requested fields (may have table prefixes)
+            available_columns: List of available column names (with table prefixes)
+            
+        Returns:
+            list: List of resolved field names that exist in available_columns
+        """
+        resolved = []
+        for field in fields:
+            if field in available_columns:
+                resolved.append(field)
+            else:
+                # Try to find a match with table prefix
+                matches = [col for col in available_columns if col.endswith(f".{field}")]
+                if matches:
+                    resolved.append(matches[0])
+                else:
+                    logger.warning("Field '%s' not found in available columns", field)
+        return resolved
     
     # ═══════════════════════════════════════════════════════════
     # Additional Helper Methods

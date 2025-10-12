@@ -1,1 +1,3 @@
-id,name,email,age,status
+users.id,users.name,users.email,users.age,users.status
+,Alice,alice@csv.com,25,
+,Bob,bob@csv.com,35,

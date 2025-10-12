@@ -40,22 +40,26 @@ users:
     type: str
     default: active
 
-# Simple posts table (user_id is just a number, no FK enforcement)
+# Posts table with FK to users
 posts:
   id:
     type: int
     pk: true
   user_id:
     type: int
-    # Note: CSV doesn't enforce FK relationships
+    required: true
+    fk: users.id  # Foreign key relationship for auto-join
   title:
     type: str
     required: true
+    rules:
+      min_length: 5
+      max_length: 200
   content:
     type: str
-  published:
+  status:
     type: str
-    # Will store as string in CSV
+    default: draft
 
 # Simple products table for testing
 products:

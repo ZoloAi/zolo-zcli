@@ -32,7 +32,8 @@ posts:
     pk: true
   user_id:
     type: int
-    # Note: CSV doesn't enforce FK relationships
+    required: true
+    fk: users.id  # Foreign key relationship for auto-join
     rules:
       min: 1
   title:
@@ -45,9 +46,9 @@ posts:
     type: str
     rules:
       min_length: 10
-  published:
+  status:
     type: str
-    # Will store as string in CSV
+    default: draft
 
 # Simple products table for testing
 products:

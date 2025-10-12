@@ -235,26 +235,46 @@ class SQLAdapter(BaseDataAdapter):
         logger.info("Inserted row into %s with ID: %s", table, row_id)
         return row_id
 
-    def select(self, table, fields=None, where=None, joins=None, order=None, limit=None):
-        """Select rows from a table."""
+    def select(self, table, fields=None, where=None, joins=None, order=None, limit=None, auto_join=False, schema=None):
+        """
+        Select rows from a table with optional JOIN support.
+        
+        Args:
+            table: Table name (str) or list of tables for multi-table query
+            fields: List of fields (may include table prefixes like "users.name")
+            where: WHERE conditions dict
+            joins: List of join definitions for manual joins
+            order: ORDER BY clause
+            limit: LIMIT value
+            auto_join: If True, automatically detect joins from FK relationships
+            schema: Schema dict (required for auto_join)
+        
+        Returns:
+            list: List of row dicts
+        """
         cur = self.get_cursor()
-
-        # Build SELECT clause
-        if not fields or fields == ["*"]:
-            select_clause = "*"
+        
+        # Handle multi-table queries
+        tables = [table] if isinstance(table, str) else table
+        is_multi_table = len(tables) > 1 or joins
+        
+        if is_multi_table:
+            # Build FROM clause with JOINs
+            from_clause, joined_tables = self._build_join_clause(
+                tables, joins=joins, schema=schema, auto_join=auto_join
+            )
+            
+            # Build SELECT clause with table qualifiers for multi-table
+            select_clause = self._build_select_clause(fields, tables)
+            
+            logger.info("🔗 Multi-table query: %s", " + ".join(tables))
         else:
-            select_clause = ", ".join(fields)
+            # Single table query (existing logic)
+            from_clause = table
+            select_clause = "*" if not fields or fields == ["*"] else ", ".join(fields)
 
-        sql = f"SELECT {select_clause} FROM {table}"
+        sql = f"SELECT {select_clause} FROM {from_clause}"
         params = []
-
-        # Build JOIN clause
-        if joins:
-            for join in joins:
-                join_type = join.get("type", "INNER").upper()
-                join_table = join["table"]
-                join_on = join["on"]
-                sql += f" {join_type} JOIN {join_table} ON {join_on}"
 
         # Build WHERE clause
         if where:
@@ -283,7 +303,8 @@ class SQLAdapter(BaseDataAdapter):
         else:
             rows = []
 
-        logger.info("Selected %d rows from %s", len(rows), table)
+        table_name = " + ".join(tables) if is_multi_table else table
+        logger.info("Selected %d rows from %s", len(rows), table_name)
         return rows
 
     def update(self, table, fields, values, where):
@@ -402,29 +423,97 @@ class SQLAdapter(BaseDataAdapter):
 
     def _build_where_clause(self, where):
         """
-        Build WHERE clause from dict.
+        Build WHERE clause from dict with advanced operator support.
+        
+        Supported formats:
+          - {"field": value}                    → field = value
+          - {"field": {"$gt": 5}}              → field > 5
+          - {"field": [1, 2, 3]}               → field IN (1, 2, 3)
+          - {"field": {"$like": "%pattern%"}}  → field LIKE '%pattern%'
+          - {"field": None}                    → field IS NULL
+          - {"$or": [{...}, {...}]}            → (cond1 OR cond2)
         
         Returns:
             tuple: (where_clause, params)
         """
         conditions = []
         params = []
-        placeholder = self._get_single_placeholder()
 
         for field, value in where.items():
+            # Handle OR conditions
+            if field.upper() in ("$OR", "OR"):
+                if isinstance(value, list) and value:
+                    or_conditions, or_params = self._build_or_conditions(value)
+                    if or_conditions:
+                        conditions.append(f"({or_conditions})")
+                        params.extend(or_params)
+                continue
+            
+            # Handle IS NULL
+            if value is None:
+                conditions.append(f"{field} IS NULL")
+                continue
+            
+            # Handle IN operator (list values)
+            if isinstance(value, list):
+                if value:
+                    placeholders = ", ".join([self._get_single_placeholder() for _ in value])
+                    conditions.append(f"{field} IN ({placeholders})")
+                    params.extend(value)
+                continue
+            
+            # Handle complex operators (dict values)
             if isinstance(value, dict):
-                # Complex condition (e.g., {"$gt": 5})
                 for op, val in value.items():
-                    sql_op = self._map_operator(op)
-                    conditions.append(f"{field} {sql_op} {placeholder}")
-                    params.append(val)
-            else:
-                # Simple equality
-                conditions.append(f"{field} = {placeholder}")
-                params.append(value)
+                    if op.upper() == "$LIKE" or op.upper() == "LIKE":
+                        conditions.append(f"{field} LIKE {self._get_single_placeholder()}")
+                        params.append(val)
+                    elif op.upper() == "$IN" or op.upper() == "IN":
+                        if isinstance(val, list) and val:
+                            placeholders = ", ".join([self._get_single_placeholder() for _ in val])
+                            conditions.append(f"{field} IN ({placeholders})")
+                            params.extend(val)
+                    elif op.upper() == "$NULL" or (op.upper() == "IS" and val is None):
+                        conditions.append(f"{field} IS NULL")
+                    elif op.upper() == "$NOTNULL" or (op.upper() == "IS NOT" and val is None):
+                        conditions.append(f"{field} IS NOT NULL")
+                    else:
+                        sql_op = self._map_operator(op)
+                        conditions.append(f"{field} {sql_op} {self._get_single_placeholder()}")
+                        params.append(val)
+                continue
+            
+            # Simple equality
+            conditions.append(f"{field} = {self._get_single_placeholder()}")
+            params.append(value)
 
         where_clause = " AND ".join(conditions) if conditions else "1=1"
         return where_clause, params
+    
+    def _build_or_conditions(self, or_list):
+        """
+        Build OR conditions from list of condition dicts.
+        
+        Args:
+            or_list (list): List of condition dictionaries
+            
+        Returns:
+            tuple: (or_clause, params)
+        """
+        or_conditions = []
+        or_params = []
+        
+        for condition_dict in or_list:
+            if not isinstance(condition_dict, dict):
+                continue
+            
+            conds, cond_params = self._build_where_clause(condition_dict)
+            if conds and conds != "1=1":
+                or_conditions.append(conds)
+                or_params.extend(cond_params)
+        
+        or_clause = " OR ".join(or_conditions)
+        return or_clause, or_params
 
     def _map_operator(self, op):
         """Map operator to SQL."""
@@ -453,6 +542,199 @@ class SQLAdapter(BaseDataAdapter):
                 parts.append(f"{field} {dir_str}")
             return ", ".join(parts)
         return ""
+    
+    def _build_select_clause(self, fields, tables):
+        """
+        Build SELECT clause with table qualifiers for multi-table queries.
+        
+        Args:
+            fields: List of field names (may include table prefixes like "users.name")
+            tables: List of tables involved in the query
+            
+        Returns:
+            str: SELECT clause
+        """
+        if not fields or fields == ["*"]:
+            # For *, use table.* for each table to avoid ambiguity
+            if len(tables) > 1:
+                return ", ".join([f"{table}.*" for table in tables])
+            return "*"
+        
+        # Fields may already have table prefixes, just join them
+        return ", ".join(fields)
+    
+    def _build_join_clause(self, tables, joins=None, schema=None, auto_join=False):
+        """
+        Build JOIN clause for multi-table queries.
+        
+        Supports:
+          - Manual JOINs with explicit ON clauses
+          - Auto-JOINs based on foreign key relationships
+          - INNER, LEFT, RIGHT, FULL OUTER, and CROSS joins
+        
+        Args:
+            tables: List of table names to join
+            joins: List of join definitions (manual joins)
+            schema: Schema dictionary for auto-join detection
+            auto_join: If True, automatically detect joins from foreign keys
+            
+        Returns:
+            tuple: (from_clause, joined_tables)
+        """
+        if not tables or len(tables) < 2:
+            # Single table - no joins needed
+            return tables[0] if tables else "", []
+        
+        base_table = tables[0]
+        from_clause = base_table
+        joined_tables = []
+        
+        if auto_join and schema:
+            # Auto-detect joins from foreign key relationships
+            logger.info("🔗 Auto-joining tables based on foreign key relationships")
+            from_clause, joined_tables = self._build_auto_join(tables, schema, base_table)
+        elif joins:
+            # Manual join definitions
+            logger.info("🔗 Building manual JOIN clauses")
+            from_clause, joined_tables = self._build_manual_join(base_table, joins)
+        else:
+            # Multiple tables but no join specification - use CROSS JOIN
+            logger.warning("⚠️ Multiple tables without JOIN specification - using CROSS JOIN")
+            join_parts = [f"CROSS JOIN {table}" for table in tables[1:]]
+            from_clause = f"{base_table} {' '.join(join_parts)}"
+            joined_tables = tables[1:]
+        
+        logger.debug("Built FROM clause: %s", from_clause)
+        return from_clause, joined_tables
+    
+    def _build_manual_join(self, base_table, joins):
+        """
+        Build JOIN clause from manual join definitions.
+        
+        Args:
+            base_table: First table in the FROM clause
+            joins: List of join definitions
+                Format: [{"type": "INNER", "table": "posts", "on": "users.id = posts.user_id"}]
+            
+        Returns:
+            tuple: (from_clause, joined_tables)
+        """
+        from_clause = base_table
+        joined_tables = []
+        
+        for join_def in joins:
+            join_type = join_def.get("type", "INNER").upper()
+            table = join_def.get("table")
+            on_clause = join_def.get("on")
+            
+            if not table or not on_clause:
+                logger.warning("⚠️ Skipping invalid join definition: %s", join_def)
+                continue
+            
+            # Validate join type
+            valid_types = ["INNER", "LEFT", "RIGHT", "FULL", "CROSS"]
+            if join_type not in valid_types:
+                logger.warning("⚠️ Invalid join type '%s', using INNER", join_type)
+                join_type = "INNER"
+            
+            # Handle FULL OUTER JOIN
+            if join_type == "FULL":
+                join_type = "FULL OUTER"
+            
+            # Build join clause
+            if join_type == "CROSS":
+                from_clause += f" CROSS JOIN {table}"
+            else:
+                from_clause += f" {join_type} JOIN {table} ON {on_clause}"
+            
+            joined_tables.append(table)
+            logger.debug("  Added %s JOIN %s", join_type, table)
+        
+        return from_clause, joined_tables
+    
+    def _build_auto_join(self, tables, schema, base_table):
+        """
+        Auto-detect and build JOIN clauses from foreign key relationships.
+        
+        Analyzes schema to find FK relationships and builds appropriate JOIN clauses.
+        
+        Args:
+            tables: List of tables to join
+            schema: Schema dictionary with FK definitions
+            base_table: Starting table
+            
+        Returns:
+            tuple: (from_clause, joined_tables)
+        """
+        from_clause = base_table
+        joined_tables = []
+        remaining_tables = [t for t in tables if t != base_table]
+        
+        # Try to join each remaining table
+        for table in remaining_tables:
+            join_found = False
+            
+            # Check if this table has FK to base table or already joined tables
+            table_schema = schema.get(table, {})
+            
+            for field_name, field_def in table_schema.items():
+                if not isinstance(field_def, dict):
+                    continue
+                
+                fk = field_def.get("fk")
+                if not fk:
+                    continue
+                
+                # Parse FK: "users.id" -> table: users, column: id
+                try:
+                    ref_table, ref_column = fk.split(".", 1)
+                except ValueError:
+                    continue
+                
+                # Check if referenced table is base or already joined
+                if ref_table == base_table or ref_table in joined_tables:
+                    # Found a join!
+                    on_clause = f"{table}.{field_name} = {ref_table}.{ref_column}"
+                    from_clause += f" INNER JOIN {table} ON {on_clause}"
+                    joined_tables.append(table)
+                    join_found = True
+                    logger.debug("  Auto-detected: INNER JOIN %s ON %s", table, on_clause)
+                    break
+            
+            # Also check reverse: does base/joined table have FK to this table?
+            if not join_found:
+                for already_joined in [base_table] + joined_tables:
+                    joined_schema = schema.get(already_joined, {})
+                    
+                    for field_name, field_def in joined_schema.items():
+                        if not isinstance(field_def, dict):
+                            continue
+                        
+                        fk = field_def.get("fk")
+                        if not fk:
+                            continue
+                        
+                        try:
+                            ref_table, ref_column = fk.split(".", 1)
+                        except ValueError:
+                            continue
+                        
+                        if ref_table == table:
+                            # Found reverse join!
+                            on_clause = f"{already_joined}.{field_name} = {table}.{ref_column}"
+                            from_clause += f" INNER JOIN {table} ON {on_clause}"
+                            joined_tables.append(table)
+                            join_found = True
+                            logger.debug("  Auto-detected (reverse): INNER JOIN %s ON %s", table, on_clause)
+                            break
+                    
+                    if join_found:
+                        break
+            
+            if not join_found:
+                logger.warning("⚠️ Could not auto-detect join for table: %s", table)
+        
+        return from_clause, joined_tables
 
     def _map_field_type(self, raw_type):
         """Map field type string to SQL type (can be overridden)."""
