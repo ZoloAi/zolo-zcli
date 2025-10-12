@@ -126,8 +126,8 @@ def handle_zLink(zHorizontal, walker=None):
     if walker is None:
         raise ValueError("handle_zLink requires a walker parameter")
         # Provide loader if missing
-        from zCLI.subsystems.zLoader import ZLoader
-        setattr(walker, "loader", ZLoader(walker))
+        from zCLI.subsystems.zLoader import zLoader
+        setattr(walker, "loader", zLoader(walker))
         # Crumbs is required for navigation
         from .zCrumbs import zCrumbs
         setattr(walker, "zCrumbs", zCrumbs())

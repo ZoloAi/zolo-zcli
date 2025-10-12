@@ -184,8 +184,8 @@ def handle_zMenu(zMenu_obj, walker=None):
     if walker is None:
         raise ValueError("handle_zMenu requires a walker parameter")
         # Provide loader/dispatch fallbacks if missing
-        from zCLI.subsystems.zLoader import ZLoader
+        from zCLI.subsystems.zLoader import zLoader
         from .zDispatch import ZDispatch
-        setattr(walker, "loader", ZLoader(walker))
+        setattr(walker, "loader", zLoader(walker))
         setattr(walker, "dispatch", ZDispatch(walker))
     return ZMenu(walker).handle(zMenu_obj)

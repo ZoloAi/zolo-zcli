@@ -86,7 +86,7 @@ class zWalker:
         from zCLI.subsystems.zUtils import ZUtils
         from zCLI.subsystems.zFunc import ZFunc
         from zCLI.subsystems.zOpen import ZOpen
-        from zCLI.subsystems.zLoader import ZLoader
+        from zCLI.subsystems.zLoader import zLoader
         
         self.zcli = None
         self.zSpark_obj = zSpark_obj
@@ -101,7 +101,7 @@ class zWalker:
         
         # Instantiate subsystems (legacy duplication)
         self.zCrumbs = zCrumbs(self)
-        self.loader = ZLoader(self)
+        self.loader = zLoader(self)
         self.dispatch = ZDispatch(self)
         self.menu = ZMenu(self)
         self.link = ZLink(self)

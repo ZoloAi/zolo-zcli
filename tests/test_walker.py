@@ -355,7 +355,7 @@ def test_loader_integration():
         # Test loader is accessible
         tester.assert_not_none(walker.loader, "Walker has loader")
         
-        # Test loader has session (ZLoader uses zSession attribute)
+        # Test loader has session (zLoader uses zSession attribute)
         tester.assert_not_none(walker.loader.zSession, "Loader has zSession")
         
         # Test loader uses same session as walker

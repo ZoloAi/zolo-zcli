@@ -16,7 +16,7 @@ from .subsystems.zDialog import ZDialog
 from .subsystems.zWizard import ZWizard
 from .subsystems.zOpen import ZOpen
 from .subsystems.zAuth import ZAuth
-from .subsystems.zLoader import ZLoader
+from .subsystems.zLoader import zLoader
 from .subsystems.zExport import ZExport
 
 # Import shell components
@@ -54,7 +54,7 @@ class zCLI:
         # Note: Order matters! ZData depends on display and loader
         self.utils = zUtils(self)
         self.display = ZDisplay(self)
-        self.loader = ZLoader(self)
+        self.loader = zLoader(self)
         self.zparser = zParser(self)
         self.data = ZData(self)  # ZData subsystem (initialized after display/loader)
         self.funcs = ZFunc(self)

@@ -13,8 +13,8 @@ logger = Logger.get_logger(__name__)
 class zUtils:
     """Core utilities for zCLI package - delegates to specialized modules."""
 
-    def __init__(self, walker=None):
-        self.walker = walker
+    def __init__(self, zcli):
+        self.zcli = zcli
         self.plugins = {}
 
     def generate_id(self, prefix: str) -> str:
