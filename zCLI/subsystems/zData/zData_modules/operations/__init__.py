@@ -5,15 +5,15 @@
 # ⚠️  DEPRECATION WARNING: This module contains legacy operation functions
 # ⚠️  that are kept only for backward compatibility with old tests.
 # ⚠️  
-# ⚠️  DO NOT USE in new code. Use the modern ZData class instead:
-# ⚠️  from zCLI.subsystems.zData import ZData
+# ⚠️  DO NOT USE in new code. Use the modern zData class instead:
+# ⚠️  from zCLI.subsystems.zData import zData
 # ⚠️
 # ⚠️  Modern API examples:
-# ⚠️  - zCreate → ZData.insert()
-# ⚠️  - zRead → ZData.select()
-# ⚠️  - zUpdate → ZData.update()
-# ⚠️  - zDelete → ZData.delete()
-# ⚠️  - zUpsert → ZData.upsert()
+# ⚠️  - zCreate → zData.insert()
+# ⚠️  - zRead → zData.select()
+# ⚠️  - zUpdate → zData.update()
+# ⚠️  - zDelete → zData.delete()
+# ⚠️  - zUpsert → zData.upsert()
 # ----------------------------------------------------------------
 
 # Import CRUD operations

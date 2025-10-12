@@ -7,7 +7,7 @@ from .subsystems.zSession import create_session
 
 # Import all subsystems from the subsystems package
 from .subsystems.zUtils import zUtils
-from .subsystems.zData import ZData
+from .subsystems.zData import zData
 from .subsystems.zFunc import ZFunc
 from .subsystems.zDisplay import ZDisplay
 from .subsystems.zParser import zParser
@@ -51,12 +51,12 @@ class zCLI:
         self.session = create_session(machine_config=self.config.get_machine())
 
         # Initialize core subsystems (single source of truth)
-        # Note: Order matters! ZData depends on display and loader
+        # Note: Order matters! zData depends on display and loader
         self.utils = zUtils(self)
         self.display = ZDisplay(self)
         self.loader = zLoader(self)
         self.zparser = zParser(self)
-        self.data = ZData(self)  # ZData subsystem (initialized after display/loader)
+        self.data = zData(self)  # zData subsystem (initialized after display/loader)
         self.funcs = ZFunc(self)
         self.socket = ZSocket(self)
         self.dialog = ZDialog(self)

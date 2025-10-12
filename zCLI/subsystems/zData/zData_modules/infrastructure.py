@@ -5,16 +5,16 @@
 # ⚠️  DEPRECATION WARNING: This module contains legacy functions that are 
 # ⚠️  kept only for backward compatibility with old tests.
 # ⚠️  
-# ⚠️  DO NOT USE in new code. Use the modern ZData class instead:
-# ⚠️  from zCLI.subsystems.zData import ZData
+# ⚠️  DO NOT USE in new code. Use the modern zData class instead:
+# ⚠️  from zCLI.subsystems.zData import zData
 # ⚠️
 # ⚠️  Legacy functions in this module:
-# ⚠️  - zDataConnect: Use ZData class with adapters instead
-# ⚠️  - zEnsureTables: Use ZData.ensure_tables() instead
+# ⚠️  - zDataConnect: Use zData class with adapters instead
+# ⚠️  - zEnsureTables: Use zData.ensure_tables() instead
 # ⚠️  - zTables: Use adapter.create_table() instead
 # ⚠️  - resolve_source: Internal implementation detail
 # ⚠️  - build_order_clause: Internal implementation detail
-# ⚠️  - handle_zData: Use ZData.handle_request() instead
+# ⚠️  - handle_zData: Use zData.handle_request() instead
 # ----------------------------------------------------------------
 
 import re

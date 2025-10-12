@@ -22,7 +22,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from zCLI.subsystems.zData import ZData
+from zCLI.subsystems.zData import zData
 
 
 def test_csv_adapter():
@@ -64,7 +64,7 @@ def test_csv_adapter():
         print("TEST 1: CSV Adapter Initialization")
         print("-"*80)
         
-        zdata = ZData(schema=schema)
+        zdata = zData(schema=schema)
         assert zdata.is_connected(), "Should be connected"
         print("✅ CSV adapter initialized")
         

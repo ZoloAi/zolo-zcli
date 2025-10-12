@@ -6,8 +6,8 @@
 # with support for both classical and quantum data paradigms.
 # ----------------------------------------------------------------
 
-from .zData import ZData
+from .zData import zData
 
 __all__ = [
-    "ZData",
+    "zData",
 ]
