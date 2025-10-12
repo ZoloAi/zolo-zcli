@@ -6,7 +6,7 @@ from logger import Logger
 from .subsystems.zSession import create_session
 
 # Import all subsystems from the subsystems package
-from .subsystems.zUtils import ZUtils
+from .subsystems.zUtils import zUtils
 from .subsystems.zData import ZData
 from .subsystems.zFunc import ZFunc
 from .subsystems.zDisplay import ZDisplay
@@ -52,7 +52,7 @@ class zCLI:
 
         # Initialize core subsystems (single source of truth)
         # Note: Order matters! ZData depends on display and loader
-        self.utils = ZUtils(self)
+        self.utils = zUtils(self)
         self.display = ZDisplay(self)
         self.loader = ZLoader(self)
         self.zparser = ZParser(self)
