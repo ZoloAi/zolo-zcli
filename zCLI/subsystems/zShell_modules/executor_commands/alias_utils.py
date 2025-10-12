@@ -8,16 +8,16 @@ from logger import Logger
 logger = Logger.get_logger(__name__)
 
 
-def resolve_alias(value, loaded_cache, raise_on_missing=True):
+def resolve_alias(value, pinned_cache, raise_on_missing=True):
     """
-    Resolve $alias to cached content from LoadedCache.
+    Resolve $alias to cached content from PinnedCache.
     
     This function checks if a value is an alias reference (starts with $)
-    and looks it up in the LoadedCache. If found, returns the cached content.
+    and looks it up in the PinnedCache. If found, returns the cached content.
     
     Args:
         value: Option value (e.g., "$sqlite_demo" or "normal_value")
-        loaded_cache: LoadedCache instance from zLoader
+        pinned_cache: PinnedCache instance from CacheOrchestrator
         raise_on_missing: If True, raises ValueError when alias not found.
                          If False, returns original value.
         
@@ -29,10 +29,10 @@ def resolve_alias(value, loaded_cache, raise_on_missing=True):
                - If alias not found and not raise_on_missing: (original_value, False)
     
     Examples:
-        >>> resolve_alias("$sqlite_demo", loaded_cache)
+        >>> resolve_alias("$sqlite_demo", pinned_cache)
         ({'users': {...}, 'posts': {...}}, True)
         
-        >>> resolve_alias("@.zCLI.Schemas.zSchema.test", loaded_cache)
+        >>> resolve_alias("@.zCLI.Schemas.zSchema.test", pinned_cache)
         ("@.zCLI.Schemas.zSchema.test", False)
     """
     # Not a string or doesn't start with $ - not an alias
@@ -41,13 +41,12 @@ def resolve_alias(value, loaded_cache, raise_on_missing=True):
     
     # Extract alias name (remove $ prefix)
     alias_name = value[1:]
-    cache_key = f"alias:{alias_name}"
     
-    # Look up in loaded cache
-    cached = loaded_cache.get(cache_key)
+    # Look up in pinned cache
+    cached = pinned_cache.get_alias(alias_name)
     
     if cached is not None:
-        logger.debug("[ALIAS] Resolved $%s from LoadedCache", alias_name)
+        logger.debug("[ALIAS] Resolved $%s from PinnedCache", alias_name)
         return cached, True
     
     # Alias not found

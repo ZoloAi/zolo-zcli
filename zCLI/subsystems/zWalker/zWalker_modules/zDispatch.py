@@ -16,7 +16,15 @@ class ZDispatch:
             raise ValueError("ZDispatch requires a walker with a session")
         self.logger = getattr(walker, "logger", logger)
 
-    def handle(self, zKey, zHorizontal):
+    def handle(self, zKey, zHorizontal, context=None):
+        """
+        Handle dispatch with optional wizard context.
+        
+        Args:
+            zKey: Dispatch key
+            zHorizontal: Dispatch value
+            context: Optional context from zWizard (for connection reuse)
+        """
         self.walker.display.handle({
             "event": "sysmsg",
             "label": "handle zDispatch",
@@ -37,10 +45,10 @@ class ZDispatch:
         logger.info("Detected modifiers for %s: %s", zKey, zModifiers)
 
         if zModifiers:
-            result = self.process_modifiers(zModifiers, zKey, zHorizontal)
+            result = self.process_modifiers(zModifiers, zKey, zHorizontal, context=context)
             logger.info("Modifier evaluation result: %s", result)
         else:
-            result = self.zLauncher(zHorizontal)
+            result = self.zLauncher(zHorizontal, context=context)
             logger.info("dispatch result: %s", result)
 
         logger.info("Modifier evaluation completed for key: %s", zKey)
@@ -74,7 +82,16 @@ class ZDispatch:
         logger.info("suf_modifiers: %s", suf_modifiers)
         return suf_modifiers
 
-    def process_modifiers(self, modifiers, zKey, zHorizontal):
+    def process_modifiers(self, modifiers, zKey, zHorizontal, context=None):
+        """
+        Process modifiers with optional wizard context.
+        
+        Args:
+            modifiers: List of modifiers to process
+            zKey: Dispatch key
+            zHorizontal: Dispatch value
+            context: Optional wizard context
+        """
         self.walker.display.handle({
             "event": "sysmsg",
             "label": "Process Modifiers",
@@ -100,7 +117,7 @@ class ZDispatch:
             return result
 
         if "^" in modifiers:
-            result = self.zLauncher(zHorizontal)
+            result = self.zLauncher(zHorizontal, context=context)
             return "zBack"
 
         if "!" in modifiers:
@@ -112,14 +129,14 @@ class ZDispatch:
                 "indent": 3
             })
             logger.info("\nRequired step: %s", zKey)
-            result = self.zLauncher(zHorizontal)
+            result = self.zLauncher(zHorizontal, context=context)
             logger.info("zRequired results: %s", result)
             while not result:
                 logger.warning("Requirement '%s' not satisfied. Retrying...", zKey)
                 choice = handle_zInput({"event": "while"})
                 if choice == "stop":
                     return "stop"
-                result = self.zLauncher(zHorizontal)
+                result = self.zLauncher(zHorizontal, context=context)
             logger.info("Requirement '%s' satisfied.", zKey)
             self.walker.display.handle({
                 "event": "sysmsg",
@@ -130,9 +147,16 @@ class ZDispatch:
             })
             return result
 
-        return self.zLauncher(zHorizontal)
+        return self.zLauncher(zHorizontal, context=context)
 
-    def zLauncher(self, zHorizontal):
+    def zLauncher(self, zHorizontal, context=None):
+        """
+        Launch appropriate handler for zHorizontal.
+        
+        Args:
+            zHorizontal: Horizontal value to dispatch
+            context: Optional wizard context for connection reuse
+        """
         self.walker.display.handle({
             "event": "sysmsg",
             "label": "zLauncher",
@@ -181,7 +205,7 @@ class ZDispatch:
                 if inner:
                     req["model"] = inner
                 logger.info("Dispatching zRead (string) with request: %s", req)
-                result = self.walker.data.handle_request(req)
+                result = self.walker.data.handle_request(req, context=context)
                 return result
 
         elif isinstance(zHorizontal, dict):
@@ -215,7 +239,7 @@ class ZDispatch:
                     req = {"model": req}
                 req.setdefault("action", "read")
                 logger.info("Dispatching zRead (dict) with request: %s", req)
-                return self.walker.data.handle_request(req)
+                return self.walker.data.handle_request(req, context=context)
 
             maybe_crud = {"action","model","tables","fields","values","filters","where","order_by","limit","offset"}
             if any(k in zHorizontal for k in maybe_crud) and "model" in zHorizontal:
@@ -223,15 +247,24 @@ class ZDispatch:
                 req.setdefault("action", "read")
                 logger.info("Detected generic CRUD dict → %s", req)
                 self.walker.display.handle({"event":"sysmsg","label":" → Handle zCRUD (dict)","style":"single","color":"DISPATCH","indent":4})
-                return self.walker.data.handle_request(req)
+                return self.walker.data.handle_request(req, context=context)
 
         return None
 
 
-def handle_zDispatch(zKey, zHorizontal, walker=None):
+def handle_zDispatch(zKey, zHorizontal, walker=None, context=None):
+    """
+    Standalone dispatch function with optional wizard context.
+    
+    Args:
+        zKey: Dispatch key
+        zHorizontal: Dispatch value
+        walker: Walker instance
+        context: Optional context from zWizard
+    """
     if walker is None:
         raise ValueError("handle_zDispatch requires a walker parameter")
-    return ZDispatch(walker).handle(zKey, zHorizontal)
+    return ZDispatch(walker).handle(zKey, zHorizontal, context=context)
 
 def prefix_checker(zKey, session=None):
     if session is None:

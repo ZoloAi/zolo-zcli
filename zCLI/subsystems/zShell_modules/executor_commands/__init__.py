@@ -20,6 +20,7 @@ from .export_executor import execute_export
 from .utils_executor import execute_utils
 from .config_executor import execute_config
 from .comm_executor import execute_comm
+from .wizard_executor import execute_wizard
 
 __all__ = [
     "execute_data",
@@ -33,5 +34,6 @@ __all__ = [
     "execute_export",
     "execute_utils",
     "execute_config",
-    "execute_comm"
+    "execute_comm",
+    "execute_wizard"
 ]

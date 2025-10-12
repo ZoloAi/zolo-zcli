@@ -33,7 +33,17 @@ def create_session(machine_config=None):
             "API_Key": None
         },
         "zCrumbs": {},
-        "zCache": {"files": {}, "loaded": {}, "data": {}},
+        "zCache": {
+            "system_cache": {},   # UI and config files (auto-cached, LRU)
+            "pinned_cache": {},   # Aliases (user-loaded, never evicts)
+            "schema_cache": {},   # Active connections (wizard-only, in-memory)
+        },
+        "wizard_mode": {
+            "active": False,      # Is wizard canvas mode active?
+            "lines": [],          # Multi-line buffer (YAML or commands)
+            "format": None,       # Detected on run: "yaml", "commands", or "hybrid"
+            "transaction": False  # Transaction flag for execution
+        },
     }
 
 # Global session removed for modern architecture
@@ -44,14 +54,14 @@ def View_zSession(session=None):
     Display the current session information.
     
     Args:
-        session: Session dict to display (optional, defaults to global zSession)
+        session: Session dict to display (required)
     """
-    # Use provided session or fall back to global for backward compatibility
-    target_session = session if session is not None else zSession
+    if session is None:
+        raise ValueError("View_zSession requires a session parameter")
     
     handle_zDisplay({
         "event": "zSession",
-        "zSession": target_session
+        "zSession": session
     })
 
 def zSession_Login(data, url=None, session=None):
@@ -61,13 +71,15 @@ def zSession_Login(data, url=None, session=None):
     Args:
         data: Authentication data (username, password, etc.)
         url: Authentication endpoint URL (optional)
-        session: Session instance to update (optional, defaults to global zSession)
+        session: Session instance to update (required)
     
     Returns:
         dict: Authentication result or None on failure
     """
-    # Use provided session or fall back to global for backward compatibility
-    target_session = session if session is not None else zSession
+    if session is None:
+        raise ValueError("zSession_Login requires a session parameter")
+    
+    target_session = session
     
     handle_zDisplay({
         "event": "sysmsg",

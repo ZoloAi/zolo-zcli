@@ -148,11 +148,11 @@ def render_session(zDisplay_Obj):
     cache = g('zCache', {})
     
     if cache:
-        # Files cache (LRU auto-managed)
-        files_cache = cache.get('files', {})
-        print(f"  {Colors.CYAN}files:{Colors.RESET} ({len(files_cache)} cached)")
-        if files_cache:
-            for cache_key, cache_entry in list(files_cache.items())[:5]:
+        # System cache (LRU auto-managed UI/config files)
+        system_cache = cache.get('system_cache', {})
+        print(f"  {Colors.CYAN}system_cache:{Colors.RESET} ({len(system_cache)} cached)")
+        if system_cache:
+            for cache_key, cache_entry in list(system_cache.items())[:5]:
                 # Show complete structure of cached data
                 cached_data = cache_entry.get("data", {}) if isinstance(cache_entry, dict) else cache_entry
                 
@@ -164,22 +164,23 @@ def render_session(zDisplay_Obj):
                     print(f"      └─ {len(blocks)} blocks, {total_keys} total keys (complete file cached)")
                 else:
                     print(f"    - {cache_key}: {type(cached_data).__name__}")
-            if len(files_cache) > 5:
-                print(f"    ... and {len(files_cache) - 5} more")
+            if len(system_cache) > 5:
+                print(f"    ... and {len(system_cache) - 5} more")
         
-        # Loaded cache (user-pinned)
-        loaded_cache = cache.get('loaded', {})
-        print(f"  {Colors.CYAN}loaded:{Colors.RESET} ({len(loaded_cache)} pinned)")
-        if loaded_cache:
-            for cache_key in loaded_cache.keys():
+        # Pinned cache (user-loaded aliases)
+        pinned_cache = cache.get('pinned_cache', {})
+        print(f"  {Colors.CYAN}pinned_cache:{Colors.RESET} ({len(pinned_cache)} aliases)")
+        if pinned_cache:
+            for cache_key in pinned_cache.keys():
                 print(f"    - {cache_key}")
         
-        # Data cache (runtime)
-        data_cache = cache.get('data', {})
-        print(f"  {Colors.CYAN}data:{Colors.RESET} ({len(data_cache)} runtime)")
-        if data_cache:
-            for cache_key in data_cache.keys():
-                print(f"    - {cache_key}")
+        # Schema cache (active connections - metadata only)
+        schema_cache = cache.get('schema_cache', {})
+        print(f"  {Colors.CYAN}schema_cache:{Colors.RESET} ({len(schema_cache)} connections)")
+        if schema_cache:
+            for alias_name, metadata in schema_cache.items():
+                status = "active" if metadata.get("active") else "inactive"
+                print(f"    - ${alias_name}: {status}")
     else:
         print(f"  {Colors.MAGENTA}(empty){Colors.RESET}")
 

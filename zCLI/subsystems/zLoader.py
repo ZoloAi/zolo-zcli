@@ -21,7 +21,7 @@ NOT for external files (that's zOpen).
 from logger import Logger
 # Global session import removed - use instance-based sessions
 from zCLI.subsystems.zDisplay import handle_zDisplay
-from zCLI.subsystems.zLoader_modules import SmartCache, LoadedCache, load_file_raw
+from zCLI.subsystems.zLoader_modules import CacheOrchestrator, load_file_raw
 
 # Logger instance
 logger = Logger.get_logger(__name__)
@@ -83,9 +83,8 @@ class ZLoader:
         else:
             self.display = None
         
-        # Initialize caches
-        self.cache = SmartCache(self.zSession, namespace="files", max_size=100)
-        self.loaded_cache = LoadedCache(self.zSession)
+        # Initialize cache orchestrator (manages all three tiers)
+        self.cache = CacheOrchestrator(self.zSession)
 
     def handle(self, zPath=None):
         """
@@ -135,26 +134,11 @@ class ZLoader:
         is_schema = "zSchema" in zVaFilename or zFile_extension == ".yaml|zSchema"
         
         if not is_schema:
-            # Step 2: Check loaded cache (PRIORITY 1 - User-pinned)
+            # Step 2: Check system cache (UI and config files)
             # Use zPath for cache key instead of OS path
             zPath_key = f"{self.zSession.get('zVaFile_path', '@')}.{zVaFilename}"
-            loaded_key = f"parsed:{zPath_key}"
-            loaded = self.loaded_cache.get(loaded_key)
-            if loaded is not None:
-                self.display.handle({
-                    "event": "sysmsg",
-                    "label": "zLoader return (loaded)",
-                    "style": "~",
-                    "color": "LOADER",
-                    "indent": 1,
-                })
-                self.logger.debug("[Priority 1] Loaded cache hit: %s", loaded_key)
-                return loaded
-
-            # Step 3: Check files cache (PRIORITY 2 - Auto-cached)
-            # Use zPath for cache key
             cache_key = f"parsed:{zPath_key}"
-            cached = self.cache.get(cache_key, filepath=zFilePath_identified)
+            cached = self.cache.get(cache_key, cache_type="system", filepath=zFilePath_identified)
             if cached is not None:
                 self.display.handle({
                     "event": "sysmsg",
@@ -163,7 +147,7 @@ class ZLoader:
                     "color": "LOADER",
                     "indent": 1,
                 })
-                self.logger.debug("[Priority 2] Files cache hit: %s", cache_key)
+                self.logger.debug("[SystemCache] Cache hit: %s", cache_key)
                 return cached
         else:
             self.logger.debug("[zSchema] Skipping cache - schemas are loaded fresh each time")
@@ -197,8 +181,8 @@ class ZLoader:
             self.logger.debug("[zSchema] Not caching - returning fresh data")
             return result
         
-        # Cache other resources (UI, configs, etc.)
-        return self.cache.set(cache_key, result, filepath=zFilePath_identified)
+        # Cache other resources (UI, configs, etc.) in system cache
+        return self.cache.set(cache_key, result, cache_type="system", filepath=zFilePath_identified)
 
 
 # ─────────────────────────────────────────────────────────────────────────────

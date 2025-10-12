@@ -73,7 +73,7 @@ class ZData:
         self.paradigm = None  # 'classical' or 'quantum'
         self.handler = None   # ClassicalData or QuantumData instance
 
-    def handle_request(self, request):
+    def handle_request(self, request, context=None):
         """
             Main entry point for data operations.
             
@@ -87,6 +87,9 @@ class ZData:
                     - fields, values, where, etc.: Operation-specific parameters
                     - options._schema_cached: Pre-parsed schema from alias (optional)
                     - options._alias_name: Alias name for logging (optional)
+                context (dict, optional): Wizard context with:
+                    - wizard_mode: True if called from zWizard
+                    - schema_cache: SchemaCache instance for connection reuse
                     
             Returns:
                 Result of the operation
@@ -100,18 +103,44 @@ class ZData:
             "indent": 1
         })
 
-        # Check if schema is pre-parsed (from alias)
+        # Check for wizard mode with schema cache
+        schema_cache = None
+        wizard_mode = False
+        if context:
+            wizard_mode = context.get("wizard_mode", False)
+            schema_cache = context.get("schema_cache")
+        
+        # Get schema (from alias or path)
         options = request.get("options", {})
         cached_schema = options.get("_schema_cached")
         alias_name = options.get("_alias_name")
         
-        if cached_schema:
-            # Use pre-parsed schema from alias
+        # Try to reuse connection from schema_cache (wizard mode only)
+        if wizard_mode and schema_cache and alias_name:
+            existing_handler = schema_cache.get_connection(alias_name)
+            
+            if existing_handler:
+                # REUSE existing connection from previous wizard step
+                self.handler = existing_handler
+                self.schema = existing_handler.schema
+                self.paradigm = self._detect_paradigm(self.schema)
+                self.logger.info("♻️  Reusing connection for $%s", alias_name)
+            else:
+                # First use in wizard - create and store connection
+                if cached_schema:
+                    self.logger.info("Using cached schema from alias: $%s", alias_name)
+                    self.load_schema(cached_schema)
+                    schema_cache.set_connection(alias_name, self.handler)
+                    self.logger.info("🔗 Created persistent connection for $%s", alias_name)
+                else:
+                    self.logger.error("No cached schema in wizard mode for alias: $%s", alias_name)
+                    return "error"
+        elif cached_schema:
+            # One-shot mode with alias
             self.logger.info("Using cached schema from alias: $%s", alias_name)
             self.load_schema(cached_schema)
         else:
             # Load schema from model path
-            # Note: Schemas are NOT cached by zLoader, so always load fresh
             model_path = request.get("model")
             if model_path:
                 self.logger.info("Loading schema from: %s", model_path)
@@ -119,7 +148,7 @@ class ZData:
                 if schema == "error" or not schema:
                     self.logger.error("Failed to load schema from: %s", model_path)
                     return "error"
-                self.load_schema(schema)  # Load schema into handler (ClassicalData or QuantumData)
+                self.load_schema(schema)
             else:
                 self.logger.error("No schema provided (model path or cached schema required)")
                 return "error"
@@ -141,8 +170,13 @@ class ZData:
             self.logger.error("Error executing request: %s", e, exc_info=True)
             result = "error"
         finally:
-            # Clean up connection
-            self.disconnect()
+            # Only disconnect if NOT in wizard mode
+            # In wizard mode, connections are managed by schema_cache
+            if not wizard_mode:
+                self.disconnect()
+                self.logger.debug("Disconnected (one-shot mode)")
+            else:
+                self.logger.debug("Connection kept alive (wizard mode)")
 
         return result
 

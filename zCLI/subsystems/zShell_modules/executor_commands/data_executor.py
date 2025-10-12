@@ -41,8 +41,8 @@ def execute_data(zcli, parsed):
     # Check if model is an alias reference
     if model_path and is_alias(model_path):
         try:
-            # Resolve alias from LoadedCache
-            resolved_schema, was_alias = resolve_alias(model_path, zcli.loader.loaded_cache)
+            # Resolve alias from PinnedCache
+            resolved_schema, was_alias = resolve_alias(model_path, zcli.loader.cache.pinned_cache)
             
             if was_alias:
                 alias_name = get_alias_name(model_path)

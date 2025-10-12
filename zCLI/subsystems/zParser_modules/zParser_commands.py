@@ -43,6 +43,7 @@ def parse_command(command, logger):
         "config": _parse_config_command,
         "load": _parse_load_command,
         "comm": _parse_comm_command,
+        "wizard": _parse_wizard_command,
     }
     
     if command_type not in commands:
@@ -391,6 +392,39 @@ def _parse_comm_command(parts):
     return {
         "type": "comm",
         "action": action,
+        "args": args,
+        "options": options
+    }
+
+
+def _parse_wizard_command(parts):
+    """
+    Parse wizard commands.
+    
+    Supported commands:
+    - wizard --start: Enter canvas mode
+    - wizard --stop: Exit canvas mode
+    - wizard --run: Execute buffer
+    - wizard --show: Display buffer
+    - wizard --clear: Clear buffer
+    """
+    if len(parts) < 2:
+        return {"error": "Wizard command requires flags (--start, --stop, --run, --show, --clear)"}
+    
+    # Extract options
+    options = {}
+    args = []
+    
+    for part in parts[1:]:
+        if part.startswith("--"):
+            flag = part[2:]
+            options[flag] = True
+        else:
+            args.append(part)
+    
+    return {
+        "type": "wizard",
+        "action": "wizard",
         "args": args,
         "options": options
     }

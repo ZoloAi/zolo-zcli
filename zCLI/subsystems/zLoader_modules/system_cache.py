@@ -1,6 +1,6 @@
-# zCLI/subsystems/zLoader_modules/smart_cache.py
+# zCLI/subsystems/zLoader_modules/system_cache.py
 """
-Smart Cache - Unified caching with automatic invalidation and LRU eviction
+System Cache - UI and config file caching with mtime checking and LRU eviction
 """
 
 import os
@@ -9,28 +9,31 @@ from collections import OrderedDict
 from logger import Logger
 
 
-class SmartCache:
+class SystemCache:
     """
-    Unified smart cache with automatic invalidation and LRU eviction.
+    System cache for UI and config files.
     
     Features:
     - File modification time checking (automatic freshness)
     - LRU eviction (memory limits)
-    - Namespace isolation (prevent collisions)
-    - Statistics tracking (performance monitoring)
+    - Auto-invalidation on file changes
+    - Statistics tracking
+    
+    Used for:
+    - zUI files
+    - zConfig files
+    - Other system resources
     """
     
-    def __init__(self, session, namespace="default", max_size=100):
+    def __init__(self, session, max_size=100):
         """
-        Initialize smart cache.
+        Initialize system cache.
         
         Args:
             session: zSession dict
-            namespace: Cache namespace (e.g., "files", "data")
             max_size: Maximum cache entries (LRU eviction)
         """
         self.session = session
-        self.namespace = namespace
         self.max_size = max_size
         self.logger = Logger.get_logger()
         
@@ -46,15 +49,17 @@ class SmartCache:
         self._ensure_namespace()
     
     def _ensure_namespace(self):
-        """Ensure cache namespace exists in session."""
+        """Ensure system_cache namespace exists in session."""
         if "zCache" not in self.session:
             self.session["zCache"] = {}
         
-        if self.namespace not in self.session["zCache"]:
-            self.session["zCache"][self.namespace] = OrderedDict()
-        elif not isinstance(self.session["zCache"][self.namespace], OrderedDict):
+        if "system_cache" not in self.session["zCache"]:
+            self.session["zCache"]["system_cache"] = OrderedDict()
+        elif not isinstance(self.session["zCache"]["system_cache"], OrderedDict):
             # Convert existing dict to OrderedDict
-            self.session["zCache"][self.namespace] = OrderedDict(self.session["zCache"][self.namespace])
+            self.session["zCache"]["system_cache"] = OrderedDict(
+                self.session["zCache"]["system_cache"]
+            )
     
     def get(self, key, filepath=None, default=None):
         """
@@ -69,11 +74,11 @@ class SmartCache:
             Cached value or default
         """
         try:
-            cache = self.session["zCache"][self.namespace]
+            cache = self.session["zCache"]["system_cache"]
             
             if key not in cache:
                 self.stats["misses"] += 1
-                self.logger.debug("[Cache MISS] %s:%s", self.namespace, key)
+                self.logger.debug("[SystemCache MISS] %s", key)
                 return default
             
             entry = cache[key]
@@ -88,15 +93,15 @@ class SmartCache:
                         # File changed - invalidate
                         self.stats["invalidations"] += 1
                         self.logger.debug(
-                            "[Cache STALE] %s:%s (mtime: %s → %s)",
-                            self.namespace, key, cached_mtime, current_mtime
+                            "[SystemCache STALE] %s (mtime: %s → %s)",
+                            key, cached_mtime, current_mtime
                         )
                         del cache[key]
                         return default
                 except OSError:
                     # File doesn't exist anymore - invalidate
                     self.stats["invalidations"] += 1
-                    self.logger.debug("[Cache INVALID] %s:%s (file not found)", self.namespace, key)
+                    self.logger.debug("[SystemCache INVALID] %s (file not found)", key)
                     del cache[key]
                     return default
             
@@ -106,12 +111,12 @@ class SmartCache:
             entry["hits"] = entry.get("hits", 0) + 1
             
             self.stats["hits"] += 1
-            self.logger.debug("[Cache HIT] %s:%s (hits: %d)", self.namespace, key, entry["hits"])
+            self.logger.debug("[SystemCache HIT] %s (hits: %d)", key, entry["hits"])
             
             return entry.get("data")
             
         except Exception as e:
-            self.logger.debug("[Cache ERROR] %s:%s - %s", self.namespace, key, e)
+            self.logger.debug("[SystemCache ERROR] %s - %s", key, e)
             return default
     
     def set(self, key, value, filepath=None):
@@ -127,7 +132,7 @@ class SmartCache:
             The cached value (for chaining)
         """
         try:
-            cache = self.session["zCache"][self.namespace]
+            cache = self.session["zCache"]["system_cache"]
             
             # Create cache entry
             entry = {
@@ -149,35 +154,34 @@ class SmartCache:
             cache[key] = entry
             cache.move_to_end(key)
             
-            self.logger.debug("[Cache SET] %s:%s", self.namespace, key)
+            self.logger.debug("[SystemCache SET] %s", key)
             
             # Evict oldest if over limit
             while len(cache) > self.max_size:
                 evicted_key, evicted_entry = cache.popitem(last=False)
                 self.stats["evictions"] += 1
                 self.logger.debug(
-                    "[Cache EVICT] %s:%s (age: %.1fs, hits: %d)",
-                    self.namespace,
+                    "[SystemCache EVICT] %s (age: %.1fs, hits: %d)",
                     evicted_key,
                     time.time() - evicted_entry["cached_at"],
                     evicted_entry.get("hits", 0)
                 )
             
         except Exception as e:
-            self.logger.debug("[Cache ERROR] %s:%s - %s", self.namespace, key, e)
+            self.logger.debug("[SystemCache ERROR] %s - %s", key, e)
         
         return value
     
     def invalidate(self, key):
         """Remove specific key from cache."""
         try:
-            cache = self.session["zCache"][self.namespace]
+            cache = self.session["zCache"]["system_cache"]
             if key in cache:
                 del cache[key]
                 self.stats["invalidations"] += 1
-                self.logger.debug("[Cache INVALIDATE] %s:%s", self.namespace, key)
+                self.logger.debug("[SystemCache INVALIDATE] %s", key)
         except Exception as e:
-            self.logger.debug("[Cache ERROR] %s:%s - %s", self.namespace, key, e)
+            self.logger.debug("[SystemCache ERROR] %s - %s", key, e)
     
     def clear(self, pattern=None):
         """
@@ -185,10 +189,10 @@ class SmartCache:
         
         Args:
             pattern: Optional pattern to match (e.g., "parsed:*")
-                    If None, clears entire namespace
+                    If None, clears entire cache
         """
         try:
-            cache = self.session["zCache"][self.namespace]
+            cache = self.session["zCache"]["system_cache"]
             
             if pattern:
                 # Clear matching keys
@@ -197,27 +201,27 @@ class SmartCache:
                 for key in keys_to_delete:
                     del cache[key]
                 self.logger.debug(
-                    "[Cache CLEAR] %s: %d entries matching '%s'",
-                    self.namespace, len(keys_to_delete), pattern
+                    "[SystemCache CLEAR] %d entries matching '%s'",
+                    len(keys_to_delete), pattern
                 )
             else:
-                # Clear entire namespace
+                # Clear entire cache
                 count = len(cache)
                 cache.clear()
-                self.logger.debug("[Cache CLEAR] %s: %d entries", self.namespace, count)
+                self.logger.debug("[SystemCache CLEAR] %d entries", count)
                 
         except Exception as e:
-            self.logger.debug("[Cache ERROR] clear - %s", e)
+            self.logger.debug("[SystemCache ERROR] clear - %s", e)
     
     def get_stats(self):
         """Return cache statistics."""
         try:
-            cache = self.session["zCache"][self.namespace]
+            cache = self.session["zCache"]["system_cache"]
             total_requests = self.stats["hits"] + self.stats["misses"]
             hit_rate = (self.stats["hits"] / total_requests * 100) if total_requests > 0 else 0
             
             return {
-                "namespace": self.namespace,
+                "namespace": "system_cache",
                 "size": len(cache),
                 "max_size": self.max_size,
                 "hits": self.stats["hits"],
@@ -228,3 +232,4 @@ class SmartCache:
             }
         except Exception:
             return {}
+

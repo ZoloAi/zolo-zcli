@@ -61,8 +61,17 @@ class InteractiveShell:
         
         while self.running:
             try:
-                # Get user input
-                command = input("zCLI> ").strip()
+                # Get user input with dynamic prompt
+                prompt = self._get_prompt()
+                raw_input = input(prompt)
+                
+                # In wizard mode, preserve whitespace for YAML indentation
+                # In normal mode, strip whitespace
+                wizard_mode = self.zcli.session.get("wizard_mode", {})
+                if wizard_mode.get("active"):
+                    command = raw_input  # Preserve indentation
+                else:
+                    command = raw_input.strip()  # Strip in normal mode
                 
                 # Handle empty input
                 if not command:
@@ -96,6 +105,18 @@ class InteractiveShell:
         # Save command history
         if READLINE_AVAILABLE and self.history_file:
             self._save_history()
+    
+    def _get_prompt(self):
+        """
+        Get the appropriate prompt based on current mode.
+        
+        Returns:
+            str: Prompt string
+        """
+        wizard_mode = self.zcli.session.get("wizard_mode", {})
+        if wizard_mode.get("active"):
+            return "> "  # Wizard canvas mode
+        return "zCLI> "  # Normal mode
     
     def _setup_history(self):
         """Setup readline history file for persistent command history."""
