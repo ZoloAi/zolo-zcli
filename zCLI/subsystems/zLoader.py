@@ -8,17 +8,16 @@ from zCLI.subsystems.zLoader_modules import CacheOrchestrator, load_file_raw
 # Logger instance
 logger = Logger.get_logger(__name__)
 
-
 class zLoader:
     """Middleware layer for loading and caching zVaFiles (UI, Schema, Config)."""
-    
+
     def __init__(self, zcli):
         """Initialize zLoader with zCLI instance."""
         self.zcli = zcli
         self.logger = zcli.logger
         self.zSession = zcli.session
         self.display = zcli.display
-        
+
         # Initialize cache orchestrator (manages all three tiers)
         self.cache = CacheOrchestrator(self.zSession)
 
@@ -44,7 +43,7 @@ class zLoader:
 
         # Detect if this is a zSchema file (should not be cached)
         is_schema = "zSchema" in zVaFilename or zFile_extension == ".yaml|zSchema"
-        
+
         if not is_schema:
             # Step 2: Check system cache (UI and config files)
             # Use zPath for cache key instead of OS path
@@ -81,11 +80,11 @@ class zLoader:
             "color": "LOADER",
             "indent": 1,
         })
-        
+
         # Don't cache schemas - they should be loaded fresh each time
         if is_schema:
             self.logger.debug("[zSchema] Not caching - returning fresh data")
             return result
-        
+
         # Cache other resources (UI, configs, etc.) in system cache
         return self.cache.set(cache_key, result, cache_type="system", filepath=zFilePath_identified)

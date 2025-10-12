@@ -1,7 +1,5 @@
 # zCLI/subsystems/zLoader_modules/system_cache.py
-"""
-System Cache - UI and config file caching with mtime checking and LRU eviction
-"""
+"""UI and config file caching with mtime checking and LRU eviction."""
 
 import os
 import time
@@ -10,33 +8,14 @@ from logger import Logger
 
 
 class SystemCache:
-    """
-    System cache for UI and config files.
-    
-    Features:
-    - File modification time checking (automatic freshness)
-    - LRU eviction (memory limits)
-    - Auto-invalidation on file changes
-    - Statistics tracking
-    
-    Used for:
-    - zUI files
-    - zConfig files
-    - Other system resources
-    """
-    
+    """System cache for UI and config files with mtime checking and LRU eviction."""
+
     def __init__(self, session, max_size=100):
-        """
-        Initialize system cache.
-        
-        Args:
-            session: zSession dict
-            max_size: Maximum cache entries (LRU eviction)
-        """
+        """Initialize system cache."""
         self.session = session
         self.max_size = max_size
         self.logger = Logger.get_logger()
-        
+
         # Statistics
         self.stats = {
             "hits": 0,
@@ -44,15 +23,15 @@ class SystemCache:
             "evictions": 0,
             "invalidations": 0
         }
-        
+
         # Ensure namespace exists
         self._ensure_namespace()
-    
+
     def _ensure_namespace(self):
         """Ensure system_cache namespace exists in session."""
         if "zCache" not in self.session:
             self.session["zCache"] = {}
-        
+
         if "system_cache" not in self.session["zCache"]:
             self.session["zCache"]["system_cache"] = OrderedDict()
         elif not isinstance(self.session["zCache"]["system_cache"], OrderedDict):
@@ -60,35 +39,25 @@ class SystemCache:
             self.session["zCache"]["system_cache"] = OrderedDict(
                 self.session["zCache"]["system_cache"]
             )
-    
+
     def get(self, key, filepath=None, default=None):
-        """
-        Get value from cache with optional freshness check.
-        
-        Args:
-            key: Cache key
-            filepath: Optional file path for mtime checking
-            default: Default value if not found or stale
-            
-        Returns:
-            Cached value or default
-        """
+        """Get value from cache with optional freshness check."""
         try:
             cache = self.session["zCache"]["system_cache"]
-            
+
             if key not in cache:
                 self.stats["misses"] += 1
                 self.logger.debug("[SystemCache MISS] %s", key)
                 return default
-            
+
             entry = cache[key]
-            
+
             # Check freshness if filepath provided
             if filepath and "mtime" in entry:
                 try:
                     current_mtime = os.path.getmtime(filepath)
                     cached_mtime = entry["mtime"]
-                    
+
                     if current_mtime != cached_mtime:
                         # File changed - invalidate
                         self.stats["invalidations"] += 1
@@ -104,36 +73,26 @@ class SystemCache:
                     self.logger.debug("[SystemCache INVALID] %s (file not found)", key)
                     del cache[key]
                     return default
-            
+
             # Cache hit - move to end (most recent)
             cache.move_to_end(key)
             entry["accessed_at"] = time.time()
             entry["hits"] = entry.get("hits", 0) + 1
-            
+
             self.stats["hits"] += 1
             self.logger.debug("[SystemCache HIT] %s (hits: %d)", key, entry["hits"])
-            
+
             return entry.get("data")
-            
+
         except Exception as e:
             self.logger.debug("[SystemCache ERROR] %s - %s", key, e)
             return default
-    
+
     def set(self, key, value, filepath=None):
-        """
-        Set value in cache with optional mtime tracking.
-        
-        Args:
-            key: Cache key
-            value: Value to cache
-            filepath: Optional file path for mtime tracking
-            
-        Returns:
-            The cached value (for chaining)
-        """
+        """Set value in cache with optional mtime tracking."""
         try:
             cache = self.session["zCache"]["system_cache"]
-            
+
             # Create cache entry
             entry = {
                 "data": value,
@@ -141,7 +100,7 @@ class SystemCache:
                 "accessed_at": time.time(),
                 "hits": 0
             }
-            
+
             # Add mtime if filepath provided
             if filepath:
                 try:
@@ -149,13 +108,13 @@ class SystemCache:
                     entry["filepath"] = filepath
                 except OSError:
                     pass  # File doesn't exist, skip mtime
-            
+
             # Store entry
             cache[key] = entry
             cache.move_to_end(key)
-            
+
             self.logger.debug("[SystemCache SET] %s", key)
-            
+
             # Evict oldest if over limit
             while len(cache) > self.max_size:
                 evicted_key, evicted_entry = cache.popitem(last=False)
@@ -166,12 +125,12 @@ class SystemCache:
                     time.time() - evicted_entry["cached_at"],
                     evicted_entry.get("hits", 0)
                 )
-            
+
         except Exception as e:
             self.logger.debug("[SystemCache ERROR] %s - %s", key, e)
-        
+
         return value
-    
+
     def invalidate(self, key):
         """Remove specific key from cache."""
         try:
@@ -182,18 +141,12 @@ class SystemCache:
                 self.logger.debug("[SystemCache INVALIDATE] %s", key)
         except Exception as e:
             self.logger.debug("[SystemCache ERROR] %s - %s", key, e)
-    
+
     def clear(self, pattern=None):
-        """
-        Clear cache entries.
-        
-        Args:
-            pattern: Optional pattern to match (e.g., "parsed:*")
-                    If None, clears entire cache
-        """
+        """Clear cache entries (optionally by pattern)."""
         try:
             cache = self.session["zCache"]["system_cache"]
-            
+
             if pattern:
                 # Clear matching keys
                 pattern_str = pattern.replace("*", "")
@@ -209,17 +162,17 @@ class SystemCache:
                 count = len(cache)
                 cache.clear()
                 self.logger.debug("[SystemCache CLEAR] %d entries", count)
-                
+
         except Exception as e:
             self.logger.debug("[SystemCache ERROR] clear - %s", e)
-    
+
     def get_stats(self):
         """Return cache statistics."""
         try:
             cache = self.session["zCache"]["system_cache"]
             total_requests = self.stats["hits"] + self.stats["misses"]
             hit_rate = (self.stats["hits"] / total_requests * 100) if total_requests > 0 else 0
-            
+
             return {
                 "namespace": "system_cache",
                 "size": len(cache),
@@ -232,4 +185,3 @@ class SystemCache:
             }
         except Exception:
             return {}
-

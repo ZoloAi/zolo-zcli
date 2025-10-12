@@ -1,141 +1,77 @@
 # zCLI/subsystems/zLoader_modules/pinned_cache.py
-"""
-Pinned Cache - User-loaded aliases (parsed schemas, no connections)
-
-This cache is for explicitly loaded resources via the 'load --as' command.
-Unlike system_cache (auto-cached files) or schema_cache (connections),
-entries here:
-- Never auto-evict (user must clear manually)
-- Are lightweight (parsed data only, no connections)
-- Have highest priority (checked first)
-- Are explicitly managed by user
-"""
+"""User-loaded aliases cache - never auto-evicts, highest priority."""
 
 import time
 from logger import Logger
 
-
 class PinnedCache:
-    """
-    Pinned cache for user-loaded aliases.
-    
-    Aliases are lightweight - just parsed schema dicts, no connections.
-    
-    Namespace convention:
-    - Key format: "alias:{name}"
-    - Example: "alias:sqlite_demo" → {parsed schema dict}
-    
-    Features:
-    - Never auto-evicts (user must explicitly clear)
-    - Session-scoped (persists across commands)
-    - Priority 1 (checked before system_cache)
-    - Supports $alias references
-    """
-    
+    """Pinned cache for user-loaded aliases (parsed schemas only, no auto-eviction)."""
+
     def __init__(self, session):
-        """
-        Initialize pinned cache.
-        
-        Args:
-            session: zSession dict
-        """
+        """Initialize pinned cache."""
         self.session = session
         self.logger = Logger.get_logger()
         self._ensure_namespace()
-    
+
     def _ensure_namespace(self):
         """Ensure pinned_cache namespace exists in session."""
         if "zCache" not in self.session:
             self.session["zCache"] = {}
-        
+
         if "pinned_cache" not in self.session["zCache"]:
             self.session["zCache"]["pinned_cache"] = {}
-    
+
     def load_alias(self, alias_name, parsed_schema, zpath):
-        """
-        Load alias (from load --as command).
-        
-        Args:
-            alias_name: Alias name (without $ prefix)
-            parsed_schema: Parsed schema dict
-            zpath: Original zPath
-            
-        Returns:
-            The parsed schema
-        """
+        """Load alias (from load --as command)."""
         try:
             cache = self.session["zCache"]["pinned_cache"]
             key = f"alias:{alias_name}"
-            
+
             cache[key] = {
                 "data": parsed_schema,
                 "zpath": zpath,
                 "type": "schema",
                 "loaded_at": time.time()
             }
-            
+
             self.logger.info("[PinnedCache] Alias loaded: $%s → %s", alias_name, zpath)
-            
+
         except Exception as e:
             self.logger.error("[PinnedCache ERROR] %s - %s", alias_name, e)
-        
+
         return parsed_schema
-    
+
     def get_alias(self, alias_name):
-        """
-        Get alias by name.
-        
-        Args:
-            alias_name: Alias name (without $ prefix)
-            
-        Returns:
-            Parsed schema dict or None
-        """
+        """Get alias by name."""
         try:
             cache = self.session["zCache"]["pinned_cache"]
             key = f"alias:{alias_name}"
-            
+
             if key in cache:
                 entry = cache[key]
                 self.logger.debug("[PinnedCache HIT] $%s", alias_name)
                 return entry.get("data")
-            
+
             return None
-            
+
         except Exception as e:
             self.logger.debug("[PinnedCache ERROR] %s - %s", alias_name, e)
             return None
-    
+
     def has_alias(self, alias_name):
-        """
-        Check if alias exists.
-        
-        Args:
-            alias_name: Alias name (without $ prefix)
-            
-        Returns:
-            bool
-        """
+        """Check if alias exists."""
         try:
             key = f"alias:{alias_name}"
             return key in self.session["zCache"]["pinned_cache"]
         except Exception:
             return False
-    
+
     def remove_alias(self, alias_name):
-        """
-        Remove specific alias.
-        
-        Args:
-            alias_name: Alias name (without $ prefix)
-            
-        Returns:
-            True if removed, False if not found
-        """
+        """Remove specific alias."""
         try:
             cache = self.session["zCache"]["pinned_cache"]
             key = f"alias:{alias_name}"
-            
+
             if key in cache:
                 del cache[key]
                 self.logger.info("[PinnedCache] Removed: $%s", alias_name)
@@ -144,21 +80,12 @@ class PinnedCache:
         except Exception as e:
             self.logger.error("[PinnedCache ERROR] %s - %s", alias_name, e)
             return False
-    
+
     def clear(self, pattern=None):
-        """
-        Clear pinned resources.
-        
-        Args:
-            pattern: Optional pattern to match (e.g., "alias:*")
-                    If None, clears all aliases
-                    
-        Returns:
-            Number of items cleared
-        """
+        """Clear pinned resources (optionally by pattern)."""
         try:
             cache = self.session["zCache"]["pinned_cache"]
-            
+
             if pattern:
                 # Clear matching keys
                 pattern_str = pattern.replace("*", "")
@@ -176,21 +103,16 @@ class PinnedCache:
                 cache.clear()
                 self.logger.info("[PinnedCache] Removed all %d aliases", count)
                 return count
-                
+
         except Exception as e:
             self.logger.error("[PinnedCache ERROR] clear - %s", e)
             return 0
-    
+
     def list_aliases(self):
-        """
-        List all aliases.
-        
-        Returns:
-            List of dicts with alias info
-        """
+        """List all aliases."""
         try:
             cache = self.session["zCache"]["pinned_cache"]
-            
+
             aliases = []
             for key, entry in cache.items():
                 if key.startswith("alias:"):
@@ -202,27 +124,19 @@ class PinnedCache:
                         "loaded_at": entry.get("loaded_at"),
                         "age": time.time() - entry.get("loaded_at", time.time())
                     })
-            
+
             return aliases
-            
+
         except Exception as e:
             self.logger.error("[PinnedCache ERROR] list - %s", e)
             return []
-    
+
     def get_info(self, alias_name):
-        """
-        Get metadata about an alias.
-        
-        Args:
-            alias_name: Alias name (without $ prefix)
-            
-        Returns:
-            Dict with metadata or None
-        """
+        """Get metadata about an alias."""
         try:
             cache = self.session["zCache"]["pinned_cache"]
             key = f"alias:{alias_name}"
-            
+
             if key in cache:
                 entry = cache[key]
                 return {
@@ -233,10 +147,9 @@ class PinnedCache:
                     "age": time.time() - entry.get("loaded_at", time.time()),
                     "size": len(str(entry.get("data", "")))
                 }
-            
+
             return None
-            
+
         except Exception as e:
             self.logger.error("[PinnedCache ERROR] get_info - %s", e)
             return None
-

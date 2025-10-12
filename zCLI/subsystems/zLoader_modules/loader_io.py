@@ -1,44 +1,17 @@
 # zCLI/subsystems/zLoader_modules/loader_io.py
-"""
-File I/O operations for zLoader - Raw file reading from disk
-"""
+"""File I/O operations for zLoader - raw file reading from disk."""
 
 from logger import Logger
 
 # Logger instance
 logger = Logger.get_logger(__name__)
-from zCLI.subsystems.zDisplay import handle_zDisplay
-
 
 def load_file_raw(full_path, display=None):
-    """
-    Load raw file content from filesystem.
-    
-    This is zLoader's core responsibility: File I/O.
-    Reads the file as-is without any parsing or interpretation.
-    
-    Args:
-        full_path: Full path to file
-        display: Optional display instance for rendering
-        
-    Returns:
-        Raw file content as string
-        
-    Raises:
-        RuntimeError: If file cannot be read
-    """
+    """Load raw file content from filesystem."""
     logger.debug("Opening file: %s", full_path)
 
     if display:
         display.handle({
-            "event": "sysmsg",
-            "label": "Reading",
-            "style": "single",
-            "color": "SUBLOADER",
-            "indent": 2,
-        })
-    else:
-        handle_zDisplay({
             "event": "sysmsg",
             "label": "Reading",
             "style": "single",
