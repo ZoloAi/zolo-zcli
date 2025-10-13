@@ -1,18 +1,6 @@
-# zCLI/subsystems/zShell.py — Core zShell Handler
-# ───────────────────────────────────────────────────────────────
-"""
-Core zShell handler for shell mode.
-
-This module serves as the main handler for zShell functionality,
-delegating to specialized modules within zShell_modules/.
-"""
+"""Core zShell handler for shell mode."""
 
 from logger import Logger
-
-# Logger instance
-logger = Logger.get_logger(__name__)
-
-# Import specialized modules from zShell_modules registry
 from .zShell_modules.zShell_interactive import (
     InteractiveShell as InteractiveShell_func,
     launch_zCLI_shell as launch_zCLI_shell_func
@@ -20,51 +8,35 @@ from .zShell_modules.zShell_interactive import (
 from .zShell_modules.zShell_executor import CommandExecutor as CommandExecutor_func
 from .zShell_modules.zShell_help import HelpSystem as HelpSystem_func
 
+logger = Logger.get_logger(__name__)
 
 class ZShell:
-    """
-    Core zShell Handler.
-    
-    Manages shell mode and delegates to specialized modules:
-    - InteractiveShell: REPL interface and user interaction loop
-    - CommandExecutor: Command parsing and execution engine
-    - HelpSystem: Documentation and help system
-    """
-    
+    """Core zShell handler for shell mode."""
+
     def __init__(self, zcli):
-        """
-        Initialize zShell handler.
-        
-        Args:
-            zcli: Parent zCLI instance
-        """
+        """Initialize zShell handler."""
         self.zcli = zcli
         self.logger = Logger.get_logger()
-        
-        # Initialize shell components
+
         self.interactive = InteractiveShell_func(zcli)
         self.executor = CommandExecutor_func(zcli)
         self.help_system = HelpSystem_func()
-        
         logger.debug("zShell handler initialized")
-    
+
     def run_shell(self):
         """Run shell mode."""
         return self.interactive.run()
-    
+
     def execute_command(self, command):
         """Execute a single command."""
         return self.executor.execute(command)
-    
+
     def show_help(self):
         """Show help information."""
         return self.help_system.show_help()
 
-
-def launch_zCLI_shell():
+def launch_zCLI_shell(zcli):
     """Launch zCLI shell from within the UI."""
-    return launch_zCLI_shell_func()
+    return launch_zCLI_shell_func(zcli)
 
-
-# Export main handler and utility function
 __all__ = ["ZShell", "launch_zCLI_shell"]

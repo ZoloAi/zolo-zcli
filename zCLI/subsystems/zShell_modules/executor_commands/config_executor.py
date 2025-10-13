@@ -1,167 +1,44 @@
 # zCLI/subsystems/zShell_modules/executor_commands/config_executor.py
-# ───────────────────────────────────────────────────────────────
-"""Configuration command execution for zCLI."""
+"""Configuration command executor (check system diagnostics)."""
 
+import os
+from pathlib import Path
 from logger import Logger
 
-# Logger instance
 logger = Logger.get_logger(__name__)
 
-
 def execute_config(zcli, parsed):
-    """
-    Execute configuration commands.
-    
-    Currently supports:
-    - config check: System configuration diagnostics
-    
-    Args:
-        zcli: zCLI instance
-        parsed: Parsed command dictionary
-        
-    Returns:
-        Configuration operation result
-    """
+    """Execute config commands (check)."""
     action = parsed.get("action")
-
     logger.debug("Executing config command: %s", action)
 
     if action == "check":
-        # Check system configuration folders and files
         return check_config_system(zcli)
-    else:
-        return {
-            "error": f"Unknown config action: {action}",
-            "available_actions": [
-                "check"
-            ]
-        }
 
+    return {
+        "error": f"Unknown config action: {action}",
+        "available_actions": ["check"]
+    }
 
 def check_config_system(zcli):
-    """
-    Check system configuration folders and files are properly installed and accessible.
-    
-    Args:
-        zcli: zCLI instance
-        
-    Returns:
-        Configuration system check result
-    """
-    import os
-    from pathlib import Path
-
+    """Check system configuration folders and files accessibility."""
     logger.info("Checking zCLI configuration system...")
 
     results = {
         "status": "checking",
         "checks": {},
-        "summary": {
-            "total_checks": 0,
-            "passed": 0,
-            "failed": 0,
-            "warnings": 0
-        }
+        "summary": {"total_checks": 0, "passed": 0, "failed": 0, "warnings": 0}
     }
 
-    # Get paths info from zConfig
     paths_info = zcli.config.get_paths_info()
-
-    # Check 1: Package config directory (get from package root)
-    try:
-        import zCLI
-        from pathlib import Path
-        package_root = Path(zCLI.__file__).parent.parent
-        package_config_dir = package_root / "config"
-        results["checks"]["package_config"] = check_directory(
-            str(package_config_dir),
-            "Package configuration directory",
-            required=True
-        )
-    except Exception:
-        results["checks"]["package_config"] = check_directory(
-            "N/A",
-            "Package configuration directory",
-            required=True
-        )
-
-    # Check 2: System config directory  
-    results["checks"]["system_config"] = check_directory(
-        paths_info.get("system_config", "N/A"),
-        "System configuration directory",
-        required=False
-    )
-
-    # Check 3: User config directory
-    results["checks"]["user_config"] = check_directory(
-        paths_info.get("user_config_active", "N/A"),
-        "User configuration directory", 
-        required=True
-    )
-
-    # Check 3.5: User data directory with zMachine subdirectories
-    user_data_dir = paths_info.get("user_data", "N/A")
-    results["checks"]["user_data"] = check_directory(
-        user_data_dir,
-        "User data directory",
-        required=True
-    )
     
-    # Check zMachine subdirectories
-    if user_data_dir and user_data_dir != "N/A":
-        for subdir in ["Config", "Cache"]:
-            subdir_path = f"{user_data_dir}/{subdir}"
-            results["checks"][f"zmachine_{subdir.lower()}"] = check_directory(
-                subdir_path,
-                f"zMachine.{subdir} subdirectory",
-                required=True
-            )
-
-    # Check 4: Machine config file
-    user_config_dir = paths_info.get("user_config_active", "")
-    if user_config_dir and user_config_dir != "N/A":
-        machine_config_path = f"{user_config_dir}/machine.yaml"
-    else:
-        machine_config_path = "/machine.yaml"
-    results["checks"]["machine_config"] = check_file(
-        machine_config_path,
-        "Machine configuration file",
-        required=True
-    )
-
-    # Check 5: Default config files
-    try:
-        import zCLI
-        from pathlib import Path
-        package_root = Path(zCLI.__file__).parent.parent
-        package_config_dir = package_root / "config"
-
-        default_configs = [
-            "zConfig.default.yaml",
-            "zConfig.dev.yaml", 
-            "zConfig.prod.yaml",
-            "zConfig.machine.yaml"
-        ]
-
-        for config_file in default_configs:
-            config_path = str(package_config_dir / config_file)
-            results["checks"][f"default_{config_file.replace('.', '_')}"] = check_file(
-                config_path,
-                f"Default {config_file}",
-                required=True
-            )
-    except Exception:
-        # Skip default config checks if package path can't be determined
-        pass
-
-    # Check 6: Config loader functionality
+    # Run all checks
+    _run_directory_checks(results, paths_info)
+    _run_file_checks(results, paths_info)
     results["checks"]["config_loader"] = check_config_loader(zcli)
-
-    # Check 7: Machine config loading
     results["checks"]["machine_loading"] = check_machine_config_loading(zcli)
 
-    # Calculate summary
-    for check_name, check_result in results["checks"].items():
+    for _check_name, check_result in results["checks"].items():
         results["summary"]["total_checks"] += 1
         if check_result["status"] == "pass":
             results["summary"]["passed"] += 1
@@ -170,7 +47,6 @@ def check_config_system(zcli):
         elif check_result["status"] == "warning":
             results["summary"]["warnings"] += 1
 
-    # Overall status
     if results["summary"]["failed"] == 0:
         results["status"] = "pass"
     elif results["summary"]["failed"] <= 2:
@@ -178,17 +54,66 @@ def check_config_system(zcli):
     else:
         results["status"] = "fail"
 
-    # Print results
     print_config_check_results(results)
-
-    # Return None to prevent JSON output (formatted display already shown)
     return None
+
+
+def _run_directory_checks(results, paths_info):
+    """Run all directory checks."""
+    try:
+        import zCLI
+        package_root = Path(zCLI.__file__).parent.parent
+        package_config_dir = package_root / "config"
+        results["checks"]["package_config"] = check_directory(
+            str(package_config_dir), "Package configuration directory", required=True
+        )
+    except Exception:
+        results["checks"]["package_config"] = check_directory(
+            "N/A", "Package configuration directory", required=True
+        )
+
+    # Check 2: System config directory  
+    results["checks"]["system_config"] = check_directory(
+        paths_info.get("system_config", "N/A"), "System configuration directory", required=False
+    )
+
+    # Check 3: User config directory
+    results["checks"]["user_config"] = check_directory(
+        paths_info.get("user_config_active", "N/A"), "User configuration directory", required=True
+    )
+
+    # Check 4: User data directory with zMachine subdirectories
+    user_data_dir = paths_info.get("user_data", "N/A")
+    results["checks"]["user_data"] = check_directory(user_data_dir, "User data directory", required=True)
+    
+    if user_data_dir and user_data_dir != "N/A":
+        for subdir in ["Config", "Cache"]:
+            results["checks"][f"zmachine_{subdir.lower()}"] = check_directory(
+                f"{user_data_dir}/{subdir}", f"zMachine.{subdir} subdirectory", required=True
+            )
+
+
+def _run_file_checks(results, paths_info):
+    """Run all file checks."""
+    user_config_dir = paths_info.get("user_config_active", "")
+    machine_config_path = f"{user_config_dir}/machine.yaml" if user_config_dir and user_config_dir != "N/A" else "/machine.yaml"
+    results["checks"]["machine_config"] = check_file(machine_config_path, "Machine configuration file", required=True)
+
+    try:
+        import zCLI
+        package_root = Path(zCLI.__file__).parent.parent
+        package_config_dir = package_root / "config"
+
+        for config_file in ["zConfig.default.yaml", "zConfig.dev.yaml", "zConfig.prod.yaml", "zConfig.machine.yaml"]:
+            results["checks"][f"default_{config_file.replace('.', '_')}"] = check_file(
+                str(package_config_dir / config_file), f"Default {config_file}", required=True
+            )
+    except Exception:
+        pass
 
 
 def check_directory(path, description, required=True):
     """Check if a directory exists and is accessible."""
-    import os
-
     if path == "N/A":
         return {
             "status": "fail" if required else "warning",
@@ -236,8 +161,6 @@ def check_directory(path, description, required=True):
 
 def check_file(path, description, required=True):
     """Check if a file exists and is accessible."""
-    import os
-
     if not path or path == "N/A":
         return {
             "status": "fail" if required else "warning",
@@ -287,9 +210,8 @@ def check_file(path, description, required=True):
 
 
 def check_config_loader(zcli):
-    """Check if config loader is working properly."""
+    """Check if config loader is working."""
     try:
-        # Test config loading
         config_sources = zcli.config.get_config_sources()
         if config_sources:
             return {
@@ -298,12 +220,12 @@ def check_config_loader(zcli):
                 "message": f"Config loaded from {len(config_sources)} sources: {', '.join(config_sources)}",
                 "sources": config_sources
             }
-        else:
-            return {
-                "status": "warning",
-                "description": "Configuration loader", 
-                "message": "Config loader working but no sources loaded"
-            }
+        
+        return {
+            "status": "warning",
+            "description": "Configuration loader", 
+            "message": "Config loader working but no sources loaded"
+        }
     except Exception as e:
         return {
             "status": "fail",
@@ -313,7 +235,7 @@ def check_config_loader(zcli):
 
 
 def check_machine_config_loading(zcli):
-    """Check if machine config is loading properly."""
+    """Check if machine config is loading."""
     try:
         machine_info = zcli.config.get_machine()
         if machine_info:
@@ -331,18 +253,18 @@ def check_machine_config_loading(zcli):
                         "deployment": machine_info.get("deployment")
                     }
                 }
-            else:
-                return {
-                    "status": "warning",
-                    "description": "Machine configuration loading",
-                    "message": f"Machine config loaded but missing fields: {', '.join(missing)}"
-                }
-        else:
+            
             return {
-                "status": "fail",
+                "status": "warning",
                 "description": "Machine configuration loading",
-                "message": "Machine config not loaded"
+                "message": f"Machine config loaded but missing fields: {', '.join(missing)}"
             }
+        
+        return {
+            "status": "fail",
+            "description": "Machine configuration loading",
+            "message": "Machine config not loaded"
+        }
     except Exception as e:
         return {
             "status": "fail",
@@ -353,12 +275,10 @@ def check_machine_config_loading(zcli):
 
 def print_config_check_results(results):
     """Display formatted configuration check results using zDisplay."""
+    # TODO: Replace with proper zDisplay text event once supported
     from zCLI.subsystems.zDisplay import ZDisplay
 
-    # Create display instance
     display = ZDisplay()
-
-    # Header
     display.handle({
         "event": "header",
         "label": "zCLI Configuration System Check",
@@ -367,7 +287,6 @@ def print_config_check_results(results):
         "indent": 0
     })
 
-    # Summary first
     summary = results["summary"]
     summary_lines = [f"Summary: {summary['passed']}/{summary['total_checks']} checks passed"]
     if summary["warnings"] > 0:
@@ -382,7 +301,6 @@ def print_config_check_results(results):
         "indent": 0
     })
 
-    # Detailed results header
     display.handle({
         "event": "header",
         "label": "Detailed Results",
@@ -391,8 +309,7 @@ def print_config_check_results(results):
         "indent": 0
     })
 
-    # Detailed results
-    for check_name, check_result in results["checks"].items():
+    for _check_name, check_result in results["checks"].items():
         status_indicator = {"pass": "[OK]", "warning": "[WARN]", "fail": "[FAIL]"}.get(check_result["status"], "[UNKNOWN]")
         required_text = " (required)" if check_result.get("required", False) else ""
 
@@ -403,7 +320,6 @@ def print_config_check_results(results):
 
         detail_lines.append(f"   Status: {check_result['message']}")
 
-        # Additional info
         if "size" in check_result:
             detail_lines.append(f"   Size: {check_result['size']} bytes")
         if "sources" in check_result:
@@ -419,7 +335,6 @@ def print_config_check_results(results):
             "indent": 0
         })
 
-    # Overall status at the bottom (most important)
     status_indicator = {"pass": "[OK]", "warning": "[WARN]", "fail": "[FAIL]"}.get(results["status"], "[UNKNOWN]")
     status_color = {"pass": "GREEN", "warning": "YELLOW", "fail": "RED"}.get(results["status"], "RESET")
 
@@ -438,7 +353,6 @@ def print_config_check_results(results):
         "indent": 0
     })
 
-    # Footer
     display.handle({
         "event": "header",
         "label": "",

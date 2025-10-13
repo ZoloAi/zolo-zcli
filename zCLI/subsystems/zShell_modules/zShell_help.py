@@ -1,252 +1,238 @@
-# zCLI/zCore/Help.py — Help System
+# zCLI/subsystems/zShell_modules/zShell_help.py — Help System
 # ───────────────────────────────────────────────────────────────
+"""Help system for zCLI shell - centralized command documentation."""
 
 class HelpSystem:
     """Help system for zCLI - provides documentation and usage examples."""
-    
+
+    # Centralized command definitions
+    COMMANDS = {
+        "data": {
+            "desc": "Data operations (CRUD)",
+            "usage": [
+                "data read <table> [--model PATH] [--limit N] [--where CLAUSE]",
+                "data insert <table> [--model PATH] [--fields ...] [--values ...]",
+                "data update <table> [--model PATH] [--fields ...] [--values ...] [--where CLAUSE]",
+                "data delete <table> [--model PATH] [--where CLAUSE]",
+                "data upsert <table> [--model PATH] [--fields ...] [--values ...]",
+                "data create <table> [--model PATH]",
+                "data drop <table> [--model PATH]",
+                "data head <table> [--model PATH]",
+            ],
+            "examples": [
+                "data read users --model @.zCLI.Schemas.zSchema.sqlite_demo",
+                "data read users --model $sqlite_demo",
+                "data read users,posts --model $sqlite_demo --auto-join",
+                "data insert users --model $sqlite_demo --fields name,email --values 'Alice','alice@example.com'",
+                "data read users --where 'age > 25' --limit 10",
+            ]
+        },
+        "load": {
+            "desc": "Load and cache resources (schemas, UI files)",
+            "usage": [
+                "load <zPath> [--as ALIAS]",
+                "load --show",
+                "load --clear [ALIAS]",
+            ],
+            "examples": [
+                "load @.zCLI.Schemas.zSchema.sqlite_demo --as sqlite_demo",
+                "load @.zCLI.Schemas.zSchema.csv_demo --as csv_demo",
+                "load --show",
+                "load --clear sqlite_demo",
+            ]
+        },
+        "wizard": {
+            "desc": "Multi-step workflow orchestration",
+            "usage": [
+                "wizard --start",
+                "wizard --stop",
+                "wizard --run",
+                "wizard --show",
+                "wizard --clear",
+            ],
+            "examples": [
+                "wizard --start",
+                "  # Enter YAML or commands, then:",
+                "wizard --run",
+            ]
+        },
+        "func": {
+            "desc": "Execute utility functions",
+            "usage": [
+                "func <function_name> [args...]",
+                "func generate_id <prefix>",
+                "func generate_API <prefix>",
+            ],
+            "examples": [
+                "func generate_id zU",
+                "func generate_API zApp",
+            ]
+        },
+        "utils": {
+            "desc": "Utility operations",
+            "usage": [
+                "utils <util_name> [args...]",
+                "utils hash_password <password>",
+            ],
+            "examples": [
+                "utils hash_password mypassword",
+            ]
+        },
+        "session": {
+            "desc": "Session management",
+            "usage": [
+                "session info",
+                "session set <key> <value>",
+                "session get <key>",
+            ],
+            "examples": [
+                "session info",
+                "session set zWorkspace /path/to/project",
+            ]
+        },
+        "auth": {
+            "desc": "Authentication",
+            "usage": [
+                "auth login",
+                "auth logout",
+                "auth status",
+            ],
+            "examples": [
+                "auth login",
+                "auth status",
+            ]
+        },
+        "walker": {
+            "desc": "Launch UI mode from shell",
+            "usage": [
+                "walker run",
+            ],
+            "examples": [
+                "session set zWorkspace /path/to/project",
+                "session set zVaFilename ui.main.yaml",
+                "walker run",
+            ]
+        },
+        "open": {
+            "desc": "Open files or URLs",
+            "usage": [
+                "open <path_or_url>",
+            ],
+            "examples": [
+                "open @.index.html",
+                "open https://example.com",
+            ]
+        },
+        "config": {
+            "desc": "Configuration management",
+            "usage": [
+                "config show",
+                "config get <key>",
+                "config set <key> <value>",
+            ],
+            "examples": [
+                "config show",
+                "config get zWorkspace",
+            ]
+        },
+        "export": {
+            "desc": "Export data",
+            "usage": [
+                "export <table> [--format FORMAT] [--output PATH]",
+            ],
+            "examples": [
+                "export users --format csv --output users.csv",
+            ]
+        },
+        "test": {
+            "desc": "Run test suites",
+            "usage": [
+                "test run",
+                "test session",
+            ],
+            "examples": [
+                "test run",
+                "test session",
+            ]
+        },
+        "comm": {
+            "desc": "Communication/socket operations",
+            "usage": [
+                "comm <operation> [args...]",
+            ],
+            "examples": [
+                "comm status",
+            ]
+        },
+    }
+
     @staticmethod
     def show_help():
         """Display comprehensive help information."""
         help_text = """
-═══════════════════════════════════════════════════════════════
-                    zCLI Shell Commands
-═══════════════════════════════════════════════════════════════
+╔═══════════════════════════════════════════════════════════════╗
+║                    zCLI Interactive Shell                     ║
+╚═══════════════════════════════════════════════════════════════╝
 
-Data Operations:
-  data read <table> [options]     - Read data from table
-  data create <table> [options]   - Create new record
-  data update <table> [options]   - Update existing record
-  data delete <table> [options]   - Delete record
-  data search <table> [options]   - Search in table
-  
-  Options:
-    --limit N                     - Limit results to N records
-    --model PATH                  - Specify schema model path
+Available Commands:
+"""
+        # Generate command list
+        for cmd, info in HelpSystem.COMMANDS.items():
+            help_text += f"\n  {cmd:12} - {info['desc']}"
 
-  Examples:
-    data read zUsers
-    data read zUsers --limit 10
-    data create zUsers --model @.zCloud.schemas.schema.zIndex.zUsers
-
-───────────────────────────────────────────────────────────────
-
-Resource Loading:
-  load <zPath>                    - Load and pin resource to cache
-  load --show                     - Show loaded resources
-  load --clear [pattern]          - Clear loaded resources
-  
-  Examples:
-    load @.schemas.schema
-    load @.ui.admin
-    load --show
-    load --clear schema:*
-
-───────────────────────────────────────────────────────────────
-
-Functions:
-  func <function_name> [args]     - Execute function
-  func generate_id <prefix>       - Generate ID with prefix
-  func generate_API <prefix>      - Generate API key
-  
-  Examples:
-    func generate_id zU
-    func generate_API zApp
-
-───────────────────────────────────────────────────────────────
-
-Utilities:
-  utils <util_name> [args]        - Execute utility function
-  utils hash_password <password>  - Hash password
-  
-  Examples:
-    utils hash_password mypassword
-
-───────────────────────────────────────────────────────────────
-
-Authentication:
-  auth login                      - Login with Zolo credentials
-  auth logout                     - Logout and clear credentials
-  auth status                     - Show authentication status
-  
-  Examples:
-    auth login
-    auth status
-    auth logout
-
-───────────────────────────────────────────────────────────────
-
-Session Management:
-  session info                    - Show session information
-  session set <key> <value>       - Set session value
-  session get <key>               - Get session value
-  
-  Examples:
-    session info
-    session set zWorkspace /path/to/project
-    session set zVaFilename ui.main.yaml
-    session set zVaFile_path @
-    session set zBlock Root
-
-───────────────────────────────────────────────────────────────
-
-File & URL Operations:
-  open <path>                     - Open HTML file or URL
-  
-  Examples:
-    open @.zProducts.zTimer.index.html
-    open https://example.com
-
-───────────────────────────────────────────────────────────────
-
-Walker (UI Mode):
-  walker run                      - Launch Walker from session config
-  
-  Required session fields:
-    - zWorkspace                  - Project workspace path
-    - zVaFilename                 - UI YAML filename
-    - zVaFile_path                - UI file path (default: @)
-    - zBlock                      - Starting block (default: Root)
-  
-  Examples:
-    # Configure session first
-    session set zWorkspace /path/to/project
-    session set zVaFilename ui.main.yaml
-    session set zVaFile_path @
-    session set zBlock Root
-    
-    # Then launch Walker
-    walker run
-
-───────────────────────────────────────────────────────────────
-
-Testing:
-  test run                       - Run all test suites (Core + CRUD + RGB)
-  test session                   - Quick session isolation test
-  
-  Examples:
-    test run
-    test session
-
-───────────────────────────────────────────────────────────────
+        help_text += """
 
 General:
-  help                           - Show this help
-  exit                           - Exit shell
-  quit                           - Exit shell
+  help [command]  - Show help (or help for specific command)
+  tips            - Show quick tips
+  clear/cls       - Clear screen
+  exit/quit/q     - Exit shell
+
+Usage:
+  • Type 'help <command>' for detailed help on a specific command
+  • Use Tab for command history (↑/↓ arrows)
+  • Press Ctrl+C to interrupt operations
+
+Examples:
+  help data       - Show detailed data command help
+  help load       - Show detailed load command help
+  help wizard     - Show detailed wizard command help
 
 ═══════════════════════════════════════════════════════════════
-        """
+"""
         print(help_text)
-    
+
     @staticmethod
     def show_command_help(command_type):
         """Show help for a specific command type."""
-        help_sections = {
-            "data": """
-Data Operations Help:
-  
-  data read <table> [--limit N] [--model PATH]
-    Read records from a table
-    
-  data create <table> [--model PATH]
-    Create a new record (will prompt for fields)
-    
-  data update <table> [--model PATH]
-    Update an existing record
-    
-  data delete <table> [--model PATH]
-    Delete a record
-    
-  data search <table> [--model PATH]
-    Search for records
-""",
-            "func": """
-Function Operations Help:
+        if command_type not in HelpSystem.COMMANDS:
+            print(f"No help available for: {command_type}")
+            print("Use 'help' for list of all commands")
+            return
 
-  func <function_name> [args...]
-    Execute a function with optional arguments
-    
-  Common functions:
-    - generate_id <prefix>    Generate unique ID
-    - generate_API <prefix>   Generate API key
-""",
-            "session": """
-Session Management Help:
+        cmd_info = HelpSystem.COMMANDS[command_type]
 
-  session info
-    Display current session information
-    
-  session set <key> <value>
-    Set a session variable
-    
-  session get <key>
-    Get a session variable value
-""",
-            "walker": """
-Walker Mode Help:
+        help_text = f"""
+╔═══════════════════════════════════════════════════════════════╗
+║  {command_type.upper()} Command Help
+╚═══════════════════════════════════════════════════════════════╝
 
-  walker run
-    Launch Walker UI mode using session configuration
-    
-  Required session fields:
-    - zWorkspace      Project workspace path
-    - zVaFilename     UI YAML filename (e.g., ui.main.yaml)
-    - zVaFile_path    UI file path (default: @)
-    - zBlock          Starting block (default: Root)
-  
-  Example workflow:
-    1. session set zWorkspace /path/to/project
-    2. session set zVaFilename ui.main.yaml
-    3. session set zVaFile_path @
-    4. session set zBlock Root
-    5. walker run
-  
-  The Walker will use your current session (same zS_id, zAuth, etc.)
-  Type 'exit' in Walker to return to Shell mode.
-""",
-            "test": """
-Testing Help:
+Description:
+  {cmd_info['desc']}
 
-  test run
-    Run the core zCLI test suite (79 tests)
-    Tests: Session isolation, subsystem integration, zParser,
-           plugin loading, version management
-    
-  test data
-    Run data operations test suite only (4 test files)
-    Tests: Validation, JOIN operations, direct operations
-    
-  test all
-    Run ALL test suites (core + CRUD)
-    Comprehensive test coverage of entire framework
-    
-  test session
-    Quick test to verify current shell has unique session ID
-    Useful for debugging session isolation
-""",
-            "auth": """
-Authentication Help:
+Usage:
+"""
+        for usage in cmd_info['usage']:
+            help_text += f"  {usage}\n"
 
-  auth login
-    Authenticate with your Zolo credentials
-    Credentials are stored locally in ~/.zolo/credentials
-    
-  auth logout
-    Clear stored credentials and logout
-    
-  auth status
-    Display current authentication status and user information
-    
-  Note: Authentication is required to use zCLI
-""",
-        }
-        
-        if command_type in help_sections:
-            print(help_sections[command_type])
-        else:
-            print(f"No specific help available for: {command_type}")
-            print("Use 'help' for general help")
-    
+        help_text += "\nExamples:\n"
+        for example in cmd_info['examples']:
+            help_text += f"  {example}\n"
+
+        help_text += "\n═══════════════════════════════════════════════════════════════\n"
+
+        print(help_text)
+
     @staticmethod
     def get_welcome_message():
         """Return welcome message for shell startup."""
@@ -259,7 +245,7 @@ Type 'help' for available commands
 Type 'exit' or 'quit' to leave
 
 """
-    
+
     @staticmethod
     def get_quick_tips():
         """Return quick tips for shell usage."""
@@ -270,4 +256,3 @@ Quick Tips:
   • Commands are case-sensitive
   • Use Tab for... (coming soon: autocomplete)
 """
-

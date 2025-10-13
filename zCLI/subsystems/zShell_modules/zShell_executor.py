@@ -1,282 +1,302 @@
-# zCLI/subsystems/zShell_modules/zShell_executor.py — Command Execution Engine
-# ───────────────────────────────────────────────────────────────
+"""Command execution engine with wizard canvas mode support."""
 
 from logger import Logger
-
-# Logger instance
-logger = Logger.get_logger(__name__)
-
-# Import modular command executors
 from .executor_commands import (
     execute_data, execute_func, execute_session, execute_walker,
     execute_open, execute_test, execute_auth, execute_load, 
-    execute_export, execute_utils, execute_config, execute_comm, execute_wizard
+    execute_export, execute_utils, execute_config, execute_comm
 )
 
+logger = Logger.get_logger(__name__)
 
 class CommandExecutor:
-    """
-    Command Execution Engine for zCLI.
-    
-    Handles parsing and executing different command types:
-    - CRUD operations
-    - Functions
-    - Utilities
-    - Session management
-    - Walker commands
-    - Open commands
-    """
-    
+    """Command execution engine with wizard canvas mode support."""
+
     def __init__(self, zcli):
-        """
-        Initialize command executor.
-        
-        Args:
-            zcli: Parent zCLI instance with access to all subsystems
-        """
+        """Initialize command executor."""
         self.zcli = zcli
         self.logger = Logger.get_logger()
-    
+
     def execute(self, command: str):
-        """
-        Parse and execute a shell command.
-        
-        Args:
-            command: Command string like "data read users --limit 10"
-        
-        Returns:
-            Command execution result
-        """
+        """Parse and execute a shell command."""
         if not command.strip():
             return None
-        
-        # Check if in wizard canvas mode
+
         wizard_mode = self.zcli.session.get("wizard_mode", {})
         if wizard_mode.get("active"):
-            # In wizard canvas mode - accumulate lines silently
-            
-            # Handle wizard control commands
-            if command.strip() == "wizard --stop":
-                return self._wizard_stop()
-            
-            if command.strip() == "wizard --run":
-                return self._wizard_run()
-            
-            if command.strip() == "wizard --show":
-                return self._wizard_show()
-            
-            if command.strip() == "wizard --clear":
-                return self._wizard_clear()
-            
-            # Accumulate line silently (preserve indentation for YAML)
-            # Don't strip() - need to preserve whitespace for YAML parsing
-            wizard_mode["lines"].append(command)
-            return None
-        
+            return self._handle_wizard_command(command, wizard_mode)
+
         try:
-            # Parse the command using zParser
             parsed = self.zcli.zparser.parse_command(command)
-            
-            # Check for parsing errors
+
             if "error" in parsed:
                 return parsed
-            
-            # Execute based on command type
-            command_type = parsed.get("type")
-            
-            if command_type == "data":
-                return execute_data(self.zcli, parsed)
-            elif command_type == "func":
-                return execute_func(self.zcli, parsed)
-            elif command_type == "utils":
-                return execute_utils(self.zcli, parsed)
-            elif command_type == "session":
-                return execute_session(self.zcli, parsed)
-            elif command_type == "walker":
-                return execute_walker(self.zcli, parsed)
-            elif command_type == "open":
-                return execute_open(self.zcli, parsed)
-            elif command_type == "test":
-                return execute_test(self.zcli, parsed)
-            elif command_type == "load":
-                return execute_load(self.zcli, parsed)
-            elif command_type == "auth":
-                return execute_auth(self.zcli, parsed)
-            elif command_type == "export":
-                return execute_export(self.zcli, parsed)
-            elif command_type == "config":
-                return execute_config(self.zcli, parsed)
-            elif command_type == "comm":
-                return execute_comm(self.zcli, parsed)
-            elif command_type == "wizard":
-                return execute_wizard(self.zcli, parsed)
-            else:
-                return {"error": f"Unknown command type: {command_type}"}
-        
+
+            return self._execute_parsed_command(parsed)
+
         except Exception as e:  # pylint: disable=broad-except
             self.logger.error("Command execution failed: %s", e)
             return {"error": str(e)}
-    
-    # ═══════════════════════════════════════════════════════════
-    # Wizard Canvas Control Methods
-    # ═══════════════════════════════════════════════════════════
-    
+
+    def _handle_wizard_command(self, command, wizard_mode):
+        """Handle wizard canvas mode commands."""
+        if command.strip() == "wizard --stop":
+            return self._wizard_stop()
+
+        if command.strip() == "wizard --run":
+            return self._wizard_run()
+
+        if command.strip() == "wizard --show":
+            return self._wizard_show()
+
+        if command.strip() == "wizard --clear":
+            return self._wizard_clear()
+
+        wizard_mode["lines"].append(command)
+        return None
+
     def _wizard_stop(self):
         """Exit wizard mode and discard buffer."""
         wizard_mode = self.zcli.session["wizard_mode"]
         line_count = len(wizard_mode["lines"])
-        
+
         wizard_mode["active"] = False
         wizard_mode["lines"] = []
         wizard_mode["format"] = None
-        
-        print(f"[Exited wizard canvas - {line_count} lines discarded]")
+
+        self.zcli.display.handle({
+            "event": "sysmsg",
+            "label": f"Exited wizard canvas - {line_count} lines discarded",
+            "style": "single",
+            "color": "INFO",
+            "indent": 0
+        })
         return {"status": "stopped", "lines_discarded": line_count}
-    
+
     def _wizard_show(self):
         """Display current buffer."""
         lines = self.zcli.session["wizard_mode"]["lines"]
-        
+
         if not lines:
-            print("Wizard buffer empty")
+            self.zcli.display.handle({
+                "event": "sysmsg",
+                "label": "Wizard buffer empty",
+                "style": "single",
+                "color": "INFO",
+                "indent": 0
+            })
             return {"status": "empty"}
-        
-        print(f"\nWizard Buffer ({len(lines)} lines):")
-        print("─" * 70)
+
+        self.zcli.display.handle({
+            "event": "sysmsg",
+            "label": f"Wizard Buffer ({len(lines)} lines):",
+            "style": "full",
+            "color": "INFO",
+            "indent": 0
+        })
+
         for i, line in enumerate(lines, 1):
-            print(f"{i:3}: {line}")
-        print("─" * 70)
-        
+            self.zcli.display.handle({
+                "event": "sysmsg",
+                "label": f"{i:3}: {line}",
+                "style": "single",
+                "color": "DATA",
+                "indent": 1
+            })
+
         return {"status": "shown", "lines": len(lines)}
-    
+
     def _wizard_clear(self):
         """Clear buffer without exiting wizard mode."""
         wizard_mode = self.zcli.session["wizard_mode"]
         line_count = len(wizard_mode["lines"])
         wizard_mode["lines"] = []
-        
-        print(f"[Buffer cleared - {line_count} lines removed]")
+
+        self.zcli.display.handle({
+            "event": "sysmsg",
+            "label": f"Buffer cleared - {line_count} lines removed",
+            "style": "single",
+            "color": "INFO",
+            "indent": 0
+        })
         return {"status": "cleared", "lines": line_count}
-    
+
     def _wizard_run(self):
         """Execute wizard buffer with smart format detection."""
         wizard_mode = self.zcli.session["wizard_mode"]
         lines = wizard_mode["lines"]
-        
+
         if not lines:
-            print("Wizard buffer empty - nothing to run")
+            self.zcli.display.handle({
+                "event": "sysmsg",
+                "label": "Wizard buffer empty - nothing to run",
+                "style": "single",
+                "color": "WARNING",
+                "indent": 0
+            })
             return {"error": "empty_buffer"}
-        
-        # Join lines into single string
+
         buffer = "\n".join(lines)
-        
-        print(f"\n[Executing wizard buffer ({len(lines)} lines)...]")
-        print("─" * 70)
-        
-        # Detect format and execute
+
+        self.zcli.display.handle({
+            "event": "sysmsg",
+            "label": f"Executing wizard buffer ({len(lines)} lines)...",
+            "style": "full",
+            "color": "EXTERNAL",
+            "indent": 0
+        })
+
         result = self._execute_wizard_buffer(buffer)
-        
-        # Clear buffer after successful execution
+
         if result.get("status") == "success":
             wizard_mode["lines"] = []
-            print("─" * 70)
-            print("[Buffer cleared after execution]")
-        
+            self.zcli.display.handle({
+                "event": "sysmsg",
+                "label": "Buffer cleared after execution",
+                "style": "single",
+                "color": "INFO",
+                "indent": 0
+            })
+
         return result
-    
+
     def _execute_wizard_buffer(self, buffer):
-        """
-        Smart format detection and execution.
-        
-        Detects three formats:
-        1. YAML structure (step1:, zData:, etc.) → Execute via zWizard
-        2. Shell commands (data read, func, etc.) → Execute sequentially
-        3. Hybrid (YAML with embedded shell commands) → Execute via zWizard with preprocessing
-        """
+        """Smart format detection and execution."""
         import yaml
-        
-        # Try YAML parsing first
+
         try:
             wizard_obj = yaml.safe_load(buffer)
-            
+
             if isinstance(wizard_obj, dict):
-                # Valid YAML structure - execute via zWizard
-                print("[Detected YAML/Hybrid format]")
-                
-                # Check for transaction flag
+                self.zcli.display.handle({
+                    "event": "sysmsg",
+                    "label": "Detected YAML/Hybrid format",
+                    "style": "single",
+                    "color": "INFO",
+                    "indent": 1
+                })
+
                 use_transaction = wizard_obj.get("_transaction", False)
                 if use_transaction:
-                    print("[Transaction mode: ENABLED]")
-                
-                # Count actual steps (non-meta keys)
+                    self.zcli.display.handle({
+                        "event": "sysmsg",
+                        "label": "Transaction mode: ENABLED",
+                        "style": "single",
+                        "color": "WARNING",
+                        "indent": 1
+                    })
+
                 step_count = len([k for k in wizard_obj.keys() if not k.startswith("_")])
-                print(f"[Executing {step_count} steps via zWizard...]")
-                
-                # Execute via zWizard (already has transaction support)
+                self.zcli.display.handle({
+                    "event": "sysmsg",
+                    "label": f"Executing {step_count} steps via zWizard...",
+                    "style": "single",
+                    "color": "EXTERNAL",
+                    "indent": 1
+                })
+
                 result = self.zcli.wizard.handle(wizard_obj)
-                
-                print("[✅ Wizard execution complete]")
+
+                self.zcli.display.handle({
+                    "event": "sysmsg",
+                    "label": "[OK] Wizard execution complete",
+                    "style": "single",
+                    "color": "SUCCESS",
+                    "indent": 1
+                })
                 return {"status": "success", "format": "yaml", "result": result}
-        
+
         except yaml.YAMLError as e:
-            # Not valid YAML - treat as shell commands
             self.logger.debug("YAML parsing failed: %s - treating as shell commands", e)
-        
-        # Execute as sequential shell commands
-        print("[Detected shell command format]")
+
+        self.zcli.display.handle({
+            "event": "sysmsg",
+            "label": "Detected shell command format",
+            "style": "single",
+            "color": "INFO",
+            "indent": 1
+        })
         lines = [line.strip() for line in buffer.split("\n") if line.strip()]
-        
-        print(f"[Executing {len(lines)} commands sequentially...]")
+
+        self.zcli.display.handle({
+            "event": "sysmsg",
+            "label": f"Executing {len(lines)} commands sequentially...",
+            "style": "single",
+            "color": "EXTERNAL",
+            "indent": 1
+        })
         results = []
-        
+
         for i, command in enumerate(lines, 1):
-            print(f"\n[Step {i}/{len(lines)}] {command}")
-            
-            # Parse command
+            self.zcli.display.handle({
+                "event": "sysmsg",
+                "label": f"Step {i}/{len(lines)}: {command}",
+                "style": "single",
+                "color": "DATA",
+                "indent": 2
+            })
+
             parsed = self.zcli.zparser.parse_command(command)
             if "error" in parsed:
-                print(f"[X] Parse error: {parsed['error']}")
+                self.zcli.display.handle({
+                    "event": "sysmsg",
+                    "label": f"Parse error: {parsed['error']}",
+                    "style": "single",
+                    "color": "ERROR",
+                    "indent": 2
+                })
                 return {"error": f"Failed at step {i}", "command": command, "parse_error": parsed["error"]}
-            
-            # Execute command
+
             try:
                 result = self._execute_parsed_command(parsed)
                 results.append(result)
-                print(f"[✓] Step {i} complete")
+                self.zcli.display.handle({
+                    "event": "sysmsg",
+                    "label": f"✓ Step {i} complete",
+                    "style": "single",
+                    "color": "SUCCESS",
+                    "indent": 2
+                })
             except Exception as e:
-                print(f"[X] Execution error: {e}")
+                self.zcli.display.handle({
+                    "event": "sysmsg",
+                    "label": f"Execution error: {e}",
+                    "style": "single",
+                    "color": "ERROR",
+                    "indent": 2
+                })
                 return {"error": f"Failed at step {i}", "command": command, "exception": str(e)}
-        
-        print(f"\n[✅ {len(lines)} commands executed successfully]")
+
+        self.zcli.display.handle({
+            "event": "sysmsg",
+            "label": f"[OK] {len(lines)} commands executed successfully",
+            "style": "full",
+            "color": "SUCCESS",
+            "indent": 1
+        })
         return {"status": "success", "format": "commands", "results": results}
-    
+
     def _execute_parsed_command(self, parsed):
-        """Execute a pre-parsed command (extracted from execute method)."""
+        """Execute a pre-parsed command."""
         command_type = parsed.get("type")
-        
-        if command_type == "data":
-            return execute_data(self.zcli, parsed)
-        elif command_type == "func":
-            return execute_func(self.zcli, parsed)
-        elif command_type == "utils":
-            return execute_utils(self.zcli, parsed)
-        elif command_type == "session":
-            return execute_session(self.zcli, parsed)
-        elif command_type == "walker":
-            return execute_walker(self.zcli, parsed)
-        elif command_type == "open":
-            return execute_open(self.zcli, parsed)
-        elif command_type == "test":
-            return execute_test(self.zcli, parsed)
-        elif command_type == "auth":
-            return execute_auth(self.zcli, parsed)
-        elif command_type == "export":
-            return execute_export(self.zcli, parsed)
-        elif command_type == "config":
-            return execute_config(self.zcli, parsed)
-        elif command_type == "comm":
-            return execute_comm(self.zcli, parsed)
-        elif command_type == "load":
-            return execute_load(self.zcli, parsed)
-        else:
-            return {"error": f"Unknown command type: {command_type}"}
+
+        command_map = {
+            "data": execute_data,
+            "func": execute_func,
+            "utils": execute_utils,
+            "session": execute_session,
+            "walker": execute_walker,
+            "open": execute_open,
+            "test": execute_test,
+            "auth": execute_auth,
+            "export": execute_export,
+            "config": execute_config,
+            "comm": execute_comm,
+            "load": execute_load,
+        }
+
+        executor = command_map.get(command_type)
+        if executor:
+            return executor(self.zcli, parsed)
+
+        return {"error": f"Unknown command type: {command_type}"}
