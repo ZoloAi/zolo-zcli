@@ -29,6 +29,27 @@ class DataOperations:
         self.zcli = handler.zcli
 
     # ═══════════════════════════════════════════════════════════
+    # Hook Execution (zFunc Integration)
+    # ═══════════════════════════════════════════════════════════
+
+    def execute_hook(self, hook_expr, context):
+        """Execute a zFunc hook if available."""
+        if not hook_expr:
+            return None
+
+        if not self.zcli.zfunc:
+            self.logger.warning("zFunc not available, skipping hook: %s", hook_expr)
+            return None
+
+        try:
+            self.logger.debug("Executing hook: %s", hook_expr)
+            result = self.zcli.zfunc.handle(hook_expr, context)
+            return result
+        except Exception as e:  # pylint: disable=broad-except
+            self.logger.error("Hook execution failed: %s", e, exc_info=True)
+            return None
+
+    # ═══════════════════════════════════════════════════════════
     # Action Router
     # ═══════════════════════════════════════════════════════════
 

@@ -63,6 +63,32 @@ class zParser:
         """Resolve ~.zMachine.* path references to OS-specific paths."""
         return resolve_zmachine_path_func(data_path, config_paths)
 
+    def resolve_data_path(self, data_path):
+        """Resolve data paths (supports ~.zMachine.* and @ workspace paths)."""
+        if not isinstance(data_path, str):
+            return data_path
+
+        # Handle ~.zMachine.* paths
+        if data_path.startswith("~.zMachine."):
+            return self.resolve_zmachine_path(data_path)
+
+        # Handle @ workspace paths
+        if data_path.startswith("@"):
+            from pathlib import Path
+            workspace = self.zSession.get("zWorkspace")
+            if not workspace:
+                workspace = Path.cwd()
+            else:
+                workspace = Path(workspace)
+
+            path_parts = data_path[1:].strip(".").split(".")
+            resolved = str(workspace / "/".join(path_parts))
+            self.logger.debug("Resolved @ path: %s → %s", data_path, resolved)
+            return resolved
+
+        # No special prefix, return as-is
+        return data_path
+
     # ═══════════════════════════════════════════════════════════
     # Command Parsing
     # ═══════════════════════════════════════════════════════════

@@ -26,6 +26,9 @@ class zData:
         self.logger = zcli.logger
         self.display = zcli.display
         self.loader = zcli.loader
+        self.zparser = zcli.zparser  # Path resolution
+        self.zfunc = zcli.zfunc      # Function hooks & transforms
+        self.open = zcli.open        # File/schema opening
 
         # Data state
         self.schema = None
@@ -233,3 +236,52 @@ class zData:
         if not self.handler:
             raise RuntimeError("No handler initialized")
         return self.handler.list_tables()
+
+    # ═══════════════════════════════════════════════════════════
+    # File Operations (zOpen Integration)
+    # ═══════════════════════════════════════════════════════════
+
+    def open_schema(self, schema_path=None):
+        """Open schema file in editor via zOpen."""
+        if not self.open:
+            self.logger.warning("zOpen not available")
+            return "error"
+
+        # Use current schema's path if not specified
+        if not schema_path and self.schema:
+            meta = self.schema.get("Meta", {})
+            schema_path = meta.get("zVaFiles")
+
+        if not schema_path:
+            self.logger.error("No schema path available")
+            return "error"
+
+        self.logger.info("Opening schema file: %s", schema_path)
+        return self.open.handle({"zOpen": {"path": schema_path}})
+
+    def open_csv(self, table_name=None):
+        """Open CSV data file in editor via zOpen."""
+        if not self.open:
+            self.logger.warning("zOpen not available")
+            return "error"
+
+        if not self.handler:
+            self.logger.error("No handler initialized")
+            return "error"
+
+        # Get CSV path from adapter
+        if hasattr(self.handler, 'adapter') and hasattr(self.handler.adapter, '_get_csv_path'):
+            if not table_name:
+                # List available tables
+                tables = self.handler.list_tables()
+                if not tables:
+                    self.logger.error("No tables available")
+                    return "error"
+                table_name = tables[0]  # Default to first table
+
+            csv_path = str(self.handler.adapter._get_csv_path(table_name))
+            self.logger.info("Opening CSV file: %s", csv_path)
+            return self.open.handle({"zOpen": {"path": csv_path}})
+
+        self.logger.error("CSV operations not supported for this adapter")
+        return "error"
