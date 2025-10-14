@@ -4,7 +4,6 @@
 
 from urllib.parse import urlparse
 from logger import Logger
-# Global session import removed - use instance-based sessions
 
 # Import zOpen modules from registry
 from .zOpen_modules.zOpen_url import zOpen_url
@@ -15,57 +14,35 @@ from .zOpen_modules.zOpen_path import zOpen_zPath
 logger = Logger.get_logger(__name__)
 
 
-class ZOpen:
-    """
-    Core zOpen class that handles file and URL opening operations.
+class zOpen:
+    """Core zOpen class for file and URL opening operations."""
     
-    Provides intelligent opening based on:
-    - File types (URL, HTML, text, zPath)
-    - Machine capabilities (browser, curl, etc.)
-    - Environment (GUI vs headless)
-    """
-    
-    def __init__(self, zcli_or_walker=None):
-        # Accept either zcli instance (shell mode) or walker (UI mode)
-        if hasattr(zcli_or_walker, 'session'):
-            # Modern zCLI instance
-            self.zcli = zcli_or_walker
-            self.walker = None
-            self.zSession = zcli_or_walker.session
-            self.logger = zcli_or_walker.logger
-            self.display = zcli_or_walker.display
-            self.zparser = zcli_or_walker.zparser
-            self.zfunc = zcli_or_walker.zfunc
-            self.dialog = zcli_or_walker.dialog
-        elif hasattr(zcli_or_walker, 'zSession'):
-            # Legacy walker instance
-            self.walker = zcli_or_walker
-            self.zcli = getattr(zcli_or_walker, 'zcli', None)
-            self.zSession = zcli_or_walker.zSession
-            self.logger = getattr(zcli_or_walker, "logger", logger)
-            self.display = getattr(zcli_or_walker, "display", None)
-            # Try to get subsystems from walker's zcli
-            self.zparser = getattr(self.zcli, 'zparser', None) if self.zcli else None
-            self.zfunc = getattr(self.zcli, 'zfunc', None) if self.zcli else None
-            self.dialog = getattr(self.zcli, 'dialog', None) if self.zcli else None
-        else:
-            # No valid instance
-            raise ValueError("ZOpen requires a zCLI instance or walker with session")
+    def __init__(self, zcli):
+        """Initialize zOpen with zCLI instance."""
+        if zcli is None:
+            raise ValueError("zOpen requires a zCLI instance")
+        
+        if not hasattr(zcli, 'session'):
+            raise ValueError("Invalid zCLI instance: missing 'session' attribute")
+        
+        self.zcli = zcli
+        self.session = zcli.session
+        self.logger = zcli.logger
+        self.display = zcli.display
+        self.zparser = zcli.zparser
+        self.zfunc = zcli.zfunc
+        self.dialog = zcli.dialog
+        self.mycolor = "ZOPEN"
+        
+        self.display.handle({
+            "event": "sysmsg",
+            "label": "zOpen Ready",
+            "color": self.mycolor,
+            "indent": 0
+        })
 
     def handle(self, zHorizontal):
-        """
-        Main entry point for zOpen operations.
-        
-        Supports two formats:
-        1. String: "zOpen(path)"
-        2. Dict: {"zOpen": {"path": "...", "onSuccess": "zFunc(...)", "onFail": "..."}}
-        
-        Args:
-            zHorizontal: zOpen expression (string or dict)
-            
-        Returns:
-            Result from handler or hook execution
-        """
+        """Handle zOpen operations with optional hooks."""
         if self.display:
             self.display.handle({
                 "event": "sysmsg",
@@ -92,7 +69,7 @@ class ZOpen:
             raw_path = zHorizontal[len("zOpen("):-1].strip().strip('"').strip("'")
             on_success = None
             on_fail = None
-        
+
         self.logger.debug("parsed path: %s", raw_path)
 
         # Determine file type and route to appropriate handler
@@ -101,17 +78,17 @@ class ZOpen:
         if parsed.scheme in ("http", "https") or raw_path.startswith("www."):
             # URL handling
             url = raw_path if parsed.scheme else f"https://{raw_path}"
-            result = zOpen_url(url, self.zSession, self.logger, display=self.display, zcli=self.zcli)
+            result = zOpen_url(url, self.session, self.logger, display=self.display, zcli=self.zcli)
         
         elif raw_path.startswith("@") or raw_path.startswith("~"):
             # zPath handling
-            result = zOpen_zPath(raw_path, self.zSession, self.logger, display=self.display, zcli=self.zcli)
+            result = zOpen_zPath(raw_path, self.session, self.logger, display=self.display, zcli=self.zcli)
         
         else:
             # Local file handling
             import os
             path = os.path.abspath(os.path.expanduser(raw_path))
-            result = zOpen_file(path, self.zSession, self.logger, display=self.display, zcli=self.zcli)
+            result = zOpen_file(path, self.session, self.logger, display=self.display, zcli=self.zcli)
         
         # Execute hooks based on result
         if result == "zBack" and on_success and self.zfunc:
@@ -141,12 +118,18 @@ class ZOpen:
         return result
 
 
-def handle_zOpen(zHorizontal, walker=None):
-    """Standalone function for zOpen operations."""
-    if walker is None:
-        raise ValueError("handle_zOpen requires a walker parameter")
-    return ZOpen(walker).handle(zHorizontal)
+def handle_zOpen(zHorizontal, walker=None, zcli=None):
+    """Backward-compatible function for zOpen operations."""
+    # Modern: use zcli directly if provided
+    if zcli:
+        return zOpen(zcli).handle(zHorizontal)
+    
+    # Legacy: extract zcli from walker
+    if walker and hasattr(walker, 'zcli'):
+        return zOpen(walker.zcli).handle(zHorizontal)
+    
+    raise ValueError("handle_zOpen requires either zcli or walker with zcli attribute")
 
 
 # Export main components
-__all__ = ["ZOpen", "handle_zOpen"]
+__all__ = ["zOpen", "handle_zOpen"]

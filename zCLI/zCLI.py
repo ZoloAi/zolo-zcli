@@ -13,7 +13,7 @@ from .subsystems.zParser import zParser
 from .subsystems.zSocket import ZSocket
 from .subsystems.zDialog import zDialog
 from .subsystems.zWizard import zWizard
-from .subsystems.zOpen import ZOpen
+from .subsystems.zOpen import zOpen
 from .subsystems.zAuth import ZAuth
 from .subsystems.zLoader import zLoader
 from .subsystems.zExport import ZExport
@@ -65,7 +65,7 @@ class zCLI:
         # Layer 1: Operations
         self.zfunc = zFunc(self)
         self.dialog = zDialog(self)
-        self.open = ZOpen(self)
+        self.open = zOpen(self)
         self.data = zData(self)
         self.auth = ZAuth(self)
 

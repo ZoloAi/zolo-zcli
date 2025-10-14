@@ -6,19 +6,7 @@ import webbrowser
 
 
 def zOpen_file(path, zSession, logger, display=None, zcli=None):
-    """
-    Handle local file opening based on file type.
-    
-    Args:
-        path: Absolute file path
-        zSession: Session with machine capabilities
-        logger: Logger instance
-        display: Display instance (optional)
-        zcli: zCLI instance for subsystem access (optional)
-        
-    Returns:
-        "zBack" on success, "stop" on failure
-    """
+    """Handle local file opening based on file type."""
     if logger:
         logger.debug("resolved path: %s", path)
     
@@ -104,17 +92,7 @@ def zOpen_file(path, zSession, logger, display=None, zcli=None):
 
 
 def zOpen_html(path, logger, display=None):
-    """
-    Open HTML files in browser.
-    
-    Args:
-        path: HTML file path
-        logger: Logger instance
-        display: Display instance (optional)
-        
-    Returns:
-        "zBack" on success, "stop" on failure
-    """
+    """Open HTML files in browser."""
     url = f"file://{path}"
     if logger:
         logger.info("opening html file: %s", url)
@@ -157,22 +135,7 @@ def zOpen_html(path, logger, display=None):
 
 
 def zOpen_text(path, zSession, logger, display=None, zcli=None):
-    """
-    Open all text files using user's preferred IDE.
-    
-    Uses machine.yaml preference:
-    - ide: For all file types (.txt, .md, .py, .js, .json, .yaml, etc.)
-    
-    Args:
-        path: Text file path
-        zSession: Session with machine configuration
-        logger: Logger instance
-        display: Display instance (optional)
-        zcli: zCLI instance for subsystem access (optional)
-        
-    Returns:
-        "zBack" on success, "stop" on failure
-    """
+    """Open text files using user's preferred IDE."""
     if logger:
         logger.info("opening text file: %s", path)
     
@@ -243,17 +206,7 @@ def zOpen_text(path, zSession, logger, display=None, zcli=None):
 
 
 def zOpen_text_display(path, logger, display=None):
-    """
-    Display text file content when IDE opening fails.
-    
-    Args:
-        path: Text file path
-        logger: Logger instance
-        display: Display instance (optional)
-        
-    Returns:
-        "zBack" always (graceful fallback)
-    """
+    """Display text file content when IDE opening fails."""
     if logger:
         logger.info("Displaying text file content")
     

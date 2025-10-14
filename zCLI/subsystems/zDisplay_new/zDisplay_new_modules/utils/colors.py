@@ -8,11 +8,12 @@ class Colors:
     # Subsystem colors
     ZCRUD      = "\033[97;48;5;94m"         # Brown bg (CRUD operations)
     ZFUNC      = "\033[97;41m"              # Red bg (Function execution)
-    ZDIALOG    = "\033[97;45m"              #  ()
+    ZDIALOG    = "\033[97;45m"              # Magenta bg (Dialogs)
     ZWIZARD    = "\033[38;5;154;48;5;57m"   # Purple bg (Wizards)
-    ZDISPLAY   = "\033[30;48;5;99m"              # Magenta bg (Display)
+    ZDISPLAY   = "\033[30;48;5;99m"         # Magenta bg (Display)
     PARSER     = "\033[38;5;236;48;5;230m"  # Dark text, cream background (Parsing)
     SCHEMA     = "\033[97;48;5;65m"         # Green bg (Schema)
+    ZOPEN      = "\033[97;48;5;27m"         # Blue bg (File/URL opening)
     EXTERNAL   = "\033[30;103m"             # Yellow bg (External API)
     
     # Walker colors (UI/navigation)

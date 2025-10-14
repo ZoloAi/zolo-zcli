@@ -6,19 +6,7 @@ from .zOpen_file import zOpen_file
 
 
 def zOpen_zPath(zPath, zSession, logger, display=None, zcli=None):
-    """
-    Handle zPath opening (workspace-relative and absolute paths).
-    
-    Args:
-        zPath: zPath string (e.g., "@.path.to.file.html" or "~.absolute.path")
-        zSession: Session with workspace information
-        logger: Logger instance
-        display: Display instance (optional)
-        zcli: zCLI instance for subsystem access (optional)
-        
-    Returns:
-        "zBack" on success, "stop" on failure
-    """
+    """Handle zPath opening (workspace-relative and absolute paths)."""
     if logger:
         logger.debug("resolving zPath: %s", zPath)
     

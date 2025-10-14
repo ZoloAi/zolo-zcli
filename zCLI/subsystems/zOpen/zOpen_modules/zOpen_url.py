@@ -6,22 +6,7 @@ import subprocess
 
 
 def zOpen_url(url, zSession, logger, display=None, zcli=None):
-    """
-    Handle URL opening using user's preferred browser.
-    
-    Uses machine.yaml preferences:
-    - browser: User's preferred browser
-    
-    Args:
-        url: URL to open
-        zSession: Session with machine configuration
-        logger: Logger instance
-        display: Display instance (optional)
-        zcli: zCLI instance for subsystem access (optional)
-        
-    Returns:
-        "zBack" on success, "stop" on failure
-    """
+    """Handle URL opening using user's preferred browser."""
     if logger:
         logger.info("opening url: %s", url)
     
@@ -58,18 +43,7 @@ def zOpen_url(url, zSession, logger, display=None, zcli=None):
 
 
 def zOpen_url_browser(url, browser, logger, display=None):
-    """
-    Open URL in specified or default browser.
-    
-    Args:
-        url: URL to open
-        browser: Preferred browser name (or None for system default)
-        logger: Logger instance
-        display: Display instance (optional)
-        
-    Returns:
-        "zBack" on success, "stop" on failure
-    """
+    """Open URL in specified or default browser."""
     try:
         if browser and browser not in ("unknown", "Safari", "Edge"):
             # Try to use specific browser if available
