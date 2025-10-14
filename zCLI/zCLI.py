@@ -6,7 +6,7 @@ from logger import Logger
 
 # Import all subsystems from the subsystems package
 from .subsystems.zUtils import zUtils
-from .subsystems.zDisplay_new import zDisplay_new
+from .subsystems.zDisplay import zDisplay
 from .subsystems.zData import zData
 from .subsystems.zFunc import zFunc
 from .subsystems.zParser import zParser
@@ -56,7 +56,7 @@ class zCLI:
 
         # Initialize core subsystems (single source of truth)
         # Note: Order matters! zData depends on display and loader
-        self.display = zDisplay_new(self)
+        self.display = zDisplay(self)
         self.mycolor = "MAIN"
 
         self.zparser = zParser(self)

@@ -12,7 +12,7 @@ from zCLI.subsystems.zWalker.zWalker_modules.zLink import ZLink
 from zCLI.subsystems.zWalker.zWalker_modules.zCrumbs import zCrumbs
 
 # Legacy mode subsystems (imported lazily when needed)
-# - zSession, zDisplay_new, zUtils, zFunc, ZOpen
+# - zSession, zDisplay, zUtils, zFunc, ZOpen
 
 
 class zWalker(zWizard):
@@ -101,7 +101,7 @@ class zWalker(zWizard):
         """
         # Lazy imports for legacy mode only
         from zCLI.subsystems.zSession import zSession
-        from zCLI.subsystems.zDisplay_new import zDisplay_new
+        from zCLI.subsystems.zDisplay import zDisplay
         from zCLI.subsystems.zUtils import zUtils
         from zCLI.subsystems.zFunc import zFunc
         from zCLI.subsystems.zOpen import ZOpen
@@ -125,13 +125,13 @@ class zWalker(zWizard):
         self.menu = ZMenu(self)
         self.link = ZLink(self)
         
-        # Create a minimal zcli-like object for zDisplay_new in legacy mode
+        # Create a minimal zcli-like object for zDisplay in legacy mode
         class LegacyZCLI:
             def __init__(self, session, logger_instance):
                 self.session = session
                 self.logger = logger_instance
         
-        self.display = zDisplay_new(LegacyZCLI(self.zSession, self.logger))
+        self.display = zDisplay(LegacyZCLI(self.zSession, self.logger))
         self.func = zFunc(self)
         self.open = ZOpen(self)
         self.utils = zUtils(self)

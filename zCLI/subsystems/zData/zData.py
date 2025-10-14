@@ -31,6 +31,15 @@ class zData:
         self.schema = None
         self.paradigm = None  # 'classical' or 'quantum'
         self.handler = None   # ClassicalData or QuantumData instance
+        self.mycolor = "ZDATA"
+        
+        self.display.handle({
+            "event": "sysmsg",
+            "label": "zData Ready",
+            "color": self.mycolor,
+            "indent": 0
+        })
+
 
     def handle_request(self, request, context=None):
         """Main entry point for data operations."""

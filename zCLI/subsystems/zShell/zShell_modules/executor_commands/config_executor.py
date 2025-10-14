@@ -276,12 +276,12 @@ def check_machine_config_loading(zcli):
 def print_config_check_results(results):
     """Display formatted configuration check results using zDisplay."""
     # TODO: Replace with proper zDisplay text event once supported
-    from zCLI.subsystems.zDisplay_new import zDisplay_new
+    from zCLI.subsystems.zDisplay import zDisplay
     from zCLI.subsystems.zSession import zSession
     from logger import Logger
     
     logger = Logger.get_logger(__name__)
-    display = zDisplay_new(zSession, logger=logger)
+    display = zDisplay(zSession, logger=logger)
     display.handle({
         "event": "header",
         "label": "zCLI Configuration System Check",
