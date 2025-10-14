@@ -12,7 +12,7 @@ from .subsystems.zFunc import zFunc
 from .subsystems.zParser import zParser
 from .subsystems.zSocket import ZSocket
 from .subsystems.zDialog import zDialog
-from .subsystems.zWizard import ZWizard
+from .subsystems.zWizard import zWizard
 from .subsystems.zOpen import ZOpen
 from .subsystems.zAuth import ZAuth
 from .subsystems.zLoader import zLoader
@@ -40,7 +40,7 @@ class zCLI:
 
         # Initialize logger
         self.logger = Logger.get_logger("zCLI")
-
+        # Layer 0: Foundation
         # Import zConfig here to avoid circular dependency (zConfig may import other subsystems)
         # Initialize zConfig FIRST (provides machine config for session creation)
         from .subsystems.zConfig import zConfig
@@ -61,16 +61,21 @@ class zCLI:
 
         self.zparser = zParser(self)
         self.loader = zLoader(self)
-        self.zfunc = zFunc(self)
-        self.wizard = ZWizard(self)
-        self.dialog = zDialog(self)
 
-        self.data = zData(self)  # zData subsystem (initialized after display/loader)
+        # Layer 1: Operations
+        self.zfunc = zFunc(self)
+        self.dialog = zDialog(self)
         self.open = ZOpen(self)
+        self.data = zData(self)
         self.auth = ZAuth(self)
+
+        # Layer 2: Core Abstraction
+        self.wizard = zWizard(self)
+
         self.export = ZExport(self)
         self.socket = ZSocket(self)
 
+        # Layer 3: Orchestration
         # Initialize shell and command executor
         self.shell = ZShell(self)
 

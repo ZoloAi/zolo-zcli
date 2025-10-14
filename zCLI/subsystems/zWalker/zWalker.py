@@ -1,6 +1,6 @@
-import traceback
 import sys
 from logger import Logger
+from zCLI.subsystems.zWizard import zWizard
 
 # Logger instance
 logger = Logger.get_logger(__name__)
@@ -12,21 +12,26 @@ from zCLI.subsystems.zWalker.zWalker_modules.zLink import ZLink
 from zCLI.subsystems.zWalker.zWalker_modules.zCrumbs import zCrumbs
 
 # Legacy mode subsystems (imported lazily when needed)
-# - zSession, zDisplay_new, ZUtils, ZFunc, ZOpen
+# - zSession, zDisplay_new, zUtils, zFunc, ZOpen
 
 
-class zWalker:
+class zWalker(zWizard):
     """
-    zWalker - UI/Menu Navigation Interface Layer
+    zWalker - UI/Menu Navigation Interface Layer (extends zWizard)
     
-    zWalker provides YAML-driven menu navigation and vertical/horizontal walking.
+    zWalker extends zWizard's core loop engine with:
+    - YAML-driven menu navigation
+    - Breadcrumb trail management (zCrumbs)
+    - File linking and navigation (zLink)
+    - Interactive menu rendering (zMenu)
+    
+    Architecture:
+    - Inherits: execute_loop() from zWizard (core iteration pattern)
+    - Adds: Walker-specific navigation features
+    
     It can work in two modes:
-    
     1. NEW: Receives a zCLI instance and uses its subsystems (recommended)
     2. LEGACY: Receives zSpark_obj directly and creates its own subsystems (backward compatibility)
-    
-    The new architecture eliminates subsystem duplication by making zCLI
-    the single source of truth.
     """
     
     def __init__(self, zcli_or_spark):
@@ -36,13 +41,25 @@ class zWalker:
         Args:
             zcli_or_spark: Either a zCLI instance (new) or zSpark_obj dict (legacy)
         """
-        # Detect which mode we're in
+        # Detect which mode we're in and initialize base class
         if hasattr(zcli_or_spark, 'session') and hasattr(zcli_or_spark, 'crud'):
             # NEW MODE: Received zCLI instance
+            # Initialize ZWizard parent first
+            super().__init__(zcli=zcli_or_spark, walker=self)
             self._init_from_zcli(zcli_or_spark)
         else:
             # LEGACY MODE: Received zSpark_obj dict
+            # Initialize base attributes first for parent class
+            self.zSpark_obj = zcli_or_spark
+            self._init_from_spark_prereq()
+            super().__init__(zcli=None, walker=self)
             self._init_from_spark(zcli_or_spark)
+    
+    def _init_from_spark_prereq(self):
+        """Setup minimal attributes needed for ZWizard parent init (legacy mode)."""
+        from zCLI.subsystems.zSession import zSession
+        self.zSession = zSession
+        self.logger = Logger.get_logger()
     
     def _init_from_zcli(self, zcli):
         """
@@ -278,126 +295,90 @@ class zWalker:
         )
 
     # ─────────────────────────────────────────────────────────────────────────
-    def zBlock_loop(self, active_zBlock_dict, zBlock_keys, zKey=None):
+    def zBlock_loop(self, active_zBlock_dict, zBlock_keys=None, zKey=None):  # pylint: disable=unused-argument
+        """
+        Interactive loop through vertical keys with navigation support.
+        
+        Now uses ZWizard's execute_loop() core engine with Walker-specific callbacks.
+        
+        Args:
+            active_zBlock_dict: Dictionary of {key: value} for current block
+            zBlock_keys: List of keys to iterate
+            zKey: Optional starting key (for navigation)
+        """
         # 🔷 Display the start of the vertical walk for the current zBlock
-        self.display.handle(
-            {
-                "event": "sysmsg",
-                "label": f"zBlock: {self.session['zBlock']}",
-                "style": "single",
-                "color": "MAIN",
-                "indent": 1,
-            }
-        )
-
-        # figure out starting index if zKey was passed
-        idx = 0
-        if zKey is not None and zKey in zBlock_keys:
-            idx = zBlock_keys.index(zKey)
-
-        # 🔁 Iterate through each vertical key in the current zBlock
-        while idx < len(zBlock_keys):
-            zKey = zBlock_keys[idx]
-            logger.debug("Processing zKey: %s", zKey)
-
-            # 🔹 Display horizontal section for current key
-            self.display.handle(
-                {
-                    "event": "sysmsg",
-                    "label": f"zKey: {zKey}",
-                    "style": "single",
-                    "color": "MAIN",
-                    "indent": 2,
-                }
-            )
-
+        self.display.handle({
+            "event": "sysmsg",
+            "label": f"zBlock: {self.session['zBlock']}",
+            "style": "single",
+            "color": "MAIN",
+            "indent": 1,
+        })
+        
+        # Custom dispatch function that handles breadcrumb tracking
+        def walker_dispatch(key, value):
             active_zBlock = next(reversed(self.session["zCrumbs"]))
             logger.debug("active_zBlock: %s", active_zBlock)
-
-            # 📄 Get the horizontal content linked to this vertical key
-            zHorizontal = active_zBlock_dict[zKey]
-            logger.debug("\nWalking zHorizontal:\n%s", zHorizontal)
-
+            logger.debug("\nWalking zHorizontal:\n%s", value)
+            
             # 🥨 Track breadcrumb trail for navigation/history
-            if not (isinstance(zHorizontal, dict) and "zWizard" in zHorizontal):
+            if not (isinstance(value, dict) and "zWizard" in value):
                 trail = self.session["zCrumbs"].get(active_zBlock, [])
-                if not trail or trail[-1] != zKey:
+                if not trail or trail[-1] != key:
                     # validate key is really part of the active block
-                    if zKey in active_zBlock_dict:
-                        self.zCrumbs.handle_zCrumbs(active_zBlock, zKey)
+                    if key in active_zBlock_dict:
+                        self.zCrumbs.handle_zCrumbs(active_zBlock, key)
                     else:
-                        logger.warning("Skipping invalid crumb: %s not in %s", zKey, active_zBlock)
+                        logger.warning("Skipping invalid crumb: %s not in %s", key, active_zBlock)
                 else:
-                    logger.debug("Skipping duplicate crumb: %s already last in %s", zKey, active_zBlock)
+                    logger.debug("Skipping duplicate crumb: %s already last in %s", key, active_zBlock)
             else:
-                logger.debug("zWizard key detected; breadcrumb tracking skipped for %s", zKey)
-
-            # 🚀 Try dispatching the logic tied to this key (e.g. zFunc, zLink, zDialog...)
-            try:
-                result = self.dispatch.handle(zKey, zHorizontal)
-
-            # ❌ Catch any unexpected errors during dispatch and halt the loop
-            except Exception as e:
-                tb_str = traceback.format_exc()
-                logger.error(
-                    "zError for key '%s': %s\n📍 Traceback:\n%s", zKey, e, tb_str
-                )
-                self.display.handle(
-                    {
-                        "event": "sysmsg",
-                        "label": f"Dispatch error for: {zKey}",
-                        "style": "full",
-                        "color": "ERROR",
-                        "indent": 1,
-                    }
-                )
-                return  # ⛔ Escapes loop
-
-            # ⛔ Graceful halt triggered by logic
-            if result == "zBack":
-                active_zBlock_dict, zBlock_keys, zKey = self.zCrumbs.handle_zBack(show_banner=False)
-                return self.zBlock_loop(active_zBlock_dict, zBlock_keys, zKey)
-
-            elif result == "stop":
-                logger.debug("Dispatch returned stop after key: %s", zKey)
-                self.display.handle(
-                    {
-                        "event": "sysmsg",
-                        "label": "You've stopped the system!",
-                        "style": "full",
-                        "color": "MAIN",
-                        "indent": 0,
-                    }
-                )
-                sys.exit()  # ⛔ Exit loop cleanly
-
-            elif result == "error" or "":
-                logger.info("Error after key: %s", zKey)
-                self.display.handle(
-                    {
-                        "event": "sysmsg",
-                        "label": "Error Returned",
-                        "style": "~",
-                        "color": "MAIN",
-                        "indent": 2,
-                    }
-                )
-                sys.exit()  # ⛔ Exit loop cleanly
-
-            else:
-                # ➡️ Move on to the next vertical key
-                logger.debug("Continuing to next zKey after: %s", zKey)
-                self.display.handle(
-                    {
-                        "event": "sysmsg",
-                        "label": "process_keys → next zKey",
-                        "style": "single",
-                        "color": "MAIN",
-                        "indent": 1,
-                    }
-                )
-
-                idx += 1
+                logger.debug("zWizard key detected; breadcrumb tracking skipped for %s", key)
+            
+            # Dispatch action
+            return self.dispatch.handle(key, value)
+        
+        # Navigation callbacks for Walker-specific behavior
+        def on_back(result):  # pylint: disable=unused-argument
+            """Handle zBack navigation."""
+            active_zBlock_dict_new, zBlock_keys_new, zKey_new = self.zCrumbs.handle_zBack(show_banner=False)
+            return self.zBlock_loop(active_zBlock_dict_new, zBlock_keys_new, zKey_new)
+        
+        def on_stop(result):  # pylint: disable=unused-argument
+            """Handle stop signal."""
+            logger.debug("Dispatch returned stop")
+            self.display.handle({
+                "event": "sysmsg",
+                "label": "You've stopped the system!",
+                "style": "full",
+                "color": "MAIN",
+                "indent": 0,
+            })
+            sys.exit()  # Exit cleanly
+        
+        def on_error(error_or_result, key):  # pylint: disable=unused-argument
+            """Handle error."""
+            logger.info("Error after key: %s", key)
+            self.display.handle({
+                "event": "sysmsg",
+                "label": "Error Returned",
+                "style": "~",
+                "color": "MAIN",
+                "indent": 2,
+            })
+            sys.exit()  # Exit cleanly
+        
+        # Use parent's execute_loop with Walker-specific navigation
+        return self.execute_loop(
+            items_dict=active_zBlock_dict,
+            dispatch_fn=walker_dispatch,
+            navigation_callbacks={
+                'on_back': on_back,
+                'on_stop': on_stop,
+                'on_error': on_error,
+            },
+            start_key=zKey
+        )
 
 
 def handle_zWalker(zSpark_obj):
