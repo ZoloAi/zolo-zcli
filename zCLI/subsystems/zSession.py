@@ -1,117 +1,140 @@
 # zCLI/subsystems/zSession.py — Session Management Subsystem
 # ───────────────────────────────────────────────────────────────
 """
-Provides session factory and authentication for zCLI instances.
-Enables multi-user support and parallel execution.
+Session management subsystem for zCLI.
+Provides session lifecycle and authentication.
+    Dependencies: zCLI, zDisplay
 """
 
 import requests
+import secrets
 from logger import Logger
-from zCLI.subsystems.zDisplay import handle_zDisplay
 
-# Logger instance
 logger = Logger.get_logger(__name__)
 
-def create_session(machine_config=None):
-    """Create isolated session instance for zCLI.
+
+class zSession:
+    """Session management subsystem."""
+
+    def __init__(self, zcli):
+        """Initialize zSession subsystem with zCLI instance."""
+        self.zcli = zcli
+        self.logger = zcli.logger
+        
+        # Session color for system messages (stored as string, resolved by zDisplay)
+        self.mycolor = "MAIN"
     
-    Args:
-        machine_config: Machine configuration dict (from zConfig)
-    Returns:
-        dict: New session with default values
-    """
-    return {
-        "zS_id": None,
-        "zWorkspace": None,
-        "zVaFile_path": None,
-        "zVaFilename": None,
-        "zBlock": None,
-        "zMode": None,
-        "zMachine": machine_config or {},  # Machine-level config (static per machine)
-        "zAuth": {
-            "id": None,
-            "username": None,
-            "role": None,
-            "API_Key": None
-        },
-        "zCrumbs": {},
-        "zCache": {
-            "system_cache": {},   # UI and config files (auto-cached, LRU)
-            "pinned_cache": {},   # Aliases (user-loaded, never evicts)
-            "schema_cache": {},   # Active connections (wizard-only, in-memory)
-        },
-        "wizard_mode": {
-            "active": False,      # Is wizard canvas mode active?
-            "lines": [],          # Multi-line buffer (YAML or commands)
-            "format": None,       # Detected on run: "yaml", "commands", or "hybrid"
-            "transaction": False  # Transaction flag for execution
-        },
-    }
+    def generate_id(self, prefix: str = "zS") -> str:
+        """
+        Generate a random session ID with given prefix.
+        
+        Args:
+            prefix: ID prefix (default: "zS")
+            
+        Returns:
+            String like "zS_a1b2c3d4"
+        """
+        random_hex = secrets.token_hex(4)  # 8 character hex string
+        return f"{prefix}_{random_hex}"
 
-def View_zSession(session=None):
-    """Display current session information."""
-    if session is None:
-        raise ValueError("View_zSession requires a session parameter")
+    def create_session(self, machine_config=None):
+        """
+        Create isolated session instance for zCLI.
+        
+        Args:
+            machine_config: Machine configuration dict (from zConfig)
+        Returns:
+            dict: New session with default values
+        """
+        return {
+            "zS_id": None,
+            "zWorkspace": None,
+            "zVaFile_path": None,
+            "zVaFilename": None,
+            "zBlock": None,
+            "zMode": None,
+            "zMachine": machine_config or {},  # Machine-level config (static per machine)
+            "zAuth": {
+                "id": None,
+                "username": None,
+                "role": None,
+                "API_Key": None
+            },
+            "zCrumbs": {},
+            "zCache": {
+                "system_cache": {},   # UI and config files (auto-cached, LRU)
+                "pinned_cache": {},   # Aliases (user-loaded, never evicts)
+                "schema_cache": {},   # Active connections (wizard-only, in-memory)
+            },
+            "wizard_mode": {
+                "active": False,      # Is wizard canvas mode active?
+                "lines": [],          # Multi-line buffer (YAML or commands)
+                "format": None,       # Detected on run: "yaml", "commands", or "hybrid"
+                "transaction": False  # Transaction flag for execution
+            },
+        }
 
-    handle_zDisplay({
-        "event": "zSession",
-        "zSession": session
-    })
-
-def zSession_Login(data, url=None, session=None):
-    """Authenticate and update session with user credentials."""
-    if session is None:
-        raise ValueError("zSession_Login requires a session parameter")
-
-    target_session = session
-
-    handle_zDisplay({
-        "event": "sysmsg",
-        "label": "send_to_server",
-        "style": "~",
-        "color": "EXTERNAL",
-        "indent": 0
-    })
-
-    if not url:
-        url = "http://127.0.0.1:5000/zAuth"
-        logger.debug("[Web] No URL provided — defaulting to %s", url)
-
-    # Include current session mode so server can distinguish CLI vs Web
-    data.setdefault("mode", target_session.get("zMode"))
-
-    logger.info("[>>] Sending request to %s", url)
-    logger.debug("└── Payload: %s", data)
-
-    try:
-        response = requests.post(url, json=data, timeout=10)
-
-        logger.info("[<<] Response received [status=%s]", response.status_code)
-        logger.debug("└── Body: %s", response.text)
-
-        result = response.json()
-
-        if result.get("status") == "success" and "user" in result:
-            user = result["user"]
-            target_session["zAuth"].update({
-                "username": user.get("username"),
-                "role": user.get("role"),
-                "id": user.get("id", None),
-                "API_Key": user.get("api_key", None)
-            })
-
-            logger.info("[*] Authenticated user: %s (role=%s)", user.get("username"), user.get("role"))
-            logger.debug(
-                "└── Updated zSession['zAuth']: id=%s, API_Key=%s",
-                user.get("id", None),
-                user.get("api_key", None)
-            )
-
-            return result
-
-        logger.warning("[FAIL] Login failed or missing user data in response: %s", result)
-        return None
-
-    except Exception as e:
-        logger.error("[ERROR] Exception during request to %s: %s", url, e)
-        return None
+    def login(self, data, url=None):
+        """
+        Authenticate and update session with user credentials.
+        
+        Args:
+            data: Login credentials dict
+            url: Authentication endpoint (defaults to local server)
+            
+        Returns:
+            dict: Authentication result or None on failure
+        """
+        session = self.zcli.session
+        
+        # Display authentication message using new display system
+        self.zcli.display.handle({
+            "event": "sysmsg",
+            "label": "send_to_server",
+            "color": self.mycolor,
+            "indent": 0
+        })
+        
+        if not url:
+            url = "http://127.0.0.1:5000/zAuth"
+            self.logger.debug("[Web] No URL provided — defaulting to %s", url)
+        
+        # Include current session mode so server can distinguish CLI vs Web
+        data.setdefault("mode", session.get("zMode"))
+        
+        self.logger.info("[>>] Sending request to %s", url)
+        self.logger.debug("└── Payload: %s", data)
+        
+        try:
+            response = requests.post(url, json=data, timeout=10)
+            
+            self.logger.info("[<<] Response received [status=%s]", response.status_code)
+            self.logger.debug("└── Body: %s", response.text)
+            
+            result = response.json()
+            
+            if result.get("status") == "success" and "user" in result:
+                user = result["user"]
+                session["zAuth"].update({
+                    "username": user.get("username"),
+                    "role": user.get("role"),
+                    "id": user.get("id", None),
+                    "API_Key": user.get("api_key", None)
+                })
+                
+                self.logger.info("[*] Authenticated user: %s (role=%s)", 
+                               user.get("username"), user.get("role"))
+                self.logger.debug(
+                    "└── Updated zSession['zAuth']: id=%s, API_Key=%s",
+                    user.get("id", None),
+                    user.get("api_key", None)
+                )
+                
+                return result
+            
+            self.logger.warning("[FAIL] Login failed or missing user data in response: %s", result)
+            return None
+        
+        except Exception as e:
+            self.logger.error("[ERROR] Exception during request to %s: %s", url, e)
+            return None

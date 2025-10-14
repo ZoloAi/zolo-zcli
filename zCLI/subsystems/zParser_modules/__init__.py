@@ -28,6 +28,10 @@ from .zParser_utils import (
     handle_zParser
 )
 
+from .zParser_zFunc import (
+    parse_function_spec
+)
+
 __all__ = [
     # zPath operations
     "zPath_decoder",
@@ -42,4 +46,7 @@ __all__ = [
     "parse_dotted_path",
     "handle_zRef",
     "handle_zParser",
+    
+    # Function path parsing (for zFunc)
+    "parse_function_spec",
 ]

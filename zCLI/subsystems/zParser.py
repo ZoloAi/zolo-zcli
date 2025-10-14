@@ -1,6 +1,8 @@
 # zCLI/subsystems/zParser.py — Core zParser Handler
 # ───────────────────────────────────────────────────────────────
-"""Core zParser handler for path resolution, command parsing, file parsing, and utilities."""
+""" Core zParser handler for path resolution, command parsing, file parsing, and utilities.
+    Dependencies: zCLI, zSession, zDisplay
+"""
 
 from logger import Logger
 from .zParser_modules.zParser_zPath import (
@@ -37,6 +39,13 @@ class zParser:
         self.zSession = zcli.session
         self.logger = zcli.logger
         self.display = zcli.display
+        self.mycolor = "PARSER"
+        self.display.handle({
+            "event": "sysmsg",
+            "label": "zParser Ready",
+            "color": self.mycolor,
+            "indent": 0
+        })
 
     # ═══════════════════════════════════════════════════════════
     # Path Resolution
@@ -81,6 +90,28 @@ class zParser:
     def detect_format(self, raw_content):
         """Auto-detect file format from content."""
         return detect_format(raw_content)
+
+    # ═══════════════════════════════════════════════════════════
+    # Function Path Parsing (for zFunc)
+    # ═══════════════════════════════════════════════════════════
+
+    def parse_function_path(self, zFunc_spec, zContext=None):
+        """
+        Parse zFunc path specification into file path and function name.
+        
+        Supports:
+        - Dict format: {"zFunc_path": "...", "zFunc_args": "..."}
+        - String format: "zFunc(@utils.myfile.my_function, args)"
+        
+        Args:
+            zFunc_spec: Function specification (dict or string)
+            zContext: Optional context
+            
+        Returns:
+            tuple: (func_path, arg_str, function_name)
+        """
+        from .zParser_modules.zParser_zFunc import parse_function_spec
+        return parse_function_spec(zFunc_spec, self.zSession, zContext, self.logger)
 
     def parse_file_by_path(self, file_path):
         """Load and parse file in one call."""

@@ -3,16 +3,15 @@
 """Single source of truth for all subsystems."""
 
 from logger import Logger
-from .subsystems.zSession import create_session
 
 # Import all subsystems from the subsystems package
 from .subsystems.zUtils import zUtils
+from .subsystems.zDisplay_new import zDisplay_new
 from .subsystems.zData import zData
-from .subsystems.zFunc import ZFunc
-from .subsystems.zDisplay import ZDisplay
+from .subsystems.zFunc import zFunc
 from .subsystems.zParser import zParser
 from .subsystems.zSocket import ZSocket
-from .subsystems.zDialog import ZDialog
+from .subsystems.zDialog import zDialog
 from .subsystems.zWizard import ZWizard
 from .subsystems.zOpen import ZOpen
 from .subsystems.zAuth import ZAuth
@@ -45,30 +44,39 @@ class zCLI:
         # Import zConfig here to avoid circular dependency (zConfig may import other subsystems)
         # Initialize zConfig FIRST (provides machine config for session creation)
         from .subsystems.zConfig import zConfig
+        from .subsystems.zSession import zSession
+
         self.config = zConfig(zcli=self)
 
+        # Initialize zSession subsystem BEFORE creating session
+        self.zsession = zSession(self)
+
         # Create instance-specific session with machine config
-        self.session = create_session(machine_config=self.config.get_machine())
+        self.session = self.zsession.create_session(machine_config=self.config.get_machine())
 
         # Initialize core subsystems (single source of truth)
         # Note: Order matters! zData depends on display and loader
-        self.utils = zUtils(self)
-        self.display = ZDisplay(self)
-        self.loader = zLoader(self)
+        self.display = zDisplay_new(self)
+        self.mycolor = "MAIN"
+
         self.zparser = zParser(self)
-        self.data = zData(self)  # zData subsystem (initialized after display/loader)
-        self.funcs = ZFunc(self)
-        self.socket = ZSocket(self)
-        self.dialog = ZDialog(self)
+        self.loader = zLoader(self)
+        self.zfunc = zFunc(self)
+
+        self.dialog = zDialog(self)
         self.wizard = ZWizard(self)
+
+        self.data = zData(self)  # zData subsystem (initialized after display/loader)
         self.open = ZOpen(self)
         self.auth = ZAuth(self)
         self.export = ZExport(self)
+        self.socket = ZSocket(self)
 
         # Initialize shell and command executor
         self.shell = ZShell(self)
 
         # Load plugins if specified
+        self.utils = zUtils(self)
         self._load_plugins()
 
         # Determine interface mode (needed for session initialization)
@@ -97,7 +105,7 @@ class zCLI:
         Walker mode populates additional fields later.
         """
         # Set session ID - always required
-        self.session["zS_id"] = self.utils.generate_id("zS")
+        self.session["zS_id"] = self.zsession.generate_id("zS")
 
         # Set zMode based on interface mode
         if self.ui_mode:

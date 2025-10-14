@@ -2,85 +2,55 @@
 # ───────────────────────────────────────────────────────────────
 
 """
-zDialog - Interactive Form/Dialog Subsystem
-
-Purpose:
-- Collect user input through interactive forms
-- Validate input against schema models
-- Handle form submission (onSubmit)
-- Integration with zData for CRUD operations
-
-Key Responsibilities:
-- Form rendering (via zDisplay)
-- Input collection and validation
-- Context management (model, fields, zConv)
-- Submission handling (dict or string expressions)
+zDialog - Interactive Form/Dialog Subsystem for collecting and validating user input through forms.
+Handles form rendering, input validation, context management and submission processing.
 """
 
 from logger import Logger
-
-# Logger instance
-logger = Logger.get_logger(__name__)
-from zCLI.subsystems.zDisplay import handle_zDisplay
-# Global session import removed - use instance-based sessions
 from zCLI.subsystems.zDialog_modules import create_dialog_context, handle_submit
 
+logger = Logger.get_logger(__name__)
 
-class ZDialog:
+
+class zDialog:
     """
     zDialog - Interactive Form/Dialog Subsystem
     
-    Handles user input collection through interactive forms with
-    schema-based validation and submission handling.
-    
-    Key Features:
-    - Schema-driven form rendering
-    - Field validation
-    - Context management (model, fields, zConv)
-    - Flexible submission (dict or string expressions)
-    
-    Architecture:
-        User → zDialog → zDisplay (render form)
-                    ↓
-              Collect input (zConv)
-                    ↓
-              onSubmit → zDispatch/zFunc → zData
+    Handles user input collection through interactive forms with validation.
+    Manages form rendering, input validation, and submission processing.
     """
-    
-    def __init__(self, walker=None):
-        """
-        Initialize zDialog subsystem.
-        
-        Args:
-            walker: Optional walker instance for context
-        """
+
+    def __init__(self, zcli, walker=None):
+        """Initialize zDialog subsystem."""
+        if zcli is None:
+            raise ValueError("zDialog requires a zCLI instance")
+
+        if not hasattr(zcli, 'session'):
+            raise ValueError("Invalid zCLI instance: missing 'session' attribute")
+
+        # Modern architecture: zCLI instance provides all dependencies
+        self.zcli = zcli
+        self.session = zcli.session
+        self.logger = zcli.logger
+        self.display = zcli.display
+        self.zparser = zcli.zparser
+
+        # Keep walker for legacy compatibility
         self.walker = walker
-        self.zSession = getattr(walker, "session", None)
-        if not self.zSession:
-            raise ValueError("ZDialog requires a walker with a session")
-        self.logger = getattr(walker, "logger", logger) if walker else logger
+        self.mycolor = "ZDIALOG"
+        self.display.handle({
+            "event": "sysmsg",
+            "label": "zDialog Ready",
+            "color": self.mycolor,
+            "indent": 0
+        })
 
     def handle(self, zHorizontal):
-        """
-        Main entry point for dialog handling.
-        
-        Workflow:
-        1. Parse dialog configuration (model, fields, onSubmit)
-        2. Create dialog context
-        3. Render form and collect input (via zDisplay)
-        4. Handle submission if onSubmit provided
-        
-        Args:
-            zHorizontal: Dialog configuration dict with zDialog key
-            
-        Returns:
-            zConv (collected data) or submission result
-        """
-        handle_zDisplay({
+        """Handle dialog form input and submission."""
+        self.display.handle({
             "event": "sysmsg",
             "label": "zDialog",
-            "style": "full",
-            "color": "ZDIALOG",
+            "color": self.mycolor,
             "indent": 1
         })
 
@@ -112,7 +82,7 @@ class ZDialog:
         self.logger.info("\nzContext: %s", zContext)
 
         # Render form and collect input
-        zConv = handle_zDisplay({
+        zConv = self.display.handle({
             "event": "zDialog",
             "context": zContext,
             "walker": self.walker,
@@ -139,15 +109,24 @@ class ZDialog:
 # Backward Compatibility Function
 # ─────────────────────────────────────────────────────────────────────────────
 
-def handle_zDialog(zHorizontal, walker=None):
+def handle_zDialog(zHorizontal, walker=None, zcli=None):
     """
     Backward-compatible function for dialog handling.
     
     Args:
         zHorizontal: Dialog configuration dict
-        walker: Optional walker instance
+        walker: Optional walker instance (legacy - extracts zcli from walker)
+        zcli: Optional zCLI instance (modern - preferred)
         
     Returns:
         zConv or submission result
     """
-    return ZDialog(walker).handle(zHorizontal)
+    # Modern: use zcli directly if provided
+    if zcli:
+        return zDialog(zcli, walker=walker).handle(zHorizontal)
+    
+    # Legacy: extract zcli from walker
+    if walker and hasattr(walker, 'zcli'):
+        return zDialog(walker.zcli, walker=walker).handle(zHorizontal)
+    
+    raise ValueError("handle_zDialog requires either zcli or walker with zcli attribute")

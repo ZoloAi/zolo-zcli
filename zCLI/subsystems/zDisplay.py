@@ -90,8 +90,14 @@ class ZDisplay:
         return None
 
 
-# Standalone helper function (used by zSession.py)
+# Standalone helper functions (used by other modules)
 def handle_zDisplay(zDisplay_Obj):
     """Standalone display handler for modules without zcli instance."""
     disp = ZDisplay()
     return disp.handle(zDisplay_Obj)
+
+
+def handle_zInput(zInput_Obj):
+    """Standalone input handler for modules without zcli instance."""
+    disp = ZDisplay()
+    return disp.handle_input(zInput_Obj)

@@ -1,6 +1,8 @@
 # zCLI/subsystems/zLoader.py — File Loading and Caching Subsystem
 # ───────────────────────────────────────────────────────────────
-"""Middleware for loading/caching zVaFiles with three-tier cache architecture."""
+""" Middleware for loading/caching zVaFiles with three-tier cache architecture.
+    Dependencies: zCLI, zSession, zDisplay, zParser
+"""
 
 from logger import Logger
 from zCLI.subsystems.zLoader_modules import CacheOrchestrator, load_file_raw
@@ -17,17 +19,28 @@ class zLoader:
         self.logger = zcli.logger
         self.zSession = zcli.session
         self.display = zcli.display
+        self.mycolor = "LOADER"
 
         # Initialize cache orchestrator (manages all three tiers)
         self.cache = CacheOrchestrator(self.zSession)
+
+        # Store parser method references for cleaner code
+        self.zpath_decoder = zcli.zparser.zPath_decoder
+        self.identify_zfile = zcli.zparser.identify_zFile
+        self.parse_file_content = zcli.zparser.parse_file_content
+        self.display.handle({
+            "event": "sysmsg",
+            "label": "zLoader Ready",
+            "color": self.mycolor,
+            "indent": 0
+        })
 
     def handle(self, zPath=None):
         """Main entry point for zVaFile loading and parsing."""
         self.display.handle({
             "event": "sysmsg",
             "label": "zLoader",
-            "style": "full",
-            "color": "LOADER",
+            "color": self.mycolor,
             "indent": 1,
         })
         self.logger.debug("zFile_zObj: %s", zPath)
@@ -37,8 +50,8 @@ class zLoader:
         zType = "zUI" if not zPath and self.zSession.get("zVaFilename") else None
 
         # Step 1: Use zParser for path resolution and file discovery
-        zVaFile_fullpath, zVaFilename = self.zcli.zparser.zPath_decoder(zPath, zType)
-        zFilePath_identified, zFile_extension = self.zcli.zparser.identify_zFile(zVaFilename, zVaFile_fullpath)
+        zVaFile_fullpath, zVaFilename = self.zpath_decoder(zPath, zType)
+        zFilePath_identified, zFile_extension = self.identify_zfile(zVaFilename, zVaFile_fullpath)
         self.logger.debug("zFilePath_identified!\n%s", zFilePath_identified)
 
         # Detect if this is a zSchema file (should not be cached)
@@ -55,7 +68,7 @@ class zLoader:
                     "event": "sysmsg",
                     "label": "zLoader return (cached)",
                     "style": "~",
-                    "color": "LOADER",
+                    "color": self.mycolor,
                     "indent": 1,
                 })
                 self.logger.debug("[SystemCache] Cache hit: %s", cache_key)
@@ -69,7 +82,7 @@ class zLoader:
         self.logger.debug("\nzFile Raw: %s", zFile_raw)
 
         # Step 5: Parse using zParser (delegates to zParser)
-        result = self.zcli.zparser.parse_file_content(zFile_raw, zFile_extension)
+        result = self.parse_file_content(zFile_raw, zFile_extension)
         self.logger.debug("zLoader parse result:\n%s", result)
 
         # Step 6: Return result (cache only if not a schema)
@@ -77,7 +90,7 @@ class zLoader:
             "event": "sysmsg",
             "label": "zLoader return",
             "style": "~",
-            "color": "LOADER",
+            "color": self.mycolor,
             "indent": 1,
         })
 

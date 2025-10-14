@@ -4,8 +4,8 @@ from logger import Logger
 logger = Logger.get_logger(__name__)
 # Global session import removed - use instance-based sessions
 from zCLI.subsystems.zDialog import handle_zDialog
-from zCLI.subsystems.zFunc import handle_zFunc
-from zCLI.subsystems.zDisplay import handle_zDisplay, handle_zInput
+from zCLI.subsystems.zDisplay import handle_zInput
+# zFunc now accessed via walker.zcli.zfunc
 
 
 class ZDispatch:
@@ -169,7 +169,7 @@ class ZDispatch:
             if zHorizontal.startswith("zFunc("):
                 logger.info("Detected zFunc request")
                 self.walker.display.handle({"event":"sysmsg","label":" → Handle zFunc","style":"single","color":"DISPATCH","indent":5})
-                return handle_zFunc(zHorizontal, walker=self.walker)
+                return self.walker.zcli.zfunc.handle(zHorizontal)
 
             if zHorizontal.startswith("zLink("):
                 from .zLink import handle_zLink

@@ -16,7 +16,6 @@ import json
 from pathlib import Path
 from getpass import getpass
 from logger import Logger
-from zCLI.subsystems.zSession import zSession_Login
 
 
 class ZAuth:
@@ -137,10 +136,9 @@ class ZAuth:
         logger.info("[*] Authenticating with remote server: %s", server_url)
         
         try:
-            result = zSession_Login(
+            result = self.walker.zsession.login(
                 {"username": username, "password": password, "mode": "Terminal"},
-                url=f"{server_url}/zAuth",
-                session=self.zSession
+                url=f"{server_url}/zAuth"
             )
             
             if result and result.get("status") == "success":

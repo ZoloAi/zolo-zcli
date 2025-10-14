@@ -135,7 +135,7 @@ def handle_string_submit(submit_expr, zContext, walker=None):
             return False
 
     # Execute via zFunc
-    from zCLI.subsystems.zFunc import handle_zFunc
+    # zFunc now accessed via walker.zcli.zfunc
     logger.info("Final zSubmit to execute: %s", submit_expr)
     
     handle_zDisplay({
@@ -146,7 +146,7 @@ def handle_string_submit(submit_expr, zContext, walker=None):
         "indent": 5
     })
     
-    result = handle_zFunc(submit_expr, zContext=zContext, walker=walker)
+    result = walker.zcli.zfunc.handle(submit_expr, zContext)
     logger.debug("zSubmit result: %s", result)
     
     handle_zDisplay({
