@@ -1,5 +1,4 @@
 from logger import Logger
-from zCLI.subsystems.zDisplay import handle_zDisplay
 from zCLI.subsystems.zWalker.zWalker_modules.zDispatch import handle_zDispatch
 # Global session import removed - use instance-based sessions
 import re
@@ -50,13 +49,21 @@ class ZWizard:
         - Result accumulation (zHat array)
         - Error handling with automatic rollback
         """
-        handle_zDisplay({
-            "event": "sysmsg",
-            "label": "Handle zWizard",
-            "style": "full",
-            "color": "ZWIZARD",
-            "indent": 1,
-        })
+        # Get display instance
+        display = None
+        if self.zcli:
+            display = self.zcli.display
+        elif self.walker and hasattr(self.walker, 'display'):
+            display = self.walker.display
+        
+        if display:
+            display.handle({
+                "event": "sysmsg",
+                "label": "Handle zWizard",
+                "style": "full",
+                "color": "ZWIZARD",
+                "indent": 1,
+            })
 
         try:
             zHat = []
@@ -70,13 +77,14 @@ class ZWizard:
                 if step_key.startswith("_"):
                     continue
                 
-                handle_zDisplay({
-                    "event": "sysmsg",
-                    "label": f"zWizard step: {step_key}",
-                    "style": "single",
-                    "color": "ZWIZARD",
-                    "indent": 2,
-                })
+                if display:
+                    display.handle({
+                        "event": "sysmsg",
+                        "label": f"zWizard step: {step_key}",
+                        "style": "single",
+                        "color": "ZWIZARD",
+                        "indent": 2,
+                    })
 
                 # Interpolate zHat references in string values
                 if isinstance(step_value, str):

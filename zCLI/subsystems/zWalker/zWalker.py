@@ -1,7 +1,9 @@
 import traceback
 import sys
 from logger import Logger
-from zCLI.subsystems.zDisplay import handle_zDisplay
+
+# Logger instance
+logger = Logger.get_logger(__name__)
 
 # Walker-specific subsystems (always needed)
 from zCLI.subsystems.zWalker.zWalker_modules.zDispatch import ZDispatch
@@ -10,7 +12,7 @@ from zCLI.subsystems.zWalker.zWalker_modules.zLink import ZLink
 from zCLI.subsystems.zWalker.zWalker_modules.zCrumbs import zCrumbs
 
 # Legacy mode subsystems (imported lazily when needed)
-# - zSession, ZDisplay, ZUtils, ZFunc, ZOpen
+# - zSession, zDisplay_new, ZUtils, ZFunc, ZOpen
 
 
 class zWalker:
@@ -82,9 +84,9 @@ class zWalker:
         """
         # Lazy imports for legacy mode only
         from zCLI.subsystems.zSession import zSession
-        from zCLI.subsystems.zDisplay import ZDisplay
-        from zCLI.subsystems.zUtils import ZUtils
-        from zCLI.subsystems.zFunc import ZFunc
+        from zCLI.subsystems.zDisplay_new import zDisplay_new
+        from zCLI.subsystems.zUtils import zUtils
+        from zCLI.subsystems.zFunc import zFunc
         from zCLI.subsystems.zOpen import ZOpen
         from zCLI.subsystems.zLoader import zLoader
         
@@ -105,10 +107,17 @@ class zWalker:
         self.dispatch = ZDispatch(self)
         self.menu = ZMenu(self)
         self.link = ZLink(self)
-        self.display = ZDisplay(self)
-        self.func = ZFunc(self)
+        
+        # Create a minimal zcli-like object for zDisplay_new in legacy mode
+        class LegacyZCLI:
+            def __init__(self, session, logger_instance):
+                self.session = session
+                self.logger = logger_instance
+        
+        self.display = zDisplay_new(LegacyZCLI(self.zSession, self.logger))
+        self.func = zFunc(self)
         self.open = ZOpen(self)
-        self.utils = ZUtils(self)
+        self.utils = zUtils(self)
         
         # Load optional utils plugins from zSpark_obj if provided
         try:

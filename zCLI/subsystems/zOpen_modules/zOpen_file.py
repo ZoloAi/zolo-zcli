@@ -3,10 +3,9 @@
 
 import os
 import webbrowser
-from zCLI.subsystems.zDisplay import handle_zDisplay
 
 
-def zOpen_file(path, zSession, logger):
+def zOpen_file(path, zSession, logger, display=None):
     """
     Handle local file opening based on file type.
     
@@ -14,6 +13,7 @@ def zOpen_file(path, zSession, logger):
         path: Absolute file path
         zSession: Session with machine capabilities
         logger: Logger instance
+        display: Display instance (optional)
         
     Returns:
         "zBack" on success, "stop" on failure
@@ -33,7 +33,7 @@ def zOpen_file(path, zSession, logger):
     if ext in ['.html', '.htm']:
         return zOpen_html(path, logger)
     elif ext in ['.txt', '.md', '.py', '.js', '.json', '.yaml', '.yml']:
-        return zOpen_text(path, zSession, logger)
+        return zOpen_text(path, zSession, logger, display)
     else:
         if logger:
             logger.warning("Unsupported file type: %s", ext)
@@ -71,7 +71,7 @@ def zOpen_html(path, logger):
         return "stop"
 
 
-def zOpen_text(path, zSession, logger):
+def zOpen_text(path, zSession, logger, display=None):
     """
     Open all text files using user's preferred IDE.
     
@@ -82,6 +82,7 @@ def zOpen_text(path, zSession, logger):
         path: Text file path
         zSession: Session with machine configuration
         logger: Logger instance
+        display: Display instance (optional)
         
     Returns:
         "zBack" on success, "stop" on failure
@@ -119,16 +120,17 @@ def zOpen_text(path, zSession, logger):
             logger.warning("Failed to open with IDE %s: %s", editor, e)
         
         # Fallback: Display file content
-        return zOpen_text_display(path, logger)
+        return zOpen_text_display(path, logger, display)
 
 
-def zOpen_text_display(path, logger):
+def zOpen_text_display(path, logger, display=None):
     """
     Display text file content when IDE opening fails.
     
     Args:
         path: Text file path
         logger: Logger instance
+        display: Display instance (optional)
         
     Returns:
         "zBack" always (graceful fallback)
@@ -140,13 +142,14 @@ def zOpen_text_display(path, logger):
         with open(path, 'r', encoding='utf-8') as f:
             content = f.read()
         
-        handle_zDisplay({
-            "event": "sysmsg",
-            "label": f"File Content: {os.path.basename(path)}",
-            "style": "~",
-            "color": "INFO",
-            "indent": 1,
-        })
+        if display:
+            display.handle({
+                "event": "sysmsg",
+                "label": f"File Content: {os.path.basename(path)}",
+                "style": "~",
+                "color": "INFO",
+                "indent": 1,
+            })
         
         # Display first 1000 characters
         if len(content) > 1000:

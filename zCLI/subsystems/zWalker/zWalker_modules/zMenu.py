@@ -3,7 +3,6 @@ from logger import Logger
 # Logger instance
 logger = Logger.get_logger(__name__)
 # Global session import removed - use instance-based sessions
-from zCLI.subsystems.zDisplay import handle_zDisplay, handle_zInput
 
 
 class ZMenu:
@@ -51,7 +50,7 @@ class ZMenu:
 
         # ✅ Streamlined input validation loop
         while True:
-            choice = handle_zInput({"event": "input"})
+            choice = self.walker.display.input({"event": "input"})
             logger.debug("User raw input: '%s'", choice)
 
             if not choice.isdigit():

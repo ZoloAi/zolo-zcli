@@ -3,7 +3,6 @@ from logger import Logger
 # Logger instance
 logger = Logger.get_logger(__name__)
 # Global session import removed - use instance-based sessions
-from zCLI.subsystems.zDisplay import handle_zDisplay
 from zCLI.subsystems.zParser import zExpr_eval
 
 

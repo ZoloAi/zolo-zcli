@@ -4,7 +4,6 @@
 
 from urllib.parse import urlparse
 from logger import Logger
-from zCLI.subsystems.zDisplay import handle_zDisplay
 # Global session import removed - use instance-based sessions
 
 # Import zOpen modules from registry
@@ -34,12 +33,14 @@ class ZOpen:
             self.walker = None
             self.zSession = zcli_or_walker.session
             self.logger = zcli_or_walker.logger
+            self.display = zcli_or_walker.display
         elif hasattr(zcli_or_walker, 'zSession'):
             # Legacy walker instance
             self.walker = zcli_or_walker
             self.zcli = None
             self.zSession = zcli_or_walker.zSession
             self.logger = getattr(zcli_or_walker, "logger", logger)
+            self.display = getattr(zcli_or_walker, "display", None)
         else:
             # No valid instance
             raise ValueError("ZOpen requires a zCLI instance or walker with session")
@@ -54,16 +55,17 @@ class ZOpen:
         Returns:
             "zBack" on success, "stop" on failure
         """
-        handle_zDisplay({
-            "event": "sysmsg",
-            "label": "Handle zOpen",
-            "style": "full",
-            "color": "ZOPEN",
-            "indent": 1,
-        })
-        handle_zDisplay({
-            "event": "zCrumbs"
-        })
+        if self.display:
+            self.display.handle({
+                "event": "sysmsg",
+                "label": "Handle zOpen",
+                "style": "full",
+                "color": "ZOPEN",
+                "indent": 1,
+            })
+            self.display.handle({
+                "event": "zCrumbs"
+            })
 
         self.logger.debug("incoming zOpen request: %s", zHorizontal)
 
@@ -77,7 +79,7 @@ class ZOpen:
         if parsed.scheme in ("http", "https") or raw_path.startswith("www."):
             # URL handling
             url = raw_path if parsed.scheme else f"https://{raw_path}"
-            return zOpen_url(url, self.zSession, self.logger)
+            return zOpen_url(url, self.zSession, self.logger, display=self.display)
         
         elif raw_path.startswith("@") or raw_path.startswith("~"):
             # zPath handling
@@ -87,7 +89,7 @@ class ZOpen:
             # Local file handling
             import os
             path = os.path.abspath(os.path.expanduser(raw_path))
-            return zOpen_file(path, self.zSession, self.logger)
+            return zOpen_file(path, self.zSession, self.logger, display=self.display)
 
 
 def handle_zOpen(zHorizontal, walker=None):

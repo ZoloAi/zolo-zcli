@@ -3,10 +3,9 @@
 
 import webbrowser
 import subprocess
-from zCLI.subsystems.zDisplay import handle_zDisplay
 
 
-def zOpen_url(url, zSession, logger):
+def zOpen_url(url, zSession, logger, display=None):
     """
     Handle URL opening using user's preferred browser.
     
@@ -17,6 +16,7 @@ def zOpen_url(url, zSession, logger):
         url: URL to open
         zSession: Session with machine configuration
         logger: Logger instance
+        display: Display instance (optional)
         
     Returns:
         "zBack" on success, "stop" on failure
@@ -78,7 +78,7 @@ def zOpen_url_browser(url, browser, logger):
         return "stop"
 
 
-def zOpen_url_headless(url, capabilities, logger):
+def zOpen_url_headless(url, capabilities, logger, display=None):
     """
     Handle URL opening on headless systems using available tools.
     
@@ -86,6 +86,7 @@ def zOpen_url_headless(url, capabilities, logger):
         url: URL to open
         capabilities: Machine capabilities dict
         logger: Logger instance
+        display: Display instance (optional)
         
     Returns:
         "zBack" on success, "stop" on failure
@@ -101,13 +102,14 @@ def zOpen_url_headless(url, capabilities, logger):
             if result.returncode == 0:
                 if logger:
                     logger.info("Successfully fetched URL content via curl")
-                handle_zDisplay({
-                    "event": "sysmsg",
-                    "label": "URL Content (via curl)",
-                    "style": "~",
-                    "color": "INFO",
-                    "indent": 1,
-                })
+                if display:
+                    display.handle({
+                        "event": "sysmsg",
+                        "label": "URL Content (via curl)",
+                        "style": "~",
+                        "color": "INFO",
+                        "indent": 1,
+                    })
                 
                 # Display first 500 characters
                 content = result.stdout
@@ -126,16 +128,17 @@ def zOpen_url_headless(url, capabilities, logger):
                 logger.warning("curl error: %s", e)
     
     # Fallback: Just display URL
-    return zOpen_url_display(url, logger)
+    return zOpen_url_display(url, logger, display)
 
 
-def zOpen_url_display(url, logger):
+def zOpen_url_display(url, logger, display=None):
     """
     Display URL information when opening fails.
     
     Args:
         url: URL to display
         logger: Logger instance (optional)
+        display: Display instance (optional)
         
     Returns:
         "zBack" always (graceful fallback)
@@ -143,13 +146,14 @@ def zOpen_url_display(url, logger):
     if logger:
         logger.warning("Unable to open URL. Displaying information instead.")
     
-    handle_zDisplay({
-        "event": "sysmsg",
-        "label": "URL Information",
-        "style": "~",
-        "color": "INFO",
-        "indent": 1,
-    })
+    if display:
+        display.handle({
+            "event": "sysmsg",
+            "label": "URL Information",
+            "style": "~",
+            "color": "INFO",
+            "indent": 1,
+        })
     print(f"URL: {url}")
     print("Unable to open in browser. Please copy and paste into your browser.")
     return "zBack"

@@ -4,7 +4,6 @@ from logger import Logger
 logger = Logger.get_logger(__name__)
 # Global session import removed - use instance-based sessions
 from zCLI.subsystems.zDialog import handle_zDialog
-from zCLI.subsystems.zDisplay import handle_zInput
 # zFunc now accessed via walker.zcli.zfunc
 
 
@@ -133,7 +132,7 @@ class ZDispatch:
             logger.info("zRequired results: %s", result)
             while not result:
                 logger.warning("Requirement '%s' not satisfied. Retrying...", zKey)
-                choice = handle_zInput({"event": "while"})
+                choice = self.walker.display.input({"event": "while"})
                 if choice == "stop":
                     return "stop"
                 result = self.zLauncher(zHorizontal, context=context)

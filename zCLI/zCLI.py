@@ -62,9 +62,8 @@ class zCLI:
         self.zparser = zParser(self)
         self.loader = zLoader(self)
         self.zfunc = zFunc(self)
-
-        self.dialog = zDialog(self)
         self.wizard = ZWizard(self)
+        self.dialog = zDialog(self)
 
         self.data = zData(self)  # zData subsystem (initialized after display/loader)
         self.open = ZOpen(self)

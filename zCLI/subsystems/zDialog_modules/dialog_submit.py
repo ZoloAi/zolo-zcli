@@ -7,7 +7,6 @@ from logger import Logger
 
 # Logger instance
 logger = Logger.get_logger(__name__)
-from zCLI.subsystems.zDisplay import handle_zDisplay
 from .dialog_context import inject_placeholders
 
 
@@ -22,12 +21,15 @@ def handle_submit(submit_expr, zContext, walker=None):
     Args:
         submit_expr: Submit expression (dict or string)
         zContext: Dialog context with model, fields, zConv
-        walker: Optional walker instance
+        walker: Walker instance (required)
         
     Returns:
         Result of submission (varies by handler)
     """
-    handle_zDisplay({
+    if walker is None:
+        raise ValueError("handle_submit requires a walker instance")
+    
+    walker.display.handle({
         "event": "sysmsg",
         "label": "zSubmit",
         "style": "single",
@@ -87,7 +89,7 @@ def handle_dict_submit(submit_dict, zContext, walker=None):
     logger.info("Dispatching dict onSubmit via zLauncher: %s", submit_dict)
     result = zLauncher(submit_dict, walker=walker)
 
-    handle_zDisplay({
+    walker.display.handle({
         "event": "sysmsg",
         "label": "zSubmit Return",
         "style": "~",
@@ -95,7 +97,7 @@ def handle_dict_submit(submit_dict, zContext, walker=None):
         "indent": 3
     })
 
-    handle_zDisplay({
+    walker.display.handle({
         "event": "sysmsg",
         "label": "zDialog Return",
         "style": "~",
@@ -138,7 +140,7 @@ def handle_string_submit(submit_expr, zContext, walker=None):
     # zFunc now accessed via walker.zcli.zfunc
     logger.info("Final zSubmit to execute: %s", submit_expr)
     
-    handle_zDisplay({
+    walker.display.handle({
         "event": "sysmsg",
         "label": " → Handle zFunc",
         "style": "single",
@@ -149,7 +151,7 @@ def handle_string_submit(submit_expr, zContext, walker=None):
     result = walker.zcli.zfunc.handle(submit_expr, zContext)
     logger.debug("zSubmit result: %s", result)
     
-    handle_zDisplay({
+    walker.display.handle({
         "event": "sysmsg",
         "label": "zSubmit Return",
         "style": "~",
@@ -157,7 +159,7 @@ def handle_string_submit(submit_expr, zContext, walker=None):
         "indent": 3
     })
 
-    handle_zDisplay({
+    walker.display.handle({
         "event": "sysmsg",
         "label": "zDialog Return",
         "style": "~",
