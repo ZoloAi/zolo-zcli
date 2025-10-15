@@ -12,6 +12,7 @@ from .subsystems.zFunc import zFunc
 from .subsystems.zParser import zParser
 from .subsystems.zComm import zComm
 from .subsystems.zDispatch import zDispatch
+from .subsystems.zNavigation import zNavigation
 from .subsystems.zDialog import zDialog
 from .subsystems.zWizard import zWizard
 from .subsystems.zOpen import zOpen
@@ -63,6 +64,7 @@ class zCLI:
         # Note: Order matters! All subsystems may use zComm for communication
         self.display = zDisplay(self)
         self.dispatch = zDispatch(self)
+        self.navigation = zNavigation(self)  # Core navigation system - unified menus, breadcrumbs, linking
         self.mycolor = "MAIN"
 
         self.zparser = zParser(self)

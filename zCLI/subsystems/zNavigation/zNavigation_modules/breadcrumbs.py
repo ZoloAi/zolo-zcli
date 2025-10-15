@@ -5,34 +5,35 @@ logger = Logger.get_logger(__name__)
 # Global session import removed - use instance-based sessions
 
 
-class zCrumbs:
+class Breadcrumbs:
     """Manage breadcrumb trails for the CLI session."""
 
-    def __init__(self, walker=None):
-        # Walker is optional for backward compatibility
-        self.walker = walker
-        self.zSession = getattr(walker, "zSession", None)
-        if not self.zSession:
-            raise ValueError("zCrumbs requires a walker with a session")
-        self.logger = getattr(walker, "logger", logger) if walker else logger
+    def __init__(self, navigation):
+        """Initialize breadcrumbs manager."""
+        self.navigation = navigation
+        self.zcli = navigation.zcli
+        self.logger = navigation.logger
 
-    def handle_zCrumbs(self, zBlock, zKey):
-        self.walker.display.handle({
+    def handle_zCrumbs(self, zBlock, zKey, walker=None):
+        """Handle breadcrumb trail management."""
+        display = walker.display if walker else self.zcli.display
+        
+        display.handle({
             "event": "sysmsg",
-            "label": "Handle zCrumbs",
+            "label": "Handle zNavigation Breadcrumbs",
             "style": "full",
             "color": "ZCRUMB",
             "indent": 2,
         })
 
         logger.debug("\nIncoming zBlock: %s,\nand zKey: %s", zBlock, zKey)
-        logger.debug("\nCurrent zCrumbs: %s", self.zSession["zCrumbs"])
+        logger.debug("\nCurrent zCrumbs: %s", self.zcli.session["zCrumbs"])
 
-        if zBlock not in self.zSession["zCrumbs"]:
-            self.zSession["zCrumbs"][zBlock] = []
-            logger.debug("\nCurrent zCrumbs: %s", self.zSession["zCrumbs"])
+        if zBlock not in self.zcli.session["zCrumbs"]:
+            self.zcli.session["zCrumbs"][zBlock] = []
+            logger.debug("\nCurrent zCrumbs: %s", self.zcli.session["zCrumbs"])
 
-        zBlock_crumbs = self.zSession["zCrumbs"][zBlock]
+        zBlock_crumbs = self.zcli.session["zCrumbs"][zBlock]
         logger.debug("\nCurrent zTrail: %s", zBlock_crumbs)
 
         # Prevent duplicate zKeys

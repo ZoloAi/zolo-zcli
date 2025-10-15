@@ -5,26 +5,16 @@ Walker Package - YAML-Driven UI/Menu Navigation
 
 This package contains modules specific to Walker (UI) mode:
 - zWalker.py: Main navigation controller
-- zWalker_modules/: Component modules
-  - zDispatch: Event/action dispatching
-  - zMenu: Menu rendering and navigation
-  - zLink: Inter-file linking
-  - zCrumbs: Breadcrumb navigation tracking
+- zWalker_modules/: Empty (all navigation moved to core zNavigation)
 
-Note: zLoader is in zCLI.subsystems for shared usage.
+Note: zDispatch and zNavigation (includes zMenu, zCrumbs, zLink) are now core subsystems 
+in zCLI.subsystems for universal access. zLoader is also in zCLI.subsystems for shared usage.
 """
 
 from .zWalker import zWalker
-from .zWalker_modules.zDispatch import ZDispatch
-from .zWalker_modules.zMenu import ZMenu
-from .zWalker_modules.zLink import ZLink
-from .zWalker_modules.zCrumbs import zCrumbs
+# zDispatch, zNavigation (includes zCrumbs, zLink, zMenu) are now imported from core subsystems
 
 __all__ = [
     "zWalker",
-    "ZDispatch",
-    "ZMenu",
-    "ZLink",
-    "zCrumbs",
 ]
 

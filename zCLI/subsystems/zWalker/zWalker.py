@@ -6,10 +6,7 @@ from zCLI.subsystems.zWizard import zWizard
 logger = Logger.get_logger(__name__)
 
 # Walker-specific subsystems (always needed)
-# zDispatch is now imported from core subsystem
-from zCLI.subsystems.zWalker.zWalker_modules.zMenu import ZMenu
-from zCLI.subsystems.zWalker.zWalker_modules.zLink import ZLink
-from zCLI.subsystems.zWalker.zWalker_modules.zCrumbs import zCrumbs
+# zDispatch, zNavigation, zCrumbs, and zLink are now imported from core subsystems
 
 # Legacy mode subsystems (imported lazily when needed)
 # - zSession, zDisplay, zUtils, zFunc, ZOpen
@@ -83,12 +80,9 @@ class zWalker(zWizard):
         # Use shared loader instance from zCLI
         self.loader = zcli.loader
         
-        # Create walker-specific subsystems (need access to walker methods like zBlock_loop)
-        self.zCrumbs = zCrumbs(self)  # ← Fixed: zCrumbs is Walker-specific, create it here
-        # Use core zDispatch instead of creating local instance
+        # Use core subsystems instead of creating local instances
         self.dispatch = zcli.dispatch
-        self.menu = ZMenu(self)
-        self.link = ZLink(self)
+        self.navigation = zcli.navigation  # Use core zNavigation (includes breadcrumbs, linking, menus)
         
         # Configure logger level
         self._configure_logger()
@@ -328,7 +322,7 @@ class zWalker(zWizard):
                 if not trail or trail[-1] != key:
                     # validate key is really part of the active block
                     if key in active_zBlock_dict:
-                        self.zCrumbs.handle_zCrumbs(active_zBlock, key)
+                        self.navigation.handle_zCrumbs(active_zBlock, key, walker=self)
                     else:
                         logger.warning("Skipping invalid crumb: %s not in %s", key, active_zBlock)
                 else:
@@ -342,7 +336,7 @@ class zWalker(zWizard):
         # Navigation callbacks for Walker-specific behavior
         def on_back(result):  # pylint: disable=unused-argument
             """Handle zBack navigation."""
-            active_zBlock_dict_new, zBlock_keys_new, zKey_new = self.zCrumbs.handle_zBack(show_banner=False)
+            active_zBlock_dict_new, zBlock_keys_new, zKey_new = self.navigation.handle_zBack(show_banner=False, walker=self)
             return self.zBlock_loop(active_zBlock_dict_new, zBlock_keys_new, zKey_new)
         
         def on_stop(result):  # pylint: disable=unused-argument

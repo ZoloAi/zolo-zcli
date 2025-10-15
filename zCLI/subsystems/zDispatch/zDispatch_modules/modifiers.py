@@ -55,22 +55,24 @@ class ModifierProcessor:
         self.logger.info("Resolved modifiers: %s on key: %s", modifiers, zKey)
 
         if "*" in modifiers:
-            # Menu modifier - requires walker
-            if not walker:
-                self.logger.warning("Menu modifier (*) requires walker instance")
-                return self.dispatch.launcher.launch(zHorizontal, context=context, walker=walker)
-            
-            from ...zWalker.zWalker_modules.zMenu import handle_zMenu
+            # Menu modifier - now uses core zMenu
             is_anchor = "~" in modifiers
             self.logger.debug("* Modifier detected for %s — invoking menu (anchor=%s)", zKey, is_anchor)
-            active_zBlock = next(reversed(self.zcli.session["zCrumbs"]))
-            zMenu_obj = {
-                "zBlock": active_zBlock,
-                "zKey": zKey,
-                "zHorizontal": zHorizontal,
-                "is_anchor": is_anchor
-            }
-            result = handle_zMenu(zMenu_obj, walker=walker)
+            
+            if walker:
+                # Walker context - use legacy format for complex navigation
+                active_zBlock = next(reversed(self.zcli.session["zCrumbs"]))
+                zMenu_obj = {
+                    "zBlock": active_zBlock,
+                    "zKey": zKey,
+                    "zHorizontal": zHorizontal,
+                    "is_anchor": is_anchor
+                }
+                result = self.zcli.navigation.handle(zMenu_obj, walker=walker)
+            else:
+                # Non-walker context - use simple menu
+                result = self.zcli.navigation.create(zHorizontal, allow_back=not is_anchor, walker=walker)
+            
             return result
 
         if "^" in modifiers:

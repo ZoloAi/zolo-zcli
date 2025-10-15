@@ -6,13 +6,12 @@ logger = Logger.get_logger(__name__)
 from zCLI.subsystems.zParser import zExpr_eval
 
 
-class ZLink:
-    def __init__(self, walker):
-        self.walker = walker
-        self.zSession = getattr(walker, "zSession", None)
-        if not self.zSession:
-            raise ValueError("ZLink requires a walker with a session")
-        self.logger = getattr(walker, "logger", logger)
+class Linking:
+    def __init__(self, navigation):
+        """Initialize linking manager."""
+        self.navigation = navigation
+        self.zcli = navigation.zcli
+        self.logger = navigation.logger
 
     def handle(self, zHorizontal):
         self.walker.display.handle({
