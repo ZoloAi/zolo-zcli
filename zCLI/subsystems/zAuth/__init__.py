@@ -3,6 +3,7 @@
 zAuth subsystem.
 """
 
-from .zAuth import ZAuth  # noqa: F401
+from .zAuth import zAuth  # noqa: F401
+from .zAuth_modules.helpers import check_authentication  # noqa: F401
 
-__all__ = ['ZAuth']
+__all__ = ['zAuth', 'check_authentication']

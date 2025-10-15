@@ -23,6 +23,28 @@ class zSession:
         
         # Session color for system messages (stored as string, resolved by zDisplay)
         self.mycolor = "MAIN"
+        
+        # Print styled ready message (before zDisplay is available)
+        self._print_ready()
+    
+    def _print_ready(self):
+        """Print styled 'Ready' message (before zDisplay is available)."""
+        try:
+            from ..zDisplay.zDisplay_modules.utils.colors import Colors
+            color_code = getattr(Colors, self.mycolor, Colors.RESET)
+            label = "zSession Ready"
+            BASE_WIDTH = 60
+            char = "═"
+            label_len = len(label) + 2
+            space = BASE_WIDTH - label_len
+            left = space // 2
+            right = space - left
+            colored_label = f"{color_code} {label} {Colors.RESET}"
+            line = f"{char * left}{colored_label}{char * right}"
+            print(line)
+        except Exception:
+            # Silently fail if Colors not available
+            pass
     
     def generate_id(self, prefix: str = "zS") -> str:
         """

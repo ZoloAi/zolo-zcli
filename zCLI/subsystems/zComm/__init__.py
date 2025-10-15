@@ -1,8 +1,9 @@
 # zCLI/subsystems/zComm/__init__.py
 """
-zComm subsystem.
+zComm subsystem - Communication & WebSocket Management
 """
 
-from .zComm import ZComm  # noqa: F401
+from .zComm import zComm  # noqa: F401
+from .zComm_modules.zBifrost import zBifrost, create_client  # noqa: F401
 
-__all__ = ['ZComm']
+__all__ = ['zComm', 'zBifrost', 'create_client']

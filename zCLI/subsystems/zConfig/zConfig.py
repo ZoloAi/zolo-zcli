@@ -43,6 +43,12 @@ class zConfig:
 
         # Store zCLI instance for display access
         self.zcli = zcli
+        
+        # Configuration color for system messages
+        self.mycolor = "SCHEMA"  # Green bg (configuration/schema)
+
+        # Print styled ready message (before zDisplay is available)
+        self._print_ready()
 
         logger.info("[zConfig] Initialized for environment: %s (from %s)", 
                    self.environment,
@@ -85,6 +91,29 @@ class zConfig:
             return self.machine.get_all()
         return self.machine.get(key, default)
 
+    # ═══════════════════════════════════════════════════════════
+    # Layer 0 Ready Message
+    # ═══════════════════════════════════════════════════════════
+    
+    def _print_ready(self):
+        """Print styled 'Ready' message (before zDisplay is available)."""
+        try:
+            from ..zDisplay.zDisplay_modules.utils.colors import Colors
+            color_code = getattr(Colors, self.mycolor, Colors.RESET)
+            label = "zConfig Ready"
+            BASE_WIDTH = 60
+            char = "═"
+            label_len = len(label) + 2
+            space = BASE_WIDTH - label_len
+            left = space // 2
+            right = space - left
+            colored_label = f"{color_code} {label} {Colors.RESET}"
+            line = f"{char * left}{colored_label}{char * right}"
+            print(line)
+        except Exception:
+            # Silently fail if Colors not available
+            pass
+    
     # ═══════════════════════════════════════════════════════════
     # Secret Management (Environment Variables Only)
     # ═══════════════════════════════════════════════════════════

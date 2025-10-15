@@ -10,11 +10,11 @@ from .subsystems.zDisplay import zDisplay
 from .subsystems.zData import zData
 from .subsystems.zFunc import zFunc
 from .subsystems.zParser import zParser
-from .subsystems.zComm import ZComm
+from .subsystems.zComm import zComm
 from .subsystems.zDialog import zDialog
 from .subsystems.zWizard import zWizard
 from .subsystems.zOpen import zOpen
-from .subsystems.zAuth import ZAuth
+from .subsystems.zAuth import zAuth
 from .subsystems.zLoader import zLoader
 from .subsystems.zExport import ZExport
 
@@ -56,7 +56,7 @@ class zCLI:
 
         # Initialize zComm (Communication infrastructure for WebSocket, PostgreSQL services)
         # Must be in Layer 0 because zDisplay, zDialog, and zData depend on it
-        self.comm = ZComm(self)
+        self.comm = zComm(self)
 
         # Layer 1: Core Subsystems (depend on Layer 0)
         # Note: Order matters! All subsystems may use zComm for communication
@@ -69,7 +69,7 @@ class zCLI:
         self.dialog = zDialog(self)
         self.open = zOpen(self)
         self.data = zData(self)
-        self.auth = ZAuth(self)
+        self.auth = zAuth(self)
 
         # Layer 2: Core Abstraction
         self.wizard = zWizard(self)
@@ -91,7 +91,7 @@ class zCLI:
         self._init_session()
 
         self.logger.info("zCLI Core initialized - UI Mode: %s", self.ui_mode)
-
+    
     def _load_plugins(self):
         """ Load utility plugins (Python modules) from zSpark_obj if provided.
             Uses zUtils, not zLoader."""
