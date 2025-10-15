@@ -11,6 +11,7 @@ from .subsystems.zData import zData
 from .subsystems.zFunc import zFunc
 from .subsystems.zParser import zParser
 from .subsystems.zComm import zComm
+from .subsystems.zDispatch import zDispatch
 from .subsystems.zDialog import zDialog
 from .subsystems.zWizard import zWizard
 from .subsystems.zOpen import zOpen
@@ -61,6 +62,7 @@ class zCLI:
         # Layer 1: Core Subsystems (depend on Layer 0)
         # Note: Order matters! All subsystems may use zComm for communication
         self.display = zDisplay(self)
+        self.dispatch = zDispatch(self)
         self.mycolor = "MAIN"
 
         self.zparser = zParser(self)

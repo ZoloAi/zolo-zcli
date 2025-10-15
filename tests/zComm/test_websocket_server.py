@@ -46,6 +46,7 @@ async def run_test_server():
             self.zcli = zcli
             self.data = zcli.data
             self.logger = zcli.logger
+            self.display = zcli.display
     
     walker = MockWalker(zcli)
     

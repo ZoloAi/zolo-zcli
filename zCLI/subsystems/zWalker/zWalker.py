@@ -6,7 +6,7 @@ from zCLI.subsystems.zWizard import zWizard
 logger = Logger.get_logger(__name__)
 
 # Walker-specific subsystems (always needed)
-from zCLI.subsystems.zWalker.zWalker_modules.zDispatch import ZDispatch
+# zDispatch is now imported from core subsystem
 from zCLI.subsystems.zWalker.zWalker_modules.zMenu import ZMenu
 from zCLI.subsystems.zWalker.zWalker_modules.zLink import ZLink
 from zCLI.subsystems.zWalker.zWalker_modules.zCrumbs import zCrumbs
@@ -85,7 +85,8 @@ class zWalker(zWizard):
         
         # Create walker-specific subsystems (need access to walker methods like zBlock_loop)
         self.zCrumbs = zCrumbs(self)  # ← Fixed: zCrumbs is Walker-specific, create it here
-        self.dispatch = ZDispatch(self)
+        # Use core zDispatch instead of creating local instance
+        self.dispatch = zcli.dispatch
         self.menu = ZMenu(self)
         self.link = ZLink(self)
         

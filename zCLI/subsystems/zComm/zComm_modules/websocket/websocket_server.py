@@ -31,8 +31,9 @@ CLIENTS = set()
 
 
 class zBifrost:
-    def __init__(self, walker=None, port: int = PORT, host: str = HOST):
+    def __init__(self, walker=None, zcli=None, port: int = PORT, host: str = HOST):
         self.walker = walker
+        self.zcli = zcli or (walker.zcli if walker else None)
         self.logger = getattr(walker, "logger", logger) if walker else logger
         self.port = port
         self.host = host
@@ -156,11 +157,11 @@ class zBifrost:
                 zHorizontal = data.get("zHorizontal") or zKey
 
                 if zKey:
-                    from zCLI.subsystems.zWalker.zWalker_modules.zDispatch import handle_zDispatch
+                    from zCLI.subsystems.zDispatch import handle_zDispatch
                     self.logger.debug(f"[zBifrost] ▶ Dispatching CLI cmd: {zKey}")
                     try:
-                        # pass walker so dispatch/CRUD use walker context
-                        result = await asyncio.to_thread(handle_zDispatch, zKey, zHorizontal, self.walker)
+                        # Use core zDispatch - walker is optional for WebSocket context
+                        result = await asyncio.to_thread(handle_zDispatch, zKey, zHorizontal, zcli=self.zcli, walker=self.walker)
                         payload = json.dumps({"result": result})
                     except Exception as exc:  # pylint: disable=broad-except
                         self.logger.error("[zBifrost] ❌ CLI execution error: %s", exc)

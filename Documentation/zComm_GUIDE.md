@@ -7,10 +7,10 @@
 > **Layer 0 Subsystem:** zComm is initialized in Layer 0 (Foundation) because zDisplay, zDialog, and zData depend on it for communication infrastructure.
 
 ### Core Responsibilities:
-- **WebSocket Server:** Real-time bidirectional communication for web UIs
+- **WebSocket Server:** zBifrost - Real-time bidirectional communication for web UIs
 - **Service Management:** Start/stop/monitor local services (PostgreSQL, Redis, etc.)
 - **Network Utilities:** Port checking, connection management
-- **Client Library:** zBifrost 🌈 - Python WebSocket client for connecting to zCLI servers
+- **JavaScript Client:** zBifrost.js - Frontend client library for connecting to zCLI servers
 
 ---
 
@@ -23,18 +23,17 @@ zComm/
 ├── zComm.py                      # Main interface (117 lines)
 └── zComm_modules/
     ├── websocket/
-    │   └── websocket_server.py   # WebSocket server (ZSocket)
+    │   └── websocket_server.py   # zBifrost WebSocket server
     ├── services/
     │   ├── service_manager.py    # Service orchestration
     │   └── postgresql_service.py # PostgreSQL service
-    ├── localhost/                # Network utilities
-    └── zBifrost.py              🌈 WebSocket client library
+    └── localhost/                # Network utilities
 ```
 
 ### Module Organization
 
 1. **WebSocket Module** - Real-time communication
-   - `ZSocket` class - WebSocket server implementation
+   - `zBifrost` class - WebSocket server implementation
    - Authentication & origin validation
    - Message broadcasting
    - Client management
@@ -44,12 +43,6 @@ zComm/
    - `PostgreSQLService` - PostgreSQL start/stop/status
    - Connection info retrieval
    - Service health monitoring
-
-3. **zBifrost** - Client library
-   - Python WebSocket client
-   - CRUD operations
-   - Command dispatch
-   - Broadcast listening
 
 ---
 
@@ -156,151 +149,188 @@ await zcli.comm.broadcast_websocket(
 
 ---
 
-## zBifrost - WebSocket Client 🌈
+## zBifrost - WebSocket Server 🌈
 
 ### Overview
 
-**zBifrost** is the Python WebSocket client library for connecting to zCLI servers. Named after Bifröst, the rainbow bridge from Norse mythology that connects different realms.
+**zBifrost** is the WebSocket server implementation within zComm. Named after Bifröst, the rainbow bridge from Norse mythology that connects different realms.
 
 > **Perfect for:** Multi-realm architecture, quantum/multiverse features, bridging different technologies
 
-### Quick Start
+### JavaScript Client Library
 
-```python
-import asyncio
-from zCLI.subsystems.zComm import zBifrost
+For web frontends, use the **zBifrost.js** client library located at `tests/zComm/zBifrost.js`. This provides:
+- ES6 class-based API
+- CRUD operations
+- Command dispatch (zFunc, zLink, zOpen)
+- Broadcast listening
+- Auto-reconnection
+- Promise-based async/await patterns
 
-async def main():
-    # Using context manager (recommended)
-    async with zBifrost("ws://127.0.0.1:56891") as client:
-        # CRUD operations
-        user = await client.create("Users", {
-            "name": "Alice",
-            "email": "alice@example.com"
-        })
-        
-        # Read with filters
-        users = await client.read("Users", 
-            filters={"active": True, "age__gte": 18},
-            limit=10
-        )
-        
-        # Update
-        await client.update("Users", user["id"], {
-            "verified": True
-        })
-        
-        # Delete
-        await client.delete("Users", user["id"])
+### JavaScript Client Quick Start
 
-asyncio.run(main())
+```javascript
+// Browser/Node.js
+import { zBifrost } from './zBifrost.js';
+
+async function main() {
+    // Create client
+    const client = new zBifrost('ws://127.0.0.1:56891', 'your-token');
+    
+    // Connect
+    await client.connect();
+    
+    // CRUD operations
+    const user = await client.create('Users', {
+        name: 'Alice',
+        email: 'alice@example.com'
+    });
+    
+    // Read with filters
+    const users = await client.read('Users', 
+        {active: true, age__gte: 18},
+        {limit: 10}
+    );
+    
+    // Update
+    await client.update('Users', user.id, {
+        verified: true
+    });
+    
+    // Delete
+    await client.delete('Users', user.id);
+    
+    // Listen for broadcasts
+    client.onBroadcast((msg) => console.log('Update:', msg));
+    
+    // Disconnect
+    client.disconnect();
+}
+
+main();
 ```
 
-### CRUD Operations
+### JavaScript Client CRUD Operations
 
 #### Create
-```python
-user = await client.create("Users", {
-    "name": "Bob",
-    "email": "bob@example.com"
-})
+```javascript
+const user = await client.create('Users', {
+    name: 'Bob',
+    email: 'bob@example.com'
+});
 ```
 
 #### Read
-```python
-# Simple read
-users = await client.read("Users")
+```javascript
+// Simple read
+const users = await client.read('Users');
 
-# With filters
-active_users = await client.read("Users", {
-    "active": True,
-    "age__gte": 18
-})
+// With filters
+const activeUsers = await client.read('Users', {
+    active: true,
+    age__gte: 18
+});
 
-# Full options
-results = await client.read(
-    "Users",
-    filters={"role": "admin"},
-    fields=["id", "name", "email"],
-    order_by="created_at DESC",
-    limit=10,
-    offset=20
-)
+// Full options
+const results = await client.read(
+    'Users',
+    {role: 'admin'},
+    {
+        fields: ['id', 'name', 'email'],
+        order_by: 'created_at DESC',
+        limit: 10,
+        offset: 20
+    }
+);
 ```
 
 #### Update
-```python
-# Update by ID
-await client.update("Users", 123, {"verified": True})
+```javascript
+// Update by ID
+await client.update('Users', 123, {verified: true});
 
-# Update by filters
-await client.update("Users", 
-    {"email": "alice@example.com"}, 
-    {"last_login": "2024-10-15"}
-)
+// Update by filters
+await client.update('Users', 
+    {email: 'alice@example.com'}, 
+    {last_login: '2024-10-15'}
+);
 ```
 
 #### Delete
-```python
-# Delete by ID
-await client.delete("Users", 123)
+```javascript
+// Delete by ID
+await client.delete('Users', 123);
 
-# Delete by filters
-await client.delete("Users", {"inactive": True})
+// Delete by filters
+await client.delete('Users', {inactive: true});
 ```
 
 #### Upsert
-```python
-user = await client.upsert("Users",
+```javascript
+const user = await client.upsert('Users',
     {
-        "email": "alice@example.com",
-        "name": "Alice",
-        "role": "user"
+        email: 'alice@example.com',
+        name: 'Alice',
+        role: 'user'
     },
-    conflict_fields=["email"]
-)
+    ['email']
+);
 ```
 
-### Advanced Features
+### JavaScript Client Advanced Features
 
 #### Command Dispatch
-```python
-# Execute zFunc
-result = await client.zFunc("zFunc(calculateTotal, {'cart_id': 123})")
+```javascript
+// Execute zFunc
+const result = await client.zFunc('zFunc(calculateTotal, {cart_id: 123})');
 
-# Navigate zLink
-await client.zLink("/admin/users")
+// Navigate zLink
+await client.zLink('/admin/users');
 
-# File operations
-await client.zOpen("config.yaml")
+// File operations
+await client.zOpen('config.yaml');
 ```
 
 #### Broadcast Listening
-```python
-def on_update(message):
-    print(f"Broadcast received: {message}")
+```javascript
+function onUpdate(message) {
+    console.log('Broadcast received:', message);
+}
 
-client.on_broadcast(on_update)
+client.onBroadcast(onUpdate);
+
+// Remove listener
+client.removeBroadcastListener(onUpdate);
 ```
 
 #### Raw Commands
-```python
-result = await client.send({
-    "zKey": "custom_command",
-    "zHorizontal": {
-        "action": "ping",
-        "data": {"message": "Hello"}
+```javascript
+const result = await client.send({
+    zKey: 'custom_command',
+    zHorizontal: {
+        action: 'ping',
+        data: {message: 'Hello'}
     }
-}, timeout=10.0)
+}, 10000); // 10 second timeout
 ```
 
-### Authentication
-```python
-# With token
-client = zBifrost(
-    url="ws://localhost:56891",
-    token="your-auth-token"
-)
+#### Authentication
+```javascript
+// With token
+const client = new zBifrost(
+    'ws://localhost:56891',
+    'your-auth-token'
+);
+
+// Or with options
+const client = new zBifrost(
+    'ws://localhost:56891',
+    'token',
+    {
+        debug: true,
+        autoReconnect: true
+    }
+);
 ```
 
 ---
@@ -446,98 +476,138 @@ if __name__ == "__main__":
     asyncio.run(run_websocket_server())
 ```
 
-### Example 2: Python Client (zBifrost)
-
-```python
-import asyncio
-from zCLI.subsystems.zComm import zBifrost
-
-async def main():
-    # Connect to zCLI server
-    async with zBifrost("ws://127.0.0.1:56891") as client:
-        # Create records
-        users = [
-            {"name": "Alice", "email": "alice@example.com"},
-            {"name": "Bob", "email": "bob@example.com"}
-        ]
-        
-        for user_data in users:
-            user = await client.create("Users", user_data)
-            print(f"✅ Created: {user}")
-        
-        # Read with filters
-        active_users = await client.read("Users", 
-            filters={"active": True},
-            order_by="created_at DESC",
-            limit=10
-        )
-        
-        print(f"📊 Found {len(active_users)} active users")
-        
-        # Listen for real-time updates
-        def on_broadcast(message):
-            print(f"📻 Update: {message}")
-        
-        client.on_broadcast(on_broadcast)
-        
-        # Keep listening
-        await asyncio.sleep(60)
-
-asyncio.run(main())
-```
-
-### Example 3: JavaScript Client (Frontend)
+### Example 2: JavaScript Client (zBifrost.js)
 
 ```javascript
-// Conceptual JavaScript client (to be implemented)
-class ZCLIClient {
-  constructor(url = 'ws://localhost:56891', token = null) {
-    this.url = token ? `${url}?token=${token}` : url;
-    this.ws = null;
-  }
+// Browser or Node.js environment
+import { zBifrost } from './zBifrost.js';
 
-  async connect() {
-    this.ws = new WebSocket(this.url);
+async function main() {
+    // Connect to zCLI server
+    const client = new zBifrost('ws://127.0.0.1:56891', 'your-token');
+    await client.connect();
     
-    return new Promise((resolve, reject) => {
-      this.ws.onopen = () => resolve();
-      this.ws.onerror = (err) => reject(err);
-    });
-  }
-
-  async create(model, values) {
-    return this.send({
-      zKey: `create_${model}`,
-      zHorizontal: {
-        action: 'create',
-        model: model,
-        values: values
-      }
-    });
-  }
-
-  async send(payload) {
-    this.ws.send(JSON.stringify(payload));
+    // Create records
+    const users = [
+        {name: 'Alice', email: 'alice@example.com'},
+        {name: 'Bob', email: 'bob@example.com'}
+    ];
     
-    return new Promise((resolve) => {
-      this.ws.onmessage = (event) => {
-        const response = JSON.parse(event.data);
-        resolve(response.result);
-      };
-    });
-  }
+    for (const userData of users) {
+        const user = await client.create('Users', userData);
+        console.log('✅ Created:', user);
+    }
+    
+    // Read with filters
+    const activeUsers = await client.read('Users', 
+        {active: true},
+        {
+            order_by: 'created_at DESC',
+            limit: 10
+        }
+    );
+    
+    console.log(`📊 Found ${activeUsers.length} active users`);
+    
+    // Listen for real-time updates
+    function onBroadcast(message) {
+        console.log('📻 Update:', message);
+    }
+    
+    client.onBroadcast(onBroadcast);
+    
+    // Keep listening for 60 seconds
+    setTimeout(() => {
+        client.disconnect();
+    }, 60000);
 }
 
-// Usage
-const client = new ZCLIClient('ws://localhost:56891', 'your-token');
-await client.connect();
+main().catch(console.error);
+```
 
-const user = await client.create('Users', {
-  name: 'Alice',
-  email: 'alice@example.com'
-});
+### Example 3: HTML Demo Page
 
-console.log('Created:', user);
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>zBifrost Demo</title>
+    <script type="module">
+        import { zBifrost } from './zBifrost.js';
+        
+        // Global client instance
+        let client = null;
+        
+        async function connect() {
+            const url = document.getElementById('serverUrl').value;
+            const token = document.getElementById('authToken').value;
+            
+            client = new zBifrost(url, token, {debug: true});
+            await client.connect();
+            
+            // Listen for broadcasts
+            client.onBroadcast((msg) => {
+                console.log('📻 Broadcast:', msg);
+                document.getElementById('broadcasts').innerHTML += 
+                    `<div>${new Date().toISOString()}: ${JSON.stringify(msg)}</div>`;
+            });
+            
+            document.getElementById('status').textContent = '✅ Connected';
+            document.getElementById('connectBtn').disabled = true;
+            document.getElementById('disconnectBtn').disabled = false;
+        }
+        
+        async function createUser() {
+            const name = document.getElementById('userName').value;
+            const email = document.getElementById('userEmail').value;
+            
+            const user = await client.create('Users', {name, email});
+            console.log('Created user:', user);
+            
+            document.getElementById('results').innerHTML = 
+                `<div>✅ Created: ${JSON.stringify(user)}</div>`;
+        }
+        
+        function disconnect() {
+            if (client) {
+                client.disconnect();
+                client = null;
+            }
+            
+            document.getElementById('status').textContent = '❌ Disconnected';
+            document.getElementById('connectBtn').disabled = false;
+            document.getElementById('disconnectBtn').disabled = true;
+        }
+        
+        // Make functions global
+        window.connect = connect;
+        window.createUser = createUser;
+        window.disconnect = disconnect;
+    </script>
+</head>
+<body>
+    <h1>zBifrost Demo</h1>
+    
+    <div>
+        <input id="serverUrl" value="ws://127.0.0.1:56891" placeholder="Server URL">
+        <input id="authToken" placeholder="Auth Token (optional)">
+        <button id="connectBtn" onclick="connect()">Connect</button>
+        <button id="disconnectBtn" onclick="disconnect()" disabled>Disconnect</button>
+    </div>
+    
+    <div id="status">❌ Disconnected</div>
+    
+    <div>
+        <h3>Create User</h3>
+        <input id="userName" placeholder="Name">
+        <input id="userEmail" placeholder="Email">
+        <button onclick="createUser()">Create User</button>
+    </div>
+    
+    <div id="results"></div>
+    <div id="broadcasts"></div>
+</body>
+</html>
 ```
 
 ### Example 4: PostgreSQL Service Management
@@ -569,45 +639,54 @@ result = zcli.data.handle_request({
 print(f"📊 Found {len(result)} users")
 ```
 
-### Example 5: Multi-Client Broadcasting
+### Example 5: Multi-Client Broadcasting (JavaScript)
 
-```python
-import asyncio
-from zCLI.subsystems.zComm import zBifrost
+```javascript
+// sender.js - Client that sends updates
+import { zBifrost } from './zBifrost.js';
 
-async def sender():
-    """Client that sends updates."""
-    async with zBifrost("ws://localhost:56891") as client:
-        for i in range(5):
-            await client.create("Messages", {
-                "text": f"Message {i}",
-                "timestamp": "2024-10-15"
-            })
-            await asyncio.sleep(2)
-
-async def receiver():
-    """Client that receives broadcasts."""
-    async with zBifrost("ws://localhost:56891") as client:
-        messages_received = []
+async function sender() {
+    const client = new zBifrost('ws://127.0.0.1:56891');
+    await client.connect();
+    
+    for (let i = 0; i < 5; i++) {
+        await client.create('Messages', {
+            text: `Message ${i}`,
+            timestamp: new Date().toISOString()
+        });
         
-        def on_broadcast(msg):
-            messages_received.append(msg)
-            print(f"📩 Received: {msg}")
-        
-        client.on_broadcast(on_broadcast)
-        
-        # Listen for 15 seconds
-        await asyncio.sleep(15)
-        print(f"Total messages: {len(messages_received)}")
+        await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+    
+    client.disconnect();
+}
 
-# Run both concurrently
-async def main():
-    await asyncio.gather(
-        receiver(),
-        sender()
-    )
+// receiver.js - Client that receives broadcasts
+import { zBifrost } from './zBifrost.js';
 
-asyncio.run(main())
+async function receiver() {
+    const client = new zBifrost('ws://127.0.0.1:56891');
+    await client.connect();
+    
+    const messagesReceived = [];
+    
+    function onBroadcast(msg) {
+        messagesReceived.push(msg);
+        console.log('📩 Received:', msg);
+    }
+    
+    client.onBroadcast(onBroadcast);
+    
+    // Listen for 15 seconds
+    setTimeout(() => {
+        console.log(`Total messages: ${messagesReceived.length}`);
+        client.disconnect();
+    }, 15000);
+}
+
+// Run both (in separate terminals or processes)
+// node sender.js
+// node receiver.js
 ```
 
 ---
@@ -634,7 +713,7 @@ Create WebSocket server instance.
 - `host` - Host to bind to (default: 127.0.0.1)
 
 **Returns:**
-- `ZSocket` instance
+- `zBifrost` instance
 
 #### `async start_websocket(socket_ready, walker=None)`
 Start WebSocket server.
@@ -698,75 +777,71 @@ Check if a port is available.
 
 ---
 
-## zBifrost Client API
+## zBifrost.js Client API
 
 ### Connection
 
-```python
-from zCLI.subsystems.zComm import zBifrost, create_client
+```javascript
+import { zBifrost, createClient } from './zBifrost.js';
 
-# Method 1: Context manager (recommended)
-async with zBifrost("ws://localhost:56891") as client:
-    # Your code here
-    pass
+// Method 1: Manual connection (recommended)
+const client = new zBifrost('ws://localhost:56891', 'your-token');
+await client.connect();
+// ... use client ...
+client.disconnect();
 
-# Method 2: Manual connection
-client = zBifrost("ws://localhost:56891", token="your-token")
-await client.connect()
-# ... use client ...
-await client.disconnect()
-
-# Method 3: Convenience function
-client = await create_client("ws://localhost:56891", token="abc123")
-# ... use client ...
-await client.close()
+// Method 2: Convenience function
+const client = await createClient('ws://localhost:56891', 'abc123');
+// ... use client ...
+client.disconnect();
 ```
 
 ### CRUD Methods
 
-```python
-# Create
-user = await client.create(model, values)
+```javascript
+// Create
+const user = await client.create(model, values);
 
-# Read
-users = await client.read(model, filters, fields, order_by, limit, offset)
+// Read
+const users = await client.read(model, filters, options);
 
-# Update
-result = await client.update(model, filters, values)
+// Update
+const result = await client.update(model, filters, values);
 
-# Delete
-result = await client.delete(model, filters)
+// Delete
+const result = await client.delete(model, filters);
 
-# Upsert
-user = await client.upsert(model, values, conflict_fields)
+// Upsert
+const user = await client.upsert(model, values, conflictFields);
 ```
 
 ### Advanced Methods
 
-```python
-# Execute zFunc
-result = await client.zFunc(func_call_string)
+```javascript
+// Execute zFunc
+const result = await client.zFunc(funcCallString);
 
-# Navigate zLink
-result = await client.zLink(path)
+// Navigate zLink
+const result = await client.zLink(path);
 
-# File operations
-result = await client.zOpen(command)
+// File operations
+const result = await client.zOpen(command);
 
-# Raw send
-result = await client.send(payload, timeout=30.0)
+// Raw send
+const result = await client.send(payload, timeoutMs);
 ```
 
 ### Broadcast Listening
 
-```python
-def message_handler(message):
-    print(f"📻 Broadcast: {message}")
+```javascript
+function messageHandler(message) {
+    console.log('📻 Broadcast:', message);
+}
 
-client.on_broadcast(message_handler)
+client.onBroadcast(messageHandler);
 
-# Remove listener
-client.remove_broadcast_listener(message_handler)
+// Remove listener
+client.removeBroadcastListener(messageHandler);
 ```
 
 ---
@@ -893,7 +968,8 @@ zAuth stores credentials in `~/.zolo/credentials` with:
 Located in `tests/zComm/`:
 - `test_websocket_server.py` - Server tests
 - `test_websocket_client.py` - Client tests
-- `test_zBifrost.py` - zBifrost demo
+- `zBifrost.js` - JavaScript client library
+- `test_zBifrost.html` - Interactive HTML demo
 - `test_service_manager.py` - Service management tests
 - `test_integration.py` - End-to-end tests
 
@@ -906,8 +982,8 @@ python3 tests/zComm/test_websocket_server.py
 # Test client (Terminal 2)
 python3 tests/zComm/test_websocket_client.py
 
-# zBifrost demo
-python3 tests/zComm/test_zBifrost.py
+# JavaScript demo (Browser)
+open tests/zComm/test_zBifrost.html
 
 # Integration tests
 python3 tests/zComm/test_integration.py
@@ -937,21 +1013,21 @@ See `tests/zComm/QUICKSTART.md` for step-by-step testing guide.
 - Hardcode credentials
 - Block async operations
 
-### 2. zBifrost Client
+### 2. zBifrost.js Client
 
 ✅ **Do:**
-- Use context managers (`async with`)
-- Handle exceptions properly
+- Handle connection errors gracefully
 - Set timeouts for requests
-- Clean up connections
-- Use batch operations when possible
+- Clean up connections with `disconnect()`
+- Use broadcast listeners for real-time updates
+- Handle authentication tokens securely
 
 ❌ **Don't:**
 - Forget to disconnect
 - Ignore connection errors
-- Use blocking operations
 - Create too many clients
 - Send sensitive data without encryption
+- Block the main thread with long operations
 
 ### 3. Service Management
 
@@ -999,8 +1075,8 @@ python3 -c "from zCLI.zCLI import zCLI; zcli = zCLI({}); print(zcli.comm.check_p
 export WEBSOCKET_REQUIRE_AUTH=False
 python3 tests/zComm/test_websocket_server.py
 
-# Option 2: Provide token
-client = zBifrost("ws://localhost:56891", token="your-token")
+# Option 2: Provide token (JavaScript)
+const client = new zBifrost('ws://localhost:56891', 'your-token');
 ```
 
 **Important:** Set env var BEFORE importing (see QUICKSTART.md)
@@ -1047,12 +1123,12 @@ zcli.comm.restart_service("postgresql")
 - Authentication not passed
 
 **Debug:**
-```python
-# Enable debug logging in client
-client = zBifrost("ws://localhost:56891", debug=True)
+```javascript
+// Enable debug logging in client
+const client = new zBifrost('ws://localhost:56891', null, {debug: true});
 
-# Check server logs
-# Will show received messages and errors
+// Check server logs
+// Will show received messages and errors
 ```
 
 ---
@@ -1079,55 +1155,82 @@ async def handle_client(self, ws):
             await handle_zDispatch(zKey, data.get("zHorizontal"), self.walker)
 ```
 
-### Connection Pooling
+### JavaScript Client Extensions
+
+```javascript
+// Extend zBifrost class
+class CustomZBifrost extends zBifrost {
+    async customMethod(data) {
+        return this.send({
+            zKey: 'custom_command',
+            zHorizontal: data
+        });
+    }
+}
+
+// Usage
+const client = new CustomZBifrost('ws://localhost:56891');
+await client.connect();
+const result = await client.customMethod({action: 'ping'});
+```
+
+### Connection Pooling (JavaScript)
 
 For multiple clients, use connection pooling:
 
-```python
-import asyncio
-from zCLI.subsystems.zComm import zBifrost
+```javascript
+import { zBifrost } from './zBifrost.js';
 
-class ClientPool:
-    def __init__(self, url, size=5):
-        self.url = url
-        self.size = size
-        self.clients = []
+class ClientPool {
+    constructor(url, size = 5) {
+        this.url = url;
+        this.size = size;
+        this.clients = [];
+    }
     
-    async def initialize(self):
-        for _ in range(self.size):
-            client = zBifrost(self.url)
-            await client.connect()
-            self.clients.append(client)
+    async initialize() {
+        for (let i = 0; i < this.size; i++) {
+            const client = new zBifrost(this.url);
+            await client.connect();
+            this.clients.push(client);
+        }
+    }
     
-    async def get_client(self):
-        # Simple round-robin
-        client = self.clients.pop(0)
-        self.clients.append(client)
-        return client
+    async getClient() {
+        // Simple round-robin
+        const client = this.clients.shift();
+        this.clients.push(client);
+        return client;
+    }
     
-    async def close_all(self):
-        for client in self.clients:
-            await client.disconnect()
+    async closeAll() {
+        for (const client of this.clients) {
+            client.disconnect();
+        }
+        this.clients = [];
+    }
+}
 
-# Usage
-pool = ClientPool("ws://localhost:56891", size=5)
-await pool.initialize()
+// Usage
+const pool = new ClientPool('ws://localhost:56891', 5);
+await pool.initialize();
 
-client = await pool.get_client()
-result = await client.read("Users")
+const client = await pool.getClient();
+const result = await client.read('Users');
 ```
 
 ### Auto-Reconnection
 
-```python
-client = zBifrost(
-    url="ws://localhost:56891",
-    auto_reconnect=True  # Automatically reconnect on disconnection
-)
+```javascript
+const client = new zBifrost(
+    'ws://localhost:56891',
+    null,
+    {autoReconnect: true}  // Automatically reconnect on disconnection
+);
 
-await client.connect()
+await client.connect();
 
-# Client will attempt to reconnect if connection drops
+// Client will attempt to reconnect if connection drops
 ```
 
 ---
@@ -1173,7 +1276,7 @@ If you're migrating from old zSocket code:
 
 **Before:**
 ```python
-from zCLI.subsystems.zSocket import ZSocket, start_socket_server
+from zCLI.subsystems.zComm.zComm_modules.websocket.websocket_server import ZSocket
 
 # Old pattern
 socket = ZSocket(walker=walker)
@@ -1192,14 +1295,25 @@ await comm.start_websocket(ready, walker=walker)
 ### Class Name Changes
 
 - ❌ `ZComm` → ✅ `zComm` (lowercase z)
+- ❌ `ZSocket` → ✅ `zBifrost` (WebSocket server)
 - ❌ `ZAuth` → ✅ `zAuth` (lowercase z)
+
+### JavaScript Client
+
+**New:** Use `zBifrost.js` client library:
+```javascript
+import { zBifrost } from './zBifrost.js';
+const client = new zBifrost('ws://localhost:56891');
+await client.connect();
+```
 
 ---
 
 ## Related Documentation
 
-- **[zBIFROST_GUIDE.md](../tests/zComm/zBIFROST_GUIDE.md)** - Complete zBifrost API reference
 - **[QUICKSTART.md](../tests/zComm/QUICKSTART.md)** - Quick start testing guide
+- **[zBifrost.js](../tests/zComm/zBifrost.js)** - JavaScript client library
+- **[test_zBifrost.html](../tests/zComm/test_zBifrost.html)** - Interactive HTML demo
 - **[zData_GUIDE.md](zData_GUIDE.md)** - Database operations
 - **[zDisplay_GUIDE.md](zDisplay_GUIDE.md)** - Output formatting
 - **[zSession_GUIDE.md](zSession_GUIDE.md)** - Session management

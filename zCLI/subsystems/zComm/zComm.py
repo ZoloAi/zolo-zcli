@@ -61,7 +61,7 @@ class zComm:
 
     def create_websocket(self, walker=None, port=56891, host="127.0.0.1"):
         """Create WebSocket server instance."""
-        self.websocket = zBifrost(walker=walker, port=port, host=host)
+        self.websocket = zBifrost(walker=walker, zcli=self.zcli, port=port, host=host)
         return self.websocket
 
     async def start_websocket(self, socket_ready, walker=None):

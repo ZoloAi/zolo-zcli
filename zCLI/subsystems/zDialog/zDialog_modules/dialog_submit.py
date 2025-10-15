@@ -84,10 +84,10 @@ def handle_dict_submit(submit_dict, zContext, walker=None):
     elif "model" not in submit_dict:
         submit_dict["model"] = zContext.get("model")
 
-    # Dispatch via zLauncher
-    from zCLI.subsystems.zWalker.zWalker_modules.zDispatch import zLauncher
-    logger.info("Dispatching dict onSubmit via zLauncher: %s", submit_dict)
-    result = zLauncher(submit_dict, walker=walker)
+    # Dispatch via core zDispatch
+    from zCLI.subsystems.zDispatch import handle_zDispatch
+    logger.info("Dispatching dict onSubmit via zDispatch: %s", submit_dict)
+    result = handle_zDispatch("submit", submit_dict, zcli=walker.zcli, walker=walker)
 
     walker.display.handle({
         "event": "sysmsg",

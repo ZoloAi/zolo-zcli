@@ -86,10 +86,10 @@ class zWizard:
                 # Use walker's dispatch instance
                 dispatch_fn = self.walker.dispatch.handle
             else:
-                # Use lazy import to avoid circular dependency
-                from zCLI.subsystems.zWalker.zWalker_modules.zDispatch import handle_zDispatch
+                # Use core zDispatch
+                from zCLI.subsystems.zDispatch import handle_zDispatch
                 def default_dispatch(key, value):
-                    return handle_zDispatch(key, value, walker=self.walker, context=context)
+                    return handle_zDispatch(key, value, zcli=self.zcli, walker=self.walker, context=context)
                 dispatch_fn = default_dispatch
         
         # Extract keys list
@@ -250,9 +250,10 @@ class zWizard:
 
                 # Execute step with context
                 if self.walker:
-                    # Walker mode - use zDispatch (lazy import to avoid circular dependency)
-                    from zCLI.subsystems.zWalker.zWalker_modules.zDispatch import handle_zDispatch
+                    # Walker mode - use core zDispatch
+                    from zCLI.subsystems.zDispatch import handle_zDispatch
                     result = handle_zDispatch(step_key, step_value, 
+                                             zcli=self.zcli,
                                              walker=self.walker,
                                              context=step_context)
                 else:
