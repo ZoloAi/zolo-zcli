@@ -140,37 +140,37 @@ class ConfigLoader:
         Environment variables have highest priority and override all config files.
         
         Supported env vars:
-        - WEBSOCKET_HOST → zSocket.network.host
-        - WEBSOCKET_PORT → zSocket.network.port
-        - WEBSOCKET_REQUIRE_AUTH → zSocket.security.require_auth
-        - WEBSOCKET_MAX_CONNECTIONS → zSocket.limits.max_connections
+        - WEBSOCKET_HOST → zComm.network.host
+        - WEBSOCKET_PORT → zComm.network.port
+        - WEBSOCKET_REQUIRE_AUTH → zComm.security.require_auth
+        - WEBSOCKET_MAX_CONNECTIONS → zComm.limits.max_connections
         - etc.
         """
         env_overrides = {}
         
-        # zSocket configuration
+        # zComm configuration (WebSocket & services)
         if os.getenv("WEBSOCKET_HOST"):
-            self._set_nested(env_overrides, "zSocket.network.host", os.getenv("WEBSOCKET_HOST"))
+            self._set_nested(env_overrides, "zComm.network.host", os.getenv("WEBSOCKET_HOST"))
         
         if os.getenv("WEBSOCKET_PORT"):
-            self._set_nested(env_overrides, "zSocket.network.port", int(os.getenv("WEBSOCKET_PORT")))
+            self._set_nested(env_overrides, "zComm.network.port", int(os.getenv("WEBSOCKET_PORT")))
         
         if os.getenv("WEBSOCKET_REQUIRE_AUTH"):
             value = os.getenv("WEBSOCKET_REQUIRE_AUTH").lower() in ("true", "1", "yes")
-            self._set_nested(env_overrides, "zSocket.security.require_auth", value)
+            self._set_nested(env_overrides, "zComm.security.require_auth", value)
         
         if os.getenv("WEBSOCKET_ALLOWED_ORIGINS"):
             origins = [o.strip() for o in os.getenv("WEBSOCKET_ALLOWED_ORIGINS").split(",") if o.strip()]
-            self._set_nested(env_overrides, "zSocket.security.allowed_origins", origins)
+            self._set_nested(env_overrides, "zComm.security.allowed_origins", origins)
         
         if os.getenv("WEBSOCKET_AUTH_SCHEMA"):
-            self._set_nested(env_overrides, "zSocket.security.auth_schema", os.getenv("WEBSOCKET_AUTH_SCHEMA"))
+            self._set_nested(env_overrides, "zComm.security.auth_schema", os.getenv("WEBSOCKET_AUTH_SCHEMA"))
         
         if os.getenv("WEBSOCKET_MAX_CONNECTIONS"):
-            self._set_nested(env_overrides, "zSocket.limits.max_connections", int(os.getenv("WEBSOCKET_MAX_CONNECTIONS")))
+            self._set_nested(env_overrides, "zComm.limits.max_connections", int(os.getenv("WEBSOCKET_MAX_CONNECTIONS")))
         
         if os.getenv("WEBSOCKET_RATE_LIMIT"):
-            self._set_nested(env_overrides, "zSocket.limits.rate_limit_per_minute", int(os.getenv("WEBSOCKET_RATE_LIMIT")))
+            self._set_nested(env_overrides, "zComm.limits.rate_limit_per_minute", int(os.getenv("WEBSOCKET_RATE_LIMIT")))
         
         # zData configuration
         if os.getenv("ZOLO_DATA_BACKEND"):
@@ -206,7 +206,7 @@ class ConfigLoader:
         
         Args:
             config: Config dict
-            path: Dot-separated path (e.g., "zSocket.network.host")
+            path: Dot-separated path (e.g., "zComm.network.host")
             value: Value to set
         """
         keys = path.split(".")
@@ -233,7 +233,7 @@ class ConfigLoader:
                 "version": "1.0",
                 "environment": self.environment
             },
-            "zSocket": {
+            "zComm": {
                 "network": {
                     "host": "127.0.0.1",
                     "port": 56891

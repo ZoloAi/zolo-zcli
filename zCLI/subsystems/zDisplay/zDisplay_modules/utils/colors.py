@@ -14,6 +14,7 @@ class Colors:
     PARSER     = "\033[38;5;236;48;5;230m"  # Dark text, cream background (Parsing)
     SCHEMA     = "\033[97;48;5;65m"         # Green bg (Schema)
     ZOPEN      = "\033[97;48;5;27m"         # Blue bg (File/URL opening)
+    ZCOMM      = "\033[97;48;5;33m"         # Bright blue bg (Communication & services)
     EXTERNAL   = "\033[30;103m"             # Yellow bg (External API)
     
     # Walker colors (UI/navigation)

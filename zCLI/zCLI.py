@@ -10,7 +10,7 @@ from .subsystems.zDisplay import zDisplay
 from .subsystems.zData import zData
 from .subsystems.zFunc import zFunc
 from .subsystems.zParser import zParser
-from .subsystems.zSocket import ZSocket
+from .subsystems.zComm import ZComm
 from .subsystems.zDialog import zDialog
 from .subsystems.zWizard import zWizard
 from .subsystems.zOpen import zOpen
@@ -40,7 +40,7 @@ class zCLI:
 
         # Initialize logger
         self.logger = Logger.get_logger("zCLI")
-        # Layer 0: Foundation
+        # Layer 0: Foundation (Infrastructure)
         # Import zConfig here to avoid circular dependency (zConfig may import other subsystems)
         # Initialize zConfig FIRST (provides machine config for session creation)
         from .subsystems.zConfig import zConfig
@@ -54,15 +54,17 @@ class zCLI:
         # Create instance-specific session with machine config
         self.session = self.zsession.create_session(machine_config=self.config.get_machine())
 
-        # Initialize core subsystems (single source of truth)
-        # Note: Order matters! zData depends on display and loader
+        # Initialize zComm (Communication infrastructure for WebSocket, PostgreSQL services)
+        # Must be in Layer 0 because zDisplay, zDialog, and zData depend on it
+        self.comm = ZComm(self)
+
+        # Layer 1: Core Subsystems (depend on Layer 0)
+        # Note: Order matters! All subsystems may use zComm for communication
         self.display = zDisplay(self)
         self.mycolor = "MAIN"
 
         self.zparser = zParser(self)
         self.loader = zLoader(self)
-
-        # Layer 1: Operations
         self.zfunc = zFunc(self)
         self.dialog = zDialog(self)
         self.open = zOpen(self)
@@ -73,7 +75,6 @@ class zCLI:
         self.wizard = zWizard(self)
 
         self.export = ZExport(self)
-        self.socket = ZSocket(self)
 
         # Layer 3: Orchestration
         # Initialize shell and command executor

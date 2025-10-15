@@ -29,14 +29,17 @@ class ZComm:
     """
     
     def __init__(self, zcli=None):
-        """
-        Initialize zComm subsystem.
+        """Initialize zComm subsystem."""
+        if zcli is None:
+            raise ValueError("zComm requires a zCLI instance")
         
-        Args:
-            zcli: Parent zCLI instance (optional)
-        """
+        if not hasattr(zcli, 'session'):
+            raise ValueError("Invalid zCLI instance: missing 'session' attribute")
+        
         self.zcli = zcli
-        self.logger = Logger.get_logger(__name__)
+        self.session = zcli.session
+        self.logger = zcli.logger
+        self.mycolor = "ZCOMM"
         
         # WebSocket server instance
         self.websocket = None
@@ -44,7 +47,8 @@ class ZComm:
         # Service manager
         self.services = ServiceManager(self.logger)
         
-        self.logger.debug("zComm subsystem initialized")
+        # Log ready (display not available yet as zComm is in Layer 0)
+        self.logger.info("[zComm] Communication subsystem ready")
     
     # ═══════════════════════════════════════════════════════════
     # WebSocket Management
