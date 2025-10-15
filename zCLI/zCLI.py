@@ -2,8 +2,6 @@
 # ───────────────────────────────────────────────────────────────
 """Single source of truth for all subsystems."""
 
-from logger import Logger
-
 # Import all subsystems from the subsystems package
 from .subsystems.zUtils import zUtils
 from .subsystems.zDisplay import zDisplay
@@ -19,8 +17,6 @@ from .subsystems.zWalker import zWalker
 from .subsystems.zOpen import zOpen
 from .subsystems.zAuth import zAuth
 from .subsystems.zLoader import zLoader
-
-# Import shell components
 from .subsystems.zShell import ZShell
 
 class zCLI:
@@ -40,17 +36,19 @@ class zCLI:
         """
         self.zspark_obj = zSpark_obj or {}
 
-        # Initialize logger
-        self.logger = Logger.get_logger("zCLI")
         # Layer 0: Foundation (Infrastructure)
         # Import zConfig here to avoid circular dependency (zConfig may import other subsystems)
         # Initialize zConfig FIRST (provides machine config for session creation)
         from .subsystems.zConfig import zConfig
-        from .subsystems.zSession import zSession
+        from .subsystems.zLogger import zLogger
 
         self.config = zConfig(zcli=self)
 
-        # Initialize zSession subsystem BEFORE creating session
+        # Initialize zLogger subsystem (needs config, must be early in Layer 0)
+        self.logger = zLogger(self)
+
+        # Initialize zSession subsystem (needs logger)
+        from .subsystems.zSession import zSession
         self.zsession = zSession(self)
 
         # Create instance-specific session with machine config
@@ -142,10 +140,7 @@ class zCLI:
         """Main entry point - determines whether to run in UI mode or shell mode."""
         if self.ui_mode:
             self.logger.info("Starting zCLI in UI mode via zWalker...")
-            # Import zWalker only when needed (lazy loading - Walker not used in shell mode)
-            from .subsystems.zWalker.zWalker import zWalker
-            walker = zWalker(self)
-            return walker.run()
+            return self.walker.run()
 
         self.logger.info("Starting zCLI in shell mode...")
         return self.run_shell()

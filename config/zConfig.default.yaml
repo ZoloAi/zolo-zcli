@@ -1,64 +1,33 @@
-# config/config.default.yaml
-# Default configuration for zolo-zcli
-# This file is included in the package and provides sensible defaults
-
+# zConfig.default.yaml - System-Level Configuration
 Meta:
   version: "1.0"
   environment: "dev"
   description: "Default zolo-zcli configuration"
 
+# Logger Configuration (System-Level)
+logger:
+  level:
+    type: "enum"
+    options: ["debug", "info", "production"]
+    default: "debug"
+    
+    # Log level enum values:
+    # debug:      All messages (development)
+    # info:       Info and above (build/testing)  
+    # production: Warning and above (production - default)
+
+# WebSocket Configuration (System-Level)
 zSocket:
   network:
-    host: "127.0.0.1"              # Localhost only (secure default)
+    host: "127.0.0.1"              # localhost for development
     port: 56891                    # Default WebSocket port
   
-  security:
-    require_auth: true             # Authentication required by default
-    allowed_origins: []            # Empty = localhost only
-    auth_schema: "@.schemas.auth.zUsers"  # Default auth schema path
-    auth_token_field: "api_key"    # Field name for API token
-  
-  limits:
-    max_connections: 100           # Maximum concurrent connections
-    max_message_size: 102400       # 100KB max message size
-    rate_limit_per_minute: 100     # 100 messages per minute per client
-  
-  timeouts:
-    auth_timeout: 10               # Authentication timeout (seconds)
-    ping_interval: 20              # Ping interval (seconds)
-    ping_timeout: 20               # Ping timeout (seconds)
+  # Deployment scenarios:
+  # Development: host: "127.0.0.1" (localhost only)
+  # Production:  host: "0.0.0.0" (accept external connections)
+  # Cloud:       host: "zolo-backend.company.com" (specific domain)
 
-zData:
-  backends:
-    default: "sqlite"              # Default backend
-    sqlite:
-      path: "./data.db"            # Default SQLite path (current directory)
-    csv:
-      directory: "./data"          # Default CSV directory
-    postgresql:
-      host: "localhost"            # Default PostgreSQL host
-      port: 5432                   # Default PostgreSQL port
-      database: "zolo"             # Default database name
-      # username/password via env vars only!
-
+# Cache Configuration (System-Level)
 zLoader:
   cache:
-    max_size: 100                  # Maximum cache entries
-    ttl: 3600                      # Cache TTL (1 hour)
-    auto_evict: true               # Enable LRU eviction
-
-zSession:
-  id_prefix: "zS"                  # Session ID prefix
-  auto_save: false                 # Don't auto-save sessions
-  
-zParser:
-  strict_mode: false               # Allow lenient parsing
-  
-zDisplay:
-  default_mode: "Terminal"         # Terminal, UI, or REST
-  colors_enabled: true             # Enable ANSI colors
-  
-zShell:
-  history_file: "~/.zolo-zcli_history"  # Command history
-  history_size: 1000               # Max history entries
-
+    max_size: 100                  # Maximum cached files

@@ -116,20 +116,26 @@ def _should_show_sysmsg(session):
     """
     Check if system messages should be displayed.
     
-    Respects debug flag or deployment mode from session:
-    - debug=True: Show
-    - debug=False: Hide
-    - No debug flag: Check deployment (hide in prod)
+    Uses zLogger level to determine visibility:
+    - debug/info: Show sysmsg
+    - production: Hide sysmsg
+    
+    Falls back to session debug flag if zLogger not available.
     """
     if not session:
         return True
     
-    # Check explicit debug flag
+    # Check if zLogger is available and use its level
+    zcli = session.get("zCLI")
+    if zcli and hasattr(zcli, 'logger') and hasattr(zcli.logger, 'should_show_sysmsg'):
+        return zcli.logger.should_show_sysmsg()
+    
+    # Fallback to legacy session debug flag
     debug = session.get("debug")
     if debug is not None:
         return debug
     
-    # Check deployment mode
+    # Fallback to deployment mode
     deployment = session.get("zMachine", {}).get("deployment", "dev")
     if deployment == "prod":
         return False

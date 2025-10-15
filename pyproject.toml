@@ -1,17 +1,18 @@
 # =============================================================================
-# zCLI Framework - Python Package Configuration
+# zolo-zcli Framework - Python Package Configuration v1.4.0
 # =============================================================================
-# This file defines how to build, package, and distribute the zCLI framework.
+# This file defines how to build, package, and distribute the zolo-zcli framework.
 # It replaces the old setup.py file with a modern, standardized approach.
 #
 # What this file does:
 # 1. Tells Python how to build the package (wheels, source distributions)
 # 2. Defines package metadata (name, version, author, description)
 # 3. Specifies dependencies (what other packages zCLI needs)
-# 4. Creates CLI entry points (the 'zolo-zcli' command)
+# 4. Creates CLI entry points (the 'zolo' command)
 # 5. Configures package discovery (which files to include)
 #
 # Format: TOML (Tom's Obvious Minimal Language) - human-readable config format
+# Version: 1.4.0 - Modernized zCLI architecture with zLogger subsystem
 # =============================================================================
 
 # -----------------------------------------------------------------------------
@@ -41,7 +42,7 @@ description = "A YAML-driven CLI framework for interactive applications"
 
 # Author information
 authors = [
-    {name = "Gal Nachshon", email = "gal@zolo.dev"}
+    {name = "Gal Nachshon", email = "gal@zolo.media"}
 ]
 
 # Long description file (README.md will be used as package description)
@@ -65,10 +66,12 @@ classifiers = [
     "Programming Language :: Python :: 3.12",  # Supports Python 3.12
     "Topic :: Software Development :: Libraries :: Python Modules",  # It's a library
     "Topic :: System :: Shells",               # It's a shell framework
+    "Topic :: Software Development :: Frameworks",  # It's a CLI framework
+    "Environment :: Console",                   # Console application
 ]
 
 # Keywords for search - helps users find zCLI when searching PyPI
-keywords = ["cli", "framework", "yaml", "interactive", "shell"]
+keywords = ["cli", "framework", "yaml", "interactive", "shell", "websocket", "real-time"]
 
 # -----------------------------------------------------------------------------
 # DEPENDENCIES
@@ -78,7 +81,7 @@ keywords = ["cli", "framework", "yaml", "interactive", "shell"]
 dependencies = [
     "PyYAML>=6.0",        # For parsing YAML configuration files
     "python-dotenv>=1.0", # For loading .env files with environment variables
-    "websockets>=15.0",   # For WebSocket communication (zSocket subsystem)
+    "websockets>=15.0",   # For WebSocket communication (zBifrost subsystem)
     "requests>=2.32",     # For HTTP requests (zSession subsystem)
     "platformdirs>=4.0",  # For cross-platform config/data directory paths (zConfig subsystem)
 ]
@@ -111,9 +114,9 @@ dev = [
 # -----------------------------------------------------------------------------
 # CLI ENTRY POINTS
 # -----------------------------------------------------------------------------
-# This creates the 'zolo-zcli' command that users can run from terminal
+# This creates the 'zolo' command that users can run from terminal
 [project.scripts]
-# When user types 'zolo-zcli', it calls the main() function in main
+# When user types 'zolo', it calls the main() function in main
 zolo = "main:main"
 
 # -----------------------------------------------------------------------------
@@ -146,6 +149,7 @@ version = {attr = "zCLI.version.__version__"}
 # -----------------------------------------------------------------------------
 # Includes non-Python files (like YAML configs) in the package
 [tool.setuptools.package-data]
-# Include all .yaml and .yml files from the zCLI package and config directory
+# Include all .yaml and .yml files from the zCLI package
 "zCLI" = ["*.yaml", "*.yml"]
+# Include config files (system-level defaults only)
 "*" = ["config/*.yaml", "config/*.yml"]

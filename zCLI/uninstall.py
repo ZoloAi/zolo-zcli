@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# zCLI/uninstall.py — Uninstallation Utilities
+# zCLI/uninstall.py — Uninstallation Utilities v1.4.0
 # ───────────────────────────────────────────────────────────────
 
 """
@@ -8,14 +8,12 @@ zolo-zcli Uninstallation Utilities
 Provides safe uninstallation with options to:
 - Remove package only (keep user data)
 - Remove package + user data (clean uninstall)
+
+Note: This module operates independently of zCLI subsystems for safety.
 """
 
 import sys
 import shutil
-from logger import Logger
-
-# Logger instance
-logger = Logger.get_logger(__name__)
 
 
 def uninstall_package():
@@ -45,7 +43,6 @@ def uninstall_package():
             return False
             
     except Exception as e:  # pylint: disable=broad-except
-        logger.error("[Uninstall] Failed to uninstall package: %s", e)
         print(f"❌ Error during uninstall: {e}")
         return False
 
@@ -62,7 +59,11 @@ def remove_user_data():
     Returns:
         Boolean indicating success
     """
-    from zCLI.subsystems.zConfig_modules import ZConfigPaths
+    try:
+        from zCLI.subsystems.zConfig_modules import ZConfigPaths
+    except ImportError:
+        print("❌ Cannot import zConfig modules - package may already be uninstalled")
+        return False
     
     paths = ZConfigPaths()
     removed_count = 0
@@ -84,7 +85,6 @@ def remove_user_data():
                 removed_count += 1
             except Exception as e:  # pylint: disable=broad-except
                 print(f"  ❌ Failed to remove {name}: {e}")
-                logger.error("[Uninstall] Failed to remove %s: %s", name, e)
         else:
             print(f"  ⊘ {name} not found: {dir_path}")
     
@@ -146,7 +146,12 @@ def uninstall_keep_data():
     Returns:
         Exit code (0 = success, 1 = failure)
     """
-    from zCLI.subsystems.zConfig_modules import ZConfigPaths
+    try:
+        from zCLI.subsystems.zConfig_modules import ZConfigPaths
+    except ImportError:
+        print("❌ Cannot import zConfig modules - package may already be uninstalled")
+        print("Proceeding with package removal only...")
+        return uninstall_package()
     
     paths = ZConfigPaths()
     

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# zCLI/setup.py — Installation and Setup Utilities
+# zCLI/setup.py — Installation and Setup Utilities v1.4.0
 # ───────────────────────────────────────────────────────────────
 
 """
@@ -11,13 +11,10 @@ Handles first-run initialization:
 - Sets up user config directory structure
 
 This runs automatically on first import of zConfig.
+Note: This module operates independently of zCLI subsystems for safety.
 """
 
-from pathlib import Path
-from logger import Logger
-
-# Logger instance
-logger = Logger.get_logger(__name__)
+# Path import removed - not needed in this version
 
 
 def ensure_config_directories():
@@ -36,43 +33,42 @@ def ensure_config_directories():
     """
     try:
         from zCLI.subsystems.zConfig_modules import ZConfigPaths
-        
-        paths = ZConfigPaths()
-        
-        # Create user config directory
-        user_config = paths.user_config_dir
-        if not user_config.exists():
-            user_config.mkdir(parents=True, exist_ok=True)
-            logger.info("[Setup] Created user config directory: %s", user_config)
-        
-        # Create user data directory with zMachine subdirectories
-        user_data = paths.user_data_dir
-        if not user_data.exists():
-            user_data.mkdir(parents=True, exist_ok=True)
-            logger.info("[Setup] Created user data directory: %s", user_data)
-        
-        # Create zMachine subdirectories for organized storage
-        # Config: User-specific configuration overrides
-        # Cache: Temporary data and cache files (cache.csv for load command)
-        zmachine_subdirs = ["Config", "Cache"]
-        for subdir in zmachine_subdirs:
-            subdir_path = user_data / subdir
-            if not subdir_path.exists():
-                subdir_path.mkdir(parents=True, exist_ok=True)
-                logger.info("[Setup] Created zMachine.%s: %s", subdir, subdir_path)
-        
-        # Create user cache directory
-        user_cache = paths.user_cache_dir
-        if not user_cache.exists():
-            user_cache.mkdir(parents=True, exist_ok=True)
-            logger.info("[Setup] Created user cache directory: %s", user_cache)
-        
-        logger.info("[Setup] Config directories ensured")
-        return True
-    
-    except Exception as e:  # pylint: disable=broad-except,unused-import
-        logger.error("[Setup] Failed to create config directories: %s", e)
+    except ImportError:
+        print("❌ Cannot import zConfig modules - setup may not be available")
         return False
+        
+    paths = ZConfigPaths()
+    
+    # Create user config directory
+    user_config = paths.user_config_dir
+    if not user_config.exists():
+        user_config.mkdir(parents=True, exist_ok=True)
+        print(f"✅ Created user config directory: {user_config}")
+    
+    # Create user data directory with zMachine subdirectories
+    user_data = paths.user_data_dir
+    if not user_data.exists():
+        user_data.mkdir(parents=True, exist_ok=True)
+        print(f"✅ Created user data directory: {user_data}")
+    
+    # Create zMachine subdirectories for organized storage
+    # Config: User-specific configuration overrides
+    # Cache: Temporary data and cache files (cache.csv for load command)
+    zmachine_subdirs = ["Config", "Cache"]
+    for subdir in zmachine_subdirs:
+        subdir_path = user_data / subdir
+        if not subdir_path.exists():
+            subdir_path.mkdir(parents=True, exist_ok=True)
+            print(f"✅ Created zMachine.{subdir}: {subdir_path}")
+    
+    # Create user cache directory
+    user_cache = paths.user_cache_dir
+    if not user_cache.exists():
+        user_cache.mkdir(parents=True, exist_ok=True)
+        print(f"✅ Created user cache directory: {user_cache}")
+    
+    print("✅ Config directories ensured")
+    return True
 
 
 def print_installation_info():
@@ -84,7 +80,11 @@ def print_installation_info():
     - How to customize
     - Next steps
     """
-    from zCLI.subsystems.zConfig_modules import ZConfigPaths
+    try:
+        from zCLI.subsystems.zConfig_modules import ZConfigPaths
+    except ImportError:
+        print("❌ Cannot import zConfig modules - installation info not available")
+        return
     
     paths = ZConfigPaths()
     

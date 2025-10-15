@@ -1,13 +1,11 @@
 """CLI entry point for the zolo-zcli package."""
 
 import argparse
-
-from logger import Logger, set_log_level
 from zCLI.version import get_version
 
 
 def main() -> None:
-    """Main entry point for the ``zolo-zcli`` command."""
+    """Main entry point for the zolo-zcli command."""
 
     parser = argparse.ArgumentParser(
         description="Zolo zCLI Framework - YAML-driven CLI for interactive applications",
@@ -15,12 +13,6 @@ def main() -> None:
     )
     
     # Global arguments
-    parser.add_argument(
-        "--log-level",
-        default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        help="Set log level (default: INFO)",
-    )
     parser.add_argument(
         "--version",
         action="version",
@@ -59,17 +51,10 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    # Initialize logging first so it applies to main and everything that follows
-    set_log_level(args.log_level)
-
-    # Get logger instance for main
-    main_logger = Logger.get_logger("main")
-
     # Handle subcommands
     if args.command == "shell":
-        main_logger.info("Starting zCLI Shell mode...")
-        from zCLI import zCLI  # Import after logging init
-        cli = zCLI()
+        from zCLI import zCLI
+        cli = zCLI()  # Modern zCLI with zLogger subsystem handles logging
         cli.run_shell()
     
     elif args.command == "uninstall":
@@ -83,9 +68,8 @@ def main() -> None:
     
     else:
         # No command specified - default to shell mode
-        main_logger.info("Starting zCLI Shell mode...")
-        from zCLI import zCLI  # Import after logging init
-        cli = zCLI()
+        from zCLI import zCLI
+        cli = zCLI()  # Modern zCLI with zLogger subsystem handles logging
         cli.run_shell()
 
 

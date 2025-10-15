@@ -6,6 +6,7 @@ Provides session lifecycle and authentication.
     Dependencies: zCLI, zDisplay
 """
 
+import os
 import requests
 import secrets
 from logger import Logger
@@ -70,7 +71,7 @@ class zSession:
         """
         return {
             "zS_id": None,
-            "zWorkspace": None,
+            "zWorkspace": os.getcwd(),  # Default to current working directory
             "zVaFile_path": None,
             "zVaFilename": None,
             "zBlock": None,
@@ -94,6 +95,7 @@ class zSession:
                 "format": None,       # Detected on run: "yaml", "commands", or "hybrid"
                 "transaction": False  # Transaction flag for execution
             },
+            "zCLI": self.zcli,       # Reference to zCLI instance for subsystems access
         }
 
     def login(self, data, url=None):
