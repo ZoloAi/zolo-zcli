@@ -247,23 +247,56 @@ def _parse_export_command(parts):
     }
 
 def _parse_config_command(parts):
-    """Parse config commands like 'config check', 'config get path', 'config set path value'"""
+    """Parse config commands like 'config check', 'config get path', 'config set path value', 'config machine browser Chrome'"""
     if len(parts) < 2:
-        return {"error": "Config command requires action (check, get, set, list, reload, validate, export, import)"}
+        return {"error": "Config command requires action (check, get, set, list, reload, validate, machine, config)"}
 
     action = parts[1].lower()
-    valid_actions = ["check", "get", "set", "list", "reload", "validate", "export", "import"]
+    valid_actions = ["check", "get", "set", "list", "reload", "validate", "machine", "config"]
 
     if action not in valid_actions:
         return {"error": f"Invalid config action: {action}. Use: {', '.join(valid_actions)}"}
 
-    # Extract arguments and options
+    # Handle persistence commands (machine, config)
+    if action in ["machine", "config"]:
+        return _parse_config_persistence_command(parts)
+
+    # Extract arguments and options for other commands
     args = parts[2:] if len(parts) > 2 else []
     options = {}
 
     return {
         "type": "config",
         "action": action,
+        "args": args,
+        "options": options
+    }
+
+def _parse_config_persistence_command(parts):
+    """Parse config persistence commands like 'config machine browser Chrome' or 'config machine --reset browser'."""
+    if len(parts) < 2:
+        return {"error": "Config persistence command requires target (machine, config)"}
+
+    target = parts[1].lower()
+    valid_targets = ["machine", "config"]
+
+    if target not in valid_targets:
+        return {"error": f"Invalid config persistence target: {target}. Use: {', '.join(valid_targets)}"}
+
+    # Check for flags (--show, --reset)
+    options = {}
+    args = []
+
+    for part in parts[2:]:
+        if part.startswith("--"):
+            flag = part[2:]
+            options[flag] = True
+        else:
+            args.append(part)
+
+    return {
+        "type": "config_persistence",
+        "action": target,
         "args": args,
         "options": options
     }

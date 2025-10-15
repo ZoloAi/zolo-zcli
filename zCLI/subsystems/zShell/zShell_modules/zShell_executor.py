@@ -6,6 +6,7 @@ from .executor_commands import (
     execute_open, execute_test, execute_auth, execute_load, 
     execute_export, execute_utils, execute_config, execute_comm
 )
+from .executor_commands.config_persistence_executor import execute_config_persistence
 
 logger = Logger.get_logger(__name__)
 
@@ -291,6 +292,7 @@ class CommandExecutor:
             "auth": execute_auth,
             "export": execute_export,
             "config": execute_config,
+            "config_persistence": execute_config_persistence,
             "comm": execute_comm,
             "load": execute_load,
         }

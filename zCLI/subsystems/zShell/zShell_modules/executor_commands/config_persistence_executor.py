@@ -1,6 +1,6 @@
-# zCLI/subsystems/zShell_modules/executor_commands/export_executor.py
+# zCLI/subsystems/zShell/zShell_modules/executor_commands/config_persistence_executor.py
 # ───────────────────────────────────────────────────────────────
-"""Export command execution for zCLI."""
+"""Config persistence command execution for zCLI."""
 
 from logger import Logger
 
@@ -8,20 +8,19 @@ from logger import Logger
 logger = Logger.get_logger(__name__)
 
 
-def execute_export(zcli, parsed):
+def execute_config_persistence(zcli, parsed):
     """
-    Execute export commands like 'export machine text_editor cursor'.
+    Execute config persistence commands like 'config machine browser Chrome'.
     
     Args:
         zcli: zCLI instance
         parsed: Parsed command dictionary with:
-            - target: 'machine' or 'config'
-            - key: Config key to update
-            - value: New value for the key
+            - action: 'machine' or 'config'
+            - args: Command arguments (key, value)
             - options: Command options (e.g., --show, --reset)
             
     Returns:
-        Export operation result
+        Config persistence operation result
     """
     target = parsed.get("action")  # 'machine' or 'config'
     args = parsed.get("args", [])

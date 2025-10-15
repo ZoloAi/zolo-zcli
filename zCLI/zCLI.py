@@ -19,7 +19,6 @@ from .subsystems.zWalker import zWalker
 from .subsystems.zOpen import zOpen
 from .subsystems.zAuth import zAuth
 from .subsystems.zLoader import zLoader
-from .subsystems.zExport import ZExport
 
 # Import shell components
 from .subsystems.zShell import ZShell
@@ -81,8 +80,6 @@ class zCLI:
         self._load_plugins()         # Load plugins immediately after plugin system is ready
         self.wizard = zWizard(self)  # Can use plugins immediately
         self.walker = zWalker(self)  # Modern walker with unified navigation (can use plugins immediately)
-
-        self.export = ZExport(self)
 
         # Layer 3: Orchestration
         # Initialize shell and command executor
