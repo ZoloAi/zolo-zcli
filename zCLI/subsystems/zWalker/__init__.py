@@ -1,14 +1,19 @@
 # zCLI/subsystems/zWalker/__init__.py — Walker (UI Mode) Package
 # ───────────────────────────────────────────────────────────────
 """
-Walker Package - YAML-Driven UI/Menu Navigation
+Walker Package - Modern YAML-Driven UI/Menu Navigation
 
-This package contains modules specific to Walker (UI) mode:
-- zWalker.py: Main navigation controller
-- zWalker_modules/: Empty (all navigation moved to core zNavigation)
+This package contains the modern zWalker subsystem:
+- zWalker.py: Main navigation controller (fully modernized)
 
-Note: zDispatch and zNavigation (includes zMenu, zCrumbs, zLink) are now core subsystems 
-in zCLI.subsystems for universal access. zLoader is also in zCLI.subsystems for shared usage.
+Architecture:
+- Uses core zCLI subsystems (zNavigation, zDispatch, zDisplay, etc.)
+- No local subsystem instances - everything shared from core
+- Unified navigation system via zNavigation
+- Fully modernized - no legacy compatibility code
+
+Note: All navigation components (zMenu, zCrumbs, zLink) are now part of 
+core zNavigation subsystem for universal access across all subsystems.
 """
 
 from .zWalker import zWalker

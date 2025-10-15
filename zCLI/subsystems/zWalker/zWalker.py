@@ -1,3 +1,5 @@
+"""zWalker - Modern UI/Menu Navigation Interface Layer."""
+
 import sys
 from logger import Logger
 from zCLI.subsystems.zWizard import zWizard
@@ -5,309 +7,143 @@ from zCLI.subsystems.zWizard import zWizard
 # Logger instance
 logger = Logger.get_logger(__name__)
 
-# Walker-specific subsystems (always needed)
-# zDispatch, zNavigation, zCrumbs, and zLink are now imported from core subsystems
-
-# Legacy mode subsystems (imported lazily when needed)
-# - zSession, zDisplay, zUtils, zFunc, ZOpen
-
 
 class zWalker(zWizard):
     """
-    zWalker - UI/Menu Navigation Interface Layer (extends zWizard)
+    zWalker - Modern UI/Menu Navigation Interface Layer (extends zWizard)
     
     zWalker extends zWizard's core loop engine with:
     - YAML-driven menu navigation
-    - Breadcrumb trail management (zCrumbs)
-    - File linking and navigation (zLink)
-    - Interactive menu rendering (zMenu)
+    - Breadcrumb trail management (via core zNavigation)
+    - File linking and navigation (via core zNavigation)
+    - Interactive menu rendering (via core zNavigation)
     
     Architecture:
     - Inherits: execute_loop() from zWizard (core iteration pattern)
-    - Adds: Walker-specific navigation features
+    - Uses: Core zCLI subsystems (zNavigation, zDispatch, zDisplay, etc.)
     
-    It can work in two modes:
-    1. NEW: Receives a zCLI instance and uses its subsystems (recommended)
-    2. LEGACY: Receives zSpark_obj directly and creates its own subsystems (backward compatibility)
+    Modern Architecture:
+    - Receives zCLI instance and uses all core subsystems
+    - No local subsystem instances - everything shared from core
+    - Unified navigation system via zNavigation
     """
     
-    def __init__(self, zcli_or_spark):
+    def __init__(self, zcli):
         """
-        Initialize zWalker interface.
+        Initialize zWalker with zCLI instance (modern architecture).
         
         Args:
-            zcli_or_spark: Either a zCLI instance (new) or zSpark_obj dict (legacy)
+            zcli: zCLI instance with all core subsystems
         """
-        # Detect which mode we're in and initialize base class
-        if hasattr(zcli_or_spark, 'session') and hasattr(zcli_or_spark, 'crud'):
-            # NEW MODE: Received zCLI instance
-            # Initialize ZWizard parent first
-            super().__init__(zcli=zcli_or_spark, walker=self)
-            self._init_from_zcli(zcli_or_spark)
-        else:
-            # LEGACY MODE: Received zSpark_obj dict
-            # Initialize base attributes first for parent class
-            self.zSpark_obj = zcli_or_spark
-            self._init_from_spark_prereq()
-            super().__init__(zcli=None, walker=self)
-            self._init_from_spark(zcli_or_spark)
-    
-    def _init_from_spark_prereq(self):
-        """Setup minimal attributes needed for ZWizard parent init (legacy mode)."""
-        from zCLI.subsystems.zSession import zSession
-        self.zSession = zSession
-        self.logger = Logger.get_logger()
-    
-    def _init_from_zcli(self, zcli):
-        """
-        Initialize from zCLI instance (new architecture).
-        Uses subsystems from zCLI where appropriate.
-        Creates walker-specific subsystems that need walker methods.
-        """
+        # Initialize ZWizard parent first
+        super().__init__(zcli=zcli, walker=self)
+        
+        # Use all core subsystems (no local instances)
         self.zcli = zcli
-        self.zSpark_obj = zcli.zspark_obj  # ← Fixed: use lowercase 'zspark_obj'
-        
-        # Use zCLI's core subsystems (single source of truth)
-        self.logger = zcli.logger
+        self.zSpark_obj = zcli.zspark_obj
         self.session = zcli.session
-        # Also set zSession attribute for legacy subsystems that expect it
-        self.zSession = zcli.session
         self.display = zcli.display
-        self.func = zcli.funcs
-        self.open = zcli.open
-        self.utils = zcli.utils
-        
-        # Use shared loader instance from zCLI
-        self.loader = zcli.loader
-        
-        # Use core subsystems instead of creating local instances
         self.dispatch = zcli.dispatch
-        self.navigation = zcli.navigation  # Use core zNavigation (includes breadcrumbs, linking, menus)
+        self.navigation = zcli.navigation  # Unified navigation system (menus, breadcrumbs, linking)
+        self.loader = zcli.loader
+        self.zfunc = zcli.zfunc
+        self.open = zcli.open
+        self.plugins = zcli.utils.plugins  # Direct access to loaded plugins
         
-        # Configure logger level
+        # Walker-specific configuration
         self._configure_logger()
         
-        logger.info("zWalker initialized from zCLI instance (new architecture)")
-    
-    def _init_from_spark(self, zSpark_obj):
-        """
-        Initialize from zSpark_obj (legacy mode for backward compatibility).
-        Creates its own subsystem instances.
-        """
-        # Lazy imports for legacy mode only
-        from zCLI.subsystems.zSession import zSession
-        from zCLI.subsystems.zDisplay import zDisplay
-        from zCLI.subsystems.zUtils import zUtils
-        from zCLI.subsystems.zFunc import zFunc
-        from zCLI.subsystems.zOpen import ZOpen
-        from zCLI.subsystems.zLoader import zLoader
+        # Print styled ready message using zDisplay
+        self.zcli.display.handle({
+            "event": "sysmsg",
+            "label": "zWalker Ready",
+            "color": "MAIN",
+            "indent": 0
+        })
         
-        self.zcli = None
-        self.zSpark_obj = zSpark_obj
-        
-        # In legacy mode, use global session for backward compatibility
-        self.session = zSession
-        # Also set zSession attribute for legacy subsystems that expect it
-        self.zSession = zSession
-        
-        # Attach logger instance for children to use
-        self.logger = Logger.get_logger()
-        
-        # Instantiate subsystems (legacy duplication)
-        self.zCrumbs = zCrumbs(self)
-        self.loader = zLoader(self)
-        self.dispatch = ZDispatch(self)
-        self.menu = ZMenu(self)
-        self.link = ZLink(self)
-        
-        # Create a minimal zcli-like object for zDisplay in legacy mode
-        class LegacyZCLI:
-            def __init__(self, session, logger_instance):
-                self.session = session
-                self.logger = logger_instance
-        
-        self.display = zDisplay(LegacyZCLI(self.zSession, self.logger))
-        self.func = zFunc(self)
-        self.open = ZOpen(self)
-        self.utils = zUtils(self)
-        
-        # Load optional utils plugins from zSpark_obj if provided
+        logger.info("zWalker initialized (fully modernized architecture)")
+
+    def _configure_logger(self):
+        """Configure logger level based on session mode."""
         try:
-            plugin_paths = self.zSpark_obj.get("plugins") or []
-            if isinstance(plugin_paths, (list, tuple)):
-                self.utils.load_plugins(plugin_paths)
-            elif isinstance(plugin_paths, str):
-                self.utils.load_plugins([plugin_paths])
+            if self.session.get("zMode") == "Debug":
+                self.logger.setLevel("DEBUG")
+            else:
+                self.logger.setLevel("INFO")
         except Exception:
             pass
-        
-        # Configure logger level
-        self._configure_logger()
-        
-        logger.warning("zWalker initialized from zSpark_obj (legacy mode - consider using zCLI)")
-    
-    def _configure_logger(self):
-        """Configure logger level from zSpark_obj.logger setting."""
-        try:
-            level_str = str(self.zSpark_obj.get("logger", "info")).strip().lower()
-            if level_str == "debug":
-                self.logger.set_level(10)  # logging.DEBUG
-            elif level_str == "prod":
-                self.logger.set_level(30)  # logging.WARNING (quieter in prod)
-            else:
-                self.logger.set_level(20)  # logging.INFO
-        except Exception:
-            # Fallback to INFO if anything goes wrong
-            self.logger.set_level(20)
 
     def run(self):
-        # 🔑 Initialize session id (only if not already set by zCLI)
-        if not self.session.get("zS_id"):
-            self.session["zS_id"] = self.utils.generate_id("zS")
-        
-        # Populate session BEFORE displaying it
-        # Note: zCLI already initialized minimal session, 
-        # but walker needs to populate configuration fields
-        self.session["zWorkspace"] = self.zSpark_obj["zWorkspace"]
-        self.session["zVaFile_path"] = self.zSpark_obj["zVaFile_path"] or "@"
-        self.session["zVaFilename"] = self.zSpark_obj["zVaFilename"]
-        self.session["zBlock"] = self.zSpark_obj["zBlock"]
-        self.session["zMode"] = self.zSpark_obj["zMode"]
-        
-        # Override debug setting from zSpark (controls sysmsg visibility)
-        if "debug" in self.zSpark_obj:
-            self.session["debug"] = self.zSpark_obj["debug"]
-
-        # NOW display the session (after it's populated)
-        self.display.handle({
-            "event": "zSession",
-            "zSession": self.session  # Pass walker's session explicitly
-        })
-
-        self.display.handle({
-            "event": "sysmsg",
-            "label": f"Running: {self.zSpark_obj.get('zSpark') or 'zSpark'}",
-            "style": "full",
-            "color": "MAIN",
-            "indent": 0,
-        })
-
-        for zSpark_key, zSpark_value in self.zSpark_obj.items():
-            logger.debug("\n%s = %r", zSpark_key, zSpark_value)
-
-        self.display.handle({
-            "event": "sysmsg",
-            "label": "zWalker",
-            "style": "single",
-            "color": "MAIN",
-            "indent": 0,
-        })
-
-        # Construct first zCrumb and update zTrail
-        default_zCrumb = f"{self.session['zVaFile_path']}.{self.session['zVaFilename']}.{self.session['zBlock']}"
-        self.session["zCrumbs"][default_zCrumb] = []
-
-        logger.info("zSession Defaults Stored:")
-        for k, v in {
-            "zWorkspace": self.session["zWorkspace"],
-            "zVaFile_path": self.session["zVaFile_path"],
-            "zVaFilename": self.session["zVaFilename"],
-            "zBlock": self.session["zBlock"],
-            "zMode": self.session["zMode"],
-            "zCrumbs": self.session["zCrumbs"],
-        }.items():
-            logger.info("  %s: %s", k, v)
-
-        # Load and parse UI file with enhanced validation
-        zFile_raw = self.loader.handle()
-        logger.debug("zFile raw data:\n%s", zFile_raw)
-        
-        # Use shared zVaFile parsing for UI files
-        if hasattr(self, 'zcli') and self.zcli:
-            # NEW: Use zCLI's zParser for enhanced UI parsing
-            zFile_parsed_result = self.zcli.zparser.parse_zva_file(zFile_raw, "zUI", session=self.session)
-            
-            # Extract the actual UI data from parsed result
-            if "zblocks" in zFile_parsed_result:
-                # Convert back to legacy format for Walker compatibility
-                zFile_parsed = {}
-                for zblock_name, zblock_data in zFile_parsed_result["zblocks"].items():
-                    if "items" in zblock_data:
-                        # Extract the actual 'data' from each wrapped item
-                        zFile_parsed[zblock_name] = {
-                            key: item["data"] if isinstance(item, dict) and "data" in item else item
-                            for key, item in zblock_data["items"].items()
-                        }
-                    else:
-                        zFile_parsed[zblock_name] = zblock_data
-            else:
-                # Fallback to raw data if parsing failed
-                zFile_parsed = zFile_raw
-        else:
-            # LEGACY: Use basic parsing (fallback)
-            zFile_parsed = zFile_raw
-            
-        logger.debug("zFile parsed with validation:\n%s", zFile_parsed)
-
-        # Pulls active zBlock from zCrumbs
-        active_zBlock_dict = zFile_parsed[self.session["zBlock"]]
-        logger.debug(
-            "active zBlock (%s) dict:\n %s",
-            self.session["zBlock"],
-            active_zBlock_dict,
-        )
-
-        zBlock_keys = list(active_zBlock_dict.keys())
-        logger.debug(
-            "\n%s zKeys:\n   %s",
-            next(reversed(self.session['zCrumbs'])),
-            "\n   ".join(f"└─ {k}" for k in zBlock_keys),
-        )
-
-        if not zBlock_keys:
-            logger.error("No vertical keys found — cannot proceed with walk.")
-            print("Fatal: zNode contains no keys. Exiting.")
-            return self.display.handle(
-                {
-                    "event": "sysmsg",
-                    "label": "You've reached a dead end!",
-                    "style": "full",
-                    "color": "ERROR",
-                    "indent": 0,
-                }
-            )
-
-        self.zBlock_loop(active_zBlock_dict, zBlock_keys)
-
-        return self.display.handle(
-            {
-                "event": "sysmsg",
-                "label": "You've reached your destination!",
-                "style": "full",
-                "color": "MAIN",
-                "indent": 0,
-            }
-        )
-
-    # ─────────────────────────────────────────────────────────────────────────
-    def zBlock_loop(self, active_zBlock_dict, zBlock_keys=None, zKey=None):  # pylint: disable=unused-argument
         """
-        Interactive loop through vertical keys with navigation support.
+        Main entry point for zWalker execution.
         
-        Now uses ZWizard's execute_loop() core engine with Walker-specific callbacks.
+        Returns:
+            Result of walker execution
+        """
+        try:
+            # Get zVaFile from zSpark_obj
+            zVaFile = self.zSpark_obj.get("zVaFile")
+            if not zVaFile:
+                logger.error("No zVaFile specified in zSpark_obj")
+                return {"error": "No zVaFile specified"}
+
+            # Load the YAML file
+            raw_zFile = self.loader.handle(zVaFile)
+            if not raw_zFile:
+                logger.error("Failed to load zVaFile: %s", zVaFile)
+                return {"error": "Failed to load zVaFile"}
+
+            # Get the root zBlock
+            root_zBlock = self.zSpark_obj.get("zBlock", "root")
+            if root_zBlock not in raw_zFile:
+                logger.error("Root zBlock '%s' not found in zVaFile", root_zBlock)
+                return {"error": f"Root zBlock '{root_zBlock}' not found"}
+
+            # Initialize session for walker mode
+            self._init_walker_session()
+
+            # Start the walker loop
+            return self.zBlock_loop(raw_zFile[root_zBlock])
+
+        except Exception as e:
+            logger.error("zWalker execution failed: %s", e, exc_info=True)
+            return {"error": str(e)}
+
+    def _init_walker_session(self):
+        """Initialize session for walker mode."""
+        # Set zMode to Walker
+        self.session["zMode"] = "Walker"
+        
+        # Initialize zCrumbs for walker navigation
+        if "zCrumbs" not in self.session:
+            self.session["zCrumbs"] = {}
+        
+        # Set initial zBlock
+        root_zBlock = self.zSpark_obj.get("zBlock", "root")
+        self.session["zCrumbs"][root_zBlock] = []
+        self.session["zBlock"] = root_zBlock
+
+    def zBlock_loop(self, active_zBlock_dict, zBlock_keys=None, zKey=None):
+        """
+        Main walker loop for processing zBlocks.
         
         Args:
-            active_zBlock_dict: Dictionary of {key: value} for current block
-            zBlock_keys: List of keys to iterate
-            zKey: Optional starting key (for navigation)
+            active_zBlock_dict: Dictionary containing the current zBlock
+            zBlock_keys: Optional list of keys to process
+            zKey: Optional starting key
+            
+        Returns:
+            Result of walker execution
         """
-        # 🔷 Display the start of the vertical walk for the current zBlock
+        if zBlock_keys is None:
+            zBlock_keys = list(active_zBlock_dict.keys())
+
         self.display.handle({
             "event": "sysmsg",
-            "label": f"zBlock: {self.session['zBlock']}",
-            "style": "single",
+            "label": "zWalker Loop",
+            "style": "full",
             "color": "MAIN",
-            "indent": 1,
+            "indent": 0
         })
         
         # Custom dispatch function that handles breadcrumb tracking
@@ -370,13 +206,7 @@ class zWalker(zWizard):
             navigation_callbacks={
                 'on_back': on_back,
                 'on_stop': on_stop,
-                'on_error': on_error,
+                'on_error': on_error
             },
             start_key=zKey
         )
-
-
-def handle_zWalker(zSpark_obj):
-    """Backward-compatible wrapper for existing function-based API."""
-    # Legacy support: create walker from zSpark_obj directly
-    return zWalker(zSpark_obj).run()

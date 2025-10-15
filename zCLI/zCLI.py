@@ -15,6 +15,7 @@ from .subsystems.zDispatch import zDispatch
 from .subsystems.zNavigation import zNavigation
 from .subsystems.zDialog import zDialog
 from .subsystems.zWizard import zWizard
+from .subsystems.zWalker import zWalker
 from .subsystems.zOpen import zOpen
 from .subsystems.zAuth import zAuth
 from .subsystems.zLoader import zLoader
@@ -76,17 +77,16 @@ class zCLI:
         self.auth = zAuth(self)
 
         # Layer 2: Core Abstraction
-        self.wizard = zWizard(self)
+        self.utils = zUtils(self)    # Plugin system first - available to all Layer 2+ subsystems
+        self._load_plugins()         # Load plugins immediately after plugin system is ready
+        self.wizard = zWizard(self)  # Can use plugins immediately
+        self.walker = zWalker(self)  # Modern walker with unified navigation (can use plugins immediately)
 
         self.export = ZExport(self)
 
         # Layer 3: Orchestration
         # Initialize shell and command executor
         self.shell = ZShell(self)
-
-        # Load plugins if specified
-        self.utils = zUtils(self)
-        self._load_plugins()
 
         # Determine interface mode (needed for session initialization)
         self.ui_mode = bool(self.zspark_obj.get("zVaFilename"))
