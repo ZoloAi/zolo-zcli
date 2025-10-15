@@ -195,42 +195,5 @@ export WEBSOCKET_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8080
 
 ---
 
-## 🌈 zBifrost - Python Client Library
-
-**New!** Use **zBifrost** to connect Python applications to the zCLI WebSocket server.
-
-### Quick Example
-
-```python
-import asyncio
-from zCLI.subsystems.zComm import zBifrost
-
-async def main():
-    async with zBifrost("ws://127.0.0.1:56891") as client:
-        # CRUD operations
-        user = await client.create("Users", {"name": "Alice"})
-        users = await client.read("Users", {"active": True})
-        await client.update("Users", user["id"], {"name": "Alice Smith"})
-        await client.delete("Users", user["id"])
-
-asyncio.run(main())
-```
-
-### Documentation
-
-See **[zBIFROST_GUIDE.md](zBIFROST_GUIDE.md)** for complete API reference and examples.
-
-### Demo
-
-```bash
-# Terminal 1: Server
-python3 tests/zComm/test_websocket_server.py
-
-# Terminal 2: zBifrost demo
-python3 tests/zComm/test_zBifrost.py
-```
-
----
-
 **Created**: October 15, 2025
 

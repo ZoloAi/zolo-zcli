@@ -13,12 +13,12 @@ class ServiceManager:
     Provides unified interface for starting, stopping, and monitoring
     local services like PostgreSQL, Redis, etc.
     """
-    
+
     def __init__(self, logger):
         self.logger = logger
         self.services = {}
         self._register_services()
-    
+
     def _register_services(self):
         """Register available service handlers."""
         self.services['postgresql'] = PostgreSQLService(self.logger)

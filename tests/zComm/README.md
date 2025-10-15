@@ -20,10 +20,8 @@ tests/zComm/
 ├── README.md                     # This file
 ├── QUICKSTART.md                 # Quick start guide
 ├── TEST_DEPENDENCIES.md          # Test-only dependency notes
-├── zBIFROST_GUIDE.md            # 🌈 zBifrost client library guide
 ├── test_websocket_server.py      # WebSocket server tests
 ├── test_websocket_client.py      # WebSocket client tests
-├── test_zBifrost.py             # 🌈 zBifrost client demo
 ├── test_service_manager.py       # Service management tests
 └── test_integration.py           # End-to-end integration tests
 ```
@@ -79,15 +77,6 @@ python3 tests/zComm/test_service_manager.py
 - ✅ Authentication token handling
 - ✅ Reconnection logic
 - ✅ Error handling
-
-### 2b. 🌈 zBifrost Client Library (`test_zBifrost.py`)
-- ✅ Python client library for zCLI WebSocket backend
-- ✅ Simplified CRUD operations (create, read, update, delete, upsert)
-- ✅ Command dispatch (zFunc, zLink, zOpen)
-- ✅ Broadcast message listening
-- ✅ Context manager support
-- ✅ Request/response correlation
-- 📖 See [zBIFROST_GUIDE.md](zBIFROST_GUIDE.md) for full API
 
 ### 3. Service Manager Tests (`test_service_manager.py`)
 - ✅ Start/stop services

@@ -1,7 +1,7 @@
 """Communication & Service Management Subsystem for WebSocket, services and localhost utilities."""
 
 from logger import Logger
-from .zComm_modules.websocket.websocket_server import ZSocket
+from .zComm_modules.websocket.websocket_server import zBifrost
 from .zComm_modules.services import ServiceManager
 
 # Logger instance
@@ -61,7 +61,7 @@ class zComm:
 
     def create_websocket(self, walker=None, port=56891, host="127.0.0.1"):
         """Create WebSocket server instance."""
-        self.websocket = ZSocket(walker=walker, port=port, host=host)
+        self.websocket = zBifrost(walker=walker, port=port, host=host)
         return self.websocket
 
     async def start_websocket(self, socket_ready, walker=None):
