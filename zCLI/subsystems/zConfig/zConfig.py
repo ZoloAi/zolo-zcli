@@ -3,12 +3,10 @@
 """Cross-platform configuration management with hierarchical loading and secret support."""
 
 import os
-from logger import Logger
 from .zConfig_modules import zConfigPaths, ConfigLoader
 from .zConfig_modules.machine_config import MachineConfig
 
-# Logger instance
-logger = Logger.get_logger(__name__)
+# Note: No logger import to avoid circular dependency with zLogger subsystem
 
 
 class zConfig:
@@ -50,13 +48,9 @@ class zConfig:
         # Print styled ready message (before zDisplay is available)
         self._print_ready()
 
-        logger.info("[zConfig] Initialized for environment: %s (from %s)", 
-                   self.environment,
-                   "machine.yaml" if self.machine.get("deployment") else "ZOLO_ENV/default")
-        logger.debug("[zConfig] Machine: %s on %s", 
-                    self.machine.get("hostname"), 
-                    self.machine.get("os"))
-        logger.debug("[zConfig] Config sources: %s", self.loader.config_sources)
+        print(f"[zConfig] Initialized for environment: {self.environment} (from {'machine.yaml' if self.machine.get('deployment') else 'ZOLO_ENV/default'})")
+        print(f"[zConfig] Machine: {self.machine.get('hostname')} on {self.machine.get('os')}")
+        print(f"[zConfig] Config sources: {self.loader.config_sources}")
 
     # ═══════════════════════════════════════════════════════════
     # Configuration Access
@@ -146,7 +140,7 @@ class zConfig:
         value = self.secrets.get(key, default)
 
         if value is None:
-            logger.warning("[zConfig] Secret '%s' not found in environment", key)
+            print(f"[zConfig] Secret '{key}' not found in environment")
 
         return value
 
@@ -272,7 +266,7 @@ class zConfig:
                     "message": "Failed to save machine config"
                 })
             else:
-                print(f"\n❌ Failed to save machine config\n")
+                print("\n❌ Failed to save machine config\n")
         
         return success
 
@@ -288,6 +282,9 @@ class zConfig:
         Returns:
             bool: Success status
         """
+        # TODO: Implement config persistence
+        print(f"[zConfig] persist_config called with key={key}, value={value}, show={show}")
+        return False
         # Future implementation for config.yaml persistence
         if self.zcli and self.zcli.display:
             self.zcli.display.handle({
@@ -356,7 +353,7 @@ class zConfig:
                         "message": "Failed to save machine config"
                     })
                 else:
-                    print(f"\n❌ Failed to save machine config\n")
+                    print("\n❌ Failed to save machine config\n")
             
             return success
         else:

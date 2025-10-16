@@ -12,10 +12,8 @@ import socket
 import shutil
 import yaml
 from pathlib import Path
-from logger import Logger
 
-# Logger instance
-logger = Logger.get_logger(__name__)
+# Note: No logger import to avoid circular dependency with zLogger subsystem
 
 
 class MachineConfig:
@@ -56,12 +54,12 @@ class MachineConfig:
         self.machine = self._auto_detect()
         
         # 2. Load system machine config (if exists)
-        system_machine = self.paths.system_config_dir / "machine.yaml"
+        system_machine = self.paths.system_config_dir / "zConfig.machine.yaml"
         if system_machine.exists():
             self._merge_from_file(system_machine, "system")
         
         # 3. Load user machine config (if exists, overrides system)
-        user_machine = self.paths.user_config_dir / "machine.yaml"
+        user_machine = self.paths.user_zconfigs_dir / "zConfig.machine.yaml"
         if user_machine.exists():
             self._merge_from_file(user_machine, "user")
         else:
@@ -75,7 +73,7 @@ class MachineConfig:
         Returns:
             Dict with machine defaults
         """
-        logger.debug("[MachineConfig] Auto-detecting machine information...")
+        print("[MachineConfig] Auto-detecting machine information...")
         
         machine = {
             # Identity
@@ -100,8 +98,7 @@ class MachineConfig:
             "memory_gb": self._get_memory_gb(),
         }
         
-        logger.debug("[MachineConfig] Detected: %s on %s", 
-                    machine["hostname"], machine["os"])
+        print(f"[MachineConfig] Detected: {machine['hostname']} on {machine['os']}")
         
         return machine
     
@@ -147,11 +144,11 @@ class MachineConfig:
                 
                 for key, name in browser_mapping.items():
                     if key in output_lower:
-                        logger.debug("[MachineConfig] Found default browser via LaunchServices: %s", name)
+                        print(f"[MachineConfig] Found default browser via LaunchServices: {name}")
                         return name
                 
             except Exception as e:
-                logger.debug("[MachineConfig] Could not query LaunchServices: %s", e)
+                print(f"[MachineConfig] Could not query LaunchServices: {e}")
             
             # Fallback: Safari is macOS default
             return "Safari"
@@ -211,7 +208,7 @@ class MachineConfig:
         for var in ["IDE", "VISUAL_EDITOR", "EDITOR", "VISUAL"]:
             ide_env = os.getenv(var)
             if ide_env:
-                logger.debug("[MachineConfig] IDE from env var %s: %s", var, ide_env)
+                print(f"[MachineConfig] IDE from env var {var}: {ide_env}")
                 return ide_env
         
         # Check for modern GUI IDEs (prioritized by popularity/modernity)
@@ -224,7 +221,7 @@ class MachineConfig:
         
         for ide in modern_ides:
             if shutil.which(ide):
-                logger.debug("[MachineConfig] Found modern IDE: %s", ide)
+                print(f"[MachineConfig] Found modern IDE: {ide}")
                 return ide
         
         # Check for classic IDEs
@@ -238,24 +235,24 @@ class MachineConfig:
         
         for ide in classic_ides:
             if shutil.which(ide):
-                logger.debug("[MachineConfig] Found classic IDE: %s", ide)
+                print(f"[MachineConfig] Found classic IDE: {ide}")
                 return ide
         
         # macOS-specific: Check for Xcode
         if platform.system() == "Darwin":
             if shutil.which("xed"):  # Xcode command-line tool
-                logger.debug("[MachineConfig] Found Xcode (xed)")
+                print("[MachineConfig] Found Xcode (xed)")
                 return "xed"
         
         # Fallback to simple editors
         simple_editors = ["nano", "vim", "nvim", "vi"]
         for editor in simple_editors:
             if shutil.which(editor):
-                logger.debug("[MachineConfig] Falling back to simple editor: %s", editor)
+                print(f"[MachineConfig] Falling back to simple editor: {editor}")
                 return editor
         
         # Final fallback
-        logger.debug("[MachineConfig] Using final fallback: nano")
+        print("[MachineConfig] Using final fallback: nano")
         return "nano"
     
     def _get_memory_gb(self):
@@ -314,10 +311,10 @@ class MachineConfig:
                 
                 if data and "zMachine" in data:
                     self.machine.update(data["zMachine"])
-                    logger.info("[MachineConfig] Loaded %s machine config: %s", source, path)
+                    print(f"[MachineConfig] Loaded {source} machine config: {path}")
         
         except Exception as e:
-            logger.warning("[MachineConfig] Failed to load %s machine config: %s", source, e)
+            print(f"[MachineConfig] Failed to load {source} machine config: {e}")
     
     def _create_user_machine_config(self, path):
         """
@@ -363,11 +360,11 @@ zMachine:
 """
             
             path.write_text(content)
-            logger.info("[MachineConfig] Created user machine config: %s", path)
-            logger.info("[MachineConfig] You can edit this file to customize tool preferences")
+            print(f"[MachineConfig] Created user machine config: {path}")
+            print("[MachineConfig] You can edit this file to customize tool preferences")
         
         except Exception as e:
-            logger.warning("[MachineConfig] Failed to create user machine config: %s", e)
+            print(f"[MachineConfig] Failed to create user machine config: {e}")
     
     def get(self, key, default=None):
         """
@@ -416,10 +413,10 @@ zMachine:
             with open(path, 'w') as f:
                 yaml.dump(content, f, default_flow_style=False, sort_keys=False)
             
-            logger.info("[MachineConfig] Saved machine config to: %s", path)
+            print(f"[MachineConfig] Saved machine config to: {path}")
             return True
         
         except Exception as e:
-            logger.error("[MachineConfig] Failed to save machine config: %s", e)
+            print(f"[MachineConfig] Failed to save machine config: {e}")
             return False
 

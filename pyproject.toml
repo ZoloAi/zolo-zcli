@@ -1,155 +1,79 @@
-# =============================================================================
-# zolo-zcli Framework - Python Package Configuration v1.4.0
-# =============================================================================
-# This file defines how to build, package, and distribute the zolo-zcli framework.
-# It replaces the old setup.py file with a modern, standardized approach.
-#
-# What this file does:
-# 1. Tells Python how to build the package (wheels, source distributions)
-# 2. Defines package metadata (name, version, author, description)
-# 3. Specifies dependencies (what other packages zCLI needs)
-# 4. Creates CLI entry points (the 'zolo' command)
-# 5. Configures package discovery (which files to include)
-#
-# Format: TOML (Tom's Obvious Minimal Language) - human-readable config format
-# Version: 1.4.0 - Modernized zCLI architecture with zLogger subsystem
-# =============================================================================
-
-# -----------------------------------------------------------------------------
-# BUILD SYSTEM CONFIGURATION
-# -----------------------------------------------------------------------------
-# This tells Python what tools to use when building the package
 [build-system]
-# These packages are needed to build zCLI (but not to use it)
 requires = ["setuptools>=61.0", "wheel"]
-# Use setuptools as the build backend (handles packaging logic)
 build-backend = "setuptools.build_meta"
 
-# -----------------------------------------------------------------------------
-# PACKAGE METADATA
-# -----------------------------------------------------------------------------
-# This is the information users see when they install or browse the package
 [project]
-# Package name - this is what users type: pip install zolo-zcli
 name = "zolo-zcli"
-
-# Version number - follows semantic versioning (major.minor.patch)
-# Version is read from zCLI/version.py to ensure consistency
 dynamic = ["version"]
-
-# Short description that appears in package listings
-description = "A YAML-driven CLI framework for interactive applications"
-
-# Author information
+description = "A full-stack CLI framework powered by declerative zVaFiles, WebSocket server, interactive navigation, and pluggable data backends"
 authors = [
     {name = "Gal Nachshon", email = "gal@zolo.media"}
 ]
-
-# Long description file (README.md will be used as package description)
 readme = "README.md"
-
-# License information (SPDX identifier)
-license = "LicenseRef-Proprietary"
-
-# Minimum Python version required
+license = "MIT"
 requires-python = ">=3.8"
-
-# PyPI classifiers - helps users find the package and understand what it is
 classifiers = [
-    "Development Status :: 4 - Beta",           # Still in development
-    "Intended Audience :: Developers",          # Target audience
-    "Programming Language :: Python :: 3",     # Python 3 only
-    "Programming Language :: Python :: 3.8",   # Supports Python 3.8
-    "Programming Language :: Python :: 3.9",   # Supports Python 3.9
-    "Programming Language :: Python :: 3.10",  # Supports Python 3.10
-    "Programming Language :: Python :: 3.11",  # Supports Python 3.11
-    "Programming Language :: Python :: 3.12",  # Supports Python 3.12
-    "Topic :: Software Development :: Libraries :: Python Modules",  # It's a library
-    "Topic :: System :: Shells",               # It's a shell framework
-    "Topic :: Software Development :: Frameworks",  # It's a CLI framework
-    "Environment :: Console",                   # Console application
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Shells",
+    "Topic :: Software Development :: Frameworks",
+    "Environment :: Console",
 ]
-
-# Keywords for search - helps users find zCLI when searching PyPI
-keywords = ["cli", "framework", "yaml", "interactive", "shell", "websocket", "real-time"]
-
-# -----------------------------------------------------------------------------
-# DEPENDENCIES
-# -----------------------------------------------------------------------------
-# These packages will be automatically installed when someone installs zCLI
-# Core dependencies work with SQLite (built into Python, no extra install needed)
+keywords = ["cli", "framework", "yaml", "interactive", "shell", "declarative", "configuration", "menu-driven", "plugin-system", "session-management"]
 dependencies = [
-    "PyYAML>=6.0",        # For parsing YAML configuration files
-    "python-dotenv>=1.0", # For loading .env files with environment variables
-    "websockets>=15.0",   # For WebSocket communication (zBifrost subsystem)
-    "requests>=2.32",     # For HTTP requests (zSession subsystem)
-    "platformdirs>=4.0",  # For cross-platform config/data directory paths (zConfig subsystem)
+    "PyYAML>=6.0",
+    "websockets>=15.0",
+    "requests>=2.32",
+    "platformdirs>=4.0",
 ]
 
-# -----------------------------------------------------------------------------
-# OPTIONAL DEPENDENCIES
-# -----------------------------------------------------------------------------
-# These are only installed when specifically requested
 [project.optional-dependencies]
-# Backend-specific dependencies
 csv = [
-    "pandas>=2.0",        # For CSV backend support
+    "pandas>=2.0",
 ]
 postgresql = [
-    "psycopg2-binary>=2.9", # For PostgreSQL database connections
+    "psycopg2-binary>=2.9",
 ]
-# Install all backends - install with: pip install zolo-zcli[all]
 all = [
     "pandas>=2.0",
     "psycopg2-binary>=2.9",
 ]
-
-# Development dependencies - install with: pip install zolo-zcli[dev]
 dev = [
-    "pytest>=7.0",        # For running tests
-    "pytest-cov>=4.0",    # For test coverage reports
-    "pylint>=2.0",        # For code linting and style checking
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "pylint>=2.0",
 ]
 
-# -----------------------------------------------------------------------------
-# CLI ENTRY POINTS
-# -----------------------------------------------------------------------------
-# This creates the 'zolo' command that users can run from terminal
 [project.scripts]
-# When user types 'zolo', it calls the main() function in main
 zolo = "main:main"
 
-# -----------------------------------------------------------------------------
-# PROJECT URLs
-# -----------------------------------------------------------------------------
-# Links to project resources (update with your actual GitHub repo)
 [project.urls]
 Homepage = "https://github.com/ZoloAi/zolo-zcli"
 Documentation = "https://github.com/ZoloAi/zolo-zcli#readme"
 Repository = "https://github.com/ZoloAi/zolo-zcli"
 "Bug Tracker" = "https://github.com/ZoloAi/zolo-zcli/issues"
 
-# -----------------------------------------------------------------------------
-# PACKAGE DISCOVERY
-# -----------------------------------------------------------------------------
-# Tells setuptools which Python packages to include
 [tool.setuptools.packages.find]
-where = ["."]           # Look in current directory
-include = ["zCLI*", "logger*"]     # Include zCLI packages and logger module
+# Configure how setuptools discovers Python packages in this repo
+# - where: start searching from the project root directory
+# - include: only include packages whose names match these patterns
+where = ["."]
+include = ["zCLI*", "logger*"]
 
 [tool.setuptools]
+# Also ship a single-file module alongside packages
+# (this includes main.py at the repo root as a top-level module named "main")
 py-modules = ["main"]
 
-# Version configuration - read from version.py
 [tool.setuptools.dynamic]
+# Dynamically read the version string from the attribute
+# zCLI/version.py -> __version__ (exported via zCLI.version.__version__)
 version = {attr = "zCLI.version.__version__"}
-
-# -----------------------------------------------------------------------------
-# DATA FILES
-# -----------------------------------------------------------------------------
-# Includes non-Python files (like YAML configs) in the package
-[tool.setuptools.package-data]
-# Include all .yaml and .yml files from the zCLI package
-"zCLI" = ["*.yaml", "*.yml"]
-# Include config files (system-level defaults only)
-"*" = ["config/*.yaml", "config/*.yml"]

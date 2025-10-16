@@ -35,18 +35,18 @@ def main() -> None:
     # Uninstall subcommand
     uninstall_parser = subparsers.add_parser(
         "uninstall",
-        help="Uninstall zolo-zcli"
+        help="Uninstall zolo-zcli framework"
     )
     uninstall_group = uninstall_parser.add_mutually_exclusive_group()
     uninstall_group.add_argument(
         "--clean",
         action="store_true",
-        help="Remove package AND all user data (complete removal)"
+        help="Remove package AND user data (keep dependencies)"
     )
     uninstall_group.add_argument(
-        "--keep-data",
+        "--dependencies",
         action="store_true",
-        help="Remove package but keep user data (default)"
+        help="Remove only optional dependencies (pandas, psycopg2)"
     )
 
     args = parser.parse_args()
@@ -58,13 +58,15 @@ def main() -> None:
         cli.run_shell()
     
     elif args.command == "uninstall":
-        from zCLI.uninstall import uninstall_clean, uninstall_keep_data
+        from zCLI.uninstall import uninstall_clean, uninstall_framework_only, uninstall_dependencies
         
         if args.clean:
             return uninstall_clean()
+        elif args.dependencies:
+            return uninstall_dependencies()
         else:
-            # Default to keep-data
-            return uninstall_keep_data()
+            # Default: framework-only uninstall
+            return uninstall_framework_only()
     
     else:
         # No command specified - default to shell mode

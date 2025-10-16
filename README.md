@@ -2,25 +2,27 @@
 
 > **`zolo-zcli` is a powerful universal framework that combines traditional CLI commands with declarative configuration files (YAML/JSON), enabling rapid development of both command-line tools and web applications with unified backend/frontend architecture.**
 
-**🔐 Authentication Required** - zCLI is a private Zolo product. Contact gal@zolo.media for access.
+**🏷️ Trademark Notice:** "Zolo" and "zCLI" are trademarks of Gal Nachshon.
+
+**📄 License:** MIT License with Ethical Use Clause - See [LICENSE](LICENSE) for details.
 
 ## 🚀 Quick Start
 
 📘 **[Full Installation Guide](Documentation/INSTALL.md)** - Detailed setup instructions, troubleshooting, and authentication
 
-### Installation (Authorized Users Only)
+### Installation
 
-`zolo-zcli` is distributed via private GitHub repository. You must have repository access to install.
+`zolo-zcli` is available on PyPI and GitHub.
 
 ```bash
-# Install latest version (v1.3.0)
-pip install git+ssh://git@github.com/ZoloAi/zolo-zcli.git@v1.3.0
+# Install from PyPI (recommended)
+pip install zolo-zcli
 
-# Or install from main branch
-pip install git+ssh://git@github.com/ZoloAi/zolo-zcli.git
+# Or install from GitHub
+pip install git+https://github.com/ZoloAi/zolo-zcli.git
 
-# Or with personal access token
-pip install git+https://TOKEN@github.com/ZoloAi/zolo-zcli.git@v1.3.0
+# Or install specific version
+pip install git+https://github.com/ZoloAi/zolo-zcli.git@v1.4.0
 ```
 
 ### Basic Usage

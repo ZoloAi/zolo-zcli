@@ -8,10 +8,8 @@ Loads config from multiple sources and merges them with priority.
 import os
 import yaml
 from pathlib import Path
-from logger import Logger
 
-# Logger instance
-logger = Logger.get_logger(__name__)
+# Note: No logger import to avoid circular dependency with zLogger subsystem
 
 
 class ConfigLoader:
@@ -63,47 +61,81 @@ class ConfigLoader:
         # 4. Apply environment variable overrides
         self._load_env_overrides()
         
-        logger.info("[ConfigLoader] Configuration loaded from %d sources: %s",
-                   len(self.config_sources), ", ".join(self.config_sources))
+        print(f"[ConfigLoader] Configuration loaded from {len(self.config_sources)} sources: {', '.join(self.config_sources)}")
         
         return self.config
     
     def _load_package_defaults(self):
-        """Load package default configuration."""
+        """Load package default configuration from user's Application Support directory."""
         try:
-            # Get package config directory
-            import zCLI
-            package_root = Path(zCLI.__file__).parent.parent
-            default_config = package_root / "config" / "zConfig.default.yaml"
+            # Look in user's Application Support directory first
+            from .config_paths import zConfigPaths
+            paths = zConfigPaths()
+            user_configs_dir = paths.user_zconfigs_dir
+            
+            # Ensure zConfigs directory exists
+            user_configs_dir.mkdir(parents=True, exist_ok=True)
+            
+            default_config = user_configs_dir / "zConfig.default.yaml"
             
             if default_config.exists():
-                self._load_config_file(default_config, "package-defaults")
+                print(f"[ConfigLoader] Using existing user config: {default_config}")
+                self._load_config_file(default_config, "user-defaults")
             else:
-                logger.warning("[ConfigLoader] Package defaults not found: %s", default_config)
-                # Use fallback hardcoded defaults
-                self.config = self._get_fallback_defaults()
-                self.config_sources.append("fallback-defaults")
+                # Try package defaults as fallback
+                import zCLI
+                package_root = Path(zCLI.__file__).parent.parent
+                package_default_config = package_root / "config" / "zConfig.default.yaml"
+                
+                if package_default_config.exists():
+                    print(f"[ConfigLoader] Creating user config from package defaults: {default_config}")
+                    # Copy package defaults to user directory
+                    import shutil
+                    shutil.copy2(package_default_config, default_config)
+                    self._load_config_file(default_config, "user-defaults")
+                else:
+                    print(f"[ConfigLoader] Package defaults not found: {package_default_config}")
+                    # Use fallback hardcoded defaults
+                    self.config = self._get_fallback_defaults()
+                    self.config_sources.append("fallback-defaults")
         
         except Exception as e:
-            logger.error("[ConfigLoader] Failed to load package defaults: %s", e)
+            print(f"[ConfigLoader] Failed to load package defaults: {e}")
             self.config = self._get_fallback_defaults()
             self.config_sources.append("fallback-defaults")
     
     def _load_package_environment_config(self):
-        """Load environment-specific package configuration."""
+        """Load environment-specific configuration from user's Application Support directory."""
         try:
-            # Get package config directory
-            import zCLI
-            package_root = Path(zCLI.__file__).parent.parent
-            env_config = package_root / "config" / f"zConfig.{self.environment}.yaml"
+            # Look in user's Application Support directory first
+            from .config_paths import zConfigPaths
+            paths = zConfigPaths()
+            user_configs_dir = paths.user_zconfigs_dir
+            
+            # Ensure zConfigs directory exists
+            user_configs_dir.mkdir(parents=True, exist_ok=True)
+            
+            env_config = user_configs_dir / f"zConfig.{self.environment}.yaml"
             
             if env_config.exists():
-                self._load_config_file(env_config, f"package-{self.environment}")
+                self._load_config_file(env_config, f"user-{self.environment}")
             else:
-                logger.debug("[ConfigLoader] No package config for environment: %s", self.environment)
+                # Try package defaults as fallback
+                import zCLI
+                package_root = Path(zCLI.__file__).parent.parent
+                package_env_config = package_root / "config" / f"zConfig.{self.environment}.yaml"
+                
+                if package_env_config.exists():
+                    print(f"[ConfigLoader] Using package environment config, copying to user directory: {env_config}")
+                    # Copy package environment config to user directory
+                    import shutil
+                    shutil.copy2(package_env_config, env_config)
+                    self._load_config_file(env_config, f"user-{self.environment}")
+                else:
+                    print(f"[ConfigLoader] No config for environment: {self.environment}")
         
         except Exception as e:
-            logger.warning("[ConfigLoader] Failed to load environment config: %s", e)
+            print(f"[ConfigLoader] Failed to load environment config: {e}")
     
     def _load_config_file(self, path, source):
         """
@@ -120,18 +152,18 @@ class ConfigLoader:
                 if data:
                     self._deep_merge(self.config, data)
                     self.config_sources.append(source)
-                    logger.info("[ConfigLoader] Loaded config from %s: %s", source, path)
+                    print(f"[ConfigLoader] Loaded config from {source}: {path}")
                 else:
-                    logger.warning("[ConfigLoader] Config file is empty: %s", path)
+                    print(f"[ConfigLoader] Config file is empty: {path}")
         
         except FileNotFoundError:
-            logger.debug("[ConfigLoader] Config file not found: %s", path)
+            print(f"[ConfigLoader] Config file not found: {path}")
         
         except yaml.YAMLError as e:
-            logger.error("[ConfigLoader] YAML parse error in %s: %s", path, e)
+            print(f"[ConfigLoader] YAML parse error in {path}: {e}")
         
         except Exception as e:
-            logger.error("[ConfigLoader] Failed to load config from %s: %s", path, e)
+            print(f"[ConfigLoader] Failed to load config from {path}: {e}")
     
     def _load_env_overrides(self):
         """
@@ -180,7 +212,7 @@ class ConfigLoader:
         if env_overrides:
             self._deep_merge(self.config, env_overrides)
             self.config_sources.append("environment-variables")
-            logger.debug("[ConfigLoader] Applied environment variable overrides")
+            print("[ConfigLoader] Applied environment variable overrides")
     
     def _deep_merge(self, base, overlay):
         """

@@ -8,10 +8,8 @@ Uses platformdirs for OS-native paths with dotfile fallback.
 import platform
 from pathlib import Path
 from platformdirs import user_config_dir, site_config_dir, user_data_dir, user_cache_dir
-from logger import Logger
 
-# Logger instance
-logger = Logger.get_logger(__name__)
+# Note: No logger import to avoid circular dependency with zLogger subsystem
 
 
 class zConfigPaths:
@@ -35,7 +33,7 @@ class zConfigPaths:
         self.app_author = "zolo"
         self.os_type = platform.system()  # 'Linux', 'Darwin', 'Windows'
         
-        logger.debug("[zConfigPaths] Initialized for OS: %s", self.os_type)
+        print(f"[zConfigPaths] Initialized for OS: {self.os_type}")
     
     # ═══════════════════════════════════════════════════════════
     # System Paths (requires admin/root)
@@ -99,6 +97,16 @@ class zConfigPaths:
         
         # Use native path (creates if needed)
         return self.user_config_dir_native
+    
+    @property
+    def user_zconfigs_dir(self):
+        """
+        User zConfigs directory for configuration files.
+        
+        Location: user_config_dir/zConfigs/
+        Contains: zConfig.default.yaml, zConfig.dev.yaml, etc.
+        """
+        return self.user_config_dir / "zConfigs"
     
     @property
     def user_data_dir(self):
@@ -199,7 +207,7 @@ class zConfigPaths:
         config_dir = self.user_config_dir_native
         if not config_dir.exists():
             config_dir.mkdir(parents=True, exist_ok=True)
-            logger.info("[zConfigPaths] Created user config directory: %s", config_dir)
+            print(f"[zConfigPaths] Created user config directory: {config_dir}")
         
         return config_dir
     

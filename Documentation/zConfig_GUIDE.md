@@ -36,7 +36,7 @@ zConfig/
 - Auto-detection of system capabilities (OS, architecture, tools)
 - User preference management (browser, IDE, terminal)
 - Deployment environment settings
-- Persistent machine.yaml configuration
+- Persistent zConfig.machine.yaml configuration
 
 ### **3. Configuration Persistence**
 - **NEW:** Integrated configuration persistence (formerly zExport)
@@ -50,6 +50,12 @@ zConfig/
 - Database, API, and service credentials
 - SSL certificate path management
 
+### **5. First-Run Setup**
+- Automatic creation of user configuration directories
+- Package defaults copied to user's Application Support directory
+- Machine configuration auto-detection and creation
+- Cross-platform path resolution (macOS, Linux, Windows)
+
 ---
 
 ## 📁 **Configuration Files**
@@ -57,18 +63,20 @@ zConfig/
 ### **Package Configuration**
 ```
 config/
-├── zConfig.default.yaml         # Package defaults
-├── zConfig.dev.yaml            # Development environment
-├── zConfig.prod.yaml           # Production environment
-├── zConfig.kernel.yaml         # Kernel-specific settings
-└── zConfig.machine.yaml        # Machine-specific defaults
+└── zConfig.default.yaml        # Package defaults (copied to user on first run)
 ```
 
 ### **User Configuration**
 ```
-~/.config/zolo-zcli/
-├── machine.yaml                # User machine preferences
-└── config.yaml                 # User application settings (future)
+~/Library/Application Support/zolo-zcli/  # macOS
+~/.local/share/zolo-zcli/                 # Linux
+%APPDATA%/zolo-zcli/                      # Windows
+├── zConfigs/                            # Configuration files
+│   ├── zConfig.default.yaml            # User's default config
+│   └── zConfig.machine.yaml            # User machine preferences
+└── Data/                               # User data
+    ├── Config/
+    └── Cache/
 ```
 
 ### **Environment Variables**
@@ -99,11 +107,18 @@ ZOLO_SSL_KEY_PATH=/path/to/key
 from zCLI.zCLI import zCLI
 
 # zConfig initializes automatically as first subsystem
+# First run: Creates user directories and copies package defaults
 zcli = zCLI({'zSpark': {}, 'plugins': []})
 
 # Access configuration
 config = zcli.config
 ```
+
+### **First-Run Setup Process**
+1. **Directory Creation**: Creates OS-specific Application Support directories
+2. **Config Copying**: Copies `zConfig.default.yaml` to user's `zConfigs` folder
+3. **Machine Detection**: Auto-detects system capabilities and creates `zConfig.machine.yaml`
+4. **Environment Setup**: Configures logging and display based on detected environment
 
 ### **Configuration Access**
 ```python
@@ -250,11 +265,10 @@ def print_info(self):
 
 ### **Configuration Hierarchy**
 ```
-1. Package Defaults (zConfig.default.yaml)
-2. Environment Defaults (zConfig.dev.yaml)
-3. Machine Defaults (zConfig.machine.yaml)
-4. User Machine Config (~/.config/zolo-zcli/machine.yaml)
-5. Environment Variables (ZOLO_*)
+1. Package Defaults (config/zConfig.default.yaml)
+2. User Defaults (~/Library/Application Support/zolo-zcli/zConfigs/zConfig.default.yaml)
+3. User Machine Config (~/Library/Application Support/zolo-zcli/zConfigs/zConfig.machine.yaml)
+4. Environment Variables (ZOLO_*)
 ```
 
 ### **Dependencies**
@@ -318,7 +332,7 @@ sources = config.get_config_sources()
 
 #### **Machine Config Not Persisting**
 - Verify write permissions to user config directory
-- Check for YAML syntax errors in machine.yaml
+- Check for YAML syntax errors in zConfig.machine.yaml
 - Ensure valid configuration keys are used
 
 #### **Secrets Not Available**
@@ -456,6 +470,7 @@ else:
 2. **Override only when necessary** for user preferences
 3. **Use valid keys** from the predefined list
 4. **Test configuration changes** in development first
+5. **All config files** are stored in the zConfigs folder for easy management
 
 ### **Secret Management**
 1. **Never hardcode secrets** in configuration files
@@ -508,8 +523,10 @@ zConfig is the foundational configuration management subsystem that:
 - **🔧 Offers** configuration persistence with validation and error handling
 - **🔐 Handles** secure secret management via environment variables
 - **🚀 Supports** cross-platform configuration with automatic environment detection
+- **📁 Organizes** all configuration files in a dedicated `zConfigs` folder
+- **🔄 Automates** first-run setup with package defaults copying and machine detection
 
-As the first subsystem in zCLI's initialization order, zConfig sets the stage for a robust, configurable, and maintainable CLI framework that adapts to any environment and user preferences.
+As the first subsystem in zCLI's initialization order, zConfig sets the stage for a robust, configurable, and maintainable CLI framework that adapts to any environment and user preferences with a clean, organized configuration structure.
 
 ---
 
