@@ -5,9 +5,7 @@ PostgreSQL Service Manager
 Detects and manages local PostgreSQL installation
 """
 
-import subprocess
-import socket
-from zCLI import platform, Path
+from zCLI import subprocess, socket, platform, Path
 
 
 class PostgreSQLService:

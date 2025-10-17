@@ -2,6 +2,23 @@
 """Logger configuration and management as part of zConfig."""
 
 from zCLI import Colors, logging
+import os
+
+class FileNameFormatter(logging.Formatter):
+    """Custom formatter that shows the actual file name instead of logger name."""
+    
+    def __init__(self, logger_config, fmt=None, datefmt=None):
+        self.logger_config = logger_config
+        super().__init__(fmt, datefmt)
+    
+    def format(self, record):
+        # Get the caller file information
+        caller_name = self.logger_config._get_caller_info(record)
+        
+        # Replace the name field with the caller information
+        record.name = caller_name
+        
+        return super().format(record)
 
 class LoggerConfig:
     """Manages logging configuration and provides logging interface."""
@@ -54,6 +71,33 @@ class LoggerConfig:
         
         return level
     
+    def _get_caller_info(self, record):
+        """Extract caller file information from log record."""
+        pathname = record.pathname
+        
+        # For zCLI subsystems, show the subsystem name instead of the full file path
+        if 'zCLI/subsystems/' in pathname:
+            # Extract subsystem name from path like: /path/to/zCLI/subsystems/zComm/zComm.py
+            parts = pathname.split('zCLI/subsystems/')
+            if len(parts) > 1:
+                subsystem_part = parts[1]
+                # Get the first directory after subsystems (e.g., zComm from zComm/zComm.py)
+                subsystem = subsystem_part.split('/')[0]
+                return subsystem
+        
+        # For zCLI core files, show the module name
+        if 'zCLI/' in pathname and 'subsystems' not in pathname:
+            filename = os.path.basename(pathname)
+            if filename.endswith('.py'):
+                filename = filename[:-3]
+            return filename
+                
+        # For other files, just show the filename
+        filename = os.path.basename(pathname)
+        if filename.endswith('.py'):
+            filename = filename[:-3]
+        return filename
+    
     def _setup_logging(self):
         """Setup Python logging with configured level."""
         # Get logging configuration
@@ -73,14 +117,19 @@ class LoggerConfig:
         
         # Setup formatters based on format setting
         if log_format == "json":
-            formatter = logging.Formatter(
+            formatter = FileNameFormatter(
+                self,
                 '{"time":"%(asctime)s","level":"%(levelname)s","name":"%(name)s",'
                 '"message":"%(message)s"}'
             )
         elif log_format == "simple":
-            formatter = logging.Formatter('%(levelname)s: %(message)s')
+            formatter = FileNameFormatter(
+                self,
+                '%(levelname)s: %(message)s'
+            )
         else:  # detailed
-            formatter = logging.Formatter(
+            formatter = FileNameFormatter(
+                self,
                 '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                 datefmt='%Y-%m-%d %H:%M:%S'
             )

@@ -1,53 +1,53 @@
-# zCLI/subsystems/zComm/zComm_modules/websocket/websocket_server.py
+# zCLI/subsystems/zComm/zComm_modules/bifrost_socket.py
+"""Secure WebSocket server with authentication and origin validation."""
 
-"""
-zCLI/subsystems/zComm/zComm_modules/websocket/websocket_server.py
-zBifrost - Secure WebSocket server with authentication and origin validation
-The rainbow bridge connecting clients to zCLI backend
-"""
-
-import asyncio
-import json
-import os
 try:
-    from websockets.server import serve as ws_serve  # ✅ New API
-except Exception:  # Fallback for older websockets versions
-    try:
-        from websockets import serve as ws_serve  # Legacy
-    except Exception:  # As a last resort, leave as None (runtime error will log clearly)
-        ws_serve = None
+    from websockets import serve as ws_serve  # Standard import
+except Exception:  # As a last resort, leave as None (runtime error will log clearly)
+    ws_serve = None
 from websockets.legacy.server import WebSocketServerProtocol
 from websockets import exceptions as ws_exceptions
 
-# lazy import for CLI handlers to avoid heavy imports during module load
+from zCLI import asyncio, json, os
 
 # ─────────────────────────────────────────────────────────────
-# Config
+# Config (will be loaded from zCLI config system)
 # ─────────────────────────────────────────────────────────────
 
-# Load WebSocket configuration from environment
-PORT = int(os.getenv("WEBSOCKET_PORT", "56891"))
-HOST = os.getenv("WEBSOCKET_HOST", "127.0.0.1")  # Default to localhost for security
-ALLOWED_ORIGINS = os.getenv("WEBSOCKET_ALLOWED_ORIGINS", "").split(",")
-REQUIRE_AUTH = os.getenv("WEBSOCKET_REQUIRE_AUTH", "True").lower() in ("true", "1", "yes")
+# Default values (will be overridden by zCLI config)
+DEFAULT_PORT = 56891
+DEFAULT_HOST = "127.0.0.1"
+DEFAULT_REQUIRE_AUTH = True
+DEFAULT_ALLOWED_ORIGINS = []
 
 CLIENTS = set()
 
-
 class zBifrost:
-    def __init__(self, walker=None, zcli=None, port: int = PORT, host: str = HOST):
+    def __init__(self, logger, walker=None, zcli=None, port: int = None, host: str = None):
         self.walker = walker
         self.zcli = zcli or (walker.zcli if walker else None)
-        # Prefer zComm/zCLI logger, then walker logger, then module logger
-        self.logger = getattr(self.zcli, "logger", getattr(walker, "logger", None))
-        self.port = port
-        self.host = host
+        self.logger = logger
+        
+        # Load WebSocket configuration from zCLI config system
+        if self.zcli and hasattr(self.zcli, 'config') and hasattr(self.zcli.config, 'websocket'):
+            self.ws_config = self.zcli.config.websocket
+            self.port = port or self.ws_config.port
+            self.host = host or self.ws_config.host
+            self.require_auth = self.ws_config.require_auth
+            self.allowed_origins = self.ws_config.allowed_origins
+        else:
+            # Fallback to defaults if zCLI config not available
+            self.port = port or DEFAULT_PORT
+            self.host = host or DEFAULT_HOST
+            self.require_auth = DEFAULT_REQUIRE_AUTH
+            self.allowed_origins = DEFAULT_ALLOWED_ORIGINS
+            
         self.clients = set()
         self.authenticated_clients = {}  # Maps ws to auth info
 
     def validate_origin(self, ws: WebSocketServerProtocol) -> bool:
         """Validate the Origin header to prevent CSRF attacks."""
-        if not ALLOWED_ORIGINS or not ALLOWED_ORIGINS[0]:
+        if not self.allowed_origins or not self.allowed_origins[0]:
             # If no origins configured, allow localhost/127.0.0.1 only
             return True
         
@@ -58,7 +58,7 @@ class zBifrost:
             return False
         
         # Check if origin is in allowed list
-        for allowed in ALLOWED_ORIGINS:
+        for allowed in self.allowed_origins:
             if allowed.strip() and origin.startswith(allowed.strip()):
                 return True
         
@@ -67,7 +67,7 @@ class zBifrost:
 
     async def authenticate_client(self, ws: WebSocketServerProtocol) -> dict:
         """Authenticate the WebSocket client."""
-        if not REQUIRE_AUTH:
+        if not self.require_auth:
             self.logger.debug("[zBifrost] Authentication disabled by config")
             return {"authenticated": True, "user": "anonymous", "role": "guest"}
         
@@ -199,7 +199,7 @@ class zBifrost:
 
     async def start_socket_server(self, socket_ready):
         self.logger.info("✅ LIVE zSocket loaded")
-        self.logger.info(f"🔐 Security: Auth={REQUIRE_AUTH}, Origins={ALLOWED_ORIGINS if ALLOWED_ORIGINS[0] else 'localhost only'}")
+        self.logger.info(f"🔐 Security: Auth={self.require_auth}, Origins={self.allowed_origins if self.allowed_origins else 'localhost only'}")
         self.logger.info(f"🧪 Handler = {self.handle_client.__name__}, args = {self.handle_client.__code__.co_varnames}")
 
         try:

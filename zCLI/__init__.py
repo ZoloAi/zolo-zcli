@@ -13,6 +13,11 @@ import subprocess
 import importlib
 import secrets
 import logging
+import requests
+import asyncio
+import json
+import time
+import re
 from pathlib import Path
 
 # Import utilities (safe to import early)
@@ -28,7 +33,7 @@ __all__ = [
     "zCLI",
     
     # System modules
-    "os", "sys", "platform", "socket", "shutil", "yaml", "subprocess", "importlib", "secrets", "logging", "Path",
+    "os", "sys", "platform", "socket", "shutil", "yaml", "subprocess", "importlib", "secrets", "logging", "requests", "asyncio", "json", "time", "re", "Path",
     
     # Utils
     "print_ready", "Colors",

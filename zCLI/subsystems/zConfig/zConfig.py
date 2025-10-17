@@ -9,6 +9,7 @@ from .zConfig_modules import (
     ConfigPersistence,
     SessionConfig,
     LoggerConfig,
+    WebSocketConfig,
 )
 
 class zConfig:
@@ -34,6 +35,9 @@ class zConfig:
         # Initialize session THIRD (uses machine and environment config for session creation)
         # Pass self so SessionConfig can call back to create_logger()
         self.session = SessionConfig(self.machine, self.environment, zcli, zSpark_obj, zconfig=self)
+
+        # Initialize WebSocket configuration (uses environment config and session)
+        self.websocket = WebSocketConfig(self.environment, zcli, self.session.create_session())
 
         # Print styled ready message (before zDisplay is available)
         self.mycolor = "CONFIG"

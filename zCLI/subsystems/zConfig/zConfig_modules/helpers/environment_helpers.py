@@ -27,6 +27,17 @@ zEnv:
     external_host: "localhost"  # external access hostname
     external_port: 56891  # external access port
   
+  # WebSocket Configuration
+  # WebSocket settings hierarchy: zSpark > system env (WEBSOCKET_*) > this file
+  websocket:
+    host: "127.0.0.1"  # WebSocket bind address (default: localhost for security)
+    port: 56891  # WebSocket port
+    require_auth: true  # require authentication for WebSocket connections
+    allowed_origins: []  # list of allowed origins (empty = localhost only)
+    max_connections: 100  # maximum concurrent WebSocket connections
+    ping_interval: 20  # ping interval in seconds
+    ping_timeout: 10  # ping timeout in seconds
+  
   # Security Settings
   security:
     require_auth: true  # require authentication

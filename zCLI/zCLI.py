@@ -2,6 +2,8 @@
 # ───────────────────────────────────────────────────────────────
 """Single source of truth for all subsystems."""
 
+from zCLI import logging
+
 class zCLI:
     """Core zCLI Engine managing all subsystems 
     Supporting three GUI modes: Shell, Walker, and Bifrost."""
@@ -24,6 +26,7 @@ class zCLI:
         #     "plugins": [                              # Optional utility plugins
         #         "zSpark.Logic.zSparkUtils",           # Import path or absolute .py
         #     ],
+        #     ... other settings ...
         # }
 
         # ─────────────────────────────────────────────────────────────
@@ -37,9 +40,18 @@ class zCLI:
         self.session = self.config.session.create_session()
 
         # Get logger from session (initialized during session creation)
-        self.logger = self.session["logger_instance"]
+        session_logger = self.session["logger_instance"]
+
+        # Create zCLI-specific logger that will show "zCLI" in logs
+        self.logger = logging.getLogger("zCLI")
+        self.logger.setLevel(session_logger._logger.level)  # Use same level as session logger
+
+        # Add the same handlers as the session logger so messages get processed
+        for handler in session_logger._logger.handlers:
+            self.logger.addHandler(handler)
+
         # Log initial message with configured level
-        self.logger.info(f"[zCLI] Logger initialized at level: {self.logger.log_level}")
+        self.logger.info("Logger initialized at level: %s", session_logger.log_level) # First log message
 
         # Initialize zComm (Communication infrastructure for zBifrost and zData)
         from .subsystems.zComm import zComm
