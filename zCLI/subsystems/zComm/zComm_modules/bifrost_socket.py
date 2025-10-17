@@ -20,8 +20,6 @@ DEFAULT_HOST = "127.0.0.1"
 DEFAULT_REQUIRE_AUTH = True
 DEFAULT_ALLOWED_ORIGINS = []
 
-CLIENTS = set()
-
 class zBifrost:
     """Secure WebSocket server with authentication and origin validation."""
 

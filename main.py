@@ -52,6 +52,12 @@ def main() -> None:
     env_parser.add_argument("value", nargs="?", help="Value to set")
     env_parser.add_argument("--show", action="store_true", help="Show current environment configuration")
     
+    # Test subcommand
+    test_parser = subparsers.add_parser(
+        "test",
+        help="Run zCLI test suite"
+    )
+    
     # Uninstall subcommand
     uninstall_parser = subparsers.add_parser(
         "uninstall",
@@ -100,6 +106,10 @@ def main() -> None:
                 print("Usage: zolo config environment [key] [value] | --show")
         else:
             print("Usage: zolo config {machine|environment} ...")
+    
+    elif args.command == "test":
+        from zTestSuite.run_all_tests import main as run_tests
+        return run_tests()
     
     elif args.command == "uninstall":
         from zCLI.uninstall import uninstall_clean, uninstall_framework_only, uninstall_dependencies
