@@ -20,10 +20,16 @@ def authenticate_remote(zcli, username, password, server_url=None):
     logger.info("[*] Authenticating with remote server: %s", server_url)
     
     try:
-        result = zcli.comm.login(
-            {"username": username, "password": password, "mode": "Terminal"},
-            url=f"{server_url}/zAuth"
+        # Use zComm for pure HTTP communication
+        response = zcli.comm.http_post(
+            f"{server_url}/zAuth",
+            data={"username": username, "password": password, "mode": "Terminal"}
         )
+        
+        if not response:
+            return {"status": "fail", "reason": "Connection failed"}
+            
+        result = response.json()
         
         if result and result.get("status") == "success":
             user = result.get("user", {})

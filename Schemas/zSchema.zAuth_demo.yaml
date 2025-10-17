@@ -1,0 +1,159 @@
+# zSchema.zAuth_demo.yaml
+# Authentication schema for testing zAuth subsystem
+# ────────────────────────────────────────────────────────────────
+
+Meta:
+  Data_Type: sqlite
+  Data_path: "@.tests.zData_tests.zAuth_demo"
+  Data_Label: "zAuth_demo"
+  Data_Paradigm: classical
+  Description: Demo schema for zAuth testing
+
+# Users table for authentication
+zUsers:
+  id:
+    type: string
+    pk: true
+    source: generate_id(zU)
+    notes: "Primary key with zU prefix"
+  
+  username:
+    type: string
+    required: true
+    unique: true
+    rules:
+      min_length: 3
+      max_length: 50
+      pattern: "^[a-zA-Z0-9_]+$"
+      error_message: "Username must be 3-50 characters, alphanumeric and underscores only"
+    notes: "Unique username for login"
+  
+  password:
+    type: string
+    required: true
+    rules:
+      min_length: 8
+      max_length: 128
+    notes: "Hashed password stored securely"
+  
+  email:
+    type: string
+    required: true
+    unique: true
+    rules:
+      format: email
+    notes: "User's email address for notifications"
+  
+  role:
+    type: enum
+    options: ["admin", "user", "guest"]
+    default: "user"
+    required: true
+    notes: "User role for permission management"
+  
+  api_key:
+    type: string
+    unique: true
+    source: generate_id(zAPI)
+    notes: "API key for authentication, auto-generated"
+  
+  status:
+    type: enum
+    options: ["active", "inactive", "pending", "suspended"]
+    default: "pending"
+    notes: "Account status"
+  
+  created_at:
+    type: datetime
+    default: now
+    notes: "Account creation timestamp"
+  
+  updated_at:
+    type: datetime
+    default: now
+    notes: "Last update timestamp"
+  
+  last_login:
+    type: datetime
+    nullable: true
+    notes: "Last successful login timestamp"
+
+# Sessions table for tracking active sessions
+zSessions:
+  id:
+    type: string
+    pk: true
+    source: generate_id(zS)
+    notes: "Session identifier"
+  
+  user_id:
+    type: string
+    required: true
+    fk: zUsers.id
+    on_delete: CASCADE
+    notes: "Reference to authenticated user"
+  
+  token:
+    type: string
+    unique: true
+    source: generate_id(zTOK)
+    notes: "Session token for authentication"
+  
+  ip_address:
+    type: string
+    nullable: true
+    notes: "Client IP address"
+  
+  user_agent:
+    type: string
+    nullable: true
+    notes: "Client user agent"
+  
+  created_at:
+    type: datetime
+    default: now
+    notes: "Session creation time"
+  
+  expires_at:
+    type: datetime
+    required: true
+    notes: "Session expiration time"
+  
+  status:
+    type: enum
+    options: ["active", "expired", "revoked"]
+    default: "active"
+    notes: "Session status"
+
+# Login attempts table for security monitoring
+zLoginAttempts:
+  id:
+    type: string
+    pk: true
+    source: generate_id(zLA)
+  
+  username:
+    type: string
+    required: true
+    notes: "Username attempted (may not exist)"
+  
+  success:
+    type: boolean
+    required: true
+    notes: "Whether login was successful"
+  
+  ip_address:
+    type: string
+    nullable: true
+    notes: "Client IP address"
+  
+  failure_reason:
+    type: string
+    nullable: true
+    notes: "Reason for failure if unsuccessful"
+  
+  attempted_at:
+    type: datetime
+    default: now
+    notes: "Time of login attempt"
+

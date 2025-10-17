@@ -65,6 +65,10 @@ class zCLI:
         self.display = zDisplay(self)
         self.mycolor = "MAIN"
 
+        # Initialize authentication subsystem
+        from .subsystems.zAuth import zAuth
+        self.auth = zAuth(self)
+
         # Initialize dispatch subsystem
         from .subsystems.zDispatch import zDispatch
         self.dispatch = zDispatch(self)
@@ -97,9 +101,6 @@ class zCLI:
         from .subsystems.zData import zData
         self.data = zData(self)
 
-        # Initialize authentication subsystem
-        from .subsystems.zAuth import zAuth
-        self.auth = zAuth(self)
 
         # ─────────────────────────────────────────────────────────────
         # Layer 2: Core Abstraction

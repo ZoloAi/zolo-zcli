@@ -8,7 +8,7 @@ except Exception:  # As a last resort, leave as None (runtime error will log cle
 from websockets.legacy.server import WebSocketServerProtocol
 from websockets import exceptions as ws_exceptions
 
-from zCLI import asyncio, json, os
+from zCLI import asyncio, json
 
 # ─────────────────────────────────────────────────────────────
 # Config (will be loaded from zCLI config system)
@@ -23,11 +23,13 @@ DEFAULT_ALLOWED_ORIGINS = []
 CLIENTS = set()
 
 class zBifrost:
-    def __init__(self, logger, walker=None, zcli=None, port: int = None, host: str = None):
+    """Secure WebSocket server with authentication and origin validation."""
+
+    def __init__(self, logger, *, walker=None, zcli=None, port: int = None, host: str = None):
         self.walker = walker
         self.zcli = zcli or (walker.zcli if walker else None)
         self.logger = logger
-        
+
         # Load WebSocket configuration from zCLI config system
         if self.zcli and hasattr(self.zcli, 'config') and hasattr(self.zcli.config, 'websocket'):
             self.ws_config = self.zcli.config.websocket
@@ -41,7 +43,7 @@ class zBifrost:
             self.host = host or DEFAULT_HOST
             self.require_auth = DEFAULT_REQUIRE_AUTH
             self.allowed_origins = DEFAULT_ALLOWED_ORIGINS
-            
+
         self.clients = set()
         self.authenticated_clients = {}  # Maps ws to auth info
 
@@ -50,18 +52,18 @@ class zBifrost:
         if not self.allowed_origins or not self.allowed_origins[0]:
             # If no origins configured, allow localhost/127.0.0.1 only
             return True
-        
+
         origin = ws.request_headers.get("Origin", "")
         if not origin:
             self.logger.warning("[zBifrost] ⚠️ Connection without Origin header from %s", 
                               getattr(ws, 'remote_address', 'N/A'))
             return False
-        
+
         # Check if origin is in allowed list
         for allowed in self.allowed_origins:
             if allowed.strip() and origin.startswith(allowed.strip()):
                 return True
-        
+
         self.logger.warning("[zBifrost] 🚫 Connection from unauthorized origin: %s", origin)
         return False
 
@@ -70,33 +72,33 @@ class zBifrost:
         if not self.require_auth:
             self.logger.debug("[zBifrost] Authentication disabled by config")
             return {"authenticated": True, "user": "anonymous", "role": "guest"}
-        
+
         # Check for token in query parameters
         query = ws.path.split("?", 1)
         token = None
-        
+
         if len(query) > 1:
             params = dict(param.split("=") for param in query[1].split("&") if "=" in param)
             token = params.get("token") or params.get("api_key")
-        
+
         # Also check Authorization header
         if not token:
             auth_header = ws.request_headers.get("Authorization", "")
             if auth_header.startswith("Bearer "):
                 token = auth_header[7:]
-        
+
         if not token:
             self.logger.warning("[zBifrost] 🚫 No authentication token provided")
             await ws.close(code=1008, reason="Authentication required")
             return None
-        
+
         # Validate token against database
         try:
             if not self.walker:
                 self.logger.error("[zBifrost] Cannot validate: No zCLI instance available")
                 await ws.close(code=1008, reason="Server configuration error")
                 return None
-            
+
             result = self.walker.data.handle_request({
                 "action": "read",
                 "model": "@.zCloud.schemas.schema.zIndex.zUsers",
@@ -104,7 +106,7 @@ class zBifrost:
                 "filters": {"api_key": token},
                 "limit": 1
             })
-            
+
             if result and len(result) > 0:
                 user = result[0]
                 self.logger.info("[zBifrost] ✅ Authenticated: %s (role=%s)", 
@@ -115,39 +117,40 @@ class zBifrost:
                     "role": user.get("role"),
                     "user_id": user.get("id")
                 }
-            else:
-                self.logger.warning("[zBifrost] 🚫 Invalid authentication token")
-                await ws.close(code=1008, reason="Invalid token")
-                return None
-                
+
+            self.logger.warning("[zBifrost] 🚫 Invalid authentication token")
+            await ws.close(code=1008, reason="Invalid token")
+            return None
+
         except Exception as e:
             self.logger.error("[zBifrost] ❌ Authentication error: %s", e)
             await ws.close(code=1011, reason="Authentication error")
             return None
 
     async def handle_client(self, ws: WebSocketServerProtocol):
+        """Handle WebSocket client connection with authentication and message processing."""
         path = ws.path
         remote_addr = getattr(ws, 'remote_address', 'N/A')
-        
+
         self.logger.info(f"[zBifrost] 🔬 New connection from {remote_addr}, path: {path}")
-        
+
         # Validate origin
         if not self.validate_origin(ws):
             self.logger.warning("[zBifrost] 🚫 Connection rejected due to invalid origin")
             await ws.close(code=1008, reason="Invalid origin")
             return
-        
+
         # Authenticate client
         auth_info = await self.authenticate_client(ws)
         if not auth_info:
             return  # Connection closed in authenticate_client
-        
+
         # Store authentication info
         self.authenticated_clients[ws] = auth_info
         self.clients.add(ws)
-        
+
         self.logger.info(f"[zBifrost] ✅ Client authenticated and connected: {auth_info.get('user')} ({remote_addr})")
-        
+
         try:
             async for message in ws:
                 self.logger.info(f"[zBifrost] 📩 Received: {message}")
@@ -166,7 +169,9 @@ class zBifrost:
                     self.logger.debug(f"[zBifrost] ▶ Dispatching CLI cmd: {zKey}")
                     try:
                         # Use core zDispatch - walker is optional for WebSocket context
-                        result = await asyncio.to_thread(handle_zDispatch, zKey, zHorizontal, zcli=self.zcli, walker=self.walker)
+                        result = await asyncio.to_thread(
+                            handle_zDispatch, zKey, zHorizontal, zcli=self.zcli, walker=self.walker
+                        )
                         payload = json.dumps({"result": result})
                     except Exception as exc:  # pylint: disable=broad-except
                         self.logger.error("[zBifrost] ❌ CLI execution error: %s", exc)
@@ -191,6 +196,7 @@ class zBifrost:
             self.logger.debug(f"[zBifrost] 🔻 Active clients: {len(self.clients)}")
 
     async def broadcast(self, message, sender=None):
+        """Broadcast message to all connected clients except sender."""
         self.logger.debug(f"[zBifrost] 📡 Broadcasting to {len(self.clients) - 1} other clients")
         for client in self.clients:
             if client != sender and client.open:
@@ -198,8 +204,10 @@ class zBifrost:
                 self.logger.debug(f"[zBifrost] 📨 Sent to {getattr(client, 'remote_address', 'N/A')}")
 
     async def start_socket_server(self, socket_ready):
+        """Start the WebSocket server and signal when ready."""
         self.logger.info("✅ LIVE zSocket loaded")
-        self.logger.info(f"🔐 Security: Auth={self.require_auth}, Origins={self.allowed_origins if self.allowed_origins else 'localhost only'}")
+        origins = self.allowed_origins if self.allowed_origins else 'localhost only'
+        self.logger.info(f"🔐 Security: Auth={self.require_auth}, Origins={origins}")
         self.logger.info(f"🧪 Handler = {self.handle_client.__name__}, args = {self.handle_client.__code__.co_varnames}")
 
         try:
@@ -208,7 +216,8 @@ class zBifrost:
             server = await ws_serve(self.handle_client, self.host, self.port)
         except OSError as e:
             if getattr(e, 'errno', None) == 48:  # macOS/Linux: Address already in use
-                self.logger.error(f"❌ Port {self.port} already in use. Try restarting the app or killing the stuck process.")
+                msg = f"❌ Port {self.port} already in use. Try restarting the app or killing the stuck process."
+                self.logger.error(msg)
             else:
                 self.logger.error(f"❌ Failed to start WebSocket server: {e}")
             return
@@ -220,29 +229,23 @@ class zBifrost:
         await server.wait_closed()
 
 # ─────────────────────────────────────────────────────────────
-# Handle client connection
-# ─────────────────────────────────────────────────────────────
-
-_DEFAULT_SOCKET = None
-
-def _get_default_socket(walker=None):
-    global _DEFAULT_SOCKET  # pylint: disable=global-statement
-    if _DEFAULT_SOCKET is None:
-        _DEFAULT_SOCKET = zBifrost(walker)
-    return _DEFAULT_SOCKET
-
-# ─────────────────────────────────────────────────────────────
-# Broadcast message to all clients except sender
+# Module-level convenience functions
 # ─────────────────────────────────────────────────────────────
 
 async def broadcast(message, sender=None, walker=None):
-    sock = _get_default_socket(walker)
-    await sock.broadcast(message, sender=sender)
-
-# ─────────────────────────────────────────────────────────────
-# Start the WebSocket server
-# ─────────────────────────────────────────────────────────────
+    """Broadcast message to all clients using walker's socket."""
+    if walker and hasattr(walker, 'zcli') and hasattr(walker.zcli, 'comm'):
+        await walker.zcli.comm.broadcast_websocket(message, sender=sender)
+    else:
+        # Fallback: create temporary socket for broadcast
+        sock = zBifrost(None, walker=walker)
+        await sock.broadcast(message, sender=sender)
 
 async def start_socket_server(socket_ready, walker=None):
-    sock = _get_default_socket(walker)
-    await sock.start_socket_server(socket_ready)
+    """Start WebSocket server using walker's comm subsystem."""
+    if walker and hasattr(walker, 'zcli') and hasattr(walker.zcli, 'comm'):
+        await walker.zcli.comm.start_websocket(socket_ready, walker=walker)
+    else:
+        # Fallback: create temporary socket
+        sock = zBifrost(None, walker=walker)
+        await sock.start_socket_server(socket_ready)

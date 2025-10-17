@@ -57,24 +57,9 @@ class zComm:
             self.logger.warning("Failed to auto-start WebSocket server: %s", e)
 
     def _print_ready(self):
-        """Print styled 'Ready' message (before zDisplay is available)."""
-        try:
-            from ..zDisplay.zDisplay_modules.utils.colors import Colors
-            color_code = getattr(Colors, self.mycolor, Colors.RESET)
-            label = "zComm Ready"
-            BASE_WIDTH = 60
-            char = "═"
-            label_len = len(label) + 2
-            space = BASE_WIDTH - label_len
-            left = space // 2
-            right = space - left
-            colored_label = f"{color_code} {label} {Colors.RESET}"
-            line = f"{char * left}{colored_label}{char * right}"
-            print(line)
-        except Exception:
-            # Silently fail if Colors not available
-            pass
-
+        """Print simple ready message (before zDisplay is available)."""
+        # Simple console output - no display subsystem dependency
+        print("zComm Ready")
 
     # ═══════════════════════════════════════════════════════════
     # WebSocket Management
@@ -91,23 +76,23 @@ class zComm:
             config_host = host or "127.0.0.1"
             config_port = port or 56891
             self.logger.info("Creating WebSocket server with defaults: %s:%d", config_host, config_port)
-            
+
         self.logger.debug("WebSocket config - walker=%s, port=%d, host=%s", 
                          walker is not None, config_port, config_host)
-        
+
         self.websocket = zBifrost(self.logger, walker=walker, zcli=self.zcli, port=config_port, host=config_host)
-        
+
         self.logger.info("WebSocket server instance created successfully")
         return self.websocket
 
     async def start_websocket(self, socket_ready, walker=None):
         """Start WebSocket server."""
         self.logger.info("Starting WebSocket server...")
-        
+
         # Always create a new WebSocket instance to ensure we have the latest config
         self.logger.debug("Creating WebSocket instance with current configuration")
         self.websocket = self.create_websocket(walker=walker)
-            
+
         self.logger.debug("Calling start_socket_server with socket_ready callback")
         await self.websocket.start_socket_server(socket_ready)
         self.logger.info("WebSocket server started successfully")
@@ -116,7 +101,8 @@ class zComm:
         """Broadcast message to all WebSocket clients."""
         if self.websocket:
             self.logger.debug("Broadcasting WebSocket message from sender: %s", sender)
-            self.logger.debug("Message content: %s", str(message)[:100] + "..." if len(str(message)) > 100 else str(message))
+            msg_preview = str(message)[:100] + "..." if len(str(message)) > 100 else str(message)
+            self.logger.debug("Message content: %s", msg_preview)
             await self.websocket.broadcast(message, sender=sender)
             self.logger.debug("WebSocket broadcast completed")
         else:
@@ -130,40 +116,40 @@ class zComm:
         """Start a local service."""
         self.logger.info("Starting service: %s", service_name)
         self.logger.debug("Service start parameters: %s", kwargs)
-        
+
         result = self.services.start(service_name, **kwargs)
-        
+
         if result:
             self.logger.info("Service '%s' started successfully", service_name)
         else:
             self.logger.error("Failed to start service '%s'", service_name)
-            
+
         return result
 
     def stop_service(self, service_name):
         """Stop a running service."""
         self.logger.info("Stopping service: %s", service_name)
-        
+
         result = self.services.stop(service_name)
-        
+
         if result:
             self.logger.info("Service '%s' stopped successfully", service_name)
         else:
             self.logger.error("Failed to stop service '%s'", service_name)
-            
+
         return result
 
     def restart_service(self, service_name):
         """Restart a service."""
         self.logger.info("Restarting service: %s", service_name)
-        
+
         result = self.services.restart(service_name)
-        
+
         if result:
             self.logger.info("Service '%s' restarted successfully", service_name)
         else:
             self.logger.error("Failed to restart service '%s'", service_name)
-            
+
         return result
 
     def service_status(self, service_name=None):
@@ -172,24 +158,24 @@ class zComm:
             self.logger.debug("Getting status for service: %s", service_name)
         else:
             self.logger.debug("Getting status for all services")
-            
+
         status = self.services.status(service_name)
-        
+
         if service_name:
             self.logger.debug("Service '%s' status: %s", service_name, status)
         else:
             self.logger.debug("All services status: %s", status)
-            
+
         return status
 
     def get_service_connection_info(self, service_name):
         """Get connection information for a service."""
         self.logger.debug("Getting connection info for service: %s", service_name)
-        
+
         info = self.services.get_connection_info(service_name)
-        
+
         self.logger.debug("Service '%s' connection info: %s", service_name, info)
-        
+
         return info
 
     # ═══════════════════════════════════════════════════════════
@@ -199,99 +185,41 @@ class zComm:
     def check_port(self, port):
         """Check if a port is available."""
         import socket
-        
+
         self.logger.debug("Checking port availability: %d", port)
-        
+
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(1)
             result = sock.connect_ex(('localhost', port))
             sock.close()
-            
+
             is_available = result != 0  # True if available, False if in use
-            
+
             if is_available:
                 self.logger.debug("Port %d is available", port)
             else:
                 self.logger.debug("Port %d is in use", port)
-                
+
             return is_available
-            
+
         except Exception as e:
             self.logger.error("Error checking port %d: %s", port, e)
             return False
 
     # ═══════════════════════════════════════════════════════════
-    # HTTP Client (Auth and APIs)
+    # HTTP Client (Pure Communication)
     # ═══════════════════════════════════════════════════════════
 
-    def login(self, data, url=None):
-        """Authenticate with remote server and update session auth fields."""
-        self.logger.info("Starting authentication process")
-        
-        session = self.session
-
-        # Optional display notice (display may not exist during early init)
-        try:
-            if hasattr(self.zcli, 'display') and self.zcli.display:
-                self.logger.debug("Sending display notification for authentication")
-                self.zcli.display.handle({
-                    "event": "sysmsg",
-                    "label": "send_to_server",
-                    "color": self.mycolor,
-                    "indent": 0
-                })
-        except Exception as e:
-            self.logger.debug("Display notification failed (non-critical): %s", e)
-
-        if not url:
-            url = "http://127.0.0.1:5000/zAuth"
-            self.logger.debug("No URL provided — defaulting to %s", url)
-        else:
-            self.logger.debug("Using provided authentication URL: %s", url)
-
-        # Include current session mode so server can distinguish CLI vs Web
-        data = dict(data or {})
-        session_mode = session.get("zMode")
-        data.setdefault("mode", session_mode)
-        
-        self.logger.debug("Session mode: %s", session_mode)
-        self.logger.info("Sending authentication request to %s", url)
+    def http_post(self, url, data=None, timeout=10):
+        """Make HTTP POST request - pure communication, no auth logic."""
+        self.logger.debug("Making HTTP POST request to %s", url)
         self.logger.debug("Request payload: %s", data)
 
         try:
-            self.logger.debug("Making HTTP POST request with 10s timeout")
-            response = requests.post(url, json=data, timeout=10)
-
-            self.logger.info("Authentication response received [status=%s]", response.status_code)
-            self.logger.debug("Response body: %s", response.text)
-
-            self.logger.debug("Parsing JSON response")
-            result = response.json()
-
-            if result.get("status") == "success" and "user" in result:
-                user = result["user"]
-                
-                self.logger.debug("Authentication successful, updating session")
-                session["zAuth"].update({
-                    "username": user.get("username"),
-                    "role": user.get("role"),
-                    "id": user.get("id", None),
-                    "API_Key": user.get("api_key", None)
-                })
-
-                self.logger.info("User authenticated successfully: %s (role=%s)",
-                                 user.get("username"), user.get("role"))
-                self.logger.debug("Session updated - ID: %s, API_Key: %s",
-                    user.get("id", None),
-                    user.get("api_key", None)
-                )
-
-                return result
-
-            self.logger.warning("Authentication failed or missing user data in response: %s", result)
-            return None
-
+            response = requests.post(url, json=data, timeout=timeout)
+            self.logger.debug("Response received [status=%s]", response.status_code)
+            return response
         except Exception as e:
-            self.logger.error("Exception during authentication request to %s: %s", url, e)
+            self.logger.error("HTTP POST request failed to %s: %s", url, e)
             return None
