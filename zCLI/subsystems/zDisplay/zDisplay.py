@@ -58,11 +58,11 @@ class zDisplay:
         self.session = zcli.session
         self.logger = zcli.logger
         self.mode = self.session.get("zMode", "Terminal")
-        
+
         # Colors utility
         self.colors = Colors
         self.mycolor = "ZDISPLAY"
-        
+
         # Create adapters based on mode
         self.output = OutputFactory.create(self.session, self.logger)
         self.input = InputFactory.create(self.session, self.logger)
@@ -316,11 +316,11 @@ class zDisplay:
             if event == "sysmsg":
                 return handler(obj, self.output, session=self.session, mycolor=self.mycolor, logger=self.logger)
             return handler(obj, self.output, logger=self.logger)
-        if adapter_type == "input":
+        elif adapter_type == "input":
             return handler(obj, self.input, logger=self.logger)
-        if adapter_type == "both":
+        elif adapter_type == "both":
             return handler(obj, self.output, self.input, logger=self.logger)
-        
-        self.logger.error("Invalid adapter type '%s' for event '%s'", adapter_type, event)
-        return None
+        else:
+            self.logger.error("Invalid adapter type '%s' for event '%s'", adapter_type, event)
+            return None
 
