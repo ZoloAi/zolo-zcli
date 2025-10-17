@@ -1,3 +1,5 @@
+# zCLI/subsystems/zAuth/zAuth.py
+
 # zCLI/subsystems/zAuth.py — Authentication Subsystem
 # ───────────────────────────────────────────────────────────────
 

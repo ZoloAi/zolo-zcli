@@ -1,12 +1,10 @@
+# zCLI/subsystems/zComm/zComm.py
+
 """Communication & Service Management Subsystem for WebSocket, services and localhost utilities."""
 
-from logger import Logger
+import requests
 from .zComm_modules.websocket.websocket_server import zBifrost
 from .zComm_modules.services import ServiceManager
-
-# Logger instance
-logger = Logger.get_logger(__name__)
-
 
 class zComm:
     """Communication & Service Management for WebSocket and services."""
@@ -115,3 +113,77 @@ class zComm:
         except Exception as e:
             self.logger.error("Error checking port %d: %s", port, e)
             return False
+
+    # ═══════════════════════════════════════════════════════════
+    # HTTP Client (Auth and APIs)
+    # ═══════════════════════════════════════════════════════════
+
+    def login(self, data, url=None):
+        """
+        Authenticate with remote server and update session auth fields.
+
+        Args:
+            data: Login credentials dict
+            url: Authentication endpoint (defaults to local server)
+
+        Returns:
+            dict: Authentication result or None on failure
+        """
+        session = self.session
+
+        # Optional display notice (display may not exist during early init)
+        try:
+            if hasattr(self.zcli, 'display') and self.zcli.display:
+                self.zcli.display.handle({
+                    "event": "sysmsg",
+                    "label": "send_to_server",
+                    "color": self.mycolor,
+                    "indent": 0
+                })
+        except Exception:
+            pass
+
+        if not url:
+            url = "http://127.0.0.1:5000/zAuth"
+            self.logger.debug("[Web] No URL provided — defaulting to %s", url)
+
+        # Include current session mode so server can distinguish CLI vs Web
+        data = dict(data or {})
+        data.setdefault("mode", session.get("zMode"))
+
+        self.logger.info("[>>] Sending request to %s", url)
+        self.logger.debug("└── Payload: %s", data)
+
+        try:
+            response = requests.post(url, json=data, timeout=10)
+
+            self.logger.info("[<<] Response received [status=%s]", response.status_code)
+            self.logger.debug("└── Body: %s", response.text)
+
+            result = response.json()
+
+            if result.get("status") == "success" and "user" in result:
+                user = result["user"]
+                session["zAuth"].update({
+                    "username": user.get("username"),
+                    "role": user.get("role"),
+                    "id": user.get("id", None),
+                    "API_Key": user.get("api_key", None)
+                })
+
+                self.logger.info("[*] Authenticated user: %s (role=%s)",
+                                 user.get("username"), user.get("role"))
+                self.logger.debug(
+                    "└── Updated zSession['zAuth']: id=%s, API_Key=%s",
+                    user.get("id", None),
+                    user.get("api_key", None)
+                )
+
+                return result
+
+            self.logger.warning("[FAIL] Login failed or missing user data in response: %s", result)
+            return None
+
+        except Exception as e:
+            self.logger.error("[ERROR] Exception during request to %s: %s", url, e)
+            return None

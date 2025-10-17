@@ -1,25 +1,13 @@
-# zCLI/subsystems/zParser_modules/zParser_utils.py — Parser Utilities Module
-# ───────────────────────────────────────────────────────────────
+# zCLI/subsystems/zParser/zParser_modules/zParser_utils.py
+
 """Utility functions for parsing operations."""
 
-import os
+from zCLI import os
 import json
 import yaml
-from logger import Logger
 
-# Logger instance
-logger = Logger.get_logger(__name__)
-
-
-def zExpr_eval(expr, display=None):
-    """
-    Evaluate JSON expressions.
-    Converts string representations to Python objects.
-    
-    Args:
-        expr: Expression string to evaluate
-        display: Optional display instance for rendering
-    """
+def zExpr_eval(expr, logger, display=None):
+    """Evaluate JSON expressions and convert to Python objects."""
     if display:
         display.handle({
             "event": "sysmsg",
@@ -52,15 +40,7 @@ def zExpr_eval(expr, display=None):
 
 
 def parse_dotted_path(ref_expr):
-    """
-    Parse a dotted path like 'zApp.schema.users' into useful parts.
-    
-    Returns:
-        dict with:
-            - table: final key (e.g., 'users')
-            - parts: list of path parts
-            - is_valid: True if input is valid dotted string
-    """
+    """Parse a dotted path string into table name, parts list, and validity."""
     if not isinstance(ref_expr, str):
         return {"is_valid": False, "error": "not a string"}
 
@@ -77,16 +57,8 @@ def parse_dotted_path(ref_expr):
     }
 
 
-def handle_zRef(ref_expr, base_path=None, display=None):
-    """
-    Handle zRef expressions to load YAML data.
-    Uses provided base_path or falls back to current working directory.
-    
-    Args:
-        ref_expr: zRef expression string
-        base_path: Optional base path for resolution
-        display: Optional display instance for rendering
-    """
+def handle_zRef(ref_expr, logger, base_path=None, display=None):
+    """Handle zRef expressions to load YAML data."""
     if display:
         display.handle({
             "event": "sysmsg",
@@ -126,17 +98,7 @@ def handle_zRef(ref_expr, base_path=None, display=None):
 
 
 def handle_zParser(zFile_raw, display=None):  # pylint: disable=unused-argument
-    """
-    Placeholder function for zParser handler.
-    Currently just returns True for compatibility.
-    
-    Args:
-        zFile_raw: Raw file data to process
-        display: Optional display instance for rendering
-        
-    Returns:
-        bool: Always returns True (placeholder)
-    """
+    """Placeholder function that always returns True."""
     if display:
         display.handle({
             "event": "sysmsg",

@@ -1,11 +1,10 @@
+# zCLI/subsystems/zNavigation/zNavigation_modules/menu_system.py
+
 """Menu system for zNavigation."""
 
-from logger import Logger
 from .menu_builder import MenuBuilder
 from .menu_renderer import MenuRenderer
 from .menu_interaction import MenuInteraction
-
-logger = Logger.get_logger(__name__)
 
 
 class MenuSystem:
@@ -114,7 +113,7 @@ class MenuSystem:
             "indent": 1
         })
 
-        logger.debug(
+        self.logger.debug(
             "\nzMENU Object:"
             "\n. zBlock      : %s"
             "\n. zKey        : %s"
@@ -129,10 +128,10 @@ class MenuSystem:
         # Handle anchor mode logic
         options = zMenu_obj["zHorizontal"]
         if not zMenu_obj["is_anchor"]:
-            logger.debug("Anchor mode active — injecting zBack into menu.")
+            self.logger.debug("Anchor mode active — injecting zBack into menu.")
             options = options + ["zBack"]
 
-        logger.debug("zMenu options:\n%s", options)
+        self.logger.debug("zMenu options:\n%s", options)
 
         # Create menu pairs for display
         menu_pairs = list(enumerate(options))
@@ -165,12 +164,12 @@ class MenuSystem:
             raw_zFile = walker.loader.handle()
             selected_parsed = raw_zFile[active_zBlock][selected]
             
-            logger.debug("selected parsed from vertical: %s", selected_parsed)
+            self.logger.debug("selected parsed from vertical: %s", selected_parsed)
             
             dispatch_results = walker.dispatch.handle(selected, selected_parsed)
-            logger.debug("dispatch results: %s", dispatch_results)
+            self.logger.debug("dispatch results: %s", dispatch_results)
             return dispatch_results
             
         except Exception as e:
-            logger.error("❌ Failed during vertical dispatch for: %s — %s", selected, e, exc_info=True)
+            self.logger.error("❌ Failed during vertical dispatch for: %s — %s", selected, e, exc_info=True)
             raise

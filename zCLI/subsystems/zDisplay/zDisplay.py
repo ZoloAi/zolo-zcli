@@ -1,7 +1,6 @@
-# zCLI/subsystems/zDisplay.py
+# zCLI/subsystems/zDisplay/zDisplay.py
 """Display and rendering subsystem - UI elements, input collection, multi-mode output."""
 
-from logger import Logger
 from .zDisplay_modules.output import OutputFactory
 from .zDisplay_modules.input import InputFactory
 from .zDisplay_modules.utils import Colors
@@ -41,8 +40,6 @@ from .zDisplay_modules.events.tables import (
     handle_schema_table,
 )
 
-logger = Logger.get_logger(__name__)
-
 class zDisplay:
     """Display and rendering subsystem - UI elements, input collection, multi-mode output."""
 
@@ -67,8 +64,8 @@ class zDisplay:
         self.mycolor = "ZDISPLAY"
         
         # Create adapters based on mode
-        self.output = OutputFactory.create(self.session)
-        self.input = InputFactory.create(self.session)
+        self.output = OutputFactory.create(self.session, self.logger)
+        self.input = InputFactory.create(self.session, self.logger)
 
         self.handle({
             "event": "sysmsg",
@@ -313,15 +310,16 @@ class zDisplay:
             return None
         
         # Call handler with appropriate adapter(s)
+        # All handlers receive logger as a keyword argument for consistency
         if adapter_type == "output":
-            # Special case: sysmsg needs session and mycolor
+            # Special case: sysmsg needs additional session and mycolor
             if event == "sysmsg":
-                return handler(obj, self.output, session=self.session, mycolor=self.mycolor)
-            return handler(obj, self.output)
+                return handler(obj, self.output, session=self.session, mycolor=self.mycolor, logger=self.logger)
+            return handler(obj, self.output, logger=self.logger)
         if adapter_type == "input":
-            return handler(obj, self.input)
+            return handler(obj, self.input, logger=self.logger)
         if adapter_type == "both":
-            return handler(obj, self.output, self.input)
+            return handler(obj, self.output, self.input, logger=self.logger)
         
         self.logger.error("Invalid adapter type '%s' for event '%s'", adapter_type, event)
         return None

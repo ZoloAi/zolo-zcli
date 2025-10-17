@@ -1,9 +1,4 @@
-from logger import Logger
-
-# Logger instance
-logger = Logger.get_logger(__name__)
-# Global session import removed - use instance-based sessions
-
+# zCLI/subsystems/zNavigation/zNavigation_modules/breadcrumbs.py
 
 class Breadcrumbs:
     """Manage breadcrumb trails for the CLI session."""
@@ -26,19 +21,19 @@ class Breadcrumbs:
             "indent": 2,
         })
 
-        logger.debug("\nIncoming zBlock: %s,\nand zKey: %s", zBlock, zKey)
-        logger.debug("\nCurrent zCrumbs: %s", self.zcli.session["zCrumbs"])
+        self.logger.debug("\nIncoming zBlock: %s,\nand zKey: %s", zBlock, zKey)
+        self.logger.debug("\nCurrent zCrumbs: %s", self.zcli.session["zCrumbs"])
 
         if zBlock not in self.zcli.session["zCrumbs"]:
             self.zcli.session["zCrumbs"][zBlock] = []
-            logger.debug("\nCurrent zCrumbs: %s", self.zcli.session["zCrumbs"])
+            self.logger.debug("\nCurrent zCrumbs: %s", self.zcli.session["zCrumbs"])
 
         zBlock_crumbs = self.zcli.session["zCrumbs"][zBlock]
-        logger.debug("\nCurrent zTrail: %s", zBlock_crumbs)
+        self.logger.debug("\nCurrent zTrail: %s", zBlock_crumbs)
 
         # Prevent duplicate zKeys
         if zBlock_crumbs and zBlock_crumbs[-1] == zKey:
-            logger.debug(
+            self.logger.debug(
                 "Breadcrumb '%s' already exists at the end of scope '%s' — skipping.",
                 zKey,
                 zBlock,
@@ -47,7 +42,7 @@ class Breadcrumbs:
 
         # ✅ All good — add it
         zBlock_crumbs.append(zKey)
-        logger.debug("\nCurrent zTrail: %s", zBlock_crumbs)
+        self.logger.debug("\nCurrent zTrail: %s", zBlock_crumbs)
 
     def handle_zBack(self, show_banner=True):
         self.walker.display.handle({
@@ -59,54 +54,54 @@ class Breadcrumbs:
         })
 
         active_zCrumb = next(reversed(self.zSession["zCrumbs"]))
-        logger.debug("active_zCrumb: %s", active_zCrumb)
+        self.logger.debug("active_zCrumb: %s", active_zCrumb)
 
         original_zCrumb = next(iter(self.zSession["zCrumbs"]))
-        logger.debug("original_zCrumb: %s", original_zCrumb)
+        self.logger.debug("original_zCrumb: %s", original_zCrumb)
 
         active_zBlock = active_zCrumb.split(".")[-1]
-        logger.debug("active_zBlock: %s", active_zBlock)
+        self.logger.debug("active_zBlock: %s", active_zBlock)
 
         trail = self.zSession["zCrumbs"][active_zCrumb]
-        logger.debug("trail: %s", trail)
+        self.logger.debug("trail: %s", trail)
 
         # Pop the last crumb if present; otherwise, if empty and not root, pop the scope
         if trail:
             trail.pop()
-            logger.debug("Trail after pop in '%s': %s", active_zCrumb, trail)
+            self.logger.debug("Trail after pop in '%s': %s", active_zCrumb, trail)
         else:
             if active_zCrumb != original_zCrumb:
                 # remove the empty child scope
                 popped_scope = self.zSession["zCrumbs"].pop(active_zCrumb, None)
-                logger.debug("Popped empty zCrumb scope: %s → %s", active_zCrumb, popped_scope)
+                self.logger.debug("Popped empty zCrumb scope: %s → %s", active_zCrumb, popped_scope)
                 # move to parent (now last scope)
                 active_zCrumb = next(reversed(self.zSession["zCrumbs"]))
-                logger.debug("active_zCrumb (parent): %s", active_zCrumb)
+                self.logger.debug("active_zCrumb (parent): %s", active_zCrumb)
                 trail = self.zSession["zCrumbs"][active_zCrumb]
-                logger.debug("parent trail before pop: %s", trail)
+                self.logger.debug("parent trail before pop: %s", trail)
                 # also pop the parent's last key (the link that opened the child)
                 if trail:
                     trail.pop()
-                    logger.debug("parent trail after pop: %s", trail)
+                    self.logger.debug("parent trail after pop: %s", trail)
             else:
-                logger.debug("Root scope reached with empty trail; nothing to pop.")
+                self.logger.debug("Root scope reached with empty trail; nothing to pop.")
 
         # If after popping the current scope became empty (and it's not root), also remove it and pop parent key
         if not trail and active_zCrumb != original_zCrumb:
             popped_scope = self.zSession["zCrumbs"].pop(active_zCrumb, None)
-            logger.debug("Post-pop empty scope removed: %s → %s", active_zCrumb, popped_scope)
+            self.logger.debug("Post-pop empty scope removed: %s → %s", active_zCrumb, popped_scope)
             active_zCrumb = next(reversed(self.zSession["zCrumbs"]))
-            logger.debug("active_zCrumb (parent): %s", active_zCrumb)
+            self.logger.debug("active_zCrumb (parent): %s", active_zCrumb)
             trail = self.zSession["zCrumbs"][active_zCrumb]
-            logger.debug("parent trail (pre second pop): %s", trail)
+            self.logger.debug("parent trail (pre second pop): %s", trail)
             if trail:
                 trail.pop()
-                logger.debug("parent trail (post second pop): %s", trail)
+                self.logger.debug("parent trail (post second pop): %s", trail)
         if show_banner and getattr(self.walker, "display", None):
             self.walker.display.handle({"event": "zCrumbs"})  # Aesthetic
 
         if trail == [] and active_zCrumb == original_zCrumb:
-            logger.debug("Root scope reached; crumb cleared but scope preserved.")
+            self.logger.debug("Root scope reached; crumb cleared but scope preserved.")
 
         # Update session context to reflect the new active crumb so subsequent
         # loads reference the correct file and block.
@@ -128,7 +123,7 @@ class Breadcrumbs:
         zBlock_keys = list(active_zBlock_dict.keys())
 
         if not zBlock_keys:
-            logger.error("No keys in active zBlock after zBack; cannot resume.")
+            self.logger.error("No keys in active zBlock after zBack; cannot resume.")
             return active_zBlock_dict, [], None
 
         # Normalize start key: only use it if it exists; otherwise start from first
@@ -136,7 +131,7 @@ class Breadcrumbs:
             start_key = resolved_zBack_key
         else:
             if resolved_zBack_key:
-                logger.warning(
+                self.logger.warning(
                     "Resolved zKey %r not valid for block %r",
                     resolved_zBack_key,
                     self.zSession["zBlock"],

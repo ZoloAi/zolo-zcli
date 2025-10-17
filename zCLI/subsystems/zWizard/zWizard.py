@@ -1,38 +1,16 @@
 # zCLI/subsystems/zWizard/zWizard.py
-"""
-zWizard - Core loop engine for vertical/horizontal walking.
 
-Provides the fundamental iteration pattern used by both:
-- Wizard mode: Linear step execution with transactions
-- Walker mode: Interactive navigation with menus/breadcrumbs
-"""
+"""Core loop engine for vertical/horizontal walking in Wizard and Walker modes."""
 
-from logger import Logger
 import re
 import traceback
 from .zWizard_modules import execute_step_shell_mode
 
-# Logger instance
-logger = Logger.get_logger(__name__)
-
-
 class zWizard:
-    """
-    Core loop engine for vertical/horizontal walking.
-    
-    Provides the fundamental iteration pattern used by both:
-    - Wizard mode: Linear step execution with transactions
-    - Walker mode: Interactive navigation with menus/breadcrumbs
-    """
+    """Core loop engine for vertical/horizontal walking in Wizard and Walker modes."""
     
     def __init__(self, zcli=None, walker=None):
-        """
-        Initialize zWizard subsystem.
-        
-        Args:
-            zcli: zCLI instance (preferred)
-            walker: Walker instance (legacy compatibility)
-        """
+        """Initialize zWizard subsystem with either zcli or walker instance."""
         # Support both zcli and walker instances
         if zcli:
             self.zcli = zcli
@@ -48,7 +26,10 @@ class zWizard:
             self.zSession = getattr(walker, "zSession", None)
             if not self.zSession:
                 raise ValueError("zWizard requires a walker with a session")
-            self.logger = getattr(walker, "logger", logger)
+            # Walker should always have a logger from zcli
+            if not hasattr(walker, "logger"):
+                raise ValueError("zWizard requires a walker with a logger")
+            self.logger = walker.logger
             self.display = getattr(walker, "display", None)
             # Get schema_cache from walker's loader (if available)
             if hasattr(walker, 'loader') and hasattr(walker.loader, 'cache'):
@@ -59,27 +40,7 @@ class zWizard:
             raise ValueError("zWizard requires either zcli or walker instance")
     
     def execute_loop(self, items_dict, dispatch_fn=None, navigation_callbacks=None, context=None, start_key=None):
-        """
-        Core loop engine: iterate through keys -> dispatch actions -> handle results.
-        
-        This is the fundamental pattern used by both Wizard and Walker:
-        - Wizard: Linear execution of steps
-        - Walker: Interactive navigation through YAML blocks
-        
-        Args:
-            items_dict: Dictionary of {key: value} pairs to iterate
-            dispatch_fn: Optional custom dispatch function (defaults to handle_zDispatch)
-            navigation_callbacks: Optional dict with callbacks:
-                - on_back: Called when result == "zBack"
-                - on_stop: Called when result == "stop"
-                - on_error: Called when result == "error"
-                - on_continue: Called when continuing to next key
-            context: Optional context passed to dispatch
-            start_key: Optional key to start from (for navigation)
-            
-        Returns:
-            Final result or accumulated results
-        """
+        """Core loop engine that iterates through keys, dispatches actions, and handles results."""
         # Default dispatch function
         if dispatch_fn is None:
             if self.walker:
@@ -180,15 +141,7 @@ class zWizard:
         return None
 
     def handle(self, zWizard_obj):
-        """
-        Execute a sequence of steps with persistent connections and optional transactions.
-        
-        Features:
-        - Persistent connections across steps (via schema_cache)
-        - Transaction support (_transaction: true)
-        - Result accumulation (zHat array)
-        - Error handling with automatic rollback
-        """
+        """Execute a sequence of steps with persistent connections and transactions."""
         # Get display instance
         display = None
         if self.zcli:
@@ -258,7 +211,7 @@ class zWizard:
                                              context=step_context)
                 else:
                     # Shell mode - execute directly using module
-                    result = execute_step_shell_mode(self.zcli, step_key, step_value, step_context)
+                    result = execute_step_shell_mode(self.zcli, step_key, step_value, self.logger, step_context)
                 
                 zHat.append(result)
             

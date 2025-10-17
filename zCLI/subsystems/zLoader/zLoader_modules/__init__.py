@@ -1,14 +1,7 @@
+# zCLI/subsystems/zLoader/zLoader_modules/__init__.py
+
 # zCLI/subsystems/zLoader_modules/__init__.py
-"""
-zLoader Modules - Modular components for file loading and caching
-
-Three-tier cache architecture:
-- system_cache: UI and config files (auto-cached, LRU)
-- pinned_cache: Aliases (user-loaded, never evicts)
-- schema_cache: Active connections (wizard-only)
-
-CacheOrchestrator manages routing between tiers.
-"""
+"""zLoader modules for file loading and caching."""
 
 from .cache_orchestrator import CacheOrchestrator
 from .system_cache import SystemCache

@@ -1,7 +1,6 @@
-# zCLI/subsystems/zParser_modules/zParser_commands.py — Command Parsing Module
-# ───────────────────────────────────────────────────────────────
-"""Command parsing functionality for shell commands."""
+# zCLI/subsystems/zParser/zParser_modules/zParser_commands.py
 
+"""Command parsing functionality for shell commands."""
 
 def parse_command(command, logger):
     """Parse shell commands into structured format."""

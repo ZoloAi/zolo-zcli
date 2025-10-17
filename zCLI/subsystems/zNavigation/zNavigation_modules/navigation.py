@@ -1,9 +1,6 @@
+# zCLI/subsystems/zNavigation/zNavigation_modules/navigation.py
+
 """Navigation state management for zNavigation."""
-
-from logger import Logger
-
-logger = Logger.get_logger(__name__)
-
 
 class Navigation:
     """Navigation state and history management."""

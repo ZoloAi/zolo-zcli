@@ -1,9 +1,6 @@
+# zCLI/subsystems/zDispatch/zDispatch_modules/modifiers.py
+
 """Modifier processing for zDispatch."""
-
-from logger import Logger
-
-logger = Logger.get_logger(__name__)
-
 
 class ModifierProcessor:
     """Handles prefix and suffix modifiers for zDispatch."""

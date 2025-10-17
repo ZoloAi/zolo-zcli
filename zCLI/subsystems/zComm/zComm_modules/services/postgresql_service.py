@@ -1,12 +1,13 @@
+# zCLI/subsystems/zComm/zComm_modules/services/postgresql_service.py
+
 """
 PostgreSQL Service Manager
 Detects and manages local PostgreSQL installation
 """
 
 import subprocess
-import platform
 import socket
-from pathlib import Path
+from zCLI import platform, Path
 
 
 class PostgreSQLService:

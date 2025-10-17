@@ -1,10 +1,9 @@
+# zCLI/subsystems/zData/zData_modules/shared/backends/csv_adapter.py
+
 # zCLI/subsystems/zData/zData_modules/backends/csv_adapter.py
 """CSV backend adapter implementation using pandas."""
 
-from logger import Logger
 from .base_adapter import BaseDataAdapter
-
-logger = Logger.get_logger(__name__)
 
 try:
     import pandas as pd

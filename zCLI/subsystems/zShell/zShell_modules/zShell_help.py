@@ -1,3 +1,5 @@
+# zCLI/subsystems/zShell/zShell_modules/zShell_help.py
+
 # zCLI/subsystems/zShell_modules/zShell_help.py — Help System
 # ───────────────────────────────────────────────────────────────
 """Help system for zCLI shell - centralized command documentation."""

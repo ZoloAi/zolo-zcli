@@ -1,24 +1,30 @@
+# zCLI/subsystems/zData/zData_modules/shared/backends/adapter_factory.py
+
 """Factory for creating backend adapters based on schema data type."""
-
-from logger import Logger
-
-logger = Logger.get_logger(__name__)
 
 class AdapterFactory:
     """Factory for creating backend adapters (SQLite, PostgreSQL, CSV)."""
 
     _adapters = {}
+    _logger = None
+
+    @classmethod
+    def set_logger(cls, logger):
+        """Set logger instance for factory (called by zcli)."""
+        cls._logger = logger
 
     @classmethod
     def register_adapter(cls, data_type, adapter_class):
         """Register adapter for a data type (enables plugin extensions)."""
         cls._adapters[data_type.lower()] = adapter_class
-        Logger.get_logger("AdapterFactory").info("Registered adapter for data type: %s", data_type)
+        if cls._logger:
+            cls._logger.info("Registered adapter for data type: %s", data_type)
 
     @classmethod
     def create_adapter(cls, data_type, config):
         """Create adapter instance for specified data type."""
-        logger.debug("Creating adapter for data type: %s", data_type)
+        if cls._logger:
+            cls._logger.debug("Creating adapter for data type: %s", data_type)
 
         adapter_class = cls._adapters.get(data_type.lower())
 
@@ -30,7 +36,8 @@ class AdapterFactory:
             )
 
         adapter = adapter_class(config)
-        logger.info("Created %s adapter", adapter.__class__.__name__)
+        if cls._logger:
+            cls._logger.info("Created %s adapter", adapter.__class__.__name__)
         return adapter
 
     @classmethod

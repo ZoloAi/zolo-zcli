@@ -1,7 +1,8 @@
+# zCLI/subsystems/zData/zData_modules/shared/data_operations.py
+
 # zCLI/subsystems/zData/zData_modules/shared/operations.py
 """Shared CRUD operations facade - delegates to individual operation modules."""
 
-from logger import Logger
 from .operations import (
     handle_insert,
     handle_read,
@@ -12,9 +13,6 @@ from .operations import (
     handle_drop,
     handle_head,
 )
-
-# Logger instance
-logger = Logger.get_logger(__name__)
 
 class DataOperations:
     """Shared operations facade - delegates to individual operation modules."""

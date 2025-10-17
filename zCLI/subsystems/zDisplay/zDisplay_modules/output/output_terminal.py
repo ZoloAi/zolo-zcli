@@ -1,8 +1,8 @@
-# zCLI/subsystems/zDisplay_modules/output/output_terminal.py
+# zCLI/subsystems/zDisplay/zDisplay_modules/output/output_terminal.py
+
 """Terminal output adapter - stdout rendering."""
 
 from .output_adapter import OutputAdapter
-
 
 class TerminalOutput(OutputAdapter):
     """Terminal output via print() to stdout."""

@@ -1,10 +1,7 @@
-# zCLI/subsystems/zParser.py — Core zParser Handler
-# ───────────────────────────────────────────────────────────────
-""" Core zParser handler for path resolution, command parsing, file parsing, and utilities.
-    Dependencies: zCLI, zSession, zDisplay
-"""
+# zCLI/subsystems/zParser/zParser.py
 
-from logger import Logger
+"""Core zParser handler for path resolution, parsing, and utilities."""
+
 from .zParser_modules.zParser_zPath import (
     zPath_decoder as zPath_decoder_func, 
     identify_zFile as identify_zFile_func,
@@ -19,9 +16,7 @@ from .zParser_modules.zParser_zVaFile import (
 from .zParser_modules.zParser_file import (
     parse_file_content, parse_yaml, parse_json, detect_format, parse_file_by_path, parse_json_expr
 )
-
-# Logger instance
-logger = Logger.get_logger(__name__)
+from .zParser_modules.zParser_zFunc import parse_function_spec
 
 class zParser:
     """Core zParser class for path resolution, command parsing, file parsing, and utilities."""
@@ -53,15 +48,15 @@ class zParser:
 
     def zPath_decoder(self, zPath=None, zType=None):
         """Resolve dotted paths to file paths."""
-        return zPath_decoder_func(self.zSession, zPath, zType, self.display)
+        return zPath_decoder_func(self.zSession, self.logger, zPath, zType, self.display)
 
     def identify_zFile(self, filename, full_zFilePath):
         """Identify file type and find actual file path with extension."""
-        return identify_zFile_func(filename, full_zFilePath, self.display)
+        return identify_zFile_func(filename, full_zFilePath, self.logger, self.display)
 
     def resolve_zmachine_path(self, data_path, config_paths=None):
         """Resolve ~.zMachine.* path references to OS-specific paths."""
-        return resolve_zmachine_path_func(data_path, config_paths)
+        return resolve_zmachine_path_func(data_path, self.logger, config_paths)
 
     def resolve_data_path(self, data_path):
         """Resolve data paths (supports ~.zMachine.* and @ workspace paths)."""
@@ -74,7 +69,7 @@ class zParser:
 
         # Handle @ workspace paths
         if data_path.startswith("@"):
-            from pathlib import Path
+            from zCLI import Path
             workspace = self.zSession.get("zWorkspace")
             if not workspace:
                 workspace = Path.cwd()
@@ -103,49 +98,35 @@ class zParser:
 
     def parse_file_content(self, raw_content, file_extension=None):
         """Parse raw file content (YAML/JSON) into Python objects."""
-        return parse_file_content(raw_content, file_extension)
+        return parse_file_content(raw_content, self.logger, file_extension)
 
     def parse_yaml(self, raw_content):
         """Parse YAML content."""
-        return parse_yaml(raw_content)
+        return parse_yaml(raw_content, self.logger)
 
     def parse_json(self, raw_content):
         """Parse JSON content."""
-        return parse_json(raw_content)
+        return parse_json(raw_content, self.logger)
 
     def detect_format(self, raw_content):
         """Auto-detect file format from content."""
-        return detect_format(raw_content)
+        return detect_format(raw_content, self.logger)
 
     # ═══════════════════════════════════════════════════════════
     # Function Path Parsing (for zFunc)
     # ═══════════════════════════════════════════════════════════
 
     def parse_function_path(self, zFunc_spec, zContext=None):
-        """
-        Parse zFunc path specification into file path and function name.
-        
-        Supports:
-        - Dict format: {"zFunc_path": "...", "zFunc_args": "..."}
-        - String format: "zFunc(@utils.myfile.my_function, args)"
-        
-        Args:
-            zFunc_spec: Function specification (dict or string)
-            zContext: Optional context
-            
-        Returns:
-            tuple: (func_path, arg_str, function_name)
-        """
-        from .zParser_modules.zParser_zFunc import parse_function_spec
-        return parse_function_spec(zFunc_spec, self.zSession, zContext, self.logger)
+        """Parse zFunc path specification into (func_path, arg_str, function_name)."""
+        return parse_function_spec(zFunc_spec, self.zSession, self.logger, zContext)
 
     def parse_file_by_path(self, file_path):
         """Load and parse file in one call."""
-        return parse_file_by_path(file_path)
+        return parse_file_by_path(file_path, self.logger)
 
     def parse_json_expr(self, expr):
         """Parse JSON-like expression strings."""
-        return parse_json_expr(expr)
+        return parse_json_expr(expr, self.logger)
 
     # ═══════════════════════════════════════════════════════════
     # Expression Evaluation
@@ -153,7 +134,7 @@ class zParser:
 
     def zExpr_eval(self, expr):
         """Evaluate JSON expressions."""
-        return zExpr_eval(expr, self.display)
+        return zExpr_eval(expr, self.logger, self.display)
 
     def parse_dotted_path(self, ref_expr):
         """Parse a dotted path into useful parts."""
@@ -161,7 +142,7 @@ class zParser:
 
     def handle_zRef(self, ref_expr, base_path=None):
         """Handle zRef expressions to load YAML data."""
-        return handle_zRef(ref_expr, base_path, self.display)
+        return handle_zRef(ref_expr, self.logger, base_path, self.display)
 
     def handle_zParser(self, zFile_raw):
         """Placeholder function for zParser handler."""
@@ -173,31 +154,31 @@ class zParser:
 
     def parse_zva_file(self, data, file_type, file_path=None, session=None):
         """Parse zVaFile with type-specific logic and validation."""
-        return parse_zva_file(data, file_type, file_path, session, self.display)
+        return parse_zva_file(data, file_type, self.logger, file_path, session, self.display)
 
     def validate_zva_structure(self, data, file_type, file_path=None):
         """Validate zVaFile structure based on type."""
-        return validate_zva_structure(data, file_type, file_path)
+        return validate_zva_structure(data, file_type, self.logger, file_path)
 
     def extract_zva_metadata(self, data, file_type):
         """Extract metadata from zVaFiles."""
-        return extract_zva_metadata(data, file_type)
+        return extract_zva_metadata(data, file_type, self.logger)
 
     def parse_ui_file(self, data, file_path=None, session=None):
         """Parse UI file with UI-specific logic and validation."""
-        return parse_ui_file(data, file_path, session)
+        return parse_ui_file(data, self.logger, file_path, session)
 
     def parse_schema_file(self, data, file_path=None, session=None):
         """Parse schema file with schema-specific logic and validation."""
-        return parse_schema_file(data, file_path, session)
+        return parse_schema_file(data, self.logger, file_path, session)
 
     def validate_ui_structure(self, data, file_path=None):
         """Validate UI file structure."""
-        return validate_ui_structure(data, file_path)
+        return validate_ui_structure(data, self.logger, file_path)
 
     def validate_schema_structure(self, data, file_path=None):
         """Validate schema file structure."""
-        return validate_schema_structure(data, file_path)
+        return validate_schema_structure(data, self.logger, file_path)
 
 
 # Export main components

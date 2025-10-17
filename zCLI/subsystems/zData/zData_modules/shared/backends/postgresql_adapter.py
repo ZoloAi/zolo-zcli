@@ -1,11 +1,10 @@
+# zCLI/subsystems/zData/zData_modules/shared/backends/postgresql_adapter.py
+
 """PostgreSQL backend adapter implementation."""
 
 from datetime import datetime
 import yaml
-from logger import Logger
 from .sql_adapter import SQLAdapter
-
-logger = Logger.get_logger(__name__)
 
 # Try to import psycopg2
 try:

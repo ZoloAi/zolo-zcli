@@ -1,8 +1,6 @@
+# zCLI/subsystems/zShell/zShell_modules/executor_commands/comm_executor.py
+
 """Communication and service management command executor."""
-
-from logger import Logger
-
-logger = Logger.get_logger(__name__)
 
 
 def execute_comm(zcli, parsed):
@@ -57,7 +55,7 @@ def _handle_start(zcli, args, options):
         return {"error": "Service name required. Usage: comm start <service>"}
 
     service_name = args[0]
-    logger.info("Starting service: %s", service_name)
+    zcli.logger.info("Starting service: %s", service_name)
 
     success = zcli.comm.start_service(service_name, **options)
 
@@ -106,7 +104,7 @@ def _handle_stop(zcli, args, options):  # pylint: disable=unused-argument
         return {"error": "Service name required. Usage: comm stop <service>"}
 
     service_name = args[0]
-    logger.info("Stopping service: %s", service_name)
+    zcli.logger.info("Stopping service: %s", service_name)
 
     success = zcli.comm.stop_service(service_name)
 
@@ -135,7 +133,7 @@ def _handle_restart(zcli, args, options):  # pylint: disable=unused-argument
         return {"error": "Service name required. Usage: comm restart <service>"}
 
     service_name = args[0]
-    logger.info("Restarting service: %s", service_name)
+    zcli.logger.info("Restarting service: %s", service_name)
 
     success = zcli.comm.restart_service(service_name)
 
@@ -267,7 +265,7 @@ def _install_postgresql(options):
     """Install PostgreSQL with OS-specific instructions."""
     # TODO: Replace print() with zDisplay once it supports raw text output
     # Currently zDisplay only supports sysmsg events, not multi-line formatted text
-    import platform
+    from zCLI import platform
     
     os_type = platform.system()
     auto_install = options.get("auto", False) or options.get("y", False)

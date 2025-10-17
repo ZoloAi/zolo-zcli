@@ -1,3 +1,5 @@
+# zCLI/subsystems/zOpen/zOpen_modules/__init__.py
+
 # zCLI/subsystems/zOpen_modules/__init__.py — zOpen Registry Package
 # ───────────────────────────────────────────────────────────────
 """

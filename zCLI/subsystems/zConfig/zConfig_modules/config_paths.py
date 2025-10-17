@@ -1,103 +1,67 @@
-# zCLI/subsystems/zConfig_modules/config_paths.py
-"""
-Cross-platform configuration path resolution.
+# zCLI/subsystems/zConfig/zConfig_modules/config_paths.py
+"""Cross-platform configuration path resolution with platformdirs."""
 
-Uses platformdirs for OS-native paths with dotfile fallback.
-"""
-
-import platform
-from pathlib import Path
 from platformdirs import user_config_dir, site_config_dir, user_data_dir, user_cache_dir
-
-# Note: No logger import to avoid circular dependency with zLogger subsystem
-
+from zCLI import platform, Path, sys, Colors
 
 class zConfigPaths:
-    """
-    Cross-platform path resolver for zolo-zcli configuration.
-    
-    Provides OS-native paths for:
-    - System configuration (admin/root)
-    - User configuration (per-user settings)
-    - User data (databases, files)
-    - Cache (temporary data)
-    
-    Platform Support:
-    - Linux: Uses XDG Base Directory spec
-    - macOS: Uses Apple conventions
-    - Windows: Uses AppData conventions
-    """
-    
+    """Cross-platform path resolver for zolo-zcli configuration using native OS conventions."""
+
     def __init__(self):
         self.app_name = "zolo-zcli"
         self.app_author = "zolo"
         self.os_type = platform.system()  # 'Linux', 'Darwin', 'Windows'
-        
-        print(f"[zConfigPaths] Initialized for OS: {self.os_type}")
-    
+
+        # Validate OS type
+        valid_os_types = ("Linux", "Darwin", "Windows")
+        if self.os_type not in valid_os_types:
+            print(f"{Colors.ERROR}[zConfigPaths] ERROR: Unsupported OS type '{self.os_type}'{Colors.RESET}")
+            print(f"{Colors.WARNING}[zConfigPaths] Supported OS types: {', '.join(valid_os_types)}{Colors.RESET}")
+            print(f"{Colors.WARNING}[zConfigPaths] Please report this issue or add support for your OS{Colors.RESET}")
+            sys.exit(1)
+
+        print(f"{Colors.CONFIG}[zConfigPaths] Initialized for OS: {self.os_type}{Colors.RESET}")
+
     # ═══════════════════════════════════════════════════════════
-    # System Paths (requires admin/root)
+    # Resolves standard OS locations for zolo system folders
     # ═══════════════════════════════════════════════════════════
-    
     @property
     def system_config_dir(self):
         r"""
-        System-wide configuration directory.
+        System config location (discovery only; not created).
         
-        Linux:   /etc/zolo-zcli
-        macOS:   /Library/Application Support/zolo-zcli
-        Windows: C:\ProgramData\zolo-zcli
-        
-        Requires: Admin/root permissions to write
+        Linux/macOS: /etc/zolo-zcli
+        Windows:     C:\\ProgramData\\zolo-zcli
         """
         if self.os_type in ("Linux", "Darwin"):
-            # Unix-like: prefer /etc for system config
+            # Unix-like systems use /etc for system config
             return Path("/etc/zolo-zcli")
-        else:
-            # Windows: use platformdirs
-            return Path(site_config_dir(self.app_name, self.app_author))
-    
-    # ═══════════════════════════════════════════════════════════
-    # User Paths (per-user, no admin needed)
-    # ═══════════════════════════════════════════════════════════
-    
+
+        # Windows: use platformdirs
+        return Path(site_config_dir(self.app_name, self.app_author))
+
     @property
-    def user_config_dir_native(self):
+    def user_config_dir(self):
         r"""
-        User configuration directory (OS-native location).
-        
+        User config location (OS-native).
+
         Linux:   ~/.config/zolo-zcli
-        macOS:   ~/Library/Application Support/zolo-zcli
+        macOS:   ~/Library/Application Support/zolo-zcli 
         Windows: %APPDATA%\zolo-zcli
         """
         return Path(user_config_dir(self.app_name, self.app_author))
-    
+
     @property
-    def user_config_dir_dotfile(self):
+    def user_config_dir_legacy(self):
         """
-        User configuration directory (dotfile convention).
+        Legacy dotfile configuration directory (backward compatibility).
         
         All OS: ~/.zolo-zcli
         
-        Fallback for users who prefer dotfiles.
+        Checked for backward compatibility with older installations.
         """
         return Path.home() / ".zolo-zcli"
-    
-    @property
-    def user_config_dir(self):
-        """
-        User configuration directory (auto-detect).
-        
-        Checks both native and dotfile, returns whichever exists.
-        Prefers native path for new installations.
-        """
-        # Check dotfile first (for backward compatibility)
-        if self.user_config_dir_dotfile.exists():
-            return self.user_config_dir_dotfile
-        
-        # Use native path (creates if needed)
-        return self.user_config_dir_native
-    
+
     @property
     def user_zconfigs_dir(self):
         """
@@ -107,7 +71,7 @@ class zConfigPaths:
         Contains: zConfig.default.yaml, zConfig.dev.yaml, etc.
         """
         return self.user_config_dir / "zConfigs"
-    
+
     @property
     def user_data_dir(self):
         r"""
@@ -118,7 +82,7 @@ class zConfigPaths:
         Windows: %LOCALAPPDATA%\zolo-zcli
         """
         return Path(user_data_dir(self.app_name, self.app_author))
-    
+
     @property
     def user_cache_dir(self):
         r"""
@@ -129,33 +93,35 @@ class zConfigPaths:
         Windows: %LOCALAPPDATA%\zolo-zcli\Cache
         """
         return Path(user_cache_dir(self.app_name, self.app_author))
-    
+
     # ═══════════════════════════════════════════════════════════
-    # Project Paths (current working directory)
+    # System Config Files
     # ═══════════════════════════════════════════════════════════
-    
+
     @property
-    def project_config_file(self):
+    def system_config_defaults(self):
         """
-        Project-local config file.
+        System default configuration file.
         
-        All OS: ./config.yaml (current directory)
+        Location: system_config_dir/zConfig.defaults.yaml
+        Created on first run with base configuration.
         """
-        return Path.cwd() / "config.yaml"
-    
+        return self.system_config_dir / "zConfig.defaults.yaml"
+
     @property
-    def project_config_file_dotfile(self):
+    def system_machine_config(self):
         """
-        Project-local config file (dotfile style).
+        System machine configuration file (zMachine zVaFile).
         
-        All OS: ./.zolo-zcli.yaml (current directory)
+        Location: system_config_dir/zMachine.yaml
+        Contains machine identity and capabilities.
         """
-        return Path.cwd() / ".zolo-zcli.yaml"
-    
+        return self.system_config_dir / "zMachine.yaml"
+
     # ═══════════════════════════════════════════════════════════
     # Config File Hierarchy
     # ═══════════════════════════════════════════════════════════
-    
+
     def get_config_file_hierarchy(self):
         """
         Get list of config file paths to check, in priority order.
@@ -163,34 +129,34 @@ class zConfigPaths:
         Returns:
             List of (Path, priority, description) tuples
             
-        Priority:
-        1 = lowest (system)
-        5 = highest (project)
+        Config Hierarchy (lowest to highest priority):
+        1. System defaults (zConfig.defaults.yaml) - Base configuration
+        2. User config - Per-user overrides
+        3. Environment variables / dotenv - Runtime exports (TODO)
+        4. Session runtime - In-memory overrides (handled elsewhere)
         """
         configs = []
         
-        # 1. System config (lowest priority)
-        system_config = self.system_config_dir / "config.yaml"
-        if system_config.exists():
-            configs.append((system_config, 1, "system"))
+        # 1. System defaults (lowest priority - base config)
+        if self.system_config_defaults.exists():
+            configs.append((self.system_config_defaults, 1, "system-defaults"))
         
-        # 2. User config (native path)
-        user_config_native = self.user_config_dir_native / "config.yaml"
-        if user_config_native.exists():
-            configs.append((user_config_native, 2, "user-native"))
+        # 2. User config (primary native path)
+        user_config = self.user_config_dir / "zConfigs" / "zConfig.yaml"
+        if user_config.exists():
+            configs.append((user_config, 2, "user"))
         
-        # 3. User config (dotfile path - for backward compat)
-        user_config_dotfile = self.user_config_dir_dotfile / "config.yaml"
-        if user_config_dotfile.exists():
-            configs.append((user_config_dotfile, 3, "user-dotfile"))
+        # 3. User config (legacy dotfile path - backward compat)
+        user_config_legacy = self.user_config_dir_legacy / "zConfig.yaml"
+        if user_config_legacy.exists():
+            configs.append((user_config_legacy, 3, "user-legacy"))
         
-        # 4. Project config (standard)
-        if self.project_config_file.exists():
-            configs.append((self.project_config_file, 4, "project"))
+        # TODO: 4. Environment variables / dotenv
+        # Load from .env file or environment exports
+        # These override file-based configs
         
-        # 5. Project config (dotfile - highest priority)
-        if self.project_config_file_dotfile.exists():
-            configs.append((self.project_config_file_dotfile, 5, "project-dotfile"))
+        # Note: Session runtime overrides (highest priority) are handled
+        # in-memory by zSession subsystem, not in this file hierarchy
         
         # Sort by priority
         configs.sort(key=lambda x: x[1])
@@ -202,9 +168,8 @@ class zConfigPaths:
         Ensure user config directory exists.
         
         Creates the directory if it doesn't exist.
-        Uses native path by default.
         """
-        config_dir = self.user_config_dir_native
+        config_dir = self.user_config_dir
         if not config_dir.exists():
             config_dir.mkdir(parents=True, exist_ok=True)
             print(f"[zConfigPaths] Created user config directory: {config_dir}")
@@ -220,13 +185,13 @@ class zConfigPaths:
         """
         return {
             "os": self.os_type,
-            "system_config": str(self.system_config_dir),
-            "user_config_native": str(self.user_config_dir_native),
-            "user_config_dotfile": str(self.user_config_dir_dotfile),
-            "user_config_active": str(self.user_config_dir),
-            "user_data": str(self.user_data_dir),
-            "user_cache": str(self.user_cache_dir),
-            "project_config": str(self.project_config_file),
-            "project_config_dotfile": str(self.project_config_file_dotfile),
+            "system_config_dir": str(self.system_config_dir),
+            "system_config_defaults": str(self.system_config_defaults),
+            "system_machine_config": str(self.system_machine_config),
+            "user_config_dir": str(self.user_config_dir),
+            "user_config_legacy": str(self.user_config_dir_legacy),
+            "user_zconfigs_dir": str(self.user_zconfigs_dir),
+            "user_data_dir": str(self.user_data_dir),
+            "user_cache_dir": str(self.user_cache_dir),
         }
 

@@ -1,67 +1,34 @@
-"""File Parsing Module - Centralized YAML/JSON parsing for all file types.
+# zCLI/subsystems/zParser/zParser_modules/zParser_file.py
 
-This module consolidates all YAML/JSON parsing logic that was previously
-duplicated across zLoader and zParser_utils.
+"""Centralized YAML/JSON parsing module for handling file content."""
 
-Functions:
-    parse_file_content(): Main entry point for parsing file content
-    parse_yaml(): Parse YAML content
-    parse_json(): Parse JSON content
-    detect_format(): Auto-detect file format
-    parse_file_by_path(): Load and parse file in one call
-    parse_json_expr(): Parse JSON-like expression strings
-"""
-
-import os
+from zCLI import os
 import json
 import yaml
-from logger import Logger
-
-# Logger instance
-logger = Logger.get_logger(__name__)
 
 
-def parse_file_content(raw_content, file_extension=None):
-    """
-    Parse raw file content into Python objects.
-    
-    Supports YAML and JSON formats with automatic detection.
-    
-    Args:
-        raw_content (str): Raw file content as string
-        file_extension (str): File extension (.yaml, .yml, .json) or None for auto-detect
-        
-    Returns:
-        Parsed data structure (dict, list, etc.) or None on error
-    """
+def parse_file_content(raw_content, logger, file_extension=None):
+    """Parse raw file content (YAML/JSON) into Python objects."""
     if not raw_content:
         logger.warning("Empty content provided for parsing")
         return None
 
     # Auto-detect format if no extension provided
     if not file_extension:
-        file_extension = detect_format(raw_content)
+        file_extension = detect_format(raw_content, logger)
         logger.debug("Auto-detected format: %s", file_extension)
 
     # Route to appropriate parser
     if file_extension == ".json":
-        return parse_json(raw_content)
+        return parse_json(raw_content, logger)
     elif file_extension in [".yaml", ".yml"]:
-        return parse_yaml(raw_content)
+        return parse_yaml(raw_content, logger)
     else:
         logger.error("Unsupported file extension: %s", file_extension)
         return None
 
-def parse_yaml(raw_content):
-    """
-    Parse YAML content into Python objects.
-    
-    Args:
-        raw_content (str): Raw YAML content
-        
-    Returns:
-        Parsed data structure or None on error
-    """
+def parse_yaml(raw_content, logger):
+    """Parse YAML content into Python objects."""
     try:
         parsed = yaml.safe_load(raw_content)
         logger.debug("YAML parsed successfully! Type: %s, Keys: %s",
@@ -76,16 +43,8 @@ def parse_yaml(raw_content):
         return None
 
 
-def parse_json(raw_content):
-    """
-    Parse JSON content into Python objects.
-    
-    Args:
-        raw_content (str): Raw JSON content
-        
-    Returns:
-        Parsed data structure or None on error
-    """
+def parse_json(raw_content, logger):
+    """Parse JSON content into Python objects."""
     try:
         parsed = json.loads(raw_content)
         logger.debug("JSON parsed successfully! Type: %s, Keys: %s",
@@ -99,16 +58,8 @@ def parse_json(raw_content):
         logger.error("Unexpected error parsing JSON: %s", e)
         return None
 
-def detect_format(raw_content):
-    """
-    Auto-detect file format from content.
-    
-    Args:
-        raw_content (str): Raw file content
-        
-    Returns:
-        str: Detected extension (.json, .yaml, or None)
-    """
+def detect_format(raw_content, logger):
+    """Auto-detect file format from content."""
     if not raw_content:
         return None
 
@@ -129,16 +80,8 @@ def detect_format(raw_content):
     logger.debug("Could not detect format, defaulting to YAML")
     return ".yaml"
 
-def parse_file_by_path(file_path):
-    """
-    Convenience function: Load and parse file in one call.
-    
-    Args:
-        file_path (str): Path to file
-        
-    Returns:
-        Parsed data structure or None on error
-    """
+def parse_file_by_path(file_path, logger):
+    """Load and parse file in one call."""
 
     if not os.path.exists(file_path):
         logger.error("File not found: %s", file_path)
@@ -156,24 +99,14 @@ def parse_file_by_path(file_path):
         return None
 
     # Parse content
-    return parse_file_content(raw_content, ext)
+    return parse_file_content(raw_content, logger, ext)
 
 # ═══════════════════════════════════════════════════════════
 # Expression Parsing (for zExpr_eval compatibility)
 # ═══════════════════════════════════════════════════════════
 
-def parse_json_expr(expr):
-    """
-    Parse JSON-like expression strings.
-    
-    Used by zExpr_eval for parsing dict/list expressions.
-    
-    Args:
-        expr (str): Expression string (e.g., '{"key": "value"}')
-        
-    Returns:
-        Parsed object or None on error
-    """
+def parse_json_expr(expr, logger):
+    """Parse JSON-like expression strings into Python objects."""
     try:
         # Handle single quotes (common in Python expressions)
         normalized = expr.replace("'", '"')

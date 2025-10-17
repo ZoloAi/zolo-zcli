@@ -1,28 +1,14 @@
+# zCLI/subsystems/zShell/zShell_modules/executor_commands/data_executor.py
+
 # zCLI/subsystems/zShell_modules/executor_commands/data_executor.py
 # ───────────────────────────────────────────────────────────────
 """Data command execution for zCLI."""
 
-from logger import Logger
 from .alias_utils import resolve_alias, is_alias, get_alias_name
-
-# Logger instance
-logger = Logger.get_logger(__name__)
 
 
 def execute_data(zcli, parsed):
-    """
-    Execute data commands like 'data read users --limit 10' or 'data read users,posts --auto-join'.
-    
-    Supports multi-table queries with comma-separated table names.
-    Supports alias references with $ prefix (e.g., --model $sqlite_demo).
-    
-    Args:
-        zcli: zCLI instance
-        parsed: Parsed command dictionary
-        
-    Returns:
-        Data operation result
-    """
+    """Execute data commands for reading and manipulating data tables."""
     action = parsed["action"]
     table_arg = parsed["args"][0] if parsed["args"] else None
     
@@ -42,11 +28,11 @@ def execute_data(zcli, parsed):
     if model_path and is_alias(model_path):
         try:
             # Resolve alias from PinnedCache
-            resolved_schema, was_alias = resolve_alias(model_path, zcli.loader.cache.pinned_cache)
+            resolved_schema, was_alias = resolve_alias(model_path, zcli.loader.cache.pinned_cache, zcli.logger)
             
             if was_alias:
                 alias_name = get_alias_name(model_path)
-                logger.info("📌 Using aliased schema: $%s", alias_name)
+                zcli.logger.info("📌 Using aliased schema: $%s", alias_name)
                 
                 # Pass pre-parsed schema to zData
                 # Set model to None and provide schema directly
@@ -55,7 +41,7 @@ def execute_data(zcli, parsed):
                 options["_alias_name"] = alias_name
         except ValueError as e:
             # Alias not found - return error
-            logger.error("Alias resolution failed: %s", e)
+            zcli.logger.error("Alias resolution failed: %s", e)
             return {"error": str(e)}
     
     # Extract auto-join flag from options
@@ -70,7 +56,7 @@ def execute_data(zcli, parsed):
         "options": options  # Pass options separately for proper parsing
     }
     
-    logger.debug("Executing data operation: %s on %s", action, tables)
+    zcli.logger.debug("Executing data operation: %s on %s", action, tables)
     # Use modern zData interface through zcli.data
     return zcli.data.handle_request(zRequest)
 

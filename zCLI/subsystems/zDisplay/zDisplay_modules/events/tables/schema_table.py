@@ -1,41 +1,10 @@
+# zCLI/subsystems/zDisplay/zDisplay_modules/events/tables/schema_table.py
+
 # zCLI/subsystems/zDisplay_modules/events/tables/schema_table.py
 """Schema table display handler - renders table structure."""
 
-from logger import Logger
-
-logger = Logger.get_logger(__name__)
-
-
-def handle_schema_table(obj, output_adapter):
-    """
-    Render table schema (column definitions).
-    
-    Shows table structure without querying data - displays columns,
-    types, and constraints.
-    
-    Args:
-        obj: Display object with schema data:
-            - table: Table name
-            - columns: List of column dicts with:
-                - name: Column name
-                - type: Data type
-                - pk: Primary key flag (optional)
-                - required: Required flag (optional)
-                - default: Default value (optional)
-        output_adapter: Output adapter for rendering
-        
-    Example obj:
-        {
-            "event": "zTableSchema",
-            "table": "users",
-            "columns": [
-                {"name": "id", "type": "int", "pk": True},
-                {"name": "username", "type": "str", "required": True},
-                {"name": "email", "type": "str", "required": True},
-                {"name": "created_at", "type": "datetime", "default": "now()"}
-            ]
-        }
-    """
+def handle_schema_table(obj, output_adapter, logger):
+    """Render table schema showing column definitions, types and constraints."""
     table = obj.get("table", "Unknown")
     columns = obj.get("columns", [])
     

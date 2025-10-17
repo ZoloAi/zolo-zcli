@@ -1,3 +1,5 @@
+# zCLI/subsystems/zComm/zComm_modules/services/service_manager.py
+
 """
 Service Manager
 Manages local services (PostgreSQL, Redis, etc.)

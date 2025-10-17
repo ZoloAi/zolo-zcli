@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# zCLI/uninstall.py
+
 # zCLI/uninstall.py — Uninstallation Utilities v1.4.0
 # ───────────────────────────────────────────────────────────────
 
@@ -12,7 +14,7 @@ Provides safe uninstallation with options to:
 Note: This module operates independently of zCLI subsystems for safety.
 """
 
-import sys
+from zCLI import sys
 import shutil
 
 

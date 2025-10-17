@@ -1,3 +1,5 @@
+# zCLI/subsystems/zParser/zParser_modules/__init__.py
+
 # zCLI/subsystems/zParser_modules/__init__.py — zParser Registry Package
 # ───────────────────────────────────────────────────────────────
 """

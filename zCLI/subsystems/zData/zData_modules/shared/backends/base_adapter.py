@@ -2,11 +2,7 @@
 """Abstract base class defining the interface for all data backend adapters."""
 
 from abc import ABC, abstractmethod
-from pathlib import Path
-from logger import Logger
-
-logger = Logger.get_logger(__name__)
-
+from zCLI import Path
 
 class BaseDataAdapter(ABC):  # pylint: disable=unnecessary-pass
     """Abstract base class for all backend adapters (SQLite, PostgreSQL, CSV)."""

@@ -1,12 +1,9 @@
+# zCLI/subsystems/zDispatch/zDispatch.py
+
 """zDispatch - Core Command Dispatch Subsystem for zCLI."""
 
-from logger import Logger
 from .zDispatch_modules.modifiers import ModifierProcessor
 from .zDispatch_modules.launcher import CommandLauncher
-
-# Logger instance
-logger = Logger.get_logger(__name__)
-
 
 class zDispatch:
     """Core command dispatch subsystem for zCLI."""
@@ -50,15 +47,7 @@ class zDispatch:
             pass
 
     def handle(self, zKey, zHorizontal, context=None, walker=None):
-        """
-        Handle dispatch with optional wizard context and walker.
-        
-        Args:
-            zKey: Dispatch key
-            zHorizontal: Dispatch value
-            context: Optional context from zWizard (for connection reuse)
-            walker: Optional walker instance (for display operations)
-        """
+        """Handle dispatch with optional wizard context and walker."""
         # Use walker's display if available, otherwise use zCLI's display
         display = walker.display if walker else self.zcli.display
         
@@ -94,16 +83,7 @@ class zDispatch:
 
 
 def handle_zDispatch(zKey, zHorizontal, zcli=None, walker=None, context=None):
-    """
-    Standalone dispatch function with optional wizard context and walker.
-    
-    Args:
-        zKey: Dispatch key
-        zHorizontal: Dispatch value
-        zcli: zCLI instance (required if walker not provided)
-        walker: Walker instance (optional, provides zCLI and display)
-        context: Optional context from zWizard
-    """
+    """Standalone dispatch function with optional wizard context and walker."""
     # Determine zCLI instance
     if walker:
         zcli_instance = walker.zcli

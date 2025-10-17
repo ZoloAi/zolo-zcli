@@ -3,6 +3,6 @@
 zConfig subsystem.
 """
 
-from .zConfig import zConfig  # noqa: F401
+from .zConfig import zConfig
 
 __all__ = ['zConfig']

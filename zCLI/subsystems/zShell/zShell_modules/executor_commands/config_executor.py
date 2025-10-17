@@ -1,16 +1,14 @@
+# zCLI/subsystems/zShell/zShell_modules/executor_commands/config_executor.py
+
 # zCLI/subsystems/zShell_modules/executor_commands/config_executor.py
 """Configuration command executor (check system diagnostics)."""
 
-import os
-from pathlib import Path
-from logger import Logger
-
-logger = Logger.get_logger(__name__)
+from zCLI import os, Path
 
 def execute_config(zcli, parsed):
     """Execute config commands (check)."""
     action = parsed.get("action")
-    logger.debug("Executing config command: %s", action)
+    zcli.logger.debug("Executing config command: %s", action)
 
     if action == "check":
         return check_config_system(zcli)
@@ -22,7 +20,7 @@ def execute_config(zcli, parsed):
 
 def check_config_system(zcli):
     """Check system configuration folders and files accessibility."""
-    logger.info("Checking zCLI configuration system...")
+    zcli.logger.info("Checking zCLI configuration system...")
 
     results = {
         "status": "checking",
@@ -274,92 +272,49 @@ def check_machine_config_loading(zcli):
 
 
 def print_config_check_results(results):
-    """Display formatted configuration check results using zDisplay."""
-    # TODO: Replace with proper zDisplay text event once supported
-    from zCLI.subsystems.zDisplay import zDisplay
-    from zCLI.subsystems.zSession import zSession
-    from logger import Logger
+    """Display formatted configuration check results."""
+    # TODO: Replace with zDisplay when properly integrated with zcli instance
     
-    logger = Logger.get_logger(__name__)
-    display = zDisplay(zSession, logger=logger)
-    display.handle({
-        "event": "header",
-        "label": "zCLI Configuration System Check",
-        "color": "CYAN",
-        "style": "=",
-        "indent": 0
-    })
+    print("\n" + "=" * 70)
+    print("zCLI Configuration System Check")
+    print("=" * 70)
 
     summary = results["summary"]
-    summary_lines = [f"Summary: {summary['passed']}/{summary['total_checks']} checks passed"]
+    print(f"\nSummary: {summary['passed']}/{summary['total_checks']} checks passed")
     if summary["warnings"] > 0:
-        summary_lines.append(f"Warnings: {summary['warnings']}")
+        print(f"Warnings: {summary['warnings']}")
     if summary["failed"] > 0:
-        summary_lines.append(f"Failed: {summary['failed']}")
+        print(f"Failed: {summary['failed']}")
 
-    display.handle({
-        "event": "text",
-        "value": "\n".join(summary_lines),
-        "color": "WHITE",
-        "indent": 0
-    })
-
-    display.handle({
-        "event": "header",
-        "label": "Detailed Results",
-        "color": "CYAN",
-        "style": "-",
-        "indent": 0
-    })
+    print("\n" + "-" * 70)
+    print("Detailed Results")
+    print("-" * 70)
 
     for _check_name, check_result in results["checks"].items():
         status_indicator = {"pass": "[OK]", "warning": "[WARN]", "fail": "[FAIL]"}.get(check_result["status"], "[UNKNOWN]")
         required_text = " (required)" if check_result.get("required", False) else ""
 
-        detail_lines = [f"{status_indicator} {check_result['description']}{required_text}"]
+        print(f"\n{status_indicator} {check_result['description']}{required_text}")
 
         if "path" in check_result:
-            detail_lines.append(f"   Path: {check_result['path']}")
+            print(f"   Path: {check_result['path']}")
 
-        detail_lines.append(f"   Status: {check_result['message']}")
+        print(f"   Status: {check_result['message']}")
 
         if "size" in check_result:
-            detail_lines.append(f"   Size: {check_result['size']} bytes")
+            print(f"   Size: {check_result['size']} bytes")
         if "sources" in check_result:
-            detail_lines.append(f"   Sources: {', '.join(check_result['sources'])}")
+            print(f"   Sources: {', '.join(check_result['sources'])}")
         if "machine" in check_result:
             machine = check_result["machine"]
-            detail_lines.append(f"   OS: {machine.get('os')} | Host: {machine.get('hostname')} | Env: {machine.get('deployment')}")
-
-        display.handle({
-            "event": "text",
-            "value": "\n".join(detail_lines),
-            "color": "RESET",
-            "indent": 0
-        })
+            print(f"   OS: {machine.get('os')} | Host: {machine.get('hostname')} | Env: {machine.get('deployment')}")
 
     status_indicator = {"pass": "[OK]", "warning": "[WARN]", "fail": "[FAIL]"}.get(results["status"], "[UNKNOWN]")
-    status_color = {"pass": "GREEN", "warning": "YELLOW", "fail": "RED"}.get(results["status"], "RESET")
 
-    display.handle({
-        "event": "header",
-        "label": "Final Result",
-        "color": "CYAN",
-        "style": "-",
-        "indent": 0
-    })
+    print("\n" + "-" * 70)
+    print("Final Result")
+    print("-" * 70)
 
-    display.handle({
-        "event": "text",
-        "value": f"\n{status_indicator} Overall Status: {results['status'].upper()}\n",
-        "color": status_color,
-        "indent": 0
-    })
+    print(f"\n{status_indicator} Overall Status: {results['status'].upper()}\n")
 
-    display.handle({
-        "event": "header",
-        "label": "",
-        "color": "CYAN",
-        "style": "=",
-        "indent": 0
-    })
+    print("=" * 70 + "\n")

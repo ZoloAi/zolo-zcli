@@ -1,15 +1,10 @@
-# zCLI/subsystems/zData/zData_modules/quantum/quantum_data.py
-# ----------------------------------------------------------------
-# Quantum data management handler (STUB).
-# 
-# This is a placeholder for future quantum data paradigm implementation.
-# Uses zStrongNuclearField for identity and temporality management.
-# ----------------------------------------------------------------
+# zCLI/subsystems/zData/zData_modules/paradigms/quantum/quantum_data.py
 
-from logger import Logger
+"""Quantum data management handler (STUB).
 
-# Logger instance
-logger = Logger.get_logger(__name__)
+This is a placeholder for future quantum data paradigm implementation.
+Uses zStrongNuclearField for identity and temporality management.
+"""
 
 
 class QuantumData:
@@ -36,7 +31,7 @@ class QuantumData:
         self.adapter = None
         self._connected = False
         
-        logger.info("🌌 QuantumData handler initialized (STUB)")
+        self.logger.info("🌌 QuantumData handler initialized (STUB)")
     
     def handle_request(self, request):
         """
@@ -49,7 +44,7 @@ class QuantumData:
             Result of the operation
         """
         action = request.get("action", "unknown")
-        logger.info("🌌 Quantum operation: %s (STUB - not yet implemented)", action)
+        self.logger.info("🌌 Quantum operation: %s (STUB - not yet implemented)", action)
         
         # Return appropriate defaults based on action
         if action == "read":
@@ -67,37 +62,37 @@ class QuantumData:
     
     def insert(self, table, fields, values):
         """Insert operation (quantum paradigm - STUB)."""
-        logger.info("🌌 Quantum insert: table=%s (STUB)", table)
+        self.logger.info("🌌 Quantum insert: table=%s (STUB)", table)
         return 1
     
     def select(self, table, fields=None, where=None, joins=None, order=None, limit=None):
         """Select operation (quantum paradigm - STUB)."""
-        logger.info("🌌 Quantum select: table=%s (STUB)", table)
+        self.logger.info("🌌 Quantum select: table=%s (STUB)", table)
         return []
     
     def update(self, table, fields, values, where):
         """Update operation (quantum paradigm - STUB)."""
-        logger.info("🌌 Quantum update: table=%s (STUB)", table)
+        self.logger.info("🌌 Quantum update: table=%s (STUB)", table)
         return 0
     
     def delete(self, table, where):
         """Delete operation (quantum paradigm - STUB)."""
-        logger.info("🌌 Quantum delete: table=%s (STUB)", table)
+        self.logger.info("🌌 Quantum delete: table=%s (STUB)", table)
         return 0
     
     def upsert(self, table, fields, values, conflict_fields):
         """Upsert operation (quantum paradigm - STUB)."""
-        logger.info("🌌 Quantum upsert: table=%s (STUB)", table)
+        self.logger.info("🌌 Quantum upsert: table=%s (STUB)", table)
         return 1
     
     def ensure_tables(self, tables=None):
         """Ensure tables exist (quantum paradigm - STUB)."""
-        logger.info("🌌 Quantum ensure_tables (STUB)")
+        self.logger.info("🌌 Quantum ensure_tables (STUB)")
         return True
     
     def list_tables(self):
         """List tables (quantum paradigm - STUB)."""
-        logger.info("🌌 Quantum list_tables (STUB)")
+        self.logger.info("🌌 Quantum list_tables (STUB)")
         return []
     
     def is_connected(self):
@@ -106,6 +101,6 @@ class QuantumData:
     
     def disconnect(self):
         """Disconnect (quantum paradigm - STUB)."""
-        logger.info("🌌 Quantum disconnect (STUB)")
+        self.logger.info("🌌 Quantum disconnect (STUB)")
         self._connected = False
 

@@ -1,18 +1,17 @@
-# zCLI/subsystems/zDisplay_modules/output/output_adapter.py
+# zCLI/subsystems/zDisplay/zDisplay_modules/output/output_adapter.py
+
 """Base output adapter and factory for mode-specific rendering."""
 
-from logger import Logger
-
-logger = Logger.get_logger(__name__)
-
+from zCLI.subsystems.zDisplay.zDisplay_modules.utils import Colors
 
 class OutputAdapter:
     """Base class for output adapters (Terminal, WebSocket)."""
 
-    def __init__(self, session=None):
-        """Initialize with optional session context."""
+    def __init__(self, session=None, logger=None):
+        """Initialize with optional session context and logger."""
         self.session = session or {}
-        self.logger = Logger.get_logger()
+        self.logger = logger
+        self.colors = Colors
 
     # Primitive operations (subclasses must implement)
     def write_raw(self, content):
@@ -31,21 +30,25 @@ class OutputFactory:
     """Factory for creating output adapters based on session mode."""
 
     @staticmethod
-    def create(session=None):
+    def create(session=None, logger=None):
         """Create output adapter for session mode (defaults to Terminal)."""
         from .output_terminal import TerminalOutput
 
         if not session:
-            logger.debug("[OutputFactory] No session, defaulting to Terminal")
-            return TerminalOutput(session)
+            if logger:
+                logger.debug("[OutputFactory] No session, defaulting to Terminal")
+            return TerminalOutput(session, logger)
 
         mode = session.get("zMode", "Terminal")
-        logger.debug("[OutputFactory] Creating adapter for mode: %s", mode)
+        if logger:
+            logger.debug("[OutputFactory] Creating adapter for mode: %s", mode)
 
         if mode == "Terminal":
-            return TerminalOutput(session)
+            return TerminalOutput(session, logger)
         if mode in ("UI", "WebSocket"):
-            logger.warning("[OutputFactory] WebSocket not implemented, using Terminal")
-            return TerminalOutput(session)
-        logger.warning("[OutputFactory] Unknown mode '%s', using Terminal", mode)
-        return TerminalOutput(session)
+            if logger:
+                logger.warning("[OutputFactory] WebSocket not implemented, using Terminal")
+            return TerminalOutput(session, logger)
+        if logger:
+            logger.warning("[OutputFactory] Unknown mode '%s', using Terminal", mode)
+        return TerminalOutput(session, logger)

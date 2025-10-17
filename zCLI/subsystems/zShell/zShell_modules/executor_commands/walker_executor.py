@@ -1,29 +1,16 @@
+# zCLI/subsystems/zShell/zShell_modules/executor_commands/walker_executor.py
+
 # zCLI/subsystems/zShell_modules/executor_commands/walker_executor.py
 # ───────────────────────────────────────────────────────────────
 """Walker command execution for zCLI."""
 
-from logger import Logger
-
-# Logger instance
-logger = Logger.get_logger(__name__)
-
-
 def execute_walker(zcli, parsed):
-    """
-    Execute walker commands like 'walker run'.
-    
-    Args:
-        zcli: zCLI instance
-        parsed: Parsed command dictionary
-        
-    Returns:
-        Walker command result
-    """
+    """Execute walker commands like 'walker run'."""
     action = parsed["action"]
     
     if action == "run":
         # Launch Walker using session's zVaF configuration
-        logger.info("Launching Walker from session configuration...")
+        zcli.logger.info("Launching Walker from session configuration...")
         
         # Validate required session fields
         required_fields = ["zWorkspace", "zVaFilename", "zVaFile_path", "zBlock"]
@@ -54,21 +41,21 @@ def execute_walker(zcli, parsed):
         # Import and launch Walker
         try:
             from zCLI.subsystems.zWalker.zWalker import zWalker
-            logger.info("Creating zWalker instance from zCLI...")
+            zcli.logger.info("Creating zWalker instance from zCLI...")
             walker = zWalker(zcli)
             
-            logger.info("Starting Walker UI mode...")
+            zcli.logger.info("Starting Walker UI mode...")
             result = walker.run()
             
             # After Walker exits normally, return to shell
-            logger.info("Walker exited normally, returning to Shell mode...")
+            zcli.logger.info("Walker exited normally, returning to Shell mode...")
             zcli.ui_mode = False
             
             return {"success": "Walker session completed", "result": result}
             
         except SystemExit as e:
             # Walker called sys.exit() - this is normal for "stop" or completion
-            logger.info("Walker exited via sys.exit(%s), returning to Shell mode...", e.code)
+            zcli.logger.info("Walker exited via sys.exit(%s), returning to Shell mode...", e.code)
             zcli.ui_mode = False
             
             # Determine if it was a normal exit or error
@@ -78,7 +65,7 @@ def execute_walker(zcli, parsed):
                 return {"note": f"Walker exited with code {e.code}"}
             
         except Exception as e:
-            logger.error("Failed to launch Walker: %s", e, exc_info=True)
+            zcli.logger.error("Failed to launch Walker: %s", e, exc_info=True)
             zcli.ui_mode = False
             return {"error": f"Walker launch failed: {str(e)}"}
     

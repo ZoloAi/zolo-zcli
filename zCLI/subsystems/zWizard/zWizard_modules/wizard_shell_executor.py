@@ -1,28 +1,9 @@
 # zCLI/subsystems/zWizard/zWizard_modules/wizard_shell_executor.py
-"""
-Shell mode execution for zWizard steps.
 
-Handles execution of wizard steps in shell/CLI mode without walker/UI.
-"""
+"""Shell mode execution for zWizard steps."""
 
-from logger import Logger
-
-logger = Logger.get_logger(__name__)
-
-
-def execute_step_shell_mode(zcli, step_key, step_value, context=None):
-    """
-    Execute a wizard step in shell mode (without walker/zDispatch).
-    
-    Args:
-        zcli: zCLI instance with subsystems
-        step_key: Step name
-        step_value: Step configuration (dict or string)
-        context: Optional wizard context with schema_cache
-        
-    Returns:
-        Step execution result
-    """
+def execute_step_shell_mode(zcli, step_key, step_value, logger, context=None):
+    """Execute a wizard step in shell mode."""
     logger.debug("Executing step in shell mode: %s", step_key)
     
     # Handle different step value types

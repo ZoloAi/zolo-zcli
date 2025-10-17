@@ -1,9 +1,12 @@
+# zCLI/subsystems/zData/zData_modules/shared/backends/adapter_registry.py
+
 """Backend adapter registry - auto-registers built-in adapters on import."""
 
-from logger import Logger
+import logging
 from .adapter_factory import AdapterFactory
 
-logger = Logger.get_logger(__name__)
+# Get logger for this module
+logger = logging.getLogger("zCLI.zData")
 
 def register_builtin_adapters():
     """Register built-in adapters (SQLite, CSV, PostgreSQL)."""

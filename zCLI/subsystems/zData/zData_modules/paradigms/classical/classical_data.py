@@ -1,12 +1,10 @@
+# zCLI/subsystems/zData/zData_modules/paradigms/classical/classical_data.py
+
 """Classical data management handler."""
 
-from logger import Logger
 from ...shared.backends.adapter_factory import AdapterFactory
 from ...shared.validator import DataValidator
 from ...shared.data_operations import DataOperations
-
-# Logger instance
-logger = Logger.get_logger(__name__)
 
 class ClassicalData:
     """Classical data handler - manages connections and delegates operations."""
@@ -51,6 +49,9 @@ class ClassicalData:
         # Resolve special paths via zParser (handles ~.zMachine.* and @ paths)
         data_path = self.zcli.zparser.resolve_data_path(data_path)
         self.logger.info("Initializing %s adapter for: %s (label: %s)", data_type, data_path, data_label)
+
+        # Set logger for factory
+        AdapterFactory.set_logger(self.logger)
 
         # Create appropriate adapter
         try:
@@ -105,7 +106,7 @@ class ClassicalData:
         if self.adapter:
             self.adapter.disconnect()
             self._connected = False
-            logger.info("Disconnected from backend")
+            self.logger.info("Disconnected from backend")
 
     def get_connection_info(self):
         """Get connection information."""

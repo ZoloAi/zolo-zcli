@@ -1,34 +1,11 @@
+# zCLI/subsystems/zShell/zShell_modules/executor_commands/load_executor.py
+
 # zCLI/subsystems/zShell_modules/executor_commands/load_executor.py
 # ───────────────────────────────────────────────────────────────
 """Load command execution for zCLI."""
 
-from logger import Logger
-
-# Logger instance
-logger = Logger.get_logger(__name__)
-
-
 def execute_load(zcli, parsed):
-    """
-    Execute load command to pin resources to cache.
-    
-    Commands:
-      load <zPath>                   - Load and pin resource
-      load <zPath> --as <alias>      - Load and pin with alias (use with $alias)
-      load show                      - Show all cache tiers
-      load show pinned               - Show Tier 1 (pinned resources)
-      load show cached               - Show Tier 2 (auto-cache stats)
-      load show aliases              - Show all aliases
-      load show schemas/ui/config    - Show specific resource type
-      load clear [pattern]           - Clear loaded resources
-    
-    Args:
-        zcli: zCLI instance
-        parsed: Parsed command dictionary
-        
-    Returns:
-        Load operation result
-    """
+    """Execute load command to pin resources to cache."""
     args = parsed.get("args", [])
     options = parsed.get("options", {})
     
@@ -72,14 +49,14 @@ def execute_load(zcli, parsed):
         # Load directly without going through handle() to ensure schemas are cached
         if alias:
             # Load raw file
-            from zCLI.subsystems.zLoader_modules import load_file_raw
+            from zCLI.subsystems.zLoader.zLoader_modules.loader_io import load_file_raw
             
             # Get resolved filepath from zParser
             zVaFile_fullpath, zVaFilename = zcli.zparser.zPath_decoder(zPath, None)
             zFilePath_identified, zFile_extension = zcli.zparser.identify_zFile(zVaFilename, zVaFile_fullpath)
             
             # Read raw content
-            zFile_raw = load_file_raw(zFilePath_identified, zcli.display)
+            zFile_raw = load_file_raw(zFilePath_identified, zcli.logger, zcli.display)
             
             # Parse content
             result = zcli.zparser.parse_file_content(zFile_raw, zFile_extension)
@@ -130,10 +107,10 @@ def execute_load(zcli, parsed):
             item_type = "blocks"
         
         if alias:
-            logger.info("✅ Loaded and aliased %s: %s → %s (%d %s)", 
+            zcli.logger.info("✅ Loaded and aliased %s: %s → %s (%d %s)", 
                        resource_type, zPath, display_name, len(items), item_type)
         else:
-            logger.info("✅ Loaded %s: %s (%d %s)", resource_type, zPath, len(items), item_type)
+            zcli.logger.info("✅ Loaded %s: %s (%d %s)", resource_type, zPath, len(items), item_type)
         
         return {
             "status": "success",
@@ -145,7 +122,7 @@ def execute_load(zcli, parsed):
         }
         
     except Exception as e:  # pylint: disable=broad-except
-        logger.error("Failed to load %s: %s", zPath, e)
+        zcli.logger.error("Failed to load %s: %s", zPath, e)
         return {"error": str(e)}
 
 

@@ -1,18 +1,15 @@
+# zCLI/subsystems/zOpen/zOpen.py
+
 # zCLI/subsystems/zOpen.py — Core zOpen Handler
 # ───────────────────────────────────────────────────────────────
 """Core zOpen handler for file and URL opening operations."""
 
 from urllib.parse import urlparse
-from logger import Logger
 
 # Import zOpen modules from registry
 from .zOpen_modules.zOpen_url import zOpen_url
 from .zOpen_modules.zOpen_file import zOpen_file
 from .zOpen_modules.zOpen_path import zOpen_zPath
-
-# Logger instance
-logger = Logger.get_logger(__name__)
-
 
 class zOpen:
     """Core zOpen class for file and URL opening operations."""

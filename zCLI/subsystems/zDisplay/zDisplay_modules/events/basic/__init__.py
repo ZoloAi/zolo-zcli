@@ -1,3 +1,5 @@
+# zCLI/subsystems/zDisplay/zDisplay_modules/events/basic/__init__.py
+
 # zCLI/subsystems/zDisplay_modules/events/basic/__init__.py
 """
 Basic event handlers - simple formatted output built on primitives.
@@ -25,4 +27,3 @@ __all__ = [
     'handle_break',
     'handle_pause',
 ]
-

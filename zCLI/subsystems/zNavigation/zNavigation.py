@@ -1,14 +1,11 @@
+# zCLI/subsystems/zNavigation/zNavigation.py
+
 """zNavigation - Unified Navigation System Subsystem for zCLI."""
 
-from logger import Logger
 from .zNavigation_modules.menu_system import MenuSystem
 from .zNavigation_modules.breadcrumbs import Breadcrumbs
 from .zNavigation_modules.navigation import Navigation
 from .zNavigation_modules.linking import Linking
-
-# Logger instance
-logger = Logger.get_logger(__name__)
-
 
 class zNavigation:
     """Unified navigation system subsystem for zCLI."""
@@ -42,29 +39,29 @@ class zNavigation:
     # Menu System Methods
     def create(self, options, title=None, allow_back=True, walker=None):
         """Create and display a menu, return user choice."""
-        return self.menu.create(options, title, allow_back, walker)
+        return self.menu.create(options, title=title, allow_back=allow_back, walker=walker)
 
     def select(self, options, prompt="Select option", walker=None):
         """Simple selection menu without complex navigation."""
-        return self.menu.select(options, prompt, walker)
+        return self.menu.select(options, prompt=prompt, walker=walker)
 
     def handle(self, zMenu_obj, walker=None):
         """Handle legacy zMenu object format (for backward compatibility)."""
-        return self.menu.handle(zMenu_obj, walker)
+        return self.menu.handle(zMenu_obj, walker=walker)
 
     # Breadcrumbs Methods
     def handle_zCrumbs(self, zBlock, zKey, walker=None):
         """Handle breadcrumb trail management."""
-        return self.breadcrumbs.handle_zCrumbs(zBlock, zKey, walker)
+        return self.breadcrumbs.handle_zCrumbs(zBlock, zKey, walker=walker)
 
     def handle_zBack(self, show_banner=True, walker=None):
         """Handle back navigation."""
-        return self.breadcrumbs.handle_zBack(show_banner, walker)
+        return self.breadcrumbs.handle_zBack(show_banner=show_banner, walker=walker)
 
     # Navigation Methods
     def navigate_to(self, target, context=None):
         """Navigate to a specific target."""
-        return self.navigation.navigate_to(target, context)
+        return self.navigation.navigate_to(target, context=context)
 
     def get_current_location(self):
         """Get current navigation location."""
@@ -77,11 +74,11 @@ class zNavigation:
     # Linking Methods
     def handle_zLink(self, zHorizontal, walker=None):
         """Handle inter-file linking."""
-        return self.linking.handle_zLink(zHorizontal, walker)
+        return self.linking.handle(zHorizontal, walker=walker)
 
     def create_link(self, source, target, metadata=None):
         """Create a navigation link."""
-        return self.linking.create_link(source, target, metadata)
+        return self.linking.create_link(source, target, metadata=metadata)
 
 
 # Standalone handler functions for backward compatibility
@@ -102,7 +99,7 @@ def handle_zLink(zHorizontal, walker=None):
     if not walker:
         raise ValueError("handle_zLink requires walker parameter")
     
-    return walker.zcli.navigation.handle_zLink(zHorizontal, walker)
+    return walker.zcli.navigation.handle_zLink(zHorizontal, walker=walker)
 
 
 def handle_zCrumbs(zBlock, zKey, walker=None):
@@ -110,4 +107,4 @@ def handle_zCrumbs(zBlock, zKey, walker=None):
     if not walker:
         raise ValueError("handle_zCrumbs requires walker parameter")
     
-    return walker.zcli.navigation.handle_zCrumbs(zBlock, zKey, walker)
+    return walker.zcli.navigation.handle_zCrumbs(zBlock, zKey, walker=walker)

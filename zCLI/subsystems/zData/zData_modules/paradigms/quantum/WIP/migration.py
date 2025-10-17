@@ -1,3 +1,5 @@
+# zCLI/subsystems/zData/zData_modules/paradigms/quantum/WIP/migration.py
+
 # zCLI/subsystems/zMigrate.py — Schema Migration Subsystem
 # ───────────────────────────────────────────────────────────────
 
@@ -14,7 +16,7 @@ Handles:
 Future: DROP COLUMN, RENAME, TYPE changes, indexes, etc.
 """
 
-from logger import Logger
+# Logger will be passed as parameter to functions that need it
 
 # ═══════════════════════════════════════════════════════════════════
 # Ghost Migration Table Schema for RGB Tracking
@@ -84,15 +86,16 @@ class ZMigrate:
     Minimal v1.0: Detects and adds missing columns only.
     """
     
-    def __init__(self, walker=None):
+    def __init__(self, walker=None, logger=None):
         """
         Initialize migration manager.
         
         Args:
             walker: Optional zCLI instance for context
+            logger: Logger instance to use
         """
         self.walker = walker
-        self.logger = Logger.get_logger()
+        self.logger = logger or (walker.logger if walker else None)
     
     def _ensure_migrations_table(self, zData):
         """Create zMigrations table using zCLI's zTables function."""
@@ -105,7 +108,7 @@ class ZMigrate:
             if not cur.fetchone():
                 # Create using zCLI's table creation system
                 zTables("zMigrations", MIGRATION_TABLE_SCHEMA, zData["cursor"], zData["conn"])
-                logger.info("✅ Created zMigrations table using zCLI schema")
+                self.logger.info("✅ Created zMigrations table using zCLI schema")
     
     def _update_rgb_on_access(self, table, row_id, zData):
         """Update RGB values when row is accessed."""
@@ -121,7 +124,7 @@ class ZMigrate:
         """, (row_id,))
         
         zData["conn"].commit()
-        logger.debug("🌈 Updated RGB on access: %s.%s", table, row_id)
+        self.logger.debug("🌈 Updated RGB on access: %s.%s", table, row_id)
     
     def _update_rgb_on_migration(self, table, migration_type, success, zData):
         """Update B component based on migration results."""
@@ -133,14 +136,14 @@ class ZMigrate:
                 UPDATE {table} SET 
                     weak_force_b = MIN(255, weak_force_b + 10)
             """)
-            logger.info("✅ Migration success - B increased for %s", table)
+            self.logger.info("✅ Migration success - B increased for %s", table)
         else:
             # Migration failure = decrease B (less stable)
             cur.execute(f"""
                 UPDATE {table} SET 
                     weak_force_b = MAX(0, weak_force_b - 20)
             """)
-            logger.warning("❌ Migration failed - B decreased for %s", table)
+            self.logger.warning("❌ Migration failed - B decreased for %s", table)
         
         zData["conn"].commit()
     
@@ -168,10 +171,10 @@ class ZMigrate:
             total_rows_affected += rows_affected
             
             if rows_affected > 0:
-                logger.debug("Applied RGB decay to %d rows in table '%s'", rows_affected, table)
+                self.logger.debug("Applied RGB decay to %d rows in table '%s'", rows_affected, table)
         
         zData["conn"].commit()
-        logger.info("⏰ Applied RGB time decay to %d total rows across %d tables", total_rows_affected, len(user_tables))
+        self.logger.info("⏰ Applied RGB time decay to %d total rows across %d tables", total_rows_affected, len(user_tables))
         
         return total_rows_affected
     
@@ -312,7 +315,7 @@ class ZMigrate:
                     }
                 }
         """
-        logger.info("[Migration] Detecting schema changes...")
+        self.logger.info("[Migration] Detecting schema changes...")
         
         # Get current database schema
         db_schema = self._introspect_database(zData)
@@ -330,7 +333,7 @@ class ZMigrate:
             
             # Check if table exists in database
             if table_name not in db_schema:
-                logger.info("[Migration] Table '%s' doesn't exist in DB (will be created by zEnsureTables)", table_name)
+                self.logger.info("[Migration] Table '%s' doesn't exist in DB (will be created by zEnsureTables)", table_name)
                 continue
             
             # Get columns currently in database
@@ -351,7 +354,7 @@ class ZMigrate:
             
             if new_cols:
                 changes["new_columns"][table_name] = new_cols
-                logger.info("[Migration] Found %d new columns in table '%s'", len(new_cols), table_name)
+                self.logger.info("[Migration] Found %d new columns in table '%s'", len(new_cols), table_name)
             
             # Check for new indexes
             if "indexes" in table_fields:
@@ -371,7 +374,7 @@ class ZMigrate:
                     
                     if new_indexes:
                         changes["new_indexes"][table_name] = new_indexes
-                        logger.info("[Migration] Found %d new indexes for table '%s'", len(new_indexes), table_name)
+                        self.logger.info("[Migration] Found %d new indexes for table '%s'", len(new_indexes), table_name)
         
         return changes
     
@@ -388,10 +391,10 @@ class ZMigrate:
             bool: True if successful, False otherwise
         """
         if not changes.get("new_columns") and not changes.get("new_indexes"):
-            logger.info("[Migration] No changes to apply")
+            self.logger.info("[Migration] No changes to apply")
             return True
         
-        logger.info("[Migration] Applying schema changes...")
+        self.logger.info("[Migration] Applying schema changes...")
         
         # Route to database-specific implementation
         if zData["type"] == "sqlite":
@@ -399,7 +402,7 @@ class ZMigrate:
         elif zData["type"] == "postgresql":
             return self._apply_postgres_migrations(changes, zForm, zData)
         else:
-            logger.error("[Migration] Migrations not supported for database type: %s", zData["type"])
+            self.logger.error("[Migration] Migrations not supported for database type: %s", zData["type"])
             return False
     
     def auto_migrate(self, zForm, zData):
@@ -455,7 +458,7 @@ class ZMigrate:
         elif zData["type"] == "postgresql":
             return self._introspect_postgres(zData)
         
-        logger.warning("[Migration] Introspection not implemented for: %s", zData["type"])
+        self.logger.warning("[Migration] Introspection not implemented for: %s", zData["type"])
         return {}
     
     def _introspect_sqlite(self, zData):
@@ -472,7 +475,7 @@ class ZMigrate:
         cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")
         tables = [row[0] for row in cur.fetchall()]
         
-        logger.info("[Migration] Found %d tables in database", len(tables))
+        self.logger.info("[Migration] Found %d tables in database", len(tables))
         
         for table in tables:
             # Use PRAGMA table_info to get column details
@@ -490,7 +493,7 @@ class ZMigrate:
                 }
             
             schema[table] = columns
-            logger.debug("[Migration] Table '%s' has %d columns", table, len(columns))
+            self.logger.debug("[Migration] Table '%s' has %d columns", table, len(columns))
         
         return schema
     
@@ -638,27 +641,27 @@ class ZMigrate:
                             sql += f" DEFAULT {default_val}"
                     
                     # Execute migration
-                    logger.info("[Migration] Executing: %s", sql)
+                    self.logger.info("[Migration] Executing: %s", sql)
                     cur.execute(sql)
-                    logger.info("[Migration] ✅ Added column '%s' to table '%s'", col_name, table_name)
+                    self.logger.info("[Migration] ✅ Added column '%s' to table '%s'", col_name, table_name)
             
             # Commit all column changes
             conn.commit()
-            logger.info("[Migration] All column migrations applied successfully")
+            self.logger.info("[Migration] All column migrations applied successfully")
             
             # Apply index changes
             if changes.get("new_indexes"):
-                logger.info("[Migration] Creating new indexes...")
+                self.logger.info("[Migration] Creating new indexes...")
                 for table_name, new_indexes in changes["new_indexes"].items():
                     # Import here to avoid circular dependency
                     from zCLI.subsystems.zData.zData_modules.infrastructure import _create_indexes
                     _create_indexes(table_name, new_indexes, cur, conn)
-                logger.info("[Migration] All index migrations applied successfully")
+                self.logger.info("[Migration] All index migrations applied successfully")
             
             return True
             
         except Exception as e:
-            logger.error("[Migration] Migration failed: %s", e)
+            self.logger.error("[Migration] Migration failed: %s", e)
             conn.rollback()
             return False
     
@@ -735,7 +738,7 @@ def auto_migrate_schema(zForm, zData, walker=None):
         return False
     
     if result["status"] == "success":
-        logger.info("[Migration] %s", result["message"])
+        self.logger.info("[Migration] %s", result["message"])
     
     return True
 

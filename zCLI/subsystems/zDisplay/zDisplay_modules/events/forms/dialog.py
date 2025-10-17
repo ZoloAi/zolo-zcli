@@ -1,39 +1,9 @@
-# zCLI/subsystems/zDisplay_modules/events/forms/dialog.py
+# zCLI/subsystems/zDisplay/zDisplay_modules/events/forms/dialog.py
+
 """Dialog/Form display and input collection handler."""
 
-from logger import Logger
-
-logger = Logger.get_logger(__name__)
-
-
-def handle_dialog(obj, output_adapter, input_adapter):
-    """
-    Render interactive form and collect user input.
-    
-    This is the core form rendering function used by zDialog subsystem.
-    It displays form fields and collects user input, returning a zConv dict.
-    
-    Args:
-        obj: Display object with context containing:
-            - context: Dict with 'model', 'fields', and optionally 'zConv'
-            - zcli: Optional zCLI instance for schema loading
-            - walker: Optional walker instance (legacy)
-        output_adapter: Output adapter for rendering prompts
-        input_adapter: Input adapter for collecting user input
-        
-    Returns:
-        zConv dict with collected field values
-        
-    Example obj:
-        {
-            "event": "zDialog",
-            "context": {
-                "model": "@.schemas.zUsers",
-                "fields": ["username", "email", "role"]
-            },
-            "zcli": zcli_instance
-        }
-    """
+def handle_dialog(obj, output_adapter, input_adapter, logger):
+    """Render interactive form and collect user input, returning a zConv dict."""
     # Extract context
     zContext = obj.get("context", {})
     fields = zContext.get("fields", [])
@@ -66,7 +36,7 @@ def handle_dialog(obj, output_adapter, input_adapter):
         logger.debug("Schema-based form mode")
         
         # Load model schema
-        model_raw = _load_model_schema(model, zcli, walker)
+        model_raw = _load_model_schema(model, zcli, walker, logger)
         if not model_raw:
             logger.error("Failed to load model schema: %s", model)
             return zConv
@@ -127,7 +97,7 @@ def handle_dialog(obj, output_adapter, input_adapter):
     return zConv
 
 
-def _load_model_schema(model_path, zcli, walker):
+def _load_model_schema(model_path, zcli, walker, logger):
     """Load schema model using loader."""
     try:
         # Try zcli first (modern)

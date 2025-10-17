@@ -1,4 +1,5 @@
-# zCLI/subsystems/zDisplay_modules/events/primitives/__init__.py
+# zCLI/subsystems/zDisplay/zDisplay_modules/events/primitives/__init__.py
+
 """
 Primitive event handlers - atomic I/O operations (cannot be decomposed).
 
@@ -15,4 +16,3 @@ __all__ = [
     'handle_read',
     'handle_read_password',
 ]
-

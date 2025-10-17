@@ -1,11 +1,9 @@
+# zCLI/subsystems/zData/zData_modules/shared/backends/sqlite_adapter.py
+
 """SQLite backend adapter implementation."""
 
 import sqlite3
-from logger import Logger
 from .sql_adapter import SQLAdapter
-
-logger = Logger.get_logger(__name__)
-
 
 class SQLiteAdapter(SQLAdapter):
     """SQLite backend implementation (inherits SQL logic from SQLAdapter)."""

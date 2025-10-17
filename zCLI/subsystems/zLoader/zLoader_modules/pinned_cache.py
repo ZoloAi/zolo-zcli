@@ -1,16 +1,16 @@
-# zCLI/subsystems/zLoader_modules/pinned_cache.py
+# zCLI/subsystems/zLoader/zLoader_modules/pinned_cache.py
+
 """User-loaded aliases cache - never auto-evicts, highest priority."""
 
 import time
-from logger import Logger
 
 class PinnedCache:
     """Pinned cache for user-loaded aliases (parsed schemas only, no auto-eviction)."""
 
-    def __init__(self, session):
+    def __init__(self, session, logger):
         """Initialize pinned cache."""
         self.session = session
-        self.logger = Logger.get_logger()
+        self.logger = logger
         self._ensure_namespace()
 
     def _ensure_namespace(self):

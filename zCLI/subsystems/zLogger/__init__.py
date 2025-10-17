@@ -1,3 +1,5 @@
+# zCLI/subsystems/zLogger/__init__.py
+
 """
 zLogger Package - Logging Subsystem
 

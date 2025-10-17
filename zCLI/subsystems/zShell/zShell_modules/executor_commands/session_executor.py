@@ -1,24 +1,11 @@
+# zCLI/subsystems/zShell/zShell_modules/executor_commands/session_executor.py
+
 # zCLI/subsystems/zShell_modules/executor_commands/session_executor.py
 # ───────────────────────────────────────────────────────────────
 """Session command execution for zCLI."""
 
-from logger import Logger
-
-# Logger instance
-logger = Logger.get_logger(__name__)
-
-
 def execute_session(zcli, parsed):
-    """
-    Execute session commands like 'session info', 'session set mode zGUI'.
-    
-    Args:
-        zcli: zCLI instance
-        parsed: Parsed command dictionary
-        
-    Returns:
-        Session command result
-    """
+    """Execute session commands like 'session info' and 'session set'."""
     action = parsed["action"]
     args = parsed["args"]
     
@@ -31,7 +18,7 @@ def execute_session(zcli, parsed):
     elif action == "set" and len(args) >= 2:
         key, value = args[0], args[1]
         zcli.session[key] = value
-        logger.info("Session updated: %s = %s", key, value)
+        zcli.logger.info("Session updated: %s = %s", key, value)
         return {"success": f"Set {key} = {value}"}
     elif action == "get" and len(args) >= 1:
         key = args[0]

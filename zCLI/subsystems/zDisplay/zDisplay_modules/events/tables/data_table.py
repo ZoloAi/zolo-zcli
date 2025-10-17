@@ -1,38 +1,12 @@
+# zCLI/subsystems/zDisplay/zDisplay_modules/events/tables/data_table.py
+
 # zCLI/subsystems/zDisplay_modules/events/tables/data_table.py
 """Data table display handler - renders query results."""
 
 import json
-from logger import Logger
 
-logger = Logger.get_logger(__name__)
-
-
-def handle_data_table(obj, output_adapter):
-    """
-    Render data table (query results).
-    
-    Displays rows of data from database queries or CRUD operations.
-    Uses JSON formatting for readability.
-    
-    Args:
-        obj: Display object with table data:
-            - title: Table title (default: "Table")
-            - rows: List of row dicts
-            - color: Header color (optional)
-            - style: Header style (optional)
-            - indent: Indentation level (optional)
-        output_adapter: Output adapter for rendering
-        
-    Example obj:
-        {
-            "event": "zTable",
-            "title": "Users",
-            "rows": [
-                {"id": 1, "name": "Alice", "email": "alice@example.com"},
-                {"id": 2, "name": "Bob", "email": "bob@example.com"}
-            ]
-        }
-    """
+def handle_data_table(obj, output_adapter, logger):
+    """Render data table with rows from database queries or CRUD operations."""
     title = obj.get("title", "Table")
     rows = obj.get("rows", [])
     

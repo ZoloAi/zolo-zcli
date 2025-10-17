@@ -2,85 +2,111 @@
 # ───────────────────────────────────────────────────────────────
 """Single source of truth for all subsystems."""
 
-# Import all subsystems from the subsystems package
-from .subsystems.zUtils import zUtils
-from .subsystems.zDisplay import zDisplay
-from .subsystems.zData import zData
-from .subsystems.zFunc import zFunc
-from .subsystems.zParser import zParser
-from .subsystems.zComm import zComm
-from .subsystems.zDispatch import zDispatch
-from .subsystems.zNavigation import zNavigation
-from .subsystems.zDialog import zDialog
-from .subsystems.zWizard import zWizard
-from .subsystems.zWalker import zWalker
-from .subsystems.zOpen import zOpen
-from .subsystems.zAuth import zAuth
-from .subsystems.zLoader import zLoader
-from .subsystems.zShell import ZShell
-
 class zCLI:
-    """
-    Core zCLI Engine manages all subsystems and provides two modes:
-    - Shell: Interactive command-line interface
-    - Walker: Menu-driven interface using YAML files
-    """
+    """Core zCLI Engine managing all subsystems 
+    Supporting three GUI modes: Shell, Walker, and Bifrost."""
 
     def __init__(self, zSpark_obj=None):
-        """
-        Initialize zCLI instance in Shell or Walker/UI mode.
+        """Initialize zCLI instance (LFS style)
+        with optional zSpark_obj config dict."""
 
-        Args:
-            zSpark_obj: Configuration dict for Walker/UI mode (optional).
-                       See Documentation/zolo-zcli_GUIDE.md for details.
-        """
+        # Initialize zSpark_obj config dict
         self.zspark_obj = zSpark_obj or {}
+        # Example zSpark_obj format:
+        # zSpark_obj = {
+        #     "zSpark": "zSpark Example",               # Label
+        #     "zWorkspace": Path.to.Workspace,
+        #     "zVaFile_path": .zPath.to.zVaFile,        # Virtual address file path (optional)
+        #     "zVaFilename": .zPath.to.zVaFilename,     # zVaFile name (optional)
+        #     "zBlock": .zPath.to.zBlock,               # zBlock name
+        #     "zMode": "Terminal",                      # UI mode
+        #     "logger": "debug",                        # Logging level
+        #     "plugins": [                              # Optional utility plugins
+        #         "zSpark.Logic.zSparkUtils",           # Import path or absolute .py
+        #     ],
+        # }
 
-        # Layer 0: Foundation (Infrastructure)
-        # Import zConfig here to avoid circular dependency (zConfig may import other subsystems)
-        # Initialize zConfig FIRST (provides machine config for session creation)
+        # ─────────────────────────────────────────────────────────────
+        # Layer 0: Foundation
+        # ─────────────────────────────────────────────────────────────
+        # Initialize zConfig FIRST (provides machine config, environment config, and logger)
         from .subsystems.zConfig import zConfig
-        from .subsystems.zLogger import zLogger
+        self.config = zConfig(zcli=self, zSpark_obj=zSpark_obj)
 
-        self.config = zConfig(zcli=self)
+        # Create instance-specific session (session management is now part of zConfig)
+        # Note: create_session() also initializes the logger
+        self.session = self.config.session.create_session()
 
-        # Initialize zLogger subsystem (needs config, must be early in Layer 0)
-        self.logger = zLogger(self)
+        # Get logger from session (initialized during session creation)
+        self.logger = self.session["logger_instance"]
 
-        # Initialize zSession subsystem (needs logger)
-        from .subsystems.zSession import zSession
-        self.zsession = zSession(self)
-
-        # Create instance-specific session with machine config
-        self.session = self.zsession.create_session(machine_config=self.config.get_machine())
-
-        # Initialize zComm (Communication infrastructure for WebSocket, PostgreSQL services)
-        # Must be in Layer 0 because zDisplay, zDialog, and zData depend on it
+        # Initialize zComm (Communication infrastructure for zBifrost and zData)
+        from .subsystems.zComm import zComm
         self.comm = zComm(self)
 
-        # Layer 1: Core Subsystems (depend on Layer 0)
-        # Note: Order matters! All subsystems may use zComm for communication
+        # ─────────────────────────────────────────────────────────────
+        # Layer 1: Core Subsystems
+        # ─────────────────────────────────────────────────────────────
+        # Initialize display subsystem
+        from .subsystems.zDisplay import zDisplay
         self.display = zDisplay(self)
-        self.dispatch = zDispatch(self)
-        self.navigation = zNavigation(self)  # Core navigation system - unified menus, breadcrumbs, linking
         self.mycolor = "MAIN"
 
+        # Initialize dispatch subsystem
+        from .subsystems.zDispatch import zDispatch
+        self.dispatch = zDispatch(self)
+
+        # Initialize navigation subsystem
+        from .subsystems.zNavigation import zNavigation
+        self.navigation = zNavigation(self)
+
+        # Initialize parser subsystem
+        from .subsystems.zParser import zParser
         self.zparser = zParser(self)
+
+        # Initialize loader subsystem
+        from .subsystems.zLoader import zLoader
         self.loader = zLoader(self)
+
+        # Initialize function subsystem
+        from .subsystems.zFunc import zFunc
         self.zfunc = zFunc(self)
+
+        # Initialize dialog subsystem
+        from .subsystems.zDialog import zDialog
         self.dialog = zDialog(self)
+
+        # Initialize open subsystem
+        from .subsystems.zOpen import zOpen
         self.open = zOpen(self)
+
+        # Initialize data subsystem
+        from .subsystems.zData import zData
         self.data = zData(self)
+
+        # Initialize authentication subsystem
+        from .subsystems.zAuth import zAuth
         self.auth = zAuth(self)
 
+        # ─────────────────────────────────────────────────────────────
         # Layer 2: Core Abstraction
+        # ─────────────────────────────────────────────────────────────
+        # Initialize utility subsystem
+        from .subsystems.zUtils import zUtils
         self.utils = zUtils(self)    # Plugin system first - available to all Layer 2+ subsystems
         self._load_plugins()         # Load plugins immediately after plugin system is ready
+
+        # Initialize wizard subsystem
+        from .subsystems.zWizard import zWizard
         self.wizard = zWizard(self)  # Can use plugins immediately
+
+        # Initialize walker subsystem
+        from .subsystems.zWalker import zWalker
         self.walker = zWalker(self)  # Modern walker with unified navigation (can use plugins immediately)
 
         # Layer 3: Orchestration
         # Initialize shell and command executor
+        from .subsystems.zShell import ZShell
         self.shell = ZShell(self)
 
         # Determine interface mode (needed for session initialization)
@@ -90,7 +116,7 @@ class zCLI:
         self._init_session()
 
         self.logger.info("zCLI Core initialized - UI Mode: %s", self.ui_mode)
-    
+
     def _load_plugins(self):
         """ Load utility plugins (Python modules) from zSpark_obj if provided.
             Uses zUtils, not zLoader."""
@@ -109,7 +135,7 @@ class zCLI:
         Walker mode populates additional fields later.
         """
         # Set session ID - always required
-        self.session["zS_id"] = self.zsession.generate_id("zS")
+        self.session["zS_id"] = self.config.session.generate_id("zS")
 
         # Set zMode based on interface mode
         if self.ui_mode:

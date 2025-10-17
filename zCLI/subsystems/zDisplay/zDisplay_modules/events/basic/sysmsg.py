@@ -1,34 +1,12 @@
-# zCLI/subsystems/zDisplay_modules/events/basic/sysmsg.py
-"""
-System message handler - subsystem section headers with debug toggle.
+# zCLI/subsystems/zDisplay/zDisplay_modules/events/basic/sysmsg.py
 
-System messages are headers that indicate subsystem operations (CRUD, Dialog, etc.)
-and respect debug/deployment configuration to hide in production.
-"""
+"""System message handler for subsystem section headers with debug toggle."""
 
 from ..primitives.raw import handle_line
 
 
-def handle_sysmsg(obj, output_adapter, session=None, mycolor=None):
-    """
-    System section header for subsystem operations.
-    
-    Automatically uses subsystem's color and respects debug toggle.
-    Style determined by indent level unless specified:
-    - indent 0: full (═══)
-    - indent 1: single (───)
-    - indent 2+: wave (~~~)
-    
-    Args:
-        obj: Display object with:
-            - label (str): Header text
-            - indent (int, optional): Indentation level (default: 0)
-            - style (str, optional): Override line style (full, single, wave)
-            - color (str, optional): Color name override (takes precedence)
-        output_adapter: Output adapter instance
-        session: Session dict for debug check (optional)
-        mycolor: Subsystem's default color (optional)
-    """
+def handle_sysmsg(obj, output_adapter, session=None, mycolor=None, logger=None):
+    """Display a styled section header with optional color and debug toggle."""
     # Check if sysmsg should be shown
     if not _should_show_sysmsg(session):
         return
@@ -51,26 +29,13 @@ def handle_sysmsg(obj, output_adapter, session=None, mycolor=None):
             style = "wave"
     
     # Build decorative line with label
-    line = _build_line(label, style, indent, mycolor)
+    line = _build_line(label, style, indent, mycolor, output_adapter.colors)
     
-    handle_line({"content": line}, output_adapter)
+    handle_line({"content": line}, output_adapter, logger)
 
 
-def _build_line(label, style, indent, mycolor=None):
-    """
-    Build decorative line with centered label.
-    
-    Args:
-        label: Text to center in line
-        style: Line style (full, single, wave)
-        indent: Indentation level
-        mycolor: Optional color name (string) or color code
-        
-    Returns:
-        Formatted line string
-    """
-    from ...utils import Colors
-    
+def _build_line(label, style, indent, mycolor=None, colors=None):
+    """Build decorative line with centered label and optional styling."""
     INDENT_WIDTH = 2  # 2 spaces per indent
     BASE_WIDTH = 60
     
@@ -95,13 +60,13 @@ def _build_line(label, style, indent, mycolor=None):
         right = space - left
         
         # Apply color - resolve string to color code if needed
-        if mycolor:
+        if mycolor and colors:
             # If mycolor is a string (color name), resolve it
             if isinstance(mycolor, str) and not mycolor.startswith('\033'):
-                color_code = getattr(Colors, mycolor, Colors.RESET)
+                color_code = getattr(colors, mycolor, colors.RESET)
             else:
                 color_code = mycolor
-            colored_label = f"{color_code} {label} {Colors.RESET}"
+            colored_label = f"{color_code} {label} {colors.RESET}"
         else:
             colored_label = f" {label} "
         
@@ -113,15 +78,7 @@ def _build_line(label, style, indent, mycolor=None):
 
 
 def _should_show_sysmsg(session):
-    """
-    Check if system messages should be displayed.
-    
-    Uses zLogger level to determine visibility:
-    - debug/info: Show sysmsg
-    - production: Hide sysmsg
-    
-    Falls back to session debug flag if zLogger not available.
-    """
+    """Check if system messages should be displayed based on logging level."""
     if not session:
         return True
     

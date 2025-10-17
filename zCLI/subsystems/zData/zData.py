@@ -1,11 +1,9 @@
+# zCLI/subsystems/zData/zData.py
+
 """Unified data management with dual-paradigm support (classical/quantum)."""
 
-from logger import Logger
 from .zData_modules.paradigms.classical import ClassicalData
 from .zData_modules.paradigms.quantum import QuantumData
-
-# Logger instance
-logger = Logger.get_logger(__name__)
 
 class zData:
     """Unified data management dispatcher routing to classical or quantum handlers."""
@@ -191,7 +189,7 @@ class zData:
         """Disconnect from backend."""
         if self.handler:
             self.handler.disconnect()
-            logger.info("Disconnected from backend")
+            self.logger.info("Disconnected from backend")
 
     # ═══════════════════════════════════════════════════════════
     # CRUD Operations (Delegated to Handler)

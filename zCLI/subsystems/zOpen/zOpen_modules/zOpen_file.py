@@ -1,7 +1,9 @@
+# zCLI/subsystems/zOpen/zOpen_modules/zOpen_file.py
+
 # zCLI/subsystems/zOpen/zOpen_file.py — Local File Opening Operations
 # ───────────────────────────────────────────────────────────────
 
-import os
+from zCLI import os
 import webbrowser
 
 

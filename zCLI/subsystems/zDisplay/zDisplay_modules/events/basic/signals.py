@@ -1,97 +1,75 @@
-# zCLI/subsystems/zDisplay_modules/events/basic/signals.py
-"""
-Signal event handlers - colored feedback messages.
+# zCLI/subsystems/zDisplay/zDisplay_modules/events/basic/signals.py
 
-Simple colored text for user feedback (uses line primitive + colors).
-"""
+"""Signal event handlers - colored feedback messages (uses line primitive + colors)."""
 
-from ...utils import Colors
 from ..primitives.raw import handle_line
 
-
-def handle_error(obj, output_adapter):
+def handle_error(obj, output_adapter, logger):
     """Error message with red color."""
     content = obj.get("content", "")
     indent = obj.get("indent", 0)
     
-    colored = f"{Colors.RED}{content}{Colors.RESET}"
+    colored = f"{output_adapter.colors.RED}{content}{output_adapter.colors.RESET}"
     if indent > 0:
         indent_str = "  " * indent
         colored = f"{indent_str}{colored}"
     
-    handle_line({"content": colored}, output_adapter)
+    handle_line({"content": colored}, output_adapter, logger)
 
 
-def handle_warning(obj, output_adapter):
+def handle_warning(obj, output_adapter, logger):
     """Warning message with yellow color."""
     content = obj.get("content", "")
     indent = obj.get("indent", 0)
     
-    colored = f"{Colors.YELLOW}{content}{Colors.RESET}"
+    colored = f"{output_adapter.colors.YELLOW}{content}{output_adapter.colors.RESET}"
     if indent > 0:
         indent_str = "  " * indent
         colored = f"{indent_str}{colored}"
     
-    handle_line({"content": colored}, output_adapter)
+    handle_line({"content": colored}, output_adapter, logger)
 
 
-def handle_success(obj, output_adapter):
+def handle_success(obj, output_adapter, logger):
     """Success message with green color."""
     content = obj.get("content", "")
     indent = obj.get("indent", 0)
     
-    colored = f"{Colors.GREEN}{content}{Colors.RESET}"
+    colored = f"{output_adapter.colors.GREEN}{content}{output_adapter.colors.RESET}"
     if indent > 0:
         indent_str = "  " * indent
         colored = f"{indent_str}{colored}"
     
-    handle_line({"content": colored}, output_adapter)
+    handle_line({"content": colored}, output_adapter, logger)
 
 
-def handle_info(obj, output_adapter):
+def handle_info(obj, output_adapter, logger):
     """Info message with cyan color."""
     content = obj.get("content", "")
     indent = obj.get("indent", 0)
     
-    colored = f"{Colors.CYAN}{content}{Colors.RESET}"
+    colored = f"{output_adapter.colors.CYAN}{content}{output_adapter.colors.RESET}"
     if indent > 0:
         indent_str = "  " * indent
         colored = f"{indent_str}{colored}"
     
-    handle_line({"content": colored}, output_adapter)
+    handle_line({"content": colored}, output_adapter, logger)
 
 
-def handle_marker(obj, output_adapter):
-    """
-    Flow marker - visual separator for workflow stages.
-    
-    Displays a colored marker line to indicate flow boundaries or stages.
-    Used by Walker to mark entry/exit points or workflow transitions.
-    
-    Args:
-        obj: Display object with:
-            - label: Marker text (default: "Marker")
-            - color: Color name (default: "MAGENTA")
-            - indent: Indentation level (optional)
-        output_adapter: Output adapter for rendering
-        
-    Example obj:
-        {
-            "event": "zMarker",
-            "label": "Starting workflow",
-            "color": "GREEN"
-        }
-    """
+def handle_marker(obj, output_adapter, logger):
+    """Flow marker - visual separator for workflow stages."""
     label = obj.get("label", "Marker")
     color_name = obj.get("color", "MAGENTA")
     indent = obj.get("indent", 0)
     
+    logger.debug("Displaying flow marker: '%s' (color: %s, indent: %d)", label, color_name, indent)
+    
     # Get color from Colors class
-    color = getattr(Colors, color_name.upper(), Colors.MAGENTA)
+    color = getattr(output_adapter.colors, color_name.upper(), output_adapter.colors.MAGENTA)
     
     # Create marker line
     marker_line = "=" * 60
-    colored_label = f"{color}{label}{Colors.RESET}"
+    colored_label = f"{color}{label}{output_adapter.colors.RESET}"
     
     # Apply indentation if needed
     if indent > 0:

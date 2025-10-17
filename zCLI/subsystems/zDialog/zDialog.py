@@ -1,24 +1,11 @@
-# zCLI/subsystems/zDialog.py — Dialog/Form Subsystem
-# ───────────────────────────────────────────────────────────────
+# zCLI/subsystems/zDialog/zDialog.py
 
-"""
-zDialog - Interactive Form/Dialog Subsystem for collecting and validating user input through forms.
-Handles form rendering, input validation, context management and submission processing.
-"""
+"""Interactive Form/Dialog Subsystem for collecting and validating user input."""
 
-from logger import Logger
 from .zDialog_modules import create_dialog_context, handle_submit
 
-logger = Logger.get_logger(__name__)
-
-
 class zDialog:
-    """
-    zDialog - Interactive Form/Dialog Subsystem
-    
-    Handles user input collection through interactive forms with validation.
-    Manages form rendering, input validation, and submission processing.
-    """
+    """Interactive Form/Dialog Subsystem for collecting and validating user input."""
 
     def __init__(self, zcli, walker=None):
         """Initialize zDialog subsystem."""
@@ -79,7 +66,7 @@ class zDialog:
         )
 
         # Create dialog context
-        zContext = create_dialog_context(model, fields)
+        zContext = create_dialog_context(model, fields, self.logger)
         self.logger.info("\nzContext: %s", zContext)
 
         # Render form and collect input
@@ -96,7 +83,7 @@ class zDialog:
         try:
             if on_submit:
                 self.logger.info("Found onSubmit → Executing via handle_submit()")
-                return handle_submit(on_submit, zContext, walker=self.walker)
+                return handle_submit(on_submit, zContext, self.logger, walker=self.walker)
             
             # No onSubmit - return collected data
             return zConv
@@ -111,17 +98,7 @@ class zDialog:
 # ─────────────────────────────────────────────────────────────────────────────
 
 def handle_zDialog(zHorizontal, walker=None, zcli=None):
-    """
-    Backward-compatible function for dialog handling.
-    
-    Args:
-        zHorizontal: Dialog configuration dict
-        walker: Optional walker instance (legacy - extracts zcli from walker)
-        zcli: Optional zCLI instance (modern - preferred)
-        
-    Returns:
-        zConv or submission result
-    """
+    """Backward-compatible function for dialog handling."""
     # Modern: use zcli directly if provided
     if zcli:
         return zDialog(zcli, walker=walker).handle(zHorizontal)

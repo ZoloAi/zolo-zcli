@@ -1,32 +1,12 @@
+# zCLI/subsystems/zWalker/zWalker.py
+
 """zWalker - Modern UI/Menu Navigation Interface Layer."""
 
-import sys
-from logger import Logger
+from zCLI import sys
 from zCLI.subsystems.zWizard import zWizard
 
-# Logger instance
-logger = Logger.get_logger(__name__)
-
-
 class zWalker(zWizard):
-    """
-    zWalker - Modern UI/Menu Navigation Interface Layer (extends zWizard)
-    
-    zWalker extends zWizard's core loop engine with:
-    - YAML-driven menu navigation
-    - Breadcrumb trail management (via core zNavigation)
-    - File linking and navigation (via core zNavigation)
-    - Interactive menu rendering (via core zNavigation)
-    
-    Architecture:
-    - Inherits: execute_loop() from zWizard (core iteration pattern)
-    - Uses: Core zCLI subsystems (zNavigation, zDispatch, zDisplay, etc.)
-    
-    Modern Architecture:
-    - Receives zCLI instance and uses all core subsystems
-    - No local subsystem instances - everything shared from core
-    - Unified navigation system via zNavigation
-    """
+    """Modern UI/Menu Navigation Interface Layer extending zWizard with YAML menus and unified navigation."""
     
     def __init__(self, zcli):
         """
@@ -61,7 +41,7 @@ class zWalker(zWizard):
             "indent": 0
         })
         
-        logger.info("zWalker initialized (fully modernized architecture)")
+        self.logger.info("zWalker initialized (fully modernized architecture)")
 
     def _configure_logger(self):
         """Configure logger level based on session mode."""
@@ -74,29 +54,24 @@ class zWalker(zWizard):
             pass
 
     def run(self):
-        """
-        Main entry point for zWalker execution.
-        
-        Returns:
-            Result of walker execution
-        """
+        """Main entry point for zWalker execution."""
         try:
             # Get zVaFile from zSpark_obj
             zVaFile = self.zSpark_obj.get("zVaFile")
             if not zVaFile:
-                logger.error("No zVaFile specified in zSpark_obj")
+                self.logger.error("No zVaFile specified in zSpark_obj")
                 return {"error": "No zVaFile specified"}
 
             # Load the YAML file
             raw_zFile = self.loader.handle(zVaFile)
             if not raw_zFile:
-                logger.error("Failed to load zVaFile: %s", zVaFile)
+                self.logger.error("Failed to load zVaFile: %s", zVaFile)
                 return {"error": "Failed to load zVaFile"}
 
             # Get the root zBlock
             root_zBlock = self.zSpark_obj.get("zBlock", "root")
             if root_zBlock not in raw_zFile:
-                logger.error("Root zBlock '%s' not found in zVaFile", root_zBlock)
+                self.logger.error("Root zBlock '%s' not found in zVaFile", root_zBlock)
                 return {"error": f"Root zBlock '{root_zBlock}' not found"}
 
             # Initialize session for walker mode
@@ -106,7 +81,7 @@ class zWalker(zWizard):
             return self.zBlock_loop(raw_zFile[root_zBlock])
 
         except Exception as e:
-            logger.error("zWalker execution failed: %s", e, exc_info=True)
+            self.logger.error("zWalker execution failed: %s", e, exc_info=True)
             return {"error": str(e)}
 
     def _init_walker_session(self):
@@ -124,17 +99,7 @@ class zWalker(zWizard):
         self.session["zBlock"] = root_zBlock
 
     def zBlock_loop(self, active_zBlock_dict, zBlock_keys=None, zKey=None):
-        """
-        Main walker loop for processing zBlocks.
-        
-        Args:
-            active_zBlock_dict: Dictionary containing the current zBlock
-            zBlock_keys: Optional list of keys to process
-            zKey: Optional starting key
-            
-        Returns:
-            Result of walker execution
-        """
+        """Main walker loop for processing zBlocks."""
         if zBlock_keys is None:
             zBlock_keys = list(active_zBlock_dict.keys())
 
@@ -149,8 +114,8 @@ class zWalker(zWizard):
         # Custom dispatch function that handles breadcrumb tracking
         def walker_dispatch(key, value):
             active_zBlock = next(reversed(self.session["zCrumbs"]))
-            logger.debug("active_zBlock: %s", active_zBlock)
-            logger.debug("\nWalking zHorizontal:\n%s", value)
+            self.logger.debug("active_zBlock: %s", active_zBlock)
+            self.logger.debug("\nWalking zHorizontal:\n%s", value)
             
             # 🥨 Track breadcrumb trail for navigation/history
             if not (isinstance(value, dict) and "zWizard" in value):
@@ -160,11 +125,11 @@ class zWalker(zWizard):
                     if key in active_zBlock_dict:
                         self.navigation.handle_zCrumbs(active_zBlock, key, walker=self)
                     else:
-                        logger.warning("Skipping invalid crumb: %s not in %s", key, active_zBlock)
+                        self.logger.warning("Skipping invalid crumb: %s not in %s", key, active_zBlock)
                 else:
-                    logger.debug("Skipping duplicate crumb: %s already last in %s", key, active_zBlock)
+                    self.logger.debug("Skipping duplicate crumb: %s already last in %s", key, active_zBlock)
             else:
-                logger.debug("zWizard key detected; breadcrumb tracking skipped for %s", key)
+                self.logger.debug("zWizard key detected; breadcrumb tracking skipped for %s", key)
             
             # Dispatch action
             return self.dispatch.handle(key, value)
@@ -177,7 +142,7 @@ class zWalker(zWizard):
         
         def on_stop(result):  # pylint: disable=unused-argument
             """Handle stop signal."""
-            logger.debug("Dispatch returned stop")
+            self.logger.debug("Dispatch returned stop")
             self.display.handle({
                 "event": "sysmsg",
                 "label": "You've stopped the system!",
@@ -189,7 +154,7 @@ class zWalker(zWizard):
         
         def on_error(error_or_result, key):  # pylint: disable=unused-argument
             """Handle error."""
-            logger.info("Error after key: %s", key)
+            self.logger.info("Error after key: %s", key)
             self.display.handle({
                 "event": "sysmsg",
                 "label": "Error Returned",

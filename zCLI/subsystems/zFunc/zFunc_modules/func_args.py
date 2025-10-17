@@ -1,25 +1,10 @@
-# zCLI/subsystems/zFunc_modules/func_args.py
+# zCLI/subsystems/zFunc/zFunc_modules/func_args.py
+
 """Function argument parsing utilities."""
-
-from logger import Logger
-
-logger = Logger.get_logger(__name__)
 
 
 def parse_arguments(arg_str, zContext, split_fn, logger_instance, zparser=None):
-    """
-    Parse function arguments from string.
-    
-    Args:
-        arg_str: Argument string to parse
-        zContext: Context for variable resolution
-        split_fn: Function to split arguments
-        logger_instance: Logger instance
-        zparser: Optional zParser instance for safer evaluation
-        
-    Returns:
-        list: Parsed arguments
-    """
+    """Parse function arguments from string."""
     if not arg_str:
         logger_instance.debug("No arguments to parse")
         return []
@@ -76,15 +61,7 @@ def parse_arguments(arg_str, zContext, split_fn, logger_instance, zparser=None):
 
 
 def split_arguments(arg_str):
-    """
-    Split argument string while respecting nested brackets.
-    
-    Args:
-        arg_str: Argument string to split
-        
-    Returns:
-        list: Split arguments
-    """
+    """Split argument string while respecting nested brackets."""
     args = []
     buf = ''
     depth = 0

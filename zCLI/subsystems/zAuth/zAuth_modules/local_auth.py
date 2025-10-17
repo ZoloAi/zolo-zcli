@@ -1,3 +1,5 @@
+# zCLI/subsystems/zAuth/zAuth_modules/local_auth.py
+
 """
 zAuth/zAuth_modules/local_auth.py
 Local authentication (development/testing)

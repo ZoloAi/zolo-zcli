@@ -1,11 +1,12 @@
+# zCLI/subsystems/zAuth/zAuth_modules/credentials.py
+
 """
 zAuth/zAuth_modules/credentials.py
 Credential storage and management
 """
 
-import os
+from zCLI import os, Path
 import json
-from pathlib import Path
 
 
 class CredentialManager:

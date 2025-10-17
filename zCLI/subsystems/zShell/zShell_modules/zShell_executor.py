@@ -1,6 +1,7 @@
+# zCLI/subsystems/zShell/zShell_modules/zShell_executor.py
+
 """Command execution engine with wizard canvas mode support."""
 
-from logger import Logger
 from .executor_commands import (
     execute_data, execute_func, execute_session, execute_walker,
     execute_open, execute_test, execute_auth, execute_load, 
@@ -8,15 +9,13 @@ from .executor_commands import (
 )
 from .executor_commands.config_persistence_executor import execute_config_persistence
 
-logger = Logger.get_logger(__name__)
-
 class CommandExecutor:
     """Command execution engine with wizard canvas mode support."""
 
     def __init__(self, zcli):
         """Initialize command executor."""
         self.zcli = zcli
-        self.logger = Logger.get_logger()
+        self.logger = zcli.logger
 
     def execute(self, command: str):
         """Parse and execute a shell command."""

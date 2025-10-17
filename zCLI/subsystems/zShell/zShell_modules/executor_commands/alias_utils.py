@@ -1,15 +1,10 @@
+# zCLI/subsystems/zShell/zShell_modules/executor_commands/alias_utils.py
+
 # zCLI/subsystems/zShell_modules/executor_commands/alias_utils.py
 """Alias resolution utilities for $alias references in commands."""
 
-from logger import Logger
-
-logger = Logger.get_logger(__name__)
-
-def resolve_alias(value, pinned_cache, raise_on_missing=True):
-    """Resolve $alias to cached content from PinnedCache.
-    
-    Returns: (resolved_value, is_alias) tuple
-    """
+def resolve_alias(value, pinned_cache, logger, raise_on_missing=True):
+    """Resolve $alias to cached content from PinnedCache, returns (resolved_value, is_alias)."""
     if not isinstance(value, str) or not value.startswith("$"):
         return value, False
 
@@ -42,11 +37,8 @@ def is_alias(value):
     """Check if value is an alias reference (starts with $)."""
     return isinstance(value, str) and value.startswith("$")
 
-def resolve_option_aliases(options, loaded_cache, option_keys=None):
-    """Resolve all $alias references in options dict.
-    
-    Returns: New options dict with resolved aliases and metadata.
-    """
+def resolve_option_aliases(options, loaded_cache, logger, option_keys=None):
+    """Resolve $alias references in options dict, returning new dict with resolved values."""
     resolved_options = options.copy()
     resolved_info = {}
 
@@ -60,7 +52,7 @@ def resolve_option_aliases(options, loaded_cache, option_keys=None):
 
         if is_alias(value):
             try:
-                resolved_value, was_alias = resolve_alias(value, loaded_cache)
+                resolved_value, was_alias = resolve_alias(value, loaded_cache, logger)
                 if was_alias:
                     resolved_options[key] = resolved_value
                     resolved_info[key] = get_alias_name(value)

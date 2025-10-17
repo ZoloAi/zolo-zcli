@@ -1,12 +1,6 @@
-# zCLI/subsystems/zFunc.py — Function Loading and Execution Subsystem
-# ───────────────────────────────────────────────────────────────────
-""" Middleware for loading and executing external Python functions.
-    Dependencies: zCLI, zSession, zDisplay
-"""
+# zCLI/subsystems/zFunc/zFunc.py
 
-from logger import Logger
-
-logger = Logger.get_logger(__name__)
+"""External Python function loader and executor."""
 
 
 class zFunc:
@@ -28,16 +22,7 @@ class zFunc:
         })
 
     def handle(self, zHorizontal, zContext=None):
-        """
-        Main entry point for zFunc execution.
-        
-        Args:
-            zHorizontal: Function specification (string or dict)
-            zContext: Optional context for argument resolution
-            
-        Returns:
-            Result of function execution
-        """
+        """Execute external Python function with given spec and context."""
         self.display.handle({
             "event": "sysmsg",
             "label": f"{zHorizontal}",

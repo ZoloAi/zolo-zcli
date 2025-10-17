@@ -1,16 +1,14 @@
+# zCLI/subsystems/zShell/zShell_modules/executor_commands/auth_executor.py
+
 # zCLI/subsystems/zShell_modules/executor_commands/auth_executor.py
 """Authentication command executor (login, logout, status)."""
-
-from logger import Logger
-
-logger = Logger.get_logger(__name__)
 
 def execute_auth(zcli, parsed):
     """Execute auth commands (login, logout, status)."""
     action = parsed["action"]
     args = parsed.get("args", [])
 
-    logger.debug("Executing auth command: %s", action)
+    zcli.logger.debug("Executing auth command: %s", action)
 
     if action == "login":
         username = args[0] if len(args) > 0 else None

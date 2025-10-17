@@ -2,26 +2,9 @@
 # ───────────────────────────────────────────────────────────────
 """Config persistence command execution for zCLI."""
 
-from logger import Logger
-
-# Logger instance
-logger = Logger.get_logger(__name__)
-
 
 def execute_config_persistence(zcli, parsed):
-    """
-    Execute config persistence commands like 'config machine browser Chrome'.
-    
-    Args:
-        zcli: zCLI instance
-        parsed: Parsed command dictionary with:
-            - action: 'machine' or 'config'
-            - args: Command arguments (key, value)
-            - options: Command options (e.g., --show, --reset)
-            
-    Returns:
-        Config persistence operation result
-    """
+    """Execute config persistence commands like 'config machine browser Chrome'."""
     target = parsed.get("action")  # 'machine' or 'config'
     args = parsed.get("args", [])
     options = parsed.get("options", {})

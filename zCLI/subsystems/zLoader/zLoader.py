@@ -1,14 +1,8 @@
-# zCLI/subsystems/zLoader.py — File Loading and Caching Subsystem
-# ───────────────────────────────────────────────────────────────
-""" Middleware for loading/caching zVaFiles with three-tier cache architecture.
-    Dependencies: zCLI, zSession, zDisplay, zParser
-"""
+# zCLI/subsystems/zLoader/zLoader.py
 
-from logger import Logger
+"""zVaFile loader and cache manager."""
+
 from .zLoader_modules import CacheOrchestrator, load_file_raw
-
-# Logger instance
-logger = Logger.get_logger(__name__)
 
 class zLoader:
     """Middleware layer for loading and caching zVaFiles (UI, Schema, Config)."""
@@ -22,7 +16,7 @@ class zLoader:
         self.mycolor = "LOADER"
 
         # Initialize cache orchestrator (manages all three tiers)
-        self.cache = CacheOrchestrator(self.zSession)
+        self.cache = CacheOrchestrator(self.zSession, self.logger)
 
         # Store parser method references for cleaner code
         self.zpath_decoder = zcli.zparser.zPath_decoder
@@ -78,7 +72,7 @@ class zLoader:
 
         # Step 4: Load raw file content (PRIORITY 3 - Disk I/O)
         self.logger.debug("[Priority 3] Cache miss - loading from disk")
-        zFile_raw = load_file_raw(zFilePath_identified, self.display)
+        zFile_raw = load_file_raw(zFilePath_identified, self.logger, self.display)
         self.logger.debug("\nzFile Raw: %s", zFile_raw)
 
         # Step 5: Parse using zParser (delegates to zParser)

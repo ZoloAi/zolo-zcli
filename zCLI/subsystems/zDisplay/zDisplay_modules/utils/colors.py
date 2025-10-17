@@ -1,3 +1,5 @@
+# zCLI/subsystems/zDisplay/zDisplay_modules/utils/colors.py
+
 # zCLI/subsystems/zDisplay_modules/utils/colors.py
 """ANSI color codes for terminal output."""
 
@@ -12,7 +14,8 @@ class Colors:
     ZWIZARD    = "\033[38;5;154;48;5;57m"   # Purple bg (Wizards)
     ZDISPLAY   = "\033[30;48;5;99m"         # Magenta bg (Display)
     PARSER     = "\033[38;5;236;48;5;230m"  # Dark text, cream background (Parsing)
-    SCHEMA     = "\033[97;48;5;65m"         # Green bg (Schema)
+    CONFIG     = "\033[97;48;5;65m"         # Green bg (Configuration)
+    SCHEMA     = CONFIG                     # Backward compatibility
     ZOPEN      = "\033[97;48;5;27m"         # Blue bg (File/URL opening)
     ZCOMM      = "\033[97;48;5;33m"         # Bright blue bg (Communication & services)
     ZAUTH      = "\033[97;48;5;130m"        # Orange-brown bg (Authentication)

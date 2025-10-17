@@ -1,8 +1,8 @@
+# zCLI/subsystems/zShell/zShell_modules/zShell_interactive.py
+
 """Interactive shell mode with REPL interface and command history."""
 
-import os
-from pathlib import Path
-from logger import Logger
+from zCLI import os, Path
 from .zShell_help import HelpSystem
 from .zShell_executor import CommandExecutor
 
@@ -12,15 +12,13 @@ try:
 except ImportError:
     READLINE_AVAILABLE = False
 
-logger = Logger.get_logger(__name__)
-
 class InteractiveShell:
     """Interactive shell mode with REPL interface and command history."""
 
     def __init__(self, zcli):
         """Initialize shell interface."""
         self.zcli = zcli
-        self.logger = Logger.get_logger()
+        self.logger = zcli.logger
         self.executor = CommandExecutor(zcli)
         self.help_system = HelpSystem()
         self.running = False
@@ -31,7 +29,7 @@ class InteractiveShell:
 
     def run(self):
         """Main shell loop - handles user input and command execution."""
-        logger.info("Starting zCLI shell...")
+        self.logger.info("Starting zCLI shell...")
         self.zcli.display.handle({
             "event": "sysmsg",
             "label": self.help_system.get_welcome_message(),
@@ -83,7 +81,7 @@ class InteractiveShell:
                 break
 
             except Exception as e:
-                logger.error("Shell error: %s", e)
+                self.logger.error("Shell error: %s", e)
                 self.zcli.display.handle({
                     "event": "sysmsg",
                     "label": f"Error: {e}",
@@ -92,7 +90,7 @@ class InteractiveShell:
                     "indent": 0
                 })
 
-        logger.info("Exiting zCLI shell...")
+        self.logger.info("Exiting zCLI shell...")
         if READLINE_AVAILABLE and self.history_file:
             self._save_history()
 
@@ -113,22 +111,22 @@ class InteractiveShell:
 
             if self.history_file.exists():
                 readline.read_history_file(str(self.history_file))
-                logger.debug("Loaded command history from %s", self.history_file)
+                self.logger.debug("Loaded command history from %s", self.history_file)
 
             readline.set_history_length(1000)
-            logger.info("Command history enabled (↑/↓ arrows to navigate)")
+            self.logger.info("Command history enabled (↑/↓ arrows to navigate)")
 
         except Exception as e:
-            logger.warning("Could not setup command history: %s", e)
+            self.logger.warning("Could not setup command history: %s", e)
             self.history_file = None
 
     def _save_history(self):
         """Save command history to file."""
         try:
             readline.write_history_file(str(self.history_file))
-            logger.debug("Saved command history to %s", self.history_file)
+            self.logger.debug("Saved command history to %s", self.history_file)
         except Exception as e:
-            logger.warning("Could not save command history: %s", e)
+            self.logger.warning("Could not save command history: %s", e)
 
     def _handle_special_commands(self, command):
         """Handle special built-in commands."""

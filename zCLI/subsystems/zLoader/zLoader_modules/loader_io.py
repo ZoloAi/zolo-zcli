@@ -1,12 +1,8 @@
-# zCLI/subsystems/zLoader_modules/loader_io.py
+# zCLI/subsystems/zLoader/zLoader_modules/loader_io.py
+
 """File I/O operations for zLoader - raw file reading from disk."""
 
-from logger import Logger
-
-# Logger instance
-logger = Logger.get_logger(__name__)
-
-def load_file_raw(full_path, display=None):
+def load_file_raw(full_path, logger, display=None):
     """Load raw file content from filesystem."""
     logger.debug("Opening file: %s", full_path)
 

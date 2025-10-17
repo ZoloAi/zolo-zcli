@@ -1,3 +1,5 @@
+# zCLI/subsystems/zLogger/zLogger.py
+
 """Logging Subsystem for zCLI - manages logging and display verbosity."""
 
 import logging

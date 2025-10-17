@@ -1,5 +1,0 @@
-posts.posts.id,posts.posts.user_id,posts.posts.title,posts.posts.content,posts.posts.status
-,1,Alice First Post,Hello from Alice,published
-,1,Alice Second Post,More from Alice,draft
-,2,Bob Post,Hello from Bob,published
-,3,Charlie Post,Hello from Charlie,draft

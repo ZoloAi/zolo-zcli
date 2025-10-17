@@ -1,11 +1,8 @@
+# zCLI/subsystems/zShell/zShell_modules/executor_commands/__init__.py
+
 # zCLI/subsystems/zShell_modules/executor_commands/__init__.py
 # ───────────────────────────────────────────────────────────────
-"""
-Executor Commands Registry - Modular command execution for zCLI.
-
-This package contains specialized command executors that were extracted
-from the monolithic zShell_executor.py for better organization.
-"""
+"""Executor Commands Registry - Modular command execution for zCLI."""
 
 # Import command executors
 from .data_executor import execute_data

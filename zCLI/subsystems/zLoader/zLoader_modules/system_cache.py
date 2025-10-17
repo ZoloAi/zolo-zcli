@@ -1,20 +1,20 @@
-# zCLI/subsystems/zLoader_modules/system_cache.py
+# zCLI/subsystems/zLoader/zLoader_modules/system_cache.py
+
 """UI and config file caching with mtime checking and LRU eviction."""
 
 import os
 import time
 from collections import OrderedDict
-from logger import Logger
 
 
 class SystemCache:
     """System cache for UI and config files with mtime checking and LRU eviction."""
 
-    def __init__(self, session, max_size=100):
+    def __init__(self, session, logger, max_size=100):
         """Initialize system cache."""
         self.session = session
         self.max_size = max_size
-        self.logger = Logger.get_logger()
+        self.logger = logger
 
         # Statistics
         self.stats = {

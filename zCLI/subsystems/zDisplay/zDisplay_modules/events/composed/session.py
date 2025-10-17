@@ -1,30 +1,71 @@
-# zCLI/subsystems/zDisplay_modules/events/composed/session.py
-"""
-Session display handler - show session information.
+# zCLI/subsystems/zDisplay/zDisplay_modules/events/composed/session.py
 
-Composed event that displays complete session state using basic and primitive events.
-"""
+"""Show session information with optional break."""
+
+from ..basic.sysmsg import handle_sysmsg
+from ..basic.text import handle_text
+from ..basic.control import handle_break
 
 
-def handle_session(obj, output_adapter, input_adapter=None):
-    """
-    Display session information with optional break.
+def _display_field(label, value, output_adapter, indent=0, color="GREEN"):
+    """Display a labeled field."""
+    color_code = getattr(output_adapter.colors, color, output_adapter.colors.RESET)
+    content = f"{color_code}{label}:{output_adapter.colors.RESET} {value}"
+    if indent > 0:
+        content = "  " * indent + content
+    handle_text({"content": content, "break": False}, output_adapter)
+
+
+def _display_section(title, output_adapter, indent=0, color="GREEN"):
+    """Display a section title."""
+    color_code = getattr(output_adapter.colors, color, output_adapter.colors.RESET)
+    content = f"{color_code}{title}:{output_adapter.colors.RESET}"
+    if indent > 0:
+        content = "  " * indent + content
+    handle_text({"content": content, "break": False}, output_adapter)
+
+
+def _display_zmachine(zMachine, output_adapter):
+    """Display zMachine section."""
+    handle_text({"content": "", "break": False}, output_adapter)
+    _display_section("zMachine", output_adapter, color="GREEN")
     
-    Shows complete session state including zMachine, zAuth, and session fields.
+    # Identity & Deployment
+    for field in ["os", "hostname", "architecture", "python_version", "deployment", "role"]:
+        _display_field(f"  {field}", zMachine.get(field), output_adapter, color="YELLOW")
     
-    Args:
-        obj: Display object with:
-            - zSession (dict): Session dictionary to display
-            - break (bool, optional): Auto-break after display (default: True)
-            - break_message (str, optional): Custom break message
-        output_adapter: Output adapter for rendering
-        input_adapter: Input adapter for break (optional)
-    """
-    from ..basic.sysmsg import handle_sysmsg
-    from ..basic.text import handle_text
-    from ..basic.control import handle_break
-    from ...utils import Colors
+    # Tool Preferences
+    if any([zMachine.get("browser"), zMachine.get("ide"), zMachine.get("shell")]):
+        handle_text({"content": "", "break": False}, output_adapter)
+        _display_section("  Tool Preferences", output_adapter, color="CYAN")
+        for tool in ["browser", "ide", "shell"]:
+            if zMachine.get(tool):
+                _display_field(f"    {tool}", zMachine.get(tool), output_adapter, color="RESET")
     
+    # System Capabilities
+    if zMachine.get("cpu_cores") or zMachine.get("memory_gb"):
+        handle_text({"content": "", "break": False}, output_adapter)
+        _display_section("  System", output_adapter, color="CYAN")
+        for field in ["cpu_cores", "memory_gb"]:
+            if zMachine.get(field):
+                _display_field(f"    {field}", zMachine.get(field), output_adapter, color="RESET")
+    
+    # zcli version
+    if zMachine.get("zcli_version"):
+        handle_text({"content": "", "break": False}, output_adapter)
+        _display_field("  zcli_version", zMachine.get("zcli_version"), output_adapter, color="YELLOW")
+
+
+def _display_zauth(zAuth, output_adapter):
+    """Display zAuth section."""
+    handle_text({"content": "", "break": False}, output_adapter)
+    _display_section("zAuth", output_adapter, color="GREEN")
+    for field in ["id", "username", "role", "API_Key"]:
+        _display_field(f"  {field}", zAuth.get(field), output_adapter, color="YELLOW")
+
+
+def handle_session(obj, output_adapter, input_adapter=None, logger=None):
+    """Display session information with optional break."""
     sess = obj.get("zSession")
     should_break = obj.get("break", True)
     break_message = obj.get("break_message")
@@ -34,96 +75,29 @@ def handle_session(obj, output_adapter, input_adapter=None):
         return
     
     # Header
-    handle_sysmsg(
-        {"label": "View zSession", "indent": 0}, 
-        output_adapter,
-        session=sess,
-        mycolor="MAIN"
-    )
-    
-    # Helper to display a field
-    def display_field(label, value, indent=0, color="GREEN"):
-        """Display a labeled field."""
-        color_code = getattr(Colors, color, Colors.RESET)
-        content = f"{color_code}{label}:{Colors.RESET} {value}"
-        if indent > 0:
-            content = "  " * indent + content
-        handle_text({"content": content, "break": False}, output_adapter)
-    
-    def display_section(title, indent=0, color="GREEN"):
-        """Display a section title."""
-        color_code = getattr(Colors, color, Colors.RESET)
-        content = f"{color_code}{title}:{Colors.RESET}"
-        if indent > 0:
-            content = "  " * indent + content
-        handle_text({"content": content, "break": False}, output_adapter)
+    handle_sysmsg({"label": "View zSession", "indent": 0}, output_adapter, session=sess, mycolor="MAIN")
     
     # Core session fields
-    display_field("zSession_ID", sess.get("zS_id"))
-    display_field("zMode", sess.get("zMode"))
+    _display_field("zSession_ID", sess.get("zS_id"), output_adapter)
+    _display_field("zMode", sess.get("zMode"), output_adapter)
     
     # zMachine section
     zMachine = sess.get("zMachine", {})
     if zMachine:
-        handle_text({"content": "", "break": False}, output_adapter)  # Blank line
-        display_section("zMachine", color="GREEN")
-        
-        # Identity
-        display_field("  os", zMachine.get("os"), color="YELLOW")
-        display_field("  hostname", zMachine.get("hostname"), color="YELLOW")
-        display_field("  architecture", zMachine.get("architecture"), color="YELLOW")
-        display_field("  python_version", zMachine.get("python_version"), color="YELLOW")
-        
-        # Deployment
-        display_field("  deployment", zMachine.get("deployment"), color="YELLOW")
-        display_field("  role", zMachine.get("role"), color="YELLOW")
-        
-        # Tool Preferences
-        if any([zMachine.get("browser"), zMachine.get("ide"), zMachine.get("shell")]):
-            handle_text({"content": "", "break": False}, output_adapter)
-            display_section("  Tool Preferences", color="CYAN")
-            if zMachine.get("browser"):
-                display_field("    browser", zMachine.get("browser"), color="RESET")
-            if zMachine.get("ide"):
-                display_field("    ide", zMachine.get("ide"), color="RESET")
-            if zMachine.get("shell"):
-                display_field("    shell", zMachine.get("shell"), color="RESET")
-        
-        # System Capabilities
-        if zMachine.get("cpu_cores") or zMachine.get("memory_gb"):
-            handle_text({"content": "", "break": False}, output_adapter)
-            display_section("  System", color="CYAN")
-            if zMachine.get("cpu_cores"):
-                display_field("    cpu_cores", zMachine.get("cpu_cores"), color="RESET")
-            if zMachine.get("memory_gb"):
-                display_field("    memory_gb", zMachine.get("memory_gb"), color="RESET")
-        
-        # zcli version
-        if zMachine.get("zcli_version"):
-            handle_text({"content": "", "break": False}, output_adapter)
-            display_field("  zcli_version", zMachine.get("zcli_version"), color="YELLOW")
+        _display_zmachine(zMachine, output_adapter)
     
     # Session fields
     handle_text({"content": "", "break": False}, output_adapter)
-    display_field("zWorkspace", sess.get("zWorkspace"))
-    display_field("zVaFile_path", sess.get("zVaFile_path"))
-    display_field("zVaFilename", sess.get("zVaFilename"))
-    display_field("zBlock", sess.get("zBlock"))
+    for field in ["zWorkspace", "zVaFile_path", "zVaFilename", "zBlock"]:
+        _display_field(field, sess.get(field), output_adapter)
     
     # zAuth section
-    handle_text({"content": "", "break": False}, output_adapter)
-    display_section("zAuth", color="GREEN")
     zAuth = sess.get("zAuth", {})
-    display_field("  id", zAuth.get("id"), color="YELLOW")
-    display_field("  username", zAuth.get("username"), color="YELLOW")
-    display_field("  role", zAuth.get("role"), color="YELLOW")
-    display_field("  API_Key", zAuth.get("API_Key"), color="YELLOW")
+    _display_zauth(zAuth, output_adapter)
     
     # Optional break at the end
     if should_break and input_adapter:
-        handle_text({"content": "", "break": False}, output_adapter)  # Blank line
-        break_obj = {}
-        if break_message:
-            break_obj["message"] = break_message
-        handle_break(break_obj, output_adapter, input_adapter)
+        handle_text({"content": "", "break": False}, output_adapter)
+        break_obj = {"message": break_message} if break_message else {}
+        handle_break(break_obj, output_adapter, input_adapter, logger)
 

@@ -1,7 +1,7 @@
-# zCLI/subsystems/zLoader_modules/cache_orchestrator.py
+# zCLI/subsystems/zLoader/zLoader_modules/cache_orchestrator.py
+
 """Routes cache requests to appropriate tier (system, pinned, schema)."""
 
-from logger import Logger
 from .system_cache import SystemCache
 from .pinned_cache import PinnedCache
 from .schema_cache import SchemaCache
@@ -10,15 +10,15 @@ from .schema_cache import SchemaCache
 class CacheOrchestrator:
     """Routes cache requests to appropriate tier based on type."""
 
-    def __init__(self, session):
+    def __init__(self, session, logger):
         """Initialize cache orchestrator with all three tiers."""
         self.session = session
-        self.logger = Logger.get_logger()
+        self.logger = logger
 
         # Initialize all cache tiers
-        self.system_cache = SystemCache(session, max_size=100)
-        self.pinned_cache = PinnedCache(session)
-        self.schema_cache = SchemaCache(session)
+        self.system_cache = SystemCache(session, logger, max_size=100)
+        self.pinned_cache = PinnedCache(session, logger)
+        self.schema_cache = SchemaCache(session, logger)
 
     def get(self, key, cache_type="system", **kwargs):
         """Route get request to appropriate cache tier."""

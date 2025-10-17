@@ -1,9 +1,6 @@
-# zCLI/subsystems/zUtils_modules/__init__.py
-"""
-Utility modules for zCLI - modular organization.
+# zCLI/subsystems/zUtils/zUtils_modules/__init__.py
 
-Provides plugin loading functionality.
-"""
+"""Utility modules for zCLI - plugin loading."""
 
 from .utils_plugins import load_plugins
 

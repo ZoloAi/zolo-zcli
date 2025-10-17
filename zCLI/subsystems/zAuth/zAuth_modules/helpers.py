@@ -1,3 +1,5 @@
+# zCLI/subsystems/zAuth/zAuth_modules/helpers.py
+
 """
 zAuth/zAuth_modules/helpers.py
 Authentication helper functions

@@ -2,11 +2,6 @@
 """Data validation engine for schema-based CRUD operations."""
 
 import re
-from logger import Logger
-
-# Logger instance
-logger = Logger.get_logger(__name__)
-
 
 class DataValidator:
     """Data validation engine enforcing schema rules before CRUD operations."""

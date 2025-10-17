@@ -3,6 +3,6 @@
 zSession subsystem.
 """
 
-from .zSession import zSession  # noqa: F401
+from .zSession import zSession
 
 __all__ = ['zSession']

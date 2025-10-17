@@ -1,34 +1,9 @@
-# zCLI/subsystems/zShell_modules/executor_commands/wizard_executor.py
-# ───────────────────────────────────────────────────────────────
+# zCLI/subsystems/zShell/zShell_modules/executor_commands/wizard_executor.py
+
 """Wizard command execution for zCLI."""
 
-from logger import Logger
-
-# Logger instance
-logger = Logger.get_logger(__name__)
-
-
 def execute_wizard(zcli, parsed):
-    """
-    Execute wizard commands for canvas mode.
-    
-    Commands:
-      wizard --start    - Enter wizard canvas mode
-      wizard --stop     - Exit wizard canvas mode (handled in executor)
-      wizard --run      - Execute buffer (handled in executor)
-      wizard --show     - Display buffer (handled in executor)
-      wizard --clear    - Clear buffer (handled in executor)
-    
-    Note: Most wizard commands are handled by zShell_executor methods.
-    This function only handles --start since it's called from normal mode.
-    
-    Args:
-        zcli: zCLI instance
-        parsed: Parsed command dictionary
-        
-    Returns:
-        Wizard command result
-    """
+    """Execute wizard commands for canvas mode."""
     options = parsed.get("options", {})
     
     # Check for --start flag
@@ -38,7 +13,7 @@ def execute_wizard(zcli, parsed):
         zcli.session["wizard_mode"]["lines"] = []
         zcli.session["wizard_mode"]["format"] = None
         
-        logger.info("Entered wizard canvas mode")
+        zcli.logger.info("Entered wizard canvas mode")
         print("\n╔═══════════════════════════════════════════════════════════╗")
         print("║              Wizard Canvas Mode - Active               ║")
         print("╚═══════════════════════════════════════════════════════════╝")

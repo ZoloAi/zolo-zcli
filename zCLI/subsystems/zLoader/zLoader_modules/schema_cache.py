@@ -1,17 +1,17 @@
-# zCLI/subsystems/zLoader_modules/schema_cache.py
+# zCLI/subsystems/zLoader/zLoader_modules/schema_cache.py
+
 """Active database connection management for zWizard transactions."""
 
 import time
-from logger import Logger
 
 
 class SchemaCache:
     """Active database connection cache for zWizard with transaction support."""
 
-    def __init__(self, session):
+    def __init__(self, session, logger):
         """Initialize schema cache."""
         self.session = session
-        self.logger = Logger.get_logger()
+        self.logger = logger
 
         # In-memory connection storage (NOT in session)
         # Connections cannot be serialized, so we keep them in memory only

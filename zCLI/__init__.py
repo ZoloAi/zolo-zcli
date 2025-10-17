@@ -1,10 +1,35 @@
-# zCLI/__init__.py — Main zCLI Module
-# ───────────────────────────────────────────────────────────────
+# zCLI/__init__.py
+
+"""Main zCLI package exposing the `zCLI` core class."""
+
+# Central imports for the entire zCLI system
+import os
+import sys
+import platform
+import socket
+import shutil
+import yaml
+import subprocess
+import importlib
+import secrets
+import logging
+from pathlib import Path
+
+# Import utilities (safe to import early)
+from .utils.styled_printer import print_ready
+from .utils.colors import Colors
 
 # Import the zCLI Core and Walker
 from .zCLI import zCLI
-from .subsystems.zWalker.zWalker import zWalker
 
 # Export the main interfaces
-__all__ = ["zCLI", "zWalker"]
-
+__all__ = [
+    # Core class
+    "zCLI",
+    
+    # System modules
+    "os", "sys", "platform", "socket", "shutil", "yaml", "subprocess", "importlib", "secrets", "logging", "Path",
+    
+    # Utils
+    "print_ready", "Colors",
+]

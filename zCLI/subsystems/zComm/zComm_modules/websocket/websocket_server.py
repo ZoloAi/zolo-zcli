@@ -1,3 +1,5 @@
+# zCLI/subsystems/zComm/zComm_modules/websocket/websocket_server.py
+
 """
 zCLI/subsystems/zComm/zComm_modules/websocket/websocket_server.py
 zBifrost - Secure WebSocket server with authentication and origin validation
@@ -7,13 +9,15 @@ The rainbow bridge connecting clients to zCLI backend
 import asyncio
 import json
 import os
-from websockets.server import serve  # ✅ New API
+try:
+    from websockets.server import serve as ws_serve  # ✅ New API
+except Exception:  # Fallback for older websockets versions
+    try:
+        from websockets import serve as ws_serve  # Legacy
+    except Exception:  # As a last resort, leave as None (runtime error will log clearly)
+        ws_serve = None
 from websockets.legacy.server import WebSocketServerProtocol
 from websockets import exceptions as ws_exceptions
-from logger import Logger  # ✅ Central logger
-
-# Logger instance
-logger = Logger.get_logger(__name__)
 
 # lazy import for CLI handlers to avoid heavy imports during module load
 
@@ -34,7 +38,8 @@ class zBifrost:
     def __init__(self, walker=None, zcli=None, port: int = PORT, host: str = HOST):
         self.walker = walker
         self.zcli = zcli or (walker.zcli if walker else None)
-        self.logger = getattr(walker, "logger", logger) if walker else logger
+        # Prefer zComm/zCLI logger, then walker logger, then module logger
+        self.logger = getattr(self.zcli, "logger", getattr(walker, "logger", None))
         self.port = port
         self.host = host
         self.clients = set()
@@ -198,7 +203,9 @@ class zBifrost:
         self.logger.info(f"🧪 Handler = {self.handle_client.__name__}, args = {self.handle_client.__code__.co_varnames}")
 
         try:
-            server = await serve(self.handle_client, self.host, self.port)
+            if ws_serve is None:
+                raise RuntimeError("websockets 'serve' import failed; incompatible websockets version")
+            server = await ws_serve(self.handle_client, self.host, self.port)
         except OSError as e:
             if getattr(e, 'errno', None) == 48:  # macOS/Linux: Address already in use
                 self.logger.error(f"❌ Port {self.port} already in use. Try restarting the app or killing the stuck process.")

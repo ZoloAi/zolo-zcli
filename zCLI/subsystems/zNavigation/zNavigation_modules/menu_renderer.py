@@ -1,9 +1,6 @@
+# zCLI/subsystems/zNavigation/zNavigation_modules/menu_renderer.py
+
 """Menu renderer for zMenu."""
-
-from logger import Logger
-
-logger = Logger.get_logger(__name__)
-
 
 class MenuRenderer:
     """Handles menu display and rendering for zMenu."""

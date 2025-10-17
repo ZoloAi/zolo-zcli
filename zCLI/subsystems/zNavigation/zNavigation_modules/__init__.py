@@ -1,3 +1,5 @@
+# zCLI/subsystems/zNavigation/zNavigation_modules/__init__.py
+
 """zNavigation modules - Unified navigation system components."""
 
 from .menu_system import MenuSystem

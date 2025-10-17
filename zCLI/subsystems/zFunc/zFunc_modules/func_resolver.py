@@ -1,29 +1,13 @@
-# zCLI/subsystems/zFunc_modules/func_resolver.py
+# zCLI/subsystems/zFunc/zFunc_modules/func_resolver.py
+
 """Function resolution and loading utilities."""
 
 import os
 import importlib.util
-from logger import Logger
-
-logger = Logger.get_logger(__name__)
 
 
 def resolve_callable(file_path, func_name, logger_instance):
-    """
-    Resolve and load a callable function from a Python file.
-    
-    Args:
-        file_path: Path to Python file
-        func_name: Name of function to load
-        logger_instance: Logger instance
-        
-    Returns:
-        callable: Loaded function
-        
-    Raises:
-        FileNotFoundError: If file doesn't exist
-        AttributeError: If function not found in module
-    """
+    """Resolve and load a callable function from a Python file."""
     try:
         logger_instance.debug("File path: %s", file_path)
         logger_instance.debug("Function name: %s", func_name)

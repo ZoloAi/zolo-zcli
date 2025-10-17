@@ -1,10 +1,9 @@
+# zCLI/subsystems/zData/zData_modules/shared/backends/sql_adapter.py
+
 """Base SQL adapter providing shared operations for relational databases."""
 
 from abc import abstractmethod
-from logger import Logger
 from .base_adapter import BaseDataAdapter
-
-logger = Logger.get_logger(__name__)
 
 class SQLAdapter(BaseDataAdapter):
     """Base class for SQL-based adapters (SQLite, PostgreSQL, MySQL)."""

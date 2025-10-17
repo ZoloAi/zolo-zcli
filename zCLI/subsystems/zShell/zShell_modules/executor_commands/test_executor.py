@@ -1,27 +1,12 @@
-# zCLI/subsystems/zShell_modules/executor_commands/test_executor.py
-# ───────────────────────────────────────────────────────────────
+# zCLI/subsystems/zShell/zShell_modules/executor_commands/test_executor.py
+
 """Test command execution for zCLI."""
 
-import sys
+from zCLI import sys, os
 import subprocess
-import os
-from logger import Logger
-
-# Logger instance
-logger = Logger.get_logger(__name__)
-
 
 def execute_test(zcli, parsed):
-    """
-    Execute test commands using the unified test runner.
-    
-    Args:
-        zcli: zCLI instance
-        parsed: Parsed command dictionary
-        
-    Returns:
-        Test execution result
-    """
+    """Execute test commands using the unified test runner."""
     action = parsed["action"]
     
     # Find project root and test runner
@@ -55,7 +40,7 @@ def execute_test(zcli, parsed):
     
     if action == "run":
         # Run all tests using unified runner
-        logger.info("Running all zCLI test suites...")
+        zcli.logger.info("Running all zCLI test suites...")
         
         if not os.path.exists(test_runner):
             return {"error": f"Test runner not found at: {test_runner}"}

@@ -2,16 +2,12 @@
 """WHERE clause parsing - converts WHERE strings to adapter-compatible dicts."""
 
 import re
-from logger import Logger
 
 # Import from same directory
 try:
     from .value_parser import parse_value
 except ImportError:
     from value_parser import parse_value
-
-# Logger instance
-logger = Logger.get_logger(__name__)
 
 def parse_where_clause(where_str):
     """Parse WHERE clause string into adapter-compatible dict format."""

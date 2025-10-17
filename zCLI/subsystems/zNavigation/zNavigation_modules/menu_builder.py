@@ -1,9 +1,6 @@
+# zCLI/subsystems/zNavigation/zNavigation_modules/menu_builder.py
+
 """Menu builder for zMenu."""
-
-from logger import Logger
-
-logger = Logger.get_logger(__name__)
-
 
 class MenuBuilder:
     """Handles menu object construction for zMenu."""

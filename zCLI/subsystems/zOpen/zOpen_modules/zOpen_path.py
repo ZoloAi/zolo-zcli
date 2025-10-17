@@ -1,7 +1,9 @@
+# zCLI/subsystems/zOpen/zOpen_modules/zOpen_path.py
+
 # zCLI/subsystems/zOpen/zOpen_path.py — zPath Resolution and Opening
 # ───────────────────────────────────────────────────────────────
 
-import os
+from zCLI import os
 from .zOpen_file import zOpen_file
 
 

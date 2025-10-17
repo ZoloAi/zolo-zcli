@@ -1,3 +1,5 @@
+# zCLI/subsystems/zAuth/zAuth_modules/remote_auth.py
+
 """
 zAuth/zAuth_modules/remote_auth.py
 Remote API authentication
@@ -18,7 +20,7 @@ def authenticate_remote(zcli, username, password, server_url=None):
     logger.info("[*] Authenticating with remote server: %s", server_url)
     
     try:
-        result = zcli.zsession.login(
+        result = zcli.comm.login(
             {"username": username, "password": password, "mode": "Terminal"},
             url=f"{server_url}/zAuth"
         )

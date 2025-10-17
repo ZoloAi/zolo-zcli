@@ -1,11 +1,9 @@
+# zCLI/subsystems/zShell/zShell_modules/executor_commands/export_executor.py
+
 # zCLI/subsystems/zShell_modules/executor_commands/export_executor.py
 # ───────────────────────────────────────────────────────────────
 """Export command execution for zCLI."""
 
-from logger import Logger
-
-# Logger instance
-logger = Logger.get_logger(__name__)
 
 
 def execute_export(zcli, parsed):

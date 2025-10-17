@@ -3,6 +3,6 @@
 zComm subsystem - Communication & WebSocket Management
 """
 
-from .zComm import zComm  # noqa: F401
+from .zComm import zComm
 
 __all__ = ['zComm']

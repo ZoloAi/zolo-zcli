@@ -1,4 +1,0 @@
-users.users.id,users.users.name,users.users.email,users.users.age,users.users.status
-,Alice,alice@csv.com,25,active
-,Bob,bob@csv.com,35,inactive
-,Charlie,charlie@csv.com,45,active

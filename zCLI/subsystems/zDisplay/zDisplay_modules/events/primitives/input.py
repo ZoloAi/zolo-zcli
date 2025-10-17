@@ -1,45 +1,17 @@
-# zCLI/subsystems/zDisplay_modules/events/primitives/input.py
-"""
-Input primitive handlers - atomic input operations.
+# zCLI/subsystems/zDisplay/zDisplay_modules/events/primitives/input.py
 
-These are the most basic input operations that cannot be decomposed further:
-- read: Read string from input (blocks until Enter)
-- read_password: Read masked string (for passwords)
-"""
-
-from logger import Logger
-
-logger = Logger.get_logger(__name__)
+"""Input primitive handlers for reading strings and passwords."""
 
 
-def handle_read(obj, input_adapter):
-    """
-    Read string primitive - most atomic input operation.
-    
-    Blocks until user presses Enter, returns string.
-    
-    Args:
-        obj: Display object with:
-            - prompt (str, optional): Prompt to display before reading
-            
-    Returns:
-        String entered by user
-    """
+def handle_read(obj, input_adapter, logger):
+    """Read string primitive - blocks until Enter, returns string."""
     prompt = obj.get("prompt", "")
+    logger.debug("handle_read: prompt='%s'", prompt)
     return input_adapter.read_string(prompt)
 
 
-def handle_read_password(obj, input_adapter):
-    """
-    Read password primitive - masked input.
-    
-    Args:
-        obj: Display object with:
-            - prompt (str, optional): Prompt to display before reading
-            
-    Returns:
-        String entered by user (input was masked)
-    """
+def handle_read_password(obj, input_adapter, logger):
+    """Read password primitive - masked input, returns string."""
     prompt = obj.get("prompt", "")
+    logger.debug("handle_read_password: prompt='%s'", prompt)
     return input_adapter.read_password(prompt)
-

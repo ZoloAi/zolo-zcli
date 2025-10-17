@@ -1,9 +1,6 @@
+# zCLI/subsystems/zNavigation/zNavigation_modules/menu_interaction.py
+
 """Menu interaction handler for zMenu."""
-
-from logger import Logger
-
-logger = Logger.get_logger(__name__)
-
 
 class MenuInteraction:
     """Handles user interaction with menus for zMenu."""

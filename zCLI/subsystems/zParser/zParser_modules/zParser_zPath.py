@@ -1,15 +1,13 @@
+# zCLI/subsystems/zParser/zParser_modules/zParser_zPath.py
+
 # zCLI/subsystems/zParser_modules/zParser_zPath.py — zPath Resolution Module
 # ───────────────────────────────────────────────────────────────
 """zPath resolution and file discovery functionality."""
 
-import os
-from logger import Logger
-
-# Logger instance
-logger = Logger.get_logger(__name__)
+from zCLI import os
 
 
-def resolve_zmachine_path(data_path, config_paths=None):
+def resolve_zmachine_path(data_path, logger, config_paths=None):
     """Resolve ~.zMachine.* path references to OS-specific paths."""
     if not isinstance(data_path, str) or not data_path.startswith("~.zMachine."):
         # Not a zMachine path, return as-is
@@ -17,7 +15,7 @@ def resolve_zmachine_path(data_path, config_paths=None):
 
     # Get config paths
     if not config_paths:
-        from zCLI.subsystems.zConfig_modules import zConfigPaths
+        from ...zConfig.zConfig_modules import zConfigPaths
         config_paths = zConfigPaths()
 
     # Extract the subpath after ~.zMachine.
@@ -46,7 +44,7 @@ def is_zvafile_type(filename_or_parts):
     # Check filename string
     return filename_or_parts.startswith(ZVAFILE_PREFIXES)
 
-def _handle_ui_mode_path(zSession, zWorkspace):
+def _handle_ui_mode_path(zSession, zWorkspace, logger):
     """Handle UI mode path resolution."""
     zVaFile_path = zSession.get("zVaFile_path") or ""
     zRelPath = (
@@ -66,7 +64,7 @@ def _handle_ui_mode_path(zSession, zWorkspace):
     logger.info("\nzVaFile path: %s", zVaFile_basepath)
     return zVaFile_basepath, zFileName
 
-def _extract_filename_from_parts(zPath_parts, is_zvafile):
+def _extract_filename_from_parts(zPath_parts, is_zvafile, logger):
     """Extract filename and path parts from zPath_parts."""
     if is_zvafile:
         # zVaFile: Extract block (last part) and filename (last 2 parts before block)
@@ -89,9 +87,9 @@ def _extract_filename_from_parts(zPath_parts, is_zvafile):
 
     # Non-zVaFile: No block extraction, filename includes extension
     logger.info("\nNo zBlock (not a zVaFile)")
-    return _extract_non_zvafile_filename(zPath_parts)
+    return _extract_non_zvafile_filename(zPath_parts, logger)
 
-def _extract_non_zvafile_filename(zPath_parts):
+def _extract_non_zvafile_filename(zPath_parts, logger):
     """Extract filename from non-zVaFile path parts."""
     symbol_idx = -1
     if zPath_parts and zPath_parts[0] in ["@", "~"]:
@@ -126,7 +124,7 @@ def _find_filename_start(zPath_parts, symbol_idx):
 
     return filename_start_idx
 
-def zPath_decoder(zSession, zPath=None, zType=None, display=None):
+def zPath_decoder(zSession, logger, zPath=None, zType=None, display=None):
     """Resolve dotted paths to file paths with workspace support."""
     if display:
         display.handle({
@@ -140,7 +138,7 @@ def zPath_decoder(zSession, zPath=None, zType=None, display=None):
     zWorkspace = zSession.get("zWorkspace") or os.getcwd()
 
     if not zPath and zType == "zUI":
-        zVaFile_basepath, zFileName = _handle_ui_mode_path(zSession, zWorkspace)
+        zVaFile_basepath, zFileName = _handle_ui_mode_path(zSession, zWorkspace, logger)
     else:
         zPath_parts = zPath.lstrip(".").split(".")
         logger.info("\nparts: %s", zPath_parts)
@@ -148,20 +146,20 @@ def zPath_decoder(zSession, zPath=None, zType=None, display=None):
         is_zvafile = is_zvafile_type(zPath_parts)
         logger.info("is_zvafile: %s", is_zvafile)
 
-        zFileName, zRelPath_parts = _extract_filename_from_parts(zPath_parts, is_zvafile)
+        zFileName, zRelPath_parts = _extract_filename_from_parts(zPath_parts, is_zvafile, logger)
 
         # Fork on symbol
         symbol = zRelPath_parts[0] if zRelPath_parts else None
         logger.info("symbol: %s", symbol)
 
-        zVaFile_basepath = _resolve_symbol_path(symbol, zRelPath_parts, zWorkspace, zSession)
+        zVaFile_basepath = _resolve_symbol_path(symbol, zRelPath_parts, zWorkspace, zSession, logger)
 
     zVaFile_fullpath = os.path.join(zVaFile_basepath, zFileName)
     logger.info("zVaFile path + zVaFilename:\n%s", zVaFile_fullpath)
 
     return zVaFile_fullpath, zFileName
 
-def _resolve_symbol_path(symbol, zRelPath_parts, zWorkspace, zSession):
+def _resolve_symbol_path(symbol, zRelPath_parts, zWorkspace, zSession, logger):
     """Resolve path based on symbol."""
     if symbol == "@":
         logger.info("↪ '@' → workspace-relative path")
@@ -184,7 +182,7 @@ def _resolve_symbol_path(symbol, zRelPath_parts, zWorkspace, zSession):
 
     return zVaFile_basepath
 
-def identify_zFile(filename, full_zFilePath, display=None):
+def identify_zFile(filename, full_zFilePath, logger, display=None):
     """Identify file type and find actual file path with extension."""
     ZVAFILE_EXTENSIONS = [".json", ".yaml", ".yml"]
 
