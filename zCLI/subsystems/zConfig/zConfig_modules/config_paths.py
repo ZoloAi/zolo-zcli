@@ -20,7 +20,7 @@ class zConfigPaths:
             print(f"{Colors.WARNING}[zConfigPaths] Please report this issue or add support for your OS{Colors.RESET}")
             sys.exit(1)
 
-        print(f"{Colors.CONFIG}[zConfigPaths] Initialized for OS: {self.os_type}{Colors.RESET}")
+        print(f"[zConfigPaths] Initialized for OS: {self.os_type}")
 
     # ═══════════════════════════════════════════════════════════
     # Resolves standard OS locations for zolo system folders

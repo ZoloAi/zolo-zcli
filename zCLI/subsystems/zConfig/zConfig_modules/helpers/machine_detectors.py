@@ -45,7 +45,7 @@ def _detect_macos_browser():
 
         for key, name in browser_mapping.items():
             if key in output_lower:
-                print(f"{Colors.CONFIG}[MachineConfig] Found default browser via LaunchServices: {name}{Colors.RESET}")
+                print(f"[MachineConfig] Found default browser via LaunchServices: {name}")
                 return name
 
     except Exception as e:
@@ -100,7 +100,7 @@ def detect_ide():
 
     for ide in modern_ides:
         if shutil.which(ide):
-            print(f"{Colors.CONFIG}[MachineConfig] Found modern IDE: {ide}{Colors.RESET}")
+            print(f"[MachineConfig] Found modern IDE: {ide}")
             return ide
 
     # Check for classic IDEs
@@ -234,7 +234,7 @@ zMachine:
 
 def auto_detect_machine():
     """Auto-detect machine information and return dict with defaults."""
-    print(f"{Colors.CONFIG}[MachineConfig] Auto-detecting machine information...{Colors.RESET}")
+    print("[MachineConfig] Auto-detecting machine information...")
 
     machine = {
         # Identity
@@ -268,16 +268,13 @@ def auto_detect_machine():
     }
 
     print(
-        f"{Colors.CONFIG}[MachineConfig] Identity: "
-        f"{machine['hostname']} ({machine['username']}) on {machine['os_name']}{Colors.RESET}"
+        f"[MachineConfig] Identity: {machine['hostname']} ({machine['username']}) on {machine['os_name']}"
     )
     print(
-        f"{Colors.CONFIG}[MachineConfig] System: "
-        f"{machine['processor']}, {machine['cpu_cores']} cores, {machine['memory_gb']}GB RAM{Colors.RESET}"
+        f"[MachineConfig] System: {machine['processor']}, {machine['cpu_cores']} cores, {machine['memory_gb']}GB RAM"
     )
     print(
-        f"{Colors.CONFIG}[MachineConfig] Python: "
-        f"{machine['python_impl']} {machine['python_version']} on {machine['architecture']}{Colors.RESET}"
+        f"[MachineConfig] Python: {machine['python_impl']} {machine['python_version']} on {machine['architecture']}"
     )
 
     return machine

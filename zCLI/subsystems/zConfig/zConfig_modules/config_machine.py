@@ -24,8 +24,9 @@ class MachineConfig:
         )
 
         # Print ready message
-        print(f"{Colors.CONFIG}[MachineConfig] Ready: "
-              f"{self.machine.get('hostname')} on {self.machine.get('os')}{Colors.RESET}")
+        from zCLI import Colors
+        from ..zConfig import zConfig
+        zConfig.print_config_ready("MachineConfig Ready")
 
     def get(self, key, default=None):
         """Get machine config value by key, returning default if not found."""

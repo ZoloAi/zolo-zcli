@@ -26,7 +26,8 @@ class LoggerConfig:
         self._setup_logging()
 
         # Print ready message
-        print(f"{Colors.CONFIG}[LoggerConfig] Ready: level={self.log_level}{Colors.RESET}")
+        from ..zConfig import zConfig
+        zConfig.print_config_ready("LoggerConfig Ready")
 
     def _get_log_level(self):
         """
@@ -104,7 +105,7 @@ class LoggerConfig:
                 file_handler.setFormatter(formatter)
                 self._logger.addHandler(file_handler)
                 
-                print(f"{Colors.CONFIG}[LoggerConfig] File logging enabled: {file_path}{Colors.RESET}")
+                print(f"[LoggerConfig] File logging enabled: {file_path}")
             except Exception as e:
                 print(f"{Colors.ERROR}[LoggerConfig] Failed to setup file logging: {e}{Colors.RESET}")
     

@@ -26,7 +26,8 @@ class EnvironmentConfig:
             "EnvironmentConfig"
         )
 
-        print(f"{Colors.CONFIG}[EnvironmentConfig] Ready{Colors.RESET}")
+        from ..zConfig import zConfig
+        zConfig.print_config_ready("EnvironmentConfig Ready")
 
     def _detect_environments(self):
         """Detect virtual environment and system environment."""
@@ -41,13 +42,13 @@ class EnvironmentConfig:
 
         # Print detection results
         if self.in_venv:
-            print(f"{Colors.CONFIG}[EnvironmentConfig] Virtual environment detected: {self.venv_path}{Colors.RESET}")
+            print(f"[EnvironmentConfig] Virtual environment detected: {self.venv_path}")
         else:
-            print(f"{Colors.CONFIG}[EnvironmentConfig] Running in system environment{Colors.RESET}")
+            print("[EnvironmentConfig] Running in system environment")
 
     def _get_defaults(self):
         """Get minimal hardcoded default environment values (first run fallback)."""
-        print(f"{Colors.CONFIG}[EnvironmentConfig] Loading environment defaults...{Colors.RESET}")
+        print("[EnvironmentConfig] Loading environment defaults...")
 
         env = {
             # Minimal defaults - comprehensive config is in zConfig.zEnvironment.yaml
@@ -55,10 +56,7 @@ class EnvironmentConfig:
             "role": "development",
         }
 
-        print(
-            f"{Colors.CONFIG}[EnvironmentConfig] Environment: "
-            f"{env['deployment']} ({env['role']}){Colors.RESET}"
-        )
+        print(f"[EnvironmentConfig] Environment: {env['deployment']} ({env['role']})")
 
         return env
 

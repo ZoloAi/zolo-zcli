@@ -1,6 +1,7 @@
 # zCLI/subsystems/zConfig/zConfig.py
 """Cross-platform configuration management with hierarchical loading and secret support."""
 
+from zCLI import Colors
 from .zConfig_modules import (
     zConfigPaths,
     MachineConfig,
@@ -33,9 +34,38 @@ class zConfig:
         # Initialize session THIRD (uses machine and environment config for session creation)
         # Pass self so SessionConfig can call back to create_logger()
         self.session = SessionConfig(self.machine, self.environment, zcli, zSpark_obj, zconfig=self)
+        
+        # Print styled ready message (before zDisplay is available)
+        self.mycolor = "CONFIG"
+        self._print_ready()
 
-        print(f"[zConfig] Machine: {self.machine.get('hostname')} on {self.machine.get('os')}")
-        #print(f"[zConfig] Config sources: {self.loader.config_sources}")
+    def _print_ready(self):
+        """Print styled 'Ready' message (before zDisplay is available)."""
+        color_code = getattr(Colors, self.mycolor, Colors.RESET)
+        label = "zConfig Ready"
+        BASE_WIDTH = 60
+        char = "═"
+        label_len = len(label) + 2
+        space = BASE_WIDTH - label_len
+        left = space // 2
+        right = space - left
+        colored_label = f"{color_code} {label} {Colors.RESET}"
+        line = f"{char * left}{colored_label}{char * right}"
+        print(line)
+    
+    @staticmethod
+    def print_config_ready(label, color="CONFIG"):
+        """Print styled 'Ready' message for any config subsystem."""
+        color_code = getattr(Colors, color, Colors.RESET)
+        BASE_WIDTH = 60
+        char = "═"
+        label_len = len(label) + 2
+        space = BASE_WIDTH - label_len
+        left = space // 2
+        right = space - left
+        colored_label = f"{color_code} {label} {Colors.RESET}"
+        line = f"{char * left}{colored_label}{char * right}"
+        print(line)
 
     # ═══════════════════════════════════════════════════════════
     # Configuration Access Methods

@@ -33,7 +33,6 @@ class zCLI:
         from .subsystems.zConfig import zConfig
         self.config = zConfig(zcli=self, zSpark_obj=zSpark_obj)
 
-        # Create instance-specific session (session management is now part of zConfig)
         # Note: create_session() also initializes the logger
         self.session = self.config.session.create_session()
 

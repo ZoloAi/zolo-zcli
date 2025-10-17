@@ -22,7 +22,8 @@ class SessionConfig:
         self.mycolor = "MAIN"
 
         # Print ready message
-        print(f"{Colors.CONFIG}[SessionConfig] Ready{Colors.RESET}")
+        from ..zConfig import zConfig
+        zConfig.print_config_ready("SessionConfig Ready")
 
     def generate_id(self, prefix: str = "zS") -> str:
         """Generate random session ID with prefix (default: 'zS') -> 'zS_a1b2c3d4'."""
@@ -111,7 +112,7 @@ class SessionConfig:
         if self.zSpark is not None and isinstance(self.zSpark, dict):
             if "logger" in self.zSpark:
                 level = str(self.zSpark["logger"]).upper()
-                print(f"{Colors.CONFIG}[SessionConfig] Logger level from zSpark: {level}{Colors.RESET}")
+                print(f"[SessionConfig] Logger level from zSpark: {level}")
                 return level
         
         # 2. Check virtual environment variable (if in venv)
@@ -119,23 +120,23 @@ class SessionConfig:
             venv_logger = self.environment.get_env_var("ZOLO_LOGGER")
             if venv_logger:
                 level = str(venv_logger).upper()
-                print(f"{Colors.CONFIG}[SessionConfig] Logger level from virtual env: {level}{Colors.RESET}")
+                print(f"[SessionConfig] Logger level from virtual env: {level}")
                 return level
         
         # 3. Check system environment variable
         system_logger = self.environment.get_env_var("ZOLO_LOGGER")
         if system_logger:
             level = str(system_logger).upper()
-            print(f"{Colors.CONFIG}[SessionConfig] Logger level from system env: {level}{Colors.RESET}")
+            print(f"[SessionConfig] Logger level from system env: {level}")
             return level
         
         # 4. Check zConfig.zEnvironment.yaml file
         logging_config = self.environment.get("logging", {})
         if isinstance(logging_config, dict):
             level = logging_config.get("level", "INFO")
-            print(f"{Colors.CONFIG}[SessionConfig] Logger level from zEnvironment config: {level}{Colors.RESET}")
+            print(f"[SessionConfig] Logger level from zEnvironment config: {level}")
             return level
         
         # 5. Default fallback
-        print(f"{Colors.CONFIG}[SessionConfig] Logger level defaulting to: INFO{Colors.RESET}")
+        print("[SessionConfig] Logger level defaulting to: INFO")
         return "INFO"

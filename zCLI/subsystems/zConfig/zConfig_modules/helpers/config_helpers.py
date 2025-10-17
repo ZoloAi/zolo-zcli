@@ -9,7 +9,7 @@ def load_config_with_override(paths, yaml_key, create_func, data_dict, subsystem
     if subsystem_name == "MachineConfig":
         filename = "zConfig.machine.yaml"
     elif subsystem_name == "EnvironmentConfig":
-        filename = "zConfig.zEnvironment.yaml"
+        filename = "zConfig.Environment.yaml"
     else:
         filename = f"zConfig.{subsystem_name.lower().replace('config', '')}.yaml"
     user_config_path = paths.user_zconfigs_dir / filename
@@ -31,8 +31,7 @@ def _load_and_override(path, yaml_key, data_dict, subsystem_name, source):
 
             if data and yaml_key in data:
                 data_dict.update(data[yaml_key])
-                print(f"{Colors.CONFIG}[{subsystem_name}] Overriding with {source} settings "
-                      f"from: {path}{Colors.RESET}")
+                print(f"[{subsystem_name}] Overriding with {source} settings from: {path}")
 
     except Exception as e:
         print(f"[{subsystem_name}] Failed to load {source} config: {e}")
