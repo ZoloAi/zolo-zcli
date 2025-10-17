@@ -7,6 +7,7 @@ from .zConfig_modules import (
     EnvironmentConfig,
     ConfigPersistence,
     SessionConfig,
+    LoggerConfig,
 )
 
 class zConfig:
@@ -30,7 +31,8 @@ class zConfig:
         self.environment = EnvironmentConfig(self.sys_paths)
 
         # Initialize session THIRD (uses machine and environment config for session creation)
-        self.session = SessionConfig(self.machine, self.environment, zcli, zSpark_obj)
+        # Pass self so SessionConfig can call back to create_logger()
+        self.session = SessionConfig(self.machine, self.environment, zcli, zSpark_obj, zconfig=self)
 
         print(f"[zConfig] Machine: {self.machine.get('hostname')} on {self.machine.get('os')}")
         #print(f"[zConfig] Config sources: {self.loader.config_sources}")
@@ -50,6 +52,19 @@ class zConfig:
         if key is None:
             return self.environment.get_all()
         return self.environment.get(key, default)
+
+    def create_logger(self, session_data):
+        """
+        Create logger instance with session data.
+        Called by SessionConfig during session creation.
+        
+        Args:
+            session_data: Session dict containing zLogger level
+            
+        Returns:
+            LoggerConfig instance
+        """
+        return LoggerConfig(self.environment, self.zcli, session_data)
 
     @property
     def persistence(self):

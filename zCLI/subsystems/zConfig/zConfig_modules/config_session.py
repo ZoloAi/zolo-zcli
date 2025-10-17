@@ -6,15 +6,19 @@ from zCLI import os, Colors, secrets
 class SessionConfig:
     """Manages session configuration and creation."""
 
-    def __init__(self, machine_config, environment_config, zcli, zSpark_obj=None):
-        """Initialize session configuration with machine, environment, zCLI and optional zSpark configs."""
+    def __init__(self, machine_config, environment_config, zcli, zSpark_obj=None, zconfig=None):
+        """Initialize session configuration with machine, environment, zCLI, 
+        optional zSpark configs, and zConfig instance."""
         if zcli is None:
             raise ValueError("SessionConfig requires a zCLI instance")
+        if zconfig is None:
+            raise ValueError("SessionConfig requires a zConfig instance")
 
         self.machine = machine_config
         self.environment = environment_config
         self.zcli = zcli
         self.zSpark = zSpark_obj
+        self.zconfig = zconfig
         self.mycolor = "MAIN"
 
         # Print ready message
@@ -73,8 +77,8 @@ class SessionConfig:
         }
         
         # Initialize logger now that session is created with zLogger level
-        from .config_logger import LoggerConfig
-        logger = LoggerConfig(self.environment, self.zcli, session)
+        # Use zConfig's create_logger method to avoid late imports
+        logger = self.zconfig.create_logger(session)
         
         # Store logger in session for easy access
         session["logger_instance"] = logger

@@ -1,7 +1,7 @@
 # zCLI/subsystems/zConfig/zConfig_modules/helpers/machine_detectors.py
 """Helper functions for detecting machine capabilities and tools."""
 
-from zCLI import os, platform, shutil, Colors, subprocess, importlib, Path
+from zCLI import os, platform, shutil, Colors, subprocess, importlib, socket, Path
 
 def detect_browser():
     """Detect system default browser."""
@@ -234,8 +234,6 @@ zMachine:
 
 def auto_detect_machine():
     """Auto-detect machine information and return dict with defaults."""
-    from zCLI import os, platform, socket, Path
-    
     print(f"{Colors.CONFIG}[MachineConfig] Auto-detecting machine information...{Colors.RESET}")
 
     machine = {
