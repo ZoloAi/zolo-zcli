@@ -1,8 +1,9 @@
-# zConfig: <br> The Settings Subsystem
+# zConfig: The Settings Subsystem
 
 ## **Overview**
-- **zConfig** is **zCLI**'s foundational, machine-specific, settings management subsystem. It provides auto cross-platform configuration loading, , environment management, and `zSession` persistence.
-> **Note:** As the first subsystem initialized in **zCLI**, <u>it establishes the configuration foundation for all other subsystems</u>.
+- **zConfig** is **zCLI**'s foundational configuration management subsystem
+- Provides hierarchical configuration loading, machine detection, environment management, and session-logger integration
+- Initializes first in zCLI, establishing the configuration foundation for all other subsystems
 
 ## **Architecture**
 
@@ -19,42 +20,44 @@ zConfig/
 ├── zConfig.py                    # Main configuration manager
 └── zConfig_modules/
     ├── config_paths.py          # Cross-platform path resolution
-    ├── config_loader.py         # Hierarchical configuration loading
-    └── machine_config.py        # Machine-specific configuration
+    ├── config_machine.py        # Machine-specific configuration
+    ├── config_environment.py    # Environment and deployment settings
+    ├── config_session.py        # Session management with logger integration
+    ├── config_logger.py         # Logger configuration and management
+    ├── config_persistence.py    # Configuration persistence and validation
+    └── helpers/
+        ├── config_helpers.py    # Shared configuration utilities
+        ├── environment_helpers.py # Environment detection helpers
+        └── machine_detectors.py  # Machine capability detection
 ```
 ---
 
 ## **Core Features**
 
 ### **1. Hierarchical Configuration Loading**
-- **Package Defaults** → **Environment-Specific** → **User Overrides**
-- Automatic environment detection (dev, prod, staging, lfs)
-- Cross-platform path resolution
-- YAML-based configuration files
+- **zSpark Object** → **Virtual Environment** → **System Environment** → **Config Files** → **Defaults**
+- Cross-platform path resolution and YAML-based configuration files
+- Logger level hierarchy with environment variable support
 
 ### **2. Machine Configuration Management**
 - Auto-detection of system capabilities (OS, architecture, tools)
 - User preference management (browser, IDE, terminal)
-- Deployment environment settings
 - Persistent zConfig.machine.yaml configuration
 
-### **3. Configuration Persistence**
-- **NEW:** Integrated configuration persistence (formerly zExport)
+### **3. Session and Logger Integration**
+- Integrated session management with automatic logger initialization
+- Atomic session creation with logger as part of session lifecycle
+- Environment-based logger configuration
+
+### **4. Configuration Persistence**
 - Runtime configuration updates with disk persistence
 - Validation and error handling
 - Reset to auto-detected defaults
 
-### **4. Secret Management**
-- Environment variable-based secret loading
-- Secure credential handling
-- Database, API, and service credentials
-- SSL certificate path management
-
-### **5. First-Run Setup**
-- Automatic creation of user configuration directories
-- Package defaults copied to user's Application Support directory
-- Machine configuration auto-detection and creation
-- Cross-platform path resolution (macOS, Linux, Windows)
+### **5. Environment Configuration**
+- Environment-specific settings (deployment, datacenter, cluster)
+- Network, security, and performance configuration
+- Custom field support for extensibility
 
 ---
 
@@ -72,8 +75,8 @@ config/
 ~/.local/share/zolo-zcli/                 # Linux
 %APPDATA%/zolo-zcli/                      # Windows
 ├── zConfigs/                            # Configuration files
-│   ├── zConfig.default.yaml            # User's default config
-│   └── zConfig.machine.yaml            # User machine preferences
+│   ├── zConfig.machine.yaml            # Machine-specific settings
+│   └── zConfig.zEnvironment.yaml       # Environment configuration
 └── Data/                               # User data
     ├── Config/
     └── Cache/
@@ -83,6 +86,10 @@ config/
 ```bash
 # Environment selection
 ZOLO_ENV=dev|prod|staging|lfs
+ZOLO_DEPLOYMENT=Debug|Info|Production
+
+# Logger configuration
+ZOLO_LOGGER=DEBUG|INFO|WARNING|ERROR|CRITICAL
 
 # Database credentials
 ZOLO_DB_USERNAME=user
@@ -104,97 +111,70 @@ ZOLO_SSL_KEY_PATH=/path/to/key
 
 ### **Initialization**
 ```python
-from zCLI.zCLI import zCLI
+from zCLI import zCLI
 
 # zConfig initializes automatically as first subsystem
-# First run: Creates user directories and copies package defaults
-zcli = zCLI({'zSpark': {}, 'plugins': []})
+zcli = zCLI()
 
 # Access configuration
 config = zcli.config
 ```
 
-### **First-Run Setup Process**
-1. **Directory Creation**: Creates OS-specific Application Support directories
-2. **Config Copying**: Copies `zConfig.default.yaml` to user's `zConfigs` folder
-3. **Machine Detection**: Auto-detects system capabilities and creates `zConfig.machine.yaml`
-4. **Environment Setup**: Configures logging and display based on detected environment
-
 ### **Configuration Access**
 ```python
-# Get configuration values
-value = config.get("logging.level")
-section = config.get_section("database")
-all_config = config.get_all()
-
 # Machine configuration
 machine = config.get_machine()
 browser = config.get_machine("browser")
 hostname = config.get_machine("hostname")
+
+# Environment configuration
+env = config.get_environment()
+deployment = config.get_environment("deployment")
 ```
 
 ### **Configuration Persistence**
 ```python
 # Update machine configuration
-config.persist_machine("browser", "Chrome")
-config.persist_machine("ide", "cursor")
-config.persist_machine("deployment", "prod")
+config.persistence.persist_machine("browser", "Chrome")
+config.persistence.persist_machine("ide", "cursor")
 
 # Show current configuration
-config.persist_machine(show=True)
+config.persistence.persist_machine(show=True)
 
 # Reset to defaults
-config.persist_machine("browser", reset=True)
-```
-
-### **Secret Access**
-```python
-# Get secrets
-db_user = config.get_secret("db_username")
-api_key = config.get_secret("api_master_key")
-
-# Check secret availability
-has_ssl = config.has_secret("ssl_cert_path")
+config.persistence.persist_machine("browser", reset=True)
 ```
 
 ---
 
 ## 🖥️ **Command Line Interface**
 
-### **Configuration Persistence Commands**
+### **Configuration Commands**
 ```bash
 # Set machine preferences
-config machine browser Chrome
-config machine ide cursor
-config machine deployment prod
-config machine role development
+zolo config machine browser Chrome
+zolo config machine ide cursor
 
 # Show current configuration
-config machine --show
+zolo config machine --show
 
 # Reset to auto-detected defaults
-config machine --reset browser
-config machine --reset ide
+zolo config machine --reset browser
 
-# Future: Application configuration
-config config logging.level debug
-config config cache.max_size 1000
+# Environment configuration
+zolo config environment deployment Production
+zolo config environment --show
 ```
 
-### **Valid Machine Configuration Keys**
+### **Valid Configuration Keys**
 ```bash
-# Identity (auto-detected, user-overridable)
-os, hostname, architecture, python_version
+# Machine (user-editable)
+browser, ide, terminal, shell, cpu_cores, memory_gb
 
-# Deployment (user-configurable)
-deployment: dev|prod|staging|lfs
-role: development|production|testing|staging
-
-# Tool Preferences (user-configurable)
-browser, ide, terminal, shell
-
-# System Capabilities (auto-detected, user-overridable)
-cpu_cores, memory_gb
+# Environment (user-editable)
+deployment, role, datacenter, cluster, node_id
+network.host, network.port, security.require_auth
+logging.level, performance.max_workers
 ```
 
 ---
@@ -205,17 +185,14 @@ cpu_cores, memory_gb
 
 #### **Configuration Access**
 ```python
-def get(self, path, default=None):
-    """Get configuration value by dot-notation path."""
-    
-def get_section(self, section):
-    """Get entire configuration section."""
-    
-def get_all(self):
-    """Get complete configuration."""
-    
 def get_machine(self, key=None, default=None):
     """Get machine configuration value."""
+    
+def get_environment(self, key=None, default=None):
+    """Get environment configuration value."""
+    
+def create_logger(self, session_data):
+    """Create logger instance with session data."""
 ```
 
 #### **Configuration Persistence**
@@ -223,32 +200,8 @@ def get_machine(self, key=None, default=None):
 def persist_machine(self, key=None, value=None, show=False, reset=False):
     """Persist machine configuration changes to disk."""
     
-def persist_config(self, key=None, value=None, show=False):
-    """Persist application configuration changes to disk."""
-```
-
-#### **Secret Management**
-```python
-def get_secret(self, key, default=None):
-    """Get secret value from environment variables."""
-    
-def has_secret(self, key):
-    """Check if secret is available."""
-```
-
-#### **Utility Methods**
-```python
-def get_environment(self):
-    """Get current environment name."""
-    
-def get_paths_info(self):
-    """Get path information for debugging."""
-    
-def get_config_sources(self):
-    """Get list of config sources that were loaded."""
-    
-def print_info(self):
-    """Print configuration information for debugging."""
+def persist_environment(self, key=None, value=None, show=False, reset=False):
+    """Persist environment configuration changes to disk."""
 ```
 
 ---
@@ -257,18 +210,19 @@ def print_info(self):
 
 ### **Initialization Order**
 1. **Path Resolution** - Initialize cross-platform paths
-2. **Machine Config** - Load machine-specific settings
-3. **Environment Detection** - Determine deployment environment
-4. **Config Loading** - Load hierarchical configuration
-5. **Secret Loading** - Load environment-based secrets
-6. **Display Setup** - Prepare for zCLI integration
+2. **Machine Config** - Load machine-specific settings with auto-detection
+3. **Environment Config** - Load environment and deployment settings
+4. **Session Config** - Create session with logger level hierarchy detection
+5. **Logger Config** - Initialize logger using session's detected level
+6. **zConfig Ready** - Display styled ready message
 
 ### **Configuration Hierarchy**
 ```
-1. Package Defaults (config/zConfig.default.yaml)
-2. User Defaults (~/Library/Application Support/zolo-zcli/zConfigs/zConfig.default.yaml)
-3. User Machine Config (~/Library/Application Support/zolo-zcli/zConfigs/zConfig.machine.yaml)
-4. Environment Variables (ZOLO_*)
+1. zSpark Object (runtime configuration)
+2. Virtual Environment Variables (ZOLO_LOGGER when in venv)
+3. System Environment Variables (ZOLO_LOGGER, ZOLO_DEPLOYMENT, etc.)
+4. Environment Config File (zConfig.zEnvironment.yaml)
+5. Default Values (fallback)
 ```
 
 ### **Dependencies**
@@ -287,18 +241,6 @@ class zData:
     def __init__(self, zcli):
         self.config = zcli.config
         self.machine = zcli.config.get_machine()
-        self.secrets = zcli.config.get_secret("db_password")
-```
-
-### **Display Integration**
-```python
-# Configuration persistence uses zDisplay when available
-if self.zcli and self.zcli.display:
-    self.zcli.display.handle({
-        "event": "success",
-        "message": f"Updated machine config: {key}",
-        "details": f"{current_value} → {value}"
-    })
 ```
 
 ### **Session Integration**
@@ -312,17 +254,6 @@ if self.zcli and hasattr(self.zcli, 'session'):
 
 ## 🔍 **Debugging & Troubleshooting**
 
-### **Configuration Information**
-```python
-# Print complete configuration info
-config.print_info()
-
-# Get debug information
-env = config.get_environment()
-paths = config.get_paths_info()
-sources = config.get_config_sources()
-```
-
 ### **Common Issues**
 
 #### **Configuration Not Loading**
@@ -335,58 +266,27 @@ sources = config.get_config_sources()
 - Check for YAML syntax errors in zConfig.machine.yaml
 - Ensure valid configuration keys are used
 
-#### **Secrets Not Available**
-- Verify environment variables are set
-- Check variable naming (ZOLO_* prefix required)
-- Ensure environment variables are exported
-
 ### **Debug Commands**
 ```bash
 # Show current configuration
-config machine --show
-
-# Check configuration sources
-config check
-
-# Validate configuration
-config validate
-
-# Show debug information
-config info
+zolo config machine --show
+zolo config environment --show
 ```
 
 ---
 
 ## 🚀 **Advanced Usage**
 
-### **Custom Configuration Loading**
-```python
-# Load configuration for specific environment
-config = zConfig(environment="staging")
-
-# Access with custom defaults
-value = config.get("custom.setting", default="fallback")
-```
-
 ### **Programmatic Configuration Updates**
 ```python
 # Update multiple settings
 settings = {
     "browser": "Chrome",
-    "ide": "cursor", 
-    "deployment": "prod"
+    "ide": "cursor"
 }
 
 for key, value in settings.items():
-    config.persist_machine(key, value)
-```
-
-### **Configuration Validation**
-```python
-# Validate configuration values
-validation = config._validate_machine_value("deployment", "prod")
-if not validation["valid"]:
-    print(f"Error: {validation['error']}")
+    config.persistence.persist_machine(key, value)
 ```
 
 ---
@@ -395,64 +295,35 @@ if not validation["valid"]:
 
 ### **Basic Configuration Access**
 ```python
-from zCLI.zCLI import zCLI
+from zCLI import zCLI
 
 # Initialize zCLI (zConfig initializes automatically)
-zcli = zCLI({'zSpark': {}, 'plugins': []})
+zcli = zCLI()
 
 # Access configuration
 config = zcli.config
-
-# Get application settings
-log_level = config.get("logging.level", "INFO")
-db_host = config.get("database.host", "localhost")
 
 # Get machine information
 hostname = config.get_machine("hostname")
 browser = config.get_machine("browser")
 os_type = config.get_machine("os")
+
+# Get environment information
+deployment = config.get_environment("deployment")
+role = config.get_environment("role")
 ```
 
 ### **Configuration Persistence**
 ```python
 # Update user preferences
-config.persist_machine("browser", "Firefox")
-config.persist_machine("ide", "vscode")
+config.persistence.persist_machine("browser", "Firefox")
+config.persistence.persist_machine("ide", "vscode")
 
 # Show current configuration
-config.persist_machine(show=True)
+config.persistence.persist_machine(show=True)
 
 # Reset browser to auto-detected default
-config.persist_machine("browser", reset=True)
-```
-
-### **Secret Management**
-```python
-# Database connection
-db_user = config.get_secret("db_username")
-db_pass = config.get_secret("db_password")
-db_host = config.get_secret("db_host", "localhost")
-
-# API authentication
-api_key = config.get_secret("api_master_key")
-if api_key:
-    # Use API key for authentication
-    pass
-```
-
-### **Environment-Specific Configuration**
-```python
-# Check current environment
-env = config.get_environment()
-print(f"Running in {env} environment")
-
-# Get environment-specific settings
-if env == "prod":
-    debug_mode = False
-    log_level = "WARNING"
-else:
-    debug_mode = True
-    log_level = "DEBUG"
+config.persistence.persist_machine("browser", reset=True)
 ```
 
 ---
@@ -460,47 +331,24 @@ else:
 ## 🎯 **Best Practices**
 
 ### **Configuration Management**
-1. **Use dot notation** for nested configuration access
-2. **Provide defaults** for optional configuration values
-3. **Validate configuration** before applying changes
-4. **Use environment variables** for sensitive data
-
-### **Machine Configuration**
 1. **Let auto-detection work** for system capabilities
 2. **Override only when necessary** for user preferences
 3. **Use valid keys** from the predefined list
 4. **Test configuration changes** in development first
-5. **All config files** are stored in the zConfigs folder for easy management
-
-### **Secret Management**
-1. **Never hardcode secrets** in configuration files
-2. **Use environment variables** for all sensitive data
-3. **Check secret availability** before using
-4. **Use secure storage** for production secrets
 
 ### **Configuration Persistence**
 1. **Validate values** before persisting
 2. **Handle errors gracefully** when persistence fails
-3. **Provide user feedback** on configuration changes
-4. **Use reset functionality** for troubleshooting
+3. **Use reset functionality** for troubleshooting
 
 ---
 
 ## 🔮 **Future Enhancements**
 
 ### **Planned Features**
-- **Config.yaml Persistence** - User application configuration
 - **Configuration Templates** - Predefined configuration sets
-- **Remote Configuration** - Cloud-based configuration management
-- **Configuration Encryption** - Encrypted sensitive configuration
 - **Configuration Validation** - Schema-based validation
 - **Configuration Migration** - Automatic configuration updates
-
-### **Integration Plans**
-- **zDisplay Integration** - Enhanced configuration display
-- **zDialog Integration** - Interactive configuration setup
-- **zData Integration** - Configuration-driven data connections
-- **zAuth Integration** - Configuration-based authentication
 
 ---
 
@@ -508,8 +356,6 @@ else:
 
 - **[zSession Guide](zSession_GUIDE.md)** - Session management integration
 - **[zComm Guide](zComm_GUIDE.md)** - Communication configuration
-- **[zData Guide](zData_GUIDE.md)** - Data configuration integration
-- **[zAuth Guide](zAuth_GUIDE.md)** - Authentication configuration
 
 ---
 
@@ -517,16 +363,17 @@ else:
 
 zConfig is the foundational configuration management subsystem that:
 
-- **🎯 Provides** hierarchical configuration loading and management
+- **🎯 Provides** hierarchical configuration loading with zSpark → environment → config file priority
 - **⚡ Establishes** the configuration foundation for all zCLI subsystems  
-- **🏗️ Manages** machine-specific settings and user preferences
-- **🔧 Offers** configuration persistence with validation and error handling
-- **🔐 Handles** secure secret management via environment variables
-- **🚀 Supports** cross-platform configuration with automatic environment detection
+- **🏗️ Manages** machine-specific settings with cross-platform auto-detection
+- **🔧 Integrates** session management with atomic logger initialization
+- **📊 Supports** environment-specific configuration with deployment settings
+- **🚀 Offers** configuration persistence with validation and error handling
 - **📁 Organizes** all configuration files in a dedicated `zConfigs` folder
-- **🔄 Automates** first-run setup with package defaults copying and machine detection
+- **🔄 Automates** first-run setup with package defaults and machine detection
+- **🎨 Provides** clean, professional output with styled ready messages
 
-As the first subsystem in zCLI's initialization order, zConfig sets the stage for a robust, configurable, and maintainable CLI framework that adapts to any environment and user preferences with a clean, organized configuration structure.
+As the first subsystem in zCLI's initialization order, zConfig sets the stage for a robust, configurable, and maintainable CLI framework that adapts to any environment and user preferences with a clean, organized configuration structure and integrated session-logger architecture.
 
 ---
 

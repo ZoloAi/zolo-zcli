@@ -5,7 +5,7 @@
 Test Suite for zConfig Subsystem
 
 Tests configuration path resolution, permissions, hierarchy loading,
-and cross-platform compatibility.
+session-logger integration, persistence, and cross-platform compatibility.
 """
 
 import unittest
@@ -21,7 +21,11 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from zCLI.subsystems.zConfig.zConfig_modules.config_paths import zConfigPaths
 from zCLI.subsystems.zConfig.zConfig_modules.config_machine import MachineConfig
+from zCLI.subsystems.zConfig.zConfig_modules.config_environment import EnvironmentConfig
+from zCLI.subsystems.zConfig.zConfig_modules.config_session import SessionConfig
+from zCLI.subsystems.zConfig.zConfig_modules.config_logger import LoggerConfig
 from zCLI.subsystems.zConfig import zConfig
+from zCLI import zCLI
 
 
 class TestConfigPaths(unittest.TestCase):
@@ -201,6 +205,174 @@ class TestMachineConfig(unittest.TestCase):
         machine.update("deployment", original)
 
 
+class TestEnvironmentConfig(unittest.TestCase):
+    """Test environment configuration management."""
+    
+    def setUp(self):
+        """Set up test fixtures."""
+        self.paths = zConfigPaths()
+    
+    def test_environment_config_initialization(self):
+        """Test that environment config initializes correctly."""
+        env = EnvironmentConfig(self.paths)
+        
+        # Check basic environment settings
+        self.assertIsNotNone(env.get("deployment"))
+        self.assertIsNotNone(env.get("role"))
+    
+    def test_environment_detection(self):
+        """Test virtual environment detection."""
+        env = EnvironmentConfig(self.paths)
+        
+        # Check venv detection works
+        self.assertIsInstance(env.is_in_venv(), bool)
+    
+    def test_environment_variables(self):
+        """Test environment variable access."""
+        env = EnvironmentConfig(self.paths)
+        
+        # Test getting environment variables
+        path = env.get_env_var("PATH")
+        self.assertIsNotNone(path)
+
+
+class TestSessionConfig(unittest.TestCase):
+    """Test session configuration and logger hierarchy."""
+    
+    def test_session_id_generation(self):
+        """Test session ID generation."""
+        paths = zConfigPaths()
+        machine = MachineConfig(paths)
+        env = EnvironmentConfig(paths)
+        
+        # Create minimal zCLI mock
+        class MockZCLI:
+            pass
+        
+        zcli = MockZCLI()
+        
+        # Create minimal zConfig mock
+        class MockZConfig:
+            def create_logger(self, session_data):
+                # Return a minimal logger mock
+                class MockLogger:
+                    log_level = "INFO"
+                return MockLogger()
+        
+        zconfig = MockZConfig()
+        session_config = SessionConfig(machine, env, zcli, zconfig=zconfig)
+        
+        # Test ID generation
+        id1 = session_config.generate_id("test")
+        id2 = session_config.generate_id("test")
+        
+        self.assertTrue(id1.startswith("test_"))
+        self.assertTrue(id2.startswith("test_"))
+        self.assertNotEqual(id1, id2, "Session IDs should be unique")
+    
+    def test_logger_level_hierarchy(self):
+        """Test logger level detection hierarchy."""
+        paths = zConfigPaths()
+        machine = MachineConfig(paths)
+        env = EnvironmentConfig(paths)
+        
+        class MockZCLI:
+            pass
+        
+        class MockZConfig:
+            def create_logger(self, session_data):
+                class MockLogger:
+                    log_level = session_data.get("zLogger", "INFO")
+                return MockLogger()
+        
+        zcli = MockZCLI()
+        zconfig = MockZConfig()
+        
+        # Test with zSpark object
+        zSpark_obj = {"logger": "DEBUG"}
+        session_config = SessionConfig(machine, env, zcli, zSpark_obj, zconfig)
+        session = session_config.create_session()
+        
+        self.assertEqual(session["zLogger"], "DEBUG")
+    
+    def test_session_creation(self):
+        """Test complete session creation with logger."""
+        paths = zConfigPaths()
+        machine = MachineConfig(paths)
+        env = EnvironmentConfig(paths)
+        
+        class MockZCLI:
+            pass
+        
+        class MockZConfig:
+            def create_logger(self, session_data):
+                class MockLogger:
+                    log_level = session_data.get("zLogger", "INFO")
+                return MockLogger()
+        
+        zcli = MockZCLI()
+        zconfig = MockZConfig()
+        session_config = SessionConfig(machine, env, zcli, zconfig=zconfig)
+        session = session_config.create_session()
+        
+        # Verify session structure
+        self.assertIn("zS_id", session)
+        self.assertIn("zLogger", session)
+        self.assertIn("zMachine", session)
+        self.assertIn("logger_instance", session)
+        self.assertIsNotNone(session["logger_instance"])
+
+
+class TestConfigPersistence(unittest.TestCase):
+    """Test configuration persistence operations."""
+    
+    def setUp(self):
+        """Set up test fixtures."""
+        self.temp_dir = tempfile.mkdtemp()
+    
+    def tearDown(self):
+        """Clean up temporary directories."""
+        if os.path.exists(self.temp_dir):
+            shutil.rmtree(self.temp_dir)
+    
+    @unittest.skip("Requires full zCLI initialization - integration test")
+    def test_machine_config_persistence(self):
+        """Test persisting machine configuration changes."""
+        # This would require full zCLI initialization
+        # Should be run as integration test
+        pass
+    
+    @unittest.skip("Requires full zCLI initialization - integration test")
+    def test_environment_config_persistence(self):
+        """Test persisting environment configuration changes."""
+        # This would require full zCLI initialization
+        # Should be run as integration test
+        pass
+    
+    def test_config_file_structure(self):
+        """Test configuration file YAML structure."""
+        # Create test config file
+        test_config = self.temp_dir + "/test_config.yaml"
+        
+        import yaml
+        config_data = {
+            "zMachine": {
+                "hostname": "test-host",
+                "browser": "Chrome"
+            }
+        }
+        
+        with open(test_config, 'w') as f:
+            yaml.dump(config_data, f)
+        
+        # Verify file was created and is valid YAML
+        with open(test_config, 'r') as f:
+            loaded = yaml.safe_load(f)
+        
+        self.assertEqual(loaded["zMachine"]["hostname"], "test-host")
+        self.assertEqual(loaded["zMachine"]["browser"], "Chrome")
+
+
 class TestConfigHierarchy(unittest.TestCase):
     """Test configuration hierarchy and loading order."""
     
@@ -212,6 +384,59 @@ class TestConfigHierarchy(unittest.TestCase):
         """Clean up temporary directories."""
         if os.path.exists(self.temp_dir):
             shutil.rmtree(self.temp_dir)
+    
+    def test_logger_hierarchy_order(self):
+        """Test logger level hierarchy: zSpark > venv > system > config > default."""
+        paths = zConfigPaths()
+        machine = MachineConfig(paths)
+        env = EnvironmentConfig(paths)
+        
+        class MockZCLI:
+            pass
+        
+        class MockZConfig:
+            def create_logger(self, session_data):
+                class MockLogger:
+                    log_level = session_data.get("zLogger", "INFO")
+                return MockLogger()
+        
+        zcli = MockZCLI()
+        zconfig = MockZConfig()
+        
+        # Test 1: zSpark has highest priority
+        zSpark_obj = {"logger": "CRITICAL"}
+        session_config = SessionConfig(machine, env, zcli, zSpark_obj, zconfig)
+        session = session_config.create_session()
+        self.assertEqual(session["zLogger"], "CRITICAL")
+        
+        # Test 2: Default when nothing is set
+        session_config = SessionConfig(machine, env, zcli, zconfig=zconfig)
+        session = session_config.create_session()
+        self.assertIn(session["zLogger"], ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
+    
+    @patch.dict(os.environ, {"ZOLO_LOGGER": "WARNING"})
+    def test_environment_variable_hierarchy(self):
+        """Test that ZOLO_LOGGER environment variable is respected."""
+        paths = zConfigPaths()
+        machine = MachineConfig(paths)
+        env = EnvironmentConfig(paths)
+        
+        class MockZCLI:
+            pass
+        
+        class MockZConfig:
+            def create_logger(self, session_data):
+                class MockLogger:
+                    log_level = session_data.get("zLogger", "INFO")
+                return MockLogger()
+        
+        zcli = MockZCLI()
+        zconfig = MockZConfig()
+        session_config = SessionConfig(machine, env, zcli, zconfig=zconfig)
+        session = session_config.create_session()
+        
+        # Should use environment variable
+        self.assertEqual(session["zLogger"], "WARNING")
 
 
 class TestCrossPlatformCompatibility(unittest.TestCase):
@@ -259,10 +484,13 @@ def run_tests(verbose=True):
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
     
-    # Add all test classes
+    # Add all test classes in logical order
     suite.addTests(loader.loadTestsFromTestCase(TestConfigPaths))
     suite.addTests(loader.loadTestsFromTestCase(TestWritePermissions))
     suite.addTests(loader.loadTestsFromTestCase(TestMachineConfig))
+    suite.addTests(loader.loadTestsFromTestCase(TestEnvironmentConfig))
+    suite.addTests(loader.loadTestsFromTestCase(TestSessionConfig))
+    suite.addTests(loader.loadTestsFromTestCase(TestConfigPersistence))
     suite.addTests(loader.loadTestsFromTestCase(TestConfigHierarchy))
     suite.addTests(loader.loadTestsFromTestCase(TestCrossPlatformCompatibility))
     

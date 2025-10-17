@@ -34,7 +34,7 @@ class zConfig:
         # Initialize session THIRD (uses machine and environment config for session creation)
         # Pass self so SessionConfig can call back to create_logger()
         self.session = SessionConfig(self.machine, self.environment, zcli, zSpark_obj, zconfig=self)
-        
+
         # Print styled ready message (before zDisplay is available)
         self.mycolor = "CONFIG"
         self._print_ready()
@@ -52,7 +52,7 @@ class zConfig:
         colored_label = f"{color_code} {label} {Colors.RESET}"
         line = f"{char * left}{colored_label}{char * right}"
         print(line)
-    
+
     @staticmethod
     def print_config_ready(label, color="CONFIG"):
         """Print styled 'Ready' message for any config subsystem."""
@@ -84,21 +84,12 @@ class zConfig:
         return self.environment.get(key, default)
 
     def create_logger(self, session_data):
-        """
-        Create logger instance with session data.
-        Called by SessionConfig during session creation.
-        
-        Args:
-            session_data: Session dict containing zLogger level
-            
-        Returns:
-            LoggerConfig instance
-        """
+        """Create logger instance with session data."""
         return LoggerConfig(self.environment, self.zcli, session_data)
 
     @property
     def persistence(self):
         """Lazy-load persistence subsystem when needed for saving changes."""
         if not hasattr(self, '_persistence'):
-            self._persistence = ConfigPersistence(self.machine, self.environment, self.sys_paths, self.zcli)
+            self._persistence = ConfigPersistence(self.machine, self.environment, self.sys_paths, self.zcli)  # pylint: disable=attribute-defined-outside-init
         return self._persistence

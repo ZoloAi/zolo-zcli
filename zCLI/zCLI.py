@@ -38,6 +38,8 @@ class zCLI:
 
         # Get logger from session (initialized during session creation)
         self.logger = self.session["logger_instance"]
+        # Log initial message with configured level
+        self.logger.info(f"[zCLI] Logger initialized at level: {self.logger.log_level}")
 
         # Initialize zComm (Communication infrastructure for zBifrost and zData)
         from .subsystems.zComm import zComm
