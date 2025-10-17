@@ -22,8 +22,7 @@ zComm/
     ├── bifrost_socket.py              # Secure WebSocket server with authentication
     ├── service_manager.py             # Local service orchestration
     └── services/                      # Service definitions
-        ├── postgres_service.py        # PostgreSQL service management
-        └── redis_service.py           # Redis service management
+        └── postgresql_service.py      # PostgreSQL service management
 ```
 
 ---
@@ -43,7 +42,7 @@ zComm/
 - Clean separation of concerns (zComm handles transport, zAuth handles auth)
 
 ### **3. Service Management**
-- Local service orchestration (PostgreSQL, Redis, etc.)
+- Local service orchestration (PostgreSQL)
 - Service lifecycle management (start, stop, restart, status)
 - Connection information and health monitoring
 - Cross-platform service management
@@ -78,11 +77,6 @@ services:
     enabled: true
     port: 5432
     data_dir: "~/.zolo/data/postgres"
-  
-  redis:
-    enabled: false
-    port: 6379
-    data_dir: "~/.zolo/data/redis"
 ```
 
 ### **Environment Variables**
@@ -93,9 +87,8 @@ ZOLO_WS_PORT=56891
 ZOLO_WS_REQUIRE_AUTH=true
 
 # Service management
-ZOLO_SERVICES_ENABLED=postgres,redis
+ZOLO_SERVICES_ENABLED=postgres
 ZOLO_POSTGRES_PORT=5432
-ZOLO_REDIS_PORT=6379
 ```
 
 ---
@@ -156,34 +149,16 @@ info = comm.get_service_connection_info("postgres")
 
 ## 🖥️ **Command Line Interface**
 
-### **Communication Commands**
+### **Available Commands**
 ```bash
-# WebSocket management
-zolo comm websocket start
-zolo comm websocket stop
-zolo comm websocket status
+# Test suite
+zolo test
 
-# Service management
-zolo comm service start postgres
-zolo comm service stop redis
-zolo comm service restart postgres
-zolo comm service status
+# Shell mode (default)
+zolo shell
 
-# HTTP testing
-zolo comm http post http://api.example.com/test
-```
-
-### **Service Commands**
-```bash
-# List available services
-zolo comm service list
-
-# Service configuration
-zolo comm service config postgres --port 5433
-zolo comm service config redis --enabled true
-
-# Service logs
-zolo comm service logs postgres
+# Configuration management
+zolo config
 ```
 
 ---
@@ -257,7 +232,7 @@ Client Connection → Origin Validation → Authentication → Message Processin
 zComm → ServiceManager → Service Definitions → Local Services
   ↓           ↓                ↓                    ↓
 Config    Lifecycle        PostgreSQL         Data Storage
-         Management         Redis             Cache Layer
+         Management
 ```
 
 ### **Dependencies**
@@ -323,17 +298,11 @@ class zData:
 
 ### **Debug Commands**
 ```bash
-# Check WebSocket status
-zolo comm websocket status
+# Run test suite for diagnostics
+zolo test
 
-# Test HTTP connectivity
-zolo comm http post http://localhost:5000/health
-
-# Check service status
-zolo comm service status --all
-
-# Port availability
-zolo comm check-port 56891
+# Check port availability programmatically
+comm.check_port(56891)
 ```
 
 ---
@@ -474,11 +443,11 @@ zComm is the communication and service management subsystem that:
 - **📡 Supports** HTTP client services for external API communication
 - **🛡️ Implements** security features including origin validation and CSRF protection
 - **🎯 Offers** clean separation of concerns between transport and authentication
-- **📊 Provides** service orchestration with PostgreSQL, Redis, and custom services
+- **📊 Provides** service orchestration with PostgreSQL and custom services
 - **🔄 Automates** WebSocket server lifecycle with GUI/terminal mode detection
 - **🎨 Delivers** professional communication infrastructure with comprehensive error handling
 
-As a Layer 0 foundation subsystem, zComm provides the essential communication services that enable zCLI's real-time capabilities, service management, and secure external integrations. It works seamlessly with zAuth for authentication while maintaining clean architectural boundaries, ensuring that zCLI can operate as both a standalone CLI tool and a communication hub for distributed applications.
+As a Layer 0 foundation subsystem, zComm provides essential communication services that enable zCLI's real-time capabilities, service management, and secure external integrations. It works seamlessly with zAuth for authentication while maintaining clean architectural boundaries, ensuring zCLI operates as both a standalone CLI tool and a communication hub for distributed applications.
 
 ---
 
