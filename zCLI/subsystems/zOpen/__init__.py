@@ -3,6 +3,6 @@
 zOpen subsystem.
 """
 
-from .zOpen import zOpen, handle_zOpen  # noqa: F401
+from .zOpen import zOpen  # noqa: F401
 
-__all__ = ['zOpen', 'handle_zOpen']
+__all__ = ['zOpen']

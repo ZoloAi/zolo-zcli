@@ -21,8 +21,10 @@ import re
 import getpass
 import uuid
 import inspect
+import webbrowser
 from pathlib import Path
 from collections import OrderedDict
+from urllib.parse import urlparse
 
 # Import utilities (safe to import early)
 from .utils.styled_printer import print_ready
@@ -37,7 +39,7 @@ __all__ = [
     "zCLI",
     
     # System modules
-    "os", "sys", "platform", "socket", "shutil", "yaml", "subprocess", "importlib", "secrets", "logging", "requests", "asyncio", "json", "time", "re", "getpass", "uuid", "inspect", "Path", "OrderedDict",
+    "os", "sys", "platform", "socket", "shutil", "yaml", "subprocess", "importlib", "secrets", "logging", "requests", "asyncio", "json", "time", "re", "getpass", "uuid", "inspect", "webbrowser", "urlparse", "Path", "OrderedDict",
     
     # Utils
     "print_ready", "Colors",

@@ -76,6 +76,12 @@ try:
 except ImportError:
     ZDIALOG_AVAILABLE = False
 
+try:
+    from zTestSuite import zOpen_Test
+    ZOPEN_AVAILABLE = True
+except ImportError:
+    ZOPEN_AVAILABLE = False
+
 
 def run_subsystem_tests(test_module, name):
     """Run tests for a single subsystem with enhanced UX."""
@@ -242,6 +248,8 @@ def show_test_menu():
         available_tests.append(("zFunc", "zFunc_Test"))
     if ZDIALOG_AVAILABLE:
         available_tests.append(("zDialog", "zDialog_Test"))
+    if ZOPEN_AVAILABLE:
+        available_tests.append(("zOpen", "zOpen_Test"))
     
     if not available_tests:
         print("❌ No test suites available!")
@@ -303,6 +311,8 @@ def run_selected_tests(test_choice=None):
             test_suites.append((zFunc_Test, "zFunc"))
         if ZDIALOG_AVAILABLE:
             test_suites.append((zDialog_Test, "zDialog"))
+        if ZOPEN_AVAILABLE:
+            test_suites.append((zOpen_Test, "zOpen"))
         
         for test_module, name in test_suites:
             result = run_subsystem_tests(test_module, name)
@@ -335,6 +345,9 @@ def run_selected_tests(test_choice=None):
             results.append(result)
         elif test_choice == "zDialog_Test" and ZDIALOG_AVAILABLE:
             result = run_subsystem_tests(zDialog_Test, "zDialog")
+            results.append(result)
+        elif test_choice == "zOpen_Test" and ZOPEN_AVAILABLE:
+            result = run_subsystem_tests(zOpen_Test, "zOpen")
             results.append(result)
         else:
             print(f"❌ Test suite '{test_choice}' not available!")
