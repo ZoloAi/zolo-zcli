@@ -1,75 +1,16 @@
 # zCLI/subsystems/zDisplay/zDisplay.py
-"""Display and rendering subsystem - UI elements, input collection, multi-mode output."""
+"""Streamlined display and rendering subsystem - UI elements, input collection, multi-mode output."""
 
-from zCLI.utils import Colors
-from .zDisplay_modules.output import OutputFactory
-from .zDisplay_modules.input import InputFactory
-# Import all event handlers from centralized events module
-from .zDisplay_modules.events import (
-    # Primitive handlers
-    handle_raw,
-    handle_line,
-    handle_block,
-    handle_read,
-    handle_read_password,
-    handle_prompt_terminal,
-    handle_input_terminal,
-    handle_confirm_terminal,
-    handle_password_terminal,
-    handle_field_terminal,
-    handle_multiline_terminal,
-    handle_prompt_gui,
-    handle_input_gui,
-    handle_confirm_gui,
-    handle_password_gui,
-    handle_field_gui,
-    handle_multiline_gui,
-    # Basic handlers
-    handle_text,
-    handle_header,
-    handle_sysmsg,
-    handle_error,
-    handle_warning,
-    handle_success,
-    handle_info,
-    handle_marker,
-    handle_list,
-    handle_json,
-    handle_break,
-    handle_pause,
-    handle_break_gui,
-    handle_pause_gui,
-    handle_loading_gui,
-    handle_await_gui,
-    handle_idle_gui,
-    handle_radio_terminal,
-    handle_checkbox_terminal,
-    handle_dropdown_terminal,
-    handle_autocomplete_terminal,
-    handle_range_terminal,
-    handle_radio_gui,
-    handle_checkbox_gui,
-    handle_dropdown_gui,
-    handle_autocomplete_gui,
-    handle_range_gui,
-    # Composed handlers
-    handle_session,
-    # Walker handlers
-    handle_menu,
-    handle_crumbs,
-    # Form handlers
-    handle_dialog,
-    # Table handlers
-    handle_data_table,
-    handle_schema_table,
-)
+from zCLI import Colors
+from .zDisplay_modules.zPrimitives import zPrimitives
+from .zDisplay_modules.zEvents import zEvents
+
 
 class zDisplay:
-    """Display and rendering subsystem - UI elements, input collection, multi-mode output."""
+    """Streamlined display and rendering subsystem with cleaner architecture."""
 
     def __init__(self, zcli):
         """Initialize zDisplay subsystem."""
-
         # Validate zCLI instance
         if zcli is None:
             raise ValueError("zDisplay requires a zCLI instance")
@@ -77,287 +18,189 @@ class zDisplay:
         if not hasattr(zcli, 'session'):
             raise ValueError("Invalid zCLI instance: missing 'session' attribute")
 
-        # Modern architecture: zCLI instance provides all dependencies
+        # Core dependencies from zCLI
         self.zcli = zcli
         self.session = zcli.session
         self.logger = zcli.logger
         self.mode = self.session.get("zMode", "Terminal")
 
         # Colors utility
-        self.colors = Colors
+        self.zColors = Colors
         self.mycolor = "ZDISPLAY"
 
-        # Create adapters based on mode
-        self.output = OutputFactory.create(self.session, self.logger)
-        self.input = InputFactory.create(self.session, self.logger)
+        # Initialize zPrimitives container
+        self.zPrimitives = zPrimitives(self)
+        self.zEvents = zEvents(self)
         
-        # Set zcli instance on WebSocket adapters for communication
-        if self.mode == "GUI":
-            if hasattr(self.output, 'set_zcli'):
-                self.output.set_zcli(self.zcli)
-            if hasattr(self.input, 'set_zcli'):
-                self.input.set_zcli(self.zcli)
+        # Initialize ready message
+        self._ready()
 
-        self.handle({
-            "event": "sysmsg",
-            "label": "zDisplay Ready",
-            "color": self.mycolor,
-            "indent": 0
-        })
+    def _ready(self):
+        """Display subsystem ready message."""
+        self.zPrimitives.write_line("=" * 60)
+        self.zPrimitives.write_line(f"  {self.mycolor} Ready")
+        self.zPrimitives.write_line("=" * 60)
 
-    def _get_handler(self, terminal_handler, gui_handler=None):
-        """Get appropriate handler based on mode (Terminal vs GUI)."""
-        if self.mode == "GUI" and gui_handler is not None:
-            return gui_handler
-        return terminal_handler
+    # Convenience delegates to zPrimitives
+    def write_raw(self, content):
+        """Delegate to zPrimitives.write_raw."""
+        return self.zPrimitives.write_raw(content)
+
+    def write_line(self, content):
+        """Delegate to zPrimitives.write_line."""
+        return self.zPrimitives.write_line(content)
+
+    def write_block(self, content):
+        """Delegate to zPrimitives.write_block."""
+        return self.zPrimitives.write_block(content)
+
+    def read_string(self, prompt=""):
+        """Delegate to zPrimitives.read_string."""
+        return self.zPrimitives.read_string(prompt)
+
+    def read_password(self, prompt=""):
+        """Delegate to zPrimitives.read_password."""
+        return self.zPrimitives.read_password(prompt)
+
+    # Input primitives - matching the obj pattern like output primitives
+    def read_primitive(self, obj):
+        """Read string primitive - blocks until Enter, returns string."""
+        prompt = obj.get("prompt", "")
+        return self.zPrimitives.read_string(prompt)
+
+    def read_password_primitive(self, obj):
+        """Read password primitive - masked input, returns string."""
+        prompt = obj.get("prompt", "")
+        return self.zPrimitives.read_password(prompt)
+
+    # Event delegates to zEvents
+    def header(self, label, color="RESET", indent=0, style="full"):
+        """Delegate to zEvents.header."""
+        return self.zEvents.header(label, color, indent, style)
+
+    def zDeclare(self, label, color=None, indent=0, style=None):
+        """Delegate to zEvents.zDeclare."""
+        return self.zEvents.zDeclare(label, color, indent, style)
+
+    def text(self, content, indent=0, break_after=True, break_message=None):
+        """Delegate to zEvents.text."""
+        return self.zEvents.text(content, indent, break_after, break_message)
+
+    # Signal delegates to zEvents
+    def error(self, content, indent=0):
+        """Delegate to zEvents.error."""
+        return self.zEvents.error(content, indent)
     
+    def warning(self, content, indent=0):
+        """Delegate to zEvents.warning."""
+        return self.zEvents.warning(content, indent)
+    
+    def success(self, content, indent=0):
+        """Delegate to zEvents.success."""
+        return self.zEvents.success(content, indent)
+    
+    def info(self, content, indent=0):
+        """Delegate to zEvents.info."""
+        return self.zEvents.info(content, indent)
+    
+    def zMarker(self, label="Marker", color="MAGENTA", indent=0):
+        """Delegate to zEvents.zMarker."""
+        return self.zEvents.zMarker(label, color, indent)
+
+    # Data delegates to zEvents
+    def list(self, items, style="bullet", indent=0):
+        """Delegate to zEvents.list."""
+        return self.zEvents.list(items, style, indent)
+    
+    def json_data(self, data, indent_size=2, indent=0, color=False):
+        """Delegate to zEvents.json_data."""
+        return self.zEvents.json_data(data, indent_size, indent, color)
+
+    # AdvancedData delegates to zEvents
+    def zTable(self, title, columns, rows, limit=None, offset=0, show_header=True):
+        """Delegate to zEvents.zTable."""
+        return self.zEvents.zTable(title, columns, rows, limit, offset, show_header)
+
+    # zSystem delegates to zEvents
+    def zSession(self, session_data, break_after=True, break_message=None):
+        """Delegate to zEvents.zSession."""
+        return self.zEvents.zSession(session_data, break_after, break_message)
+    
+    def zCrumbs(self, session_data):
+        """Delegate to zEvents.zCrumbs."""
+        return self.zEvents.zCrumbs(session_data)
+    
+    def zMenu(self, menu_items, prompt="Select an option:", return_selection=False):
+        """Delegate to zEvents.zMenu."""
+        return self.zEvents.zMenu(menu_items, prompt, return_selection)
+    
+    def selection(self, prompt, options, multi=False, default=None, style="numbered"):
+        """Delegate to zEvents.selection."""
+        return self.zEvents.selection(prompt, options, multi, default, style)
+    
+    def zDialog(self, context, zcli=None, walker=None):
+        """Delegate to zEvents.zDialog."""
+        return self.zEvents.zDialog(context, zcli, walker)
+
+    # Backward compatibility layer for legacy handle() method
+    # TODO: Remove handle() method after all test suites complete and subsystems realigned
+    # This method provides backward compatibility for legacy event dict format
+    # New code should use direct method calls instead
     def handle(self, obj):
-        """Main entry point - routes events to appropriate adapter(s)."""
+        """Backward compatibility - maps old event dict format to new methods.
+        
+        Legacy code uses: display.handle({"event": "text", "content": "..."})
+        This maps to new API calls for compatibility during migration.
+        """
         event = obj.get("event")
-
-        # Event map: (handler, adapter_type)
-        # adapter_type: "output", "input", or "both"
-        # Organized LSF (primitive → complex)
-        event_map = {
-            # ════════════════════════════════════════════════════════
-            # OUTPUT PRIMITIVES - Atomic output operations
-            # ════════════════════════════════════════════════════════
-            "raw": (handle_raw, "output"),         # Raw output - MOST PRIMITIVE
-            "line": (handle_line, "output"),       # Single line write
-            "block": (handle_block, "output"),     # Multi-line block
-            
-            # ════════════════════════════════════════════════════════
-            # INPUT PRIMITIVES - Atomic input operations
-            # ════════════════════════════════════════════════════════
-            "read": (handle_read, "input"),        # Read string (blocks until Enter) - MOST PRIMITIVE
-            "read_password": (handle_read_password, "input"),  # Read masked string
-            
-            # ════════════════════════════════════════════════════════
-            # BASIC OUTPUT - Simple formatted text
-            # ════════════════════════════════════════════════════════
-            "text": (handle_text, "both"),         # Plain text with optional break
-            "header": (handle_header, "output"),   # Section headers (uses text)
-            "sysmsg": (handle_sysmsg, "output"),   # Subsystem section headers (auto-color)
-            
-            # ════════════════════════════════════════════════════════
-            # BASIC INPUT - Single-value collection
-            # ════════════════════════════════════════════════════════
-            "prompt": (self._get_handler(handle_prompt_terminal, handle_prompt_gui), "input"),
-            "input": (self._get_handler(handle_input_terminal, handle_input_gui), "input"),
-            "confirm": (self._get_handler(handle_confirm_terminal, handle_confirm_gui), "input"),
-            "password": (self._get_handler(handle_password_terminal, handle_password_gui), "input"),
-            
-            # ════════════════════════════════════════════════════════
-            # SIGNALS - Feedback primitives (output)
-            # ════════════════════════════════════════════════════════
-            "error": (handle_error, "output"),     # Error formatting (red)
-            "warning": (handle_warning, "output"), # Warning messages (yellow)
-            "success": (handle_success, "output"), # Success confirmations (green)
-            "info": (handle_info, "output"),       # Information messages (cyan)
-            "zMarker": (handle_marker, "output"),  # Flow markers
-            
-            # ════════════════════════════════════════════════════════
-            # CONTROL - Flow synchronization (both)
-            # ════════════════════════════════════════════════════════
-            "break": (self._get_handler(handle_break, handle_break_gui), "both"),
-            "pause": (self._get_handler(handle_pause, handle_pause_gui), "both"),
-            "loading": (self._get_handler(None, handle_loading_gui), "output"),
-            "await": (self._get_handler(None, handle_await_gui), "output"),
-            "idle": (self._get_handler(None, handle_idle_gui), "output"),
-            
-            # ════════════════════════════════════════════════════════
-            # SIMPLE STRUCTURES - Basic data display (output)
-            # ════════════════════════════════════════════════════════
-            "list": (handle_list, "output"),       # Simple list rendering
-            "json": (handle_json, "output"),       # JSON data
-            
-            # ════════════════════════════════════════════════════════
-            # VALIDATED INPUT - Type-checked single field (input)
-            # ════════════════════════════════════════════════════════
-            "field": (self._get_handler(handle_field_terminal, handle_field_gui), "input"),
-            "multiline": (self._get_handler(handle_multiline_terminal, handle_multiline_gui), "input"),
-            "hint": (None, "output"),             # Input hints (display)
-            "example": (None, "output"),          # Example values (display)
-            "validate": (None, "output"),         # Validation feedback (display)
-            "constraint": (None, "output"),       # Constraint display
-            
-            # ════════════════════════════════════════════════════════
-            # SELECTION - Choose from bounded options (both)
-            # ════════════════════════════════════════════════════════
-            "radio": (self._get_handler(handle_radio_terminal, handle_radio_gui), "both"),
-            "checkbox": (self._get_handler(handle_checkbox_terminal, handle_checkbox_gui), "both"),
-            "dropdown": (self._get_handler(handle_dropdown_terminal, handle_dropdown_gui), "both"),
-            "range": (self._get_handler(handle_range_terminal, handle_range_gui), "both"),
-            "autocomplete": (self._get_handler(handle_autocomplete_terminal, handle_autocomplete_gui), "both"),
-            
-            # ════════════════════════════════════════════════════════
-            # NOTIFICATIONS - Timed/contextual feedback (output)
-            # ════════════════════════════════════════════════════════
-            "notification": (None, "output"),      # System notifications
-            "toast": (None, "output"),             # Temporary messages
-            "badge": (None, "output"),             # Badge/indicator
-            "tooltip": (None, "output"),           # Hover tooltip
-            "alert": (None, "output"),             # Alert dialog
-            
-            # ════════════════════════════════════════════════════════
-            # TABLES - Structured data display (output)
-            # ════════════════════════════════════════════════════════
-            "zTable": (handle_data_table, "output"),            # Data tables
-            "zTableSchema": (handle_schema_table, "output"),    # Schema definitions
-            "zConfig": (None, "output"),           # Configuration display
-            "grid": (None, "output"),              # Grid layout
-            
-            # ════════════════════════════════════════════════════════
-            # MENUS - Interactive lists (both)
-            # ════════════════════════════════════════════════════════
-            "zMenu": (handle_menu, "output"),             # Menu selection
-            
-            # ════════════════════════════════════════════════════════
-            # HIERARCHIES - Nested structures (output)
-            # ════════════════════════════════════════════════════════
-            "tree": (None, "output"),              # Tree structures
-            "graph": (None, "output"),             # Graph/network
-            
-            # ════════════════════════════════════════════════════════
-            # NAVIGATION - Context/breadcrumbs (output)
-            # ════════════════════════════════════════════════════════
-            "zCrumbs": (handle_crumbs, "output"),           # Breadcrumb trail
-            "zSession": (handle_session, "both"),  # Session information with optional break
-            "navigate": (None, "input"),           # Page/route navigation
-            "back": (None, "input"),               # Go back action
-            "forward": (None, "input"),            # Go forward action
-            
-            # ════════════════════════════════════════════════════════
-            # VISUALIZATION - Visual representation (output)
-            # ════════════════════════════════════════════════════════
-            "progress": (None, "output"),          # Progress bars
-            "sparkline": (None, "output"),         # Inline mini-charts
-            "chart": (None, "output"),             # Charts/graphs
-            "timeline": (None, "output"),          # Timeline visualization
-            "heatmap": (None, "output"),           # Heatmap/matrix
-            "diff": (None, "output"),              # Diff/comparison
-            
-            # ════════════════════════════════════════════════════════
-            # FORMS - Multi-field interactive (both)
-            # ════════════════════════════════════════════════════════
-            "zDialog": (handle_dialog, "both"),           # Forms
-            "edit": (None, "both"),              # Edit existing data
-            
-            # ════════════════════════════════════════════════════════
-            # CONTAINERS - Layout composition (output)
-            # ════════════════════════════════════════════════════════
-            "container": (None, "output"),         # Generic container
-            "panel": (None, "output"),             # Panel/card container
-            "accordion": (None, "output"),         # Collapsible sections
-            "split": (None, "output"),             # Split pane layout
-            "tabs": (None, "output"),              # Tabbed interface
-            "sidebar": (None, "output"),           # Sidebar navigation
-            
-            # ════════════════════════════════════════════════════════
-            # OVERLAYS - Modal layers (output)
-            # ════════════════════════════════════════════════════════
-            "popover": (None, "output"),           # Contextual popover
-            "drawer": (None, "output"),            # Slide-out drawer
-            "modal": (None, "output"),             # Modal dialog
-            "overlay": (None, "output"),           # Full-screen overlay
-            
-            # ════════════════════════════════════════════════════════
-            # QUERY - Search/filter interfaces (both)
-            # ════════════════════════════════════════════════════════
-            "search": (None, "both"),            # Search input + results
-            "filter": (None, "both"),            # Filter interface
-            "sort": (None, "both"),              # Sort interface
-            "paginate": (None, "both"),          # Pagination controls
-            
-            # ════════════════════════════════════════════════════════
-            # ACTIONS - User commands (input)
-            # ════════════════════════════════════════════════════════
-            "button": (None, "input"),            # Button click
-            "action": (None, "input"),            # Generic action trigger
-            "command": (None, "input"),           # Command execution
-            "shortcut": (None, "input"),          # Keyboard shortcut
-            "gesture": (None, "input"),           # Gesture input
-            
-            # ════════════════════════════════════════════════════════
-            # STREAMING - Real-time data (output)
-            # ════════════════════════════════════════════════════════
-            "stream": (None, "output"),            # Continuous data stream
-            "tail": (None, "output"),              # Tail/follow mode
-            "live": (None, "output"),              # Live updates
-            "log": (None, "output"),               # Log output
-            "feed": (None, "output"),              # Event feed/timeline
-            
-            # ════════════════════════════════════════════════════════
-            # MEDIA - Binary/file operations (mixed)
-            # ════════════════════════════════════════════════════════
-            "file": (None, "output"),              # File display/download
-            "image": (None, "output"),             # Image rendering
-            "preview": (None, "output"),           # File preview
-            "upload": (None, "both"),            # File upload
-            "download": (None, "output"),          # File download
-            
-            # ════════════════════════════════════════════════════════
-            # EXPORT - External output (output)
-            # ════════════════════════════════════════════════════════
-            "zPrint": (None, "output"),            # Generic print/export
-            "export": (None, "output"),            # Export data
-            "clipboard": (None, "output"),         # Copy to clipboard
-            "share": (None, "output"),             # Share/send data
-            
-            # ════════════════════════════════════════════════════════
-            # TEMPORAL - History/state management (mixed)
-            # ════════════════════════════════════════════════════════
-            "history": (None, "output"),           # History display
-            "snapshot": (None, "output"),          # State snapshot
-            "undo": (None, "input"),              # Undo operation
-            "redo": (None, "input"),              # Redo operation
-            "replay": (None, "input"),            # Replay actions
-            
-            # ════════════════════════════════════════════════════════
-            # SPATIAL - Drawing/canvas operations (both)
-            # ════════════════════════════════════════════════════════
-            "drag": (None, "both"),              # Drag and drop
-            "resize": (None, "both"),            # Resize operations
-            "transform": (None, "both"),         # Transform
-            "draw": (None, "both"),              # Drawing operations
-            "canvas": (None, "both"),            # Canvas
-            
-            # ════════════════════════════════════════════════════════
-            # WORKFLOWS - Multi-step complex interactions (both)
-            # ════════════════════════════════════════════════════════
-            "while": (None, "both"),             # Retry/stop loop
-            "wizard": (None, "both"),            # Multi-step wizards
-            "crud": (None, "both"),              # Full CRUD interface
-        }
-
-        # Auto-inject session for events that need it
-        if event in ("zCrumbs", "zSession"):
-            if "zSession" not in obj and self.session:
-                obj = {**obj, "zSession": self.session}
         
-        # Route to appropriate adapter(s)
-        if event not in event_map:
-            self.logger.warning("Unknown display event: %s", event)
-            return None
-        
-        handler, adapter_type = event_map[event]
-        
-        if handler is None:
-            self.logger.debug("Event '%s' not yet implemented", event)
-            return None
-        
-        # Call handler with appropriate adapter(s)
-        # All handlers receive logger as a keyword argument for consistency
-        if adapter_type == "output":
-            # Special case: sysmsg needs additional session and mycolor
-            if event == "sysmsg":
-                return handler(obj, self.output, session=self.session, mycolor=self.mycolor, logger=self.logger)
-            return handler(obj, self.output, logger=self.logger)
-        elif adapter_type == "input":
-            return handler(obj, self.input, logger=self.logger)
-        elif adapter_type == "both":
-            return handler(obj, self.output, self.input, logger=self.logger)
+        if event == "text":
+            return self.text(obj.get("content", ""), obj.get("indent", 0), obj.get("break", False))
+        elif event == "header":
+            return self.header(obj.get("label", ""), obj.get("color", "RESET"), obj.get("indent", 0), obj.get("style", "full"))
+        elif event == "sysmsg":
+            return self.zDeclare(obj.get("label", ""), obj.get("color"), obj.get("indent", 0), obj.get("style"))
+        elif event == "error":
+            return self.error(obj.get("content", ""), obj.get("indent", 0))
+        elif event == "warning":
+            return self.warning(obj.get("content", ""), obj.get("indent", 0))
+        elif event == "success":
+            return self.success(obj.get("content", ""), obj.get("indent", 0))
+        elif event == "info":
+            return self.info(obj.get("content", ""), obj.get("indent", 0))
+        elif event == "zMarker":
+            return self.zMarker(obj.get("label", "Marker"), obj.get("color", "MAGENTA"), obj.get("indent", 0))
+        elif event == "list":
+            return self.list(obj.get("items", []), obj.get("style", "bullet"), obj.get("indent", 0))
+        elif event in ("zJSON", "json"):
+            data = obj.get("payload") or obj.get("data")
+            return self.json_data(data, obj.get("indent_size", 2), obj.get("indent", 0), obj.get("color", False))
+        elif event == "zTable":
+            return self.zTable(obj.get("title", "Table"), obj.get("columns", []), obj.get("rows", []), 
+                              obj.get("limit"), obj.get("offset", 0), obj.get("show_header", True))
+        elif event == "zSession":
+            return self.zSession(obj.get("session") or self.session, obj.get("break", True), obj.get("break_message"))
+        elif event == "zCrumbs":
+            return self.zCrumbs(obj.get("session") or self.session)
+        elif event == "zMenu":
+            return self.zMenu(obj.get("menu", []), obj.get("prompt", "Select an option:"), obj.get("return_selection", False))
+        elif event == "zDialog":
+            return self.zDialog(obj.get("context", {}), self.zcli, None)
+        elif event == "raw":
+            return self.write_raw(obj.get("content", ""))
+        elif event == "line":
+            return self.write_line(obj.get("content", ""))
+        elif event == "block":
+            return self.write_block(obj.get("content", ""))
+        elif event == "read":
+            return self.read_string(obj.get("prompt", ""))
+        elif event == "read_password":
+            return self.read_password(obj.get("prompt", ""))
         else:
-            self.logger.error("Invalid adapter type '%s' for event '%s'", adapter_type, event)
+            if self.logger:
+                self.logger.warning(f"Unknown display event: {event}")
             return None
 
+    # TODO: Add streamlined event handling system
+    # TODO: Add simplified handler registration
+    # TODO: Add mode-specific method routing

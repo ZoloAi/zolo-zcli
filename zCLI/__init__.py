@@ -18,6 +18,8 @@ import asyncio
 import json
 import time
 import re
+import getpass
+import uuid
 from pathlib import Path
 
 # Import utilities (safe to import early)
@@ -33,7 +35,7 @@ __all__ = [
     "zCLI",
     
     # System modules
-    "os", "sys", "platform", "socket", "shutil", "yaml", "subprocess", "importlib", "secrets", "logging", "requests", "asyncio", "json", "time", "re", "Path",
+    "os", "sys", "platform", "socket", "shutil", "yaml", "subprocess", "importlib", "secrets", "logging", "requests", "asyncio", "json", "time", "re", "getpass", "uuid", "Path",
     
     # Utils
     "print_ready", "Colors",

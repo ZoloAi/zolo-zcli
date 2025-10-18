@@ -23,13 +23,7 @@ class zAuth:
         self.credentials = CredentialManager()
         
         # Display ready message
-        self.zcli.display.handle({
-            "event": "sysmsg",
-            "label": "zAuth Ready",
-            "style": "full",
-            "color": self.mycolor,
-            "indent": 0
-        })
+        self.zcli.display.zDeclare("zAuth Ready", color=self.mycolor, indent=0, style="full")
         
         # Note: Authentication is session-only (no persistence)
         # Users must login each session to populate zSession authentication
@@ -60,13 +54,13 @@ class zAuth:
                       local_result["username"], local_result["role"])
             
             # Display success message
-            self.zcli.display.handle({"event": "text", "content": ""})
-            self.zcli.display.handle({"event": "text", "content": f"[OK] Logged in as: {local_result['username']} ({local_result['role']})"})
-            self.zcli.display.handle({"event": "text", "content": f"     User ID: {local_result['user_id']}"})
-            self.zcli.display.handle({"event": "text", "content": f"     API Key: {local_result['api_key'][:20]}..."})
-            self.zcli.display.handle({"event": "text", "content": "     Mode: Local (development)"})
-            self.zcli.display.handle({"event": "text", "content": "     Session: This session only (no persistence)"})
-            self.zcli.display.handle({"event": "text", "content": ""})
+            self.zcli.display.text("", break_after=False)
+            self.zcli.display.success(f"[OK] Logged in as: {local_result['username']} ({local_result['role']})")
+            self.zcli.display.text(f"     User ID: {local_result['user_id']}", break_after=False)
+            self.zcli.display.text(f"     API Key: {local_result['api_key'][:20]}...", break_after=False)
+            self.zcli.display.text("     Mode: Local (development)", break_after=False)
+            self.zcli.display.text("     Session: This session only (no persistence)", break_after=False)
+            self.zcli.display.text("", break_after=False)
             
             return {"status": "success", "user": local_result}
         
@@ -83,16 +77,16 @@ class zAuth:
                         "role": credentials.get("role"),
                         "API_Key": credentials.get("api_key")
                     })
-                self.zcli.display.handle({"event": "text", "content": "     Session: This session only (no persistence)"})
-                self.zcli.display.handle({"event": "text", "content": ""})
+                self.zcli.display.text("     Session: This session only (no persistence)", break_after=False)
+                self.zcli.display.text("", break_after=False)
             return result
         
         # No valid authentication method
         self.logger.warning("[FAIL] Authentication failed: Invalid credentials")
-        self.zcli.display.handle({"event": "text", "content": ""})
-        self.zcli.display.handle({"event": "error", "content": "[FAIL] Authentication failed: Invalid credentials"})
-        self.zcli.display.handle({"event": "text", "content": "       No authentication method available"})
-        self.zcli.display.handle({"event": "text", "content": ""})
+        self.zcli.display.text("", break_after=False)
+        self.zcli.display.error("[FAIL] Authentication failed: Invalid credentials")
+        self.zcli.display.text("       No authentication method available", break_after=False)
+        self.zcli.display.text("", break_after=False)
         return {"status": "fail", "reason": "Invalid credentials"}
     
     def logout(self):
@@ -112,13 +106,13 @@ class zAuth:
                 }
             
             if is_logged_in:
-                self.zcli.display.handle({"event": "text", "content": ""})
-                self.zcli.display.handle({"event": "text", "content": "[OK] Logged out successfully"})
-                self.zcli.display.handle({"event": "text", "content": ""})
+                self.zcli.display.text("", break_after=False)
+                self.zcli.display.success("[OK] Logged out successfully")
+                self.zcli.display.text("", break_after=False)
             else:
-                self.zcli.display.handle({"event": "text", "content": ""})
-                self.zcli.display.handle({"event": "warning", "content": "[WARN] Not currently logged in"})
-                self.zcli.display.handle({"event": "text", "content": ""})
+                self.zcli.display.text("", break_after=False)
+                self.zcli.display.warning("[WARN] Not currently logged in")
+                self.zcli.display.text("", break_after=False)
             
             return {"status": "success"}
         
@@ -131,22 +125,20 @@ class zAuth:
         # Check session authentication instead of persisted credentials
         if self.session and self.session.get("zAuth", {}).get("username"):
             auth_data = self.session["zAuth"]
-            self.zcli.display.handle({"event": "text", "content": ""})
-            self.zcli.display.handle({"event": "text", "content": "[*] Authentication Status"})
-            self.zcli.display.handle({"event": "text", "content": "═" * 50})
-            self.zcli.display.handle({"event": "text", "content": f"Username:   {auth_data.get('username')}"})
-            self.zcli.display.handle({"event": "text", "content": f"Role:       {auth_data.get('role')}"})
-            self.zcli.display.handle({"event": "text", "content": f"User ID:    {auth_data.get('id')}"})
-            self.zcli.display.handle({"event": "text", "content": f"API Key:    {auth_data.get('API_Key', '')[:20]}..."})
-            self.zcli.display.handle({"event": "text", "content": "Session:    Current session only (no persistence)"})
-            self.zcli.display.handle({"event": "text", "content": "═" * 50})
-            self.zcli.display.handle({"event": "text", "content": ""})
+            self.zcli.display.text("", break_after=False)
+            self.zcli.display.header("[*] Authentication Status")
+            self.zcli.display.text(f"Username:   {auth_data.get('username')}", indent=1, break_after=False)
+            self.zcli.display.text(f"Role:       {auth_data.get('role')}", indent=1, break_after=False)
+            self.zcli.display.text(f"User ID:    {auth_data.get('id')}", indent=1, break_after=False)
+            self.zcli.display.text(f"API Key:    {auth_data.get('API_Key', '')[:20]}...", indent=1, break_after=False)
+            self.zcli.display.text("Session:    Current session only (no persistence)", indent=1, break_after=False)
+            self.zcli.display.text("", break_after=False)
             
             return {"status": "authenticated", "user": auth_data}
         else:
-            self.zcli.display.handle({"event": "text", "content": ""})
-            self.zcli.display.handle({"event": "warning", "content": "[WARN] Not authenticated. Run 'auth login' to authenticate."})
-            self.zcli.display.handle({"event": "text", "content": ""})
+            self.zcli.display.text("", break_after=False)
+            self.zcli.display.warning("[WARN] Not authenticated. Run 'auth login' to authenticate.")
+            self.zcli.display.text("", break_after=False)
             return {"status": "not_authenticated"}
     
     def is_authenticated(self):
