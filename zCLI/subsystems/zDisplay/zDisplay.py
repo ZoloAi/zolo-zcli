@@ -84,19 +84,19 @@ class zDisplay:
     def error(self, content, indent=0):
         """Delegate to zEvents.error."""
         return self.zEvents.error(content, indent)
-    
+
     def warning(self, content, indent=0):
         """Delegate to zEvents.warning."""
         return self.zEvents.warning(content, indent)
-    
+
     def success(self, content, indent=0):
         """Delegate to zEvents.success."""
         return self.zEvents.success(content, indent)
-    
+
     def info(self, content, indent=0):
         """Delegate to zEvents.info."""
         return self.zEvents.info(content, indent)
-    
+
     def zMarker(self, label="Marker", color="MAGENTA", indent=0):
         """Delegate to zEvents.zMarker."""
         return self.zEvents.zMarker(label, color, indent)
@@ -105,7 +105,7 @@ class zDisplay:
     def list(self, items, style="bullet", indent=0):
         """Delegate to zEvents.list."""
         return self.zEvents.list(items, style, indent)
-    
+
     def json_data(self, data, indent_size=2, indent=0, color=False):
         """Delegate to zEvents.json_data."""
         return self.zEvents.json_data(data, indent_size, indent, color)
@@ -119,19 +119,19 @@ class zDisplay:
     def zSession(self, session_data, break_after=True, break_message=None):
         """Delegate to zEvents.zSession."""
         return self.zEvents.zSession(session_data, break_after, break_message)
-    
+
     def zCrumbs(self, session_data):
         """Delegate to zEvents.zCrumbs."""
         return self.zEvents.zCrumbs(session_data)
-    
+
     def zMenu(self, menu_items, prompt="Select an option:", return_selection=False):
         """Delegate to zEvents.zMenu."""
         return self.zEvents.zMenu(menu_items, prompt, return_selection)
-    
+
     def selection(self, prompt, options, multi=False, default=None, style="numbered"):
         """Delegate to zEvents.selection."""
         return self.zEvents.selection(prompt, options, multi, default, style)
-    
+
     def zDialog(self, context, zcli=None, walker=None):
         """Delegate to zEvents.zDialog."""
         return self.zEvents.zDialog(context, zcli, walker)

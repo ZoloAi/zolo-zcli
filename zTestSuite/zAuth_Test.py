@@ -256,7 +256,7 @@ class TestRemoteAuthentication(unittest.TestCase):
         self.assertEqual(result["reason"], "Invalid credentials")
     
     @patch.dict(os.environ, {"ZOLO_USE_REMOTE_API": "true"})
-    @patch('zCLI.subsystems.zAuth.zAuth.authenticate_remote')
+    @patch.object(zAuth, '_authenticate_remote')
     def test_login_with_remote_api_success(self, mock_remote_auth):
         """Test successful login with remote API."""
         # Mock successful remote authentication
@@ -277,7 +277,7 @@ class TestRemoteAuthentication(unittest.TestCase):
         self.assertEqual(self.mock_zcli.session["zAuth"]["API_Key"], "test_key_12345")
     
     @patch.dict(os.environ, {"ZOLO_USE_REMOTE_API": "true"})
-    @patch('zCLI.subsystems.zAuth.zAuth.authenticate_remote')
+    @patch.object(zAuth, '_authenticate_remote')
     def test_login_with_remote_api_failure(self, mock_remote_auth):
         """Test failed login with remote API."""
         # Mock failed remote authentication

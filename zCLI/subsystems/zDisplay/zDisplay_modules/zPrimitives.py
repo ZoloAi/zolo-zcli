@@ -25,7 +25,7 @@ class zPrimitives:
         """Write raw content with no formatting or newline."""
         # Terminal output (always)
         print(content, end='', flush=True)
-        
+
         # GUI output (if in GUI mode)
         if self._is_gui_mode():
             self._write_gui(content, "raw")
@@ -36,10 +36,10 @@ class zPrimitives:
         terminal_content = content
         if not terminal_content.endswith('\n'):
             terminal_content = terminal_content + '\n'
-        
+
         # Terminal output (always)
         print(terminal_content, end='', flush=True)
-        
+
         # GUI output (if in GUI mode) - send without newline
         if self._is_gui_mode():
             self._write_gui(content.rstrip('\n'), "line")
@@ -50,10 +50,10 @@ class zPrimitives:
         terminal_content = content
         if terminal_content and not terminal_content.endswith('\n'):
             terminal_content = terminal_content + '\n'
-        
+
         # Terminal output (always)
         print(terminal_content, end='', flush=True)
-        
+
         # GUI output (if in GUI mode) - send without trailing newlines
         if self._is_gui_mode():
             self._write_gui(content.rstrip('\n') if content else "", "block")
@@ -64,15 +64,15 @@ class zPrimitives:
         # Access zcli through display instance to send via comm subsystem
         if not self.display or not hasattr(self.display, 'zcli'):
             return
-        
+
         zcli = self.display.zcli
         if not zcli or not hasattr(zcli, 'comm'):
             return
-        
+
         try:
             # Remove trailing newlines for JSON (consistent with WebSocket output)
             content = content.rstrip('\n') if content else ""
-            
+
             # Create JSON event (same structure as WebSocket output adapter)
             event_data = {
                 "event": "output",
@@ -80,7 +80,7 @@ class zPrimitives:
                 "content": content,
                 "timestamp": time.time()
             }
-            
+
             # Send via zComm's WebSocket broadcast (same pattern as WebSocket output)
             if hasattr(zcli.comm, 'broadcast_websocket'):
                 try:
@@ -90,7 +90,7 @@ class zPrimitives:
                 except RuntimeError:
                     # No running event loop - for tests, just log the event
                     pass
-            
+
         except Exception:
             # Silently ignore GUI send failures - terminal fallback handles the output
             pass
@@ -104,13 +104,13 @@ class zPrimitives:
         # Access zcli through display instance to send via comm subsystem
         if not self.display or not hasattr(self.display, 'zcli'):
             return None
-        
+
         zcli = self.display.zcli
         if not zcli or not hasattr(zcli, 'comm'):
             return None
-        
+
         request_id = self._generate_request_id()
-        
+
         try:
             # Create input request event (same structure as WebSocketInput)
             request_event = {
@@ -121,7 +121,7 @@ class zPrimitives:
                 "timestamp": time.time(),
                 **kwargs
             }
-            
+
             # Create future for response
             try:
                 loop = asyncio.get_running_loop()
@@ -129,9 +129,9 @@ class zPrimitives:
             except RuntimeError:
                 # No running event loop - use asyncio.Future()
                 future = asyncio.Future()
-            
+
             self.response_futures[request_id] = future
-            
+
             # Send request via zComm's WebSocket broadcast
             if hasattr(zcli.comm, 'broadcast_websocket'):
                 try:
@@ -142,9 +142,9 @@ class zPrimitives:
                 except RuntimeError:
                     # No running event loop - for tests, just log the request
                     pass
-            
+
             return future
-            
+
         except Exception:
             # Return None if GUI request fails - terminal fallback will handle input
             return None
@@ -161,14 +161,14 @@ class zPrimitives:
         # Only works in GUI mode
         if not self._is_gui_mode():
             return False
-        
+
         if not self.display or not hasattr(self.display, 'zcli'):
             return False
-        
+
         zcli = self.display.zcli
         if not zcli or not hasattr(zcli, 'comm'):
             return False
-        
+
         try:
             event_data = {
                 "event": "zdisplay",
@@ -176,7 +176,7 @@ class zPrimitives:
                 "data": data,
                 "timestamp": time.time()
             }
-            
+
             if hasattr(zcli.comm, 'broadcast_websocket'):
                 try:
                     asyncio.create_task(
@@ -188,7 +188,7 @@ class zPrimitives:
                     pass
         except Exception:
             pass
-        
+
         return False
 
     # Input primitives - terminal input with optional GUI support
@@ -199,16 +199,16 @@ class zPrimitives:
             if prompt:
                 return input(prompt).strip()
             return input().strip()
-        
+
         # GUI input - return future that will be resolved by GUI response
         gui_future = self._send_input_request("string", prompt)
-        
+
         # Fallback to terminal if GUI request fails
         if gui_future is None:
             if prompt:
                 return input(prompt).strip()
             return input().strip()
-        
+
         return gui_future
 
     def read_password(self, prompt=""):
@@ -218,16 +218,16 @@ class zPrimitives:
             if prompt:
                 return getpass.getpass(prompt).strip()
             return getpass.getpass().strip()
-        
+
         # GUI input - return future that will be resolved by GUI response
         gui_future = self._send_input_request("password", prompt, masked=True)
-        
+
         # Fallback to terminal if GUI request fails
         if gui_future is None:
             if prompt:
                 return getpass.getpass(prompt).strip()
             return getpass.getpass().strip()
-        
+
         return gui_future
 
     # Convenience aliases for backward compatibility

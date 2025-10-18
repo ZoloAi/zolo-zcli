@@ -14,14 +14,14 @@
 - Depends on zDisplay for dual-mode I/O
 - Establishes session-only authentication (no persistence)
 
-### **Modular Design**
+### **Streamlined Design**
 ```
 zAuth/
-├── zAuth.py                          # Main authentication manager
-└── zAuth_modules/
-    ├── remote_auth.py                # Remote API authentication
-    └── helpers.py                    # Authentication helpers
+├── __init__.py                       # Module exports
+└── zAuth.py                          # Self-contained authentication class
 ```
+
+**Note:** All authentication logic is now contained within the `zAuth` class itself, eliminating the need for separate module files.
 
 ---
 
@@ -409,11 +409,14 @@ The streamlined zAuth removes:
 - ❌ **CredentialManager**: No persistence
 - ❌ **local_auth**: Disabled local authentication
 - ❌ **validate_api_key**: Removed validation method
+- ❌ **zAuth_modules/**: All logic moved into main class
+- ❌ **helpers.py**: Removed unused helper functions
 
 All authentication is now:
 - ✅ **Session-only**: No file-based persistence
 - ✅ **Remote-first**: Uses remote API when enabled
 - ✅ **Dual-mode**: Works in Terminal and GUI
+- ✅ **Self-contained**: Single file architecture
 
 ### **Code Updates**
 ```python

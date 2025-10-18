@@ -2,7 +2,7 @@
 """Authentication subsystem for zCLI - session-only authentication."""
 
 from zCLI import os
-from .zAuth_modules.remote_auth import authenticate_remote
+
 
 class zAuth:
     """Authentication subsystem for zCLI - session-only (no persistence)."""
@@ -31,7 +31,7 @@ class zAuth:
         
         # Try remote authentication
         if os.getenv("ZOLO_USE_REMOTE_API", "false").lower() == "true":
-            result = authenticate_remote(self.zcli, username, password, server_url)
+            result = self._authenticate_remote(username, password, server_url)
             if result.get("status") == "success":
                 # Update session with auth result
                 credentials = result.get("credentials")
@@ -101,3 +101,60 @@ class zAuth:
             return self.session["zAuth"]
         return None
     
+    def _authenticate_remote(self, username, password, server_url=None):
+        """Authenticate via Flask API (remote server)."""
+        # Get server URL from environment or default
+        if not server_url:
+            server_url = os.getenv("ZOLO_API_URL", "http://localhost:5000")
+        
+        # Authenticate via Flask API
+        self.logger.info("[*] Authenticating with remote server: %s", server_url)
+        
+        try:
+            # Use zComm for pure HTTP communication
+            response = self.zcli.comm.http_post(
+                f"{server_url}/zAuth",
+                data={"username": username, "password": password, "mode": "Terminal"}
+            )
+            
+            if not response:
+                return {"status": "fail", "reason": "Connection failed"}
+                
+            result = response.json()
+            
+            if result and result.get("status") == "success":
+                user = result.get("user", {})
+                
+                # Prepare credentials for session (no persistence)
+                credentials = {
+                    "username": user.get("username"),
+                    "api_key": user.get("api_key"),
+                    "role": user.get("role"),
+                    "user_id": user.get("id"),
+                    "server_url": server_url
+                }
+                
+                self.logger.info("[OK] Remote authentication successful: %s (role=%s)", 
+                              credentials["username"], credentials["role"])
+                
+                # Display success message
+                self.zcli.display.handle({"event": "text", "content": ""})
+                self.zcli.display.handle({"event": "text", "content": f"[OK] Logged in as: {credentials['username']} ({credentials['role']})"})
+                self.zcli.display.handle({"event": "text", "content": f"     API Key: {credentials['api_key'][:20]}..."})
+                self.zcli.display.handle({"event": "text", "content": f"     Server: {server_url}"})
+                
+                return {"status": "success", "credentials": credentials}
+            
+            self.logger.warning("[FAIL] Remote authentication failed")
+            self.zcli.display.handle({"event": "text", "content": ""})
+            self.zcli.display.handle({"event": "error", "content": "[FAIL] Authentication failed: Invalid credentials"})
+            self.zcli.display.handle({"event": "text", "content": ""})
+            return {"status": "fail", "reason": "Invalid credentials"}
+        
+        except Exception as e:
+            self.logger.error("[ERROR] Remote authentication error: %s", e)
+            self.zcli.display.handle({"event": "text", "content": ""})
+            self.zcli.display.handle({"event": "error", "content": f"[ERROR] Error connecting to remote server: {e}"})
+            self.zcli.display.handle({"event": "text", "content": ""})
+            return {"status": "error", "reason": str(e)}
+

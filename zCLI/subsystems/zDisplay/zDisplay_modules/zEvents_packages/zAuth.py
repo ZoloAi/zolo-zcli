@@ -1,7 +1,5 @@
 # zCLI/subsystems/zDisplay/zDisplay_modules/zEvents_packages/zAuth.py
-
 """zAuth events - authentication input/output for both Terminal and GUI modes."""
-
 
 class zAuthEvents:
     """Authentication events for dual-mode (Terminal/GUI) authentication flows."""
@@ -15,18 +13,7 @@ class zAuthEvents:
         self.Signals = None  # Will be set after zEvents initialization
 
     def login_prompt(self, username=None, password=None):
-        """Prompt for authentication credentials.
-        
-        Terminal: Interactive prompts for username/password.
-        GUI: Sends clean event with form fields for frontend rendering.
-        
-        Args:
-            username (str, optional): Pre-filled username.
-            password (str, optional): Pre-filled password (not recommended).
-        
-        Returns:
-            dict: {"username": str, "password": str} or None if cancelled.
-        """
+        """Prompt for username/password credentials in Terminal or GUI mode."""
         # Try GUI mode first - send clean event
         if self.zPrimitives.send_gui_event("auth_login_prompt", {
             "username": username,
@@ -35,25 +22,18 @@ class zAuthEvents:
         }):
             # GUI mode - frontend will send response via bifrost
             return None
-        
+
         # Terminal mode - interactive prompts
         if not username:
             username = self.zPrimitives.read_string("Username: ")
-        
+
         if not password:
             password = self.zPrimitives.read_password("Password: ")
-        
+
         return {"username": username, "password": password}
 
     def login_success(self, user_data):
-        """Display successful login message.
-        
-        Terminal: Formatted success message with user details.
-        GUI: Sends clean event with user data for frontend rendering.
-        
-        Args:
-            user_data (dict): User information (username, role, id, api_key).
-        """
+        """Display successful login message with user details in Terminal or GUI mode."""
         # Try GUI mode first
         if self.zPrimitives.send_gui_event("auth_login_success", {
             "username": user_data.get("username"),
@@ -62,7 +42,7 @@ class zAuthEvents:
             "api_key": user_data.get("api_key", "")[:20] + "..." if user_data.get("api_key") else None
         }):
             return
-        
+
         # Terminal mode - formatted display
         if self.Signals:
             self.Signals.success(f"[OK] Logged in as: {user_data.get('username')} ({user_data.get('role')})")
@@ -72,61 +52,39 @@ class zAuthEvents:
                 self.BasicOutputs.text(f"     API Key: {user_data.get('api_key')[:20]}...", break_after=False)
 
     def login_failure(self, reason="Invalid credentials"):
-        """Display login failure message.
-        
-        Terminal: Error message with reason.
-        GUI: Sends clean event with error for frontend rendering.
-        
-        Args:
-            reason (str): Reason for authentication failure.
-        """
+        """Display login failure message in Terminal or GUI mode."""
         # Try GUI mode first
         if self.zPrimitives.send_gui_event("auth_login_failure", {
             "reason": reason
         }):
             return
-        
+
         # Terminal mode
         if self.Signals:
             self.Signals.error(f"[FAIL] Authentication failed: {reason}")
 
     def logout_success(self):
-        """Display successful logout message.
-        
-        Terminal: Success message.
-        GUI: Sends clean event for frontend rendering.
-        """
+        """Display successful logout message in Terminal or GUI mode."""
         # Try GUI mode first
         if self.zPrimitives.send_gui_event("auth_logout_success", {}):
             return
-        
+
         # Terminal mode
         if self.Signals:
             self.Signals.success("[OK] Logged out successfully")
 
     def logout_warning(self):
-        """Display warning when logout attempted but not logged in.
-        
-        Terminal: Warning message.
-        GUI: Sends clean event for frontend rendering.
-        """
+        """Display warning when attempting to logout while not logged in."""
         # Try GUI mode first
         if self.zPrimitives.send_gui_event("auth_logout_warning", {}):
             return
-        
+
         # Terminal mode
         if self.Signals:
             self.Signals.warning("[WARN] Not currently logged in")
 
     def status_display(self, auth_data):
-        """Display authentication status.
-        
-        Terminal: Formatted table with auth details.
-        GUI: Sends clean event with auth data for frontend rendering.
-        
-        Args:
-            auth_data (dict): Authentication data (username, role, id, api_key).
-        """
+        """Display authentication status in Terminal or GUI mode."""
         # Try GUI mode first
         if self.zPrimitives.send_gui_event("auth_status", {
             "authenticated": True,
@@ -136,7 +94,7 @@ class zAuthEvents:
             "api_key": auth_data.get("API_Key", "")[:20] + "..." if auth_data.get("API_Key") else None
         }):
             return
-        
+
         # Terminal mode - formatted display
         if self.BasicOutputs:
             self.BasicOutputs.header("[*] Authentication Status")
@@ -146,18 +104,13 @@ class zAuthEvents:
             self.BasicOutputs.text(f"API Key:    {auth_data.get('API_Key', '')[:20]}...", indent=1, break_after=False)
 
     def status_not_authenticated(self):
-        """Display not authenticated status.
-        
-        Terminal: Warning message.
-        GUI: Sends clean event for frontend rendering.
-        """
+        """Display not authenticated status in Terminal or GUI mode."""
         # Try GUI mode first
         if self.zPrimitives.send_gui_event("auth_status", {
             "authenticated": False
         }):
             return
-        
+
         # Terminal mode
         if self.Signals:
             self.Signals.warning("[WARN] Not authenticated. Run 'auth login' to authenticate.")
-
