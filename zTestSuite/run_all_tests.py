@@ -13,6 +13,14 @@ from pathlib import Path
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+# Import test factory
+from zTestSuite.test_factory import (
+    run_subsystem_tests_with_factory,
+    print_subsystem_header,
+    print_test_overview,
+    print_detailed_results_table
+)
+
 # Import all test modules
 try:
     from zTestSuite import zConfig_Test
@@ -32,20 +40,32 @@ try:
 except ImportError:
     ZAUTH_AVAILABLE = False
 
+try:
+    from zTestSuite import zDisplay_Test
+    ZDISPLAY_AVAILABLE = True
+except ImportError:
+    ZDISPLAY_AVAILABLE = False
+
 
 def run_subsystem_tests(test_module, name):
-    """Run tests for a single subsystem and return results."""
-    print()
-    print("=" * 70)
-    print(f"Testing: {name}")
-    print("=" * 70)
-    
+    """Run tests for a single subsystem with enhanced UX."""
     try:
+        # Print the enhanced header
+        print_subsystem_header(name)
+        
+        # Get test suite info and print overview
+        print_test_overview(test_module, name)
+        
+        # Run the actual tests using the module's existing run_tests function
         result = test_module.run_tests(verbose=False)
+        
+        # Print enhanced results table
+        print_detailed_results_table(result, name)
+        
         return {
             "name": name,
             "total": result.testsRun,
-            "passed": result.testsRun - len(result.failures) - len(result.errors),
+            "passed": result.testsRun - len(result.failures) - len(result.errors) - len(result.skipped),
             "failed": len(result.failures),
             "error_count": len(result.errors),
             "skipped_count": len(result.skipped),
@@ -71,12 +91,11 @@ def run_subsystem_tests(test_module, name):
 
 
 def print_summary(results):
-    """Print overall summary of all test results."""
+    """Print overall summary with enhanced table formatting."""
     print()
-    print("=" * 70)
-    print("TEST SUMMARY")
-    print("=" * 70)
-    print()
+    print("=" * 90)
+    print("🏁 COMPREHENSIVE TEST SUMMARY")
+    print("=" * 90)
     
     total_tests = 0
     total_passed = 0
@@ -84,38 +103,35 @@ def print_summary(results):
     total_errors = 0
     total_skipped = 0
     
-    # Print per-subsystem results
-    for result in results:
-        status = "✓ PASS" if result["success"] else "✗ FAIL"
-        print(f"{status}  {result['name']:<20} {result['passed']}/{result['total']} passed", end="")
-        
-        if result['failed'] > 0:
-            print(f"  ({result['failed']} failed)", end="")
-        if result['error_count'] > 0:
-            print(f"  ({result['error_count']} errors)", end="")
-        if result['skipped_count'] > 0:
-            print(f"  ({result['skipped_count']} skipped)", end="")
-        print()
-        
-        total_tests += result['total']
-        total_passed += result['passed']
-        total_failed += result['failed']
-        total_errors += result['error_count']
-        total_skipped += result['skipped_count']
-    
-    # Print overall totals
+    # Print table header
     print()
-    print("-" * 70)
-    print(f"TOTAL: {total_passed}/{total_tests} tests passed")
+    print(f"{'Subsystem':<15} {'Status':<8} {'Passed':<8} {'Failed':<8} {'Errors':<8} {'Skipped':<8} {'Total':<6} {'%':<6}")
+    print("-" * 90)
     
-    if total_failed > 0:
-        print(f"       {total_failed} tests failed")
-    if total_errors > 0:
-        print(f"       {total_errors} tests had errors")
-    if total_skipped > 0:
-        print(f"       {total_skipped} tests skipped")
+    # Print each subsystem result in table format
+    for result in results:
+        subsystem = result['name']
+        status_icon = "✅ PASS" if result["success"] else "❌ FAIL"
+        passed = result['passed']
+        failed = result['failed']
+        errors = result['error_count']
+        skipped = result['skipped_count']
+        total = result['total']
+        percentage = (passed / total * 100) if total > 0 else 0
+        
+        print(f"{subsystem:<15} {status_icon:<8} {passed:<8} {failed:<8} {errors:<8} {skipped:<8} {total:<6} {percentage:5.1f}%")
+        
+        total_tests += total
+        total_passed += passed
+        total_failed += failed
+        total_errors += errors
+        total_skipped += skipped
     
-    print("-" * 70)
+    # Print totals row
+    print("-" * 90)
+    total_percentage = (total_passed / total_tests * 100) if total_tests > 0 else 0
+    print(f"{'TOTAL':<15} {'':<8} {total_passed:<8} {total_failed:<8} {total_errors:<8} {total_skipped:<8} {total_tests:<6} {total_percentage:5.1f}%")
+    print("-" * 90)
     
     # Print detailed failure information
     has_failures = any(r['failed'] > 0 or r['error_count'] > 0 or r['skipped_count'] > 0 for r in results)
@@ -167,41 +183,120 @@ def print_summary(results):
     return all_passed
 
 
-def main():
-    """Main test runner."""
+def show_test_menu():
+    """Show interactive test menu and return user selection."""
     print()
     print("=" * 70)
     print("zCLI Test Suite")
     print("=" * 70)
+    print()
     
+    # Build list of available test suites in dependency order
+    available_tests = []
+    
+    if ZCONFIG_AVAILABLE:
+        available_tests.append(("zConfig", "zConfig_Test"))
+    if ZCOMM_AVAILABLE:
+        available_tests.append(("zComm", "zComm_Test"))
+    if ZDISPLAY_AVAILABLE:
+        available_tests.append(("zDisplay", "zDisplay_Test"))
+    if ZAUTH_AVAILABLE:
+        available_tests.append(("zAuth", "zAuth_Test"))  # zAuth depends on zDisplay
+    
+    if not available_tests:
+        print("❌ No test suites available!")
+        return None
+    
+    print("Select test suite to run:")
+    print()
+    print("  0) All Tests")
+    
+    # Show numbered options for each available test suite
+    for i, (name, module) in enumerate(available_tests, 1):
+        print(f"  {i}) {name}")
+    
+    print()
+    
+    while True:
+        try:
+            choice = input("Enter choice (0-{}): ".format(len(available_tests)))
+            
+            # Handle empty input
+            if not choice.strip():
+                continue
+                
+            choice_num = int(choice.strip())
+            
+            if choice_num == 0:
+                return "all"
+            elif 1 <= choice_num <= len(available_tests):
+                return available_tests[choice_num - 1][1]  # Return module name
+            else:
+                print(f"Invalid choice. Please enter 0-{len(available_tests)}")
+        except (ValueError, KeyboardInterrupt, EOFError):
+            print("\nExiting...")
+            return None
+
+
+def run_selected_tests(test_choice=None):
+    """Run selected tests based on choice."""
     results = []
     
-    # Run zConfig tests
-    if ZCONFIG_AVAILABLE:
-        result = run_subsystem_tests(zConfig_Test, "zConfig")
-        results.append(result)
+    if test_choice == "all" or test_choice is None:
+        # Run all available tests in dependency order
+        test_suites = []
+        if ZCONFIG_AVAILABLE:
+            test_suites.append((zConfig_Test, "zConfig"))
+        if ZCOMM_AVAILABLE:
+            test_suites.append((zComm_Test, "zComm"))
+        if ZDISPLAY_AVAILABLE:
+            test_suites.append((zDisplay_Test, "zDisplay"))
+        if ZAUTH_AVAILABLE:
+            test_suites.append((zAuth_Test, "zAuth"))  # zAuth depends on zDisplay
+        
+        for test_module, name in test_suites:
+            result = run_subsystem_tests(test_module, name)
+            results.append(result)
     else:
-        print("\nWARNING: zConfig tests not available")
-    
-    # Run zComm tests
-    if ZCOMM_AVAILABLE:
-        result = run_subsystem_tests(zComm_Test, "zComm")
-        results.append(result)
-    else:
-        print("\nWARNING: zComm tests not available")
-    
-    # Run zAuth tests
-    if ZAUTH_AVAILABLE:
-        result = run_subsystem_tests(zAuth_Test, "zAuth")
-        results.append(result)
-    else:
-        print("\nWARNING: zAuth tests not available")
+        # Run specific test suite
+        if test_choice == "zConfig_Test" and ZCONFIG_AVAILABLE:
+            result = run_subsystem_tests(zConfig_Test, "zConfig")
+            results.append(result)
+        elif test_choice == "zComm_Test" and ZCOMM_AVAILABLE:
+            result = run_subsystem_tests(zComm_Test, "zComm")
+            results.append(result)
+        elif test_choice == "zAuth_Test" and ZAUTH_AVAILABLE:
+            result = run_subsystem_tests(zAuth_Test, "zAuth")
+            results.append(result)
+        elif test_choice == "zDisplay_Test" and ZDISPLAY_AVAILABLE:
+            result = run_subsystem_tests(zDisplay_Test, "zDisplay")
+            results.append(result)
+        else:
+            print(f"❌ Test suite '{test_choice}' not available!")
+            return False
     
     # Print summary
-    all_passed = print_summary(results)
+    if results:
+        all_passed = print_summary(results)
+        return all_passed
+    else:
+        print("❌ No test results to show!")
+        return False
+
+
+def main():
+    """Main test runner with interactive menu."""
+    # Check if we should show menu or run all tests
+    test_choice = show_test_menu()
+    
+    if test_choice is None:
+        sys.exit(1)
+    
+    # Run the selected tests
+    success = run_selected_tests(test_choice)
     
     # Exit with appropriate code
-    sys.exit(0 if all_passed else 1)
+    sys.exit(0 if success else 1)
 
 
 if __name__ == "__main__":

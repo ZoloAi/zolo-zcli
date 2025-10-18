@@ -159,6 +159,17 @@ class zBifrost:
                     await self.broadcast(message, sender=ws)
                     continue
 
+                # Check if this is an input response from GUI
+                if data.get("event") == "input_response":
+                    request_id = data.get("requestId")
+                    value = data.get("value")
+                    if request_id and self.zcli and hasattr(self.zcli, 'display'):
+                        # Route to zDisplay input adapter
+                        if hasattr(self.zcli.display.input, 'handle_input_response'):
+                            self.zcli.display.input.handle_input_response(request_id, value)
+                            self.logger.debug(f"[zBifrost] ✅ Routed input response: {request_id}")
+                    continue
+
                 zKey = data.get("zKey") or data.get("cmd")
                 zHorizontal = data.get("zHorizontal") or zKey
 

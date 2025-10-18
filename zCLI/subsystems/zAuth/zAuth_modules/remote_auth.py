@@ -34,7 +34,7 @@ def authenticate_remote(zcli, username, password, server_url=None):
         if result and result.get("status") == "success":
             user = result.get("user", {})
             
-            # Store credentials locally
+            # Prepare credentials for session (no persistence)
             credentials = {
                 "username": user.get("username"),
                 "api_key": user.get("api_key"),

@@ -274,6 +274,33 @@ class zBifrost {
   }
 
   // ═══════════════════════════════════════════════════════════
+  // zDisplay Event Handling
+  // ═══════════════════════════════════════════════════════════
+
+  /**
+   * Send input response to server (for GUI input events).
+   * @param {string} requestId - Request ID from input_request event
+   * @param {any} value - Input value from user
+   */
+  sendInputResponse(requestId, value) {
+    if (!this.connected || !this.ws) {
+      console.error('[zBifrost] Cannot send input response: not connected');
+      return;
+    }
+
+    const response = {
+      event: 'input_response',
+      requestId: requestId,
+      value: value
+    };
+
+    this.ws.send(JSON.stringify(response));
+    if (this.options.debug) {
+      console.log('[zBifrost] 📤 Sent input response:', response);
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
   // Broadcast Listening
   // ═══════════════════════════════════════════════════════════
 

@@ -18,11 +18,10 @@ def validate_api_key(zcli, api_key, server_url=None):  # pylint: disable=unused-
     Returns:
         dict: Validation result with 'valid' and optional 'user'
     """
-    logger = zcli.logger
-    
     if not zcli:
-        logger.error("Cannot validate API key: No zCLI instance available")
-        return {"valid": False, "reason": "No zCLI instance"}
+        return {"valid": False, "reason": "No zCLI instance available"}
+    
+    logger = zcli.logger
     
     try:
         # Validate via zData subsystem

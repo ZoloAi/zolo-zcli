@@ -27,6 +27,7 @@ class InputFactory:
     def create(session=None, logger=None):
         """Create input adapter for session mode (defaults to Terminal)."""
         from .input_terminal import TerminalInput
+        from .input_websocket import WebSocketInput
         
         if not session:
             if logger:
@@ -41,8 +42,8 @@ class InputFactory:
             return TerminalInput(session, logger)
         if mode in ("UI", "WebSocket"):
             if logger:
-                logger.warning("[InputFactory] WebSocket not implemented, using Terminal")
-            return TerminalInput(session, logger)
+                logger.info("[InputFactory] Creating WebSocket adapter for mode: %s", mode)
+            return WebSocketInput(session, logger)
         if logger:
             logger.warning("[InputFactory] Unknown mode '%s', using Terminal", mode)
         return TerminalInput(session, logger)

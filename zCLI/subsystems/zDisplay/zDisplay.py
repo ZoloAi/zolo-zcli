@@ -25,6 +25,28 @@ from .zDisplay_modules.events.basic import (
     handle_break,
     handle_pause,
 )
+from .zDisplay_modules.events.basic.control_gui import (
+    handle_break_gui,
+    handle_pause_gui,
+    handle_loading_gui,
+    handle_await_gui,
+    handle_idle_gui,
+)
+from .zDisplay_modules.events.primitives.input_gui import (
+    handle_prompt_gui,
+    handle_input_gui,
+    handle_confirm_gui,
+    handle_password_gui,
+    handle_field_gui,
+    handle_multiline_gui,
+)
+from .zDisplay_modules.events.basic.selection_gui import (
+    handle_radio_gui,
+    handle_checkbox_gui,
+    handle_dropdown_gui,
+    handle_autocomplete_gui,
+    handle_range_gui,
+)
 from .zDisplay_modules.events.composed import (
     handle_session,
 )
@@ -66,6 +88,13 @@ class zDisplay:
         # Create adapters based on mode
         self.output = OutputFactory.create(self.session, self.logger)
         self.input = InputFactory.create(self.session, self.logger)
+        
+        # Set zcli instance on WebSocket adapters for communication
+        if self.mode in ("UI", "WebSocket"):
+            if hasattr(self.output, 'set_zcli'):
+                self.output.set_zcli(self.zcli)
+            if hasattr(self.input, 'set_zcli'):
+                self.input.set_zcli(self.zcli)
 
         self.handle({
             "event": "sysmsg",
@@ -74,6 +103,12 @@ class zDisplay:
             "indent": 0
         })
 
+    def _get_handler(self, terminal_handler, gui_handler=None):
+        """Get appropriate handler based on mode (Terminal vs GUI)."""
+        if self.mode in ("UI", "WebSocket") and gui_handler is not None:
+            return gui_handler
+        return terminal_handler
+    
     def handle(self, obj):
         """Main entry point - routes events to appropriate adapter(s)."""
         event = obj.get("event")
@@ -105,10 +140,10 @@ class zDisplay:
             # ════════════════════════════════════════════════════════
             # BASIC INPUT - Single-value collection
             # ════════════════════════════════════════════════════════
-            "prompt": (None, "input"),            # Simple prompt (string)
-            "input": (None, "input"),             # Generic input collection
-            "confirm": (None, "input"),           # Yes/No confirmation
-            "password": (None, "input"),          # Masked input
+            "prompt": (self._get_handler(None, handle_prompt_gui), "input"),
+            "input": (self._get_handler(None, handle_input_gui), "input"),
+            "confirm": (self._get_handler(None, handle_confirm_gui), "input"),
+            "password": (self._get_handler(None, handle_password_gui), "input"),
             
             # ════════════════════════════════════════════════════════
             # SIGNALS - Feedback primitives (output)
@@ -122,11 +157,11 @@ class zDisplay:
             # ════════════════════════════════════════════════════════
             # CONTROL - Flow synchronization (both)
             # ════════════════════════════════════════════════════════
-            "break": (handle_break, "both"),      # Simple pause: message + wait for Enter
-            "pause": (handle_pause, "both"),      # Pagination pause (advanced)
-            "loading": (None, "output"),          # Loading state
-            "await": (None, "output"),            # Async wait state
-            "idle": (None, "output"),             # Idle state
+            "break": (self._get_handler(handle_break, handle_break_gui), "both"),
+            "pause": (self._get_handler(handle_pause, handle_pause_gui), "both"),
+            "loading": (self._get_handler(None, handle_loading_gui), "output"),
+            "await": (self._get_handler(None, handle_await_gui), "output"),
+            "idle": (self._get_handler(None, handle_idle_gui), "output"),
             
             # ════════════════════════════════════════════════════════
             # SIMPLE STRUCTURES - Basic data display (output)
@@ -137,8 +172,8 @@ class zDisplay:
             # ════════════════════════════════════════════════════════
             # VALIDATED INPUT - Type-checked single field (input)
             # ════════════════════════════════════════════════════════
-            "field": (None, "input"),             # Single field with validation
-            "multiline": (None, "input"),         # Multi-line text input
+            "field": (self._get_handler(None, handle_field_gui), "input"),
+            "multiline": (self._get_handler(None, handle_multiline_gui), "input"),
             "hint": (None, "output"),             # Input hints (display)
             "example": (None, "output"),          # Example values (display)
             "validate": (None, "output"),         # Validation feedback (display)
@@ -147,11 +182,11 @@ class zDisplay:
             # ════════════════════════════════════════════════════════
             # SELECTION - Choose from bounded options (both)
             # ════════════════════════════════════════════════════════
-            "radio": (None, "both"),             # Single select
-            "checkbox": (None, "both"),          # Multi-select
-            "dropdown": (None, "both"),          # Dropdown/select
-            "range": (None, "both"),             # Range/slider
-            "autocomplete": (None, "both"),      # Type-ahead selection
+            "radio": (self._get_handler(None, handle_radio_gui), "both"),
+            "checkbox": (self._get_handler(None, handle_checkbox_gui), "both"),
+            "dropdown": (self._get_handler(None, handle_dropdown_gui), "both"),
+            "range": (self._get_handler(None, handle_range_gui), "both"),
+            "autocomplete": (self._get_handler(None, handle_autocomplete_gui), "both"),
             
             # ════════════════════════════════════════════════════════
             # NOTIFICATIONS - Timed/contextual feedback (output)

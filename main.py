@@ -108,8 +108,14 @@ def main() -> None:
             print("Usage: zolo config {machine|environment} ...")
     
     elif args.command == "test":
-        from zTestSuite.run_all_tests import main as run_tests
-        return run_tests()
+        from zTestSuite.run_all_tests import show_test_menu, run_selected_tests
+        
+        # Interactive menu
+        choice = show_test_menu()
+        if choice is None:
+            return 1
+        success = run_selected_tests(choice)
+        return 0 if success else 1
     
     elif args.command == "uninstall":
         from zCLI.uninstall import uninstall_clean, uninstall_framework_only, uninstall_dependencies

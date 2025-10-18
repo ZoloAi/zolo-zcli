@@ -1,14 +1,13 @@
-@ -1,346 +0,0 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>zBifrost Demo - JavaScript Client</title>
+    <title>zBifrost Demo - zDisplay GUI Testing</title>
     <style>
         body {
             font-family: 'Monaco', 'Menlo', monospace;
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 20px;
             background: #1e1e1e;
@@ -69,7 +68,10 @@
         .broadcast {
             color: #dcdcaa;
         }
-        input {
+        .warning {
+            color: #dcdcaa;
+        }
+        input, textarea {
             background: #3c3c3c;
             border: 1px solid #555;
             color: #d4d4d4;
@@ -77,6 +79,10 @@
             margin: 5px;
             border-radius: 3px;
             font-family: inherit;
+        }
+        textarea {
+            width: 90%;
+            min-height: 60px;
         }
         .status {
             padding: 5px 10px;
@@ -92,11 +98,29 @@
             background: #7a2d2d;
             color: white;
         }
+        .event-card {
+            background: #2d2d30;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+            border-left: 3px solid #4ec9b0;
+        }
+        .event-type {
+            color: #4ec9b0;
+            font-weight: bold;
+        }
+        .input-prompt {
+            background: #3c3c3c;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 3px;
+            border: 2px solid #dcdcaa;
+        }
     </style>
 </head>
 <body>
-    <h1>🌈 zBifrost Demo - JavaScript Client</h1>
-    <p>WebSocket client testing for zCLI backend</p>
+    <h1>🌈 zBifrost Demo - zDisplay GUI Testing</h1>
+    <p>WebSocket client testing for zCLI backend with zDisplay event handling</p>
 
     <!-- Connection Section -->
     <div class="section">
@@ -116,9 +140,26 @@
         </div>
     </div>
 
+    <!-- zDisplay Events Section -->
+    <div class="section">
+        <h2>zDisplay Events</h2>
+        <div id="displayEventsContainer">
+            <div class="info">Waiting for zDisplay events from server...</div>
+        </div>
+        <button onclick="clearDisplayEvents()">Clear Events</button>
+    </div>
+
+    <!-- Input Responses Section -->
+    <div class="section">
+        <h2>Pending Input Requests</h2>
+        <div id="inputRequestsContainer">
+            <div class="info">No pending input requests</div>
+        </div>
+    </div>
+
     <!-- CRUD Operations Section -->
     <div class="section">
-        <h2>CRUD Operations</h2>
+        <h2>CRUD Operations (Test Backend)</h2>
         <div>
             <button onclick="testCreate()" id="btnCreate">Create User</button>
             <button onclick="testRead()" id="btnRead">Read Users</button>
@@ -130,37 +171,23 @@
         </div>
     </div>
 
-    <!-- Advanced Operations Section -->
+    <!-- Broadcast Messages Section -->
     <div class="section">
-        <h2>Advanced Operations</h2>
+        <h2>All Messages (Debug)</h2>
         <div>
-            <button onclick="testZFunc()" id="btnFunc">Test zFunc</button>
-            <button onclick="testRawCommand()" id="btnRaw">Raw Command</button>
-        </div>
-        <div class="output" id="advancedOutput">
-            <div class="info">Ready to test advanced operations...</div>
-        </div>
-    </div>
-
-    <!-- Broadcast Listening Section -->
-    <div class="section">
-        <h2>Broadcast Messages</h2>
-        <div>
-            <button onclick="startListening()">Start Listening</button>
-            <button onclick="stopListening()">Stop Listening</button>
             <button onclick="clearBroadcasts()">Clear</button>
         </div>
         <div class="output" id="broadcastOutput">
-            <div class="info">Not listening...</div>
+            <div class="info">Waiting for messages...</div>
         </div>
     </div>
 
     <script type="module">
-        import { zBifrost } from './zBifrost.js';
+        import { zBifrost } from './zBifrost_Demo.js';
 
         // Global client instance
         window.client = null;
-        window.broadcastHandler = null;
+        window.pendingInputRequests = new Map();
         window.zBifrost = zBifrost;
 
         // Connection functions
@@ -175,9 +202,13 @@
                 document.getElementById('connectionStatus').className = 'status connected';
                 document.getElementById('connectionStatus').textContent = 'Connected';
                 
-                log('crudOutput', '✅ Connected to zBifrost server', 'success');
+                // Register broadcast listener for zDisplay events
+                window.client.onBroadcast(handleServerMessage);
+                
+                log('broadcastOutput', '✅ Connected to zBifrost server', 'success');
+                log('broadcastOutput', '📡 Listening for zDisplay events...', 'info');
             } catch (e) {
-                log('crudOutput', `❌ Connection failed: ${e.message}`, 'error');
+                log('broadcastOutput', `❌ Connection failed: ${e.message}`, 'error');
             }
         };
 
@@ -187,6 +218,150 @@
                 document.getElementById('connectionStatus').className = 'status disconnected';
                 document.getElementById('connectionStatus').textContent = 'Disconnected';
             }
+        };
+
+        // Handle messages from server
+        function handleServerMessage(message) {
+            log('broadcastOutput', `📥 ${JSON.stringify(message, null, 2)}`, 'broadcast');
+
+            // Check if this is a zDisplay event
+            if (message.event) {
+                handleDisplayEvent(message);
+            }
+        }
+
+        // Handle zDisplay events
+        function handleDisplayEvent(event) {
+            const container = document.getElementById('displayEventsContainer');
+            
+            // Create event card
+            const card = document.createElement('div');
+            card.className = 'event-card';
+            
+            const timestamp = new Date().toLocaleTimeString();
+            const eventType = event.event || 'unknown';
+            
+            let content = `<div class="event-type">[${timestamp}] ${eventType}</div>`;
+            
+            // Handle different event types
+            switch(eventType) {
+                case 'output':
+                    content += `<div>${event.type}: ${event.content}</div>`;
+                    break;
+                    
+                case 'input_request':
+                    content += `<div>Type: ${event.type}</div>`;
+                    content += `<div>Prompt: ${event.prompt}</div>`;
+                    handleInputRequest(event);
+                    break;
+                    
+                case 'loading':
+                    content += `<div>⏳ ${event.message}</div>`;
+                    break;
+                    
+                case 'idle':
+                    content += `<div>✅ Ready</div>`;
+                    break;
+                    
+                case 'await':
+                    content += `<div>⏸ ${event.message}</div>`;
+                    break;
+                    
+                case 'break':
+                    content += `<div>⏸ ${event.message}</div>`;
+                    break;
+                    
+                case 'zdisplay':
+                    content += `<div>Display Event: ${event.display_event}</div>`;
+                    content += `<pre>${JSON.stringify(event.data, null, 2)}</pre>`;
+                    break;
+                    
+                default:
+                    content += `<pre>${JSON.stringify(event, null, 2)}</pre>`;
+            }
+            
+            card.innerHTML = content;
+            container.appendChild(card);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Handle input requests from server
+        function handleInputRequest(event) {
+            const requestId = event.requestId;
+            const prompt = event.prompt || 'Enter value:';
+            const inputType = event.type || 'string';
+            
+            // Store request
+            window.pendingInputRequests.set(requestId, event);
+            
+            // Create input UI
+            const container = document.getElementById('inputRequestsContainer');
+            const inputCard = document.createElement('div');
+            inputCard.className = 'input-prompt';
+            inputCard.id = `input-${requestId}`;
+            
+            let inputHTML = `<div><strong>${prompt}</strong></div>`;
+            
+            if (inputType === 'password') {
+                inputHTML += `<input type="password" id="value-${requestId}" placeholder="Enter password">`;
+            } else if (inputType === 'multiline') {
+                inputHTML += `<textarea id="value-${requestId}" placeholder="Enter text"></textarea>`;
+            } else {
+                inputHTML += `<input type="text" id="value-${requestId}" placeholder="Enter value">`;
+            }
+            
+            inputHTML += `<button onclick="submitInput('${requestId}')">Submit</button>`;
+            inputHTML += `<button onclick="cancelInput('${requestId}')">Cancel</button>`;
+            
+            inputCard.innerHTML = inputHTML;
+            container.appendChild(inputCard);
+        }
+
+        // Submit input response
+        window.submitInput = function(requestId) {
+            const inputElement = document.getElementById(`value-${requestId}`);
+            const value = inputElement.value;
+            
+            if (window.client) {
+                window.client.sendInputResponse(requestId, value);
+                log('broadcastOutput', `✅ Sent input response: ${value}`, 'success');
+            }
+            
+            // Remove input UI
+            const inputCard = document.getElementById(`input-${requestId}`);
+            if (inputCard) {
+                inputCard.remove();
+            }
+            
+            window.pendingInputRequests.delete(requestId);
+            
+            // Update container if empty
+            const container = document.getElementById('inputRequestsContainer');
+            if (container.children.length === 0) {
+                container.innerHTML = '<div class="info">No pending input requests</div>';
+            }
+        };
+
+        // Cancel input request
+        window.cancelInput = function(requestId) {
+            const inputCard = document.getElementById(`input-${requestId}`);
+            if (inputCard) {
+                inputCard.remove();
+            }
+            
+            window.pendingInputRequests.delete(requestId);
+            
+            // Update container if empty
+            const container = document.getElementById('inputRequestsContainer');
+            if (container.children.length === 0) {
+                container.innerHTML = '<div class="info">No pending input requests</div>';
+            }
+        };
+
+        // Clear display events
+        window.clearDisplayEvents = function() {
+            document.getElementById('displayEventsContainer').innerHTML = 
+                '<div class="info">Waiting for zDisplay events from server...</div>';
         };
 
         // CRUD test functions
@@ -221,7 +396,7 @@
                     {role: 'God of Thunder'},
                     {limit: 10}
                 );
-                log('crudOutput', `✅ Found ${users.length} user(s): ${JSON.stringify(users, null, 2)}`, 'success');
+                log('crudOutput', `✅ Found ${users.length} user(s)`, 'success');
             } catch (e) {
                 log('crudOutput', `❌ Error: ${e.message}`, 'error');
             }
@@ -238,7 +413,7 @@
                 const result = await window.client.update('Users', 1, {
                     name: 'Thor (The Mighty)'
                 });
-                log('crudOutput', `✅ Updated: ${JSON.stringify(result, null, 2)}`, 'success');
+                log('crudOutput', `✅ Updated`, 'success');
             } catch (e) {
                 log('crudOutput', `❌ Error: ${e.message}`, 'error');
             }
@@ -253,72 +428,9 @@
             try {
                 log('crudOutput', '🗑️  Deleting user...', 'info');
                 const result = await window.client.delete('Users', 1);
-                log('crudOutput', `✅ Deleted: ${JSON.stringify(result, null, 2)}`, 'success');
+                log('crudOutput', `✅ Deleted`, 'success');
             } catch (e) {
                 log('crudOutput', `❌ Error: ${e.message}`, 'error');
-            }
-        };
-
-        // Advanced test functions
-        window.testZFunc = async function() {
-            if (!window.client) {
-                log('advancedOutput', '❌ Not connected', 'error');
-                return;
-            }
-            
-            try {
-                log('advancedOutput', '🔧 Testing zFunc...', 'info');
-                const result = await window.client.zFunc('zFunc(testFunction, {})');
-                log('advancedOutput', `✅ Result: ${JSON.stringify(result, null, 2)}`, 'success');
-            } catch (e) {
-                log('advancedOutput', `⚠️  ${e.message}`, 'error');
-            }
-        };
-
-        window.testRawCommand = async function() {
-            if (!window.client) {
-                log('advancedOutput', '❌ Not connected', 'error');
-                return;
-            }
-            
-            try {
-                log('advancedOutput', '📤 Sending raw command...', 'info');
-                const result = await window.client.send({
-                    zKey: 'test_command',
-                    zHorizontal: {
-                        action: 'ping',
-                        message: 'Hello from zBifrost.js!'
-                    }
-                });
-                log('advancedOutput', `✅ Response: ${JSON.stringify(result, null, 2)}`, 'success');
-            } catch (e) {
-                log('advancedOutput', `⚠️  ${e.message}`, 'error');
-            }
-        };
-
-        // Broadcast functions
-        window.startListening = function() {
-            if (!window.client) {
-                log('broadcastOutput', '❌ Not connected', 'error');
-                return;
-            }
-            
-            if (!window.broadcastHandler) {
-                window.broadcastHandler = (message) => {
-                    const timestamp = new Date().toLocaleTimeString();
-                    log('broadcastOutput', `[${timestamp}] 📻 ${JSON.stringify(message, null, 2)}`, 'broadcast');
-                };
-                window.client.onBroadcast(window.broadcastHandler);
-            }
-            
-            log('broadcastOutput', '✅ Listening for broadcasts...', 'success');
-        };
-
-        window.stopListening = function() {
-            if (window.client && window.broadcastHandler) {
-                window.client.removeBroadcastListener(window.broadcastHandler);
-                window.broadcastHandler = null;
-                log('broadcastOutput', '🛑 Stopped listening', 'info');
             }
         };
 
@@ -335,12 +447,7 @@
             output.appendChild(div);
             output.scrollTop = output.scrollHeight;
         }
-
-        // Auto-connect on page load (optional)
-        // window.addEventListener('load', () => {
-        //     console.log('Page loaded. Auto-connecting...');
-        //     connectToBridge();
-        // });
     </script>
 </body>
 </html>
+
