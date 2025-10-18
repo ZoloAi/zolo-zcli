@@ -10,13 +10,7 @@ def handle_submit(submit_expr, zContext, logger, walker=None):
     if walker is None:
         raise ValueError("handle_submit requires a walker instance")
     
-    walker.display.handle({
-        "event": "sysmsg",
-        "label": "zSubmit",
-        "style": "single",
-        "color": "ZDIALOG",
-        "indent": 2
-    })
+    walker.display.zDeclare("zSubmit", color="ZDIALOG", indent=2, style="single")
 
     logger.debug("zSubmit_expr: %s", submit_expr)
     logger.debug("zContext keys: %s | zConv: %s", list(zContext.keys()), zContext.get("zConv"))
@@ -52,21 +46,8 @@ def handle_dict_submit(submit_dict, zContext, logger, walker=None):
     logger.info("Dispatching dict onSubmit via zDispatch: %s", submit_dict)
     result = handle_zDispatch("submit", submit_dict, zcli=walker.zcli, walker=walker)
 
-    walker.display.handle({
-        "event": "sysmsg",
-        "label": "zSubmit Return",
-        "style": "~",
-        "color": "ZDIALOG",
-        "indent": 3
-    })
-
-    walker.display.handle({
-        "event": "sysmsg",
-        "label": "zDialog Return",
-        "style": "~",
-        "color": "ZDIALOG",
-        "indent": 2
-    })
+    walker.display.zDeclare("zSubmit Return", color="ZDIALOG", indent=3, style="~")
+    walker.display.zDeclare("zDialog Return", color="ZDIALOG", indent=2, style="~")
 
     return result
 
@@ -76,33 +57,14 @@ def handle_string_submit(submit_expr, zContext, logger, walker=None):
     logger.debug("zSubmit detected string payload (legacy)")
     logger.info("Executing zFunc expression: %s", submit_expr)
     
-    walker.display.handle({
-        "event": "sysmsg",
-        "label": " → Handle zFunc",
-        "style": "single",
-        "color": "DISPATCH",
-        "indent": 5
-    })
+    walker.display.zDeclare(" → Handle zFunc", color="DISPATCH", indent=5, style="single")
     
     # Let zFunc handle all placeholder resolution (zConv, zConv.field, etc.)
     # zFunc's parse_arguments now natively supports these placeholders
     result = walker.zcli.zfunc.handle(submit_expr, zContext)
     logger.debug("zSubmit result: %s", result)
     
-    walker.display.handle({
-        "event": "sysmsg",
-        "label": "zSubmit Return",
-        "style": "~",
-        "color": "ZDIALOG",
-        "indent": 3
-    })
-
-    walker.display.handle({
-        "event": "sysmsg",
-        "label": "zDialog Return",
-        "style": "~",
-        "color": "ZDIALOG",
-        "indent": 2
-    })
+    walker.display.zDeclare("zSubmit Return", color="ZDIALOG", indent=3, style="~")
+    walker.display.zDeclare("zDialog Return", color="ZDIALOG", indent=2, style="~")
 
     return result

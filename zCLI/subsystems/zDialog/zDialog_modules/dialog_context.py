@@ -41,11 +41,20 @@ def inject_placeholders(obj, zContext, logger):
                     if parts[0] == "zConv" and len(parts) == 2:
                         return zconv_data.get(parts[1])
                 
-                # Handle bracket notation or complex expressions
-                return eval(obj, {}, {"zConv": zconv_data})
+                # Handle bracket notation: zConv['field'] or zConv["field"]
+                if "[" in obj and "]" in obj and isinstance(zconv_data, dict):
+                    # Extract field name from bracket notation
+                    start = obj.index("[") + 1
+                    end = obj.index("]")
+                    field = obj[start:end].strip("'\"")
+                    return zconv_data.get(field)
+                
+                # If we can't parse it safely, return the original string
+                logger.warning("Could not safely parse placeholder '%s', returning as-is", obj)
+                return obj
                 
             except Exception as e:
-                logger.error("Failed to eval placeholder '%s': %s", obj, e)
+                logger.error("Failed to parse placeholder '%s': %s", obj, e)
                 return obj
     
     return obj

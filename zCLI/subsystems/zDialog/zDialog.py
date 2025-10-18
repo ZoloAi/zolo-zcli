@@ -26,21 +26,11 @@ class zDialog:
         # Keep walker for legacy compatibility
         self.walker = walker
         self.mycolor = "ZDIALOG"
-        self.display.handle({
-            "event": "sysmsg",
-            "label": "zDialog Ready",
-            "color": self.mycolor,
-            "indent": 0
-        })
+        self.display.zDeclare("zDialog Ready", color=self.mycolor, indent=0, style="full")
 
     def handle(self, zHorizontal):
         """Handle dialog form input and submission."""
-        self.display.handle({
-            "event": "sysmsg",
-            "label": "zDialog",
-            "color": self.mycolor,
-            "indent": 1
-        })
+        self.display.zDeclare("zDialog", color=self.mycolor, indent=1, style="single")
 
         self.logger.info("\nReceived zHorizontal: %s", zHorizontal)
 

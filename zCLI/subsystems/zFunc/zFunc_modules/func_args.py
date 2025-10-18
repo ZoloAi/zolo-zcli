@@ -2,7 +2,6 @@
 
 """Function argument parsing utilities."""
 
-
 def parse_arguments(arg_str, zContext, split_fn, logger_instance, zparser=None):
     """Parse function arguments from string."""
     if not arg_str:
@@ -38,18 +37,14 @@ def parse_arguments(arg_str, zContext, split_fn, logger_instance, zparser=None):
                 parsed_args.append(value)
                 logger_instance.debug("Resolved 'this.%s' → %s", key, value)
             else:
-                # Use zParser for safer evaluation if available
+                # Use zParser for safe evaluation
                 if zparser:
-                    try:
-                        evaluated = zparser.parse_json_expr(arg)
-                        logger_instance.debug("Evaluated via zParser '%s' → %s", arg, evaluated)
-                    except Exception:
-                        # Fallback to eval for non-JSON expressions
-                        evaluated = eval(arg, {}, {})
-                        logger_instance.debug("Evaluated via eval '%s' → %s", arg, evaluated)
+                    evaluated = zparser.parse_json_expr(arg)
+                    logger_instance.debug("Evaluated via zParser '%s' → %s", arg, evaluated)
                 else:
-                    evaluated = eval(arg, {}, {})
-                    logger_instance.debug("Evaluated literal '%s' → %s", arg, evaluated)
+                    # No zParser available - treat as string literal
+                    evaluated = arg
+                    logger_instance.debug("No zParser - using literal '%s'", arg)
                 parsed_args.append(evaluated)
 
         logger_instance.debug("Final parsed args: %s", parsed_args)
@@ -71,7 +66,7 @@ def split_arguments(arg_str):
             depth += 1
         elif char in ")]}":
             depth -= 1
-        
+
         if char == ',' and depth == 0:
             args.append(buf)
             buf = ''
@@ -82,4 +77,3 @@ def split_arguments(arg_str):
         args.append(buf)
 
     return args
-

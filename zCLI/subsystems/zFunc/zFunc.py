@@ -2,6 +2,8 @@
 
 """External Python function loader and executor."""
 
+from zCLI import inspect
+
 
 class zFunc:
     """Function loading and execution subsystem."""
@@ -14,21 +16,11 @@ class zFunc:
         self.display = zcli.display
         self.zparser = zcli.zparser
         self.mycolor = "ZFUNC"
-        self.display.handle({
-            "event": "sysmsg",
-            "label": "zFunc Ready",
-            "color": self.mycolor,
-            "indent": 0
-        })
+        self.display.zDeclare("zFunc Ready", color=self.mycolor, indent=0, style="full")
 
     def handle(self, zHorizontal, zContext=None):
         """Execute external Python function with given spec and context."""
-        self.display.handle({
-            "event": "sysmsg",
-            "label": f"{zHorizontal}",
-            "color": self.mycolor,
-            "indent": 1
-        })
+        self.display.zDeclare(f"{zHorizontal}", color=self.mycolor, indent=1, style="single")
 
         self.logger.debug("zFunc.handle() invoked:")
         self.logger.debug("zHorizontal: %s", zHorizontal)
@@ -80,29 +72,18 @@ class zFunc:
 
     def _parse_args_with_display(self, arg_str, zContext):
         """Parse arguments with display header."""
-        self.display.handle({
-            "event": "sysmsg",
-            "label": "Parse Arguments",
-            "color": self.mycolor,
-            "indent": 1
-        })
+        self.display.zDeclare("Parse Arguments", color=self.mycolor, indent=1, style="single")
         from .zFunc_modules.func_args import parse_arguments, split_arguments
         return parse_arguments(arg_str, zContext, split_arguments, self.logger, self.zparser)
 
     def _resolve_callable_with_display(self, func_path, function_name):
         """Resolve callable with display header."""
-        self.display.handle({
-            "event": "sysmsg",
-            "label": "Resolve Callable",
-            "color": self.mycolor,
-            "indent": 1
-        })
+        self.display.zDeclare("Resolve Callable", color=self.mycolor, indent=1, style="single")
         from .zFunc_modules.func_resolver import resolve_callable
         return resolve_callable(func_path, function_name, self.logger)
 
     def _execute_function(self, func, args):
         """Execute function with optional session injection."""
-        import inspect
         sig = inspect.signature(func)
 
         # Auto-inject session if function accepts it
@@ -131,13 +112,7 @@ class zFunc:
         })
 
         # Separator
-        self.display.handle({
-            "event": "sysmsg",
-            "label": "",
-            "color": "CYAN",
-            "style": "~",
-            "indent": 0,
-        })
+        self.display.zDeclare("", color="CYAN", indent=0, style="~")
 
         # Break for user to review
         self.display.handle({
@@ -145,9 +120,4 @@ class zFunc:
         })
 
         # Return header
-        self.display.handle({
-            "event": "sysmsg",
-            "label": "zFunction Return",
-            "color": self.mycolor,
-            "indent": 1
-        })
+        self.display.zDeclare("zFunction Return", color=self.mycolor, indent=1, style="single")

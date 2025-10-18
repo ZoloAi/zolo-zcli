@@ -62,7 +62,7 @@ class TestzDisplayInitialization(unittest.TestCase):
         
         with patch('builtins.print'):
             display = zDisplay(self.mock_zcli)
-        
+
         self.assertEqual(display.mode, "Terminal")
 
     def test_mode_detection_gui(self):
@@ -71,7 +71,7 @@ class TestzDisplayInitialization(unittest.TestCase):
         
         with patch('builtins.print'):
             display = zDisplay(self.mock_zcli)
-        
+
         self.assertEqual(display.mode, "GUI")
 
     def test_mode_default_to_terminal(self):

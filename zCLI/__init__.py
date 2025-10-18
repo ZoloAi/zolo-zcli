@@ -20,6 +20,7 @@ import time
 import re
 import getpass
 import uuid
+import inspect
 from pathlib import Path
 from collections import OrderedDict
 
@@ -36,7 +37,7 @@ __all__ = [
     "zCLI",
     
     # System modules
-    "os", "sys", "platform", "socket", "shutil", "yaml", "subprocess", "importlib", "secrets", "logging", "requests", "asyncio", "json", "time", "re", "getpass", "uuid", "Path", "OrderedDict",
+    "os", "sys", "platform", "socket", "shutil", "yaml", "subprocess", "importlib", "secrets", "logging", "requests", "asyncio", "json", "time", "re", "getpass", "uuid", "inspect", "Path", "OrderedDict",
     
     # Utils
     "print_ready", "Colors",

@@ -64,6 +64,18 @@ try:
 except ImportError:
     ZLOADER_AVAILABLE = False
 
+try:
+    from zTestSuite import zFunc_Test
+    ZFUNC_AVAILABLE = True
+except ImportError:
+    ZFUNC_AVAILABLE = False
+
+try:
+    from zTestSuite import zDialog_Test
+    ZDIALOG_AVAILABLE = True
+except ImportError:
+    ZDIALOG_AVAILABLE = False
+
 
 def run_subsystem_tests(test_module, name):
     """Run tests for a single subsystem with enhanced UX."""
@@ -226,6 +238,10 @@ def show_test_menu():
         available_tests.append(("zParser", "zParser_Test"))
     if ZLOADER_AVAILABLE:
         available_tests.append(("zLoader", "zLoader_Test"))
+    if ZFUNC_AVAILABLE:
+        available_tests.append(("zFunc", "zFunc_Test"))
+    if ZDIALOG_AVAILABLE:
+        available_tests.append(("zDialog", "zDialog_Test"))
     
     if not available_tests:
         print("❌ No test suites available!")
@@ -283,6 +299,10 @@ def run_selected_tests(test_choice=None):
             test_suites.append((zParser_Test, "zParser"))
         if ZLOADER_AVAILABLE:
             test_suites.append((zLoader_Test, "zLoader"))
+        if ZFUNC_AVAILABLE:
+            test_suites.append((zFunc_Test, "zFunc"))
+        if ZDIALOG_AVAILABLE:
+            test_suites.append((zDialog_Test, "zDialog"))
         
         for test_module, name in test_suites:
             result = run_subsystem_tests(test_module, name)
@@ -309,6 +329,12 @@ def run_selected_tests(test_choice=None):
             results.append(result)
         elif test_choice == "zLoader_Test" and ZLOADER_AVAILABLE:
             result = run_subsystem_tests(zLoader_Test, "zLoader")
+            results.append(result)
+        elif test_choice == "zFunc_Test" and ZFUNC_AVAILABLE:
+            result = run_subsystem_tests(zFunc_Test, "zFunc")
+            results.append(result)
+        elif test_choice == "zDialog_Test" and ZDIALOG_AVAILABLE:
+            result = run_subsystem_tests(zDialog_Test, "zDialog")
             results.append(result)
         else:
             print(f"❌ Test suite '{test_choice}' not available!")

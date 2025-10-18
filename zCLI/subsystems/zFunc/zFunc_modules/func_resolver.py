@@ -2,9 +2,7 @@
 
 """Function resolution and loading utilities."""
 
-import os
-import importlib.util
-
+from zCLI import os, importlib
 
 def resolve_callable(file_path, func_name, logger_instance):
     """Resolve and load a callable function from a Python file."""
@@ -30,4 +28,3 @@ def resolve_callable(file_path, func_name, logger_instance):
         logger_instance.error("Failed to resolve callable from '%s > %s': %s", 
                             file_path, func_name, e, exc_info=True)
         raise
-
