@@ -2,7 +2,7 @@
 
 """Active database connection management for zWizard transactions."""
 
-import time
+from zCLI import time
 
 
 class SchemaCache:

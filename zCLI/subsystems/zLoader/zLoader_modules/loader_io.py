@@ -7,13 +7,7 @@ def load_file_raw(full_path, logger, display=None):
     logger.debug("Opening file: %s", full_path)
 
     if display:
-        display.handle({
-            "event": "sysmsg",
-            "label": "Reading",
-            "style": "single",
-            "color": "SUBLOADER",
-            "indent": 2,
-        })
+        display.zDeclare("Reading", color="SUBLOADER", indent=2, style="single")
 
     try:
         with open(full_path, "r", encoding="utf-8") as f:

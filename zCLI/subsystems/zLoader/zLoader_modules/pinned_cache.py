@@ -2,7 +2,7 @@
 
 """User-loaded aliases cache - never auto-evicts, highest priority."""
 
-import time
+from zCLI import time
 
 class PinnedCache:
     """Pinned cache for user-loaded aliases (parsed schemas only, no auto-eviction)."""
@@ -97,12 +97,12 @@ class PinnedCache:
                     len(keys_to_delete), pattern
                 )
                 return len(keys_to_delete)
-            else:
-                # Clear all
-                count = len(cache)
-                cache.clear()
-                self.logger.info("[PinnedCache] Removed all %d aliases", count)
-                return count
+
+            # Clear all
+            count = len(cache)
+            cache.clear()
+            self.logger.info("[PinnedCache] Removed all %d aliases", count)
+            return count
 
         except Exception as e:
             self.logger.error("[PinnedCache ERROR] clear - %s", e)

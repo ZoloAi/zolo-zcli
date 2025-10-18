@@ -22,21 +22,11 @@ class zLoader:
         self.zpath_decoder = zcli.zparser.zPath_decoder
         self.identify_zfile = zcli.zparser.identify_zFile
         self.parse_file_content = zcli.zparser.parse_file_content
-        self.display.handle({
-            "event": "sysmsg",
-            "label": "zLoader Ready",
-            "color": self.mycolor,
-            "indent": 0
-        })
+        self.display.zDeclare("zLoader Ready", color=self.mycolor, indent=0, style="full")
 
     def handle(self, zPath=None):
         """Main entry point for zVaFile loading and parsing."""
-        self.display.handle({
-            "event": "sysmsg",
-            "label": "zLoader",
-            "color": self.mycolor,
-            "indent": 1,
-        })
+        self.display.zDeclare("zLoader", color=self.mycolor, indent=1, style="single")
         self.logger.debug("zFile_zObj: %s", zPath)
 
         # Determine if we should use session values (UI file loading)
@@ -58,13 +48,7 @@ class zLoader:
             cache_key = f"parsed:{zPath_key}"
             cached = self.cache.get(cache_key, cache_type="system", filepath=zFilePath_identified)
             if cached is not None:
-                self.display.handle({
-                    "event": "sysmsg",
-                    "label": "zLoader return (cached)",
-                    "style": "~",
-                    "color": self.mycolor,
-                    "indent": 1,
-                })
+                self.display.zDeclare("zLoader return (cached)", color=self.mycolor, indent=1, style="~")
                 self.logger.debug("[SystemCache] Cache hit: %s", cache_key)
                 return cached
         else:
@@ -80,13 +64,7 @@ class zLoader:
         self.logger.debug("zLoader parse result:\n%s", result)
 
         # Step 6: Return result (cache only if not a schema)
-        self.display.handle({
-            "event": "sysmsg",
-            "label": "zLoader return",
-            "style": "~",
-            "color": self.mycolor,
-            "indent": 1,
-        })
+        self.display.zDeclare("zLoader return", color=self.mycolor, indent=1, style="~")
 
         # Don't cache schemas - they should be loaded fresh each time
         if is_schema:

@@ -2,9 +2,7 @@
 
 """UI and config file caching with mtime checking and LRU eviction."""
 
-import os
-import time
-from collections import OrderedDict
+from zCLI import os, time, OrderedDict
 
 
 class SystemCache:

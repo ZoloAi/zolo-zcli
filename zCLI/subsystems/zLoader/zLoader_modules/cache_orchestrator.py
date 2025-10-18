@@ -24,39 +24,39 @@ class CacheOrchestrator:
         """Route get request to appropriate cache tier."""
         if cache_type == "system":
             return self.system_cache.get(key, **kwargs)
-        elif cache_type == "pinned":
+        if cache_type == "pinned":
             return self.pinned_cache.get_alias(key)
-        elif cache_type == "schema":
+        if cache_type == "schema":
             return self.schema_cache.get_connection(key)
-        else:
-            self.logger.warning("[CacheOrchestrator] Unknown cache_type: %s", cache_type)
-            return None
+
+        self.logger.warning("[CacheOrchestrator] Unknown cache_type: %s", cache_type)
+        return None
 
     def set(self, key, value, cache_type="system", **kwargs):
         """Route set request to appropriate cache tier."""
         if cache_type == "system":
             return self.system_cache.set(key, value, **kwargs)
-        elif cache_type == "pinned":
+        if cache_type == "pinned":
             # For pinned, key is alias_name, kwargs should have 'zpath'
             zpath = kwargs.get("zpath", "")
             return self.pinned_cache.load_alias(key, value, zpath)
-        elif cache_type == "schema":
+        if cache_type == "schema":
             # For schema, key is alias_name, value is handler
             self.schema_cache.set_connection(key, value)
             return value
-        else:
-            self.logger.warning("[CacheOrchestrator] Unknown cache_type: %s", cache_type)
-            return value
+
+        self.logger.warning("[CacheOrchestrator] Unknown cache_type: %s", cache_type)
+        return value
 
     def has(self, key, cache_type="system"):
         """Check if key exists in specified cache tier."""
         if cache_type == "pinned":
             return self.pinned_cache.has_alias(key)
-        elif cache_type == "schema":
+        if cache_type == "schema":
             return self.schema_cache.has_connection(key)
-        else:
-            # system_cache doesn't have a specific has() method
-            return self.system_cache.get(key) is not None
+
+        # system_cache doesn't have a specific has() method
+        return self.system_cache.get(key) is not None
 
     def clear(self, cache_type="all", pattern=None):
         """Clear cache entries in specified tier(s)."""

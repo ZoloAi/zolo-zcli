@@ -21,6 +21,7 @@ import re
 import getpass
 import uuid
 from pathlib import Path
+from collections import OrderedDict
 
 # Import utilities (safe to import early)
 from .utils.styled_printer import print_ready
@@ -35,7 +36,7 @@ __all__ = [
     "zCLI",
     
     # System modules
-    "os", "sys", "platform", "socket", "shutil", "yaml", "subprocess", "importlib", "secrets", "logging", "requests", "asyncio", "json", "time", "re", "getpass", "uuid", "Path",
+    "os", "sys", "platform", "socket", "shutil", "yaml", "subprocess", "importlib", "secrets", "logging", "requests", "asyncio", "json", "time", "re", "getpass", "uuid", "Path", "OrderedDict",
     
     # Utils
     "print_ready", "Colors",
