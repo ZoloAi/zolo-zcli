@@ -2,7 +2,7 @@
 
 """Communication & Service Management Subsystem for WebSocket and services."""
 from zCLI import requests, logging
-from .zComm_modules.bifrost_socket import zBifrost
+from .zComm_modules.zBifrost import zBifrost
 from .zComm_modules import ServiceManager
 
 class zComm:

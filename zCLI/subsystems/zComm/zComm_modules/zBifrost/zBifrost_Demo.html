@@ -1,0 +1,346 @@
+@ -1,346 +0,0 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>zBifrost Demo - JavaScript Client</title>
+    <style>
+        body {
+            font-family: 'Monaco', 'Menlo', monospace;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1e1e1e;
+            color: #d4d4d4;
+        }
+        h1 {
+            color: #4ec9b0;
+            border-bottom: 2px solid #4ec9b0;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #dcdcaa;
+            margin-top: 30px;
+        }
+        .section {
+            background: #252526;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+            border-left: 4px solid #4ec9b0;
+        }
+        button {
+            background: #0e639c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        button:hover {
+            background: #1177bb;
+        }
+        button:disabled {
+            background: #555;
+            cursor: not-allowed;
+        }
+        .output {
+            background: #1e1e1e;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 3px;
+            border: 1px solid #3c3c3c;
+            font-size: 13px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success {
+            color: #4ec9b0;
+        }
+        .error {
+            color: #f48771;
+        }
+        .info {
+            color: #9cdcfe;
+        }
+        .broadcast {
+            color: #dcdcaa;
+        }
+        input {
+            background: #3c3c3c;
+            border: 1px solid #555;
+            color: #d4d4d4;
+            padding: 8px;
+            margin: 5px;
+            border-radius: 3px;
+            font-family: inherit;
+        }
+        .status {
+            padding: 5px 10px;
+            border-radius: 3px;
+            display: inline-block;
+            margin: 5px 0;
+        }
+        .status.connected {
+            background: #2d7a4f;
+            color: white;
+        }
+        .status.disconnected {
+            background: #7a2d2d;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>🌈 zBifrost Demo - JavaScript Client</h1>
+    <p>WebSocket client testing for zCLI backend</p>
+
+    <!-- Connection Section -->
+    <div class="section">
+        <h2>Connection</h2>
+        <div>
+            <label>Server URL:</label>
+            <input type="text" id="serverUrl" value="ws://127.0.0.1:56891" style="width: 300px;">
+        </div>
+        <div>
+            <label>Token (optional):</label>
+            <input type="text" id="token" placeholder="your-auth-token" style="width: 300px;">
+        </div>
+        <div>
+            <button onclick="connectToBridge()">Connect</button>
+            <button onclick="disconnectFromBridge()">Disconnect</button>
+            <span id="connectionStatus" class="status disconnected">Disconnected</span>
+        </div>
+    </div>
+
+    <!-- CRUD Operations Section -->
+    <div class="section">
+        <h2>CRUD Operations</h2>
+        <div>
+            <button onclick="testCreate()" id="btnCreate">Create User</button>
+            <button onclick="testRead()" id="btnRead">Read Users</button>
+            <button onclick="testUpdate()" id="btnUpdate">Update User</button>
+            <button onclick="testDelete()" id="btnDelete">Delete User</button>
+        </div>
+        <div class="output" id="crudOutput">
+            <div class="info">Ready to test CRUD operations...</div>
+        </div>
+    </div>
+
+    <!-- Advanced Operations Section -->
+    <div class="section">
+        <h2>Advanced Operations</h2>
+        <div>
+            <button onclick="testZFunc()" id="btnFunc">Test zFunc</button>
+            <button onclick="testRawCommand()" id="btnRaw">Raw Command</button>
+        </div>
+        <div class="output" id="advancedOutput">
+            <div class="info">Ready to test advanced operations...</div>
+        </div>
+    </div>
+
+    <!-- Broadcast Listening Section -->
+    <div class="section">
+        <h2>Broadcast Messages</h2>
+        <div>
+            <button onclick="startListening()">Start Listening</button>
+            <button onclick="stopListening()">Stop Listening</button>
+            <button onclick="clearBroadcasts()">Clear</button>
+        </div>
+        <div class="output" id="broadcastOutput">
+            <div class="info">Not listening...</div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { zBifrost } from './zBifrost.js';
+
+        // Global client instance
+        window.client = null;
+        window.broadcastHandler = null;
+        window.zBifrost = zBifrost;
+
+        // Connection functions
+        window.connectToBridge = async function() {
+            const url = document.getElementById('serverUrl').value;
+            const token = document.getElementById('token').value || null;
+            
+            try {
+                window.client = new zBifrost(url, token, {debug: true});
+                await window.client.connect();
+                
+                document.getElementById('connectionStatus').className = 'status connected';
+                document.getElementById('connectionStatus').textContent = 'Connected';
+                
+                log('crudOutput', '✅ Connected to zBifrost server', 'success');
+            } catch (e) {
+                log('crudOutput', `❌ Connection failed: ${e.message}`, 'error');
+            }
+        };
+
+        window.disconnectFromBridge = function() {
+            if (window.client) {
+                window.client.disconnect();
+                document.getElementById('connectionStatus').className = 'status disconnected';
+                document.getElementById('connectionStatus').textContent = 'Disconnected';
+            }
+        };
+
+        // CRUD test functions
+        window.testCreate = async function() {
+            if (!window.client) {
+                log('crudOutput', '❌ Not connected', 'error');
+                return;
+            }
+            
+            try {
+                log('crudOutput', '📝 Creating user...', 'info');
+                const user = await window.client.create('Users', {
+                    name: 'Thor Odinson',
+                    email: 'thor@asgard.com',
+                    role: 'God of Thunder'
+                });
+                log('crudOutput', `✅ Created: ${JSON.stringify(user, null, 2)}`, 'success');
+            } catch (e) {
+                log('crudOutput', `❌ Error: ${e.message}`, 'error');
+            }
+        };
+
+        window.testRead = async function() {
+            if (!window.client) {
+                log('crudOutput', '❌ Not connected', 'error');
+                return;
+            }
+            
+            try {
+                log('crudOutput', '📖 Reading users...', 'info');
+                const users = await window.client.read('Users', 
+                    {role: 'God of Thunder'},
+                    {limit: 10}
+                );
+                log('crudOutput', `✅ Found ${users.length} user(s): ${JSON.stringify(users, null, 2)}`, 'success');
+            } catch (e) {
+                log('crudOutput', `❌ Error: ${e.message}`, 'error');
+            }
+        };
+
+        window.testUpdate = async function() {
+            if (!window.client) {
+                log('crudOutput', '❌ Not connected', 'error');
+                return;
+            }
+            
+            try {
+                log('crudOutput', '✏️  Updating user...', 'info');
+                const result = await window.client.update('Users', 1, {
+                    name: 'Thor (The Mighty)'
+                });
+                log('crudOutput', `✅ Updated: ${JSON.stringify(result, null, 2)}`, 'success');
+            } catch (e) {
+                log('crudOutput', `❌ Error: ${e.message}`, 'error');
+            }
+        };
+
+        window.testDelete = async function() {
+            if (!window.client) {
+                log('crudOutput', '❌ Not connected', 'error');
+                return;
+            }
+            
+            try {
+                log('crudOutput', '🗑️  Deleting user...', 'info');
+                const result = await window.client.delete('Users', 1);
+                log('crudOutput', `✅ Deleted: ${JSON.stringify(result, null, 2)}`, 'success');
+            } catch (e) {
+                log('crudOutput', `❌ Error: ${e.message}`, 'error');
+            }
+        };
+
+        // Advanced test functions
+        window.testZFunc = async function() {
+            if (!window.client) {
+                log('advancedOutput', '❌ Not connected', 'error');
+                return;
+            }
+            
+            try {
+                log('advancedOutput', '🔧 Testing zFunc...', 'info');
+                const result = await window.client.zFunc('zFunc(testFunction, {})');
+                log('advancedOutput', `✅ Result: ${JSON.stringify(result, null, 2)}`, 'success');
+            } catch (e) {
+                log('advancedOutput', `⚠️  ${e.message}`, 'error');
+            }
+        };
+
+        window.testRawCommand = async function() {
+            if (!window.client) {
+                log('advancedOutput', '❌ Not connected', 'error');
+                return;
+            }
+            
+            try {
+                log('advancedOutput', '📤 Sending raw command...', 'info');
+                const result = await window.client.send({
+                    zKey: 'test_command',
+                    zHorizontal: {
+                        action: 'ping',
+                        message: 'Hello from zBifrost.js!'
+                    }
+                });
+                log('advancedOutput', `✅ Response: ${JSON.stringify(result, null, 2)}`, 'success');
+            } catch (e) {
+                log('advancedOutput', `⚠️  ${e.message}`, 'error');
+            }
+        };
+
+        // Broadcast functions
+        window.startListening = function() {
+            if (!window.client) {
+                log('broadcastOutput', '❌ Not connected', 'error');
+                return;
+            }
+            
+            if (!window.broadcastHandler) {
+                window.broadcastHandler = (message) => {
+                    const timestamp = new Date().toLocaleTimeString();
+                    log('broadcastOutput', `[${timestamp}] 📻 ${JSON.stringify(message, null, 2)}`, 'broadcast');
+                };
+                window.client.onBroadcast(window.broadcastHandler);
+            }
+            
+            log('broadcastOutput', '✅ Listening for broadcasts...', 'success');
+        };
+
+        window.stopListening = function() {
+            if (window.client && window.broadcastHandler) {
+                window.client.removeBroadcastListener(window.broadcastHandler);
+                window.broadcastHandler = null;
+                log('broadcastOutput', '🛑 Stopped listening', 'info');
+            }
+        };
+
+        window.clearBroadcasts = function() {
+            document.getElementById('broadcastOutput').innerHTML = '<div class="info">Cleared</div>';
+        };
+
+        // Utility function to log to output
+        function log(outputId, message, type = 'info') {
+            const output = document.getElementById(outputId);
+            const div = document.createElement('div');
+            div.className = type;
+            div.textContent = message;
+            output.appendChild(div);
+            output.scrollTop = output.scrollHeight;
+        }
+
+        // Auto-connect on page load (optional)
+        // window.addEventListener('load', () => {
+        //     console.log('Page loaded. Auto-connecting...');
+        //     connectToBridge();
+        // });
+    </script>
+</body>
+</html>

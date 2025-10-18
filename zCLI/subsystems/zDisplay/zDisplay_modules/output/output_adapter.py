@@ -2,7 +2,7 @@
 
 """Base output adapter and factory for mode-specific rendering."""
 
-from zCLI.subsystems.zDisplay.zDisplay_modules.utils import Colors
+from zCLI.utils import Colors
 
 class OutputAdapter:
     """Base class for output adapters (Terminal, WebSocket)."""

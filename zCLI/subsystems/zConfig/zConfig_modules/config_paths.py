@@ -94,6 +94,17 @@ class zConfigPaths:
         """
         return Path(user_cache_dir(self.app_name, self.app_author))
 
+    @property
+    def user_logs_dir(self):
+        r"""
+        User logs directory for application logs.
+        
+        Linux:   ~/.local/share/zolo-zcli/logs
+        macOS:   ~/Library/Application Support/zolo-zcli/logs
+        Windows: %LOCALAPPDATA%\zolo-zcli\logs
+        """
+        return self.user_data_dir / "logs"
+
     # ═══════════════════════════════════════════════════════════
     # System Config Files
     # ═══════════════════════════════════════════════════════════
@@ -193,5 +204,6 @@ class zConfigPaths:
             "user_zconfigs_dir": str(self.user_zconfigs_dir),
             "user_data_dir": str(self.user_data_dir),
             "user_cache_dir": str(self.user_cache_dir),
+            "user_logs_dir": str(self.user_logs_dir),
         }
 

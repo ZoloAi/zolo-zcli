@@ -19,7 +19,10 @@
 zComm/
 ├── zComm.py                           # Main communication manager
 └── zComm_modules/
-    ├── bifrost_socket.py              # Secure WebSocket server with authentication
+    ├── zBifrost/                      # WebSocket bridge module
+    │   ├── bifrost_bridge.py          # Secure WebSocket server with authentication
+    │   ├── zBifrost_Demo.html         # WebSocket demo interface
+    │   └── zBifrost_Demo.js           # WebSocket demo client
     ├── service_manager.py             # Local service orchestration
     └── services/                      # Service definitions
         └── postgresql_service.py      # PostgreSQL service management

@@ -3,7 +3,7 @@
 
 from .zDisplay_modules.output import OutputFactory
 from .zDisplay_modules.input import InputFactory
-from .zDisplay_modules.utils import Colors
+from zCLI.utils import Colors
 from .zDisplay_modules.events.primitives import (
     handle_raw,
     handle_line,

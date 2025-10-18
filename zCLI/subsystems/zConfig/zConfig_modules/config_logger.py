@@ -105,8 +105,27 @@ class LoggerConfig:
         
         # Determine if file logging is enabled
         file_enabled = logging_config.get("file_enabled", True)
-        file_path = logging_config.get("file_path", "./logs/zolo-zcli.log")
         log_format = logging_config.get("format", "detailed")
+        
+        # Get log file path - use system support directory instead of CWD
+        file_path = logging_config.get("file_path", "")
+        if not file_path or file_path.startswith("./") or file_path == "":
+            # Use proper system support directory for logs
+            if hasattr(self.zcli, 'config') and hasattr(self.zcli.config, 'sys_paths'):
+                logs_dir = self.zcli.config.sys_paths.user_logs_dir
+                file_path = str(logs_dir / "zolo-zcli.log")
+            else:
+                # Fallback if config not available yet
+                from pathlib import Path as PathLibPath
+                home_path = PathLibPath.home()
+                import platform
+                if platform.system() == "Windows":
+                    logs_dir = home_path / "AppData" / "Local" / "zolo-zcli" / "logs"
+                elif platform.system() == "Darwin":  # macOS
+                    logs_dir = home_path / "Library" / "Application Support" / "zolo-zcli" / "logs"
+                else:  # Linux
+                    logs_dir = home_path / ".local" / "share" / "zolo-zcli" / "logs"
+                file_path = str(logs_dir / "zolo-zcli.log")
         
         # Create logger
         self._logger = logging.getLogger("zCLI")
@@ -144,8 +163,9 @@ class LoggerConfig:
         if file_enabled:
             try:
                 # Ensure log directory exists
-                from zCLI import Path
+                from pathlib import Path
                 log_file = Path(file_path)
+                
                 log_file.parent.mkdir(parents=True, exist_ok=True)
                 
                 # Create file handler

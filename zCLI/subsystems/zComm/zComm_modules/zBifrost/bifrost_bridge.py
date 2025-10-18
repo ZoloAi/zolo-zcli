@@ -1,4 +1,4 @@
-# zCLI/subsystems/zComm/zComm_modules/bifrost_socket.py
+# zCLI/subsystems/zComm/zComm_modules/zBifrost/bifrost_bridge.py
 """Secure WebSocket server with authentication and origin validation."""
 
 try:

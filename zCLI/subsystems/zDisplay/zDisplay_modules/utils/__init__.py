@@ -3,7 +3,7 @@
 # zCLI/subsystems/zDisplay_modules/utils/__init__.py
 """Utilities for zDisplay - colors, formatting, helpers."""
 
-from .colors import Colors
+from zCLI.utils import Colors
 
 __all__ = ['Colors']
 

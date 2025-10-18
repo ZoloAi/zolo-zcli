@@ -22,7 +22,7 @@ import json
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from zCLI.subsystems.zComm import zComm
-from zCLI.subsystems.zComm.zComm_modules.bifrost_socket import zBifrost
+from zCLI.subsystems.zComm.zComm_modules.zBifrost import zBifrost
 from zCLI.subsystems.zComm.zComm_modules.service_manager import ServiceManager
 
 

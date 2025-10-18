@@ -52,7 +52,7 @@ zEnv:
     level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
     format: "detailed"  # simple, detailed, json
     file_enabled: true  # enable file logging
-    file_path: "./logs/zolo-zcli.log"  # log file path
+    file_path: ""  # log file path (empty = use system support directory)
     max_file_size: "10MB"  # max log file size
     backup_count: 5  # number of backup files
   

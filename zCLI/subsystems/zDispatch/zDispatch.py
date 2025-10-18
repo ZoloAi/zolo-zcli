@@ -30,7 +30,7 @@ class zDispatch:
     def _print_ready(self):
         """Print styled 'Ready' message (before zDisplay is available)."""
         try:
-            from ..zDisplay.zDisplay_modules.utils.colors import Colors
+            from zCLI.utils import Colors
             color_code = getattr(Colors, self.mycolor, Colors.RESET)
             label = "zDispatch Ready"
             BASE_WIDTH = 60
