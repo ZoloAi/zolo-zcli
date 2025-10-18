@@ -2,7 +2,7 @@
 
 """zEvents class - organized event packages for complex display operations."""
 
-from .zEvents_packages import BasicOutputs, BasicInputs, Signals, BasicData, AdvancedData, zSystem
+from .zEvents_packages import BasicOutputs, BasicInputs, Signals, BasicData, AdvancedData, zSystem, zAuthEvents
 
 class zEvents:
     """Event orchestrator - organizes events into logical packages.
@@ -14,6 +14,7 @@ class zEvents:
     - BasicData: list, json
     - AdvancedData: zTable (with pagination)
     - zSystem: zDeclare, zSession, zCrumbs, zMenu, zDialog
+    - zAuth: login_prompt, login_success, login_failure, logout_success, status_display
     """
 
     def __init__(self, display_instance):
@@ -27,6 +28,7 @@ class zEvents:
         self.BasicData = BasicData(display_instance)
         self.AdvancedData = AdvancedData(display_instance)
         self.zSystem = zSystem(display_instance)
+        self.zAuth = zAuthEvents(display_instance)
         
         # Set up composition references (packages can use each other)
         self.BasicInputs.BasicOutputs = self.BasicOutputs
@@ -37,6 +39,8 @@ class zEvents:
         self.zSystem.BasicOutputs = self.BasicOutputs
         self.zSystem.Signals = self.Signals
         self.zSystem.BasicInputs = self.BasicInputs
+        self.zAuth.BasicOutputs = self.BasicOutputs
+        self.zAuth.Signals = self.Signals
     
     # Convenience delegates to BasicOutputs for backward compatibility
     def header(self, label, color="RESET", indent=0, style="full"):

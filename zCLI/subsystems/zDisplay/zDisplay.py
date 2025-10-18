@@ -31,15 +31,9 @@ class zDisplay:
         # Initialize zPrimitives container
         self.zPrimitives = zPrimitives(self)
         self.zEvents = zEvents(self)
-        
-        # Initialize ready message
-        self._ready()
 
-    def _ready(self):
-        """Display subsystem ready message."""
-        self.zPrimitives.write_line("=" * 60)
-        self.zPrimitives.write_line(f"  {self.mycolor} Ready")
-        self.zPrimitives.write_line("=" * 60)
+        # Initialize ready message using proper zDeclare event
+        self.zDeclare("ZDISPLAY Ready", color=self.mycolor, indent=0, style="full")
 
     # Convenience delegates to zPrimitives
     def write_raw(self, content):
@@ -200,7 +194,3 @@ class zDisplay:
             if self.logger:
                 self.logger.warning(f"Unknown display event: {event}")
             return None
-
-    # TODO: Add streamlined event handling system
-    # TODO: Add simplified handler registration
-    # TODO: Add mode-specific method routing

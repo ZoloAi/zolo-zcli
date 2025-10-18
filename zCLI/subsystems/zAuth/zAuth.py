@@ -1,16 +1,11 @@
 # zCLI/subsystems/zAuth/zAuth.py
-"""Authentication subsystem for zCLI."""
+"""Authentication subsystem for zCLI - session-only authentication."""
 
 from zCLI import os
-from getpass import getpass
-from .zAuth_modules.credentials import CredentialManager
-from .zAuth_modules.local_auth import authenticate_local
 from .zAuth_modules.remote_auth import authenticate_remote
-from .zAuth_modules.validation import validate_api_key as validate_key
-
 
 class zAuth:
-    """Authentication subsystem for zCLI."""
+    """Authentication subsystem for zCLI - session-only (no persistence)."""
 
     def __init__(self, zcli):
         """Initialize authentication subsystem."""
@@ -18,57 +13,27 @@ class zAuth:
         self.session = zcli.session
         self.logger = zcli.logger
         self.mycolor = "ZAUTH"  # Orange-brown bg (Authentication)
-
-        # Credential manager
-        self.credentials = CredentialManager()
         
         # Display ready message
         self.zcli.display.zDeclare("zAuth Ready", color=self.mycolor, indent=0, style="full")
-        
-        # Note: Authentication is session-only (no persistence)
-        # Users must login each session to populate zSession authentication
     
     def login(self, username=None, password=None, server_url=None):
         """Authenticate user for this session only (no persistence)."""
-        # Prompt for credentials if not provided
-        if not username:
-            username = input("Username: ").strip()
-        if not password:
-            password = getpass("Password: ")
+        # Prompt for credentials if not provided using zDisplay events
+        if not username or not password:
+            creds = self.zcli.display.zEvents.zAuth.login_prompt(username, password)
+            if creds:
+                username = creds.get("username")
+                password = creds.get("password")
+            else:
+                # GUI mode - credentials will be sent via bifrost
+                return {"status": "pending", "reason": "Awaiting GUI response"}
         
-        # Check for local backend admin user (for testing/development)
-        # pylint: disable=unsubscriptable-object,assignment-from-none
-        local_result = authenticate_local(username, password, self.logger)
-        if local_result:
-            # Update zSession with authenticated user info (session only)
-            if self.session:
-                self.session["zAuth"].update({
-                    "id": local_result["user_id"],
-                    "username": local_result["username"],
-                    "role": local_result["role"],
-                    "API_Key": local_result["api_key"]
-                })
-                self.logger.debug("Updated zSession['zAuth']: %s", self.session["zAuth"])
-            
-            self.logger.info("[OK] Local authentication successful: %s (role=%s)", 
-                      local_result["username"], local_result["role"])
-            
-            # Display success message
-            self.zcli.display.text("", break_after=False)
-            self.zcli.display.success(f"[OK] Logged in as: {local_result['username']} ({local_result['role']})")
-            self.zcli.display.text(f"     User ID: {local_result['user_id']}", break_after=False)
-            self.zcli.display.text(f"     API Key: {local_result['api_key'][:20]}...", break_after=False)
-            self.zcli.display.text("     Mode: Local (development)", break_after=False)
-            self.zcli.display.text("     Session: This session only (no persistence)", break_after=False)
-            self.zcli.display.text("", break_after=False)
-            
-            return {"status": "success", "user": local_result}
-        
-        # If local auth fails, try Flask API (if configured)
+        # Try remote authentication
         if os.getenv("ZOLO_USE_REMOTE_API", "false").lower() == "true":
             result = authenticate_remote(self.zcli, username, password, server_url)
             if result.get("status") == "success":
-                # Update session with remote auth result (no persistence)
+                # Update session with auth result
                 credentials = result.get("credentials")
                 if credentials and self.session:
                     self.session["zAuth"].update({
@@ -77,68 +42,51 @@ class zAuth:
                         "role": credentials.get("role"),
                         "API_Key": credentials.get("api_key")
                     })
-                self.zcli.display.text("     Session: This session only (no persistence)", break_after=False)
-                self.zcli.display.text("", break_after=False)
-            return result
+                    # Display success using zDisplay events
+                    self.zcli.display.zEvents.zAuth.login_success({
+                        "username": credentials.get("username"),
+                        "role": credentials.get("role"),
+                        "user_id": credentials.get("user_id"),
+                        "api_key": credentials.get("api_key")
+                    })
+                return result
         
-        # No valid authentication method
+        # Authentication failed - use zDisplay events
         self.logger.warning("[FAIL] Authentication failed: Invalid credentials")
-        self.zcli.display.text("", break_after=False)
-        self.zcli.display.error("[FAIL] Authentication failed: Invalid credentials")
-        self.zcli.display.text("       No authentication method available", break_after=False)
-        self.zcli.display.text("", break_after=False)
+        self.zcli.display.zEvents.zAuth.login_failure("Invalid credentials")
         return {"status": "fail", "reason": "Invalid credentials"}
     
     def logout(self):
         """Clear session authentication and logout."""
-        try:
-            # Check if currently authenticated in session
-            is_logged_in = (self.session and 
-                          self.session.get("zAuth", {}).get("username") is not None)
-            
-            # Clear session auth
-            if self.session:
-                self.session["zAuth"] = {
-                    "id": None,
-                    "username": None,
-                    "role": None,
-                    "API_Key": None
-                }
-            
-            if is_logged_in:
-                self.zcli.display.text("", break_after=False)
-                self.zcli.display.success("[OK] Logged out successfully")
-                self.zcli.display.text("", break_after=False)
-            else:
-                self.zcli.display.text("", break_after=False)
-                self.zcli.display.warning("[WARN] Not currently logged in")
-                self.zcli.display.text("", break_after=False)
-            
-            return {"status": "success"}
+        is_logged_in = self.is_authenticated()
         
-        except Exception as e:
-            self.logger.error("Error during logout: %s", e)
-            return {"status": "error", "reason": str(e)}
+        # Clear session auth
+        if self.session:
+            self.session["zAuth"] = {
+                "id": None,
+                "username": None,
+                "role": None,
+                "API_Key": None
+            }
+        
+        # Display using zDisplay events
+        if is_logged_in:
+            self.zcli.display.zEvents.zAuth.logout_success()
+        else:
+            self.zcli.display.zEvents.zAuth.logout_warning()
+        
+        return {"status": "success"}
     
     def status(self):
         """Show current authentication status."""
-        # Check session authentication instead of persisted credentials
-        if self.session and self.session.get("zAuth", {}).get("username"):
+        if self.is_authenticated():
             auth_data = self.session["zAuth"]
-            self.zcli.display.text("", break_after=False)
-            self.zcli.display.header("[*] Authentication Status")
-            self.zcli.display.text(f"Username:   {auth_data.get('username')}", indent=1, break_after=False)
-            self.zcli.display.text(f"Role:       {auth_data.get('role')}", indent=1, break_after=False)
-            self.zcli.display.text(f"User ID:    {auth_data.get('id')}", indent=1, break_after=False)
-            self.zcli.display.text(f"API Key:    {auth_data.get('API_Key', '')[:20]}...", indent=1, break_after=False)
-            self.zcli.display.text("Session:    Current session only (no persistence)", indent=1, break_after=False)
-            self.zcli.display.text("", break_after=False)
-            
+            # Display using zDisplay events
+            self.zcli.display.zEvents.zAuth.status_display(auth_data)
             return {"status": "authenticated", "user": auth_data}
         else:
-            self.zcli.display.text("", break_after=False)
-            self.zcli.display.warning("[WARN] Not authenticated. Run 'auth login' to authenticate.")
-            self.zcli.display.text("", break_after=False)
+            # Display using zDisplay events
+            self.zcli.display.zEvents.zAuth.status_not_authenticated()
             return {"status": "not_authenticated"}
     
     def is_authenticated(self):
@@ -149,23 +97,7 @@ class zAuth:
     
     def get_credentials(self):
         """Get current session authentication data."""
-        if (self.session and 
-            self.session.get("zAuth") and 
-            self.session.get("zAuth", {}).get("username") is not None):
+        if self.is_authenticated():
             return self.session["zAuth"]
         return None
-    
-    def validate_api_key(self, api_key=None, server_url=None):
-        """Validate API key against server."""
-        if not api_key:
-            # Get API key from session instead of persisted credentials
-            if self.session and self.session.get("zAuth", {}).get("API_Key"):
-                api_key = self.session["zAuth"]["API_Key"]
-            else:
-                return {"valid": False, "reason": "No API key found in session"}
-        
-        if not server_url:
-            server_url = os.getenv("ZOLO_API_URL", "http://localhost:5000")
-        
-        return validate_key(self.zcli, api_key, server_url)
     
