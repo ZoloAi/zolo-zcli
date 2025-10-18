@@ -46,10 +46,11 @@ class OutputFactory:
 
         if mode == "Terminal":
             return TerminalOutput(session, logger)
-        if mode in ("UI", "WebSocket"):
+        elif mode == "GUI":
             if logger:
-                logger.info("[OutputFactory] Creating WebSocket adapter for mode: %s", mode)
+                logger.info("[OutputFactory] Creating WebSocket adapter for GUI mode")
             return WebSocketOutput(session, logger)
-        if logger:
-            logger.warning("[OutputFactory] Unknown mode '%s', using Terminal", mode)
-        return TerminalOutput(session, logger)
+        else:
+            if logger:
+                logger.warning("[OutputFactory] Unknown mode '%s', using Terminal", mode)
+            return TerminalOutput(session, logger)

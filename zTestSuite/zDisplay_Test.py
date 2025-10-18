@@ -23,6 +23,21 @@ from zCLI.subsystems.zDisplay.zDisplay_modules.output.output_terminal import Ter
 from zCLI.subsystems.zDisplay.zDisplay_modules.output.output_websocket import WebSocketOutput
 from zCLI.subsystems.zDisplay.zDisplay_modules.input.input_terminal import TerminalInput
 from zCLI.subsystems.zDisplay.zDisplay_modules.input.input_websocket import WebSocketInput
+from zCLI.subsystems.zDisplay.zDisplay_modules.events.primitives.input_terminal import (
+    handle_prompt_terminal,
+    handle_input_terminal,
+    handle_confirm_terminal,
+    handle_password_terminal,
+    handle_field_terminal,
+    handle_multiline_terminal,
+)
+from zCLI.subsystems.zDisplay.zDisplay_modules.events.basic.selection_terminal import (
+    handle_radio_terminal,
+    handle_checkbox_terminal,
+    handle_dropdown_terminal,
+    handle_autocomplete_terminal,
+    handle_range_terminal,
+)
 
 
 class TestOutputFactory(unittest.TestCase):
@@ -35,14 +50,8 @@ class TestOutputFactory(unittest.TestCase):
         self.assertIsInstance(output, TerminalOutput)
 
     def test_factory_creates_websocket_output(self):
-        """Test factory creates WebSocketOutput for WebSocket mode."""
-        session = {"zMode": "WebSocket"}
-        output = OutputFactory.create(session)
-        self.assertIsInstance(output, WebSocketOutput)
-
-    def test_factory_creates_websocket_output_for_ui_mode(self):
-        """Test factory creates WebSocketOutput for UI mode."""
-        session = {"zMode": "UI"}
+        """Test factory creates WebSocketOutput for GUI mode."""
+        session = {"zMode": "GUI"}
         output = OutputFactory.create(session)
         self.assertIsInstance(output, WebSocketOutput)
 
@@ -62,14 +71,8 @@ class TestInputFactory(unittest.TestCase):
         self.assertIsInstance(input_adapter, TerminalInput)
 
     def test_factory_creates_websocket_input(self):
-        """Test factory creates WebSocketInput for WebSocket mode."""
-        session = {"zMode": "WebSocket"}
-        input_adapter = InputFactory.create(session)
-        self.assertIsInstance(input_adapter, WebSocketInput)
-
-    def test_factory_creates_websocket_input_for_ui_mode(self):
-        """Test factory creates WebSocketInput for UI mode."""
-        session = {"zMode": "UI"}
+        """Test factory creates WebSocketInput for GUI mode."""
+        session = {"zMode": "GUI"}
         input_adapter = InputFactory.create(session)
         self.assertIsInstance(input_adapter, WebSocketInput)
 
@@ -84,7 +87,7 @@ class TestWebSocketOutput(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures."""
-        self.session = {"zMode": "WebSocket"}
+        self.session = {"zMode": "GUI"}
         self.logger = Mock()
         self.output = WebSocketOutput(self.session, self.logger)
 
@@ -156,7 +159,7 @@ class TestWebSocketInput(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures."""
-        self.session = {"zMode": "WebSocket"}
+        self.session = {"zMode": "GUI"}
         self.logger = Mock()
         self.input_adapter = WebSocketInput(self.session, self.logger)
 
@@ -244,15 +247,15 @@ class TestzDisplayInitialization(unittest.TestCase):
         self.assertIsInstance(display.input, TerminalInput)
 
     def test_zdisplay_websocket_mode_initialization(self):
-        """Test zDisplay initializes in WebSocket mode."""
+        """Test zDisplay initializes in GUI mode."""
         mock_zcli = Mock()
-        mock_zcli.session = {"zMode": "WebSocket", "zS_id": "test"}
+        mock_zcli.session = {"zMode": "GUI", "zS_id": "test"}
         mock_zcli.logger = Mock()
         mock_zcli.comm = Mock()
 
         display = zDisplay(mock_zcli)
 
-        self.assertEqual(display.mode, "WebSocket")
+        self.assertEqual(display.mode, "GUI")
         self.assertIsInstance(display.output, WebSocketOutput)
         self.assertIsInstance(display.input, WebSocketInput)
 
@@ -304,7 +307,7 @@ class TestGUIEventHandlers(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures for GUI mode."""
         self.mock_zcli = Mock()
-        self.mock_zcli.session = {"zMode": "WebSocket", "zS_id": "test"}
+        self.mock_zcli.session = {"zMode": "GUI", "zS_id": "test"}
         self.mock_zcli.logger = Mock()
         self.mock_zcli.comm = Mock()
         self.mock_zcli.comm.broadcast_websocket = Mock(return_value=asyncio.Future())
@@ -354,10 +357,10 @@ class TestModeAwareRouting(unittest.TestCase):
         # In Terminal mode, should return first handler (terminal)
         self.assertIsNotNone(handler)
 
-    def test_websocket_mode_uses_gui_handlers(self):
-        """Test WebSocket mode uses GUI handlers."""
+    def test_gui_mode_uses_gui_handlers(self):
+        """Test GUI mode uses GUI handlers."""
         mock_zcli = Mock()
-        mock_zcli.session = {"zMode": "WebSocket", "zS_id": "test"}
+        mock_zcli.session = {"zMode": "GUI", "zS_id": "test"}
         mock_zcli.logger = Mock()
         mock_zcli.comm = Mock()
         display = zDisplay(mock_zcli)
@@ -366,8 +369,298 @@ class TestModeAwareRouting(unittest.TestCase):
         terminal_handler = Mock()
         gui_handler = Mock()
         handler = display._get_handler(terminal_handler, gui_handler)
-        # In WebSocket mode, should return GUI handler
+        # In GUI mode, should return GUI handler
         self.assertEqual(handler, gui_handler)
+
+
+class TestTerminalInputHandlers(unittest.TestCase):
+    """Test terminal input handlers."""
+
+    def setUp(self):
+        """Set up test fixtures."""
+        self.mock_input_adapter = Mock()
+        self.mock_output_adapter = Mock()
+        self.mock_logger = Mock()
+
+    @patch('builtins.input', return_value='test input')
+    def test_handle_prompt_terminal(self, mock_input):
+        """Test handle_prompt_terminal."""
+        self.mock_input_adapter.read_string.return_value = 'test input'
+        
+        obj = {"prompt": "Enter name:", "default": "John"}
+        result = handle_prompt_terminal(obj, self.mock_input_adapter, self.mock_logger)
+        
+        self.assertEqual(result, 'test input')
+        self.mock_input_adapter.read_string.assert_called_once_with("Enter name: [John] ")
+
+    @patch('builtins.input', return_value='')
+    def test_handle_prompt_terminal_with_default(self, mock_input):
+        """Test handle_prompt_terminal with default value."""
+        self.mock_input_adapter.read_string.return_value = ''
+        
+        obj = {"prompt": "Enter name:", "default": "John"}
+        result = handle_prompt_terminal(obj, self.mock_input_adapter, self.mock_logger)
+        
+        self.assertEqual(result, 'John')
+
+    def test_handle_confirm_terminal_yes(self):
+        """Test handle_confirm_terminal with yes input."""
+        with patch('builtins.input', side_effect=['y']):
+            self.mock_input_adapter.read_string.side_effect = ['y']
+            
+            obj = {"message": "Continue?", "default": None}
+            result = handle_confirm_terminal(obj, self.mock_input_adapter, self.mock_logger)
+            
+            self.assertTrue(result)
+
+    def test_handle_confirm_terminal_no(self):
+        """Test handle_confirm_terminal with no input."""
+        with patch('builtins.input', side_effect=['n']):
+            self.mock_input_adapter.read_string.side_effect = ['n']
+            
+            obj = {"message": "Continue?", "default": None}
+            result = handle_confirm_terminal(obj, self.mock_input_adapter, self.mock_logger)
+            
+            self.assertFalse(result)
+
+    @patch('builtins.input', side_effect=['', 'invalid', 'y'])
+    @patch('builtins.print')
+    def test_handle_confirm_terminal_invalid_then_valid(self, mock_print, mock_input):
+        """Test handle_confirm_terminal with invalid then valid input."""
+        self.mock_input_adapter.read_string.side_effect = ['invalid', 'y']
+        
+        obj = {"message": "Continue?", "default": None}
+        result = handle_confirm_terminal(obj, self.mock_input_adapter, self.mock_logger)
+        
+        self.assertTrue(result)
+
+    def test_handle_password_terminal(self):
+        """Test handle_password_terminal."""
+        self.mock_input_adapter.read_password.return_value = 'secret123'
+        
+        obj = {"prompt": "Password: "}
+        result = handle_password_terminal(obj, self.mock_input_adapter, self.mock_logger)
+        
+        self.assertEqual(result, 'secret123')
+        self.mock_input_adapter.read_password.assert_called_once_with("Password: ")
+
+    @patch('builtins.input', side_effect=['42'])
+    def test_handle_field_terminal_integer(self, mock_input):
+        """Test handle_field_terminal with integer type."""
+        self.mock_input_adapter.read_string.side_effect = ['42']
+        
+        obj = {"field_name": "age", "type": "integer", "prompt": "Age:"}
+        result = handle_field_terminal(obj, self.mock_input_adapter, self.mock_logger)
+        
+        self.assertEqual(result, 42)
+
+    @patch('builtins.input', side_effect=['invalid', '25'])
+    @patch('builtins.print')
+    def test_handle_field_terminal_invalid_integer(self, mock_print, mock_input):
+        """Test handle_field_terminal with invalid integer input."""
+        self.mock_input_adapter.read_string.side_effect = ['invalid', '25']
+        
+        obj = {"field_name": "age", "type": "integer", "prompt": "Age:"}
+        result = handle_field_terminal(obj, self.mock_input_adapter, self.mock_logger)
+        
+        self.assertEqual(result, 25)
+
+    @patch('builtins.input', side_effect=['3.14'])
+    def test_handle_field_terminal_float(self, mock_input):
+        """Test handle_field_terminal with float type."""
+        self.mock_input_adapter.read_string.side_effect = ['3.14']
+        
+        obj = {"field_name": "price", "type": "float", "prompt": "Price:"}
+        result = handle_field_terminal(obj, self.mock_input_adapter, self.mock_logger)
+        
+        self.assertEqual(result, 3.14)
+
+    @patch('builtins.input', side_effect=['test@example.com'])
+    def test_handle_field_terminal_email(self, mock_input):
+        """Test handle_field_terminal with email type."""
+        self.mock_input_adapter.read_string.side_effect = ['test@example.com']
+        
+        obj = {"field_name": "email", "type": "email", "prompt": "Email:"}
+        result = handle_field_terminal(obj, self.mock_input_adapter, self.mock_logger)
+        
+        self.assertEqual(result, 'test@example.com')
+
+
+class TestTerminalSelectionHandlers(unittest.TestCase):
+    """Test terminal selection handlers."""
+
+    def setUp(self):
+        """Set up test fixtures."""
+        self.mock_input_adapter = Mock()
+        self.mock_output_adapter = Mock()
+        self.mock_logger = Mock()
+
+    @patch('builtins.input', return_value='1')
+    def test_handle_radio_terminal(self, mock_input):
+        """Test handle_radio_terminal."""
+        self.mock_output_adapter.write_line = Mock()
+        self.mock_input_adapter.read_string.side_effect = ['1']
+        
+        obj = {
+            "prompt": "Choose option:",
+            "options": ["Option 1", "Option 2", "Option 3"],
+            "default": None
+        }
+        result = handle_radio_terminal(obj, self.mock_output_adapter, self.mock_input_adapter, self.mock_logger)
+        
+        self.assertEqual(result, "Option 1")
+        self.mock_output_adapter.write_line.assert_called()
+
+    @patch('builtins.input', return_value='all')
+    def test_handle_checkbox_terminal_all(self, mock_input):
+        """Test handle_checkbox_terminal with 'all' selection."""
+        self.mock_output_adapter.write_line = Mock()
+        self.mock_input_adapter.read_string.side_effect = ['all']
+        
+        obj = {
+            "prompt": "Select options:",
+            "options": ["Option 1", "Option 2", "Option 3"],
+            "defaults": []
+        }
+        result = handle_checkbox_terminal(obj, self.mock_output_adapter, self.mock_input_adapter, self.mock_logger)
+        
+        self.assertEqual(result, ["Option 1", "Option 2", "Option 3"])
+
+    @patch('builtins.input', side_effect=['1,3'])
+    def test_handle_checkbox_terminal_multiple(self, mock_input):
+        """Test handle_checkbox_terminal with multiple selection."""
+        self.mock_output_adapter.write_line = Mock()
+        self.mock_input_adapter.read_string.side_effect = ['1,3']
+        
+        obj = {
+            "prompt": "Select options:",
+            "options": ["Option 1", "Option 2", "Option 3"],
+            "defaults": []
+        }
+        result = handle_checkbox_terminal(obj, self.mock_output_adapter, self.mock_input_adapter, self.mock_logger)
+        
+        self.assertEqual(result, ["Option 1", "Option 3"])
+
+    @patch('builtins.input', return_value='2')
+    def test_handle_dropdown_terminal(self, mock_input):
+        """Test handle_dropdown_terminal."""
+        self.mock_output_adapter.write_line = Mock()
+        self.mock_input_adapter.read_string.side_effect = ['2']
+        
+        obj = {
+            "prompt": "Choose:",
+            "options": ["Choice 1", "Choice 2", "Choice 3"],
+            "default": None
+        }
+        result = handle_dropdown_terminal(obj, self.mock_output_adapter, self.mock_input_adapter, self.mock_logger)
+        
+        self.assertEqual(result, "Choice 2")
+        self.mock_output_adapter.write_line.assert_called()
+
+    @patch('builtins.input', side_effect=['test', '1'])
+    def test_handle_autocomplete_terminal(self, mock_input):
+        """Test handle_autocomplete_terminal."""
+        self.mock_output_adapter.write_line = Mock()
+        self.mock_input_adapter.read_string.side_effect = ['test', '1']
+        
+        obj = {
+            "prompt": "Search:",
+            "options": ["test option", "other option", "test item"],
+            "min_chars": 1
+        }
+        result = handle_autocomplete_terminal(obj, self.mock_output_adapter, self.mock_input_adapter, self.mock_logger)
+        
+        # Should return one of the matching options
+        self.assertIn(result, ["test option", "test item"])
+
+    @patch('builtins.input', return_value='50')
+    def test_handle_range_terminal(self, mock_input):
+        """Test handle_range_terminal."""
+        self.mock_output_adapter.write_line = Mock()
+        self.mock_input_adapter.read_string.side_effect = ['50']
+        
+        obj = {
+            "prompt": "Select value:",
+            "min": 0,
+            "max": 100,
+            "step": 1,
+            "default": 0
+        }
+        result = handle_range_terminal(obj, self.mock_output_adapter, self.mock_input_adapter, self.mock_logger)
+        
+        self.assertEqual(result, 50.0)
+
+    @patch('builtins.input', side_effect=['150', '75'])
+    @patch('builtins.print')
+    def test_handle_range_terminal_out_of_bounds(self, mock_print, mock_input):
+        """Test handle_range_terminal with out of bounds input."""
+        self.mock_output_adapter.write_line = Mock()
+        self.mock_input_adapter.read_string.side_effect = ['150', '75']
+        
+        obj = {
+            "prompt": "Select value:",
+            "min": 0,
+            "max": 100,
+            "step": 1,
+            "default": 0
+        }
+        result = handle_range_terminal(obj, self.mock_output_adapter, self.mock_input_adapter, self.mock_logger)
+        
+        self.assertEqual(result, 75.0)
+
+
+class TestTerminalInputIntegration(unittest.TestCase):
+    """Test terminal input handlers integration with zDisplay."""
+
+    def setUp(self):
+        """Set up test fixtures."""
+        self.mock_zcli = Mock()
+        self.mock_zcli.session = {"zMode": "Terminal", "zS_id": "test"}
+        self.mock_zcli.logger = Mock()
+        self.display = zDisplay(self.mock_zcli)
+
+    @patch('builtins.input', return_value='test value')
+    def test_prompt_event_terminal_mode(self, mock_input):
+        """Test prompt event in Terminal mode."""
+        # Mock the input adapter's read_string method
+        self.display.input.read_string = Mock(return_value='test value')
+        
+        result = self.display.handle({
+            "event": "prompt",
+            "prompt": "Enter value:",
+            "default": ""
+        })
+        
+        self.assertEqual(result, 'test value')
+
+    @patch('builtins.input', side_effect=['y'])
+    def test_confirm_event_terminal_mode(self, mock_input):
+        """Test confirm event in Terminal mode."""
+        # Mock the input adapter's read_string method
+        self.display.input.read_string = Mock(side_effect=['y'])
+        
+        result = self.display.handle({
+            "event": "confirm",
+            "message": "Continue?",
+            "default": None
+        })
+        
+        self.assertTrue(result)
+
+    def test_radio_event_terminal_mode(self):
+        """Test radio event in Terminal mode."""
+        # Mock adapters
+        self.display.output.write_line = Mock()
+        with patch('builtins.input', return_value='1'):
+            self.display.input.read_string = Mock(return_value='1')
+            
+            result = self.display.handle({
+                "event": "radio",
+                "prompt": "Choose:",
+                "options": ["Option A", "Option B"]
+            })
+            
+            self.assertEqual(result, "Option A")
 
 
 def run_tests(verbose=False):
@@ -384,6 +677,9 @@ def run_tests(verbose=False):
     suite.addTests(loader.loadTestsFromTestCase(TestzDisplayEventHandling))
     suite.addTests(loader.loadTestsFromTestCase(TestGUIEventHandlers))
     suite.addTests(loader.loadTestsFromTestCase(TestModeAwareRouting))
+    suite.addTests(loader.loadTestsFromTestCase(TestTerminalInputHandlers))
+    suite.addTests(loader.loadTestsFromTestCase(TestTerminalSelectionHandlers))
+    suite.addTests(loader.loadTestsFromTestCase(TestTerminalInputIntegration))
 
     runner = unittest.TextTestRunner(verbosity=2 if verbose else 1)
     result = runner.run(suite)

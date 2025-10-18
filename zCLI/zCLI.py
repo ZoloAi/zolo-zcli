@@ -146,18 +146,19 @@ class zCLI:
     def _init_session(self):
         """
         Initialize session with zS_id and zMode.
-        Walker mode populates additional fields later.
         """
         # Set session ID - always required
         self.session["zS_id"] = self.config.session.generate_id("zS")
 
-        # Set zMode based on interface mode
+        # Set zMode based on zConfig source of truth or UI mode detection
         if self.ui_mode:
-            # Walker mode - zMode will be set by zWalker from config
-            self.session["zMode"] = None
+            # UI mode detected - set to GUI for WebSocket adapters
+            self.session["zMode"] = "GUI"
         else:
-            # Shell mode - always Terminal
-            self.session["zMode"] = "Terminal"
+            # Use zConfig-detected mode or default to Terminal
+            # zConfig will check zSpark_obj.get("zMode") and default to "Terminal"
+            detected_mode = self.config.session.detect_zMode()
+            self.session["zMode"] = detected_mode
 
         self.logger.debug("Session initialized:")
         self.logger.debug("  zS_id: %s", self.session["zS_id"])

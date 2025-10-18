@@ -1,17 +1,30 @@
 # zCLI/subsystems/zDisplay/zDisplay.py
 """Display and rendering subsystem - UI elements, input collection, multi-mode output."""
 
+from zCLI.utils import Colors
 from .zDisplay_modules.output import OutputFactory
 from .zDisplay_modules.input import InputFactory
-from zCLI.utils import Colors
-from .zDisplay_modules.events.primitives import (
+# Import all event handlers from centralized events module
+from .zDisplay_modules.events import (
+    # Primitive handlers
     handle_raw,
     handle_line,
     handle_block,
     handle_read,
     handle_read_password,
-)
-from .zDisplay_modules.events.basic import (
+    handle_prompt_terminal,
+    handle_input_terminal,
+    handle_confirm_terminal,
+    handle_password_terminal,
+    handle_field_terminal,
+    handle_multiline_terminal,
+    handle_prompt_gui,
+    handle_input_gui,
+    handle_confirm_gui,
+    handle_password_gui,
+    handle_field_gui,
+    handle_multiline_gui,
+    # Basic handlers
     handle_text,
     handle_header,
     handle_sysmsg,
@@ -24,40 +37,29 @@ from .zDisplay_modules.events.basic import (
     handle_json,
     handle_break,
     handle_pause,
-)
-from .zDisplay_modules.events.basic.control_gui import (
     handle_break_gui,
     handle_pause_gui,
     handle_loading_gui,
     handle_await_gui,
     handle_idle_gui,
-)
-from .zDisplay_modules.events.primitives.input_gui import (
-    handle_prompt_gui,
-    handle_input_gui,
-    handle_confirm_gui,
-    handle_password_gui,
-    handle_field_gui,
-    handle_multiline_gui,
-)
-from .zDisplay_modules.events.basic.selection_gui import (
+    handle_radio_terminal,
+    handle_checkbox_terminal,
+    handle_dropdown_terminal,
+    handle_autocomplete_terminal,
+    handle_range_terminal,
     handle_radio_gui,
     handle_checkbox_gui,
     handle_dropdown_gui,
     handle_autocomplete_gui,
     handle_range_gui,
-)
-from .zDisplay_modules.events.composed import (
+    # Composed handlers
     handle_session,
-)
-from .zDisplay_modules.events.walker import (
+    # Walker handlers
     handle_menu,
     handle_crumbs,
-)
-from .zDisplay_modules.events.forms import (
+    # Form handlers
     handle_dialog,
-)
-from .zDisplay_modules.events.tables import (
+    # Table handlers
     handle_data_table,
     handle_schema_table,
 )
@@ -90,7 +92,7 @@ class zDisplay:
         self.input = InputFactory.create(self.session, self.logger)
         
         # Set zcli instance on WebSocket adapters for communication
-        if self.mode in ("UI", "WebSocket"):
+        if self.mode == "GUI":
             if hasattr(self.output, 'set_zcli'):
                 self.output.set_zcli(self.zcli)
             if hasattr(self.input, 'set_zcli'):
@@ -105,7 +107,7 @@ class zDisplay:
 
     def _get_handler(self, terminal_handler, gui_handler=None):
         """Get appropriate handler based on mode (Terminal vs GUI)."""
-        if self.mode in ("UI", "WebSocket") and gui_handler is not None:
+        if self.mode == "GUI" and gui_handler is not None:
             return gui_handler
         return terminal_handler
     
@@ -140,10 +142,10 @@ class zDisplay:
             # ════════════════════════════════════════════════════════
             # BASIC INPUT - Single-value collection
             # ════════════════════════════════════════════════════════
-            "prompt": (self._get_handler(None, handle_prompt_gui), "input"),
-            "input": (self._get_handler(None, handle_input_gui), "input"),
-            "confirm": (self._get_handler(None, handle_confirm_gui), "input"),
-            "password": (self._get_handler(None, handle_password_gui), "input"),
+            "prompt": (self._get_handler(handle_prompt_terminal, handle_prompt_gui), "input"),
+            "input": (self._get_handler(handle_input_terminal, handle_input_gui), "input"),
+            "confirm": (self._get_handler(handle_confirm_terminal, handle_confirm_gui), "input"),
+            "password": (self._get_handler(handle_password_terminal, handle_password_gui), "input"),
             
             # ════════════════════════════════════════════════════════
             # SIGNALS - Feedback primitives (output)
@@ -172,8 +174,8 @@ class zDisplay:
             # ════════════════════════════════════════════════════════
             # VALIDATED INPUT - Type-checked single field (input)
             # ════════════════════════════════════════════════════════
-            "field": (self._get_handler(None, handle_field_gui), "input"),
-            "multiline": (self._get_handler(None, handle_multiline_gui), "input"),
+            "field": (self._get_handler(handle_field_terminal, handle_field_gui), "input"),
+            "multiline": (self._get_handler(handle_multiline_terminal, handle_multiline_gui), "input"),
             "hint": (None, "output"),             # Input hints (display)
             "example": (None, "output"),          # Example values (display)
             "validate": (None, "output"),         # Validation feedback (display)
@@ -182,11 +184,11 @@ class zDisplay:
             # ════════════════════════════════════════════════════════
             # SELECTION - Choose from bounded options (both)
             # ════════════════════════════════════════════════════════
-            "radio": (self._get_handler(None, handle_radio_gui), "both"),
-            "checkbox": (self._get_handler(None, handle_checkbox_gui), "both"),
-            "dropdown": (self._get_handler(None, handle_dropdown_gui), "both"),
-            "range": (self._get_handler(None, handle_range_gui), "both"),
-            "autocomplete": (self._get_handler(None, handle_autocomplete_gui), "both"),
+            "radio": (self._get_handler(handle_radio_terminal, handle_radio_gui), "both"),
+            "checkbox": (self._get_handler(handle_checkbox_terminal, handle_checkbox_gui), "both"),
+            "dropdown": (self._get_handler(handle_dropdown_terminal, handle_dropdown_gui), "both"),
+            "range": (self._get_handler(handle_range_terminal, handle_range_gui), "both"),
+            "autocomplete": (self._get_handler(handle_autocomplete_terminal, handle_autocomplete_gui), "both"),
             
             # ════════════════════════════════════════════════════════
             # NOTIFICATIONS - Timed/contextual feedback (output)

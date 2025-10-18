@@ -498,7 +498,7 @@ class TestConfigHierarchy(unittest.TestCase):
         self.assertEqual(session["zLogger"], "WARNING")
     
     def test_zMode_hierarchy_order(self):
-        """Test zMode hierarchy: zSpark > venv > system env."""
+        """Test zMode detection: zSpark_obj > default Terminal."""
         with patch('builtins.print'):  # Suppress initialization messages
             paths = zConfigPaths()
         machine = MachineConfig(paths)
@@ -516,23 +516,28 @@ class TestConfigHierarchy(unittest.TestCase):
         zcli = MockZCLI()
         zconfig = MockZConfig()
         
-        # Test 1: zSpark mode has highest priority
-        zSpark_obj = {"zMode": "Shell"}
+        # Test 1: Valid Terminal mode from zSpark_obj
+        zSpark_obj = {"zMode": "Terminal"}
         session_config = SessionConfig(machine, env, zcli, zSpark_obj, zconfig)
         session = session_config.create_session()
-        self.assertEqual(session["zMode"], "zSpark")
+        self.assertEqual(session["zMode"], "Terminal")
         
-        # Test 2: Virtual environment mode (mock venv detection)
-        with patch.object(env, 'is_in_venv', return_value=True):
-            session_config = SessionConfig(machine, env, zcli, zconfig=zconfig)
-            session = session_config.create_session()
-            self.assertEqual(session["zMode"], "VirtualEnv")
+        # Test 2: Valid GUI mode from zSpark_obj
+        zSpark_obj = {"zMode": "GUI"}
+        session_config = SessionConfig(machine, env, zcli, zSpark_obj, zconfig)
+        session = session_config.create_session()
+        self.assertEqual(session["zMode"], "GUI")
         
-        # Test 3: System environment (default)
-        with patch.object(env, 'is_in_venv', return_value=False):
-            session_config = SessionConfig(machine, env, zcli, zconfig=zconfig)
-            session = session_config.create_session()
-            self.assertEqual(session["zMode"], "Terminal")
+        # Test 3: Invalid mode falls back to Terminal
+        zSpark_obj = {"zMode": "Shell"}  # Invalid mode
+        session_config = SessionConfig(machine, env, zcli, zSpark_obj, zconfig)
+        session = session_config.create_session()
+        self.assertEqual(session["zMode"], "Terminal")
+        
+        # Test 4: No zSpark_obj defaults to Terminal
+        session_config = SessionConfig(machine, env, zcli, zconfig=zconfig)
+        session = session_config.create_session()
+        self.assertEqual(session["zMode"], "Terminal")
     
     def test_comprehensive_logger_hierarchy_all_levels(self):
         """Test all 5 levels of logger hierarchy in proper order."""

@@ -1,7 +1,7 @@
 # zCLI/subsystems/zConfig/zConfig_modules/config_session.py
 """Session configuration and management as part of zConfig."""
 
-from zCLI import os, Colors, secrets
+from zCLI import os, secrets
 
 class SessionConfig:
     """Manages session configuration and creation."""
@@ -51,7 +51,7 @@ class SessionConfig:
             "zVaFile_path": None,
             "zVaFilename": None,
             "zBlock": None,
-            "zMode": self._detect_zMode(),
+            "zMode": self.detect_zMode(),
             "zLogger": self._detect_logger_level(),
             "zMachine": machine_config,
             "zAuth": {
@@ -86,17 +86,15 @@ class SessionConfig:
         
         return session
 
-    def _detect_zMode(self):
-        """Detect zMode based on environment priority: zSpark > virtual env > system env."""
-        # 1. zSpark value (if available)
-        if self.zSpark is not None:
-            return "zSpark"
-
-        # 2. Virtual environment (if in venv)
-        if self.environment.is_in_venv():
-            return "VirtualEnv"
-
-        # 3. System environment (default)
+    def detect_zMode(self):
+        """Detect zMode based on zSpark_obj zMode setting, fallback to Terminal."""
+        # 1. Check zSpark_obj for explicit zMode setting (highest priority)
+        if self.zSpark is not None and isinstance(self.zSpark, dict):
+            zMode = self.zSpark.get("zMode")
+            if zMode and zMode in ("Terminal", "GUI"):
+                return zMode
+        
+        # 2. Default to Terminal if no valid zMode specified
         return "Terminal"
 
     def _detect_logger_level(self):
