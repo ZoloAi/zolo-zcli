@@ -46,6 +46,12 @@ try:
 except ImportError:
     ZDISPLAY_AVAILABLE = False
 
+try:
+    from zTestSuite import zDispatch_Test
+    ZDISPATCH_AVAILABLE = True
+except ImportError:
+    ZDISPATCH_AVAILABLE = False
+
 
 def run_subsystem_tests(test_module, name):
     """Run tests for a single subsystem with enhanced UX."""
@@ -202,6 +208,8 @@ def show_test_menu():
         available_tests.append(("zDisplay", "zDisplay_Test"))
     if ZAUTH_AVAILABLE:
         available_tests.append(("zAuth", "zAuth_Test"))  # zAuth depends on zDisplay
+    if ZDISPATCH_AVAILABLE:
+        available_tests.append(("zDispatch", "zDispatch_Test"))
     
     if not available_tests:
         print("❌ No test suites available!")
@@ -253,6 +261,8 @@ def run_selected_tests(test_choice=None):
             test_suites.append((zDisplay_Test, "zDisplay"))
         if ZAUTH_AVAILABLE:
             test_suites.append((zAuth_Test, "zAuth"))  # zAuth depends on zDisplay
+        if ZDISPATCH_AVAILABLE:
+            test_suites.append((zDispatch_Test, "zDispatch"))
         
         for test_module, name in test_suites:
             result = run_subsystem_tests(test_module, name)
@@ -270,6 +280,9 @@ def run_selected_tests(test_choice=None):
             results.append(result)
         elif test_choice == "zDisplay_Test" and ZDISPLAY_AVAILABLE:
             result = run_subsystem_tests(zDisplay_Test, "zDisplay")
+            results.append(result)
+        elif test_choice == "zDispatch_Test" and ZDISPATCH_AVAILABLE:
+            result = run_subsystem_tests(zDispatch_Test, "zDispatch")
             results.append(result)
         else:
             print(f"❌ Test suite '{test_choice}' not available!")

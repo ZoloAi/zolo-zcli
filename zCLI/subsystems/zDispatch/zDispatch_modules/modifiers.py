@@ -28,26 +28,11 @@ class ModifierProcessor:
         return suf_modifiers
 
     def process(self, modifiers, zKey, zHorizontal, context=None, walker=None):
-        """
-        Process modifiers with optional wizard context and walker.
-        
-        Args:
-            modifiers: List of modifiers to process
-            zKey: Dispatch key
-            zHorizontal: Dispatch value
-            context: Optional wizard context
-            walker: Optional walker instance
-        """
+        """Process modifiers with optional wizard context and walker."""
         # Use walker's display if available, otherwise use zCLI's display
         display = walker.display if walker else self.zcli.display
-        
-        display.handle({
-            "event": "sysmsg",
-            "label": "Process Modifiers",
-            "style": "single",
-            "color": self.dispatch.mycolor,
-            "indent": 2
-        })
+
+        display.zDeclare("Process Modifiers", color=self.dispatch.mycolor, indent=2, style="single")
 
         self.logger.info("Resolved modifiers: %s on key: %s", modifiers, zKey)
 
@@ -55,7 +40,7 @@ class ModifierProcessor:
             # Menu modifier - now uses core zMenu
             is_anchor = "~" in modifiers
             self.logger.debug("* Modifier detected for %s — invoking menu (anchor=%s)", zKey, is_anchor)
-            
+
             if walker:
                 # Walker context - use legacy format for complex navigation
                 active_zBlock = next(reversed(self.zcli.session["zCrumbs"]))
@@ -69,7 +54,7 @@ class ModifierProcessor:
             else:
                 # Non-walker context - use simple menu
                 result = self.zcli.navigation.create(zHorizontal, allow_back=not is_anchor, walker=walker)
-            
+
             return result
 
         if "^" in modifiers:
@@ -77,13 +62,7 @@ class ModifierProcessor:
             return "zBack"
 
         if "!" in modifiers:
-            display.handle({
-                "event": "sysmsg",
-                "label": "zRequired",
-                "style": "single",
-                "color": self.dispatch.mycolor,
-                "indent": 3
-            })
+            display.zDeclare("zRequired", color=self.dispatch.mycolor, indent=3, style="single")
             self.logger.info("Required step: %s", zKey)
             result = self.dispatch.launcher.launch(zHorizontal, context=context, walker=walker)
             self.logger.info("zRequired results: %s", result)
@@ -95,13 +74,7 @@ class ModifierProcessor:
                         return "stop"
                 result = self.dispatch.launcher.launch(zHorizontal, context=context, walker=walker)
             self.logger.info("Requirement '%s' satisfied.", zKey)
-            display.handle({
-                "event": "sysmsg",
-                "label": "zRequired Return",
-                "style": "~",
-                "color": self.dispatch.mycolor,
-                "indent": 3
-            })
+            display.zDeclare("zRequired Return", color=self.dispatch.mycolor, indent=3, style="~")
             return result
 
         return self.dispatch.launcher.launch(zHorizontal, context=context, walker=walker)

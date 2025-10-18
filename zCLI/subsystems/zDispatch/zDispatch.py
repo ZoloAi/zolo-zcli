@@ -22,43 +22,18 @@ class zDispatch:
         self.modifiers = ModifierProcessor(self)
         self.launcher = CommandLauncher(self)
 
-        # Print styled ready message
-        self._print_ready()
+        # Display ready message using zDisplay
+        self.zcli.display.zDeclare("zDispatch Ready", color=self.mycolor, indent=0, style="full")
 
         self.logger.info("[zDispatch] Command dispatch subsystem ready")
-
-    def _print_ready(self):
-        """Print styled 'Ready' message (before zDisplay is available)."""
-        try:
-            from zCLI.utils import Colors
-            color_code = getattr(Colors, self.mycolor, Colors.RESET)
-            label = "zDispatch Ready"
-            BASE_WIDTH = 60
-            char = "═"
-            label_len = len(label) + 2
-            space = BASE_WIDTH - label_len
-            left = space // 2
-            right = space - left
-            colored_label = f"{color_code} {label} {Colors.RESET}"
-            line = f"{char * left}{colored_label}{char * right}"
-            print(line)
-        except Exception:
-            # Silently fail if Colors not available
-            pass
 
     def handle(self, zKey, zHorizontal, context=None, walker=None):
         """Handle dispatch with optional wizard context and walker."""
         # Use walker's display if available, otherwise use zCLI's display
         display = walker.display if walker else self.zcli.display
-        
-        display.handle({
-            "event": "sysmsg",
-            "label": "handle zDispatch",
-            "style": "full",
-            "color": self.mycolor,
-            "indent": 1
-        })
-        
+
+        display.zDeclare("handle zDispatch", color=self.mycolor, indent=1, style="full")
+
         self.logger.info("zHorizontal: %s", zHorizontal)
         self.logger.info("handle zDispatch for key: %s", zKey)
 
@@ -91,6 +66,6 @@ def handle_zDispatch(zKey, zHorizontal, zcli=None, walker=None, context=None):
         zcli_instance = zcli
     else:
         raise ValueError("handle_zDispatch requires either zcli or walker parameter")
-    
+
     # Use zCLI's dispatch subsystem
     return zcli_instance.dispatch.handle(zKey, zHorizontal, context=context, walker=walker)

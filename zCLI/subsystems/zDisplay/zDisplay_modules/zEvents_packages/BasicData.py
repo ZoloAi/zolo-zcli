@@ -108,6 +108,5 @@ class BasicData:
             f'{self.zColors.MAGENTA}\\1{self.zColors.RESET}',
             json_str
         )
-        
-        return json_str
 
+        return json_str
