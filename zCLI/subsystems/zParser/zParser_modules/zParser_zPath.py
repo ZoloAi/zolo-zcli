@@ -127,13 +127,7 @@ def _find_filename_start(zPath_parts, symbol_idx):
 def zPath_decoder(zSession, logger, zPath=None, zType=None, display=None):
     """Resolve dotted paths to file paths with workspace support."""
     if display:
-        display.handle({
-            "event": "sysmsg",
-            "label": "zPath decoder",
-            "style": "single",
-            "color": "SUBLOADER",
-            "indent": 2,
-        })
+        display.zDeclare("zPath decoder", color="SUBLOADER", indent=2, style="single")
 
     zWorkspace = zSession.get("zWorkspace") or os.getcwd()
 
@@ -152,15 +146,15 @@ def zPath_decoder(zSession, logger, zPath=None, zType=None, display=None):
         symbol = zRelPath_parts[0] if zRelPath_parts else None
         logger.info("symbol: %s", symbol)
 
-        zVaFile_basepath = _resolve_symbol_path(symbol, zRelPath_parts, zWorkspace, zSession, logger)
+        zVaFile_basepath = resolve_symbol_path(symbol, zRelPath_parts, zWorkspace, zSession, logger)
 
     zVaFile_fullpath = os.path.join(zVaFile_basepath, zFileName)
     logger.info("zVaFile path + zVaFilename:\n%s", zVaFile_fullpath)
 
     return zVaFile_fullpath, zFileName
 
-def _resolve_symbol_path(symbol, zRelPath_parts, zWorkspace, zSession, logger):
-    """Resolve path based on symbol."""
+def resolve_symbol_path(symbol, zRelPath_parts, zWorkspace, zSession, logger):
+    """Resolve path based on symbol (@, ~, or no symbol)."""
     if symbol == "@":
         logger.info("↪ '@' → workspace-relative path")
 
@@ -240,12 +234,6 @@ def identify_zFile(filename, full_zFilePath, logger, display=None):
             raise FileNotFoundError(msg)
 
     if display:
-        display.handle({
-            "event": "sysmsg",
-            "label": f"Type: {zFile_type}|{zFile_extension}",
-            "style": "single",
-            "color": "SUBLOADER",
-            "indent": 2,
-        })
+        display.zDeclare(f"Type: {zFile_type}|{zFile_extension}", color="SUBLOADER", indent=2, style="single")
 
     return found_path, zFile_extension

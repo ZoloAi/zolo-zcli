@@ -9,13 +9,7 @@
 def parse_zva_file(data, file_type, logger, file_path=None, session=None, display=None):
     """Main entry point for zVaFile parsing and validation."""
     if display:
-        display.handle({
-            "event": "sysmsg",
-            "label": "parse_zva_file",
-            "style": "single",
-            "color": "SCHEMA",
-            "indent": 6
-        })
+        display.zDeclare("parse_zva_file", color="SCHEMA", indent=6, style="single")
 
     logger.info("📨 Parsing zVaFile (type: %s, path: %s)", file_type, file_path or "unknown")
 

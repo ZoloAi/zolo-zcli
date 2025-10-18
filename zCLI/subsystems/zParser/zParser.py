@@ -5,7 +5,8 @@
 from .zParser_modules.zParser_zPath import (
     zPath_decoder as zPath_decoder_func, 
     identify_zFile as identify_zFile_func,
-    resolve_zmachine_path as resolve_zmachine_path_func
+    resolve_zmachine_path as resolve_zmachine_path_func,
+    resolve_symbol_path as resolve_symbol_path_func
 )
 from .zParser_modules.zParser_commands import parse_command as parse_command_func
 from .zParser_modules.zParser_utils import zExpr_eval, parse_dotted_path, handle_zRef, handle_zParser
@@ -16,7 +17,6 @@ from .zParser_modules.zParser_zVaFile import (
 from .zParser_modules.zParser_file import (
     parse_file_content, parse_yaml, parse_json, detect_format, parse_file_by_path, parse_json_expr
 )
-from .zParser_modules.zParser_zFunc import parse_function_spec
 
 class zParser:
     """Core zParser class for path resolution, command parsing, file parsing, and utilities."""
@@ -35,12 +35,7 @@ class zParser:
         self.logger = zcli.logger
         self.display = zcli.display
         self.mycolor = "PARSER"
-        self.display.handle({
-            "event": "sysmsg",
-            "label": "zParser Ready",
-            "color": self.mycolor,
-            "indent": 0
-        })
+        self.display.zDeclare("zParser Ready", color=self.mycolor, indent=0, style="full")
 
     # ═══════════════════════════════════════════════════════════
     # Path Resolution
@@ -57,6 +52,11 @@ class zParser:
     def resolve_zmachine_path(self, data_path, config_paths=None):
         """Resolve ~.zMachine.* path references to OS-specific paths."""
         return resolve_zmachine_path_func(data_path, self.logger, config_paths)
+
+    def resolve_symbol_path(self, symbol, path_parts, workspace=None):
+        """Resolve path based on symbol (@, ~, or no symbol)."""
+        workspace = workspace or self.zSession.get("zWorkspace")
+        return resolve_symbol_path_func(symbol, path_parts, workspace, self.zSession, self.logger)
 
     def resolve_data_path(self, data_path):
         """Resolve data paths (supports ~.zMachine.* and @ workspace paths)."""
@@ -117,8 +117,71 @@ class zParser:
     # ═══════════════════════════════════════════════════════════
 
     def parse_function_path(self, zFunc_spec, zContext=None):
-        """Parse zFunc path specification into (func_path, arg_str, function_name)."""
-        return parse_function_spec(zFunc_spec, self.zSession, self.logger, zContext)
+        """Parse zFunc path specification into (func_path, arg_str, function_name).
+        
+        Supports formats:
+        - Dict: {"zFunc_path": "path/to/file.py", "zFunc_args": "args"}
+        - String: "zFunc(@utils.myfile.my_function, args)"
+        - String: "zFunc(path.to.file.function_name)"
+        """
+        from zCLI import os
+        
+        # Handle dict format
+        if isinstance(zFunc_spec, dict):
+            func_path = zFunc_spec["zFunc_path"]
+            arg_str = zFunc_spec.get("zFunc_args")
+            function_name = os.path.splitext(os.path.basename(func_path))[0]
+            return func_path, arg_str, function_name
+
+        # Handle string format: "zFunc(path.to.file.function_name, args)"
+        zFunc_raw = zFunc_spec[len("zFunc("):-1].strip()
+        
+        self.logger.debug("Parsing zFunc spec: %s", zFunc_raw)
+        if zContext:
+            self.logger.debug("Context model: %s", zContext.get("model"))
+
+        # Split path and arguments
+        if "," in zFunc_raw:
+            path_part, arg_str = zFunc_raw.split(",", 1)
+            arg_str = arg_str.strip()
+        else:
+            path_part = zFunc_raw
+            arg_str = None
+
+        # Parse path components: @utils.myfile.my_function
+        path_parts = path_part.split(".")
+        function_name = path_parts[-1]  # "my_function"
+        file_name = path_parts[-2]      # "myfile"
+        path_prefix = path_parts[:-2]   # ["@utils"] or ["utils"]
+        
+        self.logger.debug("file_name: %s", file_name)
+        self.logger.debug("function_name: %s", function_name)
+        self.logger.debug("path_prefix: %s", path_prefix)
+
+        # Extract symbol from first part
+        first_part = path_prefix[0] if path_prefix else ""
+        symbol = None
+        
+        if first_part and (first_part.startswith("@") or first_part.startswith("~")):
+            symbol = first_part[0]
+            # Remove symbol from first part
+            path_prefix[0] = first_part[1:]
+        
+        self.logger.debug("symbol: %s", symbol)
+
+        # Build path_parts list for resolve_symbol_path
+        if symbol:
+            symbol_parts = [symbol] + path_prefix
+        else:
+            symbol_parts = path_prefix
+        
+        # Use the class method - no cross-module imports needed!
+        base_path = self.resolve_symbol_path(symbol, symbol_parts)
+        func_path = os.path.join(base_path, f"{file_name}.py")
+        
+        self.logger.debug("Resolved func_path: %s", func_path)
+
+        return func_path, arg_str, function_name
 
     def parse_file_by_path(self, file_path):
         """Load and parse file in one call."""

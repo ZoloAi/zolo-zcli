@@ -2,20 +2,12 @@
 
 """Utility functions for parsing operations."""
 
-from zCLI import os
-import json
-import yaml
+from zCLI import os, json, yaml
 
 def zExpr_eval(expr, logger, display=None):
     """Evaluate JSON expressions and convert to Python objects."""
     if display:
-        display.handle({
-            "event": "sysmsg",
-            "label": "zExpr Evaluation",
-            "style": "single",
-            "color": "PARSER",
-            "indent": 1
-        })
+        display.zDeclare("zExpr Evaluation", color="PARSER", indent=1, style="single")
 
     logger.info("[>>] Received expr: %s", expr)
     expr = expr.strip()
@@ -60,13 +52,7 @@ def parse_dotted_path(ref_expr):
 def handle_zRef(ref_expr, logger, base_path=None, display=None):
     """Handle zRef expressions to load YAML data."""
     if display:
-        display.handle({
-            "event": "sysmsg",
-            "label": "handle_zRef",
-            "style": "single",
-            "color": "PARSER",
-            "indent": 6,
-        })
+        display.zDeclare("handle_zRef", color="PARSER", indent=6, style="single")
 
     if not (isinstance(ref_expr, str) and ref_expr.startswith("zRef(") and ref_expr.endswith(")")):
         logger.warning("[WARN] Invalid zRef format: %s", ref_expr)
@@ -100,11 +86,5 @@ def handle_zRef(ref_expr, logger, base_path=None, display=None):
 def handle_zParser(zFile_raw, display=None):  # pylint: disable=unused-argument
     """Placeholder function that always returns True."""
     if display:
-        display.handle({
-            "event": "sysmsg",
-            "label": "zParser",
-            "style": "full",
-            "color": "PARSER",
-            "indent": 0,
-        })
+        display.zDeclare("zParser", color="PARSER", indent=0, style="full")
     return True

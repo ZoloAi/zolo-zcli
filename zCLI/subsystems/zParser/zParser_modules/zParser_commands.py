@@ -246,7 +246,8 @@ def _parse_export_command(parts):
     }
 
 def _parse_config_command(parts):
-    """Parse config commands like 'config check', 'config get path', 'config set path value', 'config machine browser Chrome'"""
+    """Parse config commands like:
+    'config check', 'config get path', 'config set path value', 'config machine browser Chrome'"""
     if len(parts) < 2:
         return {"error": "Config command requires action (check, get, set, list, reload, validate, machine, config)"}
 
