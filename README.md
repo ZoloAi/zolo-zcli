@@ -96,8 +96,9 @@ Type 'help' for available commands
 
 ### For Developers & AI
 
-10. **[AGENT.md](Documentation/AGENT.md)** - LLM-optimized technical reference
-11. **[INSTALL.md](Documentation/INSTALL.md)** - Complete installation & uninstall guide
+10. **[zCLI Guide](Documentation/zCLI_GUIDE.md)** - Complete framework guide for building applications
+11. **[AGENT.md](Documentation/AGENT.md)** - LLM-optimized technical reference
+12. **[INSTALL.md](Documentation/INSTALL.md)** - Complete installation & uninstall guide
 
 ---
 
