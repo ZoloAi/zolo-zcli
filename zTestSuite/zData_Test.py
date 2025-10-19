@@ -21,6 +21,18 @@ import tempfile
 from pathlib import Path
 
 
+def get_package_root():
+    """Get the root directory of the installed zCLI package.
+    
+    This ensures tests can find demo files regardless of where they're run from.
+    Returns the directory containing zTestSuite (the package root).
+    """
+    # Get the directory containing this test file
+    test_file_dir = Path(__file__).parent
+    # The parent of zTestSuite is the package root
+    return test_file_dir.parent
+
+
 class TestzDataInitialization(unittest.TestCase):
     """Test zData initialization and basic setup."""
 
@@ -79,14 +91,14 @@ class TestzDataSQLiteAdapter(unittest.TestCase):
         """Set up test fixtures."""
         from zCLI import zCLI
         
-        # Create a temporary directory for test data
+        # Create a temporary directory for test data (database files only)
         self.temp_dir = tempfile.mkdtemp(prefix="zdata_test_")
         self.test_dir = Path(self.temp_dir)
         
-        # Initialize zCLI with test workspace
+        # Initialize zCLI with package root as workspace (so @.zTestSuite.demos works)
         with patch('builtins.print'):
             self.zcli = zCLI({
-                "zWorkspace": str(self.test_dir)
+                "zWorkspace": str(get_package_root())
             })
         
         # Load SQLite schema using zLoader (proper zPath resolution)
@@ -434,14 +446,14 @@ class TestzDataCSVAdapter(unittest.TestCase):
         """Set up test fixtures."""
         from zCLI import zCLI
         
-        # Create a temporary directory for test data
+        # Create a temporary directory for test data (CSV files only)
         self.temp_dir = tempfile.mkdtemp(prefix="zdata_csv_test_")
         self.test_dir = Path(self.temp_dir)
         
-        # Initialize zCLI with test workspace
+        # Initialize zCLI with package root as workspace (so @.zTestSuite.demos works)
         with patch('builtins.print'):
             self.zcli = zCLI({
-                "zWorkspace": str(self.test_dir)
+                "zWorkspace": str(get_package_root())
             })
         
         # Load CSV schema using zLoader (proper zPath resolution)
@@ -570,14 +582,14 @@ class TestzDataErrorHandling(unittest.TestCase):
         """Set up test fixtures."""
         from zCLI import zCLI
         
-        # Create a temporary directory for test data
+        # Create a temporary directory for test data (database files only)
         self.temp_dir = tempfile.mkdtemp(prefix="zdata_error_test_")
         self.test_dir = Path(self.temp_dir)
         
-        # Initialize zCLI with test workspace
+        # Initialize zCLI with package root as workspace (so @.zTestSuite.demos works)
         with patch('builtins.print'):
             self.zcli = zCLI({
-                "zWorkspace": str(self.test_dir)
+                "zWorkspace": str(get_package_root())
             })
 
     def tearDown(self):
@@ -633,14 +645,14 @@ class TestzDataPluginIntegration(unittest.TestCase):
         """Set up test fixtures."""
         from zCLI import zCLI
         
-        # Create a temporary directory for test data
+        # Create a temporary directory for test data (database files only)
         self.temp_dir = tempfile.mkdtemp(prefix="zdata_plugin_test_")
         self.test_dir = Path(self.temp_dir)
         
-        # Initialize zCLI with test workspace
+        # Initialize zCLI with package root as workspace (so @.zTestSuite.demos works)
         with patch('builtins.print'):
             self.zcli = zCLI({
-                "zWorkspace": str(self.test_dir)
+                "zWorkspace": str(get_package_root())
             })
         
         # Load id_generator plugin explicitly using PluginCache
@@ -779,14 +791,14 @@ class TestzDataConnectionManagement(unittest.TestCase):
         """Set up test fixtures."""
         from zCLI import zCLI
         
-        # Create a temporary directory for test data
+        # Create a temporary directory for test data (database files only)
         self.temp_dir = tempfile.mkdtemp(prefix="zdata_conn_test_")
         self.test_dir = Path(self.temp_dir)
         
-        # Initialize zCLI with test workspace
+        # Initialize zCLI with package root as workspace (so @.zTestSuite.demos works)
         with patch('builtins.print'):
             self.zcli = zCLI({
-                "zWorkspace": str(self.test_dir)
+                "zWorkspace": str(get_package_root())
             })
 
     def tearDown(self):
