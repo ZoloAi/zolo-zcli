@@ -311,12 +311,12 @@ Free for educational, personal, and commercial use. See [LICENSE](LICENSE) for f
 
 ## 📊 Project Stats
 
-- **Version:** 1.5.0
+- **Version:** 1.5.1
 - **Python:** 3.8+
 - **Tests:** 524 (100% passing)
 - **Subsystems:** 15
 - **Shell Commands:** 20
-- **Documentation:** 14 guides
+- **Documentation:** 15 guides
 - **Status:** ✅ Production Ready
 
 ---
@@ -392,4 +392,4 @@ Free for educational, personal, and commercial use. See [LICENSE](LICENSE) for f
 
 ---
 
-**Made with ❤️ by Gal Nachshon** | **Version 1.5.0** | **© 2024**
+**Made with ❤️ by Gal Nachshon** | **Version 1.5.1** | **© 2024**
