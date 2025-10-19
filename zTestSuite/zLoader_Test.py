@@ -17,7 +17,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from zCLI.subsystems.zLoader import zLoader
 from zCLI.subsystems.zLoader.zLoader_modules import (
-    CacheOrchestrator, SystemCache, PinnedCache, SchemaCache
+    CacheOrchestrator, SystemCache, PinnedCache, SchemaCache, PluginCache
 )
 
 
@@ -332,20 +332,171 @@ class TestSchemaCache(unittest.TestCase):
         self.assertEqual(len(self.cache.connections), 0)
 
 
+class TestPluginCache(unittest.TestCase):
+    """Test PluginCache functionality."""
+
+    def setUp(self):
+        """Set up test session, logger, and mock zcli."""
+        self.session = {"zCache": {}}
+        self.logger = Mock()
+        self.mock_zcli = Mock()
+        self.mock_zcli.logger = self.logger
+        self.cache = PluginCache(self.session, self.logger, self.mock_zcli)
+
+    def test_initialization(self):
+        """Test PluginCache initializes correctly."""
+        self.assertIn("plugin_cache", self.session["zCache"])
+        self.assertEqual(self.cache.max_size, 50)
+
+    def test_load_and_cache_plugin(self):
+        """Test loading and caching a plugin module."""
+        # Create a temporary plugin file
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+            f.write("def test_func():\n    return 'test'\n")
+            filepath = f.name
+        
+        try:
+            # Load the plugin
+            module = self.cache.load_and_cache(filepath, "test_plugin")
+            
+            # Verify module loaded
+            self.assertIsNotNone(module)
+            self.assertTrue(hasattr(module, 'test_func'))
+            self.assertEqual(module.test_func(), 'test')
+            
+            # Verify session injection
+            self.assertTrue(hasattr(module, 'zcli'))
+            self.assertEqual(module.zcli, self.mock_zcli)
+        finally:
+            Path(filepath).unlink()
+
+    def test_cache_hit(self):
+        """Test cache hit returns cached module."""
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+            f.write("def test_func():\n    return 'test'\n")
+            filepath = f.name
+        
+        try:
+            # First load (cache by filename)
+            module1 = self.cache.load_and_cache(filepath, "test_plugin")
+            
+            # Second load (should hit cache by plugin name)
+            module2 = self.cache.get("test_plugin")
+            
+            # Should be the same module
+            self.assertIs(module1, module2)
+        finally:
+            Path(filepath).unlink()
+
+    def test_mtime_invalidation(self):
+        """Test cache invalidation when file mtime changes."""
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+            f.write("def test_func():\n    return 'v1'\n")
+            filepath = f.name
+        
+        try:
+            # First load
+            module1 = self.cache.load_and_cache(filepath, "test_plugin")
+            self.assertEqual(module1.test_func(), 'v1')
+            
+            # Modify file (change mtime)
+            import time
+            time.sleep(0.01)  # Ensure mtime changes
+            with open(filepath, 'w') as f:
+                f.write("def test_func():\n    return 'v2'\n")
+            
+            # Second load (should reload due to mtime change - get by plugin name)
+            module2 = self.cache.get("test_plugin")
+            
+            # Should be None (cache invalidated)
+            self.assertIsNone(module2)
+        finally:
+            Path(filepath).unlink()
+
+    def test_lru_eviction(self):
+        """Test LRU eviction when max_size is exceeded."""
+        # Create cache with small max_size
+        small_cache = PluginCache(self.session, self.logger, self.mock_zcli, max_size=2)
+        
+        plugins = []
+        for i in range(3):
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+                f.write(f"def func{i}():\n    return {i}\n")
+                plugins.append(f.name)
+        
+        try:
+            # Load 3 plugins (max_size=2, so first should be evicted)
+            small_cache.load_and_cache(plugins[0], "plugin0")
+            small_cache.load_and_cache(plugins[1], "plugin1")
+            small_cache.load_and_cache(plugins[2], "plugin2")
+            
+            # First plugin should be evicted (get by plugin name, not path)
+            self.assertIsNone(small_cache.get("plugin0"))
+            self.assertIsNotNone(small_cache.get("plugin1"))
+            self.assertIsNotNone(small_cache.get("plugin2"))
+        finally:
+            for p in plugins:
+                Path(p).unlink()
+
+    def test_clear_all(self):
+        """Test clearing entire plugin cache."""
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+            f.write("def test_func():\n    return 'test'\n")
+            filepath = f.name
+        
+        try:
+            self.cache.load_and_cache(filepath, "test_plugin")
+            self.cache.clear()
+            
+            result = self.cache.get(filepath)
+            self.assertIsNone(result)
+        finally:
+            Path(filepath).unlink()
+
+    def test_get_stats(self):
+        """Test plugin cache statistics."""
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+            f.write("def test_func():\n    return 'test'\n")
+            filepath = f.name
+        
+        try:
+            # Load plugin
+            self.cache.load_and_cache(filepath, "test_plugin")
+            
+            # Hit cache (by plugin name)
+            self.cache.get("test_plugin")
+            
+            # Miss cache (by plugin name)
+            self.cache.get("nonexistent_plugin")
+            
+            stats = self.cache.get_stats()
+            
+            self.assertEqual(stats["size"], 1)
+            self.assertEqual(stats["max_size"], 50)
+            self.assertEqual(stats["hits"], 1)
+            self.assertEqual(stats["loads"], 1)
+            self.assertIn("hit_rate", stats)
+        finally:
+            Path(filepath).unlink()
+
+
 class TestCacheOrchestrator(unittest.TestCase):
     """Test CacheOrchestrator functionality."""
 
     def setUp(self):
-        """Set up test session and logger."""
+        """Set up test session, logger, and mock zcli."""
         self.session = {"zCache": {}}
         self.logger = Mock()
-        self.orchestrator = CacheOrchestrator(self.session, self.logger)
+        self.mock_zcli = Mock()
+        self.mock_zcli.logger = self.logger
+        self.orchestrator = CacheOrchestrator(self.session, self.logger, self.mock_zcli)
 
     def test_initialization(self):
         """Test CacheOrchestrator initializes all tiers."""
         self.assertIsInstance(self.orchestrator.system_cache, SystemCache)
         self.assertIsInstance(self.orchestrator.pinned_cache, PinnedCache)
         self.assertIsInstance(self.orchestrator.schema_cache, SchemaCache)
+        self.assertIsInstance(self.orchestrator.plugin_cache, PluginCache)
 
     def test_system_cache_routing(self):
         """Test routing to system cache."""
@@ -371,6 +522,24 @@ class TestCacheOrchestrator(unittest.TestCase):
         result = self.orchestrator.get("mydb", cache_type="schema")
         
         self.assertEqual(result, mock_handler)
+
+    def test_plugin_cache_routing(self):
+        """Test routing to plugin cache."""
+        # Create a temporary plugin file
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+            f.write("def test_func():\n    return 'test'\n")
+            filepath = f.name
+        
+        try:
+            # Load via orchestrator (cache by filename)
+            module = self.orchestrator.plugin_cache.load_and_cache(filepath, "test_plugin")
+            
+            # Get via orchestrator (by plugin name, not path)
+            result = self.orchestrator.get("test_plugin", cache_type="plugin")
+            
+            self.assertEqual(result, module)
+        finally:
+            Path(filepath).unlink()
 
     def test_has_system(self):
         """Test checking existence in system cache."""
@@ -411,6 +580,7 @@ class TestCacheOrchestrator(unittest.TestCase):
         self.assertIn("system_cache", stats)
         self.assertIn("pinned_cache", stats)
         self.assertIn("schema_cache", stats)
+        self.assertIn("plugin_cache", stats)
 
     def test_get_stats_system(self):
         """Test getting stats for system cache only."""
@@ -485,6 +655,7 @@ def run_tests(verbose=False):
     suite.addTests(loader.loadTestsFromTestCase(TestSystemCache))
     suite.addTests(loader.loadTestsFromTestCase(TestPinnedCache))
     suite.addTests(loader.loadTestsFromTestCase(TestSchemaCache))
+    suite.addTests(loader.loadTestsFromTestCase(TestPluginCache))
     suite.addTests(loader.loadTestsFromTestCase(TestCacheOrchestrator))
     suite.addTests(loader.loadTestsFromTestCase(TestzLoaderFileLoading))
 

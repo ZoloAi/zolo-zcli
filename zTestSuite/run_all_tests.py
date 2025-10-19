@@ -95,6 +95,12 @@ except ImportError:
     ZWIZARD_AVAILABLE = False
 
 try:
+    from zTestSuite import zUtils_Test
+    ZUTILS_AVAILABLE = True
+except ImportError:
+    ZUTILS_AVAILABLE = False
+
+try:
     from zTestSuite import zData_Test
     ZDATA_AVAILABLE = True
 except ImportError:
@@ -272,6 +278,8 @@ def show_test_menu():
         available_tests.append(("zShell", "zShell_Test"))
     if ZWIZARD_AVAILABLE:
         available_tests.append(("zWizard", "zWizard_Test"))
+    if ZUTILS_AVAILABLE:
+        available_tests.append(("zUtils", "zUtils_Test"))
     if ZDATA_AVAILABLE:
         available_tests.append(("zData", "zData_Test"))
     
@@ -341,6 +349,8 @@ def run_selected_tests(test_choice=None):
             test_suites.append((zShell_Test, "zShell"))
         if ZWIZARD_AVAILABLE:
             test_suites.append((zWizard_Test, "zWizard"))
+        if ZUTILS_AVAILABLE:
+            test_suites.append((zUtils_Test, "zUtils"))
         if ZDATA_AVAILABLE:
             test_suites.append((zData_Test, "zData"))
         
@@ -384,6 +394,9 @@ def run_selected_tests(test_choice=None):
             results.append(result)
         elif test_choice == "zWizard_Test" and ZWIZARD_AVAILABLE:
             result = run_subsystem_tests(zWizard_Test, "zWizard")
+            results.append(result)
+        elif test_choice == "zUtils_Test" and ZUTILS_AVAILABLE:
+            result = run_subsystem_tests(zUtils_Test, "zUtils")
             results.append(result)
         elif test_choice == "zData_Test" and ZDATA_AVAILABLE:
             result = run_subsystem_tests(zData_Test, "zData")

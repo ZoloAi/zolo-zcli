@@ -28,6 +28,7 @@ def parse_command(command, logger):
         "load": _parse_load_command,
         "comm": _parse_comm_command,
         "wizard": _parse_wizard_command,
+        "plugin": _parse_plugin_command,
     }
 
     if command_type not in commands:
@@ -134,6 +135,21 @@ def _parse_utils_command(parts):
     return {
         "type": "utils",
         "action": util_name,
+        "args": args,
+        "options": {}
+    }
+
+def _parse_plugin_command(parts):
+    """Parse plugin commands like 'plugin load @.utils.my_plugin' or 'plugin show'"""
+    if len(parts) < 2:
+        return {"error": "Plugin command requires subcommand (load, show, clear, reload)"}
+
+    action = parts[1]
+    args = parts[2:] if len(parts) > 2 else []
+
+    return {
+        "type": "plugin",
+        "action": action,
         "args": args,
         "options": {}
     }

@@ -18,6 +18,11 @@ from .zParser_utils import (
     handle_zParser
 )
 
+from .zParser_plugin import (
+    is_plugin_invocation,
+    resolve_plugin_invocation
+)
+
 __all__ = [
     # zPath operations
     "zPath_decoder",
@@ -32,4 +37,8 @@ __all__ = [
     "parse_dotted_path",
     "handle_zRef",
     "handle_zParser",
+
+    # Plugin operations
+    "is_plugin_invocation",
+    "resolve_plugin_invocation",
 ]

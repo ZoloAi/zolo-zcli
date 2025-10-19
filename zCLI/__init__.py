@@ -29,7 +29,6 @@ from urllib.parse import urlparse
 from datetime import datetime
 
 # Import utilities (safe to import early)
-from .utils.styled_printer import print_ready
 from .utils.colors import Colors
 
 # Import the zCLI Core and Walker
@@ -44,5 +43,5 @@ __all__ = [
     "os", "sys", "platform", "socket", "shutil", "yaml", "subprocess", "importlib", "secrets", "logging", "requests", "asyncio", "json", "time", "re", "getpass", "uuid", "inspect", "webbrowser", "urlparse", "Path", "OrderedDict", "sqlite3", "datetime",
     
     # Utils
-    "print_ready", "Colors",
+    "Colors",
 ]

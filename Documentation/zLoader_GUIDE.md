@@ -24,6 +24,7 @@ zLoader/
     ├── system_cache.py               # LRU cache for UI/config files
     ├── pinned_cache.py               # User-loaded aliases (no eviction)
     ├── schema_cache.py               # Active database connections
+    ├── plugin_cache.py               # Dynamic plugin modules (filename-based)
     └── loader_io.py                  # File I/O operations
 ```
 
@@ -33,10 +34,11 @@ zLoader/
 
 ## **Core Features**
 
-### **1. Three-Tier Caching**
+### **1. Four-Tier Caching**
 - **System Cache**: LRU eviction, mtime tracking, automatic invalidation
 - **Pinned Cache**: User-loaded aliases, never auto-evicts, highest priority
 - **Schema Cache**: Active database connections, in-memory only
+- **Plugin Cache**: Dynamic plugin modules, filename-based keys, collision detection
 
 ### **2. Intelligent File Loading**
 - **Path Resolution**: Delegates to zParser for symbol-based paths
@@ -57,6 +59,46 @@ zLoader/
 ---
 
 ## **Cache Tiers**
+
+### **Plugin Cache (Tier 0)**
+
+**Purpose:** Cache dynamically loaded plugin modules for fast invocation
+
+**Features:**
+- Filename-based keys (e.g., "test_plugin")
+- Collision detection (prevents duplicate filenames)
+- mtime tracking for freshness
+- LRU eviction when max_size exceeded
+- Session injection (plugins access `zcli` instance)
+
+**Usage:**
+```python
+# Load and cache plugin (automatic via &PluginName.function())
+result = zcli.zparser.resolve_plugin_invocation("&test_plugin.hello_world()")
+
+# Direct cache access
+module = zcli.loader.cache.plugin_cache.load_and_cache("/path/to/plugin.py", "test_plugin")
+cached = zcli.loader.cache.get("test_plugin", cache_type="plugin")
+
+# Check cache stats
+stats = zcli.loader.cache.get_stats(cache_type="plugin")
+```
+
+**Configuration:**
+- Default max_size: 50 entries
+- Eviction: Least Recently Used (LRU)
+- Storage: Session-based (`session["zCache"]["plugin_cache"]`)
+- Session Injection: All plugins get `zcli` instance
+
+**Collision Detection:**
+```python
+# First load: OK
+zcli.loader.cache.plugin_cache.load_and_cache("/workspace/utils/test_plugin.py", "test_plugin")
+
+# Second load with same name but different path: ERROR
+zcli.loader.cache.plugin_cache.load_and_cache("/other/path/test_plugin.py", "test_plugin")
+# Raises: ValueError - Plugin name collision
+```
 
 ### **System Cache (Tier 1)**
 
@@ -578,12 +620,13 @@ zcli.loader.cache.clear(cache_type="all")
 ## **Testing**
 
 ### **Test Coverage**
-The zLoader subsystem has **42 comprehensive tests** covering:
+The zLoader subsystem has **50 comprehensive tests** covering:
 - ✅ Initialization and setup
+- ✅ Plugin cache (filename-based keys, collision detection, session injection)
 - ✅ System cache (LRU, mtime, eviction, patterns)
 - ✅ Pinned cache (aliases, metadata, persistence)
 - ✅ Schema cache (connections, transactions)
-- ✅ Cache orchestrator (routing, statistics)
+- ✅ Cache orchestrator (routing, statistics, plugin tier)
 - ✅ File loading (cache hits/misses)
 - ✅ Edge cases and error handling
 
@@ -602,11 +645,12 @@ python3 zTestSuite/run_all_tests.py
 ## **Summary**
 
 **zLoader** provides intelligent file loading and caching for zCLI:
-- ✅ **Three-Tier Caching**: System (LRU), Pinned (user), Schema (connections)
+- ✅ **Four-Tier Caching**: Plugin (dynamic), System (LRU), Pinned (user), Schema (connections)
 - ✅ **Orchestrator Pattern**: Clean architecture with no cross-dependencies
 - ✅ **Intelligent Loading**: Cache-first with automatic freshness tracking
+- ✅ **Plugin Support**: Filename-based caching with collision detection and session injection
 - ✅ **Schema Awareness**: Fresh loading for schemas, caching for UI/config
-- ✅ **Comprehensive Testing**: 42 tests with 100% pass rate
+- ✅ **Comprehensive Testing**: 50 tests with 100% pass rate
 - ✅ **Clean API**: Unified interface for all cache operations
 
 The subsystem is production-ready with proper encapsulation, comprehensive testing, and clear documentation.

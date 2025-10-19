@@ -17,6 +17,10 @@ from .zParser_modules.zParser_zVaFile import (
 from .zParser_modules.zParser_file import (
     parse_file_content, parse_yaml, parse_json, detect_format, parse_file_by_path, parse_json_expr
 )
+from .zParser_modules.zParser_plugin import (
+    is_plugin_invocation as is_plugin_invocation_func,
+    resolve_plugin_invocation as resolve_plugin_invocation_func
+)
 
 class zParser:
     """Core zParser class for path resolution, command parsing, file parsing, and utilities."""
@@ -83,6 +87,50 @@ class zParser:
 
         # No special prefix, return as-is
         return data_path
+
+    # ═══════════════════════════════════════════════════════════
+    # Plugin Invocation (& modifier)
+    # ═══════════════════════════════════════════════════════════
+
+    def is_plugin_invocation(self, value):
+        """
+        Check if value is a plugin invocation.
+        
+        Args:
+            value: Value to check
+            
+        Returns:
+            bool: True if value starts with & and looks like a plugin call
+            
+        Example:
+            >>> parser.is_plugin_invocation("&test_plugin.hello_world('Alice')")
+            True
+        """
+        return is_plugin_invocation_func(value)
+
+    def resolve_plugin_invocation(self, value):
+        """
+        Resolve plugin function invocation.
+        
+        Syntax: &plugin_name.function_name(arg1, arg2, ...)
+        
+        Args:
+            value (str): Plugin invocation string
+            
+        Returns:
+            Result of plugin function execution
+            
+        Raises:
+            ValueError: If syntax is invalid, plugin not loaded, or function not found
+            
+        Examples:
+            >>> parser.resolve_plugin_invocation("&test_plugin.hello_world('Alice')")
+            "Hello, Alice!"
+            
+            >>> parser.resolve_plugin_invocation("&test_plugin.random_number(1, 10)")
+            7  # (random integer between 1 and 10)
+        """
+        return resolve_plugin_invocation_func(value, self.zcli)
 
     # ═══════════════════════════════════════════════════════════
     # Command Parsing

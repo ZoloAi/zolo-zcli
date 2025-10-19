@@ -24,10 +24,11 @@ zParser/
     ├── zParser_commands.py           # Command parsing
     ├── zParser_file.py               # File content parsing
     ├── zParser_utils.py              # Expression evaluation
+    ├── zParser_plugin.py             # Plugin invocation parsing (& modifier)
     └── zParser_zVaFile.py            # zVaFile parsing
 ```
 
-**Note:** Core logic like `parse_function_path()` is now self-contained within the `zParser` class, eliminating cross-module dependencies.
+**Note:** Core logic like `parse_function_path()` and `resolve_plugin_invocation()` is self-contained within the `zParser` class, eliminating cross-module dependencies.
 
 ---
 
@@ -55,6 +56,12 @@ zParser/
 - **Command Recognition**: Parse and validate zCLI commands
 - **Argument Extraction**: Split commands and arguments
 - **Error Detection**: Identify unknown commands
+
+### **5. Plugin Invocation (`&` Modifier)**
+- **Unified Syntax**: `&PluginName.function(args)` for all plugin calls
+- **Auto-Discovery**: Searches standard paths if plugin not cached
+- **Collision Detection**: Prevents duplicate plugin filenames
+- **Session Injection**: Plugins access `zcli` instance automatically
 
 ---
 
@@ -169,6 +176,63 @@ data = zcli.zparser.parse_yaml(yaml_content)
 ```python
 data = zcli.zparser.parse_file_by_path("/path/to/file.json")
 # Auto-detects format and parses
+```
+
+---
+
+## **Plugin Invocation**
+
+### **Unified Syntax**
+```python
+# All plugin invocations use: &PluginName.function(args)
+result = zcli.zparser.resolve_plugin_invocation("&test_plugin.hello_world()")
+# Returns: "Hello, World!"
+
+# With arguments
+result = zcli.zparser.resolve_plugin_invocation("&test_plugin.greet('Alice')")
+# Returns: "Hello, Alice!"
+
+# With multiple arguments
+result = zcli.zparser.resolve_plugin_invocation("&test_plugin.add(5, 10)")
+# Returns: 15
+```
+
+### **Auto-Discovery**
+```python
+# Plugin not in cache - searches standard paths:
+# 1. @.zCLI.utils
+# 2. @.utils
+# 3. @.plugins
+
+result = zcli.zparser.resolve_plugin_invocation("&my_plugin.do_something()")
+# Searches: workspace/zCLI/utils/my_plugin.py
+#          workspace/utils/my_plugin.py
+#          workspace/plugins/my_plugin.py
+```
+
+### **Detection**
+```python
+# Check if string is a plugin invocation
+is_plugin = zcli.zparser.is_plugin_invocation("&test_plugin.hello()")
+# Returns: True
+
+is_plugin = zcli.zparser.is_plugin_invocation("regular_string")
+# Returns: False
+```
+
+### **In YAML/JSON**
+```yaml
+# zSchema example
+Data_Source: "&test_plugin.get_data_source()"
+
+# zUI example
+zAction: "&test_plugin.process_input(user_data)"
+
+# zWizard workflow
+step1:
+  zData:
+    model: "&test_plugin.get_model_path()"
+    action: "select"
 ```
 
 ---
@@ -390,10 +454,11 @@ class zParser:
 ## **Testing**
 
 ### **Test Coverage**
-The zParser subsystem has **33 comprehensive tests** covering:
+The zParser subsystem has **39 comprehensive tests** covering:
 - ✅ Initialization and setup
 - ✅ Symbol path resolution (`@`, `~`, no symbol)
 - ✅ Function path parsing (dict and string formats)
+- ✅ Plugin invocation (`&PluginName.function()` syntax)
 - ✅ Command parsing
 - ✅ File content parsing (JSON/YAML)
 - ✅ Data path resolution
@@ -478,10 +543,11 @@ else:
 **zParser** provides comprehensive parsing services for zCLI:
 - ✅ **Universal Path Resolution**: Workspace (`@`), absolute (`~`), and relative paths
 - ✅ **zMachine Paths**: Clean, cross-platform user data paths (`zMachine.*`)
+- ✅ **Plugin Invocation**: Unified `&PluginName.function()` syntax with auto-discovery
 - ✅ **Self-Contained Architecture**: No cross-module dependencies
 - ✅ **Multiple Format Support**: JSON, YAML, expressions, commands
 - ✅ **Function Path Parsing**: Integrated symbol resolution
-- ✅ **Comprehensive Testing**: 33 tests with 100% pass rate
+- ✅ **Comprehensive Testing**: 39 tests with 100% pass rate
 - ✅ **Clean API**: All functionality through `zcli.zparser`
 
 The subsystem is production-ready with proper encapsulation, comprehensive testing, and clear documentation.

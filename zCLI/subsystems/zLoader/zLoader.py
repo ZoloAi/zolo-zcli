@@ -15,8 +15,8 @@ class zLoader:
         self.display = zcli.display
         self.mycolor = "LOADER"
 
-        # Initialize cache orchestrator (manages all three tiers)
-        self.cache = CacheOrchestrator(self.zSession, self.logger)
+        # Initialize cache orchestrator (manages all cache tiers including plugins)
+        self.cache = CacheOrchestrator(self.zSession, self.logger, zcli)
 
         # Store parser method references for cleaner code
         self.zpath_decoder = zcli.zparser.zPath_decoder

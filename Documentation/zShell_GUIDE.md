@@ -74,7 +74,7 @@ zShell/
 
 ### **Data Operations** (`data`)
 ```bash
-data read users --model @.Schemas.zSchema.sqlite_demo
+data read users --model @.zTestSuite.demos.zSchema.sqlite_demo
 data insert users --model $mydb --name "Alice" --age 30
 data update users --model $mydb --name "Bob" --where "id = 1"
 data delete users --model $mydb --where "age < 18"
@@ -82,7 +82,7 @@ data delete users --model $mydb --where "age < 18"
 
 ### **Schema Loading** (`load`)
 ```bash
-load @.Schemas.zSchema.sqlite_demo --as mydb
+load @.zTestSuite.demos.zSchema.sqlite_demo --as mydb
 load --show                    # Show loaded schemas
 load --clear mydb              # Clear cached schema
 ```
@@ -150,14 +150,14 @@ Wizard canvas mode enables building multi-step workflows interactively, with aut
    Type commands or YAML, then 'wizard --run' to execute
 
 # 2. Add commands
-> data insert users --model @.Schemas.zSchema.sqlite_demo --name "Alice" --age 30
-> data insert users --model @.Schemas.zSchema.sqlite_demo --name "Bob" --age 25
+> data insert users --model @.zTestSuite.demos.zSchema.sqlite_demo --name "Alice" --age 30
+> data insert users --model @.zTestSuite.demos.zSchema.sqlite_demo --name "Bob" --age 25
 
 # 3. Review canvas
 > wizard --show
 step1:
   zData:
-    model: @.Schemas.zSchema.sqlite_demo
+    model: @.zTestSuite.demos.zSchema.sqlite_demo
     action: insert
     ...
 
@@ -174,13 +174,13 @@ step1:
 _transaction: true
 step1:
   zData:
-    model: @.Schemas.zSchema.sqlite_demo
+    model: @.zTestSuite.demos.zSchema.sqlite_demo
     action: insert
     tables: [users]
     options: {name: "Alice", age: 30}
 step2:
   zData:
-    model: @.Schemas.zSchema.sqlite_demo
+    model: @.zTestSuite.demos.zSchema.sqlite_demo
     action: insert
     tables: [users]
     options: {name: "Bob", age: 25}
@@ -226,7 +226,7 @@ Usage:
   ...
 
 Examples:
-  data read users --model @.Schemas.zSchema.sqlite_demo
+  data read users --model @.zTestSuite.demos.zSchema.sqlite_demo
   data insert users --model $mydb --name "Alice" --age 30
 ```
 
@@ -317,7 +317,7 @@ User Input → Canvas Buffer → wizard --run → zWizard → Batch Execution
 ### **1. Use Schema Aliases**
 ```bash
 # Load once, reference many times
-load @.Schemas.zSchema.sqlite_demo --as mydb
+load @.zTestSuite.demos.zSchema.sqlite_demo --as mydb
 data read users --model $mydb
 data insert posts --model $mydb --title "Hello"
 ```
@@ -373,7 +373,7 @@ walker run  # Uses session context
 
 ### **1. Command Chaining** (Coming Soon)
 ```bash
-load @.Schemas.zSchema.sqlite_demo --as db && data read users --model $db
+load @.zTestSuite.demos.zSchema.sqlite_demo --as db && data read users --model $db
 ```
 
 ### **2. Output Redirection** (Coming Soon)
@@ -426,7 +426,7 @@ data read users --model $DB_PATH
 ### **Common Patterns**
 ```bash
 # Load and query
-load @.Schemas.zSchema.sqlite_demo --as db
+load @.zTestSuite.demos.zSchema.sqlite_demo --as db
 data read users --model $db --limit 10
 
 # Multi-step workflow

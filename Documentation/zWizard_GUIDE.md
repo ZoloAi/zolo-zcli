@@ -64,14 +64,14 @@ Execution Logic:
 ```yaml
 step1:
   zData:
-    model: @.Schemas.zSchema.sqlite_demo
+    model: @.zTestSuite.demos.zSchema.sqlite_demo
     action: insert
     tables: [users]
     options: {name: "Alice", age: 30}
 
 step2:
   zData:
-    model: @.Schemas.zSchema.sqlite_demo
+    model: @.zTestSuite.demos.zSchema.sqlite_demo
     action: insert
     tables: [users]
     options: {name: "Bob", age: 25}
@@ -82,14 +82,14 @@ step2:
 _transaction: true
 step1:
   zData:
-    model: @.Schemas.zSchema.sqlite_demo
+    model: @.zTestSuite.demos.zSchema.sqlite_demo
     action: insert
     tables: [users]
     options: {name: "Alice", age: 30}
 
 step2:
   zData:
-    model: @.Schemas.zSchema.sqlite_demo
+    model: @.zTestSuite.demos.zSchema.sqlite_demo
     action: insert
     tables: [users]
     options: {name: "Bob", age: 25}
@@ -122,7 +122,7 @@ zHat is an array that stores the result of each executed step, enabling dependen
 ```yaml
 step1:
   zData:
-    model: @.Schemas.zSchema.sqlite_demo
+    model: @.zTestSuite.demos.zSchema.sqlite_demo
     action: insert
     tables: [users]
     options: {name: "Alice", age: 30}
@@ -136,7 +136,7 @@ step2:
 
 step3:
   zData:
-    model: @.Schemas.zSchema.sqlite_demo
+    model: @.zTestSuite.demos.zSchema.sqlite_demo
     action: select
     tables: [users]
     options: {where: "name = 'Alice'"}
@@ -222,8 +222,8 @@ logger.debug("Schema cache connections cleared")
 > wizard --start
 
 # 2. Add commands (converted to YAML)
-> data insert users --model @.Schemas.zSchema.sqlite_demo --name "Alice" --age 30
-> data insert users --model @.Schemas.zSchema.sqlite_demo --name "Bob" --age 25
+> data insert users --model @.zTestSuite.demos.zSchema.sqlite_demo --name "Alice" --age 30
+> data insert users --model @.zTestSuite.demos.zSchema.sqlite_demo --name "Bob" --age 25
 
 # 3. Execute workflow
 > wizard --run
@@ -240,7 +240,7 @@ workflow = {
     "_transaction": True,
     "step1": {
         "zData": {
-            "model": "@.Schemas.zSchema.sqlite_demo",
+            "model": "@.zTestSuite.demos.zSchema.sqlite_demo",
             "action": "insert",
             "tables": ["users"],
             "options": {"name": "Alice", "age": 30}
@@ -404,16 +404,16 @@ step2:
 # ✅ Good: Same schema path for transaction
 _transaction: true
 step1:
-  zData: {model: "@.Schemas.zSchema.sqlite_demo", ...}
+  zData: {model: "@.zTestSuite.demos.zSchema.sqlite_demo", ...}
 step2:
-  zData: {model: "@.Schemas.zSchema.sqlite_demo", ...}
+  zData: {model: "@.zTestSuite.demos.zSchema.sqlite_demo", ...}
 
 # ❌ Bad: Different schemas break transaction
 _transaction: true
 step1:
-  zData: {model: "@.Schemas.zSchema.sqlite_demo", ...}
+  zData: {model: "@.zTestSuite.demos.zSchema.sqlite_demo", ...}
 step2:
-  zData: {model: "@.Schemas.zSchema.postgresql_demo", ...}
+  zData: {model: "@.zTestSuite.demos.zSchema.postgresql_demo", ...}
 ```
 
 ### **4. Handle Errors Gracefully**
@@ -575,12 +575,12 @@ schema_cache.clear()  # Cleanup
 ```yaml
 # ❌ Problem: Missing _transaction flag
 step1:
-  zData: {model: "@.Schemas.zSchema.sqlite_demo", ...}
+  zData: {model: "@.zTestSuite.demos.zSchema.sqlite_demo", ...}
 
 # ✅ Solution: Add _transaction flag
 _transaction: true
 step1:
-  zData: {model: "@.Schemas.zSchema.sqlite_demo", ...}
+  zData: {model: "@.zTestSuite.demos.zSchema.sqlite_demo", ...}
 ```
 
 #### **2. Connection Not Reused**
@@ -588,16 +588,16 @@ step1:
 # ❌ Problem: Different schema paths
 _transaction: true
 step1:
-  zData: {model: "@.Schemas.zSchema.sqlite_demo", ...}
+  zData: {model: "@.zTestSuite.demos.zSchema.sqlite_demo", ...}
 step2:
-  zData: {model: "@.Schemas.zSchema.other_demo", ...}
+  zData: {model: "@.zTestSuite.demos.zSchema.other_demo", ...}
 
 # ✅ Solution: Use same schema path
 _transaction: true
 step1:
-  zData: {model: "@.Schemas.zSchema.sqlite_demo", ...}
+  zData: {model: "@.zTestSuite.demos.zSchema.sqlite_demo", ...}
 step2:
-  zData: {model: "@.Schemas.zSchema.sqlite_demo", ...}
+  zData: {model: "@.zTestSuite.demos.zSchema.sqlite_demo", ...}
 ```
 
 #### **3. zHat Interpolation Not Working**

@@ -6,7 +6,7 @@ from .executor_commands import (
     execute_data, execute_func, execute_session, execute_walker,
     execute_open, execute_test, execute_auth, execute_load, 
     execute_export, execute_utils, execute_config, execute_comm,
-    execute_wizard_step
+    execute_wizard_step, execute_plugin
 )
 from .executor_commands.config_persistence_executor import execute_config_persistence
 
@@ -224,6 +224,7 @@ class CommandExecutor:
             "config_persistence": execute_config_persistence,
             "comm": execute_comm,
             "load": execute_load,
+            "plugin": execute_plugin,
         }
 
         executor = command_map.get(command_type)

@@ -373,6 +373,93 @@ class TestParseDottedPath(unittest.TestCase):
         self.assertIn("error", result)
 
 
+class TestPluginInvocation(unittest.TestCase):
+    """Test plugin invocation methods (& modifier)."""
+
+    def setUp(self):
+        """Set up mock zCLI and zParser for testing."""
+        self.mock_zcli = Mock()
+        self.mock_zcli.session = {"zMode": "Terminal", "zWorkspace": "/test/workspace"}
+        self.mock_zcli.logger = Mock()
+        self.mock_zcli.display = Mock()
+        self.mock_zcli.display.zDeclare = Mock()
+        
+        # Mock utils with plugins
+        self.mock_zcli.utils = Mock()
+        self.mock_zcli.utils.plugins = {}
+        
+        # Mock loader with plugin cache
+        self.mock_zcli.loader = Mock()
+        self.mock_zcli.loader.cache = Mock()
+        self.mock_zcli.loader.cache.plugin_cache = Mock()
+        
+        self.parser = zParser(self.mock_zcli)
+
+    def test_is_plugin_invocation_valid(self):
+        """Test identifying valid plugin invocations."""
+        self.assertTrue(self.parser.is_plugin_invocation("&test_plugin.hello_world()"))
+        self.assertTrue(self.parser.is_plugin_invocation("&@.utils.test_plugin.hello_world()"))
+        self.assertTrue(self.parser.is_plugin_invocation("&~.plugins.test.func()"))
+        self.assertTrue(self.parser.is_plugin_invocation("&zMachine.plugins.test.func()"))
+
+    def test_is_plugin_invocation_invalid(self):
+        """Test identifying invalid plugin invocations."""
+        self.assertFalse(self.parser.is_plugin_invocation("test_plugin.hello_world()"))
+        self.assertFalse(self.parser.is_plugin_invocation("@utils.test_plugin"))
+        self.assertFalse(self.parser.is_plugin_invocation(""))
+        self.assertFalse(self.parser.is_plugin_invocation(None))
+        self.assertFalse(self.parser.is_plugin_invocation(123))
+
+    def test_resolve_plugin_invocation_cached(self):
+        """Test resolving plugin invocation from cache."""
+        # Mock a cached plugin module
+        mock_module = Mock()
+        mock_module.hello_world = Mock(return_value="Hello, World!")
+        
+        # Mock cache to return the module
+        self.mock_zcli.loader.cache.get = Mock(return_value=mock_module)
+        
+        result = self.parser.resolve_plugin_invocation("&test_plugin.hello_world()")
+        
+        # Should get from cache by plugin name
+        self.mock_zcli.loader.cache.get.assert_called_with("test_plugin", cache_type="plugin")
+        self.assertEqual(result, "Hello, World!")
+
+    def test_resolve_plugin_invocation_with_args(self):
+        """Test resolving plugin invocation with arguments."""
+        # Mock a cached plugin module
+        mock_module = Mock()
+        mock_module.greet = Mock(return_value="Hello, Alice!")
+        
+        # Mock cache to return the module
+        self.mock_zcli.loader.cache.get = Mock(return_value=mock_module)
+        
+        result = self.parser.resolve_plugin_invocation("&test_plugin.greet('Alice')")
+        
+        self.assertEqual(result, "Hello, Alice!")
+
+    def test_resolve_plugin_invocation_invalid_syntax(self):
+        """Test resolving plugin invocation with invalid syntax."""
+        with self.assertRaises(ValueError) as context:
+            self.parser.resolve_plugin_invocation("&test_plugin.hello_world")  # Missing ()
+        
+        self.assertIn("Invalid plugin invocation syntax", str(context.exception))
+
+    def test_resolve_plugin_invocation_not_found(self):
+        """Test resolving plugin invocation when plugin not found."""
+        # Mock cache miss (returns None)
+        self.mock_zcli.loader.cache.get = Mock(return_value=None)
+        
+        # Mock zparser to simulate file not found in search paths
+        self.mock_zcli.zparser.resolve_symbol_path = Mock(return_value="/nonexistent/path")
+        
+        with self.assertRaises(ValueError) as context:
+            self.parser.resolve_plugin_invocation("&nonexistent.func()")
+        
+        # Should fail with "Plugin not found" after searching standard paths
+        self.assertIn("plugin not found", str(context.exception).lower())
+
+
 class TestEdgeCases(unittest.TestCase):
     """Test edge cases and error handling."""
 
@@ -427,6 +514,7 @@ def run_tests(verbose=False):
     suite.addTests(loader.loadTestsFromTestCase(TestResolveDataPath))
     suite.addTests(loader.loadTestsFromTestCase(TestExpressionEvaluation))
     suite.addTests(loader.loadTestsFromTestCase(TestParseDottedPath))
+    suite.addTests(loader.loadTestsFromTestCase(TestPluginInvocation))
     suite.addTests(loader.loadTestsFromTestCase(TestEdgeCases))
 
     runner = unittest.TextTestRunner(verbosity=2 if verbose else 1)

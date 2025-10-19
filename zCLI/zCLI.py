@@ -28,9 +28,13 @@ class zCLI:
         #     "zBlock": .zPath.to.zBlock,               # zBlock name
         #     "zMode": "Terminal",                      # UI mode
         #     "logger": "debug",                        # Logging level
-        #     "plugins": [                              # Optional utility plugins
-        #         "zSpark.Logic.zSparkUtils",           # Import path or absolute .py
+        #     "plugins": [                              # Optional plugins (pre-loaded at boot)
+        #         "zCLI.utils.test_plugin",              # Python import path (recommended)
+        #         "/absolute/path/to/plugin.py",         # Or absolute file path (NOT zPath)
         #     ],
+        #     # Note: Boot-time plugins use Python import paths, NOT zPaths or & modifiers
+        #     # Note: Runtime invocations use & modifier: &zCLI.utils.plugin.function()
+        #     # Note: All plugins get CLI session injected (zcli.logger, zcli.session, etc.)
         #     ... other settings ...
         # }
 

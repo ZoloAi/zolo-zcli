@@ -19,6 +19,7 @@ from .config_executor import execute_config
 from .comm_executor import execute_comm
 from .wizard_executor import execute_wizard
 from .wizard_step_executor import execute_wizard_step
+from .plugin_executor import execute_plugin
 
 __all__ = [
     "execute_data",
@@ -34,5 +35,6 @@ __all__ = [
     "execute_config",
     "execute_comm",
     "execute_wizard",
-    "execute_wizard_step"
+    "execute_wizard_step",
+    "execute_plugin"
 ]

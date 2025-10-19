@@ -24,6 +24,13 @@ class zUtils:
     def load_plugins(self, plugin_paths):
         """Load plugin modules and expose their callables on this instance.
         
+        Injects CLI session into each plugin module, giving plugins access to:
+        - zcli.logger - Logging functionality
+        - zcli.session - Session data (zWorkspace, zMachine, etc.)
+        - zcli.data - Data subsystem access
+        - zcli.display - Display subsystem access
+        - And all other zCLI subsystems
+        
         Args:
             plugin_paths: List of plugin paths (import paths or absolute .py file paths)
             
@@ -44,12 +51,16 @@ class zUtils:
                     spec = importlib.util.spec_from_file_location(name, path)
                     if spec and spec.loader:
                         mod = importlib.util.module_from_spec(spec)
+                        # Inject CLI session BEFORE executing module
+                        mod.zcli = self.zcli
                         spec.loader.exec_module(mod)
-                        self.logger.debug("Loaded plugin from file: %s", path)
+                        self.logger.debug("Loaded plugin from file: %s (session injected)", path)
                 else:
                     # Load from import path
                     mod = importlib.import_module(path)
-                    self.logger.debug("Loaded plugin from module: %s", path)
+                    # Inject CLI session into imported module
+                    mod.zcli = self.zcli
+                    self.logger.debug("Loaded plugin from module: %s (session injected)", path)
 
                 if not mod:
                     continue

@@ -86,12 +86,12 @@ class TestzDataSQLiteAdapter(unittest.TestCase):
         self.test_dir.mkdir(parents=True, exist_ok=True)
         
         # Load SQLite schema using zLoader (proper zPath resolution)
-        self.schema = self.zcli.loader.handle("@.Schemas.zSchema.sqlite_demo")
+        self.schema = self.zcli.loader.handle("@.zTestSuite.demos.zSchema.sqlite_demo")
         self.zcli.data.load_schema(self.schema)
         
         # Store the schema path for wizard transactions
         # zWizard will use schema_cache for connection reuse
-        self.schema_path = "@.Schemas.zSchema.sqlite_demo"
+        self.schema_path = "@.zTestSuite.demos.zSchema.sqlite_demo"
         
         # Drop existing tables (if any) and create fresh tables
         for table_name in ["users", "posts", "products"]:
@@ -348,7 +348,7 @@ class TestzDataPostgreSQLAdapter(unittest.TestCase):
         
         # Load PostgreSQL schema using zLoader (proper zPath resolution)
         try:
-            self.schema = self.zcli.loader.handle("@.Schemas.zSchema.postgresql_demo")
+            self.schema = self.zcli.loader.handle("@.zTestSuite.demos.zSchema.postgresql_demo")
             self.zcli.data.load_schema(self.schema)
             
             # Drop existing tables (if any) and create fresh tables
@@ -480,7 +480,7 @@ class TestzDataCSVAdapter(unittest.TestCase):
         self.test_dir.mkdir(parents=True, exist_ok=True)
         
         # Load CSV schema using zLoader (proper zPath resolution)
-        self.schema = self.zcli.loader.handle("@.Schemas.zSchema.csv_demo")
+        self.schema = self.zcli.loader.handle("@.zTestSuite.demos.zSchema.csv_demo")
         self.zcli.data.load_schema(self.schema)
         
         # Drop existing tables (if any) and create fresh tables
@@ -635,11 +635,149 @@ class TestzDataErrorHandling(unittest.TestCase):
     def test_table_not_found_error(self):
         """Test error when table not in schema."""
         # Load schema using zLoader (proper zPath resolution)
-        schema = self.zcli.loader.handle("@.Schemas.zSchema.sqlite_demo")
+        schema = self.zcli.loader.handle("@.zTestSuite.demos.zSchema.sqlite_demo")
         self.zcli.data.load_schema(schema)
         
         with self.assertRaises(ValueError):
             self.zcli.data.create_table("nonexistent_table")
+
+
+class TestzDataPluginIntegration(unittest.TestCase):
+    """Test zData integration with plugins."""
+
+    def setUp(self):
+        """Set up test fixtures."""
+        from zCLI import zCLI
+        with patch('builtins.print'):
+            self.zcli = zCLI()
+        
+        # Set up test directory
+        self.test_dir = self.zcli.config.sys_paths.user_data_dir / "zDataTests"
+        self.test_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Load id_generator plugin explicitly using PluginCache
+        # This ensures the plugin is available for zParser plugin invocations
+        try:
+            # Resolve the plugin file path
+            file_path = self.zcli.zparser.resolve_symbol_path("@", ["@", "zTestSuite", "demos", "id_generator"])
+            if not file_path.endswith('.py'):
+                file_path = f"{file_path}.py"
+            
+            # Load the plugin directly into PluginCache (used by zParser)
+            plugin_name = "id_generator"
+            module = self.zcli.loader.cache.plugin_cache.load_and_cache(file_path, plugin_name)
+            self.zcli.logger.debug(f"Plugin {plugin_name} loaded from {file_path}")
+        except Exception as e:
+            self.zcli.logger.warning(f"Failed to load id_generator plugin: {e}")
+        
+        # Load SQLite schema
+        self.schema = self.zcli.loader.handle("@.zTestSuite.demos.zSchema.sqlite_demo")
+        self.zcli.data.load_schema(self.schema)
+        
+        # Create fresh users table
+        try:
+            self.zcli.data.drop_table("users")
+        except Exception:
+            pass
+        self.zcli.data.create_table("users")
+
+    def tearDown(self):
+        """Clean up after each test."""
+        if self.zcli.data.is_connected():
+            self.zcli.data.disconnect()
+        
+        # Remove test database file
+        db_file = self.test_dir / "sqlite_demo.db"
+        if db_file.exists():
+            db_file.unlink()
+
+    def test_plugin_uuid_generation(self):
+        """Test using plugin to generate UUID for insert."""
+        # Generate UUID using plugin
+        user_id = self.zcli.zparser.resolve_plugin_invocation("&id_generator.generate_uuid()")
+        
+        # Verify it's a valid UUID format
+        self.assertIsInstance(user_id, str)
+        self.assertEqual(len(user_id), 36)  # UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        self.assertIn("-", user_id)
+        
+        # Use in insert
+        self.zcli.data.insert("users", ["name", "email"], ["Alice", user_id])
+        
+        # Verify insert
+        results = self.zcli.data.select("users", where=f"email = '{user_id}'")
+        self.assertEqual(len(results), 1)
+
+    def test_plugin_prefixed_id(self):
+        """Test using plugin to generate prefixed IDs."""
+        # Generate prefixed ID
+        user_id = self.zcli.zparser.resolve_plugin_invocation("&id_generator.prefixed_id('USER')")
+        
+        # Verify format
+        self.assertIsInstance(user_id, str)
+        self.assertTrue(user_id.startswith("USER_"))
+        
+        # Use in insert
+        self.zcli.data.insert("users", ["name", "email"], ["Bob", user_id])
+        
+        # Verify
+        results = self.zcli.data.select("users", where="name = 'Bob'")
+        self.assertEqual(results[0]["email"], user_id)
+
+    def test_plugin_timestamp_generation(self):
+        """Test using plugin to generate timestamps."""
+        # Generate ISO timestamp
+        iso_time = self.zcli.zparser.resolve_plugin_invocation("&id_generator.get_timestamp('iso')")
+        self.assertIsInstance(iso_time, str)
+        self.assertIn("T", iso_time)  # ISO format has T separator
+        
+        # Generate unix timestamp
+        unix_time = self.zcli.zparser.resolve_plugin_invocation("&id_generator.get_timestamp('unix')")
+        self.assertIsInstance(unix_time, int)
+        self.assertGreater(unix_time, 1000000000)  # Reasonable unix timestamp
+
+    def test_plugin_short_uuid(self):
+        """Test using plugin to generate short UUIDs."""
+        # Generate short UUID
+        short_id = self.zcli.zparser.resolve_plugin_invocation("&id_generator.short_uuid()")
+        
+        # Verify format
+        self.assertIsInstance(short_id, str)
+        self.assertEqual(len(short_id), 8)
+        
+        # Use in insert
+        self.zcli.data.insert("users", ["name", "email"], ["Charlie", short_id])
+        
+        # Verify
+        results = self.zcli.data.select("users", where="name = 'Charlie'")
+        self.assertEqual(results[0]["email"], short_id)
+
+    def test_plugin_composite_id(self):
+        """Test using plugin to generate composite IDs."""
+        # Generate composite ID
+        order_id = self.zcli.zparser.resolve_plugin_invocation("&id_generator.composite_id('ORD')")
+        
+        # Verify format
+        self.assertIsInstance(order_id, str)
+        self.assertTrue(order_id.startswith("ORD_"))
+        self.assertEqual(order_id.count("_"), 2)  # prefix_date_random
+
+    def test_plugin_multiple_inserts_unique_ids(self):
+        """Test that plugin generates unique IDs for multiple inserts."""
+        ids = []
+        
+        # Generate multiple IDs
+        for i in range(5):
+            user_id = self.zcli.zparser.resolve_plugin_invocation("&id_generator.generate_uuid()")
+            ids.append(user_id)
+            self.zcli.data.insert("users", ["name", "email"], [f"User{i}", user_id])
+        
+        # Verify all IDs are unique
+        self.assertEqual(len(ids), len(set(ids)))
+        
+        # Verify all inserts succeeded
+        results = self.zcli.data.select("users")
+        self.assertEqual(len(results), 5)
 
 
 class TestzDataConnectionManagement(unittest.TestCase):
@@ -674,7 +812,7 @@ class TestzDataConnectionManagement(unittest.TestCase):
         self.assertFalse(self.zcli.data.is_connected())
         
         # Load schema using zLoader (proper zPath resolution)
-        schema = self.zcli.loader.handle("@.Schemas.zSchema.sqlite_demo")
+        schema = self.zcli.loader.handle("@.zTestSuite.demos.zSchema.sqlite_demo")
         self.zcli.data.load_schema(schema)
         
         self.assertTrue(self.zcli.data.is_connected())
@@ -682,7 +820,7 @@ class TestzDataConnectionManagement(unittest.TestCase):
     def test_disconnect(self):
         """Test disconnecting from database."""
         # Load schema using zLoader (proper zPath resolution)
-        schema = self.zcli.loader.handle("@.Schemas.zSchema.sqlite_demo")
+        schema = self.zcli.loader.handle("@.zTestSuite.demos.zSchema.sqlite_demo")
         self.zcli.data.load_schema(schema)
         
         self.assertTrue(self.zcli.data.is_connected())
@@ -698,7 +836,7 @@ class TestzDataConnectionManagement(unittest.TestCase):
         self.assertFalse(info["connected"])
         
         # With connection - load schema using zLoader (proper zPath resolution)
-        schema = self.zcli.loader.handle("@.Schemas.zSchema.sqlite_demo")
+        schema = self.zcli.loader.handle("@.zTestSuite.demos.zSchema.sqlite_demo")
         self.zcli.data.load_schema(schema)
         
         info = self.zcli.data.get_connection_info()
@@ -715,6 +853,7 @@ def run_tests(verbose=False):
     suite.addTests(loader.loadTestsFromTestCase(TestzDataSQLiteAdapter))
     suite.addTests(loader.loadTestsFromTestCase(TestzDataCSVAdapter))
     suite.addTests(loader.loadTestsFromTestCase(TestzDataErrorHandling))
+    suite.addTests(loader.loadTestsFromTestCase(TestzDataPluginIntegration))
     suite.addTests(loader.loadTestsFromTestCase(TestzDataConnectionManagement))
     
     # Run tests

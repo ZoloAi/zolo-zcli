@@ -433,7 +433,7 @@ workflow = {
     "_transaction": True,
     "step1": {
         "zData": {
-            "model": "@.Schemas.zSchema.sqlite_demo",
+            "model": "@.zTestSuite.demos.zSchema.sqlite_demo",
             "action": "insert",
             "tables": ["users"],
             "options": {"name": "Alice", "age": 30}
@@ -441,7 +441,7 @@ workflow = {
     },
     "step2": {
         "zData": {
-            "model": "@.Schemas.zSchema.sqlite_demo",
+            "model": "@.zTestSuite.demos.zSchema.sqlite_demo",
             "action": "insert",
             "tables": ["posts"],
             "options": {"user_id": 1, "title": "Hello"}
@@ -486,6 +486,148 @@ except Exception as e:
 
 ---
 
+## Plugin Integration
+
+### Using Plugins in Data Operations
+
+Plugins can be used to generate dynamic values, custom IDs, timestamps, and more:
+
+```python
+# Example: Generate UUID for primary key
+result = zcli.zparser.resolve_plugin_invocation("&id_generator.generate_uuid()")
+zcli.data.insert("users", ["id", "name"], [result, "Alice"])
+
+# Example: Generate custom ID with prefix
+user_id = zcli.zparser.resolve_plugin_invocation("&id_generator.prefixed_id('USER')")
+zcli.data.insert("users", ["id", "name"], [user_id, "Bob"])
+
+# Example: Get current timestamp
+timestamp = zcli.zparser.resolve_plugin_invocation("&date_utils.get_timestamp()")
+zcli.data.insert("logs", ["event", "timestamp"], ["user_login", timestamp])
+```
+
+### In YAML Schemas
+
+```yaml
+# Use plugins for default values
+users:
+  id:
+    type: str
+    pk: true
+    default: "&id_generator.generate_uuid()"
+  created_at:
+    type: str
+    default: "&date_utils.get_timestamp()"
+  user_code:
+    type: str
+    default: "&id_generator.prefixed_id('USR')"
+```
+
+### In zWizard Workflows
+
+```python
+workflow = {
+    "step1": {
+        "zData": {
+            "model": "@.zTestSuite.demos.zSchema.sqlite_demo",
+            "action": "insert",
+            "tables": ["users"],
+            "options": {
+                "id": "&id_generator.generate_uuid()",
+                "name": "Alice",
+                "created_at": "&date_utils.get_timestamp()"
+            }
+        }
+    }
+}
+result = zcli.wizard.handle(workflow)
+```
+
+### Common Plugin Use Cases
+
+**1. ID Generation:**
+```python
+# UUID
+uuid = zcli.zparser.resolve_plugin_invocation("&id_generator.generate_uuid()")
+
+# Prefixed IDs
+user_id = zcli.zparser.resolve_plugin_invocation("&id_generator.prefixed_id('USER')")
+order_id = zcli.zparser.resolve_plugin_invocation("&id_generator.prefixed_id('ORD')")
+
+# Sequential IDs
+next_id = zcli.zparser.resolve_plugin_invocation("&id_generator.next_sequential('users')")
+```
+
+**2. Timestamps:**
+```python
+# ISO format
+iso_time = zcli.zparser.resolve_plugin_invocation("&date_utils.get_timestamp('iso')")
+
+# Unix timestamp
+unix_time = zcli.zparser.resolve_plugin_invocation("&date_utils.get_timestamp('unix')")
+
+# Custom format
+custom = zcli.zparser.resolve_plugin_invocation("&date_utils.get_timestamp('YYYY-MM-DD')")
+```
+
+**3. Data Validation:**
+```python
+# Validate email before insert
+email = "user@example.com"
+is_valid = zcli.zparser.resolve_plugin_invocation(f"&validators.validate_email('{email}')")
+if is_valid:
+    zcli.data.insert("users", ["email"], [email])
+```
+
+**4. Data Transformation:**
+```python
+# Hash password
+password = "secret123"
+hashed = zcli.zparser.resolve_plugin_invocation(f"&crypto.hash_password('{password}')")
+zcli.data.insert("users", ["password"], [hashed])
+
+# Slugify text
+title = "My Blog Post"
+slug = zcli.zparser.resolve_plugin_invocation(f"&text_utils.slugify('{title}')")
+zcli.data.insert("posts", ["title", "slug"], [title, slug])
+```
+
+### Creating Data Plugins
+
+Create custom plugins for your data needs:
+
+```python
+# plugins/id_generator.py
+import uuid
+import time
+
+def generate_uuid():
+    """Generate a UUID string."""
+    return str(uuid.uuid4())
+
+def prefixed_id(prefix):
+    """Generate ID with custom prefix."""
+    return f"{prefix}_{int(time.time())}_{uuid.uuid4().hex[:8]}"
+
+def next_sequential(table_name):
+    """Get next sequential ID for a table."""
+    # Access CLI session to query current max ID
+    results = zcli.data.select(table_name, fields=["MAX(id) as max_id"])
+    max_id = results[0]["max_id"] if results else 0
+    return max_id + 1
+```
+
+**Load and use:**
+```bash
+# Load plugin
+plugin load @.plugins.id_generator
+
+# Use in code
+user_id = zcli.zparser.resolve_plugin_invocation("&id_generator.generate_uuid()")
+```
+
+---
+
 ## Advanced Usage
 
 ### Connection Management
@@ -519,7 +661,7 @@ workflow = {
     "_transaction": True,  # Enables connection reuse
     "step1": {
         "zData": {
-            "model": "@.Schemas.zSchema.sqlite_demo",
+            "model": "@.zTestSuite.demos.zSchema.sqlite_demo",
             "action": "insert",
             "tables": ["users"],
             "options": {"name": "Alice"}
@@ -527,7 +669,7 @@ workflow = {
     },
     "step2": {
         "zData": {
-            "model": "@.Schemas.zSchema.sqlite_demo",  # Same model = reused connection
+            "model": "@.zTestSuite.demos.zSchema.sqlite_demo",  # Same model = reused connection
             "action": "select",
             "tables": ["users"]
         }
@@ -557,7 +699,7 @@ context = {
 # First request creates connection
 zcli.data.handle_request({
     "action": "insert",
-    "model": "@.Schemas.zSchema.sqlite_demo",
+    "model": "@.zTestSuite.demos.zSchema.sqlite_demo",
     "tables": ["users"],
     "options": {"name": "Alice"}
 }, context)
@@ -565,7 +707,7 @@ zcli.data.handle_request({
 # Subsequent requests reuse connection
 zcli.data.handle_request({
     "action": "select",
-    "model": "@.Schemas.zSchema.sqlite_demo",
+    "model": "@.zTestSuite.demos.zSchema.sqlite_demo",
     "tables": ["users"]
 }, context)
 
@@ -700,7 +842,7 @@ workflow = {
     "_transaction": True,
     "step1": {
         "zData": {
-            "model": "@.Schemas.zSchema.sqlite_demo",
+            "model": "@.zTestSuite.demos.zSchema.sqlite_demo",
             "action": "insert",
             "tables": ["users"],
             "options": {"name": "Alice"}
@@ -708,7 +850,7 @@ workflow = {
     },
     "step2": {
         "zData": {
-            "model": "@.Schemas.zSchema.sqlite_demo",
+            "model": "@.zTestSuite.demos.zSchema.sqlite_demo",
             "action": "insert",
             "tables": ["posts"],
             "options": {"user_id": 1, "title": "Post"}
@@ -1020,7 +1162,7 @@ schema = {
 
 - **Documentation**: `Documentation/zData_GUIDE.md`
 - **Tests**: `zTestSuite/zData_Test.py`
-- **Examples**: `Schemas/zSchema.*_demo.yaml`
+- **Examples**: `zTestSuite/demos/zSchema.*_demo.yaml`
 
 ---
 
