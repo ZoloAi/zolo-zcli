@@ -107,10 +107,11 @@ class TestCommandExecutor(unittest.TestCase):
             "args": []
         }
         self.mock_zcli.display.handle.return_value = None
+        self.mock_zcli.display.zSession.return_value = None
         
         result = self.executor.execute("session info")
         
-        # Session info returns None (display.handle returns None)
+        # Session info returns None (display.zSession returns None)
         self.assertIsNone(result)
     
     def test_execute_command_with_error(self):

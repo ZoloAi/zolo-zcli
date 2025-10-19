@@ -56,7 +56,18 @@ class CommandLauncher:
         """Handle dict-based launch commands."""
         if "zDisplay" in zHorizontal:
             self.logger.info("Detected zDisplay (wrapped)")
-            self.display.handle(zHorizontal["zDisplay"])
+            # Handle legacy zDisplay dict format
+            display_data = zHorizontal["zDisplay"]
+            if isinstance(display_data, dict):
+                # Modern format only - no backward compatibility
+                event = display_data.get("event")
+                if event == "text":
+                    self.display.text(display_data.get("content", ""), display_data.get("indent", 0))
+                elif event == "sysmsg":
+                    self.display.zDeclare(display_data.get("label", ""), display_data.get("color"), display_data.get("indent", 0), display_data.get("style"))
+                else:
+                    # Unknown event - log warning
+                    self.logger.warning(f"Unknown display event: {event}. Use modern API methods instead.")
             return None
 
         if "zDialog" in zHorizontal:

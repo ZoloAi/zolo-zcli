@@ -25,29 +25,20 @@ class MenuRenderer:
 
         # Show title if provided
         if title:
-            display.handle({
-                "event": "sysmsg",
-                "label": title,
-                "style": "full",
-                "color": self.menu.mycolor,
-                "indent": 0
-            })
+            display.zDeclare(title, color=self.menu.mycolor, indent=0, style="full")
 
         # Create menu pairs for display
         menu_pairs = list(enumerate(options))
         
         # Show breadcrumbs if available (for walker context)
         try:
-            display.handle({"event": "zCrumbs"})
+            display.zCrumbs(self.zcli.session)
         except Exception:
             # Ignore if zCrumbs not available
             pass
 
-        # Render menu
-        display.handle({
-            "event": "zMenu",
-            "menu": menu_pairs
-        })
+        # Render menu using modern zDisplay method
+        display.zMenu(menu_pairs)
 
         self.logger.debug("Rendered menu with %d options", len(options))
 
@@ -60,21 +51,11 @@ class MenuRenderer:
             display: Display adapter to use
             prompt: Prompt text
         """
-        display.handle({
-            "event": "sysmsg",
-            "label": prompt,
-            "style": "single",
-            "color": self.menu.mycolor,
-            "indent": 0
-        })
+        display.zDeclare(prompt, color=self.menu.mycolor, indent=0, style="single")
 
         # Simple numbered list
         for i, option in enumerate(options):
-            display.handle({
-                "event": "text",
-                "text": f"  [{i}] {option}",
-                "color": self.menu.mycolor
-            })
+            display.text(f"  [{i}] {option}")
 
         self.logger.debug("Rendered simple menu with %d options", len(options))
 
@@ -88,10 +69,6 @@ class MenuRenderer:
         """
         # Show options in a compact format
         option_text = " | ".join(f"{i}:{opt}" for i, opt in enumerate(options))
-        display.handle({
-            "event": "text",
-            "text": option_text,
-            "color": self.menu.mycolor
-        })
+        display.text(option_text)
 
         self.logger.debug("Rendered compact menu with %d options", len(options))

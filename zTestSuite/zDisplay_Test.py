@@ -520,129 +520,8 @@ class TestzEventsSystemDisplay(unittest.TestCase):
         self.assertTrue(mock_input.called)
 
 
-class TestBackwardCompatibility(unittest.TestCase):
-    """Test backward compatibility handle() method."""
-
-    def setUp(self):
-        """Set up mock zCLI and zDisplay for testing."""
-        self.mock_zcli = Mock()
-        self.mock_zcli.session = {"zMode": "Terminal"}
-        self.mock_zcli.logger = Mock()
-        
-        with patch('builtins.print'):
-            self.display = zDisplay(self.mock_zcli)
-
-    @patch('builtins.print')
-    def test_handle_text_event(self, mock_print):
-        """Test handle() with text event."""
-        obj = {"event": "text", "content": "Test content"}
-        self.display.handle(obj)
-        
-        self.assertTrue(mock_print.called)
-
-    @patch('builtins.print')
-    def test_handle_header_event(self, mock_print):
-        """Test handle() with header event."""
-        obj = {"event": "header", "label": "Test Header"}
-        self.display.handle(obj)
-        
-        self.assertTrue(mock_print.called)
-
-    @patch('builtins.print')
-    def test_handle_error_event(self, mock_print):
-        """Test handle() with error event."""
-        obj = {"event": "error", "content": "Error message"}
-        self.display.handle(obj)
-        
-        self.assertTrue(mock_print.called)
-
-    @patch('builtins.print')
-    def test_handle_warning_event(self, mock_print):
-        """Test handle() with warning event."""
-        obj = {"event": "warning", "content": "Warning message"}
-        self.display.handle(obj)
-        
-        self.assertTrue(mock_print.called)
-
-    @patch('builtins.print')
-    def test_handle_success_event(self, mock_print):
-        """Test handle() with success event."""
-        obj = {"event": "success", "content": "Success message"}
-        self.display.handle(obj)
-        
-        self.assertTrue(mock_print.called)
-
-    @patch('builtins.print')
-    def test_handle_info_event(self, mock_print):
-        """Test handle() with info event."""
-        obj = {"event": "info", "content": "Info message"}
-        self.display.handle(obj)
-        
-        self.assertTrue(mock_print.called)
-
-    @patch('builtins.print')
-    def test_handle_list_event(self, mock_print):
-        """Test handle() with list event."""
-        obj = {"event": "list", "items": ["Item 1", "Item 2"]}
-        self.display.handle(obj)
-        
-        self.assertTrue(mock_print.called)
-
-    @patch('builtins.print')
-    def test_handle_json_event(self, mock_print):
-        """Test handle() with json event."""
-        obj = {"event": "json", "data": {"key": "value"}}
-        self.display.handle(obj)
-        
-        self.assertTrue(mock_print.called)
-
-    @patch('builtins.print')
-    def test_handle_raw_event(self, mock_print):
-        """Test handle() with raw event."""
-        obj = {"event": "raw", "content": "Raw content"}
-        self.display.handle(obj)
-        
-        mock_print.assert_called_with("Raw content", end='', flush=True)
-
-    @patch('builtins.print')
-    def test_handle_line_event(self, mock_print):
-        """Test handle() with line event."""
-        obj = {"event": "line", "content": "Line content"}
-        self.display.handle(obj)
-        
-        self.assertTrue(mock_print.called)
-
-    @patch('builtins.print')
-    def test_handle_block_event(self, mock_print):
-        """Test handle() with block event."""
-        obj = {"event": "block", "content": "Block content"}
-        self.display.handle(obj)
-        
-        self.assertTrue(mock_print.called)
-
-    @patch('builtins.input', return_value="test")
-    def test_handle_read_event(self, mock_input):
-        """Test handle() with read event."""
-        obj = {"event": "read", "prompt": "Enter: "}
-        result = self.display.handle(obj)
-        
-        self.assertEqual(result, "test")
-
-    @patch('zCLI.getpass.getpass', return_value="secret")
-    def test_handle_read_password_event(self, mock_getpass):
-        """Test handle() with read_password event."""
-        obj = {"event": "read_password", "prompt": "Password: "}
-        result = self.display.handle(obj)
-        
-        self.assertEqual(result, "secret")
-
-    def test_handle_unknown_event(self):
-        """Test handle() with unknown event logs warning."""
-        obj = {"event": "unknown_event"}
-        result = self.display.handle(obj)
-        
-        self.assertIsNone(result)
-        self.mock_zcli.logger.warning.assert_called_once()
+# TestBackwardCompatibility class removed - backward compatibility deprecated
+# Modern API is now official! Use direct method calls.
 
 
 class TestModeSpecificBehavior(unittest.TestCase):
@@ -770,7 +649,7 @@ def run_tests(verbose=False):
     suite.addTests(loader.loadTestsFromTestCase(TestzEventsSignals))
     suite.addTests(loader.loadTestsFromTestCase(TestzEventsDataDisplay))
     suite.addTests(loader.loadTestsFromTestCase(TestzEventsSystemDisplay))
-    suite.addTests(loader.loadTestsFromTestCase(TestBackwardCompatibility))
+    # TestBackwardCompatibility removed - modern API is now official
     suite.addTests(loader.loadTestsFromTestCase(TestModeSpecificBehavior))
     suite.addTests(loader.loadTestsFromTestCase(TestEdgeCases))
 

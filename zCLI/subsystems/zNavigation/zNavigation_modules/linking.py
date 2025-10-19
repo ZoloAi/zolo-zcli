@@ -11,13 +11,7 @@ class Linking:
         self.logger = navigation.logger
 
     def handle(self, zHorizontal):
-        self.walker.display.handle({
-            "event": "sysmsg",
-            "label": "Handle zLink",
-            "style": "full",
-            "color": "ZLINK",
-            "indent": 1
-        })
+        self.walker.display.zDeclare("Handle zLink", color="ZLINK", indent=1, style="full")
 
         self.logger.debug("incoming zLink request: %s", zHorizontal)
         zLink_path, required_perms = self.parse_zLink_expression(zHorizontal)
@@ -57,13 +51,7 @@ class Linking:
         return self.walker.zBlock_loop(active_zBlock_dict, zBlock_keys)
 
     def parse_zLink_expression(self, expr):
-        self.walker.display.handle({
-            "event": "sysmsg",
-            "label": "zLink Parsing",
-            "style": "single",
-            "color": "ZLINK",
-            "indent": 2
-        })
+        self.walker.display.zDeclare("zLink Parsing", color="ZLINK", indent=2, style="single")
 
         self.logger.info("Raw zLink expression: %s", expr)
 
@@ -90,13 +78,7 @@ class Linking:
         return zLink_path, required
 
     def check_zLink_permissions(self, required):
-        self.walker.display.handle({
-            "event": "sysmsg",
-            "label": "zLink Auth",
-            "style": "single",
-            "color": "ZLINK",
-            "indent": 2
-        })
+        self.walker.display.zDeclare("zLink Auth", color="ZLINK", indent=2, style="single")
 
         user = self.zSession.get("zAuth", {})
         self.logger.debug("zAuth user: %s", user)

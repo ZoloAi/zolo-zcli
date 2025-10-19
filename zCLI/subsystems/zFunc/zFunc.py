@@ -104,20 +104,13 @@ class zFunc:
     def _display_result(self, result):
         """Display function result with styling."""
         # Display result as JSON
-        self.display.handle({
-            "event": "json",
-            "data": result,
-            "color": True,
-            "indent": 0,
-        })
+        self.display.json_data(result, color=True, indent=0)
 
         # Separator
         self.display.zDeclare("", color="CYAN", indent=0, style="~")
 
-        # Break for user to review
-        self.display.handle({
-            "event": "break",
-        })
+        # Break for user to review (use text with newline)
+        self.display.text("")
 
         # Return header
         self.display.zDeclare("zFunction Return", color=self.mycolor, indent=1, style="single")

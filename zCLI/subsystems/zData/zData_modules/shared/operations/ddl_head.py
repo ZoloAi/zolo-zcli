@@ -44,12 +44,15 @@ def handle_head(request, ops):
                 "pk": False
             })
 
-    # Display using zDisplay
-    ops.zcli.display.handle({
-        "event": "zTableSchema",
-        "table": table,
-        "columns": columns
-    })
+    # Display table schema
+    ops.zcli.display.zDeclare(f"Schema: {table}", color="INFO", indent=0, style="full")
+    for col in columns:
+        col_info = f"{col['name']:20} {col['type']}"
+        if col.get('pk'):
+            col_info += " [PK]"
+        if col.get('required'):
+            col_info += " [REQUIRED]"
+        ops.zcli.display.text(col_info, indent=1)
 
     ops.logger.info("[OK] HEAD %s: %d columns", table, len(columns))
     return True

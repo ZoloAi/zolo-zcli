@@ -26,13 +26,8 @@ class zNavigation:
         self.navigation = Navigation(self)
         self.linking = Linking(self)
 
-        # Print styled ready message using zDisplay (available in Layer 1)
-        self.zcli.display.handle({
-            "event": "sysmsg",
-            "label": "zNavigation Ready",
-            "color": self.mycolor,
-            "indent": 0
-        })
+        # Display ready message using modern zDisplay
+        self.zcli.display.zDeclare("zNavigation Ready", color=self.mycolor, indent=0, style="full")
 
         self.logger.info("[zNavigation] Unified navigation system ready")
 

@@ -60,11 +60,7 @@ class zDialog:
         self.logger.info("\nzContext: %s", zContext)
 
         # Render form and collect input
-        zConv = self.display.handle({
-            "event": "zDialog",
-            "context": zContext,
-            "walker": self.walker,
-        })
+        zConv = self.display.zDialog(zContext, self.zcli, self.walker)
         
         # Add collected data to context
         zContext["zConv"] = zConv

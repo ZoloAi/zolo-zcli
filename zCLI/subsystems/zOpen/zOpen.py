@@ -29,7 +29,7 @@ class zOpen:
     def handle(self, zHorizontal):
         """Handle zOpen operations with optional hooks."""
         self.display.zDeclare("Handle zOpen", color=self.mycolor, indent=1, style="full")
-        self.display.handle({"event": "zCrumbs"})  # Keep specialized event
+        self.display.zCrumbs(self.session)  # Use modern zDisplay method
 
         self.logger.debug("incoming zOpen request: %s", zHorizontal)
 
@@ -94,7 +94,7 @@ class zOpen:
                 "size": f"{os.path.getsize(path)} bytes",
                 "type": os.path.splitext(path)[1]
             }
-            self.display.handle({"event": "json", "data": file_info, "color": True, "indent": 1})
+            self.display.json_data(file_info, color=True, indent=1)
 
         # Check if file exists
         if not os.path.exists(path):
@@ -259,7 +259,7 @@ class zOpen:
             "domain": parsed.netloc,
             "path": parsed.path
         }
-        self.display.handle({"event": "json", "data": url_info, "color": True, "indent": 1})
+        self.display.json_data(url_info, color=True, indent=1)
 
         # Get machine configuration
         zMachine = self.session.get("zMachine", {})

@@ -10,11 +10,8 @@ def execute_session(zcli, parsed):
     args = parsed["args"]
     
     if action == "info":
-        # IMPORTANT: Pass the instance's session, not the global one
-        return zcli.display.handle({
-            "event": "zSession",
-            "zSession": zcli.session  # ← Pass instance session
-        })
+        # Display session information using modern zDisplay
+        return zcli.display.zSession(zcli.session)
     elif action == "set" and len(args) >= 2:
         key, value = args[0], args[1]
         zcli.session[key] = value

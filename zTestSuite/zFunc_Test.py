@@ -335,16 +335,12 @@ class TestzFuncExecution(unittest.TestCase):
         
         self.zfunc._display_result(result_data)
         
-        # Should call handle for JSON display
-        json_call = [call for call in self.mock_zcli.display.handle.call_args_list 
-                     if call[0][0].get("event") == "json"]
-        self.assertEqual(len(json_call), 1)
-        self.assertEqual(json_call[0][0][0]["data"], result_data)
+        # After modernization, should call json_data instead of handle
+        self.mock_zcli.display.json_data.assert_called_once_with(result_data, color=True, indent=0)
         
-        # Should call handle for break
-        break_call = [call for call in self.mock_zcli.display.handle.call_args_list 
-                      if call[0][0].get("event") == "break"]
-        self.assertEqual(len(break_call), 1)
+        # Should call text for break (empty line)
+        text_calls = self.mock_zcli.display.text.call_args_list
+        self.assertTrue(any(call[0][0] == "" for call in text_calls))
         
         # Should call zDeclare for separator and return header
         declare_calls = self.mock_zcli.display.zDeclare.call_args_list

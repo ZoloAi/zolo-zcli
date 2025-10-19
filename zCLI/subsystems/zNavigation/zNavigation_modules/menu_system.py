@@ -37,13 +37,7 @@ class MenuSystem:
         # Use walker's display if available, otherwise use zCLI's display
         display = walker.display if walker else self.zcli.display
         
-        display.handle({
-            "event": "sysmsg",
-            "label": "zNavigation Menu Create",
-            "style": "full",
-            "color": self.navigation.mycolor,
-            "indent": 1
-        })
+        display.zDeclare("zNavigation Menu Create", color=self.navigation.mycolor, indent=1, style="full")
 
         # Build menu object
         menu_obj = self.builder.build(options, title, allow_back)
@@ -70,13 +64,7 @@ class MenuSystem:
         """
         display = walker.display if walker else self.zcli.display
         
-        display.handle({
-            "event": "sysmsg",
-            "label": "zNavigation Menu Select",
-            "style": "single",
-            "color": self.navigation.mycolor,
-            "indent": 1
-        })
+        display.zDeclare("zNavigation Menu Select", color=self.navigation.mycolor, indent=1, style="single")
 
         # Build simple menu
         menu_obj = self.builder.build(options, prompt, allow_back=False)
@@ -105,13 +93,7 @@ class MenuSystem:
         
         display = walker.display
         
-        display.handle({
-            "event": "sysmsg",
-            "label": "Handle zNavigation Menu (Legacy)",
-            "style": "full",
-            "color": self.navigation.mycolor,
-            "indent": 1
-        })
+        display.zDeclare("Handle zNavigation Menu (Legacy)", color=self.navigation.mycolor, indent=1, style="full")
 
         self.logger.debug(
             "\nzMENU Object:"
@@ -135,23 +117,14 @@ class MenuSystem:
 
         # Create menu pairs for display
         menu_pairs = list(enumerate(options))
-        display.handle({"event": "zCrumbs"})
-        display.handle({
-            "event": "zMenu",
-            "menu": menu_pairs
-        })
+        display.zCrumbs(self.zcli.session)
+        display.zMenu(menu_pairs)
 
         # Get user choice
         choice = self.interaction.get_choice_from_list(options, display)
         
         if choice in ("zBack", "stop"):
-            display.handle({
-                "event": "sysmsg",
-                "label": "zNavigation Menu return",
-                "style": "~",
-                "color": self.navigation.mycolor,
-                "indent": 1
-            })
+            display.zDeclare("zNavigation Menu return", color=self.navigation.mycolor, indent=1, style="~")
             return choice
 
         # Handle complex navigation logic (legacy)

@@ -200,37 +200,30 @@ class ConfigPersistence:
         """Display current machine configuration."""
         machine = self.machine.get_all()
         
-        if self.zcli and self.zcli.display:
-            self.zcli.display.handle({
-                "event": "config_display",
-                "title": "Machine Configuration",
-                "data": machine,
-                "file": str(self.paths.user_zconfigs_dir / "zConfig.machine.yaml")
-            })
-        else:
-            print(f"\n{Colors.CONFIG}{'='*70}{Colors.RESET}")
-            print(f"{Colors.CONFIG}Machine Configuration{Colors.RESET}")
-            print(f"{Colors.CONFIG}{'='*70}{Colors.RESET}")
-            
-            # Group by category
-            categories = {
-                "Identity (Auto-detected)": ["os", "hostname", "architecture", "python_version", "processor"],
-                "User Preferences (Editable)": ["browser", "ide", "terminal", "shell"],
-                "System Info (Auto-detected)": ["cpu_cores", "memory_gb", "os_version", "os_name"],
-            }
-            
-            for category, keys in categories.items():
-                print(f"\n{Colors.CONFIG}{category}:{Colors.RESET}")
-                for key in keys:
-                    value = machine.get(key, "N/A")
-                    editable = key in self._get_editable_machine_keys()
-                    marker = "✏️ " if editable else "🔒 "
-                    print(f"  {marker}{key}: {value}")
-            
-            # Show file location
-            user_config_path = self.paths.user_zconfigs_dir / "zConfig.machine.yaml"
-            print(f"\n{Colors.CONFIG}Config file: {user_config_path}{Colors.RESET}")
-            print(f"{Colors.CONFIG}{'='*70}{Colors.RESET}\n")
+        # Layer 0: Always use print (zDisplay not available yet)
+        print(f"\n{Colors.CONFIG}{'='*70}{Colors.RESET}")
+        print(f"{Colors.CONFIG}Machine Configuration{Colors.RESET}")
+        print(f"{Colors.CONFIG}{'='*70}{Colors.RESET}")
+        
+        # Group by category
+        categories = {
+            "Identity (Auto-detected)": ["os", "hostname", "architecture", "python_version", "processor"],
+            "User Preferences (Editable)": ["browser", "ide", "terminal", "shell"],
+            "System Info (Auto-detected)": ["cpu_cores", "memory_gb", "os_version", "os_name"],
+        }
+        
+        for category, keys in categories.items():
+            print(f"\n{Colors.CONFIG}{category}:{Colors.RESET}")
+            for key in keys:
+                value = machine.get(key, "N/A")
+                editable = key in self._get_editable_machine_keys()
+                marker = "✏️ " if editable else "🔒 "
+                print(f"  {marker}{key}: {value}")
+        
+        # Show file location
+        user_config_path = self.paths.user_zconfigs_dir / "zConfig.machine.yaml"
+        print(f"\n{Colors.CONFIG}Config file: {user_config_path}{Colors.RESET}")
+        print(f"{Colors.CONFIG}{'='*70}{Colors.RESET}\n")
         
         return True
 
@@ -276,27 +269,20 @@ class ConfigPersistence:
         """Display current environment configuration."""
         env = self.environment.get_all()
         
-        if self.zcli and self.zcli.display:
-            self.zcli.display.handle({
-                "event": "config_display",
-                "title": "Environment Configuration",
-                "data": env,
-                "file": str(self.paths.user_zconfigs_dir / "zConfig.env.yaml")
-            })
-        else:
-            print(f"\n{Colors.CONFIG}{'='*70}{Colors.RESET}")
-            print(f"{Colors.CONFIG}Environment Configuration{Colors.RESET}")
-            print(f"{Colors.CONFIG}{'='*70}{Colors.RESET}")
-            
-            # Show environment settings
-            print(f"\n{Colors.CONFIG}zCLI Environment Settings:{Colors.RESET}")
-            for key, value in env.items():
-                print(f"  ✏️ {key}: {value}")
-            
-            # Show file location
-            user_config_path = self.paths.user_zconfigs_dir / "zConfig.env.yaml"
-            print(f"\n{Colors.CONFIG}Config file: {user_config_path}{Colors.RESET}")
-            print(f"{Colors.CONFIG}{'='*70}{Colors.RESET}\n")
+        # Layer 0: Always use print (zDisplay not available yet)
+        print(f"\n{Colors.CONFIG}{'='*70}{Colors.RESET}")
+        print(f"{Colors.CONFIG}Environment Configuration{Colors.RESET}")
+        print(f"{Colors.CONFIG}{'='*70}{Colors.RESET}")
+        
+        # Show environment settings
+        print(f"\n{Colors.CONFIG}zCLI Environment Settings:{Colors.RESET}")
+        for key, value in env.items():
+            print(f"  ✏️ {key}: {value}")
+        
+        # Show file location
+        user_config_path = self.paths.user_zconfigs_dir / "zConfig.env.yaml"
+        print(f"\n{Colors.CONFIG}Config file: {user_config_path}{Colors.RESET}")
+        print(f"{Colors.CONFIG}{'='*70}{Colors.RESET}\n")
         
         return True
 
@@ -362,31 +348,18 @@ class ConfigPersistence:
     
     def _handle_error(self, message, details=None):
         """Handle error messages."""
-        if self.zcli and self.zcli.display:
-            self.zcli.display.handle({
-                "event": "error",
-                "message": message,
-                "details": details
-            })
-        else:
-            print(f"\n{Colors.ERROR}❌ {message}{Colors.RESET}")
-            if details:
-                print(f"   {details}")
-            print()
+        # Layer 0: Always use print (zDisplay not available yet)
+        print(f"\n{Colors.ERROR}❌ {message}{Colors.RESET}")
+        if details:
+            print(f"   {details}")
+        print()
     
     def _handle_success(self, message, details=None, file_path=None):
         """Handle success messages."""
-        if self.zcli and self.zcli.display:
-            self.zcli.display.handle({
-                "event": "success",
-                "message": message,
-                "details": details,
-                "file": file_path
-            })
-        else:
-            print(f"\n{Colors.CONFIG}✅ {message}{Colors.RESET}")
-            if details:
-                print(f"   {details}")
-            if file_path:
-                print(f"   Saved to: {file_path}")
-            print()
+        # Layer 0: Always use print (zDisplay not available yet)
+        print(f"\n{Colors.CONFIG}✅ {message}{Colors.RESET}")
+        if details:
+            print(f"   {details}")
+        if file_path:
+            print(f"   Saved to: {file_path}")
+        print()

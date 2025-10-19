@@ -43,21 +43,13 @@ class MenuInteraction:
 
             if not choice.isdigit():
                 self.logger.debug("Input is not a valid digit.")
-                display.handle({
-                    "event": "text",
-                    "text": "\nInvalid input — enter a number.",
-                    "color": "ERROR"
-                })
+                display.error("\nInvalid input — enter a number.")
                 continue
 
             index = int(choice)
             if index < 0 or index >= len(options):
                 self.logger.debug("Input index %s is out of range.", index)
-                display.handle({
-                    "event": "text", 
-                    "text": "\nChoice out of range.",
-                    "color": "ERROR"
-                })
+                display.error("\nChoice out of range.")
                 continue
 
             break  # Valid input
@@ -78,11 +70,7 @@ class MenuInteraction:
         Returns:
             List of selected options
         """
-        display.handle({
-            "event": "text",
-            "text": prompt,
-            "color": self.menu.mycolor
-        })
+        display.text(prompt)
 
         while True:
             choice = display.input({"event": "input"})
@@ -95,11 +83,7 @@ class MenuInteraction:
                 # Validate all indices
                 invalid_indices = [i for i in indices if i < 0 or i >= len(options)]
                 if invalid_indices:
-                    display.handle({
-                        "event": "text",
-                        "text": f"\nInvalid indices: {invalid_indices}",
-                        "color": "ERROR"
-                    })
+                    display.error(f"\nInvalid indices: {invalid_indices}")
                     continue
 
                 selected = [options[i] for i in indices]
@@ -107,11 +91,7 @@ class MenuInteraction:
                 return selected
 
             except ValueError:
-                display.handle({
-                    "event": "text",
-                    "text": "\nInvalid input — enter comma-separated numbers.",
-                    "color": "ERROR"
-                })
+                display.error("\nInvalid input — enter comma-separated numbers.")
                 continue
 
     def get_choice_with_search(self, options, display, search_prompt="Search"):
@@ -131,18 +111,10 @@ class MenuInteraction:
         while True:
             # Show current filtered options
             if len(filtered_options) != len(options):
-                display.handle({
-                    "event": "text",
-                    "text": f"\nFiltered to {len(filtered_options)} options:",
-                    "color": self.menu.mycolor
-                })
+                display.text(f"\nFiltered to {len(filtered_options)} options:")
             
             for i, option in enumerate(filtered_options):
-                display.handle({
-                    "event": "text",
-                    "text": f"  [{i}] {option}",
-                    "color": self.menu.mycolor
-                })
+                display.text(f"  [{i}] {option}")
 
             # Get search or selection
             choice = display.input({"event": "input"})
@@ -156,31 +128,19 @@ class MenuInteraction:
                 ]
                 
                 if not filtered_options:
-                    display.handle({
-                        "event": "text",
-                        "text": "No matches found.",
-                        "color": "WARNING"
-                    })
+                    display.warning("No matches found.")
                     filtered_options = options.copy()
                 
                 continue
             
             # Selection mode
             if not choice.isdigit():
-                display.handle({
-                    "event": "text",
-                    "text": "\nInvalid input — enter a number or /search",
-                    "color": "ERROR"
-                })
+                display.error("\nInvalid input — enter a number or /search")
                 continue
 
             index = int(choice)
             if index < 0 or index >= len(filtered_options):
-                display.handle({
-                    "event": "text",
-                    "text": "\nChoice out of range.",
-                    "color": "ERROR"
-                })
+                display.error("\nChoice out of range.")
                 continue
 
             selected = filtered_options[index]

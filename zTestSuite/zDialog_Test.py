@@ -229,6 +229,7 @@ class TestzDialogHandle(unittest.TestCase):
         self.mock_zcli.display = Mock()
         self.mock_zcli.display.zDeclare = Mock()
         self.mock_zcli.display.handle = Mock(return_value={"username": "testuser"})
+        self.mock_zcli.display.zDialog = Mock(return_value={"username": "testuser"})
         self.mock_zcli.zparser = Mock()
         self.mock_zcli.zfunc = Mock()
         
@@ -248,10 +249,8 @@ class TestzDialogHandle(unittest.TestCase):
         # Should return the collected data
         self.assertEqual(result, {"username": "testuser"})
         
-        # Should call display.handle with zDialog event
-        self.mock_zcli.display.handle.assert_called_once()
-        call_args = self.mock_zcli.display.handle.call_args[0][0]
-        self.assertEqual(call_args["event"], "zDialog")
+        # After modernization, should call display.zDialog
+        self.mock_zcli.display.zDialog.assert_called_once()
 
     def test_handle_with_invalid_type(self):
         """Test handling with invalid input type."""
@@ -408,6 +407,7 @@ class TestBackwardCompatibility(unittest.TestCase):
         self.mock_zcli.display = Mock()
         self.mock_zcli.display.zDeclare = Mock()
         self.mock_zcli.display.handle = Mock(return_value={"username": "testuser"})
+        self.mock_zcli.display.zDialog = Mock(return_value={"username": "testuser"})
         self.mock_zcli.zparser = Mock()
         self.mock_zcli.zfunc = Mock()
         

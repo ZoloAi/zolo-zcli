@@ -60,7 +60,7 @@ def _handle_start(zcli, args, options):
         if conn_info:
             zcli.display.info("Connection Info:", indent=1)
             for key, value in conn_info.items():
-                zcli.display.text(f"{key}: {value}", color="DATA", indent=2)
+                zcli.display.text(f"{key}: {value}", indent=2)
 
         return {"status": "success", "service": service_name}
 
@@ -79,22 +79,10 @@ def _handle_stop(zcli, args, options):  # pylint: disable=unused-argument
     success = zcli.comm.stop_service(service_name)
 
     if success:
-        zcli.display.handle({
-            "event": "sysmsg",
-            "label": f"{service_name} stopped successfully",
-            "style": "single",
-            "color": "SUCCESS",
-            "indent": 0
-        })
+        zcli.display.success(f"{service_name} stopped successfully")
         return {"status": "success", "service": service_name}
 
-    zcli.display.handle({
-        "event": "sysmsg",
-        "label": f"Failed to stop {service_name}",
-        "style": "single",
-        "color": "ERROR",
-        "indent": 0
-    })
+    zcli.display.error(f"Failed to stop {service_name}")
     return {"error": f"Failed to stop {service_name}"}
 
 def _handle_restart(zcli, args, options):  # pylint: disable=unused-argument
@@ -108,22 +96,10 @@ def _handle_restart(zcli, args, options):  # pylint: disable=unused-argument
     success = zcli.comm.restart_service(service_name)
 
     if success:
-        zcli.display.handle({
-            "event": "sysmsg",
-            "label": f"{service_name} restarted successfully",
-            "style": "single",
-            "color": "SUCCESS",
-            "indent": 0
-        })
+        zcli.display.success(f"{service_name} restarted successfully")
         return {"status": "success", "service": service_name}
 
-    zcli.display.handle({
-        "event": "sysmsg",
-        "label": f"Failed to restart {service_name}",
-        "style": "single",
-        "color": "ERROR",
-        "indent": 0
-    })
+    zcli.display.error(f"Failed to restart {service_name}")
     return {"error": f"Failed to restart {service_name}"}
 
 def _handle_info(zcli, args, options):  # pylint: disable=unused-argument
@@ -135,30 +111,12 @@ def _handle_info(zcli, args, options):  # pylint: disable=unused-argument
     conn_info = zcli.comm.get_service_connection_info(service_name)
 
     if conn_info:
-        zcli.display.handle({
-            "event": "sysmsg",
-            "label": f"{service_name.upper()} Connection Information:",
-            "style": "full",
-            "color": "INFO",
-            "indent": 0
-        })
+        zcli.display.zDeclare(f"{service_name.upper()} Connection Information:", color="INFO", indent=0, style="full")
         for key, value in conn_info.items():
-            zcli.display.handle({
-                "event": "sysmsg",
-                "label": f"{key:20}: {value}",
-                "style": "single",
-                "color": "DATA",
-                "indent": 1
-            })
+            zcli.display.text(f"{key:20}: {value}", indent=1)
         return {"status": "success", "data": conn_info}
 
-    zcli.display.handle({
-        "event": "sysmsg",
-        "label": f"No connection info available for {service_name}",
-        "style": "single",
-        "color": "ERROR",
-        "indent": 0
-    })
+    zcli.display.error(f"No connection info available for {service_name}")
     return {"error": "Service not found or not running"}
 
 def _handle_install(zcli, args, options):
@@ -172,55 +130,24 @@ def _handle_install(zcli, args, options):
 def _display_service_status(zcli, service_name, status_info):
     """Display service status using zDisplay."""
     if isinstance(status_info, dict) and "error" in status_info:
-        zcli.display.handle({
-            "event": "sysmsg",
-            "label": f"{service_name}: {status_info['error']}",
-            "style": "single",
-            "color": "ERROR",
-            "indent": 1
-        })
+        zcli.display.text(f"{service_name}: {status_info['error']}", indent=1)
         return
 
     running = status_info.get("running", False)
     status_text = "Running" if running else "Stopped"
-    color = "SUCCESS" if running else "WARNING"
 
-    zcli.display.handle({
-        "event": "sysmsg",
-        "label": f"{service_name.upper()}: {status_text}",
-        "style": "single",
-        "color": color,
-        "indent": 1
-    })
+    zcli.display.text(f"{service_name.upper()}: {status_text}", indent=1)
 
     if "port" in status_info:
-        zcli.display.handle({
-            "event": "sysmsg",
-            "label": f"Port: {status_info['port']}",
-            "style": "single",
-            "color": "DATA",
-            "indent": 2
-        })
+        zcli.display.text(f"Port: {status_info['port']}", indent=2)
 
     if "message" in status_info:
-        zcli.display.handle({
-            "event": "sysmsg",
-            "label": f"Note: {status_info['message']}",
-            "style": "single",
-            "color": "INFO",
-            "indent": 2
-        })
+        zcli.display.text(f"Note: {status_info['message']}", indent=2)
 
     if running and "connection_info" in status_info:
         conn = status_info["connection_info"]
         if "connection_string" in conn:
-            zcli.display.handle({
-                "event": "sysmsg",
-                "label": f"URL: {conn['connection_string']}",
-                "style": "single",
-                "color": "DATA",
-                "indent": 2
-            })
+            zcli.display.text(f"URL: {conn['connection_string']}", indent=2)
 
 def _install_service_helper(zcli, service_name, options):  # pylint: disable=unused-argument
     """Guide user through service installation with OS-specific instructions."""

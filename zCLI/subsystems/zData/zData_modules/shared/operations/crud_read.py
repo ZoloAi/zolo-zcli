@@ -51,11 +51,9 @@ def handle_read(request, ops):
     # Display results
     table_display = " + ".join(tables) if is_multi_table else tables[0]
     if rows:
-        ops.zcli.display.handle({
-            "event": "zTable",
-            "table": table_display,
-            "rows": rows
-        })
+        # Extract column names from first row (assuming dict rows)
+        columns = list(rows[0].keys()) if rows and isinstance(rows[0], dict) else []
+        ops.zcli.display.zTable(table_display, columns, rows)
         ops.logger.info("[OK] Read %d row(s) from %s", len(rows), table_display)
     else:
         ops.logger.info("[OK] Read 0 rows from %s (table is empty or no matches)", table_display)

@@ -138,23 +138,23 @@ class zAuth:
                               credentials["username"], credentials["role"])
                 
                 # Display success message
-                self.zcli.display.handle({"event": "text", "content": ""})
-                self.zcli.display.handle({"event": "text", "content": f"[OK] Logged in as: {credentials['username']} ({credentials['role']})"})
-                self.zcli.display.handle({"event": "text", "content": f"     API Key: {credentials['api_key'][:20]}..."})
-                self.zcli.display.handle({"event": "text", "content": f"     Server: {server_url}"})
+                self.zcli.display.text("")
+                self.zcli.display.success(f"[OK] Logged in as: {credentials['username']} ({credentials['role']})")
+                self.zcli.display.text(f"     API Key: {credentials['api_key'][:20]}...", indent=1)
+                self.zcli.display.text(f"     Server: {server_url}", indent=1)
                 
                 return {"status": "success", "credentials": credentials}
             
             self.logger.warning("[FAIL] Remote authentication failed")
-            self.zcli.display.handle({"event": "text", "content": ""})
-            self.zcli.display.handle({"event": "error", "content": "[FAIL] Authentication failed: Invalid credentials"})
-            self.zcli.display.handle({"event": "text", "content": ""})
+            self.zcli.display.text("")
+            self.zcli.display.error("[FAIL] Authentication failed: Invalid credentials")
+            self.zcli.display.text("")
             return {"status": "fail", "reason": "Invalid credentials"}
         
         except Exception as e:
             self.logger.error("[ERROR] Remote authentication error: %s", e)
-            self.zcli.display.handle({"event": "text", "content": ""})
-            self.zcli.display.handle({"event": "error", "content": f"[ERROR] Error connecting to remote server: {e}"})
-            self.zcli.display.handle({"event": "text", "content": ""})
+            self.zcli.display.text("")
+            self.zcli.display.error(f"[ERROR] Error connecting to remote server: {e}")
+            self.zcli.display.text("")
             return {"status": "error", "reason": str(e)}
 

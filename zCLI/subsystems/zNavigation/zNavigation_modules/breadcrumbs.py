@@ -13,13 +13,7 @@ class Breadcrumbs:
         """Handle breadcrumb trail management."""
         display = walker.display if walker else self.zcli.display
         
-        display.handle({
-            "event": "sysmsg",
-            "label": "Handle zNavigation Breadcrumbs",
-            "style": "full",
-            "color": "ZCRUMB",
-            "indent": 2,
-        })
+        display.zDeclare("Handle zNavigation Breadcrumbs", color="ZCRUMB", indent=2, style="full")
 
         self.logger.debug("\nIncoming zBlock: %s,\nand zKey: %s", zBlock, zKey)
         self.logger.debug("\nCurrent zCrumbs: %s", self.zcli.session["zCrumbs"])
@@ -45,13 +39,7 @@ class Breadcrumbs:
         self.logger.debug("\nCurrent zTrail: %s", zBlock_crumbs)
 
     def handle_zBack(self, show_banner=True):
-        self.walker.display.handle({
-            "event": "sysmsg",
-            "label": "zBack",
-            "style": "full",
-            "color": "ZCRUMB",
-            "indent": 1,
-        })
+        self.walker.display.zDeclare("zBack", color="ZCRUMB", indent=1, style="full")
 
         active_zCrumb = next(reversed(self.zSession["zCrumbs"]))
         self.logger.debug("active_zCrumb: %s", active_zCrumb)
@@ -98,7 +86,7 @@ class Breadcrumbs:
                 trail.pop()
                 self.logger.debug("parent trail (post second pop): %s", trail)
         if show_banner and getattr(self.walker, "display", None):
-            self.walker.display.handle({"event": "zCrumbs"})  # Aesthetic
+            self.walker.display.zCrumbs(self.zcli.session)  # Aesthetic
 
         if trail == [] and active_zCrumb == original_zCrumb:
             self.logger.debug("Root scope reached; crumb cleared but scope preserved.")

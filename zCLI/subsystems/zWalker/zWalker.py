@@ -33,13 +33,8 @@ class zWalker(zWizard):
         # Walker-specific configuration
         self._configure_logger()
         
-        # Print styled ready message using zDisplay
-        self.zcli.display.handle({
-            "event": "sysmsg",
-            "label": "zWalker Ready",
-            "color": "MAIN",
-            "indent": 0
-        })
+        # Display ready message using modern zDisplay
+        self.display.zDeclare("zWalker Ready", color="MAIN", indent=0, style="full")
         
         self.logger.info("zWalker initialized (fully modernized architecture)")
 
@@ -103,13 +98,7 @@ class zWalker(zWizard):
         if zBlock_keys is None:
             zBlock_keys = list(active_zBlock_dict.keys())
 
-        self.display.handle({
-            "event": "sysmsg",
-            "label": "zWalker Loop",
-            "style": "full",
-            "color": "MAIN",
-            "indent": 0
-        })
+        self.display.zDeclare("zWalker Loop", color="MAIN", indent=0, style="full")
         
         # Custom dispatch function that handles breadcrumb tracking
         def walker_dispatch(key, value):
@@ -143,25 +132,13 @@ class zWalker(zWizard):
         def on_stop(result):  # pylint: disable=unused-argument
             """Handle stop signal."""
             self.logger.debug("Dispatch returned stop")
-            self.display.handle({
-                "event": "sysmsg",
-                "label": "You've stopped the system!",
-                "style": "full",
-                "color": "MAIN",
-                "indent": 0,
-            })
+            self.display.zDeclare("You've stopped the system!", color="MAIN", indent=0, style="full")
             sys.exit()  # Exit cleanly
         
         def on_error(error_or_result, key):  # pylint: disable=unused-argument
             """Handle error."""
             self.logger.info("Error after key: %s", key)
-            self.display.handle({
-                "event": "sysmsg",
-                "label": "Error Returned",
-                "style": "~",
-                "color": "MAIN",
-                "indent": 2,
-            })
+            self.display.zDeclare("Error Returned", color="MAIN", indent=2, style="~")
             sys.exit()  # Exit cleanly
         
         # Use parent's execute_loop with Walker-specific navigation

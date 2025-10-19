@@ -245,7 +245,8 @@ class TestCommandLauncherDictCommands(unittest.TestCase):
         display_obj = {"event": "text", "content": "Test"}
         result = self.launcher.launch({"zDisplay": display_obj})
         
-        self.mock_zcli.display.handle.assert_called_once_with(display_obj)
+        # After modernization, launcher uses modern display methods
+        self.mock_zcli.display.text.assert_called_once_with("Test", 0)
         self.assertIsNone(result)
 
     def test_launch_zread_dict_with_string(self):

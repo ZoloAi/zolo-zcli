@@ -177,27 +177,27 @@ class HelpSystem:
         if self.display:
             self.display.header("zCLI Interactive Shell", style="box")
             self.display.break_line()
-            self.display.text("Available Commands:", color="HEADER")
+            self.display.text("Available Commands:")
 
             # Generate command list
             for cmd, info in HelpSystem.COMMANDS.items():
                 self.display.text(f"  {cmd:12} - {info['desc']}", indent=1)
 
             self.display.break_line()
-            self.display.text("General:", color="HEADER")
+            self.display.text("General:")
             self.display.text("  help [command]  - Show help (or help for specific command)", indent=1)
             self.display.text("  tips            - Show quick tips", indent=1)
             self.display.text("  clear/cls       - Clear screen", indent=1)
             self.display.text("  exit/quit/q     - Exit shell", indent=1)
 
             self.display.break_line()
-            self.display.text("Usage:", color="HEADER")
+            self.display.text("Usage:")
             self.display.text("  • Type 'help <command>' for detailed help on a specific command", indent=1)
             self.display.text("  • Use Tab for command history (↑/↓ arrows)", indent=1)
             self.display.text("  • Press Ctrl+C to interrupt operations", indent=1)
 
             self.display.break_line()
-            self.display.text("Examples:", color="HEADER")
+            self.display.text("Examples:")
             self.display.text("  help data       - Show detailed data command help", indent=1)
             self.display.text("  help load       - Show detailed load command help", indent=1)
             self.display.text("  help wizard     - Show detailed wizard command help", indent=1)
@@ -221,16 +221,16 @@ class HelpSystem:
         if self.display:
             self.display.header(f"{command_type.upper()} Command Help", style="box")
             self.display.break_line()
-            self.display.text("Description:", color="HEADER")
+            self.display.text("Description:")
             self.display.text(f"  {cmd_info['desc']}", indent=1)
 
             self.display.break_line()
-            self.display.text("Usage:", color="HEADER")
+            self.display.text("Usage:")
             for usage in cmd_info['usage']:
                 self.display.text(f"  {usage}", indent=1)
 
             self.display.break_line()
-            self.display.text("Examples:", color="HEADER")
+            self.display.text("Examples:")
             for example in cmd_info['examples']:
                 self.display.text(f"  {example}", indent=1)
         else:

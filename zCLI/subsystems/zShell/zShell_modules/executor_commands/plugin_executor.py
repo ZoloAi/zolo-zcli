@@ -127,9 +127,9 @@ def show_plugins(zcli, args):
             filepath = plugin_info.get("filepath", "unknown")
             hits = plugin_info.get("hits", 0)
             
-            zcli.display.text(f"\n• {name}", color="INFO")
-            zcli.display.text(f"  Path: {filepath}", color="MUTED")
-            zcli.display.text(f"  Cache hits: {hits}", color="MUTED")
+            zcli.display.text(f"\n• {name}")
+            zcli.display.text(f"  Path: {filepath}")
+            zcli.display.text(f"  Cache hits: {hits}")
     else:
         zcli.display.warning("No plugins loaded")
         zcli.display.info("Use 'plugin load <zPath>' to load a plugin")
