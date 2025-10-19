@@ -236,17 +236,17 @@ pip install git+ssh://git@github.com/ZoloAi/zolo-zcli.git
 
 ### With CSV Support
 ```bash
-pip install "git+ssh://git@github.com/ZoloAi/zolo-zcli.git#egg=zolo-zcli[csv]"
+pip install "zolo-zcli[csv] @ git+ssh://git@github.com/ZoloAi/zolo-zcli.git"
 ```
 
 ### With PostgreSQL Support
 ```bash
-pip install "git+ssh://git@github.com/ZoloAi/zolo-zcli.git#egg=zolo-zcli[postgresql]"
+pip install "zolo-zcli[postgresql] @ git+ssh://git@github.com/ZoloAi/zolo-zcli.git"
 ```
 
 ### Full Install (All Features)
 ```bash
-pip install "git+ssh://git@github.com/ZoloAi/zolo-zcli.git#egg=zolo-zcli[all]"
+pip install "zolo-zcli[all] @ git+ssh://git@github.com/ZoloAi/zolo-zcli.git"
 ```
 
 ### Development Install
