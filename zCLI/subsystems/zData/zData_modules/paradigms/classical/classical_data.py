@@ -19,7 +19,7 @@ class ClassicalData:
 
         # Initialize validator with schema (excluding Meta section)
         schema_tables = {k: v for k, v in schema.items() if k != "Meta"}
-        self.validator = DataValidator(schema_tables)
+        self.validator = DataValidator(schema_tables, logger=self.logger)
 
         # Initialize adapter
         self._initialize_adapter()
@@ -39,11 +39,11 @@ class ClassicalData:
         # Validate required Meta fields
         if "Data_Type" not in meta:
             raise ValueError("Schema Meta missing required field: 'Data_Type'")
-        if "Data_path" not in meta:
-            raise ValueError("Schema Meta missing required field: 'Data_path'")
+        if "Data_Path" not in meta:
+            raise ValueError("Schema Meta missing required field: 'Data_Path'")
 
         data_type = meta["Data_Type"]
-        data_path = meta["Data_path"]
+        data_path = meta["Data_Path"]
         data_label = meta.get("Data_Label", "data")
 
         # Resolve special paths via zParser (handles ~.zMachine.* and @ paths)

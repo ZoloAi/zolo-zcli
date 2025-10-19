@@ -4,8 +4,8 @@
 
 Meta:
   Data_Type: postgresql
-  Data_path: "@.tests.zData_tests.postgresql_demo"
-  Data_Label: "demo"
+  Data_Path: "zMachine.zDataTests"
+  Data_Label: "postgresql_demo"
   Data_Paradigm: classical
   Description: Demo schema for postgresql adapter testing
   

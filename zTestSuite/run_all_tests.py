@@ -82,6 +82,24 @@ try:
 except ImportError:
     ZOPEN_AVAILABLE = False
 
+try:
+    from zTestSuite import zShell_Test
+    ZSHELL_AVAILABLE = True
+except ImportError:
+    ZSHELL_AVAILABLE = False
+
+try:
+    from zTestSuite import zWizard_Test
+    ZWIZARD_AVAILABLE = True
+except ImportError:
+    ZWIZARD_AVAILABLE = False
+
+try:
+    from zTestSuite import zData_Test
+    ZDATA_AVAILABLE = True
+except ImportError:
+    ZDATA_AVAILABLE = False
+
 
 def run_subsystem_tests(test_module, name):
     """Run tests for a single subsystem with enhanced UX."""
@@ -250,6 +268,12 @@ def show_test_menu():
         available_tests.append(("zDialog", "zDialog_Test"))
     if ZOPEN_AVAILABLE:
         available_tests.append(("zOpen", "zOpen_Test"))
+    if ZSHELL_AVAILABLE:
+        available_tests.append(("zShell", "zShell_Test"))
+    if ZWIZARD_AVAILABLE:
+        available_tests.append(("zWizard", "zWizard_Test"))
+    if ZDATA_AVAILABLE:
+        available_tests.append(("zData", "zData_Test"))
     
     if not available_tests:
         print("❌ No test suites available!")
@@ -313,6 +337,12 @@ def run_selected_tests(test_choice=None):
             test_suites.append((zDialog_Test, "zDialog"))
         if ZOPEN_AVAILABLE:
             test_suites.append((zOpen_Test, "zOpen"))
+        if ZSHELL_AVAILABLE:
+            test_suites.append((zShell_Test, "zShell"))
+        if ZWIZARD_AVAILABLE:
+            test_suites.append((zWizard_Test, "zWizard"))
+        if ZDATA_AVAILABLE:
+            test_suites.append((zData_Test, "zData"))
         
         for test_module, name in test_suites:
             result = run_subsystem_tests(test_module, name)
@@ -348,6 +378,15 @@ def run_selected_tests(test_choice=None):
             results.append(result)
         elif test_choice == "zOpen_Test" and ZOPEN_AVAILABLE:
             result = run_subsystem_tests(zOpen_Test, "zOpen")
+            results.append(result)
+        elif test_choice == "zShell_Test" and ZSHELL_AVAILABLE:
+            result = run_subsystem_tests(zShell_Test, "zShell")
+            results.append(result)
+        elif test_choice == "zWizard_Test" and ZWIZARD_AVAILABLE:
+            result = run_subsystem_tests(zWizard_Test, "zWizard")
+            results.append(result)
+        elif test_choice == "zData_Test" and ZDATA_AVAILABLE:
+            result = run_subsystem_tests(zData_Test, "zData")
             results.append(result)
         else:
             print(f"❌ Test suite '{test_choice}' not available!")

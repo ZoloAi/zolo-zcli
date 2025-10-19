@@ -8,8 +8,8 @@ from .base_adapter import BaseDataAdapter
 class SQLAdapter(BaseDataAdapter):
     """Base class for SQL-based adapters (SQLite, PostgreSQL, MySQL)."""
 
-    def __init__(self, config):
-        super().__init__(config)
+    def __init__(self, config, logger=None):
+        super().__init__(config, logger)
         # Construct db_path from folder + label
         self.db_path = self.base_path / f"{self.data_label}.db"
 
@@ -30,7 +30,8 @@ class SQLAdapter(BaseDataAdapter):
 
     def create_table(self, table_name, schema):
         """Create table with given schema."""
-        logger.info("Creating table: %s", table_name)
+        if self.logger:
+            self.logger.info("Creating table: %s", table_name)
 
         cur = self.get_cursor()
         field_defs = []
@@ -42,7 +43,8 @@ class SQLAdapter(BaseDataAdapter):
             pk_value = schema["primary_key"]
             if isinstance(pk_value, list) and len(pk_value) > 0:
                 composite_pk = pk_value
-                logger.info("Composite primary key detected: %s", composite_pk)
+                if self.logger:
+                    self.logger.info("Composite primary key detected: %s", composite_pk)
 
         # Process each field
         for field_name, attrs in schema.items():
@@ -77,16 +79,19 @@ class SQLAdapter(BaseDataAdapter):
         if composite_pk:
             pk_columns = ", ".join(composite_pk)
             table_constraints.append(f"PRIMARY KEY ({pk_columns})")
-            logger.info("Adding composite PRIMARY KEY (%s)", pk_columns)
+            if self.logger:
+                self.logger.info("Adding composite PRIMARY KEY (%s)", pk_columns)
 
         # Build and execute DDL
         all_defs = field_defs + table_constraints + foreign_keys
         ddl = f"CREATE TABLE {table_name} ({', '.join(all_defs)});"
 
-        logger.info("Executing DDL: %s", ddl)
+        if self.logger:
+            self.logger.info("Executing DDL: %s", ddl)
         cur.execute(ddl)
         self.connection.commit()
-        logger.info("Table created: %s", table_name)
+        if self.logger:
+            self.logger.info("Table created: %s", table_name)
 
         # Create indexes if specified
         if "indexes" in schema:
@@ -96,7 +101,8 @@ class SQLAdapter(BaseDataAdapter):
         """Drop table from database."""
         cur = self.get_cursor()
         sql = f"DROP TABLE IF EXISTS {table_name}"
-        logger.info("Dropping table: %s", table_name)
+        if self.logger:
+            self.logger.info("Dropping table: %s", table_name)
         cur.execute(sql)
         self.connection.commit()
 
@@ -114,22 +120,27 @@ class SQLAdapter(BaseDataAdapter):
         if "add_columns" in changes:
             for column_name, column_def in changes["add_columns"].items():
                 sql = self._build_add_column_sql(table_name, column_name, column_def)
-                logger.info("Executing ALTER TABLE: %s", sql)
+                if self.logger:
+                    self.logger.info("Executing ALTER TABLE: %s", sql)
                 cur.execute(sql)
             self.connection.commit()
-            logger.info("Altered table (add columns): %s", table_name)
+            if self.logger:
+                self.logger.info("Altered table (add columns): %s", table_name)
 
         # Handle DROP COLUMN (if supported by dialect)
         if "drop_columns" in changes:
             if self._supports_drop_column():
                 for column_name in changes["drop_columns"]:
                     sql = f"ALTER TABLE {table_name} DROP COLUMN {column_name}"
-                    logger.info("Executing ALTER TABLE: %s", sql)
+                    if self.logger:
+                        self.logger.info("Executing ALTER TABLE: %s", sql)
                     cur.execute(sql)
                 self.connection.commit()
-                logger.info("Altered table (drop columns): %s", table_name)
+                if self.logger:
+                    self.logger.info("Altered table (drop columns): %s", table_name)
             else:
-                logger.warning("DROP COLUMN not supported by this SQL dialect")
+                if self.logger:
+                    self.logger.warning("DROP COLUMN not supported by this SQL dialect")
 
     def _build_add_column_sql(self, table_name, column_name, column_def):
         """Build ADD COLUMN SQL statement."""
@@ -161,12 +172,14 @@ class SQLAdapter(BaseDataAdapter):
         placeholders = self._get_placeholders(len(fields))
         sql = f"INSERT INTO {table} ({', '.join(fields)}) VALUES ({placeholders})"
 
-        logger.debug("Executing INSERT: %s with values: %s", sql, values)
+        if self.logger:
+            self.logger.debug("Executing INSERT: %s with values: %s", sql, values)
         cur.execute(sql, values)
         self.connection.commit()
 
         row_id = self._get_last_insert_id(cur)
-        logger.info("Inserted row into %s with ID: %s", table, row_id)
+        if self.logger:
+            self.logger.info("Inserted row into %s with ID: %s", table, row_id)
         return row_id
 
     def select(self, table, fields=None, **kwargs):
@@ -193,7 +206,8 @@ class SQLAdapter(BaseDataAdapter):
             # Build SELECT clause with table qualifiers for multi-table
             select_clause = self._build_select_clause(fields, tables)
 
-            logger.info("[JOIN] Multi-table query: %s", " + ".join(tables))
+            if self.logger:
+                self.logger.info("[JOIN] Multi-table query: %s", " + ".join(tables))
         else:
             # Single table query (existing logic)
             from_clause = table
@@ -217,7 +231,8 @@ class SQLAdapter(BaseDataAdapter):
         if limit:
             sql += f" LIMIT {limit}"
 
-        logger.debug("Executing SELECT: %s with params: %s", sql, params)
+        if self.logger:
+            self.logger.debug("Executing SELECT: %s with params: %s", sql, params)
         cur.execute(sql, params)
         raw_rows = cur.fetchall()
 
@@ -230,7 +245,8 @@ class SQLAdapter(BaseDataAdapter):
             rows = []
 
         table_name = " + ".join(tables) if is_multi_table else table
-        logger.info("Selected %d rows from %s", len(rows), table_name)
+        if self.logger:
+            self.logger.info("Selected %d rows from %s", len(rows), table_name)
         return rows
 
     def update(self, table, fields, values, where):
@@ -249,12 +265,14 @@ class SQLAdapter(BaseDataAdapter):
             sql += f" WHERE {where_clause}"
             params.extend(where_params)
 
-        logger.debug("Executing UPDATE: %s with params: %s", sql, params)
+        if self.logger:
+            self.logger.debug("Executing UPDATE: %s with params: %s", sql, params)
         cur.execute(sql, params)
         self.connection.commit()
 
         rows_affected = cur.rowcount
-        logger.info("Updated %d rows in %s", rows_affected, table)
+        if self.logger:
+            self.logger.info("Updated %d rows in %s", rows_affected, table)
         return rows_affected
 
     def delete(self, table, where):
@@ -270,31 +288,36 @@ class SQLAdapter(BaseDataAdapter):
             sql += f" WHERE {where_clause}"
             params.extend(where_params)
 
-        logger.debug("Executing DELETE: %s with params: %s", sql, params)
+        if self.logger:
+            self.logger.debug("Executing DELETE: %s with params: %s", sql, params)
         cur.execute(sql, params)
         self.connection.commit()
 
         rows_affected = cur.rowcount
-        logger.info("Deleted %d rows from %s", rows_affected, table)
+        if self.logger:
+            self.logger.info("Deleted %d rows from %s", rows_affected, table)
         return rows_affected
 
     def begin_transaction(self):
         """Begin transaction."""
         if self.connection:
             self.connection.execute("BEGIN")
-            logger.debug("Transaction started")
+            if self.logger:
+                self.logger.debug("Transaction started")
 
     def commit(self):
         """Commit current transaction."""
         if self.connection:
             self.connection.commit()
-            logger.debug("Transaction committed")
+            if self.logger:
+                self.logger.debug("Transaction committed")
 
     def rollback(self):
         """Rollback current transaction."""
         if self.connection:
             self.connection.rollback()
-            logger.debug("Transaction rolled back")
+            if self.logger:
+                self.logger.debug("Transaction rolled back")
 
     def _build_foreign_key_clause(self, field_name, attrs):
         """Build FOREIGN KEY clause."""
@@ -312,15 +335,20 @@ class SQLAdapter(BaseDataAdapter):
             if on_delete_upper in valid_actions:
                 fk_clause += f" ON DELETE {on_delete_upper}"
             else:
-                logger.warning("Invalid on_delete action '%s' for field '%s'", 
+                if self.logger:
+                    self.logger.warning("Invalid on_delete action '%s' for field '%s'",
                              on_delete, field_name)
 
         return fk_clause
 
     def _build_where_clause(self, where):
-        """Build WHERE clause from dict with operator support."""
+        """Build WHERE clause from dict or string with operator support."""
         conditions = []
         params = []
+        
+        # If where is a string, return it directly
+        if isinstance(where, str):
+            return where, []
 
         for field, value in where.items():
             # Handle OR conditions
@@ -454,20 +482,24 @@ class SQLAdapter(BaseDataAdapter):
 
         if auto_join and schema:
             # Auto-detect joins from foreign key relationships
-            logger.info("[JOIN] Auto-joining tables based on FK relationships")
+            if self.logger:
+                self.logger.info("[JOIN] Auto-joining tables based on FK relationships")
             from_clause, joined_tables = self._build_auto_join(tables, schema, base_table)
         elif joins:
             # Manual join definitions
-            logger.info("[JOIN] Building manual JOIN clauses")
+            if self.logger:
+                self.logger.info("[JOIN] Building manual JOIN clauses")
             from_clause, joined_tables = self._build_manual_join(base_table, joins)
         else:
             # Multiple tables but no join specification - use CROSS JOIN
-            logger.warning("[JOIN] Multiple tables without JOIN specification - using CROSS JOIN")
+            if self.logger:
+                self.logger.warning("[JOIN] Multiple tables without JOIN specification - using CROSS JOIN")
             join_parts = [f"CROSS JOIN {table}" for table in tables[1:]]
             from_clause = f"{base_table} {' '.join(join_parts)}"
             joined_tables = tables[1:]
 
-        logger.debug("Built FROM clause: %s", from_clause)
+        if self.logger:
+            self.logger.debug("Built FROM clause: %s", from_clause)
         return from_clause, joined_tables
 
     def _build_manual_join(self, base_table, joins):
@@ -481,13 +513,15 @@ class SQLAdapter(BaseDataAdapter):
             on_clause = join_def.get("on")
 
             if not table or not on_clause:
-                logger.warning("[JOIN] Skipping invalid join definition: %s", join_def)
+                if self.logger:
+                    self.logger.warning("[JOIN] Skipping invalid join definition: %s", join_def)
                 continue
 
             # Validate join type
             valid_types = ["INNER", "LEFT", "RIGHT", "FULL", "CROSS"]
             if join_type not in valid_types:
-                logger.warning("[JOIN] Invalid join type '%s', using INNER", join_type)
+                if self.logger:
+                    self.logger.warning("[JOIN] Invalid join type '%s', using INNER", join_type)
                 join_type = "INNER"
 
             # Handle FULL OUTER JOIN
@@ -501,7 +535,8 @@ class SQLAdapter(BaseDataAdapter):
                 from_clause += f" {join_type} JOIN {table} ON {on_clause}"
 
             joined_tables.append(table)
-            logger.debug("  Added %s JOIN %s", join_type, table)
+            if self.logger:
+                self.logger.debug("  Added %s JOIN %s", join_type, table)
 
         return from_clause, joined_tables
 
@@ -523,7 +558,8 @@ class SQLAdapter(BaseDataAdapter):
                 from_clause += join_clause
                 joined_tables.append(table)
             else:
-                logger.warning("[JOIN] Could not auto-detect join for table: %s", table)
+                if self.logger:
+                    self.logger.warning("[JOIN] Could not auto-detect join for table: %s", table)
 
         return from_clause, joined_tables
 
@@ -546,7 +582,8 @@ class SQLAdapter(BaseDataAdapter):
 
             if ref_table == base_table or ref_table in joined_tables:
                 on_clause = f"{table}.{field_name} = {ref_table}.{ref_column}"
-                logger.debug("  Auto-detected: INNER JOIN %s ON %s", table, on_clause)
+                if self.logger:
+                    self.logger.debug("  Auto-detected: INNER JOIN %s ON %s", table, on_clause)
                 return f" INNER JOIN {table} ON {on_clause}"
 
         return None
@@ -571,7 +608,8 @@ class SQLAdapter(BaseDataAdapter):
 
                 if ref_table == table:
                     on_clause = f"{already_joined}.{field_name} = {table}.{ref_column}"
-                    logger.debug("  Auto-detected (reverse): INNER JOIN %s ON %s", table, on_clause)
+                    if self.logger:
+                        self.logger.debug("  Auto-detected (reverse): INNER JOIN %s ON %s", table, on_clause)
                     return f" INNER JOIN {table} ON {on_clause}"
 
         return None
@@ -610,10 +648,12 @@ class SQLAdapter(BaseDataAdapter):
 
                 sql = f"CREATE {unique}INDEX IF NOT EXISTS {idx_name} ON {table_name} ({', '.join(fields)})"
             else:
-                logger.warning("Invalid index specification: %s", idx_spec)
+                if self.logger:
+                    self.logger.warning("Invalid index specification: %s", idx_spec)
                 continue
 
-            logger.info("Creating index: %s", sql)
+            if self.logger:
+                self.logger.info("Creating index: %s", sql)
             cur.execute(sql)
 
         self.connection.commit()

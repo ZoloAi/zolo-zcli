@@ -7,6 +7,10 @@
 class HelpSystem:
     """Help system for zCLI - provides documentation and usage examples."""
 
+    def __init__(self, display=None):
+        """Initialize help system with display instance."""
+        self.display = display
+
     # Centralized command definitions
     COMMANDS = {
         "data": {
@@ -168,72 +172,70 @@ class HelpSystem:
         },
     }
 
-    @staticmethod
-    def show_help():
+    def show_help(self):
         """Display comprehensive help information."""
-        help_text = """
-╔═══════════════════════════════════════════════════════════════╗
-║                    zCLI Interactive Shell                     ║
-╚═══════════════════════════════════════════════════════════════╝
+        if self.display:
+            self.display.header("zCLI Interactive Shell", style="box")
+            self.display.break_line()
+            self.display.text("Available Commands:", color="HEADER")
 
-Available Commands:
-"""
-        # Generate command list
-        for cmd, info in HelpSystem.COMMANDS.items():
-            help_text += f"\n  {cmd:12} - {info['desc']}"
+            # Generate command list
+            for cmd, info in HelpSystem.COMMANDS.items():
+                self.display.text(f"  {cmd:12} - {info['desc']}", indent=1)
 
-        help_text += """
+            self.display.break_line()
+            self.display.text("General:", color="HEADER")
+            self.display.text("  help [command]  - Show help (or help for specific command)", indent=1)
+            self.display.text("  tips            - Show quick tips", indent=1)
+            self.display.text("  clear/cls       - Clear screen", indent=1)
+            self.display.text("  exit/quit/q     - Exit shell", indent=1)
 
-General:
-  help [command]  - Show help (or help for specific command)
-  tips            - Show quick tips
-  clear/cls       - Clear screen
-  exit/quit/q     - Exit shell
+            self.display.break_line()
+            self.display.text("Usage:", color="HEADER")
+            self.display.text("  • Type 'help <command>' for detailed help on a specific command", indent=1)
+            self.display.text("  • Use Tab for command history (↑/↓ arrows)", indent=1)
+            self.display.text("  • Press Ctrl+C to interrupt operations", indent=1)
 
-Usage:
-  • Type 'help <command>' for detailed help on a specific command
-  • Use Tab for command history (↑/↓ arrows)
-  • Press Ctrl+C to interrupt operations
+            self.display.break_line()
+            self.display.text("Examples:", color="HEADER")
+            self.display.text("  help data       - Show detailed data command help", indent=1)
+            self.display.text("  help load       - Show detailed load command help", indent=1)
+            self.display.text("  help wizard     - Show detailed wizard command help", indent=1)
+        else:
+            # Fallback if no display available
+            print("Help system requires display instance")
 
-Examples:
-  help data       - Show detailed data command help
-  help load       - Show detailed load command help
-  help wizard     - Show detailed wizard command help
-
-═══════════════════════════════════════════════════════════════
-"""
-        print(help_text)
-
-    @staticmethod
-    def show_command_help(command_type):
+    def show_command_help(self, command_type):
         """Show help for a specific command type."""
         if command_type not in HelpSystem.COMMANDS:
-            print(f"No help available for: {command_type}")
-            print("Use 'help' for list of all commands")
+            if self.display:
+                self.display.warning(f"No help available for: {command_type}")
+                self.display.info("Use 'help' for list of all commands")
+            else:
+                print(f"No help available for: {command_type}")
+                print("Use 'help' for list of all commands")
             return
 
         cmd_info = HelpSystem.COMMANDS[command_type]
 
-        help_text = f"""
-╔═══════════════════════════════════════════════════════════════╗
-║  {command_type.upper()} Command Help
-╚═══════════════════════════════════════════════════════════════╝
+        if self.display:
+            self.display.header(f"{command_type.upper()} Command Help", style="box")
+            self.display.break_line()
+            self.display.text("Description:", color="HEADER")
+            self.display.text(f"  {cmd_info['desc']}", indent=1)
 
-Description:
-  {cmd_info['desc']}
+            self.display.break_line()
+            self.display.text("Usage:", color="HEADER")
+            for usage in cmd_info['usage']:
+                self.display.text(f"  {usage}", indent=1)
 
-Usage:
-"""
-        for usage in cmd_info['usage']:
-            help_text += f"  {usage}\n"
-
-        help_text += "\nExamples:\n"
-        for example in cmd_info['examples']:
-            help_text += f"  {example}\n"
-
-        help_text += "\n═══════════════════════════════════════════════════════════════\n"
-
-        print(help_text)
+            self.display.break_line()
+            self.display.text("Examples:", color="HEADER")
+            for example in cmd_info['examples']:
+                self.display.text(f"  {example}", indent=1)
+        else:
+            # Fallback
+            print(f"Help for {command_type} requires display instance")
 
     @staticmethod
     def get_welcome_message():

@@ -7,17 +7,19 @@ from zCLI import Path
 class BaseDataAdapter(ABC):  # pylint: disable=unnecessary-pass
     """Abstract base class for all backend adapters (SQLite, PostgreSQL, CSV)."""
 
-    def __init__(self, config):
-        """Initialize adapter with config (path, label, meta)."""
+    def __init__(self, config, logger=None):
+        """Initialize adapter with config (path, label, meta) and logger."""
         self.config = config
         self.connection = None
         self.cursor = None
         self.base_path = Path(config.get("path", "."))
         self.data_label = config.get("label", "data")
+        self.logger = logger  # Store logger instance
 
-        logger.debug("Initializing %s adapter with config: %s", 
-                    self.__class__.__name__, config)
-        logger.debug("Base path: %s, Data label: %s", self.base_path, self.data_label)
+        if self.logger:
+            self.logger.debug("Initializing %s adapter with config: %s", 
+                        self.__class__.__name__, config)
+            self.logger.debug("Base path: %s, Data label: %s", self.base_path, self.data_label)
 
     @abstractmethod
     def connect(self):
@@ -91,7 +93,8 @@ class BaseDataAdapter(ABC):  # pylint: disable=unnecessary-pass
         """Ensure directory exists for data storage."""
         target_path = Path(path) if path else self.base_path
         target_path.mkdir(parents=True, exist_ok=True)
-        logger.debug("Ensured directory exists: %s", target_path)
+        if self.logger:
+            self.logger.debug("Ensured directory exists: %s", target_path)
 
     def is_connected(self):
         """Check if adapter is connected."""

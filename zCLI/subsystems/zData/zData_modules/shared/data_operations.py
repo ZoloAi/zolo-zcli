@@ -105,20 +105,20 @@ class DataOperations:
         all_ok = True
         for table_name in tables_to_check:
             if table_name not in self.schema:
-                logger.warning("Table '%s' not found in schema", table_name)
+                self.logger.warning("Table '%s' not found in schema", table_name)
                 all_ok = False
                 continue
 
             if not self.adapter.table_exists(table_name):
-                logger.info("Table '%s' does not exist, creating...", table_name)
+                self.logger.info("Table '%s' does not exist, creating...", table_name)
                 try:
                     self.adapter.create_table(table_name, self.schema[table_name])
-                    logger.info("✅ Created table: %s", table_name)
+                    self.logger.info("✅ Created table: %s", table_name)
                 except Exception as e:
-                    logger.error("Failed to create table '%s': %s", table_name, e)
+                    self.logger.error("Failed to create table '%s': %s", table_name, e)
                     all_ok = False
             else:
-                logger.debug("Table '%s' already exists", table_name)
+                self.logger.debug("Table '%s' already exists", table_name)
 
         return all_ok
 

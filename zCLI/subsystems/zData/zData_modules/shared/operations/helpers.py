@@ -72,5 +72,8 @@ def display_validation_errors(table, errors, ops):
     for field, message in errors.items():
         error_lines.append(f"  • {field}: {message}")
 
-    # Print directly to maintain simplicity
-    print("\n" + "\n".join(error_lines) + "\n")
+    # Display using zDisplay
+    ops.zcli.display.line("")
+    for line in error_lines:
+        ops.zcli.display.line(line)
+    ops.zcli.display.line("")

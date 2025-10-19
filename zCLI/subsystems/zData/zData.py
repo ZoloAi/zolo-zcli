@@ -18,39 +18,25 @@ class zData:
         if not hasattr(zcli, 'session'):
             raise ValueError("Invalid zCLI instance: missing 'session' attribute")
 
-        # Modern architecture: zCLI instance provides all dependencies
+        # Store zCLI instance (provides access to all subsystems)
         self.zcli = zcli
-        self.session = zcli.session
         self.logger = zcli.logger
         self.display = zcli.display
         self.loader = zcli.loader
-        self.zparser = zcli.zparser  # Path resolution
-        self.zfunc = zcli.zfunc      # Function hooks & transforms
-        self.open = zcli.open        # File/schema opening
+        self.open = zcli.open
 
         # Data state
         self.schema = None
         self.paradigm = None  # 'classical' or 'quantum'
         self.handler = None   # ClassicalData or QuantumData instance
         self.mycolor = "ZDATA"
-        
-        self.display.handle({
-            "event": "sysmsg",
-            "label": "zData Ready",
-            "color": self.mycolor,
-            "indent": 0
-        })
+
+        self.display.zDeclare("zData Ready", color=self.mycolor, indent=0, style="full")
 
 
     def handle_request(self, request, context=None):
         """Main entry point for data operations."""
-        self.display.handle({
-            "event": "sysmsg",
-            "style": "full",
-            "label": "zData Request",
-            "color": "ZCRUD",
-            "indent": 1
-        })
+        self.display.zDeclare("zData Request", color="ZCRUD", indent=1, style="full")
 
         # Initialize schema and handler
         wizard_mode = context.get("wizard_mode", False) if context else False
@@ -90,31 +76,33 @@ class zData:
         if wizard_mode and schema_cache and alias_name:
             return self._init_wizard_handler(schema_cache, alias_name, cached_schema)
 
-        # One-shot mode with cached schema
-        if cached_schema:
+        # One-shot mode with cached schema (from pinned_cache)
+        if cached_schema and alias_name:
             self.logger.info("Using cached schema from alias: $%s", alias_name)
             self.load_schema(cached_schema)
             return True
 
-        # Load schema from model path
+        # Load schema from model path (default)
         return self._init_from_model(request.get("model"))
 
     def _init_wizard_handler(self, schema_cache, alias_name, cached_schema):
         """Initialize handler for wizard mode with connection reuse."""
+        # Check if connection already exists (reuse)
         existing_handler = schema_cache.get_connection(alias_name)
         if existing_handler:
             self.handler = existing_handler
             self.schema = existing_handler.schema
             self.paradigm = self._detect_paradigm(self.schema)
-            self.logger.info("Reusing connection for $%s", alias_name)
+            self.logger.info("♻️  Reusing connection for $%s", alias_name)
             return True
 
         # First use in wizard - create and store connection
         if not cached_schema:
-            self.logger.error("No cached schema in wizard mode for alias: $%s", alias_name)
+            self.logger.error("No cached schema for first-time connection: $%s", alias_name)
+            self.logger.error("Hint: Use 'load @data.%s' or provide model path directly", alias_name)
             return False
 
-        self.logger.info("Using cached schema from alias: $%s", alias_name)
+        self.logger.info("📦 Loading schema from pinned_cache: $%s", alias_name)
         self.load_schema(cached_schema)
         schema_cache.set_connection(alias_name, self.handler)
         self.logger.info("🔗 Created persistent connection for $%s", alias_name)
@@ -199,41 +187,187 @@ class zData:
         """Insert a row."""
         if not self.handler:
             raise RuntimeError("No handler initialized")
-        return self.handler.insert(table, fields, values)
+        if not hasattr(self.handler, 'adapter'):
+            raise RuntimeError("Handler does not have an adapter")
+        return self.handler.adapter.insert(table, fields, values)
 
     def select(self, table, fields=None, **kwargs):
         """Select rows."""
         if not self.handler:
             raise RuntimeError("No handler initialized")
-        return self.handler.select(table, fields, 
-                                   kwargs.get("where"), 
-                                   kwargs.get("joins"), 
-                                   kwargs.get("order"), 
-                                   kwargs.get("limit"))
+        if not hasattr(self.handler, 'adapter'):
+            raise RuntimeError("Handler does not have an adapter")
+        return self.handler.adapter.select(table, fields, **kwargs)
 
     def update(self, table, fields, values, where):
         """Update rows."""
         if not self.handler:
             raise RuntimeError("No handler initialized")
-        return self.handler.update(table, fields, values, where)
+        if not hasattr(self.handler, 'adapter'):
+            raise RuntimeError("Handler does not have an adapter")
+        return self.handler.adapter.update(table, fields, values, where)
 
     def delete(self, table, where):
         """Delete rows."""
         if not self.handler:
             raise RuntimeError("No handler initialized")
-        return self.handler.delete(table, where)
+        if not hasattr(self.handler, 'adapter'):
+            raise RuntimeError("Handler does not have an adapter")
+        return self.handler.adapter.delete(table, where)
 
     def upsert(self, table, fields, values, conflict_fields):
         """Upsert (insert or update) a row."""
         if not self.handler:
             raise RuntimeError("No handler initialized")
-        return self.handler.upsert(table, fields, values, conflict_fields)
+        if not hasattr(self.handler, 'adapter'):
+            raise RuntimeError("Handler does not have an adapter")
+        return self.handler.adapter.upsert(table, fields, values, conflict_fields)
 
     def list_tables(self):
         """List all tables."""
         if not self.handler:
             raise RuntimeError("No handler initialized")
-        return self.handler.list_tables()
+        if not hasattr(self.handler, 'adapter'):
+            raise RuntimeError("Handler does not have an adapter")
+        return self.handler.adapter.list_tables()
+
+    # ═══════════════════════════════════════════════════════════
+    # DDL Operations (Data Definition Language)
+    # ═══════════════════════════════════════════════════════════
+
+    def create_table(self, table_name, schema=None):
+        """Create a new table in the database."""
+        if not self.handler:
+            raise RuntimeError("No handler initialized")
+        if not hasattr(self.handler, 'adapter'):
+            raise RuntimeError("Handler does not have an adapter")
+        
+        # If schema not provided, get from loaded schema
+        if schema is None:
+            if not self.schema or table_name not in self.schema:
+                raise ValueError(f"Table '{table_name}' not found in loaded schema")
+            schema = self.schema[table_name]
+        
+        self.logger.debug("Creating table: %s", table_name)
+        return self.handler.adapter.create_table(table_name, schema)
+
+    def drop_table(self, table_name):
+        """Drop (delete) a table from the database."""
+        if not self.handler:
+            raise RuntimeError("No handler initialized")
+        if not hasattr(self.handler, 'adapter'):
+            raise RuntimeError("Handler does not have an adapter")
+        
+        self.logger.debug("Dropping table: %s", table_name)
+        return self.handler.adapter.drop_table(table_name)
+
+    def alter_table(self, table_name, changes):
+        """Alter table structure by adding or dropping columns."""
+        if not self.handler:
+            raise RuntimeError("No handler initialized")
+        if not hasattr(self.handler, 'adapter'):
+            raise RuntimeError("Handler does not have an adapter")
+        
+        self.logger.debug("Altering table: %s", table_name)
+        return self.handler.adapter.alter_table(table_name, changes)
+
+    def table_exists(self, table_name):
+        """Check if a table exists in the database."""
+        if not self.handler:
+            raise RuntimeError("No handler initialized")
+        if not hasattr(self.handler, 'adapter'):
+            raise RuntimeError("Handler does not have an adapter")
+        
+        return self.handler.adapter.table_exists(table_name)
+
+    # ═══════════════════════════════════════════════════════════
+    # DCL Operations (Data Control Language)
+    # ═══════════════════════════════════════════════════════════
+
+    def grant(self, privileges, table_name, user):
+        """Grant privileges to a user (PostgreSQL/MySQL only)."""
+        if not self.handler:
+            raise RuntimeError("No handler initialized")
+        if not hasattr(self.handler, 'adapter'):
+            raise RuntimeError("Handler does not have an adapter")
+        
+        # Check if adapter supports DCL
+        if not hasattr(self.handler.adapter, 'grant'):
+            adapter_type = self.handler.adapter.__class__.__name__
+            raise NotImplementedError(
+                f"{adapter_type} does not support GRANT operations. "
+                f"DCL is only supported by PostgreSQL and MySQL adapters."
+            )
+        
+        self.logger.debug("Granting %s on %s to %s", privileges, table_name, user)
+        return self.handler.adapter.grant(privileges, table_name, user)
+
+    def revoke(self, privileges, table_name, user):
+        """Revoke privileges from a user (PostgreSQL/MySQL only)."""
+        if not self.handler:
+            raise RuntimeError("No handler initialized")
+        if not hasattr(self.handler, 'adapter'):
+            raise RuntimeError("Handler does not have an adapter")
+        
+        # Check if adapter supports DCL
+        if not hasattr(self.handler.adapter, 'revoke'):
+            adapter_type = self.handler.adapter.__class__.__name__
+            raise NotImplementedError(
+                f"{adapter_type} does not support REVOKE operations. "
+                f"DCL is only supported by PostgreSQL and MySQL adapters."
+            )
+        
+        self.logger.debug("Revoking %s on %s from %s", privileges, table_name, user)
+        return self.handler.adapter.revoke(privileges, table_name, user)
+
+    def list_privileges(self, table_name=None, user=None):
+        """List privileges for tables and users (PostgreSQL/MySQL only)."""
+        if not self.handler:
+            raise RuntimeError("No handler initialized")
+        if not hasattr(self.handler, 'adapter'):
+            raise RuntimeError("Handler does not have an adapter")
+        
+        # Check if adapter supports DCL
+        if not hasattr(self.handler.adapter, 'list_privileges'):
+            adapter_type = self.handler.adapter.__class__.__name__
+            raise NotImplementedError(
+                f"{adapter_type} does not support privilege listing. "
+                f"DCL is only supported by PostgreSQL and MySQL adapters."
+            )
+        
+        self.logger.debug("Listing privileges (table=%s, user=%s)", table_name, user)
+        return self.handler.adapter.list_privileges(table_name, user)
+
+    # ═══════════════════════════════════════════════════════════
+    # TCL Operations (Transaction Control Language)
+    # ═══════════════════════════════════════════════════════════
+
+    def begin_transaction(self):
+        """Begin a new database transaction."""
+        if not self.handler:
+            raise RuntimeError("No handler initialized")
+        if not hasattr(self.handler, 'adapter'):
+            raise RuntimeError("Handler does not have an adapter")
+        self.logger.debug("Beginning transaction")
+        return self.handler.adapter.begin_transaction()
+
+    def commit(self):
+        """Commit the current transaction."""
+        if not self.handler:
+            raise RuntimeError("No handler initialized")
+        if not hasattr(self.handler, 'adapter'):
+            raise RuntimeError("Handler does not have an adapter")
+        self.logger.debug("Committing transaction")
+        return self.handler.adapter.commit()
+
+    def rollback(self):
+        """Rollback the current transaction."""
+        if not self.handler:
+            raise RuntimeError("No handler initialized")
+        if not hasattr(self.handler, 'adapter'):
+            raise RuntimeError("Handler does not have an adapter")
+        self.logger.debug("Rolling back transaction")
+        return self.handler.adapter.rollback()
 
     # ═══════════════════════════════════════════════════════════
     # File Operations (zOpen Integration)

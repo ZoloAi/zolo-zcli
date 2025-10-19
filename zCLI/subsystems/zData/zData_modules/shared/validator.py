@@ -1,14 +1,15 @@
 # zCLI/subsystems/zData/zData_modules/shared/validator.py
 """Data validation engine for schema-based CRUD operations."""
 
-import re
+from zCLI import re
 
 class DataValidator:
     """Data validation engine enforcing schema rules before CRUD operations."""
 
-    def __init__(self, schema):
-        """Initialize validator with schema."""
+    def __init__(self, schema, logger=None):
+        """Initialize validator with schema and logger."""
         self.schema = schema
+        self.logger = logger
         self.format_validators = {
             'email': self._validate_email,
             'url': self._validate_url,
@@ -19,7 +20,8 @@ class DataValidator:
         """Validate data for INSERT - checks rules and required fields."""
         table_schema = self.schema.get(table, {})
         if not table_schema:
-            logger.warning("No schema found for table: %s", table)
+            if self.logger:
+                self.logger.warning("No schema found for table: %s", table)
             return True, None
 
         errors = {}
@@ -48,17 +50,20 @@ class DataValidator:
                 errors[field_name] = f"{field_name} is required"
 
         if errors:
-            logger.warning("Validation failed with %d error(s)", len(errors))
+            if self.logger:
+                self.logger.warning("Validation failed with %d error(s)", len(errors))
             return False, errors
 
-        logger.debug("[OK] Validation passed for table: %s", table)
+        if self.logger:
+            self.logger.debug("[OK] Validation passed for table: %s", table)
         return True, None
 
     def validate_update(self, table, data):
         """Validate data for UPDATE - partial validation (no required field checks)."""
         table_schema = self.schema.get(table, {})
         if not table_schema:
-            logger.warning("No schema found for table: %s", table)
+            if self.logger:
+                self.logger.warning("No schema found for table: %s", table)
             return True, None
 
         errors = {}
@@ -77,10 +82,12 @@ class DataValidator:
                 errors[field_name] = error_msg
 
         if errors:
-            logger.warning("Validation failed with %d error(s)", len(errors))
+            if self.logger:
+                self.logger.warning("Validation failed with %d error(s)", len(errors))
             return False, errors
 
-        logger.debug("[OK] Validation passed for table: %s", table)
+        if self.logger:
+            self.logger.debug("[OK] Validation passed for table: %s", table)
         return True, None
 
     def _validate_field(self, field_name, value, rules, field_def):
@@ -155,7 +162,8 @@ class DataValidator:
             if not is_valid:
                 return rules.get('error_message') or error
         else:
-            logger.warning("Unknown format type: %s", format_type)
+            if self.logger:
+                self.logger.warning("Unknown format type: %s", format_type)
 
         return None
 

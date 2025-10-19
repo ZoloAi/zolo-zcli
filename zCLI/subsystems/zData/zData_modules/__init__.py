@@ -1,6 +1,4 @@
 # zCLI/subsystems/zData/zData_modules/__init__.py
-# ----------------------------------------------------------------
-# zData modules package.
-# ----------------------------------------------------------------
+"""zData modules package."""
 
 __all__ = []

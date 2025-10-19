@@ -36,13 +36,7 @@ def _handle_status(zcli, args, options):  # pylint: disable=unused-argument
     if service_name:
         _display_service_status(zcli, service_name, status)
     else:
-        zcli.display.handle({
-            "event": "sysmsg",
-            "label": "zComm Service Status",
-            "style": "full",
-            "color": "INFO",
-            "indent": 0
-        })
+        zcli.display.zDeclare("zComm Service Status", color="INFO", indent=0, style="full")
 
         for name, info in status.items():
             _display_service_status(zcli, name, info)
@@ -60,41 +54,17 @@ def _handle_start(zcli, args, options):
     success = zcli.comm.start_service(service_name, **options)
 
     if success:
-        zcli.display.handle({
-            "event": "sysmsg",
-            "label": f"{service_name} started successfully",
-            "style": "single",
-            "color": "SUCCESS",
-            "indent": 0
-        })
+        zcli.display.success(f"{service_name} started successfully")
 
         conn_info = zcli.comm.get_service_connection_info(service_name)
         if conn_info:
-            zcli.display.handle({
-                "event": "sysmsg",
-                "label": "Connection Info:",
-                "style": "single",
-                "color": "INFO",
-                "indent": 1
-            })
+            zcli.display.info("Connection Info:", indent=1)
             for key, value in conn_info.items():
-                zcli.display.handle({
-                    "event": "sysmsg",
-                    "label": f"{key}: {value}",
-                    "style": "single",
-                    "color": "DATA",
-                    "indent": 2
-                })
+                zcli.display.text(f"{key}: {value}", color="DATA", indent=2)
 
         return {"status": "success", "service": service_name}
 
-    zcli.display.handle({
-        "event": "sysmsg",
-        "label": f"Failed to start {service_name}",
-        "style": "single",
-        "color": "ERROR",
-        "indent": 0
-    })
+    zcli.display.error(f"Failed to start {service_name}")
     return {"error": f"Failed to start {service_name}"}
 
 

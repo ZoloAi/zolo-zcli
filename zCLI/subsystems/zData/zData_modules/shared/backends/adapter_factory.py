@@ -35,7 +35,7 @@ class AdapterFactory:
                 f"Available types: {available}"
             )
 
-        adapter = adapter_class(config)
+        adapter = adapter_class(config, logger=cls._logger)
         if cls._logger:
             cls._logger.info("Created %s adapter", adapter.__class__.__name__)
         return adapter

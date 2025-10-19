@@ -18,6 +18,7 @@ from .utils_executor import execute_utils
 from .config_executor import execute_config
 from .comm_executor import execute_comm
 from .wizard_executor import execute_wizard
+from .wizard_step_executor import execute_wizard_step
 
 __all__ = [
     "execute_data",
@@ -32,5 +33,6 @@ __all__ = [
     "execute_utils",
     "execute_config",
     "execute_comm",
-    "execute_wizard"
+    "execute_wizard",
+    "execute_wizard_step"
 ]

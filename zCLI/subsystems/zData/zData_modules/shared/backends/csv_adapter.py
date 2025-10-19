@@ -10,17 +10,18 @@ try:
     PANDAS_AVAILABLE = True
 except ImportError:
     PANDAS_AVAILABLE = False
-    logger.warning("pandas not available - CSV adapter will not work")
+    if self.logger:
+        self.logger.warning("pandas not available - CSV adapter will not work")
 
 
 class CSVAdapter(BaseDataAdapter):
     """CSV backend implementation using pandas."""
 
-    def __init__(self, config):
+    def __init__(self, config, logger=None):
         if not PANDAS_AVAILABLE:
             raise ImportError("pandas is required for CSV adapter. Install with: pip install pandas")
 
-        super().__init__(config)
+        super().__init__(config, logger)
         self.tables = {}
         self.schemas = {}
 
@@ -28,11 +29,13 @@ class CSVAdapter(BaseDataAdapter):
         """Ensure base directory exists."""
         try:
             self._ensure_directory()
-            logger.info("Connected to CSV backend: %s", self.base_path)
+            if self.logger:
+                self.logger.info("Connected to CSV backend: %s", self.base_path)
             self.connection = True
             return True
         except Exception as e:
-            logger.error("Failed to create CSV directory: %s", e)
+            if self.logger:
+                self.logger.error("Failed to create CSV directory: %s", e)
             raise
 
     def disconnect(self):
@@ -41,7 +44,8 @@ class CSVAdapter(BaseDataAdapter):
             for table_name, df in self.tables.items():
                 self._save_table(table_name, df)
             self.tables.clear()
-            logger.info("Disconnected from CSV backend: %s", self.base_path)
+            if self.logger:
+                self.logger.info("Disconnected from CSV backend: %s", self.base_path)
         self.connection = None
 
     def get_cursor(self):
@@ -50,7 +54,8 @@ class CSVAdapter(BaseDataAdapter):
 
     def create_table(self, table_name, schema):
         """Create CSV file with headers based on schema."""
-        logger.info("Creating CSV table: %s", table_name)
+        if self.logger:
+            self.logger.info("Creating CSV table: %s", table_name)
 
         columns = []
         self.schemas[table_name] = {}
@@ -71,7 +76,8 @@ class CSVAdapter(BaseDataAdapter):
         df.to_csv(csv_file, index=False)
         self.tables[table_name] = df
 
-        logger.info("CSV table created: %s", csv_file)
+        if self.logger:
+            self.logger.info("CSV table created: %s", csv_file)
 
     def alter_table(self, table_name, changes):
         """Alter CSV table structure."""
@@ -81,24 +87,28 @@ class CSVAdapter(BaseDataAdapter):
             for column_name, column_def in changes["add_columns"].items():
                 default = column_def.get("default", None)
                 df[column_name] = default
-                logger.info("Added column '%s' to table '%s'", column_name, table_name)
+                if self.logger:
+                    self.logger.info("Added column '%s' to table '%s'", column_name, table_name)
 
         if "drop_columns" in changes:
             for column_name in changes["drop_columns"]:
                 if column_name in df.columns:
                     df = df.drop(columns=[column_name])
-                    logger.info("Dropped column '%s' from table '%s'", column_name, table_name)
+                    if self.logger:
+                        self.logger.info("Dropped column '%s' from table '%s'", column_name, table_name)
 
         self._save_table(table_name, df)
         self.tables[table_name] = df
-        logger.info("Altered CSV table: %s", table_name)
+        if self.logger:
+            self.logger.info("Altered CSV table: %s", table_name)
 
     def drop_table(self, table_name):
         """Drop CSV table (delete file)."""
         csv_file = self.base_path / f"{table_name}.csv"
         if csv_file.exists():
             csv_file.unlink()
-            logger.info("Dropped CSV table: %s", table_name)
+            if self.logger:
+                self.logger.info("Dropped CSV table: %s", table_name)
 
         if table_name in self.tables:
             del self.tables[table_name]
@@ -109,14 +119,16 @@ class CSVAdapter(BaseDataAdapter):
         """Check if CSV table exists."""
         csv_file = self.base_path / f"{table_name}.csv"
         exists = csv_file.exists()
-        logger.debug("CSV table '%s' exists: %s", table_name, exists)
+        if self.logger:
+            self.logger.debug("CSV table '%s' exists: %s", table_name, exists)
         return exists
 
     def list_tables(self):
         """List all CSV tables."""
         csv_files = list(self.base_path.glob("*.csv"))
         tables = [f.stem for f in csv_files]
-        logger.debug("Found %d CSV tables: %s", len(tables), tables)
+        if self.logger:
+            self.logger.debug("Found %d CSV tables: %s", len(tables), tables)
         return tables
 
     def insert(self, table, fields, values):
@@ -135,7 +147,8 @@ class CSVAdapter(BaseDataAdapter):
         self.tables[table] = df
 
         row_id = len(df)
-        logger.info("Inserted row into CSV table %s (row %d)", table, row_id)
+        if self.logger:
+            self.logger.info("Inserted row into CSV table %s (row %d)", table, row_id)
         return row_id
 
     def select(self, table, fields=None, **kwargs):
@@ -151,7 +164,8 @@ class CSVAdapter(BaseDataAdapter):
         is_multi_table = len(tables) > 1 or joins
 
         if is_multi_table:
-            logger.info("[JOIN] Multi-table CSV query: %s", " + ".join(tables))
+            if self.logger:
+                self.logger.info("[JOIN] Multi-table CSV query: %s", " + ".join(tables))
             df = self._join_tables(tables, joins=joins, schema=schema, auto_join=auto_join)
 
             if fields and fields != ["*"]:
@@ -176,7 +190,8 @@ class CSVAdapter(BaseDataAdapter):
         rows = df.to_dict('records')
 
         table_name = " + ".join(tables) if is_multi_table else table
-        logger.info("Selected %d rows from %s", len(rows), table_name)
+        if self.logger:
+            self.logger.info("Selected %d rows from %s", len(rows), table_name)
         return rows
 
     def update(self, table, fields, values, where):
@@ -197,7 +212,8 @@ class CSVAdapter(BaseDataAdapter):
         self._save_table(table, df)
         self.tables[table] = df
 
-        logger.info("Updated %d rows in CSV table %s", rows_affected, table)
+        if self.logger:
+            self.logger.info("Updated %d rows in CSV table %s", rows_affected, table)
         return int(rows_affected)
 
     def delete(self, table, where):
@@ -216,7 +232,8 @@ class CSVAdapter(BaseDataAdapter):
         self._save_table(table, df)
         self.tables[table] = df
 
-        logger.info("Deleted %d rows from CSV table %s", rows_deleted, table)
+        if self.logger:
+            self.logger.info("Deleted %d rows from CSV table %s", rows_deleted, table)
         return rows_deleted
 
     def upsert(self, table, fields, values, conflict_fields):
@@ -234,16 +251,19 @@ class CSVAdapter(BaseDataAdapter):
                 for field, value in zip(fields, values):
                     if field in df.columns:
                         df.loc[mask, field] = value
-                logger.info("Updated existing row in CSV table %s", table)
+                if self.logger:
+                    self.logger.info("Updated existing row in CSV table %s", table)
                 row_id = int(df[mask].index[0]) + 1
             else:
                 df = self._append_row_to_df(df, new_row)
                 row_id = len(df)
-                logger.info("Inserted new row into CSV table %s", table)
+                if self.logger:
+                    self.logger.info("Inserted new row into CSV table %s", table)
         else:
             df = self._append_row_to_df(df, new_row)
             row_id = len(df)
-            logger.info("Inserted new row into CSV table %s", table)
+            if self.logger:
+                self.logger.info("Inserted new row into CSV table %s", table)
 
         self._save_table(table, df)
         self.tables[table] = df
@@ -275,17 +295,20 @@ class CSVAdapter(BaseDataAdapter):
 
     def begin_transaction(self):
         """CSV doesn't support transactions (no-op)."""
-        logger.debug("CSV adapter: begin_transaction (no-op)")
+        if self.logger:
+            self.logger.debug("CSV adapter: begin_transaction (no-op)")
 
     def commit(self):
         """CSV doesn't support transactions - save all cached tables."""
         for table_name, df in self.tables.items():
             self._save_table(table_name, df)
-        logger.debug("CSV adapter: commit (saved all tables)")
+        if self.logger:
+            self.logger.debug("CSV adapter: commit (saved all tables)")
 
     def rollback(self):
         """CSV doesn't support transactions - reload from disk."""
-        logger.warning("CSV adapter: rollback (reloading from disk)")
+        if self.logger:
+            self.logger.warning("CSV adapter: rollback (reloading from disk)")
         self.tables.clear()
 
     def _get_csv_path(self, table_name):
@@ -316,7 +339,8 @@ class CSVAdapter(BaseDataAdapter):
         csv_file = self._get_csv_path(table_name)
 
         if not csv_file.exists():
-            logger.error("CSV table does not exist: %s", table_name)
+            if self.logger:
+                self.logger.error("CSV table does not exist: %s", table_name)
             raise FileNotFoundError(f"Table '{table_name}' not found")
 
         try:
@@ -329,11 +353,13 @@ class CSVAdapter(BaseDataAdapter):
             # Cache for reuse
             self.tables[table_name] = df
 
-            logger.debug("Loaded CSV table %s (%d rows)", table_name, len(df))
+            if self.logger:
+                self.logger.debug("Loaded CSV table %s (%d rows)", table_name, len(df))
             return df
 
         except Exception as e:
-            logger.error("Failed to load CSV table %s: %s", table_name, e)
+            if self.logger:
+                self.logger.error("Failed to load CSV table %s: %s", table_name, e)
             raise
 
     def _save_table(self, table_name, df):
@@ -342,9 +368,11 @@ class CSVAdapter(BaseDataAdapter):
 
         try:
             df.to_csv(csv_file, index=False)
-            logger.debug("Saved CSV table %s (%d rows)", table_name, len(df))
+            if self.logger:
+                self.logger.debug("Saved CSV table %s (%d rows)", table_name, len(df))
         except Exception as e:
-            logger.error("Failed to save CSV table %s: %s", table_name, e)
+            if self.logger:
+                self.logger.error("Failed to save CSV table %s: %s", table_name, e)
             raise
 
     def _apply_schema_types(self, df, schema):
@@ -365,7 +393,8 @@ class CSVAdapter(BaseDataAdapter):
                 elif field_type in ["datetime", "date"]:
                     df[field_name] = pd.to_datetime(df[field_name], errors='coerce')
             except Exception as e:
-                logger.warning("Failed to convert column '%s' to type '%s': %s", 
+                if self.logger:
+                    self.logger.warning("Failed to convert column '%s' to type '%s': %s",
                              field_name, field_type, e)
 
         return df
@@ -374,6 +403,21 @@ class CSVAdapter(BaseDataAdapter):
         """Create boolean mask for WHERE clause with operator support."""
         if not where or len(df) == 0:
             return pd.Series([True] * len(df), index=df.index)
+
+        # Handle string WHERE clauses (simple equality only)
+        if isinstance(where, str):
+            if self.logger:
+                self.logger.warning("String WHERE clauses not fully supported in CSV adapter. Use dict format for complex queries.")
+            # Parse simple "field = 'value'" format
+            if " = " in where:
+                field, value = where.split(" = ", 1)
+                field = field.strip()
+                value = value.strip().strip("'\"")
+                where = {field: value}
+            else:
+                if self.logger:
+                    self.logger.error("Cannot parse WHERE clause: %s", where)
+                return pd.Series([True] * len(df), index=df.index)
 
         mask = pd.Series([True] * len(df), index=df.index)
 
@@ -386,7 +430,8 @@ class CSVAdapter(BaseDataAdapter):
                 continue
 
             if field not in df.columns:
-                logger.warning("Field '%s' not in table columns", field)
+                if self.logger:
+                    self.logger.warning("Field '%s' not in table columns", field)
                 continue
 
             # Handle IS NULL
@@ -447,7 +492,8 @@ class CSVAdapter(BaseDataAdapter):
             if op_func:
                 mask = mask & op_func(field, value)
             else:
-                logger.warning("Unsupported operator: %s", op)
+                if self.logger:
+                    self.logger.warning("Unsupported operator: %s", op)
 
         return mask
 
@@ -542,15 +588,18 @@ class CSVAdapter(BaseDataAdapter):
 
         if auto_join and schema:
             # Auto-detect joins from FK relationships
-            logger.info("[JOIN] Auto-joining CSV tables based on FK relationships")
+            if self.logger:
+                self.logger.info("[JOIN] Auto-joining CSV tables based on FK relationships")
             result_df = self._auto_join_csv(result_df, base_table, remaining_tables, schema)
         elif joins:
             # Manual join definitions
-            logger.info("[JOIN] Building manual JOINs for CSV")
+            if self.logger:
+                self.logger.info("[JOIN] Building manual JOINs for CSV")
             result_df = self._manual_join_csv(result_df, base_table, joins)
         else:
             # Cross join (Cartesian product)
-            logger.warning("[JOIN] Multiple tables without JOIN specification - using CROSS JOIN")
+            if self.logger:
+                self.logger.warning("[JOIN] Multiple tables without JOIN specification - using CROSS JOIN")
             for table_name in remaining_tables:
                 right_df = self._load_table(table_name)
                 right_df.columns = [f"{table_name}.{col}" for col in right_df.columns]
@@ -582,7 +631,8 @@ class CSVAdapter(BaseDataAdapter):
             if join_found:
                 joined_tables.append(table_name)
             else:
-                logger.warning("[JOIN] Could not auto-detect join for CSV table: %s", table_name)
+                if self.logger:
+                    self.logger.warning("[JOIN] Could not auto-detect join for CSV table: %s", table_name)
 
         return result_df
 
@@ -614,7 +664,8 @@ class CSVAdapter(BaseDataAdapter):
                     result_df = result_df.merge(
                         right_df, left_on=left_on, right_on=right_on, how='inner'
                     )
-                    logger.debug("  Auto-detected CSV JOIN: %s.%s = %s.%s", 
+                    if self.logger:
+                        self.logger.debug("  Auto-detected CSV JOIN: %s.%s = %s.%s",
                                ref_table, ref_column, table_name, field_name)
                     return result_df, True
 
@@ -650,7 +701,8 @@ class CSVAdapter(BaseDataAdapter):
                         result_df = result_df.merge(
                             right_df, left_on=left_on, right_on=right_on, how='inner'
                         )
-                        logger.debug("  Auto-detected CSV JOIN (reverse): %s.%s = %s.%s",
+                        if self.logger:
+                            self.logger.debug("  Auto-detected CSV JOIN (reverse): %s.%s = %s.%s",
                                    already_joined, field_name, table_name, ref_column)
                         return result_df, True
 
@@ -666,7 +718,8 @@ class CSVAdapter(BaseDataAdapter):
             on_clause = join_def.get("on")
 
             if not table_name or not on_clause:
-                logger.warning("[JOIN] Skipping invalid CSV join: %s", join_def)
+                if self.logger:
+                    self.logger.warning("[JOIN] Skipping invalid CSV join: %s", join_def)
                 continue
 
             right_df = self._load_table(table_name)
@@ -701,9 +754,11 @@ class CSVAdapter(BaseDataAdapter):
                         how=how
                     )
 
-                logger.debug("  Added CSV %s JOIN %s", join_type.upper(), table_name)
+                if self.logger:
+                    self.logger.debug("  Added CSV %s JOIN %s", join_type.upper(), table_name)
             except Exception as e:
-                logger.error("Failed to parse CSV join ON clause '%s': %s", on_clause, e)
+                if self.logger:
+                    self.logger.error("Failed to parse CSV join ON clause '%s': %s", on_clause, e)
 
         return result_df
 
@@ -719,7 +774,8 @@ class CSVAdapter(BaseDataAdapter):
                 if matches:
                     resolved.append(matches[0])
                 else:
-                    logger.warning("Field '%s' not found in available columns", field)
+                    if self.logger:
+                        self.logger.warning("Field '%s' not found in available columns", field)
         return resolved
 
     def get_connection_info(self):

@@ -35,7 +35,7 @@ zParser/
 
 ### **1. Path Resolution**
 - **Symbol Support**: `@` (workspace), `~` (absolute), or no symbol (relative)
-- **zMachine Paths**: OS-specific path resolution (`~.zMachine.*`)
+- **zMachine Paths**: OS-specific path resolution (`zMachine.*` or `~.zMachine.*`)
 - **Dotted Paths**: Convert `path.to.file` to filesystem paths
 - **File Detection**: Auto-detect file types and extensions
 
@@ -85,11 +85,15 @@ path = zcli.zparser.resolve_symbol_path(None, ["utils", "helpers"])
 
 ### **zMachine Paths**
 ```python
-# Resolve OS-specific paths
-data_path = zcli.zparser.resolve_zmachine_path("~.zMachine.data")
-# macOS: ~/Library/Application Support/zCLI/data
-# Linux: ~/.local/share/zCLI/data
-# Windows: %APPDATA%/zCLI/data
+# Resolve OS-specific paths (new format)
+data_path = zcli.zparser.resolve_zmachine_path("zMachine.zDataTests")
+# macOS: ~/Library/Application Support/zolo-zcli/zDataTests
+# Linux: ~/.local/share/zolo-zcli/zDataTests
+# Windows: %APPDATA%/zolo-zcli/zDataTests
+
+# Legacy format (still supported)
+data_path = zcli.zparser.resolve_zmachine_path("~.zMachine.data.cache")
+# macOS: ~/Library/Application Support/zolo-zcli/data/cache
 ```
 
 ### **Dotted Path Decoding**
@@ -267,13 +271,13 @@ Resolve dotted paths to file paths.
 Identify file type and find actual file path with extension.
 
 #### `resolve_zmachine_path(data_path, config_paths=None)`
-Resolve `~.zMachine.*` path references to OS-specific paths.
+Resolve `zMachine.*` or `~.zMachine.*` path references to OS-specific paths.
 
 #### `resolve_symbol_path(symbol, path_parts, workspace=None)`
 Resolve path based on symbol (`@`, `~`, or no symbol).
 
 #### `resolve_data_path(data_path)`
-Resolve data paths (supports `~.zMachine.*` and `@` workspace paths).
+Resolve data paths (supports `zMachine.*`, `~.zMachine.*`, and `@` workspace paths).
 
 ### **Function Path Methods**
 
@@ -411,7 +415,19 @@ python3 zTestSuite/run_all_tests.py
 
 ## **Best Practices**
 
-### **1. Use Symbol Paths**
+### **1. Use zMachine for User Data**
+```python
+# Good: Machine-agnostic user data paths
+Data_Path: "zMachine.zDataTests"  # Clean, cross-platform
+
+# Legacy: Still supported but verbose
+Data_Path: "~.zMachine.tests.data"
+
+# Avoid: Hardcoded absolute paths
+Data_Path: "/Users/username/data"  # Not portable
+```
+
+### **2. Use Symbol Paths**
 ```python
 # Good: Explicit workspace reference
 spec = "zFunc(@utils.myfile.my_function)"
@@ -420,7 +436,7 @@ spec = "zFunc(@utils.myfile.my_function)"
 spec = "zFunc(utils.myfile.my_function)"
 ```
 
-### **2. Let Parser Auto-Detect**
+### **3. Let Parser Auto-Detect**
 ```python
 # Good: Let parser detect format
 data = zcli.zparser.parse_file_by_path(file_path)
@@ -431,7 +447,7 @@ if format_type == ".json":
     data = zcli.zparser.parse_json(content)
 ```
 
-### **3. Use Structured Specs**
+### **4. Use Structured Specs**
 ```python
 # Good: Clear structure
 spec = {
@@ -443,7 +459,7 @@ spec = {
 spec = "zFunc(@utils.myfile.my_function, arg1, arg2)"
 ```
 
-### **4. Validate Paths**
+### **5. Validate Paths**
 ```python
 # Good: Validate before use
 result = zcli.zparser.parse_dotted_path(path)
@@ -460,7 +476,8 @@ else:
 ## **Summary**
 
 **zParser** provides comprehensive parsing services for zCLI:
-- ✅ **Universal Path Resolution**: Workspace, absolute, and relative paths
+- ✅ **Universal Path Resolution**: Workspace (`@`), absolute (`~`), and relative paths
+- ✅ **zMachine Paths**: Clean, cross-platform user data paths (`zMachine.*`)
 - ✅ **Self-Contained Architecture**: No cross-module dependencies
 - ✅ **Multiple Format Support**: JSON, YAML, expressions, commands
 - ✅ **Function Path Parsing**: Integrated symbol resolution

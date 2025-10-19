@@ -3,6 +3,6 @@
 zShell subsystem.
 """
 
-from .zShell import ZShell  # noqa: F401
+from .zShell import zShell  # noqa: F401
 
-__all__ = ['ZShell']
+__all__ = ['zShell']

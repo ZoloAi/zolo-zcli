@@ -4,8 +4,8 @@
 
 Meta:
   Data_Type: sqlite
-  Data_path: "@.tests.zData_tests.sqlite_demo"
-  Data_Label: "demo"
+  Data_Path: "zMachine.zDataTests"
+  Data_Label: "sqlite_demo"
   Data_Paradigm: classical
   Description: Demo schema for sqlite adapter testing
 

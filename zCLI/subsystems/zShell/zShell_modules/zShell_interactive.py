@@ -19,8 +19,9 @@ class InteractiveShell:
         """Initialize shell interface."""
         self.zcli = zcli
         self.logger = zcli.logger
+        self.display = zcli.display
         self.executor = CommandExecutor(zcli)
-        self.help_system = HelpSystem()
+        self.help_system = HelpSystem(display=self.display)
         self.running = False
 
         self.history_file = None
@@ -30,13 +31,7 @@ class InteractiveShell:
     def run(self):
         """Main shell loop - handles user input and command execution."""
         self.logger.info("Starting zCLI shell...")
-        self.zcli.display.handle({
-            "event": "sysmsg",
-            "label": self.help_system.get_welcome_message(),
-            "style": "raw",
-            "color": "INFO",
-            "indent": 0
-        })
+        self.zcli.display.block(self.help_system.get_welcome_message())
         self.running = True
 
         while self.running:
@@ -61,34 +56,16 @@ class InteractiveShell:
                     self._display_result(result)
 
             except KeyboardInterrupt:
-                self.zcli.display.handle({
-                    "event": "sysmsg",
-                    "label": "Goodbye!",
-                    "style": "single",
-                    "color": "INFO",
-                    "indent": 0
-                })
+                self.zcli.display.zDeclare("Goodbye!", color="INFO", indent=0, style="single")
                 break
 
             except EOFError:
-                self.zcli.display.handle({
-                    "event": "sysmsg",
-                    "label": "Goodbye!",
-                    "style": "single",
-                    "color": "INFO",
-                    "indent": 0
-                })
+                self.zcli.display.zDeclare("Goodbye!", color="INFO", indent=0, style="single")
                 break
 
             except Exception as e:
                 self.logger.error("Shell error: %s", e)
-                self.zcli.display.handle({
-                    "event": "sysmsg",
-                    "label": f"Error: {e}",
-                    "style": "single",
-                    "color": "ERROR",
-                    "indent": 0
-                })
+                self.zcli.display.zDeclare(f"Error: {e}", color="ERROR", indent=0, style="single")
 
         self.logger.info("Exiting zCLI shell...")
         if READLINE_AVAILABLE and self.history_file:
@@ -133,13 +110,7 @@ class InteractiveShell:
         cmd_lower = command.lower()
 
         if cmd_lower in ["exit", "quit", "q"]:
-            self.zcli.display.handle({
-                "event": "sysmsg",
-                "label": "Goodbye!",
-                "style": "single",
-                "color": "INFO",
-                "indent": 0
-            })
+            self.zcli.display.zDeclare("Goodbye!", color="INFO", indent=0, style="single")
             self.running = False
             return True
 
@@ -157,13 +128,7 @@ class InteractiveShell:
             return True
 
         if cmd_lower == "tips":
-            self.zcli.display.handle({
-                "event": "sysmsg",
-                "label": self.help_system.get_quick_tips(),
-                "style": "raw",
-                "color": "INFO",
-                "indent": 0
-            })
+            self.zcli.display.block(self.help_system.get_quick_tips())
             return True
 
         return False
@@ -175,43 +140,31 @@ class InteractiveShell:
 
         if isinstance(result, dict):
             if "error" in result:
-                self.zcli.display.handle({
-                    "event": "sysmsg",
-                    "label": f"Error: {result['error']}",
-                    "style": "single",
-                    "color": "ERROR",
-                    "indent": 0
-                })
+                self.zcli.display.zDeclare(
+                    f"Error: {result['error']}",
+                    color="ERROR", indent=0, style="single"
+                )
             elif "success" in result:
-                self.zcli.display.handle({
-                    "event": "sysmsg",
-                    "label": result['success'],
-                    "style": "single",
-                    "color": "SUCCESS",
-                    "indent": 0
-                })
+                self.zcli.display.zDeclare(
+                    result['success'],
+                    color="SUCCESS", indent=0, style="single"
+                )
                 if "note" in result:
-                    self.zcli.display.handle({
-                        "event": "sysmsg",
-                        "label": result['note'],
-                        "style": "single",
-                        "color": "INFO",
-                        "indent": 1
-                    })
+                    self.zcli.display.zDeclare(
+                        result['note'],
+                        color="INFO", indent=1, style="single"
+                    )
             else:
-                self.zcli.display.handle({"event": "zJSON", "payload": result})
+                self.zcli.display.json(result)
 
         elif isinstance(result, str):
-            self.zcli.display.handle({
-                "event": "sysmsg",
-                "label": result,
-                "style": "single",
-                "color": "DATA",
-                "indent": 0
-            })
+            self.zcli.display.zDeclare(
+                result,
+                color="DATA", indent=0, style="single"
+            )
 
         else:
-            self.zcli.display.handle({"event": "zJSON", "payload": {"result": result}})
+            self.zcli.display.json({"result": result})
 
     def execute_command(self, command):
         """Execute a single command (useful for testing or scripting)."""
@@ -219,30 +172,21 @@ class InteractiveShell:
 
 def launch_zCLI_shell(zcli):
     """Launch zCLI shell from within the UI"""
-    zcli.display.handle({
-        "event": "sysmsg",
-        "label": "Launching zCLI Shell from UI",
-        "style": "full",
-        "color": "EXTERNAL",
-        "indent": 0
-    })
+    zcli.display.zDeclare(
+        "Launching zCLI Shell from UI",
+        color="EXTERNAL", indent=0, style="full"
+    )
 
-    zcli.display.handle({
-        "event": "sysmsg",
-        "label": "Type 'exit' to return to UI menu",
-        "style": "single",
-        "color": "INFO",
-        "indent": 0
-    })
+    zcli.display.zDeclare(
+        "Type 'exit' to return to UI menu",
+        color="INFO", indent=0, style="single"
+    )
 
     zcli.run_shell()
 
-    zcli.display.handle({
-        "event": "sysmsg",
-        "label": "Returning to UI menu",
-        "style": "full",
-        "color": "EXTERNAL",
-        "indent": 0
-    })
+    zcli.display.zDeclare(
+        "Returning to UI menu",
+        color="EXTERNAL", indent=0, style="full"
+    )
 
     return "Returned from zCLI shell"

@@ -2,6 +2,11 @@
 # ───────────────────────────────────────────────────────────────
 """Single source of truth for all subsystems."""
 
+# TODO: Consider centralizing traceback module in zCLI/__init__.py
+#       Currently only used in 2 places (zWizard, zData/data_operations)
+#       Standard pattern: logger.error(..., exc_info=True) includes traceback automatically
+#       If traceback formatting is needed system-wide, add to zCLI imports
+
 from zCLI import logging
 
 class zCLI:
@@ -97,30 +102,31 @@ class zCLI:
         from .subsystems.zOpen import zOpen
         self.open = zOpen(self)
 
-        # Initialize data subsystem
-        from .subsystems.zData import zData
-        self.data = zData(self)
 
         # ─────────────────────────────────────────────────────────────
         # Layer 2: Core Abstraction
         # ─────────────────────────────────────────────────────────────
+        # Initialize shell and command executor (needed by zWizard)
+        from .subsystems.zShell import zShell
+        self.shell = zShell(self)
+
+        # Initialize wizard subsystem (depends on shell for wizard step execution)
+        from .subsystems.zWizard import zWizard
+        self.wizard = zWizard(self)
+
         # Initialize utility subsystem
         from .subsystems.zUtils import zUtils
         self.utils = zUtils(self)    # Plugin system first - available to all Layer 2+ subsystems
         self._load_plugins()         # Load plugins immediately after plugin system is ready
 
-        # Initialize wizard subsystem
-        from .subsystems.zWizard import zWizard
-        self.wizard = zWizard(self)  # Can use plugins immediately
+        # Initialize data subsystem
+        from .subsystems.zData import zData
+        self.data = zData(self)
 
+        # Layer 3: Orchestration
         # Initialize walker subsystem
         from .subsystems.zWalker import zWalker
         self.walker = zWalker(self)  # Modern walker with unified navigation (can use plugins immediately)
-
-        # Layer 3: Orchestration
-        # Initialize shell and command executor
-        from .subsystems.zShell import ZShell
-        self.shell = ZShell(self)
 
         # Determine interface mode (needed for session initialization)
         self.ui_mode = bool(self.zspark_obj.get("zVaFilename"))

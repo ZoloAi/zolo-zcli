@@ -8,8 +8,16 @@ from zCLI import os
 
 
 def resolve_zmachine_path(data_path, logger, config_paths=None):
-    """Resolve ~.zMachine.* path references to OS-specific paths."""
-    if not isinstance(data_path, str) or not data_path.startswith("~.zMachine."):
+    """Resolve zMachine.* or ~.zMachine.* path references to OS-specific paths."""
+    if not isinstance(data_path, str):
+        return data_path
+    
+    # Check for both formats: "zMachine." and "~.zMachine."
+    if data_path.startswith("zMachine."):
+        prefix = "zMachine."
+    elif data_path.startswith("~.zMachine."):
+        prefix = "~.zMachine."
+    else:
         # Not a zMachine path, return as-is
         return data_path
 
@@ -18,9 +26,14 @@ def resolve_zmachine_path(data_path, logger, config_paths=None):
         from ...zConfig.zConfig_modules import zConfigPaths
         config_paths = zConfigPaths()
 
-    # Extract the subpath after ~.zMachine.
+    # Extract the subpath after zMachine prefix
+    # Example: "zMachine.zDataTests" → "zDataTests"
     # Example: "~.zMachine.Data/cache.csv" → "Data/cache.csv"
-    subpath = data_path[len("~.zMachine."):]
+    subpath = data_path[len(prefix):]
+    
+    # Convert dot notation to path separators
+    # Example: "zDataTests" stays as is, "tests.zData_tests" → "tests/zData_tests"
+    subpath = subpath.replace(".", "/")
 
     # Build full path using user_data_dir as base
     base_dir = config_paths.user_data_dir

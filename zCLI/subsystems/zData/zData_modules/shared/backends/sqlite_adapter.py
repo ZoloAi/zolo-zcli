@@ -2,7 +2,7 @@
 
 """SQLite backend adapter implementation."""
 
-import sqlite3
+from zCLI import sqlite3
 from .sql_adapter import SQLAdapter
 
 class SQLiteAdapter(SQLAdapter):
@@ -15,13 +15,16 @@ class SQLiteAdapter(SQLAdapter):
             self._ensure_directory()
 
             # Convert Path to string for sqlite3.connect()
-            self.connection = sqlite3.connect(str(self.db_path))
+            # Use isolation_level='DEFERRED' for proper transaction support
+            self.connection = sqlite3.connect(str(self.db_path), isolation_level='DEFERRED')
             self.connection.row_factory = sqlite3.Row  # Enable dict-like access
             self.connection.execute("PRAGMA foreign_keys = ON;")  # Enable FK support
-            logger.info("Connected to SQLite: %s", self.db_path)
+            if self.logger:
+                self.logger.info("Connected to SQLite: %s", self.db_path)
             return self.connection
         except Exception as e:  # pylint: disable=broad-except
-            logger.error("SQLite connection failed: %s", e)
+            if self.logger:
+                self.logger.error("SQLite connection failed: %s", e)
             raise
 
     def disconnect(self):
@@ -33,9 +36,11 @@ class SQLiteAdapter(SQLAdapter):
                     self.cursor = None
                 self.connection.close()
                 self.connection = None
-                logger.info("Disconnected from SQLite: %s", self.db_path)
+                if self.logger:
+                    self.logger.info("Disconnected from SQLite: %s", self.db_path)
             except Exception as e:  # pylint: disable=broad-except
-                logger.error("Error closing SQLite connection: %s", e)
+                if self.logger:
+                    self.logger.error("Error closing SQLite connection: %s", e)
 
     def get_cursor(self):
         """Get or create a cursor."""
@@ -72,7 +77,8 @@ class SQLiteAdapter(SQLAdapter):
         )
         result = cur.fetchone()
         exists = result is not None
-        logger.debug("Table '%s' exists: %s", table_name, exists)
+        if self.logger:
+            self.logger.debug("Table '%s' exists: %s", table_name, exists)
         return exists
 
     def list_tables(self):
@@ -82,10 +88,29 @@ class SQLiteAdapter(SQLAdapter):
             "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
         )
         tables = [row[0] for row in cur.fetchall()]
-        logger.debug("Found %d tables: %s", len(tables), tables)
+        if self.logger:
+            self.logger.debug("Found %d tables: %s", len(tables), tables)
         return tables
 
     # insert(), select(), update(), delete() - inherited from SQLAdapter
+
+    def insert(self, table, fields, values):
+        """Insert row (override to skip auto-commit in autocommit mode)."""
+        result = super().insert(table, fields, values)
+        # Parent calls commit(), but in autocommit mode it's handled by explicit transactions
+        return result
+
+    def update(self, table, fields, values, where):
+        """Update rows (override to skip auto-commit in autocommit mode)."""
+        result = super().update(table, fields, values, where)
+        # Parent calls commit(), but in autocommit mode it's handled by explicit transactions
+        return result
+
+    def delete(self, table, where):
+        """Delete rows (override to skip auto-commit in autocommit mode)."""
+        result = super().delete(table, where)
+        # Parent calls commit(), but in autocommit mode it's handled by explicit transactions
+        return result
 
     def upsert(self, table, fields, values, conflict_fields):
         """Insert or update row (UPSERT operation)."""
@@ -104,18 +129,21 @@ class SQLiteAdapter(SQLAdapter):
             # Default to REPLACE behavior
             sql = f"INSERT OR REPLACE INTO {table} ({', '.join(fields)}) VALUES ({placeholders})"
 
-        logger.debug("Executing UPSERT: %s with values: %s", sql, values)
+        if self.logger:
+            self.logger.debug("Executing UPSERT: %s with values: %s", sql, values)
         cur.execute(sql, values)
-        self.connection.commit()
+        # Don't commit - SQLite in autocommit mode with explicit transaction control
 
         row_id = cur.lastrowid
-        logger.info("Upserted row into %s with ID: %s", table, row_id)
+        if self.logger:
+            self.logger.info("Upserted row into %s with ID: %s", table, row_id)
         return row_id
 
     def map_type(self, abstract_type):
         """Map abstract schema type to SQLite type."""
         if not isinstance(abstract_type, str):
-            logger.debug("Non-string type received (%r); defaulting to TEXT.", abstract_type)
+            if self.logger:
+                self.logger.debug("Non-string type received (%r); defaulting to TEXT.", abstract_type)
             return "TEXT"
 
         normalized = abstract_type.strip().rstrip("!?").lower()
@@ -138,6 +166,38 @@ class SQLiteAdapter(SQLAdapter):
 
         return type_map.get(normalized, "TEXT")
 
-    # begin_transaction(), commit(), rollback() - inherited from SQLAdapter
+    def begin_transaction(self):
+        """Begin explicit transaction in autocommit mode."""
+        if self.connection:
+            try:
+                self.connection.execute("BEGIN")
+                if self.logger:
+                    self.logger.debug("Transaction started")
+            except sqlite3.OperationalError as e:
+                if "already" not in str(e).lower():
+                    raise
+
+    def commit(self):
+        """Commit current transaction."""
+        if self.connection:
+            try:
+                self.connection.execute("COMMIT")
+                if self.logger:
+                    self.logger.debug("Transaction committed")
+            except sqlite3.OperationalError as e:
+                if "no transaction" not in str(e).lower():
+                    raise
+
+    def rollback(self):
+        """Rollback current transaction."""
+        if self.connection:
+            try:
+                self.connection.execute("ROLLBACK")
+                if self.logger:
+                    self.logger.debug("Transaction rolled back")
+            except sqlite3.OperationalError as e:
+                if "no transaction" not in str(e).lower():
+                    raise
+
     # _get_placeholders() returns "?, ?, ?" (default)
     # _get_last_insert_id() returns cursor.lastrowid (default)

@@ -1,7 +1,7 @@
 # zCLI/subsystems/zData/zData_modules/shared/parsers/where_parser.py
 """WHERE clause parsing - converts WHERE strings to adapter-compatible dicts."""
 
-import re
+from zCLI import re
 
 # Import from same directory
 try:
@@ -78,7 +78,7 @@ def parse_single_where(condition):
     if result:
         return result
 
-    logger.warning("Could not parse WHERE clause: %s", condition)
+    # Could not parse WHERE clause - return None
     return None
 
 def _parse_comparison(condition):

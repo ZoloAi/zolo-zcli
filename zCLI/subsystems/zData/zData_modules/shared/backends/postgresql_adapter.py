@@ -2,8 +2,7 @@
 
 """PostgreSQL backend adapter implementation."""
 
-from datetime import datetime
-import yaml
+from zCLI import datetime, yaml
 from .sql_adapter import SQLAdapter
 
 # Try to import psycopg2
@@ -13,13 +12,14 @@ try:
     PSYCOPG2_AVAILABLE = True
 except ImportError:
     PSYCOPG2_AVAILABLE = False
-    logger.warning("psycopg2 not available - PostgreSQL adapter will not work")
+    if self.logger:
+        self.logger.warning("psycopg2 not available - PostgreSQL adapter will not work")
 
 
 class PostgreSQLAdapter(SQLAdapter):
     """PostgreSQL backend implementation (inherits SQL logic from SQLAdapter)."""
 
-    def __init__(self, config):
+    def __init__(self, config, logger=None):
         if not PSYCOPG2_AVAILABLE:
             raise ImportError(
                 "psycopg2 is required for PostgreSQL adapter.\n"
@@ -27,7 +27,7 @@ class PostgreSQLAdapter(SQLAdapter):
             )
 
         # Call parent init (sets base_path, data_label, and db_path)
-        super().__init__(config)
+        super().__init__(config, logger)
 
         # PostgreSQL uses Data_Label as database name (not filename)
         self.database_name = self.data_label
@@ -45,21 +45,24 @@ class PostgreSQLAdapter(SQLAdapter):
             # Auto-detect: use system username (works on macOS Homebrew)
             import getpass
             self.user = getpass.getuser()
-            logger.debug("No Data_User specified, using system user: %s", self.user)
+            if self.logger:
+                self.logger.debug("No Data_User specified, using system user: %s", self.user)
 
         self.password = meta.get("Data_Password")
 
         # Override db_path to be connection string (not file path)
         self.db_path = f"{self.host}:{self.port}/{self.database_name}"
 
-        logger.debug("PostgreSQL config - database: %s, host: %s, port: %s, user: %s", 
+        if self.logger:
+            self.logger.debug("PostgreSQL config - database: %s, host: %s, port: %s, user: %s",
                     self.database_name, self.host, self.port, self.user)
 
     def connect(self):
         """Establish PostgreSQL connection (creates database if needed)."""
         try:
             # Step 1: Connect to default 'postgres' database to create our database
-            logger.info("Connecting to PostgreSQL server at %s:%s", self.host, self.port)
+            if self.logger:
+                self.logger.info("Connecting to PostgreSQL server at %s:%s", self.host, self.port)
 
             conn_params = {
                 "host": self.host,
@@ -83,16 +86,19 @@ class PostgreSQLAdapter(SQLAdapter):
 
             if not temp_cursor.fetchone():
                 # Database doesn't exist - create it
-                logger.info("Creating database: %s", self.database_name)
+                if self.logger:
+                    self.logger.info("Creating database: %s", self.database_name)
                 # Use sql.Identifier to safely quote database name
                 temp_cursor.execute(
                     sql.SQL("CREATE DATABASE {}").format(
                         sql.Identifier(self.database_name)
                     )
                 )
-                logger.info("[OK] Created database: %s", self.database_name)
+                if self.logger:
+                    self.logger.info("[OK] Created database: %s", self.database_name)
             else:
-                logger.debug("Database already exists: %s", self.database_name)
+                if self.logger:
+                    self.logger.debug("Database already exists: %s", self.database_name)
 
             temp_cursor.close()
             temp_conn.close()
@@ -102,7 +108,8 @@ class PostgreSQLAdapter(SQLAdapter):
             self.connection = psycopg2.connect(**conn_params)
             self.connection.autocommit = False  # Normal transaction mode
 
-            logger.info("Connected to PostgreSQL database: %s", self.database_name)
+            if self.logger:
+                self.logger.info("Connected to PostgreSQL database: %s", self.database_name)
 
             # Write project info file to Data_path
             self._write_project_info()
@@ -110,7 +117,8 @@ class PostgreSQLAdapter(SQLAdapter):
             return self.connection
 
         except Exception as e:  # pylint: disable=broad-except
-            logger.error("PostgreSQL connection failed: %s", e)
+            if self.logger:
+                self.logger.error("PostgreSQL connection failed: %s", e)
             raise
 
     def disconnect(self):
@@ -122,9 +130,11 @@ class PostgreSQLAdapter(SQLAdapter):
                     self.cursor = None
                 self.connection.close()
                 self.connection = None
-                logger.info("Disconnected from PostgreSQL: %s", self.database_name)
+                if self.logger:
+                    self.logger.info("Disconnected from PostgreSQL: %s", self.database_name)
             except Exception as e:  # pylint: disable=broad-except
-                logger.error("Error closing PostgreSQL connection: %s", e)
+                if self.logger:
+                    self.logger.error("Error closing PostgreSQL connection: %s", e)
 
     def get_cursor(self):
         """Get or create a cursor."""
@@ -134,7 +144,8 @@ class PostgreSQLAdapter(SQLAdapter):
 
     def create_table(self, table_name, schema):
         """Create table with PostgreSQL-specific features (SERIAL for PKs)."""
-        logger.info("Creating table: %s", table_name)
+        if self.logger:
+            self.logger.info("Creating table: %s", table_name)
 
         cur = self.get_cursor()
         composite_pk = self._get_composite_pk(schema)
@@ -145,16 +156,19 @@ class PostgreSQLAdapter(SQLAdapter):
         if composite_pk:
             pk_columns = ", ".join(composite_pk)
             table_constraints.append(f"PRIMARY KEY ({pk_columns})")
-            logger.info("Adding composite PRIMARY KEY (%s)", pk_columns)
+            if self.logger:
+                self.logger.info("Adding composite PRIMARY KEY (%s)", pk_columns)
 
         # Build and execute DDL
         all_defs = field_defs + table_constraints + foreign_keys
         ddl = f"CREATE TABLE {table_name} ({', '.join(all_defs)});"
 
-        logger.info("Executing DDL: %s", ddl)
+        if self.logger:
+            self.logger.info("Executing DDL: %s", ddl)
         cur.execute(ddl)
         self.connection.commit()
-        logger.info("Table created: %s", table_name)
+        if self.logger:
+            self.logger.info("Table created: %s", table_name)
 
         # Create indexes if specified
         if "indexes" in schema:
@@ -168,7 +182,8 @@ class PostgreSQLAdapter(SQLAdapter):
         if "primary_key" in schema:
             pk_value = schema["primary_key"]
             if isinstance(pk_value, list) and len(pk_value) > 0:
-                logger.info("Composite primary key detected: %s", pk_value)
+                if self.logger:
+                    self.logger.info("Composite primary key detected: %s", pk_value)
                 return pk_value
         return None
 
@@ -223,7 +238,8 @@ class PostgreSQLAdapter(SQLAdapter):
         )
         result = cur.fetchone()
         exists = result[0] if result else False
-        logger.debug("Table '%s' exists: %s", table_name, exists)
+        if self.logger:
+            self.logger.debug("Table '%s' exists: %s", table_name, exists)
         return exists
 
     def list_tables(self):
@@ -235,7 +251,8 @@ class PostgreSQLAdapter(SQLAdapter):
             ORDER BY table_name"""
         )
         tables = [row[0] for row in cur.fetchall()]
-        logger.debug("Found %d tables: %s", len(tables), tables)
+        if self.logger:
+            self.logger.debug("Found %d tables: %s", len(tables), tables)
         return tables
 
     # alter_table() - inherited from SQLAdapter (PostgreSQL supports DROP COLUMN)
@@ -267,7 +284,8 @@ class PostgreSQLAdapter(SQLAdapter):
         # Add RETURNING clause to get row ID
         sql_stmt += " RETURNING *"
 
-        logger.debug("Executing UPSERT: %s with values: %s", sql_stmt, values)
+        if self.logger:
+            self.logger.debug("Executing UPSERT: %s with values: %s", sql_stmt, values)
         cur.execute(sql_stmt, values)
         self.connection.commit()
 
@@ -275,13 +293,15 @@ class PostgreSQLAdapter(SQLAdapter):
         result = cur.fetchone()
         row_id = result[0] if result else None
 
-        logger.info("Upserted row into %s with ID: %s", table, row_id)
+        if self.logger:
+            self.logger.info("Upserted row into %s with ID: %s", table, row_id)
         return row_id
 
     def map_type(self, abstract_type):
         """Map abstract schema type to PostgreSQL type."""
         if not isinstance(abstract_type, str):
-            logger.debug("Non-string type received (%r); defaulting to TEXT.", abstract_type)
+            if self.logger:
+                self.logger.debug("Non-string type received (%r); defaulting to TEXT.", abstract_type)
             return "TEXT"
 
         normalized = abstract_type.strip().rstrip("!?").lower()
@@ -316,7 +336,8 @@ class PostgreSQLAdapter(SQLAdapter):
         """Get last inserted row ID (PostgreSQL uses RETURNING clause instead)."""
         # PostgreSQL doesn't have lastrowid like SQLite
         # We use RETURNING clause in INSERT instead
-        logger.debug("_get_last_insert_id called (PostgreSQL uses RETURNING clause)")
+        if self.logger:
+            self.logger.debug("_get_last_insert_id called (PostgreSQL uses RETURNING clause)")
 
     def insert(self, table, fields, values):
         """Insert row and return ID using RETURNING clause."""
@@ -326,7 +347,8 @@ class PostgreSQLAdapter(SQLAdapter):
         # PostgreSQL: Use RETURNING to get inserted ID
         sql_stmt = f"INSERT INTO {table} ({', '.join(fields)}) VALUES ({placeholders}) RETURNING *"
 
-        logger.debug("Executing INSERT: %s with values: %s", sql_stmt, values)
+        if self.logger:
+            self.logger.debug("Executing INSERT: %s with values: %s", sql_stmt, values)
         cur.execute(sql_stmt, values)
         self.connection.commit()
 
@@ -334,7 +356,8 @@ class PostgreSQLAdapter(SQLAdapter):
         result = cur.fetchone()
         row_id = result[0] if result else None
 
-        logger.info("Inserted row into %s with ID: %s", table, row_id)
+        if self.logger:
+            self.logger.info("Inserted row into %s with ID: %s", table, row_id)
         return row_id
 
     def _write_project_info(self):
@@ -355,7 +378,8 @@ class PostgreSQLAdapter(SQLAdapter):
                 if "PostgreSQL" in version_string:
                     pg_version = version_string.split()[1]
             except Exception as e:  # pylint: disable=broad-except
-                logger.debug("Could not get PostgreSQL version: %s", e)
+                if self.logger:
+                    self.logger.debug("Could not get PostgreSQL version: %s", e)
 
             # Get data directory from server
             data_dir = "Unknown"
@@ -364,7 +388,8 @@ class PostgreSQLAdapter(SQLAdapter):
                 cur.execute("SHOW data_directory;")
                 data_dir = cur.fetchone()[0]
             except Exception as e:  # pylint: disable=broad-except
-                logger.debug("Could not get data_directory: %s", e)
+                if self.logger:
+                    self.logger.debug("Could not get data_directory: %s", e)
 
             # Gather project information
             info = {
@@ -392,10 +417,12 @@ class PostgreSQLAdapter(SQLAdapter):
             with open(info_file, 'w', encoding='utf-8') as f:
                 yaml.dump(info, f, default_flow_style=False, sort_keys=False)
 
-            logger.debug("Written PostgreSQL project info to: %s", info_file)
+            if self.logger:
+                self.logger.debug("Written PostgreSQL project info to: %s", info_file)
 
         except Exception as e:  # pylint: disable=broad-except
-            logger.warning("Could not write PostgreSQL project info: %s", e)
+            if self.logger:
+                self.logger.warning("Could not write PostgreSQL project info: %s", e)
 
     def update_project_info(self):
         """Update tables list in .pginfo.yaml."""
@@ -419,7 +446,9 @@ class PostgreSQLAdapter(SQLAdapter):
             with open(info_file, 'w', encoding='utf-8') as f:
                 yaml.dump(info, f, default_flow_style=False, sort_keys=False)
 
-            logger.debug("Updated PostgreSQL project info: %s", info_file)
+            if self.logger:
+                self.logger.debug("Updated PostgreSQL project info: %s", info_file)
 
         except Exception as e:  # pylint: disable=broad-except
-            logger.warning("Could not update PostgreSQL project info: %s", e)
+            if self.logger:
+                self.logger.warning("Could not update PostgreSQL project info: %s", e)
