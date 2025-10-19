@@ -307,7 +307,7 @@ class TestInteractiveShell(unittest.TestCase):
         result = self.shell._handle_special_commands("tips")
         
         self.assertTrue(result)
-        self.mock_zcli.display.block.assert_called_once()
+        self.mock_zcli.display.write_block.assert_called_once()
     
     def test_display_result_with_error(self):
         """Test displaying result with error."""

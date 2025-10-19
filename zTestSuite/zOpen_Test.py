@@ -132,7 +132,7 @@ class TestzOpenFileHandling(unittest.TestCase):
             result = self.zopen._open_text("/test/file.py")
         
         self.assertEqual(result, "zBack")
-        self.mock_zcli.display.block.assert_called_once()
+        self.mock_zcli.display.write_block.assert_called_once()
     
     @patch('zCLI.subsystems.zOpen.zOpen.os.path.exists')
     def test_open_file_not_found_no_dialog(self, mock_exists):
@@ -187,7 +187,7 @@ class TestzOpenFileHandling(unittest.TestCase):
         result = self.zopen._display_file_content("/test/file.txt")
         
         self.assertEqual(result, "zBack")
-        self.mock_zcli.display.block.assert_called_once_with("short content")
+        self.mock_zcli.display.write_block.assert_called_once_with("short content")
     
     @patch('builtins.open', mock_open(read_data="x" * 2000))
     def test_display_file_content_long(self):
@@ -196,7 +196,7 @@ class TestzOpenFileHandling(unittest.TestCase):
         
         self.assertEqual(result, "zBack")
         # Should truncate to 1000 chars
-        call_args = self.mock_zcli.display.block.call_args[0][0]
+        call_args = self.mock_zcli.display.write_block.call_args[0][0]
         self.assertEqual(len(call_args), 1003)  # 1000 + "..."
 
 
@@ -236,7 +236,7 @@ class TestzOpenURLHandling(unittest.TestCase):
         result = self.zopen._open_url("https://example.com")
         
         self.assertEqual(result, "zBack")  # Falls back to displaying URL info
-        self.mock_zcli.display.line.assert_called()
+        self.mock_zcli.display.write_line.assert_called()
     
     @patch('zCLI.shutil.which')
     @patch('zCLI.subsystems.zOpen.zOpen.subprocess.run')
@@ -264,7 +264,7 @@ class TestzOpenURLHandling(unittest.TestCase):
         result = self.zopen._display_url_fallback("https://example.com")
         
         self.assertEqual(result, "zBack")
-        self.mock_zcli.display.line.assert_called()
+        self.mock_zcli.display.write_line.assert_called()
 
 
 class TestzOpenPathResolution(unittest.TestCase):

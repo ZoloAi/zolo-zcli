@@ -230,12 +230,12 @@ class zOpen:
 
             self.display.zDeclare(f"File Content: {os.path.basename(path)}", color="INFO", indent=1, style="~")
 
-            # Display content using display.block()
+            # Display content using display.write_block()
             if len(content) > 1000:
-                self.display.block(content[:1000] + "...")
-                self.display.line(f"\n[Content truncated - showing first 1000 of {len(content)} characters]")
+                self.display.write_block(content[:1000] + "...")
+                self.display.write_line(f"\n[Content truncated - showing first 1000 of {len(content)} characters]")
             else:
-                self.display.block(content)
+                self.display.write_block(content)
 
             return "zBack"
 
@@ -304,8 +304,8 @@ class zOpen:
         self.logger.warning("Unable to open URL. Displaying information instead.")
 
         self.display.zDeclare("URL Information", color="INFO", indent=1, style="~")
-        self.display.line(f"URL: {url}")
-        self.display.line("Unable to open in browser. Please copy and paste into your browser.")
+        self.display.write_line(f"URL: {url}")
+        self.display.write_line("Unable to open in browser. Please copy and paste into your browser.")
         return "zBack"
 
     # ═══════════════════════════════════════════════════════════════

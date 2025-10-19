@@ -31,7 +31,7 @@ class InteractiveShell:
     def run(self):
         """Main shell loop - handles user input and command execution."""
         self.logger.info("Starting zCLI shell...")
-        self.zcli.display.block(self.help_system.get_welcome_message())
+        self.zcli.display.write_block(self.help_system.get_welcome_message())
         self.running = True
 
         while self.running:
@@ -128,7 +128,7 @@ class InteractiveShell:
             return True
 
         if cmd_lower == "tips":
-            self.zcli.display.block(self.help_system.get_quick_tips())
+            self.zcli.display.write_block(self.help_system.get_quick_tips())
             return True
 
         return False

@@ -73,7 +73,7 @@ def display_validation_errors(table, errors, ops):
         error_lines.append(f"  • {field}: {message}")
 
     # Display using zDisplay
-    ops.zcli.display.line("")
+    ops.zcli.display.write_line("")
     for line in error_lines:
-        ops.zcli.display.line(line)
-    ops.zcli.display.line("")
+        ops.zcli.display.write_line(line)
+    ops.zcli.display.write_line("")
