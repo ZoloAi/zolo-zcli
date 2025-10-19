@@ -17,6 +17,7 @@ from unittest.mock import patch, MagicMock
 import os
 import shutil
 import yaml
+import tempfile
 from pathlib import Path
 
 
@@ -77,21 +78,32 @@ class TestzDataSQLiteAdapter(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         from zCLI import zCLI
-        with patch('builtins.print'):
-            self.zcli = zCLI()
         
-        # Set up test directory using zMachine path (zMachine.zDataTests)
-        # The zParser will resolve this to user_data_dir/zDataTests
-        self.test_dir = self.zcli.config.sys_paths.user_data_dir / "zDataTests"
-        self.test_dir.mkdir(parents=True, exist_ok=True)
+        # Create a temporary directory for test data
+        self.temp_dir = tempfile.mkdtemp(prefix="zdata_test_")
+        self.test_dir = Path(self.temp_dir)
+        
+        # Initialize zCLI with test workspace
+        with patch('builtins.print'):
+            self.zcli = zCLI({
+                "zWorkspace": str(self.test_dir)
+            })
         
         # Load SQLite schema using zLoader (proper zPath resolution)
         self.schema = self.zcli.loader.handle("@.zTestSuite.demos.zSchema.sqlite_demo")
+        
+        # Override the Data_Path in the schema to use temp directory
+        if "Meta" in self.schema:
+            self.schema["Meta"]["Data_Path"] = str(self.test_dir)
+        
         self.zcli.data.load_schema(self.schema)
         
         # Store the schema path for wizard transactions
-        # zWizard will use schema_cache for connection reuse
+        # Update the file cache so wizard uses the modified schema
         self.schema_path = "@.zTestSuite.demos.zSchema.sqlite_demo"
+        # The file cache stores loaded schemas - update it with our modified version
+        if hasattr(self.zcli.loader.cache, 'file_cache'):
+            self.zcli.loader.cache.file_cache.cache[self.schema_path] = self.schema
         
         # Drop existing tables (if any) and create fresh tables
         for table_name in ["users", "posts", "products"]:
@@ -107,14 +119,9 @@ class TestzDataSQLiteAdapter(unittest.TestCase):
         if self.zcli.data.is_connected():
             self.zcli.data.disconnect()
         
-        # Remove test database file
-        db_file = self.test_dir / "sqlite_demo.db"
-        if db_file.exists():
-            db_file.unlink()
-        
-        # Remove test directory if empty
-        if self.test_dir.exists() and not any(self.test_dir.iterdir()):
-            self.test_dir.rmdir()
+        # Remove entire temporary directory
+        if self.test_dir.exists():
+            shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_sqlite_schema_loading(self):
         """Test SQLite schema loads correctly."""
@@ -200,15 +207,13 @@ class TestzDataSQLiteAdapter(unittest.TestCase):
         # Transactions should be managed by zWizard using schema_cache, not by direct zData calls.
         # The schema_cache automatically manages connection reuse across workflow steps.
         
+        # NOTE: Wizard loads schemas fresh from disk, so it will use the original zMachine path
+        # This is acceptable for testing wizard transaction behavior
+        # We're testing that transactions work, not path resolution
+        
         # Clear wizard's schema_cache to ensure clean state
         if hasattr(self.zcli, 'wizard') and hasattr(self.zcli.wizard, 'schema_cache'):
             self.zcli.wizard.schema_cache.clear()
-        
-        # Ensure clean state - delete any existing test users
-        try:
-            self.zcli.data.delete("users", where="name LIKE 'TransactionUser%'")
-        except Exception:
-            pass  # Table might be empty
         
         # Create a zWizard workflow with transaction
         # Using schema path directly - zWizard's schema_cache will handle connection reuse
@@ -248,17 +253,18 @@ class TestzDataSQLiteAdapter(unittest.TestCase):
         self.assertTrue(result[0], "First insert should succeed")
         self.assertTrue(result[1], "Second insert should succeed")
         
-        # Reload schema to get fresh connection after wizard cleanup
-        # Disconnect first to ensure clean state
-        if self.zcli.data.handler:
-            self.zcli.data.handler.disconnect()
-        self.zcli.data.load_schema(self.schema)
+        # Load the wizard's schema (from original path) to verify the data
+        wizard_schema = self.zcli.loader.handle(self.schema_path)
+        self.zcli.data.load_schema(wizard_schema)
         
         # Verify data was committed
         users = self.zcli.data.select("users")
         user_names = [user["name"] for user in users]
         self.assertIn("TransactionUser1", user_names, f"TransactionUser1 not found. Users: {user_names}")
         self.assertIn("TransactionUser2", user_names, f"TransactionUser2 not found. Users: {user_names}")
+        
+        # Clean up wizard's database
+        self.zcli.data.delete("users", where="name LIKE 'TransactionUser%'")
 
     def test_sqlite_select_with_filters(self):
         """Test SELECT with WHERE, ORDER, LIMIT."""
@@ -471,16 +477,24 @@ class TestzDataCSVAdapter(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         from zCLI import zCLI
-        with patch('builtins.print'):
-            self.zcli = zCLI()
         
-        # Set up test directory using zPath format (@.tests.zData_tests)
-        workspace_root = Path(self.zcli.session.get("zWorkspace", Path.cwd()))
-        self.test_dir = workspace_root / "tests" / "zData_tests"
-        self.test_dir.mkdir(parents=True, exist_ok=True)
+        # Create a temporary directory for test data
+        self.temp_dir = tempfile.mkdtemp(prefix="zdata_csv_test_")
+        self.test_dir = Path(self.temp_dir)
+        
+        # Initialize zCLI with test workspace
+        with patch('builtins.print'):
+            self.zcli = zCLI({
+                "zWorkspace": str(self.test_dir)
+            })
         
         # Load CSV schema using zLoader (proper zPath resolution)
         self.schema = self.zcli.loader.handle("@.zTestSuite.demos.zSchema.csv_demo")
+        
+        # Override the Data_Path in the schema to use temp directory
+        if "Meta" in self.schema:
+            self.schema["Meta"]["Data_Path"] = str(self.test_dir)
+        
         self.zcli.data.load_schema(self.schema)
         
         # Drop existing tables (if any) and create fresh tables
@@ -497,17 +511,9 @@ class TestzDataCSVAdapter(unittest.TestCase):
         if self.zcli.data.is_connected():
             self.zcli.data.disconnect()
         
-        # Remove CSV files
-        for csv_file in self.test_dir.glob("*.csv"):
-            csv_file.unlink()
-        
-        # Remove test directory if empty
-        if self.test_dir.exists() and not any(self.test_dir.iterdir()):
-            self.test_dir.rmdir()
-            # Try to remove parent directory if empty
-            parent_dir = self.test_dir.parent
-            if parent_dir.exists() and not any(parent_dir.iterdir()):
-                parent_dir.rmdir()
+        # Remove entire temporary directory
+        if self.test_dir.exists():
+            shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_csv_schema_loading(self):
         """Test CSV schema loads correctly."""
@@ -648,12 +654,16 @@ class TestzDataPluginIntegration(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         from zCLI import zCLI
-        with patch('builtins.print'):
-            self.zcli = zCLI()
         
-        # Set up test directory
-        self.test_dir = self.zcli.config.sys_paths.user_data_dir / "zDataTests"
-        self.test_dir.mkdir(parents=True, exist_ok=True)
+        # Create a temporary directory for test data
+        self.temp_dir = tempfile.mkdtemp(prefix="zdata_plugin_test_")
+        self.test_dir = Path(self.temp_dir)
+        
+        # Initialize zCLI with test workspace
+        with patch('builtins.print'):
+            self.zcli = zCLI({
+                "zWorkspace": str(self.test_dir)
+            })
         
         # Load id_generator plugin explicitly using PluginCache
         # This ensures the plugin is available for zParser plugin invocations
@@ -672,6 +682,11 @@ class TestzDataPluginIntegration(unittest.TestCase):
         
         # Load SQLite schema
         self.schema = self.zcli.loader.handle("@.zTestSuite.demos.zSchema.sqlite_demo")
+        
+        # Override the Data_Path in the schema to use temp directory
+        if "Meta" in self.schema:
+            self.schema["Meta"]["Data_Path"] = str(self.test_dir)
+        
         self.zcli.data.load_schema(self.schema)
         
         # Create fresh users table
@@ -686,10 +701,9 @@ class TestzDataPluginIntegration(unittest.TestCase):
         if self.zcli.data.is_connected():
             self.zcli.data.disconnect()
         
-        # Remove test database file
-        db_file = self.test_dir / "sqlite_demo.db"
-        if db_file.exists():
-            db_file.unlink()
+        # Remove entire temporary directory
+        if self.test_dir.exists():
+            shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_plugin_uuid_generation(self):
         """Test using plugin to generate UUID for insert."""
@@ -786,26 +800,25 @@ class TestzDataConnectionManagement(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         from zCLI import zCLI
-        with patch('builtins.print'):
-            self.zcli = zCLI()
         
-        # Get test directory from zCLI config (user_data_dir)
-        self.test_dir = self.zcli.config.sys_paths.user_data_dir / "tests/zData_tests"
-        self.test_dir.mkdir(parents=True, exist_ok=True)
+        # Create a temporary directory for test data
+        self.temp_dir = tempfile.mkdtemp(prefix="zdata_conn_test_")
+        self.test_dir = Path(self.temp_dir)
+        
+        # Initialize zCLI with test workspace
+        with patch('builtins.print'):
+            self.zcli = zCLI({
+                "zWorkspace": str(self.test_dir)
+            })
 
     def tearDown(self):
         """Clean up after each test."""
         if self.zcli.data.is_connected():
             self.zcli.data.disconnect()
         
-        # Remove test database file
-        db_file = self.test_dir / "sqlite_demo.db"
-        if db_file.exists():
-            db_file.unlink()
-        
-        # Remove test directory if empty
-        if self.test_dir.exists() and not any(self.test_dir.iterdir()):
-            self.test_dir.rmdir()
+        # Remove entire temporary directory
+        if self.test_dir.exists():
+            shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_connection_status(self):
         """Test connection status checking."""
@@ -813,6 +826,8 @@ class TestzDataConnectionManagement(unittest.TestCase):
         
         # Load schema using zLoader (proper zPath resolution)
         schema = self.zcli.loader.handle("@.zTestSuite.demos.zSchema.sqlite_demo")
+        if "Meta" in schema:
+            schema["Meta"]["Data_Path"] = str(self.test_dir)
         self.zcli.data.load_schema(schema)
         
         self.assertTrue(self.zcli.data.is_connected())
@@ -821,6 +836,8 @@ class TestzDataConnectionManagement(unittest.TestCase):
         """Test disconnecting from database."""
         # Load schema using zLoader (proper zPath resolution)
         schema = self.zcli.loader.handle("@.zTestSuite.demos.zSchema.sqlite_demo")
+        if "Meta" in schema:
+            schema["Meta"]["Data_Path"] = str(self.test_dir)
         self.zcli.data.load_schema(schema)
         
         self.assertTrue(self.zcli.data.is_connected())
@@ -837,6 +854,8 @@ class TestzDataConnectionManagement(unittest.TestCase):
         
         # With connection - load schema using zLoader (proper zPath resolution)
         schema = self.zcli.loader.handle("@.zTestSuite.demos.zSchema.sqlite_demo")
+        if "Meta" in schema:
+            schema["Meta"]["Data_Path"] = str(self.test_dir)
         self.zcli.data.load_schema(schema)
         
         info = self.zcli.data.get_connection_info()

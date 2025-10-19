@@ -2,6 +2,8 @@
 
 **Target**: AI coding assistants | **Format**: Dense, technical | **Version**: 1.5.0
 
+**Package Installation**: All test files, demos, and schemas are included in the distribution via `pyproject.toml` and `MANIFEST.in`
+
 ---
 
 ## Quick Reference

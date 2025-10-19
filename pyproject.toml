@@ -72,6 +72,19 @@ include = ["zCLI*", "logger*", "zTestSuite*"]
 # (this includes main.py at the repo root as a top-level module named "main")
 py-modules = ["main"]
 
+[tool.setuptools.package-data]
+# Include non-Python files in packages
+zTestSuite = [
+    "demos/*.yaml",
+    "demos/*.py",
+    "demos/*.md",
+    "*.md",
+]
+zCLI = [
+    "subsystems/*/zCLI_modules/*.yaml",
+    "utils/*.md",
+]
+
 [tool.setuptools.dynamic]
 # Dynamically read the version string from the attribute
 # zCLI/version.py -> __version__ (exported via zCLI.version.__version__)
