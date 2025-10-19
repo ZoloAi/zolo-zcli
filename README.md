@@ -24,14 +24,17 @@ Think of zCLI as a **"website builder for the command line"** - instead of click
 ### Step 1: Install
 
 ```bash
-# Install zCLI (requires Python 3.8+)
-pip install zolo-zcli
+# Install from GitHub (requires SSH key setup)
+pip install git+ssh://git@github.com/ZoloAi/zolo-zcli.git
+
+# Or install specific version
+pip install git+ssh://git@github.com/ZoloAi/zolo-zcli.git@v1.5.0
 
 # Verify installation
-zolo-zcli --version
+zolo --version
 ```
 
-📘 **Need help?** See the [Full Installation Guide](Documentation/INSTALL.md) for detailed instructions.
+📘 **Need help?** See the [Full Installation Guide](Documentation/INSTALL.md) for SSH setup, HTTPS alternatives, and troubleshooting.
 
 ### Step 2: Start the Shell
 
@@ -228,32 +231,32 @@ zCLI is built with a clean 3-layer architecture:
 
 ### Basic Install (SQLite only)
 ```bash
-pip install zolo-zcli
+pip install git+ssh://git@github.com/ZoloAi/zolo-zcli.git
 ```
 
 ### With CSV Support
 ```bash
-pip install zolo-zcli[csv]
+pip install "git+ssh://git@github.com/ZoloAi/zolo-zcli.git#egg=zolo-zcli[csv]"
 ```
 
 ### With PostgreSQL Support
 ```bash
-pip install zolo-zcli[postgresql]
+pip install "git+ssh://git@github.com/ZoloAi/zolo-zcli.git#egg=zolo-zcli[postgresql]"
 ```
 
 ### Full Install (All Features)
 ```bash
-pip install zolo-zcli[all]
+pip install "git+ssh://git@github.com/ZoloAi/zolo-zcli.git#egg=zolo-zcli[all]"
 ```
 
 ### Development Install
 ```bash
-git clone https://github.com/ZoloAi/zolo-zcli.git
+git clone git@github.com:ZoloAi/zolo-zcli.git
 cd zolo-zcli
 pip install -e .
 ```
 
-📘 **More options:** See [INSTALL.md](Documentation/INSTALL.md) for SSH installation, uninstall options, and troubleshooting.
+📘 **More options:** See [INSTALL.md](Documentation/INSTALL.md) for SSH key setup, HTTPS alternatives, and troubleshooting.
 
 ---
 
