@@ -26,11 +26,15 @@ def get_package_root():
     
     This ensures tests can find demo files regardless of where they're run from.
     Returns the directory containing zTestSuite (the package root).
+    
+    For development: /path/to/zolo-zcli
+    For installed: /path/to/site-packages
     """
-    # Get the directory containing this test file
-    test_file_dir = Path(__file__).parent
+    # Get the directory containing this test file (zTestSuite/)
+    test_file_dir = Path(__file__).resolve().parent
     # The parent of zTestSuite is the package root
-    return test_file_dir.parent
+    package_root = test_file_dir.parent
+    return package_root
 
 
 class TestzDataInitialization(unittest.TestCase):

@@ -44,10 +44,16 @@ class SessionConfig:
         virtual_env = self.environment.get_venv_path() if self.environment.is_in_venv() else None
         system_env = self.environment.get_env_var("PATH")
 
+        # Determine zWorkspace: zSpark > getcwd
+        zWorkspace = os.getcwd()  # Default to current working directory
+        if self.zSpark is not None and isinstance(self.zSpark, dict):
+            if "zWorkspace" in self.zSpark:
+                zWorkspace = self.zSpark["zWorkspace"]
+
         # Create session dict
         session = {
             "zS_id": self.generate_id(),
-            "zWorkspace": os.getcwd(),  # Always getcwd
+            "zWorkspace": zWorkspace,
             "zVaFile_path": None,
             "zVaFilename": None,
             "zBlock": None,
