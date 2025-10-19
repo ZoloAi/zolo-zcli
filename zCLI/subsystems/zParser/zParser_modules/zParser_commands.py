@@ -29,6 +29,14 @@ def parse_command(command, logger):
         "comm": _parse_comm_command,
         "wizard": _parse_wizard_command,
         "plugin": _parse_plugin_command,
+        "history": _parse_history_command,
+        "echo": _parse_echo_command,
+        "print": _parse_echo_command,  # alias for echo
+        "ls": _parse_ls_command,
+        "dir": _parse_ls_command,  # alias for ls
+        "cd": _parse_cd_command,
+        "pwd": _parse_pwd_command,
+        "alias": _parse_alias_command,
     }
 
     if command_type not in commands:
@@ -414,6 +422,119 @@ def _parse_wizard_command(parts):
     return {
         "type": "wizard",
         "action": "wizard",
+        "args": args,
+        "options": options
+    }
+
+def _parse_history_command(parts):
+    """Parse history commands like 'history', 'history --clear', 'history save file.json'"""
+    action = "show" if len(parts) < 2 or parts[1].startswith("--") else parts[1]
+    
+    # Extract options and args
+    options = {}
+    args = []
+    
+    i = 1 if action == "show" else 2
+    while i < len(parts):
+        part = parts[i]
+        if part.startswith("--"):
+            flag = part[2:]
+            if i + 1 < len(parts) and not parts[i + 1].startswith("--"):
+                options[flag] = parts[i + 1]
+                i += 2
+            else:
+                options[flag] = True
+                i += 1
+        else:
+            args.append(part)
+            i += 1
+    
+    return {
+        "type": "history",
+        "action": action,
+        "args": args,
+        "options": options
+    }
+
+def _parse_echo_command(parts):
+    """Parse echo/print commands like 'echo Hello World' or 'echo $session.zWorkspace'"""
+    # Everything after 'echo' is the message
+    args = parts[1:] if len(parts) > 1 else []
+    
+    # Extract options
+    options = {}
+    message_parts = []
+    
+    for arg in args:
+        if arg.startswith("--"):
+            options[arg[2:]] = True
+        else:
+            message_parts.append(arg)
+    
+    return {
+        "type": "echo",
+        "action": "echo",
+        "args": message_parts,
+        "options": options
+    }
+
+def _parse_ls_command(parts):
+    """Parse ls/dir commands like 'ls', 'ls @.path', 'ls --recursive'"""
+    args = []
+    options = {}
+    
+    for part in parts[1:]:
+        if part.startswith("--") or part.startswith("-"):
+            flag = part.lstrip("-")
+            options[flag] = True
+        else:
+            args.append(part)
+    
+    return {
+        "type": "ls",
+        "action": "ls",
+        "args": args,
+        "options": options
+    }
+
+def _parse_cd_command(parts):
+    """Parse cd commands like 'cd @.path' or 'cd ~'"""
+    args = parts[1:] if len(parts) > 1 else []
+    
+    return {
+        "type": "cd",
+        "action": "cd",
+        "args": args,
+        "options": {}
+    }
+
+def _parse_pwd_command(parts):
+    """Parse pwd command"""
+    return {
+        "type": "pwd",
+        "action": "pwd",
+        "args": [],
+        "options": {}
+    }
+
+def _parse_alias_command(parts):
+    """Parse alias commands like 'alias', 'alias name="command"', 'alias --remove name'"""
+    # Extract options and args
+    options = {}
+    args = []
+    
+    for part in parts[1:]:
+        if part.startswith("--"):
+            flag = part[2:]
+            options[flag] = True
+        else:
+            args.append(part)
+    
+    action = "list" if not args and not options else "create"
+    
+    return {
+        "type": "alias",
+        "action": action,
         "args": args,
         "options": options
     }

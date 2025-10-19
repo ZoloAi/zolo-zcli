@@ -1,221 +1,357 @@
-# zShell: The Interactive Shell Subsystem
+# zShell Guide - Your Interactive Command Center
 
-## **Overview**
-- **zShell** is **zCLI**'s interactive shell and command execution subsystem
-- Provides REPL interface, command parsing, execution routing, wizard canvas mode, and comprehensive help system
-- Initializes after core subsystems, providing interactive shell services for terminal mode operations
+**Welcome!** This guide will teach you how to use zCLI's interactive shell - think of it like a conversation with your computer where you type commands and get instant results!
 
-## **Architecture**
+---
 
-### **Layer 2 Interactive Services**
-**zShell** operates as a Layer 2 subsystem, meaning it:
-- Initializes after foundation (zConfig, zComm) and display (zDisplay) subsystems
-- Provides interactive shell interface for terminal mode
-- Routes commands to appropriate subsystem handlers
-- Manages wizard canvas mode for multi-step workflows
-- Depends on zParser for command parsing and zDisplay for output
+## What is zShell?
 
-### **Modular Design**
+**zShell** is like a text-based control panel for zCLI. Instead of clicking buttons, you type commands and press Enter. It's similar to:
+- The Terminal app on Mac
+- Command Prompt on Windows
+- The Python interactive shell
+
+**Think of it like:** Texting with your computer - you send a message (command), it responds with results!
+
+---
+
+## Getting Started
+
+### Starting the Shell
+
+```bash
+# From your terminal
+zcli
+
+# You'll see:
+╔═══════════════════════════════════════════════════════════╗
+║                    zCLI Interactive Shell                 ║
+╚═══════════════════════════════════════════════════════════╝
+
+Type 'help' for available commands
+Type 'exit' or 'quit' to leave
+
+>
 ```
-zShell/
-├── zShell.py                         # Main shell handler
-└── zShell_modules/
-    ├── zShell_interactive.py         # REPL interface with history
-    ├── zShell_executor.py            # Command execution engine
-    ├── zShell_help.py                # Help system and documentation
-    └── executor_commands/            # Command handlers
-        ├── data_executor.py          # zData operations
-        ├── load_executor.py          # zLoader operations
-        ├── wizard_executor.py        # zWizard canvas mode
-        ├── wizard_step_executor.py   # zWizard step execution
-        ├── auth_executor.py          # zAuth operations
-        ├── config_executor.py        # zConfig operations
-        ├── session_executor.py       # Session management
-        ├── walker_executor.py        # zWalker launch
-        ├── open_executor.py          # zOpen operations
-        ├── func_executor.py          # zFunc operations
-        ├── utils_executor.py         # zUtils operations
-        ├── comm_executor.py          # zComm operations
-        ├── export_executor.py        # Data export
-        └── test_executor.py          # Test suite runner
+
+That `>` symbol means the shell is ready for your command!
+
+### Your First Commands
+
+```bash
+# Say hello!
+> echo Hello World
+Hello World
+
+# Check where you are
+> pwd
+Current Working Directory
+  /Users/yourname/Projects
+
+# Get help
+> help
+[Shows list of all commands]
+
+# Exit when done
+> exit
+Goodbye!
 ```
 
 ---
 
-## **Core Features**
+## Essential Commands (Like Bash!)
 
-### **1. Interactive REPL**
-- **Command History**: Persistent history with readline support
-- **Tab Completion**: (Coming soon) Command and argument completion
-- **Multi-line Input**: Support for complex commands
-- **Session Persistence**: History saved across sessions
+### 1. echo - Print Messages
 
-### **2. Command Execution Engine**
-- **Unified Routing**: Single entry point for all commands
-- **Subsystem Integration**: Routes to appropriate handlers
-- **Error Handling**: Graceful error recovery and reporting
-- **Context Awareness**: Wizard mode vs normal mode detection
+**What it does:** Displays text on the screen
 
-### **3. Wizard Canvas Mode**
-- **Multi-step Workflows**: Build YAML workflows interactively
-- **Command Buffering**: Collect commands before execution
-- **Transaction Support**: Automatic transaction management
-- **Visual Feedback**: Clear mode indicators and status
+```bash
+# Simple message
+> echo Hello there!
+Hello there!
 
-### **4. Help System**
-- **Command Documentation**: Comprehensive help for all commands
-- **Usage Examples**: Real-world usage patterns
-- **Context-Sensitive**: Command-specific help available
-- **Quick Tips**: Best practices and shortcuts
+# Show a variable
+> echo $zWorkspace
+/Users/yourname/Projects/my_project
+
+# Colored output
+> echo --success Task complete!
+✅ Task complete!
+
+> echo --error Something went wrong
+❌ Something went wrong
+```
+
+**Use it for:** Testing, displaying information, debugging
 
 ---
 
-## **Command Categories**
+### 2. pwd - Where Am I?
 
-### **Data Operations** (`data`)
+**What it does:** Shows your current directory (like "You Are Here" on a map)
+
 ```bash
-data read users --model @.zTestSuite.demos.zSchema.sqlite_demo
-data insert users --model $mydb --name "Alice" --age 30
-data update users --model $mydb --name "Bob" --where "id = 1"
-data delete users --model $mydb --where "age < 18"
+> pwd
+Current Working Directory
+  /Users/yourname/Projects/my_project
+  (as zPath: ~.Projects.my_project)
 ```
 
-### **Schema Loading** (`load`)
-```bash
-load @.zTestSuite.demos.zSchema.sqlite_demo --as mydb
-load --show                    # Show loaded schemas
-load --clear mydb              # Clear cached schema
-```
-
-### **Wizard Workflows** (`wizard`)
-```bash
-wizard --start                 # Enter canvas mode
-  # Type commands or YAML
-wizard --run                   # Execute workflow
-wizard --stop                  # Exit canvas mode
-wizard --show                  # Display current canvas
-```
-
-### **Authentication** (`auth`)
-```bash
-auth login                     # Authenticate user
-auth logout                    # Clear credentials
-auth status                    # Check auth state
-```
-
-### **Configuration** (`config`)
-```bash
-config show                    # Display all config
-config get zWorkspace          # Get specific value
-config set zWorkspace /path    # Set configuration
-```
-
-### **Session Management** (`session`)
-```bash
-session info                   # Show session data
-session set key value          # Set session value
-session get key                # Get session value
-```
-
-### **Communication** (`comm`)
-```bash
-comm status                    # Service status
-comm start postgresql          # Start service
-comm stop postgresql           # Stop service
-```
-
-### **Walker Launch** (`walker`)
-```bash
-walker run                     # Launch GUI mode
-```
-
-### **File Operations** (`open`)
-```bash
-open @.index.html              # Open file
-open https://example.com       # Open URL
-```
+**Use it for:** Checking your location before running commands
 
 ---
 
-## **Wizard Canvas Mode**
+### 3. ls - List Files
 
-### **Purpose**
-Wizard canvas mode enables building multi-step workflows interactively, with automatic transaction management and connection reuse.
+**What it does:** Shows files and folders in a directory
 
-### **Workflow**
 ```bash
-# 1. Enter canvas mode
+# List current directory
+> ls
+Directory: /Users/yourname/Projects
+Directories:
+  📁 zTestSuite/
+  📁 Documentation/
+Files:
+  📄 README.md
+  📄 main.py
+Total: 2 directories, 2 files
+
+# List specific folder
+> ls @.zTestSuite.demos
+[Shows demo files]
+
+# Show hidden files too
+> ls --all
+
+# Show file sizes
+> ls --long
+```
+
+**Use it for:** Seeing what files you have, finding things
+
+---
+
+### 4. cd - Change Directory
+
+**What it does:** Moves you to a different folder
+
+```bash
+# Go to a folder
+> cd @.zTestSuite.demos
+Changed directory to: /Users/yourname/Projects/zTestSuite/demos
+
+# Go home
+> cd ~
+Changed directory to: /Users/yourname
+
+# Go up one level
+> cd ..
+Changed directory to: /Users/yourname/Projects
+
+# Go back home (no arguments)
+> cd
+Changed directory to: /Users/yourname
+```
+
+**Use it for:** Navigating your project folders
+
+---
+
+### 5. history - Remember Commands
+
+**What it does:** Shows all the commands you've typed
+
+```bash
+# Show history
+> history
+Command History (showing 5 of 5 total)
+   1: echo Hello
+   2: pwd
+   3: ls
+   4: cd @.zTestSuite.demos
+   5: history
+
+# Search history
+> history search echo
+History Search: 'echo' (1 matches)
+   1: echo Hello
+
+# Clear history
+> history --clear
+Command history cleared (5 entries removed)
+
+# Save history to file
+> history save my_commands.json
+History saved to: my_commands.json
+(5 entries)
+```
+
+**Use it for:** Remembering what you did, repeating commands
+
+---
+
+### 6. alias - Create Shortcuts
+
+**What it does:** Makes short names for long commands
+
+```bash
+# Create an alias
+> alias ll="ls --long --all"
+Alias created: ll → ls --long --all
+
+# Use your alias
+> ll
+[Shows detailed file listing]
+
+# List all aliases
+> alias
+Defined Aliases (1)
+  ll → ls --long --all
+
+# Remove an alias
+> alias --remove ll
+Alias removed: ll
+
+# Save aliases
+> alias --save
+Aliases saved to: ~/.zcli/aliases.json
+```
+
+**Use it for:** Making your favorite commands shorter
+
+---
+
+## Working with Data
+
+### load - Load a Database Schema
+
+**What it does:** Loads a database schema so you can work with data
+
+```bash
+# Load a schema
+> load @.zTestSuite.demos.zSchema.sqlite_demo --as mydb
+Schema loaded and cached as: mydb
+
+# Show what's loaded
+> load --show
+Pinned Cache (1 schemas):
+  mydb → @.zTestSuite.demos.zSchema.sqlite_demo
+
+# Clear a schema
+> load --clear mydb
+Schema 'mydb' removed from cache
+```
+
+**Why use it:** Load once, use many times with the short name!
+
+---
+
+### data - Work with Your Data
+
+**What it does:** Read, add, update, or delete data in your database
+
+```bash
+# View data
+> data read users --model $mydb --limit 5
+[Shows first 5 users in a table]
+
+# Add data
+> data insert users --model $mydb --fields name,age --values "Alice",16
+Record inserted successfully
+
+# Update data
+> data update users --model $mydb --fields age --values 17 --where "name = 'Alice'"
+Record updated successfully
+
+# Delete data
+> data delete users --model $mydb --where "age < 13"
+Records deleted successfully
+```
+
+**Use it for:** Managing your homework tracker, contact list, inventory, etc.
+
+---
+
+## Multi-Step Workflows (Wizard Mode)
+
+### What is Wizard Mode?
+
+**Wizard mode** lets you prepare multiple commands and run them all at once - like making a recipe where you gather all ingredients before cooking!
+
+### How to Use It
+
+```bash
+# 1. Start wizard mode
 > wizard --start
 📝 Wizard Canvas Mode Active
    Type commands or YAML, then 'wizard --run' to execute
 
-# 2. Add commands
-> data insert users --model @.zTestSuite.demos.zSchema.sqlite_demo --name "Alice" --age 30
-> data insert users --model @.zTestSuite.demos.zSchema.sqlite_demo --name "Bob" --age 25
+# 2. Add your commands (they won't run yet!)
+> data insert users --model $mydb --fields name,age --values "Bob",15
+> data insert users --model $mydb --fields name,age --values "Carol",16
 
-# 3. Review canvas
+# 3. Check what you've added
 > wizard --show
-step1:
-  zData:
-    model: @.zTestSuite.demos.zSchema.sqlite_demo
-    action: insert
-    ...
+Wizard Buffer (2 lines):
+  1: data insert users --model $mydb --fields name,age --values "Bob",15
+  2: data insert users --model $mydb --fields name,age --values "Carol",16
 
-# 4. Execute workflow
+# 4. Run everything at once
 > wizard --run
-✅ Workflow executed successfully
+Executing wizard buffer (2 lines)...
+✅ 2 commands executed successfully
+Buffer cleared after execution
 
-# 5. Exit canvas mode
+# 5. Exit wizard mode
 > wizard --stop
+Exited wizard canvas - 0 lines discarded
 ```
 
-### **Transaction Support**
-```yaml
-_transaction: true
-step1:
-  zData:
-    model: @.zTestSuite.demos.zSchema.sqlite_demo
-    action: insert
-    tables: [users]
-    options: {name: "Alice", age: 30}
-step2:
-  zData:
-    model: @.zTestSuite.demos.zSchema.sqlite_demo
-    action: insert
-    tables: [users]
-    options: {name: "Bob", age: 25}
-```
+### Why Use Wizard Mode?
 
-**Key Features:**
-- Automatic connection reuse via `schema_cache`
-- BEGIN/COMMIT/ROLLBACK managed by zWizard
-- Atomic operations across multiple steps
-- Automatic cleanup on error
+- **All or nothing:** If one command fails, everything is undone (like Ctrl+Z)
+- **Faster:** Multiple operations happen together
+- **Safer:** Test your commands before running them
+- **Organized:** See all steps before executing
 
 ---
 
-## **Help System**
+## Getting Help
 
-### **General Help**
+### General Help
+
 ```bash
 > help
-╔═══════════════════════════════════════════════════════════════╗
-║                    zCLI Interactive Shell                     ║
-╚═══════════════════════════════════════════════════════════════╝
+╔═══════════════════════════════════════════════════════════╗
+║                    zCLI Interactive Shell                 ║
+╚═══════════════════════════════════════════════════════════╝
 
 Available Commands:
+  echo         - Print messages and variables
+  pwd          - Print working directory
+  ls           - List directory contents
+  cd           - Change directory
+  history      - Command history management
+  alias        - Create command shortcuts
   data         - Data operations (CRUD)
   load         - Load and cache resources
   wizard       - Multi-step workflow orchestration
-  ...
+  [... and more ...]
+
+General:
+  help [command]  - Show help (or help for specific command)
+  tips            - Show quick tips
+  clear/cls       - Clear screen
+  exit/quit/q     - Exit shell
 ```
 
-### **Command-Specific Help**
+### Command-Specific Help
+
 ```bash
 > help data
-╔═══════════════════════════════════════════════════════════════╗
-║  DATA Command Help
-╚═══════════════════════════════════════════════════════════════╝
+DATA Command Help
+═════════════════════════════════════════════════════════════
 
 Description:
   Data operations (CRUD)
@@ -223,229 +359,317 @@ Description:
 Usage:
   data read <table> [--model PATH] [--limit N]
   data insert <table> [--model PATH] [--fields ...] [--values ...]
-  ...
+  [... more examples ...]
 
 Examples:
   data read users --model @.zTestSuite.demos.zSchema.sqlite_demo
-  data insert users --model $mydb --name "Alice" --age 30
+  data insert users --model $mydb --fields name --values "Alice"
 ```
 
 ---
 
-## **Integration with Other Subsystems**
+## Useful Tips
 
-### **zParser Integration**
-```python
-# Command parsing
-parsed = self.zcli.zparser.parse_command(command)
-# Returns structured dict with action, args, options
-```
+### Tip 1: Use Aliases for Common Tasks
 
-### **zDisplay Integration**
-```python
-# Modern display architecture
-self.display.zDeclare("zShell Ready", color="SHELL", style="full")
-self.display.success("Command executed successfully")
-self.display.error("Command failed")
-```
-
-### **zWizard Integration**
-```python
-# Wizard step execution
-result = self.zcli.shell.executor.execute_wizard_step(
-    step_key, step_value, step_context
-)
-# Handles zData, zFunc, zDisplay operations in wizard mode
-```
-
-### **zData Integration**
-```python
-# Data operations routing
-execute_data(zcli, parsed)
-# Routes to zData subsystem with parsed command structure
-```
-
----
-
-## **Session Management**
-
-### **Shell State**
-```python
-# Wizard canvas mode
-zcli.session["wizard_mode"] = {
-    "active": True,
-    "canvas": {...},  # YAML workflow
-    "commands": []    # Command buffer
-}
-
-# Command history
-zcli.session["shell_history"] = [...]
-```
-
-### **History Persistence**
-- History stored in `~/.zcli_history`
-- Automatic loading on shell start
-- Persistent across sessions
-- Configurable history size
-
----
-
-## **Command Execution Flow**
-
-### **Normal Mode**
-```
-User Input → zParser → CommandExecutor → Subsystem Handler → Result
-```
-
-### **Wizard Canvas Mode**
-```
-User Input → Canvas Buffer → wizard --run → zWizard → Batch Execution
-```
-
-### **Execution Pipeline**
-1. **Input**: User types command
-2. **Parse**: zParser converts to structured dict
-3. **Route**: CommandExecutor identifies handler
-4. **Execute**: Handler calls appropriate subsystem
-5. **Display**: Result formatted via zDisplay
-6. **Return**: Control returns to REPL
-
----
-
-## **Best Practices**
-
-### **1. Use Schema Aliases**
 ```bash
-# Load once, reference many times
-load @.zTestSuite.demos.zSchema.sqlite_demo --as mydb
-data read users --model $mydb
-data insert posts --model $mydb --title "Hello"
+# Create shortcuts for things you do often
+> alias demos="cd @.zTestSuite.demos"
+> alias ll="ls --long --all"
+> alias loaddb="load @.zTestSuite.demos.zSchema.sqlite_demo --as db"
+
+# Now you can just type:
+> demos
+> ll
+> loaddb
 ```
 
-### **2. Leverage Wizard Mode for Transactions**
+### Tip 2: Check Your Work with pwd and ls
+
 ```bash
-wizard --start
-# Add multiple data operations
-wizard --run  # Executes in single transaction
+# Always know where you are
+> pwd
+> ls
+
+# Before running important commands
+> pwd
+> echo I am about to delete files here!
 ```
 
-### **3. Check Help When Unsure**
+### Tip 3: Use History to Repeat Commands
+
 ```bash
-help              # General help
-help data         # Command-specific help
-tips              # Quick tips
+# Find a command you ran before
+> history search data
+History Search: 'data' (3 matches)
+   5: data read users --model $mydb
+  12: data insert users --model $mydb --fields name --values "Alice"
+  18: data update users --model $mydb --where "id = 1"
+
+# Then copy and modify it!
 ```
 
-### **4. Use Session for Context**
+### Tip 4: Test with echo Before Running
+
 ```bash
-session set zWorkspace /path/to/project
-session set zVaFilename ui.main.yaml
-walker run  # Uses session context
+# Not sure what a variable contains?
+> echo $mydb
+@.zTestSuite.demos.zSchema.sqlite_demo
+
+# Check before using it
+> data read users --model $mydb
 ```
 
----
+### Tip 5: Use Wizard Mode for Important Operations
 
-## **Error Handling**
-
-### **Command Errors**
 ```bash
-> data read nonexistent --model $mydb
-❌ Table 'nonexistent' does not exist
-```
-
-### **Wizard Errors**
-```bash
+# When adding multiple related things
+> wizard --start
+> data insert users --model $mydb --fields name --values "Alice"
+> data insert posts --model $mydb --fields title,author --values "Hello","Alice"
 > wizard --run
-❌ Error in step2: Connection failed
-🔄 Rolling back transaction...
-✅ Rollback complete
-```
 
-### **Graceful Recovery**
-- Errors don't crash the shell
-- Clear error messages with context
-- Transaction rollback on failure
-- Shell remains responsive
-
----
-
-## **Advanced Features**
-
-### **1. Command Chaining** (Coming Soon)
-```bash
-load @.zTestSuite.demos.zSchema.sqlite_demo --as db && data read users --model $db
-```
-
-### **2. Output Redirection** (Coming Soon)
-```bash
-data read users --model $db > users.json
-```
-
-### **3. Environment Variables** (Coming Soon)
-```bash
-export DB_PATH=/path/to/db
-data read users --model $DB_PATH
+# If anything fails, NOTHING changes!
 ```
 
 ---
 
-## **Development Notes**
+## Common Patterns
 
-### **Adding New Commands**
-1. Create executor in `executor_commands/`
-2. Import in `zShell_executor.py`
-3. Add routing in `_execute_parsed_command()`
-4. Update help system in `zShell_help.py`
+### Pattern 1: Load and Query
 
-### **Modernization Status**
-- ✅ Core shell architecture
-- ✅ Command execution engine
-- ✅ Wizard canvas mode
-- ✅ Help system with zDisplay
-- 🔄 Display modernization in progress (executor_commands)
-- 📋 Tab completion (planned)
-
----
-
-## **Quick Reference**
-
-### **Shell Control**
-- `help` - Show help
-- `help <command>` - Command help
-- `tips` - Quick tips
-- `clear` / `cls` - Clear screen
-- `exit` / `quit` / `q` - Exit shell
-
-### **Wizard Mode**
-- `wizard --start` - Enter canvas mode
-- `wizard --run` - Execute workflow
-- `wizard --show` - Display canvas
-- `wizard --stop` - Exit canvas mode
-- `wizard --clear` - Clear canvas
-
-### **Common Patterns**
 ```bash
-# Load and query
-load @.zTestSuite.demos.zSchema.sqlite_demo --as db
-data read users --model $db --limit 10
+# Load your database
+> load @.zTestSuite.demos.zSchema.sqlite_demo --as db
 
-# Multi-step workflow
-wizard --start
-  data insert users --model $db --name "Alice"
-  data insert posts --model $db --title "Hello"
-wizard --run
+# Query it
+> data read users --model $db --limit 10
 
-# Session context
-session set zWorkspace /path/to/project
-walker run
+# Add something
+> data insert users --model $db --fields name,age --values "Alice",16
+```
+
+### Pattern 2: Navigate and Explore
+
+```bash
+# See where you are
+> pwd
+
+# List files
+> ls
+
+# Go somewhere
+> cd @.zTestSuite.demos
+
+# List again
+> ls
+```
+
+### Pattern 3: Create Workflow
+
+```bash
+# Start wizard
+> wizard --start
+
+# Add steps
+> data insert students --model $db --fields name,grade --values "Bob",10
+> data insert homework --model $db --fields student,subject --values "Bob","Math"
+
+# Review
+> wizard --show
+
+# Execute
+> wizard --run
 ```
 
 ---
 
-## **See Also**
-- **zParser**: Command parsing and zPath resolution
-- **zWizard**: Workflow orchestration and transactions
-- **zData**: Data operations and CRUD
-- **zDisplay**: Output formatting and rendering
-- **zLoader**: Schema and resource loading
+## Quick Reference Card
 
+### Navigation
+```bash
+pwd              # Where am I?
+ls               # What's here?
+cd <path>        # Go somewhere
+cd ..            # Go up one level
+cd ~             # Go home
+```
+
+### Files & Info
+```bash
+echo <message>   # Print something
+history          # Show past commands
+alias            # Show shortcuts
+help             # Get help
+help <command>   # Help for specific command
+```
+
+### Data Operations
+```bash
+load <path> --as <name>     # Load schema
+data read <table>           # View data
+data insert <table>         # Add data
+data update <table>         # Change data
+data delete <table>         # Remove data
+```
+
+### Wizard Mode
+```bash
+wizard --start   # Begin workflow
+wizard --show    # Review steps
+wizard --run     # Execute all
+wizard --stop    # Exit mode
+wizard --clear   # Clear buffer
+```
+
+### Shell Control
+```bash
+clear / cls      # Clear screen
+exit / quit / q  # Leave shell
+```
+
+---
+
+## Practice Exercises
+
+### Exercise 1: Basic Navigation
+
+Try these commands in order:
+```bash
+1. pwd                    # See where you are
+2. ls                     # See what's here
+3. cd @.zTestSuite.demos  # Go to demos folder
+4. ls                     # See demo files
+5. cd ..                  # Go back up
+6. pwd                    # Confirm location
+```
+
+### Exercise 2: Working with Data
+
+```bash
+1. load @.zTestSuite.demos.zSchema.sqlite_demo --as db
+2. data read users --model $db --limit 5
+3. echo I see the users!
+4. history
+```
+
+### Exercise 3: Create Shortcuts
+
+```bash
+1. alias demos="cd @.zTestSuite.demos"
+2. alias showusers="data read users --model $db --limit 10"
+3. alias
+4. demos
+5. showusers
+```
+
+### Exercise 4: Wizard Workflow
+
+```bash
+1. wizard --start
+2. echo Step 1
+3. echo Step 2
+4. wizard --show
+5. wizard --run
+6. wizard --stop
+```
+
+---
+
+## Troubleshooting
+
+### "Command not found"
+
+```bash
+> dataa read users
+❌ Unknown command: dataa
+
+# Fix: Check spelling
+> data read users
+✅ Works!
+
+# Or get help
+> help
+```
+
+### "Path not found"
+
+```bash
+> cd @.wrong.path
+❌ Directory not found
+
+# Fix: Check with ls first
+> ls
+> cd @.correct.path
+```
+
+### "Schema not loaded"
+
+```bash
+> data read users --model $mydb
+❌ Schema 'mydb' not found
+
+# Fix: Load it first
+> load @.zTestSuite.demos.zSchema.sqlite_demo --as mydb
+> data read users --model $mydb
+```
+
+### Stuck in Wizard Mode?
+
+```bash
+# Exit wizard mode
+> wizard --stop
+Exited wizard canvas
+
+# Or clear and exit
+> wizard --clear
+> wizard --stop
+```
+
+---
+
+## Next Steps
+
+Now that you know the shell basics:
+
+1. **Try the demos:** `cd @.zTestSuite.demos` and explore
+2. **Create your own database:** Use zSchema to define your data
+3. **Build workflows:** Use wizard mode for multi-step tasks
+4. **Make shortcuts:** Create aliases for your common commands
+5. **Read other guides:**
+   - [zUI_GUIDE.md](zUI_GUIDE.md) - Build interactive menus
+   - [zSchema_GUIDE.md](zSchema_GUIDE.md) - Define your data
+   - [zData_GUIDE.md](zData_GUIDE.md) - Advanced data operations
+
+---
+
+## Remember
+
+- **Type `help` when stuck** - It's always there to help you!
+- **Use `pwd` often** - Know where you are
+- **Test with `echo`** - Check variables before using them
+- **Save your work** - Use `history save` and `alias --save`
+- **Wizard mode is your friend** - Use it for important operations
+- **Practice makes perfect** - The more you use it, the easier it gets!
+
+---
+
+## Quick Start Checklist
+
+✅ Start the shell: `zcli`  
+✅ Get help: `help`  
+✅ Check location: `pwd`  
+✅ List files: `ls`  
+✅ Load a database: `load @.path --as name`  
+✅ View data: `data read table --model $name`  
+✅ Create shortcuts: `alias name="command"`  
+✅ Save history: `history save`  
+✅ Exit: `exit`
+
+**You've got this!** 🚀
+
+---
+
+**Total Commands Available:** 20  
+**Difficulty:** Beginner-Friendly  
+**Best For:** Students, beginners, anyone new to command-line tools

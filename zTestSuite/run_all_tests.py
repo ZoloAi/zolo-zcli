@@ -106,6 +106,12 @@ try:
 except ImportError:
     ZDATA_AVAILABLE = False
 
+try:
+    from zTestSuite import zWalker_Test
+    ZWALKER_AVAILABLE = True
+except ImportError:
+    ZWALKER_AVAILABLE = False
+
 
 def run_subsystem_tests(test_module, name):
     """Run tests for a single subsystem with enhanced UX."""
@@ -282,6 +288,8 @@ def show_test_menu():
         available_tests.append(("zUtils", "zUtils_Test"))
     if ZDATA_AVAILABLE:
         available_tests.append(("zData", "zData_Test"))
+    if ZWALKER_AVAILABLE:
+        available_tests.append(("zWalker", "zWalker_Test"))
     
     if not available_tests:
         print("❌ No test suites available!")
@@ -353,6 +361,8 @@ def run_selected_tests(test_choice=None):
             test_suites.append((zUtils_Test, "zUtils"))
         if ZDATA_AVAILABLE:
             test_suites.append((zData_Test, "zData"))
+        if ZWALKER_AVAILABLE:
+            test_suites.append((zWalker_Test, "zWalker"))
         
         for test_module, name in test_suites:
             result = run_subsystem_tests(test_module, name)
@@ -400,6 +410,9 @@ def run_selected_tests(test_choice=None):
             results.append(result)
         elif test_choice == "zData_Test" and ZDATA_AVAILABLE:
             result = run_subsystem_tests(zData_Test, "zData")
+            results.append(result)
+        elif test_choice == "zWalker_Test" and ZWALKER_AVAILABLE:
+            result = run_subsystem_tests(zWalker_Test, "zWalker")
             results.append(result)
         else:
             print(f"❌ Test suite '{test_choice}' not available!")

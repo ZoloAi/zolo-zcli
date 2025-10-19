@@ -461,6 +461,122 @@ class TestzShellIntegration(unittest.TestCase):
         mock_help.assert_called_once()
 
 
+class TestNewCommands(unittest.TestCase):
+    """Test new shell commands (history, echo, ls, cd, pwd, alias)."""
+    
+    def setUp(self):
+        """Set up test fixtures."""
+        self.mock_zcli = Mock()
+        self.mock_zcli.session = {
+            "wizard_mode": {"active": False, "lines": [], "format": None},
+            "command_history": [],
+            "aliases": {},
+            "zWorkspace": "/test/workspace"
+        }
+        self.mock_zcli.logger = Mock()
+        self.mock_zcli.display = Mock()
+        self.mock_zcli.display.info = Mock()
+        self.mock_zcli.display.success = Mock()
+        self.mock_zcli.display.error = Mock()
+        self.mock_zcli.display.text = Mock()
+        self.mock_zcli.display.zDeclare = Mock()
+        self.mock_zcli.zparser = Mock()
+    
+    def test_history_command_show(self):
+        """Test history command shows command history."""
+        from zCLI.subsystems.zShell.zShell_modules.executor_commands.history_executor import execute_history
+        
+        self.mock_zcli.session["command_history"] = ["cmd1", "cmd2", "cmd3"]
+        parsed = {"action": "show", "args": [], "options": {}}
+        
+        result = execute_history(self.mock_zcli, parsed)
+        
+        self.assertEqual(result["status"], "success")
+        self.assertEqual(result["total"], 3)
+    
+    def test_history_command_clear(self):
+        """Test history clear command."""
+        from zCLI.subsystems.zShell.zShell_modules.executor_commands.history_executor import execute_history
+        
+        self.mock_zcli.session["command_history"] = ["cmd1", "cmd2"]
+        parsed = {"action": "clear", "args": [], "options": {}}
+        
+        result = execute_history(self.mock_zcli, parsed)
+        
+        self.assertEqual(result["status"], "cleared")
+        self.assertEqual(len(self.mock_zcli.session["command_history"]), 0)
+    
+    def test_echo_command_simple(self):
+        """Test echo command with simple message."""
+        from zCLI.subsystems.zShell.zShell_modules.executor_commands.echo_executor import execute_echo
+        
+        parsed = {"action": "echo", "args": ["Hello", "World"], "options": {}}
+        
+        result = execute_echo(self.mock_zcli, parsed)
+        
+        self.assertEqual(result["status"], "success")
+        self.assertEqual(result["output"], "Hello World")
+        self.mock_zcli.display.text.assert_called_once_with("Hello World")
+    
+    def test_echo_command_with_variable(self):
+        """Test echo command with variable expansion."""
+        from zCLI.subsystems.zShell.zShell_modules.executor_commands.echo_executor import execute_echo
+        
+        parsed = {"action": "echo", "args": ["$zWorkspace"], "options": {}}
+        
+        result = execute_echo(self.mock_zcli, parsed)
+        
+        self.assertEqual(result["status"], "success")
+        self.assertIn("/test/workspace", result["output"])
+    
+    def test_pwd_command(self):
+        """Test pwd command shows working directory."""
+        from zCLI.subsystems.zShell.zShell_modules.executor_commands.cd_executor import execute_pwd
+        
+        parsed = {"action": "pwd", "args": [], "options": {}}
+        
+        result = execute_pwd(self.mock_zcli, parsed)
+        
+        self.assertEqual(result["status"], "success")
+        self.assertIn("path", result)
+    
+    def test_alias_command_list(self):
+        """Test alias command lists aliases."""
+        from zCLI.subsystems.zShell.zShell_modules.executor_commands.alias_executor import execute_alias
+        
+        self.mock_zcli.session["aliases"] = {"ll": "ls --long"}
+        parsed = {"action": "list", "args": [], "options": {}}
+        
+        result = execute_alias(self.mock_zcli, parsed)
+        
+        self.assertEqual(result["status"], "success")
+        self.assertEqual(result["count"], 1)
+    
+    def test_alias_command_create(self):
+        """Test alias command creates new alias."""
+        from zCLI.subsystems.zShell.zShell_modules.executor_commands.alias_executor import execute_alias
+        
+        parsed = {"action": "create", "args": ["ll=\"ls --long\""], "options": {}}
+        
+        result = execute_alias(self.mock_zcli, parsed)
+        
+        self.assertEqual(result["status"], "created")
+        self.assertEqual(result["name"], "ll")
+        self.assertEqual(self.mock_zcli.session["aliases"]["ll"], "ls --long")
+    
+    def test_alias_command_remove(self):
+        """Test alias command removes alias."""
+        from zCLI.subsystems.zShell.zShell_modules.executor_commands.alias_executor import execute_alias
+        
+        self.mock_zcli.session["aliases"] = {"ll": "ls --long"}
+        parsed = {"action": "create", "args": ["ll"], "options": {"remove": True}}
+        
+        result = execute_alias(self.mock_zcli, parsed)
+        
+        self.assertEqual(result["status"], "removed")
+        self.assertNotIn("ll", self.mock_zcli.session["aliases"])
+
+
 class TestEdgeCases(unittest.TestCase):
     """Test edge cases and error handling."""
     
@@ -522,6 +638,7 @@ def run_tests(verbose=False):
     suite.addTests(loader.loadTestsFromTestCase(TestInteractiveShell))
     suite.addTests(loader.loadTestsFromTestCase(TestHelpSystem))
     suite.addTests(loader.loadTestsFromTestCase(TestzShellIntegration))
+    suite.addTests(loader.loadTestsFromTestCase(TestNewCommands))
     suite.addTests(loader.loadTestsFromTestCase(TestEdgeCases))
     
     runner = unittest.TextTestRunner(verbosity=2 if verbose else 1)

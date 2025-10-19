@@ -9,6 +9,11 @@ This directory contains demo files used by the zCLI test suite and documentation
 - **`zSchema.postgresql_demo.yaml`** - PostgreSQL schema for testing classical data operations
 - **`zSchema.csv_demo.yaml`** - CSV schema for testing file-based data operations
 
+### **UI Demos**
+- **`zUI.walker_comprehensive.yaml`** - Full-feature zWalker demo with data operations, wizards, plugins
+- **`zUI.walker_navigation.yaml`** - Cross-file navigation demo with delta links
+- **`zUI.Walker_demo.yaml`** - Original simple demo with basic menu structure
+
 ### **Plugin Demos**
 Demo plugins for testing and documentation:
 - **`test_plugin.py`** - Basic plugin with greeting and random number functions
@@ -40,6 +45,23 @@ load @.zTestSuite.demos.zSchema.sqlite_demo --as demo
 
 # Use plugin (auto-discovered from @.zTestSuite.demos)
 &test_plugin.hello_world()
+```
+
+### **Running UI Demos**
+```python
+from zCLI import zCLI
+
+zcli = zCLI()
+
+# Comprehensive demo
+zcli.zspark_obj['zVaFile'] = '@.zTestSuite.demos.zUI.walker_comprehensive'
+zcli.zspark_obj['zBlock'] = 'zVaF'
+zcli.walker.run()
+
+# Navigation demo
+zcli.zspark_obj['zVaFile'] = '@.zTestSuite.demos.zUI.walker_navigation'
+zcli.zspark_obj['zBlock'] = 'MainHub'
+zcli.walker.run()
 ```
 
 ## **Schema Structure**

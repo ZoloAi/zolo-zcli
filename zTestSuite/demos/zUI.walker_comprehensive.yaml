@@ -1,0 +1,247 @@
+# zTestSuite/demos/zUI.walker_comprehensive.yaml
+# Comprehensive zWalker Demo - Tests all integrated subsystems
+
+zVaF:
+  # Root Menu - Main Navigation Hub
+  ~Root*: 
+    - "Data Operations"
+    - "Wizard Workflows" 
+    - "Plugin Demos"
+    - "$SubMenu"
+    - "^Session Info"
+    - "^Shell"
+    - "stop"
+
+  # ═══════════════════════════════════════════════════════════
+  # Data Operations - SQLite Integration
+  # ═══════════════════════════════════════════════════════════
+  
+  "Data Operations":
+    ~Menu*: ["View Users", "Add User", "Query Demo", "zBack"]
+    
+    "View Users":
+      zWizard:
+        load_schema:
+          zData:
+            action: load
+            schema: "@.zTestSuite.demos.zSchema.sqlite_demo"
+        select_users:
+          zData:
+            action: read
+            table: users
+            limit: 10
+    
+    "Add User":
+      zWizard:
+        load_schema:
+          zData:
+            action: load
+            schema: "@.zTestSuite.demos.zSchema.sqlite_demo"
+        get_name:
+          zDialog:
+            model: "User"
+            fields: ["name", "email"]
+        insert_user:
+          zData:
+            action: create
+            table: users
+            data:
+              name: "&test_plugin.hello_world('New User')"
+              email: "zHat[email]"
+              created_at: "&id_generator.get_timestamp()"
+        confirm:
+          zDisplay:
+            event: success
+            content: "User added successfully!"
+    
+    "Query Demo":
+      zWizard:
+        load_schema:
+          zData:
+            action: load
+            schema: "@.zTestSuite.demos.zSchema.sqlite_demo"
+        show_filtered:
+          zData:
+            action: read
+            table: users
+            where:
+              created_at: "IS NOT NULL"
+            limit: 5
+
+  # ═══════════════════════════════════════════════════════════
+  # Wizard Workflows - Multi-Step Operations
+  # ═══════════════════════════════════════════════════════════
+  
+  "Wizard Workflows":
+    ~Menu*: ["Simple Flow", "Data Pipeline", "Plugin Chain", "zBack"]
+    
+    "Simple Flow":
+      zWizard:
+        step_one:
+          zDisplay:
+            event: header
+            label: "Step 1: Welcome"
+            style: full
+            color: INFO
+        step_two:
+          zDialog:
+            model: "Demo"
+            fields: ["preference"]
+        step_three:
+          zDisplay:
+            event: success
+            content: "Workflow complete! Preference: zHat[preference]"
+    
+    "Data Pipeline":
+      zWizard:
+        init_db:
+          zData:
+            action: load
+            schema: "@.zTestSuite.demos.zSchema.sqlite_demo"
+        load_data:
+          zData:
+            action: read
+            table: users
+            limit: 3
+        display_json:
+          zDisplay:
+            event: json
+            data: "zHat"
+            color: true
+        finalize:
+          zDisplay:
+            event: success
+            content: "Pipeline completed!"
+    
+    "Plugin Chain":
+      zWizard:
+        hello:
+          zFunc: "&test_plugin.hello_world('Walker')"
+        random:
+          zFunc: "&test_plugin.random_number(1, 100)"
+        timestamp:
+          zFunc: "&id_generator.get_timestamp()"
+        summary:
+          zDisplay:
+            event: json
+            data: "zHat"
+            color: true
+
+  # ═══════════════════════════════════════════════════════════
+  # Plugin Demos - Test Plugin System
+  # ═══════════════════════════════════════════════════════════
+  
+  "Plugin Demos":
+    ~Menu*: ["Test Plugin", "ID Generator", "Session Aware", "zBack"]
+    
+    "Test Plugin":
+      zWizard:
+        hello:
+          zFunc: "&test_plugin.hello_world('zWalker Demo')"
+        random_num:
+          zFunc: "&test_plugin.random_number(10, 50)"
+        info:
+          zFunc: "&test_plugin.get_plugin_info()"
+        display:
+          zDisplay:
+            event: json
+            data: "zHat"
+            color: true
+    
+    "ID Generator":
+      zWizard:
+        uuid:
+          zFunc: "&id_generator.generate_uuid()"
+        prefixed:
+          zFunc: "&id_generator.prefixed_id('USR')"
+        short:
+          zFunc: "&id_generator.short_uuid(8)"
+        composite:
+          zFunc: "&id_generator.composite_id('ORDER', 12345)"
+        timestamp:
+          zFunc: "&id_generator.get_timestamp()"
+        display_all:
+          zDisplay:
+            event: json
+            data: "zHat"
+            color: true
+    
+    "Session Aware":
+      zWizard:
+        workspace:
+          zFunc: "&session_aware_plugin.get_workspace()"
+        machine:
+          zFunc: "&session_aware_plugin.get_machine_info()"
+        session_id:
+          zFunc: "&session_aware_plugin.get_session_id()"
+        display:
+          zDisplay:
+            event: json
+            data: "zHat"
+            color: true
+
+  # ═══════════════════════════════════════════════════════════
+  # Quick Access Functions
+  # ═══════════════════════════════════════════════════════════
+  
+  "^Session Info":
+    zDisplay:
+      event: zSession
+  
+  "^Shell":
+    zFunc: "@.zCLI.subsystems.zShell.zShell.interactive()"
+
+# ═══════════════════════════════════════════════════════════
+# SubMenu - Delta Link Test (accessed via $SubMenu)
+# ═══════════════════════════════════════════════════════════
+
+SubMenu:
+  ~Root*: ["Option A", "Option B", "Nested Menu", "zBack"]
+  
+  "Option A":
+    zDisplay:
+      event: success
+      content: "You selected Option A from SubMenu!"
+  
+  "Option B":
+    zWizard:
+      step1:
+        zDisplay:
+          event: info
+          content: "Option B: Multi-step workflow"
+      step2:
+        zDialog:
+          model: "Feedback"
+          fields: ["rating"]
+      step3:
+        zDisplay:
+          event: success
+          content: "Rating received: zHat[rating]"
+  
+  "Nested Menu":
+    ~Menu*: ["Deep Option 1", "Deep Option 2", "zBack"]
+    
+    "Deep Option 1":
+      zDisplay:
+        event: header
+        label: "Deep Navigation Test"
+        style: full
+        color: SUCCESS
+    
+    "Deep Option 2":
+      zWizard:
+        load:
+          zData:
+            action: load
+            schema: "@.zTestSuite.demos.zSchema.sqlite_demo"
+        query:
+          zData:
+            action: read
+            table: users
+            limit: 2
+        show:
+          zDisplay:
+            event: json
+            data: "zHat"
+            color: true
+

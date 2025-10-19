@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # zCLI/uninstall.py
 
-# zCLI/uninstall.py — Uninstallation Utilities v1.4.0
+# zCLI/uninstall.py — Uninstallation Utilities v1.5.0
 # ───────────────────────────────────────────────────────────────
 
 """

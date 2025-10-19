@@ -6,7 +6,8 @@ from .executor_commands import (
     execute_data, execute_func, execute_session, execute_walker,
     execute_open, execute_test, execute_auth, execute_load, 
     execute_export, execute_utils, execute_config, execute_comm,
-    execute_wizard_step, execute_plugin
+    execute_wizard_step, execute_plugin, execute_history, execute_echo,
+    execute_ls, execute_cd, execute_pwd, execute_alias
 )
 from .executor_commands.config_persistence_executor import execute_config_persistence
 
@@ -225,6 +226,14 @@ class CommandExecutor:
             "comm": execute_comm,
             "load": execute_load,
             "plugin": execute_plugin,
+            "history": execute_history,
+            "echo": execute_echo,
+            "print": execute_echo,  # alias for echo
+            "ls": execute_ls,
+            "dir": execute_ls,  # alias for ls
+            "cd": execute_cd,
+            "pwd": execute_pwd,
+            "alias": execute_alias,
         }
 
         executor = command_map.get(command_type)

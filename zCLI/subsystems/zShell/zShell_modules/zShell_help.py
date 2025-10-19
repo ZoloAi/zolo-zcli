@@ -26,7 +26,7 @@ class HelpSystem:
                 "data head <table> [--model PATH]",
             ],
             "examples": [
-                "data read users --model @.zCLI.Schemas.zSchema.sqlite_demo",
+                "data read users --model @.zTestSuite.demos.zSchema.sqlite_demo",
                 "data read users --model $sqlite_demo",
                 "data read users,posts --model $sqlite_demo --auto-join",
                 "data insert users --model $sqlite_demo --fields name,email --values 'Alice','alice@example.com'",
@@ -41,8 +41,8 @@ class HelpSystem:
                 "load --clear [ALIAS]",
             ],
             "examples": [
-                "load @.zCLI.Schemas.zSchema.sqlite_demo --as sqlite_demo",
-                "load @.zCLI.Schemas.zSchema.csv_demo --as csv_demo",
+                "load @.zTestSuite.demos.zSchema.sqlite_demo --as sqlite_demo",
+                "load @.zTestSuite.demos.zSchema.csv_demo --as csv_demo",
                 "load --show",
                 "load --clear sqlite_demo",
             ]
@@ -168,6 +168,108 @@ class HelpSystem:
             ],
             "examples": [
                 "comm status",
+            ]
+        },
+        "history": {
+            "desc": "Command history management",
+            "usage": [
+                "history",
+                "history --clear",
+                "history save [filename]",
+                "history load [filename]",
+                "history search <term>",
+            ],
+            "examples": [
+                "history",
+                "history --clear",
+                "history save my_commands.json",
+                "history search data",
+            ]
+        },
+        "echo": {
+            "desc": "Print messages and variables",
+            "usage": [
+                "echo <message>",
+                "echo $variable",
+                "echo --success <message>",
+                "echo --error <message>",
+            ],
+            "examples": [
+                "echo Hello World",
+                "echo $session.zWorkspace",
+                "echo --success Operation complete",
+            ]
+        },
+        "ls": {
+            "desc": "List directory contents",
+            "usage": [
+                "ls [path]",
+                "ls @.zPath",
+                "ls --recursive",
+                "ls --all",
+                "ls --long",
+            ],
+            "examples": [
+                "ls",
+                "ls @.zTestSuite.demos",
+                "ls --recursive",
+                "ls --long --all",
+            ]
+        },
+        "cd": {
+            "desc": "Change directory",
+            "usage": [
+                "cd [path]",
+                "cd @.zPath",
+                "cd ~",
+                "cd ..",
+            ],
+            "examples": [
+                "cd @.zTestSuite.demos",
+                "cd ~",
+                "cd ..",
+            ]
+        },
+        "pwd": {
+            "desc": "Print working directory",
+            "usage": [
+                "pwd",
+            ],
+            "examples": [
+                "pwd",
+            ]
+        },
+        "alias": {
+            "desc": "Create command shortcuts",
+            "usage": [
+                "alias",
+                "alias name=\"command\"",
+                "alias --remove name",
+                "alias --save [filename]",
+                "alias --load [filename]",
+                "alias --clear",
+            ],
+            "examples": [
+                "alias",
+                "alias ll=\"ls --long --all\"",
+                "alias demos=\"cd @.zTestSuite.demos\"",
+                "alias --remove ll",
+                "alias --save my_aliases.json",
+            ]
+        },
+        "plugin": {
+            "desc": "Plugin management",
+            "usage": [
+                "plugin load <path>",
+                "plugin show",
+                "plugin clear [name]",
+                "plugin reload <name>",
+            ],
+            "examples": [
+                "plugin load @.utils.my_plugin",
+                "plugin show",
+                "plugin clear test_plugin",
+                "plugin reload id_generator",
             ]
         },
     }

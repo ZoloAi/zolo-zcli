@@ -166,20 +166,36 @@ python3 -c "from zCLI.version import get_version; print(get_version())"
 
 ## 🗑️ Uninstalling
 
-### Standard Uninstall (Keep Data)
+zCLI provides flexible uninstall options to suit your needs.
+
+---
+
+### Option 1: Framework Only (Keep Data) - DEFAULT
 
 Remove the package but preserve your configuration and data:
 
 ```bash
-zolo uninstall --keep-data
+zolo uninstall
 ```
 
-Your data will be preserved at:
-- **Config:** `~/.zolo-zcli/` or `~/Library/Application Support/zolo-zcli/`
-- **Data:** Databases, CSVs in `Data/` subdirectory
-- **Cache:** Temporary files in `Cache/` subdirectory
+**What gets removed:**
+- ❌ zolo-zcli Python package
 
-### Clean Uninstall (Remove Everything)
+**What gets preserved:**
+- ✅ All configuration files
+- ✅ All databases and CSVs
+- ✅ All cached data
+- ✅ zMachine directories (user data)
+- ✅ Optional dependencies (pandas, psycopg2)
+
+**Your data will be preserved at:**
+- **Config:** `~/Library/Application Support/zolo-zcli/` (macOS) or `~/.config/zolo-zcli/` (Linux)
+- **Data:** `~/Library/Application Support/zolo-zcli/` (macOS) or `~/.local/share/zolo-zcli/` (Linux)
+- **Cache:** `~/Library/Caches/zolo-zcli/` (macOS) or `~/.cache/zolo-zcli/` (Linux)
+
+---
+
+### Option 2: Clean Uninstall (Remove Package + Data)
 
 ⚠️ **WARNING:** This removes ALL user data, configuration, and databases!
 
@@ -187,24 +203,105 @@ Your data will be preserved at:
 zolo uninstall --clean
 ```
 
-This will:
-- Remove the zolo-zcli package
-- Delete all configuration files
-- Delete all databases and CSVs
-- Delete all cached data
+**What gets removed:**
+- ❌ zolo-zcli Python package
+- ❌ All configuration files (zConfigs)
+- ❌ All user data (databases, CSVs)
+- ❌ All zMachine directories (`zMachine.*` paths)
+- ❌ All cached data
+
+**What gets preserved:**
+- ✅ Optional dependencies (pandas, psycopg2) - may be used by other tools
 
 **This action CANNOT be undone!**
 
-### Manual Cleanup
+---
 
-If you uninstalled via pip and want to remove user data:
+### Option 3: Dependencies Only
+
+Remove optional dependencies but keep zCLI and your data:
 
 ```bash
-# Remove user data directories
-rm -rf ~/Library/Application\ Support/zolo-zcli  # macOS
-rm -rf ~/.config/zolo-zcli                       # Linux
-rm -rf ~/Library/Caches/zolo-zcli                # macOS cache
-rm -rf ~/.cache/zolo-zcli                        # Linux cache
+zolo uninstall --dependencies
 ```
+
+**What gets removed:**
+- ❌ pandas (CSV backend support)
+- ❌ psycopg2-binary (PostgreSQL backend support)
+
+**What gets preserved:**
+- ✅ zolo-zcli Python package
+- ✅ All configuration and data
+- ✅ Core dependencies (PyYAML, websockets, etc.)
+
+⚠️ **WARNING:** CSV and PostgreSQL backends will stop working!
+
+To restore: `pip install zolo-zcli[csv,postgresql]`
+
+---
+
+### Option 4: Complete Removal (Everything)
+
+For a truly clean slate, remove package, data, AND dependencies:
+
+```bash
+# Step 1: Remove package and data
+zolo uninstall --clean
+
+# Step 2: Remove dependencies
+pip uninstall pandas psycopg2-binary -y
+```
+
+This removes **everything** related to zCLI from your system.
+
+---
+
+### Manual Cleanup
+
+If you uninstalled via `pip uninstall zolo-zcli` and want to manually remove user data:
+
+```bash
+# macOS
+rm -rf ~/Library/Application\ Support/zolo-zcli  # Config & Data (includes zMachine folders)
+rm -rf ~/Library/Caches/zolo-zcli                # Cache
+
+# Linux
+rm -rf ~/.config/zolo-zcli                       # Config
+rm -rf ~/.local/share/zolo-zcli                  # Data (includes zMachine folders)
+rm -rf ~/.cache/zolo-zcli                        # Cache
+
+# Windows (PowerShell)
+Remove-Item -Recurse -Force $env:APPDATA\zolo-zcli       # Config
+Remove-Item -Recurse -Force $env:LOCALAPPDATA\zolo-zcli  # Data & Cache
+```
+
+**What's in these directories:**
+
+- **Config**: `zConfig.yaml`, `zConfig.machine.yaml`, session data
+- **Data**: All files created via `zMachine.*` paths (databases, CSVs, test files, etc.)
+- **Cache**: Temporary files, pinned schema cache, plugin cache
+
+---
+
+### Uninstall Decision Guide
+
+| Scenario | Command | Package | Data | Dependencies |
+|----------|---------|---------|------|--------------|
+| **Upgrade zCLI** | `zolo uninstall` | ❌ | ✅ | ✅ |
+| **Start fresh** | `zolo uninstall --clean` | ❌ | ❌ | ✅ |
+| **Free disk space** | `zolo uninstall --clean` + manual deps | ❌ | ❌ | ❌ |
+| **Remove CSV support** | `zolo uninstall --dependencies` | ✅ | ✅ | ❌ |
+
+---
+
+### What is a zMachine Directory?
+
+When you use paths like `zMachine.zDataTests` or `zMachine.MyProject`, zCLI creates folders in your **user data directory** to store files in a machine-agnostic way.
+
+**Example:**
+- `zMachine.zDataTests` → `~/Library/Application Support/zolo-zcli/zDataTests/` (macOS)
+- `zMachine.zDataTests` → `~/.local/share/zolo-zcli/zDataTests/` (Linux)
+
+All these folders are removed when you use `zolo uninstall --clean`.
 
 ---

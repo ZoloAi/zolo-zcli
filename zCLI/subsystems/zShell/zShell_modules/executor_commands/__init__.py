@@ -20,6 +20,11 @@ from .comm_executor import execute_comm
 from .wizard_executor import execute_wizard
 from .wizard_step_executor import execute_wizard_step
 from .plugin_executor import execute_plugin
+from .history_executor import execute_history
+from .echo_executor import execute_echo
+from .ls_executor import execute_ls
+from .cd_executor import execute_cd, execute_pwd
+from .alias_executor import execute_alias
 
 __all__ = [
     "execute_data",
@@ -36,5 +41,11 @@ __all__ = [
     "execute_comm",
     "execute_wizard",
     "execute_wizard_step",
-    "execute_plugin"
+    "execute_plugin",
+    "execute_history",
+    "execute_echo",
+    "execute_ls",
+    "execute_cd",
+    "execute_pwd",
+    "execute_alias"
 ]
