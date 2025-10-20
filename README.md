@@ -39,7 +39,7 @@ zolo --version
 
 ```bash
 # Launch interactive shell
-zolo-zcli shell
+zolo shell
 
 # You'll see:
 ╔═══════════════════════════════════════════════════════════╗
@@ -269,12 +269,12 @@ pip install -e .
 
 ### Keep Your Data (Safe for Upgrades)
 ```bash
-zolo-zcli uninstall
+zolo uninstall
 ```
 
 ### Remove Everything
 ```bash
-zolo-zcli uninstall --clean
+zolo uninstall --clean
 ```
 
 📘 **More options:** See [INSTALL.md](Documentation/INSTALL.md) for dependency management and manual cleanup.
@@ -350,7 +350,7 @@ Free for educational, personal, and commercial use. See [LICENSE](LICENSE) for f
 ### Example 4: Plugin Integration
 ```bash
 > plugin load @.zTestSuite.demos.test_plugin
-> func test_plugin.generate_uuid()
+> &test_plugin.hello_world()
 ```
 
 ---
