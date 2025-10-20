@@ -1,0 +1,5 @@
+# zCLI Framework
+git+ssh://git@github.com/ZoloAi/zolo-zcli.git
+
+# Optional Dependencies
+python-dotenv>=1.0.1

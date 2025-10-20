@@ -7,6 +7,17 @@ from ..parsers import parse_where_clause, parse_value
 def extract_table_from_request(request, operation_name, ops, check_exists=True):
     """Extract and validate table name from request."""
     tables = request.get("tables", [])
+    
+    # Also check singular "table" parameter
+    if not tables:
+        table_param = request.get("table")
+        if table_param:
+            if isinstance(table_param, str):
+                tables = [table_param]
+            elif isinstance(table_param, list):
+                tables = table_param
+    
+    # Fallback to extracting from model path
     if not tables:
         model = request.get("model")
         if isinstance(model, str):
@@ -20,6 +31,7 @@ def extract_table_from_request(request, operation_name, ops, check_exists=True):
 
     if check_exists and not ops.adapter.table_exists(table):
         ops.logger.error("[FAIL] Table '%s' does not exist", table)
+        ops.display.error(f"Table '{table}' does not exist. Please run 'Setup Database' first to create tables.")
         return None
 
     return table

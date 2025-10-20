@@ -140,11 +140,12 @@ class DataOperations:
         # Pass schema (excluding Meta) for auto-join detection
         schema_tables = {k: v for k, v in self.schema.items() if k != "Meta"}
         return self.adapter.select(
-            table, fields,
-            kwargs.get("where"),
-            kwargs.get("joins"),
-            kwargs.get("order"),
-            kwargs.get("limit"),
+            table,
+            fields=fields,
+            where=kwargs.get("where"),
+            joins=kwargs.get("joins"),
+            order=kwargs.get("order"),
+            limit=kwargs.get("limit"),
             auto_join=kwargs.get("auto_join", False),
             schema=schema_tables
         )

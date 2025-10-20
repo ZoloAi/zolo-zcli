@@ -93,7 +93,7 @@ class MenuSystem:
         
         display = walker.display
         
-        display.zDeclare("Handle zNavigation Menu (Legacy)", color=self.navigation.mycolor, indent=1, style="full")
+        display.zDeclare("Handle zNavigation Menu", color=self.navigation.mycolor, indent=1, style="full")
 
         self.logger.debug(
             "\nzMENU Object:"
@@ -123,26 +123,8 @@ class MenuSystem:
         # Get user choice
         choice = self.interaction.get_choice_from_list(options, display)
         
-        if choice in ("zBack", "stop"):
-            display.zDeclare("zNavigation Menu return", color=self.navigation.mycolor, indent=1, style="~")
-            return choice
-
-        # Handle complex navigation logic (legacy)
-        return self._handle_legacy_navigation(choice, zMenu_obj, walker)
-
-    def _handle_legacy_navigation(self, selected, zMenu_obj, walker):
-        """Handle legacy navigation logic for walker-specific menus."""
-        try:
-            active_zBlock = zMenu_obj["zBlock"]
-            raw_zFile = walker.loader.handle()
-            selected_parsed = raw_zFile[active_zBlock][selected]
-            
-            self.logger.debug("selected parsed from vertical: %s", selected_parsed)
-            
-            dispatch_results = walker.dispatch.handle(selected, selected_parsed)
-            self.logger.debug("dispatch results: %s", dispatch_results)
-            return dispatch_results
-            
-        except Exception as e:
-            self.logger.error("❌ Failed during vertical dispatch for: %s — %s", selected, e, exc_info=True)
-            raise
+        # Modern approach: just return the choice
+        # The walker's execute_loop will look up the key and dispatch it
+        display.zDeclare("zNavigation Menu return", color=self.navigation.mycolor, indent=1, style="~")
+        self.logger.debug("Menu selected: %s", choice)
+        return choice

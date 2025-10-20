@@ -4,6 +4,8 @@
 
 **Package Installation**: All test files, demos, and schemas are included in the distribution via `pyproject.toml` and `MANIFEST.in`
 
+**Latest Update (v1.5.1)**: Fixed 8 critical bugs in zWalker/zData/zDialog integration. All CRUD operations now fully functional. See `RELEASE_1.5.1.md` for details.
+
 ---
 
 ## Quick Reference

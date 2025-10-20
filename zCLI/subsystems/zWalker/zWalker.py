@@ -88,10 +88,18 @@ class zWalker(zWizard):
         if "zCrumbs" not in self.session:
             self.session["zCrumbs"] = {}
         
-        # Set initial zBlock
+        # Set initial zBlock - construct full breadcrumb path
         root_zBlock = self.zSpark_obj.get("zBlock", "root")
-        self.session["zCrumbs"][root_zBlock] = []
+        zVaFile = self.zSpark_obj.get("zVaFile", "")
+        
+        # Construct full breadcrumb path: zVaFile.zBlock
+        # Example: "@.zUI.users_menu" + ".MainMenu" = "@.zUI.users_menu.MainMenu"
+        full_crumb_path = f"{zVaFile}.{root_zBlock}" if zVaFile else root_zBlock
+        
+        self.session["zCrumbs"][full_crumb_path] = []
         self.session["zBlock"] = root_zBlock
+        
+        self.logger.debug("Initialized breadcrumb: %s", full_crumb_path)
 
     def zBlock_loop(self, active_zBlock_dict, zBlock_keys=None, zKey=None):
         """Main walker loop for processing zBlocks."""
@@ -120,8 +128,8 @@ class zWalker(zWizard):
             else:
                 self.logger.debug("zWizard key detected; breadcrumb tracking skipped for %s", key)
             
-            # Dispatch action
-            return self.dispatch.handle(key, value)
+            # Dispatch action with walker context
+            return self.dispatch.handle(key, value, walker=self)
         
         # Navigation callbacks for Walker-specific behavior
         def on_back(result):  # pylint: disable=unused-argument

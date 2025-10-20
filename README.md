@@ -77,26 +77,27 @@ Type 'help' for available commands
 
 ## 📚 Documentation
 
-### Core Concepts
+### Getting Started
 
-1. **[zShell Guide](Documentation/zShell_GUIDE.md)** - Shell commands and navigation (pwd, ls, cd, aliases)
-2. **[zUI Guide](Documentation/zUI_GUIDE.md)** - Declarative UI definition with YAML menus
-3. **[zSchema Guide](Documentation/zSchema_GUIDE.md)** - Data schema definition and validation
+1. **[Demos](Demos/)** - Complete production apps (User Manager, and more)
+2. **[zShell Guide](Documentation/zShell_GUIDE.md)** - Shell commands and navigation (pwd, ls, cd, aliases)
+3. **[zUI Guide](Documentation/zUI_GUIDE.md)** - Declarative UI definition with YAML menus
+4. **[zSchema Guide](Documentation/zSchema_GUIDE.md)** - Data schema definition and validation
 
 ### Framework Components
 
-4. **[zData Guide](Documentation/zData_GUIDE.md)** - Multi-backend data operations (SQLite, CSV, PostgreSQL)
-5. **[zWizard Guide](Documentation/zWizard_GUIDE.md)** - Multi-step workflow orchestration
-6. **[zPlugin Guide](Documentation/zPlugin_GUIDE.md)** - Plugin development and extension system
-7. **[zParser Guide](Documentation/zParser_GUIDE.md)** - zPath resolution and command parsing
-8. **[zLoader Guide](Documentation/zLoader_GUIDE.md)** - File caching and resource management
-9. **[zWalker Guide](Documentation/zWalker_GUIDE.md)** - UI navigation and menu system
+5. **[zData Guide](Documentation/zData_GUIDE.md)** - Multi-backend data operations (SQLite, CSV, PostgreSQL)
+6. **[zWizard Guide](Documentation/zWizard_GUIDE.md)** - Multi-step workflow orchestration
+7. **[zPlugin Guide](Documentation/zPlugin_GUIDE.md)** - Plugin development and extension system
+8. **[zParser Guide](Documentation/zParser_GUIDE.md)** - zPath resolution and command parsing
+9. **[zLoader Guide](Documentation/zLoader_GUIDE.md)** - File caching and resource management
+10. **[zWalker Guide](Documentation/zWalker_GUIDE.md)** - UI navigation and menu system
 
 ### Advanced Resources
 
-10. **[zCLI Guide](Documentation/zCLI_GUIDE.md)** - Complete framework architecture and application development
-11. **[AGENT.md](Documentation/AGENT.md)** - Technical reference optimized for AI assistants
-12. **[INSTALL.md](Documentation/INSTALL.md)** - Installation, configuration, and deployment guide
+11. **[zCLI Guide](Documentation/zCLI_GUIDE.md)** - Complete framework architecture and application development
+12. **[AGENT.md](Documentation/AGENT.md)** - Technical reference optimized for AI assistants
+13. **[INSTALL.md](Documentation/INSTALL.md)** - Installation, configuration, and deployment guide
 
 ---
 
@@ -317,7 +318,7 @@ Free for educational, personal, and commercial use. See [LICENSE](LICENSE) for f
 
 - **Version:** 1.5.1
 - **Python:** 3.8+
-- **Tests:** 524 (100% passing)
+- **Tests:** 560 (100% passing)
 - **Subsystems:** 15
 - **Shell Commands:** 20
 - **Documentation:** 15 guides

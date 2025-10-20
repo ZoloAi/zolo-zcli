@@ -58,7 +58,11 @@ class ModifierProcessor:
             return result
 
         if "^" in modifiers:
+            # Execute action first, then return to previous menu
+            display.zDeclare("zBounce (execute then back)", color=self.dispatch.mycolor, indent=3, style="single")
             result = self.dispatch.launcher.launch(zHorizontal, context=context, walker=walker)
+            self.logger.info("zBounce action result: %s", result)
+            # Return zBack to navigate back after action completes
             return "zBack"
 
         if "!" in modifiers:
@@ -69,7 +73,7 @@ class ModifierProcessor:
             while not result:
                 self.logger.warning("Requirement '%s' not satisfied. Retrying...", zKey)
                 if walker:
-                    choice = display.input({"event": "while"})
+                    choice = display.read_string("Continue or stop? (press Enter to continue, 'stop' to abort): ")
                     if choice == "stop":
                         return "stop"
                 result = self.dispatch.launcher.launch(zHorizontal, context=context, walker=walker)
