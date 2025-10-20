@@ -61,6 +61,12 @@ class zWizard:
                     return error_result
                 continue
 
+            # Check if result is a key jump (e.g., menu selection)
+            if isinstance(result, str) and result in keys_list and result not in ("zBack", "stop", "error", ""):
+                self.logger.debug("Menu selected key: %s - jumping to it", result)
+                idx = keys_list.index(result)
+                continue
+
             # Handle navigation result
             nav_result = self._handle_navigation_result(result, key, navigation_callbacks)
             if nav_result is not None:

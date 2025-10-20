@@ -21,12 +21,17 @@ def handle_insert(request, ops):
     if not table:
         return False
 
-    # Extract field/value pairs from command-line options
+    # Extract field/value pairs from request
     fields = request.get("fields", [])
     values = request.get("values")
-
-    # If no explicit values, extract from options
-    if not values:
+    
+    # Check if data dictionary is provided (from zDialog/zData)
+    data_dict = request.get("data")
+    if data_dict and isinstance(data_dict, dict):
+        fields = list(data_dict.keys())
+        values = list(data_dict.values())
+    # If no explicit values, extract from command-line options
+    elif not values:
         fields, values = extract_field_values(request, "INSERT", ops)
         if not fields:
             return False

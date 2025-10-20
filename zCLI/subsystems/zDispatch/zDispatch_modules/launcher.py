@@ -73,7 +73,7 @@ class CommandLauncher:
         if "zDialog" in zHorizontal:
             from ...zDialog import handle_zDialog
             self.logger.info("Detected zDialog")
-            return handle_zDialog(zHorizontal, walker=walker)
+            return handle_zDialog(zHorizontal, zcli=self.zcli, walker=walker)
 
         if "zLink" in zHorizontal:
             if not walker:
@@ -88,17 +88,23 @@ class CommandLauncher:
         if "zRead" in zHorizontal:
             return self._handle_read_dict(zHorizontal, context)
 
+        if "zData" in zHorizontal:
+            return self._handle_data_dict(zHorizontal, context)
+
         return self._handle_crud_dict(zHorizontal, context)
 
     def _handle_wizard_string(self, zHorizontal, walker):
         """Handle zWizard string command."""
-        from ...zWizard import handle_zWizard
         self.logger.info("Detected zWizard request")
         self.display.zDeclare(" → Handle zWizard", color=self.dispatch.mycolor, indent=4, style="single")
         inner = zHorizontal[len("zWizard("):-1].strip()
         try:
             wizard_obj = ast.literal_eval(inner)
-            zHat = handle_zWizard(wizard_obj, walker=walker)
+            # Use modern OOP API - walker extends wizard, so it has handle()
+            if walker:
+                zHat = walker.handle(wizard_obj)
+            else:
+                zHat = self.zcli.wizard.handle(wizard_obj)
             return "zBack" if walker else zHat
         except Exception as e:
             self.logger.error("Failed to parse zWizard payload: %s", e)
@@ -106,9 +112,12 @@ class CommandLauncher:
 
     def _handle_wizard_dict(self, zHorizontal, walker):
         """Handle zWizard dict command."""
-        from ...zWizard import handle_zWizard
         self.logger.info("Detected zWizard (dict)")
-        zHat = handle_zWizard(zHorizontal["zWizard"], walker=walker)
+        # Use modern OOP API - walker extends wizard, so it has handle()
+        if walker:
+            zHat = walker.handle(zHorizontal["zWizard"])
+        else:
+            zHat = self.zcli.wizard.handle(zHorizontal["zWizard"])
         return "zBack" if walker else zHat
 
     def _handle_read_string(self, zHorizontal, context):
@@ -131,6 +140,17 @@ class CommandLauncher:
             req = {"model": req}
         req.setdefault("action", "read")
         self.logger.info("Dispatching zRead (dict) with request: %s", req)
+        return self.zcli.data.handle_request(req, context=context)
+
+    def _handle_data_dict(self, zHorizontal, context):
+        """Handle zData dict command."""
+        self.logger.info("Detected zData (dict)")
+        self.display.zDeclare(" → Handle zData (dict)", color=self.dispatch.mycolor, indent=4, style="single")
+        req = zHorizontal.get("zData") or {}
+        if isinstance(req, str):
+            req = {"model": req}
+        req.setdefault("action", "read")
+        self.logger.info("Dispatching zData (dict) with request: %s", req)
         return self.zcli.data.handle_request(req, context=context)
 
     def _handle_crud_dict(self, zHorizontal, context):

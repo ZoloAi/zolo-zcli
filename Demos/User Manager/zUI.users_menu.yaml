@@ -1,0 +1,50 @@
+zVaF:
+  ~Root*: ["^Setup Database", "^List Users", "^Add User", "^Search User", "^Delete User", "stop"]
+  
+  "^Setup Database":
+    zData:
+      model: "@.zSchema.users_master"
+      action: create
+      
+  "^List Users":
+    zData:
+      model: "@.zSchema.users_master"
+      action: read
+      table: users
+      order: "id DESC"
+      limit: 20
+  
+  "^Add User":
+    zDialog:
+      model: User
+      fields: ["email", "name"]
+      onSubmit:
+        zData:
+          action: insert
+          model: "@.zSchema.users_master"
+          table: users
+          data:
+            email: "zConv.email"
+            name: "zConv.name"
+
+  "^Search User":
+    zDialog:
+      model: SearchForm
+      fields: ["search_term"]
+      onSubmit:
+        zData:
+          action: read
+          model: "@.zSchema.users_master"
+          table: users
+          where: "email LIKE '%zConv.search_term%' OR name LIKE '%zConv.search_term%'"
+  
+  "^Delete User":
+    zDialog:
+      model: DeleteForm
+      fields: ["user_id"]
+      onSubmit:
+        zData:
+          action: delete
+          model: "@.zSchema.users_master"
+          table: users
+          where: "id = zConv.user_id"

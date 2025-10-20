@@ -38,7 +38,7 @@ class MenuInteraction:
         """
         # Streamlined input validation loop
         while True:
-            choice = display.input({"event": "input"})
+            choice = display.read_string("> ")
             self.logger.debug("User raw input: '%s'", choice)
 
             if not choice.isdigit():
@@ -73,7 +73,7 @@ class MenuInteraction:
         display.text(prompt)
 
         while True:
-            choice = display.input({"event": "input"})
+            choice = display.read_string("> ")
             self.logger.debug("User raw input: '%s'", choice)
 
             try:
@@ -107,6 +107,7 @@ class MenuInteraction:
             Selected option
         """
         filtered_options = options.copy()
+        display.text(f"\n{search_prompt} (enter number or /term to filter):")
         
         while True:
             # Show current filtered options
@@ -117,7 +118,7 @@ class MenuInteraction:
                 display.text(f"  [{i}] {option}")
 
             # Get search or selection
-            choice = display.input({"event": "input"})
+            choice = display.read_string("> ")
             
             if choice.startswith("/"):
                 # Search mode

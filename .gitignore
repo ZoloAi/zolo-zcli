@@ -192,3 +192,8 @@ tests/test_data.db
 tests/**/*.db
 tests/**/*.sqlite
 
+# Demo databases and artifacts
+Demos/**/*.db
+Demos/**/*.sqlite
+Demos/**/*.pdf
+

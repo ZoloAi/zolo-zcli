@@ -34,11 +34,12 @@ def handle_dict_submit(submit_dict, zContext, logger, walker=None):
     # Inject placeholders (zConv → actual values)
     submit_dict = inject_placeholders(submit_dict, zContext, logger)
     
-    # Ensure model is passed to zCRUD
+    # Ensure model is passed to zCRUD (legacy support)
     if "zCRUD" in submit_dict and isinstance(submit_dict["zCRUD"], dict):
         if "model" not in submit_dict["zCRUD"]:
             submit_dict["zCRUD"]["model"] = zContext.get("model")
-    elif "model" not in submit_dict:
+    # Don't add model to root if zData is present (zData should have its own model)
+    elif "model" not in submit_dict and "zData" not in submit_dict:
         submit_dict["model"] = zContext.get("model")
 
     # Dispatch via core zDispatch
