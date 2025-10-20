@@ -1,6 +1,6 @@
 # zCLI Agent Guide (LLM-Optimized)
 
-**Target**: AI coding assistants | **Format**: Dense, technical | **Version**: 1.5.1
+**Target**: AI coding assistants | **Format**: Dense, technical | **Version**: 1.5.0
 
 **Package Installation**: All test files, demos, and schemas are included in the distribution via `pyproject.toml` and `MANIFEST.in`
 
@@ -30,10 +30,31 @@ zcli.data.handle({"action": "read", "table": "users", "model": path})
 zcli.session["key"] = value  # Session state
 ```
 
-### 3. Path Resolution (zPath)
-- `@.path.to.File` → workspace-relative (`zcli.session["zWorkspace"]`)
-- `~.path.to.File` → absolute (user home)
-- `zMachine.SubPath` → `user_data_dir/SubPath` (OS-agnostic)
+### 3. Path Resolution (zPath) - CRITICAL FORMAT
+
+**Format Rules** (AI agents frequently get this wrong!):
+
+1. **Workspace-relative**: `@.Directory.Subdirectory.FileName`
+   - Symbol: `@.` (@ + dot)
+   - Directory separators: dots (`.`)
+   - File extension: OMITTED in zPath
+   - Example: `@.zTestSuite.demos.zSchema.sqlite_demo` → resolves to `{workspace}/zTestSuite/demos/zSchema.sqlite_demo.yaml`
+
+2. **Absolute paths**: `~.Directory.Subdirectory.FileName`
+   - Symbol: `~.` (tilde + dot)
+   - Starts from filesystem root (Unix: `/`, Windows: `C:\`)
+   - Example: `~.Users.john.Documents.myfile` → `/Users/john/Documents/myfile`
+
+3. **Machine-agnostic**: `zMachine.SubPath`
+   - NO dot after zMachine, then dots for path
+   - Resolves to `user_data_dir/SubPath`
+   - Example: `zMachine.ProjectData` → `~/Library/Application Support/zolo-zcli/ProjectData` (macOS)
+
+**Common Mistakes to AVOID**:
+- ❌ `@zTestSuite/demos/schema.yaml` (using slashes)
+- ❌ `@.zTestSuite.demos.zSchema.sqlite_demo.yaml` (including extension)
+- ❌ `zMachine/ProjectData` (using slash instead of dot)
+- ✅ `@.zTestSuite.demos.zSchema.sqlite_demo` (CORRECT)
 
 ### 4. Display Events (Modern API Only)
 ```python
@@ -81,6 +102,104 @@ zcli.loader.cache.plugin_cache.load_and_cache(
 
 # Shell command
 "plugin load @.path.to.plugin"
+```
+
+---
+
+## zPath Deep Dive (Critical for AI Agents)
+
+### File Type Detection (Automatic)
+zPath automatically appends the correct extension based on filename prefix:
+- `zSchema.*` → `.yaml`
+- `zUI.*` → `.yaml`
+- `zConfig.*` → `.yaml`
+- Plugin files → `.py`
+- Others → tries `.yaml`, `.yml`, `.json` in order
+
+### Construction Pattern
+```
+Symbol + Dot + Path.Segments.Without.Slashes + Filename.Without.Extension
+  ↓       ↓          ↓                              ↓
+  @       .    zTestSuite.demos           zSchema.sqlite_demo
+```
+
+### Real-World Examples
+
+**Loading Schemas**:
+```python
+# ✅ CORRECT
+zcli.loader.handle("@.zTestSuite.demos.zSchema.sqlite_demo")
+zcli.loader.handle("@.Schemas.zSchema.mydata")
+zcli.loader.handle("zMachine.UserProjects.zSchema.contacts")
+
+# ❌ WRONG
+zcli.loader.handle("@/zTestSuite/demos/zSchema.sqlite_demo")  # Slashes
+zcli.loader.handle("@.zTestSuite.demos.zSchema.sqlite_demo.yaml")  # Extension
+zcli.loader.handle("@zTestSuite.demos.zSchema.sqlite_demo")  # Missing dot after @
+zcli.loader.handle("@..zTestSuite.demos.zSchema.sqlite_demo")  # Double dot
+```
+
+**Loading UI Files**:
+```python
+# ✅ CORRECT
+walker.run("@.zTestSuite.demos.zUI.walker_demo", "MainMenu")
+zcli.loader.handle("@.UI.zUI.main_interface")
+
+# ❌ WRONG
+walker.run("@.zTestSuite.demos.walker_demo", "MainMenu")  # Missing zUI prefix
+walker.run("@.zTestSuite/demos/zUI.walker_demo", "MainMenu")  # Slashes
+```
+
+**Loading Plugins**:
+```python
+# ✅ CORRECT - Plugin file paths (Python files)
+zcli.loader.cache.plugin_cache.load_and_cache(
+    "@.zTestSuite.demos.test_plugin", "test_plugin"
+)
+
+# In shell command
+"plugin load @.zTestSuite.demos.test_plugin"
+
+# ❌ WRONG
+"plugin load @.zTestSuite.demos.test_plugin.py"  # Extension included
+```
+
+### Symbol Resolution Table
+
+| zPath | Resolves To | Example |
+|-------|-------------|---------|
+| `@.Dir.File` | `{workspace}/Dir/File.{ext}` | `@.zTestSuite.demos.zSchema.test` → `/workspace/zTestSuite/demos/zSchema.test.yaml` |
+| `~.Dir.File` | `/Dir/File.{ext}` | `~.Users.john.data` → `/Users/john/data` |
+| `zMachine.Path` | `{user_data_dir}/Path` | `zMachine.MyApp.data` → `~/Library/Application Support/zolo-zcli/MyApp/data` |
+
+### Shell Command Usage
+
+```bash
+# Schema operations
+> load @.zTestSuite.demos.zSchema.sqlite_demo --as demo
+> data read users --model $demo
+
+# UI navigation
+> walker @.UI.zUI.main_menu MainBlock
+
+# Plugin loading
+> plugin load @.zTestSuite.demos.test_plugin
+> &test_plugin.hello_world()
+```
+
+### In YAML Files
+
+```yaml
+# Cross-file links in zUI files
+zLink:
+  - target: $BlockInSameFile  # Delta link (same file)
+  - target: @.UI.zUI.other_menu.BlockName  # Cross-file (full zPath)
+
+# Schema references
+zData:
+  - action: read
+    table: users
+    model: @.Schemas.zSchema.production_db  # Full zPath to schema
 ```
 
 ---
@@ -373,5 +492,29 @@ zcli = zCLI(zSpark_obj)
 
 ---
 
-**End of Agent Guide** | Last Updated: v1.5.0 | Total Tokens: ~2.5k
+## zPath Quick Reference Card (Copy This!)
+
+```
+WORKSPACE:    @.Path.To.File              NO extension, NO slashes
+ABSOLUTE:     ~.Path.To.File              NO extension, NO slashes  
+MACHINE:      zMachine.Path.To.File       NO dot after zMachine
+
+✅ CORRECT:   @.zTestSuite.demos.zSchema.sqlite_demo
+✅ CORRECT:   zMachine.MyApp.zSchema.users
+✅ CORRECT:   ~.Users.john.Documents.data
+
+❌ WRONG:     @.zTestSuite/demos/zSchema.sqlite_demo.yaml
+❌ WRONG:     zMachine/MyApp/data  
+❌ WRONG:     @zTestSuite.demos (missing dot after @)
+
+EXTENSIONS AUTO-ADDED:
+  zSchema.* → .yaml
+  zUI.*     → .yaml
+  zConfig.* → .yaml
+  Plugins   → .py
+```
+
+---
+
+**End of Agent Guide** | Last Updated: v1.5.0 | Total Tokens: ~3.5k
 
