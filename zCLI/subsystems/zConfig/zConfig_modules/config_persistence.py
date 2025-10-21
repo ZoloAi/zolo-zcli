@@ -38,7 +38,7 @@ class ConfigPersistence:
         
         # Show current values
         if show or (key is None and value is None):
-            return self._show_machine_config()
+            return self.show_machine_config()
         
         # Validate key is user-editable
         if key not in self._get_editable_machine_keys():
@@ -104,7 +104,7 @@ class ConfigPersistence:
         
         # Show current values
         if show or (key is None and value is None):
-            return self._show_environment_config()
+            return self.show_environment_config()
         
         # Validate key is user-editable
         if key not in self._get_editable_environment_keys():
