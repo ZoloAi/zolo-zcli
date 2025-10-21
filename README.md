@@ -99,6 +99,50 @@ zolo shell
 
 ---
 
+## Configuration
+
+The dictionary passed to `zCLI()` configures your app. All options are optional except what your app needs.
+
+```python
+from zCLI import zCLI
+
+z = zCLI({
+    # Required for UI apps
+    "zWorkspace": ".",                      # Working directory
+    "zVaFile": "@.zUI.menu",               # YAML file to load
+    "zBlock": "root",                      # Block in YAML to start from
+    
+    # Optional
+    "logger": "debug",                     # Logging: debug, info, warning, error
+    "zMode": "Terminal",                   # Mode: Terminal, GUI, Debug
+    "plugins": [                           # Python modules to load at startup
+        "myapp.plugins.utils",
+        "/absolute/path/to/plugin.py"
+    ]
+})
+
+z.walker.run()  # For UI apps
+z.run_shell()   # For shell mode
+```
+
+**Common patterns:**
+
+```python
+# Shell only (no UI)
+z = zCLI()
+z.run_shell()
+
+# UI app
+z = zCLI({"zVaFile": "@.zUI.app", "zBlock": "main"})
+z.walker.run()
+
+# With debug logging
+z = zCLI({"zVaFile": "@.zUI.app", "zBlock": "main", "logger": "debug"})
+z.walker.run()
+```
+
+---
+
 ## How It Works
 
 ### 1. Define Your Data

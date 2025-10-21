@@ -1,13 +1,53 @@
 # zCLI v1.5.2 Release Notes
 
 **Release Date**: October 21, 2025  
-**Type**: Documentation, Testing, Repository Updates
+**Type**: Documentation, Testing, Repository Updates, Core Enhancements
 
 ---
 
 ## Overview
 
-This release focuses on improving developer onboarding, test infrastructure, and repository accessibility. Major updates include comprehensive test suite enhancements, streamlined documentation, and public repository setup.
+This release focuses on improving developer onboarding, test infrastructure, repository accessibility, and error handling infrastructure. Major updates include comprehensive test suite enhancements, streamlined documentation, public repository setup, and centralized traceback handling.
+
+---
+
+## 🔧 Core Infrastructure
+
+### Centralized Error Handling
+- **Added**: `ErrorHandler` utility in `zCLI/utils/error_handler.py`
+  - Enhanced traceback formatting with structured error information
+  - Context-aware error logging for better debugging
+  - `ExceptionContext` manager for cleaner exception handling
+  - Available system-wide via `zcli.error_handler`
+
+- **Centralized**: `traceback` module in `zCLI/__init__.py`
+  - Single source of truth for traceback handling
+  - Available to all subsystems
+  - Consistent error reporting across the framework
+
+- **Enhanced**: Error logging patterns
+  - Fixed problematic `traceback.print_exc()` usage in data_operations
+  - All subsystems now use standard `exc_info=True` pattern
+  - Optional enhanced logging with context support
+
+**Usage Examples**:
+```python
+# Standard pattern (all subsystems)
+self.logger.error("Error message", exc_info=True)
+
+# Enhanced with context (optional)
+self.zcli.error_handler.log_exception(
+    e, 
+    message="Error during operation",
+    context={'action': 'insert', 'table': 'users'}
+)
+
+# Context manager for cleaner code
+with ExceptionContext(self.zcli.error_handler, 
+                      operation="database insert",
+                      default_return="error"):
+    result = perform_operation()
+```
 
 ---
 
@@ -106,6 +146,13 @@ pip install git+https://github.com/ZoloAi/zolo-zcli.git
 ---
 
 ## 🔄 Changes Summary
+
+**Core Infrastructure**:
+- Centralized error handling with ErrorHandler utility
+- Traceback module centralized in zCLI/__init__.py
+- Enhanced error logging with context support
+- ExceptionContext manager for cleaner exception handling
+- Fixed problematic traceback usage across subsystems
 
 **Testing**:
 - Integration test suite added

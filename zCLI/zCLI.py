@@ -2,11 +2,6 @@
 # ───────────────────────────────────────────────────────────────
 """Single source of truth for all subsystems."""
 
-# TODO: Consider centralizing traceback module in zCLI/__init__.py
-#       Currently only used in 2 places (zWizard, zData/data_operations)
-#       Standard pattern: logger.error(..., exc_info=True) includes traceback automatically
-#       If traceback formatting is needed system-wide, add to zCLI imports
-
 from zCLI import logging
 
 class zCLI:
@@ -19,24 +14,6 @@ class zCLI:
 
         # Initialize zSpark_obj config dict
         self.zspark_obj = zSpark_obj or {}
-        # Example zSpark_obj format:
-        # zSpark_obj = {
-        #     "zSpark": "zSpark Example",               # Label
-        #     "zWorkspace": Path.to.Workspace,
-        #     "zVaFile_path": .zPath.to.zVaFile,        # Virtual address file path (optional)
-        #     "zVaFilename": .zPath.to.zVaFilename,     # zVaFile name (optional)
-        #     "zBlock": .zPath.to.zBlock,               # zBlock name
-        #     "zMode": "Terminal",                      # UI mode
-        #     "logger": "debug",                        # Logging level
-        #     "plugins": [                              # Optional plugins (pre-loaded at boot)
-        #         "zCLI.utils.test_plugin",              # Python import path (recommended)
-        #         "/absolute/path/to/plugin.py",         # Or absolute file path (NOT zPath)
-        #     ],
-        #     # Note: Boot-time plugins use Python import paths, NOT zPaths or & modifiers
-        #     # Note: Runtime invocations use & modifier: &zCLI.utils.plugin.function()
-        #     # Note: All plugins get CLI session injected (zcli.logger, zcli.session, etc.)
-        #     ... other settings ...
-        # }
 
         # ─────────────────────────────────────────────────────────────
         # Layer 0: Foundation
@@ -61,6 +38,10 @@ class zCLI:
 
         # Log initial message with configured level
         self.logger.info("Logger initialized at level: %s", session_logger.log_level) # First log message
+
+        # Initialize centralized error handler
+        from .utils.error_handler import ErrorHandler
+        self.error_handler = ErrorHandler(logger=self.logger)
 
         # Initialize zComm (Communication infrastructure for zBifrost and zData)
         from .subsystems.zComm import zComm

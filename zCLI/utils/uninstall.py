@@ -14,9 +14,7 @@ Provides safe uninstallation with options to:
 Note: This module operates independently of zCLI subsystems for safety.
 """
 
-from zCLI import sys
-import shutil
-
+from zCLI import sys, shutil
 
 def uninstall_package():
     """
@@ -49,9 +47,12 @@ def uninstall_package():
         return False
 
 
-def remove_user_data():
+def remove_user_data(zcli=None):
     """
     Remove all user data directories.
+    
+    Args:
+        zcli: Optional zCLI instance to get paths from
     
     Removes:
     - User config directory
@@ -61,13 +62,17 @@ def remove_user_data():
     Returns:
         Boolean indicating success
     """
-    try:
-        from zCLI.subsystems.zConfig_modules import ZConfigPaths
-    except ImportError:
-        print("❌ Cannot import zConfig modules - package may already be uninstalled")
-        return False
-    
-    paths = ZConfigPaths()
+    if zcli:
+        # Use paths from zCLI instance
+        paths = zcli.config.sys_paths
+    else:
+        # Fallback: import directly (for standalone usage)
+        try:
+            from zCLI.subsystems.zConfig.zConfig_modules import zConfigPaths
+            paths = zConfigPaths()
+        except ImportError:
+            print("❌ Cannot import zConfig modules - package may already be uninstalled")
+            return False
     removed_count = 0
     
     print("\n🧹 Removing user data directories...")
@@ -98,9 +103,12 @@ def remove_user_data():
         return True
 
 
-def uninstall_clean():
+def uninstall_clean(zcli=None):
     """
     Clean uninstall: Remove package AND system files (but keep dependencies).
+    
+    Args:
+        zcli: Optional zCLI instance (passed from Walker UI)
     
     Returns:
         Exit code (0 = success, 1 = failure)
@@ -126,7 +134,7 @@ def uninstall_clean():
         return 1
     
     # Remove user data first (before package is gone)
-    data_removed = remove_user_data()
+    data_removed = remove_user_data(zcli)
     
     # Remove package
     package_removed = uninstall_package()
@@ -137,29 +145,37 @@ def uninstall_clean():
         print("✅ Clean uninstall complete!")
         print("\nzolo-zcli has been completely removed from your system.")
         print("Optional dependencies (pandas, psycopg2) were preserved.")
+        print("=" * 70 + "\n")
+        sys.exit(0)
     else:
         print("⚠️  Uninstall completed with errors")
         print("Some components may still be present on your system.")
-    print("=" * 70 + "\n")
-    
-    return 0 if (package_removed and data_removed) else 1
+        print("=" * 70 + "\n")
+        sys.exit(1)
 
 
-def uninstall_framework_only():
+def uninstall_framework_only(zcli=None):
     """
     Framework-only uninstall: Remove package but KEEP user data and dependencies.
+    
+    Args:
+        zcli: Optional zCLI instance (passed from Walker UI)
     
     Returns:
         Exit code (0 = success, 1 = failure)
     """
-    try:
-        from zCLI.subsystems.zConfig_modules import ZConfigPaths
-    except ImportError:
-        print("❌ Cannot import zConfig modules - package may already be uninstalled")
-        print("Proceeding with package removal only...")
-        return uninstall_package()
-    
-    paths = ZConfigPaths()
+    if zcli:
+        # Use paths from zCLI instance
+        paths = zcli.config.sys_paths
+    else:
+        # Fallback: import directly (for standalone usage)
+        try:
+            from zCLI.subsystems.zConfig.zConfig_modules import zConfigPaths
+            paths = zConfigPaths()
+        except ImportError:
+            print("❌ Cannot import zConfig modules - package may already be uninstalled")
+            print("Proceeding with package removal only...")
+            return uninstall_package()
     
     print("\n" + "=" * 70)
     print("zolo-zcli Framework Uninstall")
@@ -192,16 +208,20 @@ def uninstall_framework_only():
         print("\nYour data and dependencies have been preserved.")
         print("To remove user data, run: zolo uninstall --clean")
         print("To remove dependencies, run: zolo uninstall --dependencies")
+        print("=" * 70 + "\n")
+        sys.exit(0)
     else:
         print("❌ Uninstall failed")
-    print("=" * 70 + "\n")
-    
-    return 0 if package_removed else 1
+        print("=" * 70 + "\n")
+        sys.exit(1)
 
 
-def uninstall_dependencies():
+def uninstall_dependencies(zcli=None):
     """
     Dependencies uninstall: Remove only zCLI-specific optional dependencies.
+    
+    Args:
+        zcli: Optional zCLI instance (passed from Walker UI, not used but kept for consistency)
     
     Returns:
         Exit code (0 = success, 1 = failure)
@@ -262,8 +282,7 @@ def uninstall_dependencies():
         print("⊘ No optional dependencies were removed.")
         print("They may not be installed or may be used by other packages.")
     print("=" * 70 + "\n")
-    
-    return 0
+    sys.exit(0)
 
 
 def main():

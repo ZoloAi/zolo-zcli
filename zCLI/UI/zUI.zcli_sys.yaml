@@ -1,0 +1,8 @@
+Uninstall:
+  ~Root*: ["Framework Only", "Clean Uninstall", "Dependencies Only"]
+  
+  "Framework Only": "zFunc(@.zCLI.utils.uninstall.uninstall_framework_only)"
+  
+  "Clean Uninstall": "zFunc(@.zCLI.utils.uninstall.uninstall_clean)"
+  
+  "Dependencies Only": "zFunc(@.zCLI.utils.uninstall.uninstall_dependencies)"

@@ -112,6 +112,69 @@ with patch.object(zcli.display, 'zDialog') as mock_dialog:
 
 **Key**: Mock `zDialog()` (the method), not `read_string()` - zDialog internally handles the form input loop.
 
+### 9. **zFunc in YAML - WRONG Syntax**
+```yaml
+# ❌ WRONG: Missing zFunc() wrapper
+"Menu Item":
+  zFunc: "zCLI.utils.module.function()"
+
+# ❌ WRONG: Using file path instead of module path
+"Menu Item":
+  zFunc: "zFunc(zCLI/utils/module.py.function)"
+
+# ❌ WRONG: Including () in the path
+"Menu Item":
+  zFunc: "zFunc(@.zCLI.utils.module.function())"
+```
+
+### 10. **zFunc in YAML - CORRECT Syntax**
+
+**zFunc has THREE different usage contexts**:
+
+#### A. Walker/Menu Mode (Simplest - String Value)
+```yaml
+# ✅ CORRECT: Direct string value in Walker menus
+Uninstall:
+  ~Root*: ["Framework Only", "Clean Uninstall"]
+  
+  "Framework Only": "zFunc(@.zCLI.utils.uninstall.uninstall_framework_only)"
+  "Clean Uninstall": "zFunc(@.zCLI.utils.uninstall.uninstall_clean)"
+```
+
+**Key**: In Walker mode, the menu item itself IS the zKey. No dict needed - just a string starting with `"zFunc("`.
+
+#### B. Wizard Mode (Dict with zFunc Key)
+```yaml
+# ✅ CORRECT: Dict format in wizard steps
+stepOne:
+  zFunc: "zFunc(@.utils.step_processor.process_step_one)"
+  
+stepTwo:
+  zFunc: "zFunc(@.utils.step_processor.process_step_two)"
+```
+
+**Key**: Wizard steps use dict format with `zFunc` as a key. Value is still a string starting with `"zFunc("`.
+
+#### C. Nested/Complex Operations (Dict Value)
+```yaml
+# ✅ CORRECT: When combining with other operations
+"Process Data":
+  zFunc: "zFunc(@.utils.processor.process)"
+  zLink: "@.Results"  # Chain to another block after execution
+```
+
+**Critical Rules**:
+1. **Walker menus**: String value directly → `"item": "zFunc(...)"`
+2. **Wizard steps**: Dict with zFunc key → `step: {zFunc: "zFunc(...)"}`
+3. String MUST start with `"zFunc("` wrapper in ALL contexts
+4. Use zPath format: `@.` for workspace-relative paths
+5. Path uses DOTS not slashes: `@.zCLI.utils.module`
+6. Function name WITHOUT parentheses: `.function` not `.function()`
+7. NO file extension: `.module` not `.module.py`
+8. zFunc auto-injects `zcli` and `session` if function accepts them
+
+**Why**: The dispatcher detects strings starting with `"zFunc("` and routes them to `zcli.zfunc.handle()` for parsing. Wizard mode uses dict format to allow multiple operations per step.
+
 ---
 
 ## Critical Patterns

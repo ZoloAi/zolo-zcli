@@ -196,7 +196,7 @@ class ConfigPersistence:
             )
             return False
 
-    def _show_machine_config(self):
+    def show_machine_config(self):
         """Display current machine configuration."""
         machine = self.machine.get_all()
         
@@ -265,7 +265,7 @@ class ConfigPersistence:
         self._handle_error("Environment config reset not yet implemented")
         return False
 
-    def _show_environment_config(self):
+    def show_environment_config(self):
         """Display current environment configuration."""
         env = self.environment.get_all()
         

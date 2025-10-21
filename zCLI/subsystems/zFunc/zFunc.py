@@ -83,8 +83,14 @@ class zFunc:
         return resolve_callable(func_path, function_name, self.logger)
 
     def _execute_function(self, func, args):
-        """Execute function with optional session injection."""
+        """Execute function with optional session/zcli injection."""
         sig = inspect.signature(func)
+        kwargs = {}
+
+        # Auto-inject zcli if function accepts it
+        if 'zcli' in sig.parameters:
+            self.logger.debug("Auto-injecting zcli instance to function")
+            kwargs['zcli'] = self.zcli
 
         # Auto-inject session if function accepts it
         if 'session' in sig.parameters:
@@ -94,10 +100,15 @@ class zFunc:
 
             if inject_session:
                 self.logger.debug("Auto-injecting session to function")
-                try:
-                    return func(*args, session=self.session)
-                except TypeError:
-                    return func(*args)
+                kwargs['session'] = self.session
+
+        # Execute with injected kwargs
+        if kwargs:
+            try:
+                return func(*args, **kwargs)
+            except TypeError as e:
+                self.logger.warning("Failed to inject parameters: %s", e)
+                return func(*args)
 
         return func(*args)
 

@@ -73,9 +73,7 @@ class DataOperations:
             self.logger.error("Unknown action: %s", action)
             return "error"
         except Exception as e:
-            self.logger.error("Error executing %s: %s", action, e)
-            import traceback
-            traceback.print_exc()
+            self.logger.error("Error executing %s: %s", action, e, exc_info=True)
             return "error"
 
     def ensure_tables_for_action(self, action, tables):
