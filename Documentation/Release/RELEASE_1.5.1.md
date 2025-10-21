@@ -160,11 +160,39 @@ Bugs discovered and resolved during real-world application development of a User
 
 ```bash
 # Upgrade to v1.5.1
-pip install --upgrade "zolo-zcli @ git+ssh://git@github.com/ZoloAi/zolo-zcli.git@v1.5.1"
+pip install --upgrade git+https://github.com/ZoloAi/zolo-zcli.git@v1.5.1
 
-# Or install fresh
-pip install "zolo-zcli[all] @ git+ssh://git@github.com/ZoloAi/zolo-zcli.git@v1.5.1"
+# Or install fresh with all backends
+pip install "zolo-zcli[all] @ git+https://github.com/ZoloAi/zolo-zcli.git@v1.5.1"
 ```
+
+---
+
+## Files Modified
+
+### Core Fixes
+1. `zCLI/subsystems/zWizard/zWizard.py` - Menu key jump logic
+2. `zCLI/subsystems/zDialog/zDialog_modules/dialog_submit.py` - Model pollution fix
+3. `zCLI/subsystems/zDispatch/zDispatch_modules/launcher.py` - zData handler
+4. `zCLI/subsystems/zData/zData_modules/shared/operations/crud_read.py` - Table param + pause
+5. `zCLI/subsystems/zData/zData_modules/shared/data_operations.py` - Keyword args
+6. `zCLI/subsystems/zData/zData_modules/shared/operations/helpers.py` - Table param + error msg
+7. `zCLI/subsystems/zData/zData_modules/shared/operations/crud_insert.py` - Data dict support
+
+### Documentation
+8. `Documentation/Release/RELEASE_1.5.1.md` - Release notes
+9. `Documentation/AGENT.md` - Version update + note
+10. `README.md` - Test count update (524→560)
+
+### Demo Application
+11. `Demos/User Manager/README.md` - Updated for new location
+12. `Demos/User Manager/run.py` - Production-ready launcher
+13. `Demos/User Manager/zUI.users_menu.yaml` - Complete CRUD interface
+14. `Demos/User Manager/zSchema.users_master.yaml` - Schema definition
+15. `Demos/User Manager/requirements.txt` - Updated dependencies
+
+### Version
+16. `zCLI/version.py` - Updated to 1.5.1
 
 ---
 
