@@ -7,7 +7,7 @@ Runs all test suites and provides summary per subsystem.
 """
 
 import sys
-import unittest
+import importlib
 from pathlib import Path
 
 # Add parent directory to path
@@ -15,102 +15,39 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Import test factory
 from zTestSuite.test_factory import (
-    run_subsystem_tests_with_factory,
     print_subsystem_header,
     print_test_overview,
     print_detailed_results_table
 )
 
-# Import all test modules
-try:
-    from zTestSuite import zConfig_Test
-    ZCONFIG_AVAILABLE = True
-except ImportError:
-    ZCONFIG_AVAILABLE = False
+# Define test modules to import (in dependency order)
+TEST_MODULES = [
+    'zConfig',
+    'zComm',
+    'zDisplay',
+    'zAuth',      # zAuth depends on zDisplay
+    'zDispatch',
+    'zParser',
+    'zLoader',
+    'zFunc',
+    'zDialog',
+    'zOpen',
+    'zShell',
+    'zWizard',
+    'zUtils',
+    'zData',
+    'zWalker',
+]
 
-try:
-    from zTestSuite import zComm_Test
-    ZCOMM_AVAILABLE = True
-except ImportError:
-    ZCOMM_AVAILABLE = False
-
-try:
-    from zTestSuite import zAuth_Test
-    ZAUTH_AVAILABLE = True
-except ImportError:
-    ZAUTH_AVAILABLE = False
-
-try:
-    from zTestSuite import zDisplay_Test
-    ZDISPLAY_AVAILABLE = True
-except ImportError:
-    ZDISPLAY_AVAILABLE = False
-
-try:
-    from zTestSuite import zDispatch_Test
-    ZDISPATCH_AVAILABLE = True
-except ImportError:
-    ZDISPATCH_AVAILABLE = False
-
-try:
-    from zTestSuite import zParser_Test
-    ZPARSER_AVAILABLE = True
-except ImportError:
-    ZPARSER_AVAILABLE = False
-
-try:
-    from zTestSuite import zLoader_Test
-    ZLOADER_AVAILABLE = True
-except ImportError:
-    ZLOADER_AVAILABLE = False
-
-try:
-    from zTestSuite import zFunc_Test
-    ZFUNC_AVAILABLE = True
-except ImportError:
-    ZFUNC_AVAILABLE = False
-
-try:
-    from zTestSuite import zDialog_Test
-    ZDIALOG_AVAILABLE = True
-except ImportError:
-    ZDIALOG_AVAILABLE = False
-
-try:
-    from zTestSuite import zOpen_Test
-    ZOPEN_AVAILABLE = True
-except ImportError:
-    ZOPEN_AVAILABLE = False
-
-try:
-    from zTestSuite import zShell_Test
-    ZSHELL_AVAILABLE = True
-except ImportError:
-    ZSHELL_AVAILABLE = False
-
-try:
-    from zTestSuite import zWizard_Test
-    ZWIZARD_AVAILABLE = True
-except ImportError:
-    ZWIZARD_AVAILABLE = False
-
-try:
-    from zTestSuite import zUtils_Test
-    ZUTILS_AVAILABLE = True
-except ImportError:
-    ZUTILS_AVAILABLE = False
-
-try:
-    from zTestSuite import zData_Test
-    ZDATA_AVAILABLE = True
-except ImportError:
-    ZDATA_AVAILABLE = False
-
-try:
-    from zTestSuite import zWalker_Test
-    ZWALKER_AVAILABLE = True
-except ImportError:
-    ZWALKER_AVAILABLE = False
+# Dynamically import all test modules
+AVAILABLE_MODULES = {}
+for module_name in TEST_MODULES:
+    module_test_name = f'{module_name}_Test'
+    try:
+        module = importlib.import_module(f'zTestSuite.{module_test_name}')
+        AVAILABLE_MODULES[module_name] = module
+    except ImportError:
+        pass
 
 
 def run_subsystem_tests(test_module, name):
@@ -258,38 +195,7 @@ def show_test_menu():
     print()
     
     # Build list of available test suites in dependency order
-    available_tests = []
-    
-    if ZCONFIG_AVAILABLE:
-        available_tests.append(("zConfig", "zConfig_Test"))
-    if ZCOMM_AVAILABLE:
-        available_tests.append(("zComm", "zComm_Test"))
-    if ZDISPLAY_AVAILABLE:
-        available_tests.append(("zDisplay", "zDisplay_Test"))
-    if ZAUTH_AVAILABLE:
-        available_tests.append(("zAuth", "zAuth_Test"))  # zAuth depends on zDisplay
-    if ZDISPATCH_AVAILABLE:
-        available_tests.append(("zDispatch", "zDispatch_Test"))
-    if ZPARSER_AVAILABLE:
-        available_tests.append(("zParser", "zParser_Test"))
-    if ZLOADER_AVAILABLE:
-        available_tests.append(("zLoader", "zLoader_Test"))
-    if ZFUNC_AVAILABLE:
-        available_tests.append(("zFunc", "zFunc_Test"))
-    if ZDIALOG_AVAILABLE:
-        available_tests.append(("zDialog", "zDialog_Test"))
-    if ZOPEN_AVAILABLE:
-        available_tests.append(("zOpen", "zOpen_Test"))
-    if ZSHELL_AVAILABLE:
-        available_tests.append(("zShell", "zShell_Test"))
-    if ZWIZARD_AVAILABLE:
-        available_tests.append(("zWizard", "zWizard_Test"))
-    if ZUTILS_AVAILABLE:
-        available_tests.append(("zUtils", "zUtils_Test"))
-    if ZDATA_AVAILABLE:
-        available_tests.append(("zData", "zData_Test"))
-    if ZWALKER_AVAILABLE:
-        available_tests.append(("zWalker", "zWalker_Test"))
+    available_tests = [(name, f'{name}_Test') for name in TEST_MODULES if name in AVAILABLE_MODULES]
     
     if not available_tests:
         print("❌ No test suites available!")
@@ -300,7 +206,7 @@ def show_test_menu():
     print("  0) All Tests")
     
     # Show numbered options for each available test suite
-    for i, (name, module) in enumerate(available_tests, 1):
+    for i, (name, _) in enumerate(available_tests, 1):
         print(f"  {i}) {name}")
     
     print()
@@ -332,87 +238,19 @@ def run_selected_tests(test_choice=None):
     
     if test_choice == "all" or test_choice is None:
         # Run all available tests in dependency order
-        test_suites = []
-        if ZCONFIG_AVAILABLE:
-            test_suites.append((zConfig_Test, "zConfig"))
-        if ZCOMM_AVAILABLE:
-            test_suites.append((zComm_Test, "zComm"))
-        if ZDISPLAY_AVAILABLE:
-            test_suites.append((zDisplay_Test, "zDisplay"))
-        if ZAUTH_AVAILABLE:
-            test_suites.append((zAuth_Test, "zAuth"))  # zAuth depends on zDisplay
-        if ZDISPATCH_AVAILABLE:
-            test_suites.append((zDispatch_Test, "zDispatch"))
-        if ZPARSER_AVAILABLE:
-            test_suites.append((zParser_Test, "zParser"))
-        if ZLOADER_AVAILABLE:
-            test_suites.append((zLoader_Test, "zLoader"))
-        if ZFUNC_AVAILABLE:
-            test_suites.append((zFunc_Test, "zFunc"))
-        if ZDIALOG_AVAILABLE:
-            test_suites.append((zDialog_Test, "zDialog"))
-        if ZOPEN_AVAILABLE:
-            test_suites.append((zOpen_Test, "zOpen"))
-        if ZSHELL_AVAILABLE:
-            test_suites.append((zShell_Test, "zShell"))
-        if ZWIZARD_AVAILABLE:
-            test_suites.append((zWizard_Test, "zWizard"))
-        if ZUTILS_AVAILABLE:
-            test_suites.append((zUtils_Test, "zUtils"))
-        if ZDATA_AVAILABLE:
-            test_suites.append((zData_Test, "zData"))
-        if ZWALKER_AVAILABLE:
-            test_suites.append((zWalker_Test, "zWalker"))
-        
-        for test_module, name in test_suites:
-            result = run_subsystem_tests(test_module, name)
-            results.append(result)
+        for module_name in TEST_MODULES:
+            if module_name in AVAILABLE_MODULES:
+                test_module = AVAILABLE_MODULES[module_name]
+                result = run_subsystem_tests(test_module, module_name)
+                results.append(result)
     else:
         # Run specific test suite
-        if test_choice == "zConfig_Test" and ZCONFIG_AVAILABLE:
-            result = run_subsystem_tests(zConfig_Test, "zConfig")
-            results.append(result)
-        elif test_choice == "zComm_Test" and ZCOMM_AVAILABLE:
-            result = run_subsystem_tests(zComm_Test, "zComm")
-            results.append(result)
-        elif test_choice == "zAuth_Test" and ZAUTH_AVAILABLE:
-            result = run_subsystem_tests(zAuth_Test, "zAuth")
-            results.append(result)
-        elif test_choice == "zDisplay_Test" and ZDISPLAY_AVAILABLE:
-            result = run_subsystem_tests(zDisplay_Test, "zDisplay")
-            results.append(result)
-        elif test_choice == "zDispatch_Test" and ZDISPATCH_AVAILABLE:
-            result = run_subsystem_tests(zDispatch_Test, "zDispatch")
-            results.append(result)
-        elif test_choice == "zParser_Test" and ZPARSER_AVAILABLE:
-            result = run_subsystem_tests(zParser_Test, "zParser")
-            results.append(result)
-        elif test_choice == "zLoader_Test" and ZLOADER_AVAILABLE:
-            result = run_subsystem_tests(zLoader_Test, "zLoader")
-            results.append(result)
-        elif test_choice == "zFunc_Test" and ZFUNC_AVAILABLE:
-            result = run_subsystem_tests(zFunc_Test, "zFunc")
-            results.append(result)
-        elif test_choice == "zDialog_Test" and ZDIALOG_AVAILABLE:
-            result = run_subsystem_tests(zDialog_Test, "zDialog")
-            results.append(result)
-        elif test_choice == "zOpen_Test" and ZOPEN_AVAILABLE:
-            result = run_subsystem_tests(zOpen_Test, "zOpen")
-            results.append(result)
-        elif test_choice == "zShell_Test" and ZSHELL_AVAILABLE:
-            result = run_subsystem_tests(zShell_Test, "zShell")
-            results.append(result)
-        elif test_choice == "zWizard_Test" and ZWIZARD_AVAILABLE:
-            result = run_subsystem_tests(zWizard_Test, "zWizard")
-            results.append(result)
-        elif test_choice == "zUtils_Test" and ZUTILS_AVAILABLE:
-            result = run_subsystem_tests(zUtils_Test, "zUtils")
-            results.append(result)
-        elif test_choice == "zData_Test" and ZDATA_AVAILABLE:
-            result = run_subsystem_tests(zData_Test, "zData")
-            results.append(result)
-        elif test_choice == "zWalker_Test" and ZWALKER_AVAILABLE:
-            result = run_subsystem_tests(zWalker_Test, "zWalker")
+        # Extract module name from test_choice (e.g., "zConfig_Test" -> "zConfig")
+        module_name = test_choice.replace('_Test', '')
+        
+        if module_name in AVAILABLE_MODULES:
+            test_module = AVAILABLE_MODULES[module_name]
+            result = run_subsystem_tests(test_module, module_name)
             results.append(result)
         else:
             print(f"❌ Test suite '{test_choice}' not available!")

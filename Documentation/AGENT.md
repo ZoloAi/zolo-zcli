@@ -1,8 +1,10 @@
 # zCLI Agent Guide (LLM-Optimized)
 
-**Target**: AI coding assistants | **Format**: Dense, technical | **Version**: 1.5.0
+**Target**: AI coding assistants | **Format**: Dense, technical | **Version**: 1.5.2
 
 **Package Installation**: All test files, demos, and schemas are included in the distribution via `pyproject.toml` and `MANIFEST.in`
+
+**Latest Update (v1.5.2)**: Added 13 integration/E2E tests. Refactored test runner to use loop-based imports (DRY). All 573 tests passing (563 unit + 10 skipped optional).
 
 **Latest Update (v1.5.1)**: Fixed 8 critical bugs in zWalker/zData/zDialog integration. All CRUD operations now fully functional. See `RELEASE_1.5.1.md` for details.
 
@@ -14,6 +16,101 @@
 **Architecture**: 3-layer (Foundation → Core → Services → Orchestrator)  
 **Config**: Layer 0 (no zDisplay), Others: Layer 1+ (has zDisplay)  
 **Test Suite**: `zTestSuite/run_all_tests.py` (524 tests, 100%)
+
+---
+
+## ⚠️ Common AI Agent Mistakes (Learn from v1.5.2 Test Fixes)
+
+### 1. **Mocking zDisplay Methods - WRONG APPROACH**
+```python
+# ❌ WRONG: Trying to patch at module level
+@patch('zCLI.subsystems.zDisplay.zDisplay.read_string')
+def test_dialog(mock_input):
+    # This fails: zDisplay is a MODULE, not where the method lives
+    pass
+```
+
+**Why it fails**: `zCLI.subsystems.zDisplay.zDisplay` is the MODULE path, but `read_string` is a method on the **class instance**, not the module.
+
+### 2. **Mocking zDisplay Methods - CORRECT APPROACH**
+```python
+# ✅ CORRECT: Mock on the instance
+def test_dialog(self):
+    with patch.object(self.zcli.display, 'read_string') as mock_input:
+        mock_input.return_value = "user input"
+        # Now it works - you're patching the actual instance method
+        result = self.zcli.dispatch.handle(...)
+```
+
+### 3. **Walker Initialization - WRONG**
+```python
+# ❌ WRONG: Trying to call initialize() method
+walker = self.zcli.walker
+walker.initialize(zSpark)  # AttributeError: no such method!
+```
+
+### 4. **Walker Initialization - CORRECT**
+```python
+# ✅ CORRECT: Pass config to zCLI, then run walker
+zcli = zCLI({
+    "zWorkspace": os.getcwd(),
+    "zVaFile": "@.zUI.users_menu",  # The UI file to load
+    "zBlock": "zVaF"                # The root block to start from
+})
+zcli.walker.run()  # Walker reads config from zcli.session
+```
+
+**See**: `Demos/User Manager/run.py` for the canonical pattern.
+
+### 5. **Dialog Submission - WRONG**
+```python
+# ❌ WRONG: Passing walker=None to dialog operations
+result = zcli.dispatch.handle("key", dialog_config, walker=None)
+# ValueError: handle_submit requires a walker instance
+```
+
+### 6. **Dialog Submission - CORRECT**
+```python
+# ✅ CORRECT: Create mock walker with required attributes
+mock_walker = Mock()
+mock_walker.session = zcli.session
+mock_walker.display = zcli.display
+mock_walker.dispatch = zcli.dispatch
+
+result = zcli.dispatch.handle("key", dialog_config, walker=mock_walker)
+```
+
+**Why**: Dialog submission (`onSubmit`) uses the walker to dispatch subsequent actions. The walker MUST have `session`, `display`, and `dispatch` attributes.
+
+### 7. **Test Fixtures - Use Demos as Reference**
+```python
+# ✅ BEST PRACTICE: Model tests after working demos
+# See: Demos/User Manager/
+#   - zUI.users_menu.yaml (correct YAML structure)
+#   - run.py (correct initialization pattern)
+#   - zSchema.users_master.yaml (correct schema format)
+```
+
+**Lesson**: When testing integration/E2E, always reference the actual working demo to understand the correct usage patterns.
+
+### 8. **zDialog Mocking - Complete Pattern**
+```python
+# ✅ CORRECT: Mock zDialog to return form data
+with patch.object(zcli.display, 'zDialog') as mock_dialog:
+    # Mock returns the user's form input as a dict
+    mock_dialog.return_value = {"email": "test@example.com", "name": "TestUser"}
+    
+    # Now dispatch the dialog - it will use the mocked return value
+    result = zcli.dispatch.handle("form", {
+        "zDialog": {
+            "model": "User",
+            "fields": ["email", "name"],
+            "onSubmit": {"zData": {...}}
+        }
+    }, walker=mock_walker, context={"zcli": zcli})
+```
+
+**Key**: Mock `zDialog()` (the method), not `read_string()` - zDialog internally handles the form input loop.
 
 ---
 
@@ -518,5 +615,5 @@ EXTENSIONS AUTO-ADDED:
 
 ---
 
-**End of Agent Guide** | Last Updated: v1.5.0 | Total Tokens: ~3.5k
+**End of Agent Guide** | Last Updated: v1.5.2 | Total Tokens: ~4.2k
 
