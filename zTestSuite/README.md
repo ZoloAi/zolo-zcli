@@ -43,11 +43,77 @@ Tests for configuration subsystem including:
 
 ## 🏗️ Test Structure
 
-Each test module includes:
-1. **Unit Tests**: Individual component testing
-2. **Integration Tests**: Subsystem interaction testing
-3. **Permission Tests**: File system and access validation
-4. **Mock Tests**: Isolated testing with mocked dependencies
+### Test Types
+
+#### 1. **Unit Tests** (Most test files: zConfig_Test, zDisplay_Test, etc.)
+Individual component testing with mocked dependencies:
+- Test single subsystem in isolation
+- Mock external dependencies
+- Fast execution
+- Example: `TestConfigPaths`, `TestzDisplayInitialization`
+
+#### 2. **Integration Tests** (zIntegration_Test.py)
+Real subsystem interaction testing:
+- Test multiple subsystems working together
+- Use real implementations (minimal mocking)
+- Verify actual data flow between components
+- Test end-to-end workflows
+- Example: Complete CRUD workflow (zLoader → zParser → zDispatch → zData)
+
+#### 3. **Permission Tests**
+File system and access validation:
+- Directory creation and write permissions
+- Cross-platform path handling
+- Example: `TestWritePermissions`
+
+#### 4. **Mock Tests**
+Isolated testing with controlled behavior:
+- Test error conditions
+- Test edge cases
+- Example: Testing error handling with mocked failures
+
+## 🔗 Integration Tests Explained
+
+**What is an integration test?**
+
+Unlike unit tests that test components in isolation with mocks, integration tests verify that multiple real subsystems work together correctly.
+
+**Key Differences:**
+
+| Aspect | Unit Test | Integration Test |
+|--------|-----------|------------------|
+| **Scope** | Single component | Multiple subsystems |
+| **Dependencies** | Mocked | Real implementations |
+| **Speed** | Fast (milliseconds) | Slower (seconds) |
+| **Purpose** | Verify component logic | Verify system interactions |
+| **Example** | Test zLoader parses YAML | Test zLoader → zParser → zData workflow |
+
+**When to write integration tests:**
+- Testing workflows that span multiple subsystems
+- Verifying data flows correctly between components
+- Testing real file I/O, database operations, etc.
+- Validating end-to-end user scenarios (like the User Manager demo)
+
+**Example from zIntegration_Test.py:**
+```python
+def test_complete_crud_workflow(self):
+    """Test complete CRUD workflow: Create table, Insert, Read, Update, Delete."""
+    # Step 1: CREATE TABLE (zData + zSchema integration)
+    create_result = self.z.data.handle({
+        "model": "@.zSchema.integration_test",
+        "action": "create"
+    })
+    
+    # Step 2: INSERT data (zData + zParser integration)
+    insert_result = self.z.data.handle({
+        "action": "insert",
+        "table": "products",
+        "data": {"name": "Test Product", "price": 29.99}
+    })
+    
+    # Step 3: READ data (verify insert worked)
+    # ... and so on
+```
 
 ## 📝 Writing New Tests
 

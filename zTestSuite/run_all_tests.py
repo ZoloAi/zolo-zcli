@@ -37,6 +37,7 @@ TEST_MODULES = [
     'zUtils',
     'zData',
     'zWalker',
+    'zIntegration',  # Integration tests - test multiple subsystems working together
 ]
 
 # Dynamically import all test modules
