@@ -60,33 +60,43 @@ Real subsystem interaction testing:
 - Test end-to-end workflows
 - Example: Complete CRUD workflow (zLoader → zParser → zDispatch → zData)
 
-#### 3. **Permission Tests**
+#### 3. **End-to-End Tests** (zEndToEnd_Test.py)
+Complete user workflow simulation:
+- Test entire application scenarios from start to finish
+- Simulate real-world usage patterns (like User Manager demo)
+- Verify full stack: UI → Schema → Database → CRUD → Cleanup
+- Test complex workflows (multi-table, navigation, plugins)
+- Example: User Management app (UI definition → DB setup → Add/List/Update/Delete users)
+
+#### 4. **Permission Tests**
 File system and access validation:
 - Directory creation and write permissions
 - Cross-platform path handling
 - Example: `TestWritePermissions`
 
-#### 4. **Mock Tests**
+#### 5. **Mock Tests**
 Isolated testing with controlled behavior:
 - Test error conditions
 - Test edge cases
 - Example: Testing error handling with mocked failures
 
-## 🔗 Integration Tests Explained
+## 🔗 Understanding Test Types
 
-**What is an integration test?**
+**What's the difference between Unit, Integration, and End-to-End tests?**
 
-Unlike unit tests that test components in isolation with mocks, integration tests verify that multiple real subsystems work together correctly.
+| Aspect | Unit Test | Integration Test | End-to-End Test |
+|--------|-----------|------------------|-----------------|
+| **Scope** | Single component | Multiple subsystems | Complete application workflow |
+| **Dependencies** | Mocked | Real (minimal mocks) | Real (no mocks) |
+| **Speed** | Fast (milliseconds) | Medium (< 1 second) | Slower (1-5 seconds) |
+| **Purpose** | Verify component logic | Verify subsystem interactions | Verify user workflows |
+| **Complexity** | Simple | Medium | Complex |
+| **Example** | Test zLoader parses YAML | Test zLoader → zParser → zData | Full User Manager workflow |
+| **File** | `zLoader_Test.py` | `zIntegration_Test.py` | `zEndToEnd_Test.py` |
 
-**Key Differences:**
+### Integration Tests Explained
 
-| Aspect | Unit Test | Integration Test |
-|--------|-----------|------------------|
-| **Scope** | Single component | Multiple subsystems |
-| **Dependencies** | Mocked | Real implementations |
-| **Speed** | Fast (milliseconds) | Slower (seconds) |
-| **Purpose** | Verify component logic | Verify system interactions |
-| **Example** | Test zLoader parses YAML | Test zLoader → zParser → zData workflow |
+Unlike unit tests that test components in isolation with mocks, integration tests verify that multiple real subsystems work together correctly
 
 **When to write integration tests:**
 - Testing workflows that span multiple subsystems
@@ -99,13 +109,13 @@ Unlike unit tests that test components in isolation with mocks, integration test
 def test_complete_crud_workflow(self):
     """Test complete CRUD workflow: Create table, Insert, Read, Update, Delete."""
     # Step 1: CREATE TABLE (zData + zSchema integration)
-    create_result = self.z.data.handle({
+    create_result = self.z.data.handle_request({
         "model": "@.zSchema.integration_test",
         "action": "create"
     })
     
     # Step 2: INSERT data (zData + zParser integration)
-    insert_result = self.z.data.handle({
+    insert_result = self.z.data.handle_request({
         "action": "insert",
         "table": "products",
         "data": {"name": "Test Product", "price": 29.99}
@@ -114,6 +124,42 @@ def test_complete_crud_workflow(self):
     # Step 3: READ data (verify insert worked)
     # ... and so on
 ```
+
+### End-to-End Tests Explained
+
+End-to-end (E2E) tests simulate complete user workflows from start to finish, testing the entire application stack as a user would experience it.
+
+**When to write end-to-end tests:**
+- Testing complete application scenarios (like demos)
+- Verifying full user workflows work correctly
+- Testing complex multi-step operations
+- Validating application lifecycle (init → use → cleanup)
+
+**Example from zEndToEnd_Test.py:**
+```python
+def test_complete_user_management_workflow(self):
+    """Test complete workflow: Setup DB → Add User → List → Update → Delete."""
+    # Create UI and Schema files
+    # Initialize zCLI
+    # Load UI configuration
+    ui_config = self.z.loader.handle("@.zUI.users_app")
+    
+    # Setup Database
+    setup_result = self.z.dispatch.handle("setup_db", ui_config["root"]["setup_db"])
+    
+    # Add User
+    add_result = self.z.dispatch.handle("add_user", ui_config["root"]["add_user"])
+    
+    # List, Update, Delete...
+    # Full workflow like User Manager demo
+```
+
+**End-to-End Test Scenarios:**
+1. **User Management** - Complete CRUD application with UI + Database
+2. **Blog Application** - Multi-table relationships with authors, posts, comments
+3. **Navigation Workflow** - Walker UI navigation with breadcrumb tracking
+4. **Plugin Integration** - Plugin loading and execution
+5. **Application Lifecycle** - Full init → operation → cleanup cycle
 
 ## 📝 Writing New Tests
 

@@ -38,6 +38,7 @@ TEST_MODULES = [
     'zData',
     'zWalker',
     'zIntegration',  # Integration tests - test multiple subsystems working together
+    'zEndToEnd',     # End-to-end tests - simulate complete user workflows
 ]
 
 # Dynamically import all test modules

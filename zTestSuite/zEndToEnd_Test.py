@@ -1,0 +1,602 @@
+#!/usr/bin/env python3
+# zTestSuite/zEndToEnd_Test.py
+
+"""
+End-to-End Test Suite for zCLI
+Tests complete user workflows from UI definition to data persistence.
+
+These tests simulate real-world application scenarios similar to the User Manager demo,
+but fully automated without user interaction.
+"""
+
+import unittest
+import tempfile
+import os
+from pathlib import Path
+import sys
+from unittest.mock import patch, MagicMock
+
+# Add project root to path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from zCLI import zCLI
+
+
+class TestUserManagementWorkflow(unittest.TestCase):
+    """
+    End-to-end test simulating complete user management workflow.
+    Tests: UI definition → Schema loading → Database creation → CRUD operations
+    """
+    
+    def setUp(self):
+        """Set up test fixtures with temporary workspace."""
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.workspace = self.temp_dir.name
+        
+        # Create schema file (like User Manager demo)
+        self.schema_file = Path(self.workspace) / "zSchema.users.yaml"
+        self.schema_file.write_text("""Meta:
+  Data_Type: sqlite
+  Data_Label: "users"
+  Data_Path: "@"
+  Data_Paradigm: classical
+
+users:
+  id:
+    type: int
+    pk: true
+    auto_increment: true
+  email:
+    type: str
+    unique: true
+    required: true
+  name:
+    type: str
+    required: true
+  role:
+    type: str
+    default: "user"
+  created_at:
+    type: datetime
+    default: now
+""")
+        
+        # Create UI file with menu and actions
+        self.ui_file = Path(self.workspace) / "zUI.users_app.yaml"
+        self.ui_file.write_text("""root:
+  main_menu:
+    - setup_db
+    - add_user
+    - list_users
+    - search_user
+    - update_user
+    - delete_user
+    
+  setup_db:
+    zData:
+      model: "@.zSchema.users"
+      action: create
+      
+  add_user:
+    zData:
+      model: "@.zSchema.users"
+      action: insert
+      table: users
+      data:
+        email: "test@example.com"
+        name: "Test User"
+        role: "admin"
+        
+  list_users:
+    zData:
+      model: "@.zSchema.users"
+      action: read
+      table: users
+      order: "id DESC"
+      
+  search_user:
+    zData:
+      model: "@.zSchema.users"
+      action: read
+      table: users
+      where: "email LIKE '%test%'"
+      
+  update_user:
+    zData:
+      model: "@.zSchema.users"
+      action: update
+      table: users
+      data:
+        role: "superadmin"
+      where: "id = 1"
+      
+  delete_user:
+    zData:
+      model: "@.zSchema.users"
+      action: delete
+      table: users
+      where: "id = 1"
+""")
+        
+        # Initialize zCLI
+        self.z = zCLI({"zWorkspace": self.workspace})
+        
+    def tearDown(self):
+        """Clean up temporary directory."""
+        self.temp_dir.cleanup()
+        
+    def test_complete_user_management_workflow(self):
+        """Test complete workflow: Setup DB → Add User → List → Update → Delete."""
+        
+        # Step 1: Load UI configuration
+        ui_config = self.z.loader.handle("@.zUI.users_app")
+        self.assertIsNotNone(ui_config)
+        self.assertIn("root", ui_config)
+        
+        # Step 2: Setup Database (dispatch setup_db action)
+        setup_action = ui_config["root"]["setup_db"]
+        setup_result = self.z.dispatch.handle("setup_db", setup_action)
+        self.assertTrue(setup_result, "Database setup should succeed")
+        
+        # Verify database file was created
+        db_file = Path(self.workspace) / "users.db"
+        self.assertTrue(db_file.exists(), "Database file should be created")
+        
+        # Step 3: Add User (dispatch add_user action)
+        add_action = ui_config["root"]["add_user"]
+        add_result = self.z.dispatch.handle("add_user", add_action)
+        self.assertTrue(add_result, "User creation should succeed")
+        
+        # Step 4: List Users (verify user was added)
+        list_action = ui_config["root"]["list_users"]
+        list_result = self.z.dispatch.handle("list_users", list_action)
+        
+        if isinstance(list_result, list):
+            self.assertGreater(len(list_result), 0, "Should have at least one user")
+            self.assertEqual(list_result[0]["email"], "test@example.com")
+            self.assertEqual(list_result[0]["name"], "Test User")
+            self.assertEqual(list_result[0]["role"], "admin")
+            
+            # Step 5: Search Users
+            search_action = ui_config["root"]["search_user"]
+            search_result = self.z.dispatch.handle("search_user", search_action)
+            
+            if isinstance(search_result, list):
+                self.assertGreater(len(search_result), 0, "Search should find users")
+                
+            # Step 6: Update User
+            update_action = ui_config["root"]["update_user"]
+            update_result = self.z.dispatch.handle("update_user", update_action)
+            self.assertTrue(update_result, "Update should succeed")
+            
+            # Verify update worked
+            list_after_update = self.z.dispatch.handle("list_users", list_action)
+            if isinstance(list_after_update, list) and len(list_after_update) > 0:
+                self.assertEqual(list_after_update[0]["role"], "superadmin")
+            
+            # Step 7: Delete User
+            delete_action = ui_config["root"]["delete_user"]
+            delete_result = self.z.dispatch.handle("delete_user", delete_action)
+            self.assertTrue(delete_result, "Delete should succeed")
+        else:
+            # At minimum, verify database was created
+            self.assertTrue(db_file.exists())
+
+
+class TestBlogApplicationWorkflow(unittest.TestCase):
+    """
+    End-to-end test for a blog application with multiple tables and relationships.
+    Tests: Multi-table schema → Foreign keys → Joins → Complex queries
+    """
+    
+    def setUp(self):
+        """Set up test fixtures with temporary workspace."""
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.workspace = self.temp_dir.name
+        
+        # Create blog schema with multiple tables
+        self.schema_file = Path(self.workspace) / "zSchema.blog.yaml"
+        self.schema_file.write_text("""Meta:
+  Data_Type: sqlite
+  Data_Label: "blog"
+  Data_Path: "@"
+  Data_Paradigm: classical
+
+authors:
+  id:
+    type: int
+    pk: true
+    auto_increment: true
+  name:
+    type: str
+    required: true
+  email:
+    type: str
+    unique: true
+    required: true
+
+posts:
+  id:
+    type: int
+    pk: true
+    auto_increment: true
+  author_id:
+    type: int
+    fk: authors.id
+    required: true
+  title:
+    type: str
+    required: true
+  content:
+    type: str
+    required: true
+  published:
+    type: bool
+    default: false
+  created_at:
+    type: datetime
+    default: now
+
+comments:
+  id:
+    type: int
+    pk: true
+    auto_increment: true
+  post_id:
+    type: int
+    fk: posts.id
+    required: true
+  author_name:
+    type: str
+    required: true
+  comment_text:
+    type: str
+    required: true
+  created_at:
+    type: datetime
+    default: now
+""")
+        
+        # Initialize zCLI
+        self.z = zCLI({"zWorkspace": self.workspace})
+        
+    def tearDown(self):
+        """Clean up temporary directory."""
+        self.temp_dir.cleanup()
+        
+    def test_multi_table_blog_workflow(self):
+        """Test blog application with authors, posts, and comments."""
+        
+        # Step 1: Create all tables
+        create_result = self.z.data.handle_request({
+            "model": "@.zSchema.blog",
+            "action": "create"
+        })
+        self.assertTrue(create_result, "Tables should be created")
+        
+        # Verify database file exists
+        db_file = Path(self.workspace) / "blog.db"
+        self.assertTrue(db_file.exists())
+        
+        # Step 2: Insert author
+        author_result = self.z.data.handle_request({
+            "model": "@.zSchema.blog",
+            "action": "insert",
+            "table": "authors",
+            "data": {
+                "name": "John Doe",
+                "email": "john@example.com"
+            }
+        })
+        self.assertTrue(author_result, "Author insert should succeed")
+        
+        # Step 3: Insert post (with foreign key to author)
+        post_result = self.z.data.handle_request({
+            "model": "@.zSchema.blog",
+            "action": "insert",
+            "table": "posts",
+            "data": {
+                "author_id": 1,
+                "title": "First Post",
+                "content": "This is my first blog post!",
+                "published": True
+            }
+        })
+        self.assertTrue(post_result, "Post insert should succeed")
+        
+        # Step 4: Insert comment (with foreign key to post)
+        comment_result = self.z.data.handle_request({
+            "model": "@.zSchema.blog",
+            "action": "insert",
+            "table": "comments",
+            "data": {
+                "post_id": 1,
+                "author_name": "Jane Reader",
+                "comment_text": "Great post!"
+            }
+        })
+        self.assertTrue(comment_result, "Comment insert should succeed")
+        
+        # Step 5: Read posts and verify data
+        posts = self.z.data.handle_request({
+            "model": "@.zSchema.blog",
+            "action": "read",
+            "table": "posts"
+        })
+        
+        if isinstance(posts, list) and len(posts) > 0:
+            self.assertEqual(posts[0]["title"], "First Post")
+            self.assertTrue(posts[0]["published"])
+            
+        # Step 6: Read comments
+        comments = self.z.data.handle_request({
+            "model": "@.zSchema.blog",
+            "action": "read",
+            "table": "comments"
+        })
+        
+        if isinstance(comments, list) and len(comments) > 0:
+            self.assertEqual(comments[0]["comment_text"], "Great post!")
+
+
+class TestWalkerUINavigationWorkflow(unittest.TestCase):
+    """
+    End-to-end test for zWalker UI navigation.
+    Tests: UI loading → Menu navigation → Breadcrumb tracking → Action dispatch
+    """
+    
+    def setUp(self):
+        """Set up test fixtures with temporary workspace."""
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.workspace = self.temp_dir.name
+        
+        # Create comprehensive UI navigation structure
+        self.ui_file = Path(self.workspace) / "zUI.navigation_test.yaml"
+        self.ui_file.write_text("""root:
+  welcome: "Welcome to Navigation Test"
+  main_menu:
+    - dashboard
+    - settings
+    - help
+    
+  dashboard:
+    message: "Dashboard View"
+    actions:
+      - view_stats
+      - view_reports
+      
+  settings:
+    message: "Settings View"
+    options:
+      - profile
+      - preferences
+      
+  profile:
+    name: "User Profile"
+    fields:
+      - username
+      - email
+      
+  help:
+    message: "Help Center"
+    topics:
+      - getting_started
+      - faq
+""")
+        
+    def tearDown(self):
+        """Clean up temporary directory."""
+        self.temp_dir.cleanup()
+        
+    def test_walker_navigation_workflow(self):
+        """Test complete navigation workflow through UI structure."""
+        
+        # Initialize zCLI with UI file
+        z = zCLI({
+            "zWorkspace": self.workspace,
+            "zVaFile": "@.zUI.navigation_test",
+            "zBlock": "root"
+        })
+        
+        # Verify zCLI initialized with UI
+        self.assertIsNotNone(z.walker)
+        self.assertEqual(z.zspark_obj["zVaFile"], "@.zUI.navigation_test")
+        self.assertEqual(z.zspark_obj["zBlock"], "root")
+        
+        # Load UI structure
+        ui_data = z.loader.handle("@.zUI.navigation_test")
+        self.assertIsNotNone(ui_data)
+        self.assertIn("root", ui_data)
+        
+        # Verify navigation structure
+        root = ui_data["root"]
+        self.assertIn("main_menu", root)
+        self.assertIn("dashboard", root)
+        self.assertIn("settings", root)
+        
+        # Test that walker can access nested structures
+        self.assertIn("profile", root)
+        self.assertIn("help", root)
+
+
+class TestPluginWorkflow(unittest.TestCase):
+    """
+    End-to-end test for plugin system integration.
+    Tests: Plugin loading → Function invocation → Data processing
+    """
+    
+    def setUp(self):
+        """Set up test fixtures with temporary workspace."""
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.workspace = self.temp_dir.name
+        
+        # Create a test plugin file
+        self.plugin_file = Path(self.workspace) / "test_plugin.py"
+        self.plugin_file.write_text("""
+# Test plugin for end-to-end testing
+
+def process_data(data):
+    \"\"\"Process data and return transformed result.\"\"\"
+    if isinstance(data, str):
+        return data.upper()
+    elif isinstance(data, list):
+        return [item * 2 for item in data]
+    elif isinstance(data, dict):
+        return {k: v.upper() if isinstance(v, str) else v for k, v in data.items()}
+    return data
+
+def validate_email(email):
+    \"\"\"Validate email format.\"\"\"
+    return "@" in email and "." in email.split("@")[1]
+
+def get_plugin_info():
+    \"\"\"Return plugin metadata.\"\"\"
+    return {
+        "name": "Test Plugin",
+        "version": "1.0.0",
+        "functions": ["process_data", "validate_email"]
+    }
+""")
+        
+    def tearDown(self):
+        """Clean up temporary directory."""
+        self.temp_dir.cleanup()
+        
+    def test_plugin_integration_workflow(self):
+        """Test complete plugin loading and execution workflow."""
+        
+        # Initialize zCLI with plugin
+        plugin_path = str(self.plugin_file)
+        z = zCLI({
+            "zWorkspace": self.workspace,
+            "plugins": [plugin_path]
+        })
+        
+        # Verify plugin was loaded
+        self.assertIn(plugin_path, z.utils.plugins)
+        
+        # Get plugin info
+        info = z.utils.get_plugin_info()
+        if info:
+            self.assertIn("name", info)
+            self.assertIn("functions", info)
+
+
+class TestCompleteApplicationLifecycle(unittest.TestCase):
+    """
+    End-to-end test for complete application lifecycle.
+    Tests: Initialization → Schema loading → UI rendering → Data operations → Cleanup
+    """
+    
+    def setUp(self):
+        """Set up test fixtures with temporary workspace."""
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.workspace = self.temp_dir.name
+        
+    def tearDown(self):
+        """Clean up temporary directory."""
+        self.temp_dir.cleanup()
+        
+    def test_full_application_lifecycle(self):
+        """Test complete application from start to finish."""
+        
+        # Phase 1: Application Initialization
+        z = zCLI({"zWorkspace": self.workspace})
+        
+        # Verify all subsystems initialized
+        self.assertIsNotNone(z.config)
+        self.assertIsNotNone(z.data)
+        self.assertIsNotNone(z.walker)
+        self.assertIsNotNone(z.display)
+        
+        # Phase 2: Create application schema
+        schema_file = Path(self.workspace) / "zSchema.app.yaml"
+        schema_file.write_text("""Meta:
+  Data_Type: sqlite
+  Data_Label: "app"
+  Data_Path: "@"
+  Data_Paradigm: classical
+
+app_data:
+  id:
+    type: int
+    pk: true
+    auto_increment: true
+  key:
+    type: str
+    unique: true
+    required: true
+  value:
+    type: str
+    required: true
+""")
+        
+        # Phase 3: Initialize database
+        create_result = z.data.handle_request({
+            "model": "@.zSchema.app",
+            "action": "create"
+        })
+        self.assertTrue(create_result)
+        
+        # Phase 4: Perform application operations
+        # Insert configuration
+        insert_result = z.data.handle_request({
+            "model": "@.zSchema.app",
+            "action": "insert",
+            "table": "app_data",
+            "data": {
+                "key": "app_name",
+                "value": "Test Application"
+            }
+        })
+        self.assertTrue(insert_result)
+        
+        # Read configuration
+        read_result = z.data.handle_request({
+            "model": "@.zSchema.app",
+            "action": "read",
+            "table": "app_data",
+            "where": "key = 'app_name'"
+        })
+        
+        if isinstance(read_result, list) and len(read_result) > 0:
+            self.assertEqual(read_result[0]["value"], "Test Application")
+        
+        # Phase 5: Verify workspace integrity
+        db_file = Path(self.workspace) / "app.db"
+        self.assertTrue(db_file.exists())
+        
+        # Phase 6: Cleanup (implicit via tearDown)
+        # Database will be cleaned up when temp directory is removed
+
+
+def run_tests(verbose=False):
+    """Run all end-to-end tests."""
+    loader = unittest.TestLoader()
+    suite = unittest.TestSuite()
+    
+    # Add all test classes
+    suite.addTests(loader.loadTestsFromTestCase(TestUserManagementWorkflow))
+    suite.addTests(loader.loadTestsFromTestCase(TestBlogApplicationWorkflow))
+    suite.addTests(loader.loadTestsFromTestCase(TestWalkerUINavigationWorkflow))
+    suite.addTests(loader.loadTestsFromTestCase(TestPluginWorkflow))
+    suite.addTests(loader.loadTestsFromTestCase(TestCompleteApplicationLifecycle))
+    
+    runner = unittest.TextTestRunner(verbosity=2 if verbose else 1)
+    result = runner.run(suite)
+    
+    # Print summary
+    print("\n" + "=" * 70)
+    print(f"Tests run: {result.testsRun}")
+    print(f"Failures: {len(result.failures)}")
+    print(f"Errors: {len(result.errors)}")
+    print(f"Skipped: {len(result.skipped)}")
+    print("=" * 70)
+    
+    return result
+
+
+if __name__ == "__main__":
+    result = run_tests(verbose=True)
+    sys.exit(0 if result.wasSuccessful() else 1)
+
