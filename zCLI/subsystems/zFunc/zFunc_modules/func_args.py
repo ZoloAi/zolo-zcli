@@ -30,17 +30,17 @@ def parse_arguments(arg_str, zContext, split_fn, logger_instance, zparser=None):
                 zconv_data = zContext.get("zConv", {})
                 value = zconv_data.get(field) if isinstance(zconv_data, dict) else None
                 parsed_args.append(value)
-                logger_instance.debug("Resolved 'zConv.%s' → %s", field, value)
+                logger_instance.debug("Resolved 'zConv.%s' => %s", field, value)
             elif isinstance(zContext, dict) and arg.startswith("this."):
                 key = arg.replace("this.", "")
                 value = zContext.get(key)
                 parsed_args.append(value)
-                logger_instance.debug("Resolved 'this.%s' → %s", key, value)
+                logger_instance.debug("Resolved 'this.%s' => %s", key, value)
             else:
                 # Use zParser for safe evaluation
                 if zparser:
                     evaluated = zparser.parse_json_expr(arg)
-                    logger_instance.debug("Evaluated via zParser '%s' → %s", arg, evaluated)
+                    logger_instance.debug("Evaluated via zParser '%s' => %s", arg, evaluated)
                 else:
                     # No zParser available - treat as string literal
                     evaluated = arg

@@ -37,7 +37,7 @@ class zFunc:
                 zHorizontal, 
                 zContext
             )
-            self.logger.debug("Parsed → func_path: %s, arg_str: %s, function_name: %s", 
+            self.logger.debug("Parsed => func_path: %s, arg_str: %s, function_name: %s", 
                             func_path, arg_str, function_name)
 
             # Step 2: Parse arguments
