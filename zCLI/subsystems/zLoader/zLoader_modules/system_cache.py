@@ -60,7 +60,7 @@ class SystemCache:
                         # File changed - invalidate
                         self.stats["invalidations"] += 1
                         self.logger.debug(
-                            "[SystemCache STALE] %s (mtime: %s → %s)",
+                            "[SystemCache STALE] %s (mtime: %s => %s)",
                             key, cached_mtime, current_mtime
                         )
                         del cache[key]

@@ -59,7 +59,7 @@ class SchemaCache:
             handler = self.connections[alias_name]
             handler.adapter.begin_transaction()
             self.transaction_active[alias_name] = True
-            self.logger.info("🔄 Transaction started for $%s", alias_name)
+            self.logger.info("[TXN] Transaction started for $%s", alias_name)
         else:
             self.logger.warning("Cannot begin transaction - no connection for $%s", alias_name)
 
@@ -69,7 +69,7 @@ class SchemaCache:
             handler = self.connections[alias_name]
             handler.adapter.commit()
             self.transaction_active[alias_name] = False
-            self.logger.info("✅ Transaction committed for $%s", alias_name)
+            self.logger.info("[OK] Transaction committed for $%s", alias_name)
         else:
             self.logger.warning("Cannot commit transaction - no connection for $%s", alias_name)
 
@@ -79,7 +79,7 @@ class SchemaCache:
             handler = self.connections[alias_name]
             handler.adapter.rollback()
             self.transaction_active[alias_name] = False
-            self.logger.warning("↩️  Transaction rolled back for $%s", alias_name)
+            self.logger.warning("[ROLLBACK] Transaction rolled back for $%s", alias_name)
         else:
             self.logger.warning("Cannot rollback transaction - no connection for $%s", alias_name)
 

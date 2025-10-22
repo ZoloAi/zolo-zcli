@@ -34,7 +34,7 @@ class PinnedCache:
                 "loaded_at": time.time()
             }
 
-            self.logger.info("[PinnedCache] Alias loaded: $%s → %s", alias_name, zpath)
+            self.logger.info("[PinnedCache] Alias loaded: $%s => %s", alias_name, zpath)
 
         except Exception as e:
             self.logger.error("[PinnedCache ERROR] %s - %s", alias_name, e)

@@ -100,7 +100,7 @@ class PluginCache:
                         # File changed - invalidate
                         self.stats["invalidations"] += 1
                         self.logger.debug(
-                            "[PluginCache STALE] %s (mtime: %s → %s)",
+                            "[PluginCache STALE] %s (mtime: %s => %s)",
                             plugin_name, cached_mtime, current_mtime
                         )
                         del cache[plugin_name]
@@ -155,7 +155,7 @@ class PluginCache:
                 if existing_path != file_path:
                     self.stats["collisions"] += 1
                     raise ValueError(
-                        f"❌ Plugin name collision: '{plugin_name}'\n"
+                        f"[ERROR] Plugin name collision: '{plugin_name}'\n"
                         f"   Already loaded from: {existing_path}\n"
                         f"   Attempted to load:   {file_path}\n"
                         f"   Hint: Rename one of the plugin files to avoid collision"
@@ -178,7 +178,7 @@ class PluginCache:
             spec.loader.exec_module(module)
             
             self.stats["loads"] += 1
-            self.logger.debug("[PluginCache LOAD] %s → %s (session injected)", plugin_name, file_path)
+            self.logger.debug("[PluginCache LOAD] %s => %s (session injected)", plugin_name, file_path)
 
             # Cache it by filename
             self.set(plugin_name, module, file_path)
@@ -228,7 +228,7 @@ class PluginCache:
             cache[plugin_name] = entry
             cache.move_to_end(plugin_name)
 
-            self.logger.debug("[PluginCache SET] %s ← %s", plugin_name, file_path)
+            self.logger.debug("[PluginCache SET] %s <= %s", plugin_name, file_path)
 
             # Evict oldest if over limit
             while len(cache) > self.max_size:
