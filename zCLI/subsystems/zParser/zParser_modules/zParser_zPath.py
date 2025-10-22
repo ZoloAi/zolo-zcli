@@ -27,19 +27,19 @@ def resolve_zmachine_path(data_path, logger, config_paths=None):
         config_paths = zConfigPaths()
 
     # Extract the subpath after zMachine prefix
-    # Example: "zMachine.zDataTests" → "zDataTests"
-    # Example: "~.zMachine.Data/cache.csv" → "Data/cache.csv"
+    # Example: "zMachine.zDataTests" => "zDataTests"
+    # Example: "~.zMachine.Data/cache.csv" => "Data/cache.csv"
     subpath = data_path[len(prefix):]
     
     # Convert dot notation to path separators
-    # Example: "zDataTests" stays as is, "tests.zData_tests" → "tests/zData_tests"
+    # Example: "zDataTests" stays as is, "tests.zData_tests" => "tests/zData_tests"
     subpath = subpath.replace(".", "/")
 
     # Build full path using user_data_dir as base
     base_dir = config_paths.user_data_dir
     full_path = base_dir / subpath
 
-    logger.debug("[zMachine Path] %s → %s", data_path, full_path)
+    logger.debug("[zMachine Path] %s => %s", data_path, full_path)
 
     return str(full_path)
 

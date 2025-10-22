@@ -82,7 +82,7 @@ class zParser:
 
             path_parts = data_path[1:].strip(".").split(".")
             resolved = str(workspace / "/".join(path_parts))
-            self.logger.debug("Resolved @ path: %s → %s", data_path, resolved)
+            self.logger.debug("Resolved @ path: %s => %s", data_path, resolved)
             return resolved
 
         # No special prefix, return as-is

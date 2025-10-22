@@ -11,16 +11,16 @@ def parse_zva_file(data, file_type, logger, file_path=None, session=None, displa
     if display:
         display.zDeclare("parse_zva_file", color="SCHEMA", indent=6, style="single")
 
-    logger.info("📨 Parsing zVaFile (type: %s, path: %s)", file_type, file_path or "unknown")
+    logger.info("[INFO] Parsing zVaFile (type: %s, path: %s)", file_type, file_path or "unknown")
 
     if not isinstance(data, dict):
-        logger.error("❌ Invalid zVaFile data: expected dict, got %s", type(data).__name__)
+        logger.error("[ERROR] Invalid zVaFile data: expected dict, got %s", type(data).__name__)
         return {"error": "Invalid data structure", "type": file_type}
 
     # Validate basic structure
     validation_result = validate_zva_structure(data, file_type, logger, file_path)
     if validation_result.get("errors"):
-        logger.error("❌ zVaFile structure validation failed: %s", validation_result["errors"])
+        logger.error("[ERROR] zVaFile structure validation failed: %s", validation_result["errors"])
         return {"error": "Structure validation failed", "details": validation_result}
 
     # Parse based on file type
@@ -36,13 +36,13 @@ def parse_zva_file(data, file_type, logger, file_path=None, session=None, displa
     metadata = extract_zva_metadata(data, file_type, logger)
     result["_metadata"] = metadata
 
-    logger.info("✅ zVaFile parsing completed successfully")
+    logger.info("[OK] zVaFile parsing completed successfully")
     return result
 
 
 def validate_zva_structure(data, file_type, logger, file_path=None):
     """Validate zVaFile structure based on type."""
-    logger.debug("🔍 Validating zVaFile structure (type: %s)", file_type)
+    logger.debug("[CHECK] Validating zVaFile structure (type: %s)", file_type)
 
     validation_result = {
         "valid": True,
@@ -73,7 +73,7 @@ def validate_zva_structure(data, file_type, logger, file_path=None):
 
 def validate_ui_structure(data, logger, file_path=None):  # pylint: disable=unused-argument
     """Validate UI file structure."""
-    logger.debug("🔍 Validating UI file structure")
+    logger.debug("[CHECK] Validating UI file structure")
 
     validation_result = {
         "valid": True,
@@ -179,7 +179,7 @@ def validate_schema_structure(data, logger, file_path=None):  # pylint: disable=
 
 def parse_ui_file(data, logger, file_path=None, session=None):
     """Parse UI file with UI-specific logic and validation."""
-    logger.info("🎨 Parsing UI file")
+    logger.info("[UI] Parsing UI file")
 
     parsed_ui = {
         "type": "ui",
@@ -191,11 +191,11 @@ def parse_ui_file(data, logger, file_path=None, session=None):
     # Process each zBlock (menu section)
     for zblock_name, zblock_data in data.items():
         if not isinstance(zblock_data, dict):
-            logger.warning("⚠️ Skipping invalid zBlock '%s': expected dict, got %s", 
+            logger.warning("[WARN] Skipping invalid zBlock '%s': expected dict, got %s", 
                          zblock_name, type(zblock_data).__name__)
             continue
 
-        logger.debug("🧱 Processing zBlock: %s", zblock_name)
+        logger.debug("[INFO] Processing zBlock: %s", zblock_name)
 
         # Parse zBlock content
         parsed_zblock = parse_ui_zblock(zblock_name, zblock_data, logger, session)
@@ -204,12 +204,12 @@ def parse_ui_file(data, logger, file_path=None, session=None):
     # Extract UI metadata
     parsed_ui["metadata"] = extract_ui_metadata(data)
 
-    logger.info("✅ UI file parsing completed: %d zBlocks processed", len(parsed_ui["zblocks"]))
+    logger.info("[OK] UI file parsing completed: %d zBlocks processed", len(parsed_ui["zblocks"]))
     return parsed_ui
 
 def parse_ui_zblock(zblock_name, zblock_data, logger, session=None):  # pylint: disable=unused-argument
     """Parse individual UI zBlock with validation."""
-    logger.debug("🧱 Parsing zBlock: %s", zblock_name)
+    logger.debug("[INFO] Parsing zBlock: %s", zblock_name)
 
     parsed_zblock = {
         "name": zblock_name,
@@ -236,7 +236,7 @@ def parse_ui_zblock(zblock_name, zblock_data, logger, session=None):  # pylint: 
             construct_type = identify_ui_construct(item_data)
             if construct_type:
                 parsed_zblock["constructs"][construct_type].append(item_name)
-                logger.debug("🔧 Found %s construct: %s", construct_type, item_name)
+                logger.debug("[DEBUG] Found %s construct: %s", construct_type, item_name)
 
         # Parse and validate the item
         parsed_item = parse_ui_item(item_name, item_data, construct_type, logger, session)
@@ -257,7 +257,7 @@ def identify_ui_construct(item_data):
 
 def parse_ui_item(item_name, item_data, construct_type, logger, session=None):  # pylint: disable=unused-argument
     """Parse individual UI item with type-specific validation."""
-    logger.debug("🔧 Parsing UI item: %s (type: %s)", item_name, construct_type or "unknown")
+    logger.debug("[DEBUG] Parsing UI item: %s (type: %s)", item_name, construct_type or "unknown")
 
     parsed_item = {
         "name": item_name,
@@ -365,7 +365,7 @@ def validate_zdisplay_item(item_data):
 
 def parse_schema_file(data, logger, file_path=None, session=None):
     """Parse schema file with schema-specific logic and validation."""
-    logger.info("📋 Parsing schema file")
+    logger.info("[SCHEMA] Parsing schema file")
 
     parsed_schema = {
         "type": "schema",
@@ -381,11 +381,11 @@ def parse_schema_file(data, logger, file_path=None, session=None):
             continue
 
         if not isinstance(table_data, dict):
-            logger.warning("⚠️ Skipping invalid table '%s': expected dict, got %s", 
+            logger.warning("[WARN] Skipping invalid table '%s': expected dict, got %s", 
                          table_name, type(table_data).__name__)
             continue
 
-        logger.debug("🧱 Processing table: %s", table_name)
+        logger.debug("[INFO] Processing table: %s", table_name)
 
         # Parse table structure
         parsed_table = parse_schema_table(table_name, table_data, logger, session)
@@ -394,12 +394,12 @@ def parse_schema_file(data, logger, file_path=None, session=None):
     # Extract schema metadata
     parsed_schema["metadata"] = extract_schema_metadata(data)
 
-    logger.info("✅ Schema file parsing completed: %d tables processed", len(parsed_schema["tables"]))
+    logger.info("[OK] Schema file parsing completed: %d tables processed", len(parsed_schema["tables"]))
     return parsed_schema
 
 def parse_schema_table(table_name, table_data, logger, session=None):  # pylint: disable=unused-argument
     """Parse individual schema table with field validation."""
-    logger.debug("🧱 Parsing schema table: %s", table_name)
+    logger.debug("[INFO] Parsing schema table: %s", table_name)
 
     parsed_table = {
         "name": table_name,
@@ -410,7 +410,7 @@ def parse_schema_table(table_name, table_data, logger, session=None):  # pylint:
 
     # Process each field definition
     for field_name, field_data in table_data.items():
-        logger.debug("🔧 Processing field: %s", field_name)
+        logger.debug("[DEBUG] Processing field: %s", field_name)
 
         # Parse field definition
         parsed_field = parse_schema_field(field_name, field_data, logger, session)
@@ -420,7 +420,7 @@ def parse_schema_table(table_name, table_data, logger, session=None):  # pylint:
 
 def parse_schema_field(field_name, field_data, logger, session=None):  # pylint: disable=unused-argument
     """Parse individual schema field with type validation."""
-    logger.debug("🔧 Parsing schema field: %s", field_name)
+    logger.debug("[DEBUG] Parsing schema field: %s", field_name)
 
     if isinstance(field_data, str):
         # Shorthand field definition (e.g., "str", "int=5")
@@ -429,7 +429,7 @@ def parse_schema_field(field_name, field_data, logger, session=None):  # pylint:
         # Detailed field definition
         parsed_field = parse_detailed_field(field_data, logger)
     else:
-        logger.warning("⚠️ Invalid field definition for '%s': expected string or dict", field_name)
+        logger.warning("[WARN] Invalid field definition for '%s': expected string or dict", field_name)
         parsed_field = {
             "name": field_name,
             "type": "unknown",
@@ -442,7 +442,7 @@ def parse_schema_field(field_name, field_data, logger, session=None):  # pylint:
 
 def parse_shorthand_field(field_str, logger):
     """Parse shorthand field definition (e.g., "str", "int=5", "str!")."""
-    logger.debug("🔧 Parsing shorthand field: %s", field_str)
+    logger.debug("[DEBUG] Parsing shorthand field: %s", field_str)
 
     # Basic shorthand parsing (type, required, default)
     field_type = field_str.rstrip("!?")
@@ -463,7 +463,7 @@ def parse_shorthand_field(field_str, logger):
 
 def parse_detailed_field(field_dict, logger):
     """Parse detailed field definition dictionary."""
-    logger.debug("🔧 Parsing detailed field: %s", field_dict)
+    logger.debug("[DEBUG] Parsing detailed field: %s", field_dict)
 
     # Extract standard field attributes
     return {
@@ -479,7 +479,7 @@ def parse_detailed_field(field_dict, logger):
 
 def parse_generic_file(data, logger, file_path=None):
     """Parse generic zVaFile (non-UI, non-Schema)."""
-    logger.info("📄 Parsing generic zVaFile")
+    logger.info("[INFO] Parsing generic zVaFile")
 
     return {
         "type": "generic",
@@ -491,7 +491,7 @@ def parse_generic_file(data, logger, file_path=None):
 
 def extract_zva_metadata(data, file_type, logger):
     """Extract metadata from zVaFiles."""
-    logger.debug("📊 Extracting metadata for file type: %s", file_type)
+    logger.debug("[INFO] Extracting metadata for file type: %s", file_type)
 
     if file_type == "zUI":
         return extract_ui_metadata(data)
