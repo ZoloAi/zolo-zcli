@@ -2,16 +2,31 @@
 
 **Build CLI apps in YAML. No boilerplate.**
 
-Here's a complete user management app:
+Here's a complete user management app in 3 files:
 
+### 1. Define Your Schema (`zSchema.users_master.yaml`)
 ```yaml
-# zUI.users_menu.yaml
+Meta:
+  Data_Type: sqlite
+  Data_Label: "users_master"
+  Data_Path: "@"
+  Data_Paradigm: classical
+
+users:
+  id: {type: int, pk: true, auto_increment: true}
+  email: {type: str, unique: true, required: true}
+  name: {type: str, required: true}
+  created_at: {type: datetime, default: now}
+```
+
+### 2. Define Your UI (`zUI.users_menu.yaml`)
+```yaml
 zVaF:
-  ~Root*: ["^Setup Database", "^Add User", "^List Users", "^Delete User"]
+  ~Root*: ["^Setup Database", "^List Users", "^Add User", "^Search User", "^Delete User"]
   
   "^Setup Database":
     zData:
-      model: "@.zSchema.users"
+      model: "@.zSchema.users_master"
       action: create
       
   "^Add User":
@@ -21,18 +36,21 @@ zVaF:
       onSubmit:
         zData:
           action: insert
+          model: "@.zSchema.users_master"
           table: users
           data: {email: "zConv.email", name: "zConv.name"}
   
   "^List Users":
     zData:
+      model: "@.zSchema.users_master"
       action: read
       table: users
       order: "id DESC"
+      limit: 20
 ```
 
+### 3. Run It (`run.py`)
 ```python
-# run.py - the Python part
 from zCLI import zCLI
 
 z = zCLI({
@@ -41,10 +59,18 @@ z = zCLI({
     "zBlock": "zVaF"
 })
 
-z.walker.run()  # Start the interactive menu
+z.walker.run()
 ```
 
-That's it. The YAML defines what happens, the Python just runs it. You get: interactive menus, database operations, form validation, navigation, error handling.
+**That's it.** Run `python run.py` and you get:
+- ✓ Interactive menu navigation
+- ✓ SQLite database with schema validation
+- ✓ Forms with input validation
+- ✓ Full CRUD operations
+- ✓ Error handling and rollback
+- ✓ Professional terminal UI
+
+**Zero SQL queries. Zero form validation code. Zero navigation logic.**
 
 ---
 
@@ -80,22 +106,27 @@ zolo --version
 
 ## Quick Start
 
+**Try the demo:**
 ```bash
-# Start the shell
-zolo shell
-
-# Try the demo
-> cd "Demos/User Manager"
-> python run.py
+# Clone or install zCLI first, then:
+cd "Demos/User Manager"
+python run.py
 ```
 
-**What just happened:**
-- Loaded YAML definitions
-- Created SQLite database
-- Built interactive menus
-- Handled all CRUD operations
+**What you get:**
+- Interactive menu with breadcrumb navigation
+- SQLite database created from schema
+- Forms with validation
+- CRUD operations (Create, Read, Search, Delete)
+- Professional colored output
 
-**Now build yours:** Copy the demo, modify the YAML, done.
+**Build your own:**
+1. Copy the 3 files above
+2. Modify `zSchema` for your data model
+3. Modify `zUI` for your menu options
+4. Run `python run.py`
+
+**That's the entire development cycle.**
 
 ---
 
@@ -145,40 +176,78 @@ z.walker.run()
 
 ## How It Works
 
-### 1. Define Your Data
+**Three files. That's all you need.**
+
+### 1. Schema - Define Your Data Model
 
 ```yaml
-# zSchema.users.yaml
+# zSchema.users_master.yaml
+Meta:
+  Data_Type: sqlite       # or postgresql, csv
+  Data_Label: "users_master"
+  Data_Path: "@"          # @ means current workspace
+  Data_Paradigm: classical
+
 users:
   id: {type: int, pk: true, auto_increment: true}
   email: {type: str, unique: true, required: true}
   name: {type: str, required: true}
+  created_at: {type: datetime, default: now}
 ```
 
-### 2. Define Your UI
+### 2. UI - Define Your Interface
 
 ```yaml
-# zUI.app.yaml
-root:
-  main_menu: ["^Add Item", "^View Items", "^Search"]
+# zUI.users_menu.yaml
+zVaF:
+  ~Root*: ["^Setup Database", "^Add User", "^List Users"]
   
-  "^Add Item":
+  "^Setup Database":
+    zData:
+      model: "@.zSchema.users_master"
+      action: create
+  
+  "^Add User":
     zDialog:
-      fields: ["name", "description"]
+      model: User
+      fields: ["email", "name"]
       onSubmit:
-        zData: {action: insert, table: items}
+        zData:
+          action: insert
+          model: "@.zSchema.users_master"
+          table: users
+          data: {email: "zConv.email", name: "zConv.name"}
+  
+  "^List Users":
+    zData:
+      model: "@.zSchema.users_master"
+      action: read
+      table: users
+      order: "id DESC"
 ```
 
-### 3. Run It
+### 3. Runner - Start It
 
 ```python
-# run.py (3 lines)
+# run.py
 from zCLI import zCLI
-z = zCLI({"zVaFile": "@.zUI.app", "zBlock": "root"})
+
+z = zCLI({
+    "zWorkspace": ".",
+    "zVaFile": "@.zUI.users_menu",
+    "zBlock": "zVaF"
+})
+
 z.walker.run()
 ```
 
-That's it. zCLI handles everything else.
+**Done.** zCLI handles:
+- Menu navigation and breadcrumbs
+- Database connections and schema creation
+- Form rendering and validation
+- CRUD operations and SQL generation
+- Error handling and transaction rollback
+- Terminal formatting and colors
 
 ---
 
@@ -262,8 +331,13 @@ That's it. zCLI handles everything else.
 
 ## Examples
 
-### CRUD Application
-See [User Manager Demo](Demos/User%20Manager/) - complete app in ~50 lines of YAML.
+### Complete CRUD Application
+**[User Manager Demo](Demos/User%20Manager/)** - Production-ready app in 3 files:
+- `zSchema.users_master.yaml` (22 lines) - Database schema
+- `zUI.users_menu.yaml` (50 lines) - Full UI with 5 operations
+- `run.py` (8 lines) - Python runner
+
+**Total: 80 lines for a complete CRUD system.**
 
 ### Multi-Table App
 ```yaml
