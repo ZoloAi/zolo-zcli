@@ -77,7 +77,7 @@ class zWizard:
                 navigation_callbacks['on_continue'](result, key)
 
             if self.display:
-                self.display.zDeclare("process_keys → next zKey", color="MAIN", indent=1, style="single")
+                self.display.zDeclare("process_keys => next zKey", color="MAIN", indent=1, style="single")
 
             idx += 1
 
@@ -150,7 +150,7 @@ class zWizard:
             model = step_value["zData"].get("model")
             if model and model.startswith("$"):
                 alias = model[1:]  # Remove $ prefix
-                self.logger.info("🔄 Transaction mode enabled for $%s", alias)
+                self.logger.info("[TXN] Transaction mode enabled for $%s", alias)
                 return alias
         return None
 
@@ -167,12 +167,12 @@ class zWizard:
         """Commit transaction if active."""
         if use_transaction and transaction_alias and self.schema_cache:
             self.schema_cache.commit_transaction(transaction_alias)
-            self.logger.info("✅ Transaction committed for $%s", transaction_alias)
+            self.logger.info("[OK] Transaction committed for $%s", transaction_alias)
 
     def _rollback_transaction(self, use_transaction, transaction_alias, error):
         """Rollback transaction on error."""
         if use_transaction and transaction_alias and self.schema_cache:
-            self.logger.error("❌ Error in zWizard, rolling back transaction for $%s: %s", 
+            self.logger.error("[ERROR] Error in zWizard, rolling back transaction for $%s: %s", 
                             transaction_alias, error)
             self.schema_cache.rollback_transaction(transaction_alias)
 
