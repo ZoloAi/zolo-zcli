@@ -39,7 +39,7 @@ class BasicInputs:
             # Multi-select: show checkboxes
             default_set = set(default) if isinstance(default, list) else set()
             for i, option in enumerate(options):
-                marker = "☑" if option in default_set else "☐"
+                marker = "[CHECKED]" if option in default_set else "[UNCHECKED]"
                 if self.BasicOutputs:
                     self.BasicOutputs.text(f"  {i + 1}. {marker} {option}", break_after=False)
 
@@ -48,7 +48,7 @@ class BasicInputs:
 
         # Single select: show radio buttons
         for i, option in enumerate(options):
-            marker = "●" if option == default else "○"
+            marker = "[SELECTED]" if option == default else "[UNSELECTED]"
             if self.BasicOutputs:
                 self.BasicOutputs.text(f"  {i + 1}. {marker} {option}", break_after=False)
 

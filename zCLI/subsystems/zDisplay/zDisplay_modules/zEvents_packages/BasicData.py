@@ -31,7 +31,7 @@ class BasicData:
             if style == "number":
                 prefix = f"{i}. "
             else:  # bullet
-                prefix = "• "
+                prefix = "[BULLET] "
 
             content = f"{prefix}{item}"
             # Compose: use BasicOutputs.text() instead of calling primitives directly
