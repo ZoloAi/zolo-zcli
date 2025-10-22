@@ -47,9 +47,9 @@ class zDialog:
         on_submit = zDialog_obj.get("onSubmit")
 
         self.logger.info(
-            "\n   └─ model: %s"
-            "\n   └─ fields: %s"
-            "\n   └─ on_submit: %s",
+            "\n   |-- model: %s"
+            "\n   |-- fields: %s"
+            "\n   |-- on_submit: %s",
             model,
             fields,
             on_submit
@@ -68,7 +68,7 @@ class zDialog:
         # Handle submission if onSubmit provided
         try:
             if on_submit:
-                self.logger.info("Found onSubmit → Executing via handle_submit()")
+                self.logger.info("Found onSubmit => Executing via handle_submit()")
                 return handle_submit(on_submit, zContext, self.logger, walker=self.walker)
             
             # No onSubmit - return collected data

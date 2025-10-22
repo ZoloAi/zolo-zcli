@@ -15,11 +15,11 @@ def handle_submit(submit_expr, zContext, logger, walker=None):
     logger.debug("zSubmit_expr: %s", submit_expr)
     logger.debug("zContext keys: %s | zConv: %s", list(zContext.keys()), zContext.get("zConv"))
 
-    # ── Dict-based submission → dispatch via zLauncher ──
+    # ── Dict-based submission => dispatch via zLauncher ──
     if isinstance(submit_expr, dict):
         return handle_dict_submit(submit_expr, zContext, logger, walker)
     
-    # ── Legacy string-based submission → via zFunc ──
+    # ── Legacy string-based submission => via zFunc ──
     if isinstance(submit_expr, str):
         return handle_string_submit(submit_expr, zContext, logger, walker)
     
@@ -31,7 +31,7 @@ def handle_dict_submit(submit_dict, zContext, logger, walker=None):
     """Handle dict-based onSubmit expression and dispatch via zLauncher."""
     logger.debug("zSubmit detected dict payload; preparing for zLaunch")
 
-    # Inject placeholders (zConv → actual values)
+    # Inject placeholders (zConv => actual values)
     submit_dict = inject_placeholders(submit_dict, zContext, logger)
     
     # Ensure model is passed to zCRUD (legacy support)
@@ -58,7 +58,7 @@ def handle_string_submit(submit_expr, zContext, logger, walker=None):
     logger.debug("zSubmit detected string payload (legacy)")
     logger.info("Executing zFunc expression: %s", submit_expr)
     
-    walker.display.zDeclare(" → Handle zFunc", color="DISPATCH", indent=5, style="single")
+    walker.display.zDeclare("[HANDLE] zFunc", color="DISPATCH", indent=5, style="single")
     
     # Let zFunc handle all placeholder resolution (zConv, zConv.field, etc.)
     # zFunc's parse_arguments now natively supports these placeholders

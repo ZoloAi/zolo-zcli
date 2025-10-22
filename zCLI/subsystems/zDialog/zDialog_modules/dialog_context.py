@@ -26,7 +26,7 @@ def inject_placeholders(obj, zContext, logger):
         return [inject_placeholders(v, zContext, logger) for v in obj]
     
     if isinstance(obj, str):
-        # Handle "zConv" → return entire dict
+        # Handle "zConv" => return entire dict
         if obj == "zConv":
             return zContext.get("zConv")
         
@@ -35,7 +35,7 @@ def inject_placeholders(obj, zContext, logger):
             try:
                 zconv_data = zContext.get("zConv", {})
                 
-                # Handle dot notation: zConv.field → zConv['field']
+                # Handle dot notation: zConv.field => zConv['field']
                 if "." in obj and isinstance(zconv_data, dict):
                     parts = obj.split(".", 1)
                     if parts[0] == "zConv" and len(parts) == 2:
