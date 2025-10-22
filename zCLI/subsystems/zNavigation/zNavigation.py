@@ -40,10 +40,6 @@ class zNavigation:
         """Simple selection menu without complex navigation."""
         return self.menu.select(options, prompt=prompt, walker=walker)
 
-    def handle(self, zMenu_obj, walker=None):
-        """Handle legacy zMenu object format (for backward compatibility)."""
-        return self.menu.handle(zMenu_obj, walker=walker)
-
     # Breadcrumbs Methods
     def handle_zCrumbs(self, zBlock, zKey, walker=None):
         """Handle breadcrumb trail management."""
@@ -76,19 +72,7 @@ class zNavigation:
         return self.linking.create_link(source, target, metadata=metadata)
 
 
-# Standalone handler functions for backward compatibility
-def handle_zMenu(zMenu_obj, zcli=None, walker=None):
-    """Standalone menu handler function."""
-    if walker:
-        zcli_instance = walker.zcli
-    elif zcli:
-        zcli_instance = zcli
-    else:
-        raise ValueError("handle_zMenu requires either zcli or walker parameter")
-    
-    return zcli_instance.navigation.handle(zMenu_obj, walker=walker)
-
-
+# Standalone handler functions for backward compatibility with Walker
 def handle_zLink(zHorizontal, walker=None):
     """Standalone link handler function."""
     if not walker:

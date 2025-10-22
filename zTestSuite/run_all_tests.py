@@ -25,8 +25,9 @@ TEST_MODULES = [
     'zConfig',
     'zComm',
     'zDisplay',
-    'zAuth',      # zAuth depends on zDisplay
+    'zAuth',       # zAuth depends on zDisplay
     'zDispatch',
+    'zNavigation', # zNavigation - menu system, breadcrumbs, and linking
     'zParser',
     'zLoader',
     'zFunc',
