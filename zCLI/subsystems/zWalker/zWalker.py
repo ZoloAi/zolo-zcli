@@ -114,7 +114,7 @@ class zWalker(zWizard):
             self.logger.debug("active_zBlock: %s", active_zBlock)
             self.logger.debug("\nWalking zHorizontal:\n%s", value)
             
-            # 🥨 Track breadcrumb trail for navigation/history
+            # [BREADCRUMB] Track breadcrumb trail for navigation/history
             if not (isinstance(value, dict) and "zWizard" in value):
                 trail = self.session["zCrumbs"].get(active_zBlock, [])
                 if not trail or trail[-1] != key:

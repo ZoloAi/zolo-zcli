@@ -1,5 +1,5 @@
-# zCLI/subsystems/zWalker/__init__.py — Walker (UI Mode) Package
-# ───────────────────────────────────────────────────────────────
+# zCLI/subsystems/zWalker/__init__.py - Walker (UI Mode) Package
+# --------------------------------------------------------------
 """
 Walker Package - Modern YAML-Driven UI/Menu Navigation
 
