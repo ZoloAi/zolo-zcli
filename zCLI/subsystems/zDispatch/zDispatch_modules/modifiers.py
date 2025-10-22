@@ -39,7 +39,7 @@ class ModifierProcessor:
         if "*" in modifiers:
             # Menu modifier - now uses core zMenu
             is_anchor = "~" in modifiers
-            self.logger.debug("* Modifier detected for %s — invoking menu (anchor=%s)", zKey, is_anchor)
+            self.logger.debug("* Modifier detected for %s - invoking menu (anchor=%s)", zKey, is_anchor)
 
             if walker:
                 # Walker context - use legacy format for complex navigation

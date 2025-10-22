@@ -28,7 +28,7 @@ class CommandLauncher:
         """Handle string-based launch commands."""
         if zHorizontal.startswith("zFunc("):
             self.logger.info("Detected zFunc request")
-            self.display.zDeclare(" → Handle zFunc", color=self.dispatch.mycolor, indent=5, style="single")
+            self.display.zDeclare("[HANDLE] zFunc", color=self.dispatch.mycolor, indent=5, style="single")
             return self.zcli.zfunc.handle(zHorizontal)
 
         if zHorizontal.startswith("zLink("):
@@ -36,12 +36,12 @@ class CommandLauncher:
                 self.logger.warning("zLink requires walker instance")
                 return None
             self.logger.info("Detected zLink request")
-            self.display.zDeclare(" → Handle zLink", color=self.dispatch.mycolor, indent=4, style="single")
+            self.display.zDeclare("[HANDLE] zLink", color=self.dispatch.mycolor, indent=4, style="single")
             return self.zcli.navigation.handle_zLink(zHorizontal, walker=walker)
 
         if zHorizontal.startswith("zOpen("):
             self.logger.info("Detected zOpen request")
-            self.display.zDeclare(" → Handle zOpen", color=self.dispatch.mycolor, indent=4, style="single")
+            self.display.zDeclare("[HANDLE] zOpen", color=self.dispatch.mycolor, indent=4, style="single")
             return self.zcli.open.handle(zHorizontal)
 
         if zHorizontal.startswith("zWizard("):
@@ -96,7 +96,7 @@ class CommandLauncher:
     def _handle_wizard_string(self, zHorizontal, walker):
         """Handle zWizard string command."""
         self.logger.info("Detected zWizard request")
-        self.display.zDeclare(" → Handle zWizard", color=self.dispatch.mycolor, indent=4, style="single")
+        self.display.zDeclare("[HANDLE] zWizard", color=self.dispatch.mycolor, indent=4, style="single")
         inner = zHorizontal[len("zWizard("):-1].strip()
         try:
             wizard_obj = ast.literal_eval(inner)
@@ -123,7 +123,7 @@ class CommandLauncher:
     def _handle_read_string(self, zHorizontal, context):
         """Handle zRead string command."""
         self.logger.info("Detected zRead request (string)")
-        self.display.zDeclare(" → Handle zRead (string)", color=self.dispatch.mycolor, indent=4, style="single")
+        self.display.zDeclare("[HANDLE] zRead (string)", color=self.dispatch.mycolor, indent=4, style="single")
         inner = zHorizontal[len("zRead("):-1].strip()
         req = {"action": "read"}
         if inner:
@@ -134,7 +134,7 @@ class CommandLauncher:
     def _handle_read_dict(self, zHorizontal, context):
         """Handle zRead dict command."""
         self.logger.info("Detected zRead (dict)")
-        self.display.zDeclare(" → Handle zRead (dict)", color=self.dispatch.mycolor, indent=4, style="single")
+        self.display.zDeclare("[HANDLE] zRead (dict)", color=self.dispatch.mycolor, indent=4, style="single")
         req = zHorizontal.get("zRead") or {}
         if isinstance(req, str):
             req = {"model": req}
@@ -145,7 +145,7 @@ class CommandLauncher:
     def _handle_data_dict(self, zHorizontal, context):
         """Handle zData dict command."""
         self.logger.info("Detected zData (dict)")
-        self.display.zDeclare(" → Handle zData (dict)", color=self.dispatch.mycolor, indent=4, style="single")
+        self.display.zDeclare("[HANDLE] zData (dict)", color=self.dispatch.mycolor, indent=4, style="single")
         req = zHorizontal.get("zData") or {}
         if isinstance(req, str):
             req = {"model": req}
@@ -159,7 +159,7 @@ class CommandLauncher:
         if any(k in zHorizontal for k in maybe_crud) and "model" in zHorizontal:
             req = dict(zHorizontal)
             req.setdefault("action", "read")
-            self.logger.info("Detected generic CRUD dict → %s", req)
-            self.display.zDeclare(" → Handle zCRUD (dict)", color=self.dispatch.mycolor, indent=4, style="single")
+            self.logger.info("Detected generic CRUD dict => %s", req)
+            self.display.zDeclare("[HANDLE] zCRUD (dict)", color=self.dispatch.mycolor, indent=4, style="single")
             return self.zcli.data.handle_request(req, context=context)
         return None
