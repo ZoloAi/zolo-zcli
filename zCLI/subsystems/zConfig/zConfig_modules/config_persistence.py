@@ -217,7 +217,7 @@ class ConfigPersistence:
             for key in keys:
                 value = machine.get(key, "N/A")
                 editable = key in self._get_editable_machine_keys()
-                marker = "✏️ " if editable else "🔒 "
+                marker = "[EDIT] " if editable else "[LOCK] "
                 print(f"  {marker}{key}: {value}")
         
         # Show file location
@@ -277,7 +277,7 @@ class ConfigPersistence:
         # Show environment settings
         print(f"\n{Colors.CONFIG}zCLI Environment Settings:{Colors.RESET}")
         for key, value in env.items():
-            print(f"  ✏️ {key}: {value}")
+            print(f"  [EDIT] {key}: {value}")
         
         # Show file location
         user_config_path = self.paths.user_zconfigs_dir / "zConfig.env.yaml"
@@ -349,7 +349,7 @@ class ConfigPersistence:
     def _handle_error(self, message, details=None):
         """Handle error messages."""
         # Layer 0: Always use print (zDisplay not available yet)
-        print(f"\n{Colors.ERROR}❌ {message}{Colors.RESET}")
+        print(f"\n{Colors.ERROR}[ERROR] {message}{Colors.RESET}")
         if details:
             print(f"   {details}")
         print()
@@ -357,7 +357,7 @@ class ConfigPersistence:
     def _handle_success(self, message, details=None, file_path=None):
         """Handle success messages."""
         # Layer 0: Always use print (zDisplay not available yet)
-        print(f"\n{Colors.CONFIG}✅ {message}{Colors.RESET}")
+        print(f"\n{Colors.CONFIG}[OK] {message}{Colors.RESET}")
         if details:
             print(f"   {details}")
         if file_path:

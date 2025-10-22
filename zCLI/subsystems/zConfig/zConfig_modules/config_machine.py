@@ -1,7 +1,7 @@
 # zCLI/subsystems/zConfig/zConfig_modules/config_machine.py
 """Machine-level configuration management for system identity and preferences."""
 
-from zCLI import yaml, Colors
+from zCLI import yaml
 from .helpers import auto_detect_machine, create_user_machine_config, load_config_with_override
 
 class MachineConfig:
@@ -24,7 +24,6 @@ class MachineConfig:
         )
 
         # Print ready message
-        from zCLI import Colors
         from ..zConfig import zConfig
         zConfig.print_config_ready("MachineConfig Ready")
 

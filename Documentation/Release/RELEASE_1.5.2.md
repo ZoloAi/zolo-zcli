@@ -60,6 +60,33 @@ with ExceptionContext(self.zcli.error_handler,
 - **Solution**: Removed invalid module-level logger calls; error handling now occurs in `__init__`
 - **Result**: Framework loads successfully without optional dependencies, showing clear errors only when adapters are used
 
+#### **Critical: Uninstall Command Path Resolution**
+- **Fixed**: `FileNotFoundError` when running `zolo uninstall` from outside project directory
+- **Root Cause**: `zWorkspace` was set to `os.getcwd()` instead of installed package location
+- **Impact**: Uninstall command only worked when run from within zolo-zcli project directory
+- **Solution**: Changed `zWorkspace` to use `Path(zCLI.__file__).parent` to reference installed package
+- **Result**: Uninstall command works from any directory with full Walker UI navigation
+
+**Implementation**:
+```python
+# Before (only works in project dir)
+uninstall_cli = zCLI({
+    "zWorkspace": os.getcwd(),  # ❌ Wrong directory
+    "zVaFile": "@.zCLI.UI.zUI.zcli_sys",
+    "zBlock": "Uninstall"
+})
+
+# After (works from anywhere)
+import zCLI as zcli_module
+zcli_package_dir = Path(zcli_module.__file__).parent
+
+uninstall_cli = zCLI({
+    "zWorkspace": str(zcli_package_dir),  # ✅ Installed package location
+    "zVaFile": "@.UI.zUI.zcli_sys",
+    "zBlock": "Uninstall"
+})
+```
+
 **Files Fixed**:
 ```python
 # csv_adapter.py (line 13)

@@ -29,6 +29,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 # Third-party imports
+import platformdirs  # pylint: disable=import-error
 import requests  # pylint: disable=import-error
 import yaml  # pylint: disable=import-error
 
@@ -45,8 +46,8 @@ __all__ = [
 
     # System modules
     "asyncio", "datetime", "getpass", "importlib", "inspect", "json", 
-    "logging", "os", "platform", "re", "requests", "secrets", "shutil", 
-    "socket", "sqlite3", "subprocess", "sys", "time", "traceback", 
+    "logging", "os", "platform", "platformdirs", "re", "requests", "secrets", 
+    "shutil", "socket", "sqlite3", "subprocess", "sys", "time", "traceback", 
     "uuid", "webbrowser", "yaml", "OrderedDict", "Path", "urlparse",
 
     # Utils

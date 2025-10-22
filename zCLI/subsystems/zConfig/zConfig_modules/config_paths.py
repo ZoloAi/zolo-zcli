@@ -1,8 +1,7 @@
 # zCLI/subsystems/zConfig/zConfig_modules/config_paths.py
 """Cross-platform configuration path resolution with platformdirs."""
 
-from platformdirs import user_config_dir, site_config_dir, user_data_dir, user_cache_dir
-from zCLI import platform, Path, sys, Colors
+from zCLI import platform, Path, sys, Colors, platformdirs
 
 class zConfigPaths:
     """Cross-platform path resolver for zolo-zcli configuration using native OS conventions."""
@@ -38,7 +37,7 @@ class zConfigPaths:
             return Path("/etc/zolo-zcli")
 
         # Windows: use platformdirs
-        return Path(site_config_dir(self.app_name, self.app_author))
+        return Path(platformdirs.site_config_dir(self.app_name, self.app_author))
 
     @property
     def user_config_dir(self):
@@ -49,7 +48,7 @@ class zConfigPaths:
         macOS:   ~/Library/Application Support/zolo-zcli 
         Windows: %APPDATA%\zolo-zcli
         """
-        return Path(user_config_dir(self.app_name, self.app_author))
+        return Path(platformdirs.user_config_dir(self.app_name, self.app_author))
 
     @property
     def user_config_dir_legacy(self):
@@ -81,7 +80,7 @@ class zConfigPaths:
         macOS:   ~/Library/Application Support/zolo-zcli
         Windows: %LOCALAPPDATA%\zolo-zcli
         """
-        return Path(user_data_dir(self.app_name, self.app_author))
+        return Path(platformdirs.user_data_dir(self.app_name, self.app_author))
 
     @property
     def user_cache_dir(self):
@@ -92,7 +91,7 @@ class zConfigPaths:
         macOS:   ~/Library/Caches/zolo-zcli
         Windows: %LOCALAPPDATA%\zolo-zcli\Cache
         """
-        return Path(user_cache_dir(self.app_name, self.app_author))
+        return Path(platformdirs.user_cache_dir(self.app_name, self.app_author))
 
     @property
     def user_logs_dir(self):

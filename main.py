@@ -1,7 +1,6 @@
 """CLI entry point for the zolo-zcli package."""
 
 import argparse
-import os
 from zCLI.version import get_version
 
 def handle_shell_command():
@@ -47,12 +46,17 @@ def handle_test_command():
 
 
 def handle_uninstall_command():
-    """Handle uninstall command with interactive UI."""
+    """Handle uninstall command with interactive menu."""
+    from pathlib import Path
     from zCLI import zCLI
     
+    # Get zCLI package installation directory
+    import zCLI as zcli_module
+    zcli_package_dir = Path(zcli_module.__file__).parent
+    
     uninstall_cli = zCLI({
-        "zWorkspace": os.getcwd(),
-        "zVaFile": "@.zCLI.UI.zUI.zcli_sys",
+        "zWorkspace": str(zcli_package_dir),
+        "zVaFile": "@.UI.zUI.zcli_sys",
         "zBlock": "Uninstall"
     })
     uninstall_cli.walker.run()
