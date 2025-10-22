@@ -68,12 +68,12 @@ class zOpen:
         # Execute hooks based on result
         if result == "zBack" and on_success:
             self.logger.info("Executing onSuccess hook: %s", on_success)
-            self.display.zDeclare("→ onSuccess", color=self.mycolor, indent=2, style="single")
+            self.display.zDeclare("[HOOK] onSuccess", color=self.mycolor, indent=2, style="single")
             return self.zfunc.handle(on_success)
 
         if result == "stop" and on_fail:
             self.logger.info("Executing onFail hook: %s", on_fail)
-            self.display.zDeclare("→ onFail", color=self.mycolor, indent=2, style="single")
+            self.display.zDeclare("[HOOK] onFail", color=self.mycolor, indent=2, style="single")
             return self.zfunc.handle(on_fail)
 
         return result
