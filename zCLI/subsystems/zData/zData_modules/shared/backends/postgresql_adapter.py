@@ -12,8 +12,6 @@ try:
     PSYCOPG2_AVAILABLE = True
 except ImportError:
     PSYCOPG2_AVAILABLE = False
-    if self.logger:
-        self.logger.warning("psycopg2 not available - PostgreSQL adapter will not work")
 
 
 class PostgreSQLAdapter(SQLAdapter):

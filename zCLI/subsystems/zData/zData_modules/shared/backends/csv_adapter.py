@@ -10,8 +10,6 @@ try:
     PANDAS_AVAILABLE = True
 except ImportError:
     PANDAS_AVAILABLE = False
-    if self.logger:
-        self.logger.warning("pandas not available - CSV adapter will not work")
 
 
 class CSVAdapter(BaseDataAdapter):
