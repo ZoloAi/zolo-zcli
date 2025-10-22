@@ -28,13 +28,13 @@ class Breadcrumbs:
         # Prevent duplicate zKeys
         if zBlock_crumbs and zBlock_crumbs[-1] == zKey:
             self.logger.debug(
-                "Breadcrumb '%s' already exists at the end of scope '%s' — skipping.",
+                "Breadcrumb '%s' already exists at the end of scope '%s' - skipping.",
                 zKey,
                 zBlock,
             )
             return
 
-        # ✅ All good — add it
+        # [OK] All good - add it
         zBlock_crumbs.append(zKey)
         self.logger.debug("\nCurrent zTrail: %s", zBlock_crumbs)
 
@@ -63,7 +63,7 @@ class Breadcrumbs:
             if active_zCrumb != original_zCrumb:
                 # remove the empty child scope
                 popped_scope = zSession["zCrumbs"].pop(active_zCrumb, None)
-                self.logger.debug("Popped empty zCrumb scope: %s → %s", active_zCrumb, popped_scope)
+                self.logger.debug("Popped empty zCrumb scope: %s => %s", active_zCrumb, popped_scope)
                 # move to parent (now last scope)
                 active_zCrumb = next(reversed(zSession["zCrumbs"]))
                 self.logger.debug("active_zCrumb (parent): %s", active_zCrumb)
@@ -79,7 +79,7 @@ class Breadcrumbs:
         # If after popping the current scope became empty (and it's not root), also remove it and pop parent key
         if not trail and active_zCrumb != original_zCrumb:
             popped_scope = zSession["zCrumbs"].pop(active_zCrumb, None)
-            self.logger.debug("Post-pop empty scope removed: %s → %s", active_zCrumb, popped_scope)
+            self.logger.debug("Post-pop empty scope removed: %s => %s", active_zCrumb, popped_scope)
             active_zCrumb = next(reversed(zSession["zCrumbs"]))
             self.logger.debug("active_zCrumb (parent): %s", active_zCrumb)
             trail = zSession["zCrumbs"][active_zCrumb]
@@ -100,7 +100,7 @@ class Breadcrumbs:
         
         if len(parts) >= 3:
             # Extract: base_path.zUI.filename.BlockName
-            # Example: "@.zUI.users_menu.MainMenu" → ["@", "zUI", "users_menu", "MainMenu"]
+            # Example: "@.zUI.users_menu.MainMenu" => ["@", "zUI", "users_menu", "MainMenu"]
             base_path_parts = parts[:-3]
             zSession["zVaFile_path"] = ".".join(base_path_parts) if base_path_parts else ""
             zSession["zVaFilename"] = ".".join(parts[-3:-1])

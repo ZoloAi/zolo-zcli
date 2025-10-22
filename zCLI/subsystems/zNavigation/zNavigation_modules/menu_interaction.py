@@ -43,7 +43,7 @@ class MenuInteraction:
 
             if not choice.isdigit():
                 self.logger.debug("Input is not a valid digit.")
-                display.error("\nInvalid input — enter a number.")
+                display.error("\nInvalid input - enter a number.")
                 continue
 
             index = int(choice)
@@ -91,7 +91,7 @@ class MenuInteraction:
                 return selected
 
             except ValueError:
-                display.error("\nInvalid input — enter comma-separated numbers.")
+                display.error("\nInvalid input - enter comma-separated numbers.")
                 continue
 
     def get_choice_with_search(self, options, display, search_prompt="Search"):
@@ -136,7 +136,7 @@ class MenuInteraction:
             
             # Selection mode
             if not choice.isdigit():
-                display.error("\nInvalid input — enter a number or /search")
+                display.error("\nInvalid input - enter a number or /search")
                 continue
 
             index = int(choice)

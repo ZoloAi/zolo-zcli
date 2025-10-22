@@ -43,7 +43,7 @@ class Linking:
         zBlock_keys = list(active_zBlock_dict.keys())
 
         if self.walker is None:
-            self.logger.error("❌ No walker instance provided to ZLink.")
+            self.logger.error("[ERROR] No walker instance provided to ZLink.")
             return "stop"
 
         self.walker.zCrumbs.handle_zCrumbs(zLink_path, zBlock_keys[0])
@@ -74,7 +74,7 @@ class Linking:
         else:
             zLink_path = inner
             required = {}
-            self.logger.debug("🛤️ No permission block found. Path: %s", zLink_path)
+            self.logger.debug("[INFO] No permission block found. Path: %s", zLink_path)
         return zLink_path, required
 
     def check_zLink_permissions(self, required):
@@ -85,7 +85,7 @@ class Linking:
         self.logger.debug("Required permissions: %s", required)
 
         if not required:
-            self.logger.debug("No permissions required — allowing access.")
+            self.logger.debug("No permissions required - allowing access.")
             return True
 
         for key, expected in required.items():

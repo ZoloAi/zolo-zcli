@@ -110,7 +110,7 @@ class MenuSystem:
         # Handle anchor mode logic
         options = zMenu_obj["zHorizontal"]
         if not zMenu_obj["is_anchor"]:
-            self.logger.debug("Anchor mode active — injecting zBack into menu.")
+            self.logger.debug("Anchor mode active - injecting zBack into menu.")
             options = options + ["zBack"]
 
         self.logger.debug("zMenu options:\n%s", options)
