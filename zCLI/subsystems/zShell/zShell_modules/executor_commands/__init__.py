@@ -1,7 +1,7 @@
 # zCLI/subsystems/zShell/zShell_modules/executor_commands/__init__.py
 
 # zCLI/subsystems/zShell_modules/executor_commands/__init__.py
-# ───────────────────────────────────────────────────────────────
+# --------------------------------------------------------------
 """Executor Commands Registry - Modular command execution for zCLI."""
 
 # Import command executors

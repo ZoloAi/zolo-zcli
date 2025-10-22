@@ -1,7 +1,7 @@
 # zCLI/subsystems/zShell/zShell_modules/executor_commands/data_executor.py
 
 # zCLI/subsystems/zShell_modules/executor_commands/data_executor.py
-# ───────────────────────────────────────────────────────────────
+# --------------------------------------------------------------
 """Data command execution for zCLI."""
 
 from .alias_utils import resolve_alias, is_alias, get_alias_name
@@ -32,7 +32,7 @@ def execute_data(zcli, parsed):
             
             if was_alias:
                 alias_name = get_alias_name(model_path)
-                zcli.logger.info("📌 Using aliased schema: $%s", alias_name)
+                zcli.logger.info("[PIN] Using aliased schema: $%s", alias_name)
                 
                 # Pass pre-parsed schema to zData
                 # Set model to None and provide schema directly

@@ -1,5 +1,5 @@
 # zCLI/subsystems/zShell/zShell_modules/executor_commands/config_persistence_executor.py
-# ───────────────────────────────────────────────────────────────
+# --------------------------------------------------------------
 """Config persistence command execution for zCLI."""
 
 

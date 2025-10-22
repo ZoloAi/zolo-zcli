@@ -1,7 +1,7 @@
 # zCLI/subsystems/zShell/zShell_modules/executor_commands/export_executor.py
 
 # zCLI/subsystems/zShell_modules/executor_commands/export_executor.py
-# ───────────────────────────────────────────────────────────────
+# --------------------------------------------------------------
 """Export command execution for zCLI."""
 
 

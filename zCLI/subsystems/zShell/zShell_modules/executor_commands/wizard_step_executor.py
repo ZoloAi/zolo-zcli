@@ -31,7 +31,7 @@ def execute_wizard_step(zcli, step_key, step_value, logger, context=None):
             if isinstance(zdata_config, dict):
                 zdata_config.setdefault("action", "read")
                 
-                # Normalize tables field (string → list)
+                # Normalize tables field (string => list)
                 if "tables" in zdata_config:
                     tables = zdata_config["tables"]
                     if isinstance(tables, str):

@@ -114,7 +114,7 @@ def _display_entries(zcli, path, entries, options):
     if dirs:
         zcli.display.text("Directories:", indent=1)
         for entry in dirs:
-            zcli.display.text(f"  📁 {entry['name']}/", indent=2)
+            zcli.display.text(f"  [DIR] {entry['name']}/", indent=2)
     
     # Display files
     if files:
@@ -127,13 +127,13 @@ def _display_entries(zcli, path, entries, options):
             for entry in files:
                 size_str = _format_size(entry.get("size", 0))
                 zcli.display.text(
-                    f"  📄 {entry['name']:<40} {size_str:>10}",
+                    f"  [FILE] {entry['name']:<40} {size_str:>10}",
                     indent=2
                 )
         else:
             # Simple format
             for entry in files:
-                zcli.display.text(f"  📄 {entry['name']}", indent=2)
+                zcli.display.text(f"  [FILE] {entry['name']}", indent=2)
     
     # Summary
     zcli.display.text("")

@@ -1,7 +1,7 @@
 # zCLI/subsystems/zShell/zShell_modules/executor_commands/utils_executor.py
 
 # zCLI/subsystems/zShell_modules/executor_commands/utils_executor.py
-# ───────────────────────────────────────────────────────────────
+# --------------------------------------------------------------
 """Utility command execution for zCLI."""
 
 

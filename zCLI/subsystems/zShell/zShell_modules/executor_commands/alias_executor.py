@@ -64,7 +64,7 @@ def _list_aliases(zcli, aliases):
     
     for name, command in sorted(aliases.items()):
         zcli.display.text(
-            f"  {name:<{max_len}} → {command}",
+            f"  {name:<{max_len}} => {command}",
             indent=1
         )
     
@@ -110,7 +110,7 @@ def _create_alias(zcli, aliases, args):
     # Create alias
     aliases[name] = command
     
-    zcli.display.success(f"Alias created: {name} → {command}")
+    zcli.display.success(f"Alias created: {name} => {command}")
     
     return {
         "status": "created",

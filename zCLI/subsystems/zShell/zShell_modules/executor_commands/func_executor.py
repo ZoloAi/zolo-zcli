@@ -1,7 +1,7 @@
 # zCLI/subsystems/zShell/zShell_modules/executor_commands/func_executor.py
 
 # zCLI/subsystems/zShell_modules/executor_commands/func_executor.py
-# ───────────────────────────────────────────────────────────────
+# --------------------------------------------------------------
 """Function command execution for zCLI."""
 
 def execute_func(zcli, parsed):

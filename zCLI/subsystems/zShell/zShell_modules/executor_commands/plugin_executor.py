@@ -82,7 +82,7 @@ def load_plugin(zcli, args):
         functions = [name for name in dir(module) 
                     if not name.startswith('_') and callable(getattr(module, name))]
         
-        zcli.display.success(f"✓ Loaded plugin: {module_name}")
+        zcli.display.success(f"[OK] Loaded plugin: {module_name}")
         zcli.display.info(f"  Path: {file_path}")
         zcli.display.info(f"  Functions: {', '.join(functions) if functions else 'none'}")
         
@@ -127,7 +127,7 @@ def show_plugins(zcli, args):
             filepath = plugin_info.get("filepath", "unknown")
             hits = plugin_info.get("hits", 0)
             
-            zcli.display.text(f"\n• {name}")
+            zcli.display.text(f"\n[BULLET] {name}")
             zcli.display.text(f"  Path: {filepath}")
             zcli.display.text(f"  Cache hits: {hits}")
     else:
@@ -151,10 +151,10 @@ def clear_plugins(zcli, args):
     
     if pattern:
         zcli.loader.cache.clear(cache_type="plugin", pattern=pattern)
-        zcli.display.success(f"✓ Cleared plugins matching: {pattern}")
+        zcli.display.success(f"[OK] Cleared plugins matching: {pattern}")
     else:
         zcli.loader.cache.clear(cache_type="plugin")
-        zcli.display.success("✓ Cleared all cached plugins")
+        zcli.display.success("[OK] Cleared all cached plugins")
     
     return {"success": True, "pattern": pattern}
 
@@ -180,7 +180,7 @@ def reload_plugin(zcli, args):
     if "error" in load_result:
         return load_result
     
-    zcli.display.success(f"✓ Reloaded plugin: {module_name}")
+    zcli.display.success(f"[OK] Reloaded plugin: {module_name}")
     
     return {
         "success": True,

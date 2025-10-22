@@ -1,7 +1,7 @@
 # zCLI/subsystems/zShell/zShell_modules/executor_commands/walker_executor.py
 
 # zCLI/subsystems/zShell_modules/executor_commands/walker_executor.py
-# ───────────────────────────────────────────────────────────────
+# --------------------------------------------------------------
 """Walker command execution for zCLI."""
 
 def execute_walker(zcli, parsed):

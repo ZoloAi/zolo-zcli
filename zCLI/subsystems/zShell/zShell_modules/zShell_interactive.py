@@ -91,7 +91,7 @@ class InteractiveShell:
                 self.logger.debug("Loaded command history from %s", self.history_file)
 
             readline.set_history_length(1000)
-            self.logger.info("Command history enabled (↑/↓ arrows to navigate)")
+            self.logger.info("Command history enabled (up/down arrows to navigate)")
 
         except Exception as e:
             self.logger.warning("Could not setup command history: %s", e)

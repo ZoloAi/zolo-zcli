@@ -14,9 +14,9 @@ def execute_wizard(zcli, parsed):
         zcli.session["wizard_mode"]["format"] = None
         
         zcli.logger.info("Entered wizard canvas mode")
-        print("\n╔═══════════════════════════════════════════════════════════╗")
-        print("║              Wizard Canvas Mode - Active               ║")
-        print("╚═══════════════════════════════════════════════════════════╝")
+        print("\n===============================================================")
+        print("              Wizard Canvas Mode - Active               ")
+        print("===============================================================")
         print("\nBuild your workflow by typing YAML structure or shell commands.")
         print("Each Enter adds a new line to the buffer.")
         print("\nCommands:")

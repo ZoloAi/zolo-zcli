@@ -154,7 +154,7 @@ def _install_service_helper(zcli, service_name, options):  # pylint: disable=unu
     if service_name == "postgresql":
         return _install_postgresql(options)
 
-    print(f"❌ Unknown service: {service_name}")
+    print(f"[ERROR] Unknown service: {service_name}")
     print("   Available services: postgresql")
     return {"error": f"Unknown service: {service_name}"}
 
@@ -167,9 +167,9 @@ def _install_postgresql(options):
     os_type = platform.system()
     auto_install = options.get("auto", False) or options.get("y", False)
     
-    print("\n" + "═" * 60)
+    print("\n" + "=" * 60)
     print("         PostgreSQL Installation Helper")
-    print("═" * 60)
+    print("=" * 60)
     
     if os_type == "Darwin":
         return _install_postgresql_macos(auto_install)
@@ -186,15 +186,15 @@ def _install_postgresql_macos(auto_install):
     """Install PostgreSQL on macOS."""
     import subprocess
     
-    print("\n📦 Installation command for macOS (Homebrew):")
+    print("\n[INFO] Installation command for macOS (Homebrew):")
     print("   brew install postgresql@14")
-    print("\n🚀 To start PostgreSQL after installation:")
+    print("\n[INFO] To start PostgreSQL after installation:")
     print("   brew services start postgresql@14")
     print("   OR")
     print("   comm start postgresql")
     
     if auto_install:
-        print("\n⚙️  Installing PostgreSQL...")
+        print("\n[INFO] Installing PostgreSQL...")
         try:
             result = subprocess.run(
                 ["brew", "install", "postgresql@14"],
@@ -204,23 +204,23 @@ def _install_postgresql_macos(auto_install):
                 check=False
             )
             if result.returncode == 0:
-                print("✅ PostgreSQL installed successfully!")
+                print("[OK] PostgreSQL installed successfully!")
                 print("\nStarting PostgreSQL...")
                 subprocess.run(["brew", "services", "start", "postgresql@14"], check=False)
-                print("✅ PostgreSQL started!")
+                print("[OK] PostgreSQL started!")
                 _print_postgresql_driver_info()
                 return {"status": "success", "message": "PostgreSQL installed and started"}
             
-            print(f"❌ Installation failed: {result.stderr}")
+            print(f"[ERROR] Installation failed: {result.stderr}")
             return {"error": "Installation failed"}
         except subprocess.TimeoutExpired:
-            print("❌ Installation timed out")
+            print("[ERROR] Installation timed out")
             return {"error": "Installation timed out"}
         except Exception as e:
-            print(f"❌ Installation error: {e}")
+            print(f"[ERROR] Installation error: {e}")
             return {"error": str(e)}
     
-    print("\n💡 To install automatically, run:")
+    print("\n[INFO] To install automatically, run:")
     print("   comm install postgresql --auto")
     _print_postgresql_driver_info()
     return {"status": "success", "message": "Installation instructions provided"}
@@ -228,21 +228,21 @@ def _install_postgresql_macos(auto_install):
 
 def _install_postgresql_linux(auto_install):
     """Install PostgreSQL on Linux."""
-    print("\n📦 Installation commands for Linux:")
+    print("\n[INFO] Installation commands for Linux:")
     print("\n   Ubuntu/Debian:")
     print("      sudo apt update")
     print("      sudo apt install postgresql postgresql-contrib")
     print("\n   RHEL/CentOS/Fedora:")
     print("      sudo yum install postgresql-server postgresql-contrib")
     print("      sudo postgresql-setup --initdb")
-    print("\n🚀 To start PostgreSQL after installation:")
+    print("\n[INFO] To start PostgreSQL after installation:")
     print("   sudo systemctl start postgresql")
     print("   sudo systemctl enable postgresql")
     print("   OR")
     print("   comm start postgresql")
     
     if auto_install:
-        print("\n⚠️  Auto-installation on Linux requires sudo permissions.")
+        print("\n[WARN] Auto-installation on Linux requires sudo permissions.")
         print("Please run the commands above manually.")
     
     _print_postgresql_driver_info()
@@ -251,12 +251,12 @@ def _install_postgresql_linux(auto_install):
 
 def _install_postgresql_windows():
     """Install PostgreSQL on Windows."""
-    print("\n📦 Installation for Windows:")
+    print("\n[INFO] Installation for Windows:")
     print("   1. Download installer from:")
     print("      https://www.postgresql.org/download/windows/")
     print("   2. Run the installer (EDB PostgreSQL)")
     print("   3. Follow the installation wizard")
-    print("\n🚀 PostgreSQL will start automatically as a Windows service")
+    print("\n[INFO] PostgreSQL will start automatically as a Windows service")
     
     _print_postgresql_driver_info()
     return {"status": "success", "message": "Installation instructions provided"}
@@ -264,11 +264,11 @@ def _install_postgresql_windows():
 
 def _print_postgresql_driver_info():
     """Print PostgreSQL Python driver installation info."""
-    print("\n" + "─" * 60)
-    print("📚 Python Driver (psycopg2):")
+    print("\n" + "-" * 60)
+    print("[INFO] Python Driver (psycopg2):")
     print("   The Python library for PostgreSQL is installed with:")
     print("   pip install zolo-zcli[postgresql]")
-    print("\n💡 Or to install all backend support:")
+    print("\n[INFO] Or to install all backend support:")
     print("   pip install zolo-zcli[all]")
-    print("═" * 60 + "\n")
+    print("=" * 60 + "\n")
 

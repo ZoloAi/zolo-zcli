@@ -1,7 +1,7 @@
 # zCLI/subsystems/zShell/zShell_modules/executor_commands/session_executor.py
 
 # zCLI/subsystems/zShell_modules/executor_commands/session_executor.py
-# ───────────────────────────────────────────────────────────────
+# --------------------------------------------------------------
 """Session command execution for zCLI."""
 
 def execute_session(zcli, parsed):

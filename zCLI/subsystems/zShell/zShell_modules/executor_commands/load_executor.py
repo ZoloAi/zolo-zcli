@@ -1,7 +1,7 @@
 # zCLI/subsystems/zShell/zShell_modules/executor_commands/load_executor.py
 
 # zCLI/subsystems/zShell_modules/executor_commands/load_executor.py
-# ───────────────────────────────────────────────────────────────
+# --------------------------------------------------------------
 """Load command execution for zCLI."""
 
 def execute_load(zcli, parsed):
@@ -107,10 +107,10 @@ def execute_load(zcli, parsed):
             item_type = "blocks"
         
         if alias:
-            zcli.logger.info("✅ Loaded and aliased %s: %s → %s (%d %s)", 
+            zcli.logger.info("[OK] Loaded and aliased %s: %s => %s (%d %s)", 
                        resource_type, zPath, display_name, len(items), item_type)
         else:
-            zcli.logger.info("✅ Loaded %s: %s (%d %s)", resource_type, zPath, len(items), item_type)
+            zcli.logger.info("[OK] Loaded %s: %s (%d %s)", resource_type, zPath, len(items), item_type)
         
         return {
             "status": "success",
@@ -134,10 +134,10 @@ def show_all_cache_tiers(zcli):
     
     total_items = 0
     
-    # ═══════════════════════════════════════════════════════════
+    # ============================================================
     # TIER 1: Pinned Cache (User-Loaded Aliases)
-    # ═══════════════════════════════════════════════════════════
-    print("\n╔═══ Tier 1: Pinned Cache (User-Loaded Aliases) ═══╗")
+    # ============================================================
+    print("\n=== Tier 1: Pinned Cache (User-Loaded Aliases) ===")
     
     loaded_resources = zcli.loader.cache.pinned_cache.list_aliases()
     
@@ -155,7 +155,7 @@ def show_all_cache_tiers(zcli):
             
             for item in items:
                 age_mins = int(item["age"] / 60)
-                print(f"  • ${item['name']}")
+                print(f"  [BULLET] ${item['name']}")
                 print(f"    Path: {item.get('zpath', 'N/A')}")
                 print(f"    Age: {age_mins} minutes")
         
@@ -164,10 +164,10 @@ def show_all_cache_tiers(zcli):
     else:
         print("  (empty - use 'load <zPath>' to pin resources)")
     
-    # ═══════════════════════════════════════════════════════════
+    # ============================================================
     # TIER 2: System Cache (Auto-Cached Files)
-    # ═══════════════════════════════════════════════════════════
-    print("\n╔═══ Tier 2: System Cache (Auto-Cached Files) ═══╗")
+    # ============================================================
+    print("\n=== Tier 2: System Cache (Auto-Cached Files) ===")
     
     # Get system cache statistics
     system_stats = zcli.loader.cache.system_cache.get_stats()
@@ -179,10 +179,10 @@ def show_all_cache_tiers(zcli):
     
     total_items += system_stats.get('size', 0)
     
-    # ═══════════════════════════════════════════════════════════
+    # ============================================================
     # TIER 3: Disk I/O
-    # ═══════════════════════════════════════════════════════════
-    print("\n╔═══ Tier 3: Disk I/O (Fallback) ═══╗")
+    # ============================================================
+    print("\n=== Tier 3: Disk I/O (Fallback) ===")
     print("  Loads directly from filesystem when not cached")
     print("  No eviction - always available")
     
@@ -224,7 +224,7 @@ def show_pinned_resources(zcli):
         print(f"\n{res_type.upper()}:")
         for item in items:
             age_mins = int(item["age"] / 60)
-            print(f"  • ${item['name']}")
+            print(f"  [BULLET] ${item['name']}")
             print(f"    Path: {item.get('zpath', 'N/A')}")
             print(f"    Age: {age_mins} minutes")
     
@@ -283,7 +283,7 @@ def show_resources_by_type(zcli, resource_type):
     print(f"\nFound {len(filtered)} {filter_type} resource(s):\n")
     for item in filtered:
         age_mins = int(item["age"] / 60)
-        print(f"  • ${item['name']}")
+        print(f"  [BULLET] ${item['name']}")
         print(f"    Path: {item.get('zpath', 'N/A')}")
         print(f"    Age: {age_mins} minutes")
     
@@ -321,7 +321,7 @@ def show_aliases(zcli):
         for item in items:
             age_mins = int(item["age"] / 60)
             print(f"  ${item['name']}")
-            print(f"    → {item.get('zpath', 'N/A')}")
+            print(f"    => {item.get('zpath', 'N/A')}")
             print(f"    Age: {age_mins} minutes")
     
     print(f"\n{'=' * 70}")
@@ -336,8 +336,8 @@ def clear_loaded_resources(zcli, pattern=None):
     count = zcli.loader.cache.pinned_cache.clear(pattern)
     
     if pattern:
-        print(f"\n✅ Cleared {count} loaded resources matching '{pattern}'")
+        print(f"\n[OK] Cleared {count} loaded resources matching '{pattern}'")
     else:
-        print(f"\n✅ Cleared all {count} loaded resources")
+        print(f"\n[OK] Cleared all {count} loaded resources")
     
     return {"status": "success", "cleared": count}

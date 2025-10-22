@@ -1,7 +1,7 @@
 # zCLI/subsystems/zShell/zShell_modules/zShell_help.py
 
-# zCLI/subsystems/zShell_modules/zShell_help.py — Help System
-# ───────────────────────────────────────────────────────────────
+# zCLI/subsystems/zShell_modules/zShell_help.py - Help System
+# --------------------------------------------------------------
 """Help system for zCLI shell - centralized command documentation."""
 
 class HelpSystem:
@@ -294,9 +294,9 @@ class HelpSystem:
 
             self.display.break_line()
             self.display.text("Usage:")
-            self.display.text("  • Type 'help <command>' for detailed help on a specific command", indent=1)
-            self.display.text("  • Use Tab for command history (↑/↓ arrows)", indent=1)
-            self.display.text("  • Press Ctrl+C to interrupt operations", indent=1)
+            self.display.text("  [BULLET] Type 'help <command>' for detailed help on a specific command", indent=1)
+            self.display.text("  [BULLET] Use Tab for command history (up/down arrows)", indent=1)
+            self.display.text("  [BULLET] Press Ctrl+C to interrupt operations", indent=1)
 
             self.display.break_line()
             self.display.text("Examples:")
@@ -343,9 +343,9 @@ class HelpSystem:
     def get_welcome_message():
         """Return welcome message for shell startup."""
         return """
-╔═══════════════════════════════════════════════════════════╗
-║                    zCLI Interactive Shell                 ║
-╚═══════════════════════════════════════════════════════════╝
+============================================================
+                    zCLI Interactive Shell                 
+============================================================
 
 Type 'help' for available commands
 Type 'exit' or 'quit' to leave
@@ -357,8 +357,8 @@ Type 'exit' or 'quit' to leave
         """Return quick tips for shell usage."""
         return """
 Quick Tips:
-  • Press Ctrl+C to interrupt long operations
-  • Use 'session info' to check your current context
-  • Commands are case-sensitive
-  • Use Tab for... (coming soon: autocomplete)
+  [BULLET] Press Ctrl+C to interrupt long operations
+  [BULLET] Use 'session info' to check your current context
+  [BULLET] Commands are case-sensitive
+  [BULLET] Use Tab for... (coming soon: autocomplete)
 """

@@ -1,7 +1,7 @@
 # zCLI/subsystems/zShell/zShell_modules/executor_commands/open_executor.py
 
 # zCLI/subsystems/zShell_modules/executor_commands/open_executor.py
-# ───────────────────────────────────────────────────────────────
+# --------------------------------------------------------------
 """Open command execution for zCLI."""
 
 def execute_open(zcli, parsed):
