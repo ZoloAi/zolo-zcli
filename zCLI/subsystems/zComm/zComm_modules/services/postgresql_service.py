@@ -137,7 +137,7 @@ class PostgreSQLService:
                     timeout=10
                 )
                 if result.returncode == 0:
-                    self.logger.info("✅ PostgreSQL started via Homebrew")
+                    self.logger.info("[OK] PostgreSQL started via Homebrew")
                     return True
                 
                 # Try without version
@@ -148,7 +148,7 @@ class PostgreSQLService:
                     timeout=10
                 )
                 if result.returncode == 0:
-                    self.logger.info("✅ PostgreSQL started via Homebrew")
+                    self.logger.info("[OK] PostgreSQL started via Homebrew")
                     return True
                     
             except Exception as e:
@@ -158,7 +158,7 @@ class PostgreSQLService:
         if self._has_command("pg_ctl"):
             return self._start_with_pg_ctl()
         
-        self.logger.error("❌ Could not start PostgreSQL. Install with: brew install postgresql")
+        self.logger.error("[ERROR] Could not start PostgreSQL. Install with: brew install postgresql")
         return False
     
     def _start_linux(self):
@@ -173,7 +173,7 @@ class PostgreSQLService:
                     timeout=10
                 )
                 if result.returncode == 0:
-                    self.logger.info("✅ PostgreSQL started via systemd")
+                    self.logger.info("[OK] PostgreSQL started via systemd")
                     return True
             except Exception as e:
                 self.logger.error("Failed to start PostgreSQL via systemd: %s", e)
@@ -182,7 +182,7 @@ class PostgreSQLService:
         if self._has_command("pg_ctl"):
             return self._start_with_pg_ctl()
         
-        self.logger.error("❌ Could not start PostgreSQL")
+        self.logger.error("[ERROR] Could not start PostgreSQL")
         return False
     
     def _start_windows(self):
@@ -196,7 +196,7 @@ class PostgreSQLService:
                 timeout=10
             )
             if result.returncode == 0:
-                self.logger.info("✅ PostgreSQL started via Windows service")
+                self.logger.info("[OK] PostgreSQL started via Windows service")
                 return True
         except Exception as e:
             self.logger.error("Failed to start PostgreSQL on Windows: %s", e)
@@ -219,7 +219,7 @@ class PostgreSQLService:
                 timeout=10
             )
             if result.returncode == 0:
-                self.logger.info("✅ PostgreSQL started with pg_ctl")
+                self.logger.info("[OK] PostgreSQL started with pg_ctl")
                 return True
         except Exception as e:
             self.logger.error("Failed to start PostgreSQL with pg_ctl: %s", e)
@@ -235,7 +235,7 @@ class PostgreSQLService:
         if self._has_command("brew"):
             try:
                 subprocess.run(["brew", "services", "stop", "postgresql"], timeout=10)
-                self.logger.info("✅ PostgreSQL stopped")
+                self.logger.info("[OK] PostgreSQL stopped")
                 return True
             except Exception as e:
                 self.logger.error("Failed to stop PostgreSQL: %s", e)
@@ -246,7 +246,7 @@ class PostgreSQLService:
         if self._has_command("systemctl"):
             try:
                 subprocess.run(["sudo", "systemctl", "stop", "postgresql"], timeout=10)
-                self.logger.info("✅ PostgreSQL stopped")
+                self.logger.info("[OK] PostgreSQL stopped")
                 return True
             except Exception as e:
                 self.logger.error("Failed to stop PostgreSQL: %s", e)
@@ -256,7 +256,7 @@ class PostgreSQLService:
         """Stop PostgreSQL on Windows."""
         try:
             subprocess.run(["net", "stop", "postgresql"], timeout=10)
-            self.logger.info("✅ PostgreSQL stopped")
+            self.logger.info("[OK] PostgreSQL stopped")
             return True
         except Exception as e:
             self.logger.error("Failed to stop PostgreSQL: %s", e)

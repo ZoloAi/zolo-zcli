@@ -119,7 +119,7 @@
     </style>
 </head>
 <body>
-    <h1>🌈 zBifrost Demo - zDisplay GUI Testing</h1>
+    <h1>[zBifrost] zBifrost Demo - zDisplay GUI Testing</h1>
     <p>WebSocket client testing for zCLI backend with zDisplay event handling</p>
 
     <!-- Connection Section -->
@@ -205,10 +205,10 @@
                 // Register broadcast listener for zDisplay events
                 window.client.onBroadcast(handleServerMessage);
                 
-                log('broadcastOutput', '✅ Connected to zBifrost server', 'success');
-                log('broadcastOutput', '📡 Listening for zDisplay events...', 'info');
+                log('broadcastOutput', '[OK] Connected to zBifrost server', 'success');
+                log('broadcastOutput', '[BROADCAST] Listening for zDisplay events...', 'info');
             } catch (e) {
-                log('broadcastOutput', `❌ Connection failed: ${e.message}`, 'error');
+                log('broadcastOutput', `[ERROR] Connection failed: ${e.message}`, 'error');
             }
         };
 
@@ -222,7 +222,7 @@
 
         // Handle messages from server
         function handleServerMessage(message) {
-            log('broadcastOutput', `📥 ${JSON.stringify(message, null, 2)}`, 'broadcast');
+            log('broadcastOutput', `[RECV] ${JSON.stringify(message, null, 2)}`, 'broadcast');
 
             // Check if this is a zDisplay event
             if (message.event) {
@@ -256,19 +256,19 @@
                     break;
                     
                 case 'loading':
-                    content += `<div>⏳ ${event.message}</div>`;
+                    content += `<div>[WAIT] ${event.message}</div>`;
                     break;
                     
                 case 'idle':
-                    content += `<div>✅ Ready</div>`;
+                    content += `<div>[OK] Ready</div>`;
                     break;
                     
                 case 'await':
-                    content += `<div>⏸ ${event.message}</div>`;
+                    content += `<div>[PAUSE] ${event.message}</div>`;
                     break;
                     
                 case 'break':
-                    content += `<div>⏸ ${event.message}</div>`;
+                    content += `<div>[PAUSE] ${event.message}</div>`;
                     break;
                     
                 case 'zdisplay':
@@ -324,7 +324,7 @@
             
             if (window.client) {
                 window.client.sendInputResponse(requestId, value);
-                log('broadcastOutput', `✅ Sent input response: ${value}`, 'success');
+                log('broadcastOutput', `[OK] Sent input response: ${value}`, 'success');
             }
             
             // Remove input UI
@@ -367,70 +367,70 @@
         // CRUD test functions
         window.testCreate = async function() {
             if (!window.client) {
-                log('crudOutput', '❌ Not connected', 'error');
+                log('crudOutput', '[ERROR] Not connected', 'error');
                 return;
             }
             
             try {
-                log('crudOutput', '📝 Creating user...', 'info');
+                log('crudOutput', '[CREATE] Creating user...', 'info');
                 const user = await window.client.create('Users', {
                     name: 'Thor Odinson',
                     email: 'thor@asgard.com',
                     role: 'God of Thunder'
                 });
-                log('crudOutput', `✅ Created: ${JSON.stringify(user, null, 2)}`, 'success');
+                log('crudOutput', `[OK] Created: ${JSON.stringify(user, null, 2)}`, 'success');
             } catch (e) {
-                log('crudOutput', `❌ Error: ${e.message}`, 'error');
+                log('crudOutput', `[ERROR] Error: ${e.message}`, 'error');
             }
         };
 
         window.testRead = async function() {
             if (!window.client) {
-                log('crudOutput', '❌ Not connected', 'error');
+                log('crudOutput', '[ERROR] Not connected', 'error');
                 return;
             }
             
             try {
-                log('crudOutput', '📖 Reading users...', 'info');
+                log('crudOutput', '[READ] Reading users...', 'info');
                 const users = await window.client.read('Users', 
                     {role: 'God of Thunder'},
                     {limit: 10}
                 );
-                log('crudOutput', `✅ Found ${users.length} user(s)`, 'success');
+                log('crudOutput', `[OK] Found ${users.length} user(s)`, 'success');
             } catch (e) {
-                log('crudOutput', `❌ Error: ${e.message}`, 'error');
+                log('crudOutput', `[ERROR] Error: ${e.message}`, 'error');
             }
         };
 
         window.testUpdate = async function() {
             if (!window.client) {
-                log('crudOutput', '❌ Not connected', 'error');
+                log('crudOutput', '[ERROR] Not connected', 'error');
                 return;
             }
             
             try {
-                log('crudOutput', '✏️  Updating user...', 'info');
+                log('crudOutput', '[UPDATE]  Updating user...', 'info');
                 const result = await window.client.update('Users', 1, {
                     name: 'Thor (The Mighty)'
                 });
-                log('crudOutput', `✅ Updated`, 'success');
+                log('crudOutput', `[OK] Updated`, 'success');
             } catch (e) {
-                log('crudOutput', `❌ Error: ${e.message}`, 'error');
+                log('crudOutput', `[ERROR] Error: ${e.message}`, 'error');
             }
         };
 
         window.testDelete = async function() {
             if (!window.client) {
-                log('crudOutput', '❌ Not connected', 'error');
+                log('crudOutput', '[ERROR] Not connected', 'error');
                 return;
             }
             
             try {
-                log('crudOutput', '🗑️  Deleting user...', 'info');
+                log('crudOutput', '[DELETE]  Deleting user...', 'info');
                 const result = await window.client.delete('Users', 1);
-                log('crudOutput', `✅ Deleted`, 'success');
+                log('crudOutput', `[OK] Deleted`, 'success');
             } catch (e) {
-                log('crudOutput', `❌ Error: ${e.message}`, 'error');
+                log('crudOutput', `[ERROR] Error: ${e.message}`, 'error');
             }
         };
 

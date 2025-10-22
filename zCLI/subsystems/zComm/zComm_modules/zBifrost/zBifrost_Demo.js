@@ -32,18 +32,18 @@ class zBifrost {
         ? `${this.url}?token=${this.token}` 
         : this.url;
       
-      console.log(`[zBifrost] 🌈 Connecting to ${this.url}...`);
+      console.log(`[zBifrost] [zBifrost] Connecting to ${this.url}...`);
       
       this.ws = new WebSocket(connectUrl);
       
       this.ws.onopen = () => {
         this.connected = true;
-        console.log('[zBifrost] ✅ Connected to server');
+        console.log('[zBifrost] [OK] Connected to server');
         resolve();
       };
       
       this.ws.onerror = (error) => {
-        console.error('[zBifrost] ❌ Connection error:', error);
+        console.error('[zBifrost] [ERROR] Connection error:', error);
         reject(error);
       };
       
@@ -53,10 +53,10 @@ class zBifrost {
       
       this.ws.onclose = (event) => {
         this.connected = false;
-        console.log(`[zBifrost] 🚪 Disconnected (code: ${event.code})`);
+        console.log(`[zBifrost] [DISCONNECT] Disconnected (code: ${event.code})`);
         
         if (this.options.autoReconnect) {
-          console.log('[zBifrost] 🔄 Reconnecting...');
+          console.log('[zBifrost] [RECONNECT] Reconnecting...');
           setTimeout(() => this.connect(), 2000);
         }
       };
@@ -70,7 +70,7 @@ class zBifrost {
     if (this.ws) {
       this.connected = false;
       this.ws.close();
-      console.log('[zBifrost] 🚪 Disconnected');
+      console.log('[zBifrost] [DISCONNECT] Disconnected');
     }
   }
 
@@ -267,7 +267,7 @@ class zBifrost {
       // Send message
       const message = JSON.stringify(payload);
       if (this.options.debug) {
-        console.log('[zBifrost] 📤 Sending:', message);
+        console.log('[zBifrost] [SEND] Sending:', message);
       }
       this.ws.send(message);
     });
@@ -296,7 +296,7 @@ class zBifrost {
 
     this.ws.send(JSON.stringify(response));
     if (this.options.debug) {
-      console.log('[zBifrost] 📤 Sent input response:', response);
+      console.log('[zBifrost] [SEND] Sent input response:', response);
     }
   }
 
@@ -311,7 +311,7 @@ class zBifrost {
   onBroadcast(callback) {
     this.broadcastListeners.push(callback);
     if (this.options.debug) {
-      console.log('[zBifrost] 📻 Broadcast listener registered');
+      console.log('[zBifrost] [LISTEN] Broadcast listener registered');
     }
   }
 
@@ -339,7 +339,7 @@ class zBifrost {
       const message = JSON.parse(data);
       
       if (this.options.debug) {
-        console.log('[zBifrost] 📥 Received:', data);
+        console.log('[zBifrost] [RECV] Received:', data);
       }
       
       // Check if it's a response to our request
@@ -363,7 +363,7 @@ class zBifrost {
         this._handleBroadcast(message);
       }
     } catch (e) {
-      console.error('[zBifrost] ❌ Failed to parse message:', e);
+      console.error('[zBifrost] [ERROR] Failed to parse message:', e);
     }
   }
 
@@ -373,14 +373,14 @@ class zBifrost {
    */
   _handleBroadcast(message) {
     if (this.options.debug) {
-      console.log('[zBifrost] 📻 Broadcast:', message);
+      console.log('[zBifrost] [LISTEN] Broadcast:', message);
     }
     
     for (const listener of this.broadcastListeners) {
       try {
         listener(message);
       } catch (e) {
-        console.error('[zBifrost] ❌ Broadcast listener error:', e);
+        console.error('[zBifrost] [ERROR] Broadcast listener error:', e);
       }
     }
   }

@@ -53,7 +53,7 @@ class zBifrost:
 
         origin = ws.request_headers.get("Origin", "")
         if not origin:
-            self.logger.warning("[zBifrost] ⚠️ Connection without Origin header from %s", 
+            self.logger.warning("[zBifrost] [WARN] Connection without Origin header from %s", 
                               getattr(ws, 'remote_address', 'N/A'))
             return False
 
@@ -62,7 +62,7 @@ class zBifrost:
             if allowed.strip() and origin.startswith(allowed.strip()):
                 return True
 
-        self.logger.warning("[zBifrost] 🚫 Connection from unauthorized origin: %s", origin)
+        self.logger.warning("[zBifrost] [BLOCK] Connection from unauthorized origin: %s", origin)
         return False
 
     async def authenticate_client(self, ws: WebSocketServerProtocol) -> dict:
@@ -86,7 +86,7 @@ class zBifrost:
                 token = auth_header[7:]
 
         if not token:
-            self.logger.warning("[zBifrost] 🚫 No authentication token provided")
+            self.logger.warning("[zBifrost] [BLOCK] No authentication token provided")
             await ws.close(code=1008, reason="Authentication required")
             return None
 
@@ -107,7 +107,7 @@ class zBifrost:
 
             if result and len(result) > 0:
                 user = result[0]
-                self.logger.info("[zBifrost] ✅ Authenticated: %s (role=%s)", 
+                self.logger.info("[zBifrost] [OK] Authenticated: %s (role=%s)", 
                                user.get("username"), user.get("role"))
                 return {
                     "authenticated": True,
@@ -116,12 +116,12 @@ class zBifrost:
                     "user_id": user.get("id")
                 }
 
-            self.logger.warning("[zBifrost] 🚫 Invalid authentication token")
+            self.logger.warning("[zBifrost] [BLOCK] Invalid authentication token")
             await ws.close(code=1008, reason="Invalid token")
             return None
 
         except Exception as e:
-            self.logger.error("[zBifrost] ❌ Authentication error: %s", e)
+            self.logger.error("[zBifrost] [ERROR] Authentication error: %s", e)
             await ws.close(code=1011, reason="Authentication error")
             return None
 
@@ -130,11 +130,11 @@ class zBifrost:
         path = ws.path
         remote_addr = getattr(ws, 'remote_address', 'N/A')
 
-        self.logger.info(f"[zBifrost] 🔬 New connection from {remote_addr}, path: {path}")
+        self.logger.info(f"[zBifrost] [INFO] New connection from {remote_addr}, path: {path}")
 
         # Validate origin
         if not self.validate_origin(ws):
-            self.logger.warning("[zBifrost] 🚫 Connection rejected due to invalid origin")
+            self.logger.warning("[zBifrost] [BLOCK] Connection rejected due to invalid origin")
             await ws.close(code=1008, reason="Invalid origin")
             return
 
@@ -147,11 +147,11 @@ class zBifrost:
         self.authenticated_clients[ws] = auth_info
         self.clients.add(ws)
 
-        self.logger.info(f"[zBifrost] ✅ Client authenticated and connected: {auth_info.get('user')} ({remote_addr})")
+        self.logger.info(f"[zBifrost] [OK] Client authenticated and connected: {auth_info.get('user')} ({remote_addr})")
 
         try:
             async for message in ws:
-                self.logger.info(f"[zBifrost] 📩 Received: {message}")
+                self.logger.info(f"[zBifrost] [RECV] Received: {message}")
                 try:
                     data = json.loads(message)
                 except json.JSONDecodeError:
@@ -167,7 +167,7 @@ class zBifrost:
                         # Route to zDisplay input adapter
                         if hasattr(self.zcli.display.input, 'handle_input_response'):
                             self.zcli.display.input.handle_input_response(request_id, value)
-                            self.logger.debug(f"[zBifrost] ✅ Routed input response: {request_id}")
+                            self.logger.debug(f"[zBifrost] [OK] Routed input response: {request_id}")
                     continue
 
                 zKey = data.get("zKey") or data.get("cmd")
@@ -175,7 +175,7 @@ class zBifrost:
 
                 if zKey:
                     from zCLI.subsystems.zDispatch import handle_zDispatch
-                    self.logger.debug(f"[zBifrost] ▶ Dispatching CLI cmd: {zKey}")
+                    self.logger.debug(f"[zBifrost] [DISPATCH] Dispatching CLI cmd: {zKey}")
                     try:
                         # Use core zDispatch - walker is optional for WebSocket context
                         result = await asyncio.to_thread(
@@ -183,7 +183,7 @@ class zBifrost:
                         )
                         payload = json.dumps({"result": result})
                     except Exception as exc:  # pylint: disable=broad-except
-                        self.logger.error("[zBifrost] ❌ CLI execution error: %s", exc)
+                        self.logger.error("[zBifrost] [ERROR] CLI execution error: %s", exc)
                         payload = json.dumps({"error": str(exc)})
 
                     # send result back to caller and broadcast to others
@@ -194,30 +194,30 @@ class zBifrost:
         except ws_exceptions.ConnectionClosed:
             self.logger.info("[zBifrost] Client disconnected normally")
         except Exception as e:
-            self.logger.warning(f"[zBifrost] 🚪 Client disconnected with error: {e}")
+            self.logger.warning(f"[zBifrost] [DISCONNECT] Client disconnected with error: {e}")
         finally:
             if ws in self.clients:
                 self.clients.remove(ws)
             if ws in self.authenticated_clients:
                 user = self.authenticated_clients[ws].get('user', 'unknown')
                 del self.authenticated_clients[ws]
-                self.logger.info(f"[zBifrost] 👋 User {user} disconnected")
-            self.logger.debug(f"[zBifrost] 🔻 Active clients: {len(self.clients)}")
+                self.logger.info(f"[zBifrost] [DISCONNECT] User {user} disconnected")
+            self.logger.debug(f"[zBifrost] [INFO] Active clients: {len(self.clients)}")
 
     async def broadcast(self, message, sender=None):
         """Broadcast message to all connected clients except sender."""
-        self.logger.debug(f"[zBifrost] 📡 Broadcasting to {len(self.clients) - 1} other clients")
+        self.logger.debug(f"[zBifrost] [BROADCAST] Broadcasting to {len(self.clients) - 1} other clients")
         for client in self.clients:
             if client != sender and client.open:
                 await client.send(message)
-                self.logger.debug(f"[zBifrost] 📨 Sent to {getattr(client, 'remote_address', 'N/A')}")
+                self.logger.debug(f"[zBifrost] [SENT] Sent to {getattr(client, 'remote_address', 'N/A')}")
 
     async def start_socket_server(self, socket_ready):
         """Start the WebSocket server and signal when ready."""
-        self.logger.info("✅ LIVE zSocket loaded")
+        self.logger.info("[OK] LIVE zSocket loaded")
         origins = self.allowed_origins if self.allowed_origins else 'localhost only'
-        self.logger.info(f"🔐 Security: Auth={self.require_auth}, Origins={origins}")
-        self.logger.info(f"🧪 Handler = {self.handle_client.__name__}, args = {self.handle_client.__code__.co_varnames}")
+        self.logger.info(f"[SECURITY] Security: Auth={self.require_auth}, Origins={origins}")
+        self.logger.info(f"[HANDLER] Handler = {self.handle_client.__name__}, args = {self.handle_client.__code__.co_varnames}")
 
         try:
             if ws_serve is None:
@@ -225,16 +225,16 @@ class zBifrost:
             server = await ws_serve(self.handle_client, self.host, self.port)
         except OSError as e:
             if getattr(e, 'errno', None) == 48:  # macOS/Linux: Address already in use
-                msg = f"❌ Port {self.port} already in use. Try restarting the app or killing the stuck process."
+                msg = f"[ERROR] Port {self.port} already in use. Try restarting the app or killing the stuck process."
                 self.logger.error(msg)
             else:
-                self.logger.error(f"❌ Failed to start WebSocket server: {e}")
+                self.logger.error(f"[ERROR] Failed to start WebSocket server: {e}")
             return
 
         bind_info = f"{self.host}:{self.port}"
-        security_note = " (🔒 localhost only - use nginx proxy for external access)" if self.host == "127.0.0.1" else ""
-        self.logger.info(f"[zBifrost] 🌐 WebSocket server started at ws://{bind_info}{security_note}")
-        socket_ready.set()  # ✅ Signal ready to zWalker
+        security_note = " ([LOCK] localhost only - use nginx proxy for external access)" if self.host == "127.0.0.1" else ""
+        self.logger.info(f"[zBifrost] [STARTED] WebSocket server started at ws://{bind_info}{security_note}")
+        socket_ready.set()  # [OK] Signal ready to zWalker
         await server.wait_closed()
 
 # ─────────────────────────────────────────────────────────────
