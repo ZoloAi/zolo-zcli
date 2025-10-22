@@ -82,7 +82,7 @@ def display_validation_errors(table, errors, ops):
     # Format errors for logging and display
     error_lines = [f"[FAIL] Validation Failed for table '{table}':"]
     for field, message in errors.items():
-        error_lines.append(f"  • {field}: {message}")
+        error_lines.append(f"  [BULLET] {field}: {message}")
 
     # Display using zDisplay
     ops.zcli.display.write_line("")

@@ -1,7 +1,7 @@
 # zCLI/subsystems/zData/zData_modules/paradigms/quantum/WIP/migration.py
 
-# zCLI/subsystems/zMigrate.py — Schema Migration Subsystem
-# ───────────────────────────────────────────────────────────────
+# zCLI/subsystems/zMigrate.py - Schema Migration Subsystem
+# --------------------------------------------------------------
 
 """
 zMigrate - Minimal Schema Migration System
@@ -18,9 +18,9 @@ Future: DROP COLUMN, RENAME, TYPE changes, indexes, etc.
 
 # Logger will be passed as parameter to functions that need it
 
-# ═══════════════════════════════════════════════════════════════════
+# ====================================================================
 # Ghost Migration Table Schema for RGB Tracking
-# ═══════════════════════════════════════════════════════════════════
+# ====================================================================
 MIGRATION_TABLE_SCHEMA = {
     "id": {
         "type": "TEXT",
@@ -108,7 +108,7 @@ class ZMigrate:
             if not cur.fetchone():
                 # Create using zCLI's table creation system
                 zTables("zMigrations", MIGRATION_TABLE_SCHEMA, zData["cursor"], zData["conn"])
-                self.logger.info("✅ Created zMigrations table using zCLI schema")
+                self.logger.info("[OK] Created zMigrations table using zCLI schema")
     
     def _update_rgb_on_access(self, table, row_id, zData):
         """Update RGB values when row is accessed."""
@@ -124,7 +124,7 @@ class ZMigrate:
         """, (row_id,))
         
         zData["conn"].commit()
-        self.logger.debug("🌈 Updated RGB on access: %s.%s", table, row_id)
+        self.logger.debug("[RGB] Updated RGB on access: %s.%s", table, row_id)
     
     def _update_rgb_on_migration(self, table, migration_type, success, zData):
         """Update B component based on migration results."""
@@ -136,14 +136,14 @@ class ZMigrate:
                 UPDATE {table} SET 
                     weak_force_b = MIN(255, weak_force_b + 10)
             """)
-            self.logger.info("✅ Migration success - B increased for %s", table)
+            self.logger.info("[OK] Migration success - B increased for %s", table)
         else:
             # Migration failure = decrease B (less stable)
             cur.execute(f"""
                 UPDATE {table} SET 
                     weak_force_b = MAX(0, weak_force_b - 20)
             """)
-            self.logger.warning("❌ Migration failed - B decreased for %s", table)
+            self.logger.warning("[ERROR] Migration failed - B decreased for %s", table)
         
         zData["conn"].commit()
     
@@ -174,7 +174,7 @@ class ZMigrate:
                 self.logger.debug("Applied RGB decay to %d rows in table '%s'", rows_affected, table)
         
         zData["conn"].commit()
-        self.logger.info("⏰ Applied RGB time decay to %d total rows across %d tables", total_rows_affected, len(user_tables))
+        self.logger.info("[TIME] Applied RGB time decay to %d total rows across %d tables", total_rows_affected, len(user_tables))
         
         return total_rows_affected
     
@@ -440,9 +440,9 @@ class ZMigrate:
         else:
             return {"status": "error", "message": "Migration failed"}
     
-    # ═══════════════════════════════════════════════════════════
+    # ============================================================
     # Database Introspection (Fork Pattern)
-    # ═══════════════════════════════════════════════════════════
+    # ============================================================
     
     def _introspect_database(self, zData):
         """
@@ -602,9 +602,9 @@ class ZMigrate:
         
         return schema
     
-    # ═══════════════════════════════════════════════════════════
+    # ============================================================
     # Migration Application (Fork Pattern)
-    # ═══════════════════════════════════════════════════════════
+    # ============================================================
     
     def _apply_sqlite_migrations(self, changes, zForm, zData):
         """
@@ -643,7 +643,7 @@ class ZMigrate:
                     # Execute migration
                     self.logger.info("[Migration] Executing: %s", sql)
                     cur.execute(sql)
-                    self.logger.info("[Migration] ✅ Added column '%s' to table '%s'", col_name, table_name)
+                    self.logger.info("[Migration] [OK] Added column '%s' to table '%s'", col_name, table_name)
             
             # Commit all column changes
             conn.commit()
@@ -674,9 +674,9 @@ class ZMigrate:
         # PostgreSQL uses same ADD COLUMN syntax as SQLite!
         return self._apply_sqlite_migrations(changes, zForm, zData)
     
-    # ═══════════════════════════════════════════════════════════
+    # ============================================================
     # Helper Functions
-    # ═══════════════════════════════════════════════════════════
+    # ============================================================
     
     def _get_sql_type(self, field_def):
         """
@@ -713,9 +713,9 @@ class ZMigrate:
         return sql_type
 
 
-# ═══════════════════════════════════════════════════════════════════
+# ====================================================================
 # Standalone Migration Functions
-# ═══════════════════════════════════════════════════════════════════
+# ====================================================================
 
 def auto_migrate_schema(zForm, zData, walker=None):
     """

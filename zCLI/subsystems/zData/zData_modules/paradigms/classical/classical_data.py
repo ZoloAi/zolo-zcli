@@ -73,7 +73,7 @@ class ClassicalData:
     def handle_request(self, request):
         """Handle classical data operation request."""
         action = request.get("action")
-        self.logger.info("🎬 Classical data action: %s", action)
+        self.logger.info("[CLASSICAL] Classical data action: %s", action)
 
         # Preprocess and ensure tables
         self._preprocess_request(request)
@@ -93,9 +93,9 @@ class ClassicalData:
             else:
                 request["tables"] = [t.strip() for t in tables_option.split(",")]
 
-    # ═══════════════════════════════════════════════════════════
+    # ============================================================
     # Connection Management
-    # ═══════════════════════════════════════════════════════════
+    # ============================================================
 
     def is_connected(self):
         """Check if adapter is connected."""

@@ -93,7 +93,7 @@ class zData:
             self.handler = existing_handler
             self.schema = existing_handler.schema
             self.paradigm = self._detect_paradigm(self.schema)
-            self.logger.info("♻️  Reusing connection for $%s", alias_name)
+            self.logger.info("[REUSE] Reusing connection for $%s", alias_name)
             return True
 
         # First use in wizard - create and store connection
@@ -102,10 +102,10 @@ class zData:
             self.logger.error("Hint: Use 'load @data.%s' or provide model path directly", alias_name)
             return False
 
-        self.logger.info("📦 Loading schema from pinned_cache: $%s", alias_name)
+        self.logger.info("[LOAD] Loading schema from pinned_cache: $%s", alias_name)
         self.load_schema(cached_schema)
         schema_cache.set_connection(alias_name, self.handler)
-        self.logger.info("🔗 Created persistent connection for $%s", alias_name)
+        self.logger.info("[CONNECT] Created persistent connection for $%s", alias_name)
         return True
 
     def _init_from_model(self, model_path):
@@ -179,9 +179,9 @@ class zData:
             self.handler.disconnect()
             self.logger.info("Disconnected from backend")
 
-    # ═══════════════════════════════════════════════════════════
+    # ============================================================
     # CRUD Operations (Delegated to Handler)
-    # ═══════════════════════════════════════════════════════════
+    # ============================================================
 
     def insert(self, table, fields, values):
         """Insert a row."""
@@ -231,9 +231,9 @@ class zData:
             raise RuntimeError("Handler does not have an adapter")
         return self.handler.adapter.list_tables()
 
-    # ═══════════════════════════════════════════════════════════
+    # ============================================================
     # DDL Operations (Data Definition Language)
-    # ═══════════════════════════════════════════════════════════
+    # ============================================================
 
     def create_table(self, table_name, schema=None):
         """Create a new table in the database."""
@@ -280,9 +280,9 @@ class zData:
         
         return self.handler.adapter.table_exists(table_name)
 
-    # ═══════════════════════════════════════════════════════════
+    # ============================================================
     # DCL Operations (Data Control Language)
-    # ═══════════════════════════════════════════════════════════
+    # ============================================================
 
     def grant(self, privileges, table_name, user):
         """Grant privileges to a user (PostgreSQL/MySQL only)."""
@@ -338,9 +338,9 @@ class zData:
         self.logger.debug("Listing privileges (table=%s, user=%s)", table_name, user)
         return self.handler.adapter.list_privileges(table_name, user)
 
-    # ═══════════════════════════════════════════════════════════
+    # ============================================================
     # TCL Operations (Transaction Control Language)
-    # ═══════════════════════════════════════════════════════════
+    # ============================================================
 
     def begin_transaction(self):
         """Begin a new database transaction."""
@@ -369,9 +369,9 @@ class zData:
         self.logger.debug("Rolling back transaction")
         return self.handler.adapter.rollback()
 
-    # ═══════════════════════════════════════════════════════════
+    # ============================================================
     # File Operations (zOpen Integration)
-    # ═══════════════════════════════════════════════════════════
+    # ============================================================
 
     def open_schema(self, schema_path=None):
         """Open schema file in editor via zOpen."""

@@ -26,9 +26,9 @@ class DataOperations:
         self.logger = handler.logger
         self.zcli = handler.zcli
 
-    # ═══════════════════════════════════════════════════════════
+    # ============================================================
     # Hook Execution (zFunc Integration)
-    # ═══════════════════════════════════════════════════════════
+    # ============================================================
 
     def execute_hook(self, hook_expr, context):
         """Execute a zFunc hook if available."""
@@ -47,9 +47,9 @@ class DataOperations:
             self.logger.error("Hook execution failed: %s", e, exc_info=True)
             return None
 
-    # ═══════════════════════════════════════════════════════════
+    # ============================================================
     # Action Router
-    # ═══════════════════════════════════════════════════════════
+    # ============================================================
 
     def route_action(self, action, request):
         """Route action to appropriate operation module."""
@@ -84,9 +84,9 @@ class DataOperations:
             return self.ensure_tables(tables if tables else None)
         return True
 
-    # ═══════════════════════════════════════════════════════════
+    # ============================================================
     # DDL Operations (Shared)
-    # ═══════════════════════════════════════════════════════════
+    # ============================================================
 
     def ensure_tables(self, tables=None):
         """Ensure tables exist, create if missing."""
@@ -111,7 +111,7 @@ class DataOperations:
                 self.logger.info("Table '%s' does not exist, creating...", table_name)
                 try:
                     self.adapter.create_table(table_name, self.schema[table_name])
-                    self.logger.info("✅ Created table: %s", table_name)
+                    self.logger.info("[OK] Created table: %s", table_name)
                 except Exception as e:
                     self.logger.error("Failed to create table '%s': %s", table_name, e)
                     all_ok = False
@@ -120,9 +120,9 @@ class DataOperations:
 
         return all_ok
 
-    # ═══════════════════════════════════════════════════════════
+    # ============================================================
     # CRUD Operations (Shared Adapter Delegates)
-    # ═══════════════════════════════════════════════════════════
+    # ============================================================
 
     def insert(self, table, fields, values):
         """Insert a row."""
