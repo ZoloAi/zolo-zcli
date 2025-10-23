@@ -49,13 +49,21 @@ from typing import Optional, Any
 class ErrorHandler:
     """Enhanced error handling with consistent traceback formatting."""
     
-    def __init__(self, logger=None):
+    def __init__(self, logger=None, zcli=None):
         """Initialize ErrorHandler with optional logger.
         
         Args:
             logger: Logger instance for error reporting
+            zcli: Reference to parent zCLI instance for interactive features
         """
         self.logger = logger
+        self.zcli = zcli
+        
+        # Exception context storage for interactive handling
+        self.last_exception = None
+        self.last_operation = None
+        self.last_context = {}
+        self.exception_history = []  # Stack of exceptions for navigation
     
     def format_exception(self, exc: Exception, include_locals: bool = False) -> str:
         """Format exception with enhanced details.
@@ -135,10 +143,160 @@ class ErrorHandler:
         # Add enhanced details in debug mode
         if include_locals and self.logger.isEnabledFor(logging.DEBUG):
             info = self.get_traceback_info(exc)
-            self.logger.debug("Error location: %s:%s in %s()", 
+            self.logger.debug("Error location: %s:%s in %s()",
                             info.get('file', 'unknown'),
                             info.get('line', '?'),
                             info.get('function', 'unknown'))
+    
+    def interactive_handler(self, exc: Exception, 
+                          operation: Optional[callable] = None,
+                          context: Optional[dict] = None) -> Any:
+        """Launch interactive traceback UI for exception handling.
+        
+        Args:
+            exc: The exception to handle
+            operation: Optional callable to retry the operation
+            context: Additional context about the exception
+        
+        Returns:
+            Result from UI interaction (retry result, user choice, etc.)
+        """
+        # Store exception details for UI access
+        self.last_exception = exc
+        self.last_operation = operation
+        self.last_context = context or {}
+        self.exception_history.append({
+            'exception': exc,
+            'operation': operation,
+            'context': context
+        })
+        
+        if not self.zcli:
+            # Fallback: if no zcli instance, just log and return
+            if self.logger:
+                self.logger.error("Interactive traceback unavailable (no zcli instance)")
+            print(f"Error: {exc}", file=sys.stderr)
+            traceback.print_exc()
+            return None
+        
+        # Launch Walker UI for interactive error handling
+        try:
+            # Create new zCLI instance for traceback UI
+            # We need to get the package directory to find the UI file
+            from pathlib import Path
+            import zCLI as zcli_module
+            zcli_package_dir = Path(zcli_module.__file__).parent
+            
+            traceback_cli = type(self.zcli)({
+                "zWorkspace": str(zcli_package_dir),
+                "zVaFile": "@.UI.zUI.zcli_sys",
+                "zBlock": "Traceback",
+                "zVerbose": False
+            })
+            
+            # Pass error handler to the new instance so UI can access exception
+            traceback_cli.error_handler.last_exception = exc
+            traceback_cli.error_handler.last_operation = operation
+            traceback_cli.error_handler.last_context = self.last_context
+            
+            return traceback_cli.walker.run()
+            
+        except Exception as ui_error:
+            # Fallback if UI launch fails
+            if self.logger:
+                self.logger.error("Failed to launch interactive traceback UI: %s", ui_error)
+            print(f"Original Error: {exc}", file=sys.stderr)
+            traceback.print_exc()
+            return None
+
+
+# ═══════════════════════════════════════════════════════════════════
+# Interactive Traceback Display Functions
+# ═══════════════════════════════════════════════════════════════════
+
+def display_formatted_traceback(zcli):
+    """Display formatted traceback using zDisplay.
+    
+    Args:
+        zcli: zCLI instance (auto-injected by zFunc)
+    """
+    handler = zcli.error_handler
+    exc = handler.last_exception
+    
+    if not exc:
+        zcli.display.warning("No exception to display")
+        return
+    
+    # Header
+    zcli.display.zDeclare("Exception Details", color="ERROR", indent=0, style="full")
+    
+    # Exception type and message
+    zcli.display.error(f"{type(exc).__name__}: {str(exc)}", indent=1)
+    
+    # Traceback info
+    info = handler.get_traceback_info(exc)
+    if info:
+        zcli.display.zDeclare("Location", color="WARN", indent=1, style="single")
+        zcli.display.text(f"File: {info.get('file', 'unknown')}", indent=2)
+        zcli.display.text(f"Line: {info.get('line', '?')}", indent=2)
+        zcli.display.text(f"Function: {info.get('function', 'unknown')}", indent=2)
+    
+    # Context
+    if handler.last_context:
+        zcli.display.zDeclare("Context", color="INFO", indent=1, style="single")
+        for key, value in handler.last_context.items():
+            zcli.display.text(f"{key}: {value}", indent=2)
+    
+    # Full traceback
+    zcli.display.zDeclare("Full Traceback", color="WARN", indent=1, style="single")
+    tb_lines = traceback.format_exception(type(exc), exc, exc.__traceback__)
+    for line in tb_lines:
+        zcli.display.text(line.rstrip(), indent=2)
+
+
+def retry_last_operation(zcli):
+    """Retry the last failed operation.
+    
+    Args:
+        zcli: zCLI instance (auto-injected by zFunc)
+    """
+    handler = zcli.error_handler
+    
+    if not handler.last_operation:
+        zcli.display.error("No operation to retry", indent=1)
+        return
+    
+    zcli.display.info("Retrying operation...", indent=1)
+    try:
+        result = handler.last_operation()
+        zcli.display.success("[OK] Operation succeeded!", indent=1)
+        return result
+    except Exception as e:
+        zcli.display.error(f"[ERROR] Operation failed again: {e}", indent=1)
+        # Store new exception
+        handler.last_exception = e
+        return None
+
+
+def show_exception_history(zcli):
+    """Show history of exceptions.
+    
+    Args:
+        zcli: zCLI instance (auto-injected by zFunc)
+    """
+    handler = zcli.error_handler
+    history = handler.exception_history
+    
+    if not history:
+        zcli.display.warning("No exception history", indent=1)
+        return
+    
+    zcli.display.zDeclare(f"Exception History ({len(history)} entries)", 
+                         color="INFO", indent=0, style="full")
+    
+    for idx, entry in enumerate(reversed(history[-10:])):  # Show last 10
+        exc = entry['exception']
+        zcli.display.text(f"{idx + 1}. {type(exc).__name__}: {str(exc)}", indent=1)
 
 
 class ExceptionContext:

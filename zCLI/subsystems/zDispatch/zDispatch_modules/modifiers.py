@@ -41,19 +41,8 @@ class ModifierProcessor:
             is_anchor = "~" in modifiers
             self.logger.debug("* Modifier detected for %s - invoking menu (anchor=%s)", zKey, is_anchor)
 
-            if walker:
-                # Walker context - use legacy format for complex navigation
-                active_zBlock = next(reversed(self.zcli.session["zCrumbs"]))
-                zMenu_obj = {
-                    "zBlock": active_zBlock,
-                    "zKey": zKey,
-                    "zHorizontal": zHorizontal,
-                    "is_anchor": is_anchor
-                }
-                result = self.zcli.navigation.handle(zMenu_obj, walker=walker)
-            else:
-                # Non-walker context - use simple menu
-                result = self.zcli.navigation.create(zHorizontal, allow_back=not is_anchor, walker=walker)
+            # Use navigation.create for menu display (works for both walker and non-walker)
+            result = self.zcli.navigation.create(zHorizontal, allow_back=not is_anchor, walker=walker)
 
             return result
 

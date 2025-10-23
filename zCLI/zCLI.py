@@ -41,7 +41,7 @@ class zCLI:
 
         # Initialize centralized error handler
         from .utils.error_handler import ErrorHandler
-        self.error_handler = ErrorHandler(logger=self.logger)
+        self.error_handler = ErrorHandler(logger=self.logger, zcli=self)
 
         # Initialize zComm (Communication infrastructure for zBifrost and zData)
         from .subsystems.zComm import zComm

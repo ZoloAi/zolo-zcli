@@ -4,3 +4,8 @@ Uninstall:
   "Clean Uninstall": "zFunc(@.zCLI.utils.uninstall.uninstall_clean)"
   "Dependencies Only": "zFunc(@.zCLI.utils.uninstall.uninstall_dependencies)"
 
+Traceback:
+  ~Root*: ["^View Details", "Retry Operation", "Exception History", "stop"]
+  "^View Details": "zFunc(@.utils.error_handler.display_formatted_traceback)"
+  "Retry Operation": "zFunc(@.utils.error_handler.retry_last_operation)"
+  "^Exception History": "zFunc(@.utils.error_handler.show_exception_history)"
