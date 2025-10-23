@@ -37,9 +37,12 @@ def extract_table_from_request(request, operation_name, ops, check_exists=True):
     return table
 
 def extract_where_clause(request, ops, warn_if_missing=False):
-    """Extract and parse WHERE clause from request options."""
-    options = request.get("options", {})
-    where_str = options.get("where")
+    """Extract and parse WHERE clause from request options or top-level."""
+    # Check top-level first (for YAML-based requests), then options (for shell commands)
+    where_str = request.get("where")
+    if not where_str:
+        options = request.get("options", {})
+        where_str = options.get("where")
 
     # Strip surrounding quotes if present (from command-line parsing)
     if where_str:

@@ -51,7 +51,9 @@ class zBifrost:
             # If no origins configured, allow localhost/127.0.0.1 only
             return True
 
-        origin = ws.request_headers.get("Origin", "")
+        # Handle both old and new websockets API
+        headers = getattr(ws, 'request_headers', None) or getattr(ws.request, 'headers', {})
+        origin = headers.get("Origin", "")
         if not origin:
             self.logger.warning("[zBifrost] [WARN] Connection without Origin header from %s", 
                               getattr(ws, 'remote_address', 'N/A'))
@@ -71,8 +73,12 @@ class zBifrost:
             self.logger.debug("[zBifrost] Authentication disabled by config")
             return {"authenticated": True, "user": "anonymous", "role": "guest"}
 
+        # Handle both old and new websockets API
+        path = getattr(ws, 'path', None) or getattr(ws.request, 'path', '/')
+        headers = getattr(ws, 'request_headers', None) or getattr(ws.request, 'headers', {})
+
         # Check for token in query parameters
-        query = ws.path.split("?", 1)
+        query = path.split("?", 1)
         token = None
 
         if len(query) > 1:
@@ -81,7 +87,7 @@ class zBifrost:
 
         # Also check Authorization header
         if not token:
-            auth_header = ws.request_headers.get("Authorization", "")
+            auth_header = headers.get("Authorization", "")
             if auth_header.startswith("Bearer "):
                 token = auth_header[7:]
 
@@ -127,8 +133,9 @@ class zBifrost:
 
     async def handle_client(self, ws: WebSocketServerProtocol):
         """Handle WebSocket client connection with authentication and message processing."""
-        path = ws.path
-        remote_addr = getattr(ws, 'remote_address', 'N/A')
+        # Handle both old and new websockets API
+        path = getattr(ws, 'path', None) or getattr(ws.request, 'path', '/')
+        remote_addr = getattr(ws, 'remote_address', None) or getattr(ws.remote_address, '__str__', lambda: 'N/A')()
 
         self.logger.info(f"[zBifrost] [INFO] New connection from {remote_addr}, path: {path}")
 
@@ -177,9 +184,12 @@ class zBifrost:
                     from zCLI.subsystems.zDispatch import handle_zDispatch
                     self.logger.debug(f"[zBifrost] [DISPATCH] Dispatching CLI cmd: {zKey}")
                     try:
+                        # Pass WebSocket data as context for zDialog/zFunc to use
+                        context = {"websocket_data": data, "mode": "WebSocket"}
+                        
                         # Use core zDispatch - walker is optional for WebSocket context
                         result = await asyncio.to_thread(
-                            handle_zDispatch, zKey, zHorizontal, zcli=self.zcli, walker=self.walker
+                            handle_zDispatch, zKey, zHorizontal, zcli=self.zcli, walker=self.walker, context=context
                         )
                         payload = json.dumps({"result": result})
                     except Exception as exc:  # pylint: disable=broad-except

@@ -35,6 +35,11 @@ class zDisplay:
         # Initialize ready message using proper zDeclare event
         self.zDeclare("ZDISPLAY Ready", color=self.mycolor, indent=0, style="full")
 
+    @property
+    def is_interactive(self):
+        """Check if display is in interactive mode (Terminal/Walker) vs non-interactive (WebSocket/GUI)."""
+        return self.mode in ("Terminal", "Walker", "")
+
     # Convenience delegates to zPrimitives
     def write_raw(self, content):
         """Delegate to zPrimitives.write_raw."""

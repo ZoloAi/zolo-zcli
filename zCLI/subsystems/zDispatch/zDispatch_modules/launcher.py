@@ -73,7 +73,7 @@ class CommandLauncher:
         if "zDialog" in zHorizontal:
             from ...zDialog import handle_zDialog
             self.logger.info("Detected zDialog")
-            return handle_zDialog(zHorizontal, zcli=self.zcli, walker=walker)
+            return handle_zDialog(zHorizontal, zcli=self.zcli, walker=walker, context=context)
 
         if "zLink" in zHorizontal:
             if not walker:

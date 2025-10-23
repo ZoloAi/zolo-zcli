@@ -28,7 +28,7 @@ class zDialog:
         self.mycolor = "ZDIALOG"
         self.display.zDeclare("zDialog Ready", color=self.mycolor, indent=0, style="full")
 
-    def handle(self, zHorizontal):
+    def handle(self, zHorizontal, context=None):
         """Handle dialog form input and submission."""
         self.display.zDeclare("zDialog", color=self.mycolor, indent=1, style="single")
 
@@ -59,8 +59,17 @@ class zDialog:
         zContext = create_dialog_context(model, fields, self.logger)
         self.logger.info("\nzContext: %s", zContext)
 
-        # Render form and collect input
-        zConv = self.display.zDialog(zContext, self.zcli, self.walker)
+        # Check if data is pre-provided (WebSocket/GUI mode)
+        if context and "websocket_data" in context:
+            ws_data = context["websocket_data"]
+            if "data" in ws_data:
+                zConv = ws_data["data"]
+                self.logger.info("Using pre-provided data from WebSocket: %s", zConv)
+            else:
+                zConv = {}
+        else:
+            # Render form and collect input (Terminal/Walker mode)
+            zConv = self.display.zDialog(zContext, self.zcli, self.walker)
         
         # Add collected data to context
         zContext["zConv"] = zConv
@@ -83,14 +92,14 @@ class zDialog:
 # Backward Compatibility Function
 # ─────────────────────────────────────────────────────────────────────────────
 
-def handle_zDialog(zHorizontal, walker=None, zcli=None):
+def handle_zDialog(zHorizontal, walker=None, zcli=None, context=None):
     """Backward-compatible function for dialog handling."""
     # Modern: use zcli directly if provided
     if zcli:
-        return zDialog(zcli, walker=walker).handle(zHorizontal)
+        return zDialog(zcli, walker=walker).handle(zHorizontal, context=context)
     
     # Legacy: extract zcli from walker
     if walker and hasattr(walker, 'zcli'):
-        return zDialog(walker.zcli, walker=walker).handle(zHorizontal)
+        return zDialog(walker.zcli, walker=walker).handle(zHorizontal, context=context)
     
     raise ValueError("handle_zDialog requires either zcli or walker with zcli attribute")

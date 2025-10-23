@@ -10,6 +10,8 @@ A complete, production-ready **User Management System** built with **zCLI** — 
 - No external dependencies, no server setup needed
 
 ## 🚀 Quick start
+
+### CLI Mode (Terminal Interface)
 ```bash
 # 1) Setup virtual environment
 python3 -m venv .venv
@@ -20,6 +22,19 @@ pip install -r requirements.txt
 # 2) Run the user management interface
 python run.py
 ```
+
+### Web Mode (zBifrost Real-Time UI) 🌉
+```bash
+# 1) Start the WebSocket backend
+python run_backend.py
+
+# 2) Open the frontend in your browser
+# Either double-click index.html OR run:
+python -m http.server 8000
+# Then visit: http://localhost:8000
+```
+
+**zBifrost** enables real-time CLI-to-Web communication with zero additional code — the same YAML schemas and UI definitions power both CLI and web interfaces!
 
 ## 📋 Features
 The interactive menu provides:
@@ -37,8 +52,11 @@ The interactive menu provides:
 ```
 Demos/User Manager/
 ├─ README.md                    # This file
+├─ BIFROST_README.md            # zBifrost technical details
 ├─ requirements.txt             # Python dependencies
-├─ run.py                       # Main entry point
+├─ run.py                       # CLI mode entry point
+├─ run_backend.py               # Web mode backend (zBifrost WebSocket server)
+├─ index.html                   # Web mode frontend (connects to zBifrost)
 ├─ zSchema.users_master.yaml    # Database schema definition
 └─ zUI.users_menu.yaml          # Interactive menu interface
 ```

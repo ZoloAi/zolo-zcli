@@ -30,31 +30,37 @@ def inject_placeholders(obj, zContext, logger):
         if obj == "zConv":
             return zContext.get("zConv")
         
-        # Handle "zConv.field" or "zConv['field']"
-        if obj.startswith("zConv"):
+        # Handle embedded placeholders (e.g., "id = zConv.user_id")
+        if "zConv" in obj:
             try:
                 zconv_data = zContext.get("zConv", {})
+                result = obj
                 
-                # Handle dot notation: zConv.field => zConv['field']
-                if "." in obj and isinstance(zconv_data, dict):
-                    parts = obj.split(".", 1)
-                    if parts[0] == "zConv" and len(parts) == 2:
-                        return zconv_data.get(parts[1])
+                # Replace all zConv.field patterns with their values
+                import re
+                # Match zConv.field_name patterns
+                pattern = r'zConv\.(\w+)'
+                matches = re.findall(pattern, result)
                 
-                # Handle bracket notation: zConv['field'] or zConv["field"]
-                if "[" in obj and "]" in obj and isinstance(zconv_data, dict):
-                    # Extract field name from bracket notation
-                    start = obj.index("[") + 1
-                    end = obj.index("]")
-                    field = obj[start:end].strip("'\"")
-                    return zconv_data.get(field)
+                for field in matches:
+                    value = zconv_data.get(field)
+                    if value is not None:
+                        # Replace the placeholder with the actual value
+                        # Try to detect if it's a number (even if stored as string)
+                        if isinstance(value, str) and value.isdigit():
+                            replacement = value  # Numeric string, no quotes
+                        elif isinstance(value, (int, float)):
+                            replacement = str(value)  # True numbers, no quotes
+                        else:
+                            replacement = f"'{value}'"  # Text strings, add quotes
+                        result = result.replace(f"zConv.{field}", replacement)
+                    else:
+                        logger.warning("Field '%s' not found in zConv data", field)
                 
-                # If we can't parse it safely, return the original string
-                logger.warning("Could not safely parse placeholder '%s', returning as-is", obj)
-                return obj
+                return result
                 
             except Exception as e:
-                logger.error("Failed to parse placeholder '%s': %s", obj, e)
+                logger.error("Failed to parse placeholder in '%s': %s", obj, e)
                 return obj
     
     return obj

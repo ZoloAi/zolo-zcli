@@ -49,9 +49,35 @@ class ModifierProcessor:
         if "^" in modifiers:
             # Execute action first, then return to previous menu
             display.zDeclare("zBounce (execute then back)", color=self.dispatch.mycolor, indent=3, style="single")
+            
+            # If zHorizontal is still the key with prefix, we need to look it up in walker's UI
+            if isinstance(zHorizontal, str) and zHorizontal.startswith("^"):
+                if walker:
+                    # Load the UI file to get the block dictionary
+                    zVaFile = self.zcli.zspark_obj.get("zVaFile")
+                    zBlock = self.zcli.zspark_obj.get("zBlock", "root")
+                    if zVaFile:
+                        raw_zFile = self.zcli.loader.handle(zVaFile)
+                        if raw_zFile and zBlock in raw_zFile:
+                            block_dict = raw_zFile[zBlock]
+                            zHorizontal = block_dict.get(zHorizontal, zHorizontal)
+                            self.logger.info("Resolved ^key to horizontal value: %s", zHorizontal)
+                        else:
+                            self.logger.warning("Could not load UI block %s from %s", zBlock, zVaFile)
+                    else:
+                        self.logger.warning("No zVaFile in zspark_obj")
+                else:
+                    self.logger.warning("Cannot resolve ^key without walker context")
+            
             result = self.dispatch.launcher.launch(zHorizontal, context=context, walker=walker)
             self.logger.info("zBounce action result: %s", result)
-            # Return zBack to navigate back after action completes
+            
+            # In WebSocket/GUI mode, return the actual result for API consumption
+            # In Walker/Terminal mode, return zBack for navigation
+            if context and context.get("mode") == "WebSocket":
+                return result
+            
+            # Return zBack to navigate back after action completes (Terminal/Walker mode)
             return "zBack"
 
         if "!" in modifiers:

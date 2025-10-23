@@ -106,6 +106,8 @@ zolo --version
 
 ## Quick Start
 
+### Terminal Mode (CLI)
+
 **Try the demo:**
 ```bash
 # Clone or install zCLI first, then:
@@ -120,13 +122,45 @@ python run.py
 - CRUD operations (Create, Read, Search, Delete)
 - Professional colored output
 
-**Build your own:**
-1. Copy the 3 files above
+### Web Mode (Real-Time GUI)
+
+**Run the same demo as a web app:**
+```bash
+# Terminal 1: Start WebSocket backend
+cd "Demos/User Manager"
+python run_backend.py
+
+# Terminal 2: Serve the frontend (or just open index.html)
+python -m http.server 8000
+```
+
+**Open in browser:**
+```
+http://localhost:8000/index.html
+```
+
+**What you get:**
+- Real-time WebSocket communication
+- Responsive card-based UI
+- Same YAML files as Terminal mode
+- Multi-client synchronization
+- Mobile-ready interface
+
+### The Magic: Same Code, Different UI
+
+Both modes use **identical YAML files** (`zSchema.users_master.yaml` and `zUI.users_menu.yaml`). The only difference is the entry point:
+- **Terminal**: `python run.py` → Interactive CLI
+- **Web**: `python run_backend.py` → WebSocket server + HTML frontend
+
+### Build Your Own
+
+1. Copy the 3 YAML files (schema + UI + entry point)
 2. Modify `zSchema` for your data model
 3. Modify `zUI` for your menu options
-4. Run `python run.py`
+4. Run in Terminal: `python run.py`
+5. Run as Web app: `python run_backend.py` + open `index.html`
 
-**That's the entire development cycle.**
+**That's the entire development cycle for both platforms.**
 
 ---
 

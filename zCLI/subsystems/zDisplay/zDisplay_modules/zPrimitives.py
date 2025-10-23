@@ -15,10 +15,11 @@ class zPrimitives:
         self.response_futures = {}
 
     def _is_gui_mode(self):
-        """Check if running in GUI mode."""
+        """Check if running in GUI/non-interactive mode (WebSocket, GUI, etc.)."""
         if not self.display or not hasattr(self.display, 'mode'):
             return False
-        return self.display.mode == "GUI"
+        # Non-interactive modes: anything that's not Terminal or Walker
+        return self.display.mode not in ("Terminal", "Walker", "")
 
     # Output primitives - terminal output with optional GUI support
     def write_raw(self, content):
