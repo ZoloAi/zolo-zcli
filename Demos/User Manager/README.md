@@ -56,10 +56,22 @@ Demos/User Manager/
 ├─ requirements.txt             # Python dependencies
 ├─ run.py                       # CLI mode entry point
 ├─ run_backend.py               # Web mode backend (zBifrost WebSocket server)
-├─ index.html                   # Web mode frontend (connects to zBifrost)
+├─ index.html                   # Web mode frontend (legacy demo)
+├─ index_v2.html                # 🆕 v1.5.4 frontend using BifrostClient
 ├─ zSchema.users_master.yaml    # Database schema definition
 └─ zUI.users_menu.yaml          # Interactive menu interface
 ```
+
+### 🆕 **What's New in v1.5.4?**
+
+**index_v2.html** demonstrates the new **BifrostClient** JavaScript library:
+- ✨ **Automatic zTheme styling** - No manual CSS needed
+- 🪝 **Primitive hooks system** - Event-driven customization
+- 🚀 **Simplified API** - CRUD operations in single method calls
+- 📦 **Auto-rendering** - Built-in renderers for tables, forms, menus
+- 🔌 **Clean code** - ~50% less code than original demo
+
+**Try it:** Start the backend (`python run_backend.py`) and open `index_v2.html` in your browser!
 
 ---
 

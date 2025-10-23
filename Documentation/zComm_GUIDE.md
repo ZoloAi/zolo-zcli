@@ -21,8 +21,9 @@ zComm/
 └── zComm_modules/
     ├── zBifrost/                      # WebSocket bridge module
     │   ├── bifrost_bridge.py          # Secure WebSocket server with authentication
+    │   ├── bifrost_client.js          # Production JavaScript client (v1.5.4+)
     │   ├── zBifrost_Demo.html         # WebSocket demo interface
-    │   └── zBifrost_Demo.js           # WebSocket demo client
+    │   └── zBifrost_Demo.js           # Legacy demo client
     ├── service_manager.py             # Local service orchestration
     └── services/                      # Service definitions
         └── postgresql_service.py      # PostgreSQL service management
@@ -451,6 +452,306 @@ zComm is the communication and service management subsystem that:
 - **🎨 Delivers** professional communication infrastructure with comprehensive error handling
 
 As a Layer 0 foundation subsystem, zComm provides essential communication services that enable zCLI's real-time capabilities, service management, and secure external integrations. It works seamlessly with zAuth for authentication while maintaining clean architectural boundaries, ensuring zCLI operates as both a standalone CLI tool and a communication hub for distributed applications.
+
+---
+
+## 🌉 **BifrostClient - JavaScript Client Library (v1.5.4+)**
+
+### **Overview**
+**BifrostClient** is a production-ready JavaScript client for communicating with zBifrost WebSocket servers. It provides automatic zTheme integration, primitive hooks for customization, and simplified APIs for CRUD operations.
+
+### **Features**
+- ✅ **WebSocket Management** - Auto-connect with exponential backoff retry
+- ✅ **Request/Response Correlation** - Automatic message correlation with `_requestId`
+- ✅ **Primitive Hooks** - Event-driven customization system
+- ✅ **Auto-Theme Loading** - Automatic zTheme CSS injection
+- ✅ **Auto-Rendering** - Built-in renderers for tables, forms, menus, alerts
+- ✅ **CRUD Operations** - Simplified create, read, update, delete methods
+- ✅ **zCLI Integration** - Native support for zFunc, zLink, zOpen
+- ✅ **Universal Module** - Works with ES6, CommonJS, and browser globals
+
+### **Installation**
+
+**Via CDN (jsDelivr):**
+```html
+<script src="https://cdn.jsdelivr.net/gh/ZoloAi/zolo-zcli@v1.5.4/zCLI/subsystems/zComm/zComm_modules/zBifrost/bifrost_client.js"></script>
+```
+
+**Via unpkg:**
+```html
+<script src="https://unpkg.com/zolo-zcli/zCLI/subsystems/zComm/zComm_modules/zBifrost/bifrost_client.js"></script>
+```
+
+**Local file:**
+```html
+<script src="path/to/bifrost_client.js"></script>
+```
+
+### **Quick Start**
+
+```javascript
+// Initialize with hooks
+const client = new BifrostClient('ws://localhost:8765', {
+  autoTheme: true,        // Auto-load zTheme CSS
+  autoReconnect: true,    // Auto-reconnect on disconnect
+  debug: true,            // Enable debug logging
+  hooks: {
+    onConnected: (info) => console.log('Connected!', info),
+    onDisconnected: (reason) => console.log('Disconnected:', reason),
+    onMessage: (msg) => console.log('Message:', msg),
+    onError: (error) => console.error('Error:', error)
+  }
+});
+
+// Connect
+await client.connect();
+
+// Use CRUD operations
+const users = await client.read('users');
+client.renderTable(users, '#myContainer');
+```
+
+### **Primitive Hooks**
+
+BifrostClient provides a simple, composable hook system:
+
+```javascript
+const hooks = {
+  // Connection lifecycle
+  onConnected: (info) => {
+    // Called when connection established
+    // info: { url, protocol, readyState }
+  },
+  
+  onDisconnected: (reason) => {
+    // Called when connection lost
+    // reason: { code, reason, wasClean }
+  },
+  
+  // Message handling
+  onMessage: (message) => {
+    // Called for every message received
+  },
+  
+  onBroadcast: (message) => {
+    // Called for broadcast messages (server-initiated)
+  },
+  
+  // Event types
+  onDisplay: (data) => {
+    // Called for zDisplay events
+    // Auto-render or custom handling
+  },
+  
+  onInput: (request) => {
+    // Called for input requests from server
+    // { requestId, prompt, type }
+  },
+  
+  // Error handling
+  onError: (error) => {
+    // Called on WebSocket errors
+  }
+};
+```
+
+### **CRUD Operations**
+
+```javascript
+// Create
+await client.create('users', {
+  name: 'John Doe',
+  email: 'john@example.com'
+});
+
+// Read
+const users = await client.read('users');
+const filtered = await client.read('users', { active: true });
+const paginated = await client.read('users', null, { 
+  limit: 10, 
+  offset: 0,
+  order_by: 'created_at DESC'
+});
+
+// Update
+await client.update('users', { id: 1 }, { name: 'Jane Doe' });
+await client.update('users', 1, { name: 'Jane Doe' }); // Shorthand
+
+// Delete
+await client.delete('users', { id: 1 });
+await client.delete('users', 1); // Shorthand
+```
+
+### **Auto-Rendering Methods**
+
+```javascript
+// Render table with zTheme styling
+const users = await client.read('users');
+client.renderTable(users, '#container');
+
+// Render menu with buttons
+client.renderMenu([
+  { label: 'Add User', action: () => showAddForm(), icon: '➕' },
+  { label: 'Delete User', action: () => showDeleteForm(), icon: '🗑️', variant: 'zBtnDanger' }
+], '#menuContainer');
+
+// Render form
+client.renderForm([
+  { name: 'name', label: 'Name', type: 'text', required: true },
+  { name: 'email', label: 'Email', type: 'email', required: true }
+], '#formContainer', async (data) => {
+  await client.create('users', data);
+  alert('User created!');
+});
+
+// Render messages/alerts
+client.renderMessage('User created!', 'success', '#container');
+client.renderMessage('Error occurred', 'error', '#container');
+client.renderMessage('Please wait...', 'info', '#container', 3000);
+```
+
+### **zCLI Operations**
+
+```javascript
+// Execute zFunc
+await client.zFunc('myFunction(arg1, arg2)');
+
+// Navigate with zLink
+await client.zLink('/path/to/menu');
+
+// Execute zOpen
+await client.zOpen('file.txt');
+```
+
+### **Raw Message Sending**
+
+```javascript
+// Send custom message
+const result = await client.send({
+  zKey: '^My Custom Action',
+  action: 'custom_action',
+  data: { foo: 'bar' }
+});
+
+// With custom timeout
+const result = await client.send(payload, 5000); // 5 second timeout
+```
+
+### **Theme Management**
+
+```javascript
+// Auto-load theme (default behavior)
+const client = new BifrostClient(url, { autoTheme: true });
+
+// Manually load theme
+client.loadTheme();
+
+// Load from custom URL
+client.loadTheme('https://my-cdn.com/zTheme');
+
+// Disable auto-theme
+const client = new BifrostClient(url, { autoTheme: false });
+```
+
+### **Connection Management**
+
+```javascript
+// Connect
+await client.connect();
+
+// Check connection status
+if (client.isConnected()) {
+  console.log('Connected!');
+}
+
+// Disconnect
+client.disconnect();
+
+// Auto-reconnect configuration
+const client = new BifrostClient(url, {
+  autoReconnect: true,
+  reconnectDelay: 3000  // 3 seconds between attempts
+});
+```
+
+### **Configuration Options**
+
+```javascript
+const options = {
+  // Theme
+  autoTheme: true,           // Auto-load zTheme CSS
+  
+  // Connection
+  autoReconnect: true,       // Auto-reconnect on disconnect
+  reconnectDelay: 3000,      // Delay between reconnects (ms)
+  timeout: 30000,            // Request timeout (ms)
+  
+  // Authentication
+  token: 'your-api-key',     // Authentication token
+  
+  // Debugging
+  debug: false,              // Enable console logging
+  
+  // Hooks
+  hooks: {
+    onConnected: (info) => {},
+    onDisconnected: (reason) => {},
+    onMessage: (msg) => {},
+    onError: (error) => {},
+    onBroadcast: (msg) => {},
+    onDisplay: (data) => {},
+    onInput: (request) => {}
+  }
+};
+
+const client = new BifrostClient('ws://localhost:8765', options);
+```
+
+### **Complete Example**
+
+See the **User Manager v2 Demo** for a complete working example:
+- `Demos/User Manager/index_v2.html`
+- Full CRUD operations with zTheme styling
+- Primitive hooks for event handling
+- Auto-rendering methods in action
+
+### **Comparison: Old vs New**
+
+**Old Approach (Manual WebSocket):**
+```javascript
+// 50+ lines of WebSocket boilerplate
+const ws = new WebSocket(url);
+ws.onopen = () => { /* ... */ };
+ws.onmessage = (e) => { /* ... */ };
+ws.onerror = (e) => { /* ... */ };
+ws.onclose = () => { /* reconnect logic */ };
+
+// Manual request/response correlation
+const requestId = generateId();
+callbacks.set(requestId, { resolve, reject });
+
+// Manual UI rendering
+const table = document.createElement('table');
+// ... 20+ lines of DOM manipulation
+```
+
+**New Approach (BifrostClient):**
+```javascript
+// 5 lines
+const client = new BifrostClient(url, { autoTheme: true });
+await client.connect();
+const users = await client.read('users');
+client.renderTable(users, '#container');
+```
+
+### **Browser Compatibility**
+- ✅ Chrome/Edge 88+
+- ✅ Firefox 78+
+- ✅ Safari 14+
+- ✅ All browsers with WebSocket and ES6 support
+
+### **TypeScript Support**
+TypeScript definitions coming in v1.5.5. For now, use JSDoc comments for IDE hints.
 
 ---
 

@@ -1,0 +1,127 @@
+header {
+  background-color: var(--mainBase);
+  z-index: 1000; /* High value to ensure it is on top */
+}
+
+header a {
+  font-weight: 700;
+}
+
+nav {
+  float: left;
+}
+
+/* Dropdown Styling */
+.zMenu-Sub {
+  display: none;
+  position: absolute;
+  background-color: var(--mainBase);
+  z-index: 9999; /* Ensure dropdown is above all other content */
+}
+
+nav ul, .zNavFull ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+}
+/* Clear all .zMenu-Sub and display the first one when hovering */
+nav ul:hover .zMenu-Sub {
+  display: none; /* Clear all */
+}
+body:hover .zMenu-Sub {
+  display: none;
+}
+nav ul li:hover > .zMenu-Sub:first-of-type {
+  display: block; /* Show the first */
+}
+.zNavFull li {
+  margin-left: 2em;
+  padding-top: 1em;
+}
+
+.zNavFull {
+  float: right;
+}
+
+.zNavIcon {
+  width: 30px;
+  height: 30px;
+  margin: 1em;
+  cursor: pointer;
+}
+
+.zMenu-Sub {
+  display: none;
+  position: absolute;
+  background-color: var(--mainBase);
+}
+
+.nav-is-open {
+  display: flex;
+}
+
+.zMenu-Sub ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+/* Hover State for Dropdown Items */
+.zMenu-Sub ul li {
+  padding: 0.5em 1em;
+  transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transition */
+}
+
+/* Highlight Dropdown Items on Hover */
+.zMenu-Sub ul li:hover {
+  background-color: pink; /* Light gray background */
+  color: var(--mainAccent); /* Custom accent color */
+  font-weight: 700; /* Bold font on hover */
+}
+
+.appMiniGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* Creates a 2-column grid */
+  max-height: calc(2 * 100px); /* Replace 100px with the height of one row */
+  overflow-y: auto; /* Enables vertical scrolling */
+}
+
+.miniAppItem {
+  padding: .5em;
+  position: relative; /* Needed for positioning the tooltip */
+  text-align: center; /* Centers content inside the item */
+}
+.miniAppIcon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  transition: transform 0.3s ease, box-shadow 0.3s ease; /* Smooth transition */
+}
+
+/* Hover State - Grow the icon slightly and add a subtle shadow */
+.miniAppIcon:hover {
+  transform: scale(1.1); /* Grows icon to 110% of its original size */
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2); /* Adds a subtle shadow */
+}
+
+/* Hide .zMenu-Toggler and show .zNavFull for larger screens */
+@media (min-width: 992px) {
+  .zMenu-Toggler {
+    display: none;
+  }
+  .zNavFull {
+    display: block;
+  }
+}
+
+/* Show .zMenu-Toggler and hide .zNavFull for smaller screens (mobile and tablet) */
+@media (max-width: 992px) {
+  .zMenu-Toggler {
+    display: block;
+  }
+  .zNavFull {
+    display: none;
+  }
+}

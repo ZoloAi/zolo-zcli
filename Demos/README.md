@@ -52,12 +52,55 @@ pip install -r requirements.txt
 python run.py
 ```
 
+**Web Interface (NEW in v1.5.4)**:
+```bash
+# Start backend
+python run_backend.py
+
+# Open in browser
+open index_v2.html
+```
+
+**Features**:
+- 🌉 BifrostClient - WebSocket integration
+- 🎨 zTheme - Automatic styling
+- ⚡ 75% less code than v1
+- 📦 Dual-layer caching
+
 **What You'll Learn**:
 - zUI menu systems with bounce-back navigation
 - zDialog forms with validation
 - zData CRUD operations with SQLite
 - Error handling and user feedback
 - Schema design with type validation
+
+---
+
+### **Cache Performance Demo** (`Cache_Performance_Demo.html`)
+
+**NEW in v1.5.4**: Interactive demonstration of zBifrost's dual-layer caching system.
+
+**Features**:
+- ✅ Schema caching (client + server)
+- ✅ Query result caching with TTL
+- ✅ Real-time performance metrics
+- ✅ 10-100x speedup visualization
+
+**Quick Start**:
+```bash
+# Start backend (from User Manager)
+cd "User Manager"
+python run_backend.py
+
+# Open demo
+open ../Cache_Performance_Demo.html
+```
+
+**What You'll Learn**:
+- Client-side vs server-side caching
+- TTL (Time To Live) configuration
+- Cache hit/miss statistics
+- Performance optimization strategies
 
 ---
 

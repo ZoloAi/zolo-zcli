@@ -44,6 +44,16 @@ class zBifrost:
 
         self.clients = set()
         self.authenticated_clients = {}  # Maps ws to auth info
+        
+        # Performance: Cache for parsed schemas and UI files (v1.5.4+)
+        self.schema_cache = {}  # Cache parsed zSchema files
+        self.ui_cache = {}      # Cache parsed zUI files
+        self.cache_stats = {'hits': 0, 'misses': 0}  # Track cache performance
+        
+        # Query result caching with TTL (v1.5.4+)
+        self.query_cache = {}  # Cache query results: {cache_key: {'data': result, 'timestamp': time, 'ttl': seconds}}
+        self.query_cache_ttl = 60  # Default TTL: 60 seconds
+        self.query_cache_stats = {'hits': 0, 'misses': 0, 'expired': 0}  # Track query cache performance
 
     def validate_origin(self, ws: WebSocketServerProtocol) -> bool:
         """Validate the Origin header to prevent CSRF attacks."""
@@ -66,6 +76,130 @@ class zBifrost:
 
         self.logger.warning("[zBifrost] [BLOCK] Connection from unauthorized origin: %s", origin)
         return False
+
+    def get_schema_info(self, model):
+        """Get schema information from cache or load it (v1.5.4+)."""
+        if model in self.schema_cache:
+            self.cache_stats['hits'] += 1
+            self.logger.debug(f"[zBifrost] [CACHE HIT] Schema: {model}")
+            return self.schema_cache[model]
+        
+        self.cache_stats['misses'] += 1
+        self.logger.debug(f"[zBifrost] [CACHE MISS] Schema: {model}")
+        
+        # Load schema via zData if available
+        if self.walker and hasattr(self.walker, 'data'):
+            try:
+                schema = self.walker.data.get_schema(model)
+                if schema:
+                    self.schema_cache[model] = schema
+                    return schema
+            except Exception as e:
+                self.logger.warning(f"[zBifrost] Failed to load schema {model}: {e}")
+        
+        return None
+
+    def get_connection_info(self):
+        """Get connection info to send to client on connect (v1.5.4+)."""
+        info = {
+            "server_version": "1.5.4",
+            "features": ["schema_cache", "connection_info", "realtime_sync"],
+            "cache_stats": self.cache_stats.copy()
+        }
+        
+        # Add available models if zData is available
+        if self.walker and hasattr(self.walker, 'data'):
+            try:
+                # Get list of available schemas/models
+                info["available_models"] = self._discover_models()
+            except Exception as e:
+                self.logger.debug(f"[zBifrost] Could not discover models: {e}")
+        
+        # Add session data if available
+        if self.zcli and hasattr(self.zcli, 'session'):
+            try:
+                info["session"] = {
+                    "workspace": getattr(self.zcli.session, 'workspace', None),
+                    "mode": getattr(self.zcli, 'mode', 'Terminal')
+                }
+            except Exception as e:
+                self.logger.debug(f"[zBifrost] Could not get session info: {e}")
+        
+        return info
+
+    def _discover_models(self):
+        """Discover available data models (v1.5.4+)."""
+        # This would scan workspace for zSchema files
+        # For now, return empty list - can be enhanced later
+        return []
+
+    def _generate_cache_key(self, data):
+        """Generate cache key from request data (v1.5.4+)."""
+        import hashlib
+        # Create a deterministic string from the request
+        cache_parts = [
+            data.get('zKey', ''),
+            data.get('action', ''),
+            data.get('model', ''),
+            str(data.get('where', {})),
+            str(data.get('filters', {})),
+            str(data.get('fields', [])),
+            str(data.get('order_by', [])),
+            str(data.get('limit', '')),
+            str(data.get('offset', ''))
+        ]
+        cache_string = '|'.join(cache_parts)
+        return hashlib.md5(cache_string.encode()).hexdigest()
+
+    def get_cached_query(self, cache_key):
+        """Get cached query result if valid (v1.5.4+)."""
+        import time
+        
+        if cache_key not in self.query_cache:
+            self.query_cache_stats['misses'] += 1
+            return None
+        
+        cached = self.query_cache[cache_key]
+        age = time.time() - cached['timestamp']
+        
+        # Check if expired
+        if age > cached['ttl']:
+            self.query_cache_stats['expired'] += 1
+            del self.query_cache[cache_key]
+            self.logger.debug(f"[zBifrost] [CACHE EXPIRED] Query cache key: {cache_key[:8]}... (age: {age:.1f}s)")
+            return None
+        
+        self.query_cache_stats['hits'] += 1
+        self.logger.debug(f"[zBifrost] [CACHE HIT] Query cache key: {cache_key[:8]}... (age: {age:.1f}s, ttl: {cached['ttl']}s)")
+        return cached['data']
+
+    def cache_query_result(self, cache_key, result, ttl=None):
+        """Cache a query result with TTL (v1.5.4+)."""
+        import time
+        
+        if ttl is None:
+            ttl = self.query_cache_ttl
+        
+        self.query_cache[cache_key] = {
+            'data': result,
+            'timestamp': time.time(),
+            'ttl': ttl
+        }
+        self.logger.debug(f"[zBifrost] [CACHED] Query result: {cache_key[:8]}... (ttl: {ttl}s)")
+
+    def clear_cache(self):
+        """Clear all caches (v1.5.4+)."""
+        self.schema_cache.clear()
+        self.ui_cache.clear()
+        self.query_cache.clear()
+        self.logger.info(f"[zBifrost] All caches cleared. Schema stats: {self.cache_stats}, Query stats: {self.query_cache_stats}")
+        self.cache_stats = {'hits': 0, 'misses': 0}
+        self.query_cache_stats = {'hits': 0, 'misses': 0, 'expired': 0}
+    
+    def set_query_cache_ttl(self, ttl):
+        """Set default TTL for query cache (v1.5.4+)."""
+        self.query_cache_ttl = ttl
+        self.logger.info(f"[zBifrost] Query cache TTL set to {ttl}s")
 
     async def authenticate_client(self, ws: WebSocketServerProtocol) -> dict:
         """Authenticate the WebSocket client."""
@@ -156,6 +290,18 @@ class zBifrost:
 
         self.logger.info(f"[zBifrost] [OK] Client authenticated and connected: {auth_info.get('user')} ({remote_addr})")
 
+        # Send connection info to client (v1.5.4+)
+        try:
+            connection_info = self.get_connection_info()
+            connection_info['auth'] = auth_info  # Include auth details
+            await ws.send(json.dumps({
+                "event": "connection_info",
+                "data": connection_info
+            }))
+            self.logger.debug(f"[zBifrost] [OK] Sent connection info to {auth_info.get('user')}")
+        except Exception as e:
+            self.logger.warning(f"[zBifrost] [WARN] Failed to send connection info: {e}")
+
         try:
             async for message in ws:
                 self.logger.info(f"[zBifrost] [RECV] Received: {message}")
@@ -177,11 +323,70 @@ class zBifrost:
                             self.logger.debug(f"[zBifrost] [OK] Routed input response: {request_id}")
                     continue
 
+                # Handle schema requests with cache (v1.5.4+)
+                if data.get("action") == "get_schema":
+                    model = data.get("model")
+                    if model:
+                        schema = self.get_schema_info(model)
+                        if schema:
+                            await ws.send(json.dumps({"result": schema}))
+                        else:
+                            await ws.send(json.dumps({"error": f"Schema not found: {model}"}))
+                        continue
+                
+                # Handle cache control (v1.5.4+)
+                if data.get("action") == "clear_cache":
+                    self.clear_cache()
+                    await ws.send(json.dumps({"result": "Cache cleared", "stats": self.cache_stats}))
+                    continue
+                
+                if data.get("action") == "cache_stats":
+                    # Return all cache stats (v1.5.4+)
+                    all_stats = {
+                        'schema_cache': self.cache_stats,
+                        'query_cache': self.query_cache_stats
+                    }
+                    await ws.send(json.dumps({"result": all_stats}))
+                    continue
+                
+                # Handle TTL configuration (v1.5.4+)
+                if data.get("action") == "set_query_cache_ttl":
+                    ttl = data.get("ttl", 60)
+                    self.set_query_cache_ttl(ttl)
+                    await ws.send(json.dumps({"result": f"Query cache TTL set to {ttl}s"}))
+                    continue
+
                 zKey = data.get("zKey") or data.get("cmd")
                 zHorizontal = data.get("zHorizontal") or zKey
 
                 if zKey:
                     from zCLI.subsystems.zDispatch import handle_zDispatch
+                    
+                    # Check if this is a cacheable read operation (v1.5.4+)
+                    is_read_operation = (
+                        data.get("action") == "read" or 
+                        zKey.startswith("^List") or 
+                        zKey.startswith("^Get") or
+                        zKey.startswith("^Search")
+                    )
+                    
+                    # Check for custom TTL in request
+                    cache_ttl = data.get("cache_ttl", None)
+                    disable_cache = data.get("no_cache", False)
+                    
+                    # Try cache for read operations
+                    if is_read_operation and not disable_cache:
+                        cache_key = self._generate_cache_key(data)
+                        cached_result = self.get_cached_query(cache_key)
+                        
+                        if cached_result is not None:
+                            # Cache hit!
+                            payload = json.dumps({"result": cached_result, "_cached": True})
+                            await ws.send(payload)
+                            await self.broadcast(payload, sender=ws)
+                            continue
+                    
+                    # Cache miss or not cacheable - execute query
                     self.logger.debug(f"[zBifrost] [DISPATCH] Dispatching CLI cmd: {zKey}")
                     try:
                         # Pass WebSocket data as context for zDialog/zFunc to use
@@ -191,6 +396,11 @@ class zBifrost:
                         result = await asyncio.to_thread(
                             handle_zDispatch, zKey, zHorizontal, zcli=self.zcli, walker=self.walker, context=context
                         )
+                        
+                        # Cache result if it's a read operation
+                        if is_read_operation and not disable_cache:
+                            self.cache_query_result(cache_key, result, ttl=cache_ttl)
+                        
                         payload = json.dumps({"result": result})
                     except Exception as exc:  # pylint: disable=broad-except
                         self.logger.error("[zBifrost] [ERROR] CLI execution error: %s", exc)

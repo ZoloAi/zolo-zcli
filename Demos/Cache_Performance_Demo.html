@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cache Performance Demo - zCLI</title>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script src="../zCLI/subsystems/zComm/zComm_modules/zBifrost/bifrost_client.js"></script>
+    
+    <script>
+        (async () => {
+            const client = new BifrostClient('ws://localhost:8765', {
+                autoTheme: true,
+                debug: true
+            });
+            
+            await client.connect();
+            
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="zContainer">
+                    <h1 style="font-size: 3em; margin-bottom: 0.5rem;">📦 Cache Performance Demo</h1>
+                    <p style="font-size: 1.2em; color: #6b7280; margin-bottom: 2rem;">
+                        Dual-layer caching: Schema Cache + Query Cache with TTL
+                    </p>
+
+                    <div class="dashCard">
+                        <h2 style="margin-bottom: 1.5rem;">Test Caching Performance</h2>
+                        
+                        <div class="zMenu" style="margin-bottom: 2rem;">
+                            <button class="zoloButton zBtn-primary" id="schemaTest">🗂️ Schema Cache Test</button>
+                            <button class="zoloButton zBtn-success" id="queryTest">🔍 Query Cache Test</button>
+                            <button class="zoloButton zBtn-warning" id="setTTL">⏱️ Set TTL</button>
+                            <button class="zoloButton zBtn-secondary" id="clearCache">🗑️ Clear Cache</button>
+                        </div>
+
+                        <div id="results"></div>
+                    </div>
+                </div>
+            `;
+
+            // Schema Cache Test
+            document.getElementById('schemaTest').onclick = async () => {
+                const results = document.getElementById('results');
+                results.innerHTML = '<p>Running schema cache test...</p>';
+                
+                client.clearClientCache();
+                
+                const t1 = performance.now();
+                await client.getSchema('users');
+                const time1 = (performance.now() - t1).toFixed(2);
+                
+                const t2 = performance.now();
+                await client.getSchema('users');
+                const time2 = (performance.now() - t2).toFixed(2);
+                
+                const t3 = performance.now();
+                await client.getSchema('users');
+                const time3 = (performance.now() - t3).toFixed(2);
+                
+                const stats = await client.getCacheStats();
+                
+                results.innerHTML = `
+                    <div class="zAlert zAlert-success" style="margin-bottom: 1rem;">
+                        <strong>✅ Schema Cache Test Complete!</strong>
+                    </div>
+                    <table class="zTable">
+                        <thead>
+                            <tr><th>Request</th><th>Time</th><th>Status</th><th>Speedup</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1st Request</td>
+                                <td>${time1} ms</td>
+                                <td><span class="zBadge zBadge-warning">Cache Miss</span></td>
+                                <td>-</td>
+                            </tr>
+                            <tr>
+                                <td>2nd Request</td>
+                                <td>${time2} ms</td>
+                                <td><span class="zBadge zBadge-success">Cache Hit</span></td>
+                                <td><strong>${(time1 / time2).toFixed(0)}x faster</strong></td>
+                            </tr>
+                            <tr>
+                                <td>3rd Request</td>
+                                <td>${time3} ms</td>
+                                <td><span class="zBadge zBadge-success">Cache Hit</span></td>
+                                <td><strong>${(time1 / time3).toFixed(0)}x faster</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="zPanel" style="margin-top: 1rem;">
+                        <p><strong>Hits:</strong> ${stats.schema_cache.hits} | <strong>Misses:</strong> ${stats.schema_cache.misses}</p>
+                    </div>
+                `;
+            };
+
+            // Query Cache Test
+            document.getElementById('queryTest').onclick = async () => {
+                const results = document.getElementById('results');
+                results.innerHTML = '<p>Running query cache test...</p>';
+                
+                const times = [];
+                for (let i = 0; i < 3; i++) {
+                    const start = performance.now();
+                    await client.read('users');
+                    times.push((performance.now() - start).toFixed(2));
+                }
+                
+                const stats = await client.getCacheStats();
+                
+                results.innerHTML = `
+                    <div class="zAlert zAlert-success" style="margin-bottom: 1rem;">
+                        <strong>✅ Query Cache Test Complete!</strong>
+                    </div>
+                    <table class="zTable">
+                        <thead>
+                            <tr><th>Request</th><th>Time</th><th>Speedup</th></tr>
+                        </thead>
+                        <tbody>
+                            ${times.map((t, i) => `
+                                <tr>
+                                    <td>${i + 1}${i === 0 ? 'st' : i === 1 ? 'nd' : 'rd'} Query</td>
+                                    <td>${t} ms</td>
+                                    <td>${i === 0 ? '-' : `<strong>${(times[0] / t).toFixed(1)}x faster</strong>`}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    <div class="zPanel" style="margin-top: 1rem;">
+                        <p><strong>Hits:</strong> ${stats.query_cache.hits} | <strong>Misses:</strong> ${stats.query_cache.misses} | <strong>Expired:</strong> ${stats.query_cache.expired}</p>
+                        <p><strong>Hit Rate:</strong> ${((stats.query_cache.hits / (stats.query_cache.hits + stats.query_cache.misses)) * 100).toFixed(1)}%</p>
+                    </div>
+                `;
+            };
+
+            // Set TTL
+            document.getElementById('setTTL').onclick = async () => {
+                const ttl = prompt('Enter TTL in seconds:', '60');
+                if (ttl) {
+                    await client.setQueryCacheTTL(parseInt(ttl));
+                    client.renderMessage(`✅ TTL set to ${ttl}s`, 'success', '#results');
+                }
+            };
+
+            // Clear Cache
+            document.getElementById('clearCache').onclick = async () => {
+                await client.clearServerCache();
+                client.renderMessage('✅ All caches cleared!', 'success', '#results');
+            };
+        })();
+    </script>
+</body>
+</html>
+
