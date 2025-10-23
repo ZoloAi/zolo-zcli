@@ -30,14 +30,37 @@ def inject_placeholders(obj, zContext, logger):
         if obj == "zConv":
             return zContext.get("zConv")
         
+        # Check if entire string is a single placeholder (zConv.field or zConv['field'])
+        # In this case, return the raw value without quotes
+        import re
+        if obj.startswith("zConv"):
+            try:
+                zconv_data = zContext.get("zConv", {})
+                
+                # Dot notation: zConv.field
+                if "." in obj and len(obj.split(".")) == 2:
+                    parts = obj.split(".", 1)
+                    if parts[0] == "zConv":
+                        return zconv_data.get(parts[1])
+                
+                # Bracket notation: zConv['field'] or zConv["field"]
+                if "[" in obj and "]" in obj:
+                    start = obj.index("[") + 1
+                    end = obj.index("]")
+                    field = obj[start:end].strip("'\"")
+                    return zconv_data.get(field)
+                    
+            except Exception as e:
+                logger.error("Failed to parse placeholder '%s': %s", obj, e)
+                return obj
+        
         # Handle embedded placeholders (e.g., "id = zConv.user_id")
+        # This applies when zConv.* is part of a larger string
         if "zConv" in obj:
             try:
                 zconv_data = zContext.get("zConv", {})
                 result = obj
                 
-                # Replace all zConv.field patterns with their values
-                import re
                 # Match zConv.field_name patterns
                 pattern = r'zConv\.(\w+)'
                 matches = re.findall(pattern, result)

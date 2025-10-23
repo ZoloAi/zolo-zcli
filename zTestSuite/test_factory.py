@@ -15,7 +15,7 @@ def print_subsystem_header(subsystem_name: str):
     """Print standardized subsystem header."""
     print()
     print("=" * 80)
-    print(f"🧪 TESTING: {subsystem_name}")
+    print(f"[TEST] TESTING: {subsystem_name}")
     print("=" * 80)
 
 
@@ -34,7 +34,7 @@ def print_test_overview(test_module, subsystem_name: str):
             attr_name.startswith('Test')):
             suite.addTests(loader.loadTestsFromTestCase(attr))
     
-    print("\n📋 Test Suite Overview:")
+    print("\n[INFO] Test Suite Overview:")
     print("-" * 80)
     
     test_cases = []
@@ -47,7 +47,7 @@ def print_test_overview(test_module, subsystem_name: str):
     for i, test_name in enumerate(test_cases, 1):
         print(f"  {i:2d}. {test_name}")
     
-    print(f"\n📊 Total Tests: {len(test_cases)}")
+    print(f"\n[STATS] Total Tests: {len(test_cases)}")
     print("-" * 80)
     print()
 
@@ -58,7 +58,7 @@ def run_subsystem_tests_with_factory(test_module, subsystem_name: str, verbose: 
     # Print the subsystem header
     print()
     print("=" * 80)
-    print(f"🧪 TESTING: {subsystem_name}")
+    print(f"[TEST] TESTING: {subsystem_name}")
     print("=" * 80)
     
     # Get test suite from module using the same approach as existing run_tests functions
@@ -75,7 +75,7 @@ def run_subsystem_tests_with_factory(test_module, subsystem_name: str, verbose: 
             suite.addTests(loader.loadTestsFromTestCase(attr))
     
     # Print test titles before running
-    print("\n📋 Test Suite Overview:")
+    print("\n[INFO] Test Suite Overview:")
     print("-" * 80)
     
     test_cases = []
@@ -88,7 +88,7 @@ def run_subsystem_tests_with_factory(test_module, subsystem_name: str, verbose: 
     for i, test_name in enumerate(test_cases, 1):
         print(f"  {i:2d}. {test_name}")
     
-    print(f"\n📊 Total Tests: {len(test_cases)}")
+    print(f"\n[STATS] Total Tests: {len(test_cases)}")
     print("-" * 80)
     print()
     
@@ -123,7 +123,7 @@ def print_detailed_results_table(result: unittest.TestResult, subsystem_name: st
     """Print detailed table showing each test and its status."""
     print()
     print("=" * 80)
-    print(f"📊 DETAILED TEST RESULTS - {subsystem_name}")
+    print(f"[STATS] DETAILED TEST RESULTS - {subsystem_name}")
     print("=" * 80)
     
     # Table header
@@ -137,19 +137,19 @@ def print_detailed_results_table(result: unittest.TestResult, subsystem_name: st
     for test, _ in result.failures:
         if hasattr(test, '_testMethodName'):
             test_name = f"{test.__class__.__name__}.{test._testMethodName.replace('test_', '').replace('_', ' ').title()}"
-            all_tests[test] = ('❌ FAIL', test_name)
+            all_tests[test] = ('[FAIL] FAIL', test_name)
     
     # Process errors
     for test, _ in result.errors:
         if hasattr(test, '_testMethodName'):
             test_name = f"{test.__class__.__name__}.{test._testMethodName.replace('test_', '').replace('_', ' ').title()}"
-            all_tests[test] = ('⚠️  ERROR', test_name)
+            all_tests[test] = ('[ERROR] ERROR', test_name)
     
     # Process skipped
     for test, reason in result.skipped:
         if hasattr(test, '_testMethodName'):
             test_name = f"{test.__class__.__name__}.{test._testMethodName.replace('test_', '').replace('_', ' ').title()}"
-            all_tests[test] = ('⏸ SKIP', test_name)
+            all_tests[test] = ('[SKIP]', test_name)
     
     # Print results table
     test_counter = 1
@@ -165,7 +165,7 @@ def print_detailed_results_table(result: unittest.TestResult, subsystem_name: st
             print(f"... and {passed_count} more tests passed")
     
     print("-" * 80)
-    print(f"📈 STATISTICS:")
+    print(f"[STATISTICS]:")
     total = result.testsRun
     passed = total - len(result.failures) - len(result.errors) - len(result.skipped)
     failed = len(result.failures)
@@ -173,12 +173,12 @@ def print_detailed_results_table(result: unittest.TestResult, subsystem_name: st
     skipped = len(result.skipped)
     
     percentage = (passed/total*100) if total > 0 else 0
-    print(f"   ✅ Passed:  {passed}/{total} ({percentage:.1f}%)")
+    print(f"   [OK] Passed:  {passed}/{total} ({percentage:.1f}%)")
     if failed > 0:
-        print(f"   ❌ Failed:  {failed}")
+        print(f"   [FAIL] Failed:  {failed}")
     if errors > 0:
-        print(f"   ⚠️  Errors:  {errors}")
+        print(f"   [ERROR] Errors:  {errors}")
     if skipped > 0:
-        print(f"   ⏸ Skipped: {skipped}")
+        print(f"   [SKIP] Skipped: {skipped}")
     
     print()

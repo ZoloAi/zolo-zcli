@@ -467,4 +467,4 @@ MIT License with Ethical Use Clause. See [LICENSE](LICENSE).
 
 ---
 
-**Version 1.5.2** | **Python 3.8+** | **Production Ready**
+**Version 1.5.3** | **Python 3.8+** | **Production Ready**

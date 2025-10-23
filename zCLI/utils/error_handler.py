@@ -127,6 +127,10 @@ class ErrorHandler:
             context: Additional context dictionary
             include_locals: Include local variables (debug mode only)
         """
+        # Store exception for potential interactive handling
+        self.last_exception = exc
+        self.last_context = context or {}
+        
         if not self.logger:
             # Fallback to print if no logger
             print(f"{message}: {exc}", file=sys.stderr)

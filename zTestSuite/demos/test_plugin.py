@@ -112,20 +112,20 @@ def run_self_test():
 
 
 if __name__ == "__main__":
-    print("🧪 zCLI Test Plugin - Self Test")
+    print("[TEST] zCLI Test Plugin - Self Test")
     print("=" * 50)
     
     result = run_self_test()
     
     if result["status"] == "success":
-        print("✅ Plugin self-test PASSED")
-        print(f"📊 Tests passed: {result['tests_passed']}")
-        print(f"🌍 Default greeting: {result['results']['hello_default']}")
-        print(f"🎯 Custom greeting: {result['results']['hello_custom']}")
-        print(f"🎲 Random (0-100): {result['results']['random_default']}")
-        print(f"🎲 Random (1-10): {result['results']['random_custom']}")
-        print(f"📋 Plugin: {result['results']['plugin_info']['name']} v{result['results']['plugin_info']['version']}")
+        print("[OK] Plugin self-test PASSED")
+        print(f"[STATS] Tests passed: {result['tests_passed']}")
+        print(f"[INFO] Default greeting: {result['results']['hello_default']}")
+        print(f"[TARGET] Custom greeting: {result['results']['hello_custom']}")
+        print(f"[RANDOM] Random (0-100): {result['results']['random_default']}")
+        print(f"[RANDOM] Random (1-10): {result['results']['random_custom']}")
+        print(f"[INFO] Plugin: {result['results']['plugin_info']['name']} v{result['results']['plugin_info']['version']}")
     else:
-        print("❌ Plugin self-test FAILED")
-        print(f"🚨 Error: {result['error']}")
+        print("[FAIL] Plugin self-test FAILED")
+        print(f"[ERROR] Error: {result['error']}")
         exit(1)

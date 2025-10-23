@@ -24,6 +24,7 @@ from zTestSuite.test_factory import (
 TEST_MODULES = [
     'zConfig',
     'zComm',
+    'zBifrost',  # WebSocket/GUI mode data flow tests (v1.5.3)
     'zDisplay',
     'zAuth',       # zAuth depends on zDisplay
     'zDispatch',
@@ -36,6 +37,7 @@ TEST_MODULES = [
     'zShell',
     'zWizard',
     'zUtils',
+    'zErrorHandler',  # Error handling and interactive traceback (v1.5.3)
     'zData',
     'zWalker',
     'zIntegration',  # Integration tests - test multiple subsystems working together
@@ -100,7 +102,7 @@ def print_summary(results):
     """Print overall summary with enhanced table formatting."""
     print()
     print("=" * 90)
-    print("🏁 COMPREHENSIVE TEST SUMMARY")
+    print("[FINISH] COMPREHENSIVE TEST SUMMARY")
     print("=" * 90)
     
     total_tests = 0
@@ -117,7 +119,7 @@ def print_summary(results):
     # Print each subsystem result in table format
     for result in results:
         subsystem = result['name']
-        status_icon = "✅ PASS" if result["success"] else "❌ FAIL"
+        status_icon = "[OK] PASS" if result["success"] else "[FAIL] FAIL"
         passed = result['passed']
         failed = result['failed']
         errors = result['error_count']
@@ -155,14 +157,14 @@ def print_summary(results):
                     print("  FAILED:")
                     for test, traceback in result['failures']:
                         test_name = test._testMethodName if hasattr(test, '_testMethodName') else str(test)
-                        print(f"    ✗ {test_name}")
+                        print(f"    [FAIL] {test_name}")
                 
                 # Print error tests
                 if result['errors']:
                     print("  ERRORS:")
                     for test, traceback in result['errors']:
                         test_name = test._testMethodName if hasattr(test, '_testMethodName') else str(test)
-                        print(f"    ⚠ {test_name}")
+                        print(f"    [WARN] {test_name}")
                 
                 # Print skipped tests
                 if result['skipped']:
@@ -170,7 +172,7 @@ def print_summary(results):
                     for test, reason in result['skipped']:
                         test_name = test._testMethodName if hasattr(test, '_testMethodName') else str(test)
                         reason_str = f" ({reason})" if reason else ""
-                        print(f"    ⊘ {test_name}{reason_str}")
+                        print(f"    [SKIP] {test_name}{reason_str}")
     
     print()
     print("-" * 70)
@@ -179,11 +181,11 @@ def print_summary(results):
     all_passed = all(r["success"] for r in results)
     if all_passed:
         print()
-        print("✓ ALL TESTS PASSED")
+        print("[OK] ALL TESTS PASSED")
         print()
     else:
         print()
-        print("✗ SOME TESTS FAILED")
+        print("[FAIL] SOME TESTS FAILED")
         print()
     
     return all_passed
@@ -201,7 +203,7 @@ def show_test_menu():
     available_tests = [(name, f'{name}_Test') for name in TEST_MODULES if name in AVAILABLE_MODULES]
     
     if not available_tests:
-        print("❌ No test suites available!")
+        print("[ERROR] No test suites available!")
         return None
     
     print("Select test suite to run:")
@@ -256,7 +258,7 @@ def run_selected_tests(test_choice=None):
             result = run_subsystem_tests(test_module, module_name)
             results.append(result)
         else:
-            print(f"❌ Test suite '{test_choice}' not available!")
+            print(f"[ERROR] Test suite '{test_choice}' not available!")
             return False
     
     # Print summary
@@ -264,7 +266,7 @@ def run_selected_tests(test_choice=None):
         all_passed = print_summary(results)
         return all_passed
     else:
-        print("❌ No test results to show!")
+        print("[ERROR] No test results to show!")
         return False
 
 

@@ -8,6 +8,30 @@ This folder contains complete, production-ready applications built with **zCLI**
 
 ## 📦 Available Demos
 
+### **Interactive Traceback** (`Interactive_Traceback/`)
+
+**NEW in v1.5.3**: Demonstrates zCLI's declarative error handling with interactive debugging UI.
+
+**Features**:
+- [OK] Interactive exception viewer with formatted details
+- [OK] Retry failed operations without code changes
+- [OK] Navigate exception history across multiple errors
+- [OK] 4-line YAML UI definition for complete debugging system
+
+**Quick Start**:
+```bash
+cd Interactive_Traceback
+python3 demo_interactive_traceback.py
+```
+
+**What You'll Learn**:
+- Declarative error handling patterns
+- zWalker UI for debugging workflows
+- Context preservation for operation retry
+- Exception history tracking
+
+---
+
 ### **User Manager** (`User Manager/`)
 
 A complete User Management System demonstrating full CRUD operations with SQLite.

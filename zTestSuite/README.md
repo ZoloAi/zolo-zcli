@@ -2,7 +2,7 @@
 
 Comprehensive test suite for all zCLI subsystems.
 
-## 🧪 Running Tests
+## [TEST] Running Tests
 
 ### Run All Tests
 ```bash
@@ -24,9 +24,9 @@ python zTestSuite/run_tests.py -v
 python zTestSuite/run_tests.py --list
 ```
 
-## 📋 Test Modules
+## [INFO] Test Modules
 
-### ✅ zConfig_Test.py
+### [OK] zConfig_Test.py
 Tests for configuration subsystem including:
 - **Path Resolution**: OS-specific path detection and validation
 - **Write Permissions**: Directory creation and write access verification
@@ -34,14 +34,22 @@ Tests for configuration subsystem including:
 - **Config Hierarchy**: Environment detection and loading order
 - **Cross-Platform**: Compatibility across Linux, macOS, and Windows
 
-### 🔄 Coming Soon
-- zAuth_Test.py - Authentication and authorization
-- zData_Test.py - Data backends (CSV, PostgreSQL, SQLite)
-- zDisplay_Test.py - Display and UI rendering
-- zShell_Test.py - Shell and command execution
-- zNavigation_Test.py - Menu navigation and walker
+### [OK] zBifrost_Test.py (v1.5.3)
+**NEW:** Tests for WebSocket/GUI mode data flows and placeholder injection:
+- **Embedded Placeholders**: Regex-based `zConv.*` replacement in WHERE clauses (9 tests)
+- **WHERE Clause Extraction**: Top-level vs. options dual-source handling (6 tests)
+- **WebSocket Data**: Frontend data structure and zDialog integration (4 tests)
+- **CRUD Operations**: Complete data flow in WebSocket mode (3 tests)
+- **Mode Detection**: zMode-aware behavior (Terminal, WebSocket, GUI, Walker) (4 tests)
+- **Coverage**: 26 tests, ~400 LOC, critical v1.5.3 bug fixes verified
+- **Status**: All tests passing [OK]
 
-## 🏗️ Test Structure
+### [INFO] Coming Soon
+- Enhanced multi-client WebSocket tests
+- Real-time broadcast synchronization tests
+- WebSocket authentication flow tests
+
+## [BUILD] Test Structure
 
 ### Test Types
 
@@ -58,15 +66,15 @@ Real subsystem interaction testing:
 - Use real implementations (minimal mocking)
 - Verify actual data flow between components
 - Test end-to-end workflows
-- Example: Complete CRUD workflow (zLoader → zParser → zDispatch → zData)
+- Example: Complete CRUD workflow (zLoader => zParser => zDispatch => zData)
 
 #### 3. **End-to-End Tests** (zEndToEnd_Test.py)
 Complete user workflow simulation:
 - Test entire application scenarios from start to finish
 - Simulate real-world usage patterns (like User Manager demo)
-- Verify full stack: UI → Schema → Database → CRUD → Cleanup
+- Verify full stack: UI => Schema => Database => CRUD => Cleanup
 - Test complex workflows (multi-table, navigation, plugins)
-- Example: User Management app (UI definition → DB setup → Add/List/Update/Delete users)
+- Example: User Management app (UI definition => DB setup => Add/List/Update/Delete users)
 
 #### 4. **Permission Tests**
 File system and access validation:
@@ -80,7 +88,7 @@ Isolated testing with controlled behavior:
 - Test edge cases
 - Example: Testing error handling with mocked failures
 
-## 🔗 Understanding Test Types
+## Understanding Test Types
 
 **What's the difference between Unit, Integration, and End-to-End tests?**
 
@@ -91,7 +99,7 @@ Isolated testing with controlled behavior:
 | **Speed** | Fast (milliseconds) | Medium (< 1 second) | Slower (1-5 seconds) |
 | **Purpose** | Verify component logic | Verify subsystem interactions | Verify user workflows |
 | **Complexity** | Simple | Medium | Complex |
-| **Example** | Test zLoader parses YAML | Test zLoader → zParser → zData | Full User Manager workflow |
+| **Example** | Test zLoader parses YAML | Test zLoader => zParser => zData | Full User Manager workflow |
 | **File** | `zLoader_Test.py` | `zIntegration_Test.py` | `zEndToEnd_Test.py` |
 
 ### Integration Tests Explained
@@ -133,12 +141,12 @@ End-to-end (E2E) tests simulate complete user workflows from start to finish, te
 - Testing complete application scenarios (like demos)
 - Verifying full user workflows work correctly
 - Testing complex multi-step operations
-- Validating application lifecycle (init → use → cleanup)
+- Validating application lifecycle (init => use => cleanup)
 
 **Example from zEndToEnd_Test.py:**
 ```python
 def test_complete_user_management_workflow(self):
-    """Test complete workflow: Setup DB → Add User → List → Update → Delete."""
+    """Test complete workflow: Setup DB => Add User => List => Update => Delete."""
     # Create UI and Schema files
     # Initialize zCLI
     # Load UI configuration
@@ -159,9 +167,9 @@ def test_complete_user_management_workflow(self):
 2. **Blog Application** - Multi-table relationships with authors, posts, comments
 3. **Navigation Workflow** - Walker UI navigation with breadcrumb tracking
 4. **Plugin Integration** - Plugin loading and execution
-5. **Application Lifecycle** - Full init → operation → cleanup cycle
+5. **Application Lifecycle** - Full init => operation => cleanup cycle
 
-## 📝 Writing New Tests
+## [WRITE] Writing New Tests
 
 Create a new test module following this template:
 
@@ -207,7 +215,7 @@ if __name__ == "__main__":
     sys.exit(0 if result.wasSuccessful() else 1)
 ```
 
-## 🔧 Requirements
+## [REQ] Requirements
 
 Tests use Python's built-in `unittest` framework. No additional dependencies required for basic testing.
 
@@ -217,14 +225,14 @@ pip install pytest pytest-cov  # For coverage reports
 pip install pytest-mock        # For enhanced mocking
 ```
 
-## 📊 Test Coverage
+## [STATS] Test Coverage
 
 Run with coverage (if pytest-cov installed):
 ```bash
 pytest zTestSuite/ --cov=zCLI --cov-report=html
 ```
 
-## ✨ Best Practices
+## Best Practices
 
 1. **Isolation**: Each test should be independent
 2. **Cleanup**: Use setUp/tearDown for test fixtures
@@ -232,7 +240,7 @@ pytest zTestSuite/ --cov=zCLI --cov-report=html
 4. **Assertions**: Use specific assertions (assertEqual, assertIn, etc.)
 5. **Documentation**: Document what each test validates
 
-## 🚀 CI/CD Integration
+## [CI] CI/CD Integration
 
 Add to your CI pipeline:
 ```yaml
@@ -241,7 +249,7 @@ Add to your CI pipeline:
   run: python zTestSuite/run_tests.py
 ```
 
-## 📈 Migration Notes
+## Migration Notes
 
 **Permission Tests**: The write permission validation logic has been migrated from `config_paths.py` to `zConfig_Test.py`. This allows for:
 - Proper test isolation with temporary directories

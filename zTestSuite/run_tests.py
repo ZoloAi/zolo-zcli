@@ -24,7 +24,7 @@ from zTestSuite import zConfig_Test
 
 def list_available_tests():
     """List all available test modules."""
-    print("\n📋 Available Test Modules:")
+    print("\n[INFO] Available Test Modules:")
     print("=" * 50)
     print("  • zConfig  - Configuration subsystem tests")
     # Add more as they're created
@@ -42,11 +42,11 @@ def run_subsystem_tests(subsystem, verbose=False):
     
     subsystem_lower = subsystem.lower()
     if subsystem_lower not in test_map:
-        print(f"❌ Unknown subsystem: {subsystem}")
+        print(f"[ERROR] Unknown subsystem: {subsystem}")
         list_available_tests()
         return False
     
-    print(f"\n🧪 Running {subsystem} Tests...")
+    print(f"\n[TEST] Running {subsystem} Tests...")
     print("=" * 70)
     
     result = test_map[subsystem_lower].run_tests(verbose=verbose)
@@ -55,7 +55,7 @@ def run_subsystem_tests(subsystem, verbose=False):
 
 def run_all_tests(verbose=False):
     """Run all available tests."""
-    print("\n🧪 Running All zCLI Tests...")
+    print("\n[TEST] Running All zCLI Tests...")
     print("=" * 70)
     print()
     
@@ -71,9 +71,9 @@ def run_all_tests(verbose=False):
     
     print("\n" + "=" * 70)
     if all_successful:
-        print("✅ All tests passed!")
+        print("[OK] All tests passed!")
     else:
-        print("❌ Some tests failed.")
+        print("[FAIL] Some tests failed.")
     print("=" * 70)
     
     return all_successful

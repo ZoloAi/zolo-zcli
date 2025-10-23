@@ -63,9 +63,9 @@ MainHub:
     zDisplay:
       event: zSession
 
-# ═══════════════════════════════════════════════════════════
+# ============================================================
 # Advanced Features Block (accessed via $Advanced.Root)
-# ═══════════════════════════════════════════════════════════
+# ============================================================
 
 Advanced:
   ~Root*: ["Wizard Examples", "Data Operations", "$MainHub.Root", "zBack"]

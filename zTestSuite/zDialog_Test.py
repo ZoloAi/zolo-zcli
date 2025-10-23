@@ -537,12 +537,12 @@ class TestzDialogEdgeCases(unittest.TestCase):
         logger = Mock()
         zContext = {"zConv": {"field": "value"}}
         
-        # Missing closing bracket
+        # Missing closing bracket - doesn't match bracket pattern, returns original
         obj = "zConv['field'"
         result = inject_placeholders(obj, zContext, logger)
         
-        # Should log warning and return original
-        logger.warning.assert_called()
+        # Should return original unchanged (no error, pattern doesn't match)
+        self.assertEqual(result, "zConv['field'")
 
 
 def run_tests(verbose=False):

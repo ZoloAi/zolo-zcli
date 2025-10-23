@@ -25,7 +25,7 @@ from zCLI import zCLI
 class TestUserManagementWorkflow(unittest.TestCase):
     """
     End-to-end test simulating complete user management workflow.
-    Tests: UI definition → Schema loading → Database creation → CRUD operations
+    Tests: UI definition => Schema loading => Database creation => CRUD operations
     """
     
     def setUp(self):
@@ -570,6 +570,203 @@ app_data:
         # Database will be cleaned up when temp directory is removed
 
 
+class TestUserManagerWebSocketMode(unittest.TestCase):
+    """Test User Manager Demo in WebSocket mode (v1.5.3)."""
+    
+    def test_user_manager_websocket_initialization(self):
+        """Test User Manager initialization in WebSocket mode."""
+        # Get the User Manager demo directory
+        project_root = Path(__file__).parent.parent
+        demo_dir = project_root / "Demos" / "User Manager"
+        
+        if not demo_dir.exists():
+            self.skipTest("User Manager demo not found")
+        
+        # Initialize zCLI in WebSocket mode with User Manager YAML
+        z = zCLI({
+            "zWorkspace": str(demo_dir),
+            "zVaFile": "@.zUI.users_menu",
+            "zMode": "WebSocket",
+            "zVerbose": False
+        })
+        
+        # Verify initialization
+        self.assertEqual(z.session.get("zMode"), "WebSocket")
+        self.assertEqual(z.display.mode, "WebSocket")
+        
+    def test_user_manager_crud_with_websocket_data(self):
+        """Test User Manager CRUD operations with WebSocket data format."""
+        from zCLI.subsystems.zDialog.zDialog_modules.dialog_context import inject_placeholders
+        from unittest.mock import Mock
+        
+        # Simulate frontend WebSocket message for "Add User"
+        websocket_data = {
+            "email": "test@example.com",
+            "name": "Test User"
+        }
+        
+        # Create zContext as zDialog would
+        zContext = {"zConv": websocket_data}
+        logger = Mock()
+        
+        # Test INSERT data placeholder injection
+        insert_data = {
+            "email": "zConv.email",
+            "name": "zConv.name"
+        }
+        
+        result = inject_placeholders(insert_data, zContext, logger)
+        
+        # Should return raw values (not quoted, since these are dict values not SQL strings)
+        self.assertEqual(result["email"], "test@example.com")
+        self.assertEqual(result["name"], "Test User")
+    
+    def test_user_manager_delete_with_where_clause(self):
+        """Test User Manager DELETE with WHERE clause from WebSocket."""
+        from zCLI.subsystems.zDialog.zDialog_modules.dialog_context import inject_placeholders
+        from unittest.mock import Mock
+        
+        # Simulate frontend WebSocket message for "Delete User"
+        websocket_data = {"user_id": "1"}
+        zContext = {"zConv": websocket_data}
+        logger = Mock()
+        
+        # Test DELETE WHERE clause (from zUI.users_menu.yaml)
+        where_clause = "id = zConv.user_id"
+        result = inject_placeholders(where_clause, zContext, logger)
+        
+        # Should produce valid SQL WHERE clause
+        self.assertEqual(result, "id = 1")
+    
+    def test_user_manager_search_with_like(self):
+        """Test User Manager search with LIKE wildcards."""
+        from zCLI.subsystems.zDialog.zDialog_modules.dialog_context import inject_placeholders
+        from unittest.mock import Mock
+        
+        # Simulate frontend WebSocket message for "Search User"
+        websocket_data = {"search_term": "john"}
+        zContext = {"zConv": websocket_data}
+        logger = Mock()
+        
+        # Test SEARCH WHERE clause (from zUI.users_menu.yaml)
+        where_clause = "name LIKE '%zConv.search_term%' OR email LIKE '%zConv.search_term%'"
+        result = inject_placeholders(where_clause, zContext, logger)
+        
+        # Should inject search term within LIKE patterns
+        self.assertIn("'john'", result)
+        self.assertIn("LIKE", result)
+
+
+class TestErrorHandlingWorkflow(unittest.TestCase):
+    """Test complete error handling workflow with ErrorHandler."""
+    
+    def test_error_logging_in_complete_workflow(self):
+        """Test error logging during a complete CRUD workflow."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Create schema and UI files
+            schema_file = Path(tmpdir) / "zSchema.test_app.yaml"
+            schema_file.write_text("""
+zSchema: test_app
+zBackend: sqlite
+zTables:
+  test_table:
+    id: INTEGER PRIMARY KEY
+    name: TEXT
+""")
+            
+            ui_file = Path(tmpdir) / "zUI.test_app.yaml"
+            ui_file.write_text("""
+zUI: test_app
+test_menu:
+  ~Root*:
+    "Test Action": zData(@.zSchema.test_app.test_table.insert)
+""")
+            
+            z = zCLI({
+                "zWorkspace": tmpdir,
+                "zVaFile": "@.zUI.test_app",
+                "zBlock": "test_menu"
+            })
+            
+            # Verify error_handler is available throughout workflow
+            self.assertIsNotNone(z.error_handler)
+            self.assertIsNotNone(z.error_handler.logger)
+            self.assertIs(z.error_handler.zcli, z)
+            
+            # Test that error_handler can log exceptions during operations
+            try:
+                # Simulate an operation that fails
+                raise ValueError("Workflow error test")
+            except ValueError as e:
+                z.error_handler.log_exception(
+                    e,
+                    message="Error during workflow",
+                    context={'action': 'insert', 'table': 'test_table'}
+                )
+                
+                # Verify exception was captured
+                self.assertIsNotNone(z.error_handler.last_exception)
+                self.assertEqual(str(z.error_handler.last_exception), "Workflow error test")
+    
+    def test_exception_context_in_workflow(self):
+        """Test ExceptionContext usage in a complete workflow."""
+        from zCLI.utils.error_handler import ExceptionContext
+        
+        with tempfile.TemporaryDirectory() as tmpdir:
+            z = zCLI({"zWorkspace": tmpdir})
+            
+            # Simulate using ExceptionContext during data operations
+            with ExceptionContext(
+                z.error_handler,
+                operation="database_insert",
+                context={'table': 'users', 'action': 'insert'},
+                reraise=False,
+                default_return=None
+            ) as ctx:
+                # Simulate successful operation (no exception)
+                ctx.result = "success"
+            
+            # Verify no exception was stored
+            self.assertIsNone(ctx.exception)
+            
+            # Now test with an actual exception
+            with ExceptionContext(
+                z.error_handler,
+                operation="database_delete",
+                context={'table': 'users', 'id': 123},
+                reraise=False,
+                default_return="error"
+            ) as ctx:
+                raise RuntimeError("Delete failed")
+            
+            # Exception should be captured
+            self.assertIsNotNone(ctx.exception)
+            self.assertEqual(ctx.default_return, "error")
+    
+    def test_error_handler_preserves_exception_history(self):
+        """Test error handler maintains exception history across operations."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            z = zCLI({"zWorkspace": tmpdir})
+            
+            # Simulate multiple operations with errors
+            for i in range(3):
+                try:
+                    raise ValueError(f"Error {i}")
+                except ValueError as e:
+                    z.error_handler.exception_history.append({
+                        'exception': e,
+                        'operation': f'operation_{i}',
+                        'context': {'step': i}
+                    })
+            
+            # Verify history is preserved
+            self.assertEqual(len(z.error_handler.exception_history), 3)
+            self.assertEqual(
+                str(z.error_handler.exception_history[0]['exception']),
+                "Error 0"
+            )
+
+
 def run_tests(verbose=False):
     """Run all end-to-end tests."""
     loader = unittest.TestLoader()
@@ -581,6 +778,8 @@ def run_tests(verbose=False):
     suite.addTests(loader.loadTestsFromTestCase(TestWalkerUINavigationWorkflow))
     suite.addTests(loader.loadTestsFromTestCase(TestPluginWorkflow))
     suite.addTests(loader.loadTestsFromTestCase(TestCompleteApplicationLifecycle))
+    suite.addTests(loader.loadTestsFromTestCase(TestUserManagerWebSocketMode))  # NEW v1.5.3
+    suite.addTests(loader.loadTestsFromTestCase(TestErrorHandlingWorkflow))  # NEW v1.5.3
     
     runner = unittest.TextTestRunner(verbosity=2 if verbose else 1)
     result = runner.run(suite)

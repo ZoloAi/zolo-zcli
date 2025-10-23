@@ -33,6 +33,7 @@ class TestzCLIInitialization(unittest.TestCase):
             self.assertIsNotNone(z.config)
             self.assertIsNotNone(z.logger)
             self.assertIsNotNone(z.display)
+            self.assertIsNotNone(z.error_handler)
             self.assertIsNotNone(z.loader)
             self.assertIsNotNone(z.zparser)
             self.assertIsNotNone(z.dispatch)
@@ -354,7 +355,7 @@ class TestMultiSubsystemWorkflow(unittest.TestCase):
         self.temp_dir.cleanup()
         
     def test_loader_parser_dispatch_data_workflow(self):
-        """Test workflow: zLoader → zParser → zDispatch → zData."""
+        """Test workflow: zLoader => zParser => zDispatch => zData."""
         
         # Create schema file
         schema_file = Path(self.workspace) / "zSchema.workflow_test.yaml"
@@ -416,6 +417,144 @@ root:
             self.assertTrue(db_file.exists(), "Database file should exist")
 
 
+class TestWebSocketModeIntegration(unittest.TestCase):
+    """Test WebSocket/GUI mode integration (v1.5.3)."""
+    
+    def test_websocket_mode_data_flow(self):
+        """Test complete data flow in WebSocket mode."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Initialize zCLI in WebSocket mode
+            z = zCLI({
+                "zWorkspace": tmpdir,
+                "zMode": "WebSocket"
+            })
+            
+            # Verify zMode is set
+            self.assertEqual(z.session.get("zMode"), "WebSocket")
+            
+            # Verify display is in appropriate mode
+            self.assertEqual(z.display.mode, "WebSocket")
+    
+    def test_placeholder_injection_integration(self):
+        """Test placeholder injection with zDialog and zData integration."""
+        from zCLI.subsystems.zDialog.zDialog_modules.dialog_context import inject_placeholders
+        from unittest.mock import Mock
+        
+        # Simulate WebSocket data
+        websocket_data = {"user_id": "1", "name": "Test User"}
+        zContext = {"zConv": websocket_data}
+        logger = Mock()
+        
+        # Test WHERE clause injection
+        where_clause = "id = zConv.user_id AND name = zConv.name"
+        result = inject_placeholders(where_clause, zContext, logger)
+        
+        # Should produce valid SQL
+        self.assertEqual(result, "id = 1 AND name = 'Test User'")
+    
+    def test_where_clause_extraction_integration(self):
+        """Test WHERE clause extraction with different request formats."""
+        from zCLI.subsystems.zData.zData_modules.shared.operations.helpers import extract_where_clause
+        from unittest.mock import Mock
+        
+        ops = Mock()
+        ops.logger = Mock()
+        
+        # Test YAML format (top-level)
+        yaml_request = {
+            "action": "delete",
+            "table": "users",
+            "where": "id = 1"
+        }
+        result = extract_where_clause(yaml_request, ops, warn_if_missing=False)
+        self.assertIsNotNone(result)
+        
+        # Test shell format (options)
+        shell_request = {
+            "action": "delete",
+            "table": "users",
+            "options": {"where": "id = 1"}
+        }
+        result = extract_where_clause(shell_request, ops, warn_if_missing=False)
+        self.assertIsNotNone(result)
+
+
+class TestErrorHandlerIntegration(unittest.TestCase):
+    """Test ErrorHandler integration with other subsystems."""
+    
+    def test_error_handler_with_logger(self):
+        """Test ErrorHandler is properly initialized with logger."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            z = zCLI({"zWorkspace": tmpdir})
+            
+            # ErrorHandler should have logger reference
+            self.assertIsNotNone(z.error_handler.logger)
+            self.assertIs(z.error_handler.logger, z.logger)
+    
+    def test_error_handler_with_zcli_reference(self):
+        """Test ErrorHandler has reference to zCLI instance."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            z = zCLI({"zWorkspace": tmpdir})
+            
+            # ErrorHandler should have zcli reference for interactive features
+            self.assertIsNotNone(z.error_handler.zcli)
+            self.assertIs(z.error_handler.zcli, z)
+    
+    def test_error_handler_logs_to_zcli_logger(self):
+        """Test ErrorHandler logs exceptions to zCLI logger."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            z = zCLI({"zWorkspace": tmpdir})
+            
+            try:
+                raise ValueError("Integration test error")
+            except ValueError as e:
+                # Should log without crashing
+                z.error_handler.log_exception(e, message="Test error logging")
+                
+                # Verify exception was stored for potential interactive handling
+                self.assertIsNotNone(z.error_handler.last_exception)
+    
+    def test_error_handler_with_display(self):
+        """Test ErrorHandler can use display for output."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            z = zCLI({"zWorkspace": tmpdir})
+            
+            try:
+                raise RuntimeError("Display test error")
+            except RuntimeError as e:
+                z.error_handler.last_exception = e
+                z.error_handler.last_context = {'test': 'value'}
+                
+                # Should be able to format and display (though in tests it just runs)
+                from zCLI.utils.error_handler import display_formatted_traceback
+                from unittest.mock import patch
+                
+                with patch.object(z.display, 'zDeclare'):
+                    with patch.object(z.display, 'error'):
+                        with patch.object(z.display, 'text'):
+                            display_formatted_traceback(z)
+    
+    def test_exception_context_with_zcli(self):
+        """Test ExceptionContext works with zCLI instance."""
+        from zCLI.utils.error_handler import ExceptionContext
+        
+        with tempfile.TemporaryDirectory() as tmpdir:
+            z = zCLI({"zWorkspace": tmpdir})
+            
+            # Use ExceptionContext with zCLI's error_handler
+            with ExceptionContext(
+                z.error_handler,
+                operation="test_operation",
+                context={'workspace': tmpdir},
+                reraise=False
+            ):
+                # Simulate an error
+                pass  # No error - should not log anything
+            
+            # Verify error_handler is ready for next exception
+            self.assertIsNotNone(z.error_handler)
+
+
 def run_tests(verbose=False):
     """Run all integration tests."""
     loader = unittest.TestLoader()
@@ -429,6 +568,8 @@ def run_tests(verbose=False):
     suite.addTests(loader.loadTestsFromTestCase(TestDispatchActionIntegration))
     suite.addTests(loader.loadTestsFromTestCase(TestEndToEndCRUDWorkflow))
     suite.addTests(loader.loadTestsFromTestCase(TestMultiSubsystemWorkflow))
+    suite.addTests(loader.loadTestsFromTestCase(TestWebSocketModeIntegration))  # NEW v1.5.3
+    suite.addTests(loader.loadTestsFromTestCase(TestErrorHandlerIntegration))  # NEW v1.5.3
     
     runner = unittest.TextTestRunner(verbosity=2 if verbose else 1)
     result = runner.run(suite)
