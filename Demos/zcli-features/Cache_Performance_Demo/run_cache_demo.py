@@ -72,6 +72,8 @@ def main():
         "zVaFile": "@.zUI.cache_demo",
         "zBlock": "zVaF",
         "zMode": "zBifrost",  # zBifrost mode for WebSocket operation
+        # Load cache test aggregator plugin
+        "zPlugin": ["@.cache_test_aggregator"],
         # WebSocket configuration (highest priority via zSpark)
         "websocket": {
             "host": "127.0.0.1",

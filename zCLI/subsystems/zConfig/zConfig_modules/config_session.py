@@ -50,6 +50,12 @@ class SessionConfig:
             if "zWorkspace" in self.zSpark:
                 zWorkspace = self.zSpark["zWorkspace"]
 
+        # Determine zTraceback: zSpark > default (True)
+        zTraceback = True  # Default: enable interactive prompts
+        if self.zSpark is not None and isinstance(self.zSpark, dict):
+            if "zTraceback" in self.zSpark:
+                zTraceback = self.zSpark["zTraceback"]
+
         # Create session dict
         session = {
             "zS_id": self.generate_id(),
@@ -59,6 +65,7 @@ class SessionConfig:
             "zBlock": None,
             "zMode": self.detect_zMode(),
             "zLogger": self._detect_logger_level(),
+            "zTraceback": zTraceback,  # Control interactive prompts (pause, etc.)
             "zMachine": machine_config,
             "zAuth": {
                 "id": None,

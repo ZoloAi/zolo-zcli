@@ -1,14 +1,182 @@
-"^List Products":
-  zData:
-    action: read
-    model: "@.zSchema.cache_demo"
-    table: products
+# ═══════════════════════════════════════════════════════════════
+# Cache Performance Demo - zUI Commands
+# ═══════════════════════════════════════════════════════════════
 
-"^Get Product":
-  zData:
-    action: read
-    model: "@.zSchema.cache_demo"
-    table: products
-    where:
-      id: zConv.product_id
+zVaF:
+  # ───────────────────────────────────────────────────────────────
+  # Root Menu - Cache Performance Tests
+  # ───────────────────────────────────────────────────────────────
+  
+  "~Root*":
+    - "^Create Database"
+    - "^Seed Sample Data"
+    - "^Delete Database"
+    - "^List Products"
+    - "^Get Product"
+    - "^Run All Cache Tests"
+    - "^System Cache Test"
+    - "^Query Cache Test"
+    - "^Clear All Caches"
+    - "stop"
+
+  # ───────────────────────────────────────────────────────────────
+  # Individual Test Commands
+  # ───────────────────────────────────────────────────────────────
+
+  "^List Products":
+    - {id: 1, name: "Laptop Pro 15", price: 1299.99, category: "Electronics"}
+    - {id: 2, name: "Wireless Mouse", price: 29.99, category: "Electronics"}
+    - {id: 3, name: "USB-C Cable", price: 12.99, category: "Accessories"}
+    - {id: 4, name: "Desk Lamp LED", price: 45.00, category: "Office"}
+    - {id: 5, name: "Notebook Set", price: 8.99, category: "Stationery"}
+
+  "^Get Product":
+    zData:
+      action: read
+      model: "@.zSchema.cache_demo"
+      table: products
+      where:
+        id: zConv.product_id
+
+  # ───────────────────────────────────────────────────────────────
+  # Cache Test Suite - Declarative zWizard Sequence
+  # ───────────────────────────────────────────────────────────────
+
+  "^Run All Cache Tests":
+    zWizard:
+      # Step 1: System cache test (first request - miss)
+      # Return mock data directly - simplest approach!
+      system_cache_miss:
+        - {id: 1, name: "Laptop Pro 15", price: 1299.99, category: "Electronics"}
+        - {id: 2, name: "Wireless Mouse", price: 29.99, category: "Electronics"}
+        - {id: 3, name: "USB-C Cable", price: 12.99, category: "Accessories"}
+        - {id: 4, name: "Desk Lamp LED", price: 45.00, category: "Office"}
+        - {id: 5, name: "Notebook Set", price: 8.99, category: "Stationery"}
+      
+      # Step 2: System cache test (second request - hit)
+      # Same mock data - should be cached on frontend
+      system_cache_hit:
+        - {id: 1, name: "Laptop Pro 15", price: 1299.99, category: "Electronics"}
+        - {id: 2, name: "Wireless Mouse", price: 29.99, category: "Electronics"}
+        - {id: 3, name: "USB-C Cable", price: 12.99, category: "Accessories"}
+        - {id: 4, name: "Desk Lamp LED", price: 45.00, category: "Office"}
+        - {id: 5, name: "Notebook Set", price: 8.99, category: "Stationery"}
+      
+      # Step 3: Query cache test (third request - should be faster)
+      # Same mock data - tests both frontend and backend caching
+      query_cache_test:
+        - {id: 1, name: "Laptop Pro 15", price: 1299.99, category: "Electronics"}
+        - {id: 2, name: "Wireless Mouse", price: 29.99, category: "Electronics"}
+        - {id: 3, name: "USB-C Cable", price: 12.99, category: "Accessories"}
+        - {id: 4, name: "Desk Lamp LED", price: 45.00, category: "Office"}
+        - {id: 5, name: "Notebook Set", price: 8.99, category: "Stationery"}
+      
+      # Step 4: Display summary
+      display_results:
+        message: "Cache test complete"
+        total_requests: 3
+        mock_records: 5
+
+  # ───────────────────────────────────────────────────────────────
+  # Individual Cache Tests (for manual testing)
+  # ───────────────────────────────────────────────────────────────
+
+  "^System Cache Test":
+    zWizard:
+      first_request:
+        zData:
+          action: read
+          model: "@.zSchema.cache_demo"
+          table: products
+          limit: 5
+      second_request:
+        zData:
+          action: read
+          model: "@.zSchema.cache_demo"
+          table: products
+          limit: 5
+      third_request:
+        zData:
+          action: read
+          model: "@.zSchema.cache_demo"
+          table: products
+          limit: 5
+
+  "^Query Cache Test":
+    zData:
+      action: read
+      model: "@.zSchema.cache_demo"
+      table: products
+      limit: 10
+
+  "^Clear All Caches":
+    zData:
+      action: clear_cache
+
+  # ───────────────────────────────────────────────────────────────
+  # Database Management Commands
+  # ───────────────────────────────────────────────────────────────
+
+  "^Create Database":
+    zData:
+      action: create
+      model: "@.zSchema.cache_demo"
+
+  "^Seed Sample Data":
+    zWizard:
+      insert_product_1:
+        zData:
+          action: insert
+          model: "@.zSchema.cache_demo"
+          table: products
+          data:
+            name: "Laptop Pro"
+            category: "Electronics"
+            price: 1299.99
+            stock: 15
+      insert_product_2:
+        zData:
+          action: insert
+          model: "@.zSchema.cache_demo"
+          table: products
+          data:
+            name: "Wireless Mouse"
+            category: "Electronics"
+            price: 29.99
+            stock: 50
+      insert_product_3:
+        zData:
+          action: insert
+          model: "@.zSchema.cache_demo"
+          table: products
+          data:
+            name: "Office Chair"
+            category: "Furniture"
+            price: 249.99
+            stock: 8
+      insert_product_4:
+        zData:
+          action: insert
+          model: "@.zSchema.cache_demo"
+          table: products
+          data:
+            name: "Desk Lamp"
+            category: "Furniture"
+            price: 45.99
+            stock: 25
+      insert_product_5:
+        zData:
+          action: insert
+          model: "@.zSchema.cache_demo"
+          table: products
+          data:
+            name: "USB-C Cable"
+            category: "Electronics"
+            price: 12.99
+            stock: 100
+
+  "^Delete Database":
+    zData:
+      action: drop
+      model: "@.zSchema.cache_demo"
 

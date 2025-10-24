@@ -72,9 +72,14 @@ class ModifierProcessor:
             result = self.dispatch.launcher.launch(zHorizontal, context=context, walker=walker)
             self.logger.info("zBounce action result: %s", result)
             
-            # In WebSocket/GUI mode, return the actual result for API consumption
+            # DEBUG: Log context to diagnose mode detection
+            self.logger.info("zBounce context: %s", context)
+            self.logger.info("zBounce mode check: context=%s, mode=%s", context is not None, context.get("mode") if context else None)
+            
+            # In zBifrost mode, return the actual result for API consumption
             # In Walker/Terminal mode, return zBack for navigation
-            if context and context.get("mode") == "WebSocket":
+            if context and context.get("mode") == "zBifrost":
+                self.logger.info("zBifrost mode detected - returning actual result")
                 return result
             
             # Return zBack to navigate back after action completes (Terminal/Walker mode)

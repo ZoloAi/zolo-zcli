@@ -1,0 +1,189 @@
+/* Containers */
+/* -------------------------------- */
+
+/* Global Box Sizing */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* Base styles for zContainer */
+.zContainer, .zContainer-sm, .zContainer-md, .zContainer-lg, .zContainer-xl, .zContainer-xxl {
+  width: 100%;
+  padding-right: 15px;
+  padding-left: 15px;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+/* Responsive breakpoints for zContainer (fixed-width) */
+@media (min-width: 576px) {
+  .zContainer {
+    max-width: 540px;
+  }
+}
+@media (min-width: 768px) {
+  .zContainer {
+    max-width: 720px;
+  }
+}
+@media (min-width: 992px) {
+  .zContainer {
+    max-width: 960px;
+  }
+}
+@media (min-width: 1200px) {
+  .zContainer {
+    max-width: 1140px;
+  }
+}
+@media (min-width: 1400px) {
+  .zContainer {
+    max-width: 1320px;
+  }
+}
+
+/* Fluid container */
+.zContainer-fluid {
+  width: 100%;
+  /* No max-width; always fluid */
+}
+
+/* zContainer-sm: Fluid until small breakpoint (576px), then fixed-width */
+@media (min-width: 576px) {
+  .zContainer-sm {
+    max-width: 540px;
+  }
+}
+
+/* zContainer-md: Fluid until medium breakpoint (768px), then fixed-width */
+@media (min-width: 768px) {
+  .zContainer-md {
+    max-width: 720px;
+  }
+}
+
+/* zContainer-lg: Fluid until large breakpoint (992px), then fixed-width */
+@media (min-width: 992px) {
+  .zContainer-lg {
+    max-width: 960px;
+  }
+}
+
+/* zContainer-xl: Fluid until extra large breakpoint (1200px), then fixed-width */
+@media (min-width: 1200px) {
+  .zContainer-xl {
+    max-width: 1140px;
+  }
+}
+
+/* zContainer-xxl: Fluid until extra extra large breakpoint (1400px), then fixed-width */
+@media (min-width: 1400px) {
+  .zContainer-xxl {
+    max-width: 1320px;
+  }
+}
+
+/* Optional Gutters (if needed) */
+/* Adjust horizontal padding for containers */
+.zContainer, .zContainer-sm, .zContainer-md, .zContainer-lg, .zContainer-xl, .zContainer-xxl {
+  padding-right: 1rem;
+  padding-left: 1rem;
+}
+
+/* For smaller devices, you might want to reduce the padding */
+@media (max-width: 575.98px) {
+  .zContainer {
+    padding-right: 0.5rem;
+    padding-left: 0.5rem;
+  }
+}
+
+  /* Base styled div with a border and padding */
+  .zSection {
+    border: 1px solid var(--grayDark); /* Light border */
+    border-radius: 8px; /* Slightly rounded corners */
+    padding: 1.5rem; /* Padding inside the div */
+    background-color: var(--mainBase); /* Background color */
+    margin: 2rem 0; /* Space around the div */
+    position: relative; /* For internal positioning of legend */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Optional shadow for depth */
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* Legend-like styling for a title inside the div */
+  .zLegend {
+    position: absolute;
+    top: -1em; /* Position the legend above the div border */
+    left: 1rem; /* Align the legend slightly inside */
+    background: linear-gradient(
+        to top, 
+        var(--mainYellow) 55%, /* Start with the same background color */
+        rgba(255, 255, 255, 0) 95% /* Fade to transparent */
+    );
+    padding: 0 1rem; /* Add padding around the text */
+    font-size: var(--h5size); /* Use h5 font size */
+    font-weight: 700; /* Bold text */
+    color: var(--grayDark); /* Dark text color */
+    border-radius: 10px; /* Slightly rounded corners for the legend */
+    z-index: 1; /* Ensure it appears above the border */
+  }
+  .zLegend-right {
+    right: 1rem; /* Align the legend slightly inside */
+  }
+  .zLegend-left {
+    left: 1rem; /* Align the legend slightly inside */
+  }
+  
+  
+.zContainer-Search {
+  position: relative;
+  margin: 1em 0; /* Space around the div */
+
+}
+.zSearchSuggestions {
+  position: absolute;
+  z-index: 1000;
+  width: 100%;
+  background-color: white;
+}
+.suggestion-item {
+  cursor: pointer;
+  font-size: var(--bodySmPsize);
+}
+.suggestion-item:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.cardContent {
+  display: flex;
+  flex-direction: row; /* Align items side-by-side */
+  gap: 1rem; /* Space between image and info */
+  align-items: center;
+  justify-content: center;
+
+}
+
+.cardImage {
+  flex: 0 0 auto; /* Set a fixed width for the image */
+  align-items: center;
+  justify-content: center;
+}
+.cardInfo {
+  flex-grow: 1; /* Set a fixed width for the image */
+}
+.cardImage img {
+  width: 100%; /* Make the image responsive */
+  height: auto;
+  border-radius: 10px; /* Rounded corners for the image */
+  object-fit: cover;
+}
+
+.zTitleWrapper {
+  display: flex; /* Use flexbox */
+  justify-content: center; /* Horizontally center the title */
+  align-items: center; /* Vertically center if needed */
+  margin-bottom: 2rem; /* Add some spacing below the title */
+  width: 100%; /* Ensure the wrapper spans the full container width */
+  text-align: center; /* Center-align the text */
+}

@@ -45,10 +45,8 @@ class zBifrost:
         self.clients = set()
         self.authenticated_clients = {}  # Maps ws to auth info
         
-        # Performance: Cache for parsed schemas and UI files (v1.5.4+)
-        self.schema_cache = {}  # Cache parsed zSchema files
+        # Performance: Cache for parsed UI files (v1.5.4+)
         self.ui_cache = {}      # Cache parsed zUI files
-        self.cache_stats = {'hits': 0, 'misses': 0}  # Track cache performance
         
         # Query result caching with TTL (v1.5.4+)
         self.query_cache = {}  # Cache query results: {cache_key: {'data': result, 'timestamp': time, 'ttl': seconds}}
@@ -78,24 +76,20 @@ class zBifrost:
         return False
 
     def get_schema_info(self, model):
-        """Get schema information from cache or load it (v1.5.4+)."""
-        if model in self.schema_cache:
-            self.cache_stats['hits'] += 1
-            self.logger.debug(f"[zBifrost] [CACHE HIT] Schema: {model}")
-            return self.schema_cache[model]
-        
-        self.cache_stats['misses'] += 1
-        self.logger.debug(f"[zBifrost] [CACHE MISS] Schema: {model}")
-        
-        # Load schema via zData if available
-        if self.walker and hasattr(self.walker, 'data'):
+        """Get schema from zLoader directly (no redundant backend cache)."""
+        if self.walker and hasattr(self.walker, 'loader'):
             try:
-                schema = self.walker.data.get_schema(model)
-                if schema:
-                    self.schema_cache[model] = schema
-                    return schema
+                self.logger.info(f"[zBifrost] Loading schema via zLoader: {model}")
+                schema = self.walker.loader.handle(model)
+                
+                if schema == "error" or not schema:
+                    self.logger.warning(f"[zBifrost] Failed to load schema: {model}")
+                    return None
+                
+                self.logger.info(f"[zBifrost] Successfully loaded schema: {model}")
+                return schema
             except Exception as e:
-                self.logger.warning(f"[zBifrost] Failed to load schema {model}: {e}")
+                self.logger.warning(f"[zBifrost] Error loading schema {model}: {e}")
         
         return None
 
@@ -103,8 +97,8 @@ class zBifrost:
         """Get connection info to send to client on connect (v1.5.4+)."""
         info = {
             "server_version": "1.5.4",
-            "features": ["schema_cache", "connection_info", "realtime_sync"],
-            "cache_stats": self.cache_stats.copy()
+            "features": ["client_cache", "connection_info", "realtime_sync"],
+            "query_cache_stats": self.query_cache_stats.copy()
         }
         
         # Add available models if zData is available
@@ -189,12 +183,14 @@ class zBifrost:
 
     def clear_cache(self):
         """Clear all caches (v1.5.4+)."""
-        self.schema_cache.clear()
+        # Clear UI cache
         self.ui_cache.clear()
+        
+        # Clear query cache
         self.query_cache.clear()
-        self.logger.info(f"[zBifrost] All caches cleared. Schema stats: {self.cache_stats}, Query stats: {self.query_cache_stats}")
-        self.cache_stats = {'hits': 0, 'misses': 0}
         self.query_cache_stats = {'hits': 0, 'misses': 0, 'expired': 0}
+        
+        self.logger.info(f"[zBifrost] All caches cleared. Query stats: {self.query_cache_stats}")
     
     def set_query_cache_ttl(self, ttl):
         """Set default TTL for query cache (v1.5.4+)."""
@@ -337,13 +333,12 @@ class zBifrost:
                 # Handle cache control (v1.5.4+)
                 if data.get("action") == "clear_cache":
                     self.clear_cache()
-                    await ws.send(json.dumps({"result": "Cache cleared", "stats": self.cache_stats}))
+                    await ws.send(json.dumps({"result": "Cache cleared", "stats": self.query_cache_stats}))
                     continue
                 
                 if data.get("action") == "cache_stats":
-                    # Return all cache stats (v1.5.4+)
+                    # Return query cache stats (v1.5.4+ - schemas cached on frontend)
                     all_stats = {
-                        'schema_cache': self.cache_stats,
                         'query_cache': self.query_cache_stats
                     }
                     await ws.send(json.dumps({"result": all_stats}))
@@ -381,7 +376,10 @@ class zBifrost:
                         
                         if cached_result is not None:
                             # Cache hit!
-                            payload = json.dumps({"result": cached_result, "_cached": True})
+                            response = {"result": cached_result, "_cached": True}
+                            if "_requestId" in data:
+                                response["_requestId"] = data["_requestId"]
+                            payload = json.dumps(response)
                             await ws.send(payload)
                             await self.broadcast(payload, sender=ws)
                             continue
@@ -390,7 +388,7 @@ class zBifrost:
                     self.logger.debug(f"[zBifrost] [DISPATCH] Dispatching CLI cmd: {zKey}")
                     try:
                         # Pass WebSocket data as context for zDialog/zFunc to use
-                        context = {"websocket_data": data, "mode": "WebSocket"}
+                        context = {"websocket_data": data, "mode": "zBifrost"}
                         
                         # Use core zDispatch - walker is optional for WebSocket context
                         result = await asyncio.to_thread(
@@ -401,13 +399,22 @@ class zBifrost:
                         if is_read_operation and not disable_cache:
                             self.cache_query_result(cache_key, result, ttl=cache_ttl)
                         
-                        payload = json.dumps({"result": result})
+                        # Include _requestId in response for correlation
+                        response = {"result": result}
+                        if "_requestId" in data:
+                            response["_requestId"] = data["_requestId"]
+                        payload = json.dumps(response)
+                        self.logger.info(f"[zBifrost] [SEND] Sending result (length: {len(payload)} bytes, requestId: {data.get('_requestId')})")
                     except Exception as exc:  # pylint: disable=broad-except
                         self.logger.error("[zBifrost] [ERROR] CLI execution error: %s", exc)
-                        payload = json.dumps({"error": str(exc)})
+                        response = {"error": str(exc)}
+                        if "_requestId" in data:
+                            response["_requestId"] = data["_requestId"]
+                        payload = json.dumps(response)
 
                     # send result back to caller and broadcast to others
                     await ws.send(payload)
+                    self.logger.info(f"[zBifrost] [SENT] Response sent successfully")
                     await self.broadcast(payload, sender=ws)
                 else:
                     await self.broadcast(message, sender=ws)

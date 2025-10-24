@@ -29,9 +29,10 @@ from pathlib import Path
 
 # Standard search paths for plugin discovery
 PLUGIN_SEARCH_PATHS = [
-    "@.zTestSuite.demos",  # Primary: Test/demo plugins
-    "@.utils",             # Secondary: Workspace utilities
-    "@.plugins",           # Tertiary: Workspace plugins directory
+    "@",                   # Primary: Workspace root (for demo/test plugins)
+    "@.zTestSuite.demos",  # Secondary: Test/demo plugins
+    "@.utils",             # Tertiary: Workspace utilities
+    "@.plugins",           # Quaternary: Workspace plugins directory
 ]
 
 

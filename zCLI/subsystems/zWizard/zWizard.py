@@ -198,8 +198,9 @@ class zWizard:
 
                 step_context = {
                     "wizard_mode": True,
-                    "schema_cache": self.schema_cache
-                } if self.schema_cache else None
+                    "schema_cache": self.schema_cache,
+                    "zHat": zHat  # Pass zHat to context for zFunc access
+                } if self.schema_cache else {"wizard_mode": True, "zHat": zHat}
 
                 if transaction_alias is None:
                     transaction_alias = self._check_transaction_start(use_transaction, transaction_alias, step_value)

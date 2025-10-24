@@ -74,9 +74,10 @@ def handle_read(request, ops):
 
     # Pause after displaying results (unless explicitly disabled or in non-interactive mode)
     pause = request.get("pause", True)  # Default to True
-    # Don't pause in zBifrost mode or when zMode is not Walker/Terminal
+    # Don't pause in zBifrost mode, when zMode is not Walker/Terminal, or when zTraceback is False
     zMode = ops.zcli.session.get("zMode", "")
-    if pause and zMode in ("Walker", "Terminal", ""):
+    zTraceback = ops.zcli.session.get("zTraceback", True)  # Default to True for backward compatibility
+    if pause and zTraceback and zMode in ("Walker", "Terminal", ""):
         ops.zcli.display.read_string("Press Enter to continue...")
 
     # Return the actual rows for zBifrost mode, True for terminal display mode

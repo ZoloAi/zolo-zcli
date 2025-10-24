@@ -106,10 +106,11 @@ class MessageHandler:
         if not model:
             return False
         
-        # Try to load schema via walker
+        # Load schema via zLoader (no redundant backend cache)
         def schema_loader(m):
-            if self.walker and hasattr(self.walker, 'data'):
-                return self.walker.data.get_schema(m)
+            if self.walker and hasattr(self.walker, 'loader'):
+                schema = self.walker.loader.handle(m)
+                return schema if schema != "error" else None
             return None
         
         schema = self.cache.get_schema(model, loader_func=schema_loader)
@@ -213,7 +214,7 @@ class MessageHandler:
         self.logger.debug(f"[MessageHandler] [DISPATCH] {zKey}")
         
         try:
-            context = {"websocket_data": data, "mode": "WebSocket"}
+            context = {"websocket_data": data, "mode": "zBifrost"}
             
             result = await asyncio.to_thread(
                 handle_zDispatch, zKey, zHorizontal,

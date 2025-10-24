@@ -1,0 +1,48 @@
+#departmentLogosFlex {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* Adjust column width */
+    gap: 20px; /* Space between grid items */
+    justify-content: center; /* Center grid items horizontally */
+    align-content: center; /* Center grid items vertically */
+}
+
+/* Ensure the images are responsive */
+.homepage-department-logo {
+    transition: filter 0.3s ease; /* Smooth transition for filter changes */
+}
+
+/* Tablet breakpoint for 2x2 grid */
+@media (max-width: 768px) {
+    #departmentLogosFlex {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr); /* 2 columns of equal width */
+        gap: 20px; /* Space between grid items */
+    }
+}
+
+
+.founder-img-column {
+    flex: 1; /* Allow the image column to take up equal space */
+    display: flex;
+    align-items: center; /* Center the image vertically */
+    justify-content: center; /* Center the image horizontally */
+    overflow: hidden;
+}
+
+.founder-img-column img {
+    height: 100%;
+    width: auto; /* Maintain the aspect ratio */
+    object-fit: cover;
+    object-position: center;
+}
+
+.founder-bio-column {
+    flex: 1; /* Allow the bio column to take up equal space */
+    display: flex;
+    flex-direction: column;
+    justify-content: end; /* Center the bio text vertically */
+    padding-left: 1em;
+    box-sizing: border-box; /* Include padding in the element's width and height */
+    font-size: clamp(16px, 2.5vw, 22px); /* Responsive font size */
+}
+

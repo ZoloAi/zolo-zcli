@@ -22,7 +22,8 @@ class CommandLauncher:
             return self._launch_string(zHorizontal, context, walker)
         elif isinstance(zHorizontal, dict):
             return self._launch_dict(zHorizontal, context, walker)
-        return None
+        # Return raw data as-is (lists, primitives, etc.) - useful for mock data in zWizard
+        return zHorizontal
 
     def _launch_string(self, zHorizontal, context, walker):
         """Handle string-based launch commands."""
@@ -45,7 +46,7 @@ class CommandLauncher:
             return self.zcli.open.handle(zHorizontal)
 
         if zHorizontal.startswith("zWizard("):
-            return self._handle_wizard_string(zHorizontal, walker)
+            return self._handle_wizard_string(zHorizontal, walker, context)
 
         if zHorizontal.startswith("zRead("):
             return self._handle_read_string(zHorizontal, context)
@@ -70,6 +71,18 @@ class CommandLauncher:
                     self.logger.warning(f"Unknown display event: {event}. Use modern API methods instead.")
             return None
 
+        if "zFunc" in zHorizontal:
+            self.logger.info("Detected zFunc (dict)")
+            self.display.zDeclare("[HANDLE] zFunc (dict)", color=self.dispatch.mycolor, indent=5, style="single")
+            func_spec = zHorizontal["zFunc"]
+            
+            # Check if it's a plugin invocation (starts with &)
+            if isinstance(func_spec, str) and func_spec.startswith("&"):
+                self.logger.info("Detected plugin invocation in zFunc: %s", func_spec)
+                return self.zcli.zparser.resolve_plugin_invocation(func_spec)
+            
+            return self.zcli.zfunc.handle(func_spec, zContext=context)
+
         if "zDialog" in zHorizontal:
             from ...zDialog import handle_zDialog
             self.logger.info("Detected zDialog")
@@ -83,7 +96,7 @@ class CommandLauncher:
             return self.zcli.navigation.handle_zLink(zHorizontal, walker=walker)
 
         if "zWizard" in zHorizontal:
-            return self._handle_wizard_dict(zHorizontal, walker)
+            return self._handle_wizard_dict(zHorizontal, walker, context)
 
         if "zRead" in zHorizontal:
             return self._handle_read_dict(zHorizontal, context)
@@ -91,9 +104,15 @@ class CommandLauncher:
         if "zData" in zHorizontal:
             return self._handle_data_dict(zHorizontal, context)
 
-        return self._handle_crud_dict(zHorizontal, context)
+        # Check if it looks like a CRUD operation (has action, table, model, etc.)
+        crud_keys = {"action", "table", "model", "fields", "values", "where"}
+        if any(key in zHorizontal for key in crud_keys):
+            return self._handle_crud_dict(zHorizontal, context)
+        
+        # Plain dict - return as-is (useful for mock data in zWizard)
+        return zHorizontal
 
-    def _handle_wizard_string(self, zHorizontal, walker):
+    def _handle_wizard_string(self, zHorizontal, walker, context=None):
         """Handle zWizard string command."""
         self.logger.info("Detected zWizard request")
         self.display.zDeclare("[HANDLE] zWizard", color=self.dispatch.mycolor, indent=4, style="single")
@@ -105,12 +124,16 @@ class CommandLauncher:
                 zHat = walker.handle(wizard_obj)
             else:
                 zHat = self.zcli.wizard.handle(wizard_obj)
+            # In zBifrost mode, return zHat for API consumption
+            # In Walker/Terminal mode, return zBack for navigation
+            if context and context.get("mode") == "zBifrost":
+                return zHat
             return "zBack" if walker else zHat
         except Exception as e:
             self.logger.error("Failed to parse zWizard payload: %s", e)
             return None
 
-    def _handle_wizard_dict(self, zHorizontal, walker):
+    def _handle_wizard_dict(self, zHorizontal, walker, context=None):
         """Handle zWizard dict command."""
         self.logger.info("Detected zWizard (dict)")
         # Use modern OOP API - walker extends wizard, so it has handle()
@@ -118,6 +141,10 @@ class CommandLauncher:
             zHat = walker.handle(zHorizontal["zWizard"])
         else:
             zHat = self.zcli.wizard.handle(zHorizontal["zWizard"])
+        # In zBifrost mode, return zHat for API consumption
+        # In Walker/Terminal mode, return zBack for navigation
+        if context and context.get("mode") == "zBifrost":
+            return zHat
         return "zBack" if walker else zHat
 
     def _handle_read_string(self, zHorizontal, context):

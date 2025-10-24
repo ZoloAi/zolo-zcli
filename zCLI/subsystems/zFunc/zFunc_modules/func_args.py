@@ -19,6 +19,11 @@ def parse_arguments(arg_str, zContext, split_fn, logger_instance, zparser=None):
             if arg == "zContext":
                 parsed_args.append(zContext)
                 logger_instance.debug("Injected full zContext")
+            elif arg == "zHat":
+                # Handle zHat from zWizard context
+                zhat_value = zContext.get("zHat") if isinstance(zContext, dict) else None
+                parsed_args.append(zhat_value)
+                logger_instance.debug("Injected zHat from context: %s", zhat_value)
             elif arg == "zConv":
                 # Handle zConv placeholder (from dialog context)
                 zconv_value = zContext.get("zConv") if isinstance(zContext, dict) else None
