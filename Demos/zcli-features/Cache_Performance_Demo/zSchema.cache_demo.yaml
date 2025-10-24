@@ -1,0 +1,63 @@
+Meta:
+  Data_Type: sqlite
+  Data_Label: "cache_demo"
+  Data_Path: "@"
+  Data_Paradigm: classical
+
+products:
+  id:
+    type: int
+    pk: true
+    auto_increment: true
+  name:
+    type: str
+    required: true
+  category:
+    type: str
+    required: true
+  price:
+    type: float
+    required: true
+  stock:
+    type: int
+    default: 0
+  created_at:
+    type: datetime
+    default: now
+
+# Sample data for demo
+_seed_data:
+  products:
+    - name: "Laptop Pro"
+      category: "Electronics"
+      price: 1299.99
+      stock: 15
+    - name: "Wireless Mouse"
+      category: "Electronics"
+      price: 29.99
+      stock: 50
+    - name: "Office Chair"
+      category: "Furniture"
+      price: 249.99
+      stock: 8
+    - name: "Desk Lamp"
+      category: "Furniture"
+      price: 45.99
+      stock: 25
+    - name: "USB-C Cable"
+      category: "Electronics"
+      price: 12.99
+      stock: 100
+    - name: "Notebook Set"
+      category: "Stationery"
+      price: 15.99
+      stock: 40
+    - name: "Ergonomic Keyboard"
+      category: "Electronics"
+      price: 89.99
+      stock: 20
+    - name: "Monitor Stand"
+      category: "Furniture"
+      price: 35.99
+      stock: 30
+

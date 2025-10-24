@@ -97,7 +97,7 @@ class SessionConfig:
         # 1. Check zSpark_obj for explicit zMode setting (highest priority)
         if self.zSpark is not None and isinstance(self.zSpark, dict):
             zMode = self.zSpark.get("zMode")
-            if zMode and zMode in ("Terminal", "GUI", "WebSocket", "Walker"):
+            if zMode and zMode in ("Terminal", "zBifrost", "Walker"):
                 return zMode
         
         # 2. Default to Terminal if no valid zMode specified

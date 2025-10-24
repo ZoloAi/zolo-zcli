@@ -66,13 +66,13 @@ class TestzDisplayInitialization(unittest.TestCase):
         self.assertEqual(display.mode, "Terminal")
 
     def test_mode_detection_gui(self):
-        """Test mode detection for GUI mode."""
-        self.mock_zcli.session = {"zMode": "GUI"}
+        """Test mode detection for zBifrost mode."""
+        self.mock_zcli.session = {"zMode": "zBifrost"}
         
         with patch('builtins.print'):
             display = zDisplay(self.mock_zcli)
 
-        self.assertEqual(display.mode, "GUI")
+        self.assertEqual(display.mode, "zBifrost")
 
     def test_mode_default_to_terminal(self):
         """Test mode defaults to Terminal when not specified."""
@@ -167,7 +167,7 @@ class TestzPrimitivesGUIOutput(unittest.TestCase):
     def setUp(self):
         """Set up mock zCLI and zDisplay for GUI testing."""
         self.mock_zcli = Mock()
-        self.mock_zcli.session = {"zMode": "GUI"}
+        self.mock_zcli.session = {"zMode": "zBifrost"}
         self.mock_zcli.logger = Mock()
         self.mock_zcli.comm = Mock()
         self.mock_zcli.comm.broadcast_websocket = Mock()
@@ -278,7 +278,7 @@ class TestzPrimitivesGUIInput(unittest.TestCase):
     def setUp(self):
         """Set up mock zCLI and zDisplay for GUI testing."""
         self.mock_zcli = Mock()
-        self.mock_zcli.session = {"zMode": "GUI"}
+        self.mock_zcli.session = {"zMode": "zBifrost"}
         self.mock_zcli.logger = Mock()
         self.mock_zcli.comm = Mock()
         
@@ -541,9 +541,9 @@ class TestModeSpecificBehavior(unittest.TestCase):
             self.assertTrue(mock_print.called)
 
     def test_gui_mode_uses_comm(self):
-        """Test GUI mode uses comm.broadcast_websocket for output."""
+        """Test zBifrost mode uses comm.broadcast_websocket for output."""
         mock_zcli = Mock()
-        mock_zcli.session = {"zMode": "GUI"}
+        mock_zcli.session = {"zMode": "zBifrost"}
         mock_zcli.logger = Mock()
         mock_zcli.comm = Mock()
         mock_zcli.comm.broadcast_websocket = Mock()
@@ -552,10 +552,10 @@ class TestModeSpecificBehavior(unittest.TestCase):
             display = zDisplay(mock_zcli)
             display.write_raw("test")
             
-            # GUI mode uses broadcast_websocket (async)
+            # zBifrost mode uses broadcast_websocket (async)
             # In test environment without event loop, it will try but fail silently
-            # Just verify the display was created in GUI mode
-            self.assertEqual(display.mode, "GUI")
+            # Just verify the display was created in zBifrost mode
+            self.assertEqual(display.mode, "zBifrost")
 
     def test_terminal_mode_no_comm_calls(self):
         """Test Terminal mode doesn't call comm.send."""

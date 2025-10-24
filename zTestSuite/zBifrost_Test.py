@@ -227,7 +227,7 @@ class TestWebSocketDataHandling(unittest.TestCase):
         self.logger = Mock()
         self.mock_zcli = Mock()
         self.mock_zcli.logger = self.logger
-        self.mock_zcli.session = {"zMode": "WebSocket"}
+        self.mock_zcli.session = {"zMode": "zBifrost"}
 
     def test_frontend_data_structure(self):
         """Test that frontend sends data in correct nested structure."""
@@ -386,17 +386,17 @@ class TestModeDetectionDataFlow(unittest.TestCase):
 
     def test_websocket_mode_expects_data(self):
         """Test that WebSocket mode expects pre-provided data."""
-        session = {"zMode": "WebSocket"}
+        session = {"zMode": "zBifrost"}
         
-        # In WebSocket mode, zDialog should skip prompts and use context data
-        self.assertEqual(session["zMode"], "WebSocket")
+        # In zBifrost mode, zDialog should skip prompts and use context data
+        self.assertEqual(session["zMode"], "zBifrost")
 
-    def test_gui_mode_skips_pause(self):
-        """Test that GUI mode skips 'Press Enter' pauses."""
-        session = {"zMode": "GUI"}
+    def test_zbifrost_mode_skips_pause(self):
+        """Test that zBifrost mode skips 'Press Enter' pauses."""
+        session = {"zMode": "zBifrost"}
         
-        # In GUI mode, crud_read should skip read_string("Press Enter...")
-        self.assertEqual(session["zMode"], "GUI")
+        # In zBifrost mode, crud_read should skip read_string("Press Enter...")
+        self.assertEqual(session["zMode"], "zBifrost")
 
     def test_walker_mode_is_interactive(self):
         """Test that Walker mode is treated as interactive."""

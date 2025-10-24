@@ -179,7 +179,7 @@ z = zCLI({
     
     # Optional
     "logger": "debug",                     # Logging: debug, info, warning, error
-    "zMode": "Terminal",                   # Mode: Terminal, GUI, Debug
+    "zMode": "Terminal",                   # Mode: Terminal or zBifrost
     "plugins": [                           # Python modules to load at startup
         "myapp.plugins.utils",
         "/absolute/path/to/plugin.py"

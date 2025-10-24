@@ -428,9 +428,15 @@ class zBifrost:
         """Broadcast message to all connected clients except sender."""
         self.logger.debug(f"[zBifrost] [BROADCAST] Broadcasting to {len(self.clients) - 1} other clients")
         for client in self.clients:
-            if client != sender and client.open:
-                await client.send(message)
-                self.logger.debug(f"[zBifrost] [SENT] Sent to {getattr(client, 'remote_address', 'N/A')}")
+            if client != sender:
+                try:
+                    # Check if connection is open (compatible with all websockets versions)
+                    is_open = getattr(client, 'open', None) or (not getattr(client, 'closed', False))
+                    if is_open:
+                        await client.send(message)
+                        self.logger.debug(f"[zBifrost] [SENT] Sent to {getattr(client, 'remote_address', 'N/A')}")
+                except Exception as e:
+                    self.logger.debug(f"[zBifrost] [BROADCAST] Skipped client (closed or error): {e}")
 
     async def start_socket_server(self, socket_ready):
         """Start the WebSocket server and signal when ready."""

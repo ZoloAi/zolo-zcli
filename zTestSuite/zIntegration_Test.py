@@ -426,14 +426,14 @@ class TestWebSocketModeIntegration(unittest.TestCase):
             # Initialize zCLI in WebSocket mode
             z = zCLI({
                 "zWorkspace": tmpdir,
-                "zMode": "WebSocket"
+                "zMode": "zBifrost"
             })
             
             # Verify zMode is set
-            self.assertEqual(z.session.get("zMode"), "WebSocket")
+            self.assertEqual(z.session.get("zMode"), "zBifrost")
             
             # Verify display is in appropriate mode
-            self.assertEqual(z.display.mode, "WebSocket")
+            self.assertEqual(z.display.mode, "zBifrost")
     
     def test_placeholder_injection_integration(self):
         """Test placeholder injection with zDialog and zData integration."""

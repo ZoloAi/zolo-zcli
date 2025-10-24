@@ -1,0 +1,14 @@
+"^List Products":
+  zData:
+    action: read
+    model: "@.zSchema.cache_demo"
+    table: products
+
+"^Get Product":
+  zData:
+    action: read
+    model: "@.zSchema.cache_demo"
+    table: products
+    where:
+      id: zConv.product_id
+

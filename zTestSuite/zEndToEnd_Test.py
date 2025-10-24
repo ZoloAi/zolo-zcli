@@ -586,13 +586,13 @@ class TestUserManagerWebSocketMode(unittest.TestCase):
         z = zCLI({
             "zWorkspace": str(demo_dir),
             "zVaFile": "@.zUI.users_menu",
-            "zMode": "WebSocket",
+            "zMode": "zBifrost",
             "zVerbose": False
         })
         
         # Verify initialization
-        self.assertEqual(z.session.get("zMode"), "WebSocket")
-        self.assertEqual(z.display.mode, "WebSocket")
+        self.assertEqual(z.session.get("zMode"), "zBifrost")
+        self.assertEqual(z.display.mode, "zBifrost")
         
     def test_user_manager_crud_with_websocket_data(self):
         """Test User Manager CRUD operations with WebSocket data format."""

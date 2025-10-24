@@ -6,7 +6,7 @@ from zCLI import logging
 
 class zCLI:
     """Core zCLI Engine managing all subsystems 
-    Supporting three GUI modes: Shell, Walker, and Bifrost."""
+    Supporting two primary modes: Terminal and zBifrost (WebSocket)."""
 
     def __init__(self, zSpark_obj=None):
         """Initialize zCLI instance (LFS style)
@@ -143,7 +143,7 @@ class zCLI:
         # Set zMode based on zConfig source of truth or UI mode detection
         if self.ui_mode:
             # UI mode detected - set to GUI for WebSocket adapters
-            self.session["zMode"] = "GUI"
+            self.session["zMode"] = "zBifrost"
         else:
             # Use zConfig-detected mode or default to Terminal
             # zConfig will check zSpark_obj.get("zMode") and default to "Terminal"

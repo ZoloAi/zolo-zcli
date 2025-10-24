@@ -8,7 +8,7 @@
 <body>
     <div id="app"></div>
 
-    <script src="../zCLI/subsystems/zComm/zComm_modules/zBifrost/bifrost_client.js"></script>
+    <script src="../../../zCLI/subsystems/zComm/zComm_modules/zBifrost/bifrost_client.js"></script>
     
     <script>
         (async () => {
@@ -50,15 +50,15 @@
                 client.clearClientCache();
                 
                 const t1 = performance.now();
-                await client.getSchema('users');
+                await client.getSchema('products');
                 const time1 = (performance.now() - t1).toFixed(2);
                 
                 const t2 = performance.now();
-                await client.getSchema('users');
+                await client.getSchema('products');
                 const time2 = (performance.now() - t2).toFixed(2);
                 
                 const t3 = performance.now();
-                await client.getSchema('users');
+                await client.getSchema('products');
                 const time3 = (performance.now() - t3).toFixed(2);
                 
                 const stats = await client.getCacheStats();
@@ -106,7 +106,11 @@
                 const times = [];
                 for (let i = 0; i < 3; i++) {
                     const start = performance.now();
-                    await client.read('users');
+                    await client.send({ 
+                        zKey: '^List Products', 
+                        action: 'read', 
+                        model: 'products' 
+                    });
                     times.push((performance.now() - start).toFixed(2));
                 }
                 

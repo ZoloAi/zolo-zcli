@@ -74,12 +74,12 @@ def handle_read(request, ops):
 
     # Pause after displaying results (unless explicitly disabled or in non-interactive mode)
     pause = request.get("pause", True)  # Default to True
-    # Don't pause in WebSocket/GUI mode or when zMode is not Walker/Terminal
+    # Don't pause in zBifrost mode or when zMode is not Walker/Terminal
     zMode = ops.zcli.session.get("zMode", "")
     if pause and zMode in ("Walker", "Terminal", ""):
         ops.zcli.display.read_string("Press Enter to continue...")
 
-    # Return the actual rows for WebSocket/API mode, True for terminal display mode
-    if zMode in ("WebSocket", "GUI"):
+    # Return the actual rows for zBifrost mode, True for terminal display mode
+    if zMode == "zBifrost":
         return rows
     return True

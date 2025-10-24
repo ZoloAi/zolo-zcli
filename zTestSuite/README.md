@@ -40,7 +40,7 @@ Tests for configuration subsystem including:
 - **WHERE Clause Extraction**: Top-level vs. options dual-source handling (6 tests)
 - **WebSocket Data**: Frontend data structure and zDialog integration (4 tests)
 - **CRUD Operations**: Complete data flow in WebSocket mode (3 tests)
-- **Mode Detection**: zMode-aware behavior (Terminal, WebSocket, GUI, Walker) (4 tests)
+- **Mode Detection**: zMode-aware behavior (Terminal, zBifrost, Walker) (4 tests)
 - **Coverage**: 26 tests, ~400 LOC, critical v1.5.3 bug fixes verified
 - **Status**: All tests passing [OK]
 

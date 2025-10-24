@@ -523,10 +523,10 @@ class TestConfigHierarchy(unittest.TestCase):
         self.assertEqual(session["zMode"], "Terminal")
         
         # Test 2: Valid GUI mode from zSpark_obj
-        zSpark_obj = {"zMode": "GUI"}
+        zSpark_obj = {"zMode": "zBifrost"}
         session_config = SessionConfig(machine, env, zcli, zSpark_obj, zconfig)
         session = session_config.create_session()
-        self.assertEqual(session["zMode"], "GUI")
+        self.assertEqual(session["zMode"], "zBifrost")
         
         # Test 3: Invalid mode falls back to Terminal
         zSpark_obj = {"zMode": "Shell"}  # Invalid mode

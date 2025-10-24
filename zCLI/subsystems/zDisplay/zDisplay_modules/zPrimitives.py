@@ -15,7 +15,7 @@ class zPrimitives:
         self.response_futures = {}
 
     def _is_gui_mode(self):
-        """Check if running in GUI/non-interactive mode (WebSocket, GUI, etc.)."""
+        """Check if running in zBifrost (non-interactive WebSocket) mode."""
         if not self.display or not hasattr(self.display, 'mode'):
             return False
         # Non-interactive modes: anything that's not Terminal or Walker
