@@ -7,6 +7,7 @@
 import asyncio
 import getpass
 import importlib
+import importlib.util
 import inspect
 import json
 import logging
@@ -33,6 +34,36 @@ import platformdirs  # pylint: disable=import-error
 import requests  # pylint: disable=import-error
 import yaml  # pylint: disable=import-error
 
+# Optional third-party helper (fallback implementation if python-dotenv missing)
+if importlib.util.find_spec("dotenv") is not None:
+    from dotenv import load_dotenv  # pylint: disable=import-error
+else:  # pragma: no cover - exercised when python-dotenv is unavailable
+    def load_dotenv(dotenv_path=None, override=True):
+        """Minimal fallback dotenv loader when python-dotenv is unavailable."""
+        path = Path(dotenv_path) if dotenv_path else Path.cwd() / ".env"
+        if not path.exists():
+            return False
+
+        loaded_any = False
+        with path.open("r", encoding="utf-8") as env_file:
+            for raw_line in env_file:
+                line = raw_line.strip()
+                if not line or line.startswith("#"):
+                    continue
+
+                key, sep, value = line.partition("=")
+                if not sep:
+                    continue
+
+                key = key.strip()
+                value = value.strip().strip('"').strip("'")
+
+                if override or key not in os.environ:
+                    os.environ[key] = value
+                loaded_any = True
+
+        return loaded_any
+
 # Import utilities (safe to import early)
 from .utils.colors import Colors
 
@@ -46,9 +77,12 @@ __all__ = [
 
     # System modules
     "asyncio", "datetime", "getpass", "importlib", "inspect", "json", 
-    "logging", "os", "platform", "platformdirs", "re", "requests", "secrets", 
-    "shutil", "socket", "sqlite3", "subprocess", "sys", "time", "traceback", 
+    "logging", "os", "platform", "platformdirs", "re", "requests", "secrets",
+    "shutil", "socket", "sqlite3", "subprocess", "sys", "time", "traceback",
     "uuid", "webbrowser", "yaml", "OrderedDict", "Path", "urlparse",
+
+    # Third-party helpers
+    "load_dotenv",
 
     # Utils
     "Colors",

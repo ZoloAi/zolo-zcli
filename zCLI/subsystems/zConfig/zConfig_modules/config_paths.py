@@ -1,15 +1,16 @@
 # zCLI/subsystems/zConfig/zConfig_modules/config_paths.py
 """Cross-platform configuration path resolution with platformdirs."""
 
-from zCLI import platform, Path, sys, Colors, platformdirs
+from zCLI import platform, Path, sys, Colors, platformdirs, load_dotenv
 
 class zConfigPaths:
     """Cross-platform path resolver for zolo-zcli configuration using native OS conventions."""
 
-    def __init__(self):
+    def __init__(self, zSpark_obj=None):
         self.app_name = "zolo-zcli"
         self.app_author = "zolo"
         self.os_type = platform.system()  # 'Linux', 'Darwin', 'Windows'
+        self.zSpark = zSpark_obj if isinstance(zSpark_obj, dict) else None
 
         # Validate OS type
         valid_os_types = ("Linux", "Darwin", "Windows")
@@ -20,6 +21,97 @@ class zConfigPaths:
             sys.exit(1)
 
         print(f"[zConfigPaths] Initialized for OS: {self.os_type}")
+
+        # Detect workspace and dotenv path early for reuse across modules
+        self.workspace_dir = self._detect_workspace_dir()
+        self._dotenv_path = self._detect_dotenv_file()
+
+        if self.workspace_dir:
+            print(f"[zConfigPaths] Workspace directory: {self.workspace_dir}")
+        if self._dotenv_path:
+            print(f"[zConfigPaths] Dotenv path resolved: {self._dotenv_path}")
+
+    # ═══════════════════════════════════════════════════════════
+    # Workspace & dotenv detection helpers
+    # ═══════════════════════════════════════════════════════════
+
+    def _detect_workspace_dir(self):
+        """Determine workspace directory using zSpark hint or current directory."""
+        if self.zSpark:
+            workspace = self.zSpark.get("zWorkspace")
+            if workspace:
+                try:
+                    return Path(workspace).expanduser().resolve()
+                except Exception:  # pragma: no cover - defensive fallback
+                    print(
+                        f"{Colors.WARNING}[zConfigPaths] Unable to resolve zWorkspace '{workspace}',"
+                        f" defaulting to current directory{Colors.RESET}"
+                    )
+
+        try:
+            return Path.cwd()
+        except Exception:  # pragma: no cover - defensive fallback
+            return Path.home()
+
+    def _resolve_explicit_dotenv_path(self):
+        """Check zSpark configuration for explicitly provided dotenv path."""
+        if not self.zSpark:
+            return None
+
+        dotenv_keys = (
+            "env_file",
+            "envFile",
+            "dotenv",
+            "dotenv_file",
+            "dotenvFile",
+            "dotenv_path",
+            "dotenvPath",
+        )
+
+        for key in dotenv_keys:
+            candidate = self.zSpark.get(key)
+            if candidate:
+                try:
+                    return Path(candidate).expanduser().resolve()
+                except Exception:  # pragma: no cover - defensive fallback
+                    print(
+                        f"{Colors.WARNING}[zConfigPaths] Invalid dotenv path '{candidate}' from zSpark key '{key}'{Colors.RESET}"
+                    )
+        return None
+
+    def _detect_dotenv_file(self):
+        """Determine dotenv file location from zSpark overrides or workspace."""
+        explicit = self._resolve_explicit_dotenv_path()
+        if explicit:
+            return explicit
+
+        if self.workspace_dir:
+            return self.workspace_dir / ".env"
+
+        return None
+
+    def get_dotenv_path(self):
+        """Return resolved dotenv path (may not exist)."""
+        return self._dotenv_path
+
+    def load_dotenv(self, override=True):
+        """Load environment variables from resolved dotenv file if available."""
+        dotenv_path = self.get_dotenv_path()
+        if not dotenv_path:
+            print("[zConfigPaths] No dotenv path resolved")
+            return None
+
+        if not dotenv_path.exists():
+            print(f"{Colors.WARNING}[zConfigPaths] Dotenv file not found at: {dotenv_path}{Colors.RESET}")
+            return None
+
+        loaded = load_dotenv(dotenv_path, override=override)
+        if loaded:
+            print(f"[zConfigPaths] Loaded environment variables from: {dotenv_path}")
+        else:
+            print(f"{Colors.WARNING}[zConfigPaths] Dotenv file present but no variables loaded: {dotenv_path}{Colors.RESET}")
+
+        return dotenv_path
 
     # ═══════════════════════════════════════════════════════════
     # Resolves standard OS locations for zolo system folders
@@ -161,10 +253,18 @@ class zConfigPaths:
         if user_config_legacy.exists():
             configs.append((user_config_legacy, 3, "user-legacy"))
         
-        # TODO: 4. Environment variables / dotenv
-        # Load from .env file or environment exports
-        # These override file-based configs
-        
+        # 4. Environment variables / dotenv (highest priority before runtime overrides)
+        dotenv_path = self.get_dotenv_path()
+        if dotenv_path:
+            if dotenv_path.exists():
+                configs.append((dotenv_path, 4, "env-dotenv"))
+            else:
+                print(
+                    f"{Colors.WARNING}[zConfigPaths] Dotenv path resolved but file missing: {dotenv_path}{Colors.RESET}"
+                )
+        else:
+            print("[zConfigPaths] No dotenv path detected for hierarchy")
+
         # Note: Session runtime overrides (highest priority) are handled
         # in-memory by zSession subsystem, not in this file hierarchy
         

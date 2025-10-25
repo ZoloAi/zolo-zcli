@@ -24,7 +24,7 @@ class zConfig:
         self.zSpark = zSpark_obj
 
         # Initialize path resolver
-        self.sys_paths = zConfigPaths()
+        self.sys_paths = zConfigPaths(zSpark_obj=zSpark_obj)
 
         # Load machine config FIRST (static, per-machine)
         self.machine = MachineConfig(self.sys_paths)

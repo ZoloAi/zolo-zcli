@@ -31,6 +31,11 @@ class EnvironmentConfig:
 
     def _detect_environments(self):
         """Detect virtual environment and system environment."""
+        # Load dotenv file (if available) before capturing environment snapshot
+        dotenv_path = self.paths.load_dotenv()
+        if dotenv_path:
+            print(f"[EnvironmentConfig] Dotenv loaded from: {dotenv_path}")
+
         # Detect if running in virtual environment
         self.in_venv = hasattr(sys, 'real_prefix') or (
             hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix

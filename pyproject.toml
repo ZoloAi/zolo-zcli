@@ -32,6 +32,7 @@ dependencies = [
     "websockets>=15.0",
     "requests>=2.32",
     "platformdirs>=4.0",
+    "python-dotenv>=1.0",
 ]
 
 [project.optional-dependencies]
