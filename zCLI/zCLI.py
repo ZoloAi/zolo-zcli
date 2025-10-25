@@ -6,10 +6,10 @@ from zCLI import logging
 
 class zCLI:
     """Core zCLI Engine managing all subsystems 
-    Supporting two primary modes: Terminal and zBifrost (WebSocket)."""
+    Supporting two primary modes: Terminal and zBifrost."""
 
     def __init__(self, zSpark_obj=None):
-        """Initialize zCLI instance (LFS style)
+        """Initialize zCLI instance -
         with optional zSpark_obj config dict."""
 
         # Initialize zSpark_obj config dict

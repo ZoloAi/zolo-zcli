@@ -25,7 +25,7 @@ class zConfig:
         # Validate zCLI instance FIRST - zConfig is Layer 0 and creates the session
         # so we don't require session to exist yet
         validate_zcli_instance(zcli, "zConfig", require_session=False)
-        
+
         # Store zCLI instance for display access
         self.zcli = zcli
 

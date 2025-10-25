@@ -2,6 +2,7 @@
 """Streamlined display and rendering subsystem - UI elements, input collection, multi-mode output."""
 
 from zCLI import Colors
+from zCLI.utils import validate_zcli_instance
 from .zDisplay_modules.zPrimitives import zPrimitives
 from .zDisplay_modules.zEvents import zEvents
 
@@ -10,13 +11,13 @@ class zDisplay:
     """Streamlined display and rendering subsystem with cleaner architecture."""
 
     def __init__(self, zcli):
-        """Initialize zDisplay subsystem."""
-        # Validate zCLI instance
-        if zcli is None:
-            raise ValueError("zDisplay requires a zCLI instance")
-
-        if not hasattr(zcli, 'session'):
-            raise ValueError("Invalid zCLI instance: missing 'session' attribute")
+        """Initialize zDisplay subsystem.
+        
+        Args:
+            zcli: zCLI instance (required, must have session)
+        """
+        # Validate zCLI instance FIRST
+        validate_zcli_instance(zcli, "zDisplay")
 
         # Core dependencies from zCLI
         self.zcli = zcli

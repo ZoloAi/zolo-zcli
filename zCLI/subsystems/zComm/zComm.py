@@ -11,9 +11,6 @@ class zComm:
 
     def __init__(self, zcli):
         """Initialize zComm subsystem.
-        
-        Args:
-            zcli: zCLI instance (required, must have session)
         """
         # Validate zCLI instance FIRST - session is always required
         validate_zcli_instance(zcli, "zComm")

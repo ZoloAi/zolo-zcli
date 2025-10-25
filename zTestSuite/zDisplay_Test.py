@@ -45,7 +45,7 @@ class TestzDisplayInitialization(unittest.TestCase):
         with self.assertRaises(ValueError) as context:
             zDisplay(None)
         
-        self.assertIn("requires a zCLI instance", str(context.exception))
+        self.assertIn("zCLI instance", str(context.exception))
 
     def test_initialization_with_invalid_zcli(self):
         """Test zDisplay raises error when zCLI instance lacks session."""
@@ -54,7 +54,7 @@ class TestzDisplayInitialization(unittest.TestCase):
         with self.assertRaises(ValueError) as context:
             zDisplay(invalid_zcli)
         
-        self.assertIn("missing 'session' attribute", str(context.exception))
+        self.assertIn("session", str(context.exception))
 
     def test_mode_detection_terminal(self):
         """Test mode detection for Terminal mode."""
