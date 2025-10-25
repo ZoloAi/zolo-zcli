@@ -16,20 +16,11 @@ class zConfig:
     """Configuration management with hierarchical loading and cross-platform support."""
 
     def __init__(self, zcli, zSpark_obj=None):
-        """Initialize zConfig subsystem.
-        
-        Args:
-            zcli: zCLI instance (required)
-            zSpark_obj: zSpark instance (optional, None in zShell mode)
-        """
-        # Validate zCLI instance FIRST - zConfig is Layer 0 and creates the session
-        # so we don't require session to exist yet
+        """Initialize zConfig subsystem."""
+
+        # Validate zCLI instance, pre zSession creation
         validate_zcli_instance(zcli, "zConfig", require_session=False)
-
-        # Store zCLI instance for display access
         self.zcli = zcli
-
-        # Store zSpark instance if provided (None in zShell mode)
         self.zSpark = zSpark_obj
 
         # Initialize path resolver
