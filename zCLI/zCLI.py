@@ -2,8 +2,6 @@
 # ───────────────────────────────────────────────────────────────
 """Single source of truth for all subsystems."""
 
-from zCLI import logging
-
 class zCLI:
     """Core zCLI Engine managing all subsystems 
     Supporting two primary modes: Terminal and zBifrost."""
@@ -18,30 +16,10 @@ class zCLI:
         # ─────────────────────────────────────────────────────────────
         # Layer 0: Foundation
         # ─────────────────────────────────────────────────────────────
-        # Initialize zConfig FIRST (provides machine config, environment config, and logger)
+        # Initialize zConfig FIRST (provides machine config, environment config, session, logger, and traceback)
+        # After this call, self.session, self.logger, and self.zTraceback are ready to use
         from .subsystems.zConfig import zConfig
         self.config = zConfig(zcli=self, zSpark_obj=zSpark_obj)
-
-        # Note: create_session() also initializes the logger
-        self.session = self.config.session.create_session()
-
-        # Get logger from session (initialized during session creation)
-        session_logger = self.session["logger_instance"]
-
-        # Create zCLI-specific logger that will show "zCLI" in logs
-        self.logger = logging.getLogger("zCLI")
-        self.logger.setLevel(session_logger._logger.level)  # Use same level as session logger
-
-        # Add the same handlers as the session logger so messages get processed
-        for handler in session_logger._logger.handlers:
-            self.logger.addHandler(handler)
-
-        # Log initial message with configured level
-        self.logger.info("Logger initialized at level: %s", session_logger.log_level) # First log message
-
-        # Initialize centralized traceback utility
-        from .utils.zTraceback import zTraceback
-        self.zTraceback = zTraceback(logger=self.logger, zcli=self)
 
         # Initialize zComm (Communication infrastructure for zBifrost and zData)
         from .subsystems.zComm import zComm

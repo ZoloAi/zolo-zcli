@@ -1,6 +1,7 @@
 # zCLI/subsystems/zConfig/zConfig.py
 """Cross-platform configuration management with hierarchical loading and secret support."""
 
+from zCLI import logging
 from zCLI.utils import print_ready_message, validate_zcli_instance
 from .zConfig_modules import (
     zConfigPaths,
@@ -36,8 +37,30 @@ class zConfig:
         # Pass self so SessionConfig can call back to create_logger()
         self.session = SessionConfig(self.machine, self.environment, zcli, zSpark_obj, zconfig=self)
 
+        # Create session and attach to zcli instance
+        session_data = self.session.create_session()
+        zcli.session = session_data
+
+        # Get logger from session (initialized during session creation)
+        session_logger = session_data["logger_instance"]
+
+        # Create zCLI-specific logger that will show "zCLI" in logs
+        zcli.logger = logging.getLogger("zCLI")
+        zcli.logger.setLevel(session_logger._logger.level)  # Use same level as session logger
+
+        # Add the same handlers as the session logger so messages get processed
+        for handler in session_logger._logger.handlers:
+            zcli.logger.addHandler(handler)
+
+        # Log initial message with configured level
+        zcli.logger.info("Logger initialized at level: %s", session_logger.log_level)
+
+        # Initialize centralized traceback utility
+        from zCLI.utils.zTraceback import zTraceback
+        zcli.zTraceback = zTraceback(logger=zcli.logger, zcli=zcli)
+
         # Initialize WebSocket configuration (uses environment config and session)
-        self.websocket = WebSocketConfig(self.environment, zcli, self.session.create_session())
+        self.websocket = WebSocketConfig(self.environment, zcli, session_data)
 
         # Print styled ready message (before zDisplay is available)
         print_ready_message("zConfig Ready", color="CONFIG")
