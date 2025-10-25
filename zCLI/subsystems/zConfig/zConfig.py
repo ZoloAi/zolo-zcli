@@ -1,7 +1,6 @@
 # zCLI/subsystems/zConfig/zConfig.py
 """Cross-platform configuration management with hierarchical loading and secret support."""
 
-from zCLI import logging
 from zCLI.utils import print_ready_message, validate_zcli_instance
 from .zConfig_modules import (
     zConfigPaths,
@@ -44,13 +43,8 @@ class zConfig:
         # Get logger from session (initialized during session creation)
         session_logger = session_data["logger_instance"]
 
-        # Create zCLI-specific logger that will show "zCLI" in logs
-        zcli.logger = logging.getLogger("zCLI")
-        zcli.logger.setLevel(session_logger._logger.level)  # Use same level as session logger
-
-        # Add the same handlers as the session logger so messages get processed
-        for handler in session_logger._logger.handlers:
-            zcli.logger.addHandler(handler)
+        # Use the logger instance created during session initialization
+        zcli.logger = session_logger._logger
 
         # Log initial message with configured level
         zcli.logger.info("Logger initialized at level: %s", session_logger.log_level)
