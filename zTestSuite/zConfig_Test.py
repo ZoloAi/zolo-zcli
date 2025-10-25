@@ -245,6 +245,130 @@ class TestEnvironmentConfig(unittest.TestCase):
         # Test getting environment variables
         path = env.get_env_var("PATH")
         self.assertIsNotNone(path)
+    
+    def test_dotenv_path_resolution(self):
+        """Test that dotenv path is correctly resolved."""
+        # Dotenv path should be detected during initialization
+        dotenv_path = self.paths.get_dotenv_path()
+        
+        # Path should be resolved (may or may not exist)
+        if dotenv_path:
+            self.assertIsInstance(dotenv_path, Path)
+    
+    def test_dotenv_loading_with_file(self):
+        """Test dotenv loading when .env file exists."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpdir_path = Path(tmpdir)
+            env_file = tmpdir_path / ".env"
+            
+            # Create a test .env file
+            env_file.write_text("TEST_VAR_ZCONFIG=test_value_123\nTEST_VAR2=another_value\n")
+            
+            # Create paths with workspace pointing to temp dir
+            with patch('builtins.print'):
+                paths = zConfigPaths(zSpark_obj={"zWorkspace": str(tmpdir_path)})
+            
+            # Load the dotenv file
+            loaded_path = paths.load_dotenv()
+            
+            # Verify it was loaded
+            self.assertIsNotNone(loaded_path)
+            self.assertEqual(loaded_path.resolve(), env_file.resolve())
+            
+            # Verify environment variables were set
+            self.assertEqual(os.getenv("TEST_VAR_ZCONFIG"), "test_value_123")
+            self.assertEqual(os.getenv("TEST_VAR2"), "another_value")
+            
+            # Clean up
+            del os.environ["TEST_VAR_ZCONFIG"]
+            del os.environ["TEST_VAR2"]
+    
+    def test_dotenv_loading_without_file(self):
+        """Test dotenv loading when .env file doesn't exist."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpdir_path = Path(tmpdir)
+            
+            # Create paths with workspace but no .env file
+            with patch('builtins.print'):
+                paths = zConfigPaths(zSpark_obj={"zWorkspace": str(tmpdir_path)})
+            
+            # Try to load non-existent dotenv file
+            loaded_path = paths.load_dotenv()
+            
+            # Should return None when file doesn't exist
+            self.assertIsNone(loaded_path)
+    
+    def test_dotenv_override_behavior(self):
+        """Test that dotenv can override existing environment variables."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpdir_path = Path(tmpdir)
+            env_file = tmpdir_path / ".env"
+            
+            # Set an environment variable first
+            os.environ["TEST_OVERRIDE_VAR"] = "original_value"
+            
+            # Create .env file with different value
+            env_file.write_text("TEST_OVERRIDE_VAR=overridden_value\n")
+            
+            # Create paths and load dotenv with override=True (default)
+            with patch('builtins.print'):
+                paths = zConfigPaths(zSpark_obj={"zWorkspace": str(tmpdir_path)})
+            
+            paths.load_dotenv(override=True)
+            
+            # Should be overridden
+            self.assertEqual(os.getenv("TEST_OVERRIDE_VAR"), "overridden_value")
+            
+            # Clean up
+            del os.environ["TEST_OVERRIDE_VAR"]
+    
+    def test_dotenv_no_override_behavior(self):
+        """Test that dotenv respects override=False."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpdir_path = Path(tmpdir)
+            env_file = tmpdir_path / ".env"
+            
+            # Set an environment variable first
+            os.environ["TEST_NO_OVERRIDE_VAR"] = "original_value"
+            
+            # Create .env file with different value
+            env_file.write_text("TEST_NO_OVERRIDE_VAR=should_not_override\n")
+            
+            # Create paths and load dotenv with override=False
+            with patch('builtins.print'):
+                paths = zConfigPaths(zSpark_obj={"zWorkspace": str(tmpdir_path)})
+            
+            paths.load_dotenv(override=False)
+            
+            # Should keep original value
+            self.assertEqual(os.getenv("TEST_NO_OVERRIDE_VAR"), "original_value")
+            
+            # Clean up
+            del os.environ["TEST_NO_OVERRIDE_VAR"]
+    
+    def test_dotenv_integration_with_environment_config(self):
+        """Test that EnvironmentConfig properly loads dotenv before capturing environment."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpdir_path = Path(tmpdir)
+            env_file = tmpdir_path / ".env"
+            
+            # Create .env file with deployment variable
+            env_file.write_text("ZOLO_DEPLOYMENT=Production\nZOLO_ENV=Staging\n")
+            
+            # Create paths and environment config
+            with patch('builtins.print'):
+                paths = zConfigPaths(zSpark_obj={"zWorkspace": str(tmpdir_path)})
+                env_config = EnvironmentConfig(paths)
+            
+            # Verify dotenv variables are accessible
+            self.assertEqual(env_config.get_env_var("ZOLO_DEPLOYMENT"), "Production")
+            self.assertEqual(env_config.get_env_var("ZOLO_ENV"), "Staging")
+            
+            # Clean up
+            if "ZOLO_DEPLOYMENT" in os.environ:
+                del os.environ["ZOLO_DEPLOYMENT"]
+            if "ZOLO_ENV" in os.environ:
+                del os.environ["ZOLO_ENV"]
 
 
 class TestSessionConfig(unittest.TestCase):

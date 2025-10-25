@@ -767,6 +767,137 @@ test_menu:
             )
 
 
+class TestDotenvApplicationWorkflow(unittest.TestCase):
+    """Test complete application workflow using dotenv configuration."""
+    
+    def test_application_with_dotenv_configuration(self):
+        """Test full application workflow configured via .env file."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpdir_path = Path(tmpdir)
+            
+            # Create comprehensive .env file for application
+            env_file = tmpdir_path / ".env"
+            env_file.write_text("""
+# Application Configuration
+APP_NAME=TestApp
+APP_VERSION=1.0.0
+ZOLO_DEPLOYMENT=Production
+ZOLO_LOGGER=INFO
+
+# Database Configuration
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=testdb
+DB_USER=testuser
+DB_PASSWORD=testpass123
+            """.strip())
+            
+            # Create schema file
+            schema_file = tmpdir_path / "zSchema.app_config.yaml"
+            schema_file.write_text("""
+Meta:
+  Data_Type: sqlite
+  Data_Path: "@"
+  Data_Label: "app_config"
+  Data_Paradigm: classical
+
+settings:
+  id: {type: int, pk: true, auto_increment: true}
+  key: {type: str, unique: true, required: true}
+  value: {type: str, required: true}
+            """)
+            
+            # Initialize zCLI with dotenv-configured workspace
+            z = zCLI({"zWorkspace": str(tmpdir_path)})
+            
+            # Verify dotenv variables are loaded
+            self.assertEqual(z.config.environment.get_env_var("APP_NAME"), "TestApp")
+            self.assertEqual(z.config.environment.get_env_var("APP_VERSION"), "1.0.0")
+            self.assertEqual(z.config.environment.get_env_var("ZOLO_DEPLOYMENT"), "Production")
+            
+            # Verify database config from dotenv
+            self.assertEqual(z.config.environment.get_env_var("DB_HOST"), "localhost")
+            self.assertEqual(z.config.environment.get_env_var("DB_PORT"), "5432")
+            self.assertEqual(z.config.environment.get_env_var("DB_NAME"), "testdb")
+            
+            # Create database using schema
+            z.data.handle_request({
+                "model": "@.zSchema.app_config",
+                "action": "create"
+            })
+            
+            # Store configuration from dotenv into database
+            app_name = z.config.environment.get_env_var("APP_NAME")
+            z.data.handle_request({
+                "model": "@.zSchema.app_config",
+                "action": "insert",
+                "table": "settings",
+                "data": {"key": "app_name", "value": app_name}
+            })
+            
+            # Read back configuration
+            result = z.data.handle_request({
+                "model": "@.zSchema.app_config",
+                "action": "read",
+                "table": "settings",
+                "where": "key = 'app_name'"
+            })
+            
+            # Verify configuration was stored correctly
+            self.assertIsNotNone(result)
+            
+            # Clean up environment variables
+            for var in ["APP_NAME", "APP_VERSION", "ZOLO_DEPLOYMENT", "ZOLO_LOGGER",
+                       "DB_HOST", "DB_PORT", "DB_NAME", "DB_USER", "DB_PASSWORD"]:
+                if var in os.environ:
+                    del os.environ[var]
+    
+    def test_multi_environment_dotenv_workflow(self):
+        """Test application workflow with different .env configurations."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpdir_path = Path(tmpdir)
+            
+            # Test Development environment
+            dev_env = tmpdir_path / ".env.development"
+            dev_env.write_text("ZOLO_DEPLOYMENT=Development\nAPI_URL=http://localhost:3000\n")
+            
+            # Initialize with dev environment
+            z_dev = zCLI({
+                "zWorkspace": str(tmpdir_path),
+                "dotenv": str(dev_env)
+            })
+            
+            # Verify dev configuration
+            self.assertEqual(z_dev.config.environment.get_env_var("ZOLO_DEPLOYMENT"), "Development")
+            self.assertEqual(z_dev.config.environment.get_env_var("API_URL"), "http://localhost:3000")
+            
+            # Clean up
+            if "ZOLO_DEPLOYMENT" in os.environ:
+                del os.environ["ZOLO_DEPLOYMENT"]
+            if "API_URL" in os.environ:
+                del os.environ["API_URL"]
+            
+            # Test Production environment
+            prod_env = tmpdir_path / ".env.production"
+            prod_env.write_text("ZOLO_DEPLOYMENT=Production\nAPI_URL=https://api.production.com\n")
+            
+            # Initialize with prod environment
+            z_prod = zCLI({
+                "zWorkspace": str(tmpdir_path),
+                "dotenv": str(prod_env)
+            })
+            
+            # Verify prod configuration
+            self.assertEqual(z_prod.config.environment.get_env_var("ZOLO_DEPLOYMENT"), "Production")
+            self.assertEqual(z_prod.config.environment.get_env_var("API_URL"), "https://api.production.com")
+            
+            # Clean up
+            if "ZOLO_DEPLOYMENT" in os.environ:
+                del os.environ["ZOLO_DEPLOYMENT"]
+            if "API_URL" in os.environ:
+                del os.environ["API_URL"]
+
+
 def run_tests(verbose=False):
     """Run all end-to-end tests."""
     loader = unittest.TestLoader()
@@ -780,6 +911,7 @@ def run_tests(verbose=False):
     suite.addTests(loader.loadTestsFromTestCase(TestCompleteApplicationLifecycle))
     suite.addTests(loader.loadTestsFromTestCase(TestUserManagerWebSocketMode))  # NEW v1.5.3
     suite.addTests(loader.loadTestsFromTestCase(TestTracebackWorkflow))  # NEW v1.5.3
+    suite.addTests(loader.loadTestsFromTestCase(TestDotenvApplicationWorkflow))  # NEW v1.5.4
     
     runner = unittest.TextTestRunner(verbosity=2 if verbose else 1)
     result = runner.run(suite)

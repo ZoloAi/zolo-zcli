@@ -1,5 +1,27 @@
 # zCLI/subsystems/zConfig/zConfig_modules/helpers/__init__.py
-"""Helper modules for zConfig functionality."""
+"""
+Helper modules for zConfig functionality.
+
+This package provides utility functions that support zConfig's hierarchical configuration system:
+
+1. **machine_detectors.py** - Auto-detection of machine capabilities and user preferences
+   - Detects browser, IDE, terminal, shell, and system specifications
+   - Creates machine-specific configuration files with detected values
+   - Provides fallback detection for cross-platform compatibility
+
+2. **environment_helpers.py** - Environment configuration management
+   - Creates default environment config files (deployment, network, security, logging)
+   - Provides templates for environment-specific settings
+   - Supports deployment profiles (Debug, Info, Production)
+
+3. **config_helpers.py** - Generic configuration loading and override patterns
+   - Loads YAML config files with hierarchical override behavior
+   - Creates config files on first run if missing
+   - Provides consistent file loading across all config modules
+
+These helpers separate detection/creation logic from configuration data management,
+enabling clean architecture, testability, and reusability across zConfig subsystems.
+"""
 
 from .machine_detectors import (
     detect_browser,

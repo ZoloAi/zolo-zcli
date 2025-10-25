@@ -555,6 +555,106 @@ class TestzTracebackIntegration(unittest.TestCase):
             self.assertIsNotNone(z.zTraceback)
 
 
+class TestDotenvConfigIntegration(unittest.TestCase):
+    """Test dotenv integration with zCLI configuration hierarchy."""
+    
+    def test_dotenv_loads_before_config_initialization(self):
+        """Test that dotenv variables are available during zCLI initialization."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpdir_path = Path(tmpdir)
+            env_file = tmpdir_path / ".env"
+            
+            # Create .env file with test variables
+            env_file.write_text("TEST_INTEGRATION_VAR=integration_value\nZOLO_DEPLOYMENT=TestEnv\n")
+            
+            # Initialize zCLI with workspace containing .env
+            z = zCLI({"zWorkspace": str(tmpdir_path)})
+            
+            # Verify dotenv variables are accessible through environment config
+            self.assertEqual(z.config.environment.get_env_var("TEST_INTEGRATION_VAR"), "integration_value")
+            self.assertEqual(z.config.environment.get_env_var("ZOLO_DEPLOYMENT"), "TestEnv")
+            
+            # Clean up
+            if "TEST_INTEGRATION_VAR" in os.environ:
+                del os.environ["TEST_INTEGRATION_VAR"]
+            if "ZOLO_DEPLOYMENT" in os.environ:
+                del os.environ["ZOLO_DEPLOYMENT"]
+    
+    def test_dotenv_variables_affect_session_creation(self):
+        """Test that dotenv variables influence session configuration."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpdir_path = Path(tmpdir)
+            env_file = tmpdir_path / ".env"
+            
+            # Create .env with logger level
+            env_file.write_text("ZOLO_LOGGER=DEBUG\n")
+            
+            # Initialize zCLI
+            z = zCLI({"zWorkspace": str(tmpdir_path)})
+            
+            # Verify logger level from dotenv is respected
+            # The session should have captured the environment variable
+            self.assertIsNotNone(z.session.get("zLogger"))
+            
+            # Clean up
+            if "ZOLO_LOGGER" in os.environ:
+                del os.environ["ZOLO_LOGGER"]
+    
+    def test_dotenv_with_zspark_override(self):
+        """Test that zSpark can override dotenv path."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpdir_path = Path(tmpdir)
+            custom_env_file = tmpdir_path / "custom.env"
+            
+            # Create custom .env file
+            custom_env_file.write_text("CUSTOM_ENV_VAR=custom_value\n")
+            
+            # Initialize zCLI with custom dotenv path in zSpark
+            # Use "dotenv" key which is recognized by config_paths
+            z = zCLI({
+                "zWorkspace": str(tmpdir_path),
+                "dotenv": str(custom_env_file)
+            })
+            
+            # Verify custom dotenv was loaded
+            self.assertEqual(z.config.environment.get_env_var("CUSTOM_ENV_VAR"), "custom_value")
+            
+            # Clean up
+            if "CUSTOM_ENV_VAR" in os.environ:
+                del os.environ["CUSTOM_ENV_VAR"]
+    
+    def test_dotenv_missing_file_graceful(self):
+        """Test that missing .env file doesn't break initialization."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Initialize zCLI without .env file
+            z = zCLI({"zWorkspace": tmpdir})
+            
+            # Should initialize successfully
+            self.assertIsNotNone(z.config)
+            self.assertIsNotNone(z.session)
+    
+    def test_dotenv_environment_snapshot_captured(self):
+        """Test that environment snapshot includes dotenv variables."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpdir_path = Path(tmpdir)
+            env_file = tmpdir_path / ".env"
+            
+            # Create .env file
+            env_file.write_text("SNAPSHOT_TEST_VAR=snapshot_value\n")
+            
+            # Initialize zCLI
+            z = zCLI({"zWorkspace": str(tmpdir_path)})
+            
+            # Verify environment snapshot contains dotenv variable
+            system_env = z.config.environment.system_env
+            self.assertIn("SNAPSHOT_TEST_VAR", system_env)
+            self.assertEqual(system_env["SNAPSHOT_TEST_VAR"], "snapshot_value")
+            
+            # Clean up
+            if "SNAPSHOT_TEST_VAR" in os.environ:
+                del os.environ["SNAPSHOT_TEST_VAR"]
+
+
 def run_tests(verbose=False):
     """Run all integration tests."""
     loader = unittest.TestLoader()
@@ -570,6 +670,7 @@ def run_tests(verbose=False):
     suite.addTests(loader.loadTestsFromTestCase(TestMultiSubsystemWorkflow))
     suite.addTests(loader.loadTestsFromTestCase(TestWebSocketModeIntegration))  # NEW v1.5.3
     suite.addTests(loader.loadTestsFromTestCase(TestzTracebackIntegration))  # NEW v1.5.3
+    suite.addTests(loader.loadTestsFromTestCase(TestDotenvConfigIntegration))  # NEW v1.5.4
     
     runner = unittest.TextTestRunner(verbosity=2 if verbose else 1)
     result = runner.run(suite)

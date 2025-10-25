@@ -2,6 +2,7 @@
 """Machine-level configuration management for system identity and preferences."""
 
 from zCLI import yaml
+from zCLI.utils import print_ready_message
 from .helpers import auto_detect_machine, create_user_machine_config, load_config_with_override
 
 class MachineConfig:
@@ -24,8 +25,7 @@ class MachineConfig:
         )
 
         # Print ready message
-        from ..zConfig import zConfig
-        zConfig.print_config_ready("MachineConfig Ready")
+        print_ready_message("MachineConfig Ready", color="CONFIG")
 
     def get(self, key, default=None):
         """Get machine config value by key, returning default if not found."""

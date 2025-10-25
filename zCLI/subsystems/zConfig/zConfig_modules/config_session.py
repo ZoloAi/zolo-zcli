@@ -2,6 +2,7 @@
 """Session configuration and management as part of zConfig."""
 
 from zCLI import os, secrets
+from zCLI.utils import print_ready_message, validate_zcli_instance
 
 class SessionConfig:
     """Manages session configuration and creation."""
@@ -9,8 +10,7 @@ class SessionConfig:
     def __init__(self, machine_config, environment_config, zcli, zSpark_obj=None, zconfig=None):
         """Initialize session configuration with machine, environment, zCLI, 
         optional zSpark configs, and zConfig instance."""
-        if zcli is None:
-            raise ValueError("SessionConfig requires a zCLI instance")
+        validate_zcli_instance(zcli, "SessionConfig", require_session=False)
         if zconfig is None:
             raise ValueError("SessionConfig requires a zConfig instance")
 
@@ -22,8 +22,7 @@ class SessionConfig:
         self.mycolor = "MAIN"
 
         # Print ready message
-        from ..zConfig import zConfig
-        zConfig.print_config_ready("SessionConfig Ready")
+        print_ready_message("SessionConfig Ready", color="CONFIG")
 
     def generate_id(self, prefix: str = "zS") -> str:
         """Generate random session ID with prefix (default: 'zS') -> 'zS_a1b2c3d4'."""
@@ -104,7 +103,7 @@ class SessionConfig:
         # 1. Check zSpark_obj for explicit zMode setting (highest priority)
         if self.zSpark is not None and isinstance(self.zSpark, dict):
             zMode = self.zSpark.get("zMode")
-            if zMode and zMode in ("Terminal", "zBifrost", "Walker"):
+            if zMode and zMode in ("Terminal", "zBifrost"):
                 return zMode
         
         # 2. Default to Terminal if no valid zMode specified

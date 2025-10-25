@@ -2,6 +2,7 @@
 """WebSocket configuration management as part of zConfig."""
 
 from zCLI import Colors, os
+from zCLI.utils import print_ready_message, validate_zcli_instance
 
 class WebSocketConfig:
     """Manages WebSocket configuration with hierarchical loading."""
@@ -9,10 +10,7 @@ class WebSocketConfig:
     def __init__(self, environment_config, zcli, session_data):
         """Initialize WebSocket config with environment config, zcli instance, and session data."""
         # Validate required parameters
-        if zcli is None:
-            raise ValueError("zcli parameter is required and cannot be None")
-        if session_data is None:
-            raise ValueError("session_data parameter is required and cannot be None")
+        validate_zcli_instance(zcli, "WebSocketConfig", require_session=False)
 
         self.environment = environment_config
         self.zcli = zcli
@@ -23,48 +21,47 @@ class WebSocketConfig:
         self._load_websocket_config()
 
         # Print ready message
-        from ..zConfig import zConfig
-        zConfig.print_config_ready("WebSocketConfig Ready")
+        print_ready_message("WebSocketConfig Ready", color="CONFIG")
 
     def _load_websocket_config(self):
         """Load WebSocket configuration following hierarchy: zSpark > env > config file > defaults."""
-        
+
         # Get base config from environment
         websocket_config = self.environment.get("websocket", {})
-        
+
         # 1. Check zSpark_obj for WebSocket settings (highest priority)
         if self.zcli.zspark_obj:
             zspark_ws = self.zcli.zspark_obj.get("websocket", {})
             if zspark_ws:
                 print(f"[WebSocketConfig] WebSocket settings from zSpark: {list(zspark_ws.keys())}")
                 websocket_config.update(zspark_ws)
-        
+
         # 2. Check environment variables (second priority)
         env_host = os.getenv("WEBSOCKET_HOST")
         env_port = os.getenv("WEBSOCKET_PORT")
         env_auth = os.getenv("WEBSOCKET_REQUIRE_AUTH")
         env_origins = os.getenv("WEBSOCKET_ALLOWED_ORIGINS")
-        
+
         if env_host:
             websocket_config["host"] = env_host
             print(f"[WebSocketConfig] WebSocket host from env: {env_host}")
-        
+
         if env_port:
             try:
                 websocket_config["port"] = int(env_port)
                 print(f"[WebSocketConfig] WebSocket port from env: {env_port}")
             except ValueError:
                 print(f"{Colors.WARNING}[WebSocketConfig] Invalid WEBSOCKET_PORT: {env_port}{Colors.RESET}")
-        
+
         if env_auth:
             websocket_config["require_auth"] = env_auth.lower() in ("true", "1", "yes")
             print(f"[WebSocketConfig] WebSocket auth from env: {websocket_config['require_auth']}")
-        
+
         if env_origins:
             origins_list = [origin.strip() for origin in env_origins.split(",") if origin.strip()]
             websocket_config["allowed_origins"] = origins_list
             print(f"[WebSocketConfig] WebSocket origins from env: {origins_list}")
-        
+
         # 3. Apply defaults for any missing values
         self.config = {
             "host": websocket_config.get("host", "127.0.0.1"),

@@ -2,6 +2,7 @@
 """Logger configuration and management as part of zConfig."""
 
 from zCLI import Colors, logging
+from zCLI.utils import print_ready_message, validate_zcli_instance
 import os
 
 class FileNameFormatter(logging.Formatter):
@@ -26,8 +27,7 @@ class LoggerConfig:
     def __init__(self, environment_config, zcli, session_data):
         """Initialize logger with environment config, zcli instance, and session data."""
         # Validate required parameters
-        if zcli is None:
-            raise ValueError("zcli parameter is required and cannot be None")
+        validate_zcli_instance(zcli, "LoggerConfig", require_session=False)
         if session_data is None:
             raise ValueError("session_data parameter is required and cannot be None")
 
@@ -43,8 +43,7 @@ class LoggerConfig:
         self._setup_logging()
 
         # Print ready message
-        from ..zConfig import zConfig
-        zConfig.print_config_ready("LoggerConfig Ready")
+        print_ready_message("LoggerConfig Ready", color="CONFIG")
 
     def _get_log_level(self):
         """

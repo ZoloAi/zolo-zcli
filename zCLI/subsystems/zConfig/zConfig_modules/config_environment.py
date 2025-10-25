@@ -1,7 +1,8 @@
 # zCLI/subsystems/zConfig/zConfig_modules/config_environment.py
 """Environment-level configuration management for deployment and runtime settings."""
 
-from zCLI import os, sys, yaml, Colors
+from zCLI import os, sys, yaml
+from zCLI.utils import print_ready_message
 from .helpers import create_default_env_config, load_config_with_override
 
 class EnvironmentConfig:
@@ -26,8 +27,7 @@ class EnvironmentConfig:
             "EnvironmentConfig"
         )
 
-        from ..zConfig import zConfig
-        zConfig.print_config_ready("EnvironmentConfig Ready")
+        print_ready_message("EnvironmentConfig Ready", color="CONFIG")
 
     def _detect_environments(self):
         """Detect virtual environment and system environment."""
