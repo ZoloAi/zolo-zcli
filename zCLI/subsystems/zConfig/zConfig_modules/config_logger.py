@@ -73,24 +73,28 @@ class LoggerConfig:
     def _get_caller_info(self, record):
         """Extract caller file information from log record."""
         pathname = record.pathname
-        
-        # For zCLI subsystems, show the subsystem name instead of the full file path
-        if 'zCLI/subsystems/' in pathname:
-            # Extract subsystem name from path like: /path/to/zCLI/subsystems/zComm/zComm.py
-            parts = pathname.split('zCLI/subsystems/')
+        normalized_path = pathname.replace("\\", "/")
+
+        # For zCLI subsystems, show hierarchical subsystem.module names
+        if 'zCLI/subsystems/' in normalized_path:
+            parts = normalized_path.split('zCLI/subsystems/', 1)
             if len(parts) > 1:
                 subsystem_part = parts[1]
-                # Get the first directory after subsystems (e.g., zComm from zComm/zComm.py)
-                subsystem = subsystem_part.split('/')[0]
-                return subsystem
-        
+                subsystem = subsystem_part.split('/', 1)[0]
+
+                module_name = os.path.splitext(os.path.basename(pathname))[0]
+
+                if module_name == subsystem:
+                    return subsystem
+                return f"{subsystem}.{module_name}"
+
         # For zCLI core files, show the module name
-        if 'zCLI/' in pathname and 'subsystems' not in pathname:
+        if 'zCLI/' in normalized_path and 'subsystems' not in normalized_path:
             filename = os.path.basename(pathname)
             if filename.endswith('.py'):
                 filename = filename[:-3]
             return filename
-                
+
         # For other files, just show the filename
         filename = os.path.basename(pathname)
         if filename.endswith('.py'):
@@ -135,29 +139,42 @@ class LoggerConfig:
         
         # Setup formatters based on format setting
         if log_format == "json":
-            formatter = FileNameFormatter(
+            console_formatter = FileNameFormatter(
                 self,
-                '{"time":"%(asctime)s","level":"%(levelname)s","name":"%(name)s",'
-                '"message":"%(message)s"}'
+                '{"level":"%(levelname)s","name":"%(name)s","message":"%(message)s"}'
+            )
+            file_formatter = FileNameFormatter(
+                self,
+                '{"time":"%(asctime)s","level":"%(levelname)s","name":"%(name)s","file":"%(filename)s","line":%(lineno)d,"message":"%(message)s"}',
+                datefmt='%Y-%m-%d %H:%M:%S'
             )
         elif log_format == "simple":
-            formatter = FileNameFormatter(
+            console_formatter = FileNameFormatter(
                 self,
                 '%(levelname)s: %(message)s'
             )
-        else:  # detailed
-            formatter = FileNameFormatter(
+            file_formatter = FileNameFormatter(
                 self,
-                '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                '%(asctime)s - %(levelname)s: %(message)s',
                 datefmt='%Y-%m-%d %H:%M:%S'
             )
-        
+        else:  # detailed
+            console_formatter = FileNameFormatter(
+                self,
+                '%(name)s - %(levelname)s - %(message)s'
+            )
+            file_formatter = FileNameFormatter(
+                self,
+                '%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s',
+                datefmt='%Y-%m-%d %H:%M:%S'
+            )
+
         # Console handler (always enabled)
         console_handler = logging.StreamHandler()
         console_handler.setLevel(getattr(logging, self.log_level))
-        console_handler.setFormatter(formatter)
+        console_handler.setFormatter(console_formatter)
         self._logger.addHandler(console_handler)
-        
+
         # File handler (if enabled)
         if file_enabled:
             try:
@@ -166,11 +183,11 @@ class LoggerConfig:
                 log_file = Path(file_path)
                 
                 log_file.parent.mkdir(parents=True, exist_ok=True)
-                
+
                 # Create file handler
                 file_handler = logging.FileHandler(str(log_file))
                 file_handler.setLevel(getattr(logging, self.log_level))
-                file_handler.setFormatter(formatter)
+                file_handler.setFormatter(file_formatter)
                 self._logger.addHandler(file_handler)
                 
                 print(f"[LoggerConfig] File logging enabled: {file_path}")

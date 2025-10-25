@@ -28,13 +28,8 @@ class zCLI:
         # Get logger from session (initialized during session creation)
         session_logger = self.session["logger_instance"]
 
-        # Create zCLI-specific logger that will show "zCLI" in logs
-        self.logger = logging.getLogger("zCLI")
-        self.logger.setLevel(session_logger._logger.level)  # Use same level as session logger
-
-        # Add the same handlers as the session logger so messages get processed
-        for handler in session_logger._logger.handlers:
-            self.logger.addHandler(handler)
+        # Use the session-configured logger instance directly
+        self.logger = session_logger._logger
 
         # Log initial message with configured level
         self.logger.info("Logger initialized at level: %s", session_logger.log_level) # First log message
