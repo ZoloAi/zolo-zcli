@@ -33,7 +33,7 @@ class TestzCLIInitialization(unittest.TestCase):
             self.assertIsNotNone(z.config)
             self.assertIsNotNone(z.logger)
             self.assertIsNotNone(z.display)
-            self.assertIsNotNone(z.error_handler)
+            self.assertIsNotNone(z.zTraceback)
             self.assertIsNotNone(z.loader)
             self.assertIsNotNone(z.zparser)
             self.assertIsNotNone(z.dispatch)
@@ -479,80 +479,80 @@ class TestWebSocketModeIntegration(unittest.TestCase):
         self.assertIsNotNone(result)
 
 
-class TestErrorHandlerIntegration(unittest.TestCase):
-    """Test ErrorHandler integration with other subsystems."""
-    
-    def test_error_handler_with_logger(self):
-        """Test ErrorHandler is properly initialized with logger."""
+class TestZTracebackIntegration(unittest.TestCase):
+    """Test ZTraceback integration with other subsystems."""
+
+    def test_ztraceback_with_logger(self):
+        """Test ZTraceback is properly initialized with logger."""
         with tempfile.TemporaryDirectory() as tmpdir:
             z = zCLI({"zWorkspace": tmpdir})
-            
-            # ErrorHandler should have logger reference
-            self.assertIsNotNone(z.error_handler.logger)
-            self.assertIs(z.error_handler.logger, z.logger)
-    
-    def test_error_handler_with_zcli_reference(self):
-        """Test ErrorHandler has reference to zCLI instance."""
+
+            # ZTraceback should have logger reference
+            self.assertIsNotNone(z.zTraceback.logger)
+            self.assertIs(z.zTraceback.logger, z.logger)
+
+    def test_ztraceback_with_zcli_reference(self):
+        """Test ZTraceback has reference to zCLI instance."""
         with tempfile.TemporaryDirectory() as tmpdir:
             z = zCLI({"zWorkspace": tmpdir})
-            
-            # ErrorHandler should have zcli reference for interactive features
-            self.assertIsNotNone(z.error_handler.zcli)
-            self.assertIs(z.error_handler.zcli, z)
-    
-    def test_error_handler_logs_to_zcli_logger(self):
-        """Test ErrorHandler logs exceptions to zCLI logger."""
+
+            # ZTraceback should have zcli reference for interactive features
+            self.assertIsNotNone(z.zTraceback.zcli)
+            self.assertIs(z.zTraceback.zcli, z)
+
+    def test_ztraceback_logs_to_zcli_logger(self):
+        """Test ZTraceback logs exceptions to zCLI logger."""
         with tempfile.TemporaryDirectory() as tmpdir:
             z = zCLI({"zWorkspace": tmpdir})
-            
+
             try:
                 raise ValueError("Integration test error")
             except ValueError as e:
                 # Should log without crashing
-                z.error_handler.log_exception(e, message="Test error logging")
-                
+                z.zTraceback.log_exception(e, message="Test error logging")
+
                 # Verify exception was stored for potential interactive handling
-                self.assertIsNotNone(z.error_handler.last_exception)
-    
-    def test_error_handler_with_display(self):
-        """Test ErrorHandler can use display for output."""
+                self.assertIsNotNone(z.zTraceback.last_exception)
+
+    def test_ztraceback_with_display(self):
+        """Test ZTraceback can use display for output."""
         with tempfile.TemporaryDirectory() as tmpdir:
             z = zCLI({"zWorkspace": tmpdir})
-            
+
             try:
                 raise RuntimeError("Display test error")
             except RuntimeError as e:
-                z.error_handler.last_exception = e
-                z.error_handler.last_context = {'test': 'value'}
-                
+                z.zTraceback.last_exception = e
+                z.zTraceback.last_context = {'test': 'value'}
+
                 # Should be able to format and display (though in tests it just runs)
-                from zCLI.utils.error_handler import display_formatted_traceback
+                from zCLI.utils.zTraceback import display_formatted_traceback
                 from unittest.mock import patch
-                
+
                 with patch.object(z.display, 'zDeclare'):
                     with patch.object(z.display, 'error'):
                         with patch.object(z.display, 'text'):
                             display_formatted_traceback(z)
-    
+
     def test_exception_context_with_zcli(self):
         """Test ExceptionContext works with zCLI instance."""
-        from zCLI.utils.error_handler import ExceptionContext
-        
+        from zCLI.utils.zTraceback import ExceptionContext
+
         with tempfile.TemporaryDirectory() as tmpdir:
             z = zCLI({"zWorkspace": tmpdir})
-            
-            # Use ExceptionContext with zCLI's error_handler
+
+            # Use ExceptionContext with zCLI's traceback handler
             with ExceptionContext(
-                z.error_handler,
+                z.zTraceback,
                 operation="test_operation",
                 context={'workspace': tmpdir},
                 reraise=False
             ):
                 # Simulate an error
                 pass  # No error - should not log anything
-            
-            # Verify error_handler is ready for next exception
-            self.assertIsNotNone(z.error_handler)
+
+            # Verify traceback handler is ready for next exception
+            self.assertIsNotNone(z.zTraceback)
 
 
 def run_tests(verbose=False):
@@ -569,7 +569,7 @@ def run_tests(verbose=False):
     suite.addTests(loader.loadTestsFromTestCase(TestEndToEndCRUDWorkflow))
     suite.addTests(loader.loadTestsFromTestCase(TestMultiSubsystemWorkflow))
     suite.addTests(loader.loadTestsFromTestCase(TestWebSocketModeIntegration))  # NEW v1.5.3
-    suite.addTests(loader.loadTestsFromTestCase(TestErrorHandlerIntegration))  # NEW v1.5.3
+    suite.addTests(loader.loadTestsFromTestCase(TestZTracebackIntegration))  # NEW v1.5.3
     
     runner = unittest.TextTestRunner(verbosity=2 if verbose else 1)
     result = runner.run(suite)

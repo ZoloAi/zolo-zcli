@@ -15,12 +15,12 @@ This release focuses on improving developer onboarding, test infrastructure, rep
 
 ## 🔧 Core Infrastructure
 
-### Centralized Error Handling
-- **Added**: `ErrorHandler` utility in `zCLI/utils/error_handler.py`
+### Centralized Traceback Handling
+- **Added**: `ZTraceback` utility in `zCLI/utils/zTraceback.py`
   - Enhanced traceback formatting with structured error information
   - Context-aware error logging for better debugging
   - `ExceptionContext` manager for cleaner exception handling
-  - Available system-wide via `zcli.error_handler`
+  - Available system-wide via `zcli.zTraceback`
 
 - **Centralized**: `traceback` module in `zCLI/__init__.py`
   - Single source of truth for traceback handling
@@ -38,14 +38,14 @@ This release focuses on improving developer onboarding, test infrastructure, rep
 self.logger.error("Error message", exc_info=True)
 
 # Enhanced with context (optional)
-self.zcli.error_handler.log_exception(
+self.zcli.zTraceback.log_exception(
     e, 
     message="Error during operation",
     context={'action': 'insert', 'table': 'users'}
 )
 
 # Context manager for cleaner code
-with ExceptionContext(self.zcli.error_handler, 
+with ExceptionContext(self.zcli.zTraceback, 
                       operation="database insert",
                       default_return="error"):
     result = perform_operation()
@@ -351,7 +351,7 @@ pip install git+https://github.com/ZoloAi/zolo-zcli.git
 ## 🔄 Changes Summary
 
 **Core Infrastructure**:
-- Centralized error handling with ErrorHandler utility
+- Centralized error handling with ZTraceback utility
 - Traceback module centralized in zCLI/__init__.py
 - Enhanced error logging with context support
 - ExceptionContext manager for cleaner exception handling

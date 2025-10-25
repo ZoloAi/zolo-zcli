@@ -1,9 +1,9 @@
-# zCLI/utils/error_handler.py
-"""Centralized error handling and traceback utilities for zCLI.
+# zCLI/utils/zTraceback.py
+"""Centralized traceback utilities for zCLI.
 
 This module provides enhanced error handling with consistent traceback formatting
-across all zCLI subsystems. The ErrorHandler is automatically initialized in the
-zCLI core and available via zcli.error_handler.
+across all zCLI subsystems. The ZTraceback utility is automatically initialized in the
+zCLI core and available via zcli.zTraceback.
 
 Usage Examples:
     
@@ -11,7 +11,7 @@ Usage Examples:
     try:
         risky_operation()
     except Exception as e:
-        self.zcli.error_handler.log_exception(
+        self.zcli.zTraceback.log_exception(
             e, 
             message="Error during operation",
             context={'action': 'insert', 'table': 'users'}
@@ -21,7 +21,7 @@ Usage Examples:
     from zCLI.utils import ExceptionContext
     
     with ExceptionContext(
-        self.zcli.error_handler,
+        self.zcli.zTraceback,
         operation="database insert",
         context={'table': 'users'},
         default_return="error"
@@ -32,7 +32,7 @@ Usage Examples:
     try:
         operation()
     except Exception as e:
-        info = self.zcli.error_handler.get_traceback_info(e)
+        info = self.zcli.zTraceback.get_traceback_info(e)
         # Returns: {'file': '...', 'line': 42, 'function': 'operation', 
         #           'exception_type': 'ValueError', 'exception_message': '...'}
 
@@ -46,11 +46,11 @@ import logging
 from typing import Optional, Any
 
 
-class ErrorHandler:
+class ZTraceback:
     """Enhanced error handling with consistent traceback formatting."""
     
     def __init__(self, logger=None, zcli=None):
-        """Initialize ErrorHandler with optional logger.
+        """Initialize ZTraceback with optional logger.
         
         Args:
             logger: Logger instance for error reporting
@@ -198,10 +198,10 @@ class ErrorHandler:
                 "zVerbose": False
             })
             
-            # Pass error handler to the new instance so UI can access exception
-            traceback_cli.error_handler.last_exception = exc
-            traceback_cli.error_handler.last_operation = operation
-            traceback_cli.error_handler.last_context = self.last_context
+            # Pass traceback handler to the new instance so UI can access exception
+            traceback_cli.zTraceback.last_exception = exc
+            traceback_cli.zTraceback.last_operation = operation
+            traceback_cli.zTraceback.last_context = self.last_context
             
             return traceback_cli.walker.run()
             
@@ -224,7 +224,7 @@ def display_formatted_traceback(zcli):
     Args:
         zcli: zCLI instance (auto-injected by zFunc)
     """
-    handler = zcli.error_handler
+    handler = zcli.zTraceback
     exc = handler.last_exception
     
     if not exc:
@@ -264,7 +264,7 @@ def retry_last_operation(zcli):
     Args:
         zcli: zCLI instance (auto-injected by zFunc)
     """
-    handler = zcli.error_handler
+    handler = zcli.zTraceback
     
     if not handler.last_operation:
         zcli.display.error("No operation to retry", indent=1)
@@ -288,7 +288,7 @@ def show_exception_history(zcli):
     Args:
         zcli: zCLI instance (auto-injected by zFunc)
     """
-    handler = zcli.error_handler
+    handler = zcli.zTraceback
     history = handler.exception_history
     
     if not history:
@@ -307,27 +307,27 @@ class ExceptionContext:
     """Context manager for consistent exception handling.
     
     Usage:
-        with ExceptionContext(error_handler, "database operation", 
+        with ExceptionContext(ztraceback, "database operation",
                              context={'table': 'users'}, 
                              default_return="error"):
             result = perform_risky_operation()
     """
     
-    def __init__(self, error_handler: ErrorHandler, 
+    def __init__(self, ztraceback: "ZTraceback",
                  operation: str,
                  context: Optional[dict] = None,
                  reraise: bool = False,
                  default_return: Any = None):
         """Initialize exception context.
-        
+
         Args:
-            error_handler: ErrorHandler instance
+            ztraceback: ZTraceback instance
             operation: Description of the operation being performed
             context: Additional context for error logging
             reraise: Whether to reraise the exception after logging
             default_return: Value to return if exception is caught
         """
-        self.error_handler = error_handler
+        self.ztraceback = ztraceback
         self.operation = operation
         self.context = context or {}
         self.reraise = reraise
@@ -344,7 +344,7 @@ class ExceptionContext:
             self.exception = exc_val
             
             # Log the exception
-            self.error_handler.log_exception(
+            self.ztraceback.log_exception(
                 exc_val,
                 message=f"Error during {self.operation}",
                 context=self.context

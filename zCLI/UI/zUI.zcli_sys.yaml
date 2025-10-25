@@ -6,6 +6,6 @@ Uninstall:
 
 Traceback:
   ~Root*: ["^View Details", "Retry Operation", "Exception History", "stop"]
-  "^View Details": "zFunc(@.utils.error_handler.display_formatted_traceback)"
-  "Retry Operation": "zFunc(@.utils.error_handler.retry_last_operation)"
-  "^Exception History": "zFunc(@.utils.error_handler.show_exception_history)"
+  "^View Details": "zFunc(@.utils.zTraceback.display_formatted_traceback)"
+  "Retry Operation": "zFunc(@.utils.zTraceback.retry_last_operation)"
+  "^Exception History": "zFunc(@.utils.zTraceback.show_exception_history)"

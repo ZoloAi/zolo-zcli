@@ -49,7 +49,7 @@ def main():
         print("\n[LAUNCHING] Interactive Traceback UI...\n")
         
         # Launch the interactive traceback UI
-        result = zcli.error_handler.interactive_handler(
+        result = zcli.zTraceback.interactive_handler(
             e,
             operation=failing_operation,
             context={

@@ -90,7 +90,7 @@ try:
     result = 10 / 0
 except Exception as e:
     # Launch interactive traceback UI
-    zcli.error_handler.interactive_handler(
+    zcli.zTraceback.interactive_handler(
         e,
         operation=lambda: 10 / 0,  # Optional: for retry
         context={'user_id': 123}    # Optional: additional context

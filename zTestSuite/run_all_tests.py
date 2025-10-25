@@ -37,7 +37,7 @@ TEST_MODULES = [
     'zShell',
     'zWizard',
     'zUtils',
-    'zErrorHandler',  # Error handling and interactive traceback (v1.5.3)
+    'zTraceback',  # Traceback handling and interactive error UI (v1.5.3)
     'zData',
     'zWalker',
     'zIntegration',  # Integration tests - test multiple subsystems working together

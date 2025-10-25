@@ -45,7 +45,7 @@ Select option (1-4):
 
 ### **Core Components**
 
-#### **1. Enhanced ErrorHandler**
+#### **1. Enhanced ZTraceback**
 - **Exception Context Storage**: Stores last exception, operation, and context
 - **Exception History**: Maintains stack of exceptions for navigation
 - **Interactive Handler**: Launches Walker UI for exception handling
@@ -55,7 +55,7 @@ Select option (1-4):
 
 ```python
 # Launch interactive traceback UI
-zcli.error_handler.interactive_handler(
+zcli.zTraceback.interactive_handler(
     exception,
     operation=lambda: retry_function(),
     context={'user_id': 123, 'action': 'delete'}
@@ -95,9 +95,9 @@ Complete YAML definition in `zUI.zcli_sys.yaml`:
 ```yaml
 Traceback:
   ~Root*: ["^View Details", "^Retry Operation", "^Exception History", "stop"]
-  "^View Details": "zFunc(@.zCLI.utils.error_handler.display_formatted_traceback)"
-  "^Retry Operation": "zFunc(@.zCLI.utils.error_handler.retry_last_operation)"
-  "^Exception History": "zFunc(@.zCLI.utils.error_handler.show_exception_history)"
+  "^View Details": "zFunc(@.zCLI.utils.zTraceback.display_formatted_traceback)"
+  "^Retry Operation": "zFunc(@.zCLI.utils.zTraceback.retry_last_operation)"
+  "^Exception History": "zFunc(@.zCLI.utils.zTraceback.show_exception_history)"
 ```
 
 ---
@@ -308,10 +308,10 @@ Comprehensive materials included:
 
 ## 🔧 **Technical Implementation**
 
-### **ErrorHandler Enhancements**
+### **ZTraceback Enhancements**
 
 ```python
-class ErrorHandler:
+class ZTraceback:
     def __init__(self, logger=None, zcli=None):
         self.logger = logger
         self.zcli = zcli  # Reference to parent zCLI instance
@@ -346,7 +346,7 @@ class ErrorHandler:
 try:
     risky_operation()
 except Exception as e:
-    zcli.error_handler.interactive_handler(e)
+    zcli.zTraceback.interactive_handler(e)
 ```
 
 #### **With Retry Support**
@@ -354,7 +354,7 @@ except Exception as e:
 try:
     database_operation(user_id=123)
 except Exception as e:
-    zcli.error_handler.interactive_handler(
+    zcli.zTraceback.interactive_handler(
         e,
         operation=lambda: database_operation(user_id=123),
         context={'user_id': 123}
@@ -366,7 +366,7 @@ except Exception as e:
 try:
     process_data(data)
 except Exception as e:
-    zcli.error_handler.interactive_handler(
+    zcli.zTraceback.interactive_handler(
         e,
         operation=lambda: process_data(data),
         context={
@@ -406,13 +406,13 @@ except Exception as e:
 ## 📝 **Testing**
 
 ### **Test Suite**
-- **zErrorHandler_Test.py**: Comprehensive ErrorHandler unit tests (32 tests)
-- **zIntegration_Test.py**: ErrorHandler integration tests (5 tests)
+- **zTraceback_Test.py**: Comprehensive ZTraceback unit tests (32 tests)
+- **zIntegration_Test.py**: ZTraceback integration tests (5 tests)
 - **zEndToEnd_Test.py**: Error handling workflow tests (3 tests)
 
 ### **Test Coverage**
 ```
-✓ ErrorHandler initialization and configuration
+✓ ZTraceback initialization and configuration
 ✓ Exception formatting (basic and with locals)
 ✓ Traceback info extraction and structured data
 ✓ Exception logging with context
@@ -435,7 +435,7 @@ Total: 40 tests, all passing ✅
 ### **1. Interactive Traceback System**
 
 **Core Infrastructure**:
-- Enhanced ErrorHandler with interactive support
+- Enhanced ZTraceback with interactive support
 - Added exception context storage (last_exception, last_operation, last_context)
 - Implemented interactive_handler() method
 - Added exception history tracking
@@ -451,7 +451,7 @@ Total: 40 tests, all passing ✅
 - zFunc-based menu actions
 
 **Testing**:
-- zErrorHandler_Test.py - comprehensive unit tests (32 tests, 6 test classes)
+- zTraceback_Test.py - comprehensive unit tests (32 tests, 6 test classes)
 - Integration tests in zIntegration_Test.py (5 integration tests)
 - End-to-end tests in zEndToEnd_Test.py (3 workflow tests)
 - Total: 40 tests, all passing ✅
@@ -544,12 +544,12 @@ Total: 40 tests, all passing ✅
 **Test Suite Cleanup**:
 - **Removed duplicate test file**: `zDisplay_New_Test.py` (draft version, 408 lines)
 - **Kept production version**: `zDisplay_Test.py` (comprehensive, 674 lines, properly integrated)
-- **Added new comprehensive test**: `zErrorHandler_Test.py` (32 tests across 6 test classes)
-- **Updated test integration**: Added ErrorHandler tests to Integration and EndToEnd suites
+- **Added new comprehensive test**: `zTraceback_Test.py` (32 tests across 6 test classes)
+- **Updated test integration**: Added ZTraceback tests to Integration and EndToEnd suites
 
 **Final Test Count**: 20 test modules, all properly integrated
-1. Unit tests: zConfig, zComm, zBifrost, zDisplay, zAuth, zDispatch, zNavigation, zParser, zLoader, zFunc, zDialog, zOpen, zShell, zWizard, zUtils, **zErrorHandler**, zData, zWalker
-2. Integration tests: 9 test classes (including ErrorHandler integration)
+1. Unit tests: zConfig, zComm, zBifrost, zDisplay, zAuth, zDispatch, zNavigation, zParser, zLoader, zFunc, zDialog, zOpen, zShell, zWizard, zUtils, **zZTraceback**, zData, zWalker
+2. Integration tests: 9 test classes (including ZTraceback integration)
 3. End-to-end tests: 7 test classes (including error handling workflows)
 
 **Benefits**:
@@ -559,7 +559,7 @@ Total: 40 tests, all passing ✅
 - **Consistent Formatting**: Standardized `[STATUS]` indicators throughout
 - **No Duplicates**: Removed redundant test files, cleaner repo
 
-**Verification**: All tests pass after cleanup ✅ (32 ErrorHandler + 16 Integration + 12 EndToEnd = 60 tests for ErrorHandler coverage)
+**Verification**: All tests pass after cleanup ✅ (32 ZTraceback + 16 Integration + 12 EndToEnd = 60 tests for ZTraceback coverage)
 
 ### **6. Version Update**
 

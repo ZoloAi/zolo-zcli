@@ -39,9 +39,9 @@ class zCLI:
         # Log initial message with configured level
         self.logger.info("Logger initialized at level: %s", session_logger.log_level) # First log message
 
-        # Initialize centralized error handler
-        from .utils.error_handler import ErrorHandler
-        self.error_handler = ErrorHandler(logger=self.logger, zcli=self)
+        # Initialize centralized traceback utility
+        from .utils.zTraceback import ZTraceback
+        self.zTraceback = ZTraceback(logger=self.logger, zcli=self)
 
         # Initialize zComm (Communication infrastructure for zBifrost and zData)
         from .subsystems.zComm import zComm

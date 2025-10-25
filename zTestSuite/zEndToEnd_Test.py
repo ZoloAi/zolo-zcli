@@ -657,8 +657,8 @@ class TestUserManagerWebSocketMode(unittest.TestCase):
         self.assertIn("LIKE", result)
 
 
-class TestErrorHandlingWorkflow(unittest.TestCase):
-    """Test complete error handling workflow with ErrorHandler."""
+class TestTracebackWorkflow(unittest.TestCase):
+    """Test complete error handling workflow with ZTraceback."""
     
     def test_error_logging_in_complete_workflow(self):
         """Test error logging during a complete CRUD workflow."""
@@ -688,36 +688,36 @@ test_menu:
                 "zBlock": "test_menu"
             })
             
-            # Verify error_handler is available throughout workflow
-            self.assertIsNotNone(z.error_handler)
-            self.assertIsNotNone(z.error_handler.logger)
-            self.assertIs(z.error_handler.zcli, z)
+            # Verify zTraceback is available throughout workflow
+            self.assertIsNotNone(z.zTraceback)
+            self.assertIsNotNone(z.zTraceback.logger)
+            self.assertIs(z.zTraceback.zcli, z)
             
-            # Test that error_handler can log exceptions during operations
+            # Test that zTraceback can log exceptions during operations
             try:
                 # Simulate an operation that fails
                 raise ValueError("Workflow error test")
             except ValueError as e:
-                z.error_handler.log_exception(
+                z.zTraceback.log_exception(
                     e,
                     message="Error during workflow",
                     context={'action': 'insert', 'table': 'test_table'}
                 )
                 
                 # Verify exception was captured
-                self.assertIsNotNone(z.error_handler.last_exception)
-                self.assertEqual(str(z.error_handler.last_exception), "Workflow error test")
+                self.assertIsNotNone(z.zTraceback.last_exception)
+                self.assertEqual(str(z.zTraceback.last_exception), "Workflow error test")
     
     def test_exception_context_in_workflow(self):
         """Test ExceptionContext usage in a complete workflow."""
-        from zCLI.utils.error_handler import ExceptionContext
+        from zCLI.utils.zTraceback import ExceptionContext
         
         with tempfile.TemporaryDirectory() as tmpdir:
             z = zCLI({"zWorkspace": tmpdir})
             
             # Simulate using ExceptionContext during data operations
             with ExceptionContext(
-                z.error_handler,
+                z.zTraceback,
                 operation="database_insert",
                 context={'table': 'users', 'action': 'insert'},
                 reraise=False,
@@ -731,7 +731,7 @@ test_menu:
             
             # Now test with an actual exception
             with ExceptionContext(
-                z.error_handler,
+                z.zTraceback,
                 operation="database_delete",
                 context={'table': 'users', 'id': 123},
                 reraise=False,
@@ -743,8 +743,8 @@ test_menu:
             self.assertIsNotNone(ctx.exception)
             self.assertEqual(ctx.default_return, "error")
     
-    def test_error_handler_preserves_exception_history(self):
-        """Test error handler maintains exception history across operations."""
+    def test_ztraceback_preserves_exception_history(self):
+        """Test traceback handler maintains exception history across operations."""
         with tempfile.TemporaryDirectory() as tmpdir:
             z = zCLI({"zWorkspace": tmpdir})
             
@@ -753,16 +753,16 @@ test_menu:
                 try:
                     raise ValueError(f"Error {i}")
                 except ValueError as e:
-                    z.error_handler.exception_history.append({
+                    z.zTraceback.exception_history.append({
                         'exception': e,
                         'operation': f'operation_{i}',
                         'context': {'step': i}
                     })
             
             # Verify history is preserved
-            self.assertEqual(len(z.error_handler.exception_history), 3)
+            self.assertEqual(len(z.zTraceback.exception_history), 3)
             self.assertEqual(
-                str(z.error_handler.exception_history[0]['exception']),
+                str(z.zTraceback.exception_history[0]['exception']),
                 "Error 0"
             )
 
