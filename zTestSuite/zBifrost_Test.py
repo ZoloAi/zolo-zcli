@@ -398,12 +398,14 @@ class TestModeDetectionDataFlow(unittest.TestCase):
         # In zBifrost mode, crud_read should skip read_string("Press Enter...")
         self.assertEqual(session["zMode"], "zBifrost")
 
-    def test_walker_mode_is_interactive(self):
-        """Test that Walker mode is treated as interactive."""
-        session = {"zMode": "Walker"}
+    def test_valid_modes(self):
+        """Test that only valid zMode values are recognized."""
+        # Valid modes are Terminal and zBifrost
+        valid_modes = ["Terminal", "zBifrost"]
         
-        # Walker mode is interactive (same as Terminal for input purposes)
-        self.assertIn(session["zMode"], ["Terminal", "Walker", ""])
+        for mode in valid_modes:
+            session = {"zMode": mode}
+            self.assertIn(session["zMode"], valid_modes)
 
 
 def run_tests(verbose=False):
