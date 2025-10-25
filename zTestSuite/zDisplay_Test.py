@@ -87,7 +87,7 @@ class TestzDisplayInitialization(unittest.TestCase):
         """Test zPrimitives container is initialized."""
         with patch('builtins.print'):
             display = zDisplay(self.mock_zcli)
-        
+
         self.assertIsNotNone(display.zPrimitives)
         self.assertIsInstance(display.zPrimitives, zPrimitives)
 
@@ -95,9 +95,69 @@ class TestzDisplayInitialization(unittest.TestCase):
         """Test zEvents container is initialized."""
         with patch('builtins.print'):
             display = zDisplay(self.mock_zcli)
-        
+
         self.assertIsNotNone(display.zEvents)
         self.assertIsInstance(display.zEvents, zEvents)
+
+    def test_event_map_contains_core_events(self):
+        """Ensure unified event map exposes expected events."""
+        with patch('builtins.print'):
+            display = zDisplay(self.mock_zcli)
+
+        for event in [
+            "text",
+            "zDeclare",
+            "write_line",
+            "read_string",
+            "json_data",
+        ]:
+            self.assertIn(event, display._event_map)
+
+    def test_handle_routes_event(self):
+        """Verify handle() dispatches events via the routing table."""
+        with patch('builtins.print'):
+            display = zDisplay(self.mock_zcli)
+
+        mock_handler = Mock(return_value="ok")
+        display._event_map['custom'] = mock_handler
+
+        result = display.handle({"event": "custom", "value": 123})
+
+        mock_handler.assert_called_once_with(value=123)
+        self.assertEqual(result, "ok")
+
+    def test_handle_unknown_event_logs_warning(self):
+        """Unknown events should be logged and ignored."""
+        with patch('builtins.print'):
+            display = zDisplay(self.mock_zcli)
+
+        display.logger.warning = Mock()
+        result = display.handle({"event": "missing"})
+
+        display.logger.warning.assert_called_with("Unknown zDisplay event: %s", "missing")
+        self.assertIsNone(result)
+
+    def test_handle_invalid_parameters_logs_error(self):
+        """Invalid parameters should trigger descriptive error logging."""
+        with patch('builtins.print'):
+            display = zDisplay(self.mock_zcli)
+
+        display.logger.error = Mock()
+        result = display.handle({"event": "text"})
+
+        display.logger.error.assert_called_once()
+        self.assertIsNone(result)
+
+    def test_handler_property_alias(self):
+        """handler property should expose callable alias to handle()."""
+        with patch('builtins.print'):
+            display = zDisplay(self.mock_zcli)
+
+        display._event_map['alias_test'] = Mock(return_value=True)
+        handler = display.handler
+
+        self.assertTrue(callable(handler))
+        self.assertTrue(handler({"event": "alias_test"}))
 
 
 class TestzPrimitivesTerminalOutput(unittest.TestCase):
@@ -447,8 +507,16 @@ class TestzEventsDataDisplay(unittest.TestCase):
         """Test json_data method displays JSON."""
         data = {"key": "value", "number": 42}
         self.display.json_data(data)
-        
+
         # Should have printed JSON
+        self.assertTrue(mock_print.called)
+
+    @patch('builtins.print')
+    def test_json_alias(self, mock_print):
+        """Test json alias routes through handler."""
+        data = {"alias": True}
+        self.display.json(data)
+
         self.assertTrue(mock_print.called)
 
     @patch('builtins.print')
