@@ -1,13 +1,11 @@
 # zCLI/subsystems/zComm/zComm.py
 
-"""Communication & Service Management Subsystem for WebSocket and services."""
-from zCLI import requests
+"""Communication & Service Management Subsystem for zBifrost and services."""
 from zCLI.utils import print_ready_message, validate_zcli_instance
-from .zComm_modules.zBifrost import zBifrost
-from .zComm_modules import ServiceManager
+from .zComm_modules import ServiceManager, BifrostManager, HTTPClient, NetworkUtils
 
 class zComm:
-    """Communication & Service Management for WebSocket and services."""
+    """Communication & Service Management for zBifrost and services."""
 
     def __init__(self, zcli):
         """Initialize zComm subsystem.
@@ -20,14 +18,14 @@ class zComm:
         self.logger = zcli.logger
         self.mycolor = "ZCOMM"
 
-        # WebSocket server instance
-        self.websocket = None
-
-        # Service manager
+        # Initialize modular components
+        self._bifrost_mgr = BifrostManager(zcli, self.logger)
+        self._http_client = HTTPClient(self.logger)
+        self._network_utils = NetworkUtils(self.logger)
         self.services = ServiceManager(self.logger)
 
-        # Initialize WebSocket server if in zBifrost mode
-        self._auto_start_websocket()
+        # Initialize zBifrost server if in zBifrost mode
+        self._bifrost_mgr.auto_start()
 
         # Print styled ready message (before zDisplay is available)
         print_ready_message("zComm Ready", color="ZCOMM")
@@ -35,68 +33,26 @@ class zComm:
         # Log ready (display not available yet as zComm is in Layer 0)
         self.logger.info("Communication subsystem ready")
 
-    def _auto_start_websocket(self):
-        """Auto-start WebSocket server if in zBifrost mode."""
-        try:
-            # Check the actual zMode setting (not inferred from filename)
-            zmode = self.session.get("zMode", "Terminal")
-            is_zbifrost_mode = (zmode == "zBifrost")
-            
-            if is_zbifrost_mode:
-                self.logger.info("zBifrost mode detected - initializing WebSocket server")
-                self.create_websocket()
-                self.logger.debug("WebSocket server instance created for zBifrost mode")
-            else:
-                self.logger.debug("Terminal mode detected - WebSocket server will be created when needed")
-        except Exception as e:
-            self.logger.warning("Failed to auto-start WebSocket server: %s", e)
+    # ═══════════════════════════════════════════════════════════
+    # zBifrost Management - Delegated to BifrostManager
+    # ═══════════════════════════════════════════════════════════
 
-    # ═══════════════════════════════════════════════════════════
-    # WebSocket Management
-    # ═══════════════════════════════════════════════════════════
+    @property
+    def websocket(self):
+        """Get zBifrost (WebSocket) server instance."""
+        return self._bifrost_mgr.websocket
 
     def create_websocket(self, walker=None, port=None, host=None):
-        """Create WebSocket server instance using zCLI configuration."""
-        # Use zCLI config if available, otherwise use provided parameters or defaults
-        if self.zcli and hasattr(self.zcli, 'config') and hasattr(self.zcli.config, 'websocket'):
-            config_host = host or self.zcli.config.websocket.host
-            config_port = port or self.zcli.config.websocket.port
-            self.logger.info("Creating WebSocket server from zCLI config: %s:%d", config_host, config_port)
-        else:
-            config_host = host or "127.0.0.1"
-            config_port = port or 56891
-            self.logger.info("Creating WebSocket server with defaults: %s:%d", config_host, config_port)
-
-        self.logger.debug("WebSocket config - walker=%s, port=%d, host=%s", 
-                         walker is not None, config_port, config_host)
-
-        self.websocket = zBifrost(self.logger, walker=walker, zcli=self.zcli, port=config_port, host=config_host)
-
-        self.logger.info("WebSocket server instance created successfully")
-        return self.websocket
+        """Create zBifrost server instance using zCLI configuration."""
+        return self._bifrost_mgr.create(walker=walker, port=port, host=host)
 
     async def start_websocket(self, socket_ready, walker=None):
-        """Start WebSocket server."""
-        self.logger.info("Starting WebSocket server...")
-
-        # Always create a new WebSocket instance to ensure we have the latest config
-        self.logger.debug("Creating WebSocket instance with current configuration")
-        self.websocket = self.create_websocket(walker=walker)
-
-        self.logger.debug("Calling start_socket_server with socket_ready callback")
-        await self.websocket.start_socket_server(socket_ready)
-        self.logger.info("WebSocket server started successfully")
+        """Start zBifrost server."""
+        await self._bifrost_mgr.start(socket_ready, walker=walker)
 
     async def broadcast_websocket(self, message, sender=None):
-        """Broadcast message to all WebSocket clients."""
-        if self.websocket:
-            self.logger.debug("Broadcasting WebSocket message from sender: %s", sender)
-            msg_preview = str(message)[:100] + "..." if len(str(message)) > 100 else str(message)
-            self.logger.debug("Message content: %s", msg_preview)
-            await self.websocket.broadcast(message, sender=sender)
-            self.logger.debug("WebSocket broadcast completed")
-        else:
-            self.logger.warning("Cannot broadcast - no WebSocket server instance available")
+        """Broadcast message to all zBifrost clients."""
+        await self._bifrost_mgr.broadcast(message, sender=sender)
 
     # ═══════════════════════════════════════════════════════════
     # Service Management
@@ -169,47 +125,17 @@ class zComm:
         return info
 
     # ═══════════════════════════════════════════════════════════
-    # Utility Methods
+    # Network Utilities - Delegated to NetworkUtils
     # ═══════════════════════════════════════════════════════════
 
     def check_port(self, port):
         """Check if a port is available."""
-        import socket
-
-        self.logger.debug("Checking port availability: %d", port)
-
-        try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(1)
-            result = sock.connect_ex(('localhost', port))
-            sock.close()
-
-            is_available = result != 0  # True if available, False if in use
-
-            if is_available:
-                self.logger.debug("Port %d is available", port)
-            else:
-                self.logger.debug("Port %d is in use", port)
-
-            return is_available
-
-        except Exception as e:
-            self.logger.error("Error checking port %d: %s", port, e)
-            return False
+        return self._network_utils.check_port(port)
 
     # ═══════════════════════════════════════════════════════════
-    # HTTP Client (Pure Communication)
+    # HTTP Client - Delegated to HTTPClient
     # ═══════════════════════════════════════════════════════════
 
     def http_post(self, url, data=None, timeout=10):
         """Make HTTP POST request - pure communication, no auth logic."""
-        self.logger.debug("Making HTTP POST request to %s", url)
-        self.logger.debug("Request payload: %s", data)
-
-        try:
-            response = requests.post(url, json=data, timeout=timeout)
-            self.logger.debug("Response received [status=%s]", response.status_code)
-            return response
-        except Exception as e:
-            self.logger.error("HTTP POST request failed to %s: %s", url, e)
-            return None
+        return self._http_client.post(url, data=data, timeout=timeout)

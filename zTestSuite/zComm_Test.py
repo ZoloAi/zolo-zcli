@@ -100,7 +100,7 @@ class TestHTTPCommunication(unittest.TestCase):
         
         self.comm = zComm(self.mock_zcli)
     
-    @patch('zCLI.subsystems.zComm.zComm.requests.post')
+    @patch('zCLI.subsystems.zComm.zComm_modules.http_client.requests.post')
     def test_http_post_success(self, mock_post):
         """Test successful HTTP POST request."""
         mock_response = Mock()
@@ -118,7 +118,7 @@ class TestHTTPCommunication(unittest.TestCase):
             timeout=10
         )
     
-    @patch('zCLI.subsystems.zComm.zComm.requests.post')
+    @patch('zCLI.subsystems.zComm.zComm_modules.http_client.requests.post')
     def test_http_post_timeout(self, mock_post):
         """Test HTTP POST with custom timeout."""
         mock_response = Mock()
@@ -132,7 +132,7 @@ class TestHTTPCommunication(unittest.TestCase):
             timeout=5
         )
     
-    @patch('zCLI.subsystems.zComm.zComm.requests.post')
+    @patch('zCLI.subsystems.zComm.zComm_modules.http_client.requests.post')
     def test_http_post_failure(self, mock_post):
         """Test HTTP POST request failure."""
         mock_post.side_effect = Exception("Connection failed")
@@ -141,7 +141,7 @@ class TestHTTPCommunication(unittest.TestCase):
         
         self.assertIsNone(response)
     
-    @patch('zCLI.subsystems.zComm.zComm.requests.post')
+    @patch('zCLI.subsystems.zComm.zComm_modules.http_client.requests.post')
     def test_http_post_no_data(self, mock_post):
         """Test HTTP POST without data."""
         mock_response = Mock()
