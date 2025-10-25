@@ -1,30 +1,26 @@
 # zCLI/subsystems/zComm/zComm.py
 
 """Communication & Service Management Subsystem for WebSocket and services."""
-from zCLI import requests, logging
+from zCLI import requests
+from zCLI.utils import print_ready_message, validate_zcli_instance
 from .zComm_modules.zBifrost import zBifrost
 from .zComm_modules import ServiceManager
 
 class zComm:
     """Communication & Service Management for WebSocket and services."""
 
-    def __init__(self, zcli=None):
-        """Initialize zComm subsystem."""
-        if zcli is None:
-            raise ValueError("zComm requires a zCLI instance")
-
-        if not hasattr(zcli, 'session'):
-            raise ValueError("Invalid zCLI instance: missing 'session' attribute")
+    def __init__(self, zcli):
+        """Initialize zComm subsystem.
+        
+        Args:
+            zcli: zCLI instance (required, must have session)
+        """
+        # Validate zCLI instance FIRST - session is always required
+        validate_zcli_instance(zcli, "zComm")
 
         self.zcli = zcli
         self.session = zcli.session
-        # Create subsystem-specific logger that will show "zComm" in logs
-        self.logger = logging.getLogger("zComm")
-        self.logger.setLevel(zcli.logger.level)  # Use same level as main logger
-
-        # Add the same handlers as the main logger so messages get processed
-        for handler in zcli.logger.handlers:
-            self.logger.addHandler(handler)
+        self.logger = zcli.logger
         self.mycolor = "ZCOMM"
 
         # WebSocket server instance
@@ -37,7 +33,7 @@ class zComm:
         self._auto_start_websocket()
 
         # Print styled ready message (before zDisplay is available)
-        self._print_ready()
+        print_ready_message("zComm Ready", color="ZCOMM")
 
         # Log ready (display not available yet as zComm is in Layer 0)
         self.logger.info("Communication subsystem ready")
@@ -55,11 +51,6 @@ class zComm:
                 self.logger.debug("Terminal mode detected - WebSocket server will be created when needed")
         except Exception as e:
             self.logger.warning("Failed to auto-start WebSocket server: %s", e)
-
-    def _print_ready(self):
-        """Print simple ready message (before zDisplay is available)."""
-        # Simple console output - no display subsystem dependency
-        print("zComm Ready")
 
     # ═══════════════════════════════════════════════════════════
     # WebSocket Management

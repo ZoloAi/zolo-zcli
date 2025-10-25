@@ -1,7 +1,7 @@
 # zCLI/subsystems/zConfig/zConfig.py
 """Cross-platform configuration management with hierarchical loading and secret support."""
 
-from zCLI import Colors
+from zCLI.utils import print_ready_message, validate_zcli_instance
 from .zConfig_modules import (
     zConfigPaths,
     MachineConfig,
@@ -15,12 +15,21 @@ from .zConfig_modules import (
 class zConfig:
     """Configuration management with hierarchical loading and cross-platform support."""
 
-    def __init__(self, zcli=None, zSpark_obj=None):
-        """Initialize zConfig subsystem."""
+    def __init__(self, zcli, zSpark_obj=None):
+        """Initialize zConfig subsystem.
+        
+        Args:
+            zcli: zCLI instance (required)
+            zSpark_obj: zSpark instance (optional, None in zShell mode)
+        """
+        # Validate zCLI instance FIRST - zConfig is Layer 0 and creates the session
+        # so we don't require session to exist yet
+        validate_zcli_instance(zcli, "zConfig", require_session=False)
+        
         # Store zCLI instance for display access
         self.zcli = zcli
 
-        # Store zSpark instance if provided
+        # Store zSpark instance if provided (None in zShell mode)
         self.zSpark = zSpark_obj
 
         # Initialize path resolver
@@ -40,36 +49,16 @@ class zConfig:
         self.websocket = WebSocketConfig(self.environment, zcli, self.session.create_session())
 
         # Print styled ready message (before zDisplay is available)
-        self.mycolor = "CONFIG"
-        self._print_ready()
-
-    def _print_ready(self):
-        """Print styled 'Ready' message (before zDisplay is available)."""
-        color_code = getattr(Colors, self.mycolor, Colors.RESET)
-        label = "zConfig Ready"
-        BASE_WIDTH = 60
-        char = "═"
-        label_len = len(label) + 2
-        space = BASE_WIDTH - label_len
-        left = space // 2
-        right = space - left
-        colored_label = f"{color_code} {label} {Colors.RESET}"
-        line = f"{char * left}{colored_label}{char * right}"
-        print(line)
+        print_ready_message("zConfig Ready", color="CONFIG")
 
     @staticmethod
     def print_config_ready(label, color="CONFIG"):
-        """Print styled 'Ready' message for any config subsystem."""
-        color_code = getattr(Colors, color, Colors.RESET)
-        BASE_WIDTH = 60
-        char = "═"
-        label_len = len(label) + 2
-        space = BASE_WIDTH - label_len
-        left = space // 2
-        right = space - left
-        colored_label = f"{color_code} {label} {Colors.RESET}"
-        line = f"{char * left}{colored_label}{char * right}"
-        print(line)
+        """Print styled 'Ready' message for any config subsystem.
+        
+        Deprecated: Use print_ready_message from zCLI.utils instead.
+        Kept for backward compatibility.
+        """
+        print_ready_message(label, color=color)
 
     # ═══════════════════════════════════════════════════════════
     # Configuration Access Methods

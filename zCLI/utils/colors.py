@@ -7,6 +7,25 @@ Mirrors zDisplay.colors for consistency, but available via zCLI import.
 """
 
 
+def print_ready_message(label, color="CONFIG", base_width=60, char="═"):
+    """Print styled 'Ready' message for subsystems (before zDisplay is available).
+    
+    Args:
+        label: The message to display (e.g., "zConfig Ready")
+        color: Color name from Colors class (default: "CONFIG")
+        base_width: Total width of the line (default: 60)
+        char: Character to use for the line (default: "═")
+    """
+    color_code = getattr(Colors, color, Colors.RESET)
+    label_len = len(label) + 2
+    space = base_width - label_len
+    left = space // 2
+    right = space - left
+    colored_label = f"{color_code} {label} {Colors.RESET}"
+    line = f"{char * left}{colored_label}{char * right}"
+    print(line)
+
+
 class Colors:
     """ANSI color codes for zCLI terminal output."""
     
