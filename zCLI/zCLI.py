@@ -40,8 +40,8 @@ class zCLI:
         self.logger.info("Logger initialized at level: %s", session_logger.log_level) # First log message
 
         # Initialize centralized traceback utility
-        from .utils.zTraceback import ZTraceback
-        self.zTraceback = ZTraceback(logger=self.logger, zcli=self)
+        from .utils.zTraceback import zTraceback
+        self.zTraceback = zTraceback(logger=self.logger, zcli=self)
 
         # Initialize zComm (Communication infrastructure for zBifrost and zData)
         from .subsystems.zComm import zComm

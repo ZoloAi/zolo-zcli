@@ -658,7 +658,7 @@ class TestUserManagerWebSocketMode(unittest.TestCase):
 
 
 class TestTracebackWorkflow(unittest.TestCase):
-    """Test complete error handling workflow with ZTraceback."""
+    """Test complete error handling workflow with zTraceback."""
     
     def test_error_logging_in_complete_workflow(self):
         """Test error logging during a complete CRUD workflow."""

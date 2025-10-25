@@ -2,7 +2,7 @@
 # zTestSuite/zTraceback_Test.py
 
 """
-Comprehensive test suite for ZTraceback and interactive traceback.
+Comprehensive test suite for zTraceback and interactive traceback.
 Tests exception handling, context management, and interactive UI features.
 """
 
@@ -15,7 +15,7 @@ from io import StringIO
 # Add parent directory to path to import zCLI
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from zCLI.utils.zTraceback import ZTraceback, ExceptionContext
+from zCLI.utils.zTraceback import zTraceback, ExceptionContext
 from zCLI.utils.zTraceback import (
     display_formatted_traceback,
     retry_last_operation,
@@ -23,30 +23,30 @@ from zCLI.utils.zTraceback import (
 )
 
 
-class TestZTracebackInitialization(unittest.TestCase):
-    """Test ZTraceback initialization."""
+class TestzTracebackInitialization(unittest.TestCase):
+    """Test zTraceback initialization."""
 
     def test_initialization_without_logger(self):
-        """Test ZTraceback initializes without logger."""
-        handler = ZTraceback()
+        """Test zTraceback initializes without logger."""
+        handler = zTraceback()
         self.assertIsNone(handler.logger)
         self.assertIsNone(handler.zcli)
 
     def test_initialization_with_logger(self):
-        """Test ZTraceback initializes with logger."""
+        """Test zTraceback initializes with logger."""
         mock_logger = Mock()
-        handler = ZTraceback(logger=mock_logger)
+        handler = zTraceback(logger=mock_logger)
         self.assertEqual(handler.logger, mock_logger)
 
     def test_initialization_with_zcli(self):
-        """Test ZTraceback initializes with zCLI instance."""
+        """Test zTraceback initializes with zCLI instance."""
         mock_zcli = Mock()
-        handler = ZTraceback(logger=None, zcli=mock_zcli)
+        handler = zTraceback(logger=None, zcli=mock_zcli)
         self.assertEqual(handler.zcli, mock_zcli)
 
     def test_exception_context_storage_initialized(self):
         """Test exception context storage is initialized."""
-        handler = ZTraceback()
+        handler = zTraceback()
         self.assertIsNone(handler.last_exception)
         self.assertIsNone(handler.last_operation)
         self.assertEqual(handler.last_context, {})
@@ -58,7 +58,7 @@ class TestExceptionFormatting(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures."""
-        self.handler = ZTraceback()
+        self.handler = zTraceback()
 
     def test_format_exception_basic(self):
         """Test basic exception formatting."""
@@ -111,7 +111,7 @@ class TestExceptionLogging(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         self.mock_logger = Mock()
-        self.handler = ZTraceback(logger=self.mock_logger)
+        self.handler = zTraceback(logger=self.mock_logger)
 
     def test_log_exception_basic(self):
         """Test basic exception logging."""
@@ -154,7 +154,7 @@ class TestExceptionLogging(unittest.TestCase):
 
     def test_log_exception_without_logger_prints_to_stderr(self):
         """Test log_exception falls back to stderr when no logger."""
-        handler = ZTraceback()  # No logger
+        handler = zTraceback()  # No logger
         
         with patch('sys.stderr', new_callable=StringIO) as mock_stderr:
             try:
@@ -173,7 +173,7 @@ class TestExceptionContext(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         self.mock_logger = Mock()
-        self.handler = ZTraceback(logger=self.mock_logger)
+        self.handler = zTraceback(logger=self.mock_logger)
 
     def test_context_manager_no_exception(self):
         """Test ExceptionContext when no exception occurs."""
@@ -248,7 +248,7 @@ class TestInteractiveTraceback(unittest.TestCase):
         self.mock_zcli.session = {"zMode": "Terminal"}
         self.mock_zcli.logger = Mock()
         self.mock_zcli.display = Mock()
-        self.handler = ZTraceback(logger=self.mock_zcli.logger, zcli=self.mock_zcli)
+        self.handler = zTraceback(logger=self.mock_zcli.logger, zcli=self.mock_zcli)
         # Important: Set up the mock so zcli.zTraceback points to our handler
         self.mock_zcli.zTraceback = self.handler
 
@@ -385,7 +385,7 @@ class TestInteractiveTraceback(unittest.TestCase):
         """Test interactive_handler attempts to launch UI."""
         # This test is complex due to dynamic imports and zCLI instantiation
         # We'll test that it handles missing zcli gracefully
-        handler_no_zcli = ZTraceback()
+        handler_no_zcli = zTraceback()
         
         try:
             raise ValueError("Interactive test")
@@ -401,7 +401,7 @@ class TestInteractiveTraceback(unittest.TestCase):
 
     def test_interactive_handler_without_zcli(self):
         """Test interactive_handler falls back gracefully without zCLI."""
-        handler = ZTraceback()  # No zcli
+        handler = zTraceback()  # No zcli
         
         with patch('sys.stderr', new_callable=StringIO) as mock_stderr:
             try:
@@ -419,7 +419,7 @@ class TestEdgeCases(unittest.TestCase):
 
     def test_handler_with_none_exception(self):
         """Test handler methods with None exception."""
-        handler = ZTraceback()
+        handler = zTraceback()
         
         # Should not crash
         try:
@@ -430,7 +430,7 @@ class TestEdgeCases(unittest.TestCase):
 
     def test_get_traceback_info_with_complex_exception(self):
         """Test get_traceback_info with nested exception."""
-        handler = ZTraceback()
+        handler = zTraceback()
         
         def inner_function():
             raise ValueError("Inner error")
@@ -449,7 +449,7 @@ class TestEdgeCases(unittest.TestCase):
 
     def test_exception_with_unicode_message(self):
         """Test exception handling with unicode characters."""
-        handler = ZTraceback()
+        handler = zTraceback()
         
         try:
             raise ValueError("Unicode error: 世界 🌍")
@@ -460,7 +460,7 @@ class TestEdgeCases(unittest.TestCase):
 
     def test_very_deep_traceback(self):
         """Test handling of very deep call stacks."""
-        handler = ZTraceback()
+        handler = zTraceback()
         
         def recursive_function(depth):
             if depth == 0:
@@ -475,12 +475,12 @@ class TestEdgeCases(unittest.TestCase):
 
 
 def run_tests(verbose=False):
-    """Run all ZTraceback tests with proper test discovery."""
+    """Run all zTraceback tests with proper test discovery."""
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
 
     # Add all test classes
-    suite.addTests(loader.loadTestsFromTestCase(TestZTracebackInitialization))
+    suite.addTests(loader.loadTestsFromTestCase(TestzTracebackInitialization))
     suite.addTests(loader.loadTestsFromTestCase(TestExceptionFormatting))
     suite.addTests(loader.loadTestsFromTestCase(TestExceptionLogging))
     suite.addTests(loader.loadTestsFromTestCase(TestExceptionContext))

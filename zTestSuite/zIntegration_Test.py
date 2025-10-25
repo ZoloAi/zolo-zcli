@@ -479,29 +479,29 @@ class TestWebSocketModeIntegration(unittest.TestCase):
         self.assertIsNotNone(result)
 
 
-class TestZTracebackIntegration(unittest.TestCase):
-    """Test ZTraceback integration with other subsystems."""
+class TestzTracebackIntegration(unittest.TestCase):
+    """Test zTraceback integration with other subsystems."""
 
     def test_ztraceback_with_logger(self):
-        """Test ZTraceback is properly initialized with logger."""
+        """Test zTraceback is properly initialized with logger."""
         with tempfile.TemporaryDirectory() as tmpdir:
             z = zCLI({"zWorkspace": tmpdir})
 
-            # ZTraceback should have logger reference
+            # zTraceback should have logger reference
             self.assertIsNotNone(z.zTraceback.logger)
             self.assertIs(z.zTraceback.logger, z.logger)
 
     def test_ztraceback_with_zcli_reference(self):
-        """Test ZTraceback has reference to zCLI instance."""
+        """Test zTraceback has reference to zCLI instance."""
         with tempfile.TemporaryDirectory() as tmpdir:
             z = zCLI({"zWorkspace": tmpdir})
 
-            # ZTraceback should have zcli reference for interactive features
+            # zTraceback should have zcli reference for interactive features
             self.assertIsNotNone(z.zTraceback.zcli)
             self.assertIs(z.zTraceback.zcli, z)
 
     def test_ztraceback_logs_to_zcli_logger(self):
-        """Test ZTraceback logs exceptions to zCLI logger."""
+        """Test zTraceback logs exceptions to zCLI logger."""
         with tempfile.TemporaryDirectory() as tmpdir:
             z = zCLI({"zWorkspace": tmpdir})
 
@@ -515,7 +515,7 @@ class TestZTracebackIntegration(unittest.TestCase):
                 self.assertIsNotNone(z.zTraceback.last_exception)
 
     def test_ztraceback_with_display(self):
-        """Test ZTraceback can use display for output."""
+        """Test zTraceback can use display for output."""
         with tempfile.TemporaryDirectory() as tmpdir:
             z = zCLI({"zWorkspace": tmpdir})
 
@@ -569,7 +569,7 @@ def run_tests(verbose=False):
     suite.addTests(loader.loadTestsFromTestCase(TestEndToEndCRUDWorkflow))
     suite.addTests(loader.loadTestsFromTestCase(TestMultiSubsystemWorkflow))
     suite.addTests(loader.loadTestsFromTestCase(TestWebSocketModeIntegration))  # NEW v1.5.3
-    suite.addTests(loader.loadTestsFromTestCase(TestZTracebackIntegration))  # NEW v1.5.3
+    suite.addTests(loader.loadTestsFromTestCase(TestzTracebackIntegration))  # NEW v1.5.3
     
     runner = unittest.TextTestRunner(verbosity=2 if verbose else 1)
     result = runner.run(suite)

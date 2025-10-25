@@ -2,7 +2,7 @@
 """Centralized traceback utilities for zCLI.
 
 This module provides enhanced error handling with consistent traceback formatting
-across all zCLI subsystems. The ZTraceback utility is automatically initialized in the
+across all zCLI subsystems. The zTraceback utility is automatically initialized in the
 zCLI core and available via zcli.zTraceback.
 
 Usage Examples:
@@ -46,11 +46,11 @@ import logging
 from typing import Optional, Any
 
 
-class ZTraceback:
+class zTraceback:
     """Enhanced error handling with consistent traceback formatting."""
     
     def __init__(self, logger=None, zcli=None):
-        """Initialize ZTraceback with optional logger.
+        """Initialize zTraceback with optional logger.
         
         Args:
             logger: Logger instance for error reporting
@@ -313,7 +313,7 @@ class ExceptionContext:
             result = perform_risky_operation()
     """
     
-    def __init__(self, ztraceback: "ZTraceback",
+    def __init__(self, ztraceback: "zTraceback",
                  operation: str,
                  context: Optional[dict] = None,
                  reraise: bool = False,
@@ -321,7 +321,7 @@ class ExceptionContext:
         """Initialize exception context.
 
         Args:
-            ztraceback: ZTraceback instance
+            ztraceback: zTraceback instance
             operation: Description of the operation being performed
             context: Additional context for error logging
             reraise: Whether to reraise the exception after logging
