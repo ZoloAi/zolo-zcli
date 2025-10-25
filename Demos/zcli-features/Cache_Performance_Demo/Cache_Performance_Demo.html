@@ -11,21 +11,24 @@
 <body>
     <div id="app"></div>
 
-    <!-- Load cache modules first (must be loaded before bifrost_client.js) -->
-    <script src="../../../zCLI/subsystems/zComm/zComm_modules/zBifrost/bifrost_client_modules/storage_adapters.js"></script>
-    <script src="../../../zCLI/subsystems/zComm/zComm_modules/zBifrost/bifrost_client_modules/session_cache.js"></script>
-    <script src="../../../zCLI/subsystems/zComm/zComm_modules/zBifrost/bifrost_client_modules/plugin_cache.js"></script>
-    <script src="../../../zCLI/subsystems/zComm/zComm_modules/zBifrost/bifrost_client_modules/pinned_cache.js"></script>
-    <script src="../../../zCLI/subsystems/zComm/zComm_modules/zBifrost/bifrost_client_modules/system_cache.js"></script>
-    <script src="../../../zCLI/subsystems/zComm/zComm_modules/zBifrost/bifrost_client_modules/cache_orchestrator.js"></script>
-    
-    <!-- Load main BifrostClient -->
-    <script src="../../../zCLI/subsystems/zComm/zComm_modules/zBifrost/bifrost_client.js"></script>
-    
-    <script>
+    <!-- Load BifrostClient as ES6 module -->
+    <script type="module">
+        import { BifrostClient } from '../../../zCLI/subsystems/zComm/zComm_modules/zBifrost/bifrost_client.js';
+        
         (async () => {
-            // Connect using new global zBifrost API (auto-connects on first request)
-            await zBifrost.connect('ws://localhost:8765');
+            // Initialize with event-driven architecture
+            const client = new BifrostClient('ws://localhost:8765', {
+                autoTheme: false, // Already loaded via zTheme_loader
+                debug: true
+            });
+            
+            await client.connect();
+            
+            // Convenience method for zDispatch commands
+            client.cmd = (zKey) => client.send({ event: 'dispatch', zKey });
+            
+            // Make client globally accessible for demo
+            window.client = client;
             
             const app = document.getElementById('app');
             app.innerHTML = `
@@ -106,7 +109,7 @@
             document.getElementById('createDB').onclick = async () => {
                 console.log('🗄️ Creating database...');
                 try {
-                    const result = await zBifrost.cmd('^Create Database');
+                    const result = await client.cmd('^Create Database');
                     alert('✅ Database created successfully!');
                     console.log('Database created:', result);
                 } catch (e) {
@@ -118,7 +121,7 @@
             document.getElementById('seedData').onclick = async () => {
                 console.log('🌱 Seeding sample data...');
                 try {
-                    const result = await zBifrost.cmd('^Seed Sample Data');
+                    const result = await client.cmd('^Seed Sample Data');
                     alert('✅ Sample data seeded successfully! (5 products)');
                     console.log('Data seeded:', result);
                 } catch (e) {
@@ -133,10 +136,10 @@
                 }
                 console.log('🗑️ Deleting database...');
                 try {
-                    const result = await zBifrost.cmd('^Delete Database');
+                    const result = await client.cmd('^Delete Database');
                     alert('✅ Database deleted successfully!');
                     console.log('Database deleted:', result);
-                    await zBifrost.cache.clear(); // Clear frontend cache too
+                    await client.cache.clear(); // Clear frontend cache too
                 } catch (e) {
                     alert('❌ Failed to delete database: ' + e.message);
                     console.error('Delete DB error:', e);
@@ -151,14 +154,14 @@
                 try {
                     // Clear all caches first (skip for now - causing hang)
                     console.log('🧹 Clearing caches...');
-                    if (zBifrost.cache) {
-                        await zBifrost.cache.clear();
+                    if (client.cache) {
+                        await client.cache.clear();
                         console.log('✅ Frontend cache cleared');
                     }
                     
                     // Skip backend cache clear for now - it's hanging
                     // console.log('📤 Clearing backend cache...');
-                    // const clearResult = await zBifrost.request('clear_cache');
+                    // const clearResult = await client.request('clear_cache');
                     // console.log('✅ Backend cache cleared:', clearResult);
                     
                     // ═══════════════════════════════════════════════════════════
@@ -173,7 +176,7 @@
                     // Measure timing on frontend
                     const start1 = performance.now();
                     console.log('📤 Sending zWizard command: ^Run All Cache Tests');
-                    const wizardResults = await zBifrost.cmd('^Run All Cache Tests');
+                    const wizardResults = await client.cmd('^Run All Cache Tests');
                     console.log('📥 Received zWizard results:', wizardResults);
                     times.request3 = performance.now() - start1;
                 
@@ -221,7 +224,7 @@
                 const frontendTimes = [];
                 for (let i = 0; i < 3; i++) {
                     const start = performance.now();
-                    await zBifrost.cmd('^List Products');
+                    await client.cmd('^List Products');
                     frontendTimes.push((performance.now() - start).toFixed(2));
                 }
                 

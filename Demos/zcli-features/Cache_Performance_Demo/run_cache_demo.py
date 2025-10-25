@@ -97,7 +97,7 @@ def main():
         except Exception as e:
             print(f"   Could not check websockets version: {e}")
         
-        from zCLI.subsystems.zComm.zComm_modules.zBifrost.bifrost_bridge import zBifrost
+        from zCLI.subsystems.zComm.zComm_modules.zBifrost.bifrost_bridge_modular import zBifrost
         
         # Debug websocket config
         print("🐛 Debug logging enabled")

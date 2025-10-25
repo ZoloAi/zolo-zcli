@@ -1,12 +1,12 @@
 /**
  * ═══════════════════════════════════════════════════════════════
- * zBifrost Client - Global AJAX-like Request Handler v2.0
+ * BifrostClient - Production JavaScript Client for zBifrost
  * ═══════════════════════════════════════════════════════════════
  * 
- * Streamlined, event-driven WebSocket client for zCLI's zBifrost.
- * Inspired by jQuery's AJAX API and zDisplay's event architecture.
+ * A production-ready WebSocket client for zCLI's zBifrost bridge.
+ * Modular architecture with automatic zTheme integration.
  * 
- * @version 2.0.0 (v1.5.4 refactor)
+ * @version 1.5.4
  * @author Gal Nachshon
  * @license MIT
  * 
@@ -14,774 +14,394 @@
  * Quick Start
  * ───────────────────────────────────────────────────────────────
  * 
- * // Simple CRUD operations (auto-connects on first request)
- * const users = await zBifrost.get('@.zSchema.users');
- * await zBifrost.post('@.zSchema.users', { name: 'John' });
- * await zBifrost.put('@.zSchema.users', { id: 1 }, { name: 'Jane' });
- * await zBifrost.delete('@.zSchema.users', { id: 1 });
+ * // Via CDN (jsDelivr)
+ * <script src="https://cdn.jsdelivr.net/gh/ZoloAi/zolo-zcli@v1.5.4/zCLI/subsystems/zComm/zComm_modules/zBifrost/bifrost_client_modular.js"></script>
  * 
- * // Auto-render UI
- * zBifrost.render.table(users, '#userList');
- * zBifrost.render.menu(['Home', 'About'], '#nav');
+ * // Initialize with hooks
+ * const client = new BifrostClient('ws://localhost:8765', {
+ *   autoTheme: true,  // Set to false to disable automatic zTheme loading
+ *   autoReconnect: true,
+ *   hooks: {
+ *     onConnected: (info) => console.log('Connected!'),
+ *     onDisconnected: (reason) => console.log('Disconnected:', reason),
+ *     onMessage: (msg) => console.log('Message:', msg),
+ *     onError: (error) => console.error('Error:', error),
+ *     onBroadcast: (msg) => console.log('Broadcast:', msg),
+ *     onDisplay: (data) => console.log('Display:', data),
+ *     onInput: (request) => console.log('Input requested:', request)
+ *   }
+ * });
  * 
- * // Event-driven hooks
- * zBifrost.on('connected', () => console.log('Ready!'));
- * zBifrost.on('error', (err) => console.error(err));
+ * // Connect and use
+ * await client.connect();
+ * const users = await client.read('users');
+ * client.renderTable(users, '#myContainer');
  * 
- * // Manual connection (optional - auto-connects on first request)
- * await zBifrost.connect('ws://localhost:8765');
+ * ───────────────────────────────────────────────────────────────
+ * Custom Bifrost Events (Without zTheme)
+ * ───────────────────────────────────────────────────────────────
+ * 
+ * // Disable autoTheme and handle rendering yourself
+ * const client = new BifrostClient('ws://localhost:8765', {
+ *   autoTheme: false,  // No automatic CSS loading
+ *   hooks: {
+ *     onDisplay: (data) => {
+ *       // Custom rendering logic
+ *       if (Array.isArray(data)) {
+ *         myCustomTableRenderer(data);
+ *       }
+ *     },
+ *     onMessage: (msg) => {
+ *       // Custom message handling
+ *       if (msg.type === 'notification') {
+ *         myCustomNotificationSystem(msg);
+ *       }
+ *     }
+ *   }
+ * });
  * 
  * ───────────────────────────────────────────────────────────────
  */
 
-(function(root) {
-  'use strict';
+import { BifrostConnection } from './_modules/connection.js';
+import { MessageHandler } from './_modules/message_handler.js';
+import { Renderer } from './_modules/renderer.js';
+import { ThemeLoader } from './_modules/theme_loader.js';
+import { Logger } from './_modules/logger.js';
+import { HookManager } from './_modules/hooks.js';
 
-  // ═══════════════════════════════════════════════════════════
-  // EventBus - Central event system (like zDisplay's dispatch)
-  // ═══════════════════════════════════════════════════════════
-  
-  class EventBus {
-    constructor() {
-      this.listeners = new Map();
-    }
-    
-    on(event, handler) {
-      if (!this.listeners.has(event)) {
-        this.listeners.set(event, []);
-      }
-      this.listeners.get(event).push(handler);
-    }
-    
-    off(event, handler) {
-      if (!this.listeners.has(event)) return;
-      const handlers = this.listeners.get(event);
-      const index = handlers.indexOf(handler);
-      if (index > -1) handlers.splice(index, 1);
-    }
-    
-    emit(event, data) {
-      if (!this.listeners.has(event)) return;
-      this.listeners.get(event).forEach(handler => {
-        try {
-          handler(data);
-        } catch (e) {
-          console.error(`[EventBus] Error in ${event} handler:`, e);
-        }
-      });
-    }
-    
-    once(event, handler) {
-      const onceHandler = (data) => {
-        handler(data);
-        this.off(event, onceHandler);
-      };
-      this.on(event, onceHandler);
-    }
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // BifrostCore - Minimal WebSocket wrapper
-  // ═══════════════════════════════════════════════════════════
-  
-  class BifrostCore {
-    constructor() {
-      this.ws = null;
-      this.url = null;
-      this.connected = false;
-      this.requestId = 0;
-      this.callbacks = new Map();
-      this.reconnectAttempt = 0;
-      this.reconnectDelay = 3000;
-      this.maxReconnectAttempts = 10;
-      this.eventBus = new EventBus();
-      
-      // Auto-connect flag
-      this.autoConnecting = false;
-    }
-    
-    async connect(url = 'ws://localhost:8765', options = {}) {
-      if (this.connected) return;
-      if (this.autoConnecting) {
-        // Wait for existing connection attempt
-        return new Promise((resolve) => {
-          this.eventBus.once('connected', resolve);
-        });
-      }
-      
-      this.autoConnecting = true;
+/**
+ * BifrostClient - Main class for WebSocket communication with zBifrost
+ */
+class BifrostClient {
+    /**
+     * Create a new BifrostClient instance
+     * @param {string} url - WebSocket server URL (e.g., 'ws://localhost:8765')
+     * @param {Object} options - Configuration options
+     * @param {boolean} options.autoTheme - Auto-load zTheme CSS (default: true, set to false for custom styling)
+     * @param {boolean} options.autoReconnect - Auto-reconnect on disconnect (default: true)
+     * @param {number} options.reconnectDelay - Delay between reconnect attempts in ms (default: 3000)
+     * @param {number} options.timeout - Request timeout in ms (default: 30000)
+     * @param {boolean} options.debug - Enable debug logging (default: false)
+     * @param {string} options.token - Authentication token (optional)
+     * @param {Object} options.hooks - Event hooks for customization
+     */
+    constructor(url = 'ws://localhost:8765', options = {}) {
       this.url = url;
-      this.reconnectDelay = options.reconnectDelay || 3000;
-      this.maxReconnectAttempts = options.maxReconnectAttempts || 10;
-      
-      return new Promise((resolve, reject) => {
-        try {
-          this.ws = new WebSocket(url);
-          
-          this.ws.onopen = () => {
-            this.connected = true;
-            this.reconnectAttempt = 0;
-            this.autoConnecting = false;
-            this.eventBus.emit('connected', { url });
-            resolve();
-          };
-          
-          this.ws.onmessage = (event) => {
-            this._handleMessage(event.data);
-          };
-          
-          this.ws.onclose = () => {
-            this.connected = false;
-            this.eventBus.emit('disconnected', { reason: 'closed' });
-            this._attemptReconnect();
-          };
-          
-          this.ws.onerror = (error) => {
-            this.eventBus.emit('error', error);
-            if (!this.connected) {
-              this.autoConnecting = false;
-              reject(error);
-            }
-          };
-        } catch (error) {
-          this.autoConnecting = false;
-          reject(error);
-        }
-      });
-    }
-    
-    async send(payload, timeout = 30000) {
-      // Auto-connect if not connected
-      if (!this.connected) {
-        await this.connect();
-      }
-      
-      return new Promise((resolve, reject) => {
-        const requestId = this.requestId++;
-        payload._requestId = requestId;
-        
-        // Set up timeout
-        const timeoutId = setTimeout(() => {
-          this.callbacks.delete(requestId);
-          reject(new Error(`Request timeout after ${timeout}ms`));
-        }, timeout);
-        
-        // Store callback
-        this.callbacks.set(requestId, {
-          resolve: (data) => {
-            clearTimeout(timeoutId);
-            resolve(data);
-          },
-          reject: (error) => {
-            clearTimeout(timeoutId);
-            reject(error);
-          }
-        });
-        
-        // Send request
-        try {
-          this.ws.send(JSON.stringify(payload));
-          this.eventBus.emit('request', payload);
-        } catch (error) {
-          this.callbacks.delete(requestId);
-          clearTimeout(timeoutId);
-          reject(error);
-        }
-      });
-    }
-    
-    _handleMessage(data) {
-      try {
-        const message = JSON.parse(data);
-        this.eventBus.emit('message', message);
-        
-        // Handle connection info
-        if (message.event === 'connection_info') {
-          this.eventBus.emit('connection_info', message.data);
-          return;
-        }
-        
-        // Handle display events
-        if (message.event === 'display') {
-          this.eventBus.emit('display', message.data);
-          return;
-        }
-        
-        // Handle input requests
-        if (message.event === 'input_request') {
-          this.eventBus.emit('input_request', message.data);
-          return;
-        }
-        
-        // Handle broadcast
-        if (message.event === 'broadcast') {
-          this.eventBus.emit('broadcast', message.data);
-          return;
-        }
-        
-        // Handle response correlation
-        const requestId = message._requestId;
-        if (requestId !== undefined && this.callbacks.has(requestId)) {
-          const callback = this.callbacks.get(requestId);
-          this.callbacks.delete(requestId);
-          
-          if (message.error) {
-            callback.reject(new Error(message.error));
-          } else {
-            callback.resolve(message.result);
-          }
-        }
-      } catch (e) {
-        console.error('[BifrostCore] Message parse error:', e);
-      }
-    }
-    
-    _attemptReconnect() {
-      if (this.reconnectAttempt >= this.maxReconnectAttempts) {
-        this.eventBus.emit('reconnect_failed', { attempts: this.reconnectAttempt });
-        return;
-      }
-      
-      this.reconnectAttempt++;
-      this.eventBus.emit('reconnecting', { attempt: this.reconnectAttempt });
-      
-      setTimeout(() => {
-        this.connect(this.url);
-      }, this.reconnectDelay);
-    }
-    
-    disconnect() {
-      if (this.ws) {
-        this.ws.close();
-        this.ws = null;
-      }
-      this.connected = false;
-    }
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // CacheManager - Transparent caching (integrates with existing cache system)
-  // ═══════════════════════════════════════════════════════════
-  
-  class CacheManager {
-    constructor() {
-      this.cache = null;
-      this._initCache();
-    }
-    
-    async _initCache() {
-      try {
-        if (typeof window !== 'undefined' && window.CacheOrchestrator) {
-          this.cache = new window.CacheOrchestrator({
-            debug: false,
-            persistCache: true,
-            maxSize: 100,
-            defaultTTL: 3600000 // 1 hour
-          });
-        }
-      } catch (e) {
-        console.warn('[CacheManager] Cache system unavailable:', e);
-      }
-    }
-    
-    async get(key, type = 'system') {
-      if (!this.cache) return null;
-      return await this.cache.get(key, type);
-    }
-    
-    async set(key, value, type = 'system', options = {}) {
-      if (!this.cache) return;
-      await this.cache.set(key, value, type, options);
-    }
-    
-    async clear(type = null) {
-      if (!this.cache) return;
-      if (type) {
-        await this.cache.clear(type);
-      } else {
-        await this.cache.clearAll();
-      }
-    }
-    
-    getStats() {
-      if (!this.cache) return {};
-      return this.cache.getStats();
-    }
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // RenderUtilities - Auto-render UI (like zDisplay)
-  // ═══════════════════════════════════════════════════════════
-  
-  class RenderUtilities {
-    constructor(core) {
-      this.core = core;
-    }
-    
-    table(data, selector, options = {}) {
-      const container = typeof selector === 'string' 
-        ? document.querySelector(selector) 
-        : selector;
-      
-      if (!container) {
-        console.error('[Render] Container not found:', selector);
-        return;
-      }
-      
-      if (!Array.isArray(data) || data.length === 0) {
-        container.innerHTML = '<div class="zAlert zAlert-info">No data to display</div>';
-        return;
-      }
-      
-      const keys = Object.keys(data[0]);
-      const thead = keys.map(k => `<th>${k}</th>`).join('');
-      const tbody = data.map(row => 
-        `<tr>${keys.map(k => `<td>${row[k] ?? ''}</td>`).join('')}</tr>`
-      ).join('');
-      
-      container.innerHTML = `
-        <table class="zTable">
-          <thead><tr>${thead}</tr></thead>
-          <tbody>${tbody}</tbody>
-        </table>
-      `;
-    }
-    
-    menu(items, selector) {
-      const container = typeof selector === 'string' 
-        ? document.querySelector(selector) 
-        : selector;
-      
-      if (!container) {
-        console.error('[Render] Container not found:', selector);
-        return;
-      }
-      
-      const buttons = items.map(item => {
-        const label = typeof item === 'string' ? item : item.label;
-        const action = typeof item === 'string' ? null : item.action;
-        const btnClass = typeof item === 'string' ? 'zBtn-primary' : (item.class || 'zBtn-primary');
-        
-        return `<button class="zoloButton ${btnClass}" data-action="${action || label}">${label}</button>`;
-      }).join('');
-      
-      container.innerHTML = `<div class="zMenu">${buttons}</div>`;
-      
-      // Attach event handlers
-      container.querySelectorAll('button').forEach((btn, idx) => {
-        btn.onclick = () => {
-          const item = items[idx];
-          const action = typeof item === 'string' ? null : item.action;
-          if (action && typeof action === 'function') {
-            action();
-          }
-          this.core.eventBus.emit('menu_click', { label: btn.textContent, action: btn.dataset.action });
-        };
-      });
-    }
-    
-    form(schema, selector, options = {}) {
-      const container = typeof selector === 'string' 
-        ? document.querySelector(selector) 
-        : selector;
-      
-      if (!container) {
-        console.error('[Render] Container not found:', selector);
-        return;
-      }
-      
-      const fields = Object.entries(schema).map(([key, config]) => {
-        const type = config.type || 'text';
-        const required = config.required ? 'required' : '';
-        const label = config.label || key;
-        
-        return `
-          <div class="zFormGroup">
-            <label for="${key}">${label}${config.required ? ' *' : ''}</label>
-            <input type="${type}" id="${key}" name="${key}" ${required} class="zInput" />
-          </div>
-        `;
-      }).join('');
-      
-      container.innerHTML = `
-        <form class="zForm">
-          ${fields}
-          <div class="zMenu">
-            <button type="submit" class="zoloButton zBtn-primary">Submit</button>
-            <button type="reset" class="zoloButton zBtn-secondary">Reset</button>
-          </div>
-        </form>
-      `;
-      
-      // Attach submit handler
-      const form = container.querySelector('form');
-      form.onsubmit = (e) => {
-        e.preventDefault();
-        const formData = new FormData(form);
-        const data = Object.fromEntries(formData.entries());
-        this.core.eventBus.emit('form_submit', data);
-        if (options.onSubmit) options.onSubmit(data);
+      this.options = {
+        autoTheme: options.autoTheme !== false, // Default true
+        autoReconnect: options.autoReconnect !== false, // Default true
+        reconnectDelay: options.reconnectDelay || 3000,
+        timeout: options.timeout || 30000,
+        debug: options.debug || false,
+        token: options.token || null,
+        hooks: options.hooks || {}
       };
-    }
-    
-    message(text, type = 'info', selector = null) {
-      const container = selector 
-        ? (typeof selector === 'string' ? document.querySelector(selector) : selector)
-        : document.body;
-      
-      const alert = document.createElement('div');
-      alert.className = `zAlert zAlert-${type}`;
-      alert.textContent = text;
-      
-      if (selector) {
-        container.innerHTML = '';
-        container.appendChild(alert);
-      } else {
-        container.insertBefore(alert, container.firstChild);
-        setTimeout(() => alert.remove(), 5000);
-      }
-    }
-  }
 
-  // ═══════════════════════════════════════════════════════════
-  // Global zBifrost API - Main interface
-  // ═══════════════════════════════════════════════════════════
-  
-  const core = new BifrostCore();
-  const cacheManager = new CacheManager();
-  const renderUtils = new RenderUtilities(core);
-  
-  // Load zTheme automatically using zTheme_loader
-  // Note: zTheme_loader.js should be loaded before bifrost_client.js
-  // Or it will auto-load on its own if available
-  if (typeof window !== 'undefined' && typeof window.zThemeLoader !== 'undefined') {
-    // zTheme loader is available, it will auto-load
-    console.log('[BifrostClient] zTheme loader detected, theme will auto-load');
-  } else {
-    // Fallback: Try to load zTheme_loader.js dynamically
-    if (typeof document !== 'undefined') {
-      const loaderScript = document.createElement('script');
-      loaderScript.src = '/zCLI/utils/zTheme/zTheme_loader.js';
-      loaderScript.async = true;
-      loaderScript.onerror = () => {
-        console.warn('[BifrostClient] Could not load zTheme_loader.js - theme will not auto-load');
-      };
-      document.head.appendChild(loaderScript);
+      // Initialize modules
+      this.logger = new Logger(this.options.debug);
+      this.hooks = new HookManager(this.options.hooks);
+      this.connection = new BifrostConnection(url, this.options, this.logger, this.hooks);
+      this.messageHandler = new MessageHandler(this.logger, this.hooks);
+      this.renderer = new Renderer(this.logger);
+      this.themeLoader = new ThemeLoader(this.logger);
+
+      // Set timeout for message handler
+      this.messageHandler.setTimeout(this.options.timeout);
+
+      this.logger.log('BifrostClient initialized', { url, options: this.options });
     }
-  }
-  
-  const zBifrost = {
+
     // ═══════════════════════════════════════════════════════════
-    // Core API
+    // Connection Management
     // ═══════════════════════════════════════════════════════════
-    
+
     /**
-     * Connect to WebSocket server (optional - auto-connects on first request)
+     * Connect to the WebSocket server
+     * @returns {Promise<void>}
      */
-    async connect(url = 'ws://localhost:8765', options = {}) {
-      await core.connect(url, options);
-    },
-    
+    async connect() {
+      await this.connection.connect();
+      
+      // Set up message handler
+      this.connection.onMessage((event) => {
+        this.messageHandler.handleMessage(event.data);
+      });
+
+      // Auto-load theme if enabled
+      if (this.options.autoTheme && !this.themeLoader.isLoaded()) {
+        this.themeLoader.load();
+      }
+    }
+
     /**
-     * Disconnect from server
+     * Disconnect from the server
      */
     disconnect() {
-      core.disconnect();
-    },
-    
-    /**
-     * Send raw request to server
-     */
-    async request(action, data = {}) {
-      return await core.send({ action, ...data });
-    },
-    
-    /**
-     * Send with zKey (command dispatch)
-     */
-    async cmd(zKey, data = {}) {
-      return await core.send({ zKey, ...data });
-    },
-    
-    // ═══════════════════════════════════════════════════════════
-    // CRUD Shortcuts (like $.get, $.post)
-    // ═══════════════════════════════════════════════════════════
-    
-    /**
-     * Read data (GET equivalent)
-     */
-    async get(model, filters = null, options = {}) {
-      // Check cache first
-      if (!options.noCache) {
-        const cacheKey = `${model}:${JSON.stringify(filters)}`;
-        const cached = await cacheManager.get(cacheKey);
-        if (cached) return cached;
-      }
-      
-      const result = await core.send({ 
-        action: 'read', 
-        model, 
-        filters,
-        ...options 
-      });
-      
-      // Cache result
-      if (!options.noCache && result) {
-        const cacheKey = `${model}:${JSON.stringify(filters)}`;
-        await cacheManager.set(cacheKey, result, 'system', { ttl: 3600000 });
-      }
-      
-      return result;
-    },
-    
-    /**
-     * Create data (POST equivalent)
-     */
-    async post(model, data) {
-      return await core.send({ action: 'create', model, data });
-    },
-    
-    /**
-     * Update data (PUT equivalent)
-     */
-    async put(model, filters, data) {
-      return await core.send({ action: 'update', model, filters, data });
-    },
-    
-    /**
-     * Delete data (DELETE equivalent)
-     */
-    async delete(model, filters) {
-      return await core.send({ action: 'delete', model, filters });
-    },
-    
-    // ═══════════════════════════════════════════════════════════
-    // Schema & Metadata
-    // ═══════════════════════════════════════════════════════════
-    
-    /**
-     * Get schema for model
-     */
-    async getSchema(model) {
-      // Check cache first
-      const cached = await cacheManager.get(model, 'system');
-      if (cached) return cached;
-      
-      const schema = await core.send({ action: 'get_schema', model });
-      
-      // Cache schema
-      await cacheManager.set(model, schema, 'system', { 
-        ttl: 3600000,
-        metadata: { type: 'schema', model }
-      });
-      
-      return schema;
-    },
-    
-    /**
-     * Discover available models
-     */
-    async discover() {
-      return await core.send({ action: 'discover' });
-    },
-    
-    // ═══════════════════════════════════════════════════════════
-    // Event System (like zDisplay)
-    // ═══════════════════════════════════════════════════════════
-    
-    /**
-     * Subscribe to event
-     */
-    on(event, handler) {
-      core.eventBus.on(event, handler);
-    },
-    
-    /**
-     * Unsubscribe from event
-     */
-    off(event, handler) {
-      core.eventBus.off(event, handler);
-    },
-    
-    /**
-     * Subscribe to event once
-     */
-    once(event, handler) {
-      core.eventBus.once(event, handler);
-    },
-    
-    /**
-     * Emit custom event
-     */
-    emit(event, data) {
-      core.eventBus.emit(event, data);
-    },
-    
-    // ═══════════════════════════════════════════════════════════
-    // Auto-Render Utilities
-    // ═══════════════════════════════════════════════════════════
-    
-    render: {
-      /**
-       * Render data as table
-       */
-      table(data, selector, options) {
-        renderUtils.table(data, selector, options);
-      },
-      
-      /**
-       * Render menu buttons
-       */
-      menu(items, selector) {
-        renderUtils.menu(items, selector);
-      },
-      
-      /**
-       * Render form from schema
-       */
-      form(schema, selector, options) {
-        renderUtils.form(schema, selector, options);
-      },
-      
-      /**
-       * Show message/alert
-       */
-      message(text, type, selector) {
-        renderUtils.message(text, type, selector);
-      }
-    },
-    
-    // ═══════════════════════════════════════════════════════════
-    // Cache Management
-    // ═══════════════════════════════════════════════════════════
-    
-    cache: {
-      /**
-       * Get from cache
-       */
-      async get(key, type) {
-        return await cacheManager.get(key, type);
-      },
-      
-      /**
-       * Set in cache
-       */
-      async set(key, value, type, options) {
-        await cacheManager.set(key, value, type, options);
-      },
-      
-      /**
-       * Clear cache
-       */
-      async clear(type) {
-        await cacheManager.clear(type);
-      },
-      
-      /**
-       * Get cache statistics
-       */
-      stats() {
-        return cacheManager.getStats();
-      },
-      
-      /**
-       * Direct access to cache orchestrator
-       */
-      get orchestrator() {
-        return cacheManager.cache;
-      }
-    },
-    
-    // ═══════════════════════════════════════════════════════════
-    // Utilities
-    // ═══════════════════════════════════════════════════════════
-    
+      this.connection.disconnect();
+    }
+
     /**
      * Check if connected
+     * @returns {boolean}
      */
-    get connected() {
-      return core.connected;
-    },
-    
+    isConnected() {
+      return this.connection.isConnected();
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // Message Sending
+    // ═══════════════════════════════════════════════════════════
+
     /**
-     * Get current URL
+     * Send a message and wait for response
+     * @param {Object} payload - Message payload
+     * @param {number} timeout - Custom timeout (optional)
+     * @returns {Promise<any>}
      */
-    get url() {
-      return core.url;
-    },
-    
-    /**
-     * Get version
-     */
-    version: '2.0.0'
-  };
-  
-  // Export to global scope
-  root.zBifrost = zBifrost;
-  
-  // Also export BifrostClient for backward compatibility
-  root.BifrostClient = class BifrostClient {
-    constructor(url, options = {}) {
-      console.warn('[BifrostClient] Legacy API - Use global zBifrost object instead');
-      this.url = url;
-      zBifrost.connect(url, options);
-    }
-    
-    async connect() {
-      await zBifrost.connect(this.url);
-    }
-    
-    async send(payload) {
-      return await zBifrost.request(payload.action || 'custom', payload);
-    }
-    
-    async getSchema(model) {
-      return await zBifrost.getSchema(model);
-    }
-    
-    render(type, ...args) {
-      if (zBifrost.render[type]) {
-        zBifrost.render[type](...args);
+    async send(payload, timeout = null) {
+      if (!this.isConnected()) {
+        throw new Error('Not connected to server. Call connect() first.');
       }
+
+      return this.messageHandler.send(
+        payload,
+        (msg) => this.connection.send(msg),
+        timeout
+      );
     }
-    
-    on(event, handler) {
-      zBifrost.on(event, handler);
+
+    /**
+     * Send input response to server
+     * @param {string} requestId - Request ID from input event
+     * @param {any} value - Input value
+     */
+    sendInputResponse(requestId, value) {
+      if (!this.isConnected()) {
+        this.logger.log('❌ Cannot send input response: not connected');
+        return;
+      }
+
+      // Use new event protocol
+      const message = JSON.stringify({
+        event: 'input_response',
+        requestId: requestId,
+        value: value
+      });
+      
+      this.connection.send(message);
     }
-    
-    get connected() {
-      return zBifrost.connected;
+
+    // ═══════════════════════════════════════════════════════════
+    // CRUD Operations
+    // ═══════════════════════════════════════════════════════════
+
+    /**
+     * Create a new record
+     * @param {string} model - Table/model name
+     * @param {Object} data - Field values
+     * @returns {Promise<Object>}
+     */
+    async create(model, data) {
+      return this.send({
+        event: 'dispatch',
+        zKey: `^Create ${model}`,
+        model: model,
+        data: data
+      });
     }
-    
-    get cache() {
-      return zBifrost.cache.orchestrator;
+
+    /**
+     * Read records
+     * @param {string} model - Table/model name
+     * @param {Object} filters - WHERE conditions (optional)
+     * @param {Object} options - Additional options (fields, order_by, limit, offset)
+     * @returns {Promise<Array>}
+     */
+    async read(model, filters = null, options = {}) {
+      const payload = {
+        event: 'dispatch',
+        zKey: `^List ${model}`,
+        model: model
+      };
+
+      if (filters) payload.where = filters;
+      if (options.fields) payload.fields = options.fields;
+      if (options.order_by) payload.order_by = options.order_by;
+      if (options.limit !== undefined) payload.limit = options.limit;
+      if (options.offset !== undefined) payload.offset = options.offset;
+
+      return this.send(payload);
     }
-    
-    getAllCacheStats() {
-      return zBifrost.cache.stats();
+
+    /**
+     * Update record(s)
+     * @param {string} model - Table/model name
+     * @param {Object|number} filters - WHERE conditions or ID
+     * @param {Object} data - Fields to update
+     * @returns {Promise<Object>}
+     */
+    async update(model, filters, data) {
+      if (typeof filters === 'number') {
+        filters = { id: filters };
+      }
+
+      return this.send({
+        event: 'dispatch',
+        zKey: `^Update ${model}`,
+        model: model,
+        where: filters,
+        data: data
+      });
     }
-    
-    clearClientCache() {
-      zBifrost.cache.clear();
+
+    /**
+     * Delete record(s)
+     * @param {string} model - Table/model name
+     * @param {Object|number} filters - WHERE conditions or ID
+     * @returns {Promise<Object>}
+     */
+    async delete(model, filters) {
+      if (typeof filters === 'number') {
+        filters = { id: filters };
+      }
+
+      return this.send({
+        event: 'dispatch',
+        zKey: `^Delete ${model}`,
+        model: model,
+        where: filters
+      });
     }
-  };
-  
-  // Auto-connect on first interaction if console.log detected
-  if (typeof window !== 'undefined' && window.console) {
-    console.log(`
-╔═══════════════════════════════════════════════════════════════╗
-║  zBifrost v2.0 - Global AJAX-like Request Handler            ║
-║  ───────────────────────────────────────────────────────────  ║
-║  Usage:                                                       ║
-║    const users = await zBifrost.get('@.zSchema.users');      ║
-║    zBifrost.render.table(users, '#userList');                ║
-║                                                               ║
-║  Events:                                                      ║
-║    zBifrost.on('connected', () => console.log('Ready!'));    ║
-║                                                               ║
-║  Docs: /Documentation/zComm_GUIDE.md                         ║
-╚═══════════════════════════════════════════════════════════════╝
-    `);
-  }
-  
-})(typeof self !== 'undefined' ? self : this);
+
+    // ═══════════════════════════════════════════════════════════
+    // zCLI Operations
+    // ═══════════════════════════════════════════════════════════
+
+    /**
+     * Execute a zFunc command
+     * @param {string} command - zFunc command string
+     * @returns {Promise<any>}
+     */
+    async zFunc(command) {
+      return this.send({
+        zKey: 'zFunc',
+        zHorizontal: command
+      });
+    }
+
+    /**
+     * Navigate to a zLink path
+     * @param {string} path - zLink navigation path
+     * @returns {Promise<any>}
+     */
+    async zLink(path) {
+      return this.send({
+        zKey: 'zLink',
+        zHorizontal: `zLink(${path})`
+      });
+    }
+
+    /**
+     * Execute a zOpen command
+     * @param {string} command - zOpen command string
+     * @returns {Promise<any>}
+     */
+    async zOpen(command) {
+      return this.send({
+        zKey: 'zOpen',
+        zHorizontal: `zOpen(${command})`
+      });
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // zTheme Integration
+    // ═══════════════════════════════════════════════════════════
+
+    /**
+     * Load zTheme CSS files (if autoTheme is disabled)
+     * @param {string} baseUrl - Base URL for CSS files (optional, auto-detected)
+     */
+    loadTheme(baseUrl = null) {
+      this.themeLoader.load(baseUrl);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // Auto-Rendering Methods (Using zTheme)
+    // ═══════════════════════════════════════════════════════════
+
+    /**
+     * Render data as a table with zTheme styling
+     * @param {Array} data - Array of objects to render
+     * @param {string|HTMLElement} container - Container selector or element
+     * @param {Object} options - Rendering options
+     */
+    renderTable(data, container, options = {}) {
+      this.renderer.renderTable(data, container, options);
+    }
+
+    /**
+     * Render a menu with buttons
+     * @param {Array} items - Array of menu items {label, action, icon, variant}
+     * @param {string|HTMLElement} container - Container selector or element
+     */
+    renderMenu(items, container) {
+      this.renderer.renderMenu(items, container);
+    }
+
+    /**
+     * Render a form with zTheme styling
+     * @param {Array} fields - Array of field definitions
+     * @param {string|HTMLElement} container - Container selector or element
+     * @param {Function} onSubmit - Submit handler
+     */
+    renderForm(fields, container, onSubmit) {
+      this.renderer.renderForm(fields, container, onSubmit);
+    }
+
+    /**
+     * Render a message/alert
+     * @param {string} text - Message text
+     * @param {string} type - Message type (success, error, warning, info)
+     * @param {string|HTMLElement} container - Container selector or element
+     * @param {number} duration - Auto-hide duration in ms (0 = no auto-hide)
+     */
+    renderMessage(text, type = 'info', container, duration = 5000) {
+      this.renderer.renderMessage(text, type, container, duration);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // Hook Management
+    // ═══════════════════════════════════════════════════════════
+
+    /**
+     * Register a new hook at runtime
+     * @param {string} hookName - Name of the hook
+     * @param {Function} fn - Hook function
+     */
+    registerHook(hookName, fn) {
+      this.hooks.register(hookName, fn);
+    }
+
+    /**
+     * Unregister a hook
+     * @param {string} hookName - Name of the hook
+     */
+    unregisterHook(hookName) {
+      this.hooks.unregister(hookName);
+    }
+
+    /**
+     * List all registered hooks
+     * @returns {Array<string>}
+     */
+    listHooks() {
+      return this.hooks.list();
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+// Export
+// ═══════════════════════════════════════════════════════════
+
+export { BifrostClient };

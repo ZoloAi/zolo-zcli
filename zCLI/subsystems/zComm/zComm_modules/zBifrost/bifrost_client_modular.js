@@ -197,11 +197,14 @@ import { HookManager } from './_modules/hooks.js';
         return;
       }
 
-      this.messageHandler.sendInputResponse(
-        requestId,
-        value,
-        (msg) => this.connection.send(msg)
-      );
+      // Use new event protocol
+      const message = JSON.stringify({
+        event: 'input_response',
+        requestId: requestId,
+        value: value
+      });
+      
+      this.connection.send(message);
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -216,8 +219,8 @@ import { HookManager } from './_modules/hooks.js';
      */
     async create(model, data) {
       return this.send({
+        event: 'dispatch',
         zKey: `^Create ${model}`,
-        action: 'create',
         model: model,
         data: data
       });
@@ -232,8 +235,8 @@ import { HookManager } from './_modules/hooks.js';
      */
     async read(model, filters = null, options = {}) {
       const payload = {
+        event: 'dispatch',
         zKey: `^List ${model}`,
-        action: 'read',
         model: model
       };
 
@@ -259,8 +262,8 @@ import { HookManager } from './_modules/hooks.js';
       }
 
       return this.send({
+        event: 'dispatch',
         zKey: `^Update ${model}`,
-        action: 'update',
         model: model,
         where: filters,
         data: data
@@ -279,8 +282,8 @@ import { HookManager } from './_modules/hooks.js';
       }
 
       return this.send({
+        event: 'dispatch',
         zKey: `^Delete ${model}`,
-        action: 'delete',
         model: model,
         where: filters
       });

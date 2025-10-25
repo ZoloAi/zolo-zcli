@@ -15,6 +15,12 @@ from .bridge_modules import (
     MessageHandler,
     ConnectionInfoManager
 )
+from .bridge_modules.events import (
+    ClientEvents,
+    CacheEvents,
+    DiscoveryEvents,
+    DispatchEvents
+)
 
 # ─────────────────────────────────────────────────────────────
 # Config (will be loaded from zCLI config system)
@@ -64,7 +70,35 @@ class zBifrost:
         self.connection_info = ConnectionInfoManager(logger, self.cache, self.zcli, self.walker)
         self.message_handler = MessageHandler(logger, self.cache, self.zcli, self.walker, self.connection_info)
         
-        self.logger.info("[zBifrost] Initialized with modular architecture")
+        # Initialize event handlers (event-driven architecture)
+        self.events = {
+            'client': ClientEvents(self),
+            'cache': CacheEvents(self),
+            'discovery': DiscoveryEvents(self),
+            'dispatch': DispatchEvents(self)
+        }
+        
+        # Event map - single registry for all events (like zDisplay)
+        self._event_map = {
+            # Client events
+            "input_response": self.events['client'].handle_input_response,
+            "connection_info": self.events['client'].handle_connection_info,
+            
+            # Cache events
+            "get_schema": self.events['cache'].handle_get_schema,
+            "clear_cache": self.events['cache'].handle_clear_cache,
+            "cache_stats": self.events['cache'].handle_cache_stats,
+            "set_cache_ttl": self.events['cache'].handle_set_cache_ttl,
+            
+            # Discovery events
+            "discover": self.events['discovery'].handle_discover,
+            "introspect": self.events['discovery'].handle_introspect,
+            
+            # Dispatch events (zDispatch commands)
+            "dispatch": self.events['dispatch'].handle_dispatch,
+        }
+        
+        self.logger.info("[zBifrost] Initialized with event-driven architecture")
     
     # ═══════════════════════════════════════════════════════════
     # Client Connection Handling
@@ -105,7 +139,7 @@ class zBifrost:
         try:
             async for message in ws:
                 self.logger.info(f"[zBifrost] [RECV] Received: {message}")
-                await self.message_handler.handle_message(ws, message, self.broadcast)
+                await self.handle_message(ws, message)
         
         except ws_exceptions.ConnectionClosed:
             self.logger.info("[zBifrost] Client disconnected normally")
@@ -142,6 +176,95 @@ class zBifrost:
             self.logger.info(f"[zBifrost] [DISCONNECT] User {user} disconnected")
         
         self.logger.debug(f"[zBifrost] [INFO] Active clients: {len(self.clients)}")
+    
+    # ═══════════════════════════════════════════════════════════
+    # Message Handling - Event-Driven Architecture
+    # ═══════════════════════════════════════════════════════════
+    
+    async def handle_message(self, ws, message):
+        """
+        Single entry point for all messages (mirrors zDisplay.handle)
+        
+        Args:
+            ws: WebSocket connection
+            message: Raw message string
+        """
+        try:
+            data = json.loads(message)
+        except json.JSONDecodeError:
+            # Fallback to simple broadcast if not JSON
+            await self.broadcast(message, sender=ws)
+            return
+        
+        # Get event type
+        event = data.get("event")
+        
+        # Backward compatibility: infer event from old formats
+        if not event:
+            event = self._infer_event_type(data)
+        
+        if not event:
+            self.logger.warning("[zBifrost] Message missing 'event' field and cannot be inferred")
+            await self.broadcast(json.dumps(data), sender=ws)
+            return
+        
+        # Route to handler via event map
+        handler = self._event_map.get(event)
+        if not handler:
+            self.logger.warning(f"[zBifrost] Unknown event: {event}")
+            await self.broadcast(json.dumps(data), sender=ws)
+            return
+        
+        # Execute handler
+        try:
+            await handler(ws, data)
+        except Exception as e:
+            self.logger.error(f"[zBifrost] Error handling event '{event}': {e}", exc_info=True)
+            error_response = {"error": f"Failed to handle event: {event}", "details": str(e)}
+            await ws.send(json.dumps(error_response))
+    
+    def _infer_event_type(self, data):
+        """
+        Backward compatibility: map old message formats to new events
+        
+        Args:
+            data: Message data dict
+            
+        Returns:
+            str: Inferred event type or None
+        """
+        # Old format: {"action": "get_schema"}
+        if "action" in data:
+            return data["action"]
+        
+        # Old format: {"zKey": "^List.users"} or {"cmd": "..."}
+        if "zKey" in data or "cmd" in data:
+            return "dispatch"
+        
+        return None
+    
+    # ═══════════════════════════════════════════════════════════
+    # Public API - Backward Compatibility Wrappers
+    # ═══════════════════════════════════════════════════════════
+    
+    def validate_origin(self, ws):
+        """Validate origin - wrapper for backward compatibility"""
+        return self.auth.validate_origin(ws)
+    
+    @property
+    def require_auth(self):
+        """Get require_auth setting - wrapper for backward compatibility"""
+        return self.auth.require_auth
+    
+    @property
+    def allowed_origins(self):
+        """Get allowed_origins setting - wrapper for backward compatibility"""
+        return self.auth.allowed_origins
+    
+    @property
+    def authenticated_clients(self):
+        """Get authenticated clients dict - wrapper for backward compatibility"""
+        return self.auth.authenticated_clients
     
     # ═══════════════════════════════════════════════════════════
     # Broadcasting

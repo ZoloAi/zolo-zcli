@@ -85,11 +85,12 @@ class zPrimitives:
             # Send via zComm's WebSocket broadcast (same pattern as WebSocket output)
             if hasattr(zcli.comm, 'broadcast_websocket'):
                 try:
+                    loop = asyncio.get_running_loop()
                     asyncio.create_task(
                         zcli.comm.broadcast_websocket(json.dumps(event_data))
                     )
                 except RuntimeError:
-                    # No running event loop - for tests, just log the event
+                    # No running event loop - for tests/initialization, skip broadcast
                     pass
 
         except Exception:
@@ -180,12 +181,13 @@ class zPrimitives:
 
             if hasattr(zcli.comm, 'broadcast_websocket'):
                 try:
+                    loop = asyncio.get_running_loop()
                     asyncio.create_task(
                         zcli.comm.broadcast_websocket(json.dumps(event_data))
                     )
                     return True
                 except RuntimeError:
-                    # No running event loop - for tests
+                    # No running event loop - for tests/initialization, skip broadcast
                     pass
         except Exception:
             pass

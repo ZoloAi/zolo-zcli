@@ -177,3 +177,93 @@ The module follows zCLI's naming philosophy:
 - **BifrostManager** = Manages the zBifrost lifecycle
 - Clear distinction between the concept (zBifrost) and its manager
 
+---
+
+## zBifrost Event-Driven Refactoring (v1.5.4+)
+
+### Overview
+zBifrost has been refactored from a monolithic WebSocket server into an **event-driven architecture** that mirrors zDisplay's design patterns.
+
+### Before (Monolithic - bifrost_bridge.py)
+```
+bifrost_bridge.py (494 lines)
+├── Inline message handling (150+ lines of if/elif chains)
+├── Mixed authentication/caching/dispatch logic
+├── Hard-coded message processing
+└── No clear event registry
+```
+
+### After (Event-Driven - bifrost_bridge_modular.py)
+```
+bifrost_bridge_modular.py (280 lines)
+├── Event map registry (_event_map)
+├── Single handle_message() entry point
+├── Modular event handlers
+└── Organized by domain
+
+bridge_modules/events/
+├── client_events.py      # Input responses, connection info
+├── cache_events.py        # Schema retrieval, cache operations
+├── discovery_events.py    # Auto-discovery API
+└── dispatch_events.py     # zDispatch command execution
+```
+
+### Key Improvements
+
+#### 1. Event Map (like zDisplay)
+All events registered in central map:
+```python
+self._event_map = {
+    "input_response": self.events['client'].handle_input_response,
+    "get_schema": self.events['cache'].handle_get_schema,
+    "dispatch": self.events['dispatch'].handle_dispatch,
+    # ...etc
+}
+```
+
+#### 2. Single Entry Point
+```python
+async def handle_message(self, ws, message):
+    """Single entry point for all messages (mirrors zDisplay.handle)"""
+    data = json.loads(message)
+    event = data.get("event")
+    
+    # Backward compatibility
+    if not event:
+        event = self._infer_event_type(data)
+    
+    # Route via event map
+    handler = self._event_map.get(event)
+    await handler(ws, data)
+```
+
+#### 3. Organized Event Handlers
+Each domain has dedicated handler class:
+- **ClientEvents**: User input, connection info
+- **CacheEvents**: Schema requests, cache operations
+- **DiscoveryEvents**: Auto-discovery, introspection
+- **DispatchEvents**: zDispatch command execution
+
+#### 4. Standardized Protocol
+All messages use `event` field:
+```json
+{"event": "get_schema", "model": "..."}
+{"event": "dispatch", "zKey": "^List.users"}
+```
+
+Legacy formats automatically inferred for backward compatibility.
+
+### Benefits
+
+- **Discoverability**: All events visible in `_event_map`
+- **Maintainability**: Each event type has dedicated handler
+- **Testability**: Event handlers testable independently
+- **Extensibility**: Add new events by registering in map
+- **Consistency**: Mirrors zDisplay patterns across framework
+
+### Documentation
+
+- `zBifrost/ARCHITECTURE.md` - Architecture comparison and details
+- `zBifrost/MESSAGE_PROTOCOL.md` - Complete protocol specification
+- `zBifrost/README.md` - Updated with new structure
+
