@@ -1,5 +1,18 @@
 # zCLI/subsystems/zComm/zComm_modules/zBifrost/bifrost_bridge.py
-"""Secure WebSocket server with authentication and origin validation."""
+"""Secure WebSocket server with authentication and origin validation.
+
+DEPRECATED: This legacy implementation remains temporarily for backward
+compatibility. New code should import from ``bifrost_bridge_modular``
+instead, which provides the event-driven architecture used by zDisplay.
+"""
+
+import warnings
+
+warnings.warn(
+    "bifrost_bridge.py is deprecated. Use bifrost_bridge_modular.py instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 try:
     from websockets import serve as ws_serve  # Standard import

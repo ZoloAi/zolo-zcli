@@ -3,6 +3,11 @@
 ## Overview
 
 zBifrost provides real-time WebSocket communication between zCLI backends and web frontends, enabling dual-mode applications (CLI + Web) with zero configuration.
+The bridge now mirrors zDisplay's event-driven contract. All messages flow
+through a single handler that routes by `event` into dedicated domain packages
+(`client`, `cache`, `discovery`, `dispatch`). This alignment removes duplicated
+conditional logic and makes future extensions significantly easier to reason
+about.
 
 ---
 
@@ -12,22 +17,38 @@ zBifrost provides real-time WebSocket communication between zCLI backends and we
 zBifrost/
 ├── README.md                      # This file
 ├── HOOKS_GUIDE.md                 # Comprehensive hooks documentation
-├── __init__.py                    # Python module init
-├── bifrost_bridge.py              # Server-side WebSocket bridge (Python)
+├── MESSAGE_PROTOCOL.md            # Canonical WebSocket event contracts (NEW)
+├── MIGRATION_GUIDE.md             # Legacy action → event migration steps (NEW)
+├── __init__.py                    # Python package export
+├── bifrost_bridge_modular.py      # Event-driven WebSocket bridge (default)
+├── bifrost_bridge.py              # Legacy bridge (deprecated shim)
 ├── bifrost_client.js              # Production client (monolithic, v1.5.4)
-├── bifrost_client_modular.js      # Modular client (NEW, v1.5.4+)
+├── bifrost_client_modular.js      # Modular client (ES module)
 │
-├── _modules/                      # Modular components (NEW)
-│   ├── connection.js              # WebSocket connection management
-│   ├── message_handler.js         # Message processing & correlation
-│   ├── renderer.js                # Auto-rendering with zTheme
-│   ├── theme_loader.js            # zTheme CSS loading
-│   ├── logger.js                  # Debug logging
-│   └── hooks.js                   # Hook management system
+├── bridge_modules/                # Server-side modular components
+│   ├── __init__.py
+│   ├── authentication.py          # Origin + token validation
+│   ├── cache_manager.py           # Schema & query cache orchestration
+│   ├── connection_info.py         # Server metadata snapshots
+│   ├── message_handler.py         # Dispatch + compatibility helpers
+│   └── events/                    # Event-domain routers (NEW)
+│       ├── __init__.py
+│       ├── client_events.py
+│       ├── cache_events.py
+│       ├── discovery_events.py
+│       └── dispatch_events.py
+│
+├── _modules/                      # Client-side modular bundle
+│   ├── connection.js
+│   ├── message_handler.js
+│   ├── renderer.js
+│   ├── theme_loader.js
+│   ├── logger.js
+│   └── hooks.js
 │
 └── _deprecated/                   # Legacy demo files
-    ├── zBifrost_Demo.html         # Old demo (deprecated)
-    └── zBifrost_Demo.js           # Old demo client (deprecated)
+    ├── zBifrost_Demo.html
+    └── zBifrost_Demo.js
 ```
 
 ---
@@ -48,10 +69,16 @@ zBifrost/
 - **Use**: Import as ES6 module
 - **Benefits**: Better maintainability, tree-shaking
 
-#### `bifrost_bridge.py` (Server-Side)
-- **Status**: ✅ Production Ready
-- **Type**: Python WebSocket server
-- **Use**: Automatic in zCLI WebSocket mode
+#### `bifrost_bridge_modular.py` (Server-Side Default)
+- **Status**: ✅ Production Ready (event-driven)
+- **Type**: Python WebSocket server with modular event packages
+- **Use**: Loaded automatically via `zCLI.subsystems.zComm`
+- **Highlights**: Central event map, shared handlers, backward-compatible fallbacks
+
+#### `bifrost_bridge.py` (Legacy)
+- **Status**: ⚠️ Deprecated (kept for transition)
+- **Type**: Legacy monolithic bridge
+- **Use**: Emits `DeprecationWarning`; migrate imports to `bifrost_bridge_modular`
 
 ### Documentation
 
@@ -61,6 +88,14 @@ Comprehensive guide to customizing BifrostClient behavior:
 - Usage patterns and examples
 - Custom rendering without zTheme
 - Best practices
+
+#### `MESSAGE_PROTOCOL.md`
+Authoritative reference for the standardized `event` field and handler payloads
+shared between zDisplay and zBifrost.
+
+#### `MIGRATION_GUIDE.md`
+Step-by-step instructions for upgrading legacy integrations that relied on the
+`action` field or the monolithic bridge.
 
 ### Deprecated
 

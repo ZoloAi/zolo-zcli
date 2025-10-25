@@ -198,10 +198,36 @@ class TestWebSocketManagement(unittest.TestCase):
     def test_create_websocket_uses_config(self):
         """Test that WebSocket uses zCLI configuration."""
         websocket = self.comm.create_websocket()
-        
+
         # Should use config values
         self.assertEqual(websocket.host, "127.0.0.1")
         self.assertEqual(websocket.port, 56891)
+
+    def test_create_websocket_event_map(self):
+        """The modular bridge should register standardized events."""
+        websocket = self.comm.create_websocket()
+
+        expected_events = {
+            "dispatch",
+            "get_schema",
+            "clear_cache",
+            "cache_stats",
+            "set_cache_ttl",
+            "discover",
+            "introspect",
+            "input_response",
+            "connection_info",
+        }
+
+        self.assertTrue(expected_events.issubset(set(websocket._event_map.keys())))
+
+    def test_create_websocket_infers_events(self):
+        """Legacy payloads using `action` are still supported."""
+        websocket = self.comm.create_websocket()
+
+        self.assertEqual(websocket._infer_event_type({"action": "get_schema"}), "get_schema")
+        self.assertEqual(websocket._infer_event_type({"action": "clear_cache"}), "clear_cache")
+        self.assertEqual(websocket._infer_event_type({"action": "read", "model": "users"}), "dispatch")
     
     def test_create_websocket_fallback_defaults(self):
         """Test WebSocket fallback to defaults when config unavailable."""
@@ -351,10 +377,10 @@ class TestzBifrostWebSocket(unittest.TestCase):
     def test_bifrost_uses_config(self):
         """Test that zBifrost uses zCLI config."""
         bifrost = zBifrost(self.mock_logger, zcli=self.mock_zcli)
-        
+
         self.assertEqual(bifrost.host, "127.0.0.1")
         self.assertEqual(bifrost.port, 56891)
-        self.assertTrue(bifrost.require_auth)
+        self.assertTrue(bifrost.auth.require_auth)
     
     def test_bifrost_custom_port(self):
         """Test zBifrost with custom port."""
@@ -379,10 +405,10 @@ class TestzBifrostWebSocket(unittest.TestCase):
     def test_bifrost_clients_tracking(self):
         """Test that client tracking is initialized."""
         bifrost = zBifrost(self.mock_logger, zcli=self.mock_zcli)
-        
+
         self.assertIsInstance(bifrost.clients, set)
         self.assertEqual(len(bifrost.clients), 0)
-        self.assertIsInstance(bifrost.authenticated_clients, dict)
+        self.assertIsInstance(bifrost.auth.authenticated_clients, dict)
     
     def test_validate_origin_no_origins_configured(self):
         """Test origin validation when no origins configured."""
@@ -392,7 +418,7 @@ class TestzBifrostWebSocket(unittest.TestCase):
         mock_ws.request_headers = {"Origin": "http://localhost:3000"}
         
         # Should allow localhost when no origins configured
-        result = bifrost.validate_origin(mock_ws)
+        result = bifrost.auth.validate_origin(mock_ws)
         self.assertTrue(result)
     
     def test_validate_origin_allowed(self):
@@ -403,7 +429,7 @@ class TestzBifrostWebSocket(unittest.TestCase):
         mock_ws = Mock()
         mock_ws.request_headers = {"Origin": "http://localhost:3000"}
         
-        result = bifrost.validate_origin(mock_ws)
+        result = bifrost.auth.validate_origin(mock_ws)
         self.assertTrue(result)
     
     def test_validate_origin_not_allowed(self):
@@ -414,7 +440,7 @@ class TestzBifrostWebSocket(unittest.TestCase):
         mock_ws = Mock()
         mock_ws.request_headers = {"Origin": "http://evil.com"}
         
-        result = bifrost.validate_origin(mock_ws)
+        result = bifrost.auth.validate_origin(mock_ws)
         self.assertFalse(result)
 
 

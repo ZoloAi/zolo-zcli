@@ -25,82 +25,90 @@ class MessageHandler:
         self.connection_info = connection_info_manager
     
     async def handle_message(self, ws, message, broadcast_func):
-        """
-        Handle incoming WebSocket message
-        
-        Args:
-            ws: WebSocket connection
-            message: Raw message string
-            broadcast_func: Function to broadcast messages
-            
-        Returns:
-            bool: True if message was handled, False otherwise
-        """
+        """Parse a WebSocket message and route based on its event type."""
         try:
             data = json.loads(message)
         except json.JSONDecodeError:
-            # Fallback to simple broadcast if not JSON
             await broadcast_func(message, sender=ws)
             return True
-        
-        # Route to appropriate handler
-        if await self._handle_special_actions(ws, data):
+
+        event = data.get("event") or self._infer_event_type(data)
+
+        if event and await self._handle_special_actions(event, ws, data):
             return True
-        
-        # Handle zDispatch commands
-        return await self._handle_dispatch(ws, data, broadcast_func)
+
+        # Dispatch commands are handled separately
+        if event == "dispatch" or data.get("zKey") or data.get("cmd"):
+            return await self.handle_dispatch(ws, data, broadcast_func)
+
+        if event:
+            self.logger.warning(f"[MessageHandler] [WARN] Unknown event received: {event}")
+            await broadcast_func(json.dumps(data), sender=ws)
+            return True
+
+        # No event inferred - fallback to broadcast for backward compatibility
+        await broadcast_func(json.dumps(data), sender=ws)
+        return True
     
-    async def _handle_special_actions(self, ws, data):
-        """
-        Handle special action messages (cache control, schema requests, etc.)
-        
-        Args:
-            ws: WebSocket connection
-            data: Parsed message data
-            
-        Returns:
-            bool: True if handled as special action
-        """
-        # Input response routing
-        if data.get("event") == "input_response":
-            return await self._handle_input_response(data)
-        
-        # Schema requests
-        if data.get("action") == "get_schema":
-            return await self._handle_schema_request(ws, data)
-        
-        # Cache control
-        if data.get("action") == "clear_cache":
-            return await self._handle_clear_cache(ws)
-        
-        if data.get("action") == "cache_stats":
-            return await self._handle_cache_stats(ws)
-        
-        if data.get("action") == "set_query_cache_ttl":
-            return await self._handle_set_ttl(ws, data)
-        
-        # Auto-discovery API (v1.5.4+)
-        if data.get("action") == "discover":
-            return await self._handle_discover(ws)
-        
-        if data.get("action") == "introspect":
-            return await self._handle_introspect(ws, data)
-        
-        return False
+    async def _handle_special_actions(self, event, ws, data):
+        """Route non-dispatch events to specialized handlers."""
+        handlers = {
+            "input_response": self.handle_input_response,
+            "connection_info": lambda payload: self.handle_connection_info(ws, payload),
+            "get_schema": lambda payload: self.handle_get_schema(ws, payload),
+            "clear_cache": lambda payload: self.handle_clear_cache(ws),
+            "cache_stats": lambda payload: self.handle_cache_stats(ws),
+            "set_cache_ttl": lambda payload: self.handle_set_cache_ttl(ws, payload),
+            "discover": lambda payload: self.handle_discover(ws),
+            "introspect": lambda payload: self.handle_introspect(ws, payload),
+        }
+
+        handler = handlers.get(event)
+        if not handler:
+            # Support legacy action names for backwards compatibility
+            legacy_map = {
+                "set_query_cache_ttl": handlers.get("set_cache_ttl"),
+            }
+            handler = legacy_map.get(event)
+
+        if not handler:
+            return False
+
+        result = await handler(data)
+        return bool(result)
     
-    async def _handle_input_response(self, data):
+    async def handle_input_response(self, data):
         """Route input response to zDisplay"""
         request_id = data.get("requestId")
         value = data.get("value")
-        
+
         if request_id and self.zcli and hasattr(self.zcli, 'display'):
             if hasattr(self.zcli.display.input, 'handle_input_response'):
                 self.zcli.display.input.handle_input_response(request_id, value)
                 self.logger.debug(f"[MessageHandler] [OK] Routed input response: {request_id}")
-        
+
         return True
-    
-    async def _handle_schema_request(self, ws, data):
+
+    async def handle_connection_info(self, ws, data):
+        """Send connection info snapshot back to client."""
+        if not self.connection_info:
+            await ws.send(json.dumps({
+                "event": "connection_info",
+                "error": "Connection info unavailable",
+            }))
+            return True
+
+        payload = self.connection_info.get_connection_info()
+        if data.get("auth"):
+            payload["auth"] = data["auth"]
+
+        await ws.send(json.dumps({
+            "event": "connection_info",
+            "data": payload,
+        }))
+        return True
+
+    async def handle_get_schema(self, ws, data):
         """Handle schema request"""
         model = data.get("model")
         if not model:
@@ -122,27 +130,27 @@ class MessageHandler:
         
         return True
     
-    async def _handle_clear_cache(self, ws):
+    async def handle_clear_cache(self, ws):
         """Handle cache clear request"""
         self.cache.clear_all()
         stats = self.cache.get_all_stats()
         await ws.send(json.dumps({"result": "Cache cleared", "stats": stats}))
         return True
     
-    async def _handle_cache_stats(self, ws):
+    async def handle_cache_stats(self, ws):
         """Handle cache stats request"""
         stats = self.cache.get_all_stats()
         await ws.send(json.dumps({"result": stats}))
         return True
     
-    async def _handle_set_ttl(self, ws, data):
+    async def handle_set_cache_ttl(self, ws, data):
         """Handle set TTL request"""
         ttl = data.get("ttl", 60)
         self.cache.set_query_ttl(ttl)
         await ws.send(json.dumps({"result": f"Query cache TTL set to {ttl}s"}))
         return True
     
-    async def _handle_discover(self, ws):
+    async def handle_discover(self, ws):
         """Handle discover models request"""
         if not self.connection_info:
             await ws.send(json.dumps({"error": "Discovery not available"}))
@@ -152,7 +160,7 @@ class MessageHandler:
         await ws.send(json.dumps({"result": {"models": models}}))
         return True
     
-    async def _handle_introspect(self, ws, data):
+    async def handle_introspect(self, ws, data):
         """Handle introspect model request"""
         model = data.get("model")
         if not model:
@@ -171,7 +179,7 @@ class MessageHandler:
         
         return True
     
-    async def _handle_dispatch(self, ws, data, broadcast_func):
+    async def handle_dispatch(self, ws, data, broadcast_func):
         """
         Handle zDispatch command
         
@@ -234,17 +242,17 @@ class MessageHandler:
         # Send result back
         await ws.send(payload)
         await broadcast_func(payload, sender=ws)
-        
+
         return True
-    
+
     def _is_cacheable_operation(self, data, zKey):
         """
         Check if operation is cacheable (read-only)
-        
+
         Args:
             data: Message data
             zKey: Command key
-            
+
         Returns:
             bool: True if cacheable
         """
@@ -254,4 +262,34 @@ class MessageHandler:
             zKey.startswith("^Get") or
             zKey.startswith("^Search")
         )
+
+    def _infer_event_type(self, data):
+        """Infer event type from legacy message formats."""
+        if data.get("event"):
+            return data["event"]
+
+        action = data.get("action")
+        if not action:
+            if data.get("zKey") or data.get("cmd"):
+                return "dispatch"
+            return None
+
+        legacy_map = {
+            "get_schema": "get_schema",
+            "clear_cache": "clear_cache",
+            "cache_stats": "cache_stats",
+            "set_query_cache_ttl": "set_cache_ttl",
+            "discover": "discover",
+            "introspect": "introspect",
+            "input_response": "input_response",
+            "connection_info": "connection_info",
+        }
+
+        if action in legacy_map:
+            return legacy_map[action]
+
+        if action in {"read", "create", "update", "delete"}:
+            return "dispatch"
+
+        return action
 

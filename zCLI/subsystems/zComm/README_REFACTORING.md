@@ -60,6 +60,18 @@ zComm/
 **Key Methods:**
 - `check_port(port)` - Check if port is available
 
+### 4. `zBifrost.bridge_modules.events` - Event Packages (NEW)
+**Responsibilities:**
+- Domain-specific routers for the WebSocket bridge (`client`, `cache`, `discovery`, `dispatch`)
+- Share logic with zDisplay by standardizing on the `event` field
+- Provide a single entry point for future event additions
+
+**Highlights:**
+- `bifrost_bridge_modular.py` now constructs an `_event_map` that routes every
+  message through `handle_message`, mirroring zDisplay's architecture.
+- Backward compatibility helpers translate legacy `action` payloads to events.
+- Documentation is consolidated in `MESSAGE_PROTOCOL.md` and `MIGRATION_GUIDE.md`.
+
 ## Benefits
 
 ### 1. **Separation of Concerns**

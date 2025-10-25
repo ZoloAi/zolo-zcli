@@ -4,6 +4,10 @@
 
 BifrostClient provides a **primitive hooks system** that allows you to customize behavior without modifying the core library. Hooks are callbacks that fire at specific points in the WebSocket lifecycle.
 
+> **Protocol note:** All incoming/outgoing messages include an `event` field.
+> Review [`MESSAGE_PROTOCOL.md`](MESSAGE_PROTOCOL.md) for canonical payloads
+> when building custom hooks that emit messages back to the server.
+
 ## Hook Philosophy
 
 **Primitive & Composable**: Hooks are intentionally simple building blocks. You can compose complex behavior by combining multiple hooks.
@@ -72,12 +76,12 @@ Called for **every** message received (before any processing).
 onMessage: (msg) => {
   // Log all messages
   console.log('📨 Message:', msg);
-  
+
   // Track metrics
   messageCounter++;
-  
+
   // Custom routing
-  if (msg.type === 'analytics') {
+  if (msg.event === 'analytics') {
     sendToAnalytics(msg.data);
   }
 }
@@ -89,11 +93,11 @@ Called for server-initiated broadcast messages (not responses to requests).
 ```javascript
 onBroadcast: (msg) => {
   // Handle real-time updates
-  if (msg.type === 'user_joined') {
+  if (msg.event === 'user_joined') {
     updateUserList(msg.user);
   }
-  
-  if (msg.type === 'notification') {
+
+  if (msg.event === 'notification') {
     showNotification(msg.text);
   }
 }
@@ -190,7 +194,7 @@ const client = new BifrostClient('ws://localhost:8765', {
     onMessage: (msg) => {
       // Log to analytics
       analytics.track('bifrost_message', {
-        type: msg.type,
+        event: msg.event,
         timestamp: Date.now()
       });
     },
@@ -209,7 +213,7 @@ const client = new BifrostClient('ws://localhost:8765', {
   hooks: {
     onBroadcast: (msg) => {
       // Handle real-time updates
-      switch (msg.type) {
+      switch (msg.event) {
         case 'user_typing':
           showTypingIndicator(msg.user);
           break;
@@ -364,7 +368,7 @@ const client = new BifrostClient('ws://localhost:8765', {
     
     // Handle broadcasts (real-time updates)
     onBroadcast: (msg) => {
-      if (msg.type === 'data_updated') {
+      if (msg.event === 'data_updated') {
         // Refresh your UI
         refreshDataTable();
       }

@@ -155,11 +155,20 @@
       if (!this.connected) {
         await this.connect();
       }
-      
+
       return new Promise((resolve, reject) => {
         const requestId = this.requestId++;
         payload._requestId = requestId;
-        
+
+        const normalizedPayload = { ...payload };
+        if (!normalizedPayload.event) {
+          if (normalizedPayload.zKey || normalizedPayload.cmd) {
+            normalizedPayload.event = 'dispatch';
+          } else if (normalizedPayload.action) {
+            normalizedPayload.event = normalizedPayload.action;
+          }
+        }
+
         // Set up timeout
         const timeoutId = setTimeout(() => {
           this.callbacks.delete(requestId);
@@ -180,8 +189,8 @@
         
         // Send request
         try {
-          this.ws.send(JSON.stringify(payload));
-          this.eventBus.emit('request', payload);
+          this.ws.send(JSON.stringify(normalizedPayload));
+          this.eventBus.emit('request', normalizedPayload);
         } catch (error) {
           this.callbacks.delete(requestId);
           clearTimeout(timeoutId);
@@ -492,15 +501,15 @@
     /**
      * Send raw request to server
      */
-    async request(action, data = {}) {
-      return await core.send({ action, ...data });
+    async request(event, data = {}) {
+      return await core.send({ event, action: data.action ?? event, ...data });
     },
-    
+
     /**
      * Send with zKey (command dispatch)
      */
     async cmd(zKey, data = {}) {
-      return await core.send({ zKey, ...data });
+      return await core.send({ event: 'dispatch', zKey, ...data });
     },
     
     // ═══════════════════════════════════════════════════════════
@@ -518,11 +527,12 @@
         if (cached) return cached;
       }
       
-      const result = await core.send({ 
-        action: 'read', 
-        model, 
+      const result = await core.send({
+        event: 'dispatch',
+        action: 'read',
+        model,
         filters,
-        ...options 
+        ...options
       });
       
       // Cache result
@@ -538,21 +548,21 @@
      * Create data (POST equivalent)
      */
     async post(model, data) {
-      return await core.send({ action: 'create', model, data });
+      return await core.send({ event: 'dispatch', action: 'create', model, data });
     },
     
     /**
      * Update data (PUT equivalent)
      */
     async put(model, filters, data) {
-      return await core.send({ action: 'update', model, filters, data });
+      return await core.send({ event: 'dispatch', action: 'update', model, filters, data });
     },
     
     /**
      * Delete data (DELETE equivalent)
      */
     async delete(model, filters) {
-      return await core.send({ action: 'delete', model, filters });
+      return await core.send({ event: 'dispatch', action: 'delete', model, filters });
     },
     
     // ═══════════════════════════════════════════════════════════
@@ -567,7 +577,7 @@
       const cached = await cacheManager.get(model, 'system');
       if (cached) return cached;
       
-      const schema = await core.send({ action: 'get_schema', model });
+      const schema = await core.send({ event: 'get_schema', action: 'get_schema', model });
       
       // Cache schema
       await cacheManager.set(model, schema, 'system', { 
@@ -582,7 +592,7 @@
      * Discover available models
      */
     async discover() {
-      return await core.send({ action: 'discover' });
+      return await core.send({ event: 'discover', action: 'discover' });
     },
     
     // ═══════════════════════════════════════════════════════════
@@ -732,7 +742,8 @@
     }
     
     async send(payload) {
-      return await zBifrost.request(payload.action || 'custom', payload);
+      const event = payload.event || payload.action || 'custom';
+      return await zBifrost.request(event, payload);
     }
     
     async getSchema(model) {

@@ -13,7 +13,11 @@ from .bridge_modules import (
     CacheManager,
     AuthenticationManager,
     MessageHandler,
-    ConnectionInfoManager
+    ConnectionInfoManager,
+    ClientEvents,
+    CacheEvents,
+    DiscoveryEvents,
+    DispatchEvents,
 )
 
 # ─────────────────────────────────────────────────────────────
@@ -63,6 +67,32 @@ class zBifrost:
         self.auth = AuthenticationManager(logger, require_auth, allowed_origins)
         self.connection_info = ConnectionInfoManager(logger, self.cache, self.zcli, self.walker)
         self.message_handler = MessageHandler(logger, self.cache, self.zcli, self.walker, self.connection_info)
+
+        self.events = {
+            'client': ClientEvents(self),
+            'cache': CacheEvents(self),
+            'discovery': DiscoveryEvents(self),
+            'dispatch': DispatchEvents(self)
+        }
+
+        self._event_map = {
+            # Client events
+            "input_response": self.events['client'].handle_input_response,
+            "connection_info": self.events['client'].handle_connection_info,
+
+            # Cache events
+            "get_schema": self.events['cache'].handle_get_schema,
+            "clear_cache": self.events['cache'].handle_clear_cache,
+            "cache_stats": self.events['cache'].handle_cache_stats,
+            "set_cache_ttl": self.events['cache'].handle_set_cache_ttl,
+
+            # Discovery events
+            "discover": self.events['discovery'].handle_discover,
+            "introspect": self.events['discovery'].handle_introspect,
+
+            # Dispatch events
+            "dispatch": self.events['dispatch'].handle_dispatch,
+        }
         
         self.logger.info("[zBifrost] Initialized with modular architecture")
     
@@ -105,7 +135,7 @@ class zBifrost:
         try:
             async for message in ws:
                 self.logger.info(f"[zBifrost] [RECV] Received: {message}")
-                await self.message_handler.handle_message(ws, message, self.broadcast)
+                await self.handle_message(ws, message)
         
         except ws_exceptions.ConnectionClosed:
             self.logger.info("[zBifrost] Client disconnected normally")
@@ -113,7 +143,27 @@ class zBifrost:
             self.logger.warning(f"[zBifrost] [DISCONNECT] Client disconnected with error: {e}")
         finally:
             await self._cleanup_client(ws)
-    
+
+    async def handle_message(self, ws, message):
+        """Single entry point for all messages (mirrors zDisplay.handle)."""
+        try:
+            data = json.loads(message)
+        except json.JSONDecodeError:
+            await self.broadcast(message, sender=ws)
+            return
+
+        event = data.get("event")
+        if not event:
+            event = self._infer_event_type(data)
+
+        handler = self._event_map.get(event)
+        if not handler:
+            self.logger.warning(f"[zBifrost] Unknown event: {event}")
+            await self.broadcast(json.dumps(data), sender=ws)
+            return
+
+        await handler(ws, data)
+
     async def _send_connection_info(self, ws, auth_info):
         """Send connection info to newly connected client"""
         try:
@@ -135,14 +185,48 @@ class zBifrost:
         """Clean up client connection"""
         if ws in self.clients:
             self.clients.remove(ws)
-        
+
         auth_info = self.auth.unregister_client(ws)
         if auth_info:
             user = auth_info.get('user', 'unknown')
             self.logger.info(f"[zBifrost] [DISCONNECT] User {user} disconnected")
-        
+
         self.logger.debug(f"[zBifrost] [INFO] Active clients: {len(self.clients)}")
-    
+
+    def _infer_event_type(self, data):
+        """Backward compatibility: map old formats to new events."""
+        if not data:
+            return None
+
+        event = data.get("event")
+        if event:
+            return event
+
+        action = data.get("action")
+        if not action:
+            if data.get("zKey") or data.get("cmd"):
+                return "dispatch"
+            return None
+
+        legacy_map = {
+            "get_schema": "get_schema",
+            "clear_cache": "clear_cache",
+            "cache_stats": "cache_stats",
+            "set_query_cache_ttl": "set_cache_ttl",
+            "discover": "discover",
+            "introspect": "introspect",
+            "input_response": "input_response",
+            "connection_info": "connection_info",
+        }
+
+        if action in legacy_map:
+            return legacy_map[action]
+
+        if action in {"read", "create", "update", "delete"}:
+            return "dispatch"
+
+        return action
+
     # ═══════════════════════════════════════════════════════════
     # Broadcasting
     # ═══════════════════════════════════════════════════════════

@@ -5,6 +5,6 @@ zBifrost WebSocket Bridge Module
 Secure WebSocket server with authentication and origin validation.
 """
 
-from .bifrost_bridge import zBifrost, broadcast, start_socket_server
+from .bifrost_bridge_modular import zBifrost, broadcast, start_socket_server
 
 __all__ = ['zBifrost', 'broadcast', 'start_socket_server']
