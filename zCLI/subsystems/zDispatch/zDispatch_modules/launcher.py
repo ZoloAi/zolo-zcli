@@ -22,8 +22,8 @@ class CommandLauncher:
             return self._launch_string(zHorizontal, context, walker)
         elif isinstance(zHorizontal, dict):
             return self._launch_dict(zHorizontal, context, walker)
-        # Return raw data as-is (lists, primitives, etc.) - useful for mock data in zWizard
-        return zHorizontal
+        # Unknown type - return None
+        return None
 
     def _launch_string(self, zHorizontal, context, walker):
         """Handle string-based launch commands."""
@@ -109,8 +109,8 @@ class CommandLauncher:
         if any(key in zHorizontal for key in crud_keys):
             return self._handle_crud_dict(zHorizontal, context)
         
-        # Plain dict - return as-is (useful for mock data in zWizard)
-        return zHorizontal
+        # Unknown dict - return None
+        return None
 
     def _handle_wizard_string(self, zHorizontal, walker, context=None):
         """Handle zWizard string command."""
