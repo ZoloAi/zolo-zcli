@@ -32,11 +32,11 @@ def execute_walker(zcli, parsed):
             "zVaFilename": zcli.session["zVaFilename"],
             "zVaFile_path": zcli.session.get("zVaFile_path", "@"),
             "zBlock": zcli.session.get("zBlock", "Root"),
-            "zMode": zcli.session.get("zMode", "Terminal")
+            "zMode": "zBifrost"  # Walker always runs in zBifrost mode
         })
         
-        # Set UI mode
-        zcli.ui_mode = True
+        # Set session mode to zBifrost for Walker
+        zcli.session["zMode"] = "zBifrost"
         
         # Import and launch Walker
         try:
@@ -47,16 +47,16 @@ def execute_walker(zcli, parsed):
             zcli.logger.info("Starting Walker UI mode...")
             result = walker.run()
             
-            # After Walker exits normally, return to shell
-            zcli.logger.info("Walker exited normally, returning to Shell mode...")
-            zcli.ui_mode = False
+            # After Walker exits normally, return to Terminal mode
+            zcli.logger.info("Walker exited normally, returning to Terminal mode...")
+            zcli.session["zMode"] = "Terminal"
             
             return {"success": "Walker session completed", "result": result}
             
         except SystemExit as e:
             # Walker called sys.exit() - this is normal for "stop" or completion
-            zcli.logger.info("Walker exited via sys.exit(%s), returning to Shell mode...", e.code)
-            zcli.ui_mode = False
+            zcli.logger.info("Walker exited via sys.exit(%s), returning to Terminal mode...", e.code)
+            zcli.session["zMode"] = "Terminal"
             
             # Determine if it was a normal exit or error
             if e.code == 0 or e.code is None:
@@ -66,7 +66,7 @@ def execute_walker(zcli, parsed):
             
         except Exception as e:
             zcli.logger.error("Failed to launch Walker: %s", e, exc_info=True)
-            zcli.ui_mode = False
+            zcli.session["zMode"] = "Terminal"
             return {"error": f"Walker launch failed: {str(e)}"}
     
     else:

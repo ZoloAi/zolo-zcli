@@ -61,11 +61,7 @@ class zConfig:
 
     @staticmethod
     def print_config_ready(label, color="CONFIG"):
-        """Print styled 'Ready' message for any config subsystem.
-        
-        Deprecated: Use print_ready_message from zCLI.utils instead.
-        Kept for backward compatibility.
-        """
+        """Print styled 'Ready' message (pre zDisplay initialization)"""
         print_ready_message(label, color=color)
 
     # ═══════════════════════════════════════════════════════════

@@ -26,7 +26,7 @@ class zComm:
         # Service manager
         self.services = ServiceManager(self.logger)
 
-        # Initialize WebSocket server if in GUI mode
+        # Initialize WebSocket server if in zBifrost mode
         self._auto_start_websocket()
 
         # Print styled ready message (before zDisplay is available)
@@ -36,14 +36,16 @@ class zComm:
         self.logger.info("Communication subsystem ready")
 
     def _auto_start_websocket(self):
-        """Auto-start WebSocket server if in GUI mode."""
+        """Auto-start WebSocket server if in zBifrost mode."""
         try:
-            # Check if we're in GUI mode (has zVaFilename)
-            is_gui_mode = bool(self.zcli.zspark_obj.get("zVaFilename"))
-            if is_gui_mode:
-                self.logger.info("GUI mode detected - initializing WebSocket server")
+            # Check the actual zMode setting (not inferred from filename)
+            zmode = self.session.get("zMode", "Terminal")
+            is_zbifrost_mode = (zmode == "zBifrost")
+            
+            if is_zbifrost_mode:
+                self.logger.info("zBifrost mode detected - initializing WebSocket server")
                 self.create_websocket()
-                self.logger.debug("WebSocket server instance created for GUI mode")
+                self.logger.debug("WebSocket server instance created for zBifrost mode")
             else:
                 self.logger.debug("Terminal mode detected - WebSocket server will be created when needed")
         except Exception as e:

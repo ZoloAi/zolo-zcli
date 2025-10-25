@@ -91,13 +91,10 @@ class zCLI:
         from .subsystems.zWalker import zWalker
         self.walker = zWalker(self)  # Modern walker with unified navigation (can use plugins immediately)
 
-        # Determine interface mode (needed for session initialization)
-        self.ui_mode = bool(self.zspark_obj.get("zVaFilename"))
-
-        # Initialize session
+        # Initialize session (sets zMode from zSpark_obj or defaults to Terminal)
         self._init_session()
 
-        self.logger.info("zCLI Core initialized - UI Mode: %s", self.ui_mode)
+        self.logger.info("zCLI Core initialized - Mode: %s", self.session.get("zMode"))
 
     def _load_plugins(self):
         """ Load utility plugins (Python modules) from zSpark_obj if provided.
@@ -114,19 +111,14 @@ class zCLI:
     def _init_session(self):
         """
         Initialize session with zS_id and zMode.
+        Session already has zMode from zConfig - we just set the ID here.
         """
         # Set session ID - always required
         self.session["zS_id"] = self.config.session.generate_id("zS")
 
-        # Set zMode based on zConfig source of truth or UI mode detection
-        if self.ui_mode:
-            # UI mode detected - set to GUI for WebSocket adapters
-            self.session["zMode"] = "zBifrost"
-        else:
-            # Use zConfig-detected mode or default to Terminal
-            # zConfig will check zSpark_obj.get("zMode") and default to "Terminal"
-            detected_mode = self.config.session.detect_zMode()
-            self.session["zMode"] = detected_mode
+        # zMode was already set by zConfig.session.detect_zMode() during session creation
+        # It checks zSpark_obj.get("zMode") and defaults to "Terminal"
+        # No need to override it here
 
         self.logger.debug("Session initialized:")
         self.logger.debug("  zS_id: %s", self.session["zS_id"])
@@ -146,10 +138,12 @@ class zCLI:
         return self.shell.run_shell()
 
     def run(self):
-        """Main entry point - determines whether to run in UI mode or shell mode."""
-        if self.ui_mode:
-            self.logger.info("Starting zCLI in UI mode via zWalker...")
+        """Main entry point - determines whether to run in zBifrost mode or Terminal mode."""
+        zmode = self.session.get("zMode", "Terminal")
+        
+        if zmode == "zBifrost":
+            self.logger.info("Starting zCLI in zBifrost mode via zWalker...")
             return self.walker.run()
 
-        self.logger.info("Starting zCLI in shell mode...")
+        self.logger.info("Starting zCLI in Terminal mode...")
         return self.run_shell()
