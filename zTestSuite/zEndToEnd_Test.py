@@ -779,7 +779,7 @@ def run_tests(verbose=False):
     suite.addTests(loader.loadTestsFromTestCase(TestPluginWorkflow))
     suite.addTests(loader.loadTestsFromTestCase(TestCompleteApplicationLifecycle))
     suite.addTests(loader.loadTestsFromTestCase(TestUserManagerWebSocketMode))  # NEW v1.5.3
-    suite.addTests(loader.loadTestsFromTestCase(TestErrorHandlingWorkflow))  # NEW v1.5.3
+    suite.addTests(loader.loadTestsFromTestCase(TestTracebackWorkflow))  # NEW v1.5.3
     
     runner = unittest.TextTestRunner(verbosity=2 if verbose else 1)
     result = runner.run(suite)
