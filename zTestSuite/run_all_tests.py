@@ -28,6 +28,7 @@ TEST_MODULES = [
     'zServer',     # Week 1.5 - HTTP static file server (Layer 0, after zComm)
     'zBifrost',  # WebSocket/GUI mode data flow tests (v1.5.3)
     'zBifrost_Integration',  # Week 1.6 Phase 1 - REAL WebSocket integration tests (Layer 0)
+    'zBifrost_Unit',  # Week 2.3 Phase 1 - Unit tests for message_handler, auth, dispatch (60% → 85%)
     'zShutdown',   # Week 2.2 - Graceful shutdown (signal handlers, cleanup)
     'zDisplay',
     'zAuth',       # zAuth depends on zDisplay
