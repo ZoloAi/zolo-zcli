@@ -1,12 +1,22 @@
 # zCLI/subsystems/zConfig/zConfig_modules/config_paths.py
 """Cross-platform configuration path resolution with platformdirs."""
 
+from typing import Any, Dict, List, Optional, Tuple
+from pathlib import Path as PathlibPath
 from zCLI import platform, Path, sys, Colors, platformdirs, load_dotenv
 
 class zConfigPaths:
     """Cross-platform path resolver for zolo-zcli configuration using native OS conventions."""
 
-    def __init__(self, zSpark_obj=None):
+    # Type hints for instance attributes
+    app_name: str
+    app_author: str
+    os_type: str
+    zSpark: Optional[Dict[str, Any]]
+    workspace_dir: Optional[PathlibPath]
+    _dotenv_path: Optional[PathlibPath]
+
+    def __init__(self, zSpark_obj: Optional[Dict[str, Any]] = None) -> None:
         self.app_name = "zolo-zcli"
         self.app_author = "zolo"
         self.os_type = platform.system()  # 'Linux', 'Darwin', 'Windows'
@@ -35,7 +45,7 @@ class zConfigPaths:
     # Workspace & dotenv detection helpers
     # ═══════════════════════════════════════════════════════════
 
-    def _detect_workspace_dir(self):
+    def _detect_workspace_dir(self) -> Optional[PathlibPath]:
         """Determine workspace directory using zSpark hint or current directory."""
         if self.zSpark:
             workspace = self.zSpark.get("zWorkspace")
@@ -53,7 +63,7 @@ class zConfigPaths:
         except Exception:  # pragma: no cover - defensive fallback
             return Path.home()
 
-    def _resolve_explicit_dotenv_path(self):
+    def _resolve_explicit_dotenv_path(self) -> Optional[PathlibPath]:
         """Check zSpark configuration for explicitly provided dotenv path."""
         if not self.zSpark:
             return None
@@ -79,7 +89,7 @@ class zConfigPaths:
                     )
         return None
 
-    def _detect_dotenv_file(self):
+    def _detect_dotenv_file(self) -> Optional[PathlibPath]:
         """Determine dotenv file location from zSpark overrides or workspace."""
         explicit = self._resolve_explicit_dotenv_path()
         if explicit:
@@ -90,11 +100,11 @@ class zConfigPaths:
 
         return None
 
-    def get_dotenv_path(self):
+    def get_dotenv_path(self) -> Optional[PathlibPath]:
         """Return resolved dotenv path (may not exist)."""
         return self._dotenv_path
 
-    def load_dotenv(self, override=True):
+    def load_dotenv(self, override: bool = True) -> Optional[PathlibPath]:
         """Load environment variables from resolved dotenv file if available."""
         dotenv_path = self.get_dotenv_path()
         if not dotenv_path:
@@ -117,7 +127,7 @@ class zConfigPaths:
     # Resolves standard OS locations for zolo system folders
     # ═══════════════════════════════════════════════════════════
     @property
-    def system_config_dir(self):
+    def system_config_dir(self) -> PathlibPath:
         r"""
         System config location (discovery only; not created).
         
@@ -132,7 +142,7 @@ class zConfigPaths:
         return Path(platformdirs.site_config_dir(self.app_name, self.app_author))
 
     @property
-    def user_config_dir(self):
+    def user_config_dir(self) -> PathlibPath:
         r"""
         User config location (OS-native).
 
@@ -143,7 +153,7 @@ class zConfigPaths:
         return Path(platformdirs.user_config_dir(self.app_name, self.app_author))
 
     @property
-    def user_config_dir_legacy(self):
+    def user_config_dir_legacy(self) -> PathlibPath:
         """
         Legacy dotfile configuration directory (backward compatibility).
         
@@ -154,7 +164,7 @@ class zConfigPaths:
         return Path.home() / ".zolo-zcli"
 
     @property
-    def user_zconfigs_dir(self):
+    def user_zconfigs_dir(self) -> PathlibPath:
         """
         User zConfigs directory for configuration files.
         
@@ -164,7 +174,7 @@ class zConfigPaths:
         return self.user_config_dir / "zConfigs"
 
     @property
-    def user_data_dir(self):
+    def user_data_dir(self) -> PathlibPath:
         r"""
         User data directory (databases, files).
         
@@ -175,7 +185,7 @@ class zConfigPaths:
         return Path(platformdirs.user_data_dir(self.app_name, self.app_author))
 
     @property
-    def user_cache_dir(self):
+    def user_cache_dir(self) -> PathlibPath:
         r"""
         User cache directory (temporary data).
         
@@ -186,7 +196,7 @@ class zConfigPaths:
         return Path(platformdirs.user_cache_dir(self.app_name, self.app_author))
 
     @property
-    def user_logs_dir(self):
+    def user_logs_dir(self) -> PathlibPath:
         r"""
         User logs directory for application logs.
         
@@ -201,7 +211,7 @@ class zConfigPaths:
     # ═══════════════════════════════════════════════════════════
 
     @property
-    def system_config_defaults(self):
+    def system_config_defaults(self) -> PathlibPath:
         """
         System default configuration file.
         
@@ -211,7 +221,7 @@ class zConfigPaths:
         return self.system_config_dir / "zConfig.defaults.yaml"
 
     @property
-    def system_machine_config(self):
+    def system_machine_config(self) -> PathlibPath:
         """
         System machine configuration file (zMachine zVaFile).
         
@@ -224,7 +234,7 @@ class zConfigPaths:
     # Config File Hierarchy
     # ═══════════════════════════════════════════════════════════
 
-    def get_config_file_hierarchy(self):
+    def get_config_file_hierarchy(self) -> List[Tuple[PathlibPath, int, str]]:
         """
         Get list of config file paths to check, in priority order.
         
@@ -236,6 +246,34 @@ class zConfigPaths:
         2. User config - Per-user overrides
         3. Environment variables / dotenv - Runtime exports (TODO)
         4. Session runtime - In-memory overrides (handled elsewhere)
+        
+        TODO (Deferred from v1.5.4 Week 1.3): Add .zclirc support
+        ┌───────────────────────────────────────────────────────────────┐
+        │ Future Enhancement: Unix-style Dotfile Configuration          │
+        ├───────────────────────────────────────────────────────────────┤
+        │ Priority Order (Proposed):                                    │
+        │   0. ./.zclirc           (project-specific, highest)          │
+        │   1. ~/.zclirc           (user home directory)                │
+        │   2. User config (current) (OS-native platformdirs)           │
+        │   3. System defaults     (base config)                        │
+        │                                                                │
+        │ Benefits:                                                      │
+        │   • Familiar Unix dotfile convention                          │
+        │   • Easy to find/edit: ~/.zclirc                              │
+        │   • Team-shared configs: commit ./.zclirc to git              │
+        │   • Profile support: dev/prod sections in one file            │
+        │                                                                │
+        │ Why Deferred:                                                  │
+        │   • Current platformdirs solution works well cross-platform   │
+        │   • Persistence via persist_machine() already functional      │
+        │   • Focus on critical features (testing, validation) first    │
+        │                                                                │
+        │ Implementation Notes:                                          │
+        │   • Check ./.zclirc in workspace first (highest priority)     │
+        │   • Check ~/.zclirc in home directory (user defaults)         │
+        │   • Merge with existing config hierarchy (additive, not replacement) │
+        │   • YAML format with optional profile sections                │
+        └───────────────────────────────────────────────────────────────┘
         """
         configs = []
         

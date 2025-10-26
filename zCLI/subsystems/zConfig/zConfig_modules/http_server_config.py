@@ -2,6 +2,8 @@
 
 """HTTP Server Configuration Module"""
 
+from typing import Any, Dict
+
 
 class HTTPServerConfig:
     """
@@ -14,7 +16,14 @@ class HTTPServerConfig:
         enabled: Whether HTTP server is enabled
     """
     
-    def __init__(self, zspark_obj, logger):
+    # Type hints for instance attributes
+    logger: Any
+    host: str
+    port: int
+    serve_path: str
+    enabled: bool
+    
+    def __init__(self, zspark_obj: Dict[str, Any], logger: Any) -> None:
         """
         Initialize HTTP server configuration
         
@@ -40,6 +49,6 @@ class HTTPServerConfig:
         else:
             self.logger.debug("[HTTPServerConfig] HTTP server disabled")
     
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"HTTPServerConfig(host={self.host}, port={self.port}, enabled={self.enabled})"
 

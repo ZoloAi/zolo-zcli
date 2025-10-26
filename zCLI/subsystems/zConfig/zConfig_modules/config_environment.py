@@ -1,14 +1,24 @@
 # zCLI/subsystems/zConfig/zConfig_modules/config_environment.py
 """Environment-level configuration management for deployment and runtime settings."""
 
+from typing import Any, Dict, Optional
+from pathlib import Path
 from zCLI import os, sys, yaml
 from zCLI.utils import print_ready_message
 from .helpers import create_default_env_config, load_config_with_override
+from .config_paths import zConfigPaths
 
 class EnvironmentConfig:
     """Manages environment-specific settings and deployment configuration."""
 
-    def __init__(self, paths):
+    # Type hints for instance attributes
+    paths: zConfigPaths
+    env: Dict[str, Any]
+    in_venv: bool
+    venv_path: Optional[str]
+    system_env: Dict[str, str]
+
+    def __init__(self, paths: zConfigPaths) -> None:
         """Initialize environment configuration with paths for resolution."""
         self.paths = paths
 
@@ -29,7 +39,7 @@ class EnvironmentConfig:
 
         print_ready_message("EnvironmentConfig Ready", color="CONFIG")
 
-    def _detect_environments(self):
+    def _detect_environments(self) -> None:
         """Detect virtual environment and system environment."""
         # Load dotenv file (if available) before capturing environment snapshot
         dotenv_path = self.paths.load_dotenv()
@@ -51,7 +61,7 @@ class EnvironmentConfig:
         else:
             print("[EnvironmentConfig] Running in system environment")
 
-    def _get_defaults(self):
+    def _get_defaults(self) -> Dict[str, Any]:
         """Get minimal hardcoded default environment values (first run fallback)."""
         print("[EnvironmentConfig] Loading environment defaults...")
 
@@ -65,27 +75,27 @@ class EnvironmentConfig:
 
         return env
 
-    def get(self, key, default=None):
+    def get(self, key: str, default: Any = None) -> Any:
         """Get environment config value by key, returning default if not found."""
         return self.env.get(key, default)
 
-    def get_all(self):
+    def get_all(self) -> Dict[str, Any]:
         """Get all environment configuration values."""
         return self.env.copy()
 
-    def get_env_var(self, key, default=None):
+    def get_env_var(self, key: str, default: Optional[str] = None) -> Optional[str]:
         """Get environment variable with fallback to default."""
         return self.system_env.get(key, default)
 
-    def is_in_venv(self):
+    def is_in_venv(self) -> bool:
         """Check if running in virtual environment."""
         return self.in_venv
 
-    def get_venv_path(self):
+    def get_venv_path(self) -> Optional[str]:
         """Get virtual environment path if running in venv."""
         return self.venv_path
 
-    def save_user_config(self):
+    def save_user_config(self) -> bool:
         """Save current environment config to user's env.yaml."""
         try:
             path = self.paths.user_zconfigs_dir / "zConfig.env.yaml"

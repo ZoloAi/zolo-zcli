@@ -1,6 +1,7 @@
 # zCLI/subsystems/zConfig/zConfig_modules/config_logger.py
 """Logger configuration and management as part of zConfig."""
 
+from typing import Any, Dict, Optional
 from zCLI import Colors, logging
 from zCLI.utils import print_ready_message, validate_zcli_instance
 import os
@@ -8,11 +9,13 @@ import os
 class FileNameFormatter(logging.Formatter):
     """Custom formatter that shows the actual file name instead of logger name."""
     
-    def __init__(self, logger_config, fmt=None, datefmt=None):
+    logger_config: Any  # LoggerConfig instance
+    
+    def __init__(self, logger_config: Any, fmt: Optional[str] = None, datefmt: Optional[str] = None) -> None:
         self.logger_config = logger_config
         super().__init__(fmt, datefmt)
     
-    def format(self, record):
+    def format(self, record: logging.LogRecord) -> str:
         # Get the caller file information
         caller_name = self.logger_config._get_caller_info(record)
         
@@ -24,7 +27,15 @@ class FileNameFormatter(logging.Formatter):
 class LoggerConfig:
     """Manages logging configuration and provides logging interface."""
 
-    def __init__(self, environment_config, zcli, session_data):
+    # Type hints for instance attributes
+    environment: Any  # EnvironmentConfig
+    zcli: Any  # zCLI instance
+    session_data: Dict[str, Any]
+    mycolor: str
+    log_level: str
+    _logger: logging.Logger
+
+    def __init__(self, environment_config: Any, zcli: Any, session_data: Dict[str, Any]) -> None:
         """Initialize logger with environment config, zcli instance, and session data."""
         # Validate required parameters
         validate_zcli_instance(zcli, "LoggerConfig", require_session=False)
@@ -45,7 +56,7 @@ class LoggerConfig:
         # Print ready message
         print_ready_message("LoggerConfig Ready", color="CONFIG")
 
-    def _get_log_level(self):
+    def _get_log_level(self) -> str:
         """
         Get log level from session data.
         Session has already processed the full hierarchy:

@@ -1,6 +1,7 @@
 # zCLI/subsystems/zConfig/zConfig.py
 """Cross-platform configuration management with hierarchical loading and secret support."""
 
+from typing import Any, Dict, Optional, Union
 from zCLI.utils import print_ready_message, validate_zcli_instance
 from .zConfig_modules import (
     ConfigValidator,
@@ -18,7 +19,18 @@ from .zConfig_modules import (
 class zConfig:
     """Configuration management with hierarchical loading and cross-platform support."""
 
-    def __init__(self, zcli, zSpark_obj=None):
+    # Type hints for instance attributes
+    zcli: Any  # zCLI instance
+    zSpark: Optional[Dict[str, Any]]
+    sys_paths: zConfigPaths
+    machine: MachineConfig
+    environment: EnvironmentConfig
+    session: SessionConfig
+    websocket: WebSocketConfig
+    http_server: HTTPServerConfig
+    _persistence: Optional[ConfigPersistence]
+
+    def __init__(self, zcli: Any, zSpark_obj: Optional[Dict[str, Any]] = None) -> None:
         """Initialize zConfig subsystem."""
 
         # Validate zCLI instance, pre zSession creation
@@ -81,7 +93,7 @@ class zConfig:
         print_ready_message("zConfig Ready", color="CONFIG")
 
     @staticmethod
-    def print_config_ready(label, color="CONFIG"):
+    def print_config_ready(label: str, color: str = "CONFIG") -> None:
         """Print styled 'Ready' message (pre zDisplay initialization)"""
         print_ready_message(label, color=color)
 
@@ -89,25 +101,52 @@ class zConfig:
     # Configuration Access Methods
     # ═══════════════════════════════════════════════════════════
 
-    def get_machine(self, key=None, default=None):
-        """Get machine config value by key (or all values if key=None)."""
+    def get_machine(self, key: Optional[str] = None, default: Any = None) -> Union[Any, Dict[str, Any]]:
+        """Get machine config value by key (or all values if key=None).
+        
+        Args:
+            key: Configuration key to retrieve (None returns all config)
+            default: Default value if key not found
+            
+        Returns:
+            Single value if key provided, full config dict if key is None
+        """
         if key is None:
             return self.machine.get_all()
         return self.machine.get(key, default)
 
-    def get_environment(self, key=None, default=None):
-        """Get environment config value by key (or all values if key=None)."""
+    def get_environment(self, key: Optional[str] = None, default: Any = None) -> Union[Any, Dict[str, Any]]:
+        """Get environment config value by key (or all values if key=None).
+        
+        Args:
+            key: Configuration key to retrieve (None returns all config)
+            default: Default value if key not found
+            
+        Returns:
+            Single value if key provided, full config dict if key is None
+        """
         if key is None:
             return self.environment.get_all()
         return self.environment.get(key, default)
 
-    def create_logger(self, session_data):
-        """Create logger instance with session data."""
+    def create_logger(self, session_data: Dict[str, Any]) -> LoggerConfig:
+        """Create logger instance with session data.
+        
+        Args:
+            session_data: Session dictionary containing logger configuration
+            
+        Returns:
+            Configured LoggerConfig instance
+        """
         return LoggerConfig(self.environment, self.zcli, session_data)
 
     @property
-    def persistence(self):
-        """Lazy-load persistence subsystem when needed for saving changes."""
+    def persistence(self) -> ConfigPersistence:
+        """Lazy-load persistence subsystem when needed for saving changes.
+        
+        Returns:
+            ConfigPersistence instance for saving configuration changes
+        """
         if not hasattr(self, '_persistence'):
             self._persistence = ConfigPersistence(self.machine, self.environment, self.sys_paths, self.zcli)  # pylint: disable=attribute-defined-outside-init
         return self._persistence

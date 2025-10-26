@@ -429,36 +429,21 @@
                         </div>
                     </div>
 
-                    <div class="todo-item" data-id="layer0-config-file">
-                        <input type="checkbox" class="todo-checkbox">
-                        <div class="todo-content">
-                            <div class="todo-title">Week 1.3: Add .zclirc config file support</div>
-                            <div class="todo-description">
-                                Load defaults from ~/.zclirc or ./.zclirc (like .bashrc).
-                                Priority: CWD .zclirc > HOME ~/.zclirc > defaults.
-                                <br><strong>UX Win:</strong> Users set preferences once
-                            </div>
-                            <div class="todo-tags">
-                                <span class="tag">Layer 0</span>
-                                <span class="tag">zConfig</span>
-                                <span class="tag">2 days</span>
-                            </div>
-                        </div>
-                    </div>
-
                     <div class="todo-item" data-id="layer0-type-hints">
-                        <input type="checkbox" class="todo-checkbox">
+                        <input type="checkbox" class="todo-checkbox" checked>
                         <div class="todo-content">
-                            <div class="todo-title">Week 1.4: Add type hints to zConfig/zComm</div>
+                            <div class="todo-title">Week 1.3: Add type hints to zConfig/zComm ✅</div>
                             <div class="todo-description">
                                 from typing import Dict, List, Optional, Union
                                 Enable mypy checking for Layer 0 only first.
                                 <br><strong>Foundation Quality:</strong> Type safety prevents runtime errors
+                                <br><strong>✅ COMPLETED:</strong> Type hints added to zConfig.py, zComm.py, and key modules. mypy.ini configured. All tests passing.
                             </div>
                             <div class="todo-tags">
                                 <span class="tag">Layer 0</span>
                                 <span class="tag">Code Quality</span>
                                 <span class="tag">2 days</span>
+                                <span class="tag" style="background: #48bb78; color: white;">DONE</span>
                             </div>
                         </div>
                     </div>
@@ -466,7 +451,7 @@
                     <div class="todo-item" data-id="layer0-zserver-zbifrost-separation">
                         <input type="checkbox" class="todo-checkbox">
                         <div class="todo-content">
-                            <div class="todo-title">Week 1.5: Validate zServer/zBifrost separation</div>
+                            <div class="todo-title">Week 1.4: Validate zServer/zBifrost separation</div>
                             <div class="todo-description">
                                 Verify clean separation: zServer (HTTP static files) vs zBifrost (WebSocket realtime).
                                 Ensure zBifrost doesn't duplicate HTTP server logic.
@@ -485,7 +470,7 @@
                     <div class="todo-item" data-id="layer0-zserver-comprehensive-tests">
                         <input type="checkbox" class="todo-checkbox">
                         <div class="todo-content">
-                            <div class="todo-title">Week 1.6: Add comprehensive zServer tests</div>
+                            <div class="todo-title">Week 1.5: Add comprehensive zServer tests</div>
                             <div class="todo-description">
                                 Complete test coverage for zServer lifecycle, static file serving, CORS, error handling.
                                 Include sandbox-aware network tests with @requires_network decorator.
@@ -504,7 +489,7 @@
                     <div class="todo-item" data-id="layer0-zbifrost-integration-tests">
                         <input type="checkbox" class="todo-checkbox">
                         <div class="todo-content">
-                            <div class="todo-title">Week 1.7: Add zBifrost integration tests</div>
+                            <div class="todo-title">Week 1.6: Add zBifrost integration tests</div>
                             <div class="todo-description">
                                 Test zBifrost + zServer running together (different ports, no conflicts).
                                 Test WebSocket message handling, client lifecycle, reconnection logic.
@@ -577,18 +562,17 @@
                         <ul style="margin: 10px 0 0 20px; line-height: 1.8;">
                             <li>✅ Config validation works (Week 1.1 - COMPLETE)</li>
                             <li>✅ Path resolution documented (Week 1.2 - COMPLETE)</li>
-                            <li>📝 .zclirc config file support (Week 1.3)</li>
-                            <li>📝 Type hints added to zConfig/zComm (Week 1.4)</li>
-                            <li>📝 zServer/zBifrost separation validated (Week 1.5)</li>
-                            <li>📝 zServer comprehensive tests (Week 1.6)</li>
-                            <li>📝 zBifrost integration tests (Week 1.7)</li>
+                            <li>📝 Type hints added to zConfig/zComm (Week 1.3)</li>
+                            <li>📝 zServer/zBifrost separation validated (Week 1.4)</li>
+                            <li>📝 zServer comprehensive tests (Week 1.5)</li>
+                            <li>📝 zBifrost integration tests (Week 1.6)</li>
                             <li>📝 Health checks return accurate status (Week 2.1)</li>
                             <li>📝 Graceful shutdown works (Week 2.2)</li>
                             <li>📝 100% test coverage for Layer 0 (Week 2.3 - CHECKPOINT)</li>
                             <li>📝 Documentation complete (AGENT.md updated)</li>
                         </ul>
                         <div style="margin-top: 15px; padding: 10px; background: #f0fff4; border-radius: 4px;">
-                            <strong>Progress:</strong> 2/11 completed (18%) - Week 1.1 ✅ Week 1.2 ✅
+                            <strong>Progress:</strong> 2/10 completed (20%) - Week 1.1 ✅ Week 1.2 ✅
                         </div>
                     </div>
                 </div>
@@ -996,14 +980,13 @@
                 <div class="note" style="margin-top: 30px;">
                     <div class="note-title">📅 10-Week Timeline Summary</div>
                     <div class="note-text" style="line-height: 2;">
-                        <strong>Week 1 (✅ 2/7 done):</strong><br>
+                        <strong>Week 1 (✅ 2/6 done):</strong><br>
                         &nbsp;&nbsp;• 1.1: ✅ Config validation (COMPLETE)<br>
                         &nbsp;&nbsp;• 1.2: ✅ Path resolution docs (COMPLETE - zPath_GUIDE.md)<br>
-                        &nbsp;&nbsp;• 1.3: .zclirc config file<br>
-                        &nbsp;&nbsp;• 1.4: Type hints (zConfig/zComm)<br>
-                        &nbsp;&nbsp;• 1.5: zServer/zBifrost separation validation<br>
-                        &nbsp;&nbsp;• 1.6: zServer comprehensive tests<br>
-                        &nbsp;&nbsp;• 1.7: zBifrost integration tests<br>
+                        &nbsp;&nbsp;• 1.3: Type hints (zConfig/zComm)<br>
+                        &nbsp;&nbsp;• 1.4: zServer/zBifrost separation validation<br>
+                        &nbsp;&nbsp;• 1.5: zServer comprehensive tests<br>
+                        &nbsp;&nbsp;• 1.6: zBifrost integration tests<br>
                         <br>
                         <strong>Week 2:</strong> Health checks, graceful shutdown, 100% test coverage<br>
                         <strong>Weeks 3-5:</strong> Layer 1 (Core) → Auth, Display, Validation, Hot Reload<br>
@@ -1476,6 +1459,33 @@
                     <span class="section-icon">🟢</span>
                     <h2 class="section-title">Low Priority & Polish</h2>
                     <span class="priority-badge priority-low">Polish</span>
+                </div>
+
+                <div class="subsystem-card">
+                    <div class="subsystem-header">
+                        <div class="subsystem-name">⚙️ zConfig - User Dotfile Support (Deferred)</div>
+                        <div class="subsystem-rating">Status: Nice-to-Have</div>
+                    </div>
+                    
+                    <div class="todo-item" data-id="config-zclirc">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Add .zclirc config file support (Deferred from Week 1.3)</div>
+                            <div class="todo-description">
+                                Load defaults from ~/.zclirc or ./.zclirc (like .bashrc).
+                                Priority: ./.zclirc > ~/.zclirc > platformdirs config > defaults.
+                                <br><strong>Why Deferred:</strong> Current platformdirs-based persistence works well cross-platform.
+                                <br><strong>Future Benefit:</strong> Unix-style dotfile convention, team-shared project configs.
+                                <br><strong>Note:</strong> TODO added to config_paths.py for future implementation.
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">zConfig</span>
+                                <span class="tag">UX</span>
+                                <span class="tag">2 days</span>
+                                <span class="tag" style="background: #cbd5e0; color: #2d3748;">DEFERRED</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="subsystem-card">

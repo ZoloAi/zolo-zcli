@@ -1,13 +1,24 @@
 # zCLI/subsystems/zComm/zComm.py
 
 """Communication & Service Management Subsystem for zBifrost and services."""
+from typing import Any, Dict, Optional
 from zCLI.utils import print_ready_message, validate_zcli_instance
 from .zComm_modules import ServiceManager, BifrostManager, HTTPClient, NetworkUtils
 
 class zComm:
     """Communication & Service Management for zBifrost and services."""
 
-    def __init__(self, zcli):
+    # Type hints for instance attributes
+    zcli: Any  # zCLI instance
+    session: Dict[str, Any]
+    logger: Any
+    mycolor: str
+    _bifrost_mgr: BifrostManager
+    _http_client: HTTPClient
+    _network_utils: NetworkUtils
+    services: ServiceManager
+
+    def __init__(self, zcli: Any) -> None:
         """Initialize zComm subsystem.
         """
         # Validate zCLI instance FIRST - session is always required
@@ -38,19 +49,19 @@ class zComm:
     # ═══════════════════════════════════════════════════════════
 
     @property
-    def websocket(self):
+    def websocket(self) -> Optional[Any]:
         """Get zBifrost (WebSocket) server instance."""
         return self._bifrost_mgr.websocket
 
-    def create_websocket(self, walker=None, port=None, host=None):
+    def create_websocket(self, walker: Optional[Any] = None, port: Optional[int] = None, host: Optional[str] = None) -> Any:
         """Create zBifrost server instance using zCLI configuration."""
         return self._bifrost_mgr.create(walker=walker, port=port, host=host)
 
-    async def start_websocket(self, socket_ready, walker=None):
+    async def start_websocket(self, socket_ready: Any, walker: Optional[Any] = None) -> None:
         """Start zBifrost server."""
         await self._bifrost_mgr.start(socket_ready, walker=walker)
 
-    async def broadcast_websocket(self, message, sender=None):
+    async def broadcast_websocket(self, message: Dict[str, Any], sender: Optional[Any] = None) -> None:
         """Broadcast message to all zBifrost clients."""
         await self._bifrost_mgr.broadcast(message, sender=sender)
 
@@ -58,7 +69,7 @@ class zComm:
     # HTTP Server Management (Optional Feature)
     # ═══════════════════════════════════════════════════════════
 
-    def create_http_server(self, port=None, host=None, serve_path=None):
+    def create_http_server(self, port: Optional[int] = None, host: Optional[str] = None, serve_path: Optional[str] = None) -> Any:
         """
         Create HTTP static file server instance (optional feature)
         
@@ -97,7 +108,7 @@ class zComm:
     # Service Management
     # ═══════════════════════════════════════════════════════════
 
-    def start_service(self, service_name, **kwargs):
+    def start_service(self, service_name: str, **kwargs: Any) -> bool:
         """Start a local service."""
         self.logger.info("Starting service: %s", service_name)
         self.logger.debug("Service start parameters: %s", kwargs)
@@ -111,7 +122,7 @@ class zComm:
 
         return result
 
-    def stop_service(self, service_name):
+    def stop_service(self, service_name: str) -> bool:
         """Stop a running service."""
         self.logger.info("Stopping service: %s", service_name)
 
@@ -124,7 +135,7 @@ class zComm:
 
         return result
 
-    def restart_service(self, service_name):
+    def restart_service(self, service_name: str) -> bool:
         """Restart a service."""
         self.logger.info("Restarting service: %s", service_name)
 
@@ -137,7 +148,7 @@ class zComm:
 
         return result
 
-    def service_status(self, service_name=None):
+    def service_status(self, service_name: Optional[str] = None) -> Dict[str, Any]:
         """Get service status. Returns status dict for specific service or all services."""
         if service_name:
             self.logger.debug("Getting status for service: %s", service_name)
@@ -153,7 +164,7 @@ class zComm:
 
         return status
 
-    def get_service_connection_info(self, service_name):
+    def get_service_connection_info(self, service_name: str) -> Optional[Dict[str, Any]]:
         """Get connection information for a service."""
         self.logger.debug("Getting connection info for service: %s", service_name)
 

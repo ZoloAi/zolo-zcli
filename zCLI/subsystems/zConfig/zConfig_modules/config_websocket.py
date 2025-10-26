@@ -1,13 +1,21 @@
 # zCLI/subsystems/zConfig/zConfig_modules/config_websocket.py
 """WebSocket configuration management as part of zConfig."""
 
+from typing import Any, Dict, List, Optional
 from zCLI import Colors, os
 from zCLI.utils import print_ready_message, validate_zcli_instance
 
 class WebSocketConfig:
     """Manages WebSocket configuration with hierarchical loading."""
 
-    def __init__(self, environment_config, zcli, session_data):
+    # Type hints for instance attributes
+    environment: Any  # EnvironmentConfig
+    zcli: Any  # zCLI instance
+    session_data: Dict[str, Any]
+    mycolor: str
+    config: Dict[str, Any]
+
+    def __init__(self, environment_config: Any, zcli: Any, session_data: Dict[str, Any]) -> None:
         """Initialize WebSocket config with environment config, zcli instance, and session data."""
         # Validate required parameters
         validate_zcli_instance(zcli, "WebSocketConfig", require_session=False)
@@ -23,11 +31,11 @@ class WebSocketConfig:
         # Print ready message
         print_ready_message("WebSocketConfig Ready", color="CONFIG")
 
-    def _load_websocket_config(self):
+    def _load_websocket_config(self) -> None:
         """Load WebSocket configuration following hierarchy: zSpark > env > config file > defaults."""
 
         # Get base config from environment
-        websocket_config = self.environment.get("websocket", {})
+        websocket_config: Dict[str, Any] = self.environment.get("websocket", {})
 
         # 1. Check zSpark_obj for WebSocket settings (highest priority)
         if self.zcli.zspark_obj:
@@ -73,15 +81,15 @@ class WebSocketConfig:
             "ping_timeout": websocket_config.get("ping_timeout", 10),
         }
 
-    def get(self, key, default=None):
+    def get(self, key: str, default: Any = None) -> Any:
         """Get WebSocket config value by key."""
         return self.config.get(key, default)
 
-    def get_all(self):
+    def get_all(self) -> Dict[str, Any]:
         """Get complete WebSocket configuration."""
         return self.config.copy()
 
-    def update(self, key, value):
+    def update(self, key: str, value: Any) -> None:
         """Update WebSocket config value (runtime only)."""
         self.config[key] = value
 
@@ -90,36 +98,36 @@ class WebSocketConfig:
     # ═══════════════════════════════════════════════════════════
 
     @property
-    def host(self):
+    def host(self) -> str:
         """WebSocket bind address."""
         return self.config["host"]
 
     @property
-    def port(self):
+    def port(self) -> int:
         """WebSocket port."""
         return self.config["port"]
 
     @property
-    def require_auth(self):
+    def require_auth(self) -> bool:
         """Whether authentication is required."""
         return self.config["require_auth"]
 
     @property
-    def allowed_origins(self):
+    def allowed_origins(self) -> List[str]:
         """List of allowed origins."""
         return self.config["allowed_origins"]
 
     @property
-    def max_connections(self):
+    def max_connections(self) -> int:
         """Maximum concurrent connections."""
         return self.config["max_connections"]
 
     @property
-    def ping_interval(self):
+    def ping_interval(self) -> int:
         """Ping interval in seconds."""
         return self.config["ping_interval"]
 
     @property
-    def ping_timeout(self):
+    def ping_timeout(self) -> int:
         """Ping timeout in seconds."""
         return self.config["ping_timeout"]
