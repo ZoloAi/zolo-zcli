@@ -759,20 +759,43 @@
                         </div>
                     </div>
 
-                    <div class="todo-item" data-id="layer0-documentation">
-                        <input type="checkbox" class="todo-checkbox">
+                    <div class="todo-item completed" data-id="layer0-documentation">
+                        <input type="checkbox" class="todo-checkbox" checked>
                         <div class="todo-content">
-                            <div class="todo-title">Week 2.7: Update Layer 0 Documentation</div>
+                            <div class="todo-title">Week 2.7: Update Layer 0 Documentation ✅ COMPLETE</div>
                             <div class="todo-description">
-                                Update AGENT.md with Layer 0 patterns and best practices.
-                                Document: zSpark initialization, zMode usage, zBifrost patterns, zServer integration.
-                                Create TESTING_GUIDE.md: Explain the testing strategy, @requires_network decorator, coverage goals.
-                                <br><strong>Final Step:</strong> Before moving to Layer 1
+                                <strong>✅ AGENT.md Updated (408 lines):</strong>
+                                <br>&nbsp;&nbsp;• zSpark configuration (all options with examples)
+                                <br>&nbsp;&nbsp;• Health checks API (zBifrost + zServer)
+                                <br>&nbsp;&nbsp;• Graceful shutdown patterns
+                                <br>&nbsp;&nbsp;• Path resolution (@. ~. zMachine.)
+                                <br>&nbsp;&nbsp;• Testing patterns (unit + integration examples)
+                                <br>&nbsp;&nbsp;• Common pitfalls and solutions
+                                <br>&nbsp;&nbsp;• Quick reference cards
+                                <br><br>
+                                <strong>✅ TESTING_GUIDE.md Created (500+ lines):</strong>
+                                <br>&nbsp;&nbsp;• Dual testing strategy explained
+                                <br>&nbsp;&nbsp;• Unit test examples with mocking
+                                <br>&nbsp;&nbsp;• Integration test examples (real execution)
+                                <br>&nbsp;&nbsp;• @requires_network decorator usage
+                                <br>&nbsp;&nbsp;• Coverage goals (70% Layer 0)
+                                <br>&nbsp;&nbsp;• Running tests (all commands)
+                                <br>&nbsp;&nbsp;• Best practices and anti-patterns
+                                <br>&nbsp;&nbsp;• Complete example test file structure
+                                <br><br>
+                                <strong>✅ Documentation Cleanup:</strong>
+                                <br>&nbsp;&nbsp;• Deleted deprecated Documentation/AGENT.md (686 lines of v1.5.2 bloat)
+                                <br>&nbsp;&nbsp;• Consolidated into concise root AGENT.md
+                                <br>&nbsp;&nbsp;• Consistent cross-referencing across guides
+                                <br><br>
+                                <strong>📚 Complete Layer 0 Docs:</strong> AGENT.md, TESTING_GUIDE.md, TESTING_STRATEGY.md, DEFERRED_COVERAGE.md, zPath_GUIDE.md, zConfig_GUIDE.md, zComm_GUIDE.md, zServer_GUIDE.md, SEPARATION_CHECKLIST.md
+                                <br><strong>🎯 Result:</strong> Production-ready documentation for AI assistants and developers
                             </div>
                             <div class="todo-tags">
                                 <span class="tag">Layer 0</span>
                                 <span class="tag">Documentation</span>
                                 <span class="tag">1 day</span>
+                                <span class="tag" style="background: #48bb78; color: white;">✅ DONE</span>
                             </div>
                         </div>
                     </div>
@@ -792,15 +815,16 @@
                             <li>✅ Coverage Phase 2: Auth, bridge & events (Week 2.4 - COMPLETE: 38 new tests, 874 total passing)</li>
                             <li>✅ Coverage Phase 3: Integration-focused testing (Week 2.5 - COMPLETE: 16 new tests, 890 total passing, REAL execution paths)</li>
                             <li>✅ Coverage Phase 4: Combined coverage analysis & polish (Week 2.6 - COMPLETE: 70% coverage, 907 tests, EXCEEDED TARGET!)</li>
-                            <li>📝 Documentation complete (Week 2.7 - AGENT.md, DEFERRED_COVERAGE.md)</li>
+                            <li>✅ Documentation complete (Week 2.7 - COMPLETE: AGENT.md, TESTING_GUIDE.md, cleanup)</li>
                         </ul>
                         <div style="margin-top: 15px; padding: 10px; background: #d4edda; border-radius: 4px; border: 2px solid #28a745;">
-                            <strong>🎉 Progress:</strong> 12/13 completed (92%) - Weeks 1.1✅ 1.2✅ 1.3✅ 1.4✅ 1.5✅ 1.6✅ 2.1✅ 2.2✅ 2.3✅ 2.4✅ 2.5✅ 2.6✅ | 2.7📝
+                            <strong>🎉 Progress:</strong> 13/13 completed (100%) - ALL WEEKS COMPLETE! ✅✅✅
                             <br><strong>📊 Tests:</strong> 907 passing (100% pass rate), 343 Layer 0 tests
                             <br><strong>📊 Coverage:</strong> 70% line coverage (exceeded 60% target by 10%)
                             <br><strong>📊 Test Suite:</strong> 199 unit tests (behavior) + 66 integration tests (real execution) + 78 subsystem tests
-                            <br><strong>📄 Documentation:</strong> TESTING_STRATEGY.md created, explains dual testing strategy
-                            <br><strong>🎯 Next:</strong> Week 2.7 - Create DEFERRED_COVERAGE.md, update AGENT.md, then Layer 1!
+                            <br><strong>📄 Documentation:</strong> AGENT.md, TESTING_GUIDE.md, TESTING_STRATEGY.md, DEFERRED_COVERAGE.md - ALL COMPLETE
+                            <br><strong>🚀 Status:</strong> LAYER 0 PRODUCTION-READY - CHECKPOINT PASSED!
+                            <br><strong>🎯 Next:</strong> Layer 1 - zAuth (bcrypt, sessions, RBAC)
                         </div>
                     </div>
                 </div>
@@ -1217,7 +1241,7 @@
                         &nbsp;&nbsp;• 1.6: ✅ zBifrost REAL integration tests (COMPLETE - 49 tests, all 4 phases done)<br>
                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>Skipping:</em> Client-side JS reconnection testing (validated in demos, complex to test in Python)<br>
                         <br>
-                        <strong>Week 2 (✅ 6/7 done - 86% COMPLETE!):</strong><br>
+                        <strong>Week 2 (✅ 7/7 done - 100% COMPLETE!):</strong><br>
                         &nbsp;&nbsp;• 2.1: ✅ Health checks (COMPLETE)<br>
                         &nbsp;&nbsp;• 2.2: ✅ Graceful shutdown (COMPLETE)<br>
                         &nbsp;&nbsp;• 2.3: ✅ Coverage Phase 1 - Critical routing 60%→66% (COMPLETE - message_handler 93%, dispatch 98%, 61 new tests)<br>
@@ -1227,7 +1251,8 @@
                         &nbsp;&nbsp;• 2.6: ✅ Coverage Phase 4 - Final integration & polish (COMPLETE - <strong>70% coverage!</strong> 17 tests, 907 total, EXCEEDED 60% TARGET by 10%!)<br>
                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>Achievement:</em> Machine detectors, config environment, bifrost manager all tested with REAL execution<br>
                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>Documentation:</em> TESTING_STRATEGY.md created - explains dual testing strategy (unit + integration)<br>
-                        &nbsp;&nbsp;• 2.7: 📝 Documentation update (AGENT.md, DEFERRED_COVERAGE.md) - Final step before Layer 1<br>
+                        &nbsp;&nbsp;• 2.7: ✅ Documentation complete (COMPLETE - AGENT.md updated, TESTING_GUIDE.md created, deprecated files removed)<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>Result:</em> Production-ready docs for AI assistants + developers. Layer 0 documentation polish complete!<br>
                         <br>
                         <strong>Weeks 3-5:</strong> Layer 1 (Core) → Auth, Display, Validation, Hot Reload<br>
                         <strong>Weeks 6-9:</strong> Layer 2 (Business) → Migrations, ORM, Shell, Plugins<br>
