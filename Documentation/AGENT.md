@@ -656,6 +656,9 @@ zcli = zCLI(zSpark_obj)
 
 ## zPath Quick Reference Card (Copy This!)
 
+> 📖 **For comprehensive path resolution documentation**, see **[zPath_GUIDE.md](zPath_GUIDE.md)**  
+> Covers: All three patterns, cross-platform examples, edge cases, troubleshooting
+
 ```
 WORKSPACE:    @.Path.To.File              NO extension, NO slashes
 ABSOLUTE:     ~.Path.To.File              NO extension, NO slashes  
