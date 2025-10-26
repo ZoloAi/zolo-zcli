@@ -29,6 +29,98 @@ zComm/
         └── postgresql_service.py      # PostgreSQL service management
 ```
 
+### **Separation Architecture: zBifrost vs zServer**
+
+zComm orchestrates TWO independent server systems with clean separation of concerns:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                  zComm (Orchestrator)                       │
+│                                                             │
+│  ┌──────────────────────────┐  ┌───────────────────────┐  │
+│  │      zBifrost            │  │      zServer          │  │
+│  │   (WebSocket Server)     │  │   (HTTP Server)       │  │
+│  │                          │  │                       │  │
+│  │ Protocol: ws://          │  │ Protocol: http://     │  │
+│  │ Port: 56891 (default)    │  │ Port: 8080 (default)  │  │
+│  │ Library: websockets      │  │ Library: http.server  │  │
+│  │ Purpose: Real-time       │  │ Purpose: Static files │  │
+│  │          messaging       │  │          serving      │  │
+│  │ Use case: Commands,      │  │ Use case: HTML, CSS,  │  │
+│  │           live updates   │  │           JS files    │  │
+│  └──────────────────────────┘  └───────────────────────┘  │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Responsibility Matrix:**
+
+| Aspect | zBifrost | zServer |
+|--------|----------|---------|
+| **Protocol** | WebSocket (`ws://`) | HTTP (`http://`) |
+| **Library** | `websockets` | `http.server` (built-in) |
+| **Default Port** | 56891 or 8765 | 8080 |
+| **Purpose** | Real-time bidirectional messaging | Static file serving |
+| **Authentication** | ✅ Built-in (zAuth integration) | ❌ Use reverse proxy |
+| **Use Cases** | Commands, live chat, data sync | HTML, CSS, JS delivery |
+| **Thread Model** | AsyncIO event loop | Background thread |
+| **Location** | `zComm_modules/zBifrost/` | `zCLI/subsystems/zServer/` |
+
+**Why Separate?**
+
+1. **Different Concerns**: Real-time messaging ≠ Static file serving
+2. **Different Libraries**: `websockets` ≠ `http.server` (no overlap)
+3. **Independent Lifecycle**: Can run alone or together
+4. **Security Models**: Different threat models and protection strategies
+5. **Performance**: Optimized for different workloads
+
+**Delegation Pattern in zComm:**
+
+```python
+# zComm.py orchestrates both but implements neither
+
+# WebSocket methods → delegate to BifrostManager → zBifrost
+@property
+def websocket(self) -> Optional[Any]:
+    return self._bifrost_mgr.websocket
+
+async def start_websocket(self, socket_ready, walker=None):
+    await self._bifrost_mgr.start(socket_ready, walker=walker)
+
+# HTTP methods → delegate directly to zServer
+def create_http_server(self, port=None, host=None, serve_path=None):
+    from zCLI.subsystems.zServer import zServer
+    return zServer(self.logger, zcli=self.zcli, port=port, ...)
+```
+
+**Full-Stack Usage Example:**
+
+```python
+from zCLI import zCLI
+
+# Both systems configured via zSpark
+z = zCLI({
+    "zWorkspace": "./my_app",
+    "zMode": "zBifrost",
+    "websocket": {"port": 8765, "require_auth": False},
+    "http_server": {"port": 8080, "serve_path": "./public", "enabled": True}
+})
+
+# HTTP server auto-starts (if enabled: true)
+# WebSocket server starts via walker
+z.walker.run()  # Blocking - runs WebSocket server
+
+# Browser accesses:
+# - http://localhost:8080/index.html (static files via zServer)
+# - ws://localhost:8765 (real-time via zBifrost)
+```
+
+**Port Management:**
+
+- **No conflicts**: Different default ports ensure coexistence
+- **Configurable**: Both ports adjustable via zSpark or config files
+- **Validation**: zConfig validates no port conflicts at startup (Week 1.1)
+
 ---
 
 ## **Core Features**

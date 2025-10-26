@@ -20,6 +20,113 @@ zServer is an optional subsystem that adds HTTP static file serving capability t
 - ✅ Integrates with zCLI logger
 - ✅ Works standalone or with zBifrost
 
+## Architecture Notes
+
+### What zServer Does ✅
+
+zServer is a **static file HTTP server** with a clear, focused purpose:
+
+- ✅ **Serves static files**: HTML, CSS, JavaScript, images
+- ✅ **HTTP protocol only**: Uses Python's built-in `http.server`
+- ✅ **Background thread**: Non-blocking, runs alongside your app
+- ✅ **CORS headers**: Enabled for local development
+- ✅ **Directory serving**: Serves all files from a specified directory
+- ✅ **Logger integration**: All requests logged via zCLI logger
+
+### What zServer Does NOT Do ❌
+
+To maintain clean separation, zServer explicitly does NOT:
+
+- ❌ **WebSocket connections**: Use zBifrost for real-time communication
+- ❌ **Real-time messaging**: Use zBifrost for bidirectional messaging
+- ❌ **Authentication**: Use nginx/Apache as reverse proxy for production
+- ❌ **Dynamic content**: Use Flask/Django for server-side logic
+- ❌ **API endpoints**: Use proper web framework or zBifrost for APIs
+- ❌ **Database connections**: Use zData for database operations
+
+### Relationship with zBifrost
+
+zServer and zBifrost are **independent, complementary systems**:
+
+```
+┌──────────────────────────────────────────────────┐
+│  Full-Stack zCLI Application                    │
+├──────────────────────────────────────────────────┤
+│                                                  │
+│  ┌──────────────┐         ┌─────────────────┐  │
+│  │   zServer    │         │    zBifrost     │  │
+│  │   (HTTP)     │         │  (WebSocket)    │  │
+│  │              │         │                 │  │
+│  │ Port: 8080   │         │ Port: 8765      │  │
+│  │ Static Files │ ◄─────► │ Real-time       │  │
+│  │              │  Work   │ Commands        │  │
+│  │ index.html   │ Together│ Live Updates    │  │
+│  │ style.css    │         │ Data Sync       │  │
+│  │ script.js    │         │                 │  │
+│  └──────────────┘         └─────────────────┘  │
+│         │                          │            │
+│         └──────────────────────────┘            │
+│              Both use zComm                     │
+└──────────────────────────────────────────────────┘
+```
+
+**Key Differences:**
+
+| Aspect | zServer | zBifrost |
+|--------|---------|----------|
+| Protocol | HTTP | WebSocket |
+| Direction | One-way (request → response) | Bidirectional |
+| Purpose | Static file delivery | Real-time messaging |
+| Library | `http.server` | `websockets` |
+| Port | 8080 (default) | 8765/56891 (default) |
+| Auth | ❌ No (use proxy) | ✅ Yes (built-in) |
+
+**Can Run:**
+- ✅ **Standalone**: zServer only (no WebSocket)
+- ✅ **Standalone**: zBifrost only (no HTTP)
+- ✅ **Together**: Both systems (full-stack app)
+
+**Example Full-Stack Setup:**
+
+```python
+from zCLI import zCLI
+
+# Configure both systems
+z = zCLI({
+    "zWorkspace": "./my_app",
+    "zMode": "zBifrost",  # Enables WebSocket
+    "websocket": {"port": 8765, "require_auth": False},
+    "http_server": {"port": 8080, "serve_path": "./public", "enabled": True}
+})
+
+# HTTP server auto-starts (because enabled: True)
+# Now serving: http://localhost:8080/
+
+# Start WebSocket server (blocking)
+z.walker.run()
+
+# Client can now use:
+# - HTTP: http://localhost:8080/index.html (static files)
+# - WebSocket: ws://localhost:8765 (real-time commands)
+```
+
+### Design Philosophy
+
+**Separation of Concerns:**
+- zServer focuses ONLY on static file serving
+- No WebSocket imports, no real-time logic
+- Simple, predictable, maintainable
+
+**Why Not Combine Them?**
+1. **Different libraries**: `http.server` vs `websockets` (no overlap)
+2. **Different use cases**: Static files vs Real-time messaging
+3. **Different security**: File serving vs Command execution
+4. **Maintenance**: Easier to update/fix when separate
+
+For architectural validation and code review guidelines, see:
+- `Documentation/zComm_GUIDE.md` (Separation Architecture section)
+- `Documentation/SEPARATION_CHECKLIST.md` (Code review checklist)
+
 ## Quick Start
 
 ### Basic Usage
