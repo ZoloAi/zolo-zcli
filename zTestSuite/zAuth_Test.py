@@ -4,10 +4,10 @@
 """
 Test Suite for zAuth Subsystem
 
-Tests session-only authentication, remote authentication,
-and integration with zDisplay dual-mode events.
+Tests session-only authentication, bcrypt password hashing,
+remote authentication, and integration with zDisplay dual-mode events.
 
-Note: zAuth is now streamlined for session-only authentication.
+v1.5.4+: Added comprehensive bcrypt password hashing tests (Week 3.1)
 """
 
 import unittest
@@ -15,6 +15,7 @@ from pathlib import Path
 from unittest.mock import patch, Mock
 import sys
 import os
+import time
 
 # Add parent directory to path to import zCLI
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -329,6 +330,157 @@ class TestDualModeEvents(unittest.TestCase):
         self.assertTrue(hasattr(zauth_events, 'Signals'))
 
 
+# ═══════════════════════════════════════════════════════════════
+# NEW: Password Hashing Tests (bcrypt) - Week 3.1
+# ═══════════════════════════════════════════════════════════════
+
+class TestPasswordHashing(unittest.TestCase):
+    """Test bcrypt password hashing and verification (v1.5.4+)."""
+    
+    def setUp(self):
+        """Set up test fixtures."""
+        self.mock_zcli = Mock()
+        self.mock_zcli.session = {"zAuth": {}}
+        self.mock_zcli.logger = Mock()
+        self.mock_zcli.display = Mock()
+        self.auth = zAuth(self.mock_zcli)
+    
+    def test_hash_password_returns_bcrypt_hash(self):
+        """Should return valid bcrypt hash starting with $2b$"""
+        password = "test_password_123"
+        hashed = self.auth.hash_password(password)
+        
+        # bcrypt hashes start with $2b$ (version identifier)
+        self.assertTrue(hashed.startswith("$2b$"))
+        self.assertEqual(len(hashed), 60)  # bcrypt hashes are always 60 chars
+    
+    def test_hash_password_different_each_time(self):
+        """Should generate different hashes for same password (random salt)"""
+        password = "same_password"
+        hash1 = self.auth.hash_password(password)
+        hash2 = self.auth.hash_password(password)
+        
+        # Same password, different hashes (due to random salt)
+        self.assertNotEqual(hash1, hash2)
+        # But both should be valid bcrypt hashes
+        self.assertTrue(hash1.startswith("$2b$"))
+        self.assertTrue(hash2.startswith("$2b$"))
+    
+    def test_verify_password_correct(self):
+        """Should verify correct password"""
+        password = "correct_password"
+        hashed = self.auth.hash_password(password)
+        
+        result = self.auth.verify_password(password, hashed)
+        self.assertTrue(result)
+    
+    def test_verify_password_incorrect(self):
+        """Should reject incorrect password"""
+        password = "correct_password"
+        wrong_password = "wrong_password"
+        hashed = self.auth.hash_password(password)
+        
+        result = self.auth.verify_password(wrong_password, hashed)
+        self.assertFalse(result)
+    
+    def test_verify_password_empty_plain_password(self):
+        """Should handle empty plaintext password gracefully"""
+        hashed = self.auth.hash_password("test")
+        
+        result = self.auth.verify_password("", hashed)
+        self.assertFalse(result)
+    
+    def test_verify_password_empty_hash(self):
+        """Should handle empty hash gracefully"""
+        result = self.auth.verify_password("test", "")
+        self.assertFalse(result)
+    
+    def test_verify_password_both_empty(self):
+        """Should handle both empty inputs gracefully"""
+        result = self.auth.verify_password("", "")
+        self.assertFalse(result)
+    
+    def test_hash_password_empty_raises_error(self):
+        """Should raise ValueError for empty password"""
+        with self.assertRaises(ValueError) as context:
+            self.auth.hash_password("")
+        
+        self.assertIn("Password cannot be empty", str(context.exception))
+    
+    def test_hash_password_none_raises_error(self):
+        """Should raise ValueError for None password"""
+        with self.assertRaises(ValueError) as context:
+            self.auth.hash_password(None)
+        
+        self.assertIn("Password cannot be empty", str(context.exception))
+    
+    def test_verify_password_invalid_hash_format(self):
+        """Should return False for invalid hash format"""
+        result = self.auth.verify_password("password", "not_a_valid_bcrypt_hash")
+        self.assertFalse(result)
+        
+        # Should log error
+        self.mock_zcli.logger.error.assert_called_once()
+        self.assertIn("Password verification error", 
+                     str(self.mock_zcli.logger.error.call_args))
+    
+    def test_bcrypt_hash_performance(self):
+        """Should hash within acceptable time (< 0.5s for 12 rounds)"""
+        password = "performance_test_password"
+        
+        # Hash should take < 0.5s (12 rounds on modern hardware)
+        start = time.time()
+        hashed = self.auth.hash_password(password)
+        hash_time = time.time() - start
+        
+        self.assertLess(hash_time, 0.5, f"Hashing took {hash_time:.3f}s (> 0.5s)")
+        
+        # Verify should also take < 0.5s
+        start = time.time()
+        result = self.auth.verify_password(password, hashed)
+        verify_time = time.time() - start
+        
+        self.assertLess(verify_time, 0.5, f"Verification took {verify_time:.3f}s (> 0.5s)")
+        self.assertTrue(result)
+    
+    def test_bcrypt_handles_special_characters(self):
+        """Should handle passwords with special characters"""
+        special_passwords = [
+            "p@ssw0rd!",
+            "über_secure",
+            "emoji_😀_password",
+            "spaces in password",
+            "quotes'and\"double",
+            "\ttabs\nand\nnewlines"
+        ]
+        
+        for password in special_passwords:
+            hashed = self.auth.hash_password(password)
+            result = self.auth.verify_password(password, hashed)
+            self.assertTrue(result, f"Failed for password: {repr(password)}")
+    
+    def test_bcrypt_handles_long_passwords(self):
+        """Should handle long passwords (72 bytes is bcrypt limit)"""
+        # bcrypt truncates at 72 bytes, but should still work
+        long_password = "a" * 100
+        hashed = self.auth.hash_password(long_password)
+        
+        result = self.auth.verify_password(long_password, hashed)
+        self.assertTrue(result)
+    
+    def test_verify_password_case_sensitive(self):
+        """Should be case-sensitive"""
+        password = "Password123"
+        hashed = self.auth.hash_password(password)
+        
+        # Exact match
+        self.assertTrue(self.auth.verify_password("Password123", hashed))
+        
+        # Wrong case
+        self.assertFalse(self.auth.verify_password("password123", hashed))
+        self.assertFalse(self.auth.verify_password("PASSWORD123", hashed))
+
+
 def run_tests(verbose=True):
     """Run all zAuth tests."""
     # Create test suite
@@ -342,6 +494,9 @@ def run_tests(verbose=True):
     suite.addTests(loader.loadTestsFromTestCase(TestStatusDisplay))
     suite.addTests(loader.loadTestsFromTestCase(TestRemoteAuthentication))
     suite.addTests(loader.loadTestsFromTestCase(TestDualModeEvents))
+    
+    # NEW: Password hashing tests (Week 3.1)
+    suite.addTests(loader.loadTestsFromTestCase(TestPasswordHashing))
     
     # Run tests
     runner = unittest.TextTestRunner(verbosity=2 if verbose else 1)

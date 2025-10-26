@@ -86,8 +86,8 @@ def _save_history(zcli, history, args):
     if args:
         filename = args[0]
     else:
-        # Default to user data directory
-        user_data = Path(zcli.session.get("zUserData", Path.home() / ".zcli"))
+        # Default to user data directory (cross-platform via platformdirs)
+        user_data = Path(zcli.session.get("zUserData", zcli.config.sys_paths.user_data_dir))
         user_data.mkdir(parents=True, exist_ok=True)
         filename = str(user_data / "history.json")
     

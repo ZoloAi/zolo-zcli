@@ -403,7 +403,84 @@ z = zCLI({"http_server": {"enabled": True, "port": 8080}})
 
 ---
 
+---
+
+## Layer 1: zAuth with bcrypt (Week 3.1 - NEW)
+
+### Password Hashing (Security-First)
+
+**BREAKING CHANGE**: v1.5.4+ uses bcrypt. Plaintext passwords no longer supported.
+
+**Hash Password**:
+```python
+hashed = z.auth.hash_password("user_password")
+# Returns: '$2b$12$...' (60 chars, bcrypt hash)
+```
+
+**Verify Password**:
+```python
+is_valid = z.auth.verify_password("user_input", stored_hash)
+# Returns: True/False (timing-safe comparison)
+```
+
+**Security Features**:
+- ✅ bcrypt with 12 rounds (~0.3s per hash)
+- ✅ Random salt per password
+- ✅ 72-byte limit (auto-truncated)
+- ✅ Case-sensitive
+- ✅ Special characters supported (UTF-8)
+- ✅ One-way (cannot recover plaintext)
+
+**Example Usage**:
+```python
+from zCLI import zCLI
+
+z = zCLI({"zWorkspace": "."})
+
+# Register user
+password_hash = z.auth.hash_password("secure_password")
+# Store in database: users.password_hash = password_hash
+
+# Login user
+user_input = "secure_password"
+if z.auth.verify_password(user_input, password_hash):
+    print("Login successful!")
+else:
+    print("Invalid password")
+```
+
+### Cross-Platform Path Access (Layer 0)
+
+**For Week 3.2 (Sessions) and beyond**, use these paths:
+
+```python
+# User data directory (databases, persistent files)
+data_dir = z.config.sys_paths.user_data_dir
+# macOS:   ~/Library/Application Support/zolo-zcli
+# Linux:   ~/.local/share/zolo-zcli
+# Windows: %LOCALAPPDATA%\zolo-zcli
+
+# User config directory (config files)
+config_dir = z.config.sys_paths.user_config_dir
+
+# User cache directory (temporary data)
+cache_dir = z.config.sys_paths.user_cache_dir
+
+# User logs directory
+logs_dir = z.config.sys_paths.user_logs_dir
+```
+
+**Example: Week 3.2 Sessions Database**:
+```python
+sessions_db = z.config.sys_paths.user_data_dir / "sessions.db"
+sessions_db.parent.mkdir(parents=True, exist_ok=True)
+# Automatically cross-platform!
+```
+
+---
+
 **Version**: 1.5.4  
-**Layer 0 Status**: Production-Ready (70% coverage, 907 tests passing)  
-**Next**: Layer 1 (zAuth, zDisplay, zParser, zLoader, zDialog)
+**Layer 0 Status**: ✅ Production-Ready (70% coverage, 907 tests passing)  
+**Layer 1 Status**: 🚧 In Progress (Week 3.1: bcrypt complete - 14 tests passing)  
+**Next**: Week 3.2 - Persistent sessions (SQLite)
 

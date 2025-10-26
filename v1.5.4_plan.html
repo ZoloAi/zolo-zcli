@@ -841,22 +841,25 @@
                         <br><strong>Dependencies:</strong> Layer 0 must be solid (config, paths, logging all work perfectly).
                     </div>
 
-                    <div class="todo-item" data-id="layer1-auth-bcrypt">
-                        <input type="checkbox" class="todo-checkbox">
+                    <div class="todo-item completed" data-id="layer1-auth-bcrypt">
+                        <input type="checkbox" class="todo-checkbox" checked>
                         <div class="todo-content">
-                            <div class="todo-title">Week 3.1: 🔐 Add bcrypt to zAuth (SECURITY FIRST)</div>
+                            <div class="todo-title">Week 3.1: 🔐 Add bcrypt to zAuth (SECURITY FIRST) ✅ COMPLETE</div>
                             <div class="todo-description">
-                                pip install bcrypt → add to requirements.txt.
-                                Add: hash_password(plain) → hash, verify_password(plain, hash) → bool.
-                                <br><strong>Critical:</strong> Security can't wait. Do this FIRST in Layer 1.
-                                <br><strong>Breaking Change:</strong> Existing passwords won't work (migration needed)
+                                <strong>✅ Implemented:</strong> hash_password() and verify_password() methods
+                                <br><strong>✅ Tests:</strong> 14 comprehensive unit tests (100% passing)
+                                <br><strong>✅ Security:</strong> bcrypt 12 rounds, random salting, 72-byte limit, UTF-8 support
+                                <br><strong>✅ Performance:</strong> Hash + verify in < 0.5s (acceptable for production)
+                                <br><strong>✅ Documentation:</strong> AGENT.md updated with Layer 1 examples
+                                <br><strong>✅ Total Tests:</strong> 921 passing (907 Layer 0 + 14 new bcrypt)
+                                <br><strong>Breaking Change:</strong> Plaintext passwords no longer supported (as intended)
                             </div>
                             <div class="todo-tags">
                                 <span class="tag">Layer 1</span>
                                 <span class="tag">zAuth</span>
                                 <span class="tag">Security</span>
                                 <span class="tag">1 day</span>
-                                <span class="tag" style="background: #fc8181; color: white;">CRITICAL</span>
+                                <span class="tag" style="background: #48bb78; color: white;">✅ DONE</span>
                             </div>
                         </div>
                     </div>
@@ -864,15 +867,38 @@
                     <div class="todo-item" data-id="layer1-auth-sessions">
                         <input type="checkbox" class="todo-checkbox">
                         <div class="todo-content">
-                            <div class="todo-title">Week 3.2: 🔐 Persistent sessions (SQLite-based)</div>
+                            <div class="todo-title">Week 3.2: 🔐 Persistent sessions (Authentication State)</div>
                             <div class="todo-description">
-                                Create ~/.zcli/sessions.db with: session_id, user_id, expires_at, token.
-                                Auto-expire after 7 days, refresh token pattern.
-                                <br><strong>Depends on:</strong> bcrypt (Week 3.1)
+                                <strong>Goal:</strong> "Remember me" functionality - login once, stay authenticated for 7 days (survives app restarts)
+                                <br><strong>Note:</strong> This is NOT wizard batching (that's zShell canvas mode). This is about user login persistence.
+                                <br><br>
+                                <strong>📋 The zCLI Way (Declarative):</strong>
+                                <br>&nbsp;&nbsp;1. Create <code>zSchema.sessions.yaml</code> (declarative table definition)
+                                <br>&nbsp;&nbsp;2. Use <code>z.data.Create/Read/Update/Delete</code> for all operations (no raw SQL!)
+                                <br>&nbsp;&nbsp;3. Auto-cleanup expired sessions via zData
+                                <br><br>
+                                <strong>🗂️ Schema (zSchema.sessions.yaml):</strong>
+                                <br>&nbsp;&nbsp;• Meta: Data_Type: sqlite, Data_Path: "zMachine" (platformdirs)
+                                <br>&nbsp;&nbsp;• Fields: session_id (pk), user_id, username, password_hash, token, created_at, expires_at, last_accessed
+                                <br><br>
+                                <strong>🔧 Implementation:</strong>
+                                <br>&nbsp;&nbsp;• <code>z.auth._load_session()</code> - Check sessions.db on startup
+                                <br>&nbsp;&nbsp;• <code>z.auth._save_session()</code> - Persist login state
+                                <br>&nbsp;&nbsp;• <code>z.auth._cleanup_expired()</code> - Remove old sessions
+                                <br>&nbsp;&nbsp;• Use bcrypt password_hash (Week 3.1) for security
+                                <br><br>
+                                <strong>📁 Cross-Platform Paths (via platformdirs):</strong>
+                                <br>&nbsp;&nbsp;• macOS: <code>~/Library/Application Support/zolo-zcli/sessions.db</code>
+                                <br>&nbsp;&nbsp;• Linux: <code>~/.local/share/zolo-zcli/sessions.db</code>
+                                <br>&nbsp;&nbsp;• Windows: <code>%LOCALAPPDATA%\zolo-zcli\sessions.db</code>
+                                <br><br>
+                                <strong>✅ Benefits:</strong> Declarative (no raw SQL), cross-database ready, auto-migrations (future), type-safe
+                                <br><strong>Depends on:</strong> bcrypt (Week 3.1 ✅), platformdirs (Layer 0 ✅), zData (Layer 2 - exists)
                             </div>
                             <div class="todo-tags">
                                 <span class="tag">Layer 1</span>
                                 <span class="tag">zAuth</span>
+                                <span class="tag">zData</span>
                                 <span class="tag">2 days</span>
                                 <span class="tag" style="background: #f6ad55; color: white;">DEPENDS: 3.1</span>
                             </div>
@@ -1350,13 +1376,17 @@
                     <div class="todo-item" data-id="auth-persistent">
                         <input type="checkbox" class="todo-checkbox">
                         <div class="todo-content">
-                            <div class="todo-title">Implement persistent sessions</div>
+                            <div class="todo-title">Implement persistent sessions (Authentication State)</div>
                             <div class="todo-description">
-                                Store sessions in SQLite or file-based storage.
-                                Add session expiration and refresh tokens.
+                                <strong>Goal:</strong> "Remember me" - login state survives app restarts (7-day expiry).
+                                <br><strong>The zCLI Way:</strong> Use <code>zSchema.sessions.yaml</code> + <code>z.data.Create/Read/Update/Delete</code>
+                                <br><strong>Path:</strong> <code>z.config.paths.user_data_dir / "sessions.db"</code> (cross-platform via platformdirs)
+                                <br><strong>Schema:</strong> session_id (pk), user_id, username, password_hash, token, created_at, expires_at
+                                <br><strong>Security:</strong> bcrypt password hashing (Week 3.1)
                             </div>
                             <div class="todo-tags">
                                 <span class="tag">zAuth</span>
+                                <span class="tag">zData</span>
                                 <span class="tag">Sessions</span>
                                 <span class="tag">2-3 days</span>
                             </div>
@@ -1737,11 +1767,12 @@
                         <div class="todo-content">
                             <div class="todo-title">Add .zclirc config file support (Deferred from Week 1.3)</div>
                             <div class="todo-description">
-                                Load defaults from ~/.zclirc or ./.zclirc (like .bashrc).
-                                Priority: ./.zclirc > ~/.zclirc > platformdirs config > defaults.
-                                <br><strong>Why Deferred:</strong> Current platformdirs-based persistence works well cross-platform.
-                                <br><strong>Future Benefit:</strong> Unix-style dotfile convention, team-shared project configs.
-                                <br><strong>Note:</strong> TODO added to config_paths.py for future implementation.
+                                <strong>Unix/Mac Only:</strong> Load defaults from ~/.zclirc or ./.zclirc (like .bashrc).
+                                <br>Priority: ./.zclirc > ~/.zclirc > platformdirs config > defaults.
+                                <br><strong>Why Deferred:</strong> Current <strong>platformdirs-based</strong> persistence works well <strong>cross-platform</strong> (macOS, Linux, Windows).
+                                <br><strong>Primary Path (Already Works):</strong> <code>z.config.paths.user_config_dir</code> (Layer 0 ✅)
+                                <br><strong>Future Benefit:</strong> Unix-style dotfile convention for power users, team-shared project configs.
+                                <br><strong>Note:</strong> TODO added to config_paths.py for future implementation. Not critical.
                             </div>
                             <div class="todo-tags">
                                 <span class="tag">zConfig</span>
