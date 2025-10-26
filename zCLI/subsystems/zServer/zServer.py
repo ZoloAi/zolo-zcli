@@ -144,4 +144,24 @@ class zServer:
     def get_url(self):
         """Get server URL"""
         return f"http://{self.host}:{self.port}"
+    
+    def health_check(self):
+        """
+        Get health status of HTTP server
+        
+        Returns:
+            dict: Server health status with keys:
+                - running (bool): Whether server is running
+                - host (str): Server host address
+                - port (int): Server port
+                - url (str|None): Server URL (None if not running)
+                - serve_path (str): Directory being served
+        """
+        return {
+            "running": self._running,
+            "host": self.host,
+            "port": self.port,
+            "url": self.get_url() if self._running else None,
+            "serve_path": self.serve_path
+        }
 

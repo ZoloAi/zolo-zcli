@@ -584,6 +584,119 @@ class TestzServerMocking(unittest.TestCase):
         self.assertFalse(server._running)
 
 
+class TestzServerHealthCheck(unittest.TestCase):
+    """Test zServer health check functionality (Week 2.1)"""
+    
+    def setUp(self):
+        """Set up test fixtures"""
+        self.mock_logger = Mock()
+        self.mock_logger.info = Mock()
+        self.mock_logger.warning = Mock()
+        self.mock_logger.error = Mock()
+        
+        # Create temp directory for tests
+        self.temp_dir = tempfile.mkdtemp()
+        
+        # Create a test file
+        self.test_file = Path(self.temp_dir) / "test.html"
+        self.test_file.write_text("<html><body>Test</body></html>")
+    
+    def tearDown(self):
+        """Clean up test fixtures"""
+        import shutil
+        if os.path.exists(self.temp_dir):
+            shutil.rmtree(self.temp_dir)
+    
+    def test_health_check_not_running(self):
+        """Test health check when server is not running"""
+        server = zServer(
+            self.mock_logger,
+            port=18100,
+            host="127.0.0.1",
+            serve_path=self.temp_dir
+        )
+        
+        health = server.health_check()
+        
+        # Verify health status structure
+        self.assertIn("running", health)
+        self.assertIn("host", health)
+        self.assertIn("port", health)
+        self.assertIn("url", health)
+        self.assertIn("serve_path", health)
+        
+        # Verify values when not running
+        self.assertFalse(health["running"])
+        self.assertEqual(health["host"], "127.0.0.1")
+        self.assertEqual(health["port"], 18100)
+        self.assertIsNone(health["url"])  # Should be None when not running
+        self.assertEqual(health["serve_path"], str(Path(self.temp_dir).resolve()))
+    
+    @requires_network
+    def test_health_check_running(self):
+        """Test health check when server is running"""
+        server = zServer(
+            self.mock_logger,
+            port=18101,
+            host="127.0.0.1",
+            serve_path=self.temp_dir
+        )
+        
+        try:
+            # Start server
+            server.start()
+            time.sleep(0.2)
+            
+            health = server.health_check()
+            
+            # Verify values when running
+            self.assertTrue(health["running"])
+            self.assertEqual(health["host"], "127.0.0.1")
+            self.assertEqual(health["port"], 18101)
+            self.assertEqual(health["url"], "http://127.0.0.1:18101")
+            self.assertEqual(health["serve_path"], str(Path(self.temp_dir).resolve()))
+            
+        finally:
+            server.stop()
+    
+    @requires_network
+    def test_health_check_after_stop(self):
+        """Test health check after server stops"""
+        server = zServer(
+            self.mock_logger,
+            port=18102,
+            host="127.0.0.1",
+            serve_path=self.temp_dir
+        )
+        
+        try:
+            # Start server
+            server.start()
+            time.sleep(0.2)
+            
+            # Verify running
+            health_running = server.health_check()
+            self.assertTrue(health_running["running"])
+            self.assertIsNotNone(health_running["url"])
+            
+            # Stop server
+            server.stop()
+            time.sleep(0.2)
+            
+            # Verify stopped
+            health_stopped = server.health_check()
+            self.assertFalse(health_stopped["running"])
+            self.assertIsNone(health_stopped["url"])
+            
+            # Other fields should remain consistent
+            self.assertEqual(health_stopped["host"], "127.0.0.1")
+            self.assertEqual(health_stopped["port"], 18102)
+            
+        finally:
+            if server.is_running():
+                server.stop()
+
+
 def run_tests(verbose=True):
     """Run all zServer tests"""
     loader = unittest.TestLoader()
@@ -598,6 +711,7 @@ def run_tests(verbose=True):
     suite.addTests(loader.loadTestsFromTestCase(TestzServerErrorHandling))
     suite.addTests(loader.loadTestsFromTestCase(TestzServerHandler))
     suite.addTests(loader.loadTestsFromTestCase(TestzServerMocking))
+    suite.addTests(loader.loadTestsFromTestCase(TestzServerHealthCheck))
     
     verbosity = 2 if verbose else 1
     runner = unittest.TextTestRunner(verbosity=verbosity)

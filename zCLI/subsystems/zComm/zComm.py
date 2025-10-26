@@ -175,6 +175,51 @@ class zComm:
         return info
 
     # ═══════════════════════════════════════════════════════════
+    # Health Checks (Week 2.1)
+    # ═══════════════════════════════════════════════════════════
+    
+    def websocket_health_check(self) -> Optional[Dict[str, Any]]:
+        """
+        Get zBifrost (WebSocket) server health status
+        
+        Returns:
+            dict: Health status including running state, clients count, port, etc.
+                  None if WebSocket server not initialized
+        """
+        if self.websocket:
+            return self.websocket.health_check()
+        return {"running": False, "error": "WebSocket server not initialized"}
+    
+    def server_health_check(self) -> Optional[Dict[str, Any]]:
+        """
+        Get HTTP server health status (if available via z.server)
+        
+        Note: HTTP server (zServer) is typically accessed via z.server.health_check()
+        This method provides a convenience wrapper for accessing it via zComm.
+        
+        Returns:
+            dict: Health status including running state, port, serve_path, etc.
+                  None if HTTP server not available
+        """
+        if self.zcli and hasattr(self.zcli, 'server') and self.zcli.server:
+            return self.zcli.server.health_check()
+        return {"running": False, "error": "HTTP server not available"}
+    
+    def health_check_all(self) -> Dict[str, Any]:
+        """
+        Get health status for all communication services
+        
+        Returns:
+            dict: Combined health status with keys:
+                - websocket: zBifrost health status
+                - http_server: zServer health status (if available)
+        """
+        return {
+            "websocket": self.websocket_health_check(),
+            "http_server": self.server_health_check()
+        }
+
+    # ═══════════════════════════════════════════════════════════
     # Network Utilities - Delegated to NetworkUtils
     # ═══════════════════════════════════════════════════════════
 

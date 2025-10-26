@@ -1931,8 +1931,167 @@ class TestzBifrostClientReconnection(unittest.IsolatedAsyncioTestCase):
                 pass
 
 
+@unittest.skipIf(not WEBSOCKETS_AVAILABLE, "websockets library not available")
+class TestzBifrostHealthCheck(unittest.IsolatedAsyncioTestCase):
+    """Test zBifrost health check functionality (Week 2.1)"""
+    
+    async def _start_server(self, port=18900):
+        """Start basic server for health check testing"""
+        workspace = Path(tempfile.mkdtemp())
+        
+        z = zCLI({
+            "zWorkspace": str(workspace),
+            "zMode": "zBifrost",
+            "websocket": {
+                "host": "127.0.0.1",
+                "port": port,
+                "require_auth": False
+            }
+        })
+        
+        socket_ready = asyncio.Event()
+        task = asyncio.create_task(z.comm.start_websocket(socket_ready, walker=z.walker))
+        await asyncio.wait_for(socket_ready.wait(), timeout=5)
+        await asyncio.sleep(0.3)
+        
+        return z, task
+    
+    @requires_network
+    async def test_health_check_before_start(self):
+        """Test health check before server starts"""
+        workspace = Path(tempfile.mkdtemp())
+        
+        z = zCLI({
+            "zWorkspace": str(workspace),
+            "zMode": "zBifrost",
+            "websocket": {
+                "host": "127.0.0.1",
+                "port": 18901,
+                "require_auth": False
+            }
+        })
+        
+        # Get health check before starting
+        health = z.comm.websocket.health_check()
+        
+        # Verify structure
+        self.assertIn("running", health)
+        self.assertIn("host", health)
+        self.assertIn("port", health)
+        self.assertIn("url", health)
+        self.assertIn("clients", health)
+        self.assertIn("authenticated_clients", health)
+        self.assertIn("require_auth", health)
+        
+        # Verify values before start
+        self.assertFalse(health["running"])
+        self.assertEqual(health["host"], "127.0.0.1")
+        self.assertEqual(health["port"], 18901)
+        self.assertIsNone(health["url"])
+        self.assertEqual(health["clients"], 0)
+        self.assertEqual(health["authenticated_clients"], 0)
+        self.assertFalse(health["require_auth"])
+    
+    @requires_network
+    async def test_health_check_while_running(self):
+        """Test health check while server is running"""
+        z, server_task = await self._start_server(port=18902)
+        
+        try:
+            # Get health check while running
+            health = z.comm.websocket.health_check()
+            
+            # Verify running state
+            self.assertTrue(health["running"])
+            self.assertEqual(health["host"], "127.0.0.1")
+            self.assertEqual(health["port"], 18902)
+            self.assertEqual(health["url"], "ws://127.0.0.1:18902")
+            self.assertEqual(health["clients"], 0)  # No clients connected yet
+            self.assertFalse(health["require_auth"])
+            
+        finally:
+            server_task.cancel()
+            try:
+                await server_task
+            except asyncio.CancelledError:
+                pass
+    
+    @requires_network
+    async def test_health_check_with_clients(self):
+        """Test health check reflects connected clients"""
+        z, server_task = await self._start_server(port=18903)
+        
+        try:
+            # Connect 2 clients
+            async with websockets.connect('ws://127.0.0.1:18903') as ws1:
+                async with websockets.connect('ws://127.0.0.1:18903') as ws2:
+                    # Discard connection_info
+                    await asyncio.wait_for(ws1.recv(), timeout=3)
+                    await asyncio.wait_for(ws2.recv(), timeout=3)
+                    
+                    await asyncio.sleep(0.2)
+                    
+                    # Get health check with clients
+                    health = z.comm.websocket.health_check()
+                    
+                    # Verify client count
+                    self.assertTrue(health["running"])
+                    self.assertEqual(health["clients"], 2)
+                    self.assertEqual(health["authenticated_clients"], 2)  # Both authenticated (no auth required)
+            
+            # Wait for clients to disconnect
+            await asyncio.sleep(0.3)
+            
+            # Get health check after disconnect
+            health_after = z.comm.websocket.health_check()
+            self.assertEqual(health_after["clients"], 0)
+            self.assertEqual(health_after["authenticated_clients"], 0)
+            
+        finally:
+            server_task.cancel()
+            try:
+                await server_task
+            except asyncio.CancelledError:
+                pass
+    
+    @requires_network
+    async def test_health_check_with_auth_required(self):
+        """Test health check with authentication enabled"""
+        workspace = Path(tempfile.mkdtemp())
+        
+        z = zCLI({
+            "zWorkspace": str(workspace),
+            "zMode": "zBifrost",
+            "websocket": {
+                "host": "127.0.0.1",
+                "port": 18904,
+                "require_auth": True  # Enable auth
+            }
+        })
+        
+        socket_ready = asyncio.Event()
+        server_task = asyncio.create_task(z.comm.start_websocket(socket_ready, walker=z.walker))
+        await asyncio.wait_for(socket_ready.wait(), timeout=5)
+        await asyncio.sleep(0.3)
+        
+        try:
+            # Get health check with auth enabled
+            health = z.comm.websocket.health_check()
+            
+            # Verify auth setting
+            self.assertTrue(health["running"])
+            self.assertTrue(health["require_auth"])
+            
+        finally:
+            server_task.cancel()
+            try:
+                await server_task
+            except asyncio.CancelledError:
+                pass
+
+
 def run_tests(verbose=True):
-    """Run all zBifrost integration tests (Phase 1 + Phase 2 + Phase 3 + Phase 4)."""
+    """Run all zBifrost integration tests (Phase 1 + Phase 2 + Phase 3 + Phase 4 + Health Checks)."""
     # Create test suite
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
@@ -1960,6 +2119,9 @@ def run_tests(verbose=True):
         suite.addTests(loader.loadTestsFromTestCase(TestzBifrostErrorHandling))
         suite.addTests(loader.loadTestsFromTestCase(TestzBifrostGracefulShutdown))
         suite.addTests(loader.loadTestsFromTestCase(TestzBifrostClientReconnection))
+        
+        # Week 2.1: Health Check Tests
+        suite.addTests(loader.loadTestsFromTestCase(TestzBifrostHealthCheck))
     
     # Run tests
     runner = unittest.TextTestRunner(verbosity=2 if verbose else 1)

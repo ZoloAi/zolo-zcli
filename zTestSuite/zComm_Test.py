@@ -481,6 +481,149 @@ class TestAsyncWebSocketOperations(unittest.IsolatedAsyncioTestCase):
         mock_client2.send.assert_not_called()
 
 
+class TestzCommHealthChecks(unittest.TestCase):
+    """Test zComm health check convenience methods (Week 2.1)"""
+    
+    def setUp(self):
+        """Set up test fixtures"""
+        self.mock_logger = Mock()
+        self.mock_logger.info = Mock()
+        self.mock_logger.warning = Mock()
+        self.mock_logger.error = Mock()
+        self.mock_logger.debug = Mock()
+        
+        self.mock_zcli = Mock()
+        self.mock_zcli.session = {"session_id": "test123"}
+        self.mock_zcli.logger = self.mock_logger
+        self.mock_zcli.config = Mock()
+        self.mock_zcli.config.websocket = Mock()
+        self.mock_zcli.config.websocket.host = "127.0.0.1"
+        self.mock_zcli.config.websocket.port = 8765
+    
+    def test_websocket_health_check_when_available(self):
+        """Test websocket health check when WebSocket server exists"""
+        # Create zComm with mock zCLI
+        comm = zComm(self.mock_zcli)
+        
+        # Mock websocket with health_check method
+        mock_websocket = Mock()
+        mock_websocket.health_check.return_value = {
+            "running": True,
+            "host": "127.0.0.1",
+            "port": 8765,
+            "url": "ws://127.0.0.1:8765",
+            "clients": 2,
+            "authenticated_clients": 2,
+            "require_auth": False
+        }
+        comm._bifrost_mgr.websocket = mock_websocket
+        
+        # Call health check
+        health = comm.websocket_health_check()
+        
+        # Verify it called the WebSocket's health_check
+        mock_websocket.health_check.assert_called_once()
+        
+        # Verify return value
+        self.assertEqual(health["running"], True)
+        self.assertEqual(health["clients"], 2)
+        self.assertEqual(health["url"], "ws://127.0.0.1:8765")
+    
+    def test_websocket_health_check_when_not_available(self):
+        """Test websocket health check when WebSocket server doesn't exist"""
+        # Create zComm with mock zCLI
+        comm = zComm(self.mock_zcli)
+        
+        # No websocket available
+        comm._bifrost_mgr.websocket = None
+        
+        # Call health check
+        health = comm.websocket_health_check()
+        
+        # Verify error response
+        self.assertFalse(health["running"])
+        self.assertIn("error", health)
+        self.assertEqual(health["error"], "WebSocket server not initialized")
+    
+    def test_server_health_check_when_available(self):
+        """Test HTTP server health check when server exists"""
+        # Create zComm with mock zCLI
+        comm = zComm(self.mock_zcli)
+        
+        # Mock HTTP server
+        mock_server = Mock()
+        mock_server.health_check.return_value = {
+            "running": True,
+            "host": "127.0.0.1",
+            "port": 8080,
+            "url": "http://127.0.0.1:8080",
+            "serve_path": "/path/to/files"
+        }
+        self.mock_zcli.server = mock_server
+        
+        # Call health check
+        health = comm.server_health_check()
+        
+        # Verify it called the server's health_check
+        mock_server.health_check.assert_called_once()
+        
+        # Verify return value
+        self.assertEqual(health["running"], True)
+        self.assertEqual(health["port"], 8080)
+        self.assertEqual(health["url"], "http://127.0.0.1:8080")
+    
+    def test_server_health_check_when_not_available(self):
+        """Test HTTP server health check when server doesn't exist"""
+        # Create zComm with mock zCLI
+        comm = zComm(self.mock_zcli)
+        
+        # No HTTP server
+        self.mock_zcli.server = None
+        
+        # Call health check
+        health = comm.server_health_check()
+        
+        # Verify error response
+        self.assertFalse(health["running"])
+        self.assertIn("error", health)
+        self.assertEqual(health["error"], "HTTP server not available")
+    
+    def test_health_check_all(self):
+        """Test combined health check for all services"""
+        # Create zComm with mock zCLI
+        comm = zComm(self.mock_zcli)
+        
+        # Mock both services
+        mock_websocket = Mock()
+        mock_websocket.health_check.return_value = {
+            "running": True,
+            "clients": 1,
+            "url": "ws://127.0.0.1:8765"
+        }
+        comm._bifrost_mgr.websocket = mock_websocket
+        
+        mock_server = Mock()
+        mock_server.health_check.return_value = {
+            "running": True,
+            "port": 8080,
+            "url": "http://127.0.0.1:8080"
+        }
+        self.mock_zcli.server = mock_server
+        
+        # Call combined health check
+        health = comm.health_check_all()
+        
+        # Verify structure
+        self.assertIn("websocket", health)
+        self.assertIn("http_server", health)
+        
+        # Verify both services reported
+        self.assertTrue(health["websocket"]["running"])
+        self.assertTrue(health["http_server"]["running"])
+        self.assertEqual(health["websocket"]["clients"], 1)
+        self.assertEqual(health["http_server"]["port"], 8080)
+
+
 def run_tests(verbose=True):
     """Run all zComm tests."""
     # Create test suite
@@ -495,6 +638,7 @@ def run_tests(verbose=True):
     suite.addTests(loader.loadTestsFromTestCase(TestUtilityMethods))
     suite.addTests(loader.loadTestsFromTestCase(TestzBifrostWebSocket))
     suite.addTests(loader.loadTestsFromTestCase(TestAsyncWebSocketOperations))
+    suite.addTests(loader.loadTestsFromTestCase(TestzCommHealthChecks))
     
     # Run tests
     runner = unittest.TextTestRunner(verbosity=2 if verbose else 1)

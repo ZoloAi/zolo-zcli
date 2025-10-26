@@ -63,6 +63,7 @@ class zBifrost:
             allowed_origins = DEFAULT_ALLOWED_ORIGINS
         
         self.clients = set()
+        self._running = False  # Track server running state
         
         # Initialize modular components
         self.cache = CacheManager(logger, default_query_ttl=60)
@@ -267,6 +268,34 @@ class zBifrost:
         return self.auth.authenticated_clients
     
     # ═══════════════════════════════════════════════════════════
+    # Health Check
+    # ═══════════════════════════════════════════════════════════
+    
+    def health_check(self):
+        """
+        Get health status of WebSocket server
+        
+        Returns:
+            dict: Server health status with keys:
+                - running (bool): Whether server is running
+                - host (str): Server host address
+                - port (int): Server port
+                - url (str|None): Server WebSocket URL (None if not running)
+                - clients (int): Number of connected clients
+                - authenticated_clients (int): Number of authenticated clients
+                - require_auth (bool): Whether authentication is required
+        """
+        return {
+            "running": self._running,
+            "host": self.host,
+            "port": self.port,
+            "url": f"ws://{self.host}:{self.port}" if self._running else None,
+            "clients": len(self.clients),
+            "authenticated_clients": len(self.auth.authenticated_clients),
+            "require_auth": self.auth.require_auth
+        }
+    
+    # ═══════════════════════════════════════════════════════════
     # Broadcasting
     # ═══════════════════════════════════════════════════════════
     
@@ -321,8 +350,10 @@ class zBifrost:
             if self.host == "127.0.0.1" else ""
         )
         self.logger.info(f"[zBifrost] [STARTED] WebSocket server started at ws://{bind_info}{security_note}")
+        self._running = True  # Mark server as running
         socket_ready.set()  # Signal ready to zWalker
         await server.wait_closed()
+        self._running = False  # Mark server as stopped when closed
 
 
 # ─────────────────────────────────────────────────────────────
