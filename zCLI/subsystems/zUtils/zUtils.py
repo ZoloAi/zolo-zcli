@@ -42,7 +42,8 @@ class zUtils:
         
         plugins = {}
         
-        for path in plugin_paths:
+        # Use progress iterator for plugin loading
+        for path in self.display.progress_iterator(plugin_paths, "Loading plugins"):
             try:
                 mod = None
                 if isinstance(path, str) and path.endswith('.py') and os.path.isabs(path):

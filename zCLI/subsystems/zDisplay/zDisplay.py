@@ -61,6 +61,12 @@ class zDisplay(zDisplayDelegates):
             "zMenu": self.zEvents.zMenu,
             "zDialog": self.zEvents.zDialog,
 
+            # Widget events (progress, spinners)
+            "progress_bar": self.zEvents.progress_bar,
+            "spinner": self.zEvents.spinner,
+            "progress_iterator": self.zEvents.progress_iterator,
+            "indeterminate_progress": self.zEvents.indeterminate_progress,
+
             # Input events
             "selection": self.zEvents.selection,
             "read_string": self.zPrimitives.read_string,
@@ -109,3 +115,20 @@ class zDisplay(zDisplayDelegates):
         except TypeError as error:
             self.logger.error("Invalid parameters for event '%s': %s", event, error)
             return None
+
+    # Convenience method delegates for common operations
+    def progress_bar(self, current, total=None, label="Processing", **kwargs):
+        """Convenience method: Display a progress bar."""
+        return self.zEvents.progress_bar(current, total, label, **kwargs)
+
+    def spinner(self, label="Loading", style="dots"):
+        """Convenience method: Loading spinner context manager."""
+        return self.zEvents.spinner(label, style)
+
+    def progress_iterator(self, iterable, label="Processing", **kwargs):
+        """Convenience method: Wrap iterable with progress bar."""
+        return self.zEvents.progress_iterator(iterable, label, **kwargs)
+
+    def indeterminate_progress(self, label="Processing"):
+        """Convenience method: Indeterminate progress indicator."""
+        return self.zEvents.indeterminate_progress(label)

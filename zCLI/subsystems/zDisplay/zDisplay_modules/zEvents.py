@@ -2,7 +2,7 @@
 
 """zEvents class - organized event packages for complex display operations."""
 
-from .zEvents_packages import BasicOutputs, BasicInputs, Signals, BasicData, AdvancedData, zSystem, zAuthEvents
+from .zEvents_packages import BasicOutputs, BasicInputs, Signals, BasicData, AdvancedData, zSystem, zAuthEvents, Widgets
 
 class zEvents:
     """Event orchestrator - organizes events into logical packages.
@@ -15,6 +15,7 @@ class zEvents:
     - AdvancedData: zTable (with pagination)
     - zSystem: zDeclare, zSession, zCrumbs, zMenu, zDialog
     - zAuth: login_prompt, login_success, login_failure, logout_success, status_display
+    - Widgets: progress_bar, spinner (interactive loaders)
     """
 
     def __init__(self, display_instance):
@@ -29,6 +30,7 @@ class zEvents:
         self.AdvancedData = AdvancedData(display_instance)
         self.zSystem = zSystem(display_instance)
         self.zAuth = zAuthEvents(display_instance)
+        self.Widgets = Widgets(display_instance)
 
         # Set up composition references (packages can use each other)
         self.BasicInputs.BasicOutputs = self.BasicOutputs
@@ -41,6 +43,7 @@ class zEvents:
         self.zSystem.BasicInputs = self.BasicInputs
         self.zAuth.BasicOutputs = self.BasicOutputs
         self.zAuth.Signals = self.Signals
+        self.Widgets.BasicOutputs = self.BasicOutputs
 
     # Convenience delegates to BasicOutputs for backward compatibility
     def header(self, label, color="RESET", indent=0, style="full"):
@@ -111,3 +114,20 @@ class zEvents:
     def zDialog(self, context, zcli=None, walker=None):
         """Delegate to zSystem.zDialog."""
         return self.zSystem.zDialog(context, zcli, walker)
+
+    # Convenience delegates to Widgets
+    def progress_bar(self, current, total=None, label="Processing", **kwargs):
+        """Delegate to Widgets.progress_bar."""
+        return self.Widgets.progress_bar(current, total, label, **kwargs)
+
+    def spinner(self, label="Loading", style="dots"):
+        """Delegate to Widgets.spinner."""
+        return self.Widgets.spinner(label, style)
+
+    def progress_iterator(self, iterable, label="Processing", **kwargs):
+        """Delegate to Widgets.progress_iterator."""
+        return self.Widgets.progress_iterator(iterable, label, **kwargs)
+
+    def indeterminate_progress(self, label="Processing"):
+        """Delegate to Widgets.indeterminate_progress."""
+        return self.Widgets.indeterminate_progress(label)

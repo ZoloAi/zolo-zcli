@@ -22,10 +22,10 @@ class zPrimitives:
         return self.display.mode not in ("Terminal", "Walker", "")
 
     # Output primitives - terminal output with optional GUI support
-    def write_raw(self, content):
+    def write_raw(self, content, flush=True):
         """Write raw content with no formatting or newline."""
         # Terminal output (always)
-        print(content, end='', flush=True)
+        print(content, end='', flush=flush)
 
         # GUI output (if in GUI mode)
         if self._is_gui_mode():

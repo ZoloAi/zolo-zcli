@@ -32,6 +32,7 @@ TEST_MODULES = [
     'zLayer0_Integration',  # Week 2.5 Phase 3 - Integration tests (real execution, no mocks) (44% → 60%)
     'zShutdown',   # Week 2.2 - Graceful shutdown (signal handlers, cleanup)
     'zDisplay',
+    'zDisplay_Widgets',  # Week 4.1 - Progress bars, spinners, and loading indicators
     'zAuth',       # zAuth depends on zDisplay
     'zAuth_Comprehensive',  # Week 3.4 - Comprehensive edge case testing
     'zRBAC',       # Week 3.3 - RBAC (Role-Based Access Control) depends on zAuth

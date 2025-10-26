@@ -1141,19 +1141,63 @@
                         </div>
                     </div>
 
-                    <div class="todo-item" data-id="layer1-display-progress">
-                        <input type="checkbox" class="todo-checkbox">
+                    <div class="todo-item completed" data-id="layer1-display-progress">
+                        <input type="checkbox" class="todo-checkbox" checked>
                         <div class="todo-content">
-                            <div class="todo-title">Week 4.1: 🎨 Progress bar widget in zDisplay</div>
+                            <div class="todo-title">Week 4.1: 🎨 Progress bar widget in zDisplay ✅ COMPLETE (Terminal Mode Only)</div>
                             <div class="todo-description">
-                                display.progress_bar(current, total, label="Processing")
-                                Support: indeterminate spinner, percentage, ETA calculation.
-                                <br><strong>UX Impact:</strong> Used by zData migrations, file operations
+                                <strong>🎉 IMPLEMENTED: Terminal Mode Widget Package</strong>
+                                <br><br>
+                                <strong>✅ Terminal Mode - New Widgets (All Implemented):</strong>
+                                <br>&nbsp;&nbsp;• <code>display.progress_bar(current, total, label="Processing")</code> - Percentage + ETA
+                                <br>&nbsp;&nbsp;• <code>with display.spinner("Loading", style="dots")</code> - Context manager, 6 styles
+                                <br>&nbsp;&nbsp;• <code>display.progress_iterator(iterable, label="Processing")</code> - Wrap any iterable
+                                <br>&nbsp;&nbsp;• <code>display.indeterminate_progress(label="Processing")</code> - Manual control
+                                <br><br>
+                                <strong>🎨 Spinner Styles Available:</strong>
+                                <br>&nbsp;&nbsp;• dots, line, arc, arrow, bouncingBall, simple
+                                <br><br>
+                                <strong>❌ zBifrost Mode - NOT YET IMPLEMENTED:</strong>
+                                <br>&nbsp;&nbsp;• Missing: JavaScript widgets in <code>renderer.js</code>
+                                <br>&nbsp;&nbsp;• Missing: CSS for progress bars/spinners in <code>zTheme</code>
+                                <br>&nbsp;&nbsp;• Missing: WebSocket event handlers for progress updates
+                                <br>&nbsp;&nbsp;• <strong>TODO:</strong> Implement <code>renderProgressBar()</code>, <code>renderSpinner()</code> in renderer.js
+                                <br>&nbsp;&nbsp;• <strong>TODO:</strong> Add zProgress.css, zSpinner.css to zTheme
+                                <br><br>
+                                <strong>✅ Tests Added (26 comprehensive tests - 100% passing):</strong>
+                                <br>&nbsp;&nbsp;• TestProgressBar (9 tests) - Basic, percentage, ETA, colors, edge cases
+                                <br>&nbsp;&nbsp;• TestSpinner (6 tests) - Context manager, styles, thread safety
+                                <br>&nbsp;&nbsp;• TestProgressIterator (4 tests) - Iteration, completion, ETA
+                                <br>&nbsp;&nbsp;• TestIndeterminateProgress (3 tests) - Manual start/update/complete
+                                <br>&nbsp;&nbsp;• TestWidgetsIntegration (4 tests) - Event map, handle() method, composition
+                                <br><br>
+                                <strong>🎯 Real-World Integration (2 Terminal locations updated):</strong>
+                                <br>&nbsp;&nbsp;1. <code>comm_executor.py</code> - PostgreSQL installer (spinner for brew install + service start)
+                                <br>&nbsp;&nbsp;2. <code>zUtils.py</code> - Plugin loader (progress_iterator for multi-plugin loading)
+                                <br><br>
+                                <strong>📦 Architecture (Modular Design):</strong>
+                                <br>&nbsp;&nbsp;• Created: <code>zDisplay_modules/zEvents_packages/Widgets.py</code>
+                                <br>&nbsp;&nbsp;• Integrated: <code>zDisplay.py</code> (event map + convenience methods)
+                                <br>&nbsp;&nbsp;• Orchestrated: <code>zEvents.py</code> (composition pattern)
+                                <br>&nbsp;&nbsp;• Enhanced: <code>zPrimitives.py</code> (flush parameter for smooth animation)
+                                <br>&nbsp;&nbsp;• Dependency Injection: Access zColors/zPrimitives via display_instance (no direct imports)
+                                <br><br>
+                                <strong>📁 Files Created:</strong>
+                                <br>&nbsp;&nbsp;• <code>zTestSuite/zDisplay_Widgets_Test.py</code> (26 tests)
+                                <br>&nbsp;&nbsp;• <code>Demos/progress_bar_demo/demo_progress_widgets.py</code> (8 examples)
+                                <br>&nbsp;&nbsp;• <code>Demos/progress_bar_demo/README.md</code>
+                                <br><br>
+                                <strong>✅ Total Tests:</strong> 1013 passing (was 987, +26 from Week 4.1) 🎉
+                                <br><strong>✅ Documentation:</strong> Demo + README with 8 usage patterns
+                                <br><strong>🎯 UX Impact (Terminal Only):</strong> Animated feedback during PostgreSQL install, plugin loading
+                                <br><strong>⏳ Next Step:</strong> Implement zBifrost mode widgets (JavaScript + CSS)
                             </div>
                             <div class="todo-tags">
                                 <span class="tag">Layer 1</span>
                                 <span class="tag">zDisplay</span>
+                                <span class="tag">Terminal</span>
                                 <span class="tag">2 days</span>
+                                <span class="tag" style="background: #f6ad55; color: white;">PARTIAL</span>
                             </div>
                         </div>
                     </div>
@@ -1161,16 +1205,34 @@
                     <div class="todo-item" data-id="layer1-display-spinner">
                         <input type="checkbox" class="todo-checkbox">
                         <div class="todo-content">
-                            <div class="todo-title">Week 4.2: 🎨 Loading spinners for async ops</div>
+                            <div class="todo-title">Week 4.2: 🎨 zBifrost Mode Widgets (JavaScript + CSS)</div>
                             <div class="todo-description">
-                                with display.spinner("Loading..."):
-                                    # async operation
-                                Multiple styles: dots, line, arc, bouncingBall.
+                                <strong>Goal:</strong> Implement browser-side progress bars and spinners for zBifrost mode
+                                <br><br>
+                                <strong>📋 Tasks:</strong>
+                                <br>&nbsp;&nbsp;1. Create <code>zTheme/css/zProgress.css</code> - Progress bar styling
+                                <br>&nbsp;&nbsp;2. Create <code>zTheme/css/zSpinner.css</code> - 6 spinner animations (dots, line, arc, etc.)
+                                <br>&nbsp;&nbsp;3. Add to <code>renderer.js</code>:
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;• <code>renderProgressBar(current, total, options)</code>
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;• <code>renderSpinner(label, style)</code>
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;• <code>updateProgress(progressId, current)</code>
+                                <br>&nbsp;&nbsp;4. Add WebSocket event handlers in <code>message_handler.js</code>:
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;• <code>progress_bar</code> event
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;• <code>spinner_start</code> / <code>spinner_stop</code> events
+                                <br>&nbsp;&nbsp;5. Update Python <code>Widgets.py</code> to emit WebSocket events when in zBifrost mode
+                                <br><br>
+                                <strong>🎯 Success Criteria:</strong>
+                                <br>&nbsp;&nbsp;• Progress bars animate smoothly in browser
+                                <br>&nbsp;&nbsp;• Spinners work with all 6 styles
+                                <br>&nbsp;&nbsp;• Same Python API works in both Terminal AND zBifrost modes
+                                <br>&nbsp;&nbsp;• Level 0/1 demos show progress bars during data loading
                             </div>
                             <div class="todo-tags">
                                 <span class="tag">Layer 1</span>
                                 <span class="tag">zDisplay</span>
-                                <span class="tag">1 day</span>
+                                <span class="tag">zBifrost</span>
+                                <span class="tag">JavaScript</span>
+                                <span class="tag">2-3 days</span>
                             </div>
                         </div>
                     </div>
@@ -1242,26 +1304,32 @@
                         </div>
                     </div>
 
-                    <div style="background: #e6ffed; border: 2px solid #48bb78; padding: 15px; border-radius: 8px; margin-top: 15px;">
-                        <strong>🔍 Layer 1 Health Check (In Progress - 4/7 weeks complete, zAuth 100%!):</strong>
+                    <div style="background: #fffaf0; border: 2px solid #f6ad55; padding: 15px; border-radius: 8px; margin-top: 15px;">
+                        <strong>🔍 Layer 1 Health Check (In Progress - 4.5/7 weeks complete, zAuth 100%, zDisplay PARTIAL):</strong>
                         <ul style="margin: 10px 0 0 20px; line-height: 1.8;">
                             <li>✅ zAuth: bcrypt password hashing (Week 3.1 - COMPLETE, 14 tests)</li>
                             <li>✅ zAuth: Persistent sessions with 7-day expiry (Week 3.2 - COMPLETE, 10 tests)</li>
                             <li>✅ zAuth: RBAC with inline `_rbac` directives (Week 3.3 - COMPLETE, 18 tests)</li>
                             <li>✅ zAuth: Comprehensive test suite (Week 3.4 - COMPLETE, 38 tests, 100% pass rate!) 🎉</li>
-                            <li>⏳ zDisplay: Progress bars/spinners work in Terminal AND zBifrost (Weeks 4.1-4.2)</li>
+                            <li>⚠️ zDisplay: Progress bars/spinners (Week 4.1 - <strong>Terminal DONE</strong>, zBifrost PENDING)</li>
+                            <li>⏳ zDisplay: zBifrost widgets (Week 4.2 - JavaScript + CSS NOT STARTED)</li>
                             <li>⏳ zDialog: Validators work, clear error messages (Weeks 5.1-5.2)</li>
                             <li>⏳ zLoader: Hot reload works in --dev mode (Week 5.3)</li>
                             <li>⏳ Error messages are actionable (no vague errors) (Week 4.3)</li>
                         </ul>
-                        <div style="margin-top: 15px; padding: 10px; background: #f0fff4; border-radius: 4px; border: 2px solid #48bb78;">
-                            <strong>📊 Progress:</strong> 4/7 weeks complete (57%) - zAuth at 100%! ✅
-                            <br><strong>📊 Tests:</strong> 987 passing (100% pass rate - ALL TESTS GREEN! 🎉)
+                        <div style="margin-top: 15px; padding: 10px; background: #fffbeb; border-radius: 4px; border: 2px solid #f59e0b;">
+                            <strong>📊 Progress:</strong> 4.5/7 weeks complete (64%) - zAuth at 100%, zDisplay at 50%
+                            <br><strong>📊 Tests:</strong> 1013 passing (100% pass rate - ALL TESTS GREEN! 🎉)
                             <br>&nbsp;&nbsp;• Layer 0: 343 tests (zConfig, zComm, zServer, zBifrost)
                             <br>&nbsp;&nbsp;• Layer 1 zAuth: 97 tests (bcrypt, sessions, RBAC, comprehensive)
+                            <br>&nbsp;&nbsp;• Layer 1 zDisplay (Terminal): 26 tests (progress bars, spinners, iterators)
                             <br>&nbsp;&nbsp;• Other subsystems: 547 tests
-                            <br><strong>🔑 Key Achievement:</strong> Workspace isolation preserved (Data_Path: "@")
-                            <br><strong>🎯 Next:</strong> Week 4.1 - zDisplay progress bars/spinners
+                            <br><strong>✅ Terminal Widgets:</strong> 4 widgets (progress_bar, spinner, progress_iterator, indeterminate_progress)
+                            <br><strong>❌ zBifrost Widgets:</strong> Missing JavaScript renderer + CSS styling
+                            <br><strong>🎯 Real Integration (Terminal):</strong> PostgreSQL installer + plugin loader
+                            <br><strong>🔑 Key Achievement:</strong> Consistent Python API, dependency injection, thread-safe
+                            <br><strong>⚠️ Gap Identified:</strong> zBifrost mode needs <code>renderer.js</code> + <code>zTheme CSS</code> implementation
+                            <br><strong>🎯 Next:</strong> Week 4.2 - Implement zBifrost widgets (2-3 days) OR move to Week 4.3/5.1
                         </div>
                     </div>
                 </div>
@@ -1489,7 +1557,7 @@
                         &nbsp;&nbsp;• 2.7: ✅ Documentation complete (COMPLETE - AGENT.md updated, TESTING_GUIDE.md created, deprecated files removed)<br>
                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>Result:</em> Production-ready docs for AI assistants + developers. Layer 0 documentation polish complete!<br>
                         <br>
-                        <strong>Week 3 (✅ 4/7 done - 100% zAuth COMPLETE!):</strong><br>
+                        <strong>Week 3 (✅ 4/4 done - 100% zAuth COMPLETE!):</strong><br>
                         &nbsp;&nbsp;• 3.1: ✅ bcrypt password hashing (COMPLETE - 14 tests, 921 total passing)<br>
                         &nbsp;&nbsp;• 3.2: ✅ Persistent sessions (COMPLETE - 10 tests, 931 total passing, declarative with zData)<br>
                         &nbsp;&nbsp;• 3.3: ✅ Enhanced RBAC (COMPLETE - 18 tests, 949 total passing, inline `_rbac` syntax)<br>
@@ -1499,7 +1567,17 @@
                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>Architecture:</em> Modular refactor (4 modules + facade), unified schema (auth.yaml)<br>
                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>Result:</em> 97 zAuth tests, 100% BULLETPROOF, zero subsystem pollution<br>
                         <br>
-                        <strong>Weeks 4-5:</strong> Layer 1 (Display, Validation, Hot Reload) → Progress bars, spinners, validators, file watching<br>
+                        <strong>Week 4 (⚠️ 0.5/3 done - Terminal Widgets Done, zBifrost Pending):</strong><br>
+                        &nbsp;&nbsp;• 4.1: ⚠️ Progress bar widget (<strong>PARTIAL</strong> - Terminal DONE, zBifrost PENDING)<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>✅ Terminal:</em> 26 tests, 1013 total passing, 4 widgets (progress_bar, spinner, progress_iterator, indeterminate_progress)<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>✅ Real Integration:</em> PostgreSQL installer, plugin loader<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>✅ Architecture:</em> Modular Widgets.py, dependency injection, thread-safe<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>❌ zBifrost:</em> Missing JavaScript renderer.js methods + CSS styling in zTheme<br>
+                        &nbsp;&nbsp;• 4.2: ⏳ zBifrost widgets (NOT STARTED - need JavaScript + CSS implementation)<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>TODO:</em> Create zProgress.css, zSpinner.css, update renderer.js, add WebSocket events<br>
+                        &nbsp;&nbsp;• 4.3: ⏳ Actionable error messages (All subsystems) - NOT STARTED<br>
+                        <br>
+                        <strong>Week 5:</strong> Layer 1 (Validation, Hot Reload) → Regex validators, custom validators, file watching<br>
                         <strong>Weeks 6-9:</strong> Layer 2 (Business) → Migrations, ORM, Shell, Plugins<br>
                         <strong>Week 10:</strong> Layer 3 (Orchestration) → Documentation, Integration Tests<br>
                         <br>

@@ -194,31 +194,36 @@ def _install_postgresql_macos(auto_install):
     print("   comm start postgresql")
     
     if auto_install:
-        print("\n[INFO] Installing PostgreSQL...")
-        try:
-            result = subprocess.run(
-                ["brew", "install", "postgresql@14"],
-                capture_output=True,
-                text=True,
-                timeout=300,
-                check=False
-            )
-            if result.returncode == 0:
-                print("[OK] PostgreSQL installed successfully!")
-                print("\nStarting PostgreSQL...")
-                subprocess.run(["brew", "services", "start", "postgresql@14"], check=False)
-                print("[OK] PostgreSQL started!")
-                _print_postgresql_driver_info()
-                return {"status": "success", "message": "PostgreSQL installed and started"}
+        # Use spinner widget for installation progress
+        with zcli.display.spinner("Installing PostgreSQL (this may take a few minutes)", style="dots"):
+            try:
+                result = subprocess.run(
+                    ["brew", "install", "postgresql@14"],
+                    capture_output=True,
+                    text=True,
+                    timeout=300,
+                    check=False
+                )
+            except subprocess.TimeoutExpired:
+                zcli.display.handle({"event": "error", "content": "Installation timed out"})
+                return {"error": "Installation timed out"}
+            except Exception as e:
+                zcli.display.handle({"event": "error", "content": f"Installation error: {e}"})
+                return {"error": str(e)}
+        
+        if result.returncode == 0:
+            zcli.display.handle({"event": "success", "content": "PostgreSQL installed successfully!"})
             
-            print(f"[ERROR] Installation failed: {result.stderr}")
-            return {"error": "Installation failed"}
-        except subprocess.TimeoutExpired:
-            print("[ERROR] Installation timed out")
-            return {"error": "Installation timed out"}
-        except Exception as e:
-            print(f"[ERROR] Installation error: {e}")
-            return {"error": str(e)}
+            # Use spinner for service start
+            with zcli.display.spinner("Starting PostgreSQL service", style="arc"):
+                subprocess.run(["brew", "services", "start", "postgresql@14"], check=False)
+            
+            zcli.display.handle({"event": "success", "content": "PostgreSQL started!"})
+            _print_postgresql_driver_info()
+            return {"status": "success", "message": "PostgreSQL installed and started"}
+        
+        zcli.display.handle({"event": "error", "content": f"Installation failed: {result.stderr}"})
+        return {"error": "Installation failed"}
     
     print("\n[INFO] To install automatically, run:")
     print("   comm install postgresql --auto")

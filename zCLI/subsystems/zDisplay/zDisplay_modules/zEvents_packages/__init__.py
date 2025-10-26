@@ -9,5 +9,6 @@ from .BasicData import BasicData
 from .AdvancedData import AdvancedData
 from .zSystem import zSystem
 from .zAuth import zAuthEvents
+from .Widgets import Widgets
 
-__all__ = ['BasicOutputs', 'BasicInputs', 'Signals', 'BasicData', 'AdvancedData', 'zSystem', 'zAuthEvents']
+__all__ = ['BasicOutputs', 'BasicInputs', 'Signals', 'BasicData', 'AdvancedData', 'zSystem', 'zAuthEvents', 'Widgets']
