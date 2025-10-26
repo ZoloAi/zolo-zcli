@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>zBifrost Level 1 - Simple zUI Menu</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .status {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status.disconnected {
+            background-color: #fee;
+            color: #c33;
+            border-left: 4px solid #c33;
+        }
+
+        .status.connected {
+            background-color: #efe;
+            color: #3c3;
+            border-left: 4px solid #3c3;
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: currentColor;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .button-group {
+            display: grid;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 14px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-danger {
+            background-color: #ff4444;
+            color: white;
+        }
+
+        .menu-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .btn-menu {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        #output {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 16px;
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 8px;
+            border-radius: 4px;
+            border-left: 3px solid #ccc;
+        }
+
+        .log-info { 
+            background-color: #e7f3ff;
+            border-left-color: #2196F3;
+            color: #0d47a1;
+        }
+
+        .log-success { 
+            background-color: #e8f5e9;
+            border-left-color: #4CAF50;
+            color: #1b5e20;
+        }
+
+        .log-error { 
+            background-color: #ffebee;
+            border-left-color: #f44336;
+            color: #b71c1c;
+        }
+
+        .log-warning { 
+            background-color: #fff3e0;
+            border-left-color: #ff9800;
+            color: #e65100;
+        }
+
+        .timestamp {
+            color: #999;
+            font-size: 11px;
+            margin-right: 8px;
+        }
+
+        .clear-button {
+            margin-top: 12px;
+            width: 100%;
+            background-color: #6c757d;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌉 zBifrost Level 1</h1>
+        <p class="subtitle">Simple zUI Menu Demo - Lazy Loading Architecture</p>
+
+        <div id="status" class="status disconnected">
+            <span class="status-indicator"></span>
+            <span id="statusText">Disconnected</span>
+        </div>
+
+        <div class="button-group">
+            <button id="connectBtn" class="btn-primary" onclick="connect()">Connect</button>
+            <button id="disconnectBtn" class="btn-danger" onclick="disconnect()" disabled>Disconnect</button>
+        </div>
+
+        <div class="menu-buttons" id="menuButtons" style="display: none;">
+            <button class="btn-menu" onclick="sendCommand('^Ping')">Ping</button>
+            <button class="btn-menu" onclick="sendCommand('^Echo Test')">Echo Test</button>
+            <button class="btn-menu" onclick="sendCommand('^Status')">Status</button>
+        </div>
+
+        <div id="output"></div>
+        <button class="btn-secondary clear-button" onclick="clearLog()">Clear Log</button>
+    </div>
+
+    <script src="../../zCLI/subsystems/zComm/zComm_modules/zBifrost/bifrost_client_modular.js"></script>
+    <script>
+        let client = null;
+
+        function log(message, type = 'info') {
+            const output = document.getElementById('output');
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            entry.innerHTML = `<span class="timestamp">[${timestamp}]</span>${message}`;
+            
+            output.appendChild(entry);
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function updateStatus(connected) {
+            const statusDiv = document.getElementById('status');
+            const statusText = document.getElementById('statusText');
+            const connectBtn = document.getElementById('connectBtn');
+            const disconnectBtn = document.getElementById('disconnectBtn');
+            const menuButtons = document.getElementById('menuButtons');
+
+            if (connected) {
+                statusDiv.className = 'status connected';
+                statusText.textContent = 'Connected to zBifrost';
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+                menuButtons.style.display = 'grid';
+            } else {
+                statusDiv.className = 'status disconnected';
+                statusText.textContent = 'Disconnected';
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+                menuButtons.style.display = 'none';
+            }
+        }
+
+        async function connect() {
+            try {
+                log('🔌 Initializing BifrostClient (lazy loading)...', 'info');
+                
+                client = new BifrostClient('ws://localhost:8765', {
+                    autoTheme: false,
+                    debug: true,
+                    hooks: {
+                        onConnected: (info) => {
+                            log(`✅ Connected! Server: ${info.server_version}`, 'success');
+                            updateStatus(true);
+                        },
+                        onDisconnected: (reason) => {
+                            log(`❌ Disconnected: ${reason}`, 'warning');
+                            updateStatus(false);
+                        },
+                        onMessage: (msg) => {
+                            log(`📨 Message: ${JSON.stringify(msg)}`, 'info');
+                        },
+                        onError: (error) => {
+                            log(`❌ Error: ${error}`, 'error');
+                        }
+                    }
+                });
+
+                log('📦 Lazy loading connection modules...', 'info');
+                await client.connect();
+                
+            } catch (error) {
+                log(`❌ Connection failed: ${error.message}`, 'error');
+                console.error('Connection error:', error);
+            }
+        }
+
+        function disconnect() {
+            if (client) {
+                client.disconnect();
+                client = null;
+                updateStatus(false);
+                log('🔌 Disconnected', 'info');
+            }
+        }
+
+        async function sendCommand(zKey) {
+            if (!client || !client.isConnected()) {
+                log('❌ Not connected! Click Connect first.', 'error');
+                return;
+            }
+
+            try {
+                log(`📤 Sending command: ${zKey}`, 'info');
+                
+                const response = await client.send({
+                    event: 'dispatch',
+                    zKey: zKey
+                });
+
+                log(`✅ Response: ${JSON.stringify(response)}`, 'success');
+                
+            } catch (error) {
+                log(`❌ Command failed: ${error.message}`, 'error');
+                console.error('Command error:', error);
+            }
+        }
+
+        function clearLog() {
+            document.getElementById('output').innerHTML = '';
+        }
+
+        // Initial log
+        log('👋 Ready to connect to zBifrost Level 1 demo', 'info');
+        log('🚀 Using lazy-loading BifrostClient (v1.5.5)', 'info');
+    </script>
+</body>
+</html>

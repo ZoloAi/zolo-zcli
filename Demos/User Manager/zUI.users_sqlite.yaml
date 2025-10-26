@@ -3,12 +3,12 @@ zVaF:
   
   "^Setup Database":
     zData:
-      model: "@.zSchema.users_master"
+      model: "@.zSchema.users_sqlite"
       action: create
       
   "^List Users":
     zData:
-      model: "@.zSchema.users_master"
+      model: "@.zSchema.users_sqlite"
       action: read
       table: users
       order: "id DESC"
@@ -21,7 +21,7 @@ zVaF:
       onSubmit:
         zData:
           action: insert
-          model: "@.zSchema.users_master"
+          model: "@.zSchema.users_sqlite"
           table: users
           data:
             email: "zConv.email"
@@ -34,7 +34,7 @@ zVaF:
       onSubmit:
         zData:
           action: read
-          model: "@.zSchema.users_master"
+          model: "@.zSchema.users_sqlite"
           table: users
           where: "email LIKE '%zConv.search_term%' OR name LIKE '%zConv.search_term%'"
   
@@ -45,6 +45,6 @@ zVaF:
       onSubmit:
         zData:
           action: delete
-          model: "@.zSchema.users_master"
+          model: "@.zSchema.users_sqlite"
           table: users
           where: "id = zConv.user_id"

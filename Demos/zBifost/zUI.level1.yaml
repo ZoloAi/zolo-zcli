@@ -1,0 +1,6 @@
+Level1Menu:
+  ~Root*: ["Ping", "Echo Test", "Status", "stop"]
+  "Ping": "Pong!"
+  "Echo Test": "Echo: Hello from zBifrost"
+  "Status": "Server is running"
+

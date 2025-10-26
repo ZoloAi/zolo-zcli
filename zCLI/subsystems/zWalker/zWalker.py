@@ -51,6 +51,10 @@ class zWalker(zWizard):
     def run(self):
         """Main entry point for zWalker execution."""
         try:
+            # Check if in zBifrost mode and start server instead
+            if self.session.get("zMode") == "zBifrost":
+                return self._start_bifrost_server()
+            
             # Get zVaFile from zSpark_obj
             zVaFile = self.zSpark_obj.get("zVaFile")
             if not zVaFile:
@@ -79,10 +83,31 @@ class zWalker(zWizard):
             self.logger.error("zWalker execution failed: %s", e, exc_info=True)
             return {"error": str(e)}
 
+    def _start_bifrost_server(self):
+        """Start zBifrost WebSocket server."""
+        import asyncio
+        
+        self.logger.info("Starting zBifrost WebSocket server...")
+        
+        # Get or create WebSocket instance
+        bifrost = self.zcli.comm.websocket
+        if not bifrost:
+            bifrost = self.zcli.comm.create_websocket(walker=self)
+        else:
+            # Update walker on existing instance (created before walker existed)
+            bifrost.walker = self
+            # Also update walker in dispatch events handler
+            if hasattr(bifrost, 'dispatch_handler') and bifrost.dispatch_handler:
+                bifrost.dispatch_handler.walker = self
+        
+        # Start server (blocking)
+        asyncio.run(bifrost.start_socket_server(asyncio.Event()))
+    
     def _init_walker_session(self):
         """Initialize session for walker mode."""
-        # Set zMode to Walker
-        self.session["zMode"] = "Walker"
+        # Only set zMode to Walker if not already in zBifrost mode
+        if self.session.get("zMode") != "zBifrost":
+            self.session["zMode"] = "Walker"
         
         # Initialize zCrumbs for walker navigation
         if "zCrumbs" not in self.session:

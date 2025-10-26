@@ -51,6 +51,12 @@ class CommandLauncher:
         if zHorizontal.startswith("zRead("):
             return self._handle_read_string(zHorizontal, context)
 
+        # Plain string - in zBifrost mode, return as display message
+        if context and context.get("mode") == "zBifrost":
+            self.logger.info("Plain string in zBifrost mode - returning as message")
+            return {"message": zHorizontal}
+        
+        # In Terminal mode, plain strings are displayed but return None for navigation
         return None
 
     def _launch_dict(self, zHorizontal, context, walker):

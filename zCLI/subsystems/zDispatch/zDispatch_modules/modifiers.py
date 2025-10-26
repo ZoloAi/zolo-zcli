@@ -60,8 +60,11 @@ class ModifierProcessor:
                         raw_zFile = self.zcli.loader.handle(zVaFile)
                         if raw_zFile and zBlock in raw_zFile:
                             block_dict = raw_zFile[zBlock]
-                            zHorizontal = block_dict.get(zHorizontal, zHorizontal)
-                            self.logger.info("Resolved ^key to horizontal value: %s", zHorizontal)
+                            # Strip the ^ prefix to look up the actual key in the UI dict
+                            lookup_key = zHorizontal[1:] if zHorizontal.startswith("^") else zHorizontal
+                            self.logger.warning(f"[MODIFIERS] Looking up key: '{lookup_key}' in block_dict keys: {list(block_dict.keys())}")
+                            zHorizontal = block_dict.get(lookup_key, zHorizontal)
+                            self.logger.warning(f"[MODIFIERS] Resolved ^key '{lookup_key}' to horizontal value: {zHorizontal}")
                         else:
                             self.logger.warning("Could not load UI block %s from %s", zBlock, zVaFile)
                     else:

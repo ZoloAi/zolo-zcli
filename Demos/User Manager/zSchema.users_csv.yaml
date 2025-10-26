@@ -1,0 +1,21 @@
+Meta:
+  Data_Type: csv
+  Data_Label: "users_master"
+  Data_Path: "@"
+  Data_Paradigm: classical
+
+users:
+  id:
+    type: int
+    pk: true
+    auto_increment: true
+  email:
+    type: str
+    unique: true
+    required: true
+  name:
+    type: str
+    required: true
+  created_at:
+    type: datetime
+    default: now

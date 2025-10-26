@@ -4,9 +4,9 @@
  * ═══════════════════════════════════════════════════════════════
  * 
  * A production-ready WebSocket client for zCLI's zBifrost bridge.
- * Modular architecture with automatic zTheme integration.
+ * Modular architecture with lazy loading and automatic zTheme integration.
  * 
- * @version 1.5.4
+ * @version 1.5.5
  * @author Gal Nachshon
  * @license MIT
  * 
@@ -14,7 +14,7 @@
  * Quick Start
  * ───────────────────────────────────────────────────────────────
  * 
- * // Via CDN (jsDelivr)
+ * // Via CDN (jsDelivr) - Now works with lazy loading!
  * <script src="https://cdn.jsdelivr.net/gh/ZoloAi/zolo-zcli@v1.5.4/zCLI/subsystems/zComm/zComm_modules/zBifrost/bifrost_client_modular.js"></script>
  * 
  * // Initialize with hooks
@@ -38,37 +38,23 @@
  * client.renderTable(users, '#myContainer');
  * 
  * ───────────────────────────────────────────────────────────────
- * Custom Bifrost Events (Without zTheme)
+ * Lazy Loading Architecture
  * ───────────────────────────────────────────────────────────────
  * 
- * // Disable autoTheme and handle rendering yourself
- * const client = new BifrostClient('ws://localhost:8765', {
- *   autoTheme: false,  // No automatic CSS loading
- *   hooks: {
- *     onDisplay: (data) => {
- *       // Custom rendering logic
- *       if (Array.isArray(data)) {
- *         myCustomTableRenderer(data);
- *       }
- *     },
- *     onMessage: (msg) => {
- *       // Custom message handling
- *       if (msg.type === 'notification') {
- *         myCustomNotificationSystem(msg);
- *       }
- *     }
- *   }
- * });
+ * Modules are loaded dynamically only when needed:
+ * - Logger/Hooks: Loaded immediately (lightweight)
+ * - Connection: Loaded on connect()
+ * - MessageHandler: Loaded on connect()
+ * - Renderer: Loaded on first renderTable/renderMenu/etc call
+ * - ThemeLoader: Loaded on connect() if autoTheme enabled
+ * 
+ * Benefits:
+ * - CDN-friendly (no import resolution at load time)
+ * - Progressive loading (only load what you use)
+ * - Stays modular (source files remain separate)
  * 
  * ───────────────────────────────────────────────────────────────
  */
-
-import { BifrostConnection } from './_modules/connection.js';
-import { MessageHandler } from './_modules/message_handler.js';
-import { Renderer } from './_modules/renderer.js';
-import { ThemeLoader } from './_modules/theme_loader.js';
-import { Logger } from './_modules/logger.js';
-import { HookManager } from './_modules/hooks.js';
 
 (function(root, factory) {
   // UMD (Universal Module Definition) for maximum compatibility
@@ -84,6 +70,20 @@ import { HookManager } from './_modules/hooks.js';
   }
 }(typeof self !== 'undefined' ? self : this, function() {
   'use strict';
+
+  /**
+   * Get base URL for module imports
+   */
+  function getBaseUrl() {
+    if (typeof document !== 'undefined') {
+      const scripts = document.querySelectorAll('script[src*="bifrost_client"]');
+      if (scripts.length > 0) {
+        const src = scripts[scripts.length - 1].src;
+        return src.substring(0, src.lastIndexOf('/') + 1);
+      }
+    }
+    return './';
+  }
 
   /**
    * BifrostClient - Main class for WebSocket communication with zBifrost
@@ -113,18 +113,138 @@ import { HookManager } from './_modules/hooks.js';
         hooks: options.hooks || {}
       };
 
-      // Initialize modules
-      this.logger = new Logger(this.options.debug);
-      this.hooks = new HookManager(this.options.hooks);
-      this.connection = new BifrostConnection(url, this.options, this.logger, this.hooks);
-      this.messageHandler = new MessageHandler(this.logger, this.hooks);
-      this.renderer = new Renderer(this.logger);
-      this.themeLoader = new ThemeLoader(this.logger);
+      // Module cache (lazy loaded)
+      this._modules = {};
+      this._baseUrl = getBaseUrl();
+      
+      // Pre-initialize lightweight modules synchronously
+      this._initLightweightModules();
+    }
 
-      // Set timeout for message handler
-      this.messageHandler.setTimeout(this.options.timeout);
+    /**
+     * Initialize lightweight modules that don't require imports
+     */
+    _initLightweightModules() {
+      // Inline Logger (lightweight, no dependencies)
+      this.logger = {
+        debug: this.options.debug,
+        log: (message, ...args) => {
+          if (this.logger.debug) {
+            console.log(`[BifrostClient] ${message}`, ...args);
+          }
+        },
+        enable: () => {
+          this.logger.debug = true;
+        },
+        disable: () => {
+          this.logger.debug = false;
+        },
+        isEnabled: () => {
+          return this.logger.debug;
+        }
+      };
 
-      this.logger.log('BifrostClient initialized', { url, options: this.options });
+      // Inline HookManager (lightweight, no dependencies)
+      this.hooks = {
+        hooks: this.options.hooks || {},
+        call: (hookName, ...args) => {
+          const hook = this.hooks.hooks[hookName];
+          if (typeof hook === 'function') {
+            try {
+              return hook(...args);
+            } catch (error) {
+              console.error(`[BifrostClient] Error in ${hookName} hook:`, error);
+            }
+          }
+        },
+        has: (hookName) => {
+          return typeof this.hooks.hooks[hookName] === 'function';
+        },
+        register: (hookName, fn) => {
+          if (typeof fn === 'function') {
+            this.hooks.hooks[hookName] = fn;
+          }
+        },
+        unregister: (hookName) => {
+          delete this.hooks.hooks[hookName];
+        },
+        list: () => Object.keys(this.hooks.hooks)
+      };
+
+      this.logger.log('BifrostClient initialized', { url: this.url, options: this.options });
+    }
+
+    /**
+     * Lazy load a module
+     * @param {string} moduleName - Name of the module (connection, message_handler, renderer, theme_loader)
+     * @returns {Promise<any>}
+     */
+    async _loadModule(moduleName) {
+      if (this._modules[moduleName]) {
+        return this._modules[moduleName];
+      }
+
+      const modulePath = `${this._baseUrl}_modules/${moduleName}.js`;
+      this.logger.log(`Loading module: ${moduleName} from ${modulePath}`);
+
+      try {
+        const module = await import(modulePath);
+        this._modules[moduleName] = module;
+        return module;
+      } catch (error) {
+        this.logger.error(`Failed to load module ${moduleName}:`, error);
+        throw new Error(`Failed to load BifrostClient module: ${moduleName}`);
+      }
+    }
+
+    /**
+     * Ensure connection module is loaded
+     */
+    async _ensureConnection() {
+      if (!this.connection) {
+        const { BifrostConnection } = await this._loadModule('connection');
+        this.connection = new BifrostConnection(
+          this.url,
+          this.options,
+          this.logger,
+          this.hooks
+        );
+      }
+      return this.connection;
+    }
+
+    /**
+     * Ensure message handler module is loaded
+     */
+    async _ensureMessageHandler() {
+      if (!this.messageHandler) {
+        const { MessageHandler } = await this._loadModule('message_handler');
+        this.messageHandler = new MessageHandler(this.logger, this.hooks);
+        this.messageHandler.setTimeout(this.options.timeout);
+      }
+      return this.messageHandler;
+    }
+
+    /**
+     * Ensure renderer module is loaded
+     */
+    async _ensureRenderer() {
+      if (!this.renderer) {
+        const { Renderer } = await this._loadModule('renderer');
+        this.renderer = new Renderer(this.logger);
+      }
+      return this.renderer;
+    }
+
+    /**
+     * Ensure theme loader module is loaded
+     */
+    async _ensureThemeLoader() {
+      if (!this.themeLoader) {
+        const { ThemeLoader } = await this._loadModule('theme_loader');
+        this.themeLoader = new ThemeLoader(this.logger);
+      }
+      return this.themeLoader;
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -136,6 +256,10 @@ import { HookManager } from './_modules/hooks.js';
      * @returns {Promise<void>}
      */
     async connect() {
+      // Load required modules
+      await this._ensureConnection();
+      await this._ensureMessageHandler();
+      
       await this.connection.connect();
       
       // Set up message handler
@@ -144,8 +268,11 @@ import { HookManager } from './_modules/hooks.js';
       });
 
       // Auto-load theme if enabled
-      if (this.options.autoTheme && !this.themeLoader.isLoaded()) {
-        this.themeLoader.load();
+      if (this.options.autoTheme) {
+        await this._ensureThemeLoader();
+        if (!this.themeLoader.isLoaded()) {
+          this.themeLoader.load();
+        }
       }
     }
 
@@ -153,7 +280,9 @@ import { HookManager } from './_modules/hooks.js';
      * Disconnect from the server
      */
     disconnect() {
-      this.connection.disconnect();
+      if (this.connection) {
+        this.connection.disconnect();
+      }
     }
 
     /**
@@ -161,7 +290,7 @@ import { HookManager } from './_modules/hooks.js';
      * @returns {boolean}
      */
     isConnected() {
-      return this.connection.isConnected();
+      return this.connection ? this.connection.isConnected() : false;
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -179,6 +308,8 @@ import { HookManager } from './_modules/hooks.js';
         throw new Error('Not connected to server. Call connect() first.');
       }
 
+      await this._ensureMessageHandler();
+      
       return this.messageHandler.send(
         payload,
         (msg) => this.connection.send(msg),
@@ -337,7 +468,8 @@ import { HookManager } from './_modules/hooks.js';
      * Load zTheme CSS files (if autoTheme is disabled)
      * @param {string} baseUrl - Base URL for CSS files (optional, auto-detected)
      */
-    loadTheme(baseUrl = null) {
+    async loadTheme(baseUrl = null) {
+      await this._ensureThemeLoader();
       this.themeLoader.load(baseUrl);
     }
 
@@ -351,7 +483,8 @@ import { HookManager } from './_modules/hooks.js';
      * @param {string|HTMLElement} container - Container selector or element
      * @param {Object} options - Rendering options
      */
-    renderTable(data, container, options = {}) {
+    async renderTable(data, container, options = {}) {
+      await this._ensureRenderer();
       this.renderer.renderTable(data, container, options);
     }
 
@@ -360,7 +493,8 @@ import { HookManager } from './_modules/hooks.js';
      * @param {Array} items - Array of menu items {label, action, icon, variant}
      * @param {string|HTMLElement} container - Container selector or element
      */
-    renderMenu(items, container) {
+    async renderMenu(items, container) {
+      await this._ensureRenderer();
       this.renderer.renderMenu(items, container);
     }
 
@@ -370,7 +504,8 @@ import { HookManager } from './_modules/hooks.js';
      * @param {string|HTMLElement} container - Container selector or element
      * @param {Function} onSubmit - Submit handler
      */
-    renderForm(fields, container, onSubmit) {
+    async renderForm(fields, container, onSubmit) {
+      await this._ensureRenderer();
       this.renderer.renderForm(fields, container, onSubmit);
     }
 
@@ -381,7 +516,8 @@ import { HookManager } from './_modules/hooks.js';
      * @param {string|HTMLElement} container - Container selector or element
      * @param {number} duration - Auto-hide duration in ms (0 = no auto-hide)
      */
-    renderMessage(text, type = 'info', container, duration = 5000) {
+    async renderMessage(text, type = 'info', container, duration = 5000) {
+      await this._ensureRenderer();
       this.renderer.renderMessage(text, type, container, duration);
     }
 
@@ -421,4 +557,3 @@ import { HookManager } from './_modules/hooks.js';
 
   return BifrostClient;
 }));
-

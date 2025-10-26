@@ -87,7 +87,8 @@ Demos/User Manager/
 - **Database**: `users_master.db` (auto-created in demo directory)
 - **Schema**: `zSchema.users_master.yaml` (defines table structure and validation)
 - **UI Menu**: `zUI.users_menu.yaml` (declarative interface definition)
-- **Entry Point**: `run.py` (minimal Python launcher - 36 lines)
+- **Entry Point (Terminal)**: `run.py` (10 lines)
+- **Entry Point (zBifrost)**: `run_backend.py` (67 lines)
 
 ### Key Highlights
 - ✅ **Zero SQL**: All database operations defined in YAML
