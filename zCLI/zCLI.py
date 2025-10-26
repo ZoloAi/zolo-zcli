@@ -2,6 +2,10 @@
 # ───────────────────────────────────────────────────────────────
 """Single source of truth for all subsystems."""
 
+import signal
+import sys
+from zCLI.utils.zTraceback import ExceptionContext
+
 class zCLI:
     """Core zCLI Engine managing all subsystems 
     Supporting two primary modes: Terminal and zBifrost."""
@@ -17,6 +21,10 @@ class zCLI:
 
         # Initialize zSpark_obj config dict
         self.zspark_obj = zSpark_obj or {}
+        
+        # Shutdown coordination
+        self._shutdown_requested = False
+        self._shutdown_in_progress = False
 
         # ─────────────────────────────────────────────────────────────
         # Layer 0: Foundation
@@ -109,6 +117,9 @@ class zCLI:
 
         # Initialize session (sets zMode from zSpark_obj or defaults to Terminal)
         self._init_session()
+        
+        # Register signal handlers for graceful shutdown
+        self._register_signal_handlers()
 
         self.logger.info("zCLI Core initialized - Mode: %s", self.session.get("zMode"))
 
@@ -163,3 +174,161 @@ class zCLI:
 
         self.logger.info("Starting zCLI in Terminal mode...")
         return self.run_shell()
+    
+    # ───────────────────────────────────────────────────────────────
+    # Signal Handlers & Graceful Shutdown
+    # ───────────────────────────────────────────────────────────────
+    
+    def _register_signal_handlers(self):
+        """Register signal handlers for graceful shutdown"""
+        def signal_handler(signum, frame):
+            """Handle SIGINT (Ctrl+C) and SIGTERM gracefully"""
+            signal_name = "SIGINT" if signum == signal.SIGINT else "SIGTERM"
+            
+            # Prevent multiple shutdown attempts
+            if self._shutdown_in_progress:
+                self.logger.warning(f"[{signal_name}] Shutdown already in progress...")
+                return
+            
+            self.logger.info(f"[{signal_name}] Received shutdown signal")
+            self._shutdown_requested = True
+            
+            # Call shutdown
+            try:
+                self.shutdown()
+                sys.exit(0)
+            except Exception as e:
+                self.zTraceback.log_exception(
+                    e,
+                    message=f"Error during {signal_name} shutdown",
+                    context={'signal': signum}
+                )
+                sys.exit(1)
+        
+        # Register handlers for SIGINT and SIGTERM
+        signal.signal(signal.SIGINT, signal_handler)
+        signal.signal(signal.SIGTERM, signal_handler)
+        self.logger.debug("Signal handlers registered (SIGINT, SIGTERM)")
+    
+    def shutdown(self):
+        """
+        Gracefully shutdown zCLI and all subsystems
+        
+        Performs cleanup in reverse initialization order:
+        1. Close WebSocket connections (zBifrost)
+        2. Stop HTTP server (zServer)
+        3. Close database connections (zData)
+        4. Flush and close logger
+        
+        Uses zTraceback for consistent error handling - individual
+        component failures do not prevent overall shutdown.
+        """
+        if self._shutdown_in_progress:
+            self.logger.warning("[Shutdown] Shutdown already in progress")
+            return
+        
+        self._shutdown_in_progress = True
+        self.logger.info("=" * 70)
+        self.logger.info("[Shutdown] Initiating graceful shutdown...")
+        self.logger.info("=" * 70)
+        
+        # Track cleanup success
+        cleanup_status = {
+            'websocket': False,
+            'http_server': False,
+            'database': False,
+            'logger': False
+        }
+        
+        # 1. Close WebSocket connections (zBifrost)
+        with ExceptionContext(
+            self.zTraceback,
+            operation="WebSocket shutdown",
+            default_return=None
+        ):
+            if self.comm and hasattr(self.comm, 'websocket') and self.comm.websocket:
+                if self.comm.websocket._running:
+                    self.logger.info("[Shutdown] Closing WebSocket server...")
+                    
+                    # For async shutdown, we need to handle it properly
+                    import asyncio
+                    try:
+                        # Get or create event loop
+                        try:
+                            loop = asyncio.get_running_loop()
+                        except RuntimeError:
+                            loop = asyncio.new_event_loop()
+                            asyncio.set_event_loop(loop)
+                        
+                        # Run shutdown coroutine
+                        loop.run_until_complete(self.comm.websocket.shutdown())
+                        cleanup_status['websocket'] = True
+                    except Exception as e:
+                        self.logger.warning(f"[Shutdown] WebSocket cleanup error: {e}")
+                else:
+                    self.logger.debug("[Shutdown] WebSocket server not running")
+                    cleanup_status['websocket'] = True
+            else:
+                self.logger.debug("[Shutdown] WebSocket server not initialized")
+                cleanup_status['websocket'] = True
+        
+        # 2. Stop HTTP server (zServer)
+        with ExceptionContext(
+            self.zTraceback,
+            operation="HTTP server shutdown",
+            default_return=None
+        ):
+            if self.server:
+                if self.server._running:
+                    self.logger.info("[Shutdown] Stopping HTTP server...")
+                    self.server.stop()
+                    cleanup_status['http_server'] = True
+                else:
+                    self.logger.debug("[Shutdown] HTTP server not running")
+                    cleanup_status['http_server'] = True
+            else:
+                self.logger.debug("[Shutdown] HTTP server not initialized")
+                cleanup_status['http_server'] = True
+        
+        # 3. Close database connections (zData)
+        with ExceptionContext(
+            self.zTraceback,
+            operation="Database connection cleanup",
+            default_return=None
+        ):
+            if hasattr(self, 'data') and self.data:
+                if hasattr(self.data, 'handler') and self.data.handler:
+                    self.logger.info("[Shutdown] Closing database connections...")
+                    if hasattr(self.data.handler, 'close'):
+                        self.data.handler.close()
+                    cleanup_status['database'] = True
+                else:
+                    self.logger.debug("[Shutdown] No active database connections")
+                    cleanup_status['database'] = True
+            else:
+                self.logger.debug("[Shutdown] Database subsystem not initialized")
+                cleanup_status['database'] = True
+        
+        # 4. Flush and close logger
+        with ExceptionContext(
+            self.zTraceback,
+            operation="Logger cleanup",
+            default_return=None
+        ):
+            if self.logger:
+                self.logger.info("[Shutdown] Flushing logger...")
+                # Flush all handlers
+                for handler in self.logger.handlers:
+                    handler.flush()
+                cleanup_status['logger'] = True
+        
+        # Final status report
+        self.logger.info("=" * 70)
+        self.logger.info("[Shutdown] Cleanup Status:")
+        for component, status in cleanup_status.items():
+            status_str = "✓" if status else "✗"
+            self.logger.info(f"  {status_str} {component}")
+        self.logger.info("=" * 70)
+        self.logger.info("[Shutdown] Graceful shutdown complete")
+        
+        return cleanup_status

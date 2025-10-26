@@ -64,6 +64,7 @@ class zBifrost:
         
         self.clients = set()
         self._running = False  # Track server running state
+        self.server = None  # WebSocket server instance
         
         # Initialize modular components
         self.cache = CacheManager(logger, default_query_ttl=60)
@@ -335,7 +336,7 @@ class zBifrost:
         try:
             if ws_serve is None:
                 raise RuntimeError("websockets 'serve' import failed; incompatible websockets version")
-            server = await ws_serve(self.handle_client, self.host, self.port)
+            self.server = await ws_serve(self.handle_client, self.host, self.port)
         except OSError as e:
             if getattr(e, 'errno', None) == 48:  # macOS/Linux: Address already in use
                 msg = f"[ERROR] Port {self.port} already in use. Try restarting the app or killing the stuck process."
@@ -352,8 +353,86 @@ class zBifrost:
         self.logger.info(f"[zBifrost] [STARTED] WebSocket server started at ws://{bind_info}{security_note}")
         self._running = True  # Mark server as running
         socket_ready.set()  # Signal ready to zWalker
-        await server.wait_closed()
+        await self.server.wait_closed()
         self._running = False  # Mark server as stopped when closed
+    
+    async def shutdown(self, timeout: float = 5.0):
+        """
+        Gracefully shutdown WebSocket server
+        
+        Closes all active client connections and stops the server.
+        Uses zTraceback for consistent error handling during cleanup.
+        
+        Args:
+            timeout: Maximum time in seconds to wait for graceful shutdown
+        """
+        if not self._running:
+            self.logger.debug("[zBifrost] Server not running, nothing to shutdown")
+            return
+        
+        self.logger.info("[zBifrost] Initiating graceful shutdown...")
+        
+        try:
+            # Close all client connections gracefully
+            if self.clients:
+                self.logger.info(f"[zBifrost] Closing {len(self.clients)} active connections...")
+                
+                # Create a copy to avoid modification during iteration
+                clients_copy = self.clients.copy()
+                
+                for client in clients_copy:
+                    try:
+                        # Send shutdown notification
+                        await client.send(json.dumps({
+                            "event": "server_shutdown",
+                            "message": "Server is shutting down"
+                        }))
+                        # Close connection
+                        await client.close()
+                        self.logger.debug("[zBifrost] Closed client connection")
+                    except Exception as e:
+                        # Use zTraceback if available, otherwise just log
+                        if self.zcli and hasattr(self.zcli, 'zTraceback'):
+                            self.zcli.zTraceback.log_exception(
+                                e,
+                                message="Error closing client connection during shutdown",
+                                context={'client': str(client)}
+                            )
+                        else:
+                            self.logger.warning(f"[zBifrost] Error closing client: {e}")
+                
+                # Clear the clients set
+                self.clients.clear()
+                self.auth.authenticated_clients.clear()
+            
+            # Close the server
+            if self.server:
+                try:
+                    self.logger.info("[zBifrost] Closing WebSocket server...")
+                    self.server.close()
+                    
+                    # Wait for server to close with timeout
+                    await asyncio.wait_for(self.server.wait_closed(), timeout=timeout)
+                    
+                    self.logger.info("[zBifrost] WebSocket server closed successfully")
+                except asyncio.TimeoutError:
+                    self.logger.warning(f"[zBifrost] Server shutdown timed out after {timeout}s")
+                except Exception as e:
+                    # Use zTraceback if available
+                    if self.zcli and hasattr(self.zcli, 'zTraceback'):
+                        self.zcli.zTraceback.log_exception(
+                            e,
+                            message="Error during WebSocket server shutdown"
+                        )
+                    else:
+                        self.logger.error(f"[zBifrost] Error during shutdown: {e}", exc_info=True)
+                finally:
+                    self.server = None
+        
+        finally:
+            # Always mark as not running after shutdown attempt
+            self._running = False
+            self.logger.info("[zBifrost] Shutdown complete")
 
 
 # ─────────────────────────────────────────────────────────────

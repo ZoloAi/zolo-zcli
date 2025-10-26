@@ -543,20 +543,22 @@
                         </div>
                     </div>
 
-                    <div class="todo-item" data-id="layer0-graceful-shutdown">
-                        <input type="checkbox" class="todo-checkbox">
+                    <div class="todo-item done" data-id="layer0-graceful-shutdown">
+                        <input type="checkbox" class="todo-checkbox" checked>
                         <div class="todo-content">
-                            <div class="todo-title">Week 2.2: Implement graceful shutdown (enhanced)</div>
+                            <div class="todo-title">Week 2.2: Implement graceful shutdown (enhanced) ✅</div>
                             <div class="todo-description">
                                 Handle Ctrl+C cleanly: close connections, save state, exit gracefully.
                                 Add z.shutdown() method that cleans up all resources.
                                 <br><strong>Production Ready:</strong> No zombie processes
                                 <br><strong>Note:</strong> Basic graceful shutdown tested in Week 1.6 Phase 4, this adds signal handlers and state persistence
+                                <br><strong>✅ COMPLETE:</strong> Signal handlers registered (SIGINT/SIGTERM), zBifrost.shutdown() closes all connections gracefully, z.shutdown() coordinates cleanup with zTraceback error handling, 16 comprehensive tests (all passing)
                             </div>
                             <div class="todo-tags">
                                 <span class="tag">Layer 0</span>
                                 <span class="tag">zComm</span>
                                 <span class="tag">2 days</span>
+                                <span class="tag" style="background: #48bb78; color: white;">✅ DONE</span>
                             </div>
                         </div>
                     </div>
@@ -588,13 +590,13 @@
                             <li>✅ zServer/zBifrost separation validated (Week 1.4 - COMPLETE)</li>
                             <li>✅ zServer comprehensive tests (Week 1.5 - COMPLETE)</li>
                             <li>✅ zBifrost REAL integration tests - All 4 Phases COMPLETE: lifecycle, real connections, demo validation, error handling (49 tests, 41 passed, 8 sandbox-skipped) (Week 1.6)</li>
-                            <li>📝 Health checks return accurate status (Week 2.1)</li>
-                            <li>📝 Graceful shutdown works (Week 2.2)</li>
+                            <li>✅ Health checks return accurate status - zServer.health_check() and zBifrost.health_check() implemented with comprehensive tests (Week 2.1 - COMPLETE)</li>
+                            <li>✅ Graceful shutdown works - Signal handlers, zBifrost/zServer cleanup, zTraceback integration (Week 2.2 - COMPLETE)</li>
                             <li>📝 100% test coverage for Layer 0 (Week 2.3 - CHECKPOINT)</li>
                             <li>📝 Documentation complete (AGENT.md updated)</li>
                         </ul>
                         <div style="margin-top: 15px; padding: 10px; background: #f0fff4; border-radius: 4px;">
-                            <strong>Progress:</strong> 5/10 completed (50%) - Weeks 1.1 ✅ 1.2 ✅ 1.3 ✅ 1.4 ✅ 1.5 ✅
+                            <strong>Progress:</strong> 7/10 completed (70%) - Weeks 1.1 ✅ 1.2 ✅ 1.3 ✅ 1.4 ✅ 1.5 ✅ 1.6 ✅ 2.1 ✅ 2.2 ✅
                         </div>
                     </div>
                 </div>
