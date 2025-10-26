@@ -36,17 +36,35 @@ def requires_network(func):
     Decorator to skip tests that require network access.
     
     Used for tests that need to bind to ports or make HTTP requests.
-    Gracefully skips in sandboxed environments (CI, restricted systems).
+    Gracefully skips ONLY in true CI/sandbox environments (not local dev).
+    
+    Detection logic:
+    1. Check for CI environment variables (CI=true, GITHUB_ACTIONS, etc.)
+    2. If not CI, let test run (fail naturally if network unavailable)
+    3. If CI, do socket pre-check and skip if fails
     """
+    import os
+    
+    # Detect if we're in a CI environment
+    is_ci = any([
+        os.getenv('CI') == 'true',
+        os.getenv('GITHUB_ACTIONS') == 'true',
+        os.getenv('GITLAB_CI') == 'true',
+        os.getenv('CIRCLECI') == 'true',
+        os.getenv('TRAVIS') == 'true',
+    ])
+    
     def wrapper(*args, **kwargs):
-        try:
-            # Try to bind to a test port to check network availability
-            test_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            test_socket.bind(('127.0.0.1', 0))
-            test_socket.close()
-            return func(*args, **kwargs)
-        except (OSError, PermissionError) as e:
-            raise unittest.SkipTest(f"Network not available (sandbox): {e}")
+        if is_ci:
+            # In CI: pre-check network availability
+            try:
+                test_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                test_socket.bind(('127.0.0.1', 0))
+                test_socket.close()
+            except (OSError, PermissionError) as e:
+                raise unittest.SkipTest(f"Network not available (CI): {e}")
+        # Local dev or CI with network: run the test
+        return func(*args, **kwargs)
     wrapper.__name__ = func.__name__
     wrapper.__doc__ = func.__doc__
     return wrapper
