@@ -29,6 +29,7 @@ TEST_MODULES = [
     'zBifrost',  # WebSocket/GUI mode data flow tests (v1.5.3)
     'zBifrost_Integration',  # Week 1.6 Phase 1 - REAL WebSocket integration tests (Layer 0)
     'zBifrost_Unit',  # Week 2.3 Phase 1 - Unit tests for message_handler, auth, dispatch (60% → 85%)
+    'zLayer0_Integration',  # Week 2.5 Phase 3 - Integration tests (real execution, no mocks) (44% → 60%)
     'zShutdown',   # Week 2.2 - Graceful shutdown (signal handlers, cleanup)
     'zDisplay',
     'zAuth',       # zAuth depends on zDisplay
