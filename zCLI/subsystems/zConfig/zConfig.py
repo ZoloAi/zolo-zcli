@@ -3,6 +3,8 @@
 
 from zCLI.utils import print_ready_message, validate_zcli_instance
 from .zConfig_modules import (
+    ConfigValidator,
+    ConfigValidationError,
     zConfigPaths,
     MachineConfig,
     EnvironmentConfig,
@@ -23,6 +25,21 @@ class zConfig:
         validate_zcli_instance(zcli, "zConfig", require_session=False)
         self.zcli = zcli
         self.zSpark = zSpark_obj
+
+        # ═══════════════════════════════════════════════════════════
+        # STEP 0: VALIDATE CONFIGURATION (Fail Fast)
+        # ═══════════════════════════════════════════════════════════
+        # Week 1.1 - Layer 0: Foundation
+        # Validate config BEFORE initializing anything else
+        # If config is invalid, fail immediately with clear error
+        try:
+            validator = ConfigValidator(zSpark_obj, logger=None)  # Logger doesn't exist yet
+            validator.validate()
+        except ConfigValidationError as e:
+            # Print error and exit - can't proceed with invalid config
+            import sys
+            print(str(e), file=sys.stderr)
+            sys.exit(1)
 
         # Initialize path resolver
         self.sys_paths = zConfigPaths(zSpark_obj=zSpark_obj)

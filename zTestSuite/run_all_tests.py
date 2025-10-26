@@ -22,6 +22,7 @@ from zTestSuite.test_factory import (
 
 # Define test modules to import (in dependency order)
 TEST_MODULES = [
+    'zConfig_Validator',  # Week 1.1 - Config validation (fail fast)
     'zConfig',
     'zComm',
     'zBifrost',  # WebSocket/GUI mode data flow tests (v1.5.3)

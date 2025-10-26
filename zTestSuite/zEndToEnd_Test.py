@@ -22,6 +22,46 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from zCLI import zCLI
 
 
+class TestConfigValidationWorkflow(unittest.TestCase):
+    """
+    End-to-end tests for config validation workflow (Week 1.1 - Layer 0).
+    Tests complete scenarios where config validation prevents bad deployments.
+    """
+    
+    def test_developer_catches_invalid_workspace_before_deployment(self):
+        """
+        Scenario: Developer typos workspace path, catches error immediately.
+        Expected: Clear error message, app refuses to start.
+        """
+        with self.assertRaises(SystemExit) as cm:
+            zCLI({"zWorkspace": "/path/does/not/exist", "zVaFile": "@.zUI.main"})
+        self.assertEqual(cm.exception.code, 1)
+    
+    def test_developer_catches_invalid_mode_before_deployment(self):
+        """
+        Scenario: Developer sets invalid zMode in config.
+        Expected: Clear error, fails before any subsystem starts.
+        """
+        with self.assertRaises(SystemExit) as cm:
+            zCLI({"zMode": "WebServer"})  # Invalid mode
+        self.assertEqual(cm.exception.code, 1)
+    
+    def test_production_deployment_with_valid_config(self):
+        """
+        Scenario: Production deployment with validated config.
+        Expected: All subsystems start successfully.
+        """
+        with tempfile.TemporaryDirectory() as tmpdir:
+            z = zCLI({
+                "zWorkspace": tmpdir,
+                "zMode": "Terminal"
+            })
+            # Verify successful initialization
+            self.assertIsNotNone(z.config)
+            self.assertIsNotNone(z.logger)
+            self.assertIsNotNone(z.session)
+
+
 class TestUserManagementWorkflow(unittest.TestCase):
     """
     End-to-end test simulating complete user management workflow.

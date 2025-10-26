@@ -5,6 +5,7 @@
 zConfig modules - Configuration management components
 """
 
+from .config_validator import ConfigValidator, ConfigValidationError
 from .config_paths import zConfigPaths
 from .config_machine import MachineConfig
 from .config_environment import EnvironmentConfig
@@ -15,6 +16,8 @@ from .config_websocket import WebSocketConfig
 from .http_server_config import HTTPServerConfig
 
 __all__ = [
+    "ConfigValidator",
+    "ConfigValidationError",
     "zConfigPaths",
     "MachineConfig",
     "EnvironmentConfig",

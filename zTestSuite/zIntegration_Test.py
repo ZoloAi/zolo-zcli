@@ -59,6 +59,32 @@ class TestzCLIInitialization(unittest.TestCase):
             self.assertIs(z.session, z.dispatch.session)
 
 
+class TestConfigValidationIntegration(unittest.TestCase):
+    """
+    Integration tests for config validation (Week 1.1 - Layer 0).
+    Tests that config validator integrates properly with zCLI initialization.
+    """
+    
+    def test_invalid_workspace_fails_early(self):
+        """Test that invalid workspace fails before subsystem init."""
+        with self.assertRaises(SystemExit) as cm:
+            zCLI({"zWorkspace": "/nonexistent/path/12345"})
+        self.assertEqual(cm.exception.code, 1)
+    
+    def test_invalid_mode_fails_early(self):
+        """Test that invalid zMode fails before subsystem init."""
+        with self.assertRaises(SystemExit) as cm:
+            zCLI({"zMode": "InvalidMode"})
+        self.assertEqual(cm.exception.code, 1)
+    
+    def test_valid_config_passes_validation(self):
+        """Test that valid config passes and initializes subsystems."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            z = zCLI({"zWorkspace": tmpdir, "zMode": "Terminal"})
+            self.assertIsNotNone(z.config)
+            self.assertIsNotNone(z.logger)
+
+
 class TestLoaderParserIntegration(unittest.TestCase):
     """Test integration between zLoader and zParser subsystems."""
     

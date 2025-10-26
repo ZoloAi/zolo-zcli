@@ -3,6 +3,17 @@
 
 from zCLI import os, platform, shutil, Colors, subprocess, importlib, socket, Path
 
+
+def _safe_getcwd():
+    """Safely get current working directory, handling case where it may have been deleted."""
+    try:
+        return os.getcwd()
+    except (FileNotFoundError, OSError):
+        # Directory was deleted (common in tests with temp directories)
+        # Fall back to home directory
+        return str(Path.home())
+
+
 def detect_browser():
     """Detect system default browser."""
     browser = os.getenv("BROWSER")  # Check env var first
@@ -262,7 +273,7 @@ def auto_detect_machine():
         # System capabilities
         "cpu_cores": os.cpu_count() or 1,
         "memory_gb": detect_memory_gb(),
-        "cwd": os.getcwd(),                        # Current working directory
+        "cwd": _safe_getcwd(),                     # Current working directory (safe)
         "username": os.getenv("USER") or os.getenv("USERNAME", "unknown"),
         "path": os.getenv("PATH", ""),             # System PATH
     }
