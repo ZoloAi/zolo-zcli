@@ -130,6 +130,53 @@ Before writing zUI files, check:
 
 ---
 
+## zAuth Modular Architecture (v1.5.4 Refactor)
+
+### Overview
+
+**zAuth** uses a modular architecture with the **facade pattern** for clean separation of concerns:
+
+**Module Structure**:
+```
+zCLI/subsystems/zAuth/
+├── zAuth.py (facade orchestrator, 302 lines)
+└── zAuth_modules/
+    ├── password_security.py (bcrypt hashing - 118 lines)
+    ├── session_persistence.py (SQLite sessions - 213 lines)
+    ├── authentication.py (login/logout - 193 lines)
+    └── rbac.py (roles & permissions - 268 lines)
+```
+
+### Module Responsibilities
+
+1. **password_security.py**: Pure bcrypt hashing (no dependencies)
+2. **session_persistence.py**: SQLite session management (7-day expiry)
+3. **authentication.py**: Login/logout operations (local + remote)
+4. **rbac.py**: Role-Based Access Control with permissions
+
+### Public API (Unchanged)
+
+```python
+from zCLI import zCLI
+z = zCLI({"zWorkspace": "."})
+
+# All methods work identically (facade delegates to modules)
+hashed = z.auth.hash_password("password")          # → password_security
+z.auth.login(username, password, persist=True)     # → authentication + session_persistence
+z.auth.has_role("admin")                           # → rbac
+z.auth.grant_permission(user_id, "users.delete")  # → rbac
+```
+
+### Benefits
+
+- 📉 Main file: 719 lines → 302 lines (58% reduction)
+- ✅ Testable in isolation (each module independent)
+- ✅ Clear separation of concerns
+- ✅ Extensible (add OAuth, JWT, 2FA easily)
+- ✅ Backwards compatible (facade pattern)
+
+---
+
 ## RBAC Directives (v1.5.4 Week 3.3)
 
 **Default**: PUBLIC ACCESS (no `_rbac` = no restrictions)  

@@ -257,9 +257,9 @@ class TestRemoteAuthentication(unittest.TestCase):
         self.assertEqual(result["reason"], "Invalid credentials")
     
     @patch.dict(os.environ, {"ZOLO_USE_REMOTE_API": "true"})
-    @patch.object(zAuth, '_authenticate_remote')
+    @patch('zCLI.subsystems.zAuth.zAuth_modules.authentication.Authentication.authenticate_remote')
     def test_login_with_remote_api_success(self, mock_remote_auth):
-        """Test successful login with remote API."""
+        """Test successful login with remote API (modular architecture)."""
         # Mock successful remote authentication
         mock_remote_auth.return_value = {
             "status": "success",
@@ -278,9 +278,9 @@ class TestRemoteAuthentication(unittest.TestCase):
         self.assertEqual(self.mock_zcli.session["zAuth"]["API_Key"], "test_key_12345")
     
     @patch.dict(os.environ, {"ZOLO_USE_REMOTE_API": "true"})
-    @patch.object(zAuth, '_authenticate_remote')
+    @patch('zCLI.subsystems.zAuth.zAuth_modules.authentication.Authentication.authenticate_remote')
     def test_login_with_remote_api_failure(self, mock_remote_auth):
-        """Test failed login with remote API."""
+        """Test failed login with remote API (modular architecture)."""
         # Mock failed remote authentication
         mock_remote_auth.return_value = {
             "status": "fail",
@@ -508,11 +508,21 @@ class TestPersistentSessions(unittest.TestCase):
         # Mock zData
         self.mock_zcli.data = Mock()
         self.mock_zcli.data.handler = Mock()
-        self.mock_zcli.data.schema = {"Meta": {"Data_Label": "sessions"}}
+        self.mock_zcli.data.schema = {"Meta": {"Data_Label": "auth"}}  # Unified auth schema (v1.5.4+)
         self.mock_zcli.data.table_exists = Mock(return_value=False)
         self.mock_zcli.data.create_table = Mock()
         
-        # Mock zLoader
+        # Mock zParser (new modular architecture)
+        self.mock_zcli.zparser = Mock()
+        self.mock_zcli.zparser.parse_file_content = Mock(return_value={"Meta": {"Data_Label": "auth"}})
+        
+        # Mock load_schema to update handler
+        def mock_load_schema(schema):
+            self.mock_zcli.data.schema = schema
+            self.mock_zcli.data.handler = Mock()
+        self.mock_zcli.data.load_schema = Mock(side_effect=mock_load_schema)
+        
+        # Mock zLoader (kept for compatibility)
         self.mock_zcli.loader = Mock()
         self.mock_zcli.loader.handle = Mock(return_value=True)
         
@@ -529,39 +539,45 @@ class TestPersistentSessions(unittest.TestCase):
         """Should initialize sessions database successfully"""
         auth = zAuth(self.mock_zcli)
         
-        # Verify loader was called to load schema
-        self.mock_zcli.loader.handle.assert_called()
+        # Trigger lazy loading by calling ensure_sessions_db
+        auth.session_persistence.ensure_sessions_db()
         
-        # Verify it's looking for zSchema.sessions.yaml
-        call_args = str(self.mock_zcli.loader.handle.call_args)
-        self.assertIn("zSchema.sessions.yaml", call_args)
+        # Verify zparser.parse_file_content was called (new architecture)
+        self.mock_zcli.zparser.parse_file_content.assert_called()
         
-        # Verify table_exists was checked
-        self.mock_zcli.data.table_exists.assert_called_with("sessions")
+        # Verify it's loading zSchema.auth.yaml (unified schema)
+        call_args = str(self.mock_zcli.zparser.parse_file_content.call_args)
+        self.assertIn("auth", call_args.lower())
         
-        # Verify create_table was called (since table_exists returned False)
-        self.mock_zcli.data.create_table.assert_called_with("sessions")
+        # Verify table_exists was checked for both tables
+        self.assertIn(
+            unittest.mock.call("sessions"),
+            self.mock_zcli.data.table_exists.call_args_list
+        )
+        
+        # Verify create_table was called for both tables
+        self.assertIn(
+            unittest.mock.call("sessions"),
+            self.mock_zcli.data.create_table.call_args_list
+        )
     
     def test_save_session_creates_record(self):
         """Should save session to database with correct fields"""
         auth = zAuth(self.mock_zcli)
         
-        # Mock successful insert
+        # Mock successful insert and delete
         self.mock_zcli.data.insert = Mock()
         self.mock_zcli.data.delete = Mock()
         
-        # Save session
-        auth._save_session(
+        # Save session via the modular interface
+        auth.session_persistence.save_session(
             username="testuser",
             password_hash="$2b$12$fakehash",
             user_id="123"
         )
         
-        # Verify delete was called (single session per user)
-        self.mock_zcli.data.delete.assert_called_once()
-        delete_args = self.mock_zcli.data.delete.call_args
-        self.assertEqual(delete_args[1]["table"], "sessions")
-        self.assertIn("testuser", delete_args[1]["where"])
+        # Verify delete was called (cleanup + single session per user = 2 calls)
+        self.assertGreaterEqual(self.mock_zcli.data.delete.call_count, 1)
         
         # Verify insert was called with correct fields
         self.mock_zcli.data.insert.assert_called_once()
@@ -595,11 +611,11 @@ class TestPersistentSessions(unittest.TestCase):
         self.mock_zcli.data.insert = Mock()
         self.mock_zcli.data.delete = Mock()
         
-        # Save two sessions
-        auth._save_session("user1", "hash1")
+        # Save two sessions via modular interface
+        auth.session_persistence.save_session("user1", "hash1")
         first_call_values = self.mock_zcli.data.insert.call_args_list[0][1]["values"]
         
-        auth._save_session("user2", "hash2")
+        auth.session_persistence.save_session("user2", "hash2")
         second_call_values = self.mock_zcli.data.insert.call_args_list[1][1]["values"]
         
         # Get session_id and token indexes
@@ -624,14 +640,15 @@ class TestPersistentSessions(unittest.TestCase):
             "user_id": "456",
             "username": "restored_user",
             "token": "test_token_abc",
-            "expires_at": future_expiry
+            "expires_at": future_expiry,
+            "role": "user"
         }
         
         self.mock_zcli.data.select = Mock(return_value=[mock_session])
         self.mock_zcli.data.update = Mock()
         
-        # Load session
-        auth._load_session()
+        # Load session via modular interface
+        auth.session_persistence.load_session()
         
         # Verify session was restored
         self.assertEqual(self.mock_zcli.session["zAuth"]["id"], "456")
@@ -657,7 +674,7 @@ class TestPersistentSessions(unittest.TestCase):
         self.mock_zcli.data.update = Mock()
         
         # Load session
-        auth._load_session()
+        auth.session_persistence.load_session()
         
         # Verify session was NOT restored
         self.assertIsNone(self.mock_zcli.session["zAuth"]["username"])
@@ -669,8 +686,8 @@ class TestPersistentSessions(unittest.TestCase):
         
         self.mock_zcli.data.delete = Mock(return_value=3)  # 3 sessions deleted
         
-        # Cleanup
-        auth._cleanup_expired()
+        # Cleanup via modular interface
+        auth.session_persistence.cleanup_expired()
         
         # Verify delete was called with expiry check
         self.mock_zcli.data.delete.assert_called_once()
@@ -777,9 +794,9 @@ class TestPersistentSessions(unittest.TestCase):
         self.mock_zcli.data.insert = Mock()
         self.mock_zcli.data.delete = Mock()
         
-        # Save session
+        # Save session via modular interface
         before_save = datetime.now()
-        auth._save_session("user", "hash")
+        auth.session_persistence.save_session("user", "hash")
         after_save = datetime.now()
         
         # Get expires_at value

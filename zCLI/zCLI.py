@@ -120,6 +120,10 @@ class zCLI:
         
         # Register signal handlers for graceful shutdown
         self._register_signal_handlers()
+        
+        # Note: zAuth database is workspace-relative (@), ensuring each zCLI instance
+        # is fully isolated. Auth DB lazy-loads on first save_session() or grant_permission().
+        # This preserves the "no global state" principle - the secret sauce of zCLI architecture.
 
         self.logger.info("zCLI Core initialized - Mode: %s", self.session.get("zMode"))
 
