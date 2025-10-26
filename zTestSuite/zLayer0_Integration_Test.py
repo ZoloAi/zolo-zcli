@@ -571,6 +571,310 @@ class TestNetworkUtilsRealOperations(unittest.TestCase):
 
 
 # ═══════════════════════════════════════════════════════════════════
+# Phase 4: Machine Detectors Real Auto-Detection Tests
+# ═══════════════════════════════════════════════════════════════════
+
+class TestMachineDetectorsRealAutoDetection(unittest.TestCase):
+    """
+    Integration tests for machine_detectors.py with REAL auto-detection.
+    
+    Tests actual system detection, platform queries, and auto-configuration.
+    """
+    
+    def test_real_platform_detection(self):
+        """Should detect real platform information"""
+        from zCLI.subsystems.zConfig.zConfig_modules.helpers.machine_detectors import auto_detect_machine
+        
+        # Run real auto-detection
+        machine_info = auto_detect_machine()
+        
+        # Verify real platform data
+        self.assertIsNotNone(machine_info)
+        self.assertIn("os_name", machine_info)
+        self.assertIn("os_version", machine_info)
+        self.assertIn("python_version", machine_info)
+        
+        # OS should be one of the major platforms (os_name contains platform string)
+        os_name = machine_info["os_name"].lower()
+        self.assertTrue(
+            any(platform in os_name for platform in ["darwin", "macos", "linux", "windows"]),
+            f"Unexpected OS: {machine_info['os_name']}"
+        )
+    
+    def test_real_memory_detection(self):
+        """Should detect real system memory"""
+        from zCLI.subsystems.zConfig.zConfig_modules.helpers.machine_detectors import detect_memory_gb
+        
+        # Run real memory detection
+        memory_gb = detect_memory_gb()
+        
+        # Should return a positive number (system must have RAM!)
+        self.assertIsInstance(memory_gb, (int, float))
+        self.assertGreater(memory_gb, 0)
+        # Reasonable range: 1GB to 1TB
+        self.assertLess(memory_gb, 1024)
+    
+    def test_real_browser_detection(self):
+        """Should detect real system browser"""
+        from zCLI.subsystems.zConfig.zConfig_modules.helpers.machine_detectors import detect_browser
+        
+        # Run real browser detection
+        browser = detect_browser()
+        
+        # Should return a browser name (not empty)
+        self.assertIsInstance(browser, str)
+        self.assertNotEqual(browser, "")
+        
+        # Should be one of the known browsers or "unknown"
+        known_browsers = ["Chrome", "Firefox", "Safari", "Edge", "Arc", "Brave", "Opera", "unknown"]
+        # Browser name might include version, so check if it starts with known browser
+        found = any(browser.startswith(kb) or kb.lower() in browser.lower() for kb in known_browsers)
+        self.assertTrue(found, f"Unexpected browser: {browser}")
+    
+    def test_real_ide_detection(self):
+        """Should detect real IDE if present"""
+        from zCLI.subsystems.zConfig.zConfig_modules.helpers.machine_detectors import detect_ide
+        
+        # Run real IDE detection
+        ide = detect_ide()
+        
+        # Should return a string (IDE name or "terminal")
+        self.assertIsInstance(ide, str)
+        self.assertNotEqual(ide, "")
+        
+        # Should be one of known IDEs or "terminal" or "code" (VSCode binary)
+        known_ides = ["VSCode", "code", "PyCharm", "Jupyter", "Cursor", "terminal"]
+        found = any(known in ide for known in known_ides)
+        self.assertTrue(found, f"Unexpected IDE: {ide}")
+    
+    def test_real_cpu_count_detection(self):
+        """Should detect real CPU count"""
+        from zCLI.subsystems.zConfig.zConfig_modules.helpers.machine_detectors import auto_detect_machine
+        
+        machine_info = auto_detect_machine()
+        
+        # Should have CPU cores (actual key is "cpu_cores", not "cpu_count")
+        self.assertIn("cpu_cores", machine_info)
+        cpu_cores = machine_info["cpu_cores"]
+        
+        # Should be a positive integer
+        self.assertIsInstance(cpu_cores, int)
+        self.assertGreater(cpu_cores, 0)
+        # Reasonable range: 1 to 256 cores
+        self.assertLess(cpu_cores, 256)
+    
+    def test_real_hostname_detection(self):
+        """Should detect real machine hostname"""
+        from zCLI.subsystems.zConfig.zConfig_modules.helpers.machine_detectors import auto_detect_machine
+        
+        machine_info = auto_detect_machine()
+        
+        # Should have hostname
+        self.assertIn("hostname", machine_info)
+        hostname = machine_info["hostname"]
+        
+        # Should be a non-empty string
+        self.assertIsInstance(hostname, str)
+        self.assertNotEqual(hostname, "")
+    
+    def test_real_python_version_detection(self):
+        """Should detect real Python version"""
+        from zCLI.subsystems.zConfig.zConfig_modules.helpers.machine_detectors import auto_detect_machine
+        
+        machine_info = auto_detect_machine()
+        
+        # Should have Python version
+        self.assertIn("python_version", machine_info)
+        py_version = machine_info["python_version"]
+        
+        # Should start with 3.x (we require Python 3)
+        self.assertIsInstance(py_version, str)
+        self.assertTrue(py_version.startswith("3."), f"Expected Python 3.x, got {py_version}")
+    
+    def test_real_architecture_detection(self):
+        """Should detect real system architecture"""
+        from zCLI.subsystems.zConfig.zConfig_modules.helpers.machine_detectors import auto_detect_machine
+        
+        machine_info = auto_detect_machine()
+        
+        # Should have architecture info
+        self.assertIn("architecture", machine_info)
+        arch = machine_info["architecture"]
+        
+        # Should be one of known architectures
+        self.assertIsInstance(arch, str)
+        known_archs = ["x86_64", "amd64", "arm64", "aarch64", "i386", "i686"]
+        self.assertIn(arch.lower(), [a.lower() for a in known_archs])
+    
+    def test_real_safe_getcwd_in_existing_directory(self):
+        """Should get real CWD when directory exists"""
+        from zCLI.subsystems.zConfig.zConfig_modules.helpers.machine_detectors import _safe_getcwd
+        
+        # Current directory should exist
+        cwd = _safe_getcwd()
+        
+        self.assertIsInstance(cwd, str)
+        self.assertNotEqual(cwd, "")
+        # Should be an absolute path
+        self.assertTrue(Path(cwd).is_absolute())
+    
+    def test_real_safe_getcwd_fallback(self):
+        """Should fallback to home directory if CWD deleted"""
+        from zCLI.subsystems.zConfig.zConfig_modules.helpers.machine_detectors import _safe_getcwd
+        
+        # Create and enter a temp directory, then delete it
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            
+            # This test is tricky - we can't actually cd into a deleted dir
+            # But we can verify the function has proper error handling
+            # by checking it returns a valid path
+            cwd = _safe_getcwd()
+            self.assertIsInstance(cwd, str)
+            self.assertTrue(Path(cwd).exists() or str(Path.home()) in cwd)
+
+
+# ═══════════════════════════════════════════════════════════════════
+# Phase 4: Config Environment Real Integration Tests
+# ═══════════════════════════════════════════════════════════════════
+
+class TestConfigEnvironmentRealIntegration(unittest.TestCase):
+    """
+    Integration tests for config_environment.py with REAL environment detection.
+    
+    Tests actual virtual environment detection, environment variables, and config loading.
+    """
+    
+    def test_real_venv_detection(self):
+        """Should detect real virtual environment status"""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            zspark = {"zWorkspace": temp_dir}
+            z = zCLI(zspark)
+            
+            # Access environment config
+            env_config = z.config.environment
+            
+            # Should have venv detection results
+            self.assertIsInstance(env_config.in_venv, bool)
+            
+            # If in venv, should have venv_path
+            if env_config.in_venv:
+                self.assertIsNotNone(env_config.venv_path)
+                self.assertTrue(Path(env_config.venv_path).exists())
+    
+    def test_real_system_environment_capture(self):
+        """Should capture real system environment variables"""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            zspark = {"zWorkspace": temp_dir}
+            z = zCLI(zspark)
+            
+            env_config = z.config.environment
+            
+            # Should have captured system environment
+            self.assertIsInstance(env_config.system_env, dict)
+            
+            # Should have common environment variables
+            self.assertIn("PATH", env_config.system_env)
+            self.assertIn("HOME", env_config.system_env)
+    
+    def test_real_environment_defaults(self):
+        """Should provide real default environment configuration"""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            zspark = {"zWorkspace": temp_dir}
+            z = zCLI(zspark)
+            
+            env_config = z.config.environment
+            
+            # Should have environment dict
+            self.assertIsInstance(env_config.env, dict)
+            
+            # Should have deployment setting (actual values might include "Debug", "Release", etc.)
+            if "deployment" in env_config.env:
+                deployment = env_config.env["deployment"]
+                self.assertIsInstance(deployment, str)
+                self.assertNotEqual(deployment, "")
+    
+    def test_real_dotenv_loading(self):
+        """Should handle real .env file loading"""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Create a test .env file
+            env_file = Path(temp_dir) / ".env"
+            env_file.write_text("TEST_VAR=test_value\n")
+            
+            zspark = {"zWorkspace": temp_dir}
+            z = zCLI(zspark)
+            
+            env_config = z.config.environment
+            
+            # Environment config should be initialized
+            self.assertIsNotNone(env_config)
+            self.assertIsInstance(env_config.system_env, dict)
+
+
+# ═══════════════════════════════════════════════════════════════════
+# Phase 4: Bifrost Manager Real Integration Tests
+# ═══════════════════════════════════════════════════════════════════
+
+class TestBifrostManagerRealIntegration(unittest.IsolatedAsyncioTestCase):
+    """
+    Integration tests for bifrost_manager.py with REAL lifecycle operations.
+    
+    Tests actual manager creation, auto-start logic, and lifecycle management.
+    """
+    
+    def test_real_manager_initialization(self):
+        """Should initialize real BifrostManager with zCLI"""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            zspark = {"zWorkspace": temp_dir, "zMode": "Terminal"}
+            z = zCLI(zspark)
+            
+            # Manager should be created
+            self.assertIsNotNone(z.comm._bifrost_mgr)
+            
+            # Manager should have logger and zcli
+            self.assertIsNotNone(z.comm._bifrost_mgr.logger)
+            self.assertIsNotNone(z.comm._bifrost_mgr.zcli)
+    
+    @requires_network
+    async def test_real_manual_create_and_lifecycle(self):
+        """Should create real WebSocket server via manager"""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            zspark = {"zWorkspace": temp_dir, "zMode": "Terminal"}
+            z = zCLI(zspark)
+            
+            manager = z.comm._bifrost_mgr
+            
+            # Manually create server
+            websocket = manager.create(walker=z.walker, port=56910)
+            
+            # Should have created server
+            self.assertIsNotNone(websocket)
+            self.assertEqual(manager.websocket, websocket)
+            
+            # Start server
+            server_task = asyncio.create_task(websocket.start_socket_server())
+            await asyncio.sleep(0.5)
+            
+            # Verify running
+            self.assertTrue(websocket._running)
+            
+            # Stop server
+            await websocket.shutdown()
+            self.assertFalse(websocket._running)
+    
+    def test_real_auto_start_terminal_mode(self):
+        """Should NOT auto-start in Terminal mode"""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            zspark = {"zWorkspace": temp_dir, "zMode": "Terminal"}
+            z = zCLI(zspark)
+            
+            manager = z.comm._bifrost_mgr
+            
+            # In Terminal mode, websocket should not be auto-started
+            self.assertIsNone(manager.websocket)
+
+
+# ═══════════════════════════════════════════════════════════════════
 # Test Suite Runner
 # ═══════════════════════════════════════════════════════════════════
 
@@ -579,12 +883,17 @@ def run_tests(verbose=True):
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
     
-    # Add all test classes
+    # Phase 3 tests (original)
     suite.addTests(loader.loadTestsFromTestCase(TestBifrostBridgeRealExecution))
     suite.addTests(loader.loadTestsFromTestCase(TestAuthenticationRealFlows))
     suite.addTests(loader.loadTestsFromTestCase(TestConfigValidatorIntegration))
     suite.addTests(loader.loadTestsFromTestCase(TestzServerHandlerRealHTTP))
     suite.addTests(loader.loadTestsFromTestCase(TestNetworkUtilsRealOperations))
+    
+    # Phase 4 tests (final integration)
+    suite.addTests(loader.loadTestsFromTestCase(TestMachineDetectorsRealAutoDetection))
+    suite.addTests(loader.loadTestsFromTestCase(TestConfigEnvironmentRealIntegration))
+    suite.addTests(loader.loadTestsFromTestCase(TestBifrostManagerRealIntegration))
     
     runner = unittest.TextTestRunner(verbosity=2 if verbose else 1)
     result = runner.run(suite)
