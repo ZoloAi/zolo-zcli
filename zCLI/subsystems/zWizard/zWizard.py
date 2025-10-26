@@ -52,6 +52,16 @@ class zWizard:
             if self.display:
                 self.display.zDeclare(f"zKey: {key}", color="MAIN", indent=2, style="single")
 
+            # ════════════════════════════════════════════════════════════
+            # RBAC Enforcement (v1.5.4 Week 3.3)
+            # ════════════════════════════════════════════════════════════
+            # Check if this item has RBAC requirements
+            rbac_check_result = self._check_rbac_access(key, value)
+            if rbac_check_result == "access_denied":
+                # Skip this item and move to next
+                idx += 1
+                continue
+
             # Execute action via dispatch
             try:
                 result = dispatch_fn(key, value)
@@ -219,3 +229,107 @@ class zWizard:
             if self.schema_cache:
                 self.schema_cache.clear()
                 self.logger.debug("Schema cache connections cleared")
+    
+    # ════════════════════════════════════════════════════════════
+    # RBAC Access Control (v1.5.4 Week 3.3)
+    # ════════════════════════════════════════════════════════════
+    
+    def _check_rbac_access(self, key, value):
+        """Check RBAC access for a zKey before execution (v1.5.4 Week 3.3).
+        
+        Args:
+            key: zKey name (e.g., "^Delete User")
+            value: zKey value (parsed item with potential _rbac metadata)
+        
+        Returns:
+            str: "access_granted" or "access_denied"
+        """
+        # Extract RBAC metadata (if it exists)
+        rbac = None
+        if isinstance(value, dict):
+            rbac = value.get("_rbac")
+        
+        # No RBAC requirements = public access
+        if not rbac:
+            return "access_granted"
+        
+        # Get zCLI instance (from walker or direct)
+        zcli = self.walker.zcli if self.walker else self.zcli
+        if not zcli or not hasattr(zcli, 'auth'):
+            self.logger.warning("[RBAC] No auth subsystem available, denying access")
+            return "access_denied"
+        
+        # Check require_auth (must be authenticated)
+        if rbac.get("require_auth"):
+            if not zcli.auth.is_authenticated():
+                self._display_access_denied(key, "Authentication required")
+                return "access_denied"
+        
+        # Check require_role (implies authentication)
+        required_role = rbac.get("require_role")
+        if required_role is not None:
+            # Role requirement implies authentication
+            if not zcli.auth.is_authenticated():
+                self._display_access_denied(key, "Authentication required")
+                return "access_denied"
+            
+            if not zcli.auth.has_role(required_role):
+                role_str = required_role if isinstance(required_role, str) else f"one of {required_role}"
+                self._display_access_denied(key, f"Role required: {role_str}")
+                return "access_denied"
+        
+        # Check require_permission (implies authentication)
+        required_permission = rbac.get("require_permission")
+        if required_permission:
+            # Permission requirement implies authentication
+            if not zcli.auth.is_authenticated():
+                self._display_access_denied(key, "Authentication required")
+                return "access_denied"
+            
+            if not zcli.auth.has_permission(required_permission):
+                perm_str = required_permission if isinstance(required_permission, str) else f"one of {required_permission}"
+                self._display_access_denied(key, f"Permission required: {perm_str}")
+                return "access_denied"
+        
+        # All checks passed
+        self.logger.debug("[RBAC] Access granted for %s", key)
+        return "access_granted"
+    
+    def _display_access_denied(self, key, reason):
+        """Display access denied message (Terminal + zBifrost compatible)."""
+        display = self._get_display()
+        
+        if display:
+            # Display clear access denied message (no break to avoid input prompt in tests)
+            display.handle({
+                "event": "text",
+                "content": "",
+                "indent": 0,
+                "break_after": False
+            })
+            display.handle({
+                "event": "error",
+                "content": f"[ACCESS DENIED] {key}",
+                "indent": 1
+            })
+            display.handle({
+                "event": "text",
+                "content": f"Reason: {reason}",
+                "indent": 2,
+                "break_after": False
+            })
+            display.handle({
+                "event": "text",
+                "content": "Tip: Check your role/permissions or log in",
+                "indent": 2,
+                "break_after": False
+            })
+            display.handle({
+                "event": "text",
+                "content": "",
+                "indent": 0,
+                "break_after": False
+            })
+        
+        # Log the denial
+        self.logger.warning(f"[RBAC] Access denied for '{key}': {reason}")

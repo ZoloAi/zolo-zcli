@@ -15,6 +15,10 @@ sessions:
   username:
     type: str
     required: true
+  role:
+    type: str
+    required: false
+    default: "user"  # Default role for new users
   password_hash:
     type: str
     required: true

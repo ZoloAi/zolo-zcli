@@ -144,9 +144,9 @@ class zParser:
     # File Parsing (YAML/JSON)
     # ═══════════════════════════════════════════════════════════
 
-    def parse_file_content(self, raw_content, file_extension=None):
+    def parse_file_content(self, raw_content, file_extension=None, session=None, file_path=None):
         """Parse raw file content (YAML/JSON) into Python objects."""
-        return parse_file_content(raw_content, self.logger, file_extension)
+        return parse_file_content(raw_content, self.logger, file_extension, session=session, file_path=file_path)
 
     def parse_yaml(self, raw_content):
         """Parse YAML content."""

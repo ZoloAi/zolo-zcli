@@ -33,6 +33,7 @@ TEST_MODULES = [
     'zShutdown',   # Week 2.2 - Graceful shutdown (signal handlers, cleanup)
     'zDisplay',
     'zAuth',       # zAuth depends on zDisplay
+    'zRBAC',       # Week 3.3 - RBAC (Role-Based Access Control) depends on zAuth
     'zDispatch',
     'zNavigation', # zNavigation - menu system, breadcrumbs, and linking
     'zParser',

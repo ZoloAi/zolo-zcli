@@ -1,0 +1,78 @@
+# zUI.rbac_test.yaml - RBAC Testing Demo (v1.5.4 Week 3.3)
+# Terminal mode demo - proper zCLI syntax with INLINE RBAC
+# Default: PUBLIC ACCESS (no _rbac = no restrictions)
+# Only add _rbac when you need to RESTRICT access
+
+zVaF:
+  ~Root*: ["^Login", "^Public Info", "^View Dashboard", "^Edit Settings", "^Moderator Panel", "^Delete Data", "^Admin Only", "stop"]
+  
+  # Login (no RBAC - public access by default)
+  "^Login":
+    zDisplay:
+      event: text
+      content: "Login dialog would appear here (mock authentication for manual testing)"
+      indent: 1
+  
+  # Public info (no RBAC - public access by default)
+  "^Public Info":
+    zDisplay:
+      event: text
+      content: "This is public information - no authentication required"
+      indent: 1
+  
+  # Requires authentication (any role)
+  "^View Dashboard":
+    _rbac:
+      require_auth: true
+    zDisplay:
+      event: text
+      content: "Welcome! You are authenticated."
+      indent: 1
+  
+  # Requires specific role (auth implied)
+  "^Edit Settings":
+    _rbac:
+      require_role: "user"
+    zDisplay:
+      event: text
+      content: "You have 'user' role access"
+      indent: 1
+  
+  # Multiple roles (OR logic) - auth implied
+  "^Moderator Panel":
+    _rbac:
+      require_role: ["admin", "moderator"]
+    zDisplay:
+      event: text
+      content: "You are either admin OR moderator"
+      indent: 1
+  
+  # Role + Permission (AND logic) - auth implied
+  "^Delete Data":
+    _rbac:
+      require_role: "admin"
+      require_permission: "data.delete"
+    zDisplay:
+      event: text
+      content: "You have admin role AND data.delete permission"
+      indent: 1
+  
+  # Super admin only - auth implied
+  "^Admin Only":
+    _rbac:
+      require_role: "admin"
+      require_permission: "system.shutdown"
+    zDisplay:
+      event: text
+      content: "You have the highest access level"
+      indent: 1
+
+# Separate block - no restrictions
+zVaG:
+  ~Root*: ["^Always Public"]
+  
+  "^Always Public":
+    zDisplay:
+      event: text
+      content: "This block has no restrictions (different zBlock)"
+      indent: 1

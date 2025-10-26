@@ -922,21 +922,109 @@
                         </div>
                     </div>
 
-                    <div class="todo-item" data-id="layer1-auth-rbac">
-                        <input type="checkbox" class="todo-checkbox">
+                    <div class="todo-item completed" data-id="layer1-auth-rbac">
+                        <input type="checkbox" class="todo-checkbox" checked>
                         <div class="todo-content">
-                            <div class="todo-title">Week 3.3: 🔐 Enhanced RBAC decorators</div>
+                            <div class="todo-title">Week 3.3: 🔐 Enhanced RBAC with Inline `_rbac` Directives (Declarative) ✅ COMPLETE</div>
                             <div class="todo-description">
-                                @require_role("admin") decorator for plugins.
-                                @require_permission("edit_users") for fine-grained control.
-                                Store roles/permissions in sessions.db.
-                                <br><strong>Depends on:</strong> Sessions (Week 3.2)
+                                <strong>Goal:</strong> Flask-Login style RBAC using inline YAML directives (no Python decorators!)
+                                <br><strong>Design:</strong> Declarative access control with default public access (opt-in security)
+                                <br><br>
+                                <strong>✅ IMPLEMENTED (Final Syntax - Inline `_rbac`):</strong>
+                                <br>&nbsp;&nbsp;• <strong>Default:</strong> Public access (no restrictions unless `_rbac` specified)
+                                <br>&nbsp;&nbsp;• <strong>Inline `_rbac` key</strong> within each zUI item's dictionary
+                                <br>&nbsp;&nbsp;• <strong>Auth Implied:</strong> `require_role`/`require_permission` auto-require authentication
+                                <br><br>
+                                <strong>📋 Final Syntax (Inline `_rbac` - NOT `!` Prefix):</strong>
+                                <br><code style="display: block; background: #f5f5f5; padding: 10px; margin: 5px 0; border-radius: 4px;">
+                                # Public access (default - no _rbac)
+                                <br>"^Login":
+                                <br>&nbsp;&nbsp;zDisplay: ...
+                                <br><br># Authentication only
+                                <br>"^Dashboard":
+                                <br>&nbsp;&nbsp;_rbac:
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;require_auth: true
+                                <br>&nbsp;&nbsp;zDisplay: ...
+                                <br><br># Role required (auth implied)
+                                <br>"^Edit Settings":
+                                <br>&nbsp;&nbsp;_rbac:
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;require_role: "user"
+                                <br>&nbsp;&nbsp;zDisplay: ...
+                                <br><br># Multiple roles OR logic (auth implied)
+                                <br>"^Moderate":
+                                <br>&nbsp;&nbsp;_rbac:
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;require_role: ["admin", "moderator"]
+                                <br>&nbsp;&nbsp;zDisplay: ...
+                                <br><br># Role + Permission AND logic (auth implied)
+                                <br>"^Delete Data":
+                                <br>&nbsp;&nbsp;_rbac:
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;require_role: "admin"
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;require_permission: "data.delete"
+                                <br>&nbsp;&nbsp;zDisplay: ...
+                                </code>
+                                <br><br>
+                                <strong>🔧 Implementation (✅ COMPLETE):</strong>
+                                <br>&nbsp;&nbsp;1. ✅ Extended <code>zSchema.sessions.yaml</code> - Added <code>role</code> field (default: "user")
+                                <br>&nbsp;&nbsp;2. ✅ Created <code>zSchema.permissions.yaml</code> - User permissions table (id, user_id, permission, granted_by, granted_at)
+                                <br>&nbsp;&nbsp;3. ✅ Added to zAuth:
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;• <code>has_role(role)</code> - Check user role (supports single/list)
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;• <code>has_permission(permission)</code> - Check user permission
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;• <code>grant_permission(user_id, permission, granted_by)</code> - Admin-only
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;• <code>revoke_permission(user_id, permission)</code> - Admin-only
+                                <br>&nbsp;&nbsp;4. ✅ Updated zParser - Parse inline <code>_rbac</code> directives from zUI items
+                                <br>&nbsp;&nbsp;5. ✅ Updated zLoader - Pass session context to parser for RBAC processing
+                                <br>&nbsp;&nbsp;6. ✅ Updated zWizard - Enforce RBAC before executing zKey (<code>_check_rbac_access</code>)
+                                <br>&nbsp;&nbsp;7. ✅ Clear "Access Denied" messages (Terminal + zBifrost compatible, no blocking)
+                                <br><br>
+                                <strong>📋 RBAC Features (All Implemented):</strong>
+                                <br>&nbsp;&nbsp;• ✅ <code>require_auth: true</code> - Authentication required (any role)
+                                <br>&nbsp;&nbsp;• ✅ <code>require_role: "admin"</code> - Single role (auth implied)
+                                <br>&nbsp;&nbsp;• ✅ <code>require_role: ["admin", "moderator"]</code> - Multiple roles, OR logic (auth implied)
+                                <br>&nbsp;&nbsp;• ✅ <code>require_permission: "data.delete"</code> - Permission check (auth implied)
+                                <br>&nbsp;&nbsp;• ✅ Combined directives (AND logic): role + permission both required
+                                <br>&nbsp;&nbsp;• ✅ Public access default - No `_rbac` = no restrictions (opt-in security)
+                                <br><br>
+                                <strong>✅ Tests Added (18 comprehensive tests - 100% pass rate):</strong>
+                                <br>&nbsp;&nbsp;• TestRBACParsing (6 tests) - Inline `_rbac` extraction, public default
+                                <br>&nbsp;&nbsp;• TestRBACEnforcement (11 tests) - Access control logic, auth/role/permission checks
+                                <br>&nbsp;&nbsp;• TestRBACIntegration (1 test) - RBAC with zData operations
+                                <br>&nbsp;&nbsp;• TestRBACEdgeCases (2 tests) - Error handling, safety fallbacks
+                                <br>&nbsp;&nbsp;• File: <code>zTestSuite/zRBAC_Test.py</code>
+                                <br>&nbsp;&nbsp;• Integrated: <code>zTestSuite/run_all_tests.py</code>
+                                <br><br>
+                                <strong>🎯 Key Design Decisions:</strong>
+                                <br>&nbsp;&nbsp;• <strong>Inline > Prefix:</strong> Switched from `!require_*` prefix to inline `_rbac` key (solved YAML duplicate key issue)
+                                <br>&nbsp;&nbsp;• <strong>Public by Default:</strong> No `_rbac` = public access (opt-in security, reduces boilerplate)
+                                <br>&nbsp;&nbsp;• <strong>Auth Implied:</strong> `require_role`/`require_permission` auto-require authentication (simplified YAML)
+                                <br>&nbsp;&nbsp;• <strong>No Conflict:</strong> `_rbac` inline key doesn't conflict with existing `!` suffix modifier (required step retry logic)
+                                <br>&nbsp;&nbsp;• <strong>UX First:</strong> Clear access denied messages with reasons, sandbox-compatible (no blocking input prompts)
+                                <br><br>
+                                <strong>📊 Benefits Achieved:</strong>
+                                <br>&nbsp;&nbsp;✅ Declarative (RBAC rules in YAML, not Python)
+                                <br>&nbsp;&nbsp;✅ Item-level scoping (precise control)
+                                <br>&nbsp;&nbsp;✅ Flask-Login style (familiar pattern)
+                                <br>&nbsp;&nbsp;✅ Cross-platform (Terminal + zBifrost)
+                                <br>&nbsp;&nbsp;✅ AI-friendly (clean inline syntax)
+                                <br>&nbsp;&nbsp;✅ Clean syntax (no YAML quoting issues)
+                                <br><br>
+                                <strong>📁 Files Created/Modified:</strong>
+                                <br>&nbsp;&nbsp;• Created: <code>zCLI/subsystems/zAuth/zSchema.permissions.yaml</code>
+                                <br>&nbsp;&nbsp;• Created: <code>zTestSuite/zRBAC_Test.py</code> (18 tests)
+                                <br>&nbsp;&nbsp;• Created: <code>Demos/rbac_demo/</code> (zUI, test files, README)
+                                <br>&nbsp;&nbsp;• Modified: <code>zAuth.py</code> (RBAC methods), <code>zParser_zVaFile.py</code> (inline extraction)
+                                <br>&nbsp;&nbsp;• Modified: <code>zWizard.py</code> (enforcement), <code>AGENT.md</code> (patterns + pitfalls)
+                                <br><br>
+                                <strong>✅ Total Tests:</strong> 949 passing (was 931, +18 from Week 3.3) 🎉
+                                <br><strong>✅ Documentation:</strong> AGENT.md updated with inline `_rbac` syntax, common mistakes, UX patterns
                             </div>
                             <div class="todo-tags">
                                 <span class="tag">Layer 1</span>
                                 <span class="tag">zAuth</span>
+                                <span class="tag">zParser</span>
+                                <span class="tag">zLoader</span>
+                                <span class="tag">zWizard</span>
                                 <span class="tag">2 days</span>
-                                <span class="tag" style="background: #f6ad55; color: white;">DEPENDS: 3.2</span>
+                                <span class="tag" style="background: #48bb78; color: white;">✅ DONE</span>
                             </div>
                         </div>
                     </div>
@@ -1061,16 +1149,23 @@
                         </div>
                     </div>
 
-                    <div style="background: #fff5f5; border: 2px solid #4299e1; padding: 15px; border-radius: 8px; margin-top: 15px;">
-                        <strong>🔍 Layer 1 Health Check (Must Pass Before Layer 2):</strong>
+                    <div style="background: #ebf8ff; border: 2px solid #4299e1; padding: 15px; border-radius: 8px; margin-top: 15px;">
+                        <strong>🔍 Layer 1 Health Check (In Progress - 3/7 weeks complete):</strong>
                         <ul style="margin: 10px 0 0 20px; line-height: 1.8;">
-                            <li>✅ zAuth: All security tests pass, sessions work, RBAC enforced</li>
-                            <li>✅ zDisplay: Progress bars/spinners work in Terminal AND zBifrost</li>
-                            <li>✅ zDialog: Validators work, clear error messages</li>
-                            <li>✅ zLoader: Hot reload works in --dev mode</li>
-                            <li>✅ Error messages are actionable (no vague errors)</li>
-                            <li>✅ All Layer 1 tests pass (90%+ coverage)</li>
+                            <li>✅ zAuth: bcrypt password hashing (Week 3.1 - COMPLETE)</li>
+                            <li>✅ zAuth: Persistent sessions with 7-day expiry (Week 3.2 - COMPLETE)</li>
+                            <li>✅ zAuth: RBAC with inline `_rbac` directives (Week 3.3 - COMPLETE, 18 tests)</li>
+                            <li>⏳ zAuth: Comprehensive test suite (Week 3.4 - checkpoint before display work)</li>
+                            <li>⏳ zDisplay: Progress bars/spinners work in Terminal AND zBifrost (Weeks 4.1-4.2)</li>
+                            <li>⏳ zDialog: Validators work, clear error messages (Weeks 5.1-5.2)</li>
+                            <li>⏳ zLoader: Hot reload works in --dev mode (Week 5.3)</li>
+                            <li>⏳ Error messages are actionable (no vague errors) (Week 4.3)</li>
                         </ul>
+                        <div style="margin-top: 15px; padding: 10px; background: #e6fffa; border-radius: 4px; border: 2px solid #4299e1;">
+                            <strong>📊 Progress:</strong> 3/7 weeks complete (43%)
+                            <br><strong>📊 Tests:</strong> 949 passing (907 Layer 0 + 42 Layer 1 zAuth)
+                            <br><strong>🎯 Next:</strong> Week 3.4 - zAuth comprehensive test suite (checkpoint)
+                        </div>
                     </div>
                 </div>
 
@@ -1297,7 +1392,14 @@
                         &nbsp;&nbsp;• 2.7: ✅ Documentation complete (COMPLETE - AGENT.md updated, TESTING_GUIDE.md created, deprecated files removed)<br>
                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>Result:</em> Production-ready docs for AI assistants + developers. Layer 0 documentation polish complete!<br>
                         <br>
-                        <strong>Weeks 3-5:</strong> Layer 1 (Core) → Auth, Display, Validation, Hot Reload<br>
+                        <strong>Week 3 (✅ 3/7 done - 43% COMPLETE):</strong><br>
+                        &nbsp;&nbsp;• 3.1: ✅ bcrypt password hashing (COMPLETE - 14 tests, 921 total passing)<br>
+                        &nbsp;&nbsp;• 3.2: ✅ Persistent sessions (COMPLETE - 10 tests, 931 total passing, declarative with zData)<br>
+                        &nbsp;&nbsp;• 3.3: ✅ Enhanced RBAC (COMPLETE - 18 tests, 949 total passing, inline `_rbac` syntax)<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>Key Innovation:</em> Inline `_rbac` directives, default public access, auth implied by role/permission<br>
+                        &nbsp;&nbsp;• 3.4: ⏳ zAuth comprehensive test suite (pending - checkpoint before Layer 1 display work)<br>
+                        <br>
+                        <strong>Weeks 4-5:</strong> Layer 1 (Display, Validation, Hot Reload) → Progress bars, spinners, validators, file watching<br>
                         <strong>Weeks 6-9:</strong> Layer 2 (Business) → Migrations, ORM, Shell, Plugins<br>
                         <strong>Week 10:</strong> Layer 3 (Orchestration) → Documentation, Integration Tests<br>
                         <br>

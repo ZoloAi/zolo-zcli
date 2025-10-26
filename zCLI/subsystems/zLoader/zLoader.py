@@ -60,7 +60,7 @@ class zLoader:
         self.logger.debug("\nzFile Raw: %s", zFile_raw)
 
         # Step 5: Parse using zParser (delegates to zParser)
-        result = self.parse_file_content(zFile_raw, zFile_extension)
+        result = self.parse_file_content(zFile_raw, zFile_extension, session=self.zSession, file_path=zFilePath_identified)
         self.logger.debug("zLoader parse result:\n%s", result)
 
         # Step 6: Return result (cache only if not a schema)

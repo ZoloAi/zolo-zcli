@@ -5,6 +5,57 @@
 """Centralized parsing and validation logic for zVaFiles (UI, Schema, Config)."""
 
 
+# ════════════════════════════════════════════════════════════
+# RBAC Directive Extraction (v1.5.4 Week 3.3)
+# ════════════════════════════════════════════════════════════
+
+def extract_rbac_directives(data, logger, scope="file"):
+    """Extract RBAC directives from YAML data (v1.5.4 Week 3.3).
+    
+    RBAC directives are keys that start with ! (e.g., !require_role, !require_permission).
+    They are extracted and removed from the data dictionary.
+    
+    Args:
+        data: Dictionary of YAML data (zUI file)
+        logger: Logger instance
+        scope: "file" or "block" (for logging)
+    
+    Returns:
+        tuple: (rbac_dict, data_without_rbac)
+            - rbac_dict: Dictionary of RBAC directives {directive_name: value}
+            - data_without_rbac: Original data with RBAC directives removed
+    
+    Example:
+        >>> data = {
+        ...     "!require_role": "admin",
+        ...     "!require_permission": "users.delete",
+        ...     "zVaF": {...}
+        ... }
+        >>> rbac, clean_data = extract_rbac_directives(data, logger)
+        >>> rbac
+        {"require_role": "admin", "require_permission": "users.delete"}
+        >>> "!require_role" in clean_data
+        False
+    """
+    rbac_directives = {}
+    data_without_rbac = {}
+    
+    for key, value in data.items():
+        if key.startswith("!require_"):
+            # Extract directive (remove ! prefix)
+            directive_name = key[1:]  # Remove the !
+            rbac_directives[directive_name] = value
+            logger.debug("[RBAC] %s-level directive extracted: %s = %s", scope, directive_name, value)
+        else:
+            # Keep non-RBAC keys in the cleaned data
+            data_without_rbac[key] = value
+    
+    return rbac_directives if rbac_directives else None, data_without_rbac
+
+
+# ════════════════════════════════════════════════════════════
+# Main Parsing Functions
+# ════════════════════════════════════════════════════════════
 
 def parse_zva_file(data, file_type, logger, file_path=None, session=None, display=None):
     """Main entry point for zVaFile parsing and validation."""
@@ -188,8 +239,14 @@ def parse_ui_file(data, logger, file_path=None, session=None):
         "metadata": {}
     }
 
-    # Process each zBlock (menu section)
-    for zblock_name, zblock_data in data.items():
+    # Extract file-level RBAC directives (v1.5.4 Week 3.3)
+    file_rbac, data_without_rbac = extract_rbac_directives(data, logger, scope="file")
+    if file_rbac:
+        parsed_ui["_rbac"] = file_rbac
+        logger.info("[RBAC] File-level directives found: %s", file_rbac)
+
+    # Process each zBlock (menu section) using cleaned data
+    for zblock_name, zblock_data in data_without_rbac.items():
         if not isinstance(zblock_data, dict):
             logger.warning("[WARN] Skipping invalid zBlock '%s': expected dict, got %s", 
                          zblock_name, type(zblock_data).__name__)
@@ -197,8 +254,8 @@ def parse_ui_file(data, logger, file_path=None, session=None):
 
         logger.debug("[INFO] Processing zBlock: %s", zblock_name)
 
-        # Parse zBlock content
-        parsed_zblock = parse_ui_zblock(zblock_name, zblock_data, logger, session)
+        # Parse zBlock content (with file-level RBAC passed down)
+        parsed_zblock = parse_ui_zblock(zblock_name, zblock_data, logger, session, file_rbac=file_rbac)
         parsed_ui["zblocks"][zblock_name] = parsed_zblock
 
     # Extract UI metadata
@@ -207,8 +264,8 @@ def parse_ui_file(data, logger, file_path=None, session=None):
     logger.info("[OK] UI file parsing completed: %d zBlocks processed", len(parsed_ui["zblocks"]))
     return parsed_ui
 
-def parse_ui_zblock(zblock_name, zblock_data, logger, session=None):  # pylint: disable=unused-argument
-    """Parse individual UI zBlock with validation."""
+def parse_ui_zblock(zblock_name, zblock_data, logger, session=None, file_rbac=None):  # pylint: disable=unused-argument
+    """Parse individual UI zBlock with validation and RBAC directives (v1.5.4 Week 3.3)."""
     logger.debug("[INFO] Parsing zBlock: %s", zblock_name)
 
     parsed_zblock = {
@@ -225,10 +282,25 @@ def parse_ui_zblock(zblock_name, zblock_data, logger, session=None):  # pylint: 
         }
     }
 
+    # Store file-level RBAC (inherited from parent)
+    if file_rbac:
+        parsed_zblock["_file_rbac"] = file_rbac
+
     # Process each item in the zBlock
+    # RBAC is now INLINE in the item data (v1.5.4 Week 3.3)
+    logger.debug("[RBAC] Processing zBlock '%s' with %d items", zblock_name, len(zblock_data))
+    
     for item_name, item_data in zblock_data.items():
+        logger.debug("[RBAC] Processing item: '%s'", item_name)
+        
         # zKeys can be strings (zFunc, zLink), lists (menus), or dicts (zWizard, zDialog)
         # Accept all types - validation happens in dispatch
+
+        # Check if item already has inline _rbac
+        inline_rbac = None
+        if isinstance(item_data, dict) and "_rbac" in item_data:
+            inline_rbac = item_data.pop("_rbac")  # Extract and remove from data
+            logger.info("[RBAC] Found inline _rbac for '%s': %s", item_name, inline_rbac)
 
         # Identify UI construct type (only for dict items)
         construct_type = None
@@ -240,6 +312,17 @@ def parse_ui_zblock(zblock_name, zblock_data, logger, session=None):  # pylint: 
 
         # Parse and validate the item
         parsed_item = parse_ui_item(item_name, item_data, construct_type, logger, session)
+        
+        # Apply RBAC: Default is PUBLIC ACCESS (no restrictions)
+        # Only apply RBAC if explicitly specified
+        if inline_rbac is not None:
+            # Item has explicit inline RBAC - use it
+            parsed_item["_rbac"] = inline_rbac
+            logger.info("[RBAC] Applied inline RBAC to '%s': %s", item_name, inline_rbac)
+        else:
+            # No inline RBAC = public access (default behavior)
+            logger.debug("[RBAC] Public access for '%s' (no _rbac specified)", item_name)
+        
         parsed_zblock["items"][item_name] = parsed_item
 
     return parsed_zblock

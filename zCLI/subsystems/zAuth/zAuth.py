@@ -196,7 +196,7 @@ class zAuth:
             self.session["zAuth"].update({
                 "id": session_data.get("user_id"),
                 "username": session_data.get("username"),
-                "role": None,  # Not stored in persistent sessions (privacy)
+                "role": session_data.get("role", "user"),  # Restore role from persistent sessions
                 "API_Key": session_data.get("token"),
                 "session_id": session_data.get("session_id")
             })
@@ -244,6 +244,9 @@ class zAuth:
             if not user_id:
                 user_id = username
             
+            # Get user's role from session (default to "user" if not set)
+            role = self.session.get("zAuth", {}).get("role", "user")
+            
             # Delete any existing sessions for this user (single session per user)
             try:
                 self.zcli.data.delete(
@@ -256,8 +259,8 @@ class zAuth:
             # Insert new session record (declarative zData way!)
             self.zcli.data.insert(
                 table="sessions",
-                fields=["session_id", "user_id", "username", "password_hash", "token", "created_at", "expires_at", "last_accessed"],
-                values=[session_id, user_id, username, password_hash, token, created_at, expires_at, last_accessed]
+                fields=["session_id", "user_id", "username", "role", "password_hash", "token", "created_at", "expires_at", "last_accessed"],
+                values=[session_id, user_id, username, role, password_hash, token, created_at, expires_at, last_accessed]
             )
             
             # Update in-memory session with session_id
@@ -474,4 +477,242 @@ class zAuth:
             self.zcli.display.error(f"[ERROR] Error connecting to remote server: {e}")
             self.zcli.display.text("")
             return {"status": "error", "reason": str(e)}
+    
+    # ════════════════════════════════════════════════════════════
+    # Role-Based Access Control (RBAC) - NEW in v1.5.4 Week 3.3
+    # ════════════════════════════════════════════════════════════
+    
+    def has_role(self, required_role):
+        """Check if the current user has the required role.
+        
+        Args:
+            required_role: Role name (str) or list of role names (list)
+                         - str: User must have this exact role
+                         - list: User must have ANY of these roles (OR logic)
+                         - None: Public access (always returns True)
+        
+        Returns:
+            bool: True if user has the required role(s), False otherwise
+            
+        Example:
+            >>> z.auth.has_role("admin")  # Check for admin role
+            True
+            >>> z.auth.has_role(["admin", "moderator"])  # Either role (OR)
+            True
+            >>> z.auth.has_role(None)  # Public access
+            True
+        """
+        # None = public access (override file-level restrictions)
+        if required_role is None:
+            return True
+        
+        # Check if user is authenticated first
+        if not self.is_authenticated():
+            self.logger.debug("[zAuth] User not authenticated, role check failed")
+            return False
+        
+        # Get user's current role from session
+        user_role = self.session.get("zAuth", {}).get("role")
+        
+        if not user_role:
+            self.logger.debug("[zAuth] User has no role assigned")
+            return False
+        
+        # Single role check (str)
+        if isinstance(required_role, str):
+            return user_role == required_role
+        
+        # Multiple roles check (list) - OR logic
+        if isinstance(required_role, list):
+            return user_role in required_role
+        
+        self.logger.warning(f"[zAuth] Invalid role type: {type(required_role)}")
+        return False
+    
+    def has_permission(self, required_permission):
+        """Check if the current user has the required permission.
+        
+        Args:
+            required_permission: Permission name (str) or list of permissions (list)
+                               - str: User must have this exact permission
+                               - list: User must have ANY of these permissions (OR logic)
+        
+        Returns:
+            bool: True if user has the required permission(s), False otherwise
+            
+        Example:
+            >>> z.auth.has_permission("users.delete")
+            True
+            >>> z.auth.has_permission(["users.edit", "users.delete"])
+            True
+            
+        Implementation:
+            Queries the user_permissions table from zSchema.permissions.yaml
+            to check if the user has been granted the specified permission.
+        """
+        # Check if user is authenticated first
+        if not self.is_authenticated():
+            self.logger.debug("[zAuth] User not authenticated, permission check failed")
+            return False
+        
+        # Get user ID from session
+        user_id = self.session.get("zAuth", {}).get("id")
+        if not user_id:
+            self.logger.debug("[zAuth] No user_id in session")
+            return False
+        
+        try:
+            # Ensure permissions database is loaded
+            self._ensure_permissions_db()
+            
+            # Single permission check (str)
+            if isinstance(required_permission, str):
+                results = self.zcli.data.select(
+                    table="user_permissions",
+                    where=f"user_id = '{user_id}' AND permission = '{required_permission}'",
+                    limit=1
+                )
+                return len(results) > 0 if results else False
+            
+            # Multiple permissions check (list) - OR logic
+            if isinstance(required_permission, list):
+                for perm in required_permission:
+                    results = self.zcli.data.select(
+                        table="user_permissions",
+                        where=f"user_id = '{user_id}' AND permission = '{perm}'",
+                        limit=1
+                    )
+                    if results and len(results) > 0:
+                        return True
+                return False
+            
+            self.logger.warning(f"[zAuth] Invalid permission type: {type(required_permission)}")
+            return False
+            
+        except Exception as e:
+            self.logger.error(f"[zAuth] Error checking permission: {e}")
+            return False
+    
+    def grant_permission(self, user_id, permission, granted_by=None):
+        """Grant a permission to a user (admin-only operation).
+        
+        Args:
+            user_id: User ID to grant permission to
+            permission: Permission name (e.g., "users.delete", "system.shutdown")
+            granted_by: Optional admin username who granted this permission
+        
+        Returns:
+            bool: True if permission was granted successfully, False otherwise
+            
+        Example:
+            >>> z.auth.grant_permission("user123", "users.delete", granted_by="admin")
+            True
+            
+        Security:
+            This should only be callable by users with admin role.
+            The calling code should check `has_role("admin")` before calling.
+        """
+        try:
+            # Ensure permissions database is loaded
+            self._ensure_permissions_db()
+            
+            # Check if permission already exists
+            existing = self.zcli.data.select(
+                table="user_permissions",
+                where=f"user_id = '{user_id}' AND permission = '{permission}'",
+                limit=1
+            )
+            
+            if existing and len(existing) > 0:
+                self.logger.info(f"[zAuth] Permission '{permission}' already granted to user '{user_id}'")
+                return True
+            
+            # Get current admin's username if not provided
+            if not granted_by:
+                granted_by = self.session.get("zAuth", {}).get("username", "system")
+            
+            # Insert new permission
+            self.zcli.data.insert(
+                table="user_permissions",
+                fields=["user_id", "permission", "granted_by", "granted_at"],
+                values=[user_id, permission, granted_by, datetime.now().isoformat()]
+            )
+            
+            self.logger.info(f"[zAuth] Granted permission '{permission}' to user '{user_id}' by '{granted_by}'")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"[zAuth] Error granting permission: {e}")
+            return False
+    
+    def revoke_permission(self, user_id, permission):
+        """Revoke a permission from a user (admin-only operation).
+        
+        Args:
+            user_id: User ID to revoke permission from
+            permission: Permission name to revoke
+        
+        Returns:
+            bool: True if permission was revoked successfully, False otherwise
+            
+        Example:
+            >>> z.auth.revoke_permission("user123", "users.delete")
+            True
+            
+        Security:
+            This should only be callable by users with admin role.
+            The calling code should check `has_role("admin")` before calling.
+        """
+        try:
+            # Ensure permissions database is loaded
+            self._ensure_permissions_db()
+            
+            # Delete permission
+            self.zcli.data.delete(
+                table="user_permissions",
+                where=f"user_id = '{user_id}' AND permission = '{permission}'"
+            )
+            
+            self.logger.info(f"[zAuth] Revoked permission '{permission}' from user '{user_id}'")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"[zAuth] Error revoking permission: {e}")
+            return False
+    
+    def _ensure_permissions_db(self):
+        """Ensure the permissions database is initialized (internal helper).
+        
+        Similar to _ensure_sessions_db but for the permissions table.
+        Loads zSchema.permissions.yaml and creates table if needed.
+        """
+        try:
+            # Check if already loaded
+            if self.zcli.data.handler and self.zcli.data.schema.get("Meta", {}).get("Data_Label") == "permissions":
+                return  # Already loaded
+            
+            # Get path to zSchema.permissions.yaml
+            auth_dir = Path(__file__).parent
+            schema_path = auth_dir / "zSchema.permissions.yaml"
+            
+            if not schema_path.exists():
+                self.logger.warning(f"[zAuth] Permissions schema not found: {schema_path}")
+                return
+            
+            # Load schema using zCLI's loader (declarative!)
+            schema_loaded = self.zcli.loader.handle(f"~{schema_path}")
+            
+            if not schema_loaded:
+                self.logger.warning("[zAuth] Failed to load permissions schema")
+                return
+            
+            # CREATE TABLE if it doesn't exist (separate from INSERT!)
+            if not self.zcli.data.table_exists("user_permissions"):
+                self.zcli.data.create_table("user_permissions")
+                self.logger.info("[zAuth] User permissions table created")
+            
+            self.logger.info("[zAuth] Permissions database initialized")
+            
+        except Exception as e:
+            self.logger.error(f"[zAuth] Error initializing permissions database: {e}")
 

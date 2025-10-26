@@ -38,6 +38,190 @@ z.walker.run()
 
 ---
 
+## zUI File Structure (CRITICAL FOR AGENTS)
+
+**⚠️ COMMON AGENT MISTAKE**: Inventing syntax that "looks right" but doesn't work!
+
+### ✅ Valid zUI Events (FROM zDispatch)
+
+**ONLY use these declarative events in zUI files:**
+
+```yaml
+# Data operations
+"^List Users":
+  zData:
+    model: "@.zSchema.users"
+    action: read
+    table: users
+
+# Display output
+"^Show Info":
+  zDisplay:
+    event: text        # Valid: text, header, error, warning, success, info
+    content: "Hello!"
+    indent: 1
+
+# User input
+"^Get User":
+  zDialog:
+    model: UserForm
+    fields: ["username", "email"]
+    onSubmit:
+      zData:           # onSubmit MUST be a valid zDispatch event!
+        action: insert
+        table: users
+        data:
+          username: "zConv.username"
+
+# Function calls
+"^Process":
+  zFunc: "&plugin_name.function_name"
+
+# Navigation
+"^Go Back":
+  zLink: "../previous_menu"
+
+# Wizard steps
+"^Multi Step":
+  zWizard:
+    steps: ["step1", "step2"]
+```
+
+### ❌ INVALID Patterns (DO NOT USE)
+
+```yaml
+# ❌ WRONG: Plain string in onSubmit (not a valid event)
+"^Login":
+  zDialog:
+    fields: ["username"]
+    onSubmit:
+      "Login submitted"  # ❌ WRONG! Not a zDispatch event!
+
+# ❌ WRONG: Invented event name
+"^Show Data":
+  zCustomEvent:        # ❌ WRONG! Not in zDispatch
+    data: "..."
+
+# ❌ WRONG: Missing event type in zDisplay
+"^Display":
+  zDisplay:
+    content: "..."     # ❌ WRONG! Missing "event: text"
+```
+
+### Valid zDisplay Events
+
+From `zDisplay._event_map` (the ONLY valid events):
+
+**Output**: `text`, `header`, `line`
+**Signals**: `error`, `warning`, `success`, `info`, `zMarker`
+**Data**: `list`, `json`, `json_data`, `zTable`
+**System**: `zDeclare`, `zSession`, `zCrumbs`, `zMenu`, `zDialog`
+**Inputs**: `selection`, `read_string`, `read_password`
+**Primitives**: `write_raw`, `write_line`, `write_block`
+
+### How to Verify
+
+Before writing zUI files, check:
+1. **zDispatch/launcher.py** - What events does `_launch_dict()` recognize?
+2. **zDisplay/zDisplay.py** - What events are in `_event_map`?
+3. **Existing zUI files** - Use them as templates (e.g., `Demos/User Manager/zUI.users_csv.yaml`)
+
+**Remember**: zCLI is **declarative** - you can't invent syntax, only use what the dispatcher recognizes!
+
+---
+
+## RBAC Directives (v1.5.4 Week 3.3)
+
+**Default**: PUBLIC ACCESS (no `_rbac` = no restrictions)  
+**Only add `_rbac` when you need to RESTRICT access**
+
+### ✅ Valid RBAC Patterns (Inline)
+
+```yaml
+zVaF:
+  ~Root*: ["^Login", "^View Data", "^Edit Data", "^Admin Panel"]
+  
+  # Public access (no _rbac specified)
+  "^Login":
+    zDisplay:
+      event: text
+      content: "Anyone can login"
+  
+  # Requires authentication (any role)
+  "^View Data":
+    _rbac:
+      require_auth: true
+    zDisplay:
+      event: text
+      content: "Must be logged in"
+  
+  # Specific role (auth implied)
+  "^Edit Data":
+    _rbac:
+      require_role: "user"
+    zDisplay:
+      event: text
+      content: "User role required"
+  
+  # Multiple roles + permission (auth implied)
+  "^Admin Panel":
+    _rbac:
+      require_role: ["admin", "moderator"]
+      require_permission: "admin.access"
+    zDisplay:
+      event: text
+      content: "Admin/moderator + permission required"
+```
+
+### RBAC Directive Types
+
+**Authentication Only**:
+```yaml
+_rbac:
+  require_auth: true  # User must be logged in (any role)
+```
+
+**Single Role** (auth implied):
+```yaml
+_rbac:
+  require_role: "admin"  # User must have "admin" role
+```
+
+**Multiple Roles** (OR logic, auth implied):
+```yaml
+_rbac:
+  require_role: ["admin", "moderator"]  # User must have ANY of these roles
+```
+
+**Permission Required** (auth implied):
+```yaml
+_rbac:
+  require_permission: "users.delete"  # User must have this permission
+```
+
+**Combined** (AND logic, auth implied):
+```yaml
+_rbac:
+  require_role: "admin"
+  require_permission: "data.delete"  # User must have BOTH role AND permission
+```
+
+### Key Design Principles
+
+1. **Default is PUBLIC** - No `_rbac` = accessible to everyone
+2. **Inline per item** - RBAC is defined directly in each zKey's dict
+3. **Auth is implied** - `require_role` or `require_permission` automatically requires authentication
+4. **Clean syntax** - Only add restrictions where needed, not on every item
+
+### Implementation Notes
+
+- **Enforcement**: Checked in `zWizard.execute_loop()` before dispatch
+- **Access denied**: User sees clear message with reason, item is skipped
+- **No conflict with `!` suffix**: `_rbac` is a dict key, not a YAML directive
+- **Logging**: All access denials are logged for audit trail
+
+---
+
 ## zSpark Configuration (Layer 0)
 
 **Minimal** (Terminal Mode):
