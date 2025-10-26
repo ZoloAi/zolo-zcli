@@ -938,12 +938,184 @@ settings:
                 del os.environ["API_URL"]
 
 
+class TestFullStackServerWorkflow(unittest.TestCase):
+    """
+    End-to-end test for complete HTTP + WebSocket workflow (Week 1.5).
+    Tests real-world scenario of serving HTML files that connect to WebSocket server.
+    """
+    
+    def setUp(self):
+        """Set up test fixtures"""
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.workspace = self.temp_dir.name
+        
+        # Create a simple HTML file
+        html_file = Path(self.workspace) / "index.html"
+        html_file.write_text("""<!DOCTYPE html>
+<html>
+<head><title>Test App</title></head>
+<body><h1>Full Stack Test</h1></body>
+</html>
+""")
+        
+        # Create a simple zUI file for WebSocket
+        ui_file = Path(self.workspace) / "zUI.test.yaml"
+        ui_file.write_text("""TestMenu:
+  ~Root*: ["Status", "stop"]
+  "Status": "Server running!"
+""")
+    
+    def tearDown(self):
+        """Clean up test fixtures"""
+        self.temp_dir.cleanup()
+    
+    def test_serve_html_with_http_server(self):
+        """
+        Scenario: Developer wants to serve HTML files for a web app.
+        Expected: zServer serves static files, app can access them.
+        """
+        z = zCLI({
+            "zWorkspace": self.workspace,
+            "http_server": {
+                "enabled": True,
+                "port": 18095,
+                "serve_path": self.workspace
+            }
+        })
+        
+        # Verify server is running
+        self.assertTrue(z.server.is_running())
+        
+        # Verify HTML file exists in serve path
+        html_path = Path(self.workspace) / "index.html"
+        self.assertTrue(html_path.exists())
+        
+        # In real workflow, browser would access http://localhost:18095/index.html
+        # For test, just verify server configuration
+        self.assertEqual(z.server.port, 18095)
+        self.assertEqual(z.server.serve_path, str(Path(self.workspace).resolve()))
+        
+        # Clean up
+        z.server.stop()
+    
+    def test_http_and_websocket_together(self):
+        """
+        Scenario: Full-stack app needs both HTTP (static files) and WebSocket (real-time).
+        Expected: Both servers run on different ports, no conflicts.
+        """
+        z = zCLI({
+            "zWorkspace": self.workspace,
+            "zMode": "zBifrost",
+            "zVaFile": "@.zUI.test",
+            "websocket": {"port": 18765, "require_auth": False},
+            "http_server": {
+                "enabled": True,
+                "port": 18096,
+                "serve_path": self.workspace
+            }
+        })
+        
+        # Verify both servers configured
+        self.assertIsNotNone(z.server)
+        self.assertTrue(z.server.is_running())
+        self.assertIsNotNone(z.config.websocket)
+        
+        # Verify different ports
+        self.assertNotEqual(z.server.port, z.config.websocket.port)
+        self.assertEqual(z.server.port, 18096)
+        self.assertEqual(z.config.websocket.port, 18765)
+        
+        # Verify files are accessible
+        self.assertTrue((Path(self.workspace) / "index.html").exists())
+        
+        # Clean up
+        z.server.stop()
+    
+    def test_developer_workflow_from_scratch(self):
+        """
+        Scenario: Developer creates app from scratch, needs both servers.
+        Expected: Simple config enables full-stack development environment.
+        """
+        # Create workspace
+        workspace = Path(self.workspace) / "my_app"
+        workspace.mkdir()
+        
+        # Create HTML
+        (workspace / "app.html").write_text("<html><body>My App</body></html>")
+        
+        # Create zUI
+        (workspace / "zUI.main.yaml").write_text("""MainMenu:
+  ~Root*: ["Help", "stop"]
+  "Help": "Welcome to My App"
+""")
+        
+        # Initialize zCLI with both servers
+        z = zCLI({
+            "zWorkspace": str(workspace),
+            "zMode": "zBifrost",
+            "zVaFile": "@.zUI.main",
+            "websocket": {"port": 18767, "require_auth": False},
+            "http_server": {
+                "enabled": True,
+                "port": 18097,
+                "serve_path": str(workspace)
+            }
+        })
+        
+        # Verify complete setup
+        self.assertIsNotNone(z.config)
+        self.assertIsNotNone(z.logger)
+        self.assertIsNotNone(z.server)
+        self.assertIsNotNone(z.walker)
+        
+        # Verify servers ready
+        self.assertTrue(z.server.is_running())
+        self.assertEqual(z.server.get_url(), "http://127.0.0.1:18097")
+        
+        # Verify UI file can be loaded (in zBifrost mode, UI is loaded on-demand)
+        loaded_ui = z.loader.handle("@.zUI.main")
+        self.assertIsNotNone(loaded_ui)
+        self.assertIn("MainMenu", loaded_ui)
+        self.assertEqual(loaded_ui["MainMenu"]["Help"], "Welcome to My App")
+        
+        # Clean up
+        z.server.stop()
+    
+    def test_production_deployment_scenario(self):
+        """
+        Scenario: Deploying to production with external reverse proxy.
+        Expected: zServer handles HTTP, reverse proxy handles SSL/auth.
+        """
+        z = zCLI({
+            "zWorkspace": self.workspace,
+            "http_server": {
+                "enabled": True,
+                "host": "0.0.0.0",  # Bind to all interfaces (behind reverse proxy)
+                "port": 18098,
+                "serve_path": self.workspace
+            }
+        })
+        
+        # Verify production-ready configuration
+        self.assertEqual(z.server.host, "0.0.0.0")  # Accessible from network
+        self.assertTrue(z.server.is_running())
+        
+        # In production:
+        # - Reverse proxy (nginx/caddy) handles SSL
+        # - Reverse proxy handles authentication
+        # - zServer just serves static files
+        
+        # Clean up
+        z.server.stop()
+
+
 def run_tests(verbose=False):
     """Run all end-to-end tests."""
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
     
     # Add all test classes
+    suite.addTests(loader.loadTestsFromTestCase(TestConfigValidationWorkflow))  # NEW Week 1.1
     suite.addTests(loader.loadTestsFromTestCase(TestUserManagementWorkflow))
     suite.addTests(loader.loadTestsFromTestCase(TestBlogApplicationWorkflow))
     suite.addTests(loader.loadTestsFromTestCase(TestWalkerUINavigationWorkflow))
@@ -952,6 +1124,7 @@ def run_tests(verbose=False):
     suite.addTests(loader.loadTestsFromTestCase(TestUserManagerWebSocketMode))  # NEW v1.5.3
     suite.addTests(loader.loadTestsFromTestCase(TestTracebackWorkflow))  # NEW v1.5.3
     suite.addTests(loader.loadTestsFromTestCase(TestDotenvApplicationWorkflow))  # NEW v1.5.4
+    suite.addTests(loader.loadTestsFromTestCase(TestFullStackServerWorkflow))  # NEW Week 1.5
     
     runner = unittest.TextTestRunner(verbosity=2 if verbose else 1)
     result = runner.run(suite)

@@ -681,6 +681,90 @@ class TestDotenvConfigIntegration(unittest.TestCase):
                 del os.environ["SNAPSHOT_TEST_VAR"]
 
 
+class TestzServerIntegration(unittest.TestCase):
+    """Test zServer integration with zComm and zCLI (Week 1.5)"""
+    
+    def setUp(self):
+        """Set up test fixtures"""
+        self.temp_dir = tempfile.TemporaryDirectory()
+    
+    def tearDown(self):
+        """Clean up test fixtures"""
+        self.temp_dir.cleanup()
+    
+    def test_zserver_via_zcomm(self):
+        """Test creating zServer through zComm"""
+        z = zCLI({"zWorkspace": self.temp_dir.name})
+        
+        # Create HTTP server via zComm
+        server = z.comm.create_http_server(port=18091, serve_path=self.temp_dir.name)
+        
+        # Verify server is created correctly
+        self.assertIsNotNone(server)
+        self.assertEqual(server.port, 18091)
+        self.assertEqual(server.logger, z.logger)  # Shared logger
+        self.assertFalse(server.is_running())  # Not started yet
+    
+    def test_zserver_auto_start_via_config(self):
+        """Test zServer auto-starts when enabled in config"""
+        z = zCLI({
+            "zWorkspace": self.temp_dir.name,
+            "http_server": {
+                "enabled": True,
+                "port": 18092,
+                "serve_path": self.temp_dir.name
+            }
+        })
+        
+        # Server should auto-start during zCLI init
+        self.assertIsNotNone(z.server)
+        self.assertTrue(z.server.is_running())
+        self.assertEqual(z.server.port, 18092)
+        
+        # Clean up
+        z.server.stop()
+    
+    def test_zserver_zbifrost_coexistence(self):
+        """Test both HTTP and WebSocket servers can be configured together"""
+        z = zCLI({
+            "zWorkspace": self.temp_dir.name,
+            "zMode": "zBifrost",
+            "websocket": {"port": 18765, "require_auth": False},
+            "http_server": {"enabled": True, "port": 18093, "serve_path": self.temp_dir.name}
+        })
+        
+        # Verify both are configured with different ports
+        self.assertIsNotNone(z.server)
+        self.assertIsNotNone(z.config.websocket)
+        self.assertNotEqual(z.server.port, z.config.websocket.port)
+        
+        # Verify HTTP server is running
+        self.assertTrue(z.server.is_running())
+        
+        # Clean up
+        z.server.stop()
+    
+    def test_zserver_shares_zcli_logger(self):
+        """Test zServer uses zCLI's logger instance"""
+        z = zCLI({"zWorkspace": self.temp_dir.name})
+        server = z.comm.create_http_server(port=18094)
+        
+        # Verify logger is shared
+        self.assertIs(server.logger, z.logger)
+    
+    def test_zserver_port_conflict_validation(self):
+        """Test port conflict detection (Week 1.1 config validation)"""
+        # Trying to use same port for HTTP and WebSocket should be caught
+        # by config validator (Week 1.1)
+        with self.assertRaises(SystemExit):
+            z = zCLI({
+                "zWorkspace": self.temp_dir.name,
+                "zMode": "zBifrost",
+                "websocket": {"port": 8080},
+                "http_server": {"enabled": True, "port": 8080}  # Same port!
+            })
+
+
 def run_tests(verbose=False):
     """Run all integration tests."""
     loader = unittest.TestLoader()
@@ -688,6 +772,7 @@ def run_tests(verbose=False):
     
     # Add all test classes in logical order
     suite.addTests(loader.loadTestsFromTestCase(TestzCLIInitialization))
+    suite.addTests(loader.loadTestsFromTestCase(TestConfigValidationIntegration))  # Week 1.1
     suite.addTests(loader.loadTestsFromTestCase(TestLoaderParserIntegration))
     suite.addTests(loader.loadTestsFromTestCase(TestDataSchemaIntegration))
     suite.addTests(loader.loadTestsFromTestCase(TestWalkerNavigationIntegration))
@@ -697,6 +782,7 @@ def run_tests(verbose=False):
     suite.addTests(loader.loadTestsFromTestCase(TestWebSocketModeIntegration))  # NEW v1.5.3
     suite.addTests(loader.loadTestsFromTestCase(TestzTracebackIntegration))  # NEW v1.5.3
     suite.addTests(loader.loadTestsFromTestCase(TestDotenvConfigIntegration))  # NEW v1.5.4
+    suite.addTests(loader.loadTestsFromTestCase(TestzServerIntegration))  # NEW Week 1.5
     
     runner = unittest.TextTestRunner(verbosity=2 if verbose else 1)
     result = runner.run(suite)

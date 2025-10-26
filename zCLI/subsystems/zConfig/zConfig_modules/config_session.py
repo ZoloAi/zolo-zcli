@@ -3,6 +3,23 @@
 
 from zCLI import os, secrets
 from zCLI.utils import print_ready_message, validate_zcli_instance
+from pathlib import Path
+
+
+def _safe_getcwd():
+    """
+    Safely get current working directory, handling case where it may have been deleted.
+    
+    This is common in test environments where temporary directories are created and
+    deleted rapidly. Falls back to home directory if cwd no longer exists.
+    """
+    try:
+        return os.getcwd()
+    except (FileNotFoundError, OSError):
+        # Directory was deleted (common in tests with temp directories)
+        # Fall back to home directory
+        return str(Path.home())
+
 
 class SessionConfig:
     """Manages session configuration and creation."""
@@ -43,8 +60,8 @@ class SessionConfig:
         virtual_env = self.environment.get_venv_path() if self.environment.is_in_venv() else None
         system_env = self.environment.get_env_var("PATH")
 
-        # Determine zWorkspace: zSpark > getcwd
-        zWorkspace = os.getcwd()  # Default to current working directory
+        # Determine zWorkspace: zSpark > getcwd (safe version handles deleted directories)
+        zWorkspace = _safe_getcwd()  # Default to current working directory (safe)
         if self.zSpark is not None and isinstance(self.zSpark, dict):
             if "zWorkspace" in self.zSpark:
                 zWorkspace = self.zSpark["zWorkspace"]

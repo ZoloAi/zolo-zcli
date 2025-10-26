@@ -43,7 +43,15 @@ class zServer:
         self.zcli = zcli
         self.port = port
         self.host = host
-        self.serve_path = str(Path(serve_path).resolve())
+        
+        # Resolve serve_path, handling case where path may not exist yet or cwd deleted
+        try:
+            self.serve_path = str(Path(serve_path).resolve())
+        except (FileNotFoundError, OSError):
+            # Path doesn't exist or cwd deleted (common in test cleanup) - use path as-is
+            # If relative, it will be relative to wherever we are when server starts
+            self.serve_path = str(Path(serve_path))
+        
         self.server = None
         self.thread = None
         self._running = False

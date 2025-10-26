@@ -25,6 +25,7 @@ TEST_MODULES = [
     'zConfig_Validator',  # Week 1.1 - Config validation (fail fast)
     'zConfig',
     'zComm',
+    'zServer',     # Week 1.5 - HTTP static file server (Layer 0, after zComm)
     'zBifrost',  # WebSocket/GUI mode data flow tests (v1.5.3)
     'zDisplay',
     'zAuth',       # zAuth depends on zDisplay
