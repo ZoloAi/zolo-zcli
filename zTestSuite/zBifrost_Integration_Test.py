@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-Week 1.6 - Phase 1: zBifrost REAL Integration Tests
-Server Lifecycle, Port Conflicts, and Coexistence with zServer
+Week 1.6: zBifrost REAL Integration Tests
+Phase 1: Server Lifecycle, Port Conflicts, and Coexistence with zServer
+Phase 2: Real WebSocket Connections, Message Flow, Concurrent Clients, Auth
 
 Tests REAL WebSocket server behavior (not just mocks).
 """
@@ -11,6 +12,7 @@ import asyncio
 import tempfile
 import time
 import socket
+import json
 from pathlib import Path
 from unittest.mock import Mock
 import sys
@@ -21,6 +23,14 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from zCLI import zCLI
 from zCLI.subsystems.zComm.zComm_modules.zBifrost import zBifrost
 
+# Import websockets for client testing (Phase 2)
+try:
+    import websockets
+    WEBSOCKETS_AVAILABLE = True
+except ImportError:
+    WEBSOCKETS_AVAILABLE = False
+    websockets = None
+
 
 def requires_network(func):
     """
@@ -28,19 +38,36 @@ def requires_network(func):
     
     Used for tests that need to bind to ports or make HTTP/WebSocket requests.
     Gracefully skips in sandboxed environments (CI, restricted systems).
+    Handles both sync and async test functions.
     """
-    def wrapper(*args, **kwargs):
-        try:
-            # Try to bind to a test port to check network availability
-            test_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            test_socket.bind(('127.0.0.1', 0))
-            test_socket.close()
-            return func(*args, **kwargs)
-        except (OSError, PermissionError) as e:
-            raise unittest.SkipTest(f"Network not available (sandbox): {e}")
-    wrapper.__name__ = func.__name__
-    wrapper.__doc__ = func.__doc__
-    return wrapper
+    if asyncio.iscoroutinefunction(func):
+        # Async function wrapper
+        async def async_wrapper(*args, **kwargs):
+            try:
+                # Try to bind to a test port to check network availability
+                test_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                test_socket.bind(('127.0.0.1', 0))
+                test_socket.close()
+                return await func(*args, **kwargs)
+            except (OSError, PermissionError) as e:
+                raise unittest.SkipTest(f"Network not available (sandbox): {e}")
+        async_wrapper.__name__ = func.__name__
+        async_wrapper.__doc__ = func.__doc__
+        return async_wrapper
+    else:
+        # Sync function wrapper
+        def sync_wrapper(*args, **kwargs):
+            try:
+                # Try to bind to a test port to check network availability
+                test_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                test_socket.bind(('127.0.0.1', 0))
+                test_socket.close()
+                return func(*args, **kwargs)
+            except (OSError, PermissionError) as e:
+                raise unittest.SkipTest(f"Network not available (sandbox): {e}")
+        sync_wrapper.__name__ = func.__name__
+        sync_wrapper.__doc__ = func.__doc__
+        return sync_wrapper
 
 
 class TestzBifrostInitialization(unittest.TestCase):
@@ -430,18 +457,513 @@ class TestzBifrostConfiguration(unittest.TestCase):
         self.assertEqual(bifrost.host, "127.0.0.1")
 
 
+# ============================================================================
+# PHASE 2: Real WebSocket Client Connection Tests
+# ============================================================================
+
+@unittest.skipIf(not WEBSOCKETS_AVAILABLE, "websockets library not available")
+class TestRealWebSocketConnections(unittest.IsolatedAsyncioTestCase):
+    """Test REAL WebSocket client connections (Phase 2)"""
+    
+    async def asyncSetUp(self):
+        """Set up test fixtures"""
+        self.temp_dir = tempfile.mkdtemp()
+        
+        # Create a simple zUI file for testing
+        ui_file = Path(self.temp_dir) / "zUI.test.yaml"
+        ui_file.write_text("""TestMenu:
+  ~Root*: ["Ping", "Echo", "stop"]
+  "Ping": "Pong!"
+  "Echo": "Echo received"
+""")
+    
+    async def asyncTearDown(self):
+        """Clean up test fixtures"""
+        import shutil
+        if Path(self.temp_dir).exists():
+            shutil.rmtree(self.temp_dir)
+    
+    async def _start_server(self, port=18774, require_auth=False):
+        """Helper to start zBifrost server"""
+        z = zCLI({
+            "zWorkspace": self.temp_dir,
+            "zVaFile": "@.zUI.test",
+            "zBlock": "TestMenu",
+            "zMode": "zBifrost",
+            "websocket": {
+                "port": port,
+                "host": "127.0.0.1",
+                "require_auth": require_auth
+            }
+        })
+        
+        socket_ready = asyncio.Event()
+        task = asyncio.create_task(z.comm.start_websocket(socket_ready, walker=z.walker))
+        
+        # Wait for server to be ready with timeout
+        try:
+            await asyncio.wait_for(socket_ready.wait(), timeout=5)
+            await asyncio.sleep(0.5)  # Give server time to fully start
+        except asyncio.TimeoutError:
+            task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
+            raise RuntimeError("Server failed to start within timeout")
+        
+        return z, task
+    
+    @requires_network
+    async def test_connect_and_receive_connection_info(self):
+        """Test connecting and receiving connection_info broadcast"""
+        z, server_task = await self._start_server(port=18774)
+        
+        try:
+            # Connect client
+            async with websockets.connect('ws://127.0.0.1:18774') as ws:
+                # Should receive connection_info immediately
+                response = await asyncio.wait_for(ws.recv(), timeout=3)
+                data = json.loads(response)
+                
+                # Verify connection_info structure
+                self.assertEqual(data['event'], 'connection_info')
+                self.assertIn('data', data)
+                self.assertIn('server_version', data['data'])
+                self.assertIn('features', data['data'])
+                self.assertIn('auth', data['data'])
+                
+        finally:
+            server_task.cancel()
+            try:
+                await server_task
+            except asyncio.CancelledError:
+                pass
+    
+    @requires_network
+    async def test_connect_and_disconnect(self):
+        """Test basic connect and disconnect cycle"""
+        z, server_task = await self._start_server(port=18775)
+        
+        try:
+            # Connect and disconnect
+            async with websockets.connect('ws://127.0.0.1:18775') as ws:
+                # Receive connection_info
+                await asyncio.wait_for(ws.recv(), timeout=3)
+                # Connection successful
+                self.assertTrue(True)
+            
+            # After context exit, connection should be closed
+            # Test passes if no exceptions
+            
+        finally:
+            server_task.cancel()
+            try:
+                await server_task
+            except asyncio.CancelledError:
+                pass
+    
+    @requires_network
+    async def test_multiple_sequential_connections(self):
+        """Test connecting, disconnecting, and reconnecting"""
+        z, server_task = await self._start_server(port=18776)
+        
+        try:
+            # First connection
+            async with websockets.connect('ws://127.0.0.1:18776') as ws:
+                await asyncio.wait_for(ws.recv(), timeout=3)
+            
+            # Second connection (reconnect)
+            async with websockets.connect('ws://127.0.0.1:18776') as ws:
+                await asyncio.wait_for(ws.recv(), timeout=3)
+            
+            # Third connection
+            async with websockets.connect('ws://127.0.0.1:18776') as ws:
+                await asyncio.wait_for(ws.recv(), timeout=3)
+            
+            # All connections successful
+            self.assertTrue(True)
+            
+        finally:
+            server_task.cancel()
+            try:
+                await server_task
+            except asyncio.CancelledError:
+                pass
+
+
+@unittest.skipIf(not WEBSOCKETS_AVAILABLE, "websockets library not available")
+class TestWebSocketMessageFlow(unittest.IsolatedAsyncioTestCase):
+    """Test WebSocket message send/receive flow (Phase 2)"""
+    
+    async def asyncSetUp(self):
+        """Set up test fixtures"""
+        self.temp_dir = tempfile.mkdtemp()
+        
+        # Create a simple zUI file for testing
+        ui_file = Path(self.temp_dir) / "zUI.test.yaml"
+        ui_file.write_text("""TestMenu:
+  ~Root*: ["Ping", "Echo", "stop"]
+  "Ping": "Pong!"
+  "Echo": "Echo received"
+""")
+    
+    async def asyncTearDown(self):
+        """Clean up test fixtures"""
+        import shutil
+        if Path(self.temp_dir).exists():
+            shutil.rmtree(self.temp_dir)
+    
+    async def _start_server(self, port=18777):
+        """Helper to start zBifrost server"""
+        z = zCLI({
+            "zWorkspace": self.temp_dir,
+            "zVaFile": "@.zUI.test",
+            "zBlock": "TestMenu",
+            "zMode": "zBifrost",
+            "websocket": {
+                "port": port,
+                "host": "127.0.0.1",
+                "require_auth": False
+            }
+        })
+        
+        socket_ready = asyncio.Event()
+        task = asyncio.create_task(z.comm.start_websocket(socket_ready, walker=z.walker))
+        await asyncio.wait_for(socket_ready.wait(), timeout=5)
+        await asyncio.sleep(0.5)
+        
+        return z, task
+    
+    @requires_network
+    async def test_dispatch_simple_command(self):
+        """Test sending dispatch command and receiving response"""
+        z, server_task = await self._start_server(port=18777)
+        
+        try:
+            async with websockets.connect('ws://127.0.0.1:18777') as ws:
+                # Receive and discard connection_info
+                await asyncio.wait_for(ws.recv(), timeout=3)
+                
+                # Send dispatch command
+                await ws.send(json.dumps({
+                    "event": "dispatch",
+                    "zKey": "^Ping"
+                }))
+                
+                # Receive response
+                response = await asyncio.wait_for(ws.recv(), timeout=3)
+                data = json.loads(response)
+                
+                # Verify response structure
+                self.assertIn('result', data)
+                # Result should be a message dict or string
+                if isinstance(data['result'], dict):
+                    self.assertIn('message', data['result'])
+                    self.assertEqual(data['result']['message'], 'Pong!')
+                else:
+                    # Might be direct string
+                    self.assertEqual(data['result'], 'Pong!')
+                
+        finally:
+            server_task.cancel()
+            try:
+                await server_task
+            except asyncio.CancelledError:
+                pass
+    
+    @requires_network
+    async def test_dispatch_with_ui_resolution(self):
+        """Test dispatch resolves ^key from zUI file"""
+        z, server_task = await self._start_server(port=18778)
+        
+        try:
+            async with websockets.connect('ws://127.0.0.1:18778') as ws:
+                # Discard connection_info
+                await asyncio.wait_for(ws.recv(), timeout=3)
+                
+                # Send command with ^ prefix (should resolve from zUI)
+                await ws.send(json.dumps({
+                    "event": "dispatch",
+                    "zKey": "^Echo"
+                }))
+                
+                # Receive response
+                response = await asyncio.wait_for(ws.recv(), timeout=3)
+                data = json.loads(response)
+                
+                # Verify it resolved to "Echo received"
+                self.assertIn('result', data)
+                if isinstance(data['result'], dict):
+                    self.assertIn('message', data['result'])
+                    self.assertEqual(data['result']['message'], 'Echo received')
+                
+        finally:
+            server_task.cancel()
+            try:
+                await server_task
+            except asyncio.CancelledError:
+                pass
+    
+    @requires_network
+    async def test_invalid_message_format(self):
+        """Test sending invalid JSON doesn't crash server"""
+        z, server_task = await self._start_server(port=18779)
+        
+        try:
+            async with websockets.connect('ws://127.0.0.1:18779') as ws:
+                # Discard connection_info
+                await asyncio.wait_for(ws.recv(), timeout=3)
+                
+                # Send invalid JSON
+                await ws.send("not valid json {{{")
+                
+                # Server should handle gracefully (may send error or close connection)
+                # Either way, test passes if server doesn't crash
+                try:
+                    response = await asyncio.wait_for(ws.recv(), timeout=2)
+                    # If we get a response, server handled it gracefully
+                except asyncio.TimeoutError:
+                    # If timeout, server might have ignored it - also OK
+                    pass
+                
+        finally:
+            server_task.cancel()
+            try:
+                await server_task
+            except asyncio.CancelledError:
+                pass
+
+
+@unittest.skipIf(not WEBSOCKETS_AVAILABLE, "websockets library not available")
+class TestConcurrentClients(unittest.IsolatedAsyncioTestCase):
+    """Test multiple concurrent WebSocket clients (Phase 2)"""
+    
+    async def asyncSetUp(self):
+        """Set up test fixtures"""
+        self.temp_dir = tempfile.mkdtemp()
+        
+        ui_file = Path(self.temp_dir) / "zUI.test.yaml"
+        ui_file.write_text("""TestMenu:
+  ~Root*: ["Ping", "stop"]
+  "Ping": "Pong!"
+""")
+    
+    async def asyncTearDown(self):
+        """Clean up test fixtures"""
+        import shutil
+        if Path(self.temp_dir).exists():
+            shutil.rmtree(self.temp_dir)
+    
+    async def _start_server(self, port=18780):
+        """Helper to start zBifrost server"""
+        z = zCLI({
+            "zWorkspace": self.temp_dir,
+            "zVaFile": "@.zUI.test",
+            "zBlock": "TestMenu",
+            "zMode": "zBifrost",
+            "websocket": {
+                "port": port,
+                "host": "127.0.0.1",
+                "require_auth": False
+            }
+        })
+        
+        socket_ready = asyncio.Event()
+        task = asyncio.create_task(z.comm.start_websocket(socket_ready, walker=z.walker))
+        await asyncio.wait_for(socket_ready.wait(), timeout=5)
+        await asyncio.sleep(0.5)
+        
+        return z, task
+    
+    @requires_network
+    async def test_multiple_clients_connect(self):
+        """Test 3 clients can connect simultaneously"""
+        z, server_task = await self._start_server(port=18780)
+        
+        try:
+            # Connect 3 clients simultaneously
+            ws1 = await websockets.connect('ws://127.0.0.1:18780')
+            ws2 = await websockets.connect('ws://127.0.0.1:18780')
+            ws3 = await websockets.connect('ws://127.0.0.1:18780')
+            
+            try:
+                # All should receive connection_info
+                await asyncio.wait_for(ws1.recv(), timeout=3)
+                await asyncio.wait_for(ws2.recv(), timeout=3)
+                await asyncio.wait_for(ws3.recv(), timeout=3)
+                
+                # All connected successfully
+                self.assertTrue(True)
+                
+            finally:
+                await ws1.close()
+                await ws2.close()
+                await ws3.close()
+            
+        finally:
+            server_task.cancel()
+            try:
+                await server_task
+            except asyncio.CancelledError:
+                pass
+    
+    @requires_network
+    async def test_clients_send_independently(self):
+        """Test each client can send commands independently"""
+        z, server_task = await self._start_server(port=18781)
+        
+        try:
+            ws1 = await websockets.connect('ws://127.0.0.1:18781')
+            ws2 = await websockets.connect('ws://127.0.0.1:18781')
+            
+            try:
+                # Discard connection_info
+                await asyncio.wait_for(ws1.recv(), timeout=3)
+                await asyncio.wait_for(ws2.recv(), timeout=3)
+                
+                # Client 1 sends command
+                await ws1.send(json.dumps({"event": "dispatch", "zKey": "^Ping"}))
+                
+                # Client 2 sends command
+                await ws2.send(json.dumps({"event": "dispatch", "zKey": "^Ping"}))
+                
+                # Both should receive responses
+                resp1 = await asyncio.wait_for(ws1.recv(), timeout=3)
+                resp2 = await asyncio.wait_for(ws2.recv(), timeout=3)
+                
+                # Both should be valid responses
+                self.assertIsNotNone(json.loads(resp1))
+                self.assertIsNotNone(json.loads(resp2))
+                
+            finally:
+                await ws1.close()
+                await ws2.close()
+            
+        finally:
+            server_task.cancel()
+            try:
+                await server_task
+            except asyncio.CancelledError:
+                pass
+
+
+@unittest.skipIf(not WEBSOCKETS_AVAILABLE, "websockets library not available")
+class TestWebSocketAuthentication(unittest.IsolatedAsyncioTestCase):
+    """Test WebSocket authentication flows (Phase 2)"""
+    
+    async def asyncSetUp(self):
+        """Set up test fixtures"""
+        self.temp_dir = tempfile.mkdtemp()
+        
+        ui_file = Path(self.temp_dir) / "zUI.test.yaml"
+        ui_file.write_text("""TestMenu:
+  ~Root*: ["Test", "stop"]
+  "Test": "OK"
+""")
+    
+    async def asyncTearDown(self):
+        """Clean up test fixtures"""
+        import shutil
+        if Path(self.temp_dir).exists():
+            shutil.rmtree(self.temp_dir)
+    
+    @requires_network
+    async def test_connect_with_auth_disabled(self):
+        """Test connection succeeds when auth is disabled"""
+        z = zCLI({
+            "zWorkspace": self.temp_dir,
+            "zVaFile": "@.zUI.test",
+            "zBlock": "TestMenu",
+            "zMode": "zBifrost",
+            "websocket": {
+                "port": 18782,
+                "host": "127.0.0.1",
+                "require_auth": False  # Auth disabled
+            }
+        })
+        
+        socket_ready = asyncio.Event()
+        task = asyncio.create_task(z.comm.start_websocket(socket_ready, walker=z.walker))
+        
+        try:
+            await asyncio.wait_for(socket_ready.wait(), timeout=5)
+            await asyncio.sleep(0.5)
+            
+            # Should be able to connect without authentication
+            async with websockets.connect('ws://127.0.0.1:18782') as ws:
+                response = await asyncio.wait_for(ws.recv(), timeout=3)
+                data = json.loads(response)
+                
+                # Verify connection successful
+                self.assertEqual(data['event'], 'connection_info')
+                
+        finally:
+            task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
+    
+    @requires_network
+    async def test_auth_info_in_connection(self):
+        """Test connection_info includes auth details"""
+        z = zCLI({
+            "zWorkspace": self.temp_dir,
+            "zVaFile": "@.zUI.test",
+            "zBlock": "TestMenu",
+            "zMode": "zBifrost",
+            "websocket": {
+                "port": 18783,
+                "host": "127.0.0.1",
+                "require_auth": False
+            }
+        })
+        
+        socket_ready = asyncio.Event()
+        task = asyncio.create_task(z.comm.start_websocket(socket_ready, walker=z.walker))
+        
+        try:
+            await asyncio.wait_for(socket_ready.wait(), timeout=5)
+            await asyncio.sleep(0.5)
+            
+            async with websockets.connect('ws://127.0.0.1:18783') as ws:
+                response = await asyncio.wait_for(ws.recv(), timeout=3)
+                data = json.loads(response)
+                
+                # Verify auth info is present
+                self.assertIn('auth', data['data'])
+                self.assertIn('authenticated', data['data']['auth'])
+                self.assertIn('user', data['data']['auth'])
+                self.assertIn('role', data['data']['auth'])
+                
+        finally:
+            task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
+
+
 def run_tests(verbose=True):
-    """Run all zBifrost integration tests."""
+    """Run all zBifrost integration tests (Phase 1 + Phase 2)."""
     # Create test suite
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
     
-    # Add all test classes in logical order
+    # Phase 1: Server Lifecycle Tests
     suite.addTests(loader.loadTestsFromTestCase(TestzBifrostInitialization))
     suite.addTests(loader.loadTestsFromTestCase(TestzBifrostLifecycle))
     suite.addTests(loader.loadTestsFromTestCase(TestzBifrostPortConflicts))
     suite.addTests(loader.loadTestsFromTestCase(TestzBifrostCoexistence))
     suite.addTests(loader.loadTestsFromTestCase(TestzBifrostConfiguration))
+    
+    # Phase 2: Real WebSocket Connection Tests
+    if WEBSOCKETS_AVAILABLE:
+        suite.addTests(loader.loadTestsFromTestCase(TestRealWebSocketConnections))
+        suite.addTests(loader.loadTestsFromTestCase(TestWebSocketMessageFlow))
+        suite.addTests(loader.loadTestsFromTestCase(TestConcurrentClients))
+        suite.addTests(loader.loadTestsFromTestCase(TestWebSocketAuthentication))
     
     # Run tests
     runner = unittest.TextTestRunner(verbosity=2 if verbose else 1)
@@ -452,8 +974,9 @@ def run_tests(verbose=True):
 
 if __name__ == "__main__":
     print("=" * 70)
-    print("zBifrost REAL Integration Test Suite - Week 1.6 Phase 1")
-    print("Testing: Server Lifecycle, Port Conflicts, Coexistence")
+    print("zBifrost REAL Integration Test Suite - Week 1.6")
+    print("Phase 1: Server Lifecycle, Port Conflicts, Coexistence")
+    print("Phase 2: Real WebSocket Connections, Message Flow, Concurrent Clients")
     print("=" * 70)
     result = run_tests(verbose=True)
     
