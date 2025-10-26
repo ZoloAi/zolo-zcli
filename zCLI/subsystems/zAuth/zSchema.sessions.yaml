@@ -1,0 +1,33 @@
+Meta:
+  Data_Type: sqlite
+  Data_Label: "sessions"
+  Data_Path: "zMachine"  # Use platformdirs: user_data_dir/sessions.db
+  Data_Paradigm: classical
+
+sessions:
+  session_id:
+    type: str
+    pk: true
+    required: true
+  user_id:
+    type: str
+    required: true
+  username:
+    type: str
+    required: true
+  password_hash:
+    type: str
+    required: true
+  token:
+    type: str
+    required: true
+  created_at:
+    type: datetime
+    default: now
+  expires_at:
+    type: datetime
+    required: true
+  last_accessed:
+    type: datetime
+    default: now
+

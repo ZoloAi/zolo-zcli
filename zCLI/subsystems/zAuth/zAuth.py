@@ -3,6 +3,9 @@
 
 from zCLI import os
 import bcrypt
+import secrets
+from datetime import datetime, timedelta
+from pathlib import Path
 
 
 class zAuth:
@@ -14,14 +17,22 @@ class zAuth:
     """
 
     def __init__(self, zcli):
-        """Initialize authentication subsystem with bcrypt support."""
+        """Initialize authentication subsystem with bcrypt support and persistent sessions."""
         self.zcli = zcli
         self.session = zcli.session
         self.logger = zcli.logger
         self.mycolor = "ZAUTH"  # Orange-brown bg (Authentication)
         
+        # Session persistence (v1.5.4+ Week 3.2)
+        self.sessions_db_label = "sessions"
+        self.session_duration_days = 7
+        
         # Display ready message
-        self.zcli.display.zDeclare("zAuth Ready (bcrypt enabled)", color=self.mycolor, indent=0, style="full")
+        self.zcli.display.zDeclare("zAuth Ready (bcrypt + persistent sessions)", color=self.mycolor, indent=0, style="full")
+        
+        # Initialize sessions database and restore any existing session
+        self._ensure_sessions_db()
+        self._load_session()
     
     # ════════════════════════════════════════════════════════════
     # Password Hashing (bcrypt) - NEW in v1.5.4
@@ -112,11 +123,195 @@ class zAuth:
             return False
     
     # ════════════════════════════════════════════════════════════
+    # Persistent Sessions (SQLite-based) - NEW in v1.5.4 Week 3.2
+    # ════════════════════════════════════════════════════════════
+    
+    def _ensure_sessions_db(self):
+        """Ensure the sessions database is initialized (declarative zCLI way).
+        
+        This method:
+        1. Loads zSchema.sessions.yaml from zAuth subsystem directory
+        2. Initializes zData handler
+        3. Creates sessions table if it doesn't exist (CREATE vs INSERT!)
+        4. Cleans up any expired sessions
+        """
+        try:
+            # Get path to zSchema.sessions.yaml (in zAuth subsystem directory)
+            auth_dir = Path(__file__).parent
+            schema_path = auth_dir / "zSchema.sessions.yaml"
+            
+            if not schema_path.exists():
+                self.logger.warning(f"[zAuth] Sessions schema not found: {schema_path}")
+                return
+            
+            # Load schema using zCLI's loader (declarative!)
+            schema_loaded = self.zcli.loader.handle(f"~{schema_path}")
+            
+            if not schema_loaded:
+                self.logger.warning("[zAuth] Failed to load sessions schema")
+                return
+            
+            # CREATE TABLE if it doesn't exist (separate from INSERT!)
+            if not self.zcli.data.table_exists("sessions"):
+                self.zcli.data.create_table("sessions")
+                self.logger.info("[zAuth] Sessions table created")
+            
+            self.logger.info("[zAuth] Sessions database initialized")
+            
+            # Clean up expired sessions on startup
+            self._cleanup_expired()
+            
+        except Exception as e:
+            self.logger.error(f"[zAuth] Error initializing sessions database: {e}")
+    
+    def _load_session(self):
+        """Load and restore persistent session on startup (if exists and valid).
+        
+        Checks sessions.db for a valid (non-expired) session and restores it
+        to the in-memory session state, enabling "Remember me" functionality.
+        """
+        try:
+            # Check if zData is initialized with sessions schema
+            if not self.zcli.data.handler or self.zcli.data.schema.get("Meta", {}).get("Data_Label") != self.sessions_db_label:
+                self.logger.debug("[zAuth] Sessions database not loaded, skipping restore")
+                return
+            
+            # Query for the most recent valid session (not expired)
+            now = datetime.now().isoformat()
+            
+            results = self.zcli.data.select(
+                table="sessions",
+                where=f"expires_at > '{now}'",
+                order="last_accessed DESC",
+                limit=1
+            )
+            
+            if not results or len(results) == 0:
+                self.logger.debug("[zAuth] No valid persistent session found")
+                return
+            
+            # Restore session to in-memory state
+            session_data = results[0]
+            
+            self.session["zAuth"].update({
+                "id": session_data.get("user_id"),
+                "username": session_data.get("username"),
+                "role": None,  # Not stored in persistent sessions (privacy)
+                "API_Key": session_data.get("token"),
+                "session_id": session_data.get("session_id")
+            })
+            
+            # Update last_accessed timestamp
+            self.zcli.data.update(
+                table="sessions",
+                fields=["last_accessed"],
+                values=[datetime.now().isoformat()],
+                where=f"session_id = '{session_data.get('session_id')}'"
+            )
+            
+            self.logger.info(f"[zAuth] Restored persistent session for user: {session_data.get('username')}")
+            
+        except Exception as e:
+            self.logger.error(f"[zAuth] Error loading persistent session: {e}")
+    
+    def _save_session(self, username, password_hash, user_id=None):
+        """Save current session to persistent storage (sessions.db).
+        
+        Creates a new session record with 7-day expiry, enabling "Remember me"
+        functionality across app restarts.
+        
+        Args:
+            username: Username for the session
+            password_hash: bcrypt password hash for verification
+            user_id: Optional user ID (defaults to username)
+        """
+        try:
+            # Check if zData is initialized with sessions schema
+            if not self.zcli.data.handler or self.zcli.data.schema.get("Meta", {}).get("Data_Label") != self.sessions_db_label:
+                self.logger.warning("[zAuth] Sessions database not loaded, cannot persist session")
+                return
+            
+            # Generate unique session ID and token
+            session_id = secrets.token_urlsafe(32)
+            token = secrets.token_urlsafe(32)
+            
+            # Calculate expiration (7 days from now)
+            expires_at = (datetime.now() + timedelta(days=self.session_duration_days)).isoformat()
+            created_at = datetime.now().isoformat()
+            last_accessed = created_at
+            
+            # Use user_id or fall back to username
+            if not user_id:
+                user_id = username
+            
+            # Delete any existing sessions for this user (single session per user)
+            try:
+                self.zcli.data.delete(
+                    table="sessions",
+                    where=f"username = '{username}'"
+                )
+            except Exception as e:
+                self.logger.debug(f"[zAuth] No existing sessions to delete: {e}")
+            
+            # Insert new session record (declarative zData way!)
+            self.zcli.data.insert(
+                table="sessions",
+                fields=["session_id", "user_id", "username", "password_hash", "token", "created_at", "expires_at", "last_accessed"],
+                values=[session_id, user_id, username, password_hash, token, created_at, expires_at, last_accessed]
+            )
+            
+            # Update in-memory session with session_id
+            self.session["zAuth"]["session_id"] = session_id
+            
+            self.logger.info(f"[zAuth] Persistent session saved for user: {username} (expires: {expires_at})")
+            
+        except Exception as e:
+            self.logger.error(f"[zAuth] Error saving persistent session: {e}")
+    
+    def _cleanup_expired(self):
+        """Remove expired sessions from database (housekeeping).
+        
+        Called automatically on startup and can be called manually.
+        Removes any sessions where expires_at < current time.
+        """
+        try:
+            # Check if zData is initialized with sessions schema
+            if not self.zcli.data.handler or self.zcli.data.schema.get("Meta", {}).get("Data_Label") != self.sessions_db_label:
+                self.logger.debug("[zAuth] Sessions database not loaded, skipping cleanup")
+                return
+            
+            # Delete expired sessions
+            now = datetime.now().isoformat()
+            
+            deleted = self.zcli.data.delete(
+                table="sessions",
+                where=f"expires_at <= '{now}'"
+            )
+            
+            if deleted and deleted > 0:
+                self.logger.info(f"[zAuth] Cleaned up {deleted} expired session(s)")
+            else:
+                self.logger.debug("[zAuth] No expired sessions to clean up")
+                
+        except Exception as e:
+            self.logger.error(f"[zAuth] Error cleaning up expired sessions: {e}")
+    
+    # ════════════════════════════════════════════════════════════
     # Session Authentication
     # ════════════════════════════════════════════════════════════
     
-    def login(self, username=None, password=None, server_url=None):
-        """Authenticate user for this session only (no persistence)."""
+    def login(self, username=None, password=None, server_url=None, persist=True):
+        """Authenticate user and optionally persist session.
+        
+        Args:
+            username: Username for authentication
+            password: Password for authentication
+            server_url: Optional remote server URL
+            persist: If True, save session to sessions.db (default: True)
+        
+        Returns:
+            dict: {"status": "success"|"fail"|"pending", ...}
+        """
         # Prompt for credentials if not provided using zDisplay events
         if not username or not password:
             creds = self.zcli.display.zEvents.zAuth.login_prompt(username, password)
@@ -147,6 +342,16 @@ class zAuth:
                         "user_id": credentials.get("user_id"),
                         "api_key": credentials.get("api_key")
                     })
+                    
+                    # Persist session if requested (v1.5.4 Week 3.2)
+                    if persist:
+                        # Hash the password for persistent storage
+                        password_hash = self.hash_password(password)
+                        self._save_session(
+                            username=credentials.get("username"),
+                            password_hash=password_hash,
+                            user_id=credentials.get("user_id")
+                        )
                 return result
         
         # Authentication failed - use zDisplay events
@@ -155,16 +360,30 @@ class zAuth:
         return {"status": "fail", "reason": "Invalid credentials"}
     
     def logout(self):
-        """Clear session authentication and logout."""
+        """Clear session authentication and delete persistent session."""
         is_logged_in = self.is_authenticated()
+        username = self.session.get("zAuth", {}).get("username")
         
-        # Clear session auth
+        # Delete persistent session if exists (v1.5.4 Week 3.2)
+        if username:
+            try:
+                if self.zcli.data.handler and self.zcli.data.schema.get("Meta", {}).get("Data_Label") == self.sessions_db_label:
+                    self.zcli.data.delete(
+                        table="sessions",
+                        where=f"username = '{username}'"
+                    )
+                    self.logger.info(f"[zAuth] Persistent session deleted for user: {username}")
+            except Exception as e:
+                self.logger.error(f"[zAuth] Error deleting persistent session: {e}")
+        
+        # Clear in-memory session auth
         if self.session:
             self.session["zAuth"] = {
                 "id": None,
                 "username": None,
                 "role": None,
-                "API_Key": None
+                "API_Key": None,
+                "session_id": None
             }
         
         # Display using zDisplay events

@@ -481,6 +481,322 @@ class TestPasswordHashing(unittest.TestCase):
         self.assertFalse(self.auth.verify_password("PASSWORD123", hashed))
 
 
+class TestPersistentSessions(unittest.TestCase):
+    """Test persistent session functionality (Week 3.2).
+    
+    Tests the "Remember me" functionality - sessions that survive app restarts.
+    """
+    
+    def setUp(self):
+        """Set up test fixtures with zData mocking."""
+        import tempfile
+        
+        # Create minimal zCLI mock with zData
+        self.mock_zcli = Mock()
+        self.mock_zcli.session = {
+            "zMode": "Terminal",
+            "zAuth": {
+                "id": None,
+                "username": None,
+                "role": None,
+                "API_Key": None
+            }
+        }
+        self.mock_zcli.logger = Mock()
+        self.mock_zcli.display = zDisplay(self.mock_zcli)
+        
+        # Mock zData
+        self.mock_zcli.data = Mock()
+        self.mock_zcli.data.handler = Mock()
+        self.mock_zcli.data.schema = {"Meta": {"Data_Label": "sessions"}}
+        self.mock_zcli.data.table_exists = Mock(return_value=False)
+        self.mock_zcli.data.create_table = Mock()
+        
+        # Mock zLoader
+        self.mock_zcli.loader = Mock()
+        self.mock_zcli.loader.handle = Mock(return_value=True)
+        
+        # Create temp directory for testing
+        self.temp_dir = tempfile.mkdtemp(prefix="zauth_session_test_")
+    
+    def tearDown(self):
+        """Clean up temp directory."""
+        import shutil
+        if os.path.exists(self.temp_dir):
+            shutil.rmtree(self.temp_dir)
+    
+    def test_ensure_sessions_db_success(self):
+        """Should initialize sessions database successfully"""
+        auth = zAuth(self.mock_zcli)
+        
+        # Verify loader was called to load schema
+        self.mock_zcli.loader.handle.assert_called()
+        
+        # Verify it's looking for zSchema.sessions.yaml
+        call_args = str(self.mock_zcli.loader.handle.call_args)
+        self.assertIn("zSchema.sessions.yaml", call_args)
+        
+        # Verify table_exists was checked
+        self.mock_zcli.data.table_exists.assert_called_with("sessions")
+        
+        # Verify create_table was called (since table_exists returned False)
+        self.mock_zcli.data.create_table.assert_called_with("sessions")
+    
+    def test_save_session_creates_record(self):
+        """Should save session to database with correct fields"""
+        auth = zAuth(self.mock_zcli)
+        
+        # Mock successful insert
+        self.mock_zcli.data.insert = Mock()
+        self.mock_zcli.data.delete = Mock()
+        
+        # Save session
+        auth._save_session(
+            username="testuser",
+            password_hash="$2b$12$fakehash",
+            user_id="123"
+        )
+        
+        # Verify delete was called (single session per user)
+        self.mock_zcli.data.delete.assert_called_once()
+        delete_args = self.mock_zcli.data.delete.call_args
+        self.assertEqual(delete_args[1]["table"], "sessions")
+        self.assertIn("testuser", delete_args[1]["where"])
+        
+        # Verify insert was called with correct fields
+        self.mock_zcli.data.insert.assert_called_once()
+        insert_args = self.mock_zcli.data.insert.call_args
+        
+        self.assertEqual(insert_args[1]["table"], "sessions")
+        self.assertIn("session_id", insert_args[1]["fields"])
+        self.assertIn("user_id", insert_args[1]["fields"])
+        self.assertIn("username", insert_args[1]["fields"])
+        self.assertIn("password_hash", insert_args[1]["fields"])
+        self.assertIn("token", insert_args[1]["fields"])
+        self.assertIn("created_at", insert_args[1]["fields"])
+        self.assertIn("expires_at", insert_args[1]["fields"])
+        self.assertIn("last_accessed", insert_args[1]["fields"])
+        
+        # Verify values
+        values = insert_args[1]["values"]
+        username_idx = insert_args[1]["fields"].index("username")
+        user_id_idx = insert_args[1]["fields"].index("user_id")
+        password_hash_idx = insert_args[1]["fields"].index("password_hash")
+        
+        self.assertEqual(values[username_idx], "testuser")
+        self.assertEqual(values[user_id_idx], "123")
+        self.assertEqual(values[password_hash_idx], "$2b$12$fakehash")
+    
+    def test_save_session_generates_unique_tokens(self):
+        """Should generate unique session_id and token for each session"""
+        auth = zAuth(self.mock_zcli)
+        
+        # Mock database operations
+        self.mock_zcli.data.insert = Mock()
+        self.mock_zcli.data.delete = Mock()
+        
+        # Save two sessions
+        auth._save_session("user1", "hash1")
+        first_call_values = self.mock_zcli.data.insert.call_args_list[0][1]["values"]
+        
+        auth._save_session("user2", "hash2")
+        second_call_values = self.mock_zcli.data.insert.call_args_list[1][1]["values"]
+        
+        # Get session_id and token indexes
+        fields = self.mock_zcli.data.insert.call_args_list[0][1]["fields"]
+        session_id_idx = fields.index("session_id")
+        token_idx = fields.index("token")
+        
+        # Verify they're different
+        self.assertNotEqual(first_call_values[session_id_idx], second_call_values[session_id_idx])
+        self.assertNotEqual(first_call_values[token_idx], second_call_values[token_idx])
+    
+    def test_load_session_restores_valid_session(self):
+        """Should restore valid session from database"""
+        from datetime import datetime, timedelta
+        
+        auth = zAuth(self.mock_zcli)
+        
+        # Mock valid session in database
+        future_expiry = (datetime.now() + timedelta(days=5)).isoformat()
+        mock_session = {
+            "session_id": "test_session_123",
+            "user_id": "456",
+            "username": "restored_user",
+            "token": "test_token_abc",
+            "expires_at": future_expiry
+        }
+        
+        self.mock_zcli.data.select = Mock(return_value=[mock_session])
+        self.mock_zcli.data.update = Mock()
+        
+        # Load session
+        auth._load_session()
+        
+        # Verify session was restored
+        self.assertEqual(self.mock_zcli.session["zAuth"]["id"], "456")
+        self.assertEqual(self.mock_zcli.session["zAuth"]["username"], "restored_user")
+        self.assertEqual(self.mock_zcli.session["zAuth"]["API_Key"], "test_token_abc")
+        self.assertEqual(self.mock_zcli.session["zAuth"]["session_id"], "test_session_123")
+        
+        # Verify last_accessed was updated
+        self.mock_zcli.data.update.assert_called_once()
+        update_args = self.mock_zcli.data.update.call_args
+        self.assertIn("last_accessed", update_args[1]["fields"])
+    
+    def test_load_session_ignores_expired_session(self):
+        """Should not restore expired session"""
+        from datetime import datetime, timedelta
+        
+        auth = zAuth(self.mock_zcli)
+        
+        # Mock expired session
+        past_expiry = (datetime.now() - timedelta(days=1)).isoformat()
+        
+        self.mock_zcli.data.select = Mock(return_value=[])  # No valid sessions
+        self.mock_zcli.data.update = Mock()
+        
+        # Load session
+        auth._load_session()
+        
+        # Verify session was NOT restored
+        self.assertIsNone(self.mock_zcli.session["zAuth"]["username"])
+        self.mock_zcli.data.update.assert_not_called()
+    
+    def test_cleanup_expired_removes_old_sessions(self):
+        """Should delete expired sessions"""
+        auth = zAuth(self.mock_zcli)
+        
+        self.mock_zcli.data.delete = Mock(return_value=3)  # 3 sessions deleted
+        
+        # Cleanup
+        auth._cleanup_expired()
+        
+        # Verify delete was called with expiry check
+        self.mock_zcli.data.delete.assert_called_once()
+        delete_args = self.mock_zcli.data.delete.call_args
+        self.assertEqual(delete_args[1]["table"], "sessions")
+        self.assertIn("expires_at", delete_args[1]["where"])
+    
+    def test_logout_deletes_persistent_session(self):
+        """Should delete persistent session on logout"""
+        auth = zAuth(self.mock_zcli)
+        
+        # Simulate logged-in user
+        self.mock_zcli.session["zAuth"]["username"] = "testuser"
+        self.mock_zcli.session["zAuth"]["API_Key"] = "test_key"
+        
+        self.mock_zcli.data.delete = Mock()
+        
+        # Logout
+        auth.logout()
+        
+        # Verify persistent session was deleted
+        self.mock_zcli.data.delete.assert_called_once()
+        delete_args = self.mock_zcli.data.delete.call_args
+        self.assertEqual(delete_args[1]["table"], "sessions")
+        self.assertIn("testuser", delete_args[1]["where"])
+        
+        # Verify in-memory session was cleared
+        self.assertIsNone(self.mock_zcli.session["zAuth"]["username"])
+        self.assertIsNone(self.mock_zcli.session["zAuth"]["API_Key"])
+        self.assertIsNone(self.mock_zcli.session["zAuth"]["session_id"])
+    
+    def test_login_with_persist_saves_session(self):
+        """Should save session when persist=True"""
+        auth = zAuth(self.mock_zcli)
+        
+        # Mock remote authentication success
+        with patch.dict(os.environ, {"ZOLO_USE_REMOTE_API": "true"}):
+            mock_response = Mock()
+            mock_response.json.return_value = {
+                "status": "success",
+                "user": {
+                    "id": "789",
+                    "username": "persisted_user",
+                    "api_key": "api_key_xyz",
+                    "role": "admin"
+                }
+            }
+            
+            self.mock_zcli.comm = Mock()
+            self.mock_zcli.comm.http_post = Mock(return_value=mock_response)
+            
+            self.mock_zcli.data.insert = Mock()
+            self.mock_zcli.data.delete = Mock()
+            
+            # Login with persistence
+            result = auth.login(username="persisted_user", password="mypassword", persist=True)
+            
+            # Verify login succeeded
+            self.assertEqual(result["status"], "success")
+            
+            # Verify session was saved
+            self.mock_zcli.data.insert.assert_called_once()
+            insert_args = self.mock_zcli.data.insert.call_args
+            self.assertEqual(insert_args[1]["table"], "sessions")
+    
+    def test_login_with_persist_false_skips_save(self):
+        """Should not save session when persist=False"""
+        auth = zAuth(self.mock_zcli)
+        
+        # Mock remote authentication success
+        with patch.dict(os.environ, {"ZOLO_USE_REMOTE_API": "true"}):
+            mock_response = Mock()
+            mock_response.json.return_value = {
+                "status": "success",
+                "user": {
+                    "id": "789",
+                    "username": "temp_user",
+                    "api_key": "api_key_xyz",
+                    "role": "user"
+                }
+            }
+            
+            self.mock_zcli.comm = Mock()
+            self.mock_zcli.comm.http_post = Mock(return_value=mock_response)
+            
+            self.mock_zcli.data.insert = Mock()
+            self.mock_zcli.data.delete = Mock()
+            
+            # Login without persistence
+            result = auth.login(username="temp_user", password="mypassword", persist=False)
+            
+            # Verify login succeeded
+            self.assertEqual(result["status"], "success")
+            
+            # Verify session was NOT saved
+            self.mock_zcli.data.insert.assert_not_called()
+    
+    def test_session_duration_is_7_days(self):
+        """Should set expiration to 7 days from now"""
+        from datetime import datetime, timedelta
+        
+        auth = zAuth(self.mock_zcli)
+        
+        self.mock_zcli.data.insert = Mock()
+        self.mock_zcli.data.delete = Mock()
+        
+        # Save session
+        before_save = datetime.now()
+        auth._save_session("user", "hash")
+        after_save = datetime.now()
+        
+        # Get expires_at value
+        insert_args = self.mock_zcli.data.insert.call_args
+        fields = insert_args[1]["fields"]
+        values = insert_args[1]["values"]
+        expires_at_idx = fields.index("expires_at")
+        expires_at = datetime.fromisoformat(values[expires_at_idx])
+        
+        # Verify it's approximately 7 days from now
+        expected_min = before_save + timedelta(days=7, seconds=-5)
+        expected_max = after_save + timedelta(days=7, seconds=5)
+        
+        self.assertGreaterEqual(expires_at, expected_min)
+        self.assertLessEqual(expires_at, expected_max)
+
+
 def run_tests(verbose=True):
     """Run all zAuth tests."""
     # Create test suite
@@ -497,6 +813,9 @@ def run_tests(verbose=True):
     
     # NEW: Password hashing tests (Week 3.1)
     suite.addTests(loader.loadTestsFromTestCase(TestPasswordHashing))
+    
+    # NEW: Persistent sessions tests (Week 3.2)
+    suite.addTests(loader.loadTestsFromTestCase(TestPersistentSessions))
     
     # Run tests
     runner = unittest.TextTestRunner(verbosity=2 if verbose else 1)

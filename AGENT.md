@@ -365,6 +365,32 @@ z = zCLI({"http_server": {"port": 8080}})
 z = zCLI({"http_server": {"enabled": True, "port": 8080}})
 ```
 
+### ❌ Wrong: zData INSERT before CREATE TABLE
+```python
+# Load schema
+z.loader.handle("~./zSchema.sessions.yaml")
+
+# Try to insert (FAILS - table doesn't exist!)
+z.data.insert(table="sessions", fields=[...], values=[...])
+# Error: no such table: sessions
+```
+
+### ✅ Right: CREATE TABLE before INSERT
+```python
+# Load schema
+z.loader.handle("~./zSchema.sessions.yaml")
+
+# CREATE TABLE first (DDL operation)
+if not z.data.table_exists("sessions"):
+    z.data.create_table("sessions")
+
+# NOW you can INSERT (DML operation)
+z.data.insert(table="sessions", fields=[...], values=[...])
+```
+
+**💡 Key Insight**: zData separates DDL (CREATE/DROP) from DML (INSERT/SELECT/UPDATE/DELETE).  
+Loading a schema doesn't auto-create tables - you must explicitly call `create_table()`.
+
 ---
 
 ## Quick Reference Card
@@ -449,6 +475,150 @@ else:
     print("Invalid password")
 ```
 
+---
+
+## Layer 1: Persistent Sessions (Week 3.2 - NEW)
+
+### "Remember Me" Functionality
+
+**Goal**: Login once, stay authenticated for 7 days (survives app restarts).
+
+**The zCLI Way**: Declarative schema + `z.data.Create/Read/Update/Delete` (no raw SQL!)
+
+### Setup (Automatic)
+
+When `zAuth` initializes, it:
+1. Loads `zSchema.sessions.yaml` from `zCLI/subsystems/zAuth/`
+2. Creates `sessions.db` at `z.config.sys_paths.user_data_dir / "sessions.db"`
+3. Restores any valid (non-expired) session
+
+**Schema** (`zSchema.sessions.yaml`):
+```yaml
+Meta:
+  Data_Type: sqlite
+  Data_Label: "sessions"
+  Data_Path: "zMachine"  # Uses platformdirs
+
+sessions:
+  session_id: {type: str, pk: true, required: true}
+  user_id: {type: str, required: true}
+  username: {type: str, required: true}
+  password_hash: {type: str, required: true}  # bcrypt from Week 3.1
+  token: {type: str, required: true}
+  created_at: {type: datetime, default: now}
+  expires_at: {type: datetime, required: true}  # 7 days from creation
+  last_accessed: {type: datetime, default: now}
+```
+
+### Login with Persistence (Default)
+
+```python
+from zCLI import zCLI
+import os
+
+# Enable remote API
+os.environ["ZOLO_USE_REMOTE_API"] = "true"
+
+z = zCLI({"zWorkspace": "."})
+
+# Login with persistence (default: persist=True)
+result = z.auth.login(
+    username="alice",
+    password="secure_password",
+    persist=True  # ← Saves to sessions.db
+)
+
+# Session saved! Close app, reopen → still logged in for 7 days
+```
+
+### Login WITHOUT Persistence
+
+```python
+# One-time session (doesn't survive restart)
+result = z.auth.login(
+    username="bob",
+    password="temp_password",
+    persist=False  # ← Session-only (in-memory)
+)
+```
+
+### Logout (Deletes Persistent Session)
+
+```python
+z.auth.logout()
+# - Deletes session from sessions.db
+# - Clears in-memory session
+# - Next startup = not logged in
+```
+
+### Session Lifecycle
+
+**On Startup**:
+1. `zAuth.__init__()` calls `_ensure_sessions_db()`
+   - Loads schema
+   - Creates table if needed (CREATE vs INSERT!)
+   - Cleans up expired sessions
+2. Calls `_load_session()`
+   - Queries for valid session (not expired)
+   - Restores to in-memory `z.session["zAuth"]`
+   - Updates `last_accessed` timestamp
+
+**On Login (persist=True)**:
+1. Authenticate user (remote API or local)
+2. Hash password with bcrypt
+3. Generate unique `session_id` and `token` (secrets.token_urlsafe)
+4. Calculate `expires_at` = now + 7 days
+5. Delete any existing sessions for user (single session per user)
+6. Insert new session via `z.data.insert()`
+
+**On Logout**:
+1. Delete session from `sessions.db` via `z.data.delete()`
+2. Clear in-memory session
+
+**Cleanup**:
+- Expired sessions auto-deleted on startup
+- Manual cleanup: `z.auth._cleanup_expired()`
+
+### Cross-Platform Paths
+
+Sessions database location (automatic via platformdirs):
+- **macOS**: `~/Library/Application Support/zolo-zcli/sessions.db`
+- **Linux**: `~/.local/share/zolo-zcli/sessions.db`
+- **Windows**: `%LOCALAPPDATA%\zolo-zcli\sessions.db`
+
+```python
+# Access the path programmatically
+sessions_db = z.config.sys_paths.user_data_dir / "sessions.db"
+print(f"Sessions stored at: {sessions_db}")
+```
+
+### Security Notes
+
+✅ **Password hashes** (bcrypt) stored in sessions.db, not plaintext  
+✅ **Random tokens** (32 bytes) for each session  
+✅ **7-day expiry** (configurable via `z.auth.session_duration_days`)  
+✅ **Single session per user** (old session deleted on new login)  
+✅ **Auto-cleanup** on startup  
+⚠️ **Role not persisted** (privacy: role comes from remote API only)
+
+### Testing
+
+**10 new tests** in `zTestSuite/zAuth_Test.py`:
+- `test_ensure_sessions_db_success` - Schema loading + table creation
+- `test_save_session_creates_record` - Correct fields inserted
+- `test_save_session_generates_unique_tokens` - Token uniqueness
+- `test_load_session_restores_valid_session` - Restore on startup
+- `test_load_session_ignores_expired_session` - Expired sessions ignored
+- `test_cleanup_expired_removes_old_sessions` - Housekeeping
+- `test_logout_deletes_persistent_session` - Logout cleanup
+- `test_login_with_persist_saves_session` - persist=True
+- `test_login_with_persist_false_skips_save` - persist=False
+- `test_session_duration_is_7_days` - Expiry calculation
+
+**Total zAuth tests**: 41 (was 31, +10 from Week 3.2) ✅
+
+---
+
 ### Cross-Platform Path Access (Layer 0)
 
 **For Week 3.2 (Sessions) and beyond**, use these paths:
@@ -481,6 +651,9 @@ sessions_db.parent.mkdir(parents=True, exist_ok=True)
 
 **Version**: 1.5.4  
 **Layer 0 Status**: ✅ Production-Ready (70% coverage, 907 tests passing)  
-**Layer 1 Status**: 🚧 In Progress (Week 3.1: bcrypt complete - 14 tests passing)  
-**Next**: Week 3.2 - Persistent sessions (SQLite)
+**Layer 1 Status**: 🚧 In Progress (Weeks 3.1-3.2 complete)
+- Week 3.1: ✅ bcrypt password hashing (14 tests)
+- Week 3.2: ✅ Persistent sessions with zData (10 tests)
+**Total Tests**: 931 passing (100% pass rate) 🎉  
+**Next**: Week 3.3 - Enhanced RBAC decorators
 

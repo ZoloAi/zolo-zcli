@@ -864,43 +864,60 @@
                         </div>
                     </div>
 
-                    <div class="todo-item" data-id="layer1-auth-sessions">
-                        <input type="checkbox" class="todo-checkbox">
+                    <div class="todo-item completed" data-id="layer1-auth-sessions">
+                        <input type="checkbox" class="todo-checkbox" checked>
                         <div class="todo-content">
-                            <div class="todo-title">Week 3.2: 🔐 Persistent sessions (Authentication State)</div>
+                            <div class="todo-title">Week 3.2: 🔐 Persistent sessions (Authentication State) ✅ COMPLETE</div>
                             <div class="todo-description">
                                 <strong>Goal:</strong> "Remember me" functionality - login once, stay authenticated for 7 days (survives app restarts)
                                 <br><strong>Note:</strong> This is NOT wizard batching (that's zShell canvas mode). This is about user login persistence.
                                 <br><br>
-                                <strong>📋 The zCLI Way (Declarative):</strong>
-                                <br>&nbsp;&nbsp;1. Create <code>zSchema.sessions.yaml</code> (declarative table definition)
-                                <br>&nbsp;&nbsp;2. Use <code>z.data.Create/Read/Update/Delete</code> for all operations (no raw SQL!)
-                                <br>&nbsp;&nbsp;3. Auto-cleanup expired sessions via zData
+                                <strong>✅ IMPLEMENTED (The zCLI Way - Declarative):</strong>
+                                <br>&nbsp;&nbsp;1. ✅ Created <code>zSchema.sessions.yaml</code> (declarative table definition)
+                                <br>&nbsp;&nbsp;2. ✅ Uses <code>z.data.insert/select/update/delete</code> for all operations (no raw SQL!)
+                                <br>&nbsp;&nbsp;3. ✅ Auto-cleanup expired sessions via zData
+                                <br>&nbsp;&nbsp;4. ✅ <strong>CREATE TABLE before INSERT</strong> (critical: DDL before DML!)
                                 <br><br>
                                 <strong>🗂️ Schema (zSchema.sessions.yaml):</strong>
                                 <br>&nbsp;&nbsp;• Meta: Data_Type: sqlite, Data_Path: "zMachine" (platformdirs)
                                 <br>&nbsp;&nbsp;• Fields: session_id (pk), user_id, username, password_hash, token, created_at, expires_at, last_accessed
                                 <br><br>
                                 <strong>🔧 Implementation:</strong>
-                                <br>&nbsp;&nbsp;• <code>z.auth._load_session()</code> - Check sessions.db on startup
-                                <br>&nbsp;&nbsp;• <code>z.auth._save_session()</code> - Persist login state
+                                <br>&nbsp;&nbsp;• <code>z.auth._ensure_sessions_db()</code> - Load schema + CREATE TABLE if not exists
+                                <br>&nbsp;&nbsp;• <code>z.auth._load_session()</code> - Restore valid session on startup
+                                <br>&nbsp;&nbsp;• <code>z.auth._save_session()</code> - Persist login state (bcrypt hash)
                                 <br>&nbsp;&nbsp;• <code>z.auth._cleanup_expired()</code> - Remove old sessions
-                                <br>&nbsp;&nbsp;• Use bcrypt password_hash (Week 3.1) for security
+                                <br>&nbsp;&nbsp;• <code>z.auth.login(persist=True)</code> - Save to sessions.db
+                                <br>&nbsp;&nbsp;• <code>z.auth.logout()</code> - Delete persistent session
                                 <br><br>
                                 <strong>📁 Cross-Platform Paths (via platformdirs):</strong>
                                 <br>&nbsp;&nbsp;• macOS: <code>~/Library/Application Support/zolo-zcli/sessions.db</code>
                                 <br>&nbsp;&nbsp;• Linux: <code>~/.local/share/zolo-zcli/sessions.db</code>
                                 <br>&nbsp;&nbsp;• Windows: <code>%LOCALAPPDATA%\zolo-zcli\sessions.db</code>
                                 <br><br>
-                                <strong>✅ Benefits:</strong> Declarative (no raw SQL), cross-database ready, auto-migrations (future), type-safe
-                                <br><strong>Depends on:</strong> bcrypt (Week 3.1 ✅), platformdirs (Layer 0 ✅), zData (Layer 2 - exists)
+                                <strong>✅ Tests Added:</strong> 10 comprehensive unit tests in zAuth_Test.py
+                                <br>&nbsp;&nbsp;• test_ensure_sessions_db_success - Schema + table creation
+                                <br>&nbsp;&nbsp;• test_save_session_creates_record - Correct fields
+                                <br>&nbsp;&nbsp;• test_save_session_generates_unique_tokens - Token uniqueness
+                                <br>&nbsp;&nbsp;• test_load_session_restores_valid_session - Restore on startup
+                                <br>&nbsp;&nbsp;• test_load_session_ignores_expired_session - Expiry check
+                                <br>&nbsp;&nbsp;• test_cleanup_expired_removes_old_sessions - Housekeeping
+                                <br>&nbsp;&nbsp;• test_logout_deletes_persistent_session - Cleanup
+                                <br>&nbsp;&nbsp;• test_login_with_persist_saves_session - persist=True
+                                <br>&nbsp;&nbsp;• test_login_with_persist_false_skips_save - persist=False
+                                <br>&nbsp;&nbsp;• test_session_duration_is_7_days - Expiry calculation
+                                <br><br>
+                                <strong>💡 Critical Learning:</strong> zData separates DDL (CREATE/DROP) from DML (INSERT/SELECT/UPDATE/DELETE). Loading a schema does NOT auto-create tables - you must explicitly call <code>z.data.create_table()</code> before INSERT operations!
+                                <br><br>
+                                <strong>✅ Total Tests:</strong> 931 passing (was 921, +10 from Week 3.2) 🎉
+                                <br><strong>✅ Documentation:</strong> AGENT.md updated with full examples
                             </div>
                             <div class="todo-tags">
                                 <span class="tag">Layer 1</span>
                                 <span class="tag">zAuth</span>
                                 <span class="tag">zData</span>
                                 <span class="tag">2 days</span>
-                                <span class="tag" style="background: #f6ad55; color: white;">DEPENDS: 3.1</span>
+                                <span class="tag" style="background: #48bb78; color: white;">✅ DONE</span>
                             </div>
                         </div>
                     </div>
