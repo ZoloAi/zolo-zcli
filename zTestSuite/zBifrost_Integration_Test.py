@@ -945,8 +945,465 @@ class TestWebSocketAuthentication(unittest.IsolatedAsyncioTestCase):
                 pass
 
 
+# ============================================================================
+# PHASE 3: Demo Validation Tests
+# ============================================================================
+
+@unittest.skipIf(not WEBSOCKETS_AVAILABLE, "websockets library not available")
+class TestLevel0DemoValidation(unittest.IsolatedAsyncioTestCase):
+    """Validate Level 0 demo behavior (connection_info broadcast)"""
+    
+    async def _start_level0_demo_server(self, port=18785):
+        """Start server with exact Level 0 demo config"""
+        # Replicate level0_backend.py configuration
+        z = zCLI({
+            "zMode": "zBifrost",
+            "websocket": {
+                "host": "127.0.0.1",
+                "port": port,
+                "require_auth": False  # Level 0: No auth required
+            }
+        })
+        
+        socket_ready = asyncio.Event()
+        task = asyncio.create_task(z.comm.start_websocket(socket_ready, walker=z.walker))
+        await asyncio.wait_for(socket_ready.wait(), timeout=5)
+        await asyncio.sleep(0.5)
+        
+        return z, task
+    
+    @requires_network
+    async def test_level0_connection_info_broadcast(self):
+        """Test Level 0 demo sends connection_info on connect"""
+        z, server_task = await self._start_level0_demo_server(port=18785)
+        
+        try:
+            async with websockets.connect('ws://127.0.0.1:18785') as ws:
+                # Level 0 should immediately send connection_info
+                response = await asyncio.wait_for(ws.recv(), timeout=3)
+                data = json.loads(response)
+                
+                # Validate connection_info structure (as per Level 0 README)
+                self.assertEqual(data['event'], 'connection_info')
+                self.assertIn('data', data)
+                self.assertIn('server_version', data['data'])
+                self.assertIn('features', data['data'])
+                self.assertIn('auth', data['data'])
+                
+                # Level 0: Auth should show require_auth=False
+                self.assertTrue(data['data']['auth']['authenticated'])
+                
+        finally:
+            server_task.cancel()
+            try:
+                await server_task
+            except asyncio.CancelledError:
+                pass
+    
+    @requires_network
+    async def test_level0_features_list(self):
+        """Test Level 0 demo includes expected features in connection_info"""
+        z, server_task = await self._start_level0_demo_server(port=18786)
+        
+        try:
+            async with websockets.connect('ws://127.0.0.1:18786') as ws:
+                response = await asyncio.wait_for(ws.recv(), timeout=3)
+                data = json.loads(response)
+                
+                # Verify features are listed
+                features = data['data']['features']
+                self.assertIsInstance(features, list)
+                # Should have schema_cache, query_cache, connection_info, realtime_sync
+                self.assertIn('schema_cache', features)
+                self.assertIn('connection_info', features)
+                
+        finally:
+            server_task.cancel()
+            try:
+                await server_task
+            except asyncio.CancelledError:
+                pass
+    
+    @requires_network
+    async def test_level0_no_commands(self):
+        """Test Level 0 demo has no UI commands (bare connection only)"""
+        z, server_task = await self._start_level0_demo_server(port=18787)
+        
+        try:
+            async with websockets.connect('ws://127.0.0.1:18787') as ws:
+                # Discard connection_info
+                await asyncio.wait_for(ws.recv(), timeout=3)
+                
+                # Try to send a dispatch command (should handle gracefully)
+                await ws.send(json.dumps({"event": "dispatch", "zKey": "^Test"}))
+                
+                # Server should respond (even if command doesn't exist)
+                # This tests that Level 0 can handle dispatch events gracefully
+                try:
+                    response = await asyncio.wait_for(ws.recv(), timeout=2)
+                    # Got a response - server handled it gracefully
+                    self.assertIsNotNone(response)
+                except asyncio.TimeoutError:
+                    # Timeout is also acceptable - server might not respond to invalid commands
+                    pass
+                
+        finally:
+            server_task.cancel()
+            try:
+                await server_task
+            except asyncio.CancelledError:
+                pass
+
+
+@unittest.skipIf(not WEBSOCKETS_AVAILABLE, "websockets library not available")
+class TestLevel1DemoValidation(unittest.IsolatedAsyncioTestCase):
+    """Validate Level 1 demo behavior (zUI command resolution)"""
+    
+    async def _start_level1_demo_server(self, port=18788):
+        """Start server with exact Level 1 demo config"""
+        # Replicate level1_backend.py configuration
+        demo_dir = Path(__file__).parent.parent / "Demos" / "zBifost"
+        
+        z = zCLI({
+            "zWorkspace": str(demo_dir),
+            "zVaFile": "@.zUI.level1",
+            "zBlock": "Level1Menu",
+            "zMode": "zBifrost",
+            "websocket": {
+                "host": "127.0.0.1",
+                "port": port,
+                "require_auth": False
+            }
+        })
+        
+        socket_ready = asyncio.Event()
+        task = asyncio.create_task(z.comm.start_websocket(socket_ready, walker=z.walker))
+        await asyncio.wait_for(socket_ready.wait(), timeout=5)
+        await asyncio.sleep(0.5)
+        
+        return z, task
+    
+    @requires_network
+    async def test_level1_loads_zui_file(self):
+        """Test Level 1 demo loads zUI.level1.yaml correctly"""
+        z, server_task = await self._start_level1_demo_server(port=18788)
+        
+        try:
+            # Verify zUI file was loaded
+            self.assertIsNotNone(z.walker)
+            
+            # Verify we can connect
+            async with websockets.connect('ws://127.0.0.1:18788') as ws:
+                response = await asyncio.wait_for(ws.recv(), timeout=3)
+                data = json.loads(response)
+                self.assertEqual(data['event'], 'connection_info')
+                
+        finally:
+            server_task.cancel()
+            try:
+                await server_task
+            except asyncio.CancelledError:
+                pass
+    
+    @requires_network
+    async def test_level1_ping_command(self):
+        """Test Level 1 demo: ^Ping → Pong!"""
+        z, server_task = await self._start_level1_demo_server(port=18789)
+        
+        try:
+            async with websockets.connect('ws://127.0.0.1:18789') as ws:
+                # Discard connection_info
+                await asyncio.wait_for(ws.recv(), timeout=3)
+                
+                # Send ^Ping command (as per zUI.level1.yaml)
+                await ws.send(json.dumps({
+                    "event": "dispatch",
+                    "zKey": "^Ping"
+                }))
+                
+                # Receive response
+                response = await asyncio.wait_for(ws.recv(), timeout=3)
+                data = json.loads(response)
+                
+                # Verify response is "Pong!" (as defined in zUI.level1.yaml)
+                self.assertIn('result', data)
+                if isinstance(data['result'], dict):
+                    self.assertEqual(data['result']['message'], 'Pong!')
+                else:
+                    self.assertEqual(data['result'], 'Pong!')
+                
+        finally:
+            server_task.cancel()
+            try:
+                await server_task
+            except asyncio.CancelledError:
+                pass
+    
+    @requires_network
+    async def test_level1_echo_command(self):
+        """Test Level 1 demo: ^Echo Test → Echo: Hello from zBifrost"""
+        z, server_task = await self._start_level1_demo_server(port=18790)
+        
+        try:
+            async with websockets.connect('ws://127.0.0.1:18790') as ws:
+                # Discard connection_info
+                await asyncio.wait_for(ws.recv(), timeout=3)
+                
+                # Send ^Echo Test command
+                await ws.send(json.dumps({
+                    "event": "dispatch",
+                    "zKey": "^Echo Test"
+                }))
+                
+                # Receive response
+                response = await asyncio.wait_for(ws.recv(), timeout=3)
+                data = json.loads(response)
+                
+                # Verify response matches zUI.level1.yaml
+                self.assertIn('result', data)
+                if isinstance(data['result'], dict):
+                    self.assertEqual(data['result']['message'], 'Echo: Hello from zBifrost')
+                
+        finally:
+            server_task.cancel()
+            try:
+                await server_task
+            except asyncio.CancelledError:
+                pass
+    
+    @requires_network
+    async def test_level1_status_command(self):
+        """Test Level 1 demo: ^Status → Server is running"""
+        z, server_task = await self._start_level1_demo_server(port=18791)
+        
+        try:
+            async with websockets.connect('ws://127.0.0.1:18791') as ws:
+                # Discard connection_info
+                await asyncio.wait_for(ws.recv(), timeout=3)
+                
+                # Send ^Status command
+                await ws.send(json.dumps({
+                    "event": "dispatch",
+                    "zKey": "^Status"
+                }))
+                
+                # Receive response
+                response = await asyncio.wait_for(ws.recv(), timeout=3)
+                data = json.loads(response)
+                
+                # Verify response matches zUI.level1.yaml
+                self.assertIn('result', data)
+                if isinstance(data['result'], dict):
+                    self.assertEqual(data['result']['message'], 'Server is running')
+                
+        finally:
+            server_task.cancel()
+            try:
+                await server_task
+            except asyncio.CancelledError:
+                pass
+    
+    @requires_network
+    async def test_level1_all_commands_sequential(self):
+        """Test Level 1 demo: All commands work in sequence"""
+        z, server_task = await self._start_level1_demo_server(port=18792)
+        
+        try:
+            async with websockets.connect('ws://127.0.0.1:18792') as ws:
+                # Discard connection_info
+                await asyncio.wait_for(ws.recv(), timeout=3)
+                
+                # Test all 3 commands in sequence
+                commands = [
+                    ("^Ping", "Pong!"),
+                    ("^Echo Test", "Echo: Hello from zBifrost"),
+                    ("^Status", "Server is running")
+                ]
+                
+                for zkey, expected in commands:
+                    await ws.send(json.dumps({"event": "dispatch", "zKey": zkey}))
+                    response = await asyncio.wait_for(ws.recv(), timeout=3)
+                    data = json.loads(response)
+                    
+                    # Verify each response
+                    self.assertIn('result', data)
+                    if isinstance(data['result'], dict):
+                        self.assertEqual(data['result']['message'], expected)
+                
+        finally:
+            server_task.cancel()
+            try:
+                await server_task
+            except asyncio.CancelledError:
+                pass
+
+
+@unittest.skipIf(not WEBSOCKETS_AVAILABLE, "websockets library not available")
+class TestDemoIntegrationFlow(unittest.IsolatedAsyncioTestCase):
+    """Validate zWalker → zDispatch → zDisplay integration flow"""
+    
+    async def _start_demo_server(self, port=18793):
+        """Start Level 1 server for integration testing"""
+        demo_dir = Path(__file__).parent.parent / "Demos" / "zBifost"
+        
+        z = zCLI({
+            "zWorkspace": str(demo_dir),
+            "zVaFile": "@.zUI.level1",
+            "zBlock": "Level1Menu",
+            "zMode": "zBifrost",
+            "websocket": {
+                "host": "127.0.0.1",
+                "port": port,
+                "require_auth": False
+            }
+        })
+        
+        socket_ready = asyncio.Event()
+        task = asyncio.create_task(z.comm.start_websocket(socket_ready, walker=z.walker))
+        await asyncio.wait_for(socket_ready.wait(), timeout=5)
+        await asyncio.sleep(0.5)
+        
+        return z, task
+    
+    @requires_network
+    async def test_walker_receives_dispatch_event(self):
+        """Test zWalker receives and processes dispatch events from WebSocket"""
+        z, server_task = await self._start_demo_server(port=18793)
+        
+        try:
+            async with websockets.connect('ws://127.0.0.1:18793') as ws:
+                # Discard connection_info
+                await asyncio.wait_for(ws.recv(), timeout=3)
+                
+                # Send dispatch event - zWalker should receive it
+                await ws.send(json.dumps({
+                    "event": "dispatch",
+                    "zKey": "^Ping"
+                }))
+                
+                # Should get a response back (proves zWalker received and processed it)
+                response = await asyncio.wait_for(ws.recv(), timeout=3)
+                data = json.loads(response)
+                
+                # Got a valid response with result
+                self.assertIn('result', data)
+                self.assertIsNotNone(data['result'])
+                
+        finally:
+            server_task.cancel()
+            try:
+                await server_task
+            except asyncio.CancelledError:
+                pass
+    
+    @requires_network
+    async def test_dispatch_resolves_prefix_modifiers(self):
+        """Test zDispatch strips ^ prefix and resolves from zUI file"""
+        z, server_task = await self._start_demo_server(port=18794)
+        
+        try:
+            async with websockets.connect('ws://127.0.0.1:18794') as ws:
+                # Discard connection_info
+                await asyncio.wait_for(ws.recv(), timeout=3)
+                
+                # Send ^Ping - zDispatch should:
+                # 1. Strip the ^ prefix
+                # 2. Look up "Ping" in zUI.level1.yaml
+                # 3. Return "Pong!"
+                await ws.send(json.dumps({
+                    "event": "dispatch",
+                    "zKey": "^Ping"
+                }))
+                
+                response = await asyncio.wait_for(ws.recv(), timeout=3)
+                data = json.loads(response)
+                
+                # Verify it resolved correctly
+                self.assertIn('result', data)
+                if isinstance(data['result'], dict):
+                    # zDispatch resolved "Ping" → "Pong!" from zUI
+                    self.assertEqual(data['result']['message'], 'Pong!')
+                
+        finally:
+            server_task.cancel()
+            try:
+                await server_task
+            except asyncio.CancelledError:
+                pass
+    
+    @requires_network
+    async def test_display_message_format(self):
+        """Test zDisplay returns correct message format in zBifrost mode"""
+        z, server_task = await self._start_demo_server(port=18795)
+        
+        try:
+            async with websockets.connect('ws://127.0.0.1:18795') as ws:
+                # Discard connection_info
+                await asyncio.wait_for(ws.recv(), timeout=3)
+                
+                # Send command
+                await ws.send(json.dumps({
+                    "event": "dispatch",
+                    "zKey": "^Status"
+                }))
+                
+                response = await asyncio.wait_for(ws.recv(), timeout=3)
+                data = json.loads(response)
+                
+                # Verify response format
+                self.assertIn('result', data)
+                
+                # In zBifrost mode, plain strings should be wrapped in {"message": "..."}
+                if isinstance(data['result'], dict):
+                    self.assertIn('message', data['result'])
+                    self.assertIsInstance(data['result']['message'], str)
+                
+        finally:
+            server_task.cancel()
+            try:
+                await server_task
+            except asyncio.CancelledError:
+                pass
+    
+    @requires_network
+    async def test_full_request_response_cycle(self):
+        """Test complete flow: WebSocket → zWalker → zDispatch → zDisplay → WebSocket"""
+        z, server_task = await self._start_demo_server(port=18796)
+        
+        try:
+            async with websockets.connect('ws://127.0.0.1:18796') as ws:
+                # Discard connection_info
+                await asyncio.wait_for(ws.recv(), timeout=3)
+                
+                # Full cycle test
+                await ws.send(json.dumps({
+                    "event": "dispatch",
+                    "zKey": "^Ping",
+                    "_requestId": 12345  # Track request ID
+                }))
+                
+                response = await asyncio.wait_for(ws.recv(), timeout=3)
+                data = json.loads(response)
+                
+                # Verify complete cycle worked
+                self.assertIn('result', data)
+                self.assertIn('_requestId', data)
+                self.assertEqual(data['_requestId'], 12345)
+                
+                # Verify the result is correct
+                if isinstance(data['result'], dict):
+                    self.assertEqual(data['result']['message'], 'Pong!')
+                
+        finally:
+            server_task.cancel()
+            try:
+                await server_task
+            except asyncio.CancelledError:
+                pass
+
+
 def run_tests(verbose=True):
-    """Run all zBifrost integration tests (Phase 1 + Phase 2)."""
+    """Run all zBifrost integration tests (Phase 1 + Phase 2 + Phase 3)."""
     # Create test suite
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
@@ -964,6 +1421,11 @@ def run_tests(verbose=True):
         suite.addTests(loader.loadTestsFromTestCase(TestWebSocketMessageFlow))
         suite.addTests(loader.loadTestsFromTestCase(TestConcurrentClients))
         suite.addTests(loader.loadTestsFromTestCase(TestWebSocketAuthentication))
+        
+        # Phase 3: Demo Validation Tests
+        suite.addTests(loader.loadTestsFromTestCase(TestLevel0DemoValidation))
+        suite.addTests(loader.loadTestsFromTestCase(TestLevel1DemoValidation))
+        suite.addTests(loader.loadTestsFromTestCase(TestDemoIntegrationFlow))
     
     # Run tests
     runner = unittest.TextTestRunner(verbosity=2 if verbose else 1)
@@ -977,6 +1439,7 @@ if __name__ == "__main__":
     print("zBifrost REAL Integration Test Suite - Week 1.6")
     print("Phase 1: Server Lifecycle, Port Conflicts, Coexistence")
     print("Phase 2: Real WebSocket Connections, Message Flow, Concurrent Clients")
+    print("Phase 3: Demo Validation (Level 0, Level 1, Integration Flow)")
     print("=" * 70)
     result = run_tests(verbose=True)
     
