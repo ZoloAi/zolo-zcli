@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>zServer Demo - Working!</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌐 zServer is Working!</h1>
+            <p class="subtitle">Lightweight HTTP Static File Server for zCLI</p>
+        </header>
+
+        <section class="features">
+            <h2>✨ Features Demonstrated</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📄</div>
+                    <h3>HTML Serving</h3>
+                    <p>This page proves HTML files are served correctly</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🎨</div>
+                    <h3>CSS Loading</h3>
+                    <p>Styled with external CSS (style.css)</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3>JavaScript</h3>
+                    <p>Interactive with JavaScript (script.js)</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🔄</div>
+                    <h3>CORS Enabled</h3>
+                    <p>Ready for local development</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="demo-section">
+            <h2>🧪 Interactive Test</h2>
+            <div class="test-area">
+                <button id="testBtn" onclick="runTest()">Run JavaScript Test</button>
+                <div id="output" class="output"></div>
+            </div>
+        </section>
+
+        <section class="info-section">
+            <h2>📋 Server Information</h2>
+            <div class="info-box">
+                <p><strong>Server:</strong> zServer (Python built-in http.server)</p>
+                <p><strong>Port:</strong> 8080</p>
+                <p><strong>Host:</strong> 127.0.0.1 (localhost)</p>
+                <p><strong>Status:</strong> <span class="status-badge">Running</span></p>
+            </div>
+        </section>
+
+        <section class="code-section">
+            <h2>💻 How It Works</h2>
+            <pre><code>from zCLI import zCLI
+
+z = zCLI({"zWorkspace": "."})
+
+# Create and start server
+http_server = z.comm.create_http_server(
+    port=8080,
+    serve_path="."
+)
+http_server.start()
+
+# Server runs in background thread!</code></pre>
+        </section>
+
+        <section class="links-section">
+            <h2>🔗 Test Links</h2>
+            <ul>
+                <li><a href="demo.html">demo.html</a> - This page</li>
+                <li><a href="test.html">test.html</a> - Additional test page</li>
+                <li><a href="style.css">style.css</a> - CSS file</li>
+                <li><a href="script.js">script.js</a> - JavaScript file</li>
+            </ul>
+        </section>
+
+        <footer>
+            <p>✅ All features working correctly!</p>
+            <p class="small">zCLI Framework - Lightweight & Modular</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+

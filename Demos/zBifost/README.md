@@ -86,6 +86,16 @@ open level1_client.html  # or just open in browser
 - ✅ Server responds with zUI-defined values
 - ✅ No hardcoded values - all from zCLI abstractions
 
+**Alternative: Full-Stack Server** (HTTP + WebSocket in one command):
+```bash
+# Single command starts both servers
+python3 run_server.py
+
+# Then open: http://127.0.0.1:8080/level1_client.html
+```
+
+This uses the new **zServer** subsystem to serve the HTML file and run the WebSocket server together.
+
 ---
 
 ## Level 2: Database Operations (Coming Soon)

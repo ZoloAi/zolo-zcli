@@ -10,6 +10,7 @@ from .zConfig_modules import (
     SessionConfig,
     LoggerConfig,
     WebSocketConfig,
+    HTTPServerConfig,
 )
 
 class zConfig:
@@ -55,6 +56,9 @@ class zConfig:
 
         # Initialize WebSocket configuration (uses environment config and session)
         self.websocket = WebSocketConfig(self.environment, zcli, session_data)
+
+        # Initialize HTTP Server configuration (optional feature)
+        self.http_server = HTTPServerConfig(zSpark_obj or {}, zcli.logger)
 
         # Print styled ready message (before zDisplay is available)
         print_ready_message("zConfig Ready", color="CONFIG")

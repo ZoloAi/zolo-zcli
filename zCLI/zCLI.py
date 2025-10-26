@@ -5,6 +5,11 @@
 class zCLI:
     """Core zCLI Engine managing all subsystems 
     Supporting two primary modes: Terminal and zBifrost."""
+    
+    # Attributes set by subsystems
+    logger: any  # Set by zConfig
+    session: dict  # Set by zConfig
+    zTraceback: any  # Set by zConfig
 
     def __init__(self, zSpark_obj=None):
         """Initialize zCLI instance -
@@ -90,6 +95,17 @@ class zCLI:
         # Initialize walker subsystem
         from .subsystems.zWalker import zWalker
         self.walker = zWalker(self)  # Modern walker with unified navigation (can use plugins immediately)
+
+        # Initialize HTTP server (optional) - auto-start if enabled in config
+        self.server = None
+        if hasattr(self.config, 'http_server') and self.config.http_server.enabled:
+            self.server = self.comm.create_http_server(
+                port=self.config.http_server.port,
+                host=self.config.http_server.host,
+                serve_path=self.config.http_server.serve_path
+            )
+            self.server.start()
+            self.logger.info("HTTP server auto-started at %s", self.server.get_url())
 
         # Initialize session (sets zMode from zSpark_obj or defaults to Terminal)
         self._init_session()

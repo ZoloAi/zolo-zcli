@@ -114,3 +114,58 @@ const result = await client.send({event: 'dispatch', zKey: '^Ping'});
 - zCLI operations: `zFunc()`, `zLink()`, `zOpen()`
 - Auto-rendering: `renderTable()`, `renderMenu()`, `renderForm()`
 
+## zServer (Optional HTTP Static Files)
+
+**Purpose**: Serve HTML/CSS/JS files alongside zBifrost WebSocket server
+
+**Features**:
+- Built-in Python http.server (no dependencies)
+- Optional - not everyone needs it
+- Runs in background thread
+- CORS enabled for local development
+
+**Method 1: Auto-Start** (Industry Pattern):
+```python
+from zCLI import zCLI
+
+z = zCLI({
+    "http_server": {"port": 8080, "serve_path": ".", "enabled": True}
+})
+
+# Server auto-started! Access via z.server
+print(z.server.get_url())  # http://127.0.0.1:8080
+```
+
+**Method 2: Manual Start**:
+```python
+from zCLI import zCLI
+
+z = zCLI({"zWorkspace": "."})
+
+# Create and start manually
+http_server = z.comm.create_http_server(port=8080)
+http_server.start()
+```
+
+**With zBifrost (Full-Stack)**:
+```python
+z = zCLI({
+    "zMode": "zBifrost",
+    "websocket": {"port": 8765, "require_auth": False},
+    "http_server": {"port": 8080, "enabled": True}
+})
+
+# Both servers auto-started!
+# HTTP: z.server
+# WebSocket: via z.walker.run()
+z.walker.run()
+```
+
+**Access**: http://localhost:8080/your_file.html
+
+**Methods**:
+- `z.server.start()` - Start (if manual)
+- `z.server.stop()` - Stop server
+- `z.server.is_running()` - Check status
+- `z.server.get_url()` - Get URL
+

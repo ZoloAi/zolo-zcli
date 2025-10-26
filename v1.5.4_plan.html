@@ -1,0 +1,1678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>zCLI v1.5.4+ Improvement Roadmap</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #2d3748;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.95;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 30px 40px;
+            background: #f7fafc;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #718096;
+            margin-top: 5px;
+            font-size: 0.9em;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .section-icon {
+            font-size: 2em;
+            margin-right: 15px;
+        }
+
+        .section-title {
+            font-size: 1.8em;
+            color: #2d3748;
+            flex-grow: 1;
+        }
+
+        .priority-badge {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .priority-critical {
+            background: #fc8181;
+            color: white;
+        }
+
+        .priority-high {
+            background: #f6ad55;
+            color: white;
+        }
+
+        .priority-medium {
+            background: #4fd1c5;
+            color: white;
+        }
+
+        .priority-low {
+            background: #9ae6b4;
+            color: #2d3748;
+        }
+
+        .subsystem-card {
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .subsystem-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .subsystem-name {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #2d3748;
+        }
+
+        .subsystem-rating {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .todo-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 12px;
+            margin: 8px 0;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .todo-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+        }
+
+        .todo-item.completed {
+            opacity: 0.6;
+            background: #f0fdf4;
+            border-color: #86efac;
+        }
+
+        .todo-checkbox {
+            width: 24px;
+            height: 24px;
+            margin-right: 15px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .todo-content {
+            flex-grow: 1;
+        }
+
+        .todo-title {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+
+        .todo-item.completed .todo-title {
+            text-decoration: line-through;
+            color: #718096;
+        }
+
+        .todo-description {
+            font-size: 0.9em;
+            color: #718096;
+            line-height: 1.5;
+        }
+
+        .todo-tags {
+            margin-top: 8px;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 3px 10px;
+            background: #edf2f7;
+            color: #4a5568;
+            border-radius: 12px;
+            font-size: 0.75em;
+            margin-right: 5px;
+            margin-top: 5px;
+        }
+
+        .actions {
+            position: sticky;
+            bottom: 0;
+            background: white;
+            padding: 20px 40px;
+            border-top: 2px solid #e2e8f0;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #2d3748;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+        }
+
+        .note {
+            background: #fffbeb;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .note-title {
+            font-weight: bold;
+            color: #92400e;
+            margin-bottom: 5px;
+        }
+
+        .note-text {
+            color: #78350f;
+            font-size: 0.95em;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+            .actions {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 zCLI v1.5.4+ Improvement Roadmap</h1>
+            <p>Transform from 8.3/10 (A-) to 9.5/10 (A+)</p>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalTasks">0</div>
+                <div class="stat-label">Total Tasks</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="completedTasks">0</div>
+                <div class="stat-label">Completed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="progressPercent">0%</div>
+                <div class="stat-label">Progress</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">8.3/10</div>
+                <div class="stat-label">Current Grade (A-)</div>
+            </div>
+        </div>
+
+        <div class="content">
+            <!-- Bottom-Up Refactoring Strategy -->
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-icon">🏗️</span>
+                    <h2 class="section-title">Bottom-Up Refactoring Strategy</h2>
+                    <span class="priority-badge priority-critical">Start Here</span>
+                </div>
+
+                <div class="note">
+                    <div class="note-title">🎯 The Foundation-First Approach</div>
+                    <div class="note-text">
+                        Build from the ground up, one layer at a time. Each layer must be solid before building the next.
+                        Like a skyscraper: you don't add floors before the concrete sets.
+                        <br><br>
+                        <strong>Rule:</strong> Never move to the next layer until current layer health checks pass.
+                    </div>
+                </div>
+
+                <!-- Layer Visualization -->
+                <div style="background: linear-gradient(to bottom, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 12px; margin: 20px 0;">
+                    <div style="text-align: center; margin-bottom: 20px; font-size: 1.5em; font-weight: bold;">
+                        🏛️ zCLI Architecture Layers
+                    </div>
+                    <div style="display: flex; flex-direction: column-reverse; gap: 10px;">
+                        <div style="background: rgba(255,255,255,0.95); color: #2d3748; padding: 15px; border-radius: 8px; border-left: 4px solid #48bb78;">
+                            <strong>Layer 0: Foundation</strong> (Weeks 1-2)<br>
+                            <small>zConfig, zComm, zServer → Makes everything else possible</small>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.9); color: #2d3748; padding: 15px; border-radius: 8px; border-left: 4px solid #4299e1;">
+                            <strong>Layer 1: Core Services</strong> (Weeks 3-5)<br>
+                            <small>zAuth, zDisplay, zParser, zLoader, zDialog → Daily tools</small>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.85); color: #2d3748; padding: 15px; border-radius: 8px; border-left: 4px solid #ed8936;">
+                            <strong>Layer 2: Business Logic</strong> (Weeks 6-9)<br>
+                            <small>zData, zShell, zWizard, zUtils → Heavy lifters</small>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.8); color: #2d3748; padding: 15px; border-radius: 8px; border-left: 4px solid #9f7aea;">
+                            <strong>Layer 3: Orchestration</strong> (Week 10)<br>
+                            <small>zWalker, zNavigation → Conductor</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Layer 0: Foundation -->
+                <div class="subsystem-card" style="border-left: 4px solid #48bb78;">
+                    <div class="subsystem-header">
+                        <div class="subsystem-name">🏗️ Layer 0: Foundation (Weeks 1-2)</div>
+                        <div class="subsystem-rating">Goal: 9.5/10 Stability</div>
+                    </div>
+
+                    <div style="background: #e6fffa; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                        <strong>Why First:</strong> If foundation cracks later, everything above collapses. These subsystems are used by ALL others.
+                        <br><strong>Success Criteria:</strong> Zero breaking changes possible, 100% test coverage, complete documentation.
+                    </div>
+
+                    <div class="todo-item" data-id="layer0-config-validation">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Week 1.1: Add schema validation for zspark_obj</div>
+                            <div class="todo-description">
+                                Reject invalid config EARLY (fail fast principle).
+                                Validate: zWorkspace exists, zMode is valid, websocket/http_server configs.
+                                <br><strong>Blocks:</strong> All other work (bad config = bad everything)
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Layer 0</span>
+                                <span class="tag">zConfig</span>
+                                <span class="tag">1 day</span>
+                                <span class="tag" style="background: #fc8181; color: white;">BLOCKING</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="layer0-path-docs">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Week 1.2: Document all path resolution patterns</div>
+                            <div class="todo-description">
+                                Create comprehensive guide: @. (workspace), ~. (home), zMachine. (data dir).
+                                Add examples for Windows/Mac/Linux edge cases.
+                                <br><strong>Impact:</strong> Used by 80% of subsystems
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Layer 0</span>
+                                <span class="tag">zConfig</span>
+                                <span class="tag">Documentation</span>
+                                <span class="tag">1 day</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="layer0-config-file">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Week 1.3: Add .zclirc config file support</div>
+                            <div class="todo-description">
+                                Load defaults from ~/.zclirc or ./.zclirc (like .bashrc).
+                                Priority: CWD .zclirc > HOME ~/.zclirc > defaults.
+                                <br><strong>UX Win:</strong> Users set preferences once
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Layer 0</span>
+                                <span class="tag">zConfig</span>
+                                <span class="tag">2 days</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="layer0-type-hints">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Week 1.4: Add type hints to zConfig/zComm</div>
+                            <div class="todo-description">
+                                from typing import Dict, List, Optional, Union
+                                Enable mypy checking for Layer 0 only first.
+                                <br><strong>Foundation Quality:</strong> Type safety prevents runtime errors
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Layer 0</span>
+                                <span class="tag">Code Quality</span>
+                                <span class="tag">2 days</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="layer0-health-checks">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Week 2.1: Add health checks for zServer/zBifrost</div>
+                            <div class="todo-description">
+                                z.comm.websocket.health_check() → returns status dict.
+                                z.server.health_check() → returns {running, port, clients}.
+                                <br><strong>Operational:</strong> Know when things break
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Layer 0</span>
+                                <span class="tag">zComm</span>
+                                <span class="tag">1 day</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="layer0-graceful-shutdown">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Week 2.2: Implement graceful shutdown</div>
+                            <div class="todo-description">
+                                Handle Ctrl+C cleanly: close connections, save state, exit gracefully.
+                                Add z.shutdown() method that cleans up all resources.
+                                <br><strong>Production Ready:</strong> No zombie processes
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Layer 0</span>
+                                <span class="tag">zComm</span>
+                                <span class="tag">2 days</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="layer0-test-coverage">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Week 2.3: 100% test coverage for Layer 0</div>
+                            <div class="todo-description">
+                                Run: coverage run -m pytest zTestSuite/zConfig_Test.py zTestSuite/zComm_Test.py
+                                Goal: 100% line coverage, 95%+ branch coverage.
+                                <br><strong>CHECKPOINT:</strong> Must pass before moving to Layer 1
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Layer 0</span>
+                                <span class="tag">Testing</span>
+                                <span class="tag">2 days</span>
+                                <span class="tag" style="background: #fc8181; color: white;">CHECKPOINT</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="background: #fff5f5; border: 2px solid #fc8181; padding: 15px; border-radius: 8px; margin-top: 15px;">
+                        <strong>🚨 Layer 0 Health Check (Must Pass Before Layer 1):</strong>
+                        <ul style="margin: 10px 0 0 20px; line-height: 1.8;">
+                            <li>✅ All tests pass (100% coverage)</li>
+                            <li>✅ Config validation works (rejects bad input)</li>
+                            <li>✅ Health checks return accurate status</li>
+                            <li>✅ Graceful shutdown works (no zombie processes)</li>
+                            <li>✅ Type hints pass mypy</li>
+                            <li>✅ Documentation complete (AGENT.md updated)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Layer 1: Core Services -->
+                <div class="subsystem-card" style="border-left: 4px solid #4299e1;">
+                    <div class="subsystem-header">
+                        <div class="subsystem-name">⚙️ Layer 1: Core Services (Weeks 3-5)</div>
+                        <div class="subsystem-rating">Goal: 8.5/10 → 9/10</div>
+                    </div>
+
+                    <div style="background: #ebf8ff; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                        <strong>Why Second:</strong> These are used by everything above. Fix display/auth issues now or debug them in 10 places later.
+                        <br><strong>Dependencies:</strong> Layer 0 must be solid (config, paths, logging all work perfectly).
+                    </div>
+
+                    <div class="todo-item" data-id="layer1-auth-bcrypt">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Week 3.1: 🔐 Add bcrypt to zAuth (SECURITY FIRST)</div>
+                            <div class="todo-description">
+                                pip install bcrypt → add to requirements.txt.
+                                Add: hash_password(plain) → hash, verify_password(plain, hash) → bool.
+                                <br><strong>Critical:</strong> Security can't wait. Do this FIRST in Layer 1.
+                                <br><strong>Breaking Change:</strong> Existing passwords won't work (migration needed)
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Layer 1</span>
+                                <span class="tag">zAuth</span>
+                                <span class="tag">Security</span>
+                                <span class="tag">1 day</span>
+                                <span class="tag" style="background: #fc8181; color: white;">CRITICAL</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="layer1-auth-sessions">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Week 3.2: 🔐 Persistent sessions (SQLite-based)</div>
+                            <div class="todo-description">
+                                Create ~/.zcli/sessions.db with: session_id, user_id, expires_at, token.
+                                Auto-expire after 7 days, refresh token pattern.
+                                <br><strong>Depends on:</strong> bcrypt (Week 3.1)
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Layer 1</span>
+                                <span class="tag">zAuth</span>
+                                <span class="tag">2 days</span>
+                                <span class="tag" style="background: #f6ad55; color: white;">DEPENDS: 3.1</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="layer1-auth-rbac">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Week 3.3: 🔐 Enhanced RBAC decorators</div>
+                            <div class="todo-description">
+                                @require_role("admin") decorator for plugins.
+                                @require_permission("edit_users") for fine-grained control.
+                                Store roles/permissions in sessions.db.
+                                <br><strong>Depends on:</strong> Sessions (Week 3.2)
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Layer 1</span>
+                                <span class="tag">zAuth</span>
+                                <span class="tag">2 days</span>
+                                <span class="tag" style="background: #f6ad55; color: white;">DEPENDS: 3.2</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="layer1-auth-tests">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Week 3.4: 🔐 zAuth comprehensive test suite</div>
+                            <div class="todo-description">
+                                Test: password hashing, session creation/expiry, RBAC decorators.
+                                Test edge cases: expired sessions, invalid tokens, permission denied.
+                                <br><strong>Checkpoint:</strong> zAuth must be bulletproof before moving on
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Layer 1</span>
+                                <span class="tag">zAuth</span>
+                                <span class="tag">Testing</span>
+                                <span class="tag">1 day</span>
+                                <span class="tag" style="background: #f6ad55; color: white;">CHECKPOINT</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="layer1-display-progress">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Week 4.1: 🎨 Progress bar widget in zDisplay</div>
+                            <div class="todo-description">
+                                display.progress_bar(current, total, label="Processing")
+                                Support: indeterminate spinner, percentage, ETA calculation.
+                                <br><strong>UX Impact:</strong> Used by zData migrations, file operations
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Layer 1</span>
+                                <span class="tag">zDisplay</span>
+                                <span class="tag">2 days</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="layer1-display-spinner">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Week 4.2: 🎨 Loading spinners for async ops</div>
+                            <div class="todo-description">
+                                with display.spinner("Loading..."):
+                                    # async operation
+                                Multiple styles: dots, line, arc, bouncingBall.
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Layer 1</span>
+                                <span class="tag">zDisplay</span>
+                                <span class="tag">1 day</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="layer1-error-messages">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Week 4.3: 🎨 Actionable error messages (All subsystems)</div>
+                            <div class="todo-description">
+                                Replace: "Schema not found"
+                                With: "Schema '$db' not found. Did you forget: zcli.loader.handle('@.zSchema.mydb')?"
+                                <br><strong>Scope:</strong> zLoader, zData, zParser, zDispatch
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Layer 1</span>
+                                <span class="tag">UX</span>
+                                <span class="tag">3 days</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="layer1-dialog-regex">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Week 5.1: 📝 Regex validators in zDialog</div>
+                            <div class="todo-description">
+                                YAML: email: {type: str, pattern: "^[\\w]+@[\\w]+\\.[a-z]{2,}$"}
+                                Return clear error: "Email must match pattern: user@domain.com"
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Layer 1</span>
+                                <span class="tag">zDialog</span>
+                                <span class="tag">2 days</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="layer1-dialog-custom">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Week 5.2: 📝 Custom validator functions</div>
+                            <div class="todo-description">
+                                YAML: validator: "&plugins.validate_email"
+                                Plugin returns: (valid: bool, error: str)
+                                <br><strong>Extensibility:</strong> Plugins can add domain-specific validation
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Layer 1</span>
+                                <span class="tag">zDialog</span>
+                                <span class="tag">2 days</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="layer1-loader-watch">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Week 5.3: 📦 File watching for hot reload (Dev Mode)</div>
+                            <div class="todo-description">
+                                pip install watchdog → add to optional dependencies.
+                                Auto-reload zUI/zSchema on change (--dev flag).
+                                <br><strong>DX Win:</strong> Edit YAML → See changes instantly
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Layer 1</span>
+                                <span class="tag">zLoader</span>
+                                <span class="tag">3 days</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="background: #fff5f5; border: 2px solid #4299e1; padding: 15px; border-radius: 8px; margin-top: 15px;">
+                        <strong>🔍 Layer 1 Health Check (Must Pass Before Layer 2):</strong>
+                        <ul style="margin: 10px 0 0 20px; line-height: 1.8;">
+                            <li>✅ zAuth: All security tests pass, sessions work, RBAC enforced</li>
+                            <li>✅ zDisplay: Progress bars/spinners work in Terminal AND zBifrost</li>
+                            <li>✅ zDialog: Validators work, clear error messages</li>
+                            <li>✅ zLoader: Hot reload works in --dev mode</li>
+                            <li>✅ Error messages are actionable (no vague errors)</li>
+                            <li>✅ All Layer 1 tests pass (90%+ coverage)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Layer 2: Business Logic -->
+                <div class="subsystem-card" style="border-left: 4px solid #ed8936;">
+                    <div class="subsystem-header">
+                        <div class="subsystem-name">💼 Layer 2: Business Logic (Weeks 6-9)</div>
+                        <div class="subsystem-rating">Goal: 8.5/10 → 9.5/10</div>
+                    </div>
+
+                    <div style="background: #fffaf0; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                        <strong>Why Third:</strong> Heavy lifters need solid foundation. zData migrations use zDisplay progress bars. zShell uses zAuth for permissions.
+                        <br><strong>Dependencies:</strong> Layers 0+1 must be rock-solid (especially zAuth and zDisplay).
+                    </div>
+
+                    <div class="todo-item" data-id="layer2-quantum-decision">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Week 6.1: 🧪 DECISION: Quantum paradigm (Remove or Defer)</div>
+                            <div class="todo-description">
+                                Option A: Remove quantum stub entirely (clean)
+                                Option B: Move to feature branch "quantum-future" (defer)
+                                Option C: Implement MVP (4+ weeks of work)
+                                <br><strong>Recommendation:</strong> Option B (defer to v2.0)
+                                <br><strong>Blocks:</strong> zData refactoring (need clear paradigm strategy)
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Layer 2</span>
+                                <span class="tag">zData</span>
+                                <span class="tag">Architecture</span>
+                                <span class="tag">1 day</span>
+                                <span class="tag" style="background: #fc8181; color: white;">DECISION</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="layer2-migration-generate">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Week 6.2-7.1: 🗄️ Migration generation system</div>
+                            <div class="todo-description">
+                                zcli migrate generate "add_users_table"
+                                → Creates migrations/001_add_users_table.yaml
+                                Compare schema to DB, generate ALTER TABLE statements.
+                                <br><strong>Biggest User Request:</strong> #1 requested feature
+                                <br><strong>Uses:</strong> zDisplay progress bars (Layer 1)
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Layer 2</span>
+                                <span class="tag">zData</span>
+                                <span class="tag">5 days</span>
+                                <span class="tag" style="background: #fc8181; color: white;">HIGH IMPACT</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="layer2-migration-apply">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Week 7.2-7.3: 🗄️ Migration apply/rollback</div>
+                            <div class="todo-description">
+                                zcli migrate up → Apply pending migrations
+                                zcli migrate down → Rollback last migration
+                                Track in _migrations table: {id, name, applied_at, checksum}
+                                <br><strong>Depends on:</strong> Migration generation (Week 6.2-7.1)
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Layer 2</span>
+                                <span class="tag">zData</span>
+                                <span class="tag">3 days</span>
+                                <span class="tag" style="background: #f6ad55; color: white;">DEPENDS: 6.2-7.1</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="layer2-orm-relationships">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Week 8.1-8.3: 🗄️ ORM relationships (belongs_to, has_many)</div>
+                            <div class="todo-description">
+                                YAML: users: {has_many: posts} → Auto-generate JOINs
+                                user.posts() → SELECT * FROM posts WHERE user_id = ?
+                                Eager loading: .with("posts") to prevent N+1
+                                <br><strong>Biggest Gap:</strong> Most requested after migrations
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Layer 2</span>
+                                <span class="tag">zData</span>
+                                <span class="tag">5 days</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="layer2-shell-completion">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Week 9.1-9.2: 💬 Tab completion in zShell</div>
+                            <div class="todo-description">
+                                Use readline for: commands, file paths, zUI keys, table names.
+                                TAB → auto-complete, TAB TAB → show options.
+                                <br><strong>UX Impact:</strong> Huge quality-of-life improvement
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Layer 2</span>
+                                <span class="tag">zShell</span>
+                                <span class="tag">3 days</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="layer2-plugin-discovery">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Week 9.3: 🔌 Plugin auto-discovery</div>
+                            <div class="todo-description">
+                                Scan plugins/ directory automatically.
+                                Load entry points from setup.py (Flask extension pattern).
+                                <br><strong>Convention:</strong> Reduces boilerplate
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Layer 2</span>
+                                <span class="tag">zUtils</span>
+                                <span class="tag">2 days</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="background: #fff5f5; border: 2px solid #ed8936; padding: 15px; border-radius: 8px; margin-top: 15px;">
+                        <strong>🔍 Layer 2 Health Check (Must Pass Before Layer 3):</strong>
+                        <ul style="margin: 10px 0 0 20px; line-height: 1.8;">
+                            <li>✅ zData: Migrations work (generate, apply, rollback)</li>
+                            <li>✅ zData: ORM relationships work (JOIN queries auto-generated)</li>
+                            <li>✅ zShell: Tab completion works (commands, paths, tables)</li>
+                            <li>✅ zUtils: Plugin discovery works (auto-load from plugins/)</li>
+                            <li>✅ All Layer 2 tests pass (85%+ coverage)</li>
+                            <li>✅ Integration tests pass (full stack workflows)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Layer 3: Orchestration -->
+                <div class="subsystem-card" style="border-left: 4px solid #9f7aea;">
+                    <div class="subsystem-header">
+                        <div class="subsystem-name">🎭 Layer 3: Orchestration (Week 10)</div>
+                        <div class="subsystem-rating">Goal: 9/10 → 9.5/10 (Polish)</div>
+                    </div>
+
+                    <div style="background: #faf5ff; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                        <strong>Why Last:</strong> Orchestration depends on everything below. Fix foundation bugs first, polish conductor last.
+                        <br><strong>Dependencies:</strong> ALL lower layers must be solid and tested.
+                    </div>
+
+                    <div class="todo-item" data-id="layer3-walker-docs">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Week 10.1: Document dual-mode patterns</div>
+                            <div class="todo-description">
+                                Create: DUAL_MODE_GUIDE.md with 10+ examples.
+                                Show: Same YAML → Terminal CLI + Web GUI side-by-side.
+                                <br><strong>Marketing Gold:</strong> Your killer feature, documented
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Layer 3</span>
+                                <span class="tag">zWalker</span>
+                                <span class="tag">Documentation</span>
+                                <span class="tag">2 days</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="layer3-integration-tests">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Week 10.2: Full-stack integration tests</div>
+                            <div class="todo-description">
+                                Test complete workflows: User registration → Login → CRUD → Logout.
+                                Test in BOTH modes: Terminal and zBifrost.
+                                <br><strong>Final Validation:</strong> Everything works together
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Layer 3</span>
+                                <span class="tag">Integration</span>
+                                <span class="tag">3 days</span>
+                                <span class="tag" style="background: #fc8181; color: white;">FINAL CHECK</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="background: #fff5f5; border: 2px solid #9f7aea; padding: 15px; border-radius: 8px; margin-top: 15px;">
+                        <strong>🎉 Final Health Check (v1.6.0 Release Ready):</strong>
+                        <ul style="margin: 10px 0 0 20px; line-height: 1.8;">
+                            <li>✅ ALL layers pass health checks</li>
+                            <li>✅ Full test suite: 600+ tests, 95%+ coverage</li>
+                            <li>✅ Integration tests pass in both modes</li>
+                            <li>✅ Documentation complete (all GUIDEs updated)</li>
+                            <li>✅ No breaking changes without migration path</li>
+                            <li>✅ Performance benchmarks meet targets</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="note" style="margin-top: 30px;">
+                    <div class="note-title">📅 10-Week Timeline Summary</div>
+                    <div class="note-text" style="line-height: 2;">
+                        <strong>Weeks 1-2:</strong> Layer 0 (Foundation) → Config, Comms, Health Checks<br>
+                        <strong>Weeks 3-5:</strong> Layer 1 (Core) → Auth, Display, Validation, Hot Reload<br>
+                        <strong>Weeks 6-9:</strong> Layer 2 (Business) → Migrations, ORM, Shell, Plugins<br>
+                        <strong>Week 10:</strong> Layer 3 (Orchestration) → Documentation, Integration Tests<br>
+                        <br>
+                        <strong>Result:</strong> 8.3/10 (A-) → 9.5/10 (A+, Industry-leading) 🚀
+                    </div>
+                </div>
+            </div>
+
+            <!-- Critical Missing Features -->
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-icon">🔴</span>
+                    <h2 class="section-title">Critical Missing Features</h2>
+                    <span class="priority-badge priority-critical">Critical</span>
+                </div>
+
+                <div class="subsystem-card">
+                    <div class="subsystem-header">
+                        <div class="subsystem-name">🗄️ zData - Migration System</div>
+                        <div class="subsystem-rating">Current: 8.5/10 → Target: 9.5/10</div>
+                    </div>
+                    
+                    <div class="todo-item" data-id="migration-create">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Create migration generation system</div>
+                            <div class="todo-description">
+                                Add `zcli migrate generate "migration_name"` command to create migration files.
+                                Compare current schema to database and generate ALTER TABLE statements.
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">zData</span>
+                                <span class="tag">Database</span>
+                                <span class="tag">3-5 days</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="migration-apply">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Add migration apply/rollback</div>
+                            <div class="todo-description">
+                                Implement `zcli migrate up` and `zcli migrate down` commands.
+                                Track applied migrations in a `_migrations` table.
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">zData</span>
+                                <span class="tag">Database</span>
+                                <span class="tag">2-3 days</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="migration-history">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Add migration history tracking</div>
+                            <div class="todo-description">
+                                Create `zcli migrate status` to show applied/pending migrations.
+                                Store timestamps and checksums for each migration.
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">zData</span>
+                                <span class="tag">2 days</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="subsystem-card">
+                    <div class="subsystem-header">
+                        <div class="subsystem-name">🔐 zAuth - Security Enhancements</div>
+                        <div class="subsystem-rating">Current: 6/10 → Target: 8.5/10</div>
+                    </div>
+                    
+                    <div class="todo-item" data-id="auth-bcrypt">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Add bcrypt password hashing</div>
+                            <div class="todo-description">
+                                Install bcrypt dependency, add hash_password() and verify_password() methods.
+                                Never store plaintext passwords.
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">zAuth</span>
+                                <span class="tag">Security</span>
+                                <span class="tag">1 day</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="auth-persistent">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Implement persistent sessions</div>
+                            <div class="todo-description">
+                                Store sessions in SQLite or file-based storage.
+                                Add session expiration and refresh tokens.
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">zAuth</span>
+                                <span class="tag">Sessions</span>
+                                <span class="tag">2-3 days</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="auth-rbac">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Enhance role-based access control</div>
+                            <div class="todo-description">
+                                Add permission decorators: @require_role("admin"), @require_permission("edit_users").
+                                Create roles/permissions table in schema.
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">zAuth</span>
+                                <span class="tag">RBAC</span>
+                                <span class="tag">3 days</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="subsystem-card">
+                    <div class="subsystem-header">
+                        <div class="subsystem-name">🧪 zData - Remove or Implement "Quantum" Paradigm</div>
+                        <div class="subsystem-rating">Priority: High</div>
+                    </div>
+                    
+                    <div class="todo-item" data-id="quantum-decide">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Decision: Remove or implement quantum paradigm</div>
+                            <div class="todo-description">
+                                Currently a stub. Either remove it entirely or implement zMemoryCell/zQuark patterns.
+                                If keeping as "future work", move to separate branch and document clearly.
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">zData</span>
+                                <span class="tag">Architecture</span>
+                                <span class="tag">Decision needed</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- High Priority Improvements -->
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-icon">🟠</span>
+                    <h2 class="section-title">High Priority Improvements</h2>
+                    <span class="priority-badge priority-high">High Priority</span>
+                </div>
+
+                <div class="subsystem-card">
+                    <div class="subsystem-header">
+                        <div class="subsystem-name">🗄️ zData - ORM Relationships</div>
+                        <div class="subsystem-rating">Impact: High</div>
+                    </div>
+                    
+                    <div class="todo-item" data-id="orm-relationships">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Add ORM relationship support</div>
+                            <div class="todo-description">
+                                Implement belongs_to, has_many, has_one in YAML schema.
+                                Auto-generate JOIN queries from relationships.
+                                Example: `users: has_many: posts` → auto-JOIN capability.
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">zData</span>
+                                <span class="tag">ORM</span>
+                                <span class="tag">5-7 days</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="orm-eager">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Implement eager loading</div>
+                            <div class="todo-description">
+                                Add `.with("posts")` syntax to prevent N+1 queries.
+                                Load related records in single query.
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">zData</span>
+                                <span class="tag">Performance</span>
+                                <span class="tag">3 days</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="subsystem-card">
+                    <div class="subsystem-header">
+                        <div class="subsystem-name">💬 zShell - Tab Completion</div>
+                        <div class="subsystem-rating">Impact: User Experience</div>
+                    </div>
+                    
+                    <div class="todo-item" data-id="shell-completion">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Add tab completion to zShell</div>
+                            <div class="todo-description">
+                                Use Python's `readline` module for command/path completion.
+                                Auto-complete: commands, file paths, zUI keys, table names.
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">zShell</span>
+                                <span class="tag">UX</span>
+                                <span class="tag">2-3 days</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="shell-history-search">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Add Ctrl+R history search</div>
+                            <div class="todo-description">
+                                Implement reverse-i-search like Bash.
+                                Search command history interactively.
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">zShell</span>
+                                <span class="tag">UX</span>
+                                <span class="tag">1-2 days</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="subsystem-card">
+                    <div class="subsystem-header">
+                        <div class="subsystem-name">🎨 zDisplay - TUI Widgets</div>
+                        <div class="subsystem-rating">Impact: Terminal UX</div>
+                    </div>
+                    
+                    <div class="todo-item" data-id="display-progress">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Add progress bar widget</div>
+                            <div class="todo-description">
+                                Create `display.progress_bar(current, total)` for long operations.
+                                Support indeterminate spinners for unknown progress.
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">zDisplay</span>
+                                <span class="tag">Widgets</span>
+                                <span class="tag">2 days</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="display-spinner">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Add loading spinners</div>
+                            <div class="todo-description">
+                                Implement animated spinners for async operations.
+                                Multiple styles: dots, line, arc, etc.
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">zDisplay</span>
+                                <span class="tag">Animation</span>
+                                <span class="tag">1-2 days</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="subsystem-card">
+                    <div class="subsystem-header">
+                        <div class="subsystem-name">📝 zDialog - Advanced Validation</div>
+                        <div class="subsystem-rating">Impact: Data Quality</div>
+                    </div>
+                    
+                    <div class="todo-item" data-id="dialog-validators">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Add regex validators</div>
+                            <div class="todo-description">
+                                Support regex patterns in field definitions:
+                                `email: {type: str, pattern: "^[a-z0-9]+@[a-z]+\.[a-z]{2,3}$"}`
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">zDialog</span>
+                                <span class="tag">Validation</span>
+                                <span class="tag">2 days</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="dialog-custom">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Support custom validator functions</div>
+                            <div class="todo-description">
+                                Allow `validator: "&plugins.validate_email"` in YAML.
+                                Return error message on validation failure.
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">zDialog</span>
+                                <span class="tag">Extensibility</span>
+                                <span class="tag">2 days</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Medium Priority Features -->
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-icon">🟡</span>
+                    <h2 class="section-title">Medium Priority Features</h2>
+                    <span class="priority-badge priority-medium">Medium Priority</span>
+                </div>
+
+                <div class="subsystem-card">
+                    <div class="subsystem-header">
+                        <div class="subsystem-name">📦 zLoader - File Watching</div>
+                        <div class="subsystem-rating">Impact: Developer Experience</div>
+                    </div>
+                    
+                    <div class="todo-item" data-id="loader-watch">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Add file watching for hot reload</div>
+                            <div class="todo-description">
+                                Use `watchdog` library to detect YAML file changes.
+                                Auto-reload UI/Schema without restarting app (dev mode).
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">zLoader</span>
+                                <span class="tag">DX</span>
+                                <span class="tag">2-3 days</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="subsystem-card">
+                    <div class="subsystem-header">
+                        <div class="subsystem-name">🔌 zUtils - Plugin Marketplace</div>
+                        <div class="subsystem-rating">Impact: Ecosystem</div>
+                    </div>
+                    
+                    <div class="todo-item" data-id="plugin-registry">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Create plugin registry system</div>
+                            <div class="todo-description">
+                                Add `zcli plugin list` and `zcli plugin install <name>` commands.
+                                Central registry (GitHub-based or pypi.org-style).
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">zUtils</span>
+                                <span class="tag">Ecosystem</span>
+                                <span class="tag">5-7 days</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="plugin-discovery">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Add auto-discovery for plugins</div>
+                            <div class="todo-description">
+                                Scan `plugins/` directory automatically.
+                                Load entry points from `setup.py` (like Flask extensions).
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">zUtils</span>
+                                <span class="tag">Convention</span>
+                                <span class="tag">2 days</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="subsystem-card">
+                    <div class="subsystem-header">
+                        <div class="subsystem-name">⚡ zShell - Advanced Pipes</div>
+                        <div class="subsystem-rating">Impact: Power Users</div>
+                    </div>
+                    
+                    <div class="todo-item" data-id="shell-pipes">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Enhance pipe support</div>
+                            <div class="todo-description">
+                                Full Unix-style pipes: `data read users | grep "admin" | sort`.
+                                Implement stdout capture and streaming between commands.
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">zShell</span>
+                                <span class="tag">Advanced</span>
+                                <span class="tag">3-4 days</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="subsystem-card">
+                    <div class="subsystem-header">
+                        <div class="subsystem-name">📚 Documentation Enhancements</div>
+                        <div class="subsystem-rating">Impact: Adoption</div>
+                    </div>
+                    
+                    <div class="todo-item" data-id="docs-plugin-guide">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Expand PLUGIN_GUIDE.md with 10+ examples</div>
+                            <div class="todo-description">
+                                Cover: authentication plugins, data transformers, custom validators,
+                                integrations (Slack, email), report generators, etc.
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Documentation</span>
+                                <span class="tag">2-3 days</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="docs-error-messages">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Improve error messages with actionable hints</div>
+                            <div class="todo-description">
+                                Instead of "Schema not found", say:
+                                "Schema '$db' not found. Did you forget to load '@.zSchema.mydb'?"
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">UX</span>
+                                <span class="tag">All subsystems</span>
+                                <span class="tag">3-4 days</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="docs-yaml-schema">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Create JSON Schema for zUI/zSchema YAML</div>
+                            <div class="todo-description">
+                                Enable IDE autocomplete and validation for YAML files.
+                                Create `.schema.json` files for VSCode/PyCharm integration.
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Documentation</span>
+                                <span class="tag">DX</span>
+                                <span class="tag">2-3 days</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Low Priority / Polish -->
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-icon">🟢</span>
+                    <h2 class="section-title">Low Priority & Polish</h2>
+                    <span class="priority-badge priority-low">Polish</span>
+                </div>
+
+                <div class="subsystem-card">
+                    <div class="subsystem-header">
+                        <div class="subsystem-name">🎯 Type Hints</div>
+                        <div class="subsystem-rating">Impact: IDE Support</div>
+                    </div>
+                    
+                    <div class="todo-item" data-id="types-hints">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Add comprehensive type hints</div>
+                            <div class="todo-description">
+                                Add `from typing import Dict, List, Optional` throughout codebase.
+                                Enable mypy static type checking in CI.
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Code Quality</span>
+                                <span class="tag">All subsystems</span>
+                                <span class="tag">5-7 days</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="subsystem-card">
+                    <div class="subsystem-header">
+                        <div class="subsystem-name">🔄 CI/CD Pipeline</div>
+                        <div class="subsystem-rating">Impact: Quality Assurance</div>
+                    </div>
+                    
+                    <div class="todo-item" data-id="cicd-github">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Set up GitHub Actions CI</div>
+                            <div class="todo-description">
+                                Run tests on push, check code coverage, lint with flake8/black.
+                                Test on Python 3.8, 3.9, 3.10, 3.11 across Linux/macOS/Windows.
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">DevOps</span>
+                                <span class="tag">1-2 days</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="subsystem-card">
+                    <div class="subsystem-header">
+                        <div class="subsystem-name">📹 Marketing & Demos</div>
+                        <div class="subsystem-rating">Impact: Adoption</div>
+                    </div>
+                    
+                    <div class="todo-item" data-id="marketing-video">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Create "Same Code, Dual UI" video demo</div>
+                            <div class="todo-description">
+                                3-minute video showing same YAML → Terminal CLI + Web GUI.
+                                This is your killer feature. Show it off!
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Marketing</span>
+                                <span class="tag">1 day</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="marketing-comparison">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Write "zCLI vs Django Admin" blog post</div>
+                            <div class="todo-description">
+                                Side-by-side comparison: lines of code, features, dual-mode capability.
+                                Position zCLI as "Django Admin + Click in YAML".
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Marketing</span>
+                                <span class="tag">2 days</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="marketing-casestudy">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Publish 3 case studies</div>
+                            <div class="todo-description">
+                                Real-world examples: DevOps tool, data ETL pipeline, admin dashboard.
+                                Show before/after: "300 lines of Flask → 50 lines of YAML".
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Marketing</span>
+                                <span class="tag">3-5 days</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Strategic Recommendations -->
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-icon">💡</span>
+                    <h2 class="section-title">Strategic Recommendations</h2>
+                </div>
+
+                <div class="note">
+                    <div class="note-title">🎯 Focus Areas for v1.6.0</div>
+                    <div class="note-text">
+                        <strong>Priority 1:</strong> Fix critical missing features (migrations, auth, quantum decision)<br>
+                        <strong>Priority 2:</strong> Enhance developer experience (tab completion, better errors)<br>
+                        <strong>Priority 3:</strong> Marketing push (videos, case studies, comparisons)
+                    </div>
+                </div>
+
+                <div class="note">
+                    <div class="note-title">🚀 Marketing Strategy</div>
+                    <div class="note-text">
+                        Your <strong>dual-mode architecture is UNIQUE</strong>. No framework does CLI + Web from same code.
+                        Target: DevOps engineers, data engineers, internal tool builders.
+                        Positioning: "Django Admin + Click, but declarative and dual-mode".
+                    </div>
+                </div>
+
+                <div class="note">
+                    <div class="note-title">📊 Grade Progression Path</div>
+                    <div class="note-text">
+                        <strong>Current:</strong> 8.3/10 (A-)<br>
+                        <strong>After Critical items:</strong> 8.8/10 (A)<br>
+                        <strong>After High Priority:</strong> 9.2/10 (A+)<br>
+                        <strong>After Medium Priority:</strong> 9.5/10 (A+, Industry-leading)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="actions">
+            <button class="btn btn-primary" onclick="exportProgress()">💾 Export Progress (JSON)</button>
+            <button class="btn btn-secondary" onclick="importProgress()">📥 Import Progress</button>
+            <button class="btn btn-secondary" onclick="resetProgress()">🔄 Reset All</button>
+            <button class="btn btn-secondary" onclick="window.print()">🖨️ Print</button>
+        </div>
+    </div>
+
+    <script>
+        // LocalStorage key for persistence
+        const STORAGE_KEY = 'zcli_roadmap_v154';
+
+        // Initialize checkboxes and stats
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProgress();
+            updateStats();
+            attachEventListeners();
+        });
+
+        function attachEventListeners() {
+            // Attach click handlers to all todo items
+            document.querySelectorAll('.todo-item').forEach(item => {
+                const checkbox = item.querySelector('.todo-checkbox');
+                
+                // Click on item toggles checkbox
+                item.addEventListener('click', (e) => {
+                    if (e.target !== checkbox) {
+                        checkbox.checked = !checkbox.checked;
+                        toggleTodo(item);
+                    }
+                });
+
+                // Checkbox change event
+                checkbox.addEventListener('change', () => {
+                    toggleTodo(item);
+                });
+            });
+        }
+
+        function toggleTodo(item) {
+            const checkbox = item.querySelector('.todo-checkbox');
+            if (checkbox.checked) {
+                item.classList.add('completed');
+            } else {
+                item.classList.remove('completed');
+            }
+            saveProgress();
+            updateStats();
+        }
+
+        function saveProgress() {
+            const progress = {};
+            document.querySelectorAll('.todo-item').forEach(item => {
+                const id = item.dataset.id;
+                const checkbox = item.querySelector('.todo-checkbox');
+                progress[id] = checkbox.checked;
+            });
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+        }
+
+        function loadProgress() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (!saved) return;
+
+            const progress = JSON.parse(saved);
+            document.querySelectorAll('.todo-item').forEach(item => {
+                const id = item.dataset.id;
+                if (progress[id]) {
+                    const checkbox = item.querySelector('.todo-checkbox');
+                    checkbox.checked = true;
+                    item.classList.add('completed');
+                }
+            });
+        }
+
+        function updateStats() {
+            const allItems = document.querySelectorAll('.todo-item');
+            const completedItems = document.querySelectorAll('.todo-item.completed');
+            
+            const total = allItems.length;
+            const completed = completedItems.length;
+            const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+            document.getElementById('totalTasks').textContent = total;
+            document.getElementById('completedTasks').textContent = completed;
+            document.getElementById('progressPercent').textContent = percent + '%';
+
+            // Update progress bars
+            document.querySelectorAll('.progress-fill').forEach(bar => {
+                bar.style.width = percent + '%';
+            });
+        }
+
+        function exportProgress() {
+            const progress = localStorage.getItem(STORAGE_KEY);
+            if (!progress) {
+                alert('No progress to export yet!');
+                return;
+            }
+
+            const blob = new Blob([progress], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'zcli_roadmap_progress.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importProgress() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'application/json';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const progress = JSON.parse(event.target.result);
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+                        location.reload();
+                    } catch (error) {
+                        alert('Invalid progress file!');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        function resetProgress() {
+            if (confirm('Are you sure you want to reset all progress? This cannot be undone.')) {
+                localStorage.removeItem(STORAGE_KEY);
+                location.reload();
+            }
+        }
+    </script>
+</body>
+</html>
+

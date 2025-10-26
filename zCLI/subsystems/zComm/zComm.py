@@ -55,6 +55,45 @@ class zComm:
         await self._bifrost_mgr.broadcast(message, sender=sender)
 
     # ═══════════════════════════════════════════════════════════
+    # HTTP Server Management (Optional Feature)
+    # ═══════════════════════════════════════════════════════════
+
+    def create_http_server(self, port=None, host=None, serve_path=None):
+        """
+        Create HTTP static file server instance (optional feature)
+        
+        Args:
+            port: HTTP port (default: from config or 8080)
+            host: Host address (default: from config or 127.0.0.1)
+            serve_path: Directory to serve (default: from config or current directory)
+        
+        Returns:
+            zServer instance
+        """
+        from zCLI.subsystems.zServer import zServer
+        
+        # Use config values if available, otherwise use defaults
+        if hasattr(self.zcli, 'config') and hasattr(self.zcli.config, 'http_server'):
+            config = self.zcli.config.http_server
+            port = port or config.port
+            host = host or config.host
+            serve_path = serve_path or config.serve_path
+        else:
+            port = port or 8080
+            host = host or "127.0.0.1"
+            serve_path = serve_path or "."
+        
+        http_server = zServer(
+            self.logger,
+            zcli=self.zcli,
+            port=port,
+            host=host,
+            serve_path=serve_path
+        )
+        
+        return http_server
+
+    # ═══════════════════════════════════════════════════════════
     # Service Management
     # ═══════════════════════════════════════════════════════════
 

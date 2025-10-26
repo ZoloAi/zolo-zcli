@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>zServer Test Page</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 40px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #4ec9b0;
+            border-bottom: 2px solid #4ec9b0;
+            padding-bottom: 10px;
+        }
+        .test-result {
+            background: #252526;
+            border-left: 4px solid #10b981;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .pass {
+            color: #10b981;
+        }
+        .info {
+            color: #3b82f6;
+        }
+        pre {
+            background: #252526;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        a {
+            color: #569cd6;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h1>zServer Test Page</h1>
+    
+    <div class="test-result">
+        <p class="pass">✅ TEST PASSED: This page loaded successfully</p>
+        <p class="info">ℹ️ Server: zServer (Python http.server)</p>
+        <p class="info">ℹ️ Port: 8080</p>
+        <p class="info">ℹ️ Framework: zCLI</p>
+    </div>
+
+    <h2>File Serving Tests</h2>
+    <div class="test-result">
+        <p>Test the following resources:</p>
+        <ul>
+            <li><a href="demo.html">demo.html</a> - Main demo page</li>
+            <li><a href="style.css">style.css</a> - CSS stylesheet</li>
+            <li><a href="script.js">script.js</a> - JavaScript file</li>
+            <li><a href="test.html">test.html</a> - This page</li>
+        </ul>
+    </div>
+
+    <h2>Server Configuration</h2>
+    <pre>{
+    "subsystem": "zServer",
+    "port": 8080,
+    "host": "127.0.0.1",
+    "features": [
+        "Static file serving",
+        "CORS enabled",
+        "Background threading",
+        "Directory listing disabled",
+        "Zero dependencies"
+    ],
+    "status": "operational"
+}</pre>
+
+    <h2>Back to Demo</h2>
+    <p><a href="demo.html">← Return to main demo page</a></p>
+
+    <script>
+        console.log('✅ test.html loaded and JavaScript executing');
+        console.log('Server: zServer (zCLI Framework)');
+    </script>
+</body>
+</html>
+

@@ -12,6 +12,7 @@ from .config_persistence import ConfigPersistence
 from .config_logger import LoggerConfig
 from .config_session import SessionConfig
 from .config_websocket import WebSocketConfig
+from .http_server_config import HTTPServerConfig
 
 __all__ = [
     "zConfigPaths",
@@ -21,5 +22,6 @@ __all__ = [
     "LoggerConfig",
     "SessionConfig",
     "WebSocketConfig",
+    "HTTPServerConfig",
 ]
 
