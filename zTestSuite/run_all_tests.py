@@ -42,6 +42,7 @@ TEST_MODULES = [
     'zLoader',
     'zFunc',
     'zDialog',
+    'zDialog_AutoValidation',  # Week 5.2 - Auto-validation (auto-wire forms to zSchema validation rules)
     'zOpen',
     'zShell',
     'zWizard',

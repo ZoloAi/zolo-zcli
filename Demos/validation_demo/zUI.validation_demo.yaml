@@ -1,0 +1,127 @@
+# zUI.validation_demo.yaml - Demo menu showcasing zDialog auto-validation
+
+"^User Registration Demo":
+  zDisplay:
+    text: |
+      
+      ═══════════════════════════════════════════════════════════════════
+      🎯 zDialog Auto-Validation Demo (Week 5.2)
+      ═══════════════════════════════════════════════════════════════════
+      
+      This demo showcases automatic form validation against zSchema rules.
+      
+      Features:
+        ✅ Username: Pattern validation (3-20 chars, alphanumeric + underscore)
+        ✅ Email: Format validation (must be valid email)
+        ✅ Age: Range validation (18-120)
+        ✅ Phone: Format validation (10-15 digits)
+        ✅ Website: URL format validation
+        ✅ Bio: Length validation (max 200 chars)
+      
+      Try entering invalid data to see validation in action!
+      
+  zKeys:
+    "1": "^Add User (With Validation)"
+    "2": "^Add User (Invalid Data - See Errors)"
+    "3": "^Add User (Manual Entry)"
+    "4": "^View All Users"
+    "5": "^Clear Database"
+    "0": "Exit"
+
+"^Add User (With Validation)":
+  zDialog:
+    title: "User Registration (Auto-Validation Enabled)"
+    model: '@.zSchema.demo_users'  # 🎯 Auto-validation enabled!
+    fields:
+      - username
+      - email
+      - age
+      - phone
+      - website
+      - bio
+  zData:
+    action: insert
+    table: users
+    data: zConv  # Use collected form data
+  zDisplay:
+    text: |
+      
+      ✅ User registered successfully!
+      
+      The form data was automatically validated against zSchema.demo_users
+      before submission. Invalid data would have been rejected.
+
+"^Add User (Invalid Data - See Errors)":
+  zDisplay:
+    text: |
+      
+      This will demonstrate validation errors.
+      Enter invalid data to see auto-validation in action:
+      
+      Examples of invalid data:
+        - Username: "ab" (too short, needs 3-20 chars)
+        - Email: "not-an-email" (invalid format)
+        - Age: "15" (below minimum of 18)
+        - Phone: "abc" (invalid format)
+        - Website: "not-a-url" (invalid format)
+        - Bio: (text exceeding 200 characters)
+      
+  zDialog:
+    title: "User Registration (Try Invalid Data)"
+    model: '@.zSchema.demo_users'  # 🎯 Auto-validation will catch errors!
+    fields:
+      - username
+      - email
+      - age
+      - phone
+      - website
+      - bio
+  zData:
+    action: insert
+    table: users
+    data: zConv
+  zDisplay:
+    text: |
+      
+      ✅ User registered successfully!
+
+"^Add User (Manual Entry)":
+  zDialog:
+    title: "User Registration (Manual Entry)"
+    model: '@.zSchema.demo_users'
+    fields:
+      - username
+      - email
+      - age
+  zData:
+    action: insert
+    table: users
+    data: zConv
+  zDisplay:
+    text: |
+      
+      ✅ User registered!
+      
+      Username: {username}
+      Email: {email}
+      Age: {age}
+
+"^View All Users":
+  zData:
+    action: select
+    table: users
+  zDisplay:
+    event: table
+    title: "Registered Users"
+
+"^Clear Database":
+  zData:
+    action: drop_table
+    table: users
+  zDisplay:
+    text: |
+      
+      🗑️  Database cleared!
+      
+      All users have been removed. You can start fresh.
+

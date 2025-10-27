@@ -1,0 +1,56 @@
+# zSchema.demo_users.yaml - Demo schema with comprehensive validation rules
+
+Meta:
+  Data_Type: sqlite
+  Data_Path: "@"
+  Data_Label: "demo_validation"
+  Data_Paradigm: classical
+  Description: Demo schema showcasing zDialog auto-validation (Week 5.2)
+
+# User registration table with comprehensive validation
+users:
+  id:
+    type: int
+    pk: true
+  
+  username:
+    type: str
+    required: true
+    rules:
+      pattern: "^[a-zA-Z0-9_]{3,20}$"
+      pattern_message: "Username must be 3-20 characters (letters, numbers, underscore only)"
+      min_length: 3
+      max_length: 20
+  
+  email:
+    type: str
+    required: true
+    rules:
+      format: email
+      error_message: "Please enter a valid email address (e.g., user@example.com)"
+  
+  age:
+    type: int
+    rules:
+      min: 18
+      max: 120
+      error_message: "Age must be between 18 and 120"
+  
+  phone:
+    type: str
+    rules:
+      format: phone
+      error_message: "Phone must be 10-15 digits (e.g., +1234567890)"
+  
+  website:
+    type: str
+    rules:
+      format: url
+      error_message: "Website must be a valid URL (e.g., https://example.com)"
+  
+  bio:
+    type: str
+    rules:
+      max_length: 200
+      error_message: "Bio cannot exceed 200 characters"
+

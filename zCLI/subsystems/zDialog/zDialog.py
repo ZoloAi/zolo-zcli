@@ -74,6 +74,70 @@ class zDialog:
         # Add collected data to context
         zContext["zConv"] = zConv
 
+        # ──────────────────────────────────────────────────────────────────
+        # AUTO-VALIDATION (Week 5.2): Validate form data against zSchema
+        # ──────────────────────────────────────────────────────────────────
+        if model and isinstance(model, str) and model.startswith('@'):
+            self.logger.info("Auto-validation enabled (model: %s)", model)
+            
+            try:
+                # Load schema from model path
+                schema_dict = self.zcli.loader.handle(model)
+                
+                # Extract table name from model path (e.g., '@.zSchema.users' → 'users')
+                table_name = model.split('.')[-1]
+                
+                # Create DataValidator instance
+                from zCLI.subsystems.zData.zData_modules.shared.validator import DataValidator
+                validator = DataValidator(schema_dict, self.logger)
+                
+                # Validate collected form data (use validate_insert for new data)
+                is_valid, errors = validator.validate_insert(table_name, zConv)
+                
+                if not is_valid:
+                    self.logger.warning("Auto-validation failed with %d error(s)", len(errors))
+                    
+                    # Display validation errors
+                    from zCLI.subsystems.zData.zData_modules.shared.operations.helpers import display_validation_errors
+                    
+                    # Create a mock ops object with required attributes for display_validation_errors
+                    class ValidationOps:
+                        def __init__(self, zcli):
+                            self.zcli = zcli
+                            self.logger = zcli.logger
+                            self.display = zcli.display
+                    
+                    ops = ValidationOps(self.zcli)
+                    display_validation_errors(table_name, errors, ops)
+                    
+                    # For zBifrost mode, also emit WebSocket event
+                    if self.session.get('zMode') == 'zBifrost':
+                        try:
+                            self.zcli.comm.websocket.broadcast({
+                                'event': 'validation_error',
+                                'table': table_name,
+                                'errors': errors,
+                                'fields': list(errors.keys())
+                            })
+                        except Exception as ws_err:
+                            self.logger.warning("Failed to broadcast validation errors via WebSocket: %s", ws_err)
+                    
+                    # Don't proceed to onSubmit - return None to indicate validation failure
+                    self.display.zDeclare("zDialog Return (validation failed)", color=self.mycolor, indent=1, style="~")
+                    return None
+                
+                self.logger.info("[OK] Auto-validation passed for %s", table_name)
+                
+            except Exception as val_err:
+                # If auto-validation fails (schema not found, etc.), log warning but proceed
+                # This maintains backward compatibility - forms without valid models still work
+                self.logger.warning("Auto-validation error (proceeding anyway): %s", val_err)
+        
+        elif model:
+            self.logger.debug("Auto-validation skipped (model doesn't start with '@'): %s", model)
+        else:
+            self.logger.debug("Auto-validation skipped (no model specified)")
+
         # Handle submission if onSubmit provided
         try:
             if on_submit:
