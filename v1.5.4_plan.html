@@ -1980,7 +1980,7 @@
                     </div>
 
                     <div class="todo-item" data-id="week6-1-1-exceptions-traceback-integration">
-                        <input type="checkbox" class="todo-checkbox">
+                        <input type="checkbox" class="todo-checkbox" checked>
                         <div class="todo-content">
                             <div class="todo-title">Week 6.1.1: 🔗 Integrate zExceptions with zTraceback (Industry-Grade Auto-Registration)</div>
                             <div class="todo-description">
@@ -2095,6 +2095,126 @@
                                 <span class="tag">Industry-Grade</span>
                                 <span class="tag">3-4 days</span>
                                 <span class="tag" style="background: #667eea; color: white;">CRITICAL</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="week6-1-2-uninstall-refactor">
+                        <input type="checkbox" class="todo-checkbox" checked>
+                        <div class="todo-content">
+                            <div class="todo-title">Week 6.1.2: 🧹 Refactor uninstall.py (Code Quality + Architecture Fix) ✅ COMPLETE</div>
+                            <div class="todo-description">
+                                <strong>🎯 GOAL:</strong> Clean up neglected uninstall.py utility (169 lines, untouched in v1.5.4)
+                                <br><br>
+                                <strong>❌ CURRENT STATE (Audit Grade: D+):</strong>
+                                <br>&nbsp;&nbsp;• ✅ Imports: Correct (uses centralized zCLI imports)
+                                <br>&nbsp;&nbsp;• ❌ Architecture: Mixed function signatures (some take display, some take zcli)
+                                <br>&nbsp;&nbsp;• ❌ DRY: Confirmation prompt repeated 3 times (lines 93-97, 128-132, 153-157)
+                                <br>&nbsp;&nbsp;• ❌ Magic Strings: "zolo-zcli", "yes", confirmation prompt (should be constants)
+                                <br>&nbsp;&nbsp;• ⚠️ Return Values: Inconsistent (True/False vs 1 vs sys.exit())
+                                <br>&nbsp;&nbsp;• ❌ Missing: No tests, no rollback, no dry-run, no logging
+                                <br><br>
+                                <strong>✅ DESIRED STATE (After 6.1.2):</strong>
+                                <br>&nbsp;&nbsp;• Standardized function signatures (all take zcli)
+                                <br>&nbsp;&nbsp;• DRY confirmation helper function
+                                <br>&nbsp;&nbsp;• Constants for package name, dependencies, prompts
+                                <br>&nbsp;&nbsp;• Consistent return values (status codes, not sys.exit)
+                                <br>&nbsp;&nbsp;• Better error messages with actionable hints
+                                <br>&nbsp;&nbsp;• Fix subprocess imports (use centralized from zCLI)
+                                <br><br>
+                                <strong>📋 Implementation Tasks (5 steps):</strong>
+                                <br><br>
+                                <strong>1. ✅ Fix Import Issues:</strong>
+                                <br>&nbsp;&nbsp;• Change <code>import subprocess</code> (lines 10, 60) to <code>from zCLI import subprocess</code>
+                                <br>&nbsp;&nbsp;• Remove inline imports (use centralized imports)
+                                <br><br>
+                                <strong>2. ✅ Extract Constants:</strong>
+                                <br>&nbsp;&nbsp;• <code>PACKAGE_NAME = "zolo-zcli"</code>
+                                <br>&nbsp;&nbsp;• <code>OPTIONAL_DEPENDENCIES = ["pandas", "psycopg2-binary"]</code>
+                                <br>&nbsp;&nbsp;• <code>CONFIRMATION_PROMPT = "\nType 'yes' to confirm: "</code>
+                                <br>&nbsp;&nbsp;• <code>CONFIRMATION_VALUE = "yes"</code>
+                                <br><br>
+                                <strong>3. ✅ Standardize Function Signatures:</strong>
+                                <br>&nbsp;&nbsp;• <code>uninstall_package(zcli) -> bool</code> (was taking display only)
+                                <br>&nbsp;&nbsp;• <code>remove_dependencies(zcli) -> bool</code> (was taking display only)
+                                <br>&nbsp;&nbsp;• All functions now take zcli, extract display internally
+                                <br><br>
+                                <strong>4. ✅ Extract DRY Helper Function:</strong>
+                                <br>&nbsp;&nbsp;• <code>def confirm_action(display, action_description: str) -> bool</code>
+                                <br>&nbsp;&nbsp;• Replace 3 instances of confirmation code with single helper
+                                <br>&nbsp;&nbsp;• Returns True/False (no more return 1)
+                                <br><br>
+                                <strong>5. ✅ Fix Return Value Inconsistencies:</strong>
+                                <br>&nbsp;&nbsp;• <code>remove_user_data(zcli) -> bool</code> (was always returning True)
+                                <br>&nbsp;&nbsp;• <code>remove_dependencies(zcli) -> bool</code> (was always returning True)
+                                <br>&nbsp;&nbsp;• Main functions return status codes, let caller handle sys.exit()
+                                <br><br>
+                                <strong>6. ✅ Add Smoke Tests:</strong>
+                                <br>&nbsp;&nbsp;• Create <code>zTestSuite/zUninstall_Test.py</code> with 8-10 tests
+                                <br>&nbsp;&nbsp;• Test confirm_action() helper (yes/no/empty input)
+                                <br>&nbsp;&nbsp;• Test constants are used (no magic strings)
+                                <br>&nbsp;&nbsp;• Test function signatures (all take zcli)
+                                <br>&nbsp;&nbsp;• Mock subprocess.run() to avoid actual uninstalls
+                                <br>&nbsp;&nbsp;• Test error handling (pip failures, missing directories)
+                                <br>&nbsp;&nbsp;• Verify no sys.exit() calls in helper functions
+                                <br><br>
+                                <strong>🎯 Week 6.1.2 Scope (1 day):</strong>
+                                <br>&nbsp;&nbsp;1. Fix subprocess imports (centralized)
+                                <br>&nbsp;&nbsp;2. Extract constants (package name, dependencies, prompts)
+                                <br>&nbsp;&nbsp;3. Standardize function signatures (all take zcli)
+                                <br>&nbsp;&nbsp;4. Extract confirm_action() helper (DRY)
+                                <br>&nbsp;&nbsp;5. Fix return value inconsistencies
+                                <br>&nbsp;&nbsp;6. Update docstrings for clarity
+                                <br>&nbsp;&nbsp;7. Add smoke tests (8-10 tests, mock subprocess)
+                                <br><br>
+                                <strong>📊 Issues Identified (Detailed Audit):</strong>
+                                <br>&nbsp;&nbsp;• <strong>Line 10, 60:</strong> <code>import subprocess</code> should use centralized imports
+                                <br>&nbsp;&nbsp;• <strong>Lines 93-97, 128-132, 153-157:</strong> Duplicate confirmation pattern
+                                <br>&nbsp;&nbsp;• <strong>Line 14, 68:</strong> "zolo-zcli" hardcoded (should be PACKAGE_NAME)
+                                <br>&nbsp;&nbsp;• <strong>Line 62:</strong> ["pandas", "psycopg2-binary"] hardcoded (should be constant)
+                                <br>&nbsp;&nbsp;• <strong>Functions:</strong> uninstall_package(display), remove_dependencies(display) inconsistent
+                                <br>&nbsp;&nbsp;• <strong>Returns:</strong> True/False (uninstall_package), always True (remove_user_data, remove_dependencies), 1 or sys.exit() (main functions)
+                                <br><br>
+                                <strong>📊 Expected Outcomes:</strong>
+                                <br>&nbsp;&nbsp;• ✅ 15-20% code reduction (DRY violations fixed)
+                                <br>&nbsp;&nbsp;• ✅ Consistent patterns (all functions take zcli)
+                                <br>&nbsp;&nbsp;• ✅ Constants extracted (no more magic strings)
+                                <br>&nbsp;&nbsp;• ✅ Better maintainability (single source of truth)
+                                <br>&nbsp;&nbsp;• ✅ Grade improvement: D+ → B+ (production-ready)
+                                <br><br>
+                                <strong>🧪 Tests Added (8-10 comprehensive tests):</strong>
+                                <br>&nbsp;&nbsp;• <strong>TestConfirmAction (3 tests):</strong> User says "yes", "no", empty input
+                                <br>&nbsp;&nbsp;• <strong>TestConstants (2 tests):</strong> PACKAGE_NAME used, OPTIONAL_DEPENDENCIES used
+                                <br>&nbsp;&nbsp;• <strong>TestFunctionSignatures (2 tests):</strong> All functions accept zcli parameter
+                                <br>&nbsp;&nbsp;• <strong>TestUninstallPackage (2 tests):</strong> Success (returncode 0), failure (returncode 1)
+                                <br>&nbsp;&nbsp;• <strong>TestRemoveDependencies (2 tests):</strong> Success count, failure handling
+                                <br>&nbsp;&nbsp;• <strong>TestErrorHandling (2 tests):</strong> subprocess exception, missing directories
+                                <br>&nbsp;&nbsp;• File: <code>zTestSuite/zUninstall_Test.py</code>
+                                <br>&nbsp;&nbsp;• Integration: <code>zTestSuite/run_all_tests.py</code>
+                                <br><br>
+                                <strong>⏳ Deferred (Future Enhancement):</strong>
+                                <br>&nbsp;&nbsp;• Rollback/recovery (if uninstall fails midway)
+                                <br>&nbsp;&nbsp;• Dry-run mode (preview before delete)
+                                <br>&nbsp;&nbsp;• Logging (persistent record of uninstall)
+                                <br>&nbsp;&nbsp;• Path validation (check exists before remove)
+                                <br><br>
+                                <strong>📁 Files to Create/Modify:</strong>
+                                <br>&nbsp;&nbsp;• <code>zCLI/utils/uninstall.py</code> - Main refactor (169 lines → ~140 lines after DRY fix)
+                                <br>&nbsp;&nbsp;• <code>zTestSuite/zUninstall_Test.py</code> - New test file (8-10 tests)
+                                <br>&nbsp;&nbsp;• <code>zTestSuite/run_all_tests.py</code> - Add 'zUninstall' to TEST_SUITES list
+                                <br><br>
+                                <strong>🏆 Why This Matters:</strong>
+                                <br>&nbsp;&nbsp;• Week 6 is architecture polish (uninstall.py was neglected)
+                                <br>&nbsp;&nbsp;• DRY violations are technical debt (fix now before it spreads)
+                                <br>&nbsp;&nbsp;• Inconsistent patterns hurt maintainability (standardize everything)
+                                <br>&nbsp;&nbsp;• This is A+ territory work (clean up ALL utilities, not just new features)
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Week 6</span>
+                                <span class="tag">Utils</span>
+                                <span class="tag">Code Quality</span>
+                                <span class="tag">1 day</span>
+                                <span class="tag" style="background: #f6ad55; color: white;">REFACTOR</span>
                             </div>
                         </div>
                     </div>

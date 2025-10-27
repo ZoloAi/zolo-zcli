@@ -49,6 +49,8 @@ TEST_MODULES = [
     'zUtils',
     'zTraceback',  # Traceback handling and interactive error UI (v1.5.3)
     'zExceptions',  # Week 4.3 - Actionable error messages with context-aware hints
+    'zExceptions_Traceback_Integration',  # Week 6.1.1 - Auto-registration with zTraceback (industry-grade)
+    'zUninstall',  # Week 6.1.2 - Uninstall utilities (refactored for code quality + architecture)
     'zData',
     'zData_Validation',  # Week 5.1 - Comprehensive validation tests (pattern, format, min/max, error messages)
     'zData_PluginValidation',  # Week 5.4 - Plugin validator tests (layered validation, augment not replace)

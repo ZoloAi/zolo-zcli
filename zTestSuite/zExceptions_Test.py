@@ -36,7 +36,7 @@ class TestBaseException(unittest.TestCase):
         """Test exception includes hint in message."""
         exc = zCLIException("Error occurred", hint="Try this fix")
         self.assertIn("Error occurred", str(exc))
-        self.assertIn("💡 Try this fix", str(exc))
+        self.assertIn("HINT: Try this fix", str(exc))  # Week 6.1: Emoji removed for terminal compatibility
     
     def test_exception_with_context(self):
         """Test context is stored but not in message."""
@@ -63,7 +63,7 @@ class TestSchemaNotFoundError(unittest.TestCase):
         # Check Python-specific hint
         self.assertIn("z.loader.handle('@.zSchema.users')", error_msg)
         self.assertIn("zSchema.users.yaml", error_msg)
-        self.assertIn("💡", error_msg)
+        self.assertIn("HINT:", error_msg)  # Week 6.1: Emoji removed
     
     def test_yaml_zdata_context(self):
         """Test error message for YAML zData context."""
@@ -173,8 +173,8 @@ class TestInvalidzPathError(unittest.TestCase):
         error_msg = str(exc)
         
         # Should show examples of correct and incorrect
-        self.assertIn("❌", error_msg)
-        self.assertIn("✅", error_msg)
+        self.assertIn("WRONG:", error_msg)  # Week 6.1: Replaced ❌
+        self.assertIn("RIGHT:", error_msg)  # Week 6.1: Replaced ✅
         self.assertIn("Don't include .yaml", error_msg)
 
 
@@ -210,7 +210,7 @@ class TestDatabaseNotInitializedError(unittest.TestCase):
         error_msg = str(exc)
         
         self.assertIn("INSERT before CREATE", error_msg)
-        self.assertIn("⚠️", error_msg)
+        self.assertIn("WARNING:", error_msg)  # Week 6.1: Replaced ⚠️
 
 
 class TestTableNotFoundError(unittest.TestCase):
@@ -499,8 +499,8 @@ class TestzMachinePathError(unittest.TestCase):
             )
         
         error_msg = str(cm.exception)
-        self.assertIn('Data_Path: "zMachine"  # ✅ Correct', error_msg)
-        self.assertIn('NOT: "zMachine." ❌', error_msg)
+        self.assertIn('Data_Path: "zMachine"  # Correct', error_msg)  # Week 6.1: Emoji removed
+        self.assertIn('NOT: "zMachine."', error_msg)  # Week 6.1: Emoji removed
         self.assertIn('zVaFile: "zMachine.zSchema.users"', error_msg)
     
     def test_resolved_path_shown(self):
@@ -515,11 +515,11 @@ class TestzMachinePathError(unittest.TestCase):
         
         error_msg = str(cm.exception)
         self.assertIn("zMachine.zSchema.users", error_msg)
-        self.assertIn("→", error_msg)  # Shows arrow to resolved path
+        self.assertIn("->", error_msg)  # Week 6.1: Arrow replaced with ASCII
         self.assertIn("users.yaml", error_msg)
     
     def test_actionable_hint_present(self):
-        """Test that the 💡 actionable hint is present."""
+        """Test that the actionable hint is present."""  # Week 6.1: Updated test description
         with self.assertRaises(zMachinePathError) as cm:
             raise zMachinePathError(
                 zpath="zMachine.zSchema.users",
@@ -528,7 +528,7 @@ class TestzMachinePathError(unittest.TestCase):
             )
         
         error_msg = str(cm.exception)
-        self.assertIn("💡", error_msg)  # Emoji hint indicator
+        self.assertIn("HINT:", error_msg)  # Week 6.1: Text hint indicator
 
 
 class TestExceptionHierarchy(unittest.TestCase):

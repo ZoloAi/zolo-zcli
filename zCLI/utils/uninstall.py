@@ -3,15 +3,46 @@
 
 """zCLI uninstall utilities - Walker UI only, no backward compatibility."""
 
-from zCLI import sys, shutil
+from zCLI import sys, shutil, subprocess
 
-def uninstall_package(display):
-    """Uninstall zolo-zcli package via pip."""
-    import subprocess
+# Constants
+PACKAGE_NAME = "zolo-zcli"
+OPTIONAL_DEPENDENCIES = ["pandas", "psycopg2-binary"]
+CONFIRMATION_PROMPT = "\nType 'yes' to confirm: "
+CONFIRMATION_VALUE = "yes"
+
+
+def confirm_action(display, action_description: str = None) -> bool:  # pylint: disable=unused-argument
+    """Helper to get user confirmation for destructive actions.
+    
+    Args:
+        display: zDisplay instance for user interaction
+        action_description: Description of the action (reserved for future logging)
+    
+    Returns:
+        True if user confirms, False otherwise
+    """
+    response = display.read_string(CONFIRMATION_PROMPT).strip().lower()
+    if response != CONFIRMATION_VALUE:
+        display.error("Cancelled", indent=1)
+        return False
+    return True
+
+
+def uninstall_package(zcli) -> bool:
+    """Uninstall zolo-zcli package via pip.
+    
+    Args:
+        zcli: zCLI instance
+    
+    Returns:
+        True if successful, False otherwise
+    """
+    display = zcli.display
     
     try:
         result = subprocess.run(
-            [sys.executable, "-m", "pip", "uninstall", "zolo-zcli", "-y"],
+            [sys.executable, "-m", "pip", "uninstall", PACKAGE_NAME, "-y"],
             capture_output=True,
             text=True,
             check=False
@@ -20,20 +51,28 @@ def uninstall_package(display):
         if result.returncode == 0:
             display.success("Package removed", indent=1)
             return True
-        else:
-            display.error(f"Package removal failed: {result.stderr}", indent=1)
-            return False
+        
+        display.error(f"Package removal failed: {result.stderr}", indent=1)
+        return False
             
     except Exception as e:  # pylint: disable=broad-except
         display.error(f"Package removal error: {e}", indent=1)
         return False
 
 
-def remove_user_data(zcli):
-    """Remove all user data directories (config, data, cache)."""
+def remove_user_data(zcli) -> bool:
+    """Remove all user data directories (config, data, cache).
+    
+    Args:
+        zcli: zCLI instance
+    
+    Returns:
+        True if at least one directory was removed, False if all failed
+    """
     display = zcli.display
     paths = zcli.config.sys_paths
     removed_count = 0
+    failed_count = 0
     
     dirs_to_remove = [
         ("Config", paths.user_config_dir),
@@ -48,21 +87,28 @@ def remove_user_data(zcli):
                 removed_count += 1
             except Exception as e:  # pylint: disable=broad-except
                 display.error(f"{name} removal failed: {e}", indent=1)
+                failed_count += 1
     
     if removed_count > 0:
         display.success(f"User data removed ({removed_count} directories)", indent=1)
     
-    return True
+    # Return True if we removed at least one directory successfully
+    return removed_count > 0
 
 
-def remove_dependencies(display):
-    """Remove zCLI optional dependencies (pandas, psycopg2)."""
-    import subprocess
+def remove_dependencies(zcli) -> bool:
+    """Remove zCLI optional dependencies (pandas, psycopg2).
     
-    dependencies_to_remove = ["pandas", "psycopg2-binary"]
+    Args:
+        zcli: zCLI instance
+    
+    Returns:
+        True if at least one dependency was removed, False if all failed
+    """
+    display = zcli.display
     removed_count = 0
     
-    for dep in dependencies_to_remove:
+    for dep in OPTIONAL_DEPENDENCIES:
         try:
             result = subprocess.run(
                 [sys.executable, "-m", "pip", "uninstall", dep, "-y"],
@@ -80,39 +126,51 @@ def remove_dependencies(display):
     if removed_count > 0:
         display.success(f"Dependencies removed ({removed_count} packages)", indent=1)
     
-    return True
+    # Return True if we removed at least one dependency successfully
+    return removed_count > 0
 
 
 def uninstall_clean(zcli):
-    """Clean uninstall: Remove EVERYTHING (package + data + dependencies)."""
+    """Clean uninstall: Remove EVERYTHING (package + data + dependencies).
+    
+    Args:
+        zcli: zCLI instance
+    
+    Returns:
+        0 if successful, 1 if failed (caller should handle sys.exit)
+    """
     display = zcli.display
     
     display.zDeclare("Clean Uninstall", color="MAIN", indent=0, style="full")
     display.warning("Removes EVERYTHING - package, data, dependencies", indent=1)
     
-    response = display.read_string("\nType 'yes' to confirm: ").strip().lower()
-    
-    if response != "yes":
-        display.error("Cancelled", indent=1)
+    if not confirm_action(display, "clean uninstall"):
         return 1
     
     # Remove in order: data -> dependencies -> package
     data_removed = remove_user_data(zcli)
-    deps_removed = remove_dependencies(display)
-    package_removed = uninstall_package(display)
+    deps_removed = remove_dependencies(zcli)
+    package_removed = uninstall_package(zcli)
     
     display.zDeclare("", color="MAIN", indent=0, style="full")
     
     if package_removed and data_removed and deps_removed:
         display.success("Complete removal successful", indent=1)
         sys.exit(0)
-    else:
-        display.warning("Completed with errors", indent=1)
-        sys.exit(1)
+    
+    display.warning("Completed with errors", indent=1)
+    sys.exit(1)
 
 
 def uninstall_framework_only(zcli):
-    """Framework-only uninstall: Remove package, keep data + dependencies."""
+    """Framework-only uninstall: Remove package, keep data + dependencies.
+    
+    Args:
+        zcli: zCLI instance
+    
+    Returns:
+        0 if successful, 1 if failed (caller should handle sys.exit)
+    """
     display = zcli.display
     paths = zcli.config.sys_paths
     
@@ -125,38 +183,39 @@ def uninstall_framework_only(zcli):
         f"Cache:  {paths.user_cache_dir}"
     ], style="bullet", indent=2)
     
-    response = display.read_string("\nType 'yes' to confirm: ").strip().lower()
-    
-    if response != "yes":
-        display.error("Cancelled", indent=1)
+    if not confirm_action(display, "framework-only uninstall"):
         return 1
     
-    package_removed = uninstall_package(display)
+    package_removed = uninstall_package(zcli)
     
     display.zDeclare("", color="MAIN", indent=0, style="full")
     
     if package_removed:
         display.success("Framework removed - data preserved", indent=1)
         sys.exit(0)
-    else:
-        display.error("Removal failed", indent=1)
-        sys.exit(1)
+    
+    display.error("Removal failed", indent=1)
+    sys.exit(1)
 
 
 def uninstall_dependencies(zcli):
-    """Dependencies-only uninstall: Remove optional dependencies only."""
+    """Dependencies-only uninstall: Remove optional dependencies only.
+    
+    Args:
+        zcli: zCLI instance
+    
+    Returns:
+        0 (always successful, caller should handle sys.exit)
+    """
     display = zcli.display
     
     display.zDeclare("Dependencies Only", color="MAIN", indent=0, style="full")
     display.warning("Removes pandas and psycopg2 - may affect other apps", indent=1)
     
-    response = display.read_string("\nType 'yes' to confirm: ").strip().lower()
-    
-    if response != "yes":
-        display.error("Cancelled", indent=1)
+    if not confirm_action(display, "dependencies-only uninstall"):
         return 1
     
-    deps_removed = remove_dependencies(display)
+    deps_removed = remove_dependencies(zcli)
     
     display.zDeclare("", color="MAIN", indent=0, style="full")
     
@@ -165,4 +224,3 @@ def uninstall_dependencies(zcli):
         display.info("Reinstall: pip install 'zolo-zcli[csv,postgresql]'", indent=1)
     
     sys.exit(0)
-

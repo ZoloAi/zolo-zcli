@@ -4,7 +4,26 @@
 
 import signal
 import sys
+import contextvars
 from zCLI.utils.zTraceback import ExceptionContext
+
+# Global context variable for current zCLI instance (thread-safe, async-safe)
+# Follows Django/Flask/FastAPI pattern for request/application context
+_current_zcli: contextvars.ContextVar = contextvars.ContextVar('current_zcli', default=None)
+
+
+def get_current_zcli():
+    """Get the current zCLI instance (thread-safe).
+    
+    Returns:
+        zCLI instance or None if not in a zCLI context.
+    
+    Usage:
+        zcli = get_current_zcli()
+        if zcli:
+            zcli.display.info("Using current zCLI context")
+    """
+    return _current_zcli.get()
 
 class zCLI:
     """Core zCLI Engine managing all subsystems 
@@ -25,6 +44,10 @@ class zCLI:
         # Shutdown coordination
         self._shutdown_requested = False
         self._shutdown_in_progress = False
+        
+        # Register this instance as current context (thread-safe)
+        # Enables automatic exception registration for zExceptions
+        _current_zcli.set(self)
 
         # ─────────────────────────────────────────────────────────────
         # Layer 0: Foundation
@@ -344,3 +367,13 @@ class zCLI:
         self.logger.info("[Shutdown] Graceful shutdown complete")
         
         return cleanup_status
+    
+    def __enter__(self):
+        """Context manager entry - register this instance as current."""
+        _current_zcli.set(self)
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Context manager exit - clear current instance."""
+        _current_zcli.set(None)
+        return False  # Don't suppress exceptions
