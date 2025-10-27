@@ -4,6 +4,9 @@
 import sys
 import time
 import threading
+import asyncio
+import json
+import uuid
 from contextlib import contextmanager
 
 
@@ -13,6 +16,8 @@ class Widgets:
     Provides:
     - progress_bar: Visual progress indicator with percentage and ETA
     - spinner: Animated loading spinner (context manager)
+    
+    Supports both Terminal mode and zBifrost (WebSocket) mode.
     """
 
     def __init__(self, display_instance):
@@ -32,12 +37,47 @@ class Widgets:
             "bouncingBall": ["⠁", "⠂", "⠄", "⠂"],
             "simple": [".", "..", "...", ""],
         }
+        
+        # Track active progress bars/spinners by ID (for zBifrost mode)
+        self._active_progress = {}
+        self._active_spinners = {}
+
+    def _is_bifrost_mode(self):
+        """Check if running in zBifrost (WebSocket) mode."""
+        if not self.display or not hasattr(self.display, 'mode'):
+            return False
+        return self.display.mode == "zBifrost"
+    
+    def _emit_websocket_event(self, event_data):
+        """Emit a WebSocket event for zBifrost mode."""
+        if not self._is_bifrost_mode():
+            return
+        
+        try:
+            zcli = self.display.zcli
+            if not zcli or not hasattr(zcli, 'comm'):
+                return
+            
+            # Send via zComm's WebSocket broadcast
+            if hasattr(zcli.comm, 'broadcast_websocket'):
+                try:
+                    loop = asyncio.get_running_loop()
+                    asyncio.run_coroutine_threadsafe(
+                        zcli.comm.broadcast_websocket(json.dumps(event_data)),
+                        loop
+                    )
+                except RuntimeError:
+                    # No running event loop - skip broadcast
+                    pass
+        except Exception:
+            # Silently fail in case of WebSocket issues
+            pass
 
     def progress_bar(self, current, total=None, label="Processing", 
                      width=50, show_percentage=True, show_eta=False,
                      start_time=None, color=None):
         """
-        Display a progress bar for Terminal mode.
+        Display a progress bar (Terminal + zBifrost mode).
         
         Args:
             current: Current progress value (int)
@@ -55,6 +95,36 @@ class Widgets:
         Example:
             Processing files [████████████░░░░░░░] 60% (ETA: 2m 30s)
         """
+        # Generate unique ID for this progress bar (use label as key)
+        progress_id = f"progress_{label.replace(' ', '_')}"
+        
+        # Calculate ETA string if requested
+        eta_str = None
+        if show_eta and start_time and current > 0 and total and total > 0:
+            elapsed = time.time() - start_time
+            rate = current / elapsed
+            remaining = (total - current) / rate if rate > 0 else 0
+            eta_str = self._format_time(remaining)
+        
+        # zBifrost mode - emit WebSocket event
+        if self._is_bifrost_mode():
+            event_data = {
+                "event": "progress_bar" if current < total else "progress_complete",
+                "progressId": progress_id,
+                "current": current,
+                "total": total,
+                "label": label,
+                "showPercentage": show_percentage,
+                "showETA": show_eta,
+                "eta": eta_str,
+                "color": color,
+                "container": "#app"  # Default container
+            }
+            self._emit_websocket_event(event_data)
+            self._active_progress[progress_id] = event_data
+            return f"{label}: {current}/{total}" if total else label
+        
+        # Terminal mode - render to console
         # Indeterminate mode (spinner)
         if total is None or total == 0:
             spinner_frame = self._spinner_styles["dots"][int(time.time() * 10) % 10]
@@ -83,11 +153,7 @@ class Widgets:
             output_parts.append(f"{percentage}%")
         
         # Add ETA
-        if show_eta and start_time and current > 0:
-            elapsed = time.time() - start_time
-            rate = current / elapsed
-            remaining = (total - current) / rate if rate > 0 else 0
-            eta_str = self._format_time(remaining)
+        if eta_str:
             output_parts.append(f"(ETA: {eta_str})")
         
         # Join and render
@@ -118,7 +184,7 @@ class Widgets:
     @contextmanager
     def spinner(self, label="Loading", style="dots"):
         """
-        Context manager for animated loading spinner.
+        Context manager for animated loading spinner (Terminal + zBifrost mode).
         
         Args:
             label: Text to show (str)
@@ -134,6 +200,36 @@ class Widgets:
             Loading data ⠙
             Loading data ⠹
         """
+        # Generate unique ID for this spinner
+        spinner_id = f"spinner_{label.replace(' ', '_')}_{str(uuid.uuid4())[:8]}"
+        
+        # zBifrost mode - emit WebSocket events
+        if self._is_bifrost_mode():
+            # Start spinner
+            start_event = {
+                "event": "spinner_start",
+                "spinnerId": spinner_id,
+                "label": label,
+                "style": style,
+                "container": "#app"  # Default container
+            }
+            self._emit_websocket_event(start_event)
+            self._active_spinners[spinner_id] = start_event
+            
+            try:
+                yield  # Execute the context block
+            finally:
+                # Stop spinner
+                stop_event = {
+                    "event": "spinner_stop",
+                    "spinnerId": spinner_id
+                }
+                self._emit_websocket_event(stop_event)
+                if spinner_id in self._active_spinners:
+                    del self._active_spinners[spinner_id]
+            return
+        
+        # Terminal mode - animated spinner
         # Get spinner frames
         frames = self._spinner_styles.get(style, self._spinner_styles["dots"])
         

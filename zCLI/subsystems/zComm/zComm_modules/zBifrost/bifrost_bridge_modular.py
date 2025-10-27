@@ -433,6 +433,42 @@ class zBifrost:
             # Always mark as not running after shutdown attempt
             self._running = False
             self.logger.info("[zBifrost] Shutdown complete")
+    
+    def _sync_shutdown(self):
+        """
+        Synchronous shutdown for when event loop is already running.
+        
+        This is called from zCLI.shutdown() when the event loop is active
+        and we can't use async/await. Does minimal cleanup to free the port.
+        
+        Note: This skips sending shutdown notifications to clients and just
+        forcefully closes connections and releases the port.
+        """
+        if not self._running:
+            return
+        
+        self.logger.info("[zBifrost] Synchronous shutdown (loop running)...")
+        
+        try:
+            # Clear client lists (no async send needed)
+            if self.clients:
+                self.logger.info(f"[zBifrost] Forcefully closing {len(self.clients)} connections...")
+                self.clients.clear()
+                self.auth.authenticated_clients.clear()
+            
+            # Close server synchronously
+            if self.server:
+                try:
+                    self.server.close()
+                    self.logger.info("[zBifrost] Server closed (sync)")
+                except Exception as e:
+                    self.logger.warning(f"[zBifrost] Sync close error: {e}")
+                finally:
+                    self.server = None
+        
+        finally:
+            self._running = False
+            self.logger.info("[zBifrost] Sync shutdown complete")
 
 
 # ─────────────────────────────────────────────────────────────

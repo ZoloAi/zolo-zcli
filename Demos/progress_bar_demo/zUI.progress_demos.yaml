@@ -1,0 +1,73 @@
+ProgressDemoMenu:
+  ~Root*: 
+    - "^Run All Demos"
+    - "^1. Basic Progress Bar"
+    - "^2. Progress with ETA"
+    - "^3. Colored Progress Bars"
+    - "^4. Loading Spinners"
+    - "^5. Progress Iterator"
+    - "^6. Indeterminate Progress"
+    - "^7. Via handle() Method"
+    - "^8. Real-World Migration"
+    - "stop"
+  
+  "^Run All Demos":
+    _progress:
+      enabled: true
+      label: "Running all widget demos"
+      style: "spinner"
+    zFunc: "&progress_demos.run_all()"
+  
+  "^1. Basic Progress Bar":
+    _progress:
+      enabled: true
+      label: "Demo 1: Basic Progress Bar"
+    zFunc: "&progress_demos.demo_basic_progress_bar()"
+  
+  "^2. Progress with ETA":
+    _progress:
+      enabled: true
+      label: "Demo 2: Progress with ETA"
+      show_eta: true
+    zFunc: "&progress_demos.demo_progress_with_eta()"
+  
+  "^3. Colored Progress Bars":
+    _progress:
+      enabled: true
+      label: "Demo 3: Colored Progress Bars"
+    zFunc: "&progress_demos.demo_colored_progress_bar()"
+  
+  "^4. Loading Spinners":
+    _progress:
+      enabled: true
+      label: "Demo 4: Loading Spinners"
+      style: "spinner"
+    zFunc: "&progress_demos.demo_spinner_context_manager()"
+  
+  "^5. Progress Iterator":
+    _progress:
+      enabled: true
+      label: "Demo 5: Progress Iterator"
+      show_eta: true
+    zFunc: "&progress_demos.demo_progress_iterator()"
+  
+  "^6. Indeterminate Progress":
+    _progress:
+      enabled: true
+      label: "Demo 6: Indeterminate Progress"
+      style: "spinner"
+    zFunc: "&progress_demos.demo_indeterminate_progress()"
+  
+  "^7. Via handle() Method":
+    _progress:
+      enabled: true
+      label: "Demo 7: Via handle() (zBifrost compatible)"
+    zFunc: "&progress_demos.demo_via_handle_method()"
+  
+  "^8. Real-World Migration":
+    _progress:
+      enabled: true
+      label: "Demo 8: Real-World Migration"
+      show_eta: true
+    zFunc: "&progress_demos.demo_real_world_migration()"
+

@@ -171,7 +171,86 @@
         list: () => Object.keys(this.hooks.hooks)
       };
 
+      // Register default widget hooks (Week 4.2)
+      this._registerDefaultWidgetHooks();
+
       this.logger.log('BifrostClient initialized', { url: this.url, options: this.options });
+    }
+
+    /**
+     * Register default hooks for widget events (Week 4.2)
+     * These can be overridden by user-provided hooks
+     */
+    _registerDefaultWidgetHooks() {
+      // Only register if user hasn't provided custom hooks
+      if (!this.hooks.has('onProgressBar')) {
+        this.hooks.register('onProgressBar', (message) => {
+          this._ensureRenderer().then(renderer => {
+            renderer.renderProgressBar(
+              message.progressId,
+              message.current,
+              message.total,
+              {
+                label: message.label,
+                color: message.color,
+                showPercentage: message.showPercentage,
+                showETA: message.showETA,
+                eta: message.eta
+              },
+              message.container || '#app'
+            );
+          });
+        });
+      }
+
+      if (!this.hooks.has('onProgressUpdate')) {
+        this.hooks.register('onProgressUpdate', (message) => {
+          this._ensureRenderer().then(renderer => {
+            renderer.updateProgress(
+              message.progressId,
+              message.current,
+              { eta: message.eta },
+              message.container || '#app'
+            );
+          });
+        });
+      }
+
+      if (!this.hooks.has('onProgressComplete')) {
+        this.hooks.register('onProgressComplete', (message) => {
+          this._ensureRenderer().then(renderer => {
+            renderer.removeProgress(
+              message.progressId,
+              message.container || '#app'
+            );
+          });
+        });
+      }
+
+      if (!this.hooks.has('onSpinnerStart')) {
+        this.hooks.register('onSpinnerStart', (message) => {
+          this._ensureRenderer().then(renderer => {
+            renderer.renderSpinner(
+              message.spinnerId,
+              message.label,
+              message.style || 'dots',
+              {},
+              message.container || '#app'
+            );
+          });
+        });
+      }
+
+      if (!this.hooks.has('onSpinnerStop')) {
+        this.hooks.register('onSpinnerStop', (message) => {
+          this._ensureRenderer().then(renderer => {
+            renderer.removeSpinner(
+              message.spinnerId,
+              message.container || '#app'
+            );
+          });
+        });
+      }
     }
 
     /**

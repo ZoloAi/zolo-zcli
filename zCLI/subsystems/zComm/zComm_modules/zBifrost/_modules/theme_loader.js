@@ -36,7 +36,9 @@ export class ThemeLoader {
       'css/zPanels.css',
       'css/zSpacing.css',
       'css/zEffects.css',
-      'css/zDashboard.css'
+      'css/zDashboard.css',
+      'css/zProgress.css',     // Week 4.2: Progress bar widgets
+      'css/zSpinner.css'       // Week 4.2: Spinner widgets
     ];
 
     cssFiles.forEach(file => {
@@ -62,7 +64,8 @@ export class ThemeLoader {
     // Try to detect from current script location
     const scripts = document.getElementsByTagName('script');
     for (let script of scripts) {
-      if (script.src && script.src.includes('bifrost_client.js')) {
+      // Match both bifrost_client.js and bifrost_client_modular.js
+      if (script.src && script.src.includes('bifrost_client')) {
         // Extract base path and navigate to zTheme
         const basePath = script.src.substring(0, script.src.lastIndexOf('/'));
         return basePath.replace(

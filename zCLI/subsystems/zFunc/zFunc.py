@@ -84,6 +84,8 @@ class zFunc:
 
     def _execute_function(self, func, args):
         """Execute function with optional session/zcli injection."""
+        import asyncio
+        
         sig = inspect.signature(func)
         kwargs = {}
 
@@ -105,12 +107,32 @@ class zFunc:
         # Execute with injected kwargs
         if kwargs:
             try:
-                return func(*args, **kwargs)
+                result = func(*args, **kwargs)
             except TypeError as e:
                 self.logger.warning("Failed to inject parameters: %s", e)
-                return func(*args)
-
-        return func(*args)
+                result = func(*args)
+        else:
+            result = func(*args)
+        
+        # Handle async functions (coroutines)
+        if asyncio.iscoroutine(result):
+            self.logger.debug("Function returned coroutine - awaiting in event loop")
+            try:
+                # Check if event loop is already running (zBifrost mode)
+                loop = asyncio.get_running_loop()
+                self.logger.debug("Event loop is running - using run_coroutine_threadsafe")
+                
+                # Use run_coroutine_threadsafe to execute coroutine from sync context
+                import concurrent.futures
+                future = asyncio.run_coroutine_threadsafe(result, loop)
+                return future.result(timeout=300)  # 5 min timeout
+                
+            except RuntimeError:
+                # No event loop running - use asyncio.run (Terminal mode)
+                self.logger.debug("No running event loop - using asyncio.run()")
+                return asyncio.run(result)
+        
+        return result
 
     def _display_result(self, result):
         """Display function result with styling."""

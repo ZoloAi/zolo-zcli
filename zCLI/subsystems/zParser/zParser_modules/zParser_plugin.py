@@ -103,7 +103,7 @@ def resolve_plugin_invocation(value, zcli):
         zcli.logger.debug("Plugin cache HIT: %s", plugin_name)
         func = _get_function_from_module(cached_module, function_name, plugin_name)
         args, kwargs = _parse_arguments(args_str)
-        return _execute_function(func, args, kwargs, value)
+        return _execute_function(func, args, kwargs, value, zcli)
     
     # Step 3: Cache miss - search and load
     zcli.logger.debug("Plugin cache MISS: %s (searching...)", plugin_name)
@@ -130,7 +130,7 @@ def resolve_plugin_invocation(value, zcli):
             # Execute function
             func = _get_function_from_module(module, function_name, plugin_name)
             args, kwargs = _parse_arguments(args_str)
-            return _execute_function(func, args, kwargs, value)
+            return _execute_function(func, args, kwargs, value, zcli)
             
         except FileNotFoundError:
             continue
@@ -236,15 +236,16 @@ def _get_function_from_module(module, function_name, plugin_name):
     return func
 
 
-def _execute_function(func, args, kwargs, original_value):
+def _execute_function(func, args, kwargs, original_value, zcli):
     """
-    Execute plugin function with error handling.
+    Execute plugin function with error handling, zcli injection, and async support.
     
     Args:
         func: Callable function
         args: Positional arguments
         kwargs: Keyword arguments
         original_value: Original invocation string for error messages
+        zcli: zCLI instance for dependency injection
         
     Returns:
         Result of function execution
@@ -252,8 +253,39 @@ def _execute_function(func, args, kwargs, original_value):
     Raises:
         ValueError: If execution fails
     """
+    import inspect
+    import asyncio
+    
     try:
-        return func(*args, **kwargs)
+        # Auto-inject zcli if function accepts it
+        sig = inspect.signature(func)
+        if 'zcli' in sig.parameters:
+            zcli.logger.debug("Auto-injecting zcli instance to plugin function")
+            kwargs['zcli'] = zcli
+        
+        # Execute function
+        result = func(*args, **kwargs)
+        
+        # Handle async functions (coroutines)
+        if asyncio.iscoroutine(result):
+            zcli.logger.debug("Plugin function returned coroutine - awaiting in event loop")
+            try:
+                # Check if event loop is already running (zBifrost mode)
+                loop = asyncio.get_running_loop()
+                zcli.logger.debug("Event loop is running - using run_coroutine_threadsafe")
+                
+                # Use run_coroutine_threadsafe to execute coroutine from sync context
+                import concurrent.futures
+                future = asyncio.run_coroutine_threadsafe(result, loop)
+                return future.result(timeout=300)  # 5 min timeout
+                
+            except RuntimeError:
+                # No event loop running - use asyncio.run (Terminal mode)
+                zcli.logger.debug("No running event loop - using asyncio.run()")
+                return asyncio.run(result)
+        
+        return result
+        
     except TypeError as e:
         raise ValueError(
             f"Plugin function call failed: {original_value}\n"

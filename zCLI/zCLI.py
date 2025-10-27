@@ -257,15 +257,23 @@ class zCLI:
                     # For async shutdown, we need to handle it properly
                     import asyncio
                     try:
-                        # Get or create event loop
+                        # Check if event loop is already running
                         try:
                             loop = asyncio.get_running_loop()
+                            # Loop is running - we can't use run_until_complete
+                            # Call the internal synchronous cleanup method instead
+                            if hasattr(self.comm.websocket, '_sync_shutdown'):
+                                self.comm.websocket._sync_shutdown()
+                            else:
+                                # Fallback: schedule shutdown and continue
+                                self.logger.warning("[Shutdown] Async shutdown skipped (loop running)")
                         except RuntimeError:
+                            # No running loop - create one and run shutdown
                             loop = asyncio.new_event_loop()
                             asyncio.set_event_loop(loop)
+                            loop.run_until_complete(self.comm.websocket.shutdown())
+                            loop.close()
                         
-                        # Run shutdown coroutine
-                        loop.run_until_complete(self.comm.websocket.shutdown())
                         cleanup_status['websocket'] = True
                     except Exception as e:
                         self.logger.warning(f"[Shutdown] WebSocket cleanup error: {e}")

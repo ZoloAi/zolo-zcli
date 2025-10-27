@@ -51,8 +51,29 @@ class CommandLauncher:
         if zHorizontal.startswith("zRead("):
             return self._handle_read_string(zHorizontal, context)
 
-        # Plain string - in zBifrost mode, return as display message
+        # Plain string - try to resolve from zUI in zBifrost mode
         if context and context.get("mode") == "zBifrost":
+            # Attempt to look up the key in the zUI file
+            zVaFile = self.zcli.zspark_obj.get("zVaFile")
+            zBlock = self.zcli.zspark_obj.get("zBlock", "root")
+            
+            if zVaFile and zBlock:
+                try:
+                    raw_zFile = self.zcli.loader.handle(zVaFile)
+                    if raw_zFile and zBlock in raw_zFile:
+                        block_dict = raw_zFile[zBlock]
+                        # Look up the key in the block
+                        if zHorizontal in block_dict:
+                            resolved_value = block_dict[zHorizontal]
+                            self.logger.info(f"[zBifrost] Resolved key '{zHorizontal}' from zUI to: {resolved_value}")
+                            # Recursively launch with the resolved value (could be dict with zFunc)
+                            return self.launch(resolved_value, context=context, walker=walker)
+                        else:
+                            self.logger.info(f"[zBifrost] Key '{zHorizontal}' not found in zUI block '{zBlock}'")
+                except Exception as e:
+                    self.logger.warning(f"[zBifrost] Error resolving key from zUI: {e}")
+            
+            # If we couldn't resolve it, return as display message
             self.logger.info("Plain string in zBifrost mode - returning as message")
             return {"message": zHorizontal}
         

@@ -61,6 +61,33 @@ export class MessageHandler {
         return;
       }
 
+      // Progress bar events
+      if (message.event === 'progress_bar') {
+        this.hooks.call('onProgressBar', message);
+        return;
+      }
+
+      if (message.event === 'progress_update') {
+        this.hooks.call('onProgressUpdate', message);
+        return;
+      }
+
+      if (message.event === 'progress_complete') {
+        this.hooks.call('onProgressComplete', message);
+        return;
+      }
+
+      // Spinner events
+      if (message.event === 'spinner_start') {
+        this.hooks.call('onSpinnerStart', message);
+        return;
+      }
+
+      if (message.event === 'spinner_stop') {
+        this.hooks.call('onSpinnerStop', message);
+        return;
+      }
+
       // Otherwise, treat as broadcast
       this._handleBroadcast(message);
 
