@@ -1,21 +1,31 @@
 # zCLI/subsystems/zConfig/zConfig_modules/config_machine.py
 """Machine-level configuration management for system identity and preferences."""
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 from zCLI import yaml
 from zCLI.utils import print_ready_message
 from .helpers import auto_detect_machine, create_user_machine_config, load_config_with_override
 from .config_paths import zConfigPaths
 
+# Module constants
+LOG_PREFIX = "[MachineConfig]"
+READY_MESSAGE = "MachineConfig Ready"
+YAML_KEY = "zMachine"
+SUBSYSTEM_NAME = "MachineConfig"
+
 class MachineConfig:
-    """Manages machine settings including system details, tool preferences, and hardware info."""
+    """Machine-level configuration for system identity and user preferences.
+    
+    Auto-detects capabilities (browser, IDE, shell, memory, CPU) and loads user 
+    overrides from zConfig.machine.yaml. Persisted via config_persistence.py.
+    """
 
     # Type hints for instance attributes
     paths: zConfigPaths
     machine: Dict[str, Any]
 
     def __init__(self, paths: zConfigPaths) -> None:
-        """Initialize machine configuration with paths for resolution."""
+        """Initialize with auto-detection and load user preferences from zConfig.machine.yaml."""
         self.paths = paths
 
         # Auto-detect machine defaults
@@ -24,14 +34,14 @@ class MachineConfig:
         # Load and override from config file (check exists, create if missing)
         load_config_with_override(
             self.paths,
-            "zMachine",
+            YAML_KEY,
             create_user_machine_config,
             self.machine,
-            "MachineConfig"
+            SUBSYSTEM_NAME
         )
 
         # Print ready message
-        print_ready_message("MachineConfig Ready", color="CONFIG")
+        print_ready_message(READY_MESSAGE, color="CONFIG")
 
     def get(self, key: str, default: Any = None) -> Any:
         """Get machine config value by key, returning default if not found."""
@@ -46,19 +56,19 @@ class MachineConfig:
         self.machine[key] = value
 
     def save_user_config(self) -> bool:
-        """Save current machine config to user's machine.yaml."""
+        """Save current machine config to user's zConfig.machine.yaml."""
         try:
-            path = self.paths.user_config_dir / "machine.yaml"
+            path = self.paths.user_zconfigs_dir / self.paths.ZMACHINE_USER_FILENAME
             path.parent.mkdir(parents=True, exist_ok=True)
 
-            content = {"zMachine": self.machine}
+            content = {YAML_KEY: self.machine}
 
             with open(path, 'w', encoding='utf-8') as f:
                 yaml.dump(content, f, default_flow_style=False, sort_keys=False)
 
-            print(f"[MachineConfig] Saved machine config to: {path}")
+            print(f"{LOG_PREFIX} Saved machine config to: {path}")
             return True
 
         except Exception as e:
-            print(f"[MachineConfig] Failed to save machine config: {e}")
+            print(f"{LOG_PREFIX} Failed to save machine config: {e}")
             return False

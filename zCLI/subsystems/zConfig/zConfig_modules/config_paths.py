@@ -2,50 +2,99 @@
 """Cross-platform configuration path resolution with platformdirs."""
 
 from typing import Any, Dict, List, Optional, Tuple
-from pathlib import Path as PathlibPath
-from zCLI import platform, Path, sys, Colors, platformdirs, load_dotenv
+from zCLI import platform, Path, Colors, platformdirs, load_dotenv
 
 class zConfigPaths:
     """Cross-platform path resolver for zolo-zcli configuration using native OS conventions."""
+
+    # Class-level constants
+    APP_NAME = "zolo-zcli"
+    APP_AUTHOR = "zolo"
+    VALID_OS_TYPES = ("Linux", "Darwin", "Windows")
+    DOTENV_FILENAME = ".zEnv"
+    ZCONFIGS_DIRNAME = "zConfigs"
+    ZCONFIG_FILENAME = "zConfig.yaml"
+    ZMACHINE_FILENAME = "zMachine.yaml"  # System-level machine config
+    ZMACHINE_USER_FILENAME = "zConfig.machine.yaml"  # User-level machine config
+    ZCONFIG_DEFAULTS_FILENAME = "zConfig.defaults.yaml"
+
+    # Dotenv key aliases for zSpark configuration
+    DOTENV_KEY_ALIASES = (
+        "env_file",
+        "envFile",
+        "dotenv",
+        "dotenv_file",
+        "dotenvFile",
+        "dotenv_path",
+        "dotenvPath",
+    )
 
     # Type hints for instance attributes
     app_name: str
     app_author: str
     os_type: str
     zSpark: Optional[Dict[str, Any]]
-    workspace_dir: Optional[PathlibPath]
-    _dotenv_path: Optional[PathlibPath]
+    workspace_dir: Optional[Path]
+    _dotenv_path: Optional[Path]
 
     def __init__(self, zSpark_obj: Optional[Dict[str, Any]] = None) -> None:
-        self.app_name = "zolo-zcli"
-        self.app_author = "zolo"
+        """Initialize cross-platform path resolver.
+        
+        Auto-detects OS type, validates platform support, and resolves
+        workspace and dotenv paths for configuration hierarchy.
+        
+        Args:
+            zSpark_obj: Optional configuration dictionary with path overrides
+            
+        Raises:
+            UnsupportedOSError: If OS type is unsupported (Linux/Darwin/Windows only)
+        """
+        self.app_name = self.APP_NAME
+        self.app_author = self.APP_AUTHOR
         self.os_type = platform.system()  # 'Linux', 'Darwin', 'Windows'
         self.zSpark = zSpark_obj if isinstance(zSpark_obj, dict) else None
 
         # Validate OS type
-        valid_os_types = ("Linux", "Darwin", "Windows")
-        if self.os_type not in valid_os_types:
-            print(f"{Colors.ERROR}[zConfigPaths] ERROR: Unsupported OS type '{self.os_type}'{Colors.RESET}")
-            print(f"{Colors.WARNING}[zConfigPaths] Supported OS types: {', '.join(valid_os_types)}{Colors.RESET}")
-            print(f"{Colors.WARNING}[zConfigPaths] Please report this issue or add support for your OS{Colors.RESET}")
-            sys.exit(1)
+        if self.os_type not in self.VALID_OS_TYPES:
+            # Import inline to avoid circular dependency
+            from zCLI.utils.zExceptions import UnsupportedOSError
+            self._log_error(f"Unsupported OS type '{self.os_type}'")
+            self._log_warning(f"Supported OS types: {', '.join(self.VALID_OS_TYPES)}")
+            self._log_warning("Please report this issue or add support for your OS")
+            raise UnsupportedOSError(self.os_type, self.VALID_OS_TYPES)
 
-        print(f"[zConfigPaths] Initialized for OS: {self.os_type}")
+        self._log_info(f"Initialized for OS: {self.os_type}")
 
         # Detect workspace and dotenv path early for reuse across modules
         self.workspace_dir = self._detect_workspace_dir()
         self._dotenv_path = self._detect_dotenv_file()
 
         if self.workspace_dir:
-            print(f"[zConfigPaths] Workspace directory: {self.workspace_dir}")
+            self._log_info(f"Workspace directory: {self.workspace_dir}")
         if self._dotenv_path:
-            print(f"[zConfigPaths] Dotenv path resolved: {self._dotenv_path}")
+            self._log_info(f"Dotenv path resolved: {self._dotenv_path}")
+
+    # ═══════════════════════════════════════════════════════════
+    # Logging Helpers (DRY)
+    # ═══════════════════════════════════════════════════════════
+
+    def _log_info(self, message: str) -> None:
+        """Print info message with consistent formatting."""
+        print(f"[zConfigPaths] {message}")
+
+    def _log_warning(self, message: str) -> None:
+        """Print warning message with consistent formatting."""
+        print(f"{Colors.WARNING}[zConfigPaths] {message}{Colors.RESET}")
+
+    def _log_error(self, message: str) -> None:
+        """Print error message with consistent formatting."""
+        print(f"{Colors.ERROR}[zConfigPaths] ERROR: {message}{Colors.RESET}")
 
     # ═══════════════════════════════════════════════════════════
     # Workspace & dotenv detection helpers
     # ═══════════════════════════════════════════════════════════
 
-    def _detect_workspace_dir(self) -> Optional[PathlibPath]:
+    def _detect_workspace_dir(self) -> Optional[Path]:
         """Determine workspace directory using zSpark hint or current directory."""
         if self.zSpark:
             workspace = self.zSpark.get("zWorkspace")
@@ -53,9 +102,8 @@ class zConfigPaths:
                 try:
                     return Path(workspace).expanduser().resolve()
                 except Exception:  # pragma: no cover - defensive fallback
-                    print(
-                        f"{Colors.WARNING}[zConfigPaths] Unable to resolve zWorkspace '{workspace}',"
-                        f" defaulting to current directory{Colors.RESET}"
+                    self._log_warning(
+                        f"Unable to resolve zWorkspace '{workspace}', defaulting to current directory"
                     )
 
         try:
@@ -63,63 +111,81 @@ class zConfigPaths:
         except Exception:  # pragma: no cover - defensive fallback
             return Path.home()
 
-    def _resolve_explicit_dotenv_path(self) -> Optional[PathlibPath]:
+    def _resolve_explicit_dotenv_path(self) -> Optional[Path]:
         """Check zSpark configuration for explicitly provided dotenv path."""
         if not self.zSpark:
             return None
 
-        dotenv_keys = (
-            "env_file",
-            "envFile",
-            "dotenv",
-            "dotenv_file",
-            "dotenvFile",
-            "dotenv_path",
-            "dotenvPath",
-        )
-
-        for key in dotenv_keys:
+        for key in self.DOTENV_KEY_ALIASES:
             candidate = self.zSpark.get(key)
             if candidate:
                 try:
                     return Path(candidate).expanduser().resolve()
                 except Exception:  # pragma: no cover - defensive fallback
-                    print(
-                        f"{Colors.WARNING}[zConfigPaths] Invalid dotenv path '{candidate}' from zSpark key '{key}'{Colors.RESET}"
-                    )
+                    self._log_warning(f"Invalid dotenv path '{candidate}' from zSpark key '{key}'")
         return None
 
-    def _detect_dotenv_file(self) -> Optional[PathlibPath]:
-        """Determine dotenv file location from zSpark overrides or workspace."""
+    def _detect_dotenv_file(self) -> Optional[Path]:
+        """Determine dotenv file location from zSpark overrides or workspace.
+        
+        Detection priority:
+        1. Explicit path from zSpark configuration (via DOTENV_KEY_ALIASES)
+        2. .zEnv in workspace directory (primary convention)
+        3. .env in workspace directory (backward compatibility)
+        4. Returns .zEnv path even if neither exists (for potential creation)
+        """
         explicit = self._resolve_explicit_dotenv_path()
         if explicit:
             return explicit
 
         if self.workspace_dir:
-            return self.workspace_dir / ".env"
+            # Check for .zEnv first (primary convention)
+            zenv_path = self.workspace_dir / self.DOTENV_FILENAME
+            if zenv_path.exists():
+                return zenv_path
+
+            # Fall back to .env for backward compatibility
+            env_path = self.workspace_dir / ".env"
+            if env_path.exists():
+                self._log_info("Using .env file (consider migrating to .zEnv)")
+                return env_path
+
+            # Neither exists - return primary convention path for potential creation
+            return zenv_path
 
         return None
 
-    def get_dotenv_path(self) -> Optional[PathlibPath]:
-        """Return resolved dotenv path (may not exist)."""
+    def get_dotenv_path(self) -> Optional[Path]:
+        """Return resolved dotenv path (.zEnv or .env fallback).
+        
+        Returns:
+            Path to dotenv file (may not exist), or None if no workspace
+        """
         return self._dotenv_path
 
-    def load_dotenv(self, override: bool = True) -> Optional[PathlibPath]:
-        """Load environment variables from resolved dotenv file if available."""
+    def load_dotenv(self, override: bool = True) -> Optional[Path]:
+        """Load environment variables from resolved dotenv file (.zEnv or .env).
+        
+        Args:
+            override: Whether to override existing environment variables (default: True)
+            
+        Returns:
+            Path to loaded dotenv file, or None if no file found/loaded
+        """
         dotenv_path = self.get_dotenv_path()
         if not dotenv_path:
-            print("[zConfigPaths] No dotenv path resolved")
+            self._log_info("No dotenv path resolved")
             return None
 
         if not dotenv_path.exists():
-            print(f"{Colors.WARNING}[zConfigPaths] Dotenv file not found at: {dotenv_path}{Colors.RESET}")
+            self._log_warning(f"Dotenv file not found at: {dotenv_path}")
             return None
 
         loaded = load_dotenv(dotenv_path, override=override)
         if loaded:
-            print(f"[zConfigPaths] Loaded environment variables from: {dotenv_path}")
+            self._log_info(f"Loaded environment variables from: {dotenv_path}")
         else:
-            print(f"{Colors.WARNING}[zConfigPaths] Dotenv file present but no variables loaded: {dotenv_path}{Colors.RESET}")
+            self._log_warning(f"Dotenv file present but no variables loaded: {dotenv_path}")
 
         return dotenv_path
 
@@ -127,7 +193,7 @@ class zConfigPaths:
     # Resolves standard OS locations for zolo system folders
     # ═══════════════════════════════════════════════════════════
     @property
-    def system_config_dir(self) -> PathlibPath:
+    def system_config_dir(self) -> Path:
         r"""
         System config location (discovery only; not created).
         
@@ -136,13 +202,13 @@ class zConfigPaths:
         """
         if self.os_type in ("Linux", "Darwin"):
             # Unix-like systems use /etc for system config
-            return Path("/etc/zolo-zcli")
+            return Path(f"/etc/{self.APP_NAME}")
 
         # Windows: use platformdirs
         return Path(platformdirs.site_config_dir(self.app_name, self.app_author))
 
     @property
-    def user_config_dir(self) -> PathlibPath:
+    def user_config_dir(self) -> Path:
         r"""
         User config location (OS-native).
 
@@ -153,7 +219,7 @@ class zConfigPaths:
         return Path(platformdirs.user_config_dir(self.app_name, self.app_author))
 
     @property
-    def user_config_dir_legacy(self) -> PathlibPath:
+    def user_config_dir_legacy(self) -> Path:
         """
         Legacy dotfile configuration directory (backward compatibility).
         
@@ -161,20 +227,20 @@ class zConfigPaths:
         
         Checked for backward compatibility with older installations.
         """
-        return Path.home() / ".zolo-zcli"
+        return Path.home() / f".{self.APP_NAME}"
 
     @property
-    def user_zconfigs_dir(self) -> PathlibPath:
+    def user_zconfigs_dir(self) -> Path:
         """
         User zConfigs directory for configuration files.
         
         Location: user_config_dir/zConfigs/
         Contains: zConfig.default.yaml, zConfig.dev.yaml, etc.
         """
-        return self.user_config_dir / "zConfigs"
+        return self.user_config_dir / self.ZCONFIGS_DIRNAME
 
     @property
-    def user_data_dir(self) -> PathlibPath:
+    def user_data_dir(self) -> Path:
         r"""
         User data directory (databases, files).
         
@@ -185,7 +251,7 @@ class zConfigPaths:
         return Path(platformdirs.user_data_dir(self.app_name, self.app_author))
 
     @property
-    def user_cache_dir(self) -> PathlibPath:
+    def user_cache_dir(self) -> Path:
         r"""
         User cache directory (temporary data).
         
@@ -196,7 +262,7 @@ class zConfigPaths:
         return Path(platformdirs.user_cache_dir(self.app_name, self.app_author))
 
     @property
-    def user_logs_dir(self) -> PathlibPath:
+    def user_logs_dir(self) -> Path:
         r"""
         User logs directory for application logs.
         
@@ -211,30 +277,30 @@ class zConfigPaths:
     # ═══════════════════════════════════════════════════════════
 
     @property
-    def system_config_defaults(self) -> PathlibPath:
+    def system_config_defaults(self) -> Path:
         """
         System default configuration file.
         
         Location: system_config_dir/zConfig.defaults.yaml
         Created on first run with base configuration.
         """
-        return self.system_config_dir / "zConfig.defaults.yaml"
+        return self.system_config_dir / self.ZCONFIG_DEFAULTS_FILENAME
 
     @property
-    def system_machine_config(self) -> PathlibPath:
+    def system_machine_config(self) -> Path:
         """
         System machine configuration file (zMachine zVaFile).
         
         Location: system_config_dir/zMachine.yaml
         Contains machine identity and capabilities.
         """
-        return self.system_config_dir / "zMachine.yaml"
+        return self.system_config_dir / self.ZMACHINE_FILENAME
 
     # ═══════════════════════════════════════════════════════════
     # Config File Hierarchy
     # ═══════════════════════════════════════════════════════════
 
-    def get_config_file_hierarchy(self) -> List[Tuple[PathlibPath, int, str]]:
+    def get_config_file_hierarchy(self) -> List[Tuple[Path, int, str]]:
         """
         Get list of config file paths to check, in priority order.
         
@@ -243,88 +309,63 @@ class zConfigPaths:
             
         Config Hierarchy (lowest to highest priority):
         1. System defaults (zConfig.defaults.yaml) - Base configuration
-        2. User config - Per-user overrides
-        3. Environment variables / dotenv - Runtime exports (TODO)
-        4. Session runtime - In-memory overrides (handled elsewhere)
+        2. User config (OS-native) - Per-user overrides
+        3. User config (legacy) - Backward compatibility with ~/.zolo-zcli
+        4. Environment variables (.zEnv or .env) - Workspace-specific runtime config
+        5. Session runtime - In-memory overrides (handled by zSession subsystem)
         
-        TODO (Deferred from v1.5.4 Week 1.3): Add .zclirc support
-        ┌───────────────────────────────────────────────────────────────┐
-        │ Future Enhancement: Unix-style Dotfile Configuration          │
-        ├───────────────────────────────────────────────────────────────┤
-        │ Priority Order (Proposed):                                    │
-        │   0. ./.zclirc           (project-specific, highest)          │
-        │   1. ~/.zclirc           (user home directory)                │
-        │   2. User config (current) (OS-native platformdirs)           │
-        │   3. System defaults     (base config)                        │
-        │                                                                │
-        │ Benefits:                                                      │
-        │   • Familiar Unix dotfile convention                          │
-        │   • Easy to find/edit: ~/.zclirc                              │
-        │   • Team-shared configs: commit ./.zclirc to git              │
-        │   • Profile support: dev/prod sections in one file            │
-        │                                                                │
-        │ Why Deferred:                                                  │
-        │   • Current platformdirs solution works well cross-platform   │
-        │   • Persistence via persist_machine() already functional      │
-        │   • Focus on critical features (testing, validation) first    │
-        │                                                                │
-        │ Implementation Notes:                                          │
-        │   • Check ./.zclirc in workspace first (highest priority)     │
-        │   • Check ~/.zclirc in home directory (user defaults)         │
-        │   • Merge with existing config hierarchy (additive, not replacement) │
-        │   • YAML format with optional profile sections                │
-        └───────────────────────────────────────────────────────────────┘
+        Note: Dotenv detection auto-discovers .zEnv (primary) or .env (compat).
         """
         configs = []
-        
+
         # 1. System defaults (lowest priority - base config)
         if self.system_config_defaults.exists():
             configs.append((self.system_config_defaults, 1, "system-defaults"))
-        
+
         # 2. User config (primary native path)
-        user_config = self.user_config_dir / "zConfigs" / "zConfig.yaml"
+        user_config = self.user_config_dir / self.ZCONFIGS_DIRNAME / self.ZCONFIG_FILENAME
         if user_config.exists():
             configs.append((user_config, 2, "user"))
-        
+
         # 3. User config (legacy dotfile path - backward compat)
-        user_config_legacy = self.user_config_dir_legacy / "zConfig.yaml"
+        user_config_legacy = self.user_config_dir_legacy / self.ZCONFIG_FILENAME
         if user_config_legacy.exists():
             configs.append((user_config_legacy, 3, "user-legacy"))
-        
+
         # 4. Environment variables / dotenv (highest priority before runtime overrides)
         dotenv_path = self.get_dotenv_path()
         if dotenv_path:
             if dotenv_path.exists():
                 configs.append((dotenv_path, 4, "env-dotenv"))
             else:
-                print(
-                    f"{Colors.WARNING}[zConfigPaths] Dotenv path resolved but file missing: {dotenv_path}{Colors.RESET}"
-                )
+                self._log_warning(f"Dotenv path resolved but file missing: {dotenv_path}")
         else:
-            print("[zConfigPaths] No dotenv path detected for hierarchy")
+            self._log_info("No dotenv path detected for hierarchy")
 
         # Note: Session runtime overrides (highest priority) are handled
         # in-memory by zSession subsystem, not in this file hierarchy
-        
+
         # Sort by priority
         configs.sort(key=lambda x: x[1])
-        
+
         return configs
-    
-    def ensure_user_config_dir(self):
-        """
-        Ensure user config directory exists.
+
+    def ensure_user_config_dir(self) -> Path:
+        """Ensure user config directory exists.
         
         Creates the directory if it doesn't exist.
+        
+        Returns:
+            Path to the user config directory
         """
         config_dir = self.user_config_dir
         if not config_dir.exists():
             config_dir.mkdir(parents=True, exist_ok=True)
-            print(f"[zConfigPaths] Created user config directory: {config_dir}")
-        
+            self._log_info(f"Created user config directory: {config_dir}")
+
         return config_dir
-    
-    def get_info(self):
+
+    def get_info(self) -> Dict[str, str]:
         """
         Get path information for debugging.
         
@@ -343,4 +384,3 @@ class zConfigPaths:
             "user_cache_dir": str(self.user_cache_dir),
             "user_logs_dir": str(self.user_logs_dir),
         }
-

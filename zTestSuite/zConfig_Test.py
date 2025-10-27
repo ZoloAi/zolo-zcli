@@ -41,11 +41,17 @@ class TestConfigPaths(unittest.TestCase):
                      f"OS type '{self.paths.os_type}' not recognized")
     
     def test_unsupported_os_exits(self):
-        """Test that unsupported OS types trigger exit."""
+        """Test that unsupported OS types raise UnsupportedOSError."""
+        from zCLI.utils.zExceptions import UnsupportedOSError
         with patch('zCLI.subsystems.zConfig.zConfig_modules.config_paths.platform.system', return_value='FreeBSD'):
             with patch('builtins.print'):  # Suppress error output
-                with self.assertRaises(SystemExit):
+                with self.assertRaises(UnsupportedOSError) as cm:
                     zConfigPaths()
+                # Verify exception context
+                self.assertEqual(cm.exception.context['os_type'], 'FreeBSD')
+                self.assertIn('Linux', cm.exception.context['valid_types'])
+                self.assertIn('Darwin', cm.exception.context['valid_types'])
+                self.assertIn('Windows', cm.exception.context['valid_types'])
     
     def test_user_config_paths_exist(self):
         """Test that user config path properties return valid Path objects."""

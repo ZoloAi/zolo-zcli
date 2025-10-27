@@ -2220,29 +2220,371 @@
                     </div>
 
                     <div class="todo-item" data-id="week6-2-config-review">
-                        <input type="checkbox" class="todo-checkbox">
+                        <input type="checkbox" class="todo-checkbox" checked>
                         <div class="todo-content">
-                            <div class="todo-title">Week 6.2: 🔍 Review zConfig + Modules (paths, environment, session)</div>
+                            <div class="todo-title">Week 6.2: 🔍 Review zConfig.py (Main Facade) ✅ COMPLETE</div>
                             <div class="todo-description">
-                                <strong>Files to Review:</strong>
-                                <br>&nbsp;&nbsp;• <code>zConfig/zConfig.py</code> (main facade)
-                                <br>&nbsp;&nbsp;• <code>zConfig_modules/config_paths.py</code>
-                                <br>&nbsp;&nbsp;• <code>zConfig_modules/environment_config.py</code>
-                                <br>&nbsp;&nbsp;• <code>zConfig_modules/session_config.py</code>
-                                <br>&nbsp;&nbsp;• <code>zConfig_modules/machine_config.py</code>
-                                <br>&nbsp;&nbsp;• <code>zConfig_modules/config_validator.py</code> (Week 1.1)
+                                <strong>✅ COMPLETED:</strong>
+                                <br>&nbsp;&nbsp;• <code>zConfig/zConfig.py</code> - Grade B+ → A
+                                <br>&nbsp;&nbsp;• Fixed inline sys import (centralized)
+                                <br>&nbsp;&nbsp;• Extracted session/logger key constants
+                                <br>&nbsp;&nbsp;• Removed dead code (print_config_ready)
+                                <br>&nbsp;&nbsp;• Added inline import comment (zTraceback)
+                                <br>&nbsp;&nbsp;• Enhanced __init__ docstring
+                                <br>&nbsp;&nbsp;• All 36 zConfig tests passing
                                 <br><br>
-                                <strong>Focus Areas:</strong>
-                                <br>&nbsp;&nbsp;• Path resolution consistency (platformdirs usage)
-                                <br>&nbsp;&nbsp;• Module delegation patterns
-                                <br>&nbsp;&nbsp;• No hardcoded paths (use zMachine/@ properly)
-                                <br>&nbsp;&nbsp;• Config hierarchy clarity
+                                <strong>📋 Summary:</strong> <code>WEEK_6_2_ZCONFIG_AUDIT.md</code>
                             </div>
                             <div class="todo-tags">
                                 <span class="tag">Week 6</span>
                                 <span class="tag">Layer 0</span>
                                 <span class="tag">zConfig</span>
-                                <span class="tag">1 day</span>
+                                <span class="tag">0.5 days</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="week6-2-1-config-paths-refactor">
+                        <input type="checkbox" class="todo-checkbox" checked>
+                        <div class="todo-content">
+                            <div class="todo-title">Week 6.2.1: 🧹 Refactor config_paths.py (Code Quality + DRY Fix) ✅ COMPLETE</div>
+                            <div class="todo-description">
+                                <strong>🎯 GOAL:</strong> Clean up config_paths.py (347 lines) - DRY violations + magic strings
+                                <br><br>
+                                <strong>❌ CURRENT STATE (Audit Grade: B):</strong>
+                                <br>&nbsp;&nbsp;• ⚠️ Imports: Mixed (typing not centralized, redundant Path import)
+                                <br>&nbsp;&nbsp;• ✅ Path Resolution: Excellent (platformdirs)
+                                <br>&nbsp;&nbsp;• ❌ Magic Strings: 15+ hardcoded values
+                                <br>&nbsp;&nbsp;• ❌ DRY: Log pattern repeated 13+ times
+                                <br>&nbsp;&nbsp;• ⚠️ Error Handling: Uses sys.exit(1) (not testable)
+                                <br>&nbsp;&nbsp;• ⚠️ Docstrings: Missing __init__ docstring
+                                <br><br>
+                                <strong>✅ DESIRED STATE (After 6.2.1):</strong>
+                                <br>&nbsp;&nbsp;• Class constants for all magic strings
+                                <br>&nbsp;&nbsp;• DRY logging helpers (_log_info, _log_warning, _log_error)
+                                <br>&nbsp;&nbsp;• Exception-based error handling (UnsupportedOSError)
+                                <br>&nbsp;&nbsp;• Complete docstrings
+                                <br>&nbsp;&nbsp;• Grade improvement: B → A (production-ready)
+                                <br><br>
+                                <strong>📋 Implementation Tasks (10 steps):</strong>
+                                <br><br>
+                                <strong>0. ✅ Fix Import Issues (Lines 4-6):</strong>
+                                <br>&nbsp;&nbsp;• <strong>Problem:</strong> <code>typing</code> not in centralized imports, redundant <code>Path</code> import
+                                <br>&nbsp;&nbsp;• <strong>Line 4:</strong> <code>from typing import Any, Dict, List, Optional, Tuple</code> - NOT centralized
+                                <br>&nbsp;&nbsp;• <strong>Line 5:</strong> <code>from pathlib import Path as PathlibPath</code> - Redundant (Path already in zCLI)
+                                <br>&nbsp;&nbsp;• <strong>Decision:</strong> Keep <code>typing</code> as direct import (standard for type hints)
+                                <br>&nbsp;&nbsp;• <strong>Fix:</strong> Remove line 5, use <code>Path</code> from zCLI everywhere (replace <code>PathlibPath</code>)
+                                <br>&nbsp;&nbsp;• <strong>Rationale:</strong> <code>typing</code> is standard practice for type hints (not runtime), but <code>Path</code> should use centralized import
+                                <br><br>
+                                <strong>1. ✅ Extract Class Constants (Lines 20-21, 26, 99, etc.):</strong>
+                                <br>&nbsp;&nbsp;• <code>APP_NAME = "zolo-zcli"</code>
+                                <br>&nbsp;&nbsp;• <code>APP_AUTHOR = "zolo"</code>
+                                <br>&nbsp;&nbsp;• <code>VALID_OS_TYPES = ("Linux", "Darwin", "Windows")</code>
+                                <br>&nbsp;&nbsp;• <code>DOTENV_FILENAME = ".env"</code>
+                                <br>&nbsp;&nbsp;• <code>ZCONFIGS_DIRNAME = "zConfigs"</code>
+                                <br>&nbsp;&nbsp;• <code>ZCONFIG_FILENAME = "zConfig.yaml"</code>
+                                <br>&nbsp;&nbsp;• <code>ZMACHINE_FILENAME = "zMachine.yaml"</code>
+                                <br>&nbsp;&nbsp;• <code>ZCONFIG_DEFAULTS_FILENAME = "zConfig.defaults.yaml"</code>
+                                <br>&nbsp;&nbsp;• <code>DOTENV_KEY_ALIASES = ("env_file", "envFile", ...)</code>
+                                <br><br>
+                                <strong>2. ✅ Update All Hardcoded Strings to Use Constants:</strong>
+                                <br>&nbsp;&nbsp;• Line 20-21: <code>self.app_name = self.APP_NAME</code>
+                                <br>&nbsp;&nbsp;• Line 26: <code>if self.os_type not in self.VALID_OS_TYPES</code>
+                                <br>&nbsp;&nbsp;• Line 99: <code>return self.workspace_dir / self.DOTENV_FILENAME</code>
+                                <br>&nbsp;&nbsp;• Line 139: <code>return Path(f"/etc/{self.APP_NAME}")</code>
+                                <br>&nbsp;&nbsp;• Line 174: <code>return self.user_config_dir / self.ZCONFIGS_DIRNAME</code>
+                                <br>&nbsp;&nbsp;• Line 231: <code>return self.system_config_dir / self.ZMACHINE_FILENAME</code>
+                                <br>&nbsp;&nbsp;• Line 71-79: <code>for key in self.DOTENV_KEY_ALIASES</code>
+                                <br><br>
+                                <strong>3. ✅ Create DRY Logging Helpers:</strong>
+                                <br>&nbsp;&nbsp;• <code>def _log_info(self, message: str) -> None</code>
+                                <br>&nbsp;&nbsp;• <code>def _log_warning(self, message: str) -> None</code>
+                                <br>&nbsp;&nbsp;• <code>def _log_error(self, message: str) -> None</code>
+                                <br>&nbsp;&nbsp;• Replace 13+ duplicate print statements
+                                <br><br>
+                                <strong>4. ✅ Replace sys.exit(1) with Exception (Line 31):</strong>
+                                <br>&nbsp;&nbsp;• Create <code>UnsupportedOSError</code> exception
+                                <br>&nbsp;&nbsp;• Better testability (can catch/assert)
+                                <br>&nbsp;&nbsp;• Includes hint and context
+                                <br><br>
+                                <strong>5. ✅ Add __init__ Docstring:</strong>
+                                <br>&nbsp;&nbsp;• Document initialization process
+                                <br>&nbsp;&nbsp;• List parameters and behavior
+                                <br>&nbsp;&nbsp;• Note SystemExit → UnsupportedOSError
+                                <br><br>
+                                <strong>6. ✅ Add Missing Return Type Hints:</strong>
+                                <br>&nbsp;&nbsp;• <code>ensure_user_config_dir</code> (Line 314)
+                                <br>&nbsp;&nbsp;• <code>get_info</code> (Line 327)
+                                <br><br>
+                                <strong>7. ✅ Replace PathlibPath with Path:</strong>
+                                <br>&nbsp;&nbsp;• Find all <code>PathlibPath</code> usages (type hints, returns)
+                                <br>&nbsp;&nbsp;• Replace with <code>Path</code> (from centralized import)
+                                <br>&nbsp;&nbsp;• Verify no import conflicts
+                                <br><br>
+                                <strong>8. ✅ Run zConfig Tests:</strong>
+                                <br>&nbsp;&nbsp;• Verify all 36 tests still pass
+                                <br>&nbsp;&nbsp;• Test UnsupportedOSError in isolation
+                                <br><br>
+                                <strong>9. ✅ Check Linter:</strong>
+                                <br>&nbsp;&nbsp;• No new errors introduced
+                                <br>&nbsp;&nbsp;• Constants follow naming conventions
+                                <br><br>
+                                <strong>10. ✅ Document Changes:</strong>
+                                <br>&nbsp;&nbsp;• Create summary file
+                                <br>&nbsp;&nbsp;• Note DRY improvements (13+ → 0 violations)
+                                <br>&nbsp;&nbsp;• Note testability improvements
+                                <br><br>
+                                <strong>📊 Expected Outcomes:</strong>
+                                <br>&nbsp;&nbsp;• ✅ 0 magic strings (15+ → 0)
+                                <br>&nbsp;&nbsp;• ✅ 0 DRY violations (13+ → 0)
+                                <br>&nbsp;&nbsp;• ✅ Exception-based errors (testable)
+                                <br>&nbsp;&nbsp;• ✅ Complete documentation
+                                <br>&nbsp;&nbsp;• ✅ Grade improvement: B → A
+                                <br><br>
+                                <strong>🏆 Why This Matters:</strong>
+                                <br>&nbsp;&nbsp;• config_paths.py is Layer 0 foundation (used everywhere)
+                                <br>&nbsp;&nbsp;• DRY violations create maintenance debt
+                                <br>&nbsp;&nbsp;• Magic strings make refactoring risky
+                                <br>&nbsp;&nbsp;• sys.exit() breaks test isolation
+                                <br><br>
+                                <strong>📁 Files to Modify:</strong>
+                                <br>&nbsp;&nbsp;• <code>zCLI/subsystems/zConfig/zConfig_modules/config_paths.py</code> (main refactor)
+                                <br>&nbsp;&nbsp;• <code>zCLI/utils/zExceptions.py</code> (add UnsupportedOSError)
+                                <br>&nbsp;&nbsp;• <code>zTestSuite/zConfig_Test.py</code> (verify, may add OS error test)
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Week 6</span>
+                                <span class="tag">Layer 0</span>
+                                <span class="tag">zConfig</span>
+                                <span class="tag">0.5 days</span>
+                                <span class="tag" style="background: #f6ad55; color: white;">REFACTOR</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="week6-2-2-config-machine-cleanup">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Week 6.2.2: 🧹 Clean Up config_machine.py (Filename + Docstring Issues)</div>
+                            <div class="todo-description">
+                                <strong>🎯 GOAL:</strong> Fix critical filename inconsistencies and improve documentation in config_machine.py (65 lines)
+                                <br><br>
+                                <strong>❌ CURRENT STATE (Audit Findings):</strong>
+                                <br>&nbsp;&nbsp;• 🔴 <strong>Critical:</strong> <code>save_user_config()</code> uses wrong filename: <code>"machine.yaml"</code> instead of <code>"zConfig.machine.yaml"</code>
+                                <br>&nbsp;&nbsp;• 🔴 <strong>Critical:</strong> <code>save_user_config()</code> uses wrong directory: <code>user_config_dir</code> instead of <code>user_zconfigs_dir</code>
+                                <br>&nbsp;&nbsp;• ⚠️ Missing constant for user-level machine config filename
+                                <br>&nbsp;&nbsp;• ⚠️ Incomplete class docstring (line 11)
+                                <br>&nbsp;&nbsp;• ⚠️ Incomplete <code>__init__</code> docstring (line 18)
+                                <br>&nbsp;&nbsp;• ⚠️ Misleading <code>save_user_config</code> docstring (line 49) - references wrong filename
+                                <br><br>
+                                <strong>📊 Filename Inconsistency Evidence:</strong>
+                                <br>&nbsp;&nbsp;• <code>config_helpers.py</code> line 10: <code>"zConfig.machine.yaml"</code> ✓
+                                <br>&nbsp;&nbsp;• <code>config_persistence.py</code> line 70: <code>"zConfig.machine.yaml"</code> ✓
+                                <br>&nbsp;&nbsp;• <code>config_machine.py</code> line 51: <code>"machine.yaml"</code> ❌ WRONG!
+                                <br><br>
+                                <strong>🔍 Impact Analysis:</strong>
+                                <br>&nbsp;&nbsp;• <code>save_user_config()</code> creates files in wrong location
+                                <br>&nbsp;&nbsp;• Inconsistent with rest of zConfig subsystem
+                                <br>&nbsp;&nbsp;• Potential file discovery issues
+                                <br>&nbsp;&nbsp;• Confusing for developers and users
+                                <br><br>
+                                <strong>✅ DESIRED STATE (After 6.2.2):</strong>
+                                <br>&nbsp;&nbsp;• Consistent filename usage: <code>"zConfig.machine.yaml"</code> everywhere
+                                <br>&nbsp;&nbsp;• Correct directory: <code>user_zconfigs_dir</code>
+                                <br>&nbsp;&nbsp;• Add constant to <code>config_paths.py</code>: <code>ZMACHINE_USER_FILENAME</code>
+                                <br>&nbsp;&nbsp;• Complete, accurate docstrings
+                                <br>&nbsp;&nbsp;• Consider removing <code>save_user_config()</code> if redundant with <code>config_persistence.py</code>
+                                <br><br>
+                                <strong>📋 Implementation Tasks (6 steps):</strong>
+                                <br><br>
+                                <strong>1. ✅ Add Constant to config_paths.py:</strong>
+                                <br>&nbsp;&nbsp;• Add <code>ZMACHINE_USER_FILENAME = "zConfig.machine.yaml"</code>
+                                <br>&nbsp;&nbsp;• Place after existing constants (line ~18)
+                                <br>&nbsp;&nbsp;• Document difference: <code>ZMACHINE_FILENAME</code> (system) vs <code>ZMACHINE_USER_FILENAME</code> (user)
+                                <br><br>
+                                <strong>2. ✅ Fix save_user_config() Method (Lines 48-64):</strong>
+                                <br>&nbsp;&nbsp;• Change line 51: <code>path = self.paths.user_zconfigs_dir / "zConfig.machine.yaml"</code>
+                                <br>&nbsp;&nbsp;• OR use constant: <code>path = self.paths.user_zconfigs_dir / self.paths.ZMACHINE_USER_FILENAME</code>
+                                <br>&nbsp;&nbsp;• Update docstring to reflect correct filename
+                                <br><br>
+                                <strong>3. ✅ Evaluate Redundancy:</strong>
+                                <br>&nbsp;&nbsp;• Check if <code>config_persistence.py</code> is single source of truth
+                                <br>&nbsp;&nbsp;• Line 66 of persistence calls <code>self.machine.save_user_config()</code>
+                                <br>&nbsp;&nbsp;• Decision: Keep method or refactor to persistence-only?
+                                <br><br>
+                                <strong>4. ✅ Improve Class Docstring (Line 11):</strong>
+                                <br>&nbsp;&nbsp;• Document auto-detection behavior
+                                <br>&nbsp;&nbsp;• Specify file locations (<code>zConfig.machine.yaml</code>)
+                                <br>&nbsp;&nbsp;• Note relationship to config hierarchy
+                                <br>&nbsp;&nbsp;• Mention persistence via <code>config_persistence.py</code>
+                                <br><br>
+                                <strong>5. ✅ Improve __init__ Docstring (Line 17-18):</strong>
+                                <br>&nbsp;&nbsp;• Document auto-detection on init
+                                <br>&nbsp;&nbsp;• Note file creation if missing (via helpers)
+                                <br>&nbsp;&nbsp;• Document override behavior from config files
+                                <br>&nbsp;&nbsp;• List what gets auto-detected (browser, IDE, terminal, memory, etc.)
+                                <br><br>
+                                <strong>6. ✅ Run Tests + Verify:</strong>
+                                <br>&nbsp;&nbsp;• Run <code>zConfig_Test.py</code> to ensure no breakage
+                                <br>&nbsp;&nbsp;• Check linter for any new issues
+                                <br>&nbsp;&nbsp;• Verify file is created in correct location
+                                <br>&nbsp;&nbsp;• Update plan with Week 6.2.2 summary
+                                <br><br>
+                                <strong>📊 Expected Outcomes:</strong>
+                                <br>&nbsp;&nbsp;• ✅ Consistent filename: <code>zConfig.machine.yaml</code> everywhere
+                                <br>&nbsp;&nbsp;• ✅ Correct directory usage: <code>user_zconfigs_dir</code>
+                                <br>&nbsp;&nbsp;• ✅ Constant-based approach (DRY)
+                                <br>&nbsp;&nbsp;• ✅ Clear, complete documentation
+                                <br>&nbsp;&nbsp;• ✅ No test failures
+                                <br><br>
+                                <strong>🏆 Why This Matters:</strong>
+                                <br>&nbsp;&nbsp;• Machine config is part of Layer 0 foundation
+                                <br>&nbsp;&nbsp;• Filename inconsistencies cause file discovery bugs
+                                <br>&nbsp;&nbsp;• Poor documentation hurts maintainability
+                                <br>&nbsp;&nbsp;• Follows DRY principles established in 6.2.1
+                                <br><br>
+                                <strong>📁 Files to Modify:</strong>
+                                <br>&nbsp;&nbsp;• <code>zCLI/subsystems/zConfig/zConfig_modules/config_machine.py</code> (fix save method + docstrings)
+                                <br>&nbsp;&nbsp;• <code>zCLI/subsystems/zConfig/zConfig_modules/config_paths.py</code> (add constant)
+                                <br>&nbsp;&nbsp;• <code>zTestSuite/zConfig_Test.py</code> (verify tests pass)
+                                <br><br>
+                                <strong>🔗 Related Work:</strong>
+                                <br>&nbsp;&nbsp;• Builds on Week 6.2.1 (config_paths.py refactor - DRY + constants)
+                                <br>&nbsp;&nbsp;• Continues .zEnv convention established in 6.2.1 dotenv refactor
+                                <br>&nbsp;&nbsp;• Prepares for Week 6.2.3+ (other config modules audit)
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Week 6</span>
+                                <span class="tag">Layer 0</span>
+                                <span class="tag">zConfig</span>
+                                <span class="tag">0.25 days</span>
+                                <span class="tag" style="background: #f6ad55; color: white;">BUGFIX</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="week6-2-3-machine-detectors-refactor">
+                        <input type="checkbox" class="todo-checkbox" checked>
+                        <div class="todo-content">
+                            <div class="todo-title">Week 6.2.3: 🔧 Streamline machine_detectors.py (Code Quality + Constants) ✅ COMPLETE</div>
+                            <div class="todo-description">
+                                <strong>🎯 GOAL:</strong> Refactor machine_detectors.py (292 lines) to match quality standards from 6.2.1 and 6.2.2
+                                <br><br>
+                                <strong>❌ CURRENT STATE (Audit Findings):</strong>
+                                <br>&nbsp;&nbsp;• 🔴 <strong>Critical:</strong> Inconsistent logging prefixes (uses <code>[MachineConfig]</code> in helper functions)
+                                <br>&nbsp;&nbsp;• 🔴 <strong>Critical:</strong> 25+ magic strings (browsers, IDEs) scattered throughout
+                                <br>&nbsp;&nbsp;• 🔴 <strong>Critical:</strong> 15+ DRY violations (duplicate print statements)
+                                <br>&nbsp;&nbsp;• 🔴 <strong>Critical:</strong> 0/8 functions have type hints
+                                <br>&nbsp;&nbsp;• 🟡 5+ magic numbers (timeouts, memory conversions)
+                                <br>&nbsp;&nbsp;• 🟡 44-line YAML template hardcoded in function
+                                <br>&nbsp;&nbsp;• 🟡 Incomplete docstrings on all 8 functions
+                                <br>&nbsp;&nbsp;• 🟡 Inconsistent error handling (4 different patterns)
+                                <br><br>
+                                <strong>🔍 Cross-File Inconsistency:</strong>
+                                <br>&nbsp;&nbsp;• <code>config_machine.py</code> has proper docstrings → <code>machine_detectors.py</code> doesn't
+                                <br>&nbsp;&nbsp;• <code>config_paths.py</code> has logging helpers → <code>machine_detectors.py</code> doesn't
+                                <br>&nbsp;&nbsp;• <code>config_machine.py</code> has type hints → <code>machine_detectors.py</code> doesn't
+                                <br><br>
+                                <strong>✅ DESIRED STATE (After 6.2.3):</strong>
+                                <br>&nbsp;&nbsp;• 20+ module-level constants (browsers, IDEs, timeouts, conversions)
+                                <br>&nbsp;&nbsp;• 4 logging helpers (<code>_log_info</code>, <code>_log_warning</code>, <code>_log_error</code>, <code>_log_config</code>)
+                                <br>&nbsp;&nbsp;• Type hints on all 8 functions
+                                <br>&nbsp;&nbsp;• Comprehensive docstrings with detection strategies
+                                <br>&nbsp;&nbsp;• YAML template extracted to constant
+                                <br>&nbsp;&nbsp;• Consistent <code>[MachineDetector]</code> logging prefix
+                                <br>&nbsp;&nbsp;• 0 magic strings, 0 magic numbers, 0 DRY violations
+                                <br><br>
+                                <strong>📋 Implementation Tasks (8 steps):</strong>
+                                <br><br>
+                                <strong>1. ✅ Add Module-Level Constants (Lines 7-90):</strong>
+                                <br>&nbsp;&nbsp;• <code>LOG_PREFIX = "[MachineDetector]"</code>
+                                <br>&nbsp;&nbsp;• <code>SUBPROCESS_TIMEOUT_SEC = 5</code>
+                                <br>&nbsp;&nbsp;• <code>BYTES_PER_GB</code>, <code>KB_PER_MB</code>, <code>MB_PER_GB</code>
+                                <br>&nbsp;&nbsp;• <code>BROWSER_MAPPING</code> dict + platform defaults
+                                <br>&nbsp;&nbsp;• <code>IDE_ENV_VARS</code>, <code>MODERN_IDES</code>, <code>CLASSIC_IDES</code>, <code>SIMPLE_EDITORS</code>
+                                <br>&nbsp;&nbsp;• <code>MACHINE_CONFIG_TEMPLATE</code> (44 lines extracted)
+                                <br><br>
+                                <strong>2. ✅ Create Logging Helpers (Lines 96-109):</strong>
+                                <br>&nbsp;&nbsp;• <code>def _log_info(message: str) -> None</code>
+                                <br>&nbsp;&nbsp;• <code>def _log_warning(message: str) -> None</code>
+                                <br>&nbsp;&nbsp;• <code>def _log_error(message: str) -> None</code>
+                                <br>&nbsp;&nbsp;• <code>def _log_config(message: str) -> None</code>
+                                <br>&nbsp;&nbsp;• Replace 15+ duplicate print statements
+                                <br><br>
+                                <strong>3. ✅ Add Type Hints to All 8 Functions:</strong>
+                                <br>&nbsp;&nbsp;• <code>_safe_getcwd() -> str</code>
+                                <br>&nbsp;&nbsp;• <code>detect_browser() -> str</code>
+                                <br>&nbsp;&nbsp;• <code>_detect_macos_browser() -> str</code>
+                                <br>&nbsp;&nbsp;• <code>_detect_linux_browser() -> str</code>
+                                <br>&nbsp;&nbsp;• <code>detect_ide() -> str</code>
+                                <br>&nbsp;&nbsp;• <code>detect_memory_gb() -> Optional[int]</code>
+                                <br>&nbsp;&nbsp;• <code>create_user_machine_config(path: Path, machine: Dict[str, Any]) -> None</code>
+                                <br>&nbsp;&nbsp;• <code>auto_detect_machine() -> Dict[str, Any]</code>
+                                <br><br>
+                                <strong>4. ✅ Improve All Function Docstrings:</strong>
+                                <br>&nbsp;&nbsp;• Document detection strategies (order of methods)
+                                <br>&nbsp;&nbsp;• Add Args and Returns sections
+                                <br>&nbsp;&nbsp;• Explain platform-specific behavior
+                                <br>&nbsp;&nbsp;• Document fallback logic
+                                <br><br>
+                                <strong>5. ✅ Update Functions to Use Constants:</strong>
+                                <br>&nbsp;&nbsp;• Replace inline browser dict with <code>BROWSER_MAPPING</code>
+                                <br>&nbsp;&nbsp;• Replace inline IDE lists with <code>MODERN_IDES</code>, <code>CLASSIC_IDES</code>, etc.
+                                <br>&nbsp;&nbsp;• Replace hardcoded timeout (5) with <code>SUBPROCESS_TIMEOUT_SEC</code>
+                                <br>&nbsp;&nbsp;• Replace memory math with <code>BYTES_PER_GB</code>, <code>KB_PER_MB</code>, etc.
+                                <br><br>
+                                <strong>6. ✅ Extract YAML Template:</strong>
+                                <br>&nbsp;&nbsp;• Move 44-line template to <code>MACHINE_CONFIG_TEMPLATE</code> constant
+                                <br>&nbsp;&nbsp;• Use <code>.format()</code> for safe string interpolation
+                                <br>&nbsp;&nbsp;• Centralize template for easy updates
+                                <br><br>
+                                <strong>7. ✅ Standardize Logging:</strong>
+                                <br>&nbsp;&nbsp;• Helper functions: Use <code>[MachineDetector]</code> prefix
+                                <br>&nbsp;&nbsp;• Main function (<code>auto_detect_machine</code>): Keep <code>[MachineConfig]</code> for user-facing messages
+                                <br>&nbsp;&nbsp;• All use logging helper functions
+                                <br><br>
+                                <strong>8. ✅ Run Tests + Verify:</strong>
+                                <br>&nbsp;&nbsp;• All 36 tests pass ✅
+                                <br>&nbsp;&nbsp;• No linter errors ✅
+                                <br>&nbsp;&nbsp;• New logging visible in output ✅
+                                <br>&nbsp;&nbsp;• Create summary document ✅
+                                <br><br>
+                                <strong>📊 Expected Outcomes:</strong>
+                                <br>&nbsp;&nbsp;• ✅ 20+ constants (0 → 20+)
+                                <br>&nbsp;&nbsp;• ✅ 4 logging helpers (DRY)
+                                <br>&nbsp;&nbsp;• ✅ 8/8 functions with type hints (0/8 → 8/8)
+                                <br>&nbsp;&nbsp;• ✅ 0 magic strings (25+ → 0)
+                                <br>&nbsp;&nbsp;• ✅ 0 magic numbers (5+ → 0)
+                                <br>&nbsp;&nbsp;• ✅ 0 DRY violations (15+ → 0)
+                                <br>&nbsp;&nbsp;• ✅ Comprehensive docstrings
+                                <br>&nbsp;&nbsp;• ✅ All tests passing (36/36)
+                                <br><br>
+                                <strong>🏆 Why This Matters:</strong>
+                                <br>&nbsp;&nbsp;• <code>machine_detectors.py</code> is core detection logic used by MachineConfig
+                                <br>&nbsp;&nbsp;• Magic strings make adding new browsers/IDEs risky
+                                <br>&nbsp;&nbsp;• DRY violations create maintenance debt
+                                <br>&nbsp;&nbsp;• Missing type hints hurt IDE support and catch errors late
+                                <br>&nbsp;&nbsp;• Inconsistency with other zConfig modules confuses developers
+                                <br><br>
+                                <strong>📁 Files Modified:</strong>
+                                <br>&nbsp;&nbsp;• <code>zCLI/subsystems/zConfig/zConfig_modules/helpers/machine_detectors.py</code> (comprehensive refactor)
+                                <br><br>
+                                <strong>🔗 Related Work:</strong>
+                                <br>&nbsp;&nbsp;• Continues patterns from Week 6.2.1 (config_paths.py - DRY + constants)
+                                <br>&nbsp;&nbsp;• Continues patterns from Week 6.2.2 (config_machine.py - docstrings)
+                                <br>&nbsp;&nbsp;• Achieves full consistency across all zConfig modules
+                                <br><br>
+                                <strong>✨ Test Output (New Logging):</strong>
+                                <br>&nbsp;&nbsp;• <code>[MachineDetector] Found default browser via LaunchServices: Chrome</code>
+                                <br>&nbsp;&nbsp;• <code>[MachineDetector] Found modern IDE: code</code>
+                                <br>&nbsp;&nbsp;• Clear separation between <code>[MachineDetector]</code> (helpers) and <code>[MachineConfig]</code> (main)
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Week 6</span>
+                                <span class="tag">Layer 0</span>
+                                <span class="tag">zConfig</span>
+                                <span class="tag">0.5 days</span>
+                                <span class="tag" style="background: #f6ad55; color: white;">REFACTOR</span>
                             </div>
                         </div>
                     </div>

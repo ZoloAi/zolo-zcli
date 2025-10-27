@@ -1,11 +1,129 @@
 # zCLI/subsystems/zConfig/zConfig_modules/helpers/machine_detectors.py
 """Helper functions for detecting machine capabilities and tools."""
 
+from typing import Dict, Any, Optional
 from zCLI import os, platform, shutil, Colors, subprocess, importlib, socket, Path
 
+# ═══════════════════════════════════════════════════════════
+# Module-Level Constants
+# ═══════════════════════════════════════════════════════════
 
-def _safe_getcwd():
-    """Safely get current working directory, handling case where it may have been deleted."""
+# Logging
+LOG_PREFIX = "[MachineDetector]"
+
+# Subprocess timeouts
+SUBPROCESS_TIMEOUT_SEC = 5
+
+# Memory conversion constants
+BYTES_PER_KB = 1024
+KB_PER_MB = 1024
+MB_PER_GB = 1024
+BYTES_PER_GB = 1024 ** 3
+
+# Browser detection
+BROWSER_MAPPING = {
+    'google.chrome': 'Chrome',
+    'chrome': 'Chrome',
+    'firefox': 'Firefox',
+    'safari': 'Safari',
+    'arc': 'Arc',
+    'brave': 'Brave',
+    'edge': 'Edge',
+    'opera': 'Opera',
+}
+LINUX_BROWSERS = ("firefox", "google-chrome", "chromium", "brave-browser")
+DEFAULT_MACOS_BROWSER = "Safari"
+DEFAULT_LINUX_BROWSER = "firefox"
+DEFAULT_WINDOWS_BROWSER = "Edge"
+
+# IDE detection
+IDE_ENV_VARS = ("IDE", "VISUAL_EDITOR", "EDITOR", "VISUAL")
+MODERN_IDES = ("cursor", "code", "fleet", "zed")
+CLASSIC_IDES = ("subl", "atom", "webstorm", "pycharm", "idea")
+SIMPLE_EDITORS = ("nano", "vim", "nvim", "vi")
+FALLBACK_EDITOR = "nano"
+
+# Linux browser desktop file mapping (for xdg-settings output parsing)
+LINUX_BROWSER_DESKTOP_MAP = {
+    'firefox': 'firefox',
+    'chrome': 'google-chrome',
+    'chromium': 'chromium',
+    'brave': 'brave-browser',
+}
+
+# Default values for environment variables
+DEFAULT_SHELL = "/bin/sh"
+DEFAULT_TIMEZONE = "system"
+
+# YAML template for machine config file
+MACHINE_CONFIG_TEMPLATE = """
+# zolo-zcli Machine Configuration
+# This file was auto-generated on first run.
+# You can edit this file to customize your tool preferences.
+
+zMachine:
+  # Machine Identity (auto-detected, do not edit unless needed)
+  os: "{os}"
+  os_version: "{os_version}"
+  os_name: "{os_name}"
+  hostname: "{hostname}"
+  architecture: "{architecture}"
+
+  # Python Runtime (auto-detected)
+  python_version: "{python_version}"
+  python_impl: "{python_impl}"
+  python_build: "{python_build}"
+  python_compiler: "{python_compiler}"
+  libc_ver: "{libc_ver}"
+
+  # Tool Preferences (customize these to your liking!)
+  browser: "{browser}"          # Chrome, Firefox, Arc, Safari, etc.
+  ide: "{ide}"                  # cursor, code, subl, etc.
+  terminal: "{terminal}"        # Terminal emulator
+  shell: "{shell}"              # bash, zsh, fish, etc.
+  lang: "{lang}"
+  timezone: "{timezone}"
+
+  # Paths (auto-detected)
+  home: "{home}"
+  cwd: "{cwd}"
+  username: "{username}"
+  path: "{path}"
+
+  # System Capabilities (auto-detected)
+  processor: "{processor}"
+  cpu_cores: {cpu_cores}
+  memory_gb: {memory_gb}
+  
+  # Custom Fields (add your own as needed)
+  # datacenter: "us-west-2"
+  # cluster: "lfs-cluster"
+  # lfs_node_id: "node-001"
+"""
+
+# ═══════════════════════════════════════════════════════════
+# Logging Helpers
+# ═══════════════════════════════════════════════════════════
+
+def _log_info(message: str) -> None:
+    """Print info message with consistent formatting."""
+    print(f"{LOG_PREFIX} {message}")
+
+def _log_warning(message: str) -> None:
+    """Print warning message with color."""
+    print(f"{Colors.WARNING}{LOG_PREFIX} {message}{Colors.RESET}")
+
+def _log_error(message: str) -> None:
+    """Print error message with color."""
+    print(f"{Colors.ERROR}{LOG_PREFIX} {message}{Colors.RESET}")
+
+def _log_config(message: str) -> None:
+    """Print config message with color."""
+    print(f"{Colors.CONFIG}{LOG_PREFIX} {message}{Colors.RESET}")
+
+
+def _safe_getcwd() -> str:
+    """Get current directory, falling back to home if deleted."""
     try:
         return os.getcwd()
     except (FileNotFoundError, OSError):
@@ -14,8 +132,8 @@ def _safe_getcwd():
         return str(Path.home())
 
 
-def detect_browser():
-    """Detect system default browser."""
+def detect_browser() -> str:
+    """Detect default browser via env var or platform-specific methods."""
     browser = os.getenv("BROWSER")  # Check env var first
     if browser:
         return browser
@@ -26,133 +144,108 @@ def detect_browser():
     elif system == "Linux":
         browser = _detect_linux_browser()
     elif system == "Windows":
-        browser = "Edge"  # TODO: Query Windows registry
+        browser = DEFAULT_WINDOWS_BROWSER
     else:
         browser = "unknown"
 
     return browser
 
 
-def _detect_macos_browser():
-    """Detect default browser on macOS using LaunchServices."""
+def _detect_macos_browser() -> str:
+    """Query macOS LaunchServices for default browser, fallback to Safari."""
     try:
-        # Method 1: Check LaunchServices database for http handler
+        # Check LaunchServices database for http handler
         result = subprocess.run(
             ['defaults', 'read', 'com.apple.LaunchServices/com.apple.launchservices.secure', 'LSHandlers'],
-            capture_output=True, text=True, timeout=5, check=False
+            capture_output=True, 
+            text=True, 
+            timeout=SUBPROCESS_TIMEOUT_SEC, 
+            check=False
         )
 
         output_lower = result.stdout.lower()
-        browser_mapping = {
-            'google.chrome': 'Chrome',
-            'chrome': 'Chrome',
-            'firefox': 'Firefox',
-            'safari': 'Safari',
-            'arc': 'Arc',
-            'brave': 'Brave',
-            'edge': 'Edge',
-            'opera': 'Opera',
-        }
-
-        for key, name in browser_mapping.items():
+        for key, name in BROWSER_MAPPING.items():
             if key in output_lower:
-                print(f"[MachineConfig] Found default browser via LaunchServices: {name}")
+                _log_info(f"Found default browser via LaunchServices: {name}")
                 return name
 
     except Exception as e:
-        print(f"{Colors.WARNING}[MachineConfig] Could not query LaunchServices: {e}{Colors.RESET}")
+        _log_warning(f"Could not query LaunchServices: {e}")
 
-    return "Safari"  # macOS default
+    return DEFAULT_MACOS_BROWSER
 
-def _detect_linux_browser():
-    """Detect default browser on Linux using xdg-settings."""
+def _detect_linux_browser() -> str:
+    """Query xdg-settings or PATH for default browser, fallback to firefox."""
     # Try xdg-settings first
     try:
         result = subprocess.run(
             ['xdg-settings', 'get', 'default-web-browser'],
-            capture_output=True, text=True, timeout=5, check=False
+            capture_output=True, 
+            text=True, 
+            timeout=SUBPROCESS_TIMEOUT_SEC, 
+            check=False
         )
         if result.returncode == 0:
             browser_desktop = result.stdout.strip().lower()
-            if 'firefox' in browser_desktop:
-                return "firefox"
-            if 'chrome' in browser_desktop:
-                return "google-chrome"
-            if 'chromium' in browser_desktop:
-                return "chromium"
-            if 'brave' in browser_desktop:
-                return "brave-browser"
+            for key, browser in LINUX_BROWSER_DESKTOP_MAP.items():
+                if key in browser_desktop:
+                    return browser
     except Exception:
-        pass
+        pass  # Fall through to PATH check
 
     # Check PATH for common browsers
-    for browser in ["firefox", "google-chrome", "chromium", "brave-browser"]:
+    for browser in LINUX_BROWSERS:
         if shutil.which(browser):
             return browser
 
-    return "firefox"  # Linux default
+    return DEFAULT_LINUX_BROWSER
 
-def detect_ide():
-    """Detect IDE/code editor by checking env vars, modern/classic IDEs, and fallback editors."""
+def detect_ide() -> str:
+    """Detect IDE/editor via env vars, PATH search (modern→classic→simple), fallback to nano."""
     # Check IDE/editor env vars
-    for var in ["IDE", "VISUAL_EDITOR", "EDITOR", "VISUAL"]:
+    for var in IDE_ENV_VARS:
         ide_env = os.getenv(var)
         if ide_env:
-            print(f"{Colors.CONFIG}[MachineConfig] IDE from env var {var}: {ide_env}{Colors.RESET}")
+            _log_config(f"IDE from env var {var}: {ide_env}")
             return ide_env
 
     # Check for modern GUI IDEs (prioritized by popularity/modernity)
-    modern_ides = [
-        "cursor",       # Cursor AI editor (very modern)
-        "code",         # VS Code (most popular)
-        "fleet",        # JetBrains Fleet (new)
-        "zed",          # Zed editor (modern, fast)
-    ]
-
-    for ide in modern_ides:
+    for ide in MODERN_IDES:
         if shutil.which(ide):
-            print(f"[MachineConfig] Found modern IDE: {ide}")
+            _log_info(f"Found modern IDE: {ide}")
             return ide
 
     # Check for classic IDEs
-    classic_ides = [
-        "subl",         # Sublime Text
-        "atom",         # Atom (discontinued but still used)
-        "webstorm",     # JetBrains WebStorm
-        "pycharm",      # JetBrains PyCharm
-        "idea",         # IntelliJ IDEA
-    ]
-
-    for ide in classic_ides:
+    for ide in CLASSIC_IDES:
         if shutil.which(ide):
-            print(f"{Colors.CONFIG}[MachineConfig] Found classic IDE: {ide}{Colors.RESET}")
+            _log_config(f"Found classic IDE: {ide}")
             return ide
 
     # macOS-specific: Check for Xcode
     if platform.system() == "Darwin":
         if shutil.which("xed"):  # Xcode command-line tool
-            print(f"{Colors.CONFIG}[MachineConfig] Found Xcode (xed){Colors.RESET}")
+            _log_config("Found Xcode (xed)")
             return "xed"
 
     # Fallback to simple editors
-    simple_editors = ["nano", "vim", "nvim", "vi"]
-    for editor in simple_editors:
+    for editor in SIMPLE_EDITORS:
         if shutil.which(editor):
-            print(f"{Colors.CONFIG}[MachineConfig] Falling back to simple editor: {editor}{Colors.RESET}")
+            _log_config(f"Falling back to simple editor: {editor}")
             return editor
 
     # Final fallback
-    print(f"{Colors.CONFIG}[MachineConfig] Using final fallback: nano{Colors.RESET}")
-    return "nano"
+    _log_config(f"Using final fallback: {FALLBACK_EDITOR}")
+    return FALLBACK_EDITOR
 
-def detect_memory_gb():
-    """Detect system memory in GB, returns int or None if detection fails."""
+def detect_memory_gb() -> Optional[int]:
+    """Detect system memory in GB via psutil or platform-specific methods."""
+    # Try psutil first (most reliable, cross-platform)
     try:
         psutil = importlib.import_module("psutil")
         memory_bytes = psutil.virtual_memory().total
-        return int(memory_bytes / (1024 ** 3))
+        return int(memory_bytes / BYTES_PER_GB)
     except Exception:
-        pass
+        pass  # Fall through to platform-specific methods
 
     # Platform-specific fallbacks
     try:
@@ -164,7 +257,7 @@ def detect_memory_gb():
                 for line in f:
                     if line.startswith("MemTotal:"):
                         kb = int(line.split()[1])
-                        return int(kb / (1024 * 1024))
+                        return int(kb / (KB_PER_MB * MB_PER_GB))
 
         # macOS: use sysctl
         elif system == "Darwin":
@@ -176,75 +269,56 @@ def detect_memory_gb():
             )
             if result.returncode == 0:
                 memory_bytes = int(result.stdout.strip())
-                return int(memory_bytes / (1024 ** 3))
+                return int(memory_bytes / BYTES_PER_GB)
     except Exception:
-        pass
+        pass  # Silent fail - memory detection is optional
 
     # Couldn't detect
     return None
 
-def create_user_machine_config(path, machine):
-    """Create user machine config file on first run with given path and data."""
+def create_user_machine_config(path: Path, machine: Dict[str, Any]) -> None:
+    """Create zConfig.machine.yaml with auto-detected values and user-editable preferences."""
     try:
         # Ensure directory exists
-        Path(path).parent.mkdir(parents=True, exist_ok=True)
+        path.parent.mkdir(parents=True, exist_ok=True)
 
-        # Create YAML content with current detected values
-        content = f"""
-# zolo-zcli Machine Configuration
-# This file was auto-generated on first run.
-# You can edit this file to customize your tool preferences.
+        # Format template with machine data (handle None values for YAML)
+        content = MACHINE_CONFIG_TEMPLATE.format(
+            os=machine.get('os', 'unknown'),
+            os_version=machine.get('os_version', 'unknown'),
+            os_name=machine.get('os_name', 'unknown'),
+            hostname=machine.get('hostname', 'unknown'),
+            architecture=machine.get('architecture', 'unknown'),
+            python_version=machine.get('python_version', 'unknown'),
+            python_impl=machine.get('python_impl', 'unknown'),
+            python_build=machine.get('python_build', 'unknown'),
+            python_compiler=machine.get('python_compiler', 'unknown'),
+            libc_ver=machine.get('libc_ver', 'unknown'),
+            browser=machine.get('browser', 'unknown'),
+            ide=machine.get('ide', 'unknown'),
+            terminal=machine.get('terminal', 'unknown'),
+            shell=machine.get('shell', 'unknown'),
+            lang=machine.get('lang', 'unknown'),
+            timezone=machine.get('timezone', 'unknown'),
+            home=machine.get('home', 'unknown'),
+            cwd=machine.get('cwd', 'unknown'),
+            username=machine.get('username', 'unknown'),
+            path=machine.get('path', 'unknown'),
+            processor=machine.get('processor', 'unknown'),
+            cpu_cores=machine.get('cpu_cores', 'null'),
+            memory_gb=machine.get('memory_gb', 'null')
+        )
 
-zMachine:
-  # Machine Identity (auto-detected, do not edit unless needed)
-  os: "{machine.get('os')}"
-  os_version: "{machine.get('os_version')}"
-  os_name: "{machine.get('os_name')}"
-  hostname: "{machine.get('hostname')}"
-  architecture: "{machine.get('architecture')}"
-
-  # Python Runtime (auto-detected)
-  python_version: "{machine.get('python_version')}"
-  python_impl: "{machine.get('python_impl')}"
-  python_build: "{machine.get('python_build')}"
-  python_compiler: "{machine.get('python_compiler')}"
-  libc_ver: "{machine.get('libc_ver')}"
-
-  # Tool Preferences (customize these to your liking!)
-  browser: "{machine.get('browser')}"          # Chrome, Firefox, Arc, Safari, etc.
-  ide: "{machine.get('ide')}"                  # cursor, code, subl, etc.
-  terminal: "{machine.get('terminal')}"        # Terminal emulator
-  shell: "{machine.get('shell')}"              # bash, zsh, fish, etc.
-  lang: "{machine.get('lang')}"
-  timezone: "{machine.get('timezone')}"
-
-  # Paths (auto-detected)
-  home: "{machine.get('home')}"
-  cwd: "{machine.get('cwd')}"
-  username: "{machine.get('username')}"
-  path: "{machine.get('path')}"
-
-  # System Capabilities (auto-detected)
-  processor: "{machine.get('processor')}"
-  cpu_cores: {machine.get('cpu_cores', 'null')}
-  memory_gb: {machine.get('memory_gb', 'null')}
-  
-  # Custom Fields (add your own as needed)
-  # datacenter: "us-west-2"
-  # cluster: "lfs-cluster"
-  # lfs_node_id: "node-001"
-"""
-
-        Path(path).write_text(content, encoding="utf-8")
-        print(f"{Colors.CONFIG}[MachineConfig] Created user machine config: {path}{Colors.RESET}")
-        print(f"{Colors.CONFIG}[MachineConfig] You can edit this file to customize tool preferences{Colors.RESET}")
+        path.write_text(content, encoding="utf-8")
+        _log_config(f"Created user machine config: {path}")
+        _log_config("You can edit this file to customize tool preferences")
 
     except Exception as e:
-        print(f"{Colors.ERROR}[MachineConfig] Failed to create user machine config: {e}{Colors.RESET}")
+        _log_error(f"Failed to create user machine config: {e}")
 
 
-def auto_detect_machine():
-    """Auto-detect machine information and return dict with defaults."""
+def auto_detect_machine() -> Dict[str, Any]:
+    """Auto-detect machine identity, Python runtime, tools, and capabilities."""
     print("[MachineConfig] Auto-detecting machine information...")
 
     machine = {
@@ -265,9 +339,9 @@ def auto_detect_machine():
         "browser": detect_browser(),
         "ide": detect_ide(),
         "terminal": os.getenv("TERM", "unknown"),
-        "shell": os.getenv("SHELL", "/bin/sh"),
+        "shell": os.getenv("SHELL", DEFAULT_SHELL),
         "lang": os.getenv("LANG", "unknown"),       # System language
-        "timezone": os.getenv("TZ", "system"),      # Timezone if set
+        "timezone": os.getenv("TZ", DEFAULT_TIMEZONE),      # Timezone if set
         "home": str(Path.home()),                   # User's home directory
 
         # System capabilities

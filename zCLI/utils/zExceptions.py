@@ -390,3 +390,25 @@ class zMachinePathError(zCLIException):
             context={"zpath": zpath, "resolved": resolved_path, "os": os_name}
         )
 
+
+class UnsupportedOSError(zCLIException):
+    """Raised when zCLI is run on an unsupported operating system."""
+
+    def __init__(self, os_type: str, valid_types: tuple):
+        hint = (
+            f"zCLI only supports Linux, macOS (Darwin), and Windows.\n\n"
+            f"Your OS: {os_type}\n"
+            f"Supported: {', '.join(valid_types)}\n\n"
+            f"What to do:\n"
+            f"   1. If you're on a compatible OS but seeing this, it may be a detection issue\n"
+            f"   2. Check that platform.system() returns the correct value\n"
+            f"   3. Report this issue: https://github.com/zolo-zcli/issues\n"
+            f"   4. Consider contributing OS support for your platform"
+        )
+
+        super().__init__(
+            f"Unsupported operating system: {os_type}",
+            hint=hint,
+            context={"os_type": os_type, "valid_types": valid_types}
+        )
+

@@ -2,6 +2,7 @@
 """Cross-platform configuration management with hierarchical loading and secret support."""
 
 from typing import Any, Dict, Optional, Union
+from zCLI import sys
 from zCLI.utils import print_ready_message, validate_zcli_instance
 from .zConfig_modules import (
     ConfigValidator,
@@ -15,6 +16,13 @@ from .zConfig_modules import (
     WebSocketConfig,
     HTTPServerConfig,
 )
+
+# Constants for session/logger access
+SESSION_LOGGER_KEY = "logger_instance"
+LOGGER_ATTRIBUTE = "_logger"
+SUBSYSTEM_NAME = "zConfig"
+READY_MESSAGE = "zConfig Ready"
+DEFAULT_COLOR = "CONFIG"
 
 class zConfig:
     """Configuration management with hierarchical loading and cross-platform support."""
@@ -31,10 +39,23 @@ class zConfig:
     _persistence: Optional[ConfigPersistence]
 
     def __init__(self, zcli: Any, zSpark_obj: Optional[Dict[str, Any]] = None) -> None:
-        """Initialize zConfig subsystem."""
+        """Initialize zConfig subsystem with hierarchical configuration loading.
+        
+        Initialization Order:
+            1. Validate configuration (fail fast)
+            2. Initialize path resolver
+            3. Load machine config (static, per-machine)
+            4. Load environment config (deployment, runtime)
+            5. Initialize session (creates logger, zTraceback)
+            6. Initialize WebSocket and HTTP server configs
+        
+        Args:
+            zcli: zCLI instance
+            zSpark_obj: Optional configuration dictionary from zSpark
+        """
 
         # Validate zCLI instance, pre zSession creation
-        validate_zcli_instance(zcli, "zConfig", require_session=False)
+        validate_zcli_instance(zcli, SUBSYSTEM_NAME, require_session=False)
         self.zcli = zcli
         self.zSpark = zSpark_obj
 
@@ -49,7 +70,6 @@ class zConfig:
             validator.validate()
         except ConfigValidationError as e:
             # Print error and exit - can't proceed with invalid config
-            import sys
             print(str(e), file=sys.stderr)
             sys.exit(1)
 
@@ -71,15 +91,16 @@ class zConfig:
         zcli.session = session_data
 
         # Get logger from session (initialized during session creation)
-        session_logger = session_data["logger_instance"]
+        session_logger = session_data[SESSION_LOGGER_KEY]
 
         # Use the logger instance created during session initialization
-        zcli.logger = session_logger._logger
+        zcli.logger = getattr(session_logger, LOGGER_ATTRIBUTE)
 
         # Log initial message with configured level
         zcli.logger.info("Logger initialized at level: %s", session_logger.log_level)
 
         # Initialize centralized traceback utility
+        # Import inline to avoid circular dependency (zTraceback imports zConfig types)
         from zCLI.utils.zTraceback import zTraceback
         zcli.zTraceback = zTraceback(logger=zcli.logger, zcli=zcli)
 
@@ -90,12 +111,7 @@ class zConfig:
         self.http_server = HTTPServerConfig(zSpark_obj or {}, zcli.logger)
 
         # Print styled ready message (before zDisplay is available)
-        print_ready_message("zConfig Ready", color="CONFIG")
-
-    @staticmethod
-    def print_config_ready(label: str, color: str = "CONFIG") -> None:
-        """Print styled 'Ready' message (pre zDisplay initialization)"""
-        print_ready_message(label, color=color)
+        print_ready_message(READY_MESSAGE, color=DEFAULT_COLOR)
 
     # ═══════════════════════════════════════════════════════════
     # Configuration Access Methods
