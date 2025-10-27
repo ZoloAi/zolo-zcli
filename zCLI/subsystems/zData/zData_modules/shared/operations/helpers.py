@@ -84,16 +84,26 @@ def extract_field_values(request, operation_name, ops):
     return fields, values
 
 def display_validation_errors(table, errors, ops):
-    """Display validation errors in a user-friendly format."""
+    """Display validation errors with actionable hints using ValidationError exception."""
+    from zCLI.utils.zExceptions import ValidationError
+    
     ops.logger.error("[FAIL] Validation failed for table '%s' with %d error(s)", table, len(errors))
 
-    # Format errors for logging and display
-    error_lines = [f"[FAIL] Validation Failed for table '{table}':"]
+    # Create ValidationError with context-aware hints
     for field, message in errors.items():
-        error_lines.append(f"  [BULLET] {field}: {message}")
-
-    # Display using zDisplay
-    ops.zcli.display.write_line("")
-    for line in error_lines:
-        ops.zcli.display.write_line(line)
-    ops.zcli.display.write_line("")
+        try:
+            # Raise ValidationError to get actionable hints
+            raise ValidationError(
+                field=field,
+                value="<provided value>",  # Value not available here
+                constraint=message,
+                schema_name=table
+            )
+        except ValidationError as e:
+            # Display the formatted error with hint
+            ops.zcli.display.write_line("")
+            ops.zcli.display.write_line(str(e))
+            ops.zcli.display.write_line("")
+            
+    # Also log summary
+    ops.logger.debug("[FAIL] Validation summary: %d field(s) failed for table '%s'", len(errors), table)

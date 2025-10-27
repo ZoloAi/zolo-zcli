@@ -312,20 +312,40 @@ created_at:
 
 ## Validation Rules
 
+zCLI provides comprehensive validation through the `DataValidator` class. All validation rules are defined under the `rules:` key for each field.
+
+### Basic Structure
+
+```yaml
+field_name:
+  type: str
+  required: true
+  rules:
+    # Validation rules go here
+    min_length: 3
+    max_length: 20
+    pattern: "^[a-zA-Z0-9_]+$"
+    error_message: "Custom error message"
+```
+
 ### min / max - Number Limits
 
 Set minimum and maximum values for numbers:
 
 ```yaml
 age:
-  type: integer
-  min: 13  # At least 13
-  max: 19  # At most 19
+  type: int
+  rules:
+    min: 13  # At least 13
+    max: 19  # At most 19
+    error_message: "Age must be between 13 and 19"
 
 price:
   type: float
-  min: 0.01  # At least one cent
-  max: 999.99  # At most $999.99
+  rules:
+    min: 0.01  # At least one cent
+    max: 999.99  # At most $999.99
+    error_message: "Price must be between $0.01 and $999.99"
 ```
 
 ### min_length / max_length - Text Length
@@ -334,16 +354,255 @@ Set minimum and maximum length for text:
 
 ```yaml
 username:
-  type: string
-  min_length: 3  # At least 3 characters
-  max_length: 20  # At most 20 characters
+  type: str
   required: true
+  rules:
+    min_length: 3  # At least 3 characters
+    max_length: 20  # At most 20 characters
+    error_message: "Username must be 3-20 characters"
 
 password:
-  type: string
-  min_length: 8  # At least 8 characters
+  type: str
   required: true
+  rules:
+    min_length: 8  # At least 8 characters
+    error_message: "Password must be at least 8 characters"
 ```
+
+### pattern - Regex Validation
+
+Use regular expressions to validate text patterns:
+
+```yaml
+username:
+  type: str
+  required: true
+  rules:
+    pattern: "^[a-zA-Z0-9_]{3,20}$"
+    pattern_message: "Username must be 3-20 characters (letters, numbers, underscore only)"
+
+slug:
+  type: str
+  required: true
+  rules:
+    pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    pattern_message: "Slug must be lowercase letters, numbers, and hyphens (e.g., my-blog-post)"
+
+sku:
+  type: str
+  required: true
+  rules:
+    pattern: "^[A-Z]{2,4}-[0-9]{4,6}$"
+    pattern_message: "SKU must follow format: ABC-1234 (2-4 uppercase letters, dash, 4-6 digits)"
+
+tags:
+  type: str
+  rules:
+    pattern: "^[a-zA-Z0-9,\\s]+$"
+    pattern_message: "Tags must be comma-separated words (e.g., python, coding, tutorial)"
+```
+
+**Common Regex Patterns:**
+- `^[a-zA-Z0-9_]+$` - Alphanumeric + underscore
+- `^[a-z0-9-]+$` - Lowercase alphanumeric + hyphens
+- `^[A-Z]{2,4}$` - 2-4 uppercase letters
+- `^[0-9]{4,6}$` - 4-6 digits
+- `^[a-zA-Z\\s]+$` - Letters and spaces only
+
+### format - Built-in Validators
+
+Use pre-built validators for common formats:
+
+```yaml
+email:
+  type: str
+  required: true
+  rules:
+    format: email
+    error_message: "Please enter a valid email address (user@domain.com)"
+
+website:
+  type: str
+  rules:
+    format: url
+    error_message: "Website must be a valid URL (e.g., https://example.com)"
+
+phone:
+  type: str
+  rules:
+    format: phone
+    error_message: "Phone number must be 10-15 digits (e.g., +1234567890)"
+```
+
+**Available Format Validators:**
+- `email` - Validates email addresses (user@domain.com)
+- `url` - Validates URLs (http://example.com or https://example.com)
+- `phone` - Validates phone numbers (10-15 digits, accepts +, spaces, dashes, parentheses)
+
+### error_message - Custom Error Messages
+
+Override default error messages with custom ones:
+
+```yaml
+age:
+  type: int
+  rules:
+    min: 18
+    max: 120
+    error_message: "Age must be between 18 and 120"
+
+bio:
+  type: str
+  rules:
+    max_length: 500
+    error_message: "Bio cannot exceed 500 characters"
+```
+
+**When to use:**
+- Provide user-friendly messages
+- Give context-specific guidance
+- Explain business rules
+
+### pattern_message - Regex-Specific Messages
+
+Provide helpful messages for regex pattern failures:
+
+```yaml
+username:
+  type: str
+  rules:
+    pattern: "^[a-zA-Z0-9_]{3,20}$"
+    pattern_message: "Username must be 3-20 characters (letters, numbers, underscore only)"
+    # Falls back to error_message if pattern_message not provided
+```
+
+### Combining Multiple Rules
+
+You can combine multiple validation rules:
+
+```yaml
+username:
+  type: str
+  required: true
+  rules:
+    min_length: 3
+    max_length: 20
+    pattern: "^[a-zA-Z0-9_]+$"
+    pattern_message: "Username must contain only letters, numbers, and underscores"
+
+email:
+  type: str
+  required: true
+  rules:
+    format: email
+    max_length: 255
+    error_message: "Please enter a valid email address (max 255 characters)"
+
+price:
+  type: float
+  required: true
+  rules:
+    min: 0.01
+    max: 999999.99
+    error_message: "Price must be between $0.01 and $999,999.99"
+```
+
+### Validation Execution Order
+
+DataValidator checks rules in this order:
+1. **required** - Is the field present? (if `required: true`)
+2. **String rules** - `min_length`, `max_length`
+3. **Numeric rules** - `min`, `max`
+4. **Pattern rules** - `pattern` (regex)
+5. **Format rules** - `format` (email, url, phone)
+
+**Example:**
+```yaml
+username:
+  type: str
+  required: true
+  rules:
+    min_length: 3      # Checked first
+    max_length: 20     # Checked second
+    pattern: "^[a-zA-Z0-9_]+$"  # Checked third
+```
+
+If any rule fails, validation stops and returns the error message.
+
+### Common Validation Patterns
+
+**Username Validation:**
+```yaml
+username:
+  type: str
+  required: true
+  rules:
+    pattern: "^[a-zA-Z0-9_]{3,20}$"
+    pattern_message: "Username must be 3-20 characters (letters, numbers, underscore only)"
+    min_length: 3
+    max_length: 20
+```
+
+**Email with Domain Restriction (requires plugin validator - Week 5.2):**
+```yaml
+email:
+  type: str
+  required: true
+  rules:
+    format: email
+    # validator: "&validators.check_email_domain(['company.com'])"  # Week 5.2
+    error_message: "Please enter a valid company email address"
+```
+
+**Product SKU:**
+```yaml
+sku:
+  type: str
+  required: true
+  rules:
+    pattern: "^[A-Z]{2,4}-[0-9]{4,6}$"
+    pattern_message: "SKU must follow format: ABC-1234 (2-4 uppercase letters, dash, 4-6 digits)"
+```
+
+**URL Slug:**
+```yaml
+slug:
+  type: str
+  required: true
+  rules:
+    pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    pattern_message: "Slug must be lowercase letters, numbers, and hyphens (e.g., my-blog-post)"
+```
+
+**Price Range:**
+```yaml
+price:
+  type: float
+  required: true
+  rules:
+    min: 0.01
+    max: 999999.99
+    error_message: "Price must be between $0.01 and $999,999.99"
+```
+
+### Testing Your Validation Rules
+
+When you insert or update data, DataValidator automatically checks all rules:
+
+```python
+# This will fail validation if username doesn't match pattern
+result = z.data.insert("users", {
+    "username": "invalid user!",  # Contains space and exclamation
+    "email": "user@example.com"
+})
+
+# Returns: {"error": {"username": "Username must be 3-20 characters (letters, numbers, underscore only)"}}
+```
+
+**Validation happens automatically for:**
+- `z.data.insert()` - All fields checked, required fields enforced
+- `z.data.update()` - Only provided fields checked, required fields NOT enforced
+- `zDialog` forms - (Week 5.1 Task 3 - coming soon!)
 
 ---
 

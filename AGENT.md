@@ -269,6 +269,337 @@ _rbac:
 
 ---
 
+## Data Validation (Week 5.1 - zData)
+
+**zCLI provides comprehensive validation through `DataValidator` class (191 lines)**
+
+### ✅ Validation Rules (Already Implemented!)
+
+All validation rules are defined under the `rules:` key in `zSchema` files:
+
+```yaml
+# In zSchema.users.yaml
+users:
+  username:
+    type: str
+    required: true
+    rules:
+      pattern: "^[a-zA-Z0-9_]{3,20}$"
+      pattern_message: "Username must be 3-20 characters (letters, numbers, underscore only)"
+      min_length: 3
+      max_length: 20
+  
+  email:
+    type: str
+    required: true
+    rules:
+      format: email
+      max_length: 255
+      error_message: "Please enter a valid email address (user@domain.com)"
+  
+  age:
+    type: int
+    rules:
+      min: 18
+      max: 120
+      error_message: "Age must be between 18 and 120"
+```
+
+### Available Validation Rules
+
+| Rule | Type | Example | Description |
+|------|------|---------|-------------|
+| `required` | All | `required: true` | Field must be present (top-level, not in `rules:`) |
+| `min_length` | String | `min_length: 3` | Minimum string length |
+| `max_length` | String | `max_length: 100` | Maximum string length |
+| `min` | Numeric | `min: 0` | Minimum value |
+| `max` | Numeric | `max: 999.99` | Maximum value |
+| `pattern` | String | `pattern: "^[a-z0-9-]+$"` | Regex pattern (IMPLEMENTED!) |
+| `pattern_message` | String | `pattern_message: "Use lowercase only"` | Custom regex error message |
+| `format` | String | `format: email` | Built-in validator (email, url, phone) |
+| `error_message` | All | `error_message: "Custom error"` | Override default error message |
+
+### Built-in Format Validators
+
+```yaml
+email:
+  type: str
+  rules:
+    format: email  # Validates user@domain.com
+
+website:
+  type: str
+  rules:
+    format: url  # Validates http://example.com or https://example.com
+
+phone:
+  type: str
+  rules:
+    format: phone  # Validates 10-15 digits (accepts +, spaces, dashes, parentheses)
+```
+
+### Common Regex Patterns
+
+```yaml
+# Username (alphanumeric + underscore, 3-20 chars)
+username:
+  type: str
+  rules:
+    pattern: "^[a-zA-Z0-9_]{3,20}$"
+    pattern_message: "Username must be 3-20 characters (letters, numbers, underscore only)"
+
+# URL Slug (lowercase, hyphens)
+slug:
+  type: str
+  rules:
+    pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    pattern_message: "Slug must be lowercase letters, numbers, and hyphens (e.g., my-blog-post)"
+
+# Product SKU (ABC-1234 format)
+sku:
+  type: str
+  rules:
+    pattern: "^[A-Z]{2,4}-[0-9]{4,6}$"
+    pattern_message: "SKU must follow format: ABC-1234 (2-4 uppercase letters, dash, 4-6 digits)"
+
+# Tags (comma-separated words)
+tags:
+  type: str
+  rules:
+    pattern: "^[a-zA-Z0-9,\\s]+$"
+    pattern_message: "Tags must be comma-separated words (e.g., python, coding, tutorial)"
+```
+
+### Validation Execution Order
+
+DataValidator checks rules in this order:
+1. **required** - Is the field present? (if `required: true`)
+2. **String rules** - `min_length`, `max_length`
+3. **Numeric rules** - `min`, `max`
+4. **Pattern rules** - `pattern` (regex)
+5. **Format rules** - `format` (email, url, phone)
+
+If any rule fails, validation stops and returns the error message.
+
+### Automatic Validation
+
+Validation happens automatically for:
+
+```python
+# INSERT - All fields checked, required fields enforced
+result = z.data.insert("users", {
+    "username": "invalid user!",  # Fails pattern validation
+    "email": "user@example.com"
+})
+# Returns: {"error": {"username": "Username must be 3-20 characters (letters, numbers, underscore only)"}}
+
+# UPDATE - Only provided fields checked, required fields NOT enforced
+result = z.data.update("users", {"id": 1}, {
+    "email": "invalid-email"  # Fails format validation
+})
+# Returns: {"error": {"email": "Invalid email address format"}}
+```
+
+### Combining Multiple Rules
+
+You can stack multiple validation rules:
+
+```yaml
+username:
+  type: str
+  required: true
+  rules:
+    min_length: 3      # Checked first
+    max_length: 20     # Checked second
+    pattern: "^[a-zA-Z0-9_]+$"  # Checked third
+    pattern_message: "Username must contain only letters, numbers, and underscores"
+
+email:
+  type: str
+  required: true
+  rules:
+    format: email      # Built-in email validator
+    max_length: 255    # Also enforce max length
+    error_message: "Please enter a valid email address (max 255 characters)"
+
+price:
+  type: float
+  required: true
+  rules:
+    min: 0.01          # At least 1 cent
+    max: 999999.99     # At most $999,999.99
+    error_message: "Price must be between $0.01 and $999,999.99"
+```
+
+### Common Validation Patterns
+
+**User Registration:**
+```yaml
+users:
+  username:
+    type: str
+    required: true
+    rules:
+      pattern: "^[a-zA-Z0-9_]{3,20}$"
+      pattern_message: "Username must be 3-20 characters (letters, numbers, underscore only)"
+  
+  email:
+    type: str
+    required: true
+    rules:
+      format: email
+      max_length: 255
+  
+  password_hash:
+    type: str
+    required: true
+    rules:
+      min_length: 60  # bcrypt hash length
+  
+  age:
+    type: int
+    rules:
+      min: 18
+      max: 120
+```
+
+**Product Inventory:**
+```yaml
+products:
+  sku:
+    type: str
+    required: true
+    rules:
+      pattern: "^[A-Z]{2,4}-[0-9]{4,6}$"
+      pattern_message: "SKU must follow format: ABC-1234"
+  
+  price:
+    type: float
+    required: true
+    rules:
+      min: 0.01
+      max: 999999.99
+      error_message: "Price must be between $0.01 and $999,999.99"
+  
+  stock:
+    type: int
+    default: 0
+    rules:
+      min: 0
+      error_message: "Stock cannot be negative"
+```
+
+**Blog Posts:**
+```yaml
+posts:
+  title:
+    type: str
+    required: true
+    rules:
+      min_length: 5
+      max_length: 200
+  
+  slug:
+    type: str
+    required: true
+    rules:
+      pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+      pattern_message: "Slug must be lowercase letters, numbers, and hyphens"
+  
+  tags:
+    type: str
+    rules:
+      pattern: "^[a-zA-Z0-9,\\s]+$"
+      pattern_message: "Tags must be comma-separated words"
+```
+
+### Testing Validation
+
+```python
+# Test pattern validation
+result = z.data.insert("users", {
+    "username": "invalid user!",  # Contains space and exclamation
+    "email": "user@example.com"
+})
+assert "error" in result
+assert "username" in result["error"]
+
+# Test format validation
+result = z.data.insert("users", {
+    "username": "validuser",
+    "email": "not-an-email"  # Invalid email format
+})
+assert result["error"]["email"] == "Invalid email address format"
+
+# Test numeric range
+result = z.data.insert("users", {
+    "username": "validuser",
+    "email": "user@example.com",
+    "age": 150  # Exceeds max
+})
+assert "Age must be between 18 and 120" in result["error"]["age"]
+```
+
+### Common Validation Mistakes
+
+**❌ Wrong: Using `.yaml` extension in zPath**
+```python
+z.loader.handle('@.zSchema.users.yaml')  # WRONG - double extension!
+```
+
+**✅ Right: No extension (framework auto-adds .yaml)**
+```python
+z.loader.handle('@.zSchema.users')  # Correct
+```
+
+**❌ Wrong: Forgetting `rules:` key**
+```yaml
+username:
+  type: str
+  pattern: "^[a-z]+$"  # WRONG - pattern must be under rules:
+```
+
+**✅ Right: All validation rules under `rules:` key**
+```yaml
+username:
+  type: str
+  rules:
+    pattern: "^[a-z]+$"  # Correct
+```
+
+**❌ Wrong: Using `validator:` for built-in formats**
+```yaml
+email:
+  type: str
+  rules:
+    validator: "email"  # WRONG - use format: email
+```
+
+**✅ Right: Use `format:` for built-in validators**
+```yaml
+email:
+  type: str
+  rules:
+    format: email  # Correct
+```
+
+### Plugin Validators (Week 5.2 - Coming Soon)
+
+For custom business rules, use plugin validators:
+
+```yaml
+email:
+  type: str
+  rules:
+    format: email  # Built-in validator
+    validator: "&validators.check_email_domain(['company.com'])"  # Custom plugin validator
+    error_message: "Email must be from company.com domain"
+```
+
+See Week 5.2 for plugin validator implementation.
+
+---
+
 ## Actionable Error Messages (Week 4.3)
 
 **All zCLI exceptions include context-aware hints for resolution**

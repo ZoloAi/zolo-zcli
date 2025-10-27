@@ -15,7 +15,8 @@ Meta:
   # Data_User: null             # Default: auto-detect system username (macOS/Homebrew)
   # Data_Password: null         # Default: null (no password for local)
 
-# Simple users table with validation rules
+# Simple users table (kept minimal for test compatibility)
+# See posts and products tables below for comprehensive validation examples
 users:
   id:
     type: int
@@ -40,7 +41,7 @@ users:
     type: str
     default: active
 
-# Posts table with FK to users
+# Posts table with FK to users and slug pattern validation
 posts:
   id:
     type: int
@@ -55,13 +56,26 @@ posts:
     rules:
       min_length: 5
       max_length: 200
+  slug:
+    type: str
+    required: true
+    rules:
+      pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+      pattern_message: "Slug must be lowercase letters, numbers, and hyphens (e.g., my-blog-post)"
   content:
     type: str
+    rules:
+      min_length: 10
+  tags:
+    type: str
+    rules:
+      pattern: "^[a-zA-Z0-9,\\s]+$"
+      pattern_message: "Tags must be comma-separated words (e.g., python, coding, tutorial)"
   status:
     type: str
     default: draft
 
-# Simple products table for testing
+# Products table with SKU pattern and price validation
 products:
   id:
     type: int
@@ -69,11 +83,31 @@ products:
   name:
     type: str
     required: true
+    rules:
+      min_length: 3
+      max_length: 100
+  sku:
+    type: str
+    required: true
+    rules:
+      pattern: "^[A-Z]{2,4}-[0-9]{4,6}$"
+      pattern_message: "SKU must follow format: ABC-1234 (2-4 uppercase letters, dash, 4-6 digits)"
   price:
     type: float
+    required: true
+    rules:
+      min: 0.01
+      max: 999999.99
+      error_message: "Price must be between $0.01 and $999,999.99"
   stock:
     type: int
     default: 0
+    rules:
+      min: 0
+      error_message: "Stock cannot be negative"
   category:
     type: str
+    rules:
+      pattern: "^[a-zA-Z\\s&-]+$"
+      pattern_message: "Category must contain only letters, spaces, ampersands, and hyphens"
 

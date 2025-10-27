@@ -49,6 +49,7 @@ TEST_MODULES = [
     'zTraceback',  # Traceback handling and interactive error UI (v1.5.3)
     'zExceptions',  # Week 4.3 - Actionable error messages with context-aware hints
     'zData',
+    'zData_Validation',  # Week 5.1 - Comprehensive validation tests (pattern, format, min/max, error messages)
     'zWalker',
     'zIntegration',  # Integration tests - test multiple subsystems working together
     'zEndToEnd',     # End-to-end tests - simulate complete user workflows
