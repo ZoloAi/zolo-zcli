@@ -269,6 +269,158 @@ _rbac:
 
 ---
 
+## Actionable Error Messages (Week 4.3)
+
+**All zCLI exceptions include context-aware hints for resolution**
+
+### Exception Types (from `zCLI.utils.zExceptions`)
+
+```python
+from zCLI.utils.zExceptions import (
+    SchemaNotFoundError,      # Schema file not found or not loaded
+    FormModelNotFoundError,   # Form model not in schema
+    TableNotFoundError,       # Table not in loaded schema
+    DatabaseNotInitializedError,  # INSERT before CREATE
+    InvalidzPathError,        # Malformed zPath
+    AuthenticationRequiredError,  # Login required
+    PermissionDeniedError,    # Insufficient permissions
+    zUIParseError,           # YAML syntax/structure error
+    ConfigurationError,      # Invalid zSpark config
+    PluginNotFoundError,     # Plugin file missing
+    ValidationError          # Data validation failed
+)
+```
+
+### Pattern: Automatic Actionable Hints
+
+**Every exception includes:**
+- **Clear error message** - What went wrong
+- **💡 Actionable hint** - How to fix it
+- **Context storage** - For debugging (`.context` dict)
+
+**Example - SchemaNotFoundError:**
+```python
+# User tries to load missing schema
+z.data.handle({"action": "read", "model": "@.zSchema.users"})
+
+# zCLI raises:
+# SchemaNotFoundError: Schema 'users' not found
+# 💡 Load it first: z.loader.handle('@.zSchema.users')
+#    Expected file: zSchema.users.yaml in workspace
+```
+
+### zPath Syntax Rules (CRITICAL)
+
+**✅ Correct:**
+```python
+z.loader.handle("@.zSchema.users")          # Python: NO .yaml extension
+model: "@.zSchema.products"                 # YAML: NO .yaml extension  
+```
+
+**❌ Wrong:**
+```python
+z.loader.handle("@.zSchema.users.yaml")     # Double extension!
+model: "@.zSchema.products.yaml"            # Double extension!
+```
+
+**Why:** The framework auto-adds `.yaml` for `zSchema.*`, `zUI.*`, and `zConfig.*` files.
+
+### Context-Aware Hints
+
+Exceptions provide different hints based on where they occur:
+
+**Python Context:**
+```python
+SchemaNotFoundError("users", context_type="python")
+# Hint: Load it first: z.loader.handle('@.zSchema.users')
+```
+
+**YAML zData Context:**
+```python
+SchemaNotFoundError("users", context_type="yaml_zdata")
+# Hint: In zUI files, use zPath syntax:
+#   zData:
+#     model: '@.zSchema.users'  # NO .yaml extension!
+#     action: read
+```
+
+**YAML zDialog Context:**
+```python
+FormModelNotFoundError("User", available_models=["SearchForm", "DeleteForm"])
+# Hint: Available models: SearchForm, DeleteForm
+#   Define it in zSchema.users.yaml:
+#   Models:
+#     User:
+#       fields:
+#         field1: {type: string}
+```
+
+### Common Mistakes & Solutions
+
+**1. INSERT before CREATE (Most Common)**
+```python
+# ❌ WRONG: Trying to insert before creating table
+z.data.handle({"action": "insert", "table": "users", ...})
+# Raises: DatabaseNotInitializedError
+# 💡 Initialize the database first:
+#    Step 1: Create table structure
+#    z.data.handle({'action': 'create', 'model': '@.zSchema.users'})
+#    
+#    Step 2: Then perform operations
+#    z.data.handle({'action': 'insert', ...})
+```
+
+**2. Double Extension in zPath**
+```python
+# ❌ WRONG
+z.loader.handle("@.zSchema.users.yaml")
+# Raises: InvalidzPathError
+# 💡 zPath syntax:
+#    '@.zSchema.name' - workspace-relative (NO .yaml extension)
+```
+
+**3. Missing Form Model**
+```yaml
+# ❌ WRONG: Form model not defined in schema
+zDialog:
+  model: NonExistent
+  fields: [name, email]
+# Raises: FormModelNotFoundError
+# 💡 Available models: User, SearchForm, DeleteForm
+#    Define it in zSchema.users.yaml:
+#    Models:
+#      NonExistent:
+#        fields: ...
+```
+
+### Integration with zTraceback
+
+**Actionable errors work seamlessly with `zTraceback` and `ExceptionContext`:**
+
+```python
+from zCLI.utils.zTraceback import ExceptionContext
+from zCLI.utils.zExceptions import SchemaNotFoundError
+
+with ExceptionContext(
+    zcli.zTraceback,
+    operation="schema loading",
+    context={'model': model_path},
+    default_return=None
+):
+    schema = load_schema(model_path)
+    if not schema:
+        raise SchemaNotFoundError(schema_name, context_type="python")
+
+# What happens:
+# 1. Exception is raised with actionable hint
+# 2. ExceptionContext catches it
+# 3. zTraceback logs full traceback + context
+# 4. User sees: error + hint + traceback + context
+# 5. Interactive mode allows retry
+```
+
+---
+
 ## zSpark Configuration (Layer 0)
 
 **Minimal** (Terminal Mode):

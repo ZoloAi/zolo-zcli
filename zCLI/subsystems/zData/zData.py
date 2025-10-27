@@ -2,6 +2,7 @@
 
 """Unified data management with dual-paradigm support (classical/quantum)."""
 
+from zCLI.utils.zExceptions import SchemaNotFoundError, TableNotFoundError
 from .zData_modules.paradigms.classical import ClassicalData
 from .zData_modules.paradigms.quantum import QuantumData
 
@@ -118,7 +119,13 @@ class zData:
         schema = self.loader.handle(model_path)
         if schema == "error" or not schema:
             self.logger.error("Failed to load schema from: %s", model_path)
-            return False
+            # Extract schema name from zPath (e.g., '@.zSchema.users' -> 'users')
+            schema_name = model_path.split('.')[-1] if model_path else "unknown"
+            raise SchemaNotFoundError(
+                schema_name=schema_name,
+                context_type="python",
+                zpath=model_path
+            )
 
         self.load_schema(schema)
         return bool(self.handler)
@@ -245,7 +252,9 @@ class zData:
         # If schema not provided, get from loaded schema
         if schema is None:
             if not self.schema or table_name not in self.schema:
-                raise ValueError(f"Table '{table_name}' not found in loaded schema")
+                # Extract schema name if available (e.g., from Meta section)
+                schema_name = self.schema.get('Meta', {}).get('Schema_Name') if self.schema else None
+                raise TableNotFoundError(table_name, schema_name=schema_name)
             schema = self.schema[table_name]
         
         self.logger.debug("Creating table: %s", table_name)

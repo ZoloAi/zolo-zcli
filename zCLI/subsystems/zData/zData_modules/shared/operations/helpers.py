@@ -1,6 +1,7 @@
 # zCLI/subsystems/zData/zData_modules/shared/operations/helpers.py
 """Shared helper utilities for all operations."""
 
+from zCLI.utils.zExceptions import TableNotFoundError, DatabaseNotInitializedError
 from ..parsers import parse_where_clause, parse_value
 
 
@@ -31,8 +32,12 @@ def extract_table_from_request(request, operation_name, ops, check_exists=True):
 
     if check_exists and not ops.adapter.table_exists(table):
         ops.logger.error("[FAIL] Table '%s' does not exist", table)
+        # Extract schema name if available
+        schema_name = ops.schema.get('Meta', {}).get('Schema_Name') if ops.schema else None
+        # Display user-friendly error first
         ops.display.error(f"Table '{table}' does not exist. Please run 'Setup Database' first to create tables.")
-        return None
+        # Then raise actionable exception
+        raise DatabaseNotInitializedError(operation=operation_name, table=table)
 
     return table
 

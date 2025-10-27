@@ -47,6 +47,7 @@ TEST_MODULES = [
     'zWizard',
     'zUtils',
     'zTraceback',  # Traceback handling and interactive error UI (v1.5.3)
+    'zExceptions',  # Week 4.3 - Actionable error messages with context-aware hints
     'zData',
     'zWalker',
     'zIntegration',  # Integration tests - test multiple subsystems working together

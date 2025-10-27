@@ -638,8 +638,13 @@ class TestzDataErrorHandling(unittest.TestCase):
         
         self.zcli.data.load_schema(schema)
         
-        with self.assertRaises(ValueError):
+        # Week 4.3 - Now raises TableNotFoundError with actionable hint
+        from zCLI.utils.zExceptions import TableNotFoundError
+        with self.assertRaises(TableNotFoundError) as cm:
             self.zcli.data.create_table("nonexistent_table")
+        
+        # Verify actionable error message includes hint
+        self.assertIn("Create the table first", str(cm.exception))
 
 
 class TestzDataPluginIntegration(unittest.TestCase):
