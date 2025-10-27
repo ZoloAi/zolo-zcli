@@ -396,3 +396,57 @@ class ValidationError(zCLIException):
             context={"field": field, "value": value, "constraint": constraint, "schema": schema_name}
         )
 
+
+class zMachinePathError(zCLIException):
+    """Raised when zMachine path resolution fails or file not found."""
+    
+    def __init__(self, zpath: str, resolved_path: str, context_type: str = "file"):
+        """
+        Args:
+            zpath: The zMachine zPath that was attempted
+            resolved_path: The actual OS-specific path it resolved to
+            context_type: "file" (not found) or "syntax" (wrong format)
+        """
+        import platform
+        os_name = platform.system()
+        
+        if context_type == "file":
+            hint = (
+                f"File not found at zMachine path.\n\n"
+                f"🔍 Resolution on {os_name}:\n"
+                f"   {zpath}\n"
+                f"   → {resolved_path}\n\n"
+                f"💡 Options:\n"
+                f"   1. Create the file at the resolved path\n"
+                f"   2. Use workspace path instead: '@.zSchema.users'\n"
+                f"   3. Use absolute path: '~./path/to/file'\n\n"
+                f"📁 Platform-Specific Paths:\n"
+                f"   • macOS: ~/Library/Application Support/zolo-zcli/...\n"
+                f"   • Linux: ~/.local/share/zolo-zcli/...\n"
+                f"   • Windows: %LOCALAPPDATA%\\zolo-zcli\\...\n\n"
+                f"🤔 When to use zMachine:\n"
+                f"   ✅ User data that should persist across projects\n"
+                f"   ✅ Global configuration files\n"
+                f"   ✅ Cross-platform compatible storage\n"
+                f"   ❌ Project-specific data (use '@' instead)"
+            )
+        else:  # syntax error
+            hint = (
+                f"zMachine syntax depends on context:\n\n"
+                f"📝 In zSchema Data_Path (NO dot):\n"
+                f"   Meta:\n"
+                f"     Data_Path: \"zMachine\"  # ✅ Correct\n"
+                f"     # NOT: \"zMachine.\" ❌\n\n"
+                f"📝 In zVaFile references (WITH dot):\n"
+                f"   zVaFile: \"zMachine.zSchema.users\"  # ✅ Correct\n"
+                f"   # Also valid: \"~.zMachine.zSchema.users\"\n\n"
+                f"🎯 Your OS resolves zMachine to:\n"
+                f"   {resolved_path}"
+            )
+        
+        super().__init__(
+            f"zMachine path error: {zpath}",
+            hint=hint,
+            context={"zpath": zpath, "resolved": resolved_path, "os": os_name}
+        )
+

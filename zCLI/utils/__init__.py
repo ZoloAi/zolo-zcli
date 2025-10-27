@@ -22,6 +22,7 @@ from .zExceptions import (
     ConfigurationError,
     PluginNotFoundError,
     ValidationError,
+    zMachinePathError,
 )
 
 __all__ = [
@@ -42,4 +43,5 @@ __all__ = [
     "ConfigurationError",
     "PluginNotFoundError",
     "ValidationError",
+    "zMachinePathError",
 ]

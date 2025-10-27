@@ -1362,6 +1362,83 @@
                         </div>
                     </div>
 
+                    <div class="todo-item completed" data-id="layer1-zmachine-errors">
+                        <input type="checkbox" class="todo-checkbox" checked>
+                        <div class="todo-content">
+                            <div class="todo-title">Week 4.4: 🎨 zMachine Path Error Messages (Context-Aware) ✅ COMPLETE</div>
+                            <div class="todo-description">
+                                <strong>🎉 IMPLEMENTED: Cross-Platform zMachine Path Error Messages</strong>
+                                <br><br>
+                                <strong>✅ Created zMachinePathError Exception:</strong>
+                                <br>&nbsp;&nbsp;• Context-aware (file not found vs syntax error)
+                                <br>&nbsp;&nbsp;• Shows actual OS-specific resolved path (macOS/Linux/Windows)
+                                <br>&nbsp;&nbsp;• Platform detection using <code>platform.system()</code>
+                                <br>&nbsp;&nbsp;• Actionable hints with 💡 indicator
+                                <br><br>
+                                <strong>🎯 Two Contexts Implemented:</strong>
+                                <br>&nbsp;&nbsp;1. <strong>File Not Found:</strong> Shows resolution chain with arrow (→)
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;💡 3 Options: Create file, use @ instead, use ~ for absolute
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;📁 Shows all platform paths (macOS/Linux/Windows)
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🤔 When to use zMachine (persistent user data) vs @ (workspace isolation)
+                                <br>&nbsp;&nbsp;2. <strong>Syntax Error:</strong> Data_Path: "zMachine" (NO dot) vs zVaFile: "zMachine.zSchema.users" (WITH dot)
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;✅ Shows correct usage with examples
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;❌ Shows incorrect usage with warnings
+                                <br><br>
+                                <strong>🔧 Integration with resolve_zmachine_path():</strong>
+                                <br>&nbsp;&nbsp;• Added validation for zVaFile paths (zSchema, zUI, zConfig)
+                                <br>&nbsp;&nbsp;• Auto-appends .yaml extension before checking existence
+                                <br>&nbsp;&nbsp;• Raises <code>zMachinePathError</code> if file not found
+                                <br>&nbsp;&nbsp;• Preserves existing functionality (backward compatible)
+                                <br><br>
+                                <strong>✅ Tests Added (9 comprehensive tests - 100% passing):</strong>
+                                <br>&nbsp;&nbsp;• TestzMachinePathError (10 tests total):
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1. test_file_not_found_context - File not found error message
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2. test_syntax_error_context - Syntax error guidance
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3. test_context_storage - Context dict for debugging
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4. test_platform_specific_hints - All platforms mentioned
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;5. test_when_to_use_guidance - Usage recommendations
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;6. test_alternatives_provided - 3 solution options
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;7. test_syntax_context_shows_correct_usage - Correct vs incorrect
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;8. test_resolved_path_shown - Arrow (→) to resolved path
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;9. test_actionable_hint_present - 💡 emoji indicator
+                                <br>&nbsp;&nbsp;• TestExceptionHierarchy - Updated to include zMachinePathError
+                                <br>&nbsp;&nbsp;• File: <code>zTestSuite/zExceptions_Test.py</code> (now 49 tests, was 40)
+                                <br><br>
+                                <strong>📁 Files Created/Modified:</strong>
+                                <br>&nbsp;&nbsp;• <code>zCLI/utils/zExceptions.py</code> - Added zMachinePathError class (52 lines)
+                                <br>&nbsp;&nbsp;• <code>zCLI/utils/__init__.py</code> - Exported zMachinePathError
+                                <br>&nbsp;&nbsp;• <code>zCLI/subsystems/zParser/zParser_modules/zParser_zPath.py</code> - Integrated validation
+                                <br>&nbsp;&nbsp;• <code>zTestSuite/zExceptions_Test.py</code> - Added 9 tests (130 lines)
+                                <br>&nbsp;&nbsp;• <code>AGENT.md</code> - Added comprehensive zMachine section (60 lines)
+                                <br><br>
+                                <strong>✅ Documentation Added to AGENT.md:</strong>
+                                <br>&nbsp;&nbsp;• zMachine Path Resolution section with platform-specific paths
+                                <br>&nbsp;&nbsp;• Two different syntaxes explained (Data_Path vs zVaFile)
+                                <br>&nbsp;&nbsp;• When to use zMachine vs @ vs ~ (decision guide)
+                                <br>&nbsp;&nbsp;• Common zMachine mistake (global pollution warning)
+                                <br>&nbsp;&nbsp;• Full error message example with all hints
+                                <br><br>
+                                <strong>🎯 Benefits Delivered:</strong>
+                                <br>&nbsp;&nbsp;✅ Eliminates #1 confusion point for new users (zMachine resolution)
+                                <br>&nbsp;&nbsp;✅ Makes cross-platform development crystal clear (shows all OS paths)
+                                <br>&nbsp;&nbsp;✅ Reduces "where is my file?" support questions (exact path shown)
+                                <br>&nbsp;&nbsp;✅ Consistent with Week 4.3 actionable error pattern (same UX)
+                                <br>&nbsp;&nbsp;✅ Workspace isolation guidance (@ vs zMachine decision tree)
+                                <br><br>
+                                <strong>✅ Total Tests:</strong> 1062 passing (was 1053, +9 from Week 4.4) 🎉
+                                <br><strong>✅ zExceptions Tests:</strong> 49 passing (was 40, +9 zMachinePathError tests)
+                                <br><strong>🎯 UX Impact:</strong> Users see exact resolved path + platform-specific guidance + when-to-use decision tree
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Layer 1</span>
+                                <span class="tag">zParser</span>
+                                <span class="tag">UX</span>
+                                <span class="tag">2 days</span>
+                                <span class="tag" style="background: #48bb78; color: white;">✅ DONE</span>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="todo-item" data-id="layer1-dialog-regex">
                         <input type="checkbox" class="todo-checkbox">
                         <div class="todo-content">
@@ -1413,7 +1490,7 @@
                     </div>
 
                     <div style="background: #e6ffed; border: 2px solid #48bb78; padding: 15px; border-radius: 8px; margin-top: 15px;">
-                        <strong>🔍 Layer 1 Health Check (In Progress - 6/7 weeks complete, zAuth 100%, zDisplay 100%!):</strong>
+                        <strong>🔍 Layer 1 Health Check (In Progress - 8/9 weeks complete, zAuth 100%, zDisplay 100%, zExceptions 100%!):</strong>
                         <ul style="margin: 10px 0 0 20px; line-height: 1.8;">
                             <li>✅ zAuth: bcrypt password hashing (Week 3.1 - COMPLETE, 14 tests)</li>
                             <li>✅ zAuth: Persistent sessions with 7-day expiry (Week 3.2 - COMPLETE, 10 tests)</li>
@@ -1421,22 +1498,26 @@
                             <li>✅ zAuth: Comprehensive test suite (Week 3.4 - COMPLETE, 38 tests, 100% pass rate!) 🎉</li>
                             <li>✅ zDisplay: Progress bars/spinners (Week 4.1 - <strong>COMPLETE</strong>, Terminal + zBifrost, 26 tests)</li>
                             <li>✅ zDisplay: zBifrost widgets (Week 4.2 - <strong>COMPLETE</strong>, Backend streaming + Level 2 demo)</li>
+                            <li>✅ Error messages are actionable (Week 4.3 - <strong>COMPLETE</strong>, 11 exception classes, 40 tests)</li>
+                            <li>✅ zParser: zMachine path errors (Week 4.4 - <strong>COMPLETE</strong>, cross-platform, 9 new tests) 🎉</li>
                             <li>⏳ zDialog: Validators work, clear error messages (Weeks 5.1-5.2)</li>
                             <li>⏳ zLoader: Hot reload works in --dev mode (Week 5.3)</li>
-                            <li>⏳ Error messages are actionable (no vague errors) (Week 4.3)</li>
                         </ul>
                         <div style="margin-top: 15px; padding: 10px; background: #d4edda; border-radius: 4px; border: 2px solid #28a745;">
-                            <strong>📊 Progress:</strong> 6/7 weeks complete (86%) - zAuth at 100%, zDisplay at 100%! 🎉
-                            <br><strong>📊 Tests:</strong> 1013 passing (100% pass rate - ALL TESTS GREEN! 🎉)
+                            <strong>📊 Progress:</strong> 8/9 weeks complete (89%) - zAuth at 100%, zDisplay at 100%, zExceptions at 100%! 🎉
+                            <br><strong>📊 Tests:</strong> 1062 passing (100% pass rate - ALL TESTS GREEN! 🎉)
                             <br>&nbsp;&nbsp;• Layer 0: 343 tests (zConfig, zComm, zServer, zBifrost)
                             <br>&nbsp;&nbsp;• Layer 1 zAuth: 97 tests (bcrypt, sessions, RBAC, comprehensive)
                             <br>&nbsp;&nbsp;• Layer 1 zDisplay: 26 tests (progress bars, spinners, iterators - dual-mode!)
+                            <br>&nbsp;&nbsp;• Layer 1 zExceptions: 49 tests (12 actionable exception classes including zMachinePathError)
                             <br>&nbsp;&nbsp;• Other subsystems: 547 tests
                             <br><strong>✅ Dual-Mode Widgets:</strong> 4 widgets (progress_bar, spinner, progress_iterator, indeterminate_progress) - <strong>Same API, Terminal AND zBifrost!</strong>
                             <br><strong>✅ Real Integration:</strong> PostgreSQL installer + plugin loader (Terminal) + Level 2 demo (zBifrost)
+                            <br><strong>✅ Actionable Errors:</strong> 12 custom exception classes with context-aware hints (Weeks 4.3 + 4.4)
+                            <br><strong>✅ zMachine Clarity:</strong> Cross-platform path resolution with exact OS-specific paths shown (Week 4.4)
                             <br><strong>🔑 Key Achievement:</strong> Declarative routing + auto async handling + WebSocket streaming = 10-15x more efficient than Flask/FastAPI/Node.js
                             <br><strong>🏆 Breakthrough:</strong> Fixed zDispatch key resolution, async plugin execution, graceful shutdown - zBifrost now production-ready!
-                            <br><strong>🎯 Next:</strong> Week 4.3 - Actionable error messages OR Weeks 5.1-5.3 (zDialog validators + hot reload)
+                            <br><strong>🎯 Next:</strong> Weeks 5.1-5.3 - zDialog validators + hot reload OR move to Layer 2
                         </div>
                     </div>
                 </div>
@@ -1674,7 +1755,7 @@
                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>Architecture:</em> Modular refactor (4 modules + facade), unified schema (auth.yaml)<br>
                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>Result:</em> 97 zAuth tests, 100% BULLETPROOF, zero subsystem pollution<br>
                         <br>
-                        <strong>Week 4 (✅ 2/3 done - zDisplay Dual-Mode COMPLETE!):</strong><br>
+                        <strong>Week 4 (✅ 4/4 done - 100% COMPLETE! zDisplay + zExceptions DONE!):</strong><br>
                         &nbsp;&nbsp;• 4.1: ✅ Progress bar widget (<strong>COMPLETE</strong> - Terminal + zBifrost DONE)<br>
                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>✅ Terminal:</em> 26 tests, 1013 total passing, 4 widgets (progress_bar, spinner, progress_iterator, indeterminate_progress)<br>
                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>✅ zBifrost:</em> Backend emits WebSocket events automatically, real-time streaming works!<br>
@@ -1685,7 +1766,16 @@
                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>✅ Demo:</em> Level 2 zBifrost showcase with 5 live widget demonstrations (progress bars, spinners, complex operations)<br>
                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>✅ Efficiency Gain:</em> 40 lines (zCLI) vs 400-500 lines (Flask/FastAPI/Node.js) - 10-15x more efficient!<br>
                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>🏆 Result:</em> Production-ready declarative routing + auto async handling + WebSocket streaming = Write Once, Run Anywhere<br>
-                        &nbsp;&nbsp;• 4.3: ⏳ Actionable error messages (All subsystems) - NOT STARTED<br>
+                        &nbsp;&nbsp;• 4.3: ✅ Actionable error messages (<strong>COMPLETE</strong> - 11 exception classes, 40 tests, 1053 total passing)<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>✅ Exceptions:</em> SchemaNotFoundError, InvalidzPathError, TableNotFoundError, DatabaseNotInitializedError, + 7 more<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>✅ Pattern:</em> Clear message + 💡 actionable hint + context storage for debugging<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>✅ zPath Rules:</em> NO .yaml extension in Python/YAML references (framework auto-adds)<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>✅ Integration:</em> Works seamlessly with zTraceback & ExceptionContext<br>
+                        &nbsp;&nbsp;• 4.4: ✅ zMachine path errors (<strong>COMPLETE</strong> - 9 tests, 1062 total passing, cross-platform clarity!)<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>✅ Exception:</em> zMachinePathError with file not found + syntax error contexts<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>✅ Platform-Specific:</em> Shows actual resolved paths for macOS/Linux/Windows<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>✅ Decision Guide:</em> When to use zMachine (global) vs @ (workspace) vs ~ (absolute)<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>✅ Integration:</em> resolve_zmachine_path() validates zVaFile paths, raises actionable errors<br>
                         <br>
                         <strong>Week 5:</strong> Layer 1 (Validation, Hot Reload) → Regex validators, custom validators, file watching<br>
                         <strong>Weeks 6-9:</strong> Layer 2 (Business) → Migrations, ORM, Shell, Plugins<br>

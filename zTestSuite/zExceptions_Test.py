@@ -19,7 +19,8 @@ from zCLI.utils.zExceptions import (
     PermissionDeniedError,
     ConfigurationError,
     PluginNotFoundError,
-    ValidationError
+    ValidationError,
+    zMachinePathError
 )
 
 
@@ -398,6 +399,138 @@ class TestValidationError(unittest.TestCase):
         self.assertEqual(exc.context['schema'], 'test')
 
 
+class TestzMachinePathError(unittest.TestCase):
+    """Test zMachinePathError with different contexts."""
+    
+    def test_file_not_found_context(self):
+        """Test error message for file not found context."""
+        with self.assertRaises(zMachinePathError) as cm:
+            raise zMachinePathError(
+                zpath="zMachine.zSchema.users",
+                resolved_path="/Users/test/Library/Application Support/zolo-zcli/zSchema/users.yaml",
+                context_type="file"
+            )
+        
+        error_msg = str(cm.exception)
+        self.assertIn("zMachine path error: zMachine.zSchema.users", error_msg)
+        self.assertIn("File not found at zMachine path", error_msg)
+        self.assertIn("zMachine.zSchema.users", error_msg)
+        self.assertIn("Application Support/zolo-zcli/zSchema/users.yaml", error_msg)
+        self.assertIn("Options:", error_msg)
+    
+    def test_syntax_error_context(self):
+        """Test error message for syntax error context."""
+        with self.assertRaises(zMachinePathError) as cm:
+            raise zMachinePathError(
+                zpath="zMachine.",
+                resolved_path="/Users/test/Library/Application Support/zolo-zcli",
+                context_type="syntax"
+            )
+        
+        error_msg = str(cm.exception)
+        self.assertIn("zMachine path error: zMachine.", error_msg)
+        self.assertIn("zMachine syntax depends on context", error_msg)
+        self.assertIn("In zSchema Data_Path (NO dot)", error_msg)
+        self.assertIn('Data_Path: "zMachine"', error_msg)
+    
+    def test_context_storage(self):
+        """Test that context is stored for debugging."""
+        try:
+            raise zMachinePathError(
+                zpath="zMachine.zSchema.users",
+                resolved_path="/path/to/users.yaml",
+                context_type="file"
+            )
+        except zMachinePathError as e:
+            self.assertEqual(e.context['zpath'], 'zMachine.zSchema.users')
+            self.assertEqual(e.context['resolved'], '/path/to/users.yaml')
+            self.assertIn('os', e.context)
+    
+    def test_platform_specific_hints(self):
+        """Test that platform-specific paths are shown."""
+        with self.assertRaises(zMachinePathError) as cm:
+            raise zMachinePathError(
+                zpath="zMachine.zSchema.users",
+                resolved_path="/path/to/file",
+                context_type="file"
+            )
+        
+        error_msg = str(cm.exception)
+        # Check that all platforms are mentioned
+        self.assertIn("macOS:", error_msg)
+        self.assertIn("Linux:", error_msg)
+        self.assertIn("Windows:", error_msg)
+    
+    def test_when_to_use_guidance(self):
+        """Test that usage guidance is provided."""
+        with self.assertRaises(zMachinePathError) as cm:
+            raise zMachinePathError(
+                zpath="zMachine.zSchema.users",
+                resolved_path="/path/to/file",
+                context_type="file"
+            )
+        
+        error_msg = str(cm.exception)
+        self.assertIn("When to use zMachine:", error_msg)
+        self.assertIn("User data that should persist across projects", error_msg)
+        self.assertIn('Project-specific data (use \'@\' instead)', error_msg)
+    
+    def test_alternatives_provided(self):
+        """Test that alternative solutions are provided."""
+        with self.assertRaises(zMachinePathError) as cm:
+            raise zMachinePathError(
+                zpath="zMachine.zSchema.users",
+                resolved_path="/path/to/file",
+                context_type="file"
+            )
+        
+        error_msg = str(cm.exception)
+        self.assertIn("Create the file at the resolved path", error_msg)
+        self.assertIn("Use workspace path instead", error_msg)
+        self.assertIn("Use absolute path", error_msg)
+    
+    def test_syntax_context_shows_correct_usage(self):
+        """Test syntax error shows correct vs incorrect usage."""
+        with self.assertRaises(zMachinePathError) as cm:
+            raise zMachinePathError(
+                zpath="zMachine.",
+                resolved_path="/path/to/base",
+                context_type="syntax"
+            )
+        
+        error_msg = str(cm.exception)
+        self.assertIn('Data_Path: "zMachine"  # ✅ Correct', error_msg)
+        self.assertIn('NOT: "zMachine." ❌', error_msg)
+        self.assertIn('zVaFile: "zMachine.zSchema.users"', error_msg)
+    
+    def test_resolved_path_shown(self):
+        """Test that the actual resolved path is shown."""
+        test_path = "/Users/test/Library/Application Support/zolo-zcli/zSchema/users.yaml"
+        with self.assertRaises(zMachinePathError) as cm:
+            raise zMachinePathError(
+                zpath="zMachine.zSchema.users",
+                resolved_path=test_path,
+                context_type="file"
+            )
+        
+        error_msg = str(cm.exception)
+        self.assertIn("zMachine.zSchema.users", error_msg)
+        self.assertIn("→", error_msg)  # Shows arrow to resolved path
+        self.assertIn("users.yaml", error_msg)
+    
+    def test_actionable_hint_present(self):
+        """Test that the 💡 actionable hint is present."""
+        with self.assertRaises(zMachinePathError) as cm:
+            raise zMachinePathError(
+                zpath="zMachine.zSchema.users",
+                resolved_path="/path/to/file",
+                context_type="file"
+            )
+        
+        error_msg = str(cm.exception)
+        self.assertIn("💡", error_msg)  # Emoji hint indicator
+
+
 class TestExceptionHierarchy(unittest.TestCase):
     """Test exception class hierarchy."""
     
@@ -414,7 +547,8 @@ class TestExceptionHierarchy(unittest.TestCase):
             PermissionDeniedError(),
             ConfigurationError("setting", "issue"),
             PluginNotFoundError("test"),
-            ValidationError("field", "value", "constraint")
+            ValidationError("field", "value", "constraint"),
+            zMachinePathError("zMachine.test", "/path/to/test")
         ]
         
         for exc in exceptions:
@@ -464,6 +598,7 @@ def run_tests(verbose=False):
     suite.addTests(loader.loadTestsFromTestCase(TestConfigurationError))
     suite.addTests(loader.loadTestsFromTestCase(TestPluginNotFoundError))
     suite.addTests(loader.loadTestsFromTestCase(TestValidationError))
+    suite.addTests(loader.loadTestsFromTestCase(TestzMachinePathError))
     suite.addTests(loader.loadTestsFromTestCase(TestExceptionHierarchy))
 
     runner = unittest.TextTestRunner(verbosity=2 if verbose else 1)

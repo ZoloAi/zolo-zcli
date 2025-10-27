@@ -8,7 +8,12 @@ from zCLI import os
 
 
 def resolve_zmachine_path(data_path, logger, config_paths=None):
-    """Resolve zMachine.* or ~.zMachine.* path references to OS-specific paths."""
+    """
+    Resolve zMachine.* or ~.zMachine.* path references to OS-specific paths.
+    
+    Raises:
+        zMachinePathError: If file path cannot be resolved or file not found
+    """
     if not isinstance(data_path, str):
         return data_path
     
@@ -40,6 +45,20 @@ def resolve_zmachine_path(data_path, logger, config_paths=None):
     full_path = base_dir / subpath
 
     logger.debug("[zMachine Path] %s => %s", data_path, full_path)
+    
+    # Validate if this looks like a file reference (contains zSchema, zUI, zConfig)
+    if any(part in data_path for part in ['zSchema', 'zUI', 'zConfig']):
+        from pathlib import Path
+        from zCLI.utils.zExceptions import zMachinePathError
+        
+        # Check if file exists (add .yaml extension for zVaFiles)
+        test_path = Path(str(full_path) + '.yaml')
+        if not test_path.exists():
+            raise zMachinePathError(
+                zpath=data_path,
+                resolved_path=str(test_path),
+                context_type="file"
+            )
 
     return str(full_path)
 

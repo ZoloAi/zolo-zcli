@@ -325,6 +325,66 @@ model: "@.zSchema.products.yaml"            # Double extension!
 
 **Why:** The framework auto-adds `.yaml` for `zSchema.*`, `zUI.*`, and `zConfig.*` files.
 
+### zMachine Path Resolution (Week 4.4)
+
+**zMachine** resolves to **platform-specific user data directories** via `platformdirs`:
+- macOS: `~/Library/Application Support/zolo-zcli/...`
+- Linux: `~/.local/share/zolo-zcli/...`
+- Windows: `%LOCALAPPDATA%\zolo-zcli\...`
+
+**Two Different Syntaxes (Context-Dependent):**
+
+**1. In zSchema `Data_Path` (NO dot):**
+```yaml
+# ✅ Correct - NO dot after zMachine
+Meta:
+  Data_Type: sqlite
+  Data_Path: "zMachine"  # Resolves to user_data_dir
+
+# ❌ Wrong
+Meta:
+  Data_Path: "zMachine."  # Extra dot causes issues
+```
+
+**2. In zVaFile References (WITH dot):**
+```python
+# ✅ Correct - WITH dot for file paths
+z.loader.handle("zMachine.zSchema.users")      # zPath syntax
+z.loader.handle("~.zMachine.zSchema.users")    # Alternative syntax
+```
+
+**When to Use zMachine vs @ vs ~:**
+- **zMachine:** ✅ User data that persists across projects (global configs, shared schemas)
+- **@ (workspace):** ✅ Project-specific data (instance isolation, no global state)
+- **~ (absolute):** ✅ Explicit absolute paths (when you need full control)
+
+**Common zMachine Mistake:**
+```python
+# ❌ WRONG: Using zMachine for project data
+Meta:
+  Data_Path: "zMachine"  # Global path - pollutes across projects!
+
+# ✅ CORRECT: Use workspace isolation
+Meta:
+  Data_Path: "@"  # Instance-isolated (The Secret Sauce!)
+```
+
+**File Not Found Error Example:**
+```
+zMachinePathError: zMachine path error: zMachine.zSchema.users
+
+💡 File not found at zMachine path.
+
+🔍 Resolution on Darwin:
+   zMachine.zSchema.users
+   → /Users/john/Library/Application Support/zolo-zcli/zSchema/users.yaml
+
+💡 Options:
+   1. Create the file at the resolved path
+   2. Use workspace path instead: '@.zSchema.users'
+   3. Use absolute path: '~./path/to/file'
+```
+
 ### Context-Aware Hints
 
 Exceptions provide different hints based on where they occur:
