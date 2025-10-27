@@ -1956,9 +1956,9 @@
                             <div class="todo-title">Week 6.1: 🔍 Review Core Utils (colors, validation, exceptions, traceback)</div>
                             <div class="todo-description">
                                 <strong>Files to Review:</strong>
-                                <br>&nbsp;&nbsp;• <code>zCLI/utils/colors.py</code>
-                                <br>&nbsp;&nbsp;• <code>zCLI/utils/validation.py</code>
-                                <br>&nbsp;&nbsp;• <code>zCLI/utils/zExceptions.py</code> (Week 4.3 - recent)
+                                <br>&nbsp;&nbsp;• <code>zCLI/utils/colors.py</code> ✅ DONE (55 lines, A+ grade)
+                                <br>&nbsp;&nbsp;• <code>zCLI/utils/validation.py</code> ✅ DONE (18 lines, 58% reduction, A grade)
+                                <br>&nbsp;&nbsp;• <code>zCLI/utils/zExceptions.py</code> ✅ DONE (352 lines, 22% reduction, emojis removed)
                                 <br>&nbsp;&nbsp;• <code>zCLI/utils/zTraceback.py</code>
                                 <br>&nbsp;&nbsp;• <code>zCLI/utils/uninstall.py</code>
                                 <br><br>
@@ -1975,6 +1975,126 @@
                                 <span class="tag">Layer 0</span>
                                 <span class="tag">Utils</span>
                                 <span class="tag">1 day</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="week6-1-1-exceptions-traceback-integration">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Week 6.1.1: 🔗 Integrate zExceptions with zTraceback (Industry-Grade Auto-Registration)</div>
+                            <div class="todo-description">
+                                <strong>🎯 GOAL:</strong> Connect Week 4.3 zExceptions with existing zTraceback for automatic interactive error handling
+                                <br><br>
+                                <strong>❌ CURRENT STATE (Gap Identified):</strong>
+                                <br>&nbsp;&nbsp;• zExceptions have actionable hints + context storage
+                                <br>&nbsp;&nbsp;• zTraceback has interactive handler + exception history
+                                <br>&nbsp;&nbsp;• BUT: They don't talk to each other!
+                                <br>&nbsp;&nbsp;• Result: Exceptions are NOT captured for interactive handling
+                                <br><br>
+                                <strong>✅ DESIRED STATE (After 6.1.1):</strong>
+                                <br>&nbsp;&nbsp;• All zCLIException instances auto-register with zTraceback (zero boilerplate!)
+                                <br>&nbsp;&nbsp;• Enhanced interactive traceback displays .hint attribute
+                                <br>&nbsp;&nbsp;• Exception history tracking works across all subsystems automatically
+                                <br>&nbsp;&nbsp;• Optional smart recovery actions for common errors (future enhancement)
+                                <br><br>
+                                <strong>🏆 CHOSEN STRATEGY: Option B - Auto-Registration (Industry-Grade)</strong>
+                                <br>&nbsp;&nbsp;• <strong>Why:</strong> Matches Django/Flask/FastAPI patterns (thread-local context)
+                                <br>&nbsp;&nbsp;• <strong>Why:</strong> Zero boilerplate (forget-proof, automatic everywhere)
+                                <br>&nbsp;&nbsp;• <strong>Why:</strong> Thread-safe + async-safe (production-ready)
+                                <br>&nbsp;&nbsp;• <strong>Why:</strong> 90% push to industry-grade zolo-zcli architecture
+                                <br>&nbsp;&nbsp;• <strong>Bonus:</strong> Keep ExceptionContext as power-user feature for explicit control
+                                <br><br>
+                                <strong>📋 Implementation Tasks (5 steps):</strong>
+                                <br><br>
+                                <strong>1. ✅ Add Thread-Local Context to zCLI (Foundation):</strong>
+                                <br>&nbsp;&nbsp;• Add <code>contextvars.ContextVar('current_zcli')</code> to zCLI.py
+                                <br>&nbsp;&nbsp;• Register instance in <code>zCLI.__init__()</code> with <code>_current_zcli.set(self)</code>
+                                <br>&nbsp;&nbsp;• Add <code>get_current_zcli()</code> helper function
+                                <br>&nbsp;&nbsp;• Add <code>__enter__/__exit__</code> context manager support
+                                <br>&nbsp;&nbsp;• Thread-safe, async-safe (follows Django/Flask pattern)
+                                <br><br>
+                                <strong>2. ✅ Modify zCLIException Base Class (Auto-Register):</strong>
+                                <br>&nbsp;&nbsp;• Add <code>_register_with_traceback()</code> method to base class
+                                <br>&nbsp;&nbsp;• Call from <code>__init__()</code> to auto-log all exceptions
+                                <br>&nbsp;&nbsp;• Use <code>get_current_zcli()</code> to access zTraceback
+                                <br>&nbsp;&nbsp;• Fail silently if no zCLI context (don't break exception raising)
+                                <br>&nbsp;&nbsp;• Pass .hint and .context to zTraceback.log_exception()
+                                <br><br>
+                                <strong>3. ✅ Enhance display_formatted_traceback() (Show Hints):</strong>
+                                <br>&nbsp;&nbsp;• Check <code>hasattr(exc, 'hint')</code> and display with zDisplay
+                                <br>&nbsp;&nbsp;• Show exception-specific context (exc.context)
+                                <br>&nbsp;&nbsp;• Use Week 4.3 actionable format (field + constraint + hint)
+                                <br>&nbsp;&nbsp;• Dual-mode: Terminal inline errors + zBifrost WebSocket events
+                                <br><br>
+                                <strong>4. ✅ Add ExceptionContext as Power-User Feature (Optional):</strong>
+                                <br>&nbsp;&nbsp;• Keep existing ExceptionContext for explicit control
+                                <br>&nbsp;&nbsp;• Use for retry operations or custom context
+                                <br>&nbsp;&nbsp;• Works alongside auto-registration (best of both worlds)
+                                <br><br>
+                                <strong>5. ✅ Comprehensive Tests + Documentation:</strong>
+                                <br>&nbsp;&nbsp;• Test auto-registration works (raise exception → appears in history)
+                                <br>&nbsp;&nbsp;• Test thread safety (multiple zCLI instances)
+                                <br>&nbsp;&nbsp;• Test .hint display in interactive menu
+                                <br>&nbsp;&nbsp;• Test context preservation (exc.context available)
+                                <br>&nbsp;&nbsp;• Update AGENT.md with thread-local pattern + examples
+                                <br><br>
+                                <strong>🎯 Week 6.1.1 Scope (3-4 days):</strong>
+                                <br>&nbsp;&nbsp;1. ✅ Add contextvars context to zCLI (thread-safe)
+                                <br>&nbsp;&nbsp;2. ✅ Modify zCLIException.__init__() for auto-registration
+                                <br>&nbsp;&nbsp;3. ✅ Enhance display_formatted_traceback() to show hints
+                                <br>&nbsp;&nbsp;4. ✅ Keep ExceptionContext as optional power-user feature
+                                <br>&nbsp;&nbsp;5. ✅ Add 8-10 comprehensive tests
+                                <br>&nbsp;&nbsp;6. ✅ Update AGENT.md with patterns + examples
+                                <br><br>
+                                <strong>📊 Benefits Delivered (Industry-Grade):</strong>
+                                <br>&nbsp;&nbsp;• ✅ Zero boilerplate (automatic everywhere)
+                                <br>&nbsp;&nbsp;• ✅ Thread-safe + async-safe (Django/Flask pattern)
+                                <br>&nbsp;&nbsp;• ✅ Backward compatible (no breaking changes)
+                                <br>&nbsp;&nbsp;• ✅ Forget-proof (works even if developer forgets ExceptionContext)
+                                <br>&nbsp;&nbsp;• ✅ Architectural alignment (everything interactive automatically)
+                                <br>&nbsp;&nbsp;• ✅ UX consistency (dual-mode error handling everywhere)
+                                <br>&nbsp;&nbsp;• ✅ Marketing differentiator ("Automatic interactive exception recovery")
+                                <br>&nbsp;&nbsp;• ✅ Production reliability (error history for debugging across all subsystems)
+                                <br><br>
+                                <strong>🏆 Why This Matters (A+ Territory):</strong>
+                                <br>&nbsp;&nbsp;• Week 4.3 built actionable exceptions (structure + hints)
+                                <br>&nbsp;&nbsp;• Existing zTraceback has interactive handler (UI + history)
+                                <br>&nbsp;&nbsp;• These are COMPLEMENTARY systems designed to work together
+                                <br>&nbsp;&nbsp;• Auto-registration moves from "two good systems" → "one great system"
+                                <br>&nbsp;&nbsp;• Thread-local pattern = industry standard (Django, Flask, FastAPI all use it)
+                                <br>&nbsp;&nbsp;• This is the 90% push to 9.5/10 A+ goal
+                                <br><br>
+                                <strong>📁 Files to Modify:</strong>
+                                <br>&nbsp;&nbsp;• <code>zCLI/zCLI.py</code> - Add contextvars thread-local context
+                                <br>&nbsp;&nbsp;• <code>zCLI/utils/zExceptions.py</code> - Auto-registration in base class
+                                <br>&nbsp;&nbsp;• <code>zCLI/utils/zTraceback.py</code> - Enhanced display with hints
+                                <br>&nbsp;&nbsp;• <code>AGENT.md</code> - Document thread-local pattern + auto-registration
+                                <br><br>
+                                <strong>🧪 Tests to Add (8-10 comprehensive tests):</strong>
+                                <br>&nbsp;&nbsp;• Test auto-registration (ValidationError → zTraceback history)
+                                <br>&nbsp;&nbsp;• Test SchemaNotFoundError interactive view
+                                <br>&nbsp;&nbsp;• Test thread safety (multiple zCLI instances in parallel)
+                                <br>&nbsp;&nbsp;• Test context preservation (exc.context available)
+                                <br>&nbsp;&nbsp;• Test hint display (terminal + zBifrost)
+                                <br>&nbsp;&nbsp;• Test graceful degradation (no zCLI context available)
+                                <br>&nbsp;&nbsp;• Test ExceptionContext still works (power-user feature)
+                                <br>&nbsp;&nbsp;• Integration: All subsystems (zData, zDialog, zLoader, etc.)
+                                <br><br>
+                                <strong>💡 Future Enhancement (Week 6.2+):</strong>
+                                <br>&nbsp;&nbsp;• Smart recovery actions (extend zUI.zcli_sys.yaml):
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;- ValidationError → Fix and Retry (interactive value correction)
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;- SchemaNotFoundError → Create Schema Wizard
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;- AuthenticationRequiredError → Login Dialog
+                                <br>&nbsp;&nbsp;• Recovery handlers dispatch based on exception type
+                                <br>&nbsp;&nbsp;• Declarative recovery menu (YAML-driven as always!)
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Week 6</span>
+                                <span class="tag">Architecture</span>
+                                <span class="tag">Industry-Grade</span>
+                                <span class="tag">3-4 days</span>
+                                <span class="tag" style="background: #667eea; color: white;">CRITICAL</span>
                             </div>
                         </div>
                     </div>
