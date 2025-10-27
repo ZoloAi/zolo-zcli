@@ -1683,23 +1683,6 @@
                         </div>
                     </div>
 
-                    <div class="todo-item" data-id="layer1-loader-watch">
-                        <input type="checkbox" class="todo-checkbox">
-                        <div class="todo-content">
-                            <div class="todo-title">Week 5.3: 📦 File watching for hot reload (Dev Mode)</div>
-                            <div class="todo-description">
-                                pip install watchdog → add to optional dependencies.
-                                Auto-reload zUI/zSchema on change (--dev flag).
-                                <br><strong>DX Win:</strong> Edit YAML → See changes instantly
-                            </div>
-                            <div class="todo-tags">
-                                <span class="tag">Layer 1</span>
-                                <span class="tag">zLoader</span>
-                                <span class="tag">3 days</span>
-                            </div>
-                        </div>
-                    </div>
-
                     <div class="todo-item completed" data-id="layer1-plugin-validators">
                         <input type="checkbox" class="todo-checkbox" checked>
                         <div class="todo-content">
@@ -1894,20 +1877,20 @@
                     </div>
 
                     <div style="background: #e6ffed; border: 2px solid #48bb78; padding: 15px; border-radius: 8px; margin-top: 15px;">
-                        <strong>🔍 Layer 1 Health Check (In Progress - 9/12 weeks complete, zAuth 100%, zDisplay 100%, zExceptions 100%, zData Validation 83%!):</strong>
+                        <strong>🔍 Layer 1 Health Check (10/11 weeks complete - 91% DONE! 🎉):</strong>
                         <ul style="margin: 10px 0 0 20px; line-height: 1.8;">
                             <li>✅ zAuth: bcrypt password hashing (Week 3.1 - COMPLETE, 14 tests)</li>
                             <li>✅ zAuth: Persistent sessions with 7-day expiry (Week 3.2 - COMPLETE, 10 tests)</li>
                             <li>✅ zAuth: RBAC with inline `_rbac` directives (Week 3.3 - COMPLETE, 18 tests)</li>
                             <li>✅ zAuth: Comprehensive test suite (Week 3.4 - COMPLETE, 38 tests, 100% pass rate!) 🎉</li>
-                            <li>✅ zDisplay: Progress bars/spinners (Week 4.1 - <strong>COMPLETE</strong>, Terminal + zBifrost, 26 tests)</li>
-                            <li>✅ zDisplay: zBifrost widgets (Week 4.2 - <strong>COMPLETE</strong>, Backend streaming + Level 2 demo)</li>
-                            <li>✅ Error messages are actionable (Week 4.3 - <strong>COMPLETE</strong>, 11 exception classes, 40 tests)</li>
-                            <li>✅ zParser: zMachine path errors (Week 4.4 - <strong>COMPLETE</strong>, cross-platform, 9 new tests) 🎉</li>
-                            <li>✅ zData: Connect & document existing validation (Week 5.1 - <strong>COMPLETE 5/6 tasks</strong> - DataValidator production-ready, 39 new tests!)</li>
-                            <li>⏳ zDialog: Auto-validation (Week 5.2 - <strong>CRITICAL GAP</strong> - Close the validation loop, 3-4 days)</li>
-                            <li>⏳ zLoader: Hot reload works in --dev mode (Week 5.3 - File watching with watchdog)</li>
-                            <li>⏳ zData: Add plugin validator system (Week 5.4 - Extension point for custom business rules)</li>
+                            <li>✅ zDisplay: Progress bars/spinners (Week 4.1 - COMPLETE, Terminal + zBifrost, 26 tests)</li>
+                            <li>✅ zDisplay: zBifrost widgets (Week 4.2 - COMPLETE, Backend streaming + Level 2 demo)</li>
+                            <li>✅ Error messages are actionable (Week 4.3 - COMPLETE, 11 exception classes, 40 tests)</li>
+                            <li>✅ zParser: zMachine path errors (Week 4.4 - COMPLETE, cross-platform, 9 new tests) 🎉</li>
+                            <li>✅ zData: Connect & document existing validation (Week 5.1 - COMPLETE 5/6 tasks - DataValidator production-ready, 39 new tests!)</li>
+                            <li>✅ zDialog: Auto-validation (Week 5.2 - COMPLETE - Closed the critical gap! 12 tests) 🎉</li>
+                            <li>✅ zData: Plugin validator system (Week 5.4 - COMPLETE - Extension point for custom business rules, 14 tests) 🎉</li>
+                            <li>⏳ zLoader: Hot reload works in --dev mode (Week 5.3 - DEFERRED to nice-to-have, see Medium Priority section)</li>
                         </ul>
                         <div style="margin-top: 15px; padding: 10px; background: #d4edda; border-radius: 4px; border: 2px solid #28a745;">
                             <strong>🎉 WEEK 5.1 COMPLETE - DataValidator Production-Ready!</strong>
@@ -1923,42 +1906,326 @@
                             <br>&nbsp;&nbsp;• <strong>Solution:</strong> Add <code>model: '@.zSchema.users'</code> to zDialog → auto-validate before submission
                             <br>&nbsp;&nbsp;• <strong>Priority:</strong> HIGH (closes critical UX gap, transforms zDialog from "collector" to "validating collector")
                             <br><br>
-                            <strong>📊 Progress:</strong> 9/12 weeks complete (75%) - zAuth at 100%, zDisplay at 100%, zExceptions at 100%, zData Validation at 83%! 🎉
-                            <br><strong>📊 Tests:</strong> <strong>1101 passing</strong> (100% pass rate - ALL TESTS GREEN! 🎉)
+                            <strong>📊 Progress:</strong> <strong>10/11 weeks complete (91%)!</strong> 🎉 zAuth 100%, zDisplay 100%, zExceptions 100%, <strong>zData Validation COMPLETE!</strong>
+                            <br><strong>📊 Tests:</strong> <strong>1127/1127 passing (100% pass rate)</strong> 🎉
                             <br>&nbsp;&nbsp;• Layer 0: 343 tests (zConfig, zComm, zServer, zBifrost)
                             <br>&nbsp;&nbsp;• Layer 1 zAuth: 97 tests (bcrypt, sessions, RBAC, comprehensive)
                             <br>&nbsp;&nbsp;• Layer 1 zDisplay: 26 tests (progress bars, spinners, iterators - dual-mode!)
                             <br>&nbsp;&nbsp;• Layer 1 zExceptions: 49 tests (12 actionable exception classes including zMachinePathError)
-                            <br>&nbsp;&nbsp;• <strong>Layer 1 zData Validation: 39 tests (NEW! - pattern, format, numeric, string, combined, required, custom messages)</strong>
+                            <br>&nbsp;&nbsp;• <strong>Layer 1 zData Validation: 39 tests (pattern, format, numeric, string, combined, required, custom messages)</strong>
+                            <br>&nbsp;&nbsp;• <strong>Layer 1 zDialog Auto-Validation: 12 tests (Week 5.2 - auto-wire forms to zSchema)</strong>
+                            <br>&nbsp;&nbsp;• <strong>Layer 1 zData Plugin Validation: 14 tests (Week 5.4 - custom business logic validators)</strong>
                             <br>&nbsp;&nbsp;• Other subsystems: 547 tests
-                            <br><strong>✅ Dual-Mode Widgets:</strong> 4 widgets (progress_bar, spinner, progress_iterator, indeterminate_progress) - <strong>Same API, Terminal AND zBifrost!</strong>
+                            <br><br>
+                            <strong>🏆 COMPLETE VALIDATION SYSTEM ACHIEVED (Weeks 5.1 + 5.2 + 5.4):</strong>
+                            <br>&nbsp;&nbsp;• ✅ <strong>Built-in Validation:</strong> DataValidator with pattern/format/min/max/required (Week 5.1)
+                            <br>&nbsp;&nbsp;• ✅ <strong>Auto-Validation:</strong> zDialog forms auto-validate against zSchema (Week 5.2)
+                            <br>&nbsp;&nbsp;• ✅ <strong>Plugin Validators:</strong> Extend with custom business logic (Week 5.4)
+                            <br>&nbsp;&nbsp;• ✅ <strong>Layered Architecture:</strong> Built-in (structural) → Plugin (business) with fail-fast
+                            <br>&nbsp;&nbsp;• ✅ <strong>Dual-Mode:</strong> Works in Terminal AND zBifrost automatically!
+                            <br><br>
+                            <strong>✅ Dual-Mode Widgets:</strong> 4 widgets (progress_bar, spinner, progress_iterator, indeterminate_progress) - <strong>Same API, Terminal AND zBifrost!</strong>
                             <br><strong>✅ Real Integration:</strong> PostgreSQL installer + plugin loader (Terminal) + Level 2 demo (zBifrost)
                             <br><strong>✅ Actionable Errors:</strong> 12 custom exception classes with context-aware hints (Weeks 4.3 + 4.4)
                             <br><strong>✅ zMachine Clarity:</strong> Cross-platform path resolution with exact OS-specific paths shown (Week 4.4)
-                            <br><strong>✅ Validation System:</strong> DataValidator (191 lines) with pattern/format/min/max/required validation - PRODUCTION-READY!
                             <br><strong>🔑 Key Achievement:</strong> Declarative routing + auto async handling + WebSocket streaming = 10-15x more efficient than Flask/FastAPI/Node.js
                             <br><strong>🏆 Breakthrough:</strong> Fixed zDispatch key resolution, async plugin execution, graceful shutdown - zBifrost now production-ready!
-                            <br><strong>🎯 Next Critical Task:</strong> <strong>Week 5.2 - zDialog Auto-Validation</strong> (closes critical gap!) 🚨
+                            <br><strong>🎯 Layer 1 Status:</strong> <strong>91% Complete - Only Week 5.3 (file watching) deferred as nice-to-have!</strong>
                         </div>
                     </div>
                 </div>
 
-                <!-- Layer 2: Business Logic -->
+                <!-- Architecture Polish & Testing Foundation -->
+                <div class="subsystem-card" style="border-left: 4px solid #9f7aea;">
+                    <div class="subsystem-header">
+                        <div class="subsystem-name">🔧 Meta-Refactor: Architecture Polish & Testing Foundation (Weeks 6-7)</div>
+                        <div class="subsystem-rating">Goal: Bulletproof Foundation Before Layer 2</div>
+                    </div>
+
+                    <div style="background: #faf5ff; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                        <strong>🎯 Why Now:</strong> Layer 0+1 are complete (1127 tests, 91% done). Before building Layer 2, we need to:
+                        <br>&nbsp;&nbsp;1. <strong>Polish existing code</strong> (cleanup, organization, consistency)
+                        <br>&nbsp;&nbsp;2. <strong>Establish declarative test patterns</strong> (reduce test bloat, showcase zCLI philosophy)
+                        <br><br>
+                        <strong>Strategy:</strong> Manual review with AI copilot (not feature additions) → Then build test infrastructure → Then Layer 2
+                    </div>
+
+                    <div class="todo-item" data-id="week6-1-utils-review">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Week 6.1: 🔍 Review Core Utils (colors, validation, exceptions, traceback)</div>
+                            <div class="todo-description">
+                                <strong>Files to Review:</strong>
+                                <br>&nbsp;&nbsp;• <code>zCLI/utils/colors.py</code>
+                                <br>&nbsp;&nbsp;• <code>zCLI/utils/validation.py</code>
+                                <br>&nbsp;&nbsp;• <code>zCLI/utils/zExceptions.py</code> (Week 4.3 - recent)
+                                <br>&nbsp;&nbsp;• <code>zCLI/utils/zTraceback.py</code>
+                                <br>&nbsp;&nbsp;• <code>zCLI/utils/uninstall.py</code>
+                                <br><br>
+                                <strong>What to Check:</strong>
+                                <br>&nbsp;&nbsp;• Unused imports, dead code
+                                <br>&nbsp;&nbsp;• DRY violations (duplicate logic)
+                                <br>&nbsp;&nbsp;• Magic strings/numbers → constants
+                                <br>&nbsp;&nbsp;• Docstring accuracy
+                                <br><br>
+                                <strong>Workflow:</strong> Open file → Ask AI for review → Apply suggestions → Commit
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Week 6</span>
+                                <span class="tag">Layer 0</span>
+                                <span class="tag">Utils</span>
+                                <span class="tag">1 day</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="week6-2-config-review">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Week 6.2: 🔍 Review zConfig + Modules (paths, environment, session)</div>
+                            <div class="todo-description">
+                                <strong>Files to Review:</strong>
+                                <br>&nbsp;&nbsp;• <code>zConfig/zConfig.py</code> (main facade)
+                                <br>&nbsp;&nbsp;• <code>zConfig_modules/config_paths.py</code>
+                                <br>&nbsp;&nbsp;• <code>zConfig_modules/environment_config.py</code>
+                                <br>&nbsp;&nbsp;• <code>zConfig_modules/session_config.py</code>
+                                <br>&nbsp;&nbsp;• <code>zConfig_modules/machine_config.py</code>
+                                <br>&nbsp;&nbsp;• <code>zConfig_modules/config_validator.py</code> (Week 1.1)
+                                <br><br>
+                                <strong>Focus Areas:</strong>
+                                <br>&nbsp;&nbsp;• Path resolution consistency (platformdirs usage)
+                                <br>&nbsp;&nbsp;• Module delegation patterns
+                                <br>&nbsp;&nbsp;• No hardcoded paths (use zMachine/@ properly)
+                                <br>&nbsp;&nbsp;• Config hierarchy clarity
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Week 6</span>
+                                <span class="tag">Layer 0</span>
+                                <span class="tag">zConfig</span>
+                                <span class="tag">1 day</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="week6-3-comm-review">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Week 6.3: 🔍 Review zComm + Modules (zBifrost, zServer, services)</div>
+                            <div class="todo-description">
+                                <strong>Files to Review:</strong>
+                                <br>&nbsp;&nbsp;• <code>zComm/zComm.py</code> (main facade)
+                                <br>&nbsp;&nbsp;• <code>zComm_modules/bifrost_manager.py</code>
+                                <br>&nbsp;&nbsp;• <code>zComm_modules/zBifrost/</code> (all modules)
+                                <br>&nbsp;&nbsp;• <code>zComm_modules/http_server.py</code> (Week 1.5)
+                                <br>&nbsp;&nbsp;• <code>zComm_modules/service_manager.py</code>
+                                <br><br>
+                                <strong>Focus Areas:</strong>
+                                <br>&nbsp;&nbsp;• zBifrost/zServer separation (Week 1.4 validated)
+                                <br>&nbsp;&nbsp;• Async patterns consistency
+                                <br>&nbsp;&nbsp;• Graceful shutdown logic (Week 2.2)
+                                <br>&nbsp;&nbsp;• Health check implementations (Week 2.1)
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Week 6</span>
+                                <span class="tag">Layer 0</span>
+                                <span class="tag">zComm</span>
+                                <span class="tag">1 day</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="week6-4-display-auth-review">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Week 6.4: 🔍 Review zDisplay + zAuth (high-traffic subsystems)</div>
+                            <div class="todo-description">
+                                <strong>Files to Review:</strong>
+                                <br>&nbsp;&nbsp;• <code>zDisplay/zDisplay.py</code> + modules
+                                <br>&nbsp;&nbsp;• <code>zDisplay_modules/zEvents.py</code>
+                                <br>&nbsp;&nbsp;• <code>zDisplay_modules/zEvents_packages/Widgets.py</code> (Week 4.1)
+                                <br>&nbsp;&nbsp;• <code>zAuth/zAuth.py</code> (refactored Week 3.4)
+                                <br>&nbsp;&nbsp;• <code>zAuth_modules/</code> (all 4 modules)
+                                <br><br>
+                                <strong>Focus Areas:</strong>
+                                <br>&nbsp;&nbsp;• Event map completeness
+                                <br>&nbsp;&nbsp;• Widget dual-mode consistency
+                                <br>&nbsp;&nbsp;• RBAC inline directive parsing (Week 3.3)
+                                <br>&nbsp;&nbsp;• Session persistence patterns (Week 3.2)
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Week 6</span>
+                                <span class="tag">Layer 1</span>
+                                <span class="tag">zDisplay + zAuth</span>
+                                <span class="tag">1 day</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="week6-5-parser-loader-dialog-review">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Week 6.5: 🔍 Review zParser, zLoader, zDialog (pipeline subsystems)</div>
+                            <div class="todo-description">
+                                <strong>Files to Review:</strong>
+                                <br>&nbsp;&nbsp;• <code>zParser/zParser.py</code> + modules
+                                <br>&nbsp;&nbsp;• <code>zParser_modules/zParser_plugin.py</code>
+                                <br>&nbsp;&nbsp;• <code>zParser_modules/zParser_zPath.py</code> (Week 4.4)
+                                <br>&nbsp;&nbsp;• <code>zLoader/zLoader.py</code> + modules
+                                <br>&nbsp;&nbsp;• <code>zDialog/zDialog.py</code> + modules
+                                <br>&nbsp;&nbsp;• <code>zDialog_modules/</code> (auto-validation Week 5.2)
+                                <br><br>
+                                <strong>Focus Areas:</strong>
+                                <br>&nbsp;&nbsp;• Plugin resolution consistency
+                                <br>&nbsp;&nbsp;• zPath resolution (@ vs ~ vs zMachine)
+                                <br>&nbsp;&nbsp;• Loader cache patterns
+                                <br>&nbsp;&nbsp;• Dialog auto-validation integration
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Week 6</span>
+                                <span class="tag">Layer 1</span>
+                                <span class="tag">Parser + Loader + Dialog</span>
+                                <span class="tag">1 day</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="week6-6-data-shell-review">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Week 6.6: 🔍 Review zData + zShell (business logic layer)</div>
+                            <div class="todo-description">
+                                <strong>Files to Review:</strong>
+                                <br>&nbsp;&nbsp;• <code>zData/zData.py</code>
+                                <br>&nbsp;&nbsp;• <code>zData_modules/paradigms/classical/</code>
+                                <br>&nbsp;&nbsp;• <code>zData_modules/paradigms/quantum/</code> (<strong>DECISION TIME!</strong>)
+                                <br>&nbsp;&nbsp;• <code>zData_modules/shared/validator.py</code> (Weeks 5.1, 5.4)
+                                <br>&nbsp;&nbsp;• <code>zShell/zShell.py</code> + modules
+                                <br><br>
+                                <strong>Critical Decision:</strong>
+                                <br>&nbsp;&nbsp;• <strong>Quantum Paradigm:</strong> Remove stub? Keep as placeholder? Document as future?
+                                <br><br>
+                                <strong>Focus Areas:</strong>
+                                <br>&nbsp;&nbsp;• Classical/Quantum separation clarity
+                                <br>&nbsp;&nbsp;• DataValidator integration (layered validation)
+                                <br>&nbsp;&nbsp;• Shell command executor patterns
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Week 6</span>
+                                <span class="tag">Layer 2</span>
+                                <span class="tag">zData + zShell</span>
+                                <span class="tag">1 day</span>
+                                <span class="tag" style="background: #fc8181; color: white;">QUANTUM DECISION</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="week6-7-orchestration-docs-review">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Week 6.7: 🔍 Review zWizard, zWalker, zCLI + Update Documentation</div>
+                            <div class="todo-description">
+                                <strong>Files to Review:</strong>
+                                <br>&nbsp;&nbsp;• <code>zWizard/zWizard.py</code>
+                                <br>&nbsp;&nbsp;• <code>zWalker/zWalker.py</code> (inherits from zWizard)
+                                <br>&nbsp;&nbsp;• <code>zCLI/zCLI.py</code> (main orchestrator)
+                                <br>&nbsp;&nbsp;• <code>zDispatch/zDispatch.py</code> + modules
+                                <br>&nbsp;&nbsp;• <code>zFunc/zFunc.py</code>
+                                <br>&nbsp;&nbsp;• <code>zOpen/zOpen.py</code>
+                                <br><br>
+                                <strong>Focus Areas:</strong>
+                                <br>&nbsp;&nbsp;• Initialization order in zCLI.py
+                                <br>&nbsp;&nbsp;• Wizard/Walker inheritance clarity
+                                <br>&nbsp;&nbsp;• Dispatch routing consistency
+                                <br>&nbsp;&nbsp;• No hidden state or globals
+                                <br><br>
+                                <strong>Documentation Updates:</strong>
+                                <br>&nbsp;&nbsp;• Update <code>AGENT.md</code> with architectural findings
+                                <br>&nbsp;&nbsp;• Add "No Direct Imports" rule
+                                <br>&nbsp;&nbsp;• Document Quantum decision
+                                <br>&nbsp;&nbsp;• Add code organization patterns discovered
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Week 6</span>
+                                <span class="tag">Layer 3</span>
+                                <span class="tag">Orchestration + Docs</span>
+                                <span class="tag">1 day</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="background: #e6ffed; border: 2px solid #48bb78; padding: 15px; border-radius: 8px; margin-top: 15px;">
+                        <strong>🔍 Week 6 Review Checklist (All 7 Days):</strong>
+                        <ul style="margin: 10px 0 0 20px; line-height: 1.8;">
+                            <li>✅ Unused imports removed</li>
+                            <li>✅ Dead code eliminated</li>
+                            <li>✅ DRY violations fixed</li>
+                            <li>✅ Naming conventions consistent</li>
+                            <li>✅ Magic numbers → constants</li>
+                            <li>✅ No direct cross-subsystem imports</li>
+                            <li>✅ Error handling patterns unified</li>
+                            <li>✅ Docstrings accurate</li>
+                            <li>✅ Quantum paradigm decision documented</li>
+                            <li>✅ AGENT.md updated with architecture rules</li>
+                        </ul>
+                        <div style="margin-top: 15px; padding: 10px; background: #d4edda; border-radius: 4px; border: 2px solid #28a745;">
+                            <strong>📊 Expected Outcomes:</strong>
+                            <br>&nbsp;&nbsp;• 10-20% code reduction (removed dead code)
+                            <br>&nbsp;&nbsp;• 100% consistent patterns
+                            <br>&nbsp;&nbsp;• Zero architectural violations
+                            <br>&nbsp;&nbsp;• Clean foundation ready for Week 7 (declarative tests)
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="week7-declarative-tests">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Week 7: 🧪 Declarative Test Infrastructure (TBD - Design After Week 6)</div>
+                            <div class="todo-description">
+                                <strong>🎯 GOAL:</strong> Build declarative test framework using zCLI's YAML philosophy
+                                <br><br>
+                                <strong>Vision:</strong> Reduce 1127 imperative tests by 50-70% using declarative <code>zTest.*.yaml</code> patterns
+                                <br><br>
+                                <strong>⏳ Status:</strong> DEFERRED - Will be designed after Week 6 architecture review is complete
+                                <br><strong>Reason:</strong> Need clean architecture foundation first, then build test patterns on top
+                                <br><br>
+                                <strong>📋 Placeholder Tasks:</strong>
+                                <br>&nbsp;&nbsp;• Design <code>zTest</code> YAML format
+                                <br>&nbsp;&nbsp;• Build <code>zAssert</code> subsystem
+                                <br>&nbsp;&nbsp;• Create <code>DeclarativeTestRunner</code>
+                                <br>&nbsp;&nbsp;• Convert 3-5 test files as proof-of-concept
+                                <br>&nbsp;&nbsp;• Document migration guide
+                                <br><br>
+                                <strong>Duration:</strong> 7-10 days (estimated, will refine after Week 6)
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Meta-Refactor</span>
+                                <span class="tag">Testing</span>
+                                <span class="tag">Infrastructure</span>
+                                <span class="tag">7-10 days</span>
+                                <span class="tag" style="background: #cbd5e0; color: #2d3748;">TBD</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Layer 2: Business Logic (DEFERRED to Week 8+) -->
                 <div class="subsystem-card" style="border-left: 4px solid #ed8936;">
                     <div class="subsystem-header">
-                        <div class="subsystem-name">💼 Layer 2: Business Logic (Weeks 6-9)</div>
+                        <div class="subsystem-name">💼 Layer 2: Business Logic (Weeks 8-11 - DEFERRED from original Week 6)</div>
                         <div class="subsystem-rating">Goal: 8.5/10 → 9.5/10</div>
                     </div>
 
                     <div style="background: #fffaf0; padding: 15px; border-radius: 8px; margin: 15px 0;">
-                        <strong>Why Third:</strong> Heavy lifters need solid foundation. zData migrations use zDisplay progress bars. zShell uses zAuth for permissions.
-                        <br><strong>Dependencies:</strong> Layers 0+1 must be rock-solid (especially zAuth and zDisplay).
+                        <strong>⏭️ DEFERRED:</strong> Originally planned for Week 6, now moved to Week 8+ to prioritize architecture polish
+                        <br><br>
+                        <strong>Why Defer:</strong> Heavy lifters need solid foundation. Better to polish Layers 0+1 first.
+                        <br><strong>Dependencies:</strong> Weeks 6-7 (Architecture + Tests) must be complete before building Layer 2
                     </div>
 
                     <div class="todo-item" data-id="layer2-quantum-decision">
                         <input type="checkbox" class="todo-checkbox">
                         <div class="todo-content">
-                            <div class="todo-title">Week 6.1: 🧪 DECISION: Quantum paradigm (Remove or Defer)</div>
+                            <div class="todo-title">Week 8.1: 🧪 DECISION: Quantum paradigm (Remove or Defer)</div>
                             <div class="todo-description">
                                 Option A: Remove quantum stub entirely (clean)
                                 Option B: Move to feature branch "quantum-future" (defer)
@@ -1979,7 +2246,7 @@
                     <div class="todo-item" data-id="layer2-migration-generate">
                         <input type="checkbox" class="todo-checkbox">
                         <div class="todo-content">
-                            <div class="todo-title">Week 6.2-7.1: 🗄️ Migration generation system</div>
+                            <div class="todo-title">Week 8.2-8.3: 🗄️ Migration generation system</div>
                             <div class="todo-description">
                                 zcli migrate generate "add_users_table"
                                 → Creates migrations/001_add_users_table.yaml
@@ -1999,7 +2266,7 @@
                     <div class="todo-item" data-id="layer2-migration-apply">
                         <input type="checkbox" class="todo-checkbox">
                         <div class="todo-content">
-                            <div class="todo-title">Week 7.2-7.3: 🗄️ Migration apply/rollback</div>
+                            <div class="todo-title">Week 8.4-8.5: 🗄️ Migration apply/rollback</div>
                             <div class="todo-description">
                                 zcli migrate up → Apply pending migrations
                                 zcli migrate down → Rollback last migration
@@ -2018,7 +2285,7 @@
                     <div class="todo-item" data-id="layer2-orm-relationships">
                         <input type="checkbox" class="todo-checkbox">
                         <div class="todo-content">
-                            <div class="todo-title">Week 8.1-8.3: 🗄️ ORM relationships (belongs_to, has_many)</div>
+                            <div class="todo-title">Week 9.1-9.3: 🗄️ ORM relationships (belongs_to, has_many)</div>
                             <div class="todo-description">
                                 YAML: users: {has_many: posts} → Auto-generate JOINs
                                 user.posts() → SELECT * FROM posts WHERE user_id = ?
@@ -2036,7 +2303,7 @@
                     <div class="todo-item" data-id="layer2-shell-completion">
                         <input type="checkbox" class="todo-checkbox">
                         <div class="todo-content">
-                            <div class="todo-title">Week 9.1-9.2: 💬 Tab completion in zShell</div>
+                            <div class="todo-title">Week 10.1-10.2: 💬 Tab completion in zShell</div>
                             <div class="todo-description">
                                 Use readline for: commands, file paths, zUI keys, table names.
                                 TAB → auto-complete, TAB TAB → show options.
@@ -2053,7 +2320,7 @@
                     <div class="todo-item" data-id="layer2-plugin-discovery">
                         <input type="checkbox" class="todo-checkbox">
                         <div class="todo-content">
-                            <div class="todo-title">Week 9.3: 🔌 Plugin auto-discovery</div>
+                            <div class="todo-title">Week 10.3: 🔌 Plugin auto-discovery</div>
                             <div class="todo-description">
                                 Scan plugins/ directory automatically.
                                 Load entry points from setup.py (Flask extension pattern).
@@ -2198,17 +2465,37 @@
                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>✅ Decision Guide:</em> When to use zMachine (global) vs @ (workspace) vs ~ (absolute)<br>
                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>✅ Integration:</em> resolve_zmachine_path() validates zVaFile paths, raises actionable errors<br>
                         <br>
-                        <strong>Week 5 (✅ 1/4 done - REPRIORITIZED!):</strong><br>
-                        &nbsp;&nbsp;• 5.1: ✅ Connect & document existing validation (<strong>COMPLETE 5/6 tasks</strong> - DataValidator production-ready! 39 new tests, 630+ lines of docs)<br>
+                        <strong>Week 5 (✅ 100% COMPLETE - Layer 1 Validation System DONE!):</strong><br>
+                        &nbsp;&nbsp;• 5.1: ✅ Connect & document existing validation (<strong>COMPLETE 5/6 tasks</strong> - DataValidator production-ready! 39 tests, 630+ lines of docs)<br>
                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>Discovery:</em> DataValidator (191 lines) with regex/pattern/format validation already exists! Just needed docs + tests.<br>
-                        &nbsp;&nbsp;• 5.2: ⏳ <strong>zDialog Auto-Validation (CRITICAL GAP PRIORITIZED!)</strong> - Auto-wire forms to zSchema validation rules<br>
-                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>Goal:</em> Add <code>model: '@.zSchema.users'</code> to zDialog → validate before submission (no wasted round-trips)<br>
-                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>Impact:</em> Transforms zDialog from "data collector" to "validating data collector" (major UX improvement)<br>
-                        &nbsp;&nbsp;• 5.3: ⏳ File watching for hot reload (watchdog library, --dev mode)<br>
-                        &nbsp;&nbsp;• 5.4: ⏳ Add plugin validator system (Extension point: <code>validator: "&validators.check_domain()"</code>)<br>
+                        &nbsp;&nbsp;• 5.2: ✅ <strong>zDialog Auto-Validation (COMPLETE!)</strong> - Auto-wire forms to zSchema validation rules (12 tests, 1113 total passing)<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>Achievement:</em> Add <code>model: '@.zSchema.users'</code> to zDialog → validates before submission (no wasted round-trips)<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>Impact:</em> Transformed zDialog from "data collector" to "validating data collector" (major UX improvement closed!)<br>
+                        &nbsp;&nbsp;• 5.3: ⏭️ File watching for hot reload (<strong>DEFERRED</strong> to nice-to-have - see Medium Priority section)<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>Reason:</em> Not critical for production (restart app works fine, file watching is DX polish)<br>
+                        &nbsp;&nbsp;• 5.4: ✅ <strong>Plugin validator system (COMPLETE!)</strong> - Extension point for custom business logic (14 tests, 1127 total passing)<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>Achievement:</em> Layered validation: Built-in (structural) → Plugin (business logic) with fail-fast<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>Pattern:</em> <code>validator: "&validators.check_email_domain(['company.com'])"</code> - AUGMENT, NOT REPLACE<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>🏆 VALIDATION SYSTEM COMPLETE:</em> Week 5.1 + 5.2 + 5.4 = Production-ready from forms to database!<br>
                         <br>
-                        <strong>Weeks 6-9:</strong> Layer 2 (Business) → Migrations, ORM, Shell, Plugins<br>
-                        <strong>Week 10:</strong> Layer 3 (Orchestration) → Documentation, Integration Tests<br>
+                        <strong>Week 6 (⏳ IN PROGRESS - Architecture Review & Code Polish):</strong><br>
+                        &nbsp;&nbsp;• 6.1: 🔍 Review Core Utils (colors, validation, exceptions, traceback) - 5 files<br>
+                        &nbsp;&nbsp;• 6.2: 🔍 Review zConfig + Modules (paths, environment, session) - 6 files<br>
+                        &nbsp;&nbsp;• 6.3: 🔍 Review zComm + Modules (zBifrost, zServer, services) - All modules<br>
+                        &nbsp;&nbsp;• 6.4: 🔍 Review zDisplay + zAuth (high-traffic subsystems) - 2 facades + 15+ modules<br>
+                        &nbsp;&nbsp;• 6.5: 🔍 Review zParser, zLoader, zDialog (pipeline subsystems) - 3 facades + modules<br>
+                        &nbsp;&nbsp;• 6.6: 🔍 Review zData + zShell (business logic layer) - <strong>QUANTUM DECISION!</strong><br>
+                        &nbsp;&nbsp;• 6.7: 🔍 Review zWizard, zWalker, zCLI + Update Documentation - Main orchestrator + AGENT.md<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>Goal:</em> NO new features - clean, organize, tighten existing code (file-by-file manual review)<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>Approach:</em> Bottom-up review with AI copilot, commit per file/module<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>Expected:</em> 10-20% code reduction, 100% consistent patterns, zero architectural violations<br>
+                        <br>
+                        <strong>Week 7 (⏸️ PENDING - Declarative Test Infrastructure):</strong><br>
+                        &nbsp;&nbsp;• TBD - Design after Week 6 completion<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>Goal:</em> Reduce test suite by ~50% using zCLI's declarative patterns<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <em>Approach:</em> Will be defined after architecture review identifies test patterns<br>
+                        <strong>Weeks 8-11:</strong> Layer 2 (Business Logic - DEFERRED) → Migrations, ORM, Shell, Plugins<br>
+                        <strong>Week 12:</strong> Layer 3 (Orchestration - DEFERRED) → Documentation, Integration Tests<br>
                         <br>
                         <strong>Result:</strong> 8.3/10 (A-) → 9.5/10 (A+, Industry-leading) 🚀
                     </div>
@@ -2536,22 +2823,35 @@
 
                 <div class="subsystem-card">
                     <div class="subsystem-header">
-                        <div class="subsystem-name">📦 zLoader - File Watching</div>
+                        <div class="subsystem-name">📦 zLoader - File Watching (Deferred from Week 5.3)</div>
                         <div class="subsystem-rating">Impact: Developer Experience</div>
                     </div>
                     
                     <div class="todo-item" data-id="loader-watch">
                         <input type="checkbox" class="todo-checkbox">
                         <div class="todo-content">
-                            <div class="todo-title">Add file watching for hot reload</div>
+                            <div class="todo-title">Add file watching for hot reload (--dev mode)</div>
                             <div class="todo-description">
+                                <strong>Originally Week 5.3 - Deferred to nice-to-have (not blocking Layer 1 completion)</strong>
+                                <br><br>
                                 Use `watchdog` library to detect YAML file changes.
                                 Auto-reload UI/Schema without restarting app (dev mode).
+                                <br><br>
+                                <strong>Implementation:</strong>
+                                <br>&nbsp;&nbsp;• <code>pip install watchdog</code> → add to optional dependencies
+                                <br>&nbsp;&nbsp;• Add <code>--dev</code> flag to enable file watching
+                                <br>&nbsp;&nbsp;• Monitor zUI/zSchema/zConfig files for changes
+                                <br>&nbsp;&nbsp;• Clear cache and reload on file modification
+                                <br><br>
+                                <strong>DX Win:</strong> Edit YAML → See changes instantly (no restart required)
+                                <br><strong>Why Deferred:</strong> Nice UX improvement but not critical for production (current workflow: restart app works fine)
                             </div>
                             <div class="todo-tags">
+                                <span class="tag">Layer 1</span>
                                 <span class="tag">zLoader</span>
                                 <span class="tag">DX</span>
                                 <span class="tag">2-3 days</span>
+                                <span class="tag" style="background: #cbd5e0; color: #2d3748;">DEFERRED</span>
                             </div>
                         </div>
                     </div>
