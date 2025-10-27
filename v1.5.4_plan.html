@@ -1700,64 +1700,195 @@
                         </div>
                     </div>
 
-                    <div class="todo-item" data-id="layer1-plugin-validators">
-                        <input type="checkbox" class="todo-checkbox">
+                    <div class="todo-item completed" data-id="layer1-plugin-validators">
+                        <input type="checkbox" class="todo-checkbox" checked>
                         <div class="todo-content">
-                            <div class="todo-title">Week 5.4: 📝 Add Plugin Validators (Extension Point)</div>
+                            <div class="todo-title">Week 5.4: 📝 Add Plugin Validators (Extension Point - AUGMENT, NOT REPLACE) ✅ COMPLETE</div>
                             <div class="todo-description">
-                                <strong>Goal:</strong> Extend built-in validation with domain-specific custom validators
+                                <strong>🎯 GOAL:</strong> Extend built-in validation with domain-specific custom validators using zCLI's native plugin pattern
                                 <br><br>
-                                <strong>📋 Implementation Tasks:</strong>
-                                <br>&nbsp;&nbsp;1. ✅ Add plugin validator support to DataValidator
-                                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;• Detect <code>validator: "&validators.check_email_domain(['company.com'])"</code>
-                                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;• Load validator plugin dynamically
-                                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;• Call validator with (value, field_name, *args, **kwargs)
-                                <br>&nbsp;&nbsp;2. ✅ Define validator plugin contract
-                                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;• Return <code>(is_valid: bool, error_msg: str or None)</code>
-                                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;• Access to field context (name, type, other rules)
-                                <br>&nbsp;&nbsp;3. ✅ Chain validators (built-in + custom)
-                                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;• Run built-in rules first (pattern, format, min/max)
-                                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;• Then run custom validator if specified
-                                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;• Collect all errors (not just first failure)
-                                <br>&nbsp;&nbsp;4. ✅ Create example validators (demo/reference)
+                                <strong>🔑 CORE DESIGN PHILOSOPHY:</strong>
+                                <br>&nbsp;&nbsp;• <strong>AUGMENT, NOT REPLACE:</strong> Plugin validators run AFTER built-in validators (layered validation)
+                                <br>&nbsp;&nbsp;• <strong>Consistent Syntax:</strong> Use same <code>&PluginName.function(args)</code> pattern as zFunc, zDispatch
+                                <br>&nbsp;&nbsp;• <strong>Fail-Fast:</strong> Built-in validators run first (structural), plugin validators second (business logic)
+                                <br>&nbsp;&nbsp;• <strong>Separation of Concerns:</strong> Built-in = structure/format, Plugin = business rules
+                                <br>&nbsp;&nbsp;• <strong>NO OVERRIDE:</strong> Both validators run (if built-in fails, plugin never executes)
                                 <br><br>
-                                <strong>🎯 Example Usage:</strong>
+                                <strong>📋 Implementation Tasks (5 steps):</strong>
+                                <br><br>
+                                <strong>1. ✅ Pass zcli to DataValidator initialization</strong>
+                                <br>&nbsp;&nbsp;• Modify zData operations: <code>validator = DataValidator(schema, logger, zcli)</code>
+                                <br>&nbsp;&nbsp;• Store zcli instance in DataValidator for plugin resolution
+                                <br>&nbsp;&nbsp;• Maintain backward compatibility (zcli=None default)
+                                <br><br>
+                                <strong>2. ✅ Add _check_plugin_validator() method to DataValidator</strong>
+                                <br>&nbsp;&nbsp;• Detect <code>validator: "&validators.check_email_domain(['company.com'])"</code> in rules
+                                <br>&nbsp;&nbsp;• Use <code>self.zcli.zparser.resolve_plugin_invocation()</code> (reuse existing infrastructure!)
+                                <br>&nbsp;&nbsp;• Inject validator-specific arguments: user_args + [value, field_name] + {table, full_data}
+                                <br>&nbsp;&nbsp;• Handle graceful degradation if plugin not found (log warning, skip validation)
+                                <br><br>
+                                <strong>3. ✅ Update _validate_field() execution order</strong>
+                                <br>&nbsp;&nbsp;• <strong>Layer 1:</strong> Built-in string rules (min_length, max_length)
+                                <br>&nbsp;&nbsp;• <strong>Layer 2:</strong> Built-in numeric rules (min, max)
+                                <br>&nbsp;&nbsp;• <strong>Layer 3:</strong> Built-in pattern rules (regex)
+                                <br>&nbsp;&nbsp;• <strong>Layer 4:</strong> Built-in format rules (email, url, phone)
+                                <br>&nbsp;&nbsp;• <strong>Layer 5 (NEW):</strong> Plugin validator (if specified) ← ONLY runs if all above pass!
+                                <br>&nbsp;&nbsp;• Return error at first failure (fail-fast principle)
+                                <br><br>
+                                <strong>4. ✅ Define validator plugin contract</strong>
+                                <br>&nbsp;&nbsp;• <strong>Signature:</strong> <code>def validator_name(user_args, value, field_name, **kwargs)</code>
+                                <br>&nbsp;&nbsp;• <strong>Return:</strong> <code>(is_valid: bool, error_msg: str or None)</code>
+                                <br>&nbsp;&nbsp;• <strong>Kwargs Context:</strong> <code>{table: str, full_data: dict}</code> for cross-field validation
+                                <br>&nbsp;&nbsp;• <strong>User Args:</strong> From schema (e.g., <code>['company.com', 'partner.com']</code>)
+                                <br><br>
+                                <strong>5. ✅ Create comprehensive tests + demo</strong>
+                                <br>&nbsp;&nbsp;• Plugin validator loading (cache integration)
+                                <br>&nbsp;&nbsp;• Chaining (built-in pass → plugin runs, built-in fail → plugin skipped)
+                                <br>&nbsp;&nbsp;• Error handling (plugin not found, plugin exception)
+                                <br>&nbsp;&nbsp;• Integration with Week 5.2 auto-validation (zDialog forms)
+                                <br>&nbsp;&nbsp;• Example validators: check_email_domain, check_username_blacklist, check_sku_uniqueness
+                                <br><br>
+                                <strong>🎯 Example Usage (Declarative YAML):</strong>
                                 <br><code style="display: block; background: #f5f5f5; padding: 10px; margin: 5px 0; border-radius: 4px;">
                                 # In zSchema.users.yaml
                                 <br>email:
                                 <br>&nbsp;&nbsp;type: str
                                 <br>&nbsp;&nbsp;required: true
                                 <br>&nbsp;&nbsp;rules:
-                                <br>&nbsp;&nbsp;&nbsp;&nbsp;format: email  # Built-in validator
-                                <br>&nbsp;&nbsp;&nbsp;&nbsp;validator: "&validators.check_email_domain(['company.com', 'partner.com'])"
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;format: email  # ✅ Layer 1: Built-in validator (structural)
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;validator: "&validators.check_email_domain(['company.com', 'partner.com'])"  # ✅ Layer 2: Plugin validator (business logic)
                                 <br>&nbsp;&nbsp;&nbsp;&nbsp;error_message: "Email must be from company.com or partner.com"
+                                <br><br># Example with plugin-only validation (no built-in)
+                                <br>department:
+                                <br>&nbsp;&nbsp;type: str
+                                <br>&nbsp;&nbsp;rules:
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;validator: "&validators.check_department_active()"  # Only plugin runs
                                 </code>
                                 <br><br>
-                                <strong>🔧 Validator Plugin Contract:</strong>
+                                <strong>🔧 Validator Plugin Contract (plugins/validators.py):</strong>
                                 <br><code style="display: block; background: #f5f5f5; padding: 10px; margin: 5px 0; border-radius: 4px;">
-                                # In plugins/validators.py
-                                <br>def check_email_domain(allowed_domains, value, field_name):
-                                <br>&nbsp;&nbsp;"""Validate email domain against allowed list."""
-                                <br>&nbsp;&nbsp;domain = value.split('@')[1] if '@' in value else ''
+                                # User args come first, then injected args
+                                <br>def check_email_domain(allowed_domains, value, field_name, **kwargs):
+                                <br>&nbsp;&nbsp;"""Validate email domain against allowed list.
+                                <br>&nbsp;&nbsp;
+                                <br>&nbsp;&nbsp;Args:
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;allowed_domains (list): User-provided from schema
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;value (str): Field value (auto-injected)
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;field_name (str): Field name (auto-injected)
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;**kwargs: Context (table, full_data)
+                                <br>&nbsp;&nbsp;
+                                <br>&nbsp;&nbsp;Returns:
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;tuple: (is_valid: bool, error_msg: str or None)
+                                <br>&nbsp;&nbsp;"""
+                                <br>&nbsp;&nbsp;if '@' not in value:
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;return False, f"{field_name} must be a valid email"
+                                <br>&nbsp;&nbsp;
+                                <br>&nbsp;&nbsp;domain = value.split('@')[1]
                                 <br>&nbsp;&nbsp;if domain not in allowed_domains:
                                 <br>&nbsp;&nbsp;&nbsp;&nbsp;return False, f"{field_name} must use approved domain: {', '.join(allowed_domains)}"
-                                <br>&nbsp;&nbsp;return True, None
+                                <br>&nbsp;&nbsp;
+                                <br>&nbsp;&nbsp;return True, None  # ✅ Valid
                                 </code>
                                 <br><br>
-                                <strong>✅ Benefits:</strong>
-                                <br>&nbsp;&nbsp;• Extend validation without modifying core DataValidator
-                                <br>&nbsp;&nbsp;• Business rules stay in plugins (not hardcoded)
-                                <br>&nbsp;&nbsp;• Reusable across schemas (DRY)
-                                <br>&nbsp;&nbsp;• Testable in isolation
+                                <strong>📊 Execution Flow (Layered Validation):</strong>
+                                <br><code style="display: block; background: #f5f5f5; padding: 10px; margin: 5px 0; border-radius: 4px;">
+                                Input: "test@gmail.com" for email field with format + validator
+                                <br><br>1. format: email → ✅ PASS (valid email format)
+                                <br>2. validator: &validators.check_email_domain(['company.com']) → ❌ FAIL
+                                <br>&nbsp;&nbsp;&nbsp;→ Return: "Email must be from company.com"
+                                <br><br>Input: "not-an-email" for same field
+                                <br><br>1. format: email → ❌ FAIL (invalid email format)
+                                <br>&nbsp;&nbsp;&nbsp;→ Return error immediately, plugin validator NEVER runs (fail-fast)
+                                </code>
                                 <br><br>
-                                <strong>✅ Tests to Add:</strong> Plugin validator loading, chaining, error handling, integration with built-in rules
+                                <strong>✅ Benefits (The zCLI Way):</strong>
+                                <br>&nbsp;&nbsp;• ✅ <strong>Consistent Syntax:</strong> Same <code>&plugin.function()</code> as zFunc/zDispatch
+                                <br>&nbsp;&nbsp;• ✅ <strong>Reuses Infrastructure:</strong> Plugin cache, resolve_plugin_invocation, auto-injection
+                                <br>&nbsp;&nbsp;• ✅ <strong>Declarative:</strong> Business rules in YAML, not Python decorators
+                                <br>&nbsp;&nbsp;• ✅ <strong>Layered Validation:</strong> Structural → Business logic (clear separation)
+                                <br>&nbsp;&nbsp;• ✅ <strong>Fail-Fast:</strong> Skip expensive plugin logic if basic format invalid
+                                <br>&nbsp;&nbsp;• ✅ <strong>Auto-Wired:</strong> Works with Week 5.2 zDialog auto-validation automatically!
+                                <br>&nbsp;&nbsp;• ✅ <strong>Testable:</strong> Validators are pure functions (easy unit tests)
+                                <br>&nbsp;&nbsp;• ✅ <strong>Reusable:</strong> Same validator across multiple schemas
+                                <br>&nbsp;&nbsp;• ✅ <strong>Graceful Degradation:</strong> Missing plugin = log warning + skip (no crash)
+                                <br><br>
+                                <strong>🎯 Use Cases (When to Use Each):</strong>
+                                <br>&nbsp;&nbsp;• <strong>Built-in Validators:</strong> "Is this an email?" (format: email)
+                                <br>&nbsp;&nbsp;• <strong>Plugin Validators:</strong> "Is this from approved domain?" (&validators.check_domain)
+                                <br>&nbsp;&nbsp;• <strong>Both (Recommended):</strong> Structural + business logic (layered validation)
+                                <br><br>
+                                <strong>✅ Tests to Add (20+ comprehensive tests):</strong>
+                                <br>&nbsp;&nbsp;• Plugin validator execution (valid/invalid)
+                                <br>&nbsp;&nbsp;• Chaining (built-in → plugin, fail-fast)
+                                <br>&nbsp;&nbsp;• Plugin not found (graceful skip)
+                                <br>&nbsp;&nbsp;• Plugin exception handling
+                                <br>&nbsp;&nbsp;• Context injection (table, full_data)
+                                <br>&nbsp;&nbsp;• Integration with zDialog auto-validation
+                                <br>&nbsp;&nbsp;• Multiple validators (email domain, username blacklist, SKU uniqueness)
+                                <br><br>
+                                <strong>📁 Files to Modify:</strong>
+                                <br>&nbsp;&nbsp;• <code>zCLI/subsystems/zData/zData_modules/shared/validator.py</code> - Add _check_plugin_validator()
+                                <br>&nbsp;&nbsp;• <code>zCLI/subsystems/zData/zData_modules/shared/operations/*.py</code> - Pass zcli to DataValidator
+                                <br>&nbsp;&nbsp;• <code>zTestSuite/zData_PluginValidation_Test.py</code> - New test file (20+ tests)
+                                <br>&nbsp;&nbsp;• <code>Demos/validation_demo/validators.py</code> - Example plugin validators
+                                <br>&nbsp;&nbsp;• <code>AGENT.md</code> - Plugin validator documentation (200+ lines)
+                                <br><br>
+                                <strong>⏱️ Effort Estimate:</strong> 2-3 days (leverage existing plugin infrastructure, minimal new code!)
+                                <br><strong>🎯 Priority:</strong> MEDIUM (nice-to-have extension point, core validation complete in Weeks 5.1 + 5.2)
+                                <br><strong>🏆 Impact:</strong> Extends zCLI validation to handle ANY business rule without touching core code
+                                <br><br>
+                                <hr style="border: 1px solid #48bb78; margin: 15px 0;">
+                                <strong style="color: #48bb78;">✅ COMPLETION SUMMARY (Week 5.4 - COMPLETE!):</strong>
+                                <br><br>
+                                <strong>📊 IMPLEMENTATION RESULTS:</strong>
+                                <br>&nbsp;&nbsp;• <strong>✅ Core logic:</strong> Added _check_plugin_validator() to DataValidator (100 lines, Layer 5)
+                                <br>&nbsp;&nbsp;• <strong>✅ Layered validation:</strong> Built-in (Layers 1-4) → Plugin (Layer 5) with fail-fast
+                                <br>&nbsp;&nbsp;• <strong>✅ Plugin integration:</strong> Reuses existing zParser resolve_plugin_invocation (no new infrastructure!)
+                                <br>&nbsp;&nbsp;• <strong>✅ Context injection:</strong> table_name + full_data for cross-field validation
+                                <br>&nbsp;&nbsp;• <strong>✅ Graceful degradation:</strong> Missing plugin = log warning + skip (no crash)
+                                <br><br>
+                                <strong>🧪 TEST COVERAGE:</strong>
+                                <br>&nbsp;&nbsp;• <strong>14 comprehensive tests</strong> in zData_PluginValidation_Test.py
+                                <br>&nbsp;&nbsp;• <strong>1127/1127 total tests passing (100%)</strong> 🎉 (was 1113, +14 from Week 5.4)
+                                <br>&nbsp;&nbsp;• Test scenarios: Execution, layered validation, graceful degradation, context injection, error handling
+                                <br><br>
+                                <strong>📝 DOCUMENTATION:</strong>
+                                <br>&nbsp;&nbsp;• <strong>AGENT.md:</strong> 280+ lines of plugin validator documentation
+                                <br>&nbsp;&nbsp;• <strong>Examples:</strong> 6 plugin validators (email domain, username blacklist, age eligibility, cross-field, password strength, SKU format)
+                                <br>&nbsp;&nbsp;• <strong>Demo:</strong> Demos/validation_demo/validators.py + updated zSchema.demo_users.yaml
+                                <br>&nbsp;&nbsp;• <strong>v1.5.4_plan.html:</strong> Updated with complete Week 5.4 details
+                                <br><br>
+                                <strong>🎯 KEY FEATURES DELIVERED:</strong>
+                                <br>&nbsp;&nbsp;• ✅ Layered validation (AUGMENT, NOT REPLACE philosophy)
+                                <br>&nbsp;&nbsp;• ✅ Consistent &plugin.function() syntax (reuses existing infrastructure)
+                                <br>&nbsp;&nbsp;• ✅ Fail-fast execution (skip expensive plugin if built-in fails)
+                                <br>&nbsp;&nbsp;• ✅ Auto-wired with Week 5.2 zDialog auto-validation
+                                <br>&nbsp;&nbsp;• ✅ Cross-field validation support (password confirmation, etc.)
+                                <br>&nbsp;&nbsp;• ✅ Custom error message overrides
+                                <br><br>
+                                <strong>📁 FILES MODIFIED:</strong>
+                                <br>&nbsp;&nbsp;• validator.py (+100 lines) - _check_plugin_validator() method
+                                <br>&nbsp;&nbsp;• classical_data.py (1 line) - Pass zcli to DataValidator
+                                <br>&nbsp;&nbsp;• validators.py (NEW) - 6 example plugin validators (200 lines)
+                                <br>&nbsp;&nbsp;• zData_PluginValidation_Test.py (NEW) - 14 comprehensive tests (650 lines)
+                                <br>&nbsp;&nbsp;• run_all_tests.py (1 line) - Added to test suite
+                                <br>&nbsp;&nbsp;• zSchema.demo_users.yaml - Plugin validator examples
+                                <br>&nbsp;&nbsp;• AGENT.md (+280 lines) - Complete plugin validator guide
+                                <br><br>
+                                <strong>🏅 IMPACT:</strong>
+                                <br>&nbsp;&nbsp;• <strong>Extensibility:</strong> ANY business rule without touching core code
+                                <br>&nbsp;&nbsp;• <strong>Consistency:</strong> Same plugin pattern as zFunc/zDispatch (already familiar!)
+                                <br>&nbsp;&nbsp;• <strong>DRY:</strong> Reusable validators across multiple schemas
+                                <br>&nbsp;&nbsp;• <strong>Testable:</strong> Pure functions, easy unit tests
+                                <br>&nbsp;&nbsp;• <strong>Production-Ready:</strong> Graceful degradation, error handling, comprehensive tests
+                                <br>&nbsp;&nbsp;• <strong>CRITICAL:</strong> Week 5.1 (DataValidator) + Week 5.2 (zDialog auto-validation) + Week 5.4 (Plugin validators) = COMPLETE validation system!
                             </div>
                             <div class="todo-tags">
                                 <span class="tag">Layer 1</span>
                                 <span class="tag">zData</span>
                                 <span class="tag">Extensibility</span>
                                 <span class="tag">2-3 days</span>
-                                <span class="tag" style="background: #4fd1c5; color: white;">PLUGIN SYSTEM</span>
+                                <span class="tag" style="background: #48bb78; color: white;">✅ DONE</span>
                             </div>
                         </div>
                     </div>

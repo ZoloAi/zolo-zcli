@@ -51,6 +51,7 @@ TEST_MODULES = [
     'zExceptions',  # Week 4.3 - Actionable error messages with context-aware hints
     'zData',
     'zData_Validation',  # Week 5.1 - Comprehensive validation tests (pattern, format, min/max, error messages)
+    'zData_PluginValidation',  # Week 5.4 - Plugin validator tests (layered validation, augment not replace)
     'zWalker',
     'zIntegration',  # Integration tests - test multiple subsystems working together
     'zEndToEnd',     # End-to-end tests - simulate complete user workflows

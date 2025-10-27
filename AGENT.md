@@ -837,20 +837,291 @@ Auto-validation is tested with **12 comprehensive tests** in `zTestSuite/zDialog
 
 ---
 
-### Plugin Validators (Week 5.4 - Coming Soon)
+## Plugin Validators (Week 5.4 - zData Extension Point)
 
-For custom business rules, use plugin validators:
+**🎯 Extend built-in validation with custom business logic using zCLI's native plugin pattern!**
+
+### Core Design Philosophy
+
+**AUGMENT, NOT REPLACE** - Plugin validators run AFTER built-in validators (layered validation):
+
+```
+Validation Order (fail-fast):
+  Layer 1: String rules (min_length, max_length)
+  Layer 2: Numeric rules (min, max)
+  Layer 3: Pattern rules (regex)
+  Layer 4: Format rules (email, url, phone)
+  Layer 5: Plugin validator (custom business logic) ← NEW!
+```
+
+**Key Principle**: Built-in validators check structural validity, plugin validators enforce business rules.
+
+### Syntax
+
+Plugin validators use the same `&PluginName.function(args)` pattern as `zFunc` and `zDispatch`:
+
+```yaml
+email:
+  type: str
+  required: true
+  rules:
+    format: email  # Built-in (Layer 4): Is this an email?
+    validator: "&validators.check_email_domain(['company.com', 'partner.org'])"  # Plugin (Layer 5): Is this from approved domain?
+    error_message: "Email must be from approved domain"
+```
+
+### When to Use Each
+
+| Validation Type | Purpose | Example |
+|----------------|---------|---------|
+| **Built-in** | Structural validation | "Is this an email?" (`format: email`) |
+| **Plugin** | Business logic | "Is this from approved domain?" (`&validators.check_domain`) |
+| **Both (Recommended)** | Layered validation | Format + domain check (structural + business) |
+
+### Plugin Validator Contract
+
+Plugin validators must follow this signature:
+
+```python
+# In plugins/validators.py
+def validator_name(user_args, value, field_name, **kwargs):
+    """Custom validator docstring.
+    
+    Args:
+        user_args: User-provided from schema (e.g., ['company.com'])
+        value: Field value (auto-injected by DataValidator)
+        field_name (str): Field name (auto-injected)
+        **kwargs: Context (table, full_data) for cross-field validation
+    
+    Returns:
+        tuple: (is_valid: bool, error_msg: str or None)
+    """
+    # Your validation logic
+    if not_valid:
+        return False, "Error message explaining why"
+    
+    return True, None  # ✅ Valid
+```
+
+### Example: Email Domain Validator
+
+```python
+# plugins/validators.py
+def check_email_domain(allowed_domains, value, field_name, **kwargs):
+    """Validate email domain against allowed list."""
+    if '@' not in value:
+        return False, f"{field_name} must be a valid email"
+    
+    domain = value.split('@')[1].lower()
+    allowed_lower = [d.lower() for d in allowed_domains]
+    
+    if domain not in allowed_lower:
+        return False, f"{field_name} must use approved domain: {', '.join(allowed_domains)}"
+    
+    return True, None  # ✅ Valid
+```
+
+**Usage in schema:**
+
+```yaml
+email:
+  type: str
+  required: true
+  rules:
+    format: email  # Built-in (structural)
+    validator: "&validators.check_email_domain(['company.com', 'partner.org'])"  # Plugin (business)
+    error_message: "Email must be from approved domain (company.com or partner.org)"
+```
+
+### Layered Validation Flow
+
+**Example 1: Both validators pass**
+
+```
+Input: "test@company.com"
+1. format: email → ✅ PASS (valid email structure)
+2. validator: &validators.check_email_domain(['company.com']) → ✅ PASS (approved domain)
+Result: ✅ Valid
+```
+
+**Example 2: Built-in fails, plugin skipped (fail-fast)**
+
+```
+Input: "not-an-email"
+1. format: email → ❌ FAIL (invalid email structure)
+2. validator: &validators.check_email_domain(...) → ⏭️ SKIPPED (fail-fast)
+Result: ❌ Invalid (email format error)
+```
+
+**Example 3: Built-in passes, plugin fails**
+
+```
+Input: "test@gmail.com"
+1. format: email → ✅ PASS (valid email structure)
+2. validator: &validators.check_email_domain(['company.com']) → ❌ FAIL (wrong domain)
+Result: ❌ Invalid (domain not approved)
+```
+
+### More Example Validators
+
+**Username Blacklist**
+
+```python
+def check_username_blacklist(blacklist, value, field_name, **kwargs):
+    """Ensure username is not reserved."""
+    if value.lower() in [name.lower() for name in blacklist]:
+        return False, f"{field_name} '{value}' is reserved and cannot be used"
+    return True, None
+```
+
+```yaml
+username:
+  type: str
+  rules:
+    pattern: "^[a-zA-Z0-9_]{3,20}$"  # Built-in
+    validator: "&validators.check_username_blacklist(['admin', 'root', 'system'])"  # Plugin
+```
+
+**Cross-Field Validation**
+
+```python
+def check_cross_field_match(other_field, value, field_name, **kwargs):
+    """Validate field matches another field (e.g., password confirmation)."""
+    full_data = kwargs.get('full_data', {})
+    other_value = full_data.get(other_field)
+    
+    if value != other_value:
+        return False, f"{field_name} must match {other_field}"
+    
+    return True, None
+```
+
+```yaml
+password_confirm:
+  type: str
+  rules:
+    validator: "&validators.check_cross_field_match('password')"
+    error_message: "Passwords must match"
+```
+
+**Age Eligibility**
+
+```python
+def check_age_eligibility(min_age, value, field_name, **kwargs):
+    """Validate age meets minimum requirement."""
+    if value < min_age:
+        return False, f"Must be {min_age} or older"
+    return True, None
+```
+
+```yaml
+age:
+  type: int
+  rules:
+    min: 0  # Built-in (structural)
+    max: 150  # Built-in (structural)
+    validator: "&validators.check_age_eligibility(18)"  # Plugin (business rule)
+    error_message: "Must be 18 or older to register"
+```
+
+### Benefits
+
+✅ **Consistent Syntax** - Same `&plugin.function()` as zFunc/zDispatch  
+✅ **Reuses Infrastructure** - Plugin cache, auto-injection, existing patterns  
+✅ **Declarative** - Business rules in YAML, not Python code  
+✅ **Layered Validation** - Structural → Business logic (clear separation)  
+✅ **Fail-Fast** - Skip expensive plugin logic if basic format invalid  
+✅ **Auto-Wired** - Works with Week 5.2 zDialog auto-validation automatically!  
+✅ **Testable** - Pure functions, easy to unit test  
+✅ **Reusable** - Same validator across multiple schemas  
+✅ **Graceful Degradation** - Missing plugin = log warning + skip (no crash)  
+
+### Common Mistakes
+
+❌ **WRONG**: Trying to override built-in validators
 
 ```yaml
 email:
   type: str
   rules:
-    format: email  # Built-in validator
-    validator: "&validators.check_email_domain(['company.com'])"  # Custom plugin validator
-    error_message: "Email must be from company.com domain"
+    validator: "&validators.check_email()"  # ❌ Don't reimplement email validation!
 ```
 
-See Week 5.2 for plugin validator implementation.
+✅ **RIGHT**: Use built-in + plugin for layered validation
+
+```yaml
+email:
+  type: str
+  rules:
+    format: email  # ✅ Built-in (structural)
+    validator: "&validators.check_email_domain(['company.com'])"  # ✅ Plugin (business)
+```
+
+---
+
+❌ **WRONG**: Incorrect return format
+
+```python
+def bad_validator(value, field_name):
+    if not valid:
+        return False  # ❌ Missing error message!
+    return True  # ❌ Not a tuple!
+```
+
+✅ **RIGHT**: Always return tuple (bool, str or None)
+
+```python
+def good_validator(value, field_name):
+    if not valid:
+        return False, "Error message"  # ✅ Tuple with message
+    return True, None  # ✅ Tuple (None for no error)
+```
+
+---
+
+❌ **WRONG**: Missing `&` prefix
+
+```yaml
+rules:
+  validator: "validators.check_email_domain(['company.com'])"  # ❌ Missing &
+```
+
+✅ **RIGHT**: Use `&` prefix for plugin invocation
+
+```yaml
+rules:
+  validator: "&validators.check_email_domain(['company.com'])"  # ✅ With &
+```
+
+### Demo
+
+See `Demos/validation_demo/` for complete working examples:
+
+- ✅ `validators.py` - 6 example plugin validators
+- ✅ `zSchema.demo_users.yaml` - Plugin validator usage
+- ✅ Email domain validation
+- ✅ Username blacklist
+- ✅ Age eligibility
+
+Run: `python3 Demos/validation_demo/demo_validation.py`
+
+### Test Coverage
+
+Plugin validators are tested with **14 comprehensive tests** in `zTestSuite/zData_PluginValidation_Test.py`:
+
+- ✅ Plugin execution (valid/invalid)
+- ✅ Layered validation (fail-fast behavior)
+- ✅ Plugin not found (graceful degradation)
+- ✅ Function not found (graceful skip)
+- ✅ Plugin exceptions (error handling)
+- ✅ Context injection (table, full_data)
+- ✅ Multiple validators (all pass, one fails)
+- ✅ No zcli instance (graceful skip)
+- ✅ Invalid syntax (missing &)
+- ✅ Custom error messages
+- ✅ Invalid return format
+
+**All 1127/1127 tests passing (100%)** 🎉 (was 1113, +14 from Week 5.4)
 
 ---
 

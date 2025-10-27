@@ -19,7 +19,7 @@ class ClassicalData:
 
         # Initialize validator with schema (excluding Meta section)
         schema_tables = {k: v for k, v in schema.items() if k != "Meta"}
-        self.validator = DataValidator(schema_tables, logger=self.logger)
+        self.validator = DataValidator(schema_tables, logger=self.logger, zcli=self.zcli)
 
         # Initialize adapter
         self._initialize_adapter()

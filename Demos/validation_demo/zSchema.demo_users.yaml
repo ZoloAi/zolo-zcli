@@ -21,20 +21,23 @@ users:
       pattern_message: "Username must be 3-20 characters (letters, numbers, underscore only)"
       min_length: 3
       max_length: 20
+      validator: "&validators.check_username_blacklist(['admin', 'root', 'system', 'test'])"
   
   email:
     type: str
     required: true
     rules:
-      format: email
-      error_message: "Please enter a valid email address (e.g., user@example.com)"
+      format: email  # Built-in validator (Layer 4)
+      validator: "&validators.check_email_domain(['company.com', 'partner.org', 'acme.net'])"  # Plugin validator (Layer 5)
+      error_message: "Email must be from approved domain (company.com, partner.org, or acme.net)"
   
   age:
     type: int
     rules:
-      min: 18
-      max: 120
-      error_message: "Age must be between 18 and 120"
+      min: 0  # Built-in (structural)
+      max: 120  # Built-in (structural)
+      validator: "&validators.check_age_eligibility(18)"  # Plugin (business rule)
+      error_message: "Must be 18 or older to register"
   
   phone:
     type: str

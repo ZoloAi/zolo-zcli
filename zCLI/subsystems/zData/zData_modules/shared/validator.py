@@ -6,10 +6,17 @@ from zCLI import re
 class DataValidator:
     """Data validation engine enforcing schema rules before CRUD operations."""
 
-    def __init__(self, schema, logger=None):
-        """Initialize validator with schema and logger."""
+    def __init__(self, schema, logger=None, zcli=None):
+        """Initialize validator with schema, logger, and optional zcli instance.
+        
+        Args:
+            schema (dict): Schema definition with table/field structure
+            logger: Optional logger instance
+            zcli: Optional zCLI instance (required for plugin validators)
+        """
         self.schema = schema
         self.logger = logger
+        self.zcli = zcli  # For plugin validator resolution
         self.format_validators = {
             'email': self._validate_email,
             'url': self._validate_url,
@@ -35,7 +42,8 @@ class DataValidator:
             if not rules:
                 continue
 
-            is_valid, error_msg = self._validate_field(field_name, value, rules, field_def)
+            # Pass table_name and full_data for plugin validator context
+            is_valid, error_msg = self._validate_field(field_name, value, rules, field_def, table_name=table, full_data=data)
             if not is_valid:
                 errors[field_name] = error_msg
 
@@ -77,7 +85,8 @@ class DataValidator:
             if not rules:
                 continue
 
-            is_valid, error_msg = self._validate_field(field_name, value, rules, field_def)
+            # Pass table_name and full_data for plugin validator context
+            is_valid, error_msg = self._validate_field(field_name, value, rules, field_def, table_name=table, full_data=data)
             if not is_valid:
                 errors[field_name] = error_msg
 
@@ -90,24 +99,52 @@ class DataValidator:
             self.logger.debug("[OK] Validation passed for table: %s", table)
         return True, None
 
-    def _validate_field(self, field_name, value, rules, field_def):
-        """Validate single field against schema rules."""
+    def _validate_field(self, field_name, value, rules, field_def, table_name=None, full_data=None):
+        """Validate single field against schema rules (layered validation).
+        
+        Validation Order (fail-fast):
+            Layer 1: String rules (min_length, max_length)
+            Layer 2: Numeric rules (min, max)
+            Layer 3: Pattern rules (regex)
+            Layer 4: Format rules (email, url, phone)
+            Layer 5: Plugin validator (custom business logic) - NEW!
+        
+        Args:
+            field_name (str): Name of the field being validated
+            value: Value to validate
+            rules (dict): Validation rules from schema
+            field_def (dict): Full field definition
+            table_name (str): Table name (for plugin context)
+            full_data (dict): All field data (for cross-field validation)
+        
+        Returns:
+            tuple: (is_valid: bool, error_msg: str or None)
+        """
         if value is None or value == "":
             return (True, None) if not field_def.get('required', False) else (False, f"{field_name} is required")
 
+        # Layer 1: String rules
         error = self._check_string_rules(field_name, value, rules)
         if error:
             return False, error
 
+        # Layer 2: Numeric rules
         error = self._check_numeric_rules(field_name, value, rules)
         if error:
             return False, error
 
+        # Layer 3: Pattern rules
         error = self._check_pattern_rules(field_name, value, rules)
         if error:
             return False, error
 
+        # Layer 4: Format rules
         error = self._check_format_rules(field_name, value, rules)
+        if error:
+            return False, error
+
+        # Layer 5: Plugin validator (NEW - runs AFTER all built-in validators pass)
+        error = self._check_plugin_validator(field_name, value, rules, table_name, full_data)
         if error:
             return False, error
 
@@ -188,3 +225,104 @@ class DataValidator:
         if re.match(phone_pattern, cleaned):
             return True, None
         return False, "Invalid phone number format"
+
+    def _check_plugin_validator(self, field_name, value, rules, table_name=None, full_data=None):
+        """Check custom plugin validator (Layer 5 - business logic).
+        
+        Plugin validators run AFTER all built-in validators pass (layered validation).
+        Uses existing zCLI plugin infrastructure (&PluginName.function(args) pattern).
+        
+        Args:
+            field_name (str): Name of the field being validated
+            value: Field value to validate
+            rules (dict): Validation rules from schema
+            table_name (str): Table name (for context)
+            full_data (dict): All field data (for cross-field validation)
+        
+        Returns:
+            str or None: Error message if validation fails, None if valid/no validator
+        
+        Example schema usage:
+            email:
+              type: str
+              rules:
+                format: email  # Built-in (Layer 4)
+                validator: "&validators.check_email_domain(['company.com'])"  # Plugin (Layer 5)
+        """
+        validator_spec = rules.get('validator')
+        if not validator_spec:
+            return None  # No plugin validator specified
+        
+        # Check if zcli instance is available (required for plugin resolution)
+        if not self.zcli:
+            if self.logger:
+                self.logger.warning("Plugin validator specified but zcli not provided to DataValidator: %s", validator_spec)
+            return None  # Graceful degradation
+        
+        # Validate plugin invocation syntax (must start with &)
+        if not isinstance(validator_spec, str) or not validator_spec.startswith('&'):
+            if self.logger:
+                self.logger.warning("Invalid validator syntax (must start with &): %s", validator_spec)
+            return None  # Skip invalid syntax
+        
+        try:
+            # Use existing zCLI plugin infrastructure to resolve and execute
+            # Parse the plugin invocation (e.g., "&validators.check_email_domain(['company.com'])")
+            from zCLI.subsystems.zParser.zParser_modules.zParser_plugin import (
+                _parse_invocation, _parse_arguments
+            )
+            
+            plugin_name, function_name, args_str = _parse_invocation(validator_spec)
+            
+            # Check plugin cache first (reuse existing infrastructure)
+            cached_module = self.zcli.loader.cache.get(plugin_name, cache_type="plugin")
+            
+            if not cached_module:
+                # Plugin not found - graceful degradation
+                if self.logger:
+                    self.logger.warning("Plugin validator not found (skipping validation): %s", plugin_name)
+                return None  # Skip validation if plugin missing
+            
+            # Get function from cached module
+            if not hasattr(cached_module, function_name):
+                if self.logger:
+                    self.logger.warning("Function '%s' not found in plugin '%s'", function_name, plugin_name)
+                return None  # Skip if function missing
+            
+            func = getattr(cached_module, function_name)
+            
+            # Parse user-provided arguments from schema
+            user_args, user_kwargs = _parse_arguments(args_str)
+            
+            # Inject validator-specific arguments:
+            # User args come first, then value, field_name, then kwargs context
+            final_args = list(user_args) + [value, field_name]
+            final_kwargs = {
+                **user_kwargs,
+                'table': table_name,
+                'full_data': full_data or {}
+            }
+            
+            # Execute validator plugin
+            result = func(*final_args, **final_kwargs)
+            
+            # Validate return format (must be tuple: (is_valid, error_msg))
+            if not isinstance(result, tuple) or len(result) != 2:
+                if self.logger:
+                    self.logger.error("Plugin validator must return (is_valid, error_msg) tuple: %s.%s", 
+                                    plugin_name, function_name)
+                return f"Plugin validator error: invalid return format"
+            
+            is_valid, error_msg = result
+            
+            # Return custom error_message if specified in rules, otherwise use plugin's error
+            if not is_valid:
+                return rules.get('error_message') or error_msg
+            
+            return None  # Validation passed
+            
+        except Exception as e:
+            # Log plugin execution errors but don't crash validation
+            if self.logger:
+                self.logger.error("Plugin validator execution error (%s): %s", validator_spec, e, exc_info=True)
+            return f"Plugin validator error: {str(e)}"
