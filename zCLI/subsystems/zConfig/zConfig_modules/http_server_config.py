@@ -2,7 +2,7 @@
 
 """HTTP Server Configuration Module"""
 
-from typing import Any, Dict
+from zCLI import Any, Dict
 
 
 class HTTPServerConfig:

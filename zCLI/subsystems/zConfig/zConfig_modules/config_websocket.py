@@ -1,8 +1,7 @@
 # zCLI/subsystems/zConfig/zConfig_modules/config_websocket.py
 """WebSocket configuration management as part of zConfig."""
 
-from typing import Any, Dict, List, Optional
-from zCLI import Colors, os
+from zCLI import Colors, os, Any, Dict, List
 from zCLI.utils import print_ready_message, validate_zcli_instance
 
 class WebSocketConfig:

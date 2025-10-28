@@ -2589,6 +2589,331 @@
                         </div>
                     </div>
 
+                    <div class="todo-item completed" data-id="week6-2-4-environment-audit">
+                        <input type="checkbox" class="todo-checkbox" checked>
+                        <div class="todo-content">
+                            <div class="todo-title">Week 6.2.4: 🚨 Audit & Fix config_environment.py (CRITICAL BLOCKER BUG FIXED!) ✅</div>
+                            <div class="todo-description">
+                                <strong>🎯 GOAL:</strong> Fix critical filename mismatch bug + clean up config_environment.py (114 lines)
+                                <br><br>
+                                <strong>🔴 CRITICAL BLOCKER BUG DISCOVERED:</strong>
+                                <br>&nbsp;&nbsp;• ❌ File is <strong>LOADED</strong> from: <code>zConfig.environment.yaml</code> (line 35)
+                                <br>&nbsp;&nbsp;• ❌ File is <strong>SAVED</strong> to: <code>zConfig.env.yaml</code> (line 100)
+                                <br>&nbsp;&nbsp;• 🚨 <strong>Impact:</strong> User config changes <strong>DON'T PERSIST</strong> - saved to wrong file!
+                                <br>&nbsp;&nbsp;• 🚨 <strong>Root Cause:</strong> Hardcoded <code>"zConfig.env.yaml"</code> instead of <code>self.paths.ZENVIRONMENT_FILENAME</code>
+                                <br>&nbsp;&nbsp;• 🚨 <strong>Also Broken:</strong> <code>config_persistence.py</code> has same bug (5 locations!)
+                                <br><br>
+                                <strong>❌ CURRENT STATE (Full Audit Findings):</strong>
+                                <br>&nbsp;&nbsp;• ✅ <strong>Unused Imports:</strong> NONE (all imports used)
+                                <br>&nbsp;&nbsp;• ✅ <strong>Dead Code:</strong> NONE (all methods called)
+                                <br>&nbsp;&nbsp;• ⚠️ <strong>DRY Violations:</strong> 1 found - <code>"[EnvironmentConfig]"</code> repeated 7 times
+                                <br>&nbsp;&nbsp;• 🔴 <strong>Magic Strings:</strong> 15+ found (logging prefix, YAML keys, env vars, config keys)
+                                <br>&nbsp;&nbsp;• 🔴 <strong>Filename Bug:</strong> Load/save mismatch (BLOCKER)
+                                <br>&nbsp;&nbsp;• 🔴 <strong>Systemic Issue:</strong> <code>config_persistence.py</code> also has 5 hardcoded filenames
+                                <br>&nbsp;&nbsp;• ⚠️ <strong>Doc Bug:</strong> Comment says <code>zConfig.zEnvironment.yaml</code> (wrong filename!)
+                                <br><br>
+                                <strong>🔍 Magic Strings Breakdown:</strong>
+                                <br>&nbsp;&nbsp;• <strong>Logging Prefix:</strong> <code>"[EnvironmentConfig]"</code> (7 occurrences - lines 46, 59, 61, 65, 73, 108, 112)
+                                <br>&nbsp;&nbsp;• <strong>YAML Key:</strong> <code>"zEnv"</code> (2 occurrences - lines 32, 103)
+                                <br>&nbsp;&nbsp;• <strong>Subsystem Name:</strong> <code>"EnvironmentConfig"</code> (line 36)
+                                <br>&nbsp;&nbsp;• <strong>Ready Message:</strong> <code>"EnvironmentConfig Ready"</code> (line 39)
+                                <br>&nbsp;&nbsp;• <strong>Env Variables:</strong> <code>"ZOLO_DEPLOYMENT"</code>, <code>"ZOLO_ENV"</code> (line 69)
+                                <br>&nbsp;&nbsp;• <strong>Config Keys:</strong> <code>"deployment"</code>, <code>"role"</code> (lines 69-70, 73)
+                                <br>&nbsp;&nbsp;• <strong>Default Values:</strong> <code>"Debug"</code>, <code>"development"</code> (lines 69-70)
+                                <br><br>
+                                <strong>🔴 SYSTEMIC ISSUE - config_persistence.py:</strong>
+                                <br>&nbsp;&nbsp;• Line 70: <code>"zConfig.machine.yaml"</code> → should use <code>self.paths.ZMACHINE_USER_FILENAME</code>
+                                <br>&nbsp;&nbsp;• Line 134: <code>"zConfig.env.yaml"</code> → should use <code>self.paths.ZENVIRONMENT_FILENAME</code>
+                                <br>&nbsp;&nbsp;• Line 164: <code>"zConfig.machine.yaml"</code> → should use <code>self.paths.ZMACHINE_USER_FILENAME</code>
+                                <br>&nbsp;&nbsp;• Line 224: <code>"zConfig.machine.yaml"</code> → should use <code>self.paths.ZMACHINE_USER_FILENAME</code>
+                                <br>&nbsp;&nbsp;• Line 283: <code>"zConfig.env.yaml"</code> → should use <code>self.paths.ZENVIRONMENT_FILENAME</code>
+                                <br>&nbsp;&nbsp;• 🚨 <strong>Same bug across 2 files!</strong> Violates single source of truth principle
+                                <br><br>
+                                <strong>✅ WHAT'S WORKING (zCLI Architecture):</strong>
+                                <br>&nbsp;&nbsp;• ✅ Proper dependency injection (<code>zConfigPaths</code> passed to __init__)
+                                <br>&nbsp;&nbsp;• ✅ Dotenv loading uses centralized <code>self.paths.load_dotenv()</code>
+                                <br>&nbsp;&nbsp;• ✅ All paths use <code>self.paths.user_zconfigs_dir</code>
+                                <br>&nbsp;&nbsp;• ✅ Type hints properly typed with <code>zConfigPaths</code>
+                                <br>&nbsp;&nbsp;• ✅ Follows .zEnv convention from Week 6.2.1
+                                <br><br>
+                                <strong>📋 Implementation Tasks:</strong>
+                                <br><br>
+                                <strong>1. 🔴 Fix Critical Filename Bug (config_environment.py):</strong>
+                                <br>&nbsp;&nbsp;• Line 68: Fix comment <code>zConfig.zEnvironment.yaml</code> → <code>zConfig.environment.yaml</code>
+                                <br>&nbsp;&nbsp;• Line 98: Update docstring to say correct filename
+                                <br>&nbsp;&nbsp;• Line 100: Change <code>"zConfig.env.yaml"</code> → <code>self.paths.ZENVIRONMENT_FILENAME</code>
+                                <br><br>
+                                <strong>2. 🔴 Fix Systemic Filename Bug (config_persistence.py):</strong>
+                                <br>&nbsp;&nbsp;• Line 70: Use <code>self.paths.ZMACHINE_USER_FILENAME</code>
+                                <br>&nbsp;&nbsp;• Line 134: Use <code>self.paths.ZENVIRONMENT_FILENAME</code>
+                                <br>&nbsp;&nbsp;• Line 164: Use <code>self.paths.ZMACHINE_USER_FILENAME</code>
+                                <br>&nbsp;&nbsp;• Line 224: Use <code>self.paths.ZMACHINE_USER_FILENAME</code>
+                                <br>&nbsp;&nbsp;• Line 283: Use <code>self.paths.ZENVIRONMENT_FILENAME</code>
+                                <br><br>
+                                <strong>3. ✅ Add Module Constants (config_environment.py):</strong>
+                                <br>&nbsp;&nbsp;• <code>LOG_PREFIX = "[EnvironmentConfig]"</code>
+                                <br>&nbsp;&nbsp;• <code>READY_MESSAGE = "EnvironmentConfig Ready"</code>
+                                <br>&nbsp;&nbsp;• <code>YAML_KEY = "zEnv"</code>
+                                <br>&nbsp;&nbsp;• <code>SUBSYSTEM_NAME = "EnvironmentConfig"</code>
+                                <br>&nbsp;&nbsp;• <code>ENV_VAR_DEPLOYMENT = "ZOLO_DEPLOYMENT"</code>
+                                <br>&nbsp;&nbsp;• <code>ENV_VAR_DEPLOYMENT_ALT = "ZOLO_ENV"</code>
+                                <br>&nbsp;&nbsp;• <code>KEY_DEPLOYMENT = "deployment"</code>
+                                <br>&nbsp;&nbsp;• <code>KEY_ROLE = "role"</code>
+                                <br>&nbsp;&nbsp;• <code>DEFAULT_DEPLOYMENT = "Debug"</code>
+                                <br>&nbsp;&nbsp;• <code>DEFAULT_ROLE = "development"</code>
+                                <br><br>
+                                <strong>4. ✅ Replace All Magic Strings with Constants:</strong>
+                                <br>&nbsp;&nbsp;• Lines 32, 36, 39, 46, 59, 61, 65, 69-70, 73, 103, 108, 112
+                                <br>&nbsp;&nbsp;• Follow same pattern as Week 6.2.2 (config_machine.py)
+                                <br><br>
+                                <strong>5. ✅ Run Tests & Verify:</strong>
+                                <br>&nbsp;&nbsp;• All 36 zConfig tests must pass
+                                <br>&nbsp;&nbsp;• Verify config changes persist correctly
+                                <br>&nbsp;&nbsp;• Check linter errors cleared
+                                <br><br>
+                                <strong>📊 Expected Outcomes:</strong>
+                                <br>&nbsp;&nbsp;• 🔴 <strong>Bug Fixed:</strong> Config save/load uses same filename
+                                <br>&nbsp;&nbsp;• ✅ <strong>Single Source of Truth:</strong> All filenames from <code>config_paths.py</code> constants
+                                <br>&nbsp;&nbsp;• ✅ <strong>Zero Magic Strings:</strong> 15+ eliminated with 10 constants
+                                <br>&nbsp;&nbsp;• ✅ <strong>DRY Compliance:</strong> Logging prefix used consistently
+                                <br>&nbsp;&nbsp;• ✅ <strong>Documentation Accurate:</strong> Comments match actual filenames
+                                <br>&nbsp;&nbsp;• ✅ <strong>Tests Passing:</strong> 36/36 maintained
+                                <br>&nbsp;&nbsp;• ✅ <strong>Industry-Grade:</strong> Matches quality of 6.2.1, 6.2.2, 6.2.3
+                                <br><br>
+                                <strong>🎯 Success Metrics:</strong>
+                                <br>&nbsp;&nbsp;• Audit Grade: B → A+ (eliminating all violations)
+                                <br>&nbsp;&nbsp;• Magic Strings: 15+ → 0 (100% elimination)
+                                <br>&nbsp;&nbsp;• Filename Consistency: Broken → Fixed (BLOCKER resolved)
+                                <br>&nbsp;&nbsp;• Hardcoded Paths: 6 locations → 0 (persistence + environment)
+                                <br>&nbsp;&nbsp;• Config Persistence: Broken → Working (user changes saved correctly)
+                                <br><br>
+                                <strong>⚠️ WHY THIS IS CRITICAL:</strong>
+                                <br>&nbsp;&nbsp;• 🚨 Users will report "my config changes don't save"
+                                <br>&nbsp;&nbsp;• 🚨 Orphaned <code>zConfig.env.yaml</code> files never get loaded
+                                <br>&nbsp;&nbsp;• 🚨 Production deployment configs silently fail to persist
+                                <br>&nbsp;&nbsp;• 🚨 Violates fundamental expectation: save → load should work
+                                <br>&nbsp;&nbsp;• 🚨 This is a <strong>PRODUCTION BLOCKER</strong> - must fix before release
+                                <br><br>
+                                <strong>✨ BONUS: environment_helpers.py Industry-Grade Refactor:</strong>
+                                <br>&nbsp;&nbsp;• 🏆 <strong>Single Source of Truth:</strong> Helper now imports constants from <code>config_environment.py</code>
+                                <br>&nbsp;&nbsp;• ✅ <strong>Lazy Import Pattern:</strong> Used industry-standard lazy import to avoid circular dependencies
+                                <br>&nbsp;&nbsp;• ✅ <strong>Type Hints Added:</strong> <code>def create_default_env_config(path: Path, _env_data: Dict[str, Any]) -> None</code>
+                                <br>&nbsp;&nbsp;• ✅ <strong>Magic Strings Eliminated:</strong> 6 magic strings → 0 (imports <code>LOG_PREFIX</code>, <code>YAML_KEY</code>, <code>KEY_DEPLOYMENT</code>, <code>DEFAULT_DEPLOYMENT</code>)
+                                <br>&nbsp;&nbsp;• ✅ <strong>DRY Compliance:</strong> No duplication - constants defined once, used everywhere
+                                <br>&nbsp;&nbsp;• ✅ <strong>Docstring Fixed:</strong> Now accurate (was misleading about unused parameter)
+                                <br>&nbsp;&nbsp;• 🎯 <strong>Result:</strong> Helper and config share same constants → impossible to diverge
+                                <br>&nbsp;&nbsp;• 🏆 <strong>Industry Pattern:</strong> Matches Django, FastAPI, Flask (helpers import from config, not duplicate)
+                                <br><br>
+                                <strong>📁 Files Changed:</strong>
+                                <br>&nbsp;&nbsp;• <code>zCLI/subsystems/zConfig/zConfig_modules/config_environment.py</code> (add constants, fix filename, clean magic strings)
+                                <br>&nbsp;&nbsp;• <code>zCLI/subsystems/zConfig/zConfig_modules/config_persistence.py</code> (fix 5 hardcoded filenames)
+                                <br>&nbsp;&nbsp;• <code>zCLI/subsystems/zConfig/zConfig_modules/helpers/environment_helpers.py</code> (industry-grade refactor with lazy imports)
+                                <br>&nbsp;&nbsp;• <code>v1.5.4_plan.html</code> (this plan update)
+                                <br><br>
+                                <strong>🔗 Related Work:</strong>
+                                <br>&nbsp;&nbsp;• Builds on Week 6.2.1 (config_paths.py - established filename constants)
+                                <br>&nbsp;&nbsp;• Follows Week 6.2.2 (config_machine.py - constant pattern)
+                                <br>&nbsp;&nbsp;• Completes Week 6.2.3 (machine_detectors.py - quality standards)
+                                <br>&nbsp;&nbsp;• Achieves full consistency across ALL zConfig core modules + helpers
+                                <br>&nbsp;&nbsp;• Final piece for production-ready zConfig subsystem
+                                <br><br>
+                                <strong>✅ COMPLETION STATUS:</strong>
+                                <br>&nbsp;&nbsp;• 🔴 <strong>BLOCKER BUG FIXED:</strong> Config save/load now uses same filename
+                                <br>&nbsp;&nbsp;• ✅ <strong>All 36 Tests Passing:</strong> No regressions
+                                <br>&nbsp;&nbsp;• ✅ <strong>Zero Linter Errors:</strong> Clean code quality
+                                <br>&nbsp;&nbsp;• ✅ <strong>Helper Refactored:</strong> environment_helpers.py now industry-grade with lazy imports
+                                <br>&nbsp;&nbsp;• 🎯 <strong>Total Magic Strings Eliminated:</strong> 21+ (config + helper combined)
+                                <br>&nbsp;&nbsp;• 🎯 <strong>Total DRY Violations Fixed:</strong> 10+ (config + persistence + helper)
+                                <br>&nbsp;&nbsp;• 🏆 <strong>Production Ready:</strong> zConfig subsystem fully audited and optimized
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Week 6</span>
+                                <span class="tag">Layer 0</span>
+                                <span class="tag">zConfig</span>
+                                <span class="tag">0.5 days</span>
+                                <span class="tag" style="background: #48bb78; color: white;">✅ COMPLETE</span>
+                                <span class="tag" style="background: #f6ad55; color: white;">REFACTOR</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="todo-item" data-id="week6-2-5-session-audit">
+                        <input type="checkbox" class="todo-checkbox">
+                        <div class="todo-content">
+                            <div class="todo-title">Week 6.2.5: 🔥 Audit & Refactor config_session.py (CRITICAL SESSION INFRASTRUCTURE) 🎯</div>
+                            <div class="todo-description">
+                                <strong>🎯 GOAL:</strong> Industry-grade refactor of config_session.py (170 lines) - session creation is critical infrastructure
+                                <br><br>
+                                <strong>⚠️ WHY THIS IS CRITICAL:</strong>
+                                <br>&nbsp;&nbsp;• 🔥 <strong>Every zCLI instance</strong> creates a session - this code runs on EVERY startup
+                                <br>&nbsp;&nbsp;• 🔥 <strong>Session dict structure</strong> is the foundation for all runtime state
+                                <br>&nbsp;&nbsp;• 🔥 <strong>Logger initialization</strong> depends on session configuration
+                                <br>&nbsp;&nbsp;• 🔥 <strong>zMode detection</strong> determines Terminal vs zBifrost behavior
+                                <br>&nbsp;&nbsp;• 🔥 <strong>zSpark integration</strong> - must handle dict checks safely throughout
+                                <br>&nbsp;&nbsp;• 🔥 Magic strings in session keys = refactoring nightmare for all consumers
+                                <br><br>
+                                <strong>❌ CURRENT STATE (Full Audit Findings):</strong>
+                                <br>&nbsp;&nbsp;• ✅ <strong>Unused Imports:</strong> NONE (all imports used)
+                                <br>&nbsp;&nbsp;• ✅ <strong>Dead Code:</strong> NONE (all functions called)
+                                <br>&nbsp;&nbsp;• ❌ <strong>Import Inconsistency:</strong> Uses <code>from pathlib import Path</code> instead of <code>from zCLI import Path</code>
+                                <br>&nbsp;&nbsp;• ❌ <strong>Type Hints:</strong> Missing on 5/6 methods (only <code>generate_id</code> has hints)
+                                <br>&nbsp;&nbsp;• 🔴 <strong>Magic Strings:</strong> 30+ found (logging, session keys, zSpark keys, env vars, defaults)
+                                <br>&nbsp;&nbsp;• 🔴 <strong>DRY Violations:</strong> 3 major patterns (logging prefix 5x, zSpark dict check 4x, nested dict structure)
+                                <br>&nbsp;&nbsp;• ⚠️ <strong>Docstring Issues:</strong> 3 verbose/vague docstrings
+                                <br>&nbsp;&nbsp;• ✅ <strong>zPaths Dependency:</strong> N/A (architecturally correct - session is runtime state, not file-based)
+                                <br><br>
+                                <strong>🔍 Magic Strings Breakdown (30+ occurrences):</strong>
+                                <br>&nbsp;&nbsp;• <strong>Logging Prefix:</strong> <code>"[SessionConfig]"</code> (5 occurrences - lines 142, 150, 157, 164, 168)
+                                <br>&nbsp;&nbsp;• <strong>Subsystem Name:</strong> <code>"SessionConfig"</code> (lines 30, 42)
+                                <br>&nbsp;&nbsp;• <strong>Session ID Prefix:</strong> <code>"zS"</code> (line 44)
+                                <br>&nbsp;&nbsp;• <strong>Default Values:</strong> <code>"MAIN"</code>, <code>"CONFIG"</code>, <code>"INFO"</code>, <code>True</code>, <code>"Terminal"</code>
+                                <br>&nbsp;&nbsp;• <strong>zMode Values:</strong> <code>"Terminal"</code>, <code>"zBifrost"</code> (line 123)
+                                <br>&nbsp;&nbsp;• <strong>Environment Variables:</strong> <code>"ZOLO_LOGGER"</code> (lines 147, 154), <code>"PATH"</code> (line 61)
+                                <br>&nbsp;&nbsp;• <strong>zSpark Keys:</strong> <code>"zWorkspace"</code>, <code>"zTraceback"</code>, <code>"zMode"</code>, <code>"logger"</code> (lines 66, 72, 122, 140)
+                                <br>&nbsp;&nbsp;• <strong>Session Dict Keys (20+):</strong> <code>"zS_id"</code>, <code>"zWorkspace"</code>, <code>"zVaFile_path"</code>, <code>"zVaFilename"</code>, <code>"zBlock"</code>, <code>"zMode"</code>, <code>"zLogger"</code>, <code>"zTraceback"</code>, <code>"zMachine"</code>, <code>"zAuth"</code>, <code>"zCrumbs"</code>, <code>"zCache"</code>, <code>"wizard_mode"</code>, <code>"zSpark"</code>, <code>"virtual_env"</code>, <code>"system_env"</code>, <code>"logger_instance"</code>
+                                <br>&nbsp;&nbsp;• <strong>zAuth Keys:</strong> <code>"id"</code>, <code>"username"</code>, <code>"role"</code>, <code>"API_Key"</code>
+                                <br>&nbsp;&nbsp;• <strong>zCache Keys:</strong> <code>"system_cache"</code>, <code>"pinned_cache"</code>, <code>"schema_cache"</code>
+                                <br>&nbsp;&nbsp;• <strong>wizard_mode Keys:</strong> <code>"active"</code>, <code>"lines"</code>, <code>"format"</code>, <code>"transaction"</code>
+                                <br>&nbsp;&nbsp;• <strong>Config Keys:</strong> <code>"logging"</code>, <code>"level"</code> (lines 161, 163)
+                                <br>&nbsp;&nbsp;• <strong>Magic Numbers:</strong> <code>4</code> (token hex length - line 46)
+                                <br><br>
+                                <strong>🔴 DRY VIOLATION #1 - Repeated zSpark Dict Check (4 occurrences):</strong>
+                                <br>&nbsp;&nbsp;• Lines 65-67, 71-73, 121-124, 139-141
+                                <br>&nbsp;&nbsp;• Pattern: <code>if self.zSpark is not None and isinstance(self.zSpark, dict): if "key" in self.zSpark: ...</code>
+                                <br>&nbsp;&nbsp;• <strong>Industry Solution:</strong> Extract helper method <code>_get_zSpark_value(key, default)</code>
+                                <br>&nbsp;&nbsp;• <strong>Benefit:</strong> DRY compliance + safer dict access + easier to test
+                                <br><br>
+                                <strong>🔴 DRY VIOLATION #2 - Repeated Logging Prefix (5 occurrences):</strong>
+                                <br>&nbsp;&nbsp;• Same <code>"[SessionConfig]"</code> string in 5 print statements
+                                <br>&nbsp;&nbsp;• <strong>Industry Solution:</strong> Use <code>LOG_PREFIX</code> constant like other config modules
+                                <br><br>
+                                <strong>🔴 DRY VIOLATION #3 - Large Nested Dict Structure:</strong>
+                                <br>&nbsp;&nbsp;• Lines 76-107: 32-line nested dict with hardcoded keys
+                                <br>&nbsp;&nbsp;• <strong>Risk:</strong> Any refactoring of session structure requires updating consumers
+                                <br>&nbsp;&nbsp;• <strong>Industry Solution:</strong> Extract dict keys as module constants for discoverability
+                                <br><br>
+                                <strong>❌ IMPORT INCONSISTENCY (Critical for Week 6.2 Goal):</strong>
+                                <br>&nbsp;&nbsp;• Line 6: <code>from pathlib import Path</code> ❌
+                                <br>&nbsp;&nbsp;• Should be: <code>from zCLI import Path</code> ✅
+                                <br>&nbsp;&nbsp;• Violates centralized import convention from Week 6.2.3 (typing centralization)
+                                <br>&nbsp;&nbsp;• All other config modules use centralized imports
+                                <br><br>
+                                <strong>❌ MISSING TYPE HINTS (5/6 methods):</strong>
+                                <br>&nbsp;&nbsp;• <code>_safe_getcwd()</code> - missing <code>-> str</code>
+                                <br>&nbsp;&nbsp;• <code>__init__(...)</code> - missing type hints on all 5 parameters + <code>-> None</code>
+                                <br>&nbsp;&nbsp;• <code>create_session(...)</code> - missing parameter types + <code>-> Dict[str, Any]</code>
+                                <br>&nbsp;&nbsp;• <code>detect_zMode()</code> - missing <code>-> str</code>
+                                <br>&nbsp;&nbsp;• <code>_detect_logger_level()</code> - missing <code>-> str</code>
+                                <br>&nbsp;&nbsp;• Only <code>generate_id(prefix: str = "zS") -> str</code> has full hints ✅
+                                <br><br>
+                                <strong>✅ ARCHITECTURAL FINDING - zPaths Independence:</strong>
+                                <br>&nbsp;&nbsp;• <code>config_session.py</code> does NOT use <code>zConfigPaths</code> - this is <strong>architecturally CORRECT</strong>
+                                <br>&nbsp;&nbsp;• <strong>Why:</strong> SessionConfig manages runtime state, not file-based configuration
+                                <br>&nbsp;&nbsp;• <strong>Comparison:</strong> machine/environment configs load/save files → need paths; session creates runtime dict → no files
+                                <br>&nbsp;&nbsp;• <strong>Verdict:</strong> No changes needed - dependency injection pattern is appropriate
+                                <br><br>
+                                <strong>📋 Implementation Tasks (Industry-Grade Only!):</strong>
+                                <br><br>
+                                <strong>1. ✅ Fix Import Inconsistency:</strong>
+                                <br>&nbsp;&nbsp;• Line 6: Change <code>from pathlib import Path</code> → <code>from zCLI import Path</code>
+                                <br>&nbsp;&nbsp;• Matches centralized import pattern from Week 6.2.3
+                                <br><br>
+                                <strong>2. ✅ Add Comprehensive Module Constants (35+ constants):</strong>
+                                <br>&nbsp;&nbsp;• <code>LOG_PREFIX = "[SessionConfig]"</code>
+                                <br>&nbsp;&nbsp;• <code>READY_MESSAGE = "SessionConfig Ready"</code>
+                                <br>&nbsp;&nbsp;• <code>SUBSYSTEM_NAME = "SessionConfig"</code>
+                                <br>&nbsp;&nbsp;• <code>DEFAULT_SESSION_PREFIX = "zS"</code>
+                                <br>&nbsp;&nbsp;• <code>TOKEN_HEX_LENGTH = 4</code>
+                                <br>&nbsp;&nbsp;• <code>DEFAULT_ZTRACEBACK = True</code>
+                                <br>&nbsp;&nbsp;• <code>ZMODE_TERMINAL = "Terminal"</code>, <code>ZMODE_ZBIFROST = "zBifrost"</code>
+                                <br>&nbsp;&nbsp;• <code>ENV_VAR_LOGGER = "ZOLO_LOGGER"</code>, <code>ENV_VAR_PATH = "PATH"</code>
+                                <br>&nbsp;&nbsp;• All session dict keys as constants (20+): <code>SESSION_KEY_ZS_ID</code>, <code>SESSION_KEY_ZWORKSPACE</code>, etc.
+                                <br>&nbsp;&nbsp;• All zSpark keys as constants: <code>ZSPARK_KEY_ZWORKSPACE</code>, <code>ZSPARK_KEY_ZTRACEBACK</code>, etc.
+                                <br>&nbsp;&nbsp;• All nested dict keys: zAuth, zCache, wizard_mode
+                                <br><br>
+                                <strong>3. ✅ Extract zSpark Helper Method (DRY Fix):</strong>
+                                <br>&nbsp;&nbsp;• Create <code>_get_zSpark_value(self, key: str, default: Any = None) -> Any</code>
+                                <br>&nbsp;&nbsp;• Safely gets value from zSpark dict with type checking
+                                <br>&nbsp;&nbsp;• Replace 4 duplicate patterns with single method call
+                                <br>&nbsp;&nbsp;• <strong>Industry Pattern:</strong> Same as property getters in Django/Flask
+                                <br><br>
+                                <strong>4. ✅ Add Type Hints to All Methods:</strong>
+                                <br>&nbsp;&nbsp;• <code>_safe_getcwd() -> str</code>
+                                <br>&nbsp;&nbsp;• <code>__init__(machine_config: Any, environment_config: Any, zcli: Any, zSpark_obj: Optional[Dict[str, Any]] = None, zconfig: Optional[Any] = None) -> None</code>
+                                <br>&nbsp;&nbsp;• <code>create_session(machine_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]</code>
+                                <br>&nbsp;&nbsp;• <code>detect_zMode() -> str</code>
+                                <br>&nbsp;&nbsp;• <code>_detect_logger_level() -> str</code>
+                                <br><br>
+                                <strong>5. ✅ Replace All Magic Strings with Constants:</strong>
+                                <br>&nbsp;&nbsp;• Lines 30, 39, 42, 44, 46, 61, 66-67, 72-73, 77-107, 122-123, 140-141, 142, 147, 150, 154, 157, 161, 163, 164, 168
+                                <br>&nbsp;&nbsp;• Use constants for ALL session dict keys (enables IDE autocomplete for consumers!)
+                                <br>&nbsp;&nbsp;• Use constants for ALL zSpark keys (safer dict access)
+                                <br><br>
+                                <strong>6. ✅ Improve Docstrings (Make Concise):</strong>
+                                <br>&nbsp;&nbsp;• <code>_safe_getcwd()</code>: 7 lines → 1-2 lines
+                                <br>&nbsp;&nbsp;• <code>__init__()</code>: Make more informative about dependencies
+                                <br>&nbsp;&nbsp;• <code>create_session()</code>: Document session structure hierarchy
+                                <br><br>
+                                <strong>7. ✅ Run Tests & Verify:</strong>
+                                <br>&nbsp;&nbsp;• All 36 zConfig tests must pass
+                                <br>&nbsp;&nbsp;• Verify session creation still works
+                                <br>&nbsp;&nbsp;• Check linter errors cleared
+                                <br><br>
+                                <strong>📊 Expected Outcomes:</strong>
+                                <br>&nbsp;&nbsp;• ✅ <strong>Import Consistency:</strong> Uses centralized <code>zCLI</code> imports
+                                <br>&nbsp;&nbsp;• ✅ <strong>Type Safety:</strong> 5/6 → 6/6 methods with full type hints (100%)
+                                <br>&nbsp;&nbsp;• ✅ <strong>Zero Magic Strings:</strong> 30+ eliminated with 35+ constants
+                                <br>&nbsp;&nbsp;• ✅ <strong>DRY Compliance:</strong> Helper method eliminates 4 duplicate patterns
+                                <br>&nbsp;&nbsp;• ✅ <strong>Discoverability:</strong> Session dict keys as constants → IDE autocomplete works
+                                <br>&nbsp;&nbsp;• ✅ <strong>Tests Passing:</strong> 36/36 maintained
+                                <br>&nbsp;&nbsp;• ✅ <strong>Industry-Grade:</strong> Matches quality of 6.2.1-6.2.4
+                                <br><br>
+                                <strong>🎯 Success Metrics:</strong>
+                                <br>&nbsp;&nbsp;• Audit Grade: C → A+ (eliminating all violations)
+                                <br>&nbsp;&nbsp;• Magic Strings: 30+ → 0 (100% elimination)
+                                <br>&nbsp;&nbsp;• Type Hints: 17% → 100% (6/6 methods)
+                                <br>&nbsp;&nbsp;• DRY Violations: 3 patterns → 0 (helper method + constants)
+                                <br>&nbsp;&nbsp;• Import Consistency: Broken → Fixed (matches all other configs)
+                                <br>&nbsp;&nbsp;• Session Infrastructure: Ad-hoc → Industry-Grade
+                                <br><br>
+                                <strong>🔥 WHY INDUSTRY-GRADE MATTERS HERE:</strong>
+                                <br>&nbsp;&nbsp;• <strong>Session dict consumed everywhere:</strong> zCLI core, zData, zDisplay, zAuth, zWizard
+                                <br>&nbsp;&nbsp;• <strong>Magic string keys = nightmare:</strong> Change <code>"zS_id"</code> → must find/replace across 10+ files
+                                <br>&nbsp;&nbsp;• <strong>With constants:</strong> Change <code>SESSION_KEY_ZS_ID</code> once → refactoring is safe
+                                <br>&nbsp;&nbsp;• <strong>IDE autocomplete:</strong> Consumers can discover available session keys
+                                <br>&nbsp;&nbsp;• <strong>Type safety:</strong> Catch errors at development time, not runtime
+                                <br>&nbsp;&nbsp;• <strong>zSpark integration:</strong> Helper method = safer dict access = fewer runtime errors
+                                <br><br>
+                                <strong>📁 Files Changed:</strong>
+                                <br>&nbsp;&nbsp;• <code>zCLI/subsystems/zConfig/zConfig_modules/config_session.py</code> (comprehensive refactor)
+                                <br>&nbsp;&nbsp;• <code>v1.5.4_plan.html</code> (this plan update)
+                                <br><br>
+                                <strong>🔗 Related Work:</strong>
+                                <br>&nbsp;&nbsp;• Continues patterns from Week 6.2.1 (config_paths.py - constants)
+                                <br>&nbsp;&nbsp;• Continues patterns from Week 6.2.2 (config_machine.py - constants + docstrings)
+                                <br>&nbsp;&nbsp;• Continues patterns from Week 6.2.3 (machine_detectors.py - type hints + helpers)
+                                <br>&nbsp;&nbsp;• Continues patterns from Week 6.2.4 (config_environment.py - magic string elimination)
+                                <br>&nbsp;&nbsp;• <strong>COMPLETES Week 6.2:</strong> All core zConfig modules now industry-grade!
+                                <br><br>
+                                <strong>🏆 Week 6.2 Completion:</strong>
+                                <br>&nbsp;&nbsp;• ✅ 6.2.1: config_paths.py (DRY + .zEnv convention)
+                                <br>&nbsp;&nbsp;• ✅ 6.2.2: config_machine.py (filename fix + constants)
+                                <br>&nbsp;&nbsp;• ✅ 6.2.3: machine_detectors.py (helper quality)
+                                <br>&nbsp;&nbsp;• ✅ 6.2.4: config_environment.py (BLOCKER bug + helper refactor)
+                                <br>&nbsp;&nbsp;• ⏳ 6.2.5: config_session.py (critical session infrastructure)
+                                <br>&nbsp;&nbsp;• 🎯 <strong>Result:</strong> Complete zConfig subsystem audit + industry-grade refactor
+                            </div>
+                            <div class="todo-tags">
+                                <span class="tag">Week 6</span>
+                                <span class="tag">Layer 0</span>
+                                <span class="tag">zConfig</span>
+                                <span class="tag">0.5 days</span>
+                                <span class="tag" style="background: #ed8936; color: white;">🔥 CRITICAL</span>
+                                <span class="tag" style="background: #f6ad55; color: white;">REFACTOR</span>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="todo-item" data-id="week6-3-comm-review">
                         <input type="checkbox" class="todo-checkbox">
                         <div class="todo-content">

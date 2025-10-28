@@ -1,30 +1,36 @@
 # zCLI/subsystems/zConfig/zConfig_modules/helpers/config_helpers.py
 """Shared helper functions for configuration loading across zConfig subsystems."""
 
-from zCLI import yaml, Colors
+from zCLI import yaml, Path, Dict, Any, Callable
 
-def load_config_with_override(paths, yaml_key, create_func, data_dict, subsystem_name):
-    """Load config file, creating if missing, and override data_dict with contents."""
-    # Derive filename from subsystem name
-    if subsystem_name == "MachineConfig":
-        filename = "zConfig.machine.yaml"
-    elif subsystem_name == "EnvironmentConfig":
-        filename = "zConfig.Environment.yaml"
-    else:
-        filename = f"zConfig.{subsystem_name.lower().replace('config', '')}.yaml"
+# Module constants
+SOURCE_USER = "user"
+
+def load_config_with_override(
+    paths: Any,  # zConfigPaths (avoid circular import)
+    yaml_key: str,
+    create_func: Callable[[Path, Dict[str, Any]], None],
+    data_dict: Dict[str, Any],
+    filename: str,
+    subsystem_name: str
+) -> None:
+    """Load config file from user directory, creating with defaults if missing."""
     user_config_path = paths.user_zconfigs_dir / filename
 
     if user_config_path.exists():
-        # Load existing config
-        _load_and_override(user_config_path, yaml_key, data_dict, subsystem_name, "user")
+        _load_and_override(user_config_path, yaml_key, data_dict, subsystem_name, SOURCE_USER)
     else:
-        # Create user config on first run
         create_func(user_config_path, data_dict)
-        # Load the newly created config
-        _load_and_override(user_config_path, yaml_key, data_dict, subsystem_name, "user")
+        _load_and_override(user_config_path, yaml_key, data_dict, subsystem_name, SOURCE_USER)
 
-def _load_and_override(path, yaml_key, data_dict, subsystem_name, source):
-    """Load config file and override data_dict with its contents."""
+def _load_and_override(
+    path: Path,
+    yaml_key: str,
+    data_dict: Dict[str, Any],
+    subsystem_name: str,
+    source: str
+) -> None:
+    """Load YAML config file and merge its contents into data_dict."""
     try:
         with open(path, encoding='utf-8') as f:
             data = yaml.safe_load(f)

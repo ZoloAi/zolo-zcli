@@ -22,11 +22,13 @@ import subprocess
 import sys
 import time
 import traceback
+import typing
 import uuid
 import webbrowser
 from collections import OrderedDict
 from datetime import datetime
 from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 from urllib.parse import urlparse
 
 # Third-party imports
@@ -79,7 +81,10 @@ __all__ = [
     "asyncio", "datetime", "getpass", "importlib", "inspect", "json", 
     "logging", "os", "platform", "platformdirs", "re", "requests", "secrets",
     "shutil", "socket", "sqlite3", "subprocess", "sys", "time", "traceback",
-    "uuid", "webbrowser", "yaml", "OrderedDict", "Path", "urlparse",
+    "typing", "uuid", "webbrowser", "yaml", "OrderedDict", "Path", "urlparse",
+
+    # Typing helpers
+    "Any", "Callable", "Dict", "List", "Optional", "Tuple", "Union",
 
     # Third-party helpers
     "load_dotenv",

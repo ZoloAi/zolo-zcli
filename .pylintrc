@@ -19,6 +19,7 @@ disable=
     too-few-public-methods,    # Many subsystems have few public methods
     too-many-instance-attributes,  # zCLI has many subsystems
     too-many-arguments,        # Complex data operations need many args
+    too-many-positional-arguments,  # Allow up to 6 positional args (zolo standard)
     too-many-locals,           # Complex functions may need many locals
     import-outside-toplevel,   # Allow imports inside methods (e.g., ZConfig in __init__)
     unnecessary-lambda,        # Allow lambdas for action maps and lazy evaluation

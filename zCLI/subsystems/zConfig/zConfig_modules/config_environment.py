@@ -1,12 +1,28 @@
 # zCLI/subsystems/zConfig/zConfig_modules/config_environment.py
 """Environment-level configuration management for deployment and runtime settings."""
 
-from typing import Any, Dict, Optional
-from pathlib import Path
-from zCLI import os, sys, yaml
+from zCLI import os, sys, yaml, Any, Dict, Optional
 from zCLI.utils import print_ready_message
 from .helpers import create_default_env_config, load_config_with_override
 from .config_paths import zConfigPaths
+
+# Module constants
+LOG_PREFIX = "[EnvironmentConfig]"
+READY_MESSAGE = "EnvironmentConfig Ready"
+YAML_KEY = "zEnv"
+SUBSYSTEM_NAME = "EnvironmentConfig"
+
+# Environment variable names
+ENV_VAR_DEPLOYMENT = "ZOLO_DEPLOYMENT"
+ENV_VAR_DEPLOYMENT_ALT = "ZOLO_ENV"
+
+# Config keys
+KEY_DEPLOYMENT = "deployment"
+KEY_ROLE = "role"
+
+# Default values
+DEFAULT_DEPLOYMENT = "Debug"
+DEFAULT_ROLE = "development"
 
 class EnvironmentConfig:
     """Manages environment-specific settings and deployment configuration."""
@@ -31,20 +47,21 @@ class EnvironmentConfig:
         # Load and override from config file (check exists, create if missing)
         load_config_with_override(
             self.paths,
-            "zEnv",
+            YAML_KEY,
             create_default_env_config,
             self.env,
-            "EnvironmentConfig"
+            self.paths.ZENVIRONMENT_FILENAME,
+            SUBSYSTEM_NAME
         )
 
-        print_ready_message("EnvironmentConfig Ready", color="CONFIG")
+        print_ready_message(READY_MESSAGE, color="CONFIG")
 
     def _detect_environments(self) -> None:
         """Detect virtual environment and system environment."""
         # Load dotenv file (if available) before capturing environment snapshot
         dotenv_path = self.paths.load_dotenv()
         if dotenv_path:
-            print(f"[EnvironmentConfig] Dotenv loaded from: {dotenv_path}")
+            print(f"{LOG_PREFIX} Dotenv loaded from: {dotenv_path}")
 
         # Detect if running in virtual environment
         self.in_venv = hasattr(sys, 'real_prefix') or (
@@ -57,21 +74,21 @@ class EnvironmentConfig:
 
         # Print detection results
         if self.in_venv:
-            print(f"[EnvironmentConfig] Virtual environment detected: {self.venv_path}")
+            print(f"{LOG_PREFIX} Virtual environment detected: {self.venv_path}")
         else:
-            print("[EnvironmentConfig] Running in system environment")
+            print(f"{LOG_PREFIX} Running in system environment")
 
     def _get_defaults(self) -> Dict[str, Any]:
         """Get minimal hardcoded default environment values (first run fallback)."""
-        print("[EnvironmentConfig] Loading environment defaults...")
+        print(f"{LOG_PREFIX} Loading environment defaults...")
 
         env = {
-            # Minimal defaults - comprehensive config is in zConfig.zEnvironment.yaml
-            "deployment": os.getenv("ZOLO_DEPLOYMENT") or os.getenv("ZOLO_ENV") or "Debug",
-            "role": "development",
+            # Minimal defaults - comprehensive config is in zConfig.environment.yaml
+            KEY_DEPLOYMENT: os.getenv(ENV_VAR_DEPLOYMENT) or os.getenv(ENV_VAR_DEPLOYMENT_ALT) or DEFAULT_DEPLOYMENT,
+            KEY_ROLE: DEFAULT_ROLE,
         }
 
-        print(f"[EnvironmentConfig] Environment: {env['deployment']} ({env['role']})")
+        print(f"{LOG_PREFIX} Environment: {env[KEY_DEPLOYMENT]} ({env[KEY_ROLE]})")
 
         return env
 
@@ -96,19 +113,19 @@ class EnvironmentConfig:
         return self.venv_path
 
     def save_user_config(self) -> bool:
-        """Save current environment config to user's env.yaml."""
+        """Save current environment config to user's zConfig.environment.yaml."""
         try:
-            path = self.paths.user_zconfigs_dir / "zConfig.env.yaml"
+            path = self.paths.user_zconfigs_dir / self.paths.ZENVIRONMENT_FILENAME
             path.parent.mkdir(parents=True, exist_ok=True)
 
-            content = {"zEnv": self.env}
+            content = {YAML_KEY: self.env}
 
             with open(path, 'w', encoding='utf-8') as f:
                 yaml.dump(content, f, default_flow_style=False, sort_keys=False)
 
-            print(f"[EnvironmentConfig] Saved environment config to: {path}")
+            print(f"{LOG_PREFIX} Saved environment config to: {path}")
             return True
 
         except Exception as e:
-            print(f"[EnvironmentConfig] Failed to save environment config: {e}")
+            print(f"{LOG_PREFIX} Failed to save environment config: {e}")
             return False

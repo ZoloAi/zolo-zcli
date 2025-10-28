@@ -1,21 +1,24 @@
 # zCLI/subsystems/zConfig/zConfig_modules/helpers/environment_helpers.py
 """Helper functions for environment configuration."""
 
-from zCLI import Path, Colors
+from zCLI import Path, Colors, Dict, Any
 
-def create_default_env_config(path, _env_data):
-    """Create user environment config file on first run with given path and data."""
+def create_default_env_config(path: Path, _env_data: Dict[str, Any]) -> None:
+    """Create default environment config YAML file from template."""
+    # Lazy import to avoid circular dependency (config_environment imports from helpers)
+    from ..config_environment import LOG_PREFIX, YAML_KEY, KEY_DEPLOYMENT, DEFAULT_DEPLOYMENT
+    
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
 
-        content = """
+        content = f"""
 # zolo-zcli Environment Configuration
 # This file was auto-generated on first run.
 # You can edit this file to customize your environment-specific settings.
 
-zEnv:
+{YAML_KEY}:
   # Environment Settings (customize these to your environment!)
-  deployment: "Debug"  # Debug, Info, Production
+  {KEY_DEPLOYMENT}: "{DEFAULT_DEPLOYMENT}"  # Debug, Info, Production
   datacenter: "local"  # local, us-west-2, eu-central-1, etc.
   cluster: "single-node"  # single-node, multi-node, k8s-cluster
   node_id: "node-001"  # unique identifier for this node
@@ -70,9 +73,9 @@ zEnv:
 """
 
         Path(path).write_text(content, encoding="utf-8")
-        print(f"{Colors.CONFIG}[EnvironmentConfig] Created environment config: {path}{Colors.RESET}")
-        print(f"{Colors.CONFIG}[EnvironmentConfig] You can edit this file to customize environment settings{Colors.RESET}")
+        print(f"{Colors.CONFIG}{LOG_PREFIX} Created environment config: {path}{Colors.RESET}")
+        print(f"{Colors.CONFIG}{LOG_PREFIX} You can edit this file to customize environment settings{Colors.RESET}")
 
     except Exception as e:
-        print(f"{Colors.ERROR}[EnvironmentConfig] Failed to create environment config: {e}{Colors.RESET}")
+        print(f"{Colors.ERROR}{LOG_PREFIX} Failed to create environment config: {e}{Colors.RESET}")
 

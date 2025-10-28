@@ -1,8 +1,7 @@
 # zCLI/subsystems/zConfig/zConfig_modules/config_paths.py
 """Cross-platform configuration path resolution with platformdirs."""
 
-from typing import Any, Dict, List, Optional, Tuple
-from zCLI import platform, Path, Colors, platformdirs, load_dotenv
+from zCLI import platform, Path, Colors, platformdirs, load_dotenv, Any, Dict, List, Optional, Tuple
 
 class zConfigPaths:
     """Cross-platform path resolver for zolo-zcli configuration using native OS conventions."""
@@ -16,6 +15,7 @@ class zConfigPaths:
     ZCONFIG_FILENAME = "zConfig.yaml"
     ZMACHINE_FILENAME = "zMachine.yaml"  # System-level machine config
     ZMACHINE_USER_FILENAME = "zConfig.machine.yaml"  # User-level machine config
+    ZENVIRONMENT_FILENAME = "zConfig.environment.yaml"  # User-level environment config
     ZCONFIG_DEFAULTS_FILENAME = "zConfig.defaults.yaml"
 
     # Dotenv key aliases for zSpark configuration

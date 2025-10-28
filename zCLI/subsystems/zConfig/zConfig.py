@@ -1,8 +1,7 @@
 # zCLI/subsystems/zConfig/zConfig.py
 """Cross-platform configuration management with hierarchical loading and secret support."""
 
-from typing import Any, Dict, Optional, Union
-from zCLI import sys
+from zCLI import sys, Any, Dict, Optional, Union
 from zCLI.utils import print_ready_message, validate_zcli_instance
 from .zConfig_modules import (
     ConfigValidator,

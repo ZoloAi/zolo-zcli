@@ -1,8 +1,7 @@
 # zCLI/subsystems/zConfig/zConfig_modules/helpers/machine_detectors.py
 """Helper functions for detecting machine capabilities and tools."""
 
-from typing import Dict, Any, Optional
-from zCLI import os, platform, shutil, Colors, subprocess, importlib, socket, Path
+from zCLI import os, platform, shutil, Colors, subprocess, importlib, socket, Path, Dict, Any, Optional
 
 # ═══════════════════════════════════════════════════════════
 # Module-Level Constants

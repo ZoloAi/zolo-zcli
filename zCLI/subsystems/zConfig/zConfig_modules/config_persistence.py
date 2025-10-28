@@ -67,7 +67,7 @@ class ConfigPersistence:
         
         if success:
             # Show success message
-            user_config_path = self.paths.user_zconfigs_dir / "zConfig.machine.yaml"
+            user_config_path = self.paths.user_zconfigs_dir / self.paths.ZMACHINE_USER_FILENAME
             self._handle_success(
                 f"Updated machine config: {key}",
                 f"{current_value} → {value}",
@@ -131,7 +131,7 @@ class ConfigPersistence:
         
         if success:
             # Show success message
-            user_config_path = self.paths.user_zconfigs_dir / "zConfig.env.yaml"
+            user_config_path = self.paths.user_zconfigs_dir / self.paths.ZENVIRONMENT_FILENAME
             self._handle_success(
                 f"Updated environment config: {key}",
                 f"{current_value} → {value}",
@@ -161,7 +161,7 @@ class ConfigPersistence:
         # Get fresh auto-detected values
         auto_detected = auto_detect_machine()
         
-        user_config_path = self.paths.user_zconfigs_dir / "zConfig.machine.yaml"
+        user_config_path = self.paths.user_zconfigs_dir / self.paths.ZMACHINE_USER_FILENAME
         
         if key:
             # Reset specific key
@@ -221,7 +221,7 @@ class ConfigPersistence:
                 print(f"  {marker}{key}: {value}")
         
         # Show file location
-        user_config_path = self.paths.user_zconfigs_dir / "zConfig.machine.yaml"
+        user_config_path = self.paths.user_zconfigs_dir / self.paths.ZMACHINE_USER_FILENAME
         print(f"\n{Colors.CONFIG}Config file: {user_config_path}{Colors.RESET}")
         print(f"{Colors.CONFIG}{'='*70}{Colors.RESET}\n")
         
@@ -280,7 +280,7 @@ class ConfigPersistence:
             print(f"  [EDIT] {key}: {value}")
         
         # Show file location
-        user_config_path = self.paths.user_zconfigs_dir / "zConfig.env.yaml"
+        user_config_path = self.paths.user_zconfigs_dir / self.paths.ZENVIRONMENT_FILENAME
         print(f"\n{Colors.CONFIG}Config file: {user_config_path}{Colors.RESET}")
         print(f"{Colors.CONFIG}{'='*70}{Colors.RESET}\n")
         

@@ -1,10 +1,8 @@
 # zCLI/subsystems/zConfig/zConfig_modules/config_logger.py
 """Logger configuration and management as part of zConfig."""
 
-from typing import Any, Dict, Optional
-from zCLI import Colors, logging
+from zCLI import Colors, logging, os, Any, Dict, Optional
 from zCLI.utils import print_ready_message, validate_zcli_instance
-import os
 
 class FileNameFormatter(logging.Formatter):
     """Custom formatter that shows the actual file name instead of logger name."""

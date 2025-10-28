@@ -10,8 +10,7 @@ If anything is wrong, fails immediately with clear error messages.
 Week 1.1 - Layer 0: Foundation
 """
 
-from pathlib import Path
-from typing import Dict, List, Any, Optional
+from zCLI import Path, Dict, List, Any
 
 
 class ConfigValidationError(Exception):
