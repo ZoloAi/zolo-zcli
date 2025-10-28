@@ -1,0 +1,392 @@
+# zCLI/subsystems/zConfig/zConfig_modules/helpers/config_validator.py
+
+"""
+Configuration Validator - Fail Fast on Invalid Config
+======================================================
+
+Validates zSpark_obj configuration before initializing subsystems.
+If anything is wrong, fails immediately with clear error messages.
+
+Week 1.1 - Layer 0: Foundation
+Week 6.2.9 - Moved to helpers/ (utility helper, not state module)
+"""
+
+from zCLI import Path, Dict, List, Any
+
+# ═══════════════════════════════════════════════════════════════════
+# Module Constants - Week 6.2.9
+# ═══════════════════════════════════════════════════════════════════
+
+# Logging and Messages
+LOG_PREFIX = "[CONFIG VALIDATION]"
+
+# Valid Configuration Values
+VALID_MODES = ["Terminal", "zBifrost"]
+
+# Configuration Keys
+KEY_ZWORKSPACE = "zWorkspace"
+KEY_ZMODE = "zMode"
+KEY_WEBSOCKET = "websocket"
+KEY_HTTP_SERVER = "http_server"
+KEY_PLUGINS = "plugins"
+KEY_PORT = "port"
+KEY_HOST = "host"
+KEY_REQUIRE_AUTH = "require_auth"
+KEY_ALLOWED_ORIGINS = "allowed_origins"
+KEY_SERVE_PATH = "serve_path"
+KEY_ENABLED = "enabled"
+
+# Port Validation
+PORT_MIN = 1
+PORT_MAX = 65535
+
+# Error Message Templates
+ERROR_HEADER = "\n❌ Invalid zSpark configuration:\n\n"
+ERROR_FOOTER = "\n💡 Fix the above issues and try again.\n"
+ERROR_TYPE_MISMATCH = "{key}: Must be {expected_type}, got {actual_type}"
+ERROR_TYPE_MISMATCH_HINT = "{key}: Must be {expected_type}, got {actual_type} (hint: use {value} not '{value}')"
+ERROR_PATH_NOT_EXISTS = "{key}: Path '{path}' does not exist"
+ERROR_NOT_DIRECTORY = "{key}: '{path}' is not a directory"
+ERROR_INVALID_MODE = "zMode: Must be one of {valid_modes}, got '{mode}' (case-sensitive)"
+ERROR_PORT_RANGE = "{prefix}.port: Must be {min}-{max}, got {port}"
+ERROR_PORT_CONFLICT = "Port conflict: websocket and http_server both configured to use port {port}. They must use different ports."
+ERROR_LIST_ITEMS_TYPE = "{key}: All items must be {expected_type}"
+ERROR_INVALID_TYPE_OPTIONS = "{key}: Must be {option1} or {option2}, got {actual_type}"
+
+
+# ═══════════════════════════════════════════════════════════════════
+# Exception Class
+# ═══════════════════════════════════════════════════════════════════
+
+class ConfigValidationError(Exception):
+    """Raised when zSpark_obj configuration is invalid"""
+    pass
+
+
+# ═══════════════════════════════════════════════════════════════════
+# Validator Class
+# ═══════════════════════════════════════════════════════════════════
+
+class ConfigValidator:
+    """
+    Validates zSpark_obj configuration dictionary.
+    
+    Validates:
+    - zWorkspace: Path exists and is directory
+    - zMode: Must be "Terminal" or "zBifrost"
+    - websocket: Port, host, require_auth types
+    - http_server: Port, host, serve_path, enabled types
+    - Port conflicts: websocket and http_server can't use same port
+    
+    Usage:
+        validator = ConfigValidator(zspark_obj, logger)
+        validator.validate()  # Raises ConfigValidationError if invalid
+    """
+    
+    def __init__(self, zspark_obj: Dict[str, Any], logger=None):
+        """
+        Initialize validator.
+        
+        Args:
+            zspark_obj: Configuration dictionary to validate
+            logger: Optional logger instance (if None, validation happens before logger exists)
+        """
+        self.config = zspark_obj or {}
+        self.logger = logger
+        self.errors: List[str] = []
+    
+    def validate(self) -> None:
+        """
+        Run all validations.
+        
+        Raises:
+            ConfigValidationError: If any validation fails
+        """
+        # Run all validation checks
+        self._validate_workspace()
+        self._validate_mode()
+        self._validate_websocket()
+        self._validate_http_server()
+        self._validate_port_conflicts()
+        self._validate_plugins()
+        
+        # If any errors, raise with all messages
+        if self.errors:
+            error_msg = ERROR_HEADER
+            for i, error in enumerate(self.errors, 1):
+                error_msg += f"  {i}. {error}\n"
+            error_msg += ERROR_FOOTER
+            raise ConfigValidationError(error_msg)
+    
+    def _validate_workspace(self) -> None:
+        """Validate zWorkspace path"""
+        workspace = self.config.get(KEY_ZWORKSPACE)
+        
+        # Optional, but if provided must be valid
+        if workspace is None:
+            return
+        
+        # Must be string
+        if not isinstance(workspace, str):
+            self.errors.append(
+                ERROR_TYPE_MISMATCH.format(
+                    key=KEY_ZWORKSPACE,
+                    expected_type="string",
+                    actual_type=type(workspace).__name__
+                )
+            )
+            return
+        
+        # Path must exist
+        path = Path(workspace).expanduser()
+        if not path.exists():
+            self.errors.append(
+                ERROR_PATH_NOT_EXISTS.format(key=KEY_ZWORKSPACE, path=workspace)
+            )
+            return
+        
+        # Must be directory
+        if not path.is_dir():
+            self.errors.append(
+                ERROR_NOT_DIRECTORY.format(key=KEY_ZWORKSPACE, path=workspace)
+            )
+    
+    def _validate_mode(self) -> None:
+        """Validate zMode"""
+        mode = self.config.get(KEY_ZMODE)
+        
+        if mode is None:
+            return  # Optional, defaults to "Terminal"
+        
+        # Must be string
+        if not isinstance(mode, str):
+            self.errors.append(
+                ERROR_TYPE_MISMATCH.format(
+                    key=KEY_ZMODE,
+                    expected_type="string",
+                    actual_type=type(mode).__name__
+                )
+            )
+            return
+        
+        # Must be valid mode
+        if mode not in VALID_MODES:
+            self.errors.append(
+                ERROR_INVALID_MODE.format(valid_modes=VALID_MODES, mode=mode)
+            )
+    
+    def _validate_websocket(self) -> None:
+        """Validate websocket configuration"""
+        ws_config = self.config.get(KEY_WEBSOCKET)
+        
+        if ws_config is None:
+            return  # Optional
+        
+        # Must be dict
+        if not isinstance(ws_config, dict):
+            self.errors.append(
+                ERROR_TYPE_MISMATCH.format(
+                    key=KEY_WEBSOCKET,
+                    expected_type="dict",
+                    actual_type=type(ws_config).__name__
+                )
+            )
+            return
+        
+        # Validate port
+        self._validate_port(ws_config, KEY_WEBSOCKET)
+        
+        # Validate host
+        host = ws_config.get(KEY_HOST)
+        if host is not None and not isinstance(host, str):
+            self.errors.append(
+                ERROR_TYPE_MISMATCH.format(
+                    key=f"{KEY_WEBSOCKET}.{KEY_HOST}",
+                    expected_type="string",
+                    actual_type=type(host).__name__
+                )
+            )
+        
+        # Validate require_auth
+        auth = ws_config.get(KEY_REQUIRE_AUTH)
+        if auth is not None and not isinstance(auth, bool):
+            self.errors.append(
+                ERROR_TYPE_MISMATCH.format(
+                    key=f"{KEY_WEBSOCKET}.{KEY_REQUIRE_AUTH}",
+                    expected_type="boolean",
+                    actual_type=type(auth).__name__
+                )
+            )
+        
+        # Validate allowed_origins
+        origins = ws_config.get(KEY_ALLOWED_ORIGINS)
+        if origins is not None:
+            if not isinstance(origins, list):
+                self.errors.append(
+                    ERROR_TYPE_MISMATCH.format(
+                        key=f"{KEY_WEBSOCKET}.{KEY_ALLOWED_ORIGINS}",
+                        expected_type="list",
+                        actual_type=type(origins).__name__
+                    )
+                )
+            elif not all(isinstance(o, str) for o in origins):
+                self.errors.append(
+                    ERROR_LIST_ITEMS_TYPE.format(
+                        key=f"{KEY_WEBSOCKET}.{KEY_ALLOWED_ORIGINS}",
+                        expected_type="strings"
+                    )
+                )
+    
+    def _validate_http_server(self) -> None:
+        """Validate http_server configuration"""
+        http_config = self.config.get(KEY_HTTP_SERVER)
+        
+        if http_config is None:
+            return  # Optional
+        
+        # Must be dict
+        if not isinstance(http_config, dict):
+            self.errors.append(
+                ERROR_TYPE_MISMATCH.format(
+                    key=KEY_HTTP_SERVER,
+                    expected_type="dict",
+                    actual_type=type(http_config).__name__
+                )
+            )
+            return
+        
+        # Validate port
+        self._validate_port(http_config, KEY_HTTP_SERVER)
+        
+        # Validate host
+        host = http_config.get(KEY_HOST)
+        if host is not None and not isinstance(host, str):
+            self.errors.append(
+                ERROR_TYPE_MISMATCH.format(
+                    key=f"{KEY_HTTP_SERVER}.{KEY_HOST}",
+                    expected_type="string",
+                    actual_type=type(host).__name__
+                )
+            )
+        
+        # Validate serve_path
+        serve_path = http_config.get(KEY_SERVE_PATH)
+        if serve_path is not None:
+            if not isinstance(serve_path, str):
+                self.errors.append(
+                    ERROR_TYPE_MISMATCH.format(
+                        key=f"{KEY_HTTP_SERVER}.{KEY_SERVE_PATH}",
+                        expected_type="string",
+                        actual_type=type(serve_path).__name__
+                    )
+                )
+            else:
+                path = Path(serve_path).expanduser()
+                if not path.exists():
+                    self.errors.append(
+                        ERROR_PATH_NOT_EXISTS.format(
+                            key=f"{KEY_HTTP_SERVER}.{KEY_SERVE_PATH}",
+                            path=serve_path
+                        )
+                    )
+        
+        # Validate enabled
+        enabled = http_config.get(KEY_ENABLED)
+        if enabled is not None and not isinstance(enabled, bool):
+            self.errors.append(
+                ERROR_TYPE_MISMATCH.format(
+                    key=f"{KEY_HTTP_SERVER}.{KEY_ENABLED}",
+                    expected_type="boolean",
+                    actual_type=type(enabled).__name__
+                )
+            )
+    
+    def _validate_port(self, config: Dict[str, Any], prefix: str) -> None:
+        """
+        Validate port number in a config dict.
+        
+        Args:
+            config: Dict containing 'port' key
+            prefix: Config section name (e.g., "websocket", "http_server")
+        """
+        port = config.get(KEY_PORT)
+        
+        if port is None:
+            return  # Optional, has defaults
+        
+        # Must be integer
+        if not isinstance(port, int):
+            self.errors.append(
+                ERROR_TYPE_MISMATCH_HINT.format(
+                    key=f"{prefix}.{KEY_PORT}",
+                    expected_type="integer",
+                    actual_type=type(port).__name__,
+                    value=port
+                )
+            )
+            return
+        
+        # Must be in valid range
+        if not (PORT_MIN <= port <= PORT_MAX):
+            self.errors.append(
+                ERROR_PORT_RANGE.format(
+                    prefix=prefix,
+                    min=PORT_MIN,
+                    max=PORT_MAX,
+                    port=port
+                )
+            )
+    
+    def _validate_port_conflicts(self) -> None:
+        """Ensure websocket and http_server don't use same port"""
+        ws_config = self.config.get(KEY_WEBSOCKET, {})
+        http_config = self.config.get(KEY_HTTP_SERVER, {})
+        
+        # Skip if either is not a dict (already reported error)
+        if not isinstance(ws_config, dict) or not isinstance(http_config, dict):
+            return
+        
+        ws_port = ws_config.get(KEY_PORT)
+        http_port = http_config.get(KEY_PORT)
+        
+        # Skip if either is None or invalid type (already reported error)
+        if ws_port is None or http_port is None:
+            return
+        if not isinstance(ws_port, int) or not isinstance(http_port, int):
+            return
+        
+        # Check for conflict
+        if ws_port == http_port:
+            self.errors.append(
+                ERROR_PORT_CONFLICT.format(port=ws_port)
+            )
+    
+    def _validate_plugins(self) -> None:
+        """Validate plugins configuration"""
+        plugins = self.config.get(KEY_PLUGINS)
+        
+        if plugins is None:
+            return  # Optional
+        
+        # Can be string or list
+        if isinstance(plugins, str):
+            return  # Single plugin path is OK
+        
+        if isinstance(plugins, list):
+            # All items must be strings
+            if not all(isinstance(p, str) for p in plugins):
+                self.errors.append(
+                    ERROR_LIST_ITEMS_TYPE.format(
+                        key=KEY_PLUGINS,
+                        expected_type="strings (file paths or module names)"
+                    )
+                )
+        else:
+            self.errors.append(
+                ERROR_INVALID_TYPE_OPTIONS.format(
+                    key=KEY_PLUGINS,
+                    option1="string",
+                    option2="list",
+                    actual_type=type(plugins).__name__
+                )
+            )

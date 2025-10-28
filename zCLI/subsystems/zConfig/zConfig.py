@@ -11,14 +11,13 @@ from .zConfig_modules import (
     EnvironmentConfig,
     ConfigPersistence,
     SessionConfig,
+    SESSION_KEY_LOGGER_INSTANCE,
     LoggerConfig,
     WebSocketConfig,
-    HTTPServerConfig,
+    HttpServerConfig,
 )
 
-# Constants for session/logger access
-SESSION_LOGGER_KEY = "logger_instance"
-LOGGER_ATTRIBUTE = "_logger"
+# Module Constants
 SUBSYSTEM_NAME = "zConfig"
 READY_MESSAGE = "zConfig Ready"
 DEFAULT_COLOR = "CONFIG"
@@ -34,7 +33,7 @@ class zConfig:
     environment: EnvironmentConfig
     session: SessionConfig
     websocket: WebSocketConfig
-    http_server: HTTPServerConfig
+    http_server: HttpServerConfig
     _persistence: Optional[ConfigPersistence]
 
     def __init__(self, zcli: Any, zSpark_obj: Optional[Dict[str, Any]] = None) -> None:
@@ -90,10 +89,10 @@ class zConfig:
         zcli.session = session_data
 
         # Get logger from session (initialized during session creation)
-        session_logger = session_data[SESSION_LOGGER_KEY]
+        session_logger = session_data[SESSION_KEY_LOGGER_INSTANCE]
 
-        # Use the logger instance created during session initialization
-        zcli.logger = getattr(session_logger, LOGGER_ATTRIBUTE)
+        # Extract underlying Python logger from LoggerConfig wrapper
+        zcli.logger = session_logger.logger
 
         # Log initial message with configured level
         zcli.logger.info("Logger initialized at level: %s", session_logger.log_level)
@@ -103,11 +102,11 @@ class zConfig:
         from zCLI.utils.zTraceback import zTraceback
         zcli.zTraceback = zTraceback(logger=zcli.logger, zcli=zcli)
 
-        # Initialize WebSocket configuration (uses environment config and session)
-        self.websocket = WebSocketConfig(self.environment, zcli, session_data)
+        # Initialize WebSocket configuration (uses environment config)
+        self.websocket = WebSocketConfig(self.environment, zcli)
 
         # Initialize HTTP Server configuration (optional feature)
-        self.http_server = HTTPServerConfig(zSpark_obj or {}, zcli.logger)
+        self.http_server = HttpServerConfig(zSpark_obj or {}, zcli.logger)
 
         # Print styled ready message (before zDisplay is available)
         print_ready_message(READY_MESSAGE, color=DEFAULT_COLOR)
