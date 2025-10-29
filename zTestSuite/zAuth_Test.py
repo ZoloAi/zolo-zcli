@@ -31,13 +31,22 @@ class TestzAuthInitialization(unittest.TestCase):
         """Set up test fixtures."""
         # Create minimal zCLI mock with zDisplay
         self.mock_zcli = Mock()
+        # Updated for three-tier authentication structure
         self.mock_zcli.session = {
             "zMode": "Terminal",
             "zAuth": {
-                "id": None,
-                "username": None,
-                "role": None,
-                "API_Key": None
+                "zSession": {
+                    "authenticated": False,
+                    "id": None,
+                    "username": None,
+                    "role": None,
+                    "api_key": None,
+                    "session_id": None
+                },
+                "applications": {},
+                "active_app": None,
+                "active_context": None,
+                "dual_mode": False
             }
         }
         self.mock_zcli.logger = Mock()
@@ -70,14 +79,21 @@ class TestzAuthInitialization(unittest.TestCase):
         self.assertTrue(hasattr(zauth_events, 'status_display'))
     
     def test_zauth_session_structure(self):
-        """Test that session has proper zAuth structure."""
+        """Test that session has proper three-tier zAuth structure."""
         auth = zAuth(self.mock_zcli)
         
+        # Updated for three-tier authentication structure
         self.assertIn("zAuth", auth.session)
-        self.assertIn("id", auth.session["zAuth"])
-        self.assertIn("username", auth.session["zAuth"])
-        self.assertIn("role", auth.session["zAuth"])
-        self.assertIn("API_Key", auth.session["zAuth"])
+        self.assertIn("zSession", auth.session["zAuth"])
+        self.assertIn("applications", auth.session["zAuth"])
+        self.assertIn("active_app", auth.session["zAuth"])
+        self.assertIn("active_context", auth.session["zAuth"])
+        self.assertIn("dual_mode", auth.session["zAuth"])
+        # Check zSession structure
+        self.assertIn("id", auth.session["zAuth"]["zSession"])
+        self.assertIn("username", auth.session["zAuth"]["zSession"])
+        self.assertIn("role", auth.session["zAuth"]["zSession"])
+        self.assertIn("api_key", auth.session["zAuth"]["zSession"])
 
 
 class TestSessionOnlyAuthentication(unittest.TestCase):
@@ -86,13 +102,22 @@ class TestSessionOnlyAuthentication(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         self.mock_zcli = Mock()
+        # Updated for three-tier authentication structure
         self.mock_zcli.session = {
             "zMode": "Terminal",
             "zAuth": {
-                "id": None,
-                "username": None,
-                "role": None,
-                "API_Key": None
+                "zSession": {
+                    "authenticated": False,
+                    "id": None,
+                    "username": None,
+                    "role": None,
+                    "api_key": None,
+                    "session_id": None
+                },
+                "applications": {},
+                "active_app": None,
+                "active_context": None,
+                "dual_mode": False
             }
         }
         self.mock_zcli.logger = Mock()
@@ -105,11 +130,12 @@ class TestSessionOnlyAuthentication(unittest.TestCase):
         self.assertFalse(self.auth.is_authenticated())
     
     def test_is_authenticated_after_session_update(self):
-        """Test authentication status after session update."""
-        # Simulate successful login by updating session
-        self.mock_zcli.session["zAuth"].update({
+        """Test authentication status after session update (updated for three-tier structure)."""
+        # Simulate successful login by updating session in new nested structure
+        self.mock_zcli.session["zAuth"]["zSession"].update({
+            "authenticated": True,
             "username": "testuser",
-            "API_Key": "test_key_12345",
+            "api_key": "test_key_12345",
             "role": "user",
             "id": "zU_abc123"
         })
@@ -122,20 +148,21 @@ class TestSessionOnlyAuthentication(unittest.TestCase):
         self.assertIsNone(creds)
     
     def test_get_credentials_when_authenticated(self):
-        """Test getting credentials when authenticated."""
-        # Simulate successful login
+        """Test getting credentials when authenticated (updated for three-tier structure)."""
+        # Simulate successful login in new nested structure
         session_auth = {
+            "authenticated": True,
             "username": "testuser",
-            "API_Key": "test_key_12345",
+            "api_key": "test_key_12345",
             "role": "admin",
             "id": "zU_abc123"
         }
-        self.mock_zcli.session["zAuth"].update(session_auth)
+        self.mock_zcli.session["zAuth"]["zSession"].update(session_auth)
         
         creds = self.auth.get_credentials()
         self.assertIsNotNone(creds)
         self.assertEqual(creds["username"], "testuser")
-        self.assertEqual(creds["API_Key"], "test_key_12345")
+        self.assertEqual(creds["api_key"], "test_key_12345")
         self.assertEqual(creds["role"], "admin")
 
 
@@ -145,13 +172,22 @@ class TestLogoutWorkflow(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         self.mock_zcli = Mock()
+        # Updated for three-tier authentication structure
         self.mock_zcli.session = {
             "zMode": "Terminal",
             "zAuth": {
-                "id": None,
-                "username": None,
-                "role": None,
-                "API_Key": None
+                "zSession": {
+                    "authenticated": False,
+                    "id": None,
+                    "username": None,
+                    "role": None,
+                    "api_key": None,
+                    "session_id": None
+                },
+                "applications": {},
+                "active_app": None,
+                "active_context": None,
+                "dual_mode": False
             }
         }
         self.mock_zcli.logger = Mock()
@@ -164,14 +200,16 @@ class TestLogoutWorkflow(unittest.TestCase):
         result = self.auth.logout()
         
         self.assertEqual(result["status"], "success")
-        self.assertIsNone(self.mock_zcli.session["zAuth"]["username"])
+        # Updated for three-tier authentication structure
+        self.assertFalse(self.mock_zcli.session["zAuth"]["zSession"]["authenticated"])
     
     def test_logout_when_logged_in(self):
-        """Test logout when logged in."""
-        # Simulate logged in state
-        self.mock_zcli.session["zAuth"].update({
+        """Test logout when logged in (updated for three-tier structure)."""
+        # Simulate logged in state in new nested structure
+        self.mock_zcli.session["zAuth"]["zSession"].update({
+            "authenticated": True,
             "username": "testuser",
-            "API_Key": "test_key_12345",
+            "api_key": "test_key_12345",
             "role": "user",
             "id": "zU_abc123"
         })
@@ -179,8 +217,9 @@ class TestLogoutWorkflow(unittest.TestCase):
         result = self.auth.logout()
         
         self.assertEqual(result["status"], "success")
-        self.assertIsNone(self.mock_zcli.session["zAuth"]["username"])
-        self.assertIsNone(self.mock_zcli.session["zAuth"]["API_Key"])
+        # Updated for three-tier authentication structure
+        self.assertFalse(self.mock_zcli.session["zAuth"]["zSession"]["authenticated"])
+        self.assertIsNone(self.mock_zcli.session["zAuth"]["zSession"].get("api_key"))
 
 
 class TestStatusDisplay(unittest.TestCase):
@@ -189,13 +228,22 @@ class TestStatusDisplay(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         self.mock_zcli = Mock()
+        # Updated for three-tier authentication structure
         self.mock_zcli.session = {
             "zMode": "Terminal",
             "zAuth": {
-                "id": None,
-                "username": None,
-                "role": None,
-                "API_Key": None
+                "zSession": {
+                    "authenticated": False,
+                    "id": None,
+                    "username": None,
+                    "role": None,
+                    "api_key": None,
+                    "session_id": None
+                },
+                "applications": {},
+                "active_app": None,
+                "active_context": None,
+                "dual_mode": False
             }
         }
         self.mock_zcli.logger = Mock()
@@ -210,15 +258,16 @@ class TestStatusDisplay(unittest.TestCase):
         self.assertEqual(result["status"], "not_authenticated")
     
     def test_status_authenticated(self):
-        """Test status when authenticated."""
-        # Simulate logged in state
+        """Test status when authenticated (updated for three-tier structure)."""
+        # Simulate logged in state in new nested structure
         session_auth = {
+            "authenticated": True,
             "username": "testuser",
-            "API_Key": "test_key_12345",
+            "api_key": "test_key_12345",
             "role": "admin",
             "id": "zU_abc123"
         }
-        self.mock_zcli.session["zAuth"].update(session_auth)
+        self.mock_zcli.session["zAuth"]["zSession"].update(session_auth)
         
         result = self.auth.status()
         
@@ -234,13 +283,22 @@ class TestRemoteAuthentication(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         self.mock_zcli = Mock()
+        # Updated for three-tier authentication structure
         self.mock_zcli.session = {
             "zMode": "Terminal",
             "zAuth": {
-                "id": None,
-                "username": None,
-                "role": None,
-                "API_Key": None
+                "zSession": {
+                    "authenticated": False,
+                    "id": None,
+                    "username": None,
+                    "role": None,
+                    "api_key": None,
+                    "session_id": None
+                },
+                "applications": {},
+                "active_app": None,
+                "active_context": None,
+                "dual_mode": False
             }
         }
         self.mock_zcli.logger = Mock()
@@ -274,8 +332,9 @@ class TestRemoteAuthentication(unittest.TestCase):
         result = self.auth.login("testuser", "password")
         
         self.assertEqual(result["status"], "success")
-        self.assertEqual(self.mock_zcli.session["zAuth"]["username"], "testuser")
-        self.assertEqual(self.mock_zcli.session["zAuth"]["API_Key"], "test_key_12345")
+        # Updated for three-tier authentication structure
+        self.assertEqual(self.mock_zcli.session["zAuth"]["zSession"]["username"], "testuser")
+        self.assertEqual(self.mock_zcli.session["zAuth"]["zSession"]["api_key"], "test_key_12345")
     
     @patch.dict(os.environ, {"ZOLO_USE_REMOTE_API": "true"})
     @patch('zCLI.subsystems.zAuth.zAuth_modules.authentication.Authentication.authenticate_remote')
@@ -290,7 +349,8 @@ class TestRemoteAuthentication(unittest.TestCase):
         result = self.auth.login("testuser", "wrongpassword")
         
         self.assertEqual(result["status"], "fail")
-        self.assertIsNone(self.mock_zcli.session["zAuth"]["username"])
+        # Updated for three-tier authentication structure
+        self.assertFalse(self.mock_zcli.session["zAuth"]["zSession"].get("authenticated", False))
 
 
 class TestDualModeEvents(unittest.TestCase):
@@ -299,13 +359,22 @@ class TestDualModeEvents(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         self.mock_zcli = Mock()
+        # Updated for three-tier authentication structure
         self.mock_zcli.session = {
             "zMode": "Terminal",
             "zAuth": {
-                "id": None,
-                "username": None,
-                "role": None,
-                "API_Key": None
+                "zSession": {
+                    "authenticated": False,
+                    "id": None,
+                    "username": None,
+                    "role": None,
+                    "api_key": None,
+                    "session_id": None
+                },
+                "applications": {},
+                "active_app": None,
+                "active_context": None,
+                "dual_mode": False
             }
         }
         self.mock_zcli.logger = Mock()
@@ -493,13 +562,22 @@ class TestPersistentSessions(unittest.TestCase):
         
         # Create minimal zCLI mock with zData
         self.mock_zcli = Mock()
+        # Updated for three-tier authentication structure
         self.mock_zcli.session = {
             "zMode": "Terminal",
             "zAuth": {
-                "id": None,
-                "username": None,
-                "role": None,
-                "API_Key": None
+                "zSession": {
+                    "authenticated": False,
+                    "id": None,
+                    "username": None,
+                    "role": None,
+                    "api_key": None,
+                    "session_id": None
+                },
+                "applications": {},
+                "active_app": None,
+                "active_context": None,
+                "dual_mode": False
             }
         }
         self.mock_zcli.logger = Mock()
@@ -650,11 +728,11 @@ class TestPersistentSessions(unittest.TestCase):
         # Load session via modular interface
         auth.session_persistence.load_session()
         
-        # Verify session was restored
-        self.assertEqual(self.mock_zcli.session["zAuth"]["id"], "456")
-        self.assertEqual(self.mock_zcli.session["zAuth"]["username"], "restored_user")
-        self.assertEqual(self.mock_zcli.session["zAuth"]["API_Key"], "test_token_abc")
-        self.assertEqual(self.mock_zcli.session["zAuth"]["session_id"], "test_session_123")
+        # Verify session was restored (updated for three-tier authentication structure)
+        self.assertEqual(self.mock_zcli.session["zAuth"]["zSession"]["id"], "456")
+        self.assertEqual(self.mock_zcli.session["zAuth"]["zSession"]["username"], "restored_user")
+        self.assertEqual(self.mock_zcli.session["zAuth"]["zSession"]["api_key"], "test_token_abc")
+        self.assertEqual(self.mock_zcli.session["zAuth"]["zSession"]["session_id"], "test_session_123")
         
         # Verify last_accessed was updated
         self.mock_zcli.data.update.assert_called_once()
@@ -676,8 +754,8 @@ class TestPersistentSessions(unittest.TestCase):
         # Load session
         auth.session_persistence.load_session()
         
-        # Verify session was NOT restored
-        self.assertIsNone(self.mock_zcli.session["zAuth"]["username"])
+        # Verify session was NOT restored (updated for three-tier authentication structure)
+        self.assertFalse(self.mock_zcli.session["zAuth"]["zSession"].get("authenticated", False))
         self.mock_zcli.data.update.assert_not_called()
     
     def test_cleanup_expired_removes_old_sessions(self):
@@ -699,9 +777,10 @@ class TestPersistentSessions(unittest.TestCase):
         """Should delete persistent session on logout"""
         auth = zAuth(self.mock_zcli)
         
-        # Simulate logged-in user
-        self.mock_zcli.session["zAuth"]["username"] = "testuser"
-        self.mock_zcli.session["zAuth"]["API_Key"] = "test_key"
+        # Simulate logged-in user (updated for three-tier authentication structure)
+        self.mock_zcli.session["zAuth"]["zSession"]["username"] = "testuser"
+        self.mock_zcli.session["zAuth"]["zSession"]["api_key"] = "test_key"
+        self.mock_zcli.session["zAuth"]["zSession"]["authenticated"] = True
         
         self.mock_zcli.data.delete = Mock()
         
@@ -714,10 +793,10 @@ class TestPersistentSessions(unittest.TestCase):
         self.assertEqual(delete_args[1]["table"], "sessions")
         self.assertIn("testuser", delete_args[1]["where"])
         
-        # Verify in-memory session was cleared
-        self.assertIsNone(self.mock_zcli.session["zAuth"]["username"])
-        self.assertIsNone(self.mock_zcli.session["zAuth"]["API_Key"])
-        self.assertIsNone(self.mock_zcli.session["zAuth"]["session_id"])
+        # Verify in-memory session was cleared (updated for three-tier authentication structure)
+        self.assertFalse(self.mock_zcli.session["zAuth"]["zSession"]["authenticated"])
+        self.assertIsNone(self.mock_zcli.session["zAuth"]["zSession"].get("api_key"))
+        self.assertIsNone(self.mock_zcli.session["zAuth"]["zSession"].get("session_id"))
     
     def test_login_with_persist_saves_session(self):
         """Should save session when persist=True"""

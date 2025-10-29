@@ -16,12 +16,16 @@ Architecture:
     Event handlers are organized by domain responsibility, allowing the message
     handler to route incoming messages to the appropriate specialist. This design
     promotes maintainability and testability of the WebSocket bridge logic.
+
+Naming Convention:
+    All event handler files use the bridge_event_ prefix to distinguish them from
+    other event handlers (e.g., display_event_) in the zCLI ecosystem.
 """
 
-from .event_client import ClientEvents
-from .event_cache import CacheEvents
-from .event_discovery import DiscoveryEvents
-from .event_dispatch import DispatchEvents
+from .bridge_event_client import ClientEvents
+from .bridge_event_cache import CacheEvents
+from .bridge_event_discovery import DiscoveryEvents
+from .bridge_event_dispatch import DispatchEvents
 
 __all__ = [
     'ClientEvents',

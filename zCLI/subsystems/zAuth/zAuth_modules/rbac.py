@@ -62,8 +62,8 @@ class RBAC:
             self.logger.debug("[RBAC] User not authenticated, role check failed")
             return False
         
-        # Get user's current role from session
-        user_role = self.session.get("zAuth", {}).get("role")
+        # Get user's current role from session (three-tier structure)
+        user_role = self.session.get("zAuth", {}).get("zSession", {}).get("role")
         
         if not user_role:
             self.logger.debug("[RBAC] User has no role assigned")
@@ -107,8 +107,8 @@ class RBAC:
             self.logger.debug("[RBAC] User not authenticated, permission check failed")
             return False
         
-        # Get user ID from session
-        user_id = self.session.get("zAuth", {}).get("id")
+        # Get user ID from session (three-tier structure)
+        user_id = self.session.get("zAuth", {}).get("zSession", {}).get("id")
         if not user_id:
             self.logger.debug("[RBAC] No user_id in session")
             return False
@@ -180,9 +180,9 @@ class RBAC:
                 self.logger.info(f"[RBAC] Permission '{permission}' already granted to user '{user_id}'")
                 return True
             
-            # Get current admin's username if not provided
+            # Get current admin's username if not provided (three-tier structure)
             if not granted_by:
-                granted_by = self.session.get("zAuth", {}).get("username", "system")
+                granted_by = self.session.get("zAuth", {}).get("zSession", {}).get("username", "system")
             
             # Insert new permission
             self.zcli.data.insert(
@@ -310,7 +310,7 @@ class RBAC:
         Returns:
             bool: True if authenticated, False otherwise
         """
+        # Updated for three-tier authentication structure
         return (self.session and 
-                self.session.get("zAuth", {}).get("username") is not None and
-                self.session.get("zAuth", {}).get("API_Key") is not None)
+                self.session.get("zAuth", {}).get("zSession", {}).get("authenticated", False))
 

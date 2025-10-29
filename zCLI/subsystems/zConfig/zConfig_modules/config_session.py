@@ -1,5 +1,57 @@
 # zCLI/subsystems/zConfig/zConfig_modules/config_session.py
-"""Session configuration and management as part of zConfig."""
+"""
+Session Configuration and Management for zCLI.
+
+Manages runtime session creation with three-tier authentication architecture:
+
+1. zSession Auth (Layer 1): Internal zCLI/Zolo users
+   - session["zAuth"]["zSession"] contains zCLI user credentials
+   - Used for zCLI features, premium plugins, Zolo cloud services
+   - Authenticated via zcli.auth.login()
+
+2. Application Auth (Layer 2): External application users
+   - session["zAuth"]["applications"] is a dict of app-specific credentials
+   - Multiple apps can be authenticated simultaneously (multi-app support!)
+   - Used for applications BUILT on zCLI (e.g., eCommerce stores, SaaS apps)
+   - Authenticated via zcli.auth.authenticate_app_user(app_name, token, config)
+   - Configurable user model (developer defines schema)
+   - session["zAuth"]["active_app"] tracks which app is currently focused
+
+3. Dual-Auth (Layer 3): Both contexts active simultaneously
+   - session["zAuth"]["active_context"] = "dual"
+   - session["zAuth"]["dual_mode"] = True
+   - Example: Store owner using zCLI analytics on their store
+
+Session Structure:
+    session["zAuth"] = {
+        "zSession": {
+            "authenticated": False,
+            "id": None,
+            "username": None,
+            "role": None,
+            "api_key": None
+        },
+        "applications": {  # Multi-app support: dict of app authentications
+            "ecommerce_store": {
+                "authenticated": True,
+                "id": 456,
+                "username": "customer_bob",
+                "role": "customer",
+                "api_key": "store_token_xyz"
+            },
+            "analytics_dashboard": {
+                "authenticated": True,
+                "id": 789,
+                "username": "analyst_alice",
+                "role": "analyst",
+                "api_key": "analytics_token_abc"
+            }
+        },
+        "active_app": None,  # Which app is currently focused?
+        "active_context": None,  # "zSession", "application", or "dual"
+        "dual_mode": False
+    }
+"""
 
 from zCLI import secrets, Any, Dict, Optional
 from zCLI.utils import print_ready_message, validate_zcli_instance
@@ -67,11 +119,25 @@ ZSPARK_KEY_ZTRACEBACK = "zTraceback"
 ZSPARK_KEY_ZMODE = "zMode"
 ZSPARK_KEY_LOGGER = "logger"
 
-# zAuth nested keys
+# zAuth nested keys (Three-Tier Architecture)
+# Top-level context keys
+ZAUTH_KEY_ZSESSION = "zSession"
+ZAUTH_KEY_APPLICATIONS = "applications"  # Plural for multi-app support!
+ZAUTH_KEY_ACTIVE_APP = "active_app"      # Tracks which app is focused
+ZAUTH_KEY_ACTIVE_CONTEXT = "active_context"
+ZAUTH_KEY_DUAL_MODE = "dual_mode"
+
+# User info keys (used in both zSession and application contexts)
+ZAUTH_KEY_AUTHENTICATED = "authenticated"
 ZAUTH_KEY_ID = "id"
 ZAUTH_KEY_USERNAME = "username"
 ZAUTH_KEY_ROLE = "role"
-ZAUTH_KEY_API_KEY = "API_Key"
+ZAUTH_KEY_API_KEY = "api_key"  # Changed from "API_Key" for consistency
+
+# Context values
+CONTEXT_ZSESSION = "zSession"
+CONTEXT_APPLICATION = "application"
+CONTEXT_DUAL = "dual"
 
 # zCache nested keys
 ZCACHE_KEY_SYSTEM = "system_cache"
@@ -193,10 +259,18 @@ class SessionConfig:
             SESSION_KEY_ZTRACEBACK: zTraceback,
             SESSION_KEY_ZMACHINE: machine_config,
             SESSION_KEY_ZAUTH: {
-                ZAUTH_KEY_ID: None,
-                ZAUTH_KEY_USERNAME: None,
-                ZAUTH_KEY_ROLE: None,
-                ZAUTH_KEY_API_KEY: None
+                # Three-tier authentication structure with multi-app support
+                ZAUTH_KEY_ZSESSION: {
+                    ZAUTH_KEY_AUTHENTICATED: False,
+                    ZAUTH_KEY_ID: None,
+                    ZAUTH_KEY_USERNAME: None,
+                    ZAUTH_KEY_ROLE: None,
+                    ZAUTH_KEY_API_KEY: None
+                },
+                ZAUTH_KEY_APPLICATIONS: {},  # Dict of app authentications (multi-app support!)
+                ZAUTH_KEY_ACTIVE_APP: None,  # Which app is currently focused?
+                ZAUTH_KEY_ACTIVE_CONTEXT: None,  # "zSession", "application", or "dual"
+                ZAUTH_KEY_DUAL_MODE: False
             },
             SESSION_KEY_ZCRUMBS: {},
             SESSION_KEY_ZCACHE: {

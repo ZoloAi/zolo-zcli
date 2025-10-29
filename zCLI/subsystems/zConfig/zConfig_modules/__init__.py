@@ -34,11 +34,21 @@ from .config_session import (
     # zMode values
     ZMODE_TERMINAL,
     ZMODE_ZBIFROST,
-    # Nested dict keys
+    # zAuth nested keys (three-tier architecture with multi-app support)
+    ZAUTH_KEY_ZSESSION,
+    ZAUTH_KEY_APPLICATIONS,  # Plural for multi-app support
+    ZAUTH_KEY_ACTIVE_APP,    # Tracks focused app
+    ZAUTH_KEY_ACTIVE_CONTEXT,
+    ZAUTH_KEY_DUAL_MODE,
+    ZAUTH_KEY_AUTHENTICATED,
     ZAUTH_KEY_ID,
     ZAUTH_KEY_USERNAME,
     ZAUTH_KEY_ROLE,
     ZAUTH_KEY_API_KEY,
+    CONTEXT_ZSESSION,
+    CONTEXT_APPLICATION,
+    CONTEXT_DUAL,
+    # zCache nested keys
     ZCACHE_KEY_SYSTEM,
     ZCACHE_KEY_PINNED,
     ZCACHE_KEY_SCHEMA,
@@ -81,10 +91,21 @@ __all__ = [
     "SESSION_KEY_LOGGER_INSTANCE",
     "ZMODE_TERMINAL",
     "ZMODE_ZBIFROST",
+    # zAuth constants (three-tier architecture with multi-app support)
+    "ZAUTH_KEY_ZSESSION",
+    "ZAUTH_KEY_APPLICATIONS",  # Plural for multi-app support
+    "ZAUTH_KEY_ACTIVE_APP",    # Tracks focused app
+    "ZAUTH_KEY_ACTIVE_CONTEXT",
+    "ZAUTH_KEY_DUAL_MODE",
+    "ZAUTH_KEY_AUTHENTICATED",
     "ZAUTH_KEY_ID",
     "ZAUTH_KEY_USERNAME",
     "ZAUTH_KEY_ROLE",
     "ZAUTH_KEY_API_KEY",
+    "CONTEXT_ZSESSION",
+    "CONTEXT_APPLICATION",
+    "CONTEXT_DUAL",
+    # zCache constants
     "ZCACHE_KEY_SYSTEM",
     "ZCACHE_KEY_PINNED",
     "ZCACHE_KEY_SCHEMA",

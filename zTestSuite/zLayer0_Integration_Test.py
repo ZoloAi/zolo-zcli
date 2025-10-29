@@ -20,7 +20,7 @@ import socket
 import json
 import os
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, AsyncMock, patch
 import sys
 
 # Add parent directory to path to import zCLI
@@ -296,32 +296,37 @@ class TestAuthenticationRealFlows(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(token)
     
     async def test_real_authentication_flow_with_token(self):
-        """Should perform real authentication flow with token validation"""
+        """Should perform real authentication flow with token validation (Layer 2: Application auth)"""
         self.auth.require_auth = True
         
         ws = Mock()
-        ws.path = "/?token=valid_test_token_123"
+        ws.path = "/?token=valid_test_token_123&app_name=test_app"
         ws.request_headers = {}
+        
+        # Mock walker with zAuth.authenticate_app_user
         walker = Mock()
-        
-        # Mock only the final validation step (zAuth integration)
-        # Everything else runs real code
-        async def mock_validate_token(ws, token, walker):
-            # Real validation logic would check against zAuth
-            if token == "valid_test_token_123":
-                return {"user": "testuser", "role": "admin"}
-            return None
-        
-        self.auth._validate_token = mock_validate_token
+        walker.zcli = Mock()
+        walker.zcli.session = {"zAuth": {"zSession": {"authenticated": False}}}
+        walker.zcli.auth = Mock()
+        walker.zcli.auth.authenticate_app_user = Mock(return_value={
+            "status": "success",
+            "app_name": "test_app",
+            "user": {
+                "authenticated": True,
+                "username": "testuser",
+                "role": "admin",
+                "id": "123",
+                "api_key": "valid_test_token_123"
+            }
+        })
         
         # Run real authentication flow
         result = await self.auth.authenticate_client(ws, walker)
         
-        # Verify real authentication succeeded
+        # Verify real authentication succeeded with new three-tier structure
         self.assertIsNotNone(result)
-        self.assertEqual(result["user"], "testuser")
-        # Note: authenticated_clients is keyed by ws object
-        # The mock validation returns user info, which indicates success
+        self.assertEqual(result["context"], "application")
+        self.assertEqual(result["application"]["username"], "testuser")
     
     async def test_real_authentication_failure_flow(self):
         """Should handle real authentication failure gracefully"""
@@ -329,20 +334,28 @@ class TestAuthenticationRealFlows(unittest.IsolatedAsyncioTestCase):
         
         ws = Mock()
         ws.path = "/?token=invalid_token"
-        ws.request_headers = {}
-        ws.close = Mock()
+        ws.request_headers = None  # Will trigger fallback
+        ws.close = AsyncMock()  # Must be AsyncMock for await
+        # Create a simple object with headers attribute that's a real dict
+        request_obj = type('Request', (), {'headers': {}})()
+        ws.request = request_obj
+        
+        # Mock walker with failing authentication
         walker = Mock()
-        
-        async def mock_validate_token(ws, token, walker):
-            return None  # Invalid token
-        
-        self.auth._validate_token = mock_validate_token
+        walker.zcli = Mock()
+        walker.zcli.session = {"zAuth": {"zSession": {"authenticated": False}}}
+        walker.zcli.auth = Mock()
+        walker.zcli.auth.authenticate_app_user = Mock(return_value={
+            "status": "fail",
+            "reason": "Invalid token"
+        })
         
         # Run real authentication flow (should fail)
         result = await self.auth.authenticate_client(ws, walker)
         
         # Verify real failure handling
         self.assertIsNone(result)
+        ws.close.assert_called_once()
         self.assertNotIn(ws, self.auth.authenticated_clients)
 
 

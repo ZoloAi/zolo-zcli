@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>zCLI v1.5.4+ Improvement Roadmap - Index</title>
+    <link rel="stylesheet" href="plan_styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 zCLI v1.5.4+ Improvement Roadmap</h1>
+            <p>Bottom-Up Refactoring Strategy - Layer 0 Foundation</p>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number">3/8</div>
+                <div class="stat-label">Weeks Complete</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">39</div>
+                <div class="stat-label">Files Refactored</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">✅</div>
+                <div class="stat-label">Core + Config + Comm</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">1136/1136</div>
+                <div class="stat-label">Tests Passing</div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-icon">📋</span>
+                    <h2 class="section-title">Quick Navigation</h2>
+                </div>
+
+                <div class="nav-section">
+                    <h3>✅ Completed Weeks</h3>
+                    <div class="nav-links">
+                        <a href="plan_week_6.1_core_utils.html" class="nav-link completed">
+                            <strong>Week 6.1: Core Utils ✅</strong>
+                            <div>Colors, validation, exceptions, traceback, auto-registration</div>
+                            <div style="margin-top: 8px; font-size: 0.85em; color: #718096;">
+                                5 files refactored | Exception auto-registration
+                            </div>
+                        </a>
+
+                        <a href="plan_week_6.2_zconfig.html" class="nav-link completed">
+                            <strong>Week 6.2: zConfig ✅</strong>
+                            <div>Session dict modernization, type hints, constants, industry-grade quality</div>
+                            <div style="margin-top: 8px; font-size: 0.85em; color: #718096;">
+                                12 files refactored | All tests passing
+                            </div>
+                        </a>
+
+                        <a href="plan_week_6.3_zcomm.html" class="nav-link completed">
+                            <strong>Week 6.3: zComm ✅</strong>
+                            <div>Communication & service management, zBifrost, three-tier auth</div>
+                            <div style="margin-top: 8px; font-size: 0.85em; color: #718096;">
+                                22 files refactored | All tests passing
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="nav-section" style="margin-top: 20px;">
+                    <h3>🔄 In Progress / Upcoming Weeks</h3>
+                    <div class="nav-links">
+                        <a href="plan_week_6.4_zdisplay.html" class="nav-link">
+                            <strong>Week 6.4: zDisplay</strong>
+                            <div>UI elements, input collection, multi-mode output</div>
+                            <div style="margin-top: 8px; font-size: 0.85em; color: #718096;">
+                                Status: Pending | 14 files
+                            </div>
+                        </a>
+
+                        <a href="plan_week_6.5_parser_loader_dialog.html" class="nav-link">
+                            <strong>Week 6.5: zParser, zLoader, zDialog</strong>
+                            <div>Pipeline subsystems, YAML parsing, data loading</div>
+                            <div style="margin-top: 8px; font-size: 0.85em; color: #718096;">
+                                Status: Pending
+                            </div>
+                        </a>
+
+                        <a href="plan_week_6.6_zdata_zshell.html" class="nav-link">
+                            <strong>Week 6.6: zData + zShell</strong>
+                            <div>Business logic layer, data management, shell integration</div>
+                            <div style="margin-top: 8px; font-size: 0.85em; color: #718096;">
+                                Status: Pending
+                            </div>
+                        </a>
+
+                        <a href="plan_week_6.7_zwizard_zwalker_zcli.html" class="nav-link">
+                            <strong>Week 6.7: zWizard, zWalker, zCLI</strong>
+                            <div>Top-level subsystems, documentation updates</div>
+                            <div style="margin-top: 8px; font-size: 0.85em; color: #718096;">
+                                Status: Pending
+                            </div>
+                        </a>
+
+                        <a href="plan_week_6.8_session_migration.html" class="nav-link">
+                            <strong>Week 6.8: Session Migration Verification</strong>
+                            <div>Backward compatibility removal, final cleanup</div>
+                            <div style="margin-top: 8px; font-size: 0.85em; color: #718096;">
+                                Status: Pending
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="nav-section" style="margin-top: 20px;">
+                    <h3>📦 Deferred & Future Features</h3>
+                    <div class="nav-links">
+                        <a href="plan_deferred_features.html" class="nav-link">
+                            <strong>Deferred Features & Enhancements</strong>
+                            <div>Redis/MongoDB services, JavaScript refactor, OAuth, future improvements</div>
+                            <div style="margin-top: 8px; font-size: 0.85em; color: #718096;">
+                                Low priority items for future versions
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-icon">🎯</span>
+                    <h2 class="section-title">Bottom-Up Refactoring Strategy</h2>
+                </div>
+
+                <div class="note">
+                    <strong>Why Bottom-Up?</strong>
+                    <p>We're refactoring from Layer 0 (foundation) upward to ensure stability at each level before building on top. This approach minimizes breaking changes and allows thorough testing at each layer.</p>
+                </div>
+
+                <div class="subsystem-card">
+                    <div class="subsystem-header">
+                        <div class="subsystem-name">Layer 0: Core Utils, Configuration & Communication</div>
+                        <div class="subsystem-rating" style="background: #48bb78;">✅ COMPLETE</div>
+                    </div>
+                    <div>
+                        <strong>Completed:</strong>
+                        <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                            <li>Core Utils: Exception auto-registration, thread-local context (Week 6.1)</li>
+                            <li>zConfig: Session dict modernization, type hints, constants (Week 6.2)</li>
+                            <li>zComm: Communication infrastructure, zBifrost, three-tier auth (Week 6.3)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="subsystem-card">
+                    <div class="subsystem-header">
+                        <div class="subsystem-name">Layer 1: Display & Authentication</div>
+                        <div class="subsystem-rating" style="background: #cbd5e0; color: #2d3748;">PENDING</div>
+                    </div>
+                    <div>
+                        <strong>Next Up:</strong>
+                        <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                            <li>zDisplay: UI rendering, widgets, themes, multi-mode output (Week 6.4)</li>
+                            <li>zAuth: RBAC, three-tier authentication (separate week TBD)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="subsystem-card">
+                    <div class="subsystem-header">
+                        <div class="subsystem-name">Layer 2: Pipeline & Business Logic</div>
+                        <div class="subsystem-rating" style="background: #cbd5e0; color: #2d3748;">PENDING</div>
+                    </div>
+                    <div>
+                        <strong>Planned:</strong>
+                        <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                            <li>zParser, zLoader, zDialog: Pipeline subsystems (Week 6.5)</li>
+                            <li>zData, zShell: Data management, shell integration (Week 6.6)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="subsystem-card">
+                    <div class="subsystem-header">
+                        <div class="subsystem-name">Layer 3: Top-Level & Integration</div>
+                        <div class="subsystem-rating" style="background: #cbd5e0; color: #2d3748;">PENDING</div>
+                    </div>
+                    <div>
+                        <strong>Final Phase:</strong>
+                        <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                            <li>zWizard, zWalker, zCLI: Top-level coordination (Week 6.7)</li>
+                            <li>Documentation: Complete usage guides (Week 6.7)</li>
+                            <li>Session Migration: Verification & cleanup (Week 6.8)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-icon">📊</span>
+                    <h2 class="section-title">Overall Progress</h2>
+                </div>
+
+                <div style="background: #edf2f7; padding: 20px; border-radius: 8px;">
+                    <h3 style="margin-bottom: 15px;">Completion Status</h3>
+                    <div style="margin-bottom: 15px;">
+                        <div style="background: #cbd5e0; height: 30px; border-radius: 15px; overflow: hidden;">
+                            <div style="background: linear-gradient(90deg, #48bb78 0%, #38a169 100%); width: 37.5%; height: 100%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+                                37.5%
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 0.95em;">
+                        <div>
+                            <strong>✅ Complete:</strong> 3 weeks (Core, zConfig, zComm)
+                        </div>
+                        <div>
+                            <strong>🔄 Remaining:</strong> 5 weeks + verification
+                        </div>
+                        <div>
+                            <strong>📁 Files Refactored:</strong> 39/~60 (est.)
+                        </div>
+                        <div>
+                            <strong>🧪 Tests:</strong> 1136/1136 passing
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>zCLI v1.5.4+ Improvement Roadmap | Bottom-Up Refactoring Strategy</p>
+            <p style="margin-top: 10px; font-size: 0.85em;">Last Updated: Current Session | Industry-Grade Quality Initiative</p>
+        </div>
+    </div>
+</body>
+</html>
+

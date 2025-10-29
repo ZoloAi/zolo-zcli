@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 6.4: zDisplay Subsystem - zCLI v1.5.4+</title>
+    <link rel="stylesheet" href="plan_styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Week 6.4: zDisplay Subsystem</h1>
+            <p>UI Elements, Input Collection, Multi-Mode Output</p>
+        </div>
+
+        <div class="breadcrumb">
+            <a href="v1.5.4_plan_index.html">← Back to Roadmap</a>
+            <span>|</span>
+            <a href="plan_week_6.3_zcomm.html">Week 6.3: zComm</a>
+            <span>|</span>
+            <span>Week 6.4: zDisplay</span>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number">⏳</div>
+                <div class="stat-label">Status: Pending</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">0/14</div>
+                <div class="stat-label">Files Complete</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">?</div>
+                <div class="stat-label">Tests Passing</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">TBD</div>
+                <div class="stat-label">Final Grade</div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-icon">🎯</span>
+                    <h2 class="section-title">Week 6.4 Overview</h2>
+                </div>
+
+                <div class="note">
+                    <strong>🎯 GOAL:</strong>
+                    <p>Audit and refactor the zDisplay subsystem to industry-grade standards, following Week 6.2 (zConfig) and Week 6.3 (zComm) methodology.</p>
+                </div>
+
+                <div class="note" style="background: #fffaf0; border-color: #ed8936;">
+                    <strong>⚠️ NAMING CONVENTION ISSUE IDENTIFIED:</strong>
+                    <p style="margin-top: 10px;">Files currently use mixed naming conventions (zDelegates, zEvents, zPrimitives). Need to align with zCLI standards:</p>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li><code>zDelegates.py</code> → <code>display_delegates.py</code></li>
+                        <li><code>zEvents.py</code> → <code>display_events.py</code></li>
+                        <li><code>zPrimitives.py</code> → <code>display_primitives.py</code></li>
+                        <li><code>zProgress_context.py</code> → <code>display_progress.py</code></li>
+                        <li><code>zEvents_packages/</code> → <code>events/</code> with <code>display_event_*</code> prefix</li>
+                    </ul>
+                </div>
+
+                <div class="subsystem-card">
+                    <div class="subsystem-header">
+                        <div class="subsystem-name">Subsystem Structure</div>
+                        <div class="subsystem-rating" style="background: #cbd5e0; color: #2d3748;">PENDING</div>
+                    </div>
+                    <div style="margin-top: 15px;">
+                        <strong>📁 Current Structure:</strong>
+                        <pre style="background: #f7fafc; padding: 15px; border-radius: 5px; border-left: 4px solid #667eea; margin-top: 10px;">
+zDisplay/
+  ├── __init__.py                      (10 lines)
+  ├── zDisplay.py                      (135 lines) - Main facade
+  └── zDisplay_modules/
+      ├── zDelegates.py                (? lines) - Delegation pattern
+      ├── zEvents.py                   (? lines) - Event handling
+      ├── zPrimitives.py               (? lines) - Core UI primitives
+      ├── zProgress_context.py         (? lines) - Progress bars/contexts
+      └── zEvents_packages/
+          ├── __init__.py              (? lines)
+          ├── AdvancedData.py          (? lines) - Advanced data display
+          ├── BasicData.py             (? lines) - Basic data display
+          ├── BasicInputs.py           (? lines) - Input widgets
+          ├── BasicOutputs.py          (? lines) - Output widgets
+          ├── Signals.py               (? lines) - Signal handling
+          ├── Widgets.py               (? lines) - Widget library
+          ├── zAuth.py                 (? lines) - Auth UI components
+          └── zSystem.py               (? lines) - System UI components
+                        </pre>
+
+                        <strong style="margin-top: 15px; display: block;">📊 Total Files:</strong>
+                        <ul style="margin-left: 20px; margin-top: 10px;">
+                            <li>2 root files (zDisplay.py + __init__.py)</li>
+                            <li>4 core module files</li>
+                            <li>8 event package files</li>
+                            <li><strong>Total: 14 Python files</strong></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-icon">📋</span>
+                    <h2 class="section-title">Task Breakdown</h2>
+                </div>
+
+                <div class="note" style="background: #edf2f7; border-color: #667eea;">
+                    <strong>📝 Note:</strong>
+                    <p>Comprehensive audits will be performed for each file. This is the initial task structure only.</p>
+                </div>
+
+                <!-- Root Files -->
+                <div class="todo-item">
+                    <input type="checkbox" class="todo-checkbox">
+                    <div class="todo-content">
+                        <div class="todo-title">Week 6.4 (Main): Review zDisplay.py + __init__.py (Root Subsystem Files)</div>
+                        <div class="todo-description">
+                            <strong>📁 Files:</strong>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li><code>zDisplay.py</code> (135 lines) - Main subsystem facade</li>
+                                <li><code>__init__.py</code> (10 lines) - Package exports</li>
+                            </ul>
+                            <strong>🔍 Focus Areas:</strong>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>Session dict migration (line 27: <code>self.session.get("zMode", "Terminal")</code>)</li>
+                                <li>Type hints coverage</li>
+                                <li>Magic strings elimination</li>
+                                <li>Docstring quality</li>
+                                <li>Import organization</li>
+                            </ul>
+                        </div>
+                        <div class="todo-tags">
+                            <span class="tag">Week 6.4</span>
+                            <span class="tag">Root Files</span>
+                            <span class="tag">Layer 1</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Core Module Files -->
+                <div class="todo-item">
+                    <input type="checkbox" class="todo-checkbox">
+                    <div class="todo-content">
+                        <div class="todo-title">Week 6.4.1: 🔧 Audit & Refactor zDelegates.py → display_delegates.py</div>
+                        <div class="todo-description">
+                            <strong>📁 File:</strong> <code>zDisplay_modules/zDelegates.py</code>
+                            <br><strong>📊 Complexity:</strong> TBD (delegation pattern)
+                            <br><br>
+                            <strong>🔍 Audit Items:</strong>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>Type hints coverage</li>
+                                <li>Magic strings/numbers</li>
+                                <li>DRY violations</li>
+                                <li>Session dict migration</li>
+                                <li>Docstring quality</li>
+                                <li>Dead code removal</li>
+                            </ul>
+                            <strong>🔄 Naming Convention:</strong> Rename to <code>display_delegates.py</code> (align with <code>config_*</code>, <code>comm_*</code>)
+                        </div>
+                        <div class="todo-tags">
+                            <span class="tag">Week 6.4</span>
+                            <span class="tag">Core Module</span>
+                            <span class="tag" style="background: #f6ad55; color: white;">RENAME NEEDED</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="todo-item">
+                    <input type="checkbox" class="todo-checkbox">
+                    <div class="todo-content">
+                        <div class="todo-title">Week 6.4.2: 🔧 Audit & Refactor zEvents.py → display_events.py</div>
+                        <div class="todo-description">
+                            <strong>📁 File:</strong> <code>zDisplay_modules/zEvents.py</code>
+                            <br><strong>📊 Complexity:</strong> TBD (event handling)
+                            <br><br>
+                            <strong>🔍 Audit Items:</strong>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>Type hints coverage</li>
+                                <li>Magic strings/numbers</li>
+                                <li>DRY violations</li>
+                                <li>Session dict migration</li>
+                                <li>Docstring quality</li>
+                                <li>Dead code removal</li>
+                            </ul>
+                            <strong>🔄 Naming Convention:</strong> Rename to <code>display_events.py</code>
+                        </div>
+                        <div class="todo-tags">
+                            <span class="tag">Week 6.4</span>
+                            <span class="tag">Core Module</span>
+                            <span class="tag" style="background: #f6ad55; color: white;">RENAME NEEDED</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="todo-item">
+                    <input type="checkbox" class="todo-checkbox">
+                    <div class="todo-content">
+                        <div class="todo-title">Week 6.4.3: 🔧 Audit & Refactor zPrimitives.py → display_primitives.py</div>
+                        <div class="todo-description">
+                            <strong>📁 File:</strong> <code>zDisplay_modules/zPrimitives.py</code>
+                            <br><strong>📊 Complexity:</strong> TBD (core UI primitives)
+                            <br><br>
+                            <strong>🔍 Audit Items:</strong>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>Type hints coverage</li>
+                                <li>Magic strings/numbers</li>
+                                <li>DRY violations</li>
+                                <li>Session dict migration</li>
+                                <li>Docstring quality</li>
+                                <li>Dead code removal</li>
+                            </ul>
+                            <strong>🔄 Naming Convention:</strong> Rename to <code>display_primitives.py</code>
+                        </div>
+                        <div class="todo-tags">
+                            <span class="tag">Week 6.4</span>
+                            <span class="tag">Core Module</span>
+                            <span class="tag" style="background: #f6ad55; color: white;">RENAME NEEDED</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="todo-item">
+                    <input type="checkbox" class="todo-checkbox">
+                    <div class="todo-content">
+                        <div class="todo-title">Week 6.4.4: 🔧 Audit & Refactor zProgress_context.py → display_progress.py</div>
+                        <div class="todo-description">
+                            <strong>📁 File:</strong> <code>zDisplay_modules/zProgress_context.py</code>
+                            <br><strong>📊 Complexity:</strong> TBD (progress bars/contexts)
+                            <br><br>
+                            <strong>🔍 Audit Items:</strong>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>Type hints coverage</li>
+                                <li>Magic strings/numbers</li>
+                                <li>DRY violations</li>
+                                <li>Session dict migration</li>
+                                <li>Docstring quality</li>
+                                <li>Dead code removal</li>
+                            </ul>
+                            <strong>🔄 Naming Convention:</strong> Rename to <code>display_progress.py</code>
+                        </div>
+                        <div class="todo-tags">
+                            <span class="tag">Week 6.4</span>
+                            <span class="tag">Core Module</span>
+                            <span class="tag" style="background: #f6ad55; color: white;">RENAME NEEDED</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Events Package Init -->
+                <div class="todo-item">
+                    <input type="checkbox" class="todo-checkbox">
+                    <div class="todo-content">
+                        <div class="todo-title">Week 6.4.5: 🔧 Audit zEvents_packages/__init__.py → events/__init__.py</div>
+                        <div class="todo-description">
+                            <strong>📁 File:</strong> <code>zDisplay_modules/zEvents_packages/__init__.py</code>
+                            <br><br>
+                            <strong>🔍 Audit Items:</strong>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>Package exports</li>
+                                <li>Docstring enhancement</li>
+                                <li>Architecture documentation</li>
+                            </ul>
+                            <strong>🔄 Naming Convention:</strong> Rename folder to <code>events/</code>, align file names inside
+                        </div>
+                        <div class="todo-tags">
+                            <span class="tag">Week 6.4</span>
+                            <span class="tag">Package Init</span>
+                            <span class="tag" style="background: #f6ad55; color: white;">RENAME NEEDED</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Event Package Files -->
+                <div class="todo-item">
+                    <input type="checkbox" class="todo-checkbox">
+                    <div class="todo-content">
+                        <div class="todo-title">Week 6.4.6: 🔧 Audit & Refactor BasicInputs.py → display_event_inputs.py</div>
+                        <div class="todo-description">
+                            <strong>📁 File:</strong> <code>zDisplay_modules/zEvents_packages/BasicInputs.py</code>
+                            <br><strong>📊 Complexity:</strong> TBD (input widgets)
+                            <br><br>
+                            <strong>🔍 Audit Items:</strong>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>Type hints coverage</li>
+                                <li>Magic strings/numbers</li>
+                                <li>DRY violations</li>
+                                <li>Session dict migration</li>
+                                <li>Docstring quality</li>
+                                <li>Dead code removal</li>
+                            </ul>
+                            <strong>🔄 Naming Convention:</strong> Rename to <code>display_event_inputs.py</code>
+                        </div>
+                        <div class="todo-tags">
+                            <span class="tag">Week 6.4</span>
+                            <span class="tag">Event Package</span>
+                            <span class="tag" style="background: #f6ad55; color: white;">RENAME NEEDED</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="todo-item">
+                    <input type="checkbox" class="todo-checkbox">
+                    <div class="todo-content">
+                        <div class="todo-title">Week 6.4.7: 🔧 Audit & Refactor BasicOutputs.py → display_event_outputs.py</div>
+                        <div class="todo-description">
+                            <strong>📁 File:</strong> <code>zDisplay_modules/zEvents_packages/BasicOutputs.py</code>
+                            <br><strong>📊 Complexity:</strong> TBD (output widgets)
+                            <br><br>
+                            <strong>🔍 Audit Items:</strong>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>Type hints coverage</li>
+                                <li>Magic strings/numbers</li>
+                                <li>DRY violations</li>
+                                <li>Session dict migration</li>
+                                <li>Docstring quality</li>
+                                <li>Dead code removal</li>
+                            </ul>
+                            <strong>🔄 Naming Convention:</strong> Rename to <code>display_event_outputs.py</code>
+                        </div>
+                        <div class="todo-tags">
+                            <span class="tag">Week 6.4</span>
+                            <span class="tag">Event Package</span>
+                            <span class="tag" style="background: #f6ad55; color: white;">RENAME NEEDED</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="todo-item">
+                    <input type="checkbox" class="todo-checkbox">
+                    <div class="todo-content">
+                        <div class="todo-title">Week 6.4.8: 🔧 Audit & Refactor BasicData.py → display_event_data.py</div>
+                        <div class="todo-description">
+                            <strong>📁 File:</strong> <code>zDisplay_modules/zEvents_packages/BasicData.py</code>
+                            <br><strong>📊 Complexity:</strong> TBD (basic data display)
+                            <br><br>
+                            <strong>🔍 Audit Items:</strong>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>Type hints coverage</li>
+                                <li>Magic strings/numbers</li>
+                                <li>DRY violations</li>
+                                <li>Session dict migration</li>
+                                <li>Docstring quality</li>
+                                <li>Dead code removal</li>
+                            </ul>
+                            <strong>🔄 Naming Convention:</strong> Rename to <code>display_event_data.py</code>
+                        </div>
+                        <div class="todo-tags">
+                            <span class="tag">Week 6.4</span>
+                            <span class="tag">Event Package</span>
+                            <span class="tag" style="background: #f6ad55; color: white;">RENAME NEEDED</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="todo-item">
+                    <input type="checkbox" class="todo-checkbox">
+                    <div class="todo-content">
+                        <div class="todo-title">Week 6.4.9: 🔧 Audit & Refactor AdvancedData.py → display_event_advanced.py</div>
+                        <div class="todo-description">
+                            <strong>📁 File:</strong> <code>zDisplay_modules/zEvents_packages/AdvancedData.py</code>
+                            <br><strong>📊 Complexity:</strong> TBD (advanced data display)
+                            <br><br>
+                            <strong>🔍 Audit Items:</strong>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>Type hints coverage</li>
+                                <li>Magic strings/numbers</li>
+                                <li>DRY violations</li>
+                                <li>Session dict migration</li>
+                                <li>Docstring quality</li>
+                                <li>Dead code removal</li>
+                            </ul>
+                            <strong>🔄 Naming Convention:</strong> Rename to <code>display_event_advanced.py</code>
+                        </div>
+                        <div class="todo-tags">
+                            <span class="tag">Week 6.4</span>
+                            <span class="tag">Event Package</span>
+                            <span class="tag" style="background: #f6ad55; color: white;">RENAME NEEDED</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="todo-item">
+                    <input type="checkbox" class="todo-checkbox">
+                    <div class="todo-content">
+                        <div class="todo-title">Week 6.4.10: 🔧 Audit & Refactor Widgets.py → display_event_widgets.py</div>
+                        <div class="todo-description">
+                            <strong>📁 File:</strong> <code>zDisplay_modules/zEvents_packages/Widgets.py</code>
+                            <br><strong>📊 Complexity:</strong> TBD (widget library)
+                            <br><br>
+                            <strong>🔍 Audit Items:</strong>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>Type hints coverage</li>
+                                <li>Magic strings/numbers</li>
+                                <li>DRY violations</li>
+                                <li>Session dict migration</li>
+                                <li>Docstring quality</li>
+                                <li>Dead code removal</li>
+                            </ul>
+                            <strong>🔄 Naming Convention:</strong> Rename to <code>display_event_widgets.py</code>
+                        </div>
+                        <div class="todo-tags">
+                            <span class="tag">Week 6.4</span>
+                            <span class="tag">Event Package</span>
+                            <span class="tag" style="background: #f6ad55; color: white;">RENAME NEEDED</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="todo-item">
+                    <input type="checkbox" class="todo-checkbox">
+                    <div class="todo-content">
+                        <div class="todo-title">Week 6.4.11: 🔧 Audit & Refactor Signals.py → display_event_signals.py</div>
+                        <div class="todo-description">
+                            <strong>📁 File:</strong> <code>zDisplay_modules/zEvents_packages/Signals.py</code>
+                            <br><strong>📊 Complexity:</strong> TBD (signal handling)
+                            <br><br>
+                            <strong>🔍 Audit Items:</strong>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>Type hints coverage</li>
+                                <li>Magic strings/numbers</li>
+                                <li>DRY violations</li>
+                                <li>Session dict migration</li>
+                                <li>Docstring quality</li>
+                                <li>Dead code removal</li>
+                            </ul>
+                            <strong>🔄 Naming Convention:</strong> Rename to <code>display_event_signals.py</code>
+                        </div>
+                        <div class="todo-tags">
+                            <span class="tag">Week 6.4</span>
+                            <span class="tag">Event Package</span>
+                            <span class="tag" style="background: #f6ad55; color: white;">RENAME NEEDED</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="todo-item">
+                    <input type="checkbox" class="todo-checkbox">
+                    <div class="todo-content">
+                        <div class="todo-title">Week 6.4.12: 🔧 Audit & Refactor zAuth.py → display_event_auth.py</div>
+                        <div class="todo-description">
+                            <strong>📁 File:</strong> <code>zDisplay_modules/zEvents_packages/zAuth.py</code>
+                            <br><strong>📊 Complexity:</strong> TBD (auth UI components)
+                            <br><br>
+                            <strong>🔍 Audit Items:</strong>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>Type hints coverage</li>
+                                <li>Magic strings/numbers</li>
+                                <li>DRY violations</li>
+                                <li>Session dict migration</li>
+                                <li>Docstring quality</li>
+                                <li>Dead code removal</li>
+                                <li>Integration with new three-tier zAuth architecture</li>
+                            </ul>
+                            <strong>🔄 Naming Convention:</strong> Rename to <code>display_event_auth.py</code>
+                        </div>
+                        <div class="todo-tags">
+                            <span class="tag">Week 6.4</span>
+                            <span class="tag">Event Package</span>
+                            <span class="tag" style="background: #f6ad55; color: white;">RENAME NEEDED</span>
+                            <span class="tag" style="background: #667eea; color: white;">zAuth Integration</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="todo-item">
+                    <input type="checkbox" class="todo-checkbox">
+                    <div class="todo-content">
+                        <div class="todo-title">Week 6.4.13: 🔧 Audit & Refactor zSystem.py → display_event_system.py</div>
+                        <div class="todo-description">
+                            <strong>📁 File:</strong> <code>zDisplay_modules/zEvents_packages/zSystem.py</code>
+                            <br><strong>📊 Complexity:</strong> TBD (system UI components)
+                            <br><br>
+                            <strong>🔍 Audit Items:</strong>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>Type hints coverage</li>
+                                <li>Magic strings/numbers</li>
+                                <li>DRY violations</li>
+                                <li>Session dict migration</li>
+                                <li>Docstring quality</li>
+                                <li>Dead code removal</li>
+                            </ul>
+                            <strong>🔄 Naming Convention:</strong> Rename to <code>display_event_system.py</code>
+                        </div>
+                        <div class="todo-tags">
+                            <span class="tag">Week 6.4</span>
+                            <span class="tag">Event Package</span>
+                            <span class="tag" style="background: #f6ad55; color: white;">RENAME NEEDED</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-icon">🎯</span>
+                    <h2 class="section-title">Success Criteria</h2>
+                </div>
+
+                <div class="note">
+                    <strong>✅ Week 6.4 Completion Checklist:</strong>
+                    <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                        <li>All 14 Python files audited and refactored</li>
+                        <li>Naming conventions aligned (<code>display_*</code> pattern)</li>
+                        <li>100% type hints across entire subsystem</li>
+                        <li>Zero magic strings (all → constants)</li>
+                        <li>Zero DRY violations</li>
+                        <li>100% session dict modernization</li>
+                        <li>100% docstring coverage</li>
+                        <li>All tests passing</li>
+                        <li>Industry-grade code quality (A+ grade)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-icon">🔗</span>
+                    <h2 class="section-title">Navigation</h2>
+                </div>
+
+                <div class="nav-links" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <a href="plan_week_6.3_zcomm.html" class="nav-link completed">
+                        <strong>← Previous: Week 6.3 (zComm)</strong>
+                        <div>Communication & service management</div>
+                    </a>
+
+                    <a href="v1.5.4_plan_index.html" class="nav-link">
+                        <strong>Back to Roadmap →</strong>
+                        <div>Return to main plan index</div>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Week 6.4: zDisplay Subsystem ⏳ Pending</p>
+            <p style="margin-top: 10px; font-size: 0.85em;">UI Elements | Input Collection | Multi-Mode Output</p>
+        </div>
+    </div>
+</body>
+</html>
+

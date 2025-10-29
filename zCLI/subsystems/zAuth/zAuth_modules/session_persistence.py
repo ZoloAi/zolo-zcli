@@ -3,11 +3,23 @@ Session Persistence Module - SQLite-based session management (v1.5.4+)
 
 This module handles persistent session storage in SQLite, enabling
 "Remember me" functionality across app restarts.
+
+Supports three-tier authentication (persists zSession context only).
 """
 
 import secrets
 from datetime import datetime, timedelta
 from pathlib import Path
+from zCLI.subsystems.zConfig.zConfig_modules import (
+    ZAUTH_KEY_ZSESSION,
+    ZAUTH_KEY_AUTHENTICATED,
+    ZAUTH_KEY_ID,
+    ZAUTH_KEY_USERNAME,
+    ZAUTH_KEY_ROLE,
+    ZAUTH_KEY_API_KEY,
+    ZAUTH_KEY_ACTIVE_CONTEXT,
+    CONTEXT_ZSESSION
+)
 
 
 class SessionPersistence:
@@ -121,16 +133,19 @@ class SessionPersistence:
                 self.logger.debug("[SessionPersistence] No valid persistent session found")
                 return
             
-            # Restore session to in-memory state
+            # Restore session to in-memory state (zSession context)
             session_data = results[0]
             
-            self.session["zAuth"].update({
-                "id": session_data.get("user_id"),
-                "username": session_data.get("username"),
-                "role": session_data.get("role", "user"),  # Restore role from persistent sessions
-                "API_Key": session_data.get("token"),
-                "session_id": session_data.get("session_id")
+            self.session["zAuth"][ZAUTH_KEY_ZSESSION].update({
+                ZAUTH_KEY_AUTHENTICATED: True,
+                ZAUTH_KEY_ID: session_data.get("user_id"),
+                ZAUTH_KEY_USERNAME: session_data.get("username"),
+                ZAUTH_KEY_ROLE: session_data.get("role", "user"),
+                ZAUTH_KEY_API_KEY: session_data.get("token"),
+                "session_id": session_data.get("session_id")  # Store session_id within zSession
             })
+            # Set active context to zSession
+            self.session["zAuth"][ZAUTH_KEY_ACTIVE_CONTEXT] = CONTEXT_ZSESSION
             
             # Update last_accessed timestamp
             self.zcli.data.update(

@@ -228,24 +228,28 @@ zVaF:
         self.assertEqual(result, "access_denied")
     
     def test_auth_required_authenticated_granted(self):
-        """Authenticated users should access auth-only items."""
-        self.z.session["zAuth"] = {
+        """Authenticated users should access auth-only items (updated for three-tier structure)."""
+        # Updated for three-tier authentication structure
+        self.z.session["zAuth"]["zSession"] = {
+            "authenticated": True,
             "id": "user123",
             "username": "testuser",
             "role": "user",
-            "API_Key": "token"
+            "api_key": "token"
         }
         
         result = self.z.wizard._check_rbac_access("^AuthOnly", self.zblock.get("^AuthOnly"))
         self.assertEqual(result, "access_granted")
     
     def test_role_required_correct_role_granted(self):
-        """Users with correct role should be granted access."""
-        self.z.session["zAuth"] = {
+        """Users with correct role should be granted access (updated for three-tier structure)."""
+        # Updated for three-tier authentication structure
+        self.z.session["zAuth"]["zSession"] = {
+            "authenticated": True,
             "id": "user123",
             "username": "testuser",
             "role": "user",
-            "API_Key": "token"
+            "api_key": "token"
         }
         
         result = self.z.wizard._check_rbac_access("^UserRole", self.zblock.get("^UserRole"))
@@ -288,18 +292,18 @@ zVaF:
         
         data = self.z.loader.handle("@.zUI.multi")
         
-        # Test with admin role
-        self.z.session["zAuth"] = {"id": "u1", "username": "admin", "role": "admin", "API_Key": "t"}
+        # Test with admin role (updated for three-tier structure)
+        self.z.session["zAuth"]["zSession"] = {"authenticated": True, "id": "u1", "username": "admin", "role": "admin", "api_key": "t"}
         result = self.z.wizard._check_rbac_access("^MultiRole", data["zVaF"].get("^MultiRole"))
         self.assertEqual(result, "access_granted")
         
-        # Test with moderator role
-        self.z.session["zAuth"] = {"id": "u2", "username": "mod", "role": "moderator", "API_Key": "t"}
+        # Test with moderator role (updated for three-tier structure)
+        self.z.session["zAuth"]["zSession"] = {"authenticated": True, "id": "u2", "username": "mod", "role": "moderator", "api_key": "t"}
         result = self.z.wizard._check_rbac_access("^MultiRole", data["zVaF"].get("^MultiRole"))
         self.assertEqual(result, "access_granted")
         
-        # Test with user role (not in list)
-        self.z.session["zAuth"] = {"id": "u3", "username": "user", "role": "user", "API_Key": "t"}
+        # Test with user role (not in list, updated for three-tier structure)
+        self.z.session["zAuth"]["zSession"] = {"authenticated": True, "id": "u3", "username": "user", "role": "user", "api_key": "t"}
         result = self.z.wizard._check_rbac_access("^MultiRole", data["zVaF"].get("^MultiRole"))
         self.assertEqual(result, "access_denied")
     
@@ -404,8 +408,8 @@ zVaF:
         self.assertIn("_rbac", data["zVaF"]["^View Users"])
         self.assertIn("_rbac", data["zVaF"]["^Add User"])
         
-        # Test access control
-        z.session["zAuth"] = {"id": "u1", "username": "user", "role": "user", "API_Key": "t"}
+        # Test access control (updated for three-tier structure)
+        z.session["zAuth"]["zSession"] = {"authenticated": True, "id": "u1", "username": "user", "role": "user", "api_key": "t"}
         
         # User should access View
         result = z.wizard._check_rbac_access("^View Users", data["zVaF"]["^View Users"])

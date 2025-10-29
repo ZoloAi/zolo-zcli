@@ -245,14 +245,18 @@ class zBifrost:
         self.cache = CacheManager(logger, default_query_ttl=DEFAULT_QUERY_TTL)
         self.auth = AuthenticationManager(logger, require_auth, allowed_origins)
         self.connection_info = ConnectionInfoManager(logger, self.cache, self.zcli, self.walker)
-        self.message_handler = MessageHandler(logger, self.cache, self.zcli, self.walker, self.connection_info)
+        self.message_handler = MessageHandler(
+            logger, self.cache, self.zcli, self.walker,
+            connection_info_manager=self.connection_info,
+            auth_manager=self.auth
+        )
 
         # Initialize event handlers (event-driven architecture)
         self.events = {
-            'client': ClientEvents(self),
-            'cache': CacheEvents(self),
-            'discovery': DiscoveryEvents(self),
-            'dispatch': DispatchEvents(self)
+            'client': ClientEvents(self, auth_manager=self.auth),
+            'cache': CacheEvents(self, auth_manager=self.auth),
+            'discovery': DiscoveryEvents(self, auth_manager=self.auth),
+            'dispatch': DispatchEvents(self, auth_manager=self.auth)
         }
 
         # Event map - single registry for all events (like zDisplay)

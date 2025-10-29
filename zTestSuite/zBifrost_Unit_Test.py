@@ -22,7 +22,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from zCLI.subsystems.zComm.zComm_modules.bifrost.bridge_modules.bridge_messages import MessageHandler
 from zCLI.subsystems.zComm.zComm_modules.bifrost.bridge_modules.bridge_auth import AuthenticationManager
-from zCLI.subsystems.zComm.zComm_modules.bifrost.bridge_modules.events.event_dispatch import DispatchEvents
+from zCLI.subsystems.zComm.zComm_modules.bifrost.bridge_modules.events.bridge_event_dispatch import DispatchEvents
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -565,54 +565,94 @@ class TestAuthenticationManager(unittest.IsolatedAsyncioTestCase):
         
         self.assertIsNotNone(result)
         self.assertTrue(result["authenticated"])
+        self.assertEqual(result["context"], "guest")  # Updated for three-tier auth
         self.assertEqual(result["user"], "anonymous")
     
     async def test_authenticate_client_missing_token(self):
-        """Should reject client without token"""
+        """Should reject client without token when no zSession auth"""
         auth = AuthenticationManager(self.logger, require_auth=True)
         
-        ws = AsyncMock()
-        ws.path = "/"
-        ws.request_headers = Mock()
-        ws.request_headers.get = Mock(return_value="")  # Return empty string for missing header
+        # Create WebSocket mock with real dict for headers
+        ws_mock = Mock()
+        ws_mock.close = AsyncMock()  # Only close needs to be async
+        ws_mock.path = "/"
+        ws_mock.request_headers = None  # Will trigger fallback
+        # Create a simple object with headers attribute that's a real dict
+        request_obj = type('Request', (), {'headers': {}})()
+        ws_mock.request = request_obj
+        
+        # Mock walker without zSession authentication
         walker = Mock()
+        walker.zcli = Mock()
+        walker.zcli.session = {"zAuth": {"zSession": {"authenticated": False}}}
         
-        result = await auth.authenticate_client(ws, walker)
+        result = await auth.authenticate_client(ws_mock, walker)
         
-        # Should close connection
-        ws.close.assert_called_once()
+        # Should close connection (no zSession, no token)
+        ws_mock.close.assert_called_once()
         self.assertIsNone(result)
     
     async def test_authenticate_client_with_valid_token(self):
-        """Should authenticate client with valid token"""
+        """Should authenticate client with valid token (Layer 2: Application auth)"""
         auth = AuthenticationManager(self.logger, require_auth=True)
         
         ws = AsyncMock()
-        ws.path = "/?token=valid_token_123"
+        ws.path = "/?token=valid_token_123&app_name=test_app"
         ws.request_headers = {}
-        walker = Mock()
         
-        # Mock token validation
-        with patch.object(auth, '_validate_token', return_value={"user": "testuser", "role": "admin"}):
-            result = await auth.authenticate_client(ws, walker)
+        # Mock walker with zAuth.authenticate_app_user
+        walker = Mock()
+        walker.zcli = Mock()
+        walker.zcli.session = {"zAuth": {"zSession": {"authenticated": False}}}
+        walker.zcli.auth = Mock()
+        walker.zcli.auth.authenticate_app_user = Mock(return_value={
+            "status": "success",
+            "app_name": "test_app",
+            "user": {
+                "authenticated": True,
+                "username": "testuser",
+                "role": "admin",
+                "id": "123",
+                "api_key": "valid_token_123"
+            }
+        })
+        
+        result = await auth.authenticate_client(ws, walker)
         
         self.assertIsNotNone(result)
-        self.assertEqual(result["user"], "testuser")
+        self.assertEqual(result["context"], "application")
+        self.assertIn("application", result)
+        self.assertEqual(result["application"]["username"], "testuser")
     
     async def test_authenticate_client_token_in_header(self):
-        """Should extract token from Authorization header"""
+        """Should extract token from Authorization header (Layer 2: Application auth)"""
         auth = AuthenticationManager(self.logger, require_auth=True)
         
         ws = AsyncMock()
         ws.path = "/"
         ws.request_headers = {"Authorization": "Bearer valid_token"}
-        walker = Mock()
         
-        with patch.object(auth, '_extract_token', return_value="valid_token"):
-            with patch.object(auth, '_validate_token', return_value={"user": "testuser"}):
-                result = await auth.authenticate_client(ws, walker)
+        # Mock walker with zAuth.authenticate_app_user
+        walker = Mock()
+        walker.zcli = Mock()
+        walker.zcli.session = {"zAuth": {"zSession": {"authenticated": False}}}
+        walker.zcli.auth = Mock()
+        walker.zcli.auth.authenticate_app_user = Mock(return_value={
+            "status": "success",
+            "app_name": "default_app",
+            "user": {
+                "authenticated": True,
+                "username": "testuser",
+                "role": "user",
+                "id": "456",
+                "api_key": "valid_token"
+            }
+        })
+        
+        result = await auth.authenticate_client(ws, walker)
         
         self.assertIsNotNone(result)
+        self.assertEqual(result["context"], "application")
     
     def test_extract_token_from_query_params(self):
         """Should extract token from query parameters"""
@@ -806,13 +846,22 @@ class TestAuthenticationManagerEdgeCases(unittest.IsolatedAsyncioTestCase):
         ws = AsyncMock()
         ws.path = "/?token=invalid!!!@@@###"
         ws.request_headers = {}
+        
+        # Mock walker with failing authentication
         walker = Mock()
+        walker.zcli = Mock()
+        walker.zcli.session = {"zAuth": {"zSession": {"authenticated": False}}}
+        walker.zcli.auth = Mock()
+        walker.zcli.auth.authenticate_app_user = Mock(return_value={
+            "status": "fail",
+            "reason": "Invalid token"
+        })
         
-        # Mock validation to return None for invalid token
-        with patch.object(auth, '_validate_token', return_value=None):
-            result = await auth.authenticate_client(ws, walker)
+        result = await auth.authenticate_client(ws, walker)
         
+        # Should close connection with invalid token
         self.assertIsNone(result)
+        ws.close.assert_called_once()
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -1104,7 +1153,7 @@ class TestCacheEvents(unittest.IsolatedAsyncioTestCase):
         self.bifrost.cache = Mock()
         self.bifrost.connection_info = Mock()
         
-        from zCLI.subsystems.zComm.zComm_modules.bifrost.bridge_modules.events.event_cache import CacheEvents
+        from zCLI.subsystems.zComm.zComm_modules.bifrost.bridge_modules.events.bridge_event_cache import CacheEvents
         self.cache_events = CacheEvents(self.bifrost)
     
     async def test_handle_get_schema_success(self):
@@ -1149,28 +1198,32 @@ class TestCacheEvents(unittest.IsolatedAsyncioTestCase):
         ws = AsyncMock()
         data = {}
         
-        self.bifrost.cache.clear_query_cache = Mock()
-        self.bifrost.cache.get_stats = Mock(return_value={"hits": 0, "misses": 0})
+        # Fixed: Use correct method names (clear_all instead of clear_query_cache)
+        self.bifrost.cache.clear_all = Mock()
+        self.bifrost.cache.get_all_stats = Mock(return_value={"query_cache": {"hits": 0, "misses": 0}})
         
         await self.cache_events.handle_clear_cache(ws, data)
         
-        self.bifrost.cache.clear_query_cache.assert_called_once()
+        # Note: Without auth_manager, defaults to clear_all()
+        self.bifrost.cache.clear_all.assert_called_once()
         ws.send.assert_called_once()
         sent_data = json.loads(ws.send.call_args[0][0])
-        self.assertEqual(sent_data["result"], "Cache cleared")
+        self.assertIn("Cache cleared successfully", sent_data["result"])
     
     async def test_handle_cache_stats(self):
         """Should return cache statistics"""
         ws = AsyncMock()
         data = {}
         
-        self.bifrost.cache.get_stats = Mock(return_value={"hits": 10, "misses": 3})
+        # Fixed: Use correct method name (get_all_stats instead of get_stats)
+        self.bifrost.cache.get_all_stats = Mock(return_value={"query_cache": {"hits": 10, "misses": 3}})
         
         await self.cache_events.handle_cache_stats(ws, data)
         
         ws.send.assert_called_once()
         sent_data = json.loads(ws.send.call_args[0][0])
         self.assertIn("result", sent_data)
+        self.assertIn("query_cache", sent_data["result"])
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -1186,7 +1239,7 @@ class TestClientEvents(unittest.IsolatedAsyncioTestCase):
         self.bifrost.logger = Mock()
         self.bifrost.zcli = Mock()
         
-        from zCLI.subsystems.zComm.zComm_modules.bifrost.bridge_modules.events.event_client import ClientEvents
+        from zCLI.subsystems.zComm.zComm_modules.bifrost.bridge_modules.events.bridge_event_client import ClientEvents
         self.client_events = ClientEvents(self.bifrost)
     
     async def test_handle_input_response_success(self):
@@ -1243,7 +1296,7 @@ class TestDiscoveryEvents(unittest.IsolatedAsyncioTestCase):
         self.bifrost.logger = Mock()
         self.bifrost.connection_info = Mock()
         
-        from zCLI.subsystems.zComm.zComm_modules.bifrost.bridge_modules.events.event_discovery import DiscoveryEvents
+        from zCLI.subsystems.zComm.zComm_modules.bifrost.bridge_modules.events.bridge_event_discovery import DiscoveryEvents
         self.discovery_events = DiscoveryEvents(self.bifrost)
     
     async def test_handle_discover(self):
