@@ -1,4 +1,4 @@
-# zCLI/subsystems/zComm/zComm_modules/zBifrost/bridge_modules/events/dispatch_events.py
+# zCLI/subsystems/zComm/zComm_modules/bifrost/bridge_modules/events/event_dispatch.py
 
 """zDispatch command routing event handlers for zBifrost"""
 from zCLI import asyncio, json

@@ -29,7 +29,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from zCLI import zCLI
-from zCLI.subsystems.zComm.zComm_modules.zBifrost import zBifrost
+from zCLI.subsystems.zComm.zComm_modules.bifrost import zBifrost
 
 # Import websockets for client testing (Phase 2)
 try:

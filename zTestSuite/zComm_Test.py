@@ -22,8 +22,9 @@ import json
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from zCLI.subsystems.zComm import zComm
-from zCLI.subsystems.zComm.zComm_modules.zBifrost import zBifrost
-from zCLI.subsystems.zComm.zComm_modules.service_manager import ServiceManager
+from zCLI.subsystems.zComm.zComm_modules.bifrost import zBifrost
+from zCLI.subsystems.zComm.zComm_modules.comm_services import ServiceManager
+from zCLI import requests
 
 
 class TestzCommInitialization(unittest.TestCase):
@@ -100,7 +101,7 @@ class TestHTTPCommunication(unittest.TestCase):
         
         self.comm = zComm(self.mock_zcli)
     
-    @patch('zCLI.subsystems.zComm.zComm_modules.http_client.requests.post')
+    @patch('zCLI.subsystems.zComm.zComm_modules.comm_http.requests.post')
     def test_http_post_success(self, mock_post):
         """Test successful HTTP POST request."""
         mock_response = Mock()
@@ -118,7 +119,7 @@ class TestHTTPCommunication(unittest.TestCase):
             timeout=10
         )
     
-    @patch('zCLI.subsystems.zComm.zComm_modules.http_client.requests.post')
+    @patch('zCLI.subsystems.zComm.zComm_modules.comm_http.requests.post')
     def test_http_post_timeout(self, mock_post):
         """Test HTTP POST with custom timeout."""
         mock_response = Mock()
@@ -132,16 +133,16 @@ class TestHTTPCommunication(unittest.TestCase):
             timeout=5
         )
     
-    @patch('zCLI.subsystems.zComm.zComm_modules.http_client.requests.post')
+    @patch('zCLI.subsystems.zComm.zComm_modules.comm_http.requests.post')
     def test_http_post_failure(self, mock_post):
         """Test HTTP POST request failure."""
-        mock_post.side_effect = Exception("Connection failed")
+        mock_post.side_effect = requests.RequestException("Connection failed")
         
         response = self.comm.http_post("http://test.com", {"key": "value"})
         
         self.assertIsNone(response)
     
-    @patch('zCLI.subsystems.zComm.zComm_modules.http_client.requests.post')
+    @patch('zCLI.subsystems.zComm.zComm_modules.comm_http.requests.post')
     def test_http_post_no_data(self, mock_post):
         """Test HTTP POST without data."""
         mock_response = Mock()
@@ -354,7 +355,7 @@ class TestzBifrostWebSocket(unittest.TestCase):
         
         self.assertEqual(bifrost.host, "127.0.0.1")
         self.assertEqual(bifrost.port, 56891)
-        self.assertTrue(bifrost.require_auth)
+        self.assertTrue(bifrost.auth.require_auth)
     
     def test_bifrost_custom_port(self):
         """Test zBifrost with custom port."""
@@ -382,7 +383,7 @@ class TestzBifrostWebSocket(unittest.TestCase):
         
         self.assertIsInstance(bifrost.clients, set)
         self.assertEqual(len(bifrost.clients), 0)
-        self.assertIsInstance(bifrost.authenticated_clients, dict)
+        self.assertIsInstance(bifrost.auth.authenticated_clients, dict)
     
     def test_validate_origin_no_origins_configured(self):
         """Test origin validation when no origins configured."""
@@ -392,7 +393,7 @@ class TestzBifrostWebSocket(unittest.TestCase):
         mock_ws.request_headers = {"Origin": "http://localhost:3000"}
         
         # Should allow localhost when no origins configured
-        result = bifrost.validate_origin(mock_ws)
+        result = bifrost.auth.validate_origin(mock_ws)
         self.assertTrue(result)
     
     def test_validate_origin_allowed(self):
@@ -403,7 +404,7 @@ class TestzBifrostWebSocket(unittest.TestCase):
         mock_ws = Mock()
         mock_ws.request_headers = {"Origin": "http://localhost:3000"}
         
-        result = bifrost.validate_origin(mock_ws)
+        result = bifrost.auth.validate_origin(mock_ws)
         self.assertTrue(result)
     
     def test_validate_origin_not_allowed(self):
@@ -414,7 +415,7 @@ class TestzBifrostWebSocket(unittest.TestCase):
         mock_ws = Mock()
         mock_ws.request_headers = {"Origin": "http://evil.com"}
         
-        result = bifrost.validate_origin(mock_ws)
+        result = bifrost.auth.validate_origin(mock_ws)
         self.assertFalse(result)
 
 

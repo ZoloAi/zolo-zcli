@@ -240,9 +240,9 @@ Keep `bifrost_bridge.py` as legacy, use `bifrost_bridge_modular.py` for new code
 ```python
 # In zComm.py or wherever zBifrost is imported
 try:
-    from .zComm_modules.zBifrost.bifrost_bridge_modular import zBifrost
+    from .zComm_modules.bifrost.bifrost_bridge_modular import zBifrost
 except ImportError:
-    from .zComm_modules.zBifrost.bifrost_bridge import zBifrost
+    from .zComm_modules.bifrost.bifrost_bridge import zBifrost
 ```
 
 ### **Option 2: Replace Entirely**

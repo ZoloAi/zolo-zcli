@@ -31,6 +31,9 @@ from .config_session import (
     SESSION_KEY_VIRTUAL_ENV,
     SESSION_KEY_SYSTEM_ENV,
     SESSION_KEY_LOGGER_INSTANCE,
+    # zMode values
+    ZMODE_TERMINAL,
+    ZMODE_ZBIFROST,
     # Nested dict keys
     ZAUTH_KEY_ID,
     ZAUTH_KEY_USERNAME,
@@ -76,6 +79,8 @@ __all__ = [
     "SESSION_KEY_VIRTUAL_ENV",
     "SESSION_KEY_SYSTEM_ENV",
     "SESSION_KEY_LOGGER_INSTANCE",
+    "ZMODE_TERMINAL",
+    "ZMODE_ZBIFROST",
     "ZAUTH_KEY_ID",
     "ZAUTH_KEY_USERNAME",
     "ZAUTH_KEY_ROLE",

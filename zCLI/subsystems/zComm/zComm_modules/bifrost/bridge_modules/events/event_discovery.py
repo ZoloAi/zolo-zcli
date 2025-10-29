@@ -1,4 +1,4 @@
-# zCLI/subsystems/zComm/zComm_modules/zBifrost/bridge_modules/events/discovery_events.py
+# zCLI/subsystems/zComm/zComm_modules/bifrost/bridge_modules/events/event_discovery.py
 
 """Auto-discovery API event handlers for zBifrost"""
 from zCLI import json

@@ -201,7 +201,7 @@ class TestWebSocketShutdown(unittest.IsolatedAsyncioTestCase):
         """WebSocket shutdown should close all active connections"""
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create zBifrost instance
-            from zCLI.subsystems.zComm.zComm_modules.zBifrost import zBifrost
+            from zCLI.subsystems.zComm.zComm_modules.bifrost import zBifrost
             
             z = zCLI({"zWorkspace": tmpdir})
             bifrost = zBifrost(z.logger, zcli=z, port=56899)
@@ -238,7 +238,7 @@ class TestWebSocketShutdown(unittest.IsolatedAsyncioTestCase):
     async def test_websocket_shutdown_sends_notification(self):
         """WebSocket shutdown should send shutdown notification to clients"""
         with tempfile.TemporaryDirectory() as tmpdir:
-            from zCLI.subsystems.zComm.zComm_modules.zBifrost import zBifrost
+            from zCLI.subsystems.zComm.zComm_modules.bifrost import zBifrost
             
             z = zCLI({"zWorkspace": tmpdir})
             bifrost = zBifrost(z.logger, zcli=z, port=56899)
@@ -271,7 +271,7 @@ class TestWebSocketShutdown(unittest.IsolatedAsyncioTestCase):
     async def test_websocket_shutdown_handles_errors_gracefully(self):
         """WebSocket shutdown should handle client close errors gracefully"""
         with tempfile.TemporaryDirectory() as tmpdir:
-            from zCLI.subsystems.zComm.zComm_modules.zBifrost import zBifrost
+            from zCLI.subsystems.zComm.zComm_modules.bifrost import zBifrost
             
             z = zCLI({"zWorkspace": tmpdir})
             bifrost = zBifrost(z.logger, zcli=z, port=56899)
@@ -301,7 +301,7 @@ class TestWebSocketShutdown(unittest.IsolatedAsyncioTestCase):
     async def test_websocket_shutdown_timeout_handling(self):
         """WebSocket shutdown should handle timeout gracefully"""
         with tempfile.TemporaryDirectory() as tmpdir:
-            from zCLI.subsystems.zComm.zComm_modules.zBifrost import zBifrost
+            from zCLI.subsystems.zComm.zComm_modules.bifrost import zBifrost
             
             z = zCLI({"zWorkspace": tmpdir})
             bifrost = zBifrost(z.logger, zcli=z, port=56899)

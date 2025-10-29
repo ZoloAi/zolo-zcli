@@ -5,10 +5,10 @@ zComm Modules
 Communication and service management modules for zCLI
 """
 
-from .service_manager import ServiceManager
-from .bifrost_manager import BifrostManager
-from .http_client import HTTPClient
-from .network_utils import NetworkUtils
-from .zBifrost import zBifrost
+from .comm_services import ServiceManager
+from .comm_bifrost import BifrostManager
+from .comm_http import HTTPClient
+from .helpers.network_utils import NetworkUtils
+from .bifrost import zBifrost
 
 __all__ = ['ServiceManager', 'BifrostManager', 'HTTPClient', 'NetworkUtils', 'zBifrost']

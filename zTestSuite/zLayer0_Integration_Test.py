@@ -27,8 +27,8 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from zCLI import zCLI
-from zCLI.subsystems.zComm.zComm_modules.zBifrost import zBifrost
-from zCLI.subsystems.zComm.zComm_modules.zBifrost.bridge_modules.authentication import AuthenticationManager
+from zCLI.subsystems.zComm.zComm_modules.bifrost import zBifrost
+from zCLI.subsystems.zComm.zComm_modules.bifrost.bridge_modules.bridge_auth import AuthenticationManager
 from zCLI.subsystems.zConfig.zConfig_modules.helpers.config_validator import ConfigValidator, ConfigValidationError
 
 # Import websockets for client testing

@@ -35,6 +35,10 @@ from urllib.parse import urlparse
 import platformdirs  # pylint: disable=import-error
 import requests  # pylint: disable=import-error
 import yaml  # pylint: disable=import-error
+import websockets  # pylint: disable=import-error
+from websockets import serve as ws_serve  # pylint: disable=import-error
+from websockets.legacy.server import WebSocketServerProtocol  # pylint: disable=import-error
+from websockets import exceptions as ws_exceptions  # pylint: disable=import-error
 
 # Optional third-party helper (fallback implementation if python-dotenv missing)
 if importlib.util.find_spec("dotenv") is not None:
@@ -81,7 +85,8 @@ __all__ = [
     "asyncio", "datetime", "getpass", "importlib", "inspect", "json", 
     "logging", "os", "platform", "platformdirs", "re", "requests", "secrets",
     "shutil", "socket", "sqlite3", "subprocess", "sys", "time", "traceback",
-    "typing", "uuid", "webbrowser", "yaml", "OrderedDict", "Path", "urlparse",
+    "typing", "uuid", "webbrowser", "websockets", "ws_serve", "WebSocketServerProtocol",
+    "ws_exceptions", "yaml", "OrderedDict", "Path", "urlparse",
 
     # Typing helpers
     "Any", "Callable", "Dict", "List", "Optional", "Tuple", "Union",

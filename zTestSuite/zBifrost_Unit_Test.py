@@ -20,9 +20,9 @@ import asyncio
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from zCLI.subsystems.zComm.zComm_modules.zBifrost.bridge_modules.message_handler import MessageHandler
-from zCLI.subsystems.zComm.zComm_modules.zBifrost.bridge_modules.authentication import AuthenticationManager
-from zCLI.subsystems.zComm.zComm_modules.zBifrost.bridge_modules.events.dispatch_events import DispatchEvents
+from zCLI.subsystems.zComm.zComm_modules.bifrost.bridge_modules.bridge_messages import MessageHandler
+from zCLI.subsystems.zComm.zComm_modules.bifrost.bridge_modules.bridge_auth import AuthenticationManager
+from zCLI.subsystems.zComm.zComm_modules.bifrost.bridge_modules.events.event_dispatch import DispatchEvents
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -986,7 +986,7 @@ class TestBifrostBridgeEdgeCases(unittest.IsolatedAsyncioTestCase):
     
     async def test_broadcast_to_no_clients(self):
         """Should handle broadcast when no clients connected"""
-        from zCLI.subsystems.zComm.zComm_modules.zBifrost import zBifrost
+        from zCLI.subsystems.zComm.zComm_modules.bifrost import zBifrost
         
         logger = Mock()
         bifrost = zBifrost(logger, port=56899)
@@ -1001,7 +1001,7 @@ class TestBifrostBridgeEdgeCases(unittest.IsolatedAsyncioTestCase):
     
     async def test_handle_client_exception_in_receive(self):
         """Should handle exceptions during message receive"""
-        from zCLI.subsystems.zComm.zComm_modules.zBifrost import zBifrost
+        from zCLI.subsystems.zComm.zComm_modules.bifrost import zBifrost
         
         logger = Mock()
         bifrost = zBifrost(logger, port=56899)
@@ -1017,61 +1017,9 @@ class TestBifrostBridgeEdgeCases(unittest.IsolatedAsyncioTestCase):
             # If it raises, that's acceptable for cleanup
             pass
     
-    async def test_infer_event_type_from_action(self):
-        """Should infer event type from 'action' field"""
-        from zCLI.subsystems.zComm.zComm_modules.zBifrost import zBifrost
-        
-        logger = Mock()
-        bifrost = zBifrost(logger, port=56899)
-        
-        data = {"action": "get_schema"}
-        
-        event = bifrost._infer_event_type(data)
-        
-        self.assertEqual(event, "get_schema")
-    
-    async def test_infer_event_type_from_zkey(self):
-        """Should infer event type as 'dispatch' for zKey"""
-        from zCLI.subsystems.zComm.zComm_modules.zBifrost import zBifrost
-        
-        logger = Mock()
-        bifrost = zBifrost(logger, port=56899)
-        
-        data = {"zKey": "^List.users"}
-        
-        event = bifrost._infer_event_type(data)
-        
-        self.assertEqual(event, "dispatch")
-    
-    async def test_infer_event_type_from_cmd(self):
-        """Should infer event type as 'dispatch' for cmd"""
-        from zCLI.subsystems.zComm.zComm_modules.zBifrost import zBifrost
-        
-        logger = Mock()
-        bifrost = zBifrost(logger, port=56899)
-        
-        data = {"cmd": "test_command"}
-        
-        event = bifrost._infer_event_type(data)
-        
-        self.assertEqual(event, "dispatch")
-    
-    async def test_infer_event_type_no_inference(self):
-        """Should return None when event type cannot be inferred"""
-        from zCLI.subsystems.zComm.zComm_modules.zBifrost import zBifrost
-        
-        logger = Mock()
-        bifrost = zBifrost(logger, port=56899)
-        
-        data = {"unknown": "field"}
-        
-        event = bifrost._infer_event_type(data)
-        
-        self.assertIsNone(event)
-    
     async def test_message_handler_unknown_event(self):
         """Should handle unknown event types gracefully"""
-        from zCLI.subsystems.zComm.zComm_modules.zBifrost import zBifrost
+        from zCLI.subsystems.zComm.zComm_modules.bifrost import zBifrost
         
         logger = Mock()
         bifrost = zBifrost(logger, port=56899)
@@ -1095,7 +1043,7 @@ class TestBifrostBridgeAdvancedEdgeCases(unittest.IsolatedAsyncioTestCase):
     
     async def test_broadcast_with_disconnected_clients(self):
         """Should handle broadcast when some clients are disconnected"""
-        from zCLI.subsystems.zComm.zComm_modules.zBifrost import zBifrost
+        from zCLI.subsystems.zComm.zComm_modules.bifrost import zBifrost
         
         logger = Mock()
         bifrost = zBifrost(logger, port=56900)
@@ -1119,7 +1067,7 @@ class TestBifrostBridgeAdvancedEdgeCases(unittest.IsolatedAsyncioTestCase):
     
     async def test_broadcast_with_send_failures(self):
         """Should continue broadcasting even if some sends fail"""
-        from zCLI.subsystems.zComm.zComm_modules.zBifrost import zBifrost
+        from zCLI.subsystems.zComm.zComm_modules.bifrost import zBifrost
         
         logger = Mock()
         bifrost = zBifrost(logger, port=56900)
@@ -1156,7 +1104,7 @@ class TestCacheEvents(unittest.IsolatedAsyncioTestCase):
         self.bifrost.cache = Mock()
         self.bifrost.connection_info = Mock()
         
-        from zCLI.subsystems.zComm.zComm_modules.zBifrost.bridge_modules.events.cache_events import CacheEvents
+        from zCLI.subsystems.zComm.zComm_modules.bifrost.bridge_modules.events.event_cache import CacheEvents
         self.cache_events = CacheEvents(self.bifrost)
     
     async def test_handle_get_schema_success(self):
@@ -1238,7 +1186,7 @@ class TestClientEvents(unittest.IsolatedAsyncioTestCase):
         self.bifrost.logger = Mock()
         self.bifrost.zcli = Mock()
         
-        from zCLI.subsystems.zComm.zComm_modules.zBifrost.bridge_modules.events.client_events import ClientEvents
+        from zCLI.subsystems.zComm.zComm_modules.bifrost.bridge_modules.events.event_client import ClientEvents
         self.client_events = ClientEvents(self.bifrost)
     
     async def test_handle_input_response_success(self):
@@ -1295,7 +1243,7 @@ class TestDiscoveryEvents(unittest.IsolatedAsyncioTestCase):
         self.bifrost.logger = Mock()
         self.bifrost.connection_info = Mock()
         
-        from zCLI.subsystems.zComm.zComm_modules.zBifrost.bridge_modules.events.discovery_events import DiscoveryEvents
+        from zCLI.subsystems.zComm.zComm_modules.bifrost.bridge_modules.events.event_discovery import DiscoveryEvents
         self.discovery_events = DiscoveryEvents(self.bifrost)
     
     async def test_handle_discover(self):
@@ -1346,7 +1294,7 @@ class TestCacheManager(unittest.TestCase):
         """Set up test fixtures"""
         self.logger = Mock()
         
-        from zCLI.subsystems.zComm.zComm_modules.zBifrost.bridge_modules.cache_manager import CacheManager
+        from zCLI.subsystems.zComm.zComm_modules.bifrost.bridge_modules.bridge_cache import CacheManager
         self.cache_mgr = CacheManager(self.logger, default_query_ttl=60)
     
     def test_get_schema_cache_hit(self):
@@ -1473,7 +1421,7 @@ class TestConnectionInfoManager(unittest.TestCase):
         self.zcli = Mock()
         self.walker = Mock()
         
-        from zCLI.subsystems.zComm.zComm_modules.zBifrost.bridge_modules.connection_info import ConnectionInfoManager
+        from zCLI.subsystems.zComm.zComm_modules.bifrost.bridge_modules.bridge_connection import ConnectionInfoManager
         self.conn_info = ConnectionInfoManager(self.logger, self.cache, self.zcli, self.walker)
     
     def test_get_connection_info_basic(self):

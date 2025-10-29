@@ -208,7 +208,7 @@ class TestRealWebSocket(unittest.IsolatedAsyncioTestCase):
     @requires_network  # Important!
     async def test_real_websocket_connection(self):
         """Should connect to real WebSocket server"""
-        from zCLI.subsystems.zComm.zComm_modules.zBifrost.bifrost_bridge_modular import zBifrost
+        from zCLI.subsystems.zComm.zComm_modules.bifrost.bifrost_bridge_modular import zBifrost
         
         with tempfile.TemporaryDirectory() as temp_dir:
             z = zCLI({"zWorkspace": temp_dir, "zMode": "Terminal"})
