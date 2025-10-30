@@ -1,4 +1,4 @@
-# zCLI/subsystems/zDisplay/zDisplay_modules/zEvents_packages/Signals.py
+# zCLI/subsystems/zDisplay/zDisplay_modules/events/display_event_signals.py
 """Signals - colored feedback messages for user notifications."""
 
 class Signals:

@@ -1,4 +1,4 @@
-# zCLI/subsystems/zDisplay/zDisplay_modules/zEvents_packages/BasicData.py
+# zCLI/subsystems/zDisplay/zDisplay_modules/events/display_event_data.py
 """BasicData - structured data display events (lists, JSON)."""
 
 from zCLI import json, re

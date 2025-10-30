@@ -16,8 +16,8 @@ from unittest.mock import Mock, patch
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from zCLI.subsystems.zDisplay import zDisplay
-from zCLI.subsystems.zDisplay.zDisplay_modules.zPrimitives import zPrimitives
-from zCLI.subsystems.zDisplay.zDisplay_modules.zEvents import zEvents
+from zCLI.subsystems.zDisplay.zDisplay_modules.display_primitives import zPrimitives
+from zCLI.subsystems.zDisplay.zDisplay_modules.display_events import zEvents
 
 
 class TestzDisplayInitialization(unittest.TestCase):

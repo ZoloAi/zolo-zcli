@@ -1,4 +1,4 @@
-# zCLI/subsystems/zDisplay/zDisplay_modules/zEvents_packages/zSystem.py
+# zCLI/subsystems/zDisplay/zDisplay_modules/events/display_event_system.py
 """zSystem - zCLI system introspection and navigation displays."""
 
 class zSystem:

@@ -181,9 +181,11 @@ class Authentication:
         
         cleared = []
         
+        # Check if user is logged in before any logout operations
+        is_logged_in = self.is_authenticated()
+        
         # Logout from zSession
         if context in ["zSession", "all"]:
-            is_logged_in = self.is_authenticated()
             username = self.session.get("zAuth", {}).get(ZAUTH_KEY_ZSESSION, {}).get(ZAUTH_KEY_USERNAME)
             
             self.session["zAuth"][ZAUTH_KEY_ZSESSION] = {
@@ -222,11 +224,11 @@ class Authentication:
                 except Exception as e:
                     self.logger.debug(f"[SessionPersistence] Could not delete session: {e}")
             
-            # Display using zDisplay events
-            if is_logged_in:
-                self.zcli.display.zEvents.zAuth.logout_success()
-            else:
-                self.zcli.display.zEvents.zAuth.logout_warning()
+        # Display using zDisplay events
+        if is_logged_in:
+            self.zcli.display.zEvents.zAuth.logout_success()
+        else:
+            self.zcli.display.zEvents.zAuth.logout_warning()
         
         # Logout from specific application
         if context == "application":

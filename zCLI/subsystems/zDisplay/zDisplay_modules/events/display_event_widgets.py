@@ -1,4 +1,4 @@
-# zCLI/subsystems/zDisplay/zDisplay_modules/zEvents_packages/Widgets.py
+# zCLI/subsystems/zDisplay/zDisplay_modules/events/display_event_widgets.py
 """Interactive widgets: progress bars, spinners, and loaders."""
 
 import sys

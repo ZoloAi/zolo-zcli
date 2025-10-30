@@ -1,4 +1,4 @@
-# zCLI/subsystems/zDisplay/zDisplay_modules/zEvents_packages/zAuth.py
+# zCLI/subsystems/zDisplay/zDisplay_modules/events/display_event_auth.py
 """zAuth events - authentication input/output for both Terminal and GUI modes."""
 
 class zAuthEvents:

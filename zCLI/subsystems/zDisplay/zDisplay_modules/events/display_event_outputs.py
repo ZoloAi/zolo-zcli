@@ -1,4 +1,4 @@
-# zCLI/subsystems/zDisplay/zDisplay_modules/zEvents_packages/BasicOutputs.py
+# zCLI/subsystems/zDisplay/zDisplay_modules/events/display_event_outputs.py
 """BasicOutputs - fundamental output events built on zPrimitives."""
 
 class BasicOutputs:

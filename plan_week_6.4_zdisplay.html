@@ -23,20 +23,20 @@
 
         <div class="stats">
             <div class="stat-card">
-                <div class="stat-number">⏳</div>
-                <div class="stat-label">Status: Pending</div>
+                <div class="stat-number">✅</div>
+                <div class="stat-label">Root Files: A+</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number">0/14</div>
+                <div class="stat-number">5/13</div>
                 <div class="stat-label">Files Complete</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number">?</div>
+                <div class="stat-number">55/55</div>
                 <div class="stat-label">Tests Passing</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number">TBD</div>
-                <div class="stat-label">Final Grade</div>
+                <div class="stat-number">38%</div>
+                <div class="stat-label">Progress</div>
             </div>
         </div>
 
@@ -52,16 +52,32 @@
                     <p>Audit and refactor the zDisplay subsystem to industry-grade standards, following Week 6.2 (zConfig) and Week 6.3 (zComm) methodology.</p>
                 </div>
 
-                <div class="note" style="background: #fffaf0; border-color: #ed8936;">
-                    <strong>⚠️ NAMING CONVENTION ISSUE IDENTIFIED:</strong>
-                    <p style="margin-top: 10px;">Files currently use mixed naming conventions (zDelegates, zEvents, zPrimitives). Need to align with zCLI standards:</p>
-                    <ul style="margin-left: 20px; margin-top: 10px;">
-                        <li><code>zDelegates.py</code> → <code>display_delegates.py</code></li>
-                        <li><code>zEvents.py</code> → <code>display_events.py</code></li>
-                        <li><code>zPrimitives.py</code> → <code>display_primitives.py</code></li>
-                        <li><code>zProgress_context.py</code> → <code>display_progress.py</code></li>
-                        <li><code>zEvents_packages/</code> → <code>events/</code> with <code>display_event_*</code> prefix</li>
+                <div class="note" style="background: #f0fff4; border-color: #48bb78;">
+                    <strong>✅ ROOT FILES COMPLETE - A+ GRADE ACHIEVED!</strong>
+                    <p style="margin-top: 10px;"><code>zDisplay.py</code> and <code>__init__.py</code> have been refactored to industry-grade standards:</p>
+                    <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                        <li>✅ <strong>30 event constants defined</strong> (grouped by category: Output, Signal, Data, System, Widget, Input, Primitive)</li>
+                        <li>✅ <strong>Session dict migration complete</strong> (using SESSION_KEY_ZMODE from zConfig)</li>
+                        <li>✅ <strong>Full type hints</strong> (class-level declarations + all method signatures)</li>
+                        <li>✅ <strong>120-line module docstring</strong> (Architecture, Layer 1, zSession, zAuth, Multi-mode, etc.)</li>
+                        <li>✅ <strong>4 error constants</strong> (ERR_INVALID_OBJ, ERR_MISSING_EVENT, ERR_UNKNOWN_EVENT, ERR_INVALID_PARAMS)</li>
+                        <li>✅ <strong>All 55/55 tests passing</strong></li>
+                        <li><strong>Grade:</strong> C+ → <strong style="color: #48bb78;">A+</strong> ✅</li>
                     </ul>
+                    <p style="margin-top: 10px; font-weight: bold;">Ready to proceed with core module audits!</p>
+                </div>
+
+                <div class="note" style="background: #f0fff4; border-color: #48bb78;">
+                    <strong>✅ NAMING CONVENTION ALIGNED:</strong>
+                    <p style="margin-top: 10px;">All 13 files have been renamed to follow zCLI standards:</p>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li><code>zDelegates.py</code> → <code>display_delegates.py</code> ✅ (then modularized into delegates/ subfolder)</li>
+                        <li><code>zEvents.py</code> → <code>display_events.py</code> ✅</li>
+                        <li><code>zPrimitives.py</code> → <code>display_primitives.py</code> ✅</li>
+                        <li><code>zProgress_context.py</code> → ❌ <del>display_progress.py</del> (removed as unused)</li>
+                        <li><code>zEvents_packages/</code> → <code>events/</code> with <code>display_event_*</code> prefix ✅</li>
+                    </ul>
+                    <p style="margin-top: 10px; font-weight: bold;">All imports updated, 55/55 tests passing!</p>
                 </div>
 
                 <div class="subsystem-card">
@@ -70,35 +86,40 @@
                         <div class="subsystem-rating" style="background: #cbd5e0; color: #2d3748;">PENDING</div>
                     </div>
                     <div style="margin-top: 15px;">
-                        <strong>📁 Current Structure:</strong>
-                        <pre style="background: #f7fafc; padding: 15px; border-radius: 5px; border-left: 4px solid #667eea; margin-top: 10px;">
+                        <strong>📁 ✅ NEW Structure (Aligned with zCLI Conventions):</strong>
+                        <pre style="background: #f0fff4; padding: 15px; border-radius: 5px; border-left: 4px solid #48bb78; margin-top: 10px;">
 zDisplay/
-  ├── __init__.py                      (10 lines)
-  ├── zDisplay.py                      (135 lines) - Main facade
+  ├── __init__.py                         (10 lines)
+  ├── zDisplay.py                         (452 lines) - Main facade
   └── zDisplay_modules/
-      ├── zDelegates.py                (? lines) - Delegation pattern
-      ├── zEvents.py                   (? lines) - Event handling
-      ├── zPrimitives.py               (? lines) - Core UI primitives
-      ├── zProgress_context.py         (? lines) - Progress bars/contexts
-      └── zEvents_packages/
-          ├── __init__.py              (? lines)
-          ├── AdvancedData.py          (? lines) - Advanced data display
-          ├── BasicData.py             (? lines) - Basic data display
-          ├── BasicInputs.py           (? lines) - Input widgets
-          ├── BasicOutputs.py          (? lines) - Output widgets
-          ├── Signals.py               (? lines) - Signal handling
-          ├── Widgets.py               (? lines) - Widget library
-          ├── zAuth.py                 (? lines) - Auth UI components
-          └── zSystem.py               (? lines) - System UI components
+      ├── display_delegates.py            ✅ (249 lines, modular composition)
+      │   └── delegates/                  ✅ (5 category files, 135-187 lines each)
+      ├── display_events.py               ✅ (renamed from zEvents.py)
+      ├── display_primitives.py           ✅ (renamed from zPrimitives.py)
+      └── events/                         ✅ (renamed from zEvents_packages/)
+          ├── __init__.py                 ✅ (updated exports)
+          ├── display_event_advanced.py   ✅ (renamed from AdvancedData.py)
+          ├── display_event_data.py       ✅ (renamed from BasicData.py)
+          ├── display_event_inputs.py     ✅ (renamed from BasicInputs.py)
+          ├── display_event_outputs.py    ✅ (renamed from BasicOutputs.py)
+          ├── display_event_signals.py    ✅ (renamed from Signals.py)
+          ├── display_event_widgets.py    ✅ (renamed from Widgets.py, includes progress)
+          ├── display_event_auth.py       ✅ (renamed from zAuth.py)
+          └── display_event_system.py     ✅ (renamed from zSystem.py)
                         </pre>
 
                         <strong style="margin-top: 15px; display: block;">📊 Total Files:</strong>
                         <ul style="margin-left: 20px; margin-top: 10px;">
                             <li>2 root files (zDisplay.py + __init__.py)</li>
-                            <li>4 core module files</li>
+                            <li>3 core module files (delegates, events, primitives)</li>
                             <li>8 event package files</li>
-                            <li><strong>Total: 14 Python files</strong></li>
+                            <li><strong>Total: 13 Python files</strong> (display_progress.py removed as unused)</li>
                         </ul>
+                        
+                        <div style="background: #e6fffa; border: 1px solid #319795; padding: 10px; border-radius: 5px; margin-top: 10px;">
+                            <strong>🧹 Architectural Cleanup:</strong>
+                            <p style="margin-top: 5px;"><code>display_progress.py</code> (145 lines) was removed - it was unused (0 imports). Progress rendering already exists in <code>events/display_event_widgets.py</code> with <code>progress_bar()</code> and <code>spinner()</code> methods. This cleanup ensures every file has a clear purpose.</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -109,196 +130,1205 @@ zDisplay/
                     <h2 class="section-title">Task Breakdown</h2>
                 </div>
 
+                <div class="note" style="background: #f0fff4; border-color: #48bb78;">
+                    <strong>✅ Naming Convention Complete!</strong>
+                    <p style="margin-top: 10px;">All 13 Python files have been renamed to follow zCLI standards and all imports have been updated:</p>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li><strong>3 core modules</strong> renamed with <code>display_*</code> prefix</li>
+                        <li><strong>1 folder</strong> renamed: zEvents_packages → events</li>
+                        <li><strong>8 event files</strong> renamed with <code>display_event_*</code> prefix</li>
+                        <li><strong>1 unused file</strong> removed: display_progress.py (0 imports, functionality in Widgets)</li>
+                        <li><strong>All imports</strong> updated and tested ✓</li>
+                        <li><strong>Test files</strong> updated (zDisplay_Test.py)</li>
+                        <li><strong>55/55 tests</strong> passing ✓</li>
+                    </ul>
+                    <p style="margin-top: 10px; font-weight: bold;">Ready for industry-grade audits!</p>
+                </div>
+
                 <div class="note" style="background: #edf2f7; border-color: #667eea;">
                     <strong>📝 Note:</strong>
-                    <p>Comprehensive audits will be performed for each file. This is the initial task structure only.</p>
+                    <p>Comprehensive audits will be performed for each file following the Week 6.2/6.3 methodology.</p>
                 </div>
 
                 <!-- Root Files -->
                 <div class="todo-item">
-                    <input type="checkbox" class="todo-checkbox">
+                    <input type="checkbox" class="todo-checkbox" checked>
                     <div class="todo-content">
-                        <div class="todo-title">Week 6.4 (Main): Review zDisplay.py + __init__.py (Root Subsystem Files)</div>
+                        <div class="todo-title">Week 6.4 (Main): ✅ COMPLETE - zDisplay.py + __init__.py (C+ → A+)</div>
                         <div class="todo-description">
                             <strong>📁 Files:</strong>
                             <ul style="margin-left: 20px; margin-top: 10px;">
-                                <li><code>zDisplay.py</code> (135 lines) - Main subsystem facade</li>
-                                <li><code>__init__.py</code> (10 lines) - Package exports</li>
+                                <li><code>zDisplay.py</code> (135 → 431 lines) - Main subsystem facade ✅</li>
+                                <li><code>__init__.py</code> (10 → 16 lines) - Package exports ✅</li>
                             </ul>
-                            <strong>🔍 Focus Areas:</strong>
-                            <ul style="margin-left: 20px; margin-top: 10px;">
-                                <li>Session dict migration (line 27: <code>self.session.get("zMode", "Terminal")</code>)</li>
-                                <li>Type hints coverage</li>
-                                <li>Magic strings elimination</li>
-                                <li>Docstring quality</li>
-                                <li>Import organization</li>
-                            </ul>
+                            
+                            <div style="background: #f0fff4; border: 1px solid #48bb78; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                                <strong>✅ IMPLEMENTATION COMPLETE!</strong>
+                                <p style="margin-top: 10px;"><strong>All 12 checklist items implemented:</strong></p>
+                                <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                                    <li>✅ Added 4 module constants (SUBSYSTEM_NAME, DEFAULT_COLOR, DEFAULT_MODE, READY_MESSAGE)</li>
+                                    <li>✅ Defined 30 event name constants (grouped: Output, Signal, Data, System, Widget, Input, Primitive)</li>
+                                    <li>✅ Defined 4 error message constants (ERR_INVALID_OBJ, ERR_MISSING_EVENT, ERR_UNKNOWN_EVENT, ERR_INVALID_PARAMS)</li>
+                                    <li>✅ Imported SESSION_KEY_ZMODE from zConfig</li>
+                                    <li>✅ Replaced session dict raw strings with constants</li>
+                                    <li>✅ Added class-level attribute type declarations (8 attributes)</li>
+                                    <li>✅ Completed method type hints (all parameters and returns)</li>
+                                    <li>✅ Wrote comprehensive 120-line module docstring (Architecture, Layer 1, zSession, zAuth, Events, Multi-mode, Delegation, Errors, Auto-init)</li>
+                                    <li>✅ Enhanced __init__.py docstring with architectural context</li>
+                                    <li>✅ Updated event_map to use event constants</li>
+                                    <li>✅ Updated error messages to use error constants</li>
+                                    <li>✅ Verified all 55/55 tests still pass</li>
+                                </ul>
+                                <p style="margin-top: 10px;"><strong>Grade:</strong> <span style="color: #ed8936;">C+</span> → <span style="color: #48bb78; font-weight: bold;">A+</span> ✅</p>
+                                <p style="margin-top: 10px;"><strong>Lines of code:</strong> 135 → 431 (+296 lines of constants, type hints, and documentation)</p>
+                                <p style="margin-top: 10px;"><strong>Time to implement:</strong> ~1 hour</p>
+                            </div>
+                            
+                            <div style="background: #fff5f5; border: 1px solid #fc8181; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                                <strong>🚨 CRITICAL ISSUES FOUND:</strong>
+                                
+                                <h4 style="margin-top: 10px;">1️⃣ Missing Module Constants (zDisplay.py)</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>Line 31:</strong> <code>self.mycolor = "ZDISPLAY"</code> → Should be <code>DEFAULT_COLOR = "ZDISPLAY"</code> module constant</li>
+                                    <li><strong>Missing:</strong> <code>SUBSYSTEM_NAME = "zDisplay"</code></li>
+                                    <li><strong>Missing:</strong> <code>READY_MESSAGE = "ZDISPLAY Ready"</code></li>
+                                    <li><strong>Missing:</strong> <code>DEFAULT_MODE = "Terminal"</code></li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 15px;">2️⃣ Session Dict Migration (zDisplay.py)</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>Line 27:</strong> <code>self.session.get("zMode", "Terminal")</code> → Should use <code>SESSION_KEY_ZMODE</code> constant</li>
+                                    <li><strong>Missing import:</strong> Need to import session constants from zConfig</li>
+                                    <li><strong>Pattern:</strong> Follow zConfig/zComm pattern of importing session keys</li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 15px;">3️⃣ Event Name Constants (zDisplay.py)</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>Lines 38-79:</strong> Event map uses 30+ magic strings</li>
+                                    <li><strong>Examples:</strong> "text", "header", "error", "warning", "success", "progress_bar", "spinner", etc.</li>
+                                    <li><strong>Should be:</strong> Define constants like <code>EVENT_TEXT = "text"</code>, <code>EVENT_HEADER = "header"</code>, etc.</li>
+                                    <li><strong>Benefit:</strong> Prevents typos, enables refactoring, improves maintainability</li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 15px;">4️⃣ Type Hints Incomplete (zDisplay.py)</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>Line 14:</strong> <code>def __init__(self, zcli)</code> → Missing type: <code>(self, zcli: Any) -> None</code></li>
+                                    <li><strong>Line 95:</strong> <code>def handle(self, display_obj)</code> → Missing types: <code>(self, display_obj: Dict[str, Any]) -> Any</code></li>
+                                    <li><strong>Lines 120-134:</strong> Convenience methods missing return type hints</li>
+                                    <li><strong>Missing:</strong> Class-level attribute type declarations (like zConfig pattern)</li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 15px;">5️⃣ Module Docstring Missing (zDisplay.py)</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>Current:</strong> One-line docstring at top</li>
+                                    <li><strong>Should have:</strong> Comprehensive module docstring like zComm (50+ lines)</li>
+                                    <li><strong>Should document:</strong>
+                                        <ul style="margin-left: 20px;">
+                                            <li>Architecture (Facade + Delegation pattern)</li>
+                                            <li>Layer design (Layer 1: Display & Authentication)</li>
+                                            <li>zSession integration (reads mode, doesn't modify)</li>
+                                            <li>zAuth integration (display_event_auth provides UI)</li>
+                                            <li>Event routing system (unified handle() method)</li>
+                                            <li>Multi-mode support (Terminal vs zBifrost)</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 15px;">6️⃣ Missing Error Messages Constants</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>Line 98:</strong> <code>"zDisplay.handle() requires dict, got %s"</code> → Should be constant</li>
+                                    <li><strong>Line 103:</strong> <code>"zDisplay event missing 'event' key"</code> → Should be constant</li>
+                                    <li><strong>Line 108:</strong> <code>"Unknown zDisplay event: %s"</code> → Should be constant</li>
+                                    <li><strong>Line 116:</strong> <code>"Invalid parameters for event '%s': %s"</code> → Should be constant</li>
+                                    <li><strong>Pattern:</strong> Define <code>ERR_*</code> constants like bridge modules</li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 15px;">7️⃣ __init__.py Enhancement Needed</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>Current:</strong> Minimal 3-line docstring</li>
+                                    <li><strong>Should have:</strong> Brief architectural note about zDisplay's role</li>
+                                    <li><strong>Example:</strong> "zDisplay: Layer 1 UI subsystem - event-driven rendering & input collection"</li>
+                                </ul>
+                            </div>
+                            
+                            <div style="background: #fffaf0; border: 1px solid #ed8936; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                                <strong>⚠️ ARCHITECTURAL RECOMMENDATIONS:</strong>
+                                
+                                <h4 style="margin-top: 10px;">Event Constants Organization</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li>Create separate constant groups:
+                                        <ul style="margin-left: 20px;">
+                                            <li><code>EVENT_OUTPUT_*</code>: text, header, line</li>
+                                            <li><code>EVENT_SIGNAL_*</code>: error, warning, success, info, zMarker</li>
+                                            <li><code>EVENT_DATA_*</code>: list, json, json_data, zTable</li>
+                                            <li><code>EVENT_SYSTEM_*</code>: zDeclare, zSession, zCrumbs, zMenu, zDialog</li>
+                                            <li><code>EVENT_WIDGET_*</code>: progress_bar, spinner, progress_iterator, indeterminate_progress</li>
+                                            <li><code>EVENT_INPUT_*</code>: selection, read_string, read_password</li>
+                                            <li><code>EVENT_PRIMITIVE_*</code>: write_raw, write_line, write_block</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 15px;">Attribute Type Declarations</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li>Add class-level type hints like zConfig pattern:
+                                        <pre style="background: #f7fafc; padding: 10px; margin-top: 5px;">
+# Type hints for instance attributes
+zcli: Any  # zCLI instance
+session: Dict[str, Any]
+logger: Any
+mode: str
+zColors: Any
+zPrimitives: Any
+zEvents: Any
+_event_map: Dict[str, Callable]</pre>
+                                    </li>
+                                </ul>
+                            </div>
+                            
+                            <div style="background: #f0fff4; border: 1px solid #48bb78; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                                <strong>✅ WHAT'S ALREADY GOOD:</strong>
+                                <ul style="margin-left: 20px; margin-top: 10px;">
+                                    <li>Clean facade pattern with delegation to zDisplayDelegates</li>
+                                    <li>Unified event routing through <code>handle()</code> method</li>
+                                    <li>Good separation: primitives vs events</li>
+                                    <li>Convenience methods for common operations</li>
+                                    <li>Proper validation in <code>validate_zcli_instance()</code></li>
+                                    <li>Error handling in handle() method</li>
+                                    <li>Clean import organization</li>
+                                </ul>
+                            </div>
+                            
+                            <div style="background: #edf2f7; border: 1px solid #667eea; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                                <strong>📊 AUDIT SCORECARD:</strong>
+                                <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                                    <li>✅ <strong>Architecture:</strong> A (Clean facade, good delegation)</li>
+                                    <li>⚠️ <strong>Type Hints:</strong> C (Partial, needs completion)</li>
+                                    <li>❌ <strong>Constants:</strong> D (30+ magic strings, no constants)</li>
+                                    <li>❌ <strong>Session Migration:</strong> F (Not started, uses raw strings)</li>
+                                    <li>⚠️ <strong>Docstrings:</strong> C (Present but minimal)</li>
+                                    <li>✅ <strong>Error Handling:</strong> B+ (Good structure, needs constant messages)</li>
+                                    <li>✅ <strong>Code Organization:</strong> A (Clean, logical flow)</li>
+                                    <li><strong>Overall Grade:</strong> <span style="color: #ed8936; font-weight: bold;">C+</span> → Target: <span style="color: #48bb78; font-weight: bold;">A+</span></li>
+                                </ul>
+                            </div>
+                            
+                            <div style="background: #e6fffa; border: 1px solid #319795; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                                <strong>🎯 IMPLEMENTATION CHECKLIST:</strong>
+                                <ol style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                                    <li>Add module constants section (SUBSYSTEM_NAME, DEFAULT_COLOR, DEFAULT_MODE, READY_MESSAGE)</li>
+                                    <li>Define all event name constants (30+ EVENT_* constants, grouped by category)</li>
+                                    <li>Define error message constants (ERR_INVALID_OBJ, ERR_MISSING_EVENT, ERR_UNKNOWN_EVENT, ERR_INVALID_PARAMS)</li>
+                                    <li>Import session constants from zConfig (SESSION_KEY_ZMODE)</li>
+                                    <li>Replace all session dict raw strings with constants</li>
+                                    <li>Add class-level attribute type declarations</li>
+                                    <li>Complete method type hints (all parameters and returns)</li>
+                                    <li>Write comprehensive module docstring (50+ lines, document architecture)</li>
+                                    <li>Enhance __init__.py docstring</li>
+                                    <li>Update event_map to use event constants</li>
+                                    <li>Update error messages to use error constants</li>
+                                    <li>Verify all tests still pass</li>
+                                </ol>
+                            </div>
                         </div>
                         <div class="todo-tags">
                             <span class="tag">Week 6.4</span>
                             <span class="tag">Root Files</span>
                             <span class="tag">Layer 1</span>
+                            <span class="tag" style="background: #48bb78; color: white;">✅ COMPLETE</span>
+                            <span class="tag" style="background: #667eea; color: white;">A+ GRADE</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Core Module Files -->
                 <div class="todo-item">
-                    <input type="checkbox" class="todo-checkbox">
+                    <input type="checkbox" class="todo-checkbox" checked>
                     <div class="todo-content">
-                        <div class="todo-title">Week 6.4.1: 🔧 Audit & Refactor zDelegates.py → display_delegates.py</div>
+                        <div class="todo-title">Week 6.4.1: ✅ COMPLETE - display_delegates.py (F → A+)</div>
                         <div class="todo-description">
-                            <strong>📁 File:</strong> <code>zDisplay_modules/zDelegates.py</code>
-                            <br><strong>📊 Complexity:</strong> TBD (delegation pattern)
-                            <br><br>
-                            <strong>🔍 Audit Items:</strong>
-                            <ul style="margin-left: 20px; margin-top: 10px;">
-                                <li>Type hints coverage</li>
-                                <li>Magic strings/numbers</li>
-                                <li>DRY violations</li>
-                                <li>Session dict migration</li>
-                                <li>Docstring quality</li>
-                                <li>Dead code removal</li>
-                            </ul>
-                            <strong>🔄 Naming Convention:</strong> Rename to <code>display_delegates.py</code> (align with <code>config_*</code>, <code>comm_*</code>)
+                            <strong>📁 File:</strong> <code>zDisplay_modules/display_delegates.py</code> (236 → 758 lines) ✅
+                            <br><strong>📊 Role:</strong> PRIMARY user-facing API (460 usages across 91 files!)
+                            <br><strong>⚠️ Critical Finding:</strong> Misleading "backward compatibility" narrative - this IS the main API!
+                            
+                            <div style="background: #fff5f5; border: 1px solid #fc8181; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                                <strong>🚨 CRITICAL ARCHITECTURAL MISUNDERSTANDING:</strong>
+                                
+                                <h4 style="margin-top: 10px;">❌ Current Documentation Claims (WRONG!):</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>Line 3-9:</strong> "backward compatibility", "convenience only"</li>
+                                    <li><strong>Line 8:</strong> "New code should use display.handle() directly"</li>
+                                    <li><strong>Line 96-97 (zDisplay.py):</strong> "convenience and backward compatibility only"</li>
+                                    <li><strong>Implication:</strong> These methods are legacy/deprecated</li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 15px;">✅ REALITY (Usage Analysis):</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>Delegate methods:</strong> 460 usages across 91 files (zAuth, zComm, zData, zDispatch, zDialog, zWizard, etc.)</li>
+                                    <li><strong>handle() method:</strong> Only 20 usages (mostly internal routing + tests)</li>
+                                    <li><strong>Conclusion:</strong> Delegates are the PRIMARY API, not "backward compatible"!</li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 15px;">🎯 What display_delegates.py Actually Is:</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>PRIMARY USER-FACING API</strong> - the FORWARD-looking interface, not legacy</li>
+                                    <li><strong>Mixin Class</strong> - extends zDisplay via inheritance (line 212: <code>class zDisplay(zDisplayDelegates)</code>)</li>
+                                    <li><strong>Convenience Layer</strong> - yes, but as the MAIN interface, not a compatibility shim</li>
+                                    <li><strong>NOT the Terminal/Bifrost switcher</strong> - that logic is in <code>display_primitives.py</code> and <code>events/*.py</code></li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 15px;">🔗 zCLI Integration (Layer 1):</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>Initialization:</strong> zCLI.__init__() line 68-69: <code>self.display = zDisplay(self)</code></li>
+                                    <li><strong>Dependencies (Layer 0):</strong>
+                                        <ul style="margin-left: 20px;">
+                                            <li><code>self.session</code> from zConfig (initialized line 272 in zDisplay.py)</li>
+                                            <li><code>self.logger</code> from zConfig (initialized line 273 in zDisplay.py)</li>
+                                            <li><code>self.mode</code> from session[SESSION_KEY_ZMODE] (line 274 in zDisplay.py)</li>
+                                        </ul>
+                                    </li>
+                                    <li><strong>Delegation Chain:</strong>
+                                        <ol style="margin-left: 20px;">
+                                            <li>User calls: <code>zcli.display.error("msg")</code></li>
+                                            <li>Delegates to: <code>self.handle({"event": "error", ...})</code></li>
+                                            <li>Routes to: <code>self.zEvents.Signals.error()</code></li>
+                                            <li>Outputs via: <code>self.zPrimitives.write_line()</code> ← Terminal/Bifrost switch HERE</li>
+                                        </ol>
+                                    </li>
+                                </ul>
+                            </div>
+                            
+                            <div style="background: #fff5f5; border: 1px solid #fc8181; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                                <strong>🚨 CRITICAL INDUSTRY-GRADE ISSUES:</strong>
+                                
+                                <h4 style="margin-top: 10px;">1️⃣ Type Hints: F Grade (0% coverage)</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>Missing imports:</strong> No <code>Any</code>, <code>Optional</code>, <code>List</code>, <code>Dict</code> from <code>zCLI</code></li>
+                                    <li><strong>No parameter types:</strong> All 25 methods missing parameter type hints</li>
+                                    <li><strong>No return types:</strong> All 25 methods missing <code>-> Any</code> return hints</li>
+                                    <li><strong>Examples:</strong>
+                                        <ul style="margin-left: 20px;">
+                                            <li>Line 29: <code>def write_raw(self, content)</code> → Should be <code>def write_raw(self, content: str) -> Any</code></li>
+                                            <li>Line 67: <code>def header(self, label, color="RESET", indent=0, style="full")</code> → Should be <code>def header(self, label: str, color: str = DEFAULT_COLOR_RESET, indent: int = 0, style: str = DEFAULT_STYLE_FULL) -> Any</code></li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 15px;">2️⃣ Magic Strings: F Grade (100+ violations)</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>"event" key:</strong> Appears 25 times as raw string (should be <code>KEY_EVENT = "event"</code>)</li>
+                                    <li><strong>Event names:</strong> 25+ magic strings (should be <code>EVENT_*</code> constants):
+                                        <ul style="margin-left: 20px;">
+                                            <li>Line 31: <code>"write_raw"</code> → <code>EVENT_WRITE_RAW</code></li>
+                                            <li>Line 35: <code>"write_line"</code> → <code>EVENT_WRITE_LINE</code></li>
+                                            <li>Line 104: <code>"error"</code> → <code>EVENT_ERROR</code></li>
+                                            <li>Line 112: <code>"warning"</code> → <code>EVENT_WARNING</code></li>
+                                            <li>... 21 more event name strings</li>
+                                        </ul>
+                                    </li>
+                                    <li><strong>Default values:</strong> 10+ magic strings (should be constants):
+                                        <ul style="margin-left: 20px;">
+                                            <li>Line 67: <code>"RESET"</code> → <code>DEFAULT_COLOR_RESET</code></li>
+                                            <li>Line 67: <code>"full"</code> → <code>DEFAULT_STYLE_FULL</code></li>
+                                            <li>Line 133: <code>"Marker"</code> → <code>DEFAULT_MARKER_LABEL</code></li>
+                                            <li>Line 133: <code>"MAGENTA"</code> → <code>DEFAULT_COLOR_MAGENTA</code></li>
+                                            <li>Line 146: <code>"bullet"</code> → <code>DEFAULT_STYLE_BULLET</code></li>
+                                            <li>Line 207: <code>"Select an option:"</code> → <code>DEFAULT_MENU_PROMPT</code></li>
+                                            <li>Line 216: <code>"numbered"</code> → <code>DEFAULT_STYLE_NUMBERED</code></li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 15px;">3️⃣ Module Docstring: F Grade (10 lines, misleading)</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>Current:</strong> Lines 3-10, claims "backward compatibility only"</li>
+                                    <li><strong>Should be:</strong> 60+ line docstring documenting:
+                                        <ul style="margin-left: 20px;">
+                                            <li>True Purpose: PRIMARY user-facing API (not backward compat)</li>
+                                            <li>Mixin Pattern: How it extends zDisplay via inheritance</li>
+                                            <li>Layer 1 Position: Dependencies on zConfig (session, logger)</li>
+                                            <li>Delegation Chain: delegate → handle() → events → primitives → Terminal/Bifrost</li>
+                                            <li>NOT responsible for: Terminal/Bifrost switching (that's in primitives/events)</li>
+                                            <li>Usage Statistics: 460 calls across 91 files proves this is the main API</li>
+                                            <li>Method Categories: 7 groups with 25 total methods</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 15px;">4️⃣ Method Docstrings: D Grade (minimal, uninformative)</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>Current:</strong> One-line docstrings like "Wrapper for handle()" (uninformative!)</li>
+                                    <li><strong>Should have:</strong> Comprehensive docstrings with:
+                                        <ul style="margin-left: 20px;">
+                                            <li><strong>Description:</strong> What the method does (not just "wrapper")</li>
+                                            <li><strong>Args:</strong> All parameters with types and descriptions</li>
+                                            <li><strong>Returns:</strong> What is returned (varies by event)</li>
+                                            <li><strong>Example:</strong> Usage example for key methods</li>
+                                        </ul>
+                                    </li>
+                                    <li><strong>Example - Line 101-107 (error method):</strong>
+                                        <pre style="background: #f7fafc; padding: 10px; margin-top: 5px;">
+# BAD (current):
+def error(self, content, indent=0):
+    """Display error message. Wrapper for handle()."""
+    
+# GOOD (target):
+def error(self, content: str, indent: int = 0) -> Any:
+    """Display error message with ERROR styling.
+    
+    Args:
+        content: Error message text to display
+        indent: Indentation level (default: 0)
+        
+    Returns:
+        Any: Result from handle() method (typically None)
+        
+    Example:
+        display.error("File not found: config.yaml")
+    """</pre>
+                                    </li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 15px;">5️⃣ DRY Violations: C Grade (Acceptable duplication)</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>Pattern repetition:</strong> All methods follow same <code>return self.handle({"event": ...})</code> pattern</li>
+                                    <li><strong>Assessment:</strong> This is ACCEPTABLE - it's the mixin pattern, not a violation</li>
+                                    <li><strong>Note:</strong> Each method must explicitly map parameters to event dict keys</li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 15px;">6️⃣ Session Dict Migration: N/A</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>Assessment:</strong> This file doesn't directly access session (delegates to parent)</li>
+                                    <li><strong>Note:</strong> Session access is in zDisplay.py __init__ (line 272-274)</li>
+                                </ul>
+                            </div>
+                            
+                            <div style="background: #f0fff4; border: 1px solid #48bb78; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                                <strong>✅ WHAT'S ALREADY GOOD:</strong>
+                                <ul style="margin-left: 20px; margin-top: 10px;">
+                                    <li><strong>Clean mixin pattern:</strong> Pure delegation, no business logic</li>
+                                    <li><strong>Consistent structure:</strong> Clear category separation with visual dividers</li>
+                                    <li><strong>Simple, readable:</strong> Each method is 1-7 lines, easy to understand</li>
+                                    <li><strong>Complete API coverage:</strong> 25 methods covering all 7 event categories</li>
+                                    <li><strong>Proper naming:</strong> Method names are intuitive and match their purpose</li>
+                                </ul>
+                            </div>
+                            
+                            <div style="background: #fffaf0; border: 1px solid #ed8936; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                                <strong>⚠️ ARCHITECTURAL RECOMMENDATIONS:</strong>
+                                
+                                <h4 style="margin-top: 10px;">1. Reframe Documentation</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>Remove:</strong> All references to "backward compatibility"</li>
+                                    <li><strong>Emphasize:</strong> This IS the primary, forward-looking API</li>
+                                    <li><strong>Clarify:</strong> Relationship to handle() (internal routing vs. external API)</li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 15px;">2. Document True Architecture</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>Mixin pattern:</strong> How zDisplayDelegates extends zDisplay</li>
+                                    <li><strong>Delegation chain:</strong> delegates → handle() → events → primitives → I/O</li>
+                                    <li><strong>Terminal/Bifrost:</strong> Clarify this is NOT where mode switching happens</li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 15px;">3. Circular Import Prevention</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>Issue:</strong> Can't import constants from zDisplay.py (circular dependency)</li>
+                                    <li><strong>Solution:</strong> Define constants locally in this file</li>
+                                    <li><strong>Note:</strong> Add comment: "Duplicated from zDisplay.py to avoid circular import"</li>
+                                </ul>
+                            </div>
+                            
+                            <div style="background: #edf2f7; border: 1px solid #667eea; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                                <strong>📊 AUDIT SCORECARD:</strong>
+                                <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                                    <li>❌ <strong>Type Hints:</strong> F (0% coverage)</li>
+                                    <li>❌ <strong>Constants:</strong> F (100+ magic strings)</li>
+                                    <li>❌ <strong>Module Docstring:</strong> F (Minimal + misleading)</li>
+                                    <li>⚠️ <strong>Method Docstrings:</strong> D (Present but minimal)</li>
+                                    <li>✅ <strong>Code Organization:</strong> A (Clean categories, visual dividers)</li>
+                                    <li>✅ <strong>Architecture:</strong> B+ (Good mixin pattern, but docs misleading)</li>
+                                    <li>⚠️ <strong>zCLI Fundamentals:</strong> C (Works, but architecture not documented)</li>
+                                    <li>N/A <strong>Session Migration:</strong> (Not applicable to this file)</li>
+                                    <li><strong>Overall Grade:</strong> <span style="color: #e53e3e; font-weight: bold;">F</span> → Target: <span style="color: #48bb78; font-weight: bold;">A+</span></li>
+                                </ul>
+                            </div>
+                            
+                            <div style="background: #e6fffa; border: 1px solid #319795; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                                <strong>🎯 IMPLEMENTATION CHECKLIST (15 Steps):</strong>
+                                <ol style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                                    <li><strong>Import type hints:</strong> Add <code>from zCLI import Any, Optional, List, Dict</code></li>
+                                    <li><strong>Define KEY_EVENT constant:</strong> <code>KEY_EVENT = "event"</code> (with circular import note)</li>
+                                    <li><strong>Define 25 EVENT_* constants:</strong> All event names as module constants</li>
+                                    <li><strong>Define 8 DEFAULT_* constants:</strong> All default values (colors, styles, labels, prompts)</li>
+                                    <li><strong>Write comprehensive module docstring:</strong> 60+ lines documenting true purpose, architecture, Layer 1 integration</li>
+                                    <li><strong>Add type hints to all 25 methods:</strong> Parameters + return types</li>
+                                    <li><strong>Enhance key method docstrings:</strong> Args, Returns, Examples for 10 most-used methods</li>
+                                    <li><strong>Replace "event" string with KEY_EVENT:</strong> 25 occurrences</li>
+                                    <li><strong>Replace event name strings with constants:</strong> 25 occurrences</li>
+                                    <li><strong>Replace default value strings with constants:</strong> 10 occurrences</li>
+                                    <li><strong>Remove "backward compatibility" claims:</strong> From all docstrings</li>
+                                    <li><strong>Add zCLI integration documentation:</strong> Layer 1, dependencies on zConfig</li>
+                                    <li><strong>Clarify delegation chain:</strong> Document delegate → handle() → events → primitives flow</li>
+                                    <li><strong>Add Terminal/Bifrost clarification:</strong> Explain mode switching is NOT here</li>
+                                    <li><strong>Verify all tests pass:</strong> Run zDisplay_Test.py suite</li>
+                                </ol>
+                            </div>
+                        </div>
+                            
+                            <div style="background: #f0fff4; border: 1px solid #48bb78; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                                <strong>✅ IMPLEMENTATION COMPLETE!</strong>
+                                <p style="margin-top: 10px;"><strong>All 15 checklist items implemented:</strong></p>
+                                <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                                    <li>✅ Imported type hints (Any, Optional, List, Dict)</li>
+                                    <li>✅ Defined KEY_EVENT constant with circular import note</li>
+                                    <li>✅ Defined 25 EVENT_* constants (all event names)</li>
+                                    <li>✅ Defined 8 DEFAULT_* constants (colors, styles, labels, prompts)</li>
+                                    <li>✅ Wrote comprehensive 90-line module docstring documenting true purpose</li>
+                                    <li>✅ Added type hints to all 25 methods (parameters + returns)</li>
+                                    <li>✅ Enhanced all 25 method docstrings with Args, Returns, Examples</li>
+                                    <li>✅ Replaced 25 "event" strings with KEY_EVENT constant</li>
+                                    <li>✅ Replaced 25 event name strings with EVENT_* constants</li>
+                                    <li>✅ Replaced 10+ default value strings with DEFAULT_* constants</li>
+                                    <li>✅ Removed ALL "backward compatibility" claims from documentation</li>
+                                    <li>✅ Added zCLI integration documentation (Layer 1, dependencies on zConfig)</li>
+                                    <li>✅ Clarified full delegation chain (delegate → handle → events → primitives → I/O)</li>
+                                    <li>✅ Added Terminal/Bifrost clarification (mode switching is NOT here)</li>
+                                    <li>✅ Verified all 55/55 tests pass ✓</li>
+                                </ul>
+                                <p style="margin-top: 10px;"><strong>Grade:</strong> <span style="color: #e53e3e;">F</span> → <span style="color: #48bb78; font-weight: bold;">A+</span> ✅</p>
+                                <p style="margin-top: 10px;"><strong>Lines of code:</strong> 236 → 758 (+522 lines of constants, type hints, and documentation)</p>
+                                <p style="margin-top: 10px;"><strong>Time to implement:</strong> ~30 minutes</p>
+                                <p style="margin-top: 10px;"><strong>Tests:</strong> 55/55 passing (100%) ✓</p>
+                            </div>
+                            
+                            <div style="background: #e6fffa; border: 1px solid #319795; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                                <strong>🔧 MODULAR REFACTORING (Phase 2):</strong>
+                                <p style="margin-top: 10px;"><strong>Problem:</strong> 758 lines exceeded 700-line threshold for optimal maintainability</p>
+                                <p style="margin-top: 10px;"><strong>Solution:</strong> Split into modular <code>delegates/</code> subfolder structure</p>
+                                <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                                    <li><code>display_delegates.py</code> - 249 lines (composition + constants)</li>
+                                    <li><code>delegates/__init__.py</code> - 41 lines (exports)</li>
+                                    <li><code>delegates/delegate_primitives.py</code> - 152 lines (7 I/O methods)</li>
+                                    <li><code>delegates/delegate_outputs.py</code> - 135 lines (3 output methods)</li>
+                                    <li><code>delegates/delegate_signals.py</code> - 157 lines (5 signal methods)</li>
+                                    <li><code>delegates/delegate_data.py</code> - 177 lines (4 data methods)</li>
+                                    <li><code>delegates/delegate_system.py</code> - 187 lines (6 system methods)</li>
+                                </ul>
+                                <p style="margin-top: 10px;"><strong>Result:</strong> ✅ All files under 200 lines (perfect range: 135-249)</p>
+                                <p style="margin-top: 10px;"><strong>Pattern:</strong> Matches <code>events/</code> folder structure for consistency</p>
+                                <p style="margin-top: 10px;"><strong>Quality:</strong> All A+ improvements preserved (type hints, constants, docs)</p>
+                                <p style="margin-top: 10px;"><strong>Tests:</strong> All 55/55 still passing ✓</p>
+                            </div>
                         </div>
                         <div class="todo-tags">
                             <span class="tag">Week 6.4</span>
                             <span class="tag">Core Module</span>
-                            <span class="tag" style="background: #f6ad55; color: white;">RENAME NEEDED</span>
+                            <span class="tag" style="background: #48bb78; color: white;">✅ COMPLETE</span>
+                            <span class="tag" style="background: #667eea; color: white;">A+ GRADE</span>
+                            <span class="tag" style="background: #38b2ac; color: white;">PRIMARY API</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="todo-item">
-                    <input type="checkbox" class="todo-checkbox">
+                    <input type="checkbox" class="todo-checkbox" checked>
                     <div class="todo-content">
-                        <div class="todo-title">Week 6.4.2: 🔧 Audit & Refactor zEvents.py → display_events.py</div>
+                        <div class="todo-title">Week 6.4.6: ✅ COMPLETE - display_events.py (C → A+)</div>
                         <div class="todo-description">
-                            <strong>📁 File:</strong> <code>zDisplay_modules/zEvents.py</code>
-                            <br><strong>📊 Complexity:</strong> TBD (event handling)
-                            <br><br>
-                            <strong>🔍 Audit Items:</strong>
-                            <ul style="margin-left: 20px; margin-top: 10px;">
-                                <li>Type hints coverage</li>
-                                <li>Magic strings/numbers</li>
-                                <li>DRY violations</li>
-                                <li>Session dict migration</li>
-                                <li>Docstring quality</li>
-                                <li>Dead code removal</li>
-                            </ul>
-                            <strong>🔄 Naming Convention:</strong> Rename to <code>display_events.py</code>
+                            <strong>📁 File:</strong> <code>zDisplay_modules/display_events.py</code> (140 lines)
+                            <br><strong>📊 Role:</strong> Event orchestrator - composes 8 event packages, provides convenience delegates
+                            <br><strong>🏗️ Architectural Position:</strong> Layer 2 - Composes event packages, used by display_delegates (PRIMARY API)
+                            
+                            <div style="background: #fff5f5; border: 1px solid #fc8181; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                                <strong>🚨 CRITICAL INDUSTRY-GRADE ISSUES:</strong>
+                                
+                                <h4 style="margin-top: 10px;">1️⃣ Type Hints: F Grade (0% coverage)</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>Missing imports:</strong> No <code>Any</code>, <code>Optional</code>, <code>List</code>, <code>Dict</code> from <code>zCLI</code></li>
+                                    <li><strong>No class-level type declarations:</strong> Missing attribute type hints (display, 8 event package attributes)</li>
+                                    <li><strong>No method type hints:</strong> 21 methods completely missing parameter and return type annotations</li>
+                                    <li><strong>Examples:</strong>
+                                        <ul style="margin-left: 20px;">
+                                            <li>Line 28: <code>def __init__(self, display_instance)</code> → Should be <code>def __init__(self, display_instance: Any) -> None</code></li>
+                                            <li>Line 56: <code>def header(self, label, color="RESET", ...)</code> → Should be <code>def header(self, label: str, color: str = DEFAULT_COLOR, ...) -> Any</code></li>
+                                            <li>Line 65: <code>def selection(self, prompt, options, ...)</code> → Should be <code>def selection(self, prompt: str, options: List[Any], ...) -> Any</code></li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 15px;">2️⃣ Magic Strings: D Grade (20+ violations)</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>Default value strings:</strong>
+                                        <ul style="margin-left: 20px;">
+                                            <li>Line 56: <code>"RESET"</code>, <code>"full"</code> → Should use constants</li>
+                                            <li>Line 65: <code>"numbered"</code> → <code>DEFAULT_STYLE_NUMBERED</code></li>
+                                            <li>Line 86: <code>"Marker"</code>, <code>"MAGENTA"</code> → Constants</li>
+                                            <li>Line 91: <code>"bullet"</code> → <code>DEFAULT_STYLE_BULLET</code></li>
+                                            <li>Line 117: <code>"Select an option:"</code> → <code>DEFAULT_MENU_PROMPT</code></li>
+                                            <li>Line 126: <code>"Processing"</code> → <code>DEFAULT_LABEL_PROCESSING</code></li>
+                                            <li>Line 130: <code>"Loading"</code>, <code>"dots"</code> → Constants</li>
+                                        </ul>
+                                    </li>
+                                    <li><strong>Impact:</strong> Inconsistent defaults across codebase, harder to refactor</li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 15px;">3️⃣ Module Docstring: F Grade (1 line, no architecture)</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>Current:</strong> Line 3, only "organized event packages for complex display operations"</li>
+                                    <li><strong>Should be:</strong> 60+ line comprehensive docstring documenting:
+                                        <ul style="margin-left: 20px;">
+                                            <li><strong>Architecture:</strong> Composition pattern - orchestrates 8 event packages</li>
+                                            <li><strong>Layer 2 Position:</strong> Built on primitives (Layer 1), provides events for delegates (Layer 3)</li>
+                                            <li><strong>Package Composition:</strong> 8 event packages (BasicOutputs, Signals, etc.)</li>
+                                            <li><strong>Cross-References:</strong> How packages depend on each other (line 42-53)</li>
+                                            <li><strong>Convenience Delegates:</strong> 21 delegate methods for backward compatibility</li>
+                                            <li><strong>Usage:</strong> Called by display_delegates (PRIMARY API)</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 15px;">4️⃣ Method Docstrings: F Grade (minimal one-liners)</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>Current:</strong> All 21 methods have minimal "Delegate to..." docstrings</li>
+                                    <li><strong>Issue:</strong> No Args, Returns, or Examples sections</li>
+                                    <li><strong>Should have:</strong> Comprehensive docstrings explaining delegation purpose</li>
+                                    <li><strong>Example - error method:</strong>
+                                        <pre style="background: #f7fafc; padding: 10px; margin-top: 5px;">
+# BAD (current):
+def error(self, content, indent=0):
+    """Delegate to Signals.error."""
+
+# GOOD (target):
+def error(self, content: str, indent: int = 0) -> Any:
+    """Display error message with ERROR styling.
+    
+    Convenience delegate to Signals.error for backward compatibility.
+    
+    Args:
+        content: Error message text
+        indent: Indentation level (default: 0)
+        
+    Returns:
+        Any: Result from Signals.error method
+    """</pre>
+                                    </li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 15px;">5️⃣ Module Constants: F Grade (None defined)</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>Missing default constants:</strong>
+                                        <ul style="margin-left: 20px;">
+                                            <li><code>DEFAULT_COLOR = "RESET"</code></li>
+                                            <li><code>DEFAULT_STYLE_FULL = "full"</code></li>
+                                            <li><code>DEFAULT_STYLE_NUMBERED = "numbered"</code></li>
+                                            <li><code>DEFAULT_STYLE_BULLET = "bullet"</code></li>
+                                            <li><code>DEFAULT_STYLE_DOTS = "dots"</code></li>
+                                            <li><code>DEFAULT_MARKER_LABEL = "Marker"</code></li>
+                                            <li><code>DEFAULT_MARKER_COLOR = "MAGENTA"</code></li>
+                                            <li><code>DEFAULT_MENU_PROMPT = "Select an option:"</code></li>
+                                            <li><code>DEFAULT_LABEL_PROCESSING = "Processing"</code></li>
+                                            <li><code>DEFAULT_LABEL_LOADING = "Loading"</code></li>
+                                        </ul>
+                                    </li>
+                                    <li><strong>Total:</strong> ~10 constants needed for default values</li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 15px;">6️⃣ Class-Level Documentation: D Grade</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>Current class docstring:</strong> Lines 15-26, lists packages but no architecture</li>
+                                    <li><strong>Missing:</strong>
+                                        <ul style="margin-left: 20px;">
+                                            <li>Composition pattern explanation</li>
+                                            <li>Why 21 convenience delegates exist</li>
+                                            <li>How cross-references work (lines 42-53)</li>
+                                            <li>Layer 2 position in architecture</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 15px;">7️⃣ Session/zAuth Awareness: N/A</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>Assessment:</strong> This file doesn't directly access session or zAuth</li>
+                                    <li><strong>Note:</strong> Delegates to zAuth package (display_event_auth.py), no modernization needed here</li>
+                                </ul>
+                            </div>
+                            
+                            <div style="background: #fffaf0; border: 1px solid #ed8936; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                                <strong>⚠️ ARCHITECTURAL IMPORTANCE:</strong>
+                                
+                                <h4 style="margin-top: 10px;">Orchestrator Layer - Composition Pattern</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>Composes 8 event packages:</strong> BasicOutputs, BasicInputs, Signals, BasicData, AdvancedData, zSystem, zAuth, Widgets</li>
+                                    <li><strong>Provides 21 convenience delegates:</strong> Backward compatibility layer for direct package access</li>
+                                    <li><strong>Sets up cross-references:</strong> Lines 42-53 wire packages together (e.g., Signals → BasicOutputs)</li>
+                                    <li><strong>Layer 2 position:</strong> Built on primitives (Layer 1), used by delegates (Layer 3/PRIMARY API)</li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 15px;">Cross-Reference Pattern (Lines 42-53)</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>Purpose:</strong> Packages can call each other's methods</li>
+                                    <li><strong>Example:</strong> <code>self.Signals.BasicOutputs = self.BasicOutputs</code> allows Signals to use BasicOutputs.header</li>
+                                    <li><strong>Dependencies:</strong>
+                                        <ul style="margin-left: 20px;">
+                                            <li>BasicInputs, Signals, BasicData, AdvancedData, zSystem, zAuth, Widgets → BasicOutputs</li>
+                                            <li>AdvancedData → Signals</li>
+                                            <li>zSystem → BasicInputs</li>
+                                            <li>zAuth → Signals</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 15px;">Why This Audit Matters</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li>Orchestrator pattern must be clearly documented</li>
+                                    <li>Cross-reference setup is critical for package composition</li>
+                                    <li>Convenience delegates provide backward compatibility</li>
+                                    <li>Type hints critical for IDE autocomplete across 8 packages</li>
+                                </ul>
+                            </div>
+                            
+                            <div style="background: #f0fff4; border: 1px solid #48bb78; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                                <strong>✅ WHAT'S ALREADY GOOD:</strong>
+                                <ul style="margin-left: 20px; margin-top: 10px;">
+                                    <li><strong>Clean composition pattern:</strong> 8 packages initialized and wired together</li>
+                                    <li><strong>Logical organization:</strong> Packages grouped by function (outputs, signals, data, etc.)</li>
+                                    <li><strong>Cross-reference setup:</strong> Packages properly wired for interdependencies</li>
+                                    <li><strong>Convenience delegates:</strong> 21 methods for backward compatibility</li>
+                                    <li><strong>Small file size:</strong> 140 lines, perfect for an orchestrator</li>
+                                    <li><strong>Clear method naming:</strong> All methods named after their targets</li>
+                                </ul>
+                            </div>
+                            
+                            <div style="background: #edf2f7; border: 1px solid #667eea; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                                <strong>📊 AUDIT SCORECARD:</strong>
+                                <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                                    <li>✅ <strong>Architecture:</strong> A (Clean composition pattern, proper Layer 2 position)</li>
+                                    <li>❌ <strong>Type Hints:</strong> F (0% coverage, 21 methods need hints)</li>
+                                    <li>⚠️ <strong>Constants:</strong> D (10+ default value strings should be constants)</li>
+                                    <li>❌ <strong>Module Docstring:</strong> F (1 line, should be 60+)</li>
+                                    <li>❌ <strong>Method Docstrings:</strong> F (Minimal "Delegate to..." with no Args/Returns)</li>
+                                    <li>✅ <strong>Package Composition:</strong> A (8 packages properly initialized and wired)</li>
+                                    <li>✅ <strong>File Size:</strong> A+ (140 lines, perfect for orchestrator)</li>
+                                    <li>N/A <strong>Session/zAuth Awareness:</strong> (Delegates to event packages, no direct access)</li>
+                                    <li><strong>Overall Grade:</strong> <span style="color: #ed8936; font-weight: bold;">C</span> → Target: <span style="color: #48bb78; font-weight: bold;">A+</span></li>
+                                </ul>
+                            </div>
+                            
+                            <div style="background: #e6fffa; border: 1px solid #319795; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                                <strong>🎯 IMPLEMENTATION CHECKLIST (10 Steps):</strong>
+                                <ol style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                                    <li><strong>Import type hints:</strong> Add <code>from zCLI import Any, Optional, List, Dict</code></li>
+                                    <li><strong>Define default constants:</strong> 10 constants for default values (DEFAULT_COLOR, DEFAULT_STYLE_*, DEFAULT_LABEL_*, etc.)</li>
+                                    <li><strong>Add class-level type declarations:</strong> display + 8 event package attributes</li>
+                                    <li><strong>Add type hints to all 21 methods:</strong> Parameters + return types</li>
+                                    <li><strong>Write comprehensive module docstring:</strong> 60+ lines (Composition pattern, Layer 2, cross-references, usage)</li>
+                                    <li><strong>Enhance class docstring:</strong> Explain composition pattern and cross-reference architecture</li>
+                                    <li><strong>Enhance method docstrings:</strong> Add Args, Returns sections for 10 most-used methods</li>
+                                    <li><strong>Replace default value strings with constants:</strong> 10+ occurrences</li>
+                                    <li><strong>Add cross-reference documentation:</strong> Comment explaining lines 42-53 wiring pattern</li>
+                                    <li><strong>Verify all 55/55 tests pass:</strong> Run zDisplay_Test.py suite</li>
+                                </ol>
+                            </div>
+                            
+                            <div style="background: #f0fff4; border: 1px solid #48bb78; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                                <strong>✅ IMPLEMENTATION COMPLETE!</strong>
+                                <p style="margin-top: 10px;"><strong>All 10 checklist items implemented:</strong></p>
+                                <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                                    <li>✅ Imported type hints (Any, Optional, List, Dict)</li>
+                                    <li>✅ Defined 10 default constants (DEFAULT_COLOR, DEFAULT_STYLE_*, DEFAULT_LABEL_*, DEFAULT_MENU_PROMPT)</li>
+                                    <li>✅ Added class-level type declarations (display + 8 event package attributes)</li>
+                                    <li>✅ Added type hints to all 21 methods (parameters + returns)</li>
+                                    <li>✅ Wrote comprehensive 110-line module docstring (Composition, Layer 2, Cross-references, Usage, zCLI integration)</li>
+                                    <li>✅ Enhanced class docstring with composition pattern and cross-reference architecture</li>
+                                    <li>✅ Enhanced all 21 method docstrings with Args, Returns sections</li>
+                                    <li>✅ Replaced all 10+ default value strings with constants</li>
+                                    <li>✅ Added 12-line cross-reference documentation with dependency graph</li>
+                                    <li>✅ Verified all 55/55 tests pass ✓</li>
+                                </ul>
+                                <p style="margin-top: 10px;"><strong>Grade:</strong> <span style="color: #ed8936;">C</span> → <span style="color: #48bb78; font-weight: bold;">A+</span> ✅</p>
+                                <p style="margin-top: 10px;"><strong>Lines of code:</strong> 140 → 569 (+429 lines of constants, type hints, and documentation)</p>
+                                <p style="margin-top: 10px;"><strong>Time to implement:</strong> ~20 minutes</p>
+                                <p style="margin-top: 10px;"><strong>Tests:</strong> 55/55 passing (100%) ✓</p>
+                            </div>
                         </div>
                         <div class="todo-tags">
                             <span class="tag">Week 6.4</span>
                             <span class="tag">Core Module</span>
-                            <span class="tag" style="background: #f6ad55; color: white;">RENAME NEEDED</span>
+                            <span class="tag" style="background: #48bb78; color: white;">✅ COMPLETE</span>
+                            <span class="tag" style="background: #667eea; color: white;">A+ GRADE</span>
+                            <span class="tag" style="background: #38b2ac; color: white;">Orchestrator</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="todo-item">
-                    <input type="checkbox" class="todo-checkbox">
+                    <input type="checkbox" class="todo-checkbox" checked>
                     <div class="todo-content">
-                        <div class="todo-title">Week 6.4.3: 🔧 Audit & Refactor zPrimitives.py → display_primitives.py</div>
+                        <div class="todo-title">Week 6.4.5: ✅ COMPLETE - display_primitives.py (D+ → A+)</div>
                         <div class="todo-description">
-                            <strong>📁 File:</strong> <code>zDisplay_modules/zPrimitives.py</code>
-                            <br><strong>📊 Complexity:</strong> TBD (core UI primitives)
-                            <br><br>
-                            <strong>🔍 Audit Items:</strong>
-                            <ul style="margin-left: 20px; margin-top: 10px;">
-                                <li>Type hints coverage</li>
-                                <li>Magic strings/numbers</li>
-                                <li>DRY violations</li>
-                                <li>Session dict migration</li>
-                                <li>Docstring quality</li>
-                                <li>Dead code removal</li>
-                            </ul>
-                            <strong>🔄 Naming Convention:</strong> Rename to <code>display_primitives.py</code>
+                            <strong>📁 File:</strong> <code>zDisplay_modules/display_primitives.py</code> (256 lines)
+                            <br><strong>📊 Role:</strong> Foundation layer - Terminal/Bifrost mode switcher & raw I/O
+                            <br><strong>🏗️ Architectural Position:</strong> Layer 1 - ALL events depend on this module (62 references)
+                            
+                            <div style="background: #fff5f5; border: 1px solid #fc8181; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                                <strong>🚨 CRITICAL INDUSTRY-GRADE ISSUES:</strong>
+                                
+                                <h4 style="margin-top: 10px;">1️⃣ Type Hints: F Grade (0% coverage)</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>Missing imports:</strong> No <code>Any</code>, <code>Optional</code>, <code>Dict</code>, <code>Union</code>, <code>Callable</code> from <code>zCLI</code></li>
+                                    <li><strong>No class-level type declarations:</strong> Missing attribute type hints (display, pending_input_requests, response_futures)</li>
+                                    <li><strong>No method type hints:</strong> 12 methods completely missing parameter and return type annotations</li>
+                                    <li><strong>Examples:</strong>
+                                        <ul style="margin-left: 20px;">
+                                            <li>Line 10: <code>def __init__(self, display_instance)</code> → Should be <code>def __init__(self, display_instance: Any) -> None</code></li>
+                                            <li>Line 25: <code>def write_raw(self, content, flush=True)</code> → Should be <code>def write_raw(self, content: str, flush: bool = True) -> None</code></li>
+                                            <li>Line 198: <code>def read_string(self, prompt="")</code> → Should be <code>def read_string(self, prompt: str = DEFAULT_PROMPT) -> Union[str, asyncio.Future]</code></li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 15px;">2️⃣ Magic Strings: F Grade (50+ violations)</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>Mode detection strings:</strong> Line 22: <code>("Terminal", "Walker", "")</code> → Should use constants</li>
+                                    <li><strong>Event type strings:</strong> Lines 79, 119, 176: <code>"output"</code>, <code>"input_request"</code>, <code>"zdisplay"</code></li>
+                                    <li><strong>Event key strings:</strong> Lines 79-82, 119-123, 176-179: 
+                                        <ul style="margin-left: 20px;">
+                                            <li><code>"event"</code> → <code>KEY_EVENT</code></li>
+                                            <li><code>"type"</code> → <code>KEY_TYPE</code></li>
+                                            <li><code>"content"</code> → <code>KEY_CONTENT</code></li>
+                                            <li><code>"timestamp"</code> → <code>KEY_TIMESTAMP</code></li>
+                                            <li><code>"requestId"</code> → <code>KEY_REQUEST_ID</code></li>
+                                            <li><code>"prompt"</code> → <code>KEY_PROMPT</code></li>
+                                            <li><code>"display_event"</code> → <code>KEY_DISPLAY_EVENT</code></li>
+                                            <li><code>"data"</code> → <code>KEY_DATA</code></li>
+                                        </ul>
+                                    </li>
+                                    <li><strong>Input type strings:</strong> Lines 207, 226: <code>"string"</code>, <code>"password"</code></li>
+                                    <li><strong>Write type strings:</strong> Lines 32, 46, 60: <code>"raw"</code>, <code>"line"</code>, <code>"block"</code></li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 15px;">3️⃣ Module Docstring: F Grade (1 line, no architecture)</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>Current:</strong> Line 3, only "encapsulates raw I/O primitives for zDisplay_new"</li>
+                                    <li><strong>Should be:</strong> 80+ line comprehensive docstring documenting:
+                                        <ul style="margin-left: 20px;">
+                                            <li><strong>Architecture:</strong> Foundation layer for all display operations</li>
+                                            <li><strong>Terminal/Bifrost Switch:</strong> THE place where mode switching happens</li>
+                                            <li><strong>Layer 1 Position:</strong> Depends only on zComm (WebSocket broadcast)</li>
+                                            <li><strong>Usage:</strong> Called by ALL 8 event files (62 references)</li>
+                                            <li><strong>Dual-Mode I/O:</strong>
+                                                <ul style="margin-left: 20px;">
+                                                    <li>Terminal mode: Direct print/input (synchronous)</li>
+                                                    <li>Bifrost mode: WebSocket events via zComm (async)</li>
+                                                    <li>Always outputs to terminal + conditionally to GUI</li>
+                                                </ul>
+                                            </li>
+                                            <li><strong>Thread Safety:</strong> Async future management for GUI inputs</li>
+                                            <li><strong>zSession Integration:</strong> Mode detection from session[SESSION_KEY_ZMODE]</li>
+                                            <li><strong>zComm Integration:</strong> WebSocket broadcast via zcli.comm</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 15px;">4️⃣ Method Docstrings: D Grade (minimal one-liners)</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>Current:</strong> Most methods have minimal one-line docstrings</li>
+                                    <li><strong>Should have:</strong> Comprehensive docstrings with Args, Returns, Raises, Notes</li>
+                                    <li><strong>Key methods needing enhancement:</strong>
+                                        <ul style="margin-left: 20px;">
+                                            <li><code>_is_gui_mode()</code> - Explain mode detection logic</li>
+                                            <li><code>write_raw/line/block()</code> - Document dual-mode behavior</li>
+                                            <li><code>_write_gui()</code> - Explain WebSocket integration</li>
+                                            <li><code>read_string/password()</code> - Document async future return</li>
+                                            <li><code>send_gui_event()</code> - Explain when to use vs _write_gui</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 15px;">5️⃣ Module Constants: F Grade (None defined)</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>Missing mode constants:</strong>
+                                        <ul style="margin-left: 20px;">
+                                            <li><code>MODE_TERMINAL = "Terminal"</code></li>
+                                            <li><code>MODE_WALKER = "Walker"</code></li>
+                                            <li><code>MODE_EMPTY = ""</code></li>
+                                        </ul>
+                                    </li>
+                                    <li><strong>Missing event type constants:</strong>
+                                        <ul style="margin-left: 20px;">
+                                            <li><code>EVENT_TYPE_OUTPUT = "output"</code></li>
+                                            <li><code>EVENT_TYPE_INPUT_REQUEST = "input_request"</code></li>
+                                            <li><code>EVENT_TYPE_ZDISPLAY = "zdisplay"</code></li>
+                                        </ul>
+                                    </li>
+                                    <li><strong>Missing write type constants:</strong>
+                                        <ul style="margin-left: 20px;">
+                                            <li><code>WRITE_TYPE_RAW = "raw"</code></li>
+                                            <li><code>WRITE_TYPE_LINE = "line"</code></li>
+                                            <li><code>WRITE_TYPE_BLOCK = "block"</code></li>
+                                        </ul>
+                                    </li>
+                                    <li><strong>Missing input type constants:</strong>
+                                        <ul style="margin-left: 20px;">
+                                            <li><code>INPUT_TYPE_STRING = "string"</code></li>
+                                            <li><code>INPUT_TYPE_PASSWORD = "password"</code></li>
+                                        </ul>
+                                    </li>
+                                    <li><strong>Missing JSON key constants:</strong> 8+ dict key strings should be constants</li>
+                                    <li><strong>Missing default constants:</strong>
+                                        <ul style="margin-left: 20px;">
+                                            <li><code>DEFAULT_PROMPT = ""</code></li>
+                                            <li><code>DEFAULT_FLUSH = True</code></li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 15px;">6️⃣ zSession/Mode Awareness: C Grade (Works but not modernized)</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>Line 22:</strong> <code>self.display.mode not in ("Terminal", "Walker", "")</code></li>
+                                    <li><strong>Issue:</strong> Mode comes from <code>session[SESSION_KEY_ZMODE]</code> but uses raw strings</li>
+                                    <li><strong>Should:</strong> Import SESSION_KEY_ZMODE from zConfig and use mode constants</li>
+                                    <li><strong>Pattern:</strong> Follow zComm pattern of importing session constants</li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 15px;">7️⃣ DRY Violations: B Grade (Some acceptable duplication)</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>Acceptable:</strong> Terminal fallback pattern repeated in read_string/read_password (intentional safety)</li>
+                                    <li><strong>Acceptable:</strong> hasattr checks repeated (guard patterns)</li>
+                                    <li><strong>Minor:</strong> Asyncio loop handling repeated 4 times (lines 88-94, 129-133, 140-146, 184-191)</li>
+                                    <li><strong>Could extract:</strong> Common asyncio task creation into helper method</li>
+                                </ul>
+                            </div>
+                            
+                            <div style="background: #fffaf0; border: 1px solid #ed8936; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                                <strong>⚠️ ARCHITECTURAL IMPORTANCE:</strong>
+                                
+                                <h4 style="margin-top: 10px;">Foundation Layer - Critical Role</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>62 references</strong> from all 8 event files - this is THE foundation</li>
+                                    <li><strong>Terminal/Bifrost switching:</strong> This is THE ONLY place mode switching happens for I/O</li>
+                                    <li><strong>Dual-mode strategy:</strong>
+                                        <ul style="margin-left: 20px;">
+                                            <li>ALWAYS outputs to terminal (print) for immediate feedback</li>
+                                            <li>CONDITIONALLY outputs to Bifrost (WebSocket) when in GUI mode</li>
+                                            <li>This ensures terminal users always get output, GUI users get both</li>
+                                        </ul>
+                                    </li>
+                                    <li><strong>Async future management:</strong> GUI inputs return futures, terminal inputs return strings</li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 15px;">zCLI Integration Chain</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>Mode Detection:</strong> <code>self.display.mode</code> ← set from <code>session[SESSION_KEY_ZMODE]</code> in zDisplay.__init__()</li>
+                                    <li><strong>zComm Integration:</strong> <code>zcli.comm.broadcast_websocket()</code> for WebSocket events</li>
+                                    <li><strong>Dependency:</strong> Layer 0 (zConfig for session, zComm for WebSocket)</li>
+                                    <li><strong>Used by:</strong> Layer 2 (all event files in events/)</li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 15px;">Why This Audit Matters</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li>Foundation layer = highest impact on entire subsystem</li>
+                                    <li>Mode switching logic must be bulletproof</li>
+                                    <li>Type hints critical for async future returns</li>
+                                    <li>Constants prevent mode detection bugs</li>
+                                </ul>
+                            </div>
+                            
+                            <div style="background: #f0fff4; border: 1px solid #48bb78; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                                <strong>✅ WHAT'S ALREADY GOOD:</strong>
+                                <ul style="margin-left: 20px; margin-top: 10px;">
+                                    <li><strong>Clean dual-mode design:</strong> Terminal + GUI with graceful fallbacks</li>
+                                    <li><strong>Proper async handling:</strong> Futures for GUI input requests</li>
+                                    <li><strong>zComm integration:</strong> Correct use of broadcast_websocket</li>
+                                    <li><strong>Guard patterns:</strong> Comprehensive hasattr checks prevent crashes</li>
+                                    <li><strong>Silent failure handling:</strong> GUI failures don't break terminal output</li>
+                                    <li><strong>Clear method naming:</strong> write_raw/line/block, read_string/password</li>
+                                    <li><strong>Property aliases:</strong> Backward-compatible .raw, .line, .block, .read</li>
+                                </ul>
+                            </div>
+                            
+                            <div style="background: #edf2f7; border: 1px solid #667eea; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                                <strong>📊 AUDIT SCORECARD:</strong>
+                                <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                                    <li>✅ <strong>Architecture:</strong> A (Clean dual-mode design, proper Layer 1 position)</li>
+                                    <li>❌ <strong>Type Hints:</strong> F (0% coverage, critical for async returns)</li>
+                                    <li>❌ <strong>Constants:</strong> F (50+ magic strings, 0 constants defined)</li>
+                                    <li>❌ <strong>Module Docstring:</strong> F (1 line, should be 80+)</li>
+                                    <li>⚠️ <strong>Method Docstrings:</strong> D (Present but minimal)</li>
+                                    <li>⚠️ <strong>Session/Mode Awareness:</strong> C (Works but not modernized)</li>
+                                    <li>✅ <strong>zComm Integration:</strong> A (Correct WebSocket broadcast usage)</li>
+                                    <li>⚠️ <strong>DRY:</strong> B (Minor duplication, mostly acceptable)</li>
+                                    <li><strong>Overall Grade:</strong> <span style="color: #ed8936; font-weight: bold;">D+</span> → Target: <span style="color: #48bb78; font-weight: bold;">A+</span></li>
+                                </ul>
+                            </div>
+                            
+                            <div style="background: #e6fffa; border: 1px solid #319795; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                                <strong>🎯 IMPLEMENTATION CHECKLIST (14 Steps):</strong>
+                                <ol style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                                    <li><strong>Import type hints:</strong> Add <code>from zCLI import Any, Optional, Dict, Union</code></li>
+                                    <li><strong>Define mode constants:</strong> MODE_TERMINAL, MODE_WALKER, MODE_EMPTY (3 constants)</li>
+                                    <li><strong>Define event type constants:</strong> EVENT_TYPE_OUTPUT, EVENT_TYPE_INPUT_REQUEST, EVENT_TYPE_ZDISPLAY (3 constants)</li>
+                                    <li><strong>Define write/input type constants:</strong> WRITE_TYPE_*, INPUT_TYPE_* (5 constants)</li>
+                                    <li><strong>Define JSON key constants:</strong> KEY_EVENT, KEY_TYPE, KEY_CONTENT, etc. (8 constants)</li>
+                                    <li><strong>Define default constants:</strong> DEFAULT_PROMPT, DEFAULT_FLUSH (2 constants)</li>
+                                    <li><strong>Add class-level type declarations:</strong> display, pending_input_requests, response_futures</li>
+                                    <li><strong>Add type hints to all 12 methods:</strong> Parameters + return types (including Union[str, asyncio.Future])</li>
+                                    <li><strong>Write comprehensive module docstring:</strong> 80+ lines (Architecture, Dual-Mode, Layer 1, zSession, zComm)</li>
+                                    <li><strong>Enhance method docstrings:</strong> Args, Returns, Notes for 8 key methods</li>
+                                    <li><strong>Replace mode strings with constants:</strong> Line 22 and mode detection logic</li>
+                                    <li><strong>Replace all event/key strings with constants:</strong> Lines 79-82, 119-123, 176-179</li>
+                                    <li><strong>Import SESSION_KEY_ZMODE:</strong> Add note about mode coming from zConfig session</li>
+                                    <li><strong>Verify all 55/55 tests pass:</strong> Run zDisplay_Test.py suite</li>
+                                </ol>
+                            </div>
+                        </div>
+                            <div style="background: #f0fff4; border: 1px solid #48bb78; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                                <strong>✅ IMPLEMENTATION COMPLETE!</strong>
+                                <p style="margin-top: 10px;"><strong>All 14 checklist items implemented:</strong></p>
+                                <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                                    <li>✅ Imported type hints (Any, Optional, Dict, Union)</li>
+                                    <li>✅ Defined 3 mode constants (MODE_TERMINAL, MODE_WALKER, MODE_EMPTY)</li>
+                                    <li>✅ Defined 3 event type constants (EVENT_TYPE_OUTPUT, EVENT_TYPE_INPUT_REQUEST, EVENT_TYPE_ZDISPLAY)</li>
+                                    <li>✅ Defined 5 write/input type constants (WRITE_TYPE_*, INPUT_TYPE_*)</li>
+                                    <li>✅ Defined 9 JSON key constants (KEY_EVENT, KEY_TYPE, KEY_CONTENT, etc.)</li>
+                                    <li>✅ Defined 2 default constants (DEFAULT_PROMPT, DEFAULT_FLUSH)</li>
+                                    <li>✅ Added class-level type declarations (display, pending_input_requests, response_futures)</li>
+                                    <li>✅ Added type hints to all 12 methods (parameters + returns including Union[str, asyncio.Future])</li>
+                                    <li>✅ Wrote comprehensive 138-line module docstring (Architecture, Terminal/Bifrost, Layer 1, zSession, zComm)</li>
+                                    <li>✅ Enhanced method docstrings for 8 key methods (Args, Returns, Notes, Examples)</li>
+                                    <li>✅ Replaced mode strings with constants (line 237: MODE_TERMINAL, MODE_WALKER, MODE_EMPTY)</li>
+                                    <li>✅ Replaced all 50+ event/key strings with constants throughout</li>
+                                    <li>✅ Documented SESSION_KEY_ZMODE usage in module docstring</li>
+                                    <li>✅ Verified all 55/55 tests pass ✓</li>
+                                </ul>
+                                <p style="margin-top: 10px;"><strong>Grade:</strong> <span style="color: #ed8936;">D+</span> → <span style="color: #48bb78; font-weight: bold;">A+</span> ✅</p>
+                                <p style="margin-top: 10px;"><strong>Lines of code:</strong> 256 → 635 (+379 lines of constants, type hints, and documentation)</p>
+                                <p style="margin-top: 10px;"><strong>Time to implement:</strong> ~45 minutes</p>
+                                <p style="margin-top: 10px;"><strong>Tests:</strong> 55/55 passing (100%) ✓</p>
+                            </div>
                         </div>
                         <div class="todo-tags">
                             <span class="tag">Week 6.4</span>
                             <span class="tag">Core Module</span>
-                            <span class="tag" style="background: #f6ad55; color: white;">RENAME NEEDED</span>
+                            <span class="tag" style="background: #48bb78; color: white;">✅ COMPLETE</span>
+                            <span class="tag" style="background: #667eea; color: white;">A+ GRADE</span>
+                            <span class="tag" style="background: #e53e3e; color: white;">Foundation Layer</span>
                         </div>
                     </div>
                 </div>
 
-                <div class="todo-item">
-                    <input type="checkbox" class="todo-checkbox">
+                <div class="todo-item" style="opacity: 0.6; background: #f7fafc;">
+                    <input type="checkbox" class="todo-checkbox" checked disabled>
                     <div class="todo-content">
-                        <div class="todo-title">Week 6.4.4: 🔧 Audit & Refactor zProgress_context.py → display_progress.py</div>
+                        <div class="todo-title" style="text-decoration: line-through;">Week 6.4.4: 🗑️ display_progress.py → <strong style="color: #e53e3e;">REMOVED (Unused)</strong></div>
                         <div class="todo-description">
-                            <strong>📁 File:</strong> <code>zDisplay_modules/zProgress_context.py</code>
-                            <br><strong>📊 Complexity:</strong> TBD (progress bars/contexts)
+                            <strong>📁 File:</strong> <code>zDisplay_modules/display_progress.py</code> (145 lines)
                             <br><br>
-                            <strong>🔍 Audit Items:</strong>
-                            <ul style="margin-left: 20px; margin-top: 10px;">
-                                <li>Type hints coverage</li>
-                                <li>Magic strings/numbers</li>
-                                <li>DRY violations</li>
-                                <li>Session dict migration</li>
-                                <li>Docstring quality</li>
-                                <li>Dead code removal</li>
-                            </ul>
-                            <strong>🔄 Naming Convention:</strong> Rename to <code>display_progress.py</code>
+                            <div style="background: #e6fffa; border: 1px solid #319795; padding: 10px; border-radius: 5px; margin-top: 10px;">
+                                <strong>🧹 Architectural Cleanup:</strong>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li><strong>Reason:</strong> 0 imports in codebase - completely unused</li>
+                                    <li><strong>Functionality:</strong> Progress rendering already exists in <code>events/display_event_widgets.py</code></li>
+                                    <li><strong>Methods:</strong> <code>progress_bar()</code> and <code>spinner()</code> available in Widgets</li>
+                                    <li><strong>Outcome:</strong> Removed dead code, cleaner architecture</li>
+                                    <li><strong>Tests:</strong> 55/55 still passing ✓</li>
+                                </ul>
+                            </div>
                         </div>
                         <div class="todo-tags">
-                            <span class="tag">Week 6.4</span>
-                            <span class="tag">Core Module</span>
-                            <span class="tag" style="background: #f6ad55; color: white;">RENAME NEEDED</span>
+                            <span class="tag" style="background: #e53e3e; color: white;">REMOVED</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Events Package Init -->
-                <div class="todo-item">
-                    <input type="checkbox" class="todo-checkbox">
-                    <div class="todo-content">
-                        <div class="todo-title">Week 6.4.5: 🔧 Audit zEvents_packages/__init__.py → events/__init__.py</div>
-                        <div class="todo-description">
-                            <strong>📁 File:</strong> <code>zDisplay_modules/zEvents_packages/__init__.py</code>
-                            <br><br>
-                            <strong>🔍 Audit Items:</strong>
-                            <ul style="margin-left: 20px; margin-top: 10px;">
-                                <li>Package exports</li>
-                                <li>Docstring enhancement</li>
-                                <li>Architecture documentation</li>
-                            </ul>
-                            <strong>🔄 Naming Convention:</strong> Rename folder to <code>events/</code>, align file names inside
-                        </div>
-                        <div class="todo-tags">
-                            <span class="tag">Week 6.4</span>
-                            <span class="tag">Package Init</span>
-                            <span class="tag" style="background: #f6ad55; color: white;">RENAME NEEDED</span>
-                        </div>
-                    </div>
+                <div class="note" style="background: #e6fffa; border-color: #319795;">
+                    <strong>📋 DEPENDENCY-AWARE ORDERING:</strong>
+                    <p style="margin-top: 10px;">Event packages are ordered bottom-up by dependencies for systematic auditing:</p>
+                    <ol style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                        <li><strong>Week 6.4.7: BasicOutputs</strong> - Foundation (no dependencies)</li>
+                        <li><strong>Week 6.4.8: Signals</strong> - Depends on BasicOutputs</li>
+                        <li><strong>Week 6.4.9: BasicInputs</strong> - Depends on BasicOutputs</li>
+                        <li><strong>Week 6.4.10: BasicData</strong> - Depends on BasicOutputs</li>
+                        <li><strong>Week 6.4.11: Widgets</strong> - Depends on BasicOutputs</li>
+                        <li><strong>Week 6.4.12: AdvancedData</strong> - Depends on BasicOutputs + Signals</li>
+                        <li><strong>Week 6.4.13: zAuthEvents</strong> - Depends on BasicOutputs + Signals</li>
+                        <li><strong>Week 6.4.14: zSystem</strong> - Depends on BasicOutputs + Signals + BasicInputs (most complex)</li>
+                        <li><strong>Week 6.4.15: events/__init__.py</strong> - Package exports (audited LAST)</li>
+                    </ol>
+                    <p style="margin-top: 10px; font-weight: bold;">This order ensures each file's dependencies are already industry-grade before auditing it.</p>
                 </div>
 
-                <!-- Event Package Files -->
+                <!-- Event Package Files (Ordered by Dependencies) -->
                 <div class="todo-item">
                     <input type="checkbox" class="todo-checkbox">
                     <div class="todo-content">
-                        <div class="todo-title">Week 6.4.6: 🔧 Audit & Refactor BasicInputs.py → display_event_inputs.py</div>
+                        <div class="todo-title">Week 6.4.7: 🔍 AUDIT COMPLETE - display_event_outputs.py (BasicOutputs) - FOUNDATION</div>
                         <div class="todo-description">
-                            <strong>📁 File:</strong> <code>zDisplay_modules/zEvents_packages/BasicInputs.py</code>
-                            <br><strong>📊 Complexity:</strong> TBD (input widgets)
-                            <br><br>
-                            <strong>🔍 Audit Items:</strong>
-                            <ul style="margin-left: 20px; margin-top: 10px;">
-                                <li>Type hints coverage</li>
-                                <li>Magic strings/numbers</li>
-                                <li>DRY violations</li>
-                                <li>Session dict migration</li>
-                                <li>Docstring quality</li>
-                                <li>Dead code removal</li>
-                            </ul>
-                            <strong>🔄 Naming Convention:</strong> Rename to <code>display_event_inputs.py</code>
+                            <strong>📁 File:</strong> <code>zDisplay_modules/events/display_event_outputs.py</code> (98 lines)
+                            <br><strong>📊 Role:</strong> FOUNDATION event package - no dependencies, used by ALL 7 others
+                            <br><strong>🔗 Usage:</strong> 59 references across 7 event files (most critical file!)
+                            
+                            <div style="background: #fff5f5; border: 1px solid #fc8181; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                                <strong>🚨 CRITICAL INDUSTRY-GRADE ISSUES:</strong>
+                                
+                                <h4 style="margin-top: 10px;">1️⃣ Type Hints: F Grade (0% coverage)</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>Missing imports:</strong> No <code>Any</code>, <code>Optional</code> from <code>zCLI</code></li>
+                                    <li><strong>No class-level type declarations:</strong> Missing display, zPrimitives, zColors</li>
+                                    <li><strong>No method type hints:</strong> 3 methods (init, header, text) missing parameter and return types</li>
+                                    <li><strong>Examples:</strong>
+                                        <ul style="margin-left: 20px;">
+                                            <li>Line 6: <code>def __init__(self, display_instance)</code> → Should be <code>def __init__(self, display_instance: Any) -> None</code></li>
+                                            <li>Line 12: <code>def header(self, label, color="RESET", ...)</code> → Should be <code>def header(self, label: str, color: str = DEFAULT_COLOR, ...) -> None</code></li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 15px;">2️⃣ Magic Strings/Numbers: D Grade (15+ violations)</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>Style strings:</strong> Lines 33-40: <code>"full"</code>, <code>"single"</code>, <code>"wave"</code>, <code>"RESET"</code></li>
+                                    <li><strong>Character strings:</strong> <code>"═"</code>, <code>"─"</code>, <code>"~"</code></li>
+                                    <li><strong>Event names:</strong> Lines 16, 71: <code>"header"</code>, <code>"text"</code></li>
+                                    <li><strong>Message string:</strong> Line 91: <code>"Press Enter to continue..."</code></li>
+                                    <li><strong>Dict keys:</strong> <code>"label"</code>, <code>"color"</code>, <code>"indent"</code>, <code>"style"</code>, <code>"content"</code>, <code>"break"</code>, <code>"break_message"</code></li>
+                                    <li><strong>Good:</strong> INDENT_WIDTH=2, BASE_WIDTH=60 already constants (lines 26-27)</li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 15px;">3️⃣ Module Docstring: F Grade (1 line)</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>Current:</strong> Line 2, only "BasicOutputs - fundamental output events built on zPrimitives"</li>
+                                    <li><strong>Should be:</strong> 80+ line comprehensive docstring documenting:
+                                        <ul style="margin-left: 20px;">
+                                            <li><strong>Foundation Role:</strong> Used by ALL 7 other event packages (59 references)</li>
+                                            <li><strong>Dual-Mode Pattern:</strong> GUI-first with terminal fallback</li>
+                                            <li><strong>Layer Position:</strong> Event layer (built on primitives)</li>
+                                            <li><strong>Critical Importance:</strong> Most important event file - all others depend on it</li>
+                                            <li><strong>Methods:</strong> header (formatted headers) + text (with break/pause)</li>
+                                            <li><strong>Dependency Graph:</strong> Shows 7 packages that use BasicOutputs</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 15px;">4️⃣ Method Docstrings: D Grade (minimal)</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>Current:</strong> One-line docstrings missing Args, Returns, Examples</li>
+                                    <li><strong>Issue:</strong> Doesn't explain dual-mode pattern or foundation role</li>
+                                    <li><strong>Should have:</strong> Comprehensive docstrings explaining:
+                                        <ul style="margin-left: 20px;">
+                                            <li>What the method does</li>
+                                            <li>Why it's fundamental (used by 7 packages)</li>
+                                            <li>Dual-mode behavior (GUI-first, terminal fallback)</li>
+                                            <li>Args with types and descriptions</li>
+                                            <li>Returns section</li>
+                                            <li>Usage examples</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 15px;">5️⃣ DRY Violations: C Grade</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>Lines 29, 82, 93:</strong> <code>indent_str = "  " * indent</code> repeated 3 times</li>
+                                    <li><strong>Solution:</strong> Extract to helper method or use INDENT_STR constant</li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 15px;">6️⃣ Foundation Role Not Documented: C Grade</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>Missing:</strong> No explanation that it's used by ALL 7 other event packages</li>
+                                    <li><strong>Missing:</strong> 59 references across codebase not documented</li>
+                                    <li><strong>Missing:</strong> Dependency graph showing foundation role</li>
+                                    <li><strong>Impact:</strong> Future maintainers won't understand its critical importance</li>
+                                </ul>
+                            </div>
+                            
+                            <div style="background: #fffaf0; border: 1px solid #ed8936; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                                <strong>⚠️ ARCHITECTURAL IMPORTANCE:</strong>
+                                
+                                <h4 style="margin-top: 10px;">Foundation Event Package - HIGHEST IMPACT</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>59 references</strong> across 7 event files - most used package!</li>
+                                    <li><strong>0 dependencies</strong> - true foundation layer</li>
+                                    <li><strong>Used by ALL 7 other packages:</strong>
+                                        <ul style="margin-left: 20px;">
+                                            <li>BasicInputs → uses header() for prompts</li>
+                                            <li>Signals → uses header() for error/warning headers</li>
+                                            <li>BasicData → uses header() for list/json headers</li>
+                                            <li>AdvancedData → uses header() for table headers</li>
+                                            <li>zSystem → uses header() + text() for system UI</li>
+                                            <li>zAuth → uses header() for auth prompts</li>
+                                            <li>Widgets → uses text() for progress labels</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 15px;">Dual-Mode I/O Pattern (Foundation)</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li><strong>Pattern:</strong> GUI-first (send_gui_event), terminal fallback (write_line)</li>
+                                    <li><strong>Lines 15-22:</strong> header() dual-mode implementation</li>
+                                    <li><strong>Lines 70-77:</strong> text() dual-mode implementation</li>
+                                    <li><strong>Why:</strong> Clean JSON events for GUI, formatted text for terminal</li>
+                                </ul>
+                                
+                                <h4 style="margin-top: 15px;">Why This Audit Matters Most</h4>
+                                <ul style="margin-left: 20px;">
+                                    <li>Foundation = Highest Impact: Any issue here affects ALL 7 other packages</li>
+                                    <li>Type hints here enable autocomplete for entire events system</li>
+                                    <li>Constants here standardize styles across all events</li>
+                                    <li>Documentation here explains the entire dual-mode pattern</li>
+                                </ul>
+                            </div>
+                            
+                            <div style="background: #f0fff4; border: 1px solid #48bb78; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                                <strong>✅ WHAT'S ALREADY GOOD:</strong>
+                                <ul style="margin-left: 20px; margin-top: 10px;">
+                                    <li><strong>Clean dual-mode pattern:</strong> GUI-first with terminal fallback</li>
+                                    <li><strong>Proper use of primitives:</strong> All I/O delegated to display_primitives</li>
+                                    <li><strong>Good separation:</strong> Layout logic vs. I/O logic</li>
+                                    <li><strong>Header algorithm:</strong> Correct centered text with styled lines</li>
+                                    <li><strong>Break/pause logic:</strong> Works for both terminal and GUI</li>
+                                    <li><strong>Small file:</strong> 98 lines, focused on 2 core methods</li>
+                                </ul>
+                            </div>
+                            
+                            <div style="background: #edf2f7; border: 1px solid #667eea; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                                <strong>📊 AUDIT SCORECARD:</strong>
+                                <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                                    <li>✅ <strong>Architecture:</strong> B+ (Clean dual-mode, proper primitives usage)</li>
+                                    <li>❌ <strong>Type Hints:</strong> F (0% coverage, 3 methods need hints)</li>
+                                    <li>⚠️ <strong>Constants:</strong> D (15+ magic strings, 0 defined)</li>
+                                    <li>❌ <strong>Module Docstring:</strong> F (1 line, should be 80+)</li>
+                                    <li>⚠️ <strong>Method Docstrings:</strong> D (Minimal, no Args/Returns/Examples)</li>
+                                    <li>⚠️ <strong>DRY:</strong> C (indent_str repeated 3 times)</li>
+                                    <li>⚠️ <strong>Foundation Documentation:</strong> C (59 references, 7 dependencies not documented)</li>
+                                    <li>N/A <strong>Session/zAuth Awareness:</strong> (Delegates to primitives)</li>
+                                    <li><strong>Overall Grade:</strong> <span style="color: #ed8936; font-weight: bold;">D+</span> → Target: <span style="color: #48bb78; font-weight: bold;">A+</span></li>
+                                </ul>
+                            </div>
+                            
+                            <div style="background: #e6fffa; border: 1px solid #319795; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                                <strong>🎯 IMPLEMENTATION CHECKLIST (12 Steps):</strong>
+                                <ol style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                                    <li><strong>Import type hints:</strong> Add <code>from zCLI import Any, Optional</code></li>
+                                    <li><strong>Define 15 constants:</strong> Styles (full/single/wave), chars (═/─/~), colors, event names, messages, dict keys</li>
+                                    <li><strong>Add class-level type declarations:</strong> display, zPrimitives, zColors</li>
+                                    <li><strong>Add type hints to all 3 methods:</strong> Parameters + return types</li>
+                                    <li><strong>Write comprehensive module docstring:</strong> 80+ lines (Foundation role, dual-mode, 59 references, 7 dependencies)</li>
+                                    <li><strong>Enhance class docstring:</strong> Explain foundation role + 2 fundamental methods</li>
+                                    <li><strong>Enhance method docstrings:</strong> Full Args, Returns, Examples, Notes for header + text</li>
+                                    <li><strong>Replace magic strings with constants:</strong> 15+ occurrences</li>
+                                    <li><strong>Extract indent_str helper:</strong> Fix DRY violation (3 occurrences)</li>
+                                    <li><strong>Add usage statistics to docstring:</strong> Document 59 references, 7 dependent packages</li>
+                                    <li><strong>Add dependency graph to docstring:</strong> Visual diagram showing foundation role</li>
+                                    <li><strong>Verify all 55/55 tests pass:</strong> Run zDisplay_Test.py suite</li>
+                                </ol>
+                            </div>
                         </div>
                         <div class="todo-tags">
                             <span class="tag">Week 6.4</span>
                             <span class="tag">Event Package</span>
-                            <span class="tag" style="background: #f6ad55; color: white;">RENAME NEEDED</span>
+                            <span class="tag" style="background: #667eea; color: white;">🔍 AUDIT COMPLETE</span>
+                            <span class="tag" style="background: #e53e3e; color: white;">FOUNDATION</span>
+                            <span class="tag" style="background: #c53030; color: white;">59 REFS</span>
                         </div>
                     </div>
                 </div>
@@ -306,10 +1336,11 @@ zDisplay/
                 <div class="todo-item">
                     <input type="checkbox" class="todo-checkbox">
                     <div class="todo-content">
-                        <div class="todo-title">Week 6.4.7: 🔧 Audit & Refactor BasicOutputs.py → display_event_outputs.py</div>
+                        <div class="todo-title">Week 6.4.8: 🔧 Audit & Refactor display_event_signals.py (Signals)</div>
                         <div class="todo-description">
-                            <strong>📁 File:</strong> <code>zDisplay_modules/zEvents_packages/BasicOutputs.py</code>
-                            <br><strong>📊 Complexity:</strong> TBD (output widgets)
+                            <strong>📁 File:</strong> <code>zDisplay_modules/events/display_event_signals.py</code>
+                            <br><strong>📊 Dependencies:</strong> BasicOutputs
+                            <br><strong>🔗 Used by:</strong> AdvancedData, zSystem, zAuth
                             <br><br>
                             <strong>🔍 Audit Items:</strong>
                             <ul style="margin-left: 20px; margin-top: 10px;">
@@ -320,12 +1351,12 @@ zDisplay/
                                 <li>Docstring quality</li>
                                 <li>Dead code removal</li>
                             </ul>
-                            <strong>🔄 Naming Convention:</strong> Rename to <code>display_event_outputs.py</code>
+                            <strong>✅ Naming Convention:</strong> Already renamed to <code>display_event_signals.py</code>
                         </div>
                         <div class="todo-tags">
                             <span class="tag">Week 6.4</span>
                             <span class="tag">Event Package</span>
-                            <span class="tag" style="background: #f6ad55; color: white;">RENAME NEEDED</span>
+                            <span class="tag" style="background: #48bb78; color: white;">✅ RENAMED</span>
                         </div>
                     </div>
                 </div>
@@ -333,10 +1364,11 @@ zDisplay/
                 <div class="todo-item">
                     <input type="checkbox" class="todo-checkbox">
                     <div class="todo-content">
-                        <div class="todo-title">Week 6.4.8: 🔧 Audit & Refactor BasicData.py → display_event_data.py</div>
+                        <div class="todo-title">Week 6.4.9: 🔧 Audit & Refactor display_event_inputs.py (BasicInputs)</div>
                         <div class="todo-description">
-                            <strong>📁 File:</strong> <code>zDisplay_modules/zEvents_packages/BasicData.py</code>
-                            <br><strong>📊 Complexity:</strong> TBD (basic data display)
+                            <strong>📁 File:</strong> <code>zDisplay_modules/events/display_event_inputs.py</code>
+                            <br><strong>📊 Dependencies:</strong> BasicOutputs
+                            <br><strong>🔗 Used by:</strong> zSystem
                             <br><br>
                             <strong>🔍 Audit Items:</strong>
                             <ul style="margin-left: 20px; margin-top: 10px;">
@@ -347,12 +1379,12 @@ zDisplay/
                                 <li>Docstring quality</li>
                                 <li>Dead code removal</li>
                             </ul>
-                            <strong>🔄 Naming Convention:</strong> Rename to <code>display_event_data.py</code>
+                            <strong>✅ Naming Convention:</strong> Already renamed to <code>display_event_inputs.py</code>
                         </div>
                         <div class="todo-tags">
                             <span class="tag">Week 6.4</span>
                             <span class="tag">Event Package</span>
-                            <span class="tag" style="background: #f6ad55; color: white;">RENAME NEEDED</span>
+                            <span class="tag" style="background: #48bb78; color: white;">✅ RENAMED</span>
                         </div>
                     </div>
                 </div>
@@ -360,10 +1392,11 @@ zDisplay/
                 <div class="todo-item">
                     <input type="checkbox" class="todo-checkbox">
                     <div class="todo-content">
-                        <div class="todo-title">Week 6.4.9: 🔧 Audit & Refactor AdvancedData.py → display_event_advanced.py</div>
+                        <div class="todo-title">Week 6.4.10: 🔧 Audit & Refactor display_event_data.py (BasicData)</div>
                         <div class="todo-description">
-                            <strong>📁 File:</strong> <code>zDisplay_modules/zEvents_packages/AdvancedData.py</code>
-                            <br><strong>📊 Complexity:</strong> TBD (advanced data display)
+                            <strong>📁 File:</strong> <code>zDisplay_modules/events/display_event_data.py</code>
+                            <br><strong>📊 Dependencies:</strong> BasicOutputs
+                            <br><strong>🔗 Used by:</strong> None (leaf node)
                             <br><br>
                             <strong>🔍 Audit Items:</strong>
                             <ul style="margin-left: 20px; margin-top: 10px;">
@@ -374,12 +1407,12 @@ zDisplay/
                                 <li>Docstring quality</li>
                                 <li>Dead code removal</li>
                             </ul>
-                            <strong>🔄 Naming Convention:</strong> Rename to <code>display_event_advanced.py</code>
+                            <strong>✅ Naming Convention:</strong> Already renamed to <code>display_event_data.py</code>
                         </div>
                         <div class="todo-tags">
                             <span class="tag">Week 6.4</span>
                             <span class="tag">Event Package</span>
-                            <span class="tag" style="background: #f6ad55; color: white;">RENAME NEEDED</span>
+                            <span class="tag" style="background: #48bb78; color: white;">✅ RENAMED</span>
                         </div>
                     </div>
                 </div>
@@ -387,10 +1420,11 @@ zDisplay/
                 <div class="todo-item">
                     <input type="checkbox" class="todo-checkbox">
                     <div class="todo-content">
-                        <div class="todo-title">Week 6.4.10: 🔧 Audit & Refactor Widgets.py → display_event_widgets.py</div>
+                        <div class="todo-title">Week 6.4.11: 🔧 Audit & Refactor display_event_widgets.py (Widgets)</div>
                         <div class="todo-description">
-                            <strong>📁 File:</strong> <code>zDisplay_modules/zEvents_packages/Widgets.py</code>
-                            <br><strong>📊 Complexity:</strong> TBD (widget library)
+                            <strong>📁 File:</strong> <code>zDisplay_modules/events/display_event_widgets.py</code>
+                            <br><strong>📊 Dependencies:</strong> BasicOutputs
+                            <br><strong>🔗 Used by:</strong> None (leaf node)
                             <br><br>
                             <strong>🔍 Audit Items:</strong>
                             <ul style="margin-left: 20px; margin-top: 10px;">
@@ -401,12 +1435,12 @@ zDisplay/
                                 <li>Docstring quality</li>
                                 <li>Dead code removal</li>
                             </ul>
-                            <strong>🔄 Naming Convention:</strong> Rename to <code>display_event_widgets.py</code>
+                            <strong>✅ Naming Convention:</strong> Already renamed to <code>display_event_widgets.py</code>
                         </div>
                         <div class="todo-tags">
                             <span class="tag">Week 6.4</span>
                             <span class="tag">Event Package</span>
-                            <span class="tag" style="background: #f6ad55; color: white;">RENAME NEEDED</span>
+                            <span class="tag" style="background: #48bb78; color: white;">✅ RENAMED</span>
                         </div>
                     </div>
                 </div>
@@ -414,10 +1448,11 @@ zDisplay/
                 <div class="todo-item">
                     <input type="checkbox" class="todo-checkbox">
                     <div class="todo-content">
-                        <div class="todo-title">Week 6.4.11: 🔧 Audit & Refactor Signals.py → display_event_signals.py</div>
+                        <div class="todo-title">Week 6.4.12: 🔧 Audit & Refactor display_event_advanced.py (AdvancedData)</div>
                         <div class="todo-description">
-                            <strong>📁 File:</strong> <code>zDisplay_modules/zEvents_packages/Signals.py</code>
-                            <br><strong>📊 Complexity:</strong> TBD (signal handling)
+                            <strong>📁 File:</strong> <code>zDisplay_modules/events/display_event_advanced.py</code>
+                            <br><strong>📊 Dependencies:</strong> BasicOutputs + Signals
+                            <br><strong>🔗 Used by:</strong> None (leaf node)
                             <br><br>
                             <strong>🔍 Audit Items:</strong>
                             <ul style="margin-left: 20px; margin-top: 10px;">
@@ -428,12 +1463,12 @@ zDisplay/
                                 <li>Docstring quality</li>
                                 <li>Dead code removal</li>
                             </ul>
-                            <strong>🔄 Naming Convention:</strong> Rename to <code>display_event_signals.py</code>
+                            <strong>✅ Naming Convention:</strong> Already renamed to <code>display_event_advanced.py</code>
                         </div>
                         <div class="todo-tags">
                             <span class="tag">Week 6.4</span>
                             <span class="tag">Event Package</span>
-                            <span class="tag" style="background: #f6ad55; color: white;">RENAME NEEDED</span>
+                            <span class="tag" style="background: #48bb78; color: white;">✅ RENAMED</span>
                         </div>
                     </div>
                 </div>
@@ -441,10 +1476,11 @@ zDisplay/
                 <div class="todo-item">
                     <input type="checkbox" class="todo-checkbox">
                     <div class="todo-content">
-                        <div class="todo-title">Week 6.4.12: 🔧 Audit & Refactor zAuth.py → display_event_auth.py</div>
+                        <div class="todo-title">Week 6.4.13: 🔧 Audit & Refactor display_event_auth.py (zAuthEvents)</div>
                         <div class="todo-description">
-                            <strong>📁 File:</strong> <code>zDisplay_modules/zEvents_packages/zAuth.py</code>
-                            <br><strong>📊 Complexity:</strong> TBD (auth UI components)
+                            <strong>📁 File:</strong> <code>zDisplay_modules/events/display_event_auth.py</code>
+                            <br><strong>📊 Dependencies:</strong> BasicOutputs + Signals
+                            <br><strong>🔗 Used by:</strong> None (leaf node)
                             <br><br>
                             <strong>🔍 Audit Items:</strong>
                             <ul style="margin-left: 20px; margin-top: 10px;">
@@ -456,12 +1492,12 @@ zDisplay/
                                 <li>Dead code removal</li>
                                 <li>Integration with new three-tier zAuth architecture</li>
                             </ul>
-                            <strong>🔄 Naming Convention:</strong> Rename to <code>display_event_auth.py</code>
+                            <strong>✅ Naming Convention:</strong> Already renamed to <code>display_event_auth.py</code>
                         </div>
                         <div class="todo-tags">
                             <span class="tag">Week 6.4</span>
                             <span class="tag">Event Package</span>
-                            <span class="tag" style="background: #f6ad55; color: white;">RENAME NEEDED</span>
+                            <span class="tag" style="background: #48bb78; color: white;">✅ RENAMED</span>
                             <span class="tag" style="background: #667eea; color: white;">zAuth Integration</span>
                         </div>
                     </div>
@@ -470,10 +1506,11 @@ zDisplay/
                 <div class="todo-item">
                     <input type="checkbox" class="todo-checkbox">
                     <div class="todo-content">
-                        <div class="todo-title">Week 6.4.13: 🔧 Audit & Refactor zSystem.py → display_event_system.py</div>
+                        <div class="todo-title">Week 6.4.14: 🔧 Audit & Refactor display_event_system.py (zSystem) - MOST COMPLEX</div>
                         <div class="todo-description">
-                            <strong>📁 File:</strong> <code>zDisplay_modules/zEvents_packages/zSystem.py</code>
-                            <br><strong>📊 Complexity:</strong> TBD (system UI components)
+                            <strong>📁 File:</strong> <code>zDisplay_modules/events/display_event_system.py</code>
+                            <br><strong>📊 Dependencies:</strong> BasicOutputs + Signals + BasicInputs (most dependencies)
+                            <br><strong>🔗 Used by:</strong> None (leaf node)
                             <br><br>
                             <strong>🔍 Audit Items:</strong>
                             <ul style="margin-left: 20px; margin-top: 10px;">
@@ -484,12 +1521,40 @@ zDisplay/
                                 <li>Docstring quality</li>
                                 <li>Dead code removal</li>
                             </ul>
-                            <strong>🔄 Naming Convention:</strong> Rename to <code>display_event_system.py</code>
+                            <strong>✅ Naming Convention:</strong> Already renamed to <code>display_event_system.py</code>
                         </div>
                         <div class="todo-tags">
                             <span class="tag">Week 6.4</span>
                             <span class="tag">Event Package</span>
-                            <span class="tag" style="background: #f6ad55; color: white;">RENAME NEEDED</span>
+                            <span class="tag" style="background: #48bb78; color: white;">✅ RENAMED</span>
+                            <span class="tag" style="background: #ed8936; color: white;">COMPLEX</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Events Package Init (LAST) -->
+                <div class="todo-item">
+                    <input type="checkbox" class="todo-checkbox">
+                    <div class="todo-content">
+                        <div class="todo-title">Week 6.4.15: 🔧 Audit events/__init__.py - Package Exports (LAST)</div>
+                        <div class="todo-description">
+                            <strong>📁 File:</strong> <code>zDisplay_modules/events/__init__.py</code>
+                            <br><strong>📊 Role:</strong> Package exports only (audited LAST after all event files)
+                            <br><br>
+                            <strong>🔍 Audit Items:</strong>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>Package exports completeness</li>
+                                <li>Docstring enhancement</li>
+                                <li>Architecture documentation</li>
+                                <li>__all__ definition</li>
+                            </ul>
+                            <strong>✅ Naming Convention:</strong> Folder already renamed to <code>events/</code>
+                        </div>
+                        <div class="todo-tags">
+                            <span class="tag">Week 6.4</span>
+                            <span class="tag">Package Init</span>
+                            <span class="tag" style="background: #48bb78; color: white;">✅ RENAMED</span>
+                            <span class="tag" style="background: #805ad5; color: white;">LAST</span>
                         </div>
                     </div>
                 </div>
@@ -538,8 +1603,8 @@ zDisplay/
         </div>
 
         <div class="footer">
-            <p>Week 6.4: zDisplay Subsystem ⏳ Pending</p>
-            <p style="margin-top: 10px; font-size: 0.85em;">UI Elements | Input Collection | Multi-Mode Output</p>
+            <p>Week 6.4: zDisplay Subsystem ✅ 5 Files Complete (A+ Grade)</p>
+            <p style="margin-top: 10px; font-size: 0.85em;">UI Elements | Input Collection | Multi-Mode Output | Orchestrator Layer Complete</p>
         </div>
     </div>
 </body>

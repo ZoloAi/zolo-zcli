@@ -1,4 +1,4 @@
-# zCLI/subsystems/zDisplay/zDisplay_modules/zEvents_packages/AdvancedData.py
+# zCLI/subsystems/zDisplay/zDisplay_modules/events/display_event_advanced.py
 """AdvancedData - complex data display with pagination."""
 
 

@@ -1,4 +1,4 @@
-# zCLI/subsystems/zDisplay/zDisplay_modules/zEvents_packages/BasicInputs.py
+# zCLI/subsystems/zDisplay/zDisplay_modules/events/display_event_inputs.py
 """BasicInputs - fundamental input events built on zPrimitives."""
 
 class BasicInputs:
