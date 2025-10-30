@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # zTestSuite/zDisplay_Widgets_Test.py
-"""Comprehensive tests for zDisplay Widgets (progress bars, spinners)."""
+"""Comprehensive tests for zDisplay TimeBased events (progress bars, spinners, swipers)."""
 
 import unittest
 import time
@@ -238,7 +238,7 @@ class TestIndeterminateProgress(unittest.TestCase):
 
 
 class TestWidgetsIntegration(unittest.TestCase):
-    """Integration tests for Widgets package."""
+    """Integration tests for TimeBased events package."""
 
     def setUp(self):
         """Initialize zCLI instance for testing."""
@@ -246,8 +246,8 @@ class TestWidgetsIntegration(unittest.TestCase):
         self.z = zCLI({"zWorkspace": str(self.workspace)})
 
     def test_widgets_module_initialized(self):
-        """Test that Widgets module is properly initialized."""
-        self.assertIsNotNone(self.z.display.zEvents.Widgets)
+        """Test that TimeBased module is properly initialized."""
+        self.assertIsNotNone(self.z.display.zEvents.TimeBased)
 
     def test_all_widget_events_registered(self):
         """Test that all widget events are registered in event map."""
@@ -266,26 +266,26 @@ class TestWidgetsIntegration(unittest.TestCase):
 
     def test_eta_time_formatting(self):
         """Test ETA time formatting helper."""
-        widgets = self.z.display.zEvents.Widgets
+        timebased = self.z.display.zEvents.TimeBased
         
         # Test seconds
-        self.assertEqual(widgets._format_time(30), "30s")
+        self.assertEqual(timebased._format_time(30), "30s")
         
         # Test minutes
-        self.assertEqual(widgets._format_time(90), "1m 30s")
+        self.assertEqual(timebased._format_time(90), "1m 30s")
         
         # Test hours
-        self.assertEqual(widgets._format_time(3661), "1h 1m")
+        self.assertEqual(timebased._format_time(3661), "1h 1m")
 
     def test_spinner_styles_available(self):
         """Test that all spinner styles are available."""
-        widgets = self.z.display.zEvents.Widgets
+        timebased = self.z.display.zEvents.TimeBased
         expected_styles = ["dots", "line", "arc", "arrow", "bouncingBall", "simple"]
         
         for style in expected_styles:
-            self.assertIn(style, widgets._spinner_styles)
-            self.assertIsInstance(widgets._spinner_styles[style], list)
-            self.assertGreater(len(widgets._spinner_styles[style]), 0)
+            self.assertIn(style, timebased._spinner_styles)
+            self.assertIsInstance(timebased._spinner_styles[style], list)
+            self.assertGreater(len(timebased._spinner_styles[style]), 0)
 
 
 def run_tests(verbose=False):

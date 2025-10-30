@@ -9,12 +9,13 @@ ProgressDemoMenu:
     - "^6. Indeterminate Progress"
     - "^7. Via handle() Method"
     - "^8. Real-World Migration"
+    - "^9. NEW: Content Swiper 🎯"
     - "stop"
   
   "^Run All Demos":
     _progress:
       enabled: true
-      label: "Running all widget demos"
+      label: "Running all TimeBased demos"
       style: "spinner"
     zFunc: "&progress_demos.run_all()"
   
@@ -70,4 +71,10 @@ ProgressDemoMenu:
       label: "Demo 8: Real-World Migration"
       show_eta: true
     zFunc: "&progress_demos.demo_real_world_migration()"
+  
+  "^9. NEW: Content Swiper 🎯":
+    _progress:
+      enabled: false  # No progress needed - swiper manages its own display
+      label: "Demo 9: Content Swiper"
+    zFunc: "&progress_demos.demo_swiper_feature()"
 

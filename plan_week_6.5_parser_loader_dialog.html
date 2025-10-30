@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 6.5: zParser, zLoader, zDialog - v1.5.4 Roadmap</title>
+    <link rel="stylesheet" href="plan_styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Week 6.5: zParser, zLoader, zDialog</h1>
+            <p class="subtitle">Pipeline Subsystems & BasicData Integration</p>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number">🔄</div>
+                <div class="stat-label">Status: Pending</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">~6</div>
+                <div class="stat-label">Subsystem Files</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">🔗</div>
+                <div class="stat-label">BasicData Integration</div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="section">
+                <div class="section-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                    ⚠️  CRITICAL: BasicData → zDialog Integration Required
+                </div>
+                <div class="content">
+                    <div style="background: #e6f7ff; border: 1px solid #1890ff; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
+                        <strong style="font-size: 1.2em;">🎯 Primary Goal for Week 6.5</strong>
+                        <p style="margin-top: 15px; line-height: 1.8;">
+                            This week combines <strong>two critical objectives</strong>:
+                        </p>
+                        <ol style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                            <li><strong>Industry-grade refactoring</strong> of zParser, zLoader, and zDialog subsystems</li>
+                            <li><strong>Integration of BasicData methods</strong> into zDialog (documented in Week 6.4.10)</li>
+                        </ol>
+                        <p style="margin-top: 15px; line-height: 1.8;">
+                            The BasicData integration will dramatically improve form UX, validation error display, 
+                            and data preview functionality in zDialog.
+                        </p>
+                    </div>
+
+                    <div style="background: #fff7e6; border: 1px solid #faad14; padding: 20px; border-radius: 5px;">
+                        <strong>📋 Why BasicData Integration Happens in Week 6.5:</strong>
+                        <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                            <li>✅ <strong>BasicData is A+ grade</strong> - Fully mature and tested after Week 6.4</li>
+                            <li>✅ <strong>Natural refactoring point</strong> - We're already modernizing zDialog</li>
+                            <li>✅ <strong>Low risk</strong> - Integration is well-documented with clear use cases</li>
+                            <li>✅ <strong>High value</strong> - Immediate improvements in form UX and validation</li>
+                            <li>✅ <strong>Proven pattern</strong> - Establishes integration model for zData (Week 6.6)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-icon">📋</span>
+                    <h2 class="section-title">Week 6.5 Task Breakdown</h2>
+                </div>
+
+                <div class="todo-item">
+                    <input type="checkbox" class="todo-checkbox">
+                    <div class="todo-content">
+                        <div class="todo-title">Week 6.5.1: 🔧 Audit & Refactor zParser.py</div>
+                        <div class="todo-description">
+                            <strong>📁 File:</strong> <code>zCLI/subsystems/zParser/zParser.py</code>
+                            <br><strong>🎯 Scope:</strong> YAML parsing, event handling, error management
+                            <br><br>
+                            <strong>🔍 Audit Items:</strong>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>Type hints coverage</li>
+                                <li>Magic strings/numbers</li>
+                                <li>DRY violations</li>
+                                <li>Session dict migration</li>
+                                <li>Docstring quality</li>
+                                <li>Error handling patterns</li>
+                            </ul>
+                        </div>
+                        <div class="todo-tags">
+                            <span class="tag">Week 6.5</span>
+                            <span class="tag">zParser</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="todo-item">
+                    <input type="checkbox" class="todo-checkbox">
+                    <div class="todo-content">
+                        <div class="todo-title">Week 6.5.2: 🔧 Audit & Refactor zLoader.py</div>
+                        <div class="todo-description">
+                            <strong>📁 File:</strong> <code>zCLI/subsystems/zLoader/zLoader.py</code>
+                            <br><strong>🎯 Scope:</strong> Schema loading, file discovery, caching
+                            <br><br>
+                            <strong>🔍 Audit Items:</strong>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>Type hints coverage</li>
+                                <li>Magic strings/numbers</li>
+                                <li>DRY violations</li>
+                                <li>Session dict migration</li>
+                                <li>Docstring quality</li>
+                                <li>Caching strategy</li>
+                            </ul>
+                        </div>
+                        <div class="todo-tags">
+                            <span class="tag">Week 6.5</span>
+                            <span class="tag">zLoader</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="todo-item">
+                    <input type="checkbox" class="todo-checkbox">
+                    <div class="todo-content">
+                        <div class="todo-title">Week 6.5.3: 🔧 Audit zDialog.py (Subsystem Core)</div>
+                        <div class="todo-description">
+                            <strong>📁 File:</strong> <code>zCLI/subsystems/zDialog/zDialog.py</code> (~170 lines)
+                            <br><strong>🎯 Scope:</strong> Dialog orchestration, form handling, submission
+                            <br><br>
+                            <strong>🔍 Audit Items:</strong>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>Type hints coverage</li>
+                                <li>Magic strings/numbers</li>
+                                <li>DRY violations</li>
+                                <li>Session dict migration</li>
+                                <li>Docstring quality</li>
+                                <li><strong>⚠️  Display integration points</strong> (for BasicData)</li>
+                            </ul>
+                        </div>
+                        <div class="todo-tags">
+                            <span class="tag">Week 6.5</span>
+                            <span class="tag">zDialog</span>
+                            <span class="tag" style="background: #1890ff; color: white;">🔗 BASICDATA</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="todo-item">
+                    <input type="checkbox" class="todo-checkbox">
+                    <div class="todo-content">
+                        <div class="todo-title">Week 6.5.4: 🔧 Audit zDialog Modules (dialog_context.py, dialog_submit.py)</div>
+                        <div class="todo-description">
+                            <strong>📁 Files:</strong> 
+                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                <li><code>zDialog_modules/dialog_context.py</code></li>
+                                <li><code>zDialog_modules/dialog_submit.py</code></li>
+                            </ul>
+                            <br><strong>🎯 Scope:</strong> Context creation, placeholder injection, submission handling
+                            <br><br>
+                            <strong>🔍 Audit Items:</strong>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>Type hints coverage</li>
+                                <li>Magic strings/numbers</li>
+                                <li>DRY violations</li>
+                                <li>Docstring quality</li>
+                                <li>Error handling</li>
+                            </ul>
+                        </div>
+                        <div class="todo-tags">
+                            <span class="tag">Week 6.5</span>
+                            <span class="tag">zDialog Modules</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="todo-item">
+                    <input type="checkbox" class="todo-checkbox">
+                    <div class="todo-content">
+                        <div class="todo-title" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 10px; border-radius: 5px;">
+                            Week 6.5.5: 🔗 CRITICAL - Integrate BasicData into display_event_system.py → zDialog()
+                        </div>
+                        <div class="todo-description">
+                            <strong>📁 File:</strong> <code>zDisplay_modules/events/display_event_system.py</code> (zSystem.zDialog method, ~150 lines)
+                            <br><strong>🎯 Scope:</strong> Refactor zDialog() method to use BasicData instead of custom formatting
+                            <br><br>
+                            
+                            <div style="background: #e6f7ff; border: 1px solid #1890ff; padding: 15px; border-radius: 5px; margin-top: 15px; margin-bottom: 15px;">
+                                <strong>⚠️  THIS IS THE CORE INTEGRATION TASK</strong>
+                                <p style="margin-top: 10px; line-height: 1.8;">
+                                    The <code>zSystem.zDialog()</code> method (line 145+ in display_event_system.py) currently handles 
+                                    form rendering. This task refactors it to use BasicData methods for professional display.
+                                </p>
+                            </div>
+
+                            <strong>📋 Integration Checklist:</strong>
+                            <ol style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                                <li><strong>Audit current zDialog() implementation</strong>
+                                    <ul style="margin-left: 20px; margin-top: 5px;">
+                                        <li>Identify all display/formatting code (lines 145-300+)</li>
+                                        <li>Map field options display → <code>BasicData.list()</code></li>
+                                        <li>Map validation errors → <code>BasicData.list()</code></li>
+                                        <li>Identify preview opportunities → <code>BasicData.json_data()</code></li>
+                                    </ul>
+                                </li>
+                                <li><strong>Replace field options display</strong>
+                                    <ul style="margin-left: 20px; margin-top: 5px;">
+                                        <li>Find manual numbering: <code>"1. Option"</code>, <code>"2. Option"</code></li>
+                                        <li>Replace with: <code>self.BasicData.list(options, style="numbered", indent=1)</code></li>
+                                        <li>Benefit: Consistent formatting + dual-mode support (Terminal/Bifrost)</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Replace validation error display</strong>
+                                    <ul style="margin-left: 20px; margin-top: 5px;">
+                                        <li>Find error list formatting (text blocks or loops)</li>
+                                        <li>Replace with: <code>self.BasicData.list(errors, style="bullet", indent=1)</code></li>
+                                        <li>Benefit: Clear, professional error display</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Add form data preview (NEW FEATURE)</strong>
+                                    <ul style="margin-left: 20px; margin-top: 5px;">
+                                        <li>Before submission, show preview</li>
+                                        <li>Add: <code>self.BasicData.json_data(form_data, color=True, indent_size=2)</code></li>
+                                        <li>Benefit: User sees exactly what will be submitted</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Update zDialog.py calls (if needed)</strong>
+                                    <ul style="margin-left: 20px; margin-top: 5px;">
+                                        <li>Verify line 72: <code>self.display.zDialog()</code> still works</li>
+                                        <li>Ensure backward compatibility with existing demos</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Test integration</strong>
+                                    <ul style="margin-left: 20px; margin-top: 5px;">
+                                        <li>Run zDialog demos (Demos/*/test_*.py)</li>
+                                        <li>Verify field options display (numbered)</li>
+                                        <li>Verify validation error display (bullet)</li>
+                                        <li>Verify form preview (JSON with colors)</li>
+                                        <li>Test both Terminal and Bifrost modes</li>
+                                    </ul>
+                                </li>
+                            </ol>
+
+                            <div style="background: #f0fff4; border: 1px solid #52c41a; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                                <strong>✅ Expected Improvements:</strong>
+                                <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                                    <li><strong>Professional display:</strong> Consistent numbered lists for field options</li>
+                                    <li><strong>Clear errors:</strong> Bullet-point validation error lists</li>
+                                    <li><strong>User confidence:</strong> JSON preview with syntax coloring before submit</li>
+                                    <li><strong>Dual-mode support:</strong> Works in Terminal AND Bifrost (GUI) modes</li>
+                                    <li><strong>Maintainability:</strong> No custom formatting code, uses A+ BasicData</li>
+                                </ul>
+                            </div>
+
+                            <div style="background: #fff7e6; border: 1px solid #faad14; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                                <strong>📖 Reference: BasicData Documentation</strong>
+                                <p style="margin-top: 10px;">See <strong>Week 6.4.10</strong> in <code>plan_week_6.4_zdisplay.html</code> for:</p>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li>Full API documentation for <code>list()</code> and <code>json_data()</code></li>
+                                    <li>zDialog integration use cases (documented during audit)</li>
+                                    <li>Code examples and expected output</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="todo-tags">
+                            <span class="tag">Week 6.5</span>
+                            <span class="tag">zDialog</span>
+                            <span class="tag" style="background: #f5222d; color: white;">🚨 CRITICAL</span>
+                            <span class="tag" style="background: #1890ff; color: white;">🔗 BASICDATA INTEGRATION</span>
+                            <span class="tag" style="background: #52c41a; color: white;">HIGH VALUE</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="todo-item">
+                    <input type="checkbox" class="todo-checkbox">
+                    <div class="todo-content">
+                        <div class="todo-title">Week 6.5.6: 🧪 Test & Validate All Subsystems</div>
+                        <div class="todo-description">
+                            <strong>🎯 Scope:</strong> Comprehensive testing of all refactored subsystems + BasicData integration
+                            <br><br>
+                            <strong>📋 Test Checklist:</strong>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>Run zParser tests</li>
+                                <li>Run zLoader tests</li>
+                                <li>Run zDialog tests (comprehensive)</li>
+                                <li>Test zDialog demos (RBAC, User Manager, Validation)</li>
+                                <li>Verify BasicData integration (field options, errors, preview)</li>
+                                <li>Test Terminal mode</li>
+                                <li>Test Bifrost (GUI) mode</li>
+                                <li>Verify backward compatibility</li>
+                            </ul>
+                        </div>
+                        <div class="todo-tags">
+                            <span class="tag">Week 6.5</span>
+                            <span class="tag">Testing</span>
+                            <span class="tag" style="background: #f5222d; color: white;">CRITICAL</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-header" style="background: #f0f5ff; border: 1px solid #597ef7;">
+                    💡 Week 6.5 Success Criteria
+                </div>
+                <div class="content">
+                    <div style="padding: 20px;">
+                        <h3 style="margin-top: 0;">This week is successful when:</h3>
+                        <ol style="margin-left: 20px; line-height: 2;">
+                            <li>✅ <strong>zParser, zLoader, zDialog</strong> all refactored to <strong>A+ grade</strong></li>
+                            <li>✅ <strong>BasicData integrated</strong> into zDialog (field options, validation errors, form preview)</li>
+                            <li>✅ <strong>All tests passing</strong> (existing + new integration tests)</li>
+                            <li>✅ <strong>zDialog demos working</strong> with improved UX (professional display)</li>
+                            <li>✅ <strong>Dual-mode support</strong> verified (Terminal + Bifrost)</li>
+                            <li>✅ <strong>Documentation complete</strong> (module docstrings, integration notes)</li>
+                            <li>✅ <strong>Integration pattern proven</strong> (ready for zData in Week 6.6)</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-header" style="background: #e6f7ff; border: 1px solid #1890ff;">
+                    🔮 Looking Ahead: Week 6.6 (zData Integration)
+                </div>
+                <div class="content">
+                    <div style="padding: 20px;">
+                        <p style="line-height: 1.8;">
+                            After successfully integrating BasicData into zDialog (Week 6.5), we'll apply the 
+                            <strong>proven integration pattern</strong> to zData in Week 6.6:
+                        </p>
+                        <ul style="margin-left: 20px; margin-top: 15px; line-height: 1.8;">
+                            <li><strong>Query results:</strong> Add <code>format</code> parameter ("table", "json", "list")</li>
+                            <li><strong>Schema introspection:</strong> Use <code>json_data()</code> for Meta display</li>
+                            <li><strong>Table listing:</strong> Use <code>list()</code> for table names</li>
+                            <li><strong>Validation errors:</strong> Use <code>list()</code> or <code>json_data()</code></li>
+                        </ul>
+                        <p style="margin-top: 15px; line-height: 1.8;">
+                            The zDialog integration in Week 6.5 serves as a <strong>low-risk pilot</strong> for the more 
+                            complex zData integration in Week 6.6.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-icon">🔗</span>
+                    <h2 class="section-title">Navigation</h2>
+                </div>
+
+                <div class="nav-links" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <a href="plan_week_6.4_zdisplay.html" class="nav-link completed">
+                        <strong>← Previous: Week 6.4 (zDisplay)</strong>
+                        <div>✅ BasicData documented & ready for integration</div>
+                    </a>
+
+                    <a href="v1.5.4_plan_index.html" class="nav-link">
+                        <strong>Back to Roadmap →</strong>
+                        <div>Return to main plan index</div>
+                    </a>
+                    
+                    <a href="plan_week_6.6_zdata_zshell.html" class="nav-link" style="grid-column: 1 / -1;">
+                        <strong>→ Next: Week 6.6 (zData + zShell)</strong>
+                        <div>🔗 Apply proven BasicData integration pattern to zData</div>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Week 6.5: zParser, zLoader, zDialog + BasicData Integration</p>
+            <p style="margin-top: 10px; font-size: 0.85em;">Pipeline Subsystems | Form UX Improvements | Integration Pilot</p>
+        </div>
+    </div>
+</body>
+</html>
+

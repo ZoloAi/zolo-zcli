@@ -46,7 +46,7 @@ The 8 event packages are:
 5. **AdvancedData** - Complex data (zTable with pagination)
 6. **zSystem** - System UI (zDeclare, zSession, zCrumbs, zMenu, zDialog)
 7. **zAuth** - Authentication UI (login_prompt, status_display, etc.)
-8. **Widgets** - Interactive components (progress_bar, spinner)
+8. **TimeBased** - Time-based events (progress_bar, spinner)
 
 Cross-Reference Architecture
 -----------------------------
@@ -118,7 +118,7 @@ from .events.display_event_data import BasicData
 from .events.display_event_advanced import AdvancedData
 from .events.display_event_system import zSystem
 from .events.display_event_auth import zAuthEvents
-from .events.display_event_widgets import Widgets
+from .events.display_event_timebased import TimeBased
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -166,7 +166,7 @@ class zEvents:
     - AdvancedData: zTable (with pagination)
     - zSystem: zDeclare, zSession, zCrumbs, zMenu, zDialog
     - zAuth: login_prompt, login_success, login_failure, logout_success, status_display
-    - Widgets: progress_bar, spinner, progress_iterator, indeterminate_progress
+    - TimeBased: progress_bar, spinner, progress_iterator, indeterminate_progress
     
     **Cross-Reference Dependencies:**
     - BasicOutputs → Used by ALL 7 other packages
@@ -187,7 +187,7 @@ class zEvents:
     AdvancedData: Any  # AdvancedData package instance
     zSystem: Any  # zSystem package instance
     zAuth: Any  # zAuthEvents package instance
-    Widgets: Any  # Widgets package instance
+    TimeBased: Any  # TimeBased package instance
 
     def __init__(self, display_instance: Any) -> None:
         """Initialize zEvents orchestrator with all 8 event packages.
@@ -214,7 +214,7 @@ class zEvents:
         self.AdvancedData = AdvancedData(display_instance)
         self.zSystem = zSystem(display_instance)
         self.zAuth = zAuthEvents(display_instance)
-        self.Widgets = Widgets(display_instance)
+        self.TimeBased = TimeBased(display_instance)
 
         # Step 2: Set up cross-references (packages can call each other)
         # 
@@ -223,7 +223,7 @@ class zEvents:
         #       self.BasicOutputs.header("ERROR")  # Works via cross-reference
         #
         # Dependency Graph:
-        #   BasicOutputs ← BasicInputs, Signals, BasicData, AdvancedData, zSystem, zAuth, Widgets
+        #   BasicOutputs ← BasicInputs, Signals, BasicData, AdvancedData, zSystem, zAuth, TimeBased
         #   Signals ← AdvancedData, zSystem, zAuth
         #   BasicInputs ← zSystem
         
@@ -237,7 +237,7 @@ class zEvents:
         self.zSystem.BasicInputs = self.BasicInputs
         self.zAuth.BasicOutputs = self.BasicOutputs
         self.zAuth.Signals = self.Signals
-        self.Widgets.BasicOutputs = self.BasicOutputs
+        self.TimeBased.BasicOutputs = self.BasicOutputs
 
     # ═══════════════════════════════════════════════════════════════════════════
     # Convenience Delegates - BasicOutputs
@@ -507,63 +507,63 @@ class zEvents:
         return self.zSystem.zDialog(context, zcli, walker)
 
     # ═══════════════════════════════════════════════════════════════════════════
-    # Convenience Delegates - Widgets
+    # Convenience Delegates - TimeBased
     # ═══════════════════════════════════════════════════════════════════════════
 
     def progress_bar(self, current: int, total: Optional[int] = None, label: str = DEFAULT_LABEL_PROCESSING, **kwargs: Any) -> Any:
         """Display progress bar with current/total status.
         
-        Convenience delegate to Widgets.progress_bar for backward compatibility.
+        Convenience delegate to TimeBased.progress_bar for backward compatibility.
         
         Args:
             current: Current progress value
             total: Total progress value (optional)
             label: Progress label text (default: "Processing")
-            **kwargs: Additional widget options
+            **kwargs: Additional time-based event options
             
         Returns:
-            Any: Result from Widgets.progress_bar method
+            Any: Result from TimeBased.progress_bar method
         """
-        return self.Widgets.progress_bar(current, total, label, **kwargs)
+        return self.TimeBased.progress_bar(current, total, label, **kwargs)
 
     def spinner(self, label: str = DEFAULT_LABEL_LOADING, style: str = DEFAULT_STYLE_DOTS) -> Any:
         """Display animated spinner for loading indication.
         
-        Convenience delegate to Widgets.spinner for backward compatibility.
+        Convenience delegate to TimeBased.spinner for backward compatibility.
         
         Args:
             label: Spinner label text (default: "Loading")
             style: Spinner animation style (default: "dots")
             
         Returns:
-            Any: Result from Widgets.spinner method
+            Any: Result from TimeBased.spinner method
         """
-        return self.Widgets.spinner(label, style)
+        return self.TimeBased.spinner(label, style)
 
     def progress_iterator(self, iterable: Any, label: str = DEFAULT_LABEL_PROCESSING, **kwargs: Any) -> Any:
         """Iterate with progress indication.
         
-        Convenience delegate to Widgets.progress_iterator for backward compatibility.
+        Convenience delegate to TimeBased.progress_iterator for backward compatibility.
         
         Args:
             iterable: Iterable to process
             label: Progress label text (default: "Processing")
-            **kwargs: Additional widget options
+            **kwargs: Additional time-based event options
             
         Returns:
-            Any: Result from Widgets.progress_iterator method
+            Any: Result from TimeBased.progress_iterator method
         """
-        return self.Widgets.progress_iterator(iterable, label, **kwargs)
+        return self.TimeBased.progress_iterator(iterable, label, **kwargs)
 
     def indeterminate_progress(self, label: str = DEFAULT_LABEL_PROCESSING) -> Any:
         """Display indeterminate progress indicator.
         
-        Convenience delegate to Widgets.indeterminate_progress for backward compatibility.
+        Convenience delegate to TimeBased.indeterminate_progress for backward compatibility.
         
         Args:
             label: Progress label text (default: "Processing")
             
         Returns:
-            Any: Result from Widgets.indeterminate_progress method
+            Any: Result from TimeBased.indeterminate_progress method
         """
-        return self.Widgets.indeterminate_progress(label)
+        return self.TimeBased.indeterminate_progress(label)

@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """
-Demo: zDisplay Progress Widgets
-Demonstrates progress bars, spinners, and loading indicators.
+Demo: zDisplay TimeBased Events
+Demonstrates progress bars, spinners, swipers, and time-based UI feedback.
 
-Week 4.1 - Layer 1 zDisplay enhancements
+Week 4.1 - Layer 1 zDisplay enhancements (original)
 Week 4.3 - Declarative _progress metadata pattern
+Week 6.4.11b - Swiper implementation + rename to TimeBased
 """
 from pathlib import Path
 from zCLI import zCLI

@@ -1,16 +1,20 @@
 #!/usr/bin/env python3
 """
-Progress Widget Demos Plugin
+TimeBased Events Demos Plugin
 Called from zUI.progress_demos.yaml with _progress metadata
+
+Demonstrates all time-based events:
+- Progress bars, spinners, swipers
+- Week 6.4.11b - Now includes interactive swiper feature!
 """
 import time
 
 
 def run_all():
-    """Run all widget demonstrations."""
-    zcli.display.header("🎨 zDisplay Progress Widgets Demo", style="full", color="MAGENTA")
-    zcli.display.text("\nThis demo showcases progress bars, spinners, and loading indicators.")
-    zcli.display.text("Week 4.1 - Layer 1 zDisplay enhancements\n")
+    """Run all TimeBased event demonstrations."""
+    zcli.display.header("🎨 zDisplay TimeBased Events Demo", style="full", color="MAGENTA")
+    zcli.display.text("\nThis demo showcases time-based events: progress bars, spinners, and swipers.")
+    zcli.display.text("Week 6.4.11 - TimeBased subsystem (renamed from Widgets)\n")
     
     # Run all demos sequentially
     demo_basic_progress_bar()
@@ -21,8 +25,9 @@ def run_all():
     demo_indeterminate_progress()
     demo_via_handle_method()
     demo_real_world_migration()
+    demo_swiper_feature()
     
-    zcli.display.success("\n✓ All demos completed! Progress widgets are production-ready.\n")
+    zcli.display.success("\n✓ All demos completed! TimeBased events are production-ready.\n")
 
 
 def demo_basic_progress_bar():
@@ -169,4 +174,44 @@ def demo_real_world_migration():
         time.sleep(1)
     
     zcli.display.success("✓ Migration completed successfully!")
+
+
+def demo_swiper_feature():
+    """Demo: NEW - Interactive swiper/carousel for content navigation."""
+    zcli.display.header("Demo 9: NEW - Content Swiper (TimeBased Event)", color="MAGENTA")
+    
+    # Feature introduction slides
+    slides = [
+        "🎨 Welcome to zCLI TimeBased Events!",
+        "📊 Feature 1: Progress Bars with ETA",
+        "⏳ Feature 2: Animated Spinners (6 styles)",
+        "🔄 Feature 3: Progress Iterators",
+        "📈 Feature 4: Indeterminate Progress",
+        "🎯 Feature 5: Content Swipers (YOU ARE HERE!)",
+        "✨ All features work in Terminal & Bifrost modes",
+        "🚀 TimeBased: Temporal + Non-blocking events",
+        "💡 Use Cases: Onboarding, Tours, Presentations",
+        "🎉 Thank you for exploring zCLI!"
+    ]
+    
+    zcli.display.info("\n✨ NEW FEATURE: Interactive Content Swiper")
+    zcli.display.text("Navigate using:")
+    zcli.display.text("  • Arrow Keys (◀ ▶) - Navigate between slides", indent=1)
+    zcli.display.text("  • Number Keys (1-9) - Jump to specific slide", indent=1)
+    zcli.display.text("  • 'P' Key - Pause/Resume auto-advance", indent=1)
+    zcli.display.text("  • 'Q' Key - Quit swiper", indent=1)
+    zcli.display.text("\nThe swiper will auto-advance every 2 seconds.")
+    zcli.display.text("Press Enter to start the interactive demo...\n")
+    input()
+    
+    # Launch swiper with auto-advance enabled
+    zcli.display.swiper(
+        slides=slides,
+        label="zCLI Feature Tour",
+        auto_advance=True,
+        delay=2,
+        loop=False
+    )
+    
+    zcli.display.success("\n✓ Swiper demo completed! This is a time-based event.")
 

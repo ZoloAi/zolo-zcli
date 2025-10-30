@@ -1,69 +1,651 @@
 # zCLI/subsystems/zDisplay/zDisplay_modules/events/display_event_data.py
-"""BasicData - structured data display events (lists, JSON)."""
 
-from zCLI import json, re
+"""
+BasicData - Structured Data Display with zDialog/zData Integration
+===================================================================
 
+This event package provides structured data display (lists and JSON) with
+comprehensive formatting options, building on the BasicOutputs A+ foundation
+(Week 6.4.7 complete).
+
+Composition Architecture
+------------------------
+BasicData builds on BasicOutputs (the A+ grade foundation):
+
+Layer 3: display_delegates.py (PRIMARY API)
+    ↓
+Layer 2: display_events.py (ORCHESTRATOR)
+    ↓
+Layer 2: events/display_event_data.py (BasicData) ← THIS MODULE
+    ↓
+Layer 2: events/display_event_outputs.py (BasicOutputs) ← A+ FOUNDATION
+    ↓
+Layer 1: display_primitives.py (FOUNDATION I/O)
+
+Composition Flow:
+1. BasicData method called (list() or json_data())
+2. Try GUI mode via primitives.send_gui_event()
+3. If terminal mode:
+   a. Format data (numbered list, bullet list, or JSON)
+   b. Apply styling (indentation, syntax coloring for JSON)
+   c. Display via BasicOutputs.text() for consistent I/O
+4. Return control to caller
+
+List Display (2 Styles)
+------------------------
+BasicData provides 2 list display styles:
+
+**Numbered Style:**
+- Display: "1. item", "2. item", "3. item"
+- Use case: Form field options, menu items, ordered lists
+- Method: list(items, style="number")
+
+**Bullet Style:**
+- Display: "• item", "• item", "• item" (using [BULLET] marker)
+- Use case: Validation errors, feature lists, unordered items
+- Method: list(items, style="bullet")
+
+JSON Display (Pretty Print + Syntax Coloring)
+----------------------------------------------
+BasicData provides JSON display with professional formatting:
+
+**Features:**
+- Pretty printing: json.dumps() with configurable indentation
+- Base indentation: Applied to all lines for nested display
+- Syntax coloring (terminal only): 4-color scheme via regex
+  - Cyan: JSON keys
+  - Green: String values
+  - Yellow: Numeric values
+  - Magenta: Booleans and null
+
+**Implementation:**
+- Regex-based: 4 substitution passes in _colorize_json()
+- Optional: color=True parameter enables coloring
+- Fallback: Plain JSON if coloring disabled or fails
+
+Dual-Mode I/O Pattern
+----------------------
+All methods implement the same dual-mode pattern:
+
+1. **GUI Mode (Bifrost):** Try send_gui_event() first
+   - Send clean JSON event with data
+   - Returns immediately (GUI handles async)
+   - GUI frontend will display data
+
+2. **Terminal Mode (Fallback):** Format and display locally
+   - Format data (numbered, bullet, or JSON)
+   - Apply styling (indentation, colors)
+   - Display via BasicOutputs.text() for consistent I/O
+
+zDialog Integration (Week 6.5 - Documented for Future Use)
+-----------------------------------------------------------
+**Current State:** zDialog does NOT use BasicData yet (as of Week 6.4).
+
+**Integration Potential (HIGH PRIORITY for Week 6.5):**
+
+1. **Form Field Options Display:**
+   ```python
+   # Current: Manual numbering in display_event_system.py zDialog()
+   # Future: Use BasicData for consistency
+   self.BasicData.list(field_options, style="number", indent=1)
+   # Benefit: Professional display + dual-mode support
+   ```
+
+2. **Validation Error Display:**
+   ```python
+   # Current: Text blocks or manual formatting
+   # Future: Use BasicData for clarity
+   self.BasicData.list(validation_errors, style="bullet", indent=1)
+   # Benefit: Clear, bullet-point error lists
+   ```
+
+3. **Form Data Preview Before Submission:**
+   ```python
+   # Current: Not implemented
+   # Future: Add preview feature
+   self.BasicData.json_data(form_data, color=True, indent_size=2)
+   # Benefit: User sees exactly what will be submitted
+   ```
+
+4. **Schema/Model Structure Display:**
+   ```python
+   # Current: Not implemented
+   # Future: Schema introspection
+   self.BasicData.json_data(model_schema, color=True)
+   # Benefit: Developers can inspect form structure
+   ```
+
+**Integration Timeline:**
+- Week 6.4.10: Document potential (THIS MODULE)
+- Week 6.5.5: Implement integration in display_event_system.py → zDialog()
+- Week 6.5.6: Test with zDialog demos
+
+**See:** plan_week_6.5_parser_loader_dialog.html for detailed integration checklist
+
+zData Integration (Week 6.6 - Documented for Future Use)
+---------------------------------------------------------
+**Current State:** zData uses display.zTable() (AdvancedData) for query results.
+This is CORRECT separation - zTable for complex tabular data, BasicData for
+simple lists and JSON.
+
+**Integration Potential (HIGH VALUE for Week 6.6):**
+
+1. **Query Results (JSON Format):**
+   ```python
+   # Current: Only table format via zTable()
+   # Future: Add format parameter to READ operations
+   if request.get("format") == "json":
+       ops.zcli.display.zEvents.BasicData.json_data(rows, color=True)
+   # Benefit: API-friendly JSON output, better for debugging
+   ```
+
+2. **Schema Definitions (Meta Display):**
+   ```python
+   # Current: Not displayed
+   # Future: Schema introspection command
+   schema_meta = ops.schema.get("Meta", {})
+   ops.zcli.display.zEvents.BasicData.json_data(schema_meta, color=True)
+   # Benefit: Developers can inspect database schema
+   ```
+
+3. **Table Names Listing:**
+   ```python
+   # Current: Raw print or manual formatting
+   # Future: Use BasicData for consistency
+   table_names = ops.adapter.list_tables()
+   ops.zcli.display.zEvents.BasicData.list(table_names, style="bullet")
+   # Benefit: Professional list display
+   ```
+
+4. **Column Names (Schema Introspection):**
+   ```python
+   # Current: Not implemented
+   # Future: Schema inspection command
+   columns = list(ops.schema[table_name].keys())
+   ops.zcli.display.zEvents.BasicData.list(columns, style="number")
+   # Benefit: Quick column reference
+   ```
+
+5. **Validation Errors (Structured):**
+   ```python
+   # Current: Text-based error messages
+   # Future: Structured error display
+   ops.zcli.display.zEvents.BasicData.json_data(validation_errors, color=True)
+   # Or: ops.zcli.display.zEvents.BasicData.list(error_list, style="bullet")
+   # Benefit: Clear, structured error reporting
+   ```
+
+**Integration Timeline:**
+- Week 6.4.10: Document potential (THIS MODULE)
+- Week 6.6: Implement format parameter in zData CRUD operations
+- Week 6.6: Add schema introspection commands
+
+**See:** Future Week 6.6 plan for detailed integration checklist
+
+Benefits of Composition
+-----------------------
+- **Reuses BasicOutputs logic:** Indentation, I/O, dual-mode handling
+- **Consistent behavior:** All events use same display primitives
+- **Single responsibility:** BasicData focuses on data formatting only
+- **Easy maintenance:** Changes to I/O logic happen in one place (BasicOutputs)
+
+Layer Position
+--------------
+BasicData occupies the Event Layer in the zDisplay architecture:
+- **Depends on:** BasicOutputs (A+ foundation)
+- **Used by:** ~27 references across 14 files (delegates, zOpen, zFunc, zShell, etc.)
+- **Dependency:** BasicOutputs must be wired after initialization (done by display_events.py)
+
+Usage Statistics
+----------------
+- **~27 total references** across 14 files
+- **Used by:** display_delegates, zOpen, zFunc, zShell, zAuth, Documentation
+- **2 public methods:** list() and json_data()
+- **1 helper method:** _colorize_json() (internal)
+
+zCLI Integration
+----------------
+- **Initialized by:** display_events.py (zEvents.__init__)
+- **Cross-referenced:** BasicOutputs wired after init (lines 225-228 in display_events.py)
+- **Accessed via:** zcli.display.zEvents.BasicData
+- **No session access** - delegates to primitives + BasicOutputs
+
+Thread Safety
+-------------
+Not thread-safe. All display operations should occur on the main thread or
+with appropriate synchronization.
+
+Example Usage
+-------------
+```python
+# Via display_events orchestrator:
+events = zEvents(display_instance)
+
+# List display (numbered)
+events.BasicData.list(["Option A", "Option B", "Option C"], style="number")
+# Output:
+#   1. Option A
+#   2. Option B
+#   3. Option C
+
+# List display (bullet)
+events.BasicData.list(["Error 1", "Error 2"], style="bullet")
+# Output:
+#   • Error 1
+#   • Error 2
+
+# JSON display (with syntax coloring)
+data = {"name": "John", "age": 30, "active": True}
+events.BasicData.json_data(data, color=True, indent_size=2)
+# Output (colored):
+#   {
+#     "name": "John",    (keys in cyan, values in green)
+#     "age": 30,         (number in yellow)
+#     "active": true     (boolean in magenta)
+#   }
+
+# Direct usage (rare):
+basic_data = BasicData(display_instance)
+basic_data.BasicOutputs = basic_outputs  # Must wire dependency
+basic_data.list(["Item 1", "Item 2"], style="bullet")
+```
+
+Integration Examples (Week 6.5 - zDialog)
+------------------------------------------
+```python
+# In display_event_system.py → zDialog() method:
+
+# Form field options (Week 6.5.5)
+self.BasicData.list(
+    field_options,
+    style="number",  # Professional numbered display
+    indent=1
+)
+
+# Validation errors (Week 6.5.5)
+if validation_errors:
+    self.BasicData.list(
+        validation_errors,
+        style="bullet",  # Clear bullet-point errors
+        indent=1
+    )
+
+# Form preview before submit (Week 6.5.5)
+self.BasicData.json_data(
+    form_data,
+    color=True,       # Syntax highlighting for clarity
+    indent_size=2
+)
+```
+
+Integration Examples (Week 6.6 - zData)
+----------------------------------------
+```python
+# In zData crud_read.py:
+
+# Add format parameter to READ operations (Week 6.6)
+format_type = request.get("format", "table")
+
+if format_type == "json":
+    # JSON format for API responses
+    ops.zcli.display.zEvents.BasicData.json_data(
+        rows,
+        color=True,
+        indent_size=2
+    )
+elif format_type == "list" and len(columns) == 1:
+    # Simple list for single-column results
+    items = [row[columns[0]] for row in rows]
+    ops.zcli.display.zEvents.BasicData.list(items, style="bullet")
+else:
+    # Default: table format (existing zTable)
+    ops.zcli.display.zTable(table_display, columns, rows)
+
+# Table names listing (Week 6.6)
+table_names = ops.adapter.list_tables()
+ops.zcli.display.zEvents.BasicData.list(table_names, style="number")
+
+# Schema introspection (Week 6.6)
+schema_meta = ops.schema.get("Meta", {})
+ops.zcli.display.zEvents.BasicData.json_data(schema_meta, color=True)
+```
+"""
+
+from zCLI import json, re, Any, Optional, Union, List, Dict
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Module Constants
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Event name constants
+EVENT_NAME_LIST = "list"
+EVENT_NAME_JSON = "json"
+
+# Style constants
+STYLE_BULLET = "bullet"
+STYLE_NUMBER = "number"
+
+# Marker constant
+MARKER_BULLET = "[BULLET]"
+
+# Dict key constants (for GUI events)
+KEY_ITEMS = "items"
+KEY_STYLE = "style"
+KEY_INDENT = "indent"
+KEY_DATA = "data"
+KEY_INDENT_SIZE = "indent_size"
+
+# Default value constants
+DEFAULT_STYLE = STYLE_BULLET
+DEFAULT_INDENT = 0
+DEFAULT_INDENT_SIZE = 2
+DEFAULT_COLOR = False
+
+# JSON serialization constant
+JSON_ENSURE_ASCII = False
+
+# Indentation constant
+INDENT_STRING = "  "  # Two spaces per indent level
+
+# Color reference constants (from zColors, used in _colorize_json)
+# Note: These are accessed dynamically via self.zColors at runtime
+COLOR_ATTR_CYAN = "CYAN"
+COLOR_ATTR_GREEN = "GREEN"
+COLOR_ATTR_YELLOW = "YELLOW"
+COLOR_ATTR_MAGENTA = "MAGENTA"
+COLOR_ATTR_RESET = "RESET"
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# BasicData Class
+# ═══════════════════════════════════════════════════════════════════════════
 
 class BasicData:
-    """Basic data display events for lists and JSON output."""
+    """Structured data display with zDialog/zData integration potential.
+    
+    Builds on BasicOutputs (A+ foundation) to provide professional list and
+    JSON display with comprehensive formatting options.
+    
+    **Composition:**
+    - Depends on BasicOutputs (A+ grade, Week 6.4.7)
+    - Pattern: BasicOutputs.text() for display + zPrimitives for events
+    - Benefits: Reuses BasicOutputs logic (indent, I/O, dual-mode)
+    
+    **Display Styles:**
+    - list(style="number") - Numbered lists (1. item, 2. item)
+    - list(style="bullet") - Bullet lists (• item, • item)
+    - json_data(color=True) - JSON with syntax coloring
+    
+    **Integration Potential:**
+    - zDialog (Week 6.5): Form options, validation errors, data preview
+    - zData (Week 6.6): Query results (JSON), schema display, table listing
+    
+    **Usage:**
+    - ~27 references across 14 files
+    - Used by: display_delegates, zOpen, zFunc, zShell, zAuth
+    
+    **Pattern:**
+    All methods implement dual-mode I/O (GUI-first, terminal fallback).
+    """
 
-    def __init__(self, display_instance):
-        """Initialize BasicData with reference to parent display instance."""
+    # Type hints for instance attributes
+    display: Any  # Parent zDisplay instance
+    zPrimitives: Any  # Primitives instance for I/O operations
+    zColors: Any  # Colors instance for terminal styling
+    BasicOutputs: Optional[Any]  # BasicOutputs instance for composition (wired after init)
+
+    def __init__(self, display_instance: Any) -> None:
+        """Initialize BasicData with parent display reference.
+        
+        Args:
+            display_instance: Parent zDisplay instance providing primitives and colors
+            
+        Note:
+            BasicOutputs is set to None initially and wired after initialization
+            by display_events.py to avoid circular dependencies. The fallback
+            logic handles the rare edge case where BasicOutputs is not yet set.
+        """
         self.display = display_instance
         self.zPrimitives = display_instance.zPrimitives
         self.zColors = display_instance.zColors
         # Get reference to BasicOutputs for composition
         self.BasicOutputs = None  # Will be set after zEvents initialization
 
-    def list(self, items, style="bullet", indent=0):
-        """Display list with bullets or numbers in Terminal/GUI modes."""
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Helper Methods - Output & GUI Event Handling (DRY Fixes)
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    def _output_text(self, content: str, indent: int = DEFAULT_INDENT, break_after: bool = False) -> None:
+        """Output text via BasicOutputs with fallback (DRY helper).
+        
+        Args:
+            content: Text content to output
+            indent: Indentation level (default: 0)
+            break_after: Whether to pause after output (default: False)
+            
+        Note:
+            This helper eliminates 3 duplicate BasicOutputs check + fallback patterns
+            (lines 38-42, 75-80 in original). The fallback handles the rare edge
+            case where BasicOutputs is not yet wired (initialization race condition).
+        """
+        if self.BasicOutputs:
+            self.BasicOutputs.text(content, indent=indent, break_after=break_after)
+        else:
+            # Fallback if BasicOutputs not set (shouldn't happen)
+            indented_content = self._build_indent(indent) + content
+            self.zPrimitives.write_line(indented_content)
+
+    def _build_indent(self, indent: int) -> str:
+        """Build indentation string (DRY helper).
+        
+        Args:
+            indent: Indentation level (number of indent units)
+            
+        Returns:
+            str: Indentation string (e.g., "    " for indent=2)
+            
+        Note:
+            This helper eliminates 2 duplicate indent calculation patterns
+            (lines 42, 66-68 in original).
+        """
+        return INDENT_STRING * indent
+
+    def _send_gui_event(self, event_name: str, event_data: Dict[str, Any]) -> bool:
+        """Send GUI event via primitives (DRY helper).
+        
+        Args:
+            event_name: Name of the event (e.g., "list", "json")
+            event_data: Event data dictionary
+            
+        Returns:
+            bool: True if GUI event was sent, False if terminal mode
+            
+        Note:
+            This helper eliminates 2 duplicate GUI event send patterns
+            (lines 20-26, 46-52 in original).
+        """
+        return self.zPrimitives.send_gui_event(event_name, event_data)
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Public Methods - List & JSON Display
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    def list(self, items: Optional[List[Any]], style: str = DEFAULT_STYLE, indent: int = DEFAULT_INDENT) -> None:
+        """Display list with bullets or numbers in Terminal/GUI modes.
+        
+        Foundation method for list display. Implements dual-mode I/O pattern
+        and composes with BasicOutputs for terminal display.
+        
+        Supports two display styles:
+        - numbered: "1. item", "2. item", "3. item"
+        - bullet: "• item", "• item", "• item"
+        
+        Args:
+            items: List of items to display (can be any type, will be converted to string)
+            style: Display style (default: "bullet")
+                   - "number": Numbered list (1., 2., 3., ...)
+                   - "bullet": Bullet list (• for each item)
+            indent: Base indentation level (default: 0)
+        
+        Returns:
+            None
+            
+        Example:
+            # Numbered list (for form options, menu items)
+            self.BasicData.list(["Option A", "Option B", "Option C"], style="number")
+            # Output:
+            #   1. Option A
+            #   2. Option B
+            #   3. Option C
+            
+            # Bullet list (for validation errors, feature lists)
+            self.BasicData.list(["Error 1", "Error 2"], style="bullet", indent=1)
+            # Output:
+            #     • Error 1
+            #     • Error 2
+            
+        zDialog Integration (Week 6.5):
+            # Form field options
+            self.list(field_options, style="number", indent=1)
+            
+            # Validation errors
+            self.list(validation_errors, style="bullet", indent=1)
+            
+        zData Integration (Week 6.6):
+            # Table names listing
+            table_names = ops.adapter.list_tables()
+            self.list(table_names, style="bullet")
+            
+            # Column names
+            columns = list(schema[table].keys())
+            self.list(columns, style="number")
+        
+        Note:
+            Used by: display_delegates, zOpen, zFunc, zShell
+            Composes with: BasicOutputs.text() for terminal display
+        """
+        # Handle None or empty list
+        if not items:
+            return
+
         # Try GUI mode first - send clean event
-        if self.zPrimitives.send_gui_event("list", {
-            "items": items,
-            "style": style,
-            "indent": indent
+        if self._send_gui_event(EVENT_NAME_LIST, {
+            KEY_ITEMS: items,
+            KEY_STYLE: style,
+            KEY_INDENT: indent
         }):
             return  # GUI event sent successfully
 
         # Terminal mode - format and display list
         # Use BasicOutputs.text() for consistent output (composition!)
         for i, item in enumerate(items, 1):
-            if style == "number":
+            if style == STYLE_NUMBER:
                 prefix = f"{i}. "
             else:  # bullet
-                prefix = "[BULLET] "
+                prefix = f"{MARKER_BULLET} "
 
             content = f"{prefix}{item}"
-            # Compose: use BasicOutputs.text() instead of calling primitives directly
-            if self.BasicOutputs:
-                self.BasicOutputs.text(content, indent=indent, break_after=False)
-            else:
-                # Fallback if BasicOutputs not set (shouldn't happen)
-                self.zPrimitives.write_line(f"{'  ' * indent}{content}")
+            # Compose: use helper instead of direct BasicOutputs call
+            self._output_text(content, indent=indent, break_after=False)
 
-    def json_data(self, data, indent_size=2, indent=0, color=False):
-        """Display JSON with pretty formatting and optional syntax coloring."""
+    def json_data(self, data: Optional[Union[Dict[str, Any], List[Any], Any]], 
+                  indent_size: int = DEFAULT_INDENT_SIZE, 
+                  indent: int = DEFAULT_INDENT, 
+                  color: bool = DEFAULT_COLOR) -> None:
+        """Display JSON with pretty formatting and optional syntax coloring.
+        
+        Foundation method for JSON display. Implements dual-mode I/O pattern
+        and composes with BasicOutputs for terminal display.
+        
+        Features professional JSON display with:
+        - Pretty printing (configurable indentation)
+        - Base indentation (for nested display)
+        - Syntax coloring (optional, terminal only)
+          - Cyan: JSON keys
+          - Green: String values
+          - Yellow: Numeric values
+          - Magenta: Booleans and null
+        
+        Args:
+            data: Data to serialize as JSON (dict, list, or any JSON-serializable type)
+            indent_size: JSON indentation size (default: 2 spaces)
+            indent: Base indentation level for entire output (default: 0)
+            color: Enable syntax coloring for terminal display (default: False)
+        
+        Returns:
+            None
+            
+        Example:
+            # Simple JSON display
+            data = {"name": "John", "age": 30, "active": True}
+            self.BasicData.json_data(data, indent_size=2)
+            # Output:
+            #   {
+            #     "name": "John",
+            #     "age": 30,
+            #     "active": true
+            #   }
+            
+            # With syntax coloring
+            self.BasicData.json_data(data, color=True)
+            # Output (with colors):
+            #   {
+            #     "name": "John",    (keys in cyan, values in green)
+            #     "age": 30,         (number in yellow)
+            #     "active": true     (boolean in magenta)
+            #   }
+            
+            # Nested display
+            self.BasicData.json_data(nested_data, indent=2, color=True)
+            # Output indented by 4 spaces (2 levels)
+            
+        zDialog Integration (Week 6.5):
+            # Form data preview before submission
+            self.json_data(form_data, color=True, indent_size=2)
+            
+            # Schema/model structure display
+            self.json_data(model_schema, color=True)
+            
+        zData Integration (Week 6.6):
+            # Query results in JSON format
+            if request.get("format") == "json":
+                self.json_data(rows, color=True, indent_size=2)
+            
+            # Schema Meta display
+            schema_meta = ops.schema.get("Meta", {})
+            self.json_data(schema_meta, color=True)
+            
+            # Validation errors (structured)
+            self.json_data(validation_errors, color=True)
+        
+        Note:
+            Used by: display_delegates, zAuth, Documentation
+            Composes with: BasicOutputs.text() for terminal display
+            Error handling: Serialization errors are caught and displayed
+        """
+        # Handle None data
+        if data is None:
+            return
+
         # Try GUI mode first - send clean event with raw data
-        if self.zPrimitives.send_gui_event("json", {
-            "data": data,
-            "indent_size": indent_size,
-            "indent": indent
+        if self._send_gui_event(EVENT_NAME_JSON, {
+            KEY_DATA: data,
+            KEY_INDENT_SIZE: indent_size,
+            KEY_INDENT: indent
         }):
             return  # GUI event sent successfully
 
         # Terminal mode - serialize and format JSON
-        if data is None:
-            return
-
         # Serialize to JSON
         try:
-            json_str = json.dumps(data, indent=indent_size, ensure_ascii=False)
+            json_str = json.dumps(data, indent=indent_size, ensure_ascii=JSON_ENSURE_ASCII)
         except (TypeError, ValueError) as e:
             json_str = f"<Error serializing JSON: {e}>"
 
         # Apply base indentation to each line
         if indent > 0:
-            indent_str = "  " * indent
+            indent_str = self._build_indent(indent)
             lines = json_str.split('\n')
             json_str = '\n'.join(f"{indent_str}{line}" for line in lines)
 
@@ -71,16 +653,40 @@ class BasicData:
         if color:
             json_str = self._colorize_json(json_str)
 
-        # Compose: use BasicOutputs.text() instead of calling primitives directly
-        if self.BasicOutputs:
-            # Note: json_str already has indentation applied, so pass indent=0
-            self.BasicOutputs.text(json_str, indent=0, break_after=False)
-        else:
-            # Fallback if BasicOutputs not set (shouldn't happen)
-            self.zPrimitives.write_line(json_str)
+        # Compose: use helper instead of direct BasicOutputs call
+        # Note: json_str already has indentation applied, so pass indent=0
+        self._output_text(json_str, indent=0, break_after=False)
 
-    def _colorize_json(self, json_str):
-        """Apply syntax coloring to JSON string with Cyan keys, Green strings, Yellow numbers, Magenta bools/null."""
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Helper Methods - JSON Syntax Coloring
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    def _colorize_json(self, json_str: str) -> str:
+        """Apply syntax coloring to JSON string with 4-color scheme.
+        
+        Implements regex-based syntax coloring for professional JSON display:
+        - Cyan: JSON keys (quoted strings followed by colon)
+        - Green: String values (quoted strings after colon)
+        - Yellow: Numeric values (integers and floats)
+        - Magenta: Boolean and null values
+        
+        Args:
+            json_str: Plain JSON string to colorize
+            
+        Returns:
+            str: JSON string with ANSI color codes inserted
+            
+        Implementation:
+            Uses 4 regex substitution passes in order:
+            1. Color keys: r'"([^"]+)"\s*:' → cyan
+            2. Color string values: r':\s*"([^"]*)"' → green
+            3. Color numbers: r'\b(\d+\.?\d*)\b' → yellow
+            4. Color booleans/null: r'\b(true|false|null)\b' → magenta
+            
+        Note:
+            This method is called internally by json_data() when color=True.
+            The color scheme is optimized for dark terminal backgrounds.
+        """
         # Color keys (quoted strings followed by colon)
         json_str = re.sub(
             r'"([^"]+)"\s*:',

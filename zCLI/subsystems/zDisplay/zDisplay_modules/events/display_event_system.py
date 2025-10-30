@@ -1,11 +1,610 @@
 # zCLI/subsystems/zDisplay/zDisplay_modules/events/display_event_system.py
-"""zSystem - zCLI system introspection and navigation displays."""
+"""
+zSystem - zCLI System Introspection & Navigation UI Events (v1.5.4+)
+
+This module provides system-level user interface events for the zDisplay subsystem,
+enabling comprehensive introspection and display of zCLI's internal state across both
+Terminal and Bifrost (GUI) modes. It serves as the UI presentation layer for core
+zCLI concepts: zSession, zMachine, zAuth, zCrumbs, zMenu, and zDialog.
+
+═══════════════════════════════════════════════════════════════════════════
+ARCHITECTURE: System-Level UI Integration
+═══════════════════════════════════════════════════════════════════════════
+
+zSystem is unique among zDisplay event packages as it operates at the **system level**,
+directly interacting with zCLI's core state management structures. Unlike other event
+packages that handle user data, zSystem displays zCLI's own internal state.
+
+Integration Flow:
+    zCLI core → zSystem → zDisplay → zPrimitives → Terminal/Bifrost
+
+Example:
+    # Display complete session state
+    zcli.display.zEvents.zSystem.zSession(zcli.session)
+    
+    # Display navigation breadcrumbs
+    zcli.display.zEvents.zSystem.zCrumbs(zcli.session)
+    
+    # Show interactive menu
+    choice = zcli.display.zEvents.zSystem.zMenu(
+        menu_items=[(1, "Create"), (2, "Read"), (3, "Update")],
+        return_selection=True
+    )
+
+
+═══════════════════════════════════════════════════════════════════════════
+ZSESSION INTEGRATION (17 Core Session Keys)
+═══════════════════════════════════════════════════════════════════════════
+
+zSession is the central state dictionary that persists throughout a zCLI session.
+zSystem uses **standardized SESSION_KEY_* constants** from zConfig to ensure safe,
+refactor-proof access to session data.
+
+Core Session Fields (Imported from zConfig):
+    SESSION_KEY_ZS_ID           - "zS_id" - Unique session identifier
+    SESSION_KEY_ZMODE           - "zMode" - UI mode (Terminal, Walker, Bifrost)
+    SESSION_KEY_ZMACHINE        - "zMachine" - Machine configuration dict
+    SESSION_KEY_ZAUTH           - "zAuth" - Authentication state dict
+    SESSION_KEY_ZWORKSPACE      - "zWorkspace" - Current workspace path
+    SESSION_KEY_ZVAFILE_PATH    - "zVaFile_path" - Path to zVaFile
+    SESSION_KEY_ZVAFILENAME     - "zVaFilename" - zVaFile filename
+    SESSION_KEY_ZBLOCK          - "zBlock" - Current block/scope
+    SESSION_KEY_ZCRUMBS         - "zCrumbs" - Breadcrumb navigation dict
+    SESSION_KEY_ZCACHE          - "zCache" - Session-level cache
+    SESSION_KEY_WIZARD_MODE     - "wizard_mode" - Wizard mode flag
+    SESSION_KEY_ZSPARK          - "zSpark" - Spark integration
+    SESSION_KEY_VIRTUAL_ENV     - "virtual_env" - Virtual environment path
+    SESSION_KEY_SYSTEM_ENV      - "system_env" - System environment
+    SESSION_KEY_ZLOGGER         - "zLogger" - Logger configuration
+    SESSION_KEY_ZTRACEBACK      - "zTraceback" - Traceback configuration
+    SESSION_KEY_LOGGER_INSTANCE - "logger_instance" - Logger instance
+
+Usage Example:
+    # ❌ OLD (Legacy, error-prone):
+    session_id = session.get("zS_id")
+    mode = session.get("zMode")
+    
+    # ✅ NEW (Modern, refactor-safe):
+    session_id = session.get(SESSION_KEY_ZS_ID)
+    mode = session.get(SESSION_KEY_ZMODE)
+
+
+═══════════════════════════════════════════════════════════════════════════
+ZAUTH INTEGRATION (Three-Tier Authentication Model)
+═══════════════════════════════════════════════════════════════════════════
+
+zAuth v1.5.4+ supports a **three-tier authentication architecture** that zSystem must
+correctly display. zSystem uses **standardized ZAUTH_KEY_* constants** from zConfig.
+
+Layer 1 - zSession Auth (Internal zCLI/Zolo Users):
+    Purpose:     Premium zCLI features, plugins, Zolo cloud services
+    Triggered:   zcli.auth.login()
+    Session Key: session[SESSION_KEY_ZAUTH][ZAUTH_KEY_ZSESSION]
+    Contains:    authenticated, id, username, role, api_key
+    Example:     Developer authenticating to access premium features
+
+Layer 2 - Application Auth (External App Users, Multi-App Support):
+    Purpose:     Users of applications BUILT on zCLI
+    Triggered:   zcli.auth.authenticate_app_user(app_name, token, config)
+    Session Key: session[SESSION_KEY_ZAUTH][ZAUTH_KEY_APPLICATIONS][app_name]
+    Contains:    authenticated, id, username, role, api_key (per app)
+    Example:     Store customer authenticating to eCommerce app
+    Note:        Multiple apps can be authenticated simultaneously
+
+Layer 3 - Dual-Auth (Simultaneous zSession + Application):
+    Purpose:     Developer working on their own application
+    Session Key: session[SESSION_KEY_ZAUTH][ZAUTH_KEY_DUAL_MODE] = True
+    Example:     Store owner (zSession) logged into their store (app user)
+
+Context Management:
+    session[SESSION_KEY_ZAUTH][ZAUTH_KEY_ACTIVE_CONTEXT]:  "zSession", "application", or "dual"
+    session[SESSION_KEY_ZAUTH][ZAUTH_KEY_ACTIVE_APP]:      Current focused app name
+
+zAuth Constants (Imported from zConfig):
+    ZAUTH_KEY_ZSESSION          - "zSession" - zSession auth dict key
+    ZAUTH_KEY_APPLICATIONS      - "applications" - App auth dict key
+    ZAUTH_KEY_ACTIVE_APP        - "active_app" - Focused app name
+    ZAUTH_KEY_AUTHENTICATED     - "authenticated" - Auth status flag
+    ZAUTH_KEY_ID                - "id" - User ID (NOT "zAuth_id"!)
+    ZAUTH_KEY_USERNAME          - "username" - Username
+    ZAUTH_KEY_ROLE              - "role" - User role
+    ZAUTH_KEY_API_KEY           - "api_key" - API key
+    ZAUTH_KEY_ACTIVE_CONTEXT    - "active_context" - Current context
+    ZAUTH_KEY_DUAL_MODE         - "dual_mode" - Dual auth flag
+    CONTEXT_ZSESSION            - "zSession" - zSession context value
+    CONTEXT_APPLICATION         - "application" - App context value
+    CONTEXT_DUAL                - "dual" - Dual context value
+
+Display Integration:
+    _display_zauth() method now shows:
+    - Current authentication context (zSession/application/dual)
+    - Active app name (if in application/dual context)
+    - All authenticated apps (if multiple)
+    - Dual-mode indicator (if both contexts active)
+
+
+═══════════════════════════════════════════════════════════════════════════
+ZMACHINE INTEGRATION (Machine Configuration)
+═══════════════════════════════════════════════════════════════════════════
+
+zMachine contains the machine and environment configuration where zCLI is running.
+zSystem displays this structured information in organized sections.
+
+zMachine Fields (10+ keys):
+    Identity & Deployment:
+        ZMACHINE_KEY_OS               - "os" - Operating system
+        ZMACHINE_KEY_HOSTNAME         - "hostname" - Machine hostname
+        ZMACHINE_KEY_ARCHITECTURE     - "architecture" - CPU architecture
+        ZMACHINE_KEY_PYTHON_VERSION   - "python_version" - Python version
+        ZMACHINE_KEY_DEPLOYMENT       - "deployment" - Deployment mode (dev/prod)
+        ZMACHINE_KEY_ROLE             - "role" - Machine role
+    
+    Tool Preferences:
+        ZMACHINE_KEY_BROWSER          - "browser" - Preferred browser
+        ZMACHINE_KEY_IDE              - "ide" - Preferred IDE
+        ZMACHINE_KEY_SHELL            - "shell" - Preferred shell
+    
+    System Capabilities:
+        ZMACHINE_KEY_CPU_CORES        - "cpu_cores" - Number of CPU cores
+        ZMACHINE_KEY_MEMORY_GB        - "memory_gb" - RAM in GB
+    
+    zCLI Version:
+        ZMACHINE_KEY_ZCLI_VERSION     - "zcli_version" - zCLI version number
+
+
+═══════════════════════════════════════════════════════════════════════════
+SYSTEM METHODS PROVIDED
+═══════════════════════════════════════════════════════════════════════════
+
+Core System Displays:
+    zSession():     Display complete session state (zS_id, zMode, zMachine, zAuth, etc.)
+    zCrumbs():      Display navigation breadcrumb trails (scope paths)
+    zMenu():        Display interactive menu with selection support
+    zDialog():      Display form dialog and collect validated input
+    zDeclare():     Display system declaration/message with log-level conditioning
+
+Helper Methods (Private):
+    _try_gui_event():       DRY helper for GUI event dispatch
+    _output_text():         DRY helper for BasicOutputs text
+    _get_color():           DRY helper for color code lookup
+    _display_field():       Display labeled field with color
+    _display_section():     Display section title with color
+    _display_zmachine():    Display complete zMachine structure
+    _display_zauth():       Display complete zAuth state (three-tier aware)
+    _should_show_sysmsg():  Check logging level for system message display
+
+
+═══════════════════════════════════════════════════════════════════════════
+DUAL-MODE I/O PATTERN
+═══════════════════════════════════════════════════════════════════════════
+
+All public methods follow the GUI-first, Terminal-fallback pattern established by
+zDisplay's dual-mode architecture:
+
+1. Try Bifrost (GUI) mode first via send_gui_event()
+2. If GUI mode succeeds (returns True), return immediately
+3. If GUI mode unavailable (returns False), fall back to Terminal mode
+4. Terminal mode uses composition: BasicOutputs, Signals, BasicInputs
+
+Example Flow:
+    zSession(session_data)
+    ├─ GUI Mode:      Send EVENT_ZSESSION to Bifrost
+    │                 → Frontend shows interactive session viewer
+    │                 → Return immediately
+    └─ Terminal Mode: Use zDeclare() + _display_field() + _display_zmachine() + _display_zauth()
+                      → Display formatted session in terminal
+
+
+═══════════════════════════════════════════════════════════════════════════
+COMPOSITION PATTERN
+═══════════════════════════════════════════════════════════════════════════
+
+zSystem depends on three sibling event packages via composition (most dependencies
+of any event package):
+
+Dependencies:
+    BasicOutputs (display_event_outputs.py):
+        - header():  Display section headers
+        - text():    Display formatted text
+        - Used for: All session/machine/auth field display
+    
+    Signals (display_event_signals.py):
+        - success(), error(), warning(), info():  Colored status messages
+        - Used for: System message feedback (future integration)
+    
+    BasicInputs (display_event_inputs.py):
+        - selection():  Interactive numbered selection
+        - Used for: zMenu() interactive mode
+
+Cross-Reference:
+    zSystem depends on: BasicOutputs, Signals, BasicInputs
+    No other packages depend on zSystem (leaf node in dependency graph)
+
+
+═══════════════════════════════════════════════════════════════════════════
+LOGGING INTEGRATION (_should_show_sysmsg)
+═══════════════════════════════════════════════════════════════════════════
+
+System messages (zDeclare) are conditionally displayed based on logging level and
+deployment mode. This prevents verbose system messages in production environments.
+
+Check Priority:
+    1. Logger method:      zcli.logger.should_show_sysmsg() (if available)
+    2. Debug flag:         session.get("debug") (legacy fallback)
+    3. Deployment mode:    session[SESSION_KEY_ZMACHINE][ZMACHINE_KEY_DEPLOYMENT]
+                          - "dev" → show messages (default)
+                          - "prod" → hide messages
+
+Usage:
+    def zDeclare(self, label, ...):
+        if not self._should_show_sysmsg():
+            return  # Don't display in prod or when logging level is too high
+        # Display system message
+
+
+═══════════════════════════════════════════════════════════════════════════
+ZDIALOG INTEGRATION (Week 6.5 Preparation)
+═══════════════════════════════════════════════════════════════════════════
+
+Current Implementation (Simple):
+    - Basic field collection (text input only)
+    - No schema validation
+    - No field type support (checkbox, select, etc.)
+    - No validation feedback
+
+Week 6.5 Integration TODO:
+    1. Integrate with zDialog subsystem (zCLI.subsystems.zDialog)
+    2. Add full schema validation support
+    3. Support field types: text, password, checkbox, select, number, email, etc.
+    4. Add real-time validation feedback
+    5. Integrate BasicData for validation error display (bullet list)
+    6. Integrate BasicData for form preview (JSON display)
+    7. Add zcli and walker parameter handling (currently TODO)
+    8. Support nested field structures
+    9. Support conditional field display
+    10. Add form state management
+
+Note: zDialog() parameters (zcli, walker) are documented but not yet implemented.
+      Full implementation requires Week 6.5 zDialog subsystem refactor.
+
+
+═══════════════════════════════════════════════════════════════════════════
+USAGE EXAMPLES
+═══════════════════════════════════════════════════════════════════════════
+
+1. Display Complete Session State:
+    ```python
+    # Show all session information
+    zcli.display.zEvents.zSystem.zSession(zcli.session)
+    
+    # Output (Terminal):
+    # ══════════════════════════ View zSession ═══════════════════════════
+    # zSession_ID: abc123-def456
+    # zMode: Terminal
+    # 
+    # zMachine:
+    #   os: macOS
+    #   hostname: dev-machine
+    #   deployment: dev
+    #   ...
+    # 
+    # zAuth:
+    #   Active Context: zSession
+    #   ID: 12345
+    #   Username: admin
+    #   Role: admin
+    # 
+    # zWorkspace: /Users/dev/project
+    # zVaFile_path: /Users/dev/project/app.yaml
+    # Press Enter to continue...
+    ```
+
+2. Display Navigation Breadcrumbs:
+    ```python
+    # Show navigation trail
+    zcli.display.zEvents.zSystem.zCrumbs(zcli.session)
+    
+    # Output (Terminal):
+    # zCrumbs:
+    #   file[Main > Setup > Config]
+    #   vafile[App > Database > Users]
+    #   block[^Root* > User Management]
+    ```
+
+3. Interactive Menu Selection:
+    ```python
+    # Display menu with user selection
+    menu_items = [
+        (1, "Create New User"),
+        (2, "List Users"),
+        (3, "Delete User"),
+        (4, "Exit")
+    ]
+    choice = zcli.display.zEvents.zSystem.zMenu(
+        menu_items=menu_items,
+        prompt="Select an action:",
+        return_selection=True
+    )
+    # Returns: "Create New User" (user selected 1)
+    ```
+
+
+═══════════════════════════════════════════════════════════════════════════
+THREAD SAFETY
+═══════════════════════════════════════════════════════════════════════════
+
+Instance is thread-safe (read-only access to parent display and session).
+All state is stored in zCLI session dict, not in zSystem.
+
+
+═══════════════════════════════════════════════════════════════════════════
+MODULE CONSTANTS
+═══════════════════════════════════════════════════════════════════════════
+
+See below for 60+ module-level constants defining event names, dict keys,
+messages, colors, styles, zMachine keys, and default values.
+"""
+
+from typing import Any, Optional, Dict, Union, List, Tuple
+
+# Import SESSION_KEY_* constants from zConfig (17 constants)
+# Note: Some constants imported for documentation (module docstring) but not yet used in code
+from zCLI.subsystems.zConfig.zConfig_modules.config_session import (
+    SESSION_KEY_ZS_ID,              # "zS_id"
+    SESSION_KEY_ZMODE,              # "zMode"
+    SESSION_KEY_ZMACHINE,           # "zMachine"
+    SESSION_KEY_ZAUTH,              # "zAuth"
+    SESSION_KEY_ZWORKSPACE,         # "zWorkspace"
+    SESSION_KEY_ZVAFILE_PATH,       # "zVaFile_path"
+    SESSION_KEY_ZVAFILENAME,        # "zVaFilename"
+    SESSION_KEY_ZBLOCK,             # "zBlock"
+    SESSION_KEY_ZCRUMBS,            # "zCrumbs"
+    SESSION_KEY_ZCACHE,             # "zCache" - documented for future use  # noqa: F401
+    SESSION_KEY_WIZARD_MODE,        # "wizard_mode" - documented for future use  # noqa: F401
+    SESSION_KEY_ZSPARK,             # "zSpark" - documented for future use  # noqa: F401
+    SESSION_KEY_VIRTUAL_ENV,        # "virtual_env" - documented for future use  # noqa: F401
+    SESSION_KEY_SYSTEM_ENV,         # "system_env" - documented for future use  # noqa: F401
+    SESSION_KEY_ZLOGGER,            # "zLogger" - documented for future use  # noqa: F401
+    SESSION_KEY_ZTRACEBACK,         # "zTraceback" - documented for future use  # noqa: F401
+    SESSION_KEY_LOGGER_INSTANCE     # "logger_instance" - documented for future use  # noqa: F401
+)
+
+# Import ZAUTH_KEY_* constants from zConfig (13 constants)
+# Note: Some constants imported for documentation (module docstring) but not yet used in code
+from zCLI.subsystems.zConfig.zConfig_modules import (
+    ZAUTH_KEY_ZSESSION,             # "zSession"
+    ZAUTH_KEY_APPLICATIONS,         # "applications"
+    ZAUTH_KEY_ACTIVE_APP,           # "active_app"
+    ZAUTH_KEY_AUTHENTICATED,        # "authenticated" - documented for future use  # noqa: F401
+    ZAUTH_KEY_ID,                   # "id"
+    ZAUTH_KEY_USERNAME,             # "username"
+    ZAUTH_KEY_ROLE,                 # "role"
+    ZAUTH_KEY_API_KEY,              # "api_key" - documented for future use  # noqa: F401
+    ZAUTH_KEY_ACTIVE_CONTEXT,       # "active_context"
+    ZAUTH_KEY_DUAL_MODE,            # "dual_mode"
+    CONTEXT_ZSESSION,               # "zSession"
+    CONTEXT_APPLICATION,            # "application"
+    CONTEXT_DUAL                    # "dual"
+)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# MODULE CONSTANTS
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Event Names (Bifrost WebSocket Events)
+EVENT_ZSESSION = "zSession"         # Session state display event
+EVENT_ZCRUMBS = "zCrumbs"           # Breadcrumb navigation event
+EVENT_ZMENU = "zMenu"               # Menu display/selection event
+EVENT_ZDIALOG = "zDialog"           # Form dialog event
+
+# Local Dictionary Keys (for GUI events, not session data)
+KEY_SESSION = "session"             # Session data payload
+KEY_BREAK = "break"                 # Break after display flag
+KEY_BREAK_MESSAGE = "break_message" # Break message text
+KEY_CRUMBS = "crumbs"               # Crumbs data payload
+KEY_MENU = "menu"                   # Menu items payload
+KEY_PROMPT = "prompt"               # Menu prompt text
+KEY_RETURN_SELECTION = "return_selection"  # Interactive flag
+KEY_CONTEXT = "context"             # Dialog context payload
+KEY_FIELDS = "fields"               # Dialog fields list
+
+# Messages (Terminal Output)
+MSG_NO_SESSION = "No session available"                # No session data
+MSG_VIEW_ZSESSION = "View zSession"                    # Session header
+MSG_ZCRUMBS_HEADER = "zCrumbs:"                        # Breadcrumbs header
+MSG_DEFAULT_MENU_PROMPT = "Select an option:"          # Default menu prompt
+MSG_FORM_INPUT = "Form Input"                          # Form start header
+MSG_FORM_COMPLETE = "Form Complete"                    # Form end header
+MSG_PRESS_ENTER = "Press Enter to continue..."         # Default break message
+MSG_TOOL_PREFERENCES = "Tool Preferences"              # zMachine subsection
+MSG_SYSTEM = "System"                                  # zMachine subsection
+MSG_ZMACHINE_SECTION = "zMachine"                      # zMachine section title
+MSG_ZAUTH_SECTION = "zAuth"                            # zAuth section title
+MSG_ACTIVE_CONTEXT = "Active Context"                  # zAuth context label
+MSG_DUAL_MODE_INDICATOR = "[DUAL AUTH]"                # Dual-mode badge
+MSG_AUTHENTICATED_APPS = "Authenticated Apps"          # Multi-app label
+
+# Colors (Terminal Display)
+COLOR_MAIN = "MAIN"                 # Main header color
+COLOR_GREEN = "GREEN"               # Section title color
+COLOR_YELLOW = "YELLOW"             # Field label color
+COLOR_CYAN = "CYAN"                 # Subsection color
+COLOR_RESET = "RESET"               # Reset to default
+
+# Styles (Header Rendering)
+STYLE_FULL = "full"                 # Full-width header (indent 0)
+STYLE_SINGLE = "single"             # Single-line header (indent 1)
+STYLE_WAVE = "wave"                 # Wave-style header (indent 2+)
+STYLE_NUMBERED = "numbered"         # Numbered menu style
+
+# Defaults
+DEFAULT_INDENT = 0                  # Default indentation level
+DEFAULT_STYLE = None                # Auto-select style based on indent
+DEFAULT_MENU_PROMPT = MSG_DEFAULT_MENU_PROMPT  # Default menu prompt
+DEFAULT_BREAK_MESSAGE = MSG_PRESS_ENTER        # Default break message
+DEFAULT_DEPLOYMENT = "dev"          # Default deployment mode
+
+# zMachine Dictionary Keys (zMachine Structure)
+ZMACHINE_KEY_OS = "os"                           # Operating system
+ZMACHINE_KEY_HOSTNAME = "hostname"               # Machine hostname
+ZMACHINE_KEY_ARCHITECTURE = "architecture"       # CPU architecture
+ZMACHINE_KEY_PYTHON_VERSION = "python_version"   # Python version
+ZMACHINE_KEY_DEPLOYMENT = "deployment"           # Deployment mode (dev/prod)
+ZMACHINE_KEY_ROLE = "role"                       # Machine role
+ZMACHINE_KEY_BROWSER = "browser"                 # Preferred browser
+ZMACHINE_KEY_IDE = "ide"                         # Preferred IDE
+ZMACHINE_KEY_SHELL = "shell"                     # Preferred shell
+ZMACHINE_KEY_CPU_CORES = "cpu_cores"             # Number of CPU cores
+ZMACHINE_KEY_MEMORY_GB = "memory_gb"             # RAM in GB
+ZMACHINE_KEY_ZCLI_VERSION = "zcli_version"       # zCLI version
+
+# zMachine Field Lists (for iteration)
+ZMACHINE_IDENTITY_FIELDS = [
+    ZMACHINE_KEY_OS,
+    ZMACHINE_KEY_HOSTNAME,
+    ZMACHINE_KEY_ARCHITECTURE,
+    ZMACHINE_KEY_PYTHON_VERSION,
+    ZMACHINE_KEY_DEPLOYMENT,
+    ZMACHINE_KEY_ROLE
+]
+
+ZMACHINE_TOOL_FIELDS = [
+    ZMACHINE_KEY_BROWSER,
+    ZMACHINE_KEY_IDE,
+    ZMACHINE_KEY_SHELL
+]
+
+ZMACHINE_SYSTEM_FIELDS = [
+    ZMACHINE_KEY_CPU_CORES,
+    ZMACHINE_KEY_MEMORY_GB
+]
+
+# Session Field Lists (for iteration)
+SESSION_WORKSPACE_FIELDS = [
+    SESSION_KEY_ZWORKSPACE,
+    SESSION_KEY_ZVAFILE_PATH,
+    SESSION_KEY_ZVAFILENAME,
+    SESSION_KEY_ZBLOCK
+]
+
+# Formatting Constants
+FORMAT_BREADCRUMB_SEPARATOR = " > "              # Breadcrumb path separator
+FORMAT_CRUMB_SCOPE = "  {scope}[{path}]"        # Crumb scope format
+FORMAT_MENU_ITEM = "  [{number}] {option}"      # Menu item format
+FORMAT_FIELD_PROMPT = "{field}: "                # Field input prompt
+FORMAT_FIELD_NEWLINE = "\n{field}:"              # Field newline format
+FORMAT_FIELD_LABEL_INDENT = "  {field}"          # Indented field label
+FORMAT_TOOL_FIELD_INDENT = "    {field}"         # Tool field indent
+
+# Display Labels
+LABEL_ZSESSION_ID = "zSession_ID"                # zSession ID display label
+LABEL_ZMODE = "zMode"                            # zMode display label
+LABEL_ZCLI_VERSION = "  zcli_version"            # zCLI version label
+
+# Deployment Mode Values
+DEPLOYMENT_MODE_DEV = "dev"                      # Development mode
+DEPLOYMENT_MODE_PROD = "prod"                    # Production mode
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ZSYSTEM CLASS
+# ═══════════════════════════════════════════════════════════════════════════
 
 class zSystem:
-    """zCLI system events: zDeclare, zSession, zCrumbs, zMenu, zDialog."""
+    """
+    zCLI System Introspection & Navigation UI Events (Dual-Mode Terminal + Bifrost).
+    
+    Provides user interface presentation for zCLI's core system structures across
+    both Terminal and Bifrost (GUI) modes. This is the ONLY event package that
+    operates at the system level, directly displaying zCLI's internal state.
+    
+    System Integration:
+        zCLI core → zSystem → zDisplay → Terminal/Bifrost
+    
+    Session Integration (17 SESSION_KEY_* constants):
+        Uses standardized constants from zConfig for safe, refactor-proof access
+        to zSession dict (zS_id, zMode, zMachine, zAuth, zWorkspace, etc.)
+    
+    zAuth Integration (13 ZAUTH_KEY_* constants + three-tier model):
+        Displays authentication state with full awareness of:
+        - Layer 1: zSession auth (internal zCLI users)
+        - Layer 2: Application auth (external app users, multi-app)
+        - Layer 3: Dual-auth (simultaneous contexts)
+    
+    zMachine Integration (12 ZMACHINE_KEY_* constants):
+        Displays machine configuration in organized sections:
+        - Identity & Deployment (os, hostname, deployment, role)
+        - Tool Preferences (browser, ide, shell)
+        - System Capabilities (cpu_cores, memory_gb)
+        - zCLI Version
+    
+    Composition:
+        Depends on: BasicOutputs (text/header), Signals (status messages), BasicInputs (selection)
+        Most dependencies of any event package (3 packages)
+    
+    Methods:
+        Core System Displays:
+            - zSession():   Display complete session state
+            - zCrumbs():    Display navigation breadcrumb trails
+            - zMenu():      Display interactive menu (with optional selection)
+            - zDialog():    Display form dialog and collect input
+            - zDeclare():   Display system declaration (log-level aware)
+        
+        Helper Methods (Private):
+            - _try_gui_event():     DRY helper for GUI dispatch
+            - _output_text():       DRY helper for text output
+            - _get_color():         DRY helper for color lookup
+            - _display_field():     Display labeled field
+            - _display_section():   Display section title
+            - _display_zmachine():  Display zMachine structure
+            - _display_zauth():     Display zAuth state (three-tier aware)
+            - _should_show_sysmsg(): Check logging level for message display
+    
+    Dual-Mode Pattern:
+        All methods follow GUI-first, Terminal-fallback:
+        1. Try Bifrost (GUI) via send_gui_event()
+        2. If GUI succeeds, return immediately
+        3. If GUI unavailable, fall back to Terminal output
+    
+    Usage:
+        # Display session
+        zcli.display.zEvents.zSystem.zSession(zcli.session)
+        
+        # Interactive menu
+        choice = zcli.display.zEvents.zSystem.zMenu(
+            menu_items=[(1, "Create"), (2, "Read")],
+            return_selection=True
+        )
+    """
+    
+    # Class-level type declarations
+    display: Any                           # Parent zDisplay instance
+    zPrimitives: Any                       # Primitives for I/O operations
+    zColors: Any                           # Colors for Terminal output
+    BasicOutputs: Optional[Any]            # BasicOutputs event package (set after init)
+    Signals: Optional[Any]                 # Signals event package (set after init)
+    BasicInputs: Optional[Any]             # BasicInputs event package (set after init)
 
-    def __init__(self, display_instance):
-        """Initialize zSystem with reference to parent display instance."""
+    def __init__(self, display_instance: Any) -> None:
+        """
+        Initialize zSystem with reference to parent zDisplay instance.
+        
+        Args:
+            display_instance: Parent zDisplay instance (provides access to
+                            zPrimitives, zColors, session, and will provide
+                            BasicOutputs, Signals, BasicInputs after zEvents
+                            initialization completes)
+        
+        Returns:
+            None
+        
+        Notes:
+            - BasicOutputs, Signals, BasicInputs are set to None initially
+            - They will be populated by zEvents.__init__ after all event
+              packages are instantiated (to avoid circular dependencies)
+            - This is part of zDisplay's cross-reference architecture
+        """
         self.display = display_instance
         self.zPrimitives = display_instance.zPrimitives
         self.zColors = display_instance.zColors
@@ -14,81 +613,285 @@ class zSystem:
         self.Signals = None  # Will be set after zEvents initialization
         self.BasicInputs = None  # Will be set after zEvents initialization
 
-    def zDeclare(self, label, color=None, indent=0, style=None):
-        """System message/declaration with log level conditioning and auto-style."""
+
+    # ═══════════════════════════════════════════════════════════════════════
+    # HELPER METHODS (Private - DRY Refactoring)
+    # ═══════════════════════════════════════════════════════════════════════
+
+    def _try_gui_event(self, event_name: str, data: Dict[str, Any]) -> bool:
+        """
+        Try to send GUI event to Bifrost mode (DRY helper).
+        
+        Args:
+            event_name: WebSocket event name (e.g., EVENT_ZSESSION)
+            data: Event data dictionary to send to frontend
+        
+        Returns:
+            bool: True if GUI mode succeeded (message sent), False if Terminal mode
+        
+        Usage:
+            if self._try_gui_event(EVENT_ZSESSION, {KEY_SESSION: session_data}):
+                return  # GUI handled it
+            # Fall back to Terminal mode
+        """
+        return self.zPrimitives.send_gui_event(event_name, data)
+
+    def _output_text(
+        self, 
+        content: str, 
+        indent: int = 0, 
+        break_after: bool = False
+    ) -> None:
+        """
+        Output text if BasicOutputs package available (DRY helper).
+        
+        Args:
+            content: Text content to display
+            indent: Indentation level (default: 0)
+            break_after: Add line break after text (default: False)
+        
+        Returns:
+            None
+        
+        Usage:
+            self._output_text(MSG_NO_SESSION, break_after=False)
+        """
+        if self.BasicOutputs:
+            self.BasicOutputs.text(content, indent=indent, break_after=break_after)
+
+    def _get_color(self, color_name: str) -> str:
+        """
+        Get color code from zColors with fallback to RESET (DRY helper).
+        
+        Args:
+            color_name: Color attribute name (e.g., "GREEN", "YELLOW")
+        
+        Returns:
+            str: ANSI color code from zColors, or RESET if not found
+        
+        Usage:
+            color_code = self._get_color(COLOR_GREEN)
+        """
+        return getattr(self.zColors, color_name, self.zColors.RESET)
+
+
+    # ═══════════════════════════════════════════════════════════════════════
+    # PUBLIC METHODS (System Display Events)
+    # ═══════════════════════════════════════════════════════════════════════
+
+    def zDeclare(
+        self, 
+        label: str, 
+        color: Optional[str] = None, 
+        indent: int = DEFAULT_INDENT, 
+        style: Optional[str] = DEFAULT_STYLE
+    ) -> None:
+        """
+        Display system declaration/message with log-level conditioning and auto-style.
+        
+        System messages (zDeclare) are displayed only when appropriate based on:
+        - Logging level (via zcli.logger.should_show_sysmsg())
+        - Debug flag (legacy: session["debug"])
+        - Deployment mode (dev → show, prod → hide)
+        
+        Args:
+            label: Declaration text to display
+            color: Color name (default: display.mycolor or "RESET")
+            indent: Indentation level (default: 0)
+            style: Header style ("full", "single", "wave", or None for auto-select)
+        
+        Returns:
+            None
+        
+        Style Auto-Selection:
+            indent 0 → "full" (full-width header)
+            indent 1 → "single" (single-line header)
+            indent 2+ → "wave" (wave-style header)
+        
+        Terminal Mode:
+            Renders colored header via BasicOutputs.header()
+        
+        Bifrost Mode:
+            N/A (zDeclare is Terminal-only, system messages shown in console)
+        
+        Usage:
+            # Display main system message
+            display.zEvents.zSystem.zDeclare("Session Initialized", color="MAIN")
+            
+            # Display indented sub-message
+            display.zEvents.zSystem.zDeclare("Loading config...", indent=1)
+        
+        Notes:
+            - Respects logging level (won't display in prod or high log levels)
+            - Uses display.mycolor if no color specified (preserves user preference)
+            - Composes BasicOutputs.header() for actual rendering
+        """
         # Check if system messages should be displayed based on logging level
         if not self._should_show_sysmsg():
             return
 
         # Use display's mycolor if no color specified
         if color is None:
-            color = getattr(self.display, 'mycolor', 'RESET')
+            color = getattr(self.display, 'mycolor', COLOR_RESET)
 
         # Auto-select style based on indent if not specified
         if style is None:
             if indent == 0:
-                style = "full"
+                style = STYLE_FULL
             elif indent == 1:
-                style = "single"
+                style = STYLE_SINGLE
             else:  # indent >= 2
-                style = "wave"
+                style = STYLE_WAVE
 
         # Compose: use header event to do the actual rendering
         if self.BasicOutputs:
             self.BasicOutputs.header(label, color, indent, style)
 
-    def zSession(self, session_data, break_after=True, break_message=None):
-        """Display zCLI session information."""
-        # Try GUI mode first - send clean event
-        if self.zPrimitives.send_gui_event("zSession", {
-            "session": session_data,
-            "break": break_after,
-            "break_message": break_message
+    def zSession(
+        self, 
+        session_data: Optional[Dict[str, Any]], 
+        break_after: bool = True, 
+        break_message: Optional[str] = None
+    ) -> None:
+        """
+        Display complete zCLI session state (Terminal or Bifrost mode).
+        
+        Displays all core session fields using SESSION_KEY_* constants for
+        safe, refactor-proof access:
+        - zSession ID, zMode
+        - zMachine (machine configuration)
+        - zAuth (authentication state - three-tier aware)
+        - zWorkspace, zVaFile_path, zVaFilename, zBlock
+        
+        Args:
+            session_data: zCLI session dictionary (zcli.session)
+            break_after: Add "Press Enter" prompt at end (default: True)
+            break_message: Custom break message (default: "Press Enter to continue...")
+        
+        Returns:
+            None
+        
+        Bifrost Mode:
+            - Sends EVENT_ZSESSION event with full session data
+            - Frontend displays interactive session viewer
+            - Returns immediately
+        
+        Terminal Mode:
+            - Displays formatted session structure:
+              1. Header: "View zSession"
+              2. Core fields: zSession_ID, zMode
+              3. zMachine section (if present)
+              4. Workspace fields
+              5. zAuth section (if present) - three-tier aware
+              6. Optional break prompt
+        
+        Usage:
+            # Display full session
+            zcli.display.zEvents.zSystem.zSession(zcli.session)
+            
+            # Display without break prompt
+            zcli.display.zEvents.zSystem.zSession(zcli.session, break_after=False)
+            
+            # Custom break message
+            zcli.display.zEvents.zSystem.zSession(
+                zcli.session,
+                break_message="Review complete. Press Enter..."
+            )
+        
+        Notes:
+            - Uses SESSION_KEY_* constants for all session access
+            - Composes _display_zmachine() and _display_zauth() for subsections
+            - Handles missing session data gracefully
+        """
+        # Try Bifrost (GUI) mode first - send clean event
+        if self._try_gui_event(EVENT_ZSESSION, {
+            KEY_SESSION: session_data,
+            KEY_BREAK: break_after,
+            KEY_BREAK_MESSAGE: break_message
         }):
             return  # GUI event sent successfully
 
         # Terminal mode - display session using composed events
         if not session_data:
-            if self.BasicOutputs:
-                self.BasicOutputs.text("No session available", break_after=False)
+            self._output_text(MSG_NO_SESSION, break_after=False)
             return
 
         # Header
-        self.zDeclare("View zSession", color="MAIN", indent=0)
+        self.zDeclare(MSG_VIEW_ZSESSION, color=COLOR_MAIN, indent=0)
 
         # Core session fields
-        self._display_field("zSession_ID", session_data.get("zS_id"))
-        self._display_field("zMode", session_data.get("zMode"))
+        self._display_field(LABEL_ZSESSION_ID, session_data.get(SESSION_KEY_ZS_ID))
+        self._display_field(LABEL_ZMODE, session_data.get(SESSION_KEY_ZMODE))
 
         # zMachine section
-        zMachine = session_data.get("zMachine", {})
+        zMachine = session_data.get(SESSION_KEY_ZMACHINE, {})
         if zMachine:
             self._display_zmachine(zMachine)
 
         # Session fields
-        if self.BasicOutputs:
-            self.BasicOutputs.text("", break_after=False)
-        for field in ["zWorkspace", "zVaFile_path", "zVaFilename", "zBlock"]:
-            self._display_field(field, session_data.get(field))
+        self._output_text("", break_after=False)
+        for field_key in SESSION_WORKSPACE_FIELDS:
+            value = session_data.get(field_key)
+            if value:
+                # Extract field name from constant (e.g., SESSION_KEY_ZWORKSPACE → "zWorkspace")
+                field_name = field_key  # Constants match the actual field names
+                self._display_field(field_name, value)
 
         # zAuth section
-        zAuth = session_data.get("zAuth", {})
+        zAuth = session_data.get(SESSION_KEY_ZAUTH, {})
         if zAuth:
             self._display_zauth(zAuth)
 
         # Optional break at the end
-        if break_after and self.BasicOutputs:
-            self.BasicOutputs.text("", break_after=False)
-            self.BasicOutputs.text(break_message or "Press Enter to continue...", break_after=True)
+        if break_after:
+            self._output_text("", break_after=False)
+            self._output_text(break_message or DEFAULT_BREAK_MESSAGE, break_after=True)
 
-    def zCrumbs(self, session_data):
-        """Display breadcrumb navigation trail showing scope paths."""
-        # Try GUI mode first - send clean event
-        z_crumbs = session_data.get("zCrumbs", {}) if session_data else {}
+    def zCrumbs(self, session_data: Optional[Dict[str, Any]]) -> None:
+        """
+        Display breadcrumb navigation trail showing scope paths (Terminal or Bifrost mode).
+        
+        Breadcrumbs show the navigation trail through different scopes (file, vafile, block).
+        Uses SESSION_KEY_ZCRUMBS for safe session access.
+        
+        Args:
+            session_data: zCLI session dictionary containing zCrumbs
+        
+        Returns:
+            None
+        
+        Bifrost Mode:
+            - Sends EVENT_ZCRUMBS event with crumbs data
+            - Frontend displays interactive breadcrumb UI
+            - Returns immediately
+        
+        Terminal Mode:
+            - Displays formatted breadcrumb trails:
+              zCrumbs:
+                file[Main > Setup > Config]
+                vafile[App > Database > Users]
+                block[^Root* > User Management]
+        
+        Structure:
+            session[SESSION_KEY_ZCRUMBS] = {
+                "file": ["Main", "Setup", "Config"],
+                "vafile": ["App", "Database", "Users"],
+                "block": ["^Root*", "User Management"]
+            }
+        
+        Usage:
+            # Display navigation breadcrumbs
+            zcli.display.zEvents.zSystem.zCrumbs(zcli.session)
+        
+        Notes:
+            - Uses SESSION_KEY_ZCRUMBS constant for session access
+            - Joins trail items with " > " separator
+            - Displays in "scope[path]" format
+        """
+        # Try Bifrost (GUI) mode first - send clean event
+        z_crumbs = session_data.get(SESSION_KEY_ZCRUMBS, {}) if session_data else {}
 
-        if self.zPrimitives.send_gui_event("zCrumbs", {
-            "crumbs": z_crumbs
-        }):
+        if self._try_gui_event(EVENT_ZCRUMBS, {KEY_CRUMBS: z_crumbs}):
             return  # GUI event sent successfully
 
         # Terminal mode - display breadcrumbs using composed events
@@ -99,23 +902,72 @@ class zSystem:
         crumbs_display = {}
         for scope, trail in z_crumbs.items():
             # Join trail with " > " separator
-            path = " > ".join(trail) if trail else ""
+            path = FORMAT_BREADCRUMB_SEPARATOR.join(trail) if trail else ""
             crumbs_display[scope] = path
 
         # Display breadcrumbs using BasicOutputs.text()
-        if self.BasicOutputs:
-            self.BasicOutputs.text("", break_after=False)
-            self.BasicOutputs.text("zCrumbs:", break_after=False)
-            for scope, path in crumbs_display.items():
-                self.BasicOutputs.text(f"  {scope}[{path}]", break_after=False)
+        self._output_text("", break_after=False)
+        self._output_text(MSG_ZCRUMBS_HEADER, break_after=False)
+        for scope, path in crumbs_display.items():
+            content = FORMAT_CRUMB_SCOPE.format(scope=scope, path=path)
+            self._output_text(content, break_after=False)
 
-    def zMenu(self, menu_items, prompt="Select an option:", return_selection=False):
-        """Display menu options and collect selection if requested."""
-        # Try GUI mode first - send clean event
-        if self.zPrimitives.send_gui_event("zMenu", {
-            "menu": menu_items,
-            "prompt": prompt,
-            "return_selection": return_selection
+    def zMenu(
+        self, 
+        menu_items: Optional[List[Tuple[Any, str]]], 
+        prompt: str = DEFAULT_MENU_PROMPT, 
+        return_selection: bool = False
+    ) -> Optional[Union[str, List[str]]]:
+        """
+        Display menu options and optionally collect user selection (Terminal or Bifrost mode).
+        
+        Supports two modes:
+        - Display-only: Show menu items without interaction
+        - Interactive: Show menu and return user's selection
+        
+        Args:
+            menu_items: List of (number, label) tuples, e.g., [(1, "Create"), (2, "Read")]
+            prompt: Menu prompt text (default: "Select an option:")
+            return_selection: Enable interactive selection (default: False)
+        
+        Returns:
+            Optional[Union[str, List[str]]]: 
+                - None if display-only mode or GUI mode
+                - Selected label(s) if interactive Terminal mode
+        
+        Bifrost Mode:
+            - Sends EVENT_ZMENU event with menu data
+            - Frontend displays interactive menu UI
+            - Returns None (selection handled via WebSocket callback)
+        
+        Terminal Mode:
+            - Display-only: Shows numbered menu items
+            - Interactive: Composes BasicInputs.selection() for user input
+        
+        Usage:
+            # Display-only menu
+            menu = [(1, "Create"), (2, "Read"), (3, "Update"), (4, "Delete")]
+            display.zEvents.zSystem.zMenu(menu)
+            
+            # Interactive menu
+            menu = [(1, "Create"), (2, "Read"), (3, "Update")]
+            choice = display.zEvents.zSystem.zMenu(
+                menu_items=menu,
+                prompt="Select an action:",
+                return_selection=True
+            )
+            # Returns: "Create" (if user selected 1)
+        
+        Notes:
+            - Menu items are (number, label) tuples
+            - Interactive mode uses STYLE_NUMBERED for consistency
+            - Composes BasicInputs.selection() for actual selection logic
+        """
+        # Try Bifrost (GUI) mode first - send clean event
+        if self._try_gui_event(EVENT_ZMENU, {
+            KEY_MENU: menu_items,
+            KEY_PROMPT: prompt,
+            KEY_RETURN_SELECTION: return_selection
         }):
             return None  # GUI event sent successfully
 
@@ -132,112 +984,416 @@ class zSystem:
                 prompt=prompt,
                 options=options,
                 multi=False,
-                style="numbered"
+                style=STYLE_NUMBERED
             )
         else:
             # Display-only mode: just show the menu
-            if self.BasicOutputs:
-                self.BasicOutputs.text("", break_after=False)  # Blank line
-                for number, option in menu_items:
-                    self.BasicOutputs.text(f"  [{number}] {option}", break_after=False)
+            self._output_text("", break_after=False)  # Blank line
+            for number, option in menu_items:
+                content = FORMAT_MENU_ITEM.format(number=number, option=option)
+                self._output_text(content, break_after=False)
             return None
 
-    def zDialog(self, context, zcli=None, walker=None):  # TODO: Implement zcli and walker parameter handling
-        """Display form dialog and collect input."""
-        # Try GUI mode first - send clean event
-        if self.zPrimitives.send_gui_event("zDialog", {
-            "context": context
-        }):
+    def zDialog(
+        self, 
+        context: Dict[str, Any], 
+        _zcli: Optional[Any] = None, 
+        _walker: Optional[Any] = None
+    ) -> Dict[str, Any]:
+        """
+        Display form dialog and collect validated input (Terminal or Bifrost mode).
+        
+        ⚠️  CURRENT IMPLEMENTATION: Simple field collection only.
+        📋 FUTURE (Week 6.5): Full schema validation, field types, validation feedback.
+        
+        Args:
+            context: Form context dict containing:
+                    - KEY_FIELDS: List of field names to collect
+                    - Additional schema/validation data (future)
+            _zcli: zCLI instance for advanced integration (TODO: not yet implemented)
+            _walker: zWalker instance for navigation (TODO: not yet implemented)
+        
+        Returns:
+            Dict[str, Any]: Collected form data {field_name: value, ...}
+                           Empty dict {} if GUI mode (async collection)
+        
+        Bifrost Mode:
+            - Sends EVENT_ZDIALOG event with form context
+            - Frontend displays interactive form UI
+            - Returns empty dict (data sent back via WebSocket)
+        
+        Terminal Mode:
+            - Displays form header
+            - Collects text input for each field
+            - Displays form complete footer
+            - Returns collected data dict
+        
+        Usage:
+            # Simple field collection (current)
+            context = {KEY_FIELDS: ["username", "email", "role"]}
+            data = display.zEvents.zSystem.zDialog(context)
+            # Returns: {"username": "admin", "email": "a@b.com", "role": "admin"}
+        
+        Week 6.5 Integration TODO:
+            1. Add full schema validation support
+            2. Support field types: text, password, checkbox, select, number, email
+            3. Add real-time validation feedback
+            4. Integrate BasicData for validation errors (bullet list)
+            5. Integrate BasicData for form preview (JSON display)
+            6. Implement zcli parameter handling (access to auth, session, etc.)
+            7. Implement walker parameter handling (navigation integration)
+            8. Support nested field structures
+            9. Support conditional field display
+            10. Add form state management
+        
+        Notes:
+            - zcli and walker parameters documented but not yet implemented
+            - Current implementation: Simple text input only
+            - Full implementation requires Week 6.5 zDialog subsystem refactor
+            - Uses zDeclare() for form header/footer
+            - Composes zPrimitives.read_string() for input collection
+        """
+        # Try Bifrost (GUI) mode first - send clean event
+        if self._try_gui_event(EVENT_ZDIALOG, {KEY_CONTEXT: context}):
             return {}  # GUI event sent successfully, return empty dict
 
         # Terminal mode - simplified form display
-        fields = context.get("fields", [])
+        fields = context.get(KEY_FIELDS, [])
 
         # Display header using zDeclare
-        self.zDeclare("Form Input", indent=0)
+        self.zDeclare(MSG_FORM_INPUT, indent=0)
 
         zConv = {}
 
         # Simple field collection (full schema validation would need more work)
         for field in fields:
-            if self.BasicOutputs:
-                self.BasicOutputs.text(f"\n{field}:", break_after=False)
+            content = FORMAT_FIELD_NEWLINE.format(field=field)
+            self._output_text(content, break_after=False)
             # Use primitive for input
-            value = self.zPrimitives.read_string(f"{field}: ")
+            prompt = FORMAT_FIELD_PROMPT.format(field=field)
+            value = self.zPrimitives.read_string(prompt)
             zConv[field] = value
 
         # Display footer
-        self.zDeclare("Form Complete", indent=0)
+        self.zDeclare(MSG_FORM_COMPLETE, indent=0)
 
         return zConv
 
-    # Helper methods for zSession display
-    def _display_field(self, label, value, indent=0, color="GREEN"):
-        """Display a labeled field using composed events."""
+
+    # ═══════════════════════════════════════════════════════════════════════
+    # ZSESSION DISPLAY HELPERS (Private)
+    # ═══════════════════════════════════════════════════════════════════════
+
+    def _display_field(
+        self, 
+        label: str, 
+        value: Any, 
+        indent: int = 0, 
+        color: str = COLOR_GREEN
+    ) -> None:
+        """
+        Display a labeled field with color formatting (Terminal).
+        
+        Args:
+            label: Field label text
+            value: Field value to display
+            indent: Indentation level (default: 0)
+            color: Color name for label (default: COLOR_GREEN)
+        
+        Returns:
+            None
+        
+        Format:
+            <color>label:<reset> value
+        
+        Usage:
+            self._display_field("Username", "admin", color=COLOR_YELLOW)
+            # Output: Username: admin (with colored label)
+        """
         if not self.BasicOutputs:
             return
 
-        color_code = getattr(self.zColors, color, self.zColors.RESET)
+        color_code = self._get_color(color)
         content = f"{color_code}{label}:{self.zColors.RESET} {value}"
-        self.BasicOutputs.text(content, indent=indent, break_after=False)
+        self._output_text(content, indent=indent, break_after=False)
 
-    def _display_section(self, title, indent=0, color="GREEN"):
-        """Display a section title using composed events."""
+    def _display_section(
+        self, 
+        title: str, 
+        indent: int = 0, 
+        color: str = COLOR_GREEN
+    ) -> None:
+        """
+        Display a section title with color formatting (Terminal).
+        
+        Args:
+            title: Section title text
+            indent: Indentation level (default: 0)
+            color: Color name for title (default: COLOR_GREEN)
+        
+        Returns:
+            None
+        
+        Format:
+            <color>title:<reset>
+        
+        Usage:
+            self._display_section("zMachine", color=COLOR_GREEN)
+            # Output: zMachine: (with colored title)
+        """
         if not self.BasicOutputs:
             return
 
-        color_code = getattr(self.zColors, color, self.zColors.RESET)
+        color_code = self._get_color(color)
         content = f"{color_code}{title}:{self.zColors.RESET}"
-        self.BasicOutputs.text(content, indent=indent, break_after=False)
+        self._output_text(content, indent=indent, break_after=False)
 
-    def _display_zmachine(self, zMachine):
-        """Display zMachine section."""
+    def _display_zmachine(self, zMachine: Dict[str, Any]) -> None:
+        """
+        Display complete zMachine section with organized subsections (Terminal).
+        
+        Displays machine configuration in three organized sections:
+        1. Identity & Deployment (os, hostname, architecture, python_version, deployment, role)
+        2. Tool Preferences (browser, ide, shell)
+        3. System Capabilities (cpu_cores, memory_gb)
+        4. zCLI Version
+        
+        Args:
+            zMachine: zMachine dictionary from session[SESSION_KEY_ZMACHINE]
+        
+        Returns:
+            None
+        
+        Structure:
+            zMachine:
+              os: macOS
+              hostname: dev-machine
+              architecture: arm64
+              python_version: 3.11.5
+              deployment: dev
+              role: developer
+              
+              Tool Preferences:
+                browser: Chrome
+                ide: VSCode
+                shell: zsh
+              
+              System:
+                cpu_cores: 8
+                memory_gb: 16
+              
+              zcli_version: 1.5.4
+        
+        Notes:
+            - Uses ZMACHINE_KEY_* constants for all field access
+            - Color-coded sections (GREEN for main, CYAN for subsections, YELLOW for fields)
+            - Only displays sections if fields present
+        """
         if not self.BasicOutputs:
             return
 
-        self.BasicOutputs.text("", break_after=False)
-        self._display_section("zMachine", color="GREEN")
+        self._output_text("", break_after=False)
+        self._display_section(MSG_ZMACHINE_SECTION, color=COLOR_GREEN)
 
         # Identity & Deployment
-        for field in ["os", "hostname", "architecture", "python_version", "deployment", "role"]:
-            if zMachine.get(field):
-                self._display_field(f"  {field}", zMachine.get(field), color="YELLOW")
+        for field_key in ZMACHINE_IDENTITY_FIELDS:
+            if zMachine.get(field_key):
+                label = FORMAT_FIELD_LABEL_INDENT.format(field=field_key)
+                self._display_field(label, zMachine.get(field_key), color=COLOR_YELLOW)
 
         # Tool Preferences
-        if any([zMachine.get("browser"), zMachine.get("ide"), zMachine.get("shell")]):
-            self.BasicOutputs.text("", break_after=False)
-            self._display_section("  Tool Preferences", color="CYAN")
-            for tool in ["browser", "ide", "shell"]:
-                if zMachine.get(tool):
-                    self._display_field(f"    {tool}", zMachine.get(tool), color="RESET")
+        has_tools = any(zMachine.get(tool) for tool in ZMACHINE_TOOL_FIELDS)
+        if has_tools:
+            self._output_text("", break_after=False)
+            self._display_section(FORMAT_FIELD_LABEL_INDENT.format(field=MSG_TOOL_PREFERENCES), color=COLOR_CYAN)
+            for tool_key in ZMACHINE_TOOL_FIELDS:
+                if zMachine.get(tool_key):
+                    label = FORMAT_TOOL_FIELD_INDENT.format(field=tool_key)
+                    self._display_field(label, zMachine.get(tool_key), color=COLOR_RESET)
 
         # System Capabilities
-        if zMachine.get("cpu_cores") or zMachine.get("memory_gb"):
-            self.BasicOutputs.text("", break_after=False)
-            self._display_section("  System", color="CYAN")
-            for field in ["cpu_cores", "memory_gb"]:
-                if zMachine.get(field):
-                    self._display_field(f"    {field}", zMachine.get(field), color="RESET")
+        has_system = any(zMachine.get(field) for field in ZMACHINE_SYSTEM_FIELDS)
+        if has_system:
+            self._output_text("", break_after=False)
+            self._display_section(FORMAT_FIELD_LABEL_INDENT.format(field=MSG_SYSTEM), color=COLOR_CYAN)
+            for field_key in ZMACHINE_SYSTEM_FIELDS:
+                if zMachine.get(field_key):
+                    label = FORMAT_TOOL_FIELD_INDENT.format(field=field_key)
+                    self._display_field(label, zMachine.get(field_key), color=COLOR_RESET)
 
         # zcli version
-        if zMachine.get("zcli_version"):
-            self.BasicOutputs.text("", break_after=False)
-            self._display_field("  zcli_version", zMachine.get("zcli_version"), color="YELLOW")
+        if zMachine.get(ZMACHINE_KEY_ZCLI_VERSION):
+            self._output_text("", break_after=False)
+            self._display_field(
+                LABEL_ZCLI_VERSION, 
+                zMachine.get(ZMACHINE_KEY_ZCLI_VERSION), 
+                color=COLOR_YELLOW
+            )
 
-    def _display_zauth(self, zAuth):
-        """Display zAuth section."""
+
+    # ═══════════════════════════════════════════════════════════════════════
+    # ZAUTH DISPLAY HELPERS (Private - Three-Tier Model Aware)
+    # ═══════════════════════════════════════════════════════════════════════
+
+    def _display_zauth(self, zAuth: Dict[str, Any]) -> None:
+        """
+        Display complete zAuth section with three-tier model awareness (Terminal).
+        
+        Displays authentication state with full awareness of zAuth's three-tier model:
+        - Layer 1: zSession auth (internal zCLI users)
+        - Layer 2: Application auth (external app users, multi-app)
+        - Layer 3: Dual-auth (simultaneous contexts)
+        
+        Displays:
+        1. Active Context (zSession/application/dual)
+        2. Dual-mode indicator (if dual_mode = True)
+        3. Current authentication (from active context)
+           - ID, Username, Role
+        4. All authenticated apps (if multiple apps, Layer 2)
+        5. Active app indicator (if in application/dual context)
+        
+        Args:
+            zAuth: zAuth dictionary from session[SESSION_KEY_ZAUTH]
+        
+        Returns:
+            None
+        
+        Structure Examples:
+        
+            Layer 1 (zSession Auth):
+                zAuth:
+                  Active Context: zSession
+                  ID: 12345
+                  Username: admin
+                  Role: admin
+            
+            Layer 2 (Application Auth - Single App):
+                zAuth:
+                  Active Context: application
+                  Active App: ecommerce_store
+                  ID: 67890
+                  Username: customer_john
+                  Role: customer
+            
+            Layer 2 (Multi-App):
+                zAuth:
+                  Active Context: application
+                  Active App: ecommerce_store
+                  Authenticated Apps:
+                    - ecommerce_store (ACTIVE)
+                    - analytics_dashboard
+                  ID: 67890
+                  Username: customer_john
+                  Role: customer
+            
+            Layer 3 (Dual-Auth):
+                zAuth:
+                  Active Context: dual [DUAL AUTH]
+                  Active App: ecommerce_store
+                  ID: 12345 (zSession) + 67890 (ecommerce_store)
+                  Username: admin (zSession) + store_owner (ecommerce_store)
+                  Role: admin (zSession) + owner (ecommerce_store)
+        
+        Notes:
+            - Uses ZAUTH_KEY_* constants for all field access
+            - Displays active_context first for clarity
+            - Shows dual-mode badge if ZAUTH_KEY_DUAL_MODE = True
+            - Lists all authenticated apps if multiple (multi-app support)
+            - Shows active app with indicator
+            - Adapts display based on active context
+        """
         if not self.BasicOutputs or not zAuth:
             return
 
-        self.BasicOutputs.text("", break_after=False)
-        self._display_section("zAuth", color="GREEN")
+        self._output_text("", break_after=False)
+        self._display_section(MSG_ZAUTH_SECTION, color=COLOR_GREEN)
 
-        for field in ["zAuth_id", "username", "role"]:
-            if zAuth.get(field):
-                self._display_field(f"  {field}", zAuth.get(field), color="YELLOW")
+        # Display active context first (critical for three-tier understanding)
+        active_context = zAuth.get(ZAUTH_KEY_ACTIVE_CONTEXT)
+        if active_context:
+            context_label = FORMAT_FIELD_LABEL_INDENT.format(field=MSG_ACTIVE_CONTEXT)
+            
+            # Add dual-mode indicator if dual_mode = True
+            dual_mode = zAuth.get(ZAUTH_KEY_DUAL_MODE, False)
+            context_display = f"{active_context} {MSG_DUAL_MODE_INDICATOR}" if dual_mode else active_context
+            
+            self._display_field(context_label, context_display, color=COLOR_YELLOW)
 
-    def _should_show_sysmsg(self):
-        """Check if system messages should be displayed based on logging level."""
+        # Display active app if in application or dual context
+        active_app = zAuth.get(ZAUTH_KEY_ACTIVE_APP)
+        if active_app:
+            label = FORMAT_FIELD_LABEL_INDENT.format(field="Active App")
+            self._display_field(label, active_app, color=COLOR_YELLOW)
+
+        # Display authenticated apps list if multiple apps (Layer 2 multi-app support)
+        applications = zAuth.get(ZAUTH_KEY_APPLICATIONS, {})
+        if isinstance(applications, dict) and len(applications) > 1:
+            self._output_text("", break_after=False)
+            label = FORMAT_FIELD_LABEL_INDENT.format(field=MSG_AUTHENTICATED_APPS)
+            self._display_section(label, color=COLOR_CYAN)
+            for app_name in applications.keys():
+                # Mark active app
+                app_display = f"{app_name} (ACTIVE)" if app_name == active_app else app_name
+                app_label = FORMAT_TOOL_FIELD_INDENT.format(field="-")
+                self._display_field(app_label, app_display, color=COLOR_RESET)
+
+        # Display current authentication data (from active context)
+        # Note: In zAuth v1.5.4+, the correct key is ZAUTH_KEY_ID ("id"), NOT "zAuth_id"
+        
+        # Get data from active context
+        auth_data = {}
+        if active_context == CONTEXT_ZSESSION:
+            auth_data = zAuth.get(ZAUTH_KEY_ZSESSION, {})
+        elif active_context == CONTEXT_APPLICATION and active_app:
+            auth_data = applications.get(active_app, {})
+        elif active_context == CONTEXT_DUAL:
+            # For dual context, show both (future enhancement)
+            # Current: show from active app
+            if active_app:
+                auth_data = applications.get(active_app, {})
+
+        # Display auth fields (use correct ZAUTH_KEY_* constants)
+        for field_key, field_label in [
+            (ZAUTH_KEY_ID, "ID"),
+            (ZAUTH_KEY_USERNAME, "Username"),
+            (ZAUTH_KEY_ROLE, "Role")
+        ]:
+            if auth_data.get(field_key):
+                label = FORMAT_FIELD_LABEL_INDENT.format(field=field_label)
+                self._display_field(label, auth_data.get(field_key), color=COLOR_YELLOW)
+
+
+    # ═══════════════════════════════════════════════════════════════════════
+    # SYSTEM INTEGRATION HELPERS (Private - Logging)
+    # ═══════════════════════════════════════════════════════════════════════
+
+    def _should_show_sysmsg(self) -> bool:
+        """
+        Check if system messages should be displayed based on logging level and deployment mode.
+        
+        System messages (zDeclare) are conditionally displayed to prevent verbose output
+        in production environments or when logging level is set high.
+        
+        Check Priority:
+            1. Logger method:      zcli.logger.should_show_sysmsg() (if available)
+            2. Debug flag:         session.get("debug") (legacy fallback)
+            3. Deployment mode:    session[SESSION_KEY_ZMACHINE][ZMACHINE_KEY_DEPLOYMENT]
+                                  - DEPLOYMENT_MODE_DEV ("dev") → show (default)
+                                  - DEPLOYMENT_MODE_PROD ("prod") → hide
+        
+        Returns:
+            bool: True if system messages should be displayed, False otherwise
+        
+        Usage:
+            if not self._should_show_sysmsg():
+                return  # Don't display system message
+        
+        Notes:
+            - Respects zCLI's logging framework
+            - Falls back gracefully if logger not available
+            - Production mode (prod) hides system messages by default
+            - Development mode (dev) shows system messages by default
+        """
         if not self.display or not hasattr(self.display, 'session'):
             return True
 
@@ -254,9 +1410,10 @@ class zSystem:
         if debug is not None:
             return debug
 
-        # Fallback to deployment mode
-        deployment = session.get("zMachine", {}).get("deployment", "dev")
-        if deployment == "prod":
+        # Fallback to deployment mode (use SESSION_KEY_ZMACHINE constant)
+        zmachine = session.get(SESSION_KEY_ZMACHINE, {})
+        deployment = zmachine.get(ZMACHINE_KEY_DEPLOYMENT, DEFAULT_DEPLOYMENT)
+        if deployment == DEPLOYMENT_MODE_PROD:
             return False
 
         return True
