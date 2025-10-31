@@ -51,6 +51,35 @@
                     <br><strong>🔗 Dependencies:</strong> zConfig, zParser
                     <br><strong>📊 Status:</strong> Pending
                 </div>
+                
+                <div class="subsystem-card" style="margin-top: 20px;">
+                    <div class="subsystem-header">
+                        <div class="subsystem-name">⚠️ Week 6.7 (zNavigation) Integration Point</div>
+                        <div class="subsystem-rating" style="background: #fffaf0; color: #dd6b20;">Integration TODO</div>
+                    </div>
+                    <div style="margin-top: 10px; padding: 15px; background: #fffaf0; border-left: 4px solid #dd6b20; border-radius: 4px;">
+                        <strong>📍 Backward Dependency from navigation_linking.py:</strong>
+                        <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                            <li><strong>File:</strong> zCLI/subsystems/zNavigation/navigation_modules/navigation_linking.py</li>
+                            <li><strong>Usage:</strong> <code>zFile_parsed = walker.loader.handle(zLink_path)</code></li>
+                            <li><strong>Purpose:</strong> Loads target YAML file for inter-file linking</li>
+                            <li><strong>Example:</strong> <code>loader.handle("@.zUI.settings.NetworkSettings")</code></li>
+                            <li><strong>Access Pattern:</strong> Via walker instance (walker.loader)</li>
+                        </ul>
+                        
+                        <div style="margin-top: 15px;">
+                            <strong>🔍 TODO During Week 6.9 Refactoring:</strong>
+                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                <li>☐ Verify <code>loader.handle(zLink_path)</code> signature is correct</li>
+                                <li>☐ Ensure handle() returns parsed dict structure</li>
+                                <li>☐ Test with complex zLink paths (e.g., "@.zUI.subdir.filename.BlockName")</li>
+                                <li>☐ Document loader.handle() behavior in module docstring</li>
+                                <li>☐ Add type hints: <code>def handle(self, path: str) -> Dict[str, Any]</code></li>
+                                <li>☐ Verify error handling for missing files/blocks</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 

@@ -51,6 +51,34 @@
                     <br><strong>🔗 Dependencies:</strong> zConfig
                     <br><strong>📊 Status:</strong> Pending
                 </div>
+                
+                <div class="subsystem-card" style="margin-top: 20px;">
+                    <div class="subsystem-header">
+                        <div class="subsystem-name">⚠️ Week 6.7 (zNavigation) Integration Point</div>
+                        <div class="subsystem-rating" style="background: #fffaf0; color: #dd6b20;">Integration TODO</div>
+                    </div>
+                    <div style="margin-top: 10px; padding: 15px; background: #fffaf0; border-left: 4px solid #dd6b20; border-radius: 4px;">
+                        <strong>📍 Backward Dependency from navigation_linking.py:</strong>
+                        <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                            <li><strong>File:</strong> zCLI/subsystems/zNavigation/navigation_modules/navigation_linking.py</li>
+                            <li><strong>Import:</strong> <code>from zCLI.subsystems.zParser.zParser_modules.zParser_utils import zExpr_eval</code></li>
+                            <li><strong>Usage:</strong> <code>required = zExpr_eval(perms_str, self.logger)</code></li>
+                            <li><strong>Purpose:</strong> Parses permission dict strings from zLink expressions</li>
+                            <li><strong>Example:</strong> <code>zExpr_eval('{"role": "admin"}', logger)</code> → <code>{"role": "admin"}</code></li>
+                        </ul>
+                        
+                        <div style="margin-top: 15px;">
+                            <strong>🔍 TODO During Week 6.8 Refactoring:</strong>
+                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                <li>☐ Verify <code>zExpr_eval(expr, logger, display=None)</code> signature is correct</li>
+                                <li>☐ Ensure logger parameter is required (not optional)</li>
+                                <li>☐ Test permission dict parsing with complex examples</li>
+                                <li>☐ Document zExpr_eval behavior in module docstring</li>
+                                <li>☐ Add type hints: <code>def zExpr_eval(expr: str, logger: Any, display: Optional[Any] = None) -> Any</code></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 

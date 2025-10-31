@@ -409,7 +409,7 @@ class ModifierProcessor:
             is_anchor = MOD_TILDE in modifiers
             self.logger.debug(LOG_MSG_MENU_DETECTED, zKey, is_anchor)
 
-            # TODO: Week 6.7 (zNavigation) - Verify navigation.create() signature after refactor
+            # Note: Signature verified during Week 6.7.8 refactor - perfect alignment ✅
             result = self.zcli.navigation.create(
                 zHorizontal, 
                 allow_back=not is_anchor, 

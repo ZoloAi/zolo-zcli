@@ -51,6 +51,46 @@
                     <br><strong>🔗 Dependencies:</strong> ALL previous subsystems
                     <br><strong>📊 Status:</strong> Pending
                 </div>
+                
+                <div class="subsystem-card" style="margin-top: 20px;">
+                    <div class="subsystem-header">
+                        <div class="subsystem-name">⚠️ Week 6.7 (zNavigation) Integration Point</div>
+                        <div class="subsystem-rating" style="background: #fffaf0; color: #dd6b20;">Integration TODO</div>
+                    </div>
+                    <div style="margin-top: 10px; padding: 15px; background: #fffaf0; border-left: 4px solid #dd6b20; border-radius: 4px;">
+                        <strong>📍 Backward Dependency from navigation_linking.py:</strong>
+                        <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                            <li><strong>File:</strong> zCLI/subsystems/zNavigation/navigation_modules/navigation_linking.py</li>
+                            <li><strong>Usage Pattern:</strong> Walker instance passed as parameter to handle() method</li>
+                            <li><strong>Walker Attributes Used:</strong>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li><code>walker.display</code> - For UI declarations (zDeclare)</li>
+                                    <li><code>walker.loader</code> - For file loading (handle)</li>
+                                    <li><code>walker.zCrumbs</code> - For breadcrumb tracking (handle_zCrumbs)</li>
+                                </ul>
+                            </li>
+                            <li><strong>Walker Methods Used:</strong>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li><code>walker.zBlock_loop(active_zBlock_dict, zBlock_keys)</code> - Block execution</li>
+                                </ul>
+                            </li>
+                            <li><strong>Purpose:</strong> Orchestrates navigation flow for inter-file linking</li>
+                        </ul>
+                        
+                        <div style="margin-top: 15px;">
+                            <strong>🔍 TODO During Week 6.17 Refactoring:</strong>
+                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                <li>☐ Verify walker architecture (display, loader, zCrumbs attributes)</li>
+                                <li>☐ Verify <code>walker.zBlock_loop(dict, list)</code> signature</li>
+                                <li>☐ Ensure walker is properly initialized before zNavigation use</li>
+                                <li>☐ Document walker attributes in module docstring</li>
+                                <li>☐ Add type hints for walker class and methods</li>
+                                <li>☐ Test integration with navigation_linking.py</li>
+                                <li>☐ Verify display.zDeclare() signature (color, indent, style parameters)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 

@@ -15,16 +15,16 @@
 
         <div class="stats">
             <div class="stat-card">
-                <div class="stat-number">6/19</div>
+                <div class="stat-number">7/19</div>
                 <div class="stat-label">Weeks Complete</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number">65</div>
+                <div class="stat-number">75</div>
                 <div class="stat-label">Files Refactored</div>
             </div>
             <div class="stat-card">
                 <div class="stat-number">✅</div>
-                <div class="stat-label">Core + Config + Comm + Display + Auth + Dispatch</div>
+                <div class="stat-label">Core + Config + Comm + Display + Auth + Dispatch + Navigation</div>
             </div>
             <div class="stat-card">
                 <div class="stat-number">1136/1136</div>
@@ -89,27 +89,20 @@
                                 Layer 1 Position 3 | 6 files refactored | All tests passing
                             </div>
                         </a>
+
+                        <a href="plan_week_6.7_znavigation.html" class="nav-link completed">
+                            <strong>Week 6.7: zNavigation ✅</strong>
+                            <div>Unified navigation system, menu creation, breadcrumbs, inter-file linking</div>
+                            <div style="margin-top: 8px; font-size: 0.85em; color: #718096;">
+                                Layer 1 Position 4 | 10 files refactored | All tests passing | Bug fixed (create_link)
+                            </div>
+                        </a>
                     </div>
                 </div>
 
                 <div class="nav-section" style="margin-top: 20px;">
                     <h3>🔄 Layer 1: Core Subsystems (In Progress)</h3>
                     <div class="nav-links">
-
-                        <a href="plan_week_6.7_znavigation.html" class="nav-link">
-                            <strong>Week 6.7: zNavigation</strong>
-                            <div>Unified navigation system</div>
-                            <div style="margin-top: 8px; font-size: 0.85em; color: #718096;">
-                                Layer 1 Position 4 | Status: Pending
-                            </div>
-                            <div style="margin-top: 8px; padding: 8px; background: #fffbeb; border-left: 3px solid #f59e0b; border-radius: 4px; font-size: 0.85em;">
-                                <strong>⚠️ Week 6.6 Integration:</strong>
-                                <ul style="margin: 5px 0 0 15px; padding: 0;">
-                                    <li>handle_zLink() signature (3 call sites in dispatch_launcher)</li>
-                                    <li>navigation.create() signature (1 call site in dispatch_modifiers)</li>
-                                </ul>
-                            </div>
-                        </a>
 
                         <a href="plan_week_6.8_zparser.html" class="nav-link">
                             <strong>Week 6.8: zParser</strong>
@@ -119,6 +112,9 @@
                             </div>
                             <div style="margin-top: 8px; padding: 8px; background: #fffbeb; border-left: 3px solid #f59e0b; border-radius: 4px; font-size: 0.85em;">
                                 <strong>⚠️ Week 6.6 Integration:</strong> Review resolve_plugin_invocation() signature (2 call sites in dispatch_launcher)
+                            </div>
+                            <div style="margin-top: 8px; padding: 8px; background: #e0f2fe; border-left: 3px solid #0284c7; border-radius: 4px; font-size: 0.85em;">
+                                <strong>✅ Week 6.7 Integration:</strong> Verify zExpr_eval(expr, logger) signature (used by navigation_linking.py)
                             </div>
                         </a>
 
@@ -135,6 +131,9 @@
                                     <li>loader.handle() signature (1 call site in dispatch_modifiers for ^key resolution)</li>
                                 </ul>
                             </div>
+                            <div style="margin-top: 8px; padding: 8px; background: #e0f2fe; border-left: 3px solid #0284c7; border-radius: 4px; font-size: 0.85em;">
+                                <strong>✅ Week 6.7 Integration:</strong> Verify walker.loader.handle() signature (used by navigation_linking.py)
+                            </div>
                         </a>
 
                         <a href="plan_week_6.10_zfunc.html" class="nav-link">
@@ -145,6 +144,9 @@
                             </div>
                             <div style="margin-top: 8px; padding: 8px; background: #fffbeb; border-left: 3px solid #f59e0b; border-radius: 4px; font-size: 0.85em;">
                                 <strong>⚠️ Week 6.6 Integration:</strong> Review zfunc.handle() signature (3 call sites in dispatch_launcher)
+                            </div>
+                            <div style="margin-top: 8px; padding: 8px; background: #e0f2fe; border-left: 3px solid #0284c7; border-radius: 4px; font-size: 0.85em;">
+                                <strong>✅ Week 6.7 Integration:</strong> Verify function-based menu generation (used by navigation_menu_builder.py)
                             </div>
                         </a>
 
@@ -221,6 +223,9 @@
                             <div style="margin-top: 8px; font-size: 0.85em; color: #718096;">
                                 Layer 3 Position 1 | Status: Pending
                             </div>
+                            <div style="margin-top: 8px; padding: 8px; background: #e0f2fe; border-left: 3px solid #0284c7; border-radius: 4px; font-size: 0.85em;">
+                                <strong>✅ Week 6.7 Integration:</strong> Verify walker parameter pattern (walker.display, walker.loader, walker.zCrumbs, walker.zBlock_loop)
+                            </div>
                         </a>
 
                         <a href="plan_week_6.18_zcli.html" class="nav-link">
@@ -284,7 +289,7 @@
                 <div class="subsystem-card">
                     <div class="subsystem-header">
                         <div class="subsystem-name">Layer 1: Core Subsystems</div>
-                        <div class="subsystem-rating" style="background: #fbbf24; color: #1f2937;">IN PROGRESS (3/9)</div>
+                        <div class="subsystem-rating" style="background: #fbbf24; color: #1f2937;">IN PROGRESS (4/9)</div>
                     </div>
                     <div>
                         <strong>Progress:</strong>
@@ -292,7 +297,7 @@
                             <li>✅ Week 6.4: zDisplay - UI rendering, multi-mode output, terminal swiper</li>
                             <li>✅ Week 6.5: zAuth - Three-tier authentication, RBAC, centralized schemas</li>
                             <li>✅ Week 6.6: zDispatch - Command dispatch & routing, facade pattern</li>
-                            <li>⏳ Week 6.7: zNavigation - Unified navigation system</li>
+                            <li>✅ Week 6.7: zNavigation - Unified navigation, menu creation, breadcrumbs, linking</li>
                             <li>⏳ Week 6.8: zParser - YAML parsing & configuration</li>
                             <li>⏳ Week 6.9: zLoader - Data loading & file I/O</li>
                             <li>⏳ Week 6.10: zFunc - Function execution & Python integration</li>
@@ -344,20 +349,20 @@
                     <h3 style="margin-bottom: 15px;">Completion Status</h3>
                     <div style="margin-bottom: 15px;">
                         <div style="background: #cbd5e0; height: 30px; border-radius: 15px; overflow: hidden;">
-                            <div style="background: linear-gradient(90deg, #48bb78 0%, #38a169 100%); width: 32%; height: 100%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
-                                32%
+                            <div style="background: linear-gradient(90deg, #48bb78 0%, #38a169 100%); width: 37%; height: 100%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+                                37%
                             </div>
                         </div>
                     </div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 0.95em;">
                         <div>
-                            <strong>✅ Complete:</strong> 6 weeks (Core, zConfig, zComm, zDisplay, zAuth, zDispatch)
+                            <strong>✅ Complete:</strong> 7 weeks (Core, zConfig, zComm, zDisplay, zAuth, zDispatch, zNavigation)
                         </div>
                         <div>
-                            <strong>🔄 Remaining:</strong> 13 weeks + verification
+                            <strong>🔄 Remaining:</strong> 12 weeks + verification
                         </div>
                         <div>
-                            <strong>📁 Files Refactored:</strong> 65/~100 (est.)
+                            <strong>📁 Files Refactored:</strong> 75/~100 (est.)
                         </div>
                         <div>
                             <strong>🧪 Tests:</strong> 1136/1136 passing

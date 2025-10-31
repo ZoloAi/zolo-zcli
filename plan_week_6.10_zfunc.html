@@ -51,6 +51,21 @@
                     <br><strong>🔗 Dependencies:</strong> zConfig, zLoader
                     <br><strong>📊 Status:</strong> Pending
                 </div>
+
+                <div class="note" style="background: #fffbeb; border-color: #f59e0b;">
+                    <strong>⚠️ Week 6.7 (zNavigation) Integration Point:</strong>
+                    <div style="margin-top: 10px;">
+                        <strong>File:</strong> navigation_menu_builder.py
+                        <br><strong>Method:</strong> build_from_function()
+                        <br><strong>Line:</strong> ~267 (in upgraded version)
+                        <br><strong>Current Implementation:</strong>
+                        <div style="margin-top: 5px; font-family: monospace; background: #f7fafc; padding: 10px; border-radius: 4px;">
+                            result = self.zcli.zfunc.handle(f"zFunc({func_name}, {args}, {kwargs})")
+                        </div>
+                        <br><strong>TODO:</strong> Verify and update zFunc.handle() signature during Week 6.10 refactoring
+                        <br><strong>Impact:</strong> String format may need to be updated to match new zFunc API
+                    </div>
+                </div>
             </div>
         </div>
 
