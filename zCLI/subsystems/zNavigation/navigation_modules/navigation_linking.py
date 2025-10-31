@@ -145,7 +145,7 @@ PATH_* : str
 """
 
 from zCLI import Any, Dict, Tuple
-from zCLI.subsystems.zParser.zParser_modules.zParser_utils import zExpr_eval
+from zCLI.subsystems.zParser.parser_modules.parser_utils import zExpr_eval
 from zCLI.subsystems.zConfig.zConfig_modules.config_session import (
     SESSION_KEY_ZAUTH,
     SESSION_KEY_ZVAFILE_PATH,

@@ -56,7 +56,7 @@ class TestzNavigationInitialization(unittest.TestCase):
         
         # Linking methods
         self.assertTrue(callable(self.zcli.navigation.handle_zLink))
-        self.assertTrue(callable(self.zcli.navigation.create_link))
+        # Note: create_link() was removed in Week 6.7.10 (bug fix - called non-existent method)
 
 
 class TestWalkerNavigationIntegration(unittest.TestCase):
