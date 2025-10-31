@@ -26,7 +26,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from zCLI.subsystems.zAuth.zAuth import zAuth
-from zCLI.subsystems.zAuth.zAuth_modules.authentication import Authentication
+from zCLI.subsystems.zAuth.zAuth_modules.auth_authentication import Authentication
 from zCLI.subsystems.zDisplay.zDisplay import zDisplay
 from zCLI.subsystems.zConfig.zConfig_modules import (
     ZAUTH_KEY_ZSESSION,

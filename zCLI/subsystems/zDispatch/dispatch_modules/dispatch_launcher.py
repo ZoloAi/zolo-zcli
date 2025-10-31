@@ -1,0 +1,1011 @@
+# zCLI/subsystems/zDispatch/dispatch_modules/dispatch_launcher.py
+
+"""
+Command Launcher for zDispatch Subsystem.
+
+This module provides the CommandLauncher class, which handles routing and execution
+of commands within the zCLI framework. It acts as a central dispatcher for various
+command types (string-based and dict-based), routing them to appropriate subsystem
+handlers.
+
+Architecture:
+    The CommandLauncher follows a command routing pattern with two main pathways:
+    
+    1. String Commands:
+       - Format: "zFunc(...)", "zLink(...)", "zOpen(...)", "zWizard(...)", "zRead(...)"
+       - Parsed and routed to appropriate subsystem handlers
+       - Special handling for plain strings in Bifrost mode (zUI resolution)
+    
+    2. Dict Commands:
+       - Format: {"zFunc": ...}, {"zLink": ...}, {"zDialog": ...}, etc.
+       - Direct key-based routing to subsystem handlers
+       - Support for CRUD operations and legacy zDisplay format
+    
+    Command Routing Flow:
+        launch() → Type Detection (str vs dict)
+                ↓
+        _launch_string() or _launch_dict()
+                ↓
+        Specific handler (_handle_wizard_string, _handle_read_dict, etc.)
+                ↓
+        Subsystem execution (zFunc, zNavigation, zOpen, zWizard, zData, etc.)
+
+Mode-Specific Behavior:
+    Terminal Mode:
+        - Plain strings: Return None (no navigation)
+        - zWizard: Returns "zBack" for navigation
+        - zFunc/zOpen/zLink: Returns subsystem result
+    
+    Bifrost Mode:
+        - Plain strings: Resolve from zUI or return {"message": str}
+        - zWizard: Returns zHat (actual result) for API consumption
+        - zFunc/zOpen/zLink: Returns subsystem result
+        - Supports recursive resolution (zUI key → dict with zFunc)
+
+Forward Dependencies:
+    This module integrates with 8 subsystems that will be refactored in future weeks:
+    
+    - zFunc (Week 6.10): Function execution and plugin invocation
+    - zNavigation (Week 6.7): zLink handling and menu creation
+    - zOpen (Week 6.12): File/URL opening
+    - zWizard (Week 6.14): Multi-step workflow execution
+    - zLoader (Week 6.9): zUI file loading and parsing
+    - zParser (Week 6.8): Plugin invocation resolution
+    - zData (Week 6.16): CRUD operations and data management
+    - zDialog (Week 6.11): Interactive forms and user input
+
+Plugin Support:
+    Supports plugin invocations via "&" prefix in zFunc commands:
+    - String: "zFunc(&my_plugin)"
+    - Dict: {"zFunc": "&my_plugin"}
+    - Resolved via zParser.resolve_plugin_invocation()
+
+CRUD Detection:
+    Smart fallback for generic CRUD operations that don't use zRead/zData wrappers:
+    - Detects presence of CRUD keys: action, model, table, fields, values, etc.
+    - Automatically routes to zData.handle_request()
+    - Sets default action to "read" if not specified
+
+Usage Examples:
+    # String commands
+    launcher.launch("zFunc(my_function)")
+    launcher.launch("zLink(menu:users)")
+    launcher.launch("zOpen(https://example.com)")
+    launcher.launch("zWizard({'steps': [...]})")
+    launcher.launch("zRead(users)")
+    
+    # Dict commands
+    launcher.launch({"zFunc": "my_function"})
+    launcher.launch({"zLink": "menu:users"})
+    launcher.launch({"zDialog": {"fields": [...]}})
+    launcher.launch({"zRead": {"model": "users", "where": {"id": 1}}})
+    launcher.launch({"zData": {"action": "create", "model": "users", "values": {...}}})
+    
+    # Generic CRUD (auto-detected)
+    launcher.launch({"action": "read", "model": "users"})
+    
+    # Legacy zDisplay format (backward compatibility)
+    launcher.launch({"zDisplay": {"event": "text", "content": "Hello"}})
+    
+    # Plain string in Bifrost mode (zUI resolution)
+    launcher.launch("my_button_key", context={"mode": "zBifrost"})
+
+Thread Safety:
+    - Relies on thread-safe logger and display instances from zCLI
+    - Mode detection reads from session context (context dict)
+    - No internal state mutation during command execution
+
+Integration with zSession:
+    - Mode detection: Uses SESSION_KEY_ZMODE from context
+    - Context passing: All handlers accept optional context parameter
+    - Session access: Via self.zcli.session (centralized session management)
+
+zAuth Integration:
+    - Implicit via context: Authentication state passed through context dict
+    - No direct zAuth calls: Command handlers are responsible for auth checks
+    - Mode-specific returns: Bifrost mode may return different data structures
+
+Constants:
+    All magic strings are replaced with module constants to improve maintainability
+    and reduce the risk of typos. See module-level constants below for complete list.
+"""
+
+import ast
+from typing import Any, Optional, Dict, Union
+
+# Import zConfig session constants for modernization
+# TODO: Week 6.2 (zConfig) - Use SESSION_KEY_ZMODE instead of "mode" raw string
+# Note: Temporarily using raw "mode" until zConfig constants are finalized
+# from zCLI.subsystems.zConfig.config_modules.config_constants import SESSION_KEY_ZMODE
+
+# ============================================================================
+# MODULE CONSTANTS - Command Prefixes (String Format)
+# ============================================================================
+
+CMD_PREFIX_ZFUNC = "zFunc("
+CMD_PREFIX_ZLINK = "zLink("
+CMD_PREFIX_ZOPEN = "zOpen("
+CMD_PREFIX_ZWIZARD = "zWizard("
+CMD_PREFIX_ZREAD = "zRead("
+
+# ============================================================================
+# MODULE CONSTANTS - Dict Keys (Dict Format)
+# ============================================================================
+
+KEY_ZFUNC = "zFunc"
+KEY_ZLINK = "zLink"
+KEY_ZOPEN = "zOpen"
+KEY_ZWIZARD = "zWizard"
+KEY_ZREAD = "zRead"
+KEY_ZDATA = "zData"
+KEY_ZDIALOG = "zDialog"
+KEY_ZDISPLAY = "zDisplay"
+
+# ============================================================================
+# MODULE CONSTANTS - Context Keys (Session/Mode Detection)
+# ============================================================================
+
+KEY_MODE = "mode"  # TODO: Replace with SESSION_KEY_ZMODE from zConfig
+KEY_ZVAFILE = "zVaFile"
+KEY_ZBLOCK = "zBlock"
+
+# ============================================================================
+# MODULE CONSTANTS - Mode Values
+# ============================================================================
+
+MODE_BIFROST = "zBifrost"
+MODE_TERMINAL = "Terminal"
+MODE_WALKER = "Walker"
+
+# ============================================================================
+# MODULE CONSTANTS - Display Labels (zDeclare messages)
+# ============================================================================
+
+LABEL_LAUNCHER = "zLauncher"
+LABEL_HANDLE_ZFUNC = "[HANDLE] zFunc"
+LABEL_HANDLE_ZFUNC_DICT = "[HANDLE] zFunc (dict)"
+LABEL_HANDLE_ZLINK = "[HANDLE] zLink"
+LABEL_HANDLE_ZOPEN = "[HANDLE] zOpen"
+LABEL_HANDLE_ZWIZARD = "[HANDLE] zWizard"
+LABEL_HANDLE_ZREAD_STRING = "[HANDLE] zRead (string)"
+LABEL_HANDLE_ZREAD_DICT = "[HANDLE] zRead (dict)"
+LABEL_HANDLE_ZDATA_DICT = "[HANDLE] zData (dict)"
+LABEL_HANDLE_CRUD_DICT = "[HANDLE] zCRUD (dict)"
+
+# ============================================================================
+# MODULE CONSTANTS - Display Event Keys (Legacy zDisplay format)
+# ============================================================================
+
+EVENT_TEXT = "text"
+EVENT_SYSMSG = "sysmsg"
+
+# ============================================================================
+# MODULE CONSTANTS - Data Keys (Common dict keys)
+# ============================================================================
+
+KEY_ACTION = "action"
+KEY_MODEL = "model"
+KEY_TABLE = "table"
+KEY_TABLES = "tables"
+KEY_FIELDS = "fields"
+KEY_VALUES = "values"
+KEY_FILTERS = "filters"
+KEY_WHERE = "where"
+KEY_ORDER_BY = "order_by"
+KEY_LIMIT = "limit"
+KEY_OFFSET = "offset"
+KEY_CONTENT = "content"
+KEY_INDENT = "indent"
+KEY_EVENT = "event"
+KEY_LABEL = "label"
+KEY_COLOR = "color"
+KEY_STYLE = "style"
+KEY_MESSAGE = "message"
+
+# ============================================================================
+# MODULE CONSTANTS - Default Values
+# ============================================================================
+
+DEFAULT_ACTION_READ = "read"
+DEFAULT_ZBLOCK = "root"
+DEFAULT_CONTENT = ""
+DEFAULT_INDENT = 0
+DEFAULT_INDENT_LAUNCHER = 4
+DEFAULT_INDENT_HANDLER = 5
+DEFAULT_STYLE_SINGLE = "single"
+DEFAULT_LABEL = ""
+
+# ============================================================================
+# MODULE CONSTANTS - Navigation
+# ============================================================================
+
+NAV_ZBACK = "zBack"
+
+# ============================================================================
+# MODULE CONSTANTS - Plugin Detection
+# ============================================================================
+
+PLUGIN_PREFIX = "&"
+
+
+class CommandLauncher:
+    """
+    Central command launcher for zDispatch subsystem.
+    
+    Routes string and dict commands to appropriate subsystem handlers, with mode-aware
+    behavior for Terminal vs. Bifrost execution environments.
+    
+    Attributes:
+        dispatch: Parent zDispatch instance
+        zcli: Root zCLI instance
+        logger: Logger instance from zCLI
+        display: zDisplay instance for UI output
+    
+    Methods:
+        launch(): Main entry point for command routing (type detection)
+        _launch_string(): Route string-based commands (zFunc(), zLink(), etc.)
+        _launch_dict(): Route dict-based commands ({zFunc:, zLink:, etc.})
+        _handle_wizard_string(): Parse and execute wizard from string
+        _handle_wizard_dict(): Execute wizard from dict
+        _handle_read_string(): Handle zRead string → zData
+        _handle_read_dict(): Handle zRead dict → zData
+        _handle_data_dict(): Handle zData dict → zData
+        _handle_crud_dict(): Handle generic CRUD dict → zData
+        
+        Helper methods (DRY):
+        _is_bifrost_mode(): Check if context is in Bifrost mode
+        _display_handler(): Display handler label with consistent styling
+        _log_detected(): Log detected command with consistent format
+        _check_walker(): Validate walker instance for zLink commands
+        _set_default_action(): Set default action for data requests
+    
+    Integration:
+        - zConfig: Uses session constants (TODO: SESSION_KEY_ZMODE)
+        - zDisplay: UI output via zDeclare() and text()
+        - zSession: Mode detection via context dict
+        - Forward dependencies: 8 subsystems (see module docstring)
+    """
+    
+    # Class-level type declarations
+    dispatch: Any  # zDispatch instance
+    zcli: Any  # zCLI instance
+    logger: Any  # Logger instance
+    display: Any  # zDisplay instance
+
+    def __init__(self, dispatch: Any) -> None:
+        """
+        Initialize command launcher with parent dispatch instance.
+        
+        Args:
+            dispatch: Parent zDispatch instance providing access to zCLI, logger, and display
+        
+        Raises:
+            AttributeError: If dispatch is missing required attributes (zcli, logger)
+        
+        Example:
+            launcher = CommandLauncher(dispatch)
+        """
+        self.dispatch = dispatch
+        self.zcli = dispatch.zcli
+        self.logger = dispatch.logger
+        self.display = dispatch.zcli.display
+
+    # ========================================================================
+    # PUBLIC METHODS - Main Entry Points
+    # ========================================================================
+
+    def launch(
+        self,
+        zHorizontal: Union[str, Dict[str, Any]],
+        context: Optional[Dict[str, Any]] = None,
+        walker: Optional[Any] = None
+    ) -> Optional[Union[str, Dict[str, Any]]]:
+        """
+        Launch appropriate handler for zHorizontal command with optional context and walker.
+        
+        This is the main entry point for command routing. It detects the type of command
+        (string vs. dict) and delegates to the appropriate handler.
+        
+        Args:
+            zHorizontal: Command to execute (string format like "zFunc(...)" or dict format)
+            context: Optional context dict with mode, session, and other metadata
+            walker: Optional walker instance for navigation commands (zLink, zWizard)
+        
+        Returns:
+            Command execution result, or None if command type is unknown or execution fails.
+            Return type varies by command:
+            - zFunc: Function result (any type)
+            - zLink: Navigation result (str or dict)
+            - zWizard: "zBack" (Terminal) or zHat result (Bifrost)
+            - zRead/zData: Data result (dict or list)
+            - Plain string (Bifrost): {"message": str} or resolved zUI value
+            - Unknown: None
+        
+        Examples:
+            # String commands
+            result = launcher.launch("zFunc(my_function)")
+            result = launcher.launch("zLink(menu:users)", walker=walker_instance)
+            result = launcher.launch("zRead(users)", context={"mode": "Terminal"})
+            
+            # Dict commands
+            result = launcher.launch({"zFunc": "my_function"})
+            result = launcher.launch({"zDialog": {"fields": [...]}})
+            
+            # Plain string in Bifrost mode
+            result = launcher.launch("my_button_key", context={"mode": "zBifrost"})
+        
+        Notes:
+            - Displays "zLauncher" label via zDeclare for visual feedback
+            - Unknown command types (not str or dict) return None
+            - Mode-specific behavior handled by individual command handlers
+        """
+        self._display_handler(LABEL_LAUNCHER, DEFAULT_INDENT_LAUNCHER)
+
+        if isinstance(zHorizontal, str):
+            return self._launch_string(zHorizontal, context, walker)
+        elif isinstance(zHorizontal, dict):
+            return self._launch_dict(zHorizontal, context, walker)
+        
+        # Unknown type - return None
+        return None
+
+    # ========================================================================
+    # PRIVATE METHODS - String Command Routing
+    # ========================================================================
+
+    def _launch_string(
+        self,
+        zHorizontal: str,
+        context: Optional[Dict[str, Any]],
+        walker: Optional[Any]
+    ) -> Optional[Union[str, Dict[str, Any]]]:
+        """
+        Handle string-based launch commands.
+        
+        Routes string commands with the following prefixes:
+        - "zFunc(...)": Function execution
+        - "zLink(...)": Navigation link
+        - "zOpen(...)": File/URL opening
+        - "zWizard(...)": Multi-step workflow
+        - "zRead(...)": Data read operation
+        
+        Plain strings (no prefix):
+        - Terminal mode: Return None (no navigation)
+        - Bifrost mode: Resolve from zUI file or return {"message": str}
+        
+        Args:
+            zHorizontal: String command to execute
+            context: Optional context dict with mode and session metadata
+            walker: Optional walker instance for navigation commands
+        
+        Returns:
+            Command execution result, or None if command is unhandled.
+            Return type varies by command (see launch() docstring).
+        
+        Examples:
+            # Function call
+            result = _launch_string("zFunc(calculate)", context, walker)
+            
+            # Navigation
+            result = _launch_string("zLink(menu:users)", context, walker)
+            
+            # Plain string in Bifrost mode (zUI resolution)
+            result = _launch_string("submit_button", {"mode": "zBifrost"}, walker)
+            # Returns: {"message": "submit_button"} or resolved dict from zUI
+        
+        Notes:
+            - zLink and zWizard require walker instance
+            - Bifrost mode enables recursive zUI resolution
+            - Plain strings in Terminal mode return None (display-only)
+        
+        TODO: Week 6.10 (zFunc) - Update zfunc.handle() call after refactor
+        TODO: Week 6.7 (zNavigation) - Update handle_zLink() call after refactor
+        TODO: Week 6.12 (zOpen) - Update open.handle() call after refactor
+        TODO: Week 6.14 (zWizard) - Update wizard.handle() call after refactor
+        TODO: Week 6.9 (zLoader) - Update loader.handle() call after refactor
+        """
+        # Route: zFunc()
+        if zHorizontal.startswith(CMD_PREFIX_ZFUNC):
+            self._log_detected("zFunc request")
+            self._display_handler(LABEL_HANDLE_ZFUNC, DEFAULT_INDENT_HANDLER)
+            # TODO: Week 6.10 (zFunc) - Verify zfunc.handle() signature after refactor
+            return self.zcli.zfunc.handle(zHorizontal)
+
+        # Route: zLink()
+        if zHorizontal.startswith(CMD_PREFIX_ZLINK):
+            if not self._check_walker(walker, "zLink"):
+                return None
+            self._log_detected("zLink request")
+            self._display_handler(LABEL_HANDLE_ZLINK, DEFAULT_INDENT_LAUNCHER)
+            # TODO: Week 6.7 (zNavigation) - Verify handle_zLink() signature after refactor
+            return self.zcli.navigation.handle_zLink(zHorizontal, walker=walker)
+
+        # Route: zOpen()
+        if zHorizontal.startswith(CMD_PREFIX_ZOPEN):
+            self._log_detected("zOpen request")
+            self._display_handler(LABEL_HANDLE_ZOPEN, DEFAULT_INDENT_LAUNCHER)
+            # TODO: Week 6.12 (zOpen) - Verify open.handle() signature after refactor
+            return self.zcli.open.handle(zHorizontal)
+
+        # Route: zWizard()
+        if zHorizontal.startswith(CMD_PREFIX_ZWIZARD):
+            return self._handle_wizard_string(zHorizontal, walker, context)
+
+        # Route: zRead()
+        if zHorizontal.startswith(CMD_PREFIX_ZREAD):
+            return self._handle_read_string(zHorizontal, context)
+
+        # Plain string - mode-specific handling
+        if self._is_bifrost_mode(context):
+            # Bifrost mode: Attempt to resolve from zUI file
+            zVaFile = self.zcli.zspark_obj.get(KEY_ZVAFILE)
+            zBlock = self.zcli.zspark_obj.get(KEY_ZBLOCK, DEFAULT_ZBLOCK)
+            
+            if zVaFile and zBlock:
+                try:
+                    # TODO: Week 6.9 (zLoader) - Verify loader.handle() signature after refactor
+                    raw_zFile = self.zcli.loader.handle(zVaFile)
+                    if raw_zFile and zBlock in raw_zFile:
+                        block_dict = raw_zFile[zBlock]
+                        
+                        # Look up the key in the block
+                        if zHorizontal in block_dict:
+                            resolved_value = block_dict[zHorizontal]
+                            self.logger.info(
+                                f"[{MODE_BIFROST}] Resolved key '{zHorizontal}' from zUI to: {resolved_value}"
+                            )
+                            # Recursively launch with the resolved value (could be dict with zFunc)
+                            return self.launch(resolved_value, context=context, walker=walker)
+                        else:
+                            self.logger.info(
+                                f"[{MODE_BIFROST}] Key '{zHorizontal}' not found in zUI block '{zBlock}'"
+                            )
+                except Exception as e:
+                    self.logger.warning(f"[{MODE_BIFROST}] Error resolving key from zUI: {e}")
+            
+            # If we couldn't resolve it, return as display message
+            self.logger.info(f"Plain string in {MODE_BIFROST} mode - returning as message")
+            return {KEY_MESSAGE: zHorizontal}
+        
+        # Terminal mode: Plain strings are displayed but return None for navigation
+        return None
+
+    # ========================================================================
+    # PRIVATE METHODS - Dict Command Routing
+    # ========================================================================
+
+    def _launch_dict(
+        self,
+        zHorizontal: Dict[str, Any],
+        context: Optional[Dict[str, Any]],
+        walker: Optional[Any]
+    ) -> Optional[Union[str, Dict[str, Any]]]:
+        """
+        Handle dict-based launch commands.
+        
+        Routes dict commands with the following keys:
+        - "zDisplay": Legacy display format (text, sysmsg events)
+        - "zFunc": Function execution
+        - "zDialog": Interactive form/dialog
+        - "zLink": Navigation link
+        - "zWizard": Multi-step workflow
+        - "zRead": Data read operation
+        - "zData": Generic data operation
+        - CRUD keys: Generic CRUD operation (action, model, table, etc.)
+        
+        Args:
+            zHorizontal: Dict command to execute
+            context: Optional context dict with mode and session metadata
+            walker: Optional walker instance for navigation commands
+        
+        Returns:
+            Command execution result, or None if command is unhandled.
+            Return type varies by command (see launch() docstring).
+        
+        Examples:
+            # Function call
+            result = _launch_dict({"zFunc": "calculate"}, context, walker)
+            
+            # Plugin invocation
+            result = _launch_dict({"zFunc": "&my_plugin"}, context, walker)
+            
+            # Dialog
+            result = _launch_dict({"zDialog": {"fields": [...]}}, context, walker)
+            
+            # Data operation
+            result = _launch_dict({"zRead": {"model": "users"}}, context, walker)
+            
+            # Generic CRUD
+            result = _launch_dict({"action": "read", "model": "users"}, context, walker)
+            
+            # Legacy display format
+            result = _launch_dict({"zDisplay": {"event": "text", "content": "Hello"}}, context, walker)
+        
+        Notes:
+            - Plugin invocations: Detect "&" prefix in zFunc value
+            - CRUD detection: Fallback for dicts with action/model/table keys
+            - Legacy zDisplay: Backward compatibility only (modern API preferred)
+        
+        TODO: Week 6.10 (zFunc) - Update zfunc.handle() call after refactor
+        TODO: Week 6.8 (zParser) - Update resolve_plugin_invocation() call after refactor
+        TODO: Week 6.11 (zDialog) - Update handle_zDialog() call after refactor
+        TODO: Week 6.7 (zNavigation) - Update handle_zLink() call after refactor
+        TODO: Week 6.14 (zWizard) - Update wizard.handle() call after refactor
+        TODO: Week 6.16 (zData) - Update data.handle_request() call after refactor
+        """
+        # Route: zDisplay (legacy format)
+        if KEY_ZDISPLAY in zHorizontal:
+            self._log_detected("zDisplay (wrapped)")
+            display_data = zHorizontal[KEY_ZDISPLAY]
+            
+            if isinstance(display_data, dict):
+                # Modern format only - no backward compatibility for old string formats
+                event = display_data.get(KEY_EVENT)
+                
+                if event == EVENT_TEXT:
+                    content = display_data.get(KEY_CONTENT, DEFAULT_CONTENT)
+                    indent = display_data.get(KEY_INDENT, DEFAULT_INDENT)
+                    self.display.text(content, indent)
+                elif event == EVENT_SYSMSG:
+                    label = display_data.get(KEY_LABEL, DEFAULT_LABEL)
+                    color = display_data.get(KEY_COLOR)
+                    indent = display_data.get(KEY_INDENT, DEFAULT_INDENT)
+                    style = display_data.get(KEY_STYLE)
+                    self.display.zDeclare(label, color, indent, style)
+                else:
+                    # Unknown event - log warning
+                    self.logger.warning(
+                        f"Unknown display event: {event}. Use modern API methods instead."
+                    )
+            return None
+
+        # Route: zFunc
+        if KEY_ZFUNC in zHorizontal:
+            self._log_detected("zFunc (dict)")
+            self._display_handler(LABEL_HANDLE_ZFUNC_DICT, DEFAULT_INDENT_HANDLER)
+            func_spec = zHorizontal[KEY_ZFUNC]
+            
+            # Check if it's a plugin invocation (starts with &)
+            if isinstance(func_spec, str) and func_spec.startswith(PLUGIN_PREFIX):
+                self._log_detected(f"plugin invocation in zFunc: {func_spec}")
+                # TODO: Week 6.8 (zParser) - Verify resolve_plugin_invocation() signature after refactor
+                return self.zcli.zparser.resolve_plugin_invocation(func_spec)
+            
+            # TODO: Week 6.10 (zFunc) - Verify zfunc.handle() signature after refactor
+            return self.zcli.zfunc.handle(func_spec, zContext=context)
+
+        # Route: zDialog
+        if KEY_ZDIALOG in zHorizontal:
+            # TODO: Week 6.11 (zDialog) - Verify handle_zDialog() signature after refactor
+            from ...zDialog import handle_zDialog
+            self._log_detected("zDialog")
+            return handle_zDialog(zHorizontal, zcli=self.zcli, walker=walker, context=context)
+
+        # Route: zLink
+        if KEY_ZLINK in zHorizontal:
+            if not self._check_walker(walker, "zLink"):
+                return None
+            self._log_detected("zLink")
+            # TODO: Week 6.7 (zNavigation) - Verify handle_zLink() signature after refactor
+            return self.zcli.navigation.handle_zLink(zHorizontal, walker=walker)
+
+        # Route: zWizard
+        if KEY_ZWIZARD in zHorizontal:
+            return self._handle_wizard_dict(zHorizontal, walker, context)
+
+        # Route: zRead
+        if KEY_ZREAD in zHorizontal:
+            return self._handle_read_dict(zHorizontal, context)
+
+        # Route: zData
+        if KEY_ZDATA in zHorizontal:
+            return self._handle_data_dict(zHorizontal, context)
+
+        # Check if it looks like a CRUD operation (has action, table, model, etc.)
+        crud_keys = {
+            KEY_ACTION, KEY_TABLE, KEY_MODEL, KEY_FIELDS, KEY_VALUES, KEY_WHERE
+        }
+        if any(key in zHorizontal for key in crud_keys):
+            return self._handle_crud_dict(zHorizontal, context)
+        
+        # Unknown dict - return None
+        return None
+
+    # ========================================================================
+    # PRIVATE METHODS - Specialized Command Handlers
+    # ========================================================================
+
+    def _handle_wizard_string(
+        self,
+        zHorizontal: str,
+        walker: Optional[Any],
+        context: Optional[Dict[str, Any]] = None
+    ) -> Optional[Union[str, Any]]:
+        """
+        Handle zWizard string command.
+        
+        Parses the wizard payload from string format and executes it via walker or
+        wizard subsystem. Returns mode-specific results (zBack for Terminal, zHat for Bifrost).
+        
+        Args:
+            zHorizontal: String command in format "zWizard(...)"
+            walker: Optional walker instance (preferred for navigation context)
+            context: Optional context dict with mode metadata
+        
+        Returns:
+            - Bifrost mode: zHat (actual wizard result)
+            - Terminal/Walker mode: "zBack" (for navigation) or zHat (no walker)
+            - Parse error: None
+        
+        Example:
+            result = _handle_wizard_string("zWizard({'steps': [...])})", walker, context)
+        
+        Notes:
+            - Uses ast.literal_eval() for safe payload parsing
+            - Walker extends wizard, so walker.handle() is preferred over wizard.handle()
+            - Mode-specific returns enable proper Terminal vs. API behavior
+        
+        TODO: Week 6.14 (zWizard) - Verify wizard.handle() signature after refactor
+        """
+        self._log_detected("zWizard request")
+        self._display_handler(LABEL_HANDLE_ZWIZARD, DEFAULT_INDENT_LAUNCHER)
+        
+        # Extract and parse payload
+        inner = zHorizontal[len(CMD_PREFIX_ZWIZARD):-1].strip()
+        try:
+            wizard_obj = ast.literal_eval(inner)
+            
+            # Use modern OOP API - walker extends wizard, so it has handle()
+            # TODO: Week 6.14 (zWizard) - Verify wizard.handle() signature after refactor
+            if walker:
+                zHat = walker.handle(wizard_obj)
+            else:
+                zHat = self.zcli.wizard.handle(wizard_obj)
+            
+            # Mode-specific return behavior
+            if self._is_bifrost_mode(context):
+                # Bifrost: Return zHat for API consumption
+                return zHat
+            
+            # Terminal/Walker: Return zBack for navigation (or zHat if no walker)
+            return NAV_ZBACK if walker else zHat
+        except Exception as e:
+            self.logger.error(f"Failed to parse zWizard payload: {e}")
+            return None
+
+    def _handle_wizard_dict(
+        self,
+        zHorizontal: Dict[str, Any],
+        walker: Optional[Any],
+        context: Optional[Dict[str, Any]] = None
+    ) -> Optional[Union[str, Any]]:
+        """
+        Handle zWizard dict command.
+        
+        Executes wizard payload from dict format via walker or wizard subsystem.
+        Returns mode-specific results (zBack for Terminal, zHat for Bifrost).
+        
+        Args:
+            zHorizontal: Dict command with "zWizard" key
+            walker: Optional walker instance (preferred for navigation context)
+            context: Optional context dict with mode metadata
+        
+        Returns:
+            - Bifrost mode: zHat (actual wizard result)
+            - Terminal/Walker mode: "zBack" (for navigation) or zHat (no walker)
+        
+        Example:
+            result = _handle_wizard_dict({"zWizard": {"steps": [...]}}, walker, context)
+        
+        Notes:
+            - No parsing needed (already dict format)
+            - Walker extends wizard, so walker.handle() is preferred
+            - Mode-specific returns enable proper Terminal vs. API behavior
+        
+        TODO: Week 6.14 (zWizard) - Verify wizard.handle() signature after refactor
+        """
+        self._log_detected("zWizard (dict)")
+        
+        # Use modern OOP API - walker extends wizard, so it has handle()
+        # TODO: Week 6.14 (zWizard) - Verify wizard.handle() signature after refactor
+        if walker:
+            zHat = walker.handle(zHorizontal[KEY_ZWIZARD])
+        else:
+            zHat = self.zcli.wizard.handle(zHorizontal[KEY_ZWIZARD])
+        
+        # Mode-specific return behavior
+        if self._is_bifrost_mode(context):
+            # Bifrost: Return zHat for API consumption
+            return zHat
+        
+        # Terminal/Walker: Return zBack for navigation (or zHat if no walker)
+        return NAV_ZBACK if walker else zHat
+
+    def _handle_read_string(
+        self,
+        zHorizontal: str,
+        context: Optional[Dict[str, Any]]
+    ) -> Optional[Any]:
+        """
+        Handle zRead string command.
+        
+        Parses the model name from string format and dispatches to zData subsystem
+        with default action "read".
+        
+        Args:
+            zHorizontal: String command in format "zRead(...)"
+            context: Optional context dict for data operation
+        
+        Returns:
+            Data result from zData.handle_request() (typically dict or list)
+        
+        Example:
+            result = _handle_read_string("zRead(users)", context)
+            # Equivalent to: {"action": "read", "model": "users"}
+        
+        Notes:
+            - Empty payload: {"action": "read"} (no model specified)
+            - Non-empty payload: {"action": "read", "model": "..."}
+            - Dispatched to zData.handle_request()
+        
+        TODO: Week 6.16 (zData) - Verify data.handle_request() signature after refactor
+        """
+        self._log_detected("zRead request (string)")
+        self._display_handler(LABEL_HANDLE_ZREAD_STRING, DEFAULT_INDENT_LAUNCHER)
+        
+        # Extract and build request
+        inner = zHorizontal[len(CMD_PREFIX_ZREAD):-1].strip()
+        req = {KEY_ACTION: DEFAULT_ACTION_READ}
+        if inner:
+            req[KEY_MODEL] = inner
+        
+        self.logger.info(f"Dispatching zRead (string) with request: {req}")
+        # TODO: Week 6.16 (zData) - Verify data.handle_request() signature after refactor
+        return self.zcli.data.handle_request(req, context=context)
+
+    def _handle_read_dict(
+        self,
+        zHorizontal: Dict[str, Any],
+        context: Optional[Dict[str, Any]]
+    ) -> Optional[Any]:
+        """
+        Handle zRead dict command.
+        
+        Extracts the read request from dict format and dispatches to zData subsystem
+        with default action "read".
+        
+        Args:
+            zHorizontal: Dict command with "zRead" key
+            context: Optional context dict for data operation
+        
+        Returns:
+            Data result from zData.handle_request() (typically dict or list)
+        
+        Example:
+            result = _handle_read_dict({"zRead": {"model": "users", "where": {"id": 1}}}, context)
+            # Dispatched as: {"action": "read", "model": "users", "where": {"id": 1}}
+        
+        Notes:
+            - String payload: {"zRead": "users"} → {"action": "read", "model": "users"}
+            - Dict payload: {"zRead": {...}} → {action: "read", ...}
+            - Sets default action if not specified
+        
+        TODO: Week 6.16 (zData) - Verify data.handle_request() signature after refactor
+        """
+        self._log_detected("zRead (dict)")
+        self._display_handler(LABEL_HANDLE_ZREAD_DICT, DEFAULT_INDENT_LAUNCHER)
+        
+        # Extract and normalize request
+        req = zHorizontal.get(KEY_ZREAD) or {}
+        if isinstance(req, str):
+            req = {KEY_MODEL: req}
+        
+        self._set_default_action(req, DEFAULT_ACTION_READ)
+        
+        self.logger.info(f"Dispatching zRead (dict) with request: {req}")
+        # TODO: Week 6.16 (zData) - Verify data.handle_request() signature after refactor
+        return self.zcli.data.handle_request(req, context=context)
+
+    def _handle_data_dict(
+        self,
+        zHorizontal: Dict[str, Any],
+        context: Optional[Dict[str, Any]]
+    ) -> Optional[Any]:
+        """
+        Handle zData dict command.
+        
+        Extracts the data request from dict format and dispatches to zData subsystem
+        with default action "read".
+        
+        Args:
+            zHorizontal: Dict command with "zData" key
+            context: Optional context dict for data operation
+        
+        Returns:
+            Data result from zData.handle_request() (typically dict or list)
+        
+        Example:
+            result = _handle_data_dict({"zData": {"action": "create", "model": "users", ...}}, context)
+        
+        Notes:
+            - String payload: {"zData": "users"} → {"action": "read", "model": "users"}
+            - Dict payload: {"zData": {...}} → {action: "read" (default), ...}
+            - Sets default action if not specified
+        
+        TODO: Week 6.16 (zData) - Verify data.handle_request() signature after refactor
+        """
+        self._log_detected("zData (dict)")
+        self._display_handler(LABEL_HANDLE_ZDATA_DICT, DEFAULT_INDENT_LAUNCHER)
+        
+        # Extract and normalize request
+        req = zHorizontal.get(KEY_ZDATA) or {}
+        if isinstance(req, str):
+            req = {KEY_MODEL: req}
+        
+        self._set_default_action(req, DEFAULT_ACTION_READ)
+        
+        self.logger.info(f"Dispatching zData (dict) with request: {req}")
+        # TODO: Week 6.16 (zData) - Verify data.handle_request() signature after refactor
+        return self.zcli.data.handle_request(req, context=context)
+
+    def _handle_crud_dict(
+        self,
+        zHorizontal: Dict[str, Any],
+        context: Optional[Dict[str, Any]]
+    ) -> Optional[Any]:
+        """
+        Handle generic CRUD dict command.
+        
+        Smart fallback for dicts that look like CRUD operations but don't use
+        zRead/zData wrappers. Detects CRUD keys and dispatches to zData subsystem.
+        
+        Args:
+            zHorizontal: Dict with CRUD keys (action, model, table, fields, values, etc.)
+            context: Optional context dict for data operation
+        
+        Returns:
+            Data result from zData.handle_request(), or None if not a valid CRUD dict
+        
+        Example:
+            result = _handle_crud_dict({"action": "read", "model": "users"}, context)
+            result = _handle_crud_dict({"model": "users", "where": {"id": 1}}, context)
+            # Second example: action defaults to "read"
+        
+        Notes:
+            - Requires "model" key to be present (validation)
+            - Detects CRUD keys: action, model, tables, fields, values, filters, where, order_by, limit, offset
+            - Sets default action to "read" if not specified
+            - Creates a copy to avoid mutating original dict
+        
+        TODO: Week 6.16 (zData) - Verify data.handle_request() signature after refactor
+        """
+        # CRUD key detection
+        maybe_crud = {
+            KEY_ACTION, KEY_MODEL, KEY_TABLES, KEY_FIELDS, KEY_VALUES,
+            KEY_FILTERS, KEY_WHERE, KEY_ORDER_BY, KEY_LIMIT, KEY_OFFSET
+        }
+        
+        # Validate: Must have at least one CRUD key AND "model" key
+        if any(k in zHorizontal for k in maybe_crud) and KEY_MODEL in zHorizontal:
+            req = dict(zHorizontal)  # Create copy to avoid mutation
+            self._set_default_action(req, DEFAULT_ACTION_READ)
+            
+            self._log_detected(f"generic CRUD dict => {req}")
+            self._display_handler(LABEL_HANDLE_CRUD_DICT, DEFAULT_INDENT_LAUNCHER)
+            
+            # TODO: Week 6.16 (zData) - Verify data.handle_request() signature after refactor
+            return self.zcli.data.handle_request(req, context=context)
+        
+        return None
+
+    # ========================================================================
+    # HELPER METHODS - DRY Refactoring
+    # ========================================================================
+
+    def _is_bifrost_mode(self, context: Optional[Dict[str, Any]]) -> bool:
+        """
+        Check if context indicates Bifrost mode execution.
+        
+        Args:
+            context: Optional context dict with mode metadata
+        
+        Returns:
+            True if context exists and mode is "zBifrost", False otherwise
+        
+        Example:
+            if self._is_bifrost_mode(context):
+                # Handle Bifrost-specific behavior
+        
+        Notes:
+            - TODO: Replace KEY_MODE with SESSION_KEY_ZMODE from zConfig (Week 6.2)
+            - Gracefully handles None context (returns False)
+            - Case-sensitive mode comparison
+        """
+        # TODO: Week 6.2 (zConfig) - Replace KEY_MODE with SESSION_KEY_ZMODE
+        return context is not None and context.get(KEY_MODE) == MODE_BIFROST
+
+    def _display_handler(self, label: str, indent: int) -> None:
+        """
+        Display handler label with consistent styling.
+        
+        Args:
+            label: Handler label to display
+            indent: Indentation level (spaces)
+        
+        Example:
+            self._display_handler("[HANDLE] zFunc", 5)
+        
+        Notes:
+            - Uses parent dispatch color for consistency
+            - Style is always "single" for handler labels
+            - Avoids repeated zDeclare calls with identical styling
+        """
+        self.display.zDeclare(
+            label,
+            color=self.dispatch.mycolor,
+            indent=indent,
+            style=DEFAULT_STYLE_SINGLE
+        )
+
+    def _log_detected(self, message: str) -> None:
+        """
+        Log detected command with consistent format.
+        
+        Args:
+            message: Detection message (e.g., "zFunc request", "plugin invocation")
+        
+        Example:
+            self._log_detected("zFunc request")
+            self._log_detected("plugin invocation in zFunc: &my_plugin")
+        
+        Notes:
+            - Prefixes all messages with "Detected " for consistency
+            - Uses INFO level for all command detection logs
+            - Avoids repeated "Detected" string in calling code
+        """
+        self.logger.info(f"Detected {message}")
+
+    def _check_walker(self, walker: Optional[Any], command_name: str) -> bool:
+        """
+        Validate walker instance for commands that require it.
+        
+        Args:
+            walker: Walker instance to validate (can be None)
+            command_name: Name of command requiring walker (for error message)
+        
+        Returns:
+            True if walker is valid (not None), False otherwise
+        
+        Example:
+            if not self._check_walker(walker, "zLink"):
+                return None
+        
+        Notes:
+            - Logs warning if walker is None
+            - Calling code should return None if validation fails
+            - Used by zLink and zWizard commands
+        """
+        if not walker:
+            self.logger.warning(f"{command_name} requires walker instance")
+            return False
+        return True
+
+    def _set_default_action(self, req: Dict[str, Any], default_action: str) -> None:
+        """
+        Set default action for data request if not specified.
+        
+        Args:
+            req: Request dict to modify (mutated in place)
+            default_action: Default action value (typically "read")
+        
+        Example:
+            req = {"model": "users"}
+            self._set_default_action(req, "read")
+            # req is now: {"model": "users", "action": "read"}
+        
+        Notes:
+            - Mutates req dict in place
+            - Uses dict.setdefault() to avoid overwriting existing action
+            - Eliminates repeated setdefault calls in handler methods
+        """
+        req.setdefault(KEY_ACTION, default_action)

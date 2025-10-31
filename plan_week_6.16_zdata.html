@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 6.16: zData Subsystem - zCLI v1.5.4+</title>
+    <link rel="stylesheet" href="plan_styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Week 6.16: zData Subsystem</h1>
+            <p>Data Management & Database Integration</p>
+        </div>
+
+        <div class="breadcrumb">
+            <a href="v1.5.4_plan_index.html">← Back to Roadmap</a>
+            <span>|</span>
+            <a href="plan_week_6.15_zutils.html">Week 6.15: zUtils</a>
+            <span>|</span>
+            <span>Week 6.16: zData</span>
+            <span>|</span>
+            <a href="plan_week_6.17_zwalker.html">Week 6.17: zWalker →</a>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number">0/?</div>
+                <div class="stat-label">Files Complete</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">?/?</div>
+                <div class="stat-label">Tests Passing</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">0%</div>
+                <div class="stat-label">Progress</div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-icon">🎯</span>
+                    <h2 class="section-title">Week 6.16 Overview</h2>
+                </div>
+
+                <div class="note">
+                    <strong>📋 Subsystem:</strong> zData (Data Management & Database Integration)
+                    <br><strong>📍 Initialization Order:</strong> Layer 2, Position 4
+                    <br><strong>🔗 Dependencies:</strong> zConfig, zComm, zDisplay
+                    <br><strong>📊 Status:</strong> Pending
+                </div>
+
+                <div class="note" style="background: #e6fffa; border-color: #319795;">
+                    <strong>🔗 Week 6.4 Integration TODO: AdvancedData → zData</strong>
+                    <p style="margin-top: 10px;">
+                        During Week 6.4 zDisplay refactoring, we identified integration opportunities
+                        between AdvancedData (display_event_advanced.py) and zData subsystem:
+                    </p>
+                    <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                        <li><strong>Query Results:</strong> Use AdvancedData.zTable() for displaying database query results with pagination</li>
+                        <li><strong>Table Navigation:</strong> Integrate pagination controls (prev/next/jump)</li>
+                        <li><strong>Data Export:</strong> Use AdvancedData for export previews (CSV, JSON, Excel)</li>
+                        <li><strong>Multi-Table Display:</strong> Display related tables side-by-side with pagination</li>
+                        <li><strong>Real-Time Updates:</strong> Update tables in Bifrost mode with WebSocket events</li>
+                    </ul>
+                    <p style="margin-top: 10px; font-weight: bold; color: #319795;">
+                        📋 This integration should be completed during Week 6.16 zData refactoring.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Week 6.16: zData Subsystem | zCLI v1.5.4+</p>
+        </div>
+    </div>
+</body>
+</html>
+

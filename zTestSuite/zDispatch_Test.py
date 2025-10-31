@@ -16,8 +16,8 @@ from unittest.mock import Mock, patch, MagicMock
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from zCLI.subsystems.zDispatch import zDispatch
-from zCLI.subsystems.zDispatch.zDispatch_modules.modifiers import ModifierProcessor
-from zCLI.subsystems.zDispatch.zDispatch_modules.launcher import CommandLauncher
+from zCLI.subsystems.zDispatch.dispatch_modules.dispatch_modifiers import ModifierProcessor
+from zCLI.subsystems.zDispatch.dispatch_modules.dispatch_launcher import CommandLauncher
 
 
 class TestzDispatchInitialization(unittest.TestCase):

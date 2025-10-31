@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 6.11: zDialog Subsystem - zCLI v1.5.4+</title>
+    <link rel="stylesheet" href="plan_styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Week 6.11: zDialog Subsystem</h1>
+            <p>Interactive Forms & Input Validation</p>
+        </div>
+
+        <div class="breadcrumb">
+            <a href="v1.5.4_plan_index.html">← Back to Roadmap</a>
+            <span>|</span>
+            <a href="plan_week_6.10_zfunc.html">Week 6.10: zFunc</a>
+            <span>|</span>
+            <span>Week 6.11: zDialog</span>
+            <span>|</span>
+            <a href="plan_week_6.12_zopen.html">Week 6.12: zOpen →</a>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number">0/?</div>
+                <div class="stat-label">Files Complete</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">?/?</div>
+                <div class="stat-label">Tests Passing</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">0%</div>
+                <div class="stat-label">Progress</div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-icon">🎯</span>
+                    <h2 class="section-title">Week 6.11 Overview</h2>
+                </div>
+
+                <div class="note">
+                    <strong>📋 Subsystem:</strong> zDialog (Interactive Forms & Input Validation)
+                    <br><strong>📍 Initialization Order:</strong> Layer 1, Position 8
+                    <br><strong>🔗 Dependencies:</strong> zConfig, zDisplay, zParser
+                    <br><strong>📊 Status:</strong> Pending
+                </div>
+
+                <div class="note" style="background: #e6fffa; border-color: #319795;">
+                    <strong>🔗 Week 6.4 Integration TODO: BasicData → zDialog</strong>
+                    <p style="margin-top: 10px;">
+                        During Week 6.4 zDisplay refactoring, we identified integration opportunities
+                        between BasicData (display_event_data.py) and zDialog subsystem:
+                    </p>
+                    <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                        <li><strong>Validation Errors:</strong> Use BasicData.list() for field validation errors (bullet style)</li>
+                        <li><strong>Field Options:</strong> Use BasicData.list() for select field options (numbered style)</li>
+                        <li><strong>Form Preview:</strong> Use BasicData.json_data() for form data preview (syntax coloring)</li>
+                    </ul>
+                    <p style="margin-top: 10px; font-weight: bold; color: #319795;">
+                        📋 This integration should be completed during Week 6.11 zDialog refactoring.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Week 6.11: zDialog Subsystem | zCLI v1.5.4+</p>
+        </div>
+    </div>
+</body>
+</html>
+

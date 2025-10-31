@@ -229,13 +229,16 @@ zVaF:
     
     def test_auth_required_authenticated_granted(self):
         """Authenticated users should access auth-only items (updated for three-tier structure)."""
-        # Updated for three-tier authentication structure
-        self.z.session["zAuth"]["zSession"] = {
-            "authenticated": True,
-            "id": "user123",
-            "username": "testuser",
-            "role": "user",
-            "api_key": "token"
+        # Updated for three-tier authentication structure with active_context
+        self.z.session["zAuth"] = {
+            "active_context": "zSession",  # Required for context-aware RBAC
+            "zSession": {
+                "authenticated": True,
+                "id": "user123",
+                "username": "testuser",
+                "role": "user",
+                "api_key": "token"
+            }
         }
         
         result = self.z.wizard._check_rbac_access("^AuthOnly", self.zblock.get("^AuthOnly"))
@@ -243,13 +246,16 @@ zVaF:
     
     def test_role_required_correct_role_granted(self):
         """Users with correct role should be granted access (updated for three-tier structure)."""
-        # Updated for three-tier authentication structure
-        self.z.session["zAuth"]["zSession"] = {
-            "authenticated": True,
-            "id": "user123",
-            "username": "testuser",
-            "role": "user",
-            "api_key": "token"
+        # Updated for three-tier authentication structure with active_context
+        self.z.session["zAuth"] = {
+            "active_context": "zSession",  # Required for context-aware RBAC
+            "zSession": {
+                "authenticated": True,
+                "id": "user123",
+                "username": "testuser",
+                "role": "user",
+                "api_key": "token"
+            }
         }
         
         result = self.z.wizard._check_rbac_access("^UserRole", self.zblock.get("^UserRole"))
@@ -292,18 +298,27 @@ zVaF:
         
         data = self.z.loader.handle("@.zUI.multi")
         
-        # Test with admin role (updated for three-tier structure)
-        self.z.session["zAuth"]["zSession"] = {"authenticated": True, "id": "u1", "username": "admin", "role": "admin", "api_key": "t"}
+        # Test with admin role (updated for three-tier structure with active_context)
+        self.z.session["zAuth"] = {
+            "active_context": "zSession",  # Required for context-aware RBAC
+            "zSession": {"authenticated": True, "id": "u1", "username": "admin", "role": "admin", "api_key": "t"}
+        }
         result = self.z.wizard._check_rbac_access("^MultiRole", data["zVaF"].get("^MultiRole"))
         self.assertEqual(result, "access_granted")
         
-        # Test with moderator role (updated for three-tier structure)
-        self.z.session["zAuth"]["zSession"] = {"authenticated": True, "id": "u2", "username": "mod", "role": "moderator", "api_key": "t"}
+        # Test with moderator role (updated for three-tier structure with active_context)
+        self.z.session["zAuth"] = {
+            "active_context": "zSession",
+            "zSession": {"authenticated": True, "id": "u2", "username": "mod", "role": "moderator", "api_key": "t"}
+        }
         result = self.z.wizard._check_rbac_access("^MultiRole", data["zVaF"].get("^MultiRole"))
         self.assertEqual(result, "access_granted")
         
-        # Test with user role (not in list, updated for three-tier structure)
-        self.z.session["zAuth"]["zSession"] = {"authenticated": True, "id": "u3", "username": "user", "role": "user", "api_key": "t"}
+        # Test with user role (not in list, updated for three-tier structure with active_context)
+        self.z.session["zAuth"] = {
+            "active_context": "zSession",
+            "zSession": {"authenticated": True, "id": "u3", "username": "user", "role": "user", "api_key": "t"}
+        }
         result = self.z.wizard._check_rbac_access("^MultiRole", data["zVaF"].get("^MultiRole"))
         self.assertEqual(result, "access_denied")
     
@@ -408,8 +423,11 @@ zVaF:
         self.assertIn("_rbac", data["zVaF"]["^View Users"])
         self.assertIn("_rbac", data["zVaF"]["^Add User"])
         
-        # Test access control (updated for three-tier structure)
-        z.session["zAuth"]["zSession"] = {"authenticated": True, "id": "u1", "username": "user", "role": "user", "api_key": "t"}
+        # Test access control (updated for three-tier structure with active_context)
+        z.session["zAuth"] = {
+            "active_context": "zSession",  # Required for context-aware RBAC
+            "zSession": {"authenticated": True, "id": "u1", "username": "user", "role": "user", "api_key": "t"}
+        }
         
         # User should access View
         result = z.wizard._check_rbac_access("^View Users", data["zVaF"]["^View Users"])
