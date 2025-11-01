@@ -1,0 +1,455 @@
+# zCLI/subsystems/zDialog/dialog_modules/dialog_submit.py
+
+"""
+Submission handling for zDialog - Processes onSubmit expressions.
+
+This module provides the Tier 2 Submit Handler for the zDialog subsystem,
+handling two types of submission expressions: modern dict-based (via zDispatch)
+and legacy string-based (via zFunc).
+
+Architecture Position
+---------------------
+**Tier 2: Submit Handler** (5-Tier Pattern)
+    - Tier 1: Foundation (dialog_context.py)
+    - Tier 2: Submit Handler (dialog_submit.py) ← This module
+    - Tier 3: Package Aggregator (dialog_modules/__init__.py)
+    - Tier 4: Facade (zDialog.py)
+    - Tier 5: Package Root (__init__.py)
+
+Key Functions
+-------------
+1. handle_submit(): Main entry point for onSubmit processing (type dispatch)
+2. _handle_dict_submit(): Processes dict-based submissions via zDispatch
+3. _handle_string_submit(): Processes legacy string-based submissions via zFunc
+
+Helper Functions
+----------------
+4. _inject_model_if_needed(): Handles complex model injection logic
+5. _display_submit_return(): DRY helper for display return calls
+
+Submission Type
+---------------
+**Dict-Based Submission (Pure Declarative)**:
+    - Only approach (string-based removed in v1.5.4 for architectural purity)
+    - Supports full zDispatch command dictionaries
+    - Automatic placeholder injection via inject_placeholders()
+    - Smart model injection for zCRUD/zData operations
+    - Example: {"zData": {"query": "SELECT * FROM users WHERE id = zConv.user_id"}}
+
+Integration Flow
+----------------
+Dict-Based: inject_placeholders() → handle_zDispatch() → result
+
+Dependencies
+------------
+- dialog_context: inject_placeholders (placeholder resolution), KEY_MODEL, KEY_ZCONV (constants)
+- zDispatch: handle_zDispatch (command dispatch)
+- zDisplay: walker.display.zDeclare (visual feedback)
+
+Integration Points
+------------------
+- Used by: zDialog.py (line 143 - form submission)
+- Imports from: dialog_context (inject_placeholders, constants)
+- Delegates to: zDispatch (dict submissions)
+
+Usage Examples
+--------------
+Example 1 - Dict-based submission with zData:
+    >>> submit_expr = {
+    ...     "zData": {
+    ...         "query": "INSERT INTO users (name, email) VALUES (zConv.name, zConv.email)"
+    ...     }
+    ... }
+    >>> zContext = {
+    ...     "model": "@.zSchema.users",
+    ...     "zConv": {"name": "Alice", "email": "alice@example.com"}
+    ... }
+    >>> result = handle_submit(submit_expr, zContext, logger, walker)
+    >>> # Executes: INSERT INTO users (name, email) VALUES ('Alice', 'alice@example.com')
+
+Example 2 - String-based submission (legacy):
+    >>> submit_expr = "&UserModule.create_user(zConv.username, zConv.email)"
+    >>> zContext = {"zConv": {"username": "bob", "email": "bob@example.com"}}
+    >>> result = handle_submit(submit_expr, zContext, logger, walker)
+    >>> # Calls: UserModule.create_user("bob", "bob@example.com")
+
+Example 3 - Invalid submission type:
+    >>> submit_expr = 123  # Invalid type
+    >>> result = handle_submit(submit_expr, zContext, logger, walker)
+    >>> # Logs error, returns False
+
+Version History
+---------------
+- v1.5.4: Industry-grade refactor + REMOVED string-based submissions for architectural purity
+  * Added: Type hints, constants, comprehensive docstrings
+  * Added: Dict-based submission support via zDispatch (v1.5.3)
+  * REMOVED: String-based submissions (zero users, pure declarative paradigm)
+- v1.5.2: Initial implementation with string-based submissions only (zFunc)
+
+Integration Points
+------------------
+- ✅ Week 6.6 (zDispatch): VERIFIED - handle_zDispatch signature is compatible
+"""
+
+from zCLI import Any, Dict, Optional
+from zCLI.subsystems.zDispatch import handle_zDispatch
+
+from .dialog_context import inject_placeholders, KEY_MODEL, KEY_ZCONV
+
+# ============================================================================
+# Module-Level Constants
+# ============================================================================
+
+# Dict Keys (imported from dialog_context: KEY_MODEL, KEY_ZCONV)
+KEY_ZCRUD = "zCRUD"
+KEY_ZDATA = "zData"
+
+# Dispatch Command
+DISPATCH_CMD_SUBMIT = "submit"
+
+# Display Colors
+COLOR_ZDIALOG = "ZDIALOG"
+COLOR_DISPATCH = "DISPATCH"
+
+# Display Styles
+STYLE_SINGLE = "single"
+STYLE_TILDE = "~"
+
+# Indent Levels
+INDENT_DIALOG = 2
+INDENT_SUBMIT = 3
+
+# Debug Messages
+DEBUG_SUBMIT_EXPR = "zSubmit_expr: %s"
+DEBUG_CONTEXT_KEYS = "zContext keys: %s | zConv: %s"
+DEBUG_DICT_PAYLOAD = "zSubmit detected dict payload; preparing for zLaunch"
+DEBUG_SUBMIT_RESULT = "zSubmit result: %s"
+
+# Info Messages
+INFO_DISPATCH_DICT = "Dispatching dict onSubmit via zDispatch: %s"
+
+# Error Messages
+ERROR_NO_WALKER = "handle_submit requires a walker instance"
+ERROR_INVALID_TYPE = "zSubmit expression must be a dict, got: %s"
+ERROR_DISPATCH_FAILED = "zDispatch failed for submission: %s"
+
+# Module Public API
+__all__ = ["handle_submit"]
+
+
+# ============================================================================
+# Public API
+# ============================================================================
+
+def handle_submit(
+    submit_expr: Dict[str, Any],
+    zContext: Dict[str, Any],
+    logger: Any,
+    walker: Optional[Any] = None
+) -> Any:
+    """
+    Handle the zDialog onSubmit expression and return submission result.
+
+    This is the main entry point for form submission processing in zDialog.
+    Only dict-based submissions are supported (string-based removed in v1.5.4
+    for architectural purity - pure declarative paradigm).
+
+    Parameters
+    ----------
+    submit_expr : Dict[str, Any]
+        The onSubmit expression from the dialog form. Must be a dict-based
+        command compatible with zDispatch. Common structures:
+        - {"zData": {"query": "..."}} - Database query
+        - {"zCRUD": {"action": "...", "data": {...}}} - CRUD operation
+        - {"zFunc": "..."} - Function call via dispatch
+        - Any other zDispatch-compatible command dict
+    zContext : Dict[str, Any]
+        Dialog context containing model, fields, and zConv (form data).
+        Expected structure:
+        {
+            "model": Optional[str],     # Schema model reference
+            "fields": List[Dict],       # Field definitions
+            "zConv": Dict[str, Any]     # Collected form data
+        }
+    logger : Any
+        Logger instance for debug/info/error output. Should have
+        .debug(), .info(), and .error() methods.
+    walker : Optional[Any], default=None
+        Walker instance providing access to zcli, display, loader, etc.
+        Required for submission processing (ValueError raised if None).
+
+    Returns
+    -------
+    Any
+        Submission result from zDispatch. Return type depends on the command executed:
+        - zData queries: List of records or dict results
+        - zCRUD operations: Status dict (e.g., {"status": "created", "id": 42})
+        - Other commands: Varies based on command type
+        - Error: Returns False if invalid submission type
+
+    Raises
+    ------
+    ValueError
+        If walker is None (walker is required for submission processing)
+    TypeError
+        If submit_expr is not a dict (string-based submissions removed in v1.5.4)
+
+    Examples
+    --------
+    Example 1: Dict-based submission with zData query
+        >>> submit_expr = {
+        ...     "zData": {
+        ...         "query": "SELECT * FROM users WHERE id = zConv.user_id"
+        ...     }
+        ... }
+        >>> zContext = {
+        ...     "model": "@.zSchema.users",
+        ...     "zConv": {"user_id": 42}
+        ... }
+        >>> result = handle_submit(submit_expr, zContext, logger, walker)
+        >>> # Returns: List of user records from database
+
+    Example 2: Dict-based submission with zCRUD (model auto-injected)
+        >>> submit_expr = {
+        ...     "zCRUD": {
+        ...         "action": "create",
+        ...         "data": {"name": "zConv.name", "email": "zConv.email"}
+        ...     }
+        ... }
+        >>> zContext = {
+        ...     "model": "@.zSchema.users",
+        ...     "zConv": {"name": "Alice", "email": "alice@example.com"}
+        ... }
+        >>> result = handle_submit(submit_expr, zContext, logger, walker)
+        >>> # Model "@.zSchema.users" is automatically injected into zCRUD
+
+    Example 3: Invalid submission type (error handling)
+        >>> submit_expr = 123  # Invalid type
+        >>> result = handle_submit(submit_expr, zContext, logger, walker)
+        >>> # Logs error: "zSubmit expression must be a dict, got: <class 'int'>"
+        >>> # Returns: False
+
+    Notes
+    -----
+    - Only dict-based submissions are supported (architectural decision v1.5.4)
+    - String-based submissions were removed for pure declarative paradigm alignment
+    - Placeholders are injected via inject_placeholders() from dialog_context
+    - Model injection logic is handled by _inject_model_if_needed()
+    - Visual feedback is displayed via walker.display.zDeclare()
+    - Walker is required (not optional despite type hint - ValueError if None)
+    """
+    if walker is None:
+        raise ValueError(ERROR_NO_WALKER)
+    
+    walker.display.zDeclare("zSubmit", color=COLOR_ZDIALOG, indent=INDENT_DIALOG, style=STYLE_SINGLE)
+
+    logger.debug(DEBUG_SUBMIT_EXPR, submit_expr)
+    logger.debug(DEBUG_CONTEXT_KEYS, list(zContext.keys()), zContext.get(KEY_ZCONV))
+
+    # Dict-based submission => zDispatch
+    if isinstance(submit_expr, dict):
+        return _handle_dict_submit(submit_expr, zContext, logger, walker)
+    
+    # Invalid type: Log error and return False
+    logger.error(ERROR_INVALID_TYPE, type(submit_expr))
+    return False
+
+
+# ============================================================================
+# Private Helpers
+# ============================================================================
+
+def _handle_dict_submit(
+    submit_dict: Dict[str, Any],
+    zContext: Dict[str, Any],
+    logger: Any,
+    walker: Optional[Any] = None
+) -> Any:
+    """
+    Handle dict-based onSubmit expression and dispatch via zDispatch.
+
+    This function processes modern dict-based submissions by:
+    1. Injecting placeholders (zConv.* → actual values)
+    2. Injecting model reference if needed (for zCRUD/zData)
+    3. Dispatching via handle_zDispatch()
+    4. Displaying return feedback
+
+    Parameters
+    ----------
+    submit_dict : Dict[str, Any]
+        Dict-based submission expression. Common structures:
+        - {"zData": {"query": "..."}} - Database query
+        - {"zCRUD": {"action": "...", "data": {...}}} - CRUD operation
+        - {"zFunc": "..."} - Function call via dispatch
+        - Any other zDispatch-compatible command dict
+    zContext : Dict[str, Any]
+        Dialog context containing model, fields, and zConv.
+    logger : Any
+        Logger instance for debug/info/error output.
+    walker : Optional[Any], default=None
+        Walker instance for accessing zcli and display.
+
+    Returns
+    -------
+    Any
+        Result from handle_zDispatch(). Type depends on the command executed.
+
+    Raises
+    ------
+    ImportError
+        If zDispatch module cannot be imported
+    AttributeError
+        If handle_zDispatch function is not available
+    RuntimeError
+        If zDispatch execution fails
+
+    Examples
+    --------
+    Example 1: zData query with placeholder injection
+        >>> submit_dict = {
+        ...     "zData": {"query": "SELECT * FROM users WHERE id = zConv.user_id"}
+        ... }
+        >>> zContext = {
+        ...     "model": "@.zSchema.users",
+        ...     "zConv": {"user_id": 42}
+        ... }
+        >>> result = _handle_dict_submit(submit_dict, zContext, logger, walker)
+        >>> # After placeholder injection:
+        >>> # {"zData": {"query": "SELECT * FROM users WHERE id = 42"}}
+
+    Example 2: zCRUD with model injection
+        >>> submit_dict = {
+        ...     "zCRUD": {"action": "create", "data": {"name": "Alice"}}
+        ... }
+        >>> zContext = {"model": "@.zSchema.users", "zConv": {}}
+        >>> result = _handle_dict_submit(submit_dict, zContext, logger, walker)
+        >>> # Model is automatically injected:
+        >>> # {"zCRUD": {"model": "@.zSchema.users", "action": "create", ...}}
+
+    Example 3: Root-level submission without zData (model injected at root)
+        >>> submit_dict = {"command": "custom", "param": "zConv.value"}
+        >>> zContext = {"model": "@.zSchema.config", "zConv": {"value": "test"}}
+        >>> result = _handle_dict_submit(submit_dict, zContext, logger, walker)
+        >>> # Model injected at root and placeholder resolved:
+        >>> # {"model": "@.zSchema.config", "command": "custom", "param": "test"}
+
+    Notes
+    -----
+    - Placeholders are injected via inject_placeholders() from dialog_context
+    - Model injection logic is handled by _inject_model_if_needed()
+    - Model is NOT injected at root if zData is present (zData should have its own model)
+    - Errors during dispatch are caught and logged
+    - Visual feedback is displayed via walker.display.zDeclare()
+    """
+    logger.debug(DEBUG_DICT_PAYLOAD)
+
+    try:
+        # Step 1: Inject placeholders (zConv.* => actual values)
+        submit_dict = inject_placeholders(submit_dict, zContext, logger)
+    
+        # Step 2: Inject model if needed (for zCRUD/zData)
+        submit_dict = _inject_model_if_needed(submit_dict, zContext)
+
+        # Step 3: Dispatch via zDispatch
+        logger.info(INFO_DISPATCH_DICT, submit_dict)
+        result = handle_zDispatch(DISPATCH_CMD_SUBMIT, submit_dict, zcli=walker.zcli, walker=walker)
+
+        # Step 4: Display return feedback
+        _display_submit_return(walker)
+
+        return result
+
+    except (ImportError, AttributeError, RuntimeError) as e:
+        logger.error(ERROR_DISPATCH_FAILED, e)
+        _display_submit_return(walker)
+        return False
+
+
+def _inject_model_if_needed(
+    submit_dict: Dict[str, Any],
+    zContext: Dict[str, Any]
+) -> Dict[str, Any]:
+    """
+    Inject model reference into submission dict if needed.
+
+    This helper handles the complex logic for determining where to inject
+    the model reference from zContext:
+    - If zCRUD exists: Inject into zCRUD (legacy support)
+    - If zData exists: Don't inject at root (zData should have its own model)
+    - Otherwise: Inject at root level
+
+    Parameters
+    ----------
+    submit_dict : Dict[str, Any]
+        The submission dictionary (after placeholder injection).
+    zContext : Dict[str, Any]
+        Dialog context containing the model reference.
+
+    Returns
+    -------
+    Dict[str, Any]
+        The submission dictionary with model injected if needed.
+
+    Examples
+    --------
+    Example 1: zCRUD without model (inject into zCRUD)
+        >>> submit_dict = {"zCRUD": {"action": "create", "data": {...}}}
+        >>> zContext = {"model": "@.zSchema.users"}
+        >>> result = _inject_model_if_needed(submit_dict, zContext)
+        >>> # result["zCRUD"]["model"] == "@.zSchema.users"
+
+    Example 2: zData present (don't inject at root)
+        >>> submit_dict = {"zData": {"query": "..."}}
+        >>> zContext = {"model": "@.zSchema.users"}
+        >>> result = _inject_model_if_needed(submit_dict, zContext)
+        >>> # result has NO root-level "model" key (zData should have its own)
+
+    Example 3: Neither zCRUD nor zData (inject at root)
+        >>> submit_dict = {"command": "custom"}
+        >>> zContext = {"model": "@.zSchema.config"}
+        >>> result = _inject_model_if_needed(submit_dict, zContext)
+        >>> # result["model"] == "@.zSchema.config"
+
+    Notes
+    -----
+    - This function encapsulates the complex conditional logic from lines 38-43
+    - Model injection is only performed if the model key is missing
+    - The function modifies submit_dict in place but also returns it for chaining
+    """
+    model = zContext.get(KEY_MODEL)
+    
+    # Case 1: zCRUD exists => inject model into zCRUD (legacy support)
+    if KEY_ZCRUD in submit_dict and isinstance(submit_dict[KEY_ZCRUD], dict):
+        if KEY_MODEL not in submit_dict[KEY_ZCRUD]:
+            submit_dict[KEY_ZCRUD][KEY_MODEL] = model
+    
+    # Case 2: zData exists => don't inject at root (zData should have its own model)
+    # Case 3: Neither => inject at root level
+    elif KEY_MODEL not in submit_dict and KEY_ZDATA not in submit_dict:
+        submit_dict[KEY_MODEL] = model
+    
+    return submit_dict
+
+
+def _display_submit_return(walker: Any) -> None:
+    """
+    Display submission return feedback via walker.display.
+
+    This DRY helper displays the standardized return feedback for both
+    dict-based and string-based submissions:
+    - "zSubmit Return" (indent 3)
+    - "zDialog Return" (indent 2)
+
+    Parameters
+    ----------
+    walker : Any
+        Walker instance for accessing display.
+
+    Notes
+    -----
+    - Extracted to avoid duplication in _handle_dict_submit and _handle_string_submit
+    - Uses STYLE_TILDE ("~") to indicate return/closing
+    - Indent levels: INDENT_SUBMIT (3) for zSubmit, INDENT_DIALOG (2) for zDialog
+    """
+    walker.display.zDeclare("zSubmit Return", color=COLOR_ZDIALOG, indent=INDENT_SUBMIT, style=STYLE_TILDE)
+    walker.display.zDeclare("zDialog Return", color=COLOR_ZDIALOG, indent=INDENT_DIALOG, style=STYLE_TILDE)

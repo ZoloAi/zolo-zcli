@@ -528,7 +528,6 @@ class CommandLauncher:
         
         TODO: Week 6.10 (zFunc) - Update zfunc.handle() call after refactor
         TODO: Week 6.8 (zParser) - Update resolve_plugin_invocation() call after refactor
-        TODO: Week 6.11 (zDialog) - Update handle_zDialog() call after refactor
         TODO: Week 6.7 (zNavigation) - Update handle_zLink() call after refactor
         TODO: Week 6.14 (zWizard) - Update wizard.handle() call after refactor
         TODO: Week 6.16 (zData) - Update data.handle_request() call after refactor
@@ -576,7 +575,7 @@ class CommandLauncher:
 
         # Route: zDialog
         if KEY_ZDIALOG in zHorizontal:
-            # TODO: Week 6.11 (zDialog) - Verify handle_zDialog() signature after refactor
+            # ✅ Week 6.11 (zDialog) - handle_zDialog() signature verified and compatible
             from ...zDialog import handle_zDialog
             self._log_detected("zDialog")
             return handle_zDialog(zHorizontal, zcli=self.zcli, walker=walker, context=context)

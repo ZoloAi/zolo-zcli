@@ -21,7 +21,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from zCLI.subsystems.zDialog.zDialog_modules.dialog_context import inject_placeholders
+from zCLI.subsystems.zDialog.dialog_modules.dialog_context import inject_placeholders
 from zCLI.subsystems.zData.zData_modules.shared.operations.helpers import extract_where_clause
 
 

@@ -15,7 +15,7 @@ from unittest.mock import Mock, patch
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from zCLI.subsystems.zDialog import zDialog, handle_zDialog
-from zCLI.subsystems.zDialog.zDialog_modules import (
+from zCLI.subsystems.zDialog.dialog_modules import (
     create_dialog_context, inject_placeholders, handle_submit
 )
 
@@ -44,7 +44,7 @@ class TestzDialogInitialization(unittest.TestCase):
         self.assertEqual(zdialog.logger, self.mock_zcli.logger)
         self.assertEqual(zdialog.display, self.mock_zcli.display)
         self.assertEqual(zdialog.zparser, self.mock_zcli.zparser)
-        self.assertEqual(zdialog.zfunc, self.mock_zcli.zfunc)
+        # Note: self.zfunc removed in v1.5.4 (unused after string-based submissions removed)
         self.assertEqual(zdialog.mycolor, "ZDIALOG")
 
     def test_initialization_with_walker(self):
@@ -274,32 +274,6 @@ class TestzDialogHandle(unittest.TestCase):
         declare_calls = self.mock_zcli.display.zDeclare.call_args_list
         self.assertTrue(any("zDialog" in str(call) for call in declare_calls))
 
-    def test_handle_with_onsubmit_string(self):
-        """Test handling dialog with string-based onSubmit."""
-        mock_walker = Mock()
-        mock_walker.display = Mock()
-        mock_walker.display.zDeclare = Mock()
-        mock_walker.zcli = self.mock_zcli
-        
-        zdialog = zDialog(self.mock_zcli, walker=mock_walker)
-        
-        zHorizontal = {
-            "zDialog": {
-                "model": "User",
-                "fields": ["username"],
-                "onSubmit": "zFunc(@utils.process, zConv.username)"
-            }
-        }
-        
-        self.mock_zcli.display.handle.return_value = {"username": "testuser"}
-        self.mock_zcli.zfunc.handle = Mock(return_value={"status": "success"})
-        
-        result = zdialog.handle(zHorizontal)
-        
-        # Should call zfunc.handle
-        self.mock_zcli.zfunc.handle.assert_called_once()
-        self.assertEqual(result, {"status": "success"})
-
     def test_handle_with_onsubmit_dict(self):
         """Test handling dialog with dict-based onSubmit."""
         mock_walker = Mock()
@@ -324,7 +298,7 @@ class TestzDialogHandle(unittest.TestCase):
         
         self.mock_zcli.display.handle.return_value = {"username": "testuser"}
         
-        with patch('zCLI.subsystems.zDispatch.handle_zDispatch') as mock_dispatch:
+        with patch('zCLI.subsystems.zDialog.dialog_modules.dialog_submit.handle_zDispatch') as mock_dispatch:
             mock_dispatch.return_value = {"status": "created"}
             result = zdialog.handle(zHorizontal)
             
@@ -351,17 +325,6 @@ class TestSubmissionHandling(unittest.TestCase):
             "zConv": {"username": "testuser", "email": "test@example.com"}
         }
 
-    def test_handle_submit_with_string(self):
-        """Test handling string-based submission."""
-        submit_expr = "zFunc(@utils.process, zConv.username)"
-        self.mock_walker.zcli.zfunc.handle = Mock(return_value={"status": "success"})
-        
-        result = handle_submit(submit_expr, self.zContext, self.logger, walker=self.mock_walker)
-        
-        # Should call zfunc.handle
-        self.mock_walker.zcli.zfunc.handle.assert_called_once()
-        self.assertEqual(result, {"status": "success"})
-
     def test_handle_submit_with_dict(self):
         """Test handling dict-based submission."""
         submit_expr = {
@@ -371,7 +334,7 @@ class TestSubmissionHandling(unittest.TestCase):
             }
         }
         
-        with patch('zCLI.subsystems.zDispatch.handle_zDispatch') as mock_dispatch:
+        with patch('zCLI.subsystems.zDialog.dialog_modules.dialog_submit.handle_zDispatch') as mock_dispatch:
             mock_dispatch.return_value = {"status": "created"}
             result = handle_submit(submit_expr, self.zContext, self.logger, walker=self.mock_walker)
             
@@ -382,7 +345,7 @@ class TestSubmissionHandling(unittest.TestCase):
     def test_handle_submit_without_walker(self):
         """Test handle_submit raises error without walker."""
         with self.assertRaises(ValueError) as context:
-            handle_submit("zFunc(test)", self.zContext, self.logger, walker=None)
+            handle_submit({"zData": {"query": "SELECT * FROM users"}}, self.zContext, self.logger, walker=None)
         
         self.assertIn("requires a walker instance", str(context.exception))
 
@@ -511,6 +474,8 @@ class TestzDialogEdgeCases(unittest.TestCase):
 
     def test_handle_with_onsubmit_exception(self):
         """Test handling dialog when onSubmit raises exception."""
+        from unittest.mock import patch
+        
         mock_walker = Mock()
         mock_walker.display = Mock()
         mock_walker.display.zDeclare = Mock()
@@ -522,15 +487,22 @@ class TestzDialogEdgeCases(unittest.TestCase):
             "zDialog": {
                 "model": "User",
                 "fields": ["username"],
-                "onSubmit": "zFunc(@invalid.function)"
+                "onSubmit": {
+                    "zCRUD": {
+                        "action": "create",
+                        "data": "zConv"
+                    }
+                }
             }
         }
         
         self.mock_zcli.display.handle.return_value = {"username": "testuser"}
-        self.mock_zcli.zfunc.handle = Mock(side_effect=Exception("Function error"))
         
-        with self.assertRaises(Exception):
-            zdialog.handle(zHorizontal)
+        with patch('zCLI.subsystems.zDialog.dialog_modules.dialog_submit.handle_zDispatch') as mock_dispatch:
+            mock_dispatch.side_effect = Exception("Dispatch error")
+            
+            with self.assertRaises(Exception):
+                zdialog.handle(zHorizontal)
 
     def test_inject_placeholders_with_malformed_bracket(self):
         """Test injecting placeholders with malformed bracket notation."""

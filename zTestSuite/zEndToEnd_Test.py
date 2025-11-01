@@ -636,7 +636,7 @@ class TestUserManagerWebSocketMode(unittest.TestCase):
         
     def test_user_manager_crud_with_websocket_data(self):
         """Test User Manager CRUD operations with WebSocket data format."""
-        from zCLI.subsystems.zDialog.zDialog_modules.dialog_context import inject_placeholders
+        from zCLI.subsystems.zDialog.dialog_modules.dialog_context import inject_placeholders
         from unittest.mock import Mock
         
         # Simulate frontend WebSocket message for "Add User"
@@ -663,7 +663,7 @@ class TestUserManagerWebSocketMode(unittest.TestCase):
     
     def test_user_manager_delete_with_where_clause(self):
         """Test User Manager DELETE with WHERE clause from WebSocket."""
-        from zCLI.subsystems.zDialog.zDialog_modules.dialog_context import inject_placeholders
+        from zCLI.subsystems.zDialog.dialog_modules.dialog_context import inject_placeholders
         from unittest.mock import Mock
         
         # Simulate frontend WebSocket message for "Delete User"
@@ -680,7 +680,7 @@ class TestUserManagerWebSocketMode(unittest.TestCase):
     
     def test_user_manager_search_with_like(self):
         """Test User Manager search with LIKE wildcards."""
-        from zCLI.subsystems.zDialog.zDialog_modules.dialog_context import inject_placeholders
+        from zCLI.subsystems.zDialog.dialog_modules.dialog_context import inject_placeholders
         from unittest.mock import Mock
         
         # Simulate frontend WebSocket message for "Search User"

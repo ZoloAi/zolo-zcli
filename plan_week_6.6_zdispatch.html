@@ -62,6 +62,19 @@
                         <li>Industry-grade code quality (type hints, constants, DRY)</li>
                     </ul>
                 </div>
+
+                <div class="note" style="background: #fef3c7; border-color: #f59e0b;">
+                    <strong>📋 FORWARD DEPENDENCIES (From Week 6.11 - zDialog):</strong>
+                    <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                        <li>✅ <strong>handle_zDispatch signature:</strong> Verify compatibility with dialog_submit.py
+                            <ul style="margin-left: 20px;">
+                                <li>Current: handle_zDispatch("submit", submit_dict, zcli=walker.zcli, walker=walker)</li>
+                                <li>Required: Must accept "submit" command with dict payload</li>
+                                <li>Status: COMPATIBLE - No changes needed</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
             </div>
 
             <div class="section">

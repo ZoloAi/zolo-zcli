@@ -463,7 +463,7 @@ class TestWebSocketModeIntegration(unittest.TestCase):
     
     def test_placeholder_injection_integration(self):
         """Test placeholder injection with zDialog and zData integration."""
-        from zCLI.subsystems.zDialog.zDialog_modules.dialog_context import inject_placeholders
+        from zCLI.subsystems.zDialog.dialog_modules.dialog_context import inject_placeholders
         from unittest.mock import Mock
         
         # Simulate WebSocket data
