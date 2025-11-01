@@ -1,369 +1,454 @@
 # zCLI/subsystems/zOpen/zOpen.py
 
-"""Core zOpen handler for file and URL opening operations."""
+"""
+zOpen Subsystem - Main Facade
 
-from zCLI import os, urlparse, webbrowser, subprocess
+This module provides the main facade for the zOpen subsystem, handling file and URL
+opening operations in a mode-agnostic manner. It serves as the primary entry point,
+routing requests to specialized modules and executing optional hooks.
+
+Architecture Position:
+    - Tier 2 (Facade) of zOpen's 3-tier architecture
+    - Delegates to Tier 1 foundation modules (open_paths, open_urls, open_files)
+    - Exposed to zCLI via Tier 3 (package root)
+
+3-Tier Architecture:
+    Tier 1: Foundation Modules (open_modules/)
+        - open_paths.py: zPath resolution (@ and ~ symbols)
+        - open_urls.py: URL opening in browsers
+        - open_files.py: File opening by extension (HTML, text)
+        - __init__.py: Package aggregator
+
+    Tier 2: Facade (THIS FILE)
+        - zOpen class: Main entry point
+        - handle() method: Request parsing, routing, and hook execution
+        - Delegates all opening logic to Tier 1 modules
+
+    Tier 3: Package Root (__init__.py)
+        - Exports zOpen class to zCLI
+
+Key Features:
+    - Dual Format Support: Accepts both string ("zOpen(path)") and dict formats
+    - Type Detection: Automatically detects URLs, zPaths, and local file paths
+    - Modular Routing: Delegates to specialized handlers (paths, URLs, files)
+    - Hook Execution: Supports onSuccess/onFail callbacks via zFunc
+    - Mode-Agnostic: Works in both Terminal and Bifrost modes
+    - Session Integration: Uses zConfig session for preferences
+
+Input Formats:
+    String Format (Legacy):
+        "zOpen(/path/to/file.txt)"
+        "zOpen(https://example.com)"
+        "zOpen(@.README.md)"
+
+    Dict Format (Modern):
+        {
+            "zOpen": {
+                "path": "/path/to/file.txt",
+                "onSuccess": "callback_function()",  # Optional
+                "onFail": "error_handler()"          # Optional
+            }
+        }
+
+Type Detection & Routing:
+    URLs (http:// or https:// or www.):
+        → open_url() from open_modules.open_urls
+        → Opens in user's preferred or system default browser
+
+    zPaths (@ or ~):
+        → resolve_zpath() from open_modules.open_paths
+        → Resolves to filesystem path
+        → open_file() from open_modules.open_files
+
+    Local Files (everything else):
+        → os.path.abspath(os.path.expanduser(path))
+        → open_file() from open_modules.open_files
+        → Routes by extension (.html → browser, .txt → IDE)
+
+Hook Execution (onSuccess/onFail):
+    - Executed after opening attempt completes
+    - onSuccess: Triggered if result == "zBack" (success)
+    - onFail: Triggered if result == "stop" (failure)
+    - Both callbacks executed via zFunc.handle()
+    - Hook results replace original result
+
+Integration Points:
+    - zCLI.py: Initializes zOpen (line ~210)
+    - zDispatch: Routes "zOpen(...)" commands via dispatch_launcher
+    - zConfig: Session access for workspace, IDE, browser preferences
+    - zDisplay: Output, breadcrumbs, status messages
+    - zFunc: Hook callback execution
+    - zDialog: Interactive prompts (file creation, IDE selection) via open_files
+
+Dependencies:
+    - os: Path operations (abspath, expanduser)
+    - urlparse: URL parsing for type detection
+    - open_modules: Foundation modules (paths, URLs, files)
+
+Usage Example (from zDispatch):
+    # String format
+    result = zcli.open.handle("zOpen(/path/to/file.py)")
+
+    # Dict format with hooks
+    result = zcli.open.handle({
+        "zOpen": {
+            "path": "https://github.com",
+            "onSuccess": "log_success()",
+            "onFail": "log_error()"
+        }
+    })
+
+    # zPath format
+    result = zcli.open.handle("zOpen(@.README.md)")
+
+Return Values:
+    - "zBack": Opening successful, return to previous screen
+    - "stop": Opening failed or user cancelled
+    - Hook result: If hook executes, returns hook's result
+
+Version History:
+    - v1.5.4: Refactored from monolithic (369 lines) to modular facade (~150 lines)
+    - v1.5.4: Extracted logic to open_modules (paths, URLs, files)
+    - v1.5.4: Added industry-grade documentation and type hints
+    - v1.5.4: Modernized session key access (SESSION_KEY_* constants)
+
+TODO: Week 6.6 (zDispatch) Integration:
+    - dispatch_launcher.py (Line 403): Verify open.handle() signature after refactor ✓
+    - dispatch_launcher.py (Line 427): Update open.handle() call after refactor ✓
+    - Current signature: handle(zHorizontal: str | dict) → str
+    - Status: COMPATIBLE - No changes needed
+
+Author: zCLI Development Team
+"""
+
+from zCLI import os, urlparse, Any
+
+# Import from foundation modules (Tier 1)
+from .open_modules import resolve_zpath, open_url, open_file
+
+# ═══════════════════════════════════════════════════════════════
+# Module-Level Constants
+# ═══════════════════════════════════════════════════════════════
+
+# Command Prefix
+CMD_PREFIX = "zOpen("
+
+# Dict Keys
+DICT_KEY_ZOPEN = "zOpen"
+DICT_KEY_PATH = "path"
+DICT_KEY_ON_SUCCESS = "onSuccess"
+DICT_KEY_ON_FAIL = "onFail"
+
+# URL Schemes (for detection)
+URL_SCHEME_HTTP = "http"
+URL_SCHEME_HTTPS = "https"
+URL_PREFIX_WWW = "www."
+URL_SCHEME_HTTPS_DEFAULT = "https://"
+
+# zPath Symbols (for detection)
+ZPATH_SYMBOL_WORKSPACE = "@"
+ZPATH_SYMBOL_ABSOLUTE = "~"
+
+# Return Codes (zCLI standard)
+RETURN_ZBACK = "zBack"
+RETURN_STOP = "stop"
+
+# Display Colors
+COLOR_ZOPEN = "ZOPEN"
+COLOR_INFO = "INFO"
+
+# Display Styles
+STYLE_FULL = "full"
+STYLE_SINGLE = "single"
+
+# Display Messages
+MSG_ZOPEN_READY = "zOpen Ready"
+MSG_HANDLE_ZOPEN = "Handle zOpen"
+MSG_HOOK_SUCCESS = "[HOOK] onSuccess"
+MSG_HOOK_FAIL = "[HOOK] onFail"
+
+# Display Indents
+INDENT_INIT = 0
+INDENT_HANDLE = 1
+INDENT_HOOK = 2
+
+# Log Messages
+LOG_INCOMING_REQUEST = "Incoming zOpen request: %s"
+LOG_PARSED_PATH = "Parsed path: %s"
+LOG_EXEC_SUCCESS_HOOK = "Executing onSuccess hook: %s"
+LOG_EXEC_FAIL_HOOK = "Executing onFail hook: %s"
+
+
+# ═══════════════════════════════════════════════════════════════
+# Main Facade Class
+# ═══════════════════════════════════════════════════════════════
 
 class zOpen:
-    """Core zOpen class for file and URL opening operations."""
+    """
+    Main facade class for file and URL opening operations.
 
-    def __init__(self, zcli):
-        """Initialize zOpen with zCLI instance."""
+    This class provides the primary interface for the zOpen subsystem, handling
+    initialization, request parsing, type detection, routing to specialized modules,
+    and optional hook execution.
+
+    Attributes:
+        zcli: Reference to main zCLI instance
+        session: zCLI session dictionary (from zcli.session)
+        logger: Logger instance (from zcli.logger)
+        display: zDisplay instance (from zcli.display)
+        zfunc: zFunc instance (from zcli.zfunc) for hook execution
+        dialog: zDialog instance (from zcli.dialog) for interactive prompts
+        mycolor: Display color identifier ("ZOPEN")
+
+    Public Methods:
+        handle(zHorizontal: str | dict) → str:
+            Main entry point for opening operations
+
+    Facade Pattern:
+        This class delegates all complex logic to specialized modules:
+        - zPath resolution → open_modules.open_paths
+        - URL opening → open_modules.open_urls
+        - File opening → open_modules.open_files
+
+        The facade only handles:
+        - Request parsing (string vs dict format)
+        - Type detection (URL vs zPath vs file)
+        - Routing to appropriate module
+        - Hook execution (onSuccess/onFail)
+
+    Integration with zCLI:
+        Initialized in zCLI.__init__() (line ~210):
+            self.open = zOpen(self)
+
+        Called from zDispatch (dispatch_launcher.py):
+            return self.zcli.open.handle(zHorizontal)
+
+    Version: v1.5.4
+    """
+
+    def __init__(self, zcli: Any) -> None:
+        """
+        Initialize zOpen with zCLI instance.
+
+        Args:
+            zcli: Main zCLI instance
+
+        Raises:
+            ValueError: If zcli is None or missing required attributes
+
+        Initialization Flow:
+            1. Validate zcli instance
+            2. Store references to required subsystems
+            3. Display initialization message via zDisplay
+
+        Required zCLI Attributes:
+            - session: Session dictionary
+            - logger: Logging instance
+            - display: zDisplay instance
+            - zfunc: zFunc instance (for hooks)
+            - dialog: zDialog instance (for prompts)
+
+        Example:
+            >>> zcli = zCLI()
+            >>> zopen = zOpen(zcli)
+            # Displays: "zOpen Ready"
+
+        Version: v1.5.4
+        """
         if zcli is None:
             raise ValueError("zOpen requires a zCLI instance")
 
         if not hasattr(zcli, 'session'):
             raise ValueError("Invalid zCLI instance: missing 'session' attribute")
 
+        # Store references to zCLI subsystems
         self.zcli = zcli
         self.session = zcli.session
         self.logger = zcli.logger
         self.display = zcli.display
-        self.zparser = zcli.zparser
         self.zfunc = zcli.zfunc
         self.dialog = zcli.dialog
-        self.mycolor = "ZOPEN"
+        self.mycolor = COLOR_ZOPEN
 
-        self.display.zDeclare("zOpen Ready", color=self.mycolor, indent=0, style="full")
+        # Display initialization message
+        self.display.zDeclare(
+            MSG_ZOPEN_READY,
+            color=self.mycolor,
+            indent=INDENT_INIT,
+            style=STYLE_FULL
+        )
 
-    def handle(self, zHorizontal):
-        """Handle zOpen operations with optional hooks."""
-        self.display.zDeclare("Handle zOpen", color=self.mycolor, indent=1, style="full")
-        self.display.zCrumbs(self.session)  # Use modern zDisplay method
+    def handle(self, zHorizontal: str | dict[str, Any]) -> str:
+        """
+        Handle zOpen operations with optional hooks.
 
-        self.logger.debug("incoming zOpen request: %s", zHorizontal)
+        This is the main entry point for all opening operations. It parses the input,
+        detects the type (URL/zPath/file), routes to the appropriate handler module,
+        and executes optional hooks based on the result.
+
+        Args:
+            zHorizontal: Opening request in string or dict format
+
+        Returns:
+            "zBack" if successful, "stop" if failed, or hook result if hook executes
+
+        Input Formats:
+            String: "zOpen(path_or_url)"
+                - Example: "zOpen(/path/to/file.txt)"
+                - Example: "zOpen(https://example.com)"
+                - No hooks supported in string format
+
+            Dict: {"zOpen": {"path": "...", "onSuccess": "...", "onFail": "..."}}
+                - path: Required, path or URL to open
+                - onSuccess: Optional, zFunc callback on success
+                - onFail: Optional, zFunc callback on failure
+
+        Processing Flow:
+            1. Display "Handle zOpen" message and breadcrumbs
+            2. Parse input format (string vs dict)
+            3. Extract path/URL and optional hooks
+            4. Detect type and route:
+                - http/https/www → open_url() (open_modules.open_urls)
+                - @ or ~ → resolve_zpath() + open_file() (open_modules)
+                - Other → open_file() (open_modules.open_files)
+            5. Execute hooks if present:
+                - onSuccess if result == "zBack"
+                - onFail if result == "stop"
+            6. Return result or hook result
+
+        Type Detection:
+            URLs: parsed.scheme in ("http", "https") or path.startswith("www.")
+                → open_url(url, session, display, logger)
+
+            zPaths: path.startswith("@") or path.startswith("~")
+                → resolve_zpath(path, session, logger)
+                → open_file(resolved_path, session, display, dialog, logger)
+
+            Local Files: Everything else
+                → os.path.abspath(os.path.expanduser(path))
+                → open_file(path, session, display, dialog, logger)
+
+        Hook Execution:
+            onSuccess Hook:
+                - Triggered when result == "zBack"
+                - Displays: "[HOOK] onSuccess"
+                - Executes: self.zfunc.handle(on_success)
+                - Returns: Hook result (replaces original result)
+
+            onFail Hook:
+                - Triggered when result == "stop"
+                - Displays: "[HOOK] onFail"
+                - Executes: self.zfunc.handle(on_fail)
+                - Returns: Hook result (replaces original result)
+
+        Example Usage:
+            # String format (no hooks)
+            >>> result = zopen.handle("zOpen(/path/to/file.txt)")
+            "zBack"
+
+            # Dict format (with hooks)
+            >>> result = zopen.handle({
+                "zOpen": {
+                    "path": "https://github.com",
+                    "onSuccess": "log_success()",
+                    "onFail": "log_error()"
+                }
+            })
+            "zBack"  # Or hook result if hook executes
+
+            # zPath format
+            >>> result = zopen.handle("zOpen(@.README.md)")
+            "zBack"
+
+        Integration Notes:
+            - Called by zDispatch.dispatch_launcher (line ~428)
+            - Uses zDisplay for output (mode-agnostic)
+            - Uses zFunc for hook callbacks
+            - Delegates to open_modules for all opening logic
+            - Session modernization: Uses constants from zConfig
+
+        See Also:
+            - open_modules.open_url(): URL opening
+            - open_modules.resolve_zpath(): zPath resolution
+            - open_modules.open_file(): File opening by extension
+
+        Version: v1.5.4
+        """
+        # Display handle message and breadcrumbs
+        self.display.zDeclare(
+            MSG_HANDLE_ZOPEN,
+            color=self.mycolor,
+            indent=INDENT_HANDLE,
+            style=STYLE_FULL
+        )
+        self.display.zCrumbs(self.session)
+
+        self.logger.debug(LOG_INCOMING_REQUEST, zHorizontal)
 
         # Parse input - support both string and dict formats
         if isinstance(zHorizontal, dict):
             # Dict format: {"zOpen": {"path": "...", "onSuccess": "...", "onFail": "..."}}
-            zOpen_obj = zHorizontal.get("zOpen", {})
-            raw_path = zOpen_obj.get("path", "")
-            on_success = zOpen_obj.get("onSuccess")
-            on_fail = zOpen_obj.get("onFail")
+            zopen_obj = zHorizontal.get(DICT_KEY_ZOPEN, {})
+            raw_path = zopen_obj.get(DICT_KEY_PATH, "")
+            on_success = zopen_obj.get(DICT_KEY_ON_SUCCESS)
+            on_fail = zopen_obj.get(DICT_KEY_ON_FAIL)
         else:
             # String format: "zOpen(path)"
-            raw_path = zHorizontal[len("zOpen("):-1].strip().strip('"').strip("'")
+            raw_path = zHorizontal[len(CMD_PREFIX):-1].strip().strip('"').strip("'")
             on_success = None
             on_fail = None
 
-        self.logger.debug("parsed path: %s", raw_path)
+        self.logger.debug(LOG_PARSED_PATH, raw_path)
 
-        # Determine file type and route to appropriate handler
+        # Determine type and route to appropriate handler
         parsed = urlparse(raw_path)
 
-        if parsed.scheme in ("http", "https") or raw_path.startswith("www."):
-            # URL handling
-            url = raw_path if parsed.scheme else f"https://{raw_path}"
-            result = self._open_url(url)
+        if parsed.scheme in (URL_SCHEME_HTTP, URL_SCHEME_HTTPS) or raw_path.startswith(URL_PREFIX_WWW):
+            # URL handling → open_modules.open_urls
+            url = raw_path if parsed.scheme else f"{URL_SCHEME_HTTPS_DEFAULT}{raw_path}"
+            result = open_url(url, self.session, self.display, self.logger)
 
-        elif raw_path.startswith("@") or raw_path.startswith("~"):
-            # zPath handling
-            result = self._open_zpath(raw_path)
+        elif raw_path.startswith(ZPATH_SYMBOL_WORKSPACE) or raw_path.startswith(ZPATH_SYMBOL_ABSOLUTE):
+            # zPath handling → open_modules.open_paths + open_modules.open_files
+            resolved_path = resolve_zpath(raw_path, self.session, self.logger)
+            if not resolved_path:
+                # Resolution failed
+                result = RETURN_STOP
+            else:
+                # Open resolved file
+                result = open_file(resolved_path, self.session, self.display, self.dialog, self.logger)
 
         else:
-            # Local file handling
+            # Local file handling → open_modules.open_files
             path = os.path.abspath(os.path.expanduser(raw_path))
-            result = self._open_file(path)
+            result = open_file(path, self.session, self.display, self.dialog, self.logger)
 
         # Execute hooks based on result
-        if result == "zBack" and on_success:
-            self.logger.info("Executing onSuccess hook: %s", on_success)
-            self.display.zDeclare("[HOOK] onSuccess", color=self.mycolor, indent=2, style="single")
+        if result == RETURN_ZBACK and on_success:
+            self.logger.info(LOG_EXEC_SUCCESS_HOOK, on_success)
+            self.display.zDeclare(
+                MSG_HOOK_SUCCESS,
+                color=self.mycolor,
+                indent=INDENT_HOOK,
+                style=STYLE_SINGLE
+            )
             return self.zfunc.handle(on_success)
 
-        if result == "stop" and on_fail:
-            self.logger.info("Executing onFail hook: %s", on_fail)
-            self.display.zDeclare("[HOOK] onFail", color=self.mycolor, indent=2, style="single")
+        if result == RETURN_STOP and on_fail:
+            self.logger.info(LOG_EXEC_FAIL_HOOK, on_fail)
+            self.display.zDeclare(
+                MSG_HOOK_FAIL,
+                color=self.mycolor,
+                indent=INDENT_HOOK,
+                style=STYLE_SINGLE
+            )
             return self.zfunc.handle(on_fail)
 
         return result
 
-    # ═══════════════════════════════════════════════════════════════
-    # File Opening Methods
-    # ═══════════════════════════════════════════════════════════════
 
-    def _open_file(self, path):
-        """Handle local file opening based on file type."""
-        self.logger.debug("resolved path: %s", path)
+# ═══════════════════════════════════════════════════════════════
+# Module Exports
+# ═══════════════════════════════════════════════════════════════
 
-        # Enhanced display: Show file info as JSON
-        if os.path.exists(path):
-            file_info = {
-                "path": path,
-                "exists": True,
-                "size": f"{os.path.getsize(path)} bytes",
-                "type": os.path.splitext(path)[1]
-            }
-            self.display.json_data(file_info, color=True, indent=1)
-
-        # Check if file exists
-        if not os.path.exists(path):
-            self.logger.error("file not found: %s", path)
-
-            # zDialog fallback: Offer to create file or cancel
-            if self.dialog:
-                self.logger.info("Prompting user for action on missing file")
-
-                try:
-                    result = self.dialog.handle({
-                        "zDialog": {
-                            "model": None,
-                            "fields": [{
-                                "name": "action",
-                                "type": "enum",
-                                "options": ["Create file", "Cancel"]
-                            }]
-                        }
-                    })
-
-                    if result.get("action") == "Create file":
-                        # Create empty file
-                        os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
-                        with open(path, 'w', encoding='utf-8') as f:
-                            f.write("")
-                        self.logger.info("Created file: %s", path)
-                        self.display.zDeclare(f"Created {path}", color="GREEN", indent=1, style="single")
-                        # Continue with opening the newly created file
-                    else:
-                        return "stop"
-                except Exception as e:
-                    self.logger.warning("Dialog fallback failed: %s", e)
-                    return "stop"
-            else:
-                return "stop"
-
-        # Route to appropriate handler based on file extension
-        _, ext = os.path.splitext(path.lower())
-
-        if ext in ['.html', '.htm']:
-            return self._open_html(path)
-
-        if ext in ['.txt', '.md', '.py', '.js', '.json', '.yaml', '.yml']:
-            return self._open_text(path)
-
-        self.logger.warning("Unsupported file type: %s", ext)
-        self.display.zDeclare(f"Unsupported file type: {ext}", color="RED", indent=1, style="single")
-        return "stop"
-
-    def _open_html(self, path):
-        """Open HTML files in browser."""
-        url = f"file://{path}"
-        self.logger.info("opening html file: %s", url)
-
-        try:
-            success = webbrowser.open(url)
-            if success:
-                self.logger.info("Successfully opened HTML file in browser")
-                self.display.zDeclare(
-                    f"Opened {os.path.basename(path)} in browser", 
-                    color="GREEN", indent=1, style="single"
-                )
-                return "zBack"
-
-            self.logger.warning("Browser failed to open HTML file")
-            self.display.zDeclare("Browser failed to open HTML file", color="RED", indent=1, style="single")
-            return "stop"
-        except Exception as e:
-            self.logger.warning("Browser error: %s", e)
-            self.display.zDeclare(f"Browser error: {str(e)}", color="RED", indent=1, style="single")
-            return "stop"
-
-    def _open_text(self, path):
-        """Open text files using user's preferred IDE."""
-        self.logger.info("opening text file: %s", path)
-
-        # Get machine configuration
-        zMachine = self.session.get("zMachine", {})
-        editor = zMachine.get("ide", "nano")
-
-        self.logger.info("Using IDE: %s", editor)
-
-        # zDialog: Optionally ask for IDE if multiple available
-        available_editors = ["cursor", "code", "nano", "vim"]
-        if self.dialog and editor == "unknown":
-            try:
-                result = self.dialog.handle({
-                    "zDialog": {
-                        "model": None,
-                        "fields": [{
-                            "name": "ide",
-                            "type": "enum",
-                            "options": available_editors
-                        }]
-                    }
-                })
-                editor = result.get("ide", "nano")
-            except Exception as e:
-                self.logger.warning("IDE selection dialog failed: %s", e)
-
-        # Try to open with IDE
-        try:
-            if os.name == 'nt':  # Windows
-                try:
-                    os.startfile(path)  # type: ignore
-                except AttributeError:
-                    subprocess.run([editor, path], check=False)
-            else:  # Unix/Linux/macOS
-                subprocess.run([editor, path], check=False)
-
-            self.logger.info("Successfully opened file with %s", editor)
-            self.display.zDeclare(
-                f"Opened {os.path.basename(path)} in {editor}",
-                color="GREEN", indent=1, style="single"
-            )
-            return "zBack"
-
-        except Exception as e:
-            self.logger.warning("Failed to open with IDE %s: %s", editor, e)
-            self.display.zDeclare(f"Failed to open with {editor}: {str(e)}", color="RED", indent=1, style="single")
-
-            # Fallback: Display file content
-            return self._display_file_content(path)
-
-    def _display_file_content(self, path):
-        """Display text file content when IDE opening fails."""
-        self.logger.info("Displaying text file content")
-
-        try:
-            with open(path, 'r', encoding='utf-8') as f:
-                content = f.read()
-
-            self.display.zDeclare(f"File Content: {os.path.basename(path)}", color="INFO", indent=1, style="~")
-
-            # Display content using display.write_block()
-            if len(content) > 1000:
-                self.display.write_block(content[:1000] + "...")
-                self.display.write_line(f"\n[Content truncated - showing first 1000 of {len(content)} characters]")
-            else:
-                self.display.write_block(content)
-
-            return "zBack"
-
-        except Exception as e:
-            self.logger.error("Failed to read file: %s", e)
-            return "stop"
-
-    # ═══════════════════════════════════════════════════════════════
-    # URL Opening Methods
-    # ═══════════════════════════════════════════════════════════════
-
-    def _open_url(self, url):
-        """Handle URL opening using user's preferred browser."""
-        self.logger.info("opening url: %s", url)
-
-        # Enhanced display: Show URL info as JSON
-        parsed = urlparse(url)
-        url_info = {
-            "url": url,
-            "scheme": parsed.scheme,
-            "domain": parsed.netloc,
-            "path": parsed.path
-        }
-        self.display.json_data(url_info, color=True, indent=1)
-
-        # Get machine configuration
-        zMachine = self.session.get("zMachine", {})
-        browser = zMachine.get("browser")
-
-        if browser:
-            self.logger.info("Using browser: %s", browser)
-
-        # Try to open with user's preferred browser or default
-        return self._open_url_browser(url, browser)
-
-    def _open_url_browser(self, url, browser):
-        """Open URL in specified or default browser."""
-        try:
-            if browser and browser not in ("unknown", "Safari", "Edge"):
-                # Try to use specific browser if available
-                from zCLI import shutil
-                if shutil.which(browser):
-                    subprocess.run([browser, url], check=False)
-                    self.logger.info("Successfully opened URL in %s", browser)
-                    self.display.zDeclare(f"Opened URL in {browser}", color="GREEN", indent=1, style="single")
-                    return "zBack"
-
-            # Fallback to system default browser (webbrowser module)
-            success = webbrowser.open(url)
-            if success:
-                self.logger.info("Successfully opened URL in system default browser")
-                self.display.zDeclare("Opened URL in default browser", color="GREEN", indent=1, style="single")
-                return "zBack"
-            else:
-                self.logger.warning("Browser failed to open URL")
-                self.display.zDeclare("Browser failed to open URL", color="RED", indent=1, style="single")
-                return self._display_url_fallback(url)
-
-        except Exception as e:
-            self.logger.warning("Browser error: %s", e)
-            self.display.zDeclare(f"Browser error: {str(e)}", color="RED", indent=1, style="single")
-            return self._display_url_fallback(url)
-
-    def _display_url_fallback(self, url):
-        """Display URL information when opening fails."""
-        self.logger.warning("Unable to open URL. Displaying information instead.")
-
-        self.display.zDeclare("URL Information", color="INFO", indent=1, style="~")
-        self.display.write_line(f"URL: {url}")
-        self.display.write_line("Unable to open in browser. Please copy and paste into your browser.")
-        return "zBack"
-
-    # ═══════════════════════════════════════════════════════════════
-    # zPath Resolution Methods
-    # ═══════════════════════════════════════════════════════════════
-
-    def _open_zpath(self, zPath):
-        """Handle zPath opening (workspace-relative and absolute paths)."""
-        self.logger.debug("resolving zPath: %s", zPath)
-
-        # Resolve zPath to absolute filesystem path
-        path = self._resolve_zpath(zPath)
-
-        if not path:
-            self.logger.error("Failed to resolve zPath: %s", zPath)
-            self.display.zDeclare(f"Failed to resolve zPath: {zPath}", color="RED", indent=1, style="single")
-            return "stop"
-
-        # Open the resolved file
-        return self._open_file(path)
-
-    def _resolve_zpath(self, zPath):
-        """Translate a zPath to an absolute filesystem path."""
-        # Clean the zPath
-        zPath = zPath.lstrip(".")
-        parts = zPath.split(".")
-
-        if parts[0] == "@":
-            # Workspace-relative path
-            base = self.session.get("zWorkspace") or ""
-            if not base:
-                self.logger.error("No workspace set for relative path: %s", zPath)
-                return None
-            parts = parts[1:]
-        elif parts[0] == "~":
-            # Absolute path
-            base = os.path.sep
-            parts = parts[1:]
-        else:
-            # Treat as normal filesystem path
-            base = ""
-
-        if len(parts) < 2:
-            self.logger.error("invalid zPath: %s", zPath)
-            return None
-
-        # Reconstruct file path
-        *dirs, filename, ext = parts
-        file_name = f"{filename}.{ext}"
-
-        try:
-            resolved_path = os.path.abspath(os.path.join(base, *dirs, file_name))
-            self.logger.debug("resolved zPath '%s' to: %s", zPath, resolved_path)
-            return resolved_path
-        except Exception as e:
-            self.logger.error("Failed to resolve zPath '%s': %s", zPath, e)
-            return None
-
-
-# Export main component
 __all__ = ["zOpen"]
