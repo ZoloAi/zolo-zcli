@@ -25,11 +25,11 @@
 
         <div class="stats">
             <div class="stat-card">
-                <div class="stat-number">0/?</div>
+                <div class="stat-number">0/5</div>
                 <div class="stat-label">Files Complete</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number">?/?</div>
+                <div class="stat-number">1136/1136</div>
                 <div class="stat-label">Tests Passing</div>
             </div>
             <div class="stat-card">
@@ -48,8 +48,89 @@
                 <div class="note">
                     <strong>📋 Subsystem:</strong> zDialog (Interactive Forms & Input Validation)
                     <br><strong>📍 Initialization Order:</strong> Layer 1, Position 8
-                    <br><strong>🔗 Dependencies:</strong> zConfig, zDisplay, zParser
-                    <br><strong>📊 Status:</strong> Pending
+                    <br><strong>🔗 Dependencies:</strong> zConfig (session), zDisplay (UI), zParser (YAML), zFunc (onSubmit), zDispatch (dict submit), zData (auto-validation)
+                    <br><strong>📊 Current Size:</strong> 5 files, ~350 lines total
+                    <br><strong>🏗️ Architecture:</strong> 5-tier pattern (Foundation → Submit → Aggregator → Facade → Package Root)
+                    <br><strong>📊 Status:</strong> Pre-audit complete, ready for naming conventions
+                </div>
+
+                <div class="note" style="background: #fef5e7; border-color: #f39c12;">
+                    <strong>🔍 CURRENT FILE STRUCTURE (5 files):</strong>
+                    
+                    <div style="margin-top: 15px; font-family: monospace; background: #f7fafc; padding: 10px; border-radius: 4px;">
+                        zCLI/subsystems/zDialog/<br>
+                        ├── zDialog.py&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# Main facade (~170 lines)<br>
+                        ├── __init__.py&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# Package exports (~9 lines)<br>
+                        └── zDialog_modules/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# ❌ Needs rename → dialog_modules/<br>
+                            ├── __init__.py&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# Module exports (~12 lines)<br>
+                            ├── dialog_context.py&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# ✅ GOOD naming (~90 lines)<br>
+                            └── dialog_submit.py&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# ✅ GOOD naming (~72 lines)<br>
+                    </div>
+                    
+                    <div style="margin-top: 15px;">
+                        <strong>❌ NAMING CONVENTIONS TO FIX:</strong>
+                        <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                            <li><code>zDialog_modules/</code> → <code>dialog_modules/</code> (follow pattern from zFunc, zParser, zLoader, zNavigation)</li>
+                            <li>Files <code>dialog_context.py</code>, <code>dialog_submit.py</code> → ✅ Already correct (follow <code>dialog_*</code> pattern)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="note" style="background: #e6fffa; border-color: #319795;">
+                    <strong>🏗️ 5-TIER ARCHITECTURE (Simple Pattern):</strong>
+                    <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                        <li><strong>Tier 1: Foundation</strong> (dialog_context.py) - ~90 lines
+                            <ul style="margin-left: 20px;">
+                                <li>create_dialog_context(): Create dialog context from model/fields</li>
+                                <li>inject_placeholders(): Resolve zConv.* placeholders recursively</li>
+                            </ul>
+                        </li>
+                        <li><strong>Tier 2: Submit Handler</strong> (dialog_submit.py) - ~72 lines
+                            <ul style="margin-left: 20px;">
+                                <li>handle_submit(): Main onSubmit handler (dict or string)</li>
+                                <li>handle_dict_submit(): Dict-based submission via zDispatch</li>
+                                <li>handle_string_submit(): Legacy string-based submission via zFunc</li>
+                                <li>Dependencies: dialog_context (inject_placeholders)</li>
+                            </ul>
+                        </li>
+                        <li><strong>Tier 3: Package Aggregator</strong> (dialog_modules/__init__.py) - ~12 lines
+                            <ul style="margin-left: 20px;">
+                                <li>Exposes: create_dialog_context, inject_placeholders, handle_submit</li>
+                            </ul>
+                        </li>
+                        <li><strong>Tier 4: Facade</strong> (zDialog.py) - ~170 lines
+                            <ul style="margin-left: 20px;">
+                                <li>Main entry: handle(zHorizontal, context)</li>
+                                <li>Auto-validation: Uses zData.DataValidator (lines 91-134)</li>
+                                <li>Delegates to: zDisplay.zDialog(), handle_submit()</li>
+                            </ul>
+                        </li>
+                        <li><strong>Tier 5: Package Root</strong> (__init__.py) - ~9 lines
+                            <ul style="margin-left: 20px;">
+                                <li>Exposes zDialog facade + handle_zDialog (backward compatibility)</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="note" style="background: #e6fffa; border-color: #319795;">
+                    <strong>🔗 INTEGRATION POINTS:</strong>
+                    <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                        <li><strong>Week 6.2 (zConfig):</strong> Uses session dict for zMode detection (line 114)</li>
+                        <li><strong>Week 6.3 (zComm):</strong> Uses comm.websocket.broadcast() for validation errors (lines 116-123)</li>
+                        <li><strong>Week 6.4 (zDisplay):</strong>
+                            <ul style="margin-left: 20px;">
+                                <li>Uses display.zDeclare() for status messages (8 calls)</li>
+                                <li>Uses display.zDialog() for form rendering (line 72)</li>
+                                <li><strong>TODO:</strong> BasicData integration for validation errors, field options, form preview</li>
+                            </ul>
+                        </li>
+                        <li><strong>Week 6.6 (zDispatch):</strong> Uses handle_zDispatch() for dict-based onSubmit (line 48)</li>
+                        <li><strong>Week 6.8 (zParser):</strong> Uses zparser for YAML schema loading (line 85 via loader)</li>
+                        <li><strong>Week 6.9 (zLoader):</strong> Uses loader.handle() to load schema models (line 85)</li>
+                        <li><strong>Week 6.10 (zFunc):</strong> Uses zfunc.handle() for string-based onSubmit (line 65)</li>
+                        <li><strong>zData (Not Yet Refactored):</strong> Uses DataValidator for auto-validation (lines 91-95)</li>
+                    </ul>
                 </div>
 
                 <div class="note" style="background: #e6fffa; border-color: #319795;">
@@ -66,6 +147,111 @@
                     <p style="margin-top: 10px; font-weight: bold; color: #319795;">
                         📋 This integration should be completed during Week 6.11 zDialog refactoring.
                     </p>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-icon">📋</span>
+                    <h2 class="section-title">Week 6.11 Tasks - Bottom-Up Order</h2>
+                </div>
+
+                <div class="subsystem-card" style="margin-top: 20px;">
+                    <div class="subsystem-header">
+                        <div class="subsystem-name">Week 6.11.1: Pre-Audit - Naming Conventions & File Structure</div>
+                        <div class="subsystem-rating" style="background: #fffbeb; color: #b7791f;">PENDING</div>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <strong>📋 Scope:</strong> Align file and folder naming to established conventions
+                        <br><strong>🔧 Changes Needed:</strong> Rename zDialog_modules/ → dialog_modules/
+                        <br><strong>📊 Files Affected:</strong> 1 folder rename + 5 import updates
+                    </div>
+                    
+                    <div class="note" style="background: #fef5e7; border-color: #f39c12; margin-top: 10px;">
+                        <strong>🔧 NAMING CONVENTION CHANGES:</strong>
+                        <ol style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                            <li><strong>Folder Rename:</strong>
+                                <ul style="margin-left: 20px;">
+                                    <li><code>zDialog_modules/</code> → <code>dialog_modules/</code></li>
+                                    <li>Reason: Align with zFunc (zFunc_modules), zParser (parser_modules), zLoader (loader_modules), zNavigation (navigation_modules)</li>
+                                </ul>
+                            </li>
+                            <li><strong>Import Updates (5 files):</strong>
+                                <ul style="margin-left: 20px;">
+                                    <li>zDialog.py: <code>from .zDialog_modules import ...</code> → <code>from .dialog_modules import ...</code></li>
+                                    <li>dialog_modules/__init__.py: Update module docstring</li>
+                                    <li>dialog_context.py: No changes (no internal imports)</li>
+                                    <li>dialog_submit.py: <code>from .dialog_context import ...</code> → Already correct ✓</li>
+                                    <li>__init__.py: No changes (imports from .zDialog)</li>
+                                </ul>
+                            </li>
+                        </ol>
+                    </div>
+
+                    <div class="note" style="background: #d1fae5; border-color: #10b981; margin-top: 10px;">
+                        <strong>✅ VERIFICATION CHECKLIST:</strong>
+                        <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                            <li>☐ Folder renamed: zDialog_modules/ → dialog_modules/</li>
+                            <li>☐ zDialog.py import updated</li>
+                            <li>☐ dialog_modules/__init__.py docstring updated</li>
+                            <li>☐ All tests passing (1136/1136)</li>
+                            <li>☐ Zero linter errors</li>
+                            <li>☐ HTML plan updated</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="subsystem-card" style="margin-top: 20px;">
+                    <div class="subsystem-header">
+                        <div class="subsystem-name">Week 6.11.2: dialog_context.py (Foundation)</div>
+                        <div class="subsystem-rating" style="background: #fffbeb; color: #b7791f;">PENDING</div>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <strong>📋 Scope:</strong> Context creation and placeholder injection (Tier 1 - Foundation)
+                        <br><strong>🔗 Dependencies:</strong> None (stdlib only)
+                        <br><strong>📊 Current Size:</strong> 90 lines (2 functions)
+                        <br><strong>🎯 Used By:</strong> zDialog.py (line 59), dialog_submit.py (line 35)
+                    </div>
+                </div>
+
+                <div class="subsystem-card" style="margin-top: 20px;">
+                    <div class="subsystem-header">
+                        <div class="subsystem-name">Week 6.11.3: dialog_submit.py (Submit Handler)</div>
+                        <div class="subsystem-rating" style="background: #fffbeb; color: #b7791f;">PENDING</div>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <strong>📋 Scope:</strong> OnSubmit handler (dict & string submissions) (Tier 2 - Submit Handler)
+                        <br><strong>🔗 Dependencies:</strong> dialog_context (inject_placeholders)
+                        <br><strong>📊 Current Size:</strong> 72 lines (3 functions)
+                        <br><strong>🎯 Used By:</strong> zDialog.py (line 145)
+                    </div>
+                </div>
+
+                <div class="subsystem-card" style="margin-top: 20px;">
+                    <div class="subsystem-header">
+                        <div class="subsystem-name">Week 6.11.4: dialog_modules/__init__.py (Package Aggregator)</div>
+                        <div class="subsystem-rating" style="background: #fffbeb; color: #b7791f;">PENDING</div>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <strong>📋 Scope:</strong> Public API aggregator (Tier 3 - Package Aggregator)
+                        <br><strong>🔗 Dependencies:</strong> dialog_context + dialog_submit
+                        <br><strong>📊 Current Size:</strong> 12 lines (3 exports)
+                        <br><strong>🎯 Used By:</strong> zDialog.py facade
+                    </div>
+                </div>
+
+                <div class="subsystem-card" style="margin-top: 20px;">
+                    <div class="subsystem-header">
+                        <div class="subsystem-name">Week 6.11.5: zDialog.py (Facade) & __init__.py (Package Root)</div>
+                        <div class="subsystem-rating" style="background: #fffbeb; color: #b7791f;">PENDING</div>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <strong>📋 Scope:</strong> Main dialog facade + package root (Tier 4-5)
+                        <br><strong>🔗 Dependencies:</strong> dialog_modules, zDisplay, zFunc, zDispatch, zData, zLoader
+                        <br><strong>📊 Current Size:</strong> 170 lines (facade) + 9 lines (package root) = 179 lines
+                        <br><strong>🎯 Used By:</strong> zCLI.py, zDispatch (2 call sites in dispatch_launcher)
+                        <br><strong>⚠️ Special:</strong> Auto-validation integration with zData (lines 80-140)
+                    </div>
                 </div>
             </div>
         </div>

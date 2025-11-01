@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Week 6.10: zFunc Subsystem - zCLI v1.5.4+</title>
+    <title>Week 6.10: zFunc Subsystem Refactoring</title>
     <link rel="stylesheet" href="plan_styles.css">
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>Week 6.10: zFunc Subsystem</h1>
-            <p>Function Execution & Python Integration</p>
+            <h1>📋 Week 6.10: zFunc Subsystem</h1>
+            <p>Function Execution & Python Integration | Layer 1, Position 7</p>
         </div>
 
         <div class="breadcrumb">
-            <a href="v1.5.4_plan_index.html">← Back to Roadmap</a>
+            <a href="v1.5.4_plan_index.html">Index</a>
             <span>|</span>
-            <a href="plan_week_6.9_zloader.html">Week 6.9: zLoader</a>
+            <a href="plan_week_6.9_zloader.html">← Week 6.9: zLoader</a>
             <span>|</span>
             <span>Week 6.10: zFunc</span>
             <span>|</span>
@@ -25,15 +25,15 @@
 
         <div class="stats">
             <div class="stat-card">
-                <div class="stat-number">0/?</div>
+                <div class="stat-number">4/5</div>
                 <div class="stat-label">Files Complete</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number">?/?</div>
+                <div class="stat-number">1136/1136</div>
                 <div class="stat-label">Tests Passing</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number">0%</div>
+                <div class="stat-number">80%</div>
                 <div class="stat-label">Progress</div>
             </div>
         </div>
@@ -48,31 +48,1993 @@
                 <div class="note">
                     <strong>📋 Subsystem:</strong> zFunc (Function Execution & Python Integration)
                     <br><strong>📍 Initialization Order:</strong> Layer 1, Position 7
-                    <br><strong>🔗 Dependencies:</strong> zConfig, zLoader
-                    <br><strong>📊 Status:</strong> Pending
+                    <br><strong>🔗 Dependencies:</strong> zParser (parse_function_path, parse_json_expr), inspect
+                    <br><strong>📊 Total Files:</strong> 5 files (1 facade, 1 package root, 3 modules)
+                    <br><strong>📊 Total Lines:</strong> 283 lines
+                    <br><strong>📊 Status:</strong> Pending Pre-Audit
                 </div>
 
-                <div class="note" style="background: #fffbeb; border-color: #f59e0b;">
-                    <strong>⚠️ Week 6.7 (zNavigation) Integration Point:</strong>
-                    <div style="margin-top: 10px;">
-                        <strong>File:</strong> navigation_menu_builder.py
-                        <br><strong>Method:</strong> build_from_function()
-                        <br><strong>Line:</strong> ~267 (in upgraded version)
-                        <br><strong>Current Implementation:</strong>
-                        <div style="margin-top: 5px; font-family: monospace; background: #f7fafc; padding: 10px; border-radius: 4px;">
-                            result = self.zcli.zfunc.handle(f"zFunc({func_name}, {args}, {kwargs})")
-                        </div>
-                        <br><strong>TODO:</strong> Verify and update zFunc.handle() signature during Week 6.10 refactoring
-                        <br><strong>Impact:</strong> String format may need to be updated to match new zFunc API
+                <div class="subsystem-card" style="margin-top: 20px;">
+                    <div class="subsystem-header">
+                        <div class="subsystem-name">⚠️ Week 6.6 (zDispatch) Integration Points</div>
+                        <div class="subsystem-rating" style="background: #fffaf0; color: #dd6b20;">Integration TODO</div>
                     </div>
+                    <div style="margin-top: 10px; padding: 15px; background: #fffaf0; border-left: 4px solid #dd6b20; border-radius: 4px;">
+                        <strong>📍 Backward Dependencies from dispatch_launcher.py:</strong>
+                        <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                            <li><strong>File:</strong> zCLI/subsystems/zDispatch/dispatch_modules/dispatch_launcher.py</li>
+                            <li><strong>Usage 1:</strong> <code>result = self.zcli.zfunc.handle(zFunc_call, zContext)</code> (line ~300s, zFunc command type)</li>
+                            <li><strong>Usage 2:</strong> <code>result = self.zcli.zfunc.handle(zFunc_call, zContext)</code> (line ~400s, legacy dictionary format)</li>
+                            <li><strong>Usage 3:</strong> <code>result = self.zcli.zfunc.handle(zFunc_call, zContext)</code> (line ~500s, menu action handling)</li>
+                            <li><strong>Purpose:</strong> Execute Python functions for command dispatch, menu actions, and legacy UI flows</li>
+                        </ul>
+                        
+                        <div style="margin-top: 15px;">
+                            <strong>🔍 TODO During Week 6.10 Refactoring:</strong>
+                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                <li>☐ Verify <code>handle(zHorizontal, zContext=None)</code> signature is correct</li>
+                                <li>☐ Ensure zContext parameter supports dict and None</li>
+                                <li>☐ Test function execution with context injection (zContext, zHat, zConv)</li>
+                                <li>☐ Document handle() behavior in method docstring</li>
+                                <li>☐ Add type hints: <code>def handle(self, zHorizontal: str, zContext: Optional[Dict[str, Any]] = None) -> Any</code></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="subsystem-card" style="margin-top: 20px;">
+                    <div class="subsystem-header">
+                        <div class="subsystem-name">⚠️ Week 6.7 (zNavigation) Integration Point</div>
+                        <div class="subsystem-rating" style="background: #fffaf0; color: #dd6b20;">Integration TODO</div>
+                    </div>
+                    <div style="margin-top: 10px; padding: 15px; background: #fffaf0; border-left: 4px solid #dd6b20; border-radius: 4px;">
+                        <strong>📍 Backward Dependency from navigation_menu_builder.py:</strong>
+                        <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                            <li><strong>File:</strong> zCLI/subsystems/zNavigation/navigation_modules/navigation_menu_builder.py</li>
+                            <li><strong>Usage:</strong> <code>menu_data = self.zcli.zfunc.handle(zfunc_call, context)</code> (function-based menu generation)</li>
+                            <li><strong>Purpose:</strong> Generate menu options dynamically from Python function results</li>
+                        </ul>
+                        
+                        <div style="margin-top: 15px;">
+                            <strong>🔍 TODO During Week 6.10 Refactoring:</strong>
+                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                <li>☐ Verify handle() return value structure for menu generation</li>
+                                <li>☐ Test function-based menu generation workflow</li>
+                                <li>☐ Document menu generation use case in docstring</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="subsystem-card" style="margin-top: 20px;">
+                    <div class="subsystem-header">
+                        <div class="subsystem-name">✅ Week 6.8 (zParser) Integration Point</div>
+                        <div class="subsystem-rating" style="background: #e0f2fe; color: #0c5460;">DEPENDENCY</div>
+                    </div>
+                    <div style="margin-top: 10px; padding: 15px; background: #e0f2fe; border-left: 4px solid #0284c7; border-radius: 4px;">
+                        <strong>📍 Forward Dependencies on zParser:</strong>
+                        <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                            <li><strong>parse_function_path():</strong> Function path parsing (symbol resolution, argument extraction)</li>
+                            <li><strong>parse_json_expr():</strong> Safe argument evaluation (used in func_args.py)</li>
+                            <li><strong>All methods available:</strong> zParser was upgraded to A+ in Week 6.8</li>
+                        </ul>
+                        
+                        <div style="margin-top: 15px;">
+                            <strong>✅ Integration Strategy:</strong>
+                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                <li>✓ Use zcli.zparser.parse_function_path() for function path resolution</li>
+                                <li>✓ Use zcli.zparser.parse_json_expr() for safe argument evaluation</li>
+                                <li>✓ Delegate all path/symbol resolution to zParser</li>
+                                <li>✓ Focus zFunc on function loading, execution, and result handling</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-icon">📋</span>
+                    <h2 class="section-title">Week 6.10 Tasks - Bottom-Up Order</h2>
+                </div>
+
+                <div class="subsystem-card" style="margin-top: 20px;">
+                    <div class="subsystem-header">
+                        <div class="subsystem-name">Week 6.10.1: ✅ COMPLETE - Naming Conventions & File Structure</div>
+                        <div class="subsystem-rating" style="background: #48bb78;">✅ COMPLETE</div>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <strong>📋 Scope:</strong> Verify file naming follows established patterns
+                        <br><strong>📊 Files Checked:</strong> All 5 files
+                        <br><strong>✅ Expected Pattern:</strong> func_*.py for modules
+                        <br><strong>📊 Result:</strong> ✅ NO RENAMING REQUIRED - All files correctly named!
+                        
+                        <div style="margin-top: 15px; padding: 15px; background: #d1fae5; border-left: 4px solid #10b981; border-radius: 4px;">
+                            <strong>✅ Naming Conventions - ALL CORRECT!</strong>
+                            <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                                <li>✅ func_args.py (85 lines) - Argument parsing utilities</li>
+                                <li>✅ func_resolver.py (30 lines) - Function resolution and loading</li>
+                                <li>✅ zFunc_modules/__init__.py (12 lines) - Package aggregator</li>
+                                <li>✅ zFunc.py (150 lines) - Facade</li>
+                                <li>✅ __init__.py (8 lines) - Package root</li>
+                            </ul>
+                        </div>
+
+                        <div style="margin-top: 15px; padding: 15px; background: #e0f2fe; border-left: 4px solid #0284c7; border-radius: 4px;">
+                            <strong>✅ VERIFICATION CHECKLIST - COMPLETE</strong>
+                            <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                                <li>☑ All module files use func_* prefix (func_args.py, func_resolver.py)</li>
+                                <li>☑ Package aggregator named zFunc_modules/__init__.py</li>
+                                <li>☑ Facade named zFunc.py (matches subsystem name)</li>
+                                <li>☑ Package root is __init__.py (standard Python)</li>
+                                <li>☑ Naming matches patterns from previous weeks (6.1-6.9)</li>
+                            </ul>
+                        </div>
+
+                        <div style="margin-top: 15px; padding: 15px; background: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 4px;">
+                            <strong>📊 FILE STRUCTURE ANALYSIS</strong>
+                            <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                                <li><strong>Total Files:</strong> 5 files (283 lines total)</li>
+                                <li><strong>Architecture:</strong> 4-Tier Pattern (Foundation → Aggregator → Facade → Root)</li>
+                                <li><strong>Tier 1 (Foundation):</strong> 2 files, 115 lines (func_resolver, func_args)</li>
+                                <li><strong>Tier 2 (Aggregator):</strong> 1 file, 12 lines (zFunc_modules/__init__.py)</li>
+                                <li><strong>Tier 3 (Facade):</strong> 1 file, 150 lines (zFunc.py)</li>
+                                <li><strong>Tier 4 (Root):</strong> 1 file, 8 lines (__init__.py)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="subsystem-card" style="margin-top: 20px;">
+                    <div class="subsystem-header">
+                        <div class="subsystem-name">Week 6.10.2: ✅ COMPLETE - func_resolver.py (Function Resolution)</div>
+                        <div class="subsystem-rating" style="background: #48bb78;">D+ → A+</div>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <strong>📋 Scope:</strong> Function resolution and loading (Tier 1 - Foundation)
+                        <br><strong>🔗 Dependencies:</strong> importlib, os (standard library)
+                        <br><strong>📊 Current Size:</strong> 30 lines (1 function)
+                        <br><strong>📊 Functions:</strong> resolve_callable()
+                        <br><strong>🎯 Used By:</strong> zFunc.py (_resolve_callable_with_display)
+                        <br><strong>📊 Current Grade:</strong> D+ | <strong>Target Grade:</strong> A+
+                        
+                        <div style="margin-top: 15px; padding: 15px; background: #fef2f2; border-left: 4px solid #ef4444; border-radius: 4px;">
+                            <strong>🔍 AUDIT FINDINGS - 10 Critical Issues</strong>
+                            
+                            <div style="margin-top: 10px;">
+                                <strong>1. ❌ Type Hints (0% Coverage - CRITICAL)</strong>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li><code>resolve_callable()</code> has no type hints</li>
+                                    <li>Missing: parameter types (file_path, func_name, logger_instance)</li>
+                                    <li>Missing: return type (Callable)</li>
+                                    <li>Need imports: Any, Callable from zCLI</li>
+                                </ul>
+                            </div>
+
+                            <div style="margin-top: 10px;">
+                                <strong>2. ❌ Module Docstring (Minimal - 1 line)</strong>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li>Current: Single line "Function resolution and loading utilities."</li>
+                                    <li>Missing: Purpose (Tier 1 - Foundation component)</li>
+                                    <li>Missing: Architecture position (4-tier pattern)</li>
+                                    <li>Missing: Key functionality (dynamic module loading via importlib)</li>
+                                    <li>Missing: Security considerations (arbitrary code execution)</li>
+                                    <li>Missing: Usage examples (at least 2 examples)</li>
+                                    <li>Missing: Dependencies (importlib.util, os.path)</li>
+                                    <li>Missing: Version history</li>
+                                    <li>Target: 60-80 lines comprehensive docstring</li>
+                                </ul>
+                            </div>
+
+                            <div style="margin-top: 10px;">
+                                <strong>3. ❌ Function Docstring (Minimal - 1 line)</strong>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li>Current: Single line "Resolve and load a callable function from a Python file."</li>
+                                    <li>Missing: Parameters section (3 params need full docs)</li>
+                                    <li>Missing: Returns section (Callable object)</li>
+                                    <li>Missing: Raises section (FileNotFoundError, AttributeError, ImportError)</li>
+                                    <li>Missing: Examples section (at least 2 usage examples)</li>
+                                    <li>Missing: Notes section (module caching, security, validation)</li>
+                                    <li>Target: 40-50 lines comprehensive docstring</li>
+                                </ul>
+                            </div>
+
+                            <div style="margin-top: 10px;">
+                                <strong>4. ❌ No Constants (Magic Strings)</strong>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li>Hardcoded: "File path: %s" (debug message template)</li>
+                                    <li>Hardcoded: "Function name: %s" (debug message template)</li>
+                                    <li>Hardcoded: "No such file: {file_path}" (error message template)</li>
+                                    <li>Hardcoded: "Resolved callable: %s" (debug message template)</li>
+                                    <li>Hardcoded: "Failed to resolve callable from '%s > %s': %s" (error message template)</li>
+                                    <li>Need: 5 module-level constants for all message templates</li>
+                                </ul>
+                            </div>
+
+                            <div style="margin-top: 10px;">
+                                <strong>5. ❌ Import Organization (Not Centralized)</strong>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li>Current: <code>from zCLI import os, importlib</code></li>
+                                    <li>Missing: Type hint imports (Any, Callable)</li>
+                                    <li>Need: Proper import organization with comments</li>
+                                    <li>Should use: <code>from zCLI import os, importlib, Any, Callable</code></li>
+                                </ul>
+                            </div>
+
+                            <div style="margin-top: 10px;">
+                                <strong>6. ❌ Missing Validation Checks (Safety)</strong>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li>Line 18: No check if <code>spec</code> is None before using</li>
+                                    <li>Line 19: No check if <code>spec.loader</code> is None</li>
+                                    <li>Line 23: No check if function exists before getattr (AttributeError not caught specifically)</li>
+                                    <li>Need: Explicit validation with specific error messages</li>
+                                </ul>
+                            </div>
+
+                            <div style="margin-top: 10px;">
+                                <strong>7. ❌ Generic Error Handling</strong>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li>Line 27: Catches generic <code>Exception</code> instead of specific exceptions</li>
+                                    <li>Should catch: FileNotFoundError, AttributeError, ImportError separately</li>
+                                    <li>Need: More descriptive error messages per exception type</li>
+                                    <li>Need: Better context in error messages</li>
+                                </ul>
+                            </div>
+
+                            <div style="margin-top: 10px;">
+                                <strong>8. ❌ No Module Metadata</strong>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li>Missing: <code>__all__</code> for public API</li>
+                                    <li>Should export: ["resolve_callable"]</li>
+                                </ul>
+                            </div>
+
+                            <div style="margin-top: 10px;">
+                                <strong>9. ❌ Security Considerations Not Documented</strong>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li>Function loads and executes arbitrary Python files</li>
+                                    <li>No documentation of security implications</li>
+                                    <li>No mention of trust assumptions</li>
+                                    <li>Should document: "Assumes file_path is trusted source"</li>
+                                    <li>Should note: Module is cached by Python's import system</li>
+                                </ul>
+                            </div>
+
+                            <div style="margin-top: 10px;">
+                                <strong>10. ❌ Performance/Caching Not Documented</strong>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li>importlib caches loaded modules automatically</li>
+                                    <li>Multiple calls to same file_path reuse cached module</li>
+                                    <li>No documentation of this behavior</li>
+                                    <li>Need: Note about module caching in docstring</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 15px; padding: 15px; background: #fffbeb; border-left: 4px solid #f59e0b; border-radius: 4px;">
+                            <strong>📊 CURRENT STATE ANALYSIS</strong>
+                            <table style="width: 100%; margin-top: 10px; border-collapse: collapse;">
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <th style="text-align: left; padding: 8px;">Aspect</th>
+                                    <th style="text-align: center; padding: 8px;">Current</th>
+                                    <th style="text-align: center; padding: 8px;">Target</th>
+                                    <th style="text-align: center; padding: 8px;">Gap</th>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Type Hints</td>
+                                    <td style="text-align: center; padding: 8px;">0%</td>
+                                    <td style="text-align: center; padding: 8px;">100%</td>
+                                    <td style="text-align: center; padding: 8px; color: #dc2626;">❌ Critical</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Module Docstring</td>
+                                    <td style="text-align: center; padding: 8px;">1 line</td>
+                                    <td style="text-align: center; padding: 8px;">60-80 lines</td>
+                                    <td style="text-align: center; padding: 8px; color: #dc2626;">❌ Critical</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Function Docstring</td>
+                                    <td style="text-align: center; padding: 8px;">1 line</td>
+                                    <td style="text-align: center; padding: 8px;">40-50 lines</td>
+                                    <td style="text-align: center; padding: 8px; color: #dc2626;">❌ Critical</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Constants</td>
+                                    <td style="text-align: center; padding: 8px;">0</td>
+                                    <td style="text-align: center; padding: 8px;">5</td>
+                                    <td style="text-align: center; padding: 8px; color: #dc2626;">❌ Missing</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Validation Checks</td>
+                                    <td style="text-align: center; padding: 8px;">Partial</td>
+                                    <td style="text-align: center; padding: 8px;">Complete</td>
+                                    <td style="text-align: center; padding: 8px; color: #d97706;">⚠️ Needs Work</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Error Handling</td>
+                                    <td style="text-align: center; padding: 8px;">Generic</td>
+                                    <td style="text-align: center; padding: 8px;">Specific</td>
+                                    <td style="text-align: center; padding: 8px; color: #d97706;">⚠️ Needs Work</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Module Metadata</td>
+                                    <td style="text-align: center; padding: 8px;">No</td>
+                                    <td style="text-align: center; padding: 8px;">Yes</td>
+                                    <td style="text-align: center; padding: 8px; color: #dc2626;">❌ Missing</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px;"><strong>Overall Grade</strong></td>
+                                    <td style="text-align: center; padding: 8px;"><strong>D+</strong></td>
+                                    <td style="text-align: center; padding: 8px;"><strong>A+</strong></td>
+                                    <td style="text-align: center; padding: 8px; color: #dc2626;"><strong>❌ Major Gap</strong></td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <div style="margin-top: 15px; padding: 15px; background: #e0f2fe; border-left: 4px solid #0284c7; border-radius: 4px;">
+                            <strong>📋 IMPLEMENTATION PLAN</strong>
+                            <ol style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                                <li><strong>Add Type Hints (100% coverage):</strong>
+                                    <ul style="margin-left: 20px;">
+                                        <li>Import Any, Callable from zCLI</li>
+                                        <li>Add signature: <code>def resolve_callable(file_path: str, func_name: str, logger_instance: Any) -> Callable[..., Any]:</code></li>
+                                    </ul>
+                                </li>
+                                <li><strong>Expand Module Docstring (60-80 lines):</strong>
+                                    <ul style="margin-left: 20px;">
+                                        <li>Purpose section (Tier 1 - Foundation component)</li>
+                                        <li>Architecture section (position in 4-tier pattern)</li>
+                                        <li>Key Functionality (dynamic module loading)</li>
+                                        <li>Security Considerations (trusted sources, arbitrary code)</li>
+                                        <li>Caching Behavior (importlib module cache)</li>
+                                        <li>Usage Examples (2 examples: basic + error handling)</li>
+                                        <li>Dependencies (importlib.util, os.path)</li>
+                                        <li>Integration Points (used by zFunc.py facade)</li>
+                                        <li>Version History</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Expand Function Docstring (40-50 lines):</strong>
+                                    <ul style="margin-left: 20px;">
+                                        <li>Parameters section (3 parameters fully documented)</li>
+                                        <li>Returns section (Callable object details)</li>
+                                        <li>Raises section (FileNotFoundError, AttributeError, ImportError, ValueError)</li>
+                                        <li>Examples section (2 examples: success + error)</li>
+                                        <li>Notes section (caching, security, validation)</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Add Module Constants (5 constants):</strong>
+                                    <ul style="margin-left: 20px;">
+                                        <li>DEBUG_MSG_FILE_PATH = "File path: %s"</li>
+                                        <li>DEBUG_MSG_FUNCTION_NAME = "Function name: %s"</li>
+                                        <li>DEBUG_MSG_RESOLVED = "Resolved callable: %s"</li>
+                                        <li>ERROR_MSG_FILE_NOT_FOUND = "No such file: {file_path}"</li>
+                                        <li>ERROR_MSG_RESOLUTION_FAILED = "Failed to resolve callable from '%s > %s': %s"</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Add Validation Checks:</strong>
+                                    <ul style="margin-left: 20px;">
+                                        <li>Check if spec is None after spec_from_file_location</li>
+                                        <li>Check if spec.loader is None before exec_module</li>
+                                        <li>Use hasattr() before getattr() for function existence</li>
+                                        <li>Add descriptive error messages for each validation failure</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Improve Error Handling:</strong>
+                                    <ul style="margin-left: 20px;">
+                                        <li>Catch FileNotFoundError specifically (already exists at line 13)</li>
+                                        <li>Catch AttributeError specifically (function not found)</li>
+                                        <li>Catch ImportError specifically (module load failure)</li>
+                                        <li>Keep generic Exception as final fallback</li>
+                                        <li>Use constants for all error messages</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Add Module Metadata:</strong>
+                                    <ul style="margin-left: 20px;">
+                                        <li>Add __all__ = ["resolve_callable"]</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Replace All Magic Strings:</strong>
+                                    <ul style="margin-left: 20px;">
+                                        <li>Line 10: Use DEBUG_MSG_FILE_PATH constant</li>
+                                        <li>Line 11: Use DEBUG_MSG_FUNCTION_NAME constant</li>
+                                        <li>Line 14: Use ERROR_MSG_FILE_NOT_FOUND constant</li>
+                                        <li>Line 24: Use DEBUG_MSG_RESOLVED constant</li>
+                                        <li>Line 28-29: Use ERROR_MSG_RESOLUTION_FAILED constant</li>
+                                    </ul>
+                                </li>
+                            </ol>
+                        </div>
+
+                        <div style="margin-top: 15px; padding: 15px; background: #f0fdf4; border-left: 4px solid #10b981; border-radius: 4px;">
+                            <strong>📊 EXPECTED TRANSFORMATION</strong>
+                            <table style="width: 100%; margin-top: 10px; border-collapse: collapse;">
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <th style="text-align: left; padding: 8px;">Metric</th>
+                                    <th style="text-align: center; padding: 8px;">Before</th>
+                                    <th style="text-align: center; padding: 8px;">After</th>
+                                    <th style="text-align: center; padding: 8px;">Change</th>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Total Lines</td>
+                                    <td style="text-align: center; padding: 8px;">30</td>
+                                    <td style="text-align: center; padding: 8px;">~180</td>
+                                    <td style="text-align: center; padding: 8px;">+150 (+500%)</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Type Hints</td>
+                                    <td style="text-align: center; padding: 8px;">0</td>
+                                    <td style="text-align: center; padding: 8px;">4</td>
+                                    <td style="text-align: center; padding: 8px;">+4 (100%)</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Documentation Lines</td>
+                                    <td style="text-align: center; padding: 8px;">2</td>
+                                    <td style="text-align: center; padding: 8px;">~110</td>
+                                    <td style="text-align: center; padding: 8px;">+108 (5500%)</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Constants</td>
+                                    <td style="text-align: center; padding: 8px;">0</td>
+                                    <td style="text-align: center; padding: 8px;">5</td>
+                                    <td style="text-align: center; padding: 8px;">+5</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Validation Checks</td>
+                                    <td style="text-align: center; padding: 8px;">1</td>
+                                    <td style="text-align: center; padding: 8px;">4</td>
+                                    <td style="text-align: center; padding: 8px;">+3</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px;"><strong>Grade</strong></td>
+                                    <td style="text-align: center; padding: 8px;"><strong>D+</strong></td>
+                                    <td style="text-align: center; padding: 8px;"><strong>A+</strong></td>
+                                    <td style="text-align: center; padding: 8px;"><strong>+7 half-grades</strong></td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <div style="margin-top: 15px; padding: 15px; background: #f0fdf4; border-left: 4px solid #10b981; border-radius: 4px;">
+                            <strong>✅ IMPLEMENTATION CHECKLIST - All Items Complete</strong>
+                            <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                                <li>☑ Add type hints (4 type hints total)</li>
+                                <li>☑ Expand module docstring (79 lines)</li>
+                                <li>☑ Expand function docstring (99 lines)</li>
+                                <li>☑ Add 6 module constants (message templates)</li>
+                                <li>☑ Add validation checks (spec, loader, function existence)</li>
+                                <li>☑ Improve error handling (specific exceptions)</li>
+                                <li>☑ Add module metadata (__all__)</li>
+                                <li>☑ Replace all magic strings with constants</li>
+                                <li>☑ Document security considerations</li>
+                                <li>☑ Document caching behavior</li>
+                                <li>☑ Run tests (all 1136 tests passing)</li>
+                                <li>☑ Run linter (zero errors confirmed)</li>
+                            </ul>
+                        </div>
+
+                        <div style="margin-top: 15px; padding: 15px; background: #dbeafe; border-left: 4px solid #3b82f6; border-radius: 4px;">
+                            <strong>📊 IMPLEMENTATION COMPLETE - Week 6.10.2</strong>
+                            <table style="width: 100%; margin-top: 10px; border-collapse: collapse;">
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <th style="text-align: left; padding: 8px;">Metric</th>
+                                    <th style="text-align: center; padding: 8px;">Before</th>
+                                    <th style="text-align: center; padding: 8px;">After</th>
+                                    <th style="text-align: center; padding: 8px;">Change</th>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Total Lines</td>
+                                    <td style="text-align: center; padding: 8px;">30</td>
+                                    <td style="text-align: center; padding: 8px;">289</td>
+                                    <td style="text-align: center; padding: 8px;">+259 (+863%)</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Type Hints</td>
+                                    <td style="text-align: center; padding: 8px;">0</td>
+                                    <td style="text-align: center; padding: 8px;">4</td>
+                                    <td style="text-align: center; padding: 8px;">+4 (100%)</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Module Docstring</td>
+                                    <td style="text-align: center; padding: 8px;">1 line</td>
+                                    <td style="text-align: center; padding: 8px;">79 lines</td>
+                                    <td style="text-align: center; padding: 8px;">+78 (+7800%)</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Function Docstring</td>
+                                    <td style="text-align: center; padding: 8px;">1 line</td>
+                                    <td style="text-align: center; padding: 8px;">99 lines</td>
+                                    <td style="text-align: center; padding: 8px;">+98 (+9800%)</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Constants</td>
+                                    <td style="text-align: center; padding: 8px;">0</td>
+                                    <td style="text-align: center; padding: 8px;">6</td>
+                                    <td style="text-align: center; padding: 8px;">+6 (3 debug + 3 error)</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Validation Checks</td>
+                                    <td style="text-align: center; padding: 8px;">1</td>
+                                    <td style="text-align: center; padding: 8px;">4</td>
+                                    <td style="text-align: center; padding: 8px;">+3</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Error Handlers</td>
+                                    <td style="text-align: center; padding: 8px;">1 generic</td>
+                                    <td style="text-align: center; padding: 8px;">5 specific</td>
+                                    <td style="text-align: center; padding: 8px;">+4</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px;"><strong>Grade</strong></td>
+                                    <td style="text-align: center; padding: 8px;"><strong>D+</strong></td>
+                                    <td style="text-align: center; padding: 8px;"><strong>A+</strong></td>
+                                    <td style="text-align: center; padding: 8px;"><strong>+7 half-grades</strong></td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <div style="margin-top: 15px; padding: 15px; background: #f0fdf4; border-left: 4px solid #10b981; border-radius: 4px;">
+                            <strong>🎯 KEY ACHIEVEMENTS</strong>
+                            <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                                <li><strong>100% Type Hint Coverage:</strong> All parameters and return type annotated</li>
+                                <li><strong>Comprehensive Documentation:</strong> 178 lines total (79 module + 99 function)</li>
+                                <li><strong>6 Module Constants:</strong> All magic strings eliminated
+                                    <ul style="margin-left: 20px;">
+                                        <li>3 debug message templates (FILE_PATH, FUNCTION_NAME, RESOLVED)</li>
+                                        <li>4 error message templates (FILE_NOT_FOUND, SPEC_NONE, LOADER_NONE, FUNCTION_NOT_FOUND, RESOLUTION_FAILED)</li>
+                                    </ul>
+                                </li>
+                                <li><strong>4 Validation Checks:</strong> File existence, spec creation, loader availability, function existence</li>
+                                <li><strong>5 Specific Error Handlers:</strong> FileNotFoundError, AttributeError, ImportError, ValueError, generic Exception</li>
+                                <li><strong>Security Documentation:</strong> Trust assumptions, recommendations, malicious code warnings</li>
+                                <li><strong>Caching Documentation:</strong> importlib sys.modules behavior, cache key, invalidation notes</li>
+                                <li><strong>Module Metadata:</strong> __all__ = ["resolve_callable"]</li>
+                                <li><strong>Zero Regressions:</strong> All 1136 tests passing</li>
+                                <li><strong>Zero Linter Errors:</strong> Clean code quality</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="subsystem-card" style="margin-top: 20px;">
+                    <div class="subsystem-header">
+                        <div class="subsystem-name">Week 6.10.3: ✅ COMPLETE - func_args.py (Argument Parsing)</div>
+                        <div class="subsystem-rating" style="background: #48bb78;">C- → A+</div>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <strong>📋 Scope:</strong> Argument parsing utilities (Tier 1 - Foundation)
+                        <br><strong>🔗 Dependencies:</strong> zParser (parse_json_expr for evaluation)
+                        <br><strong>📊 Current Size:</strong> 85 lines (2 functions)
+                        <br><strong>📊 Functions:</strong> parse_arguments(), split_arguments()
+                        <br><strong>🎯 Used By:</strong> zFunc.py (_parse_args_with_display)
+                        <br><strong>📊 Current Grade:</strong> C- | <strong>Target Grade:</strong> A+
+                        
+                        <div style="margin-top: 15px; padding: 15px; background: #fef2f2; border-left: 4px solid #ef4444; border-radius: 4px;">
+                            <strong>🔍 AUDIT FINDINGS - 12 Critical Issues</strong>
+                            
+                            <div style="margin-top: 10px;">
+                                <strong>1. ❌ Type Hints (0% Coverage - CRITICAL)</strong>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li><code>parse_arguments()</code> has no type hints (5 parameters)</li>
+                                    <li><code>split_arguments()</code> has no type hints (1 parameter)</li>
+                                    <li>Missing: All parameter types and return types</li>
+                                    <li>Need imports: Any, Callable, Dict, List, Optional from zCLI</li>
+                                    <li>Complex types: split_fn is Callable[[str], List[str]]</li>
+                                </ul>
+                            </div>
+
+                            <div style="margin-top: 10px;">
+                                <strong>2. ❌ Module Docstring (Minimal - 1 line)</strong>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li>Current: Single line "Function argument parsing utilities."</li>
+                                    <li>Missing: Purpose (Tier 1 - Foundation component)</li>
+                                    <li>Missing: Architecture position (4-tier pattern)</li>
+                                    <li>Missing: Key functionality (5 special argument types)</li>
+                                    <li>Missing: zCLI-specific concepts (zContext, zHat, zConv, this.field)</li>
+                                    <li>Missing: zParser integration (safe evaluation)</li>
+                                    <li>Missing: Usage examples (at least 3 examples for different arg types)</li>
+                                    <li>Missing: Dependencies (zParser for evaluation)</li>
+                                    <li>Missing: Version history</li>
+                                    <li>Target: 80-100 lines comprehensive docstring</li>
+                                </ul>
+                            </div>
+
+                            <div style="margin-top: 10px;">
+                                <strong>3. ❌ Function Docstrings (Minimal - 1-2 lines)</strong>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li><strong>parse_arguments():</strong> Single line "Parse function arguments from string."</li>
+                                    <li>Missing: Parameters section (5 params need full docs)</li>
+                                    <li>Missing: Returns section (List[Any] details)</li>
+                                    <li>Missing: Raises section (Exception)</li>
+                                    <li>Missing: Examples section (5 special argument types)</li>
+                                    <li>Missing: Notes section (zParser delegation, context injection)</li>
+                                    <li>Target: 60-80 lines for parse_arguments()</li>
+                                    <li><strong>split_arguments():</strong> Single line "Split argument string while respecting nested brackets."</li>
+                                    <li>Target: 30-40 lines for split_arguments()</li>
+                                </ul>
+                            </div>
+
+                            <div style="margin-top: 10px;">
+                                <strong>4. ❌ No Constants (15+ Magic Strings - CRITICAL)</strong>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li>Hardcoded: "No arguments to parse" (debug message)</li>
+                                    <li>Hardcoded: "Raw arg string: %s" (debug message)</li>
+                                    <li>Hardcoded: "Split args: %s" (debug message)</li>
+                                    <li>Hardcoded: "Injected full zContext" (debug message)</li>
+                                    <li>Hardcoded: "Injected zHat from context: %s" (debug message)</li>
+                                    <li>Hardcoded: "Injected zConv from context: %s" (debug message)</li>
+                                    <li>Hardcoded: "Resolved 'zConv.%s' => %s" (debug message template)</li>
+                                    <li>Hardcoded: "Resolved 'this.%s' => %s" (debug message template)</li>
+                                    <li>Hardcoded: "Evaluated via zParser '%s' => %s" (debug message template)</li>
+                                    <li>Hardcoded: "No zParser - using literal '%s'" (debug message)</li>
+                                    <li>Hardcoded: "Final parsed args: %s" (debug message)</li>
+                                    <li>Hardcoded: "Failed to parse args: %s" (error message)</li>
+                                    <li>Hardcoded: "zContext", "zHat", "zConv", "zConv.", "this." (special arg identifiers)</li>
+                                    <li>Hardcoded: "([{", ")]}", "," (bracket characters in split_arguments)</li>
+                                    <li>Need: 20+ module-level constants for all messages and identifiers</li>
+                                </ul>
+                            </div>
+
+                            <div style="margin-top: 10px;">
+                                <strong>5. ❌ Import Organization (Not Centralized)</strong>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li>Current: No imports (functions are standalone)</li>
+                                    <li>Missing: Type hint imports (Any, Callable, Dict, List, Optional)</li>
+                                    <li>Need: Proper import organization with comments</li>
+                                    <li>Should add: <code>from zCLI import Any, Callable, Dict, List, Optional</code></li>
+                                </ul>
+                            </div>
+
+                            <div style="margin-top: 10px;">
+                                <strong>6. ❌ No Input Validation (Safety Issue)</strong>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li><strong>parse_arguments():</strong> No validation of arg_str type</li>
+                                    <li><strong>parse_arguments():</strong> No validation of split_fn callable</li>
+                                    <li><strong>split_arguments():</strong> No validation of arg_str type</li>
+                                    <li><strong>split_arguments():</strong> No handling of mismatched brackets</li>
+                                    <li>Need: Type checks and validation with helpful error messages</li>
+                                </ul>
+                            </div>
+
+                            <div style="margin-top: 10px;">
+                                <strong>7. ❌ Generic Error Handling</strong>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li>Line 58: Catches generic <code>Exception</code> in parse_arguments()</li>
+                                    <li>Should catch: TypeError, AttributeError, KeyError separately</li>
+                                    <li>split_arguments() has NO error handling</li>
+                                    <li>Need: Specific exception handling with descriptive messages</li>
+                                </ul>
+                            </div>
+
+                            <div style="margin-top: 10px;">
+                                <strong>8. ❌ No Module Metadata</strong>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li>Missing: <code>__all__</code> for public API</li>
+                                    <li>Should export: ["parse_arguments", "split_arguments"]</li>
+                                </ul>
+                            </div>
+
+                            <div style="margin-top: 10px;">
+                                <strong>9. ❌ Complex Logic Not Well Documented (zCLI Concepts)</strong>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li>5 special argument types not explained in docstring:</li>
+                                    <li>1. <code>zContext</code> - Full context injection (from zFunc)</li>
+                                    <li>2. <code>zHat</code> - Wizard context value (from zWizard)</li>
+                                    <li>3. <code>zConv</code> - Dialog conversation data (from zDialog)</li>
+                                    <li>4. <code>zConv.field</code> - Dialog field notation</li>
+                                    <li>5. <code>this.key</code> - Context key notation</li>
+                                    <li>zParser delegation not explained (parse_json_expr usage)</li>
+                                    <li>Fallback to string literal not documented</li>
+                                    <li>Need: Comprehensive documentation of all special cases</li>
+                                </ul>
+                            </div>
+
+                            <div style="margin-top: 10px;">
+                                <strong>10. ❌ No Usage Examples</strong>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li>No examples for parse_arguments() with different arg types</li>
+                                    <li>No examples for split_arguments() with nested brackets</li>
+                                    <li>Need: At least 5 examples covering all special argument types</li>
+                                </ul>
+                            </div>
+
+                            <div style="margin-top: 10px;">
+                                <strong>11. ❌ Bracket Matching Not Validated (split_arguments)</strong>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li>Line 69-72: Tracks depth but doesn't validate</li>
+                                    <li>Mismatched brackets will cause incorrect splits</li>
+                                    <li>Negative depth not detected or handled</li>
+                                    <li>Final depth != 0 not detected or handled</li>
+                                    <li>Need: Validation of bracket matching with error messages</li>
+                                </ul>
+                            </div>
+
+                            <div style="margin-top: 10px;">
+                                <strong>12. ❌ DRY Violation (Repeated isinstance Checks)</strong>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li>Lines 24, 29, 32, 39: Repeated <code>isinstance(zContext, dict)</code></li>
+                                    <li>Could extract to helper variable at start of function</li>
+                                    <li>Need: Extract to <code>is_dict_context = isinstance(zContext, dict)</code></li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 15px; padding: 15px; background: #fffbeb; border-left: 4px solid #f59e0b; border-radius: 4px;">
+                            <strong>📊 CURRENT STATE ANALYSIS</strong>
+                            <table style="width: 100%; margin-top: 10px; border-collapse: collapse;">
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <th style="text-align: left; padding: 8px;">Aspect</th>
+                                    <th style="text-align: center; padding: 8px;">Current</th>
+                                    <th style="text-align: center; padding: 8px;">Target</th>
+                                    <th style="text-align: center; padding: 8px;">Gap</th>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Type Hints</td>
+                                    <td style="text-align: center; padding: 8px;">0%</td>
+                                    <td style="text-align: center; padding: 8px;">100%</td>
+                                    <td style="text-align: center; padding: 8px; color: #dc2626;">❌ Critical</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Module Docstring</td>
+                                    <td style="text-align: center; padding: 8px;">1 line</td>
+                                    <td style="text-align: center; padding: 8px;">80-100 lines</td>
+                                    <td style="text-align: center; padding: 8px; color: #dc2626;">❌ Critical</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Function Docstrings</td>
+                                    <td style="text-align: center; padding: 8px;">2 lines</td>
+                                    <td style="text-align: center; padding: 8px;">90-120 lines</td>
+                                    <td style="text-align: center; padding: 8px; color: #dc2626;">❌ Critical</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Constants</td>
+                                    <td style="text-align: center; padding: 8px;">0</td>
+                                    <td style="text-align: center; padding: 8px;">20+</td>
+                                    <td style="text-align: center; padding: 8px; color: #dc2626;">❌ Critical</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Input Validation</td>
+                                    <td style="text-align: center; padding: 8px;">None</td>
+                                    <td style="text-align: center; padding: 8px;">Complete</td>
+                                    <td style="text-align: center; padding: 8px; color: #dc2626;">❌ Critical</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Error Handling</td>
+                                    <td style="text-align: center; padding: 8px;">Generic</td>
+                                    <td style="text-align: center; padding: 8px;">Specific</td>
+                                    <td style="text-align: center; padding: 8px; color: #d97706;">⚠️ Needs Work</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Module Metadata</td>
+                                    <td style="text-align: center; padding: 8px;">No</td>
+                                    <td style="text-align: center; padding: 8px;">Yes</td>
+                                    <td style="text-align: center; padding: 8px; color: #dc2626;">❌ Missing</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">zCLI Concepts Doc</td>
+                                    <td style="text-align: center; padding: 8px;">None</td>
+                                    <td style="text-align: center; padding: 8px;">Complete</td>
+                                    <td style="text-align: center; padding: 8px; color: #dc2626;">❌ Critical</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px;"><strong>Overall Grade</strong></td>
+                                    <td style="text-align: center; padding: 8px;"><strong>C-</strong></td>
+                                    <td style="text-align: center; padding: 8px;"><strong>A+</strong></td>
+                                    <td style="text-align: center; padding: 8px; color: #dc2626;"><strong>❌ Major Gap</strong></td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <div style="margin-top: 15px; padding: 15px; background: #e0f2fe; border-left: 4px solid #0284c7; border-radius: 4px;">
+                            <strong>📋 IMPLEMENTATION PLAN (10 Steps)</strong>
+                            <ol style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                                <li><strong>Add Type Hints (100% coverage):</strong>
+                                    <ul style="margin-left: 20px;">
+                                        <li>Import: Any, Callable, Dict, List, Optional from zCLI</li>
+                                        <li>parse_arguments: <code>def parse_arguments(arg_str: Optional[str], zContext: Any, split_fn: Callable[[str], List[str]], logger_instance: Any, zparser: Any = None) -> List[Any]:</code></li>
+                                        <li>split_arguments: <code>def split_arguments(arg_str: str) -> List[str]:</code></li>
+                                    </ul>
+                                </li>
+                                <li><strong>Expand Module Docstring (80-100 lines):</strong>
+                                    <ul style="margin-left: 20px;">
+                                        <li>Purpose (Tier 1 - Foundation component)</li>
+                                        <li>Architecture (position in 4-tier pattern)</li>
+                                        <li>Key Functionality (5 special argument types)</li>
+                                        <li>zCLI-Specific Concepts (zContext, zHat, zConv, this.field)</li>
+                                        <li>zParser Integration (safe evaluation via parse_json_expr)</li>
+                                        <li>Usage Examples (3 examples: context injection, field notation, evaluation)</li>
+                                        <li>Dependencies (zParser for evaluation)</li>
+                                        <li>Integration Points (used by zFunc.py)</li>
+                                        <li>Version History</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Expand Function Docstrings:</strong>
+                                    <ul style="margin-left: 20px;">
+                                        <li><strong>parse_arguments (60-80 lines):</strong> Parameters (5), Returns, Raises, 5 Examples (one per arg type), Notes</li>
+                                        <li><strong>split_arguments (30-40 lines):</strong> Parameters, Returns, Raises, 2 Examples, Notes (bracket matching)</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Add Module Constants (20+ constants):</strong>
+                                    <ul style="margin-left: 20px;">
+                                        <li><strong>Special Argument Identifiers (5):</strong> ARG_ZCONTEXT, ARG_ZHAT, ARG_ZCONV, ARG_ZCONV_PREFIX, ARG_THIS_PREFIX</li>
+                                        <li><strong>Debug Messages (11):</strong> DEBUG_MSG_NO_ARGS, DEBUG_MSG_RAW_ARG, DEBUG_MSG_SPLIT_ARGS, etc.</li>
+                                        <li><strong>Error Messages (2):</strong> ERROR_MSG_PARSE_FAILED, ERROR_MSG_BRACKET_MISMATCH</li>
+                                        <li><strong>Bracket Characters (3):</strong> BRACKETS_OPEN, BRACKETS_CLOSE, DELIMITER_COMMA</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Add Input Validation:</strong>
+                                    <ul style="margin-left: 20px;">
+                                        <li>parse_arguments: Validate arg_str type (str or None)</li>
+                                        <li>parse_arguments: Validate split_fn is callable</li>
+                                        <li>split_arguments: Validate arg_str is string</li>
+                                        <li>split_arguments: Validate bracket matching (depth tracking)</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Improve Error Handling:</strong>
+                                    <ul style="margin-left: 20px;">
+                                        <li>parse_arguments: Catch TypeError, AttributeError, KeyError specifically</li>
+                                        <li>split_arguments: Add try-except for bracket mismatch detection</li>
+                                        <li>Use constants for all error messages</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Add Module Metadata:</strong>
+                                    <ul style="margin-left: 20px;">
+                                        <li>Add __all__ = ["parse_arguments", "split_arguments"]</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Replace All Magic Strings (20+ replacements):</strong>
+                                    <ul style="margin-left: 20px;">
+                                        <li>Lines 8, 12, 14, 21, 26, 31, 38, 43, 48, 52, 55, 59: Use debug/error constants</li>
+                                        <li>Lines 19, 22, 27, 32, 39: Use special arg identifier constants</li>
+                                        <li>Lines 70, 72, 75: Use bracket character constants</li>
+                                    </ul>
+                                </li>
+                                <li><strong>DRY Refactoring:</strong>
+                                    <ul style="margin-left: 20px;">
+                                        <li>Extract <code>is_dict_context = isinstance(zContext, dict)</code> at start of parse loop</li>
+                                        <li>Use this variable instead of repeated isinstance checks (4 locations)</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Bracket Validation (split_arguments):</strong>
+                                    <ul style="margin-left: 20px;">
+                                        <li>Check if depth goes negative (closing bracket without opening)</li>
+                                        <li>Check if final depth != 0 (mismatched brackets)</li>
+                                        <li>Raise ValueError with descriptive message for bracket mismatches</li>
+                                    </ul>
+                                </li>
+                            </ol>
+                        </div>
+
+                        <div style="margin-top: 15px; padding: 15px; background: #f0fdf4; border-left: 4px solid #10b981; border-radius: 4px;">
+                            <strong>📊 EXPECTED TRANSFORMATION</strong>
+                            <table style="width: 100%; margin-top: 10px; border-collapse: collapse;">
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <th style="text-align: left; padding: 8px;">Metric</th>
+                                    <th style="text-align: center; padding: 8px;">Before</th>
+                                    <th style="text-align: center; padding: 8px;">After</th>
+                                    <th style="text-align: center; padding: 8px;">Change</th>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Total Lines</td>
+                                    <td style="text-align: center; padding: 8px;">85</td>
+                                    <td style="text-align: center; padding: 8px;">~350</td>
+                                    <td style="text-align: center; padding: 8px;">+265 (+312%)</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Type Hints</td>
+                                    <td style="text-align: center; padding: 8px;">0</td>
+                                    <td style="text-align: center; padding: 8px;">8</td>
+                                    <td style="text-align: center; padding: 8px;">+8 (100%)</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Documentation Lines</td>
+                                    <td style="text-align: center; padding: 8px;">3</td>
+                                    <td style="text-align: center; padding: 8px;">~180</td>
+                                    <td style="text-align: center; padding: 8px;">+177 (+5900%)</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Constants</td>
+                                    <td style="text-align: center; padding: 8px;">0</td>
+                                    <td style="text-align: center; padding: 8px;">20+</td>
+                                    <td style="text-align: center; padding: 8px;">+20+</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Validation Checks</td>
+                                    <td style="text-align: center; padding: 8px;">1</td>
+                                    <td style="text-align: center; padding: 8px;">6</td>
+                                    <td style="text-align: center; padding: 8px;">+5</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Error Handlers</td>
+                                    <td style="text-align: center; padding: 8px;">1 generic</td>
+                                    <td style="text-align: center; padding: 8px;">5 specific</td>
+                                    <td style="text-align: center; padding: 8px;">+4</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px;"><strong>Grade</strong></td>
+                                    <td style="text-align: center; padding: 8px;"><strong>C-</strong></td>
+                                    <td style="text-align: center; padding: 8px;"><strong>A+</strong></td>
+                                    <td style="text-align: center; padding: 8px;"><strong>+8 half-grades</strong></td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <div style="margin-top: 15px; padding: 15px; background: #f0fdf4; border-left: 4px solid #10b981; border-radius: 4px;">
+                            <strong>✅ IMPLEMENTATION CHECKLIST - All Items Complete</strong>
+                            <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                                <li>☑ Add type hints (8 type hints total: 6 for parse_arguments, 2 for split_arguments)</li>
+                                <li>☑ Expand module docstring (109 lines)</li>
+                                <li>☑ Expand parse_arguments docstring (112 lines)</li>
+                                <li>☑ Expand split_arguments docstring (62 lines)</li>
+                                <li>☑ Add 21 module constants (5 arg identifiers + 11 debug msgs + 4 error msgs + 3 bracket chars)</li>
+                                <li>☑ Add input validation (arg_str type, split_fn callable, bracket matching)</li>
+                                <li>☑ Improve error handling (specific exceptions: TypeError, AttributeError, KeyError, ValueError, Exception)</li>
+                                <li>☑ Add module metadata (__all__)</li>
+                                <li>☑ Replace all magic strings with constants (20+ replacements)</li>
+                                <li>☑ DRY refactoring (extract isinstance check to is_dict_context variable)</li>
+                                <li>☑ Add bracket validation (negative depth, final depth != 0)</li>
+                                <li>☑ Document 5 special argument types (zContext, zHat, zConv, zConv.field, this.key)</li>
+                                <li>☑ Document zParser integration (parse_json_expr delegation)</li>
+                                <li>☑ Run tests (all 1136 tests passing)</li>
+                                <li>☑ Run linter (zero errors confirmed)</li>
+                            </ul>
+                        </div>
+
+                        <div style="margin-top: 15px; padding: 15px; background: #dbeafe; border-left: 4px solid #3b82f6; border-radius: 4px;">
+                            <strong>📊 IMPLEMENTATION COMPLETE - Week 6.10.3</strong>
+                            <table style="width: 100%; margin-top: 10px; border-collapse: collapse;">
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <th style="text-align: left; padding: 8px;">Metric</th>
+                                    <th style="text-align: center; padding: 8px;">Before</th>
+                                    <th style="text-align: center; padding: 8px;">After</th>
+                                    <th style="text-align: center; padding: 8px;">Change</th>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Total Lines</td>
+                                    <td style="text-align: center; padding: 8px;">85</td>
+                                    <td style="text-align: center; padding: 8px;">493</td>
+                                    <td style="text-align: center; padding: 8px;">+408 (+480%)</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Type Hints</td>
+                                    <td style="text-align: center; padding: 8px;">0</td>
+                                    <td style="text-align: center; padding: 8px;">8</td>
+                                    <td style="text-align: center; padding: 8px;">+8 (100%)</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Module Docstring</td>
+                                    <td style="text-align: center; padding: 8px;">1 line</td>
+                                    <td style="text-align: center; padding: 8px;">109 lines</td>
+                                    <td style="text-align: center; padding: 8px;">+108 (+10800%)</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Function Docstrings</td>
+                                    <td style="text-align: center; padding: 8px;">2 lines</td>
+                                    <td style="text-align: center; padding: 8px;">174 lines</td>
+                                    <td style="text-align: center; padding: 8px;">+172 (+8600%)</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Constants</td>
+                                    <td style="text-align: center; padding: 8px;">0</td>
+                                    <td style="text-align: center; padding: 8px;">21</td>
+                                    <td style="text-align: center; padding: 8px;">+21</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Validation Checks</td>
+                                    <td style="text-align: center; padding: 8px;">1</td>
+                                    <td style="text-align: center; padding: 8px;">6</td>
+                                    <td style="text-align: center; padding: 8px;">+5</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Error Handlers</td>
+                                    <td style="text-align: center; padding: 8px;">1 generic</td>
+                                    <td style="text-align: center; padding: 8px;">5 specific</td>
+                                    <td style="text-align: center; padding: 8px;">+4</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px;"><strong>Grade</strong></td>
+                                    <td style="text-align: center; padding: 8px;"><strong>C-</strong></td>
+                                    <td style="text-align: center; padding: 8px;"><strong>A+</strong></td>
+                                    <td style="text-align: center; padding: 8px;"><strong>+8 half-grades</strong></td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <div style="margin-top: 15px; padding: 15px; background: #f0fdf4; border-left: 4px solid #10b981; border-radius: 4px;">
+                            <strong>🎯 KEY ACHIEVEMENTS</strong>
+                            <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                                <li><strong>100% Type Hint Coverage:</strong> All 8 parameters and return types annotated
+                                    <ul style="margin-left: 20px;">
+                                        <li>parse_arguments: arg_str (Optional[str]), zContext (Any), split_fn (Callable), logger_instance (Any), zparser (Any) → List[Any]</li>
+                                        <li>split_arguments: arg_str (str) → List[str]</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Comprehensive Documentation:</strong> 283 lines total (109 module + 112 parse_arguments + 62 split_arguments)</li>
+                                <li><strong>21 Module Constants:</strong> All magic strings eliminated
+                                    <ul style="margin-left: 20px;">
+                                        <li>5 special argument identifiers (ARG_ZCONTEXT, ARG_ZHAT, ARG_ZCONV, ARG_ZCONV_PREFIX, ARG_THIS_PREFIX)</li>
+                                        <li>11 debug message templates</li>
+                                        <li>4 error message templates</li>
+                                        <li>3 bracket character constants (BRACKETS_OPEN, BRACKETS_CLOSE, DELIMITER_COMMA)</li>
+                                    </ul>
+                                </li>
+                                <li><strong>6 Validation Checks:</strong> arg_str type, split_fn callable, empty arg_str, bracket negative depth, bracket final depth, arg_str type in split_arguments</li>
+                                <li><strong>5 Specific Error Handlers:</strong> TypeError, AttributeError, KeyError, ValueError, Exception (generic fallback)</li>
+                                <li><strong>5 zCLI Special Argument Types Documented:</strong>
+                                    <ul style="margin-left: 20px;">
+                                        <li>zContext: Full context injection</li>
+                                        <li>zHat: Wizard context (zWizard integration)</li>
+                                        <li>zConv: Dialog conversation (zDialog integration)</li>
+                                        <li>zConv.field: Dialog field notation</li>
+                                        <li>this.key: Context key notation</li>
+                                    </ul>
+                                </li>
+                                <li><strong>zParser Integration Documented:</strong> Safe JSON expression evaluation via parse_json_expr()</li>
+                                <li><strong>Bracket Validation:</strong> Detects negative depth (closing without opening) and non-zero final depth (unclosed brackets)</li>
+                                <li><strong>DRY Refactoring:</strong> Extracted is_dict_context variable (used 4 times)</li>
+                                <li><strong>Module Metadata:</strong> __all__ = ["parse_arguments", "split_arguments"]</li>
+                                <li><strong>Zero Regressions:</strong> All 1136 tests passing</li>
+                                <li><strong>Zero Linter Errors:</strong> Clean code quality</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="subsystem-card" style="margin-top: 20px;">
+                    <div class="subsystem-header">
+                        <div class="subsystem-name">Week 6.10.4: ✅ COMPLETE - zFunc_modules/__init__.py (Package Aggregator)</div>
+                        <div class="subsystem-rating" style="background: #48bb78;">B → A+</div>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <strong>📋 Scope:</strong> Public API aggregator (Tier 2 - Package Aggregator)
+                        <br><strong>🔗 Dependencies:</strong> func_args + func_resolver
+                        <br><strong>📊 Current Size:</strong> 12 lines (3 exports)
+                        <br><strong>📊 Exports:</strong> parse_arguments, split_arguments, resolve_callable
+                        <br><strong>🎯 Used By:</strong> zFunc.py facade
+                        <br><strong>📊 Current Grade:</strong> B | <strong>Target Grade:</strong> A+
+                        
+                        <div style="margin-top: 15px; padding: 15px; background: #fef2f2; border-left: 4px solid #ef4444; border-radius: 4px;">
+                            <strong>🔍 AUDIT FINDINGS - 5 Issues</strong>
+                            
+                            <div style="margin-top: 10px;">
+                                <strong>1. ❌ Module Docstring (Minimal - 1 line)</strong>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li>Current: Single line "zFunc module registry - function loading and execution helpers."</li>
+                                    <li>Missing: Purpose (Tier 2 - Package Aggregator component)</li>
+                                    <li>Missing: Architecture position (4-tier pattern)</li>
+                                    <li>Missing: Tier groupings (Tier 1 exports)</li>
+                                    <li>Missing: Public API overview (3 functions)</li>
+                                    <li>Missing: Usage guidance (how to import and use)</li>
+                                    <li>Missing: Integration points (used by zFunc facade)</li>
+                                    <li>Missing: Dependencies (func_args, func_resolver)</li>
+                                    <li>Missing: Version history</li>
+                                    <li>Target: 60-80 lines comprehensive docstring</li>
+                                </ul>
+                            </div>
+
+                            <div style="margin-top: 10px;">
+                                <strong>2. ✅ Import Organization (Good, but could be better)</strong>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li>Current: Simple relative imports from submodules</li>
+                                    <li>✓ Correct use of relative imports (from .func_args, from .func_resolver)</li>
+                                    <li>✓ Clean grouping by module</li>
+                                    <li>Missing: Tier-based grouping comments</li>
+                                    <li>Missing: Purpose comments for each import group</li>
+                                    <li>Enhancement: Add "# Tier 1: Foundation" section headers</li>
+                                </ul>
+                            </div>
+
+                            <div style="margin-top: 10px;">
+                                <strong>3. ⚠️ __all__ Missing Inline Documentation</strong>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li>Current: __all__ list exists with 3 exports</li>
+                                    <li>✓ Correct exports (parse_arguments, split_arguments, resolve_callable)</li>
+                                    <li>Missing: Inline comments explaining each export's purpose</li>
+                                    <li>Missing: Tier grouping (all 3 are from Tier 1)</li>
+                                    <li>Enhancement: Add inline comments like "# Argument parsing"</li>
+                                </ul>
+                            </div>
+
+                            <div style="margin-top: 10px;">
+                                <strong>4. ❌ No Usage Guidance</strong>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li>No examples of how to use the exported functions</li>
+                                    <li>No explanation of typical import patterns</li>
+                                    <li>No guidance on when to import from this module vs. directly from submodules</li>
+                                    <li>Need: Usage examples in module docstring</li>
+                                </ul>
+                            </div>
+
+                            <div style="margin-top: 10px;">
+                                <strong>5. ❌ No Architecture Context</strong>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li>No explanation of Tier 2 role in 4-tier architecture</li>
+                                    <li>No explanation of how this aggregates Tier 1 components</li>
+                                    <li>No explanation of how Tier 3 (facade) uses this module</li>
+                                    <li>Need: Complete 4-tier architecture documentation</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 15px; padding: 15px; background: #fffbeb; border-left: 4px solid #f59e0b; border-radius: 4px;">
+                            <strong>📊 CURRENT STATE ANALYSIS</strong>
+                            <table style="width: 100%; margin-top: 10px; border-collapse: collapse;">
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <th style="text-align: left; padding: 8px;">Aspect</th>
+                                    <th style="text-align: center; padding: 8px;">Current</th>
+                                    <th style="text-align: center; padding: 8px;">Target</th>
+                                    <th style="text-align: center; padding: 8px;">Gap</th>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Module Docstring</td>
+                                    <td style="text-align: center; padding: 8px;">1 line</td>
+                                    <td style="text-align: center; padding: 8px;">60-80 lines</td>
+                                    <td style="text-align: center; padding: 8px; color: #dc2626;">❌ Critical</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Import Organization</td>
+                                    <td style="text-align: center; padding: 8px;">Good</td>
+                                    <td style="text-align: center; padding: 8px;">Excellent</td>
+                                    <td style="text-align: center; padding: 8px; color: #16a34a;">✓ Minor</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">__all__ Documentation</td>
+                                    <td style="text-align: center; padding: 8px;">Partial</td>
+                                    <td style="text-align: center; padding: 8px;">Complete</td>
+                                    <td style="text-align: center; padding: 8px; color: #d97706;">⚠️ Needs Work</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Usage Guidance</td>
+                                    <td style="text-align: center; padding: 8px;">None</td>
+                                    <td style="text-align: center; padding: 8px;">Complete</td>
+                                    <td style="text-align: center; padding: 8px; color: #dc2626;">❌ Missing</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Architecture Context</td>
+                                    <td style="text-align: center; padding: 8px;">None</td>
+                                    <td style="text-align: center; padding: 8px;">Complete</td>
+                                    <td style="text-align: center; padding: 8px; color: #dc2626;">❌ Missing</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px;"><strong>Overall Grade</strong></td>
+                                    <td style="text-align: center; padding: 8px;"><strong>B</strong></td>
+                                    <td style="text-align: center; padding: 8px;"><strong>A+</strong></td>
+                                    <td style="text-align: center; padding: 8px; color: #d97706;"><strong>⚠️ 3 half-grades</strong></td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <div style="margin-top: 15px; padding: 15px; background: #e0f2fe; border-left: 4px solid #0284c7; border-radius: 4px;">
+                            <strong>📋 IMPLEMENTATION PLAN (5 Steps)</strong>
+                            <ol style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                                <li><strong>Expand Module Docstring (60-80 lines):</strong>
+                                    <ul style="margin-left: 20px;">
+                                        <li>Purpose (Tier 2 - Package Aggregator component)</li>
+                                        <li>Architecture position (4-tier pattern: Foundation → Aggregator → Facade → Root)</li>
+                                        <li>Public API overview (3 functions from Tier 1)</li>
+                                        <li>Tier Groupings:
+                                            <ul style="margin-left: 20px;">
+                                                <li>Tier 1 - Foundation: parse_arguments, split_arguments, resolve_callable</li>
+                                            </ul>
+                                        </li>
+                                        <li>Usage Guidance:
+                                            <ul style="margin-left: 20px;">
+                                                <li>Standard import pattern (from zFunc.zFunc_modules import ...)</li>
+                                                <li>When to use aggregator vs. direct submodule imports</li>
+                                            </ul>
+                                        </li>
+                                        <li>Integration Points (used by zFunc.py facade)</li>
+                                        <li>Dependencies (func_args, func_resolver)</li>
+                                        <li>Version History</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Enhance Import Organization:</strong>
+                                    <ul style="margin-left: 20px;">
+                                        <li>Add section header comment: "# Tier 1: Foundation - Argument Parsing"</li>
+                                        <li>Add section header comment: "# Tier 1: Foundation - Function Resolution"</li>
+                                        <li>Group imports by tier and purpose</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Add Inline Comments to __all__:</strong>
+                                    <ul style="margin-left: 20px;">
+                                        <li>"parse_arguments",  # Argument parsing with context injection</li>
+                                        <li>"split_arguments",  # Argument string splitting with bracket matching</li>
+                                        <li>"resolve_callable",  # Function resolution and loading</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Add Usage Examples (in module docstring):</strong>
+                                    <ul style="margin-left: 20px;">
+                                        <li>Example 1: Standard import pattern</li>
+                                        <li>Example 2: Using parse_arguments with split_arguments</li>
+                                        <li>Example 3: Using resolve_callable standalone</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Document Architecture Context:</strong>
+                                    <ul style="margin-left: 20px;">
+                                        <li>Explain Tier 2 role (aggregation of Tier 1 components)</li>
+                                        <li>Explain relationship to Tier 3 (zFunc facade)</li>
+                                        <li>Explain complete 4-tier architecture flow</li>
+                                    </ul>
+                                </li>
+                            </ol>
+                        </div>
+
+                        <div style="margin-top: 15px; padding: 15px; background: #f0fdf4; border-left: 4px solid #10b981; border-radius: 4px;">
+                            <strong>📊 EXPECTED TRANSFORMATION</strong>
+                            <table style="width: 100%; margin-top: 10px; border-collapse: collapse;">
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <th style="text-align: left; padding: 8px;">Metric</th>
+                                    <th style="text-align: center; padding: 8px;">Before</th>
+                                    <th style="text-align: center; padding: 8px;">After</th>
+                                    <th style="text-align: center; padding: 8px;">Change</th>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Total Lines</td>
+                                    <td style="text-align: center; padding: 8px;">12</td>
+                                    <td style="text-align: center; padding: 8px;">~90</td>
+                                    <td style="text-align: center; padding: 8px;">+78 (+650%)</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Module Docstring</td>
+                                    <td style="text-align: center; padding: 8px;">1 line</td>
+                                    <td style="text-align: center; padding: 8px;">~70 lines</td>
+                                    <td style="text-align: center; padding: 8px;">+69 (+6900%)</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Import Comments</td>
+                                    <td style="text-align: center; padding: 8px;">0</td>
+                                    <td style="text-align: center; padding: 8px;">2</td>
+                                    <td style="text-align: center; padding: 8px;">+2 (tier headers)</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">__all__ Inline Comments</td>
+                                    <td style="text-align: center; padding: 8px;">0</td>
+                                    <td style="text-align: center; padding: 8px;">3</td>
+                                    <td style="text-align: center; padding: 8px;">+3</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Usage Examples</td>
+                                    <td style="text-align: center; padding: 8px;">0</td>
+                                    <td style="text-align: center; padding: 8px;">3</td>
+                                    <td style="text-align: center; padding: 8px;">+3</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px;"><strong>Grade</strong></td>
+                                    <td style="text-align: center; padding: 8px;"><strong>B</strong></td>
+                                    <td style="text-align: center; padding: 8px;"><strong>A+</strong></td>
+                                    <td style="text-align: center; padding: 8px;"><strong>+3 half-grades</strong></td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <div style="margin-top: 15px; padding: 15px; background: #f0fdf4; border-left: 4px solid #10b981; border-radius: 4px;">
+                            <strong>✅ IMPLEMENTATION CHECKLIST - All Items Complete</strong>
+                            <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                                <li>☑ Expand module docstring (119 lines)</li>
+                                <li>☑ Add architecture context (4-tier pattern)</li>
+                                <li>☑ Add public API overview (3 functions)</li>
+                                <li>☑ Add tier groupings (Tier 1 exports)</li>
+                                <li>☑ Add usage guidance (3 examples)</li>
+                                <li>☑ Add tier-based import section headers (2 headers)</li>
+                                <li>☑ Add inline comments to __all__ (3 comments)</li>
+                                <li>☑ Document integration points (zFunc facade)</li>
+                                <li>☑ Document dependencies (func_args, func_resolver)</li>
+                                <li>☑ Run tests (all 1136 tests passing)</li>
+                                <li>☑ Run linter (zero errors confirmed)</li>
+                            </ul>
+                        </div>
+
+                        <div style="margin-top: 15px; padding: 15px; background: #dbeafe; border-left: 4px solid #3b82f6; border-radius: 4px;">
+                            <strong>📊 IMPLEMENTATION COMPLETE - Week 6.10.4</strong>
+                            <table style="width: 100%; margin-top: 10px; border-collapse: collapse;">
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <th style="text-align: left; padding: 8px;">Metric</th>
+                                    <th style="text-align: center; padding: 8px;">Before</th>
+                                    <th style="text-align: center; padding: 8px;">After</th>
+                                    <th style="text-align: center; padding: 8px;">Change</th>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Total Lines</td>
+                                    <td style="text-align: center; padding: 8px;">12</td>
+                                    <td style="text-align: center; padding: 8px;">142</td>
+                                    <td style="text-align: center; padding: 8px;">+130 (+1083%)</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Module Docstring</td>
+                                    <td style="text-align: center; padding: 8px;">1 line</td>
+                                    <td style="text-align: center; padding: 8px;">119 lines</td>
+                                    <td style="text-align: center; padding: 8px;">+118 (+11800%)</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Import Section Headers</td>
+                                    <td style="text-align: center; padding: 8px;">0</td>
+                                    <td style="text-align: center; padding: 8px;">2</td>
+                                    <td style="text-align: center; padding: 8px;">+2 (tier headers)</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">__all__ Inline Comments</td>
+                                    <td style="text-align: center; padding: 8px;">0</td>
+                                    <td style="text-align: center; padding: 8px;">3</td>
+                                    <td style="text-align: center; padding: 8px;">+3</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #ddd;">
+                                    <td style="padding: 8px;">Usage Examples</td>
+                                    <td style="text-align: center; padding: 8px;">0</td>
+                                    <td style="text-align: center; padding: 8px;">3</td>
+                                    <td style="text-align: center; padding: 8px;">+3</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px;"><strong>Grade</strong></td>
+                                    <td style="text-align: center; padding: 8px;"><strong>B</strong></td>
+                                    <td style="text-align: center; padding: 8px;"><strong>A+</strong></td>
+                                    <td style="text-align: center; padding: 8px;"><strong>+3 half-grades</strong></td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <div style="margin-top: 15px; padding: 15px; background: #f0fdf4; border-left: 4px solid #10b981; border-radius: 4px;">
+                            <strong>🎯 KEY ACHIEVEMENTS</strong>
+                            <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                                <li><strong>Comprehensive Documentation:</strong> 119 lines module docstring (from 1 line)
+                                    <ul style="margin-left: 20px;">
+                                        <li>Architecture Position section (4-tier pattern)</li>
+                                        <li>4-Tier Architecture Flow diagram</li>
+                                        <li>Public API Overview (3 functions)</li>
+                                        <li>Usage Patterns section (aggregator vs. direct imports)</li>
+                                        <li>Integration Points (used by zFunc facade)</li>
+                                        <li>3 complete usage examples</li>
+                                        <li>Version History</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Tier-Based Import Organization:</strong> 2 section headers
+                                    <ul style="margin-left: 20px;">
+                                        <li>"# Tier 1: Foundation - Argument Parsing"</li>
+                                        <li>"# Tier 1: Foundation - Function Resolution"</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Inline __all__ Comments:</strong> 3 inline comments explaining each export
+                                    <ul style="margin-left: 20px;">
+                                        <li>parse_arguments: Argument parsing with context injection (5 special types)</li>
+                                        <li>split_arguments: Argument string splitting with bracket matching</li>
+                                        <li>resolve_callable: Function resolution and loading via importlib</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Usage Guidance:</strong> 3 complete examples
+                                    <ul style="margin-left: 20px;">
+                                        <li>Example 1: Standard import and usage</li>
+                                        <li>Example 2: Using resolve_callable standalone</li>
+                                        <li>Example 3: Complete workflow (parse + resolve)</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Architecture Context:</strong> Complete 4-tier flow documented
+                                    <ul style="margin-left: 20px;">
+                                        <li>Tier 1 (Foundation): Core building blocks</li>
+                                        <li>Tier 2 (Package Aggregator): This module</li>
+                                        <li>Tier 3 (Facade): zFunc.py</li>
+                                        <li>Tier 4 (Package Root): __init__.py</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Integration Documentation:</strong> Clear explanation of how zFunc.py uses this aggregator</li>
+                                <li><strong>Dependencies Documented:</strong> func_args, func_resolver (Tier 1)</li>
+                                <li><strong>Zero Regressions:</strong> All 1136 tests passing</li>
+                                <li><strong>Zero Linter Errors:</strong> Clean code quality</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="subsystem-card" style="margin-top: 20px;">
+                    <div class="subsystem-header">
+                        <div class="subsystem-name">Week 6.10.5: 🔍 AUDIT COMPLETE - zFunc.py (Facade) & __init__.py (Package Root)</div>
+                        <div class="subsystem-rating" style="background: #fef3c7; color: #92400e;">C+ → Target: A+</div>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <strong>📋 Scope:</strong> Main function execution facade + package root (Tier 3-4)
+                        <br><strong>🔗 Dependencies:</strong> func_args, func_resolver, zParser, inspect
+                        <br><strong>📊 Current Size:</strong> 150 lines (facade) + 8 lines (package root) = 158 lines
+                        <br><strong>📊 Methods:</strong> handle() + 4 helper methods
+                        <br><strong>🎯 Used By:</strong> zCLI.py, zDispatch (3 call sites), zNavigation (menu generation)
+                        <br><strong>📊 Status:</strong> Audit complete (22 issues identified)
+                    </div>
+
+                    <div style="margin-top: 15px; padding: 15px; background: #fee; border-left: 4px solid #ef4444; border-radius: 4px;">
+                        <strong>🔍 AUDIT FINDINGS - zFunc.py (Facade) - 18 ISSUES</strong>
+                        
+                        <div style="margin-top: 15px;">
+                            <strong>❌ CRITICAL ISSUES (6):</strong>
+                            <ol style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                                <li><strong>Module Docstring:</strong> 1 line - Minimal
+                                    <ul style="margin-left: 20px;">
+                                        <li>Current: "External Python function loader and executor."</li>
+                                        <li>Missing: 4-tier architecture position</li>
+                                        <li>Missing: Public API (handle method signature)</li>
+                                        <li>Missing: Usage examples (3+ needed)</li>
+                                        <li>Missing: Integration points (zDispatch, zNavigation)</li>
+                                        <li>Missing: Key features (async support, auto-injection)</li>
+                                        <li>Target: 80-100 lines comprehensive docstring</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Type Hints Coverage:</strong> ~40% (6/15 methods)
+                                    <ul style="margin-left: 20px;">
+                                        <li>❌ handle() - No type hints (CRITICAL - main API)</li>
+                                        <li>❌ _parse_args_with_display() - No type hints</li>
+                                        <li>❌ _resolve_callable_with_display() - No type hints</li>
+                                        <li>❌ _execute_function() - No type hints</li>
+                                        <li>❌ _display_result() - No type hints</li>
+                                        <li>Target: 100% type hint coverage</li>
+                                    </ul>
+                                </li>
+                                <li><strong>No Constants:</strong> 0 constants defined
+                                    <ul style="margin-left: 20px;">
+                                        <li>Magic strings: "ZFUNC", "zFunc Ready", "Parse Arguments", "Resolve Callable", etc. (10+ instances)</li>
+                                        <li>Magic strings: "zFunction Return", "CYAN", "full", "single", "~" (display styles)</li>
+                                        <li>Magic numbers: 300 (timeout), 0/1 (indents)</li>
+                                        <li>Dict keys: "model", "session", "zcli" (7+ instances)</li>
+                                        <li>Target: 15-20 module-level constants</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Method Docstrings:</strong> 1-2 lines each - Minimal
+                                    <ul style="margin-left: 20px;">
+                                        <li>handle(): 1 line - Missing params, returns, raises, examples</li>
+                                        <li>_parse_args_with_display(): 1 line - Missing params, returns</li>
+                                        <li>_resolve_callable_with_display(): 1 line - Missing params, returns</li>
+                                        <li>_execute_function(): 1 line - Missing async behavior, injection details</li>
+                                        <li>_display_result(): 1 line - Missing params, display format</li>
+                                        <li>Target: 30-50 lines per method</li>
+                                    </ul>
+                                </li>
+                                <li><strong>No Error Constants:</strong> 0 error message constants
+                                    <ul style="margin-left: 20px;">
+                                        <li>Generic error handling in handle() - line 69</li>
+                                        <li>TypeError warning in _execute_function() - line 112</li>
+                                        <li>No standardized error messages</li>
+                                        <li>Target: 5-8 error message constants</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Imports Organization:</strong> Mixed local/inline imports
+                                    <ul style="margin-left: 20px;">
+                                        <li>Top-level: from zCLI import inspect (line 5)</li>
+                                        <li>Inline: from .zFunc_modules.func_args import ... (line 76)</li>
+                                        <li>Inline: from .zFunc_modules.func_resolver import ... (line 82)</li>
+                                        <li>Inline: import asyncio (line 87)</li>
+                                        <li>Inline: import concurrent.futures (line 126)</li>
+                                        <li>Target: All imports at top (organized by tier)</li>
+                                    </ul>
+                                </li>
+                            </ol>
+                        </div>
+
+                        <div style="margin-top: 15px;">
+                            <strong>⚠️ MODERATE ISSUES (8):</strong>
+                            <ol style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                                <li><strong>No __all__ Definition:</strong> Missing module metadata
+                                    <ul style="margin-left: 20px;">
+                                        <li>Public API: zFunc class</li>
+                                        <li>Target: __all__ = ["zFunc"]</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Class Docstring:</strong> 1 line - Minimal
+                                    <ul style="margin-left: 20px;">
+                                        <li>Current: "Function loading and execution subsystem."</li>
+                                        <li>Missing: Architecture role (Tier 3 Facade)</li>
+                                        <li>Missing: Key responsibilities</li>
+                                        <li>Missing: Usage pattern</li>
+                                        <li>Target: 20-30 lines</li>
+                                    </ul>
+                                </li>
+                                <li><strong>__init__ Docstring:</strong> 1 line - Missing details
+                                    <ul style="margin-left: 20px;">
+                                        <li>Current: "Initialize zFunc with zCLI instance."</li>
+                                        <li>Missing: Stored attributes explanation</li>
+                                        <li>Missing: Dependencies initialized</li>
+                                        <li>Target: 15-20 lines</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Hardcoded Display Styles:</strong> 5+ instances
+                                    <ul style="margin-left: 20px;">
+                                        <li>Lines 19, 23, 75, 81, 143, 149: "full", "single", "~"</li>
+                                        <li>Lines 19, 23, 75, 81, 143, 149: color="ZFUNC", "CYAN"</li>
+                                        <li>Lines 19, 23, 75, 81, 143: indent=0, 1</li>
+                                        <li>Target: Constants for all display parameters</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Session Key Usage:</strong> Hardcoded dict keys
+                                    <ul style="margin-left: 20px;">
+                                        <li>Line 48: "model" - should use constant</li>
+                                        <li>Line 98: "session" - should use constant</li>
+                                        <li>Line 93: "zcli" - should use constant</li>
+                                        <li>Line 100: "session" in args[0] check</li>
+                                        <li>Target: Use zConfig session key constants</li>
+                                    </ul>
+                                </li>
+                                <li><strong>DRY Violations:</strong> Repeated patterns
+                                    <ul style="margin-left: 20px;">
+                                        <li>Lines 76-77, 82-83: Inline imports + return pattern (2 methods)</li>
+                                        <li>Lines 93-95, 98-105: Auto-injection pattern (2 checks)</li>
+                                        <li>Lines 26-30: Debug logging pattern for dict iteration</li>
+                                        <li>Target: Extract helper methods for repeated patterns</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Model Merge Logic:</strong> Lines 47-54 - Undocumented
+                                    <ul style="margin-left: 20px;">
+                                        <li>Context: Unclear why model is merged into args</li>
+                                        <li>Behavior: Inserts model as first arg or merges into dict</li>
+                                        <li>Edge cases: What if args is empty? Non-dict first arg?</li>
+                                        <li>Target: Extensive comments or extract to helper method</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Async Handling:</strong> Lines 117-133 - Complex logic
+                                    <ul style="margin-left: 20px;">
+                                        <li>Dual mode: asyncio.run_coroutine_threadsafe vs asyncio.run</li>
+                                        <li>Detection: Uses try-except to detect running loop</li>
+                                        <li>Timeout: Hardcoded 300 seconds (line 128)</li>
+                                        <li>Documentation: Only 1-line debug logs</li>
+                                        <li>Target: Extensive docstring explaining both modes</li>
+                                    </ul>
+                                </li>
+                            </ol>
+                        </div>
+
+                        <div style="margin-top: 15px;">
+                            <strong>✅ GOOD PRACTICES (4):</strong>
+                            <ol style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                                <li><strong>Signature Compatibility:</strong> ✅ VERIFIED
+                                    <ul style="margin-left: 20px;">
+                                        <li>✅ handle(zHorizontal, zContext=None) matches zDispatch TODOs</li>
+                                        <li>✅ Line 412 (dispatch_launcher.py): self.zcli.zfunc.handle(zHorizontal) ✓</li>
+                                        <li>✅ Line 575 (dispatch_launcher.py): self.zcli.zfunc.handle(func_spec, zContext=context) ✓</li>
+                                        <li>✅ Line 461 (navigation_menu_builder.py): self.zcli.zfunc.handle(f"zFunc(...)") ✓</li>
+                                        <li>✅ All 3 TODOs from Week 6.6 (zDispatch) verified</li>
+                                        <li>✅ 1 TODO from Week 6.7 (zNavigation) verified</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Clean Orchestration:</strong> Well-structured handle() method
+                                    <ul style="margin-left: 20px;">
+                                        <li>✓ Clear 5-step workflow (parse path → parse args → resolve → execute → display)</li>
+                                        <li>✓ Delegates to specialized helpers</li>
+                                        <li>✓ Comprehensive debug logging at each step</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Auto-Injection:</strong> Smart session/zcli injection
+                                    <ul style="margin-left: 20px;">
+                                        <li>✓ Uses inspect.signature to detect parameters</li>
+                                        <li>✓ Avoids double-injection (checks if session already in args)</li>
+                                        <li>✓ Graceful fallback if injection fails</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Async Support:</strong> Handles both sync and async functions
+                                    <ul style="margin-left: 20px;">
+                                        <li>✓ Detects coroutines with asyncio.iscoroutine()</li>
+                                        <li>✓ Dual mode: Bifrost (running loop) vs Terminal (no loop)</li>
+                                        <li>✓ Proper error handling for both modes</li>
+                                    </ul>
+                                </li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 15px; padding: 15px; background: #fee; border-left: 4px solid #ef4444; border-radius: 4px;">
+                        <strong>🔍 AUDIT FINDINGS - __init__.py (Package Root) - 4 ISSUES</strong>
+                        
+                        <div style="margin-top: 15px;">
+                            <strong>❌ CRITICAL ISSUES (2):</strong>
+                            <ol style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                                <li><strong>Module Docstring:</strong> 1 line - Minimal
+                                    <ul style="margin-left: 20px;">
+                                        <li>Current: "zFunc subsystem."</li>
+                                        <li>Missing: Purpose (external Python function execution)</li>
+                                        <li>Missing: 4-tier architecture overview</li>
+                                        <li>Missing: Public API (zFunc class)</li>
+                                        <li>Missing: Usage examples (2+ needed)</li>
+                                        <li>Missing: Key features (async, auto-injection, 5 special arg types)</li>
+                                        <li>Missing: Integration points (used by zDispatch, zNavigation)</li>
+                                        <li>Target: 60-80 lines comprehensive docstring</li>
+                                    </ul>
+                                </li>
+                                <li><strong>No Inline Comments:</strong> __all__ lacks documentation
+                                    <ul style="margin-left: 20px;">
+                                        <li>Current: __all__ = ['zFunc']</li>
+                                        <li>Missing: Comment explaining zFunc's role</li>
+                                        <li>Target: __all__ = ["zFunc"]  # External function execution facade (Tier 3)</li>
+                                    </ul>
+                                </li>
+                            </ol>
+                        </div>
+
+                        <div style="margin-top: 15px;">
+                            <strong>✅ GOOD PRACTICES (2):</strong>
+                            <ol style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                                <li><strong>Clean Import:</strong> ✓ Uses relative import with noqa
+                                    <ul style="margin-left: 20px;">
+                                        <li>✓ from .zFunc import zFunc  # noqa: F401</li>
+                                        <li>✓ Suppresses "imported but unused" warning</li>
+                                    </ul>
+                                </li>
+                                <li><strong>__all__ Definition:</strong> ✓ Defines public API
+                                    <ul style="margin-left: 20px;">
+                                        <li>✓ __all__ = ['zFunc']</li>
+                                        <li>✓ Single export (facade)</li>
+                                    </ul>
+                                </li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 15px; padding: 15px; background: #dbeafe; border-left: 4px solid #3b82f6; border-radius: 4px;">
+                        <strong>📊 CURRENT STATE ANALYSIS</strong>
+                        
+                        <table style="width: 100%; margin-top: 10px; border-collapse: collapse;">
+                            <tr style="border-bottom: 1px solid #ddd;">
+                                <th style="text-align: left; padding: 8px;">Aspect</th>
+                                <th style="text-align: center; padding: 8px;">zFunc.py</th>
+                                <th style="text-align: center; padding: 8px;">__init__.py</th>
+                                <th style="text-align: center; padding: 8px;">Target</th>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #ddd;">
+                                <td style="padding: 8px;">Module Docstring</td>
+                                <td style="text-align: center; padding: 8px;">1 line</td>
+                                <td style="text-align: center; padding: 8px;">1 line</td>
+                                <td style="text-align: center; padding: 8px;">80-100 / 60-80</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #ddd;">
+                                <td style="padding: 8px;">Type Hints Coverage</td>
+                                <td style="text-align: center; padding: 8px;">~40%</td>
+                                <td style="text-align: center; padding: 8px;">N/A</td>
+                                <td style="text-align: center; padding: 8px;">100%</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #ddd;">
+                                <td style="padding: 8px;">Constants</td>
+                                <td style="text-align: center; padding: 8px;">0</td>
+                                <td style="text-align: center; padding: 8px;">N/A</td>
+                                <td style="text-align: center; padding: 8px;">15-20</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #ddd;">
+                                <td style="padding: 8px;">Method Docstrings</td>
+                                <td style="text-align: center; padding: 8px;">1-2 lines</td>
+                                <td style="text-align: center; padding: 8px;">N/A</td>
+                                <td style="text-align: center; padding: 8px;">30-50 lines</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #ddd;">
+                                <td style="padding: 8px;">__all__ Documentation</td>
+                                <td style="text-align: center; padding: 8px;">Missing</td>
+                                <td style="text-align: center; padding: 8px;">Partial</td>
+                                <td style="text-align: center; padding: 8px;">Complete</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px;"><strong>Overall Grade</strong></td>
+                                <td style="text-align: center; padding: 8px;"><strong>C+</strong></td>
+                                <td style="text-align: center; padding: 8px;"><strong>C</strong></td>
+                                <td style="text-align: center; padding: 8px;"><strong>A+</strong></td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div style="margin-top: 15px; padding: 15px; background: #f0fdf4; border-left: 4px solid #10b981; border-radius: 4px;">
+                        <strong>📋 IMPLEMENTATION PLAN (12 Steps)</strong>
+                        
+                        <div style="margin-top: 15px;">
+                            <strong>Part A: zFunc.py (Facade) - 10 Steps</strong>
+                            <ol style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                                <li><strong>Expand Module Docstring</strong> (80-100 lines)
+                                    <ul style="margin-left: 20px;">
+                                        <li>Purpose (external Python function execution)</li>
+                                        <li>4-tier architecture position (Tier 3 Facade)</li>
+                                        <li>Public API (handle method signature)</li>
+                                        <li>Key features (5-step workflow, async support, auto-injection)</li>
+                                        <li>Special argument types (5 types from func_args)</li>
+                                        <li>Usage examples (3+: basic, async, auto-injection)</li>
+                                        <li>Integration points (zDispatch, zNavigation, zParser, zLoader)</li>
+                                        <li>Dependencies (zFunc_modules, zParser, zDisplay)</li>
+                                        <li>Version history</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Add Module-Level Constants</strong> (15-20 constants)
+                                    <ul style="margin-left: 20px;">
+                                        <li>Display constants: COLOR_ZFUNC, MSG_READY, MSG_PARSE_ARGS, MSG_RESOLVE, MSG_RETURN (5+)</li>
+                                        <li>Display style constants: STYLE_FULL, STYLE_SINGLE, STYLE_SEPARATOR, INDENT_ROOT, INDENT_SUB (5+)</li>
+                                        <li>Injection constants: KEY_ZCLI, KEY_SESSION, KEY_MODEL (3+)</li>
+                                        <li>Error constants: ERROR_EXECUTION_FAILED, ERROR_INJECTION_FAILED (2+)</li>
+                                        <li>Async constants: ASYNC_TIMEOUT_SECONDS (1)</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Reorganize Imports</strong>
+                                    <ul style="margin-left: 20px;">
+                                        <li>Move all imports to top of file</li>
+                                        <li>Group by category: stdlib, zCLI, relative</li>
+                                        <li>Add type hint imports (Any, Callable, Dict, List, Optional)</li>
+                                        <li>Remove inline imports from methods</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Add 100% Type Hints</strong>
+                                    <ul style="margin-left: 20px;">
+                                        <li>handle(zHorizontal: str, zContext: Optional[Dict[str, Any]] = None) -> Any</li>
+                                        <li>_parse_args_with_display(arg_str: Optional[str], zContext: Any) -> List[Any]</li>
+                                        <li>_resolve_callable_with_display(func_path: str, function_name: str) -> Callable[..., Any]</li>
+                                        <li>_execute_function(func: Callable[..., Any], args: List[Any]) -> Any</li>
+                                        <li>_display_result(result: Any) -> None</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Expand Class Docstring</strong> (20-30 lines)
+                                    <ul style="margin-left: 20px;">
+                                        <li>Architecture role (Tier 3 Facade)</li>
+                                        <li>Key responsibilities (orchestration, delegation)</li>
+                                        <li>Usage pattern (zcli.zfunc.handle())</li>
+                                        <li>Integration context</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Expand Method Docstrings</strong> (30-50 lines each)
+                                    <ul style="margin-left: 20px;">
+                                        <li>handle(): Params, returns, raises, 5-step workflow, 3+ examples</li>
+                                        <li>__init__(): Params, stored attributes, dependencies</li>
+                                        <li>_parse_args_with_display(): Params, returns, delegates to func_args</li>
+                                        <li>_resolve_callable_with_display(): Params, returns, delegates to func_resolver</li>
+                                        <li>_execute_function(): Params, returns, async behavior, auto-injection details</li>
+                                        <li>_display_result(): Params, display format, styling details</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Extract Helper Method for Model Merge</strong>
+                                    <ul style="margin-left: 20px;">
+                                        <li>Create _merge_model_into_args(args, model) helper</li>
+                                        <li>Document merge logic extensively</li>
+                                        <li>Handle edge cases (empty args, non-dict first arg)</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Extract Helper Method for Auto-Injection</strong>
+                                    <ul style="margin-left: 20px;">
+                                        <li>Create _build_injection_kwargs(func, args) helper</li>
+                                        <li>Document injection logic (zcli, session checks)</li>
+                                        <li>Return kwargs dict for execution</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Enhance Async Handling Documentation</strong>
+                                    <ul style="margin-left: 20px;">
+                                        <li>Add extensive comments explaining dual mode</li>
+                                        <li>Document Bifrost mode (running loop + run_coroutine_threadsafe)</li>
+                                        <li>Document Terminal mode (no loop + asyncio.run)</li>
+                                        <li>Explain timeout reasoning</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Add __all__ Definition</strong>
+                                    <ul style="margin-left: 20px;">
+                                        <li>__all__ = ["zFunc"]</li>
+                                    </ul>
+                                </li>
+                            </ol>
+                        </div>
+
+                        <div style="margin-top: 15px;">
+                            <strong>Part B: __init__.py (Package Root) - 2 Steps</strong>
+                            <ol style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                                <li><strong>Expand Module Docstring</strong> (60-80 lines)
+                                    <ul style="margin-left: 20px;">
+                                        <li>Purpose (external Python function execution subsystem)</li>
+                                        <li>4-tier architecture overview</li>
+                                        <li>Public API (zFunc class)</li>
+                                        <li>Key features (async, auto-injection, 5 arg types, 5-step workflow)</li>
+                                        <li>Usage examples (2+: basic usage, via zDispatch)</li>
+                                        <li>Integration points (used by zDispatch, zNavigation)</li>
+                                        <li>Dependencies (zParser, zDisplay, zLoader)</li>
+                                        <li>Version history</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Add Inline Comment to __all__</strong>
+                                    <ul style="margin-left: 20px;">
+                                        <li>__all__ = ["zFunc"]  # External function execution facade (Tier 3)</li>
+                                    </ul>
+                                </li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 15px; padding: 15px; background: #dbeafe; border-left: 4px solid #3b82f6; border-radius: 4px;">
+                        <strong>📊 EXPECTED TRANSFORMATION</strong>
+                        
+                        <table style="width: 100%; margin-top: 10px; border-collapse: collapse;">
+                            <tr style="border-bottom: 1px solid #ddd;">
+                                <th style="text-align: left; padding: 8px;">Metric</th>
+                                <th style="text-align: center; padding: 8px;">Before</th>
+                                <th style="text-align: center; padding: 8px;">After</th>
+                                <th style="text-align: center; padding: 8px;">Change</th>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #ddd;">
+                                <td style="padding: 8px;"><strong>zFunc.py</strong></td>
+                                <td style="text-align: center; padding: 8px;"></td>
+                                <td style="text-align: center; padding: 8px;"></td>
+                                <td style="text-align: center; padding: 8px;"></td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #ddd;">
+                                <td style="padding: 8px;">&nbsp;&nbsp;Total Lines</td>
+                                <td style="text-align: center; padding: 8px;">150</td>
+                                <td style="text-align: center; padding: 8px;">~400</td>
+                                <td style="text-align: center; padding: 8px;">+250 (+167%)</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #ddd;">
+                                <td style="padding: 8px;">&nbsp;&nbsp;Module Docstring</td>
+                                <td style="text-align: center; padding: 8px;">1 line</td>
+                                <td style="text-align: center; padding: 8px;">~90 lines</td>
+                                <td style="text-align: center; padding: 8px;">+89 (+8900%)</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #ddd;">
+                                <td style="padding: 8px;">&nbsp;&nbsp;Type Hints Coverage</td>
+                                <td style="text-align: center; padding: 8px;">~40%</td>
+                                <td style="text-align: center; padding: 8px;">100%</td>
+                                <td style="text-align: center; padding: 8px;">+60%</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #ddd;">
+                                <td style="padding: 8px;">&nbsp;&nbsp;Constants</td>
+                                <td style="text-align: center; padding: 8px;">0</td>
+                                <td style="text-align: center; padding: 8px;">~18</td>
+                                <td style="text-align: center; padding: 8px;">+18</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #ddd;">
+                                <td style="padding: 8px;">&nbsp;&nbsp;Helper Methods</td>
+                                <td style="text-align: center; padding: 8px;">5</td>
+                                <td style="text-align: center; padding: 8px;">7</td>
+                                <td style="text-align: center; padding: 8px;">+2 (DRY)</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #ddd;">
+                                <td style="padding: 8px;">&nbsp;&nbsp;Grade</td>
+                                <td style="text-align: center; padding: 8px;">C+</td>
+                                <td style="text-align: center; padding: 8px;">A+</td>
+                                <td style="text-align: center; padding: 8px;">+4 half-grades</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #ddd;">
+                                <td style="padding: 8px;"><strong>__init__.py</strong></td>
+                                <td style="text-align: center; padding: 8px;"></td>
+                                <td style="text-align: center; padding: 8px;"></td>
+                                <td style="text-align: center; padding: 8px;"></td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #ddd;">
+                                <td style="padding: 8px;">&nbsp;&nbsp;Total Lines</td>
+                                <td style="text-align: center; padding: 8px;">8</td>
+                                <td style="text-align: center; padding: 8px;">~75</td>
+                                <td style="text-align: center; padding: 8px;">+67 (+838%)</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #ddd;">
+                                <td style="padding: 8px;">&nbsp;&nbsp;Module Docstring</td>
+                                <td style="text-align: center; padding: 8px;">1 line</td>
+                                <td style="text-align: center; padding: 8px;">~70 lines</td>
+                                <td style="text-align: center; padding: 8px;">+69 (+6900%)</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #ddd;">
+                                <td style="padding: 8px;">&nbsp;&nbsp;Inline Comments</td>
+                                <td style="text-align: center; padding: 8px;">0</td>
+                                <td style="text-align: center; padding: 8px;">1</td>
+                                <td style="text-align: center; padding: 8px;">+1</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px;">&nbsp;&nbsp;Grade</td>
+                                <td style="text-align: center; padding: 8px;">C</td>
+                                <td style="text-align: center; padding: 8px;">A+</td>
+                                <td style="text-align: center; padding: 8px;">+5 half-grades</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div style="margin-top: 15px; padding: 15px; background: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 4px;">
+                        <strong>✅ IMPLEMENTATION CHECKLIST (22 Items)</strong>
+                        
+                        <div style="margin-top: 15px;">
+                            <strong>zFunc.py (Facade) - 18 Items:</strong>
+                            <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                                <li>☐ Expand module docstring (80-100 lines)</li>
+                                <li>☐ Add 4-tier architecture explanation</li>
+                                <li>☐ Add public API documentation (handle signature)</li>
+                                <li>☐ Add 3+ usage examples (basic, async, auto-injection)</li>
+                                <li>☐ Add 18 module-level constants</li>
+                                <li>☐ Reorganize imports (remove inline, group by category)</li>
+                                <li>☐ Add type hint imports (Any, Callable, Dict, List, Optional)</li>
+                                <li>☐ Add type hints to all 5 methods (100% coverage)</li>
+                                <li>☐ Expand class docstring (20-30 lines)</li>
+                                <li>☐ Expand __init__ docstring (15-20 lines)</li>
+                                <li>☐ Expand handle() docstring (50+ lines)</li>
+                                <li>☐ Expand _parse_args_with_display() docstring (30+ lines)</li>
+                                <li>☐ Expand _resolve_callable_with_display() docstring (30+ lines)</li>
+                                <li>☐ Expand _execute_function() docstring (50+ lines with async details)</li>
+                                <li>☐ Expand _display_result() docstring (30+ lines)</li>
+                                <li>☐ Extract _merge_model_into_args() helper (DRY)</li>
+                                <li>☐ Extract _build_injection_kwargs() helper (DRY)</li>
+                                <li>☐ Add __all__ = ["zFunc"]</li>
+                            </ul>
+                        </div>
+
+                        <div style="margin-top: 15px;">
+                            <strong>__init__.py (Package Root) - 2 Items:</strong>
+                            <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                                <li>☐ Expand module docstring (60-80 lines)</li>
+                                <li>☐ Add inline comment to __all__</li>
+                            </ul>
+                        </div>
+
+                        <div style="margin-top: 15px;">
+                            <strong>Verification - 2 Items:</strong>
+                            <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                                <li>☐ Run tests (verify no regressions)</li>
+                                <li>☐ Run linter (verify zero errors)</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 15px; padding: 15px; background: #d1fae5; border-left: 4px solid #10b981; border-radius: 4px;">
+                        <strong>✅ VERIFIED - FORWARD DEPENDENCIES (4 TODOs Resolved)</strong>
+                        <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                            <li>✅ <strong>Week 6.6 (zDispatch) - dispatch_launcher.py:</strong>
+                                <ul style="margin-left: 20px;">
+                                    <li>✅ Line 412: self.zcli.zfunc.handle(zHorizontal) - Signature matches ✓</li>
+                                    <li>✅ Line 575: self.zcli.zfunc.handle(func_spec, zContext=context) - Signature matches ✓</li>
+                                    <li>✅ 3 TODOs verified (lines 401, 411, 529, 574)</li>
+                                </ul>
+                            </li>
+                            <li>✅ <strong>Week 6.7 (zNavigation) - navigation_menu_builder.py:</strong>
+                                <ul style="margin-left: 20px;">
+                                    <li>✅ Line 461: self.zcli.zfunc.handle(f"zFunc({func_name}, {args}, {kwargs})") - Signature matches ✓</li>
+                                    <li>✅ 1 TODO verified (line 51 docstring note)</li>
+                                </ul>
+                            </li>
+                            <li>✅ <strong>Signature Verified:</strong> handle(zHorizontal, zContext=None)
+                                <ul style="margin-left: 20px;">
+                                    <li>✅ Accepts single string argument (zHorizontal) ✓</li>
+                                    <li>✅ Accepts optional zContext dict ✓</li>
+                                    <li>✅ Returns result (Any type) ✓</li>
+                                    <li>✅ All 4 TODOs from previous weeks resolved ✓</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-icon">🏗️</span>
+                    <h2 class="section-title">Architecture Overview</h2>
+                </div>
+
+                <div class="note">
+                    <strong>4-Tier Architecture (Simple Pattern):</strong>
+                    <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                        <li><strong>Tier 1: Foundation</strong> (func_resolver.py, func_args.py) - 115 lines
+                            <ul style="margin-left: 20px;">
+                                <li>func_resolver.py: Function loading from file (importlib)</li>
+                                <li>func_args.py: Argument parsing with context injection</li>
+                            </ul>
+                        </li>
+                        <li><strong>Tier 2: Package Aggregator</strong> (zFunc_modules/__init__.py) - 12 lines
+                            <ul style="margin-left: 20px;">
+                                <li>Exposes: parse_arguments, split_arguments, resolve_callable</li>
+                            </ul>
+                        </li>
+                        <li><strong>Tier 3: Facade</strong> (zFunc.py) - 150 lines
+                            <ul style="margin-left: 20px;">
+                                <li>Main entry: handle(zHorizontal, zContext)</li>
+                                <li>Delegates to: zParser (path parsing), func_resolver (loading), func_args (parsing)</li>
+                                <li>Features: Auto-injection (zcli, session), async support, result display</li>
+                            </ul>
+                        </li>
+                        <li><strong>Tier 4: Package Root</strong> (__init__.py) - 8 lines
+                            <ul style="margin-left: 20px;">
+                                <li>Exposes zFunc facade to zCLI</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="note" style="margin-top: 20px;">
+                    <strong>Key Features:</strong>
+                    <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                        <li><strong>Function Loading:</strong> Dynamic loading from Python files (importlib)</li>
+                        <li><strong>Context Injection:</strong> zContext, zHat, zConv, this.field notation</li>
+                        <li><strong>Auto-Injection:</strong> Automatic zcli and session injection if function signature accepts them</li>
+                        <li><strong>Async Support:</strong> Handles both sync and async functions (coroutines)</li>
+                        <li><strong>zParser Delegation:</strong> Uses parse_function_path() and parse_json_expr()</li>
+                        <li><strong>Result Display:</strong> JSON formatting with styled output</li>
+                    </ul>
                 </div>
             </div>
         </div>
 
         <div class="footer">
             <p>Week 6.10: zFunc Subsystem | zCLI v1.5.4+</p>
+            <p style="margin-top: 10px; font-size: 0.85em;">Pre-Audit Review Complete | Ready for Implementation</p>
         </div>
     </div>
 </body>
 </html>
-
