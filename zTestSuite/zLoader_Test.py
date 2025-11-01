@@ -16,7 +16,7 @@ import tempfile
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from zCLI.subsystems.zLoader import zLoader
-from zCLI.subsystems.zLoader.zLoader_modules import (
+from zCLI.subsystems.zLoader.loader_modules import (
     CacheOrchestrator, SystemCache, PinnedCache, SchemaCache, PluginCache
 )
 
@@ -612,7 +612,7 @@ class TestzLoaderFileLoading(unittest.TestCase):
         self.mock_zcli.display.zDeclare = Mock()
         self.mock_zcli.zparser = Mock()
 
-    @patch('zCLI.subsystems.zLoader.zLoader_modules.loader_io.open', new_callable=mock_open, read_data='{"test": "data"}')
+    @patch('zCLI.subsystems.zLoader.loader_modules.loader_io.open', new_callable=mock_open, read_data='{"test": "data"}')
     def test_load_file_with_cache_miss(self, mock_file):
         """Test loading file when not in cache."""
         self.mock_zcli.zparser.zPath_decoder = Mock(return_value=("/path/to/file", "file.json"))
@@ -625,7 +625,7 @@ class TestzLoaderFileLoading(unittest.TestCase):
         self.assertEqual(result, {"test": "data"})
         self.mock_zcli.zparser.parse_file_content.assert_called_once()
 
-    @patch('zCLI.subsystems.zLoader.zLoader_modules.loader_io.open', new_callable=mock_open, read_data='{"test": "data"}')
+    @patch('zCLI.subsystems.zLoader.loader_modules.loader_io.open', new_callable=mock_open, read_data='{"test": "data"}')
     def test_load_file_with_cache_hit(self, mock_file):
         """Test loading file when already in cache."""
         self.mock_zcli.zparser.zPath_decoder = Mock(return_value=("/path/to/file", "file.json"))

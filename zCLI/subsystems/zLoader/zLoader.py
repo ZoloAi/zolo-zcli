@@ -1,19 +1,245 @@
 # zCLI/subsystems/zLoader/zLoader.py
 
-"""zVaFile loader and cache manager."""
+"""
+zLoader facade for file loading, caching, and zParser delegation.
 
-from .zLoader_modules import CacheOrchestrator, load_file_raw
+This module provides the main facade (Tier 5) for zLoader subsystem, handling
+zVaFile (UI, Schema, Config) loading with intelligent caching and delegation to
+zParser for path resolution and content parsing. It serves as the public interface
+between zCLI and the internal zLoader 6-tier architecture.
+
+Purpose
+-------
+The zLoader facade serves as Tier 5 (Facade) in the zLoader architecture, providing
+a simple, unified interface for loading and parsing zVaFiles. It delegates to:
+    - CacheOrchestrator (Tier 3) for intelligent caching
+    - zParser subsystem for path resolution and file parsing
+    - load_file_raw (Tier 1) for raw file I/O
+
+Architecture
+------------
+**Tier 5 - Facade (Public Interface to zCLI)**
+    - Position: Public interface between zCLI and internal zLoader components
+    - Delegates To: CacheOrchestrator (Tier 3), zParser, load_file_raw (Tier 1)
+    - Used By: zCLI.py, zDispatch, zNavigation (via walker)
+    - Purpose: Unified file loading + intelligent caching + zParser delegation
+
+**6-Tier Architecture**:
+    - Tier 1: Foundation (loader_io.py - Raw file I/O)
+    - Tier 2: Cache Implementations (SystemCache, PinnedCache, SchemaCache, PluginCache)
+    - Tier 3: Cache Orchestrator (CacheOrchestrator - Unified cache router)
+    - Tier 4: Package Aggregator (loader_modules/__init__.py - Public API exposure)
+    - Tier 5: Facade ← THIS MODULE
+    - Tier 6: Package Root (__init__.py - zLoader package entry point)
+
+Key Responsibilities
+--------------------
+1. **File Loading**: Load zVaFiles (UI, Schema, Config) from disk or cache
+2. **Intelligent Caching**: Cache UI/config files, skip schemas (loaded fresh)
+3. **zParser Delegation**: Delegate path resolution and parsing to zParser subsystem
+4. **Session Integration**: Support session-based file loading (zPath=None)
+
+Caching Strategy
+----------------
+**Cached (System Cache)**:
+    - UI files (zUI.*.yaml): User interface definitions
+    - Config files (zConfig.*.yaml): Configuration files
+    - Cache Key: f"parsed:{zPath_key}" (uses zPath, not OS path)
+    - Cache Type: "system" (LRU eviction, max_size=100)
+
+**NOT Cached (Fresh Load)**:
+    - Schema files (zSchema.*.yaml): Database schemas
+    - Reason: Schemas should reflect latest DB structure
+    - Detection: "zSchema" in filename or ".yaml|zSchema" extension
+
+**Cache Key Construction**:
+    - Format: "parsed:{zPath_key}"
+    - Example: "parsed:@.zUI.users.yaml"
+    - Uses zPath (declarative path) instead of OS path
+
+Integration Points
+------------------
+**Week 6.6 (zDispatch)**:
+    - dispatch_launcher.py (line 447): raw_zFile = self.zcli.loader.handle(zVaFile)
+    - dispatch_modifiers.py (line 570): raw_zFile = self.zcli.loader.handle(zVaFile)
+    - Purpose: Load UI files for command dispatch and modifier resolution
+
+**Week 6.7 (zNavigation)**:
+    - navigation_linking.py: walker.loader.handle() (via walker parameter)
+    - Purpose: Load target UI files when processing zLink expressions
+
+**Week 6.8 (zParser)**:
+    - Uses zpath_decoder: Path resolution (zPath → full OS path)
+    - Uses identify_zfile: File type identification and extension detection
+    - Uses parse_file_content: Parse raw YAML/JSON content into Python objects
+
+External Usage
+--------------
+**Used By**:
+    - zCLI.py: zcli.loader.handle(zPath)
+    - zDispatch (via zcli.loader): self.zcli.loader.handle(zVaFile)
+    - zNavigation (via walker.loader): walker.loader.handle()
+
+Usage Examples
+--------------
+**UI File Loading (with zPath)**:
+    >>> loader = zLoader(zcli)
+    >>> ui_data = loader.handle("@.zUI.users.yaml")
+    >>> # Returns: Parsed UI dictionary (cached for subsequent loads)
+
+**UI File Loading (session fallback)**:
+    >>> loader = zLoader(zcli)
+    >>> ui_data = loader.handle()  # zPath=None, uses session values
+    >>> # Returns: Parsed UI dictionary from session context
+
+**Config File Loading**:
+    >>> loader = zLoader(zcli)
+    >>> config_data = loader.handle("~.zMachine.zConfig.app.yaml")
+    >>> # Returns: Parsed config dictionary (cached)
+
+**Schema File Loading (fresh load)**:
+    >>> loader = zLoader(zcli)
+    >>> schema_data = loader.handle("@.zSchema.users.yaml")
+    >>> # Returns: Parsed schema dictionary (NOT cached, always fresh)
+
+Layer Position
+--------------
+Layer 1, Position 6 (zLoader - Tier 5 Facade)
+    - Tier 1: Foundation (loader_io.py)
+    - Tier 2: Cache Implementations (4 caches)
+    - Tier 3: Cache Orchestrator (cache_orchestrator.py)
+    - Tier 4: Package Aggregator (loader_modules/__init__.py)
+    - Tier 5: Facade ← THIS MODULE
+    - Tier 6: Package Root (__init__.py)
+
+Dependencies
+------------
+Internal:
+    - loader_modules.CacheOrchestrator (Tier 3)
+    - loader_modules.load_file_raw (Tier 1)
+    - zParser.zpath_decoder, identify_zfile, parse_file_content
+
+External:
+    - zCLI imports: Any, Dict, Optional (for type hints)
+
+See Also
+--------
+- cache_orchestrator.py: Unified cache router (Tier 3)
+- loader_io.py: Raw file I/O (Tier 1)
+- zParser: Path resolution and content parsing
+
+Version History
+---------------
+- v1.5.4: Industry-grade upgrade (type hints, constants, comprehensive docs,
+          integration points documentation, caching strategy documentation)
+- v1.5.3: Original implementation (file loading, caching, zParser delegation)
+"""
+
+from zCLI import Any, Dict, Optional
+from .loader_modules import CacheOrchestrator, load_file_raw
+
+# ============================================================================
+# MODULE CONSTANTS
+# ============================================================================
+
+# Color Constants
+COLOR_KEY: str = "LOADER"
+
+# File Type Constants
+FILE_TYPE_UI: str = "zUI"
+FILE_TYPE_SCHEMA: str = "zSchema"
+
+# Session Keys (TODO: Import from zConfig when available)
+SESSION_KEY_VAFILENAME: str = "zVaFilename"
+SESSION_KEY_VAFILE_PATH: str = "zVaFile_path"
+
+# Cache Constants
+CACHE_KEY_PREFIX: str = "parsed:"
+CACHE_TYPE_SYSTEM: str = "system"
+
+# Default Values
+DEFAULT_PATH_SYMBOL: str = "@"
+SCHEMA_EXTENSION: str = ".yaml|zSchema"
+
+# Display Messages
+MSG_READY: str = "zLoader Ready"
+MSG_START: str = "zLoader"
+MSG_CACHED: str = "zLoader return (cached)"
+MSG_RETURN: str = "zLoader return"
+
+# ============================================================================
+# ZLOADER CLASS
+# ============================================================================
+
 
 class zLoader:
-    """Middleware layer for loading and caching zVaFiles (UI, Schema, Config)."""
+    """
+    Middleware layer for loading and caching zVaFiles (UI, Schema, Config).
 
-    def __init__(self, zcli):
-        """Initialize zLoader with zCLI instance."""
+    The zLoader class serves as the main facade for the zLoader subsystem, providing
+    intelligent file loading with caching and delegation to zParser for path resolution
+    and content parsing. It implements a smart caching strategy that caches UI/config
+    files but loads schemas fresh each time.
+
+    Attributes
+    ----------
+    zcli : Any
+        Reference to main zCLI instance (provides access to all subsystems)
+    logger : Any
+        Reference to zCLI logger for debug/info logging
+    zSession : Dict[str, Any]
+        Reference to zCLI session dictionary for state management
+    display : Any
+        Reference to zDisplay for visual feedback (zDeclare calls)
+    mycolor : str
+        Color key for display messages (COLOR_KEY constant)
+    cache : CacheOrchestrator
+        Tier 3 cache orchestrator for managing all cache tiers
+    zpath_decoder : Callable
+        zParser method for path resolution (zPath → full OS path)
+    identify_zfile : Callable
+        zParser method for file type identification
+    parse_file_content : Callable
+        zParser method for parsing raw YAML/JSON content
+
+    Caching Strategy
+    ----------------
+    **Cached (System Cache)**:
+        - UI files (zUI.*.yaml): User interface definitions
+        - Config files (zConfig.*.yaml): Configuration files
+        - Cache Key: "parsed:{zPath_key}" (uses zPath, not OS path)
+        - Cache Type: "system" (LRU eviction, max_size=100)
+
+    **NOT Cached (Fresh Load)**:
+        - Schema files (zSchema.*.yaml): Database schemas
+        - Reason: Schemas should reflect latest DB structure
+        - Detection: "zSchema" in filename or ".yaml|zSchema" extension
+    """
+
+    def __init__(self, zcli: Any) -> None:
+        """
+        Initialize zLoader with zCLI instance.
+
+        Parameters
+        ----------
+        zcli : Any
+            Main zCLI instance providing access to:
+                - session: Session dictionary for state management
+                - logger: Logger for debug/info logging
+                - display: zDisplay for visual feedback
+                - zparser: zParser for path resolution and parsing
+
+        Notes
+        -----
+        - Initializes cache orchestrator (manages all 4 cache tiers)
+        - Stores parser method references for cleaner code
+        - Displays "zLoader Ready" message via zDisplay
+        """
         self.zcli = zcli
         self.logger = zcli.logger
         self.zSession = zcli.session
         self.display = zcli.display
-        self.mycolor = "LOADER"
+        self.mycolor = COLOR_KEY
 
         # Initialize cache orchestrator (manages all cache tiers including plugins)
         self.cache = CacheOrchestrator(self.zSession, self.logger, zcli)
@@ -22,16 +248,96 @@ class zLoader:
         self.zpath_decoder = zcli.zparser.zPath_decoder
         self.identify_zfile = zcli.zparser.identify_zFile
         self.parse_file_content = zcli.zparser.parse_file_content
-        self.display.zDeclare("zLoader Ready", color=self.mycolor, indent=0, style="full")
+        self.display.zDeclare(MSG_READY, color=self.mycolor, indent=0, style="full")
 
-    def handle(self, zPath=None):
-        """Main entry point for zVaFile loading and parsing."""
-        self.display.zDeclare("zLoader", color=self.mycolor, indent=1, style="single")
+    def handle(self, zPath: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Main entry point for zVaFile loading and parsing.
+
+        Loads and parses a zVaFile (UI, Schema, Config) with intelligent caching.
+        Delegates to zParser for path resolution and content parsing. Supports
+        both explicit zPath specification and session-based fallback (zPath=None).
+
+        Parameters
+        ----------
+        zPath : Optional[str], default=None
+            Declarative path to zVaFile (e.g., "@.zUI.users.yaml")
+            - If None: Uses session values (SESSION_KEY_VAFILENAME, SESSION_KEY_VAFILE_PATH)
+            - If provided: Explicit path to load
+            - Symbols: "@" (workspace-relative), "~" (absolute), none (relative to cwd)
+
+        Returns
+        -------
+        Dict[str, Any]
+            Parsed zVaFile content as Python dictionary. Structure depends on file type:
+                - UI files: {zName, zLoad, zBlock, zOptions, etc.}
+                - Schema files: {tables, fields, constraints, etc.}
+                - Config files: {settings, values, etc.}
+
+        Raises
+        ------
+        FileNotFoundError
+            If zVaFile cannot be found (via zParser)
+        ParseError
+            If zVaFile content is invalid YAML/JSON (via zParser)
+
+        Examples
+        --------
+        **UI File Loading (with zPath)**:
+            >>> loader = zLoader(zcli)
+            >>> ui_data = loader.handle("@.zUI.users.yaml")
+            >>> # Returns: {'zName': 'users', 'zBlock': [...], ...}
+
+        **UI File Loading (session fallback)**:
+            >>> # Session has: {'zVaFilename': 'users.yaml', 'zVaFile_path': '@'}
+            >>> loader = zLoader(zcli)
+            >>> ui_data = loader.handle()  # zPath=None
+            >>> # Returns: {'zName': 'users', 'zBlock': [...], ...}
+
+        **Config File Loading**:
+            >>> loader = zLoader(zcli)
+            >>> config_data = loader.handle("~.zMachine.zConfig.app.yaml")
+            >>> # Returns: {'setting1': 'value1', 'setting2': 'value2', ...}
+
+        **Schema File Loading (fresh load)**:
+            >>> loader = zLoader(zcli)
+            >>> schema_data = loader.handle("@.zSchema.users.yaml")
+            >>> # Returns: {'tables': [...], 'fields': [...], ...} (NOT cached)
+
+        **Navigation Linking (via walker.loader)**:
+            >>> # In navigation_linking.py:
+            >>> target_ui = walker.loader.handle(target_file)
+            >>> # Returns: Parsed target UI dictionary
+
+        **Command Dispatch (via zcli.loader)**:
+            >>> # In dispatch_launcher.py or dispatch_modifiers.py:
+            >>> raw_zFile = self.zcli.loader.handle(zVaFile)
+            >>> # Returns: Parsed UI dictionary for command dispatch
+
+        Notes
+        -----
+        **Caching Strategy**:
+            - Cached: UI files (zUI.*), Config files (zConfig.*)
+            - NOT Cached: Schema files (zSchema.*) - always loaded fresh
+            - Cache Key: "parsed:{zPath_key}" (uses zPath, not OS path)
+            - Cache Type: "system" (LRU eviction, max_size=100)
+
+        **zParser Delegation**:
+            - Path Resolution: self.zpath_decoder(zPath, zType)
+            - File Identification: self.identify_zfile(zVaFilename, zVaFile_fullpath)
+            - Content Parsing: self.parse_file_content(zFile_raw, zFile_extension, ...)
+
+        **Integration Points**:
+            - zDispatch: dispatch_launcher.py, dispatch_modifiers.py
+            - zNavigation: navigation_linking.py (via walker.loader)
+            - zCLI: Direct access via zcli.loader
+        """
+        self.display.zDeclare(MSG_START, color=self.mycolor, indent=1, style="single")
         self.logger.debug("zFile_zObj: %s", zPath)
 
         # Determine if we should use session values (UI file loading)
         # When zPath is None and session has zVaFilename, use session values
-        zType = "zUI" if not zPath and self.zSession.get("zVaFilename") else None
+        zType = FILE_TYPE_UI if not zPath and self.zSession.get(SESSION_KEY_VAFILENAME) else None
 
         # Step 1: Use zParser for path resolution and file discovery
         zVaFile_fullpath, zVaFilename = self.zpath_decoder(zPath, zType)
@@ -39,16 +345,16 @@ class zLoader:
         self.logger.debug("zFilePath_identified!\n%s", zFilePath_identified)
 
         # Detect if this is a zSchema file (should not be cached)
-        is_schema = "zSchema" in zVaFilename or zFile_extension == ".yaml|zSchema"
+        is_schema = FILE_TYPE_SCHEMA in zVaFilename or zFile_extension == SCHEMA_EXTENSION
 
         if not is_schema:
             # Step 2: Check system cache (UI and config files)
             # Use zPath for cache key instead of OS path
-            zPath_key = f"{self.zSession.get('zVaFile_path', '@')}.{zVaFilename}"
-            cache_key = f"parsed:{zPath_key}"
-            cached = self.cache.get(cache_key, cache_type="system", filepath=zFilePath_identified)
+            zPath_key = f"{self.zSession.get(SESSION_KEY_VAFILE_PATH, DEFAULT_PATH_SYMBOL)}.{zVaFilename}"
+            cache_key = f"{CACHE_KEY_PREFIX}{zPath_key}"
+            cached = self.cache.get(cache_key, cache_type=CACHE_TYPE_SYSTEM, filepath=zFilePath_identified)
             if cached is not None:
-                self.display.zDeclare("zLoader return (cached)", color=self.mycolor, indent=1, style="~")
+                self.display.zDeclare(MSG_CACHED, color=self.mycolor, indent=1, style="~")
                 self.logger.debug("[SystemCache] Cache hit: %s", cache_key)
                 return cached
         else:
@@ -64,7 +370,7 @@ class zLoader:
         self.logger.debug("zLoader parse result:\n%s", result)
 
         # Step 6: Return result (cache only if not a schema)
-        self.display.zDeclare("zLoader return", color=self.mycolor, indent=1, style="~")
+        self.display.zDeclare(MSG_RETURN, color=self.mycolor, indent=1, style="~")
 
         # Don't cache schemas - they should be loaded fresh each time
         if is_schema:
@@ -72,4 +378,11 @@ class zLoader:
             return result
 
         # Cache other resources (UI, configs, etc.) in system cache
-        return self.cache.set(cache_key, result, cache_type="system", filepath=zFilePath_identified)
+        return self.cache.set(cache_key, result, cache_type=CACHE_TYPE_SYSTEM, filepath=zFilePath_identified)
+
+
+# ============================================================================
+# MODULE METADATA
+# ============================================================================
+
+__all__ = ["zLoader"]
