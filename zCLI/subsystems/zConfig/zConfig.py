@@ -154,6 +154,62 @@ class zConfig:
         """
         return LoggerConfig(self.environment, self.zcli, session_data)
 
+    def get_paths_info(self) -> Dict[str, str]:
+        """Get path information for debugging/diagnostics.
+        
+        Returns dict with all config paths (system, user, data, cache, logs).
+        Used by shell config check command for system diagnostics.
+        
+        Returns:
+            Dict[str, str]: Dictionary with path information:
+                - os: Operating system type
+                - system_config_dir: System-level config directory
+                - system_config_defaults: Default config files location
+                - system_machine_config: System machine config file
+                - user_config_dir: User config directory
+                - user_config_legacy: Legacy user config directory (if exists)
+                - user_zconfigs_dir: User zConfigs directory
+                - user_data_dir: User data directory
+                - user_cache_dir: User cache directory
+                - user_logs_dir: User logs directory
+        
+        Example:
+            paths = zcli.config.get_paths_info()
+            print(f"User config: {paths['user_config_dir']}")
+        
+        Notes:
+            - Delegates to sys_paths.get_info() for actual path resolution
+            - All paths are returned as strings (converted from Path objects)
+            - Used for config check command diagnostics
+        """
+        return self.sys_paths.get_info()
+
+    def get_config_sources(self) -> list:
+        """Get list of config sources that were loaded.
+        
+        Returns ordered list of source names that were successfully loaded during
+        initialization. Used by config check command to verify loader functionality.
+        
+        Returns:
+            List[str]: List of config source names, e.g.:
+                ['machine', 'environment']
+        
+        Example:
+            sources = zcli.config.get_config_sources()
+            print(f"Config loaded from {len(sources)} sources: {', '.join(sources)}")
+        
+        Notes:
+            - Sources are loaded in hierarchical order (machine, environment)
+            - Empty list means no sources loaded (should not happen in normal operation)
+            - Used for config check command to verify loader is working
+        """
+        sources = []
+        if hasattr(self, 'machine') and self.machine:
+            sources.append('machine')
+        if hasattr(self, 'environment') and self.environment:
+            sources.append('environment')
+        return sources
+
     @property
     def persistence(self) -> ConfigPersistence:
         """Lazy-load persistence subsystem when needed for saving changes.

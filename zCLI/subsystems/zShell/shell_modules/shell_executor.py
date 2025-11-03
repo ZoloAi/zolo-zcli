@@ -1,15 +1,15 @@
-# zCLI/subsystems/zShell/zShell_modules/zShell_executor.py
+# zCLI/subsystems/zShell/shell_modules/shell_executor.py
 
 """Command execution engine with wizard canvas mode support."""
 
-from .executor_commands import (
+from .commands import (
     execute_data, execute_func, execute_session, execute_walker,
-    execute_open, execute_test, execute_auth, execute_load, 
+    execute_open, execute_test, execute_auth, execute_load,
     execute_export, execute_utils, execute_config, execute_comm,
-    execute_wizard_step, execute_plugin, execute_history, execute_echo,
-    execute_ls, execute_cd, execute_pwd, execute_alias
+    execute_wizard_step, execute_plugin,
+    execute_ls, execute_cd, execute_pwd, execute_shortcut, execute_where, execute_help
 )
-from .executor_commands.config_persistence_executor import execute_config_persistence
+from .commands.shell_cmd_config_persistence import execute_config_persistence
 
 class CommandExecutor:
     """Command execution engine with wizard canvas mode support."""
@@ -226,14 +226,15 @@ class CommandExecutor:
             "comm": execute_comm,
             "load": execute_load,
             "plugin": execute_plugin,
-            "history": execute_history,
-            "echo": execute_echo,
-            "print": execute_echo,  # alias for echo
             "ls": execute_ls,
-            "dir": execute_ls,  # alias for ls
+            "list": execute_ls,  # Modern alias for ls (beginner-friendly)
+            "dir": execute_ls,   # Windows alias for ls
             "cd": execute_cd,
-            "pwd": execute_pwd,
-            "alias": execute_alias,
+            "cwd": execute_pwd,       # Primary: Current Working Directory
+            "pwd": execute_pwd,       # Alias: Unix compatibility (Print Working Directory)
+            "shortcut": execute_shortcut,
+            "where": execute_where,
+            "help": execute_help,
         }
 
         executor = command_map.get(command_type)

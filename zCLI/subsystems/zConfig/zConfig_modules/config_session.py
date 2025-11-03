@@ -143,6 +143,7 @@ CONTEXT_DUAL = "dual"
 ZCACHE_KEY_SYSTEM = "system_cache"
 ZCACHE_KEY_PINNED = "pinned_cache"
 ZCACHE_KEY_SCHEMA = "schema_cache"
+ZCACHE_KEY_PLUGIN = "plugin_cache"
 
 # wizard_mode nested keys
 WIZARD_KEY_ACTIVE = "active"
@@ -277,6 +278,7 @@ class SessionConfig:
                 ZCACHE_KEY_SYSTEM: {},
                 ZCACHE_KEY_PINNED: {},
                 ZCACHE_KEY_SCHEMA: {},
+                ZCACHE_KEY_PLUGIN: {},
             },
             SESSION_KEY_WIZARD_MODE: {
                 WIZARD_KEY_ACTIVE: False,

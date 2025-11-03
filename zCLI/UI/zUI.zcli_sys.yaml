@@ -1,3 +1,196 @@
+Help:
+  ~Root*: ["^Where", "^Shortcut", "^CD", "^CWD/PWD", "^LS/List/Dir", "^Session", "stop"]
+  
+  "^Where":
+    zDisplay:
+      event: text
+      content: |
+        
+        ═══════════════════════════════════════════════════════════════════
+        WHERE Command - Toggle zPath Display in Prompt
+        ═══════════════════════════════════════════════════════════════════
+        
+        Syntax: where [action]
+        
+        Actions:
+          (no args) or status - Show current mode
+          on                  - Enable zPath in prompt
+          off                 - Disable zPath (default)
+          toggle              - Switch between on/off
+        
+        Examples:
+          where                 # Check current status
+          where on              # Show zPath in prompt
+          where off             # Hide zPath from prompt
+          where toggle          # Toggle current state
+        
+        Prompt Formats:
+          Default (off):  zCLI> 
+          Enabled (on):   zCLI [~.Projects.zolo-zcli]>
+    
+  "^Shortcut":
+    zDisplay:
+      event: text
+      content: |
+        
+        ═══════════════════════════════════════════════════════════════════
+        SHORTCUT Command - Create and Manage Command Shortcuts
+        ═══════════════════════════════════════════════════════════════════
+        
+        Syntax: shortcut [name[=command]] [options]
+        
+        Actions:
+          (no args)            - List all shortcuts
+          name="command"       - Create/update shortcut
+          --remove name        - Remove shortcut
+          --save [file]        - Save shortcuts to file
+          --load [file]        - Load shortcuts from file
+          --clear              - Clear all shortcuts
+        
+        Examples:
+          shortcut                           # List all shortcuts
+          shortcut demos="cd @.Demos"         # Create shortcut
+          shortcut ll="ls --sizes --hidden"   # Create ls alias
+          shortcut --remove ll               # Remove shortcut
+
+  "^CD":
+    zDisplay:
+      event: text
+      content: |
+        
+        ═══════════════════════════════════════════════════════════════════
+        CD Command - Change Current Working Directory
+        ═══════════════════════════════════════════════════════════════════
+        
+        Syntax: cd [path]
+        
+        Path Formats:
+          cd @.Demos           # Workspace-relative zPath
+          cd ~                 # Home directory
+          cd ..                # Parent directory
+          cd /absolute/path    # Absolute path
+        
+        Examples:
+          cd @.Demos                    # Navigate to workspace/Demos
+          cd @.zTestSuite.demos         # Deep navigation with zPath
+          cd ~                          # Go to home directory
+          cd ..                         # Go up one level
+
+  "^CWD/PWD":
+    zDisplay:
+      event: text
+      content: |
+        
+        ═══════════════════════════════════════════════════════════════════
+        CWD/PWD Command - Show Current Working Directory
+        ═══════════════════════════════════════════════════════════════════
+        
+        Syntax: cwd  or  pwd
+        
+        Display:
+          1. OS Path     - Standard filesystem path
+          2. zPath       - zCLI declarative path format
+        
+        Examples:
+          cwd                   # Show current directory (both formats)
+          pwd                   # Same as cwd (Unix compatibility)
+        
+        Aliases:
+          cwd - Primary (Current Working Directory)
+          pwd - Alias (Unix standard: Print Working Directory)
+
+  "^LS/List/Dir":
+    zDisplay:
+      event: text
+      content: |
+        
+        ═══════════════════════════════════════════════════════════════════
+        LS Command - List Directory Contents
+        ═══════════════════════════════════════════════════════════════════
+        
+        Syntax: ls [path] [options]
+        
+        Options:
+          --sizes / -s         - Show file sizes
+          --hidden / -h        - Show hidden files (.*)
+          --deep / -d          - Recursive listing
+          --files / -f         - Files only
+          --dirs / -r          - Directories only
+        
+        Legacy Options:
+          -l, --long           - Same as --sizes
+          -a, --all            - Same as --hidden
+          -r, --recursive      - Same as --deep
+        
+        Examples:
+          ls                            # List current directory
+          ls @.Demos                    # List workspace/Demos
+          ls --sizes                    # Show with file sizes
+          ls --hidden                   # Include hidden files
+          ls --files                    # Files only
+        
+        Aliases:
+          ls   - Primary (Unix standard)
+          list - Alias (beginner-friendly)
+          dir  - Alias (Windows compatibility)
+
+  "^Session":
+    zDisplay:
+      event: text
+      content: |
+        
+        ═══════════════════════════════════════════════════════════════════
+        SESSION Command - Manage zCLI Session State
+        ═══════════════════════════════════════════════════════════════════
+        
+        Syntax: session [action] [key] [value]
+        
+        Actions:
+          (no args) or info    - Show session information
+          get <key>            - Get specific session value
+          set <key> <value>    - Set session value (with validation)
+        
+        Session Information Displayed:
+          • zMode        - Current execution mode (terminal/bifrost)
+          • zWorkspace   - Original workspace root (constant "home base")
+          • zMachine     - Machine identity and system info
+          • zAuth        - Authentication status and roles
+        
+        Examples:
+          session                      # Show all session info
+          session info                 # Same as above
+          session get zMode            # Get current mode
+          session set mykey myvalue    # Set custom session value
+          session set zMode bifrost    # Change execution mode (allowed)
+        
+        Session Set Validation:
+          Protected Keys (Read-Only):
+            • zS_id, zMachine, logger_instance, system_env, virtual_env
+            • Cannot be modified (system constants)
+          
+          Framework-Managed Keys (Use Dedicated Commands):
+            • zAuth, zVaFile_path, zVaFilename, zBlock, zCrumbs
+            • zCache, wizard_mode, zSpark
+            • Cannot be set directly (managed by subsystems)
+          
+          User-Configurable Keys (Allowed):
+            • zMode, zWorkspace, zLogger, zTraceback
+            • Custom keys (any key not in above lists)
+        
+        Important Notes:
+          • zWorkspace is the ORIGINAL workspace root (set at shell startup)
+          • Current directory is shown by 'cwd' or 'where' prompt
+          • Use 'cd @.' to return to zWorkspace root
+          • Protected keys cannot be modified for security/stability
+        
+        Phase 2 Enhancement (Future):
+          Additional sub-commands for comprehensive session coverage:
+          • session crumbs    - Navigation breadcrumb history
+          • session cache     - Cache statistics and management
+          • session blocks    - Active zBlock contexts
+          • session vars      - User-defined session variables
+          • session history   - Command/navigation history
+
 Uninstall:
   ~Root*: ["Framework Only", "Clean Uninstall", "Dependencies Only", "stop"]
   "Framework Only": "zFunc(@.zCLI.utils.uninstall.uninstall_framework_only)"

@@ -1,7 +1,10 @@
-# zCLI/subsystems/zShell/zShell_modules/executor_commands/alias_utils.py
+# zCLI/subsystems/zShell/shell_modules/commands/shell_cmd_shortcut_utils.py
 
-# zCLI/subsystems/zShell_modules/executor_commands/alias_utils.py
-"""Alias resolution utilities for $alias references in commands."""
+"""zLoader alias resolution utilities for $alias references in data commands.
+
+Note: This is for zLoader's $alias system (e.g. $mydata), NOT for shell command shortcuts.
+Shell command shortcuts are handled by shell_cmd_shortcut.py.
+"""
 
 def resolve_alias(value, pinned_cache, logger, raise_on_missing=True):
     """Resolve $alias to cached content from PinnedCache, returns (resolved_value, is_alias)."""

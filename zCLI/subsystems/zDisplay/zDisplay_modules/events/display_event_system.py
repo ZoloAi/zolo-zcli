@@ -359,7 +359,11 @@ from zCLI.subsystems.zConfig.zConfig_modules.config_session import (
     SESSION_KEY_ZVAFILENAME,        # "zVaFilename"
     SESSION_KEY_ZBLOCK,             # "zBlock"
     SESSION_KEY_ZCRUMBS,            # "zCrumbs"
-    SESSION_KEY_ZCACHE,             # "zCache" - documented for future use  # noqa: F401
+    SESSION_KEY_ZCACHE,             # "zCache" - NOW USED for cache display
+    ZCACHE_KEY_SYSTEM,              # "system_cache" - System-level cache
+    ZCACHE_KEY_PINNED,              # "pinned_cache" - Pinned items
+    ZCACHE_KEY_SCHEMA,              # "schema_cache" - Database schemas
+    ZCACHE_KEY_PLUGIN,              # "plugin_cache" - Loaded plugins
     SESSION_KEY_WIZARD_MODE,        # "wizard_mode" - documented for future use  # noqa: F401
     SESSION_KEY_ZSPARK,             # "zSpark" - documented for future use  # noqa: F401
     SESSION_KEY_VIRTUAL_ENV,        # "virtual_env" - documented for future use  # noqa: F401
@@ -762,6 +766,7 @@ class zSystem:
         - zMachine (machine configuration)
         - zAuth (authentication state - three-tier aware)
         - zWorkspace, zVaFile_path, zVaFilename, zBlock
+        - zCache (4-tier caching system with item counts)
         
         Args:
             session_data: zCLI session dictionary (zcli.session)
@@ -781,9 +786,10 @@ class zSystem:
               1. Header: "View zSession"
               2. Core fields: zSession_ID, zMode
               3. zMachine section (if present)
-              4. Workspace fields
+              4. Workspace fields (zWorkspace, zVaFile_path, zVaFilename, zBlock)
               5. zAuth section (if present) - three-tier aware
-              6. Optional break prompt
+              6. zCache section (4-tier caching with item counts)
+              7. Optional break prompt
         
         Usage:
             # Display full session
@@ -799,8 +805,9 @@ class zSystem:
             )
         
         Notes:
-            - Uses SESSION_KEY_* constants for all session access
-            - Composes _display_zmachine() and _display_zauth() for subsections
+            - Uses SESSION_KEY_* and ZCACHE_KEY_* constants for all session access
+            - Composes _display_zmachine(), _display_zauth(), _display_zcache() for subsections
+            - Shows None for unset workspace fields (user visibility)
             - Handles missing session data gracefully
         """
         # Try Bifrost (GUI) mode first - send clean event
@@ -828,24 +835,34 @@ class zSystem:
         if zMachine:
             self._display_zmachine(zMachine)
 
-        # Session fields
+        # Session fields (show all, including None values)
         self._output_text("", break_after=False)
         for field_key in SESSION_WORKSPACE_FIELDS:
             value = session_data.get(field_key)
-            if value:
-                # Extract field name from constant (e.g., SESSION_KEY_ZWORKSPACE → "zWorkspace")
-                field_name = field_key  # Constants match the actual field names
-                self._display_field(field_name, value)
+            # Extract field name from constant (e.g., SESSION_KEY_ZWORKSPACE → "zWorkspace")
+            field_name = field_key  # Constants match the actual field names
+            # Display all fields, including None (user wants to see what's not set)
+            self._display_field(field_name, value if value is not None else "None")
 
         # zAuth section
         zAuth = session_data.get(SESSION_KEY_ZAUTH, {})
         if zAuth:
             self._display_zauth(zAuth)
 
+        # zCache section (4-tier caching system)
+        zCache = session_data.get(SESSION_KEY_ZCACHE, {})
+        if zCache:
+            self._display_zcache(zCache)
+
         # Optional break at the end
         if break_after:
             self._output_text("", break_after=False)
-            self._output_text(break_message or DEFAULT_BREAK_MESSAGE, break_after=True)
+            # Display break message and pause (break_after adds the actual pause)
+            if break_message:
+                self._output_text(break_message, break_after=True)
+            else:
+                # Use BasicOutputs text() with break_after for standard prompt
+                self._output_text("", break_after=True)
 
     def zCrumbs(self, session_data: Optional[Dict[str, Any]]) -> None:
         """
@@ -1310,6 +1327,21 @@ class zSystem:
 
         # Display active context first (critical for three-tier understanding)
         active_context = zAuth.get(ZAUTH_KEY_ACTIVE_CONTEXT)
+        
+        # Handle case where no active context set (not authenticated)
+        if not active_context:
+            zsession_auth = zAuth.get(ZAUTH_KEY_ZSESSION, {})
+            is_authenticated = zsession_auth.get(ZAUTH_KEY_AUTHENTICATED, False)
+            
+            if not is_authenticated:
+                # Show "Not authenticated" status and exit
+                label = FORMAT_FIELD_LABEL_INDENT.format(field="Status")
+                self._display_field(label, "Not authenticated", color=COLOR_YELLOW)
+                return
+            else:
+                # Authenticated but no context set - default to zSession
+                active_context = CONTEXT_ZSESSION
+        
         if active_context:
             context_label = FORMAT_FIELD_LABEL_INDENT.format(field=MSG_ACTIVE_CONTEXT)
             
@@ -1361,6 +1393,53 @@ class zSystem:
             if auth_data.get(field_key):
                 label = FORMAT_FIELD_LABEL_INDENT.format(field=field_label)
                 self._display_field(label, auth_data.get(field_key), color=COLOR_YELLOW)
+
+    def _display_zcache(self, zCache: Dict[str, Any]) -> None:
+        """
+        Display complete zCache section with 4-tier caching system (Terminal).
+        
+        Displays cache state for all 4 cache types:
+        - system_cache: System-level cache (UI files, configs)
+        - pinned_cache: Pinned items that persist across sessions
+        - schema_cache: Database schema definitions
+        - plugin_cache: Loaded plugin modules
+        
+        Args:
+            zCache: zCache dictionary from session[SESSION_KEY_ZCACHE]
+        
+        Returns:
+            None
+        
+        Display Format:
+            zCache:
+              system_cache: 12 items
+              pinned_cache: 3 items
+              schema_cache: 5 items
+              plugin_cache: 8 items
+        
+        Notes:
+            - Uses ZCACHE_KEY_* constants for all field access
+            - Shows item count for each cache type
+            - Empty caches show "0 items"
+        """
+        if not self.BasicOutputs or not zCache:
+            return
+
+        self._output_text("", break_after=False)
+        self._display_section("zCache", color=COLOR_CYAN)
+
+        # Display each cache tier with item count
+        for cache_key, cache_label in [
+            (ZCACHE_KEY_SYSTEM, "system_cache"),
+            (ZCACHE_KEY_PINNED, "pinned_cache"),
+            (ZCACHE_KEY_SCHEMA, "schema_cache"),
+            (ZCACHE_KEY_PLUGIN, "plugin_cache")
+        ]:
+            cache_data = zCache.get(cache_key, {})
+            item_count = len(cache_data) if isinstance(cache_data, dict) else 0
+            label = FORMAT_FIELD_LABEL_INDENT.format(field=cache_label)
+            value = f"{item_count} items" if item_count != 1 else "1 item"
+            self._display_field(label, value, color=COLOR_RESET)
 
 
     # ═══════════════════════════════════════════════════════════════════════

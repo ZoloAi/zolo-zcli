@@ -4,7 +4,7 @@
 # --------------------------------------------------------------
 """Data command execution for zCLI."""
 
-from .alias_utils import resolve_alias, is_alias, get_alias_name
+from .shell_cmd_shortcut_utils import resolve_alias, is_alias, get_alias_name
 
 
 def execute_data(zcli, parsed):

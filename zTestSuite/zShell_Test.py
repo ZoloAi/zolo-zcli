@@ -6,7 +6,7 @@ Comprehensive test suite for the zShell subsystem.
 Tests cover:
 - Initialization and configuration
 - Command execution (parsed commands, special commands)
-- Interactive shell mode (REPL, history, prompts)
+- Interactive shell mode (REPL, readline history, prompts)
 - Wizard canvas mode (buffer management, execution)
 - Help system (welcome message, command help, tips)
 - Result display (errors, success, JSON)
@@ -23,9 +23,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from zCLI.subsystems.zShell.zShell import zShell
-from zCLI.subsystems.zShell.zShell_modules.zShell_interactive import InteractiveShell
-from zCLI.subsystems.zShell.zShell_modules.zShell_executor import CommandExecutor
-from zCLI.subsystems.zShell.zShell_modules.zShell_help import HelpSystem
+from zCLI.subsystems.zShell.shell_modules.shell_interactive import InteractiveShell
+from zCLI.subsystems.zShell.shell_modules.shell_executor import CommandExecutor
+from zCLI.subsystems.zShell.shell_modules.shell_help import HelpSystem
 
 
 class TestzShellInitialization(unittest.TestCase):
@@ -294,14 +294,6 @@ class TestInteractiveShell(unittest.TestCase):
         self.assertTrue(result)
         self.assertFalse(self.shell.running)
     
-    def test_handle_special_command_help(self):
-        """Test handling help command."""
-        with patch.object(self.shell.help_system, 'show_help') as mock_help:
-            result = self.shell._handle_special_commands("help")
-        
-        self.assertTrue(result)
-        mock_help.assert_called_once()
-    
     def test_handle_special_command_tips(self):
         """Test handling tips command."""
         result = self.shell._handle_special_commands("tips")
@@ -349,7 +341,9 @@ class TestInteractiveShell(unittest.TestCase):
         
         self.shell._display_result(result)
         
-        self.mock_zcli.display.json.assert_called_once_with(result)
+        # After architectural simplification, arbitrary dicts are not displayed
+        # Only error/success dicts trigger display
+        self.mock_zcli.display.json.assert_not_called()
     
     def test_display_result_with_string(self):
         """Test displaying string result."""
@@ -462,14 +456,13 @@ class TestzShellIntegration(unittest.TestCase):
 
 
 class TestNewCommands(unittest.TestCase):
-    """Test new shell commands (history, echo, ls, cd, pwd, alias)."""
+    """Test new shell commands (ls, cd, pwd, shortcut, where)."""
     
     def setUp(self):
         """Set up test fixtures."""
         self.mock_zcli = Mock()
         self.mock_zcli.session = {
             "wizard_mode": {"active": False, "lines": [], "format": None},
-            "command_history": [],
             "aliases": {},
             "zWorkspace": "/test/workspace"
         }
@@ -482,99 +475,61 @@ class TestNewCommands(unittest.TestCase):
         self.mock_zcli.display.zDeclare = Mock()
         self.mock_zcli.zparser = Mock()
     
-    def test_history_command_show(self):
-        """Test history command shows command history."""
-        from zCLI.subsystems.zShell.zShell_modules.executor_commands.history_executor import execute_history
-        
-        self.mock_zcli.session["command_history"] = ["cmd1", "cmd2", "cmd3"]
-        parsed = {"action": "show", "args": [], "options": {}}
-        
-        result = execute_history(self.mock_zcli, parsed)
-        
-        self.assertEqual(result["status"], "success")
-        self.assertEqual(result["total"], 3)
-    
-    def test_history_command_clear(self):
-        """Test history clear command."""
-        from zCLI.subsystems.zShell.zShell_modules.executor_commands.history_executor import execute_history
-        
-        self.mock_zcli.session["command_history"] = ["cmd1", "cmd2"]
-        parsed = {"action": "clear", "args": [], "options": {}}
-        
-        result = execute_history(self.mock_zcli, parsed)
-        
-        self.assertEqual(result["status"], "cleared")
-        self.assertEqual(len(self.mock_zcli.session["command_history"]), 0)
-    
-    def test_echo_command_simple(self):
-        """Test echo command with simple message."""
-        from zCLI.subsystems.zShell.zShell_modules.executor_commands.echo_executor import execute_echo
-        
-        parsed = {"action": "echo", "args": ["Hello", "World"], "options": {}}
-        
-        result = execute_echo(self.mock_zcli, parsed)
-        
-        self.assertEqual(result["status"], "success")
-        self.assertEqual(result["output"], "Hello World")
-        self.mock_zcli.display.text.assert_called_once_with("Hello World")
-    
-    def test_echo_command_with_variable(self):
-        """Test echo command with variable expansion."""
-        from zCLI.subsystems.zShell.zShell_modules.executor_commands.echo_executor import execute_echo
-        
-        parsed = {"action": "echo", "args": ["$zWorkspace"], "options": {}}
-        
-        result = execute_echo(self.mock_zcli, parsed)
-        
-        self.assertEqual(result["status"], "success")
-        self.assertIn("/test/workspace", result["output"])
-    
     def test_pwd_command(self):
         """Test pwd command shows working directory."""
-        from zCLI.subsystems.zShell.zShell_modules.executor_commands.cd_executor import execute_pwd
+        from zCLI.subsystems.zShell.shell_modules.commands.shell_cmd_cd import execute_pwd
         
         parsed = {"action": "pwd", "args": [], "options": {}}
         
         result = execute_pwd(self.mock_zcli, parsed)
         
-        self.assertEqual(result["status"], "success")
-        self.assertIn("path", result)
+        # UI adapter pattern: returns None, displays directly
+        self.assertIsNone(result)
+        # Verify display was called
+        self.assertTrue(self.mock_zcli.display.list.called or 
+                       self.mock_zcli.display.zDeclare.called)
     
-    def test_alias_command_list(self):
-        """Test alias command lists aliases."""
-        from zCLI.subsystems.zShell.zShell_modules.executor_commands.alias_executor import execute_alias
+    def test_shortcut_command_list(self):
+        """Test shortcut command lists shortcuts."""
+        from zCLI.subsystems.zShell.shell_modules.commands.shell_cmd_shortcut import (
+            execute_shortcut, SESSION_KEY_SHORTCUTS
+        )
         
-        self.mock_zcli.session["aliases"] = {"ll": "ls --long"}
+        self.mock_zcli.session[SESSION_KEY_SHORTCUTS] = {"ll": "ls --long"}
         parsed = {"action": "list", "args": [], "options": {}}
         
-        result = execute_alias(self.mock_zcli, parsed)
+        result = execute_shortcut(self.mock_zcli, parsed)
         
         self.assertEqual(result["status"], "success")
         self.assertEqual(result["count"], 1)
     
-    def test_alias_command_create(self):
-        """Test alias command creates new alias."""
-        from zCLI.subsystems.zShell.zShell_modules.executor_commands.alias_executor import execute_alias
+    def test_shortcut_command_create(self):
+        """Test shortcut command creates new shortcut."""
+        from zCLI.subsystems.zShell.shell_modules.commands.shell_cmd_shortcut import (
+            execute_shortcut, SESSION_KEY_SHORTCUTS
+        )
         
         parsed = {"action": "create", "args": ["ll=\"ls --long\""], "options": {}}
         
-        result = execute_alias(self.mock_zcli, parsed)
+        result = execute_shortcut(self.mock_zcli, parsed)
         
         self.assertEqual(result["status"], "created")
         self.assertEqual(result["name"], "ll")
-        self.assertEqual(self.mock_zcli.session["aliases"]["ll"], "ls --long")
+        self.assertEqual(self.mock_zcli.session[SESSION_KEY_SHORTCUTS]["ll"], "ls --long")
     
-    def test_alias_command_remove(self):
-        """Test alias command removes alias."""
-        from zCLI.subsystems.zShell.zShell_modules.executor_commands.alias_executor import execute_alias
+    def test_shortcut_command_remove(self):
+        """Test shortcut command removes shortcut."""
+        from zCLI.subsystems.zShell.shell_modules.commands.shell_cmd_shortcut import (
+            execute_shortcut, SESSION_KEY_SHORTCUTS
+        )
         
-        self.mock_zcli.session["aliases"] = {"ll": "ls --long"}
+        self.mock_zcli.session[SESSION_KEY_SHORTCUTS] = {"ll": "ls --long"}
         parsed = {"action": "create", "args": ["ll"], "options": {"remove": True}}
         
-        result = execute_alias(self.mock_zcli, parsed)
+        result = execute_shortcut(self.mock_zcli, parsed)
         
         self.assertEqual(result["status"], "removed")
-        self.assertNotIn("ll", self.mock_zcli.session["aliases"])
+        self.assertNotIn("ll", self.mock_zcli.session[SESSION_KEY_SHORTCUTS])
 
 
 class TestEdgeCases(unittest.TestCase):
@@ -616,14 +571,17 @@ class TestEdgeCases(unittest.TestCase):
         """Test displaying result with other types (int, list, etc)."""
         shell = InteractiveShell(self.mock_zcli)
         
-        # Test with integer
-        shell._display_result(42)
-        self.mock_zcli.display.json.assert_called_with({"result": 42})
+        # After architectural simplification, non-None results are not displayed
+        # Commands that need output should use display methods directly
         
-        # Test with list
+        # Test with integer - no display expected
+        shell._display_result(42)
+        self.mock_zcli.display.json.assert_not_called()
+        
+        # Test with list - no display expected
         self.mock_zcli.display.json.reset_mock()
         shell._display_result([1, 2, 3])
-        self.mock_zcli.display.json.assert_called_with({"result": [1, 2, 3]})
+        self.mock_zcli.display.json.assert_not_called()
 
 
 def run_tests(verbose=False):

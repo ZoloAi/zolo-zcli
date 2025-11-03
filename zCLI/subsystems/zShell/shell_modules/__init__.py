@@ -1,11 +1,11 @@
-# zCLI/subsystems/zShell/zShell_modules/__init__.py
+# zCLI/subsystems/zShell/shell_modules/__init__.py
 
 """Registry for zShell specialized modules."""
 
 # Import all zShell components
-from .zShell_interactive import InteractiveShell, launch_zCLI_shell
-from .zShell_executor import CommandExecutor
-from .zShell_help import HelpSystem
+from .shell_interactive import InteractiveShell, launch_zCLI_shell
+from .shell_executor import CommandExecutor
+from .shell_help import HelpSystem
 
 # Export all components
 __all__ = [

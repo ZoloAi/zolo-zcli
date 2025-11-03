@@ -15,9 +15,9 @@ Key Functions
 
 2. **_split_command**: Helper that splits command strings while preserving quoted arguments.
 
-3. **19 specialized parsers**: _parse_* functions for each command type (data, func, utils,
-   session, walker, open, test, auth, export, config, load, comm, wizard, plugin, history,
-   echo, ls, cd, pwd, alias).
+3. **17 specialized parsers**: _parse_* functions for each command type (data, func, utils,
+   session, walker, open, test, auth, export, config, load, comm, wizard, plugin,
+   ls, cd, pwd, shortcut, where).
 
 Architecture
 ------------
@@ -29,7 +29,7 @@ This module uses a **command router pattern**:
 Command Router:
     parse_command() → command_type → _parse_*_command() → structured dict
 
-Supported Command Types (20 Total):
+Supported Command Types (18 Total):
     1. data     - Data operations (read, create, update, delete, etc.)
     2. func     - Function invocation
     3. utils    - Utility functions
@@ -44,14 +44,12 @@ Supported Command Types (20 Total):
     12. comm    - Communication services
     13. wizard  - Wizard operations
     14. plugin  - Plugin management
-    15. history - Command history
-    16. echo    - Print output
-    17. print   - Alias for echo
-    18. ls      - List directory
-    19. dir     - Alias for ls
-    20. cd      - Change directory
-    21. pwd     - Print working directory
-    22. alias   - Command aliases
+    15. ls      - List directory (list/dir aliases)
+    16. cd      - Change directory
+    17. cwd     - Current working directory (pwd alias)
+    18. shortcut - Command shortcuts
+    19. where   - Contextual prompt display
+    20. help    - Shell command help
 
 Return Structure
 ----------------
@@ -93,7 +91,7 @@ The _split_command helper properly handles quoted strings:
 
 Examples:
     'data read users'           → ["data", "read", "users"]
-    'echo "Hello World"'        → ["echo", "Hello World"]
+    'list -size'                → ["list", "-size"]
     "data insert users --name 'John Doe'" → ["data", "insert", "users", "--name", "John Doe"]
 
 Usage Examples
@@ -167,12 +165,13 @@ CMD_TYPE_LOAD: str = "load"
 CMD_TYPE_COMM: str = "comm"
 CMD_TYPE_WIZARD: str = "wizard"
 CMD_TYPE_PLUGIN: str = "plugin"
-CMD_TYPE_HISTORY: str = "history"
-CMD_TYPE_ECHO: str = "echo"
 CMD_TYPE_LS: str = "ls"
 CMD_TYPE_CD: str = "cd"
+CMD_TYPE_CWD: str = "cwd"
 CMD_TYPE_PWD: str = "pwd"
-CMD_TYPE_ALIAS: str = "alias"
+CMD_TYPE_SHORTCUT: str = "shortcut"
+CMD_TYPE_WHERE: str = "where"
+CMD_TYPE_HELP: str = "help"
 
 # Data Actions
 ACTION_DATA_READ: str = "read"
@@ -218,11 +217,12 @@ ACTION_DEFAULT_SHOW: str = "show"
 ACTION_DEFAULT_LIST: str = "list"
 ACTION_DEFAULT_CREATE: str = "create"
 ACTION_DEFAULT_OPEN: str = "open"
-ACTION_DEFAULT_ECHO: str = "echo"
 ACTION_DEFAULT_LS: str = "ls"
 ACTION_DEFAULT_CD: str = "cd"
 ACTION_DEFAULT_PWD: str = "pwd"
+ACTION_DEFAULT_STATUS: str = "status"
 ACTION_DEFAULT_WIZARD: str = "wizard"
+ACTION_DEFAULT_INFO: str = "info"
 
 # Valid Actions Lists (for validation)
 VALID_DATA_ACTIONS: List[str] = [
@@ -664,27 +664,36 @@ def _parse_plugin_command(parts: List[str]) -> Dict[str, Any]:
 
 def _parse_session_command(parts: List[str]) -> Dict[str, Any]:
     """
-    Parse session commands like 'session info' or 'session set mode zGUI'.
+    Parse session commands like 'session' or 'session set mode zGUI'.
     
-    Session commands manage session state and configuration.
+    Session commands manage session state and configuration. If no action is
+    provided, defaults to 'info' action (display session state).
     
     Args:
-        parts: Command parts (e.g., ['session', 'info'] or ['session', 'set', 'mode', 'zGUI'])
+        parts: Command parts (e.g., ['session'] or ['session', 'set', 'mode', 'zGUI'])
     
     Returns:
-        Dict[str, Any]: Structured command dict or error dict
+        Dict[str, Any]: Structured command dict
     
     Examples:
+        >>> _parse_session_command(['session'])
+        {'type': 'session', 'action': 'info', 'args': [], 'options': {}}
+        
         >>> _parse_session_command(['session', 'info'])
         {'type': 'session', 'action': 'info', 'args': [], 'options': {}}
         
         >>> _parse_session_command(['session', 'set', 'mode', 'zGUI'])
         {'type': 'session', 'action': 'set', 'args': ['mode', 'zGUI'], 'options': {}}
+        
+        >>> _parse_session_command(['session', 'get', 'zMode'])
+        {'type': 'session', 'action': 'get', 'args': ['zMode'], 'options': {}}
+    
+    Notes:
+        - Default action is 'info' if no action provided
+        - Most common use case is viewing session state
     """
-    if len(parts) < MIN_PARTS_SIMPLE_PARSER:
-        return {DICT_KEY_ERROR: ERROR_MSG_SESSION_NO_ACTION}
-
-    action = parts[1]
+    # Default to "info" action if no action provided
+    action = ACTION_DEFAULT_INFO if len(parts) < MIN_PARTS_SIMPLE_PARSER else parts[1]
     args = parts[SLICE_START_ARGS:] if len(parts) > SLICE_START_ARGS else []
 
     return {
@@ -1094,102 +1103,9 @@ def _parse_wizard_command(parts: List[str]) -> Dict[str, Any]:
     }
 
 
-def _parse_history_command(parts: List[str]) -> Dict[str, Any]:
-    """
-    Parse history commands like 'history', 'history --clear', 'history save file.json'.
-    
-    History commands manage command history. Default action is "show" if no action specified.
-    Supports flags and arguments.
-    
-    Args:
-        parts: Command parts (e.g., ['history', 'save', 'file.json', '--limit', '100'])
-    
-    Returns:
-        Dict[str, Any]: Structured command dict
-    
-    Examples:
-        >>> _parse_history_command(['history'])
-        {'type': 'history', 'action': 'show', 'args': [], 'options': {}}
-        
-        >>> _parse_history_command(['history', '--clear'])
-        {'type': 'history', 'action': 'show', 'args': [], 'options': {'clear': True}}
-        
-        >>> _parse_history_command(['history', 'save', 'file.json'])
-        {'type': 'history', 'action': 'save', 'args': ['file.json'], 'options': {}}
-    """
-    action = ACTION_DEFAULT_SHOW if len(parts) < MIN_PARTS_SIMPLE_PARSER or parts[1].startswith(CHAR_DASH_DOUBLE) else parts[1]
-    
-    # Extract options and args
-    options = {}
-    args = []
-    
-    i = 1 if action == ACTION_DEFAULT_SHOW else SLICE_START_ARGS
-    while i < len(parts):
-        part = parts[i]
-        if part.startswith(CHAR_DASH_DOUBLE):
-            flag = part[2:]
-            if i + 1 < len(parts) and not parts[i + 1].startswith(CHAR_DASH_DOUBLE):
-                options[flag] = parts[i + 1]
-                i += 2
-            else:
-                options[flag] = True
-                i += 1
-        else:
-            args.append(part)
-            i += 1
-    
-    return {
-        DICT_KEY_TYPE: CMD_TYPE_HISTORY,
-        DICT_KEY_ACTION: action,
-        DICT_KEY_ARGS: args,
-        DICT_KEY_OPTIONS: options
-    }
-
-
-def _parse_echo_command(parts: List[str]) -> Dict[str, Any]:
-    """
-    Parse echo/print commands like 'echo Hello World' or 'echo $session.zWorkspace'.
-    
-    Echo commands print messages or variable values. Everything after 'echo' is the message.
-    Supports flags (e.g., --no-newline).
-    
-    Args:
-        parts: Command parts (e.g., ['echo', 'Hello', 'World', '--no-newline'])
-    
-    Returns:
-        Dict[str, Any]: Structured command dict
-    
-    Examples:
-        >>> _parse_echo_command(['echo', 'Hello', 'World'])
-        {'type': 'echo', 'action': 'echo', 'args': ['Hello', 'World'], 'options': {}}
-        
-        >>> _parse_echo_command(['echo', '$session.zWorkspace', '--no-newline'])
-        {'type': 'echo', 'action': 'echo', 'args': ['$session.zWorkspace'], 'options': {'no-newline': True}}
-    """
-    # Everything after 'echo' is the message
-    args = parts[1:] if len(parts) > 1 else []
-    
-    # Extract options
-    options = {}
-    message_parts = []
-    
-    for arg in args:
-        if arg.startswith(CHAR_DASH_DOUBLE):
-            options[arg[2:]] = True
-        else:
-            message_parts.append(arg)
-    
-    return {
-        DICT_KEY_TYPE: CMD_TYPE_ECHO,
-        DICT_KEY_ACTION: ACTION_DEFAULT_ECHO,
-        DICT_KEY_ARGS: message_parts,
-        DICT_KEY_OPTIONS: options
-    }
-
-
 def _parse_ls_command(parts: List[str]) -> Dict[str, Any]:
     """
-    Parse ls/dir commands like 'ls', 'ls @.path', 'ls --recursive'.
+    Parse list/ls/dir commands like 'list', 'ls @.path', 'list --sizes'.
     
     List directory commands show directory contents. Supports flags (-l, --recursive, etc.).
     
@@ -1253,51 +1169,62 @@ def _parse_cd_command(parts: List[str]) -> Dict[str, Any]:
     }
 
 
-def _parse_pwd_command(parts: List[str]) -> Dict[str, Any]:  # pylint: disable=unused-argument
+def _parse_pwd_command(parts: List[str]) -> Dict[str, Any]:
     """
-    Parse pwd command (print working directory).
+    Parse cwd/pwd command (current/print working directory).
     
-    PWD command prints current working directory. Takes no arguments.
+    Shows current working directory. Both 'cwd' (primary) and 'pwd' (alias) are supported.
+    Takes no arguments.
     
     Args:
-        parts: Command parts (e.g., ['pwd']) - unused but kept for consistency
+        parts: Command parts (e.g., ['cwd'] or ['pwd'])
     
     Returns:
-        Dict[str, Any]: Structured command dict
+        Dict[str, Any]: Structured command dict with appropriate type
     
     Examples:
+        >>> _parse_pwd_command(['cwd'])
+        {'type': 'cwd', 'action': 'pwd', 'args': [], 'options': {}}
+        
         >>> _parse_pwd_command(['pwd'])
         {'type': 'pwd', 'action': 'pwd', 'args': [], 'options': {}}
+    
+    Note:
+        Both commands execute the same function (execute_pwd), but return their
+        respective type for logging/debugging purposes.
     """
+    # Determine which command was used (cwd is primary, pwd is alias)
+    command_type = CMD_TYPE_CWD if parts[0] == "cwd" else CMD_TYPE_PWD
+    
     return {
-        DICT_KEY_TYPE: CMD_TYPE_PWD,
+        DICT_KEY_TYPE: command_type,
         DICT_KEY_ACTION: ACTION_DEFAULT_PWD,
         DICT_KEY_ARGS: [],
         DICT_KEY_OPTIONS: {}
     }
 
 
-def _parse_alias_command(parts: List[str]) -> Dict[str, Any]:
+def _parse_shortcut_command(parts: List[str]) -> Dict[str, Any]:
     """
-    Parse alias commands like 'alias', 'alias name="command"', 'alias --remove name'.
+    Parse shortcut commands like 'shortcut', 'shortcut name="command"', 'shortcut --remove name'.
     
-    Alias commands manage command aliases. Default action is "list" if no args/options.
+    Shortcut commands manage command shortcuts. Default action is "list" if no args/options.
     
     Args:
-        parts: Command parts (e.g., ['alias', 'name="command"'] or ['alias', '--remove', 'name'])
+        parts: Command parts (e.g., ['shortcut', 'name="command"'] or ['shortcut', '--remove', 'name'])
     
     Returns:
         Dict[str, Any]: Structured command dict
     
     Examples:
-        >>> _parse_alias_command(['alias'])
-        {'type': 'alias', 'action': 'list', 'args': [], 'options': {}}
+        >>> _parse_shortcut_command(['shortcut'])
+        {'type': 'shortcut', 'action': 'list', 'args': [], 'options': {}}
         
-        >>> _parse_alias_command(['alias', 'myalias="data read users"'])
-        {'type': 'alias', 'action': 'create', 'args': ['myalias="data read users"'], 'options': {}}
+        >>> _parse_shortcut_command(['shortcut', 'gs="git status"'])
+        {'type': 'shortcut', 'action': 'create', 'args': ['gs="git status"'], 'options': {}}
         
-        >>> _parse_alias_command(['alias', '--remove', 'myalias'])
-        {'type': 'alias', 'action': 'create', 'args': ['myalias'], 'options': {'remove': True}}
+        >>> _parse_shortcut_command(['shortcut', '--remove', 'gs'])
+        {'type': 'shortcut', 'action': 'create', 'args': ['gs'], 'options': {'remove': True}}
     """
     # Extract options and args
     options = {}
@@ -1313,10 +1240,80 @@ def _parse_alias_command(parts: List[str]) -> Dict[str, Any]:
     action = ACTION_DEFAULT_LIST if not args and not options else ACTION_DEFAULT_CREATE
     
     return {
-        DICT_KEY_TYPE: CMD_TYPE_ALIAS,
+        DICT_KEY_TYPE: CMD_TYPE_SHORTCUT,
         DICT_KEY_ACTION: action,
         DICT_KEY_ARGS: args,
         DICT_KEY_OPTIONS: options
+    }
+
+
+def _parse_where_command(parts: List[str]) -> Dict[str, Any]:
+    """
+    Parse where commands like 'where', 'where on', 'where off', 'where toggle'.
+    
+    Where commands manage contextual prompt display. Default action is "status" if no args.
+    
+    Args:
+        parts: Command parts (e.g., ['where'], ['where', 'on'], ['where', 'toggle'])
+    
+    Returns:
+        Dict[str, Any]: Structured command dict
+    
+    Examples:
+        >>> _parse_where_command(['where'])
+        {'type': 'where', 'action': 'status', 'args': [], 'options': {}}
+        
+        >>> _parse_where_command(['where', 'on'])
+        {'type': 'where', 'action': 'status', 'args': ['on'], 'options': {}}
+        
+        >>> _parse_where_command(['where', 'toggle'])
+        {'type': 'where', 'action': 'status', 'args': ['toggle'], 'options': {}}
+        
+        >>> _parse_where_command(['where', 'off'])
+        {'type': 'where', 'action': 'status', 'args': ['off'], 'options': {}}
+    """
+    # Extract args (no options needed for where command)
+    args = parts[1:] if len(parts) > 1 else []
+    
+    return {
+        DICT_KEY_TYPE: CMD_TYPE_WHERE,
+        DICT_KEY_ACTION: ACTION_DEFAULT_STATUS,
+        DICT_KEY_ARGS: args,
+        DICT_KEY_OPTIONS: {}
+    }
+
+
+def _parse_help_command(parts: List[str]) -> Dict[str, Any]:
+    """
+    Parse help commands like 'help', 'help ls', 'help shortcut'.
+    
+    Help commands show shell terminal command documentation. Optional argument
+    specifies which command to show help for.
+    
+    Args:
+        parts: Command parts (e.g., ['help'], ['help', 'ls'], ['help', 'shortcut'])
+    
+    Returns:
+        Dict[str, Any]: Structured command dict
+    
+    Examples:
+        >>> _parse_help_command(['help'])
+        {'type': 'help', 'action': 'show', 'args': [], 'options': {}}
+        
+        >>> _parse_help_command(['help', 'ls'])
+        {'type': 'help', 'action': 'show', 'args': ['ls'], 'options': {}}
+        
+        >>> _parse_help_command(['help', 'shortcut'])
+        {'type': 'help', 'action': 'show', 'args': ['shortcut'], 'options': {}}
+    """
+    # Extract args (command name to show help for)
+    args = parts[1:] if len(parts) > 1 else []
+    
+    return {
+        DICT_KEY_TYPE: CMD_TYPE_HELP,
+        DICT_KEY_ACTION: ACTION_DEFAULT_SHOW,
+        DICT_KEY_ARGS: args,
+        DICT_KEY_OPTIONS: {}
     }
 
 
@@ -1389,12 +1386,13 @@ COMMAND_ROUTER = {
     CMD_TYPE_COMM: _parse_comm_command,
     CMD_TYPE_WIZARD: _parse_wizard_command,
     CMD_TYPE_PLUGIN: _parse_plugin_command,
-    CMD_TYPE_HISTORY: _parse_history_command,
-    CMD_TYPE_ECHO: _parse_echo_command,
-    "print": _parse_echo_command,  # alias for echo
     CMD_TYPE_LS: _parse_ls_command,
-    "dir": _parse_ls_command,  # alias for ls
+    "list": _parse_ls_command,  # Modern alias for ls (beginner-friendly)
+    "dir": _parse_ls_command,   # Windows alias for ls
     CMD_TYPE_CD: _parse_cd_command,
-    CMD_TYPE_PWD: _parse_pwd_command,
-    CMD_TYPE_ALIAS: _parse_alias_command,
+    CMD_TYPE_CWD: _parse_pwd_command,  # Primary: Current Working Directory
+    CMD_TYPE_PWD: _parse_pwd_command,  # Alias: Unix compatibility (Print Working Directory)
+    CMD_TYPE_SHORTCUT: _parse_shortcut_command,
+    CMD_TYPE_WHERE: _parse_where_command,
+    CMD_TYPE_HELP: _parse_help_command,
 }

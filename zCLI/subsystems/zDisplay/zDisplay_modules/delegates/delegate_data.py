@@ -55,18 +55,22 @@ class DelegateData:
         style: str = DEFAULT_STYLE_BULLET, 
         indent: int = DEFAULT_INDENT
     ) -> Any:
-        """Display bulleted or numbered list.
+        """Display bulleted, numbered, or plain list.
         
         Args:
             items: List of strings to display
-            style: List style - 'bullet' or 'numbered' (default: bullet)
+            style: List style - 'bullet', 'numbered', or 'none' (default: bullet)
+                   - 'bullet': Prefix each item with "- "
+                   - 'numbered': Prefix with "1. ", "2. ", etc.
+                   - 'none': No prefix (clean output)
             indent: Indentation level (default: 0)
             
         Returns:
             Any: Result from handle() method
             
         Example:
-            display.list(["Apple", "Banana", "Cherry"], style="numbered")
+            display.list(["Apple", "Banana"], style="numbered")
+            display.list(["[DIR] folder/"], style="none")
         """
         return self.handle({
             KEY_EVENT: EVENT_LIST,

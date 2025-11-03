@@ -2,9 +2,9 @@
 
 """Core zShell handler for shell mode."""
 
-from .zShell_modules.zShell_interactive import InteractiveShell, launch_zCLI_shell as launch_zCLI_shell_func
-from .zShell_modules.zShell_executor import CommandExecutor
-from .zShell_modules.zShell_help import HelpSystem
+from .shell_modules.shell_interactive import InteractiveShell, launch_zCLI_shell as launch_zCLI_shell_func
+from .shell_modules.shell_executor import CommandExecutor
+from .shell_modules.shell_help import HelpSystem
 
 class zShell:
     """Core zShell handler for shell mode."""

@@ -327,7 +327,7 @@ STYLE_BULLET = "bullet"
 STYLE_NUMBER = "number"
 
 # Marker constant
-MARKER_BULLET = "[BULLET]"
+MARKER_BULLET: str = "- "
 
 # Dict key constants (for GUI events)
 KEY_ITEMS = "items"
@@ -477,15 +477,17 @@ class BasicData:
         Foundation method for list display. Implements dual-mode I/O pattern
         and composes with BasicOutputs for terminal display.
         
-        Supports two display styles:
+        Supports three display styles:
         - numbered: "1. item", "2. item", "3. item"
-        - bullet: "• item", "• item", "• item"
+        - bullet: "- item", "- item", "- item"
+        - none: "item", "item", "item" (no prefix)
         
         Args:
             items: List of items to display (can be any type, will be converted to string)
             style: Display style (default: "bullet")
                    - "number": Numbered list (1., 2., 3., ...)
-                   - "bullet": Bullet list (• for each item)
+                   - "bullet": Bullet list (- for each item)
+                   - "none": Plain list (no prefix, clean output)
             indent: Base indentation level (default: 0)
         
         Returns:
@@ -502,8 +504,14 @@ class BasicData:
             # Bullet list (for validation errors, feature lists)
             self.BasicData.list(["Error 1", "Error 2"], style="bullet", indent=1)
             # Output:
-            #     • Error 1
-            #     • Error 2
+            #     - Error 1
+            #     - Error 2
+            
+            # Plain list (for clean output like directory listings)
+            self.BasicData.list(["[DIR] folder/", "[FILE] file.txt"], style="none")
+            # Output:
+            #   [DIR] folder/
+            #   [FILE] file.txt
             
         zDialog Integration (Week 6.5):
             # Form field options
@@ -542,8 +550,10 @@ class BasicData:
         for i, item in enumerate(items, 1):
             if style == STYLE_NUMBER:
                 prefix = f"{i}. "
-            else:  # bullet
-                prefix = f"{MARKER_BULLET} "
+            elif style == STYLE_BULLET:
+                prefix = MARKER_BULLET
+            else:  # "none" or any other style - no prefix
+                prefix = ""
 
             content = f"{prefix}{item}"
             # Compose: use helper instead of direct BasicOutputs call
