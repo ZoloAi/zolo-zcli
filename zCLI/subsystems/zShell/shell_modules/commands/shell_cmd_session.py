@@ -133,6 +133,8 @@ Author: zCLI Framework
 Version: 1.5.4+
 """
 
+from pathlib import Path
+
 from zCLI import Any, Dict, List
 
 # Import SESSION_KEY_* constants from zConfig
@@ -209,14 +211,16 @@ PROTECTED_KEYS: set = {
 # Framework-managed keys: Require dedicated commands/subsystems (not raw session set)
 FRAMEWORK_KEYS: set = {
     SESSION_KEY_ZAUTH,              # Auth state (use zAuth commands - future)
-    SESSION_KEY_ZVAFILE_PATH,       # Current vafile (managed by zWalker)
-    SESSION_KEY_ZVAFILENAME,        # Current vafile name (managed by zWalker)
     SESSION_KEY_ZBLOCK,             # Current block (managed by zWalker)
     SESSION_KEY_ZCRUMBS,            # Navigation breadcrumbs (managed by zNavigation)
     SESSION_KEY_ZCACHE,             # Cache state (managed by zLoader)
     SESSION_KEY_WIZARD_MODE,        # Wizard mode state (managed by zWizard)
     SESSION_KEY_ZSPARK,             # zSpark context (managed by subsystems)
 }
+
+# User-configurable keys: Can be set via session set (paths auto-resolved)
+# Note: zVaFile_path and zVaFilename are user-settable in shell for testing/navigation
+# (zWalker will override as needed when active)
 
 # User-configurable keys (allowed via session set):
 # NOTE: These are documented here for reference but not enforced as a set.
@@ -384,12 +388,93 @@ def _get_session_key(zcli: Any, args: List[str]) -> None:
     _display_key_value(zcli, key, value)
 
 
+def _resolve_path_value(zcli: Any, value: str) -> str:
+    """
+    Resolve zPath notation to absolute filesystem path.
+    
+    Converts zCLI's dot-notation paths (@., ~., ~zMachine.) to absolute
+    filesystem paths. Non-zPath values are returned unchanged.
+    
+    Args:
+        zcli: zCLI instance for session and config access
+        value: Path value (may be zPath notation or regular path)
+    
+    Returns:
+        str: Resolved absolute path or original value
+    
+    Supported Formats:
+        @.path.to.dir     → Workspace-relative (from session zWorkspace)
+        ~.path.to.dir     → Home-relative
+        ~zMachine.subpath → User data directory paths
+        zMachine.subpath  → User data directory paths
+        ~                 → Home directory
+        /absolute/path    → Unchanged
+        regular_value     → Unchanged
+    
+    Examples:
+        >>> _resolve_path_value(zcli, "@.Demos")
+        '/Users/user/Projects/zolo-zcli/Demos'
+        
+        >>> _resolve_path_value(zcli, "~.Projects")
+        '/Users/user/Projects'
+        
+        >>> _resolve_path_value(zcli, "~zMachine.zConfigs")
+        '/Users/user/Library/Application Support/zolo-zcli/zConfigs'
+        
+        >>> _resolve_path_value(zcli, "debug_mode")
+        'debug_mode'
+    """
+    # Workspace-relative (@.)
+    if value.startswith("@."):
+        workspace_root = Path(zcli.session.get(SESSION_KEY_ZWORKSPACE, "."))
+        path_parts = value[2:].split(".")
+        resolved = workspace_root / "/".join(path_parts)
+        return str(resolved.resolve())
+    
+    # zMachine paths (~zMachine. or zMachine.)
+    elif value.startswith("~zMachine") or value.startswith("zMachine"):
+        user_data_dir = zcli.config.sys_paths.user_data_dir
+        
+        if value.startswith("~zMachine"):
+            remainder = value[9:]  # Remove "~zMachine"
+        else:
+            remainder = value[8:]  # Remove "zMachine"
+        
+        # Just ~zMachine or zMachine (no subpath)
+        if not remainder or remainder == ".":
+            return str(Path(user_data_dir).resolve())
+        # ~zMachine.subpath or zMachine.subpath
+        elif remainder.startswith("."):
+            subpath = remainder[1:]  # Remove leading dot
+            path_parts = subpath.split(".")
+            resolved = Path(user_data_dir) / "/".join(path_parts)
+            return str(resolved.resolve())
+    
+    # Home-relative (~.)
+    elif value.startswith("~."):
+        path_parts = value[2:].split(".")
+        resolved = Path.home() / "/".join(path_parts)
+        return str(resolved.resolve())
+    
+    # Home directory shortcut (~)
+    elif value == "~":
+        return str(Path.home().resolve())
+    
+    # Return unchanged (not a zPath or absolute path)
+    return value
+
+
 def _set_session_key(zcli: Any, args: List[str]) -> None:
     """
     Set session key to specified value.
     
     Updates a session dictionary key with the provided value. Logs the change
     and displays success confirmation via zDisplay.
+    
+    Special handling for zWorkspace: 
+    - Preserves zPath notation (@., ~., ~zMachine) for dynamic parser resolution
+    - Only resolves plain paths (non-zPath) to absolute paths
+    - This maintains semantic meaning (e.g., @.zUIs stays relative to zWorkspace)
     
     Args:
         zcli: zCLI instance with session, display, logger
@@ -423,7 +508,6 @@ def _set_session_key(zcli: Any, args: List[str]) -> None:
     
     Framework-Managed Keys (Cannot be set):
         - SESSION_KEY_ZAUTH: Use zAuth commands (future)
-        - SESSION_KEY_ZVAFILE_PATH/ZVAFILENAME: Managed by zWalker
         - SESSION_KEY_ZBLOCK: Managed by zWalker
         - SESSION_KEY_ZCRUMBS: Managed by zNavigation
         - SESSION_KEY_ZCACHE: Managed by zLoader
@@ -432,7 +516,9 @@ def _set_session_key(zcli: Any, args: List[str]) -> None:
     
     User-Configurable Keys (Allowed):
         - SESSION_KEY_ZMODE: Execution mode (terminal/bifrost)
-        - SESSION_KEY_ZWORKSPACE: Workspace root (change "home base")
+        - SESSION_KEY_ZWORKSPACE: Workspace root (auto-resolves zPaths)
+        - SESSION_KEY_ZVAFILE_PATH: Current VaFile path (auto-resolves zPaths)
+        - SESSION_KEY_ZVAFILENAME: Current VaFile name
         - SESSION_KEY_ZLOGGER: Logger level
         - SESSION_KEY_ZTRACEBACK: Traceback mode on/off
         - Custom keys: Any user-defined key not in above sets
@@ -475,14 +561,35 @@ def _set_session_key(zcli: Any, args: List[str]) -> None:
         zcli.display.info(f"Framework-managed keys: {', '.join(sorted(FRAMEWORK_KEYS))}")
         return
     
-    # Update session (only user-configurable or custom keys reach here)
-    zcli.session[key] = value
-    
-    # Log the change
-    zcli.logger.info(MSG_SESSION_UPDATED.format(key=key, value=value))
-    
-    # Display success confirmation
-    zcli.display.success(MSG_SESSION_KEY_SET.format(key=key, value=value))
+    # Special handling for zWorkspace: resolve zPath notation ONLY if not already zPath
+    # (Preserve @., ~., ~zMachine notation for dynamic resolution by parser)
+    if key == SESSION_KEY_ZWORKSPACE:
+        # Only resolve if it's NOT a zPath - preserve zPath notation for dynamic resolution
+        if not any(value.startswith(prefix) for prefix in ["@.", "~.", "~zMachine", "zMachine"]):
+            resolved_value = _resolve_path_value(zcli, value)
+            zcli.session[key] = resolved_value
+            
+            if resolved_value != value:
+                zcli.logger.info(f"Session updated: {key} = {value} (resolved to: {resolved_value})")
+                zcli.display.success(f"Set {key} = {resolved_value}")
+                zcli.display.info(f"(Resolved from: {value})")
+            else:
+                zcli.logger.info(MSG_SESSION_UPDATED.format(key=key, value=value))
+                zcli.display.success(MSG_SESSION_KEY_SET.format(key=key, value=value))
+        else:
+            # Store zPath as-is for dynamic resolution
+            zcli.session[key] = value
+            zcli.logger.info(MSG_SESSION_UPDATED.format(key=key, value=value))
+            zcli.display.success(MSG_SESSION_KEY_SET.format(key=key, value=value))
+    else:
+        # All other keys: store as-is (including zVaFile_path with zPath notation)
+        zcli.session[key] = value
+        
+        # Log the change
+        zcli.logger.info(MSG_SESSION_UPDATED.format(key=key, value=value))
+        
+        # Display success confirmation
+        zcli.display.success(MSG_SESSION_KEY_SET.format(key=key, value=value))
 
 
 # ============================================================================

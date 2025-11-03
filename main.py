@@ -10,6 +10,13 @@ def handle_shell_command():
     cli.run_shell()
 
 
+def shell_main() -> None:
+    """Direct entry point for zShell command (simplified UX)."""
+    from zCLI import zCLI
+    cli = zCLI()
+    cli.run_shell()
+
+
 def handle_config_command(args):
     """Handle config command."""
     from zCLI import zCLI

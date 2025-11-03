@@ -65,14 +65,21 @@ Help:
         Syntax: cd [path]
         
         Path Formats:
+          cd @.                # Return to workspace root
           cd @.Demos           # Workspace-relative zPath
+          cd ~zMachine         # User data directory (config/cache)
+          cd ~zMachine.zConfigs   # zMachine subdirectory
           cd ~                 # Home directory
           cd ..                # Parent directory
           cd /absolute/path    # Absolute path
         
         Examples:
+          cd @.                         # Return to workspace root
           cd @.Demos                    # Navigate to workspace/Demos
           cd @.zTestSuite.demos         # Deep navigation with zPath
+          cd ~zMachine                  # Go to user data directory
+          cd ~zMachine.zConfigs         # Go to zConfigs folder
+          cd ~zMachine.zUIs             # Go to zUIs folder
           cd ~                          # Go to home directory
           cd ..                         # Go up one level
 

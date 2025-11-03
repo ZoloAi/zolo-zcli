@@ -34,6 +34,8 @@ from .environment_helpers import (
     create_default_env_config,
 )
 from .config_helpers import (
+    ensure_user_directories,
+    initialize_system_ui,
     load_config_with_override,
 )
 
@@ -44,5 +46,7 @@ __all__ = [
     "create_user_machine_config",
     "auto_detect_machine",
     "create_default_env_config",
+    "ensure_user_directories",
+    "initialize_system_ui",
     "load_config_with_override",
 ]

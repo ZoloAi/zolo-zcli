@@ -16,6 +16,7 @@ from .zConfig_modules import (
     WebSocketConfig,
     HttpServerConfig,
 )
+from .zConfig_modules.helpers import ensure_user_directories, initialize_system_ui
 
 # Module Constants
 SUBSYSTEM_NAME = "zConfig"
@@ -73,6 +74,12 @@ class zConfig:
 
         # Initialize path resolver
         self.sys_paths = zConfigPaths(zSpark_obj=zSpark_obj)
+
+        # Ensure user directories exist (zConfigs, zUIs)
+        ensure_user_directories(self.sys_paths)
+        
+        # Copy system UI file to user zUIs directory (on first run)
+        initialize_system_ui(self.sys_paths)
 
         # Load machine config FIRST (static, per-machine)
         self.machine = MachineConfig(self.sys_paths)

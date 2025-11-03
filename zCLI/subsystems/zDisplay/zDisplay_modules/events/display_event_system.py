@@ -346,6 +346,7 @@ messages, colors, styles, zMachine keys, and default values.
 """
 
 from typing import Any, Optional, Dict, Union, List, Tuple
+from pathlib import Path
 
 # Import SESSION_KEY_* constants from zConfig (17 constants)
 # Note: Some constants imported for documentation (module docstring) but not yet used in code
@@ -751,6 +752,69 @@ class zSystem:
         if self.BasicOutputs:
             self.BasicOutputs.header(label, color, indent, style)
 
+    def _format_path_as_zpath(self, path_value: str, session_data: Dict[str, Any]) -> str:
+        """
+        Convert absolute path to zPath notation for user-friendly display.
+        
+        IMPORTANT: Preserves existing zPath notation (@., ~., ~zMachine) as-is.
+        Only converts absolute filesystem paths to zPath equivalents.
+        
+        Args:
+            path_value: Path (may be zPath notation or absolute path)
+            session_data: Session dict (for getting user data dir from zMachine)
+        
+        Returns:
+            str: zPath notation if applicable, otherwise absolute path
+        
+        Conversion Rules (ONLY for absolute paths):
+            /Users/user/Library/Application Support/zolo-zcli → ~zMachine
+            /Users/user/Library/Application Support/zolo-zcli/zConfigs → ~zMachine.zConfigs
+            /Users/user/Projects → ~.Projects
+            /Users/user → ~
+        
+        Preservation Rules:
+            @.zUIs → @.zUIs (PRESERVED - workspace-relative)
+            ~zMachine → ~zMachine (PRESERVED - already zPath)
+            ~.Projects → ~.Projects (PRESERVED - already zPath)
+        """
+        if not path_value or path_value == "None":
+            return path_value
+        
+        # PRESERVE existing zPath notation (don't convert it)
+        if any(path_value.startswith(prefix) for prefix in ["@.", "~.", "~zMachine", "zMachine."]):
+            return path_value
+        
+        # Only convert absolute paths to zPath notation
+        try:
+            abs_path_obj = Path(path_value).resolve()
+            home = Path.home()
+            
+            # Try zMachine path first (user data directory)
+            try:
+                zmachine = session_data.get(SESSION_KEY_ZMACHINE, {})
+                user_data_dir = Path(zmachine.get("user_data_dir", "")).resolve()
+                
+                if user_data_dir and abs_path_obj == user_data_dir:
+                    return "~zMachine"
+                elif user_data_dir and abs_path_obj.is_relative_to(user_data_dir):
+                    rel_path = abs_path_obj.relative_to(user_data_dir)
+                    return f"~zMachine.{str(rel_path).replace('/', '.')}"
+            except (ValueError, AttributeError):
+                pass
+            
+            # Try home-relative path (~.)
+            if abs_path_obj == home:
+                return "~"
+            elif abs_path_obj.is_relative_to(home):
+                rel_path = abs_path_obj.relative_to(home)
+                return f"~.{str(rel_path).replace('/', '.')}"
+            
+            # Return absolute path if no zPath match
+            return path_value
+        except Exception:
+            # If any error, return original
+            return path_value
+
     def zSession(
         self, 
         session_data: Optional[Dict[str, Any]], 
@@ -841,6 +905,11 @@ class zSystem:
             value = session_data.get(field_key)
             # Extract field name from constant (e.g., SESSION_KEY_ZWORKSPACE → "zWorkspace")
             field_name = field_key  # Constants match the actual field names
+            
+            # Convert path fields to zPath notation for user-friendly display
+            if field_key in (SESSION_KEY_ZWORKSPACE, SESSION_KEY_ZVAFILE_PATH) and value:
+                value = self._format_path_as_zpath(value, session_data)
+            
             # Display all fields, including None (user wants to see what's not set)
             self._display_field(field_name, value if value is not None else "None")
 

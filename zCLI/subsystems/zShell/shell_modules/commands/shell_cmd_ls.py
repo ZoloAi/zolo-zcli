@@ -130,6 +130,7 @@ Last Updated: 2025-11-02
 """
 
 # Standard library imports
+import os
 from pathlib import Path
 
 # zCLI type imports
@@ -267,7 +268,7 @@ def execute_ls(zcli: Any, parsed: Dict[str, Any]) -> None:
     
     Examples:
         >>> execute_ls(zcli, {"args": [], "options": {}})
-        # Lists current workspace directory (works for list/ls/dir)
+        # Lists current working directory (works for list/ls/dir)
         
         >>> execute_ls(zcli, {"args": ["@.src"], "options": {"size": True}})
         # Lists workspace/src with file sizes (modern: -size)
@@ -282,7 +283,7 @@ def execute_ls(zcli: Any, parsed: Dict[str, Any]) -> None:
         # Lists only files in workspace/src (modern: -file)
     
     Session Access:
-        - Reads SESSION_KEY_ZWORKSPACE for default directory
+        - Reads current working directory via os.getcwd() for default
         - No session modifications (read-only)
     
     Error Handling:
@@ -297,8 +298,8 @@ def execute_ls(zcli: Any, parsed: Dict[str, Any]) -> None:
     if args:
         target = args[0]
     else:
-        # Use current zWorkspace
-        target = zcli.session.get(SESSION_KEY_ZWORKSPACE, DEFAULT_TARGET_DIR)
+        # Use current working directory (not workspace)
+        target = os.getcwd()
     
     # Resolve zPath to filesystem path
     resolved: Optional[Path] = _resolve_zpath(zcli, target)

@@ -12,6 +12,7 @@ class zConfigPaths:
     VALID_OS_TYPES = ("Linux", "Darwin", "Windows")
     DOTENV_FILENAME = ".zEnv"
     ZCONFIGS_DIRNAME = "zConfigs"
+    ZUIS_DIRNAME = "zUIs"
     ZCONFIG_FILENAME = "zConfig.yaml"
     ZMACHINE_FILENAME = "zMachine.yaml"  # System-level machine config
     ZMACHINE_USER_FILENAME = "zConfig.machine.yaml"  # User-level machine config
@@ -240,6 +241,16 @@ class zConfigPaths:
         return self.user_config_dir / self.ZCONFIGS_DIRNAME
 
     @property
+    def user_zuis_dir(self) -> Path:
+        """
+        User zUIs directory for UI definition files.
+        
+        Location: user_config_dir/zUIs/
+        Contains: User-customized UI files for commands and walkers.
+        """
+        return self.user_config_dir / self.ZUIS_DIRNAME
+
+    @property
     def user_data_dir(self) -> Path:
         r"""
         User data directory (databases, files).
@@ -380,6 +391,7 @@ class zConfigPaths:
             "user_config_dir": str(self.user_config_dir),
             "user_config_legacy": str(self.user_config_dir_legacy),
             "user_zconfigs_dir": str(self.user_zconfigs_dir),
+            "user_zuis_dir": str(self.user_zuis_dir),
             "user_data_dir": str(self.user_data_dir),
             "user_cache_dir": str(self.user_cache_dir),
             "user_logs_dir": str(self.user_logs_dir),

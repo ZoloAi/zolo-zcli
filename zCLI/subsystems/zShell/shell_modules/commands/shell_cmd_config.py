@@ -1,132 +1,47 @@
 """
 Configuration System Diagnostics Command for zCLI Shell.
 
-This module provides the `config check` command for comprehensive system diagnostics
-of the zCLI configuration subsystem. It validates directory structures, file accessibility,
-config loader functionality, and machine configuration loading.
+Provides `config check` command for comprehensive zCLI configuration system diagnostics.
+Validates directory structures, file accessibility, config loader functionality, and
+machine configuration loading.
 
 Command Syntax:
     config check           - Run full system diagnostics
 
-Purpose:
-    The config command serves as a health check for the zCLI configuration system,
-    verifying that all required directories exist, files are readable, and the
-    configuration hierarchy is properly loaded. This is essential for:
-    - Troubleshooting installation issues
-    - Verifying cross-platform path resolution
-    - Ensuring config files are accessible
-    - Validating zMachine configuration
-    - Confirming loader functionality
-
-Architecture Integration:
-    - **zConfig Facade**: Uses zcli.config.get_paths_info() and get_config_sources()
-    - **zDisplay**: Mode-agnostic output (Terminal and Bifrost)
-    - **zConfigPaths**: Validates platformdirs-based path resolution
-    - **MachineConfig**: Verifies machine.yaml loading
-    - **zColors**: Color-coded status indicators (GREEN/YELLOW/RED)
-
 Diagnostic Checks (10+):
-    1. Package config directory (zolo-zcli/config/)
-    2. System config directory (platformdirs system)
-    3. User config directory (platformdirs user)
-    4. User data directory (platformdirs user data)
-    5. zMachine.Config subdirectory
-    6. zMachine.Cache subdirectory
-    7. Machine config file (machine.yaml)
-    8. Default config files (zConfig.*.yaml)
-    9. Config loader functionality
-    10. Machine config loading (with required fields)
+    - Directory Checks (6): Package, system, user config dirs, zMachine subdirs
+    - File Checks (5+): Machine config, default configs  
+    - Integration Checks (2): Config loader, machine loading
 
 Status Levels:
-    - **pass (GREEN)**: Check succeeded, no issues
-    - **warning (YELLOW)**: Non-critical issue, may need attention
-    - **fail (RED)**: Critical issue, affects functionality
+    - pass (GREEN): Check succeeded
+    - warning (YELLOW): Non-critical issue
+    - fail (RED): Critical issue
 
-Display Format:
-    ══════════════════════════════════════════════════════════════════════
-    zCLI Configuration System Check
-    ══════════════════════════════════════════════════════════════════════
-    
-    Summary: 10/12 checks passed
-    Warnings: 1
-    Failed: 1
-    
-    ──────────────────────────────────────────────────────────────────────
-    Detailed Results
-    ──────────────────────────────────────────────────────────────────────
-    
-    [OK] Package configuration directory (required)
-       Path: /path/to/zolo-zcli/config
-       Status: Directory exists and is readable
-    
-    [WARN] System configuration directory
-       Path: /usr/local/share/zolo-zcli
-       Status: Directory does not exist
-    
-    [FAIL] Machine configuration file (required)
-       Path: /home/user/.config/zolo-zcli/zConfigs/machine.yaml
-       Status: File does not exist
-    
-    ──────────────────────────────────────────────────────────────────────
-    Final Result
-    ──────────────────────────────────────────────────────────────────────
-    
-    [WARN] Overall Status: WARNING
-    
-    ══════════════════════════════════════════════════════════════════════
+Architecture:
+    - zConfig Facade: get_paths_info(), get_config_sources(), get_machine()
+    - zDisplay: Mode-agnostic output (Terminal and Bifrost)
+    - UI Adapter Pattern: Returns None, uses zDisplay for output
 
-Example Usage:
-    zCLI> config check
-    # Runs full system diagnostics
-    
-    # Programmatic usage:
-    from zCLI.subsystems.zShell.shell_modules.commands.shell_cmd_config import execute_config
-    execute_config(zcli, {'action': 'check', 'args': [], 'options': {}})
+Constants (35+):
+    ACTION_*, STATUS_*, CHECK_*, MSG_*, KEY_*, COLOR_*, DISPLAY_*
 
-Constants Organization:
-    - ACTION_*: Command actions
-    - STATUS_*: Check status levels
-    - MSG_*: User-facing messages
-    - KEY_*: Dictionary keys
-    - CHECK_*: Check descriptions
-    - COLOR_*: Display colors
-    - DISPLAY_*: Display formatting
-
-Implementation Notes:
-    - All functions use 100% type hints
-    - All dictionary access via constants (no magic strings)
-    - UI adapter pattern: execute_config() returns None
-    - Mode-agnostic: Uses zDisplay for all output
-    - Helper pattern: check_* functions return structured dicts
-    - DRY: _build_check_result() eliminates duplication
-
-Type Hints:
-    - Uses centralized zCLI typing imports (from zCLI import Dict, List, Any, Optional)
-    - All parameters and returns are fully typed
-    - CheckResult = Dict[str, Any] for check result structures
-
-Thread Safety:
-    - Read-only operations (no state modification)
-    - Safe for concurrent execution
-
-Error Handling:
-    - Graceful handling of missing paths
-    - Exception catching in integration checks
-    - Always returns results (never crashes)
+Implementation:
+    - 100% type hints (CheckResult, DiagnosticResults)
+    - DRY helper: _build_check_result() eliminates duplication
+    - Never raises exceptions (graceful error handling)
+    - Thread-safe (read-only operations)
 
 Dependencies:
-    - zCLI (zcli instance)
-    - zConfig (get_paths_info, get_config_sources, get_machine)
-    - zDisplay (section, text, mode-agnostic output)
-    - zColors (GREEN, YELLOW, RED, RESET)
-    - os, Path (file system operations)
+    zConfig, zDisplay, zColors, os, Path
 
-Version: 1.5.4
-Week: 6.13.7
-Grade: A+ (Industry-grade, mode-agnostic, comprehensive diagnostics)
+Example:
+    execute_config(zcli, {'action': 'check', 'args': [], 'options': {}})
+
+Version: 1.5.4 | Week: 6.13.7 | Grade: A+
 """
 
-from zCLI import os, Path, Any, Dict, List
+from zCLI import os, Any, Dict, List
 
 # ═══════════════════════════════════════════════════════════════════════════
 # MODULE CONSTANTS
@@ -156,6 +71,7 @@ KEY_FAILED: str = "failed"
 KEY_WARNINGS: str = "warnings"
 KEY_DESCRIPTION: str = "description"
 KEY_PATH: str = "path"
+KEY_ZPATH: str = "zpath"
 KEY_MESSAGE: str = "message"
 KEY_REQUIRED: str = "required"
 KEY_SIZE: str = "size"
@@ -166,10 +82,10 @@ KEY_MACHINE: str = "machine"
 CHECK_PACKAGE_CONFIG: str = "package_config"
 CHECK_SYSTEM_CONFIG: str = "system_config"
 CHECK_USER_CONFIG: str = "user_config"
-CHECK_USER_DATA: str = "user_data"
 CHECK_ZMACHINE_CONFIG: str = "zmachine_config"
-CHECK_ZMACHINE_CACHE: str = "zmachine_cache"
-CHECK_MACHINE_CONFIG: str = "machine_config"
+CHECK_ZUIS: str = "zuis"
+CHECK_MACHINE_CONFIG_FILE: str = "machine_config_file"
+CHECK_ENVIRONMENT_CONFIG_FILE: str = "environment_config_file"
 CHECK_CONFIG_LOADER: str = "config_loader"
 CHECK_MACHINE_LOADING: str = "machine_loading"
 
@@ -177,10 +93,10 @@ CHECK_MACHINE_LOADING: str = "machine_loading"
 DESC_PACKAGE_CONFIG: str = "Package configuration directory"
 DESC_SYSTEM_CONFIG: str = "System configuration directory"
 DESC_USER_CONFIG: str = "User configuration directory"
-DESC_USER_DATA: str = "User data directory"
-DESC_ZMACHINE_CONFIG: str = "zMachine.Config subdirectory"
-DESC_ZMACHINE_CACHE: str = "zMachine.Cache subdirectory"
-DESC_MACHINE_CONFIG: str = "Machine configuration file"
+DESC_ZMACHINE_CONFIG: str = "zConfigs subdirectory"
+DESC_ZUIS: str = "zUIs subdirectory"
+DESC_MACHINE_CONFIG_FILE: str = "zConfig.machine.yaml"
+DESC_ENVIRONMENT_CONFIG_FILE: str = "zConfig.environment.yaml"
 DESC_CONFIG_LOADER: str = "Configuration loader"
 DESC_MACHINE_LOADING: str = "Machine configuration loading"
 
@@ -204,6 +120,8 @@ ZMACHINE_KEY_DEPLOYMENT: str = "deployment"
 PATHS_KEY_SYSTEM_CONFIG: str = "system_config_dir"
 PATHS_KEY_USER_CONFIG: str = "user_config_dir"
 PATHS_KEY_USER_DATA: str = "user_data_dir"
+PATHS_KEY_USER_ZCONFIGS: str = "user_zconfigs_dir"
+PATHS_KEY_USER_ZUIS: str = "user_zuis_dir"
 
 # Display Constants
 DISPLAY_SEPARATOR_FULL: str = "=" * 70
@@ -296,18 +214,22 @@ def check_config_system(zcli: Any) -> None:
     
     Process:
         1. Log start of diagnostics
-        2. Get paths info from zConfig
-        3. Run directory checks (6 checks)
-        4. Run file checks (5+ checks)
-        5. Run integration checks (2 checks)
-        6. Calculate summary statistics
-        7. Determine overall status
-        8. Display formatted results
+        2. Check zMachine (FOUNDATION - must pass first)
+        3. Get current OS for OS-specific checks
+        4. Get paths info from zConfig
+        5. Run directory checks (3-4 checks, OS-dependent)
+        6. Run file checks (2 checks)
+        7. Run integration check (config loader)
+        8. Calculate summary statistics
+        9. Determine overall status
+        10. Display formatted results with zMachine at top
     
     Notes:
         - Never raises exceptions (graceful handling)
         - Always displays results (even on partial failures)
         - Uses zDisplay for mode-agnostic output
+        - OS-aware: Only checks paths relevant to current OS
+          (e.g., /etc/zolo-zcli only checked on Linux)
     """
     zcli.logger.info("Checking zCLI configuration system...")
 
@@ -323,14 +245,24 @@ def check_config_system(zcli: Any) -> None:
         }
     }
 
+    # FIRST: Check zMachine (foundation - everything depends on this)
+    machine_check = check_machine_config_loading(zcli)
+    results[KEY_MACHINE] = machine_check  # Store at top level for prominent display
+    results[KEY_CHECKS][CHECK_MACHINE_LOADING] = machine_check  # Also in checks for count
+    
+    # Get OS type for OS-specific checks
+    try:
+        current_os = zcli.config.get_machine("os", "Unknown")
+    except Exception:
+        current_os = "Unknown"
+    
     # Get paths info from zConfig
     paths_info = zcli.config.get_paths_info()
     
-    # Run all checks
-    _run_directory_checks(results, paths_info)
+    # Run all other checks (OS-aware)
+    _run_directory_checks(results, paths_info, current_os)
     _run_file_checks(results, paths_info)
     results[KEY_CHECKS][CHECK_CONFIG_LOADER] = check_config_loader(zcli)
-    results[KEY_CHECKS][CHECK_MACHINE_LOADING] = check_machine_config_loading(zcli)
 
     # Calculate summary statistics
     for check_result in results[KEY_CHECKS].values():
@@ -357,85 +289,73 @@ def check_config_system(zcli: Any) -> None:
 # CHECK RUNNERS - COORDINATE GROUPS OF CHECKS
 # ═══════════════════════════════════════════════════════════════════════════
 
-def _run_directory_checks(results: DiagnosticResults, paths_info: Dict[str, str]) -> None:
+def _run_directory_checks(results: DiagnosticResults, paths_info: Dict[str, str], current_os: str) -> None:
     """
     Run all directory checks (internal helper).
     
     Coordinates directory validation checks for package, system, user, and
-    zMachine directories. Adds results to results[KEY_CHECKS].
+    zMachine directories. Adds results to results[KEY_CHECKS]. Only checks
+    OS-relevant paths (e.g., /etc on Linux only).
     
     Args:
         results: Results dict to populate
         paths_info: Path information from zConfig.get_paths_info()
+        current_os: Current OS name (Darwin, Linux, Windows)
     
     Returns:
         None: Modifies results dict in-place
     
     Checks:
-        1. Package config directory (required)
-        2. System config directory (optional)
-        3. User config directory (required)
-        4. User data directory (required)
-        5. zMachine.Config subdirectory (required)
-        6. zMachine.Cache subdirectory (required)
+        1. System config directory (Linux only - /etc/zolo-zcli)
+        2. User config directory (required - all OS)
+        3. zConfigs subdirectory (required - all OS)
+        4. zUIs subdirectory (required - all OS)
     
     Notes:
         - Uses check_directory() for actual validation
-        - Handles missing zCLI package path gracefully
+        - OS-aware: only checks relevant paths for current OS
     """
-    # Check 1: Package config directory
-    try:
-        import zCLI
-        package_root = Path(zCLI.__file__).parent.parent
-        package_config_dir = package_root / "config"
-        results[KEY_CHECKS][CHECK_PACKAGE_CONFIG] = check_directory(
-            str(package_config_dir), DESC_PACKAGE_CONFIG, required=True
-        )
-    except Exception:
-        results[KEY_CHECKS][CHECK_PACKAGE_CONFIG] = check_directory(
-            VALUE_NOT_AVAILABLE, DESC_PACKAGE_CONFIG, required=True
+    # Check 1: System config directory (Linux only - /etc/zolo-zcli is not used on macOS/Windows)
+    if current_os == "Linux":
+        results[KEY_CHECKS][CHECK_SYSTEM_CONFIG] = check_directory(
+            paths_info.get(PATHS_KEY_SYSTEM_CONFIG, VALUE_NOT_AVAILABLE),
+            DESC_SYSTEM_CONFIG,
+            required=False,
+            zpath=""  # No zPath equivalent for Linux system directory
         )
 
-    # Check 2: System config directory  
-    results[KEY_CHECKS][CHECK_SYSTEM_CONFIG] = check_directory(
-        paths_info.get(PATHS_KEY_SYSTEM_CONFIG, VALUE_NOT_AVAILABLE),
-        DESC_SYSTEM_CONFIG,
-        required=False
-    )
-
-    # Check 3: User config directory
+    # Check 2: User config directory
+    user_config_dir = paths_info.get(PATHS_KEY_USER_CONFIG, VALUE_NOT_AVAILABLE)
     results[KEY_CHECKS][CHECK_USER_CONFIG] = check_directory(
-        paths_info.get(PATHS_KEY_USER_CONFIG, VALUE_NOT_AVAILABLE),
+        user_config_dir,
         DESC_USER_CONFIG,
-        required=True
-    )
-
-    # Check 4: User data directory with zMachine subdirectories
-    user_data_dir = paths_info.get(PATHS_KEY_USER_DATA, VALUE_NOT_AVAILABLE)
-    results[KEY_CHECKS][CHECK_USER_DATA] = check_directory(
-        user_data_dir,
-        DESC_USER_DATA,
-        required=True
+        required=True,
+        zpath="~zMachine"
     )
     
-    # Checks 5-6: zMachine subdirectories (if user data dir exists)
-    if user_data_dir and user_data_dir != VALUE_NOT_AVAILABLE:
-        results[KEY_CHECKS][CHECK_ZMACHINE_CONFIG] = check_directory(
-            f"{user_data_dir}/Config",
-            DESC_ZMACHINE_CONFIG,
-            required=True
-        )
-        results[KEY_CHECKS][CHECK_ZMACHINE_CACHE] = check_directory(
-            f"{user_data_dir}/Cache",
-            DESC_ZMACHINE_CACHE,
-            required=True
-        )
+    # Check 3: zConfigs subdirectory (contains zConfig.*.yaml files)
+    user_zconfigs_dir = paths_info.get(PATHS_KEY_USER_ZCONFIGS, VALUE_NOT_AVAILABLE)
+    results[KEY_CHECKS][CHECK_ZMACHINE_CONFIG] = check_directory(
+        user_zconfigs_dir,
+        DESC_ZMACHINE_CONFIG,
+        required=True,
+        zpath="~zMachine.zConfigs"
+    )
+    
+    # Check 4: zUIs subdirectory (contains user-customized UI files)
+    user_zuis_dir = paths_info.get(PATHS_KEY_USER_ZUIS, VALUE_NOT_AVAILABLE)
+    results[KEY_CHECKS][CHECK_ZUIS] = check_directory(
+        user_zuis_dir,
+        DESC_ZUIS,
+        required=True,
+        zpath="~zMachine.zUIs"
+    )
 
 def _run_file_checks(results: DiagnosticResults, paths_info: Dict[str, str]) -> None:
     """
     Run all file checks (internal helper).
     
-    Coordinates file validation checks for machine config and default config files.
+    Coordinates file validation checks for user configuration files in zConfigs directory.
     Adds results to results[KEY_CHECKS].
     
     Args:
@@ -446,68 +366,59 @@ def _run_file_checks(results: DiagnosticResults, paths_info: Dict[str, str]) -> 
         None: Modifies results dict in-place
     
     Checks:
-        1. Machine configuration file (machine.yaml) - required
-        2. Default config files (zConfig.*.yaml) - required
+        1. zConfig.machine.yaml (required) - Machine identity and preferences
+        2. zConfig.environment.yaml (required) - Environment configuration
     
     Notes:
         - Uses check_file() for actual validation
-        - Handles missing paths gracefully
+        - Files located in user_zconfigs_dir (user_config_dir/zConfigs/)
+        - Files auto-created on first zCLI run if missing
     """
-    # Check 1: Machine config file
-    user_config_dir = paths_info.get(PATHS_KEY_USER_CONFIG, "")
-    machine_config_path = (
-        f"{user_config_dir}/machine.yaml"
-        if user_config_dir and user_config_dir != VALUE_NOT_AVAILABLE
-        else "/machine.yaml"
-    )
-    results[KEY_CHECKS][CHECK_MACHINE_CONFIG] = check_file(
-        machine_config_path,
-        DESC_MACHINE_CONFIG,
-        required=True
-    )
-
-    # Check 2: Default config files
-    try:
-        import zCLI
-        package_root = Path(zCLI.__file__).parent.parent
-        package_config_dir = package_root / "config"
-
-        for config_file in [
-            "zConfig.default.yaml",
-            "zConfig.dev.yaml",
-            "zConfig.prod.yaml",
-            "zConfig.machine.yaml"
-        ]:
-            check_name = f"default_{config_file.replace('.', '_')}"
-            results[KEY_CHECKS][check_name] = check_file(
-                str(package_config_dir / config_file),
-                f"Default {config_file}",
-                required=True
-            )
-    except Exception:
-        pass  # Silently skip if package path unavailable
+    # Get zConfigs directory path
+    user_zconfigs_dir = paths_info.get(PATHS_KEY_USER_ZCONFIGS, VALUE_NOT_AVAILABLE)
+    
+    if user_zconfigs_dir and user_zconfigs_dir != VALUE_NOT_AVAILABLE:
+        # Check 1: zConfig.machine.yaml
+        machine_config_path = f"{user_zconfigs_dir}/zConfig.machine.yaml"
+        results[KEY_CHECKS][CHECK_MACHINE_CONFIG_FILE] = check_file(
+            machine_config_path,
+            DESC_MACHINE_CONFIG_FILE,
+            required=True,
+            zpath="zConfig.machine"
+        )
+        
+        # Check 2: zConfig.environment.yaml
+        environment_config_path = f"{user_zconfigs_dir}/zConfig.environment.yaml"
+        results[KEY_CHECKS][CHECK_ENVIRONMENT_CONFIG_FILE] = check_file(
+            environment_config_path,
+            DESC_ENVIRONMENT_CONFIG_FILE,
+            required=True,
+            zpath="zConfig.environment"
+        )
 
 # ═══════════════════════════════════════════════════════════════════════════
 # CHECK VALIDATORS - INDIVIDUAL CHECK LOGIC
 # ═══════════════════════════════════════════════════════════════════════════
 
-def check_directory(path: str, description: str, required: bool = True) -> CheckResult:
+def check_directory(path: str, description: str, required: bool = True, zpath: str = "") -> CheckResult:
     """
     Check if a directory exists and is accessible.
     
     Validates directory existence, type (is directory), and read permissions.
-    Returns structured result dict with status, path, and message.
+    Returns structured result dict with status, path, zPath, and message.
     
     Args:
         path: Directory path to check
         description: Human-readable description for display
         required: Whether directory is required (affects status on failure)
+        zpath: zPath notation for the directory (e.g., "~zMachine.zConfigs")
     
     Returns:
         CheckResult: Dictionary with:
             - status: STATUS_PASS, STATUS_WARNING, or STATUS_FAIL
             - description: Human-readable description
             - path: Directory path checked
+            - zpath: zPath notation (if provided)
             - message: Status message
             - required: Whether directory is required
     
@@ -533,6 +444,7 @@ def check_directory(path: str, description: str, required: bool = True) -> Check
             status=STATUS_FAIL if required else STATUS_WARNING,
             description=description,
             path=path,
+            zpath=zpath,
             message=MSG_PATH_NOT_CONFIGURED,
             required=required
         )
@@ -544,6 +456,7 @@ def check_directory(path: str, description: str, required: bool = True) -> Check
                     status=STATUS_PASS,
                     description=description,
                     path=path,
+                    zpath=zpath,
                     message=MSG_DIR_EXISTS_READABLE,
                     required=required
                 )
@@ -552,6 +465,7 @@ def check_directory(path: str, description: str, required: bool = True) -> Check
                     status=STATUS_FAIL if required else STATUS_WARNING,
                     description=description,
                     path=path,
+                    zpath=zpath,
                     message=MSG_DIR_EXISTS_NOT_READABLE,
                     required=required
                 )
@@ -560,6 +474,7 @@ def check_directory(path: str, description: str, required: bool = True) -> Check
                 status=STATUS_FAIL if required else STATUS_WARNING,
                 description=description,
                 path=path,
+                zpath=zpath,
                 message=MSG_PATH_NOT_DIR,
                 required=required
             )
@@ -568,27 +483,30 @@ def check_directory(path: str, description: str, required: bool = True) -> Check
             status=STATUS_FAIL if required else STATUS_WARNING,
             description=description,
             path=path,
+            zpath=zpath,
             message=MSG_DIR_NOT_EXIST,
             required=required
         )
 
-def check_file(path: str, description: str, required: bool = True) -> CheckResult:
+def check_file(path: str, description: str, required: bool = True, zpath: str = "") -> CheckResult:
     """
     Check if a file exists and is accessible.
     
     Validates file existence, type (is file), read permissions, and gets file size.
-    Returns structured result dict with status, path, message, and size.
+    Returns structured result dict with status, path, zPath, message, and size.
     
     Args:
         path: File path to check
         description: Human-readable description for display
         required: Whether file is required (affects status on failure)
+        zpath: zPath notation for the file (e.g., "zConfig.machine")
     
     Returns:
         CheckResult: Dictionary with:
             - status: STATUS_PASS, STATUS_WARNING, or STATUS_FAIL
             - description: Human-readable description
             - path: File path checked
+            - zpath: zPath notation (if provided)
             - message: Status message (includes size for pass)
             - required: Whether file is required
             - size: File size in bytes (only if pass)
@@ -616,6 +534,7 @@ def check_file(path: str, description: str, required: bool = True) -> CheckResul
             status=STATUS_FAIL if required else STATUS_WARNING,
             description=description,
             path=path,
+            zpath=zpath,
             message=MSG_PATH_NOT_CONFIGURED,
             required=required
         )
@@ -629,6 +548,7 @@ def check_file(path: str, description: str, required: bool = True) -> CheckResul
                     status=STATUS_PASS,
                     description=description,
                     path=path,
+                    zpath=zpath,
                     message=f"{MSG_FILE_EXISTS_READABLE} ({size} bytes)",
                     required=required,
                     size=size
@@ -638,6 +558,7 @@ def check_file(path: str, description: str, required: bool = True) -> CheckResul
                     status=STATUS_FAIL if required else STATUS_WARNING,
                     description=description,
                     path=path,
+                    zpath=zpath,
                     message=MSG_FILE_EXISTS_NOT_READABLE,
                     required=required
                 )
@@ -646,6 +567,7 @@ def check_file(path: str, description: str, required: bool = True) -> CheckResul
                 status=STATUS_FAIL if required else STATUS_WARNING,
                 description=description,
                 path=path,
+                zpath=zpath,
                 message=MSG_PATH_NOT_FILE,
                 required=required
             )
@@ -654,6 +576,7 @@ def check_file(path: str, description: str, required: bool = True) -> CheckResul
             status=STATUS_FAIL if required else STATUS_WARNING,
             description=description,
             path=path,
+            zpath=zpath,
             message=MSG_FILE_NOT_EXIST,
             required=required
         )
@@ -813,9 +736,10 @@ def _display_config_check_results(zcli: Any, results: DiagnosticResults) -> None
     
     Display Structure:
         1. Header (display.header with full style)
-        2. Summary (display.list for counts)
-        3. Detailed Results (display.list for each check)
-        4. Final Result (display.list for status)
+        2. Detailed Results header
+        3. zMachine Foundation (os, hostname, architecture, python_version)
+        4. All other system checks
+        5. Final Result (display.list for status)
     
     Color Coding:
         - Pass: GREEN (via status indicators)
@@ -842,22 +766,60 @@ def _display_config_check_results(zcli: Any, results: DiagnosticResults) -> None
     # Header
     zcli.display.header(DISPLAY_HEADER, color=COLOR_INFO, style="full")
     
-    # Summary
-    summary = results[KEY_SUMMARY]
-    items.append("")
-    items.append(f"{DISPLAY_SUMMARY_HEADER}: {summary[KEY_PASSED]}/{summary[KEY_TOTAL_CHECKS]} checks passed")
-    if summary[KEY_WARNINGS] > 0:
-        items.append(f"Warnings: {summary[KEY_WARNINGS]}")
-    if summary[KEY_FAILED] > 0:
-        items.append(f"Failed: {summary[KEY_FAILED]}")
-    
+    # Detailed Results Header
     items.append("")
     items.append(DISPLAY_SEPARATOR_SECTION)
     items.append(DISPLAY_DETAILED_HEADER)
     items.append(DISPLAY_SEPARATOR_SECTION)
+    
+    # zMachine Foundation - Display prominently at top with individual field checks
+    # Get full machine info from zConfig
+    try:
+        full_machine_info = zcli.config.get_machine()
+    except Exception:
+        full_machine_info = {}
+    
+    # Display individual machine fields as checks
+    items.append("")
+    items.append("zMachine (Foundation)")
+    items.append("")
+    
+    # OS
+    os_value = full_machine_info.get("os", "N/A")
+    os_indicator = INDICATOR_PASS if os_value != "N/A" else INDICATOR_FAIL
+    items.append(f"{os_indicator} OS")
+    items.append(f"{DISPLAY_INDENT}Value: {os_value}")
+    
+    # Hostname
+    hostname_value = full_machine_info.get("hostname", "N/A")
+    hostname_indicator = INDICATOR_PASS if hostname_value != "N/A" else INDICATOR_FAIL
+    items.append("")
+    items.append(f"{hostname_indicator} Hostname")
+    items.append(f"{DISPLAY_INDENT}Value: {hostname_value}")
+    
+    # Architecture
+    arch_value = full_machine_info.get("architecture", "N/A")
+    arch_indicator = INDICATOR_PASS if arch_value != "N/A" else INDICATOR_FAIL
+    items.append("")
+    items.append(f"{arch_indicator} Architecture")
+    items.append(f"{DISPLAY_INDENT}Value: {arch_value}")
+    
+    # Python Version
+    python_value = full_machine_info.get("python_version", "N/A")
+    python_indicator = INDICATOR_PASS if python_value != "N/A" else INDICATOR_FAIL
+    items.append("")
+    items.append(f"{python_indicator} Python Version")
+    items.append(f"{DISPLAY_INDENT}Value: {python_value}")
+    
+    items.append("")
+    items.append(DISPLAY_SEPARATOR_SECTION)
 
     # Detailed Results
-    for check_result in results[KEY_CHECKS].values():
+    for check_name, check_result in results[KEY_CHECKS].items():
+        # Skip machine check - already displayed prominently at top
+        if check_name == CHECK_MACHINE_LOADING:
+            continue
+            
         status = check_result.get(KEY_STATUS, STATUS_FAIL)
         status_indicator = status_indicators.get(status, INDICATOR_UNKNOWN)
         required_text = DISPLAY_REQUIRED_TEXT if check_result.get(KEY_REQUIRED, False) else ""
@@ -865,6 +827,10 @@ def _display_config_check_results(zcli: Any, results: DiagnosticResults) -> None
         # Status line
         items.append("")
         items.append(f"{status_indicator} {check_result[KEY_DESCRIPTION]}{required_text}")
+
+        # zPath (if present) - show first for clarity
+        if KEY_ZPATH in check_result and check_result[KEY_ZPATH]:
+            items.append(f"{DISPLAY_INDENT}zPath: {check_result[KEY_ZPATH]}")
 
         # Path (if present)
         if KEY_PATH in check_result:
@@ -880,15 +846,6 @@ def _display_config_check_results(zcli: Any, results: DiagnosticResults) -> None
         # Sources (if present)
         if KEY_SOURCES in check_result:
             items.append(f"{DISPLAY_INDENT}Sources: {', '.join(check_result[KEY_SOURCES])}")
-        
-        # Machine info (if present)
-        if KEY_MACHINE in check_result:
-            machine = check_result[KEY_MACHINE]
-            items.append(
-                f"{DISPLAY_INDENT}OS: {machine.get(ZMACHINE_KEY_OS)} | "
-                f"Host: {machine.get(ZMACHINE_KEY_HOSTNAME)} | "
-                f"Env: {machine.get(ZMACHINE_KEY_DEPLOYMENT)}"
-            )
 
     # Final Result
     overall_status = results[KEY_STATUS]
@@ -913,6 +870,7 @@ def _build_check_result(
     status: str,
     description: str,
     path: str,
+    zpath: str,
     message: str,
     required: bool,
     **kwargs: Any
@@ -927,6 +885,7 @@ def _build_check_result(
         status: Check status (STATUS_PASS, STATUS_WARNING, STATUS_FAIL)
         description: Human-readable description
         path: Path checked
+        zpath: zPath notation (e.g., "~zMachine.zConfigs")
         message: Status message
         required: Whether check is required
         **kwargs: Additional fields (e.g., size=1024)
@@ -939,6 +898,7 @@ def _build_check_result(
             status=STATUS_PASS,
             description="My Check",
             path="/path/to/check",
+            zpath="~zMachine.zConfigs",
             message="Check passed",
             required=True,
             size=1024
@@ -956,6 +916,10 @@ def _build_check_result(
         KEY_MESSAGE: message,
         KEY_REQUIRED: required
     }
+    
+    # Add zpath if provided
+    if zpath:
+        result[KEY_ZPATH] = zpath
     
     # Add any additional fields
     result.update(kwargs)

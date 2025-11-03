@@ -100,6 +100,8 @@ ZPATH_HOME: str = "~"
 ZPATH_PARENT: str = ".."
 ZPATH_CURRENT: str = "."
 ZPATH_SEPARATOR: str = "."
+ZMACHINE_PREFIX_SHORT: str = "zMachine"
+ZMACHINE_PREFIX_LONG: str = "~zMachine"
 
 # Error Codes
 ERROR_INVALID_PATH: str = "invalid_path"
@@ -316,6 +318,8 @@ def _resolve_zpath(zcli: Any, target: str) -> Path:
     
     Handles multiple path formats:
     • @.path.to.dir → workspace-relative (from session zWorkspace)
+    • ~zMachine.path → zMachine user data directory paths
+    • zMachine.path  → zMachine user data directory paths
     • ~.path.to.dir → home-relative
     • ~             → home directory
     • ..            → parent of current directory
@@ -363,6 +367,32 @@ def _resolve_zpath(zcli: Any, target: str) -> Path:
     if target.startswith(ZPATH_WORKSPACE_PREFIX):
         path_parts = target[len(ZPATH_WORKSPACE_PREFIX):].split(ZPATH_SEPARATOR)
         resolved = workspace_root / "/".join(path_parts)
+    
+    # zMachine paths (~zMachine.* or zMachine.*)
+    elif target.startswith(ZMACHINE_PREFIX_LONG) or target.startswith(ZMACHINE_PREFIX_SHORT):
+        # Get user data directory from zConfig
+        user_data_dir = zcli.config.sys_paths.user_data_dir
+        
+        # Remove prefix and get subpath
+        if target.startswith(ZMACHINE_PREFIX_LONG):
+            # ~zMachine or ~zMachine.subpath
+            remainder = target[len(ZMACHINE_PREFIX_LONG):]
+        else:
+            # zMachine or zMachine.subpath
+            remainder = target[len(ZMACHINE_PREFIX_SHORT):]
+        
+        # Handle just ~zMachine or zMachine (no subpath)
+        if not remainder or remainder == ".":
+            resolved = Path(user_data_dir)
+        # Handle ~zMachine.subpath or zMachine.subpath
+        elif remainder.startswith("."):
+            # Remove leading dot and convert dot notation to path
+            subpath = remainder[1:]  # Remove leading "."
+            path_parts = subpath.split(ZPATH_SEPARATOR)
+            resolved = Path(user_data_dir) / "/".join(path_parts)
+        else:
+            # Invalid format (no dot after zMachine)
+            resolved = current_dir / target
     
     # Home-relative zPath (~.path.to.dir)
     elif target.startswith(ZPATH_HOME_PREFIX):

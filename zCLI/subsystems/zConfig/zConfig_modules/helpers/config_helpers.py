@@ -2,9 +2,79 @@
 """Shared helper functions for configuration loading across zConfig subsystems."""
 
 from zCLI import yaml, Path, Dict, Any, Callable
+import shutil
 
 # Module constants
 SOURCE_USER = "user"
+LOG_PREFIX = "[ConfigHelpers]"
+ZUI_CLI_SYS_FILENAME = "zUI.zcli_sys.yaml"
+
+def ensure_user_directories(paths: Any) -> None:
+    """
+    Ensure user configuration directories exist (zConfigs, zUIs).
+    
+    Creates user_config_dir/zConfigs/ and user_config_dir/zUIs/ directories
+    if they don't already exist. These directories are essential for:
+    - zConfigs: Configuration files (zConfig.machine.yaml, zConfig.environment.yaml)
+    - zUIs: User-customized UI definition files
+    
+    Args:
+        paths: zConfigPaths instance
+        
+    Notes:
+        - Called during zConfig initialization
+        - Uses exist_ok=True for safe repeated calls
+        - Silently handles errors (non-critical operation)
+    """
+    try:
+        # Ensure zConfigs directory exists
+        paths.user_zconfigs_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Ensure zUIs directory exists
+        paths.user_zuis_dir.mkdir(parents=True, exist_ok=True)
+        
+    except Exception as e:
+        print(f"{LOG_PREFIX} Warning: Failed to create user directories: {e}")
+
+def initialize_system_ui(paths: Any) -> None:
+    """
+    Copy system UI file (zUI.zcli_sys.yaml) from package to user zUIs directory.
+    
+    Copies the system UI file containing help menus, traceback UI, and uninstall
+    walker definitions on first run. This ensures system UI features work from any
+    directory. Users can customize this file after initial copy.
+    
+    Args:
+        paths: zConfigPaths instance
+        
+    Notes:
+        - Only copies if file doesn't exist (preserves user customizations)
+        - Source: zCLI/UI/zUI.zcli_sys.yaml (from installed package)
+        - Target: user_zuis_dir/zUI.zcli_sys.yaml
+        - Non-critical operation (silently handles errors)
+    """
+    try:
+        target_file = paths.user_zuis_dir / ZUI_CLI_SYS_FILENAME
+        
+        # Skip if file already exists (user may have customized)
+        if target_file.exists():
+            return
+        
+        # Get source file from package (zCLI/UI/)
+        import zCLI
+        zcli_package_dir = Path(zCLI.__file__).parent
+        source_file = zcli_package_dir / "UI" / ZUI_CLI_SYS_FILENAME
+        
+        # Copy file if source exists
+        if source_file.exists():
+            shutil.copy2(source_file, target_file)
+            print(f"{LOG_PREFIX} Initialized system UI: {ZUI_CLI_SYS_FILENAME}")
+            print(f"{LOG_PREFIX} Location: {target_file}")
+        else:
+            print(f"{LOG_PREFIX} Warning: Source UI file not found: {source_file}")
+            
+    except Exception as e:
+        print(f"{LOG_PREFIX} Warning: Failed to initialize system UI: {e}")
 
 def load_config_with_override(
     paths: Any,  # zConfigPaths (avoid circular import)
