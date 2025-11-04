@@ -72,7 +72,7 @@ class zWizard:
                 continue
 
             # Check if result is a key jump (e.g., menu selection)
-            if isinstance(result, str) and result in keys_list and result not in ("zBack", "stop", "error", ""):
+            if isinstance(result, str) and result in keys_list and result not in ("zBack", "exit", "stop", "error", ""):
                 self.logger.debug("Menu selected key: %s - jumping to it", result)
                 idx = keys_list.index(result)
                 continue
@@ -117,10 +117,11 @@ class zWizard:
         return None
 
     def _handle_navigation_result(self, result, key, navigation_callbacks):
-        """Handle navigation results (zBack, stop, error)."""
+        """Handle navigation results (zBack, exit, stop, error)."""
         # Map result types to callback names
         result_map = {
             "zBack": "on_back",
+            "exit": "on_exit",
             "stop": "on_stop",
             "error": "on_error",
             "": "on_error"

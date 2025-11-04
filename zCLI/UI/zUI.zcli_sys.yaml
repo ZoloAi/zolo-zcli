@@ -1,5 +1,5 @@
 Help:
-  ~Root*: ["^Where", "^Shortcut", "^CD", "^CWD/PWD", "^LS/List/Dir", "^Session", "^Walker", "stop"]
+  ~Root*: ["^Where", "^Shortcut", "^CD", "^CWD/PWD", "^LS/List/Dir", "^Session", "^Walker", "exit"]
   
   "^Where":
     zDisplay:
@@ -242,13 +242,13 @@ Help:
           • Use menu exit options or Ctrl+C to return to zShell
 
 Uninstall:
-  ~Root*: ["Framework Only", "Clean Uninstall", "Dependencies Only", "stop"]
+  ~Root*: ["Framework Only", "Clean Uninstall", "Dependencies Only", "exit"]
   "Framework Only": "zFunc(@.zCLI.utils.uninstall.uninstall_framework_only)"
   "Clean Uninstall": "zFunc(@.zCLI.utils.uninstall.uninstall_clean)"
   "Dependencies Only": "zFunc(@.zCLI.utils.uninstall.uninstall_dependencies)"
 
 Traceback:
-  ~Root*: ["^View Details", "Retry Operation", "Exception History", "stop"]
+  ~Root*: ["^View Details", "Retry Operation", "Exception History", "exit"]
   "^View Details": "zFunc(@.utils.zTraceback.display_formatted_traceback)"
   "Retry Operation": "zFunc(@.utils.zTraceback.retry_last_operation)"
   "^Exception History": "zFunc(@.utils.zTraceback.show_exception_history)"

@@ -162,11 +162,17 @@ class zWalker(zWizard):
             active_zBlock_dict_new, zBlock_keys_new, zKey_new = self.navigation.handle_zBack(show_banner=False, walker=self)
             return self.zBlock_loop(active_zBlock_dict_new, zBlock_keys_new, zKey_new)
         
+        def on_exit(result):  # pylint: disable=unused-argument
+            """Handle soft exit - return to caller (zShell or script)."""
+            self.logger.debug("Dispatch returned exit")
+            self.display.zDeclare("Walker session completed", color="MAIN", indent=0, style="~")
+            return {"exit": "completed"}  # Soft exit - returns control to caller
+        
         def on_stop(result):  # pylint: disable=unused-argument
-            """Handle stop signal."""
+            """Handle hard stop - terminate entire system."""
             self.logger.debug("Dispatch returned stop")
             self.display.zDeclare("You've stopped the system!", color="MAIN", indent=0, style="full")
-            sys.exit()  # Exit cleanly
+            sys.exit()  # Hard stop - terminates everything
         
         def on_error(error_or_result, key):  # pylint: disable=unused-argument
             """Handle error."""
@@ -180,6 +186,7 @@ class zWalker(zWizard):
             dispatch_fn=walker_dispatch,
             navigation_callbacks={
                 'on_back': on_back,
+                'on_exit': on_exit,
                 'on_stop': on_stop,
                 'on_error': on_error
             },
