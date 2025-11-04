@@ -105,9 +105,8 @@ class zWalker(zWizard):
     
     def _init_walker_session(self):
         """Initialize session for walker mode."""
-        # Only set zMode to Walker if not already in zBifrost mode
-        if self.session.get("zMode") != "zBifrost":
-            self.session["zMode"] = "Walker"
+        # Preserve original zMode (Terminal or zBifrost)
+        # Walker runs within the existing mode context
         
         # Initialize zCrumbs for walker navigation
         if "zCrumbs" not in self.session:

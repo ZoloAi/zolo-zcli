@@ -190,6 +190,7 @@ def execute_help(zcli: Any, parsed: Dict[str, Any]) -> None:
     zcli.zspark_obj["zBlock"] = "Help"
     
     # Use existing walker instance (already initialized)
+    # Walker preserves current zMode (Terminal or zBifrost)
     zcli.walker.run()
 
 

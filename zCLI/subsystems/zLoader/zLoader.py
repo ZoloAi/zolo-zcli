@@ -44,7 +44,7 @@ Caching Strategy
 **Cached (System Cache)**:
     - UI files (zUI.*.yaml): User interface definitions
     - Config files (zConfig.*.yaml): Configuration files
-    - Cache Key: f"parsed:{zPath_key}" (uses zPath, not OS path)
+    - Cache Key: f"parsed:{absolute_filepath}" (uses OS path for consistency)
     - Cache Type: "system" (LRU eviction, max_size=100)
 
 **NOT Cached (Fresh Load)**:
@@ -53,9 +53,10 @@ Caching Strategy
     - Detection: "zSchema" in filename or ".yaml|zSchema" extension
 
 **Cache Key Construction**:
-    - Format: "parsed:{zPath_key}"
-    - Example: "parsed:@.zUI.users.yaml"
-    - Uses zPath (declarative path) instead of OS path
+    - Format: "parsed:{absolute_filepath}"
+    - Example: "parsed:/Users/name/workspace/zUI.users.yaml"
+    - Uses absolute OS path for session-independent consistency
+    - Ensures same file always uses same cache key (prevents duplicates)
 
 Integration Points
 ------------------
@@ -207,7 +208,7 @@ class zLoader:
     **Cached (System Cache)**:
         - UI files (zUI.*.yaml): User interface definitions
         - Config files (zConfig.*.yaml): Configuration files
-        - Cache Key: "parsed:{zPath_key}" (uses zPath, not OS path)
+        - Cache Key: "parsed:{absolute_filepath}" (uses OS path for consistency)
         - Cache Type: "system" (LRU eviction, max_size=100)
 
     **NOT Cached (Fresh Load)**:
@@ -319,8 +320,9 @@ class zLoader:
         **Caching Strategy**:
             - Cached: UI files (zUI.*), Config files (zConfig.*)
             - NOT Cached: Schema files (zSchema.*) - always loaded fresh
-            - Cache Key: "parsed:{zPath_key}" (uses zPath, not OS path)
+            - Cache Key: "parsed:{absolute_filepath}" (uses OS path for consistency)
             - Cache Type: "system" (LRU eviction, max_size=100)
+            - Mtime Invalidation: Automatically detects file changes and reloads
 
         **zParser Delegation**:
             - Path Resolution: self.zpath_decoder(zPath, zType)
@@ -349,9 +351,9 @@ class zLoader:
 
         if not is_schema:
             # Step 2: Check system cache (UI and config files)
-            # Use zPath for cache key instead of OS path
-            zPath_key = f"{self.zSession.get(SESSION_KEY_VAFOLDER, DEFAULT_PATH_SYMBOL)}.{zVaFile}"
-            cache_key = f"{CACHE_KEY_PREFIX}{zPath_key}"
+            # Use absolute filepath for cache key (session-independent)
+            # This ensures same file always uses same cache key, preventing duplicates
+            cache_key = f"{CACHE_KEY_PREFIX}{zFilePath_identified}"
             cached = self.cache.get(cache_key, cache_type=CACHE_TYPE_SYSTEM, filepath=zFilePath_identified)
             if cached is not None:
                 self.display.zDeclare(MSG_CACHED, color=self.mycolor, indent=1, style="~")
@@ -378,6 +380,8 @@ class zLoader:
             return result
 
         # Cache other resources (UI, configs, etc.) in system cache
+        # Use absolute filepath for cache key (same as get() for consistency)
+        cache_key = f"{CACHE_KEY_PREFIX}{zFilePath_identified}"
         return self.cache.set(cache_key, result, cache_type=CACHE_TYPE_SYSTEM, filepath=zFilePath_identified)
 
 

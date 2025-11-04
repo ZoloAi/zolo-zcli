@@ -1,5 +1,5 @@
 Help:
-  ~Root*: ["^Where", "^Shortcut", "^CD", "^CWD/PWD", "^LS/List/Dir", "^Session", "^Walker", "exit"]
+  ~Root*: ["^Where", "^Shortcut", "^CD", "^CWD/PWD", "^LS/List/Dir", "^Session", "^Walker", "^Load", "exit"]
   
   "^Where":
     zDisplay:
@@ -240,6 +240,65 @@ Help:
           • Respects current zMode (Terminal or zBifrost)
           • Use 'session' command to configure walker settings
           • Use menu exit options or Ctrl+C to return to zShell
+
+  "^Load":
+    zDisplay:
+      event: text
+      content: |
+        
+        ═══════════════════════════════════════════════════════════════════
+        LOAD Command - Resource Caching & Aliasing
+        ═══════════════════════════════════════════════════════════════════
+        
+        Syntax:
+          load <zPath>                    # Pin resource to cache
+          load <zPath> --as <alias>       # Load with alias ($alias)
+          load show                       # Show all cache tiers
+          load show pinned                # Show pinned (Tier 1)
+          load show cached                # Show system cache (Tier 2)
+          load show aliases               # Show all aliases
+          load show schemas|ui|config     # Filter by type
+          load clear [pattern]            # Clear pinned resources
+        
+        Description:
+          Pin resources to cache and create reusable $alias shortcuts
+          for data commands. Three-tier caching (pinned, system, disk).
+        
+        Examples:
+          # Pin schema to cache
+          load @.Schemas.zSchema.users
+          
+          # Create alias for data commands
+          load @.Schemas.zSchema.users --as users
+          data read users_table --model $users
+          data write users_table --model $users
+          
+          # Pin UI file
+          load @.UI.zUI.main_menu
+          
+          # Show cache state
+          load show                # All tiers
+          load show pinned         # User-loaded only
+          load show aliases        # All $aliases
+          
+          # Clear cache
+          load clear               # Clear all pinned
+          load clear users         # Clear by pattern
+        
+        Cache Tiers:
+          Tier 1 (Pinned): User-loaded, never evicted, creates $aliases
+          Tier 2 (System): Auto-cached, LRU eviction, mtime invalidation
+          Tier 3 (Disk):   Direct I/O fallback, always available
+        
+        Alias Benefits:
+          • Shorter commands (less typing)
+          • Faster (no repeated path resolution)
+          • Session-scoped (persists until exit)
+        
+        Notes:
+          • Aliases use $ prefix (e.g., $users, $demo)
+          • Cache auto-invalidates when files change (mtime)
+          • Session-based (in-memory, not persisted to disk)
 
 Uninstall:
   ~Root*: ["Framework Only", "Clean Uninstall", "Dependencies Only", "exit"]
