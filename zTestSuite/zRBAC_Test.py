@@ -43,7 +43,7 @@ zVaF:
       content: "Public content"
 """)
         
-        z = zCLI({"zWorkspace": str(self.workspace_path)})
+        z = zCLI({"zSpace": str(self.workspace_path)})
         data = z.loader.handle("@.zUI.test")
         
         self.assertIn("zVaF", data)
@@ -66,7 +66,7 @@ zVaF:
       content: "Protected content"
 """)
         
-        z = zCLI({"zWorkspace": str(self.workspace_path)})
+        z = zCLI({"zSpace": str(self.workspace_path)})
         data = z.loader.handle("@.zUI.test")
         
         protected = data["zVaF"].get("^Protected Action")
@@ -89,7 +89,7 @@ zVaF:
       content: "Admin content"
 """)
         
-        z = zCLI({"zWorkspace": str(self.workspace_path)})
+        z = zCLI({"zSpace": str(self.workspace_path)})
         data = z.loader.handle("@.zUI.test")
         
         admin_action = data["zVaF"].get("^Admin Action")
@@ -111,7 +111,7 @@ zVaF:
       content: "Moderator content"
 """)
         
-        z = zCLI({"zWorkspace": str(self.workspace_path)})
+        z = zCLI({"zSpace": str(self.workspace_path)})
         data = z.loader.handle("@.zUI.test")
         
         mod_action = data["zVaF"].get("^Mod Action")
@@ -134,7 +134,7 @@ zVaF:
       content: "Delete content"
 """)
         
-        z = zCLI({"zWorkspace": str(self.workspace_path)})
+        z = zCLI({"zSpace": str(self.workspace_path)})
         data = z.loader.handle("@.zUI.test")
         
         delete_action = data["zVaF"].get("^Delete Action")
@@ -198,7 +198,7 @@ zVaF:
 """)
         
         self.z = zCLI({
-            "zWorkspace": str(self.workspace_path),
+            "zSpace": str(self.workspace_path),
             "zVaFile": "@.zUI.rbac",
             "zBlock": "zVaF",
             "zMode": "Terminal"
@@ -411,7 +411,7 @@ zVaF:
 """)
         
         z = zCLI({
-            "zWorkspace": str(self.workspace_path),
+            "zSpace": str(self.workspace_path),
             "zVaFile": "@.zUI.test",
             "zBlock": "zVaF",
             "zMode": "Terminal"
@@ -453,7 +453,7 @@ class TestRBACEdgeCases(unittest.TestCase):
     
     def test_rbac_with_non_dict_value(self):
         """RBAC check with non-dict value should return granted (no restrictions)."""
-        z = zCLI({"zWorkspace": str(self.workspace_path), "zMode": "Terminal"})
+        z = zCLI({"zSpace": str(self.workspace_path), "zMode": "Terminal"})
         
         # String value (no _rbac possible)
         result = z.wizard._check_rbac_access("^StringKey", "string_value")
@@ -465,7 +465,7 @@ class TestRBACEdgeCases(unittest.TestCase):
     
     def test_rbac_empty_dict(self):
         """Empty _rbac dict should not restrict access."""
-        z = zCLI({"zWorkspace": str(self.workspace_path), "zMode": "Terminal"})
+        z = zCLI({"zSpace": str(self.workspace_path), "zMode": "Terminal"})
         
         value = {"_rbac": {}, "zDisplay": {"event": "text", "content": "test"}}
         result = z.wizard._check_rbac_access("^EmptyRBAC", value)
@@ -473,7 +473,7 @@ class TestRBACEdgeCases(unittest.TestCase):
     
     def test_rbac_no_auth_subsystem(self):
         """RBAC without auth subsystem should deny access (safety fallback)."""
-        z = zCLI({"zWorkspace": str(self.workspace_path), "zMode": "Terminal"})
+        z = zCLI({"zSpace": str(self.workspace_path), "zMode": "Terminal"})
         
         # Temporarily remove auth
         original_auth = z.auth

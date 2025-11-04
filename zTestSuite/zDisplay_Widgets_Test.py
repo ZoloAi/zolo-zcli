@@ -22,7 +22,7 @@ class TestProgressBar(unittest.TestCase):
     def setUp(self):
         """Initialize zCLI instance for testing."""
         self.workspace = Path(__file__).parent
-        self.z = zCLI({"zWorkspace": str(self.workspace)})
+        self.z = zCLI({"zSpace": str(self.workspace)})
 
     def test_progress_bar_basic(self):
         """Test basic progress bar rendering."""
@@ -117,7 +117,7 @@ class TestSpinner(unittest.TestCase):
     def setUp(self):
         """Initialize zCLI instance for testing."""
         self.workspace = Path(__file__).parent
-        self.z = zCLI({"zWorkspace": str(self.workspace)})
+        self.z = zCLI({"zSpace": str(self.workspace)})
 
     def test_spinner_context_manager(self):
         """Test spinner as context manager."""
@@ -172,7 +172,7 @@ class TestProgressIterator(unittest.TestCase):
     def setUp(self):
         """Initialize zCLI instance for testing."""
         self.workspace = Path(__file__).parent
-        self.z = zCLI({"zWorkspace": str(self.workspace)})
+        self.z = zCLI({"zSpace": str(self.workspace)})
 
     def test_progress_iterator_basic(self):
         """Test progress iterator with simple list."""
@@ -216,7 +216,7 @@ class TestIndeterminateProgress(unittest.TestCase):
     def setUp(self):
         """Initialize zCLI instance for testing."""
         self.workspace = Path(__file__).parent
-        self.z = zCLI({"zWorkspace": str(self.workspace)})
+        self.z = zCLI({"zSpace": str(self.workspace)})
 
     def test_indeterminate_progress_basic(self):
         """Test indeterminate progress basic functionality."""
@@ -243,7 +243,7 @@ class TestWidgetsIntegration(unittest.TestCase):
     def setUp(self):
         """Initialize zCLI instance for testing."""
         self.workspace = Path(__file__).parent
-        self.z = zCLI({"zWorkspace": str(self.workspace)})
+        self.z = zCLI({"zSpace": str(self.workspace)})
 
     def test_widgets_module_initialized(self):
         """Test that TimeBased module is properly initialized."""

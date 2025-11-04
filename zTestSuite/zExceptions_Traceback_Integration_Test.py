@@ -34,7 +34,7 @@ class TestAutoRegistration(unittest.TestCase):
     def setUp(self):
         """Create zCLI instance for testing."""
         self.z = zCLI(zSpark_obj={
-            'zWorkspace': '.',
+            'zSpace': '.',
             'zMode': 'Terminal'
         })
     
@@ -117,8 +117,8 @@ class TestThreadSafety(unittest.TestCase):
     
     def test_exception_registers_to_correct_instance(self):
         """Test that exceptions register to the correct zCLI instance."""
-        z1 = zCLI(zSpark_obj={'zWorkspace': '.', 'zMode': 'Terminal'})
-        z2 = zCLI(zSpark_obj={'zWorkspace': '.', 'zMode': 'Terminal'})
+        z1 = zCLI(zSpark_obj={'zSpace': '.', 'zMode': 'Terminal'})
+        z2 = zCLI(zSpark_obj={'zSpace': '.', 'zMode': 'Terminal'})
         
         # Clear histories
         z1.zTraceback.exception_history = []
@@ -151,7 +151,7 @@ class TestHintDisplay(unittest.TestCase):
     def setUp(self):
         """Create zCLI instance for testing."""
         self.z = zCLI(zSpark_obj={
-            'zWorkspace': '.',
+            'zSpace': '.',
             'zMode': 'Terminal'
         })
     
@@ -250,7 +250,7 @@ class TestGracefulDegradation(unittest.TestCase):
     
     def test_exception_with_cleared_context(self):
         """Test exception behavior when context is explicitly cleared."""
-        z = zCLI(zSpark_obj={'zWorkspace': '.', 'zMode': 'Terminal'})
+        z = zCLI(zSpark_obj={'zSpace': '.', 'zMode': 'Terminal'})
         
         # Clear context
         from zCLI.zCLI import _current_zcli
@@ -269,7 +269,7 @@ class TestContextManagerSupport(unittest.TestCase):
     
     def test_context_manager_sets_context(self):
         """Test that context manager sets current zCLI."""
-        z = zCLI(zSpark_obj={'zWorkspace': '.', 'zMode': 'Terminal'})
+        z = zCLI(zSpark_obj={'zSpace': '.', 'zMode': 'Terminal'})
         
         with z:
             current = get_current_zcli()
@@ -277,7 +277,7 @@ class TestContextManagerSupport(unittest.TestCase):
     
     def test_context_manager_clears_on_exit(self):
         """Test that context manager clears context on exit."""
-        z = zCLI(zSpark_obj={'zWorkspace': '.', 'zMode': 'Terminal'})
+        z = zCLI(zSpark_obj={'zSpace': '.', 'zMode': 'Terminal'})
         
         with z:
             pass  # Context set inside
@@ -288,8 +288,8 @@ class TestContextManagerSupport(unittest.TestCase):
     
     def test_nested_context_managers(self):
         """Test nested context managers work correctly."""
-        z1 = zCLI(zSpark_obj={'zWorkspace': '.', 'zMode': 'Terminal'})
-        z2 = zCLI(zSpark_obj={'zWorkspace': '.', 'zMode': 'Terminal'})
+        z1 = zCLI(zSpark_obj={'zSpace': '.', 'zMode': 'Terminal'})
+        z2 = zCLI(zSpark_obj={'zSpace': '.', 'zMode': 'Terminal'})
         
         with z1:
             self.assertIs(get_current_zcli(), z1)
@@ -305,7 +305,7 @@ class TestContextManagerSupport(unittest.TestCase):
     
     def test_exception_in_context_manager(self):
         """Test that exceptions in context manager don't break cleanup."""
-        z = zCLI(zSpark_obj={'zWorkspace': '.', 'zMode': 'Terminal'})
+        z = zCLI(zSpark_obj={'zSpace': '.', 'zMode': 'Terminal'})
         
         try:
             with z:
@@ -324,7 +324,7 @@ class TestExceptionContextCompatibility(unittest.TestCase):
     def setUp(self):
         """Create zCLI instance for testing."""
         self.z = zCLI(zSpark_obj={
-            'zWorkspace': '.',
+            'zSpace': '.',
             'zMode': 'Terminal'
         })
     

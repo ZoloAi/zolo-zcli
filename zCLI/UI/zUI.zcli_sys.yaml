@@ -1,5 +1,5 @@
 Help:
-  ~Root*: ["^Where", "^Shortcut", "^CD", "^CWD/PWD", "^LS/List/Dir", "^Session", "stop"]
+  ~Root*: ["^Where", "^Shortcut", "^CD", "^CWD/PWD", "^LS/List/Dir", "^Session", "^Walker", "stop"]
   
   "^Where":
     zDisplay:
@@ -159,7 +159,7 @@ Help:
         
         Session Information Displayed:
           • zMode        - Current execution mode (terminal/bifrost)
-          • zWorkspace   - Original workspace root (constant "home base")
+          • zSpace   - Original workspace root (constant "home base")
           • zMachine     - Machine identity and system info
           • zAuth        - Authentication status and roles
         
@@ -176,18 +176,22 @@ Help:
             • Cannot be modified (system constants)
           
           Framework-Managed Keys (Use Dedicated Commands):
-            • zAuth, zVaFile_path, zVaFilename, zBlock, zCrumbs
+            • zAuth, zCrumbs
             • zCache, wizard_mode, zSpark
             • Cannot be set directly (managed by subsystems)
           
+          User-Configurable Path Keys (zPath notation supported):
+            • zSpace, zVaFolder, zVaFile, zBlock
+            • Use @ (workspace), ~ (absolute), ~zMachine prefixes
+          
           User-Configurable Keys (Allowed):
-            • zMode, zWorkspace, zLogger, zTraceback
+            • zMode, zSpace, zLogger, zTraceback
             • Custom keys (any key not in above lists)
         
         Important Notes:
-          • zWorkspace is the ORIGINAL workspace root (set at shell startup)
+          • zSpace is the ORIGINAL workspace root (set at shell startup)
           • Current directory is shown by 'cwd' or 'where' prompt
-          • Use 'cd @.' to return to zWorkspace root
+          • Use 'cd @.' to return to zSpace root
           • Protected keys cannot be modified for security/stability
         
         Phase 2 Enhancement (Future):
@@ -197,6 +201,45 @@ Help:
           • session blocks    - Active zBlock contexts
           • session vars      - User-defined session variables
           • session history   - Command/navigation history
+
+  "^Walker":
+    zDisplay:
+      event: text
+      content: |
+        
+        ═══════════════════════════════════════════════════════════════════
+        WALKER Command - Launch Declarative UI Navigation
+        ═══════════════════════════════════════════════════════════════════
+        
+        Syntax: walker run
+        
+        Description:
+          Launch zWalker to run a declarative UI (zVaFile) with interactive
+          menu navigation. Uses current session configuration.
+        
+        Required Session Keys:
+          • zSpace      - Workspace root
+          • zVaFolder   - Path to UI folder
+          • zVaFile     - UI filename (without extension)
+          • zBlock      - Starting menu block
+        
+        Examples:
+          # Set up and run system help
+          session set zVaFolder @.zCLI.UI
+          session set zVaFile zUI.zcli_sys
+          session set zBlock help
+          walker run
+          
+          # Run a demo application
+          session set zVaFolder @.Demos.User\ Manager
+          session set zVaFile zUI.users_sqlite
+          session set zBlock Root
+          walker run
+        
+        Notes:
+          • Respects current zMode (Terminal or zBifrost)
+          • Use 'session' command to configure walker settings
+          • Use menu exit options or Ctrl+C to return to zShell
 
 Uninstall:
   ~Root*: ["Framework Only", "Clean Uninstall", "Dependencies Only", "stop"]

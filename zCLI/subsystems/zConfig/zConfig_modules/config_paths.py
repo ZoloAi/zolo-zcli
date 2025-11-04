@@ -98,13 +98,13 @@ class zConfigPaths:
     def _detect_workspace_dir(self) -> Optional[Path]:
         """Determine workspace directory using zSpark hint or current directory."""
         if self.zSpark:
-            workspace = self.zSpark.get("zWorkspace")
+            workspace = self.zSpark.get("zSpace")
             if workspace:
                 try:
                     return Path(workspace).expanduser().resolve()
                 except Exception:  # pragma: no cover - defensive fallback
                     self._log_warning(
-                        f"Unable to resolve zWorkspace '{workspace}', defaulting to current directory"
+                        f"Unable to resolve zSpace '{workspace}', defaulting to current directory"
                     )
 
         try:

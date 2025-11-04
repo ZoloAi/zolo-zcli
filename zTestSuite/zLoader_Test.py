@@ -27,7 +27,7 @@ class TestzLoaderInitialization(unittest.TestCase):
     def setUp(self):
         """Set up mock zCLI instance for testing."""
         self.mock_zcli = Mock()
-        self.mock_zcli.session = {"zMode": "Terminal", "zWorkspace": "/test/workspace"}
+        self.mock_zcli.session = {"zMode": "Terminal", "zSpace": "/test/workspace"}
         self.mock_zcli.logger = Mock()
         self.mock_zcli.display = Mock()
         self.mock_zcli.display.zDeclare = Mock()
@@ -606,7 +606,7 @@ class TestzLoaderFileLoading(unittest.TestCase):
     def setUp(self):
         """Set up mock zCLI instance for testing."""
         self.mock_zcli = Mock()
-        self.mock_zcli.session = {"zMode": "Terminal", "zWorkspace": "/test/workspace"}
+        self.mock_zcli.session = {"zMode": "Terminal", "zSpace": "/test/workspace"}
         self.mock_zcli.logger = Mock()
         self.mock_zcli.display = Mock()
         self.mock_zcli.display.zDeclare = Mock()

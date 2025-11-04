@@ -11,31 +11,31 @@ Architecture Position:
     - Provides path translation services for the facade layer
 
 Key Features:
-    - @ Symbol: Workspace-relative paths (requires active zWorkspace in session)
+    - @ Symbol: Workspace-relative paths (requires active zSpace in session)
     - ~ Symbol: Absolute paths from root
     - Dot Notation: Converts dot-separated paths to filesystem paths
     - Validation: Ensures zPaths are well-formed before resolution
     - Error Handling: Defensive checks for missing workspace context
 
 zPath Syntax:
-    @.folder.subfolder.filename.ext  → {zWorkspace}/folder/subfolder/filename.ext
+    @.folder.subfolder.filename.ext  → {zSpace}/folder/subfolder/filename.ext
     ~.Users.username.file.txt        → /Users/username/file.txt
-    @.README.md                       → {zWorkspace}/README.md
+    @.README.md                       → {zSpace}/README.md
 
 Integration Points:
-    - zConfig: Session access for zWorkspace resolution
+    - zConfig: Session access for zSpace resolution
     - open_files: Resolved paths are passed to file opening handlers
     - zOpen facade: Primary entry point via handle()
 
 Dependencies:
     - os: Path manipulation and filesystem operations
-    - zConfig constants: SESSION_KEY_ZWORKSPACE for session dict keys
+    - zConfig constants: SESSION_KEY_ZSPACE for session dict keys
 
 Usage Example:
-    from zCLI.subsystems.zConfig.zConfig_modules.config_session import SESSION_KEY_ZWORKSPACE
+    from zCLI.subsystems.zConfig.zConfig_modules.config_session import SESSION_KEY_ZSPACE
     from zCLI.subsystems.zOpen.open_modules.open_paths import resolve_zpath, validate_zpath
 
-    session = {SESSION_KEY_ZWORKSPACE: "/home/user/project"}
+    session = {SESSION_KEY_ZSPACE: "/home/user/project"}
     
     # Validate before resolving
     if validate_zpath("@.src.main.py"):
@@ -45,7 +45,7 @@ Usage Example:
 Version History:
     - v1.5.4: Extracted from monolithic zOpen.py, added industry-grade documentation
     - v1.5.4: Added type hints, constants, and validation helper
-    - v1.5.4: Modernized session key access (SESSION_KEY_ZWORKSPACE)
+    - v1.5.4: Modernized session key access (SESSION_KEY_ZSPACE)
 
 Author: zCLI Development Team
 """
@@ -53,7 +53,7 @@ Author: zCLI Development Team
 from zCLI import os, Optional, Any
 
 # Import centralized session constants
-from zCLI.subsystems.zConfig.zConfig_modules.config_session import SESSION_KEY_ZWORKSPACE
+from zCLI.subsystems.zConfig.zConfig_modules.config_session import SESSION_KEY_ZSPACE
 
 # ═══════════════════════════════════════════════════════════════
 # Module-Level Constants
@@ -113,8 +113,8 @@ def resolve_zpath(
 
     Symbol Handling:
         @ (Workspace-relative):
-            - Requires active zWorkspace in session
-            - Base path: session[SESSION_KEY_ZWORKSPACE]
+            - Requires active zSpace in session
+            - Base path: session[SESSION_KEY_ZSPACE]
             - Example: "@.src.main.py" → "{workspace}/src/main.py"
             - Returns None if workspace not set
 
@@ -132,11 +132,11 @@ def resolve_zpath(
     Integration Notes:
         - Called by zOpen facade's handle() method
         - Resolved paths are passed to open_files.open_file()
-        - Uses centralized SESSION_KEY_ZWORKSPACE constant
+        - Uses centralized SESSION_KEY_ZSPACE constant
         - Defensive error handling with logger output
 
     Example Usage:
-        >>> session = {SESSION_KEY_ZWORKSPACE: "/home/user/project"}
+        >>> session = {SESSION_KEY_ZSPACE: "/home/user/project"}
         >>> resolve_zpath("@.README.md", session, logger)
         "/home/user/project/README.md"
 
@@ -149,7 +149,7 @@ def resolve_zpath(
     See Also:
         - validate_zpath(): Pre-validation helper for zPath format
         - open_files.open_file(): Consumer of resolved paths
-        - SESSION_KEY_ZWORKSPACE: Centralized session key constant
+        - SESSION_KEY_ZSPACE: Centralized session key constant
 
     Version: v1.5.4
     """
@@ -162,7 +162,7 @@ def resolve_zpath(
     # Determine base path from symbol
     if parts[0] == ZPATH_SYMBOL_WORKSPACE:
         # Workspace-relative path
-        base = session.get(SESSION_KEY_ZWORKSPACE) or ""
+        base = session.get(SESSION_KEY_ZSPACE) or ""
         if not base:
             logger.error(ERR_NO_WORKSPACE + ": %s", zpath)
             return None

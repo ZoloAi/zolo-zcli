@@ -23,7 +23,7 @@ class TestzParserInitialization(unittest.TestCase):
     def setUp(self):
         """Set up mock zCLI instance for testing."""
         self.mock_zcli = Mock()
-        self.mock_zcli.session = {"zMode": "Terminal", "zWorkspace": "/test/workspace"}
+        self.mock_zcli.session = {"zMode": "Terminal", "zSpace": "/test/workspace"}
         self.mock_zcli.logger = Mock()
         self.mock_zcli.display = Mock()
         self.mock_zcli.display.zDeclare = Mock()
@@ -70,7 +70,7 @@ class TestResolveSymbolPath(unittest.TestCase):
     def setUp(self):
         """Set up mock zCLI and zParser for testing."""
         self.mock_zcli = Mock()
-        self.mock_zcli.session = {"zMode": "Terminal", "zWorkspace": "/test/workspace"}
+        self.mock_zcli.session = {"zMode": "Terminal", "zSpace": "/test/workspace"}
         self.mock_zcli.logger = Mock()
         self.mock_zcli.display = Mock()
         self.mock_zcli.display.zDeclare = Mock()
@@ -110,7 +110,7 @@ class TestParseFunctionPath(unittest.TestCase):
     def setUp(self):
         """Set up mock zCLI and zParser for testing."""
         self.mock_zcli = Mock()
-        self.mock_zcli.session = {"zMode": "Terminal", "zWorkspace": "/test/workspace"}
+        self.mock_zcli.session = {"zMode": "Terminal", "zSpace": "/test/workspace"}
         self.mock_zcli.logger = Mock()
         self.mock_zcli.display = Mock()
         self.mock_zcli.display.zDeclare = Mock()
@@ -271,7 +271,7 @@ class TestResolveDataPath(unittest.TestCase):
     def setUp(self):
         """Set up mock zCLI and zParser for testing."""
         self.mock_zcli = Mock()
-        self.mock_zcli.session = {"zMode": "Terminal", "zWorkspace": "/test/workspace"}
+        self.mock_zcli.session = {"zMode": "Terminal", "zSpace": "/test/workspace"}
         self.mock_zcli.logger = Mock()
         self.mock_zcli.display = Mock()
         self.mock_zcli.display.zDeclare = Mock()
@@ -379,7 +379,7 @@ class TestPluginInvocation(unittest.TestCase):
     def setUp(self):
         """Set up mock zCLI and zParser for testing."""
         self.mock_zcli = Mock()
-        self.mock_zcli.session = {"zMode": "Terminal", "zWorkspace": "/test/workspace"}
+        self.mock_zcli.session = {"zMode": "Terminal", "zSpace": "/test/workspace"}
         self.mock_zcli.logger = Mock()
         self.mock_zcli.display = Mock()
         self.mock_zcli.display.zDeclare = Mock()
@@ -466,7 +466,7 @@ class TestEdgeCases(unittest.TestCase):
     def setUp(self):
         """Set up mock zCLI and zParser for testing."""
         self.mock_zcli = Mock()
-        self.mock_zcli.session = {"zMode": "Terminal", "zWorkspace": "/test/workspace"}
+        self.mock_zcli.session = {"zMode": "Terminal", "zSpace": "/test/workspace"}
         self.mock_zcli.logger = Mock()
         self.mock_zcli.display = Mock()
         self.mock_zcli.display.zDeclare = Mock()

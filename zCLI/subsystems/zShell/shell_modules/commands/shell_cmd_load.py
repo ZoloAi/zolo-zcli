@@ -52,8 +52,8 @@ def execute_load(zcli, parsed):
             from zCLI.subsystems.zLoader.zLoader_modules.loader_io import load_file_raw
             
             # Get resolved filepath from zParser
-            zVaFile_fullpath, zVaFilename = zcli.zparser.zPath_decoder(zPath, None)
-            zFilePath_identified, zFile_extension = zcli.zparser.identify_zFile(zVaFilename, zVaFile_fullpath)
+            zVaFile_fullpath, zVaFile = zcli.zparser.zPath_decoder(zPath, None)
+            zFilePath_identified, zFile_extension = zcli.zparser.identify_zFile(zVaFile, zVaFile_fullpath)
             
             # Read raw content
             zFile_raw = load_file_raw(zFilePath_identified, zcli.logger, zcli.display)
@@ -71,8 +71,8 @@ def execute_load(zcli, parsed):
                 return {"error": f"Failed to load: {zPath}"}
             
             # Get resolved filepath from zParser
-            zVaFile_fullpath, zVaFilename = zcli.zparser.zPath_decoder(zPath, None)
-            zFilePath_identified, _ = zcli.zparser.identify_zFile(zVaFilename, zVaFile_fullpath)
+            zVaFile_fullpath, zVaFile = zcli.zparser.zPath_decoder(zPath, None)
+            zFilePath_identified, _ = zcli.zparser.identify_zFile(zVaFile, zVaFile_fullpath)
         
         # Determine resource type using proper zVaFile detection
         if "zSchema." in zPath:

@@ -9,7 +9,7 @@ using zCLI's declarative zPath syntax alongside traditional filesystem paths.
 OVERVIEW:
     The 'cd' command changes the current OS working directory (via os.chdir()),
     while 'cwd' (alias: 'pwd') displays the current location in both absolute
-    and zPath formats. SESSION_KEY_ZWORKSPACE remains constant as the "home base"
+    and zPath formats. SESSION_KEY_ZSPACE remains constant as the "home base"
     workspace directory (set at shell startup), allowing 'cd @.' to always return
     to the original workspace root.
 
@@ -43,15 +43,15 @@ ARCHITECTURE:
     directory manipulation, use os.chdir() and os.getcwd() directly.
 
 SESSION INTEGRATION:
-    • Reads: SESSION_KEY_ZWORKSPACE for workspace root (constant "home base")
-    • Writes: NONE - SESSION_KEY_ZWORKSPACE is immutable during shell session
+    • Reads: SESSION_KEY_ZSPACE for workspace root (constant "home base")
+    • Writes: NONE - SESSION_KEY_ZSPACE is immutable during shell session
     • cd command: Uses os.chdir() to change OS working directory
     • pwd/cwd command: Uses os.getcwd() to read current OS directory
-    • cd @. behavior: Navigates to SESSION_KEY_ZWORKSPACE (workspace root)
+    • cd @. behavior: Navigates to SESSION_KEY_ZSPACE (workspace root)
     • Pattern: Uses centralized constants from zConfig.config_session
 
 CROSS-SUBSYSTEM DEPENDENCIES:
-    • zConfig: SESSION_KEY_ZWORKSPACE constant, session management
+    • zConfig: SESSION_KEY_ZSPACE constant, session management
     • zDisplay: User feedback (success, error, info messages)
     • zParser: Future integration for standardized zPath resolution
 
@@ -87,7 +87,7 @@ import os
 from pathlib import Path
 
 from zCLI import Any, Dict, Optional
-from zCLI.subsystems.zConfig.zConfig_modules.config_session import SESSION_KEY_ZWORKSPACE
+from zCLI.subsystems.zConfig.zConfig_modules.config_session import SESSION_KEY_ZSPACE
 
 # ============================================================================
 # MODULE CONSTANTS
@@ -142,7 +142,7 @@ def execute_cd(zcli: Any, parsed: Dict[str, Any]) -> Optional[Dict[str, str]]:
     """
     Execute cd (change directory) command with zPath support.
     
-    Changes the current working directory (session zWorkspace) to the specified
+    Changes the current working directory (session zSpace) to the specified
     target. Supports zPath syntax (@., ~.), traditional paths, and shortcuts
     (., .., ~). Validates the target exists and is a directory before changing.
     
@@ -178,7 +178,7 @@ def execute_cd(zcli: Any, parsed: Dict[str, Any]) -> Optional[Dict[str, str]]:
     
     Side Effects:
         Changes OS working directory via os.chdir(). Does NOT modify
-        SESSION_KEY_ZWORKSPACE (which remains constant as workspace root).
+        SESSION_KEY_ZSPACE (which remains constant as workspace root).
     
     Examples:
         >>> execute_cd(zcli, {"args": ["~.Projects"], "options": {}})
@@ -222,7 +222,7 @@ def execute_cd(zcli: Any, parsed: Dict[str, Any]) -> Optional[Dict[str, str]]:
         zcli.display.error(MSG_CD_ERROR_NOT_DIR.format(path=resolved))
         return {DICT_KEY_ERROR: ERROR_NOT_A_DIRECTORY, DICT_KEY_PATH: str(resolved)}
     
-    # Change OS working directory (does NOT update SESSION_KEY_ZWORKSPACE)
+    # Change OS working directory (does NOT update SESSION_KEY_ZSPACE)
     os.chdir(resolved)
     
     # Display success message
@@ -269,7 +269,7 @@ def execute_pwd(zcli: Any, parsed: Dict[str, Any]) -> None:  # pylint: disable=u
     
     Session Integration:
         Reads from os.getcwd() for current OS working directory.
-        Does NOT read SESSION_KEY_ZWORKSPACE (which is workspace root).
+        Does NOT read SESSION_KEY_ZSPACE (which is workspace root).
     
     Examples:
         >>> execute_pwd(zcli, {"args": [], "options": {}})
@@ -317,7 +317,7 @@ def _resolve_zpath(zcli: Any, target: str) -> Path:
     Resolve a zPath or standard path to an absolute Path object.
     
     Handles multiple path formats:
-    • @.path.to.dir → workspace-relative (from session zWorkspace)
+    • @.path.to.dir → workspace-relative (from session zSpace)
     • ~zMachine.path → zMachine user data directory paths
     • zMachine.path  → zMachine user data directory paths
     • ~.path.to.dir → home-relative
@@ -358,7 +358,7 @@ def _resolve_zpath(zcli: Any, target: str) -> Path:
         zParser.parse_zpath() for standardized resolution across zShell commands.
     """
     # Get workspace root (constant) for @. prefix
-    workspace_root: Path = Path(zcli.session.get(SESSION_KEY_ZWORKSPACE, ZPATH_CURRENT))
+    workspace_root: Path = Path(zcli.session.get(SESSION_KEY_ZSPACE, ZPATH_CURRENT))
     
     # Get current working directory for relative paths (., .., relative)
     current_dir: Path = Path(os.getcwd())

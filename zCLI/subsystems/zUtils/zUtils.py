@@ -26,7 +26,7 @@ class zUtils:
         
         Injects CLI session into each plugin module, giving plugins access to:
         - zcli.logger - Logging functionality
-        - zcli.session - Session data (zWorkspace, zMachine, etc.)
+        - zcli.session - Session data (zSpace, zMachine, etc.)
         - zcli.data - Data subsystem access
         - zcli.display - Display subsystem access
         - And all other zCLI subsystems

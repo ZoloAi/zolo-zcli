@@ -35,7 +35,7 @@ class TestzShellInitialization(unittest.TestCase):
         """Set up test fixtures."""
         self.mock_zcli = Mock()
         self.mock_zcli.session = {
-            "zWorkspace": "/test/workspace",
+            "zSpace": "/test/workspace",
             "wizard_mode": {"active": False, "lines": [], "format": None}
         }
         self.mock_zcli.logger = Mock()
@@ -464,7 +464,7 @@ class TestNewCommands(unittest.TestCase):
         self.mock_zcli.session = {
             "wizard_mode": {"active": False, "lines": [], "format": None},
             "aliases": {},
-            "zWorkspace": "/test/workspace"
+            "zSpace": "/test/workspace"
         }
         self.mock_zcli.logger = Mock()
         self.mock_zcli.display = Mock()
@@ -473,6 +473,7 @@ class TestNewCommands(unittest.TestCase):
         self.mock_zcli.display.error = Mock()
         self.mock_zcli.display.text = Mock()
         self.mock_zcli.display.zDeclare = Mock()
+        self.mock_zcli.display.list = Mock()
         self.mock_zcli.zparser = Mock()
     
     def test_pwd_command(self):
@@ -485,8 +486,8 @@ class TestNewCommands(unittest.TestCase):
         
         # UI adapter pattern: returns None, displays directly
         self.assertIsNone(result)
-        # Verify display was called
-        self.assertTrue(self.mock_zcli.display.list.called or 
+        # Verify display was called (pwd uses text and zDeclare)
+        self.assertTrue(self.mock_zcli.display.text.called or 
                        self.mock_zcli.display.zDeclare.called)
     
     def test_shortcut_command_list(self):

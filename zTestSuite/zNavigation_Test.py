@@ -23,7 +23,7 @@ class TestzNavigationInitialization(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         self.zcli = zCLI({
-            "zWorkspace": str(Path(__file__).parent.parent),
+            "zSpace": str(Path(__file__).parent.parent),
             "zVerbose": False
         })
 
@@ -67,7 +67,7 @@ class TestWalkerNavigationIntegration(unittest.TestCase):
         """Test Walker UI navigation with test menu."""
         # Initialize Walker with test UI
         test_zcli = zCLI({
-            "zWorkspace": str(Path(__file__).parent.parent),
+            "zSpace": str(Path(__file__).parent.parent),
             "zVaFile": "@.zTestSuite.demos.zUI.test_navigation",
             "zBlock": "TestMenu",
             "zVerbose": False
@@ -82,7 +82,7 @@ class TestWalkerNavigationIntegration(unittest.TestCase):
         """Test Walker UI navigation with simple menu."""
         # Initialize Walker with test UI
         test_zcli = zCLI({
-            "zWorkspace": str(Path(__file__).parent.parent),
+            "zSpace": str(Path(__file__).parent.parent),
             "zVaFile": "@.zTestSuite.demos.zUI.test_navigation",
             "zBlock": "SimpleMenu",
             "zVerbose": False
@@ -94,7 +94,7 @@ class TestWalkerNavigationIntegration(unittest.TestCase):
     def test_navigation_module_methods_exist(self):
         """Test that navigation module methods are available."""
         zcli = zCLI({
-            "zWorkspace": str(Path(__file__).parent.parent),
+            "zSpace": str(Path(__file__).parent.parent),
             "zVerbose": False
         })
         
@@ -111,7 +111,7 @@ class TestBreadcrumbs(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         self.zcli = zCLI({
-            "zWorkspace": str(Path(__file__).parent.parent),
+            "zSpace": str(Path(__file__).parent.parent),
             "zVerbose": False
         })
         
@@ -174,7 +174,7 @@ class TestNavigation(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         self.zcli = zCLI({
-            "zWorkspace": str(Path(__file__).parent.parent),
+            "zSpace": str(Path(__file__).parent.parent),
             "zVerbose": False
         })
 
@@ -211,7 +211,7 @@ class TestLinking(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         self.zcli = zCLI({
-            "zWorkspace": str(Path(__file__).parent.parent),
+            "zSpace": str(Path(__file__).parent.parent),
             "zVerbose": False
         })
 
@@ -242,7 +242,7 @@ class TestStandaloneFunctions(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         self.zcli = zCLI({
-            "zWorkspace": str(Path(__file__).parent.parent),
+            "zSpace": str(Path(__file__).parent.parent),
             "zVerbose": False
         })
 

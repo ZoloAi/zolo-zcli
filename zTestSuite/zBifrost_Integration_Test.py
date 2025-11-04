@@ -177,7 +177,7 @@ class TestzBifrostLifecycle(unittest.IsolatedAsyncioTestCase):
         """Test zBifrost starts successfully with REAL WebSocket server"""
         # Create zCLI with zBifrost mode
         z = zCLI({
-            "zWorkspace": self.temp_dir,
+            "zSpace": self.temp_dir,
             "zMode": "zBifrost",
             "websocket": {"port": 18765, "require_auth": False}
         })
@@ -220,7 +220,7 @@ class TestzBifrostLifecycle(unittest.IsolatedAsyncioTestCase):
     async def test_server_ready_signal(self):
         """Test that socket_ready event is properly signaled"""
         z = zCLI({
-            "zWorkspace": self.temp_dir,
+            "zSpace": self.temp_dir,
             "zMode": "zBifrost",
             "websocket": {"port": 18766, "require_auth": False}
         })
@@ -252,7 +252,7 @@ class TestzBifrostLifecycle(unittest.IsolatedAsyncioTestCase):
     async def test_server_port_binding(self):
         """Test server actually binds to specified port"""
         z = zCLI({
-            "zWorkspace": self.temp_dir,
+            "zSpace": self.temp_dir,
             "zMode": "zBifrost",
             "websocket": {"port": 18767, "require_auth": False}
         })
@@ -299,7 +299,7 @@ class TestzBifrostPortConflicts(unittest.TestCase):
         # This should be caught by ConfigValidator from Week 1.1
         with self.assertRaises(SystemExit):
             z = zCLI({
-                "zWorkspace": self.temp_dir,
+                "zSpace": self.temp_dir,
                 "zMode": "zBifrost",
                 "websocket": {"port": 8080},
                 "http_server": {"enabled": True, "port": 8080}  # Same port!
@@ -310,7 +310,7 @@ class TestzBifrostPortConflicts(unittest.TestCase):
         """Test that different ports for HTTP and WebSocket are allowed"""
         # This should NOT raise an error
         z = zCLI({
-            "zWorkspace": self.temp_dir,
+            "zSpace": self.temp_dir,
             "zMode": "zBifrost",
             "websocket": {"port": 18768, "require_auth": False},
             "http_server": {"enabled": True, "port": 18868}
@@ -347,7 +347,7 @@ class TestzBifrostCoexistence(unittest.TestCase):
     def test_both_servers_different_ports_config(self):
         """Test both HTTP and WebSocket servers can be configured together"""
         z = zCLI({
-            "zWorkspace": self.temp_dir,
+            "zSpace": self.temp_dir,
             "zMode": "zBifrost",
             "websocket": {"port": 18769, "require_auth": False},
             "http_server": {
@@ -376,7 +376,7 @@ class TestzBifrostCoexistence(unittest.TestCase):
     def test_http_server_runs_independently(self):
         """Test HTTP server runs even when WebSocket is configured but not started"""
         z = zCLI({
-            "zWorkspace": self.temp_dir,
+            "zSpace": self.temp_dir,
             "zMode": "zBifrost",
             "websocket": {"port": 18770, "require_auth": False},
             "http_server": {
@@ -402,7 +402,7 @@ class TestzBifrostCoexistence(unittest.TestCase):
     def test_websocket_port_free_when_http_running(self):
         """Test WebSocket port is free even when HTTP server is running"""
         z = zCLI({
-            "zWorkspace": self.temp_dir,
+            "zSpace": self.temp_dir,
             "zMode": "zBifrost",
             "websocket": {"port": 18771, "require_auth": False},
             "http_server": {
@@ -444,7 +444,7 @@ class TestzBifrostConfiguration(unittest.TestCase):
     def test_websocket_config_loaded_from_zspark(self):
         """Test WebSocket config is loaded from zSpark_obj"""
         z = zCLI({
-            "zWorkspace": self.temp_dir,
+            "zSpace": self.temp_dir,
             "zMode": "zBifrost",
             "websocket": {
                 "port": 18772,
@@ -463,7 +463,7 @@ class TestzBifrostConfiguration(unittest.TestCase):
     def test_websocket_default_config(self):
         """Test WebSocket uses defaults when not specified"""
         z = zCLI({
-            "zWorkspace": self.temp_dir,
+            "zSpace": self.temp_dir,
             "zMode": "zBifrost"
         })
         
@@ -474,7 +474,7 @@ class TestzBifrostConfiguration(unittest.TestCase):
     
     def test_websocket_config_via_zcomm(self):
         """Test WebSocket can be created via zComm"""
-        z = zCLI({"zWorkspace": self.temp_dir})
+        z = zCLI({"zSpace": self.temp_dir})
         
         # Create WebSocket server via zComm
         bifrost = z.comm.create_websocket(port=18773, host="127.0.0.1")
@@ -514,7 +514,7 @@ class TestRealWebSocketConnections(unittest.IsolatedAsyncioTestCase):
     async def _start_server(self, port=18774, require_auth=False):
         """Helper to start zBifrost server"""
         z = zCLI({
-            "zWorkspace": self.temp_dir,
+            "zSpace": self.temp_dir,
             "zVaFile": "@.zUI.test",
             "zBlock": "TestMenu",
             "zMode": "zBifrost",
@@ -645,7 +645,7 @@ class TestWebSocketMessageFlow(unittest.IsolatedAsyncioTestCase):
     async def _start_server(self, port=18777):
         """Helper to start zBifrost server"""
         z = zCLI({
-            "zWorkspace": self.temp_dir,
+            "zSpace": self.temp_dir,
             "zVaFile": "@.zUI.test",
             "zBlock": "TestMenu",
             "zMode": "zBifrost",
@@ -786,7 +786,7 @@ class TestConcurrentClients(unittest.IsolatedAsyncioTestCase):
     async def _start_server(self, port=18780):
         """Helper to start zBifrost server"""
         z = zCLI({
-            "zWorkspace": self.temp_dir,
+            "zSpace": self.temp_dir,
             "zVaFile": "@.zUI.test",
             "zBlock": "TestMenu",
             "zMode": "zBifrost",
@@ -900,7 +900,7 @@ class TestWebSocketAuthentication(unittest.IsolatedAsyncioTestCase):
     async def test_connect_with_auth_disabled(self):
         """Test connection succeeds when auth is disabled"""
         z = zCLI({
-            "zWorkspace": self.temp_dir,
+            "zSpace": self.temp_dir,
             "zVaFile": "@.zUI.test",
             "zBlock": "TestMenu",
             "zMode": "zBifrost",
@@ -937,7 +937,7 @@ class TestWebSocketAuthentication(unittest.IsolatedAsyncioTestCase):
     async def test_auth_info_in_connection(self):
         """Test connection_info includes auth details"""
         z = zCLI({
-            "zWorkspace": self.temp_dir,
+            "zSpace": self.temp_dir,
             "zVaFile": "@.zUI.test",
             "zBlock": "TestMenu",
             "zMode": "zBifrost",
@@ -1093,7 +1093,7 @@ class TestLevel1DemoValidation(unittest.IsolatedAsyncioTestCase):
         demo_dir = Path(__file__).parent.parent / "Demos" / "zBifost"
         
         z = zCLI({
-            "zWorkspace": str(demo_dir),
+            "zSpace": str(demo_dir),
             "zVaFile": "@.zUI.level1",
             "zBlock": "Level1Menu",
             "zMode": "zBifrost",
@@ -1275,7 +1275,7 @@ class TestDemoIntegrationFlow(unittest.IsolatedAsyncioTestCase):
         demo_dir = Path(__file__).parent.parent / "Demos" / "zBifost"
         
         z = zCLI({
-            "zWorkspace": str(demo_dir),
+            "zSpace": str(demo_dir),
             "zVaFile": "@.zUI.level1",
             "zBlock": "Level1Menu",
             "zMode": "zBifrost",
@@ -1443,7 +1443,7 @@ class TestzBifrostErrorHandling(unittest.IsolatedAsyncioTestCase):
         workspace = Path(tempfile.mkdtemp())
         
         z = zCLI({
-            "zWorkspace": str(workspace),
+            "zSpace": str(workspace),
             "zMode": "zBifrost",
             "websocket": {
                 "host": "127.0.0.1",
@@ -1551,7 +1551,7 @@ class TestzBifrostErrorHandling(unittest.IsolatedAsyncioTestCase):
 """)
         
         z = zCLI({
-            "zWorkspace": str(workspace),
+            "zSpace": str(workspace),
             "zVaFile": "@.zUI.error_test",
             "zBlock": "ErrorMenu",
             "zMode": "zBifrost",
@@ -1634,7 +1634,7 @@ class TestzBifrostGracefulShutdown(unittest.IsolatedAsyncioTestCase):
         workspace = Path(tempfile.mkdtemp())
         
         z = zCLI({
-            "zWorkspace": str(workspace),
+            "zSpace": str(workspace),
             "zMode": "zBifrost",
             "websocket": {
                 "host": "127.0.0.1",
@@ -1778,7 +1778,7 @@ class TestzBifrostClientReconnection(unittest.IsolatedAsyncioTestCase):
         workspace = Path(tempfile.mkdtemp())
         
         z = zCLI({
-            "zWorkspace": str(workspace),
+            "zSpace": str(workspace),
             "zMode": "zBifrost",
             "websocket": {
                 "host": "127.0.0.1",
@@ -1940,7 +1940,7 @@ class TestzBifrostHealthCheck(unittest.IsolatedAsyncioTestCase):
         workspace = Path(tempfile.mkdtemp())
         
         z = zCLI({
-            "zWorkspace": str(workspace),
+            "zSpace": str(workspace),
             "zMode": "zBifrost",
             "websocket": {
                 "host": "127.0.0.1",
@@ -1962,7 +1962,7 @@ class TestzBifrostHealthCheck(unittest.IsolatedAsyncioTestCase):
         workspace = Path(tempfile.mkdtemp())
         
         z = zCLI({
-            "zWorkspace": str(workspace),
+            "zSpace": str(workspace),
             "zMode": "zBifrost",
             "websocket": {
                 "host": "127.0.0.1",
@@ -2060,7 +2060,7 @@ class TestzBifrostHealthCheck(unittest.IsolatedAsyncioTestCase):
         workspace = Path(tempfile.mkdtemp())
         
         z = zCLI({
-            "zWorkspace": str(workspace),
+            "zSpace": str(workspace),
             "zMode": "zBifrost",
             "websocket": {
                 "host": "127.0.0.1",

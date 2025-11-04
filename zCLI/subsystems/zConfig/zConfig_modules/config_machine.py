@@ -29,6 +29,9 @@ class MachineConfig:
 
         # Auto-detect machine defaults
         self.machine = auto_detect_machine()
+        
+        # Add user_data_dir from paths (needed for zPath display formatting)
+        self.machine["user_data_dir"] = str(paths.user_data_dir)
 
         # Load and override from config file (check exists, create if missing)
         load_config_with_override(

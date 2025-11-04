@@ -4,7 +4,7 @@
 Contextual Shell Prompt Display Management.
 
 This module provides functionality to toggle the display of the current working
-directory (zWorkspace) in the shell prompt using zPath syntax. This gives users
+directory (zSpace) in the shell prompt using zPath syntax. This gives users
 visual context of "where" they are in long interactive sessions.
 
 FEATURE OVERVIEW:
@@ -67,7 +67,7 @@ FUTURE ENHANCEMENTS:
     • Custom prompt templates
 
 CROSS-SUBSYSTEM DEPENDENCIES:
-    • zConfig: SESSION_KEY_ZWORKSPACE for current directory
+    • zConfig: SESSION_KEY_ZSPACE for current directory
     • zDisplay: User feedback (info, success, warning messages)
     • shell_interactive.py: Prompt building logic
 
@@ -114,7 +114,7 @@ from zCLI import Any, Dict, Optional
 
 # Session Keys
 SESSION_KEY_SHOW_ZPATH_IN_PROMPT: str = "zShowZPathInPrompt"
-SESSION_KEY_ZWORKSPACE: str = "zWorkspace"
+SESSION_KEY_ZSPACE: str = "zSpace"
 
 # Actions
 ACTION_STATUS: str = "status"
@@ -197,7 +197,7 @@ def execute_where(zcli: Any, parsed: Dict[str, Any]) -> Optional[Dict[str, str]]
     
     Session Integration:
         Reads and writes SESSION_KEY_SHOW_ZPATH_IN_PROMPT boolean flag.
-        Reads SESSION_KEY_ZWORKSPACE for current directory path.
+        Reads SESSION_KEY_ZSPACE for current directory path.
     
     Note:
         Shell commands are UI adapters - they display messages directly.

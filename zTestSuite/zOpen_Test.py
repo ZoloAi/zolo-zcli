@@ -31,7 +31,7 @@ class TestzOpenInitialization(unittest.TestCase):
         """Set up test fixtures."""
         self.mock_zcli = Mock()
         self.mock_zcli.session = {
-            "zWorkspace": "/test/workspace",
+            "zSpace": "/test/workspace",
             "zMachine": {
                 "ide": "code",
                 "browser": "chrome"
@@ -74,7 +74,7 @@ class TestzOpenPathResolutionModule(unittest.TestCase):
         """Set up test fixtures."""
         self.mock_logger = Mock()
         self.session = {
-            "zWorkspace": "/test/workspace"
+            "zSpace": "/test/workspace"
         }
     
     @patch('zCLI.subsystems.zOpen.open_modules.open_paths.os.path.abspath')
@@ -374,7 +374,7 @@ class TestzOpenHandleMethod(unittest.TestCase):
         """Set up test fixtures."""
         self.mock_zcli = Mock()
         self.mock_zcli.session = {
-            "zWorkspace": "/test/workspace",
+            "zSpace": "/test/workspace",
             "zMachine": {}
         }
         self.mock_zcli.logger = Mock()
@@ -535,7 +535,7 @@ class TestzOpenEdgeCases(unittest.TestCase):
         """Set up test fixtures."""
         self.mock_zcli = Mock()
         self.mock_zcli.session = {
-            "zWorkspace": "/test/workspace",
+            "zSpace": "/test/workspace",
             "zMachine": {}
         }
         self.mock_zcli.logger = Mock()

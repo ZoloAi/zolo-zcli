@@ -22,7 +22,7 @@ def get_workspace():
         str: Workspace path or '.' if not set
     """
     if hasattr(zcli, 'session'):
-        return zcli.session.get('zWorkspace', '.')
+        return zcli.session.get('zSpace', '.')
     return '.'
 
 

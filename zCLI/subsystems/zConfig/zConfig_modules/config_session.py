@@ -96,9 +96,9 @@ CONFIG_KEY_LEVEL = "level"
 # ═══════════════════════════════════════════════════════════
 
 SESSION_KEY_ZS_ID = "zS_id"
-SESSION_KEY_ZWORKSPACE = "zWorkspace"
-SESSION_KEY_ZVAFILE_PATH = "zVaFile_path"
-SESSION_KEY_ZVAFILENAME = "zVaFilename"
+SESSION_KEY_ZSPACE = "zSpace"
+SESSION_KEY_ZVAFOLDER = "zVaFolder"
+SESSION_KEY_ZVAFILE = "zVaFile"
 SESSION_KEY_ZBLOCK = "zBlock"
 SESSION_KEY_ZMODE = "zMode"
 SESSION_KEY_ZLOGGER = "zLogger"
@@ -114,7 +114,7 @@ SESSION_KEY_SYSTEM_ENV = "system_env"
 SESSION_KEY_LOGGER_INSTANCE = "logger_instance"
 
 # zSpark dict keys
-ZSPARK_KEY_ZWORKSPACE = "zWorkspace"
+ZSPARK_KEY_ZSPACE = "zSpace"
 ZSPARK_KEY_ZTRACEBACK = "zTraceback"
 ZSPARK_KEY_ZMODE = "zMode"
 ZSPARK_KEY_LOGGER = "logger"
@@ -242,8 +242,8 @@ class SessionConfig:
         virtual_env = self.environment.get_venv_path() if self.environment.is_in_venv() else None
         system_env = self.environment.get_env_var(ENV_VAR_PATH)
 
-        # Determine zWorkspace: zSpark > getcwd (safe version handles deleted directories)
-        zWorkspace = self._get_zSpark_value(ZSPARK_KEY_ZWORKSPACE) or _safe_getcwd()
+        # Determine zSpace: zSpark > getcwd (safe version handles deleted directories)
+        zSpace = self._get_zSpark_value(ZSPARK_KEY_ZSPACE) or _safe_getcwd()
 
         # Determine zTraceback: zSpark > default (True)
         zTraceback = self._get_zSpark_value(ZSPARK_KEY_ZTRACEBACK, DEFAULT_ZTRACEBACK)
@@ -251,9 +251,9 @@ class SessionConfig:
         # Create session dict with constants for all keys
         session = {
             SESSION_KEY_ZS_ID: self.generate_id(),
-            SESSION_KEY_ZWORKSPACE: zWorkspace,
-            SESSION_KEY_ZVAFILE_PATH: None,
-            SESSION_KEY_ZVAFILENAME: None,
+            SESSION_KEY_ZSPACE: zSpace,
+            SESSION_KEY_ZVAFOLDER: None,
+            SESSION_KEY_ZVAFILE: None,
             SESSION_KEY_ZBLOCK: None,
             SESSION_KEY_ZMODE: self.detect_zMode(),
             SESSION_KEY_ZLOGGER: self._detect_logger_level(),

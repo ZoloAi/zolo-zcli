@@ -272,7 +272,7 @@ class TestEnvironmentConfig(unittest.TestCase):
             
             # Create paths with workspace pointing to temp dir
             with patch('builtins.print'):
-                paths = zConfigPaths(zSpark_obj={"zWorkspace": str(tmpdir_path)})
+                paths = zConfigPaths(zSpark_obj={"zSpace": str(tmpdir_path)})
             
             # Load the dotenv file
             loaded_path = paths.load_dotenv()
@@ -296,7 +296,7 @@ class TestEnvironmentConfig(unittest.TestCase):
             
             # Create paths with workspace but no .env file
             with patch('builtins.print'):
-                paths = zConfigPaths(zSpark_obj={"zWorkspace": str(tmpdir_path)})
+                paths = zConfigPaths(zSpark_obj={"zSpace": str(tmpdir_path)})
             
             # Try to load non-existent dotenv file
             loaded_path = paths.load_dotenv()
@@ -318,7 +318,7 @@ class TestEnvironmentConfig(unittest.TestCase):
             
             # Create paths and load dotenv with override=True (default)
             with patch('builtins.print'):
-                paths = zConfigPaths(zSpark_obj={"zWorkspace": str(tmpdir_path)})
+                paths = zConfigPaths(zSpark_obj={"zSpace": str(tmpdir_path)})
             
             paths.load_dotenv(override=True)
             
@@ -342,7 +342,7 @@ class TestEnvironmentConfig(unittest.TestCase):
             
             # Create paths and load dotenv with override=False
             with patch('builtins.print'):
-                paths = zConfigPaths(zSpark_obj={"zWorkspace": str(tmpdir_path)})
+                paths = zConfigPaths(zSpark_obj={"zSpace": str(tmpdir_path)})
             
             paths.load_dotenv(override=False)
             
@@ -363,7 +363,7 @@ class TestEnvironmentConfig(unittest.TestCase):
             
             # Create paths and environment config
             with patch('builtins.print'):
-                paths = zConfigPaths(zSpark_obj={"zWorkspace": str(tmpdir_path)})
+                paths = zConfigPaths(zSpark_obj={"zSpace": str(tmpdir_path)})
                 env_config = EnvironmentConfig(paths)
             
             # Verify dotenv variables are accessible

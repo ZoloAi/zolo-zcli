@@ -127,7 +127,7 @@ class zTraceback:
 
             # Create new zCLI instance for traceback UI
             traceback_cli = zCLI.zCLI({
-                "zWorkspace": str(zcli_package_dir),
+                "zSpace": str(zcli_package_dir),
                 "zVaFile": "@.UI.zUI.zcli_sys",
                 "zBlock": "Traceback",
                 "zVerbose": False

@@ -101,12 +101,12 @@ Architecture:
 
 Session Integration:
 -------------------
-- Reads SESSION_KEY_ZWORKSPACE for default directory
+- Reads SESSION_KEY_ZSPACE for default directory
 - No session modifications (read-only command)
 
 Cross-Subsystem Dependencies:
 -----------------------------
-- zConfig: SESSION_KEY_ZWORKSPACE for workspace path
+- zConfig: SESSION_KEY_ZSPACE for workspace path
 - zDisplay: display.list() for bulk output, display.error() for errors
 - zParser: (optional) parse_path() for advanced zPath resolution
 
@@ -138,7 +138,7 @@ from zCLI import Any, Dict, List, Optional
 
 # zConfig imports
 from zCLI.subsystems.zConfig.zConfig_modules.config_session import (
-    SESSION_KEY_ZWORKSPACE,
+    SESSION_KEY_ZSPACE,
 )
 
 
@@ -368,7 +368,7 @@ def _resolve_zpath(zcli: Any, target: str) -> Optional[Path]:
     try:
         if target.startswith(ZPATH_WORKSPACE_PREFIX):
             # Workspace-relative path: @.src.components
-            workspace_str: str = zcli.session.get(SESSION_KEY_ZWORKSPACE, DEFAULT_TARGET_DIR)
+            workspace_str: str = zcli.session.get(SESSION_KEY_ZSPACE, DEFAULT_TARGET_DIR)
             workspace: Path = Path(workspace_str)
             
             # Remove @. prefix and split by .

@@ -80,7 +80,7 @@ The zBack algorithm handles multi-level navigation with sophisticated scope mana
   - Base path (everything before last 3 parts)
   - Filename (2nd and 3rd parts from end)
   - Block name (last part)
-- Update session keys: zVaFile_path, zVaFilename, zBlock
+- Update session keys: zVaFolder, zVaFile, zBlock
 
 **Step 6: Reload File**
 - Construct zPath from session values
@@ -98,8 +98,8 @@ multiple session keys:
 
 **Primary Session Keys (from zConfig):**
 - SESSION_KEY_ZCRUMBS: The breadcrumb trail dict
-- SESSION_KEY_ZVAFILE_PATH: Base path to current file
-- SESSION_KEY_ZVAFILENAME: Current file name
+- SESSION_KEY_ZVAFOLDER: Folder containing current file
+- SESSION_KEY_ZVAFILE: Current file name
 - SESSION_KEY_ZBLOCK: Current block name
 
 **Session Dependencies:**
@@ -175,8 +175,8 @@ CRUMB_* : int
 from zCLI import Any, Dict, List, Optional, Tuple
 from zCLI.subsystems.zConfig.zConfig_modules.config_session import (
     SESSION_KEY_ZCRUMBS,
-    SESSION_KEY_ZVAFILE_PATH,
-    SESSION_KEY_ZVAFILENAME,
+    SESSION_KEY_ZVAFOLDER,
+    SESSION_KEY_ZVAFILE,
     SESSION_KEY_ZBLOCK
 )
 
@@ -236,7 +236,7 @@ LOG_WARN_INVALID_KEY: str = "Resolved zKey %r not valid for block %r"
 LOG_ERR_INVALID_CRUMB: str = "Invalid active_zCrumb format: %s (needs at least 3 parts)"
 
 # Error Messages
-ERR_EMPTY_FILENAME: str = "Cannot reload file: zVaFilename is empty in session"
+ERR_EMPTY_FILENAME: str = "Cannot reload file: zVaFile is empty in session"
 ERR_NO_KEYS_AFTER_BACK: str = "No keys in active zBlock after zBack; cannot resume."
 
 # Crumb Parsing Constants (Magic Numbers)
@@ -305,7 +305,7 @@ class Breadcrumbs:
     Integration
     -----------
     - Parent: zNavigation system
-    - Session: Reads/writes SESSION_KEY_ZCRUMBS, SESSION_KEY_ZVAFILE_PATH, etc.
+    - Session: Reads/writes SESSION_KEY_ZCRUMBS, SESSION_KEY_ZVAFOLDER, etc.
     - Display: Uses zDisplay for output (mode-agnostic)
     - Loader: Uses zLoader for file reloading
     """
@@ -334,8 +334,8 @@ class Breadcrumbs:
         --------------------
         This module relies on zSession having the following keys initialized:
         - SESSION_KEY_ZCRUMBS: Dict of scopes and trails
-        - SESSION_KEY_ZVAFILE_PATH: Current file base path
-        - SESSION_KEY_ZVAFILENAME: Current file name
+        - SESSION_KEY_ZVAFOLDER: Current file folder
+        - SESSION_KEY_ZVAFILE: Current file name
         - SESSION_KEY_ZBLOCK: Current block name
         """
         self.navigation = navigation
@@ -497,8 +497,8 @@ class Breadcrumbs:
         -----
         - **Complex Algorithm**: This method implements a 113-line, 8-step algorithm
           for managing hierarchical scope transitions. See module docstring for details.
-        - **Session Mutation**: Directly modifies SESSION_KEY_ZCRUMBS, SESSION_KEY_ZVAFILE_PATH,
-          SESSION_KEY_ZVAFILENAME, SESSION_KEY_ZBLOCK in zSession.
+        - **Session Mutation**: Directly modifies SESSION_KEY_ZCRUMBS, SESSION_KEY_ZVAFOLDER,
+          SESSION_KEY_ZVAFILE, SESSION_KEY_ZBLOCK in zSession.
         - **File Reloading**: Uses zLoader to reload the appropriate file after navigation.
         - **Error Handling**: Returns (dict, [], None) if file cannot be reloaded or has no keys.
         
@@ -516,7 +516,7 @@ class Breadcrumbs:
         Integration
         -----------
         - Uses: zLoader (file reloading), zDisplay (banner/breadcrumbs)
-        - Modifies: zSession (4 keys: zCrumbs, zVaFile_path, zVaFilename, zBlock)
+        - Modifies: zSession (4 keys: zCrumbs, zVaFolder, zVaFile, zBlock)
         - Called by: MenuSystem, zWalker
         """
         # Get appropriate display adapter
@@ -627,13 +627,13 @@ class Breadcrumbs:
             # Extract: base_path.zUI.filename.BlockName
             # Example: "@.zUI.users_menu.MainMenu" => ["@", "zUI", "users_menu", "MainMenu"]
             base_path_parts = parts[:INDEX_PARTS_FROM_END]
-            zSession[SESSION_KEY_ZVAFILE_PATH] = SEPARATOR_DOT.join(base_path_parts) if base_path_parts else SEPARATOR_EMPTY
-            zSession[SESSION_KEY_ZVAFILENAME] = SEPARATOR_DOT.join(parts[INDEX_FILENAME_START:INDEX_FILENAME_END])
+            zSession[SESSION_KEY_ZVAFOLDER] = SEPARATOR_DOT.join(base_path_parts) if base_path_parts else SEPARATOR_EMPTY
+            zSession[SESSION_KEY_ZVAFILE] = SEPARATOR_DOT.join(parts[INDEX_FILENAME_START:INDEX_FILENAME_END])
             zSession[SESSION_KEY_ZBLOCK] = parts[INDEX_LAST_PART]
             self.logger.debug(
                 LOG_PARSED_SESSION,
-                zSession[SESSION_KEY_ZVAFILE_PATH],
-                zSession[SESSION_KEY_ZVAFILENAME],
+                zSession[SESSION_KEY_ZVAFOLDER],
+                zSession[SESSION_KEY_ZVAFILE],
                 zSession[SESSION_KEY_ZBLOCK]
             )
         else:
@@ -648,18 +648,18 @@ class Breadcrumbs:
         # ============================================================
         # Reload current file based on updated zSession
         # Construct zPath from session values
-        zVaFile_path = zSession.get(SESSION_KEY_ZVAFILE_PATH, SEPARATOR_EMPTY)
-        zVaFilename = zSession.get(SESSION_KEY_ZVAFILENAME, SEPARATOR_EMPTY)
+        zVaFolder = zSession.get(SESSION_KEY_ZVAFOLDER, SEPARATOR_EMPTY)
+        zVaFile = zSession.get(SESSION_KEY_ZVAFILE, SEPARATOR_EMPTY)
         
-        if not zVaFilename:
+        if not zVaFile:
             self.logger.error(ERR_EMPTY_FILENAME)
             return {}, [], None
         
         # Build zPath based on whether we have a base path
-        if zVaFile_path:
-            zPath = f"{zVaFile_path}{SEPARATOR_DOT}{zVaFilename}"
+        if zVaFolder:
+            zPath = f"{zVaFolder}{SEPARATOR_DOT}{zVaFile}"
         else:
-            zPath = f"{PREFIX_DEFAULT_PATH}{zVaFilename}"
+            zPath = f"{PREFIX_DEFAULT_PATH}{zVaFile}"
         
         self.logger.debug(LOG_RELOADING_PATH, zPath)
         

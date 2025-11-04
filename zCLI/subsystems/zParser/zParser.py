@@ -184,7 +184,7 @@ PARSER_COLOR: str = "PARSER"
 PARSER_READY_MESSAGE: str = "zParser Ready"
 
 # Session dict keys
-SESSION_KEY_WORKSPACE: str = "zWorkspace"
+SESSION_KEY_WORKSPACE: str = "zSpace"
 
 # File extensions
 FILE_EXT_PY: str = ".py"

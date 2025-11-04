@@ -87,7 +87,7 @@ class TestBifrostBridgeRealExecution(unittest.IsolatedAsyncioTestCase):
     async def test_real_server_startup_and_client_handling(self):
         """Should start real server and handle client connections through full stack"""
         with tempfile.TemporaryDirectory() as temp_dir:
-            zspark = {"zWorkspace": temp_dir, "zMode": "Terminal"}
+            zspark = {"zSpace": temp_dir, "zMode": "Terminal"}
             z = zCLI(zspark)
             
             # Create real zBifrost instance (not mocked)
@@ -129,7 +129,7 @@ class TestBifrostBridgeRealExecution(unittest.IsolatedAsyncioTestCase):
     async def test_real_broadcast_to_multiple_clients(self):
         """Should broadcast real messages to multiple connected clients"""
         with tempfile.TemporaryDirectory() as temp_dir:
-            zspark = {"zWorkspace": temp_dir, "zMode": "Terminal"}
+            zspark = {"zSpace": temp_dir, "zMode": "Terminal"}
             z = zCLI(zspark)
             
             bifrost = zBifrost(z.logger, walker=z.walker, zcli=z, port=56902)
@@ -173,7 +173,7 @@ class TestBifrostBridgeRealExecution(unittest.IsolatedAsyncioTestCase):
     async def test_real_event_routing_through_event_map(self):
         """Should route real events through the event map to correct handlers"""
         with tempfile.TemporaryDirectory() as temp_dir:
-            zspark = {"zWorkspace": temp_dir, "zMode": "Terminal"}
+            zspark = {"zSpace": temp_dir, "zMode": "Terminal"}
             z = zCLI(zspark)
             
             bifrost = zBifrost(z.logger, walker=z.walker, zcli=z, port=56903)
@@ -206,7 +206,7 @@ class TestBifrostBridgeRealExecution(unittest.IsolatedAsyncioTestCase):
     async def test_real_connection_info_broadcast_on_connect(self):
         """Should broadcast real connection info when client connects"""
         with tempfile.TemporaryDirectory() as temp_dir:
-            zspark = {"zWorkspace": temp_dir, "zMode": "Terminal"}
+            zspark = {"zSpace": temp_dir, "zMode": "Terminal"}
             z = zCLI(zspark)
             
             bifrost = zBifrost(z.logger, walker=z.walker, zcli=z, port=56904)
@@ -373,21 +373,21 @@ class TestConfigValidatorIntegration(unittest.TestCase):
     def test_real_validation_with_invalid_workspace(self):
         """Should perform real validation and reject invalid workspace"""
         # ConfigValidator needs zspark_obj to initialize
-        zspark_obj = {"zWorkspace": "/nonexistent/path/12345"}
+        zspark_obj = {"zSpace": "/nonexistent/path/12345"}
         
         # Should raise during validation
         validator = ConfigValidator(zspark_obj)
         with self.assertRaises(ConfigValidationError) as ctx:
             validator.validate()
         
-        self.assertIn("zWorkspace", str(ctx.exception))
+        self.assertIn("zSpace", str(ctx.exception))
         self.assertIn("does not exist", str(ctx.exception))
     
     def test_real_validation_with_invalid_mode(self):
         """Should perform real validation and reject invalid mode"""
         with tempfile.TemporaryDirectory() as temp_dir:
             # Test: Invalid zMode
-            zspark_obj = {"zWorkspace": temp_dir, "zMode": "InvalidMode"}
+            zspark_obj = {"zSpace": temp_dir, "zMode": "InvalidMode"}
             
             validator = ConfigValidator(zspark_obj)
             with self.assertRaises(ConfigValidationError) as ctx:
@@ -402,7 +402,7 @@ class TestConfigValidatorIntegration(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             # Test 1: Invalid port (out of range)
             zspark_obj1 = {
-                "zWorkspace": temp_dir,
+                "zSpace": temp_dir,
                 "websocket": {"port": 99999}
             }
             
@@ -414,7 +414,7 @@ class TestConfigValidatorIntegration(unittest.TestCase):
             
             # Test 2: Invalid port (negative)
             zspark_obj2 = {
-                "zWorkspace": temp_dir,
+                "zSpace": temp_dir,
                 "websocket": {"port": -1}
             }
             
@@ -429,7 +429,7 @@ class TestConfigValidatorIntegration(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             # Should NOT raise exception
             zspark_obj = {
-                "zWorkspace": temp_dir,
+                "zSpace": temp_dir,
                 "zMode": "Terminal",
                 "websocket": {
                     "port": 56789,
@@ -467,7 +467,7 @@ class TestzServerHandlerRealHTTP(unittest.TestCase):
             
             # Configure HTTP server to serve from temp directory
             zspark = {
-                "zWorkspace": temp_dir, 
+                "zSpace": temp_dir, 
                 "zMode": "Terminal", 
                 "http_server": {
                     "enabled": True,
@@ -511,7 +511,7 @@ class TestzServerHandlerRealHTTP(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             # Configure HTTP server to serve from temp directory
             zspark = {
-                "zWorkspace": temp_dir, 
+                "zSpace": temp_dir, 
                 "zMode": "Terminal", 
                 "http_server": {
                     "enabled": True,
@@ -761,7 +761,7 @@ class TestConfigEnvironmentRealIntegration(unittest.TestCase):
     def test_real_venv_detection(self):
         """Should detect real virtual environment status"""
         with tempfile.TemporaryDirectory() as temp_dir:
-            zspark = {"zWorkspace": temp_dir}
+            zspark = {"zSpace": temp_dir}
             z = zCLI(zspark)
             
             # Access environment config
@@ -778,7 +778,7 @@ class TestConfigEnvironmentRealIntegration(unittest.TestCase):
     def test_real_system_environment_capture(self):
         """Should capture real system environment variables"""
         with tempfile.TemporaryDirectory() as temp_dir:
-            zspark = {"zWorkspace": temp_dir}
+            zspark = {"zSpace": temp_dir}
             z = zCLI(zspark)
             
             env_config = z.config.environment
@@ -793,7 +793,7 @@ class TestConfigEnvironmentRealIntegration(unittest.TestCase):
     def test_real_environment_defaults(self):
         """Should provide real default environment configuration"""
         with tempfile.TemporaryDirectory() as temp_dir:
-            zspark = {"zWorkspace": temp_dir}
+            zspark = {"zSpace": temp_dir}
             z = zCLI(zspark)
             
             env_config = z.config.environment
@@ -814,7 +814,7 @@ class TestConfigEnvironmentRealIntegration(unittest.TestCase):
             env_file = Path(temp_dir) / ".env"
             env_file.write_text("TEST_VAR=test_value\n")
             
-            zspark = {"zWorkspace": temp_dir}
+            zspark = {"zSpace": temp_dir}
             z = zCLI(zspark)
             
             env_config = z.config.environment
@@ -838,7 +838,7 @@ class TestBifrostManagerRealIntegration(unittest.IsolatedAsyncioTestCase):
     def test_real_manager_initialization(self):
         """Should initialize real BifrostManager with zCLI"""
         with tempfile.TemporaryDirectory() as temp_dir:
-            zspark = {"zWorkspace": temp_dir, "zMode": "Terminal"}
+            zspark = {"zSpace": temp_dir, "zMode": "Terminal"}
             z = zCLI(zspark)
             
             # Manager should be created
@@ -852,7 +852,7 @@ class TestBifrostManagerRealIntegration(unittest.IsolatedAsyncioTestCase):
     async def test_real_manual_create_and_lifecycle(self):
         """Should create real WebSocket server via manager"""
         with tempfile.TemporaryDirectory() as temp_dir:
-            zspark = {"zWorkspace": temp_dir, "zMode": "Terminal"}
+            zspark = {"zSpace": temp_dir, "zMode": "Terminal"}
             z = zCLI(zspark)
             
             manager = z.comm._bifrost_mgr
@@ -878,7 +878,7 @@ class TestBifrostManagerRealIntegration(unittest.IsolatedAsyncioTestCase):
     def test_real_auto_start_terminal_mode(self):
         """Should NOT auto-start in Terminal mode"""
         with tempfile.TemporaryDirectory() as temp_dir:
-            zspark = {"zWorkspace": temp_dir, "zMode": "Terminal"}
+            zspark = {"zSpace": temp_dir, "zMode": "Terminal"}
             z = zCLI(zspark)
             
             manager = z.comm._bifrost_mgr

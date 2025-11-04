@@ -45,7 +45,7 @@ The zNavigation facade orchestrates four specialized components:
 4. **Linking** (navigation_linking.py)
    - Inter-file linking (zLink expressions)
    - RBAC permission checking for links
-   - Session context updates (zVaFile_path, zVaFilename, zBlock)
+   - Session context updates (zVaFolder, zVaFile, zBlock)
    - Integration: zParser (expression eval), zLoader (file loading)
 
 Public API
@@ -634,7 +634,7 @@ class zNavigation:
         - Parses zLink expression (zParser integration)
         - Checks RBAC permissions if specified
         - Loads target file (zLoader integration)
-        - Updates session context (zVaFile_path, zVaFilename, zBlock)
+        - Updates session context (zVaFolder, zVaFile, zBlock)
         - Delegates to Linking.handle()
         """
         return self.linking.handle(walker=walker, zHorizontal=zHorizontal)

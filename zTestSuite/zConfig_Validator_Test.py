@@ -42,7 +42,7 @@ class TestConfigValidatorValid(unittest.TestCase):
     def test_valid_workspace(self):
         """Test that existing workspace directory is valid"""
         with tempfile.TemporaryDirectory() as tmpdir:
-            validator = ConfigValidator({"zWorkspace": tmpdir}, logger=None)
+            validator = ConfigValidator({"zSpace": tmpdir}, logger=None)
             validator.validate()
     
     def test_websocket_config_valid(self):
@@ -76,7 +76,7 @@ class TestConfigValidatorInvalidWorkspace(unittest.TestCase):
     def test_nonexistent_workspace_fails(self):
         """Test that non-existent workspace path fails validation"""
         validator = ConfigValidator({
-            "zWorkspace": "/nonexistent/path/12345"
+            "zSpace": "/nonexistent/path/12345"
         }, logger=None)
         
         with self.assertRaises(ConfigValidationError) as cm:
@@ -87,7 +87,7 @@ class TestConfigValidatorInvalidWorkspace(unittest.TestCase):
     def test_workspace_not_string_fails(self):
         """Test that non-string workspace fails validation"""
         validator = ConfigValidator({
-            "zWorkspace": 12345
+            "zSpace": 12345
         }, logger=None)
         
         with self.assertRaises(ConfigValidationError):

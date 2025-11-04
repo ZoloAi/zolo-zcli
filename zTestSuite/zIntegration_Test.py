@@ -27,7 +27,7 @@ class TestzCLIInitialization(unittest.TestCase):
     def test_zcli_initializes_all_subsystems(self):
         """Test that zCLI initializes with all subsystems properly connected."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            z = zCLI({"zWorkspace": tmpdir})
+            z = zCLI({"zSpace": tmpdir})
             
             # Verify all core subsystems are initialized
             self.assertIsNotNone(z.config)
@@ -50,7 +50,7 @@ class TestzCLIInitialization(unittest.TestCase):
     def test_subsystems_share_common_session(self):
         """Test that all subsystems share the same session object."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            z = zCLI({"zWorkspace": tmpdir})
+            z = zCLI({"zSpace": tmpdir})
             
             # All subsystems should reference the same session
             # Note: z.config.session is the SessionConfig object, z.session is the session dict
@@ -68,7 +68,7 @@ class TestConfigValidationIntegration(unittest.TestCase):
     def test_invalid_workspace_fails_early(self):
         """Test that invalid workspace fails before subsystem init."""
         with self.assertRaises(SystemExit) as cm:
-            zCLI({"zWorkspace": "/nonexistent/path/12345"})
+            zCLI({"zSpace": "/nonexistent/path/12345"})
         self.assertEqual(cm.exception.code, 1)
     
     def test_invalid_mode_fails_early(self):
@@ -80,7 +80,7 @@ class TestConfigValidationIntegration(unittest.TestCase):
     def test_valid_config_passes_validation(self):
         """Test that valid config passes and initializes subsystems."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            z = zCLI({"zWorkspace": tmpdir, "zMode": "Terminal"})
+            z = zCLI({"zSpace": tmpdir, "zMode": "Terminal"})
             self.assertIsNotNone(z.config)
             self.assertIsNotNone(z.logger)
 
@@ -92,7 +92,7 @@ class TestLoaderParserIntegration(unittest.TestCase):
         """Set up test fixtures with temporary workspace."""
         self.temp_dir = tempfile.TemporaryDirectory()
         self.workspace = self.temp_dir.name
-        self.z = zCLI({"zWorkspace": self.workspace})
+        self.z = zCLI({"zSpace": self.workspace})
         
     def tearDown(self):
         """Clean up temporary directory."""
@@ -126,7 +126,7 @@ class TestDataSchemaIntegration(unittest.TestCase):
         """Set up test fixtures with temporary workspace."""
         self.temp_dir = tempfile.TemporaryDirectory()
         self.workspace = self.temp_dir.name
-        self.z = zCLI({"zWorkspace": self.workspace})
+        self.z = zCLI({"zSpace": self.workspace})
         
     def tearDown(self):
         """Clean up temporary directory."""
@@ -194,7 +194,7 @@ root:
         
         # Initialize zCLI with UI file
         z = zCLI({
-            "zWorkspace": self.workspace,
+            "zSpace": self.workspace,
             "zVaFile": "@.zUI.test_menu",
             "zBlock": "root"
         })
@@ -215,7 +215,7 @@ class TestDispatchActionIntegration(unittest.TestCase):
         """Set up test fixtures with temporary workspace."""
         self.temp_dir = tempfile.TemporaryDirectory()
         self.workspace = self.temp_dir.name
-        self.z = zCLI({"zWorkspace": self.workspace})
+        self.z = zCLI({"zSpace": self.workspace})
         
     def tearDown(self):
         """Clean up temporary directory."""
@@ -271,7 +271,7 @@ class TestEndToEndCRUDWorkflow(unittest.TestCase):
         """Set up test fixtures with temporary workspace."""
         self.temp_dir = tempfile.TemporaryDirectory()
         self.workspace = self.temp_dir.name
-        self.z = zCLI({"zWorkspace": self.workspace})
+        self.z = zCLI({"zSpace": self.workspace})
         
         # Create schema file
         self.schema_file = Path(self.workspace) / "zSchema.integration_test.yaml"
@@ -374,7 +374,7 @@ class TestMultiSubsystemWorkflow(unittest.TestCase):
         """Set up test fixtures with temporary workspace."""
         self.temp_dir = tempfile.TemporaryDirectory()
         self.workspace = self.temp_dir.name
-        self.z = zCLI({"zWorkspace": self.workspace})
+        self.z = zCLI({"zSpace": self.workspace})
         
     def tearDown(self):
         """Clean up temporary directory."""
@@ -451,7 +451,7 @@ class TestWebSocketModeIntegration(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             # Initialize zCLI in WebSocket mode
             z = zCLI({
-                "zWorkspace": tmpdir,
+                "zSpace": tmpdir,
                 "zMode": "zBifrost"
             })
             
@@ -511,7 +511,7 @@ class TestzTracebackIntegration(unittest.TestCase):
     def test_ztraceback_with_logger(self):
         """Test zTraceback is properly initialized with logger."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            z = zCLI({"zWorkspace": tmpdir})
+            z = zCLI({"zSpace": tmpdir})
 
             # zTraceback should have logger reference
             self.assertIsNotNone(z.zTraceback.logger)
@@ -520,7 +520,7 @@ class TestzTracebackIntegration(unittest.TestCase):
     def test_ztraceback_with_zcli_reference(self):
         """Test zTraceback has reference to zCLI instance."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            z = zCLI({"zWorkspace": tmpdir})
+            z = zCLI({"zSpace": tmpdir})
 
             # zTraceback should have zcli reference for interactive features
             self.assertIsNotNone(z.zTraceback.zcli)
@@ -529,7 +529,7 @@ class TestzTracebackIntegration(unittest.TestCase):
     def test_ztraceback_logs_to_zcli_logger(self):
         """Test zTraceback logs exceptions to zCLI logger."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            z = zCLI({"zWorkspace": tmpdir})
+            z = zCLI({"zSpace": tmpdir})
 
             try:
                 raise ValueError("Integration test error")
@@ -543,7 +543,7 @@ class TestzTracebackIntegration(unittest.TestCase):
     def test_ztraceback_with_display(self):
         """Test zTraceback can use display for output."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            z = zCLI({"zWorkspace": tmpdir})
+            z = zCLI({"zSpace": tmpdir})
 
             try:
                 raise RuntimeError("Display test error")
@@ -565,7 +565,7 @@ class TestzTracebackIntegration(unittest.TestCase):
         from zCLI.utils.zTraceback import ExceptionContext
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            z = zCLI({"zWorkspace": tmpdir})
+            z = zCLI({"zSpace": tmpdir})
 
             # Use ExceptionContext with zCLI's traceback handler
             with ExceptionContext(
@@ -594,7 +594,7 @@ class TestDotenvConfigIntegration(unittest.TestCase):
             env_file.write_text("TEST_INTEGRATION_VAR=integration_value\nZOLO_DEPLOYMENT=TestEnv\n")
             
             # Initialize zCLI with workspace containing .env
-            z = zCLI({"zWorkspace": str(tmpdir_path)})
+            z = zCLI({"zSpace": str(tmpdir_path)})
             
             # Verify dotenv variables are accessible through environment config
             self.assertEqual(z.config.environment.get_env_var("TEST_INTEGRATION_VAR"), "integration_value")
@@ -616,7 +616,7 @@ class TestDotenvConfigIntegration(unittest.TestCase):
             env_file.write_text("ZOLO_LOGGER=DEBUG\n")
             
             # Initialize zCLI
-            z = zCLI({"zWorkspace": str(tmpdir_path)})
+            z = zCLI({"zSpace": str(tmpdir_path)})
             
             # Verify logger level from dotenv is respected
             # The session should have captured the environment variable
@@ -638,7 +638,7 @@ class TestDotenvConfigIntegration(unittest.TestCase):
             # Initialize zCLI with custom dotenv path in zSpark
             # Use "dotenv" key which is recognized by config_paths
             z = zCLI({
-                "zWorkspace": str(tmpdir_path),
+                "zSpace": str(tmpdir_path),
                 "dotenv": str(custom_env_file)
             })
             
@@ -653,7 +653,7 @@ class TestDotenvConfigIntegration(unittest.TestCase):
         """Test that missing .env file doesn't break initialization."""
         with tempfile.TemporaryDirectory() as tmpdir:
             # Initialize zCLI without .env file
-            z = zCLI({"zWorkspace": tmpdir})
+            z = zCLI({"zSpace": tmpdir})
             
             # Should initialize successfully
             self.assertIsNotNone(z.config)
@@ -669,7 +669,7 @@ class TestDotenvConfigIntegration(unittest.TestCase):
             env_file.write_text("SNAPSHOT_TEST_VAR=snapshot_value\n")
             
             # Initialize zCLI
-            z = zCLI({"zWorkspace": str(tmpdir_path)})
+            z = zCLI({"zSpace": str(tmpdir_path)})
             
             # Verify environment snapshot contains dotenv variable
             system_env = z.config.environment.system_env
@@ -694,7 +694,7 @@ class TestzServerIntegration(unittest.TestCase):
     
     def test_zserver_via_zcomm(self):
         """Test creating zServer through zComm"""
-        z = zCLI({"zWorkspace": self.temp_dir.name})
+        z = zCLI({"zSpace": self.temp_dir.name})
         
         # Create HTTP server via zComm
         server = z.comm.create_http_server(port=18091, serve_path=self.temp_dir.name)
@@ -708,7 +708,7 @@ class TestzServerIntegration(unittest.TestCase):
     def test_zserver_auto_start_via_config(self):
         """Test zServer auto-starts when enabled in config"""
         z = zCLI({
-            "zWorkspace": self.temp_dir.name,
+            "zSpace": self.temp_dir.name,
             "http_server": {
                 "enabled": True,
                 "port": 18092,
@@ -727,7 +727,7 @@ class TestzServerIntegration(unittest.TestCase):
     def test_zserver_zbifrost_coexistence(self):
         """Test both HTTP and WebSocket servers can be configured together"""
         z = zCLI({
-            "zWorkspace": self.temp_dir.name,
+            "zSpace": self.temp_dir.name,
             "zMode": "zBifrost",
             "websocket": {"port": 18765, "require_auth": False},
             "http_server": {"enabled": True, "port": 18093, "serve_path": self.temp_dir.name}
@@ -746,7 +746,7 @@ class TestzServerIntegration(unittest.TestCase):
     
     def test_zserver_shares_zcli_logger(self):
         """Test zServer uses zCLI's logger instance"""
-        z = zCLI({"zWorkspace": self.temp_dir.name})
+        z = zCLI({"zSpace": self.temp_dir.name})
         server = z.comm.create_http_server(port=18094)
         
         # Verify logger is shared
@@ -758,7 +758,7 @@ class TestzServerIntegration(unittest.TestCase):
         # by config validator (Week 1.1)
         with self.assertRaises(SystemExit):
             z = zCLI({
-                "zWorkspace": self.temp_dir.name,
+                "zSpace": self.temp_dir.name,
                 "zMode": "zBifrost",
                 "websocket": {"port": 8080},
                 "http_server": {"enabled": True, "port": 8080}  # Same port!

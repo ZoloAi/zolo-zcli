@@ -286,7 +286,7 @@ class ConfigurationError(zCLIException):
         hint_msg = f"Correct configuration:\n{example}" if example else (
             "Check your zSpark initialization:\n"
             "   z = zCLI({\n"
-            "       'zWorkspace': '/path/to/project',\n"
+            "       'zSpace': '/path/to/project',\n"
             "       'zMode': 'Terminal',  # or 'zBifrost'\n"
             "       'zVerbose': True\n"
             "   })"

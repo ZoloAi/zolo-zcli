@@ -13,7 +13,7 @@ def execute_walker(zcli, parsed):
         zcli.logger.info("Launching Walker from session configuration...")
         
         # Validate required session fields
-        required_fields = ["zWorkspace", "zVaFilename", "zVaFile_path", "zBlock"]
+        required_fields = ["zSpace", "zVaFile", "zVaFolder", "zBlock"]
         missing = []
         
         for field in required_fields:
@@ -27,16 +27,24 @@ def execute_walker(zcli, parsed):
             }
         
         # Build zSpark configuration from session
-        zcli.zspark_obj.update({
-            "zWorkspace": zcli.session["zWorkspace"],
-            "zVaFilename": zcli.session["zVaFilename"],
-            "zVaFile_path": zcli.session.get("zVaFile_path", "@"),
-            "zBlock": zcli.session.get("zBlock", "Root"),
-            "zMode": "zBifrost"  # Walker always runs in zBifrost mode
-        })
+        # Preserve current zMode (Terminal or zBifrost) - user controls the mode
+        current_mode = zcli.session.get("zMode", "Terminal")
         
-        # Set session mode to zBifrost for Walker
-        zcli.session["zMode"] = "zBifrost"
+        # Construct full zPath from zVaFolder + zVaFile (NO <zBlock> suffix)
+        zva_folder = zcli.session.get("zVaFolder", "@")
+        zva_file = zcli.session["zVaFile"]
+        zblock = zcli.session.get("zBlock", "Root")
+        
+        # Build full zPath for loader: zVaFolder.zVaFile (NO <zBlock>)
+        full_zpath = f"{zva_folder}.{zva_file}"
+        
+        zcli.zspark_obj.update({
+            "zSpace": zcli.session["zSpace"],
+            "zVaFile": full_zpath,  # Full zPath to file (e.g., "@.zCLI.UI.zUI.zcli_sys")
+            "zVaFolder": zva_folder,
+            "zBlock": zblock,  # Separate - used after file is loaded
+            "zMode": current_mode  # Respect current mode (Terminal or zBifrost)
+        })
         
         # Import and launch Walker
         try:
@@ -44,19 +52,19 @@ def execute_walker(zcli, parsed):
             zcli.logger.info("Creating zWalker instance from zCLI...")
             walker = zWalker(zcli)
             
-            zcli.logger.info("Starting Walker UI mode...")
+            zcli.logger.info("Starting Walker in %s mode...", current_mode)
             result = walker.run()
             
-            # After Walker exits normally, return to Terminal mode
-            zcli.logger.info("Walker exited normally, returning to Terminal mode...")
-            zcli.session["zMode"] = "Terminal"
+            # After Walker exits normally, restore original mode
+            zcli.logger.info("Walker exited normally")
+            zcli.session["zMode"] = current_mode
             
             return {"success": "Walker session completed", "result": result}
             
         except SystemExit as e:
             # Walker called sys.exit() - this is normal for "stop" or completion
-            zcli.logger.info("Walker exited via sys.exit(%s), returning to Terminal mode...", e.code)
-            zcli.session["zMode"] = "Terminal"
+            zcli.logger.info("Walker exited via sys.exit(%s)", e.code)
+            zcli.session["zMode"] = current_mode
             
             # Determine if it was a normal exit or error
             if e.code == 0 or e.code is None:
@@ -66,7 +74,7 @@ def execute_walker(zcli, parsed):
             
         except Exception as e:
             zcli.logger.error("Failed to launch Walker: %s", e, exc_info=True)
-            zcli.session["zMode"] = "Terminal"
+            zcli.session["zMode"] = current_mode  # Restore original mode on error
             return {"error": f"Walker launch failed: {str(e)}"}
     
     else:

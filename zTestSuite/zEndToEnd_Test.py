@@ -34,7 +34,7 @@ class TestConfigValidationWorkflow(unittest.TestCase):
         Expected: Clear error message, app refuses to start.
         """
         with self.assertRaises(SystemExit) as cm:
-            zCLI({"zWorkspace": "/path/does/not/exist", "zVaFile": "@.zUI.main"})
+            zCLI({"zSpace": "/path/does/not/exist", "zVaFile": "@.zUI.main"})
         self.assertEqual(cm.exception.code, 1)
     
     def test_developer_catches_invalid_mode_before_deployment(self):
@@ -53,7 +53,7 @@ class TestConfigValidationWorkflow(unittest.TestCase):
         """
         with tempfile.TemporaryDirectory() as tmpdir:
             z = zCLI({
-                "zWorkspace": tmpdir,
+                "zSpace": tmpdir,
                 "zMode": "Terminal"
             })
             # Verify successful initialization
@@ -159,7 +159,7 @@ users:
 """)
         
         # Initialize zCLI
-        self.z = zCLI({"zWorkspace": self.workspace})
+        self.z = zCLI({"zSpace": self.workspace})
         
     def tearDown(self):
         """Clean up temporary directory."""
@@ -298,7 +298,7 @@ comments:
 """)
         
         # Initialize zCLI
-        self.z = zCLI({"zWorkspace": self.workspace})
+        self.z = zCLI({"zSpace": self.workspace})
         
     def tearDown(self):
         """Clean up temporary directory."""
@@ -433,7 +433,7 @@ class TestWalkerUINavigationWorkflow(unittest.TestCase):
         
         # Initialize zCLI with UI file
         z = zCLI({
-            "zWorkspace": self.workspace,
+            "zSpace": self.workspace,
             "zVaFile": "@.zUI.navigation_test",
             "zBlock": "root"
         })
@@ -508,7 +508,7 @@ def get_plugin_info():
         # Initialize zCLI with plugin
         plugin_path = str(self.plugin_file)
         z = zCLI({
-            "zWorkspace": self.workspace,
+            "zSpace": self.workspace,
             "plugins": [plugin_path]
         })
         
@@ -541,7 +541,7 @@ class TestCompleteApplicationLifecycle(unittest.TestCase):
         """Test complete application from start to finish."""
         
         # Phase 1: Application Initialization
-        z = zCLI({"zWorkspace": self.workspace})
+        z = zCLI({"zSpace": self.workspace})
         
         # Verify all subsystems initialized
         self.assertIsNotNone(z.config)
@@ -624,7 +624,7 @@ class TestUserManagerWebSocketMode(unittest.TestCase):
         
         # Initialize zCLI in WebSocket mode with User Manager YAML
         z = zCLI({
-            "zWorkspace": str(demo_dir),
+            "zSpace": str(demo_dir),
             "zVaFile": "@.zUI.users_menu",
             "zMode": "zBifrost",
             "zVerbose": False
@@ -723,7 +723,7 @@ test_menu:
 """)
             
             z = zCLI({
-                "zWorkspace": tmpdir,
+                "zSpace": tmpdir,
                 "zVaFile": "@.zUI.test_app",
                 "zBlock": "test_menu"
             })
@@ -753,7 +753,7 @@ test_menu:
         from zCLI.utils.zTraceback import ExceptionContext
         
         with tempfile.TemporaryDirectory() as tmpdir:
-            z = zCLI({"zWorkspace": tmpdir})
+            z = zCLI({"zSpace": tmpdir})
             
             # Simulate using ExceptionContext during data operations
             with ExceptionContext(
@@ -786,7 +786,7 @@ test_menu:
     def test_ztraceback_preserves_exception_history(self):
         """Test traceback handler maintains exception history across operations."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            z = zCLI({"zWorkspace": tmpdir})
+            z = zCLI({"zSpace": tmpdir})
             
             # Simulate multiple operations with errors
             for i in range(3):
@@ -848,7 +848,7 @@ settings:
             """)
             
             # Initialize zCLI with dotenv-configured workspace
-            z = zCLI({"zWorkspace": str(tmpdir_path)})
+            z = zCLI({"zSpace": str(tmpdir_path)})
             
             # Verify dotenv variables are loaded
             self.assertEqual(z.config.environment.get_env_var("APP_NAME"), "TestApp")
@@ -903,7 +903,7 @@ settings:
             
             # Initialize with dev environment
             z_dev = zCLI({
-                "zWorkspace": str(tmpdir_path),
+                "zSpace": str(tmpdir_path),
                 "dotenv": str(dev_env)
             })
             
@@ -923,7 +923,7 @@ settings:
             
             # Initialize with prod environment
             z_prod = zCLI({
-                "zWorkspace": str(tmpdir_path),
+                "zSpace": str(tmpdir_path),
                 "dotenv": str(prod_env)
             })
             
@@ -975,7 +975,7 @@ class TestFullStackServerWorkflow(unittest.TestCase):
         Expected: zServer serves static files, app can access them.
         """
         z = zCLI({
-            "zWorkspace": self.workspace,
+            "zSpace": self.workspace,
             "http_server": {
                 "enabled": True,
                 "port": 18095,
@@ -1004,7 +1004,7 @@ class TestFullStackServerWorkflow(unittest.TestCase):
         Expected: Both servers run on different ports, no conflicts.
         """
         z = zCLI({
-            "zWorkspace": self.workspace,
+            "zSpace": self.workspace,
             "zMode": "zBifrost",
             "zVaFile": "@.zUI.test",
             "websocket": {"port": 18765, "require_auth": False},
@@ -1051,7 +1051,7 @@ class TestFullStackServerWorkflow(unittest.TestCase):
         
         # Initialize zCLI with both servers
         z = zCLI({
-            "zWorkspace": str(workspace),
+            "zSpace": str(workspace),
             "zMode": "zBifrost",
             "zVaFile": "@.zUI.main",
             "websocket": {"port": 18767, "require_auth": False},
@@ -1087,7 +1087,7 @@ class TestFullStackServerWorkflow(unittest.TestCase):
         Expected: zServer handles HTTP, reverse proxy handles SSL/auth.
         """
         z = zCLI({
-            "zWorkspace": self.workspace,
+            "zSpace": self.workspace,
             "http_server": {
                 "enabled": True,
                 "host": "0.0.0.0",  # Bind to all interfaces (behind reverse proxy)

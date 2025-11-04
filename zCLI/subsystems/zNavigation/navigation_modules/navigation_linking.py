@@ -67,8 +67,8 @@ Session Updates
 ---------------
 The linking process updates the following session keys:
 
-- SESSION_KEY_ZVAFILE_PATH: Base path to file
-- SESSION_KEY_ZVAFILENAME: Filename (without extension)
+- SESSION_KEY_ZVAFOLDER: Folder containing the file
+- SESSION_KEY_ZVAFILE: Filename (without extension)
 - SESSION_KEY_ZBLOCK: Target block name
 
 These session keys are used by zLoader and zWalker to maintain navigation context.
@@ -81,7 +81,7 @@ Integration
 -----------
 - Called by: zNavigation facade, dispatch_launcher (3 call sites)
 - Uses: zParser (zExpr_eval), zLoader (file loading), zWalker (block execution)
-- Session: Reads SESSION_KEY_ZAUTH, writes SESSION_KEY_ZVAFILE_PATH, etc.
+- Session: Reads SESSION_KEY_ZAUTH, writes SESSION_KEY_ZVAFOLDER, etc.
 - Logging: Debug for flow, info for parsing, warning for permission denials
 
 Forward Dependencies
@@ -148,8 +148,8 @@ from zCLI import Any, Dict, Tuple
 from zCLI.subsystems.zParser.parser_modules.parser_utils import zExpr_eval
 from zCLI.subsystems.zConfig.zConfig_modules.config_session import (
     SESSION_KEY_ZAUTH,
-    SESSION_KEY_ZVAFILE_PATH,
-    SESSION_KEY_ZVAFILENAME,
+    SESSION_KEY_ZVAFOLDER,
+    SESSION_KEY_ZVAFILE,
     SESSION_KEY_ZBLOCK,
 )
 
@@ -268,7 +268,7 @@ class Linking:
     Integration
     -----------
     - Parent: zNavigation system
-    - Session: Reads SESSION_KEY_ZAUTH, writes SESSION_KEY_ZVAFILE_PATH/ZVAFILENAME/ZBLOCK
+    - Session: Reads SESSION_KEY_ZAUTH, writes SESSION_KEY_ZVAFOLDER/ZVAFILENAME/ZBLOCK
     - Walker: Passed as parameter for display, loader, zCrumbs, zBlock_loop access
     - Logging: Debug for flow, info for parsing, warning for denials
     
@@ -304,8 +304,8 @@ class Linking:
         --------------------
         This module manages the following session keys:
         - SESSION_KEY_ZAUTH: Read for permission checking
-        - SESSION_KEY_ZVAFILE_PATH: Written during navigation
-        - SESSION_KEY_ZVAFILENAME: Written during navigation
+        - SESSION_KEY_ZVAFOLDER: Written during navigation
+        - SESSION_KEY_ZVAFILE: Written during navigation
         - SESSION_KEY_ZBLOCK: Written during navigation
         """
         self.navigation = navigation
@@ -700,8 +700,8 @@ class Linking:
         DRY Helper: Centralizes session path updates.
         
         Session Keys Updated:
-        - SESSION_KEY_ZVAFILE_PATH: Base path (e.g., "")
-        - SESSION_KEY_ZVAFILENAME: Filename (e.g., "zUI.settings")
+        - SESSION_KEY_ZVAFOLDER: Folder path (e.g., "")
+        - SESSION_KEY_ZVAFILE: Filename (e.g., "zUI.settings")
         - SESSION_KEY_ZBLOCK: Block name (e.g., "NetworkSettings")
         
         Algorithm
@@ -710,11 +710,11 @@ class Linking:
         2. Split path into parts by "."
         3. If >= 2 parts:
            a. Extract base path (all parts except last 2)
-           b. Set zVaFile_path to joined base path (or "" if empty)
-           c. Set zVaFilename to last 2 parts joined
+           b. Set zVaFolder to joined base path (or "" if empty)
+           c. Set zVaFile to last 2 parts joined
         4. Else (< 2 parts):
-           a. Set zVaFile_path to ""
-           b. Set zVaFilename to entire path
+           a. Set zVaFolder to ""
+           b. Set zVaFile to entire path
         5. Set zBlock to selected_zBlock
         """
         # Extract path to file (without block name)
@@ -724,15 +724,15 @@ class Linking:
         # Parse path components
         if len(parts) >= PATH_PARTS_MIN:
             base_path_parts = parts[:PATH_PARTS_BASE_OFFSET]
-            self.zSession[SESSION_KEY_ZVAFILE_PATH] = (
+            self.zSession[SESSION_KEY_ZVAFOLDER] = (
                 PATH_SEPARATOR.join(base_path_parts) if base_path_parts else PATH_DEFAULT_BASE
             )
-            self.zSession[SESSION_KEY_ZVAFILENAME] = PATH_SEPARATOR.join(
+            self.zSession[SESSION_KEY_ZVAFILE] = PATH_SEPARATOR.join(
                 parts[PATH_INDEX_FILENAME_START:]
             )
         else:
-            self.zSession[SESSION_KEY_ZVAFILE_PATH] = PATH_DEFAULT_BASE
-            self.zSession[SESSION_KEY_ZVAFILENAME] = path_to_file
+            self.zSession[SESSION_KEY_ZVAFOLDER] = PATH_DEFAULT_BASE
+            self.zSession[SESSION_KEY_ZVAFILE] = path_to_file
         
         # Set block name
         self.zSession[SESSION_KEY_ZBLOCK] = selected_zBlock

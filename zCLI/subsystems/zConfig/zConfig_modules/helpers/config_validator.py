@@ -24,7 +24,7 @@ LOG_PREFIX = "[CONFIG VALIDATION]"
 VALID_MODES = ["Terminal", "zBifrost"]
 
 # Configuration Keys
-KEY_ZWORKSPACE = "zWorkspace"
+KEY_ZSPACE = "zSpace"
 KEY_ZMODE = "zMode"
 KEY_WEBSOCKET = "websocket"
 KEY_HTTP_SERVER = "http_server"
@@ -72,7 +72,7 @@ class ConfigValidator:
     Validates zSpark_obj configuration dictionary.
     
     Validates:
-    - zWorkspace: Path exists and is directory
+    - zSpace: Path exists and is directory
     - zMode: Must be "Terminal" or "zBifrost"
     - websocket: Port, host, require_auth types
     - http_server: Port, host, serve_path, enabled types
@@ -119,8 +119,8 @@ class ConfigValidator:
             raise ConfigValidationError(error_msg)
     
     def _validate_workspace(self) -> None:
-        """Validate zWorkspace path"""
-        workspace = self.config.get(KEY_ZWORKSPACE)
+        """Validate zSpace path"""
+        workspace = self.config.get(KEY_ZSPACE)
         
         # Optional, but if provided must be valid
         if workspace is None:
@@ -130,7 +130,7 @@ class ConfigValidator:
         if not isinstance(workspace, str):
             self.errors.append(
                 ERROR_TYPE_MISMATCH.format(
-                    key=KEY_ZWORKSPACE,
+                    key=KEY_ZSPACE,
                     expected_type="string",
                     actual_type=type(workspace).__name__
                 )
@@ -141,14 +141,14 @@ class ConfigValidator:
         path = Path(workspace).expanduser()
         if not path.exists():
             self.errors.append(
-                ERROR_PATH_NOT_EXISTS.format(key=KEY_ZWORKSPACE, path=workspace)
+                ERROR_PATH_NOT_EXISTS.format(key=KEY_ZSPACE, path=workspace)
             )
             return
         
         # Must be directory
         if not path.is_dir():
             self.errors.append(
-                ERROR_NOT_DIRECTORY.format(key=KEY_ZWORKSPACE, path=workspace)
+                ERROR_NOT_DIRECTORY.format(key=KEY_ZSPACE, path=workspace)
             )
     
     def _validate_mode(self) -> None:

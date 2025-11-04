@@ -30,7 +30,7 @@ These components provide core navigation functionality:
 3. **Linking** (navigation_linking.py)
    - Inter-file linking (zLink expressions)
    - RBAC permission checking for links
-   - Session context updates (zVaFile_path, zVaFilename, zBlock)
+   - Session context updates (zVaFolder, zVaFile, zBlock)
    - zParser integration for expression evaluation
 
 4. **MenuBuilder** (navigation_menu_builder.py)

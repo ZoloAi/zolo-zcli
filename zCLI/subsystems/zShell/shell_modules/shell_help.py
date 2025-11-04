@@ -93,7 +93,7 @@ class HelpSystem:
             ],
             "examples": [
                 "session info",
-                "session set zWorkspace /path/to/project",
+                "session set zSpace /path/to/project",
             ]
         },
         "auth": {
@@ -114,8 +114,8 @@ class HelpSystem:
                 "walker run",
             ],
             "examples": [
-                "session set zWorkspace /path/to/project",
-                "session set zVaFilename ui.main.yaml",
+                "session set zSpace /path/to/project",
+                "session set zVaFile ui.main.yaml",
                 "walker run",
             ]
         },
@@ -138,7 +138,7 @@ class HelpSystem:
             ],
             "examples": [
                 "config show",
-                "config get zWorkspace",
+                "config get zSpace",
             ]
         },
         "export": {
@@ -196,7 +196,7 @@ class HelpSystem:
             ],
             "examples": [
                 "echo Hello World",
-                "echo $session.zWorkspace",
+                "echo $session.zSpace",
                 "echo --success Operation complete",
             ]
         },

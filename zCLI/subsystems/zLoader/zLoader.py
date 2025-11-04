@@ -150,8 +150,8 @@ FILE_TYPE_UI: str = "zUI"
 FILE_TYPE_SCHEMA: str = "zSchema"
 
 # Session Keys (TODO: Import from zConfig when available)
-SESSION_KEY_VAFILENAME: str = "zVaFilename"
-SESSION_KEY_VAFILE_PATH: str = "zVaFile_path"
+SESSION_KEY_VAFILE: str = "zVaFile"
+SESSION_KEY_VAFOLDER: str = "zVaFolder"
 
 # Cache Constants
 CACHE_KEY_PREFIX: str = "parsed:"
@@ -262,7 +262,7 @@ class zLoader:
         ----------
         zPath : Optional[str], default=None
             Declarative path to zVaFile (e.g., "@.zUI.users.yaml")
-            - If None: Uses session values (SESSION_KEY_VAFILENAME, SESSION_KEY_VAFILE_PATH)
+            - If None: Uses session values (SESSION_KEY_VAFILE, SESSION_KEY_VAFOLDER)
             - If provided: Explicit path to load
             - Symbols: "@" (workspace-relative), "~" (absolute), none (relative to cwd)
 
@@ -289,7 +289,7 @@ class zLoader:
             >>> # Returns: {'zName': 'users', 'zBlock': [...], ...}
 
         **UI File Loading (session fallback)**:
-            >>> # Session has: {'zVaFilename': 'users.yaml', 'zVaFile_path': '@'}
+            >>> # Session has: {'zVaFile': 'users.yaml', 'zVaFolder': '@'}
             >>> loader = zLoader(zcli)
             >>> ui_data = loader.handle()  # zPath=None
             >>> # Returns: {'zName': 'users', 'zBlock': [...], ...}
@@ -324,7 +324,7 @@ class zLoader:
 
         **zParser Delegation**:
             - Path Resolution: self.zpath_decoder(zPath, zType)
-            - File Identification: self.identify_zfile(zVaFilename, zVaFile_fullpath)
+            - File Identification: self.identify_zfile(zVaFile, zVaFile_fullpath)
             - Content Parsing: self.parse_file_content(zFile_raw, zFile_extension, ...)
 
         **Integration Points**:
@@ -336,21 +336,21 @@ class zLoader:
         self.logger.debug("zFile_zObj: %s", zPath)
 
         # Determine if we should use session values (UI file loading)
-        # When zPath is None and session has zVaFilename, use session values
-        zType = FILE_TYPE_UI if not zPath and self.zSession.get(SESSION_KEY_VAFILENAME) else None
+        # When zPath is None and session has zVaFile, use session values
+        zType = FILE_TYPE_UI if not zPath and self.zSession.get(SESSION_KEY_VAFILE) else None
 
         # Step 1: Use zParser for path resolution and file discovery
-        zVaFile_fullpath, zVaFilename = self.zpath_decoder(zPath, zType)
-        zFilePath_identified, zFile_extension = self.identify_zfile(zVaFilename, zVaFile_fullpath)
+        zVaFile_fullpath, zVaFile = self.zpath_decoder(zPath, zType)
+        zFilePath_identified, zFile_extension = self.identify_zfile(zVaFile, zVaFile_fullpath)
         self.logger.debug("zFilePath_identified!\n%s", zFilePath_identified)
 
         # Detect if this is a zSchema file (should not be cached)
-        is_schema = FILE_TYPE_SCHEMA in zVaFilename or zFile_extension == SCHEMA_EXTENSION
+        is_schema = FILE_TYPE_SCHEMA in zVaFile or zFile_extension == SCHEMA_EXTENSION
 
         if not is_schema:
             # Step 2: Check system cache (UI and config files)
             # Use zPath for cache key instead of OS path
-            zPath_key = f"{self.zSession.get(SESSION_KEY_VAFILE_PATH, DEFAULT_PATH_SYMBOL)}.{zVaFilename}"
+            zPath_key = f"{self.zSession.get(SESSION_KEY_VAFOLDER, DEFAULT_PATH_SYMBOL)}.{zVaFile}"
             cache_key = f"{CACHE_KEY_PREFIX}{zPath_key}"
             cached = self.cache.get(cache_key, cache_type=CACHE_TYPE_SYSTEM, filepath=zFilePath_identified)
             if cached is not None:

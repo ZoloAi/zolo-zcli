@@ -102,7 +102,7 @@ class TestzDataSQLiteAdapter(unittest.TestCase):
         # Initialize zCLI with package root as workspace (so @.zTestSuite.demos works)
         with patch('builtins.print'):
             self.zcli = zCLI({
-                "zWorkspace": str(get_package_root())
+                "zSpace": str(get_package_root())
             })
         
         # Load SQLite schema using zLoader (proper zPath resolution)
@@ -320,7 +320,7 @@ class TestzDataPostgreSQLAdapter(unittest.TestCase):
             self.skipTest("psycopg2 not available - skipping PostgreSQL tests")
         
         # Set up test directory using zPath format (@.tests.zData_tests)
-        workspace_root = Path(self.zcli.session.get("zWorkspace", Path.cwd()))
+        workspace_root = Path(self.zcli.session.get("zSpace", Path.cwd()))
         self.test_dir = workspace_root / "tests" / "zData_tests"
         self.test_dir.mkdir(parents=True, exist_ok=True)
         
@@ -457,7 +457,7 @@ class TestzDataCSVAdapter(unittest.TestCase):
         # Initialize zCLI with package root as workspace (so @.zTestSuite.demos works)
         with patch('builtins.print'):
             self.zcli = zCLI({
-                "zWorkspace": str(get_package_root())
+                "zSpace": str(get_package_root())
             })
         
         # Load CSV schema using zLoader (proper zPath resolution)
@@ -593,7 +593,7 @@ class TestzDataErrorHandling(unittest.TestCase):
         # Initialize zCLI with package root as workspace (so @.zTestSuite.demos works)
         with patch('builtins.print'):
             self.zcli = zCLI({
-                "zWorkspace": str(get_package_root())
+                "zSpace": str(get_package_root())
             })
 
     def tearDown(self):
@@ -661,7 +661,7 @@ class TestzDataPluginIntegration(unittest.TestCase):
         # Initialize zCLI with package root as workspace (so @.zTestSuite.demos works)
         with patch('builtins.print'):
             self.zcli = zCLI({
-                "zWorkspace": str(get_package_root())
+                "zSpace": str(get_package_root())
             })
         
         # Load id_generator plugin explicitly using PluginCache
@@ -807,7 +807,7 @@ class TestzDataConnectionManagement(unittest.TestCase):
         # Initialize zCLI with package root as workspace (so @.zTestSuite.demos works)
         with patch('builtins.print'):
             self.zcli = zCLI({
-                "zWorkspace": str(get_package_root())
+                "zSpace": str(get_package_root())
             })
 
     def tearDown(self):

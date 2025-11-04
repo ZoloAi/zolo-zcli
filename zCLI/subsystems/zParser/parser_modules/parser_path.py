@@ -65,7 +65,7 @@ Signatures must remain stable:
 Usage Examples
 --------------
 **zPath_decoder** - Resolve dotted paths:
-    >>> zSession = {'zWorkspace': '/app'}
+    >>> zSession = {'zSpace': '/app'}
     >>> logger = get_logger()
     >>> zPath_decoder(zSession, logger, zPath='@.config.zUI.users.main')
     ('/app/config/zUI.users', 'zUI.users')
@@ -99,7 +99,7 @@ Path Symbol Conventions
 -----------------------
 @ (At Symbol) - Workspace-Relative:
     Format: @.path.to.file
-    Resolves: Relative to zSession['zWorkspace'] or os.getcwd()
+    Resolves: Relative to zSession['zSpace'] or os.getcwd()
     Example: @.config.zUI.users → {workspace}/config/zUI.users
 
 ~ (Tilde Symbol) - Absolute Path:
@@ -109,7 +109,7 @@ Path Symbol Conventions
 
 (No Symbol) - Relative to Workspace:
     Format: path.to.file
-    Resolves: Relative to zSession['zWorkspace'] or os.getcwd()
+    Resolves: Relative to zSession['zSpace'] or os.getcwd()
     Example: config.zUI.users → {workspace}/config/zUI.users
 
 zMachine Path Resolution
@@ -184,9 +184,9 @@ DISPLAY_MSG_PATH_DECODER: str = "zPath decoder"
 DISPLAY_MSG_FILE_TYPE_TEMPLATE: str = "Type: {}|{}"
 
 # Session Keys (should use zConfig constants in future)
-SESSION_KEY_ZWORKSPACE: str = "zWorkspace"
-SESSION_KEY_ZVAFILE_PATH: str = "zVaFile_path"
-SESSION_KEY_ZVAFILENAME: str = "zVaFilename"
+SESSION_KEY_ZSPACE: str = "zSpace"
+SESSION_KEY_ZVAFOLDER: str = "zVaFolder"
+SESSION_KEY_ZVAFILE: str = "zVaFile"
 
 # Path Symbols
 SYMBOL_AT: str = "@"
@@ -265,11 +265,11 @@ ZMACHINE_KEYWORDS: List[str] = [
 
 # Log Messages
 LOG_MSG_ZMACHINE_PATH: str = "[zMachine Path] %s => %s"
-LOG_MSG_ZWORKSPACE: str = "\nzWorkspace: %s"
+LOG_MSG_ZSPACE: str = "\nzSpace: %s"
 LOG_MSG_ZRELPATH: str = "\nzRelPath: %s"
 LOG_MSG_ZFILENAME: str = "\nzFileName: %s"
 LOG_MSG_OS_RELPATH: str = "\nos_RelPath: %s"
-LOG_MSG_ZVAFILE_PATH: str = "\nzVaFile path: %s"
+LOG_MSG_ZVAFOLDER_PATH: str = "\nzVaFolder path: %s"
 LOG_MSG_ZBLOCK: str = "\nzBlock: %s"
 LOG_MSG_ZPATH_2_ZFILE: str = "\nzPath_2_zFile: %s"
 LOG_MSG_ZFILENAME_SHORT: str = "zFileName: %s"
@@ -278,12 +278,12 @@ LOG_MSG_NO_ZBLOCK: str = "\nNo zBlock (not a zVaFile)"
 LOG_MSG_PARTS: str = "\nparts: %s"
 LOG_MSG_IS_ZVAFILE: str = "is_zvafile: %s"
 LOG_MSG_SYMBOL: str = "symbol: %s"
-LOG_MSG_ZVAFILE_FULLPATH: str = "zVaFile path + zVaFilename:\n%s"
+LOG_MSG_ZVAFILE_FULLPATH: str = "zVaFile path + zVaFile:\n%s"
 LOG_MSG_SYMBOL_AT: str = "↪ '@' → workspace-relative path"
 LOG_MSG_SYMBOL_TILDE: str = "↪ '~' → absolute path"
 LOG_MSG_SYMBOL_NONE: str = "↪ no symbol → treat whole as relative"
 LOG_MSG_NO_WORKSPACE: str = "⚠️ '@' path requested but no workspace configured in zSession"
-LOG_MSG_NO_WORKSPACE_HELP: str = "   Use 'session set zWorkspace <path>' to configure workspace"
+LOG_MSG_NO_WORKSPACE_HELP: str = "   Use 'session set zSpace <path>' to configure workspace"
 LOG_MSG_NO_WORKSPACE_FALLBACK: str = "   Falling back to current working directory: %s"
 LOG_MSG_FILE_TYPE: str = "File Type: %s"
 LOG_MSG_FILE_TYPE_UNKNOWN: str = "File Type: zVaFile (unknown subtype)"
@@ -472,7 +472,7 @@ def is_zvafile_type(filename_or_parts: Union[str, List[str]]) -> bool:
 
 def _handle_ui_mode_path(
     zSession: Dict[str, Any],
-    zWorkspace: str,
+    zSpace: str,
     logger: Any
 ) -> Tuple[str, str]:
     """
@@ -483,7 +483,7 @@ def _handle_ui_mode_path(
     
     Args:
         zSession: Session dictionary containing path information
-        zWorkspace: Workspace directory path
+        zSpace: Workspace directory path
         logger: Logger instance for diagnostic output
     
     Returns:
@@ -493,30 +493,30 @@ def _handle_ui_mode_path(
     
     Notes:
         - Private helper function (not for external use)
-        - Extracts zVaFile_path and zVaFilename from zSession
+        - Extracts zVaFolder and zVaFile from zSession
         - Converts dot notation to OS path separators
         - Logs all intermediate steps for debugging
     
     See Also:
         - zPath_decoder: Main function using this helper
     """
-    zVaFile_path = zSession.get(SESSION_KEY_ZVAFILE_PATH) or ""
+    zVaFolder = zSession.get(SESSION_KEY_ZVAFOLDER) or ""
     zRelPath = (
-        zVaFile_path.lstrip(PATH_SEP_DOT).split(PATH_SEP_DOT)
-        if PATH_SEP_DOT in zVaFile_path
-        else [zVaFile_path]
+        zVaFolder.lstrip(PATH_SEP_DOT).split(PATH_SEP_DOT)
+        if PATH_SEP_DOT in zVaFolder
+        else [zVaFolder]
     )
-    zFileName = zSession[SESSION_KEY_ZVAFILENAME]
-    logger.info(LOG_MSG_ZWORKSPACE, zWorkspace)
+    zFileName = zSession[SESSION_KEY_ZVAFILE]
+    logger.info(LOG_MSG_ZSPACE, zSpace)
     logger.info(LOG_MSG_ZRELPATH, zRelPath)
     logger.info(LOG_MSG_ZFILENAME, zFileName)
 
     os_RelPath = os.path.join(*zRelPath[1:]) if len(zRelPath) > 1 else ""
     logger.info(LOG_MSG_OS_RELPATH, os_RelPath)
 
-    zVaFile_basepath = os.path.join(zWorkspace, os_RelPath)
-    logger.info(LOG_MSG_ZVAFILE_PATH, zVaFile_basepath)
-    return zVaFile_basepath, zFileName
+    zVaFolder_basepath = os.path.join(zSpace, os_RelPath)
+    logger.info(LOG_MSG_ZVAFOLDER_PATH, zVaFolder_basepath)
+    return zVaFolder_basepath, zFileName
 
 
 def _extract_filename_from_parts(
@@ -696,7 +696,7 @@ def zPath_decoder(
     
     Args:
         zSession: Session dictionary containing workspace and file information
-                  Expected keys: 'zWorkspace', 'zVaFile_path', 'zVaFilename'
+                  Expected keys: 'zSpace', 'zVaFolder', 'zVaFile'
         logger: Logger instance for diagnostic output
         zPath: Optional dotted path string to resolve
                If None and zType='zUI', uses session state
@@ -711,7 +711,7 @@ def zPath_decoder(
             - filename: Extracted filename
     
     Examples:
-        >>> zSession = {'zWorkspace': '/app'}
+        >>> zSession = {'zSpace': '/app'}
         >>> logger = get_logger()
         
         # Workspace-relative zVaFile
@@ -727,8 +727,8 @@ def zPath_decoder(
         ('/app/config/scripts/utils.py', 'utils.py')
         
         # UI mode (from session)
-        >>> zSession['zVaFile_path'] = 'config.ui'
-        >>> zSession['zVaFilename'] = 'zUI.users'
+        >>> zSession['zVaFolder'] = 'config.ui'
+        >>> zSession['zVaFile'] = 'zUI.users'
         >>> zPath_decoder(zSession, logger, zType='zUI')
         ('/app/config/ui/zUI.users', 'zUI.users')
     
@@ -758,11 +758,11 @@ def zPath_decoder(
         display.zDeclare(DISPLAY_MSG_PATH_DECODER, color=COLOR_SUBLOADER, indent=INDENT_PATH, style=STYLE_SINGLE)
 
     # Get workspace from session or fall back to current directory
-    zWorkspace = zSession.get(SESSION_KEY_ZWORKSPACE) or os.getcwd()
+    zSpace = zSession.get(SESSION_KEY_ZSPACE) or os.getcwd()
 
     # UI mode: resolve from session state
     if not zPath and zType == FILE_TYPE_ZUI:
-        zVaFile_basepath, zFileName = _handle_ui_mode_path(zSession, zWorkspace, logger)
+        zVaFolder_basepath, zFileName = _handle_ui_mode_path(zSession, zSpace, logger)
     else:
         # Standard mode: parse dotted path
         zPath_parts = zPath.lstrip(PATH_SEP_DOT).split(PATH_SEP_DOT)
@@ -779,10 +779,10 @@ def zPath_decoder(
         symbol = zRelPath_parts[0] if zRelPath_parts else None
         logger.info(LOG_MSG_SYMBOL, symbol)
 
-        zVaFile_basepath = resolve_symbol_path(symbol, zRelPath_parts, zWorkspace, zSession, logger)
+        zVaFolder_basepath = resolve_symbol_path(symbol, zRelPath_parts, zSpace, zSession, logger)
 
     # Combine base path and filename
-    zVaFile_fullpath = os.path.join(zVaFile_basepath, zFileName)
+    zVaFile_fullpath = os.path.join(zVaFolder_basepath, zFileName)
     logger.info(LOG_MSG_ZVAFILE_FULLPATH, zVaFile_fullpath)
 
     return zVaFile_fullpath, zFileName
@@ -791,7 +791,7 @@ def zPath_decoder(
 def resolve_symbol_path(
     symbol: Optional[str],
     zRelPath_parts: List[str],
-    zWorkspace: str,
+    zSpace: str,
     zSession: Dict[str, Any],
     logger: Any
 ) -> str:
@@ -806,7 +806,7 @@ def resolve_symbol_path(
     Args:
         symbol: Path symbol prefix (SYMBOL_AT, SYMBOL_TILDE, or None)
         zRelPath_parts: List of path components (including symbol if present)
-        zWorkspace: Workspace directory path
+        zSpace: Workspace directory path
         zSession: Session dictionary (for workspace validation)
         logger: Logger instance for diagnostic output
     
@@ -824,9 +824,9 @@ def resolve_symbol_path(
         '/app/config/data'
     
     Notes:
-        - @ symbol: Relative to zWorkspace in zSession (or cwd)
+        - @ symbol: Relative to zSpace in zSession (or cwd)
         - ~ symbol: Absolute path from root
-        - No symbol: Relative to zWorkspace (same as @)
+        - No symbol: Relative to zSpace (same as @)
         - Logs warnings if @ used without configured workspace
         - Skips first part (symbol) when building path
     
@@ -837,28 +837,28 @@ def resolve_symbol_path(
         logger.info(LOG_MSG_SYMBOL_AT)
 
         # Warn if workspace not configured
-        if not zSession.get(SESSION_KEY_ZWORKSPACE):
+        if not zSession.get(SESSION_KEY_ZSPACE):
             logger.warning(LOG_MSG_NO_WORKSPACE)
             logger.warning(LOG_MSG_NO_WORKSPACE_HELP)
-            logger.warning(LOG_MSG_NO_WORKSPACE_FALLBACK, zWorkspace)
+            logger.warning(LOG_MSG_NO_WORKSPACE_FALLBACK, zSpace)
 
         # Build path: skip first part (symbol), join rest
         rel_base_parts = zRelPath_parts[1:]
-        zVaFile_basepath = os.path.join(zWorkspace, *rel_base_parts)
-        logger.info(LOG_MSG_ZVAFILE_PATH, zVaFile_basepath)
+        zVaFolder_basepath = os.path.join(zSpace, *rel_base_parts)
+        logger.info(LOG_MSG_ZVAFOLDER_PATH, zVaFolder_basepath)
         
     elif symbol == SYMBOL_TILDE:
         logger.info(LOG_MSG_SYMBOL_TILDE)
         # Build path: skip first part (symbol), join rest from root
         rel_base_parts = zRelPath_parts[1:]
-        zVaFile_basepath = os.path.join(*rel_base_parts)
+        zVaFolder_basepath = os.path.join(*rel_base_parts)
         
     else:
         logger.info(LOG_MSG_SYMBOL_NONE)
         # Build path: join all parts relative to workspace
-        zVaFile_basepath = os.path.join(zWorkspace, *(zRelPath_parts or []))
+        zVaFolder_basepath = os.path.join(zSpace, *(zRelPath_parts or []))
 
-    return zVaFile_basepath
+    return zVaFolder_basepath
 
 
 def identify_zFile(

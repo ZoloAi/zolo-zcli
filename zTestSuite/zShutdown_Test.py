@@ -98,7 +98,7 @@ class TestSignalHandlerRegistration(unittest.TestCase):
         """Signal handlers should be registered during zCLI initialization"""
         # Create temporary workspace
         with tempfile.TemporaryDirectory() as tmpdir:
-            z = zCLI({"zWorkspace": tmpdir})
+            z = zCLI({"zSpace": tmpdir})
             
             # Check SIGINT handler is registered
             sigint_handler = signal.getsignal(signal.SIGINT)
@@ -115,7 +115,7 @@ class TestSignalHandlerRegistration(unittest.TestCase):
     def test_signal_handler_prevents_double_shutdown(self):
         """Signal handler should prevent multiple concurrent shutdowns"""
         with tempfile.TemporaryDirectory() as tmpdir:
-            z = zCLI({"zWorkspace": tmpdir})
+            z = zCLI({"zSpace": tmpdir})
             
             # Set shutdown in progress
             z._shutdown_in_progress = True
@@ -144,7 +144,7 @@ class TestBasicShutdown(unittest.TestCase):
     def test_shutdown_returns_status_dict(self):
         """shutdown() should return cleanup status dictionary"""
         with tempfile.TemporaryDirectory() as tmpdir:
-            z = zCLI({"zWorkspace": tmpdir})
+            z = zCLI({"zSpace": tmpdir})
             
             status = z.shutdown()
             
@@ -162,7 +162,7 @@ class TestBasicShutdown(unittest.TestCase):
     def test_shutdown_is_idempotent(self):
         """Multiple shutdown() calls should be safe"""
         with tempfile.TemporaryDirectory() as tmpdir:
-            z = zCLI({"zWorkspace": tmpdir})
+            z = zCLI({"zSpace": tmpdir})
             
             # First shutdown
             status1 = z.shutdown()
@@ -179,7 +179,7 @@ class TestBasicShutdown(unittest.TestCase):
     def test_shutdown_sets_flags_correctly(self):
         """shutdown() should set internal flags correctly"""
         with tempfile.TemporaryDirectory() as tmpdir:
-            z = zCLI({"zWorkspace": tmpdir})
+            z = zCLI({"zSpace": tmpdir})
             
             # Initial state
             self.assertFalse(z._shutdown_requested)
@@ -203,7 +203,7 @@ class TestWebSocketShutdown(unittest.IsolatedAsyncioTestCase):
             # Create zBifrost instance
             from zCLI.subsystems.zComm.zComm_modules.bifrost import zBifrost
             
-            z = zCLI({"zWorkspace": tmpdir})
+            z = zCLI({"zSpace": tmpdir})
             bifrost = zBifrost(z.logger, zcli=z, port=56899)
             
             # Mock client connections
@@ -240,7 +240,7 @@ class TestWebSocketShutdown(unittest.IsolatedAsyncioTestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             from zCLI.subsystems.zComm.zComm_modules.bifrost import zBifrost
             
-            z = zCLI({"zWorkspace": tmpdir})
+            z = zCLI({"zSpace": tmpdir})
             bifrost = zBifrost(z.logger, zcli=z, port=56899)
             
             # Mock client
@@ -273,7 +273,7 @@ class TestWebSocketShutdown(unittest.IsolatedAsyncioTestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             from zCLI.subsystems.zComm.zComm_modules.bifrost import zBifrost
             
-            z = zCLI({"zWorkspace": tmpdir})
+            z = zCLI({"zSpace": tmpdir})
             bifrost = zBifrost(z.logger, zcli=z, port=56899)
             
             # Mock client that raises error on close
@@ -303,7 +303,7 @@ class TestWebSocketShutdown(unittest.IsolatedAsyncioTestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             from zCLI.subsystems.zComm.zComm_modules.bifrost import zBifrost
             
-            z = zCLI({"zWorkspace": tmpdir})
+            z = zCLI({"zSpace": tmpdir})
             bifrost = zBifrost(z.logger, zcli=z, port=56899)
             
             # Mock server that never closes
@@ -339,7 +339,7 @@ class TestHTTPServerShutdown(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create zCLI with HTTP server enabled
             z = zCLI({
-                "zWorkspace": tmpdir,
+                "zSpace": tmpdir,
                 "http_server": {
                     "enabled": True,
                     "port": 8899,
@@ -362,7 +362,7 @@ class TestHTTPServerShutdown(unittest.TestCase):
     def test_http_server_shutdown_when_not_running(self):
         """Shutdown should handle non-running HTTP server gracefully"""
         with tempfile.TemporaryDirectory() as tmpdir:
-            z = zCLI({"zWorkspace": tmpdir})
+            z = zCLI({"zSpace": tmpdir})
             
             # No HTTP server initialized
             self.assertIsNone(z.server)
@@ -382,7 +382,7 @@ class TestDatabaseCleanup(unittest.TestCase):
     def test_database_cleanup_when_active(self):
         """Shutdown should close active database connections"""
         with tempfile.TemporaryDirectory() as tmpdir:
-            z = zCLI({"zWorkspace": tmpdir})
+            z = zCLI({"zSpace": tmpdir})
             
             # Mock active database handler
             z.data.handler = Mock()
@@ -398,7 +398,7 @@ class TestDatabaseCleanup(unittest.TestCase):
     def test_database_cleanup_when_no_handler(self):
         """Shutdown should handle missing database handler gracefully"""
         with tempfile.TemporaryDirectory() as tmpdir:
-            z = zCLI({"zWorkspace": tmpdir})
+            z = zCLI({"zSpace": tmpdir})
             
             # No handler initialized
             self.assertIsNone(z.data.handler)
@@ -418,7 +418,7 @@ class TestLoggerFlushing(unittest.TestCase):
     def test_logger_handlers_flushed(self):
         """Shutdown should flush all logger handlers"""
         with tempfile.TemporaryDirectory() as tmpdir:
-            z = zCLI({"zWorkspace": tmpdir})
+            z = zCLI({"zSpace": tmpdir})
             
             # Save original handlers
             original_handlers = z.logger.handlers.copy()
@@ -457,7 +457,7 @@ class TestShutdownErrorHandling(unittest.TestCase):
         """WebSocket shutdown error should not prevent HTTP server cleanup"""
         with tempfile.TemporaryDirectory() as tmpdir:
             z = zCLI({
-                "zWorkspace": tmpdir,
+                "zSpace": tmpdir,
                 "http_server": {
                     "enabled": True,
                     "port": 8898,
@@ -493,7 +493,7 @@ class TestShutdownErrorHandling(unittest.TestCase):
     def test_http_server_error_does_not_prevent_other_cleanup(self):
         """HTTP server error should not prevent logger cleanup"""
         with tempfile.TemporaryDirectory() as tmpdir:
-            z = zCLI({"zWorkspace": tmpdir})
+            z = zCLI({"zSpace": tmpdir})
             
             # Mock HTTP server with error
             z.server = Mock()

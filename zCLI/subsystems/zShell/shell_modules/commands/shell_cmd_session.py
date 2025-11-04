@@ -25,9 +25,9 @@ Session Structure:
         - zAuth: Three-tier authentication state
     
     Workspace Fields:
-        - zWorkspace: Current workspace path
-        - zVaFile_path: Active zVaFile path
-        - zVaFilename: Active zVaFile name
+        - zSpace: Current workspace path
+        - zVaFolder: Folder containing active zVaFile
+        - zVaFile: Active zVaFile name
         - zBlock: Current zBlock
     
     Navigation:
@@ -70,7 +70,7 @@ Usage Examples:
     
     # Get specific key
     session get zMode
-    session get zWorkspace
+    session get zSpace
     
     # Set session value
     session set debug_mode true
@@ -145,9 +145,9 @@ from zCLI import Any, Dict, List
 # Some constants appear unused but are referenced in comments and protection sets
 from zCLI.subsystems.zConfig.zConfig_modules.config_session import (  # noqa: F401
     SESSION_KEY_ZS_ID,
-    SESSION_KEY_ZWORKSPACE,
-    SESSION_KEY_ZVAFILE_PATH,
-    SESSION_KEY_ZVAFILENAME,
+    SESSION_KEY_ZSPACE,
+    SESSION_KEY_ZVAFOLDER,
+    SESSION_KEY_ZVAFILE,
     SESSION_KEY_ZBLOCK,
     SESSION_KEY_ZMODE,
     SESSION_KEY_ZLOGGER,
@@ -211,7 +211,6 @@ PROTECTED_KEYS: set = {
 # Framework-managed keys: Require dedicated commands/subsystems (not raw session set)
 FRAMEWORK_KEYS: set = {
     SESSION_KEY_ZAUTH,              # Auth state (use zAuth commands - future)
-    SESSION_KEY_ZBLOCK,             # Current block (managed by zWalker)
     SESSION_KEY_ZCRUMBS,            # Navigation breadcrumbs (managed by zNavigation)
     SESSION_KEY_ZCACHE,             # Cache state (managed by zLoader)
     SESSION_KEY_WIZARD_MODE,        # Wizard mode state (managed by zWizard)
@@ -219,7 +218,7 @@ FRAMEWORK_KEYS: set = {
 }
 
 # User-configurable keys: Can be set via session set (paths auto-resolved)
-# Note: zVaFile_path and zVaFilename are user-settable in shell for testing/navigation
+# Note: zVaFolder and zVaFile are user-settable in shell for testing/navigation
 # (zWalker will override as needed when active)
 
 # User-configurable keys (allowed via session set):
@@ -227,7 +226,7 @@ FRAMEWORK_KEYS: set = {
 # Any key NOT in PROTECTED_KEYS or FRAMEWORK_KEYS is allowed.
 USER_CONFIGURABLE_KEYS_EXAMPLES: set = {
     SESSION_KEY_ZMODE,              # Execution mode (terminal/bifrost)
-    SESSION_KEY_ZWORKSPACE,         # Workspace root ("home base" can be changed)
+    SESSION_KEY_ZSPACE,         # Workspace root ("home base" can be changed)
     SESSION_KEY_ZLOGGER,            # Logger level
     SESSION_KEY_ZTRACEBACK,         # Traceback mode on/off
     # Plus any custom user-defined keys (anything not in PROTECTED_KEYS or FRAMEWORK_KEYS)
@@ -312,7 +311,7 @@ def _show_session_info(zcli: Any) -> None:
     - zSession ID, zMode
     - zMachine (OS, Python, CPU, memory)
     - zAuth (three-tier authentication aware)
-    - zWorkspace, zVaFile_path, zVaFilename, zBlock
+    - zSpace, zVaFolder, zVaFile, zBlock
     
     Args:
         zcli: zCLI instance with session and display
@@ -354,8 +353,8 @@ def _get_session_key(zcli: Any, args: List[str]) -> None:
         >>> _get_session_key(zcli, ["zMode"])
         # Displays: zMode: Terminal
         
-        >>> _get_session_key(zcli, ["zWorkspace"])
-        # Displays: zWorkspace: /Users/user/Projects/zolo-zcli
+        >>> _get_session_key(zcli, ["zSpace"])
+        # Displays: zSpace: /Users/user/Projects/zolo-zcli
         
         >>> _get_session_key(zcli, ["nonexistent"])
         # Displays error: Session key 'nonexistent' not found
@@ -403,7 +402,7 @@ def _resolve_path_value(zcli: Any, value: str) -> str:
         str: Resolved absolute path or original value
     
     Supported Formats:
-        @.path.to.dir     → Workspace-relative (from session zWorkspace)
+        @.path.to.dir     → Workspace-relative (from session zSpace)
         ~.path.to.dir     → Home-relative
         ~zMachine.subpath → User data directory paths
         zMachine.subpath  → User data directory paths
@@ -426,7 +425,7 @@ def _resolve_path_value(zcli: Any, value: str) -> str:
     """
     # Workspace-relative (@.)
     if value.startswith("@."):
-        workspace_root = Path(zcli.session.get(SESSION_KEY_ZWORKSPACE, "."))
+        workspace_root = Path(zcli.session.get(SESSION_KEY_ZSPACE, "."))
         path_parts = value[2:].split(".")
         resolved = workspace_root / "/".join(path_parts)
         return str(resolved.resolve())
@@ -471,10 +470,10 @@ def _set_session_key(zcli: Any, args: List[str]) -> None:
     Updates a session dictionary key with the provided value. Logs the change
     and displays success confirmation via zDisplay.
     
-    Special handling for zWorkspace: 
+    Special handling for zSpace: 
     - Preserves zPath notation (@., ~., ~zMachine) for dynamic parser resolution
     - Only resolves plain paths (non-zPath) to absolute paths
-    - This maintains semantic meaning (e.g., @.zUIs stays relative to zWorkspace)
+    - This maintains semantic meaning (e.g., @.zUIs stays relative to zSpace)
     
     Args:
         zcli: zCLI instance with session, display, logger
@@ -508,7 +507,6 @@ def _set_session_key(zcli: Any, args: List[str]) -> None:
     
     Framework-Managed Keys (Cannot be set):
         - SESSION_KEY_ZAUTH: Use zAuth commands (future)
-        - SESSION_KEY_ZBLOCK: Managed by zWalker
         - SESSION_KEY_ZCRUMBS: Managed by zNavigation
         - SESSION_KEY_ZCACHE: Managed by zLoader
         - SESSION_KEY_WIZARD_MODE: Managed by zWizard
@@ -516,9 +514,10 @@ def _set_session_key(zcli: Any, args: List[str]) -> None:
     
     User-Configurable Keys (Allowed):
         - SESSION_KEY_ZMODE: Execution mode (terminal/bifrost)
-        - SESSION_KEY_ZWORKSPACE: Workspace root (auto-resolves zPaths)
-        - SESSION_KEY_ZVAFILE_PATH: Current VaFile path (auto-resolves zPaths)
-        - SESSION_KEY_ZVAFILENAME: Current VaFile name
+        - SESSION_KEY_ZSPACE: Workspace root (auto-resolves zPaths)
+        - SESSION_KEY_ZVAFOLDER: Folder containing VaFile (preserves zPaths)
+        - SESSION_KEY_ZVAFILE: Current VaFile name
+        - SESSION_KEY_ZBLOCK: Current block (can be set for walker/navigation)
         - SESSION_KEY_ZLOGGER: Logger level
         - SESSION_KEY_ZTRACEBACK: Traceback mode on/off
         - Custom keys: Any user-defined key not in above sets
@@ -561,9 +560,9 @@ def _set_session_key(zcli: Any, args: List[str]) -> None:
         zcli.display.info(f"Framework-managed keys: {', '.join(sorted(FRAMEWORK_KEYS))}")
         return
     
-    # Special handling for zWorkspace: resolve zPath notation ONLY if not already zPath
+    # Special handling for zSpace: resolve zPath notation ONLY if not already zPath
     # (Preserve @., ~., ~zMachine notation for dynamic resolution by parser)
-    if key == SESSION_KEY_ZWORKSPACE:
+    if key == SESSION_KEY_ZSPACE:
         # Only resolve if it's NOT a zPath - preserve zPath notation for dynamic resolution
         if not any(value.startswith(prefix) for prefix in ["@.", "~.", "~zMachine", "zMachine"]):
             resolved_value = _resolve_path_value(zcli, value)
@@ -582,7 +581,7 @@ def _set_session_key(zcli: Any, args: List[str]) -> None:
             zcli.logger.info(MSG_SESSION_UPDATED.format(key=key, value=value))
             zcli.display.success(MSG_SESSION_KEY_SET.format(key=key, value=value))
     else:
-        # All other keys: store as-is (including zVaFile_path with zPath notation)
+        # All other keys: store as-is (including zVaFolder with zPath notation)
         zcli.session[key] = value
         
         # Log the change
@@ -616,8 +615,8 @@ def _display_key_value(zcli: Any, key: str, value: Any) -> None:
         >>> _display_key_value(zcli, "zMode", "Terminal")
         # Displays: zMode: Terminal
         
-        >>> _display_key_value(zcli, "zWorkspace", "/Users/user/Projects/zolo-zcli")
-        # Displays: zWorkspace: /Users/user/Projects/zolo-zcli
+        >>> _display_key_value(zcli, "zSpace", "/Users/user/Projects/zolo-zcli")
+        # Displays: zSpace: /Users/user/Projects/zolo-zcli
     
     Notes:
         - DRY helper to eliminate duplicate formatting logic

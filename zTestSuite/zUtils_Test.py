@@ -45,7 +45,7 @@ class TestzUtilsPluginLoading(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         # Set workspace to package root so plugin auto-discovery works from any directory
-        self.zcli = zCLI({"zWorkspace": str(get_package_root())})
+        self.zcli = zCLI({"zSpace": str(get_package_root())})
 
     def test_utils_initialization(self):
         """Test that zUtils initializes correctly."""
@@ -120,7 +120,7 @@ class TestzUtilsPluginInvocation(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         # Create zCLI instance with test plugin loaded and workspace set to package root
-        self.zcli = zCLI({"plugins": [TEST_PLUGIN_PATH], "zWorkspace": str(get_package_root())})
+        self.zcli = zCLI({"plugins": [TEST_PLUGIN_PATH], "zSpace": str(get_package_root())})
 
     def test_is_plugin_invocation(self):
         """Test plugin invocation detection."""
@@ -200,7 +200,7 @@ class TestzUtilsPluginArgumentParsing(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures."""
-        self.zcli = zCLI({"plugins": [TEST_PLUGIN_PATH], "zWorkspace": str(get_package_root())})
+        self.zcli = zCLI({"plugins": [TEST_PLUGIN_PATH], "zSpace": str(get_package_root())})
 
     def test_string_arguments(self):
         """Test parsing string arguments."""
@@ -237,7 +237,7 @@ class TestzUtilsSessionInjection(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures."""
-        self.zcli = zCLI({"zWorkspace": str(get_package_root())})
+        self.zcli = zCLI({"zSpace": str(get_package_root())})
 
     def test_preloaded_plugin_has_zcli(self):
         """Test that pre-loaded plugins have zcli injected."""
@@ -271,7 +271,7 @@ class TestzUtilsSessionInjection(unittest.TestCase):
         result = self.zcli.zparser.resolve_plugin_invocation("&session_aware_plugin.get_workspace()")
         
         # Should return the workspace path
-        self.assertEqual(result, self.zcli.session["zWorkspace"])
+        self.assertEqual(result, self.zcli.session["zSpace"])
 
     def test_session_aware_plugin_logger(self):
         """Test that plugin can access logger."""
@@ -294,7 +294,7 @@ class TestzUtilsPluginzPathInvocation(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         # No pre-loaded plugins - testing auto-discovery and caching
-        self.zcli = zCLI({"zWorkspace": str(get_package_root())})
+        self.zcli = zCLI({"zSpace": str(get_package_root())})
 
     def test_unified_syntax_auto_discovery(self):
         """Test unified &PluginName.function() syntax with auto-discovery."""
@@ -376,7 +376,7 @@ class TestzUtilsIntegration(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures."""
-        self.zcli = zCLI({"plugins": [TEST_PLUGIN_PATH], "zWorkspace": str(get_package_root())})
+        self.zcli = zCLI({"plugins": [TEST_PLUGIN_PATH], "zSpace": str(get_package_root())})
 
     def test_utils_before_zdata(self):
         """Test that zUtils initializes before zData."""

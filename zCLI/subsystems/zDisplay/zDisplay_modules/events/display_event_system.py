@@ -45,9 +45,9 @@ Core Session Fields (Imported from zConfig):
     SESSION_KEY_ZMODE           - "zMode" - UI mode (Terminal, Walker, Bifrost)
     SESSION_KEY_ZMACHINE        - "zMachine" - Machine configuration dict
     SESSION_KEY_ZAUTH           - "zAuth" - Authentication state dict
-    SESSION_KEY_ZWORKSPACE      - "zWorkspace" - Current workspace path
-    SESSION_KEY_ZVAFILE_PATH    - "zVaFile_path" - Path to zVaFile
-    SESSION_KEY_ZVAFILENAME     - "zVaFilename" - zVaFile filename
+    SESSION_KEY_ZSPACE      - "zSpace" - Current workspace path
+    SESSION_KEY_ZVAFOLDER       - "zVaFolder" - Folder containing zVaFile
+    SESSION_KEY_ZVAFILE     - "zVaFile" - zVaFile filename
     SESSION_KEY_ZBLOCK          - "zBlock" - Current block/scope
     SESSION_KEY_ZCRUMBS         - "zCrumbs" - Breadcrumb navigation dict
     SESSION_KEY_ZCACHE          - "zCache" - Session-level cache
@@ -294,8 +294,8 @@ USAGE EXAMPLES
     #   Username: admin
     #   Role: admin
     # 
-    # zWorkspace: /Users/dev/project
-    # zVaFile_path: /Users/dev/project/app.yaml
+    # zSpace: /Users/dev/project
+    # zVaFolder: /Users/dev/project/app.yaml
     # Press Enter to continue...
     ```
 
@@ -355,9 +355,9 @@ from zCLI.subsystems.zConfig.zConfig_modules.config_session import (
     SESSION_KEY_ZMODE,              # "zMode"
     SESSION_KEY_ZMACHINE,           # "zMachine"
     SESSION_KEY_ZAUTH,              # "zAuth"
-    SESSION_KEY_ZWORKSPACE,         # "zWorkspace"
-    SESSION_KEY_ZVAFILE_PATH,       # "zVaFile_path"
-    SESSION_KEY_ZVAFILENAME,        # "zVaFilename"
+    SESSION_KEY_ZSPACE,         # "zSpace"
+    SESSION_KEY_ZVAFOLDER,          # "zVaFolder"
+    SESSION_KEY_ZVAFILE,        # "zVaFile"
     SESSION_KEY_ZBLOCK,             # "zBlock"
     SESSION_KEY_ZCRUMBS,            # "zCrumbs"
     SESSION_KEY_ZCACHE,             # "zCache" - NOW USED for cache display
@@ -487,9 +487,9 @@ ZMACHINE_SYSTEM_FIELDS = [
 
 # Session Field Lists (for iteration)
 SESSION_WORKSPACE_FIELDS = [
-    SESSION_KEY_ZWORKSPACE,
-    SESSION_KEY_ZVAFILE_PATH,
-    SESSION_KEY_ZVAFILENAME,
+    SESSION_KEY_ZSPACE,
+    SESSION_KEY_ZVAFOLDER,
+    SESSION_KEY_ZVAFILE,
     SESSION_KEY_ZBLOCK
 ]
 
@@ -529,7 +529,7 @@ class zSystem:
     
     Session Integration (17 SESSION_KEY_* constants):
         Uses standardized constants from zConfig for safe, refactor-proof access
-        to zSession dict (zS_id, zMode, zMachine, zAuth, zWorkspace, etc.)
+        to zSession dict (zS_id, zMode, zMachine, zAuth, zSpace, etc.)
     
     zAuth Integration (13 ZAUTH_KEY_* constants + three-tier model):
         Displays authentication state with full awareness of:
@@ -792,13 +792,17 @@ class zSystem:
             # Try zMachine path first (user data directory)
             try:
                 zmachine = session_data.get(SESSION_KEY_ZMACHINE, {})
-                user_data_dir = Path(zmachine.get("user_data_dir", "")).resolve()
+                user_data_dir_str = zmachine.get("user_data_dir", "")
                 
-                if user_data_dir and abs_path_obj == user_data_dir:
-                    return "~zMachine"
-                elif user_data_dir and abs_path_obj.is_relative_to(user_data_dir):
-                    rel_path = abs_path_obj.relative_to(user_data_dir)
-                    return f"~zMachine.{str(rel_path).replace('/', '.')}"
+                # Only process if user_data_dir is actually set (avoid Path("").resolve() bug!)
+                if user_data_dir_str:
+                    user_data_dir = Path(user_data_dir_str).resolve()
+                    
+                    if abs_path_obj == user_data_dir:
+                        return "~zMachine"
+                    elif abs_path_obj.is_relative_to(user_data_dir):
+                        rel_path = abs_path_obj.relative_to(user_data_dir)
+                        return f"~zMachine.{str(rel_path).replace('/', '.')}"
             except (ValueError, AttributeError):
                 pass
             
@@ -829,7 +833,7 @@ class zSystem:
         - zSession ID, zMode
         - zMachine (machine configuration)
         - zAuth (authentication state - three-tier aware)
-        - zWorkspace, zVaFile_path, zVaFilename, zBlock
+        - zSpace, zVaFolder, zVaFile, zBlock
         - zCache (4-tier caching system with item counts)
         
         Args:
@@ -850,7 +854,7 @@ class zSystem:
               1. Header: "View zSession"
               2. Core fields: zSession_ID, zMode
               3. zMachine section (if present)
-              4. Workspace fields (zWorkspace, zVaFile_path, zVaFilename, zBlock)
+              4. Workspace fields (zSpace, zVaFolder, zVaFile, zBlock)
               5. zAuth section (if present) - three-tier aware
               6. zCache section (4-tier caching with item counts)
               7. Optional break prompt
@@ -903,11 +907,11 @@ class zSystem:
         self._output_text("", break_after=False)
         for field_key in SESSION_WORKSPACE_FIELDS:
             value = session_data.get(field_key)
-            # Extract field name from constant (e.g., SESSION_KEY_ZWORKSPACE → "zWorkspace")
+            # Extract field name from constant (e.g., SESSION_KEY_ZSPACE → "zSpace")
             field_name = field_key  # Constants match the actual field names
             
             # Convert path fields to zPath notation for user-friendly display
-            if field_key in (SESSION_KEY_ZWORKSPACE, SESSION_KEY_ZVAFILE_PATH) and value:
+            if field_key in (SESSION_KEY_ZSPACE, SESSION_KEY_ZVAFOLDER) and value:
                 value = self._format_path_as_zpath(value, session_data)
             
             # Display all fields, including None (user wants to see what's not set)
