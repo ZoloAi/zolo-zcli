@@ -105,18 +105,18 @@ class zCLI:
         # ─────────────────────────────────────────────────────────────
         # Layer 2: Core Abstraction
         # ─────────────────────────────────────────────────────────────
-        # Initialize shell and command executor (needed by zWizard)
+        # Initialize utility subsystem (provides plugin system for other subsystems)
+        from .subsystems.zUtils import zUtils
+        self.utils = zUtils(self)    # Plugin system - available to all Layer 2+ subsystems
+        self._load_plugins()         # Load plugins immediately after plugin system is ready
+
+        # Initialize shell and command executor (needs zUtils for 'utils' command)
         from .subsystems.zShell import zShell
         self.shell = zShell(self)
 
         # Initialize wizard subsystem (depends on shell for wizard step execution)
         from .subsystems.zWizard import zWizard
         self.wizard = zWizard(self)
-
-        # Initialize utility subsystem
-        from .subsystems.zUtils import zUtils
-        self.utils = zUtils(self)    # Plugin system first - available to all Layer 2+ subsystems
-        self._load_plugins()         # Load plugins immediately after plugin system is ready
 
         # Initialize data subsystem
         from .subsystems.zData import zData

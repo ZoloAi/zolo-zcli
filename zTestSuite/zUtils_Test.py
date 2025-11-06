@@ -58,8 +58,9 @@ class TestzUtilsPluginLoading(unittest.TestCase):
         """Test loading a single plugin."""
         plugins = self.zcli.utils.load_plugins([TEST_PLUGIN_PATH])
         
+        # Phase 2: Plugins now keyed by module name, not path
         self.assertEqual(len(plugins), 1)
-        self.assertIn(TEST_PLUGIN_PATH, plugins)
+        self.assertIn("test_plugin", plugins)
 
     def test_load_multiple_plugins(self):
         """Test loading multiple plugins."""
@@ -244,8 +245,8 @@ class TestzUtilsSessionInjection(unittest.TestCase):
         # Load plugin
         self.zcli.utils.load_plugins([TEST_PLUGIN_PATH])
         
-        # Get the module from plugins dict
-        plugin_module = self.zcli.utils.plugins[TEST_PLUGIN_PATH]
+        # Phase 2: Get the module from plugins dict by module name
+        plugin_module = self.zcli.utils.plugins["test_plugin"]
         
         # Check that zcli is injected
         self.assertTrue(hasattr(plugin_module, 'zcli'))
@@ -384,8 +385,8 @@ class TestzUtilsIntegration(unittest.TestCase):
         self.assertIsNotNone(self.zcli.utils)
         self.assertIsNotNone(self.zcli.data)
         
-        # Verify plugin is loaded and accessible
-        self.assertIn(TEST_PLUGIN_PATH, self.zcli.utils.plugins)
+        # Phase 2: Verify plugin is loaded and accessible by module name
+        self.assertIn("test_plugin", self.zcli.utils.plugins)
 
     def test_plugin_access_from_parser(self):
         """Test that zParser can access plugins through zCLI."""
