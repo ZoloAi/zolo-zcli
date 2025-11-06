@@ -274,6 +274,125 @@ def get_browser_launch_command(browser_name: str) -> tuple:
     return (None, [])
 
 
+def get_ide_launch_command(ide_name: str) -> tuple:
+    """
+    Get platform-specific command to launch an IDE or text editor.
+    
+    Args:
+        ide_name: IDE/editor name (e.g., "Cursor", "code", "cursor", "subl")
+                 Case-insensitive, normalized internally
+    
+    Returns:
+        Tuple of (command, args_template) where:
+        - macOS GUI IDEs: ("open", ["-a", "Cursor"]) - use 'open -a "App Name"'
+        - macOS CLI tools: ("cursor", []) - direct executable
+        - Linux: ("cursor", []) - direct executable
+        - Windows: ("cursor", []) - direct executable  
+        - Unknown: (None, []) - IDE not mapped
+    
+    Examples:
+        >>> get_ide_launch_command("cursor")
+        # macOS: ("open", ["-a", "Cursor"])
+        # Linux: ("cursor", []) if in PATH
+        
+        >>> get_ide_launch_command("code")
+        # macOS: ("code", []) - VS Code CLI usually in PATH
+        # Linux: ("code", [])
+    """
+    system = platform.system()
+    ide_lower = ide_name.lower()
+    
+    # macOS: GUI apps need 'open -a', CLI tools use direct command
+    if system == "Darwin":
+        # macOS GUI app mappings (need 'open -a')
+        macos_gui_apps = {
+            "cursor": "Cursor",
+            "subl": "Sublime Text",
+            "sublime": "Sublime Text",
+            "atom": "Atom",
+            "webstorm": "WebStorm",
+            "pycharm": "PyCharm",
+            "idea": "IntelliJ IDEA",
+            "fleet": "Fleet",
+            "zed": "Zed",
+        }
+        
+        # Check if it's a GUI app
+        app_name = macos_gui_apps.get(ide_lower)
+        if app_name:
+            return ("open", ["-a", app_name])
+        
+        # CLI tools that should work directly on macOS (usually in PATH)
+        macos_cli_tools = {
+            "code": "code",        # VS Code CLI
+            "nano": "nano",
+            "vim": "vim",
+            "nvim": "nvim",
+            "vi": "vi",
+            "emacs": "emacs",
+            "xed": "xed",         # Xcode editor
+        }
+        
+        cmd = macos_cli_tools.get(ide_lower)
+        if cmd and shutil.which(cmd):
+            return (cmd, [])
+        
+        return (None, [])
+    
+    # Linux: Direct executable names
+    elif system == "Linux":
+        linux_commands = {
+            "cursor": "cursor",
+            "code": "code",
+            "subl": "subl",
+            "sublime": "subl",
+            "atom": "atom",
+            "webstorm": "webstorm",
+            "pycharm": "pycharm",
+            "idea": "idea",
+            "fleet": "fleet",
+            "zed": "zed",
+            "nano": "nano",
+            "vim": "vim",
+            "nvim": "nvim",
+            "vi": "vi",
+            "emacs": "emacs",
+        }
+        
+        cmd = linux_commands.get(ide_lower)
+        if cmd and shutil.which(cmd):
+            return (cmd, [])
+        
+        return (None, [])
+    
+    # Windows: Direct executable names
+    elif system == "Windows":
+        windows_commands = {
+            "cursor": "cursor",
+            "code": "code",
+            "subl": "subl",
+            "sublime": "subl",
+            "atom": "atom",
+            "webstorm": "webstorm",
+            "pycharm": "pycharm",
+            "idea": "idea",
+            "fleet": "fleet",
+            "zed": "zed",
+            "nano": "nano",
+            "vim": "vim",
+            "nvim": "nvim",
+            "notepad": "notepad",
+        }
+        
+        cmd = windows_commands.get(ide_lower)
+        if cmd and shutil.which(cmd):
+            return (cmd, [])
+        
+        return (None, [])
+    
+    return (None, [])
+
+
 def detect_ide() -> str:
     """Detect IDE/editor via env vars, PATH search (modern→classic→simple), fallback to nano."""
     # Check IDE/editor env vars

@@ -30,6 +30,7 @@ from .machine_detectors import (
     create_user_machine_config,
     auto_detect_machine,
     get_browser_launch_command,
+    get_ide_launch_command,
 )
 from .environment_helpers import (
     create_default_env_config,
@@ -47,6 +48,7 @@ __all__ = [
     "create_user_machine_config",
     "auto_detect_machine",
     "get_browser_launch_command",
+    "get_ide_launch_command",
     "create_default_env_config",
     "ensure_user_directories",
     "initialize_system_ui",

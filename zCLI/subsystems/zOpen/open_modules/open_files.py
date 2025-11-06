@@ -71,6 +71,9 @@ from zCLI.subsystems.zConfig.zConfig_modules.config_session import (
     SESSION_KEY_IDE,
 )
 
+# Import platform-specific IDE launch command helper from zConfig
+from zCLI.subsystems.zConfig.zConfig_modules.helpers import get_ide_launch_command
+
 # ═══════════════════════════════════════════════════════════════
 # Module-Level Constants
 # ═══════════════════════════════════════════════════════════════
@@ -501,17 +504,28 @@ def _open_text(
         except Exception as e:
             logger.warning(LOG_IDE_SELECTION_FAILED, e)
 
-    # Try to open with IDE
+    # Try to open with IDE using platform-specific launch command
     try:
-        if os.name == OS_WINDOWS:  # Windows
+        # Get platform-specific IDE launch command from zConfig
+        cmd, args = get_ide_launch_command(editor)
+        
+        if cmd:
+            # Build full command: cmd + args + [path]
+            full_cmd = [cmd] + args + [path]
+            subprocess.run(full_cmd, check=False, timeout=10)
+            logger.info(LOG_SUCCESS_IDE, editor)
+        elif os.name == OS_WINDOWS:
+            # Windows fallback: try os.startfile for unknown IDEs
             try:
                 os.startfile(path)  # type: ignore
+                logger.info(LOG_SUCCESS_IDE, "startfile")
             except AttributeError:
-                subprocess.run([editor, path], check=False)
-        else:  # Unix/Linux/macOS
-            subprocess.run([editor, path], check=False)
-
-        logger.info(LOG_SUCCESS_IDE, editor)
+                subprocess.run([editor, path], check=False, timeout=10)
+                logger.info(LOG_SUCCESS_IDE, editor)
+        else:
+            # Unix/macOS fallback: try direct command for unknown IDEs
+            subprocess.run([editor, path], check=False, timeout=10)
+            logger.info(LOG_SUCCESS_IDE, editor)
         display.zDeclare(
             MSG_OPENED_IDE.format(filename=os.path.basename(path), ide=editor),
             color=COLOR_SUCCESS,
