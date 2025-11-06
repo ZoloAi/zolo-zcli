@@ -373,17 +373,11 @@ def execute_help(zcli: Any, parsed: Dict[str, Any]) -> None:
         zcli.display.info(MSG_USE_HELP_LIST)
         return
     
-    # Validate session contains zSpark
-    if SESSION_KEY_ZSPARK not in zcli.session:
-        zcli.logger.error("SESSION_KEY_ZSPARK not found in session")
-        zcli.display.error("Session configuration error - cannot launch help menu")
-        return
-    
     try:
-        # Set zSpark configuration for walker (session modernization)
-        zspark = zcli.session[SESSION_KEY_ZSPARK]
-        zspark["zVaFile"] = HELP_VAFILE_PATH
-        zspark["zBlock"] = HELP_BLOCK_NAME
+        # Set zSpark configuration for walker
+        # Use zcli.zspark_obj directly (always exists, not None)
+        zcli.zspark_obj["zVaFile"] = HELP_VAFILE_PATH
+        zcli.zspark_obj["zBlock"] = HELP_BLOCK_NAME
         
         # Launch walker (preserves current zMode: Terminal or zBifrost)
         zcli.walker.run()

@@ -4,7 +4,7 @@
 
 from .commands import (
     execute_data, execute_func, execute_session, execute_walker,
-    execute_open, execute_test, execute_auth, execute_load,
+    execute_open, execute_auth, execute_load,
     execute_export, execute_utils, execute_config, execute_comm,
     execute_wizard_step, execute_plugin,
     execute_ls, execute_cd, execute_pwd, execute_shortcut, execute_where, execute_help
@@ -218,7 +218,6 @@ class CommandExecutor:
             "session": execute_session,
             "walker": execute_walker,
             "open": execute_open,
-            "test": execute_test,
             "auth": execute_auth,
             "export": execute_export,
             "config": execute_config,

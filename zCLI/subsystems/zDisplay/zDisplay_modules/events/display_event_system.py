@@ -33,7 +33,7 @@ Example:
 
 
 ═══════════════════════════════════════════════════════════════════════════
-ZSESSION INTEGRATION (17 Core Session Keys)
+ZSESSION INTEGRATION (19 Core Session Keys)
 ═══════════════════════════════════════════════════════════════════════════
 
 zSession is the central state dictionary that persists throughout a zCLI session.
@@ -58,6 +58,8 @@ Core Session Fields (Imported from zConfig):
     SESSION_KEY_ZLOGGER         - "zLogger" - Logger configuration
     SESSION_KEY_ZTRACEBACK      - "zTraceback" - Traceback configuration
     SESSION_KEY_LOGGER_INSTANCE - "logger_instance" - Logger instance
+    SESSION_KEY_ZVARS           - "zVars" - User-defined variables
+    SESSION_KEY_ZSHORTCUTS      - "zShortcuts" - File shortcuts
 
 Usage Example:
     # ❌ OLD (Legacy, error-prone):
@@ -371,7 +373,9 @@ from zCLI.subsystems.zConfig.zConfig_modules.config_session import (
     SESSION_KEY_SYSTEM_ENV,         # "system_env" - documented for future use  # noqa: F401
     SESSION_KEY_ZLOGGER,            # "zLogger" - documented for future use  # noqa: F401
     SESSION_KEY_ZTRACEBACK,         # "zTraceback" - documented for future use  # noqa: F401
-    SESSION_KEY_LOGGER_INSTANCE     # "logger_instance" - documented for future use  # noqa: F401
+    SESSION_KEY_LOGGER_INSTANCE,    # "logger_instance" - documented for future use  # noqa: F401
+    SESSION_KEY_ZVARS,              # "zVars" - User-defined variables
+    SESSION_KEY_ZSHORTCUTS          # "zShortcuts" - File shortcuts
 )
 
 # Import ZAUTH_KEY_* constants from zConfig (13 constants)
@@ -836,6 +840,7 @@ class zSystem:
         - zAuth (authentication state - three-tier aware)
         - zSpace, zVaFolder, zVaFile, zBlock
         - zCache (4-tier caching system with item counts)
+        - zVars & zShortcuts (unified aliasing system)
         
         Args:
             session_data: zCLI session dictionary (zcli.session)
@@ -858,7 +863,8 @@ class zSystem:
               4. Workspace fields (zSpace, zVaFolder, zVaFile, zBlock)
               5. zAuth section (if present) - three-tier aware
               6. zCache section (4-tier caching with item counts)
-              7. Optional break prompt
+              7. zVars & Shortcuts section (if present)
+              8. Optional break prompt
         
         Usage:
             # Display full session
@@ -927,6 +933,12 @@ class zSystem:
         zCache = session_data.get(SESSION_KEY_ZCACHE, {})
         if zCache:
             self._display_zcache(zCache)
+
+        # zVars and zShortcuts section (unified aliasing system)
+        zvars = session_data.get(SESSION_KEY_ZVARS, {})
+        zshortcuts = session_data.get(SESSION_KEY_ZSHORTCUTS, {})
+        if zvars or zshortcuts:
+            self._display_zshortcuts(zvars, zshortcuts)
 
         # Optional break at the end
         if break_after:
@@ -1631,6 +1643,61 @@ class zSystem:
             label = FORMAT_FIELD_LABEL_INDENT.format(field=cache_label)
             value = f"{item_count} items" if item_count != 1 else "1 item"
             self._display_field(label, value, color=COLOR_RESET)
+
+    def _display_zshortcuts(
+        self,
+        zvars: Dict[str, Any],
+        zshortcuts: Dict[str, Any]
+    ) -> None:
+        """
+        Display zVars and file shortcuts section (Terminal).
+        
+        Displays user-defined variables (zVars) and file shortcuts from the unified
+        aliasing system. Shows empty state if no variables or shortcuts are defined.
+        
+        Args:
+            zvars: zVars dictionary from session[SESSION_KEY_ZVARS]
+            zshortcuts: zShortcuts dictionary from session[SESSION_KEY_ZSHORTCUTS]
+        
+        Returns:
+            None
+        
+        Display Format:
+            zVars & Shortcuts:
+              zVars: 3 defined
+              zShortcuts: 2 defined
+        
+        Or if empty:
+            zVars & Shortcuts:
+              zVars: none
+              zShortcuts: none
+        
+        Notes:
+            - Uses SESSION_KEY_ZVARS and SESSION_KEY_ZSHORTCUTS constants
+            - Shows count for each type
+            - Empty dicts show "none"
+        """
+        if not self.BasicOutputs:
+            return
+
+        # Skip section entirely if both are empty
+        if not zvars and not zshortcuts:
+            return
+
+        self._output_text("", break_after=False)
+        self._display_section("zVars & Shortcuts", color=COLOR_CYAN)
+
+        # Display zVars count
+        zvars_count = len(zvars) if isinstance(zvars, dict) else 0
+        zvars_label = FORMAT_FIELD_LABEL_INDENT.format(field="zVars")
+        zvars_value = f"{zvars_count} defined" if zvars_count > 0 else "none"
+        self._display_field(zvars_label, zvars_value, color=COLOR_RESET)
+
+        # Display zShortcuts count
+        shortcuts_count = len(zshortcuts) if isinstance(zshortcuts, dict) else 0
+        shortcuts_label = FORMAT_FIELD_LABEL_INDENT.format(field="zShortcuts")
+        shortcuts_value = f"{shortcuts_count} defined" if shortcuts_count > 0 else "none"
+        self._display_field(shortcuts_label, shortcuts_value, color=COLOR_RESET)
 
 
     # ═══════════════════════════════════════════════════════════════════════

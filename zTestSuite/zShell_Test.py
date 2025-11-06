@@ -505,18 +505,18 @@ class TestNewCommands(unittest.TestCase):
         self.assertEqual(result["count"], 1)
     
     def test_shortcut_command_create(self):
-        """Test shortcut command creates new shortcut."""
-        from zCLI.subsystems.zShell.shell_modules.commands.shell_cmd_shortcut import (
-            execute_shortcut, SESSION_KEY_SHORTCUTS
-        )
+        """Test shortcut command creates new zVar."""
+        from zCLI.subsystems.zConfig.zConfig_modules.config_session import SESSION_KEY_ZVARS
+        from zCLI.subsystems.zShell.shell_modules.commands.shell_cmd_shortcut import execute_shortcut
         
-        parsed = {"action": "create", "args": ["ll=\"ls --long\""], "options": {}}
+        parsed = {"action": "create", "args": ["myvar=\"test value\""], "options": {}}
         
         result = execute_shortcut(self.mock_zcli, parsed)
         
         self.assertEqual(result["status"], "created")
-        self.assertEqual(result["name"], "ll")
-        self.assertEqual(self.mock_zcli.session[SESSION_KEY_SHORTCUTS]["ll"], "ls --long")
+        self.assertEqual(result["name"], "myvar")
+        self.assertEqual(result["type"], "zvar")
+        self.assertEqual(self.mock_zcli.session[SESSION_KEY_ZVARS]["myvar"], "test value")
     
     def test_shortcut_command_remove(self):
         """Test shortcut command removes shortcut."""

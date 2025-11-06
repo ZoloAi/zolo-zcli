@@ -1,22 +1,26 @@
 # zCLI/subsystems/zShell/shell_modules/commands/shell_cmd_shortcut.py
 
 """
-Shell Command Shortcut Management System.
+Shell Command Shortcut Management System - Unified Aliasing.
 
-This module provides functionality for creating, managing, and persisting shell command
-shortcuts (abbreviated commands) within the zCLI framework. Shortcuts allow users to
-create memorable abbreviations for frequently-used commands.
+This module provides functionality for creating, managing, and persisting two types
+of shortcuts within the zCLI framework:
 
-IMPORTANT TERMINOLOGY DISTINCTION:
-    This module handles "shortcuts" (shell command abbreviations), which are distinct
-    from zLoader's "$alias" system (data reference aliases). The terminology was changed
-    from "alias" to "shortcut" to avoid confusion between these two separate systems:
-    
-    - **Shortcuts** (this module): User-defined command abbreviations
-      Example: `shortcut gs="git status"` then use `gs`
-      
-    - **$alias** (zLoader): Pinned data references for loaded content
-      Example: `load @data.yaml --as mydata` then use `$mydata`
+TWO TYPES OF SHORTCUTS:
+    1. **zVars** (User Variables): Store user-defined values
+       Syntax: `shortcut myvar="value"`
+       Stored in: session["zVars"]
+       Use case: Configuration values, temporary data
+       
+    2. **File Shortcuts**: References to cached files
+       Syntax: `shortcut cache` → Interactive menu to select cached file
+       Stored in: session["zShortcuts"]
+       Use case: Quick access to loaded schemas, UI files, configs
+
+UNIFIED ALIASING ARCHITECTURE:
+    Both types are stored in the session dictionary, making them accessible across
+    all subsystems (zShell, zWalker, zBifrost, zData, etc.). This centralized
+    approach ensures consistency and simplifies cross-subsystem data sharing.
 
 Core Features:
     • Create shortcuts with memorable names
@@ -83,12 +87,19 @@ from pathlib import Path
 
 from zCLI import Any, Dict, List, Optional
 
+# Import session constants from zConfig
+from zCLI.subsystems.zConfig.zConfig_modules.config_session import (
+    SESSION_KEY_ZVARS,
+    SESSION_KEY_ZSHORTCUTS
+)
+
 # ============================================================================
 # MODULE CONSTANTS
 # ============================================================================
 
-# Session Keys
-SESSION_KEY_SHORTCUTS: str = "zShortcuts"
+# Session Keys (use imported constants for consistency)
+SESSION_KEY_SHORTCUTS: str = SESSION_KEY_ZSHORTCUTS  # File shortcuts (cached files)
+SESSION_KEY_VARS: str = SESSION_KEY_ZVARS  # User variables
 SESSION_KEY_ZUSERDATA: str = "zUserData"  # TODO: Move to zConfig/config_session.py
 
 # Action Constants
@@ -241,11 +252,14 @@ def execute_shortcut(zcli: Any, parsed: Dict[str, Any]) -> Dict[str, Any]:
     args: List[str] = parsed.get(DICT_KEY_ARGS, [])
     options: Dict[str, Any] = parsed.get(DICT_KEY_OPTIONS, {})
     
-    # Initialize shortcuts dict in session if not exists
+    # Initialize shortcuts and zVars dicts in session if not exist
     if SESSION_KEY_SHORTCUTS not in zcli.session:
         zcli.session[SESSION_KEY_SHORTCUTS] = {}
+    if SESSION_KEY_ZVARS not in zcli.session:
+        zcli.session[SESSION_KEY_ZVARS] = {}
     
     shortcuts: Dict[str, str] = zcli.session[SESSION_KEY_SHORTCUTS]
+    zvars: Dict[str, str] = zcli.session[SESSION_KEY_ZVARS]
     
     # Check for 'cache' subcommand (interactive shortcut creation from cache)
     if args and args[0] == "cache":
@@ -256,13 +270,13 @@ def execute_shortcut(zcli: Any, parsed: Dict[str, Any]) -> Dict[str, Any]:
     
     # Route to action handler based on args/options
     if not args and not options:
-        return _list_shortcuts(zcli, shortcuts)
+        return _list_shortcuts(zcli, shortcuts, zvars)
     
     if options.get(OPTION_REMOVE) or options.get(OPTION_RM):
         if not args:
             zcli.display.error(MSG_SPECIFY_SHORTCUT_NAME)
             return {DICT_KEY_ERROR: ERROR_NO_SHORTCUT_NAME}
-        return _remove_shortcut(zcli, shortcuts, args[0])
+        return _remove_shortcut(zcli, shortcuts, zvars, args[0])
     
     if options.get(OPTION_SAVE):
         return _save_shortcuts(zcli, shortcuts, args)
@@ -274,7 +288,7 @@ def execute_shortcut(zcli: Any, parsed: Dict[str, Any]) -> Dict[str, Any]:
         return _clear_shortcuts(zcli)
     
     if args:
-        return _create_shortcut(zcli, shortcuts, args)
+        return _create_shortcut(zcli, shortcuts, zvars, args)
     
     return {DICT_KEY_ERROR: ERROR_INVALID_SYNTAX}
 
@@ -283,60 +297,89 @@ def execute_shortcut(zcli: Any, parsed: Dict[str, Any]) -> Dict[str, Any]:
 # LISTING SHORTCUTS
 # ============================================================================
 
-def _list_shortcuts(zcli: Any, shortcuts: Dict[str, str]) -> Dict[str, Any]:
+def _list_shortcuts(zcli: Any, shortcuts: Dict[str, str], zvars: Dict[str, str]) -> Dict[str, Any]:
     """
-    List all defined shortcuts in formatted table display.
+    List all defined shortcuts and zVars in formatted table display.
     
-    Displays shortcuts in alphabetical order with aligned columns:
-        name1     => command1
-        name2     => command2
-        longname  => command3
+    Displays two sections:
+    1. User Variables (zVars) - for storing values
+    2. File Shortcuts - for cached file references
+    
+    Each section displays items in alphabetical order with aligned columns:
+        name1     => value1
+        name2     => value2
+        longname  => value3
     
     Args:
         zcli: zCLI instance for display access
-        shortcuts: Dictionary of shortcut name -> command mappings
+        shortcuts: Dictionary of file shortcut name -> path mappings
+        zvars: Dictionary of zVar name -> value mappings
     
     Returns:
         Dict[str, Any]: {"status": "success", "count": N} or {"status": "empty"}
     
     Display:
-        Uses zDisplay.zDeclare() for header and zDisplay.text() for rows.
+        Uses zDisplay.zDeclare() for headers and zDisplay.text() for rows.
         Automatically calculates column width for clean alignment.
     
     Examples:
-        >>> _list_shortcuts(zcli, {})
-        # Displays: "No shortcuts defined"
+        >>> _list_shortcuts(zcli, {}, {})
+        # Displays: "No shortcuts or variables defined"
         {"status": "empty"}
         
-        >>> _list_shortcuts(zcli, {"gs": "git status", "ll": "ls --long"})
+        >>> _list_shortcuts(zcli, {"myui": "load @.zUI.main"}, {"env": "dev"})
         # Displays:
-        # Defined Shortcuts (2)
-        #   gs  => git status
-        #   ll  => ls --long
+        # User Variables (zVars) - 1
+        #   env  => dev
+        # File Shortcuts - 1
+        #   myui => load @.zUI.main
         {"status": "success", "count": 2}
     """
-    if not shortcuts:
-        zcli.display.info(MSG_NO_SHORTCUTS)
+    if not shortcuts and not zvars:
+        zcli.display.info("No shortcuts or variables defined")
         return {DICT_KEY_STATUS: STATUS_EMPTY}
     
-    zcli.display.zDeclare(
-        f"Defined Shortcuts ({len(shortcuts)})",
-        color=DISPLAY_COLOR_INFO,
-        indent=DISPLAY_INDENT_ZERO,
-        style=DISPLAY_STYLE_FULL
-    )
+    total_count = len(shortcuts) + len(zvars)
     
-    max_len: int = max(len(name) for name in shortcuts.keys())
-    
-    for name, command in sorted(shortcuts.items()):
-        zcli.display.text(
-            f"  {name:<{max_len}} => {command}",
-            indent=DISPLAY_INDENT_ONE
+    # Display zVars section
+    if zvars:
+        zcli.display.text("")  # Empty line for spacing
+        zcli.display.zDeclare(
+            f"User Variables (zVars) - {len(zvars)}",
+            color=DISPLAY_COLOR_INFO,
+            indent=DISPLAY_INDENT_ZERO,
+            style=DISPLAY_STYLE_FULL
         )
+        
+        max_len: int = max(len(name) for name in zvars.keys())
+        
+        for name, value in sorted(zvars.items()):
+            zcli.display.text(
+                f"  {name:<{max_len}} => {value}",
+                indent=DISPLAY_INDENT_ONE
+            )
+    
+    # Display file shortcuts section
+    if shortcuts:
+        zcli.display.text("")  # Empty line for spacing
+        zcli.display.zDeclare(
+            f"File Shortcuts - {len(shortcuts)}",
+            color=DISPLAY_COLOR_INFO,
+            indent=DISPLAY_INDENT_ZERO,
+            style=DISPLAY_STYLE_FULL
+        )
+        
+        max_len: int = max(len(name) for name in shortcuts.keys())
+        
+        for name, command in sorted(shortcuts.items()):
+            zcli.display.text(
+                f"  {name:<{max_len}} => {command}",
+                indent=DISPLAY_INDENT_ONE
+            )
     
     return {
         DICT_KEY_STATUS: STATUS_SUCCESS,
-        DICT_KEY_COUNT: len(shortcuts)
+        DICT_KEY_COUNT: total_count
     }
 
 
@@ -344,93 +387,159 @@ def _list_shortcuts(zcli: Any, shortcuts: Dict[str, str]) -> Dict[str, Any]:
 # CREATING SHORTCUTS
 # ============================================================================
 
+def _is_zvar_syntax(args: List[str]) -> bool:
+    """
+    Check if shortcut syntax is for zVar (user variable).
+    
+    Distinguishes between:
+    - zVar: Simple name="value" assignment
+    - File Shortcut: Interactive cache menu (no = sign, triggers menu)
+    
+    Args:
+        args: List of command arguments
+    
+    Returns:
+        bool: True if creating a zVar, False if creating a file shortcut
+    
+    Examples:
+        >>> _is_zvar_syntax(['myvar="value"'])
+        True
+        
+        >>> _is_zvar_syntax(['myui'])  # Will trigger cache menu
+        False
+        
+        >>> _is_zvar_syntax([])
+        False
+    
+    Notes:
+        This function uses a simple heuristic: presence of '=' indicates zVar.
+        File shortcuts are created via the interactive cache menu (no = sign).
+    """
+    if not args:
+        return False
+    
+    full_arg = " ".join(args)
+    return "=" in full_arg
+
+
 def _create_shortcut(
     zcli: Any,
     shortcuts: Dict[str, str],
+    zvars: Dict[str, str],
     args: List[str]
 ) -> Dict[str, Any]:
     """
-    Create a new shortcut with comprehensive validation.
+    Create a new shortcut or zVar with comprehensive validation.
     
-    Parses shortcut definition, validates name and command, and stores in session.
-    Supports quote-wrapped commands for multi-word/special character commands.
+    Parses definition, validates name and value, and stores in appropriate session dict.
+    Automatically detects if creating a zVar (simple value) or file shortcut (command).
     
     Args:
         zcli: zCLI instance for display and session access
-        shortcuts: Dictionary of existing shortcuts (modified in place)
-        args: List of command arguments (e.g., ['name="command"'])
+        shortcuts: Dictionary of existing file shortcuts (modified in place)
+        zvars: Dictionary of existing zVars (modified in place)
+        args: List of command arguments (e.g., ['name="value"'])
     
     Returns:
-        Dict[str, Any]: Result with status/error and shortcut metadata
+        Dict[str, Any]: Result with status/error and shortcut/zVar metadata
         
     Syntax:
-        name="command"    # Recommended (supports spaces, special chars)
-        name='command'    # Alternative (single quotes)
+        name="value"      # Creates zVar (user variable)
+        name='value'      # Alternative (single quotes)
         
     Validation:
-        • Name and command must not be empty
+        • Name and value must not be empty
         • Name cannot contain spaces
         • Name cannot be a reserved word (zCLI command)
         • Name cannot be longer than MAX_SHORTCUT_NAME_LENGTH
-        • Command cannot recursively reference same shortcut name
+        • Value cannot recursively reference same name
     
     Examples:
-        >>> _create_shortcut(zcli, {}, ['gs="git status"'])
-        {"status": "created", "name": "gs", "command": "git status"}
+        >>> _create_shortcut(zcli, {}, {}, ['myvar="hello"'])
+        {"status": "created", "name": "myvar", "value": "hello", "type": "zvar"}
         
-        >>> _create_shortcut(zcli, {}, ['data="git status"'])
+        >>> _create_shortcut(zcli, {}, {}, ['data="test"'])
         {"error": "reserved_word"}  # 'data' is a zCLI command
         
-        >>> _create_shortcut(zcli, {"gs": "old"}, ['gs="new"'])
-        # Displays warning: "Overwriting existing shortcut: gs"
-        {"status": "created", "name": "gs", "command": "new"}
+        >>> _create_shortcut(zcli, {}, {"env": "old"}, ['env="new"'])
+        # Displays warning: "Overwriting existing zVar: env"
+        {"status": "created", "name": "env", "value": "new", "type": "zvar"}
     
     Side Effects:
-        Updates shortcuts dict (passed by reference) and session state.
+        Updates zvars or shortcuts dict (passed by reference) and session state.
+    
+    Notes:
+        File shortcuts are created via interactive cache menu (`shortcut cache`),
+        not through this function.
     """
     full_arg: str = CHAR_SPACE.join(args)
     
-    # Parse: name="command" or name='command'
+    # Parse: name="value" or name='value'
     if CHAR_EQUALS not in full_arg:
         zcli.display.error(MSG_INVALID_SYNTAX)
         return {DICT_KEY_ERROR: ERROR_INVALID_SYNTAX}
     
     parts: List[str] = full_arg.split(CHAR_EQUALS, 1)
     name: str = parts[0].strip()
-    command: str = parts[1].strip()
+    value: str = parts[1].strip()
     
     # Remove quotes if present
-    if command.startswith(CHAR_QUOTE_DOUBLE) and command.endswith(CHAR_QUOTE_DOUBLE):
-        command = command[1:-1]
-    elif command.startswith(CHAR_QUOTE_SINGLE) and command.endswith(CHAR_QUOTE_SINGLE):
-        command = command[1:-1]
+    if value.startswith(CHAR_QUOTE_DOUBLE) and value.endswith(CHAR_QUOTE_DOUBLE):
+        value = value[1:-1]
+    elif value.startswith(CHAR_QUOTE_SINGLE) and value.endswith(CHAR_QUOTE_SINGLE):
+        value = value[1:-1]
     
-    # Validate shortcut name
+    # Validate name
     validation_error: Optional[Dict[str, Any]] = _validate_shortcut_name(
-        zcli, name, command
+        zcli, name, value
     )
     if validation_error:
         return validation_error
     
-    # Validate command is not empty
-    if not command:
+    # Validate value is not empty
+    if not value:
         zcli.display.error(MSG_EMPTY_NAME_OR_COMMAND)
         return {DICT_KEY_ERROR: ERROR_EMPTY_NAME_OR_COMMAND}
     
-    # Warn if overwriting existing shortcut
-    if name in shortcuts:
-        zcli.display.warning(MSG_OVERWRITING.format(name=name))
+    # Detect if creating a zVar (always true in current implementation since we check for =)
+    # zVars are simple name=value assignments
+    # File shortcuts are created via `shortcut cache` command
+    is_zvar = _is_zvar_syntax(args)
     
-    # Create shortcut
-    shortcuts[name] = command
-    
-    zcli.display.success(MSG_CREATED.format(name=name, command=command))
-    
-    return {
-        DICT_KEY_STATUS: STATUS_CREATED,
-        DICT_KEY_NAME: name,
-        DICT_KEY_COMMAND: command
-    }
+    if is_zvar:
+        # Warn if overwriting existing zVar
+        if name in zvars:
+            zcli.display.warning(f"Overwriting existing zVar: {name}")
+        
+        # Create zVar
+        zvars[name] = value
+        
+        zcli.display.success(f"zVar '{name}' created: {value}")
+        
+        return {
+            DICT_KEY_STATUS: STATUS_CREATED,
+            DICT_KEY_NAME: name,
+            "value": value,
+            "type": "zvar"
+        }
+    else:
+        # This branch is for file shortcuts (if we ever allow direct creation)
+        # Currently, file shortcuts are created via `shortcut cache`
+        # Warn if overwriting existing shortcut
+        if name in shortcuts:
+            zcli.display.warning(MSG_OVERWRITING.format(name=name))
+        
+        # Create file shortcut
+        shortcuts[name] = value
+        
+        zcli.display.success(MSG_CREATED.format(name=name, command=value))
+        
+        return {
+            DICT_KEY_STATUS: STATUS_CREATED,
+            DICT_KEY_NAME: name,
+            DICT_KEY_COMMAND: value,
+            "type": "shortcut"
+        }
 
 
 def _validate_shortcut_name(
@@ -509,45 +618,70 @@ def _validate_shortcut_name(
 def _remove_shortcut(
     zcli: Any,
     shortcuts: Dict[str, str],
+    zvars: Dict[str, str],
     name: str
 ) -> Dict[str, Any]:
     """
-    Remove an individual shortcut by name.
+    Remove an individual shortcut or zVar by name.
+    
+    Checks both zVars and file shortcuts dicts to find and remove the item.
     
     Args:
         zcli: zCLI instance for display access
-        shortcuts: Dictionary of existing shortcuts (modified in place)
-        name: Shortcut name to remove
+        shortcuts: Dictionary of existing file shortcuts (modified in place)
+        zvars: Dictionary of existing zVars (modified in place)
+        name: Shortcut/zVar name to remove
     
     Returns:
-        Dict[str, Any]: Result with status/error and removed shortcut metadata
+        Dict[str, Any]: Result with status/error and removed item metadata
     
     Examples:
-        >>> _remove_shortcut(zcli, {"gs": "git status"}, "gs")
-        # Displays: "Shortcut removed: gs (was: git status)"
-        {"status": "removed", "name": "gs", "command": "git status"}
+        >>> _remove_shortcut(zcli, {"myui": "load..."}, {"env": "dev"}, "env")
+        # Displays: "zVar removed: env (was: dev)"
+        {"status": "removed", "name": "env", "value": "dev", "type": "zvar"}
         
-        >>> _remove_shortcut(zcli, {}, "gs")
-        # Displays: "Shortcut not found: gs"
-        {"error": "not_found", "name": "gs"}
+        >>> _remove_shortcut(zcli, {"myui": "load..."}, {}, "myui")
+        # Displays: "Shortcut removed: myui (was: load...)"
+        {"status": "removed", "name": "myui", "command": "load...", "type": "shortcut"}
+        
+        >>> _remove_shortcut(zcli, {}, {}, "missing")
+        # Displays: "Shortcut or zVar not found: missing"
+        {"error": "not_found", "name": "missing"}
     
     Side Effects:
-        Removes shortcut from shortcuts dict and updates session state.
+        Removes item from zvars or shortcuts dict and updates session state.
     """
-    if name not in shortcuts:
-        zcli.display.error(MSG_NOT_FOUND.format(name=name))
-        return {DICT_KEY_ERROR: ERROR_NOT_FOUND, DICT_KEY_NAME: name}
+    # Check zVars first
+    if name in zvars:
+        value: str = zvars[name]
+        del zvars[name]
+        
+        zcli.display.success(f"zVar removed: {name} (was: {value})")
+        
+        return {
+            DICT_KEY_STATUS: STATUS_REMOVED,
+            DICT_KEY_NAME: name,
+            "value": value,
+            "type": "zvar"
+        }
     
-    command: str = shortcuts[name]
-    del shortcuts[name]
+    # Check file shortcuts
+    if name in shortcuts:
+        command: str = shortcuts[name]
+        del shortcuts[name]
+        
+        zcli.display.success(MSG_REMOVED.format(name=name, command=command))
+        
+        return {
+            DICT_KEY_STATUS: STATUS_REMOVED,
+            DICT_KEY_NAME: name,
+            DICT_KEY_COMMAND: command,
+            "type": "shortcut"
+        }
     
-    zcli.display.success(MSG_REMOVED.format(name=name, command=command))
-    
-    return {
-        DICT_KEY_STATUS: STATUS_REMOVED,
-        DICT_KEY_NAME: name,
-        DICT_KEY_COMMAND: command
-    }
+    # Not found in either
+    zcli.display.error(f"Shortcut or zVar not found: {name}")
+    return {DICT_KEY_ERROR: ERROR_NOT_FOUND, DICT_KEY_NAME: name}
 
 
 def _clear_shortcuts(zcli: Any) -> Dict[str, Any]:

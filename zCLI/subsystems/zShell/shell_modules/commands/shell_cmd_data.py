@@ -4,8 +4,6 @@
 # --------------------------------------------------------------
 """Data command execution for zCLI."""
 
-from .shell_cmd_shortcut_utils import resolve_alias, is_alias, get_alias_name
-
 
 def execute_data(zcli, parsed):
     """Execute data commands for reading and manipulating data tables."""
@@ -23,26 +21,6 @@ def execute_data(zcli, parsed):
     
     # Get model path from options - no default, model is required
     model_path = options.get("model")
-    
-    # Check if model is an alias reference
-    if model_path and is_alias(model_path):
-        try:
-            # Resolve alias from PinnedCache
-            resolved_schema, was_alias = resolve_alias(model_path, zcli.loader.cache.pinned_cache, zcli.logger)
-            
-            if was_alias:
-                alias_name = get_alias_name(model_path)
-                zcli.logger.info("[PIN] Using aliased schema: $%s", alias_name)
-                
-                # Pass pre-parsed schema to zData
-                # Set model to None and provide schema directly
-                model_path = None
-                options["_schema_cached"] = resolved_schema
-                options["_alias_name"] = alias_name
-        except ValueError as e:
-            # Alias not found - return error
-            zcli.logger.error("Alias resolution failed: %s", e)
-            return {"error": str(e)}
     
     # Extract auto-join flag from options
     auto_join = options.get("auto_join", False) or options.get("auto-join", False)

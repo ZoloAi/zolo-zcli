@@ -1,5 +1,5 @@
 Help:
-  ~Root*: ["^Where", "^Shortcut", "^CD", "^CWD/PWD", "^LS/List/Dir", "^Session", "^Walker", "^Load", "^Func", "^Config", "exit"]
+  ~Root*: ["^Where", "^Shortcut", "^CD", "^CWD/PWD", "^LS/List/Dir", "^Session", "^Walker", "^Load", "^Open", "^Func", "^Config", "exit"]
   
   "^Where":
     zDisplay:
@@ -34,24 +34,48 @@ Help:
       content: |
         
         ═══════════════════════════════════════════════════════════════════
-        SHORTCUT Command - Create and Manage Command Shortcuts
+        SHORTCUT Command - Unified Aliasing System
         ═══════════════════════════════════════════════════════════════════
         
-        Syntax: shortcut [name[=command]] [options]
+        Two Types of Shortcuts:
+          1. zVars (User Variables) - Store user-defined values
+          2. File Shortcuts         - References to cached files
+        
+        Syntax: shortcut [name="value"] [options]
         
         Actions:
-          (no args)            - List all shortcuts
-          name="command"       - Create/update shortcut
-          --remove name        - Remove shortcut
-          --save [file]        - Save shortcuts to file
-          --load [file]        - Load shortcuts from file
+          (no args)            - List all zVars and file shortcuts
+          name="value"         - Create/update zVar
+          cache                - Interactive menu to create file shortcut
+          --remove name        - Remove zVar or shortcut
           --clear              - Clear all shortcuts
         
         Examples:
-          shortcut                           # List all shortcuts
-          shortcut demos="cd @.Demos"         # Create shortcut
-          shortcut ll="ls --sizes --hidden"   # Create ls alias
-          shortcut --remove ll               # Remove shortcut
+          # zVars (User Variables)
+          shortcut env="development"         # Create variable
+          shortcut api_key="test123"         # Store API key
+          shortcut debug="true"              # Boolean flag
+          
+          # File Shortcuts (Interactive)
+          load @.zCLI.UI.zUI.zcli_sys        # Load a file first
+          shortcut cache                     # Launch interactive menu
+                                            # Select file, name it "myui"
+          
+          # List & Remove
+          shortcut                           # Show all (zVars + shortcuts)
+          shortcut --remove env              # Remove zVar
+          shortcut --remove myui             # Remove file shortcut
+        
+        Display:
+          zVars & Shortcuts:
+            zVars: 3 defined        (User variables)
+            zShortcuts: 2 defined   (File references)
+        
+        Notes:
+          - zVars stored in session["zVars"]
+          - File shortcuts stored in session["zShortcuts"]
+          - Both accessible across all subsystems
+          - Use 'session info' to view current shortcuts
 
   "^CD":
     zDisplay:
@@ -299,6 +323,42 @@ Help:
           • Aliases use $ prefix (e.g., $users, $demo)
           • Cache auto-invalidates when files change (mtime)
           • Session-based (in-memory, not persisted to disk)
+
+  "^Open":
+    zDisplay:
+      event: text
+      content: |
+        
+        ═══════════════════════════════════════════════════════════════════
+        OPEN Command - Files & URLs
+        ═══════════════════════════════════════════════════════════════════
+        
+        Syntax: open <path|url>
+        
+        Examples:
+          # URLs → Browser
+          open https://github.com
+          open www.google.com
+          
+          # Workspace Files
+          open @.README.md              # IDE
+          open @.docs.index.html        # Browser
+          open @.src.main.py            # IDE
+          
+          # Absolute/Relative Paths
+          open /etc/hosts
+          open ./config.yaml
+          open ~.Users.me.file.txt
+        
+        Routing:
+          HTML/HTM  → Browser
+          Text      → IDE (.txt, .md, .py, .js, .json, .yaml, .yml)
+          Others    → Extension-based
+        
+        Notes:
+          • Uses session IDE/browser preferences
+          • Prompts for missing files or IDE selection
+          • @ paths require active zSpace (workspace)
 
   "^Func":
     zDisplay:

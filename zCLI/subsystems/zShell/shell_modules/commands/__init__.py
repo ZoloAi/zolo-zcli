@@ -8,7 +8,6 @@ from .shell_cmd_func import execute_func
 from .shell_cmd_session import execute_session
 from .shell_cmd_walker import execute_walker
 from .shell_cmd_open import execute_open
-from .shell_cmd_test import execute_test
 from .shell_cmd_auth import execute_auth
 from .shell_cmd_load import execute_load
 from .shell_cmd_export import execute_export
@@ -30,7 +29,6 @@ __all__ = [
     "execute_session",
     "execute_walker",
     "execute_open",
-    "execute_test",
     "execute_auth",
     "execute_load",
     "execute_export",

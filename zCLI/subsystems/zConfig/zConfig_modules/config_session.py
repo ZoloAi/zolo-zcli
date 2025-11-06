@@ -112,6 +112,8 @@ SESSION_KEY_ZSPARK = "zSpark"
 SESSION_KEY_VIRTUAL_ENV = "virtual_env"
 SESSION_KEY_SYSTEM_ENV = "system_env"
 SESSION_KEY_LOGGER_INSTANCE = "logger_instance"
+SESSION_KEY_ZVARS = "zVars"
+SESSION_KEY_ZSHORTCUTS = "zShortcuts"
 
 # zSpark dict keys
 ZSPARK_KEY_ZSPACE = "zSpace"
@@ -289,6 +291,8 @@ class SessionConfig:
             SESSION_KEY_ZSPARK: zSpark_value,
             SESSION_KEY_VIRTUAL_ENV: virtual_env,
             SESSION_KEY_SYSTEM_ENV: system_env,
+            SESSION_KEY_ZVARS: {},
+            SESSION_KEY_ZSHORTCUTS: {},
         }
 
         # Initialize logger now that session is created with zLogger level
