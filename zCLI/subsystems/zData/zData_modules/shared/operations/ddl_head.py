@@ -88,15 +88,16 @@ For each column, the handler extracts:
 
 This information is used to build a structured column list for display.
 
-zDisplay Integration
--------------------
-The handler uses zDisplay for mode-agnostic output:
-- **zDeclare**: Displays schema header ("Schema: table_name")
-- **text**: Displays each column line with formatting
+zDisplay Integration (AdvancedData)
+----------------------------------
+The handler uses zDisplay (AdvancedData) for mode-agnostic tabular output:
+- **zTable**: Displays schema as formatted table with columns [Column, Type, Nullable, Default]
+- **Consistent format**: Same table display as query results (crud_read.py)
+- **Mode-agnostic**: Works in Terminal (ASCII table) and Bifrost (JSON event)
 
-This works seamlessly in both:
-- **Terminal mode**: Direct console output with color
-- **Bifrost mode**: JSON-formatted output for web frontend
+This provides:
+- **Terminal mode**: Formatted ASCII table with headers and separators
+- **Bifrost mode**: Clean JSON table event for web frontend rendering
 
 Display Formatting
 -----------------
@@ -382,36 +383,45 @@ def handle_head(request: Dict[str, Any], ops: Any) -> bool:
             })
 
     # ============================================================
-    # Phase 4: Display Schema Header
+    # Phase 4: Build Table Rows for AdvancedData Display
     # ============================================================
-    # Display table schema header
-    ops.zcli.display.zDeclare(
-        FMT_SCHEMA_HEADER % table,
-        color=DISPLAY_COLOR_INFO,
-        indent=DISPLAY_INDENT_HEADER,
-        style=DISPLAY_STYLE_FULL
-    )
+    # Build rows list from columns metadata for zTable() display
+    rows = []
+    for col in columns:
+        # Build column type with tags
+        col_type = col[KEY_TYPE]
+        if col.get(KEY_PK):
+            col_type += TAG_PK
+        if col.get(KEY_REQUIRED):
+            col_type += TAG_REQUIRED
+        
+        # Build nullable display
+        nullable = "No" if col.get(KEY_REQUIRED) else "Yes"
+        
+        # Build default value display
+        default = col.get(KEY_DEFAULT)
+        if default is not None:
+            default_display = str(default)
+        else:
+            default_display = "(none)"
+        
+        rows.append({
+            "Column": col[KEY_NAME],
+            "Type": col_type,
+            "Nullable": nullable,
+            "Default": default_display
+        })
     
     # ============================================================
-    # Phase 5: Display Column Information with Tags
+    # Phase 5: Display Schema as Table (AdvancedData Integration)
     # ============================================================
-    # Display each column with formatting and tags
-    for col in columns:
-        col_info = f"{col[KEY_NAME]:<{FMT_COL_NAME_WIDTH}} {col[KEY_TYPE]}"
-        
-        # Add [PK] tag for primary keys
-        if col.get(KEY_PK):
-            col_info += TAG_PK
-        
-        # Add [REQUIRED] tag for mandatory fields
-        if col.get(KEY_REQUIRED):
-            col_info += TAG_REQUIRED
-        
-        # Add [DEFAULT: value] tag for fields with defaults
-        if col.get(KEY_DEFAULT) is not None:
-            col_info += TAG_DEFAULT % col[KEY_DEFAULT]
-        
-        ops.zcli.display.text(col_info, indent=DISPLAY_INDENT_COLUMN)
+    # Use AdvancedData.zTable() for consistent tabular display
+    ops.zcli.display.zTable(
+        title=FMT_SCHEMA_HEADER % table,
+        columns=["Column", "Type", "Nullable", "Default"],
+        rows=rows,
+        show_header=True
+    )
 
     ops.logger.info(LOG_SUCCESS, table, len(columns))
     return True

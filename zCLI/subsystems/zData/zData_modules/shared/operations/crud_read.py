@@ -16,7 +16,7 @@ The READ operation queries rows from one or more tables. The handler supports:
 - Auto-join from foreign key detection (adapter scans FK relationships)
 - WHERE clause filtering (age > 18, name LIKE 'A%')
 - ORDER BY sorting (order by name ASC, created DESC)
-- LIMIT pagination (limit 10)
+- LIMIT + OFFSET pagination (limit 10, offset 20 for page 3)
 - Mode-aware display (zBifrost returns rows, Terminal displays table)
 - Interactive pagination (pause + "Press Enter to continue")
 
@@ -73,11 +73,19 @@ ORDER BY and LIMIT
     - Limits number of rows returned
     - Useful for pagination
 
+**LIMIT + OFFSET (Pagination):**
+    request = {"limit": 20, "offset": 40}
+    - Shows rows 41-60 (page 3, assuming 20 rows per page)
+    - offset: Number of rows to skip
+    - limit: Maximum rows to return
+    - Common pattern: offset = (page_number - 1) * page_size
+
 Display Integration
 ------------------
-The handler uses zDisplay for output:
-- **zDisplay.zTable(table_name, columns, rows):** Displays results as table
+The handler uses zDisplay (AdvancedData) for output:
+- **zDisplay.zTable(table_name, columns, rows, limit, offset):** Displays results as paginated table
 - **Column extraction:** Automatically extracts column names from first row
+- **Pagination metadata:** AdvancedData displays "Showing X-Y of Z" footer
 - **Empty result handling:** Displays "[OK] Read 0 rows (table is empty or no matches)"
 
 Mode-Aware Behavior
@@ -176,9 +184,14 @@ KEY_FIELDS = "fields"
 KEY_WHERE = "where"
 KEY_ORDER = "order"
 KEY_LIMIT = "limit"
+KEY_OFFSET = "offset"
 KEY_JOINS = "joins"
 KEY_AUTO_JOIN = "auto_join"
 KEY_PAUSE = "pause"
+
+# Pagination limits
+DEFAULT_LIMIT = 100  # Reasonable default page size
+MAX_LIMIT = 1000     # Prevent excessive queries
 
 # ============================================================
 # Module Constants - Session Keys
@@ -352,7 +365,13 @@ def handle_read(request: Dict[str, Any], ops: Any) -> Union[bool, List[Dict[str,
     fields = request.get(KEY_FIELDS)
     order = request.get(KEY_ORDER)
     limit = request.get(KEY_LIMIT)
+    offset = request.get(KEY_OFFSET, 0)  # Default to 0 (no offset)
     where = extract_where_clause(request, ops, warn_if_missing=False)
+    
+    # Validate limit against MAX_LIMIT
+    if limit and limit > MAX_LIMIT:
+        ops.logger.warning(f"Limit {limit} exceeds MAX_LIMIT {MAX_LIMIT}, capping to {MAX_LIMIT}")
+        limit = MAX_LIMIT
 
     # Extract JOIN options
     joins = request.get(KEY_JOINS)  # Manual join definitions
@@ -361,14 +380,15 @@ def handle_read(request: Dict[str, Any], ops: Any) -> Union[bool, List[Dict[str,
     # Phase 5: Execute SELECT (single or multi-table)
     table_arg = tables[0] if len(tables) == 1 else tables
     ops.logger.debug(LOG_EXECUTE_SELECT, table_arg)
-    rows = ops.select(table_arg, fields, where=where, joins=joins, order=order, limit=limit, auto_join=auto_join)
+    rows = ops.select(table_arg, fields, where=where, joins=joins, order=order, limit=limit, offset=offset, auto_join=auto_join)
 
-    # Phase 6: Display results (mode-aware)
+    # Phase 6: Display results (mode-aware with AdvancedData pagination)
     table_display = DISPLAY_SEPARATOR.join(tables) if is_multi_table else tables[0]
     if rows:
         # Extract column names from first row (assuming dict rows)
         columns = list(rows[0].keys()) if rows and isinstance(rows[0], dict) else []
-        ops.zcli.display.zTable(table_display, columns, rows)
+        # Pass limit and offset to AdvancedData for pagination metadata display
+        ops.zcli.display.zTable(table_display, columns, rows, limit=limit, offset=offset)
         ops.logger.info(LOG_SUCCESS, len(rows), table_display)
     else:
         ops.logger.info(LOG_EMPTY, table_display)

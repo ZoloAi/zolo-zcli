@@ -774,7 +774,7 @@ class CSVAdapter(BaseDataAdapter):
         - Single table queries with WHERE filtering
         - Multi-table JOINs (manual or AUTO)
         - ORDER BY sorting
-        - LIMIT result count
+        - LIMIT + OFFSET pagination
 
         Args:
             table: Table name (str) or list of tables for JOINs
@@ -786,6 +786,7 @@ class CSVAdapter(BaseDataAdapter):
                 - schema (dict): Schema for AUTO JOIN detection
                 - order (list): ORDER BY clauses [("field", "asc"), ...]
                 - limit (int): Max rows to return
+                - offset (int): Number of rows to skip (default: 0)
 
         Returns:
             List[Dict[str, Any]]: List of row dicts
@@ -824,6 +825,7 @@ class CSVAdapter(BaseDataAdapter):
         joins = kwargs.get('joins')
         order = kwargs.get('order')
         limit = kwargs.get('limit')
+        offset = kwargs.get('offset', 0)  # Default to 0 (no offset)
         auto_join = kwargs.get('auto_join', False)
         schema = kwargs.get('schema')
 
@@ -851,8 +853,14 @@ class CSVAdapter(BaseDataAdapter):
         if order:
             df = self._apply_order(df, order)
 
-        if limit:
-            df = df.head(limit)
+        # Apply LIMIT + OFFSET pagination using DataFrame slicing
+        if limit is not None:
+            # Calculate slice boundaries: [offset:offset+limit]
+            end = offset + limit
+            df = df.iloc[offset:end]
+        elif offset > 0:
+            # Only offset, no limit: skip first N rows, return rest
+            df = df.iloc[offset:]
 
         rows = df.to_dict('records')
 

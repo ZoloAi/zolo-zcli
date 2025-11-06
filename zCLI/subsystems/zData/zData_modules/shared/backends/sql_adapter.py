@@ -572,6 +572,7 @@ class SQLAdapter(BaseDataAdapter):
         joins = kwargs.get('joins')
         order = kwargs.get('order')
         limit = kwargs.get('limit')
+        offset = kwargs.get('offset')
         auto_join = kwargs.get('auto_join', False)
         schema = kwargs.get('schema')
 
@@ -614,6 +615,9 @@ class SQLAdapter(BaseDataAdapter):
         # Build LIMIT clause
         if limit:
             sql += f" LIMIT {limit}"
+            # Add OFFSET clause (only applies if LIMIT is specified - SQL standard)
+            if offset:
+                sql += f" OFFSET {offset}"
 
         if self.logger:
             self.logger.debug("Executing SELECT: %s with params: %s", sql, params)
