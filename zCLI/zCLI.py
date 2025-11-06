@@ -110,17 +110,17 @@ class zCLI:
         self.utils = zUtils(self)    # Plugin system - available to all Layer 2+ subsystems
         self._load_plugins()         # Load plugins immediately after plugin system is ready
 
-        # Initialize shell and command executor (needs zUtils for 'utils' command)
-        from .subsystems.zShell import zShell
-        self.shell = zShell(self)
-
-        # Initialize wizard subsystem (depends on shell for wizard step execution)
+        # Initialize wizard subsystem (loop engine - no upper dependencies)
         from .subsystems.zWizard import zWizard
         self.wizard = zWizard(self)
 
-        # Initialize data subsystem
+        # Initialize data subsystem (may use zWizard for interactive operations)
         from .subsystems.zData import zData
         self.data = zData(self)
+
+        # Initialize shell and command executor (depends on zUtils, zWizard, zData)
+        from .subsystems.zShell import zShell
+        self.shell = zShell(self)
 
         # Layer 3: Orchestration
         # Initialize walker subsystem
