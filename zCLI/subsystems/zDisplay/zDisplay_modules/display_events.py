@@ -463,6 +463,21 @@ class zEvents:
         """
         return self.zSystem.zSession(session_data, break_after, break_message)
 
+    def zConfig(self, config_data: Optional[Dict[str, Any]] = None, break_after: bool = True, break_message: Optional[str] = None) -> Any:
+        """Display configuration information.
+        
+        Convenience delegate to zSystem.zConfig for backward compatibility.
+        
+        Args:
+            config_data: Config dictionary with 'machine' and 'environment' keys
+            break_after: Add line break after (default: True)
+            break_message: Optional break message
+            
+        Returns:
+            Any: Result from zSystem.zConfig method
+        """
+        return self.zSystem.zConfig(config_data, break_after, break_message)
+
     def zCrumbs(self, session_data: Dict[str, Any]) -> Any:
         """Display breadcrumb navigation from session.
         

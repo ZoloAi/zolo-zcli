@@ -247,6 +247,13 @@ def execute_shortcut(zcli: Any, parsed: Dict[str, Any]) -> Dict[str, Any]:
     
     shortcuts: Dict[str, str] = zcli.session[SESSION_KEY_SHORTCUTS]
     
+    # Check for 'cache' subcommand (interactive shortcut creation from cache)
+    if args and args[0] == "cache":
+        zcli.logger.info("Launching interactive shortcut creation from cache...")
+        from zCLI.utils.cache_utils import create_shortcut_from_cache
+        result = create_shortcut_from_cache(zcli)
+        return result
+    
     # Route to action handler based on args/options
     if not args and not options:
         return _list_shortcuts(zcli, shortcuts)

@@ -399,6 +399,7 @@ from zCLI.subsystems.zConfig.zConfig_modules import (
 
 # Event Names (Bifrost WebSocket Events)
 EVENT_ZSESSION = "zSession"         # Session state display event
+EVENT_ZCONFIG = "zConfig"           # Configuration display event
 EVENT_ZCRUMBS = "zCrumbs"           # Breadcrumb navigation event
 EVENT_ZMENU = "zMenu"               # Menu display/selection event
 EVENT_ZDIALOG = "zDialog"           # Form dialog event
@@ -931,6 +932,123 @@ class zSystem:
         if break_after:
             self._output_text("", break_after=False)
             # Display break message and pause (break_after adds the actual pause)
+            if break_message:
+                self._output_text(break_message, break_after=True)
+            else:
+                # Use BasicOutputs text() with break_after for standard prompt
+                self._output_text("", break_after=True)
+
+    def zConfig(
+        self,
+        config_data: Optional[Dict[str, Any]] = None,
+        break_after: bool = True,
+        break_message: Optional[str] = None
+    ) -> None:
+        """
+        Display zConfig machine and environment configuration (Terminal or Bifrost mode).
+        
+        Displays complete zConfig state including machine configuration (OS, hardware,
+        capabilities) and environment configuration (deployment, role, venv status).
+        
+        Args:
+            config_data: Dict with 'machine' and 'environment' keys, or None to use zcli.config
+            break_after: Add "Press Enter" prompt at end (default: True)
+            break_message: Custom break message (default: "Press Enter to continue...")
+        
+        Returns:
+            None
+        
+        Bifrost Mode:
+            - Sends EVENT_ZCONFIG event with config data
+            - Frontend displays interactive config viewer
+            - Returns immediately
+        
+        Terminal Mode:
+            - Displays formatted config structure:
+              1. Machine Configuration header
+              2. Machine fields (os, hostname, architecture, etc.)
+              3. Environment Configuration header
+              4. Environment fields (deployment, role, venv, etc.)
+              5. Optional break prompt
+        
+        Usage:
+            # Display full config (auto-fetches from zcli.config)
+            zcli.display.zConfig()
+            
+            # Display with custom config data
+            zcli.display.zConfig({
+                'machine': {...},
+                'environment': {...}
+            })
+            
+            # Display without break prompt
+            zcli.display.zConfig(break_after=False)
+        
+        Notes:
+            - If config_data is None, assumes display is bound to zcli and uses zcli.config
+            - Shows all configuration keys in sorted order
+            - Handles missing values gracefully
+        """
+        # Try Bifrost (GUI) mode first - send clean event
+        if self._try_gui_event(EVENT_ZCONFIG, {
+            "config": config_data,
+            KEY_BREAK: break_after,
+            KEY_BREAK_MESSAGE: break_message
+        }):
+            return  # GUI event sent successfully
+
+        # Terminal mode - display config using composed events
+        if not config_data:
+            self._output_text("No configuration data available", break_after=False)
+            return
+
+        # Machine Configuration section
+        machine = config_data.get('machine', {})
+        if machine:
+            self._output_text("", break_after=False)
+            self.BasicOutputs.header(" zConfig: Machine Configuration", color="CONFIG", style="full")
+            self._output_text("", break_after=False)
+            
+            for key, value in sorted(machine.items()):
+                # Format value for display
+                if isinstance(value, bool):
+                    value_str = "True" if value else "False"
+                elif isinstance(value, (dict, list)):
+                    value_str = str(value)
+                    if len(value_str) > 60:
+                        value_str = value_str[:57] + "..."
+                elif value is None:
+                    value_str = "None"
+                else:
+                    value_str = str(value)
+                
+                self._display_field(key, value_str)
+
+        # Environment Configuration section
+        environment = config_data.get('environment', {})
+        if environment:
+            self._output_text("", break_after=False)
+            self.BasicOutputs.header(" zConfig: Environment Configuration", color="CONFIG", style="full")
+            self._output_text("", break_after=False)
+            
+            for key, value in sorted(environment.items()):
+                # Format value for display
+                if isinstance(value, bool):
+                    value_str = "True" if value else "False"
+                elif isinstance(value, (dict, list)):
+                    value_str = str(value)
+                    if len(value_str) > 60:
+                        value_str = value_str[:57] + "..."
+                elif value is None:
+                    value_str = "None"
+                else:
+                    value_str = str(value)
+                
+                self._display_field(key, value_str)
+
+        # Break prompt (if requested)
+        if break_after:
+            self._output_text("", break_after=False)
             if break_message:
                 self._output_text(break_message, break_after=True)
             else:

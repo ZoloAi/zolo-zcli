@@ -2,7 +2,79 @@
 
 """Core loop engine for stepped execution in Shell and Walker modes."""
 
+from typing import Any, Union
 from zCLI import re
+
+
+class WizardHat:
+    """
+    Dual-access wizard results container.
+    
+    Supports both:
+    - Numeric indexing: zHat[0], zHat[1], ... (backward compatible)
+    - Key-based access: zHat["step1"], zHat["fetch_cached"], ... (semantic)
+    
+    Example:
+        >>> zHat = WizardHat()
+        >>> zHat.add("fetch_data", {"files": [...]})
+        >>> zHat[0]                    # Access by position
+        >>> zHat["fetch_data"]         # Access by step name (more readable!)
+    """
+    
+    def __init__(self):
+        """Initialize dual-access container."""
+        self._list: list = []   # For numeric access (backward compat)
+        self._dict: dict = {}   # For key-based access (semantic)
+    
+    def add(self, key: str, value: Any) -> None:
+        """
+        Add result with both numeric and key-based access.
+        
+        Args:
+            key: Step name (e.g., "step1", "fetch_cached")
+            value: Step result
+        """
+        self._list.append(value)
+        self._dict[key] = value
+    
+    def __getitem__(self, key: Union[int, str]) -> Any:
+        """
+        Support both zHat[0] and zHat["step1"].
+        
+        Args:
+            key: Numeric index or string key
+            
+        Returns:
+            Step result
+            
+        Raises:
+            KeyError: If key is invalid
+            IndexError: If numeric index is out of range
+        """
+        if isinstance(key, int):
+            return self._list[key]
+        elif isinstance(key, str):
+            if key not in self._dict:
+                raise KeyError(f"zHat key not found: {key}")
+            return self._dict[key]
+        raise KeyError(f"Invalid zHat key type: {type(key)}")
+    
+    def __len__(self) -> int:
+        """Return number of results."""
+        return len(self._list)
+    
+    def __contains__(self, key: Union[int, str]) -> bool:
+        """Check if key exists."""
+        if isinstance(key, int):
+            return 0 <= key < len(self._list)
+        elif isinstance(key, str):
+            return key in self._dict
+        return False
+    
+    def __repr__(self) -> str:
+        """String representation for debugging."""
+        return f"WizardHat(steps={len(self._list)}, keys={list(self._dict.keys())})"
+
 
 class zWizard:
     """Core loop engine for stepped execution in Wizard and Walker modes."""
@@ -143,14 +215,62 @@ class zWizard:
         return None
 
     def _interpolate_zhat(self, step_value, zHat):
-        """Interpolate zHat references in string values."""
-        if not isinstance(step_value, str):
+        """
+        Recursively interpolate zHat references in strings (including nested structures).
+        
+        Supports:
+        - zHat[0], zHat[1], ...              # Numeric indexing (backward compat)
+        - zHat["step1"], zHat['step1']       # String key with quotes
+        - zHat[step1]                        # String key without quotes
+        
+        Works at any nesting level:
+        - Top-level strings: "zHat[0]"
+        - Nested in dicts: {zDisplay: {content: "zHat[fetch_files]"}}
+        - Nested in lists: ["zHat[0]", "zHat[1]"]
+        
+        Args:
+            step_value: Value to interpolate (str, dict, list, or primitive)
+            zHat: WizardHat instance with dual access
+            
+        Returns:
+            Interpolated value (same type as input)
+        """
+        # Handle strings (base case - actual interpolation happens here)
+        if isinstance(step_value, str):
+            def repl(match):
+                key = match.group(1)
+                
+                # Handle numeric index (backward compatible)
+                if key.isdigit():
+                    idx = int(key)
+                    return repr(zHat[idx]) if idx < len(zHat) else "None"
+                
+                # Handle string key (remove quotes if present)
+                key_clean = key.strip("'\"")
+                
+                # Check if key exists in zHat
+                if key_clean in zHat:
+                    return repr(zHat[key_clean])
+                
+                # Key not found - return None
+                self.logger.warning("zHat key not found during interpolation: %s", key_clean)
+                return "None"
+            
+            # Pattern matches: zHat[numeric] OR zHat["key"] OR zHat['key'] OR zHat[key]
+            # Group 1 captures: digits OR quoted string OR unquoted word
+            return re.sub(r"zHat\[(['\"]?\w+['\"]?)\]", repl, step_value)
+        
+        # Handle dicts (recursive case)
+        elif isinstance(step_value, dict):
+            return {k: self._interpolate_zhat(v, zHat) for k, v in step_value.items()}
+        
+        # Handle lists (recursive case)
+        elif isinstance(step_value, list):
+            return [self._interpolate_zhat(item, zHat) for item in step_value]
+        
+        # Other types (int, bool, None, etc.) - return as-is
+        else:
             return step_value
-
-        def repl(match):
-            idx = int(match.group(1))
-            return repr(zHat[idx]) if idx < len(zHat) else "None"
-        return re.sub(r"zHat\[(\d+)\]", repl, step_value)
 
     def _check_transaction_start(self, use_transaction, transaction_alias, step_value):
         """Check if transaction should start for this step."""
@@ -194,7 +314,7 @@ class zWizard:
             display.zDeclare("Handle zWizard", color="ZWIZARD", indent=1, style="full")
 
         try:
-            zHat = []
+            zHat = WizardHat()  # Use dual-access container
             use_transaction = zWizard_obj.get("_transaction", False)
             transaction_alias = None
 
@@ -217,7 +337,7 @@ class zWizard:
                     transaction_alias = self._check_transaction_start(use_transaction, transaction_alias, step_value)
 
                 result = self._execute_step(step_key, step_value, step_context)
-                zHat.append(result)
+                zHat.add(step_key, result)  # Add with key for dual access
 
             self._commit_transaction(use_transaction, transaction_alias)
             self.logger.info("zWizard completed with zHat: %s", zHat)

@@ -195,6 +195,7 @@ EXPORT_TARGET_CONFIG: str = "config"
 
 # Config Actions
 ACTION_CONFIG_CHECK: str = "check"
+ACTION_CONFIG_SHOW: str = "show"
 ACTION_CONFIG_GET: str = "get"
 ACTION_CONFIG_SET: str = "set"
 ACTION_CONFIG_LIST: str = "list"
@@ -250,6 +251,7 @@ VALID_EXPORT_TARGETS: List[str] = [
 
 VALID_CONFIG_ACTIONS: List[str] = [
     ACTION_CONFIG_CHECK,
+    ACTION_CONFIG_SHOW,
     ACTION_CONFIG_GET,
     ACTION_CONFIG_SET,
     ACTION_CONFIG_LIST,

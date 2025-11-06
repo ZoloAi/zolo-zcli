@@ -164,6 +164,7 @@ EVENT_ZTABLE = "zTable"
 
 EVENT_ZDECLARE = "zDeclare"
 EVENT_ZSESSION = "zSession"
+EVENT_ZCONFIG = "zConfig"
 EVENT_ZCRUMBS = "zCrumbs"
 EVENT_ZMENU = "zMenu"
 EVENT_ZDIALOG = "zDialog"
@@ -304,6 +305,7 @@ class zDisplay(zDisplayDelegates):
             # System events
             EVENT_ZDECLARE: self.zEvents.zDeclare,
             EVENT_ZSESSION: self.zEvents.zSession,
+            EVENT_ZCONFIG: self.zEvents.zConfig,
             EVENT_ZCRUMBS: self.zEvents.zCrumbs,
             EVENT_ZMENU: self.zEvents.zMenu,
             EVENT_ZDIALOG: self.zEvents.zDialog,

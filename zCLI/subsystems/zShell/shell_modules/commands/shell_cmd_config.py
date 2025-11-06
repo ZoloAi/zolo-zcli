@@ -7,6 +7,7 @@ machine configuration loading.
 
 Command Syntax:
     config check           - Run full system diagnostics
+    config show            - Display machine and environment configuration
 
 Diagnostic Checks (10+):
     - Directory Checks (6): Package, system, user config dirs, zMachine subdirs
@@ -49,6 +50,7 @@ from zCLI import os, Any, Dict, List
 
 # Command Actions
 ACTION_CHECK: str = "check"
+ACTION_SHOW: str = "show"
 
 # Check Status Levels
 STATUS_PASS: str = "pass"
@@ -138,6 +140,7 @@ COLOR_SUCCESS: str = "GREEN"
 COLOR_WARNING: str = "YELLOW"
 COLOR_ERROR: str = "RED"
 COLOR_INFO: str = "CYAN"
+COLOR_HEADER: str = "CONFIG"
 COLOR_RESET: str = "RESET"
 
 # Threshold Constants
@@ -183,15 +186,63 @@ def execute_config(zcli: Any, parsed: Dict[str, Any]) -> None:
         - Returns None with error display on failure
     """
     action = parsed.get("action")
+    args = parsed.get("args", [])
     zcli.logger.debug(f"Executing config command: {action}")
 
     if action == ACTION_CHECK:
         check_config_system(zcli)
         return None
+    
+    elif action == ACTION_SHOW:
+        show_config(zcli, args)
+        return None
 
     # Unknown action
-    zcli.display.text(f"Error: Unknown config action: {action}", color=COLOR_ERROR)
-    zcli.display.text(f"Available actions: [{ACTION_CHECK}]", color=COLOR_INFO)
+    zcli.display.error(f"Unknown config action: {action}")
+    zcli.display.info(f"Available actions: [{ACTION_CHECK}, {ACTION_SHOW}]")
+    return None
+
+# ═══════════════════════════════════════════════════════════════════════════
+# CONFIGURATION DISPLAY
+# ═══════════════════════════════════════════════════════════════════════════
+
+def show_config(zcli: Any, args: List[str]) -> None:
+    """
+    Display zConfig machine and environment configuration.
+    
+    Delegates to zcli.display.zConfig() which shows machine and environment
+    configuration in a formatted, consistent manner (like session info).
+    
+    Args:
+        zcli: zCLI instance with config and display subsystems
+        args: Command arguments (currently unused, future: filtering support)
+    
+    Returns:
+        None: Output displayed via zDisplay.zConfig() (UI adapter pattern)
+    
+    Example:
+        >>> show_config(zcli, [])
+        # Displays complete config via zDisplay.zConfig()
+    
+    Notes:
+        - Uses zDisplay.zConfig() event for formatted output
+        - Mode-agnostic (Terminal and zBifrost)
+        - Follows same pattern as session info command
+        - args parameter reserved for future filtering (machine/env/key)
+    """
+    _ = args  # Reserved for future filtering support
+    zcli.logger.debug("Showing config via zDisplay.zConfig()")
+    
+    # Get config data from zcli.config
+    config_data = {
+        'machine': zcli.config.get_machine(),
+        'environment': zcli.config.get_environment()
+    }
+    
+    # Delegate to zDisplay.zConfig() event
+    zcli.display.zConfig(config_data)
+    
+    zcli.logger.debug("Config display completed")
     return None
 
 # ═══════════════════════════════════════════════════════════════════════════

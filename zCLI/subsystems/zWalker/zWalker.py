@@ -152,6 +152,12 @@ class zWalker(zWizard):
             else:
                 self.logger.debug("zWizard key detected; breadcrumb tracking skipped for %s", key)
             
+            # [SPECIAL CASE] zWizard key requires direct execution
+            # The value IS the zWizard dict (step definitions)
+            if key == "zWizard":
+                self.logger.debug("Executing zWizard directly (bypass dispatch)")
+                return self.handle(value)  # zWalker inherits from zWizard
+            
             # Dispatch action with walker context
             return self.dispatch.handle(key, value, walker=self)
         

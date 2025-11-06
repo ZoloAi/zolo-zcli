@@ -31,6 +31,7 @@ from zCLI import Any, Optional, List, Dict
 
 KEY_EVENT = "event"
 EVENT_ZSESSION = "zSession"
+EVENT_ZCONFIG = "zConfig"
 EVENT_ZCRUMBS = "zCrumbs"
 EVENT_ZMENU = "zMenu"
 EVENT_SELECTION = "selection"
@@ -72,6 +73,29 @@ class DelegateSystem:
         return self.handle({
             KEY_EVENT: EVENT_ZSESSION,
             "session_data": session_data,
+            "break_after": break_after,
+            "break_message": break_message,
+        })
+
+    def zConfig(
+        self,
+        config_data: Optional[Dict[str, Any]] = None,
+        break_after: bool = True,
+        break_message: Optional[str] = None
+    ) -> Any:
+        """Display configuration information.
+        
+        Args:
+            config_data: Config dictionary with 'machine' and 'environment' keys
+            break_after: Add break after display (default: True)
+            break_message: Optional break message
+            
+        Returns:
+            Any: Result from handle() method
+        """
+        return self.handle({
+            KEY_EVENT: EVENT_ZCONFIG,
+            "config_data": config_data,
             "break_after": break_after,
             "break_message": break_message,
         })

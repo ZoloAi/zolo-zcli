@@ -1,5 +1,5 @@
 Help:
-  ~Root*: ["^Where", "^Shortcut", "^CD", "^CWD/PWD", "^LS/List/Dir", "^Session", "^Walker", "^Load", "exit"]
+  ~Root*: ["^Where", "^Shortcut", "^CD", "^CWD/PWD", "^LS/List/Dir", "^Session", "^Walker", "^Load", "^Func", "^Config", "exit"]
   
   "^Where":
     zDisplay:
@@ -299,6 +299,83 @@ Help:
           • Aliases use $ prefix (e.g., $users, $demo)
           • Cache auto-invalidates when files change (mtime)
           • Session-based (in-memory, not persisted to disk)
+
+  "^Func":
+    zDisplay:
+      event: text
+      content: |
+        
+        ═══════════════════════════════════════════════════════════════════
+        FUNC Command - Execute External Python Functions
+        ═══════════════════════════════════════════════════════════════════
+        
+        Syntax: func <function_path> [args...]
+        
+        Examples:
+          func @.utils.helpers.generate_id zU
+          func @.zCLI.utils.cache_utils.get_cached_files
+          func @.plugins.custom.process_data input.json
+        
+        Features:
+          • Supports @ (workspace) and ~ (absolute) zPath notation
+          • Auto-injects zcli/session if function signature accepts them
+          • Handles sync and async functions automatically
+          • Special args: zContext, zHat, zConv, zConv.field, this.key
+          • JSON-formatted output with color highlighting
+        
+        Notes:
+          • Functions loaded dynamically via importlib
+          • Session-scoped (no persistence between sessions)
+          • Results displayed as formatted JSON
+
+  "^Config":
+    zDisplay:
+      event: text
+      content: |
+        
+        ═══════════════════════════════════════════════════════════════════
+        CONFIG Command - Configuration Management
+        ═══════════════════════════════════════════════════════════════════
+        
+        Syntax:
+          config check                    # System diagnostics
+          config show                     # Display all configuration
+          config show machine             # Machine config only
+          config show environment         # Environment config only
+          config show machine <key>       # Get specific machine key
+          config show env <key>           # Get specific environment key
+        
+        CHECK - System Diagnostics:
+          • System Info: OS, hostname, architecture, Python version
+          • Directory Checks: zMachine, zConfigs, zUIs (with zPath notation)
+          • File Checks: zConfig.machine.yaml, zConfig.environment.yaml
+          • Integration Tests: Config loader, machine loading
+          • Status: [OK], [WARN], [FAIL] indicators
+        
+        SHOW - Configuration Display:
+          • Machine: OS, hardware, capabilities, paths
+          • Environment: Deployment, role, venv status
+          • Supports filtering by machine or environment
+          • Retrieve specific key values
+        
+        Examples:
+          config check                    # Run full diagnostics
+          config show                     # Display all config
+          config show machine             # Show machine only
+          config show machine os          # Show: os: Darwin
+          config show env deployment      # Show: deployment: Debug
+        
+        Features:
+          • 10+ diagnostic checks (check command)
+          • Complete config visibility (show command)
+          • Mode-agnostic output (Terminal + zBifrost)
+          • OS-specific validations
+          • Graceful error handling
+        
+        Notes:
+          • check: Validates zConfig subsystem integrity
+          • show: Displays actual configuration values
+          • Both commands use mode-agnostic zDisplay
 
 Uninstall:
   ~Root*: ["Framework Only", "Clean Uninstall", "Dependencies Only", "exit"]
