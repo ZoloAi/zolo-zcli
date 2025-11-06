@@ -512,14 +512,16 @@ def get_plugin_info():
             "plugins": [plugin_path]
         })
         
-        # Verify plugin was loaded
-        self.assertIn(plugin_path, z.utils.plugins)
+        # Verify plugin was loaded (plugins dict uses plugin name as key, not path)
+        self.assertIn("test_plugin", z.utils.plugins)
+        self.assertIsNotNone(z.utils.plugins.get("test_plugin"))
         
-        # Get plugin info
-        info = z.utils.get_plugin_info()
-        if info:
-            self.assertIn("name", info)
-            self.assertIn("functions", info)
+        # Verify plugin has the expected functions
+        plugin = z.utils.plugins.get("test_plugin")
+        if plugin:
+            self.assertTrue(hasattr(plugin, "process_data"))
+            self.assertTrue(hasattr(plugin, "validate_email"))
+            self.assertTrue(hasattr(plugin, "get_plugin_info"))
 
 
 class TestCompleteApplicationLifecycle(unittest.TestCase):

@@ -1,37 +1,421 @@
 # zCLI/subsystems/zData/zData_modules/shared/backends/sql_adapter.py
+"""
+SQL base adapter providing shared operations for all SQL-based backends.
 
-"""Base SQL adapter providing shared operations for relational databases."""
+This module implements a powerful SQL adapter that extends BaseDataAdapter with
+comprehensive SQL-building capabilities, including WHERE clause parsing, JOIN support,
+and automatic relationship detection. It serves as the foundation for SQLite,
+PostgreSQL, and other SQL-based backends.
+
+Architecture Overview
+--------------------
+SQLAdapter sits between BaseDataAdapter and specific SQL implementations:
+
+    BaseDataAdapter (ABC)
+           ↓
+      SQLAdapter (SQL operations + builders)
+           ↓
+    ┌──────┴──────┐
+    ↓             ↓
+SQLiteAdapter  PostgreSQLAdapter
+
+**Design Philosophy:**
+- **SQL Builder System:** Converts Python dicts to parameterized SQL
+- **Dialect Agnostic:** Uses placeholders (?, %s) via hooks for different backends
+- **AUTO JOIN Feature:** Detects relationships from schema foreign keys
+- **Comprehensive WHERE:** Supports =, >, <, >=, <=, LIKE, IN, IS NULL, OR operators
+- **Multi-table Queries:** JOIN, LEFT JOIN, INNER JOIN with manual or auto-detection
+
+SQL Builder System
+-----------------
+The adapter provides 11 SQL builder methods that construct safe, parameterized queries:
+
+**WHERE Clause Builder:**
+- Converts dict to WHERE clause: {"age": 25} → "age = ?"
+- Supports operators: {"age__gte": 18} → "age >= ?"
+- Supports OR conditions: {"or": [{"city": "NYC"}, {"city": "LA"}]}
+- Supports IN: {"city__in": ["NYC", "LA"]} → "city IN (?, ?)"
+- Supports NULL checks: {"deleted__is_null": True} → "deleted IS NULL"
+
+**JOIN Clause Builder:**
+- Manual joins: joins=[{"table": "orders", "on": "users.id = orders.user_id"}]
+- AUTO JOIN: Detects FK relationships from schema (forward and reverse)
+- Supports INNER JOIN, LEFT JOIN, RIGHT JOIN
+
+**Other Builders:**
+- ORDER BY: order="age" or order=["-created_at", "name"]
+- SELECT: Multi-table with table.field qualification
+- Foreign Keys: ON DELETE CASCADE, ON UPDATE CASCADE
+
+WHERE Clause Operators
+---------------------
+Supported operator suffixes in WHERE dict keys:
+
+- **No suffix:** Equality (age: 25 → age = ?)
+- **__gt:** Greater than (age__gt: 18 → age > ?)
+- **__lt:** Less than (age__lt: 65 → age < ?)
+- **__gte:** Greater or equal (age__gte: 18 → age >= ?)
+- **__lte:** Less or equal (age__lte: 65 → age <= ?)
+- **__like:** LIKE pattern (name__like: "John%" → name LIKE ?)
+- **__in:** IN list (city__in: ["NYC", "LA"] → city IN (?, ?))
+- **__is_null:** IS NULL check (deleted__is_null: True → deleted IS NULL)
+- **__is_not_null:** IS NOT NULL check (active__is_not_null: True → active IS NOT NULL)
+
+**OR Conditions:**
+Use special "or" key with list of condition dicts:
+```python
+where = {
+    "status": "active",
+    "or": [
+        {"city": "NYC"},
+        {"city": "LA"}
+    ]
+}
+# → status = ? AND (city = ? OR city = ?)
+```
+
+AUTO JOIN Feature
+----------------
+The adapter can automatically detect table relationships from schema foreign keys:
+
+**Forward JOIN (FK in source table):**
+```
+users.company_id → companies.id
+→ INNER JOIN companies ON users.company_id = companies.id
+```
+
+**Reverse JOIN (FK in target table):**
+```
+companies.id ← orders.company_id
+→ INNER JOIN orders ON companies.id = orders.company_id
+```
+
+Enable with: `select(["users", "companies"], auto_join=True, schema=schema)`
+
+Dialect Hooks
+------------
+Subclasses override these hooks for backend-specific SQL syntax:
+
+- **_get_placeholders(count):** Return "?, ?, ?" (SQLite) or "%s, %s, %s" (PostgreSQL)
+- **_get_single_placeholder():** Return "?" (SQLite) or "%s" (PostgreSQL)
+- **_get_last_insert_id(cursor):** Return cursor.lastrowid (SQLite) or use RETURNING (PostgreSQL)
+
+Usage Examples
+-------------
+Basic CRUD:
+    >>> adapter = SQLiteAdapter(config, logger)
+    >>> adapter.connect()
+    
+    >>> # Insert
+    >>> row_id = adapter.insert("users", ["name", "age"], ["John", 30])
+    
+    >>> # Select with WHERE
+    >>> rows = adapter.select("users", where={"age__gte": 18})
+    
+    >>> # Update
+    >>> adapter.update("users", ["age"], [31], where={"id": row_id})
+    
+    >>> # Delete
+    >>> adapter.delete("users", where={"age__lt": 18})
+
+Multi-table queries:
+    >>> # Manual JOIN
+    >>> joins = [{"table": "orders", "on": "users.id = orders.user_id"}]
+    >>> rows = adapter.select(["users", "orders"], joins=joins)
+    
+    >>> # AUTO JOIN (requires schema)
+    >>> rows = adapter.select(
+    ...     ["users", "companies"],
+    ...     auto_join=True,
+    ...     schema=schema
+    ... )
+
+Integration
+----------
+This SQL adapter is extended by:
+- sqlite_adapter.py: SQLite-specific implementation
+- postgresql_adapter.py: PostgreSQL-specific implementation
+
+Used by:
+- classical_data.py: CRUD orchestration
+- data_operations.py: High-level operations
+
+See Also
+--------
+- base_adapter.py: Abstract base class
+- sqlite_adapter.py: SQLite implementation
+- postgresql_adapter.py: PostgreSQL implementation
+"""
 
 from abc import abstractmethod
+from zCLI import Dict, List, Optional, Any
 from .base_adapter import BaseDataAdapter
 
-class SQLAdapter(BaseDataAdapter):
-    """Base class for SQL-based adapters (SQLite, PostgreSQL, MySQL)."""
+# ============================================================
+# Module Constants - SQL Keywords
+# ============================================================
 
-    def __init__(self, config, logger=None):
+SQL_SELECT = "SELECT"
+SQL_INSERT = "INSERT"
+SQL_UPDATE = "UPDATE"
+SQL_DELETE = "DELETE"
+SQL_CREATE = "CREATE"
+SQL_ALTER = "ALTER"
+SQL_DROP = "DROP"
+SQL_WHERE = "WHERE"
+SQL_ORDER = "ORDER BY"
+SQL_LIMIT = "LIMIT"
+SQL_JOIN = "JOIN"
+SQL_INNER_JOIN = "INNER JOIN"
+SQL_LEFT_JOIN = "LEFT JOIN"
+SQL_FROM = "FROM"
+SQL_INTO = "INTO"
+SQL_VALUES = "VALUES"
+
+# ============================================================
+# Module Constants - SQL Operators
+# ============================================================
+
+OP_EQ = "="
+OP_GT = ">"
+OP_LT = "<"
+OP_GTE = ">="
+OP_LTE = "<="
+OP_LIKE = "LIKE"
+OP_IN = "IN"
+OP_IS_NULL = "IS NULL"
+OP_IS_NOT_NULL = "IS NOT NULL"
+OP_AND = "AND"
+OP_OR = "OR"
+
+# Operator suffixes for WHERE clause parsing
+SUFFIX_GT = "__gt"
+SUFFIX_LT = "__lt"
+SUFFIX_GTE = "__gte"
+SUFFIX_LTE = "__lte"
+SUFFIX_LIKE = "__like"
+SUFFIX_IN = "__in"
+SUFFIX_IS_NULL = "__is_null"
+SUFFIX_IS_NOT_NULL = "__is_not_null"
+
+# ============================================================
+# Module Constants - Constraints
+# ============================================================
+
+CONSTRAINT_PRIMARY_KEY = "PRIMARY KEY"
+CONSTRAINT_FOREIGN_KEY = "FOREIGN KEY"
+CONSTRAINT_UNIQUE = "UNIQUE"
+CONSTRAINT_NOT_NULL = "NOT NULL"
+CONSTRAINT_DEFAULT = "DEFAULT"
+
+# ============================================================
+# Module Constants - Join Types
+# ============================================================
+
+JOIN_INNER = "INNER"
+JOIN_LEFT = "LEFT"
+JOIN_RIGHT = "RIGHT"
+JOIN_FULL = "FULL"
+
+# ============================================================
+# Module Constants - Index Types
+# ============================================================
+
+INDEX_SIMPLE = "simple"
+INDEX_UNIQUE = "unique"
+INDEX_COMPOSITE = "composite"
+
+# ============================================================
+# Module Constants - Schema Keys
+# ============================================================
+
+SCHEMA_KEY_PRIMARY_KEY = "primary_key"
+SCHEMA_KEY_INDEXES = "indexes"
+SCHEMA_KEY_TYPE = "type"
+SCHEMA_KEY_PK = "pk"
+SCHEMA_KEY_UNIQUE = "unique"
+SCHEMA_KEY_REQUIRED = "required"
+SCHEMA_KEY_FK = "fk"
+SCHEMA_KEY_DEFAULT = "default"
+
+# ============================================================
+# Module Constants - WHERE Keys
+# ============================================================
+
+WHERE_KEY_OR = "or"
+
+# ============================================================
+# Module Constants - Error Messages
+# ============================================================
+
+ERR_TABLE_NOT_FOUND = "Table '{table}' does not exist"
+ERR_COLUMN_NOT_FOUND = "Column '{column}' not found in table '{table}'"
+ERR_FK_INVALID = "Invalid foreign key format: {fk}"
+ERR_JOIN_MISSING_ON = "JOIN requires 'on' clause"
+ERR_DROP_COLUMN_UNSUPPORTED = "DROP COLUMN not supported by this SQL dialect"
+ERR_UPSERT_MISSING_CONFLICT = "UPSERT requires conflict_fields"
+
+# ============================================================
+# Module Constants - Log Messages
+# ============================================================
+
+LOG_CREATE_TABLE = "Creating table: %s"
+LOG_TABLE_CREATED = "Table created: %s"
+LOG_DROP_TABLE = "Dropping table: %s"
+LOG_ALTER_TABLE = "Executing ALTER TABLE: %s"
+LOG_ALTER_COMPLETE = "Altered table (%s): %s"
+LOG_INSERT_ROW = "Inserted row into %s with ID: %s"
+LOG_SELECT_ROWS = "Selected %d rows from %s"
+LOG_UPDATE_ROWS = "Updated %d rows in %s"
+LOG_DELETE_ROWS = "Deleted %d rows from %s"
+LOG_UPSERT_ROW = "Upserted row into %s with ID: %s"
+LOG_CREATE_INDEX = "Creating index: %s"
+LOG_JOIN_MULTI_TABLE = "[JOIN] Multi-table query: %s"
+LOG_JOIN_AUTO_FORWARD = "  Auto-detected (forward): %s"
+LOG_JOIN_AUTO_REVERSE = "  Auto-detected (reverse): %s"
+LOG_COMPOSITE_PK = "Composite primary key detected: %s"
+LOG_ADD_COMPOSITE_PK = "Adding composite PRIMARY KEY (%s)"
+
+# ============================================================
+# Public API
+# ============================================================
+
+__all__ = ["SQLAdapter"]
+
+class SQLAdapter(BaseDataAdapter):
+    """
+    SQL base adapter with comprehensive SQL-building and multi-table query support.
+    
+    This class extends BaseDataAdapter to provide concrete SQL operations for all
+    SQL-based backends. It implements sophisticated SQL builders for WHERE clauses,
+    JOINs, and multi-table queries with automatic relationship detection.
+    
+    Architecture
+    -----------
+    SQLAdapter provides:
+    - **Abstract Methods (3):** connect(), disconnect(), get_cursor() - backend-specific
+    - **Concrete DDL (5):** create_table(), drop_table(), alter_table(), table_exists(), list_tables()
+    - **Concrete DML (5):** insert(), select(), update(), delete(), upsert()
+    - **Concrete TCL (3):** begin_transaction(), commit(), rollback()
+    - **SQL Builders (11):** WHERE, JOIN, ORDER, SELECT builders with operator support
+    - **Dialect Hooks (3):** _get_placeholders(), _get_single_placeholder(), _get_last_insert_id()
+    
+    Key Features
+    -----------
+    **1. Comprehensive WHERE Builder:**
+    - Equality: {"age": 25}
+    - Comparison: {"age__gte": 18, "age__lt": 65}
+    - LIKE: {"name__like": "John%"}
+    - IN: {"city__in": ["NYC", "LA"]}
+    - NULL checks: {"deleted__is_null": True}
+    - OR conditions: {"or": [{"city": "NYC"}, {"city": "LA"}]}
+    
+    **2. AUTO JOIN Feature:**
+    Detects table relationships from schema foreign keys:
+    - Forward FK: users.company_id → companies.id
+    - Reverse FK: companies.id ← orders.company_id
+    
+    **3. Multi-table Queries:**
+    Supports manual JOINs and AUTO JOIN for complex queries:
+    - select(["users", "orders"], joins=[...])
+    - select(["users", "companies"], auto_join=True, schema=schema)
+    
+    **4. Composite Primary Keys:**
+    Table-level PRIMARY KEY constraints for multi-column PKs
+    
+    **5. Foreign Key Support:**
+    ON DELETE CASCADE, ON UPDATE CASCADE actions
+    
+    **6. Index Creation:**
+    Simple, composite, and unique indexes
+    
+    Subclass Implementation Guide
+    ----------------------------
+    To create a new SQL backend (e.g., MySQL):
+    
+    1. **Inherit from SQLAdapter**
+    2. **Implement 3 abstract methods:** connect(), disconnect(), get_cursor()
+    3. **Override dialect hooks (optional):**
+       - _get_placeholders(): Return "%s, %s" instead of "?, ?"
+       - _get_last_insert_id(): Use backend-specific method
+    4. **Override upsert() (optional):** Use backend-specific UPSERT syntax
+    
+    Attributes:
+        db_path (Path): Full path to database file (for file-based backends)
+        All BaseDataAdapter attributes (connection, cursor, config, logger, etc.)
+    
+    Example:
+        >>> adapter = SQLiteAdapter(config, logger=logger)
+        >>> adapter.connect()
+        >>> rows = adapter.select("users", where={"age__gte": 18}, order="name")
+    """
+
+    def __init__(
+        self,
+        config: Dict[str, Any],
+        logger: Optional[Any] = None
+    ) -> None:
+        """
+        Initialize SQL adapter with configuration.
+        
+        Args:
+            config: Configuration dict (see BaseDataAdapter)
+            logger: Optional logger instance
+        
+        Attributes Set:
+            db_path: Constructed from base_path + data_label + ".db"
+        
+        Example:
+            >>> config = {"path": "/data", "label": "mydb"}
+            >>> adapter = SQLiteAdapter(config, logger=logger)
+            >>> # adapter.db_path = Path("/data/mydb.db")
+        """
         super().__init__(config, logger)
         # Construct db_path from folder + label
         self.db_path = self.base_path / f"{self.data_label}.db"
+    
+    # ============================================================
+    # Abstract Methods (Backend-Specific)
+    # ============================================================
 
     @abstractmethod
-    def connect(self):
-        """Establish database connection (dialect-specific)."""
+    def connect(self) -> None:
+        """
+        Establish database connection (backend-specific).
+        
+        Subclasses must implement this to create backend-specific connections.
+        See BaseDataAdapter.connect() for full documentation.
+        """
         raise NotImplementedError
 
     @abstractmethod
-    def disconnect(self):
-        """Close database connection (dialect-specific)."""
+    def disconnect(self) -> None:
+        """
+        Close database connection (backend-specific).
+        
+        Subclasses must implement this to close backend-specific connections.
+        See BaseDataAdapter.disconnect() for full documentation.
+        """
         raise NotImplementedError
 
     @abstractmethod
-    def get_cursor(self):
-        """Get or create cursor (dialect-specific)."""
+    def get_cursor(self) -> Any:
+        """
+        Get or create cursor (backend-specific).
+        
+        Subclasses must implement this to return backend-specific cursor objects.
+        See BaseDataAdapter.get_cursor() for full documentation.
+        """
         raise NotImplementedError
+    
+    # ============================================================
+    # DDL - Data Definition Language
+    # ============================================================
 
-    def create_table(self, table_name, schema):
+    def create_table(self, table_name: str, schema: Dict[str, Any]) -> None:
         """Create table with given schema."""
         if self.logger:
-            self.logger.info("Creating table: %s", table_name)
+            self.logger.info(LOG_CREATE_TABLE, table_name)
 
         cur = self.get_cursor()
         field_defs = []
@@ -39,37 +423,37 @@ class SQLAdapter(BaseDataAdapter):
 
         # Check for composite primary key
         composite_pk = None
-        if "primary_key" in schema:
-            pk_value = schema["primary_key"]
+        if SCHEMA_KEY_PRIMARY_KEY in schema:
+            pk_value = schema[SCHEMA_KEY_PRIMARY_KEY]
             if isinstance(pk_value, list) and len(pk_value) > 0:
                 composite_pk = pk_value
                 if self.logger:
-                    self.logger.info("Composite primary key detected: %s", composite_pk)
+                    self.logger.info(LOG_COMPOSITE_PK, composite_pk)
 
         # Process each field
         for field_name, attrs in schema.items():
-            if field_name in ["primary_key", "indexes"]:
+            if field_name in [SCHEMA_KEY_PRIMARY_KEY, SCHEMA_KEY_INDEXES]:
                 continue
 
             if not isinstance(attrs, dict):
                 continue
 
             # Map type
-            field_type = self._map_field_type(attrs.get("type", "str"))
+            field_type = self._map_field_type(attrs.get(SCHEMA_KEY_TYPE, "str"))
             column = f"{field_name} {field_type}"
 
             # Only add column-level PRIMARY KEY if no composite PK
-            if attrs.get("pk") and not composite_pk:
-                column += " PRIMARY KEY"
-            if attrs.get("unique"):
-                column += " UNIQUE"
-            if attrs.get("required") is True:
-                column += " NOT NULL"
+            if attrs.get(SCHEMA_KEY_PK) and not composite_pk:
+                column += f" {CONSTRAINT_PRIMARY_KEY}"
+            if attrs.get(SCHEMA_KEY_UNIQUE):
+                column += f" {CONSTRAINT_UNIQUE}"
+            if attrs.get(SCHEMA_KEY_REQUIRED) is True:
+                column += f" {CONSTRAINT_NOT_NULL}"
 
             field_defs.append(column)
 
             # Handle foreign keys
-            if "fk" in attrs:
+            if SCHEMA_KEY_FK in attrs:
                 fk_clause = self._build_foreign_key_clause(field_name, attrs)
                 if fk_clause:
                     foreign_keys.append(fk_clause)
@@ -78,26 +462,26 @@ class SQLAdapter(BaseDataAdapter):
         table_constraints = []
         if composite_pk:
             pk_columns = ", ".join(composite_pk)
-            table_constraints.append(f"PRIMARY KEY ({pk_columns})")
+            table_constraints.append(f"{CONSTRAINT_PRIMARY_KEY} ({pk_columns})")
             if self.logger:
-                self.logger.info("Adding composite PRIMARY KEY (%s)", pk_columns)
+                self.logger.info(LOG_ADD_COMPOSITE_PK, pk_columns)
 
         # Build and execute DDL
         all_defs = field_defs + table_constraints + foreign_keys
-        ddl = f"CREATE TABLE {table_name} ({', '.join(all_defs)});"
+        ddl = f"{SQL_CREATE} TABLE {table_name} ({', '.join(all_defs)});"
 
         if self.logger:
             self.logger.info("Executing DDL: %s", ddl)
         cur.execute(ddl)
         self.connection.commit()
         if self.logger:
-            self.logger.info("Table created: %s", table_name)
+            self.logger.info(LOG_TABLE_CREATED, table_name)
 
         # Create indexes if specified
-        if "indexes" in schema:
-            self._create_indexes(table_name, schema["indexes"])
+        if SCHEMA_KEY_INDEXES in schema:
+            self._create_indexes(table_name, schema[SCHEMA_KEY_INDEXES])
 
-    def drop_table(self, table_name):
+    def drop_table(self, table_name: str) -> None:
         """Drop table from database."""
         cur = self.get_cursor()
         sql = f"DROP TABLE IF EXISTS {table_name}"
@@ -275,17 +659,17 @@ class SQLAdapter(BaseDataAdapter):
             self.logger.info("Updated %d rows in %s", rows_affected, table)
         return rows_affected
 
-    def delete(self, table, where):
+    def delete(self, table: str, where: Dict[str, Any]) -> int:
         """Delete rows from table."""
         cur = self.get_cursor()
 
-        sql = f"DELETE FROM {table}"
+        sql = f"{SQL_DELETE} {SQL_FROM} {table}"
         params = []
 
         # Build WHERE clause
         if where:
             where_clause, where_params = self._build_where_clause(where)
-            sql += f" WHERE {where_clause}"
+            sql += f" {SQL_WHERE} {where_clause}"
             params.extend(where_params)
 
         if self.logger:
@@ -295,10 +679,106 @@ class SQLAdapter(BaseDataAdapter):
 
         rows_affected = cur.rowcount
         if self.logger:
-            self.logger.info("Deleted %d rows from %s", rows_affected, table)
+            self.logger.info(LOG_DELETE_ROWS, rows_affected, table)
         return rows_affected
 
-    def begin_transaction(self):
+    def upsert(
+        self,
+        table: str,
+        fields: List[str],
+        values: List[Any],
+        conflict_fields: List[str]
+    ) -> Any:
+        """
+        Insert row or update if conflict on specified fields (UPSERT).
+        
+        This default implementation uses SQLite 3.24+ syntax (INSERT...ON CONFLICT).
+        Subclasses should override for backend-specific UPSERT syntax.
+        
+        Args:
+            table: Table name
+            fields: List of field names
+            values: List of values (must match fields)
+            conflict_fields: Fields to check for conflicts (usually pk or unique fields)
+        
+        Returns:
+            Row ID of inserted/updated row
+        
+        Raises:
+            ValueError: If conflict_fields not provided
+        
+        Example:
+            >>> # Insert or update by id
+            >>> row_id = adapter.upsert(
+            ...     "users",
+            ...     ["id", "name", "age"],
+            ...     [1, "John", 30],
+            ...     conflict_fields=["id"]
+            ... )
+        
+        Notes:
+            - SQLite 3.24+ required for ON CONFLICT
+            - PostgreSQL should override to use ON CONFLICT DO UPDATE
+            - MySQL should override to use ON DUPLICATE KEY UPDATE
+        """
+        if not conflict_fields:
+            raise ValueError(ERR_UPSERT_MISSING_CONFLICT)
+        
+        cur = self.get_cursor()
+        
+        # Build INSERT clause
+        placeholders = self._get_placeholders(len(fields))
+        field_list = ", ".join(fields)
+        sql = f"{SQL_INSERT} {SQL_INTO} {table} ({field_list}) {SQL_VALUES} ({placeholders})"
+        
+        # Build ON CONFLICT clause (SQLite 3.24+ syntax)
+        conflict_list = ", ".join(conflict_fields)
+        
+        # Build UPDATE clause (exclude conflict fields from update)
+        update_fields = [f for f in fields if f not in conflict_fields]
+        if update_fields:
+            update_clause = ", ".join([f"{f} = excluded.{f}" for f in update_fields])
+            sql += f" ON CONFLICT({conflict_list}) DO UPDATE SET {update_clause}"
+        else:
+            # All fields are conflict fields, just ignore conflicts
+            sql += f" ON CONFLICT({conflict_list}) DO NOTHING"
+        
+        if self.logger:
+            self.logger.debug("Executing UPSERT: %s with values: %s", sql, values)
+        cur.execute(sql, values)
+        self.connection.commit()
+        
+        row_id = self._get_last_insert_id(cur)
+        if self.logger:
+            self.logger.info(LOG_UPSERT_ROW, table, row_id)
+        return row_id
+
+    def map_type(self, abstract_type: str) -> str:
+        """
+        Map abstract schema type to SQL type (public interface).
+        
+        This method satisfies the BaseDataAdapter interface requirement.
+        Delegates to _map_field_type() for actual mapping.
+        
+        Args:
+            abstract_type: Abstract type (str, int, float, bool, datetime, json)
+        
+        Returns:
+            SQL type string (TEXT, INTEGER, REAL, etc.)
+        
+        Example:
+            >>> adapter.map_type("str")
+            "TEXT"
+            >>> adapter.map_type("int")
+            "INTEGER"
+        """
+        return self._map_field_type(abstract_type)
+    
+    # ============================================================
+    # TCL - Transaction Control Language
+    # ============================================================
+
+    def begin_transaction(self) -> None:
         """Begin transaction."""
         if self.connection:
             self.connection.execute("BEGIN")

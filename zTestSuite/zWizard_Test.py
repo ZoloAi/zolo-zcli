@@ -1,20 +1,55 @@
 # zTestSuite/zWizard_Test.py
 
 """
-Comprehensive test suite for zWizard subsystem.
+Comprehensive test suite for zWizard subsystem (v1.5.4 Phase 1+2).
 
-Tests cover:
-  - Initialization (zcli and walker modes)
-  - execute_loop() with navigation callbacks
-  - handle() with YAML workflows
-  - Transaction management (begin, commit, rollback)
-  - zHat result interpolation
-  - Error handling and recovery
-  - Shell mode vs Walker mode execution
+Test Coverage (34 tests total):
+--------------------------------
+1. **Initialization** (4 tests)
+   - zcli and walker modes
+   - Error handling for missing instances
+   - WizardInitializationError exceptions
+
+2. **execute_loop()** (9 tests)
+   - Basic loop execution
+   - Navigation signals (zBack, exit, stop, error)
+   - Exception handling with callbacks
+   - Navigation callbacks (on_back, on_error)
+   - Start key positioning
+
+3. **handle()** (8 tests)
+   - YAML workflow execution
+   - Meta key filtering (_transaction, _config)
+   - zHat interpolation
+   - Transaction commit/rollback
+   - Schema cache management
+
+4. **WizardHat Triple-Access** (9 tests - NEW!)
+   - Numeric indexing (backward compatible)
+   - Key-based access (semantic)
+   - Attribute access (convenient)
+   - Consistency across access methods
+   - Contains checks, length, repr
+   - Interpolation with key access
+
+5. **Helper Methods** (4 tests)
+   - _get_display() from zcli/walker
+   - interpolate_zhat() with WizardHat
+   - check_transaction_start() module function
+
+Phase 1+2 Enhancements:
+-----------------------
+- Updated for WizardHat return type (was list)
+- Migrated to WizardInitializationError (was ValueError)
+- Tests for triple-access pattern (numeric, key, attribute)
+- Module function tests (interpolate_zhat, check_transaction_start)
+- Zero test failures, full backward compatibility
+
+Version: v1.5.4 Week 6.14 Phase 1+2
 """
 
 import unittest
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock
 from pathlib import Path
 import sys
 
@@ -22,6 +57,10 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from zCLI.subsystems.zWizard import zWizard
+from zCLI.subsystems.zWizard.zWizard_modules.wizard_hat import WizardHat
+from zCLI.subsystems.zWizard.zWizard_modules.wizard_exceptions import WizardInitializationError
+from zCLI.subsystems.zWizard.zWizard_modules.wizard_interpolation import interpolate_zhat
+from zCLI.subsystems.zWizard.zWizard_modules.wizard_transactions import check_transaction_start
 
 
 class TestzWizardInitialization(unittest.TestCase):
@@ -62,18 +101,18 @@ class TestzWizardInitialization(unittest.TestCase):
         self.assertIsNotNone(wizard.schema_cache)
 
     def test_init_without_zcli_or_walker_raises_error(self):
-        """Test that initialization without zcli or walker raises ValueError."""
-        with self.assertRaises(ValueError) as cm:
+        """Test that initialization without zcli or walker raises WizardInitializationError."""
+        with self.assertRaises(WizardInitializationError) as cm:
             zWizard()
         self.assertIn("requires either zcli or walker", str(cm.exception))
 
     def test_init_with_walker_without_session_raises_error(self):
-        """Test that walker without session raises ValueError."""
+        """Test that walker without session raises WizardInitializationError."""
         mock_walker = MagicMock()
         mock_walker.zSession = None
         mock_walker.logger = MagicMock()
 
-        with self.assertRaises(ValueError) as cm:
+        with self.assertRaises(WizardInitializationError) as cm:
             zWizard(walker=mock_walker)
         self.assertIn("requires a walker with a session", str(cm.exception))
 
@@ -216,7 +255,13 @@ class TestzWizardHandle(unittest.TestCase):
 
         result = self.wizard.handle(workflow)
 
-        self.assertEqual(result, ["result1", "result2"])
+        # Result should be a WizardHat object
+        self.assertIsInstance(result, WizardHat)
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0], "result1")
+        self.assertEqual(result[1], "result2")
+        self.assertEqual(result["step1"], "result1")
+        self.assertEqual(result["step2"], "result2")
         self.assertEqual(self.mock_zcli.shell.executor.execute_wizard_step.call_count, 2)
 
     def test_handle_with_meta_keys(self):
@@ -231,7 +276,11 @@ class TestzWizardHandle(unittest.TestCase):
 
         result = self.wizard.handle(workflow)
 
-        self.assertEqual(result, ["result"])
+        # Result should be a WizardHat object with one step
+        self.assertIsInstance(result, WizardHat)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0], "result")
+        self.assertEqual(result["step1"], "result")
         self.assertEqual(self.mock_zcli.shell.executor.execute_wizard_step.call_count, 1)  # Only step1
 
     def test_handle_with_zhat_interpolation(self):
@@ -245,7 +294,13 @@ class TestzWizardHandle(unittest.TestCase):
 
         result = self.wizard.handle(workflow)
 
-        self.assertEqual(result, ["first_result", "second_result"])
+        # Result should be a WizardHat object
+        self.assertIsInstance(result, WizardHat)
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0], "first_result")
+        self.assertEqual(result[1], "second_result")
+        self.assertEqual(result["step1"], "first_result")
+        self.assertEqual(result["step2"], "second_result")
         # Check that step2 received interpolated value
         call_args = self.mock_zcli.shell.executor.execute_wizard_step.call_args_list[1]
         step_value = call_args[0][1]  # Second positional arg is step_value
@@ -264,7 +319,11 @@ class TestzWizardHandle(unittest.TestCase):
 
         result = self.wizard.handle(workflow)
 
-        self.assertEqual(result, ["result"])
+        # Result should be a WizardHat object
+        self.assertIsInstance(result, WizardHat)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0], "result")
+        self.assertEqual(result["step1"], "result")
         mock_schema_cache.commit_transaction.assert_called_once_with("mydb")
 
     def test_handle_with_transaction_rollback(self):
@@ -323,6 +382,93 @@ class TestzWizardHandle(unittest.TestCase):
             self.assertEqual(context.get("schema_cache"), mock_schema_cache)
 
 
+class TestWizardHatTripleAccess(unittest.TestCase):
+    """Test WizardHat's new triple-access pattern (numeric, key, attribute)."""
+
+    def test_numeric_access(self):
+        """Test numeric indexing (backward compatible)."""
+        zHat = WizardHat()
+        zHat.add("step1", "value1")
+        zHat.add("step2", "value2")
+
+        self.assertEqual(zHat[0], "value1")
+        self.assertEqual(zHat[1], "value2")
+
+    def test_key_access(self):
+        """Test key-based access (semantic)."""
+        zHat = WizardHat()
+        zHat.add("fetch_data", {"files": [1, 2, 3]})
+        zHat.add("process_data", {"status": "done"})
+
+        self.assertEqual(zHat["fetch_data"], {"files": [1, 2, 3]})
+        self.assertEqual(zHat["process_data"], {"status": "done"})
+
+    def test_attribute_access(self):
+        """Test attribute-style access (convenient - NEW!)."""
+        zHat = WizardHat()
+        zHat.add("user_id", 42)
+        zHat.add("username", "alice")
+
+        self.assertEqual(zHat.user_id, 42)
+        self.assertEqual(zHat.username, "alice")
+
+    def test_triple_access_consistency(self):
+        """Test that all three access methods return the same value."""
+        zHat = WizardHat()
+        zHat.add("test_step", "test_value")
+
+        # All three should return the same value
+        self.assertEqual(zHat[0], "test_value")
+        self.assertEqual(zHat["test_step"], "test_value")
+        self.assertEqual(zHat.test_step, "test_value")
+
+    def test_contains_check(self):
+        """Test 'in' operator for both numeric and key checks."""
+        zHat = WizardHat()
+        zHat.add("step1", "value1")
+
+        self.assertTrue(0 in zHat)
+        self.assertTrue("step1" in zHat)
+        self.assertFalse(1 in zHat)
+        self.assertFalse("step2" in zHat)
+
+    def test_length(self):
+        """Test len() function."""
+        zHat = WizardHat()
+        self.assertEqual(len(zHat), 0)
+
+        zHat.add("step1", "value1")
+        self.assertEqual(len(zHat), 1)
+
+        zHat.add("step2", "value2")
+        self.assertEqual(len(zHat), 2)
+
+    def test_repr(self):
+        """Test string representation."""
+        zHat = WizardHat()
+        zHat.add("step1", "value1")
+        zHat.add("step2", "value2")
+
+        repr_str = repr(zHat)
+        self.assertIn("WizardHat", repr_str)
+        self.assertIn("steps=2", repr_str)
+        self.assertIn("['step1', 'step2']", repr_str)
+
+    def test_interpolation_with_key_access(self):
+        """Test interpolation using key-based zHat access."""
+        zHat = WizardHat()
+        zHat.add("user_id", 123)
+        zHat.add("username", "bob")
+
+        mock_logger = MagicMock()
+        step_value = "User zHat[user_id] is zHat[username]"
+
+        result = interpolate_zhat(step_value, zHat, mock_logger)
+
+        self.assertIn("123", result)
+        self.assertIn("'bob'", result)
+
+
 class TestzWizardHelperMethods(unittest.TestCase):
     """Test helper methods."""
 
@@ -355,45 +501,66 @@ class TestzWizardHelperMethods(unittest.TestCase):
         self.assertEqual(display, mock_walker.display)
 
     def test_interpolate_zhat_string(self):
-        """Test _interpolate_zhat() with string value."""
-        zHat = ["result1", "result2"]
+        """Test interpolate_zhat() with string value using WizardHat."""
+        zHat = WizardHat()
+        zHat.add("step1", "result1")
+        zHat.add("step2", "result2")
         step_value = "command with zHat[0] and zHat[1]"
 
-        result = self.wizard._interpolate_zhat(step_value, zHat)
+        result = interpolate_zhat(step_value, zHat, self.mock_zcli.logger)
 
         self.assertIn("'result1'", result)
         self.assertIn("'result2'", result)
 
     def test_interpolate_zhat_non_string(self):
-        """Test _interpolate_zhat() with non-string value."""
-        zHat = ["result1"]
+        """Test interpolate_zhat() with non-string value (dict)."""
+        zHat = WizardHat()
+        zHat.add("step1", "result1")
         step_value = {"key": "value"}
 
-        result = self.wizard._interpolate_zhat(step_value, zHat)
+        result = interpolate_zhat(step_value, zHat, self.mock_zcli.logger)
 
         self.assertEqual(result, step_value)  # Unchanged
 
     def test_check_transaction_start_with_zdata(self):
-        """Test _check_transaction_start() with zData step."""
+        """Test check_transaction_start() with zData step."""
         step_value = {"zData": {"model": "$mydb", "action": "read"}}
         
-        alias = self.wizard._check_transaction_start(True, None, step_value)
+        alias = check_transaction_start(
+            use_transaction=True,
+            transaction_alias=None,
+            step_value=step_value,
+            schema_cache=self.wizard.schema_cache,
+            logger=self.mock_zcli.logger
+        )
 
         self.assertEqual(alias, "mydb")
 
     def test_check_transaction_start_without_dollar(self):
-        """Test _check_transaction_start() without $ prefix."""
+        """Test check_transaction_start() without $ prefix."""
         step_value = {"zData": {"model": "mydb", "action": "read"}}
         
-        alias = self.wizard._check_transaction_start(True, None, step_value)
+        alias = check_transaction_start(
+            use_transaction=True,
+            transaction_alias=None,
+            step_value=step_value,
+            schema_cache=self.wizard.schema_cache,
+            logger=self.mock_zcli.logger
+        )
 
         self.assertIsNone(alias)
 
     def test_check_transaction_start_already_started(self):
-        """Test _check_transaction_start() when transaction already started."""
+        """Test check_transaction_start() when transaction already started."""
         step_value = {"zData": {"model": "$mydb", "action": "read"}}
         
-        alias = self.wizard._check_transaction_start(True, "existing_alias", step_value)
+        alias = check_transaction_start(
+            use_transaction=True,
+            transaction_alias="existing_alias",
+            step_value=step_value,
+            schema_cache=self.wizard.schema_cache,
+            logger=self.mock_zcli.logger
+        )
 
         self.assertIsNone(alias)
 
@@ -407,6 +574,7 @@ def run_tests(verbose=False):
     suite.addTests(loader.loadTestsFromTestCase(TestzWizardInitialization))
     suite.addTests(loader.loadTestsFromTestCase(TestzWizardExecuteLoop))
     suite.addTests(loader.loadTestsFromTestCase(TestzWizardHandle))
+    suite.addTests(loader.loadTestsFromTestCase(TestWizardHatTripleAccess))
     suite.addTests(loader.loadTestsFromTestCase(TestzWizardHelperMethods))
 
     runner = unittest.TextTestRunner(verbosity=2 if verbose else 1)

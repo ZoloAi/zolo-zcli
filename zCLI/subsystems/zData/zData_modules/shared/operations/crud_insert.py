@@ -1,5 +1,200 @@
 # zCLI/subsystems/zData/zData_modules/shared/operations/crud_insert.py
-"""INSERT operation handler."""
+"""
+INSERT operation handler with hooks, validation, and flexible data sources.
+
+This module implements the INSERT operation for zData's CRUD system. It provides
+a comprehensive handler for inserting rows into database tables with support for
+multiple data sources, pre/post-insert hooks, and schema-based validation.
+
+Operation Overview
+-----------------
+The INSERT operation adds a new row to an existing table. The handler supports:
+- Multiple data sources (explicit fields/values, data dict, command-line options)
+- Pre-insert hooks (onBeforeInsert) for data modification or abortion
+- Schema-based validation (required fields, data types, patterns, format, plugins)
+- Post-insert hooks (onAfterInsert) for side effects
+- Integration with zDialog (form submissions)
+- Flexible error handling and logging
+
+Execution Flow
+-------------
+The INSERT operation follows a 6-phase execution flow:
+
+    1. **Table Extraction:** Extract and validate table name from request
+       ↓
+    2. **Data Collection:** Gather field/value pairs from multiple sources
+       ↓
+    3. **onBeforeInsert Hook:** Execute pre-insert hook (optional)
+       - Can modify data (return dict to update fields)
+       - Can abort operation (return False)
+       ↓
+    4. **Validation:** Validate data against schema rules
+       - Required fields check
+       - Data type validation
+       - Pattern matching (regex)
+       - Format validation (email, url, etc.)
+       - Plugin validators (custom business logic)
+       ↓
+    5. **Insert Execution:** Execute adapter's insert() method
+       - Returns row_id (primary key or last insert ID)
+       ↓
+    6. **onAfterInsert Hook:** Execute post-insert hook (optional)
+       - Receives inserted data + row_id
+       - For side effects (notifications, logging, etc.)
+
+Data Sources
+-----------
+The handler supports three data sources (checked in order):
+
+**1. Data Dictionary (from zDialog):**
+    request["data"] = {"name": "Alice", "age": 30}
+    - Most common source for form submissions
+    - Used by zDialog for interactive forms
+
+**2. Explicit Fields/Values:**
+    request["fields"] = ["name", "age"]
+    request["values"] = ["Alice", 30]
+    - Direct specification of columns and values
+    - Used for programmatic inserts
+
+**3. Command-Line Options:**
+    request["name"] = "Alice"
+    request["age"] = 30
+    - Extracted by extract_field_values helper
+    - Used for CLI commands
+
+Hook Integration
+---------------
+**onBeforeInsert Hook:**
+- Executed before validation
+- Receives: {"zConv": data_dict, "table": table_name}
+- Can modify data: Return dict to update/add fields
+- Can abort: Return False to cancel insert
+- Use cases: data enrichment, computed fields, business rules
+
+**onAfterInsert Hook:**
+- Executed after successful insert
+- Receives: {"zConv": data_dict, "table": table_name, "row_id": insert_id}
+- Return value ignored (side effects only)
+- Use cases: notifications, audit logs, cascade operations
+
+zConv Pattern
+------------
+"zConv" (zCLI Convention) is the standard key used to pass data dictionaries
+in hook contexts. It represents the current conversation/transaction data and
+is used consistently across zCLI subsystems (zDialog, zData, zWizard, zFunc).
+
+Validation Integration
+---------------------
+Data validation is performed via ops.validator.validate_insert(), which enforces:
+- Required fields (from schema)
+- Data types (int, float, str, bool)
+- Pattern matching (regex)
+- Format validation (email, url, date, etc.)
+- Plugin validators (custom business logic via zFunc)
+
+If validation fails, errors are displayed via display_validation_errors() and
+the operation is aborted.
+
+Usage Examples
+-------------
+**Basic INSERT:**
+    >>> request = {
+    ...     "table": "users",
+    ...     "data": {"name": "Alice", "email": "alice@example.com"}
+    ... }
+    >>> result = handle_insert(request, ops)
+    [OK] Inserted row with ID: 1
+
+**INSERT with onBeforeInsert Hook:**
+    >>> # Schema with hook to add timestamp
+    >>> schema = {
+    ...     "users": {
+    ...         "onBeforeInsert": "&add_timestamp"
+    ...     }
+    ... }
+    >>> # Plugin function adds created_at field
+    >>> result = handle_insert(request, ops)
+
+**INSERT with Validation Errors:**
+    >>> request = {"table": "users", "data": {"name": ""}}  # Empty name
+    >>> result = handle_insert(request, ops)
+    [ERROR] Validation failed for table 'users':
+      - name: Field is required
+
+Integration
+----------
+This module is used by:
+- classical_data.py: Classical paradigm INSERT operations
+- quantum_data.py: Quantum paradigm INSERT operations
+- data_operations.py: CRUD operation router
+"""
+
+from zCLI import Any, Dict
+
+# ============================================================
+# Module Constants - Operation Name
+# ============================================================
+
+OP_INSERT = "INSERT"
+
+# ============================================================
+# Module Constants - Request Keys
+# ============================================================
+
+KEY_FIELDS = "fields"
+KEY_VALUES = "values"
+KEY_DATA = "data"
+KEY_TABLE = "table"
+KEY_SCHEMA = "schema"
+KEY_ROW_ID = "row_id"
+
+# ============================================================
+# Module Constants - Hook Names
+# ============================================================
+
+HOOK_BEFORE_INSERT = "onBeforeInsert"
+HOOK_AFTER_INSERT = "onAfterInsert"
+
+# ============================================================
+# Module Constants - zConv Key
+# ============================================================
+
+ZCONV_KEY = "zConv"
+
+# ============================================================
+# Module Constants - Log Messages
+# ============================================================
+
+LOG_EXTRACT_TABLE = "Extracting table from request for %s operation"
+LOG_EXTRACT_FIELDS = "Extracting fields/values from request"
+LOG_BUILD_DATA = "Building data dictionary from fields/values"
+LOG_HOOK_BEFORE = "Executing %s hook for %s"
+LOG_HOOK_AFTER = "Executing %s hook for %s"
+LOG_VALIDATE = "Validating data for %s operation on table %s"
+LOG_INSERT = "Executing insert operation on table %s"
+LOG_SUCCESS = "[OK] Inserted row with ID: %s"
+LOG_HOOK_ABORT = "%s hook returned False, aborting %s operation"
+LOG_HOOK_MODIFY = "%s hook returned dict, updating data"
+LOG_VALIDATION_ERROR = "Validation failed for table %s"
+LOG_INSERT_ERROR = "Insert operation failed for table %s"
+
+# ============================================================
+# Module Constants - Error Messages
+# ============================================================
+
+ERR_NO_TABLE = "No table specified for INSERT operation"
+ERR_NO_FIELDS = "No fields specified for INSERT operation"
+ERR_HOOK_ABORT = "onBeforeInsert hook aborted operation"
+ERR_VALIDATION_FAILED = "Validation failed"
+ERR_INSERT_FAILED = "Insert operation failed"
+ERR_NO_DATA = "No data provided for INSERT operation"
+ERR_INVALID_DATA = "Invalid data format"
+ERR_HOOK_ERROR = "Hook execution error"
+
+# ============================================================
+# Imports - Helper Functions
+# ============================================================
 
 try:
     from .helpers import (
@@ -14,61 +209,120 @@ except ImportError:
         display_validation_errors
     )
 
-def handle_insert(request, ops):
-    """Handle INSERT operation (insert row into existing table)."""
-    # Extract and validate table name
-    table = extract_table_from_request(request, "INSERT", ops, check_exists=True)
+# ============================================================
+# Public API
+# ============================================================
+
+__all__ = ["handle_insert"]
+
+
+
+# ============================================================
+# CRUD Operations - INSERT
+# ============================================================
+
+def handle_insert(request: Dict[str, Any], ops: Any) -> bool:
+    """
+    Handle INSERT operation to insert a new row into an existing table.
+
+    This function implements the complete INSERT workflow including table validation,
+    data collection from multiple sources, pre-insert hooks, schema validation,
+    insert execution, and post-insert hooks.
+
+    Args:
+        request: Request dictionary containing operation parameters
+            - "table" (str): Table name to insert into
+            - "data" (dict, optional): Data dictionary (from zDialog)
+            - "fields" (list, optional): Field names
+            - "values" (list, optional): Field values
+            - Additional keys extracted as field/value pairs (command-line)
+        ops: Operations object providing:
+            - schema (dict): Table schemas with validation rules and hooks
+            - validator: Validator instance for data validation
+            - logger: Logger instance for diagnostic output
+            - insert(table, fields, values): Insert method
+            - execute_hook(hook, context): Hook execution method
+
+    Returns:
+        bool: True if insert succeeded, False if failed (validation, hook abort, etc.)
+
+    Raises:
+        None: All errors are logged and return False
+
+    Examples:
+        >>> # Basic INSERT with data dict
+        >>> request = {"table": "users", "data": {"name": "Alice", "age": 30}}
+        >>> result = handle_insert(request, ops)
+        [OK] Inserted row with ID: 1
+
+        >>> # INSERT with hook that adds timestamp
+        >>> request = {"table": "logs", "data": {"message": "System started"}}
+        >>> result = handle_insert(request, ops)
+        Executing onBeforeInsert hook for logs
+        [OK] Inserted row with ID: 42
+
+    Notes:
+        - Data sources checked in order: data dict, fields/values, command-line
+        - onBeforeInsert hook can modify data or abort (return False)
+        - Validation enforced via validator.validate_insert()
+        - onAfterInsert hook for side effects (notifications, logging)
+        - zConv key used to pass data in hook context
+    """
+    # Phase 1: Extract and validate table name
+    table = extract_table_from_request(request, OP_INSERT, ops, check_exists=True)
     if not table:
         return False
 
-    # Extract field/value pairs from request
-    fields = request.get("fields", [])
-    values = request.get("values")
+    # Phase 2: Extract field/value pairs from request
+    fields = request.get(KEY_FIELDS, [])
+    values = request.get(KEY_VALUES)
     
     # Check if data dictionary is provided (from zDialog/zData)
-    data_dict = request.get("data")
+    data_dict = request.get(KEY_DATA)
     if data_dict and isinstance(data_dict, dict):
         fields = list(data_dict.keys())
         values = list(data_dict.values())
     # If no explicit values, extract from command-line options
     elif not values:
-        fields, values = extract_field_values(request, "INSERT", ops)
+        fields, values = extract_field_values(request, OP_INSERT, ops)
         if not fields:
             return False
 
-    # Build data dictionary for validation
+    # Build data dictionary for validation and hooks
     data = dict(zip(fields, values))
 
-    # Execute onBeforeInsert hook (can modify data)
+    # Phase 3: Execute onBeforeInsert hook (can modify data or abort)
     table_schema = ops.schema.get(table, {})
-    on_before_insert = table_schema.get("onBeforeInsert")
+    on_before_insert = table_schema.get(HOOK_BEFORE_INSERT)
     if on_before_insert:
-        ops.logger.info("Executing onBeforeInsert hook for %s", table)
-        hook_result = ops.execute_hook(on_before_insert, {"zConv": data, "table": table})
+        ops.logger.info(LOG_HOOK_BEFORE, HOOK_BEFORE_INSERT, table)
+        hook_result = ops.execute_hook(on_before_insert, {ZCONV_KEY: data, KEY_TABLE: table})
         if hook_result is False:
-            ops.logger.error("onBeforeInsert hook returned False, aborting insert")
+            ops.logger.error(LOG_HOOK_ABORT, HOOK_BEFORE_INSERT, OP_INSERT)
             return False
         # If hook returns a dict, use it to update data
         if isinstance(hook_result, dict):
+            ops.logger.debug(LOG_HOOK_MODIFY, HOOK_BEFORE_INSERT)
             data.update(hook_result)
             fields = list(data.keys())
             values = list(data.values())
 
-    # Validate data before inserting
+    # Phase 4: Validate data before inserting
     is_valid, errors = ops.validator.validate_insert(table, data)
     if not is_valid:
+        ops.logger.error(LOG_VALIDATION_ERROR, table)
         display_validation_errors(table, errors, ops)
         return False
 
-    # Execute insert using operations' insert method
+    # Phase 5: Execute insert using operations' insert method
     row_id = ops.insert(table, fields, values)
-    ops.logger.info("[OK] Inserted row with ID: %s", row_id)
+    ops.logger.info(LOG_SUCCESS, row_id)
 
-    # Execute onAfterInsert hook (for side effects)
-    on_after_insert = table_schema.get("onAfterInsert")
+    # Phase 6: Execute onAfterInsert hook (for side effects)
+    on_after_insert = table_schema.get(HOOK_AFTER_INSERT)
     if on_after_insert:
-        ops.logger.info("Executing onAfterInsert hook for %s", table)
-        context = {"zConv": data, "table": table, "row_id": row_id}
+        ops.logger.info(LOG_HOOK_AFTER, HOOK_AFTER_INSERT, table)
+        context = {ZCONV_KEY: data, KEY_TABLE: table, KEY_ROW_ID: row_id}
         ops.execute_hook(on_after_insert, context)
 
     return True

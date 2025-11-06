@@ -1,85 +1,396 @@
 # zCLI/subsystems/zWizard/zWizard.py
 
-"""Core loop engine for stepped execution in Shell and Walker modes."""
+"""
+zWizard - Core Loop Engine for Stepped Execution
+=================================================
 
-from typing import Any, Union
-from zCLI import re
+The zWizard subsystem provides a declarative, multi-step workflow engine that powers
+both Shell commands and Walker menu navigation. It orchestrates complex sequences
+with context persistence, transaction support, and RBAC enforcement.
+
+Core Responsibilities
+--------------------
+1. **Loop Execution**: Iterate through ordered key-value pairs with dispatch
+2. **Navigation Handling**: Process navigation signals (zBack, exit, stop, error)
+3. **Context Management**: Maintain persistent state across steps via WizardHat
+4. **Transaction Support**: Optional transactional execution with rollback
+5. **RBAC Integration**: Enforce role-based access control per step
+6. **Error Handling**: Graceful error handling with callback support
+7. **Mode Flexibility**: Support both Shell (command) and Walker (menu) modes
+
+Architecture
+-----------
+### Dual-Mode Design
+- **Shell Mode**: Uses `zcli` instance for command-based workflows
+- **Walker Mode**: Uses `walker` instance for menu-based navigation
+- **Instance Detection**: Automatically detects mode from constructor args
+
+### Key Components
+1. **zWizard.py** (this file): Main orchestrator class
+2. **wizard_hat.py**: Dual-access state container (dict + attribute access)
+3. **wizard_interpolation.py**: Template variable interpolation ({{ zHat.key }})
+4. **wizard_transactions.py**: Transaction management for data operations
+5. **wizard_rbac.py**: Role-based access control enforcement
+6. **wizard_exceptions.py**: Custom exception types
+
+### Navigation Flow
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ execute_loop(items_dict, dispatch_fn, navigation_callbacks)    │
+│                                                                 │
+│  For each key in items_dict:                                   │
+│    1. Check RBAC access → Skip if denied                       │
+│    2. Dispatch action → Execute via dispatch_fn                │
+│    3. Handle result:                                           │
+│       - Key jump? → Jump to that key in loop                   │
+│       - Navigation signal? → Call callback or return           │
+│       - Error? → Handle via error callback                     │
+│    4. Continue to next key                                     │
+│                                                                 │
+│  Return: Navigation result or None                             │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Context Persistence (WizardHat)
+The `WizardHat` container provides dual-access state management:
+```python
+zHat = WizardHat()
+zHat["user"] = "Alice"        # Dict-style access
+print(zHat.user)              # Attribute-style access → "Alice"
+```
+
+### Variable Interpolation
+Steps can reference previous step results using `{{ zHat.key }}` syntax:
+```yaml
+step1:
+  type: zFunc
+  function: get_user_id
+  
+step2:
+  type: zDisplay
+  message: "User ID: {{ zHat.step1 }}"  # Interpolates step1's result
+```
+
+Navigation Signals
+-----------------
+### Core Signals (NAVIGATION_SIGNALS tuple)
+- **zBack**: Return to previous menu/context
+- **exit**: Exit the wizard/walker entirely
+- **stop**: Stop current execution
+- **error**: Indicate an error occurred
+- **""** (empty): Error signal (treated as error)
+
+### Navigation Callbacks
+Wizards can provide custom handlers for navigation events:
+```python
+navigation_callbacks = {
+    "on_back": handle_back,     # Called on zBack
+    "on_exit": handle_exit,     # Called on exit
+    "on_stop": handle_stop,     # Called on stop
+    "on_error": handle_error    # Called on error
+}
+```
+
+RBAC Integration
+---------------
+Each step can have RBAC requirements enforced automatically:
+- **Check**: Uses `wizard_rbac.check_rbac_access()`
+- **Denial**: Skips step and continues to next
+- **Logging**: Logs access denials for audit trail
+- **Display**: Shows access denied message if display available
+
+Transaction Support
+------------------
+Wizards can execute with transactional semantics:
+```yaml
+_transaction: true  # Enable transaction mode
+step1: 
+  zData: ...
+step2:
+  zData: ...  # Committed together or rolled back on error
+```
+
+Integration Points
+-----------------
+### How zShell Uses zWizard
+**Wizard Mode Execution:**
+- zShell enters "wizard mode" when executing declarative YAML workflows
+- Steps are dispatched via `shell.executor.execute_wizard_step()`
+- Context includes `wizard_mode: True` flag for special handling
+- WizardHat accumulates results across all steps
+- Navigation signals control flow (zBack returns to shell prompt)
+
+**Example Flow:**
+```
+1. User runs: zolo wizard my_workflow.yaml
+2. zShell loads YAML, calls wizard.handle(workflow)
+3. zWizard executes each step via shell executor
+4. Results accumulate in zHat
+5. Shell displays final results or handles navigation
+```
+
+### How zWalker Uses zWizard (Inheritance)
+**Menu Orchestration:**
+- zWalker inherits from zWizard, reusing the loop engine
+- Menu items become wizard steps with dispatch to walker.dispatch
+- Navigation signals map to menu actions (zBack = previous menu)
+- RBAC protects menu items based on user roles
+- WizardHat tracks menu selections and state
+
+**Key Differences:**
+- Walker uses its own dispatch instance (walker.dispatch.handle)
+- Menu items don't show "zWizard Ready" message (suppressed for subclasses)
+- Navigation is menu-centric (breadcrumbs, menu stack)
+
+### Integration with zLoader.schema_cache
+**Transaction Management:**
+- zWizard detects transaction mode from `_transaction: true`
+- Identifies database alias from `$alias` in zData model references
+- Passes schema_cache through context to all zData operations
+- On success: Calls `schema_cache.commit_transaction(alias)`
+- On error: Calls `schema_cache.rollback_transaction(alias)`
+- Always cleans up: `schema_cache.clear()` after execution
+
+**Connection Reuse:**
+- Schema cache maintains database connections across wizard steps
+- Same connection used for all operations within a transaction
+- Improves performance and ensures transaction isolation
+- Context key: `CONTEXT_KEY_SCHEMA_CACHE`
+
+### Integration with zData Subsystem
+**Data Operations:**
+- zData operations execute within wizard context when `wizard_mode: True`
+- Steps can reference previous data results: `{{ zHat.step1.id }}`
+- Transaction alias from `$model` enables atomic multi-step operations
+- zData returns results that are stored in WizardHat for interpolation
+
+**Transactional Flow:**
+```yaml
+_transaction: true
+create_user:
+  zData:
+    model: "$users"      # Transaction starts with "users" alias
+    operation: create
+    data: {name: "Alice"}
+
+create_profile:
+  zData:
+    model: "$users"      # Uses same transaction
+    operation: create
+    data: {user_id: "{{ zHat.create_user.id }}", bio: "Developer"}
+
+# Both operations committed together atomically
+```
+
+### Integration with zAuth (RBAC)
+**Access Control:**
+- Each wizard step can declare `_rbac` metadata
+- zWizard calls `check_rbac_access()` before executing each step
+- Authentication check: `zcli.auth.is_authenticated()`
+- Role check: `zcli.auth.has_role(required_role)`
+- Permission check: `zcli.auth.has_permission(required_permission)`
+- Denied steps are skipped (not executed), audit logged
+
+**Context-Aware RBAC:**
+- Uses active auth context (zSession, Application, or Dual mode)
+- RBAC checks respect three-tier authentication model
+- Access denied displayed via zDisplay (Terminal + Bifrost compatible)
+
+### Integration with zDisplay
+**Mode-Agnostic Output:**
+- All wizard output goes through zDisplay subsystem
+- Works in Terminal mode (direct output) and Bifrost mode (WebSocket)
+- Uses declarative display events (not print statements)
+- Wizard steps return None, display via `display.handle()` or `display.zDeclare()`
+
+**Display Events:**
+- Step progress: `display.zDeclare("zWizard step: X", color=SUBSYSTEM_COLOR)`
+- Access denied: Multi-event sequence with error styling
+- Results: Via step-specific display logic (zDisplay events)
+
+### Integration with zDispatch
+**Action Routing:**
+- zWizard doesn't execute actions directly
+- Delegates to `zcli.dispatch.handle(key, value, context)` (Shell mode)
+- Or delegates to `walker.dispatch.handle(key, value)` (Walker mode)
+- Context includes: wizard_mode, schema_cache, zHat
+- Dispatch determines action type (zFunc, zDisplay, zData, etc.)
+
+**Dispatch Context Flow:**
+```
+zWizard → dispatch.handle() → Action Type Detection → Subsystem Execution
+          (passes context)      (zFunc, zData, etc.)  (receives context)
+```
+
+Layer Position
+-------------
+- **Layer**: 2 (Middle Layer - Orchestration)
+- **Position**: 2 (After zUtils, before zData/zShell)
+- **Initialization Order**: Depends on zConfig, zDisplay, zParser, zLoader, zFunc
+- **Consumed By**: zShell (wizard mode), zWalker (menu orchestration), zData (transactions)
+- **Architecture Tier**: Orchestration (coordinates multiple subsystems)
+
+Constants Reference
+------------------
+### Subsystem Identity
+- SUBSYSTEM_NAME: "zWizard"
+- SUBSYSTEM_COLOR: "ZWIZARD"
+- MSG_READY: "zWizard Ready"
+
+### Navigation Signals
+- SIGNAL_ZBACK, SIGNAL_EXIT, SIGNAL_STOP, SIGNAL_ERROR, SIGNAL_EMPTY
+- NAVIGATION_SIGNALS: Tuple of all signals
+
+### Context Keys
+- CONTEXT_KEY_WIZARD_MODE: Session key for wizard mode flag
+- CONTEXT_KEY_SCHEMA_CACHE: Key for schema cache in context
+- CONTEXT_KEY_ZHAT: Key for WizardHat instance
+
+### Callbacks
+- CALLBACK_ON_BACK, CALLBACK_ON_EXIT, CALLBACK_ON_STOP, CALLBACK_ON_ERROR
+
+### Display
+- MSG_HANDLE_WIZARD, MSG_WIZARD_STEP, MSG_ZKEY_DISPLAY, MSG_DISPATCH_ERROR
+- STYLE_FULL, STYLE_SINGLE, COLOR_MAIN, COLOR_ERROR
+- INDENT_LEVEL_0, INDENT_LEVEL_1, INDENT_LEVEL_2
+
+Usage Examples
+-------------
+### Shell Command Workflow
+```python
+wizard = zWizard(zcli=zcli_instance)
+items = {
+    "welcome": {"type": "zDisplay", "message": "Welcome!"},
+    "get_name": {"type": "zDialog", "prompt": "Name?"},
+    "greet": {"type": "zFunc", "function": "greet_user"}
+}
+result = wizard.execute_loop(items)
+```
+
+### Walker Menu Navigation
+```python
+walker = zWalker(walker_instance)  # zWalker inherits from zWizard
+menu_items = {
+    "users": {"label": "Manage Users", "action": "user_menu"},
+    "settings": {"label": "Settings", "action": "settings_menu"}
+}
+result = walker.execute_loop(menu_items)
+```
+
+Dependencies
+-----------
+- **Internal**: zDisplay, zDispatch, zAuth (via zcli/walker)
+- **Modules**: wizard_hat, wizard_interpolation, wizard_transactions, 
+              wizard_rbac, wizard_exceptions
+- **Config**: SESSION_KEY_WIZARD_MODE from zConfig
+
+Version History
+--------------
+- v1.5.4 Week 6.14: Industry-grade modernization (Phase 0-1)
+- v1.5.4 Week 3.3: RBAC integration
+- Earlier: Initial implementation
+
+Notes
+-----
+- zWalker inherits from zWizard, reusing loop engine for menus
+- Only direct zWizard instances show "zWizard Ready" message
+- All display output is mode-agnostic (Terminal + Bifrost)
+- Uses UI Adapter pattern (returns None, outputs via zDisplay)
+"""
+
+from typing import Any, Dict, Optional
+
+from .zWizard_modules.wizard_hat import WizardHat
+from .zWizard_modules.wizard_interpolation import interpolate_zhat
+from .zWizard_modules.wizard_transactions import (
+    check_transaction_start,
+    commit_transaction,
+    rollback_transaction,
+)
+from .zWizard_modules.wizard_rbac import check_rbac_access
+from .zWizard_modules.wizard_exceptions import (
+    WizardInitializationError,
+    ERR_MISSING_INSTANCE
+)
+
+# Import session constants from zConfig
+from ..zConfig.zConfig_modules.config_session import SESSION_KEY_WIZARD_MODE
 
 
-class WizardHat:
-    """
-    Dual-access wizard results container.
-    
-    Supports both:
-    - Numeric indexing: zHat[0], zHat[1], ... (backward compatible)
-    - Key-based access: zHat["step1"], zHat["fetch_cached"], ... (semantic)
-    
-    Example:
-        >>> zHat = WizardHat()
-        >>> zHat.add("fetch_data", {"files": [...]})
-        >>> zHat[0]                    # Access by position
-        >>> zHat["fetch_data"]         # Access by step name (more readable!)
-    """
-    
-    def __init__(self):
-        """Initialize dual-access container."""
-        self._list: list = []   # For numeric access (backward compat)
-        self._dict: dict = {}   # For key-based access (semantic)
-    
-    def add(self, key: str, value: Any) -> None:
-        """
-        Add result with both numeric and key-based access.
-        
-        Args:
-            key: Step name (e.g., "step1", "fetch_cached")
-            value: Step result
-        """
-        self._list.append(value)
-        self._dict[key] = value
-    
-    def __getitem__(self, key: Union[int, str]) -> Any:
-        """
-        Support both zHat[0] and zHat["step1"].
-        
-        Args:
-            key: Numeric index or string key
-            
-        Returns:
-            Step result
-            
-        Raises:
-            KeyError: If key is invalid
-            IndexError: If numeric index is out of range
-        """
-        if isinstance(key, int):
-            return self._list[key]
-        elif isinstance(key, str):
-            if key not in self._dict:
-                raise KeyError(f"zHat key not found: {key}")
-            return self._dict[key]
-        raise KeyError(f"Invalid zHat key type: {type(key)}")
-    
-    def __len__(self) -> int:
-        """Return number of results."""
-        return len(self._list)
-    
-    def __contains__(self, key: Union[int, str]) -> bool:
-        """Check if key exists."""
-        if isinstance(key, int):
-            return 0 <= key < len(self._list)
-        elif isinstance(key, str):
-            return key in self._dict
-        return False
-    
-    def __repr__(self) -> str:
-        """String representation for debugging."""
-        return f"WizardHat(steps={len(self._list)}, keys={list(self._dict.keys())})"
+# ═══════════════════════════════════════════════════════════════════════════
+# PUBLIC API
+# ═══════════════════════════════════════════════════════════════════════════
+
+__all__ = ["zWizard"]
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# MODULE CONSTANTS
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Subsystem Identity
+SUBSYSTEM_NAME: str = "zWizard"
+SUBSYSTEM_COLOR: str = "ZWIZARD"
+MSG_READY: str = "zWizard Ready"
+
+# Navigation Signals
+SIGNAL_ZBACK: str = "zBack"
+SIGNAL_EXIT: str = "exit"
+SIGNAL_STOP: str = "stop"
+SIGNAL_ERROR: str = "error"
+SIGNAL_EMPTY: str = ""
+NAVIGATION_SIGNALS: tuple = (SIGNAL_ZBACK, SIGNAL_EXIT, SIGNAL_STOP, SIGNAL_ERROR, SIGNAL_EMPTY)
+
+# RBAC Results
+RBAC_ACCESS_GRANTED: str = "access_granted"
+RBAC_ACCESS_DENIED: str = "access_denied"
+
+# Context Keys
+CONTEXT_KEY_WIZARD_MODE: str = SESSION_KEY_WIZARD_MODE  # Use zConfig constant
+CONTEXT_KEY_SCHEMA_CACHE: str = "schema_cache"
+CONTEXT_KEY_ZHAT: str = "zHat"
+
+# Navigation Callback Keys
+CALLBACK_ON_BACK: str = "on_back"
+CALLBACK_ON_EXIT: str = "on_exit"
+CALLBACK_ON_STOP: str = "on_stop"
+CALLBACK_ON_ERROR: str = "on_error"
+
+# Display Messages
+MSG_HANDLE_WIZARD: str = "Handle zWizard"
+MSG_WIZARD_STEP: str = "zWizard step: %s"
+MSG_ZKEY_DISPLAY: str = "zKey: %s"
+MSG_DISPATCH_ERROR: str = "Dispatch error for: %s"
+
+# Display Styles
+STYLE_FULL: str = "full"
+STYLE_SINGLE: str = "single"
+COLOR_MAIN: str = "MAIN"
+COLOR_ERROR: str = "ERROR"
+
+# Log Messages
+LOG_MSG_PROCESSING_KEY: str = "Processing key: %s"
+LOG_MSG_MENU_SELECTED: str = "Menu selected key: %s - jumping to it"
+LOG_MSG_DISPATCH_ERROR: str = "Error for key '%s': %s"
+
+# Display Indentation Levels
+INDENT_LEVEL_0: int = 0
+INDENT_LEVEL_1: int = 1
+INDENT_LEVEL_2: int = 2
 
 
 class zWizard:
     """Core loop engine for stepped execution in Wizard and Walker modes."""
 
-    def __init__(self, zcli=None, walker=None):
+    # Type hints for instance attributes
+    zcli: Optional[Any]
+    walker: Optional[Any]
+    zSession: Dict[str, Any]
+    logger: Any
+    display: Optional[Any]
+    schema_cache: Optional[Any]
+
+    def __init__(self, zcli: Optional[Any] = None, walker: Optional[Any] = None) -> None:
         """Initialize zWizard subsystem with either zcli or walker instance."""
         # Support both zcli and walker instances
         if zcli:
@@ -95,10 +406,10 @@ class zWizard:
             self.walker = walker
             self.zSession = getattr(walker, "zSession", None)
             if not self.zSession:
-                raise ValueError("zWizard requires a walker with a session")
+                raise WizardInitializationError("zWizard requires a walker with a session")
             # Walker should always have a logger from zcli
             if not hasattr(walker, "logger"):
-                raise ValueError("zWizard requires a walker with a logger")
+                raise WizardInitializationError("zWizard requires a walker with a logger")
             self.logger = walker.logger
             self.display = getattr(walker, "display", None)
             # Get schema_cache from walker's loader (if available)
@@ -107,10 +418,88 @@ class zWizard:
             else:
                 self.schema_cache = None
         else:
-            raise ValueError("zWizard requires either zcli or walker instance")
+            raise WizardInitializationError(ERR_MISSING_INSTANCE)
 
-    def execute_loop(self, items_dict, dispatch_fn=None, navigation_callbacks=None, context=None, start_key=None):
-        """Core loop engine that iterates through keys, dispatches actions, and handles results."""
+        # Display ready message (only for direct zWizard instances, not subclasses like zWalker)
+        if self.display and self.__class__.__name__ == "zWizard":
+            self.display.zDeclare(MSG_READY, color=SUBSYSTEM_COLOR, indent=0, style="full")
+
+    def execute_loop(
+        self, 
+        items_dict: Dict[str, Any], 
+        dispatch_fn: Optional[Any] = None, 
+        navigation_callbacks: Optional[Dict[str, Any]] = None, 
+        context: Optional[Dict[str, Any]] = None, 
+        start_key: Optional[str] = None
+    ) -> Any:
+        """
+        Core loop engine that iterates through keys, dispatches actions, and handles results.
+        
+        This is the heart of zWizard - a flexible loop engine that executes ordered steps
+        with automatic RBAC enforcement, navigation handling, and error recovery.
+        
+        Args:
+            items_dict: Ordered dictionary of step keys and values
+            dispatch_fn: Optional custom dispatch function (defaults to zcli.dispatch)
+            navigation_callbacks: Optional callbacks for navigation events
+            context: Optional context passed to all dispatch calls
+            start_key: Optional key to start from (for resuming workflows)
+        
+        Returns:
+            Navigation signal (zBack, exit, stop, error) or None for normal completion
+        
+        Examples:
+            >>> # Example 1: Basic workflow execution
+            >>> wizard = zWizard(zcli=zcli_instance)
+            >>> workflow = {
+            ...     "welcome": {"type": "zDisplay", "message": "Welcome!"},
+            ...     "get_name": {"type": "zDialog", "prompt": "Name?"},
+            ...     "greet": {"type": "zDisplay", "message": "Hello!"}
+            ... }
+            >>> result = wizard.execute_loop(workflow)
+            >>> # Returns None (normal completion)
+            
+            >>> # Example 2: With navigation callbacks
+            >>> def handle_error(error, key):
+            ...     print(f"Error in {key}: {error}")
+            ...     return "error"
+            >>> 
+            >>> callbacks = {"on_error": handle_error, "on_back": lambda sig: "zBack"}
+            >>> result = wizard.execute_loop(workflow, navigation_callbacks=callbacks)
+            >>> if result == "error":
+            ...     print("Workflow stopped due to error")
+            
+            >>> # Example 3: Resume from checkpoint
+            >>> result = wizard.execute_loop(workflow, start_key="greet")
+            >>> # Skips "welcome" and "get_name", starts at "greet"
+            
+            >>> # Example 4: Custom dispatch function
+            >>> def custom_dispatch(key, value):
+            ...     print(f"Executing: {key}")
+            ...     return zcli.dispatch.handle(key, value)
+            >>> 
+            >>> result = wizard.execute_loop(workflow, dispatch_fn=custom_dispatch)
+            
+            >>> # Example 5: With context
+            >>> context = {"user_id": 42, "debug_mode": True}
+            >>> result = wizard.execute_loop(workflow, context=context)
+            >>> # Context passed to all dispatch calls
+        
+        Navigation:
+            - Returns None: Normal completion (all steps executed)
+            - Returns "zBack": User requested to go back
+            - Returns "exit": User requested to exit
+            - Returns "stop": Execution stopped
+            - Returns "error": Error occurred (if callback returns it)
+        
+        RBAC:
+            Steps with `_rbac` metadata are checked before execution.
+            Denied steps are skipped automatically and logged.
+        
+        See Also:
+            - handle(): Higher-level method with transaction support
+            - wizard_examples.py: Comprehensive usage patterns
+        """
         dispatch_fn = self._get_dispatch_fn(dispatch_fn, context)
         keys_list = list(items_dict.keys())
         idx = keys_list.index(start_key) if start_key and start_key in keys_list else 0
@@ -120,16 +509,18 @@ class zWizard:
             key = keys_list[idx]
             value = items_dict[key]
 
-            self.logger.debug("Processing key: %s", key)
+            self.logger.debug(LOG_MSG_PROCESSING_KEY, key)
             if self.display:
-                self.display.zDeclare(f"zKey: {key}", color="MAIN", indent=2, style="single")
+                self.display.zDeclare(MSG_ZKEY_DISPLAY % key, color=COLOR_MAIN, indent=INDENT_LEVEL_2, style=STYLE_SINGLE)
 
             # ════════════════════════════════════════════════════════════
             # RBAC Enforcement (v1.5.4 Week 3.3)
             # ════════════════════════════════════════════════════════════
             # Check if this item has RBAC requirements
-            rbac_check_result = self._check_rbac_access(key, value)
-            if rbac_check_result == "access_denied":
+            rbac_check_result = check_rbac_access(
+                key, value, self.zcli, self.walker, self.logger, self.display
+            )
+            if rbac_check_result == RBAC_ACCESS_DENIED:
                 # Skip this item and move to next
                 idx += 1
                 continue
@@ -144,8 +535,8 @@ class zWizard:
                 continue
 
             # Check if result is a key jump (e.g., menu selection)
-            if isinstance(result, str) and result in keys_list and result not in ("zBack", "exit", "stop", "error", ""):
-                self.logger.debug("Menu selected key: %s - jumping to it", result)
+            if isinstance(result, str) and result in keys_list and result not in NAVIGATION_SIGNALS:
+                self.logger.debug(LOG_MSG_MENU_SELECTED, result)
                 idx = keys_list.index(result)
                 continue
 
@@ -165,7 +556,7 @@ class zWizard:
 
         return None
 
-    def _get_dispatch_fn(self, dispatch_fn, context):
+    def _get_dispatch_fn(self, dispatch_fn: Optional[Any], context: Optional[Dict[str, Any]]) -> Any:
         """Get or create dispatch function."""
         if dispatch_fn is not None:
             return dispatch_fn
@@ -174,39 +565,39 @@ class zWizard:
             return self.walker.dispatch.handle
 
         # Use zcli's dispatch instance
-        def default_dispatch(key, value):
+        def default_dispatch(key: str, value: Any) -> Any:
             return self.zcli.dispatch.handle(key, value, context=context)
         return default_dispatch
 
-    def _handle_dispatch_error(self, error, key, navigation_callbacks):
+    def _handle_dispatch_error(self, error: Exception, key: str, navigation_callbacks: Optional[Dict[str, Any]]) -> Any:
         """Handle dispatch errors."""
-        self.logger.error("Error for key '%s': %s", key, error, exc_info=True)
+        self.logger.error(LOG_MSG_DISPATCH_ERROR, key, error, exc_info=True)
         if self.display:
-            self.display.zDeclare(f"Dispatch error for: {key}", color="ERROR", indent=1, style="full")
+            self.display.zDeclare(MSG_DISPATCH_ERROR % key, color=COLOR_ERROR, indent=INDENT_LEVEL_1, style=STYLE_FULL)
 
-        if navigation_callbacks and 'on_error' in navigation_callbacks:
-            return navigation_callbacks['on_error'](error, key)
+        if navigation_callbacks and CALLBACK_ON_ERROR in navigation_callbacks:
+            return navigation_callbacks[CALLBACK_ON_ERROR](error, key)
         return None
 
-    def _handle_navigation_result(self, result, key, navigation_callbacks):
+    def _handle_navigation_result(self, result: Any, key: str, navigation_callbacks: Optional[Dict[str, Any]]) -> Any:
         """Handle navigation results (zBack, exit, stop, error)."""
         # Map result types to callback names
         result_map = {
-            "zBack": "on_back",
-            "exit": "on_exit",
-            "stop": "on_stop",
-            "error": "on_error",
-            "": "on_error"
+            SIGNAL_ZBACK: CALLBACK_ON_BACK,
+            SIGNAL_EXIT: CALLBACK_ON_EXIT,
+            SIGNAL_STOP: CALLBACK_ON_STOP,
+            SIGNAL_ERROR: CALLBACK_ON_ERROR,
+            SIGNAL_EMPTY: CALLBACK_ON_ERROR
         }
 
         callback_name = result_map.get(result)
         if callback_name and navigation_callbacks and callback_name in navigation_callbacks:
-            args = (result, key) if callback_name == "on_error" else (result,)
+            args = (result, key) if callback_name == CALLBACK_ON_ERROR else (result,)
             return navigation_callbacks[callback_name](*args)
 
         return result if result in result_map else None
 
-    def _get_display(self):
+    def _get_display(self) -> Optional[Any]:
         """Get display instance from zcli or walker."""
         if self.zcli:
             return self.zcli.display
@@ -214,78 +605,8 @@ class zWizard:
             return self.walker.display
         return None
 
-    def _interpolate_zhat(self, step_value, zHat):
-        """
-        Recursively interpolate zHat references in strings (including nested structures).
-        
-        Supports:
-        - zHat[0], zHat[1], ...              # Numeric indexing (backward compat)
-        - zHat["step1"], zHat['step1']       # String key with quotes
-        - zHat[step1]                        # String key without quotes
-        
-        Works at any nesting level:
-        - Top-level strings: "zHat[0]"
-        - Nested in dicts: {zDisplay: {content: "zHat[fetch_files]"}}
-        - Nested in lists: ["zHat[0]", "zHat[1]"]
-        
-        Args:
-            step_value: Value to interpolate (str, dict, list, or primitive)
-            zHat: WizardHat instance with dual access
-            
-        Returns:
-            Interpolated value (same type as input)
-        """
-        # Handle strings (base case - actual interpolation happens here)
-        if isinstance(step_value, str):
-            def repl(match):
-                key = match.group(1)
-                
-                # Handle numeric index (backward compatible)
-                if key.isdigit():
-                    idx = int(key)
-                    return repr(zHat[idx]) if idx < len(zHat) else "None"
-                
-                # Handle string key (remove quotes if present)
-                key_clean = key.strip("'\"")
-                
-                # Check if key exists in zHat
-                if key_clean in zHat:
-                    return repr(zHat[key_clean])
-                
-                # Key not found - return None
-                self.logger.warning("zHat key not found during interpolation: %s", key_clean)
-                return "None"
-            
-            # Pattern matches: zHat[numeric] OR zHat["key"] OR zHat['key'] OR zHat[key]
-            # Group 1 captures: digits OR quoted string OR unquoted word
-            return re.sub(r"zHat\[(['\"]?\w+['\"]?)\]", repl, step_value)
-        
-        # Handle dicts (recursive case)
-        elif isinstance(step_value, dict):
-            return {k: self._interpolate_zhat(v, zHat) for k, v in step_value.items()}
-        
-        # Handle lists (recursive case)
-        elif isinstance(step_value, list):
-            return [self._interpolate_zhat(item, zHat) for item in step_value]
-        
-        # Other types (int, bool, None, etc.) - return as-is
-        else:
-            return step_value
 
-    def _check_transaction_start(self, use_transaction, transaction_alias, step_value):
-        """Check if transaction should start for this step."""
-        if not (use_transaction and transaction_alias is None and self.schema_cache):
-            return None
-
-        if isinstance(step_value, dict) and "zData" in step_value:
-            model = step_value["zData"].get("model")
-            if model and model.startswith("$"):
-                alias = model[1:]  # Remove $ prefix
-                self.logger.info("[TXN] Transaction mode enabled for $%s", alias)
-                return alias
-        return None
-
-    def _execute_step(self, step_key, step_value, step_context):
+    def _execute_step(self, step_key: str, step_value: Any, step_context: Dict[str, Any]) -> Any:
         """Execute a single wizard step."""
         if self.walker:
             # Use walker's dispatch instance
@@ -294,24 +615,125 @@ class zWizard:
         # Shell mode - use shell's wizard step executor via CLI instance
         return self.zcli.shell.executor.execute_wizard_step(step_key, step_value, step_context)
 
-    def _commit_transaction(self, use_transaction, transaction_alias):
-        """Commit transaction if active."""
-        if use_transaction and transaction_alias and self.schema_cache:
-            self.schema_cache.commit_transaction(transaction_alias)
-            self.logger.info("[OK] Transaction committed for $%s", transaction_alias)
-
-    def _rollback_transaction(self, use_transaction, transaction_alias, error):
-        """Rollback transaction on error."""
-        if use_transaction and transaction_alias and self.schema_cache:
-            self.logger.error("[ERROR] Error in zWizard, rolling back transaction for $%s: %s", 
-                            transaction_alias, error)
-            self.schema_cache.rollback_transaction(transaction_alias)
-
-    def handle(self, zWizard_obj):
-        """Execute a sequence of steps with persistent connections and transactions."""
+    def handle(self, zWizard_obj: Dict[str, Any]) -> Optional[Any]:
+        """
+        Execute a sequence of wizard steps with persistent connections and transactions.
+        
+        This is the high-level entry point for YAML-based wizards. It provides automatic:
+        - WizardHat result accumulation (triple-access: numeric, key, attribute)
+        - zHat template variable interpolation
+        - Transaction management (commit/rollback)
+        - Schema cache connection reuse
+        - Meta key filtering (_transaction, _config, etc.)
+        
+        Args:
+            zWizard_obj: Dictionary of wizard steps (from YAML or dict)
+        
+        Returns:
+            WizardHat object containing all step results (triple-access)
+            - result[0], result[1]: Numeric access
+            - result["step_name"]: Key-based access
+            - result.step_name: Attribute access
+        
+        Examples:
+            >>> # Example 1: Basic workflow
+            >>> wizard = zWizard(zcli=zcli_instance)
+            >>> workflow = {
+            ...     "step1": {"type": "zFunc", "function": "get_data"},
+            ...     "step2": {"type": "zDisplay", "message": "Processing..."},
+            ...     "step3": {"type": "zFunc", "function": "save_data"}
+            ... }
+            >>> result = wizard.handle(workflow)
+            >>> print(result[0])  # First step result
+            >>> print(result["step1"])  # Same result by name
+            >>> print(result.step1)  # Same result by attribute
+            
+            >>> # Example 2: With zHat interpolation
+            >>> workflow = {
+            ...     "get_user": {"type": "zFunc", "function": "fetch_user", "args": [42]},
+            ...     "greet": {
+            ...         "type": "zDisplay",
+            ...         "message": "Hello {{ zHat.get_user.name }}!"  # Interpolation!
+            ...     }
+            ... }
+            >>> result = wizard.handle(workflow)
+            >>> # Step2 receives interpolated message with user name
+            
+            >>> # Example 3: Transactional workflow
+            >>> workflow = {
+            ...     "_transaction": True,  # Enable transaction mode
+            ...     "create_team": {
+            ...         "zData": {
+            ...             "model": "$teams",  # Transaction starts
+            ...             "operation": "create",
+            ...             "data": {"name": "Engineering"}
+            ...         }
+            ...     },
+            ...     "add_members": {
+            ...         "zData": {
+            ...             "model": "$teams",  # Same transaction
+            ...             "operation": "update",
+            ...             "where": {"id": "{{ zHat.create_team.id }}"},
+            ...             "data": {"member_count": 5}
+            ...         }
+            ...     }
+            ... }
+            >>> result = wizard.handle(workflow)
+            >>> # Both operations committed atomically
+            >>> print(f"Team ID: {result.create_team.id}")
+            
+            >>> # Example 4: Error handling with rollback
+            >>> try:
+            ...     result = wizard.handle(workflow)
+            ... except Exception as e:
+            ...     print(f"Workflow failed, transaction rolled back: {e}")
+            
+            >>> # Example 5: YAML-based workflow
+            >>> # In workflow.yaml:
+            >>> # _transaction: true
+            >>> # fetch_data:
+            >>> #   zFunc:
+            >>> #     function: get_data
+            >>> #     args: [100]
+            >>> # 
+            >>> # process_data:
+            >>> #   zFunc:
+            >>> #     function: process
+            >>> #     args: ["{{ zHat.fetch_data }}"]
+            >>> 
+            >>> workflow = zcli.parser.load_yaml("workflow.yaml")
+            >>> result = wizard.handle(workflow)
+            >>> print(f"Processed {len(result)} steps")
+        
+        Features:
+            - **WizardHat**: Results accumulate in triple-access container
+            - **Interpolation**: Use {{ zHat.step_name }} to reference results
+            - **Transactions**: Atomic multi-step operations with automatic rollback
+            - **Meta Keys**: Keys starting with _ are filtered (configuration only)
+            - **Schema Cache**: Database connections reused across steps
+        
+        Meta Keys:
+            - _transaction (bool): Enable transaction mode
+            - _config (Any): Configuration (not executed)
+            - Any key starting with "_" is treated as metadata
+        
+        Transaction Flow:
+            1. Detect _transaction: true
+            2. Find first $model in zData step
+            3. Start transaction with that alias
+            4. Execute all steps with shared transaction
+            5. On success: Commit transaction
+            6. On error: Rollback transaction
+            7. Always: Clean up schema cache
+        
+        See Also:
+            - execute_loop(): Lower-level loop engine
+            - wizard_examples.py: Comprehensive usage patterns
+            - WizardHat: Triple-access result container
+        """
         display = self._get_display()
         if display:
-            display.zDeclare("Handle zWizard", color="ZWIZARD", indent=1, style="full")
+            display.zDeclare(MSG_HANDLE_WIZARD, color=SUBSYSTEM_COLOR, indent=INDENT_LEVEL_1, style=STYLE_FULL)
 
         try:
             zHat = WizardHat()  # Use dual-access container
@@ -323,134 +745,33 @@ class zWizard:
                     continue
 
                 if display:
-                    display.zDeclare(f"zWizard step: {step_key}", color="ZWIZARD", indent=2, style="single")
+                    display.zDeclare(MSG_WIZARD_STEP % step_key, color=SUBSYSTEM_COLOR, indent=INDENT_LEVEL_2, style=STYLE_SINGLE)
 
-                step_value = self._interpolate_zhat(step_value, zHat)
+                step_value = interpolate_zhat(step_value, zHat, self.logger)
 
                 step_context = {
-                    "wizard_mode": True,
-                    "schema_cache": self.schema_cache,
-                    "zHat": zHat  # Pass zHat to context for zFunc access
-                } if self.schema_cache else {"wizard_mode": True, "zHat": zHat}
+                    CONTEXT_KEY_WIZARD_MODE: True,
+                    CONTEXT_KEY_SCHEMA_CACHE: self.schema_cache,
+                    CONTEXT_KEY_ZHAT: zHat  # Pass zHat to context for zFunc access
+                } if self.schema_cache else {CONTEXT_KEY_WIZARD_MODE: True, CONTEXT_KEY_ZHAT: zHat}
 
                 if transaction_alias is None:
-                    transaction_alias = self._check_transaction_start(use_transaction, transaction_alias, step_value)
+                    transaction_alias = check_transaction_start(
+                        use_transaction, transaction_alias, step_value,
+                        self.schema_cache, self.logger
+                    )
 
                 result = self._execute_step(step_key, step_value, step_context)
                 zHat.add(step_key, result)  # Add with key for dual access
 
-            self._commit_transaction(use_transaction, transaction_alias)
+            commit_transaction(use_transaction, transaction_alias, self.schema_cache, self.logger)
             self.logger.info("zWizard completed with zHat: %s", zHat)
             return zHat
 
         except Exception as e:  # pylint: disable=broad-except
-            self._rollback_transaction(use_transaction, transaction_alias, e)
+            rollback_transaction(use_transaction, transaction_alias, self.schema_cache, self.logger, e)
             raise
         finally:
             if self.schema_cache:
                 self.schema_cache.clear()
                 self.logger.debug("Schema cache connections cleared")
-    
-    # ════════════════════════════════════════════════════════════
-    # RBAC Access Control (v1.5.4 Week 3.3)
-    # ════════════════════════════════════════════════════════════
-    
-    def _check_rbac_access(self, key, value):
-        """Check RBAC access for a zKey before execution (v1.5.4 Week 3.3).
-        
-        Args:
-            key: zKey name (e.g., "^Delete User")
-            value: zKey value (parsed item with potential _rbac metadata)
-        
-        Returns:
-            str: "access_granted" or "access_denied"
-        """
-        # Extract RBAC metadata (if it exists)
-        rbac = None
-        if isinstance(value, dict):
-            rbac = value.get("_rbac")
-        
-        # No RBAC requirements = public access
-        if not rbac:
-            return "access_granted"
-        
-        # Get zCLI instance (from walker or direct)
-        zcli = self.walker.zcli if self.walker else self.zcli
-        if not zcli or not hasattr(zcli, 'auth'):
-            self.logger.warning("[RBAC] No auth subsystem available, denying access")
-            return "access_denied"
-        
-        # Check require_auth (must be authenticated)
-        if rbac.get("require_auth"):
-            if not zcli.auth.is_authenticated():
-                self._display_access_denied(key, "Authentication required")
-                return "access_denied"
-        
-        # Check require_role (implies authentication)
-        required_role = rbac.get("require_role")
-        if required_role is not None:
-            # Role requirement implies authentication
-            if not zcli.auth.is_authenticated():
-                self._display_access_denied(key, "Authentication required")
-                return "access_denied"
-            
-            if not zcli.auth.has_role(required_role):
-                role_str = required_role if isinstance(required_role, str) else f"one of {required_role}"
-                self._display_access_denied(key, f"Role required: {role_str}")
-                return "access_denied"
-        
-        # Check require_permission (implies authentication)
-        required_permission = rbac.get("require_permission")
-        if required_permission:
-            # Permission requirement implies authentication
-            if not zcli.auth.is_authenticated():
-                self._display_access_denied(key, "Authentication required")
-                return "access_denied"
-            
-            if not zcli.auth.has_permission(required_permission):
-                perm_str = required_permission if isinstance(required_permission, str) else f"one of {required_permission}"
-                self._display_access_denied(key, f"Permission required: {perm_str}")
-                return "access_denied"
-        
-        # All checks passed
-        self.logger.debug("[RBAC] Access granted for %s", key)
-        return "access_granted"
-    
-    def _display_access_denied(self, key, reason):
-        """Display access denied message (Terminal + zBifrost compatible)."""
-        display = self._get_display()
-        
-        if display:
-            # Display clear access denied message (no break to avoid input prompt in tests)
-            display.handle({
-                "event": "text",
-                "content": "",
-                "indent": 0,
-                "break_after": False
-            })
-            display.handle({
-                "event": "error",
-                "content": f"[ACCESS DENIED] {key}",
-                "indent": 1
-            })
-            display.handle({
-                "event": "text",
-                "content": f"Reason: {reason}",
-                "indent": 2,
-                "break_after": False
-            })
-            display.handle({
-                "event": "text",
-                "content": "Tip: Check your role/permissions or log in",
-                "indent": 2,
-                "break_after": False
-            })
-            display.handle({
-                "event": "text",
-                "content": "",
-                "indent": 0,
-                "break_after": False
-            })
-        
-        # Log the denial
-        self.logger.warning(f"[RBAC] Access denied for '{key}': {reason}")

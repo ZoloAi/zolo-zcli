@@ -96,7 +96,9 @@ class TestzWalkerSessionManagement(unittest.TestCase):
         walker = zWalker(self.mock_zcli)
         walker._init_walker_session()
         
-        self.assertEqual(walker.session["zMode"], "Walker")
+        # Walker now preserves original zMode (Terminal or zBifrost)
+        # It runs within the existing mode context
+        self.assertIn(walker.session["zMode"], ["Terminal", "zBifrost"])
         self.assertIn("zCrumbs", walker.session)
         self.assertIn("zBlock", walker.session)
 

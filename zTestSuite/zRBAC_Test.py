@@ -15,6 +15,7 @@ from pathlib import Path
 import tempfile
 import shutil
 from zCLI import zCLI
+from zCLI.subsystems.zWizard.zWizard_modules.wizard_rbac import check_rbac_access
 
 
 class TestRBACParsing(unittest.TestCase):
@@ -217,14 +218,14 @@ zVaF:
         """Anonymous users should access public items."""
         self.z.session["zAuth"] = {}
         
-        result = self.z.wizard._check_rbac_access("^Public", self.zblock.get("^Public"))
+        result = check_rbac_access("^Public", self.zblock.get("^Public"), self.z, None, self.z.logger, self.z.display)
         self.assertEqual(result, "access_granted")
     
     def test_auth_required_anonymous_denied(self):
         """Anonymous users should be denied auth-required items."""
         self.z.session["zAuth"] = {}
         
-        result = self.z.wizard._check_rbac_access("^AuthOnly", self.zblock.get("^AuthOnly"))
+        result = check_rbac_access("^AuthOnly", self.zblock.get("^AuthOnly"), self.z, None, self.z.logger, self.z.display)
         self.assertEqual(result, "access_denied")
     
     def test_auth_required_authenticated_granted(self):
@@ -241,7 +242,7 @@ zVaF:
             }
         }
         
-        result = self.z.wizard._check_rbac_access("^AuthOnly", self.zblock.get("^AuthOnly"))
+        result = check_rbac_access("^AuthOnly", self.zblock.get("^AuthOnly"), self.z, None, self.z.logger, self.z.display)
         self.assertEqual(result, "access_granted")
     
     def test_role_required_correct_role_granted(self):
@@ -258,7 +259,7 @@ zVaF:
             }
         }
         
-        result = self.z.wizard._check_rbac_access("^UserRole", self.zblock.get("^UserRole"))
+        result = check_rbac_access("^UserRole", self.zblock.get("^UserRole"), self.z, None, self.z.logger, self.z.display)
         self.assertEqual(result, "access_granted")
     
     def test_role_required_wrong_role_denied(self):
@@ -270,14 +271,14 @@ zVaF:
             "API_Key": "token"
         }
         
-        result = self.z.wizard._check_rbac_access("^AdminRole", self.zblock.get("^AdminRole"))
+        result = check_rbac_access("^AdminRole", self.zblock.get("^AdminRole"), self.z, None, self.z.logger, self.z.display)
         self.assertEqual(result, "access_denied")
     
     def test_role_required_anonymous_denied(self):
         """Anonymous users should be denied role-required items."""
         self.z.session["zAuth"] = {}
         
-        result = self.z.wizard._check_rbac_access("^UserRole", self.zblock.get("^UserRole"))
+        result = check_rbac_access("^UserRole", self.zblock.get("^UserRole"), self.z, None, self.z.logger, self.z.display)
         self.assertEqual(result, "access_denied")
     
     def test_multiple_roles_or_logic(self):
@@ -303,7 +304,7 @@ zVaF:
             "active_context": "zSession",  # Required for context-aware RBAC
             "zSession": {"authenticated": True, "id": "u1", "username": "admin", "role": "admin", "api_key": "t"}
         }
-        result = self.z.wizard._check_rbac_access("^MultiRole", data["zVaF"].get("^MultiRole"))
+        result = check_rbac_access("^MultiRole", data["zVaF"].get("^MultiRole"), self.z, None, self.z.logger, self.z.display)
         self.assertEqual(result, "access_granted")
         
         # Test with moderator role (updated for three-tier structure with active_context)
@@ -311,7 +312,7 @@ zVaF:
             "active_context": "zSession",
             "zSession": {"authenticated": True, "id": "u2", "username": "mod", "role": "moderator", "api_key": "t"}
         }
-        result = self.z.wizard._check_rbac_access("^MultiRole", data["zVaF"].get("^MultiRole"))
+        result = check_rbac_access("^MultiRole", data["zVaF"].get("^MultiRole"), self.z, None, self.z.logger, self.z.display)
         self.assertEqual(result, "access_granted")
         
         # Test with user role (not in list, updated for three-tier structure with active_context)
@@ -319,7 +320,7 @@ zVaF:
             "active_context": "zSession",
             "zSession": {"authenticated": True, "id": "u3", "username": "user", "role": "user", "api_key": "t"}
         }
-        result = self.z.wizard._check_rbac_access("^MultiRole", data["zVaF"].get("^MultiRole"))
+        result = check_rbac_access("^MultiRole", data["zVaF"].get("^MultiRole"), self.z, None, self.z.logger, self.z.display)
         self.assertEqual(result, "access_denied")
     
     def test_permission_without_permission_denied(self):
@@ -332,7 +333,7 @@ zVaF:
         }
         
         # No permission granted yet - should be denied
-        result = self.z.wizard._check_rbac_access("^AdminPerm", self.zblock.get("^AdminPerm"))
+        result = check_rbac_access("^AdminPerm", self.zblock.get("^AdminPerm"), self.z, None, self.z.logger, self.z.display)
         self.assertEqual(result, "access_denied")
     
     def test_permission_role_check_passes_without_permission(self):
@@ -347,7 +348,7 @@ zVaF:
         }
         
         # Has admin role, but lacks permission
-        result = self.z.wizard._check_rbac_access("^AdminPerm", self.zblock.get("^AdminPerm"))
+        result = check_rbac_access("^AdminPerm", self.zblock.get("^AdminPerm"), self.z, None, self.z.logger, self.z.display)
         self.assertEqual(result, "access_denied")
 
 
@@ -430,11 +431,11 @@ zVaF:
         }
         
         # User should access View
-        result = z.wizard._check_rbac_access("^View Users", data["zVaF"]["^View Users"])
+        result = check_rbac_access("^View Users", data["zVaF"]["^View Users"], z, None, z.logger, z.display)
         self.assertEqual(result, "access_granted")
         
         # User should NOT access Add (needs admin)
-        result = z.wizard._check_rbac_access("^Add User", data["zVaF"]["^Add User"])
+        result = check_rbac_access("^Add User", data["zVaF"]["^Add User"], z, None, z.logger, z.display)
         self.assertEqual(result, "access_denied")
 
 
@@ -456,11 +457,11 @@ class TestRBACEdgeCases(unittest.TestCase):
         z = zCLI({"zSpace": str(self.workspace_path), "zMode": "Terminal"})
         
         # String value (no _rbac possible)
-        result = z.wizard._check_rbac_access("^StringKey", "string_value")
+        result = check_rbac_access("^StringKey", "string_value", z, None, z.logger, z.display)
         self.assertEqual(result, "access_granted")
         
         # List value (no _rbac possible)
-        result = z.wizard._check_rbac_access("^ListKey", ["item1", "item2"])
+        result = check_rbac_access("^ListKey", ["item1", "item2"], z, None, z.logger, z.display)
         self.assertEqual(result, "access_granted")
     
     def test_rbac_empty_dict(self):
@@ -468,23 +469,17 @@ class TestRBACEdgeCases(unittest.TestCase):
         z = zCLI({"zSpace": str(self.workspace_path), "zMode": "Terminal"})
         
         value = {"_rbac": {}, "zDisplay": {"event": "text", "content": "test"}}
-        result = z.wizard._check_rbac_access("^EmptyRBAC", value)
+        result = check_rbac_access("^EmptyRBAC", value, z, None, z.logger, z.display)
         self.assertEqual(result, "access_granted")
     
     def test_rbac_no_auth_subsystem(self):
         """RBAC without auth subsystem should deny access (safety fallback)."""
         z = zCLI({"zSpace": str(self.workspace_path), "zMode": "Terminal"})
         
-        # Temporarily remove auth
-        original_auth = z.auth
-        delattr(z, 'auth')
-        
         value = {"_rbac": {"require_auth": True}}
-        result = z.wizard._check_rbac_access("^NoAuth", value)
+        # Pass None for zcli to simulate missing auth subsystem
+        result = check_rbac_access("^NoAuth", value, None, None, z.logger, z.display)
         self.assertEqual(result, "access_denied")
-        
-        # Restore auth
-        z.auth = original_auth
 
 
 def suite():
