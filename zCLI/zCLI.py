@@ -332,10 +332,12 @@ class zCLI:
             default_return=None
         ):
             if hasattr(self, 'data') and self.data:
-                if hasattr(self.data, 'handler') and self.data.handler:
+                if hasattr(self.data, 'adapter') and self.data.adapter:
                     self.logger.info("[Shutdown] Closing database connections...")
-                    if hasattr(self.data.handler, 'close'):
-                        self.data.handler.close()
+                    if hasattr(self.data.adapter, 'disconnect'):
+                        self.data.adapter.disconnect()
+                    elif hasattr(self.data.adapter, 'close'):
+                        self.data.adapter.close()
                     cleanup_status['database'] = True
                 else:
                     self.logger.debug("[Shutdown] No active database connections")

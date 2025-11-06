@@ -384,24 +384,24 @@ class TestDatabaseCleanup(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             z = zCLI({"zSpace": tmpdir})
             
-            # Mock active database handler
-            z.data.handler = Mock()
-            z.data.handler.close = Mock()
+            # Mock active database adapter
+            z.data.adapter = Mock()
+            z.data.adapter.disconnect = Mock()
             
             # Shutdown
             status = z.shutdown()
             
-            # Verify close was called
-            z.data.handler.close.assert_called_once()
+            # Verify disconnect was called
+            z.data.adapter.disconnect.assert_called_once()
             self.assertTrue(status['database'])
     
-    def test_database_cleanup_when_no_handler(self):
-        """Shutdown should handle missing database handler gracefully"""
+    def test_database_cleanup_when_no_adapter(self):
+        """Shutdown should handle missing database adapter gracefully"""
         with tempfile.TemporaryDirectory() as tmpdir:
             z = zCLI({"zSpace": tmpdir})
             
-            # No handler initialized
-            self.assertIsNone(z.data.handler)
+            # No adapter initialized
+            self.assertIsNone(z.data.adapter)
             
             # Shutdown should succeed
             status = z.shutdown()

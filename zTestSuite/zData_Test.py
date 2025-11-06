@@ -51,7 +51,7 @@ class TestzDataInitialization(unittest.TestCase):
         self.assertIsNotNone(self.zcli.data)
         self.assertEqual(self.zcli.data.mycolor, "ZDATA")
         self.assertIsNone(self.zcli.data.schema)
-        self.assertIsNone(self.zcli.data.handler)
+        self.assertIsNone(self.zcli.data.adapter)
 
     def test_zdata_has_required_dependencies(self):
         """Test zData has all required dependencies."""
@@ -142,8 +142,7 @@ class TestzDataSQLiteAdapter(unittest.TestCase):
     def test_sqlite_schema_loading(self):
         """Test SQLite schema loads correctly."""
         self.assertIsNotNone(self.zcli.data.schema)
-        self.assertEqual(self.zcli.data.paradigm, "classical")
-        self.assertIsNotNone(self.zcli.data.handler)
+        self.assertIsNotNone(self.zcli.data.adapter)
         self.assertTrue(self.zcli.data.is_connected())
 
     def test_sqlite_list_tables(self):
@@ -355,8 +354,7 @@ class TestzDataPostgreSQLAdapter(unittest.TestCase):
     def test_postgresql_schema_loading(self):
         """Test PostgreSQL schema loads correctly."""
         self.assertIsNotNone(self.zcli.data.schema)
-        self.assertEqual(self.zcli.data.paradigm, "classical")
-        self.assertIsNotNone(self.zcli.data.handler)
+        self.assertIsNotNone(self.zcli.data.adapter)
         self.assertTrue(self.zcli.data.is_connected())
 
     def test_postgresql_list_tables(self):
@@ -490,8 +488,7 @@ class TestzDataCSVAdapter(unittest.TestCase):
     def test_csv_schema_loading(self):
         """Test CSV schema loads correctly."""
         self.assertIsNotNone(self.zcli.data.schema)
-        self.assertEqual(self.zcli.data.paradigm, "classical")
-        self.assertIsNotNone(self.zcli.data.handler)
+        self.assertIsNotNone(self.zcli.data.adapter)
 
     def test_csv_insert_and_select(self):
         """Test INSERT and SELECT operations with CSV."""
@@ -609,14 +606,14 @@ class TestzDataErrorHandling(unittest.TestCase):
         """Test operations fail without handler."""
         with self.assertRaises(RuntimeError) as context:
             self.zcli.data.insert("users", ["name"], ["Alice"])
-        self.assertIn("No handler initialized", str(context.exception))
+        self.assertIn("No adapter initialized", str(context.exception))
 
     def test_invalid_schema_detection(self):
-        """Test invalid paradigm defaults to classical."""
-        # Schema with invalid paradigm but valid required fields
+        """Test schema loads successfully even with invalid paradigm field (ignored)."""
+        # Schema with invalid paradigm (now ignored) but valid required fields
         invalid_schema = {
             "Meta": {
-                "Data_Paradigm": "invalid_paradigm",
+                "Data_Paradigm": "invalid_paradigm",  # This field is now ignored
                 "Data_Type": "sqlite",
                 "Data_Path": str(self.test_dir),
                 "Data_Label": "test_invalid"
@@ -624,8 +621,10 @@ class TestzDataErrorHandling(unittest.TestCase):
             "users": {"name": {"type": "str"}}
         }
         
+        # Should load successfully (Data_Paradigm is ignored, zData is always classical now)
         self.zcli.data.load_schema(invalid_schema)
-        self.assertEqual(self.zcli.data.paradigm, "classical")
+        self.assertIsNotNone(self.zcli.data.adapter)
+        self.assertTrue(self.zcli.data.is_connected())
 
     def test_table_not_found_error(self):
         """Test error when table not in schema."""
