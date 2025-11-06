@@ -199,6 +199,81 @@ def _detect_linux_browser() -> str:
 
     return DEFAULT_LINUX_BROWSER
 
+def get_browser_launch_command(browser_name: str) -> tuple:
+    """
+    Get platform-specific command to launch a browser.
+    
+    Args:
+        browser_name: Browser name (e.g., "Firefox", "Chrome", "firefox", "chrome")
+                     Case-insensitive, normalized internally
+    
+    Returns:
+        Tuple of (command, args_template) where:
+        - macOS: ("open", ["-a", "Firefox"]) - use 'open -a "App Name"'
+        - Linux: ("firefox", []) - direct executable
+        - Windows: ("firefox", []) - direct executable  
+        - Unknown: (None, []) - browser not mapped
+    
+    Examples:
+        >>> get_browser_launch_command("firefox")
+        # macOS: ("open", ["-a", "Firefox"])
+        # Linux: ("firefox", [])
+        
+        >>> get_browser_launch_command("Chrome")
+        # macOS: ("open", ["-a", "Google Chrome"])
+        # Linux: ("google-chrome", [])
+    """
+    system = platform.system()
+    browser_lower = browser_name.lower()
+    
+    # macOS: Use 'open -a "App Name"'
+    if system == "Darwin":
+        macos_apps = {
+            "chrome": "Google Chrome",
+            "firefox": "Firefox",
+            "safari": "Safari",
+            "arc": "Arc",
+            "brave": "Brave Browser",
+            "edge": "Microsoft Edge",
+            "opera": "Opera",
+        }
+        app_name = macos_apps.get(browser_lower)
+        if app_name:
+            return ("open", ["-a", app_name])
+        return (None, [])
+    
+    # Linux: Direct executable names
+    elif system == "Linux":
+        linux_commands = {
+            "chrome": "google-chrome",
+            "firefox": "firefox",
+            "chromium": "chromium",
+            "brave": "brave-browser",
+            "edge": "microsoft-edge",
+            "opera": "opera",
+        }
+        cmd = linux_commands.get(browser_lower)
+        if cmd and shutil.which(cmd):
+            return (cmd, [])
+        return (None, [])
+    
+    # Windows: Direct executable names
+    elif system == "Windows":
+        windows_commands = {
+            "chrome": "chrome",
+            "firefox": "firefox",
+            "brave": "brave",
+            "edge": "msedge",
+            "opera": "opera",
+        }
+        cmd = windows_commands.get(browser_lower)
+        if cmd and shutil.which(cmd):
+            return (cmd, [])
+        return (None, [])
+    
+    return (None, [])
+
+
 def detect_ide() -> str:
     """Detect IDE/editor via env vars, PATH search (modern→classic→simple), fallback to nano."""
     # Check IDE/editor env vars

@@ -134,6 +134,7 @@ Version: 1.5.4+
 """
 
 from pathlib import Path
+from difflib import get_close_matches
 
 from zCLI import Any, Dict, List
 
@@ -160,7 +161,9 @@ from zCLI.subsystems.zConfig.zConfig_modules.config_session import (  # noqa: F4
     SESSION_KEY_ZSPARK,
     SESSION_KEY_VIRTUAL_ENV,
     SESSION_KEY_SYSTEM_ENV,
-    SESSION_KEY_LOGGER_INSTANCE
+    SESSION_KEY_LOGGER_INSTANCE,
+    SESSION_KEY_BROWSER,
+    SESSION_KEY_IDE
 )
 
 # ============================================================================
@@ -230,6 +233,12 @@ USER_CONFIGURABLE_KEYS_EXAMPLES: set = {
     SESSION_KEY_ZLOGGER,            # Logger level
     SESSION_KEY_ZTRACEBACK,         # Traceback mode on/off
     # Plus any custom user-defined keys (anything not in PROTECTED_KEYS or FRAMEWORK_KEYS)
+}
+
+# Known session keys for typo detection (frequently used keys)
+KNOWN_SESSION_KEYS: set = {
+    "browser", "ide", "zMode", "zSpace", "zVaFolder", "zVaFile",
+    "zBlock", "zLogger", "zTraceback",
 }
 
 # Validation error messages
@@ -559,6 +568,18 @@ def _set_session_key(zcli: Any, args: List[str]) -> None:
         zcli.display.warning(MSG_FRAMEWORK_KEY_HINT)
         zcli.display.info(f"Framework-managed keys: {', '.join(sorted(FRAMEWORK_KEYS))}")
         return
+    
+    # Check for typos in known session keys (fuzzy matching for common mistakes)
+    if key not in KNOWN_SESSION_KEYS:
+        close_matches = get_close_matches(key, KNOWN_SESSION_KEYS, n=1, cutoff=0.7)
+        if close_matches:
+            zcli.display.warning(f"Did you mean '{close_matches[0]}'? (You typed: '{key}')")
+            zcli.display.info("Known session keys: " + ", ".join(sorted(KNOWN_SESSION_KEYS)))
+            zcli.display.text("")
+            confirm = input("Continue anyway? (y/n): ").strip().lower()
+            if confirm not in ['y', 'yes']:
+                zcli.display.info("Session set cancelled")
+                return
     
     # Special handling for zSpace: resolve zPath notation ONLY if not already zPath
     # (Preserve @., ~., ~zMachine notation for dynamic resolution by parser)

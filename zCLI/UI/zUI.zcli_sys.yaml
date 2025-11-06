@@ -171,60 +171,51 @@ Help:
       content: |
         
         ═══════════════════════════════════════════════════════════════════
-        SESSION Command - Manage zCLI Session State
+        SESSION - Runtime State Management
         ═══════════════════════════════════════════════════════════════════
         
         Syntax: session [action] [key] [value]
         
         Actions:
-          (no args) or info    - Show session information
-          get <key>            - Get specific session value
-          set <key> <value>    - Set session value (with validation)
+          session                       # Show all session info
+          session info                  # Same as above
+          session get <key>             # Get specific value
+          session set <key> <value>     # Set value (validated)
         
-        Session Information Displayed:
-          • zMode        - Current execution mode (terminal/bifrost)
-          • zSpace   - Original workspace root (constant "home base")
-          • zMachine     - Machine identity and system info
-          • zAuth        - Authentication status and roles
+        Common User-Configurable Keys:
+          zMode             - Execution mode (terminal/bifrost)
+          zSpace            - Workspace root (@ notation)
+          zVaFolder         - UI folder path (walker)
+          zVaFile           - UI filename (walker)
+          zBlock            - Starting menu block (walker)
+          zLogger           - Logger level (DEBUG/INFO/etc)
+          zTraceback        - Traceback display (True/False)
+          browser           - Browser override (temp, session-scoped)
+          ide               - IDE override (temp, session-scoped)
+        
+        Tool Preference Priority (browser/IDE):
+          1. session["browser"] or session["ide"] (temporary override)
+          2. session["zMachine"]["browser/ide"] (persistent config)
+          3. Platform auto-detect (fallback)
         
         Examples:
-          session                      # Show all session info
-          session info                 # Same as above
-          session get zMode            # Get current mode
-          session set mykey myvalue    # Set custom session value
-          session set zMode bifrost    # Change execution mode (allowed)
+          session set browser firefox   # Temp override (this session)
+          session set ide cursor        # Temp override (this session)
+          session set zMode bifrost     # Switch to bifrost mode
+          session set zSpace @.src      # Change workspace root
+          session get browser           # Check current browser
         
-        Session Set Validation:
           Protected Keys (Read-Only):
-            • zS_id, zMachine, logger_instance, system_env, virtual_env
-            • Cannot be modified (system constants)
-          
-          Framework-Managed Keys (Use Dedicated Commands):
-            • zAuth, zCrumbs
-            • zCache, wizard_mode, zSpark
-            • Cannot be set directly (managed by subsystems)
-          
-          User-Configurable Path Keys (zPath notation supported):
-            • zSpace, zVaFolder, zVaFile, zBlock
-            • Use @ (workspace), ~ (absolute), ~zMachine prefixes
-          
-          User-Configurable Keys (Allowed):
-            • zMode, zSpace, zLogger, zTraceback
-            • Custom keys (any key not in above lists)
+          zS_id, zMachine, logger_instance, system_env, virtual_env
         
-        Important Notes:
-          • zSpace is the ORIGINAL workspace root (set at shell startup)
-          • Current directory is shown by 'cwd' or 'where' prompt
-          • Use 'cd @.' to return to zSpace root
-          • Protected keys cannot be modified for security/stability
+        Framework-Managed Keys (Use Dedicated Commands):
+          zAuth, zCrumbs, zCache, wizard_mode, zSpark
         
-        Phase 2 Enhancement (Future):
-          Additional sub-commands for comprehensive session coverage:
-          • session crumbs    - Navigation breadcrumb history
-          • session cache     - Cache statistics and management
-          • session blocks    - Active zBlock contexts
-          • session vars      - User-defined session variables
-          • session history   - Command/navigation history
+        Notes:
+          • browser/ide overrides are session-scoped (not persisted)
+          • Use 'config set machine browser <value>' to persist
+          • zPath notation (@, ~, ~zMachine) supported for paths
+          • Custom keys allowed (any key not protected/framework)
 
   "^Walker":
     zDisplay:

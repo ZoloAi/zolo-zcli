@@ -66,7 +66,10 @@ Author: zCLI Development Team
 from zCLI import os, webbrowser, subprocess, Any
 
 # Import centralized session constants
-from zCLI.subsystems.zConfig.zConfig_modules.config_session import SESSION_KEY_ZMACHINE
+from zCLI.subsystems.zConfig.zConfig_modules.config_session import (
+    SESSION_KEY_ZMACHINE,
+    SESSION_KEY_IDE,
+)
 
 # ═══════════════════════════════════════════════════════════════
 # Module-Level Constants
@@ -476,9 +479,8 @@ def _open_text(
     """
     logger.info(LOG_OPENING_TEXT, path)
 
-    # Get machine configuration (IDE preference)
-    zmachine = session.get(SESSION_KEY_ZMACHINE, {})
-    editor = zmachine.get(ZMACHINE_KEY_IDE, DEFAULT_IDE)
+    # Get IDE preference (priority: session["ide"] → session["zMachine"]["ide"] → default)
+    editor = session.get(SESSION_KEY_IDE) or session.get(SESSION_KEY_ZMACHINE, {}).get(ZMACHINE_KEY_IDE, DEFAULT_IDE)
 
     logger.info(LOG_USING_IDE, editor)
 

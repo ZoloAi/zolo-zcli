@@ -54,10 +54,16 @@ Version History:
 Author: zCLI Development Team
 """
 
-from zCLI import subprocess, webbrowser, urlparse, shutil, Any
+from zCLI import subprocess, webbrowser, urlparse, Any
 
 # Import centralized session constants
-from zCLI.subsystems.zConfig.zConfig_modules.config_session import SESSION_KEY_ZMACHINE
+from zCLI.subsystems.zConfig.zConfig_modules.config_session import (
+    SESSION_KEY_ZMACHINE,
+    SESSION_KEY_BROWSER,
+)
+
+# Import platform-specific browser launch command helper from zConfig
+from zCLI.subsystems.zConfig.zConfig_modules.helpers import get_browser_launch_command
 
 # ═══════════════════════════════════════════════════════════════
 # Module-Level Constants
@@ -75,8 +81,8 @@ RETURN_STOP = "stop"       # Failure, stop execution
 # Session Keys (zMachine sub-keys)
 ZMACHINE_KEY_BROWSER = "browser"
 
-# Browsers to skip (not command-line invokable)
-BROWSERS_SKIP = ("unknown", "Safari", "Edge")
+# Browsers to skip (use system default instead)
+BROWSERS_SKIP = ("unknown",)
 
 # Display Colors
 COLOR_SUCCESS = "GREEN"
@@ -204,9 +210,8 @@ def open_url(
     }
     display.json_data(url_info, color=True, indent=INDENT_URL_INFO)
 
-    # Get machine configuration (browser preference)
-    zmachine = session.get(SESSION_KEY_ZMACHINE, {})
-    browser = zmachine.get(ZMACHINE_KEY_BROWSER)
+    # Get browser preference (priority: session["browser"] → session["zMachine"]["browser"])
+    browser = session.get(SESSION_KEY_BROWSER) or session.get(SESSION_KEY_ZMACHINE, {}).get(ZMACHINE_KEY_BROWSER)
 
     if browser:
         logger.info(LOG_USING_BROWSER, browser)
@@ -269,16 +274,24 @@ def _open_url_browser(
     try:
         # Try to use specific browser if available
         if browser and browser not in BROWSERS_SKIP:
-            if shutil.which(browser):
-                subprocess.run([browser, url], check=False)
-                logger.info(LOG_SUCCESS_SPECIFIC, browser)
-                display.zDeclare(
-                    MSG_OPENED_BROWSER.format(browser=browser),
-                    color=COLOR_SUCCESS,
-                    indent=INDENT_URL_INFO,
-                    style=STYLE_SINGLE
-                )
-                return RETURN_ZBACK
+            # Get platform-specific launch command from zConfig
+            cmd, args = get_browser_launch_command(browser)
+            
+            if cmd:
+                try:
+                    # Build full command: cmd + args + [url]
+                    full_cmd = [cmd] + args + [url]
+                    subprocess.run(full_cmd, check=False, timeout=5)
+                    logger.info(LOG_SUCCESS_SPECIFIC, browser)
+                    display.zDeclare(
+                        MSG_OPENED_BROWSER.format(browser=browser),
+                        color=COLOR_SUCCESS,
+                        indent=INDENT_URL_INFO,
+                        style=STYLE_SINGLE
+                    )
+                    return RETURN_ZBACK
+                except Exception as e:
+                    logger.warning("Browser launch failed for %s: %s", browser, e)
 
         # Fallback to system default browser (webbrowser module)
         success = webbrowser.open(url)

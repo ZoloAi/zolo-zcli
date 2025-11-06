@@ -146,6 +146,8 @@ from zCLI.subsystems.zConfig.zConfig_modules.config_session import (
     SESSION_KEY_ZVAFOLDER,
     SESSION_KEY_ZBLOCK,
     SESSION_KEY_ZMODE,
+    SESSION_KEY_BROWSER,
+    SESSION_KEY_IDE,
 )
 
 # ============================================================================
@@ -558,6 +560,16 @@ def _build_walker_zspark(zcli: Any) -> None:
         SESSION_KEY_ZBLOCK: zblock,          # Starting block (applied after load)
         SESSION_KEY_ZMODE: current_mode      # Terminal or zBifrost
     })
+    
+    # Optionally update session with tool preferences from incoming zSpark
+    # (allows programmatic walker launches to override browser/IDE)
+    if "browser" in zcli.zspark_obj and zcli.zspark_obj["browser"] is not None:
+        zcli.session[SESSION_KEY_BROWSER] = zcli.zspark_obj["browser"]
+        zcli.logger.debug("Walker: session[browser] set from zSpark: %s", zcli.zspark_obj["browser"])
+    
+    if "ide" in zcli.zspark_obj and zcli.zspark_obj["ide"] is not None:
+        zcli.session[SESSION_KEY_IDE] = zcli.zspark_obj["ide"]
+        zcli.logger.debug("Walker: session[ide] set from zSpark: %s", zcli.zspark_obj["ide"])
 
 
 def _restore_session_mode(zcli: Any, original_mode: str) -> None:

@@ -114,6 +114,8 @@ SESSION_KEY_SYSTEM_ENV = "system_env"
 SESSION_KEY_LOGGER_INSTANCE = "logger_instance"
 SESSION_KEY_ZVARS = "zVars"
 SESSION_KEY_ZSHORTCUTS = "zShortcuts"
+SESSION_KEY_BROWSER = "browser"
+SESSION_KEY_IDE = "ide"
 
 # zSpark dict keys
 ZSPARK_KEY_ZSPACE = "zSpace"
@@ -261,6 +263,8 @@ class SessionConfig:
             SESSION_KEY_ZLOGGER: self._detect_logger_level(),
             SESSION_KEY_ZTRACEBACK: zTraceback,
             SESSION_KEY_ZMACHINE: machine_config,
+            SESSION_KEY_BROWSER: self._get_zSpark_value("browser"),  # Optional override
+            SESSION_KEY_IDE: self._get_zSpark_value("ide"),          # Optional override
             SESSION_KEY_ZAUTH: {
                 # Three-tier authentication structure with multi-app support
                 ZAUTH_KEY_ZSESSION: {
