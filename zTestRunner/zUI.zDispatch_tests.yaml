@@ -1,0 +1,286 @@
+# zTestRunner/zUI.zDispatch_tests.yaml
+# Comprehensive A-to-H zDispatch Test Suite (80 tests - 100% REAL TESTS)
+# Auto-run wizard pattern with result accumulation in zHat
+# Covers CommandLauncher, ModifierProcessor, Facade API, Mode Handling, Integration
+# NO STUB TESTS - All tests perform real validation
+
+zVaF:
+  # ===============================================================
+  # A. zDispatch Facade API Tests (8 tests) - zDispatch.py
+  # ===============================================================
+  zWizard:
+    "test_01_facade_initialization":
+      zFunc: "&zdispatch_tests.test_facade_initialization()"
+    
+    "test_02_facade_handle_string_command":
+      zFunc: "&zdispatch_tests.test_facade_handle_string_command()"
+    
+    "test_03_facade_handle_dict_command":
+      zFunc: "&zdispatch_tests.test_facade_handle_dict_command()"
+    
+    "test_04_facade_handle_with_modifiers":
+      zFunc: "&zdispatch_tests.test_facade_handle_with_modifiers()"
+    
+    "test_05_facade_handle_without_modifiers":
+      zFunc: "&zdispatch_tests.test_facade_handle_without_modifiers()"
+    
+    "test_06_facade_standalone_function":
+      zFunc: "&zdispatch_tests.test_facade_standalone_function()"
+    
+    "test_07_facade_error_handling":
+      zFunc: "&zdispatch_tests.test_facade_error_handling()"
+    
+    "test_08_facade_walker_context":
+      zFunc: "&zdispatch_tests.test_facade_walker_context()"
+    
+    # ===============================================================
+    # B. CommandLauncher - String Commands Tests (12 tests)
+    # ===============================================================
+    
+    "test_09_launcher_detect_zfunc_string":
+      zFunc: "&zdispatch_tests.test_launcher_detect_zfunc_string()"
+    
+    "test_10_launcher_detect_zlink_string":
+      zFunc: "&zdispatch_tests.test_launcher_detect_zlink_string()"
+    
+    "test_11_launcher_detect_zopen_string":
+      zFunc: "&zdispatch_tests.test_launcher_detect_zopen_string()"
+    
+    "test_12_launcher_detect_zwizard_string":
+      zFunc: "&zdispatch_tests.test_launcher_detect_zwizard_string()"
+    
+    "test_13_launcher_detect_zread_string":
+      zFunc: "&zdispatch_tests.test_launcher_detect_zread_string()"
+    
+    "test_14_launcher_plain_string_terminal":
+      zFunc: "&zdispatch_tests.test_launcher_plain_string_terminal()"
+    
+    "test_15_launcher_plain_string_bifrost":
+      zFunc: "&zdispatch_tests.test_launcher_plain_string_bifrost()"
+    
+    "test_16_launcher_plugin_detection":
+      zFunc: "&zdispatch_tests.test_launcher_plugin_detection()"
+    
+    "test_17_launcher_string_parsing":
+      zFunc: "&zdispatch_tests.test_launcher_string_parsing()"
+    
+    "test_18_launcher_empty_string":
+      zFunc: "&zdispatch_tests.test_launcher_empty_string()"
+    
+    "test_19_launcher_invalid_string_format":
+      zFunc: "&zdispatch_tests.test_launcher_invalid_string_format()"
+    
+    "test_20_launcher_nested_string_resolution":
+      zFunc: "&zdispatch_tests.test_launcher_nested_string_resolution()"
+    
+    # ===============================================================
+    # C. CommandLauncher - Dict Commands Tests (12 tests)
+    # ===============================================================
+    
+    "test_21_launcher_dict_zfunc":
+      zFunc: "&zdispatch_tests.test_launcher_dict_zfunc()"
+    
+    "test_22_launcher_dict_zlink":
+      zFunc: "&zdispatch_tests.test_launcher_dict_zlink()"
+    
+    "test_23_launcher_dict_zdisplay":
+      zFunc: "&zdispatch_tests.test_launcher_dict_zdisplay()"
+    
+    "test_24_launcher_dict_zdialog":
+      zFunc: "&zdispatch_tests.test_launcher_dict_zdialog()"
+    
+    "test_25_launcher_dict_zwizard":
+      zFunc: "&zdispatch_tests.test_launcher_dict_zwizard()"
+    
+    "test_26_launcher_dict_zread":
+      zFunc: "&zdispatch_tests.test_launcher_dict_zread()"
+    
+    "test_27_launcher_dict_zdata":
+      zFunc: "&zdispatch_tests.test_launcher_dict_zdata()"
+    
+    "test_28_launcher_dict_crud_detection":
+      zFunc: "&zdispatch_tests.test_launcher_dict_crud_detection()"
+    
+    "test_29_launcher_dict_multiple_keys":
+      zFunc: "&zdispatch_tests.test_launcher_dict_multiple_keys()"
+    
+    "test_30_launcher_dict_empty":
+      zFunc: "&zdispatch_tests.test_launcher_dict_empty()"
+    
+    "test_31_launcher_dict_invalid_key":
+      zFunc: "&zdispatch_tests.test_launcher_dict_invalid_key()"
+    
+    "test_32_launcher_dict_nested_structure":
+      zFunc: "&zdispatch_tests.test_launcher_dict_nested_structure()"
+    
+    # ===============================================================
+    # D. CommandLauncher - Mode Handling Tests (8 tests)
+    # ===============================================================
+    
+    "test_33_launcher_terminal_mode_detection":
+      zFunc: "&zdispatch_tests.test_launcher_terminal_mode_detection()"
+    
+    "test_34_launcher_bifrost_mode_detection":
+      zFunc: "&zdispatch_tests.test_launcher_bifrost_mode_detection()"
+    
+    "test_35_launcher_mode_specific_behavior_zwizard":
+      zFunc: "&zdispatch_tests.test_launcher_mode_specific_behavior_zwizard()"
+    
+    "test_36_launcher_mode_specific_behavior_plain_string":
+      zFunc: "&zdispatch_tests.test_launcher_mode_specific_behavior_plain_string()"
+    
+    "test_37_launcher_walker_presence_check":
+      zFunc: "&zdispatch_tests.test_launcher_walker_presence_check()"
+    
+    "test_38_launcher_context_resolution":
+      zFunc: "&zdispatch_tests.test_launcher_context_resolution()"
+    
+    "test_39_launcher_display_delegation":
+      zFunc: "&zdispatch_tests.test_launcher_display_delegation()"
+    
+    "test_40_launcher_logger_usage":
+      zFunc: "&zdispatch_tests.test_launcher_logger_usage()"
+    
+    # ===============================================================
+    # E. ModifierProcessor - Prefix Modifiers Tests (10 tests)
+    # ===============================================================
+    
+    "test_41_modifier_detect_caret_prefix":
+      zFunc: "&zdispatch_tests.test_modifier_detect_caret_prefix()"
+    
+    "test_42_modifier_detect_tilde_prefix":
+      zFunc: "&zdispatch_tests.test_modifier_detect_tilde_prefix()"
+    
+    "test_43_modifier_detect_both_prefixes":
+      zFunc: "&zdispatch_tests.test_modifier_detect_both_prefixes()"
+    
+    "test_44_modifier_detect_no_prefix":
+      zFunc: "&zdispatch_tests.test_modifier_detect_no_prefix()"
+    
+    "test_45_modifier_caret_bounce_terminal":
+      zFunc: "&zdispatch_tests.test_modifier_caret_bounce_terminal()"
+    
+    "test_46_modifier_caret_bounce_bifrost":
+      zFunc: "&zdispatch_tests.test_modifier_caret_bounce_bifrost()"
+    
+    "test_47_modifier_tilde_anchor_standalone":
+      zFunc: "&zdispatch_tests.test_modifier_tilde_anchor_standalone()"
+    
+    "test_48_modifier_tilde_anchor_with_menu":
+      zFunc: "&zdispatch_tests.test_modifier_tilde_anchor_with_menu()"
+    
+    "test_49_modifier_prefix_stripping":
+      zFunc: "&zdispatch_tests.test_modifier_prefix_stripping()"
+    
+    "test_50_modifier_prefix_edge_cases":
+      zFunc: "&zdispatch_tests.test_modifier_prefix_edge_cases()"
+    
+    # ===============================================================
+    # F. ModifierProcessor - Suffix Modifiers Tests (10 tests)
+    # ===============================================================
+    
+    "test_51_modifier_detect_asterisk_suffix":
+      zFunc: "&zdispatch_tests.test_modifier_detect_asterisk_suffix()"
+    
+    "test_52_modifier_detect_exclamation_suffix":
+      zFunc: "&zdispatch_tests.test_modifier_detect_exclamation_suffix()"
+    
+    "test_53_modifier_detect_both_suffixes":
+      zFunc: "&zdispatch_tests.test_modifier_detect_both_suffixes()"
+    
+    "test_54_modifier_detect_no_suffix":
+      zFunc: "&zdispatch_tests.test_modifier_detect_no_suffix()"
+    
+    "test_55_modifier_asterisk_menu_creation":
+      zFunc: "&zdispatch_tests.test_modifier_asterisk_menu_creation()"
+    
+    "test_56_modifier_exclamation_required_logic":
+      zFunc: "&zdispatch_tests.test_modifier_exclamation_required_logic()"
+    
+    "test_57_modifier_exclamation_retry_loop":
+      zFunc: "&zdispatch_tests.test_modifier_exclamation_retry_loop()"
+    
+    "test_58_modifier_suffix_stripping":
+      zFunc: "&zdispatch_tests.test_modifier_suffix_stripping()"
+    
+    "test_59_modifier_suffix_edge_cases":
+      zFunc: "&zdispatch_tests.test_modifier_suffix_edge_cases()"
+    
+    "test_60_modifier_combined_prefix_suffix":
+      zFunc: "&zdispatch_tests.test_modifier_combined_prefix_suffix()"
+    
+    # ===============================================================
+    # G. Integration Tests - Workflow Tests (10 tests)
+    # ===============================================================
+    
+    "test_61_integration_facade_to_launcher":
+      zFunc: "&zdispatch_tests.test_integration_facade_to_launcher()"
+    
+    "test_62_integration_facade_to_modifiers":
+      zFunc: "&zdispatch_tests.test_integration_facade_to_modifiers()"
+    
+    "test_63_integration_modifier_to_launcher":
+      zFunc: "&zdispatch_tests.test_integration_modifier_to_launcher()"
+    
+    "test_64_integration_bounce_modifier_workflow":
+      zFunc: "&zdispatch_tests.test_integration_bounce_modifier_workflow()"
+    
+    "test_65_integration_menu_modifier_workflow":
+      zFunc: "&zdispatch_tests.test_integration_menu_modifier_workflow()"
+    
+    "test_66_integration_required_modifier_workflow":
+      zFunc: "&zdispatch_tests.test_integration_required_modifier_workflow()"
+    
+    "test_67_integration_complex_command_routing":
+      zFunc: "&zdispatch_tests.test_integration_complex_command_routing()"
+    
+    "test_68_integration_mode_switching":
+      zFunc: "&zdispatch_tests.test_integration_mode_switching()"
+    
+    "test_69_integration_error_propagation":
+      zFunc: "&zdispatch_tests.test_integration_error_propagation()"
+    
+    "test_70_integration_session_context":
+      zFunc: "&zdispatch_tests.test_integration_session_context()"
+    
+    # ===============================================================
+    # H. Real Integration Tests - Forward Dependencies (10 tests)
+    # ===============================================================
+    
+    "test_71_real_display_integration":
+      zFunc: "&zdispatch_tests.test_real_display_integration()"
+    
+    "test_72_real_logger_integration":
+      zFunc: "&zdispatch_tests.test_real_logger_integration()"
+    
+    "test_73_real_session_integration":
+      zFunc: "&zdispatch_tests.test_real_session_integration()"
+    
+    "test_74_real_walker_integration":
+      zFunc: "&zdispatch_tests.test_real_walker_integration()"
+    
+    "test_75_real_command_execution_flow":
+      zFunc: "&zdispatch_tests.test_real_command_execution_flow()"
+    
+    "test_76_real_modifier_execution_flow":
+      zFunc: "&zdispatch_tests.test_real_modifier_execution_flow()"
+    
+    "test_77_real_error_handling_flow":
+      zFunc: "&zdispatch_tests.test_real_error_handling_flow()"
+    
+    "test_78_real_mode_dependent_behavior":
+      zFunc: "&zdispatch_tests.test_real_mode_dependent_behavior()"
+    
+    "test_79_real_constants_usage":
+      zFunc: "&zdispatch_tests.test_real_constants_usage()"
+    
+    "test_80_real_type_safety_validation":
+      zFunc: "&zdispatch_tests.test_real_type_safety_validation()"
+    
+    # ===============================================================
+    # Display Results and Return to Menu
+    # ===============================================================
+    
+    "display_and_return":
+      zFunc: "&zdispatch_tests.display_test_results()"
+

@@ -46,7 +46,7 @@ zVaF:
     zLink: "@.zUI.zAuth_tests.zVaF"
   
   "zDispatch":
-    zFunc: "&test_runner.run_test_suite('zDispatch')"
+    zLink: "@.zUI.zDispatch_tests.zVaF"
   
   "zNavigation":
     zFunc: "&test_runner.run_test_suite('zNavigation')"
