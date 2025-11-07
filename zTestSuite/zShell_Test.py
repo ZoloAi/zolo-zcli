@@ -23,9 +23,12 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from zCLI.subsystems.zShell.zShell import zShell
-from zCLI.subsystems.zShell.shell_modules.shell_interactive import InteractiveShell
+from zCLI.subsystems.zShell.shell_modules.shell_runner import ShellRunner
 from zCLI.subsystems.zShell.shell_modules.shell_executor import CommandExecutor
 from zCLI.subsystems.zShell.shell_modules.shell_help import HelpSystem
+
+# Backward compatibility alias
+InteractiveShell = ShellRunner
 from zCLI.subsystems.zShell.shell_modules.commands.shell_cmd_auth import execute_auth
 from zCLI.subsystems.zAuth.zAuth import zAuth
 from zCLI.subsystems.zDisplay.zDisplay import zDisplay
@@ -159,7 +162,8 @@ class TestWizardMode(unittest.TestCase):
         """Test showing empty wizard buffer."""
         result = self.executor._wizard_show()
         
-        self.assertEqual(result["status"], "empty")
+        # UI adapter pattern - wizard methods return None
+        self.assertIsNone(result)
         self.mock_zcli.display.zDeclare.assert_called_with(
             "Wizard buffer empty",
             color="INFO",
@@ -173,8 +177,8 @@ class TestWizardMode(unittest.TestCase):
         
         result = self.executor._wizard_show()
         
-        self.assertEqual(result["status"], "shown")
-        self.assertEqual(result["lines"], 3)
+        # UI adapter pattern - wizard methods return None
+        self.assertIsNone(result)
         # Should display header + 3 lines
         self.assertEqual(self.mock_zcli.display.zDeclare.call_count, 4)
     
@@ -184,8 +188,9 @@ class TestWizardMode(unittest.TestCase):
         
         result = self.executor._wizard_clear()
         
-        self.assertEqual(result["status"], "cleared")
-        self.assertEqual(result["lines"], 2)
+        # UI adapter pattern - wizard methods return None
+        self.assertIsNone(result)
+        # Verify buffer was cleared
         self.assertEqual(len(self.mock_zcli.session["wizard_mode"]["lines"]), 0)
     
     def test_wizard_stop(self):
@@ -195,8 +200,9 @@ class TestWizardMode(unittest.TestCase):
         
         result = self.executor._wizard_stop()
         
-        self.assertEqual(result["status"], "stopped")
-        self.assertEqual(result["lines_discarded"], 2)
+        # UI adapter pattern - wizard methods return None
+        self.assertIsNone(result)
+        # Verify wizard mode was stopped and buffer cleared
         self.assertFalse(self.mock_zcli.session["wizard_mode"]["active"])
         self.assertEqual(len(self.mock_zcli.session["wizard_mode"]["lines"]), 0)
     
@@ -204,8 +210,10 @@ class TestWizardMode(unittest.TestCase):
         """Test running empty wizard buffer."""
         result = self.executor._wizard_run()
         
-        self.assertIn("error", result)
-        self.assertEqual(result["error"], "empty_buffer")
+        # UI adapter pattern - wizard methods return None
+        self.assertIsNone(result)
+        # Verify warning was displayed
+        self.mock_zcli.display.zDeclare.assert_called()
     
     def test_wizard_run_yaml_format(self):
         """Test running wizard buffer with YAML format."""
@@ -217,9 +225,11 @@ class TestWizardMode(unittest.TestCase):
         
         result = self.executor._wizard_run()
         
-        self.assertEqual(result["status"], "success")
-        self.assertEqual(result["format"], "yaml")
+        # UI adapter pattern - wizard methods return None
+        self.assertIsNone(result)
+        # Verify wizard.handle was called and buffer was cleared
         self.mock_zcli.wizard.handle.assert_called_once()
+        self.assertEqual(len(self.mock_zcli.session["wizard_mode"]["lines"]), 0)
     
     def test_wizard_run_shell_commands(self):
         """Test running wizard buffer with shell commands."""
@@ -231,9 +241,11 @@ class TestWizardMode(unittest.TestCase):
         
         result = self.executor._wizard_run()
         
-        self.assertEqual(result["status"], "success")
-        self.assertEqual(result["format"], "commands")
+        # UI adapter pattern - wizard methods return None
+        self.assertIsNone(result)
+        # Verify wizard.handle was called and buffer was cleared
         self.mock_zcli.wizard.handle.assert_called_once()
+        self.assertEqual(len(self.mock_zcli.session["wizard_mode"]["lines"]), 0)
     
     def test_wizard_run_clears_buffer_on_success(self):
         """Test that wizard run clears buffer on success."""
@@ -251,7 +263,12 @@ class TestWizardMode(unittest.TestCase):
         
         result = self.executor._wizard_run()
         
-        self.assertIn("error", result)
+        # UI adapter pattern - wizard methods return None
+        self.assertIsNone(result)
+        # Verify error was displayed
+        self.mock_zcli.display.zDeclare.assert_called()
+        # Buffer should not be cleared on failure
+        self.assertEqual(len(self.mock_zcli.session["wizard_mode"]["lines"]), 1)
 
 
 class TestInteractiveShell(unittest.TestCase):
@@ -569,7 +586,10 @@ class TestEdgeCases(unittest.TestCase):
         # Should fallback to shell commands
         result = executor._wizard_run()
         
-        self.assertEqual(result["format"], "commands")
+        # UI adapter pattern - wizard methods return None
+        self.assertIsNone(result)
+        # Verify wizard.handle was called (fallback to shell commands)
+        self.mock_zcli.wizard.handle.assert_called_once()
     
     def test_display_result_with_other_types(self):
         """Test displaying result with other types (int, list, etc)."""
