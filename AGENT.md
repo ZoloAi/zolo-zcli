@@ -4,11 +4,11 @@
 
 **Latest**: v1.5.4 - Layer 0 Complete (70% coverage, 907 tests passing)
 
-**New**: Declarative Test Suite (`zTestRunner`) - 296 tests total (100% subsystem coverage) ✅
-- **zConfig**: 66 tests (100% pass) - Configuration subsystem
-- **zComm**: 98 tests (100% pass) - Communication subsystem
-- **zDisplay**: 73 tests (100% pass) - Display & rendering subsystem
-- **zAuth**: 59 tests (mock authentication) - Authentication & authorization subsystem
+**New**: Declarative Test Suite (`zTestRunner`) - 334 tests total (100% subsystem coverage) ✅
+- **zConfig**: 72 tests (100% pass) - Configuration subsystem with integration tests
+- **zComm**: 106 tests (100% pass) - Communication subsystem with integration tests
+- **zDisplay**: 86 tests (100% pass) - Display & rendering subsystem with integration tests
+- **zAuth**: 70 tests (100% pass) - Three-tier authentication with real bcrypt & SQLite tests
 
 ---
 
@@ -845,50 +845,95 @@ z.display.zTable("Users", columns, rows, limit=10, offset=20)
 
 ---
 
-## zAuth Modular Architecture (v1.5.4 Refactor)
+## zAuth: Three-Tier Authentication & Authorization (v1.5.4+)
 
 ### Overview
 
-**zAuth** uses a modular architecture with the **facade pattern** for clean separation of concerns:
+**zAuth** provides enterprise-grade authentication with three-tier architecture, context-aware RBAC, bcrypt security, and SQLite persistence.
 
 **Module Structure**:
 ```
 zCLI/subsystems/zAuth/
-├── zAuth.py (facade orchestrator, 302 lines)
+├── zAuth.py (facade orchestrator)
 └── zAuth_modules/
-    ├── password_security.py (bcrypt hashing - 118 lines)
-    ├── session_persistence.py (SQLite sessions - 213 lines)
-    ├── authentication.py (login/logout - 193 lines)
-    └── rbac.py (roles & permissions - 268 lines)
+    ├── auth_password_security.py   (bcrypt hashing, 12 rounds)
+    ├── auth_session_persistence.py (SQLite persistence, 7-day expiry)
+    ├── auth_authentication.py      (Three-tier auth logic - CORE)
+    └── auth_rbac.py               (Context-aware RBAC)
 ```
 
-### Module Responsibilities
+### Three-Tier Authentication
 
-1. **password_security.py**: Pure bcrypt hashing (no dependencies)
-2. **session_persistence.py**: SQLite session management (7-day expiry)
-3. **authentication.py**: Login/logout operations (local + remote)
-4. **rbac.py**: Role-Based Access Control with permissions
+**Tier 1: zSession (Internal)**
+- For zCLI/Zolo platform users (developers, admins)
+- Session structure: `session["zAuth"]["zSession"]`
 
-### Public API (Unchanged)
+**Tier 2: Application (External)**
+- For end-users of apps built with zCLI (customers, employees)
+- Multi-app support: `session["zAuth"]["applications"][app_name]`
+- Independent contexts per application
+
+**Tier 3: Dual-Mode (Both)**
+- Users with both zCLI and application identities
+- RBAC uses OR logic (either context grants access)
+- Automatic detection and context switching
+
+### Public API
 
 ```python
 from zCLI import zCLI
 z = zCLI({"zWorkspace": "."})
 
-# All methods work identically (facade delegates to modules)
-hashed = z.auth.hash_password("password")          # → password_security
-z.auth.login(username, password, persist=True)     # → authentication + session_persistence
-z.auth.has_role("admin")                           # → rbac
-z.auth.grant_permission(user_id, "users.delete")  # → rbac
+# Password security (bcrypt)
+hashed = z.auth.hash_password("password")
+is_valid = z.auth.verify_password("password", hashed)
+
+# zSession authentication (Tier 1)
+z.auth.login("user@zolo.com", "password", persist=True)
+if z.auth.is_authenticated():
+    creds = z.auth.get_credentials()
+
+# Application authentication (Tier 2)
+z.auth.authenticate_app_user("my_store", token, config)
+z.auth.switch_app("admin_panel")
+user = z.auth.get_app_user("my_store")
+
+# Context-aware RBAC
+z.auth.set_active_context("dual")
+if z.auth.has_role("admin"):  # Checks BOTH contexts
+    # Admin access from either context
+    pass
+
+# Permission management
+z.auth.grant_permission("user_123", "data.delete", "admin_456")
+z.auth.has_permission("data.write")
 ```
 
-### Benefits
+### Key Features
 
-- 📉 Main file: 719 lines → 302 lines (58% reduction)
-- ✅ Testable in isolation (each module independent)
-- ✅ Clear separation of concerns
-- ✅ Extensible (add OAuth, JWT, 2FA easily)
-- ✅ Backwards compatible (facade pattern)
+✅ **Three-tier architecture** - zSession, Application, Dual-Mode contexts  
+✅ **bcrypt security** - 12 rounds, random salts, timing-safe verification  
+✅ **SQLite persistence** - 7-day expiry, automatic cleanup, secure tokens  
+✅ **Context-aware RBAC** - Role checks across all authentication tiers  
+✅ **Multi-app support** - Simultaneous authentication for multiple apps  
+✅ **70 comprehensive tests** - 100% pass rate with real bcrypt & SQLite integration
+
+### Testing
+
+**Test Coverage**: 70 tests across 11 categories (100% pass rate)
+- A. Facade API (5 tests)
+- B. Password Security (6 tests)
+- C. Session Persistence (7 tests)
+- D. Tier 1 - zSession Auth (9 tests)
+- E. Tier 2 - Application Auth (9 tests)
+- F. Tier 3 - Dual-Mode Auth (7 tests)
+- G. RBAC (9 tests)
+- H. Context Management (6 tests)
+- I. Integration Workflows (6 tests)
+- J. Real Bcrypt Tests (3 tests) - actual hashing/verification
+- K. Real SQLite Tests (3 tests) - persistence round-trip
+
+**Run Tests**: `zolo ztests` → select "zAuth"
 
 ---
 
@@ -2445,15 +2490,19 @@ Loading a schema doesn't auto-create tables - you must explicitly call `create_t
 **See**: `Documentation/` for all 25+ subsystem guides
 
 **Declarative Testing**:
-- `zTestRunner/` - Declarative test suite (296 tests total)
-- **zConfig**: `zTestRunner/zUI.zConfig_tests.yaml` (66 tests, 100% coverage)
+- `zTestRunner/` - Declarative test suite (334 tests total, 100% pass rate)
+- **zConfig**: `zTestRunner/zUI.zConfig_tests.yaml` (72 tests, 100% coverage)
   - Plugin: `zTestRunner/plugins/zconfig_tests.py` (test logic)
-- **zComm**: `zTestRunner/zUI.zComm_tests.yaml` (98 tests, 100% coverage)
+  - Integration: Real file I/O, YAML round-trip, .env creation, persistence
+- **zComm**: `zTestRunner/zUI.zComm_tests.yaml` (106 tests, 100% coverage)
   - Plugin: `zTestRunner/plugins/zcomm_tests.py` (test logic)
-- **zDisplay**: `zTestRunner/zUI.zDisplay_tests.yaml` (73 tests, 100% coverage)
+  - Integration: Network ops, port checks, WebSocket lifecycle, HTTP client
+- **zDisplay**: `zTestRunner/zUI.zDisplay_tests.yaml` (86 tests, 100% coverage)
   - Plugin: `zTestRunner/plugins/zdisplay_tests.py` (test logic)
-- **zAuth**: `zTestRunner/zUI.zAuth_tests.yaml` (59 tests, mock auth)
+  - Integration: Real display ops, table rendering, pagination, mode switching
+- **zAuth**: `zTestRunner/zUI.zAuth_tests.yaml` (70 tests, 100% coverage)
   - Plugin: `zTestRunner/plugins/zauth_tests.py` (test logic)
+  - Integration: Real bcrypt hashing/verification, SQLite persistence, three-tier auth
 
 ---
 
@@ -2679,16 +2728,18 @@ sessions_db.parent.mkdir(parents=True, exist_ok=True)
 
 **Version**: 1.5.4  
 **Layer 0 Status**: ✅ Production-Ready (70% coverage, 907 tests passing)  
-**Layer 1 Status**: 🚧 In Progress (Weeks 3.1-3.2 complete)
-- Week 3.1: ✅ bcrypt password hashing (14 tests)
-- Week 3.2: ✅ Persistent sessions with zData (10 tests)
+**Layer 1 Status**: 🚧 In Progress (zAuth complete)
+- ✅ Three-tier authentication (zSession, Application, Dual-Mode)
+- ✅ bcrypt password security (12 rounds, random salts)
+- ✅ SQLite session persistence (7-day expiry, auto-cleanup)
+- ✅ Context-aware RBAC (role & permission management)
 **Total Tests**: 931 passing (100% pass rate) 🎉  
-**Declarative Test Suite**: ✅ zTestRunner operational (296 tests, 100% subsystem coverage)
-- **zConfig**: 66 tests (100% pass) 
-- **zComm**: 98 tests (100% pass)
-- **zDisplay**: 73 tests (100% pass)
-- **zAuth**: 59 tests (mock authentication)
-**Next**: Week 3.3 - Enhanced RBAC decorators
+**Declarative Test Suite**: ✅ zTestRunner operational (334 tests, 100% pass rate, 100% subsystem coverage)
+- **zConfig**: 72 tests (100% pass) - with integration tests
+- **zComm**: 106 tests (100% pass) - with integration tests
+- **zDisplay**: 86 tests (100% pass) - with integration tests
+- **zAuth**: 70 tests (100% pass) - with real bcrypt & SQLite integration
+**Next**: Additional subsystems (zParser, zLoader, zNavigation, etc.)
 
 ---
 
@@ -2696,21 +2747,32 @@ sessions_db.parent.mkdir(parents=True, exist_ok=True)
 
 **zConfig (Week 6.2 - Complete):**
 - **Guide:** `Documentation/zConfig_GUIDE.md` - CEO & developer-friendly (updated)
-- **Test Suite:** `zTestRunner/zUI.zConfig_tests.yaml` - 66 declarative tests (100% coverage)
+- **Test Suite:** `zTestRunner/zUI.zConfig_tests.yaml` - 72 declarative tests (100% pass rate)
 - **Status:** A+ grade (100% type hints, 150+ constants, zero bugs)
+- **Coverage:** All 14 modules, 6 integration tests (file I/O, YAML, .env, persistence)
 - **Run Tests:** `zolo ztests` → select "zConfig"
 
 **zComm (Week 6.3 - Complete):**
 - **Guide:** `Documentation/zComm_GUIDE.md` - CEO & developer-friendly (updated)
-- **Test Suite:** `zTestRunner/zUI.zComm_tests.yaml` - 98 declarative tests (100% coverage)
+- **Test Suite:** `zTestRunner/zUI.zComm_tests.yaml` - 106 declarative tests (100% pass rate)
 - **Status:** A+ grade (100% type hints, 300+ constants, three-tier auth, cache security)
+- **Coverage:** All 15 modules, 8 integration tests (network ops, WebSocket, HTTP)
 - **Run Tests:** `zolo ztests` → select "zComm"
 - **Innovations:** Three-tier authentication (industry-first), cache security isolation
 
 **zDisplay (Week 6.4 - Complete):**
 - **Guide:** `Documentation/zDisplay_GUIDE.md` - CEO & developer-friendly (updated)
-- **Test Suite:** `zTestRunner/zUI.zDisplay_tests.yaml` - 73 declarative tests (100% coverage)
+- **Test Suite:** `zTestRunner/zUI.zDisplay_tests.yaml` - 86 declarative tests (100% pass rate)
 - **Status:** A+ grade (100% type hints, 30+ event constants, dual-mode architecture)
+- **Coverage:** All 13 modules, 13 integration tests (real display ops, tables, pagination)
 - **Run Tests:** `zolo ztests` → select "zDisplay"
 - **Innovations:** Automatic mode adaptation (Terminal/Bifrost), composition pattern (DRY), smart pagination
+
+**zAuth (Week 6.5 - Complete):**
+- **Guide:** `Documentation/zAuth_GUIDE.md` - CEO & developer-friendly (updated)
+- **Test Suite:** `zTestRunner/zUI.zAuth_tests.yaml` - 70 declarative tests (100% pass rate)
+- **Status:** A+ grade (three-tier auth, bcrypt security, SQLite persistence, context-aware RBAC)
+- **Coverage:** All 4 modules, 6 integration tests (real bcrypt, SQLite, three-tier workflows)
+- **Run Tests:** `zolo ztests` → select "zAuth"
+- **Innovations:** Three-tier authentication (zSession/Application/Dual), context-aware RBAC with OR logic, multi-app support
 

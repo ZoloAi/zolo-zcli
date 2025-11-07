@@ -1,443 +1,486 @@
-# zAuth: The Authentication Subsystem
+# zAuth: Three-Tier Authentication & Authorization
 
-## **Overview**
-- **zAuth** is **zCLI**'s session-only authentication subsystem
-- Provides dual-mode authentication (Terminal/GUI), remote API integration, and session credential management
-- Initializes after zDisplay, providing authentication services to all subsystems
+## Overview
+**zAuth** provides enterprise-grade authentication and authorization for zCLI with three-tier architecture, context-aware RBAC, and secure credential management.
 
-## **Architecture**
-
-### **Layer 1 Authentication Services**
-**zAuth** operates as a Layer 1 subsystem, meaning it:
-- Initializes after foundation subsystems (zConfig, zComm, zDisplay)
-- Provides authentication services to all other subsystems
-- Depends on zDisplay for dual-mode I/O
-- Establishes session-only authentication (no persistence)
-
-### **Streamlined Design**
-```
-zAuth/
-├── __init__.py                       # Module exports
-└── zAuth.py                          # Self-contained authentication class
-```
-
-**Note:** All authentication logic is now contained within the `zAuth` class itself, eliminating the need for separate module files.
+**Key Features:**
+- **Three-tier authentication**: zSession (internal), Application (external), Dual-Mode (both)
+- **bcrypt password security**: Industry-standard hashing with 12 rounds
+- **SQLite session persistence**: 7-day expiry with automatic cleanup
+- **Context-aware RBAC**: Role and permission checks across all tiers
+- **Multi-app support**: Simultaneous authentication for multiple applications
 
 ---
 
-## **Core Features**
+## Three-Tier Architecture
 
-### **1. Session-Only Authentication**
-- **No Persistence**: Credentials stored only in `session["zAuth"]` during runtime
-- **Fresh Login**: Users authenticate each session
-- **Clean Logout**: Session cleared on logout or exit
+### Tier 1: zSession Authentication (Internal)
+**For:** zCLI/Zolo platform users (developers, admins, premium features)
 
-### **2. Dual-Mode I/O**
-- **Terminal Mode**: Interactive prompts via `zDisplay.zEvents.zAuth`
-- **GUI Mode**: WebSocket events via bifrost for frontend forms
-- Automatic mode detection and seamless switching
-
-### **3. Remote API Integration**
-- **Environment-Based**: Enabled via `ZOLO_USE_REMOTE_API=true`
-- **zComm Integration**: Uses zComm for HTTP communication
-- **Flexible Endpoints**: Configurable server URL
-
----
-
-## **Session Structure**
-
-### **zAuth Session Data**
 ```python
-session["zAuth"] = {
-    "id": None,           # User ID (e.g., "zU_abc123")
-    "username": None,     # Username
-    "role": None,         # User role (e.g., "admin", "user")
-    "API_Key": None       # API key for authenticated requests
+# Login as internal user
+result = zcli.auth.login("dev@zolo.com", "password")
+
+# Check authentication
+if zcli.auth.is_authenticated():
+    print("Logged in to zCLI platform")
+```
+
+**Session Structure:**
+```python
+session["zAuth"]["zSession"] = {
+    "authenticated": True,
+    "username": "dev@zolo.com",
+    "user_id": "123",
+    "role": "developer"
 }
 ```
 
-### **Authentication States**
-- **Not Authenticated**: All fields are `None`
-- **Authenticated**: All fields populated after successful login
-- **Logged Out**: All fields reset to `None`
+### Tier 2: Application Authentication (External)
+**For:** End-users of applications built with zCLI (customers, employees, students)
 
----
-
-## **API Reference**
-
-### **Core Methods**
-
-#### **`login(username=None, password=None, server_url=None)`**
-Authenticate user for current session.
-
-**Parameters:**
-- `username` (str, optional): Username (prompts if not provided)
-- `password` (str, optional): Password (prompts if not provided)
-- `server_url` (str, optional): API server URL (uses env default if not provided)
-
-**Returns:**
 ```python
-{
-    "status": "success" | "fail" | "pending",
-    "credentials": {...},  # On success
-    "reason": "..."        # On failure
+# Authenticate app user
+result = zcli.auth.authenticate_app_user(
+    app_name="my_store",
+    token="customer_token_xyz",
+    config={"auth_endpoint": "https://store.com/api/auth"}
+)
+
+# Get specific app user
+store_user = zcli.auth.get_app_user("my_store")
+
+# Switch between apps
+zcli.auth.switch_app("admin_panel")
+```
+
+**Multi-App Session:**
+```python
+session["zAuth"]["applications"] = {
+    "my_store": {"user_id": "c123", "role": "customer"},
+    "admin_panel": {"user_id": "a456", "role": "admin"}
 }
 ```
 
-**Example:**
+### Tier 3: Dual-Mode (Both Contexts)
+**For:** Users with both zCLI and application identities (store owners, app developers)
+
+```python
+# Login to both contexts
+zcli.auth.login("owner@zolo.com", "password")           # zSession
+zcli.auth.authenticate_app_user("my_store", token, config)  # Application
+
+# System automatically detects dual-mode
+# active_context = "dual"
+# dual_mode = True
+
+# Get current user (based on active context)
+user = zcli.auth.get_active_user()
+
+# RBAC uses OR logic in dual mode
+if zcli.auth.has_role("admin"):
+    # Returns True if EITHER zSession OR app user has admin role
+    print("Admin access granted from either context")
+```
+
+---
+
+## Password Security (bcrypt)
+
+### Secure Hashing
+```python
+# Hash password with bcrypt (12 rounds, random salt)
+hashed = zcli.auth.hash_password("user_password")
+# Result: "$2b$12$randomsalt...hashedpassword"
+
+# Verify password (timing-safe comparison)
+is_valid = zcli.auth.verify_password("user_password", hashed)
+# Returns: True (correct) or False (incorrect)
+```
+
+**Security Features:**
+- **12 rounds** (2^12 = 4096 iterations) - slow by design
+- **Random salts** - each hash is unique
+- **Timing-safe** - prevents timing attacks
+- **72-byte handling** - automatic truncation with logging
+
+---
+
+## Session Persistence (SQLite)
+
+### Save and Load Sessions
+```python
+# Sessions automatically persist to SQLite database
+# Location: Application Support/zolo-zcli/sessions.db
+
+# Login with persistence (default: enabled)
+result = zcli.auth.login("user@zolo.com", "password", persist=True)
+
+# Session saved with:
+# - User credentials (hashed)
+# - Session token (random, secure)
+# - Expiry date (7 days from login)
+
+# Automatic session loading on next zCLI start
+# No re-login needed if session not expired
+
+# Logout with cleanup
+zcli.auth.logout(delete_persistent=True)
+```
+
+**Persistence Features:**
+- **7-day expiry** - sessions auto-expire after 7 days
+- **Automatic cleanup** - expired sessions removed on login
+- **Secure tokens** - generated with `secrets.token_urlsafe()`
+- **Multi-session** - supports concurrent sessions from different devices
+
+---
+
+## Context-Aware RBAC
+
+### Role Checks
+```python
+# Check single role
+if zcli.auth.has_role("admin"):
+    print("User is admin")
+
+# Check multiple roles (any match)
+if zcli.auth.has_role(["admin", "moderator"]):
+    print("User has admin OR moderator role")
+```
+
+### Context Behavior
+**zSession context:**
+```python
+zcli.auth.set_active_context("zSession")
+# Checks role in session["zAuth"]["zSession"]["role"]
+```
+
+**Application context:**
+```python
+zcli.auth.set_active_context("application")
+# Checks role in session["zAuth"]["applications"][active_app]["role"]
+```
+
+**Dual-mode context (OR logic):**
+```python
+zcli.auth.set_active_context("dual")
+# Returns True if EITHER zSession OR app user has the role
+```
+
+### Permission Checks
+```python
+# Check permission
+if zcli.auth.has_permission("data.delete"):
+    # Execute privileged operation
+    pass
+
+# Grant permission (requires admin)
+zcli.auth.grant_permission(
+    user_id="user_123",
+    permission="data.write",
+    granted_by="admin_456"
+)
+
+# Revoke permission
+zcli.auth.revoke_permission("user_123", "data.write")
+```
+
+---
+
+## Common Workflows
+
+### 1. Simple zSession Login
 ```python
 # Interactive login (prompts for credentials)
 result = zcli.auth.login()
 
-# Direct login
-result = zcli.auth.login("alice", "secret123")
+# Check result
+if result["status"] == "success":
+    creds = zcli.auth.get_credentials()
+    print(f"Welcome, {creds['username']}!")
+```
+
+### 2. Multi-App Management
+```python
+# Authenticate multiple apps
+zcli.auth.authenticate_app_user("store", "token1", config1)
+zcli.auth.authenticate_app_user("forum", "token2", config2)
+
+# Switch between apps
+zcli.auth.switch_app("store")
+store_user = zcli.auth.get_app_user("store")
+
+zcli.auth.switch_app("forum")
+forum_user = zcli.auth.get_app_user("forum")
+
+# Logout specific app
+zcli.auth.logout(context="application", app_name="forum")
+```
+
+### 3. Dual-Mode with RBAC
+```python
+# Login as developer (zSession)
+zcli.auth.login("dev@zolo.com", "password")
+
+# Authenticate as store owner (Application)
+zcli.auth.authenticate_app_user("my_store", "owner_token", config)
+
+# System detects dual-mode automatically
+# Now RBAC checks BOTH contexts
+
+# Returns True if EITHER developer OR store owner has admin role
+if zcli.auth.has_role("admin"):
+    print("Admin access from either context")
+
+# Context-specific logout
+zcli.auth.logout(context="zSession")      # Logout zCLI only
+zcli.auth.logout(context="application", app_name="my_store")  # Logout app only
+zcli.auth.logout(context="all")            # Logout everything
 ```
 
 ---
 
-#### **`logout()`**
-Clear session authentication.
+## API Reference
 
-**Returns:**
-```python
-{"status": "success"}
-```
+### Authentication Methods
 
-**Example:**
+**`login(username, password, server_url=None, persist=True)`**
+- Authenticate zSession user (internal)
+- Returns: `{"status": "success"|"fail", "user": {...}}`
+
+**`logout(context="zSession", app_name=None, delete_persistent=True)`**
+- Logout from specified context
+- Contexts: "zSession", "application", "dual", "all", "all_apps"
+
+**`is_authenticated()`**
+- Check if zSession is authenticated
+- Returns: `bool`
+
+**`get_credentials()`**
+- Get zSession credentials
+- Returns: `dict` or `None`
+
+**`status()`**
+- Get authentication status
+- Returns: `{"status": "authenticated"|"not_authenticated", "user": {...}}`
+
+### Application Methods
+
+**`authenticate_app_user(app_name, token, config)`**
+- Authenticate application user
+- Returns: `{"status": "success"|"fail", "user": {...}}`
+
+**`switch_app(app_name)`**
+- Switch active application
+- Returns: `bool`
+
+**`get_app_user(app_name)`**
+- Get application user data
+- Returns: `dict` or `None`
+
+### Context Methods
+
+**`set_active_context(context)`**
+- Set active authentication context
+- Values: "zSession", "application", "dual"
+- Returns: `bool`
+
+**`get_active_user()`**
+- Get user data from active context
+- Returns: `dict` or `None`
+
+### RBAC Methods
+
+**`has_role(required_role)`**
+- Check if user has role(s)
+- Accepts: `str` or `List[str]`
+- Returns: `bool`
+
+**`has_permission(permission)`**
+- Check if user has permission
+- Returns: `bool`
+
+**`grant_permission(user_id, permission, granted_by)`**
+- Grant permission to user
+- Returns: `bool`
+
+**`revoke_permission(user_id, permission)`**
+- Revoke permission from user
+- Returns: `bool`
+
+### Security Methods
+
+**`hash_password(plain_password)`**
+- Hash password with bcrypt
+- Returns: `str` (hashed password)
+
+**`verify_password(plain_password, hashed_password)`**
+- Verify password against hash
+- Returns: `bool`
+
+---
+
+## Session Constants
+
+All session keys use zConfig constants for consistency:
+
 ```python
-zcli.auth.logout()
+from zCLI.subsystems.zConfig.zConfig_modules.config_session import (
+    SESSION_KEY_ZAUTH,              # "zAuth"
+    ZAUTH_KEY_ZSESSION,             # "zSession"
+    ZAUTH_KEY_APPLICATIONS,         # "applications"
+    ZAUTH_KEY_ACTIVE_CONTEXT,       # "active_context"
+    ZAUTH_KEY_ACTIVE_APP,           # "active_app"
+    ZAUTH_KEY_DUAL_MODE,            # "dual_mode"
+    ZAUTH_KEY_ROLE,                 # "role"
+    ZAUTH_KEY_USERNAME,             # "username"
+    ZAUTH_KEY_AUTHENTICATED,        # "authenticated"
+    CONTEXT_ZSESSION,               # "zSession"
+    CONTEXT_APPLICATION,            # "application"
+    CONTEXT_DUAL                    # "dual"
+)
 ```
 
 ---
 
-#### **`status()`**
-Display current authentication status.
+## Module Architecture
 
-**Returns:**
-```python
-# When authenticated:
-{
-    "status": "authenticated",
-    "user": {
-        "id": "zU_abc123",
-        "username": "alice",
-        "role": "admin",
-        "API_Key": "key_xyz..."
-    }
-}
-
-# When not authenticated:
-{"status": "not_authenticated"}
+```
+zAuth/
+├── zAuth.py                        # Facade (orchestrates all modules)
+└── zAuth_modules/
+    ├── auth_password_security.py   # bcrypt hashing/verification
+    ├── auth_session_persistence.py # SQLite session storage
+    ├── auth_authentication.py      # Three-tier auth logic (CORE)
+    └── auth_rbac.py               # Context-aware RBAC
 ```
 
-**Example:**
-```python
-status = zcli.auth.status()
-if status["status"] == "authenticated":
-    print(f"Logged in as: {status['user']['username']}")
-```
+**Facade Pattern:**
+- `zAuth.py` provides unified API
+- Delegates to specialized modules internally
+- Clean separation of concerns
 
 ---
 
-#### **`is_authenticated()`**
-Check if user is currently authenticated.
+## Testing
 
-**Returns:** `bool`
-
-**Example:**
-```python
-if zcli.auth.is_authenticated():
-    # Proceed with authenticated action
-    pass
-else:
-    # Prompt for login
-    zcli.auth.login()
-```
-
----
-
-#### **`get_credentials()`**
-Get current session credentials.
-
-**Returns:** `dict` or `None`
-
-**Example:**
-```python
-creds = zcli.auth.get_credentials()
-if creds:
-    api_key = creds["API_Key"]
-    username = creds["username"]
-```
-
----
-
-## **Shell Commands**
-
-### **Available Commands**
+### Run Tests
 ```bash
-# Login (interactive)
-auth login
+# Run zAuth comprehensive test suite
+zolo ztests
+# Select: "zAuth"
 
-# Login (with username)
-auth login alice
-
-# Logout
-auth logout
-
-# Show status
-auth status
+# Or directly via Python
+python3 -c "
+from zCLI import zCLI
+test_cli = zCLI({'zSpace': 'zTestRunner', 'zMode': 'Terminal'})
+test_cli.zspark_obj['zVaFile'] = '@.zUI.zAuth_tests'
+test_cli.walker.run()
+"
 ```
 
-### **Command Flow**
-```
-User: "auth login"
-  ↓
-zParser → {"type": "auth", "action": "login"}
-  ↓
-zShell_executor → execute_auth()
-  ↓
-zAuth.login() → zDisplay.zEvents.zAuth.login_prompt()
-  ↓
-Terminal: Interactive prompts
-GUI: WebSocket event to frontend
-  ↓
-Authentication → Session update
-  ↓
-Success/Failure display
-```
+### Test Coverage
+**70 comprehensive tests** with **100% pass rate**:
+- Facade API (5 tests)
+- Password Security (6 tests) - real bcrypt operations
+- Session Persistence (7 tests) - SQLite validation
+- Tier 1 - zSession Auth (9 tests)
+- Tier 2 - Application Auth (9 tests)
+- Tier 3 - Dual-Mode Auth (7 tests)
+- RBAC (9 tests) - context-aware role checks
+- Context Management (6 tests)
+- Integration Workflows (6 tests)
+- Real Bcrypt Tests (3 tests) - actual hashing/verification
+- Real SQLite Tests (3 tests) - persistence round-trip
 
 ---
 
-## **Dual-Mode Events**
+## Best Practices
 
-### **zDisplay.zEvents.zAuth Package**
-zAuth uses dedicated display events for dual-mode I/O:
-
-#### **`login_prompt(username, password)`**
-- **Terminal**: Interactive prompts for credentials
-- **GUI**: Sends `auth_login_prompt` event with form fields
-
-#### **`login_success(user_data)`**
-- **Terminal**: Formatted success message with user details
-- **GUI**: Sends `auth_login_success` event with user data
-
-#### **`login_failure(reason)`**
-- **Terminal**: Error message with failure reason
-- **GUI**: Sends `auth_login_failure` event with reason
-
-#### **`logout_success()`**
-- **Terminal**: Success confirmation
-- **GUI**: Sends `auth_logout_success` event
-
-#### **`logout_warning()`**
-- **Terminal**: Warning when not logged in
-- **GUI**: Sends `auth_logout_warning` event
-
-#### **`status_display(auth_data)`**
-- **Terminal**: Formatted table with auth details
-- **GUI**: Sends `auth_status` event with structured data
-
-#### **`status_not_authenticated()`**
-- **Terminal**: Warning message
-- **GUI**: Sends `auth_status` event (not authenticated)
-
----
-
-## **GUI Integration**
-
-### **Bifrost Events**
-When in GUI mode, zAuth sends clean JSON events via bifrost:
-
-```json
-// Login prompt
-{
-  "event": "auth_login_prompt",
-  "data": {
-    "username": null,
-    "password": null,
-    "fields": ["username", "password"]
-  }
-}
-
-// Login success
-{
-  "event": "auth_login_success",
-  "data": {
-    "username": "alice",
-    "role": "admin",
-    "user_id": "zU_abc123",
-    "api_key": "key_xyz..."
-  }
-}
-
-// Login failure
-{
-  "event": "auth_login_failure",
-  "data": {
-    "reason": "Invalid credentials"
-  }
-}
-
-// Status display
-{
-  "event": "auth_status",
-  "data": {
-    "authenticated": true,
-    "username": "alice",
-    "role": "admin",
-    "user_id": "zU_abc123",
-    "api_key": "key_xyz..."
-  }
-}
-```
-
-### **Frontend Implementation**
-The frontend receives these events and renders appropriate UI:
-- Login form for `auth_login_prompt`
-- Success notification for `auth_login_success`
-- Error message for `auth_login_failure`
-- Status display for `auth_status`
-
----
-
-## **Remote Authentication**
-
-### **Configuration**
-```bash
-# Enable remote API
-export ZOLO_USE_REMOTE_API=true
-
-# Set API URL (optional, defaults to http://localhost:5000)
-export ZOLO_API_URL=https://api.example.com
-```
-
-### **API Endpoint**
-Remote authentication expects a POST endpoint at `/auth/login`:
-
-**Request:**
-```json
-{
-  "username": "alice",
-  "password": "secret123"
-}
-```
-
-**Response (Success):**
-```json
-{
-  "status": "success",
-  "credentials": {
-    "username": "alice",
-    "api_key": "key_xyz...",
-    "role": "admin",
-    "user_id": "zU_abc123"
-  }
-}
-```
-
-**Response (Failure):**
-```json
-{
-  "status": "fail",
-  "reason": "Invalid credentials"
-}
-```
-
----
-
-## **Best Practices**
-
-### **1. Check Authentication Before Protected Actions**
+### 1. Check Authentication First
 ```python
 if not zcli.auth.is_authenticated():
-    zcli.display.warning("Authentication required")
     result = zcli.auth.login()
     if result["status"] != "success":
-        return {"error": "Authentication failed"}
+        return {"error": "Authentication required"}
 
 # Proceed with authenticated action
 ```
 
-### **2. Use Session Credentials for API Calls**
+### 2. Use Context-Aware RBAC
 ```python
-creds = zcli.auth.get_credentials()
-if creds:
-    headers = {"Authorization": f"Bearer {creds['API_Key']}"}
-    # Make authenticated API call
+# Set appropriate context before RBAC checks
+zcli.auth.set_active_context("zSession")
+
+if zcli.auth.has_role("admin"):
+    # Admin-only operations
+    pass
 ```
 
-### **3. Handle GUI Mode Gracefully**
+### 3. Handle Multi-App Isolation
 ```python
-result = zcli.auth.login()
-if result["status"] == "pending":
-    # GUI mode - credentials will be sent via bifrost
-    # Frontend will handle the response
-    return
+# Apps are automatically isolated
+# Switching apps changes active_app but preserves all app sessions
+
+zcli.auth.switch_app("store")
+# Now RBAC checks store user's role
+
+zcli.auth.switch_app("admin_panel")
+# Now RBAC checks admin_panel user's role
 ```
 
-### **4. Clear Session on Exit**
+### 4. Secure Password Handling
 ```python
-# In cleanup/exit handlers
-zcli.auth.logout()
+# ALWAYS hash passwords before storage
+hashed = zcli.auth.hash_password(plain_password)
+
+# NEVER store plain passwords
+# NEVER compare passwords with ==
+# Use verify_password() for timing-safe comparison
+```
+
+### 5. Clean Logout
+```python
+# On application exit or logout
+zcli.auth.logout(context="all", delete_persistent=True)
 ```
 
 ---
 
-## **Testing**
+## Integration with zCLI Subsystems
 
-### **Test Suite**
-Run zAuth tests:
-```bash
-python3 zTestSuite/zAuth_Test.py
-```
+### zConfig
+Provides all session constants and structure.
 
-### **Test Coverage**
-- **17 tests** covering:
-  - Initialization and session structure
-  - Session-only authentication
-  - Login/logout workflows
-  - Status display
-  - Remote API integration
-  - Dual-mode event integration
+### zDisplay
+All authentication UI via `zDisplay.zEvents.zAuth` events:
+- `login_prompt`, `login_success`, `login_failure`
+- `logout_success`, `status_display`
+- Dual-mode compatible (Terminal + Bifrost)
 
----
+### zComm
+Remote authentication uses `zComm.http_post()` for API calls.
 
-## **Migration Notes**
+### zData
+Session persistence and permissions use declarative zData operations.
 
-### **From Old zAuth**
-The streamlined zAuth removes:
-- ❌ **CredentialManager**: No persistence
-- ❌ **local_auth**: Disabled local authentication
-- ❌ **validate_api_key**: Removed validation method
-- ❌ **zAuth_modules/**: All logic moved into main class
-- ❌ **helpers.py**: Removed unused helper functions
-
-All authentication is now:
-- ✅ **Session-only**: No file-based persistence
-- ✅ **Remote-first**: Uses remote API when enabled
-- ✅ **Dual-mode**: Works in Terminal and GUI
-- ✅ **Self-contained**: Single file architecture
-
-### **Code Updates**
-```python
-# Old (deprecated)
-zcli.display.handle({"event": "text", "content": "Login required"})
-username = input("Username: ")
-
-# New (streamlined)
-result = zcli.auth.login()  # Uses zDisplay events automatically
-```
+### zWizard
+RBAC integration for menu access control:
+- `require_auth`, `require_role`, `require_permission` directives
 
 ---
 
-## **Summary**
+## Summary
 
-**zAuth** provides streamlined, session-only authentication with:
-- **Dual-mode I/O** via zDisplay events (Terminal/GUI)
-- **Remote API integration** via zComm
-- **Clean session management** with no persistence
-- **17 passing tests** ensuring reliability
+**zAuth** provides enterprise-grade authentication with:
+- **Three-tier architecture** for internal and external users
+- **bcrypt security** with 12 rounds and random salts
+- **SQLite persistence** with 7-day auto-expiry
+- **Context-aware RBAC** with OR logic in dual-mode
+- **Multi-app support** with isolated contexts
+- **70 tests at 100%** ensuring production readiness
 
-For display integration details, see [zDisplay_GUIDE.md](zDisplay_GUIDE.md).
-For configuration options, see [zConfig_GUIDE.md](zConfig_GUIDE.md).
-
+For display integration, see [zDisplay_GUIDE.md](zDisplay_GUIDE.md).  
+For session constants, see [zConfig_GUIDE.md](zConfig_GUIDE.md).  
+For remote API integration, see [zComm_GUIDE.md](zComm_GUIDE.md).

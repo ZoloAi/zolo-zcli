@@ -5,8 +5,6 @@ zVaF:
     "zComm",
     "zDisplay",
     "zAuth",
-    "zAuth_Comprehensive",
-    "zRBAC",
     "zDispatch",
     "zNavigation",
     "zParser",
@@ -46,9 +44,6 @@ zVaF:
   
   "zAuth":
     zLink: "@.zUI.zAuth_tests.zVaF"
-  
-  "zRBAC":
-    zFunc: "&test_runner.run_test_suite('zRBAC')"
   
   "zDispatch":
     zFunc: "&test_runner.run_test_suite('zDispatch')"

@@ -1,0 +1,269 @@
+# zTestRunner/zUI.zAuth_tests.yaml
+# Comprehensive A-to-K zAuth Test Suite (70 tests - 100% REAL TESTS)
+# Auto-run wizard pattern with result accumulation in zHat
+# Covers all 4 zAuth modules + Three-Tier Architecture + RBAC + Integration workflows
+# NO STUB TESTS - All tests perform real validation
+
+zVaF:
+  # ===============================================================
+  # A. zAuth Facade API Tests (5 tests) - zAuth.py
+  # ===============================================================
+  zWizard:
+    "test_01_facade_initialization":
+      zFunc: "&zauth_tests.test_facade_initialization()"
+    
+    "test_02_facade_module_delegation":
+      zFunc: "&zauth_tests.test_facade_module_delegation()"
+    
+    "test_03_facade_session_integration":
+      zFunc: "&zauth_tests.test_facade_session_integration()"
+    
+    "test_04_facade_constants_usage":
+      zFunc: "&zauth_tests.test_facade_constants_usage()"
+    
+    "test_05_facade_error_handling":
+      zFunc: "&zauth_tests.test_facade_error_handling()"
+    
+    # ===============================================================
+    # B. Password Security Tests (6 tests) - auth_password_security.py
+    # ===============================================================
+    
+    "test_06_password_hashing_basic":
+      zFunc: "&zauth_tests.test_password_hashing_basic()"
+    
+    "test_07_password_verification_correct":
+      zFunc: "&zauth_tests.test_password_verification_correct()"
+    
+    "test_08_password_verification_incorrect":
+      zFunc: "&zauth_tests.test_password_verification_incorrect()"
+    
+    "test_09_password_salt_randomness":
+      zFunc: "&zauth_tests.test_password_salt_randomness()"
+    
+    "test_10_password_bcrypt_rounds":
+      zFunc: "&zauth_tests.test_password_bcrypt_rounds()"
+    
+    "test_11_password_edge_cases":
+      zFunc: "&zauth_tests.test_password_edge_cases()"
+    
+    # ===============================================================
+    # C. Session Persistence Tests (7 tests) - auth_session_persistence.py
+    # ===============================================================
+    
+    "test_12_persistence_db_creation":
+      zFunc: "&zauth_tests.test_persistence_db_creation()"
+    
+    "test_13_persistence_save_session":
+      zFunc: "&zauth_tests.test_persistence_save_session()"
+    
+    "test_14_persistence_load_session":
+      zFunc: "&zauth_tests.test_persistence_load_session()"
+    
+    "test_15_persistence_cleanup_expired":
+      zFunc: "&zauth_tests.test_persistence_cleanup_expired()"
+    
+    "test_16_persistence_session_token":
+      zFunc: "&zauth_tests.test_persistence_session_token()"
+    
+    "test_17_persistence_user_lookup":
+      zFunc: "&zauth_tests.test_persistence_user_lookup()"
+    
+    "test_18_persistence_concurrent_sessions":
+      zFunc: "&zauth_tests.test_persistence_concurrent_sessions()"
+    
+    # ===============================================================
+    # D. Tier 1 - zSession Authentication Tests (9 tests)
+    # ===============================================================
+    
+    "test_19_zsession_login_mock":
+      zFunc: "&zauth_tests.test_zsession_login_mock()"
+    
+    "test_20_zsession_is_authenticated":
+      zFunc: "&zauth_tests.test_zsession_is_authenticated()"
+    
+    "test_21_zsession_get_credentials":
+      zFunc: "&zauth_tests.test_zsession_get_credentials()"
+    
+    "test_22_zsession_logout":
+      zFunc: "&zauth_tests.test_zsession_logout()"
+    
+    "test_23_zsession_status":
+      zFunc: "&zauth_tests.test_zsession_status()"
+    
+    "test_24_zsession_double_login":
+      zFunc: "&zauth_tests.test_zsession_double_login()"
+    
+    "test_25_zsession_logout_without_login":
+      zFunc: "&zauth_tests.test_zsession_logout_without_login()"
+    
+    "test_26_zsession_context_update":
+      zFunc: "&zauth_tests.test_zsession_context_update()"
+    
+    "test_27_zsession_session_structure":
+      zFunc: "&zauth_tests.test_zsession_session_structure()"
+    
+    # ===============================================================
+    # E. Tier 2 - Application Authentication Tests (9 tests)
+    # ===============================================================
+    
+    "test_28_app_authenticate_user":
+      zFunc: "&zauth_tests.test_app_authenticate_user()"
+    
+    "test_29_app_get_user":
+      zFunc: "&zauth_tests.test_app_get_user()"
+    
+    "test_30_app_switch_app":
+      zFunc: "&zauth_tests.test_app_switch_app()"
+    
+    "test_31_app_multi_app_support":
+      zFunc: "&zauth_tests.test_app_multi_app_support()"
+    
+    "test_32_app_independent_contexts":
+      zFunc: "&zauth_tests.test_app_independent_contexts()"
+    
+    "test_33_app_active_app_tracking":
+      zFunc: "&zauth_tests.test_app_active_app_tracking()"
+    
+    "test_34_app_logout_specific":
+      zFunc: "&zauth_tests.test_app_logout_specific()"
+    
+    "test_35_app_session_structure":
+      zFunc: "&zauth_tests.test_app_session_structure()"
+    
+    "test_36_app_context_switching":
+      zFunc: "&zauth_tests.test_app_context_switching()"
+    
+    # ===============================================================
+    # F. Tier 3 - Dual-Mode Authentication Tests (7 tests)
+    # ===============================================================
+    
+    "test_37_dual_mode_detection":
+      zFunc: "&zauth_tests.test_dual_mode_detection()"
+    
+    "test_38_dual_set_active_context":
+      zFunc: "&zauth_tests.test_dual_set_active_context()"
+    
+    "test_39_dual_get_active_user":
+      zFunc: "&zauth_tests.test_dual_get_active_user()"
+    
+    "test_40_dual_context_switching":
+      zFunc: "&zauth_tests.test_dual_context_switching()"
+    
+    "test_41_dual_session_structure":
+      zFunc: "&zauth_tests.test_dual_session_structure()"
+    
+    "test_42_dual_logout_contexts":
+      zFunc: "&zauth_tests.test_dual_logout_contexts()"
+    
+    "test_43_dual_mode_flag":
+      zFunc: "&zauth_tests.test_dual_mode_flag()"
+    
+    # ===============================================================
+    # G. RBAC Tests (9 tests) - auth_rbac.py
+    # ===============================================================
+    
+    "test_44_rbac_has_role_single":
+      zFunc: "&zauth_tests.test_rbac_has_role_single()"
+    
+    "test_45_rbac_has_role_multiple":
+      zFunc: "&zauth_tests.test_rbac_has_role_multiple()"
+    
+    "test_46_rbac_context_aware_zsession":
+      zFunc: "&zauth_tests.test_rbac_context_aware_zsession()"
+    
+    "test_47_rbac_context_aware_application":
+      zFunc: "&zauth_tests.test_rbac_context_aware_application()"
+    
+    "test_48_rbac_dual_mode_or_logic":
+      zFunc: "&zauth_tests.test_rbac_dual_mode_or_logic()"
+    
+    "test_49_rbac_has_permission":
+      zFunc: "&zauth_tests.test_rbac_has_permission()"
+    
+    "test_50_rbac_unauthenticated":
+      zFunc: "&zauth_tests.test_rbac_unauthenticated()"
+    
+    "test_51_rbac_role_inheritance":
+      zFunc: "&zauth_tests.test_rbac_role_inheritance()"
+    
+    "test_52_rbac_permission_methods":
+      zFunc: "&zauth_tests.test_rbac_permission_methods()"
+    
+    # ===============================================================
+    # H. Context Management Tests (6 tests)
+    # ===============================================================
+    
+    "test_53_context_initialization":
+      zFunc: "&zauth_tests.test_context_initialization()"
+    
+    "test_54_context_switching_zsession_to_app":
+      zFunc: "&zauth_tests.test_context_switching_zsession_to_app()"
+    
+    "test_55_context_switching_app_to_dual":
+      zFunc: "&zauth_tests.test_context_switching_app_to_dual()"
+    
+    "test_56_context_active_app_management":
+      zFunc: "&zauth_tests.test_context_active_app_management()"
+    
+    "test_57_context_get_active_user_all_tiers":
+      zFunc: "&zauth_tests.test_context_get_active_user_all_tiers()"
+    
+    "test_58_context_invalid_context":
+      zFunc: "&zauth_tests.test_context_invalid_context()"
+    
+    # ===============================================================
+    # I. Integration Tests - Workflow Tests (6 tests)
+    # ===============================================================
+    
+    "test_59_integration_login_rbac_workflow":
+      zFunc: "&zauth_tests.test_integration_login_rbac_workflow()"
+    
+    "test_60_integration_multi_app_workflow":
+      zFunc: "&zauth_tests.test_integration_multi_app_workflow()"
+    
+    "test_61_integration_dual_mode_workflow":
+      zFunc: "&zauth_tests.test_integration_dual_mode_workflow()"
+    
+    "test_62_integration_logout_cascade":
+      zFunc: "&zauth_tests.test_integration_logout_cascade()"
+    
+    "test_63_integration_context_switching_workflow":
+      zFunc: "&zauth_tests.test_integration_context_switching_workflow()"
+    
+    "test_64_integration_session_constants":
+      zFunc: "&zauth_tests.test_integration_session_constants()"
+    
+    # ===============================================================
+    # J. Real Integration Tests - Bcrypt Operations (3 tests)
+    # ===============================================================
+    
+    "test_65_real_bcrypt_hash_verify":
+      zFunc: "&zauth_tests.test_real_bcrypt_hash_verify()"
+    
+    "test_66_real_bcrypt_timing_safe":
+      zFunc: "&zauth_tests.test_real_bcrypt_timing_safe()"
+    
+    "test_67_real_bcrypt_performance":
+      zFunc: "&zauth_tests.test_real_bcrypt_performance()"
+    
+    # ===============================================================
+    # K. Real Integration Tests - SQLite Persistence (3 tests)
+    # ===============================================================
+    
+    "test_68_real_sqlite_session_roundtrip":
+      zFunc: "&zauth_tests.test_real_sqlite_session_roundtrip()"
+    
+    "test_69_real_sqlite_expiry_cleanup":
+      zFunc: "&zauth_tests.test_real_sqlite_expiry_cleanup()"
+    
+    "test_70_real_sqlite_concurrent_sessions":
+      zFunc: "&zauth_tests.test_real_sqlite_concurrent_sessions()"
+    
+    # ===============================================================
+    # Display Results and Return to Menu
+    # ===============================================================
+    
+    "display_and_return":
+      zFunc: "&zauth_tests.display_test_results()"
+
+
