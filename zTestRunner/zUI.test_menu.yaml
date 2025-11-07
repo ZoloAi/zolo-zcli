@@ -49,7 +49,7 @@ zVaF:
     zLink: "@.zUI.zDispatch_tests.zVaF"
   
   "zNavigation":
-    zFunc: "&test_runner.run_test_suite('zNavigation')"
+    zLink: "@.zUI.zNavigation_tests.zVaF"
   
   "zParser":
     zFunc: "&test_runner.run_test_suite('zParser')"

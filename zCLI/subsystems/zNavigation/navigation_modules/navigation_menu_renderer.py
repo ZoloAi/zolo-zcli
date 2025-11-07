@@ -290,7 +290,7 @@ class MenuRenderer:
         if title:
             display.zDeclare(
                 title,
-                color=self.menu.mycolor,
+                color=self.menu.navigation.mycolor,
                 indent=DEFAULT_INDENT,
                 style=DEFAULT_STYLE_FULL
             )
@@ -372,7 +372,7 @@ class MenuRenderer:
         # Display prompt with single-line style
         display.zDeclare(
             prompt,
-            color=self.menu.mycolor,
+            color=self.menu.navigation.mycolor,
             indent=DEFAULT_INDENT,
             style=DEFAULT_STYLE_SINGLE
         )

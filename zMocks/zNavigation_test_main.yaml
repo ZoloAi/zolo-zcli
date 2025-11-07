@@ -1,0 +1,39 @@
+# zMocks/zUI.zNavigation_test_main.yaml
+# Mock zUI file for testing zNavigation zLink functionality
+# Tests both inter-file and intra-file zBlock navigation
+
+zVaF:
+  # Entry point - simulates a main menu
+  Main_Menu:
+    # This is the starting block
+    zDisplay:
+      event: text
+      content: "Main Menu - Starting Point"
+    
+    # Menu options
+    zMenu:
+      options:
+        - "Go to Settings (same file)"
+        - "Go to External File (inter-file)"
+        - "Return"
+  
+  # Target block in SAME file (intra-file navigation)
+  Settings_Block:
+    zDisplay:
+      event: text
+      content: "Settings Block - Intra-file navigation successful!"
+    
+    zMenu:
+      options:
+        - "Back to Main"
+  
+  # Another target block in SAME file
+  Advanced_Block:
+    zDisplay:
+      event: text
+      content: "Advanced Block - Intra-file navigation successful!"
+    
+    zMenu:
+      options:
+        - "Back to Main"
+
