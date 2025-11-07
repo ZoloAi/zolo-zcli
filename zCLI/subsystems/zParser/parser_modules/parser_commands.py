@@ -290,7 +290,7 @@ ERROR_MSG_DATA_NO_ACTION: str = "Data command requires action"
 ERROR_MSG_DATA_INVALID_ACTION: str = "Invalid data action: {}"
 ERROR_MSG_FUNC_NO_NAME: str = "Function command requires function name"
 ERROR_MSG_UTILS_NO_NAME: str = "Utility command requires utility name"
-ERROR_MSG_PLUGIN_NO_SUBCOMMAND: str = "Plugin command requires subcommand (load, show, clear, reload)"
+ERROR_MSG_PLUGIN_NO_SUBCOMMAND: str = "Plugin command requires subcommand (exec, run, load, show, clear, reload)"
 ERROR_MSG_SESSION_NO_ACTION: str = "Session command requires action"
 ERROR_MSG_WALKER_NO_ACTION: str = "Walker command requires action"
 ERROR_MSG_OPEN_NO_PATH: str = "Open command requires path"
@@ -633,17 +633,21 @@ def _parse_utils_command(parts: List[str]) -> Dict[str, Any]:
 
 def _parse_plugin_command(parts: List[str]) -> Dict[str, Any]:
     """
-    Parse plugin commands like 'plugin load @.utils.my_plugin' or 'plugin show'.
+    Parse plugin commands like 'plugin exec', 'plugin load', or 'plugin show'.
     
-    Plugin commands manage plugin loading, showing, clearing, and reloading.
+    Plugin commands handle both plugin execution (exec/run) and plugin cache
+    management (load/show/clear/reload).
     
     Args:
-        parts: Command parts (e.g., ['plugin', 'load', '@.utils.my_plugin'])
+        parts: Command parts (e.g., ['plugin', 'exec', 'hash_password', 'arg1'])
     
     Returns:
         Dict[str, Any]: Structured command dict or error dict
     
     Examples:
+        >>> _parse_plugin_command(['plugin', 'exec', 'hash_password', 'mypass'])
+        {'type': 'plugin', 'action': 'exec', 'args': ['hash_password', 'mypass'], 'options': {}}
+        
         >>> _parse_plugin_command(['plugin', 'load', '@.utils.my_plugin'])
         {'type': 'plugin', 'action': 'load', 'args': ['@.utils.my_plugin'], 'options': {}}
         

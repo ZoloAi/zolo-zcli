@@ -157,16 +157,26 @@ SESSION_KEY_VAFOLDER: str = "zVaFolder"
 # Cache Constants
 CACHE_KEY_PREFIX: str = "parsed:"
 CACHE_TYPE_SYSTEM: str = "system"
+CACHE_TYPE_PLUGIN: str = "plugin"
 
 # Default Values
 DEFAULT_PATH_SYMBOL: str = "@"
 SCHEMA_EXTENSION: str = ".yaml|zSchema"
+
+# Plugin Constants
+PLUGIN_EXTENSION: str = ".py"
+ZMACHINE_PREFIX: str = "zMachine."
 
 # Display Messages
 MSG_READY: str = "zLoader Ready"
 MSG_START: str = "zLoader"
 MSG_CACHED: str = "zLoader return (cached)"
 MSG_RETURN: str = "zLoader return"
+
+# Error Messages
+ERROR_PLUGIN_NOT_FOUND: str = "Plugin file not found: {filepath}"
+ERROR_PLUGIN_LOAD_FAILED: str = "Failed to load plugin: {error}"
+ERROR_NO_PARSER: str = "zParser subsystem not available"
 
 # ============================================================================
 # ZLOADER CLASS
@@ -383,6 +393,125 @@ class zLoader:
         # Use absolute filepath for cache key (same as get() for consistency)
         cache_key = f"{CACHE_KEY_PREFIX}{zFilePath_identified}"
         return self.cache.set(cache_key, result, cache_type=CACHE_TYPE_SYSTEM, filepath=zFilePath_identified)
+
+    def load_plugin_from_zpath(self, zpath: str) -> Any:
+        """
+        Load a plugin module from a zPath (facade method for shell commands).
+
+        This method provides a unified interface for loading plugins from zPath notation,
+        handling path resolution, file validation, and plugin loading via the plugin cache.
+        It's designed as a backend facade to keep shell commands thin and testable.
+
+        Parameters
+        ----------
+        zpath : str
+            Declarative path to plugin file using zPath notation:
+                - "@.plugins.my_plugin" - Workspace-relative path
+                - "~.plugins.custom" - Absolute path
+                - "zMachine.plugins.helper" - zMachine path
+                - Automatically adds .py extension if not present
+
+        Returns
+        -------
+        Any
+            Loaded plugin module object with zcli instance injected.
+            Module can be accessed via: module.function_name()
+
+        Raises
+        ------
+        FileNotFoundError
+            If plugin file cannot be found at resolved path
+        ValueError
+            If plugin loading fails (e.g., syntax error, collision)
+        RuntimeError
+            If zParser subsystem is not available
+
+        Examples
+        --------
+        **Load Plugin from Workspace**:
+            >>> loader = zLoader(zcli)
+            >>> module = loader.load_plugin_from_zpath("@.plugins.auth")
+            >>> result = module.hash_password("mypassword")
+
+        **Load Plugin from Absolute Path**:
+            >>> loader = zLoader(zcli)
+            >>> module = loader.load_plugin_from_zpath("~/custom/plugins/generator")
+            >>> id = module.generate_id()
+
+        **Load Plugin from zMachine**:
+            >>> loader = zLoader(zcli)
+            >>> module = loader.load_plugin_from_zpath("zMachine.plugins.helper")
+            >>> result = module.helper_function()
+
+        Notes
+        -----
+        **Backend Facade Pattern**:
+            This method serves as a facade to:
+            1. zParser: Path resolution (zPath → absolute file path)
+            2. Plugin Cache: Module loading + session injection + caching
+
+        **Why This Method Exists**:
+            Prevents shell commands from doing backend logic:
+            - Manual zPath parsing (lines 56-70 in old plugin.py) → Backend
+            - File existence checks (lines 73-75) → Backend
+            - Direct plugin_cache access → Backend facade
+
+        **Integration Points**:
+            - shell_cmd_plugin_mgmt.py: load_plugin(), reload_plugin()
+            - Future: Plugin installation, dependency resolution
+
+        **Error Handling**:
+            Raises proper exceptions that shell commands can catch and display:
+            - FileNotFoundError: Plugin file not found
+            - ValueError: Plugin collision or load error
+            - RuntimeError: zParser unavailable
+
+        **Session Injection**:
+            Plugin cache automatically injects zcli instance into loaded modules.
+            Plugins can access: zcli.logger, zcli.session, zcli.data, zcli.auth, etc.
+        """
+        import os
+        from pathlib import Path
+
+        # Validate zParser availability
+        if not hasattr(self.zcli, "zparser") or self.zcli.zparser is None:
+            raise RuntimeError(ERROR_NO_PARSER)
+
+        # Step 1: Resolve zPath to absolute file path
+        if zpath.startswith(ZMACHINE_PREFIX):
+            # zMachine paths (e.g., "zMachine.plugins.helper")
+            file_path = self.zcli.zparser.resolve_zmachine_path(zpath)
+        else:
+            # @ or ~ paths (e.g., "@.plugins.auth", "~/plugins/custom")
+            symbol = DEFAULT_PATH_SYMBOL if zpath.startswith(DEFAULT_PATH_SYMBOL) else (
+                "~" if zpath.startswith("~") else DEFAULT_PATH_SYMBOL
+            )
+            path_str = zpath[1:] if zpath.startswith((DEFAULT_PATH_SYMBOL, "~")) else zpath
+            path_parts = path_str.split(".")
+
+            # Prepend symbol for resolve_symbol_path
+            zRelPath_parts = [symbol] + path_parts
+            file_path = self.zcli.zparser.resolve_symbol_path(symbol, zRelPath_parts)
+
+        # Step 2: Add .py extension if not present
+        if not file_path.endswith(PLUGIN_EXTENSION):
+            file_path = f"{file_path}{PLUGIN_EXTENSION}"
+
+        # Step 3: Validate file exists
+        if not os.path.isfile(file_path):
+            raise FileNotFoundError(ERROR_PLUGIN_NOT_FOUND.format(filepath=file_path))
+
+        # Step 4: Extract module name (filename without extension)
+        module_name = Path(file_path).stem
+
+        # Step 5: Load via plugin cache (handles caching + session injection)
+        try:
+            module = self.cache.plugin_cache.load_and_cache(file_path, module_name)
+            self.logger.info("Loaded plugin: %s from %s", module_name, file_path)
+            return module
+        except Exception as e:
+            self.logger.error("Failed to load plugin %s: %s", module_name, str(e))
+            raise ValueError(ERROR_PLUGIN_LOAD_FAILED.format(error=str(e))) from e
 
 
 # ============================================================================

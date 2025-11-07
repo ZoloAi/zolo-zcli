@@ -109,7 +109,7 @@
             <div class="sidebar-section-title">Group B: zLoader (3)</div>
             <div class="sidebar-item complete"><a href="#cmd-shortcut-utils">7. shortcut_utils (DELETED)</a></div>
             <div class="sidebar-item complete"><a href="#cmd-load">8. load</a></div>
-            <div class="sidebar-item pending"><a href="#cmd-data">9. data (PARTIAL)</a></div>
+            <div class="sidebar-item complete"><a href="#cmd-data">9. data</a></div>
         </div>
 
         <div class="sidebar-section">
@@ -121,14 +121,14 @@
             <div class="sidebar-item pending"><a href="#cmd-export">14. export</a></div>
             <div class="sidebar-item complete"><a href="#cmd-func">15. func</a></div>
             <div class="sidebar-item complete"><a href="#cmd-open">16. open</a></div>
-            <div class="sidebar-item pending"><a href="#cmd-plugin">17. plugin</a></div>
+            <div class="sidebar-item complete"><a href="#cmd-plugin">17. plugin</a></div>
             <div class="sidebar-item complete"><a href="#cmd-session">18. session</a></div>
             <div class="sidebar-item complete"><a href="#cmd-test">19. test (REMOVED)</a></div>
         </div>
 
         <div class="sidebar-section">
             <div class="sidebar-section-title">Group D: Advanced (5)</div>
-            <div class="sidebar-item pending"><a href="#cmd-utils">20. utils</a></div>
+            <div class="sidebar-item complete"><a href="#cmd-utils">20. utils (DEPRECATED)</a></div>
             <div class="sidebar-item complete"><a href="#cmd-walker">21. walker</a></div>
             <div class="sidebar-item pending"><a href="#cmd-wizard">22. wizard</a></div>
             <div class="sidebar-item pending"><a href="#cmd-wizard-step">23. wizard_step</a></div>
@@ -159,10 +159,10 @@
         </div>
 
         <div class="progress-bar">
-            <div class="progress-fill" style="width: 29%;"></div>
+            <div class="progress-fill" style="width: 62%;"></div>
         </div>
         <div style="text-align: center; font-size: 12px; color: #4a5568; margin-top: 5px;">
-            29% Complete (10/34 tasks)
+            62% Complete (21/34 tasks)
         </div>
     </div>
 
@@ -2308,16 +2308,283 @@ def get_config_sources(self) -> List[str]:
 
                 <!-- Week 6.13.9: shell_cmd_data.py -->
                 <div class="todo-item" id="cmd-data">
-                    <input type="checkbox" class="todo-checkbox">
+                    <input type="checkbox" class="todo-checkbox" checked>
                     <div class="todo-content">
-                        <div class="todo-title">Week 6.13.9: shell_cmd_data.py (zData Commands)</div>
+                        <div class="todo-title">Week 6.13.9: shell_cmd_data.py (zData Commands) ✅</div>
                         <div class="todo-description">
                             <strong>📁 File:</strong> <code>commands/shell_cmd_data.py</code> (renamed from data_executor.py)
-                            <br><strong>Current Grade:</strong> TBD
-                            <br><strong>Target Grade:</strong> A+
-                            <br><strong>Dependencies:</strong> None
+                            <br><strong>Grade:</strong> D+ (60/100) → <strong style="color: #10b981;">A+ (95/100)</strong> = <strong>+35 points</strong>
+                            <br><strong>Lines:</strong> 41 → <strong style="color: #10b981;">768</strong> = <strong>+1,773% growth</strong>
+                            <br><strong>Module Docstring:</strong> 5 lines → <strong style="color: #10b981;">151 lines</strong> = <strong>+2,920%</strong>
+                            <br><strong>Constants:</strong> 0 → <strong style="color: #10b981;">85 constants</strong>
+                            <br><strong>Type Hints:</strong> 0% → <strong style="color: #10b981;">100%</strong>
+                            <br><strong>Helper Functions:</strong> 0 → <strong style="color: #10b981;">8 functions</strong>
+                            <br><strong>Actions Supported:</strong> 5 (CRUD only) → <strong style="color: #10b981;">19 actions</strong> (CRUD + DDL + migrations + connection)
+                            <br><strong>Dependencies:</strong> ✅ zData (Week 6.16 COMPLETE - 4 phases!)
                             
-                            <p style="margin-top: 10px;"><strong>Audit Focus:</strong> Type hints, zData modernization, error handling</p>
+                            <p style="margin-top: 10px;"><strong>⚠️ AUDIT COMPLETED - CRITICAL FINDINGS:</strong></p>
+                            
+                            <div style="margin-left: 20px; margin-top: 10px;">
+                                <p><strong>📊 CURRENT STATE (D+ = 60/100):</strong></p>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li>✅ <strong>Working:</strong> Basic delegation to <code>zcli.data.handle_request()</code></li>
+                                    <li>✅ <strong>Working:</strong> Multi-table parsing with comma separation for JOINs</li>
+                                    <li>✅ <strong>Working:</strong> Auto-join flag extraction from options</li>
+                                    <li>✅ <strong>Working:</strong> Model path extraction from options</li>
+                                    <li>✅ <strong>Partial:</strong> Basic logging (1 debug statement)</li>
+                                    <li>❌ <strong>CRITICAL:</strong> NO awareness of NEW zData capabilities (migrate, get_migration_history, AdvancedData)</li>
+                                    <li>❌ <strong>CRITICAL:</strong> NO module constants (60+ needed for actions, keys, error messages)</li>
+                                    <li>❌ <strong>CRITICAL:</strong> NO type hints (0% coverage, should be 100%)</li>
+                                    <li>❌ <strong>CRITICAL:</strong> NO comprehensive module docstring (5 lines vs 150+ needed)</li>
+                                    <li>❌ <strong>CRITICAL:</strong> NO error handling (no try/except, assumes zData subsystem exists)</li>
+                                    <li>❌ <strong>CRITICAL:</strong> NO input validation (missing table, missing model, invalid action)</li>
+                                    <li>❌ <strong>CRITICAL:</strong> NO helper functions (single monolithic function)</li>
+                                    <li>❌ <strong>Missing:</strong> NO migration command support (migrate, rollback)</li>
+                                    <li>❌ <strong>Missing:</strong> NO schema introspection commands (head, describe)</li>
+                                    <li>❌ <strong>Missing:</strong> NO connection state awareness (connect, disconnect, status)</li>
+                                    <li>❌ <strong>Missing:</strong> NO display integration documentation (AdvancedData zTable)</li>
+                                    <li>❌ <strong>Missing:</strong> NO zSession integration documentation</li>
+                                    <li>⚠️ <strong>Outdated:</strong> Old comment paths in header (line 1-3)</li>
+                                </ul>
+
+                                <p style="margin-top: 15px;"><strong>🚨 CRITICAL ZDATA MODERNIZATION GAPS:</strong></p>
+                                
+                                <p style="margin-top: 10px;"><em>Week 6.16 completed 4 major phases:</em></p>
+                                <ul style="margin-left: 20px; margin-top: 5px; line-height: 1.8;">
+                                    <li><strong>Phase 1:</strong> Foundation (parsers, validators, adapters) - 13 files modernized</li>
+                                    <li><strong>Phase 2:</strong> Operations (CRUD + DDL) - 10 files, facade pattern</li>
+                                    <li><strong>Phase 3:</strong> Architecture (Quantum extraction, AdvancedData integration)</li>
+                                    <li><strong>Phase 4:</strong> Declarative Migrations (schema diff, migration executor, history tracking)</li>
+                                </ul>
+                                
+                                <p style="margin-top: 10px;"><strong>❌ This file is UNAWARE of:</strong></p>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li><code>z.data.migrate(new_schema, dry_run=True)</code> - Declarative migrations</li>
+                                    <li><code>z.data.get_migration_history()</code> - Migration audit trail</li>
+                                    <li><code>z.data.connect() / disconnect() / is_connected()</code> - Connection management</li>
+                                    <li><code>z.data.head(table)</code> - Schema introspection (uses AdvancedData zTable)</li>
+                                    <li><code>z.data.select()</code> - AdvancedData pagination with zTable</li>
+                                    <li>Multi-backend support (SQLite, PostgreSQL, CSV) - adapter-specific behavior</li>
+                                    <li>Transaction support (begin, commit, rollback)</li>
+                                </ul>
+
+                                <p style="margin-top: 15px;"><strong>🎯 REQUIRED MODERNIZATION (A+ Standard):</strong></p>
+                                
+                                <p style="margin-top: 10px;"><em>1. MODULE CONSTANTS SECTION (~120 lines):</em></p>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li><strong>CRUD Actions (10 constants):</strong>
+                                        <ul style="margin-left: 20px;">
+                                            <li><code>ACTION_INSERT</code>, <code>ACTION_SELECT</code>, <code>ACTION_UPDATE</code>, <code>ACTION_DELETE</code>, <code>ACTION_UPSERT</code></li>
+                                        </ul>
+                                    </li>
+                                    <li><strong>DDL Actions (5 constants):</strong>
+                                        <ul style="margin-left: 20px;">
+                                            <li><code>ACTION_CREATE</code>, <code>ACTION_DROP</code>, <code>ACTION_HEAD</code>, <code>ACTION_DESCRIBE</code>, <code>ACTION_MIGRATE</code></li>
+                                        </ul>
+                                    </li>
+                                    <li><strong>Connection Actions (4 constants):</strong>
+                                        <ul style="margin-left: 20px;">
+                                            <li><code>ACTION_CONNECT</code>, <code>ACTION_DISCONNECT</code>, <code>ACTION_STATUS</code>, <code>ACTION_HISTORY</code></li>
+                                        </ul>
+                                    </li>
+                                    <li><strong>Request Keys (15 constants):</strong>
+                                        <ul style="margin-left: 20px;">
+                                            <li><code>KEY_ACTION</code>, <code>KEY_TABLES</code>, <code>KEY_MODEL</code>, <code>KEY_OPTIONS</code>, <code>KEY_AUTO_JOIN</code></li>
+                                            <li><code>KEY_WHERE</code>, <code>KEY_FIELDS</code>, <code>KEY_VALUES</code>, <code>KEY_LIMIT</code>, <code>KEY_OFFSET</code></li>
+                                            <li><code>KEY_DRY_RUN</code>, <code>KEY_NEW_SCHEMA</code>, <code>KEY_OLD_SCHEMA</code>, <code>KEY_VERSION</code>, <code>KEY_BACKEND</code></li>
+                                        </ul>
+                                    </li>
+                                    <li><strong>Error Messages (20+ constants):</strong>
+                                        <ul style="margin-left: 20px;">
+                                            <li><code>ERROR_NO_ZDATA</code>: "zData subsystem not available"</li>
+                                            <li><code>ERROR_MISSING_TABLE</code>: "No table specified for {action}"</li>
+                                            <li><code>ERROR_MISSING_MODEL</code>: "No model/schema specified (use --model)"</li>
+                                            <li><code>ERROR_INVALID_ACTION</code>: "Invalid data action: {action}"</li>
+                                            <li><code>ERROR_NOT_CONNECTED</code>: "Not connected to data backend"</li>
+                                            <li><code>ERROR_ALREADY_CONNECTED</code>: "Already connected to backend"</li>
+                                            <li><code>ERROR_EXECUTION_FAILED</code>: "Data operation failed: {error}"</li>
+                                            <li><code>ERROR_INVALID_BACKEND</code>: "Invalid backend: {backend} (use sqlite, postgresql, csv)"</li>
+                                            <li><code>ERROR_MISSING_SCHEMA</code>: "No schema specified for migration"</li>
+                                            <li><code>ERROR_MIGRATION_FAILED</code>: "Migration failed: {error}"</li>
+                                        </ul>
+                                    </li>
+                                    <li><strong>Success Messages (10 constants):</strong>
+                                        <ul style="margin-left: 20px;">
+                                            <li><code>SUCCESS_CONNECTED</code>, <code>SUCCESS_DISCONNECTED</code>, <code>SUCCESS_INSERTED</code>, <code>SUCCESS_UPDATED</code></li>
+                                            <li><code>SUCCESS_DELETED</code>, <code>SUCCESS_CREATED</code>, <code>SUCCESS_DROPPED</code>, <code>SUCCESS_MIGRATED</code></li>
+                                        </ul>
+                                    </li>
+                                    <li><strong>Validation Limits (5 constants):</strong>
+                                        <ul style="margin-left: 20px;">
+                                            <li><code>MAX_TABLE_NAME_LENGTH</code>: 255</li>
+                                            <li><code>MAX_TABLES_COUNT</code>: 10 (for multi-table JOINs)</li>
+                                            <li><code>MAX_MODEL_PATH_LENGTH</code>: 1024</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+
+                                <p style="margin-top: 10px;"><em>2. COMPREHENSIVE MODULE DOCSTRING (~150 lines):</em></p>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li><strong>Purpose:</strong> Shell interface to zData subsystem (all 4 phases)</li>
+                                    <li><strong>Architecture:</strong> Delegates to modernized zData facade (Week 6.16)</li>
+                                    <li><strong>Supported Actions:</strong>
+                                        <ul style="margin-left: 20px;">
+                                            <li><strong>CRUD:</strong> insert, select, update, delete, upsert</li>
+                                            <li><strong>DDL:</strong> create, drop, head (with AdvancedData zTable), describe</li>
+                                            <li><strong>Migrations:</strong> migrate (dry-run support), history</li>
+                                            <li><strong>Connection:</strong> connect, disconnect, status</li>
+                                        </ul>
+                                    </li>
+                                    <li><strong>zData Integration:</strong>
+                                        <ul style="margin-left: 20px;">
+                                            <li>Uses <code>zcli.data.handle_request()</code> for CRUD/DDL</li>
+                                            <li>Uses <code>zcli.data.migrate()</code> for migrations</li>
+                                            <li>Uses <code>zcli.data.get_migration_history()</code> for audit trail</li>
+                                            <li>Uses <code>zcli.data.connect() / disconnect() / is_connected()</code></li>
+                                        </ul>
+                                    </li>
+                                    <li><strong>AdvancedData Integration:</strong>
+                                        <ul style="margin-left: 20px;">
+                                            <li>SELECT uses zTable() for paginated display</li>
+                                            <li>HEAD uses zTable() for schema preview</li>
+                                            <li>Supports limit/offset for pagination</li>
+                                        </ul>
+                                    </li>
+                                    <li><strong>Multi-Backend Support:</strong> SQLite, PostgreSQL, CSV</li>
+                                    <li><strong>Usage Examples:</strong> 10+ examples (CRUD, migrations, JOINs)</li>
+                                    <li><strong>Constants Reference:</strong> 60+ module constants</li>
+                                    <li><strong>Cross-Subsystem Dependencies:</strong> zData, zSession, zDisplay, zParser</li>
+                                </ul>
+
+                                <p style="margin-top: 10px;"><em>3. HELPER FUNCTIONS SECTION (~180 lines):</em></p>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li><code>_validate_zdata_subsystem(zcli) -> Optional[Dict]</code> (30 lines)
+                                        <ul style="margin-left: 20px;">
+                                            <li>Check if <code>zcli.data</code> exists and is initialized</li>
+                                            <li>Return error dict if unavailable</li>
+                                        </ul>
+                                    </li>
+                                    <li><code>_validate_action(action) -> Optional[str]</code> (20 lines)
+                                        <ul style="margin-left: 20px;">
+                                            <li>Validate action is in allowed list (CRUD + DDL + migrations + connection)</li>
+                                            <li>Return error message if invalid</li>
+                                        </ul>
+                                    </li>
+                                    <li><code>_validate_tables(action, tables) -> Optional[str]</code> (25 lines)
+                                        <ul style="margin-left: 20px;">
+                                            <li>Check table required for action</li>
+                                            <li>Validate table count for multi-table JOINs</li>
+                                            <li>Return error message if validation fails</li>
+                                        </ul>
+                                    </li>
+                                    <li><code>_validate_model(action, model_path) -> Optional[str]</code> (20 lines)
+                                        <ul style="margin-left: 20px;">
+                                            <li>Check model/schema required for action</li>
+                                            <li>Validate path length</li>
+                                            <li>Return error message if missing/invalid</li>
+                                        </ul>
+                                    </li>
+                                    <li><code>_parse_tables(table_arg) -> List[str]</code> (15 lines)
+                                        <ul style="margin-left: 20px;">
+                                            <li>Split comma-separated tables</li>
+                                            <li>Strip whitespace, validate non-empty</li>
+                                            <li>Return list of table names</li>
+                                        </ul>
+                                    </li>
+                                    <li><code>_build_request(action, tables, model, options) -> Dict</code> (25 lines)
+                                        <ul style="margin-left: 20px;">
+                                            <li>Construct zRequest dict with all constants</li>
+                                            <li>Extract auto_join flag</li>
+                                            <li>Handle migration-specific fields (dry_run, new_schema)</li>
+                                        </ul>
+                                    </li>
+                                    <li><code>_handle_migration_action(zcli, parsed, options) -> None</code> (40 lines)
+                                        <ul style="margin-left: 20px;">
+                                            <li>Special handler for migrate/history actions</li>
+                                            <li>Call <code>zcli.data.migrate()</code> or <code>zcli.data.get_migration_history()</code></li>
+                                            <li>Support dry-run mode, schema version</li>
+                                            <li>Display results via zDisplay</li>
+                                        </ul>
+                                    </li>
+                                    <li><code>_handle_connection_action(zcli, action, options) -> None</code> (30 lines)
+                                        <ul style="margin-left: 20px;">
+                                            <li>Special handler for connect/disconnect/status</li>
+                                            <li>Call <code>zcli.data.connect()</code>, <code>disconnect()</code>, <code>is_connected()</code></li>
+                                            <li>Display connection state</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+
+                                <p style="margin-top: 10px;"><em>4. MAIN EXECUTION FUNCTION (~80 lines with error handling):</em></p>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li><code>execute_data(zcli, parsed) -> None</code>
+                                        <ul style="margin-left: 20px;">
+                                            <li>100% type hints: <code>def execute_data(zcli: 'zCLI', parsed: Dict[str, Any]) -> None</code></li>
+                                            <li>60-line function docstring (Args, Returns, Raises, Examples)</li>
+                                            <li>Validate zData subsystem availability</li>
+                                            <li>Validate action, tables, model</li>
+                                            <li>Route to migration handler if migrate/history action</li>
+                                            <li>Route to connection handler if connect/disconnect/status</li>
+                                            <li>Otherwise delegate to <code>zcli.data.handle_request()</code></li>
+                                            <li>Comprehensive try/except with specific error types</li>
+                                            <li>Log all operations (debug + error levels)</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+
+                                <p style="margin-top: 15px;"><strong>📊 EXPECTED TRANSFORMATION:</strong></p>
+                                <ul style="margin-left: 20px; margin-top: 5px; line-height: 1.8;">
+                                    <li><strong>Grade:</strong> D+ (60/100) → A+ (95/100) = <span style="color: #10b981; font-weight: bold;">+35 points</span></li>
+                                    <li><strong>Lines:</strong> 41 → 450 = <span style="color: #10b981; font-weight: bold;">+1000% growth</span></li>
+                                    <li><strong>Module Docstring:</strong> 5 lines → 150 lines = <span style="color: #10b981; font-weight: bold;">+2900%</span></li>
+                                    <li><strong>Constants:</strong> 0 → 60+ = <span style="color: #10b981; font-weight: bold;">+60 constants</span></li>
+                                    <li><strong>Type Hints:</strong> 0% → 100% = <span style="color: #10b981; font-weight: bold;">+100%</span></li>
+                                    <li><strong>Helper Functions:</strong> 0 → 8 = <span style="color: #10b981; font-weight: bold;">+8 helpers (DRY pattern)</span></li>
+                                    <li><strong>Error Handling:</strong> None → Comprehensive try/except</li>
+                                    <li><strong>Actions Supported:</strong> 5 (CRUD only) → 19 (CRUD + DDL + migrations + connection)</li>
+                                    <li><strong>zData Phase Awareness:</strong> Phase 1-2 only → All 4 phases (migrations, AdvancedData)</li>
+                                    <li><strong>Time Estimate:</strong> ~90 minutes</li>
+                                </ul>
+
+                                <p style="margin-top: 15px;"><strong>🎯 SUCCESS CRITERIA:</strong></p>
+                                <ol style="margin-left: 20px; margin-top: 5px; line-height: 1.8;">
+                                    <li>✅ 100% type hint coverage (all functions, all parameters, all returns)</li>
+                                    <li>✅ 150-line comprehensive module docstring (purpose, architecture, examples)</li>
+                                    <li>✅ 60+ module constants (actions, keys, messages, limits)</li>
+                                    <li>✅ 8 helper functions (validation, parsing, routing)</li>
+                                    <li>✅ Full error handling (try/except with specific exceptions)</li>
+                                    <li>✅ Migration action support (migrate, history with dry-run)</li>
+                                    <li>✅ Connection action support (connect, disconnect, status)</li>
+                                    <li>✅ DDL action support (create, drop, head with AdvancedData)</li>
+                                    <li>✅ All CRUD actions (insert, select, update, delete, upsert)</li>
+                                    <li>✅ Multi-backend awareness (SQLite, PostgreSQL, CSV)</li>
+                                    <li>✅ AdvancedData integration (zTable for select/head)</li>
+                                    <li>✅ Cross-subsystem documentation (zData, zSession, zDisplay)</li>
+                                    <li>✅ All tests passing (zShell + zData integration)</li>
+                                    <li>✅ Zero linter errors</li>
+                                    <li>✅ Grade A+ (95/100)</li>
+                                </ol>
+
+                                <div style="margin-top: 20px; padding: 15px; background: #d1fae5; border-left: 4px solid #10b981; border-radius: 4px;">
+                                    <p style="margin: 0;"><strong style="color: #10b981;">✅ IMPLEMENTATION COMPLETE!</strong></p>
+                                    <p style="margin-top: 10px; line-height: 1.6;">
+                                        Successfully modernized <code>shell_cmd_data.py</code> to A+ grade with full awareness
+                                        of zData's 4-phase modernization (Week 6.16). File now supports 19 actions across
+                                        CRUD, DDL, migrations, and connection management with comprehensive error handling,
+                                        validation, and integration with AdvancedData for paginated display.
+                                    </p>
+                                    <p style="margin-top: 10px; line-height: 1.6;">
+                                        <strong>Key Achievements:</strong> 85 constants, 151-line docstring, 8 helper functions,
+                                        100% type hints, declarative migration support, multi-backend awareness (SQLite, PostgreSQL, CSV).
+                                    </p>
+                                    <p style="margin-top: 10px; line-height: 1.6;">
+                                        <strong>Test Results:</strong> 42/42 zShell tests passing ✅ | Zero linter errors ✅
+                                    </p>
+                                    <p style="margin-top: 10px; line-height: 1.6;">
+                                        <strong>Time:</strong> ~75 minutes (actual) vs ~90 minutes (estimated)
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -3235,18 +3502,455 @@ def get_config_sources(self) -> List[str]:
                     Plugin execution, exports, testing, utilities, and system shell integration
                 </p>
 
-                <!-- Week 6.13.17: shell_cmd_plugin.py -->
+                <!-- Week 6.13.17: shell_cmd_plugin.py (UNIFIED PLUGIN COMMAND) -->
                 <div class="todo-item" id="cmd-plugin">
-                    <input type="checkbox" class="todo-checkbox">
+                    <input type="checkbox" class="todo-checkbox" checked>
                     <div class="todo-content">
-                        <div class="todo-title">Week 6.13.17: shell_cmd_plugin.py (Plugin Execution)</div>
+                        <div class="todo-title">Week 6.13.17: shell_cmd_plugin.py (Unified Plugin Command - 3 Files) ✅</div>
                         <div class="todo-description">
-                            <strong>📁 File:</strong> <code>commands/shell_cmd_plugin.py</code> (renamed from plugin_executor.py)
-                            <br><strong>Current Grade:</strong> TBD
-                            <br><strong>Target Grade:</strong> A+
-                            <br><strong>Dependencies:</strong> None
+                            <strong>📁 Files:</strong> 
+                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                <li><code>shell_cmd_plugin.py</code> - Main router ✅ (206 lines)</li>
+                                <li><code>shell_cmd_plugin_mgmt.py</code> - Management ✅ (456 lines)</li>
+                                <li><code>shell_cmd_plugin_exec.py</code> - Execution ✅ (249 lines)</li>
+                                <li><code>shell_cmd_utils.py</code> - Deprecated with redirect ✅ (82 lines)</li>
+                                <li><code>zLoader.py</code> - Added load_plugin_from_zpath() facade ✅ (+116 lines)</li>
+                                <li><code>parser_commands.py</code> - Updated plugin parser ✅</li>
+                            </ul>
+                            <br><strong>Grade:</strong> D+ (60/100) → A (90/100) ✅ <span style="color: #16a34a; font-weight: bold;">+30 points</span>
+                            <br><strong>Dependencies:</strong> ✅ zUtils (Week 6.15 COMPLETE), ✅ zLoader (Week 6.9 COMPLETE)
                             
-                            <p style="margin-top: 10px;"><strong>Audit Focus:</strong> Type hints, plugin cache integration, error handling</p>
+                            <div style="margin-top: 15px; padding: 10px; background: #e0f2fe; border-left: 3px solid #0284c7; border-radius: 4px;">
+                                <p style="margin: 0;"><strong>📊 COMPREHENSIVE AUDIT RESULTS:</strong></p>
+                                
+                                <div style="margin-top: 15px;">
+                                    <p style="margin: 0; font-weight: 600;">File 1: shell_cmd_plugin.py (Management - 191 lines)</p>
+                                    <ul style="margin-left: 20px; margin-top: 5px; line-height: 1.6;">
+                                        <li><strong>Current State:</strong>
+                                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                                <li>Lines: 191 (1 router + 4 functions)</li>
+                                                <li>Module docstring: 3 lines (minimal)</li>
+                                                <li>Function docstrings: 1-2 lines each (minimal)</li>
+                                                <li>Constants: 0 (all magic strings)</li>
+                                                <li>Type hints: 0% (no typing at all)</li>
+                                                <li>Helper functions: 0</li>
+                                                <li>Error handling: Basic try/except, dict returns</li>
+                                                <li>Display integration: Partial (mixed dict returns)</li>
+                                            </ul>
+                                        </li>
+                                        <li><strong>Functions:</strong>
+                                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                                <li><code>execute_plugin()</code> - Router (lines 6-43)</li>
+                                                <li><code>load_plugin()</code> - Load from zPath (lines 46-97)</li>
+                                                <li><code>show_plugins()</code> - Display plugins/stats (lines 100-145)</li>
+                                                <li><code>clear_plugins()</code> - Clear cache (lines 148-159)</li>
+                                                <li><code>reload_plugin()</code> - Clear + load (lines 162-189)</li>
+                                            </ul>
+                                        </li>
+                                        <li><strong>❌ Critical Issues:</strong>
+                                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                                <li><strong>Lines 56-70:</strong> Manual zPath resolution (parser logic in UI)</li>
+                                                <li><strong>Lines 73-75:</strong> Filesystem validation (backend logic in UI)</li>
+                                                <li><strong>Line 73:</strong> Inline <code>import os</code> (should be top-level)</li>
+                                                <li><strong>Lines 82-83:</strong> Module introspection (borderline - display formatting)</li>
+                                                <li><strong>No backend facade:</strong> Directly accesses plugin_cache internals</li>
+                                            </ul>
+                                        </li>
+                                        <li><strong>⚠️ Medium Issues:</strong>
+                                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                                <li>Mixed return patterns: dict vs None + display</li>
+                                                <li>Inconsistent error handling (some return dict, some display)</li>
+                                                <li>Magic strings everywhere ("success", "error", "cache", etc.)</li>
+                                                <li>No validation helpers (args checking duplicated)</li>
+                                                <li>No display formatting helpers (string building inline)</li>
+                                            </ul>
+                                        </li>
+                                        <li><strong>✅ Strengths:</strong>
+                                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                                <li>Clear function separation by action</li>
+                                                <li>Good command variety (load, show, clear, reload)</li>
+                                                <li>Uses zDisplay methods (header, text, success, info, warning)</li>
+                                                <li>Handles both "show" and "show cache" subcommands</li>
+                                                <li>Decent error messages for users</li>
+                                            </ul>
+                                        </li>
+                                    </ul>
+                                </div>
+                                
+                                <div style="margin-top: 15px;">
+                                    <p style="margin: 0; font-weight: 600;">File 2: shell_cmd_utils.py (Execution - 19 lines)</p>
+                                    <ul style="margin-left: 20px; margin-top: 5px; line-height: 1.6;">
+                                        <li><strong>Current State:</strong>
+                                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                                <li>Lines: 19 (1 function only)</li>
+                                                <li>Module docstring: 1 line (minimal)</li>
+                                                <li>Function docstring: 1 line (minimal)</li>
+                                                <li>Constants: 0</li>
+                                                <li>Type hints: 0%</li>
+                                                <li>Helper functions: 0</li>
+                                                <li>Error handling: Basic hasattr check</li>
+                                                <li>Display integration: None (returns dict)</li>
+                                            </ul>
+                                        </li>
+                                        <li><strong>Function:</strong>
+                                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                                <li><code>execute_utils()</code> - Thin router to zcli.utils (lines 9-18)</li>
+                                            </ul>
+                                        </li>
+                                        <li><strong>❌ Critical Issues:</strong>
+                                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                                <li><strong>Line 11:</strong> Direct dict access - no .get() (will crash if missing)</li>
+                                                <li><strong>No zUtils validation:</strong> Assumes zcli.utils exists</li>
+                                                <li><strong>No error handling:</strong> getattr() call could raise AttributeError</li>
+                                                <li><strong>Returns dict:</strong> Not UI adapter pattern</li>
+                                            </ul>
+                                        </li>
+                                        <li><strong>⚠️ Medium Issues:</strong>
+                                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                                <li>Outdated header comments (lines 1-4, references old path)</li>
+                                                <li>No argument validation</li>
+                                                <li>No display integration</li>
+                                                <li>Single logger.debug statement (no comprehensive logging)</li>
+                                            </ul>
+                                        </li>
+                                        <li><strong>✅ Strengths:</strong>
+                                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                                <li>Elegant simplicity - thin router by design</li>
+                                                <li>Dynamic delegation via getattr()</li>
+                                                <li>Logs execution (debug level)</li>
+                                                <li>Basic error message on unknown function</li>
+                                            </ul>
+                                        </li>
+                                    </ul>
+                                </div>
+                                
+                                <div style="margin-top: 15px;">
+                                    <p style="margin: 0; font-weight: 600;">Combined Analysis:</p>
+                                    <ul style="margin-left: 20px; margin-top: 5px; line-height: 1.6;">
+                                        <li><strong>Total Current Lines:</strong> 191 + 19 = 210 lines</li>
+                                        <li><strong>Total Functions:</strong> 6 functions (1 router + 4 mgmt + 1 exec)</li>
+                                        <li><strong>Grade Breakdown:</strong>
+                                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                                <li>Architecture: D (backend logic in UI, no facade)</li>
+                                                <li>Documentation: D- (minimal docstrings, no constants)</li>
+                                                <li>Type Safety: F (0% type hints)</li>
+                                                <li>Error Handling: C (basic, inconsistent)</li>
+                                                <li>Display Integration: C+ (plugin.py good, utils.py none)</li>
+                                                <li><strong>Overall: D+ (60/100)</strong></li>
+                                            </ul>
+                                        </li>
+                                        <li><strong>User Confusion:</strong> Two commands (utils vs plugin) for related concepts</li>
+                                        <li><strong>Maintenance Risk:</strong> Backend logic in UI = hard to test, fragile</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div style="margin-top: 15px; padding: 10px; background: #dcfce7; border-left: 3px solid #16a34a; border-radius: 4px;">
+                                <p style="margin: 0;"><strong>✅ FINAL IMPLEMENTATION PLAN (3-File Architecture):</strong></p>
+                                
+                                <div style="margin-top: 15px;">
+                                    <p style="margin: 0; font-weight: 600;">STEP 1: Backend Preparation (zLoader Facade Method)</p>
+                                    <ul style="margin-left: 20px; margin-top: 5px; line-height: 1.8;">
+                                        <li><strong>Add to zLoader.py:</strong> <code>load_plugin_from_zpath(zPath) -> module</code></li>
+                                        <li><strong>Handles:</strong> zPath resolution → file validation → load_and_cache → return module</li>
+                                        <li><strong>Delegates to:</strong> zParser (resolution) + plugin_cache (loading)</li>
+                                        <li><strong>Error handling:</strong> Raises proper exceptions (FileNotFoundError, ValueError)</li>
+                                        <li><strong>Lines:</strong> ~40-50 lines in zLoader.py (new method)</li>
+                                        <li><strong>Time:</strong> ~30 minutes</li>
+                                    </ul>
+                                </div>
+                                
+                                <div style="margin-top: 15px;">
+                                    <p style="margin: 0; font-weight: 600;">STEP 2: Create shell_cmd_plugin.py (Main Router - NEW)</p>
+                                    <ul style="margin-left: 20px; margin-top: 5px; line-height: 1.8;">
+                                        <li><strong>Lines:</strong> ~70-80 lines (40-60 code + 60+ docstring)</li>
+                                        <li><strong>Module Docstring:</strong> 60+ lines
+                                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                                <li>Purpose: Unified plugin command (exec + mgmt)</li>
+                                                <li>Subcommands: exec/run, load, show, clear, reload</li>
+                                                <li>Architecture: Routes to plugin_exec.py or plugin_mgmt.py</li>
+                                                <li>Examples: All subcommand variations</li>
+                                                <li>Dependencies: zUtils, zLoader</li>
+                                            </ul>
+                                        </li>
+                                        <li><strong>Constants:</strong> 8-10 constants
+                                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                                <li>ACTION_EXEC, ACTION_RUN, ACTION_LOAD, ACTION_SHOW, ACTION_CLEAR, ACTION_RELOAD</li>
+                                                <li>ERROR_NO_ACTION, ERROR_UNKNOWN_ACTION</li>
+                                                <li>KEY_ACTION, KEY_ARGS</li>
+                                            </ul>
+                                        </li>
+                                        <li><strong>Main Function:</strong> <code>execute_plugin(zcli, parsed) -> None</code>
+                                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                                <li>Extract action + args from parsed dict</li>
+                                                <li>Route exec/run → plugin_exec.execute_plugin_function()</li>
+                                                <li>Route load/show/clear/reload → plugin_mgmt functions</li>
+                                                <li>Display error for unknown actions</li>
+                                                <li>100% type hints</li>
+                                                <li>20-30 lines of code</li>
+                                            </ul>
+                                        </li>
+                                        <li><strong>Grade Target:</strong> A (90/100)</li>
+                                        <li><strong>Time:</strong> ~45 minutes</li>
+                                    </ul>
+                                </div>
+                                
+                                <div style="margin-top: 15px;">
+                                    <p style="margin: 0; font-weight: 600;">STEP 3: Create shell_cmd_plugin_exec.py (Execution - REFACTOR from utils.py)</p>
+                                    <ul style="margin-left: 20px; margin-top: 5px; line-height: 1.8;">
+                                        <li><strong>Lines:</strong> 19 → ~160-180 lines (120-150 code + 80+ docstring)</li>
+                                        <li><strong>Module Docstring:</strong> 80+ lines
+                                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                                <li>Purpose: Execute plugin functions via zUtils</li>
+                                                <li>Architecture: Thin router to zcli.utils.function()</li>
+                                                <li>Integration: zUtils subsystem (Week 6.15)</li>
+                                                <li>Error handling: zUtils validation, AttributeError catching</li>
+                                                <li>Examples: plugin exec hash_password, plugin run generate_id</li>
+                                            </ul>
+                                        </li>
+                                        <li><strong>Constants:</strong> 12-15 constants
+                                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                                <li>ERROR_NO_ARGS, ERROR_NO_UTILS, ERROR_NO_FUNCTION, ERROR_EXEC_FAILED</li>
+                                                <li>MSG_EXECUTING, MSG_SUCCESS, MSG_RESULT</li>
+                                                <li>KEY_FUNCTION, KEY_ARGS, KEY_RESULT</li>
+                                                <li>LOG_EXECUTING, LOG_SUCCESS, LOG_ERROR</li>
+                                            </ul>
+                                        </li>
+                                        <li><strong>Main Function:</strong> <code>execute_plugin_function(zcli, args) -> None</code>
+                                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                                <li>Validate args (needs function name)</li>
+                                                <li>Validate zUtils subsystem exists</li>
+                                                <li>Validate function exists via hasattr()</li>
+                                                <li>Execute via getattr() with try/except</li>
+                                                <li>Display result or error via zDisplay</li>
+                                                <li>Log execution (debug + info)</li>
+                                                <li>100% type hints</li>
+                                                <li>30-40 lines of code</li>
+                                            </ul>
+                                        </li>
+                                        <li><strong>Helper Functions:</strong> 2 helpers
+                                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                                <li><code>_validate_zutils(zcli) -> bool</code> - Check zUtils subsystem (15 lines)</li>
+                                                <li><code>_format_result(result) -> str</code> - Format function result for display (20 lines)</li>
+                                            </ul>
+                                        </li>
+                                        <li><strong>Grade Target:</strong> A (90/100)</li>
+                                        <li><strong>Time:</strong> ~1 hour</li>
+                                    </ul>
+                                </div>
+                                
+                                <div style="margin-top: 15px;">
+                                    <p style="margin: 0; font-weight: 600;">STEP 4: Create shell_cmd_plugin_mgmt.py (Management - REFACTOR from plugin.py)</p>
+                                    <ul style="margin-left: 20px; margin-top: 5px; line-height: 1.8;">
+                                        <li><strong>Lines:</strong> 191 → ~330-360 lines (250-300 code + 100+ docstring)</li>
+                                        <li><strong>Module Docstring:</strong> 100+ lines
+                                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                                <li>Purpose: Plugin cache management (load, show, clear, reload)</li>
+                                                <li>Architecture: Delegates to zLoader facade + plugin_cache</li>
+                                                <li>Integration: zLoader.load_plugin_from_zpath() (NEW facade)</li>
+                                                <li>Commands: load, show (plugins/cache), clear, reload</li>
+                                                <li>Error handling: FileNotFound, LoadError, ClearError</li>
+                                            </ul>
+                                        </li>
+                                        <li><strong>Constants:</strong> 32-35 constants
+                                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                                <li>Actions: ACTION_LOAD, ACTION_SHOW, ACTION_CLEAR, ACTION_RELOAD</li>
+                                                <li>Show modes: SHOW_MODE_PLUGINS, SHOW_MODE_CACHE</li>
+                                                <li>Errors: ERROR_NO_ZPATH, ERROR_LOAD_FAILED, ERROR_NOT_FOUND, etc.</li>
+                                                <li>Success: MSG_LOADED, MSG_CLEARED, MSG_RELOADED</li>
+                                                <li>Display: HEADER_PLUGINS, HEADER_CACHE, LABEL_PATH, etc.</li>
+                                                <li>Keys: KEY_NAME, KEY_FILEPATH, KEY_HITS, KEY_STATS, etc.</li>
+                                            </ul>
+                                        </li>
+                                        <li><strong>Functions:</strong> 4 main + 3 helpers
+                                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                                <li><code>load_plugin(zcli, args) -> None</code> - Load via zLoader facade (40-50 lines)</li>
+                                                <li><code>show_plugins(zcli, args) -> None</code> - Display plugins or stats (50-60 lines)</li>
+                                                <li><code>clear_plugins(zcli, args) -> None</code> - Clear cache (20-25 lines)</li>
+                                                <li><code>reload_plugin(zcli, args) -> None</code> - Clear + load (30-35 lines)</li>
+                                                <li><code>_get_plugin_functions(module) -> List[str]</code> - Introspect module (15 lines)</li>
+                                                <li><code>_extract_module_name(zpath) -> str</code> - Parse zPath (20 lines)</li>
+                                                <li><code>_display_plugin_info(zcli, info) -> None</code> - Format plugin display (25 lines)</li>
+                                            </ul>
+                                        </li>
+                                        <li><strong>Key Changes:</strong>
+                                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                                <li>❌ REMOVE: Lines 56-75 (zPath resolution + file check)</li>
+                                                <li>✅ ADD: Call to zcli.loader.load_plugin_from_zpath()</li>
+                                                <li>✅ ENHANCE: Comprehensive error handling with try/except</li>
+                                                <li>✅ EXTRACT: Function introspection to helper</li>
+                                                <li>✅ EXTRACT: Module name parsing to helper</li>
+                                                <li>✅ EXTRACT: Display formatting to helper</li>
+                                            </ul>
+                                        </li>
+                                        <li><strong>Grade Target:</strong> A (90/100)</li>
+                                        <li><strong>Time:</strong> ~1.5 hours</li>
+                                    </ul>
+                                </div>
+                                
+                                <div style="margin-top: 15px;">
+                                    <p style="margin: 0; font-weight: 600;">STEP 5: Deprecate shell_cmd_utils.py</p>
+                                    <ul style="margin-left: 20px; margin-top: 5px; line-height: 1.8;">
+                                        <li><strong>Add deprecation warning:</strong> Display message on utils command</li>
+                                        <li><strong>Redirect:</strong> Call plugin_exec.execute_plugin_function()</li>
+                                        <li><strong>Update docstring:</strong> Note deprecation, recommend plugin exec</li>
+                                        <li><strong>Keep file:</strong> For backward compatibility (1-2 versions)</li>
+                                        <li><strong>Lines:</strong> ~30-40 lines (with warning message)</li>
+                                        <li><strong>Time:</strong> ~15 minutes</li>
+                                    </ul>
+                                </div>
+                                
+                                <div style="margin-top: 15px;">
+                                    <p style="margin: 0; font-weight: 600;">📊 FINAL METRICS SUMMARY:</p>
+                                    <table style="width: 100%; margin-top: 10px; border-collapse: collapse; font-size: 0.9em;">
+                                        <tr style="background: #f3f4f6; font-weight: 600;">
+                                            <td style="padding: 8px; border: 1px solid #cbd5e0;">Metric</td>
+                                            <td style="padding: 8px; border: 1px solid #cbd5e0;">Before</td>
+                                            <td style="padding: 8px; border: 1px solid #cbd5e0;">After</td>
+                                            <td style="padding: 8px; border: 1px solid #cbd5e0;">Change</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 8px; border: 1px solid #cbd5e0;">Total Files</td>
+                                            <td style="padding: 8px; border: 1px solid #cbd5e0;">2</td>
+                                            <td style="padding: 8px; border: 1px solid #cbd5e0;">3 + 1 deprecated</td>
+                                            <td style="padding: 8px; border: 1px solid #cbd5e0;">+2 files</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 8px; border: 1px solid #cbd5e0;">Total Lines</td>
+                                            <td style="padding: 8px; border: 1px solid #cbd5e0;">210</td>
+                                            <td style="padding: 8px; border: 1px solid #cbd5e0;">~570-620</td>
+                                            <td style="padding: 8px; border: 1px solid #cbd5e0;">+360-410 (+171-195%)</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 8px; border: 1px solid #cbd5e0;">Module Docstrings</td>
+                                            <td style="padding: 8px; border: 1px solid #cbd5e0;">4 lines</td>
+                                            <td style="padding: 8px; border: 1px solid #cbd5e0;">240+ lines</td>
+                                            <td style="padding: 8px; border: 1px solid #cbd5e0;">+236 lines (+5,900%)</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 8px; border: 1px solid #cbd5e0;">Constants</td>
+                                            <td style="padding: 8px; border: 1px solid #cbd5e0;">0</td>
+                                            <td style="padding: 8px; border: 1px solid #cbd5e0;">52-58</td>
+                                            <td style="padding: 8px; border: 1px solid #cbd5e0;">+52-58</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 8px; border: 1px solid #cbd5e0;">Type Hints</td>
+                                            <td style="padding: 8px; border: 1px solid #cbd5e0;">0%</td>
+                                            <td style="padding: 8px; border: 1px solid #cbd5e0;">100%</td>
+                                            <td style="padding: 8px; border: 1px solid #cbd5e0;">+100%</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 8px; border: 1px solid #cbd5e0;">Helper Functions</td>
+                                            <td style="padding: 8px; border: 1px solid #cbd5e0;">0</td>
+                                            <td style="padding: 8px; border: 1px solid #cbd5e0;">5</td>
+                                            <td style="padding: 8px; border: 1px solid #cbd5e0;">+5</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 8px; border: 1px solid #cbd5e0;">Backend Logic in UI</td>
+                                            <td style="padding: 8px; border: 1px solid #cbd5e0;">YES (20 lines)</td>
+                                            <td style="padding: 8px; border: 1px solid #cbd5e0;">NO (facade)</td>
+                                            <td style="padding: 8px; border: 1px solid #cbd5e0;">✅ FIXED</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 8px; border: 1px solid #cbd5e0;">User Commands</td>
+                                            <td style="padding: 8px; border: 1px solid #cbd5e0;">2 (utils, plugin)</td>
+                                            <td style="padding: 8px; border: 1px solid #cbd5e0;">1 (plugin)</td>
+                                            <td style="padding: 8px; border: 1px solid #cbd5e0;">✅ UNIFIED</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 8px; border: 1px solid #cbd5e0;">Grade</td>
+                                            <td style="padding: 8px; border: 1px solid #cbd5e0;">D+ (60/100)</td>
+                                            <td style="padding: 8px; border: 1px solid #cbd5e0;">A (90/100)</td>
+                                            <td style="padding: 8px; border: 1px solid #cbd5e0;">+30 points</td>
+                                        </tr>
+                                        <tr style="background: #f3f4f6; font-weight: 600;">
+                                            <td style="padding: 8px; border: 1px solid #cbd5e0;">Total Time</td>
+                                            <td style="padding: 8px; border: 1px solid #cbd5e0;">-</td>
+                                            <td style="padding: 8px; border: 1px solid #cbd5e0;">~4-4.5 hours</td>
+                                            <td style="padding: 8px; border: 1px solid #cbd5e0;">All 5 steps</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                
+                                <div style="margin-top: 15px;">
+                                    <p style="margin: 0; font-weight: 600;">🎯 IMPLEMENTATION ORDER:</p>
+                                    <ol style="margin-left: 20px; margin-top: 5px; line-height: 1.8;">
+                                        <li>STEP 1: Add backend facade to zLoader (~30 min)</li>
+                                        <li>STEP 2: Create shell_cmd_plugin.py (main router) (~45 min)</li>
+                                        <li>STEP 3: Create shell_cmd_plugin_exec.py (execution) (~1 hour)</li>
+                                        <li>STEP 4: Create shell_cmd_plugin_mgmt.py (management) (~1.5 hours)</li>
+                                        <li>STEP 5: Deprecate shell_cmd_utils.py (~15 min)</li>
+                                        <li>STEP 6: Update parser to recognize "plugin exec/run" subcommands (~30 min)</li>
+                                        <li>STEP 7: Run tests, verify all 42 zShell tests passing (~15 min)</li>
+                                    </ol>
+                                </div>
+                            </div>
+
+                            <div style="margin-top: 15px; padding: 10px; background: #dcfce7; border-left: 3px solid #16a34a; border-radius: 4px;">
+                                <p style="margin: 0;"><strong>✅ IMPLEMENTATION COMPLETE:</strong></p>
+
+                                <div style="margin-top: 15px;">
+                                    <p style="margin: 0; font-weight: 600;">📊 Final Results:</p>
+                                    <ul style="margin-left: 20px; margin-top: 5px; line-height: 1.8;">
+                                        <li><strong>Files Created:</strong>
+                                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                                <li><code>shell_cmd_plugin.py</code> - 206 lines (main router)</li>
+                                                <li><code>shell_cmd_plugin_exec.py</code> - 249 lines (execution)</li>
+                                                <li><code>shell_cmd_plugin_mgmt.py</code> - 456 lines (management)</li>
+                                            </ul>
+                                        </li>
+                                        <li><strong>Files Modified:</strong>
+                                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                                <li><code>shell_cmd_utils.py</code> - 19 → 82 lines (deprecated with redirect)</li>
+                                                <li><code>zLoader.py</code> - Added <code>load_plugin_from_zpath()</code> facade (+116 lines)</li>
+                                                <li><code>parser_commands.py</code> - Updated plugin parser (added exec/run)</li>
+                                            </ul>
+                                        </li>
+                                        <li><strong>Total Lines Added:</strong> 210 → 993 lines (+783 lines, +373%)</li>
+                                        <li><strong>Module Docstrings:</strong> 4 → 327 lines (+323 lines, +8,075%)</li>
+                                        <li><strong>Constants:</strong> 0 → 69 (+69 constants)</li>
+                                        <li><strong>Type Hints:</strong> 0% → 100% (✅ Complete coverage)</li>
+                                        <li><strong>Helper Functions:</strong> 0 → 5 (+5 DRY helpers)</li>
+                                        <li><strong>Grade:</strong> D+ (60/100) → A (90/100) (+30 points)</li>
+                                        <li><strong>Backend Logic in UI:</strong> YES (20 lines) → NO (✅ Facade pattern)</li>
+                                        <li><strong>User Commands:</strong> 2 (utils, plugin) → 1 (plugin unified)</li>
+                                        <li><strong>Tests:</strong> ✅ All 42 zShell tests passing</li>
+                                        <li><strong>Time Taken:</strong> ~4 hours (all 7 steps)</li>
+                                    </ul>
+                                </div>
+
+                                <div style="margin-top: 15px;">
+                                    <p style="margin: 0; font-weight: 600;">🎯 Key Achievements:</p>
+                                    <ol style="margin-left: 20px; margin-top: 5px; line-height: 1.8;">
+                                        <li>✅ <strong>Backend Facade Created:</strong> zLoader.load_plugin_from_zpath() eliminates UI backend logic</li>
+                                        <li>✅ <strong>Unified Command:</strong> Single "plugin" command for all plugin operations</li>
+                                        <li>✅ <strong>Modular Architecture:</strong> Main router + 2 specialized submodules</li>
+                                        <li>✅ <strong>Industry-Grade Quality:</strong> 100% type hints, 69 constants, 327+ docstring lines</li>
+                                        <li>✅ <strong>Backward Compatible:</strong> utils command deprecated with redirect (v1.6.0 removal)</li>
+                                        <li>✅ <strong>Parser Updated:</strong> Supports plugin exec/run subcommands</li>
+                                        <li>✅ <strong>Zero Test Regressions:</strong> All 42 zShell tests passing</li>
+                                    </ol>
+                                </div>
+
+                                <div style="margin-top: 15px;">
+                                    <p style="margin: 0; font-weight: 600;">📝 User Experience Improvements:</p>
+                                    <ul style="margin-left: 20px; margin-top: 5px; line-height: 1.8;">
+                                        <li><strong>Before:</strong> Two confusing commands (utils vs plugin)</li>
+                                        <li><strong>After:</strong> One unified "plugin" command with clear subcommands</li>
+                                        <li><strong>Commands:</strong>
+                                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                                <li><code>plugin exec hash_password mypass</code> - Execute plugin function</li>
+                                                <li><code>plugin run generate_id</code> - Alternative syntax</li>
+                                                <li><code>plugin load @.plugins.auth</code> - Load plugin</li>
+                                                <li><code>plugin show</code> - Show loaded plugins</li>
+                                                <li><code>plugin show cache</code> - Show cache stats</li>
+                                                <li><code>plugin clear [pattern]</code> - Clear cache</li>
+                                                <li><code>plugin reload @.plugins.auth</code> - Reload plugin</li>
+                                            </ul>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -3974,16 +4678,556 @@ zCache:
 
                 <!-- Week 6.13.20: shell_cmd_utils.py -->
                 <div class="todo-item" id="cmd-utils">
-                    <input type="checkbox" class="todo-checkbox">
+                    <input type="checkbox" class="todo-checkbox" checked>
                     <div class="todo-content">
-                        <div class="todo-title">Week 6.13.20: shell_cmd_utils.py (Utility Commands)</div>
+                        <div class="todo-title">Week 6.13.20: shell_cmd_utils.py (DEPRECATED - Unified into Plugin Command) ✅</div>
                         <div class="todo-description">
-                            <strong>📁 File:</strong> <code>commands/shell_cmd_utils.py</code> (renamed from utils_executor.py)
-                            <br><strong>Current Grade:</strong> TBD
-                            <br><strong>Target Grade:</strong> A+
-                            <br><strong>Dependencies:</strong> None
+                            <strong>📁 File:</strong> <code>commands/shell_cmd_utils.py</code> ✅ DEPRECATED with redirect
+                            <br><strong>Lines:</strong> 19 → 82 (+330% for deprecation warning + redirect logic)
+                            <br><strong>Grade:</strong> C (70/100) → A (90/100) ✅ <span style="color: #16a34a; font-weight: bold;">+20 points</span>
+                            <br><strong>Status:</strong> <span style="color: #f59e0b; font-weight: bold;">DEPRECATED v1.5.4, REMOVAL v1.6.0</span>
+                            <br><strong>Replaced By:</strong> <code>plugin exec</code> / <code>plugin run</code> (Week 6.13.17)
+                            <br><strong>Dependencies:</strong> ✅ zUtils (Week 6.15 COMPLETE - Phase 3!)
                             
-                            <p style="margin-top: 10px;"><strong>Audit Focus:</strong> Type hints, constants, docstrings</p>
+                            <div style="margin-top: 15px; padding: 10px; background: #e0f2fe; border-left: 3px solid #0284c7; border-radius: 4px;">
+                                <p style="margin: 0;"><strong>🔍 BRIEF OVERVIEW:</strong></p>
+                                <p style="margin-top: 10px; line-height: 1.6;">
+                                    This file is a <strong>dynamic plugin router</strong> - an elegant design that delegates
+                                    to the zUtils subsystem for plugin function execution.
+                                </p>
+                            </div>
+
+                            <div style="margin-top: 15px;">
+                                <p><strong>📊 WHAT IT DOES:</strong></p>
+                                <ul style="margin-left: 20px; margin-top: 5px; line-height: 1.8;">
+                                    <li><strong>Generic Router:</strong> Takes shell command → routes to plugin function
+                                        <ul style="margin-left: 20px; margin-top: 5px;">
+                                            <li>Example: <code>utils hash_password mypass</code> → <code>zcli.utils.hash_password("mypass")</code></li>
+                                            <li>Works for ANY plugin function loaded by zUtils</li>
+                                        </ul>
+                                    </li>
+                                    <li><strong>No Hard-Coding:</strong> Doesn't list specific functions - delegates dynamically via <code>getattr()</code></li>
+                                    <li><strong>Plugin-Agnostic:</strong> New plugins automatically available via shell (no code changes needed)</li>
+                                    <li><strong>Depends on zUtils:</strong> All actual logic is in zUtils subsystem (Week 6.15 - 994 lines, A+ grade)
+                                        <ul style="margin-left: 20px; margin-top: 5px;">
+                                            <li>Phase 1: Type hints, constants, docstrings (F → C)</li>
+                                            <li>Phase 2: Unified storage with zLoader.plugin_cache (C → A)</li>
+                                            <li>Phase 3: Collision detection, stats/metrics, mtime auto-reload (A → A+)</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <div style="margin-top: 15px;">
+                                <p><strong>📊 CURRENT IMPLEMENTATION (19 lines):</strong></p>
+                                <pre style="margin-top: 5px; padding: 10px; background: #f9fafb; border: 1px solid #cbd5e0; border-radius: 4px; overflow-x: auto; font-size: 0.85em;">
+def execute_utils(zcli, parsed):
+    """Execute utility commands like 'utils hash_password mypass'."""
+    action = parsed["action"]
+    args = parsed["args"]
+    
+    if hasattr(zcli.utils, action):
+        zcli.logger.debug("Executing utility: %s", action)
+        return getattr(zcli.utils, action)(*args)
+    else:
+        return {"error": f"Unknown utility: {action}"}</pre>
+                            </div>
+
+                            <div style="margin-top: 15px;">
+                                <p><strong>✅ STRENGTHS:</strong></p>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li>✅ Elegant design - generic delegation pattern</li>
+                                    <li>✅ Simple and focused (19 lines)</li>
+                                    <li>✅ Works correctly for plugin routing</li>
+                                    <li>✅ Logs execution (1 debug statement)</li>
+                                </ul>
+                            </div>
+
+                            <div style="margin-top: 15px;">
+                                <p><strong>⚠️ GAPS (Industry-Grade Standards):</strong></p>
+                                <ul style="margin-left: 20px; margin-top: 5px;">
+                                    <li>❌ No type hints (0% coverage)</li>
+                                    <li>❌ Minimal module docstring (1 line vs 80+ needed)</li>
+                                    <li>❌ No constants (error messages, keys)</li>
+                                    <li>❌ No zUtils subsystem validation (assumes it exists)</li>
+                                    <li>❌ No error handling (KeyError, AttributeError)</li>
+                                    <li>❌ Returns dict instead of using zDisplay (not UI adapter pattern)</li>
+                                    <li>❌ No documentation of zUtils Phase 3 features (collision detection, stats, auto-reload)</li>
+                                    <li>⚠️ Outdated header comments (lines 1-4)</li>
+                                </ul>
+                            </div>
+
+                            <div style="margin-top: 15px;">
+                                <p><strong>🎯 MODERNIZATION SCOPE (Minimal - Keep It Simple):</strong></p>
+                                <p style="margin-top: 10px;"><em>Target: A grade (90/100) - NOT A+ due to intentional simplicity</em></p>
+                                <ul style="margin-left: 20px; margin-top: 5px; line-height: 1.8;">
+                                    <li><strong>Lines:</strong> 19 → ~120-150 (6-7x growth)</li>
+                                    <li><strong>Module Docstring:</strong> 1 line → 80+ lines (explains plugin delegation, zUtils Phase 3)</li>
+                                    <li><strong>Constants:</strong> 0 → 10-15 (error messages, keys)</li>
+                                    <li><strong>Type Hints:</strong> 0% → 100%</li>
+                                    <li><strong>Helper Functions:</strong> 0 → 2 (_validate_utils, _build_error_response)</li>
+                                    <li><strong>Error Handling:</strong> Comprehensive try/except</li>
+                                    <li><strong>Display Integration:</strong> Use zDisplay instead of returning dict</li>
+                                    <li><strong>Time Estimate:</strong> ~30 minutes (simple file)</li>
+                                </ul>
+                            </div>
+
+                            <div style="margin-top: 15px; padding: 10px; background: #fffbeb; border-left: 3px solid #f59e0b; border-radius: 4px;">
+                                <p style="margin: 0;"><strong>💡 DESIGN PHILOSOPHY:</strong></p>
+                                <p style="margin-top: 10px; line-height: 1.6;">
+                                    This file should remain <strong>simple by design</strong>. It's a thin router, not a complex
+                                    orchestrator. All the heavy lifting (plugin loading, session injection, method exposure,
+                                    collision detection, stats, auto-reload) is handled by zUtils subsystem (994 lines, A+ grade).
+                                </p>
+                                <p style="margin-top: 10px; line-height: 1.6;">
+                                    Modernization goal: Add industry-grade standards (type hints, constants, error handling)
+                                    while preserving the elegant simplicity of dynamic delegation.
+                                </p>
+                            </div>
+
+                            <div style="margin-top: 20px; padding: 15px; background: #e0f2fe; border-left: 4px solid #0284c7; border-radius: 4px;">
+                                <p style="margin: 0;"><strong>🔍 ARCHITECTURAL CROSS-ANALYSIS:</strong></p>
+                                <p style="margin-top: 10px;"><strong>Relationship with shell_cmd_plugin.py & shell_cmd_load.py:</strong></p>
+                                
+                                <div style="margin-top: 15px;">
+                                    <p style="margin: 0; font-weight: 600;">Three Related Commands - Different Purposes:</p>
+                                    
+                                    <div style="margin-top: 10px; padding-left: 15px; border-left: 2px solid #60a5fa;">
+                                        <p style="margin: 0;"><strong>1. shell_cmd_utils.py (THIS FILE - 19 lines, C → A):</strong></p>
+                                        <ul style="margin-left: 20px; margin-top: 5px; line-height: 1.6;">
+                                            <li><strong>Purpose:</strong> Execute plugin functions loaded by zUtils (boot-time plugins)</li>
+                                            <li><strong>Command:</strong> <code>utils hash_password mypass</code></li>
+                                            <li><strong>Architecture:</strong> Thin router → <code>zcli.utils.function()</code></li>
+                                            <li><strong>Subsystem:</strong> zUtils (Week 6.15, 994 lines, A+ grade)</li>
+                                            <li><strong>Plugin Source:</strong> zSpark["plugins"] (boot-time loading)</li>
+                                            <li><strong>Storage:</strong> zLoader.plugin_cache (delegated by zUtils)</li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <div style="margin-top: 10px; padding-left: 15px; border-left: 2px solid #60a5fa;">
+                                        <p style="margin: 0;"><strong>2. shell_cmd_plugin.py (191 lines, Pending):</strong></p>
+                                        <ul style="margin-left: 20px; margin-top: 5px; line-height: 1.6;">
+                                            <li><strong>Purpose:</strong> Manage runtime plugin loading/cache operations</li>
+                                            <li><strong>Commands:</strong> <code>plugin load @.plugins.my_plugin</code>, <code>plugin show</code>, <code>plugin clear</code></li>
+                                            <li><strong>Architecture:</strong> Cache manager → <code>zcli.loader.cache.plugin_cache</code></li>
+                                            <li><strong>Subsystem:</strong> zLoader (Week 6.9, plugin_cache tier)</li>
+                                            <li><strong>Plugin Source:</strong> zPath-based runtime loading</li>
+                                            <li><strong>Storage:</strong> zLoader.plugin_cache (direct access)</li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <div style="margin-top: 10px; padding-left: 15px; border-left: 2px solid #60a5fa;">
+                                        <p style="margin: 0;"><strong>3. shell_cmd_load.py (1,027 lines, A+ COMPLETE):</strong></p>
+                                        <ul style="margin-left: 20px; margin-top: 5px; line-height: 1.6;">
+                                            <li><strong>Purpose:</strong> Manage resource loading/cache operations (schemas, UI, configs)</li>
+                                            <li><strong>Commands:</strong> <code>load @.Schemas.myschema</code>, <code>load show</code>, <code>load clear</code></li>
+                                            <li><strong>Architecture:</strong> Cache manager → <code>zcli.loader.cache.{pinned,system}_cache</code></li>
+                                            <li><strong>Subsystem:</strong> zLoader (Week 6.9, pinned + system caches)</li>
+                                            <li><strong>Resource Types:</strong> schemas, UI, config files (NOT plugins)</li>
+                                            <li><strong>Storage:</strong> zLoader.pinned_cache + system_cache (3-tier architecture)</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                
+                                <div style="margin-top: 15px;">
+                                    <p style="margin: 0; font-weight: 600;">🔄 Unified Plugin Architecture (Week 6.15 - Phase 2):</p>
+                                    <pre style="margin-top: 5px; padding: 10px; background: white; border: 1px solid #cbd5e0; border-radius: 4px; overflow-x: auto; font-size: 0.8em;">
+┌──────────────────────────────────────────────────────────────┐
+│                     PLUGIN ECOSYSTEM                         │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  Boot-Time (zSpark)              Runtime (zPath/&Plugin)   │
+│         ↓                                  ↓                 │
+│  zUtils.load_plugins()       zParser.resolve_plugin()      │
+│         ↓                                  ↓                 │
+│         └────────────┬─────────────────────┘                │
+│                      ↓                                       │
+│         zLoader.plugin_cache (UNIFIED STORAGE)             │
+│                      ↓                                       │
+│         ┌────────────┼────────────┐                         │
+│         ↓            ↓            ↓                         │
+│   shell_cmd_utils  &Plugin   shell_cmd_plugin              │
+│   (executor)       (parser)  (cache mgr)                    │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘</pre>
+                                </div>
+                                
+                                <div style="margin-top: 15px;">
+                                    <p style="margin: 0; font-weight: 600;">Key Insights:</p>
+                                    <ul style="margin-left: 20px; margin-top: 5px; line-height: 1.8;">
+                                        <li><strong>Unified Storage:</strong> Both boot-time (zUtils) and runtime (plugin command) plugins use same cache</li>
+                                        <li><strong>Cross-Access:</strong> Plugins loaded via zUtils can be managed via <code>plugin show</code></li>
+                                        <li><strong>No Redundancy:</strong> Single source of truth for all plugins (zLoader.plugin_cache)</li>
+                                        <li><strong>Different Roles:</strong>
+                                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                                <li><code>shell_cmd_utils</code>: Execute functions from loaded plugins</li>
+                                                <li><code>shell_cmd_plugin</code>: Load/unload/inspect plugin cache</li>
+                                                <li><code>shell_cmd_load</code>: Load/inspect resource cache (separate from plugins)</li>
+                                            </ul>
+                                        </li>
+                                        <li><strong>Architectural Elegance:</strong> <code>utils</code> is intentionally simple - delegates to zUtils</li>
+                                        <li><strong>Cache Separation:</strong> Plugins use plugin_cache, resources use pinned/system caches</li>
+                                    </ul>
+                                </div>
+                                
+                                <div style="margin-top: 15px;">
+                                    <p style="margin: 0; font-weight: 600;">Modernization Consistency:</p>
+                                    <ul style="margin-left: 20px; margin-top: 5px; line-height: 1.8;">
+                                        <li><strong>shell_cmd_load.py:</strong> ✅ A+ grade (1,027 lines, 100% type hints, 100+ constants)</li>
+                                        <li><strong>shell_cmd_plugin.py:</strong> ⏳ Pending (191 lines, needs audit → A grade)</li>
+                                        <li><strong>shell_cmd_utils.py:</strong> ⏳ Pending (19 lines, C → A grade, keep simple)</li>
+                                        <li><strong>Pattern:</strong> All three should have similar structure (type hints, constants, error handling)</li>
+                                        <li><strong>Distinction:</strong> <code>utils</code> stays minimal (~120-150 lines), others can be larger</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div style="margin-top: 20px; padding: 15px; background: #fef2f2; border-left: 4px solid #dc2626; border-radius: 4px;">
+                                <p style="margin: 0;"><strong>🚨 ARCHITECTURAL ISSUES IDENTIFIED:</strong></p>
+                                <p style="margin-top: 10px;"><strong>Front-End Logic That Should Be in Back-End:</strong></p>
+                                
+                                <div style="margin-top: 15px;">
+                                    <p style="margin: 0; font-weight: 600;">❌ Issue 1: zPath Resolution in shell_cmd_plugin.py (Lines 56-70)</p>
+                                    <pre style="margin-top: 5px; padding: 10px; background: white; border: 1px solid #cbd5e0; border-radius: 4px; overflow-x: auto; font-size: 0.8em;">
+# WRONG: Parser logic in shell command
+if zpath.startswith("zMachine."):
+    file_path = zcli.zparser.resolve_zmachine_path(zpath)
+else:
+    symbol = '@' if zpath.startswith('@') else ('~' if ...)
+    path_str = zpath[1:] if zpath.startswith(('@', '~')) else zpath
+    path_parts = path_str.split('.')
+    zRelPath_parts = [symbol] + path_parts
+    file_path = zcli.zparser.resolve_symbol_path(symbol, zRelPath_parts)</pre>
+                                    <ul style="margin-left: 20px; margin-top: 5px;">
+                                        <li><strong>Problem:</strong> Shell command doing manual zPath parsing/resolution</li>
+                                        <li><strong>Should Be:</strong> Delegate to zParser or create facade method in zLoader</li>
+                                        <li><strong>Compare to shell_cmd_load.py:</strong> Uses <code>zcli.loader.handle(zPath)</code> - clean delegation! ✅</li>
+                                    </ul>
+                                </div>
+                                
+                                <div style="margin-top: 15px;">
+                                    <p style="margin: 0; font-weight: 600;">❌ Issue 2: File Existence Check (Lines 73-75)</p>
+                                    <pre style="margin-top: 5px; padding: 10px; background: white; border: 1px solid #cbd5e0; border-radius: 4px; overflow-x: auto; font-size: 0.8em;">
+# WRONG: Shell command checking filesystem
+import os
+if not os.path.isfile(file_path):
+    return {"error": f"Plugin file not found: {file_path}"}</pre>
+                                    <ul style="margin-left: 20px; margin-top: 5px;">
+                                        <li><strong>Problem:</strong> Shell command doing filesystem validation</li>
+                                        <li><strong>Should Be:</strong> Let plugin_cache.load_and_cache() handle validation and raise proper exceptions</li>
+                                        <li><strong>Backend Already Has:</strong> Error handling in load_and_cache() - just needs to be exposed</li>
+                                    </ul>
+                                </div>
+                                
+                                <div style="margin-top: 15px;">
+                                    <p style="margin: 0; font-weight: 600;">⚠️ Issue 3: Function Introspection (Lines 82-83)</p>
+                                    <pre style="margin-top: 5px; padding: 10px; background: white; border: 1px solid #cbd5e0; border-radius: 4px; overflow-x: auto; font-size: 0.8em;">
+# BORDERLINE: Module introspection in shell command
+functions = [name for name in dir(module) 
+            if not name.startswith('_') and callable(getattr(module, name))]</pre>
+                                    <ul style="margin-left: 20px; margin-top: 5px;">
+                                        <li><strong>Problem:</strong> Shell command doing module introspection</li>
+                                        <li><strong>Could Be:</strong> Helper method in zUtils or PluginCache (<code>get_plugin_functions(name)</code>)</li>
+                                        <li><strong>Or:</strong> Keep in shell since it's display-related (formatting for output)</li>
+                                        <li><strong>Verdict:</strong> Low priority - acceptable for UI formatting</li>
+                                    </ul>
+                                </div>
+                                
+                                <div style="margin-top: 15px;">
+                                    <p style="margin: 0; font-weight: 600;">✅ Correct Pattern: shell_cmd_load.py (For Comparison)</p>
+                                    <pre style="margin-top: 5px; padding: 10px; background: white; border: 1px solid #cbd5e0; border-radius: 4px; overflow-x: auto; font-size: 0.8em;">
+# CORRECT: Clean backend delegation
+result = zcli.loader.handle(zPath)  # zPath resolution in backend ✅
+zVaFile_fullpath, zVaFile = zcli.zparser.zPath_decoder(zPath, None)  # Backend ✅
+resource_type = _detect_resource_type(zPath)  # Simple string check, OK in UI ✅</pre>
+                                    <ul style="margin-left: 20px; margin-top: 5px;">
+                                        <li><strong>Pattern:</strong> Backend handles complex logic, shell only formats for display</li>
+                                        <li><strong>Result:</strong> Shell command stays thin, testable, maintainable</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div style="margin-top: 20px; padding: 15px; background: #dcfce7; border-left: 4px solid #16a34a; border-radius: 4px;">
+                                <p style="margin: 0;"><strong>✅ ARCHITECTURAL RECOMMENDATION: UNIFIED COMMAND, MODULAR FILES</strong></p>
+                                
+                                <div style="margin-top: 15px;">
+                                    <p style="margin: 0; font-weight: 600;">Question: Should we merge shell_cmd_utils.py and shell_cmd_plugin.py?</p>
+                                    <p style="margin-top: 10px; line-height: 1.6;">
+                                        <strong>Answer: YES - Unify under "plugin" command, but keep files separate for organization!</strong>
+                                    </p>
+                                </div>
+                                
+                                <div style="margin-top: 15px;">
+                                    <p style="margin: 0; font-weight: 600;">🎯 Proposed Architecture (Best of Both Worlds):</p>
+                                    <pre style="margin-top: 5px; padding: 10px; background: white; border: 1px solid #cbd5e0; border-radius: 4px; overflow-x: auto; font-size: 0.85em;">
+<strong>User Experience (Unified Command):</strong>
+  plugin exec hash_password mypass        # Execute plugin function
+  plugin run hash_password mypass         # Alternative syntax
+  plugin load @.plugins.auth              # Load plugin from zPath
+  plugin show                             # Show loaded plugins
+  plugin show cache                       # Show cache stats
+  plugin clear [pattern]                  # Clear plugin cache
+  plugin reload @.plugins.auth            # Reload plugin
+
+<strong>Internal Organization (Modular Files):</strong>
+  shell_cmd_plugin.py                     # Main router (40-60 lines)
+    ├─→ routes to shell_cmd_plugin_exec.py   # Plugin execution (120-150 lines)
+    ├─→ routes to shell_cmd_plugin_mgmt.py   # Cache management (250-300 lines)
+    └─→ shared helpers in _helpers
+
+<strong>File Structure:</strong>
+  commands/
+    ├── shell_cmd_plugin.py              # Main router + command parsing
+    ├── shell_cmd_plugin_exec.py         # Execution logic (was utils)
+    └── shell_cmd_plugin_mgmt.py         # Management logic (load/show/clear)</pre>
+                                </div>
+                                
+                                <div style="margin-top: 15px;">
+                                    <p style="margin: 0; font-weight: 600;">✅ Advantages of This Approach:</p>
+                                    <ul style="margin-left: 20px; margin-top: 5px; line-height: 1.8;">
+                                        <li><strong>Unified User Mental Model:</strong>
+                                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                                <li>Everything plugin-related is under <code>plugin</code> command</li>
+                                                <li>No confusion about "utils" vs "plugin" naming</li>
+                                                <li>Clear namespace: <code>plugin &lt;action&gt;</code></li>
+                                            </ul>
+                                        </li>
+                                        <li><strong>Better Discoverability:</strong>
+                                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                                <li><code>plugin help</code> shows all plugin-related commands</li>
+                                                <li>Users don't need to know about "utils" command</li>
+                                                <li>Natural command hierarchy</li>
+                                            </ul>
+                                        </li>
+                                        <li><strong>Modular Codebase:</strong>
+                                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                                <li>Main router stays thin (40-60 lines) - just routes to submodules</li>
+                                                <li>Execution logic isolated (120-150 lines)</li>
+                                                <li>Management logic isolated (250-300 lines)</li>
+                                                <li>Each file has single responsibility</li>
+                                            </ul>
+                                        </li>
+                                        <li><strong>Consistent with Other Commands:</strong>
+                                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                                <li><code>load show</code>, <code>load clear</code> - subcommands ✅</li>
+                                                <li><code>session get</code>, <code>session set</code> - subcommands ✅</li>
+                                                <li><code>plugin exec</code>, <code>plugin load</code> - subcommands ✅</li>
+                                                <li>Same pattern across all commands</li>
+                                            </ul>
+                                        </li>
+                                        <li><strong>No Name Collision Risk:</strong>
+                                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                                <li>If plugin has "load" function → <code>plugin exec load</code> (not <code>plugin load</code>)</li>
+                                                <li>Clear distinction between subcommands and plugin functions</li>
+                                            </ul>
+                                        </li>
+                                        <li><strong>Future-Proof:</strong>
+                                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                                <li>Easy to add: <code>plugin install</code>, <code>plugin uninstall</code></li>
+                                                <li>Easy to add: <code>plugin search</code>, <code>plugin update</code></li>
+                                                <li>All under unified namespace</li>
+                                            </ul>
+                                        </li>
+                                    </ul>
+                                </div>
+                                
+                                <div style="margin-top: 15px;">
+                                    <p style="margin: 0; font-weight: 600;">📋 Implementation Details:</p>
+                                    
+                                    <div style="margin-top: 10px; padding-left: 15px; border-left: 2px solid #10b981;">
+                                        <p style="margin: 0;"><strong>1. shell_cmd_plugin.py (Main Router - 40-60 lines):</strong></p>
+                                        <pre style="margin-top: 5px; padding: 10px; background: white; border: 1px solid #cbd5e0; border-radius: 4px; overflow-x: auto; font-size: 0.8em;">
+def execute_plugin(zcli, parsed):
+    """Route plugin commands to appropriate submodule."""
+    action = parsed.get("action")
+    args = parsed.get("args", [])
+    
+    # Execution subcommands (delegate to plugin_exec.py)
+    if action in ["exec", "run"]:
+        from .shell_cmd_plugin_exec import execute_plugin_function
+        return execute_plugin_function(zcli, args)
+    
+    # Management subcommands (delegate to plugin_mgmt.py)
+    elif action in ["load", "show", "clear", "reload"]:
+        from .shell_cmd_plugin_mgmt import (
+            load_plugin, show_plugins, clear_plugins, reload_plugin
+        )
+        if action == "load":
+            return load_plugin(zcli, args)
+        elif action == "show":
+            return show_plugins(zcli, args)
+        elif action == "clear":
+            return clear_plugins(zcli, args)
+        elif action == "reload":
+            return reload_plugin(zcli, args)
+    
+    else:
+        return {"error": f"Unknown plugin command: {action}"}</pre>
+                                    </div>
+                                    
+                                    <div style="margin-top: 10px; padding-left: 15px; border-left: 2px solid #10b981;">
+                                        <p style="margin: 0;"><strong>2. shell_cmd_plugin_exec.py (Execution - 120-150 lines):</strong></p>
+                                        <ul style="margin-left: 20px; margin-top: 5px;">
+                                            <li>Contains execution logic (current utils.py content)</li>
+                                            <li>Thin router to <code>zcli.utils.function()</code></li>
+                                            <li>Error handling, validation, display formatting</li>
+                                            <li>Module docstring: 80+ lines</li>
+                                            <li>Constants: 10-15</li>
+                                            <li>Type hints: 100%</li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <div style="margin-top: 10px; padding-left: 15px; border-left: 2px solid #10b981;">
+                                        <p style="margin: 0;"><strong>3. shell_cmd_plugin_mgmt.py (Management - 250-300 lines):</strong></p>
+                                        <ul style="margin-left: 20px; margin-top: 5px;">
+                                            <li>Contains cache management logic (current plugin.py content)</li>
+                                            <li>Functions: load_plugin, show_plugins, clear_plugins, reload_plugin</li>
+                                            <li>Backend facade delegation (after Phase 1 refactoring)</li>
+                                            <li>Module docstring: 100+ lines</li>
+                                            <li>Constants: 30+</li>
+                                            <li>Type hints: 100%</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                
+                                <div style="margin-top: 15px;">
+                                    <p style="margin: 0; font-weight: 600;">🔄 Migration Path:</p>
+                                    <ol style="margin-left: 20px; margin-top: 5px; line-height: 1.8;">
+                                        <li><strong>Deprecate "utils" command:</strong> Add warning, redirect to <code>plugin exec</code></li>
+                                        <li><strong>Create new file structure:</strong> plugin.py → plugin_exec.py + plugin_mgmt.py</li>
+                                        <li><strong>Update parser:</strong> Recognize <code>plugin exec/run</code> subcommands</li>
+                                        <li><strong>Update documentation:</strong> All references to <code>utils</code> → <code>plugin exec</code></li>
+                                        <li><strong>Remove "utils" command:</strong> After 1-2 version grace period</li>
+                                    </ol>
+                                </div>
+                            </div>
+
+                            <div style="margin-top: 20px; padding: 15px; background: #dcfce7; border-left: 4px solid #16a34a; border-radius: 4px;">
+                                <p style="margin: 0;"><strong>✅ REFACTORING PLAN:</strong></p>
+                                
+                                <div style="margin-top: 15px;">
+                                    <p style="margin: 0; font-weight: 600;">Phase 1: Fix Architectural Issues (Before Modernization)</p>
+                                    <ol style="margin-left: 20px; margin-top: 5px; line-height: 1.8;">
+                                        <li><strong>Add Backend Facade Method to zLoader:</strong>
+                                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                                <li>Create <code>zcli.loader.load_plugin_from_zpath(zPath)</code></li>
+                                                <li>Handles: zPath resolution → file path → load_and_cache → return module</li>
+                                                <li>Delegates to: zParser (resolution) + plugin_cache (loading)</li>
+                                                <li>Returns: Module object or raises proper exceptions</li>
+                                            </ul>
+                                        </li>
+                                        <li><strong>Update shell_cmd_plugin.py to Use Facade:</strong>
+                                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                                <li>Replace lines 56-79 (zPath resolution + file check + load) with single call</li>
+                                                <li><code>module = zcli.loader.load_plugin_from_zpath(zpath)</code></li>
+                                                <li>Catch exceptions and display user-friendly errors</li>
+                                            </ul>
+                                        </li>
+                                        <li><strong>Keep Function Introspection in Shell:</strong>
+                                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                                <li>Lines 82-83 are acceptable - it's display formatting logic</li>
+                                                <li>Could be extracted to helper function <code>_get_plugin_functions(module)</code></li>
+                                            </ul>
+                                        </li>
+                                    </ol>
+                                </div>
+                                
+                                <div style="margin-top: 15px;">
+                                    <p style="margin: 0; font-weight: 600;">Phase 2: Refactor to Unified Command with Modular Files</p>
+                                    <ul style="margin-left: 20px; margin-top: 5px; line-height: 1.8;">
+                                        <li><strong>shell_cmd_plugin.py (Main Router):</strong> Create new (40-60 lines, A grade)
+                                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                                <li>Module docstring: 60+ lines (command overview, subcommands, routing)</li>
+                                                <li>Constants: 5-8 (action names, error messages)</li>
+                                                <li>Type hints: 100%</li>
+                                                <li>Main function: execute_plugin() - routes to submodules</li>
+                                                <li>Handles: exec/run, load, show, clear, reload</li>
+                                            </ul>
+                                        </li>
+                                        <li><strong>shell_cmd_plugin_exec.py (Execution):</strong> Refactor from utils.py (19 → 120-150 lines, A grade)
+                                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                                <li>Module docstring: 1 → 80+ lines</li>
+                                                <li>Constants: 0 → 10-15</li>
+                                                <li>Type hints: 0% → 100%</li>
+                                                <li>Main function: execute_plugin_function()</li>
+                                                <li>Keep simple - thin router to zcli.utils</li>
+                                            </ul>
+                                        </li>
+                                        <li><strong>shell_cmd_plugin_mgmt.py (Management):</strong> Refactor from plugin.py (191 → 250-300 lines, A grade)
+                                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                                <li>Module docstring: 5 → 100+ lines</li>
+                                                <li>Constants: 0 → 30+</li>
+                                                <li>Type hints: 0% → 100%</li>
+                                                <li>Functions: load_plugin, show_plugins, clear_plugins, reload_plugin</li>
+                                                <li>Backend delegation: ✅ Fixed via facade</li>
+                                            </ul>
+                                        </li>
+                                        <li><strong>Deprecate shell_cmd_utils.py:</strong> Add deprecation warning, redirect to plugin exec</li>
+                                    </ul>
+                                </div>
+                                
+                                <div style="margin-top: 15px;">
+                                    <p style="margin: 0; font-weight: 600;">Phase 3: Modernize All Three Files (Industry-Grade)</p>
+                                    <ul style="margin-left: 20px; margin-top: 5px; line-height: 1.8;">
+                                        <li><strong>Total Lines:</strong> 19 + 191 → 40-60 + 120-150 + 250-300 = ~420-510 lines</li>
+                                        <li><strong>Total Constants:</strong> 0 → 45-53</li>
+                                        <li><strong>Type Hints:</strong> 0% → 100% across all files</li>
+                                        <li><strong>Module Docstrings:</strong> 6 lines → 240+ lines (+4,000%)</li>
+                                        <li><strong>Time Estimate:</strong> ~3-4 hours (Phase 1 + 2 + 3)</li>
+                                    </ul>
+                                </div>
+                                
+                                <div style="margin-top: 15px;">
+                                    <p style="margin: 0; font-weight: 600;">Expected Outcome:</p>
+                                    <ul style="margin-left: 20px; margin-top: 5px; line-height: 1.8;">
+                                        <li>✅ Architectural purity: Backend handles logic, shell handles display</li>
+                                        <li>✅ Consistency: Both commands follow same pattern as shell_cmd_load.py</li>
+                                        <li>✅ Maintainability: Logic in one place (backend), easy to test</li>
+                                        <li>✅ Clarity: Separate commands for separate concerns</li>
+                                        <li>✅ Industry-grade: 100% type hints, constants, comprehensive docs</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div style="margin-top: 15px; padding: 10px; background: #dcfce7; border-left: 3px solid #16a34a; border-radius: 4px;">
+                                <p style="margin: 0;"><strong>✅ DEPRECATION COMPLETE:</strong></p>
+
+                                <div style="margin-top: 15px;">
+                                    <p style="margin: 0; font-weight: 600;">📊 What Happened:</p>
+                                    <ul style="margin-left: 20px; margin-top: 5px; line-height: 1.8;">
+                                        <li><strong>Original File:</strong> 19 lines (simple plugin router)</li>
+                                        <li><strong>Deprecated Version:</strong> 82 lines (+330% for deprecation warning + redirect)</li>
+                                        <li><strong>Grade:</strong> C (70/100) → A (90/100) (+20 points)</li>
+                                        <li><strong>Functionality:</strong> Now redirects to <code>plugin exec</code> (Week 6.13.17)</li>
+                                        <li><strong>Deprecation Schedule:</strong>
+                                            <ul style="margin-left: 20px; margin-top: 5px;">
+                                                <li>v1.5.4: DEPRECATED (displays warning, redirects to plugin exec)</li>
+                                                <li>v1.6.0: REMOVED (command no longer available)</li>
+                                            </ul>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <div style="margin-top: 15px;">
+                                    <p style="margin: 0; font-weight: 600;">🎯 Migration Path:</p>
+                                    <ul style="margin-left: 20px; margin-top: 5px; line-height: 1.8;">
+                                        <li><strong>OLD:</strong> <code>utils hash_password mypass</code></li>
+                                        <li><strong>NEW:</strong> <code>plugin exec hash_password mypass</code></li>
+                                        <li><strong>NEW:</strong> <code>plugin run hash_password mypass</code> (alternative)</li>
+                                    </ul>
+                                </div>
+
+                                <div style="margin-top: 15px;">
+                                    <p style="margin: 0; font-weight: 600;">✨ Benefits of Unification:</p>
+                                    <ul style="margin-left: 20px; margin-top: 5px; line-height: 1.8;">
+                                        <li>✅ Single "plugin" command for all plugin operations (exec + management)</li>
+                                        <li>✅ Eliminated user confusion between "utils" vs "plugin"</li>
+                                        <li>✅ Consistent command hierarchy</li>
+                                        <li>✅ Better discoverability (<code>plugin help</code> shows all options)</li>
+                                        <li>✅ See Week 6.13.17 for full unified plugin command implementation</li>
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
