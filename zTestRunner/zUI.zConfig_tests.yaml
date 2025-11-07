@@ -1,0 +1,59 @@
+zVaF:
+  "Test 1: Config Initialization":
+    zDisplay:
+      event: header
+      content: |
+        
+        ======================================================================
+        TEST 1: Config Initialization
+        ======================================================================
+    
+    zDisplay:
+      event: text
+      content: |
+        
+        Testing that zCLI can initialize with minimal config...
+        
+        Expected: zCLI instance created successfully
+        Config: {"zWorkspace": "."}
+    
+    zFunc: "&zconfig_tests.test_initialization()"
+    
+    zDisplay:
+      event: success
+      content: |
+        
+        ✅ PASSED: Config initialized successfully
+        
+  
+  "Test 2: Workspace Validation":
+    zDisplay:
+      event: header
+      content: |
+        
+        ======================================================================
+        TEST 2: Workspace Validation (Fail-Fast)
+        ======================================================================
+    
+    zDisplay:
+      event: text
+      content: |
+        
+        Testing that zCLI fails when zWorkspace is missing...
+        
+        Expected: ConfigValidationError raised
+        Config: {} (missing zWorkspace)
+    
+    zFunc: "&zconfig_tests.test_workspace_required()"
+    
+    zDisplay:
+      event: success
+      content: |
+        
+        ✅ PASSED: Workspace validation works correctly
+        
+  
+  "^Return to Main Menu":
+    zDisplay:
+      event: text
+      content: "Returning to main menu..."

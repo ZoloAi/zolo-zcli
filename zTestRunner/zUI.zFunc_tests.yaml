@@ -1,0 +1,62 @@
+zVaF:
+  ~Root*: [
+    "^Run All zFunc Tests",
+    "^Run Specific Test",
+    "^View Test Info",
+    "^Back to Main Menu"
+  ]
+  
+  "^Run All zFunc Tests":
+    zFunc: "&test_runner.run_test_suite('zFunc')"
+  
+  "^Run Specific Test":
+    zDisplay:
+      event: text
+      content: |
+        
+        Available zFunc Tests:
+        - test_basic_plugin_execution
+        - test_plugin_not_found
+        - test_function_not_found
+        - test_plugin_with_args
+        - test_zcli_injection
+        - test_plugin_exception_handling
+    
+    zDialog:
+      fields:
+        - test_name
+    
+    zFunc: "&test_runner.run_specific_test('zFunc', zConv.test_name)"
+  
+  "^View Test Info":
+    zDisplay:
+      event: text
+      content: |
+        
+        ======================================================================
+        zFunc Test Suite Information
+        ======================================================================
+        
+        Purpose: Tests the zFunc subsystem (plugin execution)
+        
+        Location: zTestSuite/zFunc_Test.py
+        
+        Coverage:
+        - Plugin discovery and loading
+        - Function execution with arguments
+        - zCLI instance auto-injection
+        - Error handling (plugin not found, function not found)
+        - Exception propagation
+        - Return value handling
+        
+        Total Tests: ~15-20 test cases
+        
+        Dependencies:
+        - plugins/ folder with test plugins
+        - zCLI.subsystems.zFunc module
+        
+        ======================================================================
+  
+  "^Back to Main Menu":
+    zLink: "@.zTestRunner.zUI.test_menu"
+

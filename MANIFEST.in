@@ -4,10 +4,12 @@
 # Include documentation
 include README.md
 include LICENSE
+include run_zcli_tests.sh
 recursive-include Documentation *.md
 
 # Include test suite and demos
 recursive-include zTestSuite *.py *.yaml *.md
+recursive-include zTestRunner *.py *.yaml *.md *.sh
 
 # Include schemas and UI files
 recursive-include Schemas *.yaml

@@ -391,8 +391,14 @@ class Linking:
         # Log incoming request
         self.logger.debug(LOG_INCOMING_REQUEST, zHorizontal)
         
+        # Extract zLink value from dictionary
+        if isinstance(zHorizontal, dict):
+            zLink_expr = zHorizontal.get('zLink', '')
+        else:
+            zLink_expr = zHorizontal
+        
         # Parse zLink expression
-        zLink_path, required_perms = self.parse_zLink_expression(walker, zHorizontal)
+        zLink_path, required_perms = self.parse_zLink_expression(walker, zLink_expr)
 
         # Log parsed values
         self.logger.debug(LOG_ZLINK_PATH, zLink_path)
@@ -403,12 +409,16 @@ class Linking:
             print(MSG_PERMISSION_DENIED)
             return STATUS_STOP
 
-        # Load target file
-        zFile_parsed = walker.loader.handle(zLink_path)
+        # Extract target block name from path (last element)
+        path_parts = zLink_path.split(PATH_SEPARATOR)
+        selected_zBlock = path_parts[PATH_INDEX_BLOCK]
+        
+        # Extract file path (everything except the last element = block name)
+        zFile_path = PATH_SEPARATOR.join(path_parts[:-1])
+        
+        # Load target file (without block name)
+        zFile_parsed = walker.loader.handle(zFile_path)
         self.logger.debug(LOG_ZFILE_PARSED, zFile_parsed)
-
-        # Extract target block name from path
-        selected_zBlock = zLink_path.split(PATH_SEPARATOR)[PATH_INDEX_BLOCK]
 
         # Update session with new file/block context
         self._update_session_path(zLink_path, selected_zBlock)
@@ -423,7 +433,7 @@ class Linking:
             return STATUS_STOP
 
         # Track breadcrumb
-        walker.zCrumbs.handle_zCrumbs(zLink_path, zBlock_keys[0])
+        walker.navigation.breadcrumbs.handle_zCrumbs(zLink_path, zBlock_keys[0], walker=walker)
 
         # Execute target block
         return walker.zBlock_loop(active_zBlock_dict, zBlock_keys)
@@ -521,8 +531,14 @@ class Linking:
         # Log raw expression
         self.logger.info(LOG_RAW_EXPRESSION, expr)
 
-        # Strip "zLink(" prefix and ")" suffix
-        inner = expr[len(PARSE_PREFIX_ZLINK):-1].strip()
+        # Check if expression has "zLink(" wrapper (imperative) or is raw path (declarative YAML)
+        if expr.startswith(PARSE_PREFIX_ZLINK) and expr.endswith(PARSE_SUFFIX_RPAREN):
+            # Imperative format: zLink(@.path) → strip wrapper
+            inner = expr[len(PARSE_PREFIX_ZLINK):-1].strip()
+        else:
+            # Declarative YAML format: already a raw path → use as-is
+            inner = expr.strip()
+        
         self.logger.info(LOG_STRIPPED_INNER, inner)
 
         # Check if permissions are specified

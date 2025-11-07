@@ -2506,7 +2506,7 @@ def _install_postgresql_macos(auto_install):  # ❌ No zcli parameter!
                                     </ul>
                                 </div>
                             </div>
-
+                            
                             <div style="margin-top: 15px; padding: 10px; background: #fff3cd; border-left: 3px solid #ffc107; border-radius: 4px;">
                                 <p style="margin: 0;"><strong>⚠️ ARCHITECTURAL ISSUE - Direct print() Instead of zDisplay</strong></p>
                                 
@@ -3411,7 +3411,7 @@ def get_config_sources(self) -> List[str]:
                                         <li><strong>Type Hints:</strong> 100% (maintained)</li>
                                         <li><strong>Grade:</strong> A+ (95/100) - Maintained</li>
                                     </ul>
-                                </div>
+                        </div>
 
                                 <div style="margin-top: 15px;">
                                     <p style="margin: 0; font-weight: 600;">🎯 New Functionality:</p>
@@ -3474,7 +3474,7 @@ def get_config_sources(self) -> List[str]:
                                     Both files have the exact same logic, calling the same <code>zcli.config.persist_machine()</code>
                                     and <code>zcli.config.persist_config()</code> methods.
                                 </p>
-                            </div>
+                        </div>
 
                             <div style="margin-top: 15px; padding: 10px; background: #e0f2fe; border-left: 3px solid #0284c7; border-radius: 4px;">
                                 <p style="margin: 0;"><strong>📊 COMPREHENSIVE AUDIT RESULTS:</strong></p>
@@ -3967,7 +3967,7 @@ def execute_config_persistence(zcli, parsed):
                                     <code>zcli.config.persist_machine()</code> and <code>zcli.config.persist_config()</code> methods.
                                     The only difference is a slightly longer docstring in this file (16 vs 3 lines).
                                 </p>
-                            </div>
+                        </div>
 
                             <div style="margin-top: 15px; padding: 10px; background: #e0f2fe; border-left: 3px solid #0284c7; border-radius: 4px;">
                                 <p style="margin: 0;"><strong>📊 COMPREHENSIVE AUDIT RESULTS:</strong></p>
@@ -5572,7 +5572,7 @@ def execute_config_persistence(zcli, parsed):
                                             </ul>
                                         </li>
                                     </ul>
-                                </div>
+                        </div>
                                 
                                 <div style="margin-top: 15px;">
                                     <p style="margin: 0; font-weight: 600;">File 2: shell_cmd_utils.py (Execution - 19 lines)</p>
@@ -6692,7 +6692,7 @@ zCache:
                                     This file is a <strong>dynamic plugin router</strong> - an elegant design that delegates
                                     to the zUtils subsystem for plugin function execution.
                                 </p>
-                            </div>
+                        </div>
 
                             <div style="margin-top: 15px;">
                                 <p><strong>📊 WHAT IT DOES:</strong></p>
@@ -8236,7 +8236,7 @@ return {"error": "Wizard command should be handled by executor methods"}</pre>
                                     </ul>
                                 </div>
                             </div>
-
+                            
                             <div style="margin-top: 15px; padding: 10px; background: #e0f2fe; border-left: 3px solid #0284c7; border-radius: 4px;">
                                 <p style="margin: 0;"><strong>📊 COMPREHENSIVE AUDIT RESULTS:</strong></p>
                                 
@@ -8256,7 +8256,7 @@ return {"error": "Wizard command should be handled by executor methods"}</pre>
                                         <li><strong>Schema cache:</strong> YES (reuses connections via context)</li>
                                         <li><strong>Import style:</strong> Inline lazy imports (Lines 132, 135, 138)</li>
                                     </ul>
-                                </div>
+                        </div>
 
                                 <div style="margin-top: 15px;">
                                     <p style="margin: 0; font-weight: 600;">✅ Strengths (Already Well-Designed):</p>
@@ -8271,7 +8271,7 @@ return {"error": "Wizard command should be handled by executor methods"}</pre>
                                         <li>✅ <strong>Context Propagation:</strong> Passes context through to handle_request() (Lines 56, 72, 113)</li>
                                         <li>✅ <strong>Explicit Architecture Note:</strong> Lines 13-17 document separation of concerns</li>
                                     </ul>
-                                </div>
+                    </div>
 
                                 <div style="margin-top: 15px;">
                                     <p style="margin: 0; font-weight: 600;">⚠️ Modernization Gaps (27 Points to A+):</p>
@@ -8303,7 +8303,7 @@ return {"error": "Wizard command should be handled by executor methods"}</pre>
                                             </ul>
                                         </li>
                                     </ul>
-                                </div>
+                </div>
 
                                 <div style="margin-top: 15px;">
                                     <p style="margin: 0; font-weight: 600;">🔍 Line-by-Line Analysis:</p>
@@ -8394,7 +8394,7 @@ return {"error": "Wizard command should be handled by executor methods"}</pre>
                                         <li><strong>Type hints:</strong> 0% → 100%</li>
                                         <li><strong>Error handling:</strong> Partial → 100% (7 try/except blocks)</li>
                                         <li><strong>Grade:</strong> C+ (73/100) → A+ (95/100) (+22 points)</li>
-                                    </ul>
+                                </ul>
                                 </div>
                             </div>
 
@@ -8428,7 +8428,7 @@ return {"error": "Wizard command should be handled by executor methods"}</pre>
                                         <li><strong>Current:</strong> Passes context to handle_request() (Lines 56, 72, 113)</li>
                                         <li><strong>Action:</strong> Document context structure in function docstring</li>
                                         <li><strong>Structure:</strong> <code>{"schema_cache": SchemaCache, ...}</code></li>
-                                    </ul>
+                                </ul>
                                 </div>
                             </div>
 
@@ -8884,7 +8884,7 @@ OK ✅</pre>
                                     </li>
                                 </ol>
                             </div>
-
+                            
                             <h4 style="margin-top: 15px; color: #d69e2e;">⚠️ MEDIUM ISSUES (5):</h4>
                             <ul style="margin: 5px 0; padding-left: 20px;">
                                 <li><strong>Hard-coded Display Formatting</strong> - <code>"=" * 63</code>, <code>.center(63)</code> magic numbers</li>
@@ -8903,7 +8903,7 @@ OK ✅</pre>
                                     <li><strong>Delegates to zWizard</strong> - Correct separation of concerns</li>
                                     <li><strong>Session State Management</strong> - Uses centralized zSession</li>
                                 </ul>
-                            </div>
+                        </div>
                             <div style="background: #fffaf0; border: 1px solid #f6ad55; padding: 10px; border-radius: 5px; margin: 10px 0;">
                                 <strong>🔧 NEEDS REFINEMENT:</strong>
                                 <ul style="margin: 5px 0; padding-left: 20px;">
@@ -8911,7 +8911,7 @@ OK ✅</pre>
                                     <li><strong>Command Type Constants</strong> - All 18 command types should be constants</li>
                                     <li><strong>Wizard Command Detection</strong> - Should use constants, not magic strings</li>
                                 </ul>
-                            </div>
+                    </div>
 
                             <h4 style="margin-top: 15px; color: #2d3748;">🎯 MODERNIZATION SCOPE:</h4>
                             <div style="background: #edf2f7; border-left: 4px solid #4299e1; padding: 10px; margin: 10px 0;">
@@ -8949,7 +8949,7 @@ OK ✅</pre>
                                     <li><code>_display_wizard_banner() → None</code> - Centralize banner display</li>
                                     <li><code>_convert_commands_to_wizard(lines: List[str]) → Dict[str, Any]</code> - Extract lines 252-254</li>
                                 </ol>
-                            </div>
+                </div>
 
                             <h4 style="margin-top: 15px; color: #2d3748;">📊 ESTIMATED METRICS:</h4>
                             <table style="width: 100%; border-collapse: collapse; margin: 10px 0;">
@@ -9234,7 +9234,7 @@ OK ✅</pre>
                                     </li>
                                 </ol>
                             </div>
-
+                            
                             <h4 style="margin-top: 15px; color: #d69e2e;">⚠️ MEDIUM ISSUES (5):</h4>
                             <ul style="margin: 5px 0; padding-left: 20px;">
                                 <li><strong>Direct Dict Access</strong> - <code>wizard_mode.get("active")</code>, <code>result['error']</code>, <code>result['success']</code> (some use bracket notation)</li>
@@ -9254,7 +9254,7 @@ OK ✅</pre>
                                     <li><strong>Special Commands</strong> - Built-in commands bypass normal execution</li>
                                     <li><strong>Wizard Canvas Aware</strong> - Preserves indentation when needed</li>
                                 </ul>
-                            </div>
+                        </div>
                             <div style="background: #fffaf0; border: 1px solid #f6ad55; padding: 10px; border-radius: 5px; margin: 10px 0;">
                                 <strong>🔧 NEEDS REFINEMENT:</strong>
                                 <ul style="margin: 5px 0; padding-left: 20px;">
@@ -9263,7 +9263,7 @@ OK ✅</pre>
                                     <li><strong>os.system() Call</strong> - Document why direct call needed, or add mode check</li>
                                     <li><strong>Constants</strong> - All 30+ magic strings should be module constants</li>
                                 </ul>
-                            </div>
+                    </div>
 
                             <h4 style="margin-top: 15px; color: #2d3748;">🎯 MODERNIZATION SCOPE:</h4>
                             <div style="background: #edf2f7; border-left: 4px solid #4299e1; padding: 10px; margin: 10px 0;">
@@ -9700,7 +9700,7 @@ OK ✅</pre>
                                         </ul>
                                     </li>
                                 </ol>
-                            </div>
+                        </div>
 
                             <h4 style="margin-top: 15px; color: #d69e2e;">⚠️ MEDIUM ISSUES (4):</h4>
                             <ul style="margin: 5px 0; padding-left: 20px;">
@@ -9720,7 +9720,7 @@ OK ✅</pre>
                                     <li><strong>Initialization</strong> - Properly sets up subcomponents in __init__</li>
                                     <li><strong>UI Integration</strong> - Provides launch_zCLI_shell() for menu-driven mode</li>
                                 </ul>
-                            </div>
+                    </div>
                             <div style="background: #fffaf0; border: 1px solid #f6ad55; padding: 10px; border-radius: 5px; margin: 10px 0;">
                                 <strong>🔧 NEEDS REFINEMENT:</strong>
                                 <ul style="margin: 5px 0; padding-left: 20px;">
