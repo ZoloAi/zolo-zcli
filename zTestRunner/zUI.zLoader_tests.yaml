@@ -1,0 +1,213 @@
+# zTestRunner/zUI.zLoader_tests.yaml
+# Comprehensive zLoader Test Suite (TBD tests - 100% REAL TESTS)
+# Auto-run wizard pattern with result accumulation in zHat
+# Covers all zLoader components: Facade, CacheOrchestrator, Caches, File I/O
+
+zVaF:
+  zWizard:
+    # ===============================================================
+    # A. Facade - Initialization & Main API (6 tests)
+    # ===============================================================
+    "test_01_facade_init":
+      zFunc: "&zloader_tests.test_facade_init()"
+    "test_02_facade_attributes":
+      zFunc: "&zloader_tests.test_facade_attributes()"
+    "test_03_facade_zcli_dependency":
+      zFunc: "&zloader_tests.test_facade_zcli_dependency()"
+    "test_04_facade_cache_orchestrator":
+      zFunc: "&zloader_tests.test_facade_cache_orchestrator()"
+    "test_05_facade_parser_delegation":
+      zFunc: "&zloader_tests.test_facade_parser_delegation()"
+    "test_06_facade_handle_method":
+      zFunc: "&zloader_tests.test_facade_handle_method()"
+    
+    # ===============================================================
+    # B. File Loading - UI, Schema, Config Files (12 tests)
+    # ===============================================================
+    "test_07_load_ui_file_with_zpath":
+      zFunc: "&zloader_tests.test_load_ui_file_with_zpath()"
+    "test_08_load_ui_file_session_fallback":
+      zFunc: "&zloader_tests.test_load_ui_file_session_fallback()"
+    "test_09_load_schema_file_fresh":
+      zFunc: "&zloader_tests.test_load_schema_file_fresh()"
+    "test_10_load_config_file_cached":
+      zFunc: "&zloader_tests.test_load_config_file_cached()"
+    "test_11_load_workspace_relative_path":
+      zFunc: "&zloader_tests.test_load_workspace_relative_path()"
+    "test_12_load_absolute_path":
+      zFunc: "&zloader_tests.test_load_absolute_path()"
+    "test_13_load_zmachine_path":
+      zFunc: "&zloader_tests.test_load_zmachine_path()"
+    "test_14_load_file_not_found":
+      zFunc: "&zloader_tests.test_load_file_not_found()"
+    "test_15_load_invalid_yaml":
+      zFunc: "&zloader_tests.test_load_invalid_yaml()"
+    "test_16_load_json_file":
+      zFunc: "&zloader_tests.test_load_json_file()"
+    "test_17_load_mixed_formats":
+      zFunc: "&zloader_tests.test_load_mixed_formats()"
+    "test_18_load_large_file":
+      zFunc: "&zloader_tests.test_load_large_file()"
+    
+    # ===============================================================
+    # C. Caching Strategy - System Cache (10 tests)
+    # ===============================================================
+    "test_19_cache_ui_file_first_load":
+      zFunc: "&zloader_tests.test_cache_ui_file_first_load()"
+    "test_20_cache_ui_file_subsequent_load":
+      zFunc: "&zloader_tests.test_cache_ui_file_subsequent_load()"
+    "test_21_cache_config_file":
+      zFunc: "&zloader_tests.test_cache_config_file()"
+    "test_22_schema_file_not_cached":
+      zFunc: "&zloader_tests.test_schema_file_not_cached()"
+    "test_23_cache_key_construction":
+      zFunc: "&zloader_tests.test_cache_key_construction()"
+    "test_24_cache_hit_vs_miss":
+      zFunc: "&zloader_tests.test_cache_hit_vs_miss()"
+    "test_25_cache_invalidation_mtime":
+      zFunc: "&zloader_tests.test_cache_invalidation_mtime()"
+    "test_26_cache_lru_eviction":
+      zFunc: "&zloader_tests.test_cache_lru_eviction()"
+    "test_27_cache_clear":
+      zFunc: "&zloader_tests.test_cache_clear()"
+    "test_28_cache_stats":
+      zFunc: "&zloader_tests.test_cache_stats()"
+    
+    # ===============================================================
+    # D. Cache Orchestrator - Multi-Tier Routing (10 tests)
+    # ===============================================================
+    "test_29_orchestrator_system_cache":
+      zFunc: "&zloader_tests.test_orchestrator_system_cache()"
+    "test_30_orchestrator_pinned_cache":
+      zFunc: "&zloader_tests.test_orchestrator_pinned_cache()"
+    "test_31_orchestrator_schema_cache":
+      zFunc: "&zloader_tests.test_orchestrator_schema_cache()"
+    "test_32_orchestrator_plugin_cache":
+      zFunc: "&zloader_tests.test_orchestrator_plugin_cache()"
+    "test_33_orchestrator_cache_type_routing":
+      zFunc: "&zloader_tests.test_orchestrator_cache_type_routing()"
+    "test_34_orchestrator_batch_clear":
+      zFunc: "&zloader_tests.test_orchestrator_batch_clear()"
+    "test_35_orchestrator_batch_stats":
+      zFunc: "&zloader_tests.test_orchestrator_batch_stats()"
+    "test_36_orchestrator_conditional_plugin":
+      zFunc: "&zloader_tests.test_orchestrator_conditional_plugin()"
+    "test_37_orchestrator_tier_specific_methods":
+      zFunc: "&zloader_tests.test_orchestrator_tier_specific_methods()"
+    "test_38_orchestrator_kwargs_passthrough":
+      zFunc: "&zloader_tests.test_orchestrator_kwargs_passthrough()"
+    
+    # ===============================================================
+    # E. File I/O - Raw File Operations (8 tests)
+    # ===============================================================
+    "test_39_file_io_read_yaml":
+      zFunc: "&zloader_tests.test_file_io_read_yaml()"
+    "test_40_file_io_read_json":
+      zFunc: "&zloader_tests.test_file_io_read_json()"
+    "test_41_file_io_read_large_file":
+      zFunc: "&zloader_tests.test_file_io_read_large_file()"
+    "test_42_file_io_file_not_found":
+      zFunc: "&zloader_tests.test_file_io_file_not_found()"
+    "test_43_file_io_permission_denied":
+      zFunc: "&zloader_tests.test_file_io_permission_denied()"
+    "test_44_file_io_binary_content":
+      zFunc: "&zloader_tests.test_file_io_binary_content()"
+    "test_45_file_io_encoding_detection":
+      zFunc: "&zloader_tests.test_file_io_encoding_detection()"
+    "test_46_file_io_error_handling":
+      zFunc: "&zloader_tests.test_file_io_error_handling()"
+    
+    # ===============================================================
+    # F. Plugin Loading - load_plugin_from_zpath (8 tests)
+    # ===============================================================
+    "test_47_plugin_load_simple":
+      zFunc: "&zloader_tests.test_plugin_load_simple()"
+    "test_48_plugin_load_with_function":
+      zFunc: "&zloader_tests.test_plugin_load_with_function()"
+    "test_49_plugin_load_cached":
+      zFunc: "&zloader_tests.test_plugin_load_cached()"
+    "test_50_plugin_load_not_found":
+      zFunc: "&zloader_tests.test_plugin_load_not_found()"
+    "test_51_plugin_load_workspace_relative":
+      zFunc: "&zloader_tests.test_plugin_load_workspace_relative()"
+    "test_52_plugin_load_absolute_path":
+      zFunc: "&zloader_tests.test_plugin_load_absolute_path()"
+    "test_53_plugin_load_session_injection":
+      zFunc: "&zloader_tests.test_plugin_load_session_injection()"
+    "test_54_plugin_load_error_handling":
+      zFunc: "&zloader_tests.test_plugin_load_error_handling()"
+    
+    # ===============================================================
+    # G. zParser Delegation - Path & Content Parsing (10 tests)
+    # ===============================================================
+    "test_55_parser_zpath_decoder":
+      zFunc: "&zloader_tests.test_parser_zpath_decoder()"
+    "test_56_parser_identify_zfile":
+      zFunc: "&zloader_tests.test_parser_identify_zfile()"
+    "test_57_parser_parse_file_content":
+      zFunc: "&zloader_tests.test_parser_parse_file_content()"
+    "test_58_parser_workspace_symbol":
+      zFunc: "&zloader_tests.test_parser_workspace_symbol()"
+    "test_59_parser_absolute_symbol":
+      zFunc: "&zloader_tests.test_parser_absolute_symbol()"
+    "test_60_parser_zmachine_symbol":
+      zFunc: "&zloader_tests.test_parser_zmachine_symbol()"
+    "test_61_parser_file_type_detection":
+      zFunc: "&zloader_tests.test_parser_file_type_detection()"
+    "test_62_parser_extension_handling":
+      zFunc: "&zloader_tests.test_parser_extension_handling()"
+    "test_63_parser_yaml_parsing":
+      zFunc: "&zloader_tests.test_parser_yaml_parsing()"
+    "test_64_parser_json_parsing":
+      zFunc: "&zloader_tests.test_parser_json_parsing()"
+    
+    # ===============================================================
+    # H. Session Integration - Fallback & Context (8 tests)
+    # ===============================================================
+    "test_65_session_zvafile_fallback":
+      zFunc: "&zloader_tests.test_session_zvafile_fallback()"
+    "test_66_session_zvafolder_fallback":
+      zFunc: "&zloader_tests.test_session_zvafolder_fallback()"
+    "test_67_session_zworkspace_resolution":
+      zFunc: "&zloader_tests.test_session_zworkspace_resolution()"
+    "test_68_session_missing_keys":
+      zFunc: "&zloader_tests.test_session_missing_keys()"
+    "test_69_session_vs_explicit_zpath":
+      zFunc: "&zloader_tests.test_session_vs_explicit_zpath()"
+    "test_70_session_context_preservation":
+      zFunc: "&zloader_tests.test_session_context_preservation()"
+    "test_71_session_cache_interaction":
+      zFunc: "&zloader_tests.test_session_cache_interaction()"
+    "test_72_session_error_recovery":
+      zFunc: "&zloader_tests.test_session_error_recovery()"
+    
+    # ===============================================================
+    # I. Integration Tests - Multi-Component Workflows (10 tests)
+    # ===============================================================
+    "test_73_integration_load_parse_cache":
+      zFunc: "&zloader_tests.test_integration_load_parse_cache()"
+    "test_74_integration_ui_workflow":
+      zFunc: "&zloader_tests.test_integration_ui_workflow()"
+    "test_75_integration_schema_workflow":
+      zFunc: "&zloader_tests.test_integration_schema_workflow()"
+    "test_76_integration_plugin_workflow":
+      zFunc: "&zloader_tests.test_integration_plugin_workflow()"
+    "test_77_integration_dispatch_loading":
+      zFunc: "&zloader_tests.test_integration_dispatch_loading()"
+    "test_78_integration_navigation_linking":
+      zFunc: "&zloader_tests.test_integration_navigation_linking()"
+    "test_79_integration_cache_warming":
+      zFunc: "&zloader_tests.test_integration_cache_warming()"
+    "test_80_integration_file_reload":
+      zFunc: "&zloader_tests.test_integration_file_reload()"
+    "test_81_integration_error_recovery":
+      zFunc: "&zloader_tests.test_integration_error_recovery()"
+    "test_82_integration_concurrent_loading":
+      zFunc: "&zloader_tests.test_integration_concurrent_loading()"
+    
+    # ===============================================================
+    # Display Results and Return to Menu
+    # ===============================================================
+    "display_and_return":
+      zFunc: "&zloader_tests.display_test_results()"
+
