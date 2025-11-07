@@ -2,7 +2,7 @@ zVaF:
   ~Root*: [
     "^All Tests",
     "zConfig",
-    "^zComm",
+    "zComm",
     "^zServer",
     "^zBifrost",
     "^zBifrost_Integration",
@@ -45,8 +45,8 @@ zVaF:
   "zConfig":
     zLink: "@.zUI.zConfig_tests.zVaF"
   
-  "^zComm":
-    zFunc: "&test_runner.run_test_suite('zComm')"
+  "zComm":
+    zLink: "@.zUI.zComm_tests.zVaF"
   
   "^zServer":
     zFunc: "&test_runner.run_test_suite('zServer')"
