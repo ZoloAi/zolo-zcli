@@ -4,13 +4,14 @@
 
 **Latest**: v1.5.4 - Layer 0 Complete (70% coverage, 907 tests passing)
 
-**New**: Declarative Test Suite (`zTestRunner`) - 504 tests total (100% subsystem coverage) ✅
+**New**: Declarative Test Suite (`zTestRunner`) - 590 tests total (100% subsystem coverage) ✅
 - **zConfig**: 72 tests (100% pass) - Configuration subsystem with integration tests
 - **zComm**: 106 tests (100% pass) - Communication subsystem with integration tests
 - **zDisplay**: 86 tests (100% pass) - Display & rendering subsystem with integration tests
 - **zAuth**: 70 tests (100% pass) - Three-tier authentication with real bcrypt & SQLite tests
 - **zDispatch**: 80 tests (100% pass) - Command routing with modifier processing & integration tests
 - **zNavigation**: 90 tests (~90% pass*) - Unified navigation with menus, breadcrumbs, zLink (intra/inter-file)
+- **zParser**: 86 tests (100% pass) - Universal parsing: paths, plugins, commands, files, expressions
 
 *~90% automated pass rate (interactive tests require stdin). All pass when run interactively.
 
@@ -1414,6 +1415,225 @@ Setup_Wizard:
 - **[zNavigation Guide](Documentation/zNavigation_GUIDE.md)** - **Navigation subsystem** (✅ Complete - CEO & dev-friendly)
 - **Test Suite**: `zTestRunner/zUI.zNavigation_tests.yaml` (80 tests, ~90% automated coverage)
 - **Plugin**: `zTestRunner/plugins/znavigation_tests.py` (test logic)
+
+---
+
+## zParser: Universal Parsing & Path Resolution (v1.5.4+)
+
+### Overview
+
+**zParser** is zCLI's universal parsing engine - the "translator" that resolves paths, parses commands, loads files, evaluates expressions, and executes plugins. Every path resolution and file operation in zCLI flows through zParser.
+
+**Module Structure**:
+```
+zCLI/subsystems/zParser/
+├── zParser.py (facade orchestrator)
+└── zParser_modules/
+    ├── parser_path.py          (Path resolution, zPath decoder)
+    ├── parser_plugin.py        (Plugin invocation, & modifier)
+    ├── parser_commands.py      (Command parsing)
+    ├── parser_file.py          (File content parsing)
+    ├── parser_utils.py         (Expression evaluation)
+    └── vafile/ package         (zVaFile parsing: UI, Schema, Config)
+```
+
+### Public API
+
+```python
+from zCLI import zCLI
+z = zCLI({"zWorkspace": "."})
+
+# Path resolution
+path, file_type = z.parser.zPath_decoder("@.zUI.users")
+path = z.parser.resolve_zmachine_path("zMachine.zConfig.app")
+
+# Plugin invocation
+result = z.parser.resolve_plugin_invocation("&plugin.function(arg1, arg2)")
+is_plugin = z.parser.is_plugin_invocation("&plugin.func()")
+
+# Command parsing
+cmd = z.parser.parse_command("zFunc(&plugin.hello())")
+
+# File parsing
+data = z.parser.parse_yaml("key: value\nlist: [1, 2, 3]")
+data = z.parser.parse_json('{"key": "value"}')
+data = z.parser.parse_file_by_path("/path/to/file.yaml")  # Auto-detects
+
+# Expression evaluation
+result = z.parser.zExpr_eval('{"key": "value"}')
+result = z.parser.handle_zRef("zSession.user_id")
+
+# Function path parsing
+func_path, args, name = z.parser.parse_function_path("&plugin.func(a, b)")
+
+# zVaFile parsing
+data = z.parser.parse_zva_file("/path/to/file.yaml")
+```
+
+### Path Resolution Symbols
+
+**Workspace (`@`)**: Relative to zWorkspace
+```python
+z.parser.zPath_decoder("@.zUI.users")
+# → {workspace}/zUI.users.yaml
+```
+
+**Absolute (`~`)**: Absolute file paths
+```python
+z.parser.zPath_decoder("~./home/user/file")
+# → /home/user/file.yaml
+```
+
+**zMachine**: Cross-platform user data directory
+```python
+z.parser.resolve_zmachine_path("zMachine.zConfig.app")
+# macOS:   ~/Library/Application Support/zolo-zcli/zConfig/app.yaml
+# Linux:   ~/.local/share/zolo-zcli/zConfig/app.yaml
+# Windows: %LOCALAPPDATA%\zolo-zcli\zConfig\app.yaml
+```
+
+**No Symbol**: Relative to workspace (same as `@`)
+```python
+z.parser.zPath_decoder("utils.helpers")
+# → {workspace}/utils.helpers.py
+```
+
+### Plugin Invocation (`&` Modifier)
+
+**Unified Syntax**: All plugin calls use `&PluginName.function(args)`
+
+```python
+# Simple call
+result = z.parser.resolve_plugin_invocation("&plugin.hello()")
+
+# With arguments
+result = z.parser.resolve_plugin_invocation("&plugin.greet('Alice')")
+
+# Multiple arguments
+result = z.parser.resolve_plugin_invocation("&plugin.add(5, 10)")
+```
+
+**Auto-Discovery** (searches if not cached):
+1. `@.zCLI.utils/plugin.py`
+2. `@.utils/plugin.py`
+3. `@.plugins/plugin.py`
+
+**In YAML**:
+```yaml
+# zSchema
+Data_Source: "&plugin.get_data_source()"
+
+# zUI
+zAction: "&plugin.process_input(user_data)"
+
+# zWizard
+step1:
+  zFunc: "&plugin.step_one()"
+```
+
+### File Parsing
+
+**Auto-Detect Format**:
+```python
+data = z.parser.parse_file_by_path("file.yaml")  # Auto-detects YAML/JSON
+```
+
+**Explicit Format**:
+```python
+data = z.parser.parse_yaml("name: test\nvalue: 42")
+data = z.parser.parse_json('{"name": "test", "value": 42}')
+```
+
+**Format Detection**:
+```python
+fmt = z.parser.detect_format(content)  # Returns ".yaml" or ".json"
+```
+
+### Key Features
+
+✅ **Universal Path Resolution** - Workspace (@), absolute (~), zMachine, relative  
+✅ **Plugin Auto-Discovery** - Unified `&plugin.function()` syntax with auto-search  
+✅ **Multi-Format Parsing** - YAML, JSON, expressions, commands  
+✅ **Self-Contained Architecture** - No cross-module dependencies  
+✅ **Type Safety** - 100% type hints across all 29 public methods  
+✅ **Three-Tier Facade** - Facade → Specialized parsers → Core utilities  
+✅ **86 comprehensive tests** - 100% pass rate, zero stubs
+
+### Testing
+
+**Test Coverage**: 86 tests across 9 categories (100% pass rate)
+- A. Facade - Initialization & Main API (6 tests)
+- B. Path Resolution - zPath Decoder & File Identification (10 tests)
+- C. Plugin Invocation - Detection & Resolution (8 tests)
+- D. Command Parsing - Command String Recognition (10 tests)
+- E. File Parsing - YAML, JSON, Format Detection (12 tests)
+- F. Expression Evaluation - zExpr, zRef, Dotted Paths (10 tests)
+- G. Function Path Parsing - zFunc Arguments (8 tests)
+- H. zVaFile Parsing - UI, Schema, Config Files (12 tests)
+- I. Integration Tests - Multi-Component Workflows (10 tests)
+
+**Run Tests**: `zolo ztests` → select "zParser"
+
+**Test Files:**
+- `zTestRunner/zUI.zParser_tests.yaml` (221 lines)
+- `zTestRunner/plugins/zparser_tests.py` (1,643 lines - **NO STUB TESTS**)
+
+**Note**: All 86 tests perform real validation with assertions. Tests create temporary files inline as needed.
+
+### Common Mistakes
+
+❌ **Wrong: Using .yaml extension in zPath**
+```python
+z.loader.handle("@.zSchema.users.yaml")  # ❌ Double extension!
+```
+
+✅ **Right: No extension (framework auto-adds .yaml)**
+```python
+z.loader.handle("@.zSchema.users")  # ✅ Framework adds .yaml
+```
+
+---
+
+❌ **Wrong: Missing & prefix for plugin invocation**
+```yaml
+zFunc: "plugin.function()"  # ❌ Missing &
+```
+
+✅ **Right: Use & prefix**
+```yaml
+zFunc: "&plugin.function()"  # ✅ Plugin invocation syntax
+```
+
+---
+
+❌ **Wrong: Manual format detection**
+```python
+fmt = z.parser.detect_format(content)
+if fmt == ".json":
+    data = z.parser.parse_json(content)
+# ❌ Extra work!
+```
+
+✅ **Right: Let parser auto-detect**
+```python
+data = z.parser.parse_file_by_path(file_path)  # ✅ Auto-detects format
+```
+
+### Integration Points
+
+| Subsystem | Uses zParser For | Example |
+|-----------|------------------|---------|
+| **zLoader** | Path resolution, file loading | `z.loader.handle("@.zUI.menu")` |
+| **zFunc** | Plugin invocation parsing | `z.func.handle("&plugin.func()")` |
+| **zData** | Schema path resolution | `z.data.load_schema("@.zSchema.users")` |
+| **zWizard** | zFunc execution | `zWizard: step1: {zFunc: "&plugin.step()"}` |
+| **zDispatch** | Command parsing | All zDispatch commands use zParser |
+
+### Documentation
+
+- **[zParser Guide](Documentation/zParser_GUIDE.md)** - **Universal parsing subsystem** (✅ Complete - CEO & dev-friendly)
+- **Test Suite**: `zTestRunner/zUI.zParser_tests.yaml` (86 tests, 100% coverage)
+- **Plugin**: `zTestRunner/plugins/zparser_tests.py` (test logic)
 
 ---
 
@@ -2967,13 +3187,14 @@ Loading a schema doesn't auto-create tables - you must explicitly call `create_t
 - `Documentation/zAuth_GUIDE.md` - **Authentication & Authorization** (✅ Updated - CEO & dev-friendly)
 - `Documentation/zDispatch_GUIDE.md` - **Command Routing** (✅ Updated - CEO & dev-friendly)
 - `Documentation/zNavigation_GUIDE.md` - **Navigation System** (✅ Complete - CEO & dev-friendly)
+- `Documentation/zParser_GUIDE.md` - **Universal Parsing** (✅ Complete - CEO & dev-friendly)
 - `Documentation/zServer_GUIDE.md` - HTTP server
 - `Documentation/SEPARATION_CHECKLIST.md` - Architecture validation
 
 **See**: `Documentation/` for all 25+ subsystem guides
 
 **Declarative Testing**:
-- `zTestRunner/` - Declarative test suite (494 tests total, ~99% pass rate)
+- `zTestRunner/` - Declarative test suite (590 tests total, ~99% pass rate)
 - **zConfig**: `zTestRunner/zUI.zConfig_tests.yaml` (72 tests, 100% coverage)
   - Plugin: `zTestRunner/plugins/zconfig_tests.py` (test logic)
   - Integration: Real file I/O, YAML round-trip, .env creation, persistence
@@ -2994,6 +3215,9 @@ Loading a schema doesn't auto-create tables - you must explicitly call `create_t
   - Mocks: `zMocks/zNavigation_test_main.yaml`, `zMocks/zNavigation_test_target.yaml` (intra/inter-file tests)
   - Integration: Menu workflows, breadcrumb trails, zLink navigation (intra-file & inter-file), state management
   - *~90% automated pass rate (interactive tests require stdin). All pass when run interactively.
+- **zParser**: `zTestRunner/zUI.zParser_tests.yaml` (86 tests, 100% coverage)
+  - Plugin: `zTestRunner/plugins/zparser_tests.py` (test logic)
+  - Integration: Path resolution, plugin invocation, file parsing, expression evaluation, zVaFile workflows
 
 ---
 
@@ -3225,17 +3449,18 @@ sessions_db.parent.mkdir(parents=True, exist_ok=True)
 - ✅ SQLite session persistence (7-day expiry, auto-cleanup)
 - ✅ Context-aware RBAC (role & permission management)
 **Total Tests**: 931 passing (100% pass rate) 🎉  
-**Declarative Test Suite**: ✅ zTestRunner operational (504 tests, ~99% pass rate, 100% subsystem coverage)
+**Declarative Test Suite**: ✅ zTestRunner operational (590 tests, ~99% pass rate, 100% subsystem coverage)
 - **zConfig**: 72 tests (100% pass) - with integration tests
 - **zComm**: 106 tests (100% pass) - with integration tests
 - **zDisplay**: 86 tests (100% pass) - with integration tests
 - **zAuth**: 70 tests (100% pass) - with real bcrypt & SQLite integration
 - **zDispatch**: 80 tests (100% pass) - with modifier processing & integration tests
 - **zNavigation**: 90 tests (~90% pass*) - with menu workflows, breadcrumbs & zLink (intra/inter-file) integration
+- **zParser**: 86 tests (100% pass) - with path resolution, plugin invocation, file parsing & integration tests
 
 *~90% automated pass rate (interactive tests require stdin). All pass when run interactively.
 
-**Next**: Additional subsystems (zParser, zLoader, zWizard, etc.)
+**Next**: Additional subsystems (zLoader, zWizard, zWalker, zFunc, zDialog, etc.)
 
 ---
 
@@ -3290,4 +3515,12 @@ sessions_db.parent.mkdir(parents=True, exist_ok=True)
 - **Key Features:** Unified menu API (create/select), breadcrumb trails (zCrumbs/zBack), zLink navigation (intra-file & inter-file), RBAC-aware
 
 *\*~90% automated pass rate due to interactive tests requiring stdin. All tests pass when run interactively.*
+
+**zParser (Week 6.8 - Complete):**
+- **Guide:** `Documentation/zParser_GUIDE.md` - CEO & developer-friendly
+- **Test Suite:** `zTestRunner/zUI.zParser_tests.yaml` - 86 declarative tests (100% pass rate)
+- **Status:** A+ grade (universal parsing, path resolution, plugin auto-discovery, multi-format support)
+- **Coverage:** All 8 modules + facade (A-to-I comprehensive), 10 integration tests (path to file parsing, plugin workflows, nested operations)
+- **Run Tests:** `zolo ztests` → select "zParser"
+- **Key Features:** Path resolution (@, ~, zMachine), plugin invocation (&prefix, auto-discovery), multi-format (YAML/JSON), expression evaluation, zVaFile parsing
 
