@@ -1,45 +1,39 @@
 zVaF:
   ~Root*: [
-    "^All Tests",
+    "All Tests",
     "zConfig",
     "zComm",
-    "^zServer",
-    "^zBifrost",
-    "^zBifrost_Integration",
-    "^zBifrost_Unit",
-    "^zLayer0_Integration",
-    "^zShutdown",
-    "^zDisplay",
-    "^zDisplay_Widgets",
-    "^zAuth",
-    "^zAuth_Comprehensive",
-    "^zRBAC",
-    "^zDispatch",
-    "^zNavigation",
-    "^zParser",
-    "^zLoader",
-    "^zFunc",
-    "^zDialog",
-    "^zDialog_AutoValidation",
-    "^zOpen",
-    "^zShell",
-    "^zWizard",
-    "^zUtils",
-    "^zTraceback",
-    "^zExceptions",
-    "^zExceptions_Traceback_Integration",
-    "^zUninstall",
-    "^zData",
-    "^zData_Validation",
-    "^zData_PluginValidation",
-    "^zData_Migration",
-    "^zWalker",
-    "^zIntegration",
-    "^zEndToEnd",
+    "zDisplay",
+    "zDisplay_Widgets",
+    "zAuth",
+    "zAuth_Comprehensive",
+    "zRBAC",
+    "zDispatch",
+    "zNavigation",
+    "zParser",
+    "zLoader",
+    "zFunc",
+    "zDialog",
+    "zDialog_AutoValidation",
+    "zOpen",
+    "zShell",
+    "zWizard",
+    "zUtils",
+    "zTraceback",
+    "zExceptions",
+    "zExceptions_Traceback_Integration",
+    "zUninstall",
+    "zData",
+    "zData_Validation",
+    "zData_PluginValidation",
+    "zData_Migration",
+    "zWalker",
+    "zIntegration",
+    "zEndToEnd",
     "stop"
   ]
   
-  "^All Tests":
+  "All Tests":
     zFunc: "&test_runner.run_test_suite('all')"
   
   "zConfig":
@@ -48,101 +42,83 @@ zVaF:
   "zComm":
     zLink: "@.zUI.zComm_tests.zVaF"
   
-  "^zServer":
-    zFunc: "&test_runner.run_test_suite('zServer')"
+  "zDisplay":
+    zLink: "@.zUI.zDisplay_tests.zVaF"
   
-  "^zBifrost":
-    zFunc: "&test_runner.run_test_suite('zBifrost')"
-  
-  "^zBifrost_Integration":
-    zFunc: "&test_runner.run_test_suite('zBifrost_Integration')"
-  
-  "^zBifrost_Unit":
-    zFunc: "&test_runner.run_test_suite('zBifrost_Unit')"
-  
-  "^zLayer0_Integration":
-    zFunc: "&test_runner.run_test_suite('zLayer0_Integration')"
-  
-  "^zShutdown":
-    zFunc: "&test_runner.run_test_suite('zShutdown')"
-  
-  "^zDisplay":
-    zFunc: "&test_runner.run_test_suite('zDisplay')"
-  
-  "^zDisplay_Widgets":
+  "zDisplay_Widgets":
     zFunc: "&test_runner.run_test_suite('zDisplay_Widgets')"
   
-  "^zAuth":
+  "zAuth":
     zFunc: "&test_runner.run_test_suite('zAuth')"
   
-  "^zAuth_Comprehensive":
+  "zAuth_Comprehensive":
     zFunc: "&test_runner.run_test_suite('zAuth_Comprehensive')"
   
-  "^zRBAC":
+  "zRBAC":
     zFunc: "&test_runner.run_test_suite('zRBAC')"
   
-  "^zDispatch":
+  "zDispatch":
     zFunc: "&test_runner.run_test_suite('zDispatch')"
   
-  "^zNavigation":
+  "zNavigation":
     zFunc: "&test_runner.run_test_suite('zNavigation')"
   
-  "^zParser":
+  "zParser":
     zFunc: "&test_runner.run_test_suite('zParser')"
   
-  "^zLoader":
+  "zLoader":
     zFunc: "&test_runner.run_test_suite('zLoader')"
   
-  "^zFunc":
+  "zFunc":
     zFunc: "&test_runner.run_test_suite('zFunc')"
   
-  "^zDialog":
+  "zDialog":
     zFunc: "&test_runner.run_test_suite('zDialog')"
   
-  "^zDialog_AutoValidation":
+  "zDialog_AutoValidation":
     zFunc: "&test_runner.run_test_suite('zDialog_AutoValidation')"
   
-  "^zOpen":
+  "zOpen":
     zFunc: "&test_runner.run_test_suite('zOpen')"
   
-  "^zShell":
+  "zShell":
     zFunc: "&test_runner.run_test_suite('zShell')"
   
-  "^zWizard":
+  "zWizard":
     zFunc: "&test_runner.run_test_suite('zWizard')"
   
-  "^zUtils":
+  "zUtils":
     zFunc: "&test_runner.run_test_suite('zUtils')"
   
-  "^zTraceback":
+  "zTraceback":
     zFunc: "&test_runner.run_test_suite('zTraceback')"
   
-  "^zExceptions":
+  "zExceptions":
     zFunc: "&test_runner.run_test_suite('zExceptions')"
   
-  "^zExceptions_Traceback_Integration":
+  "zExceptions_Traceback_Integration":
     zFunc: "&test_runner.run_test_suite('zExceptions_Traceback_Integration')"
   
-  "^zUninstall":
+  "zUninstall":
     zFunc: "&test_runner.run_test_suite('zUninstall')"
   
-  "^zData":
+  "zData":
     zFunc: "&test_runner.run_test_suite('zData')"
   
-  "^zData_Validation":
+  "zData_Validation":
     zFunc: "&test_runner.run_test_suite('zData_Validation')"
   
-  "^zData_PluginValidation":
+  "zData_PluginValidation":
     zFunc: "&test_runner.run_test_suite('zData_PluginValidation')"
   
-  "^zData_Migration":
+  "zData_Migration":
     zFunc: "&test_runner.run_test_suite('zData_Migration')"
   
-  "^zWalker":
+  "zWalker":
     zFunc: "&test_runner.run_test_suite('zWalker')"
   
-  "^zIntegration":
+  "zIntegration":
     zFunc: "&test_runner.run_test_suite('zIntegration')"
   
-  "^zEndToEnd":
+  "zEndToEnd":
     zFunc: "&test_runner.run_test_suite('zEndToEnd')"

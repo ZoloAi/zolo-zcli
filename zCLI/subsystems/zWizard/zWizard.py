@@ -552,6 +552,29 @@ class zWizard:
             if self.display:
                 self.display.zDeclare("process_keys => next zKey", color="MAIN", indent=1, style="single")
 
+            # ════════════════════════════════════════════════════════════
+            # Menu Looping: Check if we should return to a menu
+            # ════════════════════════════════════════════════════════════
+            # After executing a menu selection (key jump), check if there's
+            # a menu in this block that we should loop back to, instead of
+            # continuing sequentially through the keys.
+            
+            # Search backwards from current position for a menu key
+            menu_idx = None
+            for i in range(idx - 1, -1, -1):
+                check_key = keys_list[i]
+                # Detect menu pattern: contains both ~ (anchor) and * (menu) modifiers
+                if '~' in check_key and '*' in check_key:
+                    menu_idx = i
+                    break
+            
+            if menu_idx is not None:
+                # Found a menu - loop back to it for next selection
+                self.logger.debug(f"Menu detected at index {menu_idx}, looping back to: {keys_list[menu_idx]}")
+                idx = menu_idx
+                continue
+            
+            # Normal sequential processing (no menu found)
             idx += 1
 
         return None

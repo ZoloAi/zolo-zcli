@@ -352,7 +352,7 @@ def is_plugin_invocation(value: Any) -> bool:
     return value.startswith(CHAR_AMPERSAND) and CHAR_DOT in value
 
 
-def resolve_plugin_invocation(value: str, zcli: Any) -> Any:
+def resolve_plugin_invocation(value: str, zcli: Any, context: Optional[Any] = None) -> Any:
     """
     Resolve plugin function invocation with unified filename-based syntax.
     
@@ -361,7 +361,7 @@ def resolve_plugin_invocation(value: str, zcli: Any) -> Any:
     
     Main entry point for plugin resolution. Handles the full lifecycle from
     parsing to execution, with support for caching, async functions, and
-    automatic zCLI dependency injection.
+    automatic zCLI dependency injection and context (zHat) support.
     
     Process Flow:
         1. **Parse**: Extract plugin name, function name, args from syntax
@@ -463,7 +463,7 @@ def resolve_plugin_invocation(value: str, zcli: Any) -> Any:
         zcli.logger.debug(LOG_MSG_CACHE_HIT, plugin_name)
         func = _get_function_from_module(cached_module, function_name, plugin_name)
         args, kwargs = _parse_arguments(args_str)
-        return _execute_function(func, args, kwargs, value, zcli)
+        return _execute_function(func, args, kwargs, value, zcli, context)
     
     # Step 3: Cache miss - search and load
     zcli.logger.debug(LOG_MSG_CACHE_MISS, plugin_name)
@@ -490,7 +490,7 @@ def resolve_plugin_invocation(value: str, zcli: Any) -> Any:
             # Execute function
             func = _get_function_from_module(module, function_name, plugin_name)
             args, kwargs = _parse_arguments(args_str)
-            return _execute_function(func, args, kwargs, value, zcli)
+            return _execute_function(func, args, kwargs, value, zcli, context)
             
         except FileNotFoundError:
             continue
@@ -699,10 +699,11 @@ def _execute_function(
     args: List[Any],
     kwargs: Dict[str, Any],
     original_value: str,
-    zcli: Any
+    zcli: Any,
+    context: Optional[Any] = None
 ) -> Any:
     """
-    Execute plugin function with async support, error handling, and zCLI auto-injection.
+    Execute plugin function with async support, error handling, zCLI and context auto-injection.
     
     Comprehensive function execution that handles:
     - zCLI auto-injection (inspect-based parameter detection)
@@ -779,6 +780,11 @@ def _execute_function(
         if PARAM_NAME_ZCLI in sig.parameters:
             zcli.logger.debug(LOG_MSG_AUTO_INJECT)
             kwargs[PARAM_NAME_ZCLI] = zcli
+        
+        # Auto-inject context if function accepts it (for zWizard/zHat access)
+        if 'context' in sig.parameters and context:
+            zcli.logger.debug("Auto-injecting context to plugin function")
+            kwargs['context'] = context
         
         # Execute function
         result = func(*args, **kwargs)

@@ -5,6 +5,7 @@ Declarative approach - uses existing zcli.config, minimal setup
 Covers all 14 zConfig modules including facade API and helpers
 """
 
+import sys
 from pathlib import Path
 
 
@@ -12,16 +13,10 @@ from pathlib import Path
 # Helper Functions
 # ═══════════════════════════════════════════════════════════
 
-def _store_result(zcli, test_name: str, status: str, message: str) -> None:
-    """Store test result in session."""
-    if not zcli:
-        return None
-    
+def _store_result(zcli, test_name: str, status: str, message: str):
+    """Return test result dict for zWizard/zHat accumulation."""
     result = {"test": test_name, "status": status, "message": message}
-    if "zTestRunner_results" not in zcli.session:
-        zcli.session["zTestRunner_results"] = []
-    zcli.session["zTestRunner_results"].append(result)
-    return None
+    return result
 
 
 # ═══════════════════════════════════════════════════════════
@@ -955,14 +950,27 @@ def test_detectors_auto_detect_machine(zcli=None, context=None):
 # ===============================================================
 
 def display_test_results(zcli=None, context=None):
-    """Display accumulated test results with comprehensive statistics."""
-    if not zcli:
+    """Display accumulated test results with comprehensive statistics from zHat."""
+    if not zcli or not context:
+        print("\n[ERROR] No zcli or context provided")
         return None
     
-    results = zcli.session.get("zTestRunner_results", [])
+    # Get zHat from context (accumulated by zWizard.handle())
+    zHat = context.get("zHat")
+    if not zHat:
+        print("\n[WARN] No zHat found in context")
+        return None
+    
+    # Extract all results from zHat (skip display_and_return itself)
+    results = []
+    for i in range(len(zHat)):
+        result = zHat[i]
+        if result and isinstance(result, dict) and "test" in result:
+            results.append(result)
     if not results:
         print("\n[WARN] No test results found")
-        input("Press Enter to return to main menu...")
+        if sys.stdin.isatty():
+            input("Press Enter to return to main menu...")
         return None
     
     # Calculate stats
@@ -1046,7 +1054,7 @@ def display_test_results(zcli=None, context=None):
     
     print(f"\n[INFO] Coverage: All 14 zConfig modules tested (A-to-N comprehensive coverage)")
     print("\n[INFO] Review results above.")
-    input("Press Enter to return to main menu...")
+    if sys.stdin.isatty():
+        input("Press Enter to return to main menu...")
     
-    zcli.session["zTestRunner_results"] = []
     return None

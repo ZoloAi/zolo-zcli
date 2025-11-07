@@ -412,14 +412,15 @@ class zParser:
         """
         return is_plugin_invocation_func(value)
 
-    def resolve_plugin_invocation(self, value: str) -> Any:
+    def resolve_plugin_invocation(self, value: str, context: Optional[Any] = None) -> Any:
         """
-        Resolve plugin function invocation.
+        Resolve plugin function invocation with optional context for zWizard/zHat access.
         
         Syntax: &plugin_name.function_name(arg1, arg2, ...)
         
         Args:
             value: Plugin invocation string
+            context: Optional context dict with zHat for wizard steps
         
         Returns:
             Any: Result of plugin function execution
@@ -434,7 +435,7 @@ class zParser:
             >>> num = parser.resolve_plugin_invocation("&test_plugin.random_number(1, 10)")
             7  # Random integer between 1 and 10
         """
-        return resolve_plugin_invocation_func(value, self.zcli)
+        return resolve_plugin_invocation_func(value, self.zcli, context)
 
     # ═══════════════════════════════════════════════════════════
     # Command Parsing

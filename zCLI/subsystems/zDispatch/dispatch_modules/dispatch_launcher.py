@@ -567,10 +567,10 @@ class CommandLauncher:
             # Check if it's a plugin invocation (starts with &)
             if isinstance(func_spec, str) and func_spec.startswith(PLUGIN_PREFIX):
                 self._log_detected(f"plugin invocation in zFunc: {func_spec}")
-                # TODO: Week 6.8 (zParser) - Verify resolve_plugin_invocation() signature after refactor
-                return self.zcli.zparser.resolve_plugin_invocation(func_spec)
+                # Route plugin invocations through parser with context support
+                return self.zcli.zparser.resolve_plugin_invocation(func_spec, context=context)
             
-            # TODO: Week 6.10 (zFunc) - Verify zfunc.handle() signature after refactor
+            # Non-plugin zFunc calls
             return self.zcli.zfunc.handle(func_spec, zContext=context)
 
         # Route: zDialog

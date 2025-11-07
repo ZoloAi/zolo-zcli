@@ -4,9 +4,10 @@
 
 **Latest**: v1.5.4 - Layer 0 Complete (70% coverage, 907 tests passing)
 
-**New**: Declarative Test Suite (`zTestRunner`) - 164 tests total (100% subsystem coverage) ✅
+**New**: Declarative Test Suite (`zTestRunner`) - 237 tests total (100% subsystem coverage) ✅
 - **zConfig**: 66 tests (100% pass) - Configuration subsystem
 - **zComm**: 98 tests (100% pass) - Communication subsystem
+- **zDisplay**: 73 tests (100% pass) - Display & rendering subsystem
 
 ---
 
@@ -35,10 +36,11 @@ z.walker.run()
 
 ## Code Rules (STRICT)
 
-- ❌ NO `print()` statements - use `z.display` or `z.logger`
+- ❌ NO `print()` statements - use `z.display.text()` or `z.logger.info()`
+- ❌ NO `input()` calls - use `z.display.read_string()` or `z.display.selection()`
 - ❌ NO verbose comments - code should be self-documenting
 - ✅ Keep code slim and focused
-- ✅ Use zCLI's built-in tools for all output
+- ✅ Use zCLI's built-in tools for all output (z.display works in Terminal AND Bifrost modes)
 
 ---
 
@@ -586,6 +588,259 @@ zcli.comm.http_post()  # ✅ Public method
 - **[zComm Guide](Documentation/zComm_GUIDE.md)** - **Communication subsystem** (✅ Updated - CEO & dev-friendly)
 - **Test Suite**: `zTestRunner/zUI.zComm_tests.yaml` (98 tests, 100% coverage)
 - **Plugin**: `zTestRunner/plugins/zcomm_tests.py` (test logic)
+
+---
+
+## zDisplay: Display & Rendering Subsystem (IMPORTANT!)
+
+**zDisplay** provides zCLI's unified display interface for Terminal and GUI (Bifrost) modes. It's a **Layer 1** subsystem (initializes after Layer 0).
+
+### Quick Reference
+
+```python
+from zCLI import zCLI
+
+z = zCLI({"zWorkspace": ".", "zMode": "Terminal"})
+
+# Basic output
+z.display.text("Hello World")
+z.display.header("Section Title", color="CYAN")
+
+# Feedback signals
+z.display.success("Operation completed!")
+z.display.error("Something went wrong")
+z.display.warning("Check your input")
+z.display.info("System restarting...")
+
+# Data display
+z.display.list(["Item 1", "Item 2", "Item 3"])
+z.display.json_data({"key": "value", "active": True})
+z.display.zTable("Users", ["ID", "Name"], rows, limit=10)
+
+# User interaction
+name = z.display.read_string("Enter name: ")
+password = z.display.read_password("Password: ")
+choice = z.display.selection("Choose:", ["Option 1", "Option 2"])
+
+# Progress indicators
+z.display.progress_bar(50, 100, "Processing...")
+z.display.spinner("Loading...")
+```
+
+**Common Operations:**
+```python
+# Output events
+z.display.text(content, indent=0, break_after=True)
+z.display.header(label, color="RESET", indent=0)
+
+# Signal events
+z.display.error(content, indent=0)
+z.display.warning(content, indent=0)
+z.display.success(content, indent=0)
+z.display.info(content, indent=0)
+
+# Data events
+z.display.list(items, style="bullet")
+z.display.json_data(data, indent_size=2)
+z.display.zTable(title, columns, rows, limit=None, offset=0)
+
+# Widget events
+z.display.progress_bar(current, total, label="")
+z.display.spinner(label="Loading...")
+z.display.swiper(slides, auto_advance=True, delay=3)  # NEW: Slideshow widget
+
+# System events
+z.display.zDeclare(label, color="RESET")
+z.display.zSession(session_data)
+z.display.zCrumbs(session_data)
+z.display.zConfig(config_data)  # NEW: Display config info
+```
+
+### Key Innovations
+
+**1. Dual-Mode Architecture (Automatic Adaptation)**
+
+Same API works in Terminal and Bifrost (GUI) modes:
+
+```python
+# This code works in BOTH modes (no mode checking needed!)
+z.display.zTable("Users", ["ID", "Name"], rows)
+
+# Terminal: ASCII table with colors
+# Bifrost: JSON event → {"event": "zTable", "title": "Users", ...}
+```
+
+**Why it matters:**
+- **Developer productivity**: Write once, runs everywhere
+- **Consistent UX**: Same features in Terminal and GUI
+- **Mode-agnostic**: No `if mode == "Terminal"` checks needed
+
+**2. Event-Driven Rendering (30+ Events)**
+
+All display operations route through events:
+
+```python
+# Modern style (direct method)
+z.display.success("Done!")
+
+# Legacy style (event dict)
+z.display.handle({"event": "success", "content": "Done!"})
+
+# Both work identically - events adapt to current mode
+```
+
+**Event categories:**
+- **Output**: text, header, line
+- **Signal**: error, warning, success, info, zMarker
+- **Data**: list, json, zTable (with pagination)
+- **System**: zDeclare, zSession, zCrumbs, zMenu, zDialog, zConfig
+- **Widget**: progress_bar, spinner, swiper, progress_iterator
+- **Input**: selection, read_string, read_password
+- **Primitive**: write_raw, write_line, write_block
+
+**3. Composition Pattern (DRY Architecture)**
+
+Event packages compose lower layers:
+
+```
+AdvancedData (tables)
+    ↓ uses
+Signals (error, success)
+    ↓ uses
+BasicOutputs (header, text)
+    ↓ uses
+Primitives (write_raw, send_websocket)
+```
+
+**Why it matters:**
+- Zero code duplication across event packages
+- Consistent behavior (all events use same primitives)
+- Easy maintenance (change primitive → all events updated)
+
+### Comprehensive Test Coverage (73 Tests)
+
+```
+zDisplay (73 tests across 13 modules):
+├── A. zDisplay Facade (5 tests)         ← Main API entry point
+├── B. Primitives (6 tests)              ← Low-level I/O (Terminal/Bifrost)
+├── C. Events Orchestration (5 tests)    ← Event routing & composition
+├── D. Output Events (6 tests)           ← text, header, line
+├── E. Signal Events (6 tests)           ← error, warning, success, info
+├── F. Data Events (6 tests)             ← list, json, tables
+├── G. System Events (8 tests)           ← session, menu, config, breadcrumbs
+├── H. Widget Events (7 tests)           ← progress, spinner, swiper [NEW]
+├── I. Input Events (4 tests)            ← user input collection
+├── J. Auth Events (4 tests)             ← authentication UI
+├── K. Delegates (10 tests)              ← backward compatibility layer
+├── L. System Extended (1 test)          ← zConfig display [NEW]
+└── M. Integration (6 tests)             ← multi-mode, error recovery
+```
+
+**Run it:** `zolo ztests` → select "zDisplay" → watch 73 tests pass in ~2 seconds
+
+### Common Mistakes (Avoid These!)
+
+**❌ WRONG: Using raw print/input**
+```python
+print("Hello World")  # ❌ Doesn't work in Bifrost mode!
+user_input = input("Name: ")  # ❌ Terminal-only!
+```
+
+**✅ RIGHT: Use zDisplay methods**
+```python
+z.display.text("Hello World")  # ✅ Works in both modes
+user_input = z.display.read_string("Name: ")  # ✅ Mode-agnostic
+```
+
+---
+
+**❌ WRONG: Checking mode manually**
+```python
+if z.session.get("zMode") == "Terminal":
+    print("Success!")
+else:
+    # Send WebSocket event...
+```
+
+**✅ RIGHT: Let events adapt automatically**
+```python
+z.display.success("Success!")  # ✅ Adapts to mode automatically
+```
+
+---
+
+**❌ WRONG: Reinventing pagination**
+```python
+# Manual slicing
+page_size = 20
+offset = 40
+page_data = data[offset:offset + page_size]
+# ... display logic ...
+```
+
+**✅ RIGHT: Use built-in pagination**
+```python
+z.display.zTable("Results", columns, data, limit=20, offset=40)
+# ✅ Handles slicing, formatting, pagination footer
+```
+
+---
+
+**❌ WRONG: Only testing facade methods**
+```python
+# Don't forget to test internal components!
+```
+
+**✅ RIGHT: Test all 13 modules (A-M)**
+```python
+# Facade + Primitives + Events + Outputs + Signals + Data + System + Widgets + Input + Auth + Delegates + Integration
+# See zTestRunner/zUI.zDisplay_tests.yaml for complete example
+```
+
+### Architecture (13 Modules)
+
+```
+zDisplay/
+├── zDisplay.py                         (Facade - main API)
+├── zDisplay_modules/
+    ├── display_primitives.py           (Low-level I/O)
+    ├── display_events.py               (Event orchestrator)
+    ├── display_delegates.py            (Convenience methods)
+    │   └── delegates/                  (5 category files)
+    └── events/                         (8 event packages)
+        ├── display_event_outputs.py    (text, header)
+        ├── display_event_signals.py    (error, warning, success)
+        ├── display_event_data.py       (list, json)
+        ├── display_event_advanced.py   (zTable with pagination)
+        ├── display_event_timebased.py  (progress, spinner, swiper)
+        ├── display_event_inputs.py     (selection)
+        ├── display_event_auth.py       (login prompts)
+        └── display_event_system.py     (session, menu, config)
+```
+
+### Smart Pagination (Advanced Feature)
+
+```python
+# First 10 rows
+z.display.zTable("Results", columns, rows, limit=10)
+
+# Last 10 rows (negative limit)
+z.display.zTable("Recent Activity", columns, rows, limit=-10)
+
+# Page 3 (skip 20, show next 10)
+z.display.zTable("Users", columns, rows, limit=10, offset=20)
+```
+
+**Why it matters:**
+- Handles large datasets efficiently
+- Automatic pagination footer ("... 23 more rows")
+- Works in both Terminal and Bifrost modes
+
+### Documentation
+
+- **[zDisplay Guide](Documentation/zDisplay_GUIDE.md)** - **Display & rendering subsystem** (✅ Updated - CEO & dev-friendly)
+- **Test Suite**: `zTestRunner/zUI.zDisplay_tests.yaml` (73 tests, 100% coverage)
+- **Plugin**: `zTestRunner/plugins/zdisplay_tests.py` (test logic)
 
 ---
 
@@ -2089,16 +2344,18 @@ See `Documentation/TESTING_STRATEGY.md` for comprehensive guide.
 
 ## Common Pitfalls (Learn from v1.5.4)
 
-### ❌ Wrong: Direct `print()` usage
+### ❌ Wrong: Direct `print()` or `input()` usage
 ```python
-print("Processing users...")  # NO!
+print("Processing users...")  # ❌ Doesn't work in Bifrost mode!
+user_name = input("Name: ")  # ❌ Terminal-only!
 ```
 
-### ✅ Right: Use zCLI tools
+### ✅ Right: Use zDisplay methods (mode-agnostic)
 ```python
-z.logger.info("Processing users...")
-# OR
-z.display.zHorizontal("Processing users...")
+z.display.text("Processing users...")  # ✅ Works in Terminal AND Bifrost
+user_name = z.display.read_string("Name: ")  # ✅ Dual-mode compatible
+# OR for logging only:
+z.logger.info("Processing users...")  # ✅ Goes to logs, not display
 ```
 
 ### ❌ Wrong: Invalid zSpark
@@ -2180,17 +2437,20 @@ Loading a schema doesn't auto-create tables - you must explicitly call `create_t
 - `Documentation/zPath_GUIDE.md` - Path resolution
 - `Documentation/zConfig_GUIDE.md` - **Configuration** (✅ Updated - CEO & dev-friendly)
 - `Documentation/zComm_GUIDE.md` - **Communication** (✅ Updated - CEO & dev-friendly)
+- `Documentation/zDisplay_GUIDE.md` - **Display & Rendering** (✅ Updated - CEO & dev-friendly)
 - `Documentation/zServer_GUIDE.md` - HTTP server
 - `Documentation/SEPARATION_CHECKLIST.md` - Architecture validation
 
 **See**: `Documentation/` for all 25+ subsystem guides
 
 **Declarative Testing**:
-- `zTestRunner/` - Declarative test suite (164 tests total)
+- `zTestRunner/` - Declarative test suite (237 tests total)
 - **zConfig**: `zTestRunner/zUI.zConfig_tests.yaml` (66 tests, 100% coverage)
   - Plugin: `zTestRunner/plugins/zconfig_tests.py` (test logic)
 - **zComm**: `zTestRunner/zUI.zComm_tests.yaml` (98 tests, 100% coverage)
   - Plugin: `zTestRunner/plugins/zcomm_tests.py` (test logic)
+- **zDisplay**: `zTestRunner/zUI.zDisplay_tests.yaml` (73 tests, 100% coverage)
+  - Plugin: `zTestRunner/plugins/zdisplay_tests.py` (test logic)
 
 ---
 
@@ -2420,9 +2680,10 @@ sessions_db.parent.mkdir(parents=True, exist_ok=True)
 - Week 3.1: ✅ bcrypt password hashing (14 tests)
 - Week 3.2: ✅ Persistent sessions with zData (10 tests)
 **Total Tests**: 931 passing (100% pass rate) 🎉  
-**Declarative Test Suite**: ✅ zTestRunner operational (164 tests, 100% subsystem coverage)
+**Declarative Test Suite**: ✅ zTestRunner operational (237 tests, 100% subsystem coverage)
 - **zConfig**: 66 tests (100% pass) 
 - **zComm**: 98 tests (100% pass)
+- **zDisplay**: 73 tests (100% pass)
 **Next**: Week 3.3 - Enhanced RBAC decorators
 
 ---
@@ -2441,4 +2702,11 @@ sessions_db.parent.mkdir(parents=True, exist_ok=True)
 - **Status:** A+ grade (100% type hints, 300+ constants, three-tier auth, cache security)
 - **Run Tests:** `zolo ztests` → select "zComm"
 - **Innovations:** Three-tier authentication (industry-first), cache security isolation
+
+**zDisplay (Week 6.4 - Complete):**
+- **Guide:** `Documentation/zDisplay_GUIDE.md` - CEO & developer-friendly (updated)
+- **Test Suite:** `zTestRunner/zUI.zDisplay_tests.yaml` - 73 declarative tests (100% coverage)
+- **Status:** A+ grade (100% type hints, 30+ event constants, dual-mode architecture)
+- **Run Tests:** `zolo ztests` → select "zDisplay"
+- **Innovations:** Automatic mode adaptation (Terminal/Bifrost), composition pattern (DRY), smart pagination
 

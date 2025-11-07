@@ -57,8 +57,8 @@ class zFunc:
             func = self._resolve_callable_with_display(func_path, function_name)
             self.logger.debug("Resolved: %s.%s", func.__module__, func.__name__)
 
-            # Step 4: Execute function with optional session injection
-            result = self._execute_function(func, args)
+            # Step 4: Execute function with optional session/context injection
+            result = self._execute_function(func, args, zContext)
             self.logger.debug("Execution result: %s", result)
 
             # Step 5: Display result
@@ -82,8 +82,8 @@ class zFunc:
         from .zFunc_modules.func_resolver import resolve_callable
         return resolve_callable(func_path, function_name, self.logger)
 
-    def _execute_function(self, func, args):
-        """Execute function with optional session/zcli injection."""
+    def _execute_function(self, func, args, zContext=None):
+        """Execute function with optional session/zcli/context injection."""
         import asyncio
         
         sig = inspect.signature(func)
@@ -103,6 +103,11 @@ class zFunc:
             if inject_session:
                 self.logger.debug("Auto-injecting session to function")
                 kwargs['session'] = self.session
+        
+        # Auto-inject context if function accepts it (for zWizard/zHat access)
+        if 'context' in sig.parameters and zContext:
+            self.logger.debug("Auto-injecting context to function")
+            kwargs['context'] = zContext
 
         # Execute with injected kwargs
         if kwargs:

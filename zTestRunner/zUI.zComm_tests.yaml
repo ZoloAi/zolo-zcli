@@ -1,367 +1,367 @@
 # zTestRunner/zUI.zComm_tests.yaml
-# Comprehensive A-to-H zComm Test Suite (48 tests)
-# Auto-run wizard pattern with result accumulation
-# Covers all 8 zComm modules including facade API and helpers
+# Comprehensive A-to-O zComm Test Suite (98 tests)
+# Auto-run wizard pattern with result accumulation in zHat
+# Covers all 15 zComm modules including facade API and helpers
 
 zVaF:
   # ===============================================================
   # A. zComm Facade API Tests (14 tests) - zComm.py
   # ===============================================================
+  zWizard:
+    "test_01_facade_initialization":
+      zFunc: "&zcomm_tests.test_facade_initialization()"
+    
+    "test_02_facade_websocket_property":
+      zFunc: "&zcomm_tests.test_facade_websocket_property()"
+    
+    "test_03_facade_create_websocket":
+      zFunc: "&zcomm_tests.test_facade_create_websocket()"
   
-  "test_01_facade_initialization":
-    zFunc: "&zcomm_tests.test_facade_initialization()"
+    "test_04_facade_create_http_server":
+      zFunc: "&zcomm_tests.test_facade_create_http_server()"
   
-  "test_02_facade_websocket_property":
-    zFunc: "&zcomm_tests.test_facade_websocket_property()"
+    "test_05_facade_start_service":
+      zFunc: "&zcomm_tests.test_facade_start_service()"
   
-  "test_03_facade_create_websocket":
-    zFunc: "&zcomm_tests.test_facade_create_websocket()"
+    "test_06_facade_stop_service":
+      zFunc: "&zcomm_tests.test_facade_stop_service()"
   
-  "test_04_facade_create_http_server":
-    zFunc: "&zcomm_tests.test_facade_create_http_server()"
+    "test_07_facade_restart_service":
+      zFunc: "&zcomm_tests.test_facade_restart_service()"
   
-  "test_05_facade_start_service":
-    zFunc: "&zcomm_tests.test_facade_start_service()"
+    "test_08_facade_service_status":
+      zFunc: "&zcomm_tests.test_facade_service_status()"
   
-  "test_06_facade_stop_service":
-    zFunc: "&zcomm_tests.test_facade_stop_service()"
+    "test_09_facade_get_service_connection_info":
+      zFunc: "&zcomm_tests.test_facade_get_service_connection_info()"
   
-  "test_07_facade_restart_service":
-    zFunc: "&zcomm_tests.test_facade_restart_service()"
+    "test_10_facade_websocket_health_check":
+      zFunc: "&zcomm_tests.test_facade_websocket_health_check()"
   
-  "test_08_facade_service_status":
-    zFunc: "&zcomm_tests.test_facade_service_status()"
+    "test_11_facade_server_health_check":
+      zFunc: "&zcomm_tests.test_facade_server_health_check()"
   
-  "test_09_facade_get_service_connection_info":
-    zFunc: "&zcomm_tests.test_facade_get_service_connection_info()"
+    "test_12_facade_health_check_all":
+      zFunc: "&zcomm_tests.test_facade_health_check_all()"
   
-  "test_10_facade_websocket_health_check":
-    zFunc: "&zcomm_tests.test_facade_websocket_health_check()"
+    "test_13_facade_check_port":
+      zFunc: "&zcomm_tests.test_facade_check_port()"
   
-  "test_11_facade_server_health_check":
-    zFunc: "&zcomm_tests.test_facade_server_health_check()"
+    "test_14_facade_http_post":
+      zFunc: "&zcomm_tests.test_facade_http_post()"
   
-  "test_12_facade_health_check_all":
-    zFunc: "&zcomm_tests.test_facade_health_check_all()"
+    # ===============================================================
+    # B. Bifrost Manager Tests (8 tests) - comm_bifrost.py
+    # ===============================================================
   
-  "test_13_facade_check_port":
-    zFunc: "&zcomm_tests.test_facade_check_port()"
+    "test_15_bifrost_initialization":
+      zFunc: "&zcomm_tests.test_bifrost_initialization()"
   
-  "test_14_facade_http_post":
-    zFunc: "&zcomm_tests.test_facade_http_post()"
+    "test_16_bifrost_auto_start_check":
+      zFunc: "&zcomm_tests.test_bifrost_auto_start_check()"
   
-  # ===============================================================
-  # B. Bifrost Manager Tests (8 tests) - comm_bifrost.py
-  # ===============================================================
+    "test_17_bifrost_create":
+      zFunc: "&zcomm_tests.test_bifrost_create()"
   
-  "test_15_bifrost_initialization":
-    zFunc: "&zcomm_tests.test_bifrost_initialization()"
+    "test_18_bifrost_get_instance":
+      zFunc: "&zcomm_tests.test_bifrost_get_instance()"
   
-  "test_16_bifrost_auto_start_check":
-    zFunc: "&zcomm_tests.test_bifrost_auto_start_check()"
+    "test_19_bifrost_auto_start":
+      zFunc: "&zcomm_tests.test_bifrost_health_check()"
   
-  "test_17_bifrost_create":
-    zFunc: "&zcomm_tests.test_bifrost_create()"
+    "test_20_bifrost_session_integration":
+      zFunc: "&zcomm_tests.test_bifrost_session_integration()"
   
-  "test_18_bifrost_get_instance":
-    zFunc: "&zcomm_tests.test_bifrost_get_instance()"
+    "test_21_bifrost_mode_detection":
+      zFunc: "&zcomm_tests.test_bifrost_mode_detection()"
   
-  "test_19_bifrost_auto_start":
-    zFunc: "&zcomm_tests.test_bifrost_health_check()"
+    "test_22_bifrost_instance_caching":
+      zFunc: "&zcomm_tests.test_bifrost_instance_caching()"
   
-  "test_20_bifrost_session_integration":
-    zFunc: "&zcomm_tests.test_bifrost_session_integration()"
+    # ===============================================================
+    # C. HTTP Client Tests (5 tests) - comm_http.py
+    # ===============================================================
   
-  "test_21_bifrost_mode_detection":
-    zFunc: "&zcomm_tests.test_bifrost_mode_detection()"
+    "test_23_http_client_initialization":
+      zFunc: "&zcomm_tests.test_http_client_initialization()"
   
-  "test_22_bifrost_instance_caching":
-    zFunc: "&zcomm_tests.test_bifrost_instance_caching()"
+    "test_24_http_client_post_method":
+      zFunc: "&zcomm_tests.test_http_client_post_method()"
   
-  # ===============================================================
-  # C. HTTP Client Tests (5 tests) - comm_http.py
-  # ===============================================================
+    "test_25_http_client_timeout":
+      zFunc: "&zcomm_tests.test_http_client_timeout()"
   
-  "test_23_http_client_initialization":
-    zFunc: "&zcomm_tests.test_http_client_initialization()"
+    "test_26_http_client_error_handling":
+      zFunc: "&zcomm_tests.test_http_client_error_handling()"
   
-  "test_24_http_client_post_method":
-    zFunc: "&zcomm_tests.test_http_client_post_method()"
+    "test_27_http_client_data_serialization":
+      zFunc: "&zcomm_tests.test_http_client_data_serialization()"
   
-  "test_25_http_client_timeout":
-    zFunc: "&zcomm_tests.test_http_client_timeout()"
+    # ===============================================================
+    # D. Service Manager Tests (7 tests) - comm_services.py
+    # ===============================================================
   
-  "test_26_http_client_error_handling":
-    zFunc: "&zcomm_tests.test_http_client_error_handling()"
+    "test_28_service_manager_initialization":
+      zFunc: "&zcomm_tests.test_service_manager_initialization()"
   
-  "test_27_http_client_data_serialization":
-    zFunc: "&zcomm_tests.test_http_client_data_serialization()"
+    "test_29_service_manager_start":
+      zFunc: "&zcomm_tests.test_service_manager_start()"
   
-  # ===============================================================
-  # D. Service Manager Tests (7 tests) - comm_services.py
-  # ===============================================================
+    "test_30_service_manager_stop":
+      zFunc: "&zcomm_tests.test_service_manager_stop()"
   
-  "test_28_service_manager_initialization":
-    zFunc: "&zcomm_tests.test_service_manager_initialization()"
+    "test_31_service_manager_restart":
+      zFunc: "&zcomm_tests.test_service_manager_restart()"
   
-  "test_29_service_manager_start":
-    zFunc: "&zcomm_tests.test_service_manager_start()"
+    "test_32_service_manager_status":
+      zFunc: "&zcomm_tests.test_service_manager_status()"
   
-  "test_30_service_manager_stop":
-    zFunc: "&zcomm_tests.test_service_manager_stop()"
+    "test_33_service_manager_connection_info":
+      zFunc: "&zcomm_tests.test_service_manager_connection_info()"
   
-  "test_31_service_manager_restart":
-    zFunc: "&zcomm_tests.test_service_manager_restart()"
+    "test_34_service_manager_unknown_service":
+      zFunc: "&zcomm_tests.test_service_manager_unknown_service()"
   
-  "test_32_service_manager_status":
-    zFunc: "&zcomm_tests.test_service_manager_status()"
+    # ===============================================================
+    # E. Network Utils Tests (6 tests) - helpers/network_utils.py
+    # ===============================================================
   
-  "test_33_service_manager_connection_info":
-    zFunc: "&zcomm_tests.test_service_manager_connection_info()"
+    "test_35_network_utils_initialization":
+      zFunc: "&zcomm_tests.test_network_utils_initialization()"
   
-  "test_34_service_manager_unknown_service":
-    zFunc: "&zcomm_tests.test_service_manager_unknown_service()"
+    "test_36_network_utils_check_port_available":
+      zFunc: "&zcomm_tests.test_network_utils_check_port_available()"
   
-  # ===============================================================
-  # E. Network Utils Tests (6 tests) - helpers/network_utils.py
-  # ===============================================================
+    "test_37_network_utils_check_port_in_use":
+      zFunc: "&zcomm_tests.test_network_utils_check_port_in_use()"
   
-  "test_35_network_utils_initialization":
-    zFunc: "&zcomm_tests.test_network_utils_initialization()"
+    "test_38_network_utils_invalid_port":
+      zFunc: "&zcomm_tests.test_network_utils_invalid_port()"
   
-  "test_36_network_utils_check_port_available":
-    zFunc: "&zcomm_tests.test_network_utils_check_port_available()"
+    "test_39_network_utils_port_range":
+      zFunc: "&zcomm_tests.test_network_utils_port_range()"
   
-  "test_37_network_utils_check_port_in_use":
-    zFunc: "&zcomm_tests.test_network_utils_check_port_in_use()"
+    "test_40_network_utils_error_handling":
+      zFunc: "&zcomm_tests.test_network_utils_error_handling()"
   
-  "test_38_network_utils_invalid_port":
-    zFunc: "&zcomm_tests.test_network_utils_invalid_port()"
+    # ===============================================================
+    # F. HTTP Server (zServer) Tests (4 tests) - via zConfig
+    # ===============================================================
   
-  "test_39_network_utils_port_range":
-    zFunc: "&zcomm_tests.test_network_utils_port_range()"
+    "test_41_http_server_create":
+      zFunc: "&zcomm_tests.test_http_server_create()"
   
-  "test_40_network_utils_error_handling":
-    zFunc: "&zcomm_tests.test_network_utils_error_handling()"
+    "test_42_http_server_health_check":
+      zFunc: "&zcomm_tests.test_http_server_health_check()"
   
-  # ===============================================================
-  # F. HTTP Server (zServer) Tests (4 tests) - via zConfig
-  # ===============================================================
+    "test_43_http_server_configuration":
+      zFunc: "&zcomm_tests.test_http_server_configuration()"
   
-  "test_41_http_server_create":
-    zFunc: "&zcomm_tests.test_http_server_create()"
+    "test_44_http_server_instance_access":
+      zFunc: "&zcomm_tests.test_http_server_instance_access()"
   
-  "test_42_http_server_health_check":
-    zFunc: "&zcomm_tests.test_http_server_health_check()"
+    # ===============================================================
+    # G. Integration Tests (3 tests) - Cross-module
+    # ===============================================================
   
-  "test_43_http_server_configuration":
-    zFunc: "&zcomm_tests.test_http_server_configuration()"
+    "test_45_integration_health_checks":
+      zFunc: "&zcomm_tests.test_integration_health_checks()"
   
-  "test_44_http_server_instance_access":
-    zFunc: "&zcomm_tests.test_http_server_instance_access()"
+    "test_46_integration_session_access":
+      zFunc: "&zcomm_tests.test_integration_session_access()"
   
-  # ===============================================================
-  # G. Integration Tests (3 tests) - Cross-module
-  # ===============================================================
+    "test_47_integration_logger_access":
+      zFunc: "&zcomm_tests.test_integration_logger_access()"
   
-  "test_45_integration_health_checks":
-    zFunc: "&zcomm_tests.test_integration_health_checks()"
+    # ===============================================================
+    # H. Layer 0 Compliance Tests (1 test) - Architecture
+    # ===============================================================
   
-  "test_46_integration_session_access":
-    zFunc: "&zcomm_tests.test_integration_session_access()"
+    "test_48_layer0_no_display_dependency":
+      zFunc: "&zcomm_tests.test_layer0_no_display_dependency()"
   
-  "test_47_integration_logger_access":
-    zFunc: "&zcomm_tests.test_integration_logger_access()"
+    # ===============================================================
+    # I. PostgreSQL Service Tests (6 tests) - services/postgresql_service.py
+    # ===============================================================
   
-  # ===============================================================
-  # H. Layer 0 Compliance Tests (1 test) - Architecture
-  # ===============================================================
+    "test_49_postgresql_initialization":
+      zFunc: "&zcomm_tests.test_postgresql_initialization()"
   
-  "test_48_layer0_no_display_dependency":
-    zFunc: "&zcomm_tests.test_layer0_no_display_dependency()"
+    "test_50_postgresql_start_method":
+      zFunc: "&zcomm_tests.test_postgresql_start_method()"
   
-  # ===============================================================
-  # I. PostgreSQL Service Tests (6 tests) - services/postgresql_service.py
-  # ===============================================================
+    "test_51_postgresql_stop_method":
+      zFunc: "&zcomm_tests.test_postgresql_stop_method()"
   
-  "test_49_postgresql_initialization":
-    zFunc: "&zcomm_tests.test_postgresql_initialization()"
+    "test_52_postgresql_is_running":
+      zFunc: "&zcomm_tests.test_postgresql_is_running()"
   
-  "test_50_postgresql_start_method":
-    zFunc: "&zcomm_tests.test_postgresql_start_method()"
+    "test_53_postgresql_status":
+      zFunc: "&zcomm_tests.test_postgresql_status()"
   
-  "test_51_postgresql_stop_method":
-    zFunc: "&zcomm_tests.test_postgresql_stop_method()"
+    "test_54_postgresql_connection_info":
+      zFunc: "&zcomm_tests.test_postgresql_connection_info()"
   
-  "test_52_postgresql_is_running":
-    zFunc: "&zcomm_tests.test_postgresql_is_running()"
+    # ===============================================================
+    # J. zBifrost Bridge Tests (8 tests) - bifrost/bifrost_bridge.py
+    # ===============================================================
   
-  "test_53_postgresql_status":
-    zFunc: "&zcomm_tests.test_postgresql_status()"
+    "test_55_bifrost_bridge_class":
+      zFunc: "&zcomm_tests.test_bifrost_bridge_class()"
   
-  "test_54_postgresql_connection_info":
-    zFunc: "&zcomm_tests.test_postgresql_connection_info()"
+    "test_56_bifrost_initialization_validation":
+      zFunc: "&zcomm_tests.test_bifrost_initialization_validation()"
   
-  # ===============================================================
-  # J. zBifrost Bridge Tests (8 tests) - bifrost/bifrost_bridge.py
-  # ===============================================================
+    "test_57_bifrost_client_management":
+      zFunc: "&zcomm_tests.test_bifrost_client_management()"
   
-  "test_55_bifrost_bridge_class":
-    zFunc: "&zcomm_tests.test_bifrost_bridge_class()"
+    "test_58_bifrost_component_initialization":
+      zFunc: "&zcomm_tests.test_bifrost_component_initialization()"
   
-  "test_56_bifrost_initialization_validation":
-    zFunc: "&zcomm_tests.test_bifrost_initialization_validation()"
+    "test_59_bifrost_config_loading":
+      zFunc: "&zcomm_tests.test_bifrost_config_loading()"
   
-  "test_57_bifrost_client_management":
-    zFunc: "&zcomm_tests.test_bifrost_client_management()"
+    "test_60_bifrost_port_validation":
+      zFunc: "&zcomm_tests.test_bifrost_port_validation()"
   
-  "test_58_bifrost_component_initialization":
-    zFunc: "&zcomm_tests.test_bifrost_component_initialization()"
+    "test_61_bifrost_running_state":
+      zFunc: "&zcomm_tests.test_bifrost_running_state()"
   
-  "test_59_bifrost_config_loading":
-    zFunc: "&zcomm_tests.test_bifrost_config_loading()"
+    "test_62_bifrost_event_map":
+      zFunc: "&zcomm_tests.test_bifrost_event_map()"
   
-  "test_60_bifrost_port_validation":
-    zFunc: "&zcomm_tests.test_bifrost_port_validation()"
+    # ===============================================================
+    # K. Bridge Connection Tests (4 tests) - bridge_modules/bridge_connection.py
+    # ===============================================================
   
-  "test_61_bifrost_running_state":
-    zFunc: "&zcomm_tests.test_bifrost_running_state()"
+    "test_63_connection_info_manager":
+      zFunc: "&zcomm_tests.test_connection_info_manager()"
   
-  "test_62_bifrost_event_map":
-    zFunc: "&zcomm_tests.test_bifrost_event_map()"
+    "test_64_connection_metadata":
+      zFunc: "&zcomm_tests.test_connection_metadata()"
   
-  # ===============================================================
-  # K. Bridge Connection Tests (4 tests) - bridge_modules/bridge_connection.py
-  # ===============================================================
+    "test_65_connection_get_info":
+      zFunc: "&zcomm_tests.test_connection_get_info()"
   
-  "test_63_connection_info_manager":
-    zFunc: "&zcomm_tests.test_connection_info_manager()"
+    "test_66_connection_api_discovery":
+      zFunc: "&zcomm_tests.test_connection_api_discovery()"
   
-  "test_64_connection_metadata":
-    zFunc: "&zcomm_tests.test_connection_metadata()"
+    # ===============================================================
+    # L. Bridge Auth - Three-Tier Tests (10 tests) - bridge_modules/bridge_auth.py [CRITICAL!]
+    # ===============================================================
   
-  "test_65_connection_get_info":
-    zFunc: "&zcomm_tests.test_connection_get_info()"
+    "test_67_auth_manager_initialization":
+      zFunc: "&zcomm_tests.test_auth_manager_initialization()"
   
-  "test_66_connection_api_discovery":
-    zFunc: "&zcomm_tests.test_connection_api_discovery()"
+    "test_68_auth_layer1_zsession":
+      zFunc: "&zcomm_tests.test_auth_layer1_zsession()"
   
-  # ===============================================================
-  # L. Bridge Auth - Three-Tier Tests (10 tests) - bridge_modules/bridge_auth.py [CRITICAL!]
-  # ===============================================================
+    "test_69_auth_layer2_application":
+      zFunc: "&zcomm_tests.test_auth_layer2_application()"
   
-  "test_67_auth_manager_initialization":
-    zFunc: "&zcomm_tests.test_auth_manager_initialization()"
+    "test_70_auth_layer3_dual":
+      zFunc: "&zcomm_tests.test_auth_layer3_dual()"
   
-  "test_68_auth_layer1_zsession":
-    zFunc: "&zcomm_tests.test_auth_layer1_zsession()"
+    "test_71_auth_multi_app_support":
+      zFunc: "&zcomm_tests.test_auth_multi_app_support()"
   
-  "test_69_auth_layer2_application":
-    zFunc: "&zcomm_tests.test_auth_layer2_application()"
+    "test_72_auth_origin_validation":
+      zFunc: "&zcomm_tests.test_auth_origin_validation()"
   
-  "test_70_auth_layer3_dual":
-    zFunc: "&zcomm_tests.test_auth_layer3_dual()"
+    "test_73_auth_token_extraction":
+      zFunc: "&zcomm_tests.test_auth_token_extraction()"
   
-  "test_71_auth_multi_app_support":
-    zFunc: "&zcomm_tests.test_auth_multi_app_support()"
+    "test_74_auth_client_tracking":
+      zFunc: "&zcomm_tests.test_auth_client_tracking()"
   
-  "test_72_auth_origin_validation":
-    zFunc: "&zcomm_tests.test_auth_origin_validation()"
+    "test_75_auth_context_detection":
+      zFunc: "&zcomm_tests.test_auth_context_detection()"
   
-  "test_73_auth_token_extraction":
-    zFunc: "&zcomm_tests.test_auth_token_extraction()"
+    "test_76_auth_configurable_providers":
+      zFunc: "&zcomm_tests.test_auth_configurable_providers()"
   
-  "test_74_auth_client_tracking":
-    zFunc: "&zcomm_tests.test_auth_client_tracking()"
+    # ===============================================================
+    # M. Bridge Cache - Security Tests (8 tests) - bridge_modules/bridge_cache.py [SECURITY!]
+    # ===============================================================
   
-  "test_75_auth_context_detection":
-    zFunc: "&zcomm_tests.test_auth_context_detection()"
+    "test_77_cache_manager_initialization":
+      zFunc: "&zcomm_tests.test_cache_manager_initialization()"
   
-  "test_76_auth_configurable_providers":
-    zFunc: "&zcomm_tests.test_auth_configurable_providers()"
+    "test_78_cache_user_isolation":
+      zFunc: "&zcomm_tests.test_cache_user_isolation()"
   
-  # ===============================================================
-  # M. Bridge Cache - Security Tests (8 tests) - bridge_modules/bridge_cache.py [SECURITY!]
-  # ===============================================================
+    "test_79_cache_app_isolation":
+      zFunc: "&zcomm_tests.test_cache_app_isolation()"
   
-  "test_77_cache_manager_initialization":
-    zFunc: "&zcomm_tests.test_cache_manager_initialization()"
+    "test_80_cache_key_generation":
+      zFunc: "&zcomm_tests.test_cache_key_generation()"
   
-  "test_78_cache_user_isolation":
-    zFunc: "&zcomm_tests.test_cache_user_isolation()"
+    "test_81_cache_security_warning":
+      zFunc: "&zcomm_tests.test_cache_security_warning()"
   
-  "test_79_cache_app_isolation":
-    zFunc: "&zcomm_tests.test_cache_app_isolation()"
+    "test_82_cache_query_operations":
+      zFunc: "&zcomm_tests.test_cache_query_operations()"
   
-  "test_80_cache_key_generation":
-    zFunc: "&zcomm_tests.test_cache_key_generation()"
+    "test_83_cache_schema_operations":
+      zFunc: "&zcomm_tests.test_cache_schema_operations()"
   
-  "test_81_cache_security_warning":
-    zFunc: "&zcomm_tests.test_cache_security_warning()"
+    "test_84_cache_clear_operations":
+      zFunc: "&zcomm_tests.test_cache_clear_operations()"
   
-  "test_82_cache_query_operations":
-    zFunc: "&zcomm_tests.test_cache_query_operations()"
+    # ===============================================================
+    # N. Bridge Messages Tests (6 tests) - bridge_modules/bridge_messages.py
+    # ===============================================================
   
-  "test_83_cache_schema_operations":
-    zFunc: "&zcomm_tests.test_cache_schema_operations()"
+    "test_85_message_handler_initialization":
+      zFunc: "&zcomm_tests.test_message_handler_initialization()"
   
-  "test_84_cache_clear_operations":
-    zFunc: "&zcomm_tests.test_cache_clear_operations()"
+    "test_86_message_user_context_extraction":
+      zFunc: "&zcomm_tests.test_message_user_context_extraction()"
   
-  # ===============================================================
-  # N. Bridge Messages Tests (6 tests) - bridge_modules/bridge_messages.py
-  # ===============================================================
+    "test_87_message_cacheable_detection":
+      zFunc: "&zcomm_tests.test_message_cacheable_detection()"
   
-  "test_85_message_handler_initialization":
-    zFunc: "&zcomm_tests.test_message_handler_initialization()"
+    "test_88_message_event_routing":
+      zFunc: "&zcomm_tests.test_message_event_routing()"
   
-  "test_86_message_user_context_extraction":
-    zFunc: "&zcomm_tests.test_message_user_context_extraction()"
+    "test_89_message_json_parsing":
+      zFunc: "&zcomm_tests.test_message_json_parsing()"
   
-  "test_87_message_cacheable_detection":
-    zFunc: "&zcomm_tests.test_message_cacheable_detection()"
+    "test_90_message_error_handling":
+      zFunc: "&zcomm_tests.test_message_error_handling()"
   
-  "test_88_message_event_routing":
-    zFunc: "&zcomm_tests.test_message_event_routing()"
+    # ===============================================================
+    # O. Event Handlers Tests (8 tests) - bridge_modules/events/
+    # ===============================================================
   
-  "test_89_message_json_parsing":
-    zFunc: "&zcomm_tests.test_message_json_parsing()"
+    "test_91_client_events_initialization":
+      zFunc: "&zcomm_tests.test_client_events_initialization()"
   
-  "test_90_message_error_handling":
-    zFunc: "&zcomm_tests.test_message_error_handling()"
+    "test_92_client_events_lifecycle":
+      zFunc: "&zcomm_tests.test_client_events_lifecycle()"
   
-  # ===============================================================
-  # O. Event Handlers Tests (8 tests) - bridge_modules/events/
-  # ===============================================================
+    "test_93_cache_events_initialization":
+      zFunc: "&zcomm_tests.test_cache_events_initialization()"
   
-  "test_91_client_events_initialization":
-    zFunc: "&zcomm_tests.test_client_events_initialization()"
+    "test_94_cache_events_operations":
+      zFunc: "&zcomm_tests.test_cache_events_operations()"
   
-  "test_92_client_events_lifecycle":
-    zFunc: "&zcomm_tests.test_client_events_lifecycle()"
+    "test_95_discovery_events_initialization":
+      zFunc: "&zcomm_tests.test_discovery_events_initialization()"
   
-  "test_93_cache_events_initialization":
-    zFunc: "&zcomm_tests.test_cache_events_initialization()"
+    "test_96_discovery_events_introspection":
+      zFunc: "&zcomm_tests.test_discovery_events_introspection()"
   
-  "test_94_cache_events_operations":
-    zFunc: "&zcomm_tests.test_cache_events_operations()"
+    "test_97_dispatch_events_initialization":
+      zFunc: "&zcomm_tests.test_dispatch_events_initialization()"
   
-  "test_95_discovery_events_initialization":
-    zFunc: "&zcomm_tests.test_discovery_events_initialization()"
-  
-  "test_96_discovery_events_introspection":
-    zFunc: "&zcomm_tests.test_discovery_events_introspection()"
-  
-  "test_97_dispatch_events_initialization":
-    zFunc: "&zcomm_tests.test_dispatch_events_initialization()"
-  
-  "test_98_dispatch_events_user_context":
-    zFunc: "&zcomm_tests.test_dispatch_events_user_context()"
-  
-  # ===============================================================
-  # Display Results and Return to Menu
-  # ===============================================================
-  
-  "^display_and_return":
-    zFunc: "&zcomm_tests.display_test_results()"
+    "test_98_dispatch_events_user_context":
+      zFunc: "&zcomm_tests.test_dispatch_events_user_context()"
+    
+    # ===============================================================
+    # Display Results and Return to Menu
+    # ===============================================================
+    
+    "display_and_return":
+      zFunc: "&zcomm_tests.display_test_results()"
 
