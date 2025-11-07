@@ -198,6 +198,7 @@ ACTION_CONFIG_CHECK: str = "check"
 ACTION_CONFIG_SHOW: str = "show"
 ACTION_CONFIG_GET: str = "get"
 ACTION_CONFIG_SET: str = "set"
+ACTION_CONFIG_RESET: str = "reset"
 ACTION_CONFIG_LIST: str = "list"
 ACTION_CONFIG_RELOAD: str = "reload"
 ACTION_CONFIG_VALIDATE: str = "validate"
@@ -254,6 +255,7 @@ VALID_CONFIG_ACTIONS: List[str] = [
     ACTION_CONFIG_SHOW,
     ACTION_CONFIG_GET,
     ACTION_CONFIG_SET,
+    ACTION_CONFIG_RESET,
     ACTION_CONFIG_LIST,
     ACTION_CONFIG_RELOAD,
     ACTION_CONFIG_VALIDATE,
@@ -899,14 +901,19 @@ def _parse_export_command(parts: List[str]) -> Dict[str, Any]:
 
 def _parse_config_command(parts: List[str]) -> Dict[str, Any]:
     """
-    Parse config commands like:
-    'config check', 'config get path', 'config set path value', 'config machine browser Chrome'
+    Parse config commands (unified config system).
+    
+    Supports:
+        - Diagnostics: 'config check', 'config show'
+        - Get: 'config get machine text_editor', 'config get env deployment'
+        - Set: 'config set machine text_editor cursor', 'config set env deployment prod'
+        - Reset: 'config reset machine text_editor', 'config reset env deployment'
     
     Config commands manage configuration state. Validates action against VALID_CONFIG_ACTIONS.
-    Delegates to _parse_config_persistence_command for machine/config actions.
+    Delegates to _parse_config_persistence_command for legacy machine/config actions.
     
     Args:
-        parts: Command parts (e.g., ['config', 'check'] or ['config', 'machine', 'browser', 'Chrome'])
+        parts: Command parts (e.g., ['config', 'check'], ['config', 'set', 'machine', 'browser', 'Chrome'])
     
     Returns:
         Dict[str, Any]: Structured command dict or error dict
@@ -915,8 +922,14 @@ def _parse_config_command(parts: List[str]) -> Dict[str, Any]:
         >>> _parse_config_command(['config', 'check'])
         {'type': 'config', 'action': 'check', 'args': [], 'options': {}}
         
-        >>> _parse_config_command(['config', 'get', 'path'])
-        {'type': 'config', 'action': 'get', 'args': ['path'], 'options': {}}
+        >>> _parse_config_command(['config', 'get', 'machine', 'text_editor'])
+        {'type': 'config', 'action': 'get', 'args': ['machine', 'text_editor'], 'options': {}}
+        
+        >>> _parse_config_command(['config', 'set', 'machine', 'text_editor', 'cursor'])
+        {'type': 'config', 'action': 'set', 'args': ['machine', 'text_editor', 'cursor'], 'options': {}}
+        
+        >>> _parse_config_command(['config', 'reset', 'env', 'deployment'])
+        {'type': 'config', 'action': 'reset', 'args': ['env', 'deployment'], 'options': {}}
         
         >>> _parse_config_command(['config', 'machine', 'browser', 'Chrome'])
         {'type': 'config_persistence', 'action': 'machine', 'args': ['browser', 'Chrome'], 'options': {}}
