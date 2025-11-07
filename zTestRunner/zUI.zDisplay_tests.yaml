@@ -1,7 +1,7 @@
 # zTestRunner/zUI.zDisplay_tests.yaml
-# Comprehensive A-to-M zDisplay Test Suite (73 tests)
+# Comprehensive A-to-O zDisplay Test Suite (86 tests)
 # Auto-run wizard pattern with result accumulation in zHat
-# Covers all 13 zDisplay modules including facade API, primitives, events, and delegates
+# Covers all 13 zDisplay modules + 13 real integration tests (including AdvancedData)
 
 zVaF:
   # ===============================================================
@@ -274,6 +274,53 @@ zVaF:
     
     "test_73_integration_session_access":
       zFunc: "&zdisplay_tests.test_integration_session_access()"
+    
+    # ===============================================================
+    # N. Real Integration Tests - Actual Operations (8 tests)
+    # ===============================================================
+    
+    "test_74_integration_real_text_output":
+      zFunc: "&zdisplay_tests.test_integration_real_text_output()"
+    
+    "test_75_integration_real_signal_operations":
+      zFunc: "&zdisplay_tests.test_integration_real_signal_operations()"
+    
+    "test_76_integration_real_table_rendering":
+      zFunc: "&zdisplay_tests.test_integration_real_table_rendering()"
+    
+    "test_77_integration_real_list_formatting":
+      zFunc: "&zdisplay_tests.test_integration_real_list_formatting()"
+    
+    "test_78_integration_real_json_formatting":
+      zFunc: "&zdisplay_tests.test_integration_real_json_formatting()"
+    
+    "test_79_integration_real_header_rendering":
+      zFunc: "&zdisplay_tests.test_integration_real_header_rendering()"
+    
+    "test_80_integration_real_delegate_forwarding":
+      zFunc: "&zdisplay_tests.test_integration_real_delegate_forwarding()"
+    
+    "test_81_integration_real_mode_specific_behavior":
+      zFunc: "&zdisplay_tests.test_integration_real_mode_specific_behavior()"
+    
+    # ===============================================================
+    # O. AdvancedData Integration Tests - Real zTable Operations (5 tests)
+    # ===============================================================
+    
+    "test_82_advanceddata_ztable_basic":
+      zFunc: "&zdisplay_tests.test_integration_ztable_basic_rendering()"
+    
+    "test_83_advanceddata_ztable_pagination_positive":
+      zFunc: "&zdisplay_tests.test_integration_ztable_pagination_positive()"
+    
+    "test_84_advanceddata_ztable_pagination_negative":
+      zFunc: "&zdisplay_tests.test_integration_ztable_pagination_negative()"
+    
+    "test_85_advanceddata_pagination_helper":
+      zFunc: "&zdisplay_tests.test_integration_pagination_helper_modes()"
+    
+    "test_86_advanceddata_edge_cases":
+      zFunc: "&zdisplay_tests.test_integration_ztable_empty_and_edge_cases()"
     
     # ===============================================================
     # Display Results and Return to Menu

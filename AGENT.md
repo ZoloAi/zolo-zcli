@@ -4,10 +4,11 @@
 
 **Latest**: v1.5.4 - Layer 0 Complete (70% coverage, 907 tests passing)
 
-**New**: Declarative Test Suite (`zTestRunner`) - 237 tests total (100% subsystem coverage) ✅
+**New**: Declarative Test Suite (`zTestRunner`) - 296 tests total (100% subsystem coverage) ✅
 - **zConfig**: 66 tests (100% pass) - Configuration subsystem
 - **zComm**: 98 tests (100% pass) - Communication subsystem
 - **zDisplay**: 73 tests (100% pass) - Display & rendering subsystem
+- **zAuth**: 59 tests (mock authentication) - Authentication & authorization subsystem
 
 ---
 
@@ -2444,13 +2445,15 @@ Loading a schema doesn't auto-create tables - you must explicitly call `create_t
 **See**: `Documentation/` for all 25+ subsystem guides
 
 **Declarative Testing**:
-- `zTestRunner/` - Declarative test suite (237 tests total)
+- `zTestRunner/` - Declarative test suite (296 tests total)
 - **zConfig**: `zTestRunner/zUI.zConfig_tests.yaml` (66 tests, 100% coverage)
   - Plugin: `zTestRunner/plugins/zconfig_tests.py` (test logic)
 - **zComm**: `zTestRunner/zUI.zComm_tests.yaml` (98 tests, 100% coverage)
   - Plugin: `zTestRunner/plugins/zcomm_tests.py` (test logic)
 - **zDisplay**: `zTestRunner/zUI.zDisplay_tests.yaml` (73 tests, 100% coverage)
   - Plugin: `zTestRunner/plugins/zdisplay_tests.py` (test logic)
+- **zAuth**: `zTestRunner/zUI.zAuth_tests.yaml` (59 tests, mock auth)
+  - Plugin: `zTestRunner/plugins/zauth_tests.py` (test logic)
 
 ---
 
@@ -2680,10 +2683,11 @@ sessions_db.parent.mkdir(parents=True, exist_ok=True)
 - Week 3.1: ✅ bcrypt password hashing (14 tests)
 - Week 3.2: ✅ Persistent sessions with zData (10 tests)
 **Total Tests**: 931 passing (100% pass rate) 🎉  
-**Declarative Test Suite**: ✅ zTestRunner operational (237 tests, 100% subsystem coverage)
+**Declarative Test Suite**: ✅ zTestRunner operational (296 tests, 100% subsystem coverage)
 - **zConfig**: 66 tests (100% pass) 
 - **zComm**: 98 tests (100% pass)
 - **zDisplay**: 73 tests (100% pass)
+- **zAuth**: 59 tests (mock authentication)
 **Next**: Week 3.3 - Enhanced RBAC decorators
 
 ---

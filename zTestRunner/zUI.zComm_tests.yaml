@@ -1,7 +1,7 @@
 # zTestRunner/zUI.zComm_tests.yaml
-# Comprehensive A-to-O zComm Test Suite (98 tests)
+# Comprehensive A-to-P zComm Test Suite (106 tests)
 # Auto-run wizard pattern with result accumulation in zHat
-# Covers all 15 zComm modules including facade API and helpers
+# Covers all 15 zComm modules + 8 integration tests
 
 zVaF:
   # ===============================================================
@@ -357,6 +357,34 @@ zVaF:
   
     "test_98_dispatch_events_user_context":
       zFunc: "&zcomm_tests.test_dispatch_events_user_context()"
+    
+    # ===============================================================
+    # P. Integration Tests - Real Operations (8 tests)
+    # ===============================================================
+    
+    "test_99_integration_port_availability":
+      zFunc: "&zcomm_tests.test_integration_port_availability_check()"
+    
+    "test_100_integration_health_check_exec":
+      zFunc: "&zcomm_tests.test_integration_health_check_execution()"
+    
+    "test_101_integration_websocket_lifecycle":
+      zFunc: "&zcomm_tests.test_integration_websocket_server_lifecycle()"
+    
+    "test_102_integration_http_client_init":
+      zFunc: "&zcomm_tests.test_integration_http_client_initialization()"
+    
+    "test_103_integration_service_manager_ops":
+      zFunc: "&zcomm_tests.test_integration_service_manager_operations()"
+    
+    "test_104_integration_bifrost_manager_state":
+      zFunc: "&zcomm_tests.test_integration_bifrost_manager_state()"
+    
+    "test_105_integration_network_utils_ops":
+      zFunc: "&zcomm_tests.test_integration_network_utils_operations()"
+    
+    "test_106_integration_session_persistence":
+      zFunc: "&zcomm_tests.test_integration_session_comm_persistence()"
     
     # ===============================================================
     # Display Results and Return to Menu

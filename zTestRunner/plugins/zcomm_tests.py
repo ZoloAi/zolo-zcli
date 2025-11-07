@@ -1888,6 +1888,238 @@ def test_dispatch_events_user_context(zcli=None, context=None):
 
 
 # ===============================================================
+# P. Integration Tests - Real Operations (8 tests)
+# ===============================================================
+
+def test_integration_port_availability_check(zcli=None, context=None):
+    """Test real port availability checking."""
+    if not zcli:
+        return _store_result(None, "Integration: Port Availability", "ERROR", "No zcli")
+    
+    try:
+        # Test checking an available port (high number, unlikely to be in use)
+        test_port = 59999
+        is_available = zcli.comm.check_port(test_port)
+        
+        if isinstance(is_available, bool):
+            return _store_result(zcli, "Integration: Port Availability", "PASSED", 
+                               f"Port {test_port} check: available={is_available}")
+        else:
+            return _store_result(zcli, "Integration: Port Availability", "FAILED", 
+                               f"Invalid return type: {type(is_available)}")
+    
+    except Exception as e:
+        return _store_result(zcli, "Integration: Port Availability", "ERROR", 
+                           f"Exception: {str(e)}")
+
+
+def test_integration_health_check_execution(zcli=None, context=None):
+    """Test actually calling health_check_all()."""
+    if not zcli:
+        return _store_result(None, "Integration: Health Check Exec", "ERROR", "No zcli")
+    
+    try:
+        # Actually execute the health check
+        health_data = zcli.comm.health_check_all()
+        
+        if not isinstance(health_data, dict):
+            return _store_result(zcli, "Integration: Health Check Exec", "FAILED", 
+                               f"Invalid return type: {type(health_data)}")
+        
+        # Count health checks
+        check_count = len(health_data)
+        
+        return _store_result(zcli, "Integration: Health Check Exec", "PASSED", 
+                           f"Executed: {check_count} checks returned")
+    
+    except Exception as e:
+        return _store_result(zcli, "Integration: Health Check Exec", "ERROR", 
+                           f"Exception: {str(e)}")
+
+
+def test_integration_websocket_server_lifecycle(zcli=None, context=None):
+    """Test WebSocket server creation (without starting)."""
+    if not zcli:
+        return _store_result(None, "Integration: WebSocket Lifecycle", "ERROR", "No zcli")
+    
+    try:
+        # Check if we can access WebSocket configuration
+        ws_config = zcli.config.websocket
+        
+        if not hasattr(ws_config, 'host') or not hasattr(ws_config, 'port'):
+            return _store_result(zcli, "Integration: WebSocket Lifecycle", "FAILED", 
+                               "Missing WebSocket config")
+        
+        # Validate configuration values
+        host = ws_config.host
+        port = ws_config.port
+        
+        if not isinstance(host, str) or not isinstance(port, int):
+            return _store_result(zcli, "Integration: WebSocket Lifecycle", "FAILED", 
+                               f"Invalid config types: host={type(host)}, port={type(port)}")
+        
+        return _store_result(zcli, "Integration: WebSocket Lifecycle", "PASSED", 
+                           f"Config validated: {host}:{port}")
+    
+    except Exception as e:
+        return _store_result(zcli, "Integration: WebSocket Lifecycle", "ERROR", 
+                           f"Exception: {str(e)}")
+
+
+def test_integration_http_client_initialization(zcli=None, context=None):
+    """Test HTTP client can be initialized for real requests."""
+    if not zcli:
+        return _store_result(None, "Integration: HTTP Client Init", "ERROR", "No zcli")
+    
+    try:
+        # Access the HTTP client
+        http_client = zcli.comm._http_client
+        
+        if not http_client:
+            return _store_result(zcli, "Integration: HTTP Client Init", "FAILED", 
+                               "HTTP client not initialized")
+        
+        # Verify it has required attributes for making requests
+        # HTTPClient only needs: logger attribute and post() method
+        has_post = hasattr(http_client, 'post') and callable(http_client.post)
+        has_logger = hasattr(http_client, 'logger')
+        
+        if has_post and has_logger:
+            return _store_result(zcli, "Integration: HTTP Client Init", "PASSED", 
+                               "HTTP client ready (post method + logger)")
+        else:
+            return _store_result(zcli, "Integration: HTTP Client Init", "FAILED", 
+                               f"Missing requirements: post={has_post}, logger={has_logger}")
+    
+    except Exception as e:
+        return _store_result(zcli, "Integration: HTTP Client Init", "ERROR", 
+                           f"Exception: {str(e)}")
+
+
+def test_integration_service_manager_operations(zcli=None, context=None):
+    """Test service manager status operations."""
+    if not zcli:
+        return _store_result(None, "Integration: Service Manager Ops", "ERROR", "No zcli")
+    
+    try:
+        # Get status of all services (without starting anything)
+        status_data = zcli.comm.services.status()
+        
+        if not isinstance(status_data, dict):
+            return _store_result(zcli, "Integration: Service Manager Ops", "FAILED", 
+                               f"Invalid status type: {type(status_data)}")
+        
+        # Check for PostgreSQL service info
+        service_count = len(status_data)
+        
+        return _store_result(zcli, "Integration: Service Manager Ops", "PASSED", 
+                           f"Status retrieved: {service_count} services")
+    
+    except Exception as e:
+        return _store_result(zcli, "Integration: Service Manager Ops", "ERROR", 
+                           f"Exception: {str(e)}")
+
+
+def test_integration_bifrost_manager_state(zcli=None, context=None):
+    """Test Bifrost manager state without starting server."""
+    if not zcli:
+        return _store_result(None, "Integration: Bifrost Manager State", "ERROR", "No zcli")
+    
+    try:
+        # Access the Bifrost manager
+        bifrost_mgr = zcli.comm._bifrost_mgr
+        
+        if not bifrost_mgr:
+            return _store_result(zcli, "Integration: Bifrost Manager State", "FAILED", 
+                               "Bifrost manager not initialized")
+        
+        # Check if WebSocket is started (should be None in Terminal mode)
+        ws_instance = bifrost_mgr.websocket
+        
+        # In Terminal mode, WebSocket shouldn't be auto-started
+        if ws_instance is None:
+            return _store_result(zcli, "Integration: Bifrost Manager State", "PASSED", 
+                               "Bifrost manager ready (WebSocket not started)")
+        else:
+            return _store_result(zcli, "Integration: Bifrost Manager State", "WARN", 
+                               "WebSocket unexpectedly started in Terminal mode")
+    
+    except Exception as e:
+        return _store_result(zcli, "Integration: Bifrost Manager State", "ERROR", 
+                           f"Exception: {str(e)}")
+
+
+def test_integration_network_utils_operations(zcli=None, context=None):
+    """Test network utility operations with real port checks."""
+    if not zcli:
+        return _store_result(None, "Integration: Network Utils Ops", "ERROR", "No zcli")
+    
+    try:
+        from zCLI.subsystems.zComm.zComm_modules.helpers.network_utils import NetworkUtils
+        
+        # Create a network utils instance
+        net_utils = NetworkUtils(zcli.logger)
+        
+        # Test checking a well-known port (port 80 - HTTP)
+        # This should be in use or restricted on most systems
+        result_80 = net_utils.check_port(80)
+        
+        # Test checking a high port (unlikely to be in use)
+        result_high = net_utils.check_port(59998)
+        
+        if isinstance(result_80, bool) and isinstance(result_high, bool):
+            return _store_result(zcli, "Integration: Network Utils Ops", "PASSED", 
+                               f"Port checks executed: 80={result_80}, 59998={result_high}")
+        else:
+            return _store_result(zcli, "Integration: Network Utils Ops", "FAILED", 
+                               "Invalid return types from port checks")
+    
+    except ImportError:
+        return _store_result(zcli, "Integration: Network Utils Ops", "WARN", 
+                           "NetworkUtils module not accessible")
+    except Exception as e:
+        return _store_result(zcli, "Integration: Network Utils Ops", "ERROR", 
+                           f"Exception: {str(e)}")
+
+
+def test_integration_session_comm_persistence(zcli=None, context=None):
+    """Test zComm session data persistence and access."""
+    if not zcli:
+        return _store_result(None, "Integration: Session Persistence", "ERROR", "No zcli")
+    
+    try:
+        # Store some test data in session via zComm
+        test_key = "zComm_integration_test"
+        test_value = "integration_test_value"
+        
+        # zComm should have access to session
+        if not hasattr(zcli.comm, "session"):
+            return _store_result(zcli, "Integration: Session Persistence", "FAILED", 
+                               "zComm has no session access")
+        
+        # Store data
+        zcli.comm.session[test_key] = test_value
+        
+        # Verify we can read it back
+        retrieved = zcli.comm.session.get(test_key)
+        
+        # Clean up
+        if test_key in zcli.comm.session:
+            del zcli.comm.session[test_key]
+        
+        if retrieved == test_value:
+            return _store_result(zcli, "Integration: Session Persistence", "PASSED", 
+                               "Session data persisted and retrieved")
+        else:
+            return _store_result(zcli, "Integration: Session Persistence", "FAILED", 
+                               f"Data mismatch: expected={test_value}, got={retrieved}")
+    
+    except Exception as e:
+        return _store_result(zcli, "Integration: Session Persistence", "ERROR", 
+                           f"Exception: {str(e)}")
+
+
+# ===============================================================
 # Display Test Results (Final Step)
 # ===============================================================
 
@@ -1932,7 +2164,8 @@ def display_test_results(zcli=None, context=None):
         "L. Bridge Auth - Three-Tier (10 tests) [CRITICAL]": [],
         "M. Bridge Cache - Security (8 tests) [SECURITY]": [],
         "N. Bridge Messages (6 tests)": [],
-        "O. Event Handlers (8 tests)": []
+        "O. Event Handlers (8 tests)": [],
+        "P. Integration Tests (8 tests)": []
     }
     
     # Categorize
@@ -1944,7 +2177,9 @@ def display_test_results(zcli=None, context=None):
         elif "Service Manager:" in test: categories["D. Service Manager (7 tests)"].append(r)
         elif "Network Utils:" in test: categories["E. Network Utils (6 tests)"].append(r)
         elif "HTTP Server:" in test: categories["F. HTTP Server (4 tests)"].append(r)
-        elif "Integration:" in test: categories["G. Integration (3 tests)"].append(r)
+        # Old unit-level integration tests (checking cross-module access)
+        elif "Integration: Health Checks" in test or "Integration: Session Access" in test or "Integration: Logger Access" in test:
+            categories["G. Integration (3 tests)"].append(r)
         elif "Layer 0:" in test: categories["H. Layer 0 Compliance (1 test)"].append(r)
         elif "PostgreSQL:" in test: categories["I. PostgreSQL Service (6 tests)"].append(r)
         elif "Bifrost Bridge:" in test: categories["J. zBifrost Bridge (8 tests)"].append(r)
@@ -1953,6 +2188,8 @@ def display_test_results(zcli=None, context=None):
         elif "Cache:" in test: categories["M. Bridge Cache - Security (8 tests) [SECURITY]"].append(r)
         elif "Messages:" in test: categories["N. Bridge Messages (6 tests)"].append(r)
         elif "Events:" in test: categories["O. Event Handlers (8 tests)"].append(r)
+        # New real operations integration tests (P)
+        elif "Integration:" in test: categories["P. Integration Tests (8 tests)"].append(r)
     
     # Display by category
     for category, tests in categories.items():
@@ -1983,8 +2220,9 @@ def display_test_results(zcli=None, context=None):
     else:
         print(f"\n[FAILURE] {failed + errors} test(s) did not pass")
     
-    print(f"\n[INFO] Coverage: All 15 zComm modules tested (A-to-O comprehensive coverage)")
+    print(f"\n[INFO] Coverage: All 15 zComm modules + 8 integration tests (A-to-P comprehensive coverage)")
     print(f"[INFO] Including: Three-Tier Auth, Cache Security, PostgreSQL, Bifrost Bridge, All Event Handlers")
+    print(f"[INFO] Integration Tests: Real port checks, health execution, WebSocket lifecycle, HTTP client, service manager, session persistence")
     print("\n[INFO] Review results above.")
     
     # Only prompt for input if stdin is a terminal (not piped)

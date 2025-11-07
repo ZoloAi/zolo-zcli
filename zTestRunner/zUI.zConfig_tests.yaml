@@ -1,7 +1,7 @@
 # zTestRunner/zUI.zConfig_tests.yaml
-# Comprehensive A-to-N zConfig Test Suite (66 tests)
+# Comprehensive A-to-O zConfig Test Suite (72 tests)
 # Auto-run wizard pattern with result accumulation
-# Covers all 14 zConfig modules (A-to-N) including facade API and helpers
+# Covers all 14 zConfig modules (A-to-N) + 6 integration tests (O)
 
 zVaF:
   # ===============================================================
@@ -257,6 +257,28 @@ zVaF:
     
     "test_66_detectors_auto_detect_machine":
       zFunc: "&zconfig_tests.test_detectors_auto_detect_machine()"
+    
+    # ===============================================================
+    # O. Integration Tests - Real Operations (6 tests)
+    # ===============================================================
+    
+    "test_67_integration_persist_machine":
+      zFunc: "&zconfig_tests.test_integration_persist_machine_operation()"
+    
+    "test_68_integration_persist_environment":
+      zFunc: "&zconfig_tests.test_integration_persist_environment_operation()"
+    
+    "test_69_integration_yaml_file_io":
+      zFunc: "&zconfig_tests.test_integration_yaml_file_io()"
+    
+    "test_70_integration_hierarchy_priority":
+      zFunc: "&zconfig_tests.test_integration_hierarchy_priority()"
+    
+    "test_71_integration_dotenv_file_creation":
+      zFunc: "&zconfig_tests.test_integration_dotenv_file_creation()"
+    
+    "test_72_integration_config_round_trip":
+      zFunc: "&zconfig_tests.test_integration_config_file_round_trip()"
     
     # ===============================================================
     # Display Results and Return to Menu

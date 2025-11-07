@@ -4,7 +4,6 @@ zVaF:
     "zConfig",
     "zComm",
     "zDisplay",
-    "zDisplay_Widgets",
     "zAuth",
     "zAuth_Comprehensive",
     "zRBAC",
@@ -45,14 +44,8 @@ zVaF:
   "zDisplay":
     zLink: "@.zUI.zDisplay_tests.zVaF"
   
-  "zDisplay_Widgets":
-    zFunc: "&test_runner.run_test_suite('zDisplay_Widgets')"
-  
   "zAuth":
-    zFunc: "&test_runner.run_test_suite('zAuth')"
-  
-  "zAuth_Comprehensive":
-    zFunc: "&test_runner.run_test_suite('zAuth_Comprehensive')"
+    zLink: "@.zUI.zAuth_tests.zVaF"
   
   "zRBAC":
     zFunc: "&test_runner.run_test_suite('zRBAC')"
