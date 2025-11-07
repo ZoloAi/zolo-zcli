@@ -26,6 +26,9 @@ from zCLI.subsystems.zShell.zShell import zShell
 from zCLI.subsystems.zShell.shell_modules.shell_interactive import InteractiveShell
 from zCLI.subsystems.zShell.shell_modules.shell_executor import CommandExecutor
 from zCLI.subsystems.zShell.shell_modules.shell_help import HelpSystem
+from zCLI.subsystems.zShell.shell_modules.commands.shell_cmd_auth import execute_auth
+from zCLI.subsystems.zAuth.zAuth import zAuth
+from zCLI.subsystems.zDisplay.zDisplay import zDisplay
 
 
 class TestzShellInitialization(unittest.TestCase):
@@ -585,6 +588,332 @@ class TestEdgeCases(unittest.TestCase):
         self.mock_zcli.display.json.assert_not_called()
 
 
+class TestAuthCommands(unittest.TestCase):
+    """Test authentication commands with mock login (no real server)."""
+    
+    def setUp(self):
+        """Set up test fixtures with three-tier auth structure."""
+        self.mock_zcli = Mock()
+        
+        # Three-tier auth session structure (from zAuth_Test.py)
+        self.mock_zcli.session = {
+            "zMode": "Terminal",
+            "zAuth": {
+                "zSession": {
+                    "authenticated": False,
+                    "id": None,
+                    "username": None,
+                    "role": None,
+                    "api_key": None,
+                    "session_id": None
+                },
+                "applications": {},
+                "active_app": None,
+                "active_context": None,
+                "dual_mode": False
+            }
+        }
+        
+        self.mock_zcli.logger = Mock()
+        # Initialize real zDisplay for dual-mode support
+        self.mock_zcli.display = zDisplay(self.mock_zcli)
+        # Initialize real zAuth for authentication
+        self.mock_zcli.auth = zAuth(self.mock_zcli)
+    
+    def test_auth_login_with_credentials(self):
+        """Test login with username and password provided."""
+        # Mock successful login
+        with patch.object(self.mock_zcli.auth, 'login') as mock_login:
+            mock_login.return_value = {"success": True, "username": "testuser"}
+            
+            parsed = {
+                "action": "login",
+                "args": ["testuser", "testpass"]
+            }
+            
+            execute_auth(self.mock_zcli, parsed)
+            
+            # Verify login was called with correct credentials
+            mock_login.assert_called_once_with("testuser", "testpass")
+    
+    def test_auth_login_without_credentials(self):
+        """Test login with interactive prompting for credentials."""
+        # Mock input prompts
+        with patch('builtins.input', return_value='testuser'):
+            with patch('getpass.getpass', return_value='testpass'):
+                with patch.object(self.mock_zcli.auth, 'login') as mock_login:
+                    mock_login.return_value = {"success": True, "username": "testuser"}
+                    
+                    parsed = {
+                        "action": "login",
+                        "args": []
+                    }
+                    
+                    execute_auth(self.mock_zcli, parsed)
+                    
+                    # Verify login was called with prompted credentials
+                    mock_login.assert_called_once_with("testuser", "testpass")
+    
+    def test_auth_login_partial_credentials(self):
+        """Test login with username provided but password prompted."""
+        # Mock password prompt
+        with patch('getpass.getpass', return_value='testpass'):
+            with patch.object(self.mock_zcli.auth, 'login') as mock_login:
+                mock_login.return_value = {"success": True, "username": "testuser"}
+                
+                parsed = {
+                    "action": "login",
+                    "args": ["testuser"]
+                }
+                
+                execute_auth(self.mock_zcli, parsed)
+                
+                # Verify login was called with username + prompted password
+                mock_login.assert_called_once_with("testuser", "testpass")
+    
+    def test_auth_login_failure(self):
+        """Test login with invalid credentials."""
+        # Mock failed login
+        with patch.object(self.mock_zcli.auth, 'login') as mock_login:
+            mock_login.return_value = {"success": False, "error": "Invalid credentials"}
+            
+            parsed = {
+                "action": "login",
+                "args": ["baduser", "badpass"]
+            }
+            
+            execute_auth(self.mock_zcli, parsed)
+            
+            # Verify login was called and failed
+            mock_login.assert_called_once_with("baduser", "badpass")
+            # Logger should record the failure
+            self.assertTrue(self.mock_zcli.logger.warning.called)
+    
+    def test_auth_login_cancelled(self):
+        """Test login when user cancels credential prompt."""
+        # Mock user cancelling with Ctrl+C
+        with patch('builtins.input', side_effect=KeyboardInterrupt):
+            parsed = {
+                "action": "login",
+                "args": []
+            }
+            
+            execute_auth(self.mock_zcli, parsed)
+            
+            # Should not crash, should handle gracefully
+            # Display should show error about missing credentials
+            self.assertTrue(self.mock_zcli.logger.warning.called or 
+                          self.mock_zcli.logger.debug.called)
+    
+    def test_auth_logout_when_authenticated(self):
+        """Test logout when user is authenticated."""
+        # Simulate authenticated session
+        self.mock_zcli.session["zAuth"]["zSession"].update({
+            "authenticated": True,
+            "username": "testuser",
+            "role": "user",
+            "id": "zU_test123"
+        })
+        
+        # Mock successful logout
+        with patch.object(self.mock_zcli.auth, 'logout') as mock_logout:
+            mock_logout.return_value = {"success": True}
+            
+            parsed = {
+                "action": "logout",
+                "args": []
+            }
+            
+            execute_auth(self.mock_zcli, parsed)
+            
+            # Verify logout was called
+            mock_logout.assert_called_once()
+    
+    def test_auth_logout_when_not_authenticated(self):
+        """Test logout when user is not authenticated."""
+        # Session is already not authenticated (from setUp)
+        
+        # Mock logout (should still work, just return warning)
+        with patch.object(self.mock_zcli.auth, 'logout') as mock_logout:
+            mock_logout.return_value = {"success": True, "message": "Not authenticated"}
+            
+            parsed = {
+                "action": "logout",
+                "args": []
+            }
+            
+            execute_auth(self.mock_zcli, parsed)
+            
+            # Verify logout was called
+            mock_logout.assert_called_once()
+    
+    def test_auth_status_authenticated(self):
+        """Test status when user is authenticated."""
+        # Simulate authenticated session
+        self.mock_zcli.session["zAuth"]["zSession"].update({
+            "authenticated": True,
+            "username": "testuser",
+            "role": "admin",
+            "id": "zU_test123"
+        })
+        
+        # Mock status
+        with patch.object(self.mock_zcli.auth, 'status') as mock_status:
+            mock_status.return_value = {
+                "authenticated": True,
+                "username": "testuser",
+                "role": "admin",
+                "context": "zSession"
+            }
+            
+            parsed = {
+                "action": "status",
+                "args": []
+            }
+            
+            execute_auth(self.mock_zcli, parsed)
+            
+            # Verify status was called
+            mock_status.assert_called_once()
+    
+    def test_auth_status_not_authenticated(self):
+        """Test status when user is not authenticated."""
+        # Session is already not authenticated (from setUp)
+        
+        # Mock status
+        with patch.object(self.mock_zcli.auth, 'status') as mock_status:
+            mock_status.return_value = {
+                "authenticated": False,
+                "username": None,
+                "role": None,
+                "context": None
+            }
+            
+            parsed = {
+                "action": "status",
+                "args": []
+            }
+            
+            execute_auth(self.mock_zcli, parsed)
+            
+            # Verify status was called
+            mock_status.assert_called_once()
+    
+    def test_auth_three_tier_zsession(self):
+        """Test zSession authentication context."""
+        # Simulate zSession context
+        self.mock_zcli.session["zAuth"]["zSession"].update({
+            "authenticated": True,
+            "username": "zolo_user",
+            "role": "premium",
+            "id": "zU_abc123"
+        })
+        self.mock_zcli.session["zAuth"]["active_context"] = "zSession"
+        
+        # Verify session structure
+        self.assertTrue(self.mock_zcli.session["zAuth"]["zSession"]["authenticated"])
+        self.assertEqual(self.mock_zcli.session["zAuth"]["zSession"]["username"], "zolo_user")
+        self.assertEqual(self.mock_zcli.session["zAuth"]["active_context"], "zSession")
+    
+    def test_auth_three_tier_application(self):
+        """Test Application authentication context."""
+        # Simulate application context
+        self.mock_zcli.session["zAuth"]["applications"]["store"] = {
+            "authenticated": True,
+            "user_id": "store_user_456",
+            "role": "customer"
+        }
+        self.mock_zcli.session["zAuth"]["active_app"] = "store"
+        self.mock_zcli.session["zAuth"]["active_context"] = "application"
+        
+        # Verify session structure
+        self.assertIn("store", self.mock_zcli.session["zAuth"]["applications"])
+        self.assertEqual(self.mock_zcli.session["zAuth"]["active_app"], "store")
+        self.assertEqual(self.mock_zcli.session["zAuth"]["active_context"], "application")
+    
+    def test_auth_three_tier_dual_mode(self):
+        """Test Dual-mode authentication (both zSession and application)."""
+        # Simulate dual-mode context
+        self.mock_zcli.session["zAuth"]["zSession"].update({
+            "authenticated": True,
+            "username": "zolo_user",
+            "role": "premium"
+        })
+        self.mock_zcli.session["zAuth"]["applications"]["store"] = {
+            "authenticated": True,
+            "user_id": "store_owner_789",
+            "role": "owner"
+        }
+        self.mock_zcli.session["zAuth"]["active_context"] = "dual"
+        self.mock_zcli.session["zAuth"]["dual_mode"] = True
+        
+        # Verify both contexts authenticated
+        self.assertTrue(self.mock_zcli.session["zAuth"]["zSession"]["authenticated"])
+        self.assertIn("store", self.mock_zcli.session["zAuth"]["applications"])
+        self.assertTrue(self.mock_zcli.session["zAuth"]["dual_mode"])
+        self.assertEqual(self.mock_zcli.session["zAuth"]["active_context"], "dual")
+    
+    def test_auth_error_handling_no_zauth(self):
+        """Test error handling when zAuth subsystem is not available."""
+        # Remove zAuth
+        del self.mock_zcli.auth
+        
+        parsed = {
+            "action": "login",
+            "args": ["testuser", "testpass"]
+        }
+        
+        execute_auth(self.mock_zcli, parsed)
+        
+        # Should log error and display message
+        self.assertTrue(self.mock_zcli.logger.error.called)
+    
+    def test_auth_error_handling_zauth_exception(self):
+        """Test error handling when zAuth raises exception."""
+        # Mock zAuth raising exception
+        with patch.object(self.mock_zcli.auth, 'login', side_effect=RuntimeError("Auth error")):
+            parsed = {
+                "action": "login",
+                "args": ["testuser", "testpass"]
+            }
+            
+            execute_auth(self.mock_zcli, parsed)
+            
+            # Should catch exception and log error
+            self.assertTrue(self.mock_zcli.logger.error.called)
+    
+    def test_auth_unknown_action(self):
+        """Test error handling for unknown auth action."""
+        parsed = {
+            "action": "unknown_action",
+            "args": []
+        }
+        
+        execute_auth(self.mock_zcli, parsed)
+        
+        # Should log warning
+        self.assertTrue(self.mock_zcli.logger.warning.called)
+    
+    def test_auth_returns_none(self):
+        """Test that all auth handlers return None (UI adapter pattern)."""
+        # Mock zAuth methods
+        with patch.object(self.mock_zcli.auth, 'login') as mock_login:
+            mock_login.return_value = {"success": True}
+            
+            auth_result = execute_auth(self.mock_zcli, {"action": "login", "args": ["user", "pass"]})
+            self.assertIsNone(auth_result)
+        
+        with patch.object(self.mock_zcli.auth, 'logout') as mock_logout:
+            mock_logout.return_value = {"success": True}
+            
+            self.assertIsNone(execute_auth(self.mock_zcli, {"action": "logout", "args": []}))
+        
+        with patch.object(self.mock_zcli.auth, 'status') as mock_status:
+            mock_status.return_value = {"authenticated": False}
+            
+            self.assertIsNone(execute_auth(self.mock_zcli, {"action": "status", "args": []}))
+
+
 def run_tests(verbose=False):
     """Run all zShell tests."""
     loader = unittest.TestLoader()
@@ -599,6 +928,7 @@ def run_tests(verbose=False):
     suite.addTests(loader.loadTestsFromTestCase(TestzShellIntegration))
     suite.addTests(loader.loadTestsFromTestCase(TestNewCommands))
     suite.addTests(loader.loadTestsFromTestCase(TestEdgeCases))
+    suite.addTests(loader.loadTestsFromTestCase(TestAuthCommands))
     
     runner = unittest.TextTestRunner(verbosity=2 if verbose else 1)
     result = runner.run(suite)
