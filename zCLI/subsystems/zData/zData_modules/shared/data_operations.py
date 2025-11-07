@@ -186,6 +186,7 @@ from .operations import (
     handle_drop,
     handle_head,
 )
+from .operations.ddl_migrate import handle_migrate
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # MODULE CONSTANTS
@@ -203,6 +204,7 @@ ACTION_UPSERT = "upsert"
 ACTION_CREATE = "create"
 ACTION_DROP = "drop"
 ACTION_HEAD = "head"
+ACTION_MIGRATE = "migrate"
 
 # ────────────────────────────────────────────────────────────────────────────
 # Reserved Schema Keys (Excluded from table operations)
@@ -479,7 +481,7 @@ class DataOperations:
         action strings (e.g., "insert", "read") to their corresponding handler
         functions. It handles unknown actions and exceptions gracefully.
         
-        Action Map (9 operations):
+        Action Map (10 operations):
             - "list_tables": self.list_tables() (adapter delegation)
             - "insert": handle_insert(request, self) (CRUD operation)
             - "read": handle_read(request, self) (CRUD operation)
@@ -489,6 +491,7 @@ class DataOperations:
             - "create": handle_create_table(request, self) (DDL operation)
             - "drop": handle_drop(request, self) (DDL operation)
             - "head": handle_head(request, self) (DDL operation)
+            - "migrate": handle_migrate(self, request, display) (DDL operation)
         
         Error Handling:
             - Unknown action: Logs error, returns "error" string
@@ -497,7 +500,7 @@ class DataOperations:
         
         Args:
             action: Action string identifying the operation to execute
-                    Must be one of: list_tables, insert, read, update, delete, upsert, create, drop, head
+                    Must be one of: list_tables, insert, read, update, delete, upsert, create, drop, head, migrate
             request: Request dictionary containing operation parameters
                      - Format depends on action (table, fields, values, where, etc.)
                      - Passed to operation handler for processing
@@ -537,6 +540,7 @@ class DataOperations:
             ACTION_CREATE: lambda: handle_create_table(request, self),
             ACTION_DROP: lambda: handle_drop(request, self),
             ACTION_HEAD: lambda: handle_head(request, self),
+            ACTION_MIGRATE: lambda: handle_migrate(self, request, self.zcli.display),
         }
 
         # ─────────────────────────────────────────────────────────────────────────

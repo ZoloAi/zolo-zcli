@@ -1536,6 +1536,157 @@ class zData:
         return self.adapter.rollback()
 
     # ═══════════════════════════════════════════════════════════════════════════════════
+    # MIGRATION OPERATIONS (Declarative Schema Migrations)
+    # ═══════════════════════════════════════════════════════════════════════════════════
+
+    def migrate(self, new_schema_path: str, dry_run: bool = False, 
+                auto_approve: bool = False, schema_version: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Execute declarative schema migration to new schema version.
+        
+        This method performs a declarative migration by comparing the current schema
+        with a new target schema and automatically applying the necessary DDL operations
+        (CREATE TABLE, ALTER TABLE, DROP TABLE) to bring the database in line with
+        the new schema.
+        
+        Migration Flow:
+        1. Load current schema (from self.schema)
+        2. Load new schema from new_schema_path
+        3. Compute diff via schema_diff.diff_schemas()
+        4. Display preview via zDisplay
+        5. Prompt for confirmation (unless dry_run or auto_approve)
+        6. Execute DDL operations in transaction
+        7. Record migration in _zdata_migrations table
+        8. Return success/failure result
+        
+        Args:
+            new_schema_path: Path to new schema YAML file (supports zPath: @., ~.)
+            dry_run: If True, preview changes without executing (default False)
+            auto_approve: If True, skip confirmation prompt (default False)
+            schema_version: Optional version string (e.g., "v1.2.3", git commit)
+        
+        Returns:
+            Dict with keys:
+            - success: True if migration succeeded, False otherwise
+            - diff: Structured diff from schema_diff.diff_schemas()
+            - operations_executed: Count of DDL operations performed
+            - error: Error message if failed (only if success=False)
+        
+        Raises:
+            RuntimeError: If adapter not initialized or schema not loaded
+            KeyError: If new schema path invalid
+            Exception: Any database errors during execution
+        
+        Examples:
+            # Dry-run (preview only)
+            result = zdata.migrate("@myapp.users_v2.yaml", dry_run=True)
+            
+            # Execute migration with confirmation
+            result = zdata.migrate("@myapp.users_v2.yaml")
+            
+            # Execute migration without confirmation (use with caution!)
+            result = zdata.migrate("@myapp.users_v2.yaml", auto_approve=True)
+            
+            # Execute with version tracking
+            result = zdata.migrate("@myapp.users_v2.yaml", schema_version="v1.2.3")
+        
+        Notes:
+            - Dry-run mode: Safe for testing, displays preview without executing
+            - Auto-approve mode: Use with caution! Skips confirmation prompts
+            - Transaction wrapping: All operations are atomic (all-or-nothing)
+            - Rollback on failure: Any error triggers automatic rollback
+            - History tracking: Successful migrations recorded in _zdata_migrations
+            - Idempotency: Re-running same schema is safe (no-op if no changes)
+            - Schema must be loaded before calling migrate()
+        """
+        if not self.adapter:
+            raise RuntimeError(ERROR_NO_ADAPTER)
+        if not self.schema:
+            raise RuntimeError("No schema loaded. Call load_schema() first.")
+        
+        # Load new schema from path
+        from zCLI.subsystems.zData.zData_modules.shared.migration_history import (
+            get_current_schema_hash
+        )
+        
+        # Parse new schema path via zParser
+        new_schema = self.zcli.loader.load(new_schema_path)
+        
+        # Compute schema hash
+        schema_hash = get_current_schema_hash(new_schema)
+        
+        # Build migration request
+        request = {
+            "old_schema": self.schema,
+            "new_schema": new_schema,
+            "dry_run": dry_run,
+            "auto_approve": auto_approve,
+            "schema_version": schema_version or "unknown",
+            "schema_hash": schema_hash
+        }
+        
+        # Execute migration via operations facade
+        result = self.operations.route_action("migrate", request)
+        
+        return result
+
+    def get_migration_history(self, limit: int = 100) -> List[Dict[str, Any]]:
+        """
+        Retrieve migration execution history.
+        
+        Returns list of migration records from the _zdata_migrations table,
+        ordered by applied_at (most recent first). Useful for displaying
+        migration audit trail to users.
+        
+        Args:
+            limit: Maximum number of records to return (default 100)
+        
+        Returns:
+            List of migration record dicts, each with keys:
+            - id: Migration ID
+            - schema_version: Version string (e.g., "v1.2.3")
+            - schema_hash: SHA256 hash of schema
+            - applied_at: ISO 8601 timestamp when migration ran
+            - duration_ms: Migration execution time in milliseconds
+            - tables_added: Count of tables created
+            - tables_dropped: Count of tables dropped
+            - columns_added: Count of columns added
+            - columns_dropped: Count of columns dropped
+            - status: "success" or "failed"
+            - error_message: Error details if failed
+        
+        Raises:
+            RuntimeError: If adapter not initialized
+        
+        Examples:
+            # Get recent migrations
+            history = zdata.get_migration_history(limit=10)
+            for record in history:
+                print(f"{record['applied_at']}: {record['schema_version']} - {record['status']}")
+            
+            # Check if any migrations applied
+            history = zdata.get_migration_history()
+            if history:
+                print(f"Last migration: {history[0]['applied_at']}")
+            else:
+                print("No migrations applied yet")
+        
+        Notes:
+            - Returns empty list if no migrations or table doesn't exist
+            - Results ordered by applied_at DESC (newest first)
+            - Limit prevents loading huge history (default 100)
+            - Shows both successful and failed migrations
+        """
+        if not self.adapter:
+            raise RuntimeError(ERROR_NO_ADAPTER)
+        
+        from zCLI.subsystems.zData.zData_modules.shared.migration_history import (
+            get_migration_history as _get_history
+        )
+        
+        return _get_history(self.adapter, limit=limit)
+
+    # ═══════════════════════════════════════════════════════════════════════════════════
     # FILE OPERATIONS (zOpen Integration)
     # ═══════════════════════════════════════════════════════════════════════════════════
 
