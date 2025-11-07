@@ -420,7 +420,27 @@ class Linking:
         zFile_parsed = walker.loader.handle(zFile_path)
         self.logger.debug(LOG_ZFILE_PARSED, zFile_parsed)
 
-        # Update session with new file/block context
+        # ====================================================================
+        # BREADCRUMB FIX: Capture SOURCE context BEFORE navigation
+        # ====================================================================
+        # Get source location (where we're navigating FROM) before session update
+        from zCLI.subsystems.zConfig.zConfig_modules.config_session import SESSION_KEY_ZCRUMBS
+        crumbs_dict = walker.session.get(SESSION_KEY_ZCRUMBS, {})
+        source_block_path = next(reversed(crumbs_dict)) if crumbs_dict else None
+        
+        # Use the active source scope (where we're navigating FROM)
+        if source_block_path and source_block_path in crumbs_dict:
+            # Get the last key in the source scope's trail (the key that triggered this zLink)
+            source_trail = crumbs_dict[source_block_path]
+            source_zKey = source_trail[-1] if source_trail else None
+            
+            # Record source breadcrumb (ensures parent scope has the calling key)
+            # Note: walker_dispatch already added this, but handle_zCrumbs prevents duplicates
+            if source_zKey:
+                walker.navigation.breadcrumbs.handle_zCrumbs(source_block_path, source_zKey, walker=walker)
+                self.logger.debug(f"Recorded source breadcrumb: {source_block_path}[{source_zKey}]")
+
+        # Update session to TARGET location
         self._update_session_path(zLink_path, selected_zBlock)
 
         # Get block dict and keys
@@ -432,8 +452,11 @@ class Linking:
             self.logger.error(MSG_NO_WALKER)
             return STATUS_STOP
 
-        # Track breadcrumb
-        walker.navigation.breadcrumbs.handle_zCrumbs(zLink_path, zBlock_keys[0], walker=walker)
+        # DO NOT initialize target breadcrumb scope here - let walker_dispatch handle it naturally
+        # The key insight: walker_dispatch will create and populate the target scope as keys execute
+        # When the target block completes and zBack is called, the target trail will have items
+        # zBack's algorithm will pop from the target trail, and when it empties, move to parent
+        self.logger.debug(f"Navigating to target block: {zLink_path}")
 
         # Execute target block
         return walker.zBlock_loop(active_zBlock_dict, zBlock_keys)

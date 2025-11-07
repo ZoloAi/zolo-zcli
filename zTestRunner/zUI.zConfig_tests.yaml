@@ -1,59 +1,18 @@
 zVaF:
-  "Test 1: Config Initialization":
-    zDisplay:
-      event: header
-      content: |
-        
-        ======================================================================
-        TEST 1: Config Initialization
-        ======================================================================
-    
-    zDisplay:
-      event: text
-      content: |
-        
-        Testing that zCLI can initialize with minimal config...
-        
-        Expected: zCLI instance created successfully
-        Config: {"zWorkspace": "."}
-    
+  # ══════════════════════════════════════════════════════════════════════════
+  # Result-Accumulating Test Suite - zConfig Tests
+  # ══════════════════════════════════════════════════════════════════════════
+  # Tests execute silently, results accumulate in session, final table display
+  
+  # ═══════════════════════ Test 1: Config Initialization ═══════════════════════
+  "test_initialization":
     zFunc: "&zconfig_tests.test_initialization()"
-    
-    zDisplay:
-      event: success
-      content: |
-        
-        ✅ PASSED: Config initialized successfully
-        
   
-  "Test 2: Workspace Validation":
-    zDisplay:
-      event: header
-      content: |
-        
-        ======================================================================
-        TEST 2: Workspace Validation (Fail-Fast)
-        ======================================================================
-    
-    zDisplay:
-      event: text
-      content: |
-        
-        Testing that zCLI fails when zWorkspace is missing...
-        
-        Expected: ConfigValidationError raised
-        Config: {} (missing zWorkspace)
-    
+  # ═══════════════════════ Test 2: Workspace Validation ════════════════════════
+  "test_workspace_required":
     zFunc: "&zconfig_tests.test_workspace_required()"
-    
-    zDisplay:
-      event: success
-      content: |
-        
-        ✅ PASSED: Workspace validation works correctly
-        
   
-  "^Return to Main Menu":
-    zDisplay:
-      event: text
-      content: "Returning to main menu..."
+  # ═══════════════════════ Display Results & Return ════════════════════════════
+  # Function displays table, statistics, percentages, and handles pause
+  "^display_and_return":
+    zFunc: "&zconfig_tests.display_test_results()"
