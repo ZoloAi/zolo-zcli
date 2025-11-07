@@ -1219,7 +1219,7 @@ class zCLI:
         signal.signal(signal.SIGTERM, signal_handler)
         self.logger.debug(LOG_DEBUG_SIGNAL_HANDLERS)
     
-    def shutdown(self) -> Dict[str, bool]:
+    def shutdown(self) -> Optional[Dict[str, bool]]:
         """
         Gracefully shutdown zCLI and all subsystems in reverse initialization order.
         
@@ -1251,14 +1251,17 @@ class zCLI:
         
         Returns
         -------
-        Dict[str, bool]
-            Status dictionary mapping component names to cleanup success:
+        Optional[Dict[str, bool]]
+            Status dictionary mapping component names to cleanup success, or None if
+            shutdown was already in progress:
                 {
                     'websocket': True/False,
                     'http_server': True/False,
                     'database': True/False,
                     'logger': True/False
                 }
+            
+            Returns None on subsequent calls (idempotent behavior).
         
         Component Cleanup Details
         -------------------------
@@ -1310,8 +1313,8 @@ class zCLI:
         Example 4: Multiple shutdown calls (idempotent)
             ```python
             z = zCLI()
-            status1 = z.shutdown()  # Performs cleanup
-            status2 = z.shutdown()  # Logs warning, returns {}
+            status1 = z.shutdown()  # Performs cleanup, returns status dict
+            status2 = z.shutdown()  # Logs warning, returns None
             ```
         
         Notes
@@ -1330,7 +1333,7 @@ class zCLI:
         """
         if self._shutdown_in_progress:
             self.logger.warning(LOG_WARN_SHUTDOWN_IN_PROGRESS)
-            return {}
+            return None
         
         self._shutdown_in_progress = True
         self.logger.info(SHUTDOWN_SEPARATOR)
