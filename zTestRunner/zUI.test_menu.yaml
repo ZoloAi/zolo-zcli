@@ -17,8 +17,8 @@ zVaF:
     "zDialog",
     "zOpen",
     "zUtils",
+    "zWizard_test",
     "zShell",
-    "zWizard",
     "zWalker",
     "zTraceback",
     "zExceptions",
@@ -75,8 +75,8 @@ zVaF:
   "zShell":
     zFunc: "&test_runner.run_test_suite('zShell')"
   
-  "zWizard":
-    zFunc: "&test_runner.run_test_suite('zWizard')"
+  "zWizard_test":
+    zLink: "@.zUI.zWizard_tests.zVaF"
   
   "zWalker":
     zFunc: "&test_runner.run_test_suite('zWalker')"

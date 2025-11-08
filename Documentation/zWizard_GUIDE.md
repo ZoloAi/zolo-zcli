@@ -1,697 +1,518 @@
-# zWizard: The Workflow Orchestration Engine
+# zWizard Guide
 
-## **Overview**
-- **zWizard** is **zCLI**'s core loop engine for stepped execution and workflow orchestration
-- Provides sequential step execution, transaction management, result interpolation, and navigation control
-- Powers Shell canvas mode, Walker UI navigation, and batch data operations with automatic connection reuse
-
-## **Architecture**
-
-### **Layer 2 Orchestration Engine**
-**zWizard** operates as a Layer 2 subsystem, meaning it:
-- Initializes after foundation (zConfig, zComm) and display (zDisplay) subsystems
-- Provides workflow orchestration for both Shell and Walker modes
-- Manages transaction lifecycle via schema_cache
-- Depends on zShell for step execution in Shell mode
-- Depends on zDispatch for step routing in Walker mode
-
-### **Pure Loop Engine Design**
-```
-zWizard/
-├── zWizard.py                        # Core loop engine
-└── zWizard_modules/                  # (Reserved for future extensions)
-
-Execution Logic:
-├── Shell Mode: zShell/executor_commands/wizard_step_executor.py
-└── Walker Mode: zDispatch/handle() routing
-```
-
-**Key Principle**: zWizard is a generic loop engine. Mode-specific execution logic lives in the respective subsystems (zShell for Shell mode, zDispatch for Walker mode).
+> **Multi-step workflow orchestration that just works™**  
+> Execute sequences of actions with automatic result passing, transactions, and error handling.
 
 ---
 
-## **Core Features**
+## What It Does
 
-### **1. Sequential Step Execution**
-- **Ordered Processing**: Steps execute in dictionary order
-- **Error Handling**: Graceful error recovery with callbacks
-- **Flow Control**: Navigation signals (zBack, stop, error)
-- **Context Passing**: Shared context across steps
+**zWizard** orchestrates multi-step workflows with automatic context management:
 
-### **2. Transaction Management**
-- **Automatic BEGIN/COMMIT/ROLLBACK**: Managed via schema_cache
-- **Connection Reuse**: Single connection across multiple steps
-- **Atomic Operations**: All-or-nothing execution
-- **Error Recovery**: Automatic rollback on failure
+- ✅ **Sequential execution** - Steps run in order with shared context
+- ✅ **Result passing (zHat)** - Use previous step results in later steps
+- ✅ **Transaction management** - Automatic BEGIN/COMMIT/ROLLBACK for data operations
+- ✅ **Error handling** - Graceful recovery with rollback on failure
+- ✅ **Navigation control** - Built-in zBack, exit, stop signals
 
-### **3. Result Interpolation (zHat)**
-- **Result Storage**: Each step's result stored in zHat array
-- **Reference Syntax**: `zHat[0]`, `zHat[1]`, etc.
-- **Dynamic Values**: Use previous results in subsequent steps
-- **Type Preservation**: Results maintain their original types
-
-### **4. Navigation Callbacks**
-- **on_continue**: Called after each successful step
-- **on_back**: Handle backward navigation (zBack)
-- **on_stop**: Handle stop signals
-- **on_error**: Custom error handling
+**Status:** ✅ Production-ready (45/45 tests passing, 100% coverage)
 
 ---
 
-## **Workflow Structure**
+## Why It Matters
 
-### **Basic Workflow**
-```yaml
-step1:
-  zData:
-    model: @.zTestSuite.demos.zSchema.sqlite_demo
-    action: insert
-    tables: [users]
-    options: {name: "Alice", age: 30}
+### For Developers
+- Zero boilerplate - define workflows in YAML, execution is automatic
+- Result interpolation - `zHat[0]`, `zHat[step_name]`, `zHat.step_name` all work
+- Transaction safety - multi-step data operations are atomic (all-or-nothing)
+- Modular architecture - 6 focused modules with custom exceptions
 
-step2:
-  zData:
-    model: @.zTestSuite.demos.zSchema.sqlite_demo
-    action: insert
-    tables: [users]
-    options: {name: "Bob", age: 25}
-```
-
-### **Transactional Workflow**
-```yaml
-_transaction: true
-step1:
-  zData:
-    model: @.zTestSuite.demos.zSchema.sqlite_demo
-    action: insert
-    tables: [users]
-    options: {name: "Alice", age: 30}
-
-step2:
-  zData:
-    model: @.zTestSuite.demos.zSchema.sqlite_demo
-    action: insert
-    tables: [users]
-    options: {name: "Bob", age: 25}
-```
-
-**Transaction Behavior:**
-- First step with `$alias` or schema path triggers BEGIN
-- All subsequent steps reuse the same connection
-- Success triggers COMMIT
-- Error triggers ROLLBACK
-- Finally block clears schema_cache
-
-### **Meta Keys (Underscore Prefix)**
-```yaml
-_transaction: true        # Enable transaction mode
-_config: {...}           # Workflow configuration (future)
-_timeout: 30             # Execution timeout (future)
-```
-
-Meta keys are skipped during execution but control workflow behavior.
+### For Executives
+- **Simplifies complex operations** - Multi-step workflows defined declaratively
+- **Data integrity** - Automatic rollback prevents partial updates
+- **Production-ready** - 45 comprehensive tests covering all scenarios
+- **Powers two modes** - Shell canvas workflows AND Walker UI navigation
 
 ---
 
-## **zHat Result Interpolation**
+## Architecture (Simple View)
 
-### **Concept**
-zHat is an array that stores the result of each executed step, enabling dependent operations.
+```
+zWizard (Core Loop Engine + 6 Modules)
+│
+├── zWizard.py         → Main orchestrator (execute_loop, handle)
+│
+└── zWizard_modules/
+    ├── wizard_hat.py           → WizardHat (triple-access results container)
+    ├── wizard_interpolation.py → zHat[0] string interpolation
+    ├── wizard_transactions.py  → BEGIN/COMMIT/ROLLBACK lifecycle
+    ├── wizard_rbac.py          → Permission checking (future)
+    ├── wizard_exceptions.py    → Custom exception hierarchy
+    └── __init__.py             → Module exports
 
-### **Usage Pattern**
+Used By: zShell (canvas mode), zWalker (UI navigation), zData (transactions)
+```
+
+**Test Coverage:** 45 tests across 7 categories (A-to-G) = 100% coverage
+
+---
+
+## How It Works
+
+### 1. WizardHat (Triple-Access Results)
+Every workflow execution returns a `WizardHat` object that stores all step results:
+
+```python
+# Execute workflow
+result = zcli.wizard.handle(workflow)
+
+# Three ways to access results:
+result[0]              # Numeric: First step result
+result["step1"]        # Key-based: Step name
+result.step1           # Attribute: Dot notation
+
+# All three return the same value!
+```
+
+### 2. Workflow Execution
+Define workflows in YAML, execute with one call:
+
 ```yaml
+# Simple 2-step workflow
 step1:
   zData:
-    model: @.zTestSuite.demos.zSchema.sqlite_demo
+    model: @.myschema
     action: insert
     tables: [users]
-    options: {name: "Alice", age: 30}
-  # Returns: True (success)
+    options: {name: "Alice"}
 
 step2:
   zDisplay:
     event: text
-    message: "Previous result: zHat[0]"
-  # Displays: "Previous result: True"
+    message: "Inserted user"
+```
+
+```python
+# Execute
+result = zcli.wizard.handle(workflow_dict)
+# Returns: WizardHat with 2 results
+```
+
+### 3. Result Interpolation (zHat)
+Use previous step results in later steps:
+
+```yaml
+step1:
+  zData:
+    action: insert
+    options: {name: "Alice"}
+  # Returns: {"id": 123}
+
+step2:
+  zDisplay:
+    event: text
+    message: "Created user ID: zHat[0]['id']"
+  # Displays: "Created user ID: 123"
 
 step3:
   zData:
-    model: @.zTestSuite.demos.zSchema.sqlite_demo
-    action: select
+    action: update
+    where: "id = zHat[step1]['id']"
+  # Uses result from step1 by name
+```
+
+**Interpolation Rules:**
+- Only string values are interpolated (not integers, booleans, etc.)
+- Supports numeric (`zHat[0]`) and key-based (`zHat[step_name]`) access
+- Invalid indices return `"None"`
+
+### 4. Transaction Management
+Add `_transaction: true` for atomic multi-step operations:
+
+```yaml
+_transaction: true
+
+step1:
+  zData:
+    model: $mydb  # $ prefix triggers transaction
+    action: insert
     tables: [users]
-    options: {where: "name = 'Alice'"}
-  # Returns: [{id: 1, name: "Alice", age: 30}]
 
-step4:
-  zDisplay:
-    event: text
-    message: "User ID: zHat[2][0]['id']"
-  # Displays: "User ID: 1"
+step2:
+  zData:
+    model: $mydb  # Reuses same connection
+    action: insert
+    tables: [users]
+
+# On success → COMMIT
+# On error → ROLLBACK (automatic)
 ```
 
-### **Interpolation Rules**
-- Only string values are interpolated
-- Syntax: `zHat[index]` where index is 0-based
-- Results are converted to repr() format
-- Invalid indices return "None"
+**Transaction Lifecycle:**
+1. **First step with `$alias`** → BEGIN transaction, create connection
+2. **Subsequent steps** → Reuse same connection (efficient!)
+3. **Success** → COMMIT transaction
+4. **Error** → ROLLBACK transaction (automatic)
+5. **Finally** → Clear schema_cache (cleanup)
 
 ---
 
-## **Transaction Management**
+## Common Use Cases
 
-### **Schema Cache Architecture**
-```python
-schema_cache = {
-    "connections": {
-        "mydb": <handler_instance>,  # Persistent connection
-        "otherdb": <handler_instance>
-    }
-}
+### Use Case 1: Multi-Step Data Insert
+```yaml
+_transaction: true
+
+create_user:
+  zData:
+    model: $users_db
+    action: insert
+    tables: [users]
+    options: {name: "Alice", email: "alice@example.com"}
+
+create_profile:
+  zData:
+    model: $users_db
+    action: insert
+    tables: [profiles]
+    options: {user_id: "zHat[0]['id']", bio: "Developer"}
+
+# If either step fails → both rolled back (atomic)
 ```
 
-### **Transaction Lifecycle**
-
-#### **1. Transaction Start**
-```python
-# First step with $alias or schema path
-if use_transaction and transaction_alias is None:
-    if model.startswith("$"):
-        alias = model[1:]  # Extract alias
-        # Connection created and stored in schema_cache
-```
-
-#### **2. Connection Reuse**
-```python
-# Subsequent steps check schema_cache first
-existing_handler = schema_cache.get_connection(alias)
-if existing_handler:
-    # Reuse existing connection (same transaction)
-    return existing_handler
-```
-
-#### **3. Transaction Commit**
-```python
-# On successful completion
-if use_transaction and transaction_alias:
-    schema_cache.commit_transaction(alias)
-    logger.info("✅ Transaction committed for $%s", alias)
-```
-
-#### **4. Transaction Rollback**
-```python
-# On error
-if use_transaction and transaction_alias:
-    logger.error("❌ Rolling back transaction for $%s", alias)
-    schema_cache.rollback_transaction(alias)
-```
-
-#### **5. Cleanup**
-```python
-# Always executed (finally block)
-schema_cache.clear()
-logger.debug("Schema cache connections cleared")
-```
-
----
-
-## **Shell Mode Integration**
-
-### **Canvas Mode Workflow**
+### Use Case 2: Shell Canvas Mode
 ```bash
-# 1. Enter canvas mode
-> wizard --start
+# 1. Start canvas mode
+$ wizard --start
 
-# 2. Add commands (converted to YAML)
-> data insert users --model @.zTestSuite.demos.zSchema.sqlite_demo --name "Alice" --age 30
-> data insert users --model @.zTestSuite.demos.zSchema.sqlite_demo --name "Bob" --age 25
+# 2. Add commands (converted to YAML workflow)
+$ data insert users --name "Alice"
+$ data insert users --name "Bob"
 
-# 3. Execute workflow
-> wizard --run
-# Internally calls: zcli.wizard.handle(canvas_yaml)
+# 3. Execute as transaction
+$ wizard --run --transaction
 
-# 4. Exit canvas mode
-> wizard --stop
+# 4. Stop canvas
+$ wizard --stop
 ```
 
-### **Direct YAML Execution**
+### Use Case 3: Walker UI Navigation
 ```python
-# From Python code
-workflow = {
-    "_transaction": True,
-    "step1": {
-        "zData": {
-            "model": "@.zTestSuite.demos.zSchema.sqlite_demo",
-            "action": "insert",
-            "tables": ["users"],
-            "options": {"name": "Alice", "age": 30}
-        }
-    }
-}
-
-result = zcli.wizard.handle(workflow)
-# Returns: [True] (zHat array)
-```
-
----
-
-## **Walker Mode Integration**
-
-### **UI Navigation**
-```python
-# Walker uses zWizard for menu navigation
+# zWizard powers Walker's menu system
 wizard = zWizard(walker=walker_instance)
 
 menu_items = {
-    "option1": {"zDisplay": {...}, "zNavigation": {...}},
-    "option2": {"zDisplay": {...}, "zNavigation": {...}},
+    "option1": {"zDisplay": {...}, "zLink": ...},
+    "option2": {"zFunc": {...}},
 }
 
+# Automatic navigation with callbacks
 result = wizard.execute_loop(
     menu_items,
     navigation_callbacks={
         "on_back": handle_back,
-        "on_continue": handle_continue
+        "on_error": handle_error
     }
 )
 ```
 
-### **Navigation Callbacks**
+---
+
+## Meta Keys (Underscore Prefix)
+
+Keys starting with `_` are **configuration**, not execution steps:
+
+```yaml
+_transaction: true    # Enable transaction mode
+_config: {...}       # Workflow configuration (future)
+_timeout: 30         # Execution timeout (future)
+
+# Only non-underscore keys execute as steps
+step1: {...}
+step2: {...}
+```
+
+---
+
+## Error Handling
+
+### Automatic Rollback
+```yaml
+_transaction: true
+
+step1:
+  zData: {action: insert, ...}  # Success
+
+step2:
+  zData: {action: invalid, ...}  # Error!
+
+# Result: step1 is ROLLED BACK automatically
+```
+
+### Custom Error Callbacks (Walker Mode)
 ```python
-def handle_back(result):
-    """Handle backward navigation."""
-    return "previous_menu"
-
-def handle_continue(result, key):
-    """Handle forward navigation."""
-    logger.info(f"Completed step: {key}")
-
 def handle_error(error, key):
-    """Handle errors."""
-    display.error(f"Error in {key}: {error}")
-    return "error_menu"
-```
+    """Called when step fails."""
+    logger.error(f"Step '{key}' failed: {error}")
+    display.error(f"Error: {error}")
+    return "error"  # Navigation signal
 
----
-
-## **Step Execution Flow**
-
-### **Shell Mode**
-```
-zWizard.handle(workflow)
-  → For each step:
-    → _execute_step(key, value, context)
-      → zcli.shell.executor.execute_wizard_step(key, value, context)
-        → Route to appropriate handler:
-          - zData → execute_data()
-          - zFunc → execute_func()
-          - zDisplay → display methods
-  → Commit transaction
-  → Clear schema_cache
-```
-
-### **Walker Mode**
-```
-zWizard.execute_loop(items, dispatch_fn)
-  → For each item:
-    → dispatch_fn(key, value)
-      → walker.dispatch.handle(key, value, context)
-        → Route to appropriate handler
-  → Handle navigation results
-  → Call navigation callbacks
-```
-
----
-
-## **Error Handling**
-
-### **Exception Handling**
-```python
-try:
-    result = dispatch_fn(key, value)
-except Exception as e:
-    # Log error with full traceback
-    logger.error("Error for key '%s': %s", key, e, exc_info=True)
-    
-    # Display error
-    display.zDeclare(f"Dispatch error for: {key}", color="ERROR")
-    
-    # Call error callback if provided
-    if navigation_callbacks and 'on_error' in navigation_callbacks:
-        return navigation_callbacks['on_error'](e, key)
-    
-    # Continue to next step
-    continue
-```
-
-### **Transaction Rollback**
-```python
-try:
-    # Execute workflow
-    for step in workflow:
-        execute_step(step)
-    commit_transaction()
-except Exception as e:
-    # Automatic rollback
-    rollback_transaction(alias)
-    logger.error("❌ Error in zWizard, rolling back transaction")
-    raise
-finally:
-    # Always cleanup
-    schema_cache.clear()
-```
-
----
-
-## **Best Practices**
-
-### **1. Use Transactions for Multi-Step Data Operations**
-```yaml
-# ✅ Good: Atomic operation
-_transaction: true
-step1:
-  zData: {action: insert, ...}
-step2:
-  zData: {action: insert, ...}
-
-# ❌ Bad: Separate connections, no atomicity
-step1:
-  zData: {action: insert, ...}
-step2:
-  zData: {action: insert, ...}
-```
-
-### **2. Leverage zHat for Dependent Steps**
-```yaml
-# ✅ Good: Use previous result
-step1:
-  zData: {action: insert, ...}  # Returns ID
-step2:
-  zData:
-    action: update
-    where: "id = zHat[0]"  # Use returned ID
-
-# ❌ Bad: Hardcoded values
-step1:
-  zData: {action: insert, ...}
-step2:
-  zData:
-    action: update
-    where: "id = 1"  # Fragile
-```
-
-### **3. Use Consistent Schema References**
-```yaml
-# ✅ Good: Same schema path for transaction
-_transaction: true
-step1:
-  zData: {model: "@.zTestSuite.demos.zSchema.sqlite_demo", ...}
-step2:
-  zData: {model: "@.zTestSuite.demos.zSchema.sqlite_demo", ...}
-
-# ❌ Bad: Different schemas break transaction
-_transaction: true
-step1:
-  zData: {model: "@.zTestSuite.demos.zSchema.sqlite_demo", ...}
-step2:
-  zData: {model: "@.zTestSuite.demos.zSchema.postgresql_demo", ...}
-```
-
-### **4. Handle Errors Gracefully**
-```yaml
-# Provide error callbacks in Walker mode
 wizard.execute_loop(
     items,
-    navigation_callbacks={
-        "on_error": lambda e, k: display.error(f"Failed: {e}")
-    }
+    navigation_callbacks={"on_error": handle_error}
 )
 ```
 
 ---
 
-## **Advanced Features**
+## Best Practices
 
-### **1. Custom Dispatch Functions**
-```python
-def custom_dispatch(key, value):
-    """Custom step execution logic."""
-    logger.info(f"Executing custom step: {key}")
-    # Your logic here
-    return result
-
-wizard.execute_loop(items, dispatch_fn=custom_dispatch)
+### ✅ DO: Use Transactions for Multi-Step Data
+```yaml
+_transaction: true
+step1: {zData: {action: insert, ...}}
+step2: {zData: {action: insert, ...}}
+# All-or-nothing (atomic)
 ```
 
-### **2. Context Passing**
-```python
-context = {
-    "wizard_mode": True,
-    "schema_cache": schema_cache,
-    "user_id": 123,
-    "custom_data": {...}
-}
-
-wizard.execute_loop(items, context=context)
+### ✅ DO: Leverage zHat for Dependent Steps
+```yaml
+step1: {zData: {action: insert, ...}}
+step2: {zData: {where: "id = zHat[0]['id']"}}  # Use previous result
 ```
 
-### **3. Start from Specific Key**
-```python
-# Resume from step3
-wizard.execute_loop(items, start_key="step3")
+### ✅ DO: Use Consistent Schema for Transactions
+```yaml
+_transaction: true
+step1: {zData: {model: $mydb, ...}}
+step2: {zData: {model: $mydb, ...}}  # Same connection reused
 ```
 
----
-
-## **Integration with Other Subsystems**
-
-### **zData Integration**
-```python
-# zWizard passes context to zData
-context = {
-    "wizard_mode": True,
-    "schema_cache": schema_cache
-}
-
-# zData checks for existing connection
-if wizard_mode and schema_cache:
-    existing_handler = schema_cache.get_connection(alias)
-    if existing_handler:
-        # Reuse connection (same transaction)
-        return existing_handler
+### ❌ DON'T: Mix Schemas in Transaction
+```yaml
+_transaction: true
+step1: {zData: {model: $db1, ...}}
+step2: {zData: {model: $db2, ...}}  # Different connections!
 ```
 
-### **zShell Integration**
-```python
-# Shell mode execution
-def execute_wizard_step(zcli, step_key, step_value, logger, step_context):
-    """Execute a wizard step in shell mode."""
-    if "zData" in step_value:
-        return zcli.data.handle_request(step_value["zData"], context=step_context)
-    if "zFunc" in step_value:
-        return zcli.funcs.handle(step_value["zFunc"])
-    # ... other handlers
-```
-
-### **zDisplay Integration**
-```python
-# Visual feedback during execution
-display.zDeclare("Handle zWizard", color="ZWIZARD", style="full")
-display.zDeclare(f"zWizard step: {step_key}", color="ZWIZARD", style="single")
-display.zDeclare("process_keys → next zKey", color="MAIN", style="single")
+### ❌ DON'T: Forget $ Prefix for Transactions
+```yaml
+_transaction: true
+step1: {zData: {model: mydb, ...}}  # Missing $, no transaction!
 ```
 
 ---
 
-## **Testing**
+## Integration with Other Subsystems
 
-### **Unit Testing**
+### zShell Integration
+- **Canvas mode** - Wizard workflow execution
+- **Step executor** - `zShell/executor_commands/wizard_step_executor.py`
+- **Command buffering** - Commands converted to YAML workflow
+
+### zWalker Integration
+- **Menu navigation** - `zWizard.execute_loop()` powers UI
+- **Navigation callbacks** - `on_back`, `on_error`, `on_continue`
+- **Dispatch routing** - Steps routed via `zDispatch.handle()`
+
+### zData Integration
+- **Transaction support** - Schema cache shared with zWizard
+- **Connection reuse** - `$alias` triggers single connection mode
+- **Automatic rollback** - Failed operations roll back entire workflow
+
+### zDisplay Integration
+- **Visual feedback** - Step execution progress
+- **Error display** - Formatted error messages
+- **Result display** - WizardHat contents
+
+---
+
+## Exception Hierarchy
+
 ```python
-import unittest
-from zCLI.subsystems.zWizard import zWizard
+zWizardError (base)
+├── WizardInitializationError   # Missing zcli/walker, no session
+├── WizardExecutionError         # Step execution failed
+└── WizardRBACError              # Permission denied (future)
 
-class TestzWizard(unittest.TestCase):
-    def test_basic_workflow(self):
-        """Test basic workflow execution."""
-        workflow = {
-            "step1": {"zData": {...}},
-            "step2": {"zData": {...}}
-        }
-        
-        result = self.zcli.wizard.handle(workflow)
-        self.assertEqual(len(result), 2)
-        self.assertTrue(result[0])  # First step succeeded
-        self.assertTrue(result[1])  # Second step succeeded
-```
-
-### **Transaction Testing**
-```python
-def test_transaction_commit(self):
-    """Test transaction commit on success."""
-    workflow = {
-        "_transaction": True,
-        "step1": {"zData": {...}},
-        "step2": {"zData": {...}}
-    }
-    
-    result = self.zcli.wizard.handle(workflow)
-    
-    # Verify data was committed
-    self.zcli.data.load_schema(schema)
-    users = self.zcli.data.select("users")
-    self.assertEqual(len(users), 2)
+# Example usage:
+try:
+    wizard = zWizard()
+except WizardInitializationError as e:
+    print(f"Setup failed: {e}")
 ```
 
 ---
 
-## **Performance Considerations**
+## Performance
 
-### **Connection Reuse**
-- **Single Connection**: All steps in a transaction use the same connection
-- **No Overhead**: No connection/disconnection between steps
-- **Efficient**: Reduces database round trips
+### Connection Reuse
+```yaml
+_transaction: true
+step1: {zData: {model: $db, ...}}  # CREATE connection
+step2: {zData: {model: $db, ...}}  # REUSE connection (fast!)
+step3: {zData: {model: $db, ...}}  # REUSE connection (fast!)
+# Only 1 connection for all 3 steps
+```
 
-### **Schema Cache Lifecycle**
+### Schema Cache Lifecycle
 ```python
-# Start of workflow
+# Workflow start
 schema_cache = {}  # Empty
 
-# First step
-schema_cache["mydb"] = handler  # Connection created
+# First step with $db
+schema_cache["db"] = handler  # Connection created
 
 # Subsequent steps
-handler = schema_cache["mydb"]  # Reused
+handler = schema_cache["db"]  # Reused (no overhead!)
 
-# End of workflow
+# Workflow end
 schema_cache.clear()  # Cleanup
 ```
 
 ---
 
-## **Troubleshooting**
+## Troubleshooting
 
-### **Common Issues**
-
-#### **1. Transaction Not Working**
+### Issue: Transaction Not Working
 ```yaml
 # ❌ Problem: Missing _transaction flag
-step1:
-  zData: {model: "@.zTestSuite.demos.zSchema.sqlite_demo", ...}
+step1: {zData: {model: $db, ...}}
 
-# ✅ Solution: Add _transaction flag
+# ✅ Solution: Add flag
 _transaction: true
-step1:
-  zData: {model: "@.zTestSuite.demos.zSchema.sqlite_demo", ...}
+step1: {zData: {model: $db, ...}}
 ```
 
-#### **2. Connection Not Reused**
+### Issue: zHat Interpolation Not Working
 ```yaml
-# ❌ Problem: Different schema paths
-_transaction: true
-step1:
-  zData: {model: "@.zTestSuite.demos.zSchema.sqlite_demo", ...}
-step2:
-  zData: {model: "@.zTestSuite.demos.zSchema.other_demo", ...}
-
-# ✅ Solution: Use same schema path
-_transaction: true
-step1:
-  zData: {model: "@.zTestSuite.demos.zSchema.sqlite_demo", ...}
-step2:
-  zData: {model: "@.zTestSuite.demos.zSchema.sqlite_demo", ...}
-```
-
-#### **3. zHat Interpolation Not Working**
-```yaml
-# ❌ Problem: Non-string value
-step1:
-  zData: {action: insert, ...}
-step2:
-  zData:
-    action: update
-    options: {id: zHat[0]}  # Won't interpolate
+# ❌ Problem: Non-string value (won't interpolate)
+options: {id: zHat[0]}
 
 # ✅ Solution: Use string context
-step1:
-  zData: {action: insert, ...}
-step2:
-  zData:
-    action: update
-    options: {where: "id = zHat[0]"}  # Will interpolate
+where: "id = zHat[0]"  # Will interpolate
+```
+
+### Issue: Connection Not Reused
+```yaml
+# ❌ Problem: Missing $ prefix
+_transaction: true
+step1: {zData: {model: mydb, ...}}  # No $!
+
+# ✅ Solution: Add $ prefix
+_transaction: true
+step1: {zData: {model: $mydb, ...}}  # Triggers transaction
 ```
 
 ---
 
-## **Development Notes**
+## API Reference
 
-### **Architecture Decisions**
-- **Pure Loop Engine**: zWizard doesn't know about specific step types
-- **Mode Separation**: Shell and Walker logic lives in respective subsystems
-- **Schema Cache**: Managed by zLoader, used by zWizard for transactions
-- **Error Handling**: Exceptions logged but don't crash the loop
+### Python API
+```python
+# Execute workflow (Shell mode)
+result = zcli.wizard.handle(workflow_dict)
+# Returns: WizardHat instance
 
-### **Future Enhancements**
-- 📋 Conditional steps (if/else logic)
-- 📋 Parallel step execution
-- 📋 Step retry logic
-- 📋 Workflow templates
-- 📋 Step timeout configuration
+# Execute loop (Walker mode)
+result = wizard.execute_loop(
+    items_dict,
+    dispatch_fn=custom_fn,         # Optional custom dispatcher
+    navigation_callbacks={...},    # Optional callbacks
+    context={...},                 # Optional context
+    start_key="step3"              # Optional resume point
+)
+```
+
+### WizardHat API
+```python
+# Create
+zHat = WizardHat()
+
+# Add results
+zHat.add("step1", "result1")
+zHat.add("step2", {"id": 123})
+
+# Access (3 ways)
+zHat[0]         # Numeric
+zHat["step1"]   # Key-based
+zHat.step1      # Attribute
+
+# Utilities
+len(zHat)           # 2
+"step1" in zHat     # True
+0 in zHat           # True
+```
 
 ---
 
-## **Quick Reference**
+## Testing
 
-### **Workflow Structure**
+**Test Suite:** 45 comprehensive tests
+- ✅ WizardHat triple-access (8 tests)
+- ✅ Initialization (5 tests)
+- ✅ Workflow execution (10 tests)
+- ✅ Interpolation (6 tests)
+- ✅ Transactions (6 tests)
+- ✅ Helper methods (5 tests)
+- ✅ Exception handling (5 tests)
+
+**Run Tests:**
+```bash
+# Declarative tests (45 tests)
+$ zolo ztests
+> Select: zWizard_test
+
+# Unit tests (34 tests)
+$ python3 -m unittest zTestSuite.zWizard_Test
+```
+
+---
+
+## Quick Reference
+
+### Workflow Structure
 ```yaml
-_transaction: true           # Enable transactions
-_config: {...}              # Meta configuration
+_transaction: true           # Meta: Enable transactions
+_config: {...}              # Meta: Configuration (future)
 
 step1:                      # Step name
   zData: {...}             # Step action
-  
+
 step2:
   zFunc: {...}
-  
+
 step3:
   zDisplay: {...}
 ```
 
-### **Python API**
-```python
-# Execute workflow
-result = zcli.wizard.handle(workflow)
+### Transaction Pattern
+```yaml
+_transaction: true
 
-# Execute loop with callbacks
-result = wizard.execute_loop(
-    items_dict,
-    dispatch_fn=custom_fn,
-    navigation_callbacks={...},
-    context={...},
-    start_key="step3"
-)
+step1: {zData: {model: $db, action: insert, ...}}
+step2: {zData: {model: $db, action: update, ...}}
+
+# Success → COMMIT
+# Error → ROLLBACK (automatic)
 ```
 
-### **Transaction Pattern**
-```python
-try:
-    # Execute steps
-    for step in workflow:
-        execute_step(step)
-    # Commit on success
-    commit_transaction()
-except Exception:
-    # Rollback on error
-    rollback_transaction()
-finally:
-    # Always cleanup
-    schema_cache.clear()
+### Result Interpolation
+```yaml
+step1:
+  zData: {action: insert, ...}  # Returns: {"id": 123}
+
+step2:
+  zDisplay:
+    message: "ID is zHat[0]['id']"  # Interpolated
 ```
 
 ---
 
-## **See Also**
-- **zShell**: Canvas mode and workflow execution
-- **zData**: Data operations and transaction support
-- **zLoader**: Schema loading and cache management
-- **zDispatch**: Walker mode routing
-- **zDisplay**: Visual feedback during execution
+## See Also
 
+- **zShell** - Canvas mode workflow execution
+- **zWalker** - UI navigation and menu orchestration
+- **zData** - Data operations with transaction support
+- **zLoader** - Schema loading and cache management
+- **zDispatch** - Command routing and step execution

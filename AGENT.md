@@ -17,6 +17,7 @@
 - **zDialog**: 85 tests (100% pass) - Interactive forms with auto-validation, 5 placeholder types, WebSocket support
 - **zOpen**: 83 tests (100% pass) - File & URL opening with intelligent routing, graceful fallbacks, hook execution
 - **zUtils**: 99 tests (100% pass) - Plugin management with unified cache, security enforcement, auto-reload, session injection, PermissionError handling
+- **zWizard**: 45 tests (100% pass) - Workflow orchestration with WizardHat (triple-access), sequential execution, transaction management, result interpolation
 
 *~90% automated pass rate (interactive tests require stdin). All pass when run interactively.
 
@@ -3049,6 +3050,279 @@ def my_function():
 
 ---
 
+## zWizard: Workflow Orchestration Engine (v1.5.4+)
+
+### Overview
+
+**zWizard** is zCLI's core loop engine for stepped execution and workflow orchestration - the "conductor" that executes multi-step workflows with automatic result passing, transaction management, and error handling. It powers Shell canvas mode, Walker UI navigation, and batch data operations.
+
+**Module Structure** (Pure Loop Engine):
+```
+zCLI/subsystems/zWizard/
+├── zWizard.py (core loop engine)
+└── zWizard_modules/
+    ├── wizard_hat.py           (WizardHat - triple-access results)
+    ├── wizard_interpolation.py (zHat[0] string interpolation)
+    ├── wizard_transactions.py  (BEGIN/COMMIT/ROLLBACK lifecycle)
+    ├── wizard_rbac.py          (Permission checking - future)
+    ├── wizard_exceptions.py    (Custom exception hierarchy)
+    └── __init__.py             (Module exports)
+```
+
+**Key Innovation**: WizardHat triple-access pattern - access results by numeric index (`zHat[0]`), key name (`zHat["step1"]`), or attribute (`zHat.step1`).
+
+### Public API
+
+```python
+from zCLI import zCLI
+z = zCLI({"zWorkspace": "."})
+
+# Execute workflow (Shell mode)
+workflow = {
+    "_transaction": True,
+    "step1": {"zData": {"action": "insert", ...}},
+    "step2": {"zData": {"action": "insert", ...}}
+}
+result = z.wizard.handle(workflow)
+# Returns: WizardHat instance
+
+# Execute loop (Walker mode)
+result = wizard.execute_loop(
+    items_dict,
+    dispatch_fn=custom_fn,
+    navigation_callbacks={...},
+    context={...},
+    start_key="step3"
+)
+```
+
+**Only 2 public methods**: `handle()` (Shell mode) and `execute_loop()` (Walker mode).
+
+### WizardHat Triple-Access Pattern
+
+The core innovation - access results three ways:
+
+```python
+# Execute workflow
+result = z.wizard.handle(workflow)
+
+# Three ways to access the same result:
+result[0]              # Numeric: First step result
+result["step1"]        # Key-based: Step name
+result.step1           # Attribute: Dot notation
+
+# All three return the same value!
+```
+
+**Why it matters:**
+- **Numeric access**: Simple iteration (`for i in range(len(zHat))`)
+- **Key access**: Semantic clarity (`zHat["validation_result"]`)
+- **Attribute access**: Clean syntax in code (`zHat.validation_result`)
+
+### Result Interpolation (zHat)
+
+Use previous step results in later steps:
+
+```yaml
+step1:
+  zData:
+    action: insert
+    options: {name: "Alice"}
+  # Returns: {"id": 123}
+
+step2:
+  zDisplay:
+    event: text
+    message: "Created user ID: zHat[0]['id']"
+  # Displays: "Created user ID: 123"
+
+step3:
+  zData:
+    action: update
+    where: "id = zHat[step1]['id']"
+  # Uses result from step1 by name
+```
+
+**Interpolation Rules:**
+- Only string values are interpolated
+- Supports numeric (`zHat[0]`) and key-based (`zHat[step_name]`) access
+- Invalid indices return `"None"`
+
+### Transaction Management
+
+Add `_transaction: true` for atomic multi-step operations:
+
+```yaml
+_transaction: true
+
+step1:
+  zData:
+    model: $mydb  # $ prefix triggers transaction
+    action: insert
+    tables: [users]
+
+step2:
+  zData:
+    model: $mydb  # Reuses same connection
+    action: insert
+    tables: [users]
+
+# On success → COMMIT
+# On error → ROLLBACK (automatic)
+```
+
+**Transaction Lifecycle:**
+1. **First step with `$alias`** → BEGIN transaction, create connection
+2. **Subsequent steps** → Reuse same connection (efficient!)
+3. **Success** → COMMIT transaction
+4. **Error** → ROLLBACK transaction (automatic)
+5. **Finally** → Clear schema_cache (cleanup)
+
+### Integration Points
+
+**With zShell:**
+- Canvas mode workflow execution
+- Step executor: `zShell/executor_commands/wizard_step_executor.py`
+- Command buffering → YAML workflow conversion
+
+**With zWalker:**
+- Menu navigation powered by `zWizard.execute_loop()`
+- Navigation callbacks: `on_back`, `on_error`, `on_continue`
+- Steps routed via `zDispatch.handle()`
+
+**With zData:**
+- Transaction support via shared schema cache
+- Connection reuse: `$alias` triggers single connection mode
+- Automatic rollback on failed operations
+
+**With zDisplay:**
+- Visual feedback during step execution
+- Formatted error messages
+- Result display (WizardHat contents)
+
+### Key Features
+
+✅ **WizardHat Triple-Access** - Numeric, key-based, attribute access for results  
+✅ **Sequential Execution** - Steps run in order with shared context  
+✅ **Result Interpolation** - Use previous results in later steps (zHat[0])  
+✅ **Transaction Management** - Automatic BEGIN/COMMIT/ROLLBACK for data ops  
+✅ **Error Handling** - Graceful recovery with automatic rollback  
+✅ **Navigation Control** - Built-in zBack, exit, stop signals  
+✅ **Mode-Agnostic** - Works in Shell canvas mode AND Walker UI navigation  
+✅ **45 comprehensive tests** - 100% pass rate across 7 categories
+
+### Testing
+
+**Test Coverage**: 45 tests across 7 categories (100% pass rate)
+- A. WizardHat Triple-Access (8 tests)
+- B. Initialization (5 tests)
+- C. Workflow Execution (10 tests)
+- D. Interpolation (6 tests)
+- E. Transactions (6 tests)
+- F. Helper Methods (5 tests)
+- G. Exception Handling (5 tests)
+
+**Run Tests**: `zolo ztests` → select "zWizard_test"
+
+**Test Files:**
+- `zTestRunner/zUI.zWizard_tests.yaml` (169 lines)
+- `zTestRunner/plugins/zwizard_tests.py` (1,200+ lines - **NO STUB TESTS**)
+
+**Note**: All 45 tests perform real validation with assertions. Zero stub tests.
+
+### Declarative Pattern (zUI Files)
+
+**Simple Workflow:**
+```yaml
+zVaF:
+  zWizard:
+    step1:
+      zFunc: "&data_collector.collect_item1()"
+    step2:
+      zFunc: "&data_collector.collect_item2()"
+    display_summary:
+      zFunc: "&report_generator.generate_report()"
+      # zHat automatically contains results from step1, step2
+```
+
+**Transactional Workflow:**
+```yaml
+zVaF:
+  _transaction: true
+  zWizard:
+    create_user:
+      zData:
+        model: $users_db
+        action: insert
+        tables: [users]
+    create_profile:
+      zData:
+        model: $users_db
+        action: insert
+        tables: [profiles]
+        # Reuses connection from create_user
+```
+
+### Common Mistakes
+
+❌ **Wrong: Accessing zHat outside zWizard**
+```python
+def display(zHat):
+    return zHat[0]  # ❌ zHat only exists in zWizard context!
+```
+
+✅ **Right: Use zHat only in zWizard workflows**
+```yaml
+zVaF:
+  zWizard:  # ✅ zHat available in wizard steps
+    step1:
+      zFunc: "&collector.collect()"
+    display:
+      zFunc: "&display.show_results()"  # ✅ zHat accessible here
+```
+
+---
+
+❌ **Wrong: Forgetting $ prefix for transactions**
+```yaml
+_transaction: true
+step1: {zData: {model: mydb, ...}}  # ❌ Missing $, no transaction!
+```
+
+✅ **Right: Use $ prefix to trigger transaction**
+```yaml
+_transaction: true
+step1: {zData: {model: $mydb, ...}}  # ✅ Transaction enabled
+```
+
+---
+
+❌ **Wrong: Expecting zHat interpolation in non-strings**
+```yaml
+step1:
+  zData: {action: insert, ...}
+step2:
+  zData:
+    options: {id: zHat[0]}  # ❌ Won't interpolate (not a string)
+```
+
+✅ **Right: Use string context for interpolation**
+```yaml
+step1:
+  zData: {action: insert, ...}
+step2:
+  zData:
+    where: "id = zHat[0]"  # ✅ Will interpolate (string)
+```
+
+### Documentation
+
+- **[zWizard Guide](Documentation/zWizard_GUIDE.md)** - **Workflow orchestration subsystem** (✅ Updated - CEO & dev-friendly)
+- **Test Suite**: `zTestRunner/zUI.zWizard_tests.yaml` (45 tests, 100% coverage)
+- **Plugin**: `zTestRunner/plugins/zwizard_tests.py` (test logic)
+
+---
+
 ## RBAC Directives (v1.5.4 Week 3.3)
 
 **Default**: PUBLIC ACCESS (no `_rbac` = no restrictions)  
@@ -4656,6 +4930,10 @@ Loading a schema doesn't auto-create tables - you must explicitly call `create_t
   - Plugin: `zTestRunner/plugins/zutils_tests.py` (test logic - **NO STUB TESTS**)
   - Integration: Plugin loading workflows, unified cache operations, security enforcement, collision detection, mtime auto-reload, stats tracking
   - Notes: All 98 tests perform real validation with mock zCLI instances, zero stub tests, covers 3-phase modernization
+- **zWizard**: `zTestRunner/zUI.zWizard_tests.yaml` (45 tests, 100% coverage)
+  - Plugin: `zTestRunner/plugins/zwizard_tests.py` (test logic - **NO STUB TESTS**)
+  - Integration: WizardHat triple-access workflows, sequential execution, transaction management, result interpolation, Shell/Walker integration
+  - Notes: All 45 tests perform real validation with assertions, zero stub tests, covers 7 categories (A-to-G)
 
 ---
 
@@ -4887,7 +5165,7 @@ sessions_db.parent.mkdir(parents=True, exist_ok=True)
 - ✅ SQLite session persistence (7-day expiry, auto-cleanup)
 - ✅ Context-aware RBAC (role & permission management)
 **Total Tests**: 1,112 passing (100% pass rate) 🎉  
-**Declarative Test Suite**: ✅ zTestRunner operational (1,026 tests, ~99% pass rate, 100% subsystem coverage)
+**Declarative Test Suite**: ✅ zTestRunner operational (1,071 tests, ~99% pass rate, 100% subsystem coverage)
 - **zConfig**: 72 tests (100% pass) - with integration tests
 - **zComm**: 106 tests (100% pass) - with integration tests
 - **zDisplay**: 86 tests (100% pass) - with integration tests
@@ -4900,10 +5178,11 @@ sessions_db.parent.mkdir(parents=True, exist_ok=True)
 - **zDialog**: 85 tests (100% pass) - with auto-validation, 5 placeholder types, WebSocket support & integration tests (43 real tests, 42 stubs)
 - **zOpen**: 83 tests (100% pass) - with type detection, zPath resolution, URL/file opening, hook execution & graceful fallbacks
 - **zUtils**: 99 tests (100% pass) - with unified cache, security enforcement, collision detection, mtime auto-reload, PermissionError handling & integration tests
+- **zWizard**: 45 tests (100% pass) - with WizardHat triple-access, sequential execution, transaction management, result interpolation & Shell/Walker integration
 
 *~90% automated pass rate (interactive tests require stdin). All pass when run interactively.
 
-**Next**: Additional subsystems (zShell, zWizard, zWalker, zData, etc.)
+**Next**: Additional subsystems (zShell, zWalker, zData, etc.)
 
 ---
 
@@ -5014,4 +5293,14 @@ sessions_db.parent.mkdir(parents=True, exist_ok=True)
 - **Key Features:** Unified cache architecture (delegates to zLoader.plugin_cache), security enforcement (`__all__` whitelist, collision detection), mtime-based auto-reload, session injection (every plugin gets zcli), best-effort loading, comprehensive stats
 - **Innovations:** 3-phase modernization (Foundation → Architecture → Enhancements), unified cache for cross-subsystem access (zFunc, zParser, zShell share plugins), graceful degradation (one bad plugin doesn't crash system)
 - **Notes:** All 98 tests perform real validation with mock zCLI instances, zero stub tests
+
+**zWizard (Week 6.14 - Complete):**
+- **Guide:** `Documentation/zWizard_GUIDE.md` - CEO & developer-friendly (✅ Updated)
+- **Test Suite:** `zTestRunner/zUI.zWizard_tests.yaml` - 45 declarative tests (100% pass rate)
+- **Status:** A+ grade (pure loop engine, WizardHat triple-access, transaction management, mode-agnostic)
+- **Coverage:** All 7 categories (A-to-G comprehensive), Shell/Walker integration, transaction workflows
+- **Run Tests:** `zolo ztests` → select "zWizard_test"
+- **Key Features:** WizardHat triple-access (numeric/key/attribute), sequential execution with shared context, result interpolation (zHat[0]), automatic BEGIN/COMMIT/ROLLBACK, error handling with rollback, navigation control (zBack/exit/stop)
+- **Innovations:** WizardHat triple-access pattern (industry-first ergonomics), automatic transaction management with connection reuse, mode-agnostic operation (Shell canvas + Walker UI), pure loop engine design (execution logic in respective subsystems)
+- **Notes:** All 45 tests perform real validation with assertions, zero stub tests
 
