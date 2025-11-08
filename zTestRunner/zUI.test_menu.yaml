@@ -1,3 +1,7 @@
+# zTestRunner Main Test Menu
+# Declarative test suite for zCLI subsystems
+# Each menu item links to a dedicated test suite
+
 zVaF:
   ~Root*: [
     "All Tests",
@@ -12,9 +16,10 @@ zVaF:
     "zFunc",
     "zDialog",
     "zOpen",
+    "zUtils",
     "zShell",
     "zWizard",
-    "zUtils",
+    "zWalker",
     "zTraceback",
     "zExceptions",
     "zExceptions_Traceback_Integration",
@@ -23,14 +28,13 @@ zVaF:
     "zData_Validation",
     "zData_PluginValidation",
     "zData_Migration",
-    "zWalker",
     "zIntegration",
     "zEndToEnd",
     "stop"
   ]
   
   "All Tests":
-    zFunc: "&test_runner.run_test_suite('all')"
+    zFunc: "&test_runner.run_all_tests()"
   
   "zConfig":
     zLink: "@.zUI.zConfig_tests.zVaF"
@@ -65,14 +69,17 @@ zVaF:
   "zOpen":
     zLink: "@.zUI.zOpen_tests.zVaF"
   
+  "zUtils":
+    zLink: "@.zUI.zUtils_tests.zVaF"
+  
   "zShell":
     zFunc: "&test_runner.run_test_suite('zShell')"
   
   "zWizard":
     zFunc: "&test_runner.run_test_suite('zWizard')"
   
-  "zUtils":
-    zFunc: "&test_runner.run_test_suite('zUtils')"
+  "zWalker":
+    zFunc: "&test_runner.run_test_suite('zWalker')"
   
   "zTraceback":
     zFunc: "&test_runner.run_test_suite('zTraceback')"
@@ -98,11 +105,12 @@ zVaF:
   "zData_Migration":
     zFunc: "&test_runner.run_test_suite('zData_Migration')"
   
-  "zWalker":
-    zFunc: "&test_runner.run_test_suite('zWalker')"
-  
   "zIntegration":
     zFunc: "&test_runner.run_test_suite('zIntegration')"
   
   "zEndToEnd":
     zFunc: "&test_runner.run_test_suite('zEndToEnd')"
+  
+  "stop":
+    zFunc: "&test_runner.exit_tests()"
+

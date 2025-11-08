@@ -1,0 +1,253 @@
+# zTestRunner/zUI.zUtils_tests.yaml
+# Comprehensive zUtils Test Suite (99 tests)
+# Auto-run wizard pattern with result accumulation in zHat
+# Covers 3-phase modernization: unified storage, security, collision detection, mtime auto-reload, stats/metrics, PermissionError handling
+
+zVaF:
+  zWizard:
+    # ===============================================================
+    # A. Facade - Initialization & Main API (8 tests)
+    # ===============================================================
+    "test_01_facade_init":
+      zFunc: "&zutils_tests.test_facade_init()"
+    "test_02_facade_attributes":
+      zFunc: "&zutils_tests.test_facade_attributes()"
+    "test_03_facade_zcli_dependency":
+      zFunc: "&zutils_tests.test_facade_zcli_dependency()"
+    "test_04_facade_display_initialization":
+      zFunc: "&zutils_tests.test_facade_display_initialization()"
+    "test_05_facade_stats_initialization":
+      zFunc: "&zutils_tests.test_facade_stats_initialization()"
+    "test_06_facade_mtime_tracking_initialization":
+      zFunc: "&zutils_tests.test_facade_mtime_tracking_initialization()"
+    "test_07_facade_constants_defined":
+      zFunc: "&zutils_tests.test_facade_constants_defined()"
+    "test_08_facade_type_hints_coverage":
+      zFunc: "&zutils_tests.test_facade_type_hints_coverage()"
+    
+    # ===============================================================
+    # B. Plugin Loading - Main Method (12 tests)
+    # ===============================================================
+    "test_09_load_single_plugin_file":
+      zFunc: "&zutils_tests.test_load_single_plugin_file()"
+    "test_10_load_multiple_plugins":
+      zFunc: "&zutils_tests.test_load_multiple_plugins()"
+    "test_11_load_plugin_from_module_path":
+      zFunc: "&zutils_tests.test_load_plugin_from_module_path()"
+    "test_12_load_plugin_with_string_path":
+      zFunc: "&zutils_tests.test_load_plugin_with_string_path()"
+    "test_13_load_plugin_with_list_paths":
+      zFunc: "&zutils_tests.test_load_plugin_with_list_paths()"
+    "test_14_load_plugins_none_input":
+      zFunc: "&zutils_tests.test_load_plugins_none_input()"
+    "test_15_load_plugins_empty_list":
+      zFunc: "&zutils_tests.test_load_plugins_empty_list()"
+    "test_16_load_plugin_method_exposure":
+      zFunc: "&zutils_tests.test_load_plugin_method_exposure()"
+    "test_17_load_plugin_returns_dict":
+      zFunc: "&zutils_tests.test_load_plugin_returns_dict()"
+    "test_18_load_plugin_best_effort":
+      zFunc: "&zutils_tests.test_load_plugin_best_effort()"
+    "test_19_load_plugin_progress_display":
+      zFunc: "&zutils_tests.test_load_plugin_progress_display()"
+    "test_20_load_plugin_logging":
+      zFunc: "&zutils_tests.test_load_plugin_logging()"
+    
+    # ===============================================================
+    # C. Unified Storage - zLoader Integration (10 tests)
+    # ===============================================================
+    "test_21_unified_storage_delegation":
+      zFunc: "&zutils_tests.test_unified_storage_delegation()"
+    "test_22_unified_storage_no_separate_dict":
+      zFunc: "&zutils_tests.test_unified_storage_no_separate_dict()"
+    "test_23_unified_storage_zloader_cache_used":
+      zFunc: "&zutils_tests.test_unified_storage_zloader_cache_used()"
+    "test_24_unified_storage_cross_access":
+      zFunc: "&zutils_tests.test_unified_storage_cross_access()"
+    "test_25_unified_storage_plugins_property":
+      zFunc: "&zutils_tests.test_unified_storage_plugins_property()"
+    "test_26_unified_storage_backward_compatibility":
+      zFunc: "&zutils_tests.test_unified_storage_backward_compatibility()"
+    "test_27_unified_storage_session_injection":
+      zFunc: "&zutils_tests.test_unified_storage_session_injection()"
+    "test_28_unified_storage_no_duplication":
+      zFunc: "&zutils_tests.test_unified_storage_no_duplication()"
+    "test_29_unified_storage_cache_stats":
+      zFunc: "&zutils_tests.test_unified_storage_cache_stats()"
+    "test_30_unified_storage_zloader_unavailable":
+      zFunc: "&zutils_tests.test_unified_storage_zloader_unavailable()"
+    
+    # ===============================================================
+    # D. Security - __all__ Whitelist (10 tests)
+    # ===============================================================
+    "test_31_security_all_whitelist_enforced":
+      zFunc: "&zutils_tests.test_security_all_whitelist_enforced()"
+    "test_32_security_all_whitelist_partial":
+      zFunc: "&zutils_tests.test_security_all_whitelist_partial()"
+    "test_33_security_no_all_warning":
+      zFunc: "&zutils_tests.test_security_no_all_warning()"
+    "test_34_security_no_all_exposes_public":
+      zFunc: "&zutils_tests.test_security_no_all_exposes_public()"
+    "test_35_security_private_functions_skipped":
+      zFunc: "&zutils_tests.test_security_private_functions_skipped()"
+    "test_36_security_dangerous_imports_blocked":
+      zFunc: "&zutils_tests.test_security_dangerous_imports_blocked()"
+    "test_37_security_only_callables_exposed":
+      zFunc: "&zutils_tests.test_security_only_callables_exposed()"
+    "test_38_security_builtin_not_exposed":
+      zFunc: "&zutils_tests.test_security_builtin_not_exposed()"
+    "test_39_security_method_collision_skipped":
+      zFunc: "&zutils_tests.test_security_method_collision_skipped()"
+    "test_40_security_exposure_count_logged":
+      zFunc: "&zutils_tests.test_security_exposure_count_logged()"
+    
+    # ===============================================================
+    # E. Helper Functions - Module Name, File Path (8 tests)
+    # ===============================================================
+    "test_41_helper_extract_module_name_file":
+      zFunc: "&zutils_tests.test_helper_extract_module_name_file()"
+    "test_42_helper_extract_module_name_module":
+      zFunc: "&zutils_tests.test_helper_extract_module_name_module()"
+    "test_43_helper_extract_module_name_nested":
+      zFunc: "&zutils_tests.test_helper_extract_module_name_nested()"
+    "test_44_helper_is_file_path_absolute":
+      zFunc: "&zutils_tests.test_helper_is_file_path_absolute()"
+    "test_45_helper_is_file_path_relative":
+      zFunc: "&zutils_tests.test_helper_is_file_path_relative()"
+    "test_46_helper_is_file_path_module":
+      zFunc: "&zutils_tests.test_helper_is_file_path_module()"
+    "test_47_helper_load_from_file":
+      zFunc: "&zutils_tests.test_helper_load_from_file()"
+    "test_48_helper_load_from_module":
+      zFunc: "&zutils_tests.test_helper_load_from_module()"
+    
+    # ===============================================================
+    # F. Collision Detection (8 tests)
+    # ===============================================================
+    "test_49_collision_detection_enabled":
+      zFunc: "&zutils_tests.test_collision_detection_enabled()"
+    "test_50_collision_detection_same_name":
+      zFunc: "&zutils_tests.test_collision_detection_same_name()"
+    "test_51_collision_detection_different_paths":
+      zFunc: "&zutils_tests.test_collision_detection_different_paths()"
+    "test_52_collision_detection_error_message":
+      zFunc: "&zutils_tests.test_collision_detection_error_message()"
+    "test_53_collision_detection_stats_increment":
+      zFunc: "&zutils_tests.test_collision_detection_stats_increment()"
+    "test_54_collision_detection_first_wins":
+      zFunc: "&zutils_tests.test_collision_detection_first_wins()"
+    "test_55_collision_detection_logging":
+      zFunc: "&zutils_tests.test_collision_detection_logging()"
+    "test_56_collision_detection_no_false_positive":
+      zFunc: "&zutils_tests.test_collision_detection_no_false_positive()"
+    
+    # ===============================================================
+    # G. Mtime Auto-Reload (8 tests)
+    # ===============================================================
+    "test_57_mtime_tracking_enabled":
+      zFunc: "&zutils_tests.test_mtime_tracking_enabled()"
+    "test_58_mtime_tracking_recorded":
+      zFunc: "&zutils_tests.test_mtime_tracking_recorded()"
+    "test_59_mtime_reload_on_change":
+      zFunc: "&zutils_tests.test_mtime_reload_on_change()"
+    "test_60_mtime_reload_stats_increment":
+      zFunc: "&zutils_tests.test_mtime_reload_stats_increment()"
+    "test_61_mtime_reload_throttle":
+      zFunc: "&zutils_tests.test_mtime_reload_throttle()"
+    "test_62_mtime_reload_logging":
+      zFunc: "&zutils_tests.test_mtime_reload_logging()"
+    "test_63_mtime_no_reload_same_time":
+      zFunc: "&zutils_tests.test_mtime_no_reload_same_time()"
+    "test_64_mtime_module_path_skip":
+      zFunc: "&zutils_tests.test_mtime_module_path_skip()"
+    
+    # ===============================================================
+    # H. Stats/Metrics (8 tests)
+    # ===============================================================
+    "test_65_stats_get_stats_method":
+      zFunc: "&zutils_tests.test_stats_get_stats_method()"
+    "test_66_stats_plugins_loaded_count":
+      zFunc: "&zutils_tests.test_stats_plugins_loaded_count()"
+    "test_67_stats_total_loads_increment":
+      zFunc: "&zutils_tests.test_stats_total_loads_increment()"
+    "test_68_stats_collisions_tracked":
+      zFunc: "&zutils_tests.test_stats_collisions_tracked()"
+    "test_69_stats_reloads_tracked":
+      zFunc: "&zutils_tests.test_stats_reloads_tracked()"
+    "test_70_stats_cache_hits_misses":
+      zFunc: "&zutils_tests.test_stats_cache_hits_misses()"
+    "test_71_stats_hit_rate_calculation":
+      zFunc: "&zutils_tests.test_stats_hit_rate_calculation()"
+    "test_72_stats_dict_structure":
+      zFunc: "&zutils_tests.test_stats_dict_structure()"
+    
+    # ===============================================================
+    # I. Session Injection (6 tests)
+    # ===============================================================
+    "test_73_session_injection_enabled":
+      zFunc: "&zutils_tests.test_session_injection_enabled()"
+    "test_74_session_injection_zcli_attribute":
+      zFunc: "&zutils_tests.test_session_injection_zcli_attribute()"
+    "test_75_session_injection_before_exec":
+      zFunc: "&zutils_tests.test_session_injection_before_exec()"
+    "test_76_session_injection_access_subsystems":
+      zFunc: "&zutils_tests.test_session_injection_access_subsystems()"
+    "test_77_session_injection_via_zloader":
+      zFunc: "&zutils_tests.test_session_injection_via_zloader()"
+    "test_78_session_injection_logging":
+      zFunc: "&zutils_tests.test_session_injection_logging()"
+    
+    # ===============================================================
+    # J. Error Handling (10 tests)
+    # ===============================================================
+    "test_79_error_invalid_zcli":
+      zFunc: "&zutils_tests.test_error_invalid_zcli()"
+    "test_80_error_missing_logger":
+      zFunc: "&zutils_tests.test_error_missing_logger()"
+    "test_81_error_missing_display":
+      zFunc: "&zutils_tests.test_error_missing_display()"
+    "test_82_error_invalid_plugin_path":
+      zFunc: "&zutils_tests.test_error_invalid_plugin_path()"
+    "test_83_error_file_not_found":
+      zFunc: "&zutils_tests.test_error_file_not_found()"
+    "test_84_error_import_failed":
+      zFunc: "&zutils_tests.test_error_import_failed()"
+    "test_85_error_spec_creation_failed":
+      zFunc: "&zutils_tests.test_error_spec_creation_failed()"
+    "test_86_error_exec_module_failed":
+      zFunc: "&zutils_tests.test_error_exec_module_failed()"
+    "test_87_error_best_effort_continues":
+      zFunc: "&zutils_tests.test_error_best_effort_continues()"
+    "test_88_error_logging_comprehensive":
+      zFunc: "&zutils_tests.test_error_logging_comprehensive()"
+    
+    # ===============================================================
+    # K. Integration Tests (10 tests) + L. Additional Error Handling (1 test)
+    # ===============================================================
+    "test_89_integration_zloader_cache":
+      zFunc: "&zutils_tests.test_integration_zloader_cache()"
+    "test_90_integration_zparser_cross_access":
+      zFunc: "&zutils_tests.test_integration_zparser_cross_access()"
+    "test_91_integration_zshell_utils_command":
+      zFunc: "&zutils_tests.test_integration_zshell_utils_command()"
+    "test_92_integration_zspark_boot_loading":
+      zFunc: "&zutils_tests.test_integration_zspark_boot_loading()"
+    "test_93_integration_method_exposure_runtime":
+      zFunc: "&zutils_tests.test_integration_method_exposure_runtime()"
+    "test_94_integration_backward_compatibility":
+      zFunc: "&zutils_tests.test_integration_backward_compatibility()"
+    "test_95_integration_collision_with_zloader":
+      zFunc: "&zutils_tests.test_integration_collision_with_zloader()"
+    "test_96_integration_stats_unified":
+      zFunc: "&zutils_tests.test_integration_stats_unified()"
+    "test_97_integration_mtime_reload_persistence":
+      zFunc: "&zutils_tests.test_integration_mtime_reload_persistence()"
+    "test_98_integration_full_workflow":
+      zFunc: "&zutils_tests.test_integration_full_workflow()"
+    "test_99_error_permission_denied":
+      zFunc: "&zutils_tests.test_error_permission_denied()"
+    
+    "display_and_return":
+      zFunc: "&zutils_tests.display_test_results()"
+
+
