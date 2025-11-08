@@ -75,7 +75,7 @@ zVaF:
     zLink: "@.zUI.zData_tests.zVaF"
   
   "zWalker":
-    zFunc: "&test_runner.run_test_suite('zWalker')"
+    zLink: "@.zUI.zWalker_tests.zVaF"
   
   "zIntegration":
     zFunc: "&test_runner.run_test_suite('zIntegration')"

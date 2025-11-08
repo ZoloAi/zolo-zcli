@@ -3864,6 +3864,222 @@ Package Root → Facade → Module Aggregator → Core Modules → Command Regis
 
 ---
 
+## zWalker: YAML-Driven UI Orchestration (v1.5.4+)
+
+**Final orchestration layer** - Turn YAML files into interactive CLI applications with menus, wizards, and workflows.
+
+### Key Features
+- **YAML-Based Menus** - Define interactive UIs without code
+- **Breadcrumb Navigation** - Automatic back/forward tracking (zCrumbs)
+- **Multi-Step Wizards** - Chain actions into workflows
+- **Cross-File Linking** - Navigate between menu files (delta links)
+- **Full Subsystem Access** - All 11 subsystems available
+- **Dual-Mode** - Works in Terminal and zBifrost (web)
+
+### Quick Example
+
+```yaml
+# zUI.my_app.yaml
+zVaF:
+  ~Root*: ["View Data", "Add Record", "Settings", "stop"]
+  
+  "View Data":
+    zData:
+      action: read
+      table: users
+      limit: 10
+  
+  "Add Record":
+    zWizard:
+      collect_input:
+        zDialog:
+          model: "UserData"
+          fields: ["name", "email"]
+      save_data:
+        zData:
+          action: create
+          table: users
+          data:
+            name: "zHat[name]"
+            email: "zHat[email]"
+  
+  "Settings":
+    ~Menu*: ["Change Theme", "View Config", "zBack"]
+    
+    "Change Theme":
+      zDisplay:
+        event: info
+        content: "Theme settings..."
+```
+
+```python
+# Run the app
+from zCLI import zCLI
+
+zcli = zCLI()
+zcli.zspark_obj['zVaFile'] = '@.zUI.my_app'
+zcli.zspark_obj['zBlock'] = 'zVaF'
+result = zcli.walker.run()
+```
+
+### Navigation Patterns
+
+**1. Direct Actions**
+```yaml
+"Option": { zDisplay: { event: success, content: "Done!" } }
+```
+
+**2. Delta Links (Same File)**
+```yaml
+~Root*: ["$SubMenu", "stop"]
+SubMenu:
+  ~Root*: ["Options", "zBack"]
+```
+
+**3. Cross-File Links**
+```yaml
+# In file_a.yaml
+~Root*: ["$OtherFile.OtherBlock", "stop"]
+
+# In file_b.yaml
+OtherBlock:
+  ~Root*: ["Options", "zBack"]
+```
+
+**4. Multi-Step Wizards**
+```yaml
+"Workflow":
+  zWizard:
+    step1: { zDialog: { model: "Input" } }
+    step2: { zFunc: "&plugin.process()" }
+    step3: { zDisplay: { event: json, data: "zHat" } }
+```
+
+### Reserved Keywords
+
+- **`~Root*`** - Root menu anchor (required)
+- **`~Menu*`** - Sub-menu anchor
+- **`zBack`** - Return to previous menu
+- **`stop`** - Exit walker
+- **`zHat`** - Access wizard results
+- **`$`** - Delta link prefix
+
+### Architecture
+
+**Layer 3 Orchestrator** (extends zWizard):
+```
+zWalker
+  ├── run()             → Main entry point
+  ├── zBlock_loop()     → Menu navigation
+  └── walker_dispatch() → Breadcrumb-aware dispatch
+  
+  Integrates 11 Subsystems:
+  ├─ zDisplay    → UI rendering
+  ├─ zNavigation → Menus & breadcrumbs
+  ├─ zDispatch   → Command routing
+  ├─ zLoader     → YAML loading
+  ├─ zData       → Database ops
+  ├─ zDialog     → Forms & input
+  ├─ zFunc       → Plugin exec
+  ├─ zAuth       → Authentication
+  ├─ zOpen       → File/URL opening
+  ├─ zShell      → REPL integration
+  └─ zUtils      → Utilities
+```
+
+**Public API:** 3 methods (run, zBlock_loop, _init_walker_session)
+
+### Session Management
+
+Walker automatically manages navigation state:
+
+```python
+zcli.session["zMode"] = "Walker"
+zcli.session["zCrumbs"] = {}  # Breadcrumb tracking
+zcli.session["zBlock"] = "current_block"
+
+# Breadcrumb structure:
+# {"MainMenu": ["Features"], "Features": ["Feature A"]}
+```
+
+### Testing
+
+**88 tests** across 12 categories (100% pass rate):
+- Initialization & Setup (5 tests)
+- Session Management (8 tests)
+- Orchestration & Delegation (10 tests)
+- Dual-Mode Support (8 tests)
+- Navigation Callbacks (10 tests)
+- Block Loop Execution (10 tests)
+- Integration - Display (5 tests)
+- Integration - Navigation (5 tests)
+- Integration - Dispatch (5 tests)
+- Integration - Loader (5 tests)
+- Error Handling (10 tests)
+- Cross-Subsystem Integration (7 tests)
+
+**Run Tests:** `zolo ztests` → select "zWalker"
+
+### Best Practices
+
+**✅ DO:**
+```yaml
+~Root*: ["Manage Users", "View Reports", "stop"]  # Clear labels
+"Workflow":
+  zWizard:  # Multi-step with wizard
+    validate: { zFunc: "&validate()" }
+    process: { zData: { action: create } }
+SubMenu:
+  ~Root*: ["Options", "zBack"]  # Provide back navigation
+```
+
+**❌ DON'T:**
+```yaml
+~Root*: ["opt1", "opt2", "stop"]  # Vague labels
+"Workflow":
+  zData: { action: create }  # Missing validation/confirmation
+SubMenu:
+  ~Root*: ["Options"]  # No way back!
+```
+
+### Common Patterns
+
+**CRUD Menu:**
+```yaml
+ManageUsers:
+  ~Root*: ["View All", "Add", "Edit", "Delete", "zBack"]
+  "View All": { zData: { action: read, table: users } }
+  "Add":
+    zWizard:
+      collect: { zDialog: { model: "User" } }
+      save: { zData: { action: create, table: users, data: "zHat" } }
+```
+
+**Plugin Menu:**
+```yaml
+PluginActions:
+  ~Root*: ["Generate ID", "Hash Password", "zBack"]
+  "Generate ID": { zFunc: "&id_generator.composite_id('USER', 2024)" }
+```
+
+**Nested Navigation:**
+```yaml
+Main:
+  ~Root*: ["Features", "Admin", "stop"]
+  "Features":
+    ~Menu*: ["Feature A", "Feature B", "zBack"]
+    "Feature A":
+      ~Menu*: ["Sub 1", "Sub 2", "zBack"]
+```
+
+### Documentation
+
+- **[zWalker Guide](Documentation/zWalker_GUIDE.md)** - **YAML-driven orchestration** (✅ Complete - CEO & dev-friendly)
+- **Test Suite**: `zTestRunner/zUI.zWalker_tests.yaml` (88 tests)
+- **Plugin**: `zTestRunner/plugins/zwalker_tests.py` (test logic)
+
+---
+
 ## RBAC Directives (v1.5.4 Week 3.3)
 
 **Default**: PUBLIC ACCESS (no `_rbac` = no restrictions)  

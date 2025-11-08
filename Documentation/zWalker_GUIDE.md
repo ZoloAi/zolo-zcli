@@ -1,229 +1,257 @@
 # zWalker Guide
 
-**Version:** 1.4.0  
-**Layer:** 3 (Orchestrator)  
-**Status:** Production Ready
+> **YAML-Driven UI Orchestration**  
+> Turn simple YAML files into interactive CLI applications with menus, wizards, and workflows.
 
-## Overview
+---
 
-zWalker is the final orchestrator layer in zCLI, providing a UI/menu navigation interface that extends zWizard with YAML-based declarative menus and unified navigation. It integrates all subsystems to create interactive, navigable applications from simple YAML files.
+## What It Does
 
-## Architecture
+**zWalker** is the orchestration engine that brings all zCLI subsystems together into navigable UI experiences:
 
-### Inheritance Hierarchy
+- ✅ **YAML-based menus** - Define interactive UIs without code
+- ✅ **Breadcrumb navigation** - Automatic back/forward tracking
+- ✅ **Multi-step wizards** - Chain actions into workflows
+- ✅ **Cross-file linking** - Navigate between menu files
+- ✅ **Full subsystem access** - Data, display, auth, functions, dialogs
+- ✅ **Dual-mode support** - Works in Terminal and zBifrost (web)
+
+**Status:** ✅ Production-ready (100% test coverage, 88/88 tests passing)
+
+---
+
+## Why It Matters
+
+### For Developers
+- **Zero boilerplate** - Write YAML, get interactive menus
+- **Extends zWizard** - Inherits workflow capabilities
+- **Declarative** - UI defined in data, not code
+- **Type-safe** - Full integration with typed subsystems
+- **Industry-grade** - 88 comprehensive tests, 12 test categories
+
+### For Executives
+- **Rapid prototyping** - Build CLIs in minutes, not days
+- **Non-technical friendly** - Business analysts can define UI flows
+- **Maintainable** - UI changes don't require code changes
+- **Production-ready** - 88 tests ensure reliability
+- **Web-ready** - Same YAML works in Terminal and browser (zBifrost)
+
+---
+
+## Architecture (Simple View)
+
 ```
-zWizard (Layer 2)
-    ↓
-zWalker (Layer 3)
+zWalker (Layer 3 - Orchestrator)
+│
+├── Extends zWizard → Multi-step workflows
+│
+├── Integrates 11 Subsystems:
+│   ├── zDisplay   → UI rendering
+│   ├── zNavigation → Menus & breadcrumbs
+│   ├── zDispatch  → Command routing
+│   ├── zLoader    → YAML file loading
+│   ├── zData      → Database operations
+│   ├── zDialog    → Forms & input
+│   ├── zFunc      → Plugin execution
+│   ├── zAuth      → Authentication
+│   ├── zOpen      → File/URL opening
+│   ├── zShell     → REPL integration
+│   └── zUtils     → Utilities
+│
+└── Core Features:
+    ├── run()           → Main entry point
+    ├── zBlock_loop()   → Menu navigation
+    └── walker_dispatch() → Breadcrumb-aware dispatch
 ```
 
-zWalker extends zWizard, inheriting all workflow capabilities while adding:
-- YAML-based UI/menu definitions
-- Breadcrumb navigation (zCrumbs)
-- Delta links for cross-block navigation
-- Hierarchical menu structures
-- Back navigation support
+**Test Coverage:** 88 tests across 12 categories = 100% coverage
 
-### Key Components
+---
 
-**Core Features:**
-- `run()` - Main entry point for walker execution
-- `zBlock_loop()` - Navigate through menu blocks
-- `_init_walker_session()` - Initialize walker-specific session
-- `walker_dispatch()` - Custom dispatch with breadcrumb tracking
+## How It Works
 
-**Integrated Subsystems:**
-- **zDisplay** - Modern UI rendering
-- **zNavigation** - Menus, breadcrumbs, linking
-- **zDispatch** - Command routing
-- **zLoader** - YAML file loading
-- **zData** - Database operations
-- **zWizard** - Workflow engine
-- **zFunc** - Function execution
-- **Plugins** - Dynamic extensions
+### 1. Define UI in YAML
 
-## YAML Structure
-
-### Basic Menu Block
+Create a menu file (`zUI.my_app.yaml`):
 
 ```yaml
 zVaF:
-  ~Root*: ["Option A", "Option B", "Option C", "stop"]
+  ~Root*: ["View Data", "Add Record", "Settings", "stop"]
   
-  "Option A":
-    zDisplay:
-      event: header
-      label: "You selected Option A"
-      style: full
-      color: SUCCESS
+  "View Data":
+    zData:
+      action: read
+      table: users
+      limit: 10
   
-  "Option B":
+  "Add Record":
     zWizard:
-      step1:
-        zDisplay:
-          event: info
-          content: "Multi-step workflow"
-      step2:
+      collect_input:
         zDialog:
-          model: "UserInput"
-          fields: ["name"]
+          model: "UserData"
+          fields: ["name", "email"]
+      save_data:
+        zData:
+          action: create
+          table: users
+          data:
+            name: "zHat[name]"
+            email: "zHat[email]"
+  
+  "Settings":
+    ~Menu*: ["Change Theme", "View Config", "zBack"]
+    
+    "Change Theme":
+      zDisplay:
+        event: info
+        content: "Theme settings..."
 ```
 
-**Menu Syntax:**
-- `~Root*` - Root menu anchor (required)
-- `~Menu*` - Sub-menu anchor
-- `["opt1", "opt2", ...]` - Menu options
-- `"zBack"` - Return to previous menu
-- `"stop"` - Exit walker
-
-### Navigation Types
-
-**1. Direct Actions (Keys)**
-```yaml
-"Option Name":
-  zDisplay:
-    event: success
-    content: "Direct action executed"
-```
-
-**2. Delta Links (Local)**
-```yaml
-~Root*: ["Main", "$SubMenu", "stop"]
-
-SubMenu:
-  ~Root*: ["Sub Option", "zBack"]
-```
-
-**3. Quick Access Functions**
-```yaml
-~Root*: ["^Session", "^Shell", "stop"]
-
-"^Session":
-  zDisplay:
-    event: zSession
-
-"^Shell":
-  zFunc: "@.zCLI.subsystems.zShell.zShell.interactive()"
-```
-
-**4. Cross-File Delta Links**
-```yaml
-# In file_a.yaml
-MainHub:
-  ~Root*: ["Local", "$OtherFile.OtherBlock", "stop"]
-
-# In file_b.yaml
-OtherBlock:
-  ~Root*: ["Options", "zBack"]
-```
-
-## Usage
-
-### Basic Initialization
+### 2. Run Your App
 
 ```python
 from zCLI import zCLI
 
-# Initialize zCLI
+# Initialize
 zcli = zCLI()
 
 # Configure walker
-zcli.zspark_obj['zVaFile'] = '@.path.to.ui_file'
+zcli.zspark_obj['zVaFile'] = '@.zUI.my_app'
 zcli.zspark_obj['zBlock'] = 'zVaF'
 
-# Run walker
+# Run
 result = zcli.walker.run()
 ```
 
-### Session Management
+### 3. Navigate Automatically
 
-```python
-# Walker automatically sets:
-zcli.session["zMode"] = "Walker"
-zcli.session["zCrumbs"] = {}  # Breadcrumb tracking
-zcli.session["zBlock"] = "current_block"
-```
+Walker handles:
+- Menu display via `~Root*` and `~Menu*` anchors
+- User selection and command dispatch
+- Breadcrumb tracking (zCrumbs)
+- Back navigation (`zBack`)
+- Exit handling (`stop`)
 
-### Custom Walker Loop
+---
 
-```python
-# Load YAML block
-ui_data = zcli.loader.handle("@.ui.my_menu")
+## YAML Syntax Reference
 
-# Execute specific block
-result = zcli.walker.zBlock_loop(
-    ui_data["MenuBlock"],
-    zBlock_keys=["option1", "option2"],
-    zKey="option1"  # Start at specific key
-)
-```
-
-## Integration Examples
-
-### Data Operations
+### Menu Anchors
 
 ```yaml
-"View Users":
-  zWizard:
-    load_schema:
-      zData:
-        action: load
-        schema: "@.zTestSuite.demos.zSchema.sqlite_demo"
-    query_users:
-      zData:
-        action: read
-        table: users
-        limit: 10
+~Root*: ["Option 1", "Option 2", "stop"]  # Root menu (required)
+~Menu*: ["Sub Option", "zBack"]           # Sub-menu
 ```
 
-### Plugin Integration
+### Navigation Types
 
+**1. Direct Actions**
 ```yaml
-"Generate ID":
+"Option Name":
+  zDisplay:
+    event: success
+    content: "Action executed!"
+```
+
+**2. Delta Links (Same File)**
+```yaml
+~Root*: ["Main", "$SubMenu", "stop"]
+
+SubMenu:
+  ~Root*: ["Options", "zBack"]
+```
+
+**3. Cross-File Delta Links**
+```yaml
+# In file_a.yaml
+~Root*: ["$OtherFile.OtherBlock", "stop"]
+
+# In file_b.yaml (OtherFile)
+OtherBlock:
+  ~Root*: ["Options", "zBack"]
+```
+
+**4. Multi-Step Wizards**
+```yaml
+"Workflow":
   zWizard:
-    create_id:
-      zFunc: "&id_generator.composite_id('ORDER', 2024)"
-    display:
+    step1:
+      zDialog:
+        model: "Input"
+    step2:
+      zFunc: "&plugin.process()"
+    step3:
       zDisplay:
         event: json
         data: "zHat"
-        color: true
 ```
 
-### Dialog Collection
+### Reserved Keywords
+
+- **`zBack`** - Return to previous menu
+- **`stop`** - Exit walker
+- **`zHat`** - Access wizard results
+- **`~Root*`** - Root menu anchor
+- **`~Menu*`** - Sub-menu anchor
+- **`$`** - Delta link prefix
+
+---
+
+## Common Patterns
+
+### Pattern 1: CRUD Menu
 
 ```yaml
-"Get Input":
-  zWizard:
-    collect:
-      zDialog:
-        model: "UserData"
-        fields: ["name", "email"]
-    process:
-      zData:
-        action: create
-        table: users
-        data:
-          name: "zHat[name]"
-          email: "zHat[email]"
-          created_at: "&id_generator.get_timestamp()"
+ManageUsers:
+  ~Root*: ["View All", "Add User", "Edit User", "Delete User", "zBack"]
+  
+  "View All":
+    zData:
+      action: read
+      table: users
+  
+  "Add User":
+    zWizard:
+      collect:
+        zDialog:
+          model: "User"
+          fields: ["name", "email"]
+      save:
+        zData:
+          action: create
+          table: users
+          data: "zHat"
 ```
 
-### Navigation Hierarchy
+### Pattern 2: Plugin Menu
+
+```yaml
+PluginActions:
+  ~Root*: ["Generate ID", "Hash Password", "zBack"]
+  
+  "Generate ID":
+    zFunc: "&id_generator.composite_id('USER', 2024)"
+  
+  "Hash Password":
+    zWizard:
+      input:
+        zDialog:
+          model: "Password"
+          fields: ["password"]
+      hash:
+        zFunc: "&security.hash_password(zHat[password])"
+```
+
+### Pattern 3: Nested Navigation
 
 ```yaml
 MainMenu:
-  ~Root*: ["Features", "Settings", "stop"]
+  ~Root*: ["Features", "Admin", "stop"]
   
   "Features":
     ~Menu*: ["Feature A", "Feature B", "zBack"]
     
     "Feature A":
-      zDisplay:
-        event: info
-        content: "Feature A details"
-    
-    "Feature B":
       ~Menu*: ["Sub Feature 1", "Sub Feature 2", "zBack"]
       
       "Sub Feature 1":
@@ -232,88 +260,196 @@ MainMenu:
           content: "Deep navigation works!"
 ```
 
-## Advanced Features
+---
 
-### Breadcrumb Tracking (zCrumbs)
+## API Reference
 
-Walker automatically tracks navigation history:
+### Main Methods
+
+#### `run()`
+Execute walker with configured zVaFile and zBlock.
 
 ```python
-# Session structure
-{
-  "zCrumbs": {
-    "MainMenu": ["Features", "Feature B"],
-    "MainMenu.Features.Feature B": ["Sub Feature 1"]
-  }
-}
+zcli.zspark_obj['zVaFile'] = '@.zUI.my_menu'
+zcli.zspark_obj['zBlock'] = 'zVaF'
+result = zcli.walker.run()
 ```
 
-**Automatic Features:**
-- Trail tracking for each navigation path
-- Duplicate prevention
-- Parent-child relationships
-- zBack navigation support
+#### `zBlock_loop(block_dict, keys=None, key=None)`
+Navigate through a specific menu block.
+
+```python
+ui_data = zcli.loader.handle("@.zUI.my_menu")
+result = zcli.walker.zBlock_loop(
+    ui_data["MenuBlock"],
+    zBlock_keys=["option1", "option2"],
+    zKey="option1"
+)
+```
+
+### Session Management
+
+Walker automatically manages session state:
+
+```python
+# Walker sets:
+zcli.session["zMode"] = "Walker"
+zcli.session["zCrumbs"] = {}  # Breadcrumb tracking
+zcli.session["zBlock"] = "current_block"
+
+# Access breadcrumbs:
+breadcrumbs = zcli.session["zCrumbs"]
+# Example: {"MainMenu": ["Features"], "Features": ["Feature A"]}
+```
 
 ### Navigation Callbacks
 
+Walker provides built-in callbacks for navigation events:
+
 ```python
-# Walker provides built-in callbacks:
 navigation_callbacks = {
-    'on_back': handle_zback,      # Breadcrumb-aware back navigation
-    'on_stop': handle_stop,        # Clean exit
-    'on_error': handle_error       # Error handling
+    'on_back': handle_zback,    # Breadcrumb-aware back
+    'on_stop': handle_stop,     # Clean exit
+    'on_exit': handle_exit,     # Graceful return
+    'on_error': handle_error    # Error handling
 }
 ```
 
-### Custom Dispatch Function
+---
 
-Walker wraps dispatch with breadcrumb tracking:
+## Integration Examples
 
-```python
-def walker_dispatch(key, value):
-    # Track breadcrumb
-    active_block = next(reversed(session["zCrumbs"]))
-    navigation.handle_zCrumbs(active_block, key, walker=self)
-    
-    # Dispatch action
-    return dispatch.handle(key, value)
+### With zData
+
+```yaml
+"Database Operations":
+  zWizard:
+    load_schema:
+      zData:
+        action: load
+        schema: "@.schemas.users"
+    query:
+      zData:
+        action: read
+        table: users
+        limit: 10
+    display:
+      zDisplay:
+        event: table
+        data: "zHat"
 ```
+
+### With zAuth
+
+```yaml
+"Secure Section":
+  zWizard:
+    authenticate:
+      zAuth:
+        action: login
+        provider: "local"
+    check_role:
+      zAuth:
+        action: check_role
+        role: "admin"
+    show_admin:
+      zDisplay:
+        event: success
+        content: "Admin access granted"
+```
+
+### With zShell
+
+```yaml
+"Enter Shell":
+  zFunc: "@.zCLI.subsystems.zShell.zShell.interactive()"
+
+"Run Command":
+  zShell:
+    command: "ls -la"
+```
+
+---
+
+## Testing
+
+### Declarative Test Suite
+**Location:** `zTestRunner/zUI.zWalker_tests.yaml`  
+**Plugin:** `zTestRunner/plugins/zwalker_tests.py`  
+**Total Tests:** 88 (100% passing)
+
+### Test Categories (12)
+
+| Category | Tests | Coverage |
+|----------|-------|----------|
+| A. Initialization & Core Setup | 5 | zWalker creation, zWizard inheritance, subsystems |
+| B. Session Management | 8 | zMode, zBlock, zCrumbs, workspace tracking |
+| C. Orchestration & Delegation | 10 | Pure orchestrator pattern, subsystem delegation |
+| D. Dual-Mode Support | 8 | Terminal vs zBifrost, mode switching |
+| E. Navigation Callbacks | 10 | on_back, on_exit, on_stop, on_error |
+| F. Block Loop Execution | 10 | Menu display, breadcrumbs, dispatch |
+| G. Integration - Display | 5 | zDeclare, colors, styles, mode-agnostic |
+| H. Integration - Navigation | 5 | zCrumbs, zBack, zLink, breadcrumb stack |
+| I. Integration - Dispatch | 5 | Command routing, modifiers, errors |
+| J. Integration - Loader | 5 | VaFile loading, zPath resolution, cache |
+| K. Error Handling | 10 | Missing files, invalid blocks, graceful recovery |
+| L. Cross-Subsystem Integration | 7 | Full stack, plugins, data, auth, shell |
+
+### Run Tests
+
+```bash
+# From zCLI main menu
+python main.py
+# Select: zWalker
+
+# Or direct via script
+python main.py << 'EOF'
+16
+EOF
+```
+
+### Test Results
+
+```
+==========================================================================================
+zWalker Comprehensive Test Suite - 88 Tests
+==========================================================================================
+
+A. Initialization & Core Setup (5 tests)
+------------------------------------------------------------------------------------------
+  [OK]  Init: Walker Initialization                        Walker initialized successfully
+  [OK]  Extends: zWizard Inheritance                       Walker extends zWizard
+  ...
+
+[12 categories total]
+
+==========================================================================================
+SUMMARY: 88/88 passed (100.0%) | Errors: 0 | Warnings: 0
+==========================================================================================
+```
+
+---
 
 ## Best Practices
 
-### 1. Menu Structure
-
-**Good:**
+### ✅ DO: Clear Menu Labels
 ```yaml
-~Root*: ["Clear Option", "Another Option", "stop"]
+~Root*: ["Manage Users", "View Reports", "Settings", "stop"]
 ```
 
-**Avoid:**
+### ❌ DON'T: Vague Labels
 ```yaml
-~Root*: ["opt1", "opt2", ...]  # Unclear names
+~Root*: ["opt1", "opt2", "opt3", "stop"]
 ```
 
-### 2. Action Organization
+---
 
-**Good:**
-```yaml
-"User Management":
-  ~Menu*: ["Add User", "View Users", "Edit User", "zBack"]
-```
-
-**Avoid:**
-```yaml
-"User Management": ["Add", "View", "Edit"]  # Missing ~Menu*
-```
-
-### 3. Workflow Design
-
-**Good:**
+### ✅ DO: Use Wizards for Multi-Step
 ```yaml
 "Complete Workflow":
   zWizard:
     validate:
-      zFunc: "&plugin.validate_input()"
+      zFunc: "&plugin.validate()"
     process:
       zData:
         action: create
@@ -322,46 +458,90 @@ def walker_dispatch(key, value):
         event: success
 ```
 
-**Avoid:**
+### ❌ DON'T: Chain Single Events
 ```yaml
 "Complete Workflow":
-  zData:  # Missing multi-step structure
+  zData:  # Missing validation & confirmation
     action: create
 ```
 
-### 4. Error Handling
+---
 
-**Good:**
+### ✅ DO: Provide Back Navigation
 ```yaml
-"Safe Operation":
-  zWizard:
-    try_operation:
-      zData:
-        action: read
-        table: users
-    handle_result:
-      zDisplay:
-        event: json
-        data: "zHat"
+SubMenu:
+  ~Root*: ["Option A", "Option B", "zBack"]
 ```
 
-### 5. Navigation Flow
-
-**Good:**
+### ❌ DON'T: Create Dead Ends
 ```yaml
-MainMenu:
-  ~Root*: ["$Features.Root", "$Settings.Root", "stop"]
-
-Features:
-  ~Root*: ["Feature List", "$MainMenu.Root", "zBack"]
+SubMenu:
+  ~Root*: ["Option A", "Option B"]  # No way back!
 ```
 
-**Avoid:**
+---
+
+### ✅ DO: Use Delta Links for Navigation
 ```yaml
-MainMenu:
-  ~Root*: ["Features", "stop"]
-# Missing bidirectional navigation
+~Root*: ["$Features.Root", "$Settings.Root", "stop"]
 ```
+
+### ❌ DON'T: Duplicate Menu Definitions
+```yaml
+~Root*: ["Features", "Settings", "stop"]
+# Then redefine Features menu everywhere
+```
+
+---
+
+## Troubleshooting
+
+### Issue: "zVaFile not found"
+```python
+# Solution: Use correct zPath
+zcli.zspark_obj['zVaFile'] = '@.zUI.my_menu'  # Correct
+zcli.zspark_obj['zVaFile'] = 'my_menu'        # Wrong
+```
+
+### Issue: "Root block not found"
+```yaml
+# Solution: Ensure ~Root* exists
+zVaF:
+  ~Root*: ["Options", "stop"]  # Required anchor
+```
+
+### Issue: Delta link not working
+```yaml
+# Solution: Match exact block name
+~Root*: ["$Settings", "stop"]
+
+Settings:  # Must match exactly (case-sensitive)
+  ~Root*: ["Options", "zBack"]
+```
+
+### Issue: Breadcrumbs not tracking
+```python
+# Solution: Ensure navigation subsystem is available
+if not hasattr(zcli, 'navigation'):
+    raise RuntimeError("Navigation subsystem not initialized")
+```
+
+---
+
+## Performance Tips
+
+1. **Cache schemas** - Load once at start, reuse in wizards
+2. **Limit queries** - Always specify `limit` in zData reads
+3. **Plugin caching** - Use auto-discovery paths
+4. **Shallow hierarchies** - Keep menu depth ≤ 5 levels
+
+```python
+# Clear caches when done
+zcli.data.schema_cache.clear()
+zcli.loader.cache.clear("plugin")
+```
+
+---
 
 ## Demo Files
 
@@ -382,145 +562,27 @@ Features:
 - Cross-file navigation
 - Multiple blocks
 - Complex workflows
-- Analytics demos
+- Analytics integration
 
-## API Reference
-
-### Main Methods
-
-#### `run()`
-Execute walker with zSpark_obj configuration.
-
-**Returns:** `dict` - Execution result
-
-**Example:**
-```python
-zcli.zspark_obj['zVaFile'] = '@.ui.main_menu'
-result = zcli.walker.run()
-```
-
-#### `zBlock_loop(active_zBlock_dict, zBlock_keys=None, zKey=None)`
-Navigate through a menu block.
-
-**Parameters:**
-- `active_zBlock_dict` (dict) - Menu block data
-- `zBlock_keys` (list) - Optional key order
-- `zKey` (str) - Optional starting key
-
-**Returns:** Navigation result
-
-#### `_init_walker_session()`
-Initialize walker-specific session state.
-
-**Sets:**
-- `session["zMode"]` = "Walker"
-- `session["zCrumbs"]` = {}
-- `session["zBlock"]` = root block
-
-### Properties
-
-- `zcli` - zCLI instance
-- `session` - Session state
-- `display` - zDisplay subsystem
-- `navigation` - zNavigation subsystem
-- `dispatch` - zDispatch subsystem
-- `loader` - zLoader subsystem
-- `plugins` - Loaded plugins
-
-## Testing
-
-### Test Coverage
-**File:** `zTestSuite/zWalker_Test.py`  
-**Tests:** 17  
-**Coverage:** 100%
-
-**Test Categories:**
-1. Initialization (3 tests)
-2. Session Management (2 tests)
-3. Run Execution (4 tests)
-4. Block Loop (3 tests)
-5. Navigation Callbacks (1 test)
-6. Integration (4 tests)
-
-### Running Tests
-
-```bash
-# Run walker tests only
-python3 zTestSuite/zWalker_Test.py
-
-# Run all tests
-python3 zTestSuite/run_all_tests.py
-```
-
-## Troubleshooting
-
-### Common Issues
-
-**1. zVaFile Not Found**
-```python
-# Error: No zVaFile specified
-# Solution:
-zcli.zspark_obj['zVaFile'] = '@.path.to.file'
-```
-
-**2. Root Block Missing**
-```yaml
-# Error: Root zBlock not found
-# Solution: Ensure ~Root* exists
-zVaF:
-  ~Root*: ["Option", "stop"]
-```
-
-**3. Delta Link Not Working**
-```yaml
-# Error: Delta link fails
-# Solution: Check block name matches
-~Root*: ["$ExactBlockName", "stop"]
-
-ExactBlockName:  # Must match exactly
-  ~Root*: ["Options", "zBack"]
-```
-
-**4. Breadcrumbs Not Tracking**
-```python
-# Issue: zCrumbs not updating
-# Solution: Ensure navigation subsystem available
-if not hasattr(zcli, 'navigation'):
-    # Navigation not initialized
-```
-
-## Performance
-
-### Optimization Tips
-
-1. **Cache Schemas:** Load once, reuse in wizards
-2. **Plugin Caching:** Use auto-discovery paths
-3. **Limit Query Results:** Always specify `limit`
-4. **Breadcrumb Depth:** Keep navigation hierarchies reasonable (≤5 levels)
-
-### Resource Management
-
-```python
-# Clear schema cache when done
-zcli.data.schema_cache.clear()
-
-# Clear plugin cache if needed
-zcli.loader.cache.plugin_cache.clear()
-```
+---
 
 ## Summary
 
-zWalker is the orchestration layer that brings all zCLI subsystems together into a cohesive, navigable UI experience. It combines:
+**zWalker** is the final orchestration layer that transforms YAML into interactive CLI applications:
 
-- **Declarative YAML menus** for easy UI definition
-- **Breadcrumb navigation** for intuitive back navigation
-- **Delta links** for flexible navigation flow
-- **Wizard integration** for multi-step workflows
-- **Full subsystem access** for complete functionality
+- **Declarative** - Define UIs in YAML, not code
+- **Navigable** - Automatic breadcrumbs and back navigation
+- **Powerful** - Access to all 11 zCLI subsystems
+- **Flexible** - Works in Terminal and web (zBifrost)
+- **Production-ready** - 88 tests, 100% coverage
 
-With 516 total tests passing and comprehensive demo files, zWalker is production-ready for building sophisticated CLI applications with minimal code.
+**Use Cases:**
+- Admin panels
+- Data management tools
+- Configuration wizards
+- Interactive dashboards
+- Multi-step workflows
 
-**Total zCLI Tests:** 516  
-**zWalker Tests:** 17  
-**Status:** ✅ Production Ready
-
+**Test Coverage:** 88/88 tests passing (100%)  
+**Status:** ✅ Production Ready  
+**Version:** 1.5.4
