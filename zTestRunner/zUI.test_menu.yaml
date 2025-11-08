@@ -58,7 +58,7 @@ zVaF:
     zLink: "@.zUI.zLoader_tests.zVaF"
   
   "zFunc":
-    zFunc: "&test_runner.run_test_suite('zFunc')"
+    zLink: "@.zUI.zFunc_tests.zVaF"
   
   "zDialog":
     zFunc: "&test_runner.run_test_suite('zDialog')"

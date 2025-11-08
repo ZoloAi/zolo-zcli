@@ -4,7 +4,7 @@
 
 **Latest**: v1.5.4 - Layer 0 Complete (70% coverage, 907 tests passing)
 
-**New**: Declarative Test Suite (`zTestRunner`) - 674 tests total (100% subsystem coverage) ✅
+**New**: Declarative Test Suite (`zTestRunner`) - 760 tests total (100% subsystem coverage) ✅
 - **zConfig**: 72 tests (100% pass) - Configuration subsystem with integration tests
 - **zComm**: 106 tests (100% pass) - Communication subsystem with integration tests
 - **zDisplay**: 86 tests (100% pass) - Display & rendering subsystem with integration tests
@@ -13,6 +13,7 @@
 - **zNavigation**: 90 tests (~90% pass*) - Unified navigation with menus, breadcrumbs, zLink (intra/inter-file)
 - **zParser**: 88 tests (100% pass) - Universal parsing: paths, plugins, commands, files, expressions
 - **zLoader**: 82 tests (100% pass) - Intelligent file loading with 6-tier cache architecture
+- **zFunc**: 86 tests (100% pass) - Function execution with auto-injection, context injection, async support
 
 *~90% automated pass rate (interactive tests require stdin). All pass when run interactively.
 
@@ -1878,6 +1879,338 @@ stats = z.loader.cache.get_stats("all")
 
 ---
 
+## zFunc: Function Execution & Python Integration (v1.5.4+)
+
+### Overview
+
+**zFunc** is zCLI's function execution engine - the "bridge" between declarative YAML and imperative Python. It enables dynamic loading and execution of Python functions with intelligent argument parsing, automatic dependency injection, and context-aware parameter resolution.
+
+**Module Structure** (4-Tier Architecture):
+```
+zCLI/subsystems/zFunc/
+├── zFunc.py (facade - public API)
+└── zFunc_modules/
+    ├── func_resolver.py    (Foundation: function loading & discovery)
+    ├── func_args.py        (Foundation: argument parsing & injection)
+    └── __init__.py         (Aggregator: module coordination)
+```
+
+**Key Innovation**: Same `&plugin.function()` syntax as zDispatch, with automatic zcli/session injection and 5 special argument types for wizard/dialog data access.
+
+### Public API
+
+```python
+from zCLI import zCLI
+z = zCLI({"zWorkspace": "."})
+
+# Main method: handle(zHorizontal, zContext=None)
+result = z.zfunc.handle("&plugin.function(arg1, arg2)")
+
+# With context (for zHat, zConv access)
+context = {"zHat": wizard_results, "zConv": dialog_data}
+result = z.zfunc.handle("&plugin.process()", context)
+```
+
+**Only 1 public method** - everything routes through `handle()`.
+
+### Auto-Injection (3 Types)
+
+Functions can receive framework dependencies automatically by naming parameters:
+
+```python
+# Auto-injected based on parameter name
+def my_function(zcli, session, context, regular_arg):
+    # zcli, session, context auto-injected
+    # regular_arg passed from YAML
+    return zcli.config.get(regular_arg)
+```
+
+**In YAML:**
+```yaml
+process_data:
+  zFunc: "&plugin.my_function('setting_name')"
+  # zcli, session, context auto-injected - no need to pass!
+```
+
+### Context Injection (5 Special Types)
+
+Access wizard/dialog data using special argument notation:
+
+**1. zContext** - Full context dictionary:
+```python
+def process(zContext):
+    return zContext.get("user_id")
+```
+
+**2. zHat** - Accumulated wizard results:
+```python
+def display_results(zHat):
+    all_results = [zHat[i] for i in range(len(zHat))]
+    return format_summary(all_results)
+```
+
+**3. zConv** - Dialog conversation data:
+```python
+def greet_user(zConv):
+    return f"Hello, {zConv.get('username')}!"
+```
+
+**4. zConv.field** - Specific dialog field extraction:
+```python
+def validate_email(email):  # email = context['zConv']['email']
+    return is_valid_email(email)
+
+# In YAML
+validate:
+  zFunc: "&validators.validate_email(zConv.email)"
+```
+
+**5. this.key** - Context field value:
+```python
+def double_value(value):
+    return value * 2
+
+# In YAML (context has user_id: 21)
+process:
+  zFunc: "&math_utils.double_value(this.user_id)"  # Passes 21
+```
+
+### Async Support (Automatic)
+
+Detects and executes async functions automatically:
+
+```python
+# Your async function
+async def fetch_data(url):
+    async with aiohttp.ClientSession() as session:
+        return await (await session.get(url)).json()
+```
+
+```yaml
+# In YAML - zFunc detects async automatically
+get_data:
+  zFunc: "&api_client.fetch_data('https://api.example.com/users')"
+  # Terminal mode: uses asyncio.run()
+  # Bifrost mode: uses run_coroutine_threadsafe()
+```
+
+### Declarative Pattern (zWizard + zFunc)
+
+**Most powerful pattern** - accumulate results in zHat:
+
+```yaml
+zVaF:
+  zWizard:
+    step1:
+      zFunc: "&data_collector.collect_item1()"
+    step2:
+      zFunc: "&data_collector.collect_item2()"
+    step3:
+      zFunc: "&data_collector.collect_item3()"
+    display_summary:
+      zFunc: "&report_generator.generate_report()"
+      # zHat automatically contains results from step1, step2, step3
+```
+
+```python
+# In plugins/report_generator.py
+def generate_report(zHat):
+    """Receives accumulated wizard results automatically"""
+    all_steps = [zHat[i] for i in range(len(zHat))]
+    return {"total_items": len(all_steps), "data": all_steps}
+```
+
+### Integration with Other Subsystems
+
+**zParser Integration:**
+- Uses `parse_function_path()` for path resolution
+- Uses `parse_json_expr()` for safe argument evaluation
+- Delegates all parsing operations to zParser
+
+**zDispatch Integration:**
+- Automatic routing of `zFunc` keys to zFunc handler
+- Works with dispatch modifiers (`^`, `~`, etc.)
+- Context flows through dispatch pipeline
+
+**zWizard/zWalker Integration:**
+- Functions can receive `zHat` with accumulated results
+- Each wizard step can be a `zFunc` call
+- Context automatically flows through steps
+
+**zDialog Integration:**
+- Functions can access dialog data via `zConv` or `zConv.field`
+- Automatic field extraction from dialog responses
+- Works with Week 5.2 auto-validation
+
+### Key Features
+
+✅ **Dynamic Function Loading** - Plugins, zPaths, absolute paths  
+✅ **Auto-Injection** - zcli, session, context based on function signature  
+✅ **5 Special Argument Types** - zContext, zHat, zConv, zConv.field, this.key  
+✅ **Async Support** - Automatic detection and execution (Terminal/Bifrost)  
+✅ **Bracket Matching** - Smart argument splitting respecting nested brackets  
+✅ **Result Display** - JSON formatting with colored output  
+✅ **zParser Delegation** - Uses zParser for all path and argument parsing  
+✅ **Type Safety** - 100% type hints across all modules  
+✅ **86 comprehensive tests** - 100% pass rate, zero stubs
+
+### Testing
+
+**Test Coverage**: 86 tests across 9 categories (100% pass rate)
+- A. Facade - Initialization & Main API (6 tests)
+- B. Function Path Parsing - zParser Delegation (8 tests)
+- C. Argument Parsing - split_arguments & parse_arguments (14 tests)
+- D. Function Resolution & Loading - resolve_callable (10 tests)
+- E. Function Execution - Sync & Async (12 tests)
+- F. Auto-Injection - zcli, session, context (10 tests)
+- G. Context Injection - zContext, zHat, zConv, this.field (12 tests)
+- H. Result Display - JSON Formatting (6 tests)
+- I. Integration Tests - End-to-End Workflows (8 tests)
+
+**Run Tests**: `zolo ztests` → select "zFunc"
+
+**Test Files:**
+- `zTestRunner/zUI.zFunc_tests.yaml` (214 lines)
+- `zTestRunner/plugins/zfunc_tests.py` (~2,500 lines - **NO STUB TESTS**)
+- `zTestRunner/zMocks/zfunc_test_mocks.py` (132 lines - stable mock functions)
+
+**Note**: All 86 tests perform real validation with assertions. Zero stub tests.
+
+### Common Mistakes
+
+❌ **Wrong: Manually passing zcli**
+```yaml
+process:
+  zFunc: "&plugin.my_function(zcli, 'arg')"  # ❌ Don't pass zcli manually!
+```
+
+✅ **Right: Let zFunc auto-inject**
+```yaml
+process:
+  zFunc: "&plugin.my_function('arg')"  # ✅ zcli auto-injected
+```
+
+---
+
+❌ **Wrong: Missing & prefix**
+```yaml
+calculate:
+  zFunc: "plugin.add(5, 3)"  # ❌ Missing &
+```
+
+✅ **Right: Use & prefix for plugin invocation**
+```yaml
+calculate:
+  zFunc: "&plugin.add(5, 3)"  # ✅ Plugin syntax
+```
+
+---
+
+❌ **Wrong: Accessing zHat without zWizard**
+```python
+def display(zHat):
+    return zHat[0]  # ❌ zHat only exists in zWizard context!
+```
+
+✅ **Right: Use zHat only in zWizard workflows**
+```yaml
+zVaF:
+  zWizard:  # ✅ zHat available in wizard steps
+    step1:
+      zFunc: "&collector.collect()"
+    display:
+      zFunc: "&display.show_results()"  # ✅ zHat accessible here
+```
+
+---
+
+❌ **Wrong: Treating async functions as sync**
+```python
+# No special handling needed - zFunc detects async automatically!
+# Just write async naturally:
+async def fetch_data(url):
+    async with aiohttp.ClientSession() as session:
+        return await (await session.get(url)).json()
+```
+
+✅ **Right: Write async functions naturally**
+```yaml
+# zFunc detects async and handles it automatically
+fetch:
+  zFunc: "&api.fetch_data('https://example.com')"
+  # No async/await syntax in YAML - zFunc handles it!
+```
+
+### Declarative Testing Pattern
+
+**zFunc tests follow the proven zWizard + zHat pattern**:
+
+```yaml
+# zTestRunner/zUI.zFunc_tests.yaml
+zVaF:
+  zWizard:
+    test_01_facade_init:
+      zFunc: "&zfunc_tests.test_facade_init()"
+    test_02_facade_attributes:
+      zFunc: "&zfunc_tests.test_facade_attributes()"
+    # ... 84 more tests ...
+    display_and_return:
+      zFunc: "&zfunc_tests.display_test_results()"
+      # zHat contains all 86 test results
+```
+
+```python
+# In plugins/zfunc_tests.py
+def test_facade_init(zcli=None, context=None):
+    """Test facade initialization."""
+    if not zcli:
+        zcli = zCLI({'zWorkspace': '.', 'zMode': 'Terminal'})
+    
+    try:
+        assert hasattr(zcli, 'zfunc'), "zcli missing zfunc"
+        assert zcli.zfunc is not None, "zfunc is None"
+        return {"status": "PASSED", "message": "Facade initialized"}
+    except Exception as e:
+        return {"status": "ERROR", "message": str(e)}
+
+def display_test_results(zcli=None, context=None):
+    """Display final test results from zHat."""
+    if not context or not isinstance(context, dict):
+        print("\n[WARN] No context provided")
+        input("Press Enter to continue...")
+        return
+    
+    zHat = context.get("zHat")
+    if not zHat:
+        print("\n[WARN] No zHat found")
+        input("Press Enter to continue...")
+        return
+    
+    # Extract results from zHat
+    results = []
+    for i in range(len(zHat)):
+        result = zHat[i]
+        if result and isinstance(result, dict) and "status" in result:
+            results.append(result)
+    
+    # Display summary
+    passed = sum(1 for r in results if r.get("status") == "PASSED")
+    total = len(results)
+    print(f"\n{'='*80}")
+    print(f"zFunc Tests: {passed}/{total} PASSED ({passed/total*100:.1f}%)")
+    print(f"{'='*80}\n")
+    input("Press Enter to continue...")
+```
+
+### Documentation
+
+- **[zFunc Guide](Documentation/zFunc_GUIDE.md)** - **Function execution subsystem** (✅ Complete - CEO & dev-friendly)
+- **Test Suite**: `zTestRunner/zUI.zFunc_tests.yaml` (86 tests, 100% coverage)
+- **Plugin**: `zTestRunner/plugins/zfunc_tests.py` (test logic)
+- **Mocks**: `zTestRunner/zMocks/zfunc_test_mocks.py` (stable test functions)
+
+---
+
 ## RBAC Directives (v1.5.4 Week 3.3)
 
 **Default**: PUBLIC ACCESS (no `_rbac` = no restrictions)  
@@ -3430,13 +3763,14 @@ Loading a schema doesn't auto-create tables - you must explicitly call `create_t
 - `Documentation/zNavigation_GUIDE.md` - **Navigation System** (✅ Complete - CEO & dev-friendly)
 - `Documentation/zParser_GUIDE.md` - **Universal Parsing** (✅ Complete - CEO & dev-friendly)
 - `Documentation/zLoader_GUIDE.md` - **File Loading & Caching** (✅ Complete - CEO & dev-friendly)
+- `Documentation/zFunc_GUIDE.md` - **Function Execution** (✅ Complete - CEO & dev-friendly)
 - `Documentation/zServer_GUIDE.md` - HTTP server
 - `Documentation/SEPARATION_CHECKLIST.md` - Architecture validation
 
 **See**: `Documentation/` for all 25+ subsystem guides
 
 **Declarative Testing**:
-- `zTestRunner/` - Declarative test suite (674 tests total, ~99% pass rate)
+- `zTestRunner/` - Declarative test suite (760 tests total, ~99% pass rate)
 - **zConfig**: `zTestRunner/zUI.zConfig_tests.yaml` (72 tests, 100% coverage)
   - Plugin: `zTestRunner/plugins/zconfig_tests.py` (test logic)
   - Integration: Real file I/O, YAML round-trip, .env creation, persistence
@@ -3464,6 +3798,11 @@ Loading a schema doesn't auto-create tables - you must explicitly call `create_t
   - Plugin: `zTestRunner/plugins/zloader_tests.py` (test logic - NO STUBS)
   - Integration: File loading workflows, cache tier operations (System/Pinned/Schema/Plugin), plugin loading, zParser delegation, mtime invalidation, multi-component ops
   - Notes: All 82 tests are real tests with temporary file creation/cleanup inline, zero stub tests
+- **zFunc**: `zTestRunner/zUI.zFunc_tests.yaml` (86 tests, 100% coverage)
+  - Plugin: `zTestRunner/plugins/zfunc_tests.py` (test logic - **NO STUB TESTS**)
+  - Mocks: `zTestRunner/zMocks/zfunc_test_mocks.py` (stable mock functions)
+  - Integration: Function execution workflows, auto-injection, 5 special argument types, async detection/execution, zParser delegation
+  - Notes: All 86 tests perform real validation with assertions, zero stub tests
 
 ---
 
@@ -3695,7 +4034,7 @@ sessions_db.parent.mkdir(parents=True, exist_ok=True)
 - ✅ SQLite session persistence (7-day expiry, auto-cleanup)
 - ✅ Context-aware RBAC (role & permission management)
 **Total Tests**: 931 passing (100% pass rate) 🎉  
-**Declarative Test Suite**: ✅ zTestRunner operational (674 tests, ~99% pass rate, 100% subsystem coverage)
+**Declarative Test Suite**: ✅ zTestRunner operational (760 tests, ~99% pass rate, 100% subsystem coverage)
 - **zConfig**: 72 tests (100% pass) - with integration tests
 - **zComm**: 106 tests (100% pass) - with integration tests
 - **zDisplay**: 86 tests (100% pass) - with integration tests
@@ -3704,10 +4043,11 @@ sessions_db.parent.mkdir(parents=True, exist_ok=True)
 - **zNavigation**: 90 tests (~90% pass*) - with menu workflows, breadcrumbs & zLink (intra/inter-file) integration
 - **zParser**: 88 tests (100% pass) - with path resolution, plugin invocation, file parsing & integration tests
 - **zLoader**: 82 tests (100% pass) - with 6-tier architecture, intelligent caching, zParser delegation & integration tests
+- **zFunc**: 86 tests (100% pass) - with auto-injection, 5 special argument types, async support & integration tests
 
 *~90% automated pass rate (interactive tests require stdin). All pass when run interactively.
 
-**Next**: Additional subsystems (zWizard, zWalker, zFunc, zDialog, zOpen, zShell, etc.)
+**Next**: Additional subsystems (zWizard, zWalker, zDialog, zOpen, zShell, etc.)
 
 ---
 
@@ -3779,4 +4119,13 @@ sessions_db.parent.mkdir(parents=True, exist_ok=True)
 - **Run Tests:** `zolo ztests` → select "zLoader"
 - **Key Features:** 6-tier architecture, 4 cache types (System/Pinned/Schema/Plugin), LRU eviction, mtime auto-invalidation, 100x performance (95%+ hit rate)
 - **Innovations:** Cache Orchestrator pattern, intelligent UI/Config caching with fresh Schema loading, session fallback
+
+**zFunc (Week 6.10 - Complete):**
+- **Guide:** `Documentation/zFunc_GUIDE.md` - CEO & developer-friendly (updated)
+- **Test Suite:** `zTestRunner/zUI.zFunc_tests.yaml` - 86 declarative tests (100% pass rate)
+- **Status:** A+ grade (4-tier architecture, auto-injection, 5 special argument types, async support)
+- **Coverage:** All 3 modules + facade (A-to-I comprehensive), 8 integration tests (function execution, auto-injection, context injection, async workflows)
+- **Run Tests:** `zolo ztests` → select "zFunc"
+- **Key Features:** Dynamic function loading, auto-injection (zcli/session/context), 5 special argument types (zContext/zHat/zConv/zConv.field/this.key), async detection & execution, bracket matching, zParser delegation
+- **Innovations:** Automatic dependency injection based on function signature, context-aware parameter resolution, seamless async support across Terminal/Bifrost modes
 

@@ -16,7 +16,8 @@ Successfully implemented a **fully declarative, zCLI-driven test suite** with **
 | **zNavigation** | 90 | ~90% | 61 | 29 | 90 (100%) | ✅ Complete |
 | **zParser** | 88 | 100% | 78 | 10 | 88 (100%) | ✅ Complete |
 | **zLoader** | 82 | 100% | 72 | 10 | 82 (100%) | ✅ Complete |
-| **TOTAL** | **674** | **~99%** | **579** | **95** | **674 (100%)** | 🚀 Excellent |
+| **zFunc** | 86 | 100% | 78 | 8 | 86 (100%) | ✅ Complete |
+| **TOTAL** | **760** | **~99%** | **657** | **103** | **760 (100%)** | 🚀 Excellent |
 
 ---
 
@@ -547,6 +548,56 @@ zTestRunner/
 
 ---
 
+### 9. zFunc (100% ✅)
+
+**Coverage**: 100% of 1 public method (handle) + 4-tier architecture + all special features
+
+#### Categories Tested (A-I, 86 tests - 100% REAL)
+- ✅ A. Facade - Initialization & Main API (6 tests) - 100% real
+- ✅ B. Function Path Parsing - zParser Delegation (8 tests) - 100% real
+- ✅ C. Argument Parsing - split_arguments & parse_arguments (14 tests) - 100% real
+- ✅ D. Function Resolution & Loading - resolve_callable (10 tests) - 100% real
+- ✅ E. Function Execution - Sync & Async (12 tests) - 100% real
+- ✅ F. Auto-Injection - zcli, session, context (10 tests) - 100% real
+- ✅ G. Context Injection - zContext, zHat, zConv, this.field (12 tests) - 100% real
+- ✅ H. Result Display - JSON Formatting (6 tests) - 100% real
+- ✅ I. Integration Tests - End-to-End Workflows (8 tests) - 100% real
+
+**NOTE**: All 86 tests perform real validation with assertions. Zero stub tests.
+
+#### Integration Tests (8 total)
+1. Simple end-to-end function call
+2. Function with full context workflow
+3. Function with auto-injection workflow
+4. Async function end-to-end workflow
+5. zConv field notation workflow
+6. Model merge workflow
+7. Error propagation workflow
+8. Plugin discovery workflow
+
+#### Special Features
+- **4-Tier Architecture**: Foundation (func_resolver, func_args) → Aggregator (zFunc_modules/__init__) → Facade (zFunc.py) → Root (__init__.py)
+- **5 Special Argument Types**: zContext, zHat, zConv, zConv.field, this.key
+- **Auto-Injection**: Automatic zcli, session, context parameter injection based on function signature detection
+- **Async Support**: Detects and executes both sync and async functions (Terminal mode: asyncio.run, Bifrost mode: run_coroutine_threadsafe)
+- **zParser Delegation**: Uses parse_function_path() for path parsing, parse_json_expr() for safe argument evaluation
+- **Bracket Matching**: Smart argument splitting respecting nested brackets (parentheses, square, curly)
+- **Context Injection**: Full zContext injection, wizard context (zHat), dialog data (zConv), field notation (zConv.field, this.key)
+- **Result Display**: JSON formatting with colored output
+- **Error Handling**: FileNotFoundError, ImportError, AttributeError, ValueError with propagation
+- **Real File I/O**: Creates temporary Python files for testing, full cleanup
+- **Type Safety**: Comprehensive type hints across all modules
+
+#### Public API (1 method - 100% covered)
+1. ✅ `handle(zHorizontal, zContext=None)` - Main function execution method (86 tests covering all workflows)
+
+#### Files
+- `zTestRunner/zUI.zFunc_tests.yaml` (214 lines)
+- `zTestRunner/plugins/zfunc_tests.py` (~2,500 lines - **NO STUB TESTS**)
+- **Note**: Tests create temporary Python files inline with real functions (no separate mock files needed)
+
+---
+
 ## Next Steps
 
 ### Completed ✅
@@ -557,15 +608,15 @@ zTestRunner/
 5. ✅ zDispatch with integration tests (80 tests, 100%)
 6. ✅ zNavigation with integration tests (90 tests, ~90%)
 7. ✅ zParser with integration tests (88 tests, 100%)
-8. ✅ zLoader with integration tests (82 tests, 100%) ← **NEW - 6-TIER ARCHITECTURE**
+8. ✅ zLoader with integration tests (82 tests, 100%)
+9. ✅ zFunc with integration tests (86 tests, 100%) ← **NEW - 5 SPECIAL ARG TYPES + ASYNC SUPPORT**
 
 ### Future Subsystems
-9. zWizard - Step execution, context management, zHat
-10. zWalker - YAML-driven UI navigation
-11. zDialog - Interactive dialogs and prompts
-12. zOpen - File opening and external app launching
-13. zShell - Shell command execution
-14. zFunc - Plugin function execution
+10. zWizard - Step execution, context management, zHat
+11. zWalker - YAML-driven UI navigation
+12. zDialog - Interactive dialogs and prompts
+13. zOpen - File opening and external app launching
+14. zShell - Shell command execution
 15. zData - Data operations and handlers
 
 ---
