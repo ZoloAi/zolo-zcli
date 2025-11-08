@@ -53,6 +53,12 @@ def test_facade_initialization(zcli=None, context=None):
     if not zcli or not hasattr(zcli, 'dispatch'):
         return _store_result(None, "Facade: Initialization", "ERROR", "No dispatch")
     
+    # Clear plugin cache to prevent Mock objects from old tests
+    try:
+        zcli.loader.cache.clear("plugin")
+    except:
+        pass  # Ignore if plugin cache doesn't exist
+    
     try:
         # Check facade has required components
         has_launcher = hasattr(zcli.dispatch, 'launcher')

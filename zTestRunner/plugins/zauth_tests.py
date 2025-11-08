@@ -77,6 +77,12 @@ def test_facade_initialization(zcli=None, context=None):
     if not zcli or not zcli.auth:
         return _store_result(None, "Facade: Initialization", "ERROR", "No auth")
     
+    # Clear plugin cache to prevent Mock objects from old tests
+    try:
+        zcli.loader.cache.clear("plugin")
+    except:
+        pass  # Ignore if plugin cache doesn't exist
+    
     # Check facade has required attributes
     has_password_sec = hasattr(zcli.auth, 'password_security')
     has_session_pers = hasattr(zcli.auth, 'session_persistence')

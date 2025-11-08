@@ -11,7 +11,6 @@ zVaF:
     "zLoader",
     "zFunc",
     "zDialog",
-    "zDialog_AutoValidation",
     "zOpen",
     "zShell",
     "zWizard",
@@ -61,10 +60,7 @@ zVaF:
     zLink: "@.zUI.zFunc_tests.zVaF"
   
   "zDialog":
-    zFunc: "&test_runner.run_test_suite('zDialog')"
-  
-  "zDialog_AutoValidation":
-    zFunc: "&test_runner.run_test_suite('zDialog_AutoValidation')"
+    zLink: "@.zUI.zDialog_tests.zVaF"
   
   "zOpen":
     zFunc: "&test_runner.run_test_suite('zOpen')"

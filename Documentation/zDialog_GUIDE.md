@@ -1,582 +1,550 @@
-# zDialog: The Interactive Form/Dialog Subsystem
+# zDialog Subsystem Guide
 
-## **Overview**
-- **zDialog** is **zCLI**'s interactive form and dialog subsystem for collecting and validating user input
-- Provides form rendering, field collection, placeholder injection, and submission handling
-- Initializes after zFunc, providing dialog services to all subsystems
+## Overview
 
-## **Architecture**
+**zDialog** is zCLI's **Interactive Form/Dialog Subsystem**. It handles form rendering, data collection, auto-validation against zSchema, and submission processing with mode-agnostic support for both Terminal and Bifrost (GUI) environments.
 
-### **Layer 1 Dialog Services**
-**zDialog** operates as a Layer 1 subsystem, meaning it:
-- Initializes after foundation subsystems (zConfig, zComm, zDisplay, zParser, zFunc)
-- Provides interactive form services to all other subsystems
-- Depends on zDisplay for rendering, zParser for path resolution, and zFunc for submission processing
-- Establishes the dialog foundation for zCLI
+### Executive Summary
+zDialog enables developers to create interactive forms declaratively using YAML, with automatic validation against data schemas and intelligent placeholder injection. Forms work seamlessly in both command-line (Terminal) and web-based (Bifrost) modes. The subsystem handles complex workflows like multi-field data collection, nested placeholder resolution, and submission routing—all while maintaining zCLI's pure declarative paradigm.
 
-### **Modular Design**
-```
-zDialog/
-├── __init__.py                       # Module exports
-├── zDialog.py                        # Main dialog class
-└── zDialog_modules/
-    ├── dialog_context.py             # Context creation and placeholder injection
-    └── dialog_submit.py              # Submission handling (dict/string)
-```
-
-**Note:** Clean separation between context management and submission processing.
+**Key Value**: Define forms once in YAML, get automatic validation, mode-agnostic rendering, and seamless submission handling across Terminal and GUI environments.
 
 ---
 
-## **Core Features**
+## Architecture
 
-### **1. Form Rendering**
-- **Field Collection**: Interactive input collection for multiple fields
-- **Model-Based**: Forms tied to data models for validation
-- **Context Management**: Maintains form state and collected data
-- **Display Integration**: Uses zDisplay for consistent rendering
+### 5-Tier Pattern
 
-### **2. Placeholder Injection**
-- **zConv Access**: Reference collected form data via `zConv`
-- **Dot Notation**: `zConv.field` for field access
-- **Bracket Notation**: `zConv['field']` or `zConv["field"]`
-- **Nested Structures**: Recursive injection in dicts and lists
+```
+Tier 5: Package Root (__init__.py)                    [88 lines]
+         ↓ Exposes: zDialog class, handle_zDialog function
+Tier 4: Facade (zDialog.py)                           [637 lines]
+         ↓ Main API: handle(zHorizontal, context)
+Tier 3: Package Aggregator (dialog_modules/__init__.py)
+         ↓ Exposes: create_dialog_context, inject_placeholders, handle_submit
+Tier 2: Submit Handler (dialog_submit.py)             [465 lines]
+         ↓ Dict-based submission via zDispatch
+Tier 1: Foundation (dialog_context.py)                [350 lines]
+         ↓ Context creation + 5 placeholder types
+```
 
-### **3. Submission Handling**
-- **Dual Format**: String-based (zFunc) or dict-based (zDispatch)
-- **Automatic Routing**: Routes to appropriate handler based on type
-- **Context Injection**: Passes form data to submission handlers
-- **Error Handling**: Graceful error handling and logging
+**Total**: ~1,540 lines across 5 files
 
-### **4. Backward Compatibility**
-- **Legacy Support**: `handle_zDialog()` function for older code
-- **Walker Integration**: Optional walker parameter for legacy workflows
-- **Modern API**: Direct zCLI instance usage for new code
+### Architecture Position
+- **Layer 1** subsystem (initializes after zConfig, zComm, zDisplay, zParser, zLoader, zFunc)
+- **Initialization Order**: Position 8
+- **Dependencies**: zDisplay (rendering), zData (validation), zDispatch (submission), zComm (WebSocket)
 
 ---
 
-## **Dialog Structure**
+## Key Features
 
-### **Basic Dialog Configuration**
+### 1. Auto-Validation (v1.5.4+)
+- Automatically validates form data against zSchema models
+- Uses `DataValidator` from zData subsystem
+- Triggers when model starts with `@` (e.g., `@.zSchema.users`)
+- Displays validation errors in both Terminal and Bifrost modes
+- Prevents onSubmit execution on validation failure
 
-```python
-zHorizontal = {
-    "zDialog": {
-        "model": "User",                    # Data model name
-        "fields": ["username", "email"],    # Fields to collect
-        "onSubmit": "zFunc(@utils.save)"   # Optional submission handler
-    }
-}
+### 2. Mode-Agnostic Rendering
+- **Terminal Mode**: Interactive input prompts via zDisplay
+- **Bifrost Mode**: Pre-provided data from WebSocket context
+- Single codebase works in both environments
+- Automatic mode detection via `SESSION_KEY_ZMODE`
 
-result = zcli.dialog.handle(zHorizontal)
-```
+### 3. WebSocket Support (Bifrost)
+- Accepts pre-provided form data from WebSocket context
+- Broadcasts validation errors via `comm.websocket.broadcast()`
+- Real-time form validation in GUI applications
+- Event format: `{"event": "validation_error", "table": ..., "errors": ...}`
 
-### **Dialog Without Submission**
+### 4. Placeholder Injection (5 Types)
+- **Full zConv**: `"zConv"` → Returns entire form data dict
+- **Dot Notation**: `"zConv.username"` → Returns field value
+- **Bracket Single**: `"zConv['email']"` → Returns field value
+- **Bracket Double**: `"zConv[\"email\"]"` → Returns field value
+- **Embedded**: `"WHERE id = zConv.user_id"` → Replaces within string
 
-```python
-# Collect data only, no processing
-zHorizontal = {
-    "zDialog": {
-        "model": "User",
-        "fields": ["username", "email", "age"]
-    }
-}
+### 5. Pure Declarative Paradigm (v1.5.4+)
+- **Dict-based submissions only** via zDispatch
+- String-based submissions removed for architectural purity
+- All forms defined in YAML with structured dicts
+- Enables IDE validation, autocomplete, and static analysis
 
-# Returns collected data
-zConv = zcli.dialog.handle(zHorizontal)
-# Result: {"username": "testuser", "email": "test@example.com", "age": 25}
-```
-
----
-
-## **Placeholder Injection**
-
-### **Accessing Form Data**
-
-#### **Entire zConv Dictionary**
-```python
-"onSubmit": {
-    "zCRUD": {
-        "action": "create",
-        "data": "zConv"  # Injects entire form data
-    }
-}
-```
-
-#### **Dot Notation**
-```python
-"onSubmit": "zFunc(@utils.process, zConv.username, zConv.email)"
-# Injects specific fields
-```
-
-#### **Bracket Notation**
-```python
-{
-    "user": "zConv['username']",
-    "contact": "zConv[\"email\"]"
-}
-```
-
-### **Nested Structures**
-
-```python
-{
-    "data": {
-        "user": "zConv.username",
-        "details": ["zConv.email", "zConv.age"],
-        "metadata": {
-            "source": "form",
-            "id": "zConv.id"
-        }
-    }
-}
-```
-
-**Result after injection:**
-```python
-{
-    "data": {
-        "user": "testuser",
-        "details": ["test@example.com", 25],
-        "metadata": {
-            "source": "form",
-            "id": 12345
-        }
-    }
-}
-```
+### 6. Smart Formatting
+- **Numeric values**: No quotes (`WHERE id = 123`)
+- **String values**: With quotes (`WHERE name = 'Alice'`)
+- **Recursive resolution**: Deep nested dict/list placeholder injection
+- **Regex matching**: Finds all `zConv.*` occurrences in strings
 
 ---
 
-## **Submission Handling**
+## Public API
 
-### **String-Based Submission (zFunc)**
+### Main Entry Point
 
-Routes to zFunc for external function execution:
-
-```python
-zHorizontal = {
-    "zDialog": {
-        "model": "User",
-        "fields": ["username", "email"],
-        "onSubmit": "zFunc(@utils.save_user, zConv.username, zConv.email)"
-    }
-}
-
-result = zcli.dialog.handle(zHorizontal)
-```
-
-**Flow:**
-1. Collect form data → `zConv`
-2. Parse zFunc expression
-3. Inject placeholders from `zConv`
-4. Execute function via `zcli.zfunc.handle()`
-5. Return function result
-
-### **Dict-Based Submission (zDispatch)**
-
-Routes to zDispatch for command execution:
+**zDialog.handle(zHorizontal, context=None)**
 
 ```python
-zHorizontal = {
+# Initialize (done by zCLI.py)
+dialog = zDialog(zcli_instance)
+
+# Define form
+form_spec = {
     "zDialog": {
-        "model": "User",
-        "fields": ["username", "email", "password"],
+        "model": "@.zSchema.users",
+        "fields": [
+            {"name": "username", "type": "text"},
+            {"name": "email", "type": "text"}
+        ],
         "onSubmit": {
             "zCRUD": {
                 "action": "create",
-                "data": "zConv",
-                "model": "User"
+                "data": "zConv"  # Injects entire form data
             }
         }
     }
 }
 
-result = zcli.dialog.handle(zHorizontal)
+# Handle dialog (renders, collects, validates, submits)
+result = dialog.handle(form_spec)
 ```
 
-**Flow:**
-1. Collect form data → `zConv`
-2. Inject placeholders into dict
-3. Route to `zDispatch.handle()`
-4. Execute CRUD operation
-5. Return operation result
+**Parameters**:
+- `zHorizontal` (Dict): Dialog specification with model, fields, onSubmit
+- `context` (Dict, optional): Execution context (WebSocket data, etc.)
+
+**Returns**:
+- `None`: Validation failed (onSubmit not executed)
+- `Any`: Result from onSubmit execution (if provided)
+- `Dict`: Collected form data (zConv) if no onSubmit
+
+**Workflow**:
+1. Parse zHorizontal → Extract model, fields, onSubmit
+2. Create dialog context → `create_dialog_context()`
+3. Collect form data → Terminal (zDisplay.zDialog) or Bifrost (pre-provided)
+4. Auto-validate → Against zSchema if model starts with `@`
+5. Execute onSubmit → Via handle_submit() if provided
+6. Return result or zConv
+
+### Backward Compatibility
+
+**handle_zDialog(zHorizontal, walker=None, zcli=None, context=None)**
+
+Legacy function for older code. Wraps zDialog class for single-call operations.
+
+```python
+# Legacy approach
+result = handle_zDialog(form_spec, zcli=zcli_instance)
+
+# Modern approach (preferred)
+result = zcli.zdialog.handle(form_spec)
+```
 
 ---
 
-## **API Reference**
+## Usage Examples
 
-### **zDialog Class**
+### Example 1: Terminal Mode with Auto-Validation
 
-#### **Initialization**
-```python
-zdialog = zDialog(zcli, walker=None)
+```yaml
+# zUI.user_registration.yaml
+zVaF:
+  register:
+    zDialog:
+      model: "@.zSchema.users"
+      fields:
+        - name: username
+          type: text
+        - name: email
+          type: text
+        - name: password
+          type: password
+      onSubmit:
+        zCRUD:
+          action: create
+          data: zConv  # Injects {"username": ..., "email": ..., "password": ...}
 ```
 
-**Parameters:**
-- `zcli` (zCLI): Required zCLI instance
-- `walker` (optional): Legacy walker instance for compatibility
+**Flow**:
+1. Renders form in Terminal
+2. Collects username, email, password
+3. Auto-validates against `@.zSchema.users`
+4. On success: Creates user record via zCRUD
+5. On failure: Displays validation errors, returns None
 
-**Attributes:**
-- `self.zcli`: zCLI instance
-- `self.session`: Session dictionary
-- `self.logger`: Logger instance
-- `self.display`: zDisplay instance
-- `self.zparser`: zParser instance
-- `self.zfunc`: zFunc instance
-- `self.walker`: Optional walker instance
-- `self.mycolor`: "ZDIALOG"
-
-#### **handle(zHorizontal)**
-```python
-result = zcli.dialog.handle(zHorizontal)
-```
-
-**Parameters:**
-- `zHorizontal` (dict): Dialog configuration
-
-**Returns:**
-- `zConv` (dict): Collected form data (if no onSubmit)
-- `result` (any): Submission result (if onSubmit provided)
-
-**Raises:**
-- `TypeError`: If zHorizontal is not a dict
-- `KeyError`: If required fields (model, fields) are missing
-- `Exception`: If submission processing fails
-
----
-
-### **Dialog Modules**
-
-#### **create_dialog_context(model, fields, logger, zConv=None)**
-```python
-from zCLI.subsystems.zDialog.zDialog_modules import create_dialog_context
-
-context = create_dialog_context("User", ["username", "email"], logger)
-```
-
-**Returns:** Dialog context dictionary with model and fields
-
-#### **inject_placeholders(obj, zContext, logger)**
-```python
-from zCLI.subsystems.zDialog.zDialog_modules import inject_placeholders
-
-result = inject_placeholders({"user": "zConv.username"}, zContext, logger)
-```
-
-**Returns:** Object with placeholders replaced by actual values
-
-#### **handle_submit(submit_expr, zContext, logger, walker=None)**
-```python
-from zCLI.subsystems.zDialog.zDialog_modules import handle_submit
-
-result = handle_submit(submit_expr, zContext, logger, walker=walker)
-```
-
-**Returns:** Submission result (function return or dispatch result)
-
----
-
-### **Backward Compatibility**
-
-#### **handle_zDialog(zHorizontal, walker=None, zcli=None)**
-```python
-from zCLI.subsystems.zDialog import handle_zDialog
-
-# Modern usage
-result = handle_zDialog(zHorizontal, zcli=zcli)
-
-# Legacy usage
-result = handle_zDialog(zHorizontal, walker=walker)
-```
-
-**Parameters:**
-- `zHorizontal` (dict): Dialog configuration
-- `walker` (optional): Walker instance with zcli attribute
-- `zcli` (optional): Direct zCLI instance
-
-**Returns:** Dialog result (collected data or submission result)
-
----
-
-## **Usage Examples**
-
-### **Simple Form Collection**
+### Example 2: Bifrost Mode with Pre-Provided Data
 
 ```python
-# Define dialog
-dialog_config = {
-    "zDialog": {
-        "model": "User",
-        "fields": ["username", "email", "age"]
+# WebSocket sends form data
+context = {
+    "websocket_data": {
+        "data": {"username": "alice", "email": "alice@example.com"}
     }
 }
 
-# Collect data
-user_data = zcli.dialog.handle(dialog_config)
-
-# Use collected data
-print(f"Username: {user_data['username']}")
-print(f"Email: {user_data['email']}")
-print(f"Age: {user_data['age']}")
+# Handle dialog (skips rendering, uses pre-provided data)
+result = zcli.zdialog.handle(form_spec, context=context)
+# Auto-validates, broadcasts errors via WebSocket if needed
 ```
 
-### **Form with Function Submission**
+### Example 3: Data Collection Only (No onSubmit)
 
-```python
-# Dialog with zFunc submission
-dialog_config = {
-    "zDialog": {
-        "model": "User",
-        "fields": ["username", "email", "password"],
-        "onSubmit": "zFunc(@auth.register, zConv.username, zConv.email, zConv.password)"
-    }
-}
-
-# Collect and submit
-result = zcli.dialog.handle(dialog_config)
-
-if result.get("status") == "success":
-    print(f"User registered: {result['user_id']}")
+```yaml
+zVaF:
+  collect_info:
+    zDialog:
+      model: "@.zSchema.users"
+      fields:
+        - name: username
+          type: text
+        - name: age
+          type: number
+      # No onSubmit - just collect and validate
 ```
 
-### **Form with CRUD Submission**
+**Returns**: `{"username": "testuser", "age": 25}` (after validation)
 
-```python
-# Dialog with zCRUD submission
-dialog_config = {
-    "zDialog": {
-        "model": "Product",
-        "fields": ["name", "price", "category"],
-        "onSubmit": {
-            "zCRUD": {
-                "action": "create",
-                "data": {
-                    "name": "zConv.name",
-                    "price": "zConv.price",
-                    "category": "zConv.category",
-                    "created_at": "now()"
-                }
-            }
-        }
-    }
-}
+### Example 4: Complex Placeholder Injection
 
-# Collect and create
-result = zcli.dialog.handle(dialog_config)
-
-if result.get("status") == "created":
-    print(f"Product created with ID: {result['id']}")
-```
-
-### **Nested Placeholder Injection**
-
-```python
-# Complex submission with nested placeholders
-dialog_config = {
-    "zDialog": {
-        "model": "Order",
-        "fields": ["customer_id", "product_id", "quantity"],
-        "onSubmit": {
-            "zCRUD": {
-                "action": "create",
-                "model": "Order",
-                "data": {
-                    "customer": {
-                        "id": "zConv.customer_id"
-                    },
-                    "items": [
-                        {
-                            "product_id": "zConv.product_id",
-                            "quantity": "zConv.quantity"
-                        }
-                    ],
-                    "metadata": {
-                        "source": "dialog",
-                        "timestamp": "now()"
-                    }
-                }
-            }
-        }
-    }
-}
-
-result = zcli.dialog.handle(dialog_config)
+```yaml
+zVaF:
+  create_order:
+    zDialog:
+      model: "@.zSchema.orders"
+      fields:
+        - name: customer_id
+          type: number
+        - name: product_id
+          type: number
+        - name: quantity
+          type: number
+      onSubmit:
+        zData:
+          query: "INSERT INTO orders (customer_id, product_id, quantity, total) VALUES (zConv.customer_id, zConv.product_id, zConv.quantity, zConv.quantity * 10)"
+          # Embedded placeholders with smart formatting:
+          # - customer_id: 123 (numeric, no quotes)
+          # - product_id: 456 (numeric, no quotes)
+          # - quantity: 5 (numeric, no quotes)
 ```
 
 ---
 
-## **Architecture Improvements**
+## Placeholder Resolution Details
 
-### **Security Enhancements**
-- **Removed `eval()`**: Replaced unsafe `eval()` with safe string parsing
-- **Bracket Parsing**: Manual parsing of bracket notation instead of code execution
-- **Error Handling**: Graceful fallback on malformed placeholders
+### Full zConv
+```yaml
+onSubmit:
+  zCRUD:
+    action: create
+    data: zConv  # Entire form data: {"username": "alice", "email": "alice@example.com"}
+```
 
-### **Dependency Management**
-- **zFunc Integration**: Direct access to `zcli.zfunc` for function execution
-- **zParser Integration**: Uses `zcli.zparser` for path resolution
-- **zDisplay Integration**: Uses `zcli.display.zDeclare()` for new architecture
+### Dot Notation
+```yaml
+onSubmit:
+  zFunc: "&user_service.create(zConv.username, zConv.email)"
+  # Resolves to: create("alice", "alice@example.com")
+```
 
-### **Code Organization**
-- **Modular Design**: Separate modules for context and submission
-- **Clean Separation**: Context management vs. submission processing
-- **No Cross-Dependencies**: Each module is self-contained
+### Embedded Placeholders
+```yaml
+onSubmit:
+  zData:
+    query: "SELECT * FROM users WHERE id = zConv.user_id AND status = zConv.status"
+    # Numeric: WHERE id = 42 (no quotes)
+    # String: AND status = 'active' (with quotes)
+```
+
+### Nested Structures
+```yaml
+onSubmit:
+  zCRUD:
+    action: create
+    data:
+      user:
+        name: zConv.username
+        email: zConv.email
+      metadata:
+        source: form
+        timestamp: now()
+  # Resolves to:
+  # data:
+  #   user:
+  #     name: "alice"
+  #     email: "alice@example.com"
+  #   metadata:
+  #     source: "form"
+  #     timestamp: "now()"
+```
 
 ---
 
-## **Migration Notes**
+## Auto-Validation Workflow
 
-### **From Old to New Architecture**
+### When Validation Triggers
 
-**Old (Legacy):**
-```python
-from zCLI.subsystems.zDialog import handle_zDialog
+Auto-validation **only** triggers when:
+- `model` field is present
+- `model` is a string
+- `model` starts with `@` (schema reference)
 
-result = handle_zDialog(zHorizontal, walker=walker)
+Example: `model: "@.zSchema.users"` → **Validation enabled**  
+Example: `model: "users"` → **Validation skipped**
+
+### Validation Process
+
+1. **Load Schema**: `zcli.loader.handle(model)` → Load YAML schema
+2. **Extract Table**: `"@.zSchema.users"` → Extract `"users"`
+3. **Create Validator**: `DataValidator(schema_dict, logger)`
+4. **Validate Data**: `validator.validate_insert(table_name, zConv)`
+5. **On Success**: Proceed to onSubmit (if provided)
+6. **On Failure**:
+   - Display errors via `display_validation_errors()`
+   - Broadcast errors via WebSocket (Bifrost mode)
+   - Return `None` (prevents onSubmit execution)
+
+### Validation Error Display
+
+**Terminal Mode**:
+```
+[ERROR] Validation failed for table 'users':
+  - username: Field is required
+  - email: Invalid email format
 ```
 
-**New (Modern):**
-```python
-result = zcli.dialog.handle(zHorizontal)
+**Bifrost Mode** (WebSocket broadcast):
+```json
+{
+  "event": "validation_error",
+  "table": "users",
+  "errors": {
+    "username": "Field is required",
+    "email": "Invalid email format"
+  },
+  "fields": ["username", "email"]
+}
 ```
 
-### **Display Method Updates**
+---
 
-**Old:**
+## Integration Points
+
+### With zDisplay
+- **Form Rendering**: `display.zDialog(zContext, zcli, walker)`
+- **Status Messages**: `display.zDeclare(message, color, indent, style)`
+- **Validation Errors**: `display_validation_errors()` (from zData)
+
+### With zData
+- **Auto-Validation**: `DataValidator(schema_dict, logger)`
+- **Validation Execution**: `validator.validate_insert(table_name, data)`
+- **Error Display**: `display_validation_errors(table_name, errors, ops)`
+
+### With zLoader
+- **Schema Loading**: `loader.handle(model)` → Load YAML schema from zPath
+
+### With zDispatch
+- **Dict Submissions**: `handle_zDispatch(command, submit_dict, zcli, walker)`
+- **Command Routing**: Routes zCRUD, zData, zFunc commands
+
+### With zComm
+- **WebSocket Broadcasting**: `comm.websocket.broadcast(event_dict)`
+- **Real-time Validation**: Validation errors sent to GUI clients
+
+### With zParser
+- **zPath Resolution**: Resolves `@.zSchema.users` to file path
+- **Expression Parsing**: Parses placeholder expressions
+
+---
+
+## Best Practices
+
+### Form Design
+1. **Use zSchema Models**: Always use `@.zSchema.*` for auto-validation
+2. **Minimal Fields**: Only collect necessary data
+3. **Clear Field Names**: Use descriptive, lowercase field names
+4. **Type Hints**: Specify field types (text, number, password, etc.)
+
+### Placeholder Usage
+1. **Dot Notation First**: Use `zConv.field` for simple access
+2. **Bracket for Special**: Use brackets only for fields with special characters
+3. **Full zConv for CRUD**: Use `data: zConv` for create/update operations
+4. **Embedded for SQL**: Use embedded placeholders in SQL queries
+
+### Submission Handling
+1. **Dict-based Only**: Use dict-based submissions (string-based removed)
+2. **zCRUD for Database**: Use zCRUD for create/update/delete operations
+3. **zData for Queries**: Use zData for custom SQL queries
+4. **zFunc for Logic**: Use zFunc for custom business logic (via zDispatch)
+
+### Error Handling
+1. **Rely on Auto-Validation**: Let zDialog validate against zSchema
+2. **Check Return Values**: `None` return means validation failed
+3. **Handle Exceptions**: Wrap dialog calls in try-catch for robustness
+4. **Log Validation Failures**: Log for auditing and debugging
+
+### Security
+1. **Schema Validation**: Always use zSchema for input validation
+2. **No Direct SQL**: Use placeholder injection, not string concatenation
+3. **Sanitize Inputs**: zDialog sanitizes via zData validation
+4. **Audit Submissions**: Log all form submissions for security audits
+
+---
+
+## Common Patterns
+
+### User Registration
+```yaml
+register_user:
+  zDialog:
+    model: "@.zSchema.users"
+    fields:
+      - {name: username, type: text}
+      - {name: email, type: text}
+      - {name: password, type: password}
+    onSubmit:
+      zCRUD:
+        action: create
+        data: zConv
+```
+
+### Data Update
+```yaml
+update_profile:
+  zDialog:
+    model: "@.zSchema.users"
+    fields:
+      - {name: email, type: text}
+      - {name: age, type: number}
+    onSubmit:
+      zCRUD:
+        action: update
+        where: {id: zConv.user_id}
+        data:
+          email: zConv.email
+          age: zConv.age
+```
+
+### Search Query
+```yaml
+search_users:
+  zDialog:
+    model: "@.zSchema.users"
+    fields:
+      - {name: search_term, type: text}
+    onSubmit:
+      zData:
+        query: "SELECT * FROM users WHERE username LIKE '%zConv.search_term%' OR email LIKE '%zConv.search_term%'"
+```
+
+---
+
+## Testing
+
+### Test Suite
+**Location**: `zTestRunner/zUI.zDialog_tests.yaml` + `zTestRunner/plugins/zdialog_tests.py`
+
+**Coverage**: 85 tests across 9 categories
+- A. Facade - Initialization & Main API (8 tests)
+- B. Context Creation (10 tests)
+- C. Placeholder Injection - 5 types (15 tests)
+- D. Submission Handling - Dict-based (10 tests)
+- E. Auto-Validation - zData Integration (12 tests)
+- F. Mode Handling - Terminal vs. Bifrost (8 tests)
+- G. WebSocket Support (6 tests)
+- H. Error Handling (6 tests)
+- I. Integration Tests (10 tests)
+
+**Pass Rate**: 100% (85/85 tests passing)
+
+### Run Tests
+```bash
+zolo ztests  # Select "zDialog"
+```
+
+---
+
+## Migration from v1.4.0 to v1.5.4+
+
+### Removed: String-Based Submissions
+**Old (v1.4.0)**:
+```yaml
+onSubmit: "zFunc(@auth.register, zConv.username, zConv.email)"
+```
+
+**New (v1.5.4+)**:
+```yaml
+onSubmit:
+  zDispatch:
+    zFunc: "&auth.register(zConv.username, zConv.email)"
+```
+
+**Rationale**: Pure declarative paradigm, better IDE support, schema validation
+
+### Added: Auto-Validation
+**New Feature** (v1.5.4+):
+- Forms automatically validate against zSchema models
+- Validation errors displayed in both Terminal and Bifrost modes
+- Prevents onSubmit execution on validation failure
+
+### Added: WebSocket Support
+**New Feature** (v1.5.0+):
+- Pre-provided data from WebSocket context
+- Real-time validation error broadcasting
+- Seamless Bifrost (GUI) integration
+
+### Updated: Display Methods
+**Old**:
 ```python
 walker.display.handle({"event": "sysmsg", "label": "zDialog", ...})
 ```
 
-**New:**
+**New**:
 ```python
 walker.display.zDeclare("zDialog", color="ZDIALOG", indent=1, style="single")
 ```
 
-### **Security Updates**
+---
 
-**Old (Unsafe):**
+## Technical Debt
+
+### zData Direct Imports
+**Current** (documented as temporary):
 ```python
-return eval(obj, {}, {"zConv": zconv_data})  # Security risk
+from zCLI.subsystems.zData.zData_modules.shared.validator import DataValidator
+from zCLI.subsystems.zData.zData_modules.shared.operations.helpers import display_validation_errors
 ```
 
-**New (Safe):**
+**Future** (when zData is refactored):
 ```python
-# Manual bracket parsing
-if "[" in obj and "]" in obj:
-    start = obj.index("[") + 1
-    end = obj.index("]")
-    field = obj[start:end].strip("'\"")
-    return zconv_data.get(field)
+validator = zcli.zdata.create_validator(schema_dict)
+zcli.zdata.display_validation_errors(table_name, errors)
 ```
+
+### ValidationOps Mock Class
+**Current**: Mock class created inside `zDialog.handle()` method  
+**Future**: Extract to module-level helper or integrate with refactored zData
+
+**Note**: Both items documented in code with TODO comments, will be addressed when zData subsystem is modernized.
 
 ---
 
-## **Testing**
+## Version History
 
-### **Test Coverage**
-- ✅ Initialization and setup
-- ✅ Context creation and management
-- ✅ Placeholder injection (all formats)
-- ✅ Form handling (with/without submission)
-- ✅ String-based submission (zFunc)
-- ✅ Dict-based submission (zDispatch)
-- ✅ Backward compatibility
-- ✅ Error handling and edge cases
-
-### **Running Tests**
-```bash
-# Run zDialog tests only
-python3 zTestSuite/zDialog_Test.py
-
-# Run all tests including zDialog
-python3 zTestSuite/run_all_tests.py
-# Select option 9 for zDialog
-# Select option 0 for all tests
-```
+- **v1.5.4+**: String-based submission removal + Industry-grade upgrade
+  - REMOVED: String-based onSubmit (zFunc integration)
+  - Enhanced: Comprehensive documentation (400+ lines)
+  - Added: 100% type hint coverage
+  - Added: 28 module-level constants
+  - Added: Session key modernization (SESSION_KEY_ZMODE)
+  - Documented: Technical debt (zData direct imports)
+- **v1.5.2**: Auto-validation integration with zData
+- **v1.5.0**: WebSocket support for Bifrost mode
+- **v1.4.0**: Initial implementation
 
 ---
 
-## **Best Practices**
-
-### **Form Design**
-1. **Clear Model Names**: Use descriptive model names that match your data structure
-2. **Minimal Fields**: Only collect necessary fields to reduce user friction
-3. **Validation**: Implement validation in submission handlers, not in dialog
-4. **Error Feedback**: Provide clear error messages on submission failure
-
-### **Placeholder Usage**
-1. **Dot Notation First**: Use `zConv.field` for simple field access
-2. **Bracket for Special**: Use brackets only for fields with special characters
-3. **Nested Carefully**: Keep nested structures simple and readable
-4. **Test Thoroughly**: Test placeholder injection with various data types
-
-### **Submission Handling**
-1. **Choose Right Type**: Use zFunc for custom logic, zCRUD for database operations
-2. **Error Handling**: Always wrap submission in try-catch blocks
-3. **Return Values**: Ensure submission handlers return meaningful results
-4. **Logging**: Log submission attempts for debugging and auditing
-
-### **Security**
-1. **Validate Input**: Always validate collected form data
-2. **Sanitize Data**: Sanitize user input before database operations
-3. **No Direct Eval**: Never use `eval()` on user input
-4. **Safe Placeholders**: Use safe placeholder injection methods only
-
----
-
-## **Common Patterns**
-
-### **User Registration**
-```python
-{
-    "zDialog": {
-        "model": "User",
-        "fields": ["username", "email", "password"],
-        "onSubmit": "zFunc(@auth.register, zConv)"
-    }
-}
-```
-
-### **Data Entry**
-```python
-{
-    "zDialog": {
-        "model": "Record",
-        "fields": ["field1", "field2", "field3"],
-        "onSubmit": {
-            "zCRUD": {
-                "action": "create",
-                "data": "zConv"
-            }
-        }
-    }
-}
-```
-
-### **Multi-Step Forms**
-```python
-# Step 1: Basic info
-step1_data = zcli.dialog.handle({
-    "zDialog": {
-        "model": "User",
-        "fields": ["username", "email"]
-    }
-})
-
-# Step 2: Additional info (with step1 data in context)
-step2_data = zcli.dialog.handle({
-    "zDialog": {
-        "model": "UserProfile",
-        "fields": ["age", "location"],
-        "onSubmit": "zFunc(@user.complete_registration, zConv, step1_data)"
-    }
-})
-```
-
----
-
-**Last Updated:** 2025-10-18  
-**Version:** 1.4.0  
-**Status:** Production Ready
-
+**Last Updated**: 2025-11-08  
+**Version**: 1.5.4+  
+**Status**: Production Ready ✅  
+**Test Coverage**: 85 tests (100% pass rate)

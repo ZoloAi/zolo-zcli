@@ -28,6 +28,13 @@ def test_facade_initialization(zcli=None, context=None):
     if not zcli:
         return _add_result(context, "Facade: Initialization", "ERROR", "No zcli instance")
     
+
+    # Clear plugin cache to prevent Mock objects from old tests
+    try:
+        zcli.loader.cache.clear("plugin")
+    except:
+        pass  # Ignore if plugin cache doesn't exist
+
     try:
         if not hasattr(zcli, 'display') or not zcli.display:
             return _add_result(context, "Facade: Initialization", "FAILED", "zcli.display not initialized")

@@ -615,6 +615,13 @@ def test_network_utils_invalid_port(zcli=None, context=None):
         return _store_result(None, "Network Utils: Invalid Port", "ERROR", "No zcli")
     
     # Port 0 or negative should be handled
+
+    # Clear plugin cache to prevent Mock objects from old tests
+    try:
+        zcli.loader.cache.clear("plugin")
+    except:
+        pass  # Ignore if plugin cache doesn't exist
+
     try:
         result = zcli.comm._network_utils.check_port(0)
         # If it doesn't raise, it should return False

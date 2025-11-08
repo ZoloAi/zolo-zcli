@@ -38,6 +38,13 @@ def test_menu_builder_init() -> Dict[str, Any]:
         from zCLI import zCLI
         
         zcli = zCLI({'zMode': 'Terminal', 'zLoggerLevel': 'ERROR'})
+        
+        # Clear plugin cache to prevent Mock objects from old tests
+        try:
+            zcli.loader.cache.clear("plugin")
+        except:
+            pass  # Ignore if plugin cache doesn't exist
+        
         builder = zcli.navigation.menu.builder
         
         assert builder is not None, "MenuBuilder init failed"

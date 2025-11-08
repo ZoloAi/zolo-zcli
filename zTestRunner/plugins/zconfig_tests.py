@@ -28,6 +28,12 @@ def test_paths_os_detection(zcli=None, context=None):
     if not zcli:
         return _store_result(None, "Paths: OS Detection", "ERROR", "No zcli")
     
+    # Clear plugin cache to prevent Mock objects from old tests
+    try:
+        zcli.loader.cache.clear("plugin")
+    except:
+        pass  # Ignore if plugin cache doesn't exist
+    
     os_type = zcli.config.sys_paths.os_type
     if os_type not in ("Linux", "Darwin", "Windows"):
         return _store_result(zcli, "Paths: OS Detection", "FAILED", f"Invalid: {os_type}")

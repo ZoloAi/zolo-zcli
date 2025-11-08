@@ -61,6 +61,12 @@ def test_facade_init(zcli: Optional[Any] = None, context: Optional[Dict[str, Any
     if not zcli:
         zcli = zCLI({'zWorkspace': '.', 'zMode': 'Terminal', 'zLoggerLevel': 'ERROR'})
     
+    # Clear plugin cache to prevent Mock objects from old tests
+    try:
+        zcli.loader.cache.clear("plugin")
+    except:
+        pass  # Ignore if plugin cache doesn't exist
+    
     try:
         # Verify zLoader exists and is initialized
         assert hasattr(zcli, 'loader'), "zCLI should have loader attribute"
