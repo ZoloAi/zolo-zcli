@@ -3,7 +3,7 @@ from pathlib import Path
 from zCLI import zCLI
 
 z = zCLI({
-    "zWorkspace": str(Path(__file__).parent),
+    "zSpace": str(Path(__file__).parent),
     "zVaFile": "@.zUI.users_sqlite",
     "zBlock": "zVaF",
     "zMode": "Terminal"
