@@ -4080,6 +4080,208 @@ Main:
 
 ---
 
+## zServer: Lightweight HTTP Static File Server (v1.5.4+)
+
+**Optional subsystem** - Serves HTML, CSS, JavaScript using Python's built-in http.server. Zero dependencies.
+
+### Key Features
+- **Static File Serving** - HTML, CSS, JS, images
+- **Background Threading** - Non-blocking, daemon thread
+- **CORS Enabled** - Automatic headers for local dev
+- **Security Built-in** - Directory listing disabled
+- **Logger Integration** - All requests via zCLI logger
+- **Works with zBifrost** - HTTP + WebSocket = full-stack
+
+### Quick Example
+
+```python
+from zCLI import zCLI
+
+z = zCLI({"zWorkspace": "."})
+
+# Create and start HTTP server
+http_server = z.comm.create_http_server(
+    port=8080,
+    host="127.0.0.1",
+    serve_path="./public"
+)
+
+http_server.start()
+print(f"Server running at: {http_server.get_url()}")
+
+# ... do work ...
+
+http_server.stop()
+```
+
+### Full-Stack Example (HTTP + WebSocket)
+
+```python
+from zCLI import zCLI
+
+z = zCLI({
+    "zMode": "zBifrost",
+    "websocket": {"port": 8765, "require_auth": False},
+    "http_server": {"port": 8080, "serve_path": ".", "enabled": True}
+})
+
+# Start HTTP server
+http_server = z.comm.create_http_server(port=8080)
+http_server.start()
+
+print(f"HTTP:      {http_server.get_url()}")
+print(f"WebSocket: ws://127.0.0.1:8765")
+
+# Start WebSocket server (blocking)
+z.walker.run()
+```
+
+### API Methods
+
+**Factory (via zComm):**
+```python
+http_server = z.comm.create_http_server(port=8080, host="127.0.0.1", serve_path="./public")
+```
+
+**Server Methods:**
+- `start()` - Start HTTP server in background thread
+- `stop()` - Graceful shutdown
+- `is_running()` - Check if server is active (returns bool)
+- `get_url()` - Get server URL (e.g., "http://127.0.0.1:8080")
+- `health_check()` - Get comprehensive status (dict with running, host, port, url, serve_path)
+
+### Architecture
+
+```
+zServer (Optional HTTP Server)
+  ├── Static file serving (HTML, CSS, JS, images)
+  ├── Background thread (daemon=True, non-blocking)
+  ├── CORS support (Access-Control-Allow-Origin: *)
+  └── Security (directory listing disabled)
+
+Integration:
+  ├── zComm.create_http_server() → Factory method
+  └── zConfig.http_server → Configuration
+```
+
+### Relationship with zBifrost
+
+**Independent Systems:**
+
+| Aspect | zServer | zBifrost |
+|--------|---------|----------|
+| Protocol | HTTP | WebSocket |
+| Direction | One-way | Bidirectional |
+| Purpose | Static files | Real-time messaging |
+| Library | `http.server` | `websockets` |
+| Port | 8080 (default) | 8765 (default) |
+
+**Can Run:**
+- ✅ Standalone: zServer only
+- ✅ Standalone: zBifrost only
+- ✅ Together: Both (full-stack app)
+
+### Configuration
+
+**Via zSpark:**
+```python
+z = zCLI({
+    "http_server": {
+        "host": "127.0.0.1",
+        "port": 8080,
+        "serve_path": "./public",
+        "enabled": True
+    }
+})
+```
+
+**Programmatic:**
+```python
+http_server = z.comm.create_http_server(
+    host="0.0.0.0",         # All interfaces
+    port=9090,               # Custom port
+    serve_path="/var/www"    # Specific path
+)
+```
+
+### Testing
+
+**35 tests** across 8 categories (100% pass rate):
+- Initialization & Configuration (5 tests)
+- Lifecycle Management (6 tests)
+- Static File Serving (5 tests)
+- CORS Support (4 tests)
+- Error Handling (5 tests)
+- Health Check API (4 tests)
+- URL Generation (3 tests)
+- Integration & Handler (3 tests)
+
+**Run Tests:** `zolo ztests` → select "zServer"
+
+### Security
+
+**Default (Secure):**
+```python
+http_server = z.comm.create_http_server()  # Localhost only
+```
+
+**Network Exposure (Use Proxy):**
+```python
+http_server = z.comm.create_http_server(host="0.0.0.0")  # ⚠️ Use with caution
+```
+
+**Built-in Security:**
+- ✅ Directory listing disabled (403 error)
+- ✅ Localhost-only by default
+- ✅ CORS enabled for local dev
+- ❌ No authentication (use nginx/Apache proxy for production)
+
+### Best Practices
+
+**✅ DO:**
+```python
+# Use high ports (no root needed)
+server = z.comm.create_http_server(port=8080)
+
+# Bind to localhost for dev
+server = z.comm.create_http_server(host="127.0.0.1")
+
+# Clean shutdown
+try:
+    server.start()
+    z.walker.run()
+except KeyboardInterrupt:
+    server.stop()
+```
+
+**❌ DON'T:**
+```python
+# Don't use privileged ports
+server = z.comm.create_http_server(port=80)  # Requires root!
+
+# Don't expose without protection
+server = z.comm.create_http_server(host="0.0.0.0")  # Insecure!
+
+# Don't forget to stop
+server.start()
+# Forgot server.stop() → resource leak
+```
+
+### Common Use Cases
+
+1. **Development Web Server** - Serve UI during development
+2. **Full-Stack Apps** - HTTP + WebSocket together
+3. **Static Asset Hosting** - Serve images, CSS, JS
+4. **Demo Applications** - Quick prototyping
+
+### Documentation
+
+- **[zServer Guide](Documentation/zServer_GUIDE.md)** - **HTTP static file server** (✅ Complete - CEO & dev-friendly)
+- **Test Suite**: `zTestRunner/zUI.zServer_tests.yaml` (35 tests)
+- **Plugin**: `zTestRunner/plugins/zserver_tests.py` (test logic)
+
+---
+
 ## RBAC Directives (v1.5.4 Week 3.3)
 
 **Default**: PUBLIC ACCESS (no `_rbac` = no restrictions)  

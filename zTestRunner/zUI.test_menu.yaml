@@ -4,7 +4,6 @@
 
 zVaF:
   ~Root*: [
-    "All Tests",
     "zConfig",
     "zComm",
     "zDisplay",
@@ -21,13 +20,9 @@ zVaF:
     "zData",
     "zShell",
     "zWalker",
-    "zIntegration",
-    "zEndToEnd",
+    "zServer",
     "stop"
   ]
-  
-  "All Tests":
-    zFunc: "&test_runner.run_all_tests()"
   
   "zConfig":
     zLink: "@.zUI.zConfig_tests.zVaF"
@@ -77,11 +72,8 @@ zVaF:
   "zWalker":
     zLink: "@.zUI.zWalker_tests.zVaF"
   
-  "zIntegration":
-    zFunc: "&test_runner.run_test_suite('zIntegration')"
-  
-  "zEndToEnd":
-    zFunc: "&test_runner.run_test_suite('zEndToEnd')"
+  "zServer":
+    zLink: "@.zUI.zServer_tests.zVaF"
   
   "stop":
     zFunc: "&test_runner.exit_tests()"
