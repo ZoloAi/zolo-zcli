@@ -10,6 +10,10 @@
 
 ---
 
+> **📖 New to zCLI?** Start with **[The Philosophy](Documentation/zPhilosophy.md)** to understand why declarative programming changes everything. It's not just a framework - it's a paradigm shift from "code then present" to "intend then evolve."
+
+---
+
 ## What Is zCLI?
 
 zCLI transforms YAML files into fully functional CLI applications with:
@@ -391,7 +395,8 @@ zTests       # Test suite
 
 ## Documentation
 
-### Getting Started
+### Philosophy & Concepts
+- **[zPhilosophy](Documentation/zPhilosophy.md)** - **START HERE** - Why declarative? How zCLI changes the paradigm
 - **[Installation Guide](Documentation/INSTALL.md)** - Setup and troubleshooting
 - **[Quick Start](Demos/User%20Manager/)** - Working CRUD app
 - **[Framework Guide](Documentation/zCLI_GUIDE.md)** - Complete reference
