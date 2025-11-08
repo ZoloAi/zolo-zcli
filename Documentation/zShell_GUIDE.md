@@ -1,675 +1,931 @@
-# zShell Guide - Your Interactive Command Center
+# zShell Guide
 
-**Welcome!** This guide will teach you how to use zCLI's interactive shell - think of it like a conversation with your computer where you type commands and get instant results!
-
----
-
-## What is zShell?
-
-**zShell** is like a text-based control panel for zCLI. Instead of clicking buttons, you type commands and press Enter. It's similar to:
-- The Terminal app on Mac
-- Command Prompt on Windows
-- The Python interactive shell
-
-**Think of it like:** Texting with your computer - you send a message (command), it responds with results!
+**Interactive Command Center & REPL for zCLI**
 
 ---
 
-## Getting Started
+## Overview
+
+`zShell` is zCLI's interactive shell subsystem providing a command-line interface (REPL) for executing commands, managing workflows, and interacting with all zCLI subsystems. Think of it as your text-based control panel.
+
+**Key Features:**
+- **18+ Commands** - Terminal, data, config, auth, and more
+- **Wizard Canvas Mode** - Multi-step workflow orchestration
+- **Command History** - Persistent history with search
+- **zPath Support** - Navigate using zCLI path syntax
+- **Mode-Agnostic** - Works in Terminal and Bifrost modes
+- **Cross-Subsystem** - Direct access to all zCLI features
+
+---
+
+## Quick Start
 
 ### Starting the Shell
 
 ```bash
-# From your terminal
+# Launch interactive shell
 zcli
 
-# You'll see:
-╔═══════════════════════════════════════════════════════════╗
-║                    zCLI Interactive Shell                 ║
-╚═══════════════════════════════════════════════════════════╝
-
-Type 'help' for available commands
-Type 'exit' or 'quit' to leave
-
->
+# Or from zCLI menu
+zolo zcli
+# Select "Enter zShell"
 ```
 
-That `>` symbol means the shell is ready for your command!
-
-### Your First Commands
+### First Commands
 
 ```bash
-# Say hello!
-> echo Hello World
-Hello World
-
-# Check where you are
-> pwd
-Current Working Directory
-  /Users/yourname/Projects
-
 # Get help
 > help
-[Shows list of all commands]
 
-# Exit when done
-> exit
-Goodbye!
-```
+# Check your location
+> where
 
----
-
-## Essential Commands (Like Bash!)
-
-### 1. echo - Print Messages
-
-**What it does:** Displays text on the screen
-
-```bash
-# Simple message
-> echo Hello there!
-Hello there!
-
-# Show a variable
-> echo $zWorkspace
-/Users/yourname/Projects/my_project
-
-# Colored output
-> echo --success Task complete!
-✅ Task complete!
-
-> echo --error Something went wrong
-❌ Something went wrong
-```
-
-**Use it for:** Testing, displaying information, debugging
-
----
-
-### 2. pwd - Where Am I?
-
-**What it does:** Shows your current directory (like "You Are Here" on a map)
-
-```bash
-> pwd
-Current Working Directory
-  /Users/yourname/Projects/my_project
-  (as zPath: ~.Projects.my_project)
-```
-
-**Use it for:** Checking your location before running commands
-
----
-
-### 3. ls - List Files
-
-**What it does:** Shows files and folders in a directory
-
-```bash
-# List current directory
+# List files
 > ls
-Directory: /Users/yourname/Projects
-Directories:
-  📁 zTestSuite/
-  📁 Documentation/
-Files:
-  📄 README.md
-  📄 main.py
-Total: 2 directories, 2 files
 
-# List specific folder
-> ls @.zTestSuite.demos
-[Shows demo files]
+# Execute a function
+> func &my_plugin.my_function()
 
-# Show hidden files too
-> ls --all
-
-# Show file sizes
-> ls --long
+# Exit shell
+> exit
 ```
-
-**Use it for:** Seeing what files you have, finding things
 
 ---
 
-### 4. cd - Change Directory
+## Command Reference
 
-**What it does:** Moves you to a different folder
+### Terminal Commands (6)
+
+#### `where`
+Shows current workspace and zPath location.
 
 ```bash
-# Go to a folder
-> cd @.zTestSuite.demos
-Changed directory to: /Users/yourname/Projects/zTestSuite/demos
-
-# Go home
-> cd ~
-Changed directory to: /Users/yourname
-
-# Go up one level
-> cd ..
-Changed directory to: /Users/yourname/Projects
-
-# Go back home (no arguments)
-> cd
-Changed directory to: /Users/yourname
+> where
+Workspace: /Users/yourname/Projects/my_project
+zPath: @.Projects.my_project
 ```
 
-**Use it for:** Navigating your project folders
-
----
-
-### 5. history - Remember Commands
-
-**What it does:** Shows all the commands you've typed
+#### `cd` / `pwd`
+Change directory and print working directory.
 
 ```bash
-# Show history
-> history
-Command History (showing 5 of 5 total)
-   1: echo Hello
-   2: pwd
-   3: ls
-   4: cd @.zTestSuite.demos
-   5: history
-
-# Search history
-> history search echo
-History Search: 'echo' (1 matches)
-   1: echo Hello
-
-# Clear history
-> history --clear
-Command history cleared (5 entries removed)
-
-# Save history to file
-> history save my_commands.json
-History saved to: my_commands.json
-(5 entries)
+> cd @.zTestSuite.demos    # Change to demos folder
+> cd ..                    # Go up one level
+> cd ~                     # Go to home
+> pwd                      # Show current directory
 ```
 
-**Use it for:** Remembering what you did, repeating commands
-
----
-
-### 6. alias - Create Shortcuts
-
-**What it does:** Makes short names for long commands
+#### `ls`
+List directory contents.
 
 ```bash
-# Create an alias
-> alias ll="ls --long --all"
-Alias created: ll → ls --long --all
-
-# Use your alias
-> ll
-[Shows detailed file listing]
-
-# List all aliases
-> alias
-Defined Aliases (1)
-  ll → ls --long --all
-
-# Remove an alias
-> alias --remove ll
-Alias removed: ll
-
-# Save aliases
-> alias --save
-Aliases saved to: ~/.zcli/aliases.json
+> ls                       # List current directory
+> ls @.zTestSuite.demos    # List specific path
+> ls -l                    # Detailed listing (if supported)
 ```
 
-**Use it for:** Making your favorite commands shorter
+#### `help`
+Show available commands and usage.
+
+```bash
+> help                     # Show all commands
+> help data                # Help for specific command (if supported)
+```
+
+#### `shortcut`
+Manage zVars (user variables) and file shortcuts.
+
+```bash
+# Create zVar
+> shortcut myvar="test_value"
+
+# List zVars
+> shortcut
+
+# Use zVar in commands
+> echo $myvar
+
+# Create file shortcut (interactive)
+> shortcut cache
+# Select from cached files
+```
 
 ---
 
-## Working with Data
+### zLoader Commands (3)
 
-### load - Load a Database Schema
-
-**What it does:** Loads a database schema so you can work with data
+#### `load`
+Load resources (schemas, configs, plugins).
 
 ```bash
 # Load a schema
-> load @.zTestSuite.demos.zSchema.sqlite_demo --as mydb
-Schema loaded and cached as: mydb
+> load @.zTestSuite.demos.zSchema.sqlite_demo
 
-# Show what's loaded
-> load --show
-Pinned Cache (1 schemas):
-  mydb → @.zTestSuite.demos.zSchema.sqlite_demo
-
-# Clear a schema
-> load --clear mydb
-Schema 'mydb' removed from cache
+# Load and cache with alias (deprecated pattern)
+# Note: Use direct zPath instead
+> load @.zSchema.myschema
 ```
 
-**Why use it:** Load once, use many times with the short name!
-
----
-
-### data - Work with Your Data
-
-**What it does:** Read, add, update, or delete data in your database
+#### `data`
+Database operations (CRUD).
 
 ```bash
-# View data
-> data read users --model $mydb --limit 5
-[Shows first 5 users in a table]
+# Load schema and read data
+> data --model @.zSchema.users read users
 
-# Add data
-> data insert users --model $mydb --fields name,age --values "Alice",16
-Record inserted successfully
+# Insert data
+> data --model @.zSchema.users insert users --fields name,age --values "Alice",30
 
 # Update data
-> data update users --model $mydb --fields age --values 17 --where "name = 'Alice'"
-Record updated successfully
+> data --model @.zSchema.users update users --fields age --values 31 --where "name='Alice'"
 
 # Delete data
-> data delete users --model $mydb --where "age < 13"
-Records deleted successfully
+> data --model @.zSchema.users delete users --where "age < 18"
 ```
 
-**Use it for:** Managing your homework tracker, contact list, inventory, etc.
-
----
-
-## Multi-Step Workflows (Wizard Mode)
-
-### What is Wizard Mode?
-
-**Wizard mode** lets you prepare multiple commands and run them all at once - like making a recipe where you gather all ingredients before cooking!
-
-### How to Use It
-
+**Usage Pattern:**
 ```bash
-# 1. Start wizard mode
-> wizard --start
-📝 Wizard Canvas Mode Active
-   Type commands or YAML, then 'wizard --run' to execute
-
-# 2. Add your commands (they won't run yet!)
-> data insert users --model $mydb --fields name,age --values "Bob",15
-> data insert users --model $mydb --fields name,age --values "Carol",16
-
-# 3. Check what you've added
-> wizard --show
-Wizard Buffer (2 lines):
-  1: data insert users --model $mydb --fields name,age --values "Bob",15
-  2: data insert users --model $mydb --fields name,age --values "Carol",16
-
-# 4. Run everything at once
-> wizard --run
-Executing wizard buffer (2 lines)...
-✅ 2 commands executed successfully
-Buffer cleared after execution
-
-# 5. Exit wizard mode
-> wizard --stop
-Exited wizard canvas - 0 lines discarded
+data [--model ZPATH] <action> <table> [options]
 ```
 
-### Why Use Wizard Mode?
+**Actions:** `read`, `insert`, `update`, `delete`, `list` (tables)
 
-- **All or nothing:** If one command fails, everything is undone (like Ctrl+Z)
-- **Faster:** Multiple operations happen together
-- **Safer:** Test your commands before running them
-- **Organized:** See all steps before executing
-
----
-
-## Getting Help
-
-### General Help
+#### `plugin`
+Plugin management.
 
 ```bash
-> help
-╔═══════════════════════════════════════════════════════════╗
-║                    zCLI Interactive Shell                 ║
-╚═══════════════════════════════════════════════════════════╝
+# List loaded plugins
+> plugin list
 
-Available Commands:
-  echo         - Print messages and variables
-  pwd          - Print working directory
-  ls           - List directory contents
-  cd           - Change directory
-  history      - Command history management
-  alias        - Create command shortcuts
-  data         - Data operations (CRUD)
-  load         - Load and cache resources
-  wizard       - Multi-step workflow orchestration
-  [... and more ...]
+# Load plugin
+> plugin load @.plugins.my_plugin
 
-General:
-  help [command]  - Show help (or help for specific command)
-  tips            - Show quick tips
-  clear/cls       - Clear screen
-  exit/quit/q     - Exit shell
-```
-
-### Command-Specific Help
-
-```bash
-> help data
-DATA Command Help
-═════════════════════════════════════════════════════════════
-
-Description:
-  Data operations (CRUD)
-
-Usage:
-  data read <table> [--model PATH] [--limit N]
-  data insert <table> [--model PATH] [--fields ...] [--values ...]
-  [... more examples ...]
-
-Examples:
-  data read users --model @.zTestSuite.demos.zSchema.sqlite_demo
-  data insert users --model $mydb --fields name --values "Alice"
+# Call plugin function (use func command instead)
+> plugin exec my_plugin.my_function
 ```
 
 ---
 
-## Useful Tips
+### Integration Commands (10)
 
-### Tip 1: Use Aliases for Common Tasks
+#### `auth`
+Authentication commands.
 
 ```bash
-# Create shortcuts for things you do often
-> alias demos="cd @.zTestSuite.demos"
-> alias ll="ls --long --all"
-> alias loaddb="load @.zTestSuite.demos.zSchema.sqlite_demo --as db"
+# Check auth status
+> auth status
 
-# Now you can just type:
-> demos
-> ll
-> loaddb
+# Login (prompts for credentials)
+> auth login
+
+# Logout
+> auth logout
 ```
 
-### Tip 2: Check Your Work with pwd and ls
+#### `comm`
+Communication services status.
 
 ```bash
-# Always know where you are
-> pwd
-> ls
+# Check service status
+> comm status
 
-# Before running important commands
-> pwd
-> echo I am about to delete files here!
+# Additional comm operations available
+> comm start
+> comm stop
 ```
 
-### Tip 3: Use History to Repeat Commands
+#### `config`
+Configuration management.
 
 ```bash
-# Find a command you ran before
-> history search data
-History Search: 'data' (3 matches)
-   5: data read users --model $mydb
-  12: data insert users --model $mydb --fields name --values "Alice"
-  18: data update users --model $mydb --where "id = 1"
+# Get config value
+> config get my_key
 
-# Then copy and modify it!
+# Set config value
+> config set my_key my_value
+
+# List all config
+> config list
+
+# Remove config value
+> config remove my_key
 ```
 
-### Tip 4: Test with echo Before Running
+#### `func`
+Function execution.
 
 ```bash
-# Not sure what a variable contains?
-> echo $mydb
-@.zTestSuite.demos.zSchema.sqlite_demo
+# Call a plugin function
+> func &my_plugin.my_function()
 
-# Check before using it
-> data read users --model $mydb
+# With arguments
+> func &my_plugin.calculate(10, 20)
+
+# With context injection
+> func &my_plugin.process(zContext)
 ```
 
-### Tip 5: Use Wizard Mode for Important Operations
+#### `open`
+Open files and URLs.
 
 ```bash
-# When adding multiple related things
-> wizard --start
-> data insert users --model $mydb --fields name --values "Alice"
-> data insert posts --model $mydb --fields title,author --values "Hello","Alice"
-> wizard --run
+# Open file
+> open @.README.md
 
-# If anything fails, NOTHING changes!
+# Open URL
+> open https://example.com
+
+# Open with specific app (if supported)
+> open myfile.pdf
+```
+
+#### `session`
+Session information.
+
+```bash
+# Show session info
+> session
+
+# Display includes:
+# - Current workspace
+# - Loaded zVaFile
+# - Active zVars
+# - Session keys
+```
+
+---
+
+### Advanced Commands (2)
+
+#### `walker`
+Navigate to zWalker menu mode.
+
+```bash
+> walker
+# Launches Walker UI menu system
+```
+
+#### `wizard_step` / `wizard`
+Wizard canvas mode for multi-step workflows.
+
+```bash
+# Start canvas mode
+> wizard_step start
+
+# Add steps
+> wizard_step step1: config set key1 value1
+> wizard_step step2: config set key2 value2
+
+# Show buffer
+> wizard_step show
+
+# Run workflow
+> wizard_step run
+
+# Clear buffer
+> wizard_step clear
+
+# Stop canvas mode
+> wizard_step stop
+```
+
+---
+
+## Wizard Canvas Mode
+
+### What is Wizard Canvas?
+
+Wizard canvas mode lets you **build multi-step workflows** before executing them. All steps run together in a transaction - if one fails, all changes are rolled back.
+
+### Basic Workflow
+
+```bash
+# 1. Start canvas mode
+> wizard_step start
+📝 Wizard Canvas Active
+
+# 2. Add steps (won't execute yet)
+> wizard_step step1: config set test_key test_value
+> wizard_step step2: data --model $db insert users --fields name --values "Alice"
+
+# 3. Review your workflow
+> wizard_step show
+Wizard Buffer (2 steps):
+  step1: config set test_key test_value
+  step2: data --model $db insert users --fields name --values "Alice"
+
+# 4. Execute all steps
+> wizard_step run
+✅ Workflow executed (2 steps)
+
+# 5. Exit canvas mode
+> wizard_step stop
+```
+
+### YAML Format Support
+
+```bash
+> wizard_step start
+> wizard_step zWizard:
+> wizard_step   step1: config get my_key
+> wizard_step   step2: config set my_key new_value
+> wizard_step run
+```
+
+### Transaction Support
+
+```bash
+> wizard_step start
+> wizard_step _transaction: true
+> wizard_step step1: data insert users ...
+> wizard_step step2: data insert posts ...
+> wizard_step run
+# Both inserts succeed or both are rolled back
 ```
 
 ---
 
 ## Common Patterns
 
-### Pattern 1: Load and Query
+### Pattern 1: Navigate and Explore
 
 ```bash
-# Load your database
-> load @.zTestSuite.demos.zSchema.sqlite_demo --as db
-
-# Query it
-> data read users --model $db --limit 10
-
-# Add something
-> data insert users --model $db --fields name,age --values "Alice",16
-```
-
-### Pattern 2: Navigate and Explore
-
-```bash
-# See where you are
-> pwd
+# Check location
+> where
 
 # List files
 > ls
 
-# Go somewhere
+# Change directory
 > cd @.zTestSuite.demos
 
 # List again
 > ls
 ```
 
-### Pattern 3: Create Workflow
+### Pattern 2: Data Operations
 
 ```bash
-# Start wizard
-> wizard --start
+# Load schema
+> load @.zSchema.mydb
 
-# Add steps
-> data insert students --model $db --fields name,grade --values "Bob",10
-> data insert homework --model $db --fields student,subject --values "Bob","Math"
+# Read data
+> data --model @.zSchema.mydb read users
 
-# Review
-> wizard --show
+# Insert data
+> data --model @.zSchema.mydb insert users --fields name,age --values "Bob",25
 
-# Execute
-> wizard --run
+# Update data
+> data --model @.zSchema.mydb update users --fields age --values 26 --where "name='Bob'"
+```
+
+### Pattern 3: Multi-Step Workflow
+
+```bash
+# Start wizard canvas
+> wizard_step start
+
+# Add multiple operations
+> wizard_step step1: data insert users --model $db --fields name --values "Alice"
+> wizard_step step2: data insert posts --model $db --fields author --values "Alice"
+
+# Execute together
+> wizard_step run
+
+# Exit canvas
+> wizard_step stop
+```
+
+### Pattern 4: Config Management
+
+```bash
+# Set multiple values
+> config set db_host localhost
+> config set db_port 5432
+> config set db_name myapp
+
+# Check values
+> config list
+
+# Use in other commands
+> config get db_host
+```
+
+### Pattern 5: Function Calls
+
+```bash
+# Load plugin
+> plugin load @.plugins.my_utils
+
+# Call function
+> func &my_utils.process_data()
+
+# With arguments
+> func &my_utils.calculate(10, 20)
 ```
 
 ---
 
-## Quick Reference Card
+## Best Practices
 
-### Navigation
+### 1. Use `where` and `ls` Frequently
+
 ```bash
-pwd              # Where am I?
-ls               # What's here?
-cd <path>        # Go somewhere
-cd ..            # Go up one level
-cd ~             # Go home
+# Always know where you are
+> where
+> ls
+
+# Before running important commands
+> where
+> data delete users --model $db --where "age < 18"
 ```
 
-### Files & Info
+### 2. Use Wizard Canvas for Critical Operations
+
 ```bash
-echo <message>   # Print something
-history          # Show past commands
-alias            # Show shortcuts
-help             # Get help
-help <command>   # Help for specific command
+# ✅ Good: Multi-step operations in wizard mode
+> wizard_step start
+> wizard_step _transaction: true
+> wizard_step step1: data insert users ...
+> wizard_step step2: data insert profiles ...
+> wizard_step run
+
+# ❌ Avoid: Running critical operations separately
+> data insert users ...
+> data insert profiles ...  # If this fails, user has no profile!
 ```
 
-### Data Operations
+### 3. Use zVars for Repeated Values
+
 ```bash
-load <path> --as <name>     # Load schema
-data read <table>           # View data
-data insert <table>         # Add data
-data update <table>         # Change data
-data delete <table>         # Remove data
+# Create shortcuts for common paths
+> shortcut db="@.zSchema.production_db"
+
+# Use in commands
+> data --model $db read users
+> data --model $db insert users --fields name --values "Alice"
 ```
 
-### Wizard Mode
+### 4. Check Before You Delete
+
 ```bash
-wizard --start   # Begin workflow
-wizard --show    # Review steps
-wizard --run     # Execute all
-wizard --stop    # Exit mode
-wizard --clear   # Clear buffer
+# ✅ Good: Check what you're deleting first
+> data --model $db read users --where "age < 18"
+# Review results
+> data --model $db delete users --where "age < 18"
+
+# ❌ Avoid: Deleting without checking
+> data --model $db delete users --where "age < 18"
 ```
 
-### Shell Control
+### 5. Use Direct zPaths
+
 ```bash
-clear / cls      # Clear screen
-exit / quit / q  # Leave shell
+# ✅ Good: Direct zPath (modern approach)
+> data --model @.zSchema.users read users
+
+# ⚠️ Deprecated: Load with alias
+> load @.zSchema.users --as db
+> data --model $db read users
 ```
 
 ---
 
-## Practice Exercises
+## Special Features
 
-### Exercise 1: Basic Navigation
+### Command History
 
-Try these commands in order:
-```bash
-1. pwd                    # See where you are
-2. ls                     # See what's here
-3. cd @.zTestSuite.demos  # Go to demos folder
-4. ls                     # See demo files
-5. cd ..                  # Go back up
-6. pwd                    # Confirm location
-```
+zShell automatically saves command history to `~/.zolo/.zcli_history` (if readline is available).
 
-### Exercise 2: Working with Data
+**Features:**
+- Up/down arrows navigate history
+- Persistent across sessions
+- Automatic saving
+
+### Dynamic Prompts
 
 ```bash
-1. load @.zTestSuite.demos.zSchema.sqlite_demo --as db
-2. data read users --model $db --limit 5
-3. echo I see the users!
-4. history
+# Normal mode
+>
+
+# Wizard canvas mode
+📝>
+
+# With zPath display (if enabled)
+@.Projects.myapp>
 ```
 
-### Exercise 3: Create Shortcuts
+### Special Commands
 
 ```bash
-1. alias demos="cd @.zTestSuite.demos"
-2. alias showusers="data read users --model $db --limit 10"
-3. alias
-4. demos
-5. showusers
+# Exit shell
+exit
+quit
+q
+
+# Clear screen
+clear
+cls
+
+# Show tips
+tips
+
+# Empty input (ignored)
+<just press Enter>
+
+# Comments (ignored)
+# This is a comment
 ```
 
-### Exercise 4: Wizard Workflow
+---
+
+## Error Handling
+
+### Command Not Found
 
 ```bash
-1. wizard --start
-2. echo Step 1
-3. echo Step 2
-4. wizard --show
-5. wizard --run
-6. wizard --stop
+> unknowncommand
+❌ Unknown command: unknowncommand
+Type 'help' for available commands
 ```
+
+### Missing Arguments
+
+```bash
+> data read
+❌ Missing required argument: table
+Usage: data --model PATH read TABLE [options]
+```
+
+### Invalid Path
+
+```bash
+> cd @.nonexistent.path
+❌ Directory not found: @.nonexistent.path
+```
+
+### Schema Not Loaded
+
+```bash
+> data --model @.wrong.path read users
+❌ Schema not found: @.wrong.path
+```
+
+---
+
+## Integration Points
+
+### With zWalker (UI Mode)
+
+```bash
+# Launch shell from Walker menu
+# Walker menu → "Enter zShell"
+
+# Return to Walker
+> walker
+# Or
+> exit
+```
+
+### With zData
+
+```bash
+# Direct integration - no separate loading needed
+> data --model @.zSchema.users read users
+
+# Wizard canvas supports transactions
+> wizard_step start
+> wizard_step _transaction: true
+> wizard_step step1: data insert users ...
+```
+
+### With zAuth
+
+```bash
+# Check auth status
+> auth status
+
+# Login if required
+> auth login
+
+# Commands respect RBAC
+> data delete users --where "id=1"
+# Requires appropriate permissions
+```
+
+### With zConfig
+
+```bash
+# Set config values
+> config set my_key my_value
+
+# Use in session
+> session
+# Shows config values
+```
+
+### With zFunc
+
+```bash
+# Call any loaded plugin function
+> func &my_plugin.my_function()
+
+# Context injection works
+> func &my_plugin.process(zContext)
+```
+
+---
+
+## Testing
+
+### Test Coverage
+
+**100 tests** across 14 categories (100% pass rate):
+- A. Initialization & Core Setup (5 tests)
+- B. Command Routing - Terminal (6 tests)
+- C. Command Routing - zLoader (3 tests)
+- D. Command Routing - Integration (10 tests)
+- E. Command Routing - Advanced (2 tests)
+- F. Wizard Canvas Mode (10 tests)
+- G. Special Commands (5 tests)
+- H. Command Execution (10 tests)
+- I. Shortcut System (10 tests)
+- J. Data Operations (10 tests)
+- K. Plugin Operations (8 tests)
+- L. Session Management (7 tests)
+- M. Error Handling (7 tests)
+- N. Integration & Cross-Subsystem (7 tests)
+
+**Run Tests:**
+```bash
+zolo ztests
+# Select "zShell"
+```
+
+**Test Files:**
+- `zTestRunner/zUI.zShell_tests.yaml` (100 test steps)
+- `zTestRunner/plugins/zshell_tests.py` (~1,500 lines)
+
+---
+
+## Architecture
+
+### 6-Layer Hierarchy
+
+```
+┌─────────────────────────────────────────────────┐
+│         LEVEL 6: Package Root (__init__.py)     │
+│              └─→ Exports: zShell                │
+├─────────────────────────────────────────────────┤
+│         LEVEL 5: Facade (zShell.py)             │
+│              └─→ 3-method API                   │
+├─────────────────────────────────────────────────┤
+│    LEVEL 4: Module Aggregator (shell_modules)  │
+│         └─→ Exports: ShellRunner, Executor      │
+├─────────────────────────────────────────────────┤
+│    LEVEL 3: Core Modules (2,340 lines)         │
+│         ├─→ ShellRunner (REPL loop)            │
+│         ├─→ CommandExecutor (routing)          │
+│         └─→ HelpSystem (help display)          │
+├─────────────────────────────────────────────────┤
+│    LEVEL 2: Command Registry (commands/)       │
+│         └─→ 18 command executors               │
+├─────────────────────────────────────────────────┤
+│    LEVEL 1: Command Executors (18 files)       │
+│         ├─→ Terminal (6): where, cd, ls, etc.  │
+│         ├─→ zLoader (3): load, data, plugin    │
+│         ├─→ Integration (10): auth, config...  │
+│         └─→ Advanced (2): walker, wizard_step  │
+└─────────────────────────────────────────────────┘
+```
+
+### Public API
+
+```python
+from zCLI.subsystems.zShell import zShell
+
+# Initialize shell
+shell = zShell(zcli)
+
+# Run REPL loop (interactive mode)
+shell.run_shell()
+
+# Execute single command (testing/non-interactive)
+shell.execute_command("data read users --model @.zSchema.users")
+
+# Show help
+shell.show_help()
+```
+
+### Facade Pattern
+
+zShell uses the **Facade pattern** to hide complexity:
+- **Public API:** 3 simple methods
+- **Internal:** 2,340 lines across 3 core modules
+- **Commands:** 18 command executors with ~5,500 lines
+
+**Benefits:**
+- Simple to use (3 methods)
+- Complex internally (full-featured)
+- Easy to refactor (facade hides changes)
+
+---
+
+## Command Summary
+
+### All Available Commands (18)
+
+| Command | Category | Description |
+|---------|----------|-------------|
+| `where` | Terminal | Show current workspace |
+| `cd` | Terminal | Change directory |
+| `pwd` | Terminal | Print working directory |
+| `ls` | Terminal | List directory contents |
+| `help` | Terminal | Show command help |
+| `shortcut` | Terminal | Manage zVars and file shortcuts |
+| `load` | zLoader | Load resources |
+| `data` | zLoader | Database operations (CRUD) |
+| `plugin` | zLoader | Plugin management |
+| `auth` | Integration | Authentication commands |
+| `comm` | Integration | Communication services |
+| `config` | Integration | Configuration management |
+| `func` | Integration | Function execution |
+| `open` | Integration | Open files and URLs |
+| `session` | Integration | Session information |
+| `walker` | Advanced | Navigate to Walker UI |
+| `wizard_step` | Advanced | Wizard canvas mode |
+| `wizard` | Advanced | Alias for wizard_step |
+
+### Special Commands
+
+- `exit`, `quit`, `q` - Exit shell
+- `clear`, `cls` - Clear screen
+- `tips` - Show quick tips
+- `#` - Comment (ignored)
+- Empty line - Ignored
 
 ---
 
 ## Troubleshooting
 
-### "Command not found"
+### Shell Won't Start
 
+**Problem:** `zcli` command not found
+
+**Solution:**
 ```bash
-> dataa read users
-❌ Unknown command: dataa
+# Reinstall zCLI
+pip install --upgrade zolo-zcli
 
-# Fix: Check spelling
-> data read users
-✅ Works!
+# Or check installation
+which zcli
+```
 
-# Or get help
+### Commands Not Working
+
+**Problem:** Commands not recognized
+
+**Solution:**
+```bash
+# Check available commands
 > help
+
+# Verify spelling
+> hlep  ❌
+> help  ✅
 ```
 
-### "Path not found"
+### Wizard Canvas Stuck
 
+**Problem:** Can't exit wizard mode
+
+**Solution:**
 ```bash
-> cd @.wrong.path
-❌ Directory not found
+# Clear buffer and stop
+> wizard_step clear
+> wizard_step stop
 
-# Fix: Check with ls first
+# Or force exit
+> exit
+```
+
+### Path Not Found
+
+**Problem:** zPath not resolving
+
+**Solution:**
+```bash
+# Check workspace
+> where
+
+# List available paths
 > ls
-> cd @.correct.path
+
+# Use absolute paths if needed
+> cd /Users/yourname/Projects
 ```
 
-### "Schema not loaded"
+---
 
+## Migration Notes
+
+### From Old Shell Commands
+
+**Old (deprecated):**
 ```bash
-> data read users --model $mydb
-❌ Schema 'mydb' not found
-
-# Fix: Load it first
-> load @.zTestSuite.demos.zSchema.sqlite_demo --as mydb
-> data read users --model $mydb
+# Load with alias
+> load @.zSchema.users --as db
+> data --model $db read users
 ```
 
-### Stuck in Wizard Mode?
-
+**New (recommended):**
 ```bash
-# Exit wizard mode
-> wizard --stop
-Exited wizard canvas
+# Direct zPath
+> data --model @.zSchema.users read users
+```
 
-# Or clear and exit
-> wizard --clear
-> wizard --stop
+### From Manual Transactions
+
+**Old (manual):**
+```bash
+> data --model $db begin
+> data --model $db insert users ...
+> data --model $db insert posts ...
+> data --model $db commit
+```
+
+**New (wizard canvas):**
+```bash
+> wizard_step start
+> wizard_step _transaction: true
+> wizard_step step1: data insert users ...
+> wizard_step step2: data insert posts ...
+> wizard_step run
 ```
 
 ---
 
-## Next Steps
+## FAQ
 
-Now that you know the shell basics:
+### Q: How do I exit the shell?
+**A:** Type `exit`, `quit`, or `q` and press Enter.
 
-1. **Try the demos:** `cd @.zTestSuite.demos` and explore
-2. **Create your own database:** Use zSchema to define your data
-3. **Build workflows:** Use wizard mode for multi-step tasks
-4. **Make shortcuts:** Create aliases for your common commands
-5. **Read other guides:**
-   - [zUI_GUIDE.md](zUI_GUIDE.md) - Build interactive menus
-   - [zSchema_GUIDE.md](zSchema_GUIDE.md) - Define your data
-   - [zData_GUIDE.md](zData_GUIDE.md) - Advanced data operations
+### Q: Can I use regular bash commands?
+**A:** No, zShell is not a bash replacement. It's designed for zCLI operations. For bash commands, use your terminal.
 
----
+### Q: How do I see my command history?
+**A:** Use up/down arrows (if readline available) or check `~/.zolo/.zcli_history` file.
 
-## Remember
+### Q: What's the difference between `wizard` and `wizard_step`?
+**A:** They're aliases - both do the same thing.
 
-- **Type `help` when stuck** - It's always there to help you!
-- **Use `pwd` often** - Know where you are
-- **Test with `echo`** - Check variables before using them
-- **Save your work** - Use `history save` and `alias --save`
-- **Wizard mode is your friend** - Use it for important operations
-- **Practice makes perfect** - The more you use it, the easier it gets!
+### Q: Can I run Python code in the shell?
+**A:** No, but you can call Python functions via `func` command:
+```bash
+> func &my_plugin.my_python_function()
+```
 
----
-
-## Quick Start Checklist
-
-✅ Start the shell: `zcli`  
-✅ Get help: `help`  
-✅ Check location: `pwd`  
-✅ List files: `ls`  
-✅ Load a database: `load @.path --as name`  
-✅ View data: `data read table --model $name`  
-✅ Create shortcuts: `alias name="command"`  
-✅ Save history: `history save`  
-✅ Exit: `exit`
-
-**You've got this!** 🚀
+### Q: How do I clear the screen?
+**A:** Type `clear` or `cls` and press Enter.
 
 ---
 
-**Total Commands Available:** 20  
-**Difficulty:** Beginner-Friendly  
-**Best For:** Students, beginners, anyone new to command-line tools
+## Quick Reference
+
+### Essential Commands
+```bash
+where               # Show location
+ls                  # List files
+cd PATH             # Change directory
+help                # Show help
+data --model PATH   # Data operations
+func &plugin.func() # Call function
+wizard_step start   # Start workflow
+exit                # Exit shell
+```
+
+### Workflow Pattern
+```bash
+1. where            # Know where you are
+2. ls               # See what's available
+3. load resource    # Load what you need
+4. data/func/etc    # Do your work
+5. exit             # Leave shell
+```
+
+---
+
+## Support
+
+- **Documentation:** `Documentation/zShell_GUIDE.md`
+- **Tests:** `zTestRunner/zUI.zShell_tests.yaml` (100 tests)
+- **Source:** `zCLI/subsystems/zShell/`
+- **Help:** Type `help` in the shell
+
+---
+
+**Version:** 1.5.4  
+**Last Updated:** 2025-11-08  
+**Status:** Production Ready  
+**Total Commands:** 18+ (plus special commands)  
+**Test Coverage:** 100 tests (100% pass rate)

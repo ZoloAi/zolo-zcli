@@ -66,7 +66,7 @@ zVaF:
     zLink: "@.zUI.zUtils_tests.zVaF"
   
   "zShell":
-    zFunc: "&test_runner.run_test_suite('zShell')"
+    zLink: "@.zUI.zShell_tests.zVaF"
   
   "zWizard_test":
     zLink: "@.zUI.zWizard_tests.zVaF"
