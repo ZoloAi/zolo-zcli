@@ -4,7 +4,7 @@
 
 **Latest**: v1.5.4 - Layer 0 Complete (70% coverage, 907 tests passing)
 
-**New**: Declarative Test Suite (`zTestRunner`) - 1,027 tests total (100% subsystem coverage) ✅
+**New**: Declarative Test Suite (`zTestRunner`) - 1,147 tests total (100% subsystem coverage) ✅
 - **zConfig**: 72 tests (100% pass) - Configuration subsystem with integration tests
 - **zComm**: 106 tests (100% pass) - Communication subsystem with integration tests
 - **zDisplay**: 86 tests (100% pass) - Display & rendering subsystem with integration tests
@@ -18,6 +18,7 @@
 - **zOpen**: 83 tests (100% pass) - File & URL opening with intelligent routing, graceful fallbacks, hook execution
 - **zUtils**: 99 tests (100% pass) - Plugin management with unified cache, security enforcement, auto-reload, session injection, PermissionError handling
 - **zWizard**: 45 tests (100% pass) - Workflow orchestration with WizardHat (triple-access), sequential execution, transaction management, result interpolation
+- **zData**: 120 tests (100% pass) - Unified data management with multi-backend support (SQLite/PostgreSQL/CSV), schema-driven validation, wizard mode, plugin integration
 
 *~90% automated pass rate (interactive tests require stdin). All pass when run interactively.
 
@@ -3323,6 +3324,476 @@ step2:
 
 ---
 
+## zData: Unified Data Management (v1.5.4+)
+
+### Overview
+
+**zData** is zCLI's unified data management subsystem - the "universal database interface" that provides a consistent API for database operations across multiple backends (SQLite, PostgreSQL, CSV). It's **schema-driven**, **declarative**, and **mode-agnostic**.
+
+**Module Structure** (6-Tier Architecture):
+```
+zCLI/subsystems/zData/
+├── zData.py (facade - public API)
+└── zData_modules/
+    ├── classical_data/             (Relational paradigm)
+    │   ├── classical_data.py       (Handler orchestrator)
+    │   ├── adapter_factory.py      (Backend router)
+    │   ├── data_validator.py       (Schema validation)
+    │   ├── data_operations.py      (CRUD facade)
+    │   └── adapters/               (Backend implementations)
+    │       ├── sqlite_adapter.py
+    │       ├── postgresql_adapter.py
+    │       └── csv_adapter.py
+    └── quantum_data/               (Future - stub)
+```
+
+**Key Innovation**: Schema-driven design - define structure once in YAML, let zData handle validation, constraints, and backend-specific SQL.
+
+### Public API
+
+```python
+from zCLI import zCLI
+z = zCLI({"zWorkspace": "."})
+
+# Load schema
+schema = z.loader.handle("@.zSchema.users")
+z.data.load_schema(schema)
+
+# DML Operations
+user_id = z.data.insert("users", ["name", "email"], ["Alice", "alice@example.com"])
+users = z.data.select("users", where="age > 25", order="name ASC", limit=10)
+updated = z.data.update("users", ["age"], [31], where="name = 'Alice'")
+deleted = z.data.delete("users", where="age < 18")
+
+# DDL Operations
+z.data.create_table("users")
+z.data.drop_table("old_users")
+z.data.alter_table("users", {"add_columns": {"status": {"type": "str"}}})
+
+# Connection Management
+z.data.disconnect()
+```
+
+**Only 1 entry point** - everything routes through `z.data` facade.
+
+### Schema Format (The Heart of zData)
+
+**Minimal Schema:**
+```yaml
+# zSchema.users.yaml
+Meta:
+  Data_Type: sqlite
+  Data_Path: "~.zMachine.myapp"  # Cross-platform user data dir
+  Data_Label: "mydb"
+
+users:
+  id: {type: int, pk: true, auto_increment: true}
+  name: {type: str, required: true}
+  email: {type: str, unique: true}
+  age: {type: int, default: 0}
+```
+
+**Full Schema with Validation:**
+```yaml
+users:
+  username:
+    type: str
+    required: true
+    rules:
+      pattern: "^[a-zA-Z0-9_]{3,20}$"
+      pattern_message: "Username must be 3-20 characters"
+      min_length: 3
+      max_length: 20
+  
+  email:
+    type: str
+    required: true
+    rules:
+      format: email  # Built-in validator
+      max_length: 255
+  
+  age:
+    type: int
+    rules:
+      min: 18
+      max: 120
+  
+  status:
+    type: str
+    default: "active"
+    enum: [active, inactive, banned]
+```
+
+**Path Resolution** (via zConfig):
+- `~.zMachine.*` → OS-specific user data dir (macOS: `~/Library/Application Support/zolo-zcli/`)
+- `@.workspace.*` → Workspace-relative path
+- Absolute paths work as-is
+
+### Multi-Backend Support (Same API!)
+
+**Switch backends with 1 config change:**
+
+```yaml
+# Development (SQLite)
+Meta:
+  Data_Type: sqlite
+  Data_Path: "~.zMachine.myapp"
+  Data_Label: "dev"
+
+# Production (PostgreSQL) - SAME CODE, DIFFERENT CONFIG!
+Meta:
+  Data_Type: postgresql
+  Data_Path: "~.zMachine.myapp"
+  Data_Label: "prod"
+  Data_Host: "localhost"
+  Data_Port: 5432
+  Data_User: "myuser"
+  Data_Password: "mypass"
+```
+
+**Your code doesn't change** - zData handles backend-specific SQL automatically.
+
+### Wizard Mode (Recommended Pattern)
+
+**Best Practice**: Use zWizard for multi-step data operations (automatic transaction management + connection reuse):
+
+```yaml
+# In zUI file
+zVaF:
+  _transaction: true  # Enable transaction + connection reuse
+  zWizard:
+    create_user:
+      zData:
+        model: $users_db  # $ prefix triggers transaction
+        action: insert
+        tables: [users]
+        options: {name: "Alice", email: "alice@example.com"}
+    
+    create_profile:
+      zData:
+        model: $users_db  # Reuses same connection
+        action: insert
+        tables: [profiles]
+        options: {user_id: "{0}", bio: "Hello"}  # {0} = user_id from step 1
+```
+
+**What happens:**
+1. ✅ First step with `$alias` → BEGIN transaction, create connection
+2. ✅ Subsequent steps → Reuse same connection (efficient!)
+3. ✅ Success → COMMIT transaction
+4. ✅ Error → ROLLBACK transaction (automatic)
+5. ✅ Finally → Clear schema_cache (cleanup)
+
+**Benefits:**
+- ✅ Automatic BEGIN/COMMIT/ROLLBACK
+- ✅ Connection reuse (single connection for all steps)
+- ✅ Schema cache management
+- ✅ Atomic operations guaranteed
+
+### Plugin Integration (Dynamic Values)
+
+**Use plugins to generate dynamic values:**
+
+```yaml
+# In schema
+users:
+  id:
+    type: str
+    pk: true
+    default: "&id_generator.generate_uuid()"  # Auto-generate UUID
+  
+  created_at:
+    type: str
+    default: "&date_utils.get_timestamp()"  # Auto-timestamp
+```
+
+**In code:**
+```python
+# Generate UUID
+uuid = z.zparser.resolve_plugin_invocation("&id_generator.generate_uuid()")
+z.data.insert("users", ["id", "name"], [uuid, "Alice"])
+```
+
+**Common plugin use cases:**
+- ID generation (UUID, prefixed IDs, sequential)
+- Timestamps (ISO, Unix, custom formats)
+- Data validation (email, phone, custom rules)
+- Data transformation (hash passwords, slugify text)
+
+### Validation (Automatic!)
+
+**Built-in validators** (checked automatically on insert/update):
+
+```yaml
+users:
+  username:
+    type: str
+    required: true
+    rules:
+      pattern: "^[a-zA-Z0-9_]{3,20}$"
+      pattern_message: "Custom error message"
+  
+  email:
+    type: str
+    rules:
+      format: email  # Built-in: email, url, phone
+  
+  age:
+    type: int
+    rules:
+      min: 18
+      max: 120
+```
+
+**Validation happens automatically:**
+```python
+# INSERT - All fields validated, required fields enforced
+result = z.data.insert("users", ["username", "email"], ["invalid user!", "not-email"])
+# Returns: {"error": {"username": "Username must be 3-20 characters...", "email": "Invalid email format"}}
+
+# UPDATE - Only provided fields validated, required fields NOT enforced
+result = z.data.update("users", ["email"], ["invalid-email"], where="id = 1")
+# Returns: {"error": {"email": "Invalid email format"}}
+```
+
+### Key Features
+
+✅ **Multi-Backend** - SQLite, PostgreSQL, CSV (same API)  
+✅ **Schema-Driven** - Define once, validate everywhere  
+✅ **Full SQL Support** - DML, DQL, DDL, DCL, TCL operations  
+✅ **Wizard Integration** - Automatic transactions + connection reuse  
+✅ **Plugin Integration** - Dynamic values (UUIDs, timestamps, etc.)  
+✅ **Path Resolution** - `~.zMachine.*` and `@workspace` support  
+✅ **Backend Portability** - Switch SQLite ↔ PostgreSQL with 1 config change  
+✅ **Type Safety** - 100% type hints across all modules  
+✅ **120 comprehensive tests** - 100% pass rate across 21 categories (A-U)
+
+### Testing
+
+**Test Coverage**: 120 tests across 21 categories (100% pass rate)
+- A. Initialization (3 tests)
+- B. SQLite Adapter (13 tests)
+- C. CSV Adapter (10 tests)
+- D. Error Handling (3 tests)
+- E. Plugin Integration (6 tests)
+- F. Connection Management (3 tests)
+- G. Validation (5 tests)
+- H. Complex SELECT (5 tests)
+- I. Transactions (5 tests)
+- J. Wizard Mode (5 tests)
+- K. Foreign Keys (8 tests)
+- L. Hooks (8 tests)
+- M. WHERE Parsers (4 tests)
+- N. ALTER TABLE (5 tests)
+- O. Integration (8 tests)
+- P. Edge Cases (7 tests)
+- Q. Complex Queries (5 tests)
+- R. Schema Management (5 tests)
+- S. Data Types (5 tests)
+- T. Performance (5 tests)
+- U. Final Integration (3 tests)
+
+**Run Tests**: `zolo ztests` → select "zData"
+
+**Test Files:**
+- `zTestRunner/zUI.zData_tests.yaml` (120 test steps)
+- `zTestRunner/plugins/zdata_tests.py` (3,500+ lines - **NO STUB TESTS**)
+
+**Note**: All 120 tests perform real validation with SQLite/CSV operations, temporary file creation/cleanup, plugin loading, and cross-subsystem integration.
+
+### Common Mistakes
+
+❌ **Wrong: Using raw SQL**
+```python
+cursor.execute("INSERT INTO users (name) VALUES (?)", ("Alice",))  # ❌ No validation!
+```
+
+✅ **Right: Use zData API**
+```python
+z.data.insert("users", ["name"], ["Alice"])  # ✅ Validated, backend-agnostic
+```
+
+---
+
+❌ **Wrong: INSERT before CREATE TABLE**
+```python
+# Load schema
+schema = z.loader.handle("@.zSchema.users")
+z.data.load_schema(schema)
+
+# Try to insert (FAILS!)
+z.data.insert("users", ["name"], ["Alice"])  # ❌ Table doesn't exist!
+```
+
+✅ **Right: CREATE TABLE first**
+```python
+# Load schema
+schema = z.loader.handle("@.zSchema.users")
+z.data.load_schema(schema)
+
+# CREATE TABLE first (DDL operation)
+if not z.data.table_exists("users"):
+    z.data.create_table("users")
+
+# NOW you can INSERT (DML operation)
+z.data.insert("users", ["name"], ["Alice"])  # ✅ Works!
+```
+
+---
+
+❌ **Wrong: Using .yaml extension in zPath**
+```python
+z.loader.handle("@.zSchema.users.yaml")  # ❌ Double extension!
+```
+
+✅ **Right: No extension (framework auto-adds .yaml)**
+```python
+z.loader.handle("@.zSchema.users")  # ✅ Framework adds .yaml
+```
+
+---
+
+❌ **Wrong: Forgetting `rules:` key for validation**
+```yaml
+username:
+  type: str
+  pattern: "^[a-z]+$"  # ❌ Pattern must be under rules:
+```
+
+✅ **Right: All validation rules under `rules:` key**
+```yaml
+username:
+  type: str
+  rules:
+    pattern: "^[a-z]+$"  # ✅ Correct
+```
+
+---
+
+❌ **Wrong: Manual transaction management (imperative)**
+```python
+# Manual BEGIN/COMMIT/ROLLBACK (not recommended for workflows)
+z.data.begin_transaction()
+try:
+    z.data.insert("users", ["name"], ["Alice"])
+    z.data.insert("posts", ["user_id"], [1])
+    z.data.commit()
+except:
+    z.data.rollback()
+```
+
+✅ **Right: Use zWizard for transactions (declarative)**
+```yaml
+# Automatic transaction management
+_transaction: true
+zWizard:
+  step1: {zData: {model: $db, action: insert, tables: [users], ...}}
+  step2: {zData: {model: $db, action: insert, tables: [posts], ...}}
+# Automatic BEGIN/COMMIT/ROLLBACK + connection reuse
+```
+
+### Declarative Pattern (zUI Files)
+
+**Simple CRUD:**
+```yaml
+"^Add User":
+  zDialog:
+    model: "@.zSchema.users"  # Auto-validation enabled!
+    fields: [username, email, age]
+  zData:
+    action: insert
+    table: users
+    data: zConv  # Use collected form data
+  zDisplay:
+    text: "✅ User added successfully!"
+```
+
+**Multi-Step with Transaction:**
+```yaml
+"^Create Order":
+  _transaction: true
+  zWizard:
+    create_order:
+      zData:
+        model: $ecommerce
+        action: insert
+        tables: [orders]
+        options: {customer_id: 123, total: 99.99}
+    create_payment:
+      zData:
+        model: $ecommerce
+        action: insert
+        tables: [payments]
+        options: {order_id: "{0}", amount: 99.99}
+# Both succeed or both rollback (atomic)
+```
+
+### Integration Points
+
+**With zLoader:**
+- Schema loading: `z.loader.handle("@.zSchema.users")`
+- Path resolution delegation
+
+**With zWizard:**
+- Transaction management via `_transaction: true`
+- Connection reuse via `$alias` prefix
+- Result interpolation via `{0}` placeholders
+
+**With zDialog:**
+- Auto-validation before submission (Week 5.2)
+- Form data injection via `zConv`
+
+**With zFunc:**
+- Plugin invocation for dynamic values
+- `&id_generator.generate_uuid()` syntax
+
+**With zDisplay:**
+- Table rendering: `z.display.zTable("Users", columns, rows)`
+- Mode-agnostic output
+
+### Documentation
+
+- **[zData Guide](Documentation/zData_GUIDE.md)** - **Unified data management subsystem** (✅ Complete - CEO & dev-friendly)
+- **Test Suite**: `zTestRunner/zUI.zData_tests.yaml` (120 tests, 100% coverage)
+- **Plugin**: `zTestRunner/plugins/zdata_tests.py` (test logic)
+
+### Quick Reference
+
+**Essential Operations:**
+```python
+# Load schema
+schema = z.loader.handle("@.zSchema.users")
+z.data.load_schema(schema)
+
+# CREATE TABLE (DDL - do this first!)
+z.data.create_table("users")
+
+# INSERT (DML)
+z.data.insert("users", ["name", "email"], ["Alice", "alice@example.com"])
+
+# SELECT (DQL)
+users = z.data.select("users", where="age > 25", order="name ASC", limit=10)
+
+# UPDATE (DML)
+z.data.update("users", ["age"], [31], where="name = 'Alice'")
+
+# DELETE (DML)
+z.data.delete("users", where="age < 18")
+
+# Disconnect
+z.data.disconnect()
+```
+
+**Wizard Pattern (Recommended):**
+```yaml
+_transaction: true
+zWizard:
+  step1: {zData: {model: $db, action: insert, tables: [users], ...}}
+  step2: {zData: {model: $db, action: insert, tables: [profiles], ...}}
+```
+
+---
+
 ## RBAC Directives (v1.5.4 Week 3.3)
 
 **Default**: PUBLIC ACCESS (no `_rbac` = no restrictions)  
@@ -4879,13 +5350,14 @@ Loading a schema doesn't auto-create tables - you must explicitly call `create_t
 - `Documentation/zDialog_GUIDE.md` - **Interactive Forms & Validation** (✅ Complete - CEO & dev-friendly)
 - `Documentation/zOpen_GUIDE.md` - **File & URL Opening** (✅ Complete - CEO & dev-friendly)
 - `Documentation/zUtils_GUIDE.md` - **Plugin Management** (✅ Complete - CEO & dev-friendly)
+- `Documentation/zData_GUIDE.md` - **Unified Data Management** (✅ Complete - CEO & dev-friendly)
 - `Documentation/zServer_GUIDE.md` - HTTP server
 - `Documentation/SEPARATION_CHECKLIST.md` - Architecture validation
 
 **See**: `Documentation/` for all 25+ subsystem guides
 
 **Declarative Testing**:
-- `zTestRunner/` - Declarative test suite (1,026 tests total, ~99% pass rate)
+- `zTestRunner/` - Declarative test suite (1,147 tests total, ~99% pass rate)
 - **zConfig**: `zTestRunner/zUI.zConfig_tests.yaml` (72 tests, 100% coverage)
   - Plugin: `zTestRunner/plugins/zconfig_tests.py` (test logic)
   - Integration: Real file I/O, YAML round-trip, .env creation, persistence
@@ -4934,6 +5406,10 @@ Loading a schema doesn't auto-create tables - you must explicitly call `create_t
   - Plugin: `zTestRunner/plugins/zwizard_tests.py` (test logic - **NO STUB TESTS**)
   - Integration: WizardHat triple-access workflows, sequential execution, transaction management, result interpolation, Shell/Walker integration
   - Notes: All 45 tests perform real validation with assertions, zero stub tests, covers 7 categories (A-to-G)
+- **zData**: `zTestRunner/zUI.zData_tests.yaml` (120 tests, 100% coverage)
+  - Plugin: `zTestRunner/plugins/zdata_tests.py` (test logic - **NO STUB TESTS**)
+  - Integration: Multi-backend workflows (SQLite/CSV), CRUD operations, validation, transactions, wizard mode, foreign keys, hooks, WHERE parsers, ALTER TABLE, schema management
+  - Notes: All 120 tests perform real validation with assertions, zero stub tests, covers 21 categories (A-to-U) in 5 phases
 
 ---
 

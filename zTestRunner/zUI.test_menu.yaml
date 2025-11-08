@@ -18,16 +18,9 @@ zVaF:
     "zOpen",
     "zUtils",
     "zWizard_test",
+    "zData",
     "zShell",
     "zWalker",
-    "zTraceback",
-    "zExceptions",
-    "zExceptions_Traceback_Integration",
-    "zUninstall",
-    "zData",
-    "zData_Validation",
-    "zData_PluginValidation",
-    "zData_Migration",
     "zIntegration",
     "zEndToEnd",
     "stop"
@@ -77,33 +70,12 @@ zVaF:
   
   "zWizard_test":
     zLink: "@.zUI.zWizard_tests.zVaF"
+
+  "zData":
+    zLink: "@.zUI.zData_tests.zVaF"
   
   "zWalker":
     zFunc: "&test_runner.run_test_suite('zWalker')"
-  
-  "zTraceback":
-    zFunc: "&test_runner.run_test_suite('zTraceback')"
-  
-  "zExceptions":
-    zFunc: "&test_runner.run_test_suite('zExceptions')"
-  
-  "zExceptions_Traceback_Integration":
-    zFunc: "&test_runner.run_test_suite('zExceptions_Traceback_Integration')"
-  
-  "zUninstall":
-    zFunc: "&test_runner.run_test_suite('zUninstall')"
-  
-  "zData":
-    zFunc: "&test_runner.run_test_suite('zData')"
-  
-  "zData_Validation":
-    zFunc: "&test_runner.run_test_suite('zData_Validation')"
-  
-  "zData_PluginValidation":
-    zFunc: "&test_runner.run_test_suite('zData_PluginValidation')"
-  
-  "zData_Migration":
-    zFunc: "&test_runner.run_test_suite('zData_Migration')"
   
   "zIntegration":
     zFunc: "&test_runner.run_test_suite('zIntegration')"
