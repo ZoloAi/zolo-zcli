@@ -23,11 +23,11 @@
 ### Starting the Shell
 
 ```bash
-# Launch interactive shell
-zcli
+# Direct entry point (recommended)
+zShell
 
 # Or from zCLI menu
-zolo zcli
+zolo
 # Select "Enter zShell"
 ```
 
@@ -658,7 +658,7 @@ Usage: data --model PATH read TABLE [options]
 
 **Run Tests:**
 ```bash
-zolo ztests
+zTests
 # Select "zShell"
 ```
 
@@ -770,7 +770,7 @@ zShell uses the **Facade pattern** to hide complexity:
 
 ### Shell Won't Start
 
-**Problem:** `zcli` command not found
+**Problem:** `zShell` command not found
 
 **Solution:**
 ```bash
@@ -778,7 +778,7 @@ zShell uses the **Facade pattern** to hide complexity:
 pip install --upgrade zolo-zcli
 
 # Or check installation
-which zcli
+which zShell
 ```
 
 ### Commands Not Working

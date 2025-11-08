@@ -56,6 +56,7 @@ dev = [
 [project.scripts]
 zolo = "main:main"
 zShell = "main:shell_main"
+zTests = "main:ztests_main"
 
 [project.urls]
 Homepage = "https://github.com/ZoloAi/zolo-zcli"

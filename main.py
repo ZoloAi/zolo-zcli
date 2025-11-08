@@ -17,6 +17,11 @@ def shell_main() -> None:
     cli.run_shell()
 
 
+def ztests_main() -> None:
+    """Direct entry point for zTests command (simplified UX)."""
+    handle_ztests_command()
+
+
 def handle_config_command(args):
     """Handle config command."""
     from zCLI import zCLI
@@ -40,16 +45,6 @@ def handle_config_command(args):
             print("Usage: zolo config environment [key] [value] | --show")
     else:
         print("Usage: zolo config {machine|environment} ...")
-
-
-def handle_test_command():
-    """Handle test command (legacy)."""
-    from zTestSuite.run_all_tests import show_test_menu, run_selected_tests
-    choice = show_test_menu()
-    if choice is None:
-        return 1
-    success = run_selected_tests(choice)
-    return 0 if success else 1
 
 
 def handle_ztests_command():
@@ -128,11 +123,8 @@ def main() -> None:
     env_parser.add_argument("value", nargs="?", help="Value to set")
     env_parser.add_argument("--show", action="store_true", help="Show configuration")
     
-    # Test subcommand (legacy)
-    subparsers.add_parser("test", help="Run zCLI test suite (legacy)")
-    
     # zTests subcommand (declarative)
-    subparsers.add_parser("ztests", help="Run zCLI test suite (declarative)")
+    subparsers.add_parser("ztests", help="Run zCLI test suite")
     
     # Uninstall subcommand
     uninstall_parser = subparsers.add_parser("uninstall", help="Uninstall zolo-zcli framework")
@@ -147,8 +139,6 @@ def main() -> None:
         handle_shell_command()
     elif args.command == "config":
         handle_config_command(args)
-    elif args.command == "test":
-        return handle_test_command()
     elif args.command == "ztests":
         return handle_ztests_command()
     elif args.command == "uninstall":
