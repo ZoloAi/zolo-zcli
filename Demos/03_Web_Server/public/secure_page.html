@@ -13,7 +13,7 @@
             <nav>
                 <a href="index.html">Home</a>
                 <a href="test_page.html">Test Page</a>
-                <a href="secure_page.html" class="active">Secure Area</a>
+                <a href="secure" class="active">🔒 Secure Area</a>
             </nav>
         </header>
 
@@ -27,18 +27,20 @@
                 <div class="warning-box">
                     <h2>⚠️ This Should Not Be Visible</h2>
                     <p>If you're seeing this page, role-based access control is <strong>NOT working</strong>.</p>
-                    <p>This page requires the <code>zTester</code> role and should be blocked by the walker.</p>
+                    <p>This page requires the <code>zTester</code> role and should be blocked by the backend router.</p>
                 </div>
 
                 <div class="code-block">
-                    <h3>Expected Behavior</h3>
-                    <pre><code># In walker, before serving this page:
-if not z.auth.has_role("zTester"):
-    # Serve access_denied.html instead
-    return "access_denied.html"
+                    <h3>Declarative RBAC (server_routes.yaml)</h3>
+                    <pre><code>routes:
+  "/secure":
+    type: static
+    file: "secure_page.html"
+    _rbac:
+      require_role: "zTester"  # ← Backend enforced!
 
-# Role check should fail (no auth setup)
-# User should see Access Denied page</code></pre>
+# HTTPRouter checks z.auth.has_role("zTester")
+# Access denied → Serves error_pages.403</code></pre>
                 </div>
 
                 <h2>What This Would Contain</h2>

@@ -13,7 +13,7 @@
             <nav>
                 <a href="index.html">Home</a>
                 <a href="test_page.html">Test Page</a>
-                <a href="secure_page.html">Secure Area</a>
+                <a href="secure">🔒 Secure Area</a>
             </nav>
         </header>
 
@@ -28,35 +28,38 @@
                     <h2>⛔ Authentication Required</h2>
                     <p><strong>Role Required:</strong> <code>zTester</code></p>
                     <p><strong>Your Status:</strong> Not authenticated</p>
+                    <p style="margin-top: 20px; font-size: 18px; color: #d32f2f;">
+                        <strong>Redirecting to home page in <span id="countdown">10</span> seconds...</strong>
+                    </p>
                 </div>
 
                 <h2>What Just Happened?</h2>
                 <p>You attempted to access a secure page that requires the <code>zTester</code> role.</p>
-                <p>The walker performed a role check using <code>z.auth.has_role("zTester")</code> and blocked access.</p>
+                <p>The <strong>HTTPRouter</strong> performed a role check using <code>z.auth.has_role("zTester")</code> and blocked access.</p>
 
                 <div class="success-box">
-                    <h3>✅ RBAC Deniability Proven!</h3>
+                    <h3>✅ Declarative RBAC Proven!</h3>
                     <ul>
-                        <li>✅ Walker checked role before serving secure_page.html</li>
+                        <li>✅ HTTPRouter checked RBAC rules from YAML</li>
                         <li>✅ Role check failed (no authentication)</li>
-                        <li>✅ Access denied page served instead</li>
+                        <li>✅ Error page (403) served automatically</li>
                         <li>✅ Secure content protected</li>
-                        <li>✅ User-friendly error message displayed</li>
+                        <li>✅ Zero manual Python checks needed</li>
                     </ul>
                 </div>
 
                 <div class="code-block">
-                    <h3>Role Check Implementation</h3>
-                    <pre><code># Walker checks role before serving secure pages
-def check_secure_access():
-    # Check if user has zTester role
-    if z.auth.has_role("zTester"):
-        return "secure_page.html"  # Authorized
-    else:
-        return "access_denied.html"  # Denied
-    
-# Result: Access denied (no auth setup yet)
-# This proves deniability mechanism works!</code></pre>
+                    <h3>Declarative RBAC (server_routes.yaml)</h3>
+                    <pre><code>Meta:
+  error_pages:
+    403: "access_denied.html"  # ← You are here!
+
+routes:
+  "/secure":
+    type: static
+    file: "secure_page.html"
+    _rbac:
+      require_role: "zTester"  # Backend enforced</code></pre>
                 </div>
 
                 <h2>How to Gain Access</h2>
@@ -106,6 +109,27 @@ def check_secure_access():
     </div>
 
     <script src="script.js"></script>
+    <script>
+        // Countdown redirect timer
+        let countdown = 10;
+        const countdownElement = document.getElementById('countdown');
+        
+        const timer = setInterval(() => {
+            countdown--;
+            countdownElement.textContent = countdown;
+            
+            if (countdown <= 0) {
+                clearInterval(timer);
+                window.location.href = '/';
+            }
+        }, 1000);
+        
+        // Optional: Allow user to cancel redirect by clicking anywhere
+        document.addEventListener('click', () => {
+            clearInterval(timer);
+            countdownElement.parentElement.innerHTML = '<strong style="color: #2e7d32;">Auto-redirect cancelled. <a href="/">Click here to go home</a></strong>';
+        }, { once: true });
+    </script>
 </body>
 </html>
 

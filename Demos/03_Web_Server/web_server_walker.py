@@ -12,12 +12,13 @@ z = zCLI({
 })
 
 # Step 3: Create HTTP server with declarative routing
-import os
-routes_path = os.path.join(os.getcwd(), "zServer.demo_routes.yaml")
+# Use absolute path for routes file  
+routes_file = "/Users/galnachshon/Projects/zolo-zcli/Demos/03_Web_Server/zServer_routes.yaml"
+
 server = z.comm.create_http_server(
     port=8080,
     serve_path="./public",
-    routes_file=routes_path  # Declarative routing!
+    routes_file=routes_file  # Declarative routing!
 )
 
 # Start server in background
@@ -30,7 +31,7 @@ print("="*70)
 print(f"📍 Server URL:   {server.get_url()}")
 print(f"📊 Health:       {server.health_check()}")
 print(f"📁 Serving:      {server.serve_path}")
-print(f"🗺️  Routes File:  zServer.demo_routes.yaml")
+print(f"🗺️  Routes File:  zServer_routes.yaml")
 print("="*70)
 
 # Show route information
@@ -59,11 +60,12 @@ else:
 print("="*70)
 
 print("\n💡 How It Works:")
-print("   1. Routes defined declaratively in zServer.demo_routes.yaml")
+print("   1. Routes defined declaratively in zServer_routes.yaml")
 print("   2. HTTPRouter matches incoming paths (/secure)")
 print("   3. RBAC checked via z.auth.has_role('zTester')")
-print("   4. Access denied → Serves error_pages.403 (access_denied.html)")
-print("   5. No manual Python checks - fully declarative!")
+print("   4. Access denied → Serves access_denied.html")
+print("   5. Auto-redirect countdown (10s) to home page")
+print("   6. No manual Python checks - fully declarative!")
 
 print("\n🔗 Try these URLs:")
 print(f"   → {server.get_url()}/           (works)")

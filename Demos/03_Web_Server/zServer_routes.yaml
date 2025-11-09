@@ -21,6 +21,27 @@ routes:
     file: "test_page.html"
     description: "Multi-page navigation test - public access"
   
+  "/index.html":
+    type: static
+    file: "index.html"
+    description: "Landing page - explicit path"
+  
+  "/test_page.html":
+    type: static
+    file: "test_page.html"
+    description: "Test page - explicit path"
+  
+  # Static assets (CSS, JS) - public access
+  "/style.css":
+    type: static
+    file: "style.css"
+    description: "Main stylesheet"
+  
+  "/script.js":
+    type: static
+    file: "script.js"
+    description: "Main JavaScript file"
+  
   # RBAC-protected route - requires zTester role
   "/secure":
     type: static
@@ -28,9 +49,4 @@ routes:
     description: "Secure content - zTester role required"
     _rbac:
       require_role: "zTester"
-  
-  # Wildcard fallback for unmatched paths
-  "/*":
-    type: static
-    description: "Default file serving fallback"
 

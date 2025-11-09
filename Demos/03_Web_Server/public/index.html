@@ -13,7 +13,7 @@
             <nav>
                 <a href="index.html" class="active">Home</a>
                 <a href="test_page.html">Test Page</a>
-                <a href="access_denied.html">🔒 Secure Area</a>
+                <a href="secure">🔒 Secure Area</a>
             </nav>
         </header>
 
@@ -29,21 +29,21 @@
 
                 <div class="feature-grid">
                     <div class="feature">
-                        <div class="feature-icon">🚀</div>
-                        <h3>Zero Dependencies</h3>
-                        <p>Uses Python's built-in http.server</p>
+                        <div class="feature-icon">🗺️</div>
+                        <h3>Declarative Routing</h3>
+                        <p>Flask-style blueprints via YAML</p>
+                    </div>
+
+                    <div class="feature">
+                        <div class="feature-icon">🔒</div>
+                        <h3>Built-in RBAC</h3>
+                        <p>Role-based access control</p>
                     </div>
 
                     <div class="feature">
                         <div class="feature-icon">🧵</div>
                         <h3>Background Threading</h3>
                         <p>Non-blocking, daemon thread</p>
-                    </div>
-
-                    <div class="feature">
-                        <div class="feature-icon">🔒</div>
-                        <h3>CORS Enabled</h3>
-                        <p>Auto-headers for local dev</p>
                     </div>
 
                     <div class="feature">
@@ -54,10 +54,11 @@
                 </div>
 
                 <div class="code-block">
-                    <h3>Factory Method</h3>
+                    <h3>Declarative Routing Example</h3>
                     <pre><code>server = z.comm.create_http_server(
     port=8080,
-    serve_path="./public"
+    serve_path="./public",
+    routes_file="./server_routes.yaml"  # 🗺️ Declarative!
 )
 server.start()  # Background thread
 print(server.get_url())  # http://127.0.0.1:8080

@@ -362,8 +362,56 @@
             <h3>🌱 "Seed the Demo, Let It Grow"</h3>
             <p>Start simple, build complexity naturally. Each demo catches bugs and proves patterns for the next level.</p>
             <p style="margin-top: 0.5rem; color: var(--text-secondary);">
-                Coverage: 13 Subsystems × (Terminal + zBifrost) = Complete zCLI Showcase
+                Coverage: 11/13 Core Subsystems Proven | 3 Layers Complete | HTTPRouter Added in v1.5.4
             </p>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- KEY LEARNINGS FOR FUTURE DEMOS                                   -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        
+        <div class="level" style="background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(0, 212, 255, 0.2)); border: 2px solid var(--accent-purple); margin-bottom: 2rem;">
+            <div class="level-header" style="border-bottom: 2px solid var(--accent-purple);">
+                <div class="level-title">
+                    <h2>📚 Key Learnings from Demo 3 - Declarative Routing</h2>
+                    <div class="level-description">Backend patterns and architectural decisions for future demos</div>
+                </div>
+            </div>
+            
+            <div style="padding: 0 1rem;">
+                <h3 style="color: var(--accent-blue); margin-bottom: 0.5rem;">🗺️ The zServer.*.yaml Pattern</h3>
+                <ul style="margin-bottom: 1rem; line-height: 1.8;">
+                    <li><strong>File Naming:</strong> Use <code>zServer_*.yaml</code> (e.g., <code>zServer_routes.yaml</code>) - "zServer" in filename triggers parser detection</li>
+                    <li><strong>Parser Flow:</strong> <code>zcli.loader.handle()</code> → <code>parser_file.py</code> detects "zServer" → <code>vafile_server.py</code> parses</li>
+                    <li><strong>Structure:</strong> <code>Meta</code> (base_path, default_route, error_pages) + <code>routes</code> (path mappings)</li>
+                    <li><strong>RBAC:</strong> <code>_rbac: {require_role: "roleName"}</code> enforced by <code>HTTPRouter.check_access()</code></li>
+                    <li><strong>Error Pages:</strong> <code>error_pages: {403: "access_denied.html"}</code> in Meta → auto-served on access denial</li>
+                </ul>
+                
+                <h3 style="color: var(--accent-blue); margin-bottom: 0.5rem;">🔧 Backend Integration Points</h3>
+                <ul style="margin-bottom: 1rem; line-height: 1.8;">
+                    <li><strong>HTTPRouter:</strong> Initialized in <code>zServer._load_routes()</code>, passed to handler via <code>partial()</code></li>
+                    <li><strong>Route Matching:</strong> Exact match → Wildcard (<code>/*</code>) → Default route (from Meta)</li>
+                    <li><strong>RBAC Check:</strong> <code>z.auth.has_role(role)</code> called in <code>router.check_access()</code> before serving</li>
+                    <li><strong>Fallback:</strong> If no <code>routes_file</code>, <code>handler.do_GET()</code> uses <code>super()</code> for pure static serving</li>
+                </ul>
+                
+                <h3 style="color: var(--accent-blue); margin-bottom: 0.5rem;">🎨 UX Best Practices</h3>
+                <ul style="margin-bottom: 1rem; line-height: 1.8;">
+                    <li><strong>Error Feedback:</strong> Use auto-redirect countdown (10s) for denied access - clear, user-friendly</li>
+                    <li><strong>Animation:</strong> Pulsing countdown via CSS <code>@keyframes</code> draws attention without being jarring</li>
+                    <li><strong>User Control:</strong> Allow cancel via click event - respects user agency</li>
+                    <li><strong>Static Assets:</strong> Explicitly route CSS/JS files in <code>zServer_routes.yaml</code> to ensure proper serving</li>
+                </ul>
+                
+                <h3 style="color: var(--accent-blue); margin-bottom: 0.5rem;">🧪 Testing Patterns</h3>
+                <ul style="margin-bottom: 0; line-height: 1.8;">
+                    <li><strong>Mock Files:</strong> Place mock <code>zServer.*.yaml</code> in <code>zTestRunner/zMocks/</code> for test suite</li>
+                    <li><strong>RBAC Testing:</strong> Mock <code>z.auth.has_role()</code> with <code>return_value=False/True</code></li>
+                    <li><strong>Route Testing:</strong> Test exact match, wildcard, default separately for complete coverage</li>
+                    <li><strong>Error Pages:</strong> Verify <code>error_pages</code> dict keys are <code>int</code> (403), not <code>str</code> ("403")</li>
+                </ul>
+            </div>
         </div>
 
         <div class="timer-section">
@@ -590,12 +638,12 @@
         <!-- LEVEL 3: WEB SERVER (15 min)                                    -->
         <!-- ═══════════════════════════════════════════════════════════════ -->
         
-        <div class="level level-3">
+        <div class="level level-3" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05));">
             <div class="level-header">
                 <div class="level-number">3</div>
                 <div class="level-title">
                     <h2 style="color: var(--accent-green);">🌐 Web Server - zServer ✅ COMPLETE</h2>
-                    <div class="level-description">"Flask-like" capabilities - Serve static HTML, CSS, JS websites</div>
+                    <div class="level-description" style="color: var(--accent-green);">"Flask-like" declarative routing + RBAC proven with static HTML/CSS/JS</div>
                 </div>
             </div>
 
@@ -604,35 +652,87 @@
                 <input type="checkbox" class="demo-checkbox" onchange="updateDemo(this)" checked>
                 <div class="demo-content">
                     <div class="demo-title">
-                        <span><strong>#3.1</strong> HTTP Server - Static Website ✅</span>
+                        <span><strong>#3.1</strong> HTTP Server - Declarative Routing + RBAC ✅</span>
                     </div>
                     <div class="demo-description">
-                        <strong>Goal:</strong> Prove <code>z.comm.create_http_server()</code> factory method + full lifecycle API<br>
-                        <strong>Implementation:</strong>
+                        <strong>Goal:</strong> Prove <code>z.comm.create_http_server()</code> factory + declarative routing + RBAC enforcement<br>
+                        
+                        <strong>Frontend Implementation:</strong>
                         <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
-                            <li><strong>Walker:</strong> <code>web_server_walker.py</code> - 3-step spark pattern</li>
-                            <li><strong>Factory:</strong> <code>server = z.comm.create_http_server(port=8080, serve_path="./public")</code></li>
+                            <li><strong>Walker:</strong> <code>web_server_walker.py</code> - 3-step spark with <code>routes_file</code> parameter</li>
+                            <li><strong>Factory:</strong> <code>server = z.comm.create_http_server(port=8080, serve_path="./public", routes_file="zServer_routes.yaml")</code></li>
+                            <li><strong>Declarative Routes:</strong> <code>zServer_routes.yaml</code> - Flask-style blueprint for paths, files, RBAC rules</li>
                             <li><strong>Lifecycle:</strong> <code>server.start()</code> → Background daemon thread, non-blocking</li>
-                            <li><strong>Status:</strong> <code>server.get_url()</code> → "http://127.0.0.1:8080"</li>
-                            <li><strong>Health:</strong> <code>server.health_check()</code> → {"running": True, "host": "127.0.0.1", "port": 8080, ...}</li>
-                            <li><strong>Cleanup:</strong> <code>server.stop()</code> → Graceful shutdown with 2-second timeout</li>
+                            <li><strong>Status:</strong> <code>server.get_url()</code>, <code>server.health_check()</code></li>
+                            <li><strong>Cleanup:</strong> <code>server.stop()</code> → Graceful shutdown</li>
                         </ul>
-                        <strong>Static Files:</strong> Serve from <code>./public/</code>
+                        
+                        <strong>Backend Refactor (v1.5.4 Phase 2 - Declarative Routing):</strong>
+                        <ul style="margin: 0.5rem 0; padding-left: 1.5rem; color: var(--accent-purple);">
+                            <li><strong>📄 Parser:</strong> <code>zParser/vafile/vafile_server.py</code> - New parser for <code>zServer.*.yaml</code> routing files</li>
+                            <li><strong>🔍 Detection:</strong> <code>parser_file.py</code> - Detects "zServer" in filename → routes to server parser</li>
+                            <li><strong>🗺️ Router:</strong> <code>zServer/zServer_modules/router.py</code> - <code>HTTPRouter</code> class:
+                                <ul style="margin: 0.25rem 0; padding-left: 1.5rem;">
+                                    <li><code>match_route(path)</code> - Exact → Wildcard → Default fallback</li>
+                                    <li><code>check_access(route)</code> - RBAC via <code>z.auth.has_role()</code>, error page redirect</li>
+                                    <li><code>resolve_file_path(route)</code> - Maps route to static file</li>
+                                </ul>
+                            </li>
+                            <li><strong>🔧 Handler:</strong> <code>handler.py</code> - Modified <code>do_GET()</code> to use router if present, else fallback to static serving</li>
+                            <li><strong>🚀 Server:</strong> <code>zServer.py</code> - Added <code>routes_file</code> param, <code>_load_routes()</code> via <code>zcli.loader.handle()</code></li>
+                            <li><strong>🏗️ Facade:</strong> <code>zComm.py</code> - Added <code>routes_file</code> param to <code>create_http_server()</code></li>
+                        </ul>
+                        
+                        <strong>Test Coverage (45 tests total):</strong>
                         <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
-                            <li><code>index.html</code> - Landing page with zCLI branding + link to test page</li>
-                            <li><code>test_page.html</code> - Second page to prove multi-page navigation + link back to index</li>
-                            <li><code>style.css</code> - Shared modern styling for both pages</li>
-                            <li><code>script.js</code> - Interactive JS to prove JavaScript execution</li>
+                            <li><strong>New:</strong> 10 tests for declarative routing + RBAC (test_36 to test_45)</li>
+                            <li><strong>Fixed:</strong> Pre-existing <code>test_06_server_start</code> (threading mock)</li>
+                            <li><strong>Mock:</strong> <code>zTestRunner/zMocks/zServer.test_routes.yaml</code> for testing</li>
                         </ul>
-                        <strong>Catches:</strong> zComm factory pattern, zServer lifecycle (start/stop/status), background threading (daemon=True), CORS auto-headers, file serving, directory structure, clean shutdown<br>
-                        <strong style="color: var(--accent-yellow);">💡 Pattern: zSpark → zComm.create_http_server() → server.start() → Static files at http://127.0.0.1:8080</strong><br>
-                        <strong style="color: var(--accent-cyan);">📖 Docs Reference:</strong> zServer_GUIDE.md (Lines 74-117), zComm_GUIDE.md (Lines 122-133)
+                        
+                        <strong>Static Files Served:</strong>
+                        <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+                            <li><code>index.html</code> - Landing page (public, route: <code>/</code>)</li>
+                            <li><code>test_page.html</code> - Multi-page navigation (public, route: <code>/test</code>)</li>
+                            <li><code>secure_page.html</code> - RBAC-protected (requires <code>zTester</code> role, route: <code>/secure</code>)</li>
+                            <li><code>access_denied.html</code> - Error page with 10s auto-redirect countdown + animation (403 error)</li>
+                            <li><code>style.css</code> - Shared styling + countdown pulse animation</li>
+                            <li><code>script.js</code> - Interactive JavaScript</li>
+                        </ul>
+                        
+                        <strong>zServer.routes.yaml Pattern (NEW):</strong>
+                        <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+                            <li><strong>Meta:</strong> <code>base_path</code>, <code>default_route</code>, <code>error_pages: {403: "access_denied.html"}</code></li>
+                            <li><strong>Routes:</strong> Dict mapping paths to <code>{type, file, description, _rbac}</code></li>
+                            <li><strong>RBAC:</strong> <code>_rbac: {require_role: "zTester"}</code> enforced by backend router</li>
+                            <li><strong>Wildcard:</strong> <code>/*</code> for fallback file serving</li>
+                        </ul>
+                        
+                        <strong>UX Improvements:</strong>
+                        <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+                            <li><strong>Auto-Redirect:</strong> Access denied page counts down 10s → redirects to home</li>
+                            <li><strong>Animation:</strong> Pulsing countdown with red gradient background</li>
+                            <li><strong>User Control:</strong> Click anywhere to cancel redirect</li>
+                            <li><strong>Clear Feedback:</strong> Shows required role, access status, RBAC enforcement message</li>
+                        </ul>
+                        
+                        <strong>Backward Compatibility:</strong> <code>routes_file</code> is optional - without it, zServer falls back to pure static file serving<br>
+                        
+                        <strong>Catches:</strong> Declarative routing, RBAC enforcement, error page redirection, route matching (exact/wildcard/default), parser integration, <code>zLoader.handle()</code>, <code>HTTPRouter</code> lifecycle, auto-redirect UX, countdown animation<br>
+                        
+                        <strong style="color: var(--accent-yellow);">💡 Pattern: zSpark → <code>routes_file="zServer_routes.yaml"</code> → HTTPRouter → RBAC check → Serve file or error page</strong><br>
+                        
+                        <strong style="color: var(--accent-green);">✅ DONE: Full declarative routing + RBAC proven, 45/45 tests passing, UX polished</strong>
                     </div>
                     <div class="demo-meta">
                         <span class="subsystem-tag">zComm</span>
-                        <span class="subsystem-tag">zServer (via zComm)</span>
+                        <span class="subsystem-tag">zServer</span>
+                        <span class="subsystem-tag">zParser (vafile_server)</span>
+                        <span class="subsystem-tag">zLoader</span>
+                        <span class="subsystem-tag">zAuth (RBAC)</span>
+                        <span class="subsystem-tag">HTTPRouter</span>
                         <span class="mode-tag">HTTP</span>
-                        <span class="time-tag">⏱️ 15 min</span>
+                        <span class="time-tag">⏱️ 60 min (including backend refactor)</span>
                     </div>
                 </div>
             </div>
@@ -653,10 +753,10 @@
                 <div class="coverage-item">✅ zConfig</div>
                 <div class="coverage-item">✅ zComm (zServer)</div>
                 <div class="coverage-item">✅ zDisplay</div>
-                <div class="coverage-item" style="opacity: 0.3;">⊘ zAuth</div>
+                <div class="coverage-item">✅ zAuth (RBAC)</div>
                 <div class="coverage-item">✅ zDispatch</div>
                 <div class="coverage-item">✅ zNavigation</div>
-                <div class="coverage-item">✅ zParser</div>
+                <div class="coverage-item">✅ zParser (vafile_server)</div>
                 <div class="coverage-item">✅ zLoader</div>
                 <div class="coverage-item" style="opacity: 0.3;">⊘ zFunc</div>
                 <div class="coverage-item">✅ zDialog</div>
@@ -665,11 +765,13 @@
                 <div class="coverage-item" style="opacity: 0.3;">⊘ zWizard</div>
                 <div class="coverage-item">✅ zData</div>
                 <div class="coverage-item" style="opacity: 0.3;">⊘ zShell</div>
+                <div class="coverage-item">✅ HTTPRouter (NEW)</div>
                 <div class="coverage-item" style="opacity: 0.5;">⏳ BifrostClient (Future)</div>
                 <div class="coverage-item" style="opacity: 0.5;">⏳ zTheme (Future)</div>
             </div>
             <div style="margin-top: 1rem; text-align: center; color: var(--text-secondary); font-size: 0.9rem;">
-                <strong>Legend:</strong> ✅ Proven | ⏳ Future/Optional | ⊘ Advanced Features
+                <strong>Legend:</strong> ✅ Proven | ⏳ Future/Optional | ⊘ Advanced Features<br>
+                <strong style="color: var(--accent-green); margin-top: 0.5rem; display: block;">🎉 11/13 Core Subsystems Proven | HTTPRouter Added in v1.5.4</strong>
             </div>
         </div>
 

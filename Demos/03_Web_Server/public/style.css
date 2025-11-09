@@ -410,3 +410,31 @@ footer p {
     }
 }
 
+/* ============================================
+   Countdown Animation (Access Denied Page)
+   ============================================ */
+
+#countdown {
+    display: inline-block;
+    font-size: 24px;
+    font-weight: bold;
+    color: #d32f2f;
+    background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+    padding: 8px 16px;
+    border-radius: 8px;
+    animation: pulse 1s ease-in-out infinite;
+    min-width: 40px;
+    text-align: center;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.8;
+    }
+}
+
