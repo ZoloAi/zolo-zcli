@@ -1,0 +1,26 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# 🏗️ Foundation Layer Demo - zCLI v1.5.4
+# ═══════════════════════════════════════════════════════════════════════════════
+# ═══════════════════════════════════════════════════════════════════════════════
+# 🎯 PRIMARY ENTRY POINT (zVaF)
+# ═══════════════════════════════════════════════════════════════════════════════
+zVaF:
+  # Root menu - demonstrates declarative menu structure
+  ~Root*: [
+    "Demo_zDisplay",
+    "stop"
+  ]
+
+  "Demo_zDisplay":
+    # zDelta modifier (%) for intra-file block navigation
+    zDelta: "%Demo_zDisplay"
+    
+Demo_zDisplay:
+  # Alternate block - demonstrates zBlock entry points
+  Root*: ["^What just happened?"]
+  
+  "^What just happened?":
+    zDisplay:
+      event: text
+      content: "🏗️ Foundation Demo Complete! This message proves the entire stack: zSpark launched zWalker → ~Root* created menus → zDelta navigated between blocks → zCrumbs tracked breadcrumbs → zDisplay rendered this event. All declarative, all working."
+      indent: 1

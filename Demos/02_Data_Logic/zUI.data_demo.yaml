@@ -1,0 +1,86 @@
+# 💾 Data & Logic Layer Demo - zCLI v1.5.4
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 🎯 PRIMARY ENTRY POINT (zVaF)
+# ═══════════════════════════════════════════════════════════════════════════════
+zVaF:
+  # Root menu - demonstrates data backends
+  ~Root*: [
+    "Demo_CSV",
+    "Demo_SQLite",
+    "stop"
+  ]
+  
+  "Demo_CSV":
+    # zDelta navigation to CSV demo block
+    zDelta: "%Demo_CSV"
+    
+  "Demo_SQLite":
+    # zDelta navigation to SQLite demo block
+    zDelta: "%Demo_SQLite"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 📊 CSV DEMO BLOCK
+# ═══════════════════════════════════════════════════════════════════════════════
+Demo_CSV:
+  ~Root*: ["^Setup CSV", "^List Users", "^Add User"]
+  
+  "^Setup CSV":
+    zData:
+      model: "@.zSchema.users_csv"
+      action: create
+  
+  "^List Users":
+    zData:
+      model: "@.zSchema.users_csv"
+      action: read
+      table: users
+      order: "id DESC"
+      limit: 10
+  
+  "^Add User":
+    zDialog:
+      model: User
+      fields: ["email", "name"]
+      onSubmit:
+        zData:
+          action: insert
+          model: "@.zSchema.users_csv"
+          table: users
+          data:
+            email: "zConv.email"
+            name: "zConv.name"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 🗄️ SQLITE DEMO BLOCK
+# ═══════════════════════════════════════════════════════════════════════════════
+Demo_SQLite:
+  ~Root*: ["^Setup SQLite", "^List Users", "^Add User"]
+  
+  "^Setup SQLite":
+    zData:
+      model: "@.zSchema.users_sqlite"
+      action: create
+  
+  "^List Users":
+    zData:
+      model: "@.zSchema.users_sqlite"
+      action: read
+      table: users
+      order: "id DESC"
+      limit: 10
+  
+  "^Add User":
+    zDialog:
+      model: User
+      fields: ["email", "name"]
+      onSubmit:
+        zData:
+          action: insert
+          model: "@.zSchema.users_sqlite"
+          table: users
+          data:
+            email: "zConv.email"
+            name: "zConv.name"
+

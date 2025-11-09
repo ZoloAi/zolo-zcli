@@ -17,7 +17,7 @@ Architecture:
        - Special handling for plain strings in Bifrost mode (zUI resolution)
     
     2. Dict Commands:
-       - Format: {"zFunc": ...}, {"zLink": ...}, {"zDialog": ...}, etc.
+       - Format: {"zFunc": ...}, {"zLink": ...}, {"zDelta": ...}, {"zDialog": ...}, etc.
        - Direct key-based routing to subsystem handlers
        - Support for CRUD operations and legacy zDisplay format
     
@@ -34,19 +34,20 @@ Mode-Specific Behavior:
     Terminal Mode:
         - Plain strings: Return None (no navigation)
         - zWizard: Returns "zBack" for navigation
-        - zFunc/zOpen/zLink: Returns subsystem result
+        - zFunc/zOpen/zLink/zDelta: Returns subsystem result
     
     Bifrost Mode:
         - Plain strings: Resolve from zUI or return {"message": str}
         - zWizard: Returns zHat (actual result) for API consumption
-        - zFunc/zOpen/zLink: Returns subsystem result
+        - zFunc/zOpen/zLink/zDelta: Returns subsystem result
         - Supports recursive resolution (zUI key → dict with zFunc)
 
 Forward Dependencies:
     This module integrates with 8 subsystems that will be refactored in future weeks:
     
     - zFunc (Week 6.10): Function execution and plugin invocation
-    - zNavigation (Week 6.7): zLink handling and menu creation
+    - zNavigation (Week 6.7): zLink handling (inter-file) and menu creation
+    - zWalker: zDelta handling (intra-file block navigation)
     - zOpen (Week 6.12): File/URL opening
     - zWizard (Week 6.14): Multi-step workflow execution
     - zLoader (Week 6.9): zUI file loading and parsing
@@ -77,6 +78,7 @@ Usage Examples:
     # Dict commands
     launcher.launch({"zFunc": "my_function"})
     launcher.launch({"zLink": "menu:users"})
+    launcher.launch({"zDelta": "%Demo_Block"})
     launcher.launch({"zDialog": {"fields": [...]}})
     launcher.launch({"zRead": {"model": "users", "where": {"id": 1}}})
     launcher.launch({"zData": {"action": "create", "model": "users", "values": {...}}})
@@ -134,6 +136,7 @@ CMD_PREFIX_ZREAD = "zRead("
 
 KEY_ZFUNC = "zFunc"
 KEY_ZLINK = "zLink"
+KEY_ZDELTA = "zDelta"
 KEY_ZOPEN = "zOpen"
 KEY_ZWIZARD = "zWizard"
 KEY_ZREAD = "zRead"
@@ -165,6 +168,7 @@ LABEL_LAUNCHER = "zLauncher"
 LABEL_HANDLE_ZFUNC = "[HANDLE] zFunc"
 LABEL_HANDLE_ZFUNC_DICT = "[HANDLE] zFunc (dict)"
 LABEL_HANDLE_ZLINK = "[HANDLE] zLink"
+LABEL_HANDLE_ZDELTA = "[HANDLE] zDelta"
 LABEL_HANDLE_ZOPEN = "[HANDLE] zOpen"
 LABEL_HANDLE_ZWIZARD = "[HANDLE] zWizard"
 LABEL_HANDLE_ZREAD_STRING = "[HANDLE] zRead (string)"
@@ -587,6 +591,63 @@ class CommandLauncher:
             self._log_detected("zLink")
             # TODO: Week 6.7 (zNavigation) - Verify handle_zLink() signature after refactor
             return self.zcli.navigation.handle_zLink(zHorizontal, walker=walker)
+
+        # Route: zDelta (intra-file block navigation)
+        if KEY_ZDELTA in zHorizontal:
+            if not self._check_walker(walker, "zDelta"):
+                return None
+            self._log_detected("zDelta")
+            self._display_handler(LABEL_HANDLE_ZDELTA, DEFAULT_INDENT_HANDLER)
+            
+            # Extract target block name
+            target_block_name = zHorizontal[KEY_ZDELTA]
+            
+            # Strip % prefix if present
+            if isinstance(target_block_name, str) and target_block_name.startswith("%"):
+                target_block_name = target_block_name[1:]
+            
+            self.logger.info(f"zDelta navigation to block: {target_block_name}")
+            
+            # Get current zVaFile from session
+            current_zVaFile = walker.session.get("zVaFile") or walker.zSpark_obj.get("zVaFile")
+            if not current_zVaFile:
+                self.logger.error("No zVaFile in session or zspark_obj")
+                return None
+            
+            # Reload the UI file (walker doesn't store it as an instance attribute)
+            raw_zFile = walker.loader.handle(current_zVaFile)
+            if not raw_zFile:
+                self.logger.error(f"Failed to load UI file: {current_zVaFile}")
+                return None
+            
+            # Extract the target block dict from raw_zFile
+            if target_block_name not in raw_zFile:
+                self.logger.error(f"Block '{target_block_name}' not found in UI file '{current_zVaFile}'")
+                return None
+            
+            target_block_dict = raw_zFile[target_block_name]
+            
+            # Update session zBlock to reflect the target block
+            walker.session["zBlock"] = target_block_name
+            
+            # Initialize new breadcrumb scope for target block (creates new node in zCrumbs)
+            # Construct full breadcrumb path: zVaFile.zBlock
+            zVaFile = walker.session.get("zVaFile") or current_zVaFile
+            full_crumb_path = f"{zVaFile}.{target_block_name}" if zVaFile else target_block_name
+            
+            # Initialize empty breadcrumb trail for the new scope
+            if "zCrumbs" not in walker.session:
+                walker.session["zCrumbs"] = {}
+            walker.session["zCrumbs"][full_crumb_path] = []
+            
+            self.logger.info(f"zDelta: Created new breadcrumb scope: {full_crumb_path}")
+            
+            # Get block keys
+            zBlock_keys = list(target_block_dict.keys())
+            
+            # Navigate to the target block using walker's zBlock_loop
+            result = walker.zBlock_loop(target_block_dict, zBlock_keys)
+            return result
 
         # Route: zWizard
         if KEY_ZWIZARD in zHorizontal:

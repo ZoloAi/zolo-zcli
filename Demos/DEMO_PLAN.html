@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎯 Bottom-Up Demo Plan | zCLI v1.5.4</title>
+    <style>
+        :root {
+            --bg-dark: #0a0e27;
+            --bg-card: #1a1f3a;
+            --accent-blue: #00d4ff;
+            --accent-purple: #a855f7;
+            --accent-green: #10b981;
+            --accent-yellow: #fbbf24;
+            --accent-red: #ef4444;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --border: #334155;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            padding: 2rem;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 212, 255, 0.2);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .philosophy {
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(0, 212, 255, 0.2));
+            border: 2px solid var(--accent-purple);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .philosophy h3 {
+            margin-bottom: 1rem;
+            color: var(--accent-blue);
+        }
+
+        .timer-section {
+            background: var(--bg-card);
+            border: 2px solid var(--accent-yellow);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .countdown {
+            font-size: 3rem;
+            font-weight: bold;
+            color: var(--accent-yellow);
+            margin: 1rem 0;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .level {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .level-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .level-number {
+            font-size: 2rem;
+            font-weight: bold;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .level-1 .level-number {
+            background: linear-gradient(135deg, #ef4444, #f59e0b);
+        }
+
+        .level-2 .level-number {
+            background: linear-gradient(135deg, #f59e0b, #10b981);
+        }
+
+        .level-3 .level-number {
+            background: linear-gradient(135deg, #10b981, #00d4ff);
+        }
+
+        .level-4 .level-number {
+            background: linear-gradient(135deg, #00d4ff, #a855f7);
+        }
+
+        .level-title {
+            flex: 1;
+        }
+
+        .level-title h2 {
+            font-size: 1.8rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .level-description {
+            color: var(--text-secondary);
+        }
+
+        .demo {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+            transition: all 0.3s ease;
+        }
+
+        .demo:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--accent-blue);
+        }
+
+        .demo.completed {
+            opacity: 0.6;
+            background: rgba(16, 185, 129, 0.1);
+            border-color: var(--accent-green);
+        }
+
+        .demo-checkbox {
+            width: 24px;
+            height: 24px;
+            margin-top: 0.25rem;
+            cursor: pointer;
+            accent-color: var(--accent-green);
+        }
+
+        .demo-content {
+            flex: 1;
+        }
+
+        .demo-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .demo-description {
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            line-height: 1.5;
+        }
+
+        .demo-meta {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+
+        .subsystem-tag {
+            background: rgba(168, 85, 247, 0.2);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            border: 1px solid rgba(168, 85, 247, 0.4);
+        }
+
+        .mode-tag {
+            background: rgba(0, 212, 255, 0.2);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            border: 1px solid rgba(0, 212, 255, 0.4);
+        }
+
+        .time-tag {
+            background: rgba(251, 191, 36, 0.2);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            border: 1px solid rgba(251, 191, 36, 0.4);
+        }
+
+        .legend {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .legend-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .legend-items {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .controls {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            display: flex;
+            gap: 1rem;
+            z-index: 1000;
+        }
+
+        button {
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 212, 255, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        code {
+            background: rgba(0, 212, 255, 0.1);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        .coverage-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .coverage-item {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 0.5rem;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .countdown {
+                font-size: 2rem;
+            }
+
+            .controls {
+                position: static;
+                margin-top: 2rem;
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎯 Bottom-Up Demo Plan</h1>
+            <div class="subtitle">zCLI v1.5.4 | Progressive Learning & Bug Discovery | Deadline: 18:00</div>
+        </header>
+
+        <div class="philosophy">
+            <h3>🌱 "Seed the Demo, Let It Grow"</h3>
+            <p>Start simple, build complexity naturally. Each demo catches bugs and proves patterns for the next level.</p>
+            <p style="margin-top: 0.5rem; color: var(--text-secondary);">
+                Coverage: 13 Subsystems × (Terminal + zBifrost) = Complete zCLI Showcase
+            </p>
+        </div>
+
+        <div class="timer-section">
+            <div style="font-size: 1.2rem; margin-bottom: 0.5rem;">⏰ Time Remaining</div>
+            <div class="countdown" id="countdown">Loading...</div>
+            <div style="color: var(--text-secondary);">Current Time: <span id="current-time"></span></div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" style="color: var(--accent-green);" id="completed-count">4</div>
+                <div class="stat-label">✅ Completed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" style="color: var(--accent-yellow);" id="pending-count">13</div>
+                <div class="stat-label">⏳ Pending</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" style="color: var(--accent-blue);" id="total-count">17</div>
+                <div class="stat-label">📋 Total Demos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" style="color: var(--accent-purple);" id="progress-percent">24%</div>
+                <div class="stat-label">📈 Progress</div>
+            </div>
+        </div>
+
+        <div class="legend">
+            <div class="legend-title">🎯 Progressive Strategy:</div>
+            <div class="legend-items">
+                <span style="color: var(--accent-red);">■</span> <strong>LEVEL 1:</strong> Foundation (Display, Navigation, Menus)
+                <span style="color: var(--accent-yellow);">■</span> <strong>LEVEL 2:</strong> Data & Logic (zData, zFunc, zWizard)
+                <span style="color: var(--accent-green);">■</span> <strong>LEVEL 3:</strong> Communication (zBifrost, zServer)
+                <span style="color: var(--accent-blue);">■</span> <strong>LEVEL 4:</strong> Advanced (RBAC, Validation, Full-Stack)
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- LEVEL 1: FOUNDATION (10-15 min each)                            -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        
+        <div class="level level-1" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05));">
+            <div class="level-header">
+                <div class="level-number">1</div>
+                <div class="level-title">
+                    <h2>🏗️ Foundation Layer ✅ COMPLETE</h2>
+                    <div class="level-description" style="color: var(--accent-green);">All core subsystems proven: Display, Navigation, Menus, Config, zDelta</div>
+                </div>
+            </div>
+
+            <!-- Demo #1.1 -->
+            <div class="demo" data-demo-id="1-1" data-status="completed">
+                <input type="checkbox" class="demo-checkbox" onchange="updateDemo(this)" checked>
+                <div class="demo-content">
+                    <div class="demo-title">
+                        <span><strong>#1.1</strong> Hello zCLI - Display Basics ✅</span>
+                    </div>
+                    <div class="demo-description">
+                        <strong>Goal:</strong> Prove <code>zDisplay</code> works in Terminal mode<br>
+                        <strong>Test:</strong> text event with comprehensive demo summary<br>
+                        <strong>Catches:</strong> zDisplay text event, break_after prompts, rendering<br>
+                        <strong style="color: var(--accent-green);">✅ DONE: Text event displays foundation demo summary perfectly</strong>
+                    </div>
+                    <div class="demo-meta">
+                        <span class="subsystem-tag">zDisplay</span>
+                        <span class="subsystem-tag">zConfig</span>
+                        <span class="mode-tag">Terminal</span>
+                        <span class="time-tag">⏱️ 10 min</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Demo #1.2 -->
+            <div class="demo" data-demo-id="1-2" data-status="completed">
+                <input type="checkbox" class="demo-checkbox" onchange="updateDemo(this)" checked>
+                <div class="demo-content">
+                    <div class="demo-title">
+                        <span><strong>#1.2</strong> Simple Menu - Navigation ✅</span>
+                    </div>
+                    <div class="demo-description">
+                        <strong>Goal:</strong> Prove <code>~Root*</code> declarative menus work<br>
+                        <strong>Test:</strong> 3-5 menu items, selection, "stop" command<br>
+                        <strong>Catches:</strong> zNavigation, zDispatch routing, menu rendering<br>
+                        <strong style="color: var(--accent-green);">✅ DONE: foundation_demo.yaml implements ~Root* menus</strong>
+                    </div>
+                    <div class="demo-meta">
+                        <span class="subsystem-tag">zNavigation</span>
+                        <span class="subsystem-tag">zDispatch</span>
+                        <span class="mode-tag">Terminal</span>
+                        <span class="time-tag">⏱️ 15 min</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Demo #1.3 -->
+            <div class="demo" data-demo-id="1-3" data-status="completed">
+                <input type="checkbox" class="demo-checkbox" onchange="updateDemo(this)" checked>
+                <div class="demo-content">
+                    <div class="demo-title">
+                        <span><strong>#1.3</strong> Nested Menus - Breadcrumbs ✅</span>
+                    </div>
+                    <div class="demo-description">
+                        <strong>Goal:</strong> Prove nested navigation with <code>^</code> bounce back<br>
+                        <strong>Test:</strong> Root → SubMenu → Action → Back<br>
+                        <strong>Catches:</strong> zCrumbs, navigation state, modifier handling<br>
+                        <strong style="color: var(--accent-green);">✅ DONE: zCrumbs tracks navigation trails correctly</strong>
+                    </div>
+                    <div class="demo-meta">
+                        <span class="subsystem-tag">zNavigation</span>
+                        <span class="subsystem-tag">zDispatch</span>
+                        <span class="mode-tag">Terminal</span>
+                        <span class="time-tag">⏱️ 15 min</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Demo #1.3.5 (NEW) -->
+            <div class="demo" data-demo-id="1-3-5" data-status="completed">
+                <input type="checkbox" class="demo-checkbox" onchange="updateDemo(this)" checked>
+                <div class="demo-content">
+                    <div class="demo-title">
+                        <span><strong>#1.3.5</strong> zDelta Navigation - Intra-File Blocks ✅</span>
+                    </div>
+                    <div class="demo-description">
+                        <strong>Goal:</strong> Prove intra-file block navigation with <code>zDelta</code><br>
+                        <strong>Test:</strong> Navigate between blocks in same zUI file, creates new breadcrumb node<br>
+                        <strong>Catches:</strong> zDelta vs zLink distinction, breadcrumb scope creation<br>
+                        <strong style="color: var(--accent-green);">✅ DONE: zDelta implemented in dispatch_launcher.py</strong>
+                    </div>
+                    <div class="demo-meta">
+                        <span class="subsystem-tag">zDispatch</span>
+                        <span class="subsystem-tag">zNavigation</span>
+                        <span class="mode-tag">Terminal</span>
+                        <span class="time-tag">⏱️ 30 min</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Demo #1.4 -->
+            <div class="demo" data-demo-id="1-4" data-status="completed">
+                <input type="checkbox" class="demo-checkbox" onchange="updateDemo(this)" checked>
+                <div class="demo-content">
+                    <div class="demo-title">
+                        <span><strong>#1.4</strong> Config & Paths - zParser ✅</span>
+                    </div>
+                    <div class="demo-description">
+                        <strong>Goal:</strong> Prove path resolution (<code>@.</code> <code>~.</code> <code>$.</code>)<br>
+                        <strong>Test:</strong> Load zUI from workspace, config from AppSupport<br>
+                        <strong>Catches:</strong> zParser, zLoader, zConfig path handling<br>
+                        <strong style="color: var(--accent-green);">✅ DONE: @. prefix resolves workspace-relative paths</strong>
+                    </div>
+                    <div class="demo-meta">
+                        <span class="subsystem-tag">zParser</span>
+                        <span class="subsystem-tag">zLoader</span>
+                        <span class="subsystem-tag">zConfig</span>
+                        <span class="mode-tag">Terminal</span>
+                        <span class="time-tag">⏱️ 10 min</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- LEVEL 2: DATA & LOGIC (15-20 min each)                          -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        
+        <div class="level level-2">
+            <div class="level-header">
+                <div class="level-number">2</div>
+                <div class="level-title">
+                    <h2>💾 Data & Logic Layer</h2>
+                    <div class="level-description">Core operations: zData, zFunc, zWizard, zDialog</div>
+                </div>
+            </div>
+
+            <!-- Demo #2.1 -->
+            <div class="demo" data-demo-id="2-1" data-status="pending">
+                <input type="checkbox" class="demo-checkbox" onchange="updateDemo(this)">
+                <div class="demo-content">
+                    <div class="demo-title">
+                        <span><strong>#2.1</strong> CRUD Operations - zData</span>
+                    </div>
+                    <div class="demo-description">
+                        <strong>Goal:</strong> Prove declarative CRUD (Create, Read, Update, Delete)<br>
+                        <strong>Test:</strong> SQLite backend, schema-driven validation<br>
+                        <strong>Catches:</strong> zData, zSchema, database operations, table display
+                    </div>
+                    <div class="demo-meta">
+                        <span class="subsystem-tag">zData</span>
+                        <span class="subsystem-tag">zDisplay</span>
+                        <span class="mode-tag">Terminal</span>
+                        <span class="time-tag">⏱️ 20 min</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Demo #2.2 -->
+            <div class="demo" data-demo-id="2-2" data-status="pending">
+                <input type="checkbox" class="demo-checkbox" onchange="updateDemo(this)">
+                <div class="demo-content">
+                    <div class="demo-title">
+                        <span><strong>#2.2</strong> Plugin Functions - zFunc</span>
+                    </div>
+                    <div class="demo-description">
+                        <strong>Goal:</strong> Prove <code>&plugin.function</code> syntax works<br>
+                        <strong>Test:</strong> Simple plugin with auto-injection (zcli, zhat, zconv)<br>
+                        <strong>Catches:</strong> zFunc, zUtils (plugin loader), context injection
+                    </div>
+                    <div class="demo-meta">
+                        <span class="subsystem-tag">zFunc</span>
+                        <span class="subsystem-tag">zUtils</span>
+                        <span class="mode-tag">Terminal</span>
+                        <span class="time-tag">⏱️ 15 min</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Demo #2.3 -->
+            <div class="demo" data-demo-id="2-3" data-status="pending">
+                <input type="checkbox" class="demo-checkbox" onchange="updateDemo(this)">
+                <div class="demo-content">
+                    <div class="demo-title">
+                        <span><strong>#2.3</strong> Multi-Step Workflow - zWizard</span>
+                    </div>
+                    <div class="demo-description">
+                        <strong>Goal:</strong> Prove declarative workflows (3-5 steps)<br>
+                        <strong>Test:</strong> Sequential execution, WizardHat results, step interpolation<br>
+                        <strong>Catches:</strong> zWizard, result passing, transaction management
+                    </div>
+                    <div class="demo-meta">
+                        <span class="subsystem-tag">zWizard</span>
+                        <span class="subsystem-tag">zData</span>
+                        <span class="mode-tag">Terminal</span>
+                        <span class="time-tag">⏱️ 20 min</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Demo #2.4 -->
+            <div class="demo" data-demo-id="2-4" data-status="pending">
+                <input type="checkbox" class="demo-checkbox" onchange="updateDemo(this)">
+                <div class="demo-content">
+                    <div class="demo-title">
+                        <span><strong>#2.4</strong> Interactive Forms - zDialog</span>
+                    </div>
+                    <div class="demo-description">
+                        <strong>Goal:</strong> Prove declarative forms with auto-validation<br>
+                        <strong>Test:</strong> 3-5 fields, validation rules, onSubmit → zData<br>
+                        <strong>Catches:</strong> zDialog, validation, placeholder injection
+                    </div>
+                    <div class="demo-meta">
+                        <span class="subsystem-tag">zDialog</span>
+                        <span class="subsystem-tag">zData</span>
+                        <span class="mode-tag">Terminal</span>
+                        <span class="time-tag">⏱️ 15 min</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- LEVEL 3: COMMUNICATION (20-30 min each)                         -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        
+        <div class="level level-3">
+            <div class="level-header">
+                <div class="level-number">3</div>
+                <div class="level-title">
+                    <h2>🌐 Communication Layer</h2>
+                    <div class="level-description">Real-time & HTTP: zBifrost, zServer, BifrostClient</div>
+                </div>
+            </div>
+
+            <!-- Demo #3.1 -->
+            <div class="demo" data-demo-id="3-1" data-status="pending">
+                <input type="checkbox" class="demo-checkbox" onchange="updateDemo(this)">
+                <div class="demo-content">
+                    <div class="demo-title">
+                        <span><strong>#3.1</strong> Static Server - zServer</span>
+                    </div>
+                    <div class="demo-description">
+                        <strong>Goal:</strong> Prove HTTP static file serving (port 8080)<br>
+                        <strong>Test:</strong> Serve HTML/CSS/JS, auto-index, CORS headers<br>
+                        <strong>Catches:</strong> zServer, HTTP routing, static file paths
+                    </div>
+                    <div class="demo-meta">
+                        <span class="subsystem-tag">zComm (zServer)</span>
+                        <span class="mode-tag">HTTP</span>
+                        <span class="time-tag">⏱️ 15 min</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Demo #3.2 -->
+            <div class="demo" data-demo-id="3-2" data-status="pending">
+                <input type="checkbox" class="demo-checkbox" onchange="updateDemo(this)">
+                <div class="demo-content">
+                    <div class="demo-title">
+                        <span><strong>#3.2</strong> WebSocket Connection - zBifrost</span>
+                    </div>
+                    <div class="demo-description">
+                        <strong>Goal:</strong> Prove WebSocket connection (port 8765)<br>
+                        <strong>Test:</strong> Connect, receive <code>connection_info</code>, send command<br>
+                        <strong>Catches:</strong> zBifrost, WebSocket handshake, origin policy
+                    </div>
+                    <div class="demo-meta">
+                        <span class="subsystem-tag">zComm (zBifrost)</span>
+                        <span class="subsystem-tag">BifrostClient</span>
+                        <span class="mode-tag">zBifrost</span>
+                        <span class="time-tag">⏱️ 20 min</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Demo #3.3 -->
+            <div class="demo" data-demo-id="3-3" data-status="pending">
+                <input type="checkbox" class="demo-checkbox" onchange="updateDemo(this)">
+                <div class="demo-content">
+                    <div class="demo-title">
+                        <span><strong>#3.3</strong> Display Events - zBifrost Mode</span>
+                    </div>
+                    <div class="demo-description">
+                        <strong>Goal:</strong> Prove <code>zDisplay</code> works in zBifrost mode<br>
+                        <strong>Test:</strong> Same zUI as #1.1, but rendered as JSON events<br>
+                        <strong>Catches:</strong> Mode switching, JSON serialization, event format
+                    </div>
+                    <div class="demo-meta">
+                        <span class="subsystem-tag">zDisplay</span>
+                        <span class="subsystem-tag">zComm (zBifrost)</span>
+                        <span class="mode-tag">zBifrost</span>
+                        <span class="time-tag">⏱️ 20 min</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Demo #3.4 -->
+            <div class="demo" data-demo-id="3-4" data-status="pending">
+                <input type="checkbox" class="demo-checkbox" onchange="updateDemo(this)">
+                <div class="demo-content">
+                    <div class="demo-title">
+                        <span><strong>#3.4</strong> Auto NavBar - zTheme</span>
+                    </div>
+                    <div class="demo-description">
+                        <strong>Goal:</strong> Prove <code>~Root*</code> auto-generates navbar in GUI<br>
+                        <strong>Test:</strong> BifrostClient detects <code>~</code>, renders navbar with zTheme CSS<br>
+                        <strong>Catches:</strong> MenuHandler, zNav.css, connection status styling
+                    </div>
+                    <div class="demo-meta">
+                        <span class="subsystem-tag">BifrostClient</span>
+                        <span class="subsystem-tag">zTheme</span>
+                        <span class="mode-tag">zBifrost</span>
+                        <span class="time-tag">⏱️ 30 min</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Demo #3.5 -->
+            <div class="demo" data-demo-id="3-5" data-status="pending">
+                <input type="checkbox" class="demo-checkbox" onchange="updateDemo(this)">
+                <div class="demo-content">
+                    <div class="demo-title">
+                        <span><strong>#3.5</strong> Cache Performance - zLoader</span>
+                    </div>
+                    <div class="demo-description">
+                        <strong>Goal:</strong> Prove 4-tier caching (System, Plugin, Pinned, Schema)<br>
+                        <strong>Test:</strong> Load same zUI 4x, measure cache hits/misses<br>
+                        <strong>Catches:</strong> zLoader, cache orchestrator, TTL expiration
+                    </div>
+                    <div class="demo-meta">
+                        <span class="subsystem-tag">zLoader</span>
+                        <span class="subsystem-tag">zFunc</span>
+                        <span class="mode-tag">zBifrost</span>
+                        <span class="time-tag">⏱️ 25 min</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- LEVEL 4: ADVANCED (30-45 min each)                              -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        
+        <div class="level level-4">
+            <div class="level-header">
+                <div class="level-number">4</div>
+                <div class="level-title">
+                    <h2>🚀 Advanced Features</h2>
+                    <div class="level-description">Production patterns: RBAC, Validation, Full-Stack Apps</div>
+                </div>
+            </div>
+
+            <!-- Demo #4.1 -->
+            <div class="demo" data-demo-id="4-1" data-status="pending">
+                <input type="checkbox" class="demo-checkbox" onchange="updateDemo(this)">
+                <div class="demo-content">
+                    <div class="demo-title">
+                        <span><strong>#4.1</strong> Authentication - zAuth (3-Tier)</span>
+                    </div>
+                    <div class="demo-description">
+                        <strong>Goal:</strong> Prove 3-tier auth (Session, App, Context)<br>
+                        <strong>Test:</strong> Login, bcrypt password, session management<br>
+                        <strong>Catches:</strong> zAuth, password hashing, session storage
+                    </div>
+                    <div class="demo-meta">
+                        <span class="subsystem-tag">zAuth</span>
+                        <span class="subsystem-tag">zData</span>
+                        <span class="mode-tag">Terminal + zBifrost</span>
+                        <span class="time-tag">⏱️ 30 min</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Demo #4.2 -->
+            <div class="demo" data-demo-id="4-2" data-status="pending">
+                <input type="checkbox" class="demo-checkbox" onchange="updateDemo(this)">
+                <div class="demo-content">
+                    <div class="demo-title">
+                        <span><strong>#4.2</strong> RBAC - Role-Based Access</span>
+                    </div>
+                    <div class="demo-description">
+                        <strong>Goal:</strong> Prove context-aware RBAC (admin, user, guest)<br>
+                        <strong>Test:</strong> Different menus per role, permission checks<br>
+                        <strong>Catches:</strong> zAuth RBAC, context injection, menu filtering
+                    </div>
+                    <div class="demo-meta">
+                        <span class="subsystem-tag">zAuth</span>
+                        <span class="subsystem-tag">zNavigation</span>
+                        <span class="mode-tag">Terminal + zBifrost</span>
+                        <span class="time-tag">⏱️ 35 min</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Demo #4.3 -->
+            <div class="demo" data-demo-id="4-3" data-status="pending">
+                <input type="checkbox" class="demo-checkbox" onchange="updateDemo(this)">
+                <div class="demo-content">
+                    <div class="demo-title">
+                        <span><strong>#4.3</strong> Validation - Auto Schema Validation</span>
+                    </div>
+                    <div class="demo-description">
+                        <strong>Goal:</strong> Prove schema-driven validation (email, phone, custom)<br>
+                        <strong>Test:</strong> Invalid inputs rejected, custom validators<br>
+                        <strong>Catches:</strong> zDialog validation, zData schema enforcement
+                    </div>
+                    <div class="demo-meta">
+                        <span class="subsystem-tag">zDialog</span>
+                        <span class="subsystem-tag">zData</span>
+                        <span class="mode-tag">Terminal + zBifrost</span>
+                        <span class="time-tag">⏱️ 30 min</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Demo #4.4 -->
+            <div class="demo" data-demo-id="4-4" data-status="pending">
+                <input type="checkbox" class="demo-checkbox" onchange="updateDemo(this)">
+                <div class="demo-content">
+                    <div class="demo-title">
+                        <span><strong>#4.4</strong> Full-Stack App - User Manager</span>
+                    </div>
+                    <div class="demo-description">
+                        <strong>Goal:</strong> Prove complete CRUD app (Terminal + GUI)<br>
+                        <strong>Test:</strong> SQLite backend, zBifrost frontend, RBAC, validation<br>
+                        <strong>Catches:</strong> Full integration, all subsystems working together
+                    </div>
+                    <div class="demo-meta">
+                        <span class="subsystem-tag">ALL</span>
+                        <span class="mode-tag">Terminal + zBifrost</span>
+                        <span class="time-tag">⏱️ 45 min</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- COVERAGE SUMMARY                                                 -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        
+        <div class="level" style="background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(0, 212, 255, 0.1));">
+            <div class="level-header">
+                <div class="level-title">
+                    <h2>📊 Subsystem Coverage (13/13)</h2>
+                    <div class="level-description">All zCLI subsystems tested across 16 demos</div>
+                </div>
+            </div>
+            <div class="coverage-grid">
+                <div class="coverage-item">✅ zConfig</div>
+                <div class="coverage-item">✅ zComm</div>
+                <div class="coverage-item">✅ zDisplay</div>
+                <div class="coverage-item">✅ zAuth</div>
+                <div class="coverage-item">✅ zDispatch</div>
+                <div class="coverage-item">✅ zNavigation</div>
+                <div class="coverage-item">✅ zParser</div>
+                <div class="coverage-item">✅ zLoader</div>
+                <div class="coverage-item">✅ zFunc</div>
+                <div class="coverage-item">✅ zDialog</div>
+                <div class="coverage-item">✅ zOpen</div>
+                <div class="coverage-item">✅ zUtils</div>
+                <div class="coverage-item">✅ zWizard</div>
+                <div class="coverage-item">✅ zData</div>
+                <div class="coverage-item">✅ zShell</div>
+                <div class="coverage-item">✅ BifrostClient</div>
+                <div class="coverage-item">✅ zTheme</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button onclick="saveProgress()">💾 Save Progress</button>
+            <button onclick="resetAll()">🔄 Reset All</button>
+        </div>
+    </div>
+
+    <script>
+        // ═══════════════════════════════════════════════════════════════
+        // Timer Logic
+        // ═══════════════════════════════════════════════════════════════
+        
+        const deadline = new Date();
+        deadline.setHours(18, 0, 0, 0); // 6:00 PM today
+
+        function updateTimer() {
+            const now = new Date();
+            const diff = deadline - now;
+
+            if (diff <= 0) {
+                document.getElementById('countdown').textContent = '⏰ DEADLINE REACHED!';
+                document.getElementById('countdown').style.color = 'var(--accent-red)';
+                return;
+            }
+
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            document.getElementById('countdown').textContent = 
+                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+            document.getElementById('current-time').textContent = now.toLocaleTimeString();
+        }
+
+        setInterval(updateTimer, 1000);
+        updateTimer();
+
+        // ═══════════════════════════════════════════════════════════════
+        // Demo Progress Tracking
+        // ═══════════════════════════════════════════════════════════════
+        
+        function updateDemo(checkbox) {
+            const demo = checkbox.closest('.demo');
+            const demoId = demo.getAttribute('data-demo-id');
+            
+            if (checkbox.checked) {
+                demo.classList.add('completed');
+                demo.setAttribute('data-status', 'completed');
+            } else {
+                demo.classList.remove('completed');
+                demo.setAttribute('data-status', 'pending');
+            }
+
+            updateStats();
+            saveProgress();
+        }
+
+        function updateStats() {
+            const allDemos = document.querySelectorAll('.demo');
+            const completedDemos = document.querySelectorAll('.demo.completed');
+            
+            const total = allDemos.length;
+            const completed = completedDemos.length;
+            const pending = total - completed;
+            const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+            document.getElementById('completed-count').textContent = completed;
+            document.getElementById('pending-count').textContent = pending;
+            document.getElementById('total-count').textContent = total;
+            document.getElementById('progress-percent').textContent = progress + '%';
+        }
+
+        function saveProgress() {
+            const state = {};
+            document.querySelectorAll('.demo').forEach(demo => {
+                const id = demo.getAttribute('data-demo-id');
+                const status = demo.getAttribute('data-status');
+                state[id] = status;
+            });
+            localStorage.setItem('zcli_demo_progress', JSON.stringify(state));
+        }
+
+        function loadProgress() {
+            const saved = localStorage.getItem('zcli_demo_progress');
+            if (!saved) return;
+
+            const state = JSON.parse(saved);
+            Object.keys(state).forEach(id => {
+                const demo = document.querySelector(`[data-demo-id="${id}"]`);
+                if (!demo) return;
+
+                const checkbox = demo.querySelector('.demo-checkbox');
+                if (state[id] === 'completed') {
+                    checkbox.checked = true;
+                    demo.classList.add('completed');
+                    demo.setAttribute('data-status', 'completed');
+                }
+            });
+
+            updateStats();
+        }
+
+        function resetAll() {
+            if (!confirm('Reset all progress? This cannot be undone.')) return;
+
+            document.querySelectorAll('.demo-checkbox').forEach(cb => {
+                cb.checked = false;
+            });
+            document.querySelectorAll('.demo').forEach(demo => {
+                demo.classList.remove('completed');
+                demo.setAttribute('data-status', 'pending');
+            });
+
+            localStorage.removeItem('zcli_demo_progress');
+            updateStats();
+        }
+
+        // Initialize on load
+        loadProgress();
+    </script>
+</body>
+</html>
+
