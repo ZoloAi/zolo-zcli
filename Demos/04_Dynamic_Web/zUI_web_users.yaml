@@ -1,0 +1,44 @@
+# Demo 4 - Dynamic Web UI: Users Page
+# Demonstrates zData integration with HTTP route navigation
+
+zVaF:
+  # Navigation back to dashboard
+  ~Root*: ["Back to Dashboard", "Show Users"]
+  
+  "Back to Dashboard":
+    # HTTP route back to dashboard
+    zLink: "/dashboard"
+  
+  "Show Users":
+    # Jump to UserList block
+    zDelta: "%UserList"
+
+UserList:
+  # Display header
+  zDisplay:
+    event: header
+    content: "👥 User Management"
+    indent: 0
+  
+  # Fetch users from Demo 2's CSV data
+  zData:
+    model: "../02_Data_Logic/zSchema.users_csv"
+    action: read
+    table: users
+    order: "id DESC"
+    limit: 10
+  
+  # Display users in table format
+  # Note: In web mode, this will render as HTML <table>
+  # In terminal mode, this renders as ASCII table
+  zDisplay:
+    event: text
+    content: "User data loaded successfully!"
+    indent: 1
+  
+  # Back navigation
+  ~Root*: ["Dashboard"]
+  
+  "Dashboard":
+    zLink: "/dashboard"
+

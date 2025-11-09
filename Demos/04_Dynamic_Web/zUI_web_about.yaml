@@ -1,0 +1,57 @@
+# Demo 4 - Dynamic Web UI: About Page
+# Simple content page with navigation
+
+zVaF:
+  ~Root*: ["Dashboard", "Users", "Show About"]
+  
+  "Dashboard":
+    zLink: "/dashboard"
+  
+  "Users":
+    zLink: "/users"
+  
+  "Show About":
+    zDelta: "%About"
+
+About:
+  # Header
+  zDisplay:
+    event: header
+    content: "ℹ️ About zCLI v1.5.4"
+    indent: 0
+  
+  # Description
+  zDisplay:
+    event: text
+    content: "zCLI is a declarative framework for building command-line and web applications using YAML configuration."
+    indent: 1
+  
+  # Features list
+  zDisplay:
+    event: text
+    content: "Key Features:"
+    indent: 1
+  
+  zDisplay:
+    event: list
+    items:
+      - "Declarative YAML-driven UI"
+      - "Multi-mode support (Terminal, Web, Bifrost)"
+      - "Built-in CRUD with validation"
+      - "Role-based access control (RBAC)"
+      - "HTTP server with routing"
+      - "Zero dependencies"
+    indent: 2
+  
+  # Version info
+  zDisplay:
+    event: success
+    content: "Demo 4: Dynamic Web Applications - Layer 4 Complete!"
+    indent: 1
+  
+  # Navigation
+  ~Root*: ["Back"]
+  
+  "Back":
+    zLink: "/dashboard"
+

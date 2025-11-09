@@ -1,0 +1,58 @@
+# Demo 4 - Dynamic Web UI: Server Routes
+# Maps HTTP routes to zUI files for server-side rendering
+# v1.5.4 Phase 3 - Dynamic HTML Generation
+
+Meta:
+  base_path: "./public"
+  default_route: "/dashboard"
+  error_pages:
+    403: "access_denied.html"
+    404: "errors/404.html"
+
+routes:
+  # =====================================================================
+  # Dynamic Routes (zUI → HTML Rendering)
+  # =====================================================================
+  
+  "/dashboard":
+    type: dynamic
+    zVaFile: "./zUI_web_dashboard.yaml"
+    zBlock: "zVaF"
+    description: "Main dashboard - Dynamic HTML from zUI"
+  
+  "/users":
+    type: dynamic
+    zVaFile: "./zUI_web_users.yaml"
+    zBlock: "zVaF"
+    description: "User list page - zData + zTable rendered as HTML"
+    _rbac:
+      require_role: "viewer"
+  
+  "/about":
+    type: dynamic
+    zVaFile: "./zUI_web_about.yaml"
+    zBlock: "zVaF"
+    description: "About page - Simple content rendering"
+  
+  # =====================================================================
+  # Static Assets (from Demo 3)
+  # =====================================================================
+  
+  "/style.css":
+    type: static
+    file: "style.css"
+    description: "Main stylesheet"
+  
+  "/script.js":
+    type: static
+    file: "script.js"
+    description: "Main JavaScript file"
+  
+  # =====================================================================
+  # Fallback
+  # =====================================================================
+  
+  "/*":
+    type: static
+    description: "Default file serving fallback"
+

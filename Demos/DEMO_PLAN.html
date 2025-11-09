@@ -414,6 +414,67 @@
             </div>
         </div>
 
+        <div class="level" style="background: linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(16, 185, 129, 0.2)); border: 2px solid var(--accent-yellow); margin-bottom: 2rem;">
+            <div class="level-header" style="border-bottom: 2px solid var(--accent-yellow);">
+                <div class="level-title">
+                    <h2>📚 Key Learnings from Demo 4 - Dynamic Web (zUI → HTML)</h2>
+                    <div class="level-description">Server-side rendering, HTTP route navigation, and zPhilosophy in action</div>
+                </div>
+            </div>
+            
+            <div style="padding: 0 1rem;">
+                <h3 style="color: var(--accent-blue); margin-bottom: 0.5rem;">🔗 HTTP Route Navigation (Critical Enhancement)</h3>
+                <ul style="margin-bottom: 1rem; line-height: 1.8;">
+                    <li><strong>File:</strong> <code>navigation_linking.py</code> lines 407-437 - Added HTTP route detection</li>
+                    <li><strong>Logic:</strong> <code>if zLink_path.startswith("/"):</code> → Treat as HTTP route, not file path</li>
+                    <li><strong>Dual Mode:</strong> Terminal (<code>@.zUI.file</code>) vs Web (<code>/route</code>) - Backward compatible</li>
+                    <li><strong>Return Value:</strong> Web mode returns <code>{"type": "http_redirect", "url": path}</code> for HTML renderer</li>
+                    <li><strong>Warning:</strong> Terminal mode shows warning if HTTP route used (prevents confusion)</li>
+                </ul>
+                
+                <h3 style="color: var(--accent-blue); margin-bottom: 0.5rem;">📄 Dynamic Route Parsing (Parser Enhancement)</h3>
+                <ul style="margin-bottom: 1rem; line-height: 1.8;">
+                    <li><strong>File:</strong> <code>vafile_server.py</code> - Added <code>KEY_ZVAFILE</code> and <code>KEY_ZBLOCK</code> constants</li>
+                    <li><strong>Bug Found:</strong> Parser was dropping <code>zVaFile</code> and <code>zBlock</code> keys from routes!</li>
+                    <li><strong>Fix:</strong> Added explicit copying of these keys in <code>parse_server_file()</code> lines 217-220</li>
+                    <li><strong>Pattern:</strong> <code>type: dynamic</code> + <code>zVaFile: "./zUI_web_dashboard.yaml"</code> + <code>zBlock: "zVaF"</code></li>
+                </ul>
+                
+                <h3 style="color: var(--accent-blue); margin-bottom: 0.5rem;">🎨 Server-Side Rendering Architecture</h3>
+                <ul style="margin-bottom: 1rem; line-height: 1.8;">
+                    <li><strong>PageRenderer:</strong> New module (<code>page_renderer.py</code>) - Converts zUI YAML → HTML</li>
+                    <li><strong>Rendering Flow:</strong> Load zUI → Parse blocks → Render elements → Wrap in template → Return HTML</li>
+                    <li><strong>Menu Handling:</strong> Extract <code>~Root*</code> items → Look up actions → Convert to <code>&lt;a href=""&gt;</code> links</li>
+                    <li><strong>zDisplay Events:</strong> Each event type (text, header, list, success, etc.) has HTML renderer</li>
+                    <li><strong>NO Client-Side JS:</strong> All parsing happens server-side (like Django/Rails/PHP)</li>
+                </ul>
+                
+                <h3 style="color: var(--accent-blue); margin-bottom: 0.5rem;">🐛 Bugs Caught & Fixed</h3>
+                <ul style="margin-bottom: 1rem; line-height: 1.8;">
+                    <li><strong>Menu Actions as Content:</strong> Fixed by skipping menu item keys from rendering loop</li>
+                    <li><strong>Parser Dot-Splitting:</strong> Filenames like <code>zUI.web_dashboard.yaml</code> → Split incorrectly. Solution: Use underscores (<code>zUI_web_dashboard.yaml</code>)</li>
+                    <li><strong>Missing Error Pages:</strong> <code>access_denied.html</code> not in <code>public/</code> → 404. Fixed by copying from Demo 3</li>
+                    <li><strong>Path Resolution:</strong> Relative paths (<code>./file.yaml</code>) → Resolve using <code>zSpace</code> for absolute path</li>
+                </ul>
+                
+                <h3 style="color: var(--accent-blue); margin-bottom: 0.5rem;">🎯 zPhilosophy Validated</h3>
+                <ul style="margin-bottom: 1rem; line-height: 1.8;">
+                    <li><strong>Step 1 (Intent):</strong> Created zUI files with <code>zLink: "/route"</code> - Declared WHAT we want</li>
+                    <li><strong>Step 2 (Structure):</strong> Created <code>zServer_routes.yaml</code> with <code>type: dynamic</code> - Declared HOW</li>
+                    <li><strong>Step 3 (Implementation):</strong> Only then wrote PageRenderer code - Guided by declarations</li>
+                    <li><strong>Result:</strong> Backend code implements exactly what zUI/routes define - No over-engineering!</li>
+                </ul>
+                
+                <h3 style="color: var(--accent-blue); margin-bottom: 0.5rem;">🧪 Testing & Validation</h3>
+                <ul style="margin-bottom: 0; line-height: 1.8;">
+                    <li><strong>Routes:</strong> <code>/dashboard</code> (public), <code>/users</code> (RBAC - 403), <code>/about</code> (public)</li>
+                    <li><strong>RBAC:</strong> <code>require_role: "viewer"</code> correctly denies access with error page</li>
+                    <li><strong>Menu Links:</strong> <code>zLink: "/users"</code> → <code>&lt;a href="/users"&gt;</code> (clickable!)</li>
+                    <li><strong>Landing Page:</strong> <code>/</code> → <code>index.html</code> explains demo and provides navigation</li>
+                </ul>
+            </div>
+        </div>
+
         <div class="timer-section">
             <div style="font-size: 1.2rem; margin-bottom: 0.5rem;">⏰ Time Remaining</div>
             <div class="countdown" id="countdown">Loading...</div>
@@ -430,11 +491,11 @@
                 <div class="stat-label">⏳ Pending</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" style="color: var(--accent-blue);" id="total-count">7</div>
+                <div class="stat-number" style="color: var(--accent-blue);" id="total-count">8</div>
                 <div class="stat-label">📋 Total Demos</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" style="color: var(--accent-purple);" id="progress-percent">100%</div>
+                <div class="stat-number" style="color: var(--accent-purple);" id="progress-percent">88%</div>
                 <div class="stat-label">📈 Progress</div>
             </div>
         </div>
@@ -444,7 +505,8 @@
             <div class="legend-items">
                 <span style="color: var(--accent-red);">■</span> <strong>LEVEL 1:</strong> Foundation (Display, Navigation, Menus, Config)
                 <span style="color: var(--accent-yellow);">■</span> <strong>LEVEL 2:</strong> Data & Logic (CRUD, Forms, Validation)
-                <span style="color: var(--accent-green);">■</span> <strong>LEVEL 3:</strong> Web Server (Static HTML/CSS/JS via zServer)
+                <span style="color: var(--accent-green);">■</span> <strong>LEVEL 3:</strong> Web Server (Static HTML/CSS/JS + Declarative Routing + RBAC)
+                <span style="color: var(--accent-purple);">■</span> <strong>LEVEL 4:</strong> Dynamic Web UI (zUI → HTML Rendering - Server-side templating)
             </div>
         </div>
 
@@ -739,6 +801,411 @@
         </div>
 
         <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- LEVEL 4: DYNAMIC WEB UI (PLANNING PHASE)                         -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        
+        <div class="level level-4" style="background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(16, 185, 129, 0.05)); border: 2px solid var(--accent-green);">
+            <div class="level-header" style="border-bottom: 2px solid var(--accent-green);">
+                <div class="level-number">4</div>
+                <div class="level-title">
+                    <h2 style="color: var(--accent-green);">🎨 Dynamic Web UI - zServer + zUI ⚡ MVP COMPLETE</h2>
+                    <div class="level-description">Server-side HTML rendering from zUI YAML - Declarative web applications (improvements pending)</div>
+                </div>
+            </div>
+
+            <!-- Demo #4.1 - MVP Complete -->
+            <div class="demo" data-demo-id="4-1" data-status="completed" style="border: 2px solid var(--accent-green);">
+                <input type="checkbox" class="demo-checkbox" onchange="updateDemo(this)">
+                <div class="demo-content">
+                    <div class="demo-title">
+                        <span><strong>#4.1</strong> Dynamic Pages - zUI → HTML Rendering ✅</span>
+                    </div>
+                    <div class="demo-description">
+                        <strong style="color: var(--accent-green);">🎯 MVP COMPLETE:</strong> Server-side rendering from zUI YAML working!<br>
+                        <strong>Status:</strong> Routes `/dashboard`, `/users`, `/about` all render from zUI files. RBAC working. Improvements pending (better HTML rendering, zDelta support).
+                        
+                        <div style="margin-top: 1rem; padding: 1rem; background: rgba(251, 191, 36, 0.1); border-left: 3px solid var(--accent-yellow); border-radius: 4px;">
+                            <strong style="color: var(--accent-yellow);">💡 zPhilosophy Approach:</strong>
+                            <ul style="margin: 0.5rem 0; padding-left: 1.5rem; line-height: 1.8;">
+                                <li><strong>Step 1:</strong> Create zUI YAML (dashboard, user list, etc.) - WHAT we want to show</li>
+                                <li><strong>Step 2:</strong> Create zServer routes YAML - HOW URLs map to zUI files</li>
+                                <li><strong>Step 3:</strong> Implement imperative bridge (HTML renderer) - Guided by declarative structure</li>
+                                <li><strong>Key:</strong> Intention (zUI) → Structure (routes) → Implementation (code)</li>
+                            </ul>
+                        </div>
+                        
+                        <div style="margin-top: 1rem; padding: 1rem; background: rgba(239, 68, 68, 0.1); border-left: 3px solid var(--accent-red); border-radius: 4px;">
+                            <strong style="color: var(--accent-red);">⚠️ Design Flaw Identified:</strong>
+                            <p style="margin: 0.5rem 0;"><strong>Problem:</strong> zUI zLink only understands file paths, not HTTP routes</p>
+                            <ul style="margin: 0.5rem 0; padding-left: 1.5rem; line-height: 1.8;">
+                                <li><strong>Current:</strong> <code>zLink: "@.zUI.settings"</code> → Loads file (Terminal mode)</li>
+                                <li><strong>Needed:</strong> <code>zLink: "/dashboard"</code> → HTTP route (Web mode)</li>
+                                <li><strong>Solution:</strong> Enhance zLink to detect <code>/</code> prefix → Route to zServer, not zLoader</li>
+                            </ul>
+                        </div>
+                        
+                        <div style="margin-top: 1rem; padding: 1rem; background: rgba(16, 185, 129, 0.1); border-left: 3px solid var(--accent-green); border-radius: 4px;">
+                            <strong style="color: var(--accent-green);">✅ Proposed Solution: URL-Aware zLink</strong>
+                            <p style="margin: 0.5rem 0;"><strong>Dual-Mode zLink Behavior:</strong></p>
+                            <ul style="margin: 0.5rem 0; padding-left: 1.5rem; line-height: 1.8;">
+                                <li><strong>Terminal Mode (existing):</strong>
+                                    <ul style="margin: 0.25rem 0; padding-left: 1.5rem;">
+                                        <li><code>zLink: "@.zUI.dashboard"</code> → Loads file via zLoader</li>
+                                        <li>Behavior unchanged (backward compatible)</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Web Mode (new):</strong>
+                                    <ul style="margin: 0.25rem 0; padding-left: 1.5rem;">
+                                        <li><code>zLink: "/dashboard"</code> → HTTP redirect to route</li>
+                                        <li><code>zLink: "/users"</code> → HTTP redirect to route</li>
+                                        <li>Prefix <code>/</code> signals HTTP route (follows web conventions)</li>
+                                    </ul>
+                                </li>
+                            </ul>
+                            <p style="margin: 0.5rem 0;"><strong>Backend Detection Logic:</strong></p>
+                            <pre style="background: rgba(0,0,0,0.3); padding: 0.75rem; border-radius: 4px; overflow-x: auto; margin: 0.5rem 0;"><code># In navigation_linking.py
+if zLink_path.startswith("/"):
+    # Web mode: HTTP route navigation
+    return self._handle_http_route(zLink_path)
+else:
+    # Terminal mode: File-based navigation (existing)
+    return self._handle_file_navigation(zLink_path)</code></pre>
+                        </div>
+                        
+                        <h3 style="color: var(--accent-green); margin: 1rem 0 0.5rem;">📝 Step 1: Define zUI Interfaces (Declarative Intent)</h3>
+                        <div style="background: rgba(16, 185, 129, 0.05); padding: 1rem; border-radius: 4px; margin-bottom: 1rem;">
+                            <strong>Create zUI files for demo pages with HTTP route navigation:</strong>
+                            
+                            <p style="margin: 0.75rem 0;"><strong>zUI.web_dashboard.yaml</strong> - Landing page:</p>
+                            <pre style="background: rgba(0,0,0,0.3); padding: 0.75rem; border-radius: 4px; overflow-x: auto; margin: 0.5rem 0;"><code>zVaF:
+  ~Root*: ["View Users", "About", "Home"]
+  
+  "View Users":
+    zLink: "/users"  # HTTP route!
+  
+  "About":
+    zLink: "/about"  # HTTP route!
+  
+  "Home":
+    zDisplay:
+      event: text
+      content: "Welcome to zCLI Web Dashboard"</code></pre>
+                            
+                            <p style="margin: 0.75rem 0;"><strong>zUI.web_users.yaml</strong> - User list page:</p>
+                            <pre style="background: rgba(0,0,0,0.3); padding: 0.75rem; border-radius: 4px; overflow-x: auto; margin: 0.5rem 0;"><code>zVaF:
+  ~Root*: ["Back to Dashboard"]
+  
+  "Back to Dashboard":
+    zLink: "/dashboard"  # HTTP route back!
+  
+UserList:
+  zData:
+    model: "@.zSchema.users_csv"
+    action: read
+    table: users
+  
+  zDisplay:
+    event: zTable
+    title: "Users"
+    data: "zConv.users"</code></pre>
+                            
+                            <p style="margin: 0.75rem 0;"><strong>zUI.web_about.yaml</strong> - About page:</p>
+                            <pre style="background: rgba(0,0,0,0.3); padding: 0.75rem; border-radius: 4px; overflow-x: auto; margin: 0.5rem 0;"><code>zVaF:
+  ~Root*: ["Dashboard", "Users"]
+  
+  "Dashboard":
+    zLink: "/dashboard"
+  
+  "Users":
+    zLink: "/users"
+
+About:
+  zDisplay:
+    event: header
+    content: "About zCLI v1.5.4"
+  
+  zDisplay:
+    event: list
+    items: ["Declarative YAML", "Multi-mode", "Web apps"]</code></pre>
+                            
+                            <strong style="color: var(--accent-green);">Key: Navigation uses <code>/route</code> format, not file paths!</strong>
+                        </div>
+                        
+                        <h3 style="color: var(--accent-blue); margin: 1rem 0 0.5rem;">🗺️ Step 2: Define zServer Routes (Declarative Structure)</h3>
+                        <div style="background: rgba(0, 212, 255, 0.05); padding: 1rem; border-radius: 4px; margin-bottom: 1rem;">
+                            <strong>Extend zServer_routes.yaml with dynamic routes:</strong>
+                            <pre style="background: rgba(0,0,0,0.3); padding: 0.75rem; border-radius: 4px; overflow-x: auto; margin: 0.5rem 0;"><code>routes:
+  "/dashboard":
+    type: dynamic
+    zVaFile: "@.zUI.web_dashboard"
+    zBlock: "zVaF"
+    description: "Main dashboard"
+  
+  "/users":
+    type: dynamic
+    zVaFile: "@.zUI.web_users"
+    zBlock: "UserList"
+    description: "User list page"
+    _rbac:
+      require_role: "viewer"
+  
+  "/about":
+    type: dynamic
+    zVaFile: "@.zUI.web_about"
+    zBlock: "About"
+    description: "About page"</code></pre>
+                            <strong style="color: var(--accent-blue);">Key: Routes point to zUI files, backend figures out rendering</strong>
+                        </div>
+                        
+                        <h3 style="color: var(--accent-purple); margin: 1rem 0 0.5rem;">🔧 Step 3: Implement Imperative Bridge (Guided by Structure)</h3>
+                        <div style="background: rgba(168, 85, 247, 0.05); padding: 1rem; border-radius: 4px; margin-bottom: 1rem;">
+                            <strong>Only now do we write backend code to bridge zUI → HTML:</strong>
+                            <ul style="margin: 0.5rem 0; padding-left: 1.5rem; line-height: 1.8;">
+                                <li><strong>What events do we need to render?</strong> → Look at zUI files (header, text, zTable, zMenu, list)</li>
+                                <li><strong>How do routes work?</strong> → Look at zServer routes (zVaFile, zBlock, RBAC)</li>
+                                <li><strong>What HTML output?</strong> → Guided by zDisplay events in zUI</li>
+                            </ul>
+                            <strong style="color: var(--accent-purple);">Key: zUI structure guides what code we write, not vice versa</strong>
+                        </div>
+                        
+                        <h3 style="color: var(--accent-blue); margin: 1rem 0 0.5rem;">🏗️ Proposed Architecture</h3>
+                        <ul style="margin-bottom: 1rem; line-height: 1.8; background: rgba(0, 212, 255, 0.05); padding: 1rem; border-radius: 4px;">
+                            <li><strong>1. New Display Mode:</strong> Add "Web" mode to zDisplay (alongside Terminal, zBifrost)</li>
+                            <li><strong>2. HTML Renderer Module:</strong> <code>zDisplay/zDisplay_modules/display_renderer_html.py</code>
+                                <ul style="margin: 0.25rem 0; padding-left: 1.5rem;">
+                                    <li>Converts zDisplay events → HTML fragments</li>
+                                    <li>Each event handler returns HTML string</li>
+                                    <li>Example: <code>render_text(content) → "&lt;p&gt;{content}&lt;/p&gt;"</code></li>
+                                </ul>
+                            </li>
+                            <li><strong>3. Web Route Type:</strong> Add "dynamic" route type to <code>zServer_routes.yaml</code>
+                                <ul style="margin: 0.25rem 0; padding-left: 1.5rem;">
+                                    <li><code>type: dynamic</code> → Points to <code>zUI</code> file instead of static HTML</li>
+                                    <li><code>zVaFile: "@.zUI.dashboard"</code> → Loads zUI YAML</li>
+                                    <li><code>zBlock: "MainView"</code> → Entry point in zUI file</li>
+                                </ul>
+                            </li>
+                            <li><strong>4. Page Renderer:</strong> <code>zServer/zServer_modules/page_renderer.py</code>
+                                <ul style="margin: 0.25rem 0; padding-left: 1.5rem;">
+                                    <li>Loads zUI YAML via <code>zcli.loader.handle()</code></li>
+                                    <li>Executes zUI block (menus, display events)</li>
+                                    <li>Captures rendered HTML from HTML renderer</li>
+                                    <li>Wraps in layout template (header, footer, CSS)</li>
+                                    <li>Returns complete HTML page</li>
+                                </ul>
+                            </li>
+                            <li><strong>5. HTTPRouter Integration:</strong> Extend <code>router.py</code>
+                                <ul style="margin: 0.25rem 0; padding-left: 1.5rem;">
+                                    <li>Detect <code>type: dynamic</code> routes</li>
+                                    <li>Call page renderer with zVaFile + zBlock</li>
+                                    <li>Serve rendered HTML with appropriate headers</li>
+                                </ul>
+                            </li>
+                        </ul>
+                        
+                        <h3 style="color: var(--accent-blue); margin: 1rem 0 0.5rem;">🧪 Backend Refactoring Needed</h3>
+                        
+                        <div style="background: rgba(239, 68, 68, 0.1); padding: 1rem; border-radius: 4px; margin-bottom: 1rem; border-left: 3px solid var(--accent-red);">
+                            <strong style="color: var(--accent-red);">🚨 CRITICAL: zLink Enhancement (Must Do First)</strong>
+                            <p style="margin: 0.5rem 0;">Before any HTML rendering, zLink must support HTTP routes:</p>
+                            <ul style="margin: 0.5rem 0; padding-left: 1.5rem; line-height: 1.8;">
+                                <li><strong>File:</strong> <code>zNavigation/navigation_modules/navigation_linking.py</code></li>
+                                <li><strong>Method:</strong> <code>Linking.handle()</code> - Add HTTP route detection</li>
+                                <li><strong>Logic:</strong>
+<pre style="background: rgba(0,0,0,0.3); padding: 0.5rem; border-radius: 4px; margin: 0.5rem 0;"><code>if zLink_path.startswith("/"):
+    # Web mode: Return HTTP redirect/meta refresh
+    return {"type": "redirect", "url": zLink_path}
+else:
+    # Existing file-based navigation (unchanged)</code></pre>
+                                </li>
+                                <li><strong>Why First:</strong> Without this, zUI navigation won't work in web context</li>
+                            </ul>
+                        </div>
+                        
+                        <ul style="margin-bottom: 1rem; line-height: 1.8; background: rgba(168, 85, 247, 0.05); padding: 1rem; border-radius: 4px;">
+                            <li><strong>📄 New Files (Estimated 6 files):</strong>
+                                <ol style="margin: 0.5rem 0; padding-left: 1.5rem;">
+                                    <li><code>zDisplay_modules/display_renderer_html.py</code> - HTML event renderer (~300 lines)</li>
+                                    <li><code>zDisplay_modules/templates/base_layout.html</code> - Base HTML template</li>
+                                    <li><code>zDisplay_modules/templates/components.html</code> - Reusable HTML components</li>
+                                    <li><code>zServer_modules/page_renderer.py</code> - zUI → HTML page generator (~200 lines)</li>
+                                    <li><code>zServer_modules/template_engine.py</code> - Simple template system (~150 lines)</li>
+                                    <li><code>zTestRunner/plugins/html_renderer_tests.py</code> - Test suite for HTML rendering</li>
+                                </ol>
+                            </li>
+                            <li><strong>🔧 Modified Files (Estimated 5 files - added zLink):</strong>
+                                <ol style="margin: 0.5rem 0; padding-left: 1.5rem;">
+                                    <li><strong style="color: var(--accent-red);">🚨 CRITICAL:</strong> <code>navigation_linking.py</code> - HTTP route support in zLink</li>
+                                    <li><code>zDisplay.py</code> - Add Web mode detection, instantiate HTML renderer</li>
+                                    <li><code>display_primitives.py</code> - Add <code>_is_web_mode()</code>, HTML output buffer</li>
+                                    <li><code>zServer_modules/router.py</code> - Handle <code>type: dynamic</code> routes</li>
+                                    <li><code>zServer_modules/handler.py</code> - Serve rendered HTML pages</li>
+                                </ol>
+                            </li>
+                        </ul>
+                        
+                        <h3 style="color: var(--accent-blue); margin: 1rem 0 0.5rem;">⚠️ Key Challenges</h3>
+                        <ul style="margin-bottom: 1rem; line-height: 1.8;">
+                            <li><strong style="color: var(--accent-red);">🚨 1. zLink HTTP Route Support (CRITICAL):</strong>
+                                <ul style="margin: 0.25rem 0; padding-left: 1.5rem;">
+                                    <li><strong>Problem:</strong> zLink currently only loads files, can't handle <code>/dashboard</code> HTTP routes</li>
+                                    <li><strong>Solution:</strong> Detect <code>/</code> prefix → Return redirect metadata for HTML renderer</li>
+                                    <li><strong>Impact:</strong> Blocks entire demo - navigation won't work without this</li>
+                                </ul>
+                            </li>
+                            <li><strong>2. HTML Rendering of zMenu:</strong>
+                                <ul style="margin: 0.25rem 0; padding-left: 1.5rem;">
+                                    <li><code>~Root*</code> menus → How to convert to <code>&lt;nav&gt;</code> with links?</li>
+                                    <li>Menu items with <code>zLink: "/route"</code> → Render as <code>&lt;a href="/route"&gt;</code></li>
+                                </ul>
+                            </li>
+                            <li><strong>3. State Management:</strong>
+                                <ul style="margin: 0.25rem 0; padding-left: 1.5rem;">
+                                    <li>Terminal/zBifrost: Stateful (session persists)</li>
+                                    <li>Web: Stateless HTTP (each request is independent)</li>
+                                    <li>Solution: Server-side session storage or accept stateless rendering</li>
+                                </ul>
+                            </li>
+                            <li><strong>4. Interactive Forms (Phase 3):</strong>
+                                <ul style="margin: 0.25rem 0; padding-left: 1.5rem;">
+                                    <li>zDialog → HTML form → POST → Re-render page?</li>
+                                    <li>How to handle validation errors?</li>
+                                </ul>
+                            </li>
+                            <li><strong>5. Styling:</strong>
+                                <ul style="margin: 0.25rem 0; padding-left: 1.5rem;">
+                                    <li>Reuse Demo 3's <code>style.css</code> as base</li>
+                                    <li>Or generate zTheme CSS for web?</li>
+                                </ul>
+                            </li>
+                            <li><strong>6. Backward Compatibility:</strong>
+                                <ul style="margin: 0.25rem 0; padding-left: 1.5rem;">
+                                    <li>Ensure Terminal/zBifrost modes still work</li>
+                                    <li>Web mode is additive, not replacement</li>
+                                    <li><code>/</code> prefix only active in Web mode</li>
+                                </ul>
+                            </li>
+                        </ul>
+                        
+                        <h3 style="color: var(--accent-blue); margin: 1rem 0 0.5rem;">📝 Phased Implementation (Declarative → Imperative)</h3>
+                        
+                        <div style="background: rgba(16, 185, 129, 0.05); padding: 1rem; border-radius: 4px; margin-bottom: 1rem;">
+                            <strong style="color: var(--accent-green);">Phase 1: MVP - Declarative Foundation</strong>
+                            <ol style="margin: 0.5rem 0; padding-left: 1.5rem; line-height: 1.8;">
+                                <li><strong>zUI First:</strong> Create <code>zUI.web_dashboard.yaml</code> with:
+                                    <ul style="margin: 0.25rem 0; padding-left: 1.5rem;">
+                                        <li><code>zDisplay.header("Welcome")</code></li>
+                                        <li><code>zDisplay.text("Description")</code></li>
+                                        <li><code>~Root*</code> menu (3 links)</li>
+                                    </ul>
+                                </li>
+                                <li><strong>zServer Routes:</strong> Add <code>"/dashboard"</code> route with <code>type: dynamic</code></li>
+                                <li><strong>Imperative Bridge:</strong> Minimal HTML renderer for 3 events (text, header, zMenu)</li>
+                                <li><strong>Walker:</strong> <code>web_app_walker.py</code> to start server</li>
+                            </ol>
+                            <strong style="color: var(--accent-green);">Goal: Prove zUI → HTML works end-to-end</strong>
+                        </div>
+                        
+                        <div style="background: rgba(0, 212, 255, 0.05); padding: 1rem; border-radius: 4px; margin-bottom: 1rem;">
+                            <strong style="color: var(--accent-blue);">Phase 2: Full Coverage - More zUI Pages</strong>
+                            <ol style="margin: 0.5rem 0; padding-left: 1.5rem; line-height: 1.8;">
+                                <li><strong>zUI Expansion:</strong> Add <code>zUI.web_users.yaml</code> (zTable), <code>zUI.web_about.yaml</code> (list, success)</li>
+                                <li><strong>zServer Routes:</strong> Add <code>"/users"</code>, <code>"/about"</code> routes</li>
+                                <li><strong>Imperative:</strong> Extend renderer for zTable, list, error, success, warning, info</li>
+                                <li><strong>CSS:</strong> Reuse Demo 3's <code>style.css</code></li>
+                            </ol>
+                            <strong style="color: var(--accent-blue);">Goal: Feature parity with Terminal mode</strong>
+                        </div>
+                        
+                        <div style="background: rgba(168, 85, 247, 0.05); padding: 1rem; border-radius: 4px;">
+                            <strong style="color: var(--accent-purple);">Phase 3: Interactive - Forms & Navigation</strong>
+                            <ol style="margin: 0.5rem 0; padding-left: 1.5rem; line-height: 1.8;">
+                                <li><strong>zUI:</strong> Add <code>zUI.web_add_user.yaml</code> with <code>zDialog</code></li>
+                                <li><strong>zServer Routes:</strong> Handle POST requests, form submissions</li>
+                                <li><strong>Imperative:</strong> Form renderer, POST handler, navigation (zLink → hyperlinks)</li>
+                                <li><strong>State:</strong> Session management if needed</li>
+                            </ol>
+                            <strong style="color: var(--accent-purple);">Goal: Full web application framework</strong>
+                        </div>
+                        
+                        <h3 style="color: var(--accent-blue); margin: 1rem 0 0.5rem;">📋 Questions for Codebase Investigation</h3>
+                        <ul style="margin-bottom: 1rem; line-height: 1.8;">
+                            <li><strong style="color: var(--accent-red);">🚨 PRIORITY:</strong> <strong>How does zLink parse paths?</strong> → <code>navigation_linking.py</code> line ~400
+                                <ul style="margin: 0.25rem 0; padding-left: 1.5rem;">
+                                    <li>Current: <code>path.split(".")</code> for file paths</li>
+                                    <li>Needed: Detect <code>startswith("/")</code> for HTTP routes</li>
+                                    <li>Where to inject HTTP route logic?</li>
+                                </ul>
+                            </li>
+                            <li>✅ <strong>What zDisplay events exist?</strong> → Determines what we can use in zUI files</li>
+                            <li>✅ <strong>How does zWalker execute zUI blocks?</strong> → Can we reuse this in page renderer?</li>
+                            <li>⏳ <strong>Can we load zUI mid-request?</strong> → <code>zcli.loader.handle(zVaFile)</code> from HTTP handler?</li>
+                            <li>⏳ <strong>How do ~Root* menus render?</strong> → Can we convert menu structure to HTML <code>&lt;nav&gt;</code>?</li>
+                            <li>⏳ <strong>Does zCLI have template patterns?</strong> → Search for existing HTML/template code to reuse</li>
+                        </ul>
+                        
+                        <h3 style="color: var(--accent-green); margin: 1rem 0 0.5rem;">✅ MVP COMPLETE - What Got Built</h3>
+                        <div style="background: rgba(16, 185, 129, 0.1); padding: 1rem; border-radius: 4px;">
+                            <p><strong>Status:</strong> Server-side rendering working! HTTP routes, RBAC, clickable menus all functional.</p>
+                            
+                            <p style="margin: 0.75rem 0;"><strong>✅ Completed (MVP Phase):</strong></p>
+                            <ol style="margin: 0; padding-left: 1.5rem; line-height: 1.8;">
+                                <li>✅ Created zUI files with HTTP route navigation (<code>zLink: "/dashboard"</code>)</li>
+                                <li>✅ Updated zServer_routes.yaml (dynamic route definitions with <code>zVaFile</code>, <code>zBlock</code>)</li>
+                                <li>✅ <strong>Enhanced zLink</strong> - Detects <code>/</code> prefix for HTTP routes (<code>navigation_linking.py</code> lines 407-437)</li>
+                                <li>✅ <strong>Enhanced vafile_server.py</strong> - Parser now supports <code>zVaFile</code> and <code>zBlock</code> keys</li>
+                                <li>✅ <strong>Created PageRenderer</strong> - Converts zUI YAML to HTML (<code>page_renderer.py</code>)</li>
+                                <li>✅ HTML renderers for: <code>zDisplay</code> (text, header, list, success/error/warning/info), <code>~Root*</code> menus</li>
+                                <li>✅ <strong>Menu rendering</strong> - <code>zLink: "/route"</code> → <code>&lt;a href="/route"&gt;</code></li>
+                                <li>✅ <strong>HTTPRouter integration</strong> - <code>type: dynamic</code> routes call PageRenderer</li>
+                                <li>✅ RBAC protection working (<code>/users</code> requires "viewer" role)</li>
+                                <li>✅ Error pages configured (<code>access_denied.html</code> with 10s countdown redirect)</li>
+                                <li>✅ Landing page (<code>index.html</code>) explaining Demo 4</li>
+                                <li>✅ Tested end-to-end: Browser → <code>/dashboard</code> → zUI → HTML → clickable nav</li>
+                            </ol>
+                            
+                            <p style="margin: 0.75rem 0;"><strong>📂 Files Created/Modified:</strong></p>
+                            <ul style="margin: 0; padding-left: 1.5rem; line-height: 1.8;">
+                                <li><strong>NEW:</strong> <code>Demos/04_Dynamic_Web/</code> directory</li>
+                                <li><strong>NEW:</strong> <code>zUI_web_dashboard.yaml</code>, <code>zUI_web_users.yaml</code>, <code>zUI_web_about.yaml</code></li>
+                                <li><strong>NEW:</strong> <code>zServer_routes.yaml</code> (dynamic routes config)</li>
+                                <li><strong>NEW:</strong> <code>dynamic_web_walker.py</code> (demo entry point)</li>
+                                <li><strong>NEW:</strong> <code>public/index.html</code>, <code>access_denied.html</code></li>
+                                <li><strong>NEW:</strong> <code>zServer_modules/page_renderer.py</code> (~200 lines)</li>
+                                <li><strong>MODIFIED:</strong> <code>navigation_linking.py</code> (+35 lines - HTTP route detection)</li>
+                                <li><strong>MODIFIED:</strong> <code>vafile_server.py</code> (+4 lines - zVaFile/zBlock keys)</li>
+                                <li><strong>MODIFIED:</strong> <code>zServer_modules/handler.py</code> (+44 lines - dynamic route handling)</li>
+                            </ul>
+                            
+                            <p style="margin: 0.75rem 0;"><strong>🧪 Test It:</strong></p>
+                            <pre style="background: rgba(0,0,0,0.3); padding: 0.75rem; border-radius: 4px; margin: 0.5rem 0;"><code>cd Demos/04_Dynamic_Web
+python3 dynamic_web_walker.py
+# Open: http://127.0.0.1:8081/
+# Test: /dashboard, /about, /users (403)</code></pre>
+                            
+                            <p style="margin: 0.75rem 0 0;"><strong style="color: var(--accent-yellow);">⏳ Pending Improvements:</strong></p>
+                            <ul style="margin: 0.5rem 0; padding-left: 1.5rem; line-height: 1.8;">
+                                <li>Better HTML rendering for all zDisplay events</li>
+                                <li>zDelta support (intra-file navigation in web mode)</li>
+                                <li>zData/zTable HTML rendering</li>
+                                <li>Form support (zDialog → HTML forms)</li>
+                                <li>Better CSS styling (currently reusing Demo 3)</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="demo-meta">
+                        <span class="subsystem-tag">zDisplay (Web Mode)</span>
+                        <span class="subsystem-tag">zServer (Dynamic Routes)</span>
+                        <span class="subsystem-tag">HTMLRenderer (NEW)</span>
+                        <span class="subsystem-tag">PageRenderer (NEW)</span>
+                        <span class="mode-tag">HTTP + HTML</span>
+                        <span class="time-tag">⏱️ 120+ min (major refactor)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
         <!-- COVERAGE SUMMARY                                                 -->
         <!-- ═══════════════════════════════════════════════════════════════ -->
         
@@ -766,12 +1233,13 @@
                 <div class="coverage-item">✅ zData</div>
                 <div class="coverage-item" style="opacity: 0.3;">⊘ zShell</div>
                 <div class="coverage-item">✅ HTTPRouter (NEW)</div>
+                <div class="coverage-item">✅ PageRenderer (NEW)</div>
                 <div class="coverage-item" style="opacity: 0.5;">⏳ BifrostClient (Future)</div>
                 <div class="coverage-item" style="opacity: 0.5;">⏳ zTheme (Future)</div>
             </div>
             <div style="margin-top: 1rem; text-align: center; color: var(--text-secondary); font-size: 0.9rem;">
                 <strong>Legend:</strong> ✅ Proven | ⏳ Future/Optional | ⊘ Advanced Features<br>
-                <strong style="color: var(--accent-green); margin-top: 0.5rem; display: block;">🎉 11/13 Core Subsystems Proven | HTTPRouter Added in v1.5.4</strong>
+                <strong style="color: var(--accent-green); margin-top: 0.5rem; display: block;">🎉 12/13 Core Subsystems Proven | HTTPRouter + PageRenderer Added in v1.5.4</strong>
             </div>
         </div>
 

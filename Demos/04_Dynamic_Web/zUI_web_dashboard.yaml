@@ -1,0 +1,45 @@
+# Demo 4 - Dynamic Web UI: Dashboard
+# zPhilosophy: Define intent first (HTTP route navigation)
+# This zUI uses HTTP routes (/users, /about) instead of file paths
+
+zVaF:
+  # Main menu with HTTP route navigation
+  ~Root*: ["View Users", "About", "Home"]
+  
+  "View Users":
+    # HTTP route navigation (requires zLink enhancement)
+    zLink: "/users"
+  
+  "About":
+    # HTTP route navigation
+    zLink: "/about"
+  
+  "Home":
+    zDelta: "%HomePage"
+
+HomePage:
+  # Display welcome message
+  Header:
+    zDisplay:
+      event: header
+      content: "🎨 Welcome to zCLI Dynamic Web"
+      indent: 0
+  
+  Description:
+    zDisplay:
+      event: text
+      content: "This dashboard demonstrates declarative web applications powered by zUI YAML."
+      indent: 1
+  
+  Instructions:
+    zDisplay:
+      event: text
+      content: "Navigate using the menu above to explore user management and about pages."
+      indent: 1
+  
+  Status:
+    zDisplay:
+      event: success
+      content: "HTTP route navigation via zLink!"
+      indent: 1
+

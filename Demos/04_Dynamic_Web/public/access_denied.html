@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Access Denied - Demo 4</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">⚡ zCLI</div>
+            <nav>
+                <a href="/">Home</a>
+                <a href="/dashboard">Dashboard</a>
+                <a href="/about">About</a>
+            </nav>
+        </header>
+
+        <main>
+            <section class="hero">
+                <h1>🚫 Access Denied</h1>
+                <p class="subtitle">Role-Based Access Control Active</p>
+            </section>
+
+            <section class="content">
+                <div class="error-box">
+                    <h2>⛔ Authentication Required</h2>
+                    <p><strong>Role Required:</strong> <code>viewer</code></p>
+                    <p><strong>Your Status:</strong> Not authenticated (no role assigned)</p>
+                    <p style="margin-top: 20px; font-size: 18px; color: #d32f2f;">
+                        <strong>Redirecting to home page in <span id="countdown">10</span> seconds...</strong>
+                    </p>
+                </div>
+
+                <h2>What Just Happened?</h2>
+                <p>You attempted to access <strong>/users</strong> which requires the <code>viewer</code> role.</p>
+                <p>The <strong>HTTPRouter</strong> performed a role check using <code>z.auth.has_role("viewer")</code> and blocked access.</p>
+
+                <div class="success-box">
+                    <h3>✅ Declarative RBAC Proven!</h3>
+                    <ul>
+                        <li>✅ HTTPRouter checked RBAC rules from YAML</li>
+                        <li>✅ Role check failed (no authentication)</li>
+                        <li>✅ Error page (403) served automatically</li>
+                        <li>✅ Secure content protected</li>
+                        <li>✅ Zero manual Python checks needed</li>
+                    </ul>
+                </div>
+
+                <div class="code-block">
+                    <h3>Declarative RBAC (zServer_routes.yaml)</h3>
+                    <pre><code>Meta:
+  error_pages:
+    403: "access_denied.html"  # ← You are here!
+
+routes:
+  "/users":
+    type: dynamic
+    zVaFile: "./zUI_web_users.yaml"
+    _rbac:
+      require_role: "viewer"  # Backend enforced</code></pre>
+                </div>
+
+                <h2>How to Gain Access</h2>
+                <p>To access the <strong>/users</strong> page, you would need to:</p>
+                <ol>
+                    <li>Authenticate via <code>z.auth.login("user", "password")</code></li>
+                    <li>Be granted the <code>viewer</code> role</li>
+                    <li>Role would be stored in session</li>
+                    <li><code>z.auth.has_role("viewer")</code> would return <code>True</code></li>
+                </ol>
+
+                <div class="stats-grid">
+                    <div class="stat">
+                        <div class="stat-value">🔒</div>
+                        <div class="stat-label">Security Layer</div>
+                        <div class="stat-detail">Role-Based Access Control</div>
+                    </div>
+
+                    <div class="stat">
+                        <div class="stat-value">zTester</div>
+                        <div class="stat-label">Required Role</div>
+                        <div class="stat-detail">Not granted to current session</div>
+                    </div>
+
+                    <div class="stat">
+                        <div class="stat-value">✅</div>
+                        <div class="stat-label">Deniability</div>
+                        <div class="stat-detail">Working as expected</div>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <a href="index.html" class="btn btn-primary">
+                        ← Back to Home
+                    </a>
+                    <a href="test_page.html" class="btn btn-secondary">
+                        Go to Test Page
+                    </a>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>🔒 zAuth RBAC Integration - Deniability Proven</p>
+            <p>Layer 3: Web Server + Role-Based Access Control</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        // Countdown redirect timer
+        let countdown = 10;
+        const countdownElement = document.getElementById('countdown');
+        
+        const timer = setInterval(() => {
+            countdown--;
+            countdownElement.textContent = countdown;
+            
+            if (countdown <= 0) {
+                clearInterval(timer);
+                window.location.href = '/';
+            }
+        }, 1000);
+        
+        // Optional: Allow user to cancel redirect by clicking anywhere
+        document.addEventListener('click', () => {
+            clearInterval(timer);
+            countdownElement.parentElement.innerHTML = '<strong style="color: #2e7d32;">Auto-redirect cancelled. <a href="/">Click here to go home</a></strong>';
+        }, { once: true });
+    </script>
+</body>
+</html>
+

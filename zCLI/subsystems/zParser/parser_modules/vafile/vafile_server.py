@@ -89,6 +89,8 @@ KEY_TARGET = "target"
 KEY_STATUS = "status"
 KEY_DESCRIPTION = "description"
 KEY_RBAC = "_rbac"
+KEY_ZVAFILE = "zVaFile"  # For dynamic routes (v1.5.4 Phase 3)
+KEY_ZBLOCK = "zBlock"    # For dynamic routes (v1.5.4 Phase 3)
 
 # Route types
 ROUTE_TYPE_STATIC = "static"
@@ -212,6 +214,10 @@ def parse_server_file(
             route_entry[KEY_STATUS] = route_data[KEY_STATUS]
         if KEY_DESCRIPTION in route_data:
             route_entry[KEY_DESCRIPTION] = route_data[KEY_DESCRIPTION]
+        if KEY_ZVAFILE in route_data:
+            route_entry[KEY_ZVAFILE] = route_data[KEY_ZVAFILE]
+        if KEY_ZBLOCK in route_data:
+            route_entry[KEY_ZBLOCK] = route_data[KEY_ZBLOCK]
         
         routes[route_path] = route_entry
         

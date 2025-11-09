@@ -1,0 +1,440 @@
+/* ============================================
+   zServer Demo - Modern Styling
+   ============================================ */
+
+:root {
+    --primary: #a855f7;
+    --primary-dark: #7c3aed;
+    --secondary: #00d4ff;
+    --background: #0a0a0f;
+    --surface: #1a1a24;
+    --surface-light: #2a2a3a;
+    --text: #e0e0e0;
+    --text-secondary: #a0a0b0;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --border: #3a3a4a;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: linear-gradient(135deg, var(--background) 0%, #0f0f1a 100%);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+/* ============================================
+   Header & Navigation
+   ============================================ */
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 3rem;
+}
+
+.logo {
+    font-size: 1.8rem;
+    font-weight: bold;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+nav {
+    display: flex;
+    gap: 1.5rem;
+}
+
+nav a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+}
+
+nav a:hover {
+    color: var(--text);
+    background: var(--surface);
+}
+
+nav a.active {
+    color: var(--primary);
+    background: var(--surface);
+}
+
+/* ============================================
+   Hero Section
+   ============================================ */
+
+.hero {
+    text-align: center;
+    padding: 3rem 0;
+    margin-bottom: 3rem;
+}
+
+.hero h1 {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.subtitle {
+    font-size: 1.3rem;
+    color: var(--text-secondary);
+}
+
+/* ============================================
+   Content Section
+   ============================================ */
+
+.content {
+    background: var(--surface);
+    padding: 2rem;
+    border-radius: 1rem;
+    border: 1px solid var(--border);
+    margin-bottom: 2rem;
+}
+
+.content h2 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: var(--primary);
+}
+
+.content p {
+    margin-bottom: 1.5rem;
+    font-size: 1.1rem;
+}
+
+/* ============================================
+   Feature Grid
+   ============================================ */
+
+.feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0;
+}
+
+.feature {
+    background: var(--surface-light);
+    padding: 1.5rem;
+    border-radius: 0.8rem;
+    border: 1px solid var(--border);
+    text-align: center;
+    transition: transform 0.3s, border-color 0.3s;
+}
+
+.feature:hover {
+    transform: translateY(-5px);
+    border-color: var(--primary);
+}
+
+.feature-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.feature h3 {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+    color: var(--primary);
+}
+
+.feature p {
+    color: var(--text-secondary);
+    margin-bottom: 0;
+}
+
+/* ============================================
+   Code Block
+   ============================================ */
+
+.code-block {
+    background: var(--background);
+    padding: 1.5rem;
+    border-radius: 0.8rem;
+    border: 1px solid var(--border);
+    margin: 2rem 0;
+}
+
+.code-block h3 {
+    color: var(--secondary);
+    margin-bottom: 1rem;
+}
+
+.code-block pre {
+    overflow-x: auto;
+}
+
+.code-block code {
+    color: var(--text);
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+code {
+    background: var(--surface-light);
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.3rem;
+    font-family: 'Monaco', 'Courier New', monospace;
+    color: var(--secondary);
+}
+
+/* ============================================
+   Success Box
+   ============================================ */
+
+.success-box {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+    border: 2px solid var(--success);
+    padding: 1.5rem;
+    border-radius: 0.8rem;
+    margin: 2rem 0;
+}
+
+.success-box h3 {
+    color: var(--success);
+    margin-bottom: 1rem;
+}
+
+.success-box ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.success-box li {
+    padding: 0.5rem 0;
+    font-size: 1.1rem;
+}
+
+.success-box ol {
+    padding-left: 1.5rem;
+    margin-top: 1rem;
+}
+
+.success-box ol li {
+    padding: 0.5rem 0;
+}
+
+/* ============================================
+   Warning Box
+   ============================================ */
+
+.warning-box {
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(251, 191, 36, 0.05) 100%);
+    border: 2px solid var(--warning);
+    padding: 1.5rem;
+    border-radius: 0.8rem;
+    margin: 2rem 0;
+}
+
+.warning-box h2, .warning-box h3 {
+    color: var(--warning);
+    margin-bottom: 1rem;
+}
+
+.warning-box p {
+    margin-bottom: 0.75rem;
+}
+
+/* ============================================
+   Error Box
+   ============================================ */
+
+.error-box {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%);
+    border: 2px solid var(--accent-red);
+    padding: 1.5rem;
+    border-radius: 0.8rem;
+    margin: 2rem 0;
+}
+
+.error-box h2, .error-box h3 {
+    color: var(--accent-red);
+    margin-bottom: 1rem;
+}
+
+.error-box p {
+    margin-bottom: 0.75rem;
+}
+
+/* ============================================
+   Stats Grid
+   ============================================ */
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0;
+}
+
+.stat {
+    background: var(--surface-light);
+    padding: 1.5rem;
+    border-radius: 0.8rem;
+    border: 1px solid var(--border);
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: var(--primary);
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+}
+
+.stat-detail {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+/* ============================================
+   Buttons
+   ============================================ */
+
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 0.8rem 1.5rem;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: inline-block;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(168, 85, 247, 0.3);
+}
+
+.btn-secondary {
+    background: var(--surface-light);
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+    background: var(--surface);
+    border-color: var(--primary);
+}
+
+/* ============================================
+   Footer
+   ============================================ */
+
+footer {
+    text-align: center;
+    padding: 2rem 0;
+    color: var(--text-secondary);
+    border-top: 1px solid var(--border);
+    margin-top: 3rem;
+}
+
+footer p {
+    margin: 0.5rem 0;
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+
+@media (max-width: 768px) {
+    .hero h1 {
+        font-size: 2rem;
+    }
+
+    .subtitle {
+        font-size: 1rem;
+    }
+
+    .feature-grid,
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+    }
+
+    .btn {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+/* ============================================
+   Countdown Animation (Access Denied Page)
+   ============================================ */
+
+#countdown {
+    display: inline-block;
+    font-size: 24px;
+    font-weight: bold;
+    color: #d32f2f;
+    background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+    padding: 8px 16px;
+    border-radius: 8px;
+    animation: pulse 1s ease-in-out infinite;
+    min-width: 40px;
+    text-align: center;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.8;
+    }
+}
+

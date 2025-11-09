@@ -403,6 +403,42 @@ class Linking:
         # Log parsed values
         self.logger.debug(LOG_ZLINK_PATH, zLink_path)
         self.logger.debug(LOG_REQUIRED_PERMS, required_perms)
+        
+        # ====================================================================
+        # HTTP ROUTE DETECTION (v1.5.4 Phase 3 - Demo 4)
+        # ====================================================================
+        # Detect if zLink is an HTTP route (starts with "/")
+        # This enables dual-mode behavior: Terminal (file paths) vs Web (HTTP routes)
+        if zLink_path.startswith("/"):
+            self.logger.info(f"[zLink] HTTP route detected: {zLink_path}")
+            
+            # Get display mode from session
+            from zCLI.subsystems.zConfig.zConfig_modules.config_session import SESSION_KEY_ZMODE
+            mode = walker.session.get(SESSION_KEY_ZMODE, "Terminal")
+            
+            if mode == "Web":
+                # WEB MODE: Return metadata for HTML link rendering
+                # The page renderer will convert this to <a href="/route">
+                self.logger.debug(f"[zLink] Web mode - returning redirect metadata")
+                return {
+                    "type": "http_redirect",
+                    "url": zLink_path,
+                    "mode": "web"
+                }
+            else:
+                # TERMINAL MODE: HTTP routes don't make sense in terminal
+                # User likely mixed Web and Terminal zUI patterns
+                self.logger.warning(f"[zLink] HTTP route '{zLink_path}' in Terminal mode - skipping navigation")
+                walker.display.handle({
+                    "event": "warning",
+                    "content": f"HTTP route '{zLink_path}' cannot be navigated in Terminal mode",
+                    "indent": 1
+                })
+                return STATUS_STOP
+        
+        # ====================================================================
+        # FILE-BASED NAVIGATION (Original logic - Terminal/Bifrost mode)
+        # ====================================================================
 
         # Check permissions if required
         if required_perms and not self.check_zLink_permissions(walker, required_perms):

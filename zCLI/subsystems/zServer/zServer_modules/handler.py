@@ -77,8 +77,9 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
                 # Fallback to HTTP 403
                 return self.send_error(403, "Access Denied")
         
-        # Access granted - serve file
+        # Access granted - serve based on route type
         route_type = route.get("type", "static")
+        
         if route_type == "static":
             # Serve static file
             file_path = self.router.resolve_file_path(route)
@@ -86,6 +87,52 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
             self.path = f"/{os.path.basename(file_path)}"
             return super().do_GET()
         
-        # Future: Handle dynamic routes
-        return self.send_error(501, "Dynamic routes not yet implemented")
+        elif route_type == "dynamic":
+            # Serve dynamically generated HTML from zUI
+            return self._handle_dynamic_route(route)
+        
+        # Unknown route type
+        return self.send_error(501, f"Route type '{route_type}' not supported")
+    
+    def _handle_dynamic_route(self, route: dict):
+        """
+        Handle dynamic route - render zUI to HTML.
+        
+        Args:
+            route: Route definition with zVaFile and zBlock
+        
+        Returns:
+            None: Sends HTTP response directly
+        """
+        try:
+            # Extract zUI file and block from route
+            zVaFile = route.get("zVaFile", "")
+            zBlock = route.get("zBlock", "zVaF")
+            
+            if not zVaFile:
+                return self.send_error(500, "Dynamic route missing zVaFile")
+            
+            # Get zcli instance from router
+            if not hasattr(self.router, 'zcli'):
+                return self.send_error(500, "zCLI instance not available")
+            
+            # Import and create page renderer
+            from .page_renderer import PageRenderer
+            renderer = PageRenderer(self.router.zcli)
+            
+            # Render zUI to HTML
+            html_content = renderer.render_page(zVaFile, zBlock)
+            
+            # Send HTML response
+            self.send_response(200)
+            self.send_header("Content-type", "text/html")
+            self.send_header("Content-length", len(html_content.encode('utf-8')))
+            self.end_headers()
+            self.wfile.write(html_content.encode('utf-8'))
+            
+        except Exception as e:
+            # Log error and send 500
+            if hasattr(self, 'zcli_logger') and self.zcli_logger:
+                self.zcli_logger.error(f"[Handler] Dynamic route error: {e}")
+            return self.send_error(500, f"Dynamic rendering failed: {str(e)}")
 
