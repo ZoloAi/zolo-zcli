@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - zBifrost Demo</title>
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        #content {
+            min-height: 400px;
+            padding: 2rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        #status {
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            font-weight: 500;
+        }
+        #status.connecting {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        #status.connected {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        #status.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .zui-header {
+            font-size: 1.8rem;
+            color: #4f46e5;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .zui-text {
+            color: #374151;
+            line-height: 1.6;
+            margin: 0.5rem 0;
+        }
+        .zui-success {
+            color: #059669;
+            padding: 0.5rem;
+            background: #d1fae5;
+            border-radius: 4px;
+            margin: 0.5rem 0;
+        }
+        .zui-info {
+            color: #0284c7;
+            padding: 0.5rem;
+            background: #e0f2fe;
+            border-radius: 4px;
+            margin: 0.5rem 0;
+        }
+        .zui-divider {
+            border-top: 1px solid #e5e7eb;
+            margin: 1rem 0;
+        }
+        .zui-menu {
+            list-style: none;
+            padding: 0;
+            margin: 1rem 0;
+        }
+        .zui-menu li {
+            margin: 0.5rem 0;
+        }
+        .zui-menu a {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            background: #4f46e5;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .zui-menu a:hover {
+            background: #4338ca;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="status" class="connecting">
+            🔌 Connecting to zBifrost...
+        </div>
+
+        <div id="content">
+            <p style="color: #6b7280;">Loading dashboard via zBifrost...</p>
+        </div>
+    </div>
+
+    <!-- Load zBifrost Client -->
+    <script src="/bifrost_client.js"></script>
+    
+    <script>
+        (async () => {
+            const statusEl = document.getElementById('status');
+            const contentEl = document.getElementById('content');
+
+            try {
+                // Initialize zBifrost client  
+                const client = new BifrostClient('ws://127.0.0.1:8765', {
+                    autoTheme: false,  // We're using custom styles
+                    autoReconnect: true,
+                    debug: true,
+                    hooks: {
+                        onConnected: (info) => {
+                            console.log('✅ Connected to zBifrost:', info);
+                            statusEl.className = 'connected';
+                            statusEl.textContent = '✅ Connected to zBifrost';
+                        },
+                        
+                        onDisconnected: (reason) => {
+                            console.log('❌ Disconnected:', reason);
+                            statusEl.className = 'error';
+                            statusEl.textContent = '❌ Disconnected from zBifrost';
+                        },
+                        
+                        onDisplay: (data) => {
+                            console.log('📊 Display event:', data);
+                            renderDisplayEvent(data);
+                        },
+                        
+                        onError: (error) => {
+                            console.error('❌ Error:', error);
+                            statusEl.className = 'error';
+                            statusEl.textContent = `❌ Error: ${error.message}`;
+                        }
+                    }
+                });
+
+                // Connect to server
+                await client.connect();
+                console.log('📡 Connection established');
+
+                // TODO: Need to figure out how to execute zUI via zBifrost
+                // Options:
+                // 1. client.zFunc('load_zui zUI_web_dashboard.yaml')
+                // 2. Custom command in bridge
+                // 3. Execute walker.run() on server with mode=zBifrost
+
+                // For now, show explanatory message
+                contentEl.innerHTML = `
+                    <div class="zui-header">🎨 Dashboard (zBifrost Mode)</div>
+                    <div class="zui-text">
+                        <p><strong>Status:</strong> WebSocket connected! ✅</p>
+                        <p><strong>Issue:</strong> Need server-side command to execute zUI file.</p>
+                    </div>
+                    <div class="zui-divider"></div>
+                    <div class="zui-info">
+                        <p><strong>Architecture Note:</strong></p>
+                        <p>zBifrost client is connected and ready to render JSON events.</p>
+                        <p>Server needs to execute <code>zWalker.run()</code> with <code>mode="zBifrost"</code>.</p>
+                    </div>
+                    <div class="zui-divider"></div>
+                    <p><strong>Fallback:</strong> <a href="/static-demo.html">View static demo</a></p>
+                `;
+
+            } catch (error) {
+                console.error('Fatal error:', error);
+                statusEl.className = 'error';
+                statusEl.textContent = `❌ Fatal error: ${error.message}`;
+                contentEl.innerHTML = `
+                    <div style="color: #991b1b; padding: 1rem; background: #fee2e2; border-radius: 4px;">
+                        <h3>Connection Failed</h3>
+                        <p>${error.message}</p>
+                        <p><strong>Possible causes:</strong></p>
+                        <ul>
+                            <li>zBifrost server not running on ws://127.0.0.1:56891</li>
+                            <li>CORS or network issues</li>
+                            <li>Server crashed or port blocked</li>
+                        </ul>
+                    </div>
+                `;
+            }
+
+            // Render function for zDisplay events
+            function renderDisplayEvent(data) {
+                // This function converts zDisplay JSON to HTML
+                console.log('Rendering display event:', data);
+                
+                // Extract event type and content
+                const eventType = data.display_event || data.event;
+                const eventData = data.data || data;
+                
+                let html = '';
+                
+                switch(eventType) {
+                    case 'header':
+                        html = `<div class="zui-header">${eventData.content || eventData.label}</div>`;
+                        break;
+                    
+                    case 'text':
+                        html = `<div class="zui-text">${eventData.content}</div>`;
+                        break;
+                    
+                    case 'success':
+                        html = `<div class="zui-success">${eventData.content}</div>`;
+                        break;
+                    
+                    case 'info':
+                        html = `<div class="zui-info">${eventData.content}</div>`;
+                        break;
+                    
+                    case 'line':
+                        html = `<div class="zui-divider"></div>`;
+                        break;
+                    
+                    case 'list':
+                        const items = eventData.items || [];
+                        html = `<ul class="zui-list">
+                            ${items.map(item => `<li>${item}</li>`).join('')}
+                        </ul>`;
+                        break;
+                    
+                    default:
+                        html = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                }
+                
+                contentEl.innerHTML += html;
+            }
+        })();
+    </script>
+</body>
+</html>
+

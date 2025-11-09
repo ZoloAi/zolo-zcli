@@ -1,57 +1,108 @@
-# Demo 4 - Dynamic Web UI: About Page
-# Simple content page with navigation
+# Demo 4.2 - Dual-Mode About Page
+# zPhilosophy: Same zUI, Any Mode
 
 zVaF:
-  ~Root*: ["Dashboard", "Users", "Show About"]
+  PageHeader:
+    zDisplay:
+      event: header
+      content: "ℹ️  About zCLI"
+      indent: 0
+  
+  Intro:
+    zDisplay:
+      event: text
+      content: "zCLI is a declarative command-line interface framework"
+      indent: 1
+  
+  Divider1:
+    zDisplay:
+      event: line
+      indent: 0
+  
+  FeaturesHeader:
+    zDisplay:
+      event: text
+      content: "🎯 Key Features:"
+      indent: 1
+  
+  FeaturesList:
+    zDisplay:
+      event: list
+      items:
+        - "Declarative zUI YAML for interfaces"
+        - "Multi-mode: Terminal, Web, zBifrost GUI"
+        - "Built-in zServer with RBAC"
+        - "zData subsystem for CRUD operations"
+        - "zNavigation with breadcrumbs and linking"
+        - "zDisplay mode-agnostic rendering"
+      indent: 2
+  
+  Divider2:
+    zDisplay:
+      event: line
+      indent: 0
+  
+  PhilosophyHeader:
+    zDisplay:
+      event: text
+      content: "💡 zPhilosophy:"
+      indent: 1
+  
+  PhilosophyText:
+    zDisplay:
+      event: success
+      content: "Intention precedes implementation. Structure guides logic."
+      indent: 2
+  
+  Divider3:
+    zDisplay:
+      event: line
+      indent: 0
+  
+  # Navigation menu
+  ~Root*: ["Dashboard", "Users", "Technical Details"]
   
   "Dashboard":
-    zLink: "/dashboard"
+    zLink: "@.zUI_web_dashboard"
   
   "Users":
-    zLink: "/users"
+    zLink: "@.zUI_web_users"
   
-  "Show About":
-    zDelta: "%About"
+  "Technical Details":
+    zDelta: "%TechDetails"
 
-About:
-  # Header
-  zDisplay:
-    event: header
-    content: "ℹ️ About zCLI v1.5.4"
-    indent: 0
+TechDetails:
+  TechHeader:
+    zDisplay:
+      event: header
+      content: "🔧 Technical Architecture"
+      indent: 0
   
-  # Description
-  zDisplay:
-    event: text
-    content: "zCLI is a declarative framework for building command-line and web applications using YAML configuration."
-    indent: 1
+  SubsystemsHeader:
+    zDisplay:
+      event: text
+      content: "Core Subsystems:"
+      indent: 1
   
-  # Features list
-  zDisplay:
-    event: text
-    content: "Key Features:"
-    indent: 1
+  SubsystemsList:
+    zDisplay:
+      event: list
+      items:
+        - "zAuth - Authentication & RBAC"
+        - "zComm - Communication (zServer, zSocket)"
+        - "zConfig - Configuration management"
+        - "zData - Data operations (CSV, SQLite, JSON)"
+        - "zDialog - Interactive forms"
+        - "zDispatch - Command routing"
+        - "zDisplay - Mode-agnostic rendering"
+        - "zLoader - VaFile loading & parsing"
+        - "zNavigation - Links, breadcrumbs, menus"
+        - "zParser - Universal parsing engine"
+        - "zUtils - Utilities & helpers"
+      indent: 2
   
-  zDisplay:
-    event: list
-    items:
-      - "Declarative YAML-driven UI"
-      - "Multi-mode support (Terminal, Web, Bifrost)"
-      - "Built-in CRUD with validation"
-      - "Role-based access control (RBAC)"
-      - "HTTP server with routing"
-      - "Zero dependencies"
-    indent: 2
+  BackMenu:
+    ~Root*: ["Back to About"]
   
-  # Version info
-  zDisplay:
-    event: success
-    content: "Demo 4: Dynamic Web Applications - Layer 4 Complete!"
-    indent: 1
-  
-  # Navigation
-  ~Root*: ["Back"]
-  
-  "Back":
-    zLink: "/dashboard"
-
+  "Back to About":
+    zDelta: "%zVaF"

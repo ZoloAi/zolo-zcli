@@ -38,16 +38,30 @@ class PageRenderer:
         html_buffer: StringIO buffer for capturing HTML output
     """
     
-    def __init__(self, zcli: Any):
+    def __init__(self, zcli: Any, routes: Dict = None):
         """
         Initialize page renderer.
         
         Args:
             zcli: zCLI instance providing loader, session, display
+            routes: Optional routing configuration for file→route mapping
         """
         self.zcli = zcli
         self.logger = zcli.logger if hasattr(zcli, 'logger') else None
         self.html_buffer = None
+        
+        # Build reverse mapping: zVaFile → HTTP route for dual-mode navigation
+        self._file_to_route_map = {}
+        if routes:
+            for route_path, route_config in routes.items():
+                if isinstance(route_config, dict) and route_config.get('type') == 'dynamic':
+                    zvafile = route_config.get('zVaFile', '')
+                    if zvafile:
+                        # Normalize file path: ./zUI_web_users.yaml → zUI_web_users
+                        normalized = zvafile.replace('./', '').replace('.yaml', '')
+                        self._file_to_route_map[normalized] = route_path
+                        if self.logger:
+                            self.logger.debug(f"[PageRenderer] Mapped {normalized} → {route_path}")
     
     def render_page(
         self,
@@ -164,29 +178,64 @@ class PageRenderer:
             # Menu items - make them clickable
             return self._render_menu(value, block_data or {})
         
-        elif key == "zDisplay":
-            # Display event
-            return self._render_display_event(value)
+        # Check if value is a dict containing zDisplay
+        elif isinstance(value, dict) and "zDisplay" in value:
+            # Display event wrapped in dict (e.g., WelcomeHeader: {zDisplay: {...}})
+            return self._render_display_event(value["zDisplay"])
         
-        elif key == "zLink":
+        elif isinstance(value, dict) and "zLink" in value:
             # Link navigation (HTTP route)
-            if isinstance(value, str) and value.startswith("/"):
-                return f'<a href="{value}" class="btn btn-primary">Navigate</a>'
-            return ""
+            link_path = value["zLink"]
+            http_route = self._convert_file_path_to_route(link_path)
+            return f'<a href="{http_route}" class="btn btn-primary">Navigate</a>'
         
         elif key.startswith("_"):
             # Skip internal keys (e.g., _rbac)
             return ""
         
         else:
-            # Unknown - render as data
+            # Unknown - render as data (debug mode)
             return f"<div class='debug'><strong>{key}:</strong> {value}</div>"
+    
+    def _convert_file_path_to_route(self, link_path: str) -> str:
+        """
+        Convert zLink file path to HTTP route for web navigation.
+        
+        Dual-mode navigation solution:
+        - Terminal: Uses file path directly (@.zUI_web_users)
+        - Web: Maps file path to HTTP route (/users)
+        
+        Args:
+            link_path: zLink value (e.g., "@.zUI_web_users")
+        
+        Returns:
+            str: HTTP route (e.g., "/users") or original if no mapping
+        """
+        # Extract filename from zLink path (@.zUI_web_users → zUI_web_users)
+        if link_path.startswith("@."):
+            filename = link_path[2:]  # Remove @. prefix
+        else:
+            filename = link_path
+        
+        # Look up HTTP route from mapping
+        http_route = self._file_to_route_map.get(filename)
+        
+        if http_route:
+            if self.logger:
+                self.logger.debug(f"[PageRenderer] Mapped file path '{link_path}' → '{http_route}'")
+            return http_route
+        else:
+            # No mapping found, return as-is (might be HTTP route already)
+            if self.logger:
+                self.logger.warning(f"[PageRenderer] No route mapping for '{link_path}', using as-is")
+            return link_path
     
     def _render_menu(self, items: list, block_data: Dict) -> str:
         """
         Render ~Root* menu as HTML nav with clickable links.
         
         Looks up each menu item's action (zLink/zDelta) and creates appropriate links.
+        Converts file paths to HTTP routes for dual-mode compatibility.
         """
         if not items:
             return ""
@@ -200,10 +249,12 @@ class PageRenderer:
             action = block_data.get(label, {})
             
             if isinstance(action, dict):
-                # Check for zLink (HTTP route)
+                # Check for zLink (file path → HTTP route mapping)
                 if "zLink" in action:
-                    link_url = action["zLink"]
-                    html += f'<li><a href="{link_url}">{label}</a></li>'
+                    link_path = action["zLink"]
+                    # Convert file path to HTTP route for web navigation
+                    http_route = self._convert_file_path_to_route(link_path)
+                    html += f'<li><a href="{http_route}">{label}</a></li>'
                 
                 # Check for zDelta (intra-file navigation)
                 elif "zDelta" in action:

@@ -1,41 +1,36 @@
-# Demo 4 - Dynamic Web UI: Server Routes
-# Maps HTTP routes to zUI files for server-side rendering
-# v1.5.4 Phase 3 - Dynamic HTML Generation
+# Demo 4.2 - Dual-Mode zUI: Server Routes
+# Phase 2: zBifrost WebSocket + Static HTML serving
+# Dynamic rendering happens client-side via zBifrost JS client
 
 Meta:
   base_path: "./public"
-  default_route: "/dashboard"
+  default_route: "/"
   error_pages:
     403: "access_denied.html"
     404: "errors/404.html"
 
 routes:
   # =====================================================================
-  # Dynamic Routes (zUI → HTML Rendering)
+  # Static HTML Pages (Load zBifrost client for dynamic rendering)
   # =====================================================================
+  
+  "/":
+    type: static
+    file: "index.html"
+    description: "Landing page with demo overview"
   
   "/dashboard":
-    type: dynamic
-    zVaFile: "./zUI_web_dashboard.yaml"
-    zBlock: "zVaF"
-    description: "Main dashboard - Dynamic HTML from zUI"
+    type: static
+    file: "dashboard.html"
+    description: "Dashboard page with zBifrost client"
   
-  "/users":
-    type: dynamic
-    zVaFile: "./zUI_web_users.yaml"
-    zBlock: "zVaF"
-    description: "User list page - zData + zTable rendered as HTML"
-    _rbac:
-      require_role: "viewer"
-  
-  "/about":
-    type: dynamic
-    zVaFile: "./zUI_web_about.yaml"
-    zBlock: "zVaF"
-    description: "About page - Simple content rendering"
+  "/test-gui.html":
+    type: static
+    file: "test-gui.html"
+    description: "GUI test page - simple zBifrost connection test"
   
   # =====================================================================
-  # Static Assets (from Demo 3)
+  # Static Assets
   # =====================================================================
   
   "/style.css":
@@ -47,6 +42,47 @@ routes:
     type: static
     file: "script.js"
     description: "Main JavaScript file"
+  
+  "/bifrost_client.js":
+    type: static
+    file: "bifrost_client.js"
+    description: "zBifrost WebSocket client (copied from zCLI)"
+  
+  # zBifrost lazy-loaded modules
+  "/_modules/connection.js":
+    type: static
+    file: "_modules/connection.js"
+    description: "zBifrost connection module"
+  
+  "/_modules/hooks.js":
+    type: static
+    file: "_modules/hooks.js"
+    description: "zBifrost hooks module"
+  
+  "/_modules/logger.js":
+    type: static
+    file: "_modules/logger.js"
+    description: "zBifrost logger module"
+  
+  "/_modules/message_handler.js":
+    type: static
+    file: "_modules/message_handler.js"
+    description: "zBifrost message handler module"
+  
+  "/_modules/renderer.js":
+    type: static
+    file: "_modules/renderer.js"
+    description: "zBifrost renderer module"
+  
+  "/_modules/theme_loader.js":
+    type: static
+    file: "_modules/theme_loader.js"
+    description: "zBifrost theme loader module"
+  
+  "/access_denied.html":
+    type: static
+    file: "access_denied.html"
+    description: "RBAC denial page"
   
   # =====================================================================
   # Fallback

@@ -1,44 +1,72 @@
-# Demo 4 - Dynamic Web UI: Users Page
-# Demonstrates zData integration with HTTP route navigation
+# Demo 4.2 - Dual-Mode Users Page
+# zPhilosophy: Same zUI, Any Mode
 
 zVaF:
-  # Navigation back to dashboard
-  ~Root*: ["Back to Dashboard", "Show Users"]
+  PageHeader:
+    zDisplay:
+      event: header
+      content: "👥 User Management"
+      indent: 0
   
-  "Back to Dashboard":
-    # HTTP route back to dashboard
-    zLink: "/dashboard"
+  PageDescription:
+    zDisplay:
+      event: text
+      content: "Manage application users with RBAC protection"
+      indent: 1
   
-  "Show Users":
-    # Jump to UserList block
+  Divider1:
+    zDisplay:
+      event: line
+      indent: 0
+  
+  RBACNotice:
+    zDisplay:
+      event: warning
+      content: "🔒 This page requires 'viewer' role (RBAC Demo)"
+      indent: 1
+  
+  FutureFeatures:
+    zDisplay:
+      event: info
+      content: "Future: zData CRUD + zDialog forms"
+      indent: 1
+  
+  Divider2:
+    zDisplay:
+      event: line
+      indent: 0
+  
+  # Navigation menu
+  ~Root*: ["Mock User List", "Dashboard", "About"]
+  
+  "Mock User List":
     zDelta: "%UserList"
-
-UserList:
-  # Display header
-  zDisplay:
-    event: header
-    content: "👥 User Management"
-    indent: 0
-  
-  # Fetch users from Demo 2's CSV data
-  zData:
-    model: "../02_Data_Logic/zSchema.users_csv"
-    action: read
-    table: users
-    order: "id DESC"
-    limit: 10
-  
-  # Display users in table format
-  # Note: In web mode, this will render as HTML <table>
-  # In terminal mode, this renders as ASCII table
-  zDisplay:
-    event: text
-    content: "User data loaded successfully!"
-    indent: 1
-  
-  # Back navigation
-  ~Root*: ["Dashboard"]
   
   "Dashboard":
-    zLink: "/dashboard"
+    # File path navigation (works everywhere!)
+    zLink: "@.zUI_web_dashboard"
+  
+  "About":
+    zLink: "@.zUI_web_about"
 
+UserList:
+  ListHeader:
+    zDisplay:
+      event: text
+      content: "📋 User List (Mock Data):"
+      indent: 1
+  
+  UserListDisplay:
+    zDisplay:
+      event: list
+      items:
+        - "ID: 1, Name: Alice Johnson, Role: admin"
+        - "ID: 2, Name: Bob Smith, Role: viewer"
+        - "ID: 3, Name: Charlie Brown, Role: editor"
+      indent: 2
+  
+  BackMenu:
+    ~Root*: ["Back to Users"]
+  
+  "Back to Users":
+    zDelta: "%zVaF"

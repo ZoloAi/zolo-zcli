@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GUI Test - zBifrost</title>
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        #status {
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+        #status.connecting { background: #fef3c7; color: #92400e; }
+        #status.connected { background: #d1fae5; color: #065f46; }
+        #status.error { background: #fee2e2; color: #991b1b; }
+        
+        #content {
+            min-height: 400px;
+            padding: 2rem;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+        }
+        
+        .test-button {
+            padding: 0.75rem 1.5rem;
+            margin: 0.5rem;
+            background: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .test-button:hover {
+            background: #4338ca;
+        }
+        
+        .log {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.85rem;
+        }
+        .log-entry {
+            padding: 0.25rem 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 zBifrost GUI Test</h1>
+        
+        <div id="status" class="connecting">
+            🔌 Connecting to zBifrost WebSocket...
+        </div>
+
+        <div>
+            <button class="test-button" onclick="testHeader()">Test Header Event</button>
+            <button class="test-button" onclick="testText()">Test Text Event</button>
+            <button class="test-button" onclick="testSuccess()">Test Success Event</button>
+            <button class="test-button" onclick="testInfo()">Test Info Event</button>
+            <button class="test-button" onclick="clearContent()">Clear</button>
+        </div>
+
+        <div id="content">
+            <p style="color: #6b7280;">Waiting for connection...</p>
+        </div>
+
+        <div class="log" id="log">
+            <strong>Event Log:</strong>
+        </div>
+    </div>
+
+    <script type="module">
+        // SimpleBifrostClient - Same pattern as Level 0 demo
+        class SimpleBifrostClient {
+            constructor(url, options = {}) {
+                this.url = url;
+                this.options = options;
+                this.ws = null;
+                this.hooks = options.hooks || {};
+            }
+
+            async connect() {
+                return new Promise((resolve, reject) => {
+                    this.ws = new WebSocket(this.url);
+                    
+                    this.ws.onopen = () => {
+                        console.log('[zBifrost] WebSocket opened');
+                    };
+                    
+                    this.ws.onmessage = (event) => {
+                        try {
+                            const msg = JSON.parse(event.data);
+                            console.log('[zBifrost] Message:', msg);
+                            
+                            if (msg.event === 'connection_info') {
+                                if (this.hooks.onConnected) {
+                                    this.hooks.onConnected(msg.data);
+                                }
+                                resolve();
+                            } else {
+                                if (this.hooks.onMessage) {
+                                    this.hooks.onMessage(msg);
+                                }
+                                if (this.hooks.onDisplay) {
+                                    this.hooks.onDisplay(msg);
+                                }
+                            }
+                            
+                            if (this.hooks.onBroadcast) {
+                                this.hooks.onBroadcast(msg);
+                            }
+                        } catch (e) {
+                            console.log('[zBifrost] Non-JSON message:', event.data);
+                        }
+                    };
+                    
+                    this.ws.onerror = (error) => {
+                        console.error('[zBifrost] WebSocket error:', error);
+                        if (this.hooks.onError) {
+                            this.hooks.onError(error);
+                        }
+                        reject(error);
+                    };
+                    
+                    this.ws.onclose = (event) => {
+                        console.log('[zBifrost] WebSocket closed:', event);
+                        if (this.hooks.onDisconnected) {
+                            this.hooks.onDisconnected(event.reason || 'Connection closed');
+                        }
+                    };
+                });
+            }
+
+            disconnect() {
+                if (this.ws) {
+                    this.ws.close();
+                    this.ws = null;
+                }
+            }
+
+            isConnected() {
+                return this.ws && this.ws.readyState === WebSocket.OPEN;
+            }
+
+            async send(data) {
+                if (!this.isConnected()) {
+                    throw new Error('Not connected to server');
+                }
+                
+                return new Promise((resolve, reject) => {
+                    try {
+                        const message = JSON.stringify(data);
+                        this.ws.send(message);
+                        console.log('[zBifrost] Sent:', data);
+                        resolve();
+                    } catch (error) {
+                        console.error('[zBifrost] Send failed:', error);
+                        reject(error);
+                    }
+                });
+            }
+        }
+
+        let client;
+        const statusEl = document.getElementById('status');
+        const contentEl = document.getElementById('content');
+        const logEl = document.getElementById('log');
+
+        function addLog(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            const timestamp = new Date().toLocaleTimeString();
+            entry.textContent = `[${timestamp}] ${message}`;
+            if (type === 'error') entry.style.color = '#dc2626';
+            if (type === 'success') entry.style.color = '#059669';
+            logEl.appendChild(entry);
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        async function initBifrost() {
+            try {
+                addLog('🚀 Initializing SimpleBifrostClient (Level 0 pattern)...');
+                
+                client = new SimpleBifrostClient('ws://127.0.0.1:8765', {
+                    autoTheme: false,
+                    autoReconnect: true,
+                    debug: true,
+                    hooks: {
+                        onConnected: (info) => {
+                            statusEl.className = 'connected';
+                            statusEl.textContent = '✅ Connected to zBifrost';
+                            addLog('✅ Connected via SimpleBifrostClient!', 'success');
+                            addLog(`📦 Server version: ${info.server_version || 'unknown'}`, 'success');
+                            addLog(`🎯 Features: ${info.features ? info.features.join(', ') : 'none'}`, 'success');
+                            contentEl.innerHTML = '<p style="color: #059669;">✅ Connection established! Try the test buttons above.</p>';
+                        },
+                        
+                        onDisconnected: (reason) => {
+                            statusEl.className = 'error';
+                            statusEl.textContent = '❌ Disconnected';
+                            addLog(`🔌 Disconnected: ${reason}`, 'error');
+                        },
+                        
+                        onDisplay: (data) => {
+                            addLog(`📨 Display event received: ${JSON.stringify(data)}`, 'success');
+                            renderDisplayEvent(data);
+                        },
+                        
+                        onMessage: (msg) => {
+                            addLog(`📨 Message: ${JSON.stringify(msg).substring(0, 100)}...`);
+                        },
+                        
+                        onError: (error) => {
+                            addLog(`❌ Error: ${error.message || error}`, 'error');
+                        },
+                        
+                        onBroadcast: (msg) => {
+                            addLog(`📡 Broadcast: ${msg.event || 'unknown'}`);
+                        }
+                    }
+                });
+
+                addLog('🔌 Connecting to ws://127.0.0.1:8765...');
+                await client.connect();
+
+            } catch (error) {
+                statusEl.className = 'error';
+                statusEl.textContent = `❌ Connection failed: ${error.message}`;
+                addLog(`❌ Fatal error: ${error.message}`, 'error');
+                contentEl.innerHTML = `
+                    <div style="color: #991b1b; padding: 1rem; background: #fee2e2; border-radius: 4px;">
+                        <h3>Connection Failed</h3>
+                        <p>${error.message}</p>
+                        <ul>
+                            <li>Is zBifrost running on ws://127.0.0.1:8765?</li>
+                            <li>Did you start dynamic_web_walker.py?</li>
+                        </ul>
+                    </div>
+                `;
+            }
+        }
+
+        // Test functions - send dispatch commands to zCLI backend
+        window.testHeader = async function() {
+            if (!client || !client.isConnected()) {
+                addLog('❌ Not connected!', 'error');
+                return;
+            }
+            
+            addLog('📤 Sending dispatch: ^TestHeader');
+            try {
+                await client.send({
+                    event: 'dispatch',
+                    zKey: '^TestHeader'
+                });
+                addLog('✅ Command sent', 'success');
+            } catch (e) {
+                addLog(`❌ Failed: ${e.message}`, 'error');
+            }
+        }
+
+        window.testText = async function() {
+            if (!client || !client.isConnected()) {
+                addLog('❌ Not connected!', 'error');
+                return;
+            }
+            
+            addLog('📤 Sending dispatch: ^TestText');
+            try {
+                await client.send({
+                    event: 'dispatch',
+                    zKey: '^TestText'
+                });
+                addLog('✅ Command sent', 'success');
+            } catch (e) {
+                addLog(`❌ Failed: ${e.message}`, 'error');
+            }
+        }
+
+        window.testSuccess = async function() {
+            if (!client || !client.isConnected()) {
+                addLog('❌ Not connected!', 'error');
+                return;
+            }
+            
+            addLog('📤 Sending dispatch: ^TestSuccess');
+            try {
+                await client.send({
+                    event: 'dispatch',
+                    zKey: '^TestSuccess'
+                });
+                addLog('✅ Command sent', 'success');
+            } catch (e) {
+                addLog(`❌ Failed: ${e.message}`, 'error');
+            }
+        }
+
+        window.testInfo = async function() {
+            if (!client || !client.isConnected()) {
+                addLog('❌ Not connected!', 'error');
+                return;
+            }
+            
+            addLog('📤 Sending dispatch: ^TestInfo');
+            try {
+                await client.send({
+                    event: 'dispatch',
+                    zKey: '^TestInfo'
+                });
+                addLog('✅ Command sent', 'success');
+            } catch (e) {
+                addLog(`❌ Failed: ${e.message}`, 'error');
+            }
+        }
+
+        window.clearContent = function() {
+            contentEl.innerHTML = '';
+            addLog('Content cleared');
+        }
+
+        function renderDisplayEvent(data) {
+            // Render zDisplay JSON events as HTML
+            const eventType = data.display_event || data.event || 'unknown';
+            const eventData = data.data || data;
+            
+            let html = '';
+            
+            switch(eventType) {
+                case 'header':
+                    html = `<h2 style="color: #4f46e5; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.5rem;">
+                        ${eventData.content || eventData.label || 'Header'}
+                    </h2>`;
+                    break;
+                
+                case 'text':
+                    html = `<p>${eventData.content || eventData.text || 'Text'}</p>`;
+                    break;
+                
+                case 'success':
+                    html = `<p style="color: #059669; background: #d1fae5; padding: 0.75rem; border-radius: 4px;">
+                        ✅ ${eventData.content || 'Success'}
+                    </p>`;
+                    break;
+                
+                case 'error':
+                    html = `<p style="color: #dc2626; background: #fee2e2; padding: 0.75rem; border-radius: 4px;">
+                        ❌ ${eventData.content || 'Error'}
+                    </p>`;
+                    break;
+                
+                case 'info':
+                    html = `<p style="color: #0284c7; background: #e0f2fe; padding: 0.75rem; border-radius: 4px;">
+                        ℹ️  ${eventData.content || 'Info'}
+                    </p>`;
+                    break;
+                
+                default:
+                    html = `<pre style="background: #f3f4f6; padding: 1rem; border-radius: 4px; overflow-x: auto;">${JSON.stringify(data, null, 2)}</pre>`;
+            }
+            
+            contentEl.innerHTML += html;
+        }
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', initBifrost);
+    </script>
+</body>
+</html>
+

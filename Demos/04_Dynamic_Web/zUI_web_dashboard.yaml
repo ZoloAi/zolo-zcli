@@ -1,45 +1,98 @@
-# Demo 4 - Dynamic Web UI: Dashboard
-# zPhilosophy: Define intent first (HTTP route navigation)
-# This zUI uses HTTP routes (/users, /about) instead of file paths
+# Demo 4.2 - Dual-Mode Dashboard
+# zPhilosophy: Same zUI, Any Mode (Terminal, Web, zBifrost)
+# Test in Terminal FIRST, then prove it works in Web!
 
 zVaF:
-  # Main menu with HTTP route navigation
-  ~Root*: ["View Users", "About", "Home"]
-  
-  "View Users":
-    # HTTP route navigation (requires zLink enhancement)
-    zLink: "/users"
-  
-  "About":
-    # HTTP route navigation
-    zLink: "/about"
-  
-  "Home":
-    zDelta: "%HomePage"
-
-HomePage:
-  # Display welcome message
-  Header:
+  # Step 1: Real content (not just navigation!)
+  WelcomeHeader:
     zDisplay:
       event: header
-      content: "🎨 Welcome to zCLI Dynamic Web"
+      content: "🎨 Welcome to zCLI Dashboard"
       indent: 0
   
-  Description:
+  WelcomeText:
     zDisplay:
       event: text
-      content: "This dashboard demonstrates declarative web applications powered by zUI YAML."
+      content: "Multi-mode application - Terminal, Web, and zBifrost ready"
       indent: 1
   
-  Instructions:
+  Divider1:
+    zDisplay:
+      event: line
+      indent: 0
+  
+  # Step 2: System Status (useful content!)
+  StatusHeader:
     zDisplay:
       event: text
-      content: "Navigate using the menu above to explore user management and about pages."
+      content: "📊 System Status:"
       indent: 1
   
-  Status:
+  ServerStatus:
     zDisplay:
       event: success
-      content: "HTTP route navigation via zLink!"
+      content: "✅ zServer: Online"
+      indent: 2
+  
+  AuthStatus:
+    zDisplay:
+      event: info
+      content: "🔐 zAuth: Ready"
+      indent: 2
+  
+  DisplayStatus:
+    zDisplay:
+      event: success
+      content: "🖥️  zDisplay: Multi-mode"
+      indent: 2
+  
+  Divider2:
+    zDisplay:
+      event: line
+      indent: 0
+  
+  # Step 3: Navigation menu (dual-mode compatible!)
+  ~Root*: ["View Users", "About", "Diagnostics", "stop"]
+  
+  "View Users":
+    # Use file path (works in ALL modes!)
+    zLink: "@.zUI_web_users"
+  
+  "About":
+    # Use file path
+    zLink: "@.zUI_web_about"
+  
+  "Diagnostics":
+    # Intra-file navigation (works everywhere!)
+    zDelta: "%Diagnostics"
+
+Diagnostics:
+  DiagHeader:
+    zDisplay:
+      event: header
+      content: "🔧 Server Diagnostics"
+      indent: 0
+  
+  DiagInfo:
+    zDisplay:
+      event: text
+      content: "System Information:"
       indent: 1
+  
+  DiagList:
+    zDisplay:
+      event: list
+      items:
+        - "Port: 8081"
+        - "Mode: Auto-detected (Terminal/Web/zBifrost)"
+        - "zAuth: Session-based RBAC"
+        - "zServer: Declarative routing"
+        - "Routes: 3 active (/, /dashboard, /users, /about)"
+      indent: 2
+  
+  BackMenu:
+    ~Root*: ["Back to Dashboard"]
+  
+  "Back to Dashboard":
+    zDelta: "%zVaF"
 

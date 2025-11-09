@@ -487,15 +487,15 @@
                 <div class="stat-label">✅ Completed</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" style="color: var(--accent-yellow);" id="pending-count">0</div>
+                <div class="stat-number" style="color: var(--accent-yellow);" id="pending-count">1</div>
                 <div class="stat-label">⏳ Pending</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" style="color: var(--accent-blue);" id="total-count">8</div>
+                <div class="stat-number" style="color: var(--accent-blue);" id="total-count">9</div>
                 <div class="stat-label">📋 Total Demos</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" style="color: var(--accent-purple);" id="progress-percent">88%</div>
+                <div class="stat-number" style="color: var(--accent-purple);" id="progress-percent">78%</div>
                 <div class="stat-label">📈 Progress</div>
             </div>
         </div>
@@ -804,12 +804,12 @@
         <!-- LEVEL 4: DYNAMIC WEB UI (PLANNING PHASE)                         -->
         <!-- ═══════════════════════════════════════════════════════════════ -->
         
-        <div class="level level-4" style="background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(16, 185, 129, 0.05)); border: 2px solid var(--accent-green);">
-            <div class="level-header" style="border-bottom: 2px solid var(--accent-green);">
+        <div class="level level-4" style="background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(16, 185, 129, 0.05)); border: 2px solid var(--accent-yellow);">
+            <div class="level-header" style="border-bottom: 2px solid var(--accent-yellow);">
                 <div class="level-number">4</div>
                 <div class="level-title">
-                    <h2 style="color: var(--accent-green);">🎨 Dynamic Web UI - zServer + zUI ⚡ MVP COMPLETE</h2>
-                    <div class="level-description">Server-side HTML rendering from zUI YAML - Declarative web applications (improvements pending)</div>
+                    <h2 style="color: var(--accent-yellow);">🎨 Dynamic Web UI - zServer + zUI ⚡ MVP DONE, Refining...</h2>
+                    <div class="level-description">Server-side HTML rendering • Dual-mode zUI (Terminal + Web) • zPhilosophy validation</div>
                 </div>
             </div>
 
@@ -1200,6 +1200,225 @@ python3 dynamic_web_walker.py
                         <span class="subsystem-tag">PageRenderer (NEW)</span>
                         <span class="mode-tag">HTTP + HTML</span>
                         <span class="time-tag">⏱️ 120+ min (major refactor)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Demo #4.2 - Dual-Mode zUI -->
+            <div class="demo" data-demo-id="4-2" data-status="pending" style="border: 2px solid var(--accent-yellow);">
+                <input type="checkbox" class="demo-checkbox" onchange="updateDemo(this)">
+                <div class="demo-content">
+                    <div class="demo-title">
+                        <span><strong>#4.2</strong> Dual-Mode zUI - Terminal + Web from Same YAML ⏳</span>
+                    </div>
+                    <div class="demo-description">
+                        <strong style="color: var(--accent-yellow);">🎯 GOAL:</strong> Prove zCLI's core philosophy - "Same zUI, Any Mode"<br>
+                        <strong>Challenge:</strong> Demo 4.1 is web-only! Dashboard doesn't work in Terminal mode. Fix this architectural flaw.
+                        
+                        <div style="margin-top: 1rem; padding: 1rem; background: rgba(239, 68, 68, 0.1); border-left: 3px solid var(--accent-red); border-radius: 4px;">
+                            <strong style="color: var(--accent-red);">❌ Current Problem with Demo 4.1:</strong>
+                            <pre style="background: rgba(0,0,0,0.3); padding: 0.75rem; border-radius: 4px; margin: 0.5rem 0;"><code># zUI_web_dashboard.yaml - Currently web-only!
+zVaF:
+  ~Root*: ["View Users", "About"]
+  "View Users":
+    zLink: "/users"  # ❌ HTTP route doesn't work in Terminal!</code></pre>
+                            <p style="margin: 0.5rem 0 0;"><strong>Test fails:</strong> <code>python3 -c "z.walker.run('zUI_web_dashboard.yaml')"</code> → Error or nothing!</p>
+                        </div>
+                        
+                        <div style="margin-top: 1rem; padding: 1rem; background: rgba(16, 185, 129, 0.1); border-left: 3px solid var(--accent-green); border-radius: 4px;">
+                            <strong style="color: var(--accent-green);">✅ zPhilosophy Principle:</strong>
+                            <blockquote style="margin: 0.5rem 0; padding: 0.5rem; border-left: 3px solid var(--accent-green); font-style: italic;">
+                                "Just like zSchemas are both data models AND validators,<br>
+                                zUI files are Terminal interface AND Web interface AND GUI interface.<br>
+                                One source of truth, multiple rendering targets."
+                            </blockquote>
+                            <p style="margin: 0.5rem 0;"><strong>Analogy:</strong></p>
+                            <ul style="margin: 0; padding-left: 1.5rem;">
+                                <li><code>zSchema.users.yaml</code> → Works in CSV backend AND SQLite backend</li>
+                                <li><code>zUI.dashboard.yaml</code> → Should work in Terminal AND Web AND zBifrost</li>
+                            </ul>
+                        </div>
+                        
+                        <h3 style="color: var(--accent-blue); margin: 1rem 0 0.5rem;">📋 Step 1: Redesign zUI for Dual-Mode</h3>
+                        <div style="background: rgba(0, 212, 255, 0.05); padding: 1rem; border-radius: 4px; margin-bottom: 1rem;">
+                            <strong>Create REAL content that works everywhere:</strong>
+                            <pre style="background: rgba(0,0,0,0.3); padding: 0.75rem; border-radius: 4px; margin: 0.5rem 0;"><code># zUI_web_dashboard.yaml - PROPER dual-mode design
+zVaF:
+  # Step 1: Welcome (works in all modes)
+  WelcomeHeader:
+    zDisplay:
+      event: header
+      content: "🎨 Welcome to zCLI Dashboard"
+  
+  WelcomeText:
+    zDisplay:
+      event: text
+      content: "Multi-mode ready - Terminal, Web, GUI"
+      indent: 1
+  
+  # Step 2: Real content (not just navigation!)
+  SystemStatus:
+    zDisplay:
+      event: text
+      content: "System Status:"
+      indent: 1
+  
+  ServerHealth:
+    zDisplay:
+      event: success
+      content: "✅ Server: Online"
+      indent: 2
+  
+  AuthStatus:
+    zDisplay:
+      event: info
+      content: "🔐 Auth: Ready"
+      indent: 2
+  
+  # Step 3: Navigation (dual-mode compatible)
+  ~Root*: ["View Users", "About", "Diagnostics"]
+  
+  "View Users":
+    # File path for Terminal/Bifrost
+    zLink: "@.zUI_web_users"
+  
+  "Diagnostics":
+    # Intra-file works everywhere!
+    zDelta: "%Diagnostics"
+
+Diagnostics:
+  DiagHeader:
+    zDisplay:
+      event: header
+      content: "🔧 Server Diagnostics"
+  
+  DiagList:
+    zDisplay:
+      event: list
+      items:
+        - "Port: 8081"
+        - "Mode: Auto-detected"
+        - "Routes: 3 active"</code></pre>
+                            <strong style="color: var(--accent-green);">Key: Real content first, navigation second!</strong>
+                        </div>
+                        
+                        <h3 style="color: var(--accent-blue); margin: 1rem 0 0.5rem;">🔗 Step 2: Solve Dual-Mode Navigation</h3>
+                        <div style="background: rgba(0, 212, 255, 0.05); padding: 1rem; border-radius: 4px; margin-bottom: 1rem;">
+                            <strong>Problem: zLink needs to work in BOTH modes</strong>
+                            
+                            <p style="margin: 0.75rem 0;"><strong>Option A: Mode-Aware zLink (Recommended)</strong></p>
+                            <pre style="background: rgba(0,0,0,0.3); padding: 0.75rem; border-radius: 4px; margin: 0.5rem 0;"><code>"View Users":
+  zLink: "@.zUI_web_users"  # Always use file path
+
+# Backend auto-detects mode:
+# - Terminal: Load file via zLoader
+# - Web: PageRenderer maps to "/users" via zServer_routes.yaml
+# - Bifrost: Load file and render in GUI</code></pre>
+                            
+                            <p style="margin: 0.75rem 0;"><strong>Option B: Dual Syntax</strong></p>
+                            <pre style="background: rgba(0,0,0,0.3); padding: 0.75rem; border-radius: 4px; margin: 0.5rem 0;"><code>"View Users":
+  zLink:
+    terminal: "@.zUI_web_users"
+    web: "/users"</code></pre>
+                            
+                            <p style="margin: 0.75rem 0;"><strong>Option C: zServer Mapping</strong></p>
+                            <pre style="background: rgba(0,0,0,0.3); padding: 0.75rem; border-radius: 4px; margin: 0.5rem 0;"><code># zUI always uses file paths
+"View Users":
+  zLink: "@.zUI_web_users"
+
+# zServer_routes.yaml defines HTTP route
+routes:
+  "/users":
+    type: dynamic
+    zVaFile: "@.zUI_web_users"  # Same file!
+    
+# Web mode: "/users" HTTP route → loads same file
+# Terminal: "@.zUI_web_users" → loads file directly</code></pre>
+                        </div>
+                        
+                        <h3 style="color: var(--accent-blue); margin: 1rem 0 0.5rem;">🧪 Step 3: Test Terminal First!</h3>
+                        <div style="background: rgba(168, 85, 247, 0.05); padding: 1rem; border-radius: 4px; margin-bottom: 1rem;">
+                            <strong>zPhilosophy: If it doesn't work in Terminal, the zUI is wrong!</strong>
+                            
+                            <p style="margin: 0.75rem 0;"><strong>Test 1: Terminal Mode</strong></p>
+                            <pre style="background: rgba(0,0,0,0.3); padding: 0.75rem; border-radius: 4px; margin: 0.5rem 0;"><code>cd Demos/04_Dynamic_Web
+python3 -c "
+from zCLI import zCLI
+z = zCLI({
+    'zSpace': '.',
+    'zVaFile': 'zUI_web_dashboard.yaml',
+    'zMode': 'Terminal'
+})
+z.walker.run()
+"
+# Expected: Welcome, status, menu, navigation works!</code></pre>
+                            
+                            <p style="margin: 0.75rem 0;"><strong>Test 2: Web Mode (should still work)</strong></p>
+                            <pre style="background: rgba(0,0,0,0.3); padding: 0.75rem; border-radius: 4px; margin: 0.5rem 0;"><code>python3 dynamic_web_walker.py
+# Open: http://127.0.0.1:8081/dashboard
+# Expected: SAME content as Terminal, just HTML!</code></pre>
+                            
+                            <p style="margin: 0.75rem 0;"><strong>Test 3: Compare outputs</strong></p>
+                            <ul style="margin: 0; padding-left: 1.5rem; line-height: 1.8;">
+                                <li>Same welcome message? ✅</li>
+                                <li>Same status info? ✅</li>
+                                <li>Same menu structure? ✅</li>
+                                <li>Navigation works in both? ✅</li>
+                            </ul>
+                        </div>
+                        
+                        <h3 style="color: var(--accent-blue); margin: 1rem 0 0.5rem;">🔧 Step 4: Fix PageRenderer (If Needed)</h3>
+                        <div style="background: rgba(251, 191, 36, 0.05); padding: 1rem; border-radius: 4px; margin-bottom: 1rem;">
+                            <strong>Current PageRenderer: Parses YAML structure (web-only)</strong>
+                            <p style="margin: 0.5rem 0;"><strong>Should be:</strong> Execute zWalker blocks → Capture output → Mode determines rendering</p>
+                            
+                            <pre style="background: rgba(0,0,0,0.3); padding: 0.75rem; border-radius: 4px; margin: 0.5rem 0;"><code># Pseudo-code for proper dual-mode
+def render_page(zVaFile, zBlock):
+    # Load zUI
+    zui_data = zcli.loader.handle(zVaFile)
+    
+    # Set mode to "Web" (for HTML output)
+    session["zMode"] = "Web"
+    
+    # Execute walker blocks (SAME as Terminal!)
+    for key, value in zui_data[zBlock].items():
+        walker.execute_key(key, value)
+        # zDisplay events fire → Captured as HTML
+    
+    # Wrap in template
+    return wrap_html(captured_output)</code></pre>
+                        </div>
+                        
+                        <h3 style="color: var(--accent-green); margin: 1rem 0 0.5rem;">✅ Success Criteria</h3>
+                        <ul style="margin-bottom: 1rem; line-height: 1.8;">
+                            <li>✅ Dashboard zUI runs in Terminal mode (test first!)</li>
+                            <li>✅ Same dashboard works in Web mode (test second)</li>
+                            <li>✅ Content is identical (welcome, status, menu)</li>
+                            <li>✅ Navigation works in both modes (zLink dual-mode solved)</li>
+                            <li>✅ zDelta works in both modes (intra-file navigation)</li>
+                            <li>✅ No web-specific syntax in zUI files</li>
+                            <li>✅ zPhilosophy validated: One zUI, multiple modes!</li>
+                        </ul>
+                        
+                        <div style="background: rgba(168, 85, 247, 0.1); padding: 1rem; border-radius: 4px;">
+                            <strong style="color: var(--accent-purple);">🎯 Why This Matters:</strong>
+                            <p style="margin: 0.5rem 0;">This proves zCLI's architecture is sound:</p>
+                            <ul style="margin: 0; padding-left: 1.5rem; line-height: 1.8;">
+                                <li>Terminal = Rapid development & testing</li>
+                                <li>Web = User-facing deployment</li>
+                                <li>zBifrost = Rich desktop apps</li>
+                                <li><strong>All use the SAME zUI file!</strong></li>
+                            </ul>
+                            <p style="margin: 0.5rem 0 0;"><strong style="color: var(--accent-green);">Bonus:</strong> Terminal testing is FASTER than web testing → Better dev workflow!</p>
+                        </div>
+                    </div>
+                    <div class="demo-meta">
+                        <span class="subsystem-tag">zWalker (Core)</span>
+                        <span class="subsystem-tag">zDisplay (Multi-mode)</span>
+                        <span class="subsystem-tag">zNavigation (Dual-mode)</span>
+                        <span class="subsystem-tag">PageRenderer (Refactor)</span>
+                        <span class="mode-tag">Terminal + Web</span>
+                        <span class="time-tag">⏱️ 90 min (refactor + testing)</span>
                     </div>
                 </div>
             </div>

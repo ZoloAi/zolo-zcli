@@ -116,9 +116,10 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
             if not hasattr(self.router, 'zcli'):
                 return self.send_error(500, "zCLI instance not available")
             
-            # Import and create page renderer
+            # Import and create page renderer with routes for dual-mode navigation
             from .page_renderer import PageRenderer
-            renderer = PageRenderer(self.router.zcli)
+            routes = self.router.routes.get('routes', {}) if hasattr(self.router, 'routes') else {}
+            renderer = PageRenderer(self.router.zcli, routes=routes)
             
             # Render zUI to HTML
             html_content = renderer.render_page(zVaFile, zBlock)

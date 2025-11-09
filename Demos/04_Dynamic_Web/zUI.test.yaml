@@ -1,0 +1,54 @@
+# Demo 4.2 - Test zUI for zBifrost connection testing
+# Simple blocks with zDisplay events to test WebSocket communication
+
+TestMenu:
+  WelcomeHeader:
+    zDisplay:
+      event: header
+      label: "🧪 zBifrost Test Menu"
+  
+  Description:
+    zDisplay:
+      event: text
+      content: "This is a test menu to verify zBifrost WebSocket communication."
+  
+  ~Root*:
+    - Test Header Event: { zKey: "^TestHeader" }
+    - Test Text Event: { zKey: "^TestText" }
+    - Test Success Event: { zKey: "^TestSuccess" }
+    - Test Info Event: { zKey: "^TestInfo" }
+
+TestHeader:
+  HeaderEvent:
+    zDisplay:
+      event: header
+      label: "📋 This is a Header Event"
+  
+  BackLink:
+    zDisplay:
+      event: info
+      content: "✅ Header event rendered successfully!"
+
+TestText:
+  TextEvent:
+    zDisplay:
+      event: text
+      content: "This is a simple text display event. It can contain multiple lines of text and will be rendered as plain paragraphs."
+
+TestSuccess:
+  SuccessEvent:
+    zDisplay:
+      event: success
+      content: "Operation completed successfully! ✅"
+  
+  AdditionalInfo:
+    zDisplay:
+      event: text
+      content: "Success events are typically used to confirm actions."
+
+TestInfo:
+  InfoEvent:
+    zDisplay:
+      event: info
+      content: "ℹ️  This is an informational message. Use it to provide context or guidance."
+

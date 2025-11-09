@@ -3,92 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Demo 4 - Dynamic Web UI</title>
+    <title>Demo 4.2 - Dual-Mode zUI</title>
     <link rel="stylesheet" href="/style.css">
+    <style>
+        .hero {
+            text-align: center;
+            padding: 3rem 1rem;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1));
+            border-radius: 12px;
+            margin-bottom: 2rem;
+        }
+        .hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            color: #4f46e5;
+        }
+        .hero p {
+            font-size: 1.2rem;
+            color: #6b7280;
+        }
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .feature {
+            padding: 1.5rem;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .feature h3 {
+            color: #4f46e5;
+            margin-bottom: 0.5rem;
+        }
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: #4f46e5;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #4338ca;
+        }
+        .btn-secondary {
+            background: white;
+            color: #4f46e5;
+            border: 2px solid #4f46e5;
+        }
+        .btn-secondary:hover {
+            background: #f5f3ff;
+        }
+        .architecture {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 1rem;
+            margin-top: 2rem;
+            border-radius: 4px;
+        }
+        .architecture h3 {
+            color: #92400e;
+            margin-top: 0;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>🎨 Demo 4: Dynamic Web UI</h1>
-            <p class="subtitle">zUI YAML → Server-Side HTML Rendering</p>
-        </header>
+        <div class="hero">
+            <h1>🎨 Demo 4.2: Dual-Mode zUI</h1>
+            <p>One YAML file, two rendering modes: Terminal + Web</p>
+        </div>
 
-        <main>
-            <section class="hero">
-                <h2>Welcome to zCLI Dynamic Web</h2>
-                <p>This demo proves <strong>server-side rendering</strong> from zUI YAML files.</p>
-            </section>
+        <div class="features">
+            <div class="feature">
+                <h3>🖥️  Terminal Mode</h3>
+                <p>Run zUI files directly in your terminal with immediate output.</p>
+                <code style="font-size: 0.9rem;">python3 test_terminal_mode.py</code>
+            </div>
 
-            <section class="content">
-                <h3>🚀 Try These Routes:</h3>
-                <div class="feature-grid">
-                    <div class="feature">
-                        <div class="feature-icon">📊</div>
-                        <h4><a href="/dashboard">Dashboard</a></h4>
-                        <p>Dynamic HTML from zUI_web_dashboard.yaml</p>
-                        <p><small>✅ Public access</small></p>
-                    </div>
+            <div class="feature">
+                <h3>🌐 Web Mode</h3>
+                <p>Same zUI file rendered as HTML via zBifrost WebSocket client.</p>
+                <code style="font-size: 0.9rem;">http://localhost:8081/dashboard</code>
+            </div>
 
-                    <div class="feature">
-                        <div class="feature-icon">ℹ️</div>
-                        <h4><a href="/about">About</a></h4>
-                        <p>Dynamic content page</p>
-                        <p><small>✅ Public access</small></p>
-                    </div>
+            <div class="feature">
+                <h3>🔗 Dual-Mode Navigation</h3>
+                <p>zLink paths work in both modes: file paths (Terminal) → HTTP routes (Web).</p>
+                <code style="font-size: 0.9rem;">zLink: "@.zUI_web_users"</code>
+            </div>
+        </div>
 
-                    <div class="feature">
-                        <div class="feature-icon">🔒</div>
-                        <h4><a href="/users">Users (Protected)</a></h4>
-                        <p>Requires "viewer" role</p>
-                        <p><small>❌ Will show access denied</small></p>
-                    </div>
-                </div>
-            </section>
+        <div class="cta-buttons">
+            <a href="/dashboard" class="btn btn-primary">🎨 Try Dashboard (zBifrost)</a>
+            <a href="/static-demo.html" class="btn btn-secondary">📄 Static Demo (No WebSocket)</a>
+        </div>
 
-            <section class="content">
-                <h3>🏗️ How It Works</h3>
-                <div class="info-box">
-                    <ol>
-                        <li>Browser requests <code>/dashboard</code></li>
-                        <li>HTTPRouter matches dynamic route</li>
-                        <li><strong>PageRenderer loads zUI YAML</strong> (server-side)</li>
-                        <li>Converts zUI blocks to HTML</li>
-                        <li>Returns complete HTML document</li>
-                        <li>Browser displays finished page</li>
-                    </ol>
-                    <p><strong>No client-side JavaScript parsing!</strong> Pure server-side rendering (SSR).</p>
-                </div>
-            </section>
+        <div class="architecture">
+            <h3>🏗️  Architecture</h3>
+            <ol style="margin: 0.5rem 0; padding-left: 1.5rem;">
+                <li><strong>zServer (HTTP):</strong> Serves HTML, CSS, JS on port 8081</li>
+                <li><strong>zBifrost (WebSocket):</strong> Real-time zDisplay JSON events on port 56891</li>
+                <li><strong>zBifrost Client (JS):</strong> Captures JSON, renders as HTML in browser</li>
+                <li><strong>zUI YAML:</strong> Single source of truth for both Terminal and Web modes</li>
+            </ol>
+            <p style="margin-top: 1rem; color: #92400e;"><strong>Innovation:</strong> Same zUI file, different rendering targets!</p>
+        </div>
 
-            <section class="content">
-                <h3>✨ What's Different from Demo 3?</h3>
-                <table style="width: 100%; margin-top: 1rem;">
-                    <tr style="background: #f0f0f0;">
-                        <th style="padding: 0.5rem; text-align: left;">Demo 3</th>
-                        <th style="padding: 0.5rem; text-align: left;">Demo 4</th>
-                    </tr>
-                    <tr>
-                        <td style="padding: 0.5rem;">Static HTML (hand-coded)</td>
-                        <td style="padding: 0.5rem;"><strong>Dynamic HTML (generated from zUI)</strong></td>
-                    </tr>
-                    <tr style="background: #f9f9f9;">
-                        <td style="padding: 0.5rem;">Files in <code>public/</code></td>
-                        <td style="padding: 0.5rem;"><strong>zUI YAML parsed at runtime</strong></td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 0.5rem;">Manual HTML updates</td>
-                        <td style="padding: 0.5rem;"><strong>Change YAML, HTML updates automatically</strong></td>
-                    </tr>
-                </table>
-            </section>
-        </main>
+        <div style="margin-top: 2rem; text-align: center; padding: 1rem; background: #f3f4f6; border-radius: 8px;">
+            <h3 style="margin-top: 0;">🧪 What to Test</h3>
+            <ul style="list-style: none; padding: 0; margin: 1rem 0;">
+                <li>✅ Terminal mode: <code>python3 test_terminal_mode.py</code></li>
+                <li>✅ Web mode: <a href="/dashboard" style="color: #4f46e5;">http://localhost:8081/dashboard</a></li>
+                <li>✅ Navigation: Click menu items in both modes</li>
+                <li>✅ Content: Same zDisplay events, different rendering</li>
+                <li>✅ RBAC: Try <a href="/users" style="color: #4f46e5;">/users</a> without "viewer" role</li>
+            </ul>
+        </div>
 
-        <footer>
-            <p>Generated by zCLI v1.5.4 - Demo 4: Dynamic Web UI</p>
-            <p><small>Server-Side Rendering • YAML-Driven • Declarative Architecture</small></p>
+        <footer style="margin-top: 3rem; text-align: center; color: #6b7280; padding: 2rem 0; border-top: 1px solid #e5e7eb;">
+            <p>Generated by zCLI v1.5.4 - Demo 4.2: Dual-Mode zUI</p>
+            <p style="font-size: 0.9rem;">
+                <a href="https://github.com/ZoloAi/zolo-zcli" style="color: #4f46e5;">GitHub</a> | 
+                <a href="/about" style="color: #4f46e5;">About</a>
+            </p>
         </footer>
     </div>
-    <script src="/script.js"></script>
 </body>
 </html>
-
