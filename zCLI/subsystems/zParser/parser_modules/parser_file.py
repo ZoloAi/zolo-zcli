@@ -462,6 +462,13 @@ def parse_file_content(
     elif file_extension and (FILE_MARKER_ZUI in file_extension):
         is_ui_file = True
     
+    # Check if this is a Server routing file (v1.5.4 Phase 2)
+    is_server_file: bool = False
+    if file_path and "zServer" in str(file_path):
+        is_server_file = True
+    elif file_extension and "zServer" in file_extension:
+        is_server_file = True
+    
     logger.info(f"{LOG_PREFIX_PARSE} {LOG_MSG_IS_UI_FILE}", is_ui_file, file_extension, file_path)
     
     # Route to appropriate parser
@@ -489,6 +496,13 @@ def parse_file_content(
             
             # Fallback if transformation failed
             return parsed_ui.get(DICT_KEY_ZBLOCKS, data) if isinstance(parsed_ui, dict) else data
+        
+        # Apply Server-specific parsing (routing) if this is a Server file (v1.5.4 Phase 2)
+        if is_server_file and data:
+            from .vafile import parse_server_file
+            logger.info("[zServer] Detected server routing file")
+            parsed_server = parse_server_file(data, logger, file_path=file_path, session=session)
+            return parsed_server
         
         return data
     else:

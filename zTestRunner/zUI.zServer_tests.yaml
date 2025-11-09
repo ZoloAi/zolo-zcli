@@ -1,8 +1,8 @@
 # zTestRunner/zUI.zServer_tests.yaml
-# zServer Comprehensive Test Suite (35 tests)
+# zServer Comprehensive Test Suite (45 tests)
 # Declarative approach - tests HTTP static file server functionality
 # Covers: Initialization, Lifecycle, Static Files, CORS, Error Handling,
-#         Health Check, Configuration, Integration, Handler
+#         Health Check, Configuration, Integration, Handler, Routing & RBAC
 
 zVaF:
   zWizard:
@@ -134,6 +134,39 @@ zVaF:
     
     "test_35_server_attributes_complete":
       zFunc: "&zserver_tests.test_35_server_attributes_complete()"
+    
+    # ===============================================================
+    # I. Declarative Routing & RBAC (10 tests) - v1.5.4 Phase 2
+    # ===============================================================
+    "test_36_server_file_parsing":
+      zFunc: "&zserver_tests.test_36_server_file_parsing()"
+    
+    "test_37_router_initialization":
+      zFunc: "&zserver_tests.test_37_router_initialization()"
+    
+    "test_38_route_matching_exact":
+      zFunc: "&zserver_tests.test_38_route_matching_exact()"
+    
+    "test_39_route_matching_wildcard":
+      zFunc: "&zserver_tests.test_39_route_matching_wildcard()"
+    
+    "test_40_route_matching_default":
+      zFunc: "&zserver_tests.test_40_route_matching_default()"
+    
+    "test_41_rbac_public_access":
+      zFunc: "&zserver_tests.test_41_rbac_public_access()"
+    
+    "test_42_rbac_role_required":
+      zFunc: "&zserver_tests.test_42_rbac_role_required()"
+    
+    "test_43_rbac_error_page_redirect":
+      zFunc: "&zserver_tests.test_43_rbac_error_page_redirect()"
+    
+    "test_44_router_file_resolution":
+      zFunc: "&zserver_tests.test_44_router_file_resolution()"
+    
+    "test_45_server_with_routes_integration":
+      zFunc: "&zserver_tests.test_45_server_with_routes_integration()"
     
     # ===============================================================
     # Display Results

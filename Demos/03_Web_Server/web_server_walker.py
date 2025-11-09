@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Web Server Layer Demo - Covers 3.1"""
+"""Web Server Layer Demo - Declarative Routing + RBAC (v1.5.4 Phase 2)"""
 
 from zCLI import zCLI
 
@@ -11,26 +11,65 @@ z = zCLI({
     "zMode": "Terminal"
 })
 
-# Step 3: Create HTTP server via zComm factory
+# Step 3: Create HTTP server with declarative routing
+import os
+routes_path = os.path.join(os.getcwd(), "zServer.demo_routes.yaml")
 server = z.comm.create_http_server(
     port=8080,
-    serve_path="./public"
+    serve_path="./public",
+    routes_file=routes_path  # Declarative routing!
 )
 
 # Start server in background
 server.start()
 
 # Display server info
-print("\n" + "="*60)
-print("🌐 zServer Demo - Static Website")
-print("="*60)
-print(f"📍 Server URL:  {server.get_url()}")
-print(f"📊 Health:      {server.health_check()}")
-print(f"📁 Serving:     ./public/")
-print("="*60)
-print("\n🔗 Open in browser:")
-print(f"   → {server.get_url()}/index.html")
-print(f"   → {server.get_url()}/test_page.html")
+print("\n" + "="*70)
+print("🌐 zServer Demo - Declarative Routing + RBAC")
+print("="*70)
+print(f"📍 Server URL:   {server.get_url()}")
+print(f"📊 Health:       {server.health_check()}")
+print(f"📁 Serving:      {server.serve_path}")
+print(f"🗺️  Routes File:  zServer.demo_routes.yaml")
+print("="*70)
+
+# Show route information
+print("\n📋 Declared Routes:")
+print("   → /              (public)  →  index.html")
+print("   → /test          (public)  →  test_page.html")
+print("   → /secure        (zTester) →  secure_page.html [RBAC PROTECTED]")
+print("   → /*             (public)  →  wildcard fallback")
+
+# Show RBAC status
+print("\n" + "="*70)
+print("🔒 Role-Based Access Control")
+print("="*70)
+
+has_tester_role = z.auth.has_role("zTester")
+
+print(f"📋 Role Check:   z.auth.has_role('zTester')")
+print(f"📊 Result:       {has_tester_role}")
+print(f"🎯 Enforcement:  Backend router (HTTPRouter + handler.py)")
+
+if has_tester_role:
+    print(f"✅ /secure:      GRANTED - User has zTester role")
+else:
+    print(f"❌ /secure:      DENIED - Redirects to access_denied.html")
+
+print("="*70)
+
+print("\n💡 How It Works:")
+print("   1. Routes defined declaratively in zServer.demo_routes.yaml")
+print("   2. HTTPRouter matches incoming paths (/secure)")
+print("   3. RBAC checked via z.auth.has_role('zTester')")
+print("   4. Access denied → Serves error_pages.403 (access_denied.html)")
+print("   5. No manual Python checks - fully declarative!")
+
+print("\n🔗 Try these URLs:")
+print(f"   → {server.get_url()}/           (works)")
+print(f"   → {server.get_url()}/test       (works)")
+print(f"   → {server.get_url()}/secure     (denied → redirects)")
+
 print("\n⌨️  Press Enter to stop server...\n")
 
 # Wait for user input
@@ -42,5 +81,5 @@ except KeyboardInterrupt:
 # Clean shutdown
 print("🛑 Stopping server...")
 server.stop()
-print("✅ Server stopped. Demo complete!")
+print("✅ Server stopped. Declarative routing demo complete!")
 

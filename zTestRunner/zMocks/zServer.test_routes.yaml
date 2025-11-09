@@ -1,0 +1,45 @@
+# zTestRunner/zMocks/zServer.test_routes.yaml
+# Mock zServer routing file for testing declarative routing & RBAC
+# Used by: zUI.zServer_tests.yaml (Category I - Routing tests)
+
+Meta:
+  base_path: "./public"
+  default_route: "index.html"
+  error_pages:
+    403: "access_denied.html"
+    404: "not_found.html"
+
+routes:
+  # Exact route - public access
+  "/":
+    type: static
+    file: "index.html"
+    description: "Landing page"
+  
+  # Exact route - public access
+  "/test":
+    type: static
+    file: "test.html"
+    description: "Test page"
+  
+  # Exact route - RBAC protected (role required)
+  "/admin":
+    type: static
+    file: "admin.html"
+    description: "Admin panel"
+    _rbac:
+      require_role: "admin"
+  
+  # Exact route - RBAC protected (auth required)
+  "/dashboard":
+    type: static
+    file: "dashboard.html"
+    description: "User dashboard"
+    _rbac:
+      require_auth: true
+  
+  # Wildcard fallback - public access
+  "/*":
+    type: static
+    description: "Default static file serving"
+

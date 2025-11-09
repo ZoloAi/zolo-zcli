@@ -233,6 +233,57 @@ code {
     font-size: 1.1rem;
 }
 
+.success-box ol {
+    padding-left: 1.5rem;
+    margin-top: 1rem;
+}
+
+.success-box ol li {
+    padding: 0.5rem 0;
+}
+
+/* ============================================
+   Warning Box
+   ============================================ */
+
+.warning-box {
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(251, 191, 36, 0.05) 100%);
+    border: 2px solid var(--warning);
+    padding: 1.5rem;
+    border-radius: 0.8rem;
+    margin: 2rem 0;
+}
+
+.warning-box h2, .warning-box h3 {
+    color: var(--warning);
+    margin-bottom: 1rem;
+}
+
+.warning-box p {
+    margin-bottom: 0.75rem;
+}
+
+/* ============================================
+   Error Box
+   ============================================ */
+
+.error-box {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%);
+    border: 2px solid var(--accent-red);
+    padding: 1.5rem;
+    border-radius: 0.8rem;
+    margin: 2rem 0;
+}
+
+.error-box h2, .error-box h3 {
+    color: var(--accent-red);
+    margin-bottom: 1rem;
+}
+
+.error-box p {
+    margin-bottom: 0.75rem;
+}
+
 /* ============================================
    Stats Grid
    ============================================ */

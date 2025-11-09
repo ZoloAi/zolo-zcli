@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>zServer Demo - Secure Page</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">⚡ zCLI</div>
+            <nav>
+                <a href="index.html">Home</a>
+                <a href="test_page.html">Test Page</a>
+                <a href="secure_page.html" class="active">Secure Area</a>
+            </nav>
+        </header>
+
+        <main>
+            <section class="hero">
+                <h1>🔒 Secure Area</h1>
+                <p class="subtitle">Role: zTester Required</p>
+            </section>
+
+            <section class="content">
+                <div class="warning-box">
+                    <h2>⚠️ This Should Not Be Visible</h2>
+                    <p>If you're seeing this page, role-based access control is <strong>NOT working</strong>.</p>
+                    <p>This page requires the <code>zTester</code> role and should be blocked by the walker.</p>
+                </div>
+
+                <div class="code-block">
+                    <h3>Expected Behavior</h3>
+                    <pre><code># In walker, before serving this page:
+if not z.auth.has_role("zTester"):
+    # Serve access_denied.html instead
+    return "access_denied.html"
+
+# Role check should fail (no auth setup)
+# User should see Access Denied page</code></pre>
+                </div>
+
+                <h2>What This Would Contain</h2>
+                <p>If properly authenticated with <code>zTester</code> role, this page would show:</p>
+                
+                <div class="feature-grid">
+                    <div class="feature">
+                        <div class="feature-icon">🧪</div>
+                        <h3>Testing Tools</h3>
+                        <p>Access to zCLI testing utilities</p>
+                    </div>
+
+                    <div class="feature">
+                        <div class="feature-icon">📊</div>
+                        <h3>Test Results</h3>
+                        <p>View comprehensive test coverage</p>
+                    </div>
+
+                    <div class="feature">
+                        <div class="feature-icon">🔍</div>
+                        <h3>Debug Console</h3>
+                        <p>Advanced debugging capabilities</p>
+                    </div>
+
+                    <div class="feature">
+                        <div class="feature-icon">⚙️</div>
+                        <h3>System Config</h3>
+                        <p>Tester-level configuration access</p>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <a href="index.html" class="btn btn-primary">
+                        ← Back to Home
+                    </a>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>🔒 This page requires zTester role authentication</p>
+            <p>Access should be denied via walker role check</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+

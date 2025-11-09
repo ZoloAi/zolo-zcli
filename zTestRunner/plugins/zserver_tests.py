@@ -1,9 +1,9 @@
 # zTestRunner/plugins/zserver_tests.py
 """
-zServer Comprehensive Test Suite (35 tests)
+zServer Comprehensive Test Suite (45 tests)
 Declarative approach - tests HTTP static file server functionality
 Covers all zServer moving parts: initialization, lifecycle, static files,
-CORS, error handling, health check, configuration, integration
+CORS, error handling, health check, configuration, integration, routing & RBAC
 """
 
 import sys
@@ -192,15 +192,27 @@ def test_06_server_start(zcli: Optional[Any] = None, context: Optional[Dict[str,
         
         server = zServer(mock_logger, port=19000, serve_path=temp_dir)
         
-        # Mock HTTPServer to avoid network
-        with patch('zCLI.subsystems.zServer.zServer.HTTPServer') as mock_http:
+        # Mock HTTPServer and Thread to avoid network/threading
+        with patch('zCLI.subsystems.zServer.zServer.HTTPServer') as mock_http, \
+             patch('zCLI.subsystems.zServer.zServer.threading.Thread') as mock_thread:
+            
             mock_server_instance = MagicMock()
             mock_http.return_value = mock_server_instance
+            
+            mock_thread_instance = MagicMock()
+            mock_thread.return_value = mock_thread_instance
             
             server.start()
             
             if not server._running:
                 return _store_result(zcli, "Lifecycle: Start Server", "ERROR", "Server not marked as running")
+            
+            # Verify thread was created and started
+            if not mock_thread.called:
+                return _store_result(zcli, "Lifecycle: Start Server", "ERROR", "Thread not created")
+            
+            if not mock_thread_instance.start.called:
+                return _store_result(zcli, "Lifecycle: Start Server", "ERROR", "Thread not started")
             
             server._running = False  # Clean up
             return _store_result(zcli, "Lifecycle: Start Server", "PASSED", "Server started successfully")
@@ -983,6 +995,367 @@ def test_35_server_attributes_complete(zcli: Optional[Any] = None, context: Opti
 
 
 # ============================================================
+# I. DECLARATIVE ROUTING & RBAC (10 tests) - v1.5.4 Phase 2
+# ============================================================
+
+def test_36_server_file_parsing(zcli: Optional[Any] = None, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Test: Parse zServer.*.yaml file"""
+    try:
+        from zCLI.subsystems.zParser.parser_modules.vafile.vafile_server import parse_server_file
+        
+        mock_logger = Mock()
+        
+        # Mock server file data
+        test_data = {
+            "Meta": {
+                "base_path": "./public",
+                "default_route": "index.html",
+                "error_pages": {"403": "access_denied.html"}
+            },
+            "routes": {
+                "/": {"type": "static", "file": "index.html"},
+                "/test": {"type": "static", "file": "test.html"}
+            }
+        }
+        
+        result = parse_server_file(test_data, mock_logger)
+        
+        if result.get("type") != "server":
+            return _store_result(zcli, "Routing: Server File Parsing", "ERROR", "Type should be 'server'")
+        
+        if "routes" not in result:
+            return _store_result(zcli, "Routing: Server File Parsing", "ERROR", "Missing routes key")
+        
+        if "/" not in result["routes"]:
+            return _store_result(zcli, "Routing: Server File Parsing", "ERROR", "Missing root route")
+        
+        return _store_result(zcli, "Routing: Server File Parsing", "PASSED", "Server file parsed correctly")
+    
+    except Exception as e:
+        return _store_result(zcli, "Routing: Server File Parsing", "ERROR", f"Exception: {str(e)}")
+
+
+def test_37_router_initialization(zcli: Optional[Any] = None, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Test: HTTPRouter initialization"""
+    try:
+        from zCLI.subsystems.zServer.zServer_modules.router import HTTPRouter
+        
+        mock_logger = Mock()
+        mock_zcli = Mock()
+        mock_zcli.auth = Mock()
+        
+        routes_data = {
+            "meta": {"base_path": "./public"},
+            "routes": {
+                "/": {"type": "static", "file": "index.html"}
+            }
+        }
+        
+        router = HTTPRouter(routes_data, mock_zcli, mock_logger)
+        
+        if not router:
+            return _store_result(zcli, "Routing: Router Initialization", "ERROR", "Router not created")
+        
+        if not hasattr(router, 'match_route'):
+            return _store_result(zcli, "Routing: Router Initialization", "ERROR", "Missing match_route method")
+        
+        if not hasattr(router, 'check_access'):
+            return _store_result(zcli, "Routing: Router Initialization", "ERROR", "Missing check_access method")
+        
+        return _store_result(zcli, "Routing: Router Initialization", "PASSED", "HTTPRouter initialized successfully")
+    
+    except Exception as e:
+        return _store_result(zcli, "Routing: Router Initialization", "ERROR", f"Exception: {str(e)}")
+
+
+def test_38_route_matching_exact(zcli: Optional[Any] = None, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Test: Exact route matching"""
+    try:
+        from zCLI.subsystems.zServer.zServer_modules.router import HTTPRouter
+        
+        mock_logger = Mock()
+        mock_zcli = Mock()
+        
+        routes_data = {
+            "meta": {},
+            "routes": {
+                "/": {"type": "static", "file": "index.html"},
+                "/test": {"type": "static", "file": "test.html"}
+            }
+        }
+        
+        router = HTTPRouter(routes_data, mock_zcli, mock_logger)
+        
+        # Test exact match
+        route = router.match_route("/test")
+        
+        if not route:
+            return _store_result(zcli, "Routing: Exact Match", "ERROR", "Route not matched")
+        
+        if route.get("file") != "test.html":
+            return _store_result(zcli, "Routing: Exact Match", "ERROR", "Wrong file matched")
+        
+        return _store_result(zcli, "Routing: Exact Match", "PASSED", "Exact route matched correctly")
+    
+    except Exception as e:
+        return _store_result(zcli, "Routing: Exact Match", "ERROR", f"Exception: {str(e)}")
+
+
+def test_39_route_matching_wildcard(zcli: Optional[Any] = None, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Test: Wildcard route matching"""
+    try:
+        from zCLI.subsystems.zServer.zServer_modules.router import HTTPRouter
+        
+        mock_logger = Mock()
+        mock_zcli = Mock()
+        
+        routes_data = {
+            "meta": {"default_route": "index.html"},
+            "routes": {
+                "/": {"type": "static", "file": "index.html"},
+                "/*": {"type": "static", "description": "Wildcard"}
+            }
+        }
+        
+        router = HTTPRouter(routes_data, mock_zcli, mock_logger)
+        
+        # Test wildcard match
+        route = router.match_route("/some/unknown/path")
+        
+        if not route:
+            return _store_result(zcli, "Routing: Wildcard Match", "ERROR", "Wildcard route not matched")
+        
+        if route.get("description") != "Wildcard":
+            return _store_result(zcli, "Routing: Wildcard Match", "ERROR", "Wrong wildcard route matched")
+        
+        return _store_result(zcli, "Routing: Wildcard Match", "PASSED", "Wildcard route matched correctly")
+    
+    except Exception as e:
+        return _store_result(zcli, "Routing: Wildcard Match", "ERROR", f"Exception: {str(e)}")
+
+
+def test_40_route_matching_default(zcli: Optional[Any] = None, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Test: Default route fallback"""
+    try:
+        from zCLI.subsystems.zServer.zServer_modules.router import HTTPRouter
+        
+        mock_logger = Mock()
+        mock_zcli = Mock()
+        
+        routes_data = {
+            "meta": {"default_route": "index.html", "base_path": "./public"},
+            "routes": {
+                "/": {"type": "static", "file": "index.html"}
+            }
+        }
+        
+        router = HTTPRouter(routes_data, mock_zcli, mock_logger)
+        
+        # Test default route fallback (no /* defined)
+        route = router.match_route("/unknown")
+        
+        if not route:
+            return _store_result(zcli, "Routing: Default Fallback", "ERROR", "No default route returned")
+        
+        # Should get default route behavior
+        return _store_result(zcli, "Routing: Default Fallback", "PASSED", "Default fallback works")
+    
+    except Exception as e:
+        return _store_result(zcli, "Routing: Default Fallback", "ERROR", f"Exception: {str(e)}")
+
+
+def test_41_rbac_public_access(zcli: Optional[Any] = None, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Test: Public access (no RBAC)"""
+    try:
+        from zCLI.subsystems.zServer.zServer_modules.router import HTTPRouter
+        
+        mock_logger = Mock()
+        mock_zcli = Mock()
+        mock_zcli.auth = Mock()
+        
+        routes_data = {
+            "meta": {},
+            "routes": {
+                "/": {"type": "static", "file": "index.html"}
+            }
+        }
+        
+        router = HTTPRouter(routes_data, mock_zcli, mock_logger)
+        
+        route = router.match_route("/")
+        has_access, error_page = router.check_access(route)
+        
+        if not has_access:
+            return _store_result(zcli, "RBAC: Public Access", "ERROR", "Public route should be accessible")
+        
+        if error_page is not None:
+            return _store_result(zcli, "RBAC: Public Access", "ERROR", "Public route should not have error page")
+        
+        return _store_result(zcli, "RBAC: Public Access", "PASSED", "Public access allowed")
+    
+    except Exception as e:
+        return _store_result(zcli, "RBAC: Public Access", "ERROR", f"Exception: {str(e)}")
+
+
+def test_42_rbac_role_required(zcli: Optional[Any] = None, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Test: Role required RBAC"""
+    try:
+        from zCLI.subsystems.zServer.zServer_modules.router import HTTPRouter
+        
+        mock_logger = Mock()
+        mock_zcli = Mock()
+        mock_zcli.auth = Mock()
+        mock_zcli.auth.has_role = Mock(return_value=False)  # User doesn't have role
+        
+        routes_data = {
+            "meta": {"error_pages": {403: "access_denied.html"}},
+            "routes": {
+                "/admin": {
+                    "type": "static",
+                    "file": "admin.html",
+                    "_rbac": {"require_role": "admin"}
+                }
+            }
+        }
+        
+        router = HTTPRouter(routes_data, mock_zcli, mock_logger)
+        
+        route = router.match_route("/admin")
+        has_access, error_page = router.check_access(route)
+        
+        if has_access:
+            return _store_result(zcli, "RBAC: Role Required", "ERROR", "Should deny access without role")
+        
+        if error_page != "access_denied.html":
+            return _store_result(zcli, "RBAC: Role Required", "ERROR", f"Wrong error page: {error_page}")
+        
+        # Verify has_role was called
+        if not mock_zcli.auth.has_role.called:
+            return _store_result(zcli, "RBAC: Role Required", "ERROR", "has_role not called")
+        
+        return _store_result(zcli, "RBAC: Role Required", "PASSED", "Role-based access denied correctly")
+    
+    except Exception as e:
+        return _store_result(zcli, "RBAC: Role Required", "ERROR", f"Exception: {str(e)}")
+
+
+def test_43_rbac_error_page_redirect(zcli: Optional[Any] = None, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Test: RBAC error page redirect"""
+    try:
+        from zCLI.subsystems.zServer.zServer_modules.router import HTTPRouter
+        
+        mock_logger = Mock()
+        mock_zcli = Mock()
+        mock_zcli.auth = Mock()
+        mock_zcli.auth.is_authenticated = Mock(return_value=False)
+        
+        routes_data = {
+            "meta": {"error_pages": {403: "access_denied.html"}},
+            "routes": {
+                "/dashboard": {
+                    "type": "static",
+                    "file": "dashboard.html",
+                    "_rbac": {"require_auth": True}
+                }
+            }
+        }
+        
+        router = HTTPRouter(routes_data, mock_zcli, mock_logger)
+        
+        route = router.match_route("/dashboard")
+        has_access, error_page = router.check_access(route)
+        
+        if has_access:
+            return _store_result(zcli, "RBAC: Error Page Redirect", "ERROR", "Should deny access")
+        
+        if error_page != "access_denied.html":
+            return _store_result(zcli, "RBAC: Error Page Redirect", "ERROR", "Should return error page")
+        
+        return _store_result(zcli, "RBAC: Error Page Redirect", "PASSED", "Error page redirect configured")
+    
+    except Exception as e:
+        return _store_result(zcli, "RBAC: Error Page Redirect", "ERROR", f"Exception: {str(e)}")
+
+
+def test_44_router_file_resolution(zcli: Optional[Any] = None, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Test: Router file path resolution"""
+    try:
+        from zCLI.subsystems.zServer.zServer_modules.router import HTTPRouter
+        
+        mock_logger = Mock()
+        mock_zcli = Mock()
+        
+        routes_data = {
+            "meta": {"base_path": "./public"},
+            "routes": {
+                "/": {"type": "static", "file": "index.html"}
+            }
+        }
+        
+        router = HTTPRouter(routes_data, mock_zcli, mock_logger)
+        
+        route = router.match_route("/")
+        file_path = router.resolve_file_path(route)
+        
+        if not file_path:
+            return _store_result(zcli, "Routing: File Resolution", "ERROR", "File path not resolved")
+        
+        if "index.html" not in file_path:
+            return _store_result(zcli, "Routing: File Resolution", "ERROR", "Wrong file path resolved")
+        
+        return _store_result(zcli, "Routing: File Resolution", "PASSED", "File paths resolved correctly")
+    
+    except Exception as e:
+        return _store_result(zcli, "Routing: File Resolution", "ERROR", f"Exception: {str(e)}")
+
+
+def test_45_server_with_routes_integration(zcli: Optional[Any] = None, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Test: zServer with routes_file integration"""
+    temp_dir = None
+    try:
+        from zCLI.subsystems.zServer.zServer import zServer
+        from pathlib import Path
+        
+        mock_logger = Mock()
+        mock_zcli = Mock()
+        mock_zcli.loader = Mock()
+        
+        # Mock loader to return routes data
+        mock_zcli.loader.handle = Mock(return_value={
+            "type": "server",
+            "meta": {"base_path": "./public"},
+            "routes": {
+                "/": {"type": "static", "file": "index.html"}
+            }
+        })
+        
+        temp_dir = _create_temp_dir()
+        
+        # Create server with routes_file
+        server = zServer(
+            mock_logger,
+            zcli=mock_zcli,
+            port=8080,
+            serve_path=temp_dir,
+            routes_file="./test_routes.yaml"
+        )
+        
+        if not server.router:
+            return _store_result(zcli, "Routing: Server Integration", "ERROR", "Router not initialized")
+        
+        if not mock_zcli.loader.handle.called:
+            return _store_result(zcli, "Routing: Server Integration", "ERROR", "Loader not called")
+        
+        return _store_result(zcli, "Routing: Server Integration", "PASSED", "zServer + routing integrated")
+    
+    except Exception as e:
+        return _store_result(zcli, "Routing: Server Integration", "ERROR", f"Exception: {str(e)}")
+    finally:
+        if temp_dir:
+            _cleanup_temp_dir(temp_dir)
+
+
+# ============================================================
 # DISPLAY TEST RESULTS
 # ============================================================
 
@@ -1038,6 +1411,7 @@ def display_test_results(zcli: Optional[Any] = None, context: Optional[Dict[str,
         "F. Health Check API (4 tests)": [],
         "G. URL Generation (3 tests)": [],
         "H. Integration & Handler (3 tests)": [],
+        "I. Declarative Routing & RBAC (10 tests)": [],
     }
     
     # Categorize results
@@ -1060,6 +1434,8 @@ def display_test_results(zcli: Optional[Any] = None, context: Optional[Dict[str,
             categories["G. URL Generation (3 tests)"].append(r)
         elif "Integration:" in test_name:
             categories["H. Integration & Handler (3 tests)"].append(r)
+        elif "Routing:" in test_name or "RBAC:" in test_name:
+            categories["I. Declarative Routing & RBAC (10 tests)"].append(r)
     
     # Display by category
     for category, tests in categories.items():

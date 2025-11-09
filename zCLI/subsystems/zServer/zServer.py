@@ -28,21 +28,24 @@ class zServer:
     - Directory listing disabled for security
     """
     
-    def __init__(self, logger, *, zcli=None, port=8080, host="127.0.0.1", serve_path="."):
+    def __init__(self, logger, *, zcli=None, port=8080, host="127.0.0.1", serve_path=".", routes_file=None):
         """
-        Initialize zServer
+        Initialize zServer (v1.5.4 Phase 2: Added declarative routing)
         
         Args:
             logger: zCLI logger instance
-            zcli: zCLI instance (optional)
+            zcli: zCLI instance (optional, required for routing with RBAC)
             port: HTTP port (default: 8080)
             host: Host address (default: 127.0.0.1)
             serve_path: Directory to serve files from (default: current directory)
+            routes_file: Optional zServer.*.yaml file for declarative routing
         """
         self.logger = logger
         self.zcli = zcli
         self.port = port
         self.host = host
+        self.routes_file = routes_file
+        self.router = None
         
         # Resolve serve_path, handling case where path may not exist yet or cwd deleted
         try:
@@ -52,11 +55,38 @@ class zServer:
             # If relative, it will be relative to wherever we are when server starts
             self.serve_path = str(Path(serve_path))
         
+        # Load routes if provided (v1.5.4 Phase 2)
+        if routes_file and zcli:
+            self._load_routes()
+        
         self.server = None
         self.thread = None
         self._running = False
         
         self.logger.info(f"[zServer] Initialized - will serve from: {self.serve_path}")
+        if self.router:
+            self.logger.info(f"[zServer] Declarative routing enabled: {routes_file}")
+    
+    def _load_routes(self):
+        """
+        Load routing configuration from zServer.*.yaml file (v1.5.4 Phase 2).
+        
+        Uses zLoader to load and parse routing file, then creates HTTPRouter instance.
+        """
+        try:
+            # Use zLoader to load routes file (handle() is the public API)
+            routes_data = self.zcli.loader.handle(self.routes_file)
+            
+            if routes_data and routes_data.get("type") == "server":
+                # Import router (lazy import to avoid circular dependency)
+                from .zServer_modules.router import HTTPRouter
+                self.router = HTTPRouter(routes_data, self.zcli, self.logger)
+                self.logger.info(f"[zServer] Loaded routes from: {self.routes_file}")
+            else:
+                self.logger.warning(f"[zServer] Invalid routes file: {self.routes_file}")
+        except Exception as e:
+            self.logger.error(f"[zServer] Failed to load routes: {e}")
+            # Continue without router (fallback to static serving)
     
     def start(self):
         """
@@ -79,8 +109,8 @@ class zServer:
         os.chdir(self.serve_path)
         
         try:
-            # Create handler with logger
-            handler = partial(LoggingHTTPRequestHandler, logger=self.logger)
+            # Create handler with logger and router (v1.5.4 Phase 2)
+            handler = partial(LoggingHTTPRequestHandler, logger=self.logger, router=self.router)
             
             # Create HTTP server
             self.server = HTTPServer((self.host, self.port), handler)

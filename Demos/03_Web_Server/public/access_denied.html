@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Access Denied - zServer Demo</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">⚡ zCLI</div>
+            <nav>
+                <a href="index.html">Home</a>
+                <a href="test_page.html">Test Page</a>
+                <a href="secure_page.html">Secure Area</a>
+            </nav>
+        </header>
+
+        <main>
+            <section class="hero">
+                <h1>🚫 Access Denied</h1>
+                <p class="subtitle">Role-Based Access Control Active</p>
+            </section>
+
+            <section class="content">
+                <div class="error-box">
+                    <h2>⛔ Authentication Required</h2>
+                    <p><strong>Role Required:</strong> <code>zTester</code></p>
+                    <p><strong>Your Status:</strong> Not authenticated</p>
+                </div>
+
+                <h2>What Just Happened?</h2>
+                <p>You attempted to access a secure page that requires the <code>zTester</code> role.</p>
+                <p>The walker performed a role check using <code>z.auth.has_role("zTester")</code> and blocked access.</p>
+
+                <div class="success-box">
+                    <h3>✅ RBAC Deniability Proven!</h3>
+                    <ul>
+                        <li>✅ Walker checked role before serving secure_page.html</li>
+                        <li>✅ Role check failed (no authentication)</li>
+                        <li>✅ Access denied page served instead</li>
+                        <li>✅ Secure content protected</li>
+                        <li>✅ User-friendly error message displayed</li>
+                    </ul>
+                </div>
+
+                <div class="code-block">
+                    <h3>Role Check Implementation</h3>
+                    <pre><code># Walker checks role before serving secure pages
+def check_secure_access():
+    # Check if user has zTester role
+    if z.auth.has_role("zTester"):
+        return "secure_page.html"  # Authorized
+    else:
+        return "access_denied.html"  # Denied
+    
+# Result: Access denied (no auth setup yet)
+# This proves deniability mechanism works!</code></pre>
+                </div>
+
+                <h2>How to Gain Access</h2>
+                <p>To access secure pages, you would need to:</p>
+                <ol>
+                    <li>Authenticate via <code>z.auth.login("user", "password")</code></li>
+                    <li>Be granted the <code>zTester</code> role</li>
+                    <li>Role would be stored in session</li>
+                    <li><code>z.auth.has_role("zTester")</code> would return <code>True</code></li>
+                </ol>
+
+                <div class="stats-grid">
+                    <div class="stat">
+                        <div class="stat-value">🔒</div>
+                        <div class="stat-label">Security Layer</div>
+                        <div class="stat-detail">Role-Based Access Control</div>
+                    </div>
+
+                    <div class="stat">
+                        <div class="stat-value">zTester</div>
+                        <div class="stat-label">Required Role</div>
+                        <div class="stat-detail">Not granted to current session</div>
+                    </div>
+
+                    <div class="stat">
+                        <div class="stat-value">✅</div>
+                        <div class="stat-label">Deniability</div>
+                        <div class="stat-detail">Working as expected</div>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <a href="index.html" class="btn btn-primary">
+                        ← Back to Home
+                    </a>
+                    <a href="test_page.html" class="btn btn-secondary">
+                        Go to Test Page
+                    </a>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>🔒 zAuth RBAC Integration - Deniability Proven</p>
+            <p>Layer 3: Web Server + Role-Based Access Control</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+

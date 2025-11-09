@@ -361,6 +361,11 @@ from .vafile_config import (
     extract_config_metadata
 )
 
+# Server routing (v1.5.4 Phase 2)
+from .vafile_server import (
+    parse_server_file
+)
+
 
 # Export all public API
 __all__ = [
@@ -374,6 +379,7 @@ __all__ = [
     'parse_ui_file',
     'parse_schema_file',
     'parse_config_file',
+    'parse_server_file',
     'parse_generic_file',
     
     # Type-specific validators

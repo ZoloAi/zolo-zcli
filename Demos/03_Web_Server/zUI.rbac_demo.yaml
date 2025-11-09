@@ -1,0 +1,23 @@
+# zUI.rbac_demo.yaml - Role-Based Access Control Deniability Demo
+# Proves RBAC enforcement WITHOUT implementing authentication
+# zWizard automatically checks roles and denies access
+
+zVaF:
+  ~Root*: ["^Public Page", "^Secure Page (zTester)", "stop"]
+  
+  # No RBAC - Public access (default)
+  "^Public Page":
+    zDisplay:
+      event: text
+      content: "✅ Public access - no authentication required"
+      indent: 1
+  
+  # Requires zTester role - WILL BE DENIED
+  "^Secure Page (zTester)":
+    _rbac:
+      require_role: "zTester"
+    zDisplay:
+      event: text
+      content: "🔒 This should NOT display - role check failed"
+      indent: 1
+

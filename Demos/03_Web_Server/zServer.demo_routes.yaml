@@ -1,0 +1,36 @@
+# zServer.demo_routes.yaml - Declarative HTTP Routing Demo
+# Philosophy: "Routes are data, not code" - Flask blueprint style for zCLI
+# v1.5.4 Phase 2
+
+Meta:
+  base_path: "./public"
+  default_route: "index.html"
+  error_pages:
+    403: "access_denied.html"
+    404: "errors/404.html"
+
+routes:
+  # Public routes (no RBAC - accessible to all)
+  "/":
+    type: static
+    file: "index.html"
+    description: "Landing page - public access"
+  
+  "/test":
+    type: static
+    file: "test_page.html"
+    description: "Multi-page navigation test - public access"
+  
+  # RBAC-protected route - requires zTester role
+  "/secure":
+    type: static
+    file: "secure_page.html"
+    description: "Secure content - zTester role required"
+    _rbac:
+      require_role: "zTester"
+  
+  # Wildcard fallback for unmatched paths
+  "/*":
+    type: static
+    description: "Default file serving fallback"
+
