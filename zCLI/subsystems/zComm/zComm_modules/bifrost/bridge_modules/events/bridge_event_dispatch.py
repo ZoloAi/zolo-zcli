@@ -360,17 +360,30 @@ class DispatchEvents:
                 zcli=self.zcli, walker=self.walker, context=context
             )
             
-            # Cache result if cacheable
+            # Check if result contains buffered events (new zBifrost capture pattern)
+            actual_result = result
+            buffered_events = None
+            
+            if isinstance(result, dict) and 'events' in result and 'result' in result:
+                # New structure: {result: ..., events: [...]}
+                actual_result = result['result']
+                buffered_events = result['events']
+                self.logger.debug(
+                    f"{LOG_PREFIX_EXECUTE} Captured {len(buffered_events)} display events | "
+                    f"Command: {zKey} | User: {user_id}"
+                )
+            
+            # Cache result if cacheable (cache only the actual result, not events)
             if is_cacheable and not disable_cache:
                 cache_key = self.cache.generate_cache_key(data, user_context)
-                self.cache.cache_query(cache_key, result, ttl=cache_ttl)
+                self.cache.cache_query(cache_key, actual_result, ttl=cache_ttl)
                 self.logger.debug(
                     f"{LOG_PREFIX_EXECUTE} Result cached | "
                     f"Command: {zKey} | User: {user_id}"
                 )
             
             # Build response
-            response = {KEY_RESULT: result}
+            response = {KEY_RESULT: actual_result}
             if KEY_REQUEST_ID in data:
                 response[KEY_REQUEST_ID] = data[KEY_REQUEST_ID]
             
@@ -407,6 +420,25 @@ class DispatchEvents:
                 f"{LOG_PREFIX_EXECUTE} {ERR_BROADCAST_FAILED} | "
                 f"Command: {zKey} | User: {user_id} | Error: {str(broadcast_err)}"
             )
+        
+        # Send buffered display events if any (new zBifrost capture pattern)
+        if 'buffered_events' in locals() and buffered_events:
+            for event in buffered_events:
+                try:
+                    event_payload = json.dumps({
+                        'event': 'display',
+                        'data': event
+                    })
+                    await ws.send(event_payload)
+                    self.logger.debug(
+                        f"{LOG_PREFIX_EXECUTE} Sent display event: {event.get('display_event')} | "
+                        f"Command: {zKey}"
+                    )
+                except Exception as event_err:
+                    self.logger.error(
+                        f"{LOG_PREFIX_EXECUTE} Failed to send display event | "
+                        f"Command: {zKey} | Error: {str(event_err)}"
+                    )
     
     def _is_cacheable_operation(self, data: Dict[str, Any], zKey: str) -> bool:
         """

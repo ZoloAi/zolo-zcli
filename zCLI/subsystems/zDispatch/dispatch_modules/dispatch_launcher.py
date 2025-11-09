@@ -555,7 +555,7 @@ class CommandLauncher:
                 if event == EVENT_TEXT:
                     content = display_data.get(KEY_CONTENT, DEFAULT_CONTENT)
                     indent = display_data.get(KEY_INDENT, DEFAULT_INDENT)
-                    self.display.text(content, indent, break_after=False)
+                    self.display.text(content, indent)
                 elif event == EVENT_SYSMSG:
                     label = display_data.get(KEY_LABEL, DEFAULT_LABEL)
                     color = display_data.get(KEY_COLOR)
@@ -585,7 +585,7 @@ class CommandLauncher:
                 elif event == EVENT_LINE:
                     # Line events are mapped to text in zDisplay, draw a separator
                     indent = display_data.get(KEY_INDENT, DEFAULT_INDENT)
-                    self.display.text("─" * 60, indent, break_after=False)
+                    self.display.text("─" * 60, indent)
                 elif event == EVENT_LIST:
                     items = display_data.get('items', [])
                     indent = display_data.get(KEY_INDENT, DEFAULT_INDENT)

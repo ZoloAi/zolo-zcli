@@ -85,6 +85,35 @@ routes:
     description: "RBAC denial page"
   
   # =====================================================================
+  # zTheme CSS (local clones for development)
+  # =====================================================================
+  
+  "/zTheme/css/css_vars.css":
+    type: static
+    file: "zTheme/css/css_vars.css"
+    description: "zTheme CSS variables"
+  
+  "/zTheme/css/zMain.css":
+    type: static
+    file: "zTheme/css/zMain.css"
+    description: "zTheme main styles"
+  
+  "/zTheme/css/zContainers.css":
+    type: static
+    file: "zTheme/css/zContainers.css"
+    description: "zTheme container styles"
+  
+  "/zTheme/css/zButtons.css":
+    type: static
+    file: "zTheme/css/zButtons.css"
+    description: "zTheme button styles"
+  
+  "/zTheme/css/zTypography.css":
+    type: static
+    file: "zTheme/css/zTypography.css"
+    description: "zTheme typography styles"
+  
+  # =====================================================================
   # Fallback
   # =====================================================================
   

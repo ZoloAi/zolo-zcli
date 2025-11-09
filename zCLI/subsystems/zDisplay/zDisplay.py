@@ -247,6 +247,7 @@ class zDisplay(zDisplayDelegates):
     zPrimitives: zPrimitives  # Primitives module
     zEvents: zEvents  # Events module
     _event_map: Dict[str, Callable]  # Event routing map
+    _event_buffer: list  # Buffer for capturing events in zBifrost mode
 
     def __init__(self, zcli: Any) -> None:
         """Initialize zDisplay subsystem.
@@ -281,6 +282,9 @@ class zDisplay(zDisplayDelegates):
         # Initialize module containers
         self.zPrimitives = zPrimitives(self)
         self.zEvents = zEvents(self)
+
+        # Event buffer for zBifrost mode (capture events instead of broadcasting)
+        self._event_buffer = []
 
         # Unified event routing map
         self._event_map = {
@@ -386,6 +390,38 @@ class zDisplay(zDisplayDelegates):
         except TypeError as error:
             self.logger.error(ERR_INVALID_PARAMS, event, error)
             return None
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Event Buffer Management (zBifrost Mode)
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    def buffer_event(self, event_data: Dict[str, Any]) -> None:
+        """
+        Buffer a display event for zBifrost mode.
+        
+        Instead of broadcasting immediately, events are captured in a buffer
+        and returned as part of the command result. This solves the async
+        event loop issue when zDispatch runs in a worker thread.
+        
+        Args:
+            event_data: Event dictionary to buffer
+        """
+        self._event_buffer.append(event_data)
+
+    def collect_buffered_events(self) -> list:
+        """
+        Collect all buffered events and clear the buffer.
+        
+        Returns:
+            list: All buffered events since last collection
+        """
+        events = self._event_buffer.copy()
+        self._event_buffer.clear()
+        return events
+
+    def clear_event_buffer(self) -> None:
+        """Clear the event buffer without returning events."""
+        self._event_buffer.clear()
 
     # ═══════════════════════════════════════════════════════════════════════════
     # Convenience Method Delegates (Backward Compatibility)

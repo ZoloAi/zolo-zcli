@@ -1,0 +1,81 @@
+/* General Alert Styling */
+#flash-messages .alert {
+    margin: 0.5em 0; /* Add some spacing between alerts */
+    padding: 1em 1.5em; /* Add padding for better appearance */
+    width: auto;
+    font-size: 16px; /* Set a default font size */
+    font-weight: bold;
+    border-radius: 8px; /* Rounded corners */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    color: #fff; /* Default text color */
+    display: flex; /* Flex for close button alignment */
+    justify-content: space-between;
+    align-items: center;
+    animation: fadeIn 0.5s ease-out; /* Smooth fade-in animation */
+    z-index: 998;
+}
+
+/* Success Alert */
+#flash-messages .alert-success {
+    background: linear-gradient(90deg, #38ef7d, #11998e); /* Green gradient */
+    border: 1px solid #11998e;
+}
+
+/* Info Alert */
+#flash-messages .alert-info {
+    background: linear-gradient(90deg, #56ccf2, #2f80ed); /* Blue gradient */
+    border: 1px solid #2f80ed;
+}
+
+/* Warning Alert */
+#flash-messages .alert-warning {
+    background: linear-gradient(90deg, #f2994a, #f2c94c); /* Orange gradient */
+    border: 1px solid #f2994a;
+    color: #333; /* Dark text for contrast */
+}
+
+/* Danger Alert */
+#flash-messages .alert-danger {
+    background: linear-gradient(90deg, #eb5757, #ff6b6b); /* Red gradient */
+    border: 1px solid #eb5757;
+}
+
+/* Close Button Styling */
+#flash-messages .close {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-left: 1em;
+}
+
+#flash-messages .close:hover {
+    opacity: 0.7; /* Slight fade effect on hover */
+}
+
+/* Animation for Fade In */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    #flash-messages {
+        width: 90%; /* Make alerts span most of the screen on mobile */
+        left: 5%; /* Center horizontally */
+        right: auto;
+    }
+
+    #flash-messages .alert {
+        font-size: 14px; /* Slightly smaller font for mobile */
+    }
+}

@@ -19,7 +19,7 @@ print()
 z = zCLI({
     "zSpace": os.path.dirname(os.path.abspath(__file__)),
     "zVaFile": "@.zUI.test",
-    "zBlock": "TestMenu",
+    "zBlock": "zVaF",
     "zMode": "Terminal"
 })
 

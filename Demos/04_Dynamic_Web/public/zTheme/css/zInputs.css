@@ -1,0 +1,303 @@
+/* Inputs */
+/* -------------------------------- */
+/* Textarea */
+/* -------------------------------- */
+.zTextarea {
+  display: block;
+  width: 100%; /* Full container width */
+  height: 100px; /* Default height */
+  max-height: 200px; /* Limit vertical growth */
+  padding: 0.375rem 0.75rem; /* Consistent padding */
+  font-family: 'Yarden', 'Kalam', sans-serif; /* Font-family with fallbacks */
+  font-size: var(--bodyPsize); /* Match body size */
+  line-height: 1.5;
+  color: var(--grayDark);
+  background-color: #fff;
+  border: 1px solid var(--gray);
+  border-radius: 0.25rem;
+  resize: none; /* Disable manual resizing */
+  box-sizing: border-box; /* Include padding and borders */
+  overflow-y: auto; /* Scrollbar if content overflows vertically */
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.zTextarea:focus {
+  color: var(--grayDark);
+  background-color: #fff;
+  border-color: var(--mainBlue);
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.zTextarea::placeholder {
+  color: var(--gray);
+  opacity: 1;
+}
+
+.zTextarea:disabled,
+.zTextarea[readonly] {
+  background-color: var(--mainYellow);
+  opacity: 1;
+}
+
+/* Base Input */
+.zInput {
+    display: block;
+    width: 100%;
+    padding: 0.375rem 0.75rem;
+    font-family: 'Yarden', 'Kalam', sans-serif; /* Font-family with fallbacks */
+    font-size: var(--bodyPsize);
+    line-height: 1.5;
+    color: var(--grayDark);
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 1px solid var(--gray);
+    border-radius: 0.25rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  }
+  
+  .zInput:focus {
+    color: var(--grayDark);
+    background-color: #fff;
+    border-color: var(--mainBlue);
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  }
+  
+  .zInput::placeholder {
+    color: var(--gray);
+    opacity: 1;
+  }
+  
+  .zInput:disabled,
+  .zInput[readonly] {
+    background-color: var(--mainYellow);
+    opacity: 1;
+  }
+
+  /* Input Sizes */
+  .zInput-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: calc(var(--bodyPsize) * 0.875);
+    border-radius: 0.2rem;
+  }
+  
+  .zInput-lg {
+    padding: 0.5rem 1rem;
+    font-size: calc(var(--bodyPsize) * 1.25);
+    border-radius: 0.3rem;
+  }
+  
+  /* Input Variants */
+  .zInput-primary {
+    border-color: var(--mainBlue);
+  }
+  
+  .zInput-success {
+    border-color: var(--mainGreen);
+  }
+  
+  .zInput-danger {
+    border-color: var(--mainRed);
+  }
+  
+  .zInput-warning {
+    border-color: var(--mainOrange);
+  }
+  
+  .zInput-info {
+    border-color: var(--mainPurple);
+  }
+  
+  .zInput-light {
+    border-color: var(--mainBase);
+  }
+  
+  .zInput-dark {
+    border-color: var(--grayDark);
+  }
+  
+  /* Input Groups */
+  .zInput-group {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    width: 100%;
+  }
+  
+  .zInput-group > .zInput,
+  .zInput-group > .zInput-group-text,
+  .zInput-group > .zBtn {
+    position: relative;
+    flex: 1 1 auto;
+    margin-bottom: 0;
+  }
+  
+  .zInput-group > .zInput-group-prepend,
+  .zInput-group > .zInput-group-append {
+    display: flex;
+  }
+  
+  .zInput-group > .zInput-group-prepend .zInput-group-text,
+  .zInput-group > .zInput-group-append .zInput-group-text {
+    border-radius: 0;
+  }
+  
+  .zInput-group-text {
+    display: flex;
+    align-items: center;
+    padding: 0.375rem 0.75rem;
+    margin-bottom: 0;
+    font-size: var(--bodyPsize);
+    font-weight: 400;
+    line-height: 1.5;
+    color: var(--grayDark);
+    text-align: center;
+    white-space: nowrap;
+    background-color: var(--grayLighter);
+    border: 1px solid var(--grayLight);
+    border-radius: 0.25rem;
+  }
+  
+  /* Input with Icons */
+  .zInput-icon {
+    position: relative;
+  }
+  
+  .zInput-icon .zInput {
+    padding-left: 2.5rem;
+  }
+  
+  .zInput-icon .zInput-icon-addon {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1rem;
+    color: var(--gray);
+  }
+  
+  /* Input Validation */
+  .zInput.is-valid {
+    border-color: var(--mainGreen);
+  }
+  
+  .zInput.is-invalid {
+    border-color: var(--mainRed);
+  }
+  
+  .zValid-feedback,
+  .zInvalid-feedback {
+    display: none;
+    width: 100%;
+    margin-top: 0.25rem;
+    font-size: calc(var(--bodyPsize) * 0.875);
+  }
+  
+  .zValid-feedback {
+    color: var(--mainGreen);
+  }
+  
+  .zInvalid-feedback {
+    color: var(--mainRed);
+  }
+  
+  .zInput.is-valid ~ .zValid-feedback {
+    display: block;
+  }
+  
+  .zInput.is-invalid ~ .zInvalid-feedback {
+    display: block;
+  }
+  
+  /* Input Group Sizes */
+  .zInput-group-sm > .zInput,
+  .zInput-group-sm > .zInput-group-text,
+  .zInput-group-sm > .zBtn {
+    padding: 0.25rem 0.5rem;
+    font-size: calc(var(--bodyPsize) * 0.875);
+    border-radius: 0.2rem;
+  }
+  
+  .zInput-group-lg > .zInput,
+  .zInput-group-lg > .zInput-group-text,
+  .zInput-group-lg > .zBtn {
+    padding: 0.5rem 1rem;
+    font-size: calc(var(--bodyPsize) * 1.25);
+    border-radius: 0.3rem;
+  }
+  .zCheckbox {
+    width: 25px; /* Adjust size as needed */
+    height: 25px;
+    position: relative;
+    appearance: none;
+    background-color: #fffbcb; /* Background color of the checkbox */
+    border: 2px solid #555; /* Border of the checkbox */
+    border-radius: 5px; /* Rounded corners */
+    display: inline-block;
+    vertical-align: middle;
+    cursor: pointer;
+  }
+  
+  .zCheckbox:checked {
+    background-color: #a3cf9c; /* Color of the checkbox when checked */
+  }
+  
+  .zCheckbox:checked::after {
+    content: '\2714'; /* Checkmark symbol */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 16px;
+    color: #fffbcb; /* Color of the checkmark */
+  }
+  /* Zolo Dropdown Styles */
+.zDropdown {
+  font-family: 'Yarden', 'Kalam', sans-serif; /* Font-family with fallbacks */
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  background-color: #ffffff; /* Background color */
+  color: #333333; /* Text color */
+  appearance: none; /* Remove default dropdown arrow */
+  background-image: url('/static/elements/arrow down svg.png'); /* Custom dropdown arrow */
+  background-repeat: no-repeat;
+  background-position: left 10px center; /* Position arrow on the left */
+  background-size: 16px;
+  padding-left: 30px; /* Add padding to avoid text overlapping with the arrow */
+}
+
+.zDropdown:focus {
+  outline: none;
+  /* border-color: #ff4500; /* Border color when focused */
+}
+
+.zDropdown option {
+  background-color: #ffffff;
+  color: #333333;
+}
+
+.zDropdown:disabled {
+  background-color: #dddddd; /* Disabled background */
+  color: #888888; /* Disabled text color */
+}
+.zAiEnhanceGroup {
+  display: flex;
+  column-gap: 1rem;
+  align-items: center;
+}
+
+.zAiEnhanceItems {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  row-gap: 0.5rem;
+  align-items: center;
+}
+
+.zAiEnhanceBtn {
+  padding-left: 1rem;
+  width: 50px;
+  height: 50px;
+}

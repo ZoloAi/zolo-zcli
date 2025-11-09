@@ -1,0 +1,89 @@
+.zContainer-Dash {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  align-content: flex-start;
+  align-items: flex-start;
+  margin-top: 2em;
+}
+.zSidebar {
+  order: 0;
+  flex: 0 1 auto;
+  align-self: auto;
+  background-color: var(--mainBase);
+  padding: 1em 2em;
+  margin-left: 1em;
+  border-radius: 10px;
+  position: relative;
+}
+
+.zSidebar ul li a {
+  font-weight: 700;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: var(--bodyPsize);
+}
+
+.zSidebar ul li a span {
+  font-weight: 700;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: var(--bodyPsize);
+}
+
+.zSidebar ul li svg {
+  width: 25px;
+  height: 25px;
+  margin: 0 0 0.4em 0.4em;
+}
+
+.zPanel {
+    order: 0;
+    flex: 1 1 auto;
+    align-self: auto;
+    width: 100%;
+    background-color: var(--mainBase);
+    border-radius: 10px;
+    padding: 1em;
+    min-height: 100%;
+}
+
+.zSidebar ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  width: max-content;
+}
+.zSidebar li {
+  padding: 1em 0;
+  width: max-content;
+}
+
+.zPanel-content {
+  display: none; /* Default state is hidden */
+}
+
+.zPanel-content.active {
+  display: block; /* Visible state */
+}
+.panelOverview {
+  display: flex; /* Use flexbox to align children horizontally */
+  gap: 1rem; /* Optional: Add space between sections */
+  align-items: stretch; /* Ensure both sections align to the height of the container */
+}
+
+.overviewInfo {
+  flex: 0 0 auto; /* Size based on content, do not grow or shrink */
+  max-width: max-content; /* Ensure it takes only as much space as the content requires */
+}
+
+.overviewActions {
+  flex: 1 1 auto; /* Take up remaining space and grow/shrink as needed */
+  display: flex; /* Optional: Use flex for internal layout if required */
+  flex-direction: column; /* Stack child elements vertically */
+  justify-content: space-between; /* Distribute actions evenly if needed */
+  align-self: end;
+}

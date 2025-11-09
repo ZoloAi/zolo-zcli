@@ -342,16 +342,10 @@ class zPrimitives:
                 KEY_TIMESTAMP: time.time()
             }
 
-            # Send via zComm's WebSocket broadcast (same pattern as WebSocket output)
-            if hasattr(zcli.comm, 'broadcast_websocket'):
-                try:
-                    loop = asyncio.get_running_loop()
-                    asyncio.create_task(
-                        zcli.comm.broadcast_websocket(json.dumps(event_data))
-                    )
-                except RuntimeError:
-                    # No running event loop - for tests/initialization, skip broadcast
-                    pass
+            # In zBifrost mode: these are debug/log events, not user-facing display events
+            # User-facing events go through send_gui_event() which buffers them
+            # Debug events are just discarded in zBifrost mode (they're for terminal only)
+            pass
 
         except Exception:
             # Silently ignore GUI send failures - terminal fallback handles the output
@@ -449,52 +443,43 @@ class zPrimitives:
                 future.set_result(value)
 
     def send_gui_event(self, event_name: str, data: Dict[str, Any]) -> bool:
-        """GUI primitive - send clean event object via bifrost (no terminal processing).
+        """GUI primitive - buffer clean event object for zBifrost capture pattern.
         
         Used by event handlers to send structured events directly to GUI clients.
-        Unlike _write_gui (which always prints to terminal), this is GUI-only.
+        Events are buffered and returned as part of command result (capture pattern).
         
         Args:
             event_name: Name of the display event (e.g., "header", "error")
             data: Event data dictionary to send to GUI
         
         Returns:
-            bool: True if event was sent successfully, False otherwise
+            bool: True if event was buffered successfully, False otherwise
         
         Notes:
             - Only works in Bifrost mode (returns False in Terminal mode)
             - Used by events/*.py for rich GUI rendering
+            - Events are captured in buffer, not broadcasted directly
             - Example: send_gui_event("header", {"label": "Test", "color": "BLUE"})
         """
         # Only works in GUI mode
         if not self._is_gui_mode():
             return False
 
-        if not self.display or not hasattr(self.display, 'zcli'):
-            return False
-
-        zcli = self.display.zcli
-        if not zcli or not hasattr(zcli, 'comm'):
+        if not self.display or not hasattr(self.display, 'buffer_event'):
             return False
 
         try:
+            # Create event structure for buffering (capture pattern)
             event_data = {
-                KEY_EVENT: EVENT_TYPE_ZDISPLAY,
                 KEY_DISPLAY_EVENT: event_name,
                 KEY_DATA: data,
                 KEY_TIMESTAMP: time.time()
             }
 
-            if hasattr(zcli.comm, 'broadcast_websocket'):
-                try:
-                    loop = asyncio.get_running_loop()
-                    asyncio.create_task(
-                        zcli.comm.broadcast_websocket(json.dumps(event_data))
-                    )
-                    return True
-                except RuntimeError:
-                    # No running event loop - for tests/initialization, skip broadcast
-                    pass
+            # Buffer event for collection (no broadcast from worker thread)
+            self.display.buffer_event(event_data)
+            return True
+            
         except Exception:
             pass
 

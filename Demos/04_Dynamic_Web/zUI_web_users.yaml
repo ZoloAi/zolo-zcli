@@ -3,10 +3,10 @@
 
 zVaF:
   PageHeader:
-    zDisplay:
-      event: header
-      content: "👥 User Management"
-      indent: 0
+  zDisplay:
+    event: header
+    content: "👥 User Management"
+    indent: 0
   
   PageDescription:
     zDisplay:
@@ -26,10 +26,10 @@ zVaF:
       indent: 1
   
   FutureFeatures:
-    zDisplay:
+  zDisplay:
       event: info
       content: "Future: zData CRUD + zDialog forms"
-      indent: 1
+    indent: 1
   
   Divider2:
     zDisplay:
@@ -45,7 +45,7 @@ zVaF:
   "Dashboard":
     # File path navigation (works everywhere!)
     zLink: "@.zUI_web_dashboard"
-  
+
   "About":
     zLink: "@.zUI_web_about"
 

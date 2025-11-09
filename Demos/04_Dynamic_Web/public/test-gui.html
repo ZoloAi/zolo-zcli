@@ -4,8 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GUI Test - zBifrost</title>
-    <link rel="stylesheet" href="/style.css">
+    <!-- zTheme CSS (local clone for development) -->
+    <link rel="stylesheet" href="/zTheme/css/css_vars.css">
+    <link rel="stylesheet" href="/zTheme/css/zMain.css">
+    <link rel="stylesheet" href="/zTheme/css/zContainers.css">
+    <link rel="stylesheet" href="/zTheme/css/zButtons.css">
+    <link rel="stylesheet" href="/zTheme/css/zTypography.css">
     <style>
+        /* Minimal custom styling - zTheme handles everything else */
         #status {
             padding: 1rem;
             margin-bottom: 1rem;
@@ -20,29 +26,16 @@
             min-height: 400px;
             padding: 2rem;
             background: white;
-            border: 1px solid #e5e7eb;
+            border: 1px solid var(--grayLight);
             border-radius: 8px;
-        }
-        
-        .test-button {
-            padding: 0.75rem 1.5rem;
-            margin: 0.5rem;
-            background: #4f46e5;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 1rem;
-        }
-        .test-button:hover {
-            background: #4338ca;
+            margin: 1rem 0;
         }
         
         .log {
             margin-top: 2rem;
             padding: 1rem;
-            background: #f9fafb;
-            border: 1px solid #e5e7eb;
+            background: var(--mainBase);
+            border: 1px solid var(--grayLight);
             border-radius: 4px;
             max-height: 300px;
             overflow-y: auto;
@@ -51,12 +44,12 @@
         }
         .log-entry {
             padding: 0.25rem 0;
-            border-bottom: 1px solid #e5e7eb;
+            border-bottom: 1px solid var(--grayLight);
         }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="zContainer">
         <h1>🧪 zBifrost GUI Test</h1>
         
         <div id="status" class="connecting">
@@ -64,11 +57,12 @@
         </div>
 
         <div>
-            <button class="test-button" onclick="testHeader()">Test Header Event</button>
-            <button class="test-button" onclick="testText()">Test Text Event</button>
-            <button class="test-button" onclick="testSuccess()">Test Success Event</button>
-            <button class="test-button" onclick="testInfo()">Test Info Event</button>
-            <button class="test-button" onclick="clearContent()">Clear</button>
+            <button class="zoloButton zBtnInfo" onclick="testHeader()">Test Header</button>
+            <button class="zoloButton zBtnInfo" onclick="testText()">Test Text</button>
+            <button class="zoloButton zBtnSuccess" onclick="testSuccess()">Test Success</button>
+            <button class="zoloButton zBtnInfo" onclick="testInfo()">Test Info</button>
+            <button class="zoloButton zBtnInfo" onclick="testJSON()">Test JSON</button>
+            <button class="zoloButton zBtnWarning" onclick="clearContent()">Clear</button>
         </div>
 
         <div id="content">
@@ -103,20 +97,27 @@
                             const msg = JSON.parse(event.data);
                             console.log('[zBifrost] Message:', msg);
                             
+                            // Handle connection info
                             if (msg.event === 'connection_info') {
                                 if (this.hooks.onConnected) {
                                     this.hooks.onConnected(msg.data);
                                 }
                                 resolve();
-                            } else {
+                            }
+                            // Handle display events (new capture pattern)
+                            else if (msg.event === 'display') {
+                                if (this.hooks.onDisplay) {
+                                    this.hooks.onDisplay(msg.data);
+                                }
+                            }
+                            // Handle other messages
+                            else {
                                 if (this.hooks.onMessage) {
                                     this.hooks.onMessage(msg);
                                 }
-                                if (this.hooks.onDisplay) {
-                                    this.hooks.onDisplay(msg);
-                                }
                             }
                             
+                            // Always call broadcast hook
                             if (this.hooks.onBroadcast) {
                                 this.hooks.onBroadcast(msg);
                             }
@@ -306,28 +307,46 @@
             }
         }
 
-        window.testInfo = async function() {
-            if (!client || !client.isConnected()) {
-                addLog('❌ Not connected!', 'error');
-                return;
+            window.testInfo = async function() {
+                if (!client || !client.isConnected()) {
+                    addLog('❌ Not connected!', 'error');
+                    return;
+                }
+                
+                addLog('📤 Sending dispatch: ^TestInfo');
+                try {
+                    await client.send({
+                        event: 'dispatch',
+                        zKey: '^TestInfo'
+                    });
+                    addLog('✅ Command sent', 'success');
+                } catch (e) {
+                    addLog(`❌ Failed: ${e.message}`, 'error');
+                }
             }
-            
-            addLog('📤 Sending dispatch: ^TestInfo');
-            try {
-                await client.send({
-                    event: 'dispatch',
-                    zKey: '^TestInfo'
-                });
-                addLog('✅ Command sent', 'success');
-            } catch (e) {
-                addLog(`❌ Failed: ${e.message}`, 'error');
-            }
-        }
 
-        window.clearContent = function() {
-            contentEl.innerHTML = '';
-            addLog('Content cleared');
-        }
+            window.testJSON = async function() {
+                if (!client || !client.isConnected()) {
+                    addLog('❌ Not connected!', 'error');
+                    return;
+                }
+                
+                addLog('📤 Sending dispatch: ^TestJSON');
+                try {
+                    await client.send({
+                        event: 'dispatch',
+                        zKey: '^TestJSON'
+                    });
+                    addLog('✅ Command sent', 'success');
+                } catch (e) {
+                    addLog(`❌ Failed: ${e.message}`, 'error');
+                }
+            }
+
+            window.clearContent = function() {
+                contentEl.innerHTML = '';
+                addLog('Content cleared');
+            }
 
         function renderDisplayEvent(data) {
             // Render zDisplay JSON events as HTML
@@ -363,6 +382,11 @@
                     html = `<p style="color: #0284c7; background: #e0f2fe; padding: 0.75rem; border-radius: 4px;">
                         ℹ️  ${eventData.content || 'Info'}
                     </p>`;
+                    break;
+                
+                case 'json_data':
+                case 'json':
+                    html = `<pre style="background: #1e1e1e; color: #d4d4d4; padding: 1rem; border-radius: 4px; overflow-x: auto;">${JSON.stringify(eventData.data || eventData, null, 2)}</pre>`;
                     break;
                 
                 default:

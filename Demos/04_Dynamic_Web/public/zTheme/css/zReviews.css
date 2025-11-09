@@ -1,0 +1,156 @@
+/* Customizable: "truncated" is your custom class */
+.truncated {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    min-width: 80%;
+}
+
+/* Customizable: "read-more" is your custom class */
+.read-more {
+    display: block;
+    color: #007bff; /* This is Bootstrap's default primary color, you can customize it */
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+/* General styling for the review carousel to mimic a thought bubble */
+.reviews-carousel-item-content {
+    background-color: #fff; /* White background for the thought bubble */
+    border-radius: 30px; /* Rounded corners for the bubble effect */
+    padding: 20px; /* Space inside the bubble */
+    position: relative; /* For positioning the bubble tail */
+    text-align: center; /* Center-align text */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 80% !important; /* Adjusted for wider display */
+    max-width: 80% !important; /* Adjusted for wider display */
+    min-height: 300px; /* Adjust height as necessary */
+    margin: 20px auto; /* Center and adjust margin */
+}
+
+/* Adding the tail to the thought bubble */
+.reviews-carousel-item-content:before,
+.reviews-carousel-item-content:after {
+    content: "";
+    background-color: #fff; /* Match the bubble background color */
+    border-radius: 50%;
+    display: block;
+    position: absolute;
+    z-index: -1;
+}
+
+.reviews-carousel-item-content:before {
+    width: 44px;
+    height: 44px;
+    top: -12px;
+    left: 28px;
+    box-shadow: -50px 30px 0 -12px #fff;
+}
+
+.reviews-carousel-item-content:after {
+    bottom: -10px;
+    right: 26px;
+    width: 30px;
+    height: 30px;
+    box-shadow: 40px -34px 0 0 #fff,
+                -28px -6px 0 -2px #fff,
+                -24px 17px 0 -6px #fff,
+                -5px 25px 0 -10px #fff;
+}
+
+/* Adjusted styles for the arrow controls */
+.carousel-control-prev, 
+.carousel-control-next {
+    width: 30px; /* Making the arrow smaller */
+    height: 30px; /* Making the arrow smaller */
+    top: 50%; /* Centering vertically */
+    transform: translateY(-50%); /* Align properly */
+}
+
+.carousel-control-prev-icon, 
+.carousel-control-next-icon {
+    width: 100%; /* Adjust the icon to fit the new control size */
+    height: 100%; /* Adjust the icon to fit the new control size */
+}
+
+/* Styling the text inside the bubble */
+.reviews-carousel-item-content .review-header h5,
+.reviews-carousel-item-content .review-rating,
+.reviews-carousel-item-content .review-content,
+.reviews-carousel-item-content .review-date {
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1); /* Light text shadow for readability */
+}
+
+/* Style the "Read More" link to fit the bubble look */
+.reviews-carousel-item-content .read-more {
+    color: #388e3c; /* Dark green to match the bubble theme */
+    font-weight: bold;
+    text-decoration: underline;
+    cursor: pointer;
+}
+/* Container for the review button to control its position */
+.review-button-container {
+    text-align: left; /* Aligns the button to the left */
+    margin-right: 0; /* Ensures no extra margin on the right */
+}
+
+/* Styling the review button like a thought bubble */
+.review-button {
+    background-color: #fff; /* White background for the thought bubble */
+    border-radius: 30px; /* Rounded corners to match the bubble effect */
+    padding: 15px 25px; /* Space inside the bubble */
+    position: relative; /* For positioning the bubble tail */
+    text-align: center; /* Center-align text */
+    display: inline-block; /* Ensures the button is inline with text alignment */
+    color: var(--mainGreen); /* Text color to match the overall theme */
+    font-weight: bold; /* Bold text to make the button stand out */
+    font-family: Arial, sans-serif; /* Simple font for readability */
+    border: 2px solid var(--mainYellow); /* Yellow border for contrast */
+    transition: background-color 0.3s ease, box-shadow 0.3s ease; /* Smooth transitions for hover effects */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Soft shadow for some depth */
+}
+
+.review-button:hover {
+    background-color: var(--mainYellow); /* Change background to yellow on hover */
+    color: var(--grayDark); /* Darker text color for better contrast on yellow */
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); /* Slightly stronger shadow on hover */
+}
+
+.review-button:active {
+    background-color: var(--mainGreen); /* Green background when the button is pressed */
+    color: var(--mainBase); /* Light text color on press for contrast */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Reduced shadow on press */
+    transform: translateY(2px); /* Small downward movement to simulate a press */
+}
+
+/* Adding the tail to the button thought bubble */
+.review-button:before,
+.review-button:after {
+    content: "";
+    background-color: #fff; /* Match the bubble background color */
+    border-radius: 50%;
+    display: block;
+    position: absolute;
+    z-index: -1;
+}
+
+.review-button:before {
+    width: 20px;
+    height: 20px;
+    top: -10px;
+    left: 20px;
+    box-shadow: -40px 30px 0 -10px #fff;
+}
+
+.review-button:after {
+    bottom: -10px;
+    right: 20px;
+    width: 20px;
+    height: 20px;
+    box-shadow: 40px -34px 0 0 #fff,
+                -28px -6px 0 -2px #fff,
+                -24px 17px 0 -6px #fff,
+                -5px 25px 0 -10px #fff;
+}

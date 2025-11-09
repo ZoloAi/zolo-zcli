@@ -73,21 +73,21 @@ zVaF:
 
 TechDetails:
   TechHeader:
-    zDisplay:
-      event: header
+  zDisplay:
+    event: header
       content: "🔧 Technical Architecture"
-      indent: 0
+    indent: 0
   
   SubsystemsHeader:
-    zDisplay:
-      event: text
+  zDisplay:
+    event: text
       content: "Core Subsystems:"
-      indent: 1
+    indent: 1
   
   SubsystemsList:
-    zDisplay:
-      event: list
-      items:
+  zDisplay:
+    event: list
+    items:
         - "zAuth - Authentication & RBAC"
         - "zComm - Communication (zServer, zSocket)"
         - "zConfig - Configuration management"
@@ -99,7 +99,7 @@ TechDetails:
         - "zNavigation - Links, breadcrumbs, menus"
         - "zParser - Universal parsing engine"
         - "zUtils - Utilities & helpers"
-      indent: 2
+    indent: 2
   
   BackMenu:
     ~Root*: ["Back to About"]

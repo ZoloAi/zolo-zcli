@@ -17,12 +17,10 @@ print("="*60)
 print()
 
 # Step 1: Initialize zCLI in main thread
-routes_file = os.path.abspath(os.path.join(os.path.dirname(__file__), 'zServer_routes.yaml'))
-
 z = zCLI({
     "zSpace": os.path.dirname(os.path.abspath(__file__)),
     "zVaFile": "@.zUI.test",
-    "zBlock": "TestMenu",
+    "zBlock": "zVaF",
     "zMode": "zBifrost",
     "websocket": {
         "host": "127.0.0.1",
@@ -31,13 +29,12 @@ z = zCLI({
     }
 })
 
-# Step 2: Start zServer (HTTP) - uses same zCLI instance
+# Step 2: Start zServer (HTTP) - simple static serving (no routing)
 print("🌐 Starting zServer (HTTP)...")
 server = z.comm.create_http_server(
     serve_path=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'public'),
     port=8081,
-    host='127.0.0.1',
-    routes_file=routes_file
+    host='127.0.0.1'
 )
 server.start()
 print(f"✅ zServer (HTTP): {server.get_url()}")

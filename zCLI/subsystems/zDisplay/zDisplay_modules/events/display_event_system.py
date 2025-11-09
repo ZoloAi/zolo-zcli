@@ -740,6 +740,11 @@ class zSystem:
         if not self._should_show_sysmsg():
             return
 
+        # zDeclare is Terminal-only: skip in zBifrost/GUI mode
+        # System messages are for debug flow visualization in terminal, not user-facing UI
+        if self.zPrimitives and self.zPrimitives._is_gui_mode():
+            return
+
         # Use display's mycolor if no color specified
         if color is None:
             color = getattr(self.display, 'mycolor', COLOR_RESET)

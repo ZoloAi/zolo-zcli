@@ -429,5 +429,26 @@ def handle_zDispatch(
     else:
         raise ValueError(ERR_NO_ZCLI_OR_WALKER)
 
+    # Check if we're in zBifrost mode (event capture mode)
+    is_bifrost = context and context.get('mode') == 'zBifrost'
+    
+    # Clear event buffer before execution (for clean capture)
+    if is_bifrost and hasattr(zcli_instance.display, 'clear_event_buffer'):
+        zcli_instance.display.clear_event_buffer()
+    
     # Use zCLI's dispatch subsystem
-    return zcli_instance.dispatch.handle(zKey, zHorizontal, context=context, walker=walker)
+    result = zcli_instance.dispatch.handle(zKey, zHorizontal, context=context, walker=walker)
+    
+    # Collect buffered events after execution (zBifrost mode only)
+    if is_bifrost and hasattr(zcli_instance.display, 'collect_buffered_events'):
+        buffered_events = zcli_instance.display.collect_buffered_events()
+        
+        # Return structured response with events
+        if buffered_events:
+            return {
+                'result': result,
+                'events': buffered_events
+            }
+    
+    # Terminal mode or no events: return result directly
+    return result
