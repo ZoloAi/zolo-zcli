@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>zServer Demo - Home</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">⚡ zCLI</div>
+            <nav>
+                <a href="index.html" class="active">Home</a>
+                <a href="test_page.html">Test Page</a>
+            </nav>
+        </header>
+
+        <main>
+            <section class="hero">
+                <h1>🌐 Welcome to zServer</h1>
+                <p class="subtitle">Lightweight HTTP Static File Server</p>
+            </section>
+
+            <section class="content">
+                <h2>What You're Seeing</h2>
+                <p>This static website is being served by <strong>zServer</strong>, part of zCLI's <code>zComm</code> subsystem.</p>
+
+                <div class="feature-grid">
+                    <div class="feature">
+                        <div class="feature-icon">🚀</div>
+                        <h3>Zero Dependencies</h3>
+                        <p>Uses Python's built-in http.server</p>
+                    </div>
+
+                    <div class="feature">
+                        <div class="feature-icon">🧵</div>
+                        <h3>Background Threading</h3>
+                        <p>Non-blocking, daemon thread</p>
+                    </div>
+
+                    <div class="feature">
+                        <div class="feature-icon">🔒</div>
+                        <h3>CORS Enabled</h3>
+                        <p>Auto-headers for local dev</p>
+                    </div>
+
+                    <div class="feature">
+                        <div class="feature-icon">📊</div>
+                        <h3>Health Check API</h3>
+                        <p>Full status monitoring</p>
+                    </div>
+                </div>
+
+                <div class="code-block">
+                    <h3>Factory Method</h3>
+                    <pre><code>server = z.comm.create_http_server(
+    port=8080,
+    serve_path="./public"
+)
+server.start()  # Background thread
+print(server.get_url())  # http://127.0.0.1:8080
+server.stop()  # Graceful shutdown</code></pre>
+                </div>
+
+                <div class="action-buttons">
+                    <a href="test_page.html" class="btn btn-primary">
+                        Navigate to Test Page →
+                    </a>
+                    <button id="testBtn" class="btn btn-secondary">
+                        Test JavaScript
+                    </button>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>🏗️ Layer 3: Web Server - zServer | Demo #3.1</p>
+            <p>Part of zCLI's Bottom-Up Demo Strategy</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+

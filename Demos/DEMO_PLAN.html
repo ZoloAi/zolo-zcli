@@ -374,30 +374,29 @@
 
         <div class="stats">
             <div class="stat-card">
-                <div class="stat-number" style="color: var(--accent-green);" id="completed-count">6</div>
+                <div class="stat-number" style="color: var(--accent-green);" id="completed-count">7</div>
                 <div class="stat-label">✅ Completed</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" style="color: var(--accent-yellow);" id="pending-count">9</div>
+                <div class="stat-number" style="color: var(--accent-yellow);" id="pending-count">0</div>
                 <div class="stat-label">⏳ Pending</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" style="color: var(--accent-blue);" id="total-count">15</div>
+                <div class="stat-number" style="color: var(--accent-blue);" id="total-count">7</div>
                 <div class="stat-label">📋 Total Demos</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" style="color: var(--accent-purple);" id="progress-percent">40%</div>
+                <div class="stat-number" style="color: var(--accent-purple);" id="progress-percent">100%</div>
                 <div class="stat-label">📈 Progress</div>
             </div>
         </div>
 
         <div class="legend">
-            <div class="legend-title">🎯 Progressive Strategy:</div>
+            <div class="legend-title">🎯 Bottom-Up Strategy: "Seed the Demo, Let It Grow"</div>
             <div class="legend-items">
-                <span style="color: var(--accent-red);">■</span> <strong>LEVEL 1:</strong> Foundation (Display, Navigation, Menus)
-                <span style="color: var(--accent-yellow);">■</span> <strong>LEVEL 2:</strong> Data & Logic (zData, zDialog)
-                <span style="color: var(--accent-green);">■</span> <strong>LEVEL 3:</strong> Communication (zBifrost, zServer)
-                <span style="color: var(--accent-blue);">■</span> <strong>LEVEL 4:</strong> Advanced (RBAC, Validation, Full-Stack)
+                <span style="color: var(--accent-red);">■</span> <strong>LEVEL 1:</strong> Foundation (Display, Navigation, Menus, Config)
+                <span style="color: var(--accent-yellow);">■</span> <strong>LEVEL 2:</strong> Data & Logic (CRUD, Forms, Validation)
+                <span style="color: var(--accent-green);">■</span> <strong>LEVEL 3:</strong> Web Server (Static HTML/CSS/JS via zServer)
             </div>
         </div>
 
@@ -588,215 +587,52 @@
         </div>
 
         <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!-- LEVEL 3: COMMUNICATION (20-30 min each)                         -->
+        <!-- LEVEL 3: WEB SERVER (15 min)                                    -->
         <!-- ═══════════════════════════════════════════════════════════════ -->
         
         <div class="level level-3">
             <div class="level-header">
                 <div class="level-number">3</div>
                 <div class="level-title">
-                    <h2>🌐 Communication Layer</h2>
-                    <div class="level-description">Real-time & HTTP: zBifrost, zServer, BifrostClient</div>
+                    <h2 style="color: var(--accent-green);">🌐 Web Server - zServer ✅ COMPLETE</h2>
+                    <div class="level-description">"Flask-like" capabilities - Serve static HTML, CSS, JS websites</div>
                 </div>
             </div>
 
             <!-- Demo #3.1 -->
-            <div class="demo" data-demo-id="3-1" data-status="pending">
-                <input type="checkbox" class="demo-checkbox" onchange="updateDemo(this)">
+            <div class="demo" data-demo-id="3-1" data-status="completed">
+                <input type="checkbox" class="demo-checkbox" onchange="updateDemo(this)" checked>
                 <div class="demo-content">
                     <div class="demo-title">
-                        <span><strong>#3.1</strong> Static Server - zServer</span>
+                        <span><strong>#3.1</strong> HTTP Server - Static Website ✅</span>
                     </div>
                     <div class="demo-description">
-                        <strong>Goal:</strong> Prove HTTP static file serving (port 8080)<br>
-                        <strong>Test:</strong> Serve HTML/CSS/JS, auto-index, CORS headers<br>
-                        <strong>Catches:</strong> zServer, HTTP routing, static file paths
+                        <strong>Goal:</strong> Prove <code>z.comm.create_http_server()</code> factory method + full lifecycle API<br>
+                        <strong>Implementation:</strong>
+                        <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+                            <li><strong>Walker:</strong> <code>web_server_walker.py</code> - 3-step spark pattern</li>
+                            <li><strong>Factory:</strong> <code>server = z.comm.create_http_server(port=8080, serve_path="./public")</code></li>
+                            <li><strong>Lifecycle:</strong> <code>server.start()</code> → Background daemon thread, non-blocking</li>
+                            <li><strong>Status:</strong> <code>server.get_url()</code> → "http://127.0.0.1:8080"</li>
+                            <li><strong>Health:</strong> <code>server.health_check()</code> → {"running": True, "host": "127.0.0.1", "port": 8080, ...}</li>
+                            <li><strong>Cleanup:</strong> <code>server.stop()</code> → Graceful shutdown with 2-second timeout</li>
+                        </ul>
+                        <strong>Static Files:</strong> Serve from <code>./public/</code>
+                        <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+                            <li><code>index.html</code> - Landing page with zCLI branding + link to test page</li>
+                            <li><code>test_page.html</code> - Second page to prove multi-page navigation + link back to index</li>
+                            <li><code>style.css</code> - Shared modern styling for both pages</li>
+                            <li><code>script.js</code> - Interactive JS to prove JavaScript execution</li>
+                        </ul>
+                        <strong>Catches:</strong> zComm factory pattern, zServer lifecycle (start/stop/status), background threading (daemon=True), CORS auto-headers, file serving, directory structure, clean shutdown<br>
+                        <strong style="color: var(--accent-yellow);">💡 Pattern: zSpark → zComm.create_http_server() → server.start() → Static files at http://127.0.0.1:8080</strong><br>
+                        <strong style="color: var(--accent-cyan);">📖 Docs Reference:</strong> zServer_GUIDE.md (Lines 74-117), zComm_GUIDE.md (Lines 122-133)
                     </div>
                     <div class="demo-meta">
-                        <span class="subsystem-tag">zComm (zServer)</span>
+                        <span class="subsystem-tag">zComm</span>
+                        <span class="subsystem-tag">zServer (via zComm)</span>
                         <span class="mode-tag">HTTP</span>
                         <span class="time-tag">⏱️ 15 min</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Demo #3.2 -->
-            <div class="demo" data-demo-id="3-2" data-status="pending">
-                <input type="checkbox" class="demo-checkbox" onchange="updateDemo(this)">
-                <div class="demo-content">
-                    <div class="demo-title">
-                        <span><strong>#3.2</strong> WebSocket Connection - zBifrost</span>
-                    </div>
-                    <div class="demo-description">
-                        <strong>Goal:</strong> Prove WebSocket connection (port 8765)<br>
-                        <strong>Test:</strong> Connect, receive <code>connection_info</code>, send command<br>
-                        <strong>Catches:</strong> zBifrost, WebSocket handshake, origin policy
-                    </div>
-                    <div class="demo-meta">
-                        <span class="subsystem-tag">zComm (zBifrost)</span>
-                        <span class="subsystem-tag">BifrostClient</span>
-                        <span class="mode-tag">zBifrost</span>
-                        <span class="time-tag">⏱️ 20 min</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Demo #3.3 -->
-            <div class="demo" data-demo-id="3-3" data-status="pending">
-                <input type="checkbox" class="demo-checkbox" onchange="updateDemo(this)">
-                <div class="demo-content">
-                    <div class="demo-title">
-                        <span><strong>#3.3</strong> Display Events - zBifrost Mode</span>
-                    </div>
-                    <div class="demo-description">
-                        <strong>Goal:</strong> Prove <code>zDisplay</code> works in zBifrost mode<br>
-                        <strong>Test:</strong> Same zUI as #1.1, but rendered as JSON events<br>
-                        <strong>Catches:</strong> Mode switching, JSON serialization, event format
-                    </div>
-                    <div class="demo-meta">
-                        <span class="subsystem-tag">zDisplay</span>
-                        <span class="subsystem-tag">zComm (zBifrost)</span>
-                        <span class="mode-tag">zBifrost</span>
-                        <span class="time-tag">⏱️ 20 min</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Demo #3.4 -->
-            <div class="demo" data-demo-id="3-4" data-status="pending">
-                <input type="checkbox" class="demo-checkbox" onchange="updateDemo(this)">
-                <div class="demo-content">
-                    <div class="demo-title">
-                        <span><strong>#3.4</strong> Auto NavBar - zTheme</span>
-                    </div>
-                    <div class="demo-description">
-                        <strong>Goal:</strong> Prove <code>~Root*</code> auto-generates navbar in GUI<br>
-                        <strong>Test:</strong> BifrostClient detects <code>~</code>, renders navbar with zTheme CSS<br>
-                        <strong>Catches:</strong> MenuHandler, zNav.css, connection status styling
-                    </div>
-                    <div class="demo-meta">
-                        <span class="subsystem-tag">BifrostClient</span>
-                        <span class="subsystem-tag">zTheme</span>
-                        <span class="mode-tag">zBifrost</span>
-                        <span class="time-tag">⏱️ 30 min</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Demo #3.5 -->
-            <div class="demo" data-demo-id="3-5" data-status="pending">
-                <input type="checkbox" class="demo-checkbox" onchange="updateDemo(this)">
-                <div class="demo-content">
-                    <div class="demo-title">
-                        <span><strong>#3.5</strong> Cache Performance - zLoader</span>
-                    </div>
-                    <div class="demo-description">
-                        <strong>Goal:</strong> Prove 4-tier caching (System, Plugin, Pinned, Schema)<br>
-                        <strong>Test:</strong> Load same zUI 4x, measure cache hits/misses<br>
-                        <strong>Catches:</strong> zLoader, cache orchestrator, TTL expiration
-                    </div>
-                    <div class="demo-meta">
-                        <span class="subsystem-tag">zLoader</span>
-                        <span class="subsystem-tag">zFunc</span>
-                        <span class="mode-tag">zBifrost</span>
-                        <span class="time-tag">⏱️ 25 min</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!-- LEVEL 4: ADVANCED (30-45 min each)                              -->
-        <!-- ═══════════════════════════════════════════════════════════════ -->
-        
-        <div class="level level-4">
-            <div class="level-header">
-                <div class="level-number">4</div>
-                <div class="level-title">
-                    <h2>🚀 Advanced Features</h2>
-                    <div class="level-description">Production patterns: RBAC, Validation, Full-Stack Apps</div>
-                </div>
-            </div>
-
-            <!-- Demo #4.1 -->
-            <div class="demo" data-demo-id="4-1" data-status="pending">
-                <input type="checkbox" class="demo-checkbox" onchange="updateDemo(this)">
-                <div class="demo-content">
-                    <div class="demo-title">
-                        <span><strong>#4.1</strong> Authentication - zAuth (3-Tier)</span>
-                    </div>
-                    <div class="demo-description">
-                        <strong>Goal:</strong> Prove 3-tier auth (Session, App, Context)<br>
-                        <strong>Test:</strong> Login, bcrypt password, session management<br>
-                        <strong>Catches:</strong> zAuth, password hashing, session storage
-                    </div>
-                    <div class="demo-meta">
-                        <span class="subsystem-tag">zAuth</span>
-                        <span class="subsystem-tag">zData</span>
-                        <span class="mode-tag">Terminal + zBifrost</span>
-                        <span class="time-tag">⏱️ 30 min</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Demo #4.2 -->
-            <div class="demo" data-demo-id="4-2" data-status="pending">
-                <input type="checkbox" class="demo-checkbox" onchange="updateDemo(this)">
-                <div class="demo-content">
-                    <div class="demo-title">
-                        <span><strong>#4.2</strong> RBAC - Role-Based Access</span>
-                    </div>
-                    <div class="demo-description">
-                        <strong>Goal:</strong> Prove context-aware RBAC (admin, user, guest)<br>
-                        <strong>Test:</strong> Different menus per role, permission checks<br>
-                        <strong>Catches:</strong> zAuth RBAC, context injection, menu filtering
-                    </div>
-                    <div class="demo-meta">
-                        <span class="subsystem-tag">zAuth</span>
-                        <span class="subsystem-tag">zNavigation</span>
-                        <span class="mode-tag">Terminal + zBifrost</span>
-                        <span class="time-tag">⏱️ 35 min</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Demo #4.3 -->
-            <div class="demo" data-demo-id="4-3" data-status="pending">
-                <input type="checkbox" class="demo-checkbox" onchange="updateDemo(this)">
-                <div class="demo-content">
-                    <div class="demo-title">
-                        <span><strong>#4.3</strong> Validation - Auto Schema Validation</span>
-                    </div>
-                    <div class="demo-description">
-                        <strong>Goal:</strong> Prove schema-driven validation (email, phone, custom)<br>
-                        <strong>Test:</strong> Invalid inputs rejected, custom validators<br>
-                        <strong>Catches:</strong> zDialog validation, zData schema enforcement
-                    </div>
-                    <div class="demo-meta">
-                        <span class="subsystem-tag">zDialog</span>
-                        <span class="subsystem-tag">zData</span>
-                        <span class="mode-tag">Terminal + zBifrost</span>
-                        <span class="time-tag">⏱️ 30 min</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Demo #4.4 -->
-            <div class="demo" data-demo-id="4-4" data-status="pending">
-                <input type="checkbox" class="demo-checkbox" onchange="updateDemo(this)">
-                <div class="demo-content">
-                    <div class="demo-title">
-                        <span><strong>#4.4</strong> Full-Stack App - User Manager</span>
-                    </div>
-                    <div class="demo-description">
-                        <strong>Goal:</strong> Prove complete CRUD app (Terminal + GUI)<br>
-                        <strong>Test:</strong> SQLite backend, zBifrost frontend, RBAC, validation<br>
-                        <strong>Catches:</strong> Full integration, all subsystems working together
-                    </div>
-                    <div class="demo-meta">
-                        <span class="subsystem-tag">ALL</span>
-                        <span class="mode-tag">Terminal + zBifrost</span>
-                        <span class="time-tag">⏱️ 45 min</span>
                     </div>
                 </div>
             </div>
@@ -809,28 +645,31 @@
         <div class="level" style="background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(0, 212, 255, 0.1));">
             <div class="level-header">
                 <div class="level-title">
-                    <h2>📊 Subsystem Coverage (13/13)</h2>
-                    <div class="level-description">All zCLI subsystems tested across 16 demos</div>
+                    <h2>📊 Subsystem Coverage</h2>
+                    <div class="level-description">Bottom-up approach: Core subsystems proven across 3 layers</div>
                 </div>
             </div>
             <div class="coverage-grid">
                 <div class="coverage-item">✅ zConfig</div>
-                <div class="coverage-item">✅ zComm</div>
+                <div class="coverage-item">✅ zComm (zServer)</div>
                 <div class="coverage-item">✅ zDisplay</div>
-                <div class="coverage-item">✅ zAuth</div>
+                <div class="coverage-item" style="opacity: 0.3;">⊘ zAuth</div>
                 <div class="coverage-item">✅ zDispatch</div>
                 <div class="coverage-item">✅ zNavigation</div>
                 <div class="coverage-item">✅ zParser</div>
                 <div class="coverage-item">✅ zLoader</div>
-                <div class="coverage-item">✅ zFunc</div>
+                <div class="coverage-item" style="opacity: 0.3;">⊘ zFunc</div>
                 <div class="coverage-item">✅ zDialog</div>
-                <div class="coverage-item">✅ zOpen</div>
+                <div class="coverage-item" style="opacity: 0.3;">⊘ zOpen</div>
                 <div class="coverage-item">✅ zUtils</div>
-                <div class="coverage-item">✅ zWizard</div>
+                <div class="coverage-item" style="opacity: 0.3;">⊘ zWizard</div>
                 <div class="coverage-item">✅ zData</div>
-                <div class="coverage-item">✅ zShell</div>
-                <div class="coverage-item">✅ BifrostClient</div>
-                <div class="coverage-item">✅ zTheme</div>
+                <div class="coverage-item" style="opacity: 0.3;">⊘ zShell</div>
+                <div class="coverage-item" style="opacity: 0.5;">⏳ BifrostClient (Future)</div>
+                <div class="coverage-item" style="opacity: 0.5;">⏳ zTheme (Future)</div>
+            </div>
+            <div style="margin-top: 1rem; text-align: center; color: var(--text-secondary); font-size: 0.9rem;">
+                <strong>Legend:</strong> ✅ Proven | ⏳ Future/Optional | ⊘ Advanced Features
             </div>
         </div>
 

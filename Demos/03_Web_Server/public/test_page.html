@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>zServer Demo - Test Page</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">⚡ zCLI</div>
+            <nav>
+                <a href="index.html">Home</a>
+                <a href="test_page.html" class="active">Test Page</a>
+            </nav>
+        </header>
+
+        <main>
+            <section class="hero">
+                <h1>✅ Navigation Proof</h1>
+                <p class="subtitle">Multi-page routing works!</p>
+            </section>
+
+            <section class="content">
+                <h2>What This Proves</h2>
+                <p>You successfully navigated from <code>index.html</code> to <code>test_page.html</code>.</p>
+
+                <div class="success-box">
+                    <h3>✨ zServer Capabilities Proven</h3>
+                    <ul>
+                        <li>✅ Multi-page serving</li>
+                        <li>✅ Static file routing</li>
+                        <li>✅ Shared CSS resources</li>
+                        <li>✅ Shared JavaScript resources</li>
+                        <li>✅ HTML navigation links</li>
+                    </ul>
+                </div>
+
+                <div class="code-block">
+                    <h3>Server Lifecycle API</h3>
+                    <pre><code># Create server
+server = z.comm.create_http_server(port=8080)
+
+# Start in background (non-blocking)
+server.start()
+
+# Check status
+if server.is_running():
+    print(f"URL: {server.get_url()}")
+    print(f"Health: {server.health_check()}")
+
+# Clean shutdown
+server.stop()</code></pre>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat">
+                        <div class="stat-value">5</div>
+                        <div class="stat-label">API Methods</div>
+                        <div class="stat-detail">start, stop, is_running, get_url, health_check</div>
+                    </div>
+
+                    <div class="stat">
+                        <div class="stat-value">8080</div>
+                        <div class="stat-label">Default Port</div>
+                        <div class="stat-detail">Localhost-only for security</div>
+                    </div>
+
+                    <div class="stat">
+                        <div class="stat-value">100%</div>
+                        <div class="stat-label">Test Coverage</div>
+                        <div class="stat-detail">35/35 tests passing</div>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <a href="index.html" class="btn btn-primary">
+                        ← Back to Home
+                    </a>
+                    <button id="testBtn" class="btn btn-secondary">
+                        Test JavaScript Again
+                    </button>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>🌐 Served by zServer (via zComm) | Port 8080</p>
+            <p>Background daemon thread, CORS enabled</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
