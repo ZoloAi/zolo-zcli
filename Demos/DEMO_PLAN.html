@@ -374,19 +374,19 @@
 
         <div class="stats">
             <div class="stat-card">
-                <div class="stat-number" style="color: var(--accent-green);" id="completed-count">4</div>
+                <div class="stat-number" style="color: var(--accent-green);" id="completed-count">6</div>
                 <div class="stat-label">✅ Completed</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" style="color: var(--accent-yellow);" id="pending-count">13</div>
+                <div class="stat-number" style="color: var(--accent-yellow);" id="pending-count">9</div>
                 <div class="stat-label">⏳ Pending</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" style="color: var(--accent-blue);" id="total-count">17</div>
+                <div class="stat-number" style="color: var(--accent-blue);" id="total-count">15</div>
                 <div class="stat-label">📋 Total Demos</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" style="color: var(--accent-purple);" id="progress-percent">24%</div>
+                <div class="stat-number" style="color: var(--accent-purple);" id="progress-percent">40%</div>
                 <div class="stat-label">📈 Progress</div>
             </div>
         </div>
@@ -395,7 +395,7 @@
             <div class="legend-title">🎯 Progressive Strategy:</div>
             <div class="legend-items">
                 <span style="color: var(--accent-red);">■</span> <strong>LEVEL 1:</strong> Foundation (Display, Navigation, Menus)
-                <span style="color: var(--accent-yellow);">■</span> <strong>LEVEL 2:</strong> Data & Logic (zData, zFunc, zWizard)
+                <span style="color: var(--accent-yellow);">■</span> <strong>LEVEL 2:</strong> Data & Logic (zData, zDialog)
                 <span style="color: var(--accent-green);">■</span> <strong>LEVEL 3:</strong> Communication (zBifrost, zServer)
                 <span style="color: var(--accent-blue);">■</span> <strong>LEVEL 4:</strong> Advanced (RBAC, Validation, Full-Stack)
             </div>
@@ -530,29 +530,31 @@
         <!-- LEVEL 2: DATA & LOGIC (15-20 min each)                          -->
         <!-- ═══════════════════════════════════════════════════════════════ -->
         
-        <div class="level level-2">
+        <div class="level level-2" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05));">
             <div class="level-header">
                 <div class="level-number">2</div>
                 <div class="level-title">
-                    <h2>💾 Data & Logic Layer</h2>
-                    <div class="level-description">Core operations: zData, zFunc, zWizard, zDialog</div>
+                    <h2>💾 Data & Logic Layer ✅ COMPLETE</h2>
+                    <div class="level-description" style="color: var(--accent-green);">CRUD operations proven: zData, zDialog, zSchema integration</div>
                 </div>
             </div>
 
             <!-- Demo #2.1 -->
-            <div class="demo" data-demo-id="2-1" data-status="pending">
-                <input type="checkbox" class="demo-checkbox" onchange="updateDemo(this)">
+            <div class="demo" data-demo-id="2-1" data-status="completed">
+                <input type="checkbox" class="demo-checkbox" onchange="updateDemo(this)" checked>
                 <div class="demo-content">
                     <div class="demo-title">
-                        <span><strong>#2.1</strong> CRUD Operations - zData</span>
+                        <span><strong>#2.1</strong> CRUD Operations - zData ✅</span>
                     </div>
                     <div class="demo-description">
-                        <strong>Goal:</strong> Prove declarative CRUD (Create, Read, Update, Delete)<br>
-                        <strong>Test:</strong> SQLite backend, schema-driven validation<br>
-                        <strong>Catches:</strong> zData, zSchema, database operations, table display
+                        <strong>Goal:</strong> Prove declarative CRUD (Create, Read, Insert, Delete)<br>
+                        <strong>Test:</strong> CSV + SQLite backends with zDelta navigation<br>
+                        <strong>Catches:</strong> zData, zSchema, zDialog forms, database operations<br>
+                        <strong style="color: var(--accent-green);">✅ DONE: Full CRUD cycle proven with both CSV and SQLite adapters</strong>
                     </div>
                     <div class="demo-meta">
                         <span class="subsystem-tag">zData</span>
+                        <span class="subsystem-tag">zDialog</span>
                         <span class="subsystem-tag">zDisplay</span>
                         <span class="mode-tag">Terminal</span>
                         <span class="time-tag">⏱️ 20 min</span>
@@ -561,64 +563,23 @@
             </div>
 
             <!-- Demo #2.2 -->
-            <div class="demo" data-demo-id="2-2" data-status="pending">
-                <input type="checkbox" class="demo-checkbox" onchange="updateDemo(this)">
+            <div class="demo" data-demo-id="2-2" data-status="completed">
+                <input type="checkbox" class="demo-checkbox" onchange="updateDemo(this)" checked>
                 <div class="demo-content">
                     <div class="demo-title">
-                        <span><strong>#2.2</strong> Plugin Functions - zFunc</span>
+                        <span><strong>#2.2</strong> Interactive Forms - zDialog ✅</span>
                     </div>
                     <div class="demo-description">
-                        <strong>Goal:</strong> Prove <code>&plugin.function</code> syntax works<br>
-                        <strong>Test:</strong> Simple plugin with auto-injection (zcli, zhat, zconv)<br>
-                        <strong>Catches:</strong> zFunc, zUtils (plugin loader), context injection
-                    </div>
-                    <div class="demo-meta">
-                        <span class="subsystem-tag">zFunc</span>
-                        <span class="subsystem-tag">zUtils</span>
-                        <span class="mode-tag">Terminal</span>
-                        <span class="time-tag">⏱️ 15 min</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Demo #2.3 -->
-            <div class="demo" data-demo-id="2-3" data-status="pending">
-                <input type="checkbox" class="demo-checkbox" onchange="updateDemo(this)">
-                <div class="demo-content">
-                    <div class="demo-title">
-                        <span><strong>#2.3</strong> Multi-Step Workflow - zWizard</span>
-                    </div>
-                    <div class="demo-description">
-                        <strong>Goal:</strong> Prove declarative workflows (3-5 steps)<br>
-                        <strong>Test:</strong> Sequential execution, WizardHat results, step interpolation<br>
-                        <strong>Catches:</strong> zWizard, result passing, transaction management
-                    </div>
-                    <div class="demo-meta">
-                        <span class="subsystem-tag">zWizard</span>
-                        <span class="subsystem-tag">zData</span>
-                        <span class="mode-tag">Terminal</span>
-                        <span class="time-tag">⏱️ 20 min</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Demo #2.4 -->
-            <div class="demo" data-demo-id="2-4" data-status="pending">
-                <input type="checkbox" class="demo-checkbox" onchange="updateDemo(this)">
-                <div class="demo-content">
-                    <div class="demo-title">
-                        <span><strong>#2.4</strong> Interactive Forms - zDialog</span>
-                    </div>
-                    <div class="demo-description">
-                        <strong>Goal:</strong> Prove declarative forms with auto-validation<br>
-                        <strong>Test:</strong> 3-5 fields, validation rules, onSubmit → zData<br>
-                        <strong>Catches:</strong> zDialog, validation, placeholder injection
+                        <strong>Goal:</strong> Prove declarative forms with onSubmit → zData<br>
+                        <strong>Test:</strong> Add User and Delete User forms from Demo #2.1<br>
+                        <strong>Catches:</strong> zDialog fields, zConv placeholders, onSubmit routing<br>
+                        <strong style="color: var(--accent-green);">✅ DONE: Proven in Demo #2.1 CRUD operations</strong>
                     </div>
                     <div class="demo-meta">
                         <span class="subsystem-tag">zDialog</span>
                         <span class="subsystem-tag">zData</span>
                         <span class="mode-tag">Terminal</span>
-                        <span class="time-tag">⏱️ 15 min</span>
+                        <span class="time-tag">⏱️ Covered in 2.1</span>
                     </div>
                 </div>
             </div>

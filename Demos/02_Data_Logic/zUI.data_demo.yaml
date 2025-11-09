@@ -24,7 +24,7 @@ zVaF:
 # 📊 CSV DEMO BLOCK
 # ═══════════════════════════════════════════════════════════════════════════════
 Demo_CSV:
-  ~Root*: ["^Setup CSV", "^List Users", "^Add User"]
+  ~Root*: ["^Setup CSV", "^List Users", "^Add User", "^Delete User"]
   
   "^Setup CSV":
     zData:
@@ -51,12 +51,23 @@ Demo_CSV:
           data:
             email: "zConv.email"
             name: "zConv.name"
+  
+  "^Delete User":
+    zDialog:
+      model: DeleteForm
+      fields: ["user_id"]
+      onSubmit:
+        zData:
+          action: delete
+          model: "@.zSchema.users_csv"
+          table: users
+          where: "id = zConv.user_id"
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # 🗄️ SQLITE DEMO BLOCK
 # ═══════════════════════════════════════════════════════════════════════════════
 Demo_SQLite:
-  ~Root*: ["^Setup SQLite", "^List Users", "^Add User"]
+  ~Root*: ["^Setup SQLite", "^List Users", "^Add User", "^Delete User"]
   
   "^Setup SQLite":
     zData:
@@ -83,4 +94,15 @@ Demo_SQLite:
           data:
             email: "zConv.email"
             name: "zConv.name"
+  
+  "^Delete User":
+    zDialog:
+      model: DeleteForm
+      fields: ["user_id"]
+      onSubmit:
+        zData:
+          action: delete
+          model: "@.zSchema.users_sqlite"
+          table: users
+          where: "id = zConv.user_id"
 
