@@ -535,7 +535,7 @@
                 <div class="level-number">2</div>
                 <div class="level-title">
                     <h2>💾 Data & Logic Layer ✅ COMPLETE</h2>
-                    <div class="level-description" style="color: var(--accent-green);">CRUD operations proven: zData, zDialog, zSchema integration</div>
+                    <div class="level-description" style="color: var(--accent-green);">CRUD operations + validation proven: zData, zDialog, zSchema with 5-layer validation</div>
                 </div>
             </div>
 
@@ -544,17 +544,18 @@
                 <input type="checkbox" class="demo-checkbox" onchange="updateDemo(this)" checked>
                 <div class="demo-content">
                     <div class="demo-title">
-                        <span><strong>#2.1</strong> CRUD Operations - zData ✅</span>
+                        <span><strong>#2.1</strong> CRUD Operations + Validation - zData ✅</span>
                     </div>
                     <div class="demo-description">
-                        <strong>Goal:</strong> Prove declarative CRUD (Create, Read, Insert, Delete)<br>
-                        <strong>Test:</strong> CSV + SQLite backends with zDelta navigation<br>
-                        <strong>Catches:</strong> zData, zSchema, zDialog forms, database operations<br>
-                        <strong style="color: var(--accent-green);">✅ DONE: Full CRUD cycle proven with both CSV and SQLite adapters</strong>
+                        <strong>Goal:</strong> Prove declarative CRUD with schema validation<br>
+                        <strong>Test:</strong> CSV + SQLite backends, 5-layer validation (min_length, format:email, required)<br>
+                        <strong>Catches:</strong> zData, zSchema, zDialog forms, DataValidator, empty string prevention<br>
+                        <strong style="color: var(--accent-green);">✅ DONE: Full CRUD + validation proven with both adapters</strong>
                     </div>
                     <div class="demo-meta">
                         <span class="subsystem-tag">zData</span>
                         <span class="subsystem-tag">zDialog</span>
+                        <span class="subsystem-tag">DataValidator</span>
                         <span class="subsystem-tag">zDisplay</span>
                         <span class="mode-tag">Terminal</span>
                         <span class="time-tag">⏱️ 20 min</span>
@@ -567,16 +568,17 @@
                 <input type="checkbox" class="demo-checkbox" onchange="updateDemo(this)" checked>
                 <div class="demo-content">
                     <div class="demo-title">
-                        <span><strong>#2.2</strong> Interactive Forms - zDialog ✅</span>
+                        <span><strong>#2.2</strong> Forms + Validation - zDialog ✅</span>
                     </div>
                     <div class="demo-description">
-                        <strong>Goal:</strong> Prove declarative forms with onSubmit → zData<br>
-                        <strong>Test:</strong> Add User and Delete User forms from Demo #2.1<br>
-                        <strong>Catches:</strong> zDialog fields, zConv placeholders, onSubmit routing<br>
-                        <strong style="color: var(--accent-green);">✅ DONE: Proven in Demo #2.1 CRUD operations</strong>
+                        <strong>Goal:</strong> Prove declarative forms with validation → zData<br>
+                        <strong>Test:</strong> Add/Delete User forms with validation (min_length, format:email)<br>
+                        <strong>Catches:</strong> zDialog fields, zConv placeholders, onSubmit routing, validation errors<br>
+                        <strong style="color: var(--accent-green);">✅ DONE: Forms + 5-layer validation proven in Demo #2.1</strong>
                     </div>
                     <div class="demo-meta">
                         <span class="subsystem-tag">zDialog</span>
+                        <span class="subsystem-tag">DataValidator</span>
                         <span class="subsystem-tag">zData</span>
                         <span class="mode-tag">Terminal</span>
                         <span class="time-tag">⏱️ Covered in 2.1</span>

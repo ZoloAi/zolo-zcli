@@ -13,9 +13,16 @@ users:
     type: str
     unique: true
     required: true
+    rules:
+      format: email
+      min_length: 5
+      max_length: 255
   name:
     type: str
     required: true
+    rules:
+      min_length: 1
+      max_length: 100
   created_at:
     type: datetime
     default: now
