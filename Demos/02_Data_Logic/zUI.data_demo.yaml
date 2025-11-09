@@ -24,7 +24,7 @@ zVaF:
 # 📊 CSV DEMO BLOCK
 # ═══════════════════════════════════════════════════════════════════════════════
 Demo_CSV:
-  ~Root*: ["^Setup CSV", "^List Users", "^Add User", "^Delete User"]
+  Root*: ["^Setup CSV", "^List Users", "^Add User", "^Delete User"]
   
   "^Setup CSV":
     zData:
@@ -67,7 +67,7 @@ Demo_CSV:
 # 🗄️ SQLITE DEMO BLOCK
 # ═══════════════════════════════════════════════════════════════════════════════
 Demo_SQLite:
-  ~Root*: ["^Setup SQLite", "^List Users", "^Add User", "^Delete User"]
+  Root*: ["^Setup SQLite", "^List Users", "^Add User", "^Delete User"]
   
   "^Setup SQLite":
     zData:

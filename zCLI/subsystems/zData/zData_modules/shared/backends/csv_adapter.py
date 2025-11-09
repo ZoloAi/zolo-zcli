@@ -729,6 +729,7 @@ class CSVAdapter(BaseDataAdapter):
         Insert a row into CSV table and save to disk.
 
         Loads table, appends new row, saves back to CSV.
+        Handles auto_increment for ID fields by calculating max(id) + 1.
 
         Args:
             table: Table name
@@ -736,17 +737,17 @@ class CSVAdapter(BaseDataAdapter):
             values: List of values (same order as fields)
 
         Returns:
-            int: Row ID (row count after insert)
+            int: Auto-generated ID if pk with auto_increment, else row count
 
         Example:
             >>> row_id = adapter.insert("users", ["name", "age"], ["Alice", 30])
-            >>> # Returns 1 (first row)
+            >>> # Returns auto-incremented ID if 'id' field has auto_increment: true
 
         Note:
             - Creates field→value dict via zip(fields, values)
+            - Auto-generates ID if schema has pk=True, auto_increment=True
             - Appends row to DataFrame
             - Saves immediately to CSV (no explicit commit needed)
-            - Returns row count (not a true auto-increment ID)
         """
         df = self._load_table(table)
 
@@ -756,12 +757,50 @@ class CSVAdapter(BaseDataAdapter):
             fields = []
 
         new_row = {field: value for field, value in zip(fields, values)}
+        
+        # Handle auto_increment for primary key fields
+        # Try schema first, then fallback to convention-based detection
+        schema = self.schemas.get(table, {})
+        auto_id_field = None
+        
+        # Check schema for explicit auto_increment field
+        for field_name, field_def in schema.items():
+            if isinstance(field_def, dict):
+                is_pk = field_def.get('pk', False) or field_def.get('primary_key', False)
+                is_auto = field_def.get('auto_increment', False) or field_def.get('autoincrement', False)
+                if is_pk and is_auto:
+                    auto_id_field = field_name
+                    break
+        
+        # Fallback: If no schema, check for 'id' column in DataFrame (convention-based)
+        if not auto_id_field and 'id' in df.columns and 'id' not in new_row:
+            auto_id_field = 'id'
+        
+        # If auto_increment field found and not provided (or empty) in insert
+        if auto_id_field and (auto_id_field not in new_row or not new_row.get(auto_id_field)):
+            # Calculate next ID: max(existing_ids) + 1, or 1 if table is empty
+            if len(df) > 0 and auto_id_field in df.columns:
+                try:
+                    max_id = df[auto_id_field].max()
+                    # Handle NaN or None
+                    next_id = int(max_id) + 1 if pd.notna(max_id) else 1
+                except (ValueError, TypeError):
+                    next_id = len(df) + 1
+            else:
+                next_id = 1
+            
+            new_row[auto_id_field] = next_id
+            row_id = next_id
+            if self.logger:
+                self.logger.info(f"Auto-generated ID for {table}: {next_id}")
+        else:
+            row_id = len(df) + 1
+        
         df = self._append_row_to_df(df, new_row)
 
         self._save_table(table, df)
         self.tables[table] = df
 
-        row_id = len(df)
         if self.logger:
             self.logger.info(LOG_ROW_INSERTED, table, row_id)
         return row_id

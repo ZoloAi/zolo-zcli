@@ -11,10 +11,6 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../.
 
 from zCLI import zCLI
 
-print("="*60)
-print("🎨 Demo 4.2 - Dual-Mode zUI (Terminal + Web)")
-print("="*60)
-print()
 
 # Step 1: Initialize zCLI in main thread
 z = zCLI({
