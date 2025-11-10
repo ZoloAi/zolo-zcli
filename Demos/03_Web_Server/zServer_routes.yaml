@@ -3,7 +3,7 @@
 # v1.5.4 Phase 2
 
 Meta:
-  base_path: "./public"
+  base_path: "/Users/galnachshon/Projects/zolo-zcli/Demos/03_Web_Server/public"
   default_route: "index.html"
   error_pages:
     403: "access_denied.html"

@@ -17,7 +17,7 @@ routes_file = "/Users/galnachshon/Projects/zolo-zcli/Demos/03_Web_Server/zServer
 
 server = z.comm.create_http_server(
     port=8080,
-    serve_path="./public",
+    serve_path="/Users/galnachshon/Projects/zolo-zcli/Demos/03_Web_Server/public",
     routes_file=routes_file  # Declarative routing!
 )
 

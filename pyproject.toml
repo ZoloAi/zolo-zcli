@@ -99,3 +99,4 @@ zCLI = [
 # Dynamically read the version string from the attribute
 # zCLI/version.py -> __version__ (exported via zCLI.version.__version__)
 version = {attr = "zCLI.version.__version__"}
+
