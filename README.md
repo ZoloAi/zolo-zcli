@@ -1,16 +1,15 @@
 # zCLI
+## **<span style="color:#A2D46E">Declare once—run everywhere.</span>**  
+Define data and workflows, deploy instantly as terminal or GUI, or interactively using zShell.
 
-> **Enterprise-Grade YAML-Driven CLI Framework**  
-> Build production-ready command-line applications without writing boilerplate code.
+> **New to zCLI?**  
+> Start with [<span style="color:#A2D46E">**The zPhilosophy**</span>](Documentation/zPhilosophy.md) to discover how<br>**<span style="color:#A2D46E">Zolo</span> evolves intent and structure into meaning and syntax**.
+
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Tests: 1,073+](https://img.shields.io/badge/tests-1%2C073%2B%20passing-green)](zTestRunner/)
-[![Version: 1.5.4](https://img.shields.io/badge/version-1.5.4-blue)](https://github.com/ZoloAi/zolo-zcli)
-
----
-
-> **📖 New to zCLI?** Start with **[The Philosophy](Documentation/zPhilosophy.md)** to understand why declarative programming changes everything. It's not just a framework - it's a paradigm shift from "code then present" to "intend then evolve."
+[![Version: 1.5.5](https://img.shields.io/badge/version-1.5.5-blue)](https://github.com/ZoloAi/zolo-zcli)
 
 ---
 
