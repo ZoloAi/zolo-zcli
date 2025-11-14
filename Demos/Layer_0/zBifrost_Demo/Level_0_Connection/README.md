@@ -19,7 +19,8 @@ Think of it like making a phone call: you dial (connect), say hello, then hang u
 ## Files
 
 - **<span style="color:#F8961F">`level0_backend.py`</span>** - The Python server (25 lines)
-- **<span style="color:#F8961F">`level0_client.html`</span>** - The web page (opens in any browser)
+- **<span style="color:#F8961F">`level0_client.html`</span>** - The web page (uses BifrostClient library)
+- **<span style="color:#F8961F">`styles.css`</span>** - The styling (purple gradient theme)
 
 ## How to Run
 
@@ -85,23 +86,88 @@ When you run this, zCLI automatically:
 ### The Client (JavaScript)
 
 ```javascript
-// Create a connection to the server
-ws = new WebSocket('ws://127.0.0.1:8765');
-
-// When connected, the server sends a message
-ws.onmessage = (event) => {
-    const msg = JSON.parse(event.data);
-    
-    if (msg.event === 'connection_info') {
-        showWelcomeMessage();  // Show "Hello from zBlog!"
+// Use BifrostClient library (production-ready!)
+const client = new BifrostClient('ws://127.0.0.1:8765', {
+    hooks: {
+        onConnected: () => showConnected(),
+        onMessage: (msg) => {
+            if (msg.event === 'connection_info') {
+                showWelcome();  // Show "Hello from zBlog!"
+            }
+        }
     }
-};
+});
+
+// Connect with one line!
+await client.connect();
 ```
 
 The browser:
-1. Connects to `ws://127.0.0.1:8765` (like dialing a phone number)
-2. Listens for messages from the server
-3. Displays the welcome message when it arrives
+1. Loads BifrostClient library (handles all WebSocket complexity)
+2. Connects to `ws://127.0.0.1:8765` (like dialing a phone number)
+3. BifrostClient automatically parses JSON and calls your hooks
+4. Displays the welcome message when it arrives
+
+**Key Point:** You're using the same production-ready library that powers all of zCLI's WebSocket features!
+
+### Why This Approach? (Imperative vs Declarative)
+
+**Level 0 is intentionally imperative** - you're learning the fundamentals:
+
+```javascript
+// You manually handle each message type
+onMessage: (msg) => {
+    if (msg.event === 'connection_info') {
+        showWelcome();  // You decide what to do
+    }
+}
+```
+
+**This teaches you:**
+- How WebSocket communication works
+- How to use BifrostClient with conventional tools
+- The hooks pattern (foundational for all levels)
+- How to handle messages imperatively (useful for custom apps)
+
+**In future levels, this becomes declarative:**
+
+**Level 3+** (Backend does the work):
+```python
+# Backend: Just describe what you want
+z.display.success("Hello from zBlog!")
+z.display.header("Welcome to Level 3")
+```
+
+```javascript
+// Frontend: Auto-renders based on event type!
+onDisplay: (data) => {
+    // BifrostClient automatically renders
+    // success → green box
+    // header → big title
+    // No manual if/else needed!
+}
+```
+
+**The progression:**
+- **Level 0**: Learn the plumbing (imperative)
+- **Level 3**: See the magic (declarative zDisplay events)
+- **Level 5+**: Pure productivity (auto-rendering)
+
+This is the **zCLI teaching philosophy**: understand the foundation, then leverage the abstractions.
+
+### Development vs Production
+
+**Right now (Development):**
+- The HTML loads BifrostClient from your local zCLI installation
+- Works offline, no internet required
+- Path: `../../../../zCLI/subsystems/zComm/zComm_modules/bifrost/bifrost_client_modular.js`
+
+**In Production (After deploying):**
+- Switch to CDN: `https://cdn.jsdelivr.net/gh/ZoloAi/zolo-zcli@v1.5.5/...`
+- Works from anywhere with internet
+- Same code, just different source!
+
+This is the **zolo way**: develop locally, deploy globally with one line change.
 
 ## Success Checklist
 

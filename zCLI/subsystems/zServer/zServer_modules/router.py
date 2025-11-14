@@ -57,6 +57,7 @@ RBAC_KEY_REQUIRE_PERMISSION = "require_permission"
 
 # Route types
 ROUTE_TYPE_STATIC = "static"
+ROUTE_TYPE_CONTENT = "content"  # Inline HTML content (like Flask return "<h1>...</h1>")
 ROUTE_TYPE_DYNAMIC = "dynamic"
 ROUTE_TYPE_REDIRECT = "redirect"
 

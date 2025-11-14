@@ -5,24 +5,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Level 0: Hello zBlog</title>
     <link rel="stylesheet" href="styles.css">
+    
+    <!-- Development: Local path (works offline) -->
+    <script src="../../../../zCLI/subsystems/zComm/zComm_modules/bifrost/bifrost_client_modular.js"></script>
+    
+    <!-- Production: Uncomment this and comment out the line above when deploying -->
+    <!-- <script src="https://cdn.jsdelivr.net/gh/ZoloAi/zolo-zcli@v1.5.5/zCLI/subsystems/zComm/zComm_modules/bifrost/bifrost_client_modular.js"></script> -->
 </head>
 <body>
     <div class="container">
         <h1>🌉 Level 0: Hello zBlog</h1>
         <p class="subtitle">Your first WebSocket connection!</p>
-        
+    
         <div class="goal">
             <strong>🎯 Goal:</strong> Connect to the zBlog server and see a welcome message. That's it!
-        </div>
-        
-        <div id="status" class="status disconnected">
+    </div>
+
+    <div id="status" class="status disconnected">
             ❌ Not Connected
-        </div>
-        
+    </div>
+
         <div id="messageBox" class="message-box">
             Waiting for connection...
-        </div>
-        
+    </div>
+
         <div class="buttons">
             <button id="connectBtn" class="btn-connect" onclick="connect()">
                 🚀 Connect to Server
@@ -44,79 +50,69 @@
     </div>
 
     <script>
-        // Simple WebSocket client for Level 0
-        // No fancy libraries, just pure JavaScript!
-        
-        let ws = null;
-        const statusDiv = document.getElementById('status');
-        const messageBox = document.getElementById('messageBox');
-        const connectBtn = document.getElementById('connectBtn');
-        const disconnectBtn = document.getElementById('disconnectBtn');
-        
-        function connect() {
-            console.log('🚀 Connecting to zBlog server...');
-            
-            // Create WebSocket connection
-            ws = new WebSocket('ws://127.0.0.1:8765');
-            
-            // When connection opens
-            ws.onopen = () => {
-                console.log('✅ Connected!');
-                statusDiv.className = 'status connected';
-                statusDiv.textContent = '✅ Connected to zBlog!';
-                connectBtn.disabled = true;
-                disconnectBtn.disabled = false;
-            };
-            
-            // When we receive a message
-            ws.onmessage = (event) => {
-                console.log('📨 Message received:', event.data);
-                
-                try {
-                    const msg = JSON.parse(event.data);
-                    console.log('📦 Parsed message:', msg);
-                    
-                    // Check for connection_info (zBifrost sends this automatically)
+                // Initialize BifrostClient with hooks
+        const client = new BifrostClient('ws://127.0.0.1:8765', {
+            autoTheme: false,  // We have our own custom styles
+            debug: true,       // Show console logs for learning
+                    hooks: {
+                        onConnected: (info) => {
+                    console.log('Connected!', info);
+                    showConnected();
+                        },
+                        onDisconnected: (reason) => {
+                    console.log('Disconnected:', reason);
+                    showDisconnected();
+                        },
+                        onMessage: (msg) => {
+                    console.log('Message received:', msg);
                     if (msg.event === 'connection_info') {
-                        showWelcomeMessage();
+                        showWelcome();
                     }
-                    // Check for any other messages
-                    else if (msg.message) {
-                        showMessage(msg.message);
+                        },
+                        onError: (error) => {
+                    console.error('Error:', error);
+                    showError();
+                        }
                     }
-                } catch (e) {
-                    // If it's not JSON, just show it as text
-                    showMessage(event.data);
-                }
-            };
-            
-            // If connection fails
-            ws.onerror = (error) => {
-                console.error('❌ Connection error:', error);
-                showMessage('❌ Connection failed! Is the server running?');
-            };
-            
-            // When connection closes
-            ws.onclose = () => {
-                console.log('👋 Disconnected');
-                statusDiv.className = 'status disconnected';
-                statusDiv.textContent = '❌ Not Connected';
-                messageBox.className = 'message-box';
-                messageBox.textContent = 'Waiting for connection...';
-                connectBtn.disabled = false;
-                disconnectBtn.disabled = true;
-                ws = null;
-            };
-        }
-        
-        function disconnect() {
-            if (ws) {
-                console.log('👋 Disconnecting...');
-                ws.close();
+                });
+
+        // Connect button handler
+        async function connect() {
+            document.getElementById('connectBtn').disabled = true;
+            try {
+                await client.connect();
+            } catch (error) {
+                console.error('Connection failed:', error);
+                document.getElementById('connectBtn').disabled = false;
             }
         }
+
+        // Disconnect button handler
+        function disconnect() {
+                client.disconnect();
+        }
         
-        function showWelcomeMessage() {
+        // UI update functions
+        function showConnected() {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = 'status connected';
+            statusDiv.textContent = '✅ Connected to zBlog!';
+            document.getElementById('disconnectBtn').disabled = false;
+        }
+
+        function showDisconnected() {
+            const statusDiv = document.getElementById('status');
+            const messageBox = document.getElementById('messageBox');
+            statusDiv.className = 'status disconnected';
+            statusDiv.textContent = '❌ Not Connected';
+            messageBox.className = 'message-box';
+            messageBox.textContent = 'Waiting for connection...';
+            document.getElementById('connectBtn').disabled = false;
+            document.getElementById('disconnectBtn').disabled = true;
+        }
+        
+        function showWelcome() {
+            const messageBox = document.getElementById('messageBox');
             messageBox.className = 'message-box has-message';
             messageBox.innerHTML = `
                 <div>
@@ -129,14 +125,16 @@
             `;
         }
         
-        function showMessage(text) {
+        function showError() {
+            const messageBox = document.getElementById('messageBox');
             messageBox.className = 'message-box has-message';
-            messageBox.textContent = text;
+            messageBox.style.background = '#f44336';
+            messageBox.textContent = '❌ Connection failed! Is the server running?';
         }
         
-        // Log to console when page loads
-        console.log('👋 Level 0: Hello zBlog');
-        console.log('📝 Click "Connect to Server" to start!');
+        // Log when page loads
+        console.log('Level 0: Hello zBlog');
+        console.log('Click "Connect to Server" to start!');
     </script>
 </body>
 </html>

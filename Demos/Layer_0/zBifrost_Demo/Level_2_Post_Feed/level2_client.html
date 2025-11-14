@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Level 2: Post Feed</title>
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Development: Local path -->
+    <script src="../../../../zCLI/subsystems/zComm/zComm_modules/bifrost/bifrost_client_modular.js"></script>
+    
+    <!-- Production: Uncomment this and comment out the line above -->
+    <!-- <script src="https://cdn.jsdelivr.net/gh/ZoloAi/zolo-zcli@v1.5.5/zCLI/subsystems/zComm/zComm_modules/bifrost/bifrost_client_modular.js"></script> -->
+</head>
+<body>
+    <div class="container">
+        <h1>📰 Level 2: Post Feed</h1>
+        <p class="subtitle">Display multiple posts like a real blog!</p>
+        
+        <div class="goal">
+            <strong>🎯 Goal:</strong> Load and display 5 blog posts in a feed. Learn how to work with arrays of data (lists of posts).
+        </div>
+        
+        <div id="status" class="status disconnected">
+            ❌ Not Connected
+        </div>
+        
+        <div class="buttons">
+            <button id="connectBtn" class="btn-connect" onclick="connect()">
+                🚀 Connect to Server
+            </button>
+            <button id="disconnectBtn" class="btn-disconnect" onclick="disconnect()" disabled>
+                👋 Disconnect
+            </button>
+        </div>
+        
+        <!-- Load Feed button (only shows when connected) -->
+        <div id="loadSection" style="display: none; margin-top: 30px; text-align: center;">
+            <button 
+                onclick="loadFeed()" 
+                style="padding: 15px 40px; background: #667eea; color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 1.1em; font-weight: bold;"
+            >
+                📰 Load Feed
+            </button>
+        </div>
+        
+        <!-- Post count display -->
+        <div id="postCount" style="display: none; margin-top: 20px; text-align: center; color: #667eea; font-weight: bold; font-size: 1.1em;"></div>
+        
+        <!-- Blog posts feed -->
+        <div id="postsFeed" style="display: none; margin-top: 30px; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;"></div>
+        
+        <div class="instructions">
+            <h3>💡 Imperative Foundation Complete!</h3>
+            <div style="background: #e8f5e9; padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #8FBE6D;">
+                <p style="margin: 0; color: #555; line-height: 1.6;">
+                    <strong style="color: #8FBE6D;">Levels 0-2 give you everything needed to build ANY web app imperatively!</strong><br><br>
+                    The patterns you've learned (custom events, manual DOM, data structures) can be reused and mixed to create 
+                    a full WordPress-like blog, e-commerce site, or any complex web application. You have <strong>complete control</strong> 
+                    over the WebSocket communication and rendering.<br><br>
+                    However, showing the entire structure of such a demo would be redundant—the concepts are all here in these fundamentals. 
+                    <strong style="color: #667eea;">The next phase (Level 3+) will show the proper declarative way</strong> to build such apps 
+                    with zTheme auto-rendering, reducing code by 90%!
+                </p>
+            </div>
+            
+            <h3>📋 Instructions</h3>
+            <ol>
+                <li>Make sure <code>level2_backend.py</code> is running</li>
+                <li>Click the "Connect to Server" button above</li>
+                <li>Click "Load Feed" to fetch all blog posts</li>
+                <li>See 5 blog posts appear as cards!</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        // Initialize BifrostClient with hooks
+        const client = new BifrostClient('ws://127.0.0.1:8765', {
+            autoTheme: false,  // We have our own styles
+            debug: true,       // Show console logs for learning
+            hooks: {
+                onConnected: (info) => {
+                    console.log('Connected!', info);
+                    showConnected();
+                    document.getElementById('loadSection').style.display = 'block';
+                },
+                onDisconnected: (reason) => {
+                    console.log('Disconnected:', reason);
+                    showDisconnected();
+                    document.getElementById('loadSection').style.display = 'none';
+                    document.getElementById('postsFeed').style.display = 'none';
+                    document.getElementById('postCount').style.display = 'none';
+                },
+                onMessage: (msg) => {
+                    console.log('Message received:', msg);
+                    if (msg.event === 'connection_info') {
+                        console.log('Connected to zBlog server!');
+                    } else if (msg.event === 'posts_data') {
+                        displayFeed(msg.posts, msg.count);
+                    }
+                },
+                onError: (error) => {
+                    console.error('Error:', error);
+                    showError();
+                }
+            }
+        });
+        
+        // UI elements
+        const statusDiv = document.getElementById('status');
+        const connectBtn = document.getElementById('connectBtn');
+        const disconnectBtn = document.getElementById('disconnectBtn');
+
+        // Connect button handler
+        async function connect() {
+            connectBtn.disabled = true;
+            try {
+                await client.connect();
+            } catch (error) {
+                console.error('Connection failed:', error);
+                connectBtn.disabled = false;
+            }
+        }
+        
+        // Disconnect button handler
+        function disconnect() {
+            client.disconnect();
+        }
+
+        // Load feed button handler
+        async function loadFeed() {
+            if (!client.isConnected()) {
+                alert('Not connected to server!');
+                return;
+            }
+
+            const request = {
+                event: 'get_posts'
+            };
+
+            try {
+                client.connection.send(JSON.stringify(request));
+                console.log('Requested blog feed');
+            } catch (error) {
+                console.error('Failed to load feed:', error);
+                alert('Failed to load feed: ' + error.message);
+            }
+        }
+        
+        // Display blog posts feed
+        function displayFeed(posts, count) {
+            console.log(`Displaying ${count} posts:`, posts);
+            
+            // Show post count
+            const postCount = document.getElementById('postCount');
+            postCount.style.display = 'block';
+            postCount.textContent = `📚 ${count} Posts in Feed`;
+            
+            // Show the feed container
+            const postsFeed = document.getElementById('postsFeed');
+            postsFeed.style.display = 'grid';
+            postsFeed.innerHTML = ''; // Clear previous posts
+            
+            // Create a card for each post
+            posts.forEach(post => {
+                const card = createPostCard(post);
+                postsFeed.appendChild(card);
+            });
+            
+            // Scroll to feed
+            postsFeed.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        
+        // Create a post card
+        function createPostCard(post) {
+            const card = document.createElement('div');
+            card.style.cssText = `
+                background: white;
+                border-radius: 15px;
+                padding: 25px;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                transition: transform 0.2s, box-shadow 0.2s;
+                cursor: pointer;
+            `;
+            
+            // Hover effect
+            card.onmouseenter = () => {
+                card.style.transform = 'translateY(-5px)';
+                card.style.boxShadow = '0 8px 12px rgba(0,0,0,0.15)';
+            };
+            card.onmouseleave = () => {
+                card.style.transform = 'translateY(0)';
+                card.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
+            };
+            
+            // Title
+            const title = document.createElement('h3');
+            title.style.cssText = 'color: #667eea; margin: 0 0 10px 0; font-size: 1.3em;';
+            title.textContent = post.title;
+            card.appendChild(title);
+            
+            // Metadata (author and date)
+            const meta = document.createElement('div');
+            meta.style.cssText = 'color: #999; font-size: 0.85em; margin-bottom: 15px; display: flex; gap: 15px;';
+            meta.innerHTML = `
+                <span>✍️ ${post.author}</span>
+                <span>📅 ${post.date}</span>
+            `;
+            card.appendChild(meta);
+            
+            // Excerpt
+            const excerpt = document.createElement('p');
+            excerpt.style.cssText = 'color: #555; line-height: 1.6; margin: 15px 0;';
+            excerpt.textContent = post.excerpt;
+            card.appendChild(excerpt);
+            
+            // Tags
+            const tagsContainer = document.createElement('div');
+            tagsContainer.style.cssText = 'display: flex; gap: 8px; flex-wrap: wrap; margin-top: 15px;';
+            post.tags.forEach(tag => {
+                const tagEl = document.createElement('span');
+                tagEl.style.cssText = 'background: #667eea; color: white; padding: 4px 12px; border-radius: 15px; font-size: 0.75em;';
+                tagEl.textContent = `#${tag}`;
+                tagsContainer.appendChild(tagEl);
+            });
+            card.appendChild(tagsContainer);
+            
+            return card;
+        }
+        
+        // UI update functions
+        function showConnected() {
+            statusDiv.className = 'status connected';
+            statusDiv.textContent = '✅ Connected to zBlog!';
+            disconnectBtn.disabled = false;
+        }
+        
+        function showDisconnected() {
+            statusDiv.className = 'status disconnected';
+            statusDiv.textContent = '❌ Not Connected';
+            connectBtn.disabled = false;
+            disconnectBtn.disabled = true;
+        }
+
+        function showError() {
+            statusDiv.className = 'status disconnected';
+            statusDiv.style.background = '#f44336';
+            statusDiv.textContent = '❌ Connection failed! Is the server running?';
+        }
+        
+        // Log when page loads
+        console.log('Level 2: Post Feed');
+        console.log('Click "Connect to Server" to start!');
+    </script>
+</body>
+</html>

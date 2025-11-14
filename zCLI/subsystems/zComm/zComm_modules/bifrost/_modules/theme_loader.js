@@ -68,15 +68,18 @@ export class ThemeLoader {
       if (script.src && script.src.includes('bifrost_client')) {
         // Extract base path and navigate to zTheme
         const basePath = script.src.substring(0, script.src.lastIndexOf('/'));
+        // Handle both local and CDN paths
+        // Local: .../zCLI/subsystems/zComm/zComm_modules/bifrost -> .../zCLI/subsystems/zTheme
+        // CDN: .../zComm/zComm_modules/bifrost -> .../zTheme
         return basePath.replace(
-          '/zComm/zComm_modules/zBifrost',
+          /\/zComm\/zComm_modules\/bifrost$/,
           '/zTheme'
         );
       }
     }
 
     // Fallback to GitHub CDN
-    return 'https://cdn.jsdelivr.net/gh/ZoloAi/zolo-zcli@v1.5.4/zCLI/subsystems/zTheme';
+    return 'https://cdn.jsdelivr.net/gh/ZoloAi/zolo-zcli@main/zCLI/subsystems/zTheme';
   }
 
   /**

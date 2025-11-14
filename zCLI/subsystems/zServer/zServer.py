@@ -71,11 +71,25 @@ class zServer:
         """
         Load routing configuration from zServer.*.yaml file (v1.5.4 Phase 2).
         
-        Uses zLoader to load and parse routing file, then creates HTTPRouter instance.
+        Uses zParser to load and parse routing file directly (bypassing zLoader's
+        zPath decoder to avoid dot interpretation in filenames like zServer.routes.yaml).
         """
         try:
-            # Use zLoader to load routes file (handle() is the public API)
-            routes_data = self.zcli.loader.handle(self.routes_file)
+            # Load file directly using zParser (bypass zLoader's zPath decoder)
+            # This avoids interpreting dots in "zServer.routes.yaml" as path separators
+            from ..zParser.parser_modules import parse_file_content
+            from ..zLoader.loader_modules import load_file_raw
+            
+            # Read raw file content
+            raw_content = load_file_raw(self.routes_file, self.logger)
+            
+            # Parse content (zParser will detect zServer in path and parse as server file)
+            routes_data = parse_file_content(
+                raw_content,
+                self.logger,
+                file_extension=".yaml",
+                file_path=self.routes_file
+            )
             
             if routes_data and routes_data.get("type") == "server":
                 # Import router (lazy import to avoid circular dependency)

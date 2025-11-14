@@ -1,0 +1,32 @@
+# Level 3: Getting Started - HTTP Routes
+# Mirrors Flask Blog Part 1: flaskblog.py
+#
+# Flask:
+#   @app.route("/")
+#   @app.route("/home")
+#   def home():
+#       return "<h1>Home Page</h1>"
+#
+#   @app.route("/about")
+#   def about():
+#       return "<h1>About Page</h1>"
+#
+# zCLI: Declarative routes with inline content (no decorators!)
+
+Meta:
+  base_path: "."
+  default_route: "/"
+
+routes:
+  /:
+    type: content
+    content: "<h1>Home Page</h1>"
+  
+  /home:
+    type: content
+    content: "<h1>Home Page</h1>"
+  
+  /about:
+    type: content
+    content: "<h1>About Page</h1>"
+

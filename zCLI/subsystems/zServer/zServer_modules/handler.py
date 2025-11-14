@@ -87,12 +87,46 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
             self.path = f"/{os.path.basename(file_path)}"
             return super().do_GET()
         
+        elif route_type == "content":
+            # Serve inline HTML content (like Flask return "<h1>...</h1>")
+            return self._handle_content_route(route)
+        
         elif route_type == "dynamic":
             # Serve dynamically generated HTML from zUI
             return self._handle_dynamic_route(route)
         
         # Unknown route type
         return self.send_error(501, f"Route type '{route_type}' not supported")
+    
+    def _handle_content_route(self, route: dict):
+        """
+        Handle content route - serve inline HTML string (like Flask return "<h1>...</h1>").
+        
+        Args:
+            route: Route definition with "content" field
+        
+        Returns:
+            None: Sends HTTP response directly
+        """
+        try:
+            # Extract HTML content from route
+            html_content = route.get("content", "")
+            
+            if not html_content:
+                return self.send_error(500, "Content route missing 'content' field")
+            
+            # Send HTML response
+            self.send_response(200)
+            self.send_header("Content-type", "text/html")
+            self.send_header("Content-length", len(html_content.encode('utf-8')))
+            self.end_headers()
+            self.wfile.write(html_content.encode('utf-8'))
+            
+        except Exception as e:
+            # Log error and send 500
+            if hasattr(self, 'zcli_logger') and self.zcli_logger:
+                self.zcli_logger.error(f"[Handler] Content route error: {e}")
+            return self.send_error(500, f"Content serving failed: {str(e)}")
     
     def _handle_dynamic_route(self, route: dict):
         """

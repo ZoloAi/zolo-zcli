@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Level 1: Echo Test</title>
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Development: Local path (works offline) -->
+    <script src="../../../../zCLI/subsystems/zComm/zComm_modules/bifrost/bifrost_client_modular.js"></script>
+    
+    <!-- Production: Uncomment this and comment out the line above when deploying -->
+    <!-- <script src="https://cdn.jsdelivr.net/gh/ZoloAi/zolo-zcli@v1.5.5/zCLI/subsystems/zComm/zComm_modules/bifrost/bifrost_client_modular.js"></script> -->
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 Level 1: Echo Test</h1>
+        <p class="subtitle">Two-way communication!</p>
+        
+        <div class="goal">
+            <strong>🎯 Goal:</strong> Send a message to the server and get it echoed back. Proves browser ↔ server communication works!
+        </div>
+        
+        <div id="status" class="status disconnected">
+            ❌ Not Connected
+        </div>
+        
+        <div id="messageBox" class="message-box">
+            Waiting for connection...
+        </div>
+        
+        <div class="buttons">
+            <button id="connectBtn" class="btn-connect" onclick="connect()">
+                🚀 Connect to Server
+            </button>
+            <button id="disconnectBtn" class="btn-disconnect" onclick="disconnect()" disabled>
+                👋 Disconnect
+            </button>
+        </div>
+        
+        <!-- Echo input section (only shows when connected) -->
+        <div id="echoSection" style="display: none; margin-top: 30px;">
+            <h3 style="color: #667eea; margin-bottom: 15px;">Send a Message</h3>
+            <div style="display: flex; gap: 10px;">
+                <input 
+                    type="text" 
+                    id="messageInput" 
+                    placeholder="Type your message here..."
+                    style="flex: 1; padding: 15px; font-size: 1em; border: 2px solid #667eea; border-radius: 10px;"
+                    onkeypress="if(event.key === 'Enter') sendMessage()"
+                />
+                <button 
+                    onclick="sendMessage()" 
+                    style="padding: 15px 30px; background: #667eea; color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 1em; font-weight: bold;"
+                >
+                    📤 Send
+                </button>
+            </div>
+            <div id="echoLog" style="margin-top: 20px; background: #f9f9f9; border-radius: 10px; padding: 15px; max-height: 200px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 0.9em;">
+                <div style="color: #999;">Echo responses will appear here...</div>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h3>📋 Instructions</h3>
+            <ol>
+                <li>Make sure <code>level1_backend.py</code> is running</li>
+                <li>Click the "Connect to Server" button above</li>
+                <li>Type a message in the input box that appears</li>
+                <li>Click "Send" or press Enter</li>
+                <li>Watch your message get echoed back!</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        // Initialize BifrostClient with hooks
+        const client = new BifrostClient('ws://127.0.0.1:8765', {
+            autoTheme: false,  // We have our own custom styles
+            debug: true,       // Show console logs for learning
+            hooks: {
+                onConnected: (info) => {
+                    console.log('Connected!', info);
+                    showConnected();
+                },
+                onDisconnected: (reason) => {
+                    console.log('Disconnected:', reason);
+                    showDisconnected();
+                },
+                onMessage: (msg) => {
+                    console.log('Message received:', msg);
+                    if (msg.event === 'connection_info') {
+                        showWelcome();
+                    } else if (msg.event === 'echo_response') {
+                        showEchoResponse(msg);
+                    }
+                },
+                onError: (error) => {
+                    console.error('Error:', error);
+                    showError();
+                }
+            }
+        });
+        
+        // Connect button handler
+        async function connect() {
+            document.getElementById('connectBtn').disabled = true;
+            try {
+                await client.connect();
+            } catch (error) {
+                console.error('Connection failed:', error);
+                document.getElementById('connectBtn').disabled = false;
+            }
+        }
+        
+        // Disconnect button handler
+        function disconnect() {
+            client.disconnect();
+        }
+        
+        // UI update functions
+        function showConnected() {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = 'status connected';
+            statusDiv.textContent = '✅ Connected to zBlog!';
+            document.getElementById('disconnectBtn').disabled = false;
+            // Show echo section when connected
+            document.getElementById('echoSection').style.display = 'block';
+        }
+        
+        function showDisconnected() {
+            const statusDiv = document.getElementById('status');
+            const messageBox = document.getElementById('messageBox');
+            statusDiv.className = 'status disconnected';
+            statusDiv.textContent = '❌ Not Connected';
+            messageBox.className = 'message-box';
+            messageBox.textContent = 'Waiting for connection...';
+            document.getElementById('connectBtn').disabled = false;
+            document.getElementById('disconnectBtn').disabled = true;
+            // Hide echo section when disconnected
+            document.getElementById('echoSection').style.display = 'none';
+        }
+        
+        function showWelcome() {
+            const messageBox = document.getElementById('messageBox');
+            messageBox.className = 'message-box has-message';
+            messageBox.innerHTML = `
+                <div>
+                    <div class="success-icon">🎉</div>
+                    <div><strong>Hello from zBlog!</strong></div>
+                    <div style="margin-top: 10px; font-size: 0.9em;">
+                        You're connected and ready to build your blog!
+                    </div>
+                </div>
+            `;
+        }
+        
+        function showError() {
+            const messageBox = document.getElementById('messageBox');
+            messageBox.className = 'message-box has-message';
+            messageBox.style.background = '#f44336';
+            messageBox.textContent = '❌ Connection failed! Is the server running?';
+        }
+        
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message) {
+                alert('Please type a message first!');
+                return;
+            }
+            
+            // Send echo request to server
+            const echoRequest = {
+                event: 'echo',
+                message: message,
+                timestamp: Date.now()
+            };
+            
+            // Use BifrostClient's connection to send
+            if (client.isConnected()) {
+                client.connection.send(JSON.stringify(echoRequest));
+                console.log('Sent:', echoRequest);
+                
+                // Clear input
+                input.value = '';
+                
+                // Show "sending..." in log
+                const echoLog = document.getElementById('echoLog');
+                const entry = document.createElement('div');
+                entry.style.color = '#999';
+                entry.style.margin = '5px 0';
+                entry.textContent = `→ Sent: "${message}"`;
+                echoLog.appendChild(entry);
+                echoLog.scrollTop = echoLog.scrollHeight;
+            } else {
+                alert('Not connected to server!');
+            }
+        }
+        
+        function showEchoResponse(msg) {
+            const echoLog = document.getElementById('echoLog');
+            const entry = document.createElement('div');
+            entry.style.color = '#667eea';
+            entry.style.margin = '5px 0';
+            entry.style.fontWeight = 'bold';
+            entry.textContent = `← ${msg.echo}`;
+            echoLog.appendChild(entry);
+            echoLog.scrollTop = echoLog.scrollHeight;
+        }
+        
+        // Log when page loads
+        console.log('Level 1: Echo Test');
+        console.log('Click "Connect to Server" to start!');
+    </script>
+</body>
+</html>

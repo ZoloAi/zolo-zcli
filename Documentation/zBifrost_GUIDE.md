@@ -4,7 +4,7 @@
 
 > **<span style="color:#F8961F">Real-time bidirectional communication</span>** between Python backends and JavaScript frontends via WebSocket bridge.
 
-**<span style="color:#8FBE6D">Every modern app needs real-time communication.</span>** WebSocket servers, message routing, event handling—the real struggle is keeping your Python backend's JSON in sync with your JavaScript frontend, let alone setting it up. **One schema change breaks everything.**
+**<span style="color:#8FBE6D">Every modern app needs real-time communication.</span>** WebSocket servers, message routing, event handling—the real struggle is keeping your Python backend's JSON in sync with your JavaScript frontecdnd, let alone setting it up. **One schema change breaks everything.**
 
 **<span style="color:#8FBE6D">zBifrost</span>** is zCLI's **<span style="color:#F8961F">Layer 0 WebSocket bridge</span>**, providing a **production-ready server** (Python) and **standalone JavaScript client**. Don't need the full framework? Import zCLI, use just the server. Or use the JavaScript client standalone with any WebSocket backend.
 
@@ -44,31 +44,225 @@ zBifrost uses an **<span style="color:#8FBE6D">event-driven architecture</span>*
 
 **Demo Roadmap:**
 
+> **End Goal**: Build a complete WordPress-style blog ("zBlog") following the exact workflow of [Corey Schafer's Flask Blog Tutorial](https://github.com/CoreyMSchafer/code_snippets/tree/master/Python/Flask_Blog), but using zCLI instead of Flask—resulting in 90% less code!
+
+**Phase 1: Foundation (Imperative Usage)** — Levels 0-2
 - **Level 0**: Hello zBlog - Connect to server, see welcome message, disconnect
 - **Level 1**: Echo Test - Type message, send it, get echo back (proves two-way communication)
-- **Level 2**: Your First Post - Display one hardcoded blog post (title, author, content)
-- **Level 3**: Post Feed - Show 5 hardcoded posts as cards (like a real blog homepage)
-- **Level 4**: Load from Database - Click "Load Posts" button, fetch real posts from SQLite
-- **Level 5**: Write a Post - Form to create new post (title + content), see it appear in feed
-- **Level 6**: Edit Your Post - Click post to edit, change title/content, save changes
-- **Level 7**: Delete Post - Delete button with "Are you sure?" confirmation
-- **Level 8**: Real-Time Magic - Open two browsers, publish in one, instantly appears in other
-- **Level 9**: Login Required - Username/password form, must login to create posts
-- **Level 10**: Admin vs Author - Admins can edit/delete any post, authors only their own
-- **Level 11**: Production Polish - Loading spinners, error messages, beautiful CSS
+- **Level 2**: Post Feed - Show 5 hardcoded posts as cards (manual DOM, imperative JavaScript)
+
+**Phase 2: Declarative zCLI (Following Flask Blog Tutorial Structure)** — Levels 3-16
+
+- **Level 3**: Getting Started - HTTP + WebSocket Together
+  - **Flask Part 1**: Run Flask dev server, serve static files
+  - **zCLI**: Add zServer (HTTP) + zBifrost (WebSocket) in same Python script
+  - **NEW**: Run both HTTP (port 8000) and WebSocket (port 8765) together
+
+- **Level 4**: Templates - Jinja2 Base Layout
+  - **Flask Part 2**: Create base template with Jinja2 (layout.html, home.html, about.html)
+  - **zCLI**: Jinja2 layout with multi-zone divs (`<div id="zui-content">`, `<div id="zui-sidebar">`)
+  - **NEW**: Server-side rendering for page structure (header, nav, footer)
+
+- **Level 5**: Forms and User Input - Registration Form
+  - **Flask Part 3**: Flask-WTF forms, validation, flash messages
+  - **zCLI**: `z.display.form()` with zSchema validation (auto-rendered + validated)
+  - **NEW**: Form schema → HTML form (no manual HTML!)
+
+- **Level 6**: Database - SQLAlchemy Models
+  - **Flask Part 4**: Define User and Post models with SQLAlchemy
+  - **zCLI**: Write zSchema YAML (declarative schema for User, Post)
+  - **NEW**: YAML schema → SQLite tables (no Python ORM code!)
+
+- **Level 7**: User Authentication - Login/Logout
+  - **Flask Part 5**: Flask-Login, bcrypt, login_required decorator
+  - **zCLI**: `z.auth.login()` + RBAC rules in YAML (auth.yaml)
+  - **NEW**: `z.display.login_form()` + session token management
+
+- **Level 8**: User Account - Profile Page
+  - **Flask Part 6**: User profile, update account info, profile picture upload
+  - **zCLI**: `z.display.form(schema="update_profile")` + file upload via zBifrost
+  - **NEW**: File upload over WebSocket + `z.data.update("users")`
+
+- **Level 9**: Create Posts - New Post Form
+  - **Flask Part 7**: Create post route, form, save to database
+  - **zCLI**: `z.display.form(schema="create_post")` + `z.data.insert("posts")`
+  - **NEW**: Form submission → database (declarative, no routes!)
+
+- **Level 10**: Update and Delete Posts - CRUD Operations
+  - **Flask Part 8**: Edit/delete routes, authorization checks
+  - **zCLI**: `z.display.table(posts, actions=["edit", "delete"])` + RBAC
+  - **NEW**: `z.display.table()` with action buttons + `z.display.confirm()`
+
+- **Level 11**: Pagination - Post List Pagination
+  - **Flask Part 9**: SQLAlchemy pagination, page parameter
+  - **zCLI**: `z.data.select("posts", limit=10, offset=page*10)` + `z.display.pagination()`
+  - **NEW**: `z.display.pagination()` auto-renders pagination controls
+
+- **Level 12**: Email and Password Reset
+  - **Flask Part 10**: Flask-Mail, password reset tokens, email templates
+  - **zCLI**: `z.comm.send_email()` + `z.auth.reset_password_token()`
+  - **NEW**: Email via zComm + token-based password reset
+
+- **Level 13**: Blueprints - Application Structure
+  - **Flask Part 11**: Organize app into blueprints (users, posts, main)
+  - **zCLI**: Organize zCLI commands into modules (users.py, posts.py, main.py)
+  - **NEW**: Modular zCLI structure (same as Flask blueprints)
+
+- **Level 14**: Custom Error Pages - 404, 403, 500
+  - **Flask Part 12**: Custom error handlers, error templates
+  - **zCLI**: `z.display.error(404, message="Page not found")` + custom error zones
+  - **NEW**: Error events routed to specific divs
+
+- **Level 15**: Comments System - Nested Data
+  - **Flask Extension**: Add Comment model, foreign keys, nested rendering
+  - **zCLI**: zSchema foreign keys + `z.data.select(join="comments")` + nested rendering
+  - **NEW**: BifrostClient nested rendering (posts with comments array)
+
+- **Level 16**: Real-Time Updates - WebSocket Broadcasts
+  - **Flask Extension**: Would require Flask-SocketIO (complex setup)
+  - **zCLI**: `z.comm.websocket.broadcast()` (already built-in!)
+  - **NEW**: Multi-user real-time updates (new posts appear instantly for all users)
 
 **Optional Advanced Levels:**
-- **Level 12**: Comments & Replies - Add comments to posts, nested replies
-- **Level 13**: Terminal Mode - Manage blog from command line (same features as web)
+- **Level 17**: Deployment - Production Setup (Gunicorn, Nginx, SSL)
+- **Level 18**: Terminal Mode - Same zDisplay events work in Terminal (dual-mode!)
+
+---
+
+### Backend Enhancement Notes (Not Part of Demos)
+
+**These backend features may need implementation/enhancement before building certain levels:**
+
+**For Level 3:**
+- ✅ zServer HTTP server - Already exists
+- ✅ zBifrost WebSocket server - Already exists
+- ⏳ **NEEDED**: Run both servers together (HTTP + WebSocket in same Python script)
+- ⏳ **NEEDED**: Static file serving via zServer
+
+**For Level 4:**
+- ⏳ **NEEDED**: Jinja2 integration in zServer (serve Jinja2-rendered layouts)
+- ⏳ **NEEDED**: Template directory structure
+- ⏳ **NEEDED**: Pass data to Jinja2 templates (ui_zones, etc.)
+
+**For Level 5:**
+- ✅ zData schema loading - Already exists
+- ✅ `z.data.create_table()` - Already exists
+- ✅ zSchema YAML parsing - Already exists
+
+**For Level 6:**
+- ✅ `z.data.select()` with WHERE/ORDER BY/LIMIT - Already exists
+- ✅ SQLite adapter - Already exists
+- ✅ `z.display.json_data()` - Already exists
+- ✅ BifrostClient `onDisplay` hook - Already exists
+- ⏳ **NEEDED**: Auto-rendering logic in BifrostClient for structured data (posts array)
+- ⏳ **NEEDED**: `target` parameter in zDisplay events (route to specific div)
+
+**For Level 7:**
+- ⏳ **NEEDED**: `z.display.form()` - Send form schema as zDisplay event
+- ⏳ **NEEDED**: BifrostClient auto-form rendering (from schema → HTML form)
+- ✅ zData validator (5-layer validation) - Already exists
+
+**For Level 8:**
+- ⏳ **NEEDED**: `z.display.table()` - Send table data + actions as zDisplay event
+- ⏳ **NEEDED**: BifrostClient auto-table rendering (with action buttons)
+- ⏳ **NEEDED**: `z.display.confirm()` - Confirmation dialog event
+- ✅ `z.data.update()` / `z.data.delete()` - Already exists
+
+**For Level 9:**
+- ✅ Foreign keys in zSchema - Already exists
+- ✅ `z.data.select()` with JOIN - Already exists
+- ⏳ **NEEDED**: BifrostClient nested rendering (posts with comments array)
+
+**For Level 10:**
+- ✅ zAuth subsystem - Already exists
+- ✅ `z.auth.login()` / `z.auth.check_permission()` - Already exists
+- ⏳ **NEEDED**: `z.display.login_form()` - Auto-rendered login UI
+- ⏳ **NEEDED**: Session token management in BifrostClient
+- ⏳ **NEEDED**: Zone-level RBAC (hide/show divs based on role)
+
+**Priority Implementation Order:**
+1. **Level 3**: Run HTTP + WebSocket servers together, static file serving
+2. **Level 4**: Jinja2 integration in zServer (template rendering)
+3. **Level 6**: BifrostClient auto-rendering for arrays + `target` parameter
+4. **Level 7**: `z.display.form()` + auto-form rendering
+5. **Level 8**: `z.display.table()` + auto-table rendering + `z.display.confirm()`
+6. **Level 10**: `z.display.login_form()` + session token management + zone RBAC
+
+---
 
 **Current Status:**
-- ✅ **Level 0**: Complete (Hello zBlog - high school friendly!)
-- ⏳ **Level 1**: Needs creation (Echo Test)
-- ⏳ **Level 2**: Needs creation (Your First Post)
-- ⏳ **Level 3**: Needs creation (Post Feed)
-- ⏳ **Level 4**: Needs creation (Load from Database)
-- ⏳ **Levels 5-11**: Progressive blog features to be built
-- 📦 **Old demos**: Level_1_Menu and Level_2_Widgets archived (not aligned with zBlog tutorial)
+- ✅ **Phase 1 (Levels 0-2)**: Complete - Imperative foundation established
+- ⏳ **Phase 2 (Levels 3-16)**: Ready to build (following [Corey Schafer's Flask Blog Tutorial](https://github.com/CoreyMSchafer/code_snippets/tree/master/Python/Flask_Blog))
+- 📦 **Old demos**: Level_1_Menu and Level_2_Widgets archived (not aligned with Flask tutorial structure)
+
+**Key Insight:** Phase 1 teaches raw WebSocket mechanics (imperative). Phase 2 reveals zBifrost's declarative magic, following the **exact same workflow** as the famous Flask blog tutorial—but with **91% less code**!
+
+**Why This Structure?**
+
+1. **Phase 1 (Imperative)**: You need to understand WebSocket fundamentals before appreciating the abstractions. Manual DOM manipulation shows what zCLI automates for you. By the end, you'll have a complete imperative toolkit for building ANY web app.
+
+2. **Phase 2 (Declarative)**: Levels 3-16 follow the **exact structure of [Corey Schafer's Flask Blog Tutorial](https://github.com/CoreyMSchafer/code_snippets/tree/master/Python/Flask_Blog)**, part-by-part:
+   - **Level 3**: Part 1 - Getting Started (Flask app → zServer + zBifrost)
+   - **Level 4**: Part 2 - Templates (Jinja2 layout)
+   - **Level 5**: Part 3 - Forms (Flask-WTF → `z.display.form()`)
+   - **Level 6**: Part 4 - Database (SQLAlchemy → zSchema YAML)
+   - **Level 7**: Part 5 - User Auth (Flask-Login → zAuth YAML)
+   - **Level 8**: Part 6 - User Account (profile, upload)
+   - **Level 9**: Part 7 - Create Posts (form, save)
+   - **Level 10**: Part 8 - Update/Delete (CRUD routes → `z.display.table()`)
+   - **Level 11**: Part 9 - Pagination (SQLAlchemy pagination → `z.display.pagination()`)
+   - **Level 12**: Part 10 - Email/Reset (Flask-Mail → `z.comm.send_email()`)
+   - **Level 13**: Part 11 - Blueprints (modular structure)
+   - **Level 14**: Part 12 - Error Pages (custom handlers → `z.display.error()`)
+   - **Level 15**: Extension - Comments (foreign keys, JOIN)
+   - **Level 16**: Extension - Real-Time (Flask-SocketIO → built-in WebSocket!)
+   - **Result**: Same blog, **91% less code**, plus real-time updates!
+
+---
+
+### Flask → zCLI Workflow Mapping
+
+**How we'd build a blog in Flask** (imperative, 16 parts) **vs. zCLI** (declarative, same 16 levels):
+
+| Level | Flask Blog Tutorial | zCLI Workflow | Code Reduction |
+|-------|---------------------|---------------|----------------|
+| **0-2** | N/A (Flask assumes HTTP) | WebSocket fundamentals (imperative) | N/A (teaching phase) |
+| **3** | Part 1: Getting Started (Flask app, routes) | zServer (HTTP) + zBifrost (WebSocket) together | ~50 lines → 10 lines |
+| **4** | Part 2: Templates (Jinja2 layout.html) | Jinja2 layout with multi-zone divs | ~100 lines → 30 lines |
+| **5** | Part 3: Forms (Flask-WTF, validation) | `z.display.form()` + zSchema validation | ~150 lines → 20 lines |
+| **6** | Part 4: Database (SQLAlchemy models) | zSchema YAML (declarative schema) | ~80 lines Python → 15 lines YAML |
+| **7** | Part 5: User Auth (Flask-Login, bcrypt) | `z.auth.login()` + RBAC YAML | ~200 lines → 10 lines Python + 10 lines YAML |
+| **8** | Part 6: User Account (profile, upload) | `z.display.form()` + file upload | ~120 lines → 15 lines |
+| **9** | Part 7: Create Posts (form, save) | `z.display.form()` + `z.data.insert()` | ~100 lines → 10 lines |
+| **10** | Part 8: Update/Delete (CRUD routes) | `z.display.table()` with actions | ~150 lines → 5 lines |
+| **11** | Part 9: Pagination (SQLAlchemy pagination) | `z.display.pagination()` | ~80 lines → 5 lines |
+| **12** | Part 10: Email/Reset (Flask-Mail, tokens) | `z.comm.send_email()` + `z.auth.reset_password_token()` | ~150 lines → 10 lines |
+| **13** | Part 11: Blueprints (app structure) | Modular zCLI commands | ~200 lines refactor → 0 lines (same structure) |
+| **14** | Part 12: Error Pages (custom handlers) | `z.display.error()` events | ~60 lines → 5 lines |
+| **15** | Extension: Comments (foreign keys, JOIN) | zSchema foreign keys + nested rendering | ~100 lines → 10 lines YAML + 5 lines Python |
+| **16** | Extension: Real-Time (Flask-SocketIO setup) | `z.comm.websocket.broadcast()` (built-in!) | ~300 lines → 1 line |
+| **Total** | **~1,840 lines of Python + HTML** | **~155 lines of Python + YAML** | **~91% reduction!** |
+
+**Key Differences:**
+
+**Flask (Imperative):**
+- Write routes for every action (`@app.route('/post/create', methods=['POST'])`)
+- Write HTML templates for every view (`post_list.html`, `post_edit.html`)
+- Write SQL queries or ORM code for every operation
+- Manually handle form validation, CSRF tokens, error messages
+- Manually implement authentication logic (sessions, cookies, decorators)
+
+**zCLI (Declarative):**
+- **One HTML file** with `<div id="zContainer"></div>` (BifrostClient auto-renders everything)
+- **One Python backend** with zDisplay events (`z.display.json_data()`, `z.display.form()`, `z.display.table()`)
+- **One zSchema YAML** for database models (auto-creates tables, validates data)
+- **One zAuth YAML** for RBAC rules (auto-enforces permissions)
+- **Zero routes, zero templates, zero SQL** — just describe what you want!
+
+**Code Reduction:**
+- **Flask**: ~500-1000 lines (routes, templates, forms, queries, auth logic)
+- **zCLI**: ~50-100 lines (schema YAML + Python backend with zDisplay events)
+- **Result**: **90% less code, same functionality!**
 
 ---
 
@@ -94,66 +288,71 @@ python3 level0_backend.py
 
 ---
 
-### Level 1: Simple zUI Menu
+### Level 1: Echo Test
 
-**<span style="color:#8FBE6D">Goal</span>**: Load a zUI file and execute dispatch commands via WebSocket.
+**<span style="color:#8FBE6D">Goal</span>**: Type message, send it, get echo back (proves two-way communication).
 
-**Location**: [`Level_1_Menu/`](../Demos/Layer_0/zBifrost_Demo/Level_1_Menu)
+**Location**: [`Level_1_Echo/`](../Demos/Layer_0/zBifrost_Demo/Level_1_Echo) | [README](../Demos/Layer_0/zBifrost_Demo/Level_1_Echo/README.md)
 
 **What you'll learn:**
 - **<span style="color:#F8961F">Production BifrostClient</span>** (lazy loading architecture)
-- **<span style="color:#F8961F">zUI menu definition</span>** in YAML
-- Dispatch commands (`^Ping`, `^Echo Test`, `^Status`)
-- No hardcoded values—all from zCLI abstractions
+- **<span style="color:#8FBE6D">Custom event handlers</span>** (register `echo` event)
+- **<span style="color:#00D4FF">Two-way communication</span>** (client → server → client)
 
 **Run:**
 ```bash
-cd Demos/Layer_0/zBifrost_Demo/Level_1_Menu
+cd Demos/Layer_0/zBifrost_Demo/Level_1_Echo
 python3 level1_backend.py
-# Open level1_client.html in browser
+# Open level1_client.html in browser, type a message, click "Send"
 ```
 
-**Alternative**: Use `python3 run_server.py` to start HTTP + WebSocket together (zServer subsystem)
-
-**Success**: Menu buttons execute zUI-defined commands, responses logged to console
+**Success**: Your message is echoed back with timestamp
 
 ---
 
-### Level 2: Widget Showcase
+### Level 2: Post Feed
 
-**<span style="color:#8FBE6D">Goal</span>**: Demonstrate declarative zDisplay widgets in dual-mode (Terminal + Browser).
+**<span style="color:#8FBE6D">Goal</span>**: Show 5 hardcoded posts as cards (like a real blog homepage).
 
-**Location**: [`Level_2_Widgets/`](../Demos/Layer_0/zBifrost_Demo/Level_2_Widgets)
+**Location**: [`Level_2_Post_Feed/`](../Demos/Layer_0/zBifrost_Demo/Level_2_Post_Feed) | [README](../Demos/Layer_0/zBifrost_Demo/Level_2_Post_Feed/README.md)
 
 **What you'll learn:**
-- **<span style="color:#F8961F">Declarative `_progress` metadata</span>** in zUI
-- **<span style="color:#F8961F">Progress bars</span>** with ETA and colors (success, info, warning, danger)
-- **<span style="color:#F8961F">6 spinner styles</span>** (dots, line, arc, arrow, bouncingBall, simple)
-- Same Python API works in Terminal and Browser
-- Custom hooks for widget events (`onProgressBar`, `onSpinnerStart`)
+- **<span style="color:#F8961F">Arrays of structured data</span>** (posts with title, author, excerpt, tags)
+- **<span style="color:#8FBE6D">Dynamic element creation</span>** (manual `createPostCard()` function)
+- **<span style="color:#00D4FF">CSS Grid layout</span>** (responsive post cards)
 
 **Run:**
 ```bash
-cd Demos/Layer_0/zBifrost_Demo/Level_2_Widgets
+cd Demos/Layer_0/zBifrost_Demo/Level_2_Post_Feed
 python3 level2_backend.py
-# Open level2_client.html in browser, click "Run Demo"
+# Open level2_client.html in browser, click "Load Feed"
 ```
 
-**Success**: All widgets render smoothly in browser, same code works in Terminal mode
+**Success**: 5 blog posts appear as styled cards
 
 ---
 
-### Level 3: CRUD Operations (Coming Soon)
-**Goal**: Perform database operations via WebSocket (no HTTP API needed).
+### Level 3: HTTP + WebSocket Together
 
-**What you'll build:**
-- Server with zData backend (SQLite)
-- Client CRUD UI (create, read, update, delete users)
-- Real-time updates when data changes
+**<span style="color:#8FBE6D">Goal</span>**: Run both HTTP server (zServer) and WebSocket server (zBifrost) in the same Python script.
 
-**Concepts**: `client.read()`, `client.create()`, `client.update()`, `client.delete()`, zData integration
+**Location**: [`Level_3_HTTP_WebSocket/`](../Demos/Layer_0/zBifrost_Demo/Level_3_HTTP_WebSocket) | [README](../Demos/Layer_0/zBifrost_Demo/Level_3_HTTP_WebSocket/README.md)
 
-**Backend features**: zData subsystem, cache isolation, CRUD event handlers
+**What you'll learn:**
+- **<span style="color:#F8961F">zServer (HTTP server)</span>** - Serve static files via HTTP
+- **<span style="color:#8FBE6D">Dual-server architecture</span>** - HTTP (port 8000) + WebSocket (port 8765)
+- **<span style="color:#00D4FF">Production environment</span>** - Move from `file://` to `http://` URLs
+
+**Run:**
+```bash
+cd Demos/Layer_0/zBifrost_Demo/Level_3_HTTP_WebSocket
+python3 level3_backend.py
+# Open http://127.0.0.1:8000/level3_client.html in browser (NOT file://)
+```
+
+**Success**: Same blog feed as Level 2, but served via HTTP!
+
+**Why this matters**: Enables CORS, cookies, sessions (needed for auth), and Jinja2 templates (Level 4)
 
 ---
 

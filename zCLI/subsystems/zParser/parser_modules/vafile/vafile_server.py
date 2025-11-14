@@ -84,6 +84,7 @@ KEY_ERROR_PAGES = "error_pages"
 # Route keys
 KEY_TYPE = "type"
 KEY_FILE = "file"
+KEY_CONTENT = "content"  # For inline HTML content (v1.5.4 Phase 2)
 KEY_HANDLER = "handler"
 KEY_TARGET = "target"
 KEY_STATUS = "status"
@@ -94,6 +95,7 @@ KEY_ZBLOCK = "zBlock"    # For dynamic routes (v1.5.4 Phase 3)
 
 # Route types
 ROUTE_TYPE_STATIC = "static"
+ROUTE_TYPE_CONTENT = "content"  # For inline HTML content (v1.5.4 Phase 2)
 ROUTE_TYPE_DYNAMIC = "dynamic"
 ROUTE_TYPE_REDIRECT = "redirect"
 
@@ -206,6 +208,8 @@ def parse_server_file(
         # Add type-specific fields
         if KEY_FILE in route_data:
             route_entry[KEY_FILE] = route_data[KEY_FILE]
+        if KEY_CONTENT in route_data:
+            route_entry[KEY_CONTENT] = route_data[KEY_CONTENT]
         if KEY_HANDLER in route_data:
             route_entry[KEY_HANDLER] = route_data[KEY_HANDLER]
         if KEY_TARGET in route_data:
