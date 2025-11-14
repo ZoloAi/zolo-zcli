@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+
+{% block content %}
+    <h2>About zBlog</h2>
+    <p>zBlog is a demonstration project that mirrors <a href="https://github.com/CoreyMSchafer/code_snippets/tree/master/Python/Flask_Blog" target="_blank">Corey Schafer's Flask Blog Tutorial</a>, but built with zCLI instead of Flask.</p>
+    
+    <h3>Why zCLI?</h3>
+    <p>zCLI is a declarative Python framework that reduces boilerplate by 90% compared to traditional web frameworks like Flask or Django.</p>
+    
+    <h3>Key Features</h3>
+    <ul>
+        <li><strong>Declarative Routes</strong>: Define routes in YAML instead of Python decorators</li>
+        <li><strong>Jinja2 Templates</strong>: Same templating engine as Flask</li>
+        <li><strong>WebSocket Built-in</strong>: Real-time communication without Flask-SocketIO</li>
+        <li><strong>Auto-Rendering</strong>: BifrostClient auto-renders zDisplay events</li>
+        <li><strong>Schema-Driven</strong>: Define database models in YAML, not Python classes</li>
+    </ul>
+    
+    <h3>Tutorial Progress</h3>
+    <p>We're currently at <strong>Level 4: Templates</strong>, which corresponds to Flask Blog Part 2.</p>
+    <p>By the end of this tutorial series, we'll have built a complete blog with authentication, posts, comments, and real-time updates—all with 90% less code than Flask!</p>
+    
+    <hr style="margin: 2rem 0; border: none; border-top: 1px solid #ddd;">
+    
+    <p><strong>Tech Stack:</strong></p>
+    <ul>
+        <li>Backend: zCLI (Python)</li>
+        <li>Frontend: Jinja2 + BifrostClient (JavaScript)</li>
+        <li>Database: SQLite (via zData)</li>
+        <li>Real-time: WebSocket (via zBifrost)</li>
+    </ul>
+{% endblock %}
+

@@ -91,6 +91,10 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
             # Serve inline HTML content (like Flask return "<h1>...</h1>")
             return self._handle_content_route(route)
         
+        elif route_type == "template":
+            # Serve Jinja2 template (like Flask render_template())
+            return self._handle_template_route(route)
+        
         elif route_type == "dynamic":
             # Serve dynamically generated HTML from zUI
             return self._handle_dynamic_route(route)
@@ -127,6 +131,58 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
             if hasattr(self, 'zcli_logger') and self.zcli_logger:
                 self.zcli_logger.error(f"[Handler] Content route error: {e}")
             return self.send_error(500, f"Content serving failed: {str(e)}")
+    
+    def _handle_template_route(self, route: dict):
+        """
+        Handle template route - render Jinja2 template (like Flask render_template()).
+        
+        Args:
+            route: Route definition with "template" field and optional "context" dict
+        
+        Returns:
+            None: Sends HTTP response directly
+        """
+        try:
+            template_name = route.get("template", "")
+            if not template_name:
+                return self.send_error(500, "Template route missing 'template' field")
+            
+            # Get context data (variables to pass to template)
+            context = route.get("context", {})
+            
+            # Get zcli instance from router
+            if not hasattr(self.router, 'zcli'):
+                return self.send_error(500, "zCLI instance not available")
+            
+            # Get templates directory from serve_path
+            import os
+            from jinja2 import Environment, FileSystemLoader, TemplateNotFound
+            
+            serve_path = self.router.zcli.server.serve_path
+            templates_dir = os.path.join(serve_path, "templates")
+            
+            # Create Jinja2 environment
+            env = Environment(loader=FileSystemLoader(templates_dir))
+            
+            # Render template
+            template = env.get_template(template_name)
+            html_content = template.render(**context)
+            
+            # Send HTML response
+            self.send_response(200)
+            self.send_header("Content-type", "text/html; charset=utf-8")
+            self.send_header("Content-length", len(html_content.encode('utf-8')))
+            self.end_headers()
+            self.wfile.write(html_content.encode('utf-8'))
+            
+        except TemplateNotFound as e:
+            if hasattr(self, 'zcli_logger') and self.zcli_logger:
+                self.zcli_logger.error(f"[Handler] Template not found: {e}")
+            return self.send_error(404, f"Template not found: {template_name}")
+        except Exception as e:
+            if hasattr(self, 'zcli_logger') and self.zcli_logger:
+                self.zcli_logger.error(f"[Handler] Template rendering error: {e}")
+            return self.send_error(500, f"Template rendering failed: {str(e)}")
     
     def _handle_dynamic_route(self, route: dict):
         """

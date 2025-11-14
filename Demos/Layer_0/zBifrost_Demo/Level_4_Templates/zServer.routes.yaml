@@ -1,0 +1,41 @@
+# Level 4: Templates - Jinja2 Base Layout
+# Mirrors Flask Blog Part 2: flaskblog.py
+#
+# Flask:
+#   from flask import Flask, render_template
+#   app = Flask(__name__)
+#   
+#   @app.route("/")
+#   @app.route("/home")
+#   def home():
+#       return render_template('home.html')
+#   
+#   @app.route("/about")
+#   def about():
+#       return render_template('about.html')
+#
+# zCLI: Declarative routes with Jinja2 templates (no decorators!)
+
+Meta:
+  base_path: "."
+  default_route: "/"
+
+routes:
+  /:
+    type: template
+    template: "home.html"
+    context:
+      title: "Home"
+  
+  /home:
+    type: template
+    template: "home.html"
+    context:
+      title: "Home"
+  
+  /about:
+    type: template
+    template: "about.html"
+    context:
+      title: "About"
+
