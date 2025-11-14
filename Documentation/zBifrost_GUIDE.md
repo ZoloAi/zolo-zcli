@@ -40,26 +40,57 @@ zBifrost uses an **<span style="color:#8FBE6D">event-driven architecture</span>*
 
 > **<span style="color:#8FBE6D">Learn zBifrost step-by-step.</span>**<br>Each level builds on the previous, adding complexity gradually. All demos live in [`Demos/Layer_0/zBifrost_Demo`](../Demos/Layer_0/zBifrost_Demo).
 
-### Level 0: Bare Connection
+**End Goal:** Build **<span style="color:#F8961F">zBlog</span>**—a complete blog platform with real-time updates and multi-user support. Each level adds exactly one feature, starting from "Hello World" and ending with a production-ready blog.
 
-**<span style="color:#8FBE6D">Goal</span>**: Prove BifrostClient works—no UI, no database, no commands.
+**Demo Roadmap:**
 
-**Location**: [`Level_0_Connection/`](../Demos/Layer_0/zBifrost_Demo/Level_0_Connection)
+- **Level 0**: Hello zBlog - Connect to server, see welcome message, disconnect
+- **Level 1**: Echo Test - Type message, send it, get echo back (proves two-way communication)
+- **Level 2**: Your First Post - Display one hardcoded blog post (title, author, content)
+- **Level 3**: Post Feed - Show 5 hardcoded posts as cards (like a real blog homepage)
+- **Level 4**: Load from Database - Click "Load Posts" button, fetch real posts from SQLite
+- **Level 5**: Write a Post - Form to create new post (title + content), see it appear in feed
+- **Level 6**: Edit Your Post - Click post to edit, change title/content, save changes
+- **Level 7**: Delete Post - Delete button with "Are you sure?" confirmation
+- **Level 8**: Real-Time Magic - Open two browsers, publish in one, instantly appears in other
+- **Level 9**: Login Required - Username/password form, must login to create posts
+- **Level 10**: Admin vs Author - Admins can edit/delete any post, authors only their own
+- **Level 11**: Production Polish - Loading spinners, error messages, beautiful CSS
+
+**Optional Advanced Levels:**
+- **Level 12**: Comments & Replies - Add comments to posts, nested replies
+- **Level 13**: Terminal Mode - Manage blog from command line (same features as web)
+
+**Current Status:**
+- ✅ **Level 0**: Complete (Hello zBlog - high school friendly!)
+- ⏳ **Level 1**: Needs creation (Echo Test)
+- ⏳ **Level 2**: Needs creation (Your First Post)
+- ⏳ **Level 3**: Needs creation (Post Feed)
+- ⏳ **Level 4**: Needs creation (Load from Database)
+- ⏳ **Levels 5-11**: Progressive blog features to be built
+- 📦 **Old demos**: Level_1_Menu and Level_2_Widgets archived (not aligned with zBlog tutorial)
+
+---
+
+### Level 0: Hello zBlog
+
+**<span style="color:#8FBE6D">Goal</span>**: Connect to server, see welcome message, disconnect. That's it!
+
+**Location**: [`Level_0_Connection/`](../Demos/Layer_0/zBifrost_Demo/Level_0_Connection) | [README](../Demos/Layer_0/zBifrost_Demo/Level_0_Connection/README.md)
 
 **What you'll learn:**
-- **<span style="color:#F8961F">Minimal zBifrost server</span>** (10 lines of Python)
-- SimpleBifrostClient wrapper (same API as production)
-- Connection lifecycle hooks (`onConnected`, `onDisconnected`)
-- Server info discovery (version, features)
+- **<span style="color:#F8961F">Start a WebSocket server</span>** in Python (10 lines!)
+- **<span style="color:#8FBE6D">Connect from browser</span>** (just click a button)
+- **<span style="color:#00D4FF">See messages flow</span>** between server and browser
 
 **Run:**
 ```bash
 cd Demos/Layer_0/zBifrost_Demo/Level_0_Connection
 python3 level0_backend.py
-# Open level0_client.html in browser
+# Open level0_client.html in browser, click "Connect"
 ```
 
-**Success**: Client connects, displays server info, clean disconnect works
+**Success**: You see "🎉 Hello from zBlog!" in your browser
 
 ---
 
