@@ -1,3 +1,5 @@
+[← Back to zBifrost](zBifrost_GUIDE.md) | [Next: zAuth Guide →](zAuth_GUIDE.md)
+
 # zDisplay Guide
 
 > **One display API for Terminal and GUI™**  

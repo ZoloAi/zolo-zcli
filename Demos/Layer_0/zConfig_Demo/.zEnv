@@ -1,0 +1,5 @@
+ZOLO_DEPLOYMENT=Production
+APP_REPORT_NAME=low_stock_report
+APP_THRESHOLD=4
+APP_REGION=us-east-1
+

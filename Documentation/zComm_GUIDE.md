@@ -1,240 +1,100 @@
-# zComm: Communication & Service Management
+[← Back to zConfig](zConfig_GUIDE.md) | [Next: zBifrost Guide →](zBifrost_GUIDE.md)
 
-**Version**: 1.5.4+ | **Status**: ✅ Production-Ready (A+ Grade) | **Tests**: 98/98 passing (100%)
+# zComm Guide
 
----
+> **<span style="color:#F8961F">Unified I/O</span>** that routes everything—WebSocket, HTTP, service orchestration—through one clean interface.
 
-## What is zComm?
+**<span style="color:#8FBE6D">Every application needs communication infrastructure.</span>** WebSocket servers, HTTP requests, service management, port checking—you either build it yourself, import three different libraries, or copy-paste from tutorials. zComm is zCLI's **<span style="color:#F8961F">Layer 0 communication hub</span>**, initialized right after zConfig to provide WebSocket (zBifrost), HTTP client, service orchestration, and network utilities. Don't need the full framework? **<span style="color:#8FBE6D">Import zCLI, use just zComm.</span>** Get **<span style="color:#8FBE6D">production-ready WebSocket servers</span>**, **<span style="color:#F8961F">HTTP client for API calls</span>**, and **<span style="color:#EA7171">service lifecycle management</span>** through one facade.<br>**No websockets library, no requests library, no service juggling.**
 
-**zComm** is zCLI's communication subsystem that manages:
-- **WebSocket servers** (real-time bidirectional messaging)
-- **HTTP clients** (external API communication)
-- **Local services** (PostgreSQL, Redis, etc.)
-- **Network utilities** (port checking, service health)
+> **Need an HTTP server?** zComm focuses on communication clients. For serving static files (HTML/CSS/JS) use [zServer Guide](zServer_GUIDE.md).
 
-**Key Insight**: zComm is a **Layer 0** foundation - it initializes early and provides communication services to all other subsystems.
+## Standalone Usage
 
----
-
-## For Developers
-
-### Quick Start (3 Lines)
+zComm works in any Python project—just needs zConfig for paths and logging.<br>**Two imports, full communication stack.**
 
 ```python
 from zCLI import zCLI
 
-z = zCLI({"zWorkspace": ".", "zMode": "zBifrost"})
-z.walker.run()  # WebSocket server on port 8765
+# Minimal setup (zConfig auto-initializes)
+z = zCLI()
+
+# WebSocket server ready
+z = zCLI({"zMode": "zBifrost"})
+z.walker.run()  # ws://localhost:8765
+
+# HTTP client ready
+response = z.comm.http_post("https://api.example.com/data", {"key": "value"})
+
+# Service management ready
+z.comm.start_service("postgres", port=5432)
+info = z.comm.get_service_connection_info("postgres")
 ```
 
-**What you get**:
-- ✅ Secure WebSocket server (zBifrost)
-- ✅ HTTP client for external APIs
-- ✅ Service management (PostgreSQL, etc.)
-- ✅ Three-tier authentication ready
-- ✅ Cache security isolation
+**What you get:**
+- **<span style="color:#00D4FF">WebSocket Server (zBifrost)</span>**: Real-time bidirectional messaging with auth support
+- **<span style="color:#8FBE6D">HTTP Client</span>**: Make API requests with timeouts and retries
+- **<span style="color:#F8961F">Service Orchestration</span>**: Start/stop PostgreSQL, Redis, etc. programmatically
+- **<span style="color:#EA7171">Network Utilities</span>**: Port checking, health checks, connection info
 
-### Common Operations
+**What you don't need:**
+- ❌ `websockets` library - zBifrost is built-in
+- ❌ `requests` library - HTTP client is built-in
+- ❌ Manual service management - zComm handles lifecycle
+- ❌ Port conflict resolution - Auto-detection built-in
+
+## HTTP Client
+
+External API communication with timeouts, retries, and error handling.<br>**One method for GET, POST, PUT, DELETE.**
+
+> **Note:** zComm provides the HTTP **client** for making requests. To **serve** static files (HTML/CSS/JS), use [zServer](zServer_GUIDE.md).
+
+### Quick Demo: HTTP Client
+
+> **<span style="color:#8FBE6D">Want to see zComm's HTTP client in action?</span>**<br>Visit [`Demos/Layer_0/zComm_Demo`](../Demos/Layer_0/zComm_Demo) for a complete client/server demo. Start `simple_http_server.py`, then run `http_client_demo.py` to see the full request/response cycle—no `requests` library needed.
 
 ```python
-# WebSocket Management
-z.comm.create_websocket()
-await z.comm.start_websocket(socket_ready)
+# POST request
+response = z.comm.http_post("https://api.example.com/auth", {
+    "username": username,
+    "password": password
+}, timeout=30)
 
-# HTTP Communication
-response = z.comm.http_post(url, data)
+if response and response.status_code == 200:
+    user_data = response.json()
 
-# Service Management
-z.comm.start_service("postgres", port=5432)
-status = z.comm.service_status("postgres")
+# GET request
+data = z.comm.http_get("https://api.example.com/users")
 
-# Network Utilities
+# Network checks
 is_available = z.comm.check_port(8080)
 ```
 
----
+### Quick Demo: Network Utilities
 
-## For Executives
+> **<span style="color:#8FBE6D">Want to see port checking in action?</span>**<br>Visit [`Demos/Layer_0/zComm_Demo/port_probe_demo.py`](../Demos/Layer_0/zComm_Demo/port_probe_demo.py) for a standalone example that uses `z.comm.check_port()` to verify port availability, temporarily binds a socket to show it becomes unavailable, then releases it—demonstrating network utility functions without manual socket plumbing.
 
-### Why zComm Matters
+## WebSocket Server (zBifrost)
 
-**Problem**: Most frameworks treat communication as an afterthought, leading to:
-- ❌ Security vulnerabilities (data leaks between users)
-- ❌ Complex authentication (one-size-fits-all approach)
-- ❌ Poor scalability (can't support multiple apps)
+Real-time bidirectional communication via WebSocket. Set `zMode: "zBifrost"` and zComm handles the rest.<br>**Declare once, instant real-time.**
 
-**Solution**: zComm provides enterprise-grade communication infrastructure:
-- ✅ **Three-Tier Authentication** (unprecedented flexibility)
-- ✅ **Cache Security Isolation** (prevents data leaks)
-- ✅ **Multi-App Support** (one server, many applications)
-- ✅ **Production-Ready** (100% test coverage, A+ grade)
+### Quick Demo: WebSocket Server
 
-### Business Value
-
-| Feature | Benefit | Impact |
-|---------|---------|--------|
-| **Three-Tier Auth** | Support internal users, app users, and hybrid | Revenue: Multiple customer tiers on one platform |
-| **Cache Security** | User/app data isolation | Risk: Zero data leakage, GDPR compliant |
-| **Multi-App** | Unlimited simultaneous apps | Scale: One infrastructure, infinite apps |
-| **WebSocket + HTTP** | Real-time + API communication | UX: Instant updates + external integrations |
-
----
-
-## Core Innovations
-
-### 1. Three-Tier Authentication Architecture
-
-**Industry First**: Most systems have 1 or 2 auth tiers. zComm has **3 independent tiers**:
-
-```
-┌─────────────────────────────────────────────────────┐
-│ Layer 1: zSession Auth (Internal Users)            │
-│  - Zolo/zCLI users accessing paid features         │
-│  - Persistent token for zCloud                     │
-├─────────────────────────────────────────────────────┤
-│ Layer 2: Application Auth (External Users)         │
-│  - Your app's customers (eCommerce, SaaS, etc.)    │
-│  - Multiple apps simultaneously                    │
-├─────────────────────────────────────────────────────┤
-│ Layer 3: Dual-Auth (Both Active)                   │
-│  - zSession user building app + logged into app    │
-│  - Enhanced features for authenticated builders    │
-└─────────────────────────────────────────────────────┘
-```
-
-**Why It Matters**:
-- **Revenue**: Charge different tiers differently (zCloud users vs app users)
-- **Flexibility**: Developer can be logged into their own app as a user
-- **Scalability**: Single server handles unlimited app authentications
-
-**Implementation**: `bridge_auth.py` (50+ constants, 100% type hints)
-
-### 2. Cache Security Isolation
-
-**Critical Fix**: Cache entries are isolated by:
-- `user_id` (prevents User A seeing User B's data)
-- `app_name` (prevents App 1 seeing App 2's data)
-- `role` (admin vs user permissions)
-- `auth_context` (zSession vs application)
-
-**Before**:
-```python
-cache_key = hash(query)  # ❌ Everyone shares same cache
-# DANGER: User A could see User B's cached results!
-```
-
-**After**:
-```python
-cache_key = hash(query + user_id + app_name + role)  # ✅ Isolated
-# SAFE: Each user/app has independent cache
-```
-
-**Why It Matters**:
-- **Security**: GDPR/CCPA compliant (no data leaks)
-- **Trust**: Enterprise-ready isolation
-- **Debugging**: Clear which user/app generated each cache entry
-
-**Implementation**: `bridge_cache.py` (50+ constants, user context warnings)
-
----
-
-## Architecture
-
-### Two-Server Design (Clean Separation)
-
-```
-┌─────────────────────────────────────────────────────┐
-│                  zComm (Orchestrator)               │
-│                                                     │
-│  ┌──────────────────────┐  ┌───────────────────┐  │
-│  │    zBifrost          │  │    zServer        │  │
-│  │  (WebSocket)         │  │    (HTTP)         │  │
-│  │                      │  │                   │  │
-│  │ Port: 8765          │  │ Port: 8080        │  │
-│  │ Purpose: Real-time  │  │ Purpose: Files    │  │
-│  │ Library: websockets │  │ Library: built-in │  │
-│  └──────────────────────┘  └───────────────────┘  │
-│                                                     │
-└─────────────────────────────────────────────────────┘
-```
-
-**Why Separate?**
-1. Different protocols (WebSocket ≠ HTTP)
-2. Independent lifecycle (run together or alone)
-3. Different security models
-4. Performance optimization
-
-### Folder Structure (Aligned with zConfig)
-
-```
-zComm/
-├── zComm.py                    # Facade (237 → 690 lines)
-└── zComm_modules/
-    ├── comm_http.py            # HTTP client
-    ├── comm_services.py        # Service manager
-    ├── comm_bifrost.py         # WebSocket lifecycle
-    ├── bifrost/                # WebSocket server
-    │   ├── bifrost_bridge.py   # Core server
-    │   └── bridge_modules/
-    │       ├── bridge_auth.py      # Three-tier auth
-    │       ├── bridge_cache.py     # Cache security
-    │       ├── bridge_messages.py  # Message routing
-    │       ├── bridge_connection.py # Metadata
-    │       └── events/             # Event handlers
-    ├── services/
-    │   └── postgresql_service.py
-    └── helpers/
-        └── network_utils.py
-```
-
-### Component Responsibilities
-
-| Component | Purpose | Lines | Constants | Grade |
-|-----------|---------|-------|-----------|-------|
-| **comm_http.py** | HTTP requests | 177 | 26 | A+ |
-| **comm_services.py** | Service lifecycle | 250 | 32 | A+ |
-| **comm_bifrost.py** | WebSocket facade | 512 | 36 | A+ |
-| **bridge_auth.py** | Three-tier auth | 450+ | 50+ | A+ |
-| **bridge_cache.py** | Cache security | 450+ | 50+ | A+ |
-
----
-
-## Quick Start
-
-### Full-Stack Application (WebSocket + HTTP)
+> **<span style="color:#8FBE6D">Want to see zBifrost in action?</span>**<br>WebSocket demos require both server (Python) and client (JavaScript/browser). For complete examples, see the zCLI repository's `examples/zBifrost/` directory or test with `wscat -c ws://localhost:8765` after starting a zBifrost server.
 
 ```python
-from zCLI import zCLI
+# Backend: Start WebSocket server
+z = zCLI({"zMode": "zBifrost"})
+z.walker.run()  # ws://localhost:8765
 
-# Both servers configured
-z = zCLI({
-    "zWorkspace": "./my_app",
-    "zMode": "zBifrost",
-    "websocket": {
-        "port": 8765,
-        "require_auth": False  # Set true for production
-    },
-    "http_server": {
-        "port": 8080,
-        "serve_path": "./public",
-        "enabled": True
-    }
-})
-
-# HTTP server auto-starts
-# WebSocket starts via walker
-z.walker.run()
-
-# Access:
-# - http://localhost:8080/index.html (static files)
-# - ws://localhost:8765 (real-time)
+# Programmatic control
+z.comm.create_websocket(port=8765, require_auth=False)
+await z.comm.start_websocket(socket_ready)
 ```
 
-### JavaScript Client (Frontend)
+**JavaScript Client:**
 
-```html
-<script src="https://cdn.jsdelivr.net/gh/ZoloAi/zolo-zcli@v1.5.4/zCLI/subsystems/zComm/zComm_modules/zBifrost/bifrost_client.js"></script>
-<script>
+```javascript
+// Include via CDN or local
 const client = new BifrostClient('ws://localhost:8765', {
     autoTheme: true,  // Auto-load zTheme CSS
     hooks: {
@@ -248,265 +108,54 @@ await client.connect();
 // CRUD operations
 const users = await client.read('users');
 client.renderTable(users, '#container');
-</script>
 ```
 
----
+**Environment Variables:**
+- **<span style="color:#00D4FF">WEBSOCKET_HOST</span>**: Server host (default: 127.0.0.1)
+- **<span style="color:#00D4FF">WEBSOCKET_PORT</span>**: Server port (default: 8765)
+- **<span style="color:#00D4FF">WEBSOCKET_REQUIRE_AUTH</span>**: Require authentication (true/false)
+- **<span style="color:#00D4FF">WEBSOCKET_ALLOWED_ORIGINS</span>**: Comma-separated CORS origins
 
-## Common Use Cases
+## Cache Security Isolation
 
-### 1. Real-Time Dashboard
+Cache entries are automatically isolated by user, app, and role to prevent data leaks.<br>**No shared cache, no data leakage.**
+
+**Isolation Strategy:**
 
 ```python
-# Backend
-z = zCLI({"zMode": "zBifrost"})
-z.walker.run()
+# Traditional (UNSAFE)
+cache_key = hash(query)  # ❌ Everyone shares the same cache
 
-# Frontend (auto-updates)
-client.hooks.onBroadcast = (data) => {
-    updateChart(data);  // Real-time chart updates
-};
+# zComm (SAFE)
+cache_key = hash(query + user_id + app_name + role + auth_context)  # ✅
+# Each user/app has independent cache - GDPR/CCPA compliant
 ```
 
-### 2. External API Integration
+**What's Isolated:**
+- **<span style="color:#8FBE6D">user_id</span>**: User A never sees User B's cached data
+- **<span style="color:#F8961F">app_name</span>**: App 1 never sees App 2's cached data
+- **<span style="color:#00D4FF">role</span>**: Admin cache separate from user cache
+- **<span style="color:#EA7171">auth_context</span>**: zSession vs application separation
 
-```python
-# zAuth uses zComm for remote authentication
-response = z.comm.http_post("https://api.example.com/auth", {
-    "username": username,
-    "password": password
-})
+## Service Orchestration
 
-if response and response.status_code == 200:
-    user_data = response.json()
-```
+Start, stop, and manage local services (PostgreSQL, Redis, etc.).<br>**Declare service needs, zComm handles lifecycle.**
 
-### 3. Multi-App Platform
+### Quick Demo: Service Status
 
-```python
-# Single zBifrost server supports multiple apps
-# Each app has independent authentication
-
-# App 1: eCommerce
-session["zAuth"]["applications"]["ecommerce_store"] = {
-    "user_id": "cust_123",
-    "role": "customer"
-}
-
-# App 2: Admin Panel (simultaneous)
-session["zAuth"]["applications"]["admin_panel"] = {
-    "user_id": "admin_456",
-    "role": "admin"
-}
-
-# Cache is isolated automatically!
-```
-
-### 4. Service Management
+> **<span style="color:#8FBE6D">Want to see service detection in action?</span>**<br>Visit [`Demos/Layer_0/zComm_Demo/service_status_demo.py`](../Demos/Layer_0/zComm_Demo/service_status_demo.py) for a standalone example that checks if PostgreSQL is running and retrieves connection info—no manual port probing or OS-specific commands needed. Safe to run even without PostgreSQL installed.
 
 ```python
 # Start PostgreSQL
-z.comm.start_service("postgres", port=5432)
+z.comm.start_service("postgresql", port=5432)
 
 # Get connection info
-info = z.comm.get_service_connection_info("postgres")
+info = z.comm.get_service_connection_info("postgresql")
 # → {"host": "127.0.0.1", "port": 5432, "status": "running"}
+
+# Check status
+status = z.comm.service_status("postgresql")
 
 # Use with zData
 z.data.connect(info["host"], info["port"])
 ```
-
----
-
-## Troubleshooting
-
-### WebSocket Won't Start
-
-**Symptom**: `Port already in use`
-
-**Solution**:
-```python
-# Check port availability
-if z.comm.check_port(8765):
-    z.comm.create_websocket(port=8765)
-else:
-    z.comm.create_websocket(port=8766)  # Use alternate port
-```
-
-### HTTP Requests Failing
-
-**Symptom**: `Connection timeout`
-
-**Solution**:
-```python
-# Increase timeout for slow networks
-response = z.comm.http_post(url, data, timeout=30)  # 30 seconds
-```
-
-### Service Won't Start
-
-**Symptom**: `Service failed to start`
-
-**Solution**:
-```python
-# Check service status first
-status = z.comm.service_status("postgres")
-if status["status"] != "running":
-    # Check logs
-    z.logger.info(f"Service status: {status}")
-```
-
-### Cache Data Leakage Concerns
-
-**Symptom**: Worried about user data mixing
-
-**Verification**:
-```python
-# zComm automatically isolates cache by user/app
-# Check cache keys in logs - they include user_id and app_name
-# Example: "abc123|ecommerce_store|customer|application|query_hash"
-```
-
----
-
-## Testing & Quality
-
-### Declarative Test Suite
-
-**Location**: `zTestRunner/zUI.zComm_tests.yaml` + `plugins/zcomm_tests.py`
-
-**Coverage**: 98 tests across 15 categories (A-O)
-
-```
-A. zComm Facade API          → 14 tests ✅
-B. Bifrost Manager           → 8 tests ✅
-C. HTTP Client               → 5 tests ✅
-D. Service Manager           → 7 tests ✅
-E. Network Utils             → 6 tests ✅
-F. HTTP Server               → 4 tests ✅
-G. Integration Tests         → 3 tests ✅
-H. Layer 0 Compliance        → 1 test ✅
-I. PostgreSQL Service        → 6 tests ✅
-J. zBifrost Bridge           → 8 tests ✅
-K. Bridge Connection         → 4 tests ✅
-L. Bridge Auth (Three-Tier)  → 10 tests ✅ [CRITICAL]
-M. Bridge Cache (Security)   → 8 tests ✅ [SECURITY]
-N. Bridge Messages           → 6 tests ✅
-O. Event Handlers            → 8 tests ✅
-──────────────────────────────────────────
-TOTAL:                         98 tests (100% pass)
-```
-
-**Run Tests**:
-```bash
-zolo ztests
-# Select option 3: "zComm"
-# Watch 98 tests pass in ~2 seconds
-```
-
-### Quality Metrics
-
-| Metric | Score | Details |
-|--------|-------|---------|
-| **Test Coverage** | 100% | All 98 tests passing |
-| **Type Hints** | 100% | Every function typed |
-| **Constants** | 300+ | Zero magic strings |
-| **Docstrings** | 100% | Industry-grade docs |
-| **Grade** | A+ | Production-ready |
-
----
-
-## Summary
-
-**zComm delivers enterprise-grade communication infrastructure with breakthrough innovations:**
-
-### Key Benefits
-
-**For Developers**:
-- ✅ **3-line setup** - WebSocket + HTTP server ready instantly
-- ✅ **Type safety** - 100% type hints prevent bugs
-- ✅ **Clean API** - Facade pattern hides complexity
-- ✅ **Well-tested** - 98 tests, 100% pass rate
-
-**For Businesses**:
-- ✅ **Multi-tier revenue** - zSession, app users, and hybrid customers
-- ✅ **Enterprise security** - Cache isolation, no data leaks
-- ✅ **Infinite scaling** - One server, unlimited apps
-- ✅ **Production-ready** - A+ grade, battle-tested
-
-### Architectural Innovations
-
-1. **Three-Tier Authentication** - Industry first, enables flexible monetization
-2. **Cache Security Isolation** - Enterprise-grade user/app separation
-3. **Multi-App Support** - Unprecedented platform scalability
-4. **Declarative Testing** - 98 tests in ~19 lines/test
-
-### What Makes zComm Special
-
-**Traditional Approach** (Flask, Express, etc.):
-- 1 authentication tier (logged in or not)
-- Shared cache (security risk)
-- 1 app per server (scaling cost)
-
-**zComm Approach**:
-- **3 authentication tiers** (zSession + Application + Dual)
-- **Isolated cache** (user_id + app_name + role)
-- **Unlimited apps** (one server, infinite scale)
-
-**Result**: Enterprise features at startup speed.
-
----
-
-## Related Documentation
-
-- **[zConfig Guide](zConfig_GUIDE.md)** - Configuration management (Layer 0 foundation)
-- **[zAuth Guide](zAuth_GUIDE.md)** - Authentication integration
-- **[zServer Guide](zServer_GUIDE.md)** - HTTP static file server
-- **[AGENT.md](../AGENT.md)** - Quick reference for AI assistants
-
----
-
-## Quick Reference
-
-### Essential Commands
-
-```python
-# Create WebSocket server
-z.comm.create_websocket()
-
-# HTTP communication
-response = z.comm.http_post(url, data)
-
-# Service management
-z.comm.start_service("postgres")
-z.comm.service_status("postgres")
-
-# Network utilities
-z.comm.check_port(8765)
-```
-
-### Configuration
-
-```yaml
-# zConfig.websocket.yaml
-websocket:
-  host: "127.0.0.1"
-  port: 8765
-  require_auth: true
-  allowed_origins:
-    - "https://app.example.com"
-```
-
-### Health Checks
-
-```python
-# WebSocket status
-status = z.comm.websocket_health_check()
-
-# All services
-status = z.comm.health_check_all()
-```
-
----
-
-**Version**: 1.5.4+ | **Updated**: November 2025 | **Status**: Production-Ready ✅

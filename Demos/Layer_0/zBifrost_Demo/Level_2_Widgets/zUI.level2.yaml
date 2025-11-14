@@ -1,0 +1,57 @@
+Level2Menu:
+  ~Root*: 
+    - "Run Widget Demo"
+    - "1. Progress Bar with ETA"
+    - "2. Colored Progress Bars"
+    - "3. Spinner Styles"
+    - "4. Progress Iterator"
+    - "5. Complex Operation"
+    - "Status"
+    - "stop"
+  
+  "Run Widget Demo":
+    _progress:
+      enabled: true
+      label: "Running all widget demos"
+      style: "spinner"
+    zFunc: "&widget_demos.run_all_demos()"
+  
+  "1. Progress Bar with ETA":
+    _progress:
+      enabled: true
+      label: "Demo 1: Progress Bar with ETA"
+      show_eta: true
+    zFunc: "&widget_demos.demo_1_progress_bar()"
+  
+  "2. Colored Progress Bars":
+    _progress:
+      enabled: true
+      label: "Demo 2: Colored Progress Bars"
+    zFunc: "&widget_demos.demo_2_colored_progress()"
+  
+  "3. Spinner Styles":
+    _progress:
+      enabled: true
+      label: "Demo 3: Spinner Styles"
+      style: "spinner"
+    zFunc: "&widget_demos.demo_3_spinners()"
+  
+  "4. Progress Iterator":
+    _progress:
+      enabled: true
+      label: "Demo 4: Progress Iterator"
+      show_eta: true
+    zFunc: "&widget_demos.demo_4_progress_iterator()"
+  
+  "5. Complex Operation":
+    _progress:
+      enabled: true
+      label: "Demo 5: Complex Multi-Step Operation"
+      show_eta: true
+    zFunc: "&widget_demos.demo_5_complex_operation()"
+  
+  "Status":
+    zDisplay:
+      event: success
+      content: "Level 2 Widget Demo Server Ready! 🎨"
+

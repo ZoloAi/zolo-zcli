@@ -1,5 +1,4 @@
-[← Back to README.md](../README.md)
-
+[← Back to README](../README.md) | [Next: zConfig Guide →](zConfig_GUIDE.md)
 
 # <span style="color:#FFFBCC">The Philosophy of Zolo</span>
 
