@@ -21,6 +21,12 @@ Meta:
   default_route: "/"
 
 routes:
+  # Static file route for BifrostClient
+  /static/bifrost_client.js:
+    type: static
+    file: "../../../../zCLI/subsystems/zComm/zComm_modules/bifrost/client/src/bifrost_client.js"
+  
+  # Template routes
   /:
     type: template
     template: "home.html"

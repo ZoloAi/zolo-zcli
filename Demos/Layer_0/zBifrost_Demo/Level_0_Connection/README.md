@@ -15,6 +15,8 @@ Think of it like making a phone call: you dial (connect), say hello, then hang u
 1. **<span style="color:#8FBE6D">How to start a WebSocket server</span>** in Python (10 lines of code!)
 2. **<span style="color:#F8961F">How to connect from a web browser</span>** (just click a button)
 3. **<span style="color:#00D4FF">How messages flow</span>** between server and browser
+4. **<span style="color:#F8961F">New: Error boundaries</span>** - Visual error display for debugging
+5. **<span style="color:#F8961F">New: Auto-initialization</span>** - Error display and renderers load automatically
 
 ## Files
 
@@ -51,6 +53,8 @@ You should see:
 Just double-click **<span style="color:#F8961F">`level0_client.html`</span>** (or drag it into your browser).
 
 You'll see a purple page with a big "Connect to Server" button.
+
+**Note:** BifrostClient automatically detects `file://` protocol and disables advanced features (error display, auto-rendering) that require HTTP. This keeps Level 0 simple! For full features, see Level 4+ demos.
 
 ### Step 3: Connect!
 
@@ -210,6 +214,45 @@ python3 level0_backend.py
 3. Look for error messages (red text)
 4. Try a different browser (Chrome, Firefox, Safari)
 
+## New Features (v1.5.5+)
+
+### 🎯 Smart Protocol Detection
+
+BifrostClient now **automatically detects** if you're running on `file://` protocol and gracefully disables features that require HTTP:
+- ✅ Works with simple double-click (no HTTP server needed for Level 0)
+- ✅ Automatically skips error display module loading
+- ✅ Automatically skips zDisplay renderer module loading
+- ✅ Still shows errors in browser console (F12)
+
+**This means:** Level 0 stays simple and "just works"!
+
+### 🛡️ Error Boundaries (HTTP only)
+
+When running via HTTP server (Level 4+), BifrostClient includes **visual error display**! If something goes wrong, you'll see a nice red notification in the top-right corner.
+
+**Note:** In Level 0 (`file://`), errors appear in console only.
+
+### 🎨 Auto-Initialization
+
+When you call `client.connect()`, the BifrostClient now automatically:
+- ✅ Detects protocol and loads appropriate modules
+- ✅ Initializes error display (if HTTP + `showErrors: true`)
+- ✅ Initializes zDisplay renderer (if HTTP)
+- ✅ Loads theme if `autoTheme: true` (if HTTP)
+
+**This means:** Less boilerplate, more "it just works"!
+
+### 📦 Modular Architecture
+
+The client now uses a **lazy-loading** architecture:
+- Modules are loaded only when needed
+- Smaller initial bundle size
+- Better performance
+
+**For developers:** Check the browser console to see modules loading on-demand!
+
+---
+
 ## What's Next?
 
 In **<span style="color:#F8961F">Level 1</span>**, you'll learn to send messages FROM the browser TO the server (two-way communication!). You'll type a message, send it, and get an echo back—like a parrot! 🦜
@@ -220,4 +263,5 @@ In **<span style="color:#F8961F">Level 1</span>**, you'll learn to send messages
 
 **Version**: 1.5.5  
 **Difficulty**: Beginner  
-**Time**: 5 minutes
+**Time**: 5 minutes  
+**Updated**: 2025-01-15 (Refactored for new BifrostClient architecture)

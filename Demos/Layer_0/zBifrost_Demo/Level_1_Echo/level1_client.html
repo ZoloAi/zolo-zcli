@@ -7,10 +7,10 @@
     <link rel="stylesheet" href="styles.css">
     
     <!-- Development: Local path (works offline) -->
-    <script src="../../../../zCLI/subsystems/zComm/zComm_modules/bifrost/bifrost_client_modular.js"></script>
+    <script src="../../../../zCLI/subsystems/zComm/zComm_modules/bifrost/client/src/bifrost_client.js"></script>
     
     <!-- Production: Uncomment this and comment out the line above when deploying -->
-    <!-- <script src="https://cdn.jsdelivr.net/gh/ZoloAi/zolo-zcli@v1.5.5/zCLI/subsystems/zComm/zComm_modules/bifrost/bifrost_client_modular.js"></script> -->
+    <!-- <script src="https://cdn.jsdelivr.net/gh/ZoloAi/zolo-zcli@v1.5.5/zCLI/subsystems/zComm/zComm_modules/bifrost/client/src/bifrost_client.js"></script> -->
 </head>
 <body>
     <div class="container">
@@ -162,7 +162,7 @@
             messageBox.textContent = '❌ Connection failed! Is the server running?';
         }
         
-        function sendMessage() {
+        async function sendMessage() {
             const input = document.getElementById('messageInput');
             const message = input.value.trim();
             
@@ -178,22 +178,29 @@
                 timestamp: Date.now()
             };
             
-            // Use BifrostClient's connection to send
+            // Use BifrostClient's send() method
             if (client.isConnected()) {
-                client.connection.send(JSON.stringify(echoRequest));
-                console.log('Sent:', echoRequest);
-                
-                // Clear input
-                input.value = '';
-                
-                // Show "sending..." in log
-                const echoLog = document.getElementById('echoLog');
-                const entry = document.createElement('div');
-                entry.style.color = '#999';
-                entry.style.margin = '5px 0';
-                entry.textContent = `→ Sent: "${message}"`;
-                echoLog.appendChild(entry);
-                echoLog.scrollTop = echoLog.scrollHeight;
+                try {
+                    // Note: We're NOT awaiting the response here because echo
+                    // comes back via onMessage hook, not as a return value
+                    client.send(echoRequest);
+                    console.log('Sent:', echoRequest);
+                    
+                    // Clear input
+                    input.value = '';
+                    
+                    // Show "sending..." in log
+                    const echoLog = document.getElementById('echoLog');
+                    const entry = document.createElement('div');
+                    entry.style.color = '#999';
+                    entry.style.margin = '5px 0';
+                    entry.textContent = `→ Sent: "${message}"`;
+                    echoLog.appendChild(entry);
+                    echoLog.scrollTop = echoLog.scrollHeight;
+                } catch (error) {
+                    console.error('Failed to send message:', error);
+                    alert('Failed to send message!');
+                }
             } else {
                 alert('Not connected to server!');
             }

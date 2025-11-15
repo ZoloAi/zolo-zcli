@@ -1,4 +1,4 @@
-[← Back to Level 1](../Level_1_Echo/README.md) | [Next: Level 3 →](../Level_3_zBifrost_Magic/README.md)
+[← Back to Level 1](../Level_1_Echo/README.md) | [Next: Level 3 →](../Level_3_Getting_Started/README.md)
 
 # Level 2: Post Feed
 
@@ -48,6 +48,8 @@ Click 'Load Feed' to see all blog posts!
 ### Step 2: Open the Web Page
 
 Double-click **<span style="color:#F8961F">`level2_client.html`</span>** (or drag into browser).
+
+**Note:** Like previous levels, BifrostClient automatically detects `file://` protocol and works without an HTTP server!
 
 ### Step 3: Load the Feed!
 

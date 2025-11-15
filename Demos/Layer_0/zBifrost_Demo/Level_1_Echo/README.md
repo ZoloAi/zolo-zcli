@@ -1,4 +1,4 @@
-[← Back to Level 0](../Level_0_Connection/README.md) | [Next: Level 2 →](../Level_2_First_Post/README.md)
+[← Back to Level 0](../Level_0_Connection/README.md) | [Next: Level 2 →](../Level_2_Post_Feed/README.md)
 
 # Level 1: Echo Test
 
@@ -48,6 +48,8 @@ Type a message and click 'Send' to test echo!
 
 Double-click **<span style="color:#F8961F">`level1_client.html`</span>** (or drag into browser).
 
+**Note:** Like Level 0, BifrostClient automatically detects `file://` protocol and works without an HTTP server!
+
 ### Step 3: Test Echo!
 
 1. Click **<span style="color:#8FBE6D">"🚀 Connect to Server"</span>**
@@ -90,7 +92,7 @@ z.comm.bifrost.custom_handlers['echo'] = handle_echo_message
 ### The Client (JavaScript) - NEW: Sending Messages
 
 ```javascript
-function sendMessage() {
+async function sendMessage() {
     const message = input.value.trim();
     
     // Create echo request
@@ -100,9 +102,9 @@ function sendMessage() {
         timestamp: Date.now()
     };
     
-    // Send via BifrostClient's connection
+    // Send via BifrostClient's send() method
     if (client.isConnected()) {
-        client.connection.send(JSON.stringify(echoRequest));
+        client.send(echoRequest);  // No need to JSON.stringify!
     }
 }
 
@@ -117,8 +119,8 @@ onMessage: (msg) => {
 **What's new:**
 1. User types a message
 2. We create a JSON object with `event: 'echo'`
-3. Check if connected with `client.isConnected()`
-4. Send it to the server via `client.connection.send()`
+3. **NEW API:** Use `client.send(payload)` instead of `client.connection.send()`
+4. BifrostClient automatically handles JSON.stringify() for you
 5. Server processes it and sends back `echo_response`
 6. Our `onMessage` hook catches it and displays it
 

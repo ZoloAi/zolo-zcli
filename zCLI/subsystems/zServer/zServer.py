@@ -172,10 +172,21 @@ class zServer:
         
         if self.server:
             self.logger.info("[zServer] Stopping HTTP server...")
-            self.server.shutdown()
-            self.server.server_close()
+            
+            # Mark as not running first to prevent new requests
             self._running = False
             
+            # Shutdown must be called from a different thread to avoid deadlock
+            import threading
+            shutdown_thread = threading.Thread(target=self.server.shutdown)
+            shutdown_thread.daemon = True
+            shutdown_thread.start()
+            shutdown_thread.join(timeout=2)
+            
+            # Close the server socket
+            self.server.server_close()
+            
+            # Wait for server thread to finish
             if self.thread:
                 self.thread.join(timeout=2)
             

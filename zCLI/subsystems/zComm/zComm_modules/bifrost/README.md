@@ -1,364 +1,185 @@
 # zBifrost - WebSocket Bridge for zCLI
 
-## Overview
-
-zBifrost provides real-time WebSocket communication between zCLI backends and web frontends, enabling dual-mode applications (CLI + Web) with zero configuration.
+Real-time WebSocket communication between zCLI backends and web frontends, enabling dual-mode applications (CLI + Web) with zero configuration.
 
 ---
 
-## Directory Structure
+## 📁 Directory Structure (v1.5.5+)
 
 ```
-zBifrost/
-├── README.md                      # This file
-├── ARCHITECTURE.md                # Event-driven architecture (NEW v1.5.4+)
-├── MESSAGE_PROTOCOL.md            # Protocol specification (NEW v1.5.4+)
-├── HOOKS_GUIDE.md                 # Comprehensive hooks documentation
-├── __init__.py                    # Python module init
+bifrost/
+├── README.md                  # This file
+├── __init__.py                # Package exports (imports from server/)
 │
-├── bifrost_bridge_modular.py      # ✅ Event-driven server (v1.5.4+)
+├── server/                    # Python backend
+│   ├── README.md              # Server documentation
+│   ├── bifrost_bridge.py      # Main zBifrost class
+│   ├── modules/               # Server-side modules
+│   │   ├── bridge_auth.py     # Authentication & authorization
+│   │   ├── bridge_cache.py    # Schema & data caching
+│   │   ├── bridge_connection.py  # Connection state management
+│   │   ├── bridge_messages.py # Message routing & dispatch
+│   │   └── events/            # Event handlers
+│   │       ├── bridge_event_cache.py      # Cache operations
+│   │       ├── bridge_event_client.py     # Client lifecycle
+│   │       ├── bridge_event_discovery.py  # Service discovery
+│   │       └── bridge_event_dispatch.py   # Command execution
+│   └── __init__.py            # Server package exports
 │
-├── bifrost_client.js              # ✅ Modular client with event protocol (v1.5.4+)
+├── client/                    # JavaScript client
+│   ├── README.md              # Client documentation
+│   ├── src/                   # Source files
+│   │   ├── bifrost_client.js  # Main BifrostClient class
+│   │   ├── core/              # Core modules
+│   │   │   ├── connection.js  # WebSocket connection management
+│   │   │   ├── hooks.js       # Hook management system
+│   │   │   ├── logger.js      # Debug logging
+│   │   │   └── message_handler.js  # Message processing & correlation
+│   │   ├── rendering/         # Rendering modules
+│   │   │   ├── renderer.js    # Auto-rendering with zTheme
+│   │   │   └── theme_loader.js  # zTheme CSS loading
+│   │   └── api/               # API wrappers [future]
+│   ├── dist/                  # Built files for production [future]
+│   └── tests/                 # Unit tests [future]
 │
-├── bridge_modules/                # Server-side modules
-│   ├── authentication.py          # Client auth & origin validation
-│   ├── cache_manager.py           # Query & schema caching
-│   ├── connection_info.py         # Server info & discovery
-│   ├── message_handler.py         # Legacy message routing
-│   │
-│   └── events/                    # Event handlers (NEW v1.5.4+)
-│       ├── client_events.py       # Client-side events
-│       ├── cache_events.py        # Cache operations
-│       ├── discovery_events.py    # Auto-discovery API
-│       └── dispatch_events.py     # Command execution
-│
-├── _modules/                      # Client-side modules
-│   ├── connection.js              # WebSocket connection management
-│   ├── message_handler.js         # Message processing & correlation
-│   ├── renderer.js                # Auto-rendering with zTheme
-│   ├── theme_loader.js            # zTheme CSS loading
-│   ├── logger.js                  # Debug logging
-│   └── hooks.js                   # Hook management system
+└── docs/                      # Shared documentation
+    ├── ARCHITECTURE.md        # Event-driven architecture
+    ├── MESSAGE_PROTOCOL.md    # Protocol specification
+    └── HOOKS_GUIDE.md         # Hooks system reference
 ```
 
 ---
 
-## Files
+## 🚀 Quick Start
 
-### Production Files
+### Python Backend
 
-#### `bifrost_client.js` (Main Client)
-- **Status**: ✅ Production Ready (v1.5.4+)
-- **Type**: Modular (uses `_modules/` for components)
-- **Protocol**: Event-driven (matches server architecture)
-- **Use**: Import as ES6 module or via CDN
-- **CDN**: `https://cdn.jsdelivr.net/gh/ZoloAi/zolo-zcli@v1.5.4/zCLI/subsystems/zComm/zComm_modules/zBifrost/bifrost_client.js`
+```python
+from zCLI import zCLI
 
-#### `bifrost_bridge_modular.py` (Server-Side)
-- **Status**: ✅ Production Ready (v1.5.4+)
-- **Type**: Event-driven Python WebSocket server
-- **Use**: Automatic in zCLI WebSocket mode
-- **Architecture**: Mirrors zDisplay event system
+# Auto-start via zCLI (zBifrost mode)
+z = zCLI({"zMode": "zBifrost"})
+z.walker.run()
 
-### Documentation
+# Programmatic control
+from zCLI.subsystems.zComm.zComm_modules.bifrost import zBifrost
 
-#### `ARCHITECTURE.md` (NEW v1.5.4+)
-Event-driven architecture documentation:
-- Architecture comparison (before/after)
-- Event map and handler organization
-- Message flow and routing
-- Benefits and best practices
+bifrost = zBifrost(zcli_instance, logger)
+await bifrost.start_socket_server(socket_ready_event)
+await bifrost.broadcast({"event": "message", "data": "Hello"})
+```
 
-#### `MESSAGE_PROTOCOL.md` (NEW v1.5.4+)
-Complete protocol specification:
-- Standard message format
-- All event types and payloads
-- Backward compatibility
-- Migration guide
+### JavaScript Client
 
-#### `HOOKS_GUIDE.md`
-Comprehensive guide to customizing BifrostClient behavior:
-- All available hooks explained
-- Usage patterns and examples
-- Custom rendering without zTheme
-- Best practices
-
----
-
-## Quick Start
-
-### Option 1: ES6 Module (Recommended)
+#### Via CDN (jsDelivr)
 
 ```html
-<script type="module">
-  import { BifrostClient } from './bifrost_client.js';
-  
-  const client = new BifrostClient('ws://localhost:8765', {
-    autoTheme: true,
-    hooks: {
-      onConnected: () => console.log('Connected!')
-    }
-  });
-  
-  await client.connect();
-</script>
-```
-
-### Option 2: Direct Script Include
-
-```html
-<script src="https://cdn.jsdelivr.net/gh/ZoloAi/zolo-zcli@v1.5.4/zCLI/subsystems/zComm/zComm_modules/zBifrost/bifrost_client.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/ZoloAi/zolo-zcli@main/zCLI/subsystems/zComm/zComm_modules/bifrost/client/src/bifrost_client.js"></script>
 
 <script>
   const client = new BifrostClient('ws://localhost:8765', {
-    autoTheme: true
+    autoTheme: true,
+    autoReconnect: true,
+    hooks: {
+      onConnected: (info) => console.log('Connected!', info),
+      onDisconnected: (reason) => console.log('Disconnected:', reason),
+      onMessage: (msg) => console.log('Message:', msg),
+      onDisplay: (data) => console.log('Display event:', data),
+      onError: (error) => console.error('Error:', error)
+    }
   });
   
-  await client.connect();
+  client.connect();
 </script>
 ```
 
-### Option 3: Without zTheme (Custom Styling)
+#### Local Development
 
-```javascript
-const client = new BifrostClient('ws://localhost:8765', {
-  autoTheme: false,  // 🚫 Don't load zTheme CSS
-  hooks: {
-    onDisplay: (data) => {
-      // Your custom rendering logic
-      if (Array.isArray(data)) {
-        myCustomTableRenderer(data);
-      }
-    }
-  }
-});
+```html
+<script src="../../../../zCLI/subsystems/zComm/zComm_modules/bifrost/client/src/bifrost_client.js"></script>
 ```
 
 ---
 
-## Features
+## ✨ Features
 
-### ✅ WebSocket Management
-- Auto-connect with exponential backoff
-- Connection state tracking
-- Automatic reconnection
-- Request/response correlation
+### Server (Python)
+- ✅ Event-driven architecture (mirrors zDisplay)
+- ✅ Automatic authentication & authorization
+- ✅ Schema & data caching
+- ✅ Connection state management
+- ✅ Message routing & dispatch
+- ✅ Broadcast to all clients
 
-### ✅ Primitive Hooks System
-- `onConnected`, `onDisconnected`
-- `onMessage`, `onError`, `onBroadcast`
-- `onDisplay`, `onInput`
-- Runtime hook registration
-
-### ✅ CRUD Operations
-- `create(model, data)`
-- `read(model, filters, options)`
-- `update(model, filters, data)`
-- `delete(model, filters)`
-
-### ✅ zCLI Integration
-- `zFunc(command)` - Execute functions
-- `zLink(path)` - Navigate menus
-- `zOpen(command)` - Open resources
-
-### ✅ Auto-Rendering (Optional)
-- `renderTable(data, container)` - Tables with zTheme
-- `renderForm(fields, container, onSubmit)` - Forms
-- `renderMenu(items, container)` - Button menus
-- `renderMessage(text, type, container)` - Alerts
-
-### ✅ zTheme Integration (Optional)
-- Auto-load zTheme CSS
-- Graceful fallback if CSS fails
-- Can be disabled (`autoTheme: false`)
+### Client (JavaScript)
+- ✅ Lazy loading (modules load only when needed)
+- ✅ Auto-reconnect with exponential backoff
+- ✅ Auto-theme (optional zTheme CSS loading)
+- ✅ Hooks system (onConnected, onDisconnected, onMessage, etc.)
+- ✅ CRUD operations (`create()`, `read()`, `update()`, `delete()`)
+- ✅ Auto-rendering (`renderTable()`, `renderForm()`, `renderMenu()`)
+- ✅ zCLI integration (`zFunc()`, `zLink()`, `zOpen()`)
 
 ---
 
-## Architecture
+## 📚 Documentation
 
-### Event-Driven Pattern (v1.5.4+)
-
-zBifrost now uses an **event-driven architecture** that mirrors zDisplay:
-
-- **Single Entry Point**: `handle_message()` routes all events
-- **Event Map**: Central registry of all handlers
-- **Organized Packages**: Events grouped by domain (client, cache, discovery, dispatch)
-- **Backward Compatible**: Legacy formats automatically converted
-
-See [ARCHITECTURE.md](./ARCHITECTURE.md) for complete details.
-
-### Client-Side Architecture
-
-**Main Client**: `bifrost_client.js`
-- Thin orchestration layer (422 lines)
-- Imports modular components
-- Exposes clean API
-- Uses event protocol
-
-**Modular Components** (`_modules/`):
-1. **connection.js**: WebSocket lifecycle management
-2. **message_handler.js**: Message parsing & request correlation
-3. **renderer.js**: DOM rendering with zTheme styling
-4. **theme_loader.js**: Dynamic CSS loading
-5. **logger.js**: Debug logging
-6. **hooks.js**: Event hook management
-
-**Cache System** (`bifrost_client_modules/`):
-- Integrates with existing cache orchestrator
-- Optional for advanced use cases
-
-### Server-Side Event Handlers (`bridge_modules/events/`)
-
-1. **client_events.py**: Input responses, connection info
-2. **cache_events.py**: Schema retrieval, cache operations
-3. **discovery_events.py**: Auto-discovery, introspection
-4. **dispatch_events.py**: zDispatch command execution
-
-### Benefits of Modular Architecture
-
-- **Maintainability**: Each module has clear responsibility
-- **Testability**: Modules can be tested independently
-- **Discoverability**: All events visible in event map
-- **Extensibility**: Easy to add new events
-- **Consistency**: Matches zDisplay patterns
+- **[server/README.md](server/README.md)** - Python backend documentation
+- **[client/README.md](client/README.md)** - JavaScript client documentation
+- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** - Event-driven architecture
+- **[docs/MESSAGE_PROTOCOL.md](docs/MESSAGE_PROTOCOL.md)** - Protocol specification
+- **[docs/HOOKS_GUIDE.md](docs/HOOKS_GUIDE.md)** - Hooks system reference
 
 ---
 
-## Configuration Options
+## 🎓 Demos
 
-```javascript
-new BifrostClient(url, {
-  // Theme
-  autoTheme: true,           // Auto-load zTheme CSS
-  
-  // Connection
-  autoReconnect: true,       // Auto-reconnect on disconnect
-  reconnectDelay: 3000,      // Delay between reconnects (ms)
-  timeout: 30000,            // Request timeout (ms)
-  
-  // Authentication
-  token: 'your-api-key',     // Authentication token
-  
-  // Debugging
-  debug: false,              // Enable console logging
-  
-  // Hooks
-  hooks: {
-    onConnected: (info) => {},
-    onDisconnected: (reason) => {},
-    onMessage: (msg) => {},
-    onError: (error) => {},
-    onBroadcast: (msg) => {},
-    onDisplay: (data) => {},
-    onInput: (request) => {}
-  }
-});
+See [`../../../../Demos/Layer_0/zBifrost_Demo/`](../../../../Demos/Layer_0/zBifrost_Demo/) for progressive tutorials:
+
+- **Level 0**: Hello zBlog (basic connection)
+- **Level 1**: Echo Test (two-way communication)
+- **Level 2**: Post Feed (structured data)
+- **Level 4a+**: Multi-zone layout with zDisplay events
+
+---
+
+## 🔄 Migration Notes (v1.5.5)
+
+### What Changed?
+
+- **Reorganized folder structure**: Python backend → `server/`, JavaScript client → `client/src/`
+- **Updated import paths**: `bifrost_client_modular.js` → `client/src/bifrost_client.js`
+- **Module organization**: JS modules now in `core/` and `rendering/` subfolders
+- **No breaking changes**: All APIs remain the same
+
+### Updating Your Code
+
+**HTML files** (update script src):
+```html
+<!-- Old -->
+<script src=".../bifrost/bifrost_client_modular.js"></script>
+
+<!-- New -->
+<script src=".../bifrost/client/src/bifrost_client.js"></script>
+```
+
+**Python imports** (no changes needed):
+```python
+from zCLI.subsystems.zComm.zComm_modules.bifrost import zBifrost
+# Still works! __init__.py handles the new structure
 ```
 
 ---
 
-## Examples
-
-### Example 1: Basic Usage with zTheme
-
-```javascript
-const client = new BifrostClient('ws://localhost:8765', {
-  autoTheme: true
-});
-
-await client.connect();
-const users = await client.read('users');
-client.renderTable(users, '#app');
-```
-
-### Example 2: Custom Rendering (No zTheme)
-
-```javascript
-const client = new BifrostClient('ws://localhost:8765', {
-  autoTheme: false,
-  hooks: {
-    onDisplay: (data) => {
-      // Use React, Vue, or vanilla JS
-      ReactDOM.render(<MyTable data={data} />, container);
-    }
-  }
-});
-```
-
-### Example 3: Real-Time Updates
-
-```javascript
-const client = new BifrostClient('ws://localhost:8765', {
-  hooks: {
-    onBroadcast: (msg) => {
-      if (msg.type === 'user_joined') {
-        addUserToList(msg.user);
-      }
-    }
-  }
-});
-```
-
----
-
-## Demos
-
-### User Manager v2
-**Location**: `Demos/User Manager/index_v2.html`
-
-Full-featured CRUD application demonstrating:
-- ✅ BifrostClient with zTheme
-- ✅ All CRUD operations
-- ✅ Primitive hooks
-- ✅ Auto-rendering methods
-- ✅ 62% less code than v1
-
-**Run it**:
-```bash
-cd Demos/User\ Manager
-python run_backend.py
-# Open index_v2.html in browser
-```
-
----
-
-## Migration Guide
-
-### From zBifrost_Demo.js → bifrost_client.js
-
-**Old**:
-```javascript
-const client = new zBifrost(url, token, { debug: true });
-await client.connect();
-const result = await client.send({ zKey: 'command' });
-```
-
-**New**:
-```javascript
-const client = new BifrostClient(url, { 
-  token, 
-  debug: true 
-});
-await client.connect();
-const result = await client.send({ zKey: 'command' });
-```
-
-**Changes**:
-- Constructor now takes options object
-- Added primitive hooks system
-- Added auto-rendering methods
-- Added zTheme integration
-
----
-
-## Testing
+## 🧪 Testing
 
 ```bash
 # Run backend
-python run_backend.py
+cd Demos/Layer_0/zBifrost_Demo/Level_0_Connection
+python level0_backend.py
 
-# Open test page
-open Demos/User\ Manager/index_v2.html
+# Open client in browser
+open level0_client.html
 
 # Check console for debug logs
 # Enable with: { debug: true }
@@ -366,7 +187,7 @@ open Demos/User\ Manager/index_v2.html
 
 ---
 
-## Performance
+## 📊 Performance
 
 - **Connection**: < 100ms to establish
 - **Message**: < 10ms round-trip
@@ -376,7 +197,7 @@ open Demos/User\ Manager/index_v2.html
 
 ---
 
-## Browser Compatibility
+## 🌐 Browser Compatibility
 
 - ✅ Chrome/Edge 88+
 - ✅ Firefox 78+
@@ -385,28 +206,6 @@ open Demos/User\ Manager/index_v2.html
 
 ---
 
-## Contributing
-
-When adding features:
-1. Add module to `_modules/` if appropriate
-2. Update `bifrost_client_modular.js` to use it
-3. Add tests for the module
-4. Update this README
-5. Update HOOKS_GUIDE.md if adding hooks
-
----
-
-## See Also
-
-- [ARCHITECTURE.md](./ARCHITECTURE.md) - Event-driven architecture (NEW)
-- [MESSAGE_PROTOCOL.md](./MESSAGE_PROTOCOL.md) - Protocol specification (NEW)
-- [HOOKS_GUIDE.md](./HOOKS_GUIDE.md) - Complete hooks documentation
-- [zComm Guide](../../../../../../Documentation/zComm_GUIDE.md) - Communication subsystem
-- [Release Notes](../../../../../../Documentation/Release/RELEASE_1.5.4.md) - What's new in v1.5.4
-
----
-
-**Version**: 1.5.4  
+**Version**: 1.5.5  
 **License**: MIT  
 **Author**: Gal Nachshon
-

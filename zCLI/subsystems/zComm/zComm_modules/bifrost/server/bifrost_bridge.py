@@ -27,13 +27,13 @@ from zCLI import (
     Optional, Dict, Any,
     ws_serve, WebSocketServerProtocol, ws_exceptions
 )
-from .bridge_modules import (
+from .modules import (
     CacheManager,
     AuthenticationManager,
     MessageHandler,
     ConnectionInfoManager
 )
-from .bridge_modules.events import (
+from .modules.events import (
     ClientEvents,
     CacheEvents,
     DiscoveryEvents,

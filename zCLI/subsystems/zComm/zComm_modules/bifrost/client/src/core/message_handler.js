@@ -9,6 +9,11 @@ export class MessageHandler {
     this.logger = logger;
     this.hooks = hooks;
     
+    // Pass logger to hooks for better error handling
+    if (this.hooks && typeof this.hooks.logger === 'undefined') {
+      this.hooks.logger = logger;
+    }
+    
     this.requestId = 0;
     this.callbacks = new Map();
     this.timeout = 30000; // Default timeout
@@ -19,6 +24,31 @@ export class MessageHandler {
    */
   setTimeout(timeout) {
     this.timeout = timeout;
+  }
+
+  /**
+   * Validate outgoing message follows protocol
+   * @private
+   */
+  _validateOutgoingMessage(payload) {
+    // Warn if using deprecated 'action' field
+    if (payload.action && !payload.event) {
+      this.logger.warn(
+        'Using deprecated "action" field. Please use "event" instead.',
+        { action: payload.action }
+      );
+      // Auto-migrate: copy action to event
+      payload.event = payload.action;
+    }
+
+    // Warn if message has both 'action' and 'event'
+    if (payload.action && payload.event && payload.action !== payload.event) {
+      this.logger.warn(
+        'Message has both "action" and "event" fields with different values. Using "event".',
+        { action: payload.action, event: payload.event }
+      );
+      delete payload.action;
+    }
   }
 
   /**
@@ -39,11 +69,13 @@ export class MessageHandler {
         return;
       }
       
-      // If no requestId but has result/error, check if we have a pending callback (FIFO fallback)
+      // If message looks like a response but has no _requestId, log error
       if ((message.result !== undefined || message.error !== undefined) && this.callbacks.size > 0) {
-        const [oldestId, callback] = this.callbacks.entries().next().value;
-        this._handleResponse(oldestId, message);
-        return;
+        this.logger.error(
+          'Received response without _requestId! Backend must echo _requestId in all responses.',
+          { message, pendingRequests: this.callbacks.size }
+        );
+        // Don't try to correlate - this is a backend bug that must be fixed
       }
 
       // Check for specific event types
@@ -101,6 +133,9 @@ export class MessageHandler {
    * Send a message and wait for response
    */
   async send(payload, sendFn, timeout = null) {
+    // Validate message follows protocol
+    this._validateOutgoingMessage(payload);
+    
     const requestId = this.requestId++;
     payload._requestId = requestId;
 

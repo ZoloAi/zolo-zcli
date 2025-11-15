@@ -102,12 +102,32 @@
      * @param {Object} options.hooks - Event hooks for customization
      */
     constructor(url = 'ws://localhost:8765', options = {}) {
+      // Validate URL
+      if (typeof url !== 'string' || url.trim() === '') {
+        throw new Error('BifrostClient: URL must be a non-empty string');
+      }
+      if (!url.startsWith('ws://') && !url.startsWith('wss://')) {
+        throw new Error('BifrostClient: URL must start with ws:// or wss://');
+      }
+
       this.url = url;
+
+      // Validate and set options
+      const reconnectDelay = options.reconnectDelay || 3000;
+      const timeout = options.timeout || 30000;
+
+      if (typeof reconnectDelay !== 'number' || reconnectDelay <= 0) {
+        throw new Error('BifrostClient: reconnectDelay must be a positive number');
+      }
+      if (typeof timeout !== 'number' || timeout <= 0) {
+        throw new Error('BifrostClient: timeout must be a positive number');
+      }
+
       this.options = {
         autoTheme: options.autoTheme !== false, // Default true
         autoReconnect: options.autoReconnect !== false, // Default true
-        reconnectDelay: options.reconnectDelay || 3000,
-        timeout: options.timeout || 30000,
+        reconnectDelay: reconnectDelay,
+        timeout: timeout,
         debug: options.debug || false,
         token: options.token || null,
         hooks: options.hooks || {}
@@ -133,6 +153,15 @@
             console.log(`[BifrostClient] ${message}`, ...args);
           }
         },
+        error: (message, ...args) => {
+          // Always show errors, regardless of debug mode
+          console.error(`[BifrostClient ERROR] ${message}`, ...args);
+        },
+        warn: (message, ...args) => {
+          if (this.logger.debug) {
+            console.warn(`[BifrostClient WARN] ${message}`, ...args);
+          }
+        },
         enable: () => {
           this.logger.debug = true;
         },
@@ -147,13 +176,42 @@
       // Inline HookManager (lightweight, no dependencies)
       this.hooks = {
         hooks: this.options.hooks || {},
+        errorHandler: null, // Set by _initErrorDisplay()
         call: (hookName, ...args) => {
           const hook = this.hooks.hooks[hookName];
           if (typeof hook === 'function') {
             try {
               return hook(...args);
             } catch (error) {
+              // Log to console
               console.error(`[BifrostClient] Error in ${hookName} hook:`, error);
+              
+              // Log via logger
+              this.logger.error(`Error in ${hookName} hook:`, error);
+              
+              // Display in UI if error handler is set
+              if (this.hooks.errorHandler) {
+                try {
+                  this.hooks.errorHandler({
+                    type: 'hook_error',
+                    hookName,
+                    error,
+                    message: error.message,
+                    stack: error.stack
+                  });
+                } catch (displayError) {
+                  console.error('[BifrostClient] Error handler itself failed:', displayError);
+                }
+              }
+              
+              // Call onError hook if it exists and isn't the one that failed
+              if (hookName !== 'onError' && this.hooks.hooks.onError) {
+                try {
+                  this.hooks.hooks.onError(error);
+                } catch (onErrorError) {
+                  console.error('[BifrostClient] onError hook failed:', onErrorError);
+                }
+              }
             }
           }
         },
@@ -178,79 +236,18 @@
     }
 
     /**
-     * Register default hooks for widget events (Week 4.2)
-     * These can be overridden by user-provided hooks
+     * Register default hooks for widget events
+     * 
+     * NOTE: Progress bar and spinner hooks removed as the renderer methods
+     * (renderProgressBar, updateProgress, removeProgress, renderSpinner, removeSpinner)
+     * are not yet implemented. These will be added back in Task 9 when we implement
+     * and test the auto-rendering methods.
+     * 
+     * For now, users can implement these hooks manually if needed.
      */
     _registerDefaultWidgetHooks() {
-      // Only register if user hasn't provided custom hooks
-      if (!this.hooks.has('onProgressBar')) {
-        this.hooks.register('onProgressBar', (message) => {
-          this._ensureRenderer().then(renderer => {
-            renderer.renderProgressBar(
-              message.progressId,
-              message.current,
-              message.total,
-              {
-                label: message.label,
-                color: message.color,
-                showPercentage: message.showPercentage,
-                showETA: message.showETA,
-                eta: message.eta
-              },
-              message.container || '#app'
-            );
-          });
-        });
-      }
-
-      if (!this.hooks.has('onProgressUpdate')) {
-        this.hooks.register('onProgressUpdate', (message) => {
-          this._ensureRenderer().then(renderer => {
-            renderer.updateProgress(
-              message.progressId,
-              message.current,
-              { eta: message.eta },
-              message.container || '#app'
-            );
-          });
-        });
-      }
-
-      if (!this.hooks.has('onProgressComplete')) {
-        this.hooks.register('onProgressComplete', (message) => {
-          this._ensureRenderer().then(renderer => {
-            renderer.removeProgress(
-              message.progressId,
-              message.container || '#app'
-            );
-          });
-        });
-      }
-
-      if (!this.hooks.has('onSpinnerStart')) {
-        this.hooks.register('onSpinnerStart', (message) => {
-          this._ensureRenderer().then(renderer => {
-            renderer.renderSpinner(
-              message.spinnerId,
-              message.label,
-              message.style || 'dots',
-              {},
-              message.container || '#app'
-            );
-          });
-        });
-      }
-
-      if (!this.hooks.has('onSpinnerStop')) {
-        this.hooks.register('onSpinnerStop', (message) => {
-          this._ensureRenderer().then(renderer => {
-            renderer.removeSpinner(
-              message.spinnerId,
-              message.container || '#app'
-            );
-          });
-        });
-      }
+      // Placeholder for future widget hooks
+      // Will be implemented in Task 9: Test Auto-Rendering Methods
     }
 
     /**
@@ -263,7 +260,18 @@
         return this._modules[moduleName];
       }
 
-      const modulePath = `${this._baseUrl}_modules/${moduleName}.js`;
+      // Determine module subfolder based on module type
+      const coreModules = ['connection', 'hooks', 'logger', 'message_handler', 'error_display'];
+      const renderingModules = ['renderer', 'theme_loader', 'zdisplay_renderer'];
+      
+      let subfolder = '';
+      if (coreModules.includes(moduleName)) {
+        subfolder = 'core/';
+      } else if (renderingModules.includes(moduleName)) {
+        subfolder = 'rendering/';
+      }
+
+      const modulePath = `${this._baseUrl}${subfolder}${moduleName}.js`;
       this.logger.log(`Loading module: ${moduleName} from ${modulePath}`);
 
       try {
@@ -316,6 +324,26 @@
     }
 
     /**
+     * Ensure zDisplay renderer module is loaded
+     */
+    async _ensureZDisplayRenderer() {
+      if (!this.zDisplayRenderer) {
+        const { ZDisplayRenderer } = await this._loadModule('zdisplay_renderer');
+        this.zDisplayRenderer = new ZDisplayRenderer(this.logger);
+        
+        // Register default onDisplay hook if not already set
+        if (!this.hooks.has('onDisplay')) {
+          this.hooks.register('onDisplay', (event) => {
+            this.logger.log('[BifrostClient] Auto-rendering zDisplay event:', event);
+            this.zDisplayRenderer.render(event);
+          });
+          this.logger.log('[BifrostClient] Registered default onDisplay hook for auto-rendering');
+        }
+      }
+      return this.zDisplayRenderer;
+    }
+
+    /**
      * Ensure theme loader module is loaded
      */
     async _ensureThemeLoader() {
@@ -331,10 +359,80 @@
     // ═══════════════════════════════════════════════════════════
 
     /**
+     * Initialize error display (if not disabled)
+     */
+    async _ensureErrorDisplay() {
+      if (this.options.showErrors === false) return; // Allow disabling
+      
+      if (!this.errorDisplay) {
+        const { ErrorDisplay } = await this._loadModule('error_display');
+        this.errorDisplay = new ErrorDisplay({
+          position: this.options.errorPosition || 'top-right',
+          maxErrors: this.options.maxErrors || 5,
+          autoDismiss: this.options.autoDismiss || 10000
+        });
+        
+        // Set error handler for hooks
+        this.hooks.errorHandler = (errorInfo) => {
+          this.errorDisplay.show(errorInfo);
+        };
+        
+        this.logger.log('Error display initialized');
+      }
+      return this.errorDisplay;
+    }
+
+    /**
+     * Check if running on file:// protocol (which doesn't support ES6 module imports)
+     * @private
+     */
+    _isFileProtocol() {
+      return typeof window !== 'undefined' && window.location.protocol === 'file:';
+    }
+
+    /**
      * Connect to the WebSocket server
      * @returns {Promise<void>}
      */
     async connect() {
+      // Skip module loading for file:// protocol (ES6 imports not supported)
+      const isFileProtocol = this._isFileProtocol();
+      
+      if (isFileProtocol) {
+        this.logger.log('[BifrostClient] Running on file:// protocol - skipping module loading');
+        this.logger.log('[BifrostClient] Error display and auto-rendering disabled (use HTTP server to enable)');
+      }
+      
+      // Initialize error display (for visual error boundaries) - skip on file://
+      if (!isFileProtocol && this.options.showErrors !== false) {
+        try {
+          await this._ensureErrorDisplay();
+        } catch (error) {
+          this.logger.warn('[BifrostClient] Error display failed to load:', error.message);
+        }
+      }
+      
+      // Initialize zDisplay renderer (for auto-rendering zDisplay events) - skip on file://
+      if (!isFileProtocol) {
+        try {
+          await this._ensureZDisplayRenderer();
+        } catch (error) {
+          this.logger.warn('[BifrostClient] zDisplay renderer failed to load:', error.message);
+        }
+      }
+      
+      // Load theme BEFORE connecting to prevent FOUC (Flash of Unstyled Content)
+      if (this.options.autoTheme && !isFileProtocol) {
+        try {
+          await this._ensureThemeLoader();
+          if (!this.themeLoader.isLoaded()) {
+            this.themeLoader.load();
+          }
+        } catch (error) {
+          this.logger.warn('[BifrostClient] Theme loader failed to load:', error.message);
+        }
+      }
+
       // Load required modules
       await this._ensureConnection();
       await this._ensureMessageHandler();
@@ -345,14 +443,6 @@
       this.connection.onMessage((event) => {
         this.messageHandler.handleMessage(event.data);
       });
-
-      // Auto-load theme if enabled
-      if (this.options.autoTheme) {
-        await this._ensureThemeLoader();
-        if (!this.themeLoader.isLoaded()) {
-          this.themeLoader.load();
-        }
-      }
     }
 
     /**

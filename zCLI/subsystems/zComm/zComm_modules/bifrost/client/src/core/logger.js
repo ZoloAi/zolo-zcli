@@ -19,6 +19,22 @@ export class Logger {
   }
 
   /**
+   * Log error (always shown, regardless of debug mode)
+   */
+  error(message, ...args) {
+    console.error(`[BifrostClient ERROR] ${message}`, ...args);
+  }
+
+  /**
+   * Log warning if debug enabled
+   */
+  warn(message, ...args) {
+    if (this.debug) {
+      console.warn(`[BifrostClient WARN] ${message}`, ...args);
+    }
+  }
+
+  /**
    * Enable debug logging
    */
   enable() {

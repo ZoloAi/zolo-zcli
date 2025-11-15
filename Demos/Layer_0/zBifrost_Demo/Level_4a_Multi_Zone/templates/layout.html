@@ -12,8 +12,7 @@
     <!-- Bootstrap CSS (matching Corey Schafer's Flask tutorial) -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     
-    <!-- BifrostClient (WebSocket connection for zDisplay events) -->
-    <script src="https://cdn.jsdelivr.net/gh/ZoloAi/zolo-zcli@main/zCLI/subsystems/zComm/zComm_modules/bifrost/bifrost_client_modular.js"></script>
+    <!-- BifrostClient will be loaded at end of body to ensure DOM is ready -->
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -57,8 +56,16 @@
         </div>
     </main>
     
+    <!-- BifrostClient (CDN - jsDelivr from GitHub) -->
+    <!-- Note: If this fails to load, jsDelivr might be caching. Try purging at: -->
+    <!-- https://purge.jsdelivr.net/gh/ZoloAi/zolo-zcli@main/zCLI/subsystems/zComm/zComm_modules/bifrost/client/src/bifrost_client.js -->
+    <script src="https://cdn.jsdelivr.net/gh/ZoloAi/zolo-zcli@main/zCLI/subsystems/zComm/zComm_modules/bifrost/client/src/bifrost_client.js"></script>
+    
     <!-- WebSocket Connection Script -->
     <script>
+        console.log('Level 4a: Multi-Zone Layout');
+        console.log('Initializing BifrostClient...');
+        
         // Get connection status badge
         const statusBadge = document.getElementById('connection-status');
         
@@ -81,9 +88,10 @@
                     console.log('❌ Disconnected from zBifrost server', reason);
                     updateStatus('danger', '● Disconnected');
                 },
-                onDisplay: (data) => {
-                    console.log('📨 Received zDisplay event:', data);
-                    // zDisplay events will be auto-rendered here (Level 4b will implement this)
+                onDisplay: (event) => {
+                    console.log('📨 Received zDisplay event:', event);
+                    // zDisplay events will be auto-rendered by BifrostClient's default handler
+                    // (Level 4b will send actual zDisplay events from backend)
                 },
                 onError: (error) => {
                     console.error('⚠️ WebSocket error:', error);
@@ -93,7 +101,11 @@
         });
         
         // Connect on page load
-        client.connect();
+        console.log('Connecting to WebSocket server...');
+        client.connect().catch(error => {
+            console.error('Failed to connect:', error);
+            updateStatus('danger', '● Connection Failed');
+        });
     </script>
 </body>
 </html>

@@ -6,11 +6,11 @@
     <title>Level 0: Hello zBlog</title>
     <link rel="stylesheet" href="styles.css">
     
-    <!-- Development: Local path (works offline) -->
-    <script src="../../../../zCLI/subsystems/zComm/zComm_modules/bifrost/bifrost_client_modular.js"></script>
+    <!-- Development: Local path (updated for new folder structure) -->
+    <script src="../../../../zCLI/subsystems/zComm/zComm_modules/bifrost/client/src/bifrost_client.js"></script>
     
-    <!-- Production: Uncomment this and comment out the line above when deploying -->
-    <!-- <script src="https://cdn.jsdelivr.net/gh/ZoloAi/zolo-zcli@v1.5.5/zCLI/subsystems/zComm/zComm_modules/bifrost/bifrost_client_modular.js"></script> -->
+    <!-- Production: CDN (use for deployment) -->
+    <!-- <script src="https://cdn.jsdelivr.net/gh/ZoloAi/zolo-zcli@main/zCLI/subsystems/zComm/zComm_modules/bifrost/client/src/bifrost_client.js"></script> -->
 </head>
 <body>
     <div class="container">
@@ -51,30 +51,32 @@
 
     <script>
                 // Initialize BifrostClient with hooks
+        // Note: Error display and zDisplay renderer auto-initialize on connect()
         const client = new BifrostClient('ws://127.0.0.1:8765', {
             autoTheme: false,  // We have our own custom styles
             debug: true,       // Show console logs for learning
-                    hooks: {
-                        onConnected: (info) => {
-                    console.log('Connected!', info);
+            showErrors: true,  // Enable visual error display (NEW!)
+            hooks: {
+                onConnected: (info) => {
+                    console.log('✅ Connected!', info);
                     showConnected();
-                        },
-                        onDisconnected: (reason) => {
-                    console.log('Disconnected:', reason);
+                },
+                onDisconnected: (reason) => {
+                    console.log('❌ Disconnected:', reason);
                     showDisconnected();
-                        },
-                        onMessage: (msg) => {
-                    console.log('Message received:', msg);
+                },
+                onMessage: (msg) => {
+                    console.log('📨 Message received:', msg);
                     if (msg.event === 'connection_info') {
                         showWelcome();
                     }
-                        },
-                        onError: (error) => {
-                    console.error('Error:', error);
+                },
+                onError: (error) => {
+                    console.error('⚠️ Error:', error);
                     showError();
-                        }
-                    }
-                });
+                }
+            }
+        });
 
         // Connect button handler
         async function connect() {

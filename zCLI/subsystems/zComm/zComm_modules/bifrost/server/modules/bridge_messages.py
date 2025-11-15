@@ -218,29 +218,32 @@ class MessageHandler:
         Returns:
             bool: True if handled as special action, False to continue routing
         """
+        # Get event field (supports both 'event' and 'action' for backward compatibility)
+        event = self._get_event(data)
+        
         # Input response routing
-        if data.get(MSG_KEY_EVENT) == EVENT_INPUT_RESPONSE:
+        if event == EVENT_INPUT_RESPONSE:
             return await self._handle_input_response(data)
         
         # Schema requests
-        if data.get(MSG_KEY_ACTION) == ACTION_GET_SCHEMA:
+        if event == ACTION_GET_SCHEMA:
             return await self._handle_schema_request(ws, data)
         
         # Cache control
-        if data.get(MSG_KEY_ACTION) == ACTION_CLEAR_CACHE:
-            return await self._handle_clear_cache(ws)
+        if event == ACTION_CLEAR_CACHE:
+            return await self._handle_clear_cache(ws, data)
         
-        if data.get(MSG_KEY_ACTION) == ACTION_CACHE_STATS:
-            return await self._handle_cache_stats(ws)
+        if event == ACTION_CACHE_STATS:
+            return await self._handle_cache_stats(ws, data)
         
-        if data.get(MSG_KEY_ACTION) == ACTION_SET_TTL:
+        if event == ACTION_SET_TTL:
             return await self._handle_set_ttl(ws, data)
         
         # Auto-discovery API (v1.5.4+)
-        if data.get(MSG_KEY_ACTION) == ACTION_DISCOVER:
-            return await self._handle_discover(ws)
+        if event == ACTION_DISCOVER:
+            return await self._handle_discover(ws, data)
         
-        if data.get(MSG_KEY_ACTION) == ACTION_INTROSPECT:
+        if event == ACTION_INTROSPECT:
             return await self._handle_introspect(ws, data)
         
         return False
@@ -292,15 +295,13 @@ class MessageHandler:
         schema = self.cache.get_schema(model, loader_func=schema_loader)
         
         if schema:
-            await ws.send(json.dumps({MSG_KEY_RESULT: schema}))
+            await ws.send(self._build_response(data, result=schema))
         else:
-            await ws.send(
-                json.dumps({MSG_KEY_ERROR: RESPONSE_SCHEMA_NOT_FOUND.format(model=model)})
-            )
+            await ws.send(self._build_response(data, error=RESPONSE_SCHEMA_NOT_FOUND.format(model=model)))
         
         return True
     
-    async def _handle_clear_cache(self, ws: Any) -> bool:
+    async def _handle_clear_cache(self, ws: Any, data: Dict[str, Any]) -> bool:
         """
         Handle cache clear request and return statistics.
         
@@ -312,12 +313,10 @@ class MessageHandler:
         """
         self.cache.clear_all()
         stats = self.cache.get_all_stats()
-        await ws.send(
-            json.dumps({MSG_KEY_RESULT: RESPONSE_CACHE_CLEARED, MSG_KEY_STATS: stats})
-        )
+        await ws.send(self._build_response(data, result=RESPONSE_CACHE_CLEARED, stats=stats))
         return True
     
-    async def _handle_cache_stats(self, ws: Any) -> bool:
+    async def _handle_cache_stats(self, ws: Any, data: Dict[str, Any]) -> bool:
         """
         Handle cache statistics request.
         
@@ -328,7 +327,7 @@ class MessageHandler:
             bool: Always True (request handled)
         """
         stats = self.cache.get_all_stats()
-        await ws.send(json.dumps({MSG_KEY_RESULT: stats}))
+        await ws.send(self._build_response(data, result=stats))
         return True
     
     async def _handle_set_ttl(self, ws: Any, data: Dict[str, Any]) -> bool:
@@ -344,12 +343,10 @@ class MessageHandler:
         """
         ttl = data.get(MSG_KEY_TTL, DEFAULT_CACHE_TTL)
         self.cache.set_query_ttl(ttl)
-        await ws.send(
-            json.dumps({MSG_KEY_RESULT: RESPONSE_TTL_SET.format(ttl=ttl)})
-        )
+        await ws.send(self._build_response(data, result=RESPONSE_TTL_SET.format(ttl=ttl)))
         return True
     
-    async def _handle_discover(self, ws: Any) -> bool:
+    async def _handle_discover(self, ws: Any, data: Dict[str, Any]) -> bool:
         """
         Handle discover models request for API auto-discovery.
         
@@ -360,15 +357,13 @@ class MessageHandler:
             bool: Always True (request handled)
         """
         if not self.connection_info:
-            await ws.send(
-                json.dumps({MSG_KEY_ERROR: RESPONSE_DISCOVERY_NOT_AVAILABLE})
-            )
+            await ws.send(self._build_response(data, error=RESPONSE_DISCOVERY_NOT_AVAILABLE))
             return True
         
         # pylint: disable=protected-access
         # Reason: _discover_models is an internal API method intended for bridge use
         models = self.connection_info._discover_models()
-        await ws.send(json.dumps({MSG_KEY_RESULT: {MSG_KEY_MODELS: models}}))
+        await ws.send(self._build_response(data, result={MSG_KEY_MODELS: models}))
         return True
     
     async def _handle_introspect(self, ws: Any, data: Dict[str, Any]) -> bool:
@@ -384,24 +379,55 @@ class MessageHandler:
         """
         model = data.get(MSG_KEY_MODEL)
         if not model:
-            await ws.send(json.dumps({MSG_KEY_ERROR: RESPONSE_MODEL_REQUIRED}))
+            await ws.send(self._build_response(data, error=RESPONSE_MODEL_REQUIRED))
             return True
         
         if not self.connection_info:
-            await ws.send(
-                json.dumps({MSG_KEY_ERROR: RESPONSE_INTROSPECTION_NOT_AVAILABLE})
-            )
+            await ws.send(self._build_response(data, error=RESPONSE_INTROSPECTION_NOT_AVAILABLE))
             return True
         
         model_info = self.connection_info.introspect_model(model)
         if model_info:
-            await ws.send(json.dumps({MSG_KEY_RESULT: model_info}))
+            await ws.send(self._build_response(data, result=model_info))
         else:
-            await ws.send(
-                json.dumps({MSG_KEY_ERROR: RESPONSE_MODEL_NOT_FOUND.format(model=model)})
-            )
+            await ws.send(self._build_response(data, error=RESPONSE_MODEL_NOT_FOUND.format(model=model)))
         
         return True
+    
+    def _get_event(self, data: Dict[str, Any]) -> Optional[str]:
+        """
+        Get event field from message, supporting both 'event' and 'action' (deprecated).
+        
+        Args:
+            data: Message data dictionary
+            
+        Returns:
+            str: Event name, or None if not present
+            
+        Note:
+            Prefers 'event' field over 'action' for forward compatibility.
+            The 'action' field is deprecated as of v1.5.5.
+        """
+        return data.get(MSG_KEY_EVENT) or data.get(MSG_KEY_ACTION)
+    
+    def _build_response(self, data: Dict[str, Any], **response_fields) -> str:
+        """
+        Build JSON response with _requestId echoed from request.
+        
+        Args:
+            data: Original request data (may contain _requestId)
+            **response_fields: Response fields (result, error, etc.)
+            
+        Returns:
+            str: JSON-encoded response with _requestId if present in request
+        """
+        response = dict(response_fields)
+        
+        # Echo _requestId if present in request
+        if "_requestId" in data:
+            response["_requestId"] = data["_requestId"]
+        
+        return json.dumps(response)
     
     async def _handle_dispatch(
         self,
@@ -453,7 +479,7 @@ class MessageHandler:
             
             if cached_result is not None:
                 # Cache hit!
-                payload = json.dumps({MSG_KEY_RESULT: cached_result, MSG_KEY_CACHED: True})
+                payload = self._build_response(data, result=cached_result, _cached=True)
                 await ws.send(payload)
                 await broadcast_func(payload, sender=ws)
                 return True
@@ -473,13 +499,13 @@ class MessageHandler:
             if is_cacheable and not disable_cache:
                 self.cache.cache_query(cache_key, result, ttl=cache_ttl)
             
-            payload = json.dumps({MSG_KEY_RESULT: result})
+            payload = self._build_response(data, result=result)
         
         # pylint: disable=broad-except
         # Reason: zDispatch can raise many exception types - need broad catch
         except Exception as exc:
             self.logger.error(f"{LOG_PREFIX} {LOG_ERROR} CLI execution error: {exc}")
-            payload = json.dumps({MSG_KEY_ERROR: str(exc)})
+            payload = self._build_response(data, error=str(exc))
         
         # Send result back
         await ws.send(payload)
@@ -502,13 +528,14 @@ class MessageHandler:
             bool: True if operation is cacheable, False otherwise
             
         Cacheable Patterns:
-            - action == "read"
+            - event == "read"
             - zKey starts with "^List"
             - zKey starts with "^Get"
             - zKey starts with "^Search"
         """
+        event = self._get_event(data)
         return (
-            data.get(MSG_KEY_ACTION) == ACTION_READ or
+            event == ACTION_READ or
             zKey.startswith(CMD_PREFIX_LIST) or
             zKey.startswith(CMD_PREFIX_GET) or
             zKey.startswith(CMD_PREFIX_SEARCH)
