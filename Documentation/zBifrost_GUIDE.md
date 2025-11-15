@@ -54,14 +54,24 @@ zBifrost uses an **<span style="color:#8FBE6D">event-driven architecture</span>*
 **Phase 2: Declarative zCLI (Following Flask Blog Tutorial Structure)** — Levels 3-16
 
 - **Level 3**: Getting Started - HTTP + WebSocket Together
-  - **Flask Part 1**: Run Flask dev server, serve static files
   - **zCLI**: Add zServer (HTTP) + zBifrost (WebSocket) in same Python script
   - **NEW**: Run both HTTP (port 8000) and WebSocket (port 8765) together
 
-- **Level 4**: Templates - Jinja2 Base Layout
-  - **Flask Part 2**: Create base template with Jinja2 (layout.html, home.html, about.html)
-  - **zCLI**: Jinja2 layout with multi-zone divs (`<div id="zui-content">`, `<div id="zui-sidebar">`)
-  - **NEW**: Server-side rendering for page structure (header, nav, footer)
+- **Level 4**: Templates - Jinja2 Base Layout + Bootstrap
+  - **zCLI**: Jinja2 layout with Bootstrap navbar and container
+  - **NEW**: Server-side rendering for page structure (header, nav, footer) + Bootstrap styling
+
+- **Level 4a**: zUI Basics - Multi-Zone Layout
+  - **zCLI**: Add `<div id="zui-content">` and `<div id="zui-sidebar">` to Jinja2 layout
+  - **NEW**: Prepare HTML for zDisplay event routing (zone-based rendering)
+
+- **Level 4b**: First zDisplay Event - Hello from Backend
+  - **zCLI**: Send `z.display.text()` event via zBifrost to render in `zui-content` zone
+  - **NEW**: Backend → Frontend communication (Python sends, JavaScript renders)
+
+- **Level 4c**: zUI File Execution - Menu Navigation
+  - **zCLI**: Load and execute a simple zUI YAML file with menu options
+  - **NEW**: zWalker integration (execute zUI files in zBifrost mode)
 
 - **Level 5**: Forms and User Input - Registration Form
   - **Flask Part 3**: Flask-WTF forms, validation, flash messages
@@ -135,14 +145,14 @@ zBifrost uses an **<span style="color:#8FBE6D">event-driven architecture</span>*
 
 **For Level 3:**
 - ✅ zServer HTTP server - Already exists
-- ✅ zBifrost WebSocket server - Already exists
-- ⏳ **NEEDED**: Run both servers together (HTTP + WebSocket in same Python script)
-- ⏳ **NEEDED**: Static file serving via zServer
+- ✅ Inline content routes (`type: content`) - Implemented
+- ✅ Declarative routing via YAML - Already exists
 
 **For Level 4:**
-- ⏳ **NEEDED**: Jinja2 integration in zServer (serve Jinja2-rendered layouts)
-- ⏳ **NEEDED**: Template directory structure
-- ⏳ **NEEDED**: Pass data to Jinja2 templates (ui_zones, etc.)
+- ✅ Jinja2 integration in zServer - Implemented (`type: template`)
+- ✅ Template directory structure - Implemented
+- ✅ Pass context to Jinja2 templates - Implemented
+- ✅ Bootstrap CSS integration - Complete
 
 **For Level 5:**
 - ✅ zData schema loading - Already exists
@@ -192,7 +202,9 @@ zBifrost uses an **<span style="color:#8FBE6D">event-driven architecture</span>*
 
 **Current Status:**
 - ✅ **Phase 1 (Levels 0-2)**: Complete - Imperative foundation established
-- ⏳ **Phase 2 (Levels 3-16)**: Ready to build (following [Corey Schafer's Flask Blog Tutorial](https://github.com/CoreyMSchafer/code_snippets/tree/master/Python/Flask_Blog))
+- ✅ **Level 3**: Complete - HTTP server (inline content routes)
+- ✅ **Level 4**: Complete - Jinja2 templates + Bootstrap styling
+- ⏳ **Phase 2 (Levels 5-16)**: Ready to build (following [Corey Schafer's Flask Blog Tutorial](https://github.com/CoreyMSchafer/code_snippets/tree/master/Python/Flask_Blog))
 - 📦 **Old demos**: Level_1_Menu and Level_2_Widgets archived (not aligned with Flask tutorial structure)
 
 **Key Insight:** Phase 1 teaches raw WebSocket mechanics (imperative). Phase 2 reveals zBifrost's declarative magic, following the **exact same workflow** as the famous Flask blog tutorial—but with **91% less code**!
@@ -228,7 +240,10 @@ zBifrost uses an **<span style="color:#8FBE6D">event-driven architecture</span>*
 |-------|---------------------|---------------|----------------|
 | **0-2** | N/A (Flask assumes HTTP) | WebSocket fundamentals (imperative) | N/A (teaching phase) |
 | **3** | Part 1: Getting Started (Flask app, routes) | zServer (HTTP) + zBifrost (WebSocket) together | ~50 lines → 10 lines |
-| **4** | Part 2: Templates (Jinja2 layout.html) | Jinja2 layout with multi-zone divs | ~100 lines → 30 lines |
+| **4** | Part 2: Templates (Jinja2 layout.html + Bootstrap) | Jinja2 layout with Bootstrap navbar | ~100 lines → 40 lines |
+| **4a** | N/A (Flask doesn't have zones) | Add multi-zone divs to layout | ~5 lines HTML |
+| **4b** | N/A (Flask doesn't have zDisplay) | Send `z.display.text()` via zBifrost | ~3 lines Python |
+| **4c** | N/A (Flask doesn't have zUI) | Execute zUI YAML file with zWalker | ~10 lines YAML |
 | **5** | Part 3: Forms (Flask-WTF, validation) | `z.display.form()` + zSchema validation | ~150 lines → 20 lines |
 | **6** | Part 4: Database (SQLAlchemy models) | zSchema YAML (declarative schema) | ~80 lines Python → 15 lines YAML |
 | **7** | Part 5: User Auth (Flask-Login, bcrypt) | `z.auth.login()` + RBAC YAML | ~200 lines → 10 lines Python + 10 lines YAML |
@@ -356,17 +371,67 @@ python3 level3_backend.py
 
 ---
 
-### Level 4: Auto-Rendering with zTheme (Coming Soon)
-**Goal**: Let BifrostClient automatically render data with zTheme CSS.
+### Level 4: Templates - Jinja2 Base Layout + Bootstrap
 
-**What you'll build:**
-- CRUD app using `client.renderTable()` instead of manual DOM
-- Forms via `client.renderForm()`
-- Menus via `client.renderMenu()`
+**<span style="color:#8FBE6D">Goal</span>**: Use Jinja2 templates with Bootstrap CSS for server-side rendering (matching Corey Schafer's Flask Part 2).
 
-**Concepts**: `autoTheme: true`, auto-rendering methods, zTheme CSS
+**Location**: [`Level_4_Templates/`](../Demos/Layer_0/zBifrost_Demo/Level_4_Templates) | [README](../Demos/Layer_0/zBifrost_Demo/Level_4_Templates/README.md)
 
-**Backend features**: Schema discovery, zDisplay JSON events
+**What you'll learn:**
+- **<span style="color:#F8961F">Jinja2 template inheritance</span>** (`layout.html` → `home.html`, `about.html`)
+- **<span style="color:#8FBE6D">Bootstrap 4 integration</span>** (navbar, container, responsive grid)
+- **<span style="color:#00D4FF">Template context variables</span>** (pass data from YAML routes to templates)
+
+**Run:**
+```bash
+cd Demos/Layer_0/zBifrost_Demo/Level_4_Templates
+python3 level4_backend.py
+# Open http://127.0.0.1:8000/ in browser
+```
+
+**Success**: Bootstrap-styled blog with navbar, home page, and about page
+
+**Key Files:**
+- `zServer.routes.yaml` - Declarative routes with `type: template`
+- `templates/layout.html` - Base template with Bootstrap navbar
+- `templates/home.html` - Extends layout, shows home content
+- `templates/about.html` - Extends layout, shows about content
+
+**Flask Comparison:**
+```python
+# Flask Part 2 (Corey Schafer)
+from flask import Flask, render_template
+app = Flask(__name__)
+
+@app.route("/")
+@app.route("/home")
+def home():
+    return render_template('home.html', title='Home')
+
+@app.route("/about")
+def about():
+    return render_template('about.html', title='About')
+
+app.run(debug=True)
+```
+
+```yaml
+# zCLI (Declarative YAML)
+routes:
+  /:
+    type: template
+    template: "home.html"
+    context:
+      title: "Home"
+  
+  /about:
+    type: template
+    template: "about.html"
+    context:
+      title: "About"
+```
+
+**Code Reduction**: ~100 lines Flask → ~40 lines zCLI (60% reduction)
 
 ---
 

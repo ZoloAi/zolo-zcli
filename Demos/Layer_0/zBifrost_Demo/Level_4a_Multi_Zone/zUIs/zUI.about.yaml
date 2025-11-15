@@ -1,0 +1,88 @@
+# Level 4a: Multi-Zone Layout - About Page
+# This zUI file defines the about page content using zDisplay events
+
+Meta:
+  title: "About"
+  description: "About page content for zBlog"
+
+zVaF:
+  About_title:
+    zDisplay:
+      event: header
+      indent: 1
+      content: "About zBlog"
+  
+  About_intro:
+    zDisplay:
+      event: text
+      indent: 1
+      content: "zBlog is a demonstration project that mirrors Corey Schafer's Flask Blog Tutorial, but built with zCLI instead of Flask."
+  
+  Why_title:
+    zDisplay:
+      event: header
+      indent: 2
+      content: "Why zCLI?"
+  
+  Why_description:
+    zDisplay:
+      event: text
+      indent: 1
+      content: "zCLI is a declarative Python framework that reduces boilerplate by 90% compared to traditional web frameworks like Flask or Django."
+  
+  Features_title:
+    zDisplay:
+      event: header
+      indent: 2
+      content: "Key Features"
+  
+  Features_list:
+    zDisplay:
+      event: list
+      indent: 1
+      items:
+        - "Declarative Routes: Define routes in YAML instead of Python decorators"
+        - "zUI Files: Define UI content in YAML using zDisplay events"
+        - "WebSocket Built-in: Real-time communication without Flask-SocketIO"
+        - "Auto-Rendering: BifrostClient auto-renders zDisplay events"
+        - "Schema-Driven: Define database models in YAML, not Python classes"
+  
+  Progress_title:
+    zDisplay:
+      event: header
+      indent: 2
+      content: "Tutorial Progress"
+  
+  Progress_current:
+    zDisplay:
+      event: text
+      indent: 1
+      content: "We're currently at Level 4a: Multi-Zone Layout, which introduces zDisplay events and zone-based rendering."
+  
+  Progress_future:
+    zDisplay:
+      event: text
+      indent: 1
+      content: "By the end of this tutorial series, we'll have built a complete blog with authentication, posts, comments, and real-time updates—all with 90% less code than Flask!"
+  
+  Divider:
+    zDisplay:
+      event: text
+      indent: 0
+      content: "─────────────────────────────────────────────────"
+  
+  Tech_stack_title:
+    zDisplay:
+      event: header
+      indent: 2
+      content: "Tech Stack"
+  
+  Tech_stack_list:
+    zDisplay:
+      event: list
+      indent: 1
+      items:
+        - "Backend: zCLI (Python)"
+        - "Frontend: Jinja2 + BifrostClient (JavaScript)"
+        - "Database: SQLite (via zData)"
+        - "Real-time: WebSocket (via zBifrost)"
