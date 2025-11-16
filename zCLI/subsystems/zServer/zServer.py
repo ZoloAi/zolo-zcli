@@ -28,9 +28,10 @@ class zServer:
     - Directory listing disabled for security
     """
     
-    def __init__(self, logger, *, zcli=None, port=8080, host="127.0.0.1", serve_path=".", routes_file=None):
+    def __init__(self, logger, *, zcli=None, port=8080, host="127.0.0.1", serve_path=".", 
+                 static_folder="static", template_folder="templates", routes_file=None):
         """
-        Initialize zServer (v1.5.4 Phase 2: Added declarative routing)
+        Initialize zServer (v1.5.5: Flask-like folder conventions)
         
         Args:
             logger: zCLI logger instance
@@ -38,6 +39,8 @@ class zServer:
             port: HTTP port (default: 8080)
             host: Host address (default: 127.0.0.1)
             serve_path: Directory to serve files from (default: current directory)
+            static_folder: Static files folder (default: "static", Flask convention)
+            template_folder: Jinja2 templates folder (default: "templates", Flask convention)
             routes_file: Optional zServer.*.yaml file for declarative routing
         """
         self.logger = logger
@@ -46,6 +49,8 @@ class zServer:
         self.host = host
         self.routes_file = routes_file
         self.router = None
+        self.static_folder = static_folder
+        self.template_folder = template_folder
         
         # Resolve serve_path, handling case where path may not exist yet or cwd deleted
         try:
@@ -64,6 +69,8 @@ class zServer:
         self._running = False
         
         self.logger.info(f"[zServer] Initialized - will serve from: {self.serve_path}")
+        self.logger.info(f"[zServer] Static folder: {self.static_folder}/")
+        self.logger.info(f"[zServer] Template folder: {self.template_folder}/")
         if self.router:
             self.logger.info(f"[zServer] Declarative routing enabled: {routes_file}")
     
@@ -123,8 +130,14 @@ class zServer:
         os.chdir(self.serve_path)
         
         try:
-            # Create handler with logger and router (v1.5.4 Phase 2)
-            handler = partial(LoggingHTTPRequestHandler, logger=self.logger, router=self.router)
+            # Create handler with logger, router, and folder conventions (v1.5.5)
+            handler = partial(
+                LoggingHTTPRequestHandler, 
+                logger=self.logger, 
+                router=self.router,
+                static_folder=self.static_folder,
+                template_folder=self.template_folder
+            )
             
             # Create HTTP server
             self.server = HTTPServer((self.host, self.port), handler)

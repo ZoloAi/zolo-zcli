@@ -1,4 +1,4 @@
-# Level 4: Templates - Jinja2 Base Layout
+# Level 4a: Multi-Zone Layout - Flask-like conventions
 # Mirrors Flask Blog Part 2: flaskblog.py
 #
 # Flask:
@@ -15,18 +15,16 @@
 #       return render_template('about.html')
 #
 # zCLI: Declarative routes with Jinja2 templates (no decorators!)
+#
+# Note: /static/* is auto-served from static/ folder (Flask convention)
+#       No need to define explicit routes for static files!
 
 Meta:
   base_path: "."
   default_route: "/"
 
 routes:
-  # Static file route for BifrostClient
-  /static/bifrost_client.js:
-    type: static
-    file: "../../../../zCLI/subsystems/zComm/zComm_modules/bifrost/client/src/bifrost_client.js"
-  
-  # Template routes
+  # Template routes (static files auto-served from static/)
   /:
     type: template
     template: "home.html"

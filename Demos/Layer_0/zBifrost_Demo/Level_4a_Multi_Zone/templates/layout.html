@@ -12,7 +12,8 @@
     <!-- Bootstrap CSS (matching Corey Schafer's Flask tutorial) -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     
-    <!-- BifrostClient will be loaded at end of body to ensure DOM is ready -->
+    <!-- Test: Flask-like /static/* convention -->
+    <script src="/static/js/hello.js"></script>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -56,14 +57,28 @@
         </div>
     </main>
     
-    <!-- BifrostClient (CDN - jsDelivr from GitHub) -->
-    <!-- Note: If this fails to load, jsDelivr might be caching. Try purging at: -->
-    <!-- https://purge.jsdelivr.net/gh/ZoloAi/zolo-zcli@main/zCLI/subsystems/zComm/zComm_modules/bifrost/client/src/bifrost_client.js -->
-    <script src="https://cdn.jsdelivr.net/gh/ZoloAi/zolo-zcli@main/zCLI/subsystems/zComm/zComm_modules/bifrost/client/src/bifrost_client.js"></script>
+    <!-- BifrostClient from jsDelivr CDN (using specific commit hash) -->
+    <!-- Using commit hash for immediate availability (no cache delay) -->
+    <script src="https://cdn.jsdelivr.net/gh/ZoloAi/zolo-zcli@f86b2abd9cab149a6163de826e4b27b90afbdc7f/zCLI/subsystems/zComm/zComm_modules/bifrost/client/src/bifrost_client.js" 
+            crossorigin="anonymous"></script>
+    
+    <!-- TODO: Publish to npm for cleaner import like: -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/@zoloai/zcli@1.5.5/bifrost_client.min.js"></script> -->
     
     <!-- WebSocket Connection Script -->
     <script>
         console.log('Level 4a: Multi-Zone Layout');
+        console.log('BifrostClient available?', typeof BifrostClient !== 'undefined');
+        
+        // Check if BifrostClient is defined before proceeding
+        if (typeof BifrostClient === 'undefined') {
+            console.error('❌ BifrostClient is not defined! Script may have failed to load or execute.');
+            console.error('Check browser console for script loading errors.');
+            document.getElementById('connection-status').className = 'badge badge-danger';
+            document.getElementById('connection-status').textContent = '● Script Load Failed';
+            throw new Error('BifrostClient not available');
+        }
+        
         console.log('Initializing BifrostClient...');
         
         // Get connection status badge

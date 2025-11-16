@@ -9,11 +9,13 @@ import os
 
 
 class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
-    """HTTP request handler with zCLI logger integration + routing (v1.5.4 Phase 2)"""
+    """HTTP request handler with zCLI logger integration + routing (v1.5.5: Flask conventions)"""
     
-    def __init__(self, *args, logger=None, router=None, **kwargs):
+    def __init__(self, *args, logger=None, router=None, static_folder="static", template_folder="templates", **kwargs):
         self.zcli_logger = logger
         self.router = router  # HTTPRouter instance (optional)
+        self.static_folder = static_folder  # Flask convention: static files folder
+        self.template_folder = template_folder  # Flask convention: templates folder
         super().__init__(*args, **kwargs)
     
     def log_message(self, format, *args):
@@ -44,18 +46,115 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
     
     def do_GET(self):
         """
-        Handle GET requests with optional routing (v1.5.4 Phase 2).
+        Handle GET requests with Flask-like conventions (v1.5.5).
         
         Flow:
-            1. If router exists: Use declarative routing
-            2. Otherwise: Fallback to static file serving (current behavior)
+            1. Check for favicon.ico and serve default if not found
+            2. Check for /static/* and auto-serve from static_folder
+            3. If router exists: Use declarative routing
+            4. Otherwise: Fallback to static file serving (current behavior)
         """
+        # Handle favicon.ico with default zolo favicon
+        if self.path == '/favicon.ico':
+            return self._serve_default_favicon()
+        
+        # Auto-serve /static/* from static_folder (Flask convention)
+        if self.path.startswith('/static/'):
+            return self._serve_static_file()
+        
         # Check if router exists (declarative routing mode)
         if self.router:
             return self._handle_routed_request()
         
         # Fallback: Static file serving (backward compatible)
         return super().do_GET()
+    
+    def _serve_default_favicon(self):
+        """Serve default zolo favicon from zServer static folder"""
+        import os
+        
+        # Path to default favicon in zServer static folder
+        zserver_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        favicon_path = os.path.join(zserver_dir, 'static', 'favicon.ico')
+        
+        if not os.path.exists(favicon_path):
+            # No default favicon, return 404
+            return self.send_error(404, "Favicon not found")
+        
+        try:
+            with open(favicon_path, 'rb') as f:
+                favicon_data = f.read()
+            
+            self.send_response(200)
+            self.send_header("Content-type", "image/x-icon")
+            self.send_header("Content-length", len(favicon_data))
+            self.send_header("Cache-Control", "public, max-age=86400")  # Cache for 1 day
+            self.end_headers()
+            self.wfile.write(favicon_data)
+            
+        except Exception as e:
+            if hasattr(self, 'zcli_logger') and self.zcli_logger:
+                self.zcli_logger.error(f"[Handler] Error serving favicon: {e}")
+            return self.send_error(500, f"Error serving favicon: {str(e)}")
+    
+    def _serve_static_file(self):
+        """
+        Auto-serve files from /static/* (Flask convention).
+        
+        Maps /static/js/hello.js → {serve_path}/static/js/hello.js
+        """
+        import os
+        import mimetypes
+        from urllib.parse import unquote
+        
+        # Remove /static/ prefix to get relative path
+        relative_path = self.path[8:]  # Remove '/static/'
+        
+        # Decode URL encoding (e.g., %20 → space)
+        relative_path = unquote(relative_path)
+        
+        # Build absolute path: {serve_path}/{static_folder}/{relative_path}
+        file_path = os.path.join(os.getcwd(), self.static_folder, relative_path)
+        
+        # Security: Prevent directory traversal
+        file_path = os.path.abspath(file_path)
+        static_root = os.path.abspath(os.path.join(os.getcwd(), self.static_folder))
+        
+        if not file_path.startswith(static_root):
+            return self.send_error(403, "Access denied")
+        
+        # Check if file exists
+        if not os.path.exists(file_path):
+            return self.send_error(404, f"File not found: {self.path}")
+        
+        # Check if it's a directory (not allowed)
+        if os.path.isdir(file_path):
+            return self.send_error(403, "Directory listing is disabled")
+        
+        # Serve the file
+        try:
+            with open(file_path, 'rb') as f:
+                content = f.read()
+            
+            # Determine content type
+            content_type, _ = mimetypes.guess_type(file_path)
+            if not content_type:
+                content_type = 'application/octet-stream'
+            
+            self.send_response(200)
+            self.send_header("Content-type", content_type)
+            self.send_header("Content-length", len(content))
+            self.send_header("Cache-Control", "public, max-age=3600")  # Cache for 1 hour
+            self.end_headers()
+            self.wfile.write(content)
+            
+            if self.zcli_logger:
+                self.zcli_logger.debug(f"[Handler] Served static file: {self.path}")
+            
+        except Exception as e:
+            if hasattr(self, 'zcli_logger') and self.zcli_logger:
+                self.zcli_logger.error(f"[Handler] Error serving static file: {e}")
+            return self.send_error(500, f"Error serving file: {str(e)}")
     
     def _handle_routed_request(self):
         """Handle request using HTTPRouter with RBAC enforcement"""
@@ -81,11 +180,38 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
         route_type = route.get("type", "static")
         
         if route_type == "static":
-            # Serve static file
+            # Serve static file directly
             file_path = self.router.resolve_file_path(route)
-            # Update self.path to point to resolved file
-            self.path = f"/{os.path.basename(file_path)}"
-            return super().do_GET()
+            
+            # Check if file exists
+            if not os.path.exists(file_path):
+                return self.send_error(404, f"File not found: {file_path}")
+            
+            # Check if it's a directory (not allowed for static routes)
+            if os.path.isdir(file_path):
+                return self.send_error(403, "Directory listing is disabled")
+            
+            # Serve the file directly
+            try:
+                with open(file_path, 'rb') as f:
+                    content = f.read()
+                
+                # Determine content type
+                import mimetypes
+                content_type, _ = mimetypes.guess_type(file_path)
+                if not content_type:
+                    content_type = 'application/octet-stream'
+                
+                self.send_response(200)
+                self.send_header("Content-type", content_type)
+                self.send_header("Content-length", len(content))
+                self.end_headers()
+                self.wfile.write(content)
+                
+            except Exception as e:
+                if hasattr(self, 'zcli_logger') and self.zcli_logger:
+                    self.zcli_logger.error(f"[Handler] Error serving static file: {e}")
+                return self.send_error(500, f"Error serving file: {str(e)}")
         
         elif route_type == "content":
             # Serve inline HTML content (like Flask return "<h1>...</h1>")
@@ -154,12 +280,12 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
             if not hasattr(self.router, 'zcli'):
                 return self.send_error(500, "zCLI instance not available")
             
-            # Get templates directory from serve_path
+            # Get templates directory from serve_path (Flask convention)
             import os
             from jinja2 import Environment, FileSystemLoader, TemplateNotFound
             
             serve_path = self.router.zcli.server.serve_path
-            templates_dir = os.path.join(serve_path, "templates")
+            templates_dir = os.path.join(serve_path, self.template_folder)
             
             # Create Jinja2 environment
             env = Environment(loader=FileSystemLoader(templates_dir))
