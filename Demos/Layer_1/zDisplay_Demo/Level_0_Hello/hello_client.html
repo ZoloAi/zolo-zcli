@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hello zCLI - zBifrost Mode</title>
+    
+    <!-- BifrostClient Library (local development) -->
+    <script src="../../../../zCLI/subsystems/zComm/zComm_modules/bifrost/client/src/bifrost_client.js"></script>
+    
+    <!-- Production: CDN (use for deployment) -->
+    <!-- <script src="https://cdn.jsdelivr.net/gh/ZoloAi/zolo-zcli@main/zCLI/subsystems/zComm/zComm_modules/bifrost/client/src/bifrost_client.js"></script> -->
+    
+    <!-- Styles -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2rem;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        #connectBtn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        #disconnectBtn {
+            background: #e74c3c;
+            color: white;
+            display: none;
+        }
+
+        #status {
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+            display: none;
+        }
+
+        #status.connected {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        #status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        #status.connecting {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        #output {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 300px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.8;
+            overflow-y: auto;
+            max-height: 500px;
+        }
+
+        .message {
+            margin: 8px 0;
+            padding: 8px 12px;
+            border-radius: 4px;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+
+        .message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-left: 4px solid #17a2b8;
+        }
+
+        .message.text {
+            color: #333;
+        }
+
+        .indented {
+            margin-left: 20px;
+        }
+
+        .footer {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+            color: #666;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        .footer strong {
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎉 Hello zCLI</h1>
+        <p class="subtitle">Same code, different mode: Terminal → Browser!</p>
+
+        <div class="controls">
+            <button id="connectBtn">🚀 Connect to Server</button>
+            <button id="disconnectBtn">👋 Disconnect</button>
+        </div>
+
+        <div id="status"></div>
+
+        <div id="output">
+            <p style="color: #999; text-align: center; margin-top: 100px;">
+                Click "Connect to Server" to see the magic! ✨
+            </p>
+        </div>
+
+        <div class="footer">
+            <strong>The Point:</strong> The Python backend uses the EXACT same display code as the Terminal version.
+            zDisplay automatically adapts to the mode (Terminal ANSI vs WebSocket JSON).
+            <strong>Declare once—run everywhere!</strong>
+        </div>
+    </div>
+
+    <script>
+        let client = null;
+        const connectBtn = document.getElementById('connectBtn');
+        const disconnectBtn = document.getElementById('disconnectBtn');
+        const status = document.getElementById('status');
+        const output = document.getElementById('output');
+
+        // Show status message
+        function showStatus(message, type) {
+            status.textContent = message;
+            status.className = type;
+            status.style.display = 'block';
+        }
+
+        // Clear output
+        function clearOutput() {
+            output.innerHTML = '';
+        }
+
+        // Append message to output
+        function appendMessage(content, type = 'text', indent = 0) {
+            const message = document.createElement('div');
+            message.className = `message ${type}`;
+            if (indent > 0) {
+                message.classList.add('indented');
+                message.style.marginLeft = `${indent * 20}px`;
+            }
+            message.textContent = content;
+            output.appendChild(message);
+            output.scrollTop = output.scrollHeight;
+        }
+
+        // Connect button
+        connectBtn.addEventListener('click', async () => {
+            try {
+                showStatus('Connecting to server...', 'connecting');
+                clearOutput();
+                
+                // Create BifrostClient
+                client = new BifrostClient('ws://127.0.0.1:8765', {
+                    autoTheme: false,  // We have custom styles
+                    hooks: {
+                        onConnected: (info) => {
+                            console.log('Connected!', info);
+                            showStatus('✅ Connected to zCLI Server!', 'connected');
+                            connectBtn.style.display = 'none';
+                            disconnectBtn.style.display = 'inline-block';
+                            
+                            // Request the hello display from server
+                            client.send({event: 'show_hello'});
+                        },
+                        onDisconnected: () => {
+                            console.log('Disconnected');
+                            showStatus('❌ Disconnected from server', 'disconnected');
+                            connectBtn.style.display = 'inline-block';
+                            disconnectBtn.style.display = 'none';
+                        },
+                        onMessage: (msg) => {
+                            console.log('Message received:', msg);
+                            handleMessage(msg);
+                        }
+                    }
+                });
+
+                await client.connect();
+                
+            } catch (error) {
+                console.error('Connection error:', error);
+                showStatus('❌ Connection failed! Is the server running?', 'disconnected');
+                appendMessage('Error: ' + error.message, 'error');
+            }
+        });
+
+        // Disconnect button
+        disconnectBtn.addEventListener('click', () => {
+            if (client) {
+                client.disconnect();
+                client = null;
+            }
+        });
+
+        // Handle messages from server
+        function handleMessage(msg) {
+            // Handle both old format (event: "success") and new format (display_event: "success")
+            const event = msg.display_event || msg.event;
+            
+            if (!event) {
+                // Ignore system events like connection_info
+                if (msg.event !== 'connection_info') {
+                    console.warn('Invalid message:', msg);
+                }
+                return;
+            }
+
+            // Extract content from new format (data.content, data.message, data.text) or old format (content)
+            const content = msg.data?.content || msg.data?.message || msg.data?.text || msg.content || '';
+            const indent = msg.data?.indent || msg.indent || 0;
+
+            // Map event types to CSS classes
+            switch (event) {
+                case 'success':
+                    appendMessage(content, 'success', indent);
+                    break;
+                case 'info':
+                    appendMessage(content, 'info', indent);
+                    break;
+                case 'text':
+                    appendMessage(content, 'text', indent);
+                    break;
+                case 'connection_info':
+                    // System event - ignore
+                    break;
+                default:
+                    appendMessage(`[${event}] ${content}`, 'text', indent);
+            }
+        }
+    </script>
+</body>
+</html>
+

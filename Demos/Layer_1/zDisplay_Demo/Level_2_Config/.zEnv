@@ -1,0 +1,7 @@
+# Example .zEnv file for Level 2: Config Demo
+# zConfig automatically loads these variables on initialization
+
+APP_NAME=TerminalTutorial
+API_URL=https://api.example.com
+DEBUG=True
+

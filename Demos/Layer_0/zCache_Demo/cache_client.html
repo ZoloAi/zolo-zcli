@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>zCLI Cache Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #2a5298;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .status-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #e74c3c;
+        }
+
+        .status-dot.connected {
+            background: #27ae60;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .btn-connect {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-disconnect {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-run {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-clear {
+            background: #95a5a6;
+            color: white;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .output-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            min-height: 500px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        #output {
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .event-success {
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .event-error {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .event-warning {
+            color: #f39c12;
+            font-weight: bold;
+        }
+
+        .event-info {
+            color: #3498db;
+        }
+
+        .event-header {
+            color: #2c3e50;
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-top: 15px;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+
+        .event-text {
+            color: #2c3e50;
+            margin: 5px 0;
+        }
+
+        .event-json {
+            background: #ecf0f1;
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 20px;
+            font-size: 0.9em;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎉 zCLI Cache Demo</h1>
+            <p>Layer 0: Foundation Caching + Dual-Mode Rendering</p>
+        </div>
+
+        <div class="status-panel">
+            <div class="status">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="statusText">Disconnected</span>
+            </div>
+            <div class="controls">
+                <button class="btn-connect" id="connectBtn" onclick="connect()">Connect to Server</button>
+                <button class="btn-disconnect" id="disconnectBtn" onclick="disconnect()" style="display:none;">Disconnect</button>
+                <button class="btn-run" id="runBtn" onclick="runDemo()" disabled>Run Cache Demo</button>
+                <button class="btn-clear" onclick="clearOutput()">Clear Output</button>
+            </div>
+        </div>
+
+        <div class="output-panel">
+            <div id="output">
+                <div class="event-info">👋 Welcome to the zCLI Cache Demo!</div>
+                <div class="event-text">Click "Connect to Server" to begin.</div>
+                <div class="event-text">Make sure <code>cache_demo_bifrost.py</code> is running first.</div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Powered by <strong>zCLI</strong> + <strong>zBifrost</strong> WebSocket Bridge</p>
+            <p>🎨 Same code, everywhere: Terminal → Browser → Mobile</p>
+        </div>
+    </div>
+
+    <script src="../../../zCLI/subsystems/zComm/zComm_modules/bifrost/client/src/bifrost_client.js"></script>
+    <script>
+        let client = null;
+
+        function showStatus(message, type = 'info') {
+            const statusText = document.getElementById('statusText');
+            const statusDot = document.getElementById('statusDot');
+            
+            statusText.textContent = message;
+            
+            if (type === 'connected') {
+                statusDot.classList.add('connected');
+            } else {
+                statusDot.classList.remove('connected');
+            }
+        }
+
+        function appendOutput(html) {
+            const output = document.getElementById('output');
+            output.innerHTML += html;
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function clearOutput() {
+            document.getElementById('output').innerHTML = '';
+        }
+
+        function connect() {
+            showStatus('Connecting...', 'connecting');
+            
+            client = new BifrostClient('ws://127.0.0.1:8765', {
+                autoTheme: false,
+                hooks: {
+                    onConnected: (info) => {
+                        console.log('Connected!', info);
+                        showStatus('✅ Connected to zCLI Server!', 'connected');
+                        document.getElementById('connectBtn').style.display = 'none';
+                        document.getElementById('disconnectBtn').style.display = 'inline-block';
+                        document.getElementById('runBtn').disabled = false;
+                        
+                        appendOutput(`
+                            <div class="event-success">✅ Connected to server!</div>
+                            <div class="event-text">Click "Run Cache Demo" to see the magic.</div>
+                        `);
+                    },
+                    onDisconnected: (info) => {
+                        console.log('Disconnected:', info);
+                        showStatus('❌ Disconnected', 'disconnected');
+                        document.getElementById('connectBtn').style.display = 'inline-block';
+                        document.getElementById('disconnectBtn').style.display = 'none';
+                        document.getElementById('runBtn').disabled = true;
+                        
+                        appendOutput(`<div class="event-error">❌ Disconnected from server</div>`);
+                    },
+                    onError: (error) => {
+                        console.error('WebSocket error:', error);
+                        showStatus('❌ Connection Error', 'error');
+                        appendOutput(`<div class="event-error">❌ Error: ${error.message || 'Connection failed'}</div>`);
+                    },
+                    onMessage: (data) => {
+                        console.log('Received:', data);
+                        handleDisplayEvent(data);
+                    }
+                }
+            });
+
+            client.connect();
+        }
+
+        function disconnect() {
+            if (client) {
+                client.disconnect();
+                client = null;
+            }
+        }
+
+        function runDemo() {
+            if (!client) {
+                appendOutput(`<div class="event-error">❌ Not connected! Click "Connect to Server" first.</div>`);
+                return;
+            }
+
+            // Clear previous output
+            clearOutput();
+            appendOutput(`<div class="event-info">🚀 Running cache performance demo...</div>`);
+
+            // Request the cache demo from server
+            client.send({event: 'run_cache_demo'});
+        }
+
+        function handleDisplayEvent(data) {
+            // Handle both old format (event: "output") and new format (display_event: "success")
+            const displayEvent = data.display_event || data.event;
+            
+            switch(displayEvent) {
+                case 'header':
+                    const color = data.data?.color || 'BLACK';
+                    const label = data.data?.label || '';
+                    appendOutput(`<div class="event-header" style="color: ${getColorHex(color)}">${label}</div>`);
+                    break;
+                
+                case 'success':
+                    const successMsg = data.data?.content || data.data?.message || data.content || '';
+                    appendOutput(`<div class="event-success">${escapeHtml(successMsg)}</div>`);
+                    break;
+                
+                case 'error':
+                    const errorMsg = data.data?.content || data.data?.message || data.content || '';
+                    appendOutput(`<div class="event-error">${escapeHtml(errorMsg)}</div>`);
+                    break;
+                
+                case 'warning':
+                    const warningMsg = data.data?.content || data.data?.message || data.content || '';
+                    appendOutput(`<div class="event-warning">${escapeHtml(warningMsg)}</div>`);
+                    break;
+                
+                case 'info':
+                    const infoMsg = data.data?.content || data.data?.message || data.content || '';
+                    appendOutput(`<div class="event-info">${escapeHtml(infoMsg)}</div>`);
+                    break;
+                
+                case 'text':
+                case 'output':
+                    const textMsg = data.data?.content || data.data?.text || data.content || '';
+                    if (textMsg.trim()) {
+                        appendOutput(`<div class="event-text">${escapeHtml(textMsg)}</div>`);
+                    } else {
+                        appendOutput(`<div style="height: 10px;"></div>`);
+                    }
+                    break;
+                
+                case 'json':
+                case 'json_data':
+                    const jsonData = data.data?.data || data.content || {};
+                    appendOutput(`<div class="event-json"><pre>${escapeHtml(JSON.stringify(jsonData, null, 2))}</pre></div>`);
+                    break;
+                
+                case 'list':
+                    const items = data.data?.items || [];
+                    let listHtml = '<div class="event-text"><ul>';
+                    items.forEach(item => {
+                        listHtml += `<li>${escapeHtml(item)}</li>`;
+                    });
+                    listHtml += '</ul></div>';
+                    appendOutput(listHtml);
+                    break;
+                
+                case 'connection_info':
+                    // System event - ignore silently
+                    break;
+                
+                default:
+                    console.log('Unknown display event:', displayEvent, data);
+            }
+        }
+
+        function getColorHex(colorName) {
+            const colors = {
+                'CYAN': '#17a2b8',
+                'RED': '#e74c3c',
+                'GREEN': '#27ae60',
+                'YELLOW': '#f39c12',
+                'BLUE': '#3498db',
+                'MAGENTA': '#9b59b6',
+                'BLACK': '#2c3e50'
+            };
+            return colors[colorName] || '#2c3e50';
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
+

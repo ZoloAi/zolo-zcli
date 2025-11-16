@@ -342,10 +342,17 @@ class zPrimitives:
                 KEY_TIMESTAMP: time.time()
             }
 
-            # In zBifrost mode: these are debug/log events, not user-facing display events
-            # User-facing events go through send_gui_event() which buffers them
-            # Debug events are just discarded in zBifrost mode (they're for terminal only)
-            pass
+            # Broadcast to all connected WebSocket clients
+            if hasattr(zcli.comm, 'broadcast_websocket'):
+                try:
+                    loop = asyncio.get_running_loop()
+                    asyncio.run_coroutine_threadsafe(
+                        zcli.comm.broadcast_websocket(json.dumps(event_data)),
+                        loop
+                    )
+                except RuntimeError:
+                    # No running event loop - skip broadcast (tests/initialization)
+                    pass
 
         except Exception:
             # Silently ignore GUI send failures - terminal fallback handles the output
@@ -476,8 +483,23 @@ class zPrimitives:
                 KEY_TIMESTAMP: time.time()
             }
 
-            # Buffer event for collection (no broadcast from worker thread)
+            # Buffer event for collection (backward compatibility with zWalker)
             self.display.buffer_event(event_data)
+            
+            # ALSO broadcast immediately for custom handlers (new capability)
+            if self.display and hasattr(self.display, 'zcli'):
+                zcli = self.display.zcli
+                if zcli and hasattr(zcli, 'comm') and hasattr(zcli.comm, 'broadcast_websocket'):
+                    try:
+                        loop = asyncio.get_running_loop()
+                        asyncio.run_coroutine_threadsafe(
+                            zcli.comm.broadcast_websocket(json.dumps(event_data)),
+                            loop
+                        )
+                    except RuntimeError:
+                        # No running event loop - buffering still works
+                        pass
+            
             return True
             
         except Exception:
