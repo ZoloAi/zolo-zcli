@@ -1,7 +1,89 @@
 {% extends "layout.html" %}
 
 {% block content %}
-    <!-- Content will be dynamically loaded from zUI.about.yaml via zDisplay events -->
-    <p class="text-muted">Loading content...</p>
+    <h1>About zBlog</h1>
+    <p class="lead">A demonstration of zCLI's Flask-like conventions and declarative architecture.</p>
+    
+    <h2 class="mt-4">What is zCLI?</h2>
+    <p>zCLI is a modern Python framework that brings Flask's simplicity to the next level with:</p>
+    <ul>
+        <li><strong>Declarative Routing</strong> - Define routes in YAML, not Python decorators</li>
+        <li><strong>Flask Conventions</strong> - Familiar <code>static/</code> and <code>templates/</code> folder structure</li>
+        <li><strong>Built-in WebSockets</strong> - Real-time communication via zBifrost bridge</li>
+        <li><strong>Auto-Rendering</strong> - zDisplay events automatically render to your UI</li>
+        <li><strong>Zero Boilerplate</strong> - Focus on your app, not framework setup</li>
+    </ul>
+    
+    <h2 class="mt-4">This Demo</h2>
+    <p>This Level 4a demo showcases:</p>
+    
+    <div class="card mb-3">
+        <div class="card-header">
+            <strong>Flask-like Folder Structure</strong>
+        </div>
+        <div class="card-body">
+            <pre><code>Level_4a_Multi_Zone/
+├── static/              ← Auto-served at /static/*
+│   ├── client/          ← BifrostClient library
+│   └── js/
+│       └── hello.js
+├── templates/           ← Jinja2 templates
+│   ├── layout.html
+│   ├── home.html
+│   └── about.html
+├── level4a_backend.py   ← Python backend
+└── zServer.routes.yaml  ← Declarative routes</code></pre>
+        </div>
+    </div>
+    
+    <div class="card mb-3">
+        <div class="card-header">
+            <strong>Declarative Routing (No Decorators!)</strong>
+        </div>
+        <div class="card-body">
+            <p>Instead of Flask's decorator approach:</p>
+            <pre><code># Flask (imperative)
+@app.route("/")
+def home():
+    return render_template('home.html')</code></pre>
+            
+            <p class="mt-3">zCLI uses declarative YAML:</p>
+            <pre><code># zCLI (declarative)
+routes:
+  /:
+    type: template
+    template: "home.html"
+    context:
+      title: "Home"</code></pre>
+        </div>
+    </div>
+    
+    <div class="card mb-3">
+        <div class="card-header">
+            <strong>WebSocket Integration</strong>
+        </div>
+        <div class="card-body">
+            <p>Connect to zBifrost in just 3 lines:</p>
+            <pre><code>const client = new BifrostClient('ws://127.0.0.1:8765');
+client.connect();
+window.bifrostClient = client;</code></pre>
+            <p class="mt-2 mb-0">Check your browser console (F12) to see the connection status!</p>
+        </div>
+    </div>
+    
+    <h2 class="mt-4">Learn More</h2>
+    <p>Explore the other demo levels to see more features:</p>
+    <ul>
+        <li><strong>Level 0</strong> - Basic WebSocket connection</li>
+        <li><strong>Level 1</strong> - Two-way communication (echo)</li>
+        <li><strong>Level 2</strong> - Structured data (blog posts)</li>
+        <li><strong>Level 4a</strong> - Multi-zone layout (you are here!)</li>
+        <li><strong>Level 4b+</strong> - zDisplay events and auto-rendering</li>
+    </ul>
+    
+    <p class="mt-4">
+        <a href="/" class="btn btn-primary">Back to Home</a>
+        <a href="https://github.com/ZoloAi/zolo-zcli" class="btn btn-secondary" target="_blank">View on GitHub</a>
+    </p>
 {% endblock %}
 

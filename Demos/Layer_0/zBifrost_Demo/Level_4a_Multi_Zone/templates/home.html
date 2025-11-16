@@ -1,7 +1,13 @@
 {% extends "layout.html" %}
 
 {% block content %}
-    <!-- Content will be dynamically loaded from zUI.home.yaml via zDisplay events -->
-    <p class="text-muted">Loading content...</p>
+    <section class="pageHero">
+        <div class="zSection">
+            <h1>Welcome to zBlog</h1>
+            <p class="zSubheading">A tiny demo blog built with zCLI, zServer, zBifrost, and zTheme.</p>
+            <p>This level focuses on one thing only: a clean hero page with Flask-like routing and zTheme styling.</p>
+            <a class="zoloButton zBtnPrimary zBtn-lg" href="/about">What is this demo?</a>
+        </div>
+    </section>
 {% endblock %}
 

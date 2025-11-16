@@ -1,0 +1,86 @@
+/* Header wrapper */
+.zNav {
+  background-color: var(--mainBase);
+  z-index: 1000;
+}
+
+/* Inner bar */
+.zNav-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+/* Brand */
+.zNav-brand {
+  font-weight: 900;
+  font-size: var(--h3size);
+}
+
+/* Desktop links */
+.zNav-links {
+  display: flex;
+  gap: 2rem;
+}
+
+.zNav-link {
+  font-weight: 700;
+  font-size: var(--bodyPsize);
+  position: relative;
+}
+
+/* Simple underline on active/hover */
+.zNav-link.is-active::after,
+.zNav-link:hover::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -0.25rem;
+  width: 100%;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--mainBlue);
+}
+
+/* Mobile toggle button */
+.zNav-toggle {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: none; /* hidden on desktop */
+  font-size: 1.5rem;
+}
+
+/* Mobile dropdown */
+.zNav-menu {
+  display: none;
+  flex-direction: column;
+  padding: 0.5rem 1rem 1rem;
+  background-color: var(--mainBase);
+}
+
+.zNav-menu .zNav-link {
+  padding: 0.5rem 0;
+}
+
+/* Open state */
+.zNav-menu.nav-is-open {
+  display: flex;
+}
+
+/* Breakpoints */
+@media (max-width: 992px) {
+  .zNav-links {
+    display: none; /* hide desktop links */
+  }
+
+  .zNav-toggle {
+    display: inline-flex; /* show hamburger */
+    align-items: center;
+    justify-content: center;
+  }
+}

@@ -1,65 +1,20 @@
-# Level 4a: Multi-Zone Layout - Home Page
-# This zUI file defines the home page content using zDisplay events
-
-Meta:
-  title: "Home"
-  description: "Home page content for zBlog"
-
 zVaF:
-  Hero_title:
-    zDisplay:
-      event: header
-      indent: 1
-      content: "Welcome to zBlog!"
-  
-  Hero_subtitle:
-    zDisplay:
-      event: text
-      indent: 1
-      content: "This is the home page of our Flask-style blog, built with zCLI."
-  
-  Whats_new_title:
-    zDisplay:
-      event: header
-      indent: 2
-      content: "What's New in Level 4a?"
-  
-  Whats_new_list:
-    zDisplay:
-      event: list
-      indent: 1
-      items:
-        - "Multi-Zone Layout: Separate divs for content and sidebar"
-        - "zDisplay Events: Backend sends events, frontend renders them"
-        - "zUI Files: Content defined in YAML, not HTML templates"
-        - "Zone Targeting: Each event specifies which zone to render into"
-  
-  Comparison_title:
-    zDisplay:
-      event: header
-      indent: 2
-      content: "Flask vs. zCLI"
-  
-  Comparison_flask:
-    zDisplay:
-      event: text
-      indent: 1
-      content: "Flask Part 2: ~100 lines (routes + 3 templates + CSS)"
-  
-  Comparison_zcli:
-    zDisplay:
-      event: text
-      indent: 1
-      content: "zCLI Level 4a: ~20 lines (zUI YAML + multi-zone layout)"
-  
-  Comparison_reduction:
-    zDisplay:
-      event: success
-      indent: 1
-      content: "Code Reduction: 80% less code!"
-  
-  Next_steps:
-    zDisplay:
-      event: info
-      indent: 1
-      content: "Next up: Level 4b will send zDisplay events from Python backend!"
+  ~zNav*: ["Home", "About", "Posts"]
+  Home:
+    Title:
+      zDisplay:
+        event: header
+        indent: 1
+        content: "Welcome to zBlog"
+    Subtitle:
+      zDisplay:
+        event: header
+        indent: 2
+        content: "A tiny demo blog built with zCLI, zServer, zBifrost, and zTheme."
+    Description:
+      zDisplay:
+        event: text
+        content: "This level focuses on one thing only: a clean hero page with Flask-like routing and zTheme styling."
+    ~Follow_up*: ["%About"]
+
+
