@@ -1,4 +1,17 @@
 :root {
+    --color-primary:   #A2D46E; /* Intention - the heart of zCLI */
+    --color-secondary: #9370DB; /* Validation - structure & elegance */
+
+    --color-info:      #5CA9FF; /* Perception - clarity & understanding */
+    --color-success:   #52B788; /* Manifestation - organic & vibrant */
+    --color-warning:   #FFB347; /* Caution - warm & approachable */
+    --color-error:     #E63946; /* Decisive - clear & strong */
+
+    --color-base:      #FFFCDC; /* Foundation - warm & natural */
+    --color-gray:      #6F6F62; /* Earth - grounded & stable */
+    --color-darkgray:  #3A3A32; /* Depth - contrast & clarity */
+
+  /* Depricated below */
     --mainBase: #FFFBCB;
     --gray: #54595F;
     --grayDark: #3F4347;

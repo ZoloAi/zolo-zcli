@@ -16,7 +16,7 @@ body {
   font-size: 100%; /* Default font size for accessibility */
   font-weight: 400; /* Regular weight for readability */
   line-height: 1.6; /* Comfortable line height */
-  color: var(--grayDark); /* Default text color */
+  color: var(--color-darkgray); /* Default text color */
 
   /* Layout and Alignment */
   display: flex; /* Flexbox for vertical layout */
@@ -30,7 +30,7 @@ body {
   text-rendering: optimizeLegibility; /* Enhance text rendering for readability */
 
   /* Background */
-  background: var(--mainGrad); /* Gradient background */
+  background: var(--color-base); /* Base background color */
 
   /* Miscellaneous */
   -webkit-font-smoothing: antialiased; /* Improve font rendering on WebKit */

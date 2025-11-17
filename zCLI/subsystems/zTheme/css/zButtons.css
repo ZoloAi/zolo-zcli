@@ -3,8 +3,8 @@
   display: inline-flex; /* Ensures buttons are properly aligned */
   align-items: center;
   justify-content: center;
-  background: var(--mainGrad); /* Default gradient background */
-  color: var(--grayDark); /* Default text color */
+  background: var(--color-primary); /* Default background */
+  color: var(--color-darkgray); /* Default text color */
   border: none; /* Remove border */
   padding: 10px 20px; /* Default padding */
   font-size: var(--h5size); /* Default font size */
@@ -37,43 +37,43 @@
 
 /* Color Variants */
 .zBtnInfo {
-  background: linear-gradient(to right, #a1c4fd, #c2e9fb); /* Info gradient */
-  color: var(--grayDark); /* Dark gray text */
+  background: var(--color-info); /* Info blue */
+  color: var(--color-base); /* Light text */
 }
 
 .zBtnInfo:hover {
-  background: var(--orangeGrad); /* Hover color for info buttons */
-  color: var(--mainBase) !important;
+  background: var(--color-primary); /* Hover to primary green */
+  color: var(--color-darkgray) !important;
 }
 
 .zBtnWarning {
-  background: var(--purpleGrad); /* Warning gradient */
-  color: var(--mainBase); /* Text color for Warning buttons */
+  background: var(--color-warning); /* Warning yellow */
+  color: var(--color-darkgray); /* Dark text */
 }
 
 .zBtnWarning:hover {
-  background: var(--mainGrad); /* Hover color for Warning buttons */
-  color: var(--grayDark) !important;
+  background: var(--color-secondary); /* Hover to secondary purple */
+  color: var(--color-base) !important;
 }
 
 .zBtnDanger {
-  background: var(--orangeGrad); /* Danger gradient */
-  color: var(--mainBase); /* Text color for danger buttons */
+  background: var(--color-error); /* Danger red */
+  color: var(--color-base); /* Light text */
 }
 
 .zBtnDanger:hover {
-  background: var(--mainGrad); /* Hover color for danger buttons */
-  color: var(--grayDark) !important;
+  background: var(--color-darkgray); /* Hover to dark gray */
+  color: var(--color-base) !important;
 }
 
 .zBtnPrimary {
-  background: var(--mainGrad); /* Primary default background */
-  color: var(--grayDark); /* Primary text color */
+  background: var(--color-primary); /* Primary green */
+  color: var(--color-darkgray); /* Dark text */
 }
 
 .zBtnPrimary:hover {
-  background: var(--orangeGrad); /* Hover background for primary */
-  color: var(--mainBase) !important;
+  background: var(--color-success); /* Hover to success green */
+  color: var(--color-base) !important;
 }
 
 /* Square Large Button (Special Case) */
@@ -92,7 +92,7 @@
 .zBtnLargeSq:hover {
   transform: scale(1.1);
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3); /* Prominent shadow */
-  background-color: #0056b3; /* Darker background */
+  background-color: var(--color-info); /* Info blue background */
 }
 
 .zBtnLargeSq:active {
@@ -102,18 +102,18 @@
 
 /* Tab Button Variant */
 .zBtnTab {
-  background: var(--grayDark); /* Default background color for tab buttons */
-  color: var(--mainBase); /* Default text color */
+  background: var(--color-gray); /* Default background color for tab buttons */
+  color: var(--color-base); /* Light text */
 }
 
 .zBtnTab:hover {
-  background: var(--mainGrad); /* Blue gradient background on hover */
-  color: var(--mainBase); /* Text color remains clear on hover */
+  background: var(--color-primary); /* Primary green on hover */
+  color: var(--color-darkgray); /* Dark text on hover */
 }
 
 .zBtnTab.active-tab {
-  background: var(--blueGrad); /* Indicate the active tab */
-  color: var(--mainBase); /* Change text color */
+  background: var(--color-info); /* Info blue for active tab */
+  color: var(--color-base); /* Light text */
   transform: scale(1.1); /* Optional: subtle scale effect */
 }
 

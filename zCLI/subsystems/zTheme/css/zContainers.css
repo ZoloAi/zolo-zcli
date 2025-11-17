@@ -100,15 +100,65 @@
 
   /* Base styled div with a border and padding */
   .zSection {
-    border: 1px solid var(--grayDark); /* Light border */
+    border: 1px solid var(--color-gray); /* Gray border */
     border-radius: 8px; /* Slightly rounded corners */
     padding: 1.5rem; /* Padding inside the div */
-    background-color: var(--mainBase); /* Background color */
+    background-color: var(--color-base); /* Base background */
+    color: var(--color-darkgray); /* Dark text */
     margin: 2rem 0; /* Space around the div */
     position: relative; /* For internal positioning of legend */
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Optional shadow for depth */
     display: flex;
     flex-direction: column;
+  }
+  
+  /* Color Variants - Bootstrap-style */
+  .zSection-primary {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-darkgray);
+  }
+  
+  .zSection-secondary {
+    background-color: var(--color-secondary);
+    border-color: var(--color-secondary);
+    color: var(--color-base);
+  }
+  
+  .zSection-info {
+    background-color: var(--color-info);
+    border-color: var(--color-info);
+    color: var(--color-base);
+  }
+  
+  .zSection-success {
+    background-color: var(--color-success);
+    border-color: var(--color-success);
+    color: var(--color-base);
+  }
+  
+  .zSection-warning {
+    background-color: var(--color-warning);
+    border-color: var(--color-warning);
+    color: var(--color-darkgray);
+  }
+  
+  .zSection-error {
+    background-color: var(--color-error);
+    border-color: var(--color-error);
+    color: var(--color-base);
+  }
+  
+  .zSection-light {
+    background-color: var(--color-base);
+    border-color: var(--color-gray);
+    color: var(--color-darkgray);
+  }
+  
+  .zSection-dark {
+    background-color: var(--color-darkgray);
+    border-color: var(--color-darkgray);
+    color: var(--color-base);
   }
   
   /* Legend-like styling for a title inside the div */
@@ -118,13 +168,13 @@
     left: 1rem; /* Align the legend slightly inside */
     background: linear-gradient(
         to top, 
-        var(--mainYellow) 55%, /* Start with the same background color */
+        var(--color-warning) 55%, /* Warning yellow gradient */
         rgba(255, 255, 255, 0) 95% /* Fade to transparent */
     );
     padding: 0 1rem; /* Add padding around the text */
     font-size: var(--h5size); /* Use h5 font size */
     font-weight: 700; /* Bold text */
-    color: var(--grayDark); /* Dark text color */
+    color: var(--color-darkgray); /* Dark text color */
     border-radius: 10px; /* Slightly rounded corners for the legend */
     z-index: 1; /* Ensure it appears above the border */
   }
@@ -145,7 +195,7 @@
   position: absolute;
   z-index: 1000;
   width: 100%;
-  background-color: white;
+  background-color: var(--color-base);
 }
 .suggestion-item {
   cursor: pointer;

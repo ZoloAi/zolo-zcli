@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Level 4: zTheme Auto-Rendering</title>
+    <link rel="stylesheet" href="../../../../zCLI/subsystems/zTheme/zTheme.css">
+    <script src="../../../../zCLI/subsystems/zComm/zComm_modules/bifrost/client/src/bifrost_client.js"></script>
+</head>
+<body>
+    <div class="zContainer zmt-5">
+        
+        <div class="zD-flex zFlexColumn zAlignItems-center zmb-4">
+            <h1>🎨 Level 4: zTheme Auto-Rendering</h1>
+            <p>autoTheme: true = Zero custom code</p>
+            
+            <div class="zSection-warning zp-3 zmt-3">
+                🎉 <strong>autoTheme: true</strong> = Zero custom rendering code needed!<br>
+                BifrostClient + zTheme = Instant beautiful UI
+            </div>
+            
+            <div class="zD-flex zmt-3" style="gap: 15px;">
+                <button class="zoloButton zBtnPrimary" id="connectBtn" onclick="connect()">Connect</button>
+                <button class="zoloButton zBtnDanger zD-none" id="disconnectBtn" onclick="disconnect()">Disconnect</button>
+            </div>
+        </div>
+
+        <div id="status" class="zD-none zSection zp-3 zmb-3"></div>
+        <div id="ztheme-output" class="zSection-primary"><h1>zTheme Output</h1></div>
+
+
+    </div>
+
+    <script>
+        let client = null;
+
+        async function connect() {
+            console.log('Connecting...');
+            
+            client = new BifrostClient('ws://127.0.0.1:8765', {
+                autoTheme: true,
+                targetElement: '#ztheme-output',
+                hooks: {
+                    onConnected: () => {
+                        console.log('✅ Connected!');
+                        client.send({event: 'show_hello'});
+                    },
+                    onDisconnected: () => console.log('❌ Disconnected'),
+                    onError: (err) => console.error('❌ Error:', err)
+                }
+            });
+
+            await client.connect();
+        }
+
+        function disconnect() {
+            if (client) client.disconnect();
+        }
+
+        /* 
+         * Classic Swiper.js initialization for reference:
+         * 
+         * const swiper = new Swiper('.swiper', {
+         *     direction: 'horizontal',
+         *     loop: true,
+         *     pagination: {
+         *         el: '.swiper-pagination',
+         *     },
+         *     navigation: {
+         *         nextEl: '.swiper-button-next',
+         *         prevEl: '.swiper-button-prev',
+         *     },
+         *     scrollbar: {
+         *         el: '.swiper-scrollbar',
+         *     },
+         * });
+         */
+    </script>
+
+</body>
+</html>

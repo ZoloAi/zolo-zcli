@@ -10,9 +10,8 @@ client/
 │   ├── bifrost_client.js      # Main BifrostClient class
 │   ├── core/                  # Core modules (connection, hooks, logger, message_handler)
 │   ├── rendering/             # Rendering modules (renderer, theme_loader)
-│   └── api/                   # API wrappers (CRUD, zCLI operations) [future]
-├── dist/                      # Built files for production [future]
-└── tests/                     # Unit tests [future]
+│   └── api/                   # API wrappers (CRUD, zCLI operations)
+└── README.md                  # This file
 ```
 
 ## Usage
@@ -61,6 +60,7 @@ See [`../docs/`](../docs/) for:
 - `ARCHITECTURE.md` - Client architecture & design
 - `MESSAGE_PROTOCOL.md` - WebSocket message format
 - `HOOKS_GUIDE.md` - Hooks system reference
+- `CRUD_API.md` - CRUD operations API reference
 
 ## Demos
 

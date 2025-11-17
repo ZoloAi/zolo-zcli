@@ -352,7 +352,8 @@ async function fetchUserWithRetry(id, maxRetries = 3) {
 
 ## See Also
 
-- [Message Protocol Documentation](../../docs/MESSAGE_PROTOCOL.md)
-- [BifrostClient Core API](./API.md) *(coming soon)*
-- [zBifrost Architecture](../../README.md)
+- [Message Protocol Documentation](./MESSAGE_PROTOCOL.md)
+- [BifrostClient Core API](../client/README.md)
+- [zBifrost Architecture](../README.md)
+
 
