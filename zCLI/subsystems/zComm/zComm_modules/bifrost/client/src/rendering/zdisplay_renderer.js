@@ -17,18 +17,24 @@
 export class ZDisplayRenderer {
   constructor(logger = null) {
     this.logger = logger || console;
-    this.defaultZone = 'zui-content'; // Default target zone
+    this.defaultZone = 'zVaF'; // Default zCLI container (zView and Function)
   }
 
   /**
    * Render a zDisplay event to HTML
    * @param {Object} event - zDisplay event object
-   * @param {string} targetZone - Target DOM element ID (default: 'zui-content')
+   * @param {string} targetZone - Target DOM element ID (default: 'zVaF')
    * @returns {HTMLElement|null} - Created element or null if flushed
    */
   render(event, targetZone = null) {
     try {
-      const zone = targetZone || event.target || this.defaultZone;
+      // Normalize event format (support both old and new formats)
+      // Old: {event: 'success', content: '...', indent: 0}
+      // New: {display_event: 'success', data: {content: '...', indent: 0}}
+      const eventType = event.display_event || event.event;
+      const eventData = event.data || event;  // Use data if present, otherwise use event itself
+      
+      const zone = targetZone || eventData.target || this.defaultZone;
       const container = document.getElementById(zone);
       
       if (!container) {
@@ -36,8 +42,8 @@ export class ZDisplayRenderer {
         return null;
       }
 
-      // Handle indent 0 as flush (clear zone)
-      if (event.indent === 0) {
+      // Handle explicit flush event (not just indent 0)
+      if (eventType === 'flush' || eventData.flush === true) {
         this._flush(container);
         this.logger.log(`[ZDisplayRenderer] Flushed zone: ${zone}`);
         return null;
@@ -46,36 +52,36 @@ export class ZDisplayRenderer {
       // Route to appropriate renderer based on event type
       let element = null;
       
-      switch (event.event) {
+      switch (eventType) {
         case 'header':
-          element = this._renderHeader(event);
+          element = this._renderHeader(eventData);
           break;
         case 'text':
-          element = this._renderText(event);
+          element = this._renderText(eventData);
           break;
         case 'list':
-          element = this._renderList(event);
+          element = this._renderList(eventData);
           break;
         case 'error':
-          element = this._renderAlert(event, 'danger');
+          element = this._renderAlert(eventData, 'danger');
           break;
         case 'warning':
-          element = this._renderAlert(event, 'warning');
+          element = this._renderAlert(eventData, 'warning');
           break;
         case 'success':
-          element = this._renderAlert(event, 'success');
+          element = this._renderAlert(eventData, 'success');
           break;
         case 'info':
-          element = this._renderAlert(event, 'info');
+          element = this._renderAlert(eventData, 'info');
           break;
         default:
-          this.logger.warn(`[ZDisplayRenderer] Unknown event type: ${event.event}`);
-          element = this._renderText(event); // Fallback to text
+          this.logger.warn(`[ZDisplayRenderer] Unknown event type: ${eventType}`);
+          element = this._renderText(eventData); // Fallback to text
       }
 
       if (element) {
         container.appendChild(element);
-        this.logger.log(`[ZDisplayRenderer] Rendered ${event.event} to ${zone}`);
+        this.logger.log(`[ZDisplayRenderer] Rendered ${eventType} to ${zone}`);
       }
 
       return element;
@@ -94,36 +100,48 @@ export class ZDisplayRenderer {
   }
 
   /**
-   * Render a header element
+   * Render a header element (zTheme pure - NO Bootstrap!)
+   * indent=0 → HERO (centered, large, prominent)
+   * indent=1-6 → h1-h6 (semantic HTML headers)
    * @private
    */
   _renderHeader(event) {
-    const indent = event.indent || 1;
+    const indent = event.indent !== undefined ? event.indent : 1;
     
-    // Map indent to header level: indent 1 = h1, indent 2 = h2, etc.
-    // Cap at h4 for indent 4+
-    const level = Math.min(indent, 4);
+    // Python sends 'label' field for headers (not 'content')
+    const content = event.label || event.content || '';
+    
+    // indent=0 → HERO header (special centered title)
+    if (indent === 0) {
+      const hero = document.createElement('div');
+      hero.className = 'zHero';
+      hero.innerHTML = this._sanitizeHTML(content);
+      return hero;
+    }
+    
+    // indent=1-6 → h1-h6 (semantic HTML headers)
+    const level = Math.min(indent, 6);
     const tag = `h${level}`;
     
     const header = document.createElement(tag);
-    header.innerHTML = this._sanitizeHTML(event.content);
+    header.innerHTML = this._sanitizeHTML(content);
     
-    // Add Bootstrap classes for styling
-    header.className = 'mt-3 mb-2';
+    // Pure zTheme - all styling handled by zTypography.css (h1-h6 rules)
+    // No inline styles needed! 🎨
     
     return header;
   }
 
   /**
-   * Render a text element
+   * Render a text element (pure zTheme - NO Bootstrap!)
    * @private
    */
   _renderText(event) {
     const p = document.createElement('p');
     p.innerHTML = this._sanitizeHTML(event.content);
     
-    // Add Bootstrap classes
-    p.className = 'mb-2';
+    // Minimal inline styling (margin-bottom for spacing)
+    p.style.marginBottom = '0.5rem';
     
     // Apply indent as left margin (1rem per indent level)
     if (event.indent && event.indent > 0) {
@@ -134,14 +152,14 @@ export class ZDisplayRenderer {
   }
 
   /**
-   * Render a list element
+   * Render a list element (pure zTheme - NO Bootstrap!)
    * @private
    */
   _renderList(event) {
     const ul = document.createElement('ul');
-    ul.className = 'mb-3';
+    ul.className = 'zList';
     
-    // Apply indent as left margin
+    // Apply indent as left margin (minimal inline style for dynamic indentation)
     if (event.indent && event.indent > 0) {
       ul.style.marginLeft = `${event.indent}rem`;
     }
@@ -162,13 +180,25 @@ export class ZDisplayRenderer {
   }
 
   /**
-   * Render an alert element (error, warning, success, info)
+   * Render a signal alert (error, warning, success, info)
+   * Toast-style dismissible alerts - pure zTheme, beats Bootstrap! 🎨
+   * Auto-fades after 5 seconds, but can be manually dismissed with ×
    * @private
    */
   _renderAlert(event, type) {
-    const alert = document.createElement('div');
-    alert.className = `alert alert-${type} mb-3`;
-    alert.setAttribute('role', 'alert');
+    const signal = document.createElement('div');
+    
+    // Map type to zSignal classes (Bootstrap compatibility layer)
+    const classMap = {
+      danger: 'error',    // danger → zSignal-error
+      warning: 'warning', // warning → zSignal-warning
+      success: 'success', // success → zSignal-success
+      info: 'info'        // info → zSignal-info
+    };
+    
+    const signalType = classMap[type] || 'info';
+    signal.className = `zSignal zSignal-${signalType}`;
+    signal.setAttribute('role', 'alert');
     
     // Add icon based on type
     const icons = {
@@ -181,14 +211,38 @@ export class ZDisplayRenderer {
     const icon = icons[type] || '';
     const content = this._sanitizeHTML(event.content);
     
-    alert.innerHTML = icon ? `<strong>${icon}</strong> ${content}` : content;
+    // Create content wrapper
+    const contentDiv = document.createElement('div');
+    contentDiv.innerHTML = icon ? `<strong style="margin-right: 0.5rem;">${icon}</strong>${content}` : content;
     
-    // Apply indent as left margin
+    // Create close button (dismissible like Bootstrap)
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'close';
+    closeBtn.innerHTML = '×';
+    closeBtn.setAttribute('aria-label', 'Close');
+    closeBtn.onclick = () => {
+      signal.style.animation = 'fadeOut 0.3s ease-out';
+      setTimeout(() => signal.remove(), 300);
+    };
+    
+    // Append content and close button
+    signal.appendChild(contentDiv);
+    signal.appendChild(closeBtn);
+    
+    // Apply indent as left margin (minimal inline style for dynamic indentation)
     if (event.indent && event.indent > 0) {
-      alert.style.marginLeft = `${event.indent}rem`;
+      signal.style.marginLeft = `${event.indent}rem`;
     }
     
-    return alert;
+    // Auto-dismiss after 5 seconds with fade-out animation
+    setTimeout(() => {
+      if (signal.parentElement) {  // Only fade if still in DOM (not manually closed)
+        signal.style.animation = 'fadeOut 0.5s ease-out';
+        setTimeout(() => signal.remove(), 500);
+      }
+    }, 5000);
+    
+    return signal;
   }
 
   /**

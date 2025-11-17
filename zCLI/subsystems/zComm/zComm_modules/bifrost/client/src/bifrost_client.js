@@ -14,28 +14,28 @@
  * Quick Start
  * ───────────────────────────────────────────────────────────────
  * 
- * // Via CDN (jsDelivr) - Now works with lazy loading!
- * <script src="https://cdn.jsdelivr.net/gh/ZoloAi/zolo-zcli@v1.5.4/zCLI/subsystems/zComm/zComm_modules/zBifrost/bifrost_client_modular.js"></script>
- * 
- * // Initialize with hooks
+ * // Swiper-Style Elegance (One declaration, everything happens automatically):
  * const client = new BifrostClient('ws://localhost:8765', {
- *   autoTheme: true,  // Set to false to disable automatic zTheme loading
- *   autoReconnect: true,
+ *   autoConnect: true,        // Auto-connect on instantiation
+ *   zTheme: true,             // Enable zTheme CSS & rendering
+ *   // targetElement: 'zVaF', // Optional: default is 'zVaF' (zView and Function)
+ *   autoRequest: 'show_hello',// Auto-send on connect
+ *   onConnected: (info) => console.log('✅ Connected!', info)
+ * });
+ * 
+ * // Traditional (More control):
+ * const client = new BifrostClient('ws://localhost:8765', {
+ *   zTheme: true,
  *   hooks: {
  *     onConnected: (info) => console.log('Connected!'),
  *     onDisconnected: (reason) => console.log('Disconnected:', reason),
  *     onMessage: (msg) => console.log('Message:', msg),
- *     onError: (error) => console.error('Error:', error),
- *     onBroadcast: (msg) => console.log('Broadcast:', msg),
- *     onDisplay: (data) => console.log('Display:', data),
- *     onInput: (request) => console.log('Input requested:', request)
+ *     onError: (error) => console.error('Error:', error)
  *   }
  * });
- * 
- * // Connect and use
  * await client.connect();
+ * client.send({event: 'my_event'});
  * const users = await client.read('users');
- * client.renderTable(users, '#myContainer');
  * 
  * ───────────────────────────────────────────────────────────────
  * Lazy Loading Architecture
@@ -46,7 +46,7 @@
  * - Connection: Loaded on connect()
  * - MessageHandler: Loaded on connect()
  * - Renderer: Loaded on first renderTable/renderMenu/etc call
- * - ThemeLoader: Loaded on connect() if autoTheme enabled
+ * - ThemeLoader: Loaded on connect() if zTheme enabled
  * 
  * Benefits:
  * - CDN-friendly (no import resolution at load time)
@@ -93,7 +93,10 @@
      * Create a new BifrostClient instance
      * @param {string} url - WebSocket server URL (e.g., 'ws://localhost:8765')
      * @param {Object} options - Configuration options
-     * @param {boolean} options.autoTheme - Auto-load zTheme CSS (default: true, set to false for custom styling)
+     * @param {boolean} options.autoConnect - Auto-connect on instantiation (default: false)
+     * @param {boolean} options.zTheme - Enable zTheme CSS & auto-rendering (default: true)
+     * @param {string} options.targetElement - Target DOM selector for rendering (default: 'zVaF')
+     * @param {string|Object} options.autoRequest - Auto-send request on connect (event name or full request object)
      * @param {boolean} options.autoReconnect - Auto-reconnect on disconnect (default: true)
      * @param {number} options.reconnectDelay - Delay between reconnect attempts in ms (default: 3000)
      * @param {number} options.timeout - Request timeout in ms (default: 30000)
@@ -124,7 +127,10 @@
       }
 
       this.options = {
-        autoTheme: options.autoTheme !== false, // Default true
+        autoConnect: options.autoConnect || false, // Default false
+        zTheme: options.zTheme !== false && options.autoTheme !== false, // Support both names, default true
+        targetElement: options.targetElement || 'zVaF', // Default zCLI container
+        autoRequest: options.autoRequest || null, // Auto-send on connect
         autoReconnect: options.autoReconnect !== false, // Default true
         reconnectDelay: reconnectDelay,
         timeout: timeout,
@@ -139,6 +145,14 @@
       
       // Pre-initialize lightweight modules synchronously
       this._initLightweightModules();
+      
+      // Auto-connect if requested (Swiper-style elegance!)
+      if (this.options.autoConnect) {
+        this.connect().catch(err => {
+          this.logger.error('Auto-connect failed:', err);
+          this.hooks.call('onError', { type: 'autoconnect_failed', error: err });
+        });
+      }
     }
 
     /**
@@ -331,6 +345,14 @@
         const { ZDisplayRenderer } = await this._loadModule('zdisplay_renderer');
         this.zDisplayRenderer = new ZDisplayRenderer(this.logger);
         
+        // Set target element from options (strip # prefix if present)
+        const targetElement = this.options.targetElement || '#zui-content';
+        this.zDisplayRenderer.defaultZone = targetElement.startsWith('#') 
+          ? targetElement.substring(1) 
+          : targetElement;
+        
+        this.logger.log(`[BifrostClient] zDisplay target set to: ${this.zDisplayRenderer.defaultZone}`);
+        
         // Register default onDisplay hook if not already set
         if (!this.hooks.has('onDisplay')) {
           this.hooks.register('onDisplay', (event) => {
@@ -422,7 +444,7 @@
       }
       
       // Load theme BEFORE connecting to prevent FOUC (Flash of Unstyled Content)
-      if (this.options.autoTheme && !isFileProtocol) {
+      if (this.options.zTheme && !isFileProtocol) {
         try {
           await this._ensureThemeLoader();
           if (!this.themeLoader.isLoaded()) {
@@ -443,6 +465,16 @@
       this.connection.onMessage((event) => {
         this.messageHandler.handleMessage(event.data);
       });
+      
+      // Auto-send request if specified (Swiper-style elegance!)
+      if (this.options.autoRequest) {
+        const request = typeof this.options.autoRequest === 'string'
+          ? { event: this.options.autoRequest }
+          : this.options.autoRequest;
+        
+        this.logger.log('📤 Auto-sending request:', request);
+        this.send(request);
+      }
     }
 
     /**
@@ -634,7 +666,7 @@
     // ═══════════════════════════════════════════════════════════
 
     /**
-     * Load zTheme CSS files (if autoTheme is disabled)
+     * Load zTheme CSS files (manual override if zTheme is disabled)
      * @param {string} baseUrl - Base URL for CSS files (optional, auto-detected)
      */
     async loadTheme(baseUrl = null) {

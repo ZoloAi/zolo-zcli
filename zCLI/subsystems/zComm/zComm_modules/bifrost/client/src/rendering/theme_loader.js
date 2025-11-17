@@ -69,12 +69,13 @@ export class ThemeLoader {
         // Extract base path and navigate to zTheme
         const basePath = script.src.substring(0, script.src.lastIndexOf('/'));
         // Handle both local and CDN paths
-        // Local: .../zCLI/subsystems/zComm/zComm_modules/bifrost -> .../zCLI/subsystems/zTheme
-        // CDN: .../zComm/zComm_modules/bifrost -> .../zTheme
-        return basePath.replace(
-          /\/zComm\/zComm_modules\/bifrost$/,
-          '/zTheme'
-        );
+        // Local: .../zCLI/subsystems/zComm/zComm_modules/bifrost/client/src -> .../zCLI/subsystems/zTheme
+        // CDN: .../zComm/zComm_modules/bifrost/client/src -> .../zTheme
+        
+        // Navigate up from /client/src to /bifrost, then replace bifrost with zTheme
+        return basePath
+          .replace(/\/client\/src$/, '')  // Remove /client/src
+          .replace(/\/zComm\/zComm_modules\/bifrost$/, '/zTheme');  // Navigate to zTheme
       }
     }
 

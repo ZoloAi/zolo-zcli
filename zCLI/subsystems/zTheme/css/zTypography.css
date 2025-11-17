@@ -45,11 +45,26 @@
 
 /* Headings */
 /* -------------------------------- */
-h1, h2, h3, h4, h5, h6 {
-  color: var(--grayDark);
+
+/* HERO Header - indent=0 (centered, large, prominent) */
+.zHero {
+  font-size: 3rem;
   font-weight: 900;
-  line-height: 1.2; /* Added for consistency */
+  text-align: center;
+  color: var(--color-primary);
+  margin: 2rem 0;
+  padding: 1.5rem 0;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--color-darkgray);
+  font-weight: 700;
+  line-height: 1.3;
   padding: 0;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
 }
 
 h1 {
@@ -204,8 +219,30 @@ cite {
   color: var(--mainBlue); /* Styled like links for citation elements */
 }
 
+/* Lists */
+/* -------------------------------- */
+ul, ol {
+  margin: 0.5rem 0;
+  padding-left: 2rem;
+  color: var(--color-darkgray);
+}
+
 li {
   font-size: var(--bodyPsize);
+  margin: 0.25rem 0;
+  line-height: 1.6;
+}
+
+/* zDisplay list event class */
+.zList {
+  margin: 0.5rem 0;
+  padding-left: 2rem;
+  color: var(--color-darkgray);
+}
+
+.zList li {
+  margin: 0.25rem 0;
+  line-height: 1.6;
 }
 
 /* Badge in Text */

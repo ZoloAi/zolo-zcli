@@ -71,15 +71,18 @@ await z.comm.start_websocket(socket_ready)
 
 > **<span style="color:#8FBE6D">Learn zBifrost step-by-step.</span>**<br>Each level builds on the previous, adding complexity gradually. All demos live in [`Demos/Layer_0/zBifrost_Demo`](../Demos/Layer_0/zBifrost_Demo).
 
-**Complete Tutorial:** Three levels provide a **<span style="color:#F8961F">complete imperative foundation</span>** for building any WebSocket-based application. These demos teach raw WebSocket mechanics, giving you full control over client-server communication.
+**The Progression:** Four levels take you from imperative to declarative, showing **<span style="color:#F8961F">the evolution of WebSocket development</span>** with zCLI:
 
-**Available Demos:**
+**Levels 0-2: Imperative Foundation** (raw WebSocket mechanics, full control)
+- **Level 0**: Hello zBlog - Basic connection lifecycle
+- **Level 1**: Echo Test - Two-way communication with custom handlers
+- **Level 2**: Post Feed - Manual DOM manipulation, complex data structures
 
-**Level 0**: Hello zBlog - Connect to server, see welcome message, disconnect
-**Level 1**: Echo Test - Type message, send it, get echo back (proves two-way communication)
-**Level 2**: Post Feed - Show 5 hardcoded posts as cards (manual DOM, imperative JavaScript)
+**Levels 3-4: Declarative Magic** (zDisplay events + zTheme auto-rendering)
+- **Level 3**: zDisplay Events - Declarative server (`z.display.*()` auto-broadcasts)
+- **Level 4**: zTheme Auto-Rendering - Declarative full-stack (`zTheme: true` = zero custom code!)
 
-> **What's next?** For declarative server-side rendering, database integration, and full-stack applications, see the [zServer Guide](zServer_GUIDE.md) which builds on zBifrost's WebSocket foundation.
+> **The Philosophy:** Start with imperative patterns (understand the foundation), then leverage declarative abstractions (boost productivity). By Level 4, you'll build professional UIs with **75% less code** than Level 2!
 
 ---
 
@@ -149,8 +152,58 @@ python3 level2_backend.py
 
 ---
 
+### Level 3: zDisplay Events
 
+**<span style="color:#8FBE6D">Goal</span>**: Same interface as Level 2, but using declarative zDisplay events from Python!
 
+**Location**: [`Level_3_display/`](../Demos/Layer_0/zBifrost_Demo/Level_3_display) | [README](../Demos/Layer_0/zBifrost_Demo/Level_3_display/README.md)
+
+**What you'll learn:**
+- **<span style="color:#F8961F">zDisplay events</span>** (`z.display.success()`, `z.display.header()`, `z.display.list()`)
+- **<span style="color:#8FBE6D">Auto-broadcasting</span>** (each `z.display.*()` call automatically sends to WebSocket)
+- **<span style="color:#00D4FF">Dual-mode rendering</span>** (same Python code works in Terminal AND browser)
+- **<span style="color:#667eea">Toast-style alerts</span>** (auto-fade after 5 seconds, × dismiss button)
+- **<span style="color:#EA7171">HERO headers</span>** (indent=0 for centered, large titles)
+- **<span style="color:#8FBE6D">Semantic HTML</span>** (indent=1-6 maps to h1-h6 headers)
+
+**Run:**
+```bash
+cd Demos/Layer_0/zBifrost_Demo/Level_3_display
+python3 hello_bifrost.py
+# Open hello_client.html in browser - content appears automatically!
+```
+
+**Success**: Content renders automatically (no "Load" button), signals auto-fade, headers scale properly
+
+**Major Shift**: Backend is now declarative! You describe WHAT to show (`z.display.success(...)`), not HOW to send it (manual JSON construction).
+
+---
+
+### Level 4: zTheme Auto-Rendering
+
+**<span style="color:#8FBE6D">Goal</span>**: Same as Level 3, but with ZERO custom rendering code! Set `zTheme: true` and watch the magic.
+
+**Location**: [`Level_4_zTheme/`](../Demos/Layer_0/zBifrost_Demo/Level_4_zTheme) | [README](../Demos/Layer_0/zBifrost_Demo/Level_4_zTheme/README.md)
+
+**What you'll learn:**
+- **<span style="color:#F8961F">zTheme auto-rendering</span>** (`zTheme: true` = built-in renderer handles everything)
+- **<span style="color:#8FBE6D">Swiper-style elegance</span>** (one declaration, everything just works!)
+- **<span style="color:#00D4FF">Auto-connect pattern</span>** (`autoConnect`, `autoRequest`, `autoTheme`)
+- **<span style="color:#667eea">Professional styling</span>** (zTheme CSS loads automatically)
+- **<span style="color:#EA7171">75% less code</span>** (74 lines vs 313 lines in Level 3)
+
+**Run:**
+```bash
+cd Demos/Layer_0/zBifrost_Demo/Level_4_zTheme
+python3 hello_zTheme.py
+# Open hello_client.html - page auto-connects, content appears instantly!
+```
+
+**Success**: Page auto-connects (no button), content renders beautifully with zero custom CSS/JS
+
+**Ultimate Simplicity**: Both frontend AND backend are declarative. Just describe what you want, zCLI handles the rest!
+
+---
 
 ## Server-Side (Python)
 
@@ -246,12 +299,12 @@ The BifrostClient is a **<span style="color:#8FBE6D">standalone JavaScript libra
 
 Copy `bifrost_client_modular.js` and `_modules/` directory to your project.
 
-### Basic Usage
+### Basic Usage (Traditional)
 
 ```javascript
-// Initialize client
+// Traditional: Manual connect + hooks
 const client = new BifrostClient('ws://localhost:8765', {
-    autoTheme: true,  // Auto-load zTheme CSS
+    zTheme: true,  // Auto-load zTheme CSS
     autoReconnect: true,
     hooks: {
         onConnected: (info) => console.log('Connected!', info),
@@ -261,7 +314,7 @@ const client = new BifrostClient('ws://localhost:8765', {
     }
 });
 
-// Connect
+// Connect manually
 await client.connect();
 
 // Use immediately
@@ -269,16 +322,37 @@ const users = await client.read('users');
 client.renderTable(users, '#container');
 ```
 
+### Swiper-Style Elegance (Recommended)
+
+```javascript
+// Swiper-style: One declaration, everything happens automatically!
+const client = new BifrostClient('ws://localhost:8765', {
+    autoConnect: true,              // ← Auto-connect on instantiation
+    zTheme: true,                   // ← Enable zTheme CSS & rendering (auto-loads CSS!)
+    // targetElement: 'zVaF',       // ← Optional: default is 'zVaF' (zView and Function)
+    autoRequest: 'show_hello',      // ← Auto-send on connect
+    debug: true,                    // ← See what's happening in console
+    onConnected: (info) => console.log('✅ Connected!', info),
+    onDisconnected: () => console.log('❌ Disconnected'),
+    onError: (err) => console.error('❌ Error:', err)
+});
+
+// That's it! No connect() call needed - everything happens automatically!
+```
+
 ### Configuration Options
 
 ```javascript
 new BifrostClient(url, {
-    // Theme
-    autoTheme: true,           // Auto-load zTheme CSS (default: true)
+    // Swiper-Style Options (NEW in v1.5.5)
+    autoConnect: false,          // Auto-connect on instantiation (default: false)
+    zTheme: true,                // Enable zTheme CSS & auto-rendering (default: true)
+    targetElement: 'zVaF',       // Target element for rendering (default: 'zVaF')
+    autoRequest: null,           // Auto-send on connect: 'event_name' or {event: '...', data: {...}} (default: null)
     
     // Connection
     autoReconnect: true,         // Auto-reconnect on disconnect (default: true)
-    reconnectDelay: 3000,       // Delay between reconnects in ms (default: 3000)
+    reconnectDelay: 3000,        // Delay between reconnects in ms (default: 3000)
     timeout: 30000,              // Request timeout in ms (default: 30000)
     
     // Authentication
@@ -299,6 +373,13 @@ new BifrostClient(url, {
     }
 });
 ```
+
+**Option Details:**
+
+- **`autoConnect`**: If `true`, connects immediately on instantiation (Swiper-style!)
+- **`zTheme`**: If `true`, loads zTheme CSS and registers built-in renderer (backward compatible with `autoTheme`)
+- **`targetElement`**: Element ID or selector for rendering (default: `'zVaF'` = zView and Function)
+- **`autoRequest`**: Message to send immediately after connection (string = event name, object = full message)
 
 ## CRUD Operations
 
@@ -334,7 +415,7 @@ await client.delete('users', {
 
 ## Auto-Rendering
 
-BifrostClient can automatically render data using zTheme CSS (if `autoTheme: true`). Render methods work with any container selector.
+BifrostClient can automatically render data using zTheme CSS (if `zTheme: true`). Render methods work with any container selector.
 
 ```javascript
 // Render table
@@ -368,7 +449,7 @@ Disable auto-theme and use your own rendering logic:
 
 ```javascript
 const client = new BifrostClient('ws://localhost:8765', {
-    autoTheme: false,  // Don't load zTheme CSS
+    zTheme: false,  // Don't load zTheme CSS (use your own!)
     hooks: {
         onDisplay: (data) => {
             // Use React, Vue, or vanilla JS
@@ -379,6 +460,15 @@ const client = new BifrostClient('ws://localhost:8765', {
     }
 });
 ```
+
+**When to use:**
+- ✅ Custom branding (your company's design system)
+- ✅ Integration with React/Vue/Angular
+- ✅ Pixel-perfect control over UI
+
+**When NOT to use:**
+- ❌ Internal tools (use `zTheme: true` for instant professional UI)
+- ❌ Rapid prototyping (use `zTheme: true` for speed)
 
 ## Hooks System
 

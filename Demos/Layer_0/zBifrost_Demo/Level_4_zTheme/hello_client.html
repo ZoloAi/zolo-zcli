@@ -4,77 +4,69 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Level 4: zTheme Auto-Rendering</title>
-    <link rel="stylesheet" href="../../../../zCLI/subsystems/zTheme/zTheme.css">
     <script src="../../../../zCLI/subsystems/zComm/zComm_modules/bifrost/client/src/bifrost_client.js"></script>
 </head>
 <body>
     <div class="zContainer zmt-5">
         
         <div class="zD-flex zFlexColumn zAlignItems-center zmb-4">
-            <h1>🎨 Level 4: zTheme Auto-Rendering</h1>
-            <p>autoTheme: true = Zero custom code</p>
+            <h1>🎨 Level 4: Swiper-Style Elegance</h1>
+            <p>One declaration. Everything happens automatically.</p>
             
             <div class="zSection-warning zp-3 zmt-3">
-                🎉 <strong>autoTheme: true</strong> = Zero custom rendering code needed!<br>
-                BifrostClient + zTheme = Instant beautiful UI
+                🚀 <strong>autoConnect + zTheme + autoRequest</strong> = Swiper-level elegance!<br>
+                No manual connect(), no manual send(), no custom rendering - just declare your intent.
             </div>
             
             <div class="zD-flex zmt-3" style="gap: 15px;">
-                <button class="zoloButton zBtnPrimary" id="connectBtn" onclick="connect()">Connect</button>
-                <button class="zoloButton zBtnDanger zD-none" id="disconnectBtn" onclick="disconnect()">Disconnect</button>
+                <button class="zoloButton zBtnPrimary" disabled>Auto-Connected ✨</button>
+                <button class="zoloButton zBtnDanger" onclick="disconnect()">Disconnect</button>
             </div>
         </div>
 
         <div id="status" class="zD-none zSection zp-3 zmb-3"></div>
-        <div id="ztheme-output" class="zSection-primary"><h1>zTheme Output</h1></div>
+        <div id="zVaF" class="zContainer"><h1>zVaF Output</h1></div>
 
 
     </div>
 
     <script>
-        let client = null;
+        // 🎨 Swiper-Style Elegance! One declaration, everything happens automatically.
+        const client = new BifrostClient('ws://127.0.0.1:8765', {
+            autoConnect: true,              // ← Auto-connect on instantiation
+            zTheme: true,                   // ← Enable zTheme CSS & rendering (auto-loads CSS!)
+            // targetElement: 'zVaF',       // ← Optional: default is 'zVaF' (zView and Function)
+            autoRequest: 'show_hello',      // ← Auto-send on connect
+            debug: true,                    // ← See what's happening in console
+            onConnected: (info) => console.log('✅ Connected!', info),
+            onDisconnected: () => console.log('❌ Disconnected'),
+            onError: (err) => console.error('❌ Error:', err)
+        });
 
-        async function connect() {
-            console.log('Connecting...');
-            
-            client = new BifrostClient('ws://127.0.0.1:8765', {
-                autoTheme: true,
-                targetElement: '#ztheme-output',
-                hooks: {
-                    onConnected: () => {
-                        console.log('✅ Connected!');
-                        client.send({event: 'show_hello'});
-                    },
-                    onDisconnected: () => console.log('❌ Disconnected'),
-                    onError: (err) => console.error('❌ Error:', err)
-                }
-            });
-
-            await client.connect();
+        function connect() {
+            // Already connected via autoConnect!
+            console.log('Already auto-connected! ✨');
         }
 
         function disconnect() {
             if (client) client.disconnect();
         }
 
-        /* 
-         * Classic Swiper.js initialization for reference:
+        /* ─────────────────────────────────────────────────────────
+         * Compare with classic Swiper.js initialization:
          * 
          * const swiper = new Swiper('.swiper', {
          *     direction: 'horizontal',
          *     loop: true,
-         *     pagination: {
-         *         el: '.swiper-pagination',
-         *     },
+         *     pagination: { el: '.swiper-pagination' },
          *     navigation: {
          *         nextEl: '.swiper-button-next',
          *         prevEl: '.swiper-button-prev',
-         *     },
-         *     scrollbar: {
-         *         el: '.swiper-scrollbar',
-         *     },
+         *     }
          * });
-         */
+         * 
+         * Same elegance: One declaration, everything just works! 🚀
+         * ───────────────────────────────────────────────────────── */
     </script>
 
 </body>

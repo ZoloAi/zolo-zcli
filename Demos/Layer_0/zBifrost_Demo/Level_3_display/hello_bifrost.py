@@ -19,11 +19,6 @@ How to run:
 
 from zCLI import zCLI
 
-print("🌉 Starting Hello zCLI Server (zBifrost mode)...")
-print("📝 Goal: See the SAME code render in a browser")
-print("🎉 NEW: z.display now broadcasts automatically - no manual JSON!")
-print()
-
 # Initialize zCLI in zBifrost mode (WebSocket server)
 z = zCLI({
     "zMode": "zBifrost",
@@ -47,10 +42,34 @@ async def handle_show_hello(_websocket, _message_data):
     z.display.info(f"Mode: {z.session.get('zMode', 'Terminal')}")
     z.display.info(f"Workspace: {z.config.sys_paths.workspace_dir}")
     z.display.info(f"Deployment: {z.session.get('deployment', 'Debug')}")
-    
+    z.display.success("✨ All subsystems loaded and ready!")
+    z.display.info("💡 z.display now broadcasts automatically in zBifrost mode!")
     # Separator
     z.display.text("", break_after=False)
-    
+
+    # Hero Header (indent=0 → centered, large, prominent)
+    z.display.header("🎨 zDisplay Events Showcase", color="CYAN", indent=0)
+
+    # Explain what just happened with the signals
+    z.display.text("💬 Notice: The colored signals above will auto-fade after 5 seconds!", indent=0, break_after=False)
+    z.display.text("   You can also dismiss them manually with the × button.", indent=0, break_after=False)
+    z.display.text("   This is zTheme's toast-style alert system - pure CSS!", indent=0, break_after=False)
+    z.display.text("", break_after=False)
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Header Demo - indent 0 = HERO, indent 1-6 = h1-h6 (semantic HTML headers)
+    # ═══════════════════════════════════════════════════════════════════════════
+    z.display.text("Below are examples of all header levels (h1-h6):", indent=0, break_after=False)
+    z.display.text("", break_after=False)
+    z.display.header("Level 1 Header (h1)", color="CYAN", indent=1)
+    z.display.header("Level 2 Header (h2)", color="CYAN", indent=2)
+    z.display.header("Level 3 Header (h3)", color="CYAN", indent=3)
+    z.display.header("Level 4 Header (h4)", color="CYAN", indent=4)
+    z.display.header("Level 5 Header (h5)", color="CYAN", indent=5)
+    z.display.header("Level 6 Header (h6)", color="CYAN", indent=6)
+
+    z.display.text("", break_after=False)
+
     # Show what we have access to
     z.display.text("Available subsystems:", indent=0, break_after=False)
     subsystems = [
@@ -69,14 +88,7 @@ async def handle_show_hello(_websocket, _message_data):
         "z.walker   - UI orchestration",
         "z.wizard   - Multi-step workflows",
     ]
-    
-    for subsystem in subsystems:
-        z.display.text(f"  • {subsystem}", indent=1, break_after=False)
-    
-    z.display.text("", break_after=False)
-    z.display.success("✨ All subsystems loaded and ready!")
-    z.display.text("", break_after=False)
-    z.display.info("💡 z.display now broadcasts automatically in zBifrost mode!")
+    z.display.list(subsystems, style="bullet", indent=1)
 
 # Register the handler for the client to trigger display
 # Note: _event_map is the documented way to register custom handlers (see zBifrost demos)
@@ -85,13 +97,6 @@ if z.comm.websocket:
     print("✓ Hello handler registered!")
 else:
     print("✗ Warning: Could not register hello handler")
-
-print("✅ Server is running on ws://127.0.0.1:8765")
-print("👉 Open hello_client.html in your browser")
-print("👉 Click 'Connect to Server' to see the magic!")
-print()
-print("Press Ctrl+C to stop the server")
-print()
 
 # Start the WebSocket server
 z.walker.run()

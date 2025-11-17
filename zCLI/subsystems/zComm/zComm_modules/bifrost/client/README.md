@@ -16,25 +16,41 @@ client/
 
 ## Usage
 
-### Via CDN (jsDelivr)
+### Swiper-Style Elegance (Recommended)
 
 ```html
 <script src="https://cdn.jsdelivr.net/gh/ZoloAi/zolo-zcli@main/zCLI/subsystems/zComm/zComm_modules/bifrost/client/src/bifrost_client.js"></script>
 
+<div id="zVaF"></div> <!-- Default zCLI container (zView and Function) -->
+
+<script>
+  // One declaration, everything happens automatically!
+  const client = new BifrostClient('ws://localhost:8765', {
+    autoConnect: true,              // Auto-connect on instantiation
+    zTheme: true,                   // Enable zTheme CSS & rendering
+    // targetElement: 'zVaF',       // Optional: default is 'zVaF'
+    autoRequest: 'my_event',        // Auto-send on connect
+    onConnected: (info) => console.log('✅ Connected!', info)
+  });
+</script>
+```
+
+### Traditional (More Control)
+
+```html
 <script>
   const client = new BifrostClient('ws://localhost:8765', {
-    autoTheme: true,
-    autoReconnect: true,
+    zTheme: true,
     hooks: {
       onConnected: (info) => console.log('Connected!', info),
       onDisconnected: (reason) => console.log('Disconnected:', reason),
       onMessage: (msg) => console.log('Message:', msg),
-      onDisplay: (data) => console.log('Display event:', data),
       onError: (error) => console.error('Error:', error)
     }
   });
   
-  client.connect();
+  await client.connect();
+  client.send({event: 'my_event'});
 </script>
 ```
 
@@ -46,9 +62,10 @@ client/
 
 ## Features
 
+- **Swiper-Style Elegance**: `autoConnect`, `zTheme`, `autoRequest` for one-line initialization
 - **Lazy Loading**: Modules load dynamically only when needed
 - **Auto-Reconnect**: Automatic reconnection with exponential backoff
-- **Auto-Theme**: Optional zTheme CSS loading
+- **zTheme Integration**: Optional CSS loading & automatic rendering
 - **Hooks System**: Lifecycle callbacks (onConnected, onDisconnected, onMessage, etc.)
 - **CRUD Operations**: `create()`, `read()`, `update()`, `delete()` methods
 - **Auto-Rendering**: `renderTable()`, `renderForm()`, `renderMenu()` helpers

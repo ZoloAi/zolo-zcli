@@ -83,8 +83,11 @@ export class MessageHandler {
         return; // Handled internally by zDisplay
       }
 
-      if (message.event === 'display' || message.type === 'display') {
-        this.hooks.call('onDisplay', message.data || message);
+      // Check for display events (supports multiple formats)
+      // - Old: {event: 'display', data: {...}}
+      // - New: {display_event: 'success', data: {...}}
+      if (message.event === 'display' || message.type === 'display' || message.display_event) {
+        this.hooks.call('onDisplay', message);  // Pass full message with display_event
         return;
       }
 
