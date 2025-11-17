@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Level 5: Advanced zDisplay Events</title>
+    <script src="../../../../zCLI/subsystems/zComm/zComm_modules/bifrost/client/src/bifrost_client.js"></script>
+</head>
+<body>
+    <div class="zContainer zmt-5">
+        
+        <div class="zD-flex zFlexColumn zAlignItems-center zmb-4">
+            <h1>🎨 Level 5: Advanced zDisplay Events</h1>
+            <p>Tables, JSON, Progress Bars, and More!</p>
+            
+            <div class="zSection-info zp-3 zmt-3">
+                🚀 <strong>ALL advanced zDisplay events</strong> with zTheme auto-rendering!<br>
+                Same Python from zDisplay Level 1, now in browser with zero custom code.
+            </div>
+            
+            <div class="zD-flex zmt-3" style="gap: 15px;">
+                <button class="zoloButton zBtnPrimary" disabled>Auto-Connected ✨</button>
+                <button class="zoloButton zBtnDanger" onclick="disconnect()">Disconnect</button>
+            </div>
+        </div>
+
+        <div id="status" class="zD-none zSection zp-3 zmb-3"></div>
+        <div id="zVaF" class="zContainer"><h1>zVaF Output</h1></div>
+
+    </div>
+
+    <script>
+        // 🎨 Swiper-Style Elegance! One declaration, everything happens automatically.
+        const client = new BifrostClient('ws://127.0.0.1:8765', {
+            autoConnect: true,              // ← Auto-connect on instantiation
+            zTheme: true,                   // ← Enable zTheme CSS & rendering (auto-loads CSS!)
+            // targetElement: 'zVaF',       // ← Optional: default is 'zVaF' (zView and Function)
+            autoRequest: 'show_advanced',   // ← Auto-send on connect (trigger advanced demo)
+            debug: true,                    // ← See what's happening in console
+            onConnected: (info) => console.log('✅ Connected!', info),
+            onDisconnected: () => console.log('❌ Disconnected'),
+            onError: (err) => console.error('❌ Error:', err)
+        });
+
+        function connect() {
+            // Already connected via autoConnect!
+            console.log('Already auto-connected! ✨');
+        }
+
+        function disconnect() {
+            if (client) client.disconnect();
+        }
+
+        /* ─────────────────────────────────────────────────────────
+         * Compare with classic Swiper.js initialization:
+         * 
+         * const swiper = new Swiper('.swiper', {
+         *     direction: 'horizontal',
+         *     loop: true,
+         *     pagination: { el: '.swiper-pagination' },
+         *     navigation: {
+         *         nextEl: '.swiper-button-next',
+         *         prevEl: '.swiper-button-prev',
+         *     }
+         * });
+         * 
+         * Same elegance: One declaration, everything just works! 🚀
+         * ───────────────────────────────────────────────────────── */
+    </script>
+
+</body>
+</html>

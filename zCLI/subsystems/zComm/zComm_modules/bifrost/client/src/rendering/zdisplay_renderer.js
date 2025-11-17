@@ -62,6 +62,17 @@ export class ZDisplayRenderer {
         case 'list':
           element = this._renderList(eventData);
           break;
+        case 'table':
+        case 'zTable':  // Backend sends 'zTable' (camelCase)
+          element = this._renderTable(eventData);
+          break;
+        case 'json':
+        case 'json_data':  // Backend sends 'json' or 'json_data'
+          element = this._renderJSON(eventData);
+          break;
+        case 'progress_bar':
+          element = this._renderProgressBar(eventData);
+          break;
         case 'error':
           element = this._renderAlert(eventData, 'danger');
           break;
@@ -177,6 +188,216 @@ export class ZDisplayRenderer {
     });
     
     return ul;
+  }
+
+  /**
+   * Render a table element (pure zTheme - NO Bootstrap!)
+   * Uses zTheme's .zTable classes with automatic striping and hover effects
+   * Implements client-side pagination (backend sends all rows + metadata)
+   * @private
+   */
+  _renderTable(event) {
+    // Extract table data and pagination metadata
+    const title = event.title || '';
+    const columns = event.columns || [];
+    const allRows = event.rows || [];
+    const limit = event.limit;  // Can be null/undefined (show all)
+    const offset = event.offset || 0;
+    
+    // Apply pagination if limit is specified
+    let rows = allRows;
+    let hasMore = false;
+    let moreCount = 0;
+    
+    if (limit !== null && limit !== undefined && limit > 0) {
+      // Slice rows: from offset to offset+limit
+      rows = allRows.slice(offset, offset + limit);
+      hasMore = (offset + limit) < allRows.length;
+      moreCount = allRows.length - (offset + limit);
+    }
+    
+    // Create container wrapper
+    const container = document.createElement('div');
+    container.style.marginBottom = '1.5rem';
+    
+    // Apply indent as left margin (minimal inline style for dynamic indentation)
+    if (event.indent && event.indent > 0) {
+      container.style.marginLeft = `${event.indent}rem`;
+    }
+    
+    // Add title with pagination info if provided
+    if (title) {
+      const titleElement = document.createElement('h4');
+      
+      // Show pagination range in title if limited
+      if (limit !== null && limit !== undefined && limit > 0 && allRows.length > 0) {
+        const showingStart = offset + 1;
+        const showingEnd = Math.min(offset + rows.length, allRows.length);
+        titleElement.textContent = `${title} (showing ${showingStart}-${showingEnd} of ${allRows.length})`;
+      } else {
+        titleElement.textContent = title;
+      }
+      
+      titleElement.style.marginBottom = '0.75rem';
+      titleElement.style.color = 'var(--color-darkgray)';
+      container.appendChild(titleElement);
+    }
+    
+    // Create table wrapper for responsiveness
+    const tableWrapper = document.createElement('div');
+    tableWrapper.className = 'zTable-responsive';
+    
+    // Create table
+    const table = document.createElement('table');
+    table.className = 'zTable zTable-striped zTable-hover zTable-bordered';
+    
+    // Create thead with columns
+    if (columns.length > 0) {
+      const thead = document.createElement('thead');
+      const headerRow = document.createElement('tr');
+      
+      columns.forEach(column => {
+        const th = document.createElement('th');
+        th.textContent = column;
+        headerRow.appendChild(th);
+      });
+      
+      thead.appendChild(headerRow);
+      table.appendChild(thead);
+    }
+    
+    // Create tbody with (paginated) rows
+    if (rows.length > 0) {
+      const tbody = document.createElement('tbody');
+      
+      rows.forEach(row => {
+        const tr = document.createElement('tr');
+        
+        // Handle both array and object rows
+        if (Array.isArray(row)) {
+          // Array row: [val1, val2, val3]
+          row.forEach(value => {
+            const td = document.createElement('td');
+            td.innerHTML = this._sanitizeHTML(this._formatCellValue(value));
+            tr.appendChild(td);
+          });
+        } else {
+          // Object row: {col1: val1, col2: val2, ...}
+          columns.forEach(column => {
+            const td = document.createElement('td');
+            const value = row[column];
+            td.innerHTML = this._sanitizeHTML(this._formatCellValue(value));
+            tr.appendChild(td);
+          });
+        }
+        
+        tbody.appendChild(tr);
+      });
+      
+      table.appendChild(tbody);
+    }
+    
+    tableWrapper.appendChild(table);
+    container.appendChild(tableWrapper);
+    
+    // Add "... N more rows" footer if there are more rows
+    if (hasMore && moreCount > 0) {
+      const footer = document.createElement('p');
+      footer.style.color = 'var(--color-info)';
+      footer.style.marginTop = '0.5rem';
+      footer.style.marginLeft = '1rem';
+      footer.style.fontStyle = 'italic';
+      footer.textContent = `... ${moreCount} more rows`;
+      container.appendChild(footer);
+    }
+    
+    return container;
+  }
+
+  /**
+   * Format cell value for display (handles booleans, nulls, etc.)
+   * @private
+   */
+  _formatCellValue(value) {
+    if (value === null || value === undefined) {
+      return '<span style="color: var(--color-gray);">—</span>';
+    }
+    if (typeof value === 'boolean') {
+      return value 
+        ? '<span style="color: var(--color-success);">✓</span>' 
+        : '<span style="color: var(--color-error);">✗</span>';
+    }
+    return String(value);
+  }
+
+  /**
+   * Render JSON data (pretty-printed)
+   * @private
+   */
+  _renderJSON(event) {
+    // Extract JSON data
+    const data = event.data || event.content || {};
+    
+    // Create container
+    const container = document.createElement('div');
+    container.style.marginBottom = '1rem';
+    
+    // Apply indent as left margin
+    if (event.indent && event.indent > 0) {
+      container.style.marginLeft = `${event.indent}rem`;
+    }
+    
+    // Create pre element for JSON
+    const pre = document.createElement('pre');
+    pre.style.backgroundColor = 'var(--color-base)';
+    pre.style.border = '1px solid var(--color-gray)';
+    pre.style.borderRadius = '4px';
+    pre.style.padding = '1rem';
+    pre.style.overflow = 'auto';
+    pre.style.fontFamily = 'monospace';
+    pre.style.fontSize = '0.9em';
+    pre.style.color = 'var(--color-darkgray)';
+    
+    // Pretty-print JSON
+    try {
+      pre.textContent = JSON.stringify(data, null, 2);
+    } catch (e) {
+      pre.textContent = String(data);
+    }
+    
+    container.appendChild(pre);
+    return container;
+  }
+
+  /**
+   * Render progress bar (simple text-based for now)
+   * TODO: Implement CSS animated progress bar
+   * @private
+   */
+  _renderProgressBar(event) {
+    // Extract progress data
+    const current = event.current || 0;
+    const total = event.total || 100;
+    const label = event.label || '';
+    const percentage = Math.round((current / total) * 100);
+    
+    // Create container
+    const container = document.createElement('div');
+    container.style.marginBottom = '0.5rem';
+    
+    // Apply indent as left margin
+    if (event.indent && event.indent > 0) {
+      container.style.marginLeft = `${event.indent}rem`;
+    }
+    
+    // For now, render as text (CSS animation coming soon!)
+    const text = document.createElement('span');
+    text.textContent = `${label} [${percentage}%]`;
+    text.style.color = 'var(--color-info)';
+    text.style.fontFamily = 'monospace';
+    
+    container.appendChild(text);
+    return container;
   }
 
   /**

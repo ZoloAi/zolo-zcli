@@ -6,10 +6,15 @@ Demonstrates zDisplay's core capabilities:
 - Text & headers (formatted output)
 - Signals (success, error, warning, info)
 - Tables (structured data with automatic formatting)
+- Pagination (simple truncation + interactive navigation with limit/offset)
+- Interactive selection (user input with validation)
 - Lists & JSON (simple data display)
 - Progress bars (visual feedback)
 
-Key Concept: Same code works in Terminal (ANSI) and GUI (WebSocket)
+Key Concepts:
+- Same code works in Terminal (ANSI) and GUI (WebSocket)
+- Interactive pagination with Previous/Next navigation
+- Proper page calculation: offset = (page_num - 1) × page_size
 """
 
 from zCLI import zCLI
@@ -58,24 +63,77 @@ z.display.zTable(
 z.display.text("", break_after=False)
 
 # ============================================
-# 4. Table Pagination
+# 4. Table Pagination - Simple Truncation
 # ============================================
-z.display.header("Table Pagination", color="YELLOW")
-z.display.text("Show only first 3 rows:")
+z.display.header("Table Pagination - Simple Truncation", color="YELLOW")
+z.display.text("Show only first 3 rows with limit parameter:")
 
 z.display.zTable(
-    title="Users (Limited)",
+    title="Users (Limited to 3)",
     columns=["ID", "Name", "Email"],
     rows=users,
-    limit=3  # Only first 3 rows
+    limit=3  # Only first 3 rows (shows "... 2 more rows")
 )
 z.display.text("", break_after=False)
 
 # ============================================
-# 5. Lists
+# 5. Table Pagination - Interactive Navigation
 # ============================================
-z.display.header("Lists", color="BLUE")
-z.display.text("Bulleted lists for simple data:")
+z.display.header("Table Pagination - Interactive Navigation", color="YELLOW")
+z.display.text("Demonstrates page navigation with limit + offset:")
+z.display.text("", break_after=False)
+
+# Pagination state
+page_size = 2  # rows per page
+total_rows = len(users)
+total_pages = (total_rows + page_size - 1) // page_size  # Ceiling division
+current_page = 1
+
+# Interactive pagination loop
+while True:
+    # Calculate offset based on current page
+    offset = (current_page - 1) * page_size
+    
+    # Display current page
+    z.display.text(f"📄 Page {current_page} of {total_pages}", indent=1)
+    z.display.zTable(
+        title=f"Users - Page {current_page}/{total_pages}",
+        columns=["ID", "Name", "Email"],
+        rows=users,
+        limit=page_size,
+        offset=offset
+    )
+    
+    # Navigation options
+    options = []
+    if current_page > 1:
+        options.append("Previous Page")
+    if current_page < total_pages:
+        options.append("Next Page")
+    options.append("Exit")
+    
+    # Get user choice
+    choice = z.display.zEvents.BasicInputs.selection(
+        "Navigate:",
+        options,
+        default="Exit"
+    )
+    
+    # Handle choice
+    if not choice or choice == "Exit":
+        break
+    elif choice == "Next Page":
+        current_page += 1
+    elif choice == "Previous Page":
+        current_page -= 1
+
+z.display.text("", break_after=False)
+
+# ============================================
+# 6. Lists
+# ============================================
+z.display.header("Bulleted Lists", color="BLUE")
+z.display.text("Lists for presenting features or items:")
 
 features = [
     "Fast - Zero-config initialization",
@@ -87,10 +145,10 @@ z.display.list(features)
 z.display.text("", break_after=False)
 
 # ============================================
-# 6. JSON (pretty-printed)
+# 7. JSON (pretty-printed)
 # ============================================
 z.display.header("JSON Display", color="CYAN")
-z.display.text("Pretty-printed JSON with colors:")
+z.display.text("Pretty-printed JSON with automatic formatting:")
 
 config = {
     "version": "1.5.5",
@@ -106,7 +164,7 @@ z.display.json_data(config)
 z.display.text("", break_after=False)
 
 # ============================================
-# 7. Progress Bar
+# 8. Progress Bar
 # ============================================
 z.display.header("Progress Indicators", color="GREEN")
 z.display.text("Visual feedback for long operations:")
@@ -120,9 +178,9 @@ z.display.success("Processing complete!")
 z.display.text("", break_after=False)
 
 # ============================================
-# 8. Indentation
+# 9. Indentation
 # ============================================
-z.display.header("Text Indentation", color="MAGENTA")
+z.display.header("Hierarchical Content", color="MAGENTA")
 z.display.text("Hierarchical content with indentation:")
 
 z.display.text("Root Level", indent=0)
@@ -139,7 +197,9 @@ z.display.success("You've learned about:")
 features_learned = [
     "text() and header() - Basic output",
     "success(), error(), warning(), info() - Signals",
-    "zTable() - Smart tables with pagination",
+    "zTable() - Smart tables with automatic formatting",
+    "Pagination - Simple truncation + Interactive navigation (limit + offset)",
+    "selection() - Interactive user input with validation",
     "list() - Bulleted lists",
     "json_data() - Pretty JSON",
     "progress_bar() - Visual feedback",

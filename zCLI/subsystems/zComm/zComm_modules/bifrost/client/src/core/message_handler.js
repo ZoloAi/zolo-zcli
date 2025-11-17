@@ -86,19 +86,23 @@ export class MessageHandler {
       // Check for display events (supports multiple formats)
       // - Old: {event: 'display', data: {...}}
       // - New: {display_event: 'success', data: {...}}
+      // - Progress: {event: 'progress_bar', ...} → treated as display event
       if (message.event === 'display' || message.type === 'display' || message.display_event) {
         this.hooks.call('onDisplay', message);  // Pass full message with display_event
         return;
       }
 
-      if (message.event === 'input_request' || message.type === 'input_request') {
-        this.hooks.call('onInput', message);
+      // Progress bar events - also route to display renderer
+      if (message.event === 'progress_bar' || message.event === 'progress_complete') {
+        // Convert to display_event format for renderer
+        message.display_event = 'progress_bar';
+        this.hooks.call('onDisplay', message);
+        this.hooks.call('onProgressBar', message);  // Also call specific hook for backwards compat
         return;
       }
 
-      // Progress bar events
-      if (message.event === 'progress_bar') {
-        this.hooks.call('onProgressBar', message);
+      if (message.event === 'input_request' || message.type === 'input_request') {
+        this.hooks.call('onInput', message);
         return;
       }
 
