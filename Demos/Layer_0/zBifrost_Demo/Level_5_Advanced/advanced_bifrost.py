@@ -4,16 +4,20 @@ Level 5: Advanced zDisplay Events
 
 This demo showcases ALL advanced zDisplay events in zBifrost mode:
 - Signals (success, error, warning, info) with toast-style alerts
-- zTable() with smart pagination (simple truncation + multi-page control)
+- zTable() with THREE pagination modes:
+  1. Basic: No pagination (all rows shown)
+  2. Simple truncation: limit only → "... N more rows" footer
+  3. Interactive: limit + interactive=True → Navigation buttons
 - json_data() for structured data
 - list() for bulleted/numbered lists
 - Text indentation for hierarchical content
 - Complex nested content
 
-Key Pagination Concepts:
-- Simple truncation: limit=3 → Shows first 3 rows + "... N more rows"
-- Multi-page control: offset = (page_num - 1) × page_size
-- Backend calculates offsets, frontend adds navigation controls
+Interactive Table Navigation:
+- Frontend renders navigation buttons (First, Previous, Next, Last, Jump)
+- User clicks button → WebSocket message sent to backend
+- Backend calculates new offset → Sends updated table
+- Seamless real-time pagination via WebSocket!
 
 Same Python code from zDisplay Level 1, but now in browser via WebSocket!
 
@@ -21,6 +25,7 @@ How to run:
 1. python3 advanced_bifrost.py
 2. Open advanced_client.html in your browser
 3. Watch advanced display events auto-render with zTheme!
+4. Click navigation buttons to browse table pages!
 """
 
 from zCLI import zCLI
@@ -60,10 +65,10 @@ async def handle_show_advanced(_websocket, _message_data):
     # ============================================
     z.display.header("Signals", color="GREEN", indent=1)
     z.display.text("Signals provide automatic color coding and icons:")
-    z.display.success("✅ Operation completed successfully!")
-    z.display.error("❌ Something went wrong!")
-    z.display.warning("⚠️  Be careful here!")
-    z.display.info("ℹ️  Just letting you know...")
+    z.display.success("Operation completed successfully!")
+    z.display.error("Something went wrong!")
+    z.display.warning("Be careful here!")
+    z.display.info("Just letting you know...")
     z.display.text("", break_after=False)
     
     # ============================================
@@ -102,41 +107,35 @@ async def handle_show_advanced(_websocket, _message_data):
     z.display.text("", break_after=False)
     
     # ============================================
-    # 5. Table Pagination - Multi-Page Navigation
+    # 5. Table Pagination - Interactive Navigation
     # ============================================
-    z.display.header("Table Pagination - Multi-Page Control", color="YELLOW", indent=1)
-    z.display.text("Demonstrates page navigation with limit + offset:")
-    z.display.text("Note: In a real app, you'd add JS navigation controls in the frontend", indent=1)
+    z.display.header("Table Pagination - Interactive Navigation", color="YELLOW", indent=1)
+    z.display.text("Click navigation buttons to browse pages:")
+    z.display.text("Features: First, Previous, Next, Last, Jump to page", indent=1)
     z.display.text("", break_after=False)
     
-    # Demonstrate pagination logic (backend calculates offset)
+    # Interactive pagination with navigation controls
     page_size = 2  # rows per page
-    total_rows = len(users)
-    total_pages = (total_rows + page_size - 1) // page_size  # Ceiling division
+    z.display.zTable(
+        title="Users - Interactive Navigation",
+        columns=["ID", "Name", "Email"],
+        rows=users,
+        limit=page_size,
+        offset=0,
+        interactive=True  # Enable navigation buttons in frontend
+    )
     
-    # Display all pages to showcase the offset calculation
-    for page_num in range(1, total_pages + 1):
-        offset = (page_num - 1) * page_size  # Key pagination formula!
-        
-        z.display.text(f"📄 Page {page_num} of {total_pages} (offset={offset}, limit={page_size}):", indent=1)
-        z.display.zTable(
-            title=f"Users - Page {page_num}/{total_pages}",
-            columns=["ID", "Name", "Email"],
-            rows=users,
-            limit=page_size,
-            offset=offset
-        )
-        z.display.text("", break_after=False)
-    
-    z.display.info("💡 Pagination formula: offset = (page_num - 1) × page_size")
+    z.display.text("", break_after=False)
     z.display.text("", break_after=False)
     
     # ============================================
     # 6. Lists
     # ============================================
-    z.display.header("Bulleted Lists", color="BLUE", indent=1)
+    z.display.header("Lists - Bullets and Numbers", color="BLUE", indent=1)
     z.display.text("Lists for presenting features or items:")
     
+    # Bulleted list
+    z.display.text("🔸 Bulleted list:", indent=1, break_after=False)
     features = [
         "Fast - Zero-config initialization",
         "Simple - Declarative API",
@@ -144,7 +143,19 @@ async def handle_show_advanced(_websocket, _message_data):
         "Tested - 1,073+ tests passing",
         "Elegant - Swiper-style patterns"
     ]
-    z.display.list(features, style="bullet", indent=1)
+    z.display.list(features, style="bullet", indent=2)
+    z.display.text("", break_after=False)
+    
+    # Numbered list
+    z.display.text("🔢 Numbered list:", indent=1, break_after=False)
+    steps = [
+        "Initialize zCLI with zMode='zBifrost'",
+        "Define display logic with z.display events",
+        "Register WebSocket event handler",
+        "Start server with z.walker.run()",
+        "Open HTML client in browser"
+    ]
+    z.display.list(steps, style="number", indent=2)
     z.display.text("", break_after=False)
     
     # ============================================
@@ -169,19 +180,7 @@ async def handle_show_advanced(_websocket, _message_data):
     z.display.text("", break_after=False)
     
     # ============================================
-    # 8. Text Indentation
-    # ============================================
-    z.display.header("Hierarchical Content", color="MAGENTA", indent=1)
-    z.display.text("Multi-level indentation for structure:")
-    
-    z.display.text("📦 Root Level", indent=0, break_after=False)
-    z.display.text("  📂 Child Level", indent=1, break_after=False)
-    z.display.text("    📄 Grandchild Level", indent=2, break_after=False)
-    z.display.text("      📝 Great-grandchild Level", indent=3, break_after=False)
-    z.display.text("", break_after=False)
-    
-    # ============================================
-    # 9. Complex Nested List
+    # 8. Complex Nested List
     # ============================================
     z.display.header("Nested Information", color="BLUE", indent=1)
     z.display.text("Combine lists with indentation:")
@@ -206,11 +205,11 @@ async def handle_show_advanced(_websocket, _message_data):
     features_learned = [
         "Signals - success, error, warning, info (toast-style alerts)",
         "zTable() - Smart tables with automatic formatting",
-        "Pagination - Simple truncation + Multi-page control (limit + offset)",
+        "Pagination - THREE modes: Basic, Simple truncation, Interactive navigation",
+        "Interactive controls - Navigation buttons with WebSocket bidirectional communication",
         "list() - Bulleted and numbered lists",
         "json_data() - Pretty JSON formatting",
-        "Text indentation - Hierarchical content",
-        "Complex nesting - Lists + indentation"
+        "Complex nesting - Lists with hierarchical structure"
     ]
     z.display.list(features_learned, style="bullet", indent=1)
     
@@ -219,9 +218,60 @@ async def handle_show_advanced(_websocket, _message_data):
     z.display.text("", break_after=False)
     z.display.success("🎉 That's the power of declarative zDisplay events + zTheme auto-rendering!")
 
-# Register the handler for the client to trigger display
+# Navigation handler for interactive tables
+async def handle_table_navigate(_websocket, message_data):
+    """
+    Handle table navigation commands from frontend buttons.
+    
+    Commands: 'n' (next), 'p' (previous), 'f' (first), 'l' (last), or page number
+    """
+    data = message_data.get('data', {})
+    command = data.get('command', '')
+    title = data.get('title', 'Table')
+    columns = data.get('columns', [])
+    rows = data.get('rows', [])
+    limit = data.get('limit', 10)
+    current_offset = data.get('offset', 0)
+    total_rows = data.get('totalRows', len(rows))
+    
+    # Calculate pagination
+    total_pages = (total_rows + limit - 1) // limit
+    current_page = (current_offset // limit) + 1
+    
+    # Process navigation command
+    new_page = current_page
+    
+    if command == 'n':  # Next
+        new_page = min(current_page + 1, total_pages)
+    elif command == 'p':  # Previous
+        new_page = max(current_page - 1, 1)
+    elif command == 'f':  # First
+        new_page = 1
+    elif command == 'l':  # Last
+        new_page = total_pages
+    elif command.isdigit():  # Jump to specific page
+        page_num = int(command)
+        if 1 <= page_num <= total_pages:
+            new_page = page_num
+    
+    # Calculate new offset
+    new_offset = (new_page - 1) * limit
+    
+    # Re-send table with new offset
+    z.display.zTable(
+        title=title,
+        columns=columns,
+        rows=rows,
+        limit=limit,
+        offset=new_offset,
+        interactive=True
+    )
+
+# Register the handlers
 z.comm.websocket._event_map['show_advanced'] = handle_show_advanced  # noqa: SLF001
+z.comm.websocket._event_map['table_navigate'] = handle_table_navigate  # noqa: SLF001
 print("✓ Advanced display handler registered!")
+print("✓ Table navigation handler registered!")
 
 print("✅ Server is running on ws://127.0.0.1:8765")
 print("👉 Open advanced_client.html in your browser")

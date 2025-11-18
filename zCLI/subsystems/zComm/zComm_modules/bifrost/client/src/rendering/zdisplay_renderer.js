@@ -91,6 +91,25 @@ export class ZDisplayRenderer {
       }
 
       if (element) {
+        // For interactive tables, replace existing table with same ID instead of appending
+        if (eventType === 'table' || eventType === 'zTable') {
+          const isInteractive = element.getAttribute('data-interactive') === 'true';
+          const tableId = element.getAttribute('data-table-id');
+          
+          if (isInteractive && tableId) {
+            // Find existing interactive table with same ID
+            const existingTable = container.querySelector(`[data-table-id="${tableId}"][data-interactive="true"]`);
+            
+            if (existingTable) {
+              // Replace existing table
+              existingTable.replaceWith(element);
+              this.logger.log(`[ZDisplayRenderer] Replaced interactive table '${tableId}' in ${zone}`);
+              return element;
+            }
+          }
+        }
+        
+        // Default: append element
         container.appendChild(element);
         this.logger.log(`[ZDisplayRenderer] Rendered ${eventType} to ${zone}`);
       }
@@ -164,15 +183,21 @@ export class ZDisplayRenderer {
 
   /**
    * Render a list element (pure zTheme - NO Bootstrap!)
+   * Supports both bulleted (ul) and numbered (ol) lists
    * @private
    */
   _renderList(event) {
-    const ul = document.createElement('ul');
-    ul.className = 'zList';
+    // Check style: "number" → <ol>, "bullet" → <ul> (default)
+    const style = event.style || 'bullet';
+    const listElement = style === 'number' 
+      ? document.createElement('ol') 
+      : document.createElement('ul');
+    
+    listElement.className = 'zList';
     
     // Apply indent as left margin (minimal inline style for dynamic indentation)
     if (event.indent && event.indent > 0) {
-      ul.style.marginLeft = `${event.indent}rem`;
+      listElement.style.marginLeft = `${event.indent}rem`;
     }
     
     // Render list items
@@ -184,16 +209,19 @@ export class ZDisplayRenderer {
       const content = typeof item === 'string' ? item : (item.content || '');
       li.innerHTML = this._sanitizeHTML(content);
       
-      ul.appendChild(li);
+      listElement.appendChild(li);
     });
     
-    return ul;
+    return listElement;
   }
 
   /**
    * Render a table element (pure zTheme - NO Bootstrap!)
    * Uses zTheme's .zTable classes with automatic striping and hover effects
-   * Implements client-side pagination (backend sends all rows + metadata)
+   * Supports three display modes:
+   *   1. Basic: No pagination (limit=null)
+   *   2. Simple truncation: limit only, shows "... N more rows"
+   *   3. Interactive: limit + interactive=true, shows navigation buttons
    * @private
    */
   _renderTable(event) {
@@ -203,6 +231,7 @@ export class ZDisplayRenderer {
     const allRows = event.rows || [];
     const limit = event.limit;  // Can be null/undefined (show all)
     const offset = event.offset || 0;
+    const interactive = event.interactive || false;  // Enable navigation controls
     
     // Apply pagination if limit is specified
     let rows = allRows;
@@ -219,6 +248,15 @@ export class ZDisplayRenderer {
     // Create container wrapper
     const container = document.createElement('div');
     container.style.marginBottom = '1.5rem';
+    
+    // For interactive tables, add a data attribute for replacement logic
+    if (interactive) {
+      container.setAttribute('data-table-id', title || 'table');
+      container.setAttribute('data-interactive', 'true');
+      
+      // Add smooth fade-in animation for page transitions
+      container.style.animation = 'fadeIn 0.3s ease-in';
+    }
     
     // Apply indent as left margin (minimal inline style for dynamic indentation)
     if (event.indent && event.indent > 0) {
@@ -300,8 +338,14 @@ export class ZDisplayRenderer {
     tableWrapper.appendChild(table);
     container.appendChild(tableWrapper);
     
-    // Add "... N more rows" footer if there are more rows
-    if (hasMore && moreCount > 0) {
+    // Footer: Interactive navigation OR simple "... N more rows" message
+    if (interactive && limit && limit > 0) {
+      // Interactive mode: Render navigation buttons
+      this._renderNavigationControls(container, {
+        title, columns, rows: allRows, limit, offset, totalRows: allRows.length
+      });
+    } else if (hasMore && moreCount > 0) {
+      // Simple truncation: Show "... N more rows" footer
       const footer = document.createElement('p');
       footer.style.color = 'var(--color-info)';
       footer.style.marginTop = '0.5rem';
@@ -312,6 +356,122 @@ export class ZDisplayRenderer {
     }
     
     return container;
+  }
+  
+  /**
+   * Render interactive navigation controls for paginated tables
+   * Creates buttons that send navigation commands back to the server
+   * @private
+   */
+  _renderNavigationControls(container, tableState) {
+    const { limit, offset, totalRows } = tableState;
+    
+    // Calculate pagination metadata
+    const totalPages = Math.ceil(totalRows / limit);
+    const currentPage = Math.floor(offset / limit) + 1;
+    const canGoPrev = currentPage > 1;
+    const canGoNext = currentPage < totalPages;
+    
+    // Create navigation container
+    const navContainer = document.createElement('div');
+    navContainer.style.marginTop = '1rem';
+    navContainer.style.display = 'flex';
+    navContainer.style.gap = '0.5rem';
+    navContainer.style.alignItems = 'center';
+    navContainer.style.justifyContent = 'center';
+    
+    // Page info display
+    const pageInfo = document.createElement('span');
+    pageInfo.style.marginRight = '1rem';
+    pageInfo.style.color = 'var(--color-darkgray)';
+    pageInfo.style.fontWeight = '500';
+    pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+    navContainer.appendChild(pageInfo);
+    
+    // Helper to create navigation button
+    const createNavButton = (label, command, enabled) => {
+      const btn = document.createElement('button');
+      btn.className = 'zoloButton ' + (enabled ? 'zBtnSecondary' : 'zBtnDisabled');
+      btn.textContent = label;
+      btn.disabled = !enabled;
+      
+      if (enabled) {
+        btn.onclick = () => {
+          // Send navigation command back to server
+          this.logger.log(`[ZDisplayRenderer] Sending navigation command: ${command}`);
+          if (this.client && this.client.send) {
+            this.client.send({
+              event: 'table_navigate',
+              data: {
+                command,
+                ...tableState
+              }
+            });
+          }
+        };
+      }
+      
+      return btn;
+    };
+    
+    // Navigation buttons
+    navContainer.appendChild(createNavButton('⏮ First', 'f', canGoPrev));
+    navContainer.appendChild(createNavButton('◀ Previous', 'p', canGoPrev));
+    navContainer.appendChild(createNavButton('Next ▶', 'n', canGoNext));
+    navContainer.appendChild(createNavButton('Last ⏭', 'l', canGoNext));
+    
+    // Jump to page input
+    const jumpContainer = document.createElement('span');
+    jumpContainer.style.marginLeft = '1rem';
+    jumpContainer.style.display = 'flex';
+    jumpContainer.style.gap = '0.5rem';
+    jumpContainer.style.alignItems = 'center';
+    
+    const jumpLabel = document.createElement('span');
+    jumpLabel.style.color = 'var(--color-darkgray)';
+    jumpLabel.textContent = 'Jump to:';
+    jumpContainer.appendChild(jumpLabel);
+    
+    const jumpInput = document.createElement('input');
+    jumpInput.type = 'number';
+    jumpInput.min = '1';
+    jumpInput.max = totalPages.toString();
+    jumpInput.placeholder = '#';
+    jumpInput.style.width = '60px';
+    jumpInput.style.padding = '0.25rem 0.5rem';
+    jumpInput.style.border = '1px solid var(--color-gray)';
+    jumpInput.style.borderRadius = '4px';
+    jumpInput.style.textAlign = 'center';
+    
+    const jumpBtn = createNavButton('Go', 'jump', true);
+    jumpBtn.onclick = () => {
+      const pageNum = parseInt(jumpInput.value);
+      if (pageNum >= 1 && pageNum <= totalPages) {
+        this.logger.log(`[ZDisplayRenderer] Jumping to page: ${pageNum}`);
+        if (this.client && this.client.send) {
+          this.client.send({
+            event: 'table_navigate',
+            data: {
+              command: pageNum.toString(),
+              ...tableState
+            }
+          });
+        }
+        jumpInput.value = '';
+      }
+    };
+    
+    jumpInput.onkeypress = (e) => {
+      if (e.key === 'Enter') {
+        jumpBtn.click();
+      }
+    };
+    
+    jumpContainer.appendChild(jumpInput);
+    jumpContainer.appendChild(jumpBtn);
+    navContainer.appendChild(jumpContainer);
+    
+    container.appendChild(navContainer);
   }
 
   /**

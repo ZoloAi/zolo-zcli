@@ -144,7 +144,8 @@ class DelegateData:
         rows: List[List[Any]], 
         limit: Optional[int] = None, 
         offset: int = 0, 
-        show_header: bool = True
+        show_header: bool = True,
+        interactive: bool = False
     ) -> Any:
         """Display tabular data with optional pagination.
         
@@ -155,6 +156,7 @@ class DelegateData:
             limit: Optional row limit for pagination (default: None)
             offset: Starting row offset (default: 0)
             show_header: Show column headers (default: True)
+            interactive: Enable interactive navigation in Terminal mode (default: False)
             
         Returns:
             Any: Result from handle() method
@@ -166,7 +168,8 @@ class DelegateData:
                 [
                     ["Alice", 30, "Admin"],
                     ["Bob", 25, "User"]
-                ]
+                ],
+                interactive=True
             )
         """
         return self.handle({
@@ -177,5 +180,6 @@ class DelegateData:
             "limit": limit,
             "offset": offset,
             "show_header": show_header,
+            "interactive": interactive,
         })
 

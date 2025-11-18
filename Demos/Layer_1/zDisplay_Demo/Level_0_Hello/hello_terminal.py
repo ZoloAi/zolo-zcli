@@ -2,13 +2,17 @@
 Level 0: Hello zCLI (Terminal Mode)
 ====================================
 
-Your first zCLI program—just 3 lines!
+Your first zCLI program—simple, declarative, powerful!
 
 What this demonstrates:
-- Zero-config initialization
-- Basic display output (success, info signals)
-- Session context (checking mode)
+- Zero-config initialization (no parameters needed!)
+- Basic display output (signals: success, info)
+- Session context (mode, workspace, deployment)
 - Terminal rendering (ANSI colors)
+
+Key concept:
+This SAME code works in browser mode too! See Level 3 (hello_bifrost.py)
+for the identical display logic running via WebSocket.
 
 No setup required. Just run it!
 """
@@ -18,7 +22,7 @@ from zCLI import zCLI
 # Initialize zCLI (zero config!)
 z = zCLI()
 
-# Print to Terminal
+# Display information (works in Terminal AND browser with zMode="zBifrost")
 z.display.success("Hello from zCLI!")
 z.display.info(f"Mode: {z.session.get('zMode', 'Terminal')}")
 z.display.info(f"Workspace: {z.config.sys_paths.workspace_dir}")
@@ -27,7 +31,7 @@ z.display.info(f"Deployment: {z.session.get('deployment', 'Debug')}")
 # Separator
 z.display.text("", break_after=False)
 
-# Show what we have access to
+# List all available subsystems (demonstrating text output with indentation)
 z.display.text("Available subsystems:", indent=0, break_after=False)
 subsystems = [
     "z.config   - Configuration management",
@@ -46,9 +50,22 @@ subsystems = [
     "z.wizard   - Multi-step workflows",
 ]
 
+# Display each subsystem with bullet and indentation
 for subsystem in subsystems:
     z.display.text(f"  • {subsystem}", indent=1, break_after=False)
 
 z.display.text("", break_after=False)
 z.display.success("✨ All subsystems loaded and ready!")
+
+# Hierarchical indentation demo
+z.display.text("", break_after=False)
+z.display.text("Hierarchical content with indentation:", indent=0, break_after=False)
+z.display.text("📦 Root Level", indent=0, break_after=False)
+z.display.text("📂 Child Level", indent=1, break_after=False)
+z.display.text("📄 Grandchild Level", indent=2, break_after=False)
+z.display.text("📝 Great-grandchild Level", indent=3, break_after=False)
+
+# Try it in browser mode too!
+# Change zCLI() to zCLI({"zMode": "zBifrost", "websocket": {...}})
+# Same code, different output target. That's declarative zDisplay!
 

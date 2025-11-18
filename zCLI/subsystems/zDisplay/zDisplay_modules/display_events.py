@@ -410,7 +410,7 @@ class zEvents:
     # Convenience Delegates - AdvancedData
     # ═══════════════════════════════════════════════════════════════════════════
 
-    def zTable(self, title: str, columns: List[str], rows: List[List[Any]], limit: Optional[int] = None, offset: int = 0, show_header: bool = True) -> Any:
+    def zTable(self, title: str, columns: List[str], rows: List[List[Any]], limit: Optional[int] = None, offset: int = 0, show_header: bool = True, interactive: bool = False) -> Any:
         """Display data in table format with pagination support.
         
         Convenience delegate to AdvancedData.zTable for backward compatibility.
@@ -422,11 +422,12 @@ class zEvents:
             limit: Maximum rows to display (pagination)
             offset: Row offset for pagination (default: 0)
             show_header: Show column headers (default: True)
+            interactive: Enable keyboard navigation in Terminal mode (default: False)
             
         Returns:
             Any: Result from AdvancedData.zTable method
         """
-        return self.AdvancedData.zTable(title, columns, rows, limit, offset, show_header)
+        return self.AdvancedData.zTable(title, columns, rows, limit, offset, show_header, interactive)
 
     # ═══════════════════════════════════════════════════════════════════════════
     # Convenience Delegates - zSystem

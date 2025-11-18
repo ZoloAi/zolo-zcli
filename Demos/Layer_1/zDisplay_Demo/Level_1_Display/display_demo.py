@@ -1,50 +1,52 @@
 """
-Level 1: Display & Signals
-===========================
+Level 1: Advanced zDisplay Events
+==================================
 
-Demonstrates zDisplay's core capabilities:
-- Text & headers (formatted output)
-- Signals (success, error, warning, info)
-- Tables (structured data with automatic formatting)
-- Pagination (simple truncation + interactive navigation with limit/offset)
-- Interactive selection (user input with validation)
-- Lists & JSON (simple data display)
-- Progress bars (visual feedback)
+This demo showcases ALL advanced zDisplay events in Terminal mode:
+- Signals (success, error, warning, info) with color-coded feedback
+- zTable() with THREE pagination modes:
+  1. Basic: No pagination (all rows shown)
+  2. Simple truncation: limit only → "... N more rows" footer
+  3. Interactive: limit + interactive=True → Keyboard navigation
+- json_data() for structured data
+- list() for bulleted/numbered lists
+- Complex nested content
 
-Key Concepts:
-- Same code works in Terminal (ANSI) and GUI (WebSocket)
-- Interactive pagination with Previous/Next navigation
-- Proper page calculation: offset = (page_num - 1) × page_size
+Interactive Table Navigation (Terminal):
+- Built-in keyboard commands: [n]ext, [p]revious, [f]irst, [l]ast, [#] jump, [q]uit
+- Automatic page calculation and navigation handling
+- Seamless in-terminal pagination!
+
+Same display logic works in browser mode too (see zBifrost Level 5)!
 """
 
 from zCLI import zCLI
-import time
 
 # Initialize zCLI
 z = zCLI()
 
 # ============================================
-# 1. Headers & Text
+# 1. Headers & Introduction
 # ============================================
-z.display.header("zDisplay Demo: Text & Signals", color="CYAN")
-z.display.text("This demonstrates zDisplay's core features")
+z.display.header("Advanced zDisplay Events Showcase", color="CYAN", indent=0)
+z.display.text("This demonstrates zDisplay's advanced capabilities:")
 z.display.text("", break_after=False)
 
 # ============================================
 # 2. Signals (color-coded feedback)
 # ============================================
-z.display.header("Signals", color="GREEN")
+z.display.header("Signals", color="GREEN", indent=1)
 z.display.text("Signals provide automatic color coding and icons:")
-z.display.success("✅ Operation completed successfully!")
-z.display.error("❌ Something went wrong!")
-z.display.warning("⚠️  Be careful here!")
-z.display.info("ℹ️  Just letting you know...")
+z.display.success("Operation completed successfully!")
+z.display.error("Something went wrong!")
+z.display.warning("Be careful here!")
+z.display.info("Just letting you know...")
 z.display.text("", break_after=False)
 
 # ============================================
 # 3. Tables (with automatic formatting)
 # ============================================
-z.display.header("Tables", color="MAGENTA")
+z.display.header("Data Tables", color="MAGENTA", indent=1)
 z.display.text("Smart table rendering with automatic alignment:")
 
 users = [
@@ -65,7 +67,7 @@ z.display.text("", break_after=False)
 # ============================================
 # 4. Table Pagination - Simple Truncation
 # ============================================
-z.display.header("Table Pagination - Simple Truncation", color="YELLOW")
+z.display.header("Table Pagination - Simple Truncation", color="YELLOW", indent=1)
 z.display.text("Show only first 3 rows with limit parameter:")
 
 z.display.zTable(
@@ -79,75 +81,59 @@ z.display.text("", break_after=False)
 # ============================================
 # 5. Table Pagination - Interactive Navigation
 # ============================================
-z.display.header("Table Pagination - Interactive Navigation", color="YELLOW")
-z.display.text("Demonstrates page navigation with limit + offset:")
+z.display.header("Table Pagination - Interactive Navigation", color="YELLOW", indent=1)
+z.display.text("Use keyboard commands to navigate through pages:")
+z.display.text("Commands: [n]ext, [p]revious, [f]irst, [l]ast, [#] jump, [q]uit", indent=1)
 z.display.text("", break_after=False)
 
-# Pagination state
+# Interactive pagination with built-in navigation
 page_size = 2  # rows per page
-total_rows = len(users)
-total_pages = (total_rows + page_size - 1) // page_size  # Ceiling division
-current_page = 1
+z.display.zTable(
+    title="Users - Interactive Navigation",
+    columns=["ID", "Name", "Email"],
+    rows=users,
+    limit=page_size,
+    offset=0,
+    interactive=True  # Enable built-in keyboard navigation
+)
 
-# Interactive pagination loop
-while True:
-    # Calculate offset based on current page
-    offset = (current_page - 1) * page_size
-    
-    # Display current page
-    z.display.text(f"📄 Page {current_page} of {total_pages}", indent=1)
-    z.display.zTable(
-        title=f"Users - Page {current_page}/{total_pages}",
-        columns=["ID", "Name", "Email"],
-        rows=users,
-        limit=page_size,
-        offset=offset
-    )
-    
-    # Navigation options
-    options = []
-    if current_page > 1:
-        options.append("Previous Page")
-    if current_page < total_pages:
-        options.append("Next Page")
-    options.append("Exit")
-    
-    # Get user choice
-    choice = z.display.zEvents.BasicInputs.selection(
-        "Navigate:",
-        options,
-        default="Exit"
-    )
-    
-    # Handle choice
-    if not choice or choice == "Exit":
-        break
-    elif choice == "Next Page":
-        current_page += 1
-    elif choice == "Previous Page":
-        current_page -= 1
-
+z.display.text("", break_after=False)
 z.display.text("", break_after=False)
 
 # ============================================
-# 6. Lists
+# 6. Lists - Bullets and Numbers
 # ============================================
-z.display.header("Bulleted Lists", color="BLUE")
+z.display.header("Lists - Bullets and Numbers", color="BLUE", indent=1)
 z.display.text("Lists for presenting features or items:")
 
+# Bulleted list
+z.display.text("🔸 Bulleted list:", indent=1, break_after=False)
 features = [
     "Fast - Zero-config initialization",
     "Simple - Declarative API",
     "Multi-mode - Terminal and GUI",
-    "Tested - 1,073+ tests passing"
+    "Tested - 1,073+ tests passing",
+    "Elegant - Swiper-style patterns"
 ]
-z.display.list(features)
+z.display.list(features, style="bullet", indent=2)
+z.display.text("", break_after=False)
+
+# Numbered list
+z.display.text("🔢 Numbered list:", indent=1, break_after=False)
+steps = [
+    "Initialize zCLI with zMode='zBifrost'",
+    "Define display logic with z.display events",
+    "Register WebSocket event handler",
+    "Start server with z.walker.run()",
+    "Open HTML client in browser"
+]
+z.display.list(steps, style="number", indent=2)
 z.display.text("", break_after=False)
 
 # ============================================
 # 7. JSON (pretty-printed)
 # ============================================
-z.display.header("JSON Display", color="CYAN")
+z.display.header("JSON Display", color="CYAN", indent=1)
 z.display.text("Pretty-printed JSON with automatic formatting:")
 
 config = {
@@ -158,56 +144,50 @@ config = {
         "zDisplay": "loaded",
         "zComm": "loaded"
     },
+    "features": ["ANSI colors", "Interactive input", "Smart formatting"],
     "debug": True
 }
 z.display.json_data(config)
 z.display.text("", break_after=False)
 
 # ============================================
-# 8. Progress Bar
+# 8. Complex Nested List
 # ============================================
-z.display.header("Progress Indicators", color="GREEN")
-z.display.text("Visual feedback for long operations:")
+z.display.header("Nested Information", color="BLUE", indent=1)
+z.display.text("Combine lists with indentation:")
 
-# Simulate processing
-for i in range(0, 101, 10):
-    z.display.progress_bar(i, 100, "Processing data")
-    time.sleep(0.3)
+z.display.text("🎯 Project Structure:", indent=0, break_after=False)
 
-z.display.success("Processing complete!")
-z.display.text("", break_after=False)
-
-# ============================================
-# 9. Indentation
-# ============================================
-z.display.header("Hierarchical Content", color="MAGENTA")
-z.display.text("Hierarchical content with indentation:")
-
-z.display.text("Root Level", indent=0)
-z.display.text("Child Level", indent=1)
-z.display.text("Grandchild Level", indent=2)
-z.display.text("Great-grandchild Level", indent=3)
+components = [
+    "Backend (Python) - zCLI with zDisplay",
+    "Frontend (Terminal) - ANSI rendering engine",
+    "Input (Keyboard) - Interactive commands",
+    "Formatting (ASCII) - Smart text alignment"
+]
+z.display.list(components, style="bullet", indent=1)
 z.display.text("", break_after=False)
 
 # ============================================
 # Summary
 # ============================================
-z.display.header("Summary", color="CYAN")
-z.display.success("You've learned about:")
+z.display.header("What You've Seen", color="CYAN", indent=0)
+z.display.success("You've experienced ALL advanced zDisplay events:")
+
 features_learned = [
-    "text() and header() - Basic output",
-    "success(), error(), warning(), info() - Signals",
+    "Signals - success, error, warning, info with color-coded feedback",
     "zTable() - Smart tables with automatic formatting",
-    "Pagination - Simple truncation + Interactive navigation (limit + offset)",
-    "selection() - Interactive user input with validation",
-    "list() - Bulleted lists",
-    "json_data() - Pretty JSON",
-    "progress_bar() - Visual feedback",
-    "Indentation - Hierarchical content"
+    "Pagination - THREE modes: Basic, Simple truncation, Interactive navigation",
+    "Interactive controls - Keyboard commands for seamless navigation",
+    "list() - Bulleted and numbered lists",
+    "json_data() - Pretty JSON formatting",
+    "Complex nesting - Lists with hierarchical structure"
 ]
-z.display.list(features_learned)
+z.display.list(features_learned, style="bullet", indent=1)
 
 z.display.text("", break_after=False)
-z.display.info("💡 Next: Level 2 teaches configuration and path resolution!")
-z.display.text("Run: cd ../Level_2_Config && python3 config_demo.py")
+z.display.info("💡 All of this works in Terminal AND browser with the SAME Python code!")
+z.display.text("", break_after=False)
+z.display.text("Next steps:")
+z.display.text("  • Level 2: Configuration and path resolution (cd ../Level_2_Config)", indent=1, break_after=False)
+z.display.text("  • zBifrost Level 5: Same demo in browser mode! (cd ../../../Layer_0/zBifrost_Demo/Level_5_Advanced)", indent=1, break_after=False)
 

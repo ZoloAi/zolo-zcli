@@ -345,6 +345,9 @@
         const { ZDisplayRenderer } = await this._loadModule('zdisplay_renderer');
         this.zDisplayRenderer = new ZDisplayRenderer(this.logger);
         
+        // Pass client reference for interactive features (navigation buttons, etc.)
+        this.zDisplayRenderer.client = this;
+        
         // Set target element from options (strip # prefix if present)
         const targetElement = this.options.targetElement || '#zui-content';
         this.zDisplayRenderer.defaultZone = targetElement.startsWith('#') 

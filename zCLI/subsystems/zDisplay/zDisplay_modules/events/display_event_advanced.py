@@ -320,6 +320,14 @@ MSG_NO_ROWS: str = "No rows to display"
 MSG_MORE_ROWS: str = "... {count} more rows"
 MSG_SHOWING_RANGE: str = "{title} (showing {start}-{end} of {total})"
 
+# Navigation constants (interactive mode)
+NAV_PROMPT: str = "Navigate: [n]ext | [p]revious | [f]irst | [l]ast | [#] jump | [q]uit: "
+NAV_COMMANDS: set = {"n", "p", "f", "l", "q"}
+NAV_INVALID: str = "Invalid command. Use: n, p, f, l, # (page number), or q"
+NAV_ALREADY_FIRST: str = "Already on first page"
+NAV_ALREADY_LAST: str = "Already on last page"
+NAV_INVALID_PAGE: str = "Invalid page. Enter 1-{total_pages}"
+
 # Characters
 CHAR_SEPARATOR: str = "─"
 CHAR_SPACE: str = " "
@@ -634,7 +642,8 @@ class AdvancedData:
         rows: List[Union[Dict[str, Any], List[Any]]],
         limit: Optional[int] = None,
         offset: int = DEFAULT_OFFSET,
-        show_header: bool = True
+        show_header: bool = True,
+        interactive: bool = False
     ) -> None:
         """
         Display data table with optional pagination and formatting for Terminal/Bifrost modes.
@@ -642,6 +651,7 @@ class AdvancedData:
         This is the primary method of AdvancedData, designed for database query result
         display from the zData subsystem. It handles:
           • Pagination: Slice rows using limit/offset (via Pagination helper)
+          • Interactive Navigation: Keyboard-driven page navigation (Terminal-only)
           • Terminal Rendering: Formatted ASCII table with column headers, separators
           • Bifrost Rendering: Clean JSON event with raw data
           • Empty State: "No columns"/"No rows" messages via Signals
@@ -662,6 +672,7 @@ class AdvancedData:
            - Display formatted rows via _format_row() + BasicOutputs.text()
            - Display "No rows" message (if empty) via Signals.info()
            - Display pagination footer (if has_more) via Signals.info()
+           - If interactive=True, enter navigation loop with keyboard commands
         
         **Terminal Output Example:**
         
@@ -720,6 +731,10 @@ class AdvancedData:
             limit: Maximum rows to display (None=all, negative=last N, positive=from offset)
             offset: Starting row index (0-based, default 0)
             show_header: Whether to display column headers (default True)
+            interactive: Enable keyboard navigation in Terminal mode (default False)
+                        Commands: [n]ext, [p]revious, [f]irst, [l]ast, [#] jump to page, [q]uit
+                        Only works with limit > 0 (pagination must be enabled)
+                        Ignored in Bifrost mode
         
         Returns:
             None (output is rendered to Terminal or sent to Bifrost)
@@ -748,18 +763,27 @@ class AdvancedData:
                 rows=all_logs,
                 limit=-10  # Negative limit = last N rows
             )
+            
+            # Interactive navigation (Terminal-only)
+            display.zTable(
+                title="User Database",
+                columns=["id", "name", "email"],
+                rows=all_users,
+                limit=20,
+                offset=0,
+                interactive=True  # Enable keyboard navigation (n/p/f/l/#/q)
+            )
         
         Notes:
             - Column width is fixed at 15 characters in Terminal mode (Week 6.6: auto-sizing)
             - All data types are converted to strings (Week 6.6: type-aware formatting)
             - Truncation is naive ("..." at end, Week 6.6: smart truncation for UUIDs/IDs)
-            - Terminal mode has no interactive pagination (Week 6.6: navigation controls)
+            - Interactive pagination available with interactive=True (Terminal-only)
             - Bifrost mode sends raw data (frontend handles rendering/pagination)
         
-        Week 6.6 Enhancements:
+        Week 6.6 Enhancements (Remaining):
             - Add column_types parameter for data type formatting
             - Add column_widths parameter for auto-sizing
-            - Add interactive parameter for Terminal pagination controls
             - Add editable parameter for Bifrost cell editing
         """
         # Try Bifrost mode first - send clean event
@@ -769,7 +793,8 @@ class AdvancedData:
             KEY_ROWS: rows,
             KEY_LIMIT: limit,
             KEY_OFFSET: offset,
-            KEY_SHOW_HEADER: show_header
+            KEY_SHOW_HEADER: show_header,
+            "interactive": interactive  # Enable frontend navigation controls
         }):
             return  # Bifrost event sent successfully
         
@@ -784,6 +809,99 @@ class AdvancedData:
         page_info = self.pagination.paginate(rows, limit, offset)
         paginated_rows = page_info[KEY_ITEMS]
         
+        # Render initial page
+        self._render_table_page(title, columns, page_info, paginated_rows, show_header)
+        
+        # Interactive navigation (Terminal-only)
+        if interactive and limit and limit > 0:
+            total_rows = len(rows)
+            page_size = limit
+            total_pages = (total_rows + page_size - 1) // page_size
+            current_page = (offset // page_size) + 1
+            
+            while True:
+                # Show navigation prompt
+                command = self.zPrimitives.read_string(NAV_PROMPT).strip().lower()
+                
+                # Parse command
+                if command == "q":
+                    break
+                elif command == "n":
+                    # Next page
+                    if current_page < total_pages:
+                        current_page += 1
+                    else:
+                        self._signal_warning(NAV_ALREADY_LAST, indent=0)
+                        continue
+                elif command == "p":
+                    # Previous page
+                    if current_page > 1:
+                        current_page -= 1
+                    else:
+                        self._signal_warning(NAV_ALREADY_FIRST, indent=0)
+                        continue
+                elif command == "f":
+                    # First page
+                    current_page = 1
+                elif command == "l":
+                    # Last page
+                    current_page = total_pages
+                elif command.isdigit():
+                    # Jump to page number
+                    page_num = int(command)
+                    if 1 <= page_num <= total_pages:
+                        current_page = page_num
+                    else:
+                        self._signal_warning(
+                            NAV_INVALID_PAGE.format(total_pages=total_pages),
+                            indent=0
+                        )
+                        continue
+                else:
+                    self._signal_warning(NAV_INVALID, indent=0)
+                    continue
+                
+                # Calculate new offset and re-display table
+                current_offset = (current_page - 1) * page_size
+                page_info = self.pagination.paginate(rows, limit, current_offset)
+                paginated_rows = page_info[KEY_ITEMS]
+                
+                # Re-display table
+                self._render_table_page(title, columns, page_info, paginated_rows, show_header)
+    
+    # ═══════════════════════════════════════════════════════════════════════
+    #                           HELPER METHODS
+    # ═══════════════════════════════════════════════════════════════════════
+    
+    def _render_table_page(
+        self,
+        title: str,
+        columns: List[str],
+        page_info: Dict[str, Any],
+        paginated_rows: List[Union[Dict[str, Any], List[Any]]],
+        show_header: bool
+    ) -> None:
+        """
+        Render a single page of table data to Terminal.
+        
+        This helper method renders one page of a paginated table, including:
+          • Title header with pagination info (showing X-Y of Z)
+          • Column headers (if show_header=True)
+          • Formatted rows
+          • Pagination footer (if more rows exist)
+        
+        Used by zTable() for initial display and interactive navigation re-display.
+        
+        Args:
+            title: Table title
+            columns: List of column names
+            page_info: Pagination metadata dict from Pagination.paginate()
+            paginated_rows: Rows to display (already sliced)
+            show_header: Whether to show column headers
+        
+        Returns:
+            None (output is rendered to Terminal)
+        """
         # Display title with pagination info
         self._output_text("", break_after=False)
         if self.BasicOutputs:
@@ -822,10 +940,6 @@ class AdvancedData:
         
         # Add closing blank line
         self._output_text("", break_after=False)
-    
-    # ═══════════════════════════════════════════════════════════════════════
-    #                           HELPER METHODS
-    # ═══════════════════════════════════════════════════════════════════════
     
     def _format_row(
         self,
