@@ -1,24 +1,24 @@
 [← Back to Level 2](../Level_2_Config/README.md) | [Tutorial Home](../README.md)
 
-# Level 3: User Input
+# Level 3: User Input - Primitives Only
 
-**<span style="color:#8FBE6D">Learn to collect user input with validation!</span>**
+**<span style="color:#8FBE6D">Master the fundamental input methods!</span>**
 
 ## What You'll Build
 
-An interactive Terminal app that demonstrates zDisplay's input capabilities:
-1. **String Input** - Collect text from users
-2. **Password Input** - Masked password entry
-3. **Single Selection** - Choose one from a list
-4. **Multi-Selection** - Choose multiple from a list
-5. **Interactive Menus** - Number-based selections
+An interactive Terminal app that demonstrates zDisplay's primitive input methods:
+1. **String Input** - `read_string()` for text collection
+2. **Password Input** - `read_password()` for masked entry
+3. **Complete Form** - Building forms with primitive inputs
 
 ## What You'll Learn
 
-1. **<span style="color:#8FBE6D">Input methods</span>** - String, password, selection
-2. **<span style="color:#F8961F">Validation</span>** - Automatic type checking
-3. **<span style="color:#00D4FF">Selections</span>** - Single and multi-select
-4. **<span style="color:#EA7171">Menus</span>** - Interactive number choices
+1. **<span style="color:#8FBE6D">Primitive inputs</span>** - `read_string()` and `read_password()`
+2. **<span style="color:#F8961F">Return types</span>** - Terminal: `str`, Bifrost: `asyncio.Future`
+3. **<span style="color:#00D4FF">Form building</span>** - Combining primitive inputs
+4. **<span style="color:#EA7171">Validation</span>** - Basic password confirmation example
+
+**Note:** Complex inputs (`selection()`, `zMenu()`, `zDialog()`) are covered in advanced tutorials.
 
 ## The Code
 

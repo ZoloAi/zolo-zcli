@@ -1,12 +1,13 @@
 """
-Level 2: Config & Paths
-========================
+Level 2: Config & Session
+==========================
 
 Demonstrates zConfig's core capabilities:
 - Machine detection (OS, hostname, architecture, Python version)
 - Configuration hierarchy (machine → environment → session)
 - Environment variables (read from .zEnv automatically)
 - Path resolution (@ shortcuts for workspace-relative paths)
+- Session variables (zVars) - Store user-defined values
 
 Key Concept: Zero-config initialization with hierarchical overrides
 """
@@ -107,7 +108,7 @@ paths_to_resolve = [
 
 for label, path in paths_to_resolve:
     try:
-        resolved = z.parser.resolve_path(path)
+        resolved = z.zparser.resolve_data_path(path)
         z.display.info(f"{label}: {resolved}")
     except Exception as e:
         z.display.warning(f"{label}: {e}")
@@ -149,6 +150,32 @@ z.display.json_data(session_data)
 z.display.text("")
 
 # ============================================
+# 8. Session Variables (zVars)
+# ============================================
+z.display.header("Session Variables (zVars)", color="BLUE")
+z.display.text("Store user-defined values for the session:")
+
+# Initialize zVars if not exists
+if "zVars" not in z.session:
+    z.session["zVars"] = {}
+
+# Set some example variables
+z.session["zVars"]["app_mode"] = "demo"
+z.session["zVars"]["user_role"] = "developer"
+z.session["zVars"]["theme"] = "dark"
+
+z.display.success("Stored 3 variables in session['zVars']:")
+z.display.text(f"  app_mode: {z.session['zVars']['app_mode']}", indent=1)
+z.display.text(f"  user_role: {z.session['zVars']['user_role']}", indent=1)
+z.display.text(f"  theme: {z.session['zVars']['theme']}", indent=1)
+
+z.display.text("")
+z.display.info("💡 zVars persist for the entire session")
+z.display.info("💡 Work across Terminal AND Bifrost modes")
+z.display.info("💡 Perfect for storing user inputs and preferences")
+z.display.text("")
+
+# ============================================
 # Summary
 # ============================================
 z.display.header("Summary", color="MAGENTA")
@@ -159,6 +186,7 @@ features_learned = [
     "Environment config - Deployment mode, logger level",
     "Environment variables - Read from .zEnv automatically",
     "Path resolution - @ shortcuts for workspace-relative paths",
+    "Session variables (zVars) - Store user values across the session",
     "Configuration hierarchy - 5-tier resolution (defaults → session)"
 ]
 z.display.list(features_learned)

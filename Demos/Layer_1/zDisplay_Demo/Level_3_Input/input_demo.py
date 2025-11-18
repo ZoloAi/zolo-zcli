@@ -1,15 +1,15 @@
 """
-Level 3: User Input
-====================
+Level 3: User Input - Primitives Only
+======================================
 
-Demonstrates zDisplay's input capabilities:
-- String input (plain text)
-- Password input (masked)
-- Single selection (choose one)
-- Multi-selection (choose multiple)
-- Interactive menus (numbered options)
+Demonstrates zDisplay's primitive input methods:
+- read_string() - Plain text input
+- read_password() - Masked password input
+- Storing inputs in session["zVars"] for cross-mode compatibility
 
-Key Concept: Same input API works in Terminal (input()) and GUI (HTML forms)
+Key Concept: Store inputs in zVars for clean async handling in Bifrost mode
+
+Note: Complex inputs (selection, menus, dialogs) are covered in advanced tutorials.
 """
 
 from zCLI import zCLI
@@ -17,151 +17,67 @@ from zCLI import zCLI
 # Initialize zCLI
 z = zCLI()
 
+# Initialize zVars for input storage
+if "zVars" not in z.session:
+    z.session["zVars"] = {}
+
 # ============================================
 # Introduction
 # ============================================
 z.display.header("Level 3: User Input Demo", color="CYAN")
-z.display.text("This demo shows how to collect user input in zCLI")
-z.display.info("All methods work in Terminal AND GUI mode!")
+z.display.text("Collect user input and store in session variables")
+z.display.info("All methods work in Terminal AND Bifrost modes!")
+z.display.info("💡 Inputs are stored in session['zVars'] for easy access")
 z.display.text("")
 
 # ============================================
-# 1. String Input
+# 1. String Input → Stored in zVars
 # ============================================
 z.display.header("1. String Input", color="GREEN")
-z.display.text("Collect plain text from the user:")
+z.display.text("Collect plain text and store in session:")
 
-name = z.display.read_string("Enter your name: ")
-z.display.success(f"✅ Hello, {name}!")
+# Collect and store in zVars
+z.session["zVars"]["name"] = z.display.read_string("Enter your name: ")
 
-age = z.display.read_string("Enter your age: ")
-z.display.success(f"✅ You are {age} years old")
+# Access from zVars
+z.display.success(f"✅ Hello, {z.session['zVars']['name']}!")
+z.display.info("Stored in: session['zVars']['name']")
 
 z.display.text("")
 
 # ============================================
-# 2. Password Input (masked)
+# 2. Password Input → Stored in zVars
 # ============================================
 z.display.header("2. Password Input", color="YELLOW")
-z.display.text("Passwords are masked with * characters:")
+z.display.text("Masked input stored in session:")
 
-password = z.display.read_password("Enter a password: ")
-z.display.success(f"✅ Password received ({len(password)} characters)")
-z.display.info(f"First character: {password[0] if password else 'N/A'}")
+# Collect and store in zVars
+z.session["zVars"]["password"] = z.display.read_password("Enter a password: ")
+
+# Access from zVars
+pwd_len = len(z.session["zVars"]["password"])
+z.display.success(f"✅ Password received ({pwd_len} characters)")
+z.display.info("Stored in: session['zVars']['password']")
 z.display.warning("⚠️  In real apps, hash passwords before storing!")
 
 z.display.text("")
 
 # ============================================
-# 3. Single Selection
+# 3. View All Collected Inputs
 # ============================================
-z.display.header("3. Single Selection", color="BLUE")
-z.display.text("Choose one option from a list:")
-z.display.info("Use arrow keys (↑↓) to navigate, Enter to select")
-
-environments = ["Development", "Staging", "Production"]
-env = z.display.selection(
-    "Choose deployment environment:",
-    environments
-)
-z.display.success(f"✅ Selected: {env}")
-
+z.display.header("3. Session Variables Summary", color="BLUE")
+z.display.text("All inputs collected and stored in session['zVars']:")
 z.display.text("")
 
-# ============================================
-# 4. Multi-Selection
-# ============================================
-z.display.header("4. Multi-Selection", color="MAGENTA")
-z.display.text("Choose multiple options from a list:")
-z.display.info("Use arrow keys (↑↓) to navigate, Space to toggle, Enter to confirm")
-
-feature_options = ["Logging", "Caching", "Debugging", "Profiling", "Analytics"]
-features = z.display.selection(
-    "Enable features (select multiple):",
-    feature_options,
-    multi=True
-)
-
-if features:
-    z.display.success(f"✅ Enabled {len(features)} features:")
-    for feature in features:
-        z.display.text(f"  • {feature}", indent=1)
-else:
-    z.display.warning("No features selected")
-
-z.display.text("")
-
-# ============================================
-# 5. Interactive Menu
-# ============================================
-z.display.header("5. Interactive Menu", color="CYAN")
-z.display.text("Numbered menu options (type number and press Enter):")
-
-menu_items = [
-    (1, "View Profile"),
-    (2, "Edit Settings"),
-    (3, "View Logs"),
-    (4, "Logout"),
-]
-
-choice = z.display.zMenu(
-    menu_items,
-    prompt="Choose an option:",
-    return_selection=True
-)
-
-z.display.success(f"✅ You selected option {choice}")
-
-# Map choice to action
-action_map = {
-    1: "Viewing profile...",
-    2: "Opening settings...",
-    3: "Loading logs...",
-    4: "Logging out...",
+# Display collected data (mask password for security)
+collected_data = {
+    "name": z.session["zVars"]["name"],
+    "password": "*" * len(z.session["zVars"]["password"])  # Masked
 }
-z.display.info(action_map.get(choice, "Unknown action"))
+z.display.json_data(collected_data)
 
 z.display.text("")
-
-# ============================================
-# 6. Putting It All Together: Mini Registration Form
-# ============================================
-z.display.header("6. Complete Form Example", color="GREEN")
-z.display.text("A simple registration form combining all input types:")
-
-# Collect user data
-z.display.text("Registration Form", indent=0)
-username = z.display.read_string("  Username: ")
-email = z.display.read_string("  Email: ")
-password = z.display.read_password("  Password: ")
-
-role = z.display.selection(
-    "  Select role:",
-    ["Admin", "Editor", "Viewer"]
-)
-
-permissions = z.display.selection(
-    "  Select permissions:",
-    ["Read", "Write", "Delete", "Share"],
-    multi=True
-)
-
-# Display summary
-z.display.text("")
-z.display.header("Registration Summary", color="BLUE")
-
-summary_data = {
-    "Username": username,
-    "Email": email,
-    "Password": "*" * len(password),  # Masked
-    "Role": role,
-    "Permissions": ", ".join(permissions) if permissions else "None"
-}
-
-z.display.json_data(summary_data)
-
-z.display.text("")
-z.display.success("✅ Registration complete!")
+z.display.success("✅ All inputs stored in session and accessible!")
 
 # ============================================
 # Summary
@@ -170,21 +86,16 @@ z.display.text("")
 z.display.header("Summary", color="MAGENTA")
 z.display.text("You've learned about:")
 features_learned = [
-    "read_string() - Plain text input",
-    "read_password() - Masked password input",
-    "selection() - Single choice from list",
-    "selection(multi=True) - Multiple choices from list",
-    "zMenu() - Numbered menu options",
-    "Building complete forms by combining input methods"
+    "read_string() - Plain text input with prompt",
+    "read_password() - Masked password input (hidden characters)",
+    "session['zVars'] - Store inputs for session-wide access",
+    "Cross-mode compatibility - Same pattern works in Terminal & Bifrost",
+    "Async handling - zVars isolate async complexity in Bifrost mode"
 ]
 z.display.list(features_learned)
 
 z.display.text("")
-z.display.success("🎉 Congratulations! You've completed the Layer 0 Terminal Tutorial!")
+z.display.success("🎉 Input primitives + zVars mastered!")
 z.display.text("")
-z.display.info("Next steps:")
-z.display.text("  • Explore zBifrost - Turn Terminal apps into web GUIs", indent=1)
-z.display.text("  • Learn zWalker - Build UIs from YAML", indent=1)
-z.display.text("  • Try zData - Database operations", indent=1)
-z.display.text("  • Build a real app - Combine all layers", indent=1)
+z.display.info("💡 Next: Learn zBifrost to turn this Terminal demo into a web GUI!")
 
