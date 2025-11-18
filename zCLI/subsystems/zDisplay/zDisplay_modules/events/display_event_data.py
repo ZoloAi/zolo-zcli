@@ -321,10 +321,13 @@ from zCLI import json, re, Any, Optional, Union, List, Dict
 # Event name constants
 EVENT_NAME_LIST = "list"
 EVENT_NAME_JSON = "json"
+EVENT_NAME_OUTLINE = "outline"
 
 # Style constants
 STYLE_BULLET = "bullet"
 STYLE_NUMBER = "number"
+STYLE_LETTER = "letter"  # a, b, c...
+STYLE_ROMAN = "roman"    # i, ii, iii...
 
 # Marker constant
 MARKER_BULLET: str = "- "
@@ -332,6 +335,7 @@ MARKER_BULLET: str = "- "
 # Dict key constants (for GUI events)
 KEY_ITEMS = "items"
 KEY_STYLE = "style"
+KEY_STYLES = "styles"  # For outline (multiple styles per level)
 KEY_INDENT = "indent"
 KEY_DATA = "data"
 KEY_INDENT_SIZE = "indent_size"
@@ -468,6 +472,71 @@ class BasicData:
         return self.zPrimitives.send_gui_event(event_name, event_data)
 
     # ═══════════════════════════════════════════════════════════════════════════
+    # Helper Methods - Prefix Generation & Number Conversion
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    def _generate_prefix(self, style: str, number: int) -> str:
+        """Generate list prefix based on style and number.
+        
+        Extracted from list() method for reuse in outline(). This implements
+        the DRY principle - single source of truth for prefix generation.
+        
+        Args:
+            style: List style (bullet, number, letter, roman, none)
+            number: Item number (1-indexed)
+            
+        Returns:
+            str: Formatted prefix (e.g., "1. ", "a. ", "i. ", "- ", or "")
+        """
+        if style == STYLE_NUMBER:
+            return f"{number}. "
+        elif style == STYLE_LETTER:
+            # a, b, c... (26 letters, then aa, ab, etc.)
+            return self._number_to_letter(number) + ". "
+        elif style == STYLE_ROMAN:
+            # i, ii, iii, iv...
+            return self._number_to_roman(number) + ". "
+        elif style == STYLE_BULLET:
+            return MARKER_BULLET
+        else:  # "none" style
+            return ""
+
+    def _number_to_letter(self, num: int) -> str:
+        """Convert number to lowercase letter (1→a, 2→b, 27→aa).
+        
+        Args:
+            num: Number to convert (1-indexed)
+            
+        Returns:
+            str: Lowercase letter(s)
+        """
+        result = ""
+        while num > 0:
+            num -= 1
+            result = chr(97 + (num % 26)) + result
+            num //= 26
+        return result
+
+    def _number_to_roman(self, num: int) -> str:
+        """Convert number to lowercase roman numeral (1→i, 2→ii, 4→iv).
+        
+        Args:
+            num: Number to convert (1-50 supported)
+            
+        Returns:
+            str: Lowercase roman numeral
+        """
+        values = [50, 40, 10, 9, 5, 4, 1]
+        symbols = ['l', 'xl', 'x', 'ix', 'v', 'iv', 'i']
+        result = ""
+        for i, value in enumerate(values):
+            count = num // value
+            if count:
+                result += symbols[i] * count
+                num -= value * count
+        return result
+
+    # ═══════════════════════════════════════════════════════════════════════════
     # Public Methods - List & JSON Display
     # ═══════════════════════════════════════════════════════════════════════════
 
@@ -546,15 +615,9 @@ class BasicData:
             return  # GUI event sent successfully
 
         # Terminal mode - format and display list
-        # Use BasicOutputs.text() for consistent output (composition!)
+        # Use _generate_prefix() helper for DRY (reused by outline() method)
         for i, item in enumerate(items, 1):
-            if style == STYLE_NUMBER:
-                prefix = f"{i}. "
-            elif style == STYLE_BULLET:
-                prefix = MARKER_BULLET
-            else:  # "none" or any other style - no prefix
-                prefix = ""
-
+            prefix = self._generate_prefix(style, i)
             content = f"{prefix}{item}"
             # Compose: use helper instead of direct BasicOutputs call
             self._output_text(content, indent=indent, break_after=False)
@@ -666,6 +729,163 @@ class BasicData:
         # Compose: use helper instead of direct BasicOutputs call
         # Note: json_str already has indentation applied, so pass indent=0
         self._output_text(json_str, indent=0, break_after=False)
+
+    def outline(
+        self, 
+        items: List[Union[str, Dict[str, Any]]], 
+        styles: Optional[List[str]] = None, 
+        indent: int = DEFAULT_INDENT
+    ) -> None:
+        """Display hierarchical outline with multi-level numbering (Word-style).
+        
+        Foundation method for outline display. Supports nested structures with
+        automatic multi-level numbering (1→a→i→bullet pattern).
+        
+        Reuses existing list() abstractions:
+        - _output_text() for terminal output (composition with BasicOutputs)
+        - _send_gui_event() for GUI mode (dual-mode I/O pattern)
+        - _generate_prefix() for numbering (extracted from list())
+        
+        Args:
+            items: List of items (strings or dicts with 'content' and 'children')
+                   - String: "Item text"
+                   - Dict: {"content": "Item text", "children": [nested items]}
+            styles: List of styles per indentation level (default: number→letter→roman→bullet)
+                    - Level 0: numbers (1, 2, 3)
+                    - Level 1: letters (a, b, c)
+                    - Level 2: roman (i, ii, iii)
+                    - Level 3+: bullets (•)
+            indent: Base indentation level (default: 0)
+        
+        Returns:
+            None
+            
+        Example:
+            # Simple flat outline (numbers at top level)
+            z.display.outline([
+                "Backend Architecture",
+                "Frontend Architecture",
+                "Communication Layer"
+            ], styles=["number"])
+            # Output:
+            #   1. Backend Architecture
+            #   2. Frontend Architecture
+            #   3. Communication Layer
+            
+            # Hierarchical outline (Word-style multi-level)
+            z.display.outline([
+                {
+                    "content": "Backend Architecture",
+                    "children": [
+                        {
+                            "content": "Python Runtime Environment",
+                            "children": [
+                                "zCLI framework initialization",
+                                "zDisplay subsystem loading"
+                            ]
+                        },
+                        "Data Processing Layer"
+                    ]
+                },
+                {
+                    "content": "Frontend Architecture",
+                    "children": ["Rendering Engine", "User Interaction"]
+                }
+            ])
+            # Output (default styles: number→letter→roman):
+            #   1. Backend Architecture
+            #      a. Python Runtime Environment
+            #         i. zCLI framework initialization
+            #         ii. zDisplay subsystem loading
+            #      b. Data Processing Layer
+            #   2. Frontend Architecture
+            #      a. Rendering Engine
+            #      b. User Interaction
+        
+        Note:
+            Composes with: _generate_prefix(), _output_text(), _send_gui_event()
+            Pattern: Same dual-mode I/O as list() and json_data()
+        """
+        # Handle None or empty list
+        if not items:
+            return
+        
+        # Default outline styles (Word-like multi-level numbering)
+        if styles is None:
+            styles = [STYLE_NUMBER, STYLE_LETTER, STYLE_ROMAN, STYLE_BULLET]
+        
+        # Try GUI mode first - send clean event (dual-mode pattern)
+        if self._send_gui_event(EVENT_NAME_OUTLINE, {
+            KEY_ITEMS: items,
+            KEY_STYLES: styles,
+            KEY_INDENT: indent
+        }):
+            return  # GUI event sent successfully
+        
+        # Terminal mode - recursive rendering using existing abstractions
+        self._render_outline_items(items, styles, indent, level=0)
+
+    def _render_outline_items(
+        self, 
+        items: List[Union[str, Dict[str, Any]]], 
+        styles: List[str], 
+        base_indent: int, 
+        level: int,
+        counters: Optional[Dict[str, int]] = None
+    ) -> None:
+        """Recursively render outline items using existing list() logic.
+        
+        Reuses:
+        - _generate_prefix() for numbering (extracted from list())
+        - _output_text() for terminal output (composition with BasicOutputs)
+        
+        Args:
+            items: List of items (strings or dicts)
+            styles: List of styles per level
+            base_indent: Base indentation level
+            level: Current nesting level (0-indexed)
+            counters: Counter dict for tracking item numbers per level
+        """
+        if counters is None:
+            counters = {}
+        
+        # Initialize counter for this level
+        counter_key = f"level_{level}"
+        if counter_key not in counters:
+            counters[counter_key] = 0
+        
+        for item in items:
+            # Increment counter for this level
+            counters[counter_key] += 1
+            
+            # Determine style for this level (fallback to bullet for deep nesting)
+            style = styles[level] if level < len(styles) else STYLE_BULLET
+            
+            # Extract content and children
+            if isinstance(item, dict):
+                content = item.get("content", "")
+                children = item.get("children", [])
+            else:
+                content = str(item)
+                children = []
+            
+            # Generate prefix using extracted helper (reuse from list()!)
+            prefix = self._generate_prefix(style, counters[counter_key])
+            
+            # Render this item using existing abstraction
+            full_content = f"{prefix}{content}"
+            current_indent = base_indent + level
+            self._output_text(full_content, indent=current_indent, break_after=False)
+            
+            # Recursively render children (reuse this same logic)
+            if children:
+                self._render_outline_items(children, styles, base_indent, level + 1, counters)
+            
+            # Reset child counters when moving to next sibling
+            # This ensures each sibling's children start from 1/a/i again
+            child_keys = [k for k in counters.keys() if k.startswith(f"level_{level + 1}")]
+            for k in child_keys:
+                del counters[k]
 
     # ═══════════════════════════════════════════════════════════════════════════
     # Helper Methods - JSON Syntax Coloring

@@ -390,6 +390,21 @@ class zEvents:
         """
         return self.BasicData.list(items, style, indent)
 
+    def outline(self, items: List[Any], styles: Optional[List[str]] = None, indent: int = 0) -> Any:
+        """Display hierarchical outline with multi-level numbering.
+        
+        Convenience delegate to BasicData.outline for backward compatibility.
+        
+        Args:
+            items: List of items (strings or dicts with 'content' and 'children')
+            styles: List of styles per indentation level (default: number→letter→roman→bullet)
+            indent: Base indentation level (default: 0)
+            
+        Returns:
+            Any: Result from BasicData.outline method
+        """
+        return self.BasicData.outline(items, styles, indent)
+
     def json_data(self, data: Dict[str, Any], indent_size: int = 2, indent: int = 0, color: bool = False) -> Any:
         """Display JSON data with formatting.
         

@@ -10,7 +10,7 @@ This demo showcases ALL advanced zDisplay events in Terminal mode:
   3. Interactive: limit + interactive=True → Keyboard navigation
 - json_data() for structured data
 - list() for bulleted/numbered lists
-- Complex nested content
+- outline() for hierarchical multi-level outlines (Word-style: 1→a→i→bullet)
 
 Interactive Table Navigation (Terminal):
 - Built-in keyboard commands: [n]ext, [p]revious, [f]irst, [l]ast, [#] jump, [q]uit
@@ -131,7 +131,86 @@ z.display.list(steps, style="number", indent=2)
 z.display.text("", break_after=False)
 
 # ============================================
-# 7. JSON (pretty-printed)
+# 7. Hierarchical Outline (Multi-Level Structure)
+# ============================================
+z.display.header("Hierarchical Outline", color="BLUE", indent=1)
+z.display.text("Full outline format with Word-style multi-level numbering:")
+z.display.text("", break_after=False)
+
+# Hierarchical outline with nested structure
+outline_data = [
+    {
+        "content": "Backend Architecture",
+        "children": [
+            {
+                "content": "Python Runtime Environment",
+                "children": [
+                    "zCLI framework initialization",
+                    "zDisplay subsystem loading",
+                    "Event handler registration"
+                ]
+            },
+            {
+                "content": "Data Processing Layer",
+                "children": [
+                    "Input validation",
+                    "Business logic execution"
+                ]
+            },
+            {
+                "content": "Output Generation",
+                "children": [
+                    "ANSI color formatting",
+                    "Terminal rendering"
+                ]
+            }
+        ]
+    },
+    {
+        "content": "Frontend Architecture",
+        "children": [
+            {
+                "content": "Rendering Engine",
+                "children": [
+                    "ANSI escape sequences",
+                    "Unicode character support"
+                ]
+            },
+            {
+                "content": "User Interaction",
+                "children": [
+                    "Keyboard input handling",
+                    "Interactive navigation commands"
+                ]
+            }
+        ]
+    },
+    {
+        "content": "Communication Layer",
+        "children": [
+            {
+                "content": "Event System",
+                "children": [
+                    "WebSocket protocol",
+                    "Message serialization"
+                ]
+            },
+            {
+                "content": "Protocol Design",
+                "children": [
+                    "Request/response patterns",
+                    "Bidirectional communication"
+                ]
+            }
+        ]
+    }
+]
+
+z.display.outline(outline_data)
+z.display.text("", break_after=False)
+
+# ============================================
+# 8. JSON (pretty-printed)
 # ============================================
 z.display.header("JSON Display", color="CYAN", indent=1)
 z.display.text("Pretty-printed JSON with automatic formatting:")
@@ -151,23 +230,6 @@ z.display.json_data(config)
 z.display.text("", break_after=False)
 
 # ============================================
-# 8. Complex Nested List
-# ============================================
-z.display.header("Nested Information", color="BLUE", indent=1)
-z.display.text("Combine lists with indentation:")
-
-z.display.text("🎯 Project Structure:", indent=0, break_after=False)
-
-components = [
-    "Backend (Python) - zCLI with zDisplay",
-    "Frontend (Terminal) - ANSI rendering engine",
-    "Input (Keyboard) - Interactive commands",
-    "Formatting (ASCII) - Smart text alignment"
-]
-z.display.list(components, style="bullet", indent=1)
-z.display.text("", break_after=False)
-
-# ============================================
 # Summary
 # ============================================
 z.display.header("What You've Seen", color="CYAN", indent=0)
@@ -180,7 +242,7 @@ features_learned = [
     "Interactive controls - Keyboard commands for seamless navigation",
     "list() - Bulleted and numbered lists",
     "json_data() - Pretty JSON formatting",
-    "Complex nesting - Lists with hierarchical structure"
+    "outline() - Hierarchical outlines with multi-level numbering (1→a→i→bullet)"
 ]
 z.display.list(features_learned, style="bullet", indent=1)
 

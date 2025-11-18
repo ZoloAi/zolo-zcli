@@ -62,6 +62,9 @@ export class ZDisplayRenderer {
         case 'list':
           element = this._renderList(eventData);
           break;
+        case 'outline':
+          element = this._renderOutline(eventData);
+          break;
         case 'table':
         case 'zTable':  // Backend sends 'zTable' (camelCase)
           element = this._renderTable(eventData);
@@ -208,6 +211,100 @@ export class ZDisplayRenderer {
       // Support both string items and object items with content field
       const content = typeof item === 'string' ? item : (item.content || '');
       li.innerHTML = this._sanitizeHTML(content);
+      
+      listElement.appendChild(li);
+    });
+    
+    return listElement;
+  }
+
+  /**
+   * Render hierarchical outline with multi-level numbering (Word-style)
+   * Supports: number (1,2,3) → letter (a,b,c) → roman (i,ii,iii) → bullet
+   * @private
+   */
+  _renderOutline(event) {
+    const items = event.items || [];
+    const styles = event.styles || ['number', 'letter', 'roman', 'bullet'];
+    const baseIndent = event.indent || 0;
+    
+    // Create container for the outline
+    const container = document.createElement('div');
+    container.className = 'zOutline';
+    
+    // Apply base indent
+    if (baseIndent > 0) {
+      container.style.marginLeft = `${baseIndent}rem`;
+    }
+    
+    // Render items recursively
+    const listElement = this._renderOutlineItems(items, styles, 0);
+    if (listElement) {
+      container.appendChild(listElement);
+    }
+    
+    return container;
+  }
+
+  /**
+   * Recursively render outline items with proper nesting
+   * @private
+   */
+  _renderOutlineItems(items, styles, level) {
+    if (!items || items.length === 0) {
+      return null;
+    }
+    
+    // Determine style for this level
+    const style = level < styles.length ? styles[level] : 'bullet';
+    
+    // Create list element based on style
+    let listElement;
+    if (style === 'bullet') {
+      listElement = document.createElement('ul');
+      listElement.className = 'zList';
+    } else {
+      listElement = document.createElement('ol');
+      listElement.className = 'zList';
+      
+      // Set list-style-type for different numbering styles
+      if (style === 'letter') {
+        listElement.style.listStyleType = 'lower-alpha';  // a, b, c
+      } else if (style === 'roman') {
+        listElement.style.listStyleType = 'lower-roman';  // i, ii, iii
+      }
+      // 'number' uses default decimal (1, 2, 3)
+    }
+    
+    // Render each item
+    items.forEach(item => {
+      const li = document.createElement('li');
+      
+      // Extract content and children
+      let content, children;
+      if (typeof item === 'string') {
+        content = item;
+        children = null;
+      } else if (typeof item === 'object') {
+        content = item.content || '';
+        children = item.children || null;
+      } else {
+        content = String(item);
+        children = null;
+      }
+      
+      // Create text node for this item's content
+      const contentSpan = document.createElement('span');
+      contentSpan.innerHTML = this._sanitizeHTML(content);
+      li.appendChild(contentSpan);
+      
+      // Recursively render children if they exist
+      if (children && children.length > 0) {
+        const childList = this._renderOutlineItems(children, styles, level + 1);
+        if (childList) {
+          li.appendChild(childList);
+        }
+      }
       
       listElement.appendChild(li);
     });

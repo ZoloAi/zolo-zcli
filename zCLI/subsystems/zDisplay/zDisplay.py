@@ -154,6 +154,7 @@ EVENT_ZMARKER = "zMarker"
 # ═══════════════════════════════════════════════════════════════════════════
 
 EVENT_LIST = "list"
+EVENT_OUTLINE = "outline"
 EVENT_JSON = "json"
 EVENT_JSON_DATA = "json_data"
 EVENT_ZTABLE = "zTable"
@@ -302,6 +303,7 @@ class zDisplay(zDisplayDelegates):
 
             # Data events
             EVENT_LIST: self.zEvents.list,
+            EVENT_OUTLINE: self.zEvents.outline,
             EVENT_JSON: self.zEvents.json_data,
             EVENT_JSON_DATA: self.zEvents.json_data,
             EVENT_ZTABLE: self.zEvents.zTable,
