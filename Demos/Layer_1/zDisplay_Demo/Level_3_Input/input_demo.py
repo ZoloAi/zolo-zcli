@@ -1,15 +1,14 @@
 """
-Level 3: User Input - Primitives Only
-======================================
+Level 3: User Input - Terminal Mode
+====================================
 
-Demonstrates zDisplay's primitive input methods:
+Demonstrates zDisplay's input methods:
 - read_string() - Plain text input
 - read_password() - Masked password input
-- Storing inputs in session["zVars"] for cross-mode compatibility
+- selection() - Single and multi-select
+- Storing inputs in session["zVars"]
 
-Key Concept: Store inputs in zVars for clean async handling in Bifrost mode
-
-Note: Complex inputs (selection, menus, dialogs) are covered in advanced tutorials.
+Key: SAME CODE works in Terminal AND Bifrost modes!
 """
 
 from zCLI import zCLI
@@ -22,80 +21,35 @@ if "zVars" not in z.session:
     z.session["zVars"] = {}
 
 # ============================================
-# Introduction
+# SAME LOGIC as Bifrost demo (input_bifrost.py)
 # ============================================
-z.display.header("Level 3: User Input Demo", color="CYAN")
-z.display.text("Collect user input and store in session variables")
-z.display.info("All methods work in Terminal AND Bifrost modes!")
-z.display.info("💡 Inputs are stored in session['zVars'] for easy access")
+z.display.header("Fire-and-Forget Pattern", color="CYAN")
+z.display.text("5 inputs (string, string, password, selection, multi-selection)!")
 z.display.text("")
 
-# ============================================
-# 1. String Input → Stored in zVars
-# ============================================
-z.display.header("1. String Input", color="GREEN")
-z.display.text("Collect plain text and store in session:")
+# Terminal mode: Direct execution (no await needed)
+name_value = z.display.read_string("Enter your name: ")
+z.session["zVars"]["name"] = name_value
+z.display.success(f"Name: {name_value}")
 
-# Collect and store in zVars
-z.session["zVars"]["name"] = z.display.read_string("Enter your name: ")
+email_value = z.display.read_string("Enter your email: ")
+z.session["zVars"]["email"] = email_value
+z.display.success(f"Email: {email_value}")
 
-# Access from zVars
-z.display.success(f"✅ Hello, {z.session['zVars']['name']}!")
-z.display.info("Stored in: session['zVars']['name']")
+password_value = z.display.read_password("Enter password: ")
+z.session["zVars"]["password_length"] = len(password_value)
+z.display.success(f"Password: {'•' * len(password_value)} ({len(password_value)} chars)")
 
-z.display.text("")
+role_value = z.display.selection("Select your role:", ["Developer", "Designer", "Manager", "Other"])
+z.session["zVars"]["role"] = role_value
+z.display.success(f"Role: {role_value}")
 
-# ============================================
-# 2. Password Input → Stored in zVars
-# ============================================
-z.display.header("2. Password Input", color="YELLOW")
-z.display.text("Masked input stored in session:")
+skills_value = z.display.selection("Select your skills:", ["Python", "JavaScript", "React", "Django", "zCLI"], multi=True, default=["Python", "zCLI"])
+z.session["zVars"]["skills"] = skills_value
+z.display.success(f"Skills: {', '.join(skills_value) if skills_value else 'None selected'}")
 
-# Collect and store in zVars
-z.session["zVars"]["password"] = z.display.read_password("Enter a password: ")
-
-# Access from zVars
-pwd_len = len(z.session["zVars"]["password"])
-z.display.success(f"✅ Password received ({pwd_len} characters)")
-z.display.info("Stored in: session['zVars']['password']")
-z.display.warning("⚠️  In real apps, hash passwords before storing!")
-
-z.display.text("")
-
-# ============================================
-# 3. View All Collected Inputs
-# ============================================
-z.display.header("3. Session Variables Summary", color="BLUE")
-z.display.text("All inputs collected and stored in session['zVars']:")
-z.display.text("")
-
-# Display collected data (mask password for security)
-collected_data = {
-    "name": z.session["zVars"]["name"],
-    "password": "*" * len(z.session["zVars"]["password"])  # Masked
-}
-z.display.json_data(collected_data)
-
-z.display.text("")
-z.display.success("✅ All inputs stored in session and accessible!")
-
-# ============================================
 # Summary
-# ============================================
 z.display.text("")
-z.display.header("Summary", color="MAGENTA")
-z.display.text("You've learned about:")
-features_learned = [
-    "read_string() - Plain text input with prompt",
-    "read_password() - Masked password input (hidden characters)",
-    "session['zVars'] - Store inputs for session-wide access",
-    "Cross-mode compatibility - Same pattern works in Terminal & Bifrost",
-    "Async handling - zVars isolate async complexity in Bifrost mode"
-]
-z.display.list(features_learned)
-
-z.display.text("")
-z.display.success("🎉 Input primitives + zVars mastered!")
-z.display.text("")
-z.display.info("💡 Next: Learn zBifrost to turn this Terminal demo into a web GUI!")
+z.display.header("Summary", color="BLUE")
+z.display.json_data(z.session["zVars"])
 

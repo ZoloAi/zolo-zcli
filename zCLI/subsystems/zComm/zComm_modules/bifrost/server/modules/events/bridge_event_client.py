@@ -180,6 +180,8 @@ class ClientEvents:
             })
             ```
         """
+        self.logger.info(f"{LOG_PREFIX_INPUT} 🔵 handle_input_response CALLED! Data: {data}")
+        
         # Extract user context for logging and future authorization
         user_context = self._extract_user_context(ws)
         user_id = user_context.get(CONTEXT_KEY_USER_ID, DEFAULT_USER_ID)

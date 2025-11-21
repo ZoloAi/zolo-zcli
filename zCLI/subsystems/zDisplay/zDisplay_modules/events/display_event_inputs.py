@@ -299,7 +299,7 @@ class BasicInputs:
 
     def selection(self, prompt: str, options: List[str], multi: bool = DEFAULT_MULTI, 
                   default: Optional[Union[str, List[str]]] = None, 
-                  style: str = DEFAULT_STYLE) -> Optional[Union[str, List[str]]]:
+                  style: str = DEFAULT_STYLE) -> Union[Optional[str], List[str], 'asyncio.Future']:
         """Display selection prompt and collect user's choice(s).
         
         Foundation method for interactive selection prompts. Implements dual-mode
@@ -324,8 +324,11 @@ class BasicInputs:
                    Currently only "numbered" is supported
                 
         Returns:
-            Single-select: Optional[str] - Selected option or None if cancelled
-            Multi-select: List[str] - List of selected options (empty if none)
+            Terminal mode:
+                Single-select: Optional[str] - Selected option or None if cancelled
+                Multi-select: List[str] - List of selected options (empty if none)
+            Bifrost mode:
+                asyncio.Future - That will resolve to the selection value(s)
             
         Example:
             # Single-select
@@ -338,34 +341,43 @@ class BasicInputs:
                 multi=True,
                 default=["Feature A"]
             )
+            
+            # Bifrost mode (fire-and-forget)
+            future = self.BasicInputs.selection("Choose:", options)
+            result = await future  # Resolves when user selects
         
         Note:
             Used by: zSystem (menu prompts, configuration selection)
             Composes with: BasicOutputs.text() for terminal display
             Validates: Input range (1 to len(options)), numeric input, toggle behavior
         """
-        # Try GUI mode first
-        if self._try_gui_mode(prompt, options, multi, default, style):
-            return [] if multi else None
+        # Try GUI mode first - returns Future if successful
+        gui_future = self._try_gui_mode_future(prompt, options, multi, default, style)
+        if gui_future is not None:
+            return gui_future
 
-        # Validate options
+        # Terminal mode: Validate options
         if not self._validate_options(options, multi):
             return [] if multi else None
 
-        # Display prompt and options
+        # Terminal mode: Display prompt and options
         self._display_prompt(prompt)
         self._display_options(options, multi, default)
 
-        # Handle selection based on mode
+        # Terminal mode: Handle selection
         return self._handle_selection(options, multi, default)
 
     # ═══════════════════════════════════════════════════════════════════════════
     # Helper Methods - Selection Logic (Extracted from selection() for refactoring)
     # ═══════════════════════════════════════════════════════════════════════════
 
-    def _try_gui_mode(self, prompt: str, options: List[str], multi: bool, 
-                      default: Optional[Union[str, List[str]]], style: str) -> bool:
-        """Try to handle selection in GUI mode (extracted method).
+    def _try_gui_mode_future(self, prompt: str, options: List[str], multi: bool, 
+                             default: Optional[Union[str, List[str]]], style: str) -> Optional['asyncio.Future']:
+        """Try to handle selection in GUI mode with Future return (extracted method).
+        
+        Creates and returns an asyncio.Future that will be resolved when the GUI
+        client sends back the selection response. This enables fire-and-forget
+        pattern for selections in Bifrost mode.
         
         Args:
             prompt: Selection prompt text
@@ -375,15 +387,24 @@ class BasicInputs:
             style: Display style
             
         Returns:
-            bool: True if GUI mode handled the event, False otherwise
+            Optional[asyncio.Future]: Future that resolves to selection value(s),
+                                      or None if not in GUI mode
         """
-        return self.zPrimitives.send_gui_event(EVENT_NAME_SELECTION, {
-            KEY_PROMPT: prompt,
-            KEY_OPTIONS: options,
-            KEY_MULTI: multi,
-            KEY_DEFAULT: default,
-            KEY_STYLE: style
-        })
+        # Check if in GUI mode
+        if not self.zPrimitives._is_gui_mode():
+            return None
+        
+        # Send selection request via input_request mechanism (creates Future)
+        gui_future = self.zPrimitives._send_input_request(
+            'selection',  # request_type
+            prompt,
+            options=options,
+            multi=multi,
+            default=default,
+            style=style
+        )
+        
+        return gui_future
 
     def _validate_options(self, options: List[str], multi: bool) -> bool:
         """Validate that options list is not empty (extracted method).

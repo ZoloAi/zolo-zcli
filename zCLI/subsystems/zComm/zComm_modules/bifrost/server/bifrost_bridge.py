@@ -417,8 +417,24 @@ class zBifrost:
             return
 
         # Execute handler
+        # For custom event handlers that may block on user input (like show_inputs),
+        # we need to run them as background tasks to avoid blocking the message loop.
+        # This prevents deadlock when handler awaits input_response that arrives later.
         try:
-            await handler(ws, data)
+            # Check if this is a built-in event that should be awaited inline
+            builtin_events = {
+                EVENT_INPUT_RESPONSE, EVENT_CONNECTION_INFO, EVENT_GET_SCHEMA, 
+                EVENT_CLEAR_CACHE, EVENT_CACHE_STATS, EVENT_SET_CACHE_TTL,
+                EVENT_DISCOVER, EVENT_INTROSPECT, EVENT_DISPATCH
+            }
+            
+            if event in builtin_events:
+                # Built-in events: await normally (they don't block on user input)
+                await handler(ws, data)
+            else:
+                # Custom handlers: run as background task to avoid blocking message loop
+                asyncio.create_task(handler(ws, data))
+                self.logger.debug(f"[zBifrost] Created background task for event: {event}")
         except Exception as e:
             self.logger.error(LOG_ERROR_HANDLING_EVENT.format(event=event, error=e), exc_info=True)
             error_response = {

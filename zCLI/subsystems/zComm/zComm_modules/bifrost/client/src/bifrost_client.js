@@ -364,6 +364,22 @@
           });
           this.logger.log('[BifrostClient] Registered default onDisplay hook for auto-rendering');
         }
+        
+        // Register default onInput hook if not already set
+        if (!this.hooks.has('onInput')) {
+          this.hooks.register('onInput', (inputRequest) => {
+            this.logger.log('[BifrostClient] Rendering input request:', inputRequest);
+            const inputType = inputRequest.type || inputRequest.data?.type || 'string';
+            
+            // Route to appropriate renderer based on type
+            if (inputType === 'selection') {
+              this.zDisplayRenderer.renderSelectionRequest(inputRequest);
+            } else {
+              this.zDisplayRenderer.renderInputRequest(inputRequest);
+            }
+          });
+          this.logger.log('[BifrostClient] Registered default onInput hook for input rendering');
+        }
       }
       return this.zDisplayRenderer;
     }

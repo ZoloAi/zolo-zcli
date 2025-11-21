@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Level 6: User Input (Bifrost)</title>
+    <script src="../../../../zCLI/subsystems/zComm/zComm_modules/bifrost/client/src/bifrost_client.js"></script>
+</head>
+<body>
+    <div class="zContainer zmt-5">
+        
+        <div class="zD-flex zFlexColumn zAlignItems-center zmb-4">
+            <h1>📝 Level 6: User Input (Bifrost)</h1>
+            <p>Primitive inputs with zVars pattern</p>
+            
+            <div class="zSection-info zp-3 zmt-3">
+                🚀 <strong>Async input collection</strong> with zTheme auto-rendering!<br>
+                HTML forms auto-generated, inputs stored in session['zVars'].
+            </div>
+            
+            <div class="zD-flex zmt-3" style="gap: 15px;">
+                <button class="zoloButton zBtnPrimary" disabled>Auto-Connected ✨</button>
+                <button class="zoloButton zBtnDanger" onclick="disconnect()">Disconnect</button>
+            </div>
+        </div>
+
+        <div id="status" class="zD-none zSection zp-3 zmb-3"></div>
+        <div id="zVaF" class="zContainer"><h1>zVaF Output</h1></div>
+
+    </div>
+
+    <script>
+        // 🎨 Swiper-Style Elegance! One declaration, everything happens automatically.
+        const client = new BifrostClient('ws://127.0.0.1:8765', {
+            autoConnect: true,              // ← Auto-connect on instantiation
+            zTheme: true,                   // ← Enable zTheme CSS & rendering (auto-loads CSS!)
+            // targetElement: 'zVaF',       // ← Optional: default is 'zVaF' (zView and Function)
+            autoRequest: 'show_inputs',     // ← Auto-send on connect (trigger input demo)
+            debug: true,                    // ← See what's happening in console
+            onConnected: (info) => console.log('✅ Connected!', info),
+            onDisconnected: () => console.log('❌ Disconnected'),
+            onError: (err) => console.error('❌ Error:', err)
+        });
+
+        // Expose client to window for input form submissions
+        window.bifrostClient = client;
+
+        function connect() {
+            // Already connected via autoConnect!
+            console.log('Already auto-connected! ✨');
+        }
+
+        function disconnect() {
+            if (client) client.disconnect();
+        }
+
+        /* ─────────────────────────────────────────────────────────
+         * Architecture:
+         * 
+         * 1. Backend sends input_request via read_string/read_password
+         * 2. BifrostClient's onInput hook auto-renders HTML form
+         * 3. User submits → client.sendInputResponse(requestId, value)
+         * 4. Backend receives response, populates session["zVars"]
+         * 5. Display logic reads from zVars (synchronously, no await)
+         * 
+         * Result: Clean async isolation! ✨
+         * ───────────────────────────────────────────────────────── */
+    </script>
+
+</body>
+</html>
+

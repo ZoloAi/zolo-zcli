@@ -444,10 +444,24 @@ class zPrimitives:
             request_id: UUID of the original input request
             value: User's input value from GUI client
         """
+        # Get logger from parent display instance
+        logger = self.display.zcli.logger if self.display and hasattr(self.display, 'zcli') else None
+        
+        if logger:
+            logger.info(f"🟢 handle_input_response called! RequestID: {request_id}, Value: {value}")
+            logger.info(f"🔍 Available futures: {list(self.response_futures.keys())}")
+        
         if request_id in self.response_futures:
             future = self.response_futures.pop(request_id)
+            if logger:
+                logger.info(f"✅ Found matching future! Done: {future.done()}")
             if not future.done():
                 future.set_result(value)
+                if logger:
+                    logger.info(f"✅ Future resolved with value: {value}")
+        else:
+            if logger:
+                logger.warning(f"⚠️ No matching future found for requestId: {request_id}")
 
     def send_gui_event(self, event_name: str, data: Dict[str, Any]) -> bool:
         """GUI primitive - buffer clean event object for zBifrost capture pattern.

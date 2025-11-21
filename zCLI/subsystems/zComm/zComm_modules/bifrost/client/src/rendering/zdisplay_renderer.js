@@ -799,5 +799,304 @@ export class ZDisplayRenderer {
       this.logger.error(`[ZDisplayRenderer] Zone not found: ${zone}`);
     }
   }
+
+  /**
+   * Render input request as HTML form
+   * @param {Object} inputRequest - Input request event from backend
+   * @param {string} targetZone - Target DOM element ID
+   */
+  renderInputRequest(inputRequest, targetZone = null) {
+    const zone = targetZone || this.defaultZone;
+    const container = document.getElementById(zone);
+    
+    if (!container) {
+      this.logger.error(`[ZDisplayRenderer] Cannot render input - zone not found: ${zone}`);
+      return;
+    }
+    
+    // Extract input details
+    const requestId = inputRequest.requestId || inputRequest.data?.requestId;
+    const inputType = inputRequest.type || inputRequest.data?.type || 'string';
+    const prompt = inputRequest.prompt || inputRequest.data?.prompt || 'Enter input:';
+    const masked = inputRequest.masked || inputRequest.data?.masked || (inputType === 'password');
+    
+    this.logger.log('[ZDisplayRenderer] Rendering input form:', { requestId, inputType, prompt, masked });
+    
+    // Create form container
+    const form = document.createElement('form');
+    form.className = 'zInputForm';
+    form.style.cssText = `
+      margin: 1rem 0;
+      padding: 1rem;
+      border: 2px solid var(--color-primary, #00D4FF);
+      border-radius: 8px;
+      background-color: var(--color-base, #fff);
+    `;
+    
+    // Create label
+    const label = document.createElement('label');
+    label.textContent = prompt;
+    label.style.cssText = `
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: bold;
+      color: var(--color-darkgray, #333);
+    `;
+    
+    // Create input field
+    const input = document.createElement('input');
+    input.type = masked ? 'password' : 'text';
+    input.placeholder = masked ? '••••••••' : 'Type here...';
+    input.required = true;
+    input.style.cssText = `
+      width: 100%;
+      padding: 0.5rem;
+      margin-bottom: 1rem;
+      border: 1px solid var(--color-gray, #ccc);
+      border-radius: 4px;
+      font-size: 1rem;
+    `;
+    
+    // Create submit button
+    const submitBtn = document.createElement('button');
+    submitBtn.type = 'submit';
+    submitBtn.textContent = '✓ Submit';
+    submitBtn.className = 'zoloButton zBtnPrimary';
+    submitBtn.style.cssText = `
+      padding: 0.5rem 1.5rem;
+      cursor: pointer;
+    `;
+    
+    // Handle form submission
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const value = input.value.trim();
+      
+      this.logger.log('[ZDisplayRenderer] Input submitted:', { requestId, value: masked ? '***' : value });
+      
+      // Send input_response back to server (one-way, no response expected)
+      if (window.bifrostClient && window.bifrostClient.connection) {
+        try {
+          const payload = {
+            event: 'input_response',
+            requestId: requestId,
+            value: value
+          };
+          this.logger.log('[ZDisplayRenderer] Sending input_response:', payload);
+          window.bifrostClient.connection.send(JSON.stringify(payload));
+          this.logger.log('[ZDisplayRenderer] ✅ Input response sent successfully (one-way)');
+        } catch (error) {
+          this.logger.error('[ZDisplayRenderer] ❌ Failed to send input response:', error);
+        }
+      } else {
+        this.logger.error('[ZDisplayRenderer] Cannot send input response - bifrostClient not found on window');
+      }
+      
+      // Replace form with confirmation message
+      const confirmation = document.createElement('p');
+      confirmation.style.cssText = `
+        margin: 1rem 0;
+        padding: 0.75rem;
+        background-color: var(--color-success-light, #d4edda);
+        border: 1px solid var(--color-success, #28a745);
+        border-radius: 4px;
+        color: var(--color-success-dark, #155724);
+      `;
+      confirmation.textContent = masked 
+        ? `✓ Password submitted (${value.length} characters)` 
+        : `✓ Submitted: ${value}`;
+      
+      form.replaceWith(confirmation);
+    });
+    
+    // Assemble form
+    form.appendChild(label);
+    form.appendChild(input);
+    form.appendChild(submitBtn);
+    
+    // Add to container
+    container.appendChild(form);
+    
+    // Focus input
+    input.focus();
+    
+    this.logger.log('[ZDisplayRenderer] Input form rendered');
+  }
+
+  /**
+   * Render selection request as HTML form with radio/checkboxes
+   * @param {Object} selectionRequest - Selection request event from backend
+   * @param {string} targetZone - Target DOM element ID
+   */
+  renderSelectionRequest(selectionRequest, targetZone = null) {
+    const zone = targetZone || this.defaultZone;
+    const container = document.getElementById(zone);
+    
+    if (!container) {
+      this.logger.error(`[ZDisplayRenderer] Cannot render selection - zone not found: ${zone}`);
+      return;
+    }
+    
+    // Extract selection details
+    const requestId = selectionRequest.requestId || selectionRequest.data?.requestId;
+    const prompt = selectionRequest.prompt || selectionRequest.data?.prompt || 'Select:';
+    const options = selectionRequest.options || selectionRequest.data?.options || [];
+    const multi = selectionRequest.multi || selectionRequest.data?.multi || false;
+    const defaultVal = selectionRequest.default || selectionRequest.data?.default;
+    
+    this.logger.log('[ZDisplayRenderer] Rendering selection form:', { requestId, prompt, options, multi });
+    
+    // Create form container
+    const form = document.createElement('form');
+    form.className = 'zSelectionForm';
+    form.style.cssText = `
+      margin: 1rem 0;
+      padding: 1rem;
+      border: 2px solid var(--color-primary, #00D4FF);
+      border-radius: 8px;
+      background-color: var(--color-base, #fff);
+    `;
+    
+    // Create label
+    const label = document.createElement('label');
+    label.textContent = prompt;
+    label.style.cssText = `
+      display: block;
+      margin-bottom: 1rem;
+      font-weight: bold;
+      color: var(--color-darkgray, #333);
+    `;
+    form.appendChild(label);
+    
+    // Create options container
+    const optionsContainer = document.createElement('div');
+    optionsContainer.style.cssText = `
+      margin-bottom: 1rem;
+      max-height: 300px;
+      overflow-y: auto;
+    `;
+    
+    // Create option elements
+    const inputType = multi ? 'checkbox' : 'radio';
+    const inputName = `selection_${requestId}`;
+    
+    options.forEach((option, index) => {
+      const optionDiv = document.createElement('div');
+      optionDiv.style.cssText = `
+        padding: 0.5rem;
+        margin: 0.25rem 0;
+        border-radius: 4px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+      `;
+      optionDiv.onmouseover = () => optionDiv.style.backgroundColor = 'var(--color-lightgray, #f8f9fa)';
+      optionDiv.onmouseout = () => optionDiv.style.backgroundColor = 'transparent';
+      
+      const input = document.createElement('input');
+      input.type = inputType;
+      input.name = inputName;
+      input.value = option;
+      input.id = `${inputName}_${index}`;
+      input.style.cssText = `
+        margin-right: 0.5rem;
+        cursor: pointer;
+      `;
+      
+      // Set default selection
+      if (defaultVal) {
+        if (multi && Array.isArray(defaultVal)) {
+          input.checked = defaultVal.includes(option);
+        } else if (!multi && defaultVal === option) {
+          input.checked = true;
+        }
+      }
+      
+      const optionLabel = document.createElement('label');
+      optionLabel.htmlFor = input.id;
+      optionLabel.textContent = option;
+      optionLabel.style.cssText = `
+        cursor: pointer;
+        flex: 1;
+      `;
+      
+      optionDiv.appendChild(input);
+      optionDiv.appendChild(optionLabel);
+      optionDiv.onclick = () => input.checked = !input.checked;
+      
+      optionsContainer.appendChild(optionDiv);
+    });
+    
+    form.appendChild(optionsContainer);
+    
+    // Create submit button
+    const submitBtn = document.createElement('button');
+    submitBtn.type = 'submit';
+    submitBtn.textContent = '✓ Submit';
+    submitBtn.className = 'zoloButton zBtnPrimary';
+    submitBtn.style.cssText = `
+      padding: 0.5rem 1.5rem;
+      cursor: pointer;
+    `;
+    form.appendChild(submitBtn);
+    
+    // Handle form submission
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      // Get selected values
+      const selectedInputs = form.querySelectorAll(`input[name="${inputName}"]:checked`);
+      const selectedValues = Array.from(selectedInputs).map(input => input.value);
+      
+      // Return appropriate format
+      const value = multi ? selectedValues : (selectedValues[0] || null);
+      
+      this.logger.log('[ZDisplayRenderer] Selection submitted:', { requestId, value });
+      
+      // Send selection_response back to server (one-way)
+      if (window.bifrostClient && window.bifrostClient.connection) {
+        try {
+          const payload = {
+            event: 'input_response',
+            requestId: requestId,
+            value: value
+          };
+          this.logger.log('[ZDisplayRenderer] Sending selection response:', payload);
+          window.bifrostClient.connection.send(JSON.stringify(payload));
+          this.logger.log('[ZDisplayRenderer] ✅ Selection response sent successfully');
+        } catch (error) {
+          this.logger.error('[ZDisplayRenderer] ❌ Failed to send selection response:', error);
+        }
+      } else {
+        this.logger.error('[ZDisplayRenderer] Cannot send selection response - bifrostClient not found');
+      }
+      
+      // Replace form with confirmation message
+      const confirmation = document.createElement('p');
+      confirmation.style.cssText = `
+        margin: 1rem 0;
+        padding: 0.75rem;
+        background-color: var(--color-success-light, #d4edda);
+        border: 1px solid var(--color-success, #28a745);
+        border-radius: 4px;
+        color: var(--color-success-dark, #155724);
+      `;
+      
+      if (multi) {
+        confirmation.textContent = selectedValues.length > 0
+          ? `✓ Selected: ${selectedValues.join(', ')}`
+          : '✓ No selections made';
+      } else {
+        confirmation.textContent = value ? `✓ Selected: ${value}` : '✓ No selection made';
+      }
+      
+      form.replaceWith(confirmation);
+    });
+    
+    // Add to container
+    container.appendChild(form);
+    
+    this.logger.log('[ZDisplayRenderer] Selection form rendered');
+  }
 }
 
