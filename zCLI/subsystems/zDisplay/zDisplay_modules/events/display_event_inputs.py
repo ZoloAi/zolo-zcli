@@ -432,9 +432,13 @@ class BasicInputs:
                                       or None if not in GUI mode
         """
         # Check if in GUI mode
-        if not self.zPrimitives._is_gui_mode():
+        is_gui = self.zPrimitives._is_gui_mode()
+        print(f"[_try_gui_mode_button] is_gui_mode={is_gui}")
+        if not is_gui:
+            print(f"[_try_gui_mode_button] Returning None (Terminal mode)")
             return None
         
+        print(f"[_try_gui_mode_button] Calling _send_input_request (Bifrost mode)")
         # Send button request via input_request mechanism (creates Future)
         gui_future = self.zPrimitives._send_input_request(
             'button',  # request_type
@@ -444,6 +448,7 @@ class BasicInputs:
             style=style
         )
         
+        print(f"[_try_gui_mode_button] Returning future: {gui_future}")
         return gui_future
 
     def _validate_options(self, options: List[str], multi: bool) -> bool:
@@ -653,7 +658,7 @@ class BasicInputs:
         action: Optional[str] = None,
         color: str = "primary",
         style: str = "default"
-    ) -> bool:
+    ) -> Union[bool, 'asyncio.Future']:
         """Display a button that requires EXPLICIT confirmation to execute.
         
         Cross-mode behavior:
@@ -686,20 +691,30 @@ class BasicInputs:
             # On click: sends True back to backend
         """
         # Try GUI mode first (Bifrost) - returns Future if successful
-        gui_future = self._try_gui_mode_button(label, action, color, style)
+        is_gui = self.zPrimitives._is_gui_mode()
+        print(f"\n[BUTTON] Mode check: is_gui_mode={is_gui}, display.mode={self.zPrimitives.display.mode if self.zPrimitives.display else 'None'}")
+        
+        # BYPASS _try_gui_mode_button and check mode DIRECTLY here
+        if not is_gui:
+            print(f"[BUTTON] Terminal mode detected - skipping GUI future")
+            gui_future = None
+        else:
+            print(f"[BUTTON] Bifrost mode detected - creating GUI future")
+            gui_future = self._try_gui_mode_button(label, action, color, style)
+        
+        print(f"[BUTTON] gui_future={gui_future}, type={type(gui_future) if gui_future else 'None'}")
         if gui_future is not None:
+            print(f"[BUTTON] Returning GUI future")
             return gui_future
+        print(f"[BUTTON] Proceeding to Terminal mode")
         
         # Terminal mode: y/n confirmation using read_string primitive
         try:
-            # Log button request
-            if hasattr(self.BasicOutputs, 'zcli') and hasattr(self.BasicOutputs.zcli, 'logger'):
-                self.BasicOutputs.zcli.logger.info(f"🔘 Button prompt: {label}")
-            
-            # Call read_string primitive directly
-            response = self.zPrimitives.read_string(
-                PROMPT_BUTTON_TEMPLATE.format(label=label)
-            ).strip().lower()
+            # Call read_string primitive directly  
+            prompt = PROMPT_BUTTON_TEMPLATE.format(label=label)
+            print(f"\n[BUTTON DEBUG] About to prompt: {prompt}")
+            response = self.zPrimitives.read_string(prompt).strip().lower()
+            print(f"[BUTTON DEBUG] Got response: '{response}'")
             
             # Log response
             if hasattr(self.BasicOutputs, 'zcli') and hasattr(self.BasicOutputs.zcli, 'logger'):
