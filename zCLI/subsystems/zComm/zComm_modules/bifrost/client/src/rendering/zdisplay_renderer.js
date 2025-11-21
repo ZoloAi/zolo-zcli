@@ -1386,5 +1386,150 @@ export class ZDisplayRenderer {
     
     this.logger.log('[ZDisplayRenderer] Button rendered');
   }
+
+  renderSwiperInit(swiperEvent) {
+    const zone = this.defaultZone;
+    const container = document.getElementById(zone);
+    
+    if (!container) {
+      this.logger.error(`[ZDisplayRenderer] Cannot render swiper - zone not found: ${zone}`);
+      return;
+    }
+    
+    // Extract swiper data
+    const swiperId = swiperEvent.swiperId || `swiper-${Date.now()}`;
+    const label = swiperEvent.label || 'Swiper';
+    const slides = swiperEvent.slides || [];
+    const currentSlide = swiperEvent.currentSlide || 0;
+    const totalSlides = swiperEvent.totalSlides || slides.length;
+    const autoAdvance = swiperEvent.autoAdvance !== false;
+    const delay = swiperEvent.delay || 3;
+    const loop = swiperEvent.loop !== false;
+    
+    this.logger.log('[ZDisplayRenderer] Rendering swiper:', { swiperId, label, totalSlides });
+    
+    // Create swiper container
+    const swiperContainer = document.createElement('div');
+    swiperContainer.className = 'zSwiper';
+    swiperContainer.setAttribute('data-swiper-id', swiperId);
+    swiperContainer.style.cssText = `
+      margin: 1.5rem 0;
+      padding: 1.5rem;
+      border: 2px solid var(--color-primary);
+      border-radius: 8px;
+      background-color: var(--color-base);
+    `;
+    
+    // Swiper label
+    if (label) {
+      const labelElement = document.createElement('h4');
+      labelElement.textContent = label;
+      labelElement.style.cssText = `
+        margin: 0 0 1rem 0;
+        color: var(--color-primary);
+        font-weight: 600;
+      `;
+      swiperContainer.appendChild(labelElement);
+    }
+    
+    // Slide content container
+    const slideContent = document.createElement('div');
+    slideContent.className = 'zSwiper-content';
+    slideContent.style.cssText = `
+      min-height: 200px;
+      padding: 1rem;
+      background-color: var(--color-lightgray);
+      border-radius: 4px;
+      margin-bottom: 1rem;
+      white-space: pre-wrap;
+      font-family: monospace;
+    `;
+    slideContent.textContent = slides[currentSlide] || 'No content';
+    swiperContainer.appendChild(slideContent);
+    
+    // Navigation controls
+    const navContainer = document.createElement('div');
+    navContainer.style.cssText = `
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 1rem;
+    `;
+    
+    // Previous button
+    const prevBtn = document.createElement('button');
+    prevBtn.textContent = '◀ Previous';
+    prevBtn.className = 'zoloButton zBtnSecondary';
+    prevBtn.disabled = !loop && currentSlide === 0;
+    prevBtn.onclick = () => {
+      const newSlide = currentSlide > 0 ? currentSlide - 1 : (loop ? totalSlides - 1 : 0);
+      this._updateSwiper(swiperId, slides, newSlide, totalSlides);
+    };
+    
+    // Slide indicator
+    const indicator = document.createElement('span');
+    indicator.className = 'zSwiper-indicator';
+    indicator.textContent = `${currentSlide + 1} / ${totalSlides}`;
+    indicator.style.cssText = `
+      color: var(--color-darkgray);
+      font-weight: 500;
+    `;
+    
+    // Next button
+    const nextBtn = document.createElement('button');
+    nextBtn.textContent = 'Next ▶';
+    nextBtn.className = 'zoloButton zBtnPrimary';
+    nextBtn.disabled = !loop && currentSlide === totalSlides - 1;
+    nextBtn.onclick = () => {
+      const newSlide = currentSlide < totalSlides - 1 ? currentSlide + 1 : (loop ? 0 : currentSlide);
+      this._updateSwiper(swiperId, slides, newSlide, totalSlides);
+    };
+    
+    navContainer.appendChild(prevBtn);
+    navContainer.appendChild(indicator);
+    navContainer.appendChild(nextBtn);
+    swiperContainer.appendChild(navContainer);
+    
+    // Auto-advance
+    if (autoAdvance) {
+      const autoAdvanceInterval = setInterval(() => {
+        const currentContainer = document.querySelector(`[data-swiper-id="${swiperId}"]`);
+        if (!currentContainer) {
+          clearInterval(autoAdvanceInterval);
+          return;
+        }
+        const currentIndicator = currentContainer.querySelector('.zSwiper-indicator');
+        const currentSlideNum = parseInt(currentIndicator.textContent.split('/')[0].trim()) - 1;
+        const newSlide = currentSlideNum < totalSlides - 1 ? currentSlideNum + 1 : (loop ? 0 : currentSlideNum);
+        this._updateSwiper(swiperId, slides, newSlide, totalSlides);
+      }, delay * 1000);
+    }
+    
+    // Add to container
+    container.appendChild(swiperContainer);
+    
+    this.logger.log('[ZDisplayRenderer] Swiper rendered');
+  }
+
+  _updateSwiper(swiperId, slides, newSlideIndex, totalSlides) {
+    const swiperContainer = document.querySelector(`[data-swiper-id="${swiperId}"]`);
+    if (!swiperContainer) return;
+    
+    const slideContent = swiperContainer.querySelector('.zSwiper-content');
+    const indicator = swiperContainer.querySelector('.zSwiper-indicator');
+    const prevBtn = swiperContainer.querySelectorAll('button')[0];
+    const nextBtn = swiperContainer.querySelectorAll('button')[1];
+    
+    // Update content
+    slideContent.textContent = slides[newSlideIndex] || 'No content';
+    indicator.textContent = `${newSlideIndex + 1} / ${totalSlides}`;
+    
+    // Update button states (if not looping)
+    const loop = prevBtn.disabled === false && newSlideIndex === 0;
+    prevBtn.disabled = !loop && newSlideIndex === 0;
+    nextBtn.disabled = !loop && newSlideIndex === totalSlides - 1;
+    
+    this.logger.log('[ZDisplayRenderer] Swiper updated to slide:', newSlideIndex + 1);
+  }
 }
 

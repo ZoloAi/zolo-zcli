@@ -400,6 +400,15 @@
           });
           this.logger.log('[BifrostClient] Registered default onSpinnerStop hook');
         }
+        
+        // Register default onSwiperInit hook if not already set
+        if (!this.hooks.has('onSwiperInit')) {
+          this.hooks.register('onSwiperInit', (event) => {
+            this.logger.log('[BifrostClient] Swiper init:', event);
+            this.zDisplayRenderer.renderSwiperInit(event);
+          });
+          this.logger.log('[BifrostClient] Registered default onSwiperInit hook');
+        }
       }
       return this.zDisplayRenderer;
     }

@@ -127,6 +127,11 @@ export class MessageHandler {
         return;
       }
 
+      if (message.event === 'swiper_init') {
+        this.hooks.call('onSwiperInit', message);
+        return;
+      }
+
       // Otherwise, treat as broadcast
       this._handleBroadcast(message);
 

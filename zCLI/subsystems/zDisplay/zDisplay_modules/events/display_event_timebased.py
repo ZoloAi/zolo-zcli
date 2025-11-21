@@ -567,7 +567,21 @@ class TimeBased:
             - ETA calculation: Requires start_time parameter
         """
         # Generate unique ID for this progress bar (use label as key)
-        progress_id = f"progress_{label.replace(CHAR_SPACE, '_')}"
+        # Generate unique ID - check if we're updating an existing progress bar
+        base_id = label.replace(CHAR_SPACE, '_')
+        # Look for existing progress bar with matching label
+        existing_id = None
+        for pid, pdata in self._active_progress.items():
+            if pdata.get(KEY_LABEL) == label and pid.startswith(f"progress_{base_id}"):
+                existing_id = pid
+                break
+        
+        if existing_id:
+            # Reuse existing ID for updates
+            progress_id = existing_id
+        else:
+            # New progress bar - add timestamp for uniqueness
+            progress_id = f"progress_{base_id}_{int(time.time() * 1000)}"
         
         # Calculate ETA string if requested
         eta_str = None
@@ -592,7 +606,15 @@ class TimeBased:
                 KEY_CONTAINER: DEFAULT_CONTAINER
             }
             self._emit_websocket_event(event_data)
-            self._active_progress[progress_id] = event_data
+            
+            # Clean up completed progress bars
+            if current >= total:
+                # Remove from active tracking so next progress bar with same label gets new ID
+                self._active_progress.pop(progress_id, None)
+            else:
+                # Store active progress bar
+                self._active_progress[progress_id] = event_data
+            
             return f"{label}: {current}/{total}" if total else label
         
         # Terminal mode - render to console
