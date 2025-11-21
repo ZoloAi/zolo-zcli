@@ -27,7 +27,7 @@ async def handle_show_inputs(_websocket, _message_data):
     """Fire-and-Forget: Send all input requests, then await responses."""
     
     z.display.header("Fire-and-Forget Pattern", color="CYAN")
-    z.display.text("5 inputs (string, string, password, selection, multi-selection)!")
+    z.display.text("7 inputs (string, string, password, selection, multi-selection, button, button)!")
     z.display.text("")
     
     # 🔥 FIRE: Send all requests (don't await)
@@ -36,8 +36,10 @@ async def handle_show_inputs(_websocket, _message_data):
     future_password = z.display.read_password("Enter password: ")
     future_role = z.display.selection("Select your role:", ["Developer", "Designer", "Manager", "Other"])
     future_skills = z.display.selection("Select your skills:", ["Python", "JavaScript", "React", "Django", "zCLI"], multi=True, default=["Python", "zCLI"])
+    future_save = z.display.button("Save Profile", action="save_profile", color="success")
+    future_delete = z.display.button("Delete Account", action="delete_account", color="danger")
     
-    z.display.info("💡 All 5 forms should now be visible!")
+    z.display.info("💡 All 7 forms should now be visible!")
     z.display.text("")
     
     # ⏳ COLLECT: Await responses
@@ -60,6 +62,20 @@ async def handle_show_inputs(_websocket, _message_data):
     skills_value = await future_skills
     z.session["zVars"]["skills"] = skills_value
     z.display.success(f"Skills: {', '.join(skills_value) if skills_value else 'None selected'}")
+    
+    save_clicked = await future_save
+    z.session["zVars"]["profile_saved"] = save_clicked
+    if save_clicked:
+        z.display.success("✅ Profile saved successfully!")
+    else:
+        z.display.info("Profile save cancelled.")
+    
+    delete_clicked = await future_delete
+    z.session["zVars"]["account_deleted"] = delete_clicked
+    if delete_clicked:
+        z.display.warning("⚠️ Account marked for deletion!")
+    else:
+        z.display.info("Account deletion cancelled.")
     
     # Summary
     z.display.text("")

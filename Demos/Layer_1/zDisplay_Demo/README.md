@@ -7,9 +7,10 @@ This tutorial introduces you to zCLI's Layer 0 (Foundation) subsystems through h
 ## What You'll Learn
 
 1. **<span style="color:#8FBE6D">Level 0: Hello zCLI</span>** - Your first zCLI program (3 lines!)
-2. **<span style="color:#F8961F">Level 1: Display & Signals</span>** - Output text, tables, and feedback
-3. **<span style="color:#00D4FF">Level 2: Config & Paths</span>** - Read config files and resolve paths
+2. **<span style="color:#F8961F">Level 1: Display Advanced</span>** - Tables, JSON, lists, and outlines
+3. **<span style="color:#00D4FF">Level 2: Config & Session</span>** - Read config files and session variables
 4. **<span style="color:#EA7171">Level 3: User Input</span>** - Collect input and validate data
+5. **<span style="color:#AE84D3">Level 4: Animations & Progress</span>** - Progress bars, spinners, and iterators
 
 ## Prerequisites
 
@@ -26,21 +27,23 @@ zolo --version
 Each level is a standalone Python script you can run immediately:
 
 ```
-Terminal_Tutorial/
+zDisplay_Demo/
 ├── Level_0_Hello/
-│   ├── hello.py          # Your first zCLI program
-│   └── README.md         # Step-by-step guide
+│   ├── hello_terminal.py     # Your first zCLI program
+│   └── README.md             # Step-by-step guide
 ├── Level_1_Display/
-│   ├── display_demo.py   # Text, tables, signals
+│   ├── advanced_demo.py      # Tables, JSON, lists, outlines
 │   └── README.md
 ├── Level_2_Config/
-│   ├── config_demo.py    # Configuration hierarchy
-│   ├── .zEnv             # Environment variables
+│   ├── config_demo.py        # Configuration & session variables
 │   └── README.md
 ├── Level_3_Input/
-│   ├── input_demo.py     # User input & validation
+│   ├── input_demo.py         # User input & validation
 │   └── README.md
-└── README.md             # You are here!
+├── Level_4_Animations/
+│   ├── animations_demo.py    # Progress bars & spinners
+│   └── README.md
+└── README.md                 # You are here!
 ```
 
 ## How to Use This Tutorial
@@ -51,9 +54,11 @@ Terminal_Tutorial/
 - Takes ~30 minutes total
 
 **Option 2: Jump to What You Need**
-- Need output? → Level 1 (Display)
+- Need basics? → Level 0 (Hello)
+- Need tables/JSON? → Level 1 (Display Advanced)
 - Need config? → Level 2 (Config)
 - Need input? → Level 3 (Input)
+- Need progress? → Level 4 (Animations)
 
 ## What Makes This "Layer 0"?
 

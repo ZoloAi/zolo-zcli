@@ -374,11 +374,31 @@
             // Route to appropriate renderer based on type
             if (inputType === 'selection') {
               this.zDisplayRenderer.renderSelectionRequest(inputRequest);
+            } else if (inputType === 'button') {
+              this.zDisplayRenderer.renderButtonRequest(inputRequest);
             } else {
               this.zDisplayRenderer.renderInputRequest(inputRequest);
             }
           });
           this.logger.log('[BifrostClient] Registered default onInput hook for input rendering');
+        }
+        
+        // Register default onSpinnerStart hook if not already set
+        if (!this.hooks.has('onSpinnerStart')) {
+          this.hooks.register('onSpinnerStart', (event) => {
+            this.logger.log('[BifrostClient] Spinner start:', event);
+            this.zDisplayRenderer.renderSpinnerStart(event);
+          });
+          this.logger.log('[BifrostClient] Registered default onSpinnerStart hook');
+        }
+        
+        // Register default onSpinnerStop hook if not already set
+        if (!this.hooks.has('onSpinnerStop')) {
+          this.hooks.register('onSpinnerStop', (event) => {
+            this.logger.log('[BifrostClient] Spinner stop:', event);
+            this.zDisplayRenderer.renderSpinnerStop(event);
+          });
+          this.logger.log('[BifrostClient] Registered default onSpinnerStop hook');
         }
       }
       return this.zDisplayRenderer;

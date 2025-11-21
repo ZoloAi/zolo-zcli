@@ -25,7 +25,6 @@ if "zVars" not in z.session:
 # ============================================
 z.display.header("Fire-and-Forget Pattern", color="CYAN")
 z.display.text("5 inputs (string, string, password, selection, multi-selection)!")
-z.display.text("")
 
 # Terminal mode: Direct execution (no await needed)
 name_value = z.display.read_string("Enter your name: ")
@@ -48,8 +47,31 @@ skills_value = z.display.selection("Select your skills:", ["Python", "JavaScript
 z.session["zVars"]["skills"] = skills_value
 z.display.success(f"Skills: {', '.join(skills_value) if skills_value else 'None selected'}")
 
+# ============================================
+# NEW: Button - Single Action Confirmation
+# ============================================
+z.display.header("Button Actions", color="GREEN")
+z.display.text("Buttons REQUIRE explicit y/n confirmation (no defaults!):", break_after=False)
+
+# Save action button
+if z.display.button("Save Profile", action="save_profile", color="success"):
+    z.session["zVars"]["profile_saved"] = True
+    z.display.success("✅ Profile saved successfully!")
+else:
+    z.session["zVars"]["profile_saved"] = False
+    z.display.info("Profile not saved.")
+
+z.display.text("", break_after=False)
+
+# Delete action button (danger color)
+if z.display.button("Delete Account", action="delete_account", color="danger"):
+    z.session["zVars"]["account_deleted"] = True
+    z.display.warning("⚠️ Account marked for deletion!")
+else:
+    z.session["zVars"]["account_deleted"] = False
+    z.display.info("Account deletion cancelled.")
+
 # Summary
-z.display.text("")
 z.display.header("Summary", color="BLUE")
 z.display.json_data(z.session["zVars"])
 

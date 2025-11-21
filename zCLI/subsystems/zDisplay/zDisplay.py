@@ -186,6 +186,7 @@ EVENT_INDETERMINATE_PROGRESS = "indeterminate_progress"
 EVENT_SELECTION = "selection"
 EVENT_READ_STRING = "read_string"
 EVENT_READ_PASSWORD = "read_password"
+EVENT_BUTTON = "button"
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Event Name Constants - Primitive Events
@@ -326,6 +327,7 @@ class zDisplay(zDisplayDelegates):
             EVENT_SELECTION: self.zEvents.selection,
             EVENT_READ_STRING: self.zPrimitives.read_string,
             EVENT_READ_PASSWORD: self.zPrimitives.read_password,
+            EVENT_BUTTON: self.zEvents.button,
 
             # Primitive events
             EVENT_WRITE_RAW: self.zPrimitives.write_raw,
@@ -489,3 +491,27 @@ class zDisplay(zDisplayDelegates):
             Any: Context manager for indeterminate progress
         """
         return self.zEvents.indeterminate_progress(label)
+
+    def button(
+        self,
+        label: str,
+        action: Optional[str] = None,
+        color: str = "primary",
+        style: str = "default"
+    ) -> bool:
+        """Convenience method: Display a button that requires confirmation.
+        
+        Cross-mode behavior:
+        - Terminal: Prompts "Click [Label]? (y/n): " → returns True/False
+        - Bifrost: Renders actual button → click returns True
+        
+        Args:
+            label: Button label text (e.g., "Submit", "Delete", "Save")
+            action: Optional action identifier or zVar name
+            color: Button color (primary, success, danger, warning, info)
+            style: Button style (default, outlined, text)
+            
+        Returns:
+            bool: True if clicked (y), False if cancelled (n)
+        """
+        return self.zEvents.button(label, action, color, style)

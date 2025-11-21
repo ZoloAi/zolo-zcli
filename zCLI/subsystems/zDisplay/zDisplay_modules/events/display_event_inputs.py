@@ -152,6 +152,7 @@ from typing import Set
 
 # Event name constant
 EVENT_NAME_SELECTION = "selection"
+EVENT_NAME_BUTTON = "button"
 
 # Marker string constants
 MARKER_CHECKED = "[CHECKED]"
@@ -165,6 +166,9 @@ KEY_OPTIONS = "options"
 KEY_MULTI = "multi"
 KEY_DEFAULT = "default"
 KEY_STYLE = "style"
+KEY_LABEL = "label"
+KEY_ACTION = "action"
+KEY_COLOR = "color"
 
 # Message constants
 MSG_INVALID_NUMBER = "Please enter a valid number"
@@ -174,10 +178,13 @@ MSG_INVALID_RANGE_TEMPLATE = "Invalid: {input} (must be 1-{max_num})"
 MSG_MULTI_SELECT_INSTRUCTIONS = "Enter numbers separated by spaces (e.g., '1 3 5'), or 'done':"
 MSG_ADDED_TEMPLATE = "Added: {option}"
 MSG_REMOVED_TEMPLATE = "Removed: {option}"
+MSG_BUTTON_CLICKED = "{label} clicked!"
+MSG_BUTTON_CANCELLED = "{label} cancelled."
 
 # Prompt constants
 PROMPT_INPUT = "> "
 PROMPT_SINGLE_SELECT_TEMPLATE = "Enter choice (1-{max_num}){default_hint}: "
+PROMPT_BUTTON_TEMPLATE = "Click [{label}]? (y/n): "
 
 # Command constants (for multi-select)
 CMD_DONE = "done"
@@ -406,6 +413,39 @@ class BasicInputs:
         
         return gui_future
 
+    def _try_gui_mode_button(self, label: str, action: Optional[str], 
+                             color: str, style: str) -> Optional['asyncio.Future']:
+        """Try to handle button in GUI mode with Future return (extracted method).
+        
+        Creates and returns an asyncio.Future that will be resolved when the GUI
+        client sends back the button click response. This enables fire-and-forget
+        pattern for buttons in Bifrost mode.
+        
+        Args:
+            label: Button label text
+            action: Optional action identifier
+            color: Button color (primary, success, danger, warning, info)
+            style: Button style (default, outlined, text)
+            
+        Returns:
+            Optional[asyncio.Future]: Future that resolves to bool (True if clicked),
+                                      or None if not in GUI mode
+        """
+        # Check if in GUI mode
+        if not self.zPrimitives._is_gui_mode():
+            return None
+        
+        # Send button request via input_request mechanism (creates Future)
+        gui_future = self.zPrimitives._send_input_request(
+            'button',  # request_type
+            label,
+            action=action,
+            color=color,
+            style=style
+        )
+        
+        return gui_future
+
     def _validate_options(self, options: List[str], multi: bool) -> bool:
         """Validate that options list is not empty (extracted method).
         
@@ -602,3 +642,158 @@ class BasicInputs:
                 break_after=False,
                 indent=1
             )
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Button - Single Action Confirmation
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    def button(
+        self,
+        label: str,
+        action: Optional[str] = None,
+        color: str = "primary",
+        style: str = "default"
+    ) -> bool:
+        """Display a button that requires EXPLICIT confirmation to execute.
+        
+        Cross-mode behavior:
+        - Terminal: Prompts "Click [Label]? (y/n): " → MUST type "y" or "yes"
+        - Bifrost: Renders actual button → click returns True
+        
+        Args:
+            label: Button label text (e.g., "Submit", "Delete", "Save")
+            action: Optional action identifier or zVar name to store result
+            color: Button color (primary, success, danger, warning, info)
+            style: Button style (default, outlined, text)
+            
+        Returns:
+            bool: True if explicitly confirmed ("y"/"yes"), False otherwise
+            
+        Important:
+            NO DEFAULT! User MUST type "y" or "yes" to confirm.
+            This prevents accidental clicks on dangerous actions (e.g., Delete).
+            
+        Example (Terminal):
+            >>> if z.display.button("Delete File", color="danger"):
+            ...     delete_file()
+            Click [Delete File]? (y/n): y
+                Delete File clicked!
+            [deletes file]
+            
+        Example (Bifrost):
+            >>> z.display.button("Submit Form", action="form_submit")
+            # Renders: <button class="zoloButton zBtnPrimary">Submit Form</button>
+            # On click: sends True back to backend
+        """
+        # Try GUI mode first (Bifrost) - returns Future if successful
+        gui_future = self._try_gui_mode_button(label, action, color, style)
+        if gui_future is not None:
+            return gui_future
+        
+        # Terminal mode: y/n confirmation using read_string primitive
+        try:
+            # Log button request
+            if hasattr(self.BasicOutputs, 'zcli') and hasattr(self.BasicOutputs.zcli, 'logger'):
+                self.BasicOutputs.zcli.logger.info(f"🔘 Button prompt: {label}")
+            
+            # Call read_string primitive directly
+            response = self.zPrimitives.read_string(
+                PROMPT_BUTTON_TEMPLATE.format(label=label)
+            ).strip().lower()
+            
+            # Log response
+            if hasattr(self.BasicOutputs, 'zcli') and hasattr(self.BasicOutputs.zcli, 'logger'):
+                self.BasicOutputs.zcli.logger.info(f"🔘 Button response: '{response}'")
+            
+            # MUST type 'y' or 'yes' - no default, no Enter shortcut
+            if response in ('y', 'yes'):
+                self._output_text(
+                    MSG_BUTTON_CLICKED.format(label=label),
+                    break_after=False,
+                    indent=1
+                )
+                return True
+            else:
+                self._output_text(
+                    MSG_BUTTON_CANCELLED.format(label=label),
+                    break_after=False,
+                    indent=1
+                )
+                return False
+                
+        except KeyboardInterrupt:
+            self._output_text(
+                MSG_BUTTON_CANCELLED.format(label=label),
+                break_after=False,
+                indent=1
+            )
+            return False
+
+    def _try_gui_mode_button(
+        self,
+        label: str,
+        action: Optional[str],
+        color: str,
+        style: str
+    ) -> Optional['asyncio.Future']:
+        """Try to handle button in GUI mode and return a Future.
+        
+        Args:
+            label: Button label text
+            action: Optional action identifier
+            color: Button color
+            style: Button style
+            
+        Returns:
+            Optional[asyncio.Future]: Future that resolves to True (clicked) or False (cancelled),
+                                      or None if GUI request fails (use terminal fallback)
+        """
+        return self.zPrimitives._send_input_request(
+            EVENT_NAME_BUTTON,
+            label,
+            action=action,
+            color=color,
+            style=style
+        )
+
+    def _collect_button_confirmation(self, label: str) -> bool:
+        """Collect button click confirmation in terminal mode.
+        
+        Args:
+            label: Button label text
+            
+        Returns:
+            bool: True if confirmed (y/yes only), False otherwise
+            
+        Note:
+            Requires explicit "y" or "yes" input - no default!
+            This prevents accidental clicks on dangerous actions.
+        """
+        try:
+            response = self.zPrimitives.read_string(
+                PROMPT_BUTTON_TEMPLATE.format(label=label)
+            ).strip().lower()
+            
+            # MUST type 'y' or 'yes' - no default, no Enter shortcut
+            if response in ('y', 'yes'):
+                self._output_text(
+                    MSG_BUTTON_CLICKED.format(label=label),
+                    break_after=False,
+                    indent=1
+                )
+                return True
+            else:
+                self._output_text(
+                    MSG_BUTTON_CANCELLED.format(label=label),
+                    break_after=False,
+                    indent=1
+                )
+                return False
+                
+        except KeyboardInterrupt:
+            self._output_text(
+                MSG_BUTTON_CANCELLED.format(label=label),
+                break_after=False,
+                indent=1
+            )
+            return False

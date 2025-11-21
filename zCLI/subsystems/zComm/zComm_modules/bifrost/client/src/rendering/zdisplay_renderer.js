@@ -635,26 +635,172 @@ export class ZDisplayRenderer {
     // Extract progress data
     const current = event.current || 0;
     const total = event.total || 100;
-    const label = event.label || '';
+    const label = event.label || 'Processing';
     const percentage = Math.round((current / total) * 100);
+    const showPercentage = event.showPercentage !== false;  // Default true
+    const color = event.color || 'default';
+    const progressId = event.progressId || `progress-${Date.now()}`;
     
-    // Create container
+    // Check if progress bar already exists (update existing)
+    const existingProgress = document.querySelector(`[data-progress-id="${progressId}"]`);
+    if (existingProgress) {
+      // Update existing progress bar
+      const fillElement = existingProgress.querySelector('.zProgress-fill');
+      const statsElement = existingProgress.querySelector('.zProgress-stats');
+      
+      if (fillElement) {
+        fillElement.style.width = `${percentage}%`;
+      }
+      if (statsElement && showPercentage) {
+        statsElement.textContent = `${percentage}%`;
+      }
+      
+      // Keep progress bar visible even when complete (for demo purposes)
+      // TODO: Add option to auto-remove on complete if needed
+      
+      return null;  // Don't append, we updated existing
+    }
+    
+    // Create new progress bar using zTheme classes
     const container = document.createElement('div');
-    container.style.marginBottom = '0.5rem';
+    container.className = 'zProgress';
+    container.setAttribute('data-progress-id', progressId);
+    
+    // Apply color variant
+    const colorMap = {
+      GREEN: 'success',
+      RED: 'danger',
+      YELLOW: 'warning',
+      BLUE: 'info',
+      PURPLE: 'purple'
+    };
+    const variant = colorMap[color] || 'info';
+    container.classList.add(`zProgress-${variant}`);
     
     // Apply indent as left margin
     if (event.indent && event.indent > 0) {
       container.style.marginLeft = `${event.indent}rem`;
     }
     
-    // For now, render as text (CSS animation coming soon!)
-    const text = document.createElement('span');
-    text.textContent = `${label} [${percentage}%]`;
-    text.style.color = 'var(--color-info)';
-    text.style.fontFamily = 'monospace';
+    // Progress label and stats
+    const labelDiv = document.createElement('div');
+    labelDiv.className = 'zProgress-label';
     
-    container.appendChild(text);
+    const labelText = document.createElement('span');
+    labelText.textContent = label;
+    labelDiv.appendChild(labelText);
+    
+    if (showPercentage) {
+      const statsSpan = document.createElement('span');
+      statsSpan.className = 'zProgress-stats';
+      statsSpan.textContent = `${percentage}%`;
+      labelDiv.appendChild(statsSpan);
+    }
+    
+    container.appendChild(labelDiv);
+    
+    // Progress track (background)
+    const track = document.createElement('div');
+    track.className = 'zProgress-track';
+    
+    // Progress fill (animated bar)
+    const fill = document.createElement('div');
+    fill.className = 'zProgress-fill';
+    fill.style.width = `${percentage}%`;
+    
+    track.appendChild(fill);
+    container.appendChild(track);
+    
     return container;
+  }
+
+  /**
+   * Start a spinner (loading indicator)
+   * @param {Object} event - Spinner event data
+   * @param {string} targetZone - Target DOM element ID
+   */
+  renderSpinnerStart(event, targetZone = null) {
+    const spinnerId = event.spinnerId || event.data?.spinnerId || `spinner-${Date.now()}`;
+    const label = event.label || event.data?.label || 'Loading';
+    const style = event.style || event.data?.style || 'dots';
+    const zone = targetZone || this.defaultZone;
+    const container = document.getElementById(zone);
+    
+    if (!container) {
+      this.logger.error(`[ZDisplayRenderer] Cannot render spinner - zone not found: ${zone}`);
+      return;
+    }
+    
+    // Create spinner using zTheme classes
+    const spinnerDiv = document.createElement('div');
+    spinnerDiv.className = 'zSpinner';
+    spinnerDiv.setAttribute('data-spinner-id', spinnerId);
+    
+    // Spinner animation
+    const animationDiv = document.createElement('div');
+    animationDiv.className = 'zSpinner-animation';
+    
+    // Map backend style names to CSS class names
+    const styleMap = {
+      dots: 'zSpinner-dots',
+      line: 'zSpinner-line',
+      arc: 'zSpinner-arc',
+      arrow: 'zSpinner-arrow',
+      bouncingBall: 'zSpinner-bouncingBall',
+      simple: 'zSpinner-simple',
+      circle: 'zSpinner-circle'
+    };
+    
+    const spinnerClass = styleMap[style] || 'zSpinner-dots';
+    const spinnerIcon = document.createElement('div');
+    spinnerIcon.className = spinnerClass;
+    animationDiv.appendChild(spinnerIcon);
+    
+    // Label
+    const labelSpan = document.createElement('span');
+    labelSpan.className = 'zSpinner-label';
+    labelSpan.textContent = label;
+    
+    spinnerDiv.appendChild(animationDiv);
+    spinnerDiv.appendChild(labelSpan);
+    
+    container.appendChild(spinnerDiv);
+    this.logger.log(`[ZDisplayRenderer] Spinner started: ${spinnerId}`);
+  }
+
+  /**
+   * Stop a spinner (loading indicator)
+   * @param {Object} event - Spinner event data
+   */
+  renderSpinnerStop(event) {
+    const spinnerId = event.spinnerId || event.data?.spinnerId;
+    
+    if (!spinnerId) {
+      this.logger.warn('[ZDisplayRenderer] Cannot stop spinner - no spinnerId provided');
+      return;
+    }
+    
+    const spinner = document.querySelector(`[data-spinner-id="${spinnerId}"]`);
+    
+    if (spinner) {
+      // Replace spinner with success checkmark
+      spinner.style.transition = 'opacity 0.3s ease';
+      spinner.style.opacity = '0';
+      
+      setTimeout(() => {
+        const label = spinner.querySelector('.zSpinner-label');
+        const labelText = label ? label.textContent : '';
+        
+        // Create success message
+        const successDiv = document.createElement('p');
+        successDiv.style.marginBottom = '0.5rem';
+        successDiv.style.color = 'var(--mainGreen, #8FBE6D)';
+        successDiv.innerHTML = `✓ ${labelText}`;
+        
+        spinner.replaceWith(successDiv);
+        this.logger.log(`[ZDisplayRenderer] Spinner stopped: ${spinnerId}`);
+      }, 300);
+    }
   }
 
   /**
@@ -1097,6 +1243,148 @@ export class ZDisplayRenderer {
     container.appendChild(form);
     
     this.logger.log('[ZDisplayRenderer] Selection form rendered');
+  }
+
+  renderButtonRequest(buttonRequest, targetZone = null) {
+    const zone = targetZone || this.defaultZone;
+    const container = document.getElementById(zone);
+    
+    if (!container) {
+      this.logger.error(`[ZDisplayRenderer] Cannot render button - zone not found: ${zone}`);
+      return;
+    }
+    
+    // Extract button details
+    const requestId = buttonRequest.requestId || buttonRequest.data?.requestId;
+    const label = buttonRequest.prompt || buttonRequest.data?.prompt || 'Click Me';
+    const action = buttonRequest.action || buttonRequest.data?.action || null;
+    const color = buttonRequest.color || buttonRequest.data?.color || 'primary';
+    const style = buttonRequest.style || buttonRequest.data?.style || 'default';
+    
+    this.logger.log('[ZDisplayRenderer] Rendering button:', { requestId, label, action, color, style });
+    
+    // Create button container
+    const buttonContainer = document.createElement('div');
+    buttonContainer.className = 'zButtonContainer';
+    buttonContainer.style.cssText = `
+      margin: 1rem 0;
+      padding: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    `;
+    
+    // Create the button with zTheme classes
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = label;
+    
+    // Apply zTheme button classes based on color
+    const colorClass = {
+      'primary': 'zBtnPrimary',
+      'success': 'zBtnSuccess',
+      'danger': 'zBtnDanger',
+      'warning': 'zBtnWarning',
+      'info': 'zBtnInfo',
+      'secondary': 'zBtnSecondary'
+    }[color] || 'zBtnPrimary';
+    
+    button.className = `zoloButton ${colorClass}`;
+    button.style.cssText = `
+      padding: 0.5rem 1.5rem;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: transform 0.1s ease;
+    `;
+    
+    // Add hover effect
+    button.addEventListener('mouseenter', () => {
+      button.style.transform = 'scale(1.02)';
+    });
+    button.addEventListener('mouseleave', () => {
+      button.style.transform = 'scale(1)';
+    });
+    
+    // Handle button click
+    button.addEventListener('click', () => {
+      this.logger.log('[ZDisplayRenderer] Button clicked:', label);
+      
+      // Send response back to server (True = clicked)
+      if (window.bifrostClient && window.bifrostClient.connection) {
+        window.bifrostClient.connection.send(JSON.stringify({
+          event: 'input_response',
+          requestId: requestId,
+          value: true  // Button clicked = True
+        }));
+        this.logger.log('[ZDisplayRenderer] Button response sent');
+      }
+      
+      // Replace button with confirmation
+      const confirmation = document.createElement('p');
+      confirmation.style.cssText = `
+        margin: 0;
+        padding: 0.5rem 1rem;
+        color: var(--color-success, #10b981);
+        font-weight: 500;
+      `;
+      confirmation.textContent = `✓ ${label} clicked!`;
+      
+      buttonContainer.replaceWith(confirmation);
+    });
+    
+    // Add cancel button (optional - for explicit "No" response)
+    const cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button';
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.className = 'zoloButton zBtnSecondary';
+    cancelBtn.style.cssText = `
+      padding: 0.5rem 1.5rem;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: transform 0.1s ease;
+    `;
+    
+    cancelBtn.addEventListener('mouseenter', () => {
+      cancelBtn.style.transform = 'scale(1.02)';
+    });
+    cancelBtn.addEventListener('mouseleave', () => {
+      cancelBtn.style.transform = 'scale(1)';
+    });
+    
+    cancelBtn.addEventListener('click', () => {
+      this.logger.log('[ZDisplayRenderer] Button cancelled:', label);
+      
+      // Send response back to server (False = cancelled)
+      if (window.bifrostClient && window.bifrostClient.connection) {
+        window.bifrostClient.connection.send(JSON.stringify({
+          event: 'input_response',
+          requestId: requestId,
+          value: false  // Button cancelled = False
+        }));
+        this.logger.log('[ZDisplayRenderer] Button cancel response sent');
+      }
+      
+      // Replace button with confirmation
+      const confirmation = document.createElement('p');
+      confirmation.style.cssText = `
+        margin: 0;
+        padding: 0.5rem 1rem;
+        color: var(--color-info, #3b82f6);
+        font-weight: 500;
+      `;
+      confirmation.textContent = `○ ${label} cancelled`;
+      
+      buttonContainer.replaceWith(confirmation);
+    });
+    
+    // Add buttons to container
+    buttonContainer.appendChild(button);
+    buttonContainer.appendChild(cancelBtn);
+    
+    // Add to page
+    container.appendChild(buttonContainer);
+    
+    this.logger.log('[ZDisplayRenderer] Button rendered');
   }
 }
 
