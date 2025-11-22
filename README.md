@@ -1,9 +1,19 @@
-# zCLI
+<div style="display: flex; flex-direction: column; align-items: stretch; margin-bottom: 1rem; font-weight: 500;">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <span></span>
+    <span><a style="color:#FFFBCC;" href="Documentation/zPhilosophy.md">Next: zPhilosophy →</a></span>
+  </div>
+  <div style="display: flex; justify-content: center; align-items: center; margin-top: 0.85rem;">
+    <h1 style="margin: 0; font-size: 2.15rem; font-weight: 700;">
+      <span style="color:#FFFBCC;">zCLI</span>
+    </h1>
+  </div>
+</div>
+
 ## **<span style="color:#A2D46E">Declare once—run everywhere.</span>**  
-Define data and workflows, deploy instantly as terminal or GUI, or interactively using zShell.
 
 > **New to zCLI?**  
-> Start with [<span style="color:#A2D46E">**The zPhilosophy**</span>](Documentation/zPhilosophy.md) to discover how **<span style="color:#A2D46E">Zolo</span> evolves intent and structure into meaning and syntax**.
+> Start with [<span style="color:#A2D46E">**The zPhilosophy**</span>](Documentation/zPhilosophy.md) to learn how **<span style="color:#A2D46E">Zolo</span> treats declarative intent as syntax**.
 
 ## Installation
 
