@@ -1,14 +1,60 @@
-[← Back to zPhilosophy](zPhilosophy.md) | [Next: zComm Guide →](zComm_GUIDE.md)
+<div style="display: flex; flex-direction: column; align-items: stretch; margin-bottom: 1rem; font-weight: 500;">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <span><a style="color:#FFFBCC;" href="zPhilosophy.md">← Back to zPhilosophy</a></span>
+    <span><a style="color:#FFFBCC;" href="../README.md">Home</a></span>
+    <span><a style="color:#FFFBCC;" href="zComm_GUIDE.md">Next: zComm Guide →</a></span>
+  </div>
+  <div style="display: flex; justify-content: center; align-items: center; margin-top: 0.85rem;">
+    <h1 style="margin: 0; font-size: 2.15rem; font-weight: 700;">
+      <span style="color:#FFFBCC;">zConfig Guide</span>
+    </h1>
+  </div>
+</div>
 
-# zConfig Guide
+> <span style="color:#F8961F"><b>Self-aware configuration</b></span> that detects your machine, adapts to your environment, and stays out of your way.
 
-> **<span style="color:#F8961F">Self-aware configuration</span>** that detects your machine, adapts to your environment, and gets out of your way.
+<span style="color:#8FBE6D"><b>Every project begins with configuration.</b></span>  
+Paths. Logging. Environment detection. Secrets.  
+You either build it yourself or copy it from somewhere else.
 
-**<span style="color:#8FBE6D">Every codebase needs configuration.</span>** Paths, logging, environment detection, secrets management—you either write it yourself or copy-paste from StackOverflow. zConfig is the **<span style="color:#F8961F">first subsystem initialized</span>** in zCLI, establishing the **<span style="color:#F8961F">session</span>**, **<span style="color:#F8961F">logger</span>**, and **<span style="color:#F8961F">machine context</span>** upon which all **<span style="color:#F8961F">16 other subsystems</span>** depend. Don't need the full framework? **<span style="color:#8FBE6D">Import zCLI, use just zConfig.</span>** Get **<span style="color:#8FBE6D">zero boilerplate</span>** with **<span style="color:#F8961F">hierarchical settings</span>** (machine → environment → session), cross-platform paths, and persistent preferences.<br>**No dotenv chaos, no wheel-reinventing.**
+zConfig is the <span style="color:#F8961F"><b>first subsystem</b></span> initialized in zCLI.  
+It establishes the <span style="color:#F8961F">session</span>, <span style="color:#F8961F">logger</span>, and <span style="color:#F8961F">machine context</span> that all <span style="color:#F8961F">16 other subsystems</span> rely on.
 
-## Quick Demo
+You don’t need the full framework.  
+<span style="color:#8FBE6D"><b>Import zCLI and use only zConfig.</b></span>
 
-> **<span style="color:#8FBE6D">Want to see zConfig solo?</span>**<br>Visit [`Demos/Layer_0/zConfig_Demo`](../Demos/Layer_0/zConfig_Demo) for a standalone example that loads only the zConfig subsystem (no python-dotenv), reads `.zEnv`, detects machine info, and prints a low-stock summary for a pretend inventory.
+You get <span style="color:#8FBE6D">zero boilerplate</span>,  
+<span style="color:#F8961F">hierarchical settings</span> (machine → environment → session),  
+cross-platform paths,  
+and persistent preferences.
+
+**No dotenv sprawl. No reinventing the wheel.**
+
+## Quick Start
+
+### <span style="color:#8FBE6D">Initialize zCLI</span>
+
+`z = zCLI()` automatically initializes zConfig, detects your machine, creates support folders, and loads defaults. No setup required.
+
+> **Try it:** [`Level_0_Hello/hello_config.py`](../Demos/Layer_0/zConfig_Demo/Level_0_Hello/hello_config.py)
+
+### <span style="color:#8FBE6D">Read Machine Values</span>
+
+`machine = z.config.get_machine()` returns all machine properties (OS, CPU, IDE, browser, etc.). Access individual keys with `z.config.get_machine("hostname")`.
+
+> **Try it:** [`Level_1_Get/zmachine_get.py`](../Demos/Layer_0/zConfig_Demo/Level_1_Get/zmachine_get.py)
+
+### <span style="color:#8FBE6D">Read Environment Values</span>
+
+`env = z.config.get_environment()` returns deployment, logging, network, and security settings. Use `z.config.get_environment("deployment")` for single keys.
+
+> **Try it:** [`Level_1_Get/zenv_get.py`](../Demos/Layer_0/zConfig_Demo/Level_1_Get/zenv_get.py)
+
+### <span style="color:#8FBE6D">Read Session Values</span>
+
+`session = z.session` contains runtime state (zMode, zSpace, zVars, zAuth, etc.) created during initialization and influenced by zSpark.
+
+> **Try it:** [`Level_1_Get/zsession_get.py`](../Demos/Layer_0/zConfig_Demo/Level_1_Get/zsession_get.py)
 
 ## The Hierarchy
 
