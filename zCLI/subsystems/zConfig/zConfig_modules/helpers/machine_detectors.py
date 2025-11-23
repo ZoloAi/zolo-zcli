@@ -104,21 +104,25 @@ zMachine:
 # Logging Helpers
 # ═══════════════════════════════════════════════════════════
 
-def _log_info(message: str) -> None:
-    """Print info message with consistent formatting."""
-    print(f"{LOG_PREFIX} {message}")
+def _log_info(message: str, log_level: Optional[str] = None) -> None:
+    """Print info message with consistent formatting (log-level aware)."""
+    from zCLI.utils import print_if_not_prod
+    print_if_not_prod(f"{LOG_PREFIX} {message}", log_level)
 
-def _log_warning(message: str) -> None:
-    """Print warning message with color."""
-    print(f"{Colors.WARNING}{LOG_PREFIX} {message}{Colors.RESET}")
+def _log_warning(message: str, log_level: Optional[str] = None) -> None:
+    """Print warning message with color (log-level aware)."""
+    from zCLI.utils import print_if_not_prod
+    print_if_not_prod(f"{Colors.WARNING}{LOG_PREFIX} {message}{Colors.RESET}", log_level)
 
-def _log_error(message: str) -> None:
-    """Print error message with color."""
+def _log_error(message: str, log_level: Optional[str] = None) -> None:
+    """Print error message with color (always shown, even in PROD mode)."""
+    # Errors should always be visible
     print(f"{Colors.ERROR}{LOG_PREFIX} {message}{Colors.RESET}")
 
-def _log_config(message: str) -> None:
-    """Print config message with color."""
-    print(f"{Colors.CONFIG}{LOG_PREFIX} {message}{Colors.RESET}")
+def _log_config(message: str, log_level: Optional[str] = None) -> None:
+    """Print config message with color (log-level aware)."""
+    from zCLI.utils import print_if_not_prod
+    print_if_not_prod(f"{Colors.CONFIG}{LOG_PREFIX} {message}{Colors.RESET}", log_level)
 
 
 def _safe_getcwd() -> str:
@@ -131,7 +135,7 @@ def _safe_getcwd() -> str:
         return str(Path.home())
 
 
-def detect_browser() -> str:
+def detect_browser(log_level: Optional[str] = None) -> str:
     """Detect default browser via env var or platform-specific methods."""
     browser = os.getenv("BROWSER")  # Check env var first
     if browser:
@@ -139,9 +143,9 @@ def detect_browser() -> str:
 
     system = platform.system()
     if system == "Darwin":
-        browser = _detect_macos_browser()
+        browser = _detect_macos_browser(log_level)
     elif system == "Linux":
-        browser = _detect_linux_browser()
+        browser = _detect_linux_browser(log_level)
     elif system == "Windows":
         browser = DEFAULT_WINDOWS_BROWSER
     else:
@@ -150,7 +154,7 @@ def detect_browser() -> str:
     return browser
 
 
-def _detect_macos_browser() -> str:
+def _detect_macos_browser(log_level: Optional[str] = None) -> str:
     """Query macOS LaunchServices for default browser, fallback to Safari."""
     try:
         # Check LaunchServices database for http handler
@@ -165,15 +169,15 @@ def _detect_macos_browser() -> str:
         output_lower = result.stdout.lower()
         for key, name in BROWSER_MAPPING.items():
             if key in output_lower:
-                _log_info(f"Found default browser via LaunchServices: {name}")
+                _log_info(f"Found default browser via LaunchServices: {name}", log_level)
                 return name
 
     except Exception as e:
-        _log_warning(f"Could not query LaunchServices: {e}")
+        _log_warning(f"Could not query LaunchServices: {e}", log_level)
 
     return DEFAULT_MACOS_BROWSER
 
-def _detect_linux_browser() -> str:
+def _detect_linux_browser(log_level: Optional[str] = None) -> str:
     """Query xdg-settings or PATH for default browser, fallback to firefox."""
     # Try xdg-settings first
     try:
@@ -393,37 +397,37 @@ def get_ide_launch_command(ide_name: str) -> tuple:
     return (None, [])
 
 
-def detect_ide() -> str:
+def detect_ide(log_level: Optional[str] = None) -> str:
     """Detect IDE/editor via env vars, PATH search (modern→classic→simple), fallback to nano."""
     # Check IDE/editor env vars
     for var in IDE_ENV_VARS:
         ide_env = os.getenv(var)
         if ide_env:
-            _log_config(f"IDE from env var {var}: {ide_env}")
+            _log_config(f"IDE from env var {var}: {ide_env}", log_level)
             return ide_env
 
     # Check for modern GUI IDEs (prioritized by popularity/modernity)
     for ide in MODERN_IDES:
         if shutil.which(ide):
-            _log_info(f"Found modern IDE: {ide}")
+            _log_info(f"Found modern IDE: {ide}", log_level)
             return ide
 
     # Check for classic IDEs
     for ide in CLASSIC_IDES:
         if shutil.which(ide):
-            _log_config(f"Found classic IDE: {ide}")
+            _log_config(f"Found classic IDE: {ide}", log_level)
             return ide
 
     # macOS-specific: Check for Xcode
     if platform.system() == "Darwin":
         if shutil.which("xed"):  # Xcode command-line tool
-            _log_config("Found Xcode (xed)")
+            _log_config("Found Xcode (xed)", log_level)
             return "xed"
 
     # Fallback to simple editors
     for editor in SIMPLE_EDITORS:
         if shutil.which(editor):
-            _log_config(f"Falling back to simple editor: {editor}")
+            _log_config(f"Falling back to simple editor: {editor}", log_level)
             return editor
 
     # Final fallback
@@ -510,9 +514,10 @@ def create_user_machine_config(path: Path, machine: Dict[str, Any]) -> None:
         _log_error(f"Failed to create user machine config: {e}")
 
 
-def auto_detect_machine() -> Dict[str, Any]:
+def auto_detect_machine(log_level: Optional[str] = None) -> Dict[str, Any]:
     """Auto-detect machine identity, Python runtime, tools, and capabilities."""
-    print("[MachineConfig] Auto-detecting machine information...")
+    from zCLI.utils import print_if_not_prod
+    print_if_not_prod("[MachineConfig] Auto-detecting machine information...", log_level)
 
     machine = {
         # Identity
@@ -529,8 +534,8 @@ def auto_detect_machine() -> Dict[str, Any]:
         "libc_ver": platform.libc_ver()[0],         # libc version
 
         # User tools (system defaults, user can override)
-        "browser": detect_browser(),
-        "ide": detect_ide(),
+        "browser": detect_browser(log_level),
+        "ide": detect_ide(log_level),
         "terminal": os.getenv("TERM", "unknown"),
         "shell": os.getenv("SHELL", DEFAULT_SHELL),
         "lang": os.getenv("LANG", "unknown"),       # System language
@@ -545,14 +550,17 @@ def auto_detect_machine() -> Dict[str, Any]:
         "path": os.getenv("PATH", ""),             # System PATH
     }
 
-    print(
-        f"[MachineConfig] Identity: {machine['hostname']} ({machine['username']}) on {machine['os_name']}"
+    print_if_not_prod(
+        f"[MachineConfig] Identity: {machine['hostname']} ({machine['username']}) on {machine['os_name']}",
+        log_level
     )
-    print(
-        f"[MachineConfig] System: {machine['processor']}, {machine['cpu_cores']} cores, {machine['memory_gb']}GB RAM"
+    print_if_not_prod(
+        f"[MachineConfig] System: {machine['processor']}, {machine['cpu_cores']} cores, {machine['memory_gb']}GB RAM",
+        log_level
     )
-    print(
-        f"[MachineConfig] Python: {machine['python_impl']} {machine['python_version']} on {machine['architecture']}"
+    print_if_not_prod(
+        f"[MachineConfig] Python: {machine['python_impl']} {machine['python_version']} on {machine['architecture']}",
+        log_level
     )
 
     return machine

@@ -200,8 +200,12 @@ class SessionConfig:
         self.zconfig = zconfig
         self.mycolor = COLOR_MAIN
 
-        # Print ready message
-        print_ready_message(READY_MESSAGE, color=COLOR_CONFIG)
+        # Extract log level for log-aware printing
+        from zCLI.utils import get_log_level_from_zspark
+        self._log_level = get_log_level_from_zspark(zSpark_obj)
+
+        # Print ready message (log-level aware)
+        print_ready_message(READY_MESSAGE, color=COLOR_CONFIG, log_level=self._log_level)
 
     def generate_id(self, prefix: str = DEFAULT_SESSION_PREFIX) -> str:
         """Generate random session ID with prefix (default: 'zS') -> 'zS_a1b2c3d4'."""
@@ -333,13 +337,15 @@ class SessionConfig:
         5. Default to INFO
         
         Returns:
-            Logger level string (e.g., "INFO", "DEBUG", "WARNING")
+            Logger level string (e.g., "INFO", "DEBUG", "WARNING", "PROD")
         """
+        from zCLI.utils import print_if_not_prod
+        
         # 1. Check zSpark for logger setting
         zSpark_logger = self._get_zSpark_value(ZSPARK_KEY_LOGGER)
         if zSpark_logger:
             level = str(zSpark_logger).upper()
-            print(f"{LOG_PREFIX} Logger level from zSpark: {level}")
+            print_if_not_prod(f"{LOG_PREFIX} Logger level from zSpark: {level}", level)
             return level
 
         # 2. Check virtual environment variable (if in venv)
@@ -347,23 +353,23 @@ class SessionConfig:
             venv_logger = self.environment.get_env_var(ENV_VAR_LOGGER)
             if venv_logger:
                 level = str(venv_logger).upper()
-                print(f"{LOG_PREFIX} Logger level from virtual env: {level}")
+                print_if_not_prod(f"{LOG_PREFIX} Logger level from virtual env: {level}", level)
                 return level
 
         # 3. Check system environment variable
         system_logger = self.environment.get_env_var(ENV_VAR_LOGGER)
         if system_logger:
             level = str(system_logger).upper()
-            print(f"{LOG_PREFIX} Logger level from system env: {level}")
+            print_if_not_prod(f"{LOG_PREFIX} Logger level from system env: {level}", level)
             return level
 
         # 4. Check zConfig.zEnvironment.yaml file
         logging_config = self.environment.get(CONFIG_KEY_LOGGING, {})
         if isinstance(logging_config, dict):
             level = logging_config.get(CONFIG_KEY_LEVEL, DEFAULT_LOG_LEVEL)
-            print(f"{LOG_PREFIX} Logger level from zEnvironment config: {level}")
+            print_if_not_prod(f"{LOG_PREFIX} Logger level from zEnvironment config: {level}", level)
             return level
 
         # 5. Default fallback
-        print(f"{LOG_PREFIX} Logger level defaulting to: {DEFAULT_LOG_LEVEL}")
+        print_if_not_prod(f"{LOG_PREFIX} Logger level defaulting to: {DEFAULT_LOG_LEVEL}", DEFAULT_LOG_LEVEL)
         return DEFAULT_LOG_LEVEL

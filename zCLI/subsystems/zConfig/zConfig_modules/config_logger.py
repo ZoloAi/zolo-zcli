@@ -92,8 +92,8 @@ class LoggerConfig:
         # Initialize Python logging
         self._setup_logging()
 
-        # Print ready message
-        print_ready_message(READY_MESSAGE, color="CONFIG")
+        # Print ready message (log-level aware)
+        print_ready_message(READY_MESSAGE, color="CONFIG", log_level=self.log_level)
 
     def _normalize_log_level(self, level: Any) -> str:
         """Normalize log level to uppercase string."""
@@ -287,9 +287,8 @@ class LoggerConfig:
                 file_handler.setFormatter(file_formatter)
                 self._logger.addHandler(file_handler)
                 
-                if is_prod_mode:
-                    print(f"{LOG_PREFIX} PROD mode: File logging enabled (no console output): {file_path}")
-                else:
+                # Only print file logging message if not in PROD mode
+                if not is_prod_mode:
                     print(f"{LOG_PREFIX} File logging enabled: {file_path}")
             except Exception as e:
                 print(f"{Colors.ERROR}{LOG_PREFIX} Failed to setup file logging: {e}{Colors.RESET}")
@@ -346,12 +345,16 @@ class LoggerConfig:
         """
         Check if system messages should be displayed based on log level.
         
-        System messages are shown for DEBUG and INFO levels only.
+        System messages (aesthetic "Ready" banners) are shown for all levels
+        EXCEPT PROD mode. These are visual indicators only, not logged to file.
+        
+        Shown in: DEBUG, INFO, WARNING, ERROR, CRITICAL
+        Hidden in: PROD
         
         Returns:
             bool: True if sysmsg should be shown
         """
-        return self.log_level in (LOG_LEVEL_DEBUG, LOG_LEVEL_INFO)
+        return self.log_level != LOG_LEVEL_PROD
     
     # ═══════════════════════════════════════════════════════════
     # Logging Interface

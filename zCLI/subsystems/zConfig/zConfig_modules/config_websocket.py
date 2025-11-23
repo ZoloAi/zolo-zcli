@@ -69,8 +69,13 @@ class WebSocketConfig:
         # Get WebSocket configuration from environment (which uses hierarchy)
         self._load_websocket_config()
 
-        # Print ready message
-        print_ready_message(READY_MESSAGE, color="CONFIG")
+        # Extract log level for log-aware printing
+        log_level = None
+        if hasattr(zcli, 'session') and zcli.session:
+            log_level = zcli.session.get('zLogger')
+
+        # Print ready message (log-level aware)
+        print_ready_message(READY_MESSAGE, color="CONFIG", log_level=log_level)
 
     def _load_websocket_config(self) -> None:
         """Load WebSocket configuration following hierarchy: zSpark > env > config file > defaults."""

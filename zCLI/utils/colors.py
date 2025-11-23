@@ -1,8 +1,84 @@
 # zCLI/utils/colors.py
 """ANSI color codes for terminal output."""
 
-def print_ready_message(label, color="CONFIG", base_width=60, char="═"):
-    """Print styled 'Ready' message for subsystems."""
+from typing import Optional, Dict, Any
+
+# ═══════════════════════════════════════════════════════════
+# Log Level Constants
+# ═══════════════════════════════════════════════════════════
+LOG_LEVEL_PROD = "PROD"  # Production mode: file logging only, no stdout
+LOG_LEVEL_KEY_ALIASES = ("logger", "log_level", "logLevel", "zLogger")
+
+# ═══════════════════════════════════════════════════════════
+# Log Level Helper
+# ═══════════════════════════════════════════════════════════
+
+def get_log_level_from_zspark(zspark_obj: Optional[Dict[str, Any]]) -> Optional[str]:
+    """
+    Extract log level from zSpark object using known key aliases.
+    
+    Args:
+        zspark_obj: zSpark configuration dictionary
+        
+    Returns:
+        Log level string or None if not found
+    """
+    if not zspark_obj:
+        return None
+    
+    for key in LOG_LEVEL_KEY_ALIASES:
+        if key in zspark_obj:
+            level = zspark_obj[key]
+            return str(level).upper() if level else None
+    
+    return None
+
+def should_suppress_init_prints(log_level: Optional[str]) -> bool:
+    """
+    Check if initialization prints should be suppressed based on log level.
+    
+    In PROD mode, all console output is suppressed (logs go to file only).
+    
+    Args:
+        log_level: Log level string (e.g., "PROD", "INFO", "DEBUG")
+        
+    Returns:
+        True if prints should be suppressed, False otherwise
+    """
+    if not log_level:
+        return False
+    
+    return log_level.upper() == LOG_LEVEL_PROD
+
+# ═══════════════════════════════════════════════════════════
+# Log-Level Aware Print Functions
+# ═══════════════════════════════════════════════════════════
+
+def print_if_not_prod(message: str, log_level: Optional[str] = None) -> None:
+    """
+    Print message only if not in PROD mode.
+    
+    Args:
+        message: Message to print
+        log_level: Log level string (if PROD, suppresses output)
+    """
+    if not should_suppress_init_prints(log_level):
+        print(message)
+
+def print_ready_message(label: str, color: str = "CONFIG", base_width: int = 60, char: str = "═", log_level: Optional[str] = None) -> None:
+    """
+    Print styled 'Ready' message for subsystems.
+    
+    Args:
+        label: Message label
+        color: Color code name from Colors class
+        base_width: Total width of the message line
+        char: Character to use for padding
+        log_level: Optional log level (suppresses output if PROD)
+    """
+    if should_suppress_init_prints(log_level):
+        return
+        
     color_code = getattr(Colors, color, Colors.RESET)  # Get color code
     label_len = len(label) + 2  # Label length with spaces
     space = base_width - label_len  # Calculate remaining space

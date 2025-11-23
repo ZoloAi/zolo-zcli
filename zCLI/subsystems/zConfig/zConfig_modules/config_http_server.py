@@ -75,8 +75,12 @@ class HttpServerConfig:
         else:
             self.logger.debug(f"{LOG_PREFIX} HTTP server disabled")
         
-        # Print ready message
-        print_ready_message(READY_MESSAGE, color="CONFIG")
+        # Extract log level for log-aware printing
+        from zCLI.utils import get_log_level_from_zspark
+        log_level = get_log_level_from_zspark(zspark_obj)
+        
+        # Print ready message (log-level aware)
+        print_ready_message(READY_MESSAGE, color="CONFIG", log_level=log_level)
     
     def __repr__(self) -> str:
         """Return string representation of HttpServerConfig instance."""

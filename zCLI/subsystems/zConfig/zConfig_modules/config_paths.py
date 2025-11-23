@@ -37,6 +37,7 @@ class zConfigPaths:
     zSpark: Optional[Dict[str, Any]]
     workspace_dir: Optional[Path]
     _dotenv_path: Optional[Path]
+    _log_level: Optional[str]
 
     def __init__(self, zSpark_obj: Optional[Dict[str, Any]] = None) -> None:
         """Initialize cross-platform path resolver.
@@ -54,6 +55,10 @@ class zConfigPaths:
         self.app_author = self.APP_AUTHOR
         self.os_type = platform.system()  # 'Linux', 'Darwin', 'Windows'
         self.zSpark = zSpark_obj if isinstance(zSpark_obj, dict) else None
+        
+        # Extract log level early for log-aware printing (before logger exists)
+        from zCLI.utils import get_log_level_from_zspark
+        self._log_level = get_log_level_from_zspark(zSpark_obj)
 
         # Validate OS type
         if self.os_type not in self.VALID_OS_TYPES:
@@ -76,19 +81,22 @@ class zConfigPaths:
             self._log_info(f"Dotenv path resolved: {self._dotenv_path}")
 
     # ═══════════════════════════════════════════════════════════
-    # Logging Helpers (DRY)
+    # Logging Helpers (DRY) - Log-level aware
     # ═══════════════════════════════════════════════════════════
 
     def _log_info(self, message: str) -> None:
-        """Print info message with consistent formatting."""
-        print(f"[zConfigPaths] {message}")
+        """Print info message with consistent formatting (suppressed in PROD mode)."""
+        from zCLI.utils import print_if_not_prod
+        print_if_not_prod(f"[zConfigPaths] {message}", self._log_level)
 
     def _log_warning(self, message: str) -> None:
-        """Print warning message with consistent formatting."""
-        print(f"{Colors.WARNING}[zConfigPaths] {message}{Colors.RESET}")
+        """Print warning message with consistent formatting (suppressed in PROD mode)."""
+        from zCLI.utils import print_if_not_prod
+        print_if_not_prod(f"{Colors.WARNING}[zConfigPaths] {message}{Colors.RESET}", self._log_level)
 
     def _log_error(self, message: str) -> None:
-        """Print error message with consistent formatting."""
+        """Print error message with consistent formatting (always shown, even in PROD mode)."""
+        # Errors should always be visible, even in PROD mode
         print(f"{Colors.ERROR}[zConfigPaths] ERROR: {message}{Colors.RESET}")
 
     # ═══════════════════════════════════════════════════════════

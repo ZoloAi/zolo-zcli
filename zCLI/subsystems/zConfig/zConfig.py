@@ -98,8 +98,9 @@ class zConfig:
         # Get logger from session (initialized during session creation)
         session_logger = session_data[SESSION_KEY_LOGGER_INSTANCE]
 
-        # Extract underlying Python logger from LoggerConfig wrapper
-        zcli.logger = session_logger.logger
+        # Store full LoggerConfig instance (provides helper methods like should_show_sysmsg())
+        # The LoggerConfig class proxies all standard logging methods to the underlying Python logger
+        zcli.logger = session_logger
 
         # Log initial message with configured level
         zcli.logger.info("Logger initialized at level: %s", session_logger.log_level)
@@ -115,8 +116,9 @@ class zConfig:
         # Initialize HTTP Server configuration (optional feature)
         self.http_server = HttpServerConfig(zSpark_obj or {}, zcli.logger)
 
-        # Print styled ready message (before zDisplay is available)
-        print_ready_message(READY_MESSAGE, color=DEFAULT_COLOR)
+        # Print styled ready message (before zDisplay is available, log-level aware)
+        log_level = zcli.session.get('zLogger') if zcli.session else None
+        print_ready_message(READY_MESSAGE, color=DEFAULT_COLOR, log_level=log_level)
 
     # ═══════════════════════════════════════════════════════════
     # Configuration Access Methods

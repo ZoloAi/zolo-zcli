@@ -51,17 +51,20 @@ class EnvironmentConfig:
             create_default_env_config,
             self.env,
             self.paths.ZENVIRONMENT_FILENAME,
-            SUBSYSTEM_NAME
+            SUBSYSTEM_NAME,
+            log_level=paths._log_level
         )
 
-        print_ready_message(READY_MESSAGE, color="CONFIG")
+        print_ready_message(READY_MESSAGE, color="CONFIG", log_level=paths._log_level)
 
     def _detect_environments(self) -> None:
         """Detect virtual environment and system environment."""
+        from zCLI.utils import print_if_not_prod
+        
         # Load dotenv file (if available) before capturing environment snapshot
         dotenv_path = self.paths.load_dotenv()
         if dotenv_path:
-            print(f"{LOG_PREFIX} Dotenv loaded from: {dotenv_path}")
+            print_if_not_prod(f"{LOG_PREFIX} Dotenv loaded from: {dotenv_path}", self.paths._log_level)
 
         # Detect if running in virtual environment
         self.in_venv = hasattr(sys, 'real_prefix') or (
@@ -74,13 +77,15 @@ class EnvironmentConfig:
 
         # Print detection results
         if self.in_venv:
-            print(f"{LOG_PREFIX} Virtual environment detected: {self.venv_path}")
+            print_if_not_prod(f"{LOG_PREFIX} Virtual environment detected: {self.venv_path}", self.paths._log_level)
         else:
-            print(f"{LOG_PREFIX} Running in system environment")
+            print_if_not_prod(f"{LOG_PREFIX} Running in system environment", self.paths._log_level)
 
     def _get_defaults(self) -> Dict[str, Any]:
         """Get minimal hardcoded default environment values (first run fallback)."""
-        print(f"{LOG_PREFIX} Loading environment defaults...")
+        from zCLI.utils import print_if_not_prod
+        
+        print_if_not_prod(f"{LOG_PREFIX} Loading environment defaults...", self.paths._log_level)
 
         env = {
             # Minimal defaults - comprehensive config is in zConfig.environment.yaml
@@ -88,7 +93,7 @@ class EnvironmentConfig:
             KEY_ROLE: DEFAULT_ROLE,
         }
 
-        print(f"{LOG_PREFIX} Environment: {env[KEY_DEPLOYMENT]} ({env[KEY_ROLE]})")
+        print_if_not_prod(f"{LOG_PREFIX} Environment: {env[KEY_DEPLOYMENT]} ({env[KEY_ROLE]})", self.paths._log_level)
 
         return env
 

@@ -27,8 +27,8 @@ class MachineConfig:
         """Initialize with auto-detection and load user preferences from zConfig.machine.yaml."""
         self.paths = paths
 
-        # Auto-detect machine defaults
-        self.machine = auto_detect_machine()
+        # Auto-detect machine defaults (pass log level for aware printing)
+        self.machine = auto_detect_machine(log_level=paths._log_level)
         
         # Add user_data_dir from paths (needed for zPath display formatting)
         self.machine["user_data_dir"] = str(paths.user_data_dir)
@@ -40,11 +40,12 @@ class MachineConfig:
             create_user_machine_config,
             self.machine,
             self.paths.ZMACHINE_USER_FILENAME,
-            SUBSYSTEM_NAME
+            SUBSYSTEM_NAME,
+            log_level=paths._log_level
         )
 
-        # Print ready message
-        print_ready_message(READY_MESSAGE, color="CONFIG")
+        # Print ready message (log-level aware)
+        print_ready_message(READY_MESSAGE, color="CONFIG", log_level=paths._log_level)
 
     def get(self, key: str, default: Any = None) -> Any:
         """Get machine config value by key, returning default if not found."""

@@ -291,8 +291,9 @@ class zComm:
         # Initialize zBifrost server if in zBifrost mode
         self._bifrost_mgr.auto_start()
 
-        # Print styled ready message (before zDisplay is available)
-        print_ready_message(MSG_READY, color=COLOR_ZCOMM)
+        # Print styled ready message (before zDisplay is available, log-level aware)
+        log_level = self.session.get('zLogger') if self.session else None
+        print_ready_message(MSG_READY, color=COLOR_ZCOMM, log_level=log_level)
 
         # Log ready (display not available yet as zComm is in Layer 0)
         self.logger.info(MSG_SUBSYSTEM_READY)
