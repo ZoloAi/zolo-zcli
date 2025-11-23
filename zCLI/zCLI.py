@@ -543,6 +543,10 @@ class zCLI:
                     handler.flush()
                 cleanup_status[SHUTDOWN_LOGGER] = True
         
+        # 5. Uninstall exception hook if installed
+        if hasattr(self, 'zTraceback') and self.zTraceback:
+            self.zTraceback.uninstall_exception_hook()
+        
         # Final status report
         self.logger.info(SHUTDOWN_SEPARATOR)
         self.logger.info(SHUTDOWN_MSG_STATUS_REPORT)

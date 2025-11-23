@@ -24,9 +24,9 @@ def main():
     print("\nThis will trigger a ZeroDivisionError and launch the interactive UI.")
     print("You'll see a menu with options to:")
     print("  1. View Details")
-    print("  2. Retry Operation")
+    print("  2. Full Traceback")
     print("  3. Exception History")
-    print("  4. Stop")
+    print("  4. Exit")
     print()
     
     # Initialize zCLI
@@ -51,7 +51,6 @@ def main():
         # Launch the interactive traceback UI
         result = zcli.zTraceback.interactive_handler(
             e,
-            operation=failing_operation,
             context={
                 'demo': 'interactive_traceback',
                 'test_value': 10,

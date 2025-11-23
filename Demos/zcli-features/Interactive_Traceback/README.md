@@ -6,9 +6,9 @@ This folder contains interactive demonstrations of zCLI's **Interactive Tracebac
 
 The Interactive Traceback system transforms traditional Python error handling into a menu-driven debugging experience, allowing you to:
 - **View Details**: See formatted exception information with context
-- **Retry Operation**: Re-execute the failed operation
+- **Full Traceback**: Display complete stack trace for debugging
 - **Exception History**: Navigate through previously caught exceptions
-- **Stop**: Exit the interactive session
+- **Exit**: Exit the interactive session
 
 ## Demo Files
 
@@ -45,11 +45,10 @@ Runs 4 tests:
 python3 Demos/Interactive_Traceback/test_interactive_traceback.py
 ```
 
-Includes 4 interactive tests:
+Includes interactive tests demonstrating:
 1. **Basic Interactive Traceback** - Simple `ZeroDivisionError`
-2. **Retryable Operation** - Operation that succeeds after retries
-3. **Nested Traceback** - Multi-level function call stacks
-4. **Exception History** - Multiple exceptions tracked over time
+2. **Nested Traceback** - Multi-level function call stacks
+3. **Exception History** - Multiple exceptions tracked over time
 
 ---
 
@@ -60,7 +59,7 @@ The entire interactive traceback system is defined in just 4 lines of YAML:
 
 ```yaml
 Traceback:
-  ~Root*: ["^View Details", "^Retry Operation", "^Exception History", "stop"]
+  ~Root*: ["^View Details", "^Full Traceback", "Exception History", "exit"]
 ```
 
 ### Seamless Integration
@@ -92,8 +91,7 @@ except Exception as e:
     # Launch interactive traceback UI
     zcli.zTraceback.interactive_handler(
         e,
-        operation=lambda: 10 / 0,  # Optional: for retry
-        context={'user_id': 123}    # Optional: additional context
+        context={'user_id': 123}  # Optional: additional context
     )
 ```
 
@@ -115,7 +113,7 @@ except Exception as e:
 | **Code Required** | 50-100 lines | 1 function call |
 | **UI Definition** | Python code | 4 lines of YAML |
 | **Context Display** | Manual formatting | Automatic zDisplay |
-| **Retry Logic** | Custom implementation | Built-in |
+| **Stack Traces** | Plain text dump | Formatted views |
 | **History Tracking** | Custom state management | Built-in stack |
 | **Terminal Safety** | Emoji/Unicode issues | ASCII-safe |
 

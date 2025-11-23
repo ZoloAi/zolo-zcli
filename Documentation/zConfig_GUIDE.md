@@ -92,13 +92,52 @@ Pass a minimal `zSpark_obj` dict into `zCLI()` to override runtime settings **be
 - `DEBUG`, `INFO` (default), `WARNING`, `ERROR`, `CRITICAL` - Standard Python logging levels
 - `PROD` - **Production mode**: Silent console output, full file logging, no "Ready" banners
 
-**PROD Mode** is special:
-- Console: Completely silent (no initialization noise)
-- File: Full logs to `~/Library/Application Support/zolo-zcli/logs/zolo-zcli.log`
-- System messages: All aesthetic "Ready" banners suppressed
-- Perfect for production deployments with clean output
-
 > **Try it:** [`Level_2_zSettings/zspark_demo.py`](../Demos/Layer_0/zConfig_Demo/Level_2_zSettings/zspark_demo.py) | [README](../Demos/Layer_0/zConfig_Demo/Level_2_zSettings/README.md)
+
+### <span style="color:#8FBE6D">Use the Built-in Logger</span>
+
+```python
+z = zCLI({"logger": "INFO"})
+
+# Use z.logger in your code - no imports needed
+z.logger.info("Application started")
+z.logger.warning("Rate limit approaching")
+z.logger.error("Connection failed")
+```
+
+The logger is already configured - no `import logging` needed. All standard methods available: `.debug()`, `.info()`, `.warning()`, `.error()`, `.critical()`.
+
+> **Try it:** [`Level_2_zSettings/zlogger_demo.py`](../Demos/Layer_0/zConfig_Demo/Level_2_zSettings/zlogger_demo.py)
+
+### <span style="color:#8FBE6D">Custom Logger Methods for Production</span>
+
+```python
+z = zCLI({"logger": "PROD"})
+
+z.logger.dev("Cache hit rate: 87%")        # Hidden in PROD
+z.logger.user("Processing 1,247 records") # Always visible
+```
+
+Two custom methods for clean production logging:
+- **`.dev()`** - Development diagnostics (shown in INFO+, hidden in PROD)
+- **`.user()`** - Application messages (always shown, even in PROD)
+
+> **Try it:** [`Level_2_zSettings/zlogger_user_demo.py`](../Demos/Layer_0/zConfig_Demo/Level_2_zSettings/zlogger_user_demo.py)
+
+### <span style="color:#8FBE6D">Enable Automatic Exception Handling</span>
+
+```python
+z = zCLI({
+    "logger": "PROD",
+    "zTraceback": True,  # No try/except needed
+})
+
+result = handle_request()  # Errors launch interactive menu
+```
+
+Uncaught exceptions automatically launch an interactive menu with error details and full traceback. No try/except blocks required - just enable it.
+
+> **Try it:** [`Level_2_zSettings/ztraceback_demo.py`](../Demos/Layer_0/zConfig_Demo/Level_2_zSettings/ztraceback_demo.py)
 
 ## The Hierarchy
 

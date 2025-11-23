@@ -75,7 +75,7 @@ DEFAULT_SESSION_PREFIX = "zS"
 TOKEN_HEX_LENGTH = 4
 
 # Default values
-DEFAULT_ZTRACEBACK = True
+DEFAULT_ZTRACEBACK = False  # Opt-in: Set zTraceback: True in zSpark to enable automatic exception handling
 DEFAULT_LOG_LEVEL = "INFO"
 
 # zMode values

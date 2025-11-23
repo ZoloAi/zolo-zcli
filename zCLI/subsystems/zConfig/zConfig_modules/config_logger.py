@@ -414,4 +414,52 @@ class LoggerConfig:
             **kwargs: Keyword arguments passed to logger
         """
         self._logger.critical(message, *args, **kwargs)
+    
+    def dev(self, message: str, *args: Any, **kwargs: Any) -> None:
+        """
+        Development log - shown in INFO/DEBUG/WARNING/ERROR/CRITICAL modes,
+        but HIDDEN in PROD mode.
+        
+        Use for development diagnostics and internal debugging messages that
+        should not appear in production deployments.
+        
+        Args:
+            message: Log message (supports % formatting with args)
+            *args: Positional arguments for message formatting
+            **kwargs: Keyword arguments passed to logger
+        
+        Example:
+            z.logger.dev("Cache hit rate: %d%%", 87)
+            z.logger.dev("Development diagnostic message")
+        """
+        if self.log_level == LOG_LEVEL_PROD:
+            return  # Suppressed in PROD mode
+        
+        # Show in all other modes
+        self._logger.info(message, *args, **kwargs)
+    
+    def user(self, message: str, *args: Any, **kwargs: Any) -> None:
+        """
+        User application log - shown in ALL modes including PROD.
+        
+        Use for important application messages that should always be visible,
+        even in production deployments. These go to both console and log file.
+        
+        Args:
+            message: Log message (supports % formatting with args)
+            *args: Positional arguments for message formatting
+            **kwargs: Keyword arguments passed to logger
+        
+        Example:
+            z.logger.user("Application started successfully")
+            z.logger.user("Processing %d records...", 1247)
+        """
+        # Format message if args provided
+        formatted_msg = message % args if args else message
+        
+        # Always print to console, even in PROD mode
+        print(formatted_msg)
+        
+        # Also log to file
+        self._logger.info(message, *args, **kwargs)
 

@@ -110,6 +110,10 @@ class zConfig:
         from zCLI.utils.zTraceback import zTraceback
         zcli.zTraceback = zTraceback(logger=zcli.logger, zcli=zcli)
 
+        # Install automatic exception handler if zTraceback is enabled
+        if zcli.session.get('zTraceback', False):
+            zcli.zTraceback.install_exception_hook()
+
         # Initialize WebSocket configuration (uses environment config)
         self.websocket = WebSocketConfig(self.environment, zcli)
 
