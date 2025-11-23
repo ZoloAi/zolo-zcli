@@ -139,6 +139,34 @@ Uncaught exceptions automatically launch an interactive menu with error details 
 
 > **Try it:** [`Level_2_zSettings/ztraceback_demo.py`](../Demos/Layer_0/zConfig_Demo/Level_2_zSettings/ztraceback_demo.py)
 
+### <span style="color:#8FBE6D">Read Workspace Secrets from .zEnv</span>
+
+```python
+z = zCLI()
+
+# Auto-loaded from .zEnv in workspace
+threshold = z.config.environment.get_env_var("APP_THRESHOLD")
+region = z.config.environment.get_env_var("APP_REGION")
+```
+
+zConfig automatically loads `.zEnv` (or `.env`) from your workspace. No python-dotenv needed.
+
+> **Try it:** [`Level_3_hierarchy/zenv_demo.py`](../Demos/Layer_0/zConfig_Demo/Level_3_hierarchy/zenv_demo.py)
+
+### <span style="color:#8FBE6D">Read Persistent Environment Config</span>
+
+```python
+z = zCLI()
+
+# System-wide persistent settings
+deployment = z.config.get_environment("deployment")
+custom_field_1 = z.config.get_environment("custom_field_1")
+```
+
+Environment config persists across all projects in `~/Library/Application Support/zolo-zcli/zConfigs/`. Custom fields are built into the template.
+
+> **Try it:** [`Level_3_hierarchy/zenv_persistence_demo.py`](../Demos/Layer_0/zConfig_Demo/Level_3_hierarchy/zenv_persistence_demo.py)
+
 ## The Hierarchy
 
 zConfig resolves configuration through **<span style="color:#8FBE6D">5 layers</span>**, from system defaults to runtime overrides:
@@ -164,9 +192,9 @@ zConfig resolves configuration through **<span style="color:#8FBE6D">5 layers</s
   </div>
 
   <div style="border-left:4px solid #F8961F; padding:1rem; background:rgba(248,150,31,0.08);">
-    <strong style="color:#F8961F;">4. Workspace Secrets</strong><br>
-    Project-specific secrets from .zEnv or .env files (auto-loaded into environment)<br>
-    <code style="color:#999;">./workspace/.zEnv (preferred) or .env</code>
+    <strong style="color:#F8961F;">4. Environment Variables</strong><br>
+    OS environment (system exports, venv vars) + workspace secrets (.zEnv/.env)<br>
+    <code style="color:#999;">export MY_VAR=value, .zEnv, .env</code>
   </div>
 
   <div style="border-left:4px solid #EA7171; padding:1rem; background:rgba(234,113,113,0.08);">
@@ -176,6 +204,8 @@ zConfig resolves configuration through **<span style="color:#8FBE6D">5 layers</s
   </div>
 
 </div>
+
+**About Layer 4 (Environment Variables):** This layer reads from three sources - shell exports (`export VAR=value`), virtual environment variables (when venv is active), and workspace `.zEnv` files. All accessed via the same `get_env_var()` method. Priority: system → venv → .zEnv (last wins). The demos above focus on `.zEnv` since it's the most common and doesn't require shell configuration.
 
 ## Cross-Platform Paths
 

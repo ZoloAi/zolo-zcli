@@ -1,0 +1,7 @@
+# Workspace-specific settings
+# These are auto-loaded by zConfig (no python-dotenv needed!)
+
+APP_THRESHOLD=4
+APP_REGION=us-east-1
+APP_REPORT_NAME=low_stock_report
+

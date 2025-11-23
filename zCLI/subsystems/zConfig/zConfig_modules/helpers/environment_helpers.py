@@ -67,9 +67,9 @@ def create_default_env_config(path: Path, _env_data: Dict[str, Any]) -> None:
     timeout: 30  # default timeout (seconds)
   
   # Custom Fields (add your own as needed)
-  # custom_field_1: "value"
-  # custom_field_2: 42
-  # custom_field_3: ["item1", "item2"]
+  custom_field_1: "value"
+  custom_field_2: 42
+  custom_field_3: ["item1", "item2"]
 """
 
         Path(path).write_text(content, encoding="utf-8")
