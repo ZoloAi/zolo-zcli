@@ -22,7 +22,8 @@ LOG_LEVEL_INFO = "INFO"
 LOG_LEVEL_WARNING = "WARNING"
 LOG_LEVEL_ERROR = "ERROR"
 LOG_LEVEL_CRITICAL = "CRITICAL"
-VALID_LOG_LEVELS = (LOG_LEVEL_DEBUG, LOG_LEVEL_INFO, LOG_LEVEL_WARNING, LOG_LEVEL_ERROR, LOG_LEVEL_CRITICAL)
+LOG_LEVEL_PROD = "PROD"  # Production mode: file logging only, no stdout
+VALID_LOG_LEVELS = (LOG_LEVEL_DEBUG, LOG_LEVEL_INFO, LOG_LEVEL_WARNING, LOG_LEVEL_ERROR, LOG_LEVEL_CRITICAL, LOG_LEVEL_PROD)
 DEFAULT_LOG_LEVEL = LOG_LEVEL_INFO
 
 # Config Keys
@@ -191,12 +192,18 @@ class LoggerConfig:
         
         Configures console and file handlers with custom formatters,
         using zPaths for log file location or falling back to platform defaults.
+        
+        PROD Mode:
+            - Uses INFO level for logging
+            - File logging only (no console output)
+            - All logs go to .log file
         """
         # Get logging configuration
         logging_config = self.environment.get(CONFIG_KEY_LOGGING, {})
         
-        # Determine if file logging is enabled
-        file_enabled = logging_config.get(CONFIG_KEY_FILE_ENABLED, DEFAULT_FILE_ENABLED)
+        # Determine if file logging is enabled (always enabled in PROD mode)
+        is_prod_mode = self.log_level == LOG_LEVEL_PROD
+        file_enabled = is_prod_mode or logging_config.get(CONFIG_KEY_FILE_ENABLED, DEFAULT_FILE_ENABLED)
         log_format = logging_config.get(CONFIG_KEY_FORMAT, DEFAULT_FORMAT)
         
         # Get log file path - use system support directory instead of CWD
@@ -218,9 +225,12 @@ class LoggerConfig:
                     logs_dir = home_path / ".local" / "share" / "zolo-zcli" / "logs"
                 file_path = str(logs_dir / LOG_FILENAME)
         
+        # For PROD mode, use INFO level internally but skip console output
+        actual_log_level = LOG_LEVEL_INFO if is_prod_mode else self.log_level
+        
         # Create logger
         self._logger = logging.getLogger(LOGGER_NAME)
-        self._logger.setLevel(getattr(logging, self.log_level))
+        self._logger.setLevel(getattr(logging, actual_log_level))
         
         # Clear existing handlers to avoid duplicates
         self._logger.handlers.clear()
@@ -256,13 +266,14 @@ class LoggerConfig:
                 datefmt='%Y-%m-%d %H:%M:%S'
             )
 
-        # Console handler (always enabled)
-        console_handler = logging.StreamHandler()
-        console_handler.setLevel(getattr(logging, self.log_level))
-        console_handler.setFormatter(console_formatter)
-        self._logger.addHandler(console_handler)
+        # Console handler (disabled in PROD mode)
+        if not is_prod_mode:
+            console_handler = logging.StreamHandler()
+            console_handler.setLevel(getattr(logging, actual_log_level))
+            console_handler.setFormatter(console_formatter)
+            self._logger.addHandler(console_handler)
 
-        # File handler (if enabled)
+        # File handler (always enabled in PROD mode, otherwise configurable)
         if file_enabled:
             try:
                 # Ensure log directory exists
@@ -272,11 +283,14 @@ class LoggerConfig:
 
                 # Create file handler
                 file_handler = logging.FileHandler(str(log_file))
-                file_handler.setLevel(getattr(logging, self.log_level))
+                file_handler.setLevel(getattr(logging, actual_log_level))
                 file_handler.setFormatter(file_formatter)
                 self._logger.addHandler(file_handler)
                 
-                print(f"{LOG_PREFIX} File logging enabled: {file_path}")
+                if is_prod_mode:
+                    print(f"{LOG_PREFIX} PROD mode: File logging enabled (no console output): {file_path}")
+                else:
+                    print(f"{LOG_PREFIX} File logging enabled: {file_path}")
             except Exception as e:
                 print(f"{Colors.ERROR}{LOG_PREFIX} Failed to setup file logging: {e}{Colors.RESET}")
     
@@ -297,17 +311,25 @@ class LoggerConfig:
         Set logger level dynamically.
         
         Args:
-            level: Log level string ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')
+            level: Log level string ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL', 'PROD')
+        
+        Note:
+            PROD mode uses INFO level internally but disables console output.
+            Switching to PROD dynamically won't remove existing console handlers.
+            For full PROD mode behavior, set it during initialization.
         """
         level = self._normalize_log_level(level)
         
         if level in VALID_LOG_LEVELS:
-            self._logger.setLevel(getattr(logging, level))
+            # For PROD mode, use INFO level internally
+            actual_level = LOG_LEVEL_INFO if level == LOG_LEVEL_PROD else level
+            
+            self._logger.setLevel(getattr(logging, actual_level))
             self.log_level = level
             
             # Update all handlers
             for handler in self._logger.handlers:
-                handler.setLevel(getattr(logging, level))
+                handler.setLevel(getattr(logging, actual_level))
         else:
             print(f"{Colors.WARNING}{LOG_PREFIX} Invalid log level: {level}{Colors.RESET}")
     

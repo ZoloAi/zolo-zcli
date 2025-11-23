@@ -17,15 +17,9 @@ from zCLI import zCLI
 
 
 def run_demo():
-    print("\n# Initializing zCLI with explicit zSpark overrides...")
-    print("  - zMode: Terminal")
-    print("  - zTraceback: True")
-    print("  - logger: DEBUG")
-
     z = zCLI({
         "zMode": "Terminal",
-        "zTraceback": True,
-        "logger": "DEBUG",
+        "logger": "PROD",
     })
     session = z.session
 
