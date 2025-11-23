@@ -82,14 +82,23 @@ Contains runtime state (zMode, zSpace, zVars, zAuth, etc.) created during initia
 ```python
 z = zCLI({
     "zMode": "Terminal",
-    "zTraceback": True,
-    "logger": "DEBUG",
+    "logger": "PROD",  # Silent console, full file logging
 })
 ```
 
-Pass a minimal `zSpark_obj` dict into `zCLI()` to override runtime settings (mode, traceback, logger level) before touching `.zEnv` or YAML. Fastest way to experiment in memory.
+Pass a minimal `zSpark_obj` dict into `zCLI()` to override runtime settings **before** any `.zEnv` or YAML files are loaded. This is the highest priority in the configuration hierarchy and the fastest way to experiment in memory.
 
-> **Try it:** [`Level_2_zSettings/zspark_demo.py`](../Demos/Layer_0/zConfig_Demo/Level_2_zSettings/zspark_demo.py)
+**Logger Levels:**
+- `DEBUG`, `INFO` (default), `WARNING`, `ERROR`, `CRITICAL` - Standard Python logging levels
+- `PROD` - **Production mode**: Silent console output, full file logging, no "Ready" banners
+
+**PROD Mode** is special:
+- Console: Completely silent (no initialization noise)
+- File: Full logs to `~/Library/Application Support/zolo-zcli/logs/zolo-zcli.log`
+- System messages: All aesthetic "Ready" banners suppressed
+- Perfect for production deployments with clean output
+
+> **Try it:** [`Level_2_zSettings/zspark_demo.py`](../Demos/Layer_0/zConfig_Demo/Level_2_zSettings/zspark_demo.py) | [README](../Demos/Layer_0/zConfig_Demo/Level_2_zSettings/README.md)
 
 ## The Hierarchy
 
