@@ -20,7 +20,7 @@ def run_demo():
     session = z.session
 
     print("\n# Direct zSession accessors:")
-    print(f"zS_id            : {session.get('zS_id')}")
+    print(f"zSession_id      : {session.get('zS_id')}")
     print(f"zSpace           : {session.get('zSpace')}")
     print(f"zMode            : {session.get('zMode')}")
     print(f"zLogger          : {session.get('zLogger')}")
