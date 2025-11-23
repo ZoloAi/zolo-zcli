@@ -30,31 +30,66 @@ and persistent preferences.
 
 **No dotenv sprawl. No reinventing the wheel.**
 
-## Quick Start
+## zConfig Tutorials
 
 ### <span style="color:#8FBE6D">Initialize zCLI</span>
 
-`z = zCLI()` automatically initializes zConfig, detects your machine, creates support folders, and loads defaults. No setup required.
+```python
+from zCLI import zCLI
+
+z = zCLI()
+```
+
+Automatically initializes zConfig, detects your machine, creates support folders, and loads defaults. No setup required.
 
 > **Try it:** [`Level_0_Hello/hello_config.py`](../Demos/Layer_0/zConfig_Demo/Level_0_Hello/hello_config.py)
 
 ### <span style="color:#8FBE6D">Read Machine Values</span>
 
-`machine = z.config.get_machine()` returns all machine properties (OS, CPU, IDE, browser, etc.). Access individual keys with `z.config.get_machine("hostname")`.
+```python
+machine = z.config.get_machine()
+hostname = z.config.get_machine("hostname")
+```
+
+Returns all machine properties (OS, CPU, IDE, browser, etc.) with optional single-key lookups.
 
 > **Try it:** [`Level_1_Get/zmachine_get.py`](../Demos/Layer_0/zConfig_Demo/Level_1_Get/zmachine_get.py)
 
 ### <span style="color:#8FBE6D">Read Environment Values</span>
 
-`env = z.config.get_environment()` returns deployment, logging, network, and security settings. Use `z.config.get_environment("deployment")` for single keys.
+```python
+env = z.config.get_environment()
+deployment = z.config.get_environment("deployment")
+```
+
+Returns deployment, logging, network, and security settings with direct access to individual keys.
 
 > **Try it:** [`Level_1_Get/zenv_get.py`](../Demos/Layer_0/zConfig_Demo/Level_1_Get/zenv_get.py)
 
 ### <span style="color:#8FBE6D">Read Session Values</span>
 
-`session = z.session` contains runtime state (zMode, zSpace, zVars, zAuth, etc.) created during initialization and influenced by zSpark.
+```python
+session = z.session
+z_mode = session.get("zMode")
+```
+
+Contains runtime state (zMode, zSpace, zVars, zAuth, etc.) created during initialization and influenced by zSpark.
 
 > **Try it:** [`Level_1_Get/zsession_get.py`](../Demos/Layer_0/zConfig_Demo/Level_1_Get/zsession_get.py)
+
+### <span style="color:#8FBE6D">Control Settings with zSpark</span>
+
+```python
+z = zCLI({
+    "zMode": "Terminal",
+    "zTraceback": True,
+    "logger": "DEBUG",
+})
+```
+
+Pass a minimal `zSpark_obj` dict into `zCLI()` to override runtime settings (mode, traceback, logger level) before touching `.zEnv` or YAML. Fastest way to experiment in memory.
+
+> **Try it:** [`Level_2_zSettings/zspark_demo.py`](../Demos/Layer_0/zConfig_Demo/Level_2_zSettings/zspark_demo.py)
 
 ## The Hierarchy
 
@@ -183,6 +218,8 @@ z.config.persistence.persist_machine("ide", "cursor")
 
 # Set environment deployment (saved to zConfig.environment.yaml)
 z.config.persistence.persist_environment("deployment", "Production")
+# Enable file-only logging (no stdout) via PROD level
+z.config.persistence.persist_environment("logging.level", "PROD")
 
 # Session-only overrides (not persisted, direct access)
 z.session["api_key"] = "temporary_secret"
@@ -190,8 +227,10 @@ z.session["zVars"]["custom_flag"] = True
 
 # Access logger (created during zConfig initialization)
 z.logger.info("Configuration loaded")
-z.session["logger_instance"].log_level  # "INFO", "DEBUG", etc.
+z.session["logger_instance"].log_level  # "INFO", "DEBUG", "PROD", etc.
 ```
+
+> **Note:** `PROD` (or `PRODUCTION`) disables stdout logging and writes to the support-folder log file.
 
 **Editable vs. Locked:**
 
@@ -223,7 +262,7 @@ config machine --reset browser
 zConfig reads standard OS environment variables for auto-detection and recognizes zCLI-specific variables for runtime overrides.<br>**Set once in your shell or `.zEnv`, use everywhere.**
 
 **zCLI-Specific Variables:**
-- **<span style="color:#F8961F">ZOLO_LOGGER</span>**: Log level override (DEBUG, INFO, WARNING, ERROR)
+- **<span style="color:#F8961F">ZOLO_LOGGER</span>**: Log level override (DEBUG, INFO, WARNING, ERROR, CRITICAL, PROD)
 - **<span style="color:#F8961F">ZOLO_DEPLOYMENT</span>** or **<span style="color:#F8961F">ZOLO_ENV</span>**: Deployment mode (Debug, Info, Production)
 - **<span style="color:#00D4FF">WEBSOCKET_HOST</span>**: WebSocket server host (default: 127.0.0.1)
 - **<span style="color:#00D4FF">WEBSOCKET_PORT</span>**: WebSocket server port (default: 8765)
