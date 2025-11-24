@@ -37,7 +37,21 @@ zolo --version
 [![Version: 1.5.5](https://img.shields.io/badge/version-1.5.5-F8961F)](https://github.com/ZoloAi/zolo-zcli)
 <br><strong>Need a specific version?</strong> See <a href="Documentation/INSTALL.md">INSTALL.md</a>
 
+## Clone Repository
 
+```bash
+# Clone the public repository
+git clone https://github.com/ZoloAi/zolo-zcli.git
+cd zolo-zcli
+
+# Install in development mode
+pip install -e ".[all]"
+
+# Run tests
+zTests
+```
+
+**[View on GitHub](https://github.com/ZoloAi/zolo-zcli)** | **[Report Issues](https://github.com/ZoloAi/zolo-zcli/issues)**
 
 
 ## How to Learn zCLI
