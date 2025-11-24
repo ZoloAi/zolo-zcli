@@ -1,14 +1,23 @@
-[← Back to zComm](zComm_GUIDE.md) | [Next: zDisplay Guide →](zDisplay_GUIDE.md)
-
-# zBifrost Guide
+<div style="display: flex; flex-direction: column; align-items: stretch; margin-bottom: 1rem; font-weight: 500;">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <span><a style="color:#FFFBCC;" href="zComm_GUIDE.md">← Back to zComm</a></span>
+    <span><a style="color:#FFFBCC;" href="../README.md">Home</a></span>
+    <span><a style="color:#FFFBCC;" href="zDisplay_GUIDE.md">Next: zDisplay Guide →</a></span>
+  </div>
+  <div style="display: flex; justify-content: center; align-items: center; margin-top: 0.85rem;">
+    <h1 style="margin: 0; font-size: 2.15rem; font-weight: 700;">
+      <span style="color:#FFFBCC;">zBifrost Guide</span>
+    </h1>
+  </div>
+</div>
 
 > **<span style="color:#F8961F">Real-time bidirectional communication</span>** between Python backends and JavaScript frontends via WebSocket bridge.
 
-**<span style="color:#8FBE6D">Every modern app needs real-time communication.</span>** WebSocket servers, message routing, event handling—the real struggle is keeping your Python backend's JSON in sync with your JavaScript frontecdnd, let alone setting it up. **One schema change breaks everything.**
+**<span style="color:#8FBE6D">Every modern app needs real-time communication.</span>** WebSocket servers, message routing, event handling—the real struggle is keeping your Python backend's JSON in sync with your JavaScript frontend, let alone setting it up. **One schema change breaks everything.**
 
-**<span style="color:#8FBE6D">zBifrost</span>** is zCLI's **<span style="color:#F8961F">Layer 0 WebSocket bridge</span>**, providing a **production-ready server** (Python) and **standalone JavaScript client**. Don't need the full framework? Import zCLI, use just the server. Or use the JavaScript client standalone with any WebSocket backend.
+<span style="color:#8FBE6D">**zBifrost**</span> is zCLI's **<span style="color:#F8961F">Layer 0 WebSocket bridge</span>**, providing a **production-ready server** (Python) and **standalone JavaScript client**. Don't need the full framework? **<span style="color:#8FBE6D">Import zCLI, use just the server.</span>** Or use the JavaScript client standalone with any WebSocket backend. Get **<span style="color:#8FBE6D">event-driven architecture</span>**, **<span style="color:#F8961F">CRUD operations via WebSocket</span>**, **<span style="color:#F8961F">auto-rendering with zTheme</span>**, and **<span style="color:#F8961F">hooks for customization</span>** in one unified bridge.<br>**No websockets library, no message juggling, no boilerplate.**
 
-Get **<span style="color:#F8961F">event-driven architecture</span>**, **<span style="color:#F8961F">CRUD operations via WebSocket</span>**, **<span style="color:#F8961F">auto-rendering with zTheme</span>**, and **<span style="color:#F8961F">hooks for customization</span>** in one unified bridge. **No websockets library, no message juggling, no boilerplate.**
+> **Coming from zComm?** You've learned client-side HTTP and service management. zBifrost adds **server-side WebSocket** for real-time Terminal ↔ Web communication.
 
 ## Architecture
 

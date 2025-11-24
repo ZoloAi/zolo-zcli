@@ -246,3 +246,64 @@ Declare desired state—zComm handles orchestration. No `brew services start`, n
 > - **Linux:** systemd/apt (`sudo apt-get install postgresql`)
 > - **Windows:** Windows Services ([Download Installer](https://www.postgresql.org/download/windows/))
 
+---
+
+## Summary
+
+You've learned zComm's **<span style="color:#8FBE6D">client-side communication capabilities</span>**:
+
+✅ **Network Utilities**
+- Port checking before binding servers
+- Cross-platform, no manual socket management
+
+✅ **Complete HTTP Client**
+- All RESTful methods (GET, POST, PUT, PATCH, DELETE)
+- Query parameters, JSON payloads, custom headers
+- Graceful error handling (returns `None` on failure)
+- No `requests` library needed
+
+✅ **Service Management**
+- Detect running services (PostgreSQL, Redis, MongoDB)
+- Get connection information automatically
+- Start/stop services programmatically
+- Cross-platform service orchestration
+
+✅ **Declarative Pattern**
+- Say WHAT you want, not HOW to do it
+- One line per operation
+- zComm handles complexity internally
+
+**<span style="color:#F8961F">8 micro-step demos</span>** guide you from "Hello zComm" to programmatic service lifecycle management.
+
+## What's Next: zBifrost WebSocket Server
+
+zComm includes **<span style="color:#8FBE6D">zBifrost</span>**, a production-ready **<span style="color:#F8961F">WebSocket server</span>** for real-time, bidirectional communication between terminal and web applications.
+
+**Why a Separate Guide?**
+
+zBifrost is architecturally part of zComm but has **<span style="color:#F8961F">distinct complexity</span>**:
+- **Client/Server Architecture** - Requires understanding WebSocket connections
+- **Authentication System** - Three-tier auth (zSession, app-level, dual-mode)
+- **JavaScript Client** - Frontend integration with `BifrostClient`
+- **Cache Management** - User/app/role isolation for security
+- **CRUD Operations** - Real-time data flow patterns
+
+Following **<span style="color:#8FBE6D">micro-step progression</span>** and **<span style="color:#F8961F">separation of concerns</span>**, zBifrost has its own comprehensive guide to avoid making this guide monolithic.
+
+**<span style="color:#8FBE6D">Continue your journey:</span>** [zBifrost Guide →](zBifrost_GUIDE.md)
+
+Start a WebSocket server in one line:
+```python
+z = zCLI({"zMode": "zBifrost"})
+z.walker.run()  # ws://localhost:56891
+```
+
+Connect from JavaScript:
+```javascript
+const client = new BifrostClient('ws://localhost:56891');
+await client.connect();
+const users = await client.read('users');
+```
+
+**Real-time Terminal ↔ Web communication with authentication, caching, and declarative patterns.**
+
