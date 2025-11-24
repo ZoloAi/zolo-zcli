@@ -2,13 +2,9 @@
 """
 HTTP client for zComm subsystem.
 
-Provides a simple HTTP POST client for making web requests. This is a pure
-communication layer with no authentication logic - auth should be handled by
-the caller (e.g., zAuth subsystem).
-
-Note: Currently only implements POST method as that's the primary use case
-for zComm. Additional HTTP methods (GET, PUT, DELETE, PATCH) can be added
-as needed.
+Provides a complete HTTP client for making web requests (GET, POST, PUT, PATCH, DELETE).
+This is a pure communication layer with no authentication logic - auth should be handled
+by the caller (e.g., zAuth subsystem).
 """
 
 from zCLI import Any, Dict, Optional, requests
@@ -24,27 +20,29 @@ LOG_PREFIX = "[HTTPClient]"
 DEFAULT_TIMEOUT = 10  # seconds
 
 # Log Messages
-LOG_POST_REQUEST = "Making HTTP POST request to {url}"
+LOG_REQUEST = "Making HTTP {method} request to {url}"
 LOG_REQUEST_PAYLOAD = "Request payload: {data}"
+LOG_REQUEST_PARAMS = "Query parameters: {params}"
 LOG_RESPONSE_RECEIVED = "Response received [status={status}]"
 
 # Error Messages
-ERROR_REQUEST_FAILED = "HTTP POST request failed to {url}: {error}"
+ERROR_REQUEST_FAILED = "HTTP {method} request failed to {url}: {error}"
 ERROR_INVALID_URL = "Invalid URL provided: {url}"
 ERROR_INVALID_TIMEOUT = "Timeout must be positive, got: {timeout}"
 
 
 class HTTPClient:
     """
-    HTTP client for making web requests (POST method).
+    HTTP client for making web requests (GET, POST, PUT, PATCH, DELETE).
     
     This is a pure communication layer with no authentication logic.
     Authentication should be handled by the caller (e.g., zAuth subsystem).
     
     Example:
         >>> client = HTTPClient(logger)
-        >>> response = client.post("https://api.example.com/endpoint", 
-        ...                        data={"key": "value"}, 
+        >>> response = client.get("https://api.example.com/users")
+        >>> response = client.post("https://api.example.com/users", 
+        ...                        data={"name": "Alice"}, 
         ...                        timeout=5)
         >>> if response:
         ...     print(f"Status: {response.status_code}")
@@ -102,7 +100,7 @@ class HTTPClient:
             raise ValueError(error_msg)
 
         # Log request
-        self.logger.debug(f"{LOG_PREFIX} {LOG_POST_REQUEST.format(url=url)}")
+        self.logger.debug(f"{LOG_PREFIX} {LOG_REQUEST.format(method='POST', url=url)}")
         if data:
             self.logger.debug(f"{LOG_PREFIX} {LOG_REQUEST_PAYLOAD.format(data=data)}")
 
@@ -115,12 +113,259 @@ class HTTPClient:
 
         except requests.Timeout:
             # Specific timeout error
-            error_msg = ERROR_REQUEST_FAILED.format(url=url, error=f"Timeout after {timeout}s")
+            error_msg = ERROR_REQUEST_FAILED.format(method='POST', url=url, error=f"Timeout after {timeout}s")
             self.logger.error(f"{LOG_PREFIX} {error_msg}")
             return None
 
         except requests.RequestException as e:
             # Other request-related errors (connection, DNS, etc.)
-            error_msg = ERROR_REQUEST_FAILED.format(url=url, error=str(e))
+            error_msg = ERROR_REQUEST_FAILED.format(method='POST', url=url, error=str(e))
+            self.logger.error(f"{LOG_PREFIX} {error_msg}")
+            return None
+
+    def get(self, url: str, params: Optional[Dict[str, Any]] = None,
+            headers: Optional[Dict[str, str]] = None,
+            timeout: int = DEFAULT_TIMEOUT) -> Optional[Any]:
+        """
+        Make HTTP GET request - pure communication, no auth logic.
+        
+        Args:
+            url: Target URL (must start with http:// or https://)
+            params: Optional query parameters (dict will be URL-encoded)
+            headers: Optional custom headers
+            timeout: Request timeout in seconds (must be positive, default: 10)
+            
+        Returns:
+            Response object on success, None on failure
+            
+        Example:
+            >>> response = client.get(
+            ...     "https://api.example.com/users",
+            ...     params={"limit": 10, "offset": 0},
+            ...     timeout=5
+            ... )
+            >>> if response and response.status_code == 200:
+            ...     users = response.json()
+        """
+        # Validate URL
+        if not url or not isinstance(url, str):
+            error_msg = ERROR_INVALID_URL.format(url=url)
+            self.logger.error(f"{LOG_PREFIX} {error_msg}")
+            raise ValueError(error_msg)
+
+        if not url.startswith(("http://", "https://")):
+            error_msg = ERROR_INVALID_URL.format(url=url)
+            self.logger.error(f"{LOG_PREFIX} {error_msg}")
+            raise ValueError(error_msg)
+
+        # Validate timeout
+        if not isinstance(timeout, int) or timeout <= 0:
+            error_msg = ERROR_INVALID_TIMEOUT.format(timeout=timeout)
+            self.logger.error(f"{LOG_PREFIX} {error_msg}")
+            raise ValueError(error_msg)
+
+        # Log request
+        self.logger.debug(f"{LOG_PREFIX} {LOG_REQUEST.format(method='GET', url=url)}")
+        if params:
+            self.logger.debug(f"{LOG_PREFIX} {LOG_REQUEST_PARAMS.format(params=params)}")
+
+        try:
+            response = requests.get(url, params=params, headers=headers, timeout=timeout)
+            self.logger.debug(
+                f"{LOG_PREFIX} {LOG_RESPONSE_RECEIVED.format(status=response.status_code)}"
+            )
+            return response
+
+        except requests.Timeout:
+            error_msg = ERROR_REQUEST_FAILED.format(method='GET', url=url, error=f"Timeout after {timeout}s")
+            self.logger.error(f"{LOG_PREFIX} {error_msg}")
+            return None
+
+        except requests.RequestException as e:
+            error_msg = ERROR_REQUEST_FAILED.format(method='GET', url=url, error=str(e))
+            self.logger.error(f"{LOG_PREFIX} {error_msg}")
+            return None
+
+    def put(self, url: str, data: Optional[Dict[str, Any]] = None,
+            headers: Optional[Dict[str, str]] = None,
+            timeout: int = DEFAULT_TIMEOUT) -> Optional[Any]:
+        """
+        Make HTTP PUT request - pure communication, no auth logic.
+        
+        Args:
+            url: Target URL (must start with http:// or https://)
+            data: Optional JSON data payload (dict will be serialized to JSON)
+            headers: Optional custom headers
+            timeout: Request timeout in seconds (must be positive, default: 10)
+            
+        Returns:
+            Response object on success, None on failure
+            
+        Example:
+            >>> response = client.put(
+            ...     "https://api.example.com/users/123",
+            ...     data={"name": "Alice", "email": "alice@example.com"},
+            ...     timeout=5
+            ... )
+            >>> if response and response.status_code == 200:
+            ...     updated_user = response.json()
+        """
+        # Validate URL
+        if not url or not isinstance(url, str):
+            error_msg = ERROR_INVALID_URL.format(url=url)
+            self.logger.error(f"{LOG_PREFIX} {error_msg}")
+            raise ValueError(error_msg)
+
+        if not url.startswith(("http://", "https://")):
+            error_msg = ERROR_INVALID_URL.format(url=url)
+            self.logger.error(f"{LOG_PREFIX} {error_msg}")
+            raise ValueError(error_msg)
+
+        # Validate timeout
+        if not isinstance(timeout, int) or timeout <= 0:
+            error_msg = ERROR_INVALID_TIMEOUT.format(timeout=timeout)
+            self.logger.error(f"{LOG_PREFIX} {error_msg}")
+            raise ValueError(error_msg)
+
+        # Log request
+        self.logger.debug(f"{LOG_PREFIX} {LOG_REQUEST.format(method='PUT', url=url)}")
+        if data:
+            self.logger.debug(f"{LOG_PREFIX} {LOG_REQUEST_PAYLOAD.format(data=data)}")
+
+        try:
+            response = requests.put(url, json=data, headers=headers, timeout=timeout)
+            self.logger.debug(
+                f"{LOG_PREFIX} {LOG_RESPONSE_RECEIVED.format(status=response.status_code)}"
+            )
+            return response
+
+        except requests.Timeout:
+            error_msg = ERROR_REQUEST_FAILED.format(method='PUT', url=url, error=f"Timeout after {timeout}s")
+            self.logger.error(f"{LOG_PREFIX} {error_msg}")
+            return None
+
+        except requests.RequestException as e:
+            error_msg = ERROR_REQUEST_FAILED.format(method='PUT', url=url, error=str(e))
+            self.logger.error(f"{LOG_PREFIX} {error_msg}")
+            return None
+
+    def patch(self, url: str, data: Optional[Dict[str, Any]] = None,
+              headers: Optional[Dict[str, str]] = None,
+              timeout: int = DEFAULT_TIMEOUT) -> Optional[Any]:
+        """
+        Make HTTP PATCH request - pure communication, no auth logic.
+        
+        Args:
+            url: Target URL (must start with http:// or https://)
+            data: Optional JSON data payload (dict will be serialized to JSON)
+            headers: Optional custom headers
+            timeout: Request timeout in seconds (must be positive, default: 10)
+            
+        Returns:
+            Response object on success, None on failure
+            
+        Example:
+            >>> response = client.patch(
+            ...     "https://api.example.com/users/123",
+            ...     data={"email": "newemail@example.com"},
+            ...     timeout=5
+            ... )
+            >>> if response and response.status_code == 200:
+            ...     updated_user = response.json()
+        """
+        # Validate URL
+        if not url or not isinstance(url, str):
+            error_msg = ERROR_INVALID_URL.format(url=url)
+            self.logger.error(f"{LOG_PREFIX} {error_msg}")
+            raise ValueError(error_msg)
+
+        if not url.startswith(("http://", "https://")):
+            error_msg = ERROR_INVALID_URL.format(url=url)
+            self.logger.error(f"{LOG_PREFIX} {error_msg}")
+            raise ValueError(error_msg)
+
+        # Validate timeout
+        if not isinstance(timeout, int) or timeout <= 0:
+            error_msg = ERROR_INVALID_TIMEOUT.format(timeout=timeout)
+            self.logger.error(f"{LOG_PREFIX} {error_msg}")
+            raise ValueError(error_msg)
+
+        # Log request
+        self.logger.debug(f"{LOG_PREFIX} {LOG_REQUEST.format(method='PATCH', url=url)}")
+        if data:
+            self.logger.debug(f"{LOG_PREFIX} {LOG_REQUEST_PAYLOAD.format(data=data)}")
+
+        try:
+            response = requests.patch(url, json=data, headers=headers, timeout=timeout)
+            self.logger.debug(
+                f"{LOG_PREFIX} {LOG_RESPONSE_RECEIVED.format(status=response.status_code)}"
+            )
+            return response
+
+        except requests.Timeout:
+            error_msg = ERROR_REQUEST_FAILED.format(method='PATCH', url=url, error=f"Timeout after {timeout}s")
+            self.logger.error(f"{LOG_PREFIX} {error_msg}")
+            return None
+
+        except requests.RequestException as e:
+            error_msg = ERROR_REQUEST_FAILED.format(method='PATCH', url=url, error=str(e))
+            self.logger.error(f"{LOG_PREFIX} {error_msg}")
+            return None
+
+    def delete(self, url: str, headers: Optional[Dict[str, str]] = None,
+               timeout: int = DEFAULT_TIMEOUT) -> Optional[Any]:
+        """
+        Make HTTP DELETE request - pure communication, no auth logic.
+        
+        Args:
+            url: Target URL (must start with http:// or https://)
+            headers: Optional custom headers
+            timeout: Request timeout in seconds (must be positive, default: 10)
+            
+        Returns:
+            Response object on success, None on failure
+            
+        Example:
+            >>> response = client.delete(
+            ...     "https://api.example.com/users/123",
+            ...     timeout=5
+            ... )
+            >>> if response and response.status_code == 204:
+            ...     print("User deleted successfully")
+        """
+        # Validate URL
+        if not url or not isinstance(url, str):
+            error_msg = ERROR_INVALID_URL.format(url=url)
+            self.logger.error(f"{LOG_PREFIX} {error_msg}")
+            raise ValueError(error_msg)
+
+        if not url.startswith(("http://", "https://")):
+            error_msg = ERROR_INVALID_URL.format(url=url)
+            self.logger.error(f"{LOG_PREFIX} {error_msg}")
+            raise ValueError(error_msg)
+
+        # Validate timeout
+        if not isinstance(timeout, int) or timeout <= 0:
+            error_msg = ERROR_INVALID_TIMEOUT.format(timeout=timeout)
+            self.logger.error(f"{LOG_PREFIX} {error_msg}")
+            raise ValueError(error_msg)
+
+        # Log request
+        self.logger.debug(f"{LOG_PREFIX} {LOG_REQUEST.format(method='DELETE', url=url)}")
+
+        try:
+            response = requests.delete(url, headers=headers, timeout=timeout)
+            self.logger.debug(
+                f"{LOG_PREFIX} {LOG_RESPONSE_RECEIVED.format(status=response.status_code)}"
+            )
+            return response
+
+        except requests.Timeout:
+            error_msg = ERROR_REQUEST_FAILED.format(method='DELETE', url=url, error=f"Timeout after {timeout}s")
+            self.logger.error(f"{LOG_PREFIX} {error_msg}")
+            return None
+
+        except requests.RequestException as e:
+            error_msg = ERROR_REQUEST_FAILED.format(method='DELETE', url=url, error=str(e))
             self.logger.error(f"{LOG_PREFIX} {error_msg}")
             return None

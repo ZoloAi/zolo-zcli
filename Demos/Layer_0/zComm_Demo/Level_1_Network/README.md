@@ -7,6 +7,7 @@ Learn core zComm network utilities with simple, focused examples.
 - Check port availability across multiple ports
 - Understand common service ports (HTTP, PostgreSQL, Redis, etc.)
 - Use zComm's network utilities in iteration patterns
+- Make HTTP requests with all RESTful methods (GET, POST, PUT, PATCH, DELETE)
 - Clean console output with PROD logger
 
 ### Demos
@@ -71,9 +72,47 @@ Server echoed:
 Tip: No 'requests' library needed - zComm handles it!
 ```
 
+---
+
+#### **`http_methods.py`** - Complete RESTful HTTP Client
+- All HTTP methods: GET, POST, PUT, PATCH, DELETE
+- Query parameters for GET requests
+- JSON payloads for POST/PUT/PATCH
+- Complete API interaction workflow
+
+**Run:**
+```bash
+python Demos/Layer_0/zComm_Demo/Level_1_Network/http_methods.py
+```
+
+**Expected Output:**
+```
+=== HTTP Methods Demo ===
+
+GET - Retrieve data
+✓ {'key': 'value'}
+
+POST - Create resource
+✓ {'name': 'Alice'}
+
+PUT - Update entire resource
+✓ {'name': 'Alice', 'role': 'Developer'}
+
+PATCH - Partial update
+✓ {'role': 'Tech Lead'}
+
+DELETE - Remove resource
+✓ Deleted
+
+==================================================
+Five methods, one simple pattern
+```
+
 ### Key Takeaways
 
 - **Port checking:** zComm's `check_port()` works seamlessly in loops without managing socket objects
-- **HTTP requests:** Built-in HTTP client eliminates the need for the `requests` library
+- **Complete HTTP client:** All RESTful methods (GET, POST, PUT, PATCH, DELETE) available
+- **No dependencies:** Built-in HTTP client eliminates the need for the `requests` library
 - **Public APIs:** Use httpbin.org for testing without local server setup
+- **RESTful workflows:** GET to retrieve, POST to create, PUT/PATCH to update, DELETE to remove
 

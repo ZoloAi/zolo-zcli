@@ -24,6 +24,12 @@ These examples showcase zComm's core communication features.
 - Demonstrates JSON request/response handling
 - No `requests` library required
 
+**`Level_1_Network/http_methods.py`**
+- Complete RESTful HTTP client (GET, POST, PUT, PATCH, DELETE)
+- All methods demonstrated with httpbin.org
+- Shows proper request/response handling per method
+- Production-ready API interaction patterns
+
 ### Level 2: Services & Error Handling
 
 **`Level_2_Services/service_check.py`**

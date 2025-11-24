@@ -71,30 +71,43 @@ from zCLI import zCLI
 
 z = zCLI({"logger": "PROD"})
 
-# POST request with JSON payload
-response = z.comm.http_post(
-    "https://httpbin.org/post",
-    {"message": "Hello from zComm"},
-    timeout=10
+# GET - Retrieve data
+users = z.comm.http_get("https://api.example.com/users", params={"limit": 10})
+
+# POST - Create resource
+new_user = z.comm.http_post(
+    "https://api.example.com/users",
+    data={"name": "Alice", "role": "Developer"}
 )
 
-if response and response.status_code == 200:
-    result = response.json()
-    print(f"Success: {result['json']}")
+# PUT - Update entire resource
+updated = z.comm.http_put(
+    "https://api.example.com/users/123",
+    data={"name": "Alice", "role": "Senior Developer"}
+)
+
+# PATCH - Partial update
+patched = z.comm.http_patch(
+    "https://api.example.com/users/123",
+    data={"role": "Tech Lead"}
+)
+
+# DELETE - Remove resource
+deleted = z.comm.http_delete("https://api.example.com/users/123")
 ```
 
-No `requests` library needed. Built-in HTTP client with timeout and error handling.
+No `requests` library needed. Complete HTTP client with all RESTful methods.
 
-**Parameters:**
-- `url` - Target URL (http:// or https://)
-- `data` - JSON payload as dict (optional)
-- `timeout` - Request timeout in seconds (default: 10)
+**Available Methods:**
+- `http_get(url, params={}, headers={}, timeout=10)` - Retrieve resources
+- `http_post(url, data={}, timeout=10)` - Create resources  
+- `http_put(url, data={}, headers={}, timeout=10)` - Update entire resources
+- `http_patch(url, data={}, headers={}, timeout=10)` - Partial updates
+- `http_delete(url, headers={}, timeout=10)` - Remove resources
 
 **Returns:** Response object with `.status_code`, `.json()`, `.text` or `None` on failure.
 
-> **Note:** Currently supports POST requests. Additional methods (GET, PUT, DELETE) will be added as needed.
-
-> **Try it:** [`Level_1_Network/http_simple.py`](../Demos/Layer_0/zComm_Demo/Level_1_Network/http_simple.py)
+> **Try it:** [`Level_1_Network/http_simple.py`](../Demos/Layer_0/zComm_Demo/Level_1_Network/http_simple.py) · [`http_methods.py`](../Demos/Layer_0/zComm_Demo/Level_1_Network/http_methods.py)
 
 ### <span style="color:#8FBE6D">Handle HTTP Errors</span>
 

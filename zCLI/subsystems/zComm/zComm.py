@@ -681,6 +681,34 @@ class zComm:
     # HTTP Client - Delegated to HTTPClient
     # ═══════════════════════════════════════════════════════════
 
+    def http_get(self, url: str, params: Optional[Dict[str, Any]] = None,
+                 headers: Optional[Dict[str, str]] = None, timeout: int = 10) -> Any:
+        """
+        Make HTTP GET request.
+        
+        Note:
+            Pure communication layer - no auth logic. Applications should handle
+            authentication separately (e.g., adding auth headers, using zAuth).
+        
+        Args:
+            url: Target URL
+            params: Query parameters (will be URL-encoded)
+            headers: Optional custom headers
+            timeout: Request timeout in seconds (default: 10)
+        
+        Returns:
+            Response object or None on failure
+        
+        Example:
+            ```python
+            response = comm.http_get(
+                "https://api.example.com/users",
+                params={"limit": 10, "offset": 0}
+            )
+            ```
+        """
+        return self._http_client.get(url, params=params, headers=headers, timeout=timeout)
+
     def http_post(self, url: str, data: Optional[Dict[str, Any]] = None, timeout: int = 10) -> Any:
         """
         Make HTTP POST request.
@@ -695,7 +723,7 @@ class zComm:
             timeout: Request timeout in seconds (default: 10)
         
         Returns:
-            Response object from requests library
+            Response object or None on failure
         
         Example:
             ```python
@@ -706,3 +734,83 @@ class zComm:
             ```
         """
         return self._http_client.post(url, data=data, timeout=timeout)
+
+    def http_put(self, url: str, data: Optional[Dict[str, Any]] = None,
+                 headers: Optional[Dict[str, str]] = None, timeout: int = 10) -> Any:
+        """
+        Make HTTP PUT request.
+        
+        Note:
+            Pure communication layer - no auth logic. Applications should handle
+            authentication separately (e.g., adding auth headers, using zAuth).
+        
+        Args:
+            url: Target URL
+            data: Request body data (will be JSON-encoded)
+            headers: Optional custom headers
+            timeout: Request timeout in seconds (default: 10)
+        
+        Returns:
+            Response object or None on failure
+        
+        Example:
+            ```python
+            response = comm.http_put(
+                "https://api.example.com/users/123",
+                data={"username": "john", "email": "john@example.com"}
+            )
+            ```
+        """
+        return self._http_client.put(url, data=data, headers=headers, timeout=timeout)
+
+    def http_patch(self, url: str, data: Optional[Dict[str, Any]] = None,
+                   headers: Optional[Dict[str, str]] = None, timeout: int = 10) -> Any:
+        """
+        Make HTTP PATCH request.
+        
+        Note:
+            Pure communication layer - no auth logic. Applications should handle
+            authentication separately (e.g., adding auth headers, using zAuth).
+        
+        Args:
+            url: Target URL
+            data: Request body data (will be JSON-encoded)
+            headers: Optional custom headers
+            timeout: Request timeout in seconds (default: 10)
+        
+        Returns:
+            Response object or None on failure
+        
+        Example:
+            ```python
+            response = comm.http_patch(
+                "https://api.example.com/users/123",
+                data={"email": "newemail@example.com"}
+            )
+            ```
+        """
+        return self._http_client.patch(url, data=data, headers=headers, timeout=timeout)
+
+    def http_delete(self, url: str, headers: Optional[Dict[str, str]] = None,
+                    timeout: int = 10) -> Any:
+        """
+        Make HTTP DELETE request.
+        
+        Note:
+            Pure communication layer - no auth logic. Applications should handle
+            authentication separately (e.g., adding auth headers, using zAuth).
+        
+        Args:
+            url: Target URL
+            headers: Optional custom headers
+            timeout: Request timeout in seconds (default: 10)
+        
+        Returns:
+            Response object or None on failure
+        
+        Example:
+            ```python
+            response = comm.http_delete("https://api.example.com/users/123")
+            ```
+        """
+        return self._http_client.delete(url, headers=headers, timeout=timeout)
