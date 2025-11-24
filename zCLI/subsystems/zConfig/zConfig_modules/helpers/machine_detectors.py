@@ -135,6 +135,24 @@ def _safe_getcwd() -> str:
         return str(Path.home())
 
 
+def _get_libc_ver() -> str:
+    """
+    Get libc version (Linux only).
+    
+    Returns empty string on Windows/macOS or if detection fails.
+    Handles Windows Store Python reparse point issues gracefully.
+    """
+    try:
+        # libc is Linux-only (GNU C Library)
+        if platform.system() in ("Windows", "Darwin"):
+            return ""
+        return platform.libc_ver()[0]
+    except (OSError, AttributeError):
+        # OSError: Windows Store Python reparse point issue
+        # AttributeError: libc_ver not available in some environments
+        return ""
+
+
 def detect_browser(log_level: Optional[str] = None) -> str:
     """Detect default browser via env var or platform-specific methods."""
     browser = os.getenv("BROWSER")  # Check env var first
@@ -531,7 +549,7 @@ def auto_detect_machine(log_level: Optional[str] = None) -> Dict[str, Any]:
         "python_impl": platform.python_implementation(), # CPython, PyPy, etc.
         "python_build": platform.python_build()[0],  # Build info
         "python_compiler": platform.python_compiler(), # Compiler used
-        "libc_ver": platform.libc_ver()[0],         # libc version
+        "libc_ver": _get_libc_ver(),         # libc version (Linux only)
 
         # User tools (system defaults, user can override)
         "browser": detect_browser(log_level),
