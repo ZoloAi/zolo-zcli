@@ -12,9 +12,6 @@
 
 ## **<span style="color:#A2D46E">Declare once—run everywhere.</span>**  
 
-> **New to zCLI?**  
-> Start with [<span style="color:#A2D46E">**The zPhilosophy**</span>](Documentation/zPhilosophy.md) to learn how **<span style="color:#A2D46E">Zolo</span> treats declarative intent as syntax**.
-
 ## Installation
 
 ```bash
@@ -38,18 +35,23 @@ zolo --version
 [![License: MIT](https://img.shields.io/badge/License-MIT-F1E65C.svg)](LICENSE)
 [![Tests: 1,073+](https://img.shields.io/badge/tests-1%2C073%2B%20passing-8FBE6D)](zTestRunner/)
 [![Version: 1.5.5](https://img.shields.io/badge/version-1.5.5-F8961F)](https://github.com/ZoloAi/zolo-zcli)
+<br><strong>Need a specific version?</strong> See <a href="Documentation/INSTALL.md">INSTALL.md</a>
 
-<p align="right"><strong>Troubleshooting?</strong> See <a href="Documentation/INSTALL.md">INSTALL.md</a></p>
+
+
 
 ## How to Learn zCLI
 
-zCLI is a **<span style="color:#8FBE6D">comprehensive framework</span>** with **<span style="color:#F8961F">18 subsystems</span>** spanning **<span style="color:#F8961F">4 architectural layers</span>**.
+> **New to Zolo?**  
+> Start with [<span style="color:#A2D46E">**The zPhilosophy**</span>](Documentation/zPhilosophy.md) to learn how **<span style="color:#A2D46E">Zolo</span> treats declarative intent as syntax**.
+
+**<span style="color:#A2D46E">zCLI</span> is a comprehensive framework** with **<span style="color:#F8961F">18 subsystems</span>** spanning **<span style="color:#F8961F">4 architectural layers</span>**.
 
 **<span style="color:#8FBE6D">Need a specific capability?</span>**  
 Use the **Architecture table below** to navigate directly to that subsystem's guide (zConfig, zComm, zData, zServer, etc.) and integrate it into your project.
 
 **<span style="color:#8FBE6D">Want to master the entire framework?</span>**  
-Start with **<span style="color:#F8961F">Layer 0</span>** (zConfig) and progress upward—each layer builds on the previous. Read subsystem guides sequentially to understand how zCLI works from the ground up.
+Start with **<span style="color:#F8961F">Layer 0</span>** (zConfig) and progress upward. Each layer builds on the previous with micro-step demos, which are `copy-paste` ready for you to use.
 
 **<span style="color:#8FBE6D">Prefer to learn by reverse engineering?</span>**  
 Jump to [Quick Example](#quick-example) to see a working CRUD app, then trace backward through the subsystems it uses to understand how the pieces connect.
