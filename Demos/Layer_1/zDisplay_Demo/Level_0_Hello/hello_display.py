@@ -1,53 +1,33 @@
-"""
-Level 0: Hello zCLI (Terminal Mode)
-====================================
-
-Your first zCLI program—simple, declarative, powerful!
-
-What this demonstrates:
-- Zero-config initialization (no parameters needed!)
-- Basic display output (signals: success, info)
-- Session context (mode, workspace, deployment)
-- Terminal rendering (ANSI colors)
-
-Key concept:
-This SAME code works in browser mode too! See Level 3 (hello_bifrost.py)
-for the identical display logic running via WebSocket.
-
-No setup required. Just run it!
-"""
-
 from zCLI import zCLI
 
 # Initialize zCLI (zero config!)
-z = zCLI()
+z = zCLI({"logger": "PROD"})
 
 # Display information (works in Terminal AND browser with zMode="zBifrost")
 z.display.success("Hello from zCLI!")
-z.display.info(f"Mode: {z.session.get('zMode', 'Terminal')}")
+z.display.info(f"Mode: {z.session.get('zMode')}")
 z.display.info(f"Workspace: {z.config.sys_paths.workspace_dir}")
-z.display.info(f"Deployment: {z.session.get('deployment', 'Debug')}")
 
 # Separator
-z.display.text("", break_after=False)
+z.display.text("")
 
 # List all available subsystems (demonstrating text output with indentation)
 z.display.text("Available subsystems:", indent=0, break_after=False)
 subsystems = [
-    "z.config   - Configuration management",
-    "z.display  - Output & rendering",
-    "z.comm     - HTTP client & services",
-    "z.auth     - Authentication",
-    "z.data     - Database operations",
-    "z.dialog   - Forms & validation",
-    "z.func     - Python execution",
-    "z.loader   - File loading",
-    "z.logger   - Logging",
+    "z.config     - Configuration management",
+    "z.display    - Output & rendering",
+    "z.comm       - HTTP client & services",
+    "z.auth       - Authentication",
+    "z.data       - Database operations",
+    "z.dialog     - Forms & validation",
+    "z.func       - Python execution",
+    "z.loader     - File loading",
+    "z.logger     - Logging",
     "z.navigation - Menus & breadcrumbs",
-    "z.parser   - Path resolution",
-    "z.session  - Runtime context",
-    "z.walker   - UI orchestration",
-    "z.wizard   - Multi-step workflows",
+    "z.parser     - Path resolution",
+    "z.session    - Runtime context",
+    "z.walker     - UI orchestration",
+    "z.wizard     - Multi-step workflows",
 ]
 
 # Display each subsystem with bullet and indentation
