@@ -4,6 +4,10 @@
 
 **zDialog** is zCLI's **Interactive Form/Dialog Subsystem**. It handles form rendering, data collection, auto-validation against zSchema, and submission processing with mode-agnostic support for both Terminal and Bifrost (GUI) environments.
 
+### Start Here: First Tutorials
+- **Display primitives first.** Run the new micro-step demos in `Demos/Layer_1/zDisplay_Demo/output/Level_1_Primitives/` (write_raw, write_line, write_block) to see how raw text flows through zDisplay before adding form-specific rendering.
+- These three scripts mirror the zConfig/zComm tutorial style—quick, copy/paste-ready steps—and form the entry point for this guide before you move into zDialog-specific YAML forms.
+
 ### Executive Summary
 zDialog enables developers to create interactive forms declaratively using YAML, with automatic validation against data schemas and intelligent placeholder injection. Forms work seamlessly in both command-line (Terminal) and web-based (Bifrost) modes. The subsystem handles complex workflows like multi-field data collection, nested placeholder resolution, and submission routing—all while maintaining zCLI's pure declarative paradigm.
 

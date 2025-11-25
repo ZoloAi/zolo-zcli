@@ -15,7 +15,16 @@ These micro-step demos introduce you to zDisplay's complete rendering capabiliti
 
 ---
 
-### **Level 1: Basic Outputs & Signals** (2 demos)
+### **Level 1: Output Primitives** (3 demos)
+**Foundation** - Lowest-level write calls for raw text
+
+| Demo | What It Shows |
+|------|---------------|
+| `output/Level_1_Primitives/write_raw.py` | `write_raw()` – raw output with **no** newline |
+| `output/Level_1_Primitives/write_line.py` | `write_line()` – auto-newline per call |
+| `output/Level_1_Primitives/write_block.py` | `write_block()` – multi-line block output |
+
+### **Level 1 (continued): Basic Outputs & Signals** (2 demos)
 **Core Rendering** - Headers, text, and feedback
 
 | Demo | What It Shows |
@@ -77,8 +86,14 @@ These micro-step demos introduce you to zDisplay's complete rendering capabiliti
 cd Level_0_Hello
 python hello_display.py
 
-# Level 1: Basic Outputs
-cd ../Level_1_Outputs_Signals
+# Level 1A: Output Primitives
+cd ../output/Level_1_Primitives
+python write_raw.py
+python write_line.py
+python write_block.py
+
+# Level 1B: Basic Outputs
+cd ../../Level_1_Outputs_Signals
 python outputs_simple.py
 python signals_basic.py
 
