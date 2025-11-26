@@ -829,7 +829,6 @@ zDisplay/
         ├── display_event_advanced.py   (zTable with pagination)
         ├── display_event_timebased.py  (progress, spinner, swiper)
         ├── display_event_inputs.py     (selection)
-        ├── display_event_auth.py       (login prompts)
         └── display_event_system.py     (session, menu, config)
 ```
 

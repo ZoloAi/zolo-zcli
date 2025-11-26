@@ -131,10 +131,10 @@ INTEGRATION WITH ZCLI SUBSYSTEMS
     
     Maintains consistent session structure across all subsystems.
 
-**zDisplay (display_event_auth.py):**
-    All authentication feedback uses zDisplay events:
-        - login_prompt, login_success, login_failure
-        - logout_success, auth_status, register_prompt
+**zDisplay:**
+    All authentication feedback uses generic zDisplay events:
+        - success(), error(), warning(), text(), header()
+        - zAuth composes these to create auth-specific UI
     
     Dual-mode compatible (Terminal + Bifrost WebSocket).
 

@@ -139,10 +139,10 @@ INTEGRATION WITH ZCLI SUBSYSTEMS
     
     Maintains consistent session structure across subsystems.
 
-**zDisplay (display_event_auth.py):**
-    All authentication feedback uses zDisplay events:
-        - login_prompt, login_success, login_failure
-        - logout_success, auth_status, register_prompt
+**zDisplay:**
+    All authentication feedback uses generic zDisplay events:
+        - success(), error(), warning(), text(), header()
+        - zAuth composes these to create auth-specific UI
     
     Dual-mode compatible (Terminal + Bifrost).
 
@@ -317,7 +317,7 @@ class zAuth:
     
     Integration:
         - zConfig: SESSION_KEY_ZAUTH and all ZAUTH_KEY_* constants
-        - zDisplay: All UI feedback via display_event_auth.py
+        - zDisplay: All UI feedback via generic display events
         - zComm: Remote authentication via comm_http.py
         - zData: Persistent storage via declarative operations
         - zWizard: RBAC integration for zVaF menu access control
@@ -481,7 +481,7 @@ class zAuth:
                 - status="pending": Remote auth initiated (async)
         
         Integration:
-            - Uses zDisplay for prompts and feedback (display_event_auth.py)
+            - Uses zDisplay generic events for prompts and feedback
             - Uses zComm for remote authentication (comm_http.py)
             - Uses session_persistence.save_session() if persist=True
             - Updates session[SESSION_KEY_ZAUTH][ZAUTH_KEY_ZSESSION]
@@ -556,7 +556,7 @@ class zAuth:
             Dict: {"status": "success", "cleared": ["zSession", "app1", ...]}
         
         Integration:
-            - Uses zDisplay for logout feedback (display_event_auth.py)
+            - Uses zDisplay generic events for logout feedback
             - Uses zData to delete persistent session (if delete_persistent=True)
             - Clears session[SESSION_KEY_ZAUTH] based on context
         
@@ -625,7 +625,7 @@ class zAuth:
             }
         
         Integration:
-            - Uses zDisplay for status display (display_event_auth.py)
+            - Uses zDisplay generic events for status display
             - Reads from session[SESSION_KEY_ZAUTH]
         
         Example:

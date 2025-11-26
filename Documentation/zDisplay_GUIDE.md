@@ -11,9 +11,13 @@
   </div>
 </div>
 
-> **<span style="color:#F8961F">Render everywhere</span>** — one display API that works in Terminal and GUI, automatically.
+> **<span style="color:#F8961F">Professional terminal output</span>** — progress bars, tables, menus, and more through one clean API.
 
-**<span style="color:#8FBE6D">Every application needs output.</span>** Tables, progress bars, menus, user input—you either write mode-specific code (terminal vs web) or duplicate everything. zDisplay is zCLI's **<span style="color:#F8961F">Layer 1 rendering engine</span>**, initialized after zConfig/zComm to provide **<span style="color:#8FBE6D">30+ display events</span>** that work identically in **<span style="color:#F8961F">Terminal or GUI</span>**. Write `display.table()` once, it renders in your terminal. Switch to zBifrost mode? **<span style="color:#8FBE6D">Same code, web browser GUI.</span>** No mode checking, no duplication, no separate UI layers.<br>**Declare once—run everywhere.**
+**<span style="color:#8FBE6D">Every application needs output.</span>** Tables, progress bars, menus, user input—you either write mode-specific code (terminal vs web) or duplicate everything.
+
+<span style="color:#8FBE6D">**zDisplay**</span> is zCLI's **<span style="color:#F8961F">Layer 1 rendering engine</span>**, initialized after zConfig/zComm to provide **<span style="color:#8FBE6D">30+ display events</span>** for professional Terminal output. Get **<span style="color:#8FBE6D">progress bars</span>**, **<span style="color:#F8961F">interactive tables</span>**, and **<span style="color:#F8961F">structured data display</span>** through one facade.<br>**No curses library, no ANSI escape sequences, no manual formatting.**
+
+> **Need GUI rendering?** All these display methods also work in Browser mode. See [zBifrost Guide](zBifrost_GUIDE.md) for real-time Terminal ↔ Web rendering.
 
 ## zDisplay Tutorials
 
@@ -52,7 +56,7 @@ z = zCLI({"logger": "PROD"})
 # Each call becomes its own line
 z.display.line("1) Each call becomes its own line")
 z.display.line("2) No need to append \\n manually")
-z.display.line("3) Works the same in Terminal or zBifrost")
+z.display.line("3) Perfect for log-style output")
 ```
 
 Single-line output with automatic newline handling. No need to manually add `\n`—`line()` does it for you. Perfect for log-style output, simple messages, or any content where each call should start on a new line. Cleaner than `raw()` when you want the newline every time.
@@ -78,6 +82,55 @@ z.display.block(block)
 Send multiple lines at once while preserving your formatting. `block()` handles the trailing newline automatically. Great for banners, status summaries, or any preformatted text. Your line breaks stay intact, terminal spacing stays clean.
 
 > **Try it:** [`output/Level_1_Primitives/write_block.py`](../Demos/Layer_1/zDisplay_Demo/output/Level_1_Primitives/write_block.py)
+
+### <span style="color:#8FBE6D">Level 1D: read_string() - Collect Text Input</span>
+
+```python
+from zCLI import zCLI
+
+z = zCLI({"logger": "PROD"})
+
+# Simple prompt
+name = z.display.read_string("What's your name? ")
+z.display.line(f"Hello, {name}!")
+
+# Configuration input with defaults
+host = z.display.read_string("Database host [localhost]: ")
+if not host:
+    host = "localhost"
+port = z.display.read_string("Database port [5432]: ")
+if not port:
+    port = "5432"
+
+z.display.line(f"✓ Configuration: {host}:{port}")
+```
+
+The most basic input primitive—**collect user text input**. Prompts the user, waits for their response, and returns what they typed (without the newline). Perfect for interactive CLIs, configuration wizards, or any situation where you need to ask the user a question.
+
+> **Try it:** [`input/Level_1_Primitives/read_string.py`](../Demos/Layer_1/zDisplay_Demo/input/Level_1_Primitives/read_string.py)
+
+### <span style="color:#8FBE6D">Level 1E: read_password() - Masked Input</span>
+
+```python
+from zCLI import zCLI
+
+z = zCLI({"logger": "PROD"})
+
+# Secure password input
+password = z.display.read_password("Password: ")
+z.display.line(f"✓ Password captured ({len(password)} characters)")
+
+# Login flow
+username = z.display.read_string("Username: ")
+password = z.display.read_password("Password: ")
+
+if username and password:
+    z.display.line(f"✓ Credentials collected for: {username}")
+```
+
+Secure input collection with **masked typing**—just like `read_string()`, but the user's input is hidden from view. Essential for passwords, API keys, tokens, or any sensitive data. The terminal shows nothing (or asterisks) while the user types, preventing shoulder-surfing and accidental exposure.
+
+> **Try it:** [`input/Level_1_Primitives/read_password.py`](../Demos/Layer_1/zDisplay_Demo/input/Level_1_Primitives/read_password.py)
 
 ---
 
@@ -204,6 +257,71 @@ z.display.zDeclare("Application Ready", color="GREEN")
 **Professional system status reporting.** Three specialized methods: `zDeclare()` for system announcements with colors (GREEN/YELLOW/RED/BLUE), `zSession()` for displaying current session state, and `zConfig()` for machine/environment configuration. Perfect for startup sequences, system monitoring, and professional status displays. All support indentation for hierarchical output.
 
 > **Try it:** [`output/Level_2_Foundation/system.py`](../Demos/Layer_1/zDisplay_Demo/output/Level_2_Foundation/system.py)
+
+### <span style="color:#8FBE6D">Level 2E: button() - Action Confirmation</span>
+
+```python
+from zCLI import zCLI
+
+z = zCLI({"logger": "PROD"})
+
+# Safe action confirmation
+if z.display.button("Save Profile", color="success"):
+    z.display.success("✅ Profile saved!")
+else:
+    z.display.info("Profile not saved")
+
+# Dangerous action warning
+if z.display.button("Delete Account", color="danger"):
+    z.display.warning("⚠️ Account marked for deletion!")
+else:
+    z.display.info("Account deletion cancelled")
+
+# Multi-step workflow
+if z.display.button("Start Backup", color="info"):
+    z.display.info("Preparing backup...", indent=1)
+    if z.display.button("Confirm Backup", color="success"):
+        z.display.success("✓ Backup completed!", indent=1)
+```
+
+**Action confirmation with yes/no prompts.** Requires explicit user confirmation (y/n) to prevent accidental actions. Color-coded by action type: `success` (green), `danger` (red), `warning` (yellow), `info` (blue). Returns `True` (confirmed) or `False` (cancelled). Perfect for destructive operations, important decisions, or multi-step workflows requiring validation.
+
+> **Try it:** [`input/Level_2_Foundation/button.py`](../Demos/Layer_1/zDisplay_Demo/input/Level_2_Foundation/button.py)
+
+### <span style="color:#8FBE6D">Level 2F: selection() - Choose from List</span>
+
+```python
+from zCLI import zCLI
+
+z = zCLI({"logger": "PROD"})
+
+# Single selection
+role = z.display.selection(
+    "Select your role:",
+    ["Developer", "Designer", "Manager"]
+)
+z.display.success(f"Selected: {role}")
+
+# Multiple selections
+skills = z.display.selection(
+    "Select your skills:",
+    ["Python", "JavaScript", "React", "Django"],
+    multi=True
+)
+z.display.success(f"Selected: {', '.join(skills)}")
+
+# Selection with default
+theme = z.display.selection(
+    "Choose theme:",
+    ["Light", "Dark", "Auto"],
+    default="Dark"
+)
+z.display.success(f"Selected: {theme}")
+```
+
+**User choice from numbered list.** Displays options with numbers (1, 2, 3...), user types number(s) to select. Single selection returns one item, multi-selection (`multi=True`) returns a list. Optional `default` parameter for pre-selected values. Perfect for menus, configuration wizards, or any scenario where users need to choose from predefined options.
+
+> **Try it:** [`input/Level_2_Foundation/selection.py`](../Demos/Layer_1/zDisplay_Demo/input/Level_2_Foundation/selection.py)
 
 ---
 
@@ -371,8 +489,8 @@ z = zCLI({"logger": "PROD"})
 # Simple auto-advancing slideshow
 intro_slides = [
     "Welcome to zCLI!",
-    "zCLI is a dual-mode CLI framework",
-    "Works in Terminal and Browser (zBifrost)",
+    "zCLI is a declarative CLI framework",
+    "Professional terminal UI with one API",
     "Let's explore the features..."
 ]
 
@@ -413,6 +531,8 @@ You've learned zDisplay's **<span style="color:#8FBE6D">complete rendering capab
 - `raw()` - Write without newline (full control)
 - `line()` - Write with automatic newline
 - `block()` - Multi-line output with preserved formatting
+- `read_string()` - Collect text input from user
+- `read_password()` - Masked password input
 
 ✅ **Foundation (Layer 2)**
 - `header()` - Formatted section headers (═/─/~) with colors
@@ -425,6 +545,8 @@ You've learned zDisplay's **<span style="color:#8FBE6D">complete rendering capab
 - `zDeclare()` - System announcements with colors
 - `zSession()` - Session state display
 - `zConfig()` - Configuration display
+- `button()` - Action confirmation with yes/no prompts
+- `selection()` - Choose from numbered list (single or multi-select)
 
 ✅ **Data (Layer 3)**
 - `list()` - Bullet/number/letter lists
@@ -440,32 +562,40 @@ You've learned zDisplay's **<span style="color:#8FBE6D">complete rendering capab
 - `spinner()` + `indeterminate_progress()` - Indeterminate loading (automatic + manual modes)
 - `swiper()` - Interactive slideshow carousel with navigation
 
-**<span style="color:#F8961F">10 micro-step demos</span>** guide you from primitives (`raw`, `line`, `block`) through foundation (`header`, `text`, `signals`, `system`) to data display (`list`, `outline`, `json_data`, `zTable`) and progress tracking (`bar`, `spinner`, `swiper`)—complete mastery of dual-mode rendering.
+**<span style="color:#F8961F">16 micro-step demos</span>** organized by function:
 
-## Mode Detection
+**Output Demos** (`output/` folder):
+- Level 1: Primitives (3) - `raw`, `line`, `block`
+- Level 2: Foundation (4) - `header`, `text`, `signals`, `system`
+- Level 3: Data (2) - `data` (list/outline/json), `table`
+- Level 4: Progress (3) - `bar`, `spinner`, `swiper`
 
-zDisplay automatically detects your execution mode and adapts rendering.<br>**No mode checking needed—it just works.**
+**Input Demos** (`input/` folder):
+- Level 1: Primitives (2) - `read_string`, `read_password`
+- Level 2: Foundation (2) - `button`, `selection`
 
-```python
-# Terminal mode (default) → ANSI console output
-z = zCLI()
-z.display.text("Hello")
+## You've Mastered Dual-Mode Display
 
-# GUI mode (zBifrost) → WebSocket JSON events
-z = zCLI({"zMode": "zBifrost"})
-z.walker.run()
-z.display.text("Hello")  # Same code, renders in browser
+You now have the complete **<span style="color:#F8961F">rendering toolkit</span>**:
+- ✅ Output primitives (raw, line, block) for full control
+- ✅ Input primitives (read_string, read_password) for user interaction
+- ✅ Foundation events (header, text, signals, system, button, selection)
+- ✅ Data display (list, outline, json_data, zTable with pagination)
+- ✅ Progress tracking (bar, spinner, swiper with auto/manual modes)
+
+**<span style="color:#8FBE6D">zDisplay gives you professional UI for Terminal and Browser—same code, automatic adaptation.</span>**
+
+---
+
+## Event Composition
+
+Complex methods build on primitives—everything composes from the foundation:
+
+```
+zTable() → header() → text() → line() → raw()
 ```
 
-**Event Composition:**
-
-Complex methods build on primitives—automatic mode-awareness throughout:
-
-```
-zTable() → header() → text() → raw()/line() → Terminal/WebSocket
-```
-
-When you call `z.display.zTable()`, it internally uses headers and text formatting, which ultimately call `raw()` or `line()`—all mode-aware automatically. **Everything builds on the primitives.**
+When you call `z.display.zTable()`, it internally uses headers and text formatting, which ultimately call `raw()` or `line()`. **Everything builds on the primitives.**
 
 ## Quick Reference
 
@@ -482,6 +612,10 @@ z.display.line("Processing complete")
 
 # Block output - multi-line with preserved formatting
 z.display.block("Line 1\nLine 2\nLine 3")
+
+# Input collection
+name = z.display.read_string("What's your name? ")
+password = z.display.read_password("Password: ")
 
 # Legacy aliases (backward compatible)
 z.display.write_raw("text")   # → raw()
@@ -523,6 +657,14 @@ z.display.zDeclare("System Initialization", color="GREEN")
 z.display.zDeclare("Loading Configuration", indent=1)
 z.display.zSession(z.session)        # Display session state
 z.display.zConfig(config_data)       # Display configuration
+
+# User input - action confirmation
+if z.display.button("Save Profile", color="success"):
+    z.display.success("Profile saved!")
+
+# User input - selection
+role = z.display.selection("Choose role:", ["Developer", "Designer", "Manager"])
+skills = z.display.selection("Choose skills:", ["Python", "React"], multi=True)
 ```
 
 **Data (Layer 3):**
@@ -615,18 +757,15 @@ z.display.zEvents.TimeBased.swiper(slides, "Tutorial", auto_advance=True, delay=
 
 **<span style="color:#8FBE6D">Continue the Layer Journey</span>**
 
-zDisplay is **<span style="color:#F8961F">Layer 1</span>**—the rendering engine that powers user interfaces. The natural progression continues with other **<span style="color:#8FBE6D">Layer 1 subsystems</span>**:
+zDisplay is **<span style="color:#F8961F">Layer 1</span>**—the rendering engine that powers user interfaces. The natural progression continues with other **<span style="color:#8FBE6D">Layer 1 subsystems</span>** that build on this foundation:
 
 - **[zAuth Guide →](zAuth_GUIDE.md)** - Authentication and user management
-- **zDialog Guide** - Forms and validation
+- **zDialog Guide** - Forms and validation  
 - **zDispatch Guide** - Event handling and routing
 
-**<span style="color:#8FBE6D">See It In Action</span>**
+**<span style="color:#8FBE6D">Want Browser Rendering?</span>**
 
-Want to see zDisplay in real-time Terminal ↔ Web mode? **<span style="color:#8FBE6D">zBifrost</span>** demos showcase the same display code working in both environments:
+All these display methods also work in real-time web browser mode. For Terminal ↔ Web rendering, see:
 
-- **[zBifrost Guide](zBifrost_GUIDE.md)** - Real-time WebSocket communication
-- **zBifrost Level 5 Demo** - Advanced display events in browser
-
-**<span style="color:#F8961F">The Promise:</span>** Write `z.display.table()` once—it works in Terminal (ANSI) and Browser (HTML) automatically. No mode checking, no duplication. That's declarative zDisplay.
+- **[zBifrost Guide](zBifrost_GUIDE.md)** - WebSocket server with GUI rendering support
 

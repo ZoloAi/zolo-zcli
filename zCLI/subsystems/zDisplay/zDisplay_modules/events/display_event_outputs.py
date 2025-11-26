@@ -74,8 +74,8 @@ display_event_outputs.py (BasicOutputs) ← FOUNDATION (0 dependencies)
     ├── display_event_advanced.py (AdvancedData)
     │   Uses: header() for zTable titles and pagination
     │
-    ├── display_event_auth.py (zAuthEvents)
-    │   Uses: header() for login/logout prompts
+    ├── [REMOVED] display_event_auth.py (zAuthEvents)
+    │   Auth UI now composed in zAuth subsystem using generic display events
     │
     └── display_event_system.py (zSystem)
         Uses: header() + text() for zDeclare, zSession, zCrumbs, zMenu, zDialog

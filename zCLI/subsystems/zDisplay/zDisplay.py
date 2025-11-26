@@ -34,13 +34,13 @@ zSession Integration:
     - zBifrost: WebSocket messages to connected GUI client
 
 zAuth Integration:
-    zDisplay provides authentication UI through display_event_auth:
-    - login_prompt: Collect credentials (Terminal or GUI)
-    - login_success/failure: Display auth result
-    - status_display: Show current auth state
+    zAuth composes generic zDisplay events for authentication UI:
+    - success(), error(), warning() for feedback
+    - text(), header() for status display
+    - Primitives for credential collection
     
-    Integrates with zAuth's three-tier architecture (zSession, Application, Dual).
-    zDisplay itself is authentication-agnostic at the facade level.
+    zDisplay provides generic presentation layer; zAuth handles auth-specific composition.
+    This maintains proper separation of concerns.
 
 Event Routing System:
     All display operations route through handle() with event dictionaries:

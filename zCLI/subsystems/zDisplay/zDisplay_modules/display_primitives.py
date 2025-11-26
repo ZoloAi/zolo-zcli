@@ -49,9 +49,8 @@ Layer 1 Position:
         - events/display_event_widgets.py (progress bars, spinners)
         - events/display_event_advanced.py (tables, complex data)
         - events/display_event_system.py (menus, dialogs)
-        - events/display_event_auth.py (login prompts)
     
-    Total: 62 references from all event files
+    Total: 56 references from all event files (post-zAuthEvents removal)
 
 Dual-Mode I/O Methods:
     Output Methods (synchronous):
