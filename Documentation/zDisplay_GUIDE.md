@@ -164,6 +164,47 @@ z.display.zMarker("Checkpoint 2", color="CYAN")
 
 > **Try it:** [`output/Level_2_Foundation/signals.py`](../Demos/Layer_1/zDisplay_Demo/output/Level_2_Foundation/signals.py)
 
+### <span style="color:#8FBE6D">Level 2D: system() - System Display Events</span>
+
+> **💡 Note:** These system display events build on concepts from **[zConfig Guide](zConfig_GUIDE.md)**. If you've worked through the early zConfig demos, you've already seen `z.session`, `z.config.get_machine()`, and `z.config.get_environment()`. This tutorial shows how to **display** that configuration data professionally. For more on reading and managing config values, see the [zConfig Guide](zConfig_GUIDE.md).
+
+```python
+from zCLI import zCLI
+
+z = zCLI({"logger": "PROD"})
+
+# System announcements with zDeclare()
+z.display.zDeclare("System Initialization")
+z.display.zDeclare("Loading Configuration", indent=1)
+z.display.zDeclare("Services Ready", color="GREEN")
+
+# Display session state
+z.display.zSession(z.session)
+
+# Display configuration info
+config_data = {
+    "machine": {
+        "os": z.config.get_machine("os"),
+        "hostname": z.config.get_machine("hostname")
+    },
+    "environment": {
+        "deployment": "Debug",
+        "mode": "Terminal"
+    }
+}
+z.display.zConfig(config_data)
+
+# Real-world startup sequence
+z.display.zDeclare("Application Starting", color="CYAN")
+z.display.info("Loading environment", indent=1)
+z.display.success("Configuration complete", indent=1)
+z.display.zDeclare("Application Ready", color="GREEN")
+```
+
+**Professional system status reporting.** Three specialized methods: `zDeclare()` for system announcements with colors (GREEN/YELLOW/RED/BLUE), `zSession()` for displaying current session state, and `zConfig()` for machine/environment configuration. Perfect for startup sequences, system monitoring, and professional status displays. All support indentation for hierarchical output.
+
+> **Try it:** [`output/Level_2_Foundation/system.py`](../Demos/Layer_1/zDisplay_Demo/output/Level_2_Foundation/system.py)
+
 ---
 
 ### <span style="color:#8FBE6D">Level 3: Data - Structured Data Display</span>
@@ -252,6 +293,101 @@ z.display.zTable(
 
 ---
 
+### <span style="color:#8FBE6D">Level 4A: progress_bar() - Deterministic Progress</span>
+
+```python
+import time
+from zCLI import zCLI
+
+z = zCLI({"logger": "PROD"})
+
+total = 50
+start_time = time.time()
+
+for i in range(total + 1):
+    z.display.progress_bar(
+        current=i,
+        total=total,
+        label="Processing files",
+        show_percentage=True,
+        show_eta=True,
+        start_time=start_time,
+        color="GREEN"
+    )
+    time.sleep(0.05)  # Simulate work
+```
+
+**Visual progress tracking with ETA.** Displays current/total counter, percentage completion, and estimated time remaining. Perfect for file processing, downloads, batch operations, or any task with known total steps. Updates in-place for clean terminal output. Multiple color options (GREEN, BLUE, YELLOW).
+
+> **💡 Cross-Terminal Support:** Progress bars automatically adapt to your terminal's capabilities. Modern terminals (iTerm2, Alacritty, Kitty, Cursor) use smooth in-place updates with `\r`. macOS Terminal.app uses cursor-up rendering for the same visual effect. Same code, optimized rendering everywhere.
+
+> **Try it:** [`output/Level_4_Progress/progress_bar.py`](../Demos/Layer_1/zDisplay_Demo/output/Level_4_Progress/progress_bar.py)
+
+### <span style="color:#8FBE6D">Level 4B: spinner() - Indeterminate Loading</span>
+
+```python
+import time
+from zCLI import zCLI
+
+z = zCLI({"logger": "PROD"})
+
+# Context manager API with auto-cleanup
+with z.display.spinner("Loading data", style="dots"):
+    time.sleep(2)  # Simulate loading
+
+with z.display.spinner("Processing", style="arc"):
+    time.sleep(2)  # Simulate processing
+```
+
+**Animated loading indicator for unknown-duration operations.** Multiple animation styles (dots, arc). Context manager ensures automatic cleanup. Perfect for API calls, database queries, file I/O, or any operation where duration is unpredictable. Non-blocking and visually indicates activity.
+
+> **Try it:** [`output/Level_4_Progress/progress_spinner.py`](../Demos/Layer_1/zDisplay_Demo/output/Level_4_Progress/progress_spinner.py)
+
+### <span style="color:#8FBE6D">Level 4C: progress_iterator() - Automatic Progress</span>
+
+```python
+import time
+from zCLI import zCLI
+
+z = zCLI({"logger": "PROD"})
+
+files = [f"file_{i}.txt" for i in range(1, 21)]
+
+# Zero manual updates - progress tracked automatically
+for filename in z.display.progress_iterator(files, "Processing files"):
+    time.sleep(0.1)  # Simulate processing
+```
+
+**Automatic progress tracking in for-loops.** Wraps any iterable (lists, ranges, dicts) and automatically updates progress bar. No manual counter management. Clean syntax, zero overhead. Perfect for batch processing, data pipelines, or iterating over collections with visual feedback.
+
+> **Try it:** [`output/Level_4_Progress/progress_iterator.py`](../Demos/Layer_1/zDisplay_Demo/output/Level_4_Progress/progress_iterator.py)
+
+### <span style="color:#8FBE6D">Level 4D: indeterminate_progress() - Activity Indicator</span>
+
+```python
+import time
+from zCLI import zCLI
+
+z = zCLI({"logger": "PROD"})
+
+# For operations with unknown duration
+with z.display.indeterminate_progress("Processing"):
+    time.sleep(3)  # Long-running task
+
+# Sequential operations
+with z.display.indeterminate_progress("Executing query"):
+    time.sleep(2)
+
+with z.display.indeterminate_progress("Building index"):
+    time.sleep(1.5)
+```
+
+**Shows activity without percentage or time estimates.** Context manager API with automatic cleanup. Perfect for database queries, network calls, filesystem operations, or any task where duration is unpredictable. Simpler than spinner, focuses on showing that work is happening.
+
+> **Try it:** [`output/Level_4_Progress/progress_indeterminate.py`](../Demos/Layer_1/zDisplay_Demo/output/Level_4_Progress/progress_indeterminate.py)
+
+---
+
 ## Summary
 
 You've learned zDisplay's **<span style="color:#8FBE6D">complete rendering capabilities</span>**:
@@ -269,6 +405,9 @@ You've learned zDisplay's **<span style="color:#8FBE6D">complete rendering capab
 - `warning()` - Yellow ⚠ cautions
 - `info()` - Cyan ℹ information
 - `zMarker()` - Magenta workflow separators
+- `zDeclare()` - System announcements with colors
+- `zSession()` - Session state display
+- `zConfig()` - Configuration display
 
 ✅ **Data (Layer 3)**
 - `list()` - Bullet/number/letter lists
@@ -279,7 +418,13 @@ You've learned zDisplay's **<span style="color:#8FBE6D">complete rendering capab
   - Type 2: Simple truncation (limit only, "... N more rows" footer)
   - Type 3: Interactive navigation (limit + interactive=True, keyboard controls)
 
-**<span style="color:#F8961F">8 micro-step demos</span>** guide you from primitives (`raw`, `line`, `block`) through foundation (`header`, `text`, `signals`) to data display (`list`, `outline`, `json_data`, `zTable`)—complete mastery of dual-mode rendering.
+✅ **Progress Tracking (Layer 4)**
+- `progress_bar()` - Deterministic progress with percentage/ETA
+- `spinner()` - Animated loading indicator (context manager)
+- `progress_iterator()` - Automatic progress for loops
+- `indeterminate_progress()` - Activity indicator for unknown duration
+
+**<span style="color:#F8961F">13 micro-step demos</span>** guide you from primitives (`raw`, `line`, `block`) through foundation (`header`, `text`, `signals`, `system`) to data display (`list`, `outline`, `json_data`, `zTable`) and progress tracking (`progress_bar`, `spinner`, `progress_iterator`, `indeterminate_progress`)—complete mastery of dual-mode rendering.
 
 ## Mode Detection
 
@@ -356,6 +501,12 @@ z.display.info("ℹ️  FYI...")         # Cyan
 # Visual workflow separator
 z.display.zMarker("Stage 1")         # Magenta separator
 z.display.zMarker("Stage 2", color="CYAN")  # Custom color
+
+# System events - professional status reporting
+z.display.zDeclare("System Initialization", color="GREEN")
+z.display.zDeclare("Loading Configuration", indent=1)
+z.display.zSession(z.session)        # Display session state
+z.display.zConfig(config_data)       # Display configuration
 ```
 
 **Data (Layer 3):**
@@ -403,6 +554,36 @@ z.display.zTable(
     offset=0,
     interactive=True  # Keyboard controls: [n]ext, [p]revious, [f]irst, [l]ast, [#] jump, [q]uit
 )
+```
+
+**Progress Tracking (Layer 4):**
+
+```python
+import time
+
+# Deterministic progress bar (auto-adapts to terminal capabilities)
+for i in range(100):
+    z.display.progress_bar(
+        current=i,
+        total=100,
+        label="Processing",
+        show_percentage=True,
+        show_eta=True,
+        start_time=time.time()
+    )
+
+# Indeterminate spinner (context manager)
+with z.display.spinner("Loading data", style="dots"):
+    time.sleep(2)
+
+# Automatic progress iterator
+files = ["file1.txt", "file2.txt", "file3.txt"]
+for file in z.display.progress_iterator(files, "Processing files"):
+    process(file)
+
+# Activity indicator for unknown duration
+with z.display.indeterminate_progress("Building index"):
+    build_index()
 ```
 
 ---

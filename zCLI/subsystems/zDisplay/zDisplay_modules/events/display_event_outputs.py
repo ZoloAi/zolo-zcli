@@ -336,7 +336,7 @@ class BasicOutputs:
             indent: Indentation level (default: 0)
                     Each level = 2 spaces
             pause: Pause for user acknowledgment (default: False)
-                   If True, displays break message and waits for Enter
+                         If True, displays break message and waits for Enter
             break_message: Custom break message (default: "Press Enter to continue...")
                           Only used if pause is True
             break_after: Legacy parameter - use 'pause' instead

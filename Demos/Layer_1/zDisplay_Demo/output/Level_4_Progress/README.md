@@ -1,4 +1,4 @@
-# Level 4: Animations & Progress
+# Level 4: Progress Tracking
 
 **Master time-based zDisplay events that animate and update over time!**
 
@@ -6,23 +6,37 @@
 
 ## 🎯 What You'll Learn
 
-This demo showcases **all 4 time-based display events**:
+This level showcases **3 core progress tracking methods**:
 
 1. **`progress_bar()`** - Visual progress indicator with percentage/ETA
 2. **`spinner()`** - Animated loading spinner (context manager)
 3. **`progress_iterator()`** - Auto-updating progress for loops
-4. **`swiper()`** - Interactive content carousel with navigation
 
 ---
 
 ## 🚀 Quick Start
 
+### **Comprehensive Demo (Recommended)**
+See all progress methods in one complete guide:
 ```bash
-cd Demos/Layer_1/zDisplay_Demo/Level_4_Animations
-python3 animations_demo.py
+python3 Demos/Layer_1/zDisplay_Demo/output/Level_4_Progress/progress.py
 ```
 
-Watch animations come to life in your terminal! ✨
+### **Individual Demos**
+Focus on specific progress methods:
+```bash
+# Progress bar with percentage/ETA
+python3 Demos/Layer_1/zDisplay_Demo/output/Level_4_Progress/progress_bar.py
+
+# Spinner loading indicators
+python3 Demos/Layer_1/zDisplay_Demo/output/Level_4_Progress/progress_spinner.py
+
+# Automatic progress for loops
+python3 Demos/Layer_1/zDisplay_Demo/output/Level_4_Progress/progress_iterator.py
+
+# More spinner examples
+python3 Demos/Layer_1/zDisplay_Demo/output/Level_4_Progress/progress_indeterminate.py
+```
 
 ---
 
