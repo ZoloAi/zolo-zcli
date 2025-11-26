@@ -629,3 +629,21 @@ class zEvents:
             Any: Result from TimeBased.indeterminate_progress method
         """
         return self.TimeBased.indeterminate_progress(label)
+    
+    def swiper(self, slides: list, label: str = "Slides", auto_advance: bool = True, delay: int = 3, loop: bool = False, container: str = "#app") -> Any:
+        """Display interactive content carousel/swiper.
+        
+        Convenience delegate to TimeBased.swiper for backward compatibility.
+        
+        Args:
+            slides: List of slide content strings
+            label: Title for the swiper (default: "Slides")
+            auto_advance: Auto-cycle through slides (default: True)
+            delay: Seconds between auto-advance (default: 3)
+            loop: Wrap around to start after last slide (default: False)
+            container: Bifrost DOM container (default: "#app")
+            
+        Returns:
+            Any: Result from TimeBased.swiper method
+        """
+        return self.TimeBased.swiper(slides, label, auto_advance, delay, loop, container)

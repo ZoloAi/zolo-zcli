@@ -293,7 +293,11 @@ z.display.zTable(
 
 ---
 
-### <span style="color:#8FBE6D">Level 4A: progress_bar() - Deterministic Progress</span>
+## Level 4: Progress Tracking
+
+> **💡 Consolidated Demos:** Level 4 uses a streamlined demo structure where related methods are combined into single files. Each demo shows both automatic and manual modes for the same visual output, helping you choose the right control level for your use case.
+
+### <span style="color:#8FBE6D">Level 4A: progress_bar() & progress_iterator() - Deterministic Progress</span>
 
 ```python
 import time
@@ -301,6 +305,7 @@ from zCLI import zCLI
 
 z = zCLI({"logger": "PROD"})
 
+# Manual mode: Full control over progress
 total = 50
 start_time = time.time()
 
@@ -315,15 +320,21 @@ for i in range(total + 1):
         color="GREEN"
     )
     time.sleep(0.05)  # Simulate work
+
+# Automatic mode: Zero manual updates
+files = [f"file_{i}.txt" for i in range(1, 26)]
+
+for filename in z.display.progress_iterator(files, "Processing files"):
+    time.sleep(0.08)  # progress_iterator() manages current/total/start_time
 ```
 
-**Visual progress tracking with ETA.** Displays current/total counter, percentage completion, and estimated time remaining. Perfect for file processing, downloads, batch operations, or any task with known total steps. Updates in-place for clean terminal output. Multiple color options (GREEN, BLUE, YELLOW).
+**Visual progress tracking with TWO modes.** Manual mode (`progress_bar`) gives full control over current/total/start_time. Automatic mode (`progress_iterator`) wraps iterables for zero-config progress tracking. Both display identical visual output with percentage completion and ETA. Choose based on your use case: manual for flexibility, automatic for simplicity.
 
 > **💡 Cross-Terminal Support:** Progress bars automatically adapt to your terminal's capabilities. Modern terminals (iTerm2, Alacritty, Kitty, Cursor) use smooth in-place updates with `\r`. macOS Terminal.app uses cursor-up rendering for the same visual effect. Same code, optimized rendering everywhere.
 
-> **Try it:** [`output/Level_4_Progress/progress_bar.py`](../Demos/Layer_1/zDisplay_Demo/output/Level_4_Progress/progress_bar.py)
+> **Try it:** [`output/Level_4_Progress/bar.py`](../Demos/Layer_1/zDisplay_Demo/output/Level_4_Progress/bar.py)
 
-### <span style="color:#8FBE6D">Level 4B: spinner() - Indeterminate Loading</span>
+### <span style="color:#8FBE6D">Level 4B: spinner() & indeterminate_progress() - Unknown Duration</span>
 
 ```python
 import time
@@ -331,60 +342,66 @@ from zCLI import zCLI
 
 z = zCLI({"logger": "PROD"})
 
-# Context manager API with auto-cleanup
+# Automatic mode: Context manager with auto-animation
 with z.display.spinner("Loading data", style="dots"):
-    time.sleep(2)  # Simulate loading
+    time.sleep(2)  # Animates automatically in background
 
 with z.display.spinner("Processing", style="arc"):
-    time.sleep(2)  # Simulate processing
-```
-
-**Animated loading indicator for unknown-duration operations.** Multiple animation styles (dots, arc). Context manager ensures automatic cleanup. Perfect for API calls, database queries, file I/O, or any operation where duration is unpredictable. Non-blocking and visually indicates activity.
-
-> **Try it:** [`output/Level_4_Progress/progress_spinner.py`](../Demos/Layer_1/zDisplay_Demo/output/Level_4_Progress/progress_spinner.py)
-
-### <span style="color:#8FBE6D">Level 4C: progress_iterator() - Automatic Progress</span>
-
-```python
-import time
-from zCLI import zCLI
-
-z = zCLI({"logger": "PROD"})
-
-files = [f"file_{i}.txt" for i in range(1, 21)]
-
-# Zero manual updates - progress tracked automatically
-for filename in z.display.progress_iterator(files, "Processing files"):
-    time.sleep(0.1)  # Simulate processing
-```
-
-**Automatic progress tracking in for-loops.** Wraps any iterable (lists, ranges, dicts) and automatically updates progress bar. No manual counter management. Clean syntax, zero overhead. Perfect for batch processing, data pipelines, or iterating over collections with visual feedback.
-
-> **Try it:** [`output/Level_4_Progress/progress_iterator.py`](../Demos/Layer_1/zDisplay_Demo/output/Level_4_Progress/progress_iterator.py)
-
-### <span style="color:#8FBE6D">Level 4D: indeterminate_progress() - Activity Indicator</span>
-
-```python
-import time
-from zCLI import zCLI
-
-z = zCLI({"logger": "PROD"})
-
-# For operations with unknown duration
-with z.display.indeterminate_progress("Processing"):
-    time.sleep(3)  # Long-running task
-
-# Sequential operations
-with z.display.indeterminate_progress("Executing query"):
     time.sleep(2)
 
-with z.display.indeterminate_progress("Building index"):
-    time.sleep(1.5)
+# Manual mode: Fine-grained control over updates
+update_progress = z.display.indeterminate_progress("Processing data")
+for i in range(30):
+    update_progress()  # You control when frames update
+    time.sleep(0.1)
+z.display.raw("\n")  # Add newline when done
 ```
 
-**Shows activity without percentage or time estimates.** Context manager API with automatic cleanup. Perfect for database queries, network calls, filesystem operations, or any task where duration is unpredictable. Simpler than spinner, focuses on showing that work is happening.
+**Animated loading indicator with TWO control modes.** Automatic mode (`spinner`) uses context manager for background animation and auto-cleanup. Manual mode (`indeterminate_progress`) returns an update function you call in your loop for fine-grained control. Both produce identical visual output (animated spinner frames). Perfect for API calls, database queries, file I/O, or any operation where duration is unpredictable.
 
-> **Try it:** [`output/Level_4_Progress/progress_indeterminate.py`](../Demos/Layer_1/zDisplay_Demo/output/Level_4_Progress/progress_indeterminate.py)
+> **Try it:** [`output/Level_4_Progress/spinner.py`](../Demos/Layer_1/zDisplay_Demo/output/Level_4_Progress/spinner.py)
+
+### <span style="color:#8FBE6D">Level 4C: swiper() - Interactive Slideshow</span>
+
+```python
+from zCLI import zCLI
+
+z = zCLI({"logger": "PROD"})
+
+# Simple auto-advancing slideshow
+intro_slides = [
+    "Welcome to zCLI!",
+    "zCLI is a dual-mode CLI framework",
+    "Works in Terminal and Browser (zBifrost)",
+    "Let's explore the features..."
+]
+
+z.display.zEvents.TimeBased.swiper(
+    intro_slides, 
+    "Introduction", 
+    auto_advance=True, 
+    delay=3
+)
+
+# Manual navigation tutorial
+tutorial_slides = [
+    "Step 1: Initialize zCLI\n\n  from zCLI import zCLI\n  z = zCLI()",
+    "Step 2: Display Progress\n\n  z.display.progress_bar(50, 100)",
+    "Step 3: Show Spinners\n\n  with z.display.spinner('Loading'):\n      time.sleep(2)"
+]
+
+z.display.zEvents.TimeBased.swiper(
+    tutorial_slides, 
+    "Tutorial", 
+    auto_advance=False  # User navigates with arrow keys
+)
+```
+
+**Interactive content carousel with beautiful box-drawn UI.** Auto-advancing slides with configurable delay, or manual navigation with arrow keys (◀ ▶), number keys (1-N jump to slide), pause/resume ('p' key), and quit ('q' key). Multi-line content support with proper formatting. Perfect for tutorials, onboarding flows, feature showcases, and presentations.
+
+> **💡 Note:** Swiper is accessed via `z.display.zEvents.TimeBased.swiper()` - a powerful interactive component for guided experiences.
+
+> **Try it:** [`output/Level_4_Progress/swiper.py`](../Demos/Layer_1/zDisplay_Demo/output/Level_4_Progress/swiper.py)
 
 ---
 
@@ -419,12 +436,11 @@ You've learned zDisplay's **<span style="color:#8FBE6D">complete rendering capab
   - Type 3: Interactive navigation (limit + interactive=True, keyboard controls)
 
 ✅ **Progress Tracking (Layer 4)**
-- `progress_bar()` - Deterministic progress with percentage/ETA
-- `spinner()` - Animated loading indicator (context manager)
-- `progress_iterator()` - Automatic progress for loops
-- `indeterminate_progress()` - Activity indicator for unknown duration
+- `progress_bar()` + `progress_iterator()` - Deterministic progress (manual + automatic modes)
+- `spinner()` + `indeterminate_progress()` - Indeterminate loading (automatic + manual modes)
+- `swiper()` - Interactive slideshow carousel with navigation
 
-**<span style="color:#F8961F">13 micro-step demos</span>** guide you from primitives (`raw`, `line`, `block`) through foundation (`header`, `text`, `signals`, `system`) to data display (`list`, `outline`, `json_data`, `zTable`) and progress tracking (`progress_bar`, `spinner`, `progress_iterator`, `indeterminate_progress`)—complete mastery of dual-mode rendering.
+**<span style="color:#F8961F">10 micro-step demos</span>** guide you from primitives (`raw`, `line`, `block`) through foundation (`header`, `text`, `signals`, `system`) to data display (`list`, `outline`, `json_data`, `zTable`) and progress tracking (`bar`, `spinner`, `swiper`)—complete mastery of dual-mode rendering.
 
 ## Mode Detection
 
@@ -561,7 +577,7 @@ z.display.zTable(
 ```python
 import time
 
-# Deterministic progress bar (auto-adapts to terminal capabilities)
+# Deterministic progress - Manual mode (full control)
 for i in range(100):
     z.display.progress_bar(
         current=i,
@@ -572,18 +588,25 @@ for i in range(100):
         start_time=time.time()
     )
 
-# Indeterminate spinner (context manager)
-with z.display.spinner("Loading data", style="dots"):
-    time.sleep(2)
-
-# Automatic progress iterator
+# Deterministic progress - Automatic mode (wrapper)
 files = ["file1.txt", "file2.txt", "file3.txt"]
 for file in z.display.progress_iterator(files, "Processing files"):
-    process(file)
+    process(file)  # progress_iterator manages counters automatically
 
-# Activity indicator for unknown duration
-with z.display.indeterminate_progress("Building index"):
-    build_index()
+# Indeterminate spinner - Automatic mode (context manager)
+with z.display.spinner("Loading data", style="dots"):
+    time.sleep(2)  # Background animation
+
+# Indeterminate spinner - Manual mode (fine control)
+update = z.display.indeterminate_progress("Building index")
+for i in range(30):
+    update()  # You control frame updates
+    time.sleep(0.1)
+z.display.raw("\n")
+
+# Interactive slideshow carousel
+slides = ["Welcome!", "Feature 1", "Feature 2", "Thank you!"]
+z.display.zEvents.TimeBased.swiper(slides, "Tutorial", auto_advance=True, delay=3)
 ```
 
 ---

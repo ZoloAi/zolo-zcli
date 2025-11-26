@@ -324,7 +324,7 @@ ARROW_RIGHT = "[C"
 ARROW_LEFT = "[D"
 
 # Swiper Status Messages
-SWIPER_STATUS_PAUSED = "[PAUSED]"
+SWIPER_STATUS_PAUSED = "[PAUSED - Press P to Resume]"
 SWIPER_STATUS_AUTO = "[AUTO-ADVANCE: {}s]"
 SWIPER_STATUS_MANUAL = "[MANUAL]"
 
@@ -1159,17 +1159,21 @@ class TimeBased:
                 f"{BOX_LEFT_T}{BOX_HORIZONTAL * (width - 2)}{BOX_RIGHT_T}"
             )
             
-            # Content (centered)
+            # Content (multi-line support)
             self.zPrimitives.line(
                 f"{BOX_VERTICAL}{CHAR_SPACE * (width - 2)}{BOX_VERTICAL}"
             )
-            content_padding = (inner_width - len(slide_content)) // 2
-            content_line = (
-                f"{BOX_VERTICAL}  {CHAR_SPACE * content_padding}{slide_content}"
-                f"{CHAR_SPACE * (inner_width - len(slide_content) - content_padding)}  "
-                f"{BOX_VERTICAL}"
-            )
-            self.zPrimitives.line(content_line)
+            
+            # Split content into lines and render each within the box
+            content_lines = slide_content.strip().split('\n')
+            for line in content_lines:
+                # Truncate if line is too long
+                line_trimmed = line[:inner_width - 4] if len(line) > inner_width - 4 else line
+                # Left-align content with proper padding
+                padding_right = CHAR_SPACE * (inner_width - len(line_trimmed) - 4)
+                content_line = f"{BOX_VERTICAL}  {line_trimmed}{padding_right}  {BOX_VERTICAL}"
+                self.zPrimitives.line(content_line)
+            
             self.zPrimitives.line(
                 f"{BOX_VERTICAL}{CHAR_SPACE * (width - 2)}{BOX_VERTICAL}"
             )
@@ -1177,15 +1181,18 @@ class TimeBased:
             # Controls
             if is_paused[0]:
                 status = SWIPER_STATUS_PAUSED
+                pause_label = "P Resume"  # Show "Resume" when paused
             elif auto_advance:
                 status = SWIPER_STATUS_AUTO.format(delay)
+                pause_label = "P Pause"   # Show "Pause" when running
             else:
                 status = SWIPER_STATUS_MANUAL
+                pause_label = "P Pause"   # Manual mode can still pause
             
             self.zPrimitives.line(
                 f"{BOX_LEFT_T}{BOX_HORIZONTAL * (width - 2)}{BOX_RIGHT_T}"
             )
-            controls = f"  ◀ Prev  ▶ Next  1-{len(slides)} Jump  P Pause  Q Quit  {status}"
+            controls = f"  ◀ Prev  ▶ Next  1-{len(slides)} Jump  {pause_label}  Q Quit  {status}"
             controls_padding = CHAR_SPACE * max(0, width - len(controls) - 2)
             self.zPrimitives.line(
                 f"{BOX_VERTICAL}{controls}{controls_padding}{BOX_VERTICAL}"
