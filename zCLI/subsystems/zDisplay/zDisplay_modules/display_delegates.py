@@ -47,7 +47,7 @@ Delegation Chain:
     3. Routes through handle(): self.handle(event_dict)
     4. Handle validates/routes:  self.zEvents.Signals.error()
     5. Event processes logic:    Format message, apply styling
-    6. Output via primitives:    self.zPrimitives.write_line()
+    6. Output via primitives:    self.zPrimitives.line()
     7. Terminal/Bifrost switch:  [Happens in primitives, NOT here]
     
     Key Point: This file and the delegates/ modules are pure delegation.

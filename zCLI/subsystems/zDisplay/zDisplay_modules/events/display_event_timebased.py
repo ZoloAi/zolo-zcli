@@ -622,7 +622,7 @@ class TimeBased:
         if total is None or total == 0:
             spinner_frame = self._spinner_styles[STYLE_DOTS][int(time.time() * 10) % 10]
             output = f"{label} {spinner_frame}"
-            self.zPrimitives.write_raw(f"{ANSI_CARRIAGE_RETURN}{output}", flush=True)
+            self.zPrimitives.raw(f"{ANSI_CARRIAGE_RETURN}{output}", flush=True)
             return output
         
         # Calculate percentage
@@ -653,11 +653,11 @@ class TimeBased:
         output = CHAR_SPACE.join(output_parts)
         
         # Use carriage return for live updates
-        self.zPrimitives.write_raw(f"{ANSI_CARRIAGE_RETURN}{output}", flush=True)
+        self.zPrimitives.raw(f"{ANSI_CARRIAGE_RETURN}{output}", flush=True)
         
         # Add newline if complete
         if current >= total:
-            self.zPrimitives.write_raw("\n")
+            self.zPrimitives.raw("\n")
         
         return output
 
@@ -741,7 +741,7 @@ class TimeBased:
             """Animation loop running in separate thread."""
             while not stop_event_flag.is_set():
                 frame = frames[frame_idx[0] % len(frames)]
-                self.zPrimitives.write_raw(
+                self.zPrimitives.raw(
                     f"{ANSI_CARRIAGE_RETURN}{label} {frame}",
                     flush=True
                 )
@@ -760,7 +760,7 @@ class TimeBased:
             animation_thread.join(timeout=DEFAULT_THREAD_JOIN_TIMEOUT)
             
             # Clear the line and show completion
-            self.zPrimitives.write_raw(
+            self.zPrimitives.raw(
                 f"{ANSI_CARRIAGE_RETURN}{label} {CHAR_CHECKMARK}\n",
                 flush=True
             )
@@ -849,7 +849,7 @@ class TimeBased:
         def update() -> None:
             """Update the spinner frame (caller controls frequency)."""
             frame = frames[frame_idx[0] % len(frames)]
-            self.zPrimitives.write_raw(
+            self.zPrimitives.raw(
                 f"{ANSI_CARRIAGE_RETURN}{label} {frame}",
                 flush=True
             )
@@ -939,8 +939,8 @@ class TimeBased:
             
             # Bifrost mode is async - frontend handles navigation
             # For now, just display a simple confirmation in terminal fallback
-            self.zPrimitives.write_line(f"\n{label}: Swiper initialized with {len(slides)} slides (Bifrost mode)")
-            self.zPrimitives.write_line(MSG_BIFROST_INITIALIZED)
+            self.zPrimitives.line(f"\n{label}: Swiper initialized with {len(slides)} slides (Bifrost mode)")
+            self.zPrimitives.line(MSG_BIFROST_INITIALIZED)
             return
         
         # Terminal mode - interactive swiper with auto-cycle + manual control
@@ -951,7 +951,7 @@ class TimeBased:
         def display_slide(idx: int) -> None:
             """Render a single slide in terminal with box-drawing UI."""
             # Clear screen (ANSI escape codes)
-            self.zPrimitives.write_raw(f"{ANSI_CLEAR_SCREEN}{ANSI_HOME}", flush=True)
+            self.zPrimitives.raw(f"{ANSI_CLEAR_SCREEN}{ANSI_HOME}", flush=True)
             
             # Calculate box width
             width = DEFAULT_SWIPER_WIDTH
@@ -964,18 +964,18 @@ class TimeBased:
             # Header
             header_text = f"  {label} ({slide_num})"
             header_padding = CHAR_SPACE * (width - len(header_text) - 2)
-            self.zPrimitives.write_line(
+            self.zPrimitives.line(
                 f"{BOX_TOP_LEFT}{BOX_HORIZONTAL * (width - 2)}{BOX_TOP_RIGHT}"
             )
-            self.zPrimitives.write_line(
+            self.zPrimitives.line(
                 f"{BOX_VERTICAL}{header_text}{header_padding}{BOX_VERTICAL}"
             )
-            self.zPrimitives.write_line(
+            self.zPrimitives.line(
                 f"{BOX_LEFT_T}{BOX_HORIZONTAL * (width - 2)}{BOX_RIGHT_T}"
             )
             
             # Content (centered)
-            self.zPrimitives.write_line(
+            self.zPrimitives.line(
                 f"{BOX_VERTICAL}{CHAR_SPACE * (width - 2)}{BOX_VERTICAL}"
             )
             content_padding = (inner_width - len(slide_content)) // 2
@@ -984,8 +984,8 @@ class TimeBased:
                 f"{CHAR_SPACE * (inner_width - len(slide_content) - content_padding)}  "
                 f"{BOX_VERTICAL}"
             )
-            self.zPrimitives.write_line(content_line)
-            self.zPrimitives.write_line(
+            self.zPrimitives.line(content_line)
+            self.zPrimitives.line(
                 f"{BOX_VERTICAL}{CHAR_SPACE * (width - 2)}{BOX_VERTICAL}"
             )
             
@@ -997,15 +997,15 @@ class TimeBased:
             else:
                 status = SWIPER_STATUS_MANUAL
             
-            self.zPrimitives.write_line(
+            self.zPrimitives.line(
                 f"{BOX_LEFT_T}{BOX_HORIZONTAL * (width - 2)}{BOX_RIGHT_T}"
             )
             controls = f"  ◀ Prev  ▶ Next  1-{len(slides)} Jump  P Pause  Q Quit  {status}"
             controls_padding = CHAR_SPACE * max(0, width - len(controls) - 2)
-            self.zPrimitives.write_line(
+            self.zPrimitives.line(
                 f"{BOX_VERTICAL}{controls}{controls_padding}{BOX_VERTICAL}"
             )
-            self.zPrimitives.write_line(
+            self.zPrimitives.line(
                 f"{BOX_BOTTOM_LEFT}{BOX_HORIZONTAL * (width - 2)}{BOX_BOTTOM_RIGHT}"
             )
         
@@ -1076,7 +1076,7 @@ class TimeBased:
         except (ImportError, AttributeError, termios.error):
             # Fallback for systems without termios (Windows)
             # Just display slides sequentially with basic input
-            self.zPrimitives.write_line(MSG_SWIPER_FALLBACK)
+            self.zPrimitives.line(MSG_SWIPER_FALLBACK)
             for idx in range(len(slides)):
                 if stop_event.is_set():
                     break
@@ -1098,8 +1098,8 @@ class TimeBased:
                 advance_thread.join(timeout=DEFAULT_THREAD_JOIN_TIMEOUT)
             
             # Clear screen and show completion
-            self.zPrimitives.write_raw(f"{ANSI_CLEAR_SCREEN}{ANSI_HOME}", flush=True)
-            self.zPrimitives.write_line(MSG_SWIPER_COMPLETED.format(label))
+            self.zPrimitives.raw(f"{ANSI_CLEAR_SCREEN}{ANSI_HOME}", flush=True)
+            self.zPrimitives.line(MSG_SWIPER_COMPLETED.format(label))
             
             # Emit completion event for Bifrost
             if swiper_id in self._active_swipers:

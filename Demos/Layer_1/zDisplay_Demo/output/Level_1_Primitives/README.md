@@ -19,20 +19,23 @@ python write_block.py
 
 ## Micro-Steps
 
-> <span style="color:#8FBE6D">**Step 1: write_raw()**</span>
+> <span style="color:#8FBE6D">**Step 1: raw()**</span>
 - Create `z = zCLI({"logger": "PROD"})`
-- Call `z.display.write_raw("Downloading...")`
+- Call `z.display.raw("Downloading...")`
 - **What you see:** Text streams on the same line—no newline added.
+- **Note:** `write_raw()` still works as a backward-compatible alias.
 
-> <span style="color:#8FBE6D">**Step 2: write_line()**</span>
+> <span style="color:#8FBE6D">**Step 2: line()**</span>
 - Reuse the same zCLI instance
-- Call `z.display.write_line("Each call is a new line")`
+- Call `z.display.line("Each call is a new line")`
 - **What you see:** Every call ends cleanly with a newline—no manual `\n` required.
+- **Note:** `write_line()` still works as a backward-compatible alias.
 
-> <span style="color:#8FBE6D">**Step 3: write_block()**</span>
+> <span style="color:#8FBE6D">**Step 3: block()**</span>
 - Build a multi-line string
-- Call `z.display.write_block(block_text)`
+- Call `z.display.block(block_text)`
 - **What you see:** Your block prints exactly as written, with a trailing newline handled for you.
+- **Note:** `write_block()` still works as a backward-compatible alias.
 
 ## Why Start Here?
 - These primitives are the **foundation** for all higher-level zDisplay events (signals, tables, progress).

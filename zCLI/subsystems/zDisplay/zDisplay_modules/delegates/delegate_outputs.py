@@ -108,28 +108,37 @@ class DelegateOutputs:
         self, 
         content: str, 
         indent: int = DEFAULT_INDENT, 
-        break_after: bool = True, 
-        break_message: Optional[str] = None
+        pause: bool = False,  # Preferred API
+        break_message: Optional[str] = None,
+        break_after: Optional[bool] = None  # Legacy parameter
     ) -> Any:
         """Display formatted text content.
+        
+        Note: Prefer using 'pause' parameter. 'break_after' is maintained for 
+        backward compatibility.
         
         Args:
             content: Text content to display
             indent: Indentation level (default: 0)
-            break_after: Add break after content (default: True)
+            pause: Pause for user acknowledgment (default: False)
             break_message: Optional break message (default: None)
+            break_after: Legacy parameter - use 'pause' instead
             
         Returns:
             Any: Result from handle() method
             
         Example:
-            display.text("Configuration loaded successfully", indent=2)
+            display.text("Configuration loaded", indent=2)
+            display.text("Press to continue", pause=True)
         """
+        # Handle backward compatibility
+        should_break = break_after if break_after is not None else pause
+        
         return self.handle({
             KEY_EVENT: EVENT_TEXT,
             "content": content,
             "indent": indent,
-            "break_after": break_after,
+            "break_after": should_break,  # Keep internal key for now
             "break_message": break_message,
         })
 

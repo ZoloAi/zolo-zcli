@@ -330,9 +330,9 @@ class zDisplay(zDisplayDelegates):
             EVENT_BUTTON: self.zEvents.button,
 
             # Primitive events
-            EVENT_WRITE_RAW: self.zPrimitives.write_raw,
-            EVENT_WRITE_LINE: self.zPrimitives.write_line,
-            EVENT_WRITE_BLOCK: self.zPrimitives.write_block,
+            EVENT_WRITE_RAW: self.zPrimitives.raw,
+            EVENT_WRITE_LINE: self.zPrimitives.line,
+            EVENT_WRITE_BLOCK: self.zPrimitives.block,
         }
 
         # Initialize ready message using modern handler

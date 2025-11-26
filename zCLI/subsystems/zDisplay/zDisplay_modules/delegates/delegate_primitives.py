@@ -8,10 +8,13 @@ basic read and write operations. These are the most fundamental display
 operations, used by higher-level events.
 
 Methods:
-    Output Primitives (3):
-    - write_raw: Write raw content without processing
-    - write_line: Write content with automatic newline
-    - write_block: Write content as formatted block
+    Output Primitives (3 + 3 legacy):
+    - raw: Write raw content without processing (preferred)
+    - line: Write content with automatic newline (preferred)
+    - block: Write content as formatted block (preferred)
+    - write_raw: Legacy alias for raw()
+    - write_line: Legacy alias for line()
+    - write_block: Legacy alias for block()
     
     Input Primitives (4):
     - read_string: Read string input from user
@@ -50,10 +53,10 @@ class DelegatePrimitives:
     """
 
     # ═══════════════════════════════════════════════════════════════════════════
-    # Primitive Output Delegates
+    # Primitive Output Delegates (Preferred API)
     # ═══════════════════════════════════════════════════════════════════════════
 
-    def write_raw(self, content: str) -> Any:
+    def raw(self, content: str) -> Any:
         """Write raw content without processing.
         
         Args:
@@ -63,13 +66,13 @@ class DelegatePrimitives:
             Any: Result from handle() method
             
         Example:
-            display.write_raw("Loading")
-            display.write_raw("... ")
-            display.write_raw("Done\\n")
+            display.raw("Loading")
+            display.raw("... ")
+            display.raw("Done\\n")
         """
         return self.handle({KEY_EVENT: EVENT_WRITE_RAW, "content": content})
 
-    def write_line(self, content: str) -> Any:
+    def line(self, content: str) -> Any:
         """Write content with automatic newline.
         
         Args:
@@ -79,11 +82,11 @@ class DelegatePrimitives:
             Any: Result from handle() method
             
         Example:
-            display.write_line("Processing complete")
+            display.line("Processing complete")
         """
         return self.handle({KEY_EVENT: EVENT_WRITE_LINE, "content": content})
 
-    def write_block(self, content: str) -> Any:
+    def block(self, content: str) -> Any:
         """Write content as a formatted block.
         
         Args:
@@ -93,6 +96,49 @@ class DelegatePrimitives:
             Any: Result from handle() method
         """
         return self.handle({KEY_EVENT: EVENT_WRITE_BLOCK, "content": content})
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Backward-Compatible Aliases (Legacy Support)
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    def write_raw(self, content: str) -> Any:
+        """Backward-compatible alias for raw().
+        
+        Note: Prefer using .raw() for cleaner API calls.
+        
+        Args:
+            content: Text to write without formatting or newline
+            
+        Returns:
+            Any: Result from handle() method
+        """
+        return self.raw(content)
+
+    def write_line(self, content: str) -> Any:
+        """Backward-compatible alias for line().
+        
+        Note: Prefer using .line() for cleaner API calls.
+        
+        Args:
+            content: Text to write with automatic newline
+            
+        Returns:
+            Any: Result from handle() method
+        """
+        return self.line(content)
+
+    def write_block(self, content: str) -> Any:
+        """Backward-compatible alias for block().
+        
+        Note: Prefer using .block() for cleaner API calls.
+        
+        Args:
+            content: Text to write as formatted block
+            
+        Returns:
+            Any: Result from handle() method
+        """
+        return self.block(content)
 
     # ═══════════════════════════════════════════════════════════════════════════
     # Primitive Input Delegates

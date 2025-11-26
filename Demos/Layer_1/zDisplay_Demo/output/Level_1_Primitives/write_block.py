@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Level 1: Primitives - write_block()
-==================================
+Level 1: Primitives - block()
+==============================
 
 Goal:
     Send multiple lines at once while zDisplay handles the trailing newline.
@@ -15,11 +15,11 @@ from zCLI import zCLI
 
 
 def run_demo():
-    """Demonstrate multi-line output with write_block()."""
+    """Demonstrate multi-line output with block()."""
     z = zCLI({"logger": "PROD"})
 
     print()
-    print("=== Level 1C: write_block() - Multi-line output ===")
+    print("=== Level 1C: block() - Multi-line output ===")
     print()
 
     block = """Deployment Summary
@@ -27,9 +27,11 @@ def run_demo():
 - Mode: Terminal
 - Status: Ready to render"""
 
-    z.display.write_block(block)
+    z.display.block(block)
 
-    print("write_block() keeps the formatting you supply and ends with a clean newline.")
+    print()
+    print("block() keeps the formatting you supply and ends with a clean newline.")
+    print("Note: write_block() still works as a backward-compatible alias.")
     print()
 
 

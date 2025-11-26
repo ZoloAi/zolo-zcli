@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-Level 1: Primitives - write_raw()
-=================================
+Level 1: Primitives - raw()
+============================
 
 Goal:
-    See how write_raw() prints text immediately with no newline.
-    Perfect for inline updates ("Loading..."), progress ticks, or
-    combining manual spacing with higher-level display events.
+    See how raw() prints text immediately with no newline.
+    Perfect for inline updates, progress indicators, or building
+    output piece by piece on the same line.
 
 Run:
     python Demos/Layer_1/zDisplay_Demo/output/Level_1_Primitives/write_raw.py
@@ -20,18 +20,27 @@ def run_demo():
     z = zCLI({"logger": "PROD"})
 
     print()
-    print("=== Level 1A: write_raw() - No newline added ===")
+    print("=== Level 1A: raw() - No newline added ===")
     print()
 
-    z.display.write_raw("Downloading")
-    z.display.write_raw("...")
-    z.display.write_raw(" still working")
-    z.display.write_raw(" (all on one line)")
+    # All on one line - raw() never adds newlines
+    z.display.raw("First")
+    z.display.raw(" + ")
+    z.display.raw("Second")
+    z.display.raw(" + ")
+    z.display.raw("Third")
+    z.display.raw("\n")  # You control when to break
 
-    # Finish the line so the terminal prompt returns cleanly
-    z.display.write_raw("\n")
+    print()
 
-    print("Tip: write_raw() is great for inline status without forcing a newline.")
+    # Use case: Building status messages
+    z.display.raw("Status: ")
+    z.display.raw("✓ Connected")
+    z.display.raw("\n")
+
+    print()
+    print("Key point: raw() gives you full control.")
+    print("           YOU decide when to add the newline.")
     print()
 
 

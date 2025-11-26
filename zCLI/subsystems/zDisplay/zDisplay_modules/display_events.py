@@ -259,7 +259,14 @@ class zEvents:
         """
         return self.BasicOutputs.header(label, color, indent, style)
 
-    def text(self, content: str, indent: int = 0, break_after: bool = True, break_message: Optional[str] = None) -> Any:
+    def text(
+        self, 
+        content: str, 
+        indent: int = 0, 
+        pause: bool = False, 
+        break_message: Optional[str] = None,
+        break_after: Optional[bool] = None
+    ) -> Any:
         """Display plain text content.
         
         Convenience delegate to BasicOutputs.text for backward compatibility.
@@ -267,13 +274,21 @@ class zEvents:
         Args:
             content: Text content to display
             indent: Indentation level (default: 0)
-            break_after: Add line break after (default: True)
+            pause: Pause for user acknowledgment (default: False)
             break_message: Optional break message
+            break_after: Legacy parameter - use 'pause' instead
             
         Returns:
             Any: Result from BasicOutputs.text method
         """
-        return self.BasicOutputs.text(content, indent, break_after, break_message)
+        # Pass to BasicOutputs with new signature
+        return self.BasicOutputs.text(
+            content, 
+            indent=indent, 
+            pause=pause,
+            break_message=break_message,
+            break_after=break_after
+        )
 
     # ═══════════════════════════════════════════════════════════════════════════
     # Convenience Delegates - BasicInputs

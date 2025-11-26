@@ -275,7 +275,7 @@ class BasicInputs:
             self.BasicOutputs.text(content, indent=indent, break_after=break_after)
         else:
             # Fallback if BasicOutputs not set (initialization race condition)
-            self.zPrimitives.write_line(content)
+            self.zPrimitives.line(content)
 
     def _build_range_error_message(self, max_num: int) -> str:
         """Build range error message (message builder helper).

@@ -17,436 +17,238 @@
 
 ## zDisplay Tutorials
 
-### <span style="color:#8FBE6D">Hello Signals</span>
+### <span style="color:#8FBE6D">Level 1A: raw() - No Newline</span>
 
 ```python
 from zCLI import zCLI
 
-# Initialize zCLI (zero config, silent mode)
 z = zCLI({"logger": "PROD"})
 
-# Four signal types - automatic color coding
-z.display.success("Hello from zCLI!")
-z.display.info("zDisplay is ready to render")
-z.display.warning("Signals adapt to Terminal or GUI mode")
-z.display.error("No color libraries needed!")
+# All on one line - raw() never adds newlines
+z.display.raw("First")
+z.display.raw(" + ")
+z.display.raw("Second")
+z.display.raw(" + ")
+z.display.raw("Third")
+z.display.raw("\n")  # You control when to break
+
+# Use case: Building status messages
+z.display.raw("Status: ")
+z.display.raw("✓ Connected")
+z.display.raw("\n")
 ```
 
-Your first zDisplay program—**four lines of feedback!** Signals provide instant visual feedback with automatic color-coding (green, blue, yellow, red) and icons in `zBifrost` zMode. Zero configuration required. No ANSI imports, no color libraries, no mode checking. Just declare what happened.
+The most primitive display operation—**write text with no automatic newline**. You get complete control over when lines break. Perfect for building output piece by piece: progress indicators, inline status updates, or combining text fragments. `raw()` is the foundation—all other display methods build on this.
 
-> **Try it:** [`Level_0_Hello/hello_signals.py`](../Demos/Layer_1/zDisplay_Demo/Level_0_Hello/hello_signals.py)
+> **Try it:** [`output/Level_1_Primitives/write_raw.py`](../Demos/Layer_1/zDisplay_Demo/output/Level_1_Primitives/write_raw.py)
 
-### <span style="color:#8FBE6D">Hello zDisplay</span>
+### <span style="color:#8FBE6D">Level 1B: line() - Automatic Newline</span>
 
 ```python
 from zCLI import zCLI
 
 z = zCLI({"logger": "PROD"})
 
-# Display information (works in Terminal AND browser)
-z.display.success("Hello from zCLI!")
-z.display.info(f"Mode: {z.session.get('zMode', 'Terminal')}")
-z.display.info(f"Workspace: {z.config.sys_paths.workspace_dir}")
-
-# Text output with indentation
-z.display.text("Available subsystems:", indent=0)
-subsystems = ["z.config", "z.display", "z.comm", "z.auth", ...]
-for subsystem in subsystems:
-    z.display.text(f"  • {subsystem}", indent=1)
+# Each call becomes its own line
+z.display.line("1) Each call becomes its own line")
+z.display.line("2) No need to append \\n manually")
+z.display.line("3) Works the same in Terminal or zBifrost")
 ```
 
-Expands on signals with text output and indentation. Demonstrates listing subsystems and hierarchical content. Shows how text combines with signals for complete output.
+Single-line output with automatic newline handling. No need to manually add `\n`—`line()` does it for you. Perfect for log-style output, simple messages, or any content where each call should start on a new line. Cleaner than `raw()` when you want the newline every time.
 
-> **Try it:** [`Level_0_Hello/hello_display.py`](../Demos/Layer_1/zDisplay_Demo/Level_0_Hello/hello_display.py)
+> **Try it:** [`output/Level_1_Primitives/write_line.py`](../Demos/Layer_1/zDisplay_Demo/output/Level_1_Primitives/write_line.py)
 
-### <span style="color:#8FBE6D">Display Text and Headers</span>
+### <span style="color:#8FBE6D">Level 1C: block() - Multi-Line Output</span>
 
 ```python
 from zCLI import zCLI
 
 z = zCLI({"logger": "PROD"})
 
-# Headers for visual separation
-z.display.header("Processing Results", color="CYAN", indent=0)
-z.display.text("Content at indent level 0")
+# Multi-line string, formatting preserved
+block = """Deployment Summary
+- Host: localhost
+- Mode: Terminal
+- Status: Ready to render"""
 
-# Nested hierarchy with indentation
-z.display.header("Parent Section", color="MAGENTA", indent=0)
-z.display.text("Content under parent", indent=0)
-z.display.header("Child Section", color="BLUE", indent=1)
-z.display.text("Content under child", indent=1)
+z.display.block(block)
 ```
 
-Foundation of all output. Headers create visual structure, text displays content with indentation (0-3+ levels). Control line breaks with `break_after` parameter.
+Send multiple lines at once while preserving your formatting. `block()` handles the trailing newline automatically. Great for banners, status summaries, or any preformatted text. Your line breaks stay intact, terminal spacing stays clean.
 
-> **Try it:** [`Level_1_Outputs_Signals/outputs_simple.py`](../Demos/Layer_1/zDisplay_Demo/Level_1_Outputs_Signals/outputs_simple.py)
+> **Try it:** [`output/Level_1_Primitives/write_block.py`](../Demos/Layer_1/zDisplay_Demo/output/Level_1_Primitives/write_block.py)
 
-> **<span style="color:#FFB347">Coming soon:</span>** `outputs_formatting.py` - Color codes, styles (full/minimal), text wrapping
+---
 
-### <span style="color:#8FBE6D">Show Feedback Signals</span>
+### <span style="color:#8FBE6D">Level 2A: header() - Formatted Headers</span>
 
 ```python
 from zCLI import zCLI
 
 z = zCLI({"logger": "PROD"})
 
-# Automatic color-coding and icons
-z.display.success("Operation completed successfully!")
-z.display.error("Something went wrong!")
-z.display.warning("Be careful here!")
-z.display.info("Just letting you know...")
+# Style: full (═══)
+z.display.header("System Initialization", color="CYAN", style="full")
 
-# All support indentation for nested feedback
-z.display.success("File uploaded successfully")
-z.display.info("Processing file", indent=1)
-z.display.success("Validation passed", indent=2)
+# Style: single (───)
+z.display.header("Loading Configuration", color="GREEN", style="single")
+
+# Style: wave (~~~)
+z.display.header("Processing Data", color="YELLOW", style="wave")
+
+# With indentation
+z.display.header("Main Section", color="MAGENTA", indent=0, style="full")
+z.display.header("Subsection", color="BLUE", indent=1, style="single")
 ```
 
-Four signal types provide instant visual feedback. Green checkmarks for success, red X for errors, yellow warnings, blue info. All signals auto-adapt to Terminal/GUI mode.
+Create **visual structure** with formatted section headers. Three styles: `full` (═), `single` (─), `wave` (~). Multiple colors (CYAN, GREEN, YELLOW, MAGENTA, BLUE, RED). Use indentation to show hierarchy. Headers organize your output into clear sections.
 
-> **Try it:** [`Level_1_Outputs_Signals/signals_basic.py`](../Demos/Layer_1/zDisplay_Demo/Level_1_Outputs_Signals/signals_basic.py)
+> **Try it:** [`output/Level_2_Foundation/header.py`](../Demos/Layer_1/zDisplay_Demo/output/Level_2_Foundation/header.py)
 
-> **<span style="color:#FFB347">Coming soon:</span>** `signals_marker.py` - zMarker() for debugging/tracking code flow
-
-### <span style="color:#8FBE6D">Display Lists</span>
+### <span style="color:#8FBE6D">Level 2B: text() - Display with Control</span>
 
 ```python
 from zCLI import zCLI
 
 z = zCLI({"logger": "PROD"})
 
-# Bulleted list
-features = ["Fast", "Simple", "Multi-mode", "Tested"]
-z.display.list(features, style="bullet", indent=1)
+# Simple text output
+z.display.text("Configuration loaded successfully")
 
-# Numbered list
-steps = ["Initialize", "Configure", "Deploy", "Monitor"]
-z.display.list(steps, style="number", indent=1)
+# With indentation (each level = 2 spaces)
+z.display.text("Configuration:", indent=0)
+z.display.text("Database: PostgreSQL", indent=1)
+z.display.text("Host: localhost", indent=2)
 
-# Letter list
-options = ["Continue", "Customize", "Import", "Cancel"]
-z.display.list(options, style="letter", indent=1)
+# With pause for user acknowledgment
+z.display.text("⚠️  About to delete data...", pause=True)
+z.display.text("Data deleted", indent=1)
 ```
 
-Present items with automatic formatting. Bullet style for features, numbered for steps, letters for options. All support indentation for hierarchy.
+Display text with **indent and pause control**. Indent creates hierarchy (0-3+ levels, 2 spaces each). Pause waits for user to press Enter before continuing. Perfect for nested content, step-by-step workflows, or confirmations. Builds on `line()` by adding control features.
 
-> **Try it:** [`Level_2_Data/data_lists.py`](../Demos/Layer_1/zDisplay_Demo/Level_2_Data/data_lists.py)
+> **Try it:** [`output/Level_2_Foundation/text.py`](../Demos/Layer_1/zDisplay_Demo/output/Level_2_Foundation/text.py)
 
-### <span style="color:#8FBE6D">Display Hierarchical Outlines</span>
+### <span style="color:#8FBE6D">Level 2C: signals() - Color-Coded Feedback</span>
 
 ```python
 from zCLI import zCLI
 
 z = zCLI({"logger": "PROD"})
 
-# Multi-level structure with Word-style numbering (1 → a → i → •)
-outline_data = [
+# Success (green ✓)
+z.display.success("Operation completed successfully")
+
+# Error (red ✗)
+z.display.error("Connection failed")
+
+# Warning (yellow ⚠)
+z.display.warning("Deprecated feature in use")
+
+# Info (cyan ℹ)
+z.display.info("Processing 10 records...")
+
+# With indentation
+z.display.success("Database connected", indent=0)
+z.display.info("Host: localhost", indent=1)
+z.display.info("Port: 5432", indent=1)
+
+# zMarker - visual separator for workflow stages
+z.display.zMarker("Checkpoint 1")
+z.display.info("Stage 1 complete")
+z.display.zMarker("Checkpoint 2", color="CYAN")
+```
+
+**Semantic feedback with automatic colors.** Four core signals (success=green, error=red, warning=yellow, info=cyan) plus `zMarker()` for workflow separators. Colors and icons apply automatically based on message type. Perfect for operation feedback, validation results, and user notifications. All signals support indentation for hierarchical feedback.
+
+> **Try it:** [`output/Level_2_Foundation/signals.py`](../Demos/Layer_1/zDisplay_Demo/output/Level_2_Foundation/signals.py)
+
+---
+
+### <span style="color:#8FBE6D">Level 3: Data - Structured Data Display</span>
+
+```python
+from zCLI import zCLI
+
+z = zCLI({"logger": "PROD"})
+
+# List - Bullet/Number/Letter styles
+z.display.list(["Fast", "Simple", "Multi-mode"], style="bullet")
+z.display.list(["Initialize", "Configure", "Deploy"], style="number")
+z.display.list(["Option A", "Option B", "Option C"], style="letter")
+
+# Outline - Hierarchical multi-level (1→a→i→•)
+z.display.outline([
     {
         "content": "Backend Architecture",
         "children": [
             {
                 "content": "Python Runtime",
-                "children": [
-                    "zCLI initialization",
-                    "Event handling"
-                ]
+                "children": ["zCLI initialization", "Event handling"]
             },
             "Data Processing Layer"
         ]
-    }
-]
-
-z.display.outline(outline_data, indent=1)
-```
-
-Full hierarchical outlines with automatic multi-level numbering. Perfect for documentation, project structures, and nested content. Automatically handles 4+ nesting levels.
-
-> **Try it:** [`Level_2_Data/data_outline.py`](../Demos/Layer_1/zDisplay_Demo/Level_2_Data/data_outline.py)
-
-### <span style="color:#8FBE6D">Display JSON Data</span>
-
-```python
-from zCLI import zCLI
-
-z = zCLI({"logger": "PROD"})
-
-# Pretty-print structured data
-config = {
-    "version": "1.5.5",
-    "mode": "Terminal",
-    "subsystems": {
-        "zConfig": "loaded",
-        "zDisplay": "loaded",
-        "zComm": "loaded"
     },
-    "features": ["ANSI colors", "Interactive input"]
-}
+    {
+        "content": "Frontend Architecture",
+        "children": ["Rendering Engine", "User Interaction"]
+    }
+])
 
-z.display.json_data(config, indent=1)
+# JSON Data - With syntax coloring
+config = {"version": "1.5.5", "mode": "Terminal", "ready": True}
+z.display.json_data(config, color=True)
 ```
 
-Automatic JSON formatting with indentation. Perfect for configs, API responses, and debug output. Optional color syntax highlighting with `color=True`.
+**Professional structured data display.** Three display types: `list()` for bullet/number/letter lists, `outline()` for hierarchical multi-level documents (1→a→i→• pattern), and `json_data()` for pretty-printed JSON with optional syntax coloring. Perfect for options, menu items, config display, and nested structures.
 
-> **Try it:** [`Level_2_Data/data_json.py`](../Demos/Layer_1/zDisplay_Demo/Level_2_Data/data_json.py)
+> **Try it:** [`output/Level_3_Data/data.py`](../Demos/Layer_1/zDisplay_Demo/output/Level_3_Data/data.py)
 
-### <span style="color:#8FBE6D">Display Basic Tables</span>
+### <span style="color:#8FBE6D">Level 3: Data - Tables (zTable)</span>
 
 ```python
 from zCLI import zCLI
 
 z = zCLI({"logger": "PROD"})
 
-# Simple table with automatic formatting
 users = [
     {"ID": 1, "Name": "Alice", "Email": "alice@example.com"},
     {"ID": 2, "Name": "Bob", "Email": "bob@example.com"},
-    {"ID": 3, "Name": "Charlie", "Email": "charlie@example.com"}
+    {"ID": 3, "Name": "Charlie", "Email": "charlie@example.com"},
+    {"ID": 4, "Name": "Diana", "Email": "diana@example.com"},
+    {"ID": 5, "Name": "Eve", "Email": "eve@example.com"},
 ]
 
+# Type 1: Basic - No Pagination (all rows)
 z.display.zTable(
-    title="Users",
+    title="All Users",
     columns=["ID", "Name", "Email"],
     rows=users
 )
-```
 
-Smart table rendering with automatic column alignment. No manual spacing calculations. All rows displayed—perfect for small datasets.
-
-> **Try it:** [`Level_2_Data/data_table_basic.py`](../Demos/Layer_1/zDisplay_Demo/Level_2_Data/data_table_basic.py)
-
-### <span style="color:#8FBE6D">Table Pagination - Simple Truncation</span>
-
-```python
-from zCLI import zCLI
-
-z = zCLI({"logger": "PROD"})
-
-users = [{"ID": i, "Name": f"User{i}"} for i in range(1, 11)]
-
-# Show first 3 rows with automatic footer
+# Type 2: Simple Truncation (limit only → "... N more rows" footer)
 z.display.zTable(
-    title="Users (Limited)",
-    columns=["ID", "Name"],
-    rows=users,
-    limit=3  # Shows "... 7 more rows" footer
-)
-
-# Skip 5, show next 3 (offset + limit)
-z.display.zTable(
-    title="Users (Offset 5)",
-    columns=["ID", "Name"],
-    rows=users,
-    offset=5,
-    limit=3
-)
-```
-
-Simple truncation with limit parameter. Automatic "... N more rows" footer. Use offset for manual page navigation. No user interaction—just display control.
-
-> **Try it:** [`Level_3_Tables_Input/table_pagination.py`](../Demos/Layer_1/zDisplay_Demo/Level_3_Tables_Input/table_pagination.py)
-
-### <span style="color:#8FBE6D">Interactive Table Navigation</span>
-
-```python
-from zCLI import zCLI
-
-z = zCLI({"logger": "PROD"})
-
-users = [{"ID": i, "Name": f"User{i}"} for i in range(1, 16)]
-
-# Built-in keyboard navigation
-z.display.zTable(
-    title="Users - Navigate with [n]ext, [p]revious, [q]uit",
+    title="Users (Limited to 3)",
     columns=["ID", "Name", "Email"],
     rows=users,
-    limit=3,
+    limit=3  # Shows first 3 with footer
+)
+
+# Type 3: Interactive Navigation (limit + interactive=True)
+z.display.zTable(
+    title="Users - Interactive",
+    columns=["ID", "Name", "Email"],
+    rows=users,
+    limit=2,
     offset=0,
-    interactive=True  # Enables keyboard controls
+    interactive=True  # Keyboard navigation: [n]ext, [p]revious, [f]irst, [l]ast, [#] jump, [q]uit
 )
 ```
 
-Full keyboard navigation: `[n]ext`, `[p]revious`, `[f]irst`, `[l]ast`, `[#]` jump to page, `[q]uit`. Automatic page calculation. Seamless terminal experience for exploring large datasets.
+**Advanced table display with THREE pagination modes.** Type 1: Basic (no pagination, shows all rows). Type 2: Simple truncation (limit only, shows "... N more rows" footer). Type 3: Interactive navigation (limit + interactive=True, full keyboard controls). Perfect for database query results from `zData`. Automatic column alignment and mixed data type support (strings, numbers, booleans).
 
-> **Try it:** [`Level_3_Tables_Input/table_interactive.py`](../Demos/Layer_1/zDisplay_Demo/Level_3_Tables_Input/table_interactive.py)
-
-### <span style="color:#8FBE6D">User Input - Selection</span>
-
-```python
-from zCLI import zCLI
-
-z = zCLI({"logger": "PROD"})
-
-# Single selection
-role = z.display.selection(
-    "Select your role:",
-    ["Developer", "Designer", "Manager", "Other"]
-)
-
-# Multi-selection
-skills = z.display.selection(
-    "Select your skills:",
-    ["Python", "JavaScript", "React", "Django", "zCLI"],
-    multi=True,
-    default=["Python"]
-)
-
-# Store in session for later use
-z.session["zVars"]["role"] = role
-z.session["zVars"]["skills"] = skills
-```
-
-Collect user choices with single or multi-select. Numbered or bullet display styles. Optional defaults. Works identically in Terminal (keyboard input) and GUI (form elements).
-
-> **Try it:** [`Level_3_Tables_Input/input_selection.py`](../Demos/Layer_1/zDisplay_Demo/Level_3_Tables_Input/input_selection.py)
-
-### <span style="color:#8FBE6D">User Input - Buttons</span>
-
-```python
-from zCLI import zCLI
-
-z = zCLI({"logger": "PROD"})
-
-# Explicit y/n confirmation required (no defaults)
-if z.display.button("Save Profile", action="save", color="success"):
-    z.session["zVars"]["saved"] = True
-    z.display.success("✅ Profile saved!")
-else:
-    z.display.info("Save cancelled")
-
-# Danger color for destructive actions
-if z.display.button("Delete Account", action="delete", color="danger"):
-    z.display.warning("⚠️ Account deleted")
-else:
-    z.display.info("Deletion cancelled")
-```
-
-Action confirmation with required y/n input. No defaults—prevents accidental actions. Color variants: success, danger, warning, info, primary. Returns boolean for branching logic.
-
-> **Try it:** [`Level_3_Tables_Input/input_button.py`](../Demos/Layer_1/zDisplay_Demo/Level_3_Tables_Input/input_button.py)
-
-### <span style="color:#8FBE6D">System Display Events</span>
-
-```python
-from zCLI import zCLI
-
-z = zCLI({"logger": "PROD"})
-
-# System-level announcements
-z.display.zDeclare("System Initialization", color="CYAN")
-z.display.zDeclare("Loading Configuration", color="GREEN", indent=1)
-z.display.zDeclare("Services Ready", color="GREEN", indent=1)
-
-# Display session state
-z.display.zSession(z.session)
-
-# Display configuration
-config_data = {
-    "machine": {"os": "macOS", "hostname": "dev-machine"},
-    "environment": {"deployment": "Debug", "mode": "Terminal"}
-}
-z.display.zConfig(config_data)
-```
-
-Professional system status reporting. zDeclare for announcements, zSession for runtime state, zConfig for machine/environment info. Perfect for startup sequences.
-
-> **Try it:** [`Level_4_System/system_declare.py`](../Demos/Layer_1/zDisplay_Demo/Level_4_System/system_declare.py)
-
-> **<span style="color:#FFB347">Coming soon:</span>** `system_navigation.py` - zCrumbs() breadcrumb navigation<br>
-> **<span style="color:#FFB347">Coming soon:</span>** `system_menu.py` - zMenu() interactive menu with action dispatch
-
-### <span style="color:#8FBE6D">Progress Bar (Deterministic)</span>
-
-```python
-import time
-from zCLI import zCLI
-
-z = zCLI({"logger": "PROD"})
-
-total = 50
-start_time = time.time()
-
-for i in range(total + 1):
-    z.display.progress_bar(
-        current=i,
-        total=total,
-        label="Processing files",
-        show_percentage=True,
-        show_eta=True,
-        start_time=start_time,
-        color="GREEN"
-    )
-    time.sleep(0.05)  # Simulate work
-```
-
-Visual progress tracking with current/total counter, percentage, and estimated time remaining (ETA). Perfect for file processing, downloads, and batch operations.
-
-> **Try it:** [`Level_5_Progress/progress_bar.py`](../Demos/Layer_1/zDisplay_Demo/Level_5_Progress/progress_bar.py)
-
-### <span style="color:#8FBE6D">Spinner (Indeterminate Loading)</span>
-
-```python
-import time
-from zCLI import zCLI
-
-z = zCLI({"logger": "PROD"})
-
-# Context manager API with auto-cleanup
-with z.display.spinner("Loading data", style="dots"):
-    time.sleep(2)  # Simulate loading
-
-with z.display.spinner("Processing", style="arc"):
-    time.sleep(2)  # Simulate processing
-```
-
-Animated loading indicator for operations with unknown duration. Multiple animation styles (dots, arc). Context manager ensures cleanup. Perfect for API calls, database queries, file I/O.
-
-> **Try it:** [`Level_5_Progress/progress_spinner.py`](../Demos/Layer_1/zDisplay_Demo/Level_5_Progress/progress_spinner.py)
-
-### <span style="color:#8FBE6D">Progress Iterator (Automatic)</span>
-
-```python
-import time
-from zCLI import zCLI
-
-z = zCLI({"logger": "PROD"})
-
-files = [f"file_{i}.txt" for i in range(1, 21)]
-
-# Zero manual updates - progress tracked automatically
-for filename in z.display.progress_iterator(files, "Processing files"):
-    time.sleep(0.1)  # Simulate processing
-```
-
-Automatic progress tracking in for-loops. Wraps any iterable (lists, ranges, dicts). No manual counter updates. Clean syntax, zero overhead. Perfect for batch processing and data pipelines.
-
-> **Try it:** [`Level_5_Progress/progress_iterator.py`](../Demos/Layer_1/zDisplay_Demo/Level_5_Progress/progress_iterator.py)
-
-### <span style="color:#8FBE6D">Indeterminate Progress</span>
-
-```python
-import time
-from zCLI import zCLI
-
-z = zCLI({"logger": "PROD"})
-
-# For operations with unknown duration
-with z.display.indeterminate_progress("Processing"):
-    time.sleep(3)  # Long-running task
-
-# Sequential operations
-with z.display.indeterminate_progress("Executing query"):
-    time.sleep(2)
-
-with z.display.indeterminate_progress("Building index"):
-    time.sleep(1.5)
-```
-
-Shows activity without percentage or time estimates. Context manager API. Perfect for database queries, network calls, filesystem operations where duration is unpredictable.
-
-> **Try it:** [`Level_5_Progress/progress_indeterminate.py`](../Demos/Layer_1/zDisplay_Demo/Level_5_Progress/progress_indeterminate.py)
-
-> **<span style="color:#FFB347">Coming soon:</span>** `mode_comparison.py` - Same display code in Terminal mode<br>
-> **<span style="color:#FFB347">Coming soon:</span>** `mode_bifrost.py` - Same display code in zBifrost/GUI mode (no changes!)
+> **Try it:** [`output/Level_3_Data/table.py`](../Demos/Layer_1/zDisplay_Demo/output/Level_3_Data/table.py)
 
 ---
 
@@ -454,32 +256,30 @@ Shows activity without percentage or time estimates. Context manager API. Perfec
 
 You've learned zDisplay's **<span style="color:#8FBE6D">complete rendering capabilities</span>**:
 
-✅ **Basic Outputs**
-- Headers and text with indentation
-- Color-coded feedback signals (success, error, warning, info)
+✅ **Primitives (Layer 1)**
+- `raw()` - Write without newline (full control)
+- `line()` - Write with automatic newline
+- `block()` - Multi-line output with preserved formatting
 
-✅ **Data Display**
-- Lists (bullet, number, letter styles)
-- Hierarchical outlines (multi-level numbering)
-- JSON pretty-printing
-- Tables with automatic formatting
+✅ **Foundation (Layer 2)**
+- `header()` - Formatted section headers (═/─/~) with colors
+- `text()` - Display text with indentation control and pause support
+- `success()` - Green ✓ confirmations
+- `error()` - Red ✗ failures
+- `warning()` - Yellow ⚠ cautions
+- `info()` - Cyan ℹ information
+- `zMarker()` - Magenta workflow separators
 
-✅ **Interactive Features**
-- Table pagination (simple truncation)
-- Interactive table navigation (keyboard controls)
-- User input (selection, buttons)
+✅ **Data (Layer 3)**
+- `list()` - Bullet/number/letter lists
+- `outline()` - Hierarchical multi-level (1→a→i→•)
+- `json_data()` - Pretty-printed JSON with syntax coloring
+- `zTable()` - Tables with THREE pagination modes:
+  - Type 1: Basic (no pagination, all rows)
+  - Type 2: Simple truncation (limit only, "... N more rows" footer)
+  - Type 3: Interactive navigation (limit + interactive=True, keyboard controls)
 
-✅ **System Events**
-- System declarations and announcements
-- Session and configuration display
-
-✅ **Progress Tracking**
-- Deterministic progress bars
-- Indeterminate spinners
-- Automatic progress iterators
-- Unknown-duration indicators
-
-**<span style="color:#F8961F">16 micro-step demos</span>** guide you from "Hello zDisplay" to complete mastery of dual-mode rendering.
+**<span style="color:#F8961F">8 micro-step demos</span>** guide you from primitives (`raw`, `line`, `block`) through foundation (`header`, `text`, `signals`) to data display (`list`, `outline`, `json_data`, `zTable`)—complete mastery of dual-mode rendering.
 
 ## Mode Detection
 
@@ -501,67 +301,108 @@ z.display.text("Hello")  # Same code, renders in browser
 Complex methods build on primitives—automatic mode-awareness throughout:
 
 ```
-zTable() → header() → text() → write primitives → Terminal/WebSocket
+zTable() → header() → text() → raw()/line() → Terminal/WebSocket
 ```
 
-When you call `z.display.zTable()`, it internally uses headers and text formatting—all mode-aware automatically.
+When you call `z.display.zTable()`, it internally uses headers and text formatting, which ultimately call `raw()` or `line()`—all mode-aware automatically. **Everything builds on the primitives.**
 
 ## Quick Reference
 
-**Output & Signals:**
+**Primitives (Layer 1):**
 
 ```python
-# Basic output
-z.display.text("Plain text", indent=0)
-z.display.header("Section Title", color="CYAN")
+# Raw output - you control newlines
+z.display.raw("Loading")
+z.display.raw("...")
+z.display.raw("\n")
 
-# Feedback signals
+# Line output - automatic newline
+z.display.line("Processing complete")
+
+# Block output - multi-line with preserved formatting
+z.display.block("Line 1\nLine 2\nLine 3")
+
+# Legacy aliases (backward compatible)
+z.display.write_raw("text")   # → raw()
+z.display.write_line("text")  # → line()
+z.display.write_block("text") # → block()
+```
+
+**Foundation (Layer 2):**
+
+```python
+# Formatted headers - visual structure
+z.display.header("Section Title", color="CYAN", style="full")   # ═══
+z.display.header("Subsection", color="GREEN", style="single")   # ───
+z.display.header("Note", color="YELLOW", style="wave")          # ~~~
+
+# Text with indentation - hierarchy
+z.display.text("Main content", indent=0)
+z.display.text("Nested content", indent=1)
+z.display.text("Deeper content", indent=2)
+
+# Optional pause for user acknowledgment
+z.display.text("Press Enter to continue", pause=True)
+
+# Legacy parameter still works (backward compatible)
+z.display.text("Old API", break_after=False)
+
+# Feedback signals - automatic color coding
 z.display.success("✅ Done!")        # Green
 z.display.error("❌ Failed!")        # Red
 z.display.warning("⚠️  Watch out!")  # Yellow
-z.display.info("ℹ️  FYI...")         # Blue
+z.display.info("ℹ️  FYI...")         # Cyan
+
+# Visual workflow separator
+z.display.zMarker("Stage 1")         # Magenta separator
+z.display.zMarker("Stage 2", color="CYAN")  # Custom color
 ```
 
-**Data Display:**
+**Data (Layer 3):**
 
 ```python
-# Tables with pagination
-z.display.zTable("Users", columns, rows, limit=10)
+# Lists - bullet/number/letter styles
+z.display.list(["Apple", "Banana", "Cherry"], style="bullet")
+z.display.list(["Step 1", "Step 2", "Step 3"], style="number")
+z.display.list(["Option A", "Option B", "Option C"], style="letter")
 
-# Lists and JSON
-z.display.list(["Apple", "Banana", "Cherry"])
-z.display.json_data({"key": "value"})
-```
+# Outline - hierarchical (1→a→i→•)
+z.display.outline([
+    {
+        "content": "Backend",
+        "children": ["Python", "Database"]
+    },
+    "Frontend"
+])
 
-**User Input:**
+# JSON - with syntax coloring
+z.display.json_data({"version": "1.5.5", "ready": True}, color=True)
 
-```python
-# String and password input
-name = z.display.read_string("Name: ")
-password = z.display.read_password("Password: ")
+# Tables with THREE pagination modes
+# Type 1: Basic (no pagination)
+z.display.zTable(
+    title="Users",
+    columns=["id", "name", "email"],
+    rows=user_data
+)
 
-# Selections
-choice = z.display.selection("Pick one:", ["A", "B", "C"])
-features = z.display.selection("Pick many:", options, multi=True)
-```
+# Type 2: Simple truncation (limit only)
+z.display.zTable(
+    title="Users (Limited)",
+    columns=["id", "name", "email"],
+    rows=user_data,
+    limit=3  # Shows "... N more rows" footer
+)
 
-**Widgets:**
-
-```python
-# Progress indicators
-z.display.progress_bar(50, 100, "Loading")
-
-# Menus
-choice = z.display.zMenu([(1, "View"), (2, "Edit")], return_selection=True)
-```
-
-**System Display:**
-
-```python
-# Session and navigation
-z.display.zSession(z.session)     # Show session context
-z.display.zCrumbs(z.session)      # Breadcrumb navigation
-z.display.zDeclare("Alert", color="WARNING")
+# Type 3: Interactive navigation (limit + interactive=True)
+z.display.zTable(
+    title="Users - Interactive",
+    columns=["id", "name", "email"],
+    rows=user_data,
+    limit=2,
+    offset=0,
+    interactive=True  # Keyboard controls: [n]ext, [p]revious, [f]irst, [l]ast, [#] jump, [q]uit
+)
 ```
 
 ---
