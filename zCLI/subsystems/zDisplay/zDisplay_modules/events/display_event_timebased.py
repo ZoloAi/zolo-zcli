@@ -889,29 +889,32 @@ class TimeBased:
         
         def animate():
             """Animation loop running in separate thread."""
+            is_first_frame = True
             while not stop_event_flag.is_set():
                 frame = frames[frame_idx[0] % len(frames)]
                 
                 # Use capability-aware rendering
                 if self._supports_carriage_return:
-                    # Clear line before writing to prevent artifacts
+                    # Modern terminals: Use carriage return for in-place update
                     self.zPrimitives.raw(
                         f"{ANSI_CARRIAGE_RETURN}{ANSI_CLEAR_LINE}{label} {frame}",
                         flush=True
                     )
-                # If no carriage return support, skip animation (will show completion only)
+                else:
+                    # Terminal.app: Use cursor-up + clear line for animation
+                    if not is_first_frame:
+                        # Move up and clear previous frame
+                        self.zPrimitives.raw(f"{ANSI_CURSOR_UP}{ANSI_CLEAR_LINE}")
+                    # Print new frame
+                    self.zPrimitives.line(f"{label} {frame}")
+                    is_first_frame = False
                 
                 frame_idx[0] += 1
                 time.sleep(DEFAULT_ANIMATION_DELAY)
         
-        # Start animation thread (only if carriage return supported)
-        animation_thread = None
-        if self._supports_carriage_return:
-            animation_thread = threading.Thread(target=animate, daemon=True)
-            animation_thread.start()
-        else:
-            # Limited terminal: just show static label
-            self.zPrimitives.line(f"{label}...")
+        # Start animation thread for all terminals
+        animation_thread = threading.Thread(target=animate, daemon=True)
+        animation_thread.start()
         
         try:
             yield  # Execute the context block
@@ -923,13 +926,14 @@ class TimeBased:
             
             # Show completion
             if self._supports_carriage_return:
-                # Clear the line and show checkmark
+                # Modern terminals: Clear and show checkmark in-place
                 self.zPrimitives.raw(
                     f"{ANSI_CARRIAGE_RETURN}{ANSI_CLEAR_LINE}{label} {CHAR_CHECKMARK}\n",
                     flush=True
                 )
             else:
-                # Limited terminal: just show completion on new line
+                # Terminal.app: Clear the spinner line and show checkmark
+                self.zPrimitives.raw(f"{ANSI_CURSOR_UP}{ANSI_CLEAR_LINE}")
                 self.zPrimitives.line(f"{label} {CHAR_CHECKMARK}")
 
     def progress_iterator(
@@ -1011,16 +1015,29 @@ class TimeBased:
             - Use spinner() context manager for automatic animation
         """
         frame_idx = [0]
+        is_first_update = [True]  # Track if this is the first update
         frames = self._spinner_styles[STYLE_DOTS]
         
         def update() -> None:
             """Update the spinner frame (caller controls frequency)."""
             frame = frames[frame_idx[0] % len(frames)]
-            # Clear line before writing to prevent artifacts
-            self.zPrimitives.raw(
-                f"{ANSI_CARRIAGE_RETURN}{ANSI_CLEAR_LINE}{label} {frame}",
-                flush=True
-            )
+            
+            # Use capability-aware rendering
+            if self._supports_carriage_return:
+                # Modern terminals: Use carriage return for in-place update
+                self.zPrimitives.raw(
+                    f"{ANSI_CARRIAGE_RETURN}{ANSI_CLEAR_LINE}{label} {frame}",
+                    flush=True
+                )
+            else:
+                # Terminal.app: Use cursor-up + clear line
+                if not is_first_update[0]:
+                    # Move up and clear previous frame
+                    self.zPrimitives.raw(f"{ANSI_CURSOR_UP}{ANSI_CLEAR_LINE}")
+                # Print new frame
+                self.zPrimitives.line(f"{label} {frame}")
+                is_first_update[0] = False
+            
             frame_idx[0] += 1
         
         return update

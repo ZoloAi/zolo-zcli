@@ -4,8 +4,9 @@ Level 5: Progress Bar
 ======================
 
 Goal:
-    Learn progress_bar() for deterministic progress tracking.
-    - current/total counter
+    Learn progress_bar() and progress_iterator() for deterministic progress tracking.
+    - Manual mode: progress_bar() with current/total counter
+    - Automatic mode: progress_iterator() wrapper for loops
     - Percentage display
     - Estimated time remaining (ETA)
     - Visual progress indicator
@@ -103,18 +104,38 @@ def run_demo():
     z.display.text("")
     
     # ============================================
+    # 4. Automatic Progress Iterator
+    # ============================================
+    z.display.header("Automatic Progress Iterator", color="BLUE", indent=0)
+    z.display.text("Same progress bar, zero manual updates:")
+    z.display.text("")
+    
+    files = [f"file_{i}.txt" for i in range(1, 26)]
+    
+    for filename in z.display.progress_iterator(files, "Processing files"):
+        time.sleep(0.08)  # Simulate file processing
+    
+    z.display.text("")
+    z.display.success("✅ All files processed!")
+    z.display.text("")
+    z.display.info("Note: progress_iterator() is a wrapper around progress_bar()")
+    z.display.text("Same rendering, but it manages current/total/start_time for you", indent=1)
+    z.display.text("")
+    
+    # ============================================
     # Summary
     # ============================================
     z.display.header("What You Learned", color="CYAN", indent=0)
-    z.display.text("✓ progress_bar() - Visual progress tracking")
-    z.display.text("✓ current/total parameters - Track progress")
+    z.display.text("✓ progress_bar() - Manual progress tracking with full control")
+    z.display.text("✓ progress_iterator() - Automatic progress for loops (wrapper)")
+    z.display.text("✓ current/total parameters - Track progress manually")
     z.display.text("✓ show_percentage - Display completion %")
     z.display.text("✓ show_eta - Show estimated time remaining")
     z.display.text("✓ start_time - Calculate accurate ETA")
     z.display.text("✓ color parameter - Customize appearance")
     z.display.text("")
     
-    z.display.line("Tip: Progress bars are perfect for file processing, downloads, and batch operations!")
+    z.display.line("Tip: Use progress_bar() for custom logic, progress_iterator() for simple loops!")
     z.display.line("")
 
 if __name__ == "__main__":
