@@ -219,13 +219,16 @@ class zConfigPaths:
     @property
     def user_config_dir(self) -> Path:
         r"""
-        User config location (OS-native).
+        User config location (unified with data for simplicity).
 
-        Linux:   ~/.config/zolo-zcli
+        Linux:   ~/.local/share/zolo-zcli
         macOS:   ~/Library/Application Support/zolo-zcli 
-        Windows: %APPDATA%\zolo-zcli
+        Windows: %LOCALAPPDATA%\zolo-zcli
+        
+        Note: Returns same directory as user_data_dir to keep everything in one place.
+        This simplifies backup, uninstall, and user management.
         """
-        return Path(platformdirs.user_config_dir(self.app_name, self.app_author))
+        return Path(platformdirs.user_data_dir(self.app_name, self.app_author))
 
     @property
     def user_config_dir_legacy(self) -> Path:
@@ -261,11 +264,14 @@ class zConfigPaths:
     @property
     def user_data_dir(self) -> Path:
         r"""
-        User data directory (databases, files).
+        User data directory (unified with config for simplicity).
         
         Linux:   ~/.local/share/zolo-zcli
         macOS:   ~/Library/Application Support/zolo-zcli
         Windows: %LOCALAPPDATA%\zolo-zcli
+        
+        Note: Returns same directory as user_config_dir to keep everything in one place.
+        This simplifies backup, uninstall, and user management.
         """
         return Path(platformdirs.user_data_dir(self.app_name, self.app_author))
 

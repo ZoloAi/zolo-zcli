@@ -760,7 +760,7 @@ z.display.zEvents.TimeBased.swiper(slides, "Tutorial", auto_advance=True, delay=
 zDisplay is **<span style="color:#F8961F">Layer 1</span>**—the rendering engine that powers user interfaces. The natural progression continues with other **<span style="color:#8FBE6D">Layer 1 subsystems</span>** that build on this foundation:
 
 - **[zAuth Guide →](zAuth_GUIDE.md)** - Authentication and user management
-- **zDialog Guide** - Forms and validation  
+- **zDialog Guide** - Forms and validation
 - **zDispatch Guide** - Event handling and routing
 
 **<span style="color:#8FBE6D">Want Browser Rendering?</span>**

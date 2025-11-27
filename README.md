@@ -1,18 +1,26 @@
-<div style="display: flex; flex-direction: column; align-items: stretch; margin-bottom: 1rem; font-weight: 500;">
-  <div style="display:flex; justify-content:space-between; align-items:center;">
-    <span></span>
-    <span><a style="color:#FFFBCC;" href="Documentation/zPhilosophy.md">Next: zPhilosophy →</a></span>
-  </div>
-  <div style="display: flex; justify-content: center; align-items: center; margin-top: 0.85rem;">
-    <h1 style="margin: 0; font-size: 2.15rem; font-weight: 700;">
-      <span style="color:#FFFBCC;">zCLI</span>
-    </h1>
-  </div>
-</div>
+# zCLI  
 
-## **<span style="color:#A2D46E">Declare once—run everywhere.</span>**  
+## **Declare once—run everywhere.**
+
+**zCLI** is a declarative cross-platform **Python framework**, where structure guides logic.
+
+It lets developers declare their app’s structure once and run it anywhere, **Terminal** or **Web**, using the same code! **Turning ideas into working tools faster** while **zCLI** handles the heavy lifting.
+
+## Requirements
+
+To get started, you only need **Python 3.8+** installed on your system.
+
+> Need help installing Python on **Windows** or **macOS**?  
+> See the **Python section** in [**zInstall**](Documentation/zInstall_GUIDE.md).
 
 ## Installation
+
+Pick the installation that fits your needs bests:
+
+- **Basic** (SQLite only) - Perfect for day-to-day development
+- **PostgreSQL** or **CSV** - Add when you need those backends
+- **Full install** (all backends) - Great for learning zCLI and running all demos
+
 
 ```bash
 # Basic (SQLite only)
@@ -30,142 +38,49 @@ pip install "zolo-zcli[all] @ git+https://github.com/ZoloAi/zolo-zcli.git"
 # Verify
 zolo --version
 ```
-
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-577590.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-F1E65C.svg)](LICENSE)
-[![Tests: 1,073+](https://img.shields.io/badge/tests-1%2C073%2B%20passing-8FBE6D)](zTestRunner/)
-[![Version: 1.5.5](https://img.shields.io/badge/version-1.5.5-F8961F)](https://github.com/ZoloAi/zolo-zcli)
-<br><strong>Need a specific version?</strong> See <a href="Documentation/INSTALL.md">INSTALL.md</a>
-
-
-
+> New to **`pip install`**? Need a specific **zVersion**?  
+>  See [**zInstall**](Documentation/zInstall_GUIDE.md) for more details.
 
 ## How to Learn zCLI
 
 > **New to Zolo?**  
-> Start with [<span style="color:#A2D46E">**The zPhilosophy**</span>](Documentation/zPhilosophy.md) to learn how **<span style="color:#A2D46E">Zolo</span> treats declarative intent as syntax**.
+> Start with **[The zPhilosophy](Documentation/zPhilosophy.md)** to learn how **Zolo** treats declarative intent as syntax.
 
-**<span style="color:#A2D46E">zCLI</span> is a comprehensive framework** with **<span style="color:#F8961F">18 subsystems</span>** spanning **<span style="color:#F8961F">4 architectural layers</span>**.
+**zCLI** is a comprehensive framework with **18 subsystems** spanning **4 architectural layers**.
 
-**<span style="color:#8FBE6D">Need a specific capability?</span>**  
+**Need a specific capability?**  
 Use the **Architecture table below** to navigate directly to that subsystem's guide (zConfig, zComm, zData, zServer, etc.) and integrate it into your project.
 
-**<span style="color:#8FBE6D">Want to master the entire framework?</span>**  
-Start with **<span style="color:#F8961F">Layer 0</span>** (zConfig) and progress upward. Each layer builds on the previous with micro-step demos, which are `copy-paste` ready for you to use.
+**Want to master the entire framework?**  
+Start with **Layer 0** (zConfig) and progress upward. Each layer builds on the previous with micro-step demos, which are `copy-paste` ready for you to use.
 
-**<span style="color:#8FBE6D">Prefer to learn by reverse engineering?</span>**  
+**Prefer to learn by reverse engineering?**  
 Jump to [Quick Example](#quick-example) to see a working CRUD app, then trace backward through the subsystems it uses to understand how the pieces connect.
 
 ## Architecture
 
 zCLI is built on a **layered, bottom-up architecture** inspired by "Linux From Scratch"—each subsystem stands alone, tested independently, then composed into higher abstractions.
 
-<table>
-<thead>
-<tr style="border-left: 4px solid #FFFFFF;">
-<th>Layer</th>
-<th>Subsystem</th>
-<th>Purpose</th>
-</tr>
-</thead>
-<tbody>
-
-<tr style="border-left: 4px solid #8FBE6D; background-color: rgba(143, 190, 109, 0.08);">
-<td rowspan="3"><strong><span style="color:#8FBE6D">0: Foundation</span></strong></td>
-<td><a href="Documentation/zConfig_GUIDE.md">zConfig</a></td>
-<td><strong><span style="color:#8FBE6D">Self-aware config layer</span></strong> — <strong><span style="color:#F8961F">machine → environment → session</span></strong> hierarchy with <strong><span style="color:#F8961F">secrets + logging</span></strong></td>
-</tr>
-
-<tr style="border-left: 4px solid #8FBE6D; background-color: rgba(143, 190, 109, 0.08);">
-<td><a href="Documentation/zComm_GUIDE.md">zComm</a></td>
-<td><strong><span style="color:#8FBE6D">Communication hub</span></strong> — <strong><span style="color:#F8961F">HTTP client</span></strong>, <strong>service orchestration</strong> (PostgreSQL, Redis), <strong>network utilities</strong></td>
-</tr>
-
-<tr style="border-left: 4px solid #8FBE6D; background-color: rgba(143, 190, 109, 0.08);">
-<td><a href="Documentation/zBifrost_GUIDE.md">zBifrost</a></td>
-<td><strong><span style="color:#8FBE6D">WebSocket bridge</span></strong> — <strong><span style="color:#F8961F">real-time bidirectional</span></strong> communication (server + <strong>JavaScript client</strong>), enables <strong>Terminal → Web GUI</strong> transformation</td>
-</tr>
-
-<tr style="border-left: 4px solid #F8961F; background-color: rgba(248, 150, 31, 0.08);">
-<td rowspan="7"><strong><span style="color:#F8961F">1: Core Services</span></strong></td>
-<td><a href="Documentation/zDisplay_GUIDE.md">zDisplay</a></td>
-<td><strong><span style="color:#8FBE6D">Render everywhere</span></strong> — <strong><span style="color:#F8961F">30+ events</span></strong> (tables, forms, widgets) adapt to <strong>Terminal or GUI</strong> automatically</td>
-</tr>
-
-<tr style="border-left: 4px solid #F8961F; background-color: rgba(248, 150, 31, 0.08);">
-<td><a href="Documentation/zAuth_GUIDE.md">zAuth</a></td>
-<td><strong><span style="color:#8FBE6D">Three-tier auth system</span></strong> — <strong><span style="color:#F8961F">bcrypt + SQLite + RBAC</span></strong>, manage <strong>platform + multi-app users</strong> simultaneously</td>
-</tr>
-
-<tr style="border-left: 4px solid #F8961F; background-color: rgba(248, 150, 31, 0.08);">
-<td><a href="Documentation/zDispatch_GUIDE.md">zDispatch</a></td>
-<td><strong><span style="color:#8FBE6D">Universal command router</span></strong> — <strong><span style="color:#F8961F">simple modifiers (^~*!)</span></strong> shape behavior, routes to <strong>7+ subsystems</strong> seamlessly</td>
-</tr>
-
-<tr style="border-left: 4px solid #F8961F; background-color: rgba(248, 150, 31, 0.08);">
-<td><a href="Documentation/zNavigation_GUIDE.md">zNavigation</a></td>
-<td><strong><span style="color:#8FBE6D">Unified navigation</span></strong> — <strong><span style="color:#F8961F">menus + breadcrumbs + state + inter-file links</span></strong>, all <strong>RBAC-aware</strong></td>
-</tr>
-
-<tr style="border-left: 4px solid #F8961F; background-color: rgba(248, 150, 31, 0.08);">
-<td><a href="Documentation/zParser_GUIDE.md">zParser</a></td>
-<td><strong><span style="color:#8FBE6D">Declarative paths & parsing</span></strong> — <strong><span style="color:#F8961F">workspace-relative + user dirs + plugin discovery</span></strong>, 21+ unified methods</td>
-</tr>
-
-<tr style="border-left: 4px solid #F8961F; background-color: rgba(248, 150, 31, 0.08);">
-<td><a href="Documentation/zLoader_GUIDE.md">zLoader</a></td>
-<td><strong><span style="color:#8FBE6D">Intelligent file loader</span></strong> — <strong><span style="color:#F8961F">4-tier cache system</span></strong> (System + Pinned + Schema + Plugin) with <strong>mtime tracking</strong></td>
-</tr>
-
-<tr style="border-left: 4px solid #F8961F; background-color: rgba(248, 150, 31, 0.08);">
-<td><a href="Documentation/zUtils_GUIDE.md">zUtils</a></td>
-<td><strong><span style="color:#8FBE6D">Plugins engine</span></strong> — <strong><span style="color:#F8961F">load Python modules</span></strong>, auto-inject session, expose as methods, <strong>unified cache</strong> with auto-reload</td>
-</tr>
-
-<tr style="border-left: 4px solid #EA7171; background-color: rgba(234, 113, 113, 0.08);">
-<td rowspan="5"><strong><span style="color:#EA7171">2: Business Logic</span></strong></td>
-<td><a href="Documentation/zFunc_GUIDE.md">zFunc</a></td>
-<td><strong><span style="color:#8FBE6D">Dynamic Python executor</span></strong> — <strong><span style="color:#F8961F">cross-language</span></strong> (using zBifrost) + <strong>internal Python</strong>, auto-injection removes boilerplate</td>
-</tr>
-
-<tr style="border-left: 4px solid #EA7171; background-color: rgba(234, 113, 113, 0.08);">
-<td><a href="Documentation/zDialog_GUIDE.md">zDialog</a></td>
-<td><strong><span style="color:#8FBE6D">Declarative form engine</span></strong> — <strong><span style="color:#F8961F">define once, auto-validate, render everywhere</span></strong> (Terminal or GUI)</td>
-</tr>
-
-<tr style="border-left: 4px solid #EA7171; background-color: rgba(234, 113, 113, 0.08);">
-<td><a href="Documentation/zOpen_GUIDE.md">zOpen</a></td>
-<td><strong><span style="color:#8FBE6D">Universal opener</span></strong> — <strong><span style="color:#F8961F">cross-OS routing</span></strong> (URLs, files, zPaths) for <strong>your tools</strong> (session-aware browser + IDE preferences)</td>
-</tr>
-
-<tr style="border-left: 4px solid #EA7171; background-color: rgba(234, 113, 113, 0.08);">
-<td><a href="Documentation/zWizard_GUIDE.md">zWizard</a></td>
-<td><strong><span style="color:#8FBE6D">Multi-step orchestrator</span></strong> — <strong><span style="color:#F8961F">sequential execution + zHat result passing</span></strong>, enabling workflows <strong>and</strong> navigation</td>
-</tr>
-
-<tr style="border-left: 4px solid #EA7171; background-color: rgba(234, 113, 113, 0.08);">
-<td><a href="Documentation/zData_GUIDE.md">zData</a></td>
-<td><strong><span style="color:#8FBE6D">Database abstraction</span></strong> — <strong><span style="color:#F8961F">backend-agnostic declerations</span></strong> (SQLite ↔ PostgreSQL ↔ CSV), and <strong>auto migration</strong></td>
-</tr>
-
-<tr style="border-left: 4px solid #AE84D3; background-color: rgba(174, 132, 211, 0.08);">
-<td rowspan="3"><strong><span style="color:#AE84D3">3: Orchestration</span></strong></td>
-<td><a href="Documentation/zShell_GUIDE.md">zShell</a></td>
-<td><strong><span style="color:#8FBE6D">Interactive command center</span></strong> — <strong><span style="color:#F8961F">18+ commands + wizard canvas</span></strong>, persistent history, <strong>direct access</strong> to all subsystems</td>
-</tr>
-
-<tr style="border-left: 4px solid #AE84D3; background-color: rgba(174, 132, 211, 0.08);">
-<td><a href="Documentation/zWalker_GUIDE.md">zWalker</a></td>
-<td><strong><span style="color:#8FBE6D">Declarative UI orchestrator</span></strong> — <strong><span style="color:#F8961F">menus + breadcrumb navigation</span></strong>, coordinates <strong>11 subsystems</strong>, Terminal <strong>and</strong> GUI</td>
-</tr>
-
-<tr style="border-left: 4px solid #AE84D3; background-color: rgba(174, 132, 211, 0.08);">
-<td><a href="Documentation/zServer_GUIDE.md">zServer</a></td>
-<td><strong><span style="color:#8FBE6D">Static file server</span></strong> — <strong><span style="color:#F8961F">serves HTML/CSS/JS</span></strong>, zero dependencies (built-in <strong>http.server</strong>), pairs with <strong>zBifrost</strong></td>
-</tr>
-
-</tbody>
-</table>
+| Layer | Subsystem | Purpose |
+|-------|-----------|---------|
+| **0: Foundation** | [zConfig](Documentation/zConfig_GUIDE.md) | **Self-aware config layer** — **machine → environment → session** hierarchy with **secrets + logging** |
+| **0: Foundation** | [zComm](Documentation/zComm_GUIDE.md) | **Communication hub** — **HTTP client**, **service orchestration** (PostgreSQL, Redis), **network utilities** |
+| **0: Foundation** | [zBifrost](Documentation/zBifrost_GUIDE.md) | **WebSocket bridge** — **real-time bidirectional** communication (server + **JavaScript client**), enables **Terminal → Web GUI** transformation |
+| **1: Core Services** | [zDisplay](Documentation/zDisplay_GUIDE.md) | **Render everywhere** — **30+ events** (tables, forms, widgets) adapt to **Terminal or GUI** automatically |
+| **1: Core Services** | [zAuth](Documentation/zAuth_GUIDE.md) | **Three-tier auth system** — **bcrypt + SQLite + RBAC**, manage **platform + multi-app users** simultaneously |
+| **1: Core Services** | [zDispatch](Documentation/zDispatch_GUIDE.md) | **Universal command router** — **simple modifiers (^~*!)** shape behavior, routes to **7+ subsystems** seamlessly |
+| **1: Core Services** | [zNavigation](Documentation/zNavigation_GUIDE.md) | **Unified navigation** — **menus + breadcrumbs + state + inter-file links**, all **RBAC-aware** |
+| **1: Core Services** | [zParser](Documentation/zParser_GUIDE.md) | **Declarative paths & parsing** — **workspace-relative + user dirs + plugin discovery**, 21+ unified methods |
+| **1: Core Services** | [zLoader](Documentation/zLoader_GUIDE.md) | **Intelligent file loader** — **4-tier cache system** (System + Pinned + Schema + Plugin) with **mtime tracking** |
+| **1: Core Services** | [zUtils](Documentation/zUtils_GUIDE.md) | **Plugins engine** — **load Python modules**, auto-inject session, expose as methods, **unified cache** with auto-reload |
+| **2: Business Logic** | [zFunc](Documentation/zFunc_GUIDE.md) | **Dynamic Python executor** — **cross-language** (using zBifrost) + **internal Python**, auto-injection removes boilerplate |
+| **2: Business Logic** | [zDialog](Documentation/zDialog_GUIDE.md) | **Declarative form engine** — **define once, auto-validate, render everywhere** (Terminal or GUI) |
+| **2: Business Logic** | [zOpen](Documentation/zOpen_GUIDE.md) | **Universal opener** — **cross-OS routing** (URLs, files, zPaths) for **your tools** (session-aware browser + IDE preferences) |
+| **2: Business Logic** | [zWizard](Documentation/zWizard_GUIDE.md) | **Multi-step orchestrator** — **sequential execution + zHat result passing**, enabling workflows **and** navigation |
+| **2: Business Logic** | [zData](Documentation/zData_GUIDE.md) | **Database abstraction** — **backend-agnostic declerations** (SQLite ↔ PostgreSQL ↔ CSV), and **auto migration** |
+| **3: Orchestration** | [zShell](Documentation/zShell_GUIDE.md) | **Interactive command center** — **18+ commands + wizard canvas**, persistent history, **direct access** to all subsystems |
+| **3: Orchestration** | [zWalker](Documentation/zWalker_GUIDE.md) | **Declarative UI orchestrator** — **menus + breadcrumb navigation**, coordinates **11 subsystems**, Terminal **and** GUI |
+| **3: Orchestration** | [zServer](Documentation/zServer_GUIDE.md) | **Static file server** — **serves HTML/CSS/JS**, zero dependencies (built-in **http.server**), pairs with **zBifrost** |
 
 ## Quick Subsystem Overview
 
@@ -409,7 +324,6 @@ zolo ztests
 
 **[Test Runner Documentation](zTestRunner/)**
 
-
 ## Configuration
 
 ```python
@@ -467,5 +381,3 @@ Copyright (c) 2024 Gal Nachshon
 **Trademarks:** "Zolo" and "zCLI" are trademarks of Gal Nachshon.
 
 See [LICENSE](LICENSE) for details.
-
-
