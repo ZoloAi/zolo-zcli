@@ -38,8 +38,22 @@ pip install "zolo-zcli[all] @ git+https://github.com/ZoloAi/zolo-zcli.git"
 # Verify
 zolo --version
 ```
+
 > New to **`pip install`**? Need a specific **zVersion**?  
 >  See [**zInstall**](Documentation/zInstall_GUIDE.md) for more details.
+
+## Get the Demos
+
+Want to explore **ready-made examples** without cloning the entire repository?
+
+```bash
+# Clone only the Demos folder
+git clone --depth 1 --filter=blob:none --sparse https://github.com/ZoloAi/zolo-zcli.git
+cd zolo-zcli
+git sparse-checkout set Demos
+```
+
+This downloads just the [Demos folder](https://github.com/ZoloAi/zolo-zcli/tree/main/Demos) with **50+ working examples** organized by layer and subsystem.
 
 ## How to Learn zCLI
 
@@ -105,3 +119,7 @@ Copyright (c) 2024 Gal Nachshon
 **Trademarks:** "Zolo" and "zCLI" are trademarks of Gal Nachshon.
 
 See [LICENSE](LICENSE) for details.
+
+---
+
+**[Next: The zPhilosophy →](Documentation/zPhilosophy.md)**
