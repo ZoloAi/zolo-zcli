@@ -18,7 +18,6 @@ from zCLI import zCLI
 
 def run_demo():
     z = zCLI({
-        "zMode": "Terminal",
         "logger": "PROD",
     })
     session = z.session

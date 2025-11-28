@@ -6,12 +6,17 @@
 
 It lets developers declare their app’s structure once and run it anywhere, **Terminal** or **Web**, using the same code! **Turning ideas into working tools faster** while **zCLI** handles the heavy lifting.
 
-## Requirements
+## New to **Zolo**?
 
-To get started, you only need **Python 3.8+** installed on your system.
+Start with **[The zPhilosophy](Documentation/zPhilosophy.md)**.  
+It introduces the core concepts of **zCLI** and smoothly leads into the layer-by-layer guides with ready-made demos.
 
-> Need help installing Python on **Windows** or **macOS**?  
-> See the **Python section** in [**zInstall**](Documentation/zInstall_GUIDE.md).
+### Requirements
+
+To get started, you only need **Python 3.8+** and **Git** installed on your system.
+
+> Need help installing requirements on **Windows** or **macOS**?  
+> See [**zInstall Guide**](Documentation/zInstall_GUIDE.md).
 
 ## Installation
 
@@ -42,26 +47,6 @@ zolo --version
 > New to **`pip install`**? Need a specific **zVersion**?  
 >  See [**zInstall**](Documentation/zInstall_GUIDE.md) for more details.
 
-## Get the Demos
-
-Want to explore **ready-made examples** without cloning the entire repository?
-
-```bash
-# Clone only the Demos folder
-git clone --depth 1 --filter=blob:none --sparse https://github.com/ZoloAi/zolo-zcli.git
-cd zolo-zcli
-git sparse-checkout set Demos
-```
-
-This downloads just the [Demos folder](https://github.com/ZoloAi/zolo-zcli/tree/main/Demos) with **50+ working examples** organized by layer and subsystem.
-
-## How to Learn zCLI
-
-**New to Zolo?**  
-Start with **[The zPhilosophy](zPhilosophy_GUIDE.md)**. It introduces the core concepts of **zCLI** and smoothly leads into the layer-by-layer guides with ready-made demos.
-
-**Need a specific capability?**  
-Use the **zArchitecture table below** to navigate directly to that subsystem's guide (zConfig, zComm, zData, zServer, etc.), where I'll find detailed information with ready-made demos.
 
 ## The zArchitecture
 
@@ -69,7 +54,7 @@ Use the **zArchitecture table below** to navigate directly to that subsystem's g
 
 | Subsystem | Purpose |
 |-----------|---------|
-| | **Layer 0: Foundation** |
+| **Layer 0:**  | **Foundation** |
 | **[zConfig](Documentation/zConfig_GUIDE.md)** | **Self-aware config layer** — **machine → environment → session** hierarchy with **secrets + logging** |
 | **[zComm](Documentation/zComm_GUIDE.md)** | **Communication hub** — **HTTP client**, **service orchestration** (PostgreSQL, Redis), **network utilities** |
 | **[zBifrost](Documentation/zBifrost_GUIDE.md)** | **WebSocket bridge** — **real-time bidirectional** communication (server + **JavaScript client**), enables **Terminal → Web GUI** transformation |

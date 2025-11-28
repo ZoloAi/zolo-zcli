@@ -1,18 +1,7 @@
 #!/usr/bin/env python3
-"""
-Level 1: zMachine Get
-=====================
-
-Goal:
-    Show all zMachine values via z.config.get_machine() so developers can
-    copy/paste these accessor lines into their own code.
-
-Run:
-    python3 Demos/Layer_0/zConfig_Demo/Level_1_Get/zmachine_get.py
-"""
+"""Show all zMachine values with z.config.get_machine() for copy-paste use."""
 
 from zCLI import zCLI
-
 
 def run_demo():
     """Print all zMachine values with copy/paste-ready accessor lines."""
@@ -44,8 +33,10 @@ def run_demo():
     print(f"python_impl       : {machine.get('python_impl')}")
     print(f"python_build      : {machine.get('python_build')}")
     print(f"python_compiler   : {machine.get('python_compiler')}")
+    print(f"python_executable : {machine.get('python_executable')}")
     print(f"libc_ver          : {machine.get('libc_ver')}")
+    print(f"zcli_install_path : {machine.get('zcli_install_path')}")
+    print(f"zcli_install_type : {machine.get('zcli_install_type')}")
 
 if __name__ == "__main__":
     run_demo()
-

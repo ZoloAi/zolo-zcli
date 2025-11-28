@@ -1,4 +1,4 @@
-**[← Back to README](../README.md) | [Home](../README.md) | [Next: zConfig Guide →](zConfig_GUIDE.md)**
+**[Home](../README.md) | [Next: zInstall Guide →](zInstall_GUIDE.md)**
 
 ---
 
@@ -100,45 +100,6 @@ Before a single line of logic is written, the application is already shaped by r
 **Thus the system shapes itself around each one.**  
 **Ensuring every interaction becomes a perfect answer to an intended purpose.**
 
-## **Why This Matters**
-
-This **zPhilosophy** is crucial for the use of **zCLI**, but also **the future of programming**.
-
-## 1. Behavioural Change
-
-### **The Traditional Approach**
-
-**Mindset**  
-Think in **code** → translate to **UI** → hope users understand  
-
-**Model**  
-Software is a collection of *functions, classes,* and *control flows* — the code itself becomes the design.  
-
-**Barrier**  
-Requires *technical knowledge* before creative intention  
-
-### **The Zolo Approach**
-
-**Mindset**  
-Think in **intentions** → declare **structure** → logic **emerges naturally**  
-
-**Model**  
-Software is understood through *intentions and structure* — the declaration becomes the design.  
-
-**Barrier**  
-*None* — declarative syntax is readable and writable by anyone  
-
-## 2. The LLM Era
-
-In the age of **Large Language Models**, the constraint is context — **tokens**, not syntax complexity.  
-Inefficient, verbose prompts about **how** to build systems are replaced by structurally declared **zForms**, which conserve tokens by expressing **what, not how**.  
-
-When intention is captured as **structure** (zUI, zSchema), humans, machines, and AI agents read the same specification.  
-The framework **perceives**, **validates**, and **manifests**; the system reasons without micromanagement.  
-**The result: fewer iterations, fewer edge-case patches, clearer outcomes.**
-
-**Declaration via structure precedes implementation, and syntax follows** — **the same structure renders as Terminal UI, Bifrost GUI, or zShell flow without rewriting logic**, while staying comfortably within an LLM's sandbox at a lower token cost.
-
 ## Conclusion
 
 At its core, **zPhilosophy** is a change of posture.  
@@ -160,35 +121,20 @@ More evolving.
 Fewer rigid paths.  
 More systems that meet people where they already are.
 
----
-
 ## What to Read Next
 
 > You now understand the *why*.  
 > Next, you will learn the *how*.
 
-To turn this philosophy into practice, we begin where all intentional systems should:  
+**Choose Your Path:**
+
+- **Haven't installed zCLI yet?**  
+  → **[Go to zInstall Guide](zInstall_GUIDE.md)** — Get set up first.
+
+- **Already installed zCLI?** (e.g., from the README)  
+  → **[Start with zConfig](zConfig_GUIDE.md)** — The **cornerstone of Layer 0 and zCLI as a whole**.
+
+To turn philosophy into practice, we begin where all intentional systems should:  
 with **structure and context**, not with business logic.
 
-### [Start Here: zConfig](zConfig_GUIDE.md)
-
-**zConfig** is the first tier of **Layer 0** — the **corner stone of zCLI**.
-
-It will teache you how to set project configurations (settings, environment variables, and machine info) into **declarative structure** instead of scattered imperative code.
-
-Every guide in zCLI comes with **working demos** you can run and modify. To get them, copy-paste to Terminal:
-
-```bash
-# Clone only the Demos folder
-git clone --depth 1 --filter=blob:none --sparse https://github.com/ZoloAi/zolo-zcli.git
-cd zolo-zcli
-git sparse-checkout set Demos
-```
-
-This downloads **50+ ready-to-run examples** organized by layer. Each demo is copy-paste ready and shows exactly how to use that part of zCLI.
-
-**Your next step:** **[zConfig Guide →](zConfig_GUIDE.md)**
-
----
-
-**[← Back to README](../README.md) | [Home](../README.md) | [Next: zConfig Guide →](zConfig_GUIDE.md)**
+After installation, **zConfig** is the first subsystem you learn. It teaches you how to transform scattered imperative code as **declarative structure**.

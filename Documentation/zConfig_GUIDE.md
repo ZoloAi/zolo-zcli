@@ -1,150 +1,235 @@
-<div style="display: flex; flex-direction: column; align-items: stretch; margin-bottom: 1rem; font-weight: 500;">
-  <div style="display:flex; justify-content:space-between; align-items:center;">
-    <span><a style="color:#FFFBCC;" href="zPhilosophy.md">← Back to zPhilosophy</a></span>
-    <span><a style="color:#FFFBCC;" href="../README.md">Home</a></span>
-    <span><a style="color:#FFFBCC;" href="zComm_GUIDE.md">Next: zComm Guide →</a></span>
-  </div>
-  <div style="display: flex; justify-content: center; align-items: center; margin-top: 0.85rem;">
-    <h1 style="margin: 0; font-size: 2.15rem; font-weight: 700;">
-      <span style="color:#FFFBCC;">zConfig Guide</span>
-    </h1>
-  </div>
-</div>
+**[← Back to zInstall Guide](zInstall_GUIDE.md) | [Home](../README.md) | [Next: zComm Guide →](zComm_GUIDE.md)**
 
-> <span style="color:#F8961F"><b>Self-aware configuration</b></span> that detects your machine, adapts to your environment, and stays out of your way.
+---
 
-<span style="color:#8FBE6D"><b>Every project begins with configuration.</b></span>  
-Paths. Logging. Environment detection. Secrets.  
-You either build it yourself or copy it from somewhere else.
+# zConfig
 
-zConfig is the <span style="color:#F8961F"><b>first subsystem</b></span> initialized in zCLI.  
-It establishes the <span style="color:#F8961F">session</span>, <span style="color:#F8961F">logger</span>, and <span style="color:#F8961F">machine context</span> that all <span style="color:#F8961F">16 other subsystems</span> rely on.
+**zConfig** is the **first sub-system** initialized by **zCLI**.
+> See [**zArchitecture**](../README.md#the-zarchitecture) for full context.
 
-You don’t need the full framework.  
-<span style="color:#8FBE6D"><b>Import zCLI and use only zConfig.</b></span>
+It auto detects **machine context**, **environment**, and manages **in-memory zSessions**.  
+All **other subsystems** rely on **zConfig** for the delerative nature of **zCLI**.
 
-You get <span style="color:#8FBE6D">zero boilerplate</span>,  
-<span style="color:#F8961F">hierarchical settings</span> (machine → environment → session),  
-cross-platform paths,  
-and persistent preferences.
+You get: 
 
-**No dotenv sprawl. No reinventing the wheel.**
+- **Zero boilerplate**  
+- **No dotenv sprawl**
+- **No reinventing the wheel**
+- **Hierarchical settings** (machine → environment → session)  
+- **Cross-platform** paths  
+- and **persistent preferences**.
 
-## zConfig Tutorials
+## Tutorials
 
-### <span style="color:#8FBE6D">Initialize zCLI</span>
+**Learn by doing!** 
+
+The tutorials below are organized in a bottom-up fashion. Every tutorial below has a working demo you can run and modify.
+
+**A Note on Learning zCLI:**  
+Each tutorial (Level_0, Level_1, Level_2...) progressively introduces more complex features of **this subsystem**. The early tutorials start with familiar imperative patterns (think Django-style conventions) to meet you where you are as a developer.
+
+As you progress through zCLI's subsystems, you'll notice a gradual shift from imperative to declarative patterns. This intentional journey helps reshape your mental model from imperative to declarative thinking. Only when you reach **Layer 3 (Orchestration)** will you see subsystems used **fully declaratively** as intended in production. By then, the true magic of declarative coding will reveal itself, and you'll understand why we started this way.
+
+Get the demos:
+
+```bash
+# Clone only the Demos folder
+git clone --depth 1 --filter=blob:none --sparse https://github.com/ZoloAi/zolo-zcli.git
+cd zolo-zcli
+git sparse-checkout set Demos
+```
+
+> All zConfig demos are in: `Demos/Layer_0/zConfig_Demo/`
+
+---
+
+# zConfig - Level 1 (Hello)
+
+### i. Initialize zCLI
+
+One line does everything. When you call `zCLI()`, it automatically:
+- Detects your machine (OS, CPU, browser, IDE, terminal)
+- Creates these config folders in your OS-native directories
+- Loads the 5-layer hierarchy (defaults → machine → environment → env vars → session)
+- Initializes the logger and session
+
+No setup files. No configuration needed. **Just import and go**.
+
+**Try it yourself:** [`Demos/Layer_0/Level_1_Hello/1_initialize.py`](../Demos/Layer_0/zConfig_Demo/Level_1_Hello/1_initialize.py)
+
 
 ```python
 from zCLI import zCLI
 
 z = zCLI()
 ```
-
-Automatically initializes zConfig, detects your machine, creates support folders, and loads defaults. No setup required.
-
-> **Try it:** [`Level_0_Hello/hello_config.py`](../Demos/Layer_0/zConfig_Demo/Level_0_Hello/hello_config.py)
-
-### <span style="color:#8FBE6D">Read Machine Values</span>
-
-```python
-machine = z.config.get_machine()
-hostname = z.config.get_machine("hostname")
-
-# Access config paths
-user_config = z.config.sys_paths.user_config_dir
-```
-
-Returns all machine properties (OS, CPU, IDE, browser, etc.) with optional single-key lookups. Machine config persists across all projects in OS-native directories:
+When you initialize zCLI for the first time, it creates a designated directory in your OS-native application support folder.  
+This is where all zCLI configurations, logs, and data live. Located at:
 
 - **macOS**: `~/Library/Application Support/zolo-zcli/`
 - **Linux**: `~/.local/share/zolo-zcli/`
 - **Windows**: `%APPDATA%/zolo-zcli/`
 
-> **Try it:** [`Level_1_Get/zmachine_get.py`](../Demos/Layer_0/zConfig_Demo/Level_1_Get/zmachine_get.py)
+Inside this directory, zCLI creates:
+- `zConfigs/` - Machine and environment configuration files
+- `zUIs/` - Custom UI definitions
+- `logs/` - Application logs
 
-<span style="color:#FFB347">**Available Machine Properties:**</span>
+---
 
-<details>
-<summary><strong>Machine Identity</strong></summary>
+# zConfig - Level 2 (Get)
 
-- `os` → macOS (Darwin), Linux, Windows
-- `os_version` → Kernel release (e.g., 24.5.0)
-- `os_name` → Full OS name with version
-- `hostname` → Machine name
-- `architecture` → x86_64, arm64, aarch64
-- `processor` → CPU model/type
-</details>
+### i. Read Machine Values
 
-<details>
-<summary><strong>Python Runtime</strong></summary>
+Once zCLI is initialized, you can read configuration from the 5-layer hierarchy.  
+Start with **machine detection**—your hardware, OS, and tools.
 
-- `python_version` → 3.12.0, 3.11.5, etc.
-- `python_impl` → CPython, PyPy, Jython
-- `python_build` → Build identifier
-- `python_compiler` → Compiler used to build Python
-- `libc_ver` → System C library version
-</details>
+During zConfig initialization, the framework auto-detects your hardware and tools (OS, CPU, browser, IDE, terminal) and stores this as **zMachine** configuration. This is a fundamental concept in zCLI—your machine's identity persists across all projects, and stored in OS-native directories:
 
-<details>
-<summary><strong>User Tools</strong></summary>
+- **macOS**: `~/Library/Application Support/zolo-zcli/zConfigs/zConfig.machine.yaml`
+- **Linux**: `~/.local/share/zolo-zcli/zConfigs/zConfig.machine.yaml`
+- **Windows**: `%APPDATA%/zolo-zcli/zConfigs/zConfig.machine.yaml`
 
-- `browser` → Chrome, Firefox, Arc, Safari, Brave, Edge, Opera
-- `ide` → Cursor, VS Code, Sublime, Vim, Nano, Fleet, Zed, PyCharm, WebStorm
-- `terminal` → From TERM environment variable
-- `shell` → bash, zsh, fish, sh
-- `lang` → System locale (en_US.UTF-8, etc.)
-- `timezone` → From TZ or system default
-</details>
+This means every zCLI project on your machine shares the same machine context—no need to reconfigure per project.  
+**To get the entire machine dict:**
 
-<details>
-<summary><strong>System Capabilities</strong></summary>
+```python
+machine = z.config.get_machine()
+print(machine)
+```
+> **New to Python?** A "dict" (dictionary) is a collection of labeled values—like `{"name": "Alice", "age": 13}`.
 
-- `cpu_cores` → Physical + logical core count
-- `memory_gb` → Total RAM via psutil or OS-specific methods
-</details>
+**To get a single value directly:**
+```python
+hostname = z.config.get_machine("hostname")
+```
 
-<details>
-<summary><strong>Paths & User</strong></summary>
+**Try it yourself:** [`Demos/Layer_0/Level_2_Get/1_zmachine.py`](../Demos/Layer_0/Level_2_Get/1_zmachine.py)
 
-- `home` → User's home path
-- `cwd` → Current directory (safe)
-- `username` → From USER or USERNAME env var
-- `path` → Full PATH environment variable
-</details>
+Complete reference of all machine properties available via `z.config.get_machine()`:
 
+| Category | Property | Description |
+|----------|----------|-------------|
+| **Machine Identity** | `os` | macOS (Darwin), Linux, Windows |
+| | `os_version` | Kernel release (e.g., 24.5.0) |
+| | `os_name` | Full OS name with version |
+| | `hostname` | Machine name |
+| | `architecture` | x86_64, arm64, aarch64 |
+| | `processor` | CPU model/type |
+| **Python Runtime** | `python_version` | 3.12.0, 3.11.5, etc. |
+| | `python_impl` | CPython, PyPy, Jython |
+| | `python_build` | Build identifier |
+| | `python_compiler` | Compiler used to build Python |
+| | `libc_ver` | System C library version |
+| | `python_executable` | Path to Python executable |
+| **zCLI Installation** | `zcli_install_path` | Where zCLI package is installed |
+| | `zcli_install_type` | editable (development) or standard |
+| **User Tools** | `browser` | Chrome, Firefox, Arc, Safari, Brave, Edge, Opera |
+| | `ide` | Cursor, VS Code, Sublime, Vim, Nano, Fleet, Zed, PyCharm, WebStorm |
+| | `terminal` | From TERM environment variable |
+| | `shell` | bash, zsh, fish, sh |
+| | `lang` | System locale (en_US.UTF-8, etc.) |
+| | `timezone` | From TZ or system default |
+| **System Capabilities** | `cpu_cores` | Physical + logical core count |
+| | `memory_gb` | Total RAM via psutil or OS-specific methods |
+| **Paths & User** | `home` | User's home path |
+| | `cwd` | Current directory (safe) |
+| | `username` | From USER or USERNAME env var |
+| | `path` | Full PATH environment variable |
 
-### <span style="color:#8FBE6D">Read Environment Values</span>
+### ii. Read Environment Values
 
+While **zMachine** identifies your hardware and tools, **zEnvironment** defines your working context.  
+Are you in Debug mode? Production? What logging level do you need?  
+This is another fundamental concept in zCLI. Your environment settings persist across all projects, stored alongside zMachine:
+
+- **macOS**: `~/Library/Application Support/zolo-zcli/zConfigs/zConfig.environment.yaml`
+- **Linux**: `~/.local/share/zolo-zcli/zConfigs/zConfig.environment.yaml`
+- **Windows**: `%APPDATA%/zolo-zcli/zConfigs/zConfig.environment.yaml`
+
+This means you set your deployment mode once (e.g., "Production") and every zCLI project respects it—unless you override it per-project with `.zEnv` files.
+
+**To get the entire environment dict:**
 ```python
 env = z.config.get_environment()
-deployment = z.config.get_environment("deployment")
+print(env)
 ```
 
-Returns deployment, logging, network, and security settings with direct access to individual keys.
+**To get a single value directly:**
+```python
+logger_level = z.config.get_environment("logger")
+```
 
-> **Try it:** [`Level_1_Get/zenv_get.py`](../Demos/Layer_0/zConfig_Demo/Level_1_Get/zenv_get.py)
+**Try it yourself:** [`Demos/Layer_0/Level_2_Get/2_environment.py`](../Demos/Layer_0/Level_2_Get/2_environment.py)
 
-### <span style="color:#8FBE6D">Read Session Values</span>
+Complete reference of all environment properties available via `z.config.get_environment()`:
 
+| Category | Property | Description |
+|----------|----------|-------------|
+| **Deployment Context** | `deployment` | Debug, Info, Production |
+| | `datacenter` | local, us-west-2, eu-central-1, etc. |
+| | `cluster` | single-node, multi-node, k8s-cluster |
+| | `node_id` | Unique identifier for this node |
+| | `role` | development, staging, production |
+| **Network** | `network.host` | Bind address (default: 127.0.0.1) |
+| | `network.port` | Service port (default: 56891) |
+| | `network.external_host` | External access hostname |
+| | `network.external_port` | External access port |
+| **WebSocket** | `websocket.host` | WebSocket bind address |
+| | `websocket.port` | WebSocket port |
+| | `websocket.require_auth` | Require authentication (true/false) |
+| | `websocket.allowed_origins` | List of allowed CORS origins |
+| | `websocket.max_connections` | Maximum concurrent connections |
+| | `websocket.ping_interval` | Ping interval in seconds |
+| | `websocket.ping_timeout` | Ping timeout in seconds |
+| **Security** | `security.require_auth` | Require authentication |
+| | `security.allow_anonymous` | Allow anonymous access |
+| | `security.ssl_enabled` | Enable SSL/TLS |
+| | `security.ssl_cert_path` | Path to SSL certificate |
+| | `security.ssl_key_path` | Path to SSL private key |
+| **Logging** | `logging.level` | DEBUG, INFO, WARNING, ERROR, CRITICAL |
+| | `logging.format` | simple, detailed, json |
+| | `logging.file_enabled` | Enable file logging (true/false) |
+| | `logging.file_path` | Log file path |
+| | `logging.max_file_size` | Max log file size (e.g., "10MB") |
+| | `logging.backup_count` | Number of backup log files |
+| **Performance** | `performance.max_workers` | Max concurrent workers |
+| | `performance.cache_size` | Cache size limit |
+| | `performance.cache_ttl` | Cache time-to-live in seconds |
+| | `performance.timeout` | Default timeout in seconds |
+| **Custom Fields** | `custom_field_1` | User-defined value |
+| | `custom_field_2` | User-defined value |
+| | `custom_field_3` | User-defined value (can be list/dict) |
+
+### iii. Read Session Values
+
+Session holds runtime state created during initialization. Values like `zMode`, `zSpace`, and `zVars` live here.
+
+**Access session values:**
 ```python
 session = z.session
-z_mode = session.get("zMode")
+print("zMode:", session.get("zMode"))
+print("zSpace:", session.get("zSpace"))
+print("zS_id:", session.get("zS_id"))
 ```
 
-Contains runtime state (zMode, zSpace, zVars, zAuth, etc.) created during initialization and influenced by zSpark.
+Session is ephemeral—it exists only in memory during your program's runtime.
 
-> **Try it:** [`Level_1_Get/zsession_get.py`](../Demos/Layer_0/zConfig_Demo/Level_1_Get/zsession_get.py)
+**Try it:** [`Level_1_Get/3_zsession.py`](../Demos/Layer_0/zConfig_Demo/Level_1_Get/3_zsession.py)
 
-### <span style="color:#8FBE6D">Control Settings with zSpark</span>
+# zConfig - Level 3 (zSettings)
+
+### i. zSpark
+
+Pass a minimal `zSpark_obj` dict into `zCLI()` to override runtime settings **before** any `.zEnv` or YAML files are loaded. This is the highest priority in the configuration hierarchy and the fastest way to experiment in memory.
 
 ```python
 z = zCLI({
-    "zMode": "Terminal",
     "logger": "PROD",  # Silent console, full file logging
 })
 ```
 
-Pass a minimal `zSpark_obj` dict into `zCLI()` to override runtime settings **before** any `.zEnv` or YAML files are loaded. This is the highest priority in the configuration hierarchy and the fastest way to experiment in memory.
+### ii. zLogger (part 1)
 
 **Logger Levels:**
 - `DEBUG`, `INFO` (default), `WARNING`, `ERROR`, `CRITICAL` - Standard Python logging levels
@@ -152,7 +237,7 @@ Pass a minimal `zSpark_obj` dict into `zCLI()` to override runtime settings **be
 
 > **Try it:** [`Level_2_zSettings/zspark_demo.py`](../Demos/Layer_0/zConfig_Demo/Level_2_zSettings/zspark_demo.py) | [README](../Demos/Layer_0/zConfig_Demo/Level_2_zSettings/README.md)
 
-### <span style="color:#8FBE6D">Use the Built-in Logger</span>
+### Use the Built-in Logger
 
 ```python
 z = zCLI({"logger": "INFO"})
@@ -165,9 +250,9 @@ z.logger.error("Connection failed")
 
 The logger is already configured - no `import logging` needed. All standard methods available: `.debug()`, `.info()`, `.warning()`, `.error()`, `.critical()`.
 
-> **Try it:** [`Level_2_zSettings/zlogger_demo.py`](../Demos/Layer_0/zConfig_Demo/Level_2_zSettings/zlogger_demo.py)
+**Try it:** [`Level_2_zSettings/zlogger_demo.py`](../Demos/Layer_0/zConfig_Demo/Level_2_zSettings/zlogger_demo.py)
 
-### <span style="color:#8FBE6D">Custom Logger Methods for Production</span>
+### Custom Logger Methods for Production
 
 ```python
 z = zCLI({"logger": "PROD"})
@@ -182,7 +267,7 @@ Two custom methods for clean production logging:
 
 > **Try it:** [`Level_2_zSettings/zlogger_user_demo.py`](../Demos/Layer_0/zConfig_Demo/Level_2_zSettings/zlogger_user_demo.py)
 
-### <span style="color:#8FBE6D">Enable Automatic Exception Handling</span>
+### Enable Automatic Exception Handling
 
 ```python
 z = zCLI({
@@ -197,7 +282,7 @@ Uncaught exceptions automatically launch an interactive menu with error details 
 
 > **Try it:** [`Level_2_zSettings/ztraceback_demo.py`](../Demos/Layer_0/zConfig_Demo/Level_2_zSettings/ztraceback_demo.py)
 
-### <span style="color:#8FBE6D">Read Workspace Secrets from .zEnv</span>
+### Read Workspace Secrets from .zEnv
 
 ```python
 z = zCLI()
@@ -211,7 +296,7 @@ zConfig automatically loads `.zEnv` (or `.env`) from your workspace. No python-d
 
 > **Try it:** [`Level_3_hierarchy/zenv_demo.py`](../Demos/Layer_0/zConfig_Demo/Level_3_hierarchy/zenv_demo.py)
 
-### <span style="color:#8FBE6D">Read Persistent Environment Config</span>
+### Read Persistent Environment Config
 
 ```python
 z = zCLI()
@@ -225,7 +310,7 @@ Environment config persists across all projects in `~/Library/Application Suppor
 
 > **Try it:** [`Level_3_hierarchy/zenv_persistence_demo.py`](../Demos/Layer_0/zConfig_Demo/Level_3_hierarchy/zenv_persistence_demo.py)
 
-### <span style="color:#8FBE6D">Persist Configuration Changes</span>
+### Persist Configuration Changes
 
 Values from Layer 2 (Machine) and Layer 3 (Environment) can be saved permanently using the persistence API. These changes survive across all projects and sessions.
 
@@ -260,82 +345,33 @@ You can also edit the YAML files directly in your text editor:
 
 ## The Hierarchy
 
-zConfig resolves configuration through **<span style="color:#8FBE6D">5 layers</span>**, from system defaults to runtime overrides:
+zConfig resolves configuration through **5 layers**, from system defaults to runtime overrides:
 
-<div style="display:flex; flex-direction:column; gap:1rem; max-width:700px;">
+**1. System Defaults**  
+Base configuration shipped with zCLI (auto-detection + fallbacks)  
+`zolo-zcli/subsystems/zConfig/zConfig.defaults.yaml`
 
-  <div style="border-left:4px solid #577590; padding:1rem; background:rgba(87,117,144,0.08);">
-    <strong style="color:#577590;">1. System Defaults</strong><br>
-    Base configuration shipped with zCLI (auto-detection + fallbacks)<br>
-    <code style="color:#999;">zolo-zcli/subsystems/zConfig/zConfig.defaults.yaml</code>
-  </div>
+**2. Machine Config (zMachine)**  
+Auto-detected hardware + your preferences (browser, IDE, terminal, shell)  
+`~/Library/Application Support/zolo-zcli/zConfigs/zConfig.machine.yaml`
 
-  <div style="border-left:4px solid #8FBE6D; padding:1rem; background:rgba(143,190,109,0.08);">
-    <strong style="color:#8FBE6D;">2. Machine Config (zMachine)</strong><br>
-    Auto-detected hardware + your preferences (browser, IDE, terminal, shell)<br>
-    <code style="color:#999;">~/Library/Application Support/zolo-zcli/zConfigs/zConfig.machine.yaml</code>
-  </div>
+**3. Environment Config (zEnvironment)**  
+Deployment context (Debug, Info, Production) + role + logging levels  
+`~/Library/Application Support/zolo-zcli/zConfigs/zConfig.environment.yaml`
 
-  <div style="border-left:4px solid #F8961F; padding:1rem; background:rgba(248,150,31,0.08);">
-    <strong style="color:#F8961F;">3. Environment Config (zEnvironment)</strong><br>
-    Deployment context (Debug, Info, Production) + role + logging levels<br>
-    <code style="color:#999;">~/Library/Application Support/zolo-zcli/zConfigs/zConfig.environment.yaml</code>
-  </div>
+**4. Environment Variables**  
+OS environment (system exports, venv vars) + workspace secrets (.zEnv/.env)  
+`export MY_VAR=value`, `.zEnv`, `.env`
 
-  <div style="border-left:4px solid #F8961F; padding:1rem; background:rgba(248,150,31,0.08);">
-    <strong style="color:#F8961F;">4. Environment Variables</strong><br>
-    OS environment (system exports, venv vars) + workspace secrets (.zEnv/.env)<br>
-    <code style="color:#999;">export MY_VAR=value, .zEnv, .env</code>
-  </div>
-
-  <div style="border-left:4px solid #EA7171; padding:1rem; background:rgba(234,113,113,0.08);">
-    <strong style="color:#EA7171;">5. Runtime Session (zSession)</strong><br>
-    Ephemeral runtime state: zAuth, zCache, zCrumbs, wizard mode, zVars<br>
-    <code style="color:#999;">Memory only (not persisted)</code>
-  </div>
-
-</div>
+**5. Runtime Session (zSession)**  
+Ephemeral runtime state: zAuth, zCache, zCrumbs, wizard mode, zVars  
+*Memory only (not persisted)*
 
 **About Layer 4 (Environment Variables):** This layer reads from three sources - shell exports (`export VAR=value`), virtual environment variables (when venv is active), and workspace `.zEnv` files. All accessed via the same `get_env_var()` method. Priority: system → venv → .zEnv (last wins). The demos above focus on `.zEnv` since it's the most common and doesn't require shell configuration.
 
-**<span style="color:#FFB347">Available Environment Variables:</span>**
+---
 
-<details>
-<summary><strong>zCLI-Specific Variables</strong></summary>
+## Appendix: Machine Properties
 
-- `ZOLO_LOGGER` → Log level override (DEBUG, INFO, WARNING, ERROR, CRITICAL, PROD)
-- `ZOLO_DEPLOYMENT` or `ZOLO_ENV` → Deployment mode (Debug, Info, Production)
-- `WEBSOCKET_HOST` → WebSocket server host (default: 127.0.0.1)
-- `WEBSOCKET_PORT` → WebSocket server port (default: 56891)
-- `WEBSOCKET_REQUIRE_AUTH` → Require WebSocket authentication (true/false)
-- `WEBSOCKET_ALLOWED_ORIGINS` → Comma-separated CORS origins
-</details>
 
-<details>
-<summary><strong>Standard OS Variables (Read for Auto-Detection)</strong></summary>
-
-- `BROWSER` → Override default browser detection
-- `IDE`, `VISUAL_EDITOR`, `EDITOR`, `VISUAL` → Override IDE/editor detection
-- `TERM` → Terminal type
-- `SHELL` → Shell path (bash, zsh, fish, etc.)
-- `LANG` → System locale
-- `TZ` → Timezone
-- `USER`, `USERNAME` → Current username
-- `PATH` → System PATH
-</details>
-
-<details>
-<summary><strong>Custom Variables (.zEnv)</strong></summary>
-
-Any variable in your `.zEnv` or `.env` file is loaded into the environment and accessible via `z.config.environment.get_env_var("YOUR_VAR")`.
-
-**Example `.zEnv` file:**
-```bash
-ZOLO_LOGGER=DEBUG
-ZOLO_DEPLOYMENT=Production
-MY_API_KEY=secret123
-DATABASE_URL=postgresql://localhost/mydb
-```
-
-**Resolution order:** zSpark (code) → Environment Variables → Config Files → Auto-Detection
-</details>
+**[← Back to zPhilosophy](zPhilosophy.md) | [Home](../README.md) | [Next: zComm Guide →](zComm_GUIDE.md)**

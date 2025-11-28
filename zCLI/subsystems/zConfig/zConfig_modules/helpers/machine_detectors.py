@@ -74,6 +74,11 @@ zMachine:
   python_build: "{python_build}"
   python_compiler: "{python_compiler}"
   libc_ver: "{libc_ver}"
+  python_executable: "{python_executable}"
+  
+  # zCLI Installation (auto-detected, useful for troubleshooting)
+  zcli_install_path: "{zcli_install_path}"
+  zcli_install_type: "{zcli_install_type}"
 
   # Tool Preferences (customize these to your liking!)
   browser: "{browser}"          # Chrome, Firefox, Arc, Safari, etc.
@@ -473,6 +478,43 @@ def detect_memory_gb() -> Optional[int]:
     # Couldn't detect
     return None
 
+def detect_zcli_install_info() -> Dict[str, str]:
+    """Detect zCLI installation path and type."""
+    import sys
+    from importlib.metadata import distribution, PackageNotFoundError
+    
+    try:
+        dist = distribution("zolo-zcli")
+        
+        # Get installation path
+        if dist.files:
+            # Get the first file's parent to find site-packages location
+            first_file = next(iter(dist.files))
+            install_path = str(first_file.locate().parent.parent.resolve())
+        else:
+            install_path = "unknown"
+        
+        # Determine install type (editable vs standard)
+        try:
+            direct_url = dist.read_text('direct_url.json')
+            install_type = "editable" if direct_url and "editable" in direct_url else "standard"
+        except:
+            # Alternative check: if install path contains the package name at root level
+            install_type = "editable" if "zolo-zcli" in install_path and "site-packages" not in install_path else "standard"
+        
+        return {
+            "python_executable": sys.executable,
+            "zcli_install_path": install_path,
+            "zcli_install_type": install_type
+        }
+    except (PackageNotFoundError, Exception):
+        # zCLI not installed or error detecting
+        return {
+            "python_executable": sys.executable,
+            "zcli_install_path": "not_installed",
+            "zcli_install_type": "unknown"
+        }
+
 def create_user_machine_config(path: Path, machine: Dict[str, Any]) -> None:
     """Create zConfig.machine.yaml with auto-detected values and user-editable preferences."""
     try:
@@ -491,6 +533,9 @@ def create_user_machine_config(path: Path, machine: Dict[str, Any]) -> None:
             python_build=machine.get('python_build', 'unknown'),
             python_compiler=machine.get('python_compiler', 'unknown'),
             libc_ver=machine.get('libc_ver', 'unknown'),
+            python_executable=machine.get('python_executable', 'unknown'),
+            zcli_install_path=machine.get('zcli_install_path', 'unknown'),
+            zcli_install_type=machine.get('zcli_install_type', 'unknown'),
             browser=machine.get('browser', 'unknown'),
             ide=machine.get('ide', 'unknown'),
             terminal=machine.get('terminal', 'unknown'),
@@ -519,6 +564,16 @@ def auto_detect_machine(log_level: Optional[str] = None) -> Dict[str, Any]:
     from zCLI.utils import print_if_not_prod
     print_if_not_prod("[MachineConfig] Auto-detecting machine information...", log_level)
 
+    # Detect zCLI installation info
+    zcli_info = detect_zcli_install_info()
+    
+    # Detect libc version (Linux-specific, handle Windows Store Python edge case)
+    try:
+        libc_ver = platform.libc_ver()[0]
+    except (OSError, PermissionError):
+        # Windows Store Python or other restricted environments
+        libc_ver = ""
+    
     machine = {
         # Identity
         "os": platform.system(),                    # Linux, Darwin, Windows
@@ -531,7 +586,10 @@ def auto_detect_machine(log_level: Optional[str] = None) -> Dict[str, Any]:
         "python_impl": platform.python_implementation(), # CPython, PyPy, etc.
         "python_build": platform.python_build()[0],  # Build info
         "python_compiler": platform.python_compiler(), # Compiler used
-        "libc_ver": platform.libc_ver()[0],         # libc version
+        "libc_ver": libc_ver,                       # libc version (Linux-specific)
+        "python_executable": zcli_info["python_executable"],  # Path to Python executable
+        "zcli_install_path": zcli_info["zcli_install_path"],  # Where zCLI is installed
+        "zcli_install_type": zcli_info["zcli_install_type"],  # editable vs standard
 
         # User tools (system defaults, user can override)
         "browser": detect_browser(log_level),
