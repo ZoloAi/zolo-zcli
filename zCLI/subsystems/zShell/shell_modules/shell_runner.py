@@ -356,7 +356,7 @@ class ShellRunner:
             self._setup_history()
             self._history_initialized = True
         
-        self.logger.debug(MSG_STARTING_SHELL)
+        self.logger.framework.debug(MSG_STARTING_SHELL)
         self.zcli.display.write_block(self.help_system.get_welcome_message())
         self.running = True
 
@@ -402,7 +402,7 @@ class ShellRunner:
                     color=COLOR_ERROR, indent=INDENT_NORMAL, style=STYLE_SINGLE
                 )
 
-        self.logger.debug(MSG_EXITING_SHELL)
+        self.logger.framework.debug(MSG_EXITING_SHELL)
         if READLINE_AVAILABLE and self.history_file:
             self._save_history()
 
@@ -535,10 +535,10 @@ class ShellRunner:
 
             if self.history_file.exists():
                 readline.read_history_file(str(self.history_file))
-                self.logger.debug(MSG_HISTORY_LOADED, self.history_file)
+                self.logger.framework.debug(MSG_HISTORY_LOADED, self.history_file)
 
             readline.set_history_length(HISTORY_LENGTH)
-            self.logger.debug(MSG_HISTORY_ENABLED)
+            self.logger.framework.debug(MSG_HISTORY_ENABLED)
 
         except Exception as e:  # pylint: disable=broad-except
             self.logger.warning(WARN_HISTORY_SETUP_FAILED, e)

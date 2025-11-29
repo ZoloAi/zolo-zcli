@@ -573,7 +573,7 @@ def auto_detect_machine(log_level: Optional[str] = None, is_production: bool = F
     except (OSError, PermissionError):
         # Windows Store Python or other restricted environments
         libc_ver = ""
-    
+
     machine = {
         # Identity
         "os": platform.system(),                    # Linux, Darwin, Windows

@@ -115,9 +115,9 @@ class ServiceManager:
         self.logger = logger
         self.services: Dict[str, Any] = {}
 
-        self.logger.debug(f"{LOG_PREFIX} {LOG_INIT}")
+        self.logger.framework.debug(f"{LOG_PREFIX} {LOG_INIT}")
         self._register_services()
-        self.logger.debug(
+        self.logger.framework.debug(
             f"{LOG_PREFIX} {LOG_INIT_COMPLETE.format(count=len(self.services))}"
         )
 
@@ -129,23 +129,23 @@ class ServiceManager:
         implement the common service interface: start(), stop(), status(),
         and get_connection_info().
         """
-        self.logger.debug(f"{LOG_PREFIX} {LOG_REGISTERING}")
+        self.logger.framework.debug(f"{LOG_PREFIX} {LOG_REGISTERING}")
 
         # Register PostgreSQL
         self.services[SERVICE_POSTGRESQL] = PostgreSQLService(self.logger)
-        self.logger.debug(
+        self.logger.framework.debug(
             f"{LOG_PREFIX} {LOG_REGISTERED_SERVICE.format(service='PostgreSQL')}"
         )
 
         # TODO: Add Redis service support
         # self.services[SERVICE_REDIS] = RedisService(self.logger)
-        # self.logger.debug(f"{LOG_PREFIX} {LOG_REGISTERED_SERVICE.format(service='Redis')}")
+        # self.logger.framework.debug(f"{LOG_PREFIX} {LOG_REGISTERED_SERVICE.format(service='Redis')}")
 
         # TODO: Add MongoDB service support
         # self.services[SERVICE_MONGODB] = MongoDBService(self.logger)
-        # self.logger.debug(f"{LOG_PREFIX} {LOG_REGISTERED_SERVICE.format(service='MongoDB')}")
+        # self.logger.framework.debug(f"{LOG_PREFIX} {LOG_REGISTERED_SERVICE.format(service='MongoDB')}")
 
-        self.logger.debug(f"{LOG_PREFIX} {LOG_REGISTRATION_COMPLETE}")
+        self.logger.framework.debug(f"{LOG_PREFIX} {LOG_REGISTRATION_COMPLETE}")
 
     def _validate_service_name(self, service_name: Any) -> None:
         """

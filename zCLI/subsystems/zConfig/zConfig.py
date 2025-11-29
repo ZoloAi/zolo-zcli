@@ -103,8 +103,8 @@ class zConfig:
         # The LoggerConfig class proxies all standard logging methods to the underlying Python logger
         zcli.logger = session_logger
 
-        # Log initial message with configured level (debug for internal init)
-        zcli.logger.debug("Logger initialized at level: %s", session_logger.log_level)
+        # Log initial message with configured level (framework logger for internal init)
+        zcli.logger.framework.debug("Logger initialized at level: %s", session_logger.log_level)
 
         # Initialize centralized traceback utility
         # Import inline to avoid circular dependency (zTraceback imports zConfig types)

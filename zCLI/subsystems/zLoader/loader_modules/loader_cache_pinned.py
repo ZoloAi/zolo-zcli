@@ -394,7 +394,7 @@ class PinnedCache:
                 ENTRY_KEY_LOADED_AT: time.time()
             }
 
-            self.logger.info(LOG_PREFIX_LOADED + " Alias loaded: $%s => %s", alias_name, zpath)
+            self.logger.framework.debug(LOG_PREFIX_LOADED + " Alias loaded: $%s => %s", alias_name, zpath)
 
         except Exception as e:
             self.logger.error(LOG_PREFIX_ERROR + " %s - %s", alias_name, e)
@@ -483,7 +483,7 @@ class PinnedCache:
 
             if key in cache:
                 del cache[key]
-                self.logger.info(LOG_PREFIX_LOADED + " Removed: $%s", alias_name)
+                self.logger.framework.debug(LOG_PREFIX_LOADED + " Removed: $%s", alias_name)
                 return True
             return False
         except Exception as e:
@@ -544,7 +544,7 @@ class PinnedCache:
                 keys_to_delete = [k for k in cache.keys() if self._matches_pattern(k, pattern)]
                 for key in keys_to_delete:
                     del cache[key]
-                self.logger.info(
+                self.logger.framework.debug(
                     LOG_PREFIX_LOADED + " Removed %d aliases matching '%s'",
                     len(keys_to_delete), pattern
                 )
@@ -553,7 +553,7 @@ class PinnedCache:
             # Clear all aliases
             count = len(cache)
             cache.clear()
-            self.logger.info(LOG_PREFIX_LOADED + " Removed all %d aliases", count)
+            self.logger.framework.debug(LOG_PREFIX_LOADED + " Removed all %d aliases", count)
             return count
 
         except Exception as e:

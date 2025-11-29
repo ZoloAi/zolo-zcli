@@ -33,7 +33,7 @@ python3 Demos/Layer_0/zConfig_Demo/lvl1_initialize/2_zspark.py
 
 ---
 
-### 3. Deployment Modes Comparison (`3_deployment_modes.py`) ⭐
+### 3. Deployment Modes Comparison (`3_deployment.py`) ⭐
 Experience all three deployment modes side-by-side.
 
 ```python
@@ -45,7 +45,7 @@ show_mode("Production")   # Minimal
 
 **Run:**
 ```bash
-python3 Demos/Layer_0/zConfig_Demo/lvl1_initialize/3_deployment_modes.py
+python3 Demos/Layer_0/zConfig_Demo/lvl1_initialize/3_deployment.py
 ```
 
 ---

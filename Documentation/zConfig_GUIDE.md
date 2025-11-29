@@ -61,9 +61,7 @@ from zCLI import zCLI
 z = zCLI()  # That's it!
 ```
 
-**🎯 See for yourself:**
-
-Run the demo to see zCLI initialization:
+**🎯 Run the demo to see for yourself**
 
 ```bash
 python3 Demos/Layer_0/zConfig_Demo/lvl1_initialize/1_initialize.py
@@ -71,12 +69,28 @@ python3 Demos/Layer_0/zConfig_Demo/lvl1_initialize/1_initialize.py
 
 [View demo source →](../Demos/Layer_0/zConfig_Demo/lvl1_initialize/1_initialize.py)
 
----
+When you run `z = zCLI()`, you see colorful banners like "zConfig Ready", "zComm Ready", etc. These are **system messages** - visual feedback showing that internal subsystems are loading successfully.
 
-### Cross-Platform Support
+In addition, between those banners, you'll see the **framework logger** outputting initialization details:
 
-When you initialize zCLI for the first time, it creates a designated directory in your OS-native application support folder.  
-**This is where all zCLI configurations, logs, and data live.** Located at:
+```
+════════════════════ zConfig Ready ════════════════════
+zConfig - DEBUG - Logger initialized at level: INFO
+════════════════════ zComm Ready ══════════════════════
+zComm - DEBUG - Communication subsystem ready
+```
+
+This is the **framework logger** - it captures DEBUG-level details of all internal zCLI operations automatically. You never need to touch it, but it's invaluable for debugging!
+
+**What are logs?** Logs are like a detailed history book of everything that happens in your application. While those banners display on your screen, zCLI is *also* recording detailed framework operations to a file.
+
+**The distinction:**
+- **Banners** = what you *see*
+- **Framework logs** = what's *recorded*
+
+**Where are logs stored?** When you initialize zCLI for the first time, it creates a designated directory in your OS-native application support folder.
+
+**This is where all zCLI configurations, logs, and default data live.** Located at:
 
 - **macOS**: `~/Library/Application Support/zolo-zcli/`
 - **Linux**: `~/.local/share/zolo-zcli/`
@@ -85,7 +99,12 @@ When you initialize zCLI for the first time, it creates a designated directory i
 Inside this directory, zCLI creates:
 - `zConfigs/` - Machine and environment configuration files
 - `zUIs/` - Custom UI definitions
-- `logs/` - Application logs
+- `logs/` - Application logs (both framework and app logs, kept separate)
+
+> **Note:** This OS-native folder structure is what makes zCLI truly cross-platform - your code works identically on macOS, Linux, and Windows without any path changes!
+>
+> Behind the scenes, zCLI uses **zParser** (subsystem #8) to handle all path operations decleratively. For **advanced** path manipulation and file operations, see [**zParser Guide**](zParser_GUIDE.md).
+
 
 ---
 
@@ -107,13 +126,7 @@ Inside this directory, zCLI creates:
 
 **How priority works:** Higher number = higher priority. If the same setting exists in multiple sources, the highest priority wins. For example, if `deployment: "Debug"` is in zEnvironment (3) and `deployment: "Production"` is in zSpark (5), zSpark wins → Production mode. 
 
-**Where to put your configuration:**
-- Hardware/OS → Sources 1-2 (auto-detected)
-- Deployment mode → Source 3 or 5
-- Secrets/API keys → Source 4 (.zEnv)
-- Quick testing → Source 5 (zSpark)
-
-**Examples:**
+**Example:**
 
 ```python
 # Production mode (silent)
@@ -139,17 +152,19 @@ In the previous demo, you saw `deployment: "Production"` in the zSpark dictionar
 
 The deployment setting controls **how zCLI behaves** in different environments:
 
-| Mode | Behavior | Logger | Use Case |
-|------|----------|--------|----------|
+| Mode | Behavior | Default Logger | Use Case |
+|------|----------|----------------|----------|
 | **Development** | Full output: banners, system messages, detailed logs | INFO | Local development - see everything |
 | **Testing** | Clean logs only: no banners/sysmsg, verbose logging | INFO | Staging/QA - logs for debugging, no noise |
-| **Production** | Minimal: silent console, no banners, errors only | ERROR | Production - minimal everything |
+| **Production** | Minimal: silent console, no banners, errors only | ERROR | Production - minimal output |
+
+> **Note:** The `logger` column shows **default** levels when not explicitly set. You can override: `{"deployment": "Production", "logger": "DEBUG"}` for troubleshooting.
 
 **Default behavior:** If you don't specify a deployment mode (like in the basic `zCLI()` initialization from Level 1.i), zCLI defaults to **Development** mode. This means full output with banners and INFO-level logging - perfect for getting started and seeing everything work!
 
 ### iii. Deployment Modes - All Three Options
 
-See all three deployment modes in one place. The demo shows each option as a comment - uncomment to try different modes:
+Compare all three deployment modes in one place. This demo focuses purely on **deployment behavior** - how each mode affects system output, banners, and logging defaults:
 
 ```python
 zSpark = {
@@ -157,198 +172,237 @@ zSpark = {
     # "deployment": "Testing",      # Clean logs
     "deployment": "Production",    # Minimal (active)
 }
+z = zCLI(zSpark)
 ```
+
+**What you'll discover by running each mode:**
+- **Production**: Clean, silent output - no banners appear during initialization
+- **Testing**: No banners but you'll see framework logs - perfect for staging/QA
+- **Development**: Full banners + framework logs - ideal for local development
+
+**Observe the behavior:** Run the demo with each deployment mode and watch how the initialization output changes!
 
 **🎯 Try it yourself:**
 
-Run the demo to see Production mode, then try uncommenting other modes:
+Run the demo to see Production mode, then uncomment other modes to compare:
 
 ```bash
-python3 Demos/Layer_0/zConfig_Demo/lvl1_initialize/3_deployment_modes.py
+python3 Demos/Layer_0/zConfig_Demo/lvl1_initialize/3_deployment.py
 ```
 
-[View demo source →](../Demos/Layer_0/zConfig_Demo/lvl1_initialize/3_deployment_modes.py)
+[View demo source →](../Demos/Layer_0/zConfig_Demo/lvl1_initialize/3_deployment.py)
 
 ---
 
 # **zConfig - Level 2** (zSettings)
 
-In the previous demo, you saw logger output for the first time—those `INFO`, `WARNING`, and `ERROR` messages. Now let's learn how to use the logger in your own code!
+Now that you understand deployment modes, let's explore **logging in detail**. You saw framework logs during initialization, but zCLI also provides a powerful application logger for your code!
 
-> **Learning approach:** This level follows "learn by doing" - you'll use the logger first, then discover how it relates to deployment through experience.
+### **i. Logger Basics - Your First Logs**
 
-### **i. Logger Basics - Separation of Concerns**
-
-Use the built-in logger in your application code - no imports or configuration needed!
-
-This demo proves deployment and logger are **independent**:
+Start using the built-in logger. No configuration, no imports beyond zCLI itself!
 
 ```python
-zSpark = {
-    "deployment": "Production",  # No banners (behavior)
-    "logger": "INFO",            # But verbose logs (override default)
-}
-z = zCLI(zSpark)
+from zCLI import zCLI
 
-# Use z.logger - no imports needed
-z.logger.info("Application started")
-z.logger.warning("Rate limit approaching")
-z.logger.error("Connection failed")
+z = zCLI()  # That's it! Logger is ready
+
+# Five log levels, from most to least verbose:
+z.logger.debug("DEBUG: Detailed diagnostic information")
+z.logger.info("INFO: Application status update")
+z.logger.warning("WARNING: Something needs attention")
+z.logger.error("ERROR: Something failed")
+z.logger.critical("CRITICAL: System failure!")
 ```
 
 **What you discover:**
-- Production deployment suppresses banners ✓
-- Logger: INFO shows detailed logs ✓
-- They're **independent concerns** - deployment controls behavior, logger controls verbosity!
+- `z.logger` is built-in and ready to use
+- Six log levels available (we'll cover the 6th in a moment)
+- In Development mode (the default), INFO and above are shown
+- Logs appear in both console AND log file automatically
 
-All standard methods available: `.debug()`, `.info()`, `.warning()`, `.error()`, `.critical()`.
+**Where are your logs stored?**
+
+Remember the zCLI support folder from Level 1? Your logs live in the `logs/` directory, but with a smart twist: **each script gets its own log file**:
+
+```
+~/Library/Application Support/zolo-zcli/logs/
+├── my_app.log           # Your app (my_app.py)
+├── api_server.log       # Another app (api_server.py)
+├── 1_logger_basics.log  # This demo
+└── zcli-framework.log   # Internal zCLI (automatic, separate)
+```
 
 **🎯 Try it yourself:**
 
-Run the demo to use the built-in logger:
+Run the demo to see logging in action:
 
 ```bash
 python3 Demos/Layer_0/zConfig_Demo/lvl2_settings/1_logger_basics.py
 ```
 
-> **Log File Location:** Remember the zCLI support folder from Level 1.i? Your logs automatically go to `logs/zolo-zcli.log` inside that directory (e.g., `~/Library/Application Support/zolo-zcli/logs/zolo-zcli.log` on macOS). Both console AND file logging happen automatically!
-
+Check the log file created: `~/Library/.../logs/1_logger_basics.log`
 
 [View demo source →](../Demos/Layer_0/zConfig_Demo/lvl2_settings/1_logger_basics.py)
 
 ---
 
-### ii. Smart Defaults - Deployment Affects Logger
+**How it works:**
+- Script name auto-detected: `my_app.py` → `my_app.log`
+- Same script = same log file (appended across runs)
+- Custom via zSpark: `{"title": "api"}` → `api.log`
+- Framework logs always separate in `zcli-framework.log`
 
-Now let's discover the relationship! Run the same logger code with different deployment modes:
+**Two completely separate logging streams:**
 
-```python
-# Development deployment
-zSpark = {"deployment": "Development"}
-z = zCLI(zSpark)
-z.logger.info("Application started")  # ✅ Shows (INFO is logged in Development)
+1. **`z.logger`** - Your application logs
+   - Controlled by `logger` setting
+   - Goes to `{script_name}.log`
+   
+2. **`z.logger.framework`** - Internal zCLI logs
+   - Controlled by `deployment` setting
+   - Goes to `zcli-framework.log`
+   - Automatic, transparent (you never touch it)
 
-# Production deployment  
-zSpark = {"deployment": "Production"}
-z = zCLI(zSpark)
-z.logger.info("Application started")  # ❌ Hidden (only ERROR+ shows in Production)
-```
-
-**What you discover:** Deployment mode automatically sets smart logger defaults!
-- **Development** → INFO logging (show details during development)
-- **Production** → ERROR logging (minimal output in production)
 
 ---
 
-**🎯 Try it yourself:**
+### ii. Advanced Logger - Custom Directory & Name
 
-Run the demo to see side-by-side comparison:
-
-```bash
-python3 Demos/Layer_0/zConfig_Demo/lvl2_settings/2_smart_defaults.py
-```
-
-[View demo source →](../Demos/Layer_0/zConfig_Demo/lvl2_settings/2_smart_defaults.py)
-
----
-
-### iii. Logger Override - Breaking Smart Defaults
-
-**Key insight from demo 2:** Deployment and logger are **separate concerns** that work together intelligently.
-
-Override smart defaults when you need different behavior:
+Take full control of your logging: custom log directory, custom filename, and override deployment defaults.
 
 ```python
 zSpark = {
-    "deployment": "Production",  # Still production behavior (no banners)
-    "logger": "DEBUG",           # But with DEBUG logging for troubleshooting
+    "deployment": "Production",  # No banners/sysmsg
+    "title": "api-server",  # Log filename (without .log)
+    "logger": "INFO",  # Override Production default (ERROR)
+    "logger_path": "./logs",  # Custom directory (relative to cwd)
 }
 z = zCLI(zSpark)
+
+z.logger.info("API started")  # Goes to ./logs/api-server.log
 ```
 
-**Two Independent Concerns:**
+**Separation of Concerns:**
 
-1. **`deployment`** - Controls **console behavior** (banners/sysmsg):
-   - `"Development"` - Shows everything (banners + sysmsg + logs)
-   - `"Testing"` - Logs only (no banners/sysmsg, but INFO logs)
-   - `"Production"` - Minimal (no banners, no sysmsg, ERROR logs only)
+1. **Logger Path** (`"logger_path"`) - WHERE (directory):
+   - Default: System folder (`~/Library/.../logs/`)
+   - Relative: `"./logs"` (relative to current working directory)
+   - Absolute: `"/var/log/myapp"` (full directory path)
+   - Tilde: `"~/my_logs"` (expands to home directory)
+   
+2. **Session Title** (`"title"`) - WHAT (filename):
+   - Default: Script filename (`my_app.py` → `my_app.log`)
+   - Custom: `{"title": "api"}` → `api.log`
+   - Always used (whether logger_path is custom or default)
+   
+3. **Logger Level** (`"logger"`):
+   - Default: Based on deployment (Production→ERROR, others→INFO)
+   - Override: DEBUG, INFO, WARNING, ERROR, CRITICAL, PROD
 
-2. **`logger`** - Controls **HOW MUCH** you log (verbosity):
-   - `"DEBUG"`, `"INFO"`, `"WARNING"`, `"ERROR"`, `"CRITICAL"`
+**Result:** `logger_path/title.log`
 
-**Why separate?** You might want Production behavior (no banners) with DEBUG logging (troubleshooting)!
-
----
+**Framework logs remain separate:**
+- Always in: `~/Library/Application Support/zolo-zcli/logs/zcli-framework.log`
+- Never customizable (by design - keeps framework transparent and predictable)
 
 **🎯 Try it yourself:**
 
-Run the demo to override smart defaults:
+Run the demo to see full customization:
 
 ```bash
-python3 Demos/Layer_0/zConfig_Demo/lvl2_settings/3_logger_override.py
+python3 Demos/Layer_0/zConfig_Demo/lvl2_settings/2_logger_advanced.py
 ```
 
-[View demo source →](../Demos/Layer_0/zConfig_Demo/lvl2_settings/3_logger_override.py)
+Check both log files: custom location AND framework location!
+
+[View demo source →](../Demos/Layer_0/zConfig_Demo/lvl2_settings/2_logger_advanced.py)
 
 ---
 
-### iv. Custom Logger Methods: .dev() and .user()
+### iii. PROD Logger Level - Silent 
 
-Deployment-aware logging methods for clean production code:
+Now discover zCLI's unique 6th logger level that doesn't exist in standard Python logging.
 
-```python
-zSpark = {"deployment": "Production"}
-z = zCLI(zSpark)
+**Standard Python logging levels:**
+- DEBUG, INFO, WARNING, ERROR, CRITICAL (5 levels)
 
-z.logger.dev("Cache hit rate: 87%")        # Hidden in Production
-z.logger.user("Processing 1,247 records") # Always visible
-```
-
-Two custom methods:
-- **`.dev()`** - Development diagnostics (shown in Debug/Info, **hidden in Production**)
-- **`.user()`** - Application messages (always shown, **even in Production**)
-
-These methods check `deployment` mode, not log level. Perfect for clean production code!
-
----
-
-**🎯 Try it yourself:**
-
-Run the demo to see deployment-aware logging:
-
-```bash
-python3 Demos/Layer_0/zConfig_Demo/lvl2_settings/4_logger_methods.py
-```
-
-[View demo source →](../Demos/Layer_0/zConfig_Demo/lvl2_settings/4_logger_methods.py)
-
----
-
-### v. Enable Automatic Exception Handling
+**zCLI adds a 6th level:**
+- **PROD** = Silent console + DEBUG file logging
 
 ```python
 zSpark = {
     "deployment": "Production",
-    "zTraceback": True,  # No try/except needed
+    "logger": "PROD",  # The special 6th level!
 }
 z = zCLI(zSpark)
 
-result = handle_request()  # Errors launch interactive menu
+z.logger.info("API started")  # Silent in console, DEBUG in file
 ```
 
-Uncaught exceptions automatically launch an interactive menu with error details and full traceback. No try/except blocks required - just enable it.
+**What makes PROD special:**
+- Console: **Completely silent** (zero output)
+- File: **DEBUG level** (captures everything)
+- Perfect for: Production APIs, microservices, daemons, background services
 
----
+**Why it exists:**
+Production environments often need full debug logs for troubleshooting, but absolutely no console noise. PROD gives you both: silent operation with comprehensive file logging.
 
 **🎯 Try it yourself:**
 
-Run the demo to see automatic exception handling:
+Experience the silence:
 
 ```bash
-python3 Demos/Layer_0/zConfig_Demo/lvl2_settings/5_ztraceback.py
+python3 Demos/Layer_0/zConfig_Demo/lvl2_settings/3_logger_prod.py
 ```
 
-[View demo source →](../Demos/Layer_0/zConfig_Demo/lvl2_settings/5_ztraceback.py)
+Notice: Your console stays silent, but check the log file - all messages are there!
+
+[View demo source →](../Demos/Layer_0/zConfig_Demo/lvl2_settings/3_logger_prod.py)
+
+---
+
+### iv. zTraceback - Automatic Exception Handling
+
+Enable automatic exception handling - no try/except blocks needed!
+
+```python
+zSpark = {
+    "deployment": "Production",  # Clean zTraceback UI
+    "title": "my-production-api",
+    "logger": "INFO",
+    "logger_path": "./logs",
+    "zTraceback": True,  # Automatic exception handling
+}
+z = zCLI(zSpark)
+
+# Just write your code - errors are handled automatically
+result = handle_request()  # If error occurs, interactive menu launches
+```
+**🎯 Try Experience automatic exception handling yourself:**
+
+```bash
+python3 Demos/Layer_0/zConfig_Demo/lvl2_settings/4_ztraceback.py
+```
+
+Watch the interactive menu launch when the error occurs!
+
+[View demo source →](../Demos/Layer_0/zConfig_Demo/lvl2_settings/4_ztraceback.py)
+
+**What you discover:**
+- **No try/except blocks needed in your code**
+- Unhandled exceptions intercepted automatically
+- Interactive menu shows error details and full traceback
+- Clean debugging experience with nested call stacks
+
+**How it works:**
+1. `zTraceback: True` installs `sys.excepthook`
+2. Any unhandled exception triggers the menu
+3. Interactive options: View Details, Full Traceback, Exit
+4. Production deployment keeps the UI clean (no framework noise)
+
+> **Note:** zTraceback is orchestrated by the `zWalker` subsystem, which provides the interactive menu infrastructure. For advanced customization and understanding the orchestration layer, see the [zWalker Guide](./zWalker_GUIDE.md).
+
 
 ---
 

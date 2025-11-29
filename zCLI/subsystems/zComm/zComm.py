@@ -296,8 +296,8 @@ class zComm:
         is_testing = zcli.config.environment.is_testing() if hasattr(zcli, 'config') and hasattr(zcli.config, 'environment') else False
         print_ready_message(MSG_READY, color=COLOR_ZCOMM, is_production=is_production, is_testing=is_testing)
 
-        # Log ready (debug for internal init)
-        self.logger.debug(MSG_SUBSYSTEM_READY)
+        # Log ready (framework logger for internal init)
+        self.logger.framework.debug(MSG_SUBSYSTEM_READY)
 
     # ═══════════════════════════════════════════════════════════
     # zBifrost Management - Delegated to BifrostManager

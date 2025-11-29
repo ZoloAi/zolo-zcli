@@ -323,7 +323,7 @@ def _transform_parsed_ui_for_walker(
             else:
                 result[zblock_name][item_name] = item_data
     
-    logger.info(LOG_MSG_TRANSFORM_COMPLETE, len(result))
+    logger.framework.debug(LOG_MSG_TRANSFORM_COMPLETE, len(result))
     logger.debug(LOG_MSG_FINAL_RESULT_KEYS, list(result.keys()))
     return result
 
@@ -444,7 +444,7 @@ def parse_file_content(
         - _transform_parsed_ui_for_walker: RBAC transformation
         - vafile.parse_ui_file: UI file RBAC extraction
     """
-    logger.info(f"{LOG_PREFIX_PARSE} {LOG_MSG_PARSE_CALLED}", file_extension)
+    logger.framework.debug(f"{LOG_PREFIX_PARSE} {LOG_MSG_PARSE_CALLED}", file_extension)
     
     if not raw_content:
         logger.warning(LOG_MSG_EMPTY_CONTENT)
@@ -469,7 +469,7 @@ def parse_file_content(
     elif file_extension and "zServer" in file_extension:
         is_server_file = True
     
-    logger.info(f"{LOG_PREFIX_PARSE} {LOG_MSG_IS_UI_FILE}", is_ui_file, file_extension, file_path)
+    logger.framework.debug(f"{LOG_PREFIX_PARSE} {LOG_MSG_IS_UI_FILE}", is_ui_file, file_extension, file_path)
     
     # Route to appropriate parser
     if file_extension == FILE_EXT_JSON:
@@ -480,7 +480,7 @@ def parse_file_content(
         # Apply UI-specific parsing (RBAC extraction) if this is a UI file
         if is_ui_file and data:
             from .vafile import parse_ui_file
-            logger.info(f"{LOG_PREFIX_RBAC} {LOG_MSG_DETECTED_UI}")
+            logger.framework.debug(f"{LOG_PREFIX_RBAC} {LOG_MSG_DETECTED_UI}")
             logger.debug(f"{LOG_PREFIX_RBAC} {LOG_MSG_RAW_DATA_KEYS}", 
                         list(data.keys()) if isinstance(data, dict) else STR_N_A)
             
@@ -500,7 +500,7 @@ def parse_file_content(
         # Apply Server-specific parsing (routing) if this is a Server file (v1.5.4 Phase 2)
         if is_server_file and data:
             from .vafile import parse_server_file
-            logger.info("[zServer] Detected server routing file")
+            logger.framework.debug("[zServer] Detected server routing file")
             parsed_server = parse_server_file(data, logger, file_path=file_path, session=session)
             return parsed_server
         

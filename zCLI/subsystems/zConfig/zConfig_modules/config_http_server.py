@@ -73,7 +73,7 @@ class HttpServerConfig:
             self.logger.info(f"{LOG_PREFIX} Enabled - {self.host}:{self.port}")
             self.logger.info(f"{LOG_PREFIX} Serve path: {self.serve_path}")
         else:
-            self.logger.debug(f"{LOG_PREFIX} HTTP server disabled")
+            self.logger.framework.debug(f"{LOG_PREFIX} HTTP server disabled")
         
         # Check production mode for banner suppression (zSpark Layer 5)
         is_production = False

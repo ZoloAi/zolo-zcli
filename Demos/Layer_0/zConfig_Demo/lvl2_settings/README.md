@@ -1,118 +1,145 @@
 # Level 2: zSettings - Logger & Error Handling
 
-**Goal:** Learn to use zCLI's built-in logger through hands-on experience, discovering the relationship between deployment and logging.
+**Goal:** Learn to use zCLI's built-in logger through hands-on experience, mastering the dual logger architecture and discovering the unique PROD level.
 
 ## Learning Flow
 
 This level follows a **learn-by-doing** approach:
-1. **Use the logger** → Experience it working
-2. **Compare modes** → Discover smart defaults
-3. **Override defaults** → Understand independence
-4. **Deployment-aware methods** → Advanced techniques
-5. **Error handling** → Automatic exceptions
+1. **Use the logger** → Experience it working (5 standard levels)
+2. **Customize everything** → Directory, filename, level overrides
+3. **Discover PROD level** → zCLI's unique 6th level (silent console + DEBUG file)
+4. **Error handling** → Automatic exceptions
 
 ## Demos
 
 ### 1. Logger Basics (`1_logger_basics.py`)
-**Action:** Use the built-in logger in your application code.
+**Action:** Use the built-in logger with Production deployment.
 
 ```python
-zSpark = {"deployment": "Development"}
-z = zCLI(zSpark)
-
-z.logger.info("Application started")
-z.logger.warning("Rate limit approaching")
-z.logger.error("Connection failed")
-```
-
-**Discovery:** Logger works out of the box, no imports needed!
-
----
-
-### 2. Smart Defaults (`2_smart_defaults.py`) ⭐ NEW
-**Action:** Run the same code with Development vs Production.
-
-```python
-# Compares side-by-side:
-demo_with_deployment("Development")       # → INFO logging
-demo_with_deployment("Production")  # → ERROR logging
-```
-
-**Discovery:** Deployment mode automatically sets logger defaults!
-- Development → INFO (show details)
-- Production → ERROR (minimal output)
-
-**Key Insight:** They're separate concerns but work together intelligently.
-
----
-
-### 3. Logger Override (`3_logger_override.py`)
-**Action:** Override smart defaults when you need different behavior.
-
-```python
-# Production behavior + DEBUG logging (troubleshooting)
 zSpark = {
-    "deployment": "Production",
-    "logger": "DEBUG",
+    "deployment": "Production",  # Minimal console output
+    "logger": "INFO",  # But with INFO logging
 }
 z = zCLI(zSpark)
+
+z.logger.debug("DEBUG: Detailed diagnostics")
+z.logger.info("INFO: Application status")
+z.logger.warning("WARNING: Needs attention")
+z.logger.error("ERROR: Something failed")
+z.logger.critical("CRITICAL: System failure")
 ```
 
-**Discovery:** Deployment and logger are INDEPENDENT - mix them however you need!
+**Discovery:**
+- Five standard log levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
+- Logs appear in console AND file automatically
+- Two separate loggers: `z.logger` (app) + `z.logger.framework` (internal)
+- App logs: `zcli-app.log` in zCLI support folder
+- Framework logs: `zcli-framework.log` (automatic, transparent)
 
 ---
 
-### 4. Logger Methods (`4_logger_methods.py`)
-**Action:** Learn deployment-aware logging methods.
+### 2. Advanced Control (`2_logger_advanced.py`)
+**Action:** Take full control: custom directory and filename.
 
 ```python
-zSpark = {"deployment": "Production"}
+zSpark = {
+    "deployment": "Production",  # No banners/sysmsg
+    "title": "my-production-api",  # Filename: my-production-api.log
+    "logger": "INFO",  # Override Production default (ERROR)
+    "logger_path": "./logs",  # Directory: ./logs/
+}
 z = zCLI(zSpark)
-
-z.logger.dev("Cache hit rate: 87%")        # Hidden in Production
-z.logger.user("Processing 1,247 records")  # Always visible
+# Result: ./logs/my-production-api.log
 ```
 
-**Discovery:** These methods check deployment mode, not log level!
+**Discovery:**
+- `logger_path` = WHERE (directory)
+- `title` = WHAT (filename)
+- Result: `logger_path/title.log`
+- Clean separation of concerns
 
 ---
 
-### 5. zTraceback (`5_ztraceback.py`)
-**Action:** Enable automatic exception handling.
+### 3. Logger PROD (`3_logger_prod.py`) ⭐ NEW
+**Action:** Discover the 6th logger level (zCLI innovation).
 
 ```python
 zSpark = {
     "deployment": "Production",
-    "zTraceback": True,
+    "title": "my-production-api",  # Custom log filename
+    "logger": "PROD",  # The special 6th level!
+    "logger_path": "./logs",  # Custom directory
+    "zTraceback": True,  # Error handling enabled
 }
 z = zCLI(zSpark)
 
-result = handle_request()  # Errors launch interactive menu
+z.logger.info("API started")  # Silent in console, DEBUG in file
+z.logger.debug("Cache initialized")  # Also silent, but logged
 ```
 
-**Discovery:** No try/except needed - automatic error interception!
+**Discovery:**
+- PROD is NOT a standard Python log level (zCLI innovation)
+- Console: Completely silent (zero output)
+- File: DEBUG level (captures everything)
+- Perfect for: APIs, microservices, daemons
+- All 6 log messages captured, even DEBUG
+
+---
+
+### 4. zTraceback (`4_ztraceback.py`)
+**Action:** Enable automatic exception handling with clean UI.
+
+```python
+zSpark = {
+    "deployment": "Production",  # Clean zTraceback UI (no framework noise)
+    "title": "my-production-api",
+    "logger": "INFO",
+    "logger_path": "./logs",
+    "zTraceback": True,  # Enable automatic exception handling
+}
+z = zCLI(zSpark)
+
+# Nested calls to demonstrate traceback depth
+level_1()  # → level_2() → level_3() → ERROR (interactive menu launches!)
+```
+
+**Discovery:**
+- No try/except needed - automatic error interception!
+- Interactive menu with error details and full traceback
+- Production deployment keeps the UI clean
+- Perfect for development debugging
 
 ---
 
 ## Key Concepts
 
-- **z.logger** - Pre-configured Python logger (no imports)
-- **Smart defaults** - Deployment modes set intelligent logger defaults
-- **Separation of concerns** - Deployment (behavior) ≠ Logger (verbosity)
-- **Independent control** - Override either one as needed
-- **.dev() / .user()** - Deployment-aware logging methods
-- **zTraceback: True** - Automatic exception handling
+- **Dual logger architecture** - `z.logger` (your app) + `z.logger.framework` (internal zCLI)
+- **App log files** - Default: `{script_name}.log` or custom via `title` parameter
+- **Framework logs** - Always separate in `zcli-framework.log` (transparent, non-configurable)
+- **Six logger levels** - DEBUG, INFO, WARNING, ERROR, CRITICAL, **PROD** (zCLI innovation)
+- **PROD level** - Unique feature: silent console, DEBUG to file (for production services)
+- **Smart defaults** - Production→ERROR, Development/Testing→INFO (unless overridden)
+- **Separation of concerns** - `deployment` (framework behavior) ≠ `logger` (app logs) ≠ `logger_path` (where)
+- **Full customization** - `title` (filename), `logger_path` (directory), `logger` (level)
+- **zTraceback: True** - Automatic exception handling with interactive menu
+- **Clean debugging** - Production deployment + zTraceback = clean error UI (no framework noise)
 
 ## Pedagogical Approach
 
 **We teach by DOING first, EXPLAINING second:**
 
-1. ✅ Use it (Demo 1)
-2. ✅ Experience the relationship (Demo 2)
-3. ✅ Understand independence (Demo 3)
-4. ✅ Master advanced techniques (Demos 4-5)
+1. ✅ **Use it** (Demo 1) - Five standard levels, dual logger architecture
+2. ✅ **Customize it** (Demo 2) - Full control: `title`, `logger_path`, `logger` override
+3. ✅ **Discover PROD** (Demo 3) - zCLI's unique 6th level (silent console, DEBUG file)
+4. ✅ **Handle errors** (Demo 4) - Automatic exception handling with clean UI
 
-This follows zCLI's philosophy: Start with familiar patterns, gradually reveal the declarative power.
+**Progression:**
+- Demo 1: Learn the basics (5 levels, see them work)
+- Demo 2: Take control (customize where and what)
+- Demo 3: Discover innovation (PROD = silent production)
+- Demo 4: Debug automatically (no try/except needed)
+
+This follows zCLI's philosophy: Start with familiar patterns, gradually reveal the power.
 
 ## What's Next?
 

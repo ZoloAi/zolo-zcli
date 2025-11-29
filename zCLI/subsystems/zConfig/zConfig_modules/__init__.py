@@ -15,6 +15,7 @@ from .config_session import (
     SessionConfig,
     # Session dict keys (for consumers)
     SESSION_KEY_ZS_ID,
+    SESSION_KEY_TITLE,
     SESSION_KEY_ZSPACE,
     SESSION_KEY_ZVAFOLDER,
     SESSION_KEY_ZVAFILE,

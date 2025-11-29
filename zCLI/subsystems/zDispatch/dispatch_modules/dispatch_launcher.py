@@ -462,20 +462,20 @@ class CommandLauncher:
                         # Look up the key in the block
                         if zHorizontal in block_dict:
                             resolved_value = block_dict[zHorizontal]
-                            self.logger.info(
+                            self.logger.framework.debug(
                                 f"[{MODE_BIFROST}] Resolved key '{zHorizontal}' from zUI to: {resolved_value}"
                             )
                             # Recursively launch with the resolved value (could be dict with zFunc)
                             return self.launch(resolved_value, context=context, walker=walker)
                         else:
-                            self.logger.info(
+                            self.logger.framework.debug(
                                 f"[{MODE_BIFROST}] Key '{zHorizontal}' not found in zUI block '{zBlock}'"
                             )
                 except Exception as e:
                     self.logger.warning(f"[{MODE_BIFROST}] Error resolving key from zUI: {e}")
             
             # If we couldn't resolve it, return as display message
-            self.logger.info(f"Plain string in {MODE_BIFROST} mode - returning as message")
+            self.logger.framework.debug(f"Plain string in {MODE_BIFROST} mode - returning as message")
             return {KEY_MESSAGE: zHorizontal}
         
         # Terminal mode: Plain strings are displayed but return None for navigation
@@ -641,7 +641,7 @@ class CommandLauncher:
             if isinstance(target_block_name, str) and target_block_name.startswith("%"):
                 target_block_name = target_block_name[1:]
             
-            self.logger.info(f"zDelta navigation to block: {target_block_name}")
+            self.logger.framework.debug(f"zDelta navigation to block: {target_block_name}")
             
             # Get current zVaFile from session
             current_zVaFile = walker.session.get("zVaFile") or walker.zSpark_obj.get("zVaFile")
@@ -675,7 +675,7 @@ class CommandLauncher:
                 walker.session["zCrumbs"] = {}
             walker.session["zCrumbs"][full_crumb_path] = []
             
-            self.logger.info(f"zDelta: Created new breadcrumb scope: {full_crumb_path}")
+            self.logger.framework.debug(f"zDelta: Created new breadcrumb scope: {full_crumb_path}")
             
             # Get block keys
             zBlock_keys = list(target_block_dict.keys())
@@ -854,7 +854,7 @@ class CommandLauncher:
         if inner:
             req[KEY_MODEL] = inner
         
-        self.logger.info(f"Dispatching zRead (string) with request: {req}")
+        self.logger.framework.debug(f"Dispatching zRead (string) with request: {req}")
         # TODO: Week 6.16 (zData) - Verify data.handle_request() signature after refactor
         return self.zcli.data.handle_request(req, context=context)
 
@@ -897,7 +897,7 @@ class CommandLauncher:
         
         self._set_default_action(req, DEFAULT_ACTION_READ)
         
-        self.logger.info(f"Dispatching zRead (dict) with request: {req}")
+        self.logger.framework.debug(f"Dispatching zRead (dict) with request: {req}")
         # TODO: Week 6.16 (zData) - Verify data.handle_request() signature after refactor
         return self.zcli.data.handle_request(req, context=context)
 
@@ -939,7 +939,7 @@ class CommandLauncher:
         
         self._set_default_action(req, DEFAULT_ACTION_READ)
         
-        self.logger.info(f"Dispatching zData (dict) with request: {req}")
+        self.logger.framework.debug(f"Dispatching zData (dict) with request: {req}")
         # TODO: Week 6.16 (zData) - Verify data.handle_request() signature after refactor
         return self.zcli.data.handle_request(req, context=context)
 
@@ -1058,7 +1058,7 @@ class CommandLauncher:
             - Uses INFO level for all command detection logs
             - Avoids repeated "Detected" string in calling code
         """
-        self.logger.info(f"Detected {message}")
+        self.logger.framework.debug(f"Detected {message}")
 
     def _check_walker(self, walker: Optional[Any], command_name: str) -> bool:
         """

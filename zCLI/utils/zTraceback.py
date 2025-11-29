@@ -152,15 +152,17 @@ class zTraceback:
             # Get package directory to find UI file
             zcli_package_dir = Path(zCLI.__file__).parent
 
-            # Get parent's logger level to inherit
+            # Get parent's deployment mode and logger level to inherit
+            parent_deployment = self.zcli.config.get_environment('deployment') if self.zcli and hasattr(self.zcli, 'config') else 'Development'
             parent_logger_level = self.zcli.session.get('zLogger', 'INFO') if self.zcli and hasattr(self.zcli, 'session') else 'INFO'
 
-            # Create new zCLI instance for traceback UI (inherit logger level from parent)
+            # Create new zCLI instance for traceback UI (inherit deployment and logger from parent)
             traceback_cli = zCLI.zCLI({
                 "zSpace": str(zcli_package_dir),
                 "zVaFile": "@.UI.zUI.zcli_sys",
                 "zBlock": "Traceback",
-                "logger": parent_logger_level,  # Inherit parent's logger level
+                "deployment": parent_deployment,  # Inherit parent's deployment mode
+                "logger": parent_logger_level,     # Inherit parent's logger level
             })
 
             # Pass traceback handler to the new instance so UI can access exception

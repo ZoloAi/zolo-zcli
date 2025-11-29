@@ -288,7 +288,7 @@ class zNavigation:
             style=DISPLAY_STYLE_INIT
         )
 
-        self.logger.debug(LOG_MSG_READY)
+        self.logger.framework.debug(LOG_MSG_READY)
 
     # ========================================================================
     # Menu System Methods
