@@ -38,6 +38,7 @@ class zConfigPaths:
     workspace_dir: Optional[Path]
     _dotenv_path: Optional[Path]
     _log_level: Optional[str]
+    _is_production: bool
 
     def __init__(self, zSpark_obj: Optional[Dict[str, Any]] = None) -> None:
         """Initialize cross-platform path resolver.
@@ -56,9 +57,11 @@ class zConfigPaths:
         self.os_type = platform.system()  # 'Linux', 'Darwin', 'Windows'
         self.zSpark = zSpark_obj if isinstance(zSpark_obj, dict) else None
         
-        # Extract log level early for log-aware printing (before logger exists)
+        # Extract log level and deployment early for log-aware printing (before logger exists)
         from zCLI.utils import get_log_level_from_zspark
         self._log_level = get_log_level_from_zspark(zSpark_obj)
+        self._is_production = self._check_production_from_zspark(zSpark_obj)
+        self._is_testing = self._check_testing_from_zspark(zSpark_obj)
 
         # Validate OS type
         if self.os_type not in self.VALID_OS_TYPES:
@@ -81,22 +84,45 @@ class zConfigPaths:
             self._log_info(f"Dotenv path resolved: {self._dotenv_path}")
 
     # ═══════════════════════════════════════════════════════════
-    # Logging Helpers (DRY) - Log-level aware
+    # Logging Helpers (DRY) - Deployment-aware
     # ═══════════════════════════════════════════════════════════
+    
+    def _check_testing_from_zspark(self, zSpark_obj: Optional[Dict[str, Any]]) -> bool:
+        """Early check if zSpark indicates Testing deployment (for suppressing banners)."""
+        if not zSpark_obj:
+            return False
+        deployment = zSpark_obj.get("deployment", "")
+        return str(deployment).lower() in ["testing", "info"]
+    
+    def _check_production_from_zspark(self, zSpark_obj: Optional[Dict[str, Any]]) -> bool:
+        """Check if deployment mode is Production from zSpark (case-insensitive).
+        
+        This is called during __init__ before environment config exists,
+        so we check zSpark directly for deployment mode.
+        """
+        if not zSpark_obj or not isinstance(zSpark_obj, dict):
+            return False
+        
+        # Check for deployment in any case variation
+        for key in ["deployment", "Deployment", "DEPLOYMENT"]:
+            if key in zSpark_obj:
+                value = str(zSpark_obj[key]).lower()
+                return value == "production"
+        
+        return False
 
     def _log_info(self, message: str) -> None:
-        """Print info message with consistent formatting (suppressed in PROD mode)."""
-        from zCLI.utils import print_if_not_prod
-        print_if_not_prod(f"[zConfigPaths] {message}", self._log_level)
+        """Print info message (suppressed in Production deployment)."""
+        if not self._is_production:
+            print(f"[zConfigPaths] {message}")
 
     def _log_warning(self, message: str) -> None:
-        """Print warning message with consistent formatting (suppressed in PROD mode)."""
-        from zCLI.utils import print_if_not_prod
-        print_if_not_prod(f"{Colors.WARNING}[zConfigPaths] {message}{Colors.RESET}", self._log_level)
+        """Print warning message (suppressed in Production deployment)."""
+        if not self._is_production:
+            print(f"{Colors.WARNING}[zConfigPaths] {message}{Colors.RESET}")
 
     def _log_error(self, message: str) -> None:
-        """Print error message with consistent formatting (always shown, even in PROD mode)."""
-        # Errors should always be visible, even in PROD mode
+        """Print error message (always shown, even in Production)."""
         print(f"{Colors.ERROR}[zConfigPaths] ERROR: {message}{Colors.RESET}")
 
     # ═══════════════════════════════════════════════════════════

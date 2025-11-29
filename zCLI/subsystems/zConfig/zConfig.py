@@ -85,7 +85,8 @@ class zConfig:
         self.machine = MachineConfig(self.sys_paths)
 
         # Load environment config SECOND (deployment, runtime settings)
-        self.environment = EnvironmentConfig(self.sys_paths)
+        # Pass zSpark for Layer 5 overrides (highest priority)
+        self.environment = EnvironmentConfig(self.sys_paths, zSpark_obj)
 
         # Initialize session THIRD (uses machine and environment config for session creation)
         # Pass self so SessionConfig can call back to create_logger()
@@ -102,8 +103,8 @@ class zConfig:
         # The LoggerConfig class proxies all standard logging methods to the underlying Python logger
         zcli.logger = session_logger
 
-        # Log initial message with configured level
-        zcli.logger.info("Logger initialized at level: %s", session_logger.log_level)
+        # Log initial message with configured level (debug for internal init)
+        zcli.logger.debug("Logger initialized at level: %s", session_logger.log_level)
 
         # Initialize centralized traceback utility
         # Import inline to avoid circular dependency (zTraceback imports zConfig types)
@@ -120,9 +121,10 @@ class zConfig:
         # Initialize HTTP Server configuration (optional feature)
         self.http_server = HttpServerConfig(zSpark_obj or {}, zcli.logger)
 
-        # Print styled ready message (before zDisplay is available, log-level aware)
-        log_level = zcli.session.get('zLogger') if zcli.session else None
-        print_ready_message(READY_MESSAGE, color=DEFAULT_COLOR, log_level=log_level)
+        # Print styled ready message (before zDisplay is available, deployment-aware)
+        is_production = self.environment.is_production()
+        is_testing = self.environment.is_testing()
+        print_ready_message(READY_MESSAGE, color=DEFAULT_COLOR, is_production=is_production, is_testing=is_testing)
 
     # ═══════════════════════════════════════════════════════════
     # Configuration Access Methods
@@ -155,6 +157,16 @@ class zConfig:
         if key is None:
             return self.environment.get_all()
         return self.environment.get(key, default)
+
+    def is_production(self) -> bool:
+        """Check if running in Production deployment mode.
+        
+        Convenience method that delegates to environment.is_production().
+        
+        Returns:
+            bool: True if deployment is "Production", False otherwise
+        """
+        return self.environment.is_production()
 
     def create_logger(self, session_data: Dict[str, Any]) -> LoggerConfig:
         """Create logger instance with session data.

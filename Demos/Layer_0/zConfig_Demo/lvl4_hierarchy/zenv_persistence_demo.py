@@ -8,7 +8,7 @@ Goal:
     These values survive across projects and restarts.
 
 Run:
-    python3 Demos/Layer_0/zConfig_Demo/Level_3_hierarchy/zenv_persistence_demo.py
+    python3 Demos/Layer_0/zConfig_Demo/lvl4_hierarchy/zenv_persistence_demo.py
 
 What This Shows:
     - Layer 3: Environment Config (deployment context + custom fields)
@@ -22,7 +22,7 @@ Key Point:
 
 from zCLI import zCLI
 
-z = zCLI({"logger": "PROD"})  # Clean output
+z = zCLI({"deployment": "Production"})  # Clean output
 
 print("\n# Layer 3: Environment Config (persistent, deployment context)")
 print("# Location: ~/Library/Application Support/zolo-zcli/zConfigs/zConfig.environment.yaml\n")

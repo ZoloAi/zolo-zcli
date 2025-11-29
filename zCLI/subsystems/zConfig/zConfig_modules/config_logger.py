@@ -22,9 +22,11 @@ LOG_LEVEL_INFO = "INFO"
 LOG_LEVEL_WARNING = "WARNING"
 LOG_LEVEL_ERROR = "ERROR"
 LOG_LEVEL_CRITICAL = "CRITICAL"
-LOG_LEVEL_PROD = "PROD"  # Production mode: file logging only, no stdout
-VALID_LOG_LEVELS = (LOG_LEVEL_DEBUG, LOG_LEVEL_INFO, LOG_LEVEL_WARNING, LOG_LEVEL_ERROR, LOG_LEVEL_CRITICAL, LOG_LEVEL_PROD)
+VALID_LOG_LEVELS = (LOG_LEVEL_DEBUG, LOG_LEVEL_INFO, LOG_LEVEL_WARNING, LOG_LEVEL_ERROR, LOG_LEVEL_CRITICAL)
 DEFAULT_LOG_LEVEL = LOG_LEVEL_INFO
+
+# Deprecated - kept for backward compatibility
+LOG_LEVEL_PROD = "PROD"
 
 # Config Keys
 CONFIG_KEY_LOGGING = "logging"
@@ -92,8 +94,8 @@ class LoggerConfig:
         # Initialize Python logging
         self._setup_logging()
 
-        # Print ready message (log-level aware)
-        print_ready_message(READY_MESSAGE, color="CONFIG", log_level=self.log_level)
+        # Print ready message (deployment-aware)
+        print_ready_message(READY_MESSAGE, color="CONFIG", is_production=self.environment.is_production(), is_testing=self.environment.is_testing())
 
     def _normalize_log_level(self, level: Any) -> str:
         """Normalize log level to uppercase string."""
@@ -193,17 +195,19 @@ class LoggerConfig:
         Configures console and file handlers with custom formatters,
         using zPaths for log file location or falling back to platform defaults.
         
-        PROD Mode:
-            - Uses INFO level for logging
-            - File logging only (no console output)
-            - All logs go to .log file
+        Deployment vs Logger:
+            - Deployment controls banners/sysmsg (behavior)
+            - Logger level controls console+file verbosity (independent)
+            - Production deployment: File always enabled, console respects logger level
         """
         # Get logging configuration
         logging_config = self.environment.get(CONFIG_KEY_LOGGING, {})
         
-        # Determine if file logging is enabled (always enabled in PROD mode)
-        is_prod_mode = self.log_level == LOG_LEVEL_PROD
-        file_enabled = is_prod_mode or logging_config.get(CONFIG_KEY_FILE_ENABLED, DEFAULT_FILE_ENABLED)
+        # Check if running in Production deployment mode
+        is_production = self.environment.is_production()
+        
+        # File logging always enabled in Production, otherwise configurable
+        file_enabled = is_production or logging_config.get(CONFIG_KEY_FILE_ENABLED, DEFAULT_FILE_ENABLED)
         log_format = logging_config.get(CONFIG_KEY_FORMAT, DEFAULT_FORMAT)
         
         # Get log file path - use system support directory instead of CWD
@@ -225,8 +229,8 @@ class LoggerConfig:
                     logs_dir = home_path / ".local" / "share" / "zolo-zcli" / "logs"
                 file_path = str(logs_dir / LOG_FILENAME)
         
-        # For PROD mode, use INFO level internally but skip console output
-        actual_log_level = LOG_LEVEL_INFO if is_prod_mode else self.log_level
+        # Use configured log level directly (no special handling needed)
+        actual_log_level = self.log_level
         
         # Create logger
         self._logger = logging.getLogger(LOGGER_NAME)
@@ -266,14 +270,13 @@ class LoggerConfig:
                 datefmt='%Y-%m-%d %H:%M:%S'
             )
 
-        # Console handler (disabled in PROD mode)
-        if not is_prod_mode:
-            console_handler = logging.StreamHandler()
-            console_handler.setLevel(getattr(logging, actual_log_level))
-            console_handler.setFormatter(console_formatter)
-            self._logger.addHandler(console_handler)
+        # Console handler (always enabled, controlled by logger level)
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(getattr(logging, actual_log_level))
+        console_handler.setFormatter(console_formatter)
+        self._logger.addHandler(console_handler)
 
-        # File handler (always enabled in PROD mode, otherwise configurable)
+        # File handler (always enabled in Production, otherwise configurable)
         if file_enabled:
             try:
                 # Ensure log directory exists
@@ -287,8 +290,8 @@ class LoggerConfig:
                 file_handler.setFormatter(file_formatter)
                 self._logger.addHandler(file_handler)
                 
-                # Only print file logging message if not in PROD mode
-                if not is_prod_mode:
+                # Only print file logging message if not in Production
+                if not is_production:
                     print(f"{LOG_PREFIX} File logging enabled: {file_path}")
             except Exception as e:
                 print(f"{Colors.ERROR}{LOG_PREFIX} Failed to setup file logging: {e}{Colors.RESET}")
@@ -310,25 +313,27 @@ class LoggerConfig:
         Set logger level dynamically.
         
         Args:
-            level: Log level string ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL', 'PROD')
+            level: Log level string ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')
         
         Note:
-            PROD mode uses INFO level internally but disables console output.
-            Switching to PROD dynamically won't remove existing console handlers.
-            For full PROD mode behavior, set it during initialization.
+            To control production behaviors (silent console, no banners),
+            use deployment mode instead of log level.
         """
         level = self._normalize_log_level(level)
         
+        # Handle deprecated PROD level
+        if level == LOG_LEVEL_PROD:
+            print(f"{Colors.WARNING}{LOG_PREFIX} 'PROD' log level is deprecated. "
+                  f"Use deployment: 'Production' instead. Defaulting to INFO.{Colors.RESET}")
+            level = LOG_LEVEL_INFO
+        
         if level in VALID_LOG_LEVELS:
-            # For PROD mode, use INFO level internally
-            actual_level = LOG_LEVEL_INFO if level == LOG_LEVEL_PROD else level
-            
-            self._logger.setLevel(getattr(logging, actual_level))
+            self._logger.setLevel(getattr(logging, level))
             self.log_level = level
             
             # Update all handlers
             for handler in self._logger.handlers:
-                handler.setLevel(getattr(logging, actual_level))
+                handler.setLevel(getattr(logging, level))
         else:
             print(f"{Colors.WARNING}{LOG_PREFIX} Invalid log level: {level}{Colors.RESET}")
     
@@ -343,18 +348,20 @@ class LoggerConfig:
     
     def should_show_sysmsg(self) -> bool:
         """
-        Check if system messages should be displayed based on log level.
+        Check if system messages should be displayed based on deployment mode.
         
-        System messages (aesthetic "Ready" banners) are shown for all levels
-        EXCEPT PROD mode. These are visual indicators only, not logged to file.
+        System messages (aesthetic "Ready" banners) are shown in Development
+        but hidden in Testing and Production deployments. These are visual
+        indicators only, not logged to file.
         
-        Shown in: DEBUG, INFO, WARNING, ERROR, CRITICAL
-        Hidden in: PROD
+        Shown in: Development deployment
+        Hidden in: Testing, Production deployments
         
         Returns:
-            bool: True if sysmsg should be shown
+            bool: True if sysmsg should be shown (Development mode only)
         """
-        return self.log_level != LOG_LEVEL_PROD
+        # Suppress in both Production AND Testing (only show in Development)
+        return not (self.environment.is_production() or self.environment.is_testing())
     
     # ═══════════════════════════════════════════════════════════
     # Logging Interface
@@ -417,8 +424,7 @@ class LoggerConfig:
     
     def dev(self, message: str, *args: Any, **kwargs: Any) -> None:
         """
-        Development log - shown in INFO/DEBUG/WARNING/ERROR/CRITICAL modes,
-        but HIDDEN in PROD mode.
+        Development log - shown in development modes but hidden in Production.
         
         Use for development diagnostics and internal debugging messages that
         should not appear in production deployments.
@@ -432,10 +438,10 @@ class LoggerConfig:
             z.logger.dev("Cache hit rate: %d%%", 87)
             z.logger.dev("Development diagnostic message")
         """
-        if self.log_level == LOG_LEVEL_PROD:
-            return  # Suppressed in PROD mode
+        if self.environment.is_production():
+            return  # Suppressed in Production deployment
         
-        # Show in all other modes
+        # Show in development modes
         self._logger.info(message, *args, **kwargs)
     
     def user(self, message: str, *args: Any, **kwargs: Any) -> None:

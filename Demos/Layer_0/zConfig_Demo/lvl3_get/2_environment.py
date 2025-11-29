@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Level 1: zEnv Get
-=================
+Level 3: Get - Environment Configuration
+=========================================
 
 Goal:
     Surface the entire environment configuration (zConfig.environment) via
@@ -9,7 +9,7 @@ Goal:
     deployment, logging, network, and security settings.
 
 Run:
-    python3 Demos/Layer_0/zConfig_Demo/Level_1_Get/zenv_get.py
+    python3 Demos/Layer_0/zConfig_Demo/lvl3_get/2_environment.py
 """
 
 from zCLI import zCLI

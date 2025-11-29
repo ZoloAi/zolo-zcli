@@ -9,8 +9,8 @@ This level shows how zConfig resolves settings through **5 layers**, from system
 
 **Run them:**
 ```bash
-python3 Demos/Layer_0/zConfig_Demo/Level_3_hierarchy/zenv_demo.py
-python3 Demos/Layer_0/zConfig_Demo/Level_3_hierarchy/zenv_persistence_demo.py
+python3 Demos/Layer_0/zConfig_Demo/lvl4_hierarchy/zenv_demo.py
+python3 Demos/Layer_0/zConfig_Demo/lvl4_hierarchy/zenv_persistence_demo.py
 ```
 
 **Shared `.zEnv` file:**

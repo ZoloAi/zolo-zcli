@@ -115,9 +115,9 @@ class ServiceManager:
         self.logger = logger
         self.services: Dict[str, Any] = {}
 
-        self.logger.info(f"{LOG_PREFIX} {LOG_INIT}")
+        self.logger.debug(f"{LOG_PREFIX} {LOG_INIT}")
         self._register_services()
-        self.logger.info(
+        self.logger.debug(
             f"{LOG_PREFIX} {LOG_INIT_COMPLETE.format(count=len(self.services))}"
         )
 

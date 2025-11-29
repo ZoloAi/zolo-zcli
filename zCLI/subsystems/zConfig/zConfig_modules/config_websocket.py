@@ -69,13 +69,9 @@ class WebSocketConfig:
         # Get WebSocket configuration from environment (which uses hierarchy)
         self._load_websocket_config()
 
-        # Extract log level for log-aware printing
-        log_level = None
-        if hasattr(zcli, 'session') and zcli.session:
-            log_level = zcli.session.get('zLogger')
-
-        # Print ready message (log-level aware)
-        print_ready_message(READY_MESSAGE, color="CONFIG", log_level=log_level)
+        # Print ready message (deployment-aware)
+        # Use environment.is_production() directly since we have the environment object
+        print_ready_message(READY_MESSAGE, color="CONFIG", is_production=self.environment.is_production(), is_testing=self.environment.is_testing())
 
     def _load_websocket_config(self) -> None:
         """Load WebSocket configuration following hierarchy: zSpark > env > config file > defaults."""

@@ -109,25 +109,24 @@ zMachine:
 # Logging Helpers
 # ═══════════════════════════════════════════════════════════
 
-def _log_info(message: str, log_level: Optional[str] = None) -> None:
-    """Print info message with consistent formatting (log-level aware)."""
-    from zCLI.utils import print_if_not_prod
-    print_if_not_prod(f"{LOG_PREFIX} {message}", log_level)
+def _log_info(message: str, log_level: Optional[str] = None, is_production: bool = False) -> None:
+    """Print info message (suppressed in Production deployment)."""
+    if not is_production:
+        print(f"{LOG_PREFIX} {message}")
 
-def _log_warning(message: str, log_level: Optional[str] = None) -> None:
-    """Print warning message with color (log-level aware)."""
-    from zCLI.utils import print_if_not_prod
-    print_if_not_prod(f"{Colors.WARNING}{LOG_PREFIX} {message}{Colors.RESET}", log_level)
+def _log_warning(message: str, log_level: Optional[str] = None, is_production: bool = False) -> None:
+    """Print warning message (suppressed in Production deployment)."""
+    if not is_production:
+        print(f"{Colors.WARNING}{LOG_PREFIX} {message}{Colors.RESET}")
 
-def _log_error(message: str, log_level: Optional[str] = None) -> None:
-    """Print error message with color (always shown, even in PROD mode)."""
-    # Errors should always be visible
+def _log_error(message: str, log_level: Optional[str] = None, is_production: bool = False) -> None:
+    """Print error message (always shown, even in Production)."""
     print(f"{Colors.ERROR}{LOG_PREFIX} {message}{Colors.RESET}")
 
-def _log_config(message: str, log_level: Optional[str] = None) -> None:
-    """Print config message with color (log-level aware)."""
-    from zCLI.utils import print_if_not_prod
-    print_if_not_prod(f"{Colors.CONFIG}{LOG_PREFIX} {message}{Colors.RESET}", log_level)
+def _log_config(message: str, log_level: Optional[str] = None, is_production: bool = False) -> None:
+    """Print config message (suppressed in Production deployment)."""
+    if not is_production:
+        print(f"{Colors.CONFIG}{LOG_PREFIX} {message}{Colors.RESET}")
 
 
 def _safe_getcwd() -> str:
@@ -140,7 +139,7 @@ def _safe_getcwd() -> str:
         return str(Path.home())
 
 
-def detect_browser(log_level: Optional[str] = None) -> str:
+def detect_browser(log_level: Optional[str] = None, is_production: bool = False) -> str:
     """Detect default browser via env var or platform-specific methods."""
     browser = os.getenv("BROWSER")  # Check env var first
     if browser:
@@ -148,9 +147,9 @@ def detect_browser(log_level: Optional[str] = None) -> str:
 
     system = platform.system()
     if system == "Darwin":
-        browser = _detect_macos_browser(log_level)
+        browser = _detect_macos_browser(log_level, is_production)
     elif system == "Linux":
-        browser = _detect_linux_browser(log_level)
+        browser = _detect_linux_browser(log_level, is_production)
     elif system == "Windows":
         browser = DEFAULT_WINDOWS_BROWSER
     else:
@@ -159,7 +158,7 @@ def detect_browser(log_level: Optional[str] = None) -> str:
     return browser
 
 
-def _detect_macos_browser(log_level: Optional[str] = None) -> str:
+def _detect_macos_browser(log_level: Optional[str] = None, is_production: bool = False) -> str:
     """Query macOS LaunchServices for default browser, fallback to Safari."""
     try:
         # Check LaunchServices database for http handler
@@ -174,15 +173,15 @@ def _detect_macos_browser(log_level: Optional[str] = None) -> str:
         output_lower = result.stdout.lower()
         for key, name in BROWSER_MAPPING.items():
             if key in output_lower:
-                _log_info(f"Found default browser via LaunchServices: {name}", log_level)
+                _log_info(f"Found default browser via LaunchServices: {name}", log_level, is_production)
                 return name
 
     except Exception as e:
-        _log_warning(f"Could not query LaunchServices: {e}", log_level)
+        _log_warning(f"Could not query LaunchServices: {e}", log_level, is_production)
 
     return DEFAULT_MACOS_BROWSER
 
-def _detect_linux_browser(log_level: Optional[str] = None) -> str:
+def _detect_linux_browser(log_level: Optional[str] = None, is_production: bool = False) -> str:
     """Query xdg-settings or PATH for default browser, fallback to firefox."""
     # Try xdg-settings first
     try:
@@ -402,41 +401,41 @@ def get_ide_launch_command(ide_name: str) -> tuple:
     return (None, [])
 
 
-def detect_ide(log_level: Optional[str] = None) -> str:
+def detect_ide(log_level: Optional[str] = None, is_production: bool = False) -> str:
     """Detect IDE/editor via env vars, PATH search (modern→classic→simple), fallback to nano."""
     # Check IDE/editor env vars
     for var in IDE_ENV_VARS:
         ide_env = os.getenv(var)
         if ide_env:
-            _log_config(f"IDE from env var {var}: {ide_env}", log_level)
+            _log_config(f"IDE from env var {var}: {ide_env}", log_level, is_production)
             return ide_env
 
     # Check for modern GUI IDEs (prioritized by popularity/modernity)
     for ide in MODERN_IDES:
         if shutil.which(ide):
-            _log_info(f"Found modern IDE: {ide}", log_level)
+            _log_info(f"Found modern IDE: {ide}", log_level, is_production)
             return ide
 
     # Check for classic IDEs
     for ide in CLASSIC_IDES:
         if shutil.which(ide):
-            _log_config(f"Found classic IDE: {ide}", log_level)
+            _log_config(f"Found classic IDE: {ide}", log_level, is_production)
             return ide
 
     # macOS-specific: Check for Xcode
     if platform.system() == "Darwin":
         if shutil.which("xed"):  # Xcode command-line tool
-            _log_config("Found Xcode (xed)", log_level)
+            _log_config("Found Xcode (xed)", log_level, is_production)
             return "xed"
 
     # Fallback to simple editors
     for editor in SIMPLE_EDITORS:
         if shutil.which(editor):
-            _log_config(f"Falling back to simple editor: {editor}", log_level)
+            _log_config(f"Falling back to simple editor: {editor}", log_level, is_production)
             return editor
 
     # Final fallback
-    _log_config(f"Using final fallback: {FALLBACK_EDITOR}")
+    _log_config(f"Using final fallback: {FALLBACK_EDITOR}", is_production=is_production)
     return FALLBACK_EDITOR
 
 def detect_memory_gb() -> Optional[int]:
@@ -552,6 +551,7 @@ def create_user_machine_config(path: Path, machine: Dict[str, Any]) -> None:
         )
 
         path.write_text(content, encoding="utf-8")
+        # Note: Always show config creation messages (not suppressed by production mode)
         _log_config(f"Created user machine config: {path}")
         _log_config("You can edit this file to customize tool preferences")
 
@@ -559,10 +559,10 @@ def create_user_machine_config(path: Path, machine: Dict[str, Any]) -> None:
         _log_error(f"Failed to create user machine config: {e}")
 
 
-def auto_detect_machine(log_level: Optional[str] = None) -> Dict[str, Any]:
+def auto_detect_machine(log_level: Optional[str] = None, is_production: bool = False) -> Dict[str, Any]:
     """Auto-detect machine identity, Python runtime, tools, and capabilities."""
-    from zCLI.utils import print_if_not_prod
-    print_if_not_prod("[MachineConfig] Auto-detecting machine information...", log_level)
+    if not is_production:
+        print("[MachineConfig] Auto-detecting machine information...")
 
     # Detect zCLI installation info
     zcli_info = detect_zcli_install_info()
@@ -592,8 +592,8 @@ def auto_detect_machine(log_level: Optional[str] = None) -> Dict[str, Any]:
         "zcli_install_type": zcli_info["zcli_install_type"],  # editable vs standard
 
         # User tools (system defaults, user can override)
-        "browser": detect_browser(log_level),
-        "ide": detect_ide(log_level),
+        "browser": detect_browser(log_level, is_production),
+        "ide": detect_ide(log_level, is_production),
         "terminal": os.getenv("TERM", "unknown"),
         "shell": os.getenv("SHELL", DEFAULT_SHELL),
         "lang": os.getenv("LANG", "unknown"),       # System language
@@ -608,17 +608,9 @@ def auto_detect_machine(log_level: Optional[str] = None) -> Dict[str, Any]:
         "path": os.getenv("PATH", ""),             # System PATH
     }
 
-    print_if_not_prod(
-        f"[MachineConfig] Identity: {machine['hostname']} ({machine['username']}) on {machine['os_name']}",
-        log_level
-    )
-    print_if_not_prod(
-        f"[MachineConfig] System: {machine['processor']}, {machine['cpu_cores']} cores, {machine['memory_gb']}GB RAM",
-        log_level
-    )
-    print_if_not_prod(
-        f"[MachineConfig] Python: {machine['python_impl']} {machine['python_version']} on {machine['architecture']}",
-        log_level
-    )
+    if not is_production:
+        print(f"[MachineConfig] Identity: {machine['hostname']} ({machine['username']}) on {machine['os_name']}")
+        print(f"[MachineConfig] System: {machine['processor']}, {machine['cpu_cores']} cores, {machine['memory_gb']}GB RAM")
+        print(f"[MachineConfig] Python: {machine['python_impl']} {machine['python_version']} on {machine['architecture']}")
 
     return machine

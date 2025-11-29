@@ -1,14 +1,11 @@
 #!/usr/bin/env python3
-"""
-Level 2d: Automatic zTraceback Interception
-============================================
+"""Level 2: zTraceback - Automatic Exception Handling
 
-Goal:
-    Show how zTraceback: True enables AUTOMATIC exception handling.
-    No try/except needed - errors are caught automatically!
+Enable automatic exception handling with zTraceback: True
+No try/except needed - errors launch an interactive menu automatically!
 
 Run:
-    python3 Demos/Layer_0/zConfig_Demo/Level_2_zSettings/ztraceback_demo.py
+    python3 Demos/Layer_0/zConfig_Demo/lvl2_settings/5_ztraceback.py
 
 What Happens:
     1. zTraceback: True installs sys.excepthook
@@ -49,12 +46,13 @@ def handle_request():
 
 # Enable automatic traceback via zSpark
 z = zCLI({
-    "logger": "PROD",       # Keep console clean
-    "zTraceback": True,     # Enable automatic exception handling
+    "deployment": "Production",  # Keep console clean (auto-defaults to ERROR logging)
+    "zTraceback": True,          # Enable automatic exception handling
 })
 
 print("\n# Session configuration:")
 print(f"zTraceback : {z.session.get('zTraceback')}")
+print(f"Deployment : {z.config.get_environment('deployment')}")
 print(f"zLogger    : {z.session.get('zLogger')}")
 
 print("\n# Triggering error (will be caught automatically)...")

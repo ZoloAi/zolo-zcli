@@ -18,7 +18,8 @@ CATEGORY_USER_PREFS = "User Preferences (Editable)"
 CATEGORY_SYSTEM_INFO = "System Info (Auto-detected)"
 
 # Valid Configuration Values
-VALID_DEPLOYMENTS = ["Debug", "Info", "Production"]
+VALID_DEPLOYMENTS = ["Development", "Testing", "Production"]
+DEPRECATED_DEPLOYMENTS = ["Debug", "Info"]  # Mapped to Development/Testing
 VALID_ROLES = ["development", "production", "testing", "staging"]
 VALID_LOG_LEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 

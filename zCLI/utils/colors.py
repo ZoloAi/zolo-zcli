@@ -6,7 +6,8 @@ from typing import Optional, Dict, Any
 # ═══════════════════════════════════════════════════════════
 # Log Level Constants
 # ═══════════════════════════════════════════════════════════
-LOG_LEVEL_PROD = "PROD"  # Production mode: file logging only, no stdout
+# Deprecated - PROD is no longer a log level, use deployment mode instead
+LOG_LEVEL_PROD = "PROD"
 LOG_LEVEL_KEY_ALIASES = ("logger", "log_level", "logLevel", "zLogger")
 
 # ═══════════════════════════════════════════════════════════
@@ -61,21 +62,70 @@ def print_if_not_prod(message: str, log_level: Optional[str] = None) -> None:
     Args:
         message: Message to print
         log_level: Log level string (if PROD, suppresses output)
+    
+    Note:
+        Deprecated - use deployment mode checking instead.
+        This function will be updated to check deployment in a future release.
     """
     if not should_suppress_init_prints(log_level):
         print(message)
 
-def print_ready_message(label: str, color: str = "CONFIG", base_width: int = 60, char: str = "═", log_level: Optional[str] = None) -> None:
+def print_if_not_production(message: str, zcli_instance: Any = None, deployment: Optional[str] = None) -> None:
+    """
+    Print message only if in Development deployment mode (not Testing or Production).
+    
+    Testing and Production modes suppress system messages and banners,
+    while Development mode shows everything for local debugging.
+    
+    Args:
+        message: Message to print
+        zcli_instance: Optional zCLI instance to check deployment from
+        deployment: Optional deployment string to check directly
+    
+    Example:
+        print_if_not_production("Debug info", zcli_instance=z)
+        print_if_not_production("Loading...", deployment="Development")
+    """
+    # If deployment string provided directly, check it
+    if deployment:
+        # Only show in Development mode (suppress in Testing and Production)
+        if deployment.lower() == "development":
+            print(message)
+        return
+    
+    # If zCLI instance provided, check its deployment mode
+    if zcli_instance and hasattr(zcli_instance, 'config'):
+        # Only show in Development mode
+        if zcli_instance.config.is_development() and not zcli_instance.config.is_production():
+            deployment_mode = zcli_instance.config.get_environment('deployment', '').lower()
+            if deployment_mode == "development":
+                print(message)
+        return
+    
+    # Fallback: print if neither provided (dev safety)
+    print(message)
+
+def print_ready_message(label: str, color: str = "CONFIG", base_width: int = 60, char: str = "═", log_level: Optional[str] = None, is_production: bool = False, is_testing: bool = False) -> None:
     """
     Print styled 'Ready' message for subsystems.
+    
+    Suppressed in Production and Testing modes (only shown in Development).
     
     Args:
         label: Message label
         color: Color code name from Colors class
         base_width: Total width of the message line
         char: Character to use for padding
-        log_level: Optional log level (suppresses output if PROD)
+        log_level: Optional log level (suppresses output if PROD) - deprecated
+        is_production: If True, suppresses output (Production deployment)
+        is_testing: If True, suppresses output (Testing deployment)
     """
+    # Check deployment mode first (highest priority)
+    # Suppress in both Production AND Testing modes
+    if is_production or is_testing:
+        return
+    
+    # Fallback to old PROD log level check (for backward compatibility)
     if should_suppress_init_prints(log_level):
         return
         

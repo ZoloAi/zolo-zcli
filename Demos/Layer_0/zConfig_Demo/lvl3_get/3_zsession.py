@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
-Level 1: zSession Get
-==============================
+Level 3: Get - Session State
+=============================
 
 Goal:
     Show key zSession values that are influenced by zSpark, so you can
     copy/paste these accessors into your own code.
 
 Run:
-    python3 Demos/Layer_0/zConfig_Demo/Level_1_Get/zsession_get.py
+    python3 Demos/Layer_0/zConfig_Demo/lvl3_get/3_zsession.py
 """
 
 from zCLI import zCLI

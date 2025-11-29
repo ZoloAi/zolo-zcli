@@ -204,8 +204,8 @@ class SessionConfig:
         from zCLI.utils import get_log_level_from_zspark
         self._log_level = get_log_level_from_zspark(zSpark_obj)
 
-        # Print ready message (log-level aware)
-        print_ready_message(READY_MESSAGE, color=COLOR_CONFIG, log_level=self._log_level)
+        # Print ready message (deployment-aware)
+        print_ready_message(READY_MESSAGE, color=COLOR_CONFIG, is_production=self.environment.is_production(), is_testing=self.environment.is_testing())
 
     def generate_id(self, prefix: str = DEFAULT_SESSION_PREFIX) -> str:
         """Generate random session ID with prefix (default: 'zS') -> 'zS_a1b2c3d4'."""
@@ -330,46 +330,132 @@ class SessionConfig:
     def _detect_logger_level(self) -> str:
         """
         Detect logger level following hierarchy:
-        1. zSpark override (if provided)
+        1. zSpark override (if provided) - EXPLICIT user choice
         2. Virtual environment variable
         3. System environment variable
         4. zConfig.zEnvironment.yaml file
-        5. Default to INFO
+        5. Default (deployment-aware: Production→ERROR, Debug/Info→INFO)
+        
+        Note:
+            Automatically migrates deprecated "PROD" log level to Production deployment.
+            Production deployment defaults to ERROR logging for minimal output.
         
         Returns:
-            Logger level string (e.g., "INFO", "DEBUG", "WARNING", "PROD")
+            Logger level string (e.g., "INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL")
         """
         from zCLI.utils import print_if_not_prod
+        import warnings
         
-        # 1. Check zSpark for logger setting
+        # Track if logger was explicitly set (for smart Production defaults)
+        explicit_logger = False
+        
+        # 1. Check zSpark for logger setting (EXPLICIT override)
         zSpark_logger = self._get_zSpark_value(ZSPARK_KEY_LOGGER)
         if zSpark_logger:
+            explicit_logger = True
             level = str(zSpark_logger).upper()
-            print_if_not_prod(f"{LOG_PREFIX} Logger level from zSpark: {level}", level)
+            
+            # Handle deprecated PROD level - migrate to deployment mode
+            if level == "PROD":
+                warnings.warn(
+                    "logger: 'PROD' is deprecated. Use deployment: 'Production' instead. "
+                    "Automatically migrating to deployment='Production' and logger='INFO'.",
+                    DeprecationWarning,
+                    stacklevel=2
+                )
+                # Set deployment to Production in environment config
+                self.environment.env["deployment"] = "Production"
+                level = "INFO"
+                # Only print if not in Production (deployment-aware)
+                if not self.environment.is_production():
+                    print(f"{LOG_PREFIX} Migrated PROD logger to Production deployment with INFO level")
+            else:
+                # Only print if not in Production (deployment-aware)
+                if not self.environment.is_production():
+                    print(f"{LOG_PREFIX} Logger level from zSpark: {level}")
+            
             return level
 
-        # 2. Check virtual environment variable (if in venv)
+        # 2. Check virtual environment variable (if in venv) - EXPLICIT override
         if self.environment.is_in_venv():
             venv_logger = self.environment.get_env_var(ENV_VAR_LOGGER)
             if venv_logger:
+                explicit_logger = True
                 level = str(venv_logger).upper()
-                print_if_not_prod(f"{LOG_PREFIX} Logger level from virtual env: {level}", level)
+                
+                # Handle deprecated PROD level
+                if level == "PROD":
+                    warnings.warn(
+                        "ZOLO_LOGGER='PROD' is deprecated. Use ZOLO_DEPLOYMENT='Production' instead.",
+                        DeprecationWarning,
+                        stacklevel=2
+                    )
+                    self.environment.env["deployment"] = "Production"
+                    level = "INFO"
+                
+                # Only print if not in Production
+                if not self.environment.is_production():
+                    print(f"{LOG_PREFIX} Logger level from virtual env: {level}")
                 return level
 
-        # 3. Check system environment variable
+        # 3. Check system environment variable - EXPLICIT override
         system_logger = self.environment.get_env_var(ENV_VAR_LOGGER)
         if system_logger:
+            explicit_logger = True
             level = str(system_logger).upper()
-            print_if_not_prod(f"{LOG_PREFIX} Logger level from system env: {level}", level)
+            
+            # Handle deprecated PROD level
+            if level == "PROD":
+                warnings.warn(
+                    "ZOLO_LOGGER='PROD' is deprecated. Use ZOLO_DEPLOYMENT='Production' instead.",
+                    DeprecationWarning,
+                    stacklevel=2
+                )
+                self.environment.env["deployment"] = "Production"
+                level = "INFO"
+            
+            # Only print if not in Production
+            if not self.environment.is_production():
+                print(f"{LOG_PREFIX} Logger level from system env: {level}")
             return level
 
-        # 4. Check zConfig.zEnvironment.yaml file
+        # 4. Check zConfig.zEnvironment.yaml file (NOT explicit if Production)
         logging_config = self.environment.get(CONFIG_KEY_LOGGING, {})
         if isinstance(logging_config, dict):
-            level = logging_config.get(CONFIG_KEY_LEVEL, DEFAULT_LOG_LEVEL)
-            print_if_not_prod(f"{LOG_PREFIX} Logger level from zEnvironment config: {level}", level)
-            return level
+            level = logging_config.get(CONFIG_KEY_LEVEL, None)
+            
+            if level:
+                # Handle deprecated PROD level
+                if str(level).upper() == "PROD":
+                    warnings.warn(
+                        "logging.level: 'PROD' in zEnvironment.yaml is deprecated. "
+                        "Use deployment: 'Production' instead.",
+                        DeprecationWarning,
+                        stacklevel=2
+                    )
+                    self.environment.env["deployment"] = "Production"
+                    level = "INFO"
+                
+                # Smart default: If Production deployment and config has INFO (default),
+                # treat it as implicit and use ERROR instead for minimal logging
+                if self.environment.is_production() and str(level).upper() == "INFO" and not explicit_logger:
+                    level = "ERROR"
+                    if not self.environment.is_production():
+                        print(f"{LOG_PREFIX} Production mode: Logger defaulting to ERROR (override with explicit logger setting)")
+                else:
+                    # Only print if not in Production
+                    if not self.environment.is_production():
+                        print(f"{LOG_PREFIX} Logger level from zEnvironment config: {level}")
+                
+                return level
 
-        # 5. Default fallback
-        print_if_not_prod(f"{LOG_PREFIX} Logger level defaulting to: {DEFAULT_LOG_LEVEL}", DEFAULT_LOG_LEVEL)
-        return DEFAULT_LOG_LEVEL
+        # 5. Default fallback (deployment-aware)
+        # Production deployment defaults to ERROR, others default to INFO
+        if self.environment.is_production():
+            default = "ERROR"
+            # Silent in Production, no need to print
+        else:
+            default = DEFAULT_LOG_LEVEL
+            print(f"{LOG_PREFIX} Logger level defaulting to: {default}")
+        
+        return default

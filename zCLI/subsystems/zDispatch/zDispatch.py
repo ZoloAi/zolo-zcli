@@ -213,7 +213,7 @@ class zDispatch:
         # Display ready message using zDisplay
         self._display_message(self.zcli.display, MSG_READY, INDENT_ROOT)
 
-        self.logger.info(LOG_MSG_READY)
+        self.logger.debug(LOG_MSG_READY)
 
     # ========================================================================
     # PUBLIC METHODS - Main Entry Point

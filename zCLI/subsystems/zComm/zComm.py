@@ -291,12 +291,13 @@ class zComm:
         # Initialize zBifrost server if in zBifrost mode
         self._bifrost_mgr.auto_start()
 
-        # Print styled ready message (before zDisplay is available, log-level aware)
-        log_level = self.session.get('zLogger') if self.session else None
-        print_ready_message(MSG_READY, color=COLOR_ZCOMM, log_level=log_level)
+        # Print styled ready message (before zDisplay is available, deployment-aware)
+        is_production = zcli.config.is_production() if hasattr(zcli, 'config') else False
+        is_testing = zcli.config.environment.is_testing() if hasattr(zcli, 'config') and hasattr(zcli.config, 'environment') else False
+        print_ready_message(MSG_READY, color=COLOR_ZCOMM, is_production=is_production, is_testing=is_testing)
 
-        # Log ready (display not available yet as zComm is in Layer 0)
-        self.logger.info(MSG_SUBSYSTEM_READY)
+        # Log ready (debug for internal init)
+        self.logger.debug(MSG_SUBSYSTEM_READY)
 
     # ═══════════════════════════════════════════════════════════
     # zBifrost Management - Delegated to BifrostManager

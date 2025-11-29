@@ -1,5 +1,14 @@
 #!/usr/bin/env python3
-"""Show all zMachine values with z.config.get_machine() for copy-paste use."""
+"""
+Level 3: Get - Machine Configuration
+=====================================
+
+Goal:
+    Show all zMachine values with z.config.get_machine() for copy-paste use.
+
+Run:
+    python3 Demos/Layer_0/zConfig_Demo/lvl3_get/1_zmachine.py
+"""
 
 from zCLI import zCLI
 

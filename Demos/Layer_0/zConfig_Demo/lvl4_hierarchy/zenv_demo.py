@@ -8,7 +8,7 @@ Goal:
     No python-dotenv needed - it's built in!
 
 Run:
-    python3 Demos/Layer_0/zConfig_Demo/Level_3_hierarchy/zenv_demo.py
+    python3 Demos/Layer_0/zConfig_Demo/lvl4_hierarchy/zenv_demo.py
 
 What This Shows:
     - zConfig looks for .zEnv (or .env) in your workspace
@@ -23,7 +23,7 @@ Key Point:
 from zCLI import zCLI
 
 # Initialize zCLI - automatically loads .zEnv from workspace
-z = zCLI({"logger": "PROD"})  # Clean console output
+z = zCLI({"deployment": "Production"})  # Clean console output
 
 print("\n# Reading from .zEnv (workspace secrets):\n")
 

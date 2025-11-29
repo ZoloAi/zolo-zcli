@@ -398,7 +398,7 @@ class zWalker(zWizard):
         # Display ready message using modern zDisplay
         self.display.zDeclare(MSG_WALKER_READY, color=COLOR_MAIN, indent=INDENT_NORMAL, style=STYLE_FULL)
         
-        self.logger.info(MSG_WALKER_INIT)
+        self.logger.debug(MSG_WALKER_INIT)
 
     def _configure_logger(self) -> None:
         """

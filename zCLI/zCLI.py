@@ -318,7 +318,7 @@ class zCLI:
         # is fully isolated. Auth DB lazy-loads on first save_session() or grant_permission().
         # This preserves the "no global state" principle - the secret sauce of zCLI architecture.
 
-        self.logger.info(LOG_INIT_COMPLETE, self.session.get(SESSION_KEY_ZMODE))
+        self.logger.debug(LOG_INIT_COMPLETE, self.session.get(SESSION_KEY_ZMODE))
 
     def _load_plugins(self) -> None:
         """
