@@ -256,7 +256,7 @@ class Signals:
         else:
             # Fallback if BasicOutputs not set (initialization race condition)
             indent_str = self._build_indent(indent)
-            self.zPrimitives.write_line(f"{indent_str}{content}")
+            self.zPrimitives.line(f"{indent_str}{content}")
 
     def _build_indent(self, indent: int) -> str:
         """Build indentation string (DRY helper).
@@ -475,8 +475,8 @@ class Signals:
         else:
             # Fallback if BasicOutputs not set (initialization race condition)
             indent_str = self._build_indent(indent)
-            self.zPrimitives.write_line(EMPTY_LINE)
-            self.zPrimitives.write_line(f"{indent_str}{marker_line}")
-            self.zPrimitives.write_line(f"{indent_str}{colored_label}")
-            self.zPrimitives.write_line(f"{indent_str}{marker_line}")
-            self.zPrimitives.write_line(EMPTY_LINE)
+            self.zPrimitives.line(EMPTY_LINE)
+            self.zPrimitives.line(f"{indent_str}{marker_line}")
+            self.zPrimitives.line(f"{indent_str}{colored_label}")
+            self.zPrimitives.line(f"{indent_str}{marker_line}")
+            self.zPrimitives.line(EMPTY_LINE)

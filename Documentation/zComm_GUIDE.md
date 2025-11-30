@@ -2,7 +2,7 @@
   <div style="display:flex; justify-content:space-between; align-items:center;">
     <span><a style="color:#FFFBCC;" href="zConfig_GUIDE.md">← Back to zConfig</a></span>
     <span><a style="color:#FFFBCC;" href="../README.md">Home</a></span>
-    <span><a style="color:#FFFBCC;" href="zBifrost_GUIDE.md">Next: zBifrost Guide →</a></span>
+    <span><a style="color:#FFFBCC;" href="zDisplay_GUIDE.md">Next: zDisplay Guide →</a></span>
   </div>
   <div style="display: flex; justify-content: center; align-items: center; margin-top: 0.85rem;">
     <h1 style="margin: 0; font-size: 2.15rem; font-weight: 700;">
@@ -275,35 +275,36 @@ You've learned zComm's **<span style="color:#8FBE6D">client-side communication c
 
 **<span style="color:#F8961F">8 micro-step demos</span>** guide you from "Hello zComm" to programmatic service lifecycle management.
 
-## What's Next: zBifrost WebSocket Server
+## You've Mastered Layer-0 Communication
 
-zComm includes **<span style="color:#8FBE6D">zBifrost</span>**, a production-ready **<span style="color:#F8961F">WebSocket server</span>** for real-time, bidirectional communication between terminal and web applications.
+You now have the complete **<span style="color:#F8961F">client-side communication toolkit</span>**:
+- ✅ WebSocket clients for real-time connections
+- ✅ HTTP requests (GET, POST, PUT, PATCH, DELETE)
+- ✅ Service detection and lifecycle management
+- ✅ Port checking and network utilities
 
-**Why a Separate Guide?**
+**<span style="color:#8FBE6D">zComm gives you the tools to connect to anything.</span>**
 
-zBifrost is architecturally part of zComm but has **<span style="color:#F8961F">distinct complexity</span>**:
-- **Client/Server Architecture** - Requires understanding WebSocket connections
-- **Authentication System** - Three-tier auth (zSession, app-level, dual-mode)
-- **JavaScript Client** - Frontend integration with `BifrostClient`
-- **Cache Management** - User/app/role isolation for security
-- **CRUD Operations** - Real-time data flow patterns
+---
 
-Following **<span style="color:#8FBE6D">micro-step progression</span>** and **<span style="color:#F8961F">separation of concerns</span>**, zBifrost has its own comprehensive guide to avoid making this guide monolithic.
+### Two Paths Forward
 
-**<span style="color:#8FBE6D">Continue your journey:</span>** [zBifrost Guide →](zBifrost_GUIDE.md)
+**<span style="color:#8FBE6D">Path 1: Continue the Layer Journey</span>**
 
-Start a WebSocket server in one line:
+zComm is **<span style="color:#F8961F">Layer 0</span>**—infrastructure that powers everything else. The natural progression continues with **<span style="color:#8FBE6D">Layer 1 subsystems</span>** like zDisplay (rendering), zDialog (user input), and zDispatch (event handling). These build on zComm's foundation.
+
+**<span style="color:#8FBE6D">Path 2: Advanced Real-Time Communication</span>**
+
+Need bidirectional Terminal ↔ Web communication? **<span style="color:#8FBE6D">zBifrost</span>** is zComm's WebSocket **server** counterpart with authentication, caching, and CRUD operations. It has its own [comprehensive guide](zBifrost_GUIDE.md) because of its distinct client/server architecture.
+
 ```python
 z = zCLI({"zMode": "zBifrost"})
-z.walker.run()  # ws://localhost:56891
+z.walker.run()  # One-line WebSocket server
 ```
 
-Connect from JavaScript:
-```javascript
-const client = new BifrostClient('ws://localhost:56891');
-await client.connect();
-const users = await client.read('users');
-```
+**<span style="color:#F8961F">Note:</span>** zBifrost demos grow alongside the subsystems—showcasing real-time integration with zDisplay, zAuth, zData, and more as complexity increases. It's a **parallel journey** you can explore at any point.
 
-**Real-time Terminal ↔ Web communication with authentication, caching, and declarative patterns.**
+---
+
+**<span style="color:#8FBE6D">You're not choosing one over the other.</span>** Layer-1 subsystems are the natural progression, and zBifrost is there when you need WebSocket orchestration for production apps. Both paths work together—zBifrost demos showcase the very subsystems you'll learn next.
 

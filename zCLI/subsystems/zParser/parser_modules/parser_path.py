@@ -507,15 +507,15 @@ def _handle_ui_mode_path(
         else [zVaFolder]
     )
     zFileName = zSession[SESSION_KEY_ZVAFILE]
-    logger.info(LOG_MSG_ZSPACE, zSpace)
-    logger.info(LOG_MSG_ZRELPATH, zRelPath)
-    logger.info(LOG_MSG_ZFILENAME, zFileName)
+    logger.framework.debug(LOG_MSG_ZSPACE, zSpace)
+    logger.framework.debug(LOG_MSG_ZRELPATH, zRelPath)
+    logger.framework.debug(LOG_MSG_ZFILENAME, zFileName)
 
     os_RelPath = os.path.join(*zRelPath[1:]) if len(zRelPath) > 1 else ""
-    logger.info(LOG_MSG_OS_RELPATH, os_RelPath)
+    logger.framework.debug(LOG_MSG_OS_RELPATH, os_RelPath)
 
     zVaFolder_basepath = os.path.join(zSpace, os_RelPath)
-    logger.info(LOG_MSG_ZVAFOLDER_PATH, zVaFolder_basepath)
+    logger.framework.debug(LOG_MSG_ZVAFOLDER_PATH, zVaFolder_basepath)
     return zVaFolder_basepath, zFileName
 
 
@@ -554,24 +554,24 @@ def _extract_filename_from_parts(
     if is_zvafile:
         # zVaFile: Extract block (last part) and filename (last 2 parts before block)
         zBlock = zPath_parts[-1]
-        logger.info(LOG_MSG_ZBLOCK, zBlock)
+        logger.framework.debug(LOG_MSG_ZBLOCK, zBlock)
 
         zPath_2_zFile = zPath_parts[:-1]
-        logger.info(LOG_MSG_ZPATH_2_ZFILE, zPath_2_zFile)
+        logger.framework.debug(LOG_MSG_ZPATH_2_ZFILE, zPath_2_zFile)
 
         # Extract file name (last 2 parts, or just last part if only 2 total)
         if len(zPath_2_zFile) == FILENAME_PARTS_FOR_SHORT:
             zFileName = zPath_2_zFile[-1]
         else:
             zFileName = PATH_SEP_DOT.join(zPath_2_zFile[-2:])
-        logger.info(LOG_MSG_ZFILENAME_SHORT, zFileName)
+        logger.framework.debug(LOG_MSG_ZFILENAME_SHORT, zFileName)
 
         zRelPath_parts = zPath_parts[:-2]
-        logger.info(LOG_MSG_ZRELPATH_PARTS, zRelPath_parts)
+        logger.framework.debug(LOG_MSG_ZRELPATH_PARTS, zRelPath_parts)
         return zFileName, zRelPath_parts
 
     # Non-zVaFile: No block extraction, filename includes extension
-    logger.info(LOG_MSG_NO_ZBLOCK)
+    logger.framework.debug(LOG_MSG_NO_ZBLOCK)
     return _extract_non_zvafile_filename(zPath_parts, logger)
 
 
@@ -618,8 +618,8 @@ def _extract_non_zvafile_filename(
         zFileName = PATH_SEP_DOT.join(zPath_parts[symbol_idx + 1:] if symbol_idx >= 0 else zPath_parts)
         zRelPath_parts = zPath_parts[:symbol_idx + 1] if symbol_idx >= 0 else []
 
-    logger.info(LOG_MSG_ZFILENAME_SHORT, zFileName)
-    logger.info(LOG_MSG_ZRELPATH_PARTS, zRelPath_parts)
+    logger.framework.debug(LOG_MSG_ZFILENAME_SHORT, zFileName)
+    logger.framework.debug(LOG_MSG_ZRELPATH_PARTS, zRelPath_parts)
     return zFileName, zRelPath_parts
 
 
@@ -766,24 +766,24 @@ def zPath_decoder(
     else:
         # Standard mode: parse dotted path
         zPath_parts = zPath.lstrip(PATH_SEP_DOT).split(PATH_SEP_DOT)
-        logger.info(LOG_MSG_PARTS, zPath_parts)
+        logger.framework.debug(LOG_MSG_PARTS, zPath_parts)
 
         # Detect if this is a zVaFile path
         is_zvafile = is_zvafile_type(zPath_parts)
-        logger.info(LOG_MSG_IS_ZVAFILE, is_zvafile)
+        logger.framework.debug(LOG_MSG_IS_ZVAFILE, is_zvafile)
 
         # Extract filename and relative path components
         zFileName, zRelPath_parts = _extract_filename_from_parts(zPath_parts, is_zvafile, logger)
 
         # Resolve path based on symbol prefix (@, ~, or none)
         symbol = zRelPath_parts[0] if zRelPath_parts else None
-        logger.info(LOG_MSG_SYMBOL, symbol)
+        logger.framework.debug(LOG_MSG_SYMBOL, symbol)
 
         zVaFolder_basepath = resolve_symbol_path(symbol, zRelPath_parts, zSpace, zSession, logger)
 
     # Combine base path and filename
     zVaFile_fullpath = os.path.join(zVaFolder_basepath, zFileName)
-    logger.info(LOG_MSG_ZVAFILE_FULLPATH, zVaFile_fullpath)
+    logger.framework.debug(LOG_MSG_ZVAFILE_FULLPATH, zVaFile_fullpath)
 
     return zVaFile_fullpath, zFileName
 
@@ -834,7 +834,7 @@ def resolve_symbol_path(
         - zPath_decoder: Main function using this helper
     """
     if symbol == SYMBOL_AT:
-        logger.info(LOG_MSG_SYMBOL_AT)
+        logger.framework.debug(LOG_MSG_SYMBOL_AT)
 
         # Warn if workspace not configured
         if not zSession.get(SESSION_KEY_ZSPACE):
@@ -845,16 +845,16 @@ def resolve_symbol_path(
         # Build path: skip first part (symbol), join rest
         rel_base_parts = zRelPath_parts[1:]
         zVaFolder_basepath = os.path.join(zSpace, *rel_base_parts)
-        logger.info(LOG_MSG_ZVAFOLDER_PATH, zVaFolder_basepath)
+        logger.framework.debug(LOG_MSG_ZVAFOLDER_PATH, zVaFolder_basepath)
         
     elif symbol == SYMBOL_TILDE:
-        logger.info(LOG_MSG_SYMBOL_TILDE)
+        logger.framework.debug(LOG_MSG_SYMBOL_TILDE)
         # Build path: skip first part (symbol), join rest from root
         rel_base_parts = zRelPath_parts[1:]
         zVaFolder_basepath = os.path.join(*rel_base_parts)
         
     else:
-        logger.info(LOG_MSG_SYMBOL_NONE)
+        logger.framework.debug(LOG_MSG_SYMBOL_NONE)
         # Build path: join all parts relative to workspace
         zVaFolder_basepath = os.path.join(zSpace, *(zRelPath_parts or []))
 

@@ -1,0 +1,16 @@
+# .zEnv - Workspace-Specific Variables
+# Auto-loaded by zCLI (no python-dotenv needed!)
+
+# Application Settings
+APP_NAME=Config Demo
+APP_VERSION=1.0.0
+APP_MODE=learning
+
+# Feature Flags
+FEATURE_DEBUG=true
+FEATURE_VERBOSE=false
+
+# Example API Settings (in real projects, add .zEnv to .gitignore!)
+API_ENDPOINT=https://api.example.com
+API_TIMEOUT=30
+

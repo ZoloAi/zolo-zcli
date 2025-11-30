@@ -316,7 +316,7 @@ def parse_ui_file(
         - parser_file.py: External usage
         - auth_rbac.py: Verifies RBAC during execution
     """
-    logger.info(LOG_MSG_PARSING_UI)
+    logger.framework.debug(LOG_MSG_PARSING_UI)
 
     parsed_ui: Dict[str, Any] = {
         DICT_KEY_TYPE: FILE_TYPE_UI,
@@ -329,7 +329,7 @@ def parse_ui_file(
     file_rbac, data_without_rbac = extract_rbac_directives(data, logger, scope=SCOPE_FILE)
     if file_rbac:
         parsed_ui[DICT_KEY_RBAC] = file_rbac
-        logger.info(LOG_MSG_FILE_RBAC_FOUND, file_rbac)
+        logger.framework.debug(LOG_MSG_FILE_RBAC_FOUND, file_rbac)
 
     # Process each zBlock (menu section) using cleaned data
     for zblock_name, zblock_data in data_without_rbac.items():
@@ -347,7 +347,7 @@ def parse_ui_file(
     # Extract UI metadata
     parsed_ui[DICT_KEY_METADATA_KEY] = extract_ui_metadata(data)
 
-    logger.info(LOG_MSG_PARSING_UI_COMPLETED, len(parsed_ui[DICT_KEY_ZBLOCKS]))
+    logger.framework.debug(LOG_MSG_PARSING_UI_COMPLETED, len(parsed_ui[DICT_KEY_ZBLOCKS]))
     return parsed_ui
 
 
@@ -453,7 +453,7 @@ def parse_ui_zblock(
         inline_rbac = None
         if isinstance(item_data, dict) and DICT_KEY_RBAC in item_data:
             inline_rbac = item_data.pop(DICT_KEY_RBAC)  # Extract and remove from data
-            logger.info(LOG_MSG_INLINE_RBAC_FOUND, item_name, inline_rbac)
+            logger.framework.debug(LOG_MSG_INLINE_RBAC_FOUND, item_name, inline_rbac)
 
         # Identify UI construct type (only for dict items)
         construct_type = None
@@ -471,7 +471,7 @@ def parse_ui_zblock(
         if inline_rbac is not None:
             # Item has explicit inline RBAC - use it
             parsed_item[DICT_KEY_RBAC] = inline_rbac
-            logger.info(LOG_MSG_INLINE_RBAC_APPLIED, item_name, inline_rbac)
+            logger.framework.debug(LOG_MSG_INLINE_RBAC_APPLIED, item_name, inline_rbac)
         else:
             # No inline RBAC = public access (default behavior)
             logger.debug(LOG_MSG_PUBLIC_ACCESS, item_name)

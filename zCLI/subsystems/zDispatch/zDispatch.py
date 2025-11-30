@@ -213,7 +213,7 @@ class zDispatch:
         # Display ready message using zDisplay
         self._display_message(self.zcli.display, MSG_READY, INDENT_ROOT)
 
-        self.logger.info(LOG_MSG_READY)
+        self.logger.framework.debug(LOG_MSG_READY)
 
     # ========================================================================
     # PUBLIC METHODS - Main Entry Point
@@ -291,29 +291,29 @@ class zDispatch:
 
         self._display_message(display, MSG_HANDLE, INDENT_HANDLE)
 
-        self.logger.info(LOG_MSG_HORIZONTAL, zHorizontal)
-        self.logger.info(LOG_MSG_HANDLE_KEY, zKey)
+        self.logger.framework.debug(LOG_MSG_HORIZONTAL, zHorizontal)
+        self.logger.framework.debug(LOG_MSG_HANDLE_KEY, zKey)
 
         # Detect modifiers (prefix + suffix)
         prefix_mods = self.modifiers.check_prefix(zKey)
         suffix_mods = self.modifiers.check_suffix(zKey)
         zModifiers = prefix_mods + suffix_mods
 
-        self.logger.info(LOG_MSG_PREFIX_MODS, prefix_mods)
-        self.logger.info(LOG_MSG_SUFFIX_MODS, suffix_mods)
-        self.logger.info(LOG_MSG_DETECTED_MODS, zKey, zModifiers)
+        self.logger.framework.debug(LOG_MSG_PREFIX_MODS, prefix_mods)
+        self.logger.framework.debug(LOG_MSG_SUFFIX_MODS, suffix_mods)
+        self.logger.framework.debug(LOG_MSG_DETECTED_MODS, zKey, zModifiers)
 
         # Route to appropriate handler (Facade orchestration)
         if zModifiers:
             # Route to ModifierProcessor
             result = self.modifiers.process(zModifiers, zKey, zHorizontal, context=context, walker=walker)
-            self.logger.info(LOG_MSG_MODIFIER_RESULT, result)
+            self.logger.framework.debug(LOG_MSG_MODIFIER_RESULT, result)
         else:
             # Route to CommandLauncher
             result = self.launcher.launch(zHorizontal, context=context, walker=walker)
-            self.logger.info(LOG_MSG_DISPATCH_RESULT, result)
+            self.logger.framework.debug(LOG_MSG_DISPATCH_RESULT, result)
 
-        self.logger.info(LOG_MSG_COMPLETED, zKey)
+        self.logger.framework.debug(LOG_MSG_COMPLETED, zKey)
         return result
 
     # ========================================================================

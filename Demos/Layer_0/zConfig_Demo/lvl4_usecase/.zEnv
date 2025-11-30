@@ -1,0 +1,21 @@
+# .zEnv - Workspace-Specific Configuration
+# ==========================================
+# This file is auto-loaded by zConfig (no python-dotenv needed!)
+# Perfect for: project requirements, API keys, deployment settings
+# 
+# Try this: Change MIN_CPU_CORES=16 and run the demo again!
+
+PROJECT_NAME=ML Training Pipeline
+PROJECT_VERSION=2.1.0
+
+# Hardware Requirements
+MIN_CPU_CORES=4
+MIN_MEMORY_GB=8
+REQUIRED_GPU=true
+
+# Software Requirements
+MIN_PYTHON_VERSION=3.11
+
+# Deployment Context
+DEPLOYMENT_ENV=staging
+

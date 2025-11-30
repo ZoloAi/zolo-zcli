@@ -45,8 +45,7 @@ The 8 event packages are:
 4. **BasicData** - Data display (list, json)
 5. **AdvancedData** - Complex data (zTable with pagination)
 6. **zSystem** - System UI (zDeclare, zSession, zCrumbs, zMenu, zDialog)
-7. **zAuth** - Authentication UI (login_prompt, status_display, etc.)
-8. **TimeBased** - Time-based events (progress_bar, spinner)
+7. **TimeBased** - Time-based events (progress_bar, spinner)
 
 Cross-Reference Architecture
 -----------------------------
@@ -59,8 +58,8 @@ self.BasicOutputs.header("ERROR")  # Works via cross-reference
 ```
 
 **Dependency Graph:**
-- BasicOutputs → Used by ALL 7 other packages (foundation)
-- Signals → Used by AdvancedData, zSystem, zAuth
+- BasicOutputs → Used by ALL 6 other packages (foundation)
+- Signals → Used by AdvancedData, zSystem
 - BasicInputs → Used by zSystem
 
 Convenience Delegates
@@ -95,8 +94,8 @@ zCLI Integration
 ----------------
 - **Initialized by:** zDisplay.__init__() (line ~35)
 - **Used by:** display_delegates.py (PRIMARY API) and event packages
-- **Dependencies:** All 8 event packages (events/*.py)
-- **No direct session/zAuth access** - delegates to event packages
+- **Dependencies:** All 7 event packages (events/*.py)
+- **No direct session access** - delegates to event packages
 
 Thread Safety
 -------------
@@ -117,7 +116,6 @@ from .events.display_event_signals import Signals
 from .events.display_event_data import BasicData
 from .events.display_event_advanced import AdvancedData
 from .events.display_event_system import zSystem
-from .events.display_event_auth import zAuthEvents
 from .events.display_event_timebased import TimeBased
 
 
@@ -165,12 +163,11 @@ class zEvents:
     - BasicData: list, json_data
     - AdvancedData: zTable (with pagination)
     - zSystem: zDeclare, zSession, zCrumbs, zMenu, zDialog
-    - zAuth: login_prompt, login_success, login_failure, logout_success, status_display
     - TimeBased: progress_bar, spinner, progress_iterator, indeterminate_progress
     
     **Cross-Reference Dependencies:**
-    - BasicOutputs → Used by ALL 7 other packages
-    - Signals → Used by AdvancedData, zSystem, zAuth
+    - BasicOutputs → Used by ALL 6 other packages
+    - Signals → Used by AdvancedData, zSystem
     - BasicInputs → Used by zSystem
     
     **Layer Position:** Layer 2 (Orchestrator)
@@ -186,7 +183,6 @@ class zEvents:
     BasicData: Any  # BasicData package instance
     AdvancedData: Any  # AdvancedData package instance
     zSystem: Any  # zSystem package instance
-    zAuth: Any  # zAuthEvents package instance
     TimeBased: Any  # TimeBased package instance
 
     def __init__(self, display_instance: Any) -> None:
@@ -213,7 +209,6 @@ class zEvents:
         self.BasicData = BasicData(display_instance)
         self.AdvancedData = AdvancedData(display_instance)
         self.zSystem = zSystem(display_instance)
-        self.zAuth = zAuthEvents(display_instance)
         self.TimeBased = TimeBased(display_instance)
 
         # Step 2: Set up cross-references (packages can call each other)
@@ -223,8 +218,8 @@ class zEvents:
         #       self.BasicOutputs.header("ERROR")  # Works via cross-reference
         #
         # Dependency Graph:
-        #   BasicOutputs ← BasicInputs, Signals, BasicData, AdvancedData, zSystem, zAuth, TimeBased
-        #   Signals ← AdvancedData, zSystem, zAuth
+        #   BasicOutputs ← BasicInputs, Signals, BasicData, AdvancedData, zSystem, TimeBased
+        #   Signals ← AdvancedData, zSystem
         #   BasicInputs ← zSystem
         
         self.BasicInputs.BasicOutputs = self.BasicOutputs
@@ -235,8 +230,6 @@ class zEvents:
         self.zSystem.BasicOutputs = self.BasicOutputs
         self.zSystem.Signals = self.Signals
         self.zSystem.BasicInputs = self.BasicInputs
-        self.zAuth.BasicOutputs = self.BasicOutputs
-        self.zAuth.Signals = self.Signals
         self.TimeBased.BasicOutputs = self.BasicOutputs
 
     # ═══════════════════════════════════════════════════════════════════════════
@@ -259,7 +252,14 @@ class zEvents:
         """
         return self.BasicOutputs.header(label, color, indent, style)
 
-    def text(self, content: str, indent: int = 0, break_after: bool = True, break_message: Optional[str] = None) -> Any:
+    def text(
+        self, 
+        content: str, 
+        indent: int = 0, 
+        pause: bool = False, 
+        break_message: Optional[str] = None,
+        break_after: Optional[bool] = None
+    ) -> Any:
         """Display plain text content.
         
         Convenience delegate to BasicOutputs.text for backward compatibility.
@@ -267,13 +267,21 @@ class zEvents:
         Args:
             content: Text content to display
             indent: Indentation level (default: 0)
-            break_after: Add line break after (default: True)
+            pause: Pause for user acknowledgment (default: False)
             break_message: Optional break message
+            break_after: Legacy parameter - use 'pause' instead
             
         Returns:
             Any: Result from BasicOutputs.text method
         """
-        return self.BasicOutputs.text(content, indent, break_after, break_message)
+        # Pass to BasicOutputs with new signature
+        return self.BasicOutputs.text(
+            content, 
+            indent=indent, 
+            pause=pause,
+            break_message=break_message,
+            break_after=break_after
+        )
 
     # ═══════════════════════════════════════════════════════════════════════════
     # Convenience Delegates - BasicInputs
@@ -614,3 +622,21 @@ class zEvents:
             Any: Result from TimeBased.indeterminate_progress method
         """
         return self.TimeBased.indeterminate_progress(label)
+    
+    def swiper(self, slides: list, label: str = "Slides", auto_advance: bool = True, delay: int = 3, loop: bool = False, container: str = "#app") -> Any:
+        """Display interactive content carousel/swiper.
+        
+        Convenience delegate to TimeBased.swiper for backward compatibility.
+        
+        Args:
+            slides: List of slide content strings
+            label: Title for the swiper (default: "Slides")
+            auto_advance: Auto-cycle through slides (default: True)
+            delay: Seconds between auto-advance (default: 3)
+            loop: Wrap around to start after last slide (default: False)
+            container: Bifrost DOM container (default: "#app")
+            
+        Returns:
+            Any: Result from TimeBased.swiper method
+        """
+        return self.TimeBased.swiper(slides, label, auto_advance, delay, loop, container)

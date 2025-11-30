@@ -49,15 +49,19 @@ Layer 1 Position:
         - events/display_event_widgets.py (progress bars, spinners)
         - events/display_event_advanced.py (tables, complex data)
         - events/display_event_system.py (menus, dialogs)
-        - events/display_event_auth.py (login prompts)
     
-    Total: 62 references from all event files
+    Total: 56 references from all event files (post-zAuthEvents removal)
 
 Dual-Mode I/O Methods:
     Output Methods (synchronous):
-        - write_raw(content, flush): Raw output, no formatting
-        - write_line(content): Single line with newline
-        - write_block(content): Multi-line block with final newline
+        - raw(content, flush): Raw output, no formatting (preferred API)
+        - line(content): Single line with newline (preferred API)
+        - block(content): Multi-line block with final newline (preferred API)
+        
+        Legacy aliases (backward compatibility):
+        - write_raw → raw
+        - write_line → line
+        - write_block → block
         
         Behavior:
             1. ALWAYS output to terminal (print)
@@ -121,8 +125,9 @@ zSession Integration:
 Usage Pattern:
     From event files (Layer 2):
         ```python
-        # Output (always synchronous)
-        self.zPrimitives.write_line("Hello World")
+        # Output (always synchronous) - Preferred API
+        self.zPrimitives.line("Hello World")
+        self.zPrimitives.raw("Loading...")
         
         # Input (synchronous OR asynchronous)
         result = self.zPrimitives.read_string("Enter name: ")
@@ -134,12 +139,14 @@ Usage Pattern:
             name = result
         ```
 
-Property Aliases:
-    Backward-compatible property aliases for convenience:
-        - .raw → write_raw
-        - .line → write_line
-        - .block → write_block
-        - .read → read_string
+Backward-Compatible Aliases:
+    Legacy methods maintained for backward compatibility:
+        - .write_raw → .raw (preferred)
+        - .write_line → .line (preferred)
+        - .write_block → .block (preferred)
+    
+    Other aliases:
+        - .read → .read_string
 """
 
 from zCLI import json, time, getpass, asyncio, uuid, Any, Dict, Union, Optional
@@ -240,7 +247,7 @@ class zPrimitives:
     # Output Primitives - Terminal + Optional GUI
     # ═══════════════════════════════════════════════════════════════════════════
 
-    def write_raw(self, content: str, flush: bool = DEFAULT_FLUSH) -> None:
+    def raw(self, content: str, flush: bool = DEFAULT_FLUSH) -> None:
         """Write raw content with no formatting or newline.
         
         Dual-mode behavior:
@@ -250,6 +257,11 @@ class zPrimitives:
         Args:
             content: Text to write (no newline added)
             flush: Whether to flush terminal output immediately
+            
+        Example:
+            z.display.raw("Loading")
+            z.display.raw("...")
+            z.display.raw(" Done!\n")
         """
         # Terminal output (always)
         print(content, end='', flush=flush)
@@ -258,7 +270,7 @@ class zPrimitives:
         if self._is_gui_mode():
             self._write_gui(content, WRITE_TYPE_RAW)
 
-    def write_line(self, content: str) -> None:
+    def line(self, content: str) -> None:
         """Write single line, ensuring newline.
         
         Dual-mode behavior:
@@ -267,6 +279,9 @@ class zPrimitives:
         
         Args:
             content: Text to write (newline added for terminal)
+            
+        Example:
+            z.display.line("Processing complete")
         """
         # Ensure content has newline for terminal
         terminal_content = content
@@ -280,7 +295,7 @@ class zPrimitives:
         if self._is_gui_mode():
             self._write_gui(content.rstrip('\n'), WRITE_TYPE_LINE)
 
-    def write_block(self, content: str) -> None:
+    def block(self, content: str) -> None:
         """Write multi-line block, ensuring final newline.
         
         Dual-mode behavior:
@@ -615,35 +630,41 @@ class zPrimitives:
         return gui_future
 
     # ═══════════════════════════════════════════════════════════════════════════
-    # Convenience Property Aliases (Backward Compatibility)
+    # Backward-Compatible Aliases (Legacy Support)
     # ═══════════════════════════════════════════════════════════════════════════
 
     @property
-    def raw(self):
-        """Alias for write_raw.
+    def write_raw(self):
+        """Backward-compatible alias for raw().
+        
+        Note: Prefer using .raw() for cleaner API calls.
         
         Returns:
-            Callable: The write_raw method
+            Callable: The raw method
         """
-        return self.write_raw
+        return self.raw
 
     @property
-    def line(self):
-        """Alias for write_line.
+    def write_line(self):
+        """Backward-compatible alias for line().
+        
+        Note: Prefer using .line() for cleaner API calls.
         
         Returns:
-            Callable: The write_line method
+            Callable: The line method
         """
-        return self.write_line
+        return self.line
 
     @property
-    def block(self):
-        """Alias for write_block.
+    def write_block(self):
+        """Backward-compatible alias for block().
+        
+        Note: Prefer using .block() for cleaner API calls.
         
         Returns:
-            Callable: The write_block method
+            Callable: The block method
         """
-        return self.write_block
+        return self.block
 
     @property
     def read(self):

@@ -96,12 +96,14 @@ CONFIG_KEY_LEVEL = "level"
 # ═══════════════════════════════════════════════════════════
 
 SESSION_KEY_ZS_ID = "zS_id"
+SESSION_KEY_TITLE = "title"
 SESSION_KEY_ZSPACE = "zSpace"
 SESSION_KEY_ZVAFOLDER = "zVaFolder"
 SESSION_KEY_ZVAFILE = "zVaFile"
 SESSION_KEY_ZBLOCK = "zBlock"
 SESSION_KEY_ZMODE = "zMode"
 SESSION_KEY_ZLOGGER = "zLogger"
+SESSION_KEY_LOGGER_PATH = "logger_path"
 SESSION_KEY_ZTRACEBACK = "zTraceback"
 SESSION_KEY_ZMACHINE = "zMachine"
 SESSION_KEY_ZAUTH = "zAuth"
@@ -118,10 +120,12 @@ SESSION_KEY_BROWSER = "browser"
 SESSION_KEY_IDE = "ide"
 
 # zSpark dict keys
+ZSPARK_KEY_TITLE = "title"
 ZSPARK_KEY_ZSPACE = "zSpace"
 ZSPARK_KEY_ZTRACEBACK = "zTraceback"
 ZSPARK_KEY_ZMODE = "zMode"
 ZSPARK_KEY_LOGGER = "logger"
+ZSPARK_KEY_LOGGER_PATH = "logger_path"
 
 # zAuth nested keys (Three-Tier Architecture)
 # Top-level context keys
@@ -204,8 +208,8 @@ class SessionConfig:
         from zCLI.utils import get_log_level_from_zspark
         self._log_level = get_log_level_from_zspark(zSpark_obj)
 
-        # Print ready message (log-level aware)
-        print_ready_message(READY_MESSAGE, color=COLOR_CONFIG, log_level=self._log_level)
+        # Print ready message (deployment-aware)
+        print_ready_message(READY_MESSAGE, color=COLOR_CONFIG, is_production=self.environment.is_production(), is_testing=self.environment.is_testing())
 
     def generate_id(self, prefix: str = DEFAULT_SESSION_PREFIX) -> str:
         """Generate random session ID with prefix (default: 'zS') -> 'zS_a1b2c3d4'."""
@@ -226,6 +230,52 @@ class SessionConfig:
         if self.zSpark is not None and isinstance(self.zSpark, dict):
             return self.zSpark.get(key, default)
         return default
+
+    def _detect_session_title(self) -> str:
+        """
+        Detect session title for log file naming.
+        
+        Priority:
+            1. zSpark["title"] - explicit user override
+            2. Script filename (sys.argv[0]) - automatic detection
+            3. "zcli-interactive" - fallback for REPL/edge cases
+        
+        Returns:
+            Session title string suitable for log filename
+        """
+        import sys
+        from pathlib import Path
+        
+        # Check for explicit title in zSpark
+        explicit_title = self._get_zSpark_value(ZSPARK_KEY_TITLE)
+        if explicit_title:
+            return str(explicit_title)
+        
+        # Detect from script filename
+        try:
+            script_path = sys.argv[0]
+            if script_path:
+                # Handle different execution modes
+                if script_path == "-c":
+                    # python -c "code"
+                    return "zcli-interactive"
+                elif script_path == "-m":
+                    # python -m module
+                    # Try to get module name from argv[1]
+                    if len(sys.argv) > 1:
+                        return Path(sys.argv[1]).stem
+                    return "zcli-module"
+                elif script_path in ("", "-"):
+                    # Interactive or stdin
+                    return "zcli-interactive"
+                else:
+                    # Normal script execution
+                    return Path(script_path).stem
+        except (IndexError, AttributeError):
+            pass
+        
+        # Fallback
+        return "zcli-interactive"
 
     def create_session(self, machine_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
@@ -256,15 +306,23 @@ class SessionConfig:
         # Determine zTraceback: zSpark > default (True)
         zTraceback = self._get_zSpark_value(ZSPARK_KEY_ZTRACEBACK, DEFAULT_ZTRACEBACK)
 
+        # Determine session title for log file naming
+        session_title = self._detect_session_title()
+        
+        # Determine logger path for custom log file location
+        logger_path = self._detect_logger_path()
+
         # Create session dict with constants for all keys
         session = {
             SESSION_KEY_ZS_ID: self.generate_id(),
+            SESSION_KEY_TITLE: session_title,
             SESSION_KEY_ZSPACE: zSpace,
             SESSION_KEY_ZVAFOLDER: None,
             SESSION_KEY_ZVAFILE: None,
             SESSION_KEY_ZBLOCK: None,
             SESSION_KEY_ZMODE: self.detect_zMode(),
             SESSION_KEY_ZLOGGER: self._detect_logger_level(),
+            SESSION_KEY_LOGGER_PATH: logger_path,
             SESSION_KEY_ZTRACEBACK: zTraceback,
             SESSION_KEY_ZMACHINE: machine_config,
             SESSION_KEY_BROWSER: self._get_zSpark_value("browser"),  # Optional override
@@ -330,46 +388,116 @@ class SessionConfig:
     def _detect_logger_level(self) -> str:
         """
         Detect logger level following hierarchy:
-        1. zSpark override (if provided)
+        1. zSpark override (if provided) - EXPLICIT user choice
         2. Virtual environment variable
         3. System environment variable
         4. zConfig.zEnvironment.yaml file
-        5. Default to INFO
+        5. Default (deployment-aware: Production→ERROR, Debug/Info→INFO)
+        
+        Note:
+            Production deployment defaults to ERROR logging for minimal output.
+            "PROD" log level provides silent console with DEBUG file logging.
         
         Returns:
-            Logger level string (e.g., "INFO", "DEBUG", "WARNING", "PROD")
+            Logger level string (e.g., "INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL", "PROD")
         """
         from zCLI.utils import print_if_not_prod
+        import warnings
         
-        # 1. Check zSpark for logger setting
+        # Track if logger was explicitly set (for smart Production defaults)
+        explicit_logger = False
+        
+        # 1. Check zSpark for logger setting (EXPLICIT override)
         zSpark_logger = self._get_zSpark_value(ZSPARK_KEY_LOGGER)
         if zSpark_logger:
+            explicit_logger = True
             level = str(zSpark_logger).upper()
-            print_if_not_prod(f"{LOG_PREFIX} Logger level from zSpark: {level}", level)
+            
+            # Only print if not in Production (deployment-aware)
+            if not self.environment.is_production():
+                print(f"{LOG_PREFIX} Logger level from zSpark: {level}")
+            
             return level
 
-        # 2. Check virtual environment variable (if in venv)
+        # 2. Check virtual environment variable (if in venv) - EXPLICIT override
         if self.environment.is_in_venv():
             venv_logger = self.environment.get_env_var(ENV_VAR_LOGGER)
             if venv_logger:
+                explicit_logger = True
                 level = str(venv_logger).upper()
-                print_if_not_prod(f"{LOG_PREFIX} Logger level from virtual env: {level}", level)
+                
+                # Only print if not in Production
+                if not self.environment.is_production():
+                    print(f"{LOG_PREFIX} Logger level from virtual env: {level}")
                 return level
 
-        # 3. Check system environment variable
+        # 3. Check system environment variable - EXPLICIT override
         system_logger = self.environment.get_env_var(ENV_VAR_LOGGER)
         if system_logger:
+            explicit_logger = True
             level = str(system_logger).upper()
-            print_if_not_prod(f"{LOG_PREFIX} Logger level from system env: {level}", level)
+            
+            # Only print if not in Production
+            if not self.environment.is_production():
+                print(f"{LOG_PREFIX} Logger level from system env: {level}")
             return level
 
-        # 4. Check zConfig.zEnvironment.yaml file
+        # 4. Check zConfig.zEnvironment.yaml file (NOT explicit if Production)
         logging_config = self.environment.get(CONFIG_KEY_LOGGING, {})
         if isinstance(logging_config, dict):
-            level = logging_config.get(CONFIG_KEY_LEVEL, DEFAULT_LOG_LEVEL)
-            print_if_not_prod(f"{LOG_PREFIX} Logger level from zEnvironment config: {level}", level)
-            return level
+            # Check new nested app config structure first
+            app_config = logging_config.get("app", {})
+            level = app_config.get(CONFIG_KEY_LEVEL, None) if isinstance(app_config, dict) else None
+            
+            # Backward compatibility: fall back to old logging.level format
+            if not level:
+                level = logging_config.get(CONFIG_KEY_LEVEL, None)
+                if level and not self.environment.is_production():
+                    warnings.warn(
+                        "logging.level is deprecated. Use logging.app.level instead.",
+                        DeprecationWarning,
+                        stacklevel=2
+                    )
+            
+            if level:
+                # Smart default: If Production deployment and config has INFO (default),
+                # treat it as implicit and use ERROR instead for minimal logging
+                if self.environment.is_production() and str(level).upper() == "INFO" and not explicit_logger:
+                    level = "ERROR"
+                    if not self.environment.is_production():
+                        print(f"{LOG_PREFIX} Production mode: Logger defaulting to ERROR (override with explicit logger setting)")
+                else:
+                    # Only print if not in Production
+                    if not self.environment.is_production():
+                        print(f"{LOG_PREFIX} Logger level from zEnvironment config: {level}")
+                
+                return level
 
-        # 5. Default fallback
-        print_if_not_prod(f"{LOG_PREFIX} Logger level defaulting to: {DEFAULT_LOG_LEVEL}", DEFAULT_LOG_LEVEL)
-        return DEFAULT_LOG_LEVEL
+        # 5. Default fallback (deployment-aware)
+        # Production deployment defaults to ERROR, others default to INFO
+        if self.environment.is_production():
+            default = "ERROR"
+            # Silent in Production, no need to print
+        else:
+            default = DEFAULT_LOG_LEVEL
+            print(f"{LOG_PREFIX} Logger level defaulting to: {default}")
+        
+        return default
+    
+    def _detect_logger_path(self) -> Optional[str]:
+        """
+        Detect custom logger path from zSpark (highest priority).
+        
+        Returns:
+            Custom logger path string if provided, None for default system path
+        """
+        # Check zSpark for logger_path override
+        logger_path = self._get_zSpark_value(ZSPARK_KEY_LOGGER_PATH)
+        if logger_path:
+            # Only print if not in Production
+            if not self.environment.is_production():
+                print(f"{LOG_PREFIX} Logger path from zSpark: {logger_path}")
+            return str(logger_path)
+        
+        # No custom path specified, return None (use default system path)
+        return None

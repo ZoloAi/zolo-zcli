@@ -165,9 +165,9 @@ INTEGRATION WITH ZCLI SUBSYSTEMS
     - Maintains consistent session structure across subsystems
     - All modules import constants from zConfig (Week 6.2)
 
-**zDisplay (display_event_auth.py):**
-    - All authentication feedback uses zDisplay events
-    - Methods: login_prompt, login_success, login_failure, logout_success, etc.
+**zDisplay:**
+    - All authentication feedback uses generic zDisplay events
+    - Methods: success(), error(), warning(), text(), header()
     - Dual-mode compatible (Terminal + Bifrost)
 
 **zComm (comm_http.py):**

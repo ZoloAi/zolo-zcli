@@ -291,9 +291,9 @@ class ModifierProcessor:
             - Detection is order-independent
             - Uses module-level PREFIX_MODIFIERS constant
         """
-        self.logger.info(LOG_MSG_PARSING_PREFIX, zKey)
+        self.logger.framework.debug(LOG_MSG_PARSING_PREFIX, zKey)
         pre_modifiers = [sym for sym in PREFIX_MODIFIERS if zKey.startswith(sym)]
-        self.logger.info(LOG_MSG_PRE_MODIFIERS, pre_modifiers)
+        self.logger.framework.debug(LOG_MSG_PRE_MODIFIERS, pre_modifiers)
         return pre_modifiers
 
     def check_suffix(self, zKey: str) -> List[str]:
@@ -324,9 +324,9 @@ class ModifierProcessor:
             - Detection is order-independent
             - Uses module-level SUFFIX_MODIFIERS constant
         """
-        self.logger.info(LOG_MSG_PARSING_SUFFIX, zKey)
+        self.logger.framework.debug(LOG_MSG_PARSING_SUFFIX, zKey)
         suf_modifiers = [sym for sym in SUFFIX_MODIFIERS if zKey.endswith(sym)]
-        self.logger.info(LOG_MSG_SUF_MODIFIERS, suf_modifiers)
+        self.logger.framework.debug(LOG_MSG_SUF_MODIFIERS, suf_modifiers)
         return suf_modifiers
 
     # ========================================================================
@@ -401,7 +401,7 @@ class ModifierProcessor:
 
         self._display_modifier(display, LABEL_PROCESS_MODIFIERS, DEFAULT_INDENT_PROCESS)
 
-        self.logger.info(LOG_MSG_RESOLVED, modifiers, zKey)
+        self.logger.framework.debug(LOG_MSG_RESOLVED, modifiers, zKey)
 
         # Priority 1: Menu modifier (*)
         if MOD_ASTERISK in modifiers:
@@ -429,11 +429,11 @@ class ModifierProcessor:
             
             # Execute the action
             result = self.dispatch.launcher.launch(zHorizontal, context=context, walker=walker)
-            self.logger.info(LOG_MSG_ZBOUNCE_RESULT, result)
+            self.logger.framework.debug(LOG_MSG_ZBOUNCE_RESULT, result)
             
             # DEBUG: Log context to diagnose mode detection
-            self.logger.info(LOG_MSG_ZBOUNCE_CONTEXT, context)
-            self.logger.info(
+            self.logger.framework.debug(LOG_MSG_ZBOUNCE_CONTEXT, context)
+            self.logger.framework.debug(
                 LOG_MSG_ZBOUNCE_MODE_CHECK, 
                 context is not None, 
                 context.get(KEY_MODE) if context else None
@@ -442,7 +442,7 @@ class ModifierProcessor:
             # Mode-specific return behavior
             if self._is_bifrost_mode(context):
                 # Bifrost: Return actual result for API consumption
-                self.logger.info(LOG_MSG_BIFROST_DETECTED)
+                self.logger.framework.debug(LOG_MSG_BIFROST_DETECTED)
                 return result
             
             # Terminal/Walker: Return zBack for navigation
@@ -451,11 +451,11 @@ class ModifierProcessor:
         # Priority 3: Required modifier (!)
         if MOD_EXCLAMATION in modifiers:
             self._display_modifier(display, LABEL_ZREQUIRED, DEFAULT_INDENT_MODIFIER)
-            self.logger.info(LOG_MSG_REQUIRED_STEP, zKey)
+            self.logger.framework.debug(LOG_MSG_REQUIRED_STEP, zKey)
             
             # Execute action and enter retry loop if needed
             result = self.dispatch.launcher.launch(zHorizontal, context=context, walker=walker)
-            self.logger.info(LOG_MSG_REQUIRED_RESULTS, result)
+            self.logger.framework.debug(LOG_MSG_REQUIRED_RESULTS, result)
             
             # Retry loop until success or user abort
             while not result:
@@ -466,7 +466,7 @@ class ModifierProcessor:
                         return INPUT_STOP
                 result = self.dispatch.launcher.launch(zHorizontal, context=context, walker=walker)
             
-            self.logger.info(LOG_MSG_REQUIREMENT_SATISFIED, zKey)
+            self.logger.framework.debug(LOG_MSG_REQUIREMENT_SATISFIED, zKey)
             self._display_modifier(display, LABEL_ZREQUIRED_RETURN, DEFAULT_INDENT_MODIFIER, style=STYLE_WAVY)
             return result
 

@@ -438,7 +438,7 @@ class BasicData:
         else:
             # Fallback if BasicOutputs not set (shouldn't happen)
             indented_content = self._build_indent(indent) + content
-            self.zPrimitives.write_line(indented_content)
+            self.zPrimitives.line(indented_content)
 
     def _build_indent(self, indent: int) -> str:
         """Build indentation string (DRY helper).

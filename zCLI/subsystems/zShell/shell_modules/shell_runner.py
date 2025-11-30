@@ -302,15 +302,15 @@ class ShellRunner:
         """
         Initialize shell runner.
         
-        Sets up the REPL infrastructure including command executor, help system,
-        and readline history (if available).
+        Sets up the REPL infrastructure including command executor and help system.
+        History setup is deferred until run() is called (lazy initialization).
         
         Args:
             zcli: The zCLI instance
             
         Examples:
             >>> runner = ShellRunner(zcli)
-            >>> runner.run()  # Start REPL loop
+            >>> runner.run()  # Start REPL loop (history setup happens here)
         """
         self.zcli: Any = zcli
         self.logger: Any = zcli.logger
@@ -320,8 +320,7 @@ class ShellRunner:
         self.running: bool = False
 
         self.history_file: Optional[Path] = None
-        if READLINE_AVAILABLE:
-            self._setup_history()
+        self._history_initialized: bool = False
 
     def run(self) -> None:
         """
@@ -350,8 +349,14 @@ class ShellRunner:
             - EOFError (Ctrl+D) exits gracefully
             - Wizard canvas mode preserves indentation
             - Command history saved on exit (if readline available)
+            - History setup is lazy (only initialized on first run)
         """
-        self.logger.info(MSG_STARTING_SHELL)
+        # Lazy initialization: Setup history only when shell is actually run
+        if not self._history_initialized and READLINE_AVAILABLE:
+            self._setup_history()
+            self._history_initialized = True
+        
+        self.logger.framework.debug(MSG_STARTING_SHELL)
         self.zcli.display.write_block(self.help_system.get_welcome_message())
         self.running = True
 
@@ -397,7 +402,7 @@ class ShellRunner:
                     color=COLOR_ERROR, indent=INDENT_NORMAL, style=STYLE_SINGLE
                 )
 
-        self.logger.info(MSG_EXITING_SHELL)
+        self.logger.framework.debug(MSG_EXITING_SHELL)
         if READLINE_AVAILABLE and self.history_file:
             self._save_history()
 
@@ -530,10 +535,10 @@ class ShellRunner:
 
             if self.history_file.exists():
                 readline.read_history_file(str(self.history_file))
-                self.logger.debug(MSG_HISTORY_LOADED, self.history_file)
+                self.logger.framework.debug(MSG_HISTORY_LOADED, self.history_file)
 
             readline.set_history_length(HISTORY_LENGTH)
-            self.logger.info(MSG_HISTORY_ENABLED)
+            self.logger.framework.debug(MSG_HISTORY_ENABLED)
 
         except Exception as e:  # pylint: disable=broad-except
             self.logger.warning(WARN_HISTORY_SETUP_FAILED, e)

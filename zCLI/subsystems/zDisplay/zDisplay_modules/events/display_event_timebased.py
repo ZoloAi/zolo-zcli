@@ -226,6 +226,7 @@ Upgraded: Week 6.4.11c (Industry-grade: type hints, constants, docstrings)
 Line Count: 554 → ~700 lines (documentation & constants)
 """
 
+import os
 import sys
 import time
 import threading
@@ -307,6 +308,8 @@ BOX_RIGHT_T = "╣"
 # ANSI Escape Sequences
 ANSI_CLEAR_SCREEN = "\033[2J"
 ANSI_HOME = "\033[H"
+ANSI_CLEAR_LINE = "\033[2K"  # Clear entire line
+ANSI_CURSOR_UP = "\033[1A"  # Move cursor up one line
 ANSI_CARRIAGE_RETURN = "\r"
 
 # Swiper Navigation Commands
@@ -321,7 +324,7 @@ ARROW_RIGHT = "[C"
 ARROW_LEFT = "[D"
 
 # Swiper Status Messages
-SWIPER_STATUS_PAUSED = "[PAUSED]"
+SWIPER_STATUS_PAUSED = "[PAUSED - Press P to Resume]"
 SWIPER_STATUS_AUTO = "[AUTO-ADVANCE: {}s]"
 SWIPER_STATUS_MANUAL = "[MANUAL]"
 
@@ -425,6 +428,115 @@ class TimeBased:
         self._active_progress = {}
         self._active_spinners = {}
         self._active_swipers = {}
+        
+        # Detect terminal capabilities for progress rendering
+        self._detect_terminal_capabilities()
+
+    # ═══════════════════════════════════════════════════════════════════════
+    #                        TERMINAL CAPABILITY DETECTION
+    # ═══════════════════════════════════════════════════════════════════════
+    
+    def _detect_terminal_capabilities(self) -> None:
+        """
+        Detect terminal capabilities for progress rendering.
+        
+        Determines if the current terminal supports ANSI escape sequences like
+        carriage return (\r) for in-place progress bar updates. Falls back to
+        newline-based rendering for terminals with limited ANSI support.
+        
+        Sets:
+            self._supports_carriage_return: bool - True if terminal supports \r
+        
+        Detection Strategy:
+            1. Check TERM_PROGRAM for specific terminal application (Terminal.app, iTerm2, etc.)
+            2. Check TERM environment variable from zConfig machine detection
+            3. Match against known capable terminals (xterm, screen, iTerm, etc.)
+            4. Fallback: Check IDE from zConfig (cursor, code, fleet, zed)
+            5. Default: True (optimistic - most modern terminals support it)
+        
+        Capable Terminals (carriage return works):
+            - Modern emulators: iTerm2, alacritty, kitty, wezterm, Hyper
+            - IDE terminals: Cursor, VS Code, Fleet, Zed, PyCharm, WebStorm
+            - Multiplexers: tmux, screen with xterm-256color
+        
+        Limited Terminals (newline-based fallback):
+            - macOS Terminal.app (\r doesn't work - line wraps instead)
+            - cmd.exe (Windows, limited ANSI support)
+            - Unknown/undetected terminals
+        
+        Notes:
+            - Used by progress_bar() to choose rendering mode
+            - Gracefully degrades to newline-based rendering if unsupported
+            - Can be overridden with zCLI({"force_ansi": True/False})
+        """
+        # Default to True (optimistic - most terminals work)
+        self._supports_carriage_return = True
+        
+        try:
+            # CRITICAL: Check TERM_PROGRAM first (identifies actual terminal app)
+            # This is more reliable than TERM which just shows emulation type
+            term_program = os.getenv("TERM_PROGRAM", "").lower()
+            
+            # Known problematic terminals (explicitly block \r - use newlines instead)
+            # Terminal.app: Carriage return doesn't work properly (line wraps instead of updating)
+            BLOCKED_TERMINALS = {
+                "apple_terminal",  # macOS Terminal.app - \r doesn't work, line wraps
+                "cmd",             # Windows cmd.exe
+                "powershell",      # Windows PowerShell (basic)
+            }
+            
+            # Check if we're in a blocked terminal
+            if term_program in BLOCKED_TERMINALS:
+                self._supports_carriage_return = False
+                return
+            
+            # Get TERM from zConfig machine detection
+            term = "unknown"
+            if hasattr(self.display, 'zcli') and hasattr(self.display.zcli, 'config'):
+                term = self.display.zcli.config.get_machine("terminal")
+                if not term:
+                    term = "unknown"
+            
+            # Terminals with full ANSI support (based on TERM type)
+            CAPABLE_TERMS = {
+                "screen", "screen-256color", "screen-16color",
+                "tmux", "tmux-256color", "tmux-16color",
+                "alacritty", "kitty", "wezterm",
+                "iterm", "iterm2",
+                "linux", "cygwin", "rxvt", "konsole", "gnome", "xfce"
+            }
+            
+            # Check if current terminal supports carriage returns
+            supports = any(
+                term.lower().startswith(capable.lower()) for capable in CAPABLE_TERMS
+            )
+            
+            # Special case: xterm variants are capable UNLESS we're in Terminal.app
+            if not supports and term.lower().startswith("xterm"):
+                # xterm is capable, but only if not blocked above
+                supports = True
+            
+            # Fallback detection: if TERM is unknown but we're in a known modern IDE
+            if not supports and term.lower() in ["unknown", "dumb"]:
+                # Check IDE from zConfig
+                if hasattr(self.display, 'zcli') and hasattr(self.display.zcli, 'config'):
+                    ide = self.display.zcli.config.get_machine("ide")
+                    if ide and ide.lower() in ["cursor", "code", "fleet", "zed", "pycharm", "webstorm"]:
+                        supports = True
+            
+            self._supports_carriage_return = supports
+            
+            # Check for force_ansi override in zSpark
+            if hasattr(self.display, 'zcli') and hasattr(self.display.zcli, 'session'):
+                zspark = self.display.zcli.session.get("zSpark", {})
+                if zspark.get("force_ansi") is True:
+                    self._supports_carriage_return = True
+                elif zspark.get("force_ansi") is False:
+                    self._supports_carriage_return = False
+                    
+        except Exception:
+            # If detection fails, default to True (optimistic)
+            self._supports_carriage_return = True
 
     # ═══════════════════════════════════════════════════════════════════════
     #                              HELPER METHODS
@@ -622,13 +734,31 @@ class TimeBased:
         if total is None or total == 0:
             spinner_frame = self._spinner_styles[STYLE_DOTS][int(time.time() * 10) % 10]
             output = f"{label} {spinner_frame}"
-            self.zPrimitives.write_raw(f"{ANSI_CARRIAGE_RETURN}{output}", flush=True)
+            
+            # Use capability-aware rendering
+            if self._supports_carriage_return:
+                # Clear line before writing to prevent artifacts
+                self.zPrimitives.raw(f"{ANSI_CARRIAGE_RETURN}{ANSI_CLEAR_LINE}{output}", flush=True)
+            else:
+                # Fallback: only show every 5th frame to reduce clutter
+                if int(time.time() * 10) % 5 == 0:
+                    self.zPrimitives.line(output)
+            
             return output
         
         # Calculate percentage
         percentage = min(100, max(0, int((current / total) * 100)))
-        filled = int((current / total) * width)
-        bar = CHAR_FILLED * filled + CHAR_EMPTY * (width - filled)
+        
+        # Adjust width for Terminal.app to prevent line wrapping (80-column limit)
+        # Reduce width if not using carriage return (Terminal.app)
+        adjusted_width = width
+        if not self._supports_carriage_return:
+            # Terminal.app: Reduce width to fit 80-column terminal
+            # Label(~15) + brackets(2) + percentage(5) + ETA(12) + bar = ~80
+            adjusted_width = min(width, 40)  # Max 40-char bar for Terminal.app
+        
+        filled = int((current / total) * adjusted_width)
+        bar = CHAR_FILLED * filled + CHAR_EMPTY * (adjusted_width - filled)
         
         # Build output components
         output_parts = [label]
@@ -652,12 +782,32 @@ class TimeBased:
         # Join and render
         output = CHAR_SPACE.join(output_parts)
         
-        # Use carriage return for live updates
-        self.zPrimitives.write_raw(f"{ANSI_CARRIAGE_RETURN}{output}", flush=True)
-        
-        # Add newline if complete
-        if current >= total:
-            self.zPrimitives.write_raw("\n")
+        # Choose rendering mode based on terminal capabilities
+        if self._supports_carriage_return:
+            # Modern terminal: Clear line + carriage return for in-place update
+            # Using \r\033[2K ensures the line is fully cleared before writing new content
+            self.zPrimitives.raw(f"{ANSI_CARRIAGE_RETURN}{ANSI_CLEAR_LINE}{output}", flush=True)
+            
+            # Add newline if complete
+            if current >= total:
+                self.zPrimitives.raw("\n")
+        else:
+            # Limited terminal (e.g. Terminal.app): Use newline with cursor-up trick
+            # Terminal.app doesn't support \r, but DOES support cursor movement
+            # Strategy: Print line with \n, then move cursor up and clear for next update
+            # Calculate interval to ensure ~10 updates total (0%, 10%, 20%, ..., 100%)
+            interval = max(1, total // 10)  # ~10% intervals
+            should_print = (current == 0 or 
+                           current >= total or 
+                           current % interval == 0)
+            
+            if should_print:
+                # For all updates after the first one, clear the previous line
+                if current > 0:
+                    # Move cursor up one line and clear it (removes previous progress bar)
+                    self.zPrimitives.raw(f"{ANSI_CURSOR_UP}{ANSI_CLEAR_LINE}")
+                # Print new progress bar with newline
+                self.zPrimitives.line(output)
         
         return output
 
@@ -739,31 +889,52 @@ class TimeBased:
         
         def animate():
             """Animation loop running in separate thread."""
+            is_first_frame = True
             while not stop_event_flag.is_set():
                 frame = frames[frame_idx[0] % len(frames)]
-                self.zPrimitives.write_raw(
-                    f"{ANSI_CARRIAGE_RETURN}{label} {frame}",
-                    flush=True
-                )
+                
+                # Use capability-aware rendering
+                if self._supports_carriage_return:
+                    # Modern terminals: Use carriage return for in-place update
+                    self.zPrimitives.raw(
+                        f"{ANSI_CARRIAGE_RETURN}{ANSI_CLEAR_LINE}{label} {frame}",
+                        flush=True
+                    )
+                else:
+                    # Terminal.app: Use cursor-up + clear line for animation
+                    if not is_first_frame:
+                        # Move up and clear previous frame
+                        self.zPrimitives.raw(f"{ANSI_CURSOR_UP}{ANSI_CLEAR_LINE}")
+                    # Print new frame
+                    self.zPrimitives.line(f"{label} {frame}")
+                    is_first_frame = False
+                
                 frame_idx[0] += 1
                 time.sleep(DEFAULT_ANIMATION_DELAY)
         
-        # Start animation thread
+        # Start animation thread for all terminals
         animation_thread = threading.Thread(target=animate, daemon=True)
         animation_thread.start()
         
         try:
             yield  # Execute the context block
         finally:
-            # Stop animation
-            stop_event_flag.set()
-            animation_thread.join(timeout=DEFAULT_THREAD_JOIN_TIMEOUT)
+            # Stop animation if running
+            if animation_thread:
+                stop_event_flag.set()
+                animation_thread.join(timeout=DEFAULT_THREAD_JOIN_TIMEOUT)
             
-            # Clear the line and show completion
-            self.zPrimitives.write_raw(
-                f"{ANSI_CARRIAGE_RETURN}{label} {CHAR_CHECKMARK}\n",
-                flush=True
-            )
+            # Show completion
+            if self._supports_carriage_return:
+                # Modern terminals: Clear and show checkmark in-place
+                self.zPrimitives.raw(
+                    f"{ANSI_CARRIAGE_RETURN}{ANSI_CLEAR_LINE}{label} {CHAR_CHECKMARK}\n",
+                    flush=True
+                )
+            else:
+                # Terminal.app: Clear the spinner line and show checkmark
+                self.zPrimitives.raw(f"{ANSI_CURSOR_UP}{ANSI_CLEAR_LINE}")
+                self.zPrimitives.line(f"{label} {CHAR_CHECKMARK}")
 
     def progress_iterator(
         self,
@@ -844,15 +1015,29 @@ class TimeBased:
             - Use spinner() context manager for automatic animation
         """
         frame_idx = [0]
+        is_first_update = [True]  # Track if this is the first update
         frames = self._spinner_styles[STYLE_DOTS]
         
         def update() -> None:
             """Update the spinner frame (caller controls frequency)."""
             frame = frames[frame_idx[0] % len(frames)]
-            self.zPrimitives.write_raw(
-                f"{ANSI_CARRIAGE_RETURN}{label} {frame}",
-                flush=True
-            )
+            
+            # Use capability-aware rendering
+            if self._supports_carriage_return:
+                # Modern terminals: Use carriage return for in-place update
+                self.zPrimitives.raw(
+                    f"{ANSI_CARRIAGE_RETURN}{ANSI_CLEAR_LINE}{label} {frame}",
+                    flush=True
+                )
+            else:
+                # Terminal.app: Use cursor-up + clear line
+                if not is_first_update[0]:
+                    # Move up and clear previous frame
+                    self.zPrimitives.raw(f"{ANSI_CURSOR_UP}{ANSI_CLEAR_LINE}")
+                # Print new frame
+                self.zPrimitives.line(f"{label} {frame}")
+                is_first_update[0] = False
+            
             frame_idx[0] += 1
         
         return update
@@ -939,8 +1124,8 @@ class TimeBased:
             
             # Bifrost mode is async - frontend handles navigation
             # For now, just display a simple confirmation in terminal fallback
-            self.zPrimitives.write_line(f"\n{label}: Swiper initialized with {len(slides)} slides (Bifrost mode)")
-            self.zPrimitives.write_line(MSG_BIFROST_INITIALIZED)
+            self.zPrimitives.line(f"\n{label}: Swiper initialized with {len(slides)} slides (Bifrost mode)")
+            self.zPrimitives.line(MSG_BIFROST_INITIALIZED)
             return
         
         # Terminal mode - interactive swiper with auto-cycle + manual control
@@ -951,7 +1136,7 @@ class TimeBased:
         def display_slide(idx: int) -> None:
             """Render a single slide in terminal with box-drawing UI."""
             # Clear screen (ANSI escape codes)
-            self.zPrimitives.write_raw(f"{ANSI_CLEAR_SCREEN}{ANSI_HOME}", flush=True)
+            self.zPrimitives.raw(f"{ANSI_CLEAR_SCREEN}{ANSI_HOME}", flush=True)
             
             # Calculate box width
             width = DEFAULT_SWIPER_WIDTH
@@ -964,48 +1149,55 @@ class TimeBased:
             # Header
             header_text = f"  {label} ({slide_num})"
             header_padding = CHAR_SPACE * (width - len(header_text) - 2)
-            self.zPrimitives.write_line(
+            self.zPrimitives.line(
                 f"{BOX_TOP_LEFT}{BOX_HORIZONTAL * (width - 2)}{BOX_TOP_RIGHT}"
             )
-            self.zPrimitives.write_line(
+            self.zPrimitives.line(
                 f"{BOX_VERTICAL}{header_text}{header_padding}{BOX_VERTICAL}"
             )
-            self.zPrimitives.write_line(
+            self.zPrimitives.line(
                 f"{BOX_LEFT_T}{BOX_HORIZONTAL * (width - 2)}{BOX_RIGHT_T}"
             )
             
-            # Content (centered)
-            self.zPrimitives.write_line(
+            # Content (multi-line support)
+            self.zPrimitives.line(
                 f"{BOX_VERTICAL}{CHAR_SPACE * (width - 2)}{BOX_VERTICAL}"
             )
-            content_padding = (inner_width - len(slide_content)) // 2
-            content_line = (
-                f"{BOX_VERTICAL}  {CHAR_SPACE * content_padding}{slide_content}"
-                f"{CHAR_SPACE * (inner_width - len(slide_content) - content_padding)}  "
-                f"{BOX_VERTICAL}"
-            )
-            self.zPrimitives.write_line(content_line)
-            self.zPrimitives.write_line(
+            
+            # Split content into lines and render each within the box
+            content_lines = slide_content.strip().split('\n')
+            for line in content_lines:
+                # Truncate if line is too long
+                line_trimmed = line[:inner_width - 4] if len(line) > inner_width - 4 else line
+                # Left-align content with proper padding
+                padding_right = CHAR_SPACE * (inner_width - len(line_trimmed) - 4)
+                content_line = f"{BOX_VERTICAL}  {line_trimmed}{padding_right}  {BOX_VERTICAL}"
+                self.zPrimitives.line(content_line)
+            
+            self.zPrimitives.line(
                 f"{BOX_VERTICAL}{CHAR_SPACE * (width - 2)}{BOX_VERTICAL}"
             )
             
             # Controls
             if is_paused[0]:
                 status = SWIPER_STATUS_PAUSED
+                pause_label = "P Resume"  # Show "Resume" when paused
             elif auto_advance:
                 status = SWIPER_STATUS_AUTO.format(delay)
+                pause_label = "P Pause"   # Show "Pause" when running
             else:
                 status = SWIPER_STATUS_MANUAL
+                pause_label = "P Pause"   # Manual mode can still pause
             
-            self.zPrimitives.write_line(
+            self.zPrimitives.line(
                 f"{BOX_LEFT_T}{BOX_HORIZONTAL * (width - 2)}{BOX_RIGHT_T}"
             )
-            controls = f"  ◀ Prev  ▶ Next  1-{len(slides)} Jump  P Pause  Q Quit  {status}"
+            controls = f"  ◀ Prev  ▶ Next  1-{len(slides)} Jump  {pause_label}  Q Quit  {status}"
             controls_padding = CHAR_SPACE * max(0, width - len(controls) - 2)
-            self.zPrimitives.write_line(
+            self.zPrimitives.line(
                 f"{BOX_VERTICAL}{controls}{controls_padding}{BOX_VERTICAL}"
             )
-            self.zPrimitives.write_line(
+            self.zPrimitives.line(
                 f"{BOX_BOTTOM_LEFT}{BOX_HORIZONTAL * (width - 2)}{BOX_BOTTOM_RIGHT}"
             )
         
@@ -1076,7 +1268,7 @@ class TimeBased:
         except (ImportError, AttributeError, termios.error):
             # Fallback for systems without termios (Windows)
             # Just display slides sequentially with basic input
-            self.zPrimitives.write_line(MSG_SWIPER_FALLBACK)
+            self.zPrimitives.line(MSG_SWIPER_FALLBACK)
             for idx in range(len(slides)):
                 if stop_event.is_set():
                     break
@@ -1098,8 +1290,8 @@ class TimeBased:
                 advance_thread.join(timeout=DEFAULT_THREAD_JOIN_TIMEOUT)
             
             # Clear screen and show completion
-            self.zPrimitives.write_raw(f"{ANSI_CLEAR_SCREEN}{ANSI_HOME}", flush=True)
-            self.zPrimitives.write_line(MSG_SWIPER_COMPLETED.format(label))
+            self.zPrimitives.raw(f"{ANSI_CLEAR_SCREEN}{ANSI_HOME}", flush=True)
+            self.zPrimitives.line(MSG_SWIPER_COMPLETED.format(label))
             
             # Emit completion event for Bifrost
             if swiper_id in self._active_swipers:

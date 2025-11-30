@@ -318,7 +318,7 @@ class zCLI:
         # is fully isolated. Auth DB lazy-loads on first save_session() or grant_permission().
         # This preserves the "no global state" principle - the secret sauce of zCLI architecture.
 
-        self.logger.info(LOG_INIT_COMPLETE, self.session.get(SESSION_KEY_ZMODE))
+        self.logger.framework.debug(LOG_INIT_COMPLETE, self.session.get(SESSION_KEY_ZMODE))
 
     def _load_plugins(self) -> None:
         """
@@ -347,10 +347,10 @@ class zCLI:
         # It checks zSpark_obj.get("zMode") and defaults to "Terminal"
         # No need to override it here
 
-        self.logger.debug(LOG_SESSION_INIT)
-        self.logger.debug(LOG_DEBUG_SESSION_ID, self.session[SESSION_KEY_ZS_ID])
-        self.logger.debug(LOG_DEBUG_SESSION_MODE, self.session[SESSION_KEY_ZMODE])
-        self.logger.debug(LOG_DEBUG_SESSION_MACHINE, self.session[SESSION_KEY_ZMACHINE].get("hostname"))
+        self.logger.framework.debug(LOG_SESSION_INIT)
+        self.logger.framework.debug(LOG_DEBUG_SESSION_ID, self.session[SESSION_KEY_ZS_ID])
+        self.logger.framework.debug(LOG_DEBUG_SESSION_MODE, self.session[SESSION_KEY_ZMODE])
+        self.logger.framework.debug(LOG_DEBUG_SESSION_MACHINE, self.session[SESSION_KEY_ZMACHINE].get("hostname"))
 
     # ═══════════════════════════════════════════════════════════════════════
     # PUBLIC API METHODS
@@ -423,7 +423,7 @@ class zCLI:
         # Register handlers for SIGINT and SIGTERM
         signal.signal(signal.SIGINT, signal_handler)
         signal.signal(signal.SIGTERM, signal_handler)
-        self.logger.debug(LOG_DEBUG_SIGNAL_HANDLERS)
+        self.logger.framework.debug(LOG_DEBUG_SIGNAL_HANDLERS)
     
     def shutdown(self) -> Optional[Dict[str, bool]]:
         """

@@ -507,7 +507,7 @@ class zLoader:
         # Step 5: Load via plugin cache (handles caching + session injection)
         try:
             module = self.cache.plugin_cache.load_and_cache(file_path, module_name)
-            self.logger.info("Loaded plugin: %s from %s", module_name, file_path)
+            self.logger.framework.debug("Loaded plugin: %s from %s", module_name, file_path)
             return module
         except Exception as e:
             self.logger.error("Failed to load plugin %s: %s", module_name, str(e))

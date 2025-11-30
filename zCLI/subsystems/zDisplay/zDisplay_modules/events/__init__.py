@@ -46,10 +46,10 @@ The event packages are organized into three architectural tiers based on depende
         • Role: Complex data display with navigation
         • Dependencies: BasicOutputs
     
-    display_event_auth.py (zAuthEvents)
-        • Provides: login_prompt(), logout_confirm(), permission_error()
-        • Role: Authentication UI events
-        • Dependencies: BasicOutputs + Signals + BasicInputs
+    [REMOVED] display_event_auth.py (zAuthEvents)
+        • Reason: Violated separation of concerns
+        • Auth UI now composed in zAuth subsystem using generic display events
+        • zDisplay remains domain-agnostic (no auth-specific knowledge)
     
     display_event_system.py (zSystem)
         • Provides: zSession(), zCrumbs(), zMenu(), zDialog(), zDeclare()
@@ -68,11 +68,11 @@ DEPENDENCY GRAPH (Bottom-Up)
       Signals (Tier 2)    BasicInputs (Tier 2)    BasicData (Tier 2)
            ↑                     ↑                        ↑
            │                     │                        │
-           ├─────────────────────┴────────────┐           │
-           │                                  │           │
-    zAuthEvents (Tier 3)              zSystem (Tier 3)    │
+           ├─────────────────────────────────────┐           │
+           │                                             │           │
+        zSystem (Tier 3)                                 │           │
                                                            │
-    TimeBased (Tier 3)              AdvancedData (Tier 3)─┘
+    TimeBased (Tier 3)              AdvancedData (Tier 3)───────────┘
 
 
 ═══════════════════════════════════════════════════════════════════════════
@@ -202,7 +202,6 @@ from . import display_event_data         # BasicData - list(), json_data() for s
 
 from . import display_event_timebased    # TimeBased - progress_bar(), spinner(), swiper()
 from . import display_event_advanced     # AdvancedData - zTable() with pagination
-from . import display_event_auth         # zAuthEvents - login_prompt(), logout_confirm(), permission_error()
 from . import display_event_system       # zSystem - zSession(), zCrumbs(), zMenu(), zDialog(), zDeclare()
 
 
@@ -217,6 +216,5 @@ __all__ = [
     'display_event_data',         # Tier 2 - Data display (list, json_data)
     'display_event_timebased',    # Tier 3 - Temporal UI (progress_bar, spinner, swiper)
     'display_event_advanced',     # Tier 3 - Complex data (zTable with pagination)
-    'display_event_auth',         # Tier 3 - Authentication UI (login_prompt, logout_confirm, permission_error)
     'display_event_system'        # Tier 3 - System introspection (zSession, zCrumbs, zMenu, zDialog, zDeclare)
 ]

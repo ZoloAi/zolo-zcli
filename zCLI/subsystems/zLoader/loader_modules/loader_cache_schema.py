@@ -484,7 +484,7 @@ class SchemaCache:
                 handler = self.connections[alias_name]
                 handler.adapter.begin_transaction()
                 self.transaction_active[alias_name] = True
-                self.logger.info(f"{LOG_PREFIX_TXN} Transaction started for ${alias_name}")
+                self.logger.framework.debug(f"{LOG_PREFIX_TXN} Transaction started for ${alias_name}")
             except Exception as e:
                 self.logger.warning(f"{LOG_PREFIX_TXN} Error starting transaction for ${alias_name}: {e}")
         else:
@@ -520,7 +520,7 @@ class SchemaCache:
                 handler = self.connections[alias_name]
                 handler.adapter.commit()
                 self.transaction_active[alias_name] = False
-                self.logger.info(f"{LOG_PREFIX_OK} Transaction committed for ${alias_name}")
+                self.logger.framework.debug(f"{LOG_PREFIX_OK} Transaction committed for ${alias_name}")
             except Exception as e:
                 self.transaction_active[alias_name] = False  # Clean up even on error
                 self.logger.warning(f"{LOG_PREFIX_OK} Error committing transaction for ${alias_name}: {e}")

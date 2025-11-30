@@ -18,7 +18,7 @@ def create_default_env_config(path: Path, _env_data: Dict[str, Any]) -> None:
 
 {YAML_KEY}:
   # Environment Settings (customize these to your environment!)
-  {KEY_DEPLOYMENT}: "{DEFAULT_DEPLOYMENT}"  # Debug, Info, Production
+  {KEY_DEPLOYMENT}: "{DEFAULT_DEPLOYMENT}"  # Development, Testing, Production
   datacenter: "local"  # local, us-west-2, eu-central-1, etc.
   cluster: "single-node"  # single-node, multi-node, k8s-cluster
   node_id: "node-001"  # unique identifier for this node
@@ -49,15 +49,21 @@ def create_default_env_config(path: Path, _env_data: Dict[str, Any]) -> None:
     ssl_cert_path: ""  # path to SSL certificate
     ssl_key_path: ""  # path to SSL private key
   
-  # Logging Configuration
-  # Logger level hierarchy: zSpark > virtual env (ZOLO_LOGGER) > system env (ZOLO_LOGGER) > this file
+  # Logging Configuration (Dual Logger System)
+  # Hierarchy: zSpark > virtual env (ZOLO_LOGGER) > system env (ZOLO_LOGGER) > this file
   logging:
+    # Application Logs (your code) - customizable
+    app:
     level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
     format: "detailed"  # simple, detailed, json
     file_enabled: true  # enable file logging
-    file_path: ""  # log file path (empty = use system support directory)
-    max_file_size: "10MB"  # max log file size
-    backup_count: 5  # number of backup files
+      file_path: ""  # empty = use zCLI support folder (zcli-app.log)
+    
+    # Framework Logs (internal zCLI) - fixed path
+    framework:
+      level: "DEBUG"  # always DEBUG to capture all internal operations
+      format: "detailed"  # simple, detailed, json
+      # Note: framework logs always go to zcli-framework.log (non-configurable path)
   
   # Performance Settings
   performance:

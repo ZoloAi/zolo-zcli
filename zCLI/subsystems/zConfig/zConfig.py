@@ -16,6 +16,7 @@ from .zConfig_modules import (
     WebSocketConfig,
     HttpServerConfig,
 )
+from .zConfig_modules.config_resource_limits import ResourceLimits
 from .zConfig_modules.helpers import ensure_user_directories, initialize_system_ui
 
 # Module Constants
@@ -36,6 +37,7 @@ class zConfig:
     websocket: WebSocketConfig
     http_server: HttpServerConfig
     _persistence: Optional[ConfigPersistence]
+    resource_limits: ResourceLimits
 
     def __init__(self, zcli: Any, zSpark_obj: Optional[Dict[str, Any]] = None) -> None:
         """Initialize zConfig subsystem with hierarchical configuration loading.
@@ -83,9 +85,14 @@ class zConfig:
 
         # Load machine config FIRST (static, per-machine)
         self.machine = MachineConfig(self.sys_paths)
+        
+        # Apply resource limits (CPU and memory) if specified
+        self.resource_limits = ResourceLimits(self.machine.machine)
+        self.resource_limits.apply()
 
         # Load environment config SECOND (deployment, runtime settings)
-        self.environment = EnvironmentConfig(self.sys_paths)
+        # Pass zSpark for Layer 5 overrides (highest priority)
+        self.environment = EnvironmentConfig(self.sys_paths, zSpark_obj)
 
         # Initialize session THIRD (uses machine and environment config for session creation)
         # Pass self so SessionConfig can call back to create_logger()
@@ -102,8 +109,8 @@ class zConfig:
         # The LoggerConfig class proxies all standard logging methods to the underlying Python logger
         zcli.logger = session_logger
 
-        # Log initial message with configured level
-        zcli.logger.info("Logger initialized at level: %s", session_logger.log_level)
+        # Log initial message with configured level (framework logger for internal init)
+        zcli.logger.framework.debug("Logger initialized at level: %s", session_logger.log_level)
 
         # Initialize centralized traceback utility
         # Import inline to avoid circular dependency (zTraceback imports zConfig types)
@@ -120,9 +127,10 @@ class zConfig:
         # Initialize HTTP Server configuration (optional feature)
         self.http_server = HttpServerConfig(zSpark_obj or {}, zcli.logger)
 
-        # Print styled ready message (before zDisplay is available, log-level aware)
-        log_level = zcli.session.get('zLogger') if zcli.session else None
-        print_ready_message(READY_MESSAGE, color=DEFAULT_COLOR, log_level=log_level)
+        # Print styled ready message (before zDisplay is available, deployment-aware)
+        is_production = self.environment.is_production()
+        is_testing = self.environment.is_testing()
+        print_ready_message(READY_MESSAGE, color=DEFAULT_COLOR, is_production=is_production, is_testing=is_testing)
 
     # ═══════════════════════════════════════════════════════════
     # Configuration Access Methods
@@ -155,6 +163,46 @@ class zConfig:
         if key is None:
             return self.environment.get_all()
         return self.environment.get(key, default)
+
+    def is_production(self) -> bool:
+        """Check if running in Production deployment mode.
+        
+        Convenience method that delegates to environment.is_production().
+        
+        Returns:
+            bool: True if deployment is "Production", False otherwise
+        """
+        return self.environment.is_production()
+    
+    def get_cpu_limit(self) -> int:
+        """Get effective CPU core limit for resource management.
+        
+        Returns user-specified limit if set, otherwise returns detected cores.
+        Use this value to limit multiprocessing pools, thread pools, etc.
+        
+        Returns:
+            int: Number of CPU cores to use
+        """
+        return self.resource_limits.get_cpu_limit()
+    
+    def get_memory_limit_gb(self) -> int:
+        """Get effective memory limit in GB for resource management.
+        
+        Returns user-specified limit if set, otherwise returns detected memory.
+        Use this value to limit cache sizes, buffer allocations, etc.
+        
+        Returns:
+            int: Memory limit in GB
+        """
+        return self.resource_limits.get_memory_limit_gb()
+    
+    def get_resource_limits_status(self) -> Dict[str, Any]:
+        """Get detailed resource limits status.
+        
+        Returns:
+            Dict with current limits, availability info, and enforcement status
+        """
+        return self.resource_limits.get_status()
 
     def create_logger(self, session_data: Dict[str, Any]) -> LoggerConfig:
         """Create logger instance with session data.

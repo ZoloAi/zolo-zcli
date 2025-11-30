@@ -117,7 +117,7 @@ class BifrostManager:
                 self.create(walker=None)
                 self.logger.debug(f"{LOG_PREFIX} {LOG_INSTANCE_CREATED_ZBIFROST}")
             else:
-                self.logger.debug(f"{LOG_PREFIX} {LOG_DETECTED_TERMINAL_MODE}")
+                self.logger.framework.debug(f"{LOG_PREFIX} {LOG_DETECTED_TERMINAL_MODE}")
         except (KeyError, AttributeError) as e:
             self.logger.warning(f"{LOG_PREFIX} {WARN_AUTO_START_FAILED}", e)
 

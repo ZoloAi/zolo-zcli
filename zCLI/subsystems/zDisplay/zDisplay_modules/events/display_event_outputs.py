@@ -74,8 +74,8 @@ display_event_outputs.py (BasicOutputs) ← FOUNDATION (0 dependencies)
     ├── display_event_advanced.py (AdvancedData)
     │   Uses: header() for zTable titles and pagination
     │
-    ├── display_event_auth.py (zAuthEvents)
-    │   Uses: header() for login/logout prompts
+    ├── [REMOVED] display_event_auth.py (zAuthEvents)
+    │   Auth UI now composed in zAuth subsystem using generic display events
     │
     └── display_event_system.py (zSystem)
         Uses: header() + text() for zDeclare, zSession, zCrumbs, zMenu, zDialog
@@ -312,44 +312,56 @@ class BasicOutputs:
 
         # Apply indentation and write using primitive
         content = f"{indent_str}{line}"
-        self.zPrimitives.write_line(content)
+        self.zPrimitives.line(content)
 
-    def text(self, content: str, indent: int = 0, break_after: bool = True, break_message: Optional[str] = None) -> None:
-        """Display text with optional indentation and break/pause.
+    def text(
+        self, 
+        content: str, 
+        indent: int = 0, 
+        pause: bool = False,  # Preferred API
+        break_message: Optional[str] = None,
+        break_after: Optional[bool] = None  # Legacy parameter
+    ) -> None:
+        """Display text with optional indentation and pause.
         
         FOUNDATION METHOD - Used extensively by zSystem events and TimeBased for
         displaying content with optional user acknowledgment.
         
         Implements dual-mode I/O pattern:
-        1. GUI Mode: Send clean JSON event with break metadata
+        1. GUI Mode: Send clean JSON event with pause metadata
         2. Terminal Mode: Display text, optionally pause for Enter key
         
         Args:
             content: Text content to display
             indent: Indentation level (default: 0)
                     Each level = 2 spaces
-            break_after: Pause for user acknowledgment (default: True)
+            pause: Pause for user acknowledgment (default: False)
                          If True, displays break message and waits for Enter
             break_message: Custom break message (default: "Press Enter to continue...")
-                          Only used if break_after is True
+                          Only used if pause is True
+            break_after: Legacy parameter - use 'pause' instead
+                         Maintained for backward compatibility
                           
         Returns:
             None
             
         Example:
             self.BasicOutputs.text("Operation complete")
-            self.BasicOutputs.text("Details...", indent=1, break_after=False)
-            self.BasicOutputs.text("Warning!", break_message="Press Enter to proceed")
+            self.BasicOutputs.text("Details...", indent=1, pause=False)
+            self.BasicOutputs.text("Warning!", pause=True, break_message="Press Enter to proceed")
             
         Note:
             Used by: zSystem (zDeclare, zSession, zCrumbs, zMenu),
                      TimeBased (progress bar labels, spinner text)
         """
+        # Handle backward compatibility: break_after overrides pause if provided
+        should_break = break_after if break_after is not None else pause
+        
         # Try GUI mode first - send clean event with break metadata
         if self.zPrimitives.send_gui_event(EVENT_NAME_TEXT, {
             KEY_CONTENT: content,
             KEY_INDENT: indent,
-            KEY_BREAK: break_after,
+            KEY_BREAK: should_break,
             KEY_BREAK_MESSAGE: break_message
         }):
             return  # GUI event sent successfully
@@ -361,10 +373,10 @@ class BasicOutputs:
             content = f"{indent_str}{content}"
 
         # Display text using primitive
-        self.zPrimitives.write_line(content)
+        self.zPrimitives.line(content)
 
         # Auto-break if enabled (pause for user input)
-        if break_after:
+        if should_break:
             # Build break message
             message = break_message or DEFAULT_BREAK_MESSAGE
             if indent > 0:
@@ -372,5 +384,5 @@ class BasicOutputs:
                 message = f"{indent_str}{message}"
 
             # Display message and wait for Enter using primitives
-            self.zPrimitives.write_line(message)
+            self.zPrimitives.line(message)
             self.zPrimitives.read_string("")  # Wait for Enter (discard result)

@@ -1711,17 +1711,15 @@ class zSystem:
 
     def _should_show_sysmsg(self) -> bool:
         """
-        Check if system messages should be displayed based on logging level and deployment mode.
+        Check if system messages should be displayed based on deployment mode.
         
         System messages (zDeclare) are conditionally displayed to prevent verbose output
-        in production environments or when logging level is set high.
+        in production environments.
         
         Check Priority:
             1. Logger method:      zcli.logger.should_show_sysmsg() (if available)
-            2. Debug flag:         session.get("debug") (legacy fallback)
-            3. Deployment mode:    session[SESSION_KEY_ZMACHINE][ZMACHINE_KEY_DEPLOYMENT]
-                                  - DEPLOYMENT_MODE_DEV ("dev") → show (default)
-                                  - DEPLOYMENT_MODE_PROD ("prod") → hide
+            2. Config method:      zcli.config.is_production() (if available)
+            3. Legacy debug flag:  session.get("debug") (backward compatibility)
         
         Returns:
             bool: True if system messages should be displayed, False otherwise
@@ -1732,30 +1730,46 @@ class zSystem:
         
         Notes:
             - Respects zCLI's logging framework
-            - Falls back gracefully if logger not available
-            - Production mode (prod) hides system messages by default
-            - Development mode (dev) shows system messages by default
+            - Falls back gracefully if logger/config not available
+            - Production deployment hides system messages
+            - Development deployments show system messages
         """
         if not self.display or not hasattr(self.display, 'session'):
             return True
 
         session = self.display.session
 
-        # Check if zCLI instance has logger with should_show_sysmsg method
+        # Priority 1: Check logger's should_show_sysmsg (uses deployment internally)
         if hasattr(self.display, 'zcli'):
             zcli = self.display.zcli
+            
+            # Check via logger (preferred method)
             if zcli and hasattr(zcli, 'logger') and hasattr(zcli.logger, 'should_show_sysmsg'):
                 return zcli.logger.should_show_sysmsg()
+            
+            # Priority 2: Check via config deployment mode
+            if zcli and hasattr(zcli, 'config'):
+                # Suppress in both Production AND Testing modes (only show in Development)
+                if hasattr(zcli.config, 'is_production') and zcli.config.is_production():
+                    return False
+                
+                # Check for Testing mode
+                if hasattr(zcli.config, 'environment') and hasattr(zcli.config.environment, 'is_testing'):
+                    if zcli.config.environment.is_testing():
+                        return False
+                
+                # Also check deployment string directly as fallback
+                if hasattr(zcli.config, 'get_environment'):
+                    deployment = str(zcli.config.get_environment('deployment', '')).lower()
+                    if deployment in ['testing', 'info', 'production']:
+                        return False
+                
+                return True
 
-        # Fallback to legacy session debug flag
+        # Priority 3: Fallback to legacy session debug flag
         debug = session.get("debug")
         if debug is not None:
             return debug
 
-        # Fallback to deployment mode (use SESSION_KEY_ZMACHINE constant)
-        zmachine = session.get(SESSION_KEY_ZMACHINE, {})
-        deployment = zmachine.get(ZMACHINE_KEY_DEPLOYMENT, DEFAULT_DEPLOYMENT)
-        if deployment == DEPLOYMENT_MODE_PROD:
-            return False
-
+        # Default: show messages (development mode)
         return True
