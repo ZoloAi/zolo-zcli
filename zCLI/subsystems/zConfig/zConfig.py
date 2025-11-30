@@ -16,6 +16,7 @@ from .zConfig_modules import (
     WebSocketConfig,
     HttpServerConfig,
 )
+from .zConfig_modules.config_resource_limits import ResourceLimits
 from .zConfig_modules.helpers import ensure_user_directories, initialize_system_ui
 
 # Module Constants
@@ -36,6 +37,7 @@ class zConfig:
     websocket: WebSocketConfig
     http_server: HttpServerConfig
     _persistence: Optional[ConfigPersistence]
+    resource_limits: ResourceLimits
 
     def __init__(self, zcli: Any, zSpark_obj: Optional[Dict[str, Any]] = None) -> None:
         """Initialize zConfig subsystem with hierarchical configuration loading.
@@ -83,6 +85,10 @@ class zConfig:
 
         # Load machine config FIRST (static, per-machine)
         self.machine = MachineConfig(self.sys_paths)
+        
+        # Apply resource limits (CPU and memory) if specified
+        self.resource_limits = ResourceLimits(self.machine.machine)
+        self.resource_limits.apply()
 
         # Load environment config SECOND (deployment, runtime settings)
         # Pass zSpark for Layer 5 overrides (highest priority)
@@ -167,6 +173,36 @@ class zConfig:
             bool: True if deployment is "Production", False otherwise
         """
         return self.environment.is_production()
+    
+    def get_cpu_limit(self) -> int:
+        """Get effective CPU core limit for resource management.
+        
+        Returns user-specified limit if set, otherwise returns detected cores.
+        Use this value to limit multiprocessing pools, thread pools, etc.
+        
+        Returns:
+            int: Number of CPU cores to use
+        """
+        return self.resource_limits.get_cpu_limit()
+    
+    def get_memory_limit_gb(self) -> int:
+        """Get effective memory limit in GB for resource management.
+        
+        Returns user-specified limit if set, otherwise returns detected memory.
+        Use this value to limit cache sizes, buffer allocations, etc.
+        
+        Returns:
+            int: Memory limit in GB
+        """
+        return self.resource_limits.get_memory_limit_gb()
+    
+    def get_resource_limits_status(self) -> Dict[str, Any]:
+        """Get detailed resource limits status.
+        
+        Returns:
+            Dict with current limits, availability info, and enforcement status
+        """
+        return self.resource_limits.get_status()
 
     def create_logger(self, session_data: Dict[str, Any]) -> LoggerConfig:
         """Create logger instance with session data.

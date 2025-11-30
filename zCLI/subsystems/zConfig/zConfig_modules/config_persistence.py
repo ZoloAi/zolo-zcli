@@ -26,7 +26,7 @@ VALID_LOG_LEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 # Machine Config Keys (Editable)
 EDITABLE_MACHINE_KEYS = [
     "browser", "ide", "terminal", "shell",  # User tool preferences
-    "cpu_cores", "memory_gb",  # System capabilities (can be overridden)
+    "cpu_cores_limit", "memory_gb_limit",   # Resource allocation limits (optional)
 ]
 
 # Machine Config Keys (By Category)

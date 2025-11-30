@@ -119,7 +119,7 @@ Inside this directory, zCLI creates:
 | **1 (lowest)** | **System Defaults** | Package defaults | Read-only |
 | **2** | **zMachine** | Hardware + tools | Config file |
 | **3** | **zEnvironment** | Deployment + logging | Config file |
-| **4** | **Environment Variables** | Secrets + exports | `.zEnv` / shell |
+| **4** | **Environment Variables** | Secrets + exports | .zEnv / shell |
 | **5 (highest)** | **zSpark** | Runtime overrides | Your code |
 
 > **Note:** Sources 2-3 are persistent config files in your OS-native application support folder (mentioned in the Initialize demo above).
@@ -403,7 +403,227 @@ Watch the interactive menu launch when the error occurs!
 
 > **Note:** zTraceback is orchestrated by the `zWalker` subsystem, which provides the interactive menu infrastructure. For advanced customization and understanding the orchestration layer, see the [zWalker Guide](./zWalker_GUIDE.md).
 
+---
 
+**🎯 Level 2 Complete!**
+
+You've mastered the development-critical settings: **logging** and **error handling**. zCLI has many more configuration options (network, security, performance), but these two are essential for every project. In Level 3, you'll learn how to **read** all configuration values—from machine detection to environment settings.
+
+---
+
+# zConfig - Level 3 (Get)
+
+### i. Read Machine Values
+
+Now that you understand configuration basics (Level 1) and settings (Level 2), it's time to **read** configuration values.
+
+Remember from Level 1: zCLI auto-detects your hardware, OS, Python runtime, and tools during initialization. This **zMachine** configuration persists in your zCLI support folder, shared across all projects.
+
+**Access machine configuration:**
+
+```python
+zSpark = {
+    "deployment": "Production",
+    "title": "machine-demo",
+    "logger": "INFO",
+    "logger_path": "./logs",
+}
+z = zCLI(zSpark)
+
+# Get all machine values at once
+machine = z.config.get_machine()
+print(f"OS: {machine.get('os')}")
+print(f"CPU cores: {machine.get('cpu_cores')}")
+print(f"Python: {machine.get('python_version')}")
+
+# Or get a single value directly
+hostname = z.config.get_machine("hostname")
+```
+
+**🎯 Try it yourself:**
+
+See all 42 machine properties organized by category:
+
+```bash
+python3 Demos/Layer_0/zConfig_Demo/lvl3_get/1_zmachine.py
+```
+
+[View demo source →](../Demos/Layer_0/zConfig_Demo/lvl3_get/1_zmachine.py)
+
+**What you'll discover:**
+- **10 logical categories**: Hardware (System, CPU, Memory, GPU, Network) → Environment (User, Tools) → Software (Python, zCLI) → Settings
+- **Metal-aware detection**: P-cores vs E-cores on Apple Silicon
+- **GPU capabilities**: Type, vendor, VRAM, compute APIs (Metal, CUDA, ROCm)
+- **Network awareness**: 6 essential properties (interfaces, primary, local IP, MAC, gateway, public IP)
+- **Resource limits**: Optional cpu_cores_limit and memory_gb_limit for containers/VMs
+- **Production-ready** for ML, compute, and network-intensive applications
+- **Copy-paste ready** accessor patterns for any property
+
+Below are **all zMachine properties** available via `z.config.get_machine()`:
+
+| Category | Property | Description |
+|----------|----------|-------------|
+| **System Identity** | os | macOS (Darwin), Linux, Windows |
+| | os_name | Full OS name with version |
+| | os_version | Kernel release (e.g., 24.5.0) |
+| | hostname | Machine name |
+| | architecture | x86_64, arm64, aarch64 |
+| | processor | CPU model/type |
+| **CPU Architecture** | cpu_cores | Total CPU cores (backward compatibility) |
+| | cpu_physical | Physical CPU cores |
+| | cpu_logical | Logical cores (with hyperthreading) |
+| | cpu_performance | P-cores (Performance, Apple Silicon only) |
+| | cpu_efficiency | E-cores (Efficiency, Apple Silicon only) |
+| **Memory** | memory_gb | Total RAM via psutil or OS-specific methods |
+| **GPU Capabilities** | gpu_available | GPU detected (true/false) |
+| | gpu_type | GPU model name (e.g., Apple M1, NVIDIA RTX 3090) |
+| | gpu_vendor | GPU vendor (Apple, NVIDIA, AMD, Intel) |
+| | gpu_memory_gb | GPU memory (VRAM) in GB |
+| | gpu_compute | Supported compute APIs (e.g., Metal, CUDA) |
+| **Network** | network_interfaces | List of all network interface names |
+| | network_primary | Active/primary network interface |
+| | network_ip_local | Local IP address (primary interface) |
+| | network_mac_address | MAC address (primary interface) |
+| | network_gateway | Default gateway/router IP address |
+| | network_ip_public | Public IP address (optional, may be None) |
+| **User & Paths** | username | From USER or USERNAME env var |
+| | home | User's home path |
+| | cwd | Current directory (safe) |
+| | user_data_dir | OS-native zCLI support folder path |
+| | path | Full PATH environment variable |
+| **Development Tools** | ✏️ browser | Chrome, Firefox, Arc, Safari, Brave, Edge, Opera |
+| | ✏️ ide | Cursor, VS Code, Sublime, Vim, Nano, Fleet, Zed, PyCharm, WebStorm |
+| | ✏️ terminal | From TERM environment variable |
+| | ✏️ shell | bash, zsh, fish, sh |
+| **Python Runtime** | python_version | 3.12.0, 3.11.5, etc. |
+| | python_impl | CPython, PyPy, Jython |
+| | python_build | Build identifier |
+| | python_compiler | Compiler used to build Python |
+| | python_executable | Path to Python executable |
+| | libc_ver | System C library version |
+| **zCLI Installation** | zcli_install_path | Where zCLI package is installed |
+| | zcli_install_type | editable (development) or standard |
+| **System Settings** | lang | System locale (en_US.UTF-8, etc.) |
+| | timezone | From TZ or system default |
+| **Resource Limits** | ✏️ cpu_cores_limit | Limit CPU cores for pools/threads (soft limits, all platforms) |
+| | ✏️ memory_gb_limit | Limit RAM for caches/buffers (soft limits, Linux hard enforcement) |
+
+> ✏️ = Editable (user preferences or resource limits) | All others are auto-detected facts
+
+---
+
+### ii. Read Environment Values
+
+While **zMachine** identifies your hardware and tools, **zEnvironment** defines your working context.  
+Are you in Development mode? Testing? Production? What logging level do you need?  
+This is another fundamental concept in zCLI. Your environment settings persist across all projects, stored alongside zMachine:
+
+- **macOS**: `~/Library/Application Support/zolo-zcli/zConfigs/zConfig.environment.yaml`
+- **Linux**: `~/.local/share/zolo-zcli/zConfigs/zConfig.environment.yaml`
+- **Windows**: `%APPDATA%/zolo-zcli/zConfigs/zConfig.environment.yaml`
+
+This means you set your deployment mode once (e.g., "Production") and every zCLI project respects it—unless you override it per-project with `.zEnv` files.
+
+**To get the entire environment dict:**
+```python
+env = z.config.get_environment()
+print(env)
+```
+
+**To get a single value directly:**
+```python
+logger_level = z.config.get_environment("logger")
+```
+
+---
+
+**🎯 Try it yourself:**
+
+Run the demo to see environment configuration:
+
+```bash
+python3 Demos/Layer_0/zConfig_Demo/lvl3_get/2_environment.py
+```
+
+[View demo source →](../Demos/Layer_0/zConfig_Demo/lvl3_get/2_environment.py)
+
+---
+
+Complete reference of all environment properties available via z.config.get_environment():
+
+| Category | Property | Description |
+|----------|----------|-------------|
+| **Deployment Context** | deployment | Development, Testing, Production |
+| | datacenter | local, us-west-2, eu-central-1, etc. |
+| | cluster | single-node, multi-node, k8s-cluster |
+| | node_id | Unique identifier for this node |
+| | role | development, staging, production |
+| **Network** | network.host | Bind address (default: 127.0.0.1) |
+| | network.port | Service port (default: 56891) |
+| | network.external_host | External access hostname |
+| | network.external_port | External access port |
+| **WebSocket** | websocket.host | WebSocket bind address |
+| | websocket.port | WebSocket port |
+| | websocket.require_auth | Require authentication (true/false) |
+| | websocket.allowed_origins | List of allowed CORS origins |
+| | websocket.max_connections | Maximum concurrent connections |
+| | websocket.ping_interval | Ping interval in seconds |
+| | websocket.ping_timeout | Ping timeout in seconds |
+| **Security** | security.require_auth | Require authentication |
+| | security.allow_anonymous | Allow anonymous access |
+| | security.ssl_enabled | Enable SSL/TLS |
+| | security.ssl_cert_path | Path to SSL certificate |
+| | security.ssl_key_path | Path to SSL private key |
+| **Logging** | logging.level | DEBUG, INFO, WARNING, ERROR, CRITICAL |
+| | logging.format | simple, detailed, json |
+| | logging.file_enabled | Enable file logging (true/false) |
+| | logging.file_path | Log file path |
+| | logging.max_file_size | Max log file size (e.g., 10MB) |
+| | logging.backup_count | Number of backup log files |
+| **Performance** | performance.max_workers | Max concurrent workers |
+| | performance.cache_size | Cache size limit |
+| | performance.cache_ttl | Cache time-to-live in seconds |
+| | performance.timeout | Default timeout in seconds |
+| **Custom Fields** | custom_field_1 | User-defined value |
+| | custom_field_2 | User-defined value |
+| | custom_field_3 | User-defined value (can be list/dict)
+
+**Note:** All environment settings are user-configurable
+
+### iii. Read Session Values
+
+Session holds runtime state created during initialization. Values like `zMode`, `zSpace`, and `zVars` live here.
+
+**Access session values:**
+```python
+session = z.session
+print("zMode:", session.get("zMode"))
+print("zSpace:", session.get("zSpace"))
+print("zS_id:", session.get("zS_id"))
+```
+
+Session is ephemeral—it exists only in memory during your program's runtime.
+
+---
+
+**🎯 Try it yourself:**
+
+Run the demo to see runtime session values:
+
+```bash
+python3 Demos/Layer_0/zConfig_Demo/lvl3_get/3_zsession.py
+```
+
+[View demo source →](../Demos/Layer_0/zConfig_Demo/lvl3_get/3_zsession.py)
+
+---
+
+---
+
+## Appendix: Machine Properties
+
+
+**[← Back to zPhilosophy](zPhilosophy.md) | [Home](../README.md) | [Next: zComm Guide →](zComm_GUIDE.md)**
 ---
 
 ### Read Workspace Secrets from .zEnv
@@ -475,8 +695,10 @@ z.config.persistence.persist_environment("custom_field_1", "my_value")
 **Which Keys Are Editable?**
 
 Machine config (Layer 2):
-- ✅ **Editable**: `browser`, `ide`, `terminal`, `shell`, `cpu_cores`, `memory_gb`
-- 🔒 **Locked**: `os`, `hostname`, `architecture`, `python_version`, `processor` (auto-detected)
+- ✅ **Editable**: 
+  - browser, ide, terminal, shell (user tool preferences)
+  - cpu_cores_limit, memory_gb_limit (resource allocation limits)
+- 🔒 **Locked**: os, hostname, architecture, cpu_cores, memory_gb, python_version, processor, gpu_type, etc. (auto-detected hardware facts)
 
 Environment config (Layer 3):
 - ✅ **All keys editable**: `deployment`, `role`, `custom_field_1/2/3`, etc.
@@ -492,185 +714,33 @@ You can also edit the YAML files directly in your text editor:
 > **Note:** The `zenv_persistence_demo.py` shows how to *read* persistent values. Use the persistence API above to *write* them. For interactive config changes, see [zShell Guide](zShell_GUIDE.md).
 
 
-# zConfig - Level 2 (Get)
 
-### i. Read Machine Values
+---
 
-Once zCLI is initialized, you can read configuration from the 5-layer hierarchy.  
-Start with **machine detection**—your hardware, OS, and tools.
+**Resource Limits Implementation:**
 
-During zConfig initialization, the framework auto-detects your hardware and tools (OS, CPU, browser, IDE, terminal) and stores this as **zMachine** configuration. This is a fundamental concept in zCLI—your machine's identity persists across all projects, and stored in OS-native directories:
+Resource limits (`cpu_cores_limit`, `memory_gb_limit`) are **fully implemented** and work cross-platform:
 
-- **macOS**: `~/Library/Application Support/zolo-zcli/zConfigs/zConfig.machine.yaml`
-- **Linux**: `~/.local/share/zolo-zcli/zConfigs/zConfig.machine.yaml`
-- **Windows**: `%APPDATA%/zolo-zcli/zConfigs/zConfig.machine.yaml`
+- **Soft Limits (All Platforms)**: Application code can query limits via `z.config.get_cpu_limit()` and `z.config.get_memory_limit_gb()` to voluntarily respect resource constraints
+- **Hard Limits (Linux Only)**: OS enforces limits - process is killed if exceeded (uses `resource.setrlimit()` and `os.sched_setaffinity()`)
+- **Use Cases**: Multiprocessing pool sizing, cache management, Docker/K8s hints, shared systems
 
-This means every zCLI project on your machine shares the same machine context—no need to reconfigure per project.  
-**To get the entire machine dict:**
-
+**Example usage:**
 ```python
-machine = z.config.get_machine()
-print(machine)
-```
-> **New to Python?** A "dict" (dictionary) is a collection of labeled values—like `{"name": "Alice", "age": 13}`.
+# Query limits
+cpu_limit = z.config.get_cpu_limit()
+memory_limit_gb = z.config.get_memory_limit_gb()
 
-**To get a single value directly:**
-```python
-hostname = z.config.get_machine("hostname")
-```
+# Apply to multiprocessing
+import multiprocessing
+pool = multiprocessing.Pool(processes=cpu_limit)
 
----
-
-**🎯 Try it yourself:**
-
-Run the demo to see all machine properties:
-
-```bash
-python3 Demos/Layer_0/zConfig_Demo/lvl3_get/1_zmachine.py
+# Apply to cache sizing
+cache_size = int(memory_limit_gb * 0.25 * 1024**3)  # 25% of limit
 ```
 
-[View demo source →](../Demos/Layer_0/zConfig_Demo/lvl3_get/1_zmachine.py)
-
----
-
-Complete reference of all machine properties available via `z.config.get_machine()`:
-
-| Category | Property | Description |
-|----------|----------|-------------|
-| **Machine Identity** | `os` | macOS (Darwin), Linux, Windows |
-| | `os_version` | Kernel release (e.g., 24.5.0) |
-| | `os_name` | Full OS name with version |
-| | `hostname` | Machine name |
-| | `architecture` | x86_64, arm64, aarch64 |
-| | `processor` | CPU model/type |
-| **Python Runtime** | `python_version` | 3.12.0, 3.11.5, etc. |
-| | `python_impl` | CPython, PyPy, Jython |
-| | `python_build` | Build identifier |
-| | `python_compiler` | Compiler used to build Python |
-| | `libc_ver` | System C library version |
-| | `python_executable` | Path to Python executable |
-| **zCLI Installation** | `zcli_install_path` | Where zCLI package is installed |
-| | `zcli_install_type` | editable (development) or standard |
-| **User Tools** | `browser` | Chrome, Firefox, Arc, Safari, Brave, Edge, Opera |
-| | `ide` | Cursor, VS Code, Sublime, Vim, Nano, Fleet, Zed, PyCharm, WebStorm |
-| | `terminal` | From TERM environment variable |
-| | `shell` | bash, zsh, fish, sh |
-| | `lang` | System locale (en_US.UTF-8, etc.) |
-| | `timezone` | From TZ or system default |
-| **System Capabilities** | `cpu_cores` | Physical + logical core count |
-| | `memory_gb` | Total RAM via psutil or OS-specific methods |
-| **Paths & User** | `home` | User's home path |
-| | `cwd` | Current directory (safe) |
-| | `username` | From USER or USERNAME env var |
-| | `path` | Full PATH environment variable |
-
-### ii. Read Environment Values
-
-While **zMachine** identifies your hardware and tools, **zEnvironment** defines your working context.  
-Are you in Debug mode? Production? What logging level do you need?  
-This is another fundamental concept in zCLI. Your environment settings persist across all projects, stored alongside zMachine:
-
-- **macOS**: `~/Library/Application Support/zolo-zcli/zConfigs/zConfig.environment.yaml`
-- **Linux**: `~/.local/share/zolo-zcli/zConfigs/zConfig.environment.yaml`
-- **Windows**: `%APPDATA%/zolo-zcli/zConfigs/zConfig.environment.yaml`
-
-This means you set your deployment mode once (e.g., "Production") and every zCLI project respects it—unless you override it per-project with `.zEnv` files.
-
-**To get the entire environment dict:**
-```python
-env = z.config.get_environment()
-print(env)
+**To set limits**, edit `zConfig.machine.yaml` and uncomment:
+```yaml
+cpu_cores_limit: 4      # Limit to 4 cores
+memory_gb_limit: 8      # Limit to 8 GB
 ```
-
-**To get a single value directly:**
-```python
-logger_level = z.config.get_environment("logger")
-```
-
----
-
-**🎯 Try it yourself:**
-
-Run the demo to see environment configuration:
-
-```bash
-python3 Demos/Layer_0/zConfig_Demo/lvl3_get/2_environment.py
-```
-
-[View demo source →](../Demos/Layer_0/zConfig_Demo/lvl3_get/2_environment.py)
-
----
-
-Complete reference of all environment properties available via `z.config.get_environment()`:
-
-| Category | Property | Description |
-|----------|----------|-------------|
-| **Deployment Context** | `deployment` | Debug, Info, Production |
-| | `datacenter` | local, us-west-2, eu-central-1, etc. |
-| | `cluster` | single-node, multi-node, k8s-cluster |
-| | `node_id` | Unique identifier for this node |
-| | `role` | development, staging, production |
-| **Network** | `network.host` | Bind address (default: 127.0.0.1) |
-| | `network.port` | Service port (default: 56891) |
-| | `network.external_host` | External access hostname |
-| | `network.external_port` | External access port |
-| **WebSocket** | `websocket.host` | WebSocket bind address |
-| | `websocket.port` | WebSocket port |
-| | `websocket.require_auth` | Require authentication (true/false) |
-| | `websocket.allowed_origins` | List of allowed CORS origins |
-| | `websocket.max_connections` | Maximum concurrent connections |
-| | `websocket.ping_interval` | Ping interval in seconds |
-| | `websocket.ping_timeout` | Ping timeout in seconds |
-| **Security** | `security.require_auth` | Require authentication |
-| | `security.allow_anonymous` | Allow anonymous access |
-| | `security.ssl_enabled` | Enable SSL/TLS |
-| | `security.ssl_cert_path` | Path to SSL certificate |
-| | `security.ssl_key_path` | Path to SSL private key |
-| **Logging** | `logging.level` | DEBUG, INFO, WARNING, ERROR, CRITICAL |
-| | `logging.format` | simple, detailed, json |
-| | `logging.file_enabled` | Enable file logging (true/false) |
-| | `logging.file_path` | Log file path |
-| | `logging.max_file_size` | Max log file size (e.g., "10MB") |
-| | `logging.backup_count` | Number of backup log files |
-| **Performance** | `performance.max_workers` | Max concurrent workers |
-| | `performance.cache_size` | Cache size limit |
-| | `performance.cache_ttl` | Cache time-to-live in seconds |
-| | `performance.timeout` | Default timeout in seconds |
-| **Custom Fields** | `custom_field_1` | User-defined value |
-| | `custom_field_2` | User-defined value |
-| | `custom_field_3` | User-defined value (can be list/dict) |
-
-### iii. Read Session Values
-
-Session holds runtime state created during initialization. Values like `zMode`, `zSpace`, and `zVars` live here.
-
-**Access session values:**
-```python
-session = z.session
-print("zMode:", session.get("zMode"))
-print("zSpace:", session.get("zSpace"))
-print("zS_id:", session.get("zS_id"))
-```
-
-Session is ephemeral—it exists only in memory during your program's runtime.
-
----
-
-**🎯 Try it yourself:**
-
-Run the demo to see runtime session values:
-
-```bash
-python3 Demos/Layer_0/zConfig_Demo/lvl3_get/3_zsession.py
-```
-
-[View demo source →](../Demos/Layer_0/zConfig_Demo/lvl3_get/3_zsession.py)
-
----
-
----
-
-## Appendix: Machine Properties
-
-
-**[← Back to zPhilosophy](zPhilosophy.md) | [Home](../README.md) | [Next: zComm Guide →](zComm_GUIDE.md)**
