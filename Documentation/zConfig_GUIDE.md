@@ -119,7 +119,7 @@ Inside this directory, zCLI creates:
 | **1 (lowest)** | **System Defaults** | Package defaults | Read-only |
 | **2** | **zMachine** | Hardware + tools | Config file |
 | **3** | **zEnvironment** | Deployment + logging | Config file |
-| **4** | **Environment Variables** | Secrets + exports | .zEnv / shell |
+| **4** | **dotenv** | Secrets + exports | .zEnv / shell |
 | **5 (highest)** | **zSpark** | Runtime overrides | Your code |
 
 > **Note:** Sources 2-3 are persistent config files in your OS-native application support folder (mentioned in the Initialize demo above).
@@ -417,7 +417,13 @@ You've mastered the development-critical settings: **logging** and **error handl
 
 Now that you understand configuration basics (Level 1) and settings (Level 2), it's time to **read** configuration values.
 
-Remember from Level 1: zCLI auto-detects your hardware, OS, Python runtime, and tools during initialization. This **zMachine** configuration persists in your zCLI support folder, shared across all projects.
+Remember from Level 1: zCLI auto-detects your hardware, OS, Python runtime, and tools during initialization. This **zMachine** configuration persists in your zCLI support folder, shared across all projects:
+
+- **macOS**: `~/Library/Application Support/zolo-zcli/zConfigs/zConfig.machine.yaml`
+- **Linux**: `~/.local/share/zolo-zcli/zConfigs/zConfig.machine.yaml`
+- **Windows**: `%APPDATA%/zolo-zcli/zConfigs/zConfig.machine.yaml`
+
+This machine configuration is detected once and stored persistently. You can manually edit tool preferences (browser, IDE, terminal, shell) and resource limits (cpu_cores_limit, memory_gb_limit) directly in this file. For details on editing configuration, see the [Persist Configuration Changes](#persist-configuration-changes) section in the Appendix.
 
 **Access machine configuration:**
 
@@ -510,36 +516,63 @@ Below are **all zMachine properties** available via `z.config.get_machine()`:
 
 > ✏️ = Editable (user preferences or resource limits) | All others are auto-detected facts
 
+**Note on editing zMachine values:**  
+Editable zMachine values (tool preferences and resource limits) can be modified in three ways:
+1. **zShell commands** (recommended) - See [zShell Guide](zShell_GUIDE.md) for `config set` and related commands
+2. **Manual YAML editing** - Edit `zConfig.machine.yaml` directly
+3. **Programmatic API** (advanced) - See [Persist Configuration Changes](#persist-configuration-changes) in the Appendix
+
+The recommended approach is using **zShell commands** for interactive changes or **manual editing** for batch modifications.
+
 ---
 
 ### ii. Read Environment Values
 
 While **zMachine** identifies your hardware and tools, **zEnvironment** defines your working context.  
 Are you in Development mode? Testing? Production? What logging level do you need?  
-This is another fundamental concept in zCLI. Your environment settings persist across all projects, stored alongside zMachine:
+
+Your environment settings persist across all projects, stored alongside zMachine:
 
 - **macOS**: `~/Library/Application Support/zolo-zcli/zConfigs/zConfig.environment.yaml`
 - **Linux**: `~/.local/share/zolo-zcli/zConfigs/zConfig.environment.yaml`
 - **Windows**: `%APPDATA%/zolo-zcli/zConfigs/zConfig.environment.yaml`
 
-This means you set your deployment mode once (e.g., "Production") and every zCLI project respects it—unless you override it per-project with `.zEnv` files.
+This means you set your deployment mode once (e.g., "Production") and every zCLI project respects it by default.
 
-**To get the entire environment dict:**
+**Access environment configuration:**
+
 ```python
+zSpark = {
+    "deployment": "Production",
+    "title": "environment-demo",
+    "logger": "INFO",
+    "logger_path": "./logs",
+}
+z = zCLI(zSpark)
+
+# Get all environment values at once
 env = z.config.get_environment()
-print(env)
+
+# Access top-level values directly
+deployment = env.get('deployment')
+
+# Access nested/grouped values (two methods):
+# Method 1: Step by step
+logging_dict = env.get('logging', {})
+log_level = logging_dict.get('level')
+
+# Method 2: Chained access (one line)
+log_level = env.get('logging', {}).get('level')
+
+# Or get a single top-level value directly (shortcut)
+deployment = z.config.get_environment("deployment")
 ```
 
-**To get a single value directly:**
-```python
-logger_level = z.config.get_environment("logger")
-```
-
----
+**Note:** This example demonstrates the **5-layer configuration hierarchy** in action! By setting `deployment: "Production"` in zSpark, we override whatever is stored in `zConfig.environment.yaml` for this session only. This is the highest priority layer, giving you programmatic control without modifying persistent configuration files.
 
 **🎯 Try it yourself:**
 
-Run the demo to see environment configuration:
+See all environment properties organized by category:
 
 ```bash
 python3 Demos/Layer_0/zConfig_Demo/lvl3_get/2_environment.py
@@ -547,9 +580,15 @@ python3 Demos/Layer_0/zConfig_Demo/lvl3_get/2_environment.py
 
 [View demo source →](../Demos/Layer_0/zConfig_Demo/lvl3_get/2_environment.py)
 
----
+**What you'll discover:**
+- **6 categories**: Deployment, Logging, Network, Security, Performance, WebSocket
+- **Deployment modes**: Development, Testing, Production (controls app behavior)
+- **5-layer hierarchy in action**: See zSpark override environment.yaml (highest priority!)
+- **Settings persistence**: Shared across all projects
+- **Custom fields**: Add your own (datacenter, cluster, node_id, etc.)
+- **Copy-paste ready** accessor patterns for any property
 
-Complete reference of all environment properties available via z.config.get_environment():
+Below are **all zEnvironment properties** available via `z.config.get_environment()`:
 
 | Category | Property | Description |
 |----------|----------|-------------|
@@ -590,97 +629,408 @@ Complete reference of all environment properties available via z.config.get_envi
 
 **Note:** All environment settings are user-configurable
 
-### iii. Read Session Values
+---
 
-Session holds runtime state created during initialization. Values like `zMode`, `zSpace`, and `zVars` live here.
+### iii. Read Workspace Variables (Dotenv)
 
-**Access session values:**
+So far you've learned about **zMachine** (Layer 2: hardware) and **zEnvironment** (Layer 3: global context). Now let's explore **Layer 4** in the configuration hierarchy.
+
+**Quick reminder - The 5 Configuration Layers:**
+
+| Priority | Layer | Source | What |
+|----------|-------|--------|------|
+| 1 (lowest) | Defaults | Package | Fallback values |
+| 2 | zMachine | Config file | Auto-detected hardware |
+| 3 | zEnvironment | Config file | Global deployment settings |
+| **4** | **Dotenv** | **.env/.zEnv** | **Workspace-specific variables** |
+| 5 (highest) | zSpark | Your code | Runtime overrides |
+
+**Layer 4** is where workspace-specific variables live. These come from **dotenv files** (`.env` / `.zEnv`) that zCLI automatically loads from your project folder.
+
+This is a standard **computer science convention** - without the need to import `python-dotenv`!
+
+**Perfect for:** API keys, secrets, feature flags, project-specific settings.
+
+**Access workspace variables:**
+
 ```python
+# .zEnv or .env file in your project folder (auto-loaded by zCLI)
+# APP_NAME=My Application
+# API_KEY=secret_key_123
+# DEBUG_MODE=true
+
+zSpark = {
+    "deployment": "Production",
+    "title": "dotenv-demo",
+    "logger": "INFO",
+    "logger_path": "./logs",
+}
+z = zCLI(zSpark)
+
+# Get values with fallback defaults
+app_name = z.config.environment.get_env_var("APP_NAME", "Unknown")
+api_key = z.config.environment.get_env_var("API_KEY")
+debug_mode = z.config.environment.get_env_var("DEBUG_MODE", "false").lower() == "true"
+```
+
+**🎯 Try it yourself:**
+
+See dotenv loading in action:
+
+```bash
+cd Demos/Layer_0/zConfig_Demo/lvl3_get
+python3 3_dotenv.py
+```
+
+[View demo source →](../Demos/Layer_0/zConfig_Demo/lvl3_get/3_dotenv.py)
+
+**What you'll discover:**
+- **Dotenv convention** - Standard `.env` / `.zEnv` files auto-load
+- **No imports needed** - No `python-dotenv` import required
+- **Workspace-specific** - Different projects = different dotenv files
+- **Fallback defaults** - Provide default values if key doesn't exist
+- **Perfect for secrets** - Add dotenv files to `.gitignore` for API keys
+- **Layer 4 priority** - Overrides global config, overridden by zSpark
+
+**Important:**
+- zCLI looks for `.zEnv` (preferred) or `.env` in your current working directory
+- `.zEnv` wins if both files exist
+- **Always add these files to `.gitignore` if they contain secrets!**
+- Use for project-specific values that shouldn't be hardcoded
+
+---
+
+### iv. Read Session Values
+
+**zMachine** is your hardware, **zEnvironment** is your context, **Dotenv** is your workspace, and **zSession** is your runtime.
+
+**zSession** holds ephemeral state created during initialization - values like `zMode`, `zSpace`, `zLogger`, and your `zSpark` dictionary. Unlike zMachine and zEnvironment configs, **zSession exists only in memory during your program's runtime**.
+
+**Access session configuration:**
+
+```python
+zSpark = {
+    "deployment": "Production",
+    "title": "session-demo",
+    "logger": "INFO",
+    "logger_path": "./logs",
+    "zTraceback": True,
+}
+z = zCLI(zSpark)
+
+# Get session dictionary
 session = z.session
-print("zMode:", session.get("zMode"))
-print("zSpace:", session.get("zSpace"))
-print("zS_id:", session.get("zS_id"))
+
+# Access runtime values
+session_id = session.get('zS_id')
+mode = session.get('zMode')
+logger_level = session.get('zLogger')
+
+# Access your original zSpark dictionary
+zspark_stored = session.get('zSpark')
 ```
 
-Session is ephemeral—it exists only in memory during your program's runtime.
-
----
+**What's in session:**
+- **Identity**: `zS_id`, `title` (runtime identifiers)
+- **Configuration**: `zMode`, `zSpace`, `zLogger`, `logger_path`, `zTraceback`
+- **Your zSpark**: Original dictionary stored for reference
+- **Environment**: `virtual_env`, `system_env` (OS environment variables)
+- **Custom vars**: `zVars` (user-defined runtime variables)
 
 **🎯 Try it yourself:**
 
-Run the demo to see runtime session values:
+See all session properties organized by category:
 
 ```bash
-python3 Demos/Layer_0/zConfig_Demo/lvl3_get/3_zsession.py
+python3 Demos/Layer_0/zConfig_Demo/lvl3_get/4_zsession.py
 ```
 
-[View demo source →](../Demos/Layer_0/zConfig_Demo/lvl3_get/3_zsession.py)
+[View demo source →](../Demos/Layer_0/zConfig_Demo/lvl3_get/4_zsession.py)
+
+**What you'll discover:**
+- **Runtime state**: Values created during initialization
+- **Ephemeral**: Exists only in memory (not persisted)
+- **zSpark reference**: Your original configuration dictionary stored
+- **System integration**: Access to virtual environments and system env vars
+- **Copy-paste ready** accessor patterns for any value
+
+Below are **all zSession properties** available via `z.session`:
+
+| Category | Property | Description |
+|----------|----------|-------------|
+| **Session Identity** | zS_id | Unique session identifier (auto-generated) |
+| | title | Session title (from zSpark or script filename) |
+| **Runtime Configuration** | zMode | Execution mode (Terminal, Bifrost, etc.) |
+| | zSpace | Workspace path (current working directory) |
+| | zLogger | Active logger level (DEBUG, INFO, etc.) |
+| | logger_path | Directory where application logs are stored |
+| | zTraceback | Exception handling enabled (True/False) |
+| **zSpark Reference** | zSpark | Original zSpark dictionary as provided |
+| **Environment Integration** | virtual_env | Virtual environment path (if active, else None) |
+| | system_env | Full system environment variables (dict) |
+| **Custom Variables** | zVars | User-defined runtime variables (dict) |
+
+**Note:** All session values are read-only runtime state. They exist only in memory and are not persisted to disk.
 
 ---
 
+**🎯 Level 3 Complete!**
+
+You've learned to **read** all three configuration sources: **zMachine** (hardware), **zEnvironment** (context), and **zSession** (runtime). In Level 4, you'll master the **5-layer hierarchy** and understand how these sources interact, including workspace-specific `.zEnv` files and configuration persistence.
+
 ---
 
-## Appendix: Machine Properties
+# **zConfig - Level 4** (Use Case)
 
+### **System Requirements Checker - The 5-Layer Hierarchy in Action**
 
-**[← Back to zPhilosophy](zPhilosophy.md) | [Home](../README.md) | [Next: zComm Guide →](zComm_GUIDE.md)**
+Time to put everything together! Let's build a **real app** that every developer needs: a system requirements checker.
+
+**What it does:**  
+Checks if your computer meets the minimum requirements for a project. Think ML training, game development, or any compute-intensive application - they all need to validate your hardware before letting you proceed.
+
+**The problem it solves:**  
+Instead of hardcoding requirements like "needs 8GB RAM" directly in your code, you define them in a `.zEnv` file. The app then:
+1. Reads requirements from `.zEnv` (what you need)
+2. Gets actual specs from zMachine (what you have)
+3. Compares them and tells you if you're ready to go
+
+**Why this is a perfect demo:**  
+Every configuration layer has a role - **Layer 2** provides hardware specs, **Layer 3** sets deployment mode, **Layer 4** defines project requirements, and **Layer 5** allows runtime overrides.
+
 ---
 
-### Read Workspace Secrets from .zEnv
+**The 5-Layer Hierarchy** (highest priority wins):
+
+| Priority | Source | What | Where | Example |
+|----------|--------|------|-------|---------|
+| **5 (highest)** | **zSpark** | Runtime overrides | Your code | `zCLI({"deployment": "Production"})` |
+| **4** | **.zEnv** | Workspace secrets | Project folder | `MIN_CPU_CORES=4` |
+| **3** | **zEnvironment** | Global settings | Config file | `deployment: Development` |
+| **2** | **zMachine** | Hardware specs | Config file | `cpu_cores: 8` (auto-detected) |
+| **1 (lowest)** | **Defaults** | Fallback values | Package | `deployment: Development` |
+
+### **The App: System Requirements Checker**
+
+Now let's see all 5 layers working together in a real app!
 
 ```python
-z = zCLI()
+zSpark = {
+    "deployment": "Production",  # Layer 5: Override global deployment
+    "title": "system-checker",
+    "logger": "INFO",
+    "logger_path": "./logs",
+}
+z = zCLI(zSpark)
 
-# Auto-loaded from .zEnv in workspace
-threshold = z.config.environment.get_env_var("APP_THRESHOLD")
-region = z.config.environment.get_env_var("APP_REGION")
+# Get requirements from .zEnv (Layer 4 - workspace-specific)
+min_cores = int(z.config.environment.get_env_var("MIN_CPU_CORES", "2"))
+min_memory = int(z.config.environment.get_env_var("MIN_MEMORY_GB", "4"))
+project_name = z.config.environment.get_env_var("PROJECT_NAME", "Unknown")
+
+# Get actual hardware from zMachine (Layer 2 - auto-detected)
+machine = z.config.get_machine()
+actual_cores = machine.get('cpu_cores')
+actual_memory = machine.get('memory_gb')
+
+# Compare and report
+print(f"Checking {project_name}...")
+print(f"CPU: {actual_cores} cores (need {min_cores}) - {'✅ PASS' if actual_cores >= min_cores else '❌ FAIL'}")
+print(f"RAM: {actual_memory}GB (need {min_memory}GB) - {'✅ PASS' if actual_memory >= min_memory else '❌ FAIL'}")
 ```
-
-zConfig automatically loads `.zEnv` (or `.env`) from your workspace. No python-dotenv needed.
-
----
 
 **🎯 Try it yourself:**
 
-Run the demo to see workspace secrets loading:
+Run the complete system checker:
 
 ```bash
-python3 Demos/Layer_0/zConfig_Demo/lvl4_hierarchy/zenv_demo.py
+python3 Demos/Layer_0/zConfig_Demo/lvl4_usecase/1_system_checker.py
 ```
 
-[View demo source →](../Demos/Layer_0/zConfig_Demo/lvl4_hierarchy/zenv_demo.py)
+[View demo source →](../Demos/Layer_0/zConfig_Demo/lvl4_usecase/1_system_checker.py)
+
+**What you'll discover:**
+- **Layer 5 (zSpark)**: Runtime override for deployment mode
+- **Layer 4 (.zEnv)**: Project-specific requirements (CPU, RAM, Python, GPU)
+- **Layer 3 (zEnvironment)**: Global deployment settings
+- **Layer 2 (zMachine)**: Auto-detected hardware specs
+- **Real-world use**: System validation, environment checks, deployment readiness
+
+**Try modifying `.zEnv`:**
+- Change `MIN_CPU_CORES=16` to fail the check
+- Change `REQUIRED_GPU=false` to remove GPU requirement
+- Add your own requirements
+
+**The `.zEnv` file:**
+```bash
+# Project: ML Training Pipeline
+PROJECT_NAME=ML Training Pipeline
+PROJECT_VERSION=2.1.0
+
+# Hardware Requirements
+MIN_CPU_CORES=4
+MIN_MEMORY_GB=8
+REQUIRED_GPU=true
+
+# Software Requirements
+MIN_PYTHON_VERSION=3.11
+```
+
+This is **Layer 4** - workspace-specific configuration that travels with your project. Perfect for:
+- System requirements
+- API keys and secrets (add to `.gitignore`!)
+- Environment-specific settings
+- Team-shared defaults
 
 ---
 
-### Read Persistent Environment Config
+**🎯 Level 4 Complete!**
+
+You've completed the entire zConfig tutorial journey:
+- ✅ **Level 1**: Initialization and deployment modes
+- ✅ **Level 2**: Logging and error handling
+- ✅ **Level 3**: Reading configuration (machine, environment, workspace, session)
+- ✅ **Level 4**: Real-world app using all 5 layers
+
+**You now understand the complete zConfig subsystem and the 5-layer configuration hierarchy!**
+
+---
+
+### So Why Use zCLI? 
+Declarative vs Imperative - Let's compare what you just **built decleratively** to the **traditional imperative approach**.
+
+### **Your zCLI App (Level 4 Demo)**
+
+**Files:** 1 Python file + 1 .zEnv file  
+**Lines of code:** ~130 lines total (heavily commented for learning)  
+**Actual logic:** ~60 lines
 
 ```python
-z = zCLI()
+from zCLI import zCLI
 
-# System-wide persistent settings
-deployment = z.config.get_environment("deployment")
-custom_field_1 = z.config.get_environment("custom_field_1")
+z = zCLI({"deployment": "Production", "logger": "INFO"})
+
+# Everything just works:
+# ✓ Hardware detection (42 properties)
+# ✓ Dotenv loading (.env/.zEnv)
+# ✓ Logger configured (console + file)
+# ✓ Cross-platform paths
+# ✓ Configuration hierarchy (5 layers)
+
+min_cores = int(z.config.environment.get_env_var("MIN_CPU_CORES", "2"))
+actual_cores = z.config.get_machine("cpu_cores")
 ```
 
-Environment config persists across all projects in `~/Library/Application Support/zolo-zcli/zConfigs/`. Custom fields are built into the template.
+### **Traditional Imperative Approach**
+
+To achieve the same functionality without zCLI:
+
+**Files needed:** 8+ files  
+**Lines of code:** ~800-1000+ lines  
+**External dependencies:** 6+ packages
+
+```
+project/
+├── config_loader.py         # ~150 lines - YAML/JSON parsing
+├── env_loader.py            # ~80 lines - dotenv implementation
+├── machine_detector.py      # ~300 lines - CPU, GPU, network detection
+├── logger_setup.py          # ~120 lines - logging configuration
+├── path_manager.py          # ~100 lines - cross-platform paths
+├── config_hierarchy.py      # ~150 lines - layer resolution logic
+├── requirements.txt         # python-dotenv, psutil, pyyaml, etc.
+└── main.py                  # Your actual app logic
+```
+
+**What you'd need to manually implement:**
+
+1. **Machine Detection** (~300 lines)
+   - CPU detection (cores, architecture, P-cores, E-cores)
+   - GPU detection (vendor, VRAM, compute APIs)
+   - Network detection (interfaces, IPs, MAC, gateway)
+   - Python runtime detection
+   - Cross-platform compatibility
+
+2. **Configuration Management** (~150 lines)
+   - YAML file parsing
+   - Config file discovery (OS-specific paths)
+   - 5-layer hierarchy resolution
+   - Defaults → Machine → Environment → Dotenv → Runtime
+
+3. **Dotenv Loading** (~80 lines)
+   - File discovery (.env vs .zEnv)
+   - Parsing key=value pairs
+   - Type conversion (strings → int/bool)
+   - Or install `python-dotenv` dependency
+
+4. **Logging Setup** (~120 lines)
+   - Console handler configuration
+   - File handler with rotation
+   - Separate app vs framework logs
+   - Deployment-aware log levels
+   - Custom log file naming per script
+
+5. **Path Management** (~100 lines)
+   - OS detection (macOS, Linux, Windows)
+   - Application support folder detection
+   - Cross-platform path resolution
+   - Directory creation with permissions
+
+6. **Error Handling** (~50 lines)
+   - sys.excepthook installation
+   - Traceback formatting
+   - Interactive error menus
+
+**Total:** ~800-1000 lines of infrastructure code **before** you write your app logic.
+
+### **The zCLI Advantage**
+
+| Aspect | zCLI (Declarative) | Traditional (Imperative) |
+|--------|-------------------|--------------------------|
+| **Lines of code** | ~60 lines | ~800-1000 lines |
+| **Files** | 1-2 files | 8+ files |
+| **Dependencies** | `zolo-zcli` (1 package) | 6+ packages |
+| **Maintenance** | Framework handles it | You maintain all of it |
+| **Cross-platform** | Automatic | Manual OS detection |
+| **Learning curve** | 4 tutorial levels | Weeks of docs/Stack Overflow |
+| **Time to first app** | Minutes | Days/weeks |
+
+### **Key Benefits**
+
+1. **Declarative Magic**: `z = zCLI()` - everything is ready
+2. **Zero Boilerplate**: No config file parsing, no path handling, no logger setup
+3. **Production-Ready**: Metal-aware detection, resource limits, dual loggers
+4. **Maintained**: Framework updates benefit all apps automatically
+5. **Consistent**: Same patterns across all subsystems (18 total!)
+
+### **From Imperative to Declarative**
+
+This is just **subsystem #1 of 18**. As you progress through zCLI's architecture:
+- **Layer 0** (zConfig, zComm) - Configuration and communication
+- **Layer 1** (zDisplay, zAuth, zDispatch) - Display, auth, and command dispatch  
+- **Layer 2** (zParser, zLoader, zUtils, zFunc) - Parsing and utilities
+- **Layer 3** (zDialog, zOpen, zWizard, zData, zShell, zWalker, zServer) - Orchestration
+
+You'll see the imperative-to-declarative shift become even more powerful. What traditionally takes thousands of lines becomes a few declarative configurations.
+
+**That's the zCLI philosophy: Focus on WHAT you want, not HOW to build it.**
 
 ---
 
-**🎯 Try it yourself:**
+## What's Next?
 
-Run the demo to see persistent environment config:
+You've mastered **zConfig** (configuration and machine context). Now it's time to learn **zComm** - the communications hub that handles WebSocket connections and HTTP clients, enabling real-time data flow and API interactions with the same declarative simplicity.
 
-```bash
-python3 Demos/Layer_0/zConfig_Demo/lvl4_hierarchy/zenv_persistence_demo.py
-```
-
-[View demo source →](../Demos/Layer_0/zConfig_Demo/lvl4_hierarchy/zenv_persistence_demo.py)
+**→ Continue to [zComm Guide](zComm_GUIDE.md)**
 
 ---
+
+# Appendix: Advanced Configuration
 
 ### Persist Configuration Changes
 
-Values from Layer 2 (Machine) and Layer 3 (Environment) can be saved permanently using the persistence API. These changes survive across all projects and sessions.
+> **Note:** The programmatic persistence API shown below is **not the recommended way** to modify configuration. Use **[zShell commands](zShell_GUIDE.md)** (interactive CLI) or **manual YAML editing** instead. This API exists for advanced use cases and backward compatibility.
+
+Values from zMachine and zEnvironment can be saved permanently using the persistence API. These changes survive across all projects and sessions.
 
 ```python
 # Save to ~/Library/.../zConfig.machine.yaml
@@ -694,24 +1044,34 @@ z.config.persistence.persist_environment("custom_field_1", "my_value")
 
 **Which Keys Are Editable?**
 
-Machine config (Layer 2):
+Machine config:
 - ✅ **Editable**: 
   - browser, ide, terminal, shell (user tool preferences)
   - cpu_cores_limit, memory_gb_limit (resource allocation limits)
 - 🔒 **Locked**: os, hostname, architecture, cpu_cores, memory_gb, python_version, processor, gpu_type, etc. (auto-detected hardware facts)
 
-Environment config (Layer 3):
+Environment config:
 - ✅ **All keys editable**: `deployment`, `role`, `custom_field_1/2/3`, etc.
 
-**Direct YAML Editing:**
+**Recommended Methods for Configuration Changes:**
 
-You can also edit the YAML files directly in your text editor:
-- `~/Library/Application Support/zolo-zcli/zConfigs/zConfig.machine.yaml`
-- `~/Library/Application Support/zolo-zcli/zConfigs/zConfig.environment.yaml`
+1. **zShell Commands (Recommended):**
+   ```bash
+   # Interactive command-line interface
+   zcli config set browser Firefox
+   zcli config set deployment Production
+   ```
+   See [zShell Guide](zShell_GUIDE.md) for full command reference.
 
-⚠️ **Warning:** Only edit the **editable** keys listed above. Modifying locked machine values (like `os`, `python_version`, `architecture`) may cause crashes or unexpected behavior.
+2. **Manual YAML Editing:**
+   Edit the files directly in your text editor:
+   - `~/Library/Application Support/zolo-zcli/zConfigs/zConfig.machine.yaml`
+   - `~/Library/Application Support/zolo-zcli/zConfigs/zConfig.environment.yaml`
 
-> **Note:** The `zenv_persistence_demo.py` shows how to *read* persistent values. Use the persistence API above to *write* them. For interactive config changes, see [zShell Guide](zShell_GUIDE.md).
+   ⚠️ **Warning:** Only edit the **editable** keys listed above. Modifying locked machine values (like `os`, `python_version`, `architecture`) may cause crashes or unexpected behavior.
+
+3. **Programmatic API (Advanced):**
+   Use the persistence API shown above for scripting or automation scenarios only.
 
 
 
@@ -744,3 +1104,7 @@ cache_size = int(memory_limit_gb * 0.25 * 1024**3)  # 25% of limit
 cpu_cores_limit: 4      # Limit to 4 cores
 memory_gb_limit: 8      # Limit to 8 GB
 ```
+
+---
+
+**[← Back to zInstall Guide](zInstall_GUIDE.md) | [Home](../README.md) | [Next: zComm Guide →](zComm_GUIDE.md)**
