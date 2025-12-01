@@ -1,9 +1,16 @@
-# zCLI/subsystems/zComm/zComm_modules/comm_bifrost.py
+# zCLI/subsystems/zBifrost/zBifrost_modules/bridge_orchestrator.py
 """
-zBifrost WebSocket lifecycle management facade for zComm.
+zBifrost WebSocket Bridge Orchestrator (Layer 2)
 
-Provides a clean interface for managing zBifrost server lifecycle including
-auto-start detection, creation, starting, and broadcasting operations.
+Orchestrates Terminal↔Web communication by coordinating zCLI subsystems
+over WebSocket infrastructure. Manages server lifecycle, client connections,
+and message routing between display/auth/data subsystems.
+
+Architecture:
+    - Uses z.comm for low-level WebSocket server infrastructure
+    - Coordinates z.display for rendering events to web clients
+    - Integrates z.auth for three-tier client authentication
+    - Manages z.data for CRUD operations from web UI
 """
 
 from zCLI import Any, Optional, Callable
@@ -12,13 +19,13 @@ from zCLI.subsystems.zConfig.zConfig_modules import (
     ZMODE_TERMINAL,
     ZMODE_ZBIFROST
 )
-from .bifrost import zBifrost
+from .bifrost.server.bifrost_bridge import zBifrost
 
 # ═══════════════════════════════════════════════════════════════════
 # Module Constants
 # ═══════════════════════════════════════════════════════════════════
 
-LOG_PREFIX = "[BifrostManager]"
+LOG_PREFIX = "[zBifrost]"
 
 # Default Configuration
 DEFAULT_HOST = "127.0.0.1"
@@ -31,77 +38,81 @@ PORT_MIN = 1
 PORT_MAX = 65535
 
 # Log Messages - Auto-start
-LOG_DETECTED_ZBIFROST_MODE = "zBifrost mode detected - initializing WebSocket server"
-LOG_INSTANCE_CREATED_ZBIFROST = "WebSocket server instance created for zBifrost mode"
-LOG_DETECTED_TERMINAL_MODE = "Terminal mode detected - WebSocket server will be created when needed"
+LOG_DETECTED_ZBIFROST_MODE = "zBifrost mode detected - initializing WebSocket bridge"
+LOG_INSTANCE_CREATED_ZBIFROST = "WebSocket bridge instance created for zBifrost mode"
+LOG_DETECTED_TERMINAL_MODE = "Terminal mode detected - WebSocket bridge will be created when needed"
 
 # Log Messages - Create
-LOG_CREATING_FROM_CONFIG = "Creating zBifrost server from zCLI config: %s:%d"
-LOG_CREATING_WITH_DEFAULTS = "Creating zBifrost server with defaults: %s:%d"
-LOG_CONFIG_DEBUG = "zBifrost config - walker=%s, port=%d, host=%s"
-LOG_INSTANCE_CREATED_SUCCESS = "zBifrost server instance created successfully"
+LOG_CREATING_FROM_CONFIG = "Creating WebSocket bridge from zCLI config: %s:%d"
+LOG_CREATING_WITH_DEFAULTS = "Creating WebSocket bridge with defaults: %s:%d"
+LOG_CONFIG_DEBUG = "Bridge config - walker=%s, port=%d, host=%s"
+LOG_INSTANCE_CREATED_SUCCESS = "WebSocket bridge instance created successfully"
 
 # Log Messages - Start
-LOG_STARTING_SERVER = "Starting zBifrost server..."
-LOG_CREATING_INSTANCE = "Creating zBifrost instance with current configuration"
+LOG_STARTING_SERVER = "Starting WebSocket bridge..."
+LOG_CREATING_INSTANCE = "Creating bridge instance with current configuration"
 LOG_CALLING_START = "Calling start_socket_server with socket_ready callback"
-LOG_STARTED_SUCCESS = "zBifrost server started successfully"
+LOG_STARTED_SUCCESS = "WebSocket bridge started successfully"
 
 # Log Messages - Broadcast
-LOG_BROADCASTING = "Broadcasting zBifrost message from sender: %s"
+LOG_BROADCASTING = "Broadcasting message from sender: %s"
 LOG_MESSAGE_CONTENT = "Message content: %s"
-LOG_BROADCAST_COMPLETED = "zBifrost broadcast completed"
+LOG_BROADCAST_COMPLETED = "Broadcast completed"
 
 # Warning Messages
-WARN_AUTO_START_FAILED = "Failed to auto-start WebSocket server: %s"
-WARN_NO_WEBSOCKET_INSTANCE = "Cannot broadcast - no zBifrost server instance available"
+WARN_AUTO_START_FAILED = "Failed to auto-start WebSocket bridge: %s"
+WARN_NO_WEBSOCKET_INSTANCE = "Cannot broadcast - no WebSocket bridge instance available"
 
 # Error Messages
 ERROR_ZCLI_NONE = "zcli parameter cannot be None"
 ERROR_LOGGER_NONE = "logger parameter cannot be None"
+ERROR_SESSION_NONE = "session parameter cannot be None"
 ERROR_SOCKET_READY_REQUIRED = "socket_ready event is required"
 ERROR_INVALID_PORT = "Port must be an integer between {min} and {max}, got: {port}"
 
-class BifrostManager:
+class BridgeOrchestrator:
     """
-    Facade for zBifrost WebSocket server lifecycle management.
+    Layer 2 orchestrator for Terminal↔Web WebSocket bridge.
     
-    Manages auto-start detection, server creation, lifecycle operations, and
-    message broadcasting for zBifrost WebSocket servers.
+    Manages WebSocket server lifecycle and coordinates zCLI subsystems
+    (display, auth, data) for real-time web communication.
     
     Attributes:
         zcli: zCLI instance
         logger: Logger instance
         session: Session dict from zCLI
-        websocket: zBifrost server instance (None until created)
+        websocket: WebSocket bridge instance (None until created)
     """
 
-    def __init__(self, zcli: Any, logger: Any) -> None:
+    def __init__(self, zcli: Any, logger: Any, session: dict) -> None:
         """
-        Initialize zBifrost manager.
+        Initialize Bridge Orchestrator.
         
         Args:
             zcli: zCLI instance (required)
             logger: Logger instance (required)
+            session: Session dict from zCLI (required)
             
         Raises:
-            ValueError: If zcli or logger is None
+            ValueError: If zcli, logger, or session is None
         """
         if zcli is None:
             raise ValueError(ERROR_ZCLI_NONE)
         if logger is None:
             raise ValueError(ERROR_LOGGER_NONE)
+        if session is None:
+            raise ValueError(ERROR_SESSION_NONE)
 
         self.zcli = zcli
         self.logger = logger
-        self.session = zcli.session
+        self.session = session
         self.websocket: Optional[Any] = None
 
     def auto_start(self) -> None:
         """
-        Auto-start zBifrost server if in zBifrost mode.
+        Auto-start WebSocket bridge if in zBifrost mode.
         
-        Checks session zMode and initializes WebSocket server if needed.
+        Checks session zMode and initializes WebSocket bridge if needed.
         
         Raises:
             KeyError: If session access fails
@@ -128,7 +139,7 @@ class BifrostManager:
         host: Optional[str] = None
     ) -> Any:
         """
-        Create zBifrost server instance using zCLI configuration.
+        Create WebSocket bridge instance using zCLI configuration.
         
         Args:
             walker: Optional walker instance
@@ -136,7 +147,7 @@ class BifrostManager:
             host: Optional host override
             
         Returns:
-            zBifrost instance
+            WebSocket bridge instance
             
         Raises:
             ValueError: If port is outside valid range
@@ -176,7 +187,7 @@ class BifrostManager:
 
     async def start(self, socket_ready: Any, walker: Optional[Any] = None) -> None:
         """
-        Start zBifrost server.
+        Start WebSocket bridge.
         
         Args:
             socket_ready: asyncio.Event to signal when server is ready (required)
@@ -200,7 +211,7 @@ class BifrostManager:
 
     async def broadcast(self, message: Any, sender: Optional[str] = None) -> None:
         """
-        Broadcast message to all zBifrost clients.
+        Broadcast message to all connected clients.
         
         Args:
             message: Message to broadcast

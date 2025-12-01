@@ -34,7 +34,7 @@ See [Installation Guide](../../../Documentation/INSTALL.md) for complete setup i
 
 **Run:**
 ```bash
-python Demos/Layer_0/zComm_Demo/Level_2_Services/service_check.py
+python Demos/Layer_0/zComm_Demo/lvl2_services/service_check.py
 ```
 
 **Expected Output (if PostgreSQL running):**
@@ -74,7 +74,7 @@ Tip: zComm detects services across macOS/Linux/Windows
 
 **Run:**
 ```bash
-python Demos/Layer_0/zComm_Demo/Level_2_Services/service_multi.py
+python Demos/Layer_0/zComm_Demo/lvl2_services/service_multi.py
 ```
 
 **Expected Output:**
@@ -108,7 +108,7 @@ Tip: Check your entire dev stack with one script!
 
 **Run:**
 ```bash
-python Demos/Layer_0/zComm_Demo/Level_2_Services/http_errors.py
+python Demos/Layer_0/zComm_Demo/lvl2_services/http_errors.py
 ```
 
 **Expected Output:**

@@ -11,7 +11,7 @@ Goal:
     - No manual port probing or OS commands
 
 Run:
-    python Demos/Layer_0/zComm_Demo/Level_2_Services/service_check.py
+    python Demos/Layer_0/zComm_Demo/lvl2_services/service_check.py
 """
 
 from zCLI import zCLI

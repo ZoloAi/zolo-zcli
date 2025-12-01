@@ -76,9 +76,9 @@ Dual-Mode I/O Methods:
             - Bifrost mode: Returns asyncio.Future (asynchronous)
             - Type hint: Union[str, asyncio.Future]
 
-zComm Integration:
+zBifrost Integration:
     WebSocket Output:
-        - Uses zcli.comm.broadcast_websocket() for all GUI output
+        - Uses zcli.bifrost.orchestrator.broadcast() for all GUI output
         - Sends JSON events with structure:
             {
                 "event": "output",
@@ -332,7 +332,7 @@ class zPrimitives:
             write_type: Type of write operation (WRITE_TYPE_RAW, WRITE_TYPE_LINE, WRITE_TYPE_BLOCK)
         
         Notes:
-            - Accesses zcli.comm.broadcast_websocket() from zComm subsystem
+            - Accesses zcli.bifrost.orchestrator.broadcast() from zBifrost subsystem
             - Sends JSON event with structure: {event, type, content, timestamp}
             - Silent failure: GUI errors don't affect terminal output
             - Handles RuntimeError when no asyncio event loop (tests/initialization)
@@ -362,7 +362,7 @@ class zPrimitives:
                 try:
                     loop = asyncio.get_running_loop()
                     asyncio.run_coroutine_threadsafe(
-                        zcli.comm.broadcast_websocket(json.dumps(event_data)),
+                        zcli.bifrost.orchestrator.broadcast(json.dumps(event_data)),
                         loop
                     )
                 except RuntimeError:
@@ -437,7 +437,7 @@ class zPrimitives:
                 try:
                     loop = asyncio.get_running_loop()
                     asyncio.create_task(
-                        zcli.comm.broadcast_websocket(json.dumps(request_event))
+                        zcli.bifrost.orchestrator.broadcast(json.dumps(request_event))
                     )
                 except RuntimeError:
                     # No running event loop - for tests, just log the request
@@ -522,7 +522,7 @@ class zPrimitives:
                     try:
                         loop = asyncio.get_running_loop()
                         asyncio.run_coroutine_threadsafe(
-                            zcli.comm.broadcast_websocket(json.dumps(event_data)),
+                            zcli.bifrost.orchestrator.broadcast(json.dumps(event_data)),
                             loop
                         )
                     except RuntimeError:

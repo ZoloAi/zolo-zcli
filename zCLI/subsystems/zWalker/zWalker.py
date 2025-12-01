@@ -39,7 +39,7 @@ zWalker is a pure orchestrator - it delegates all operations to specialized subs
     │      │    └─→ execute_loop() (from zWizard)   │              │
     │      │                                         │              │
     │      │  _start_bifrost_server()               │              │
-    │      │    └─→ comm.websocket.start_socket_server() │        │
+    │      │    └─→ bifrost.server.start_socket_server() │        │
     │      └────────────────────────────────────────┘              │
     │                                                              │
     └──────────────────────────────────────────────────────────────┘
@@ -539,10 +539,12 @@ class zWalker(zWizard):
         
         self.logger.info(MSG_BIFROST_STARTING)
         
-        # Get or create WebSocket instance
-        bifrost: Any = self.zcli.comm.websocket
+        # Get zBifrost WebSocket bridge instance (Layer 2)
+        bifrost: Any = self.zcli.bifrost.server
         if not bifrost:
-            bifrost = self.zcli.comm.create_websocket(walker=self)
+            # Create bridge if not already created
+            self.zcli.bifrost.orchestrator.create(walker=self)
+            bifrost = self.zcli.bifrost.server
         else:
             # Update walker on existing instance (created before walker existed)
             bifrost.walker = self

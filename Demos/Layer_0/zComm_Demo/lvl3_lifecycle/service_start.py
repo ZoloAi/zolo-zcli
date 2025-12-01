@@ -11,7 +11,7 @@ Goal:
     - No manual orchestration needed
 
 Run:
-    python3 Demos/Layer_0/zComm_Demo/Level_3_Lifecycle/service_start.py
+    python3 Demos/Layer_0/zComm_Demo/lvl3_lifecycle/service_start.py
 
 Note:
     Requires PostgreSQL installed and system permissions.

@@ -12,7 +12,7 @@ Goal:
     - Clean error reporting
 
 Run:
-    python3 Demos/Layer_0/zComm_Demo/Level_2_Services/http_errors.py
+    python3 Demos/Layer_0/zComm_Demo/lvl2_services/http_errors.py
 """
 
 from zCLI import zCLI

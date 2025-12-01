@@ -8,7 +8,7 @@ Goal:
     Declare what you want - zComm handles the rest.
 
 Run:
-    python3 Demos/Layer_0/zComm_Demo/Level_1_Network/http_methods.py
+    python3 Demos/Layer_0/zComm_Demo/lvl1_network/http_methods.py
 """
 
 from zCLI import zCLI

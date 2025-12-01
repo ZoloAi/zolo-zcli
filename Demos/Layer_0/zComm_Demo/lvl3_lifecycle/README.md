@@ -45,7 +45,7 @@ Starting/stopping services may require:
 
 **Run:**
 ```bash
-python Demos/Layer_0/zComm_Demo/Level_3_Lifecycle/service_start.py
+python Demos/Layer_0/zComm_Demo/lvl3_lifecycle/service_start.py
 ```
 
 **Expected Output (if PostgreSQL installed):**

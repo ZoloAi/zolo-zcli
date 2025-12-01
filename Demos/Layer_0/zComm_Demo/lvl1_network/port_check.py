@@ -10,7 +10,7 @@ Goal:
     - Clean, scannable output
 
 Run:
-    python Demos/Layer_0/zComm_Demo/Level_1_Network/port_check.py
+    python Demos/Layer_0/zComm_Demo/lvl1_network/port_check.py
 """
 
 from zCLI import zCLI

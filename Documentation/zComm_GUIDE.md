@@ -1,70 +1,146 @@
-<div style="display: flex; flex-direction: column; align-items: stretch; margin-bottom: 1rem; font-weight: 500;">
-  <div style="display:flex; justify-content:space-between; align-items:center;">
-    <span><a style="color:#FFFBCC;" href="zConfig_GUIDE.md">← Back to zConfig</a></span>
-    <span><a style="color:#FFFBCC;" href="../README.md">Home</a></span>
-    <span><a style="color:#FFFBCC;" href="zDisplay_GUIDE.md">Next: zDisplay Guide →</a></span>
-  </div>
-  <div style="display: flex; justify-content: center; align-items: center; margin-top: 0.85rem;">
-    <h1 style="margin: 0; font-size: 2.15rem; font-weight: 700;">
-      <span style="color:#FFFBCC;">zComm Guide</span>
-    </h1>
-  </div>
-</div>
+**[← Back to zConfig Guide](zConfig_GUIDE.md) | [Home](../README.md) | [Next: zBifrost Guide →](zBifrost_GUIDE.md)**
 
-> **<span style="color:#F8961F">Unified communication layer</span>** that lets you handle WebSocket, HTTP, and service management through one simple interface.
+---
 
-**<span style="color:#8FBE6D">Every application needs communication infrastructure.</span>** WebSocket servers, HTTP requests, service management, port checking—you either build it yourself, import three different libraries, or copy-paste from tutorials.
+# zComm
 
-<span style="color:#8FBE6D">**zComm**</span> is zCLI's **<span style="color:#F8961F">Layer 0 communication hub</span>**, initialized right after zConfig to provide WebSocket (zBifrost), HTTP client, service orchestration, and network utilities. Don't need the full framework? **<span style="color:#8FBE6D">Import zCLI, use just zComm.</span>** Get **<span style="color:#8FBE6D">production-ready WebSocket servers</span>**, **<span style="color:#F8961F">HTTP client for API calls</span>**, and **<span style="color:#F8961F">service lifecycle management</span>** through one facade.<br>**No websockets library, no requests library, no service juggling.**
+**zComm** is the **second subsystem** initialized by **zCLI**.
+> See [**zArchitecture**](../README.md#the-zarchitecture) for full context.
 
-> **Need an HTTP server?** zComm focuses on communication clients. For serving static files (HTML/CSS/JS) use [zServer Guide](zServer_GUIDE.md).
+It provides unified client-side communication - HTTP requests, port checking, and service management - through one simple interface.
 
-> **Need a WebSocket server?**  
-> zComm includes production-ready WebSocket server with authentication and real-time, bidirectional messaging. See [zBifrost Guide](zBifrost_GUIDE.md) for features and _Terminal &harr; Web_ usage.
+You get:
 
-## zComm Tutorials
+- **Zero configuration**  
+- **No requests library**
+- **No websockets library**  
+- **HTTP client** (GET, POST, PUT, PATCH, DELETE)
+- **Service detection** (PostgreSQL, Redis, MongoDB)  
+- **Port checking** (before binding servers)
 
-### <span style="color:#8FBE6D">Initialize zComm</span>
+> **Note:** zComm focuses on **client-side** communication. For HTTP servers (serving HTML/CSS/JS), see [zServer Guide](zServer_GUIDE.md). For WebSocket servers (real-time bidirectional), see [zBifrost Guide](zBifrost_GUIDE.md).
+
+## Tutorials
+
+**Learn by doing!** 
+
+The tutorials below are organized in a bottom-up fashion. Every tutorial below has a working demo you can run and modify.
+
+**A Note on Learning zCLI:**  
+Each tutorial (lvl1, lvl2, lvl3...) progressively introduces more complex features of **this subsystem**. The early tutorials start with familiar imperative patterns (think Django-style conventions) to meet you where you are as a developer.
+
+As you progress through zCLI's subsystems, you'll notice a gradual shift from imperative to declarative patterns. This intentional journey helps reshape your mental model from imperative to declarative thinking. Only when you reach **Layer 3 (Orchestration)** will you see subsystems used **fully declaratively** as intended in production. By then, the true magic of declarative coding will reveal itself, and you'll understand why we started this way.
+
+Get the demos:
+
+```bash
+# Clone only the Demos folder
+git clone --depth 1 --filter=blob:none --sparse https://github.com/ZoloAi/zolo-zcli.git
+cd zolo-zcli
+git sparse-checkout set Demos
+```
+
+> All zComm demos are in: `Demos/Layer_0/zComm_Demo/`
+
+---
+
+# **zComm - Level 0** (Hello zComm)
+
+### **Your First Communication Demo**
+
+After mastering zConfig's 5-layer hierarchy, you're ready to explore zComm - zCLI's communication layer. The good news? You already know everything you need!
+
+**The same zSpark pattern** from zConfig demos unlocks zComm's capabilities:
 
 ```python
 from zCLI import zCLI
 
-z = zCLI({"logger": "PROD"})
+# Familiar zSpark pattern from zConfig
+zSpark = {
+    "deployment": "Production",  # Clean output, no banners
+    "title": "hello-comm",       # Session identifier
+    "logger": "INFO",            # Log level
+    "logger_path": "./logs",     # Where logs go
+}
+z = zCLI(zSpark)
 
 # zComm is ready - check a port
 port = 8080
 is_available = z.comm.check_port(port)
 
-print(f"Port {port}: {'available' if is_available else 'in use'}")
+print(f"Port {port}: {'✓ available' if is_available else '✗ in use'}")
 ```
 
-zComm auto-initializes with zCLI. No imports, no setup, no configuration files. PROD logger keeps output clean.
+**Key Discovery**: zComm auto-initializes alongside zConfig when you call `zCLI()`. Both are Layer 0 subsystems - the foundation of the framework.
 
-> **Try it:** [`Level_0_Hello/hello_comm.py`](../Demos/Layer_0/zComm_Demo/Level_0_Hello/hello_comm.py)
+**🎯 Try it yourself:**
 
-### <span style="color:#8FBE6D">Check Port Availability</span>
+Run the demo to see zComm in action:
+
+```bash
+python3 Demos/Layer_0/zComm_Demo/lvl0_hello/hello_comm.py
+```
+
+[View demo source →](../Demos/Layer_0/zComm_Demo/lvl0_hello/hello_comm.py)
+
+**What you'll discover:**
+- zComm auto-initializes with zCLI (Layer 0)
+- Same zSpark pattern as zConfig demos
+- Network utilities ready instantly
+- Zero additional configuration required
+
+---
+
+# **zComm - Level 1** (Network Basics)
+
+### **i. Check Multiple Ports**
+
+Now that you've seen the basics, let's check multiple ports at once:
 
 ```python
 from zCLI import zCLI
 
-z = zCLI({"logger": "PROD"})
+# Consistent zSpark pattern
+zSpark = {
+    "deployment": "Production",
+    "title": "port-check",
+    "logger": "INFO",
+    "logger_path": "./logs",
+}
+z = zCLI(zSpark)
 
 # Check multiple ports
-ports = {80: "HTTP", 443: "HTTPS", 5432: "PostgreSQL"}
+ports = {80: "HTTP", 443: "HTTPS", 5432: "PostgreSQL", 6379: "Redis"}
 
 for port, service in ports.items():
     is_available = z.comm.check_port(port)
-    status = "available" if is_available else "in use"
-    print(f"Port {port} ({service}): {status}")
+    status = "✓ available" if is_available else "✗ in use"
+    print(f"Port {port:5} ({service:12}): {status}")
 ```
 
-Check if ports are free before binding servers. No manual socket probing, no cleanup needed.
+**Use Case**: Check if ports are free before binding servers. Perfect for development setup scripts or deployment validation.
 
 **Returns:** `True` if port is available (not in use), `False` if port is already bound.
 
-> **Try it:** [`Level_1_Network/port_check.py`](../Demos/Layer_0/zComm_Demo/Level_1_Network/port_check.py)
+**🎯 Try it yourself:**
 
-### <span style="color:#8FBE6D">Make HTTP Requests</span>
+```bash
+python3 Demos/Layer_0/zComm_Demo/lvl1_network/port_check.py
+```
+
+[View demo source →](../Demos/Layer_0/zComm_Demo/lvl1_network/port_check.py)
+
+**What you'll discover:**
+- Check common service ports (HTTP, HTTPS, PostgreSQL, Redis, MongoDB)
+- Cross-platform port detection
+- No manual socket probing or cleanup
+- Clean, scannable output
+
+---
+
+# **zComm - Level 2** (HTTP Client)
+
+### **i. Make HTTP Requests**
 
 ```python
 from zCLI import zCLI
@@ -107,9 +183,9 @@ No `requests` library needed. Complete HTTP client with all RESTful methods.
 
 **Returns:** Response object with `.status_code`, `.json()`, `.text` or `None` on failure.
 
-> **Try it:** [`Level_1_Network/http_simple.py`](../Demos/Layer_0/zComm_Demo/Level_1_Network/http_simple.py) · [`http_methods.py`](../Demos/Layer_0/zComm_Demo/Level_1_Network/http_methods.py)
+> **Try it:** [`lvl1_network/http_simple.py`](../Demos/Layer_0/zComm_Demo/lvl1_network/http_simple.py) · [`http_methods.py`](../Demos/Layer_0/zComm_Demo/lvl1_network/http_methods.py)
 
-### <span style="color:#8FBE6D">Handle HTTP Errors</span>
+### **ii. Handle HTTP Errors**
 
 ```python
 from zCLI import zCLI
@@ -142,9 +218,13 @@ All errors return `None` instead of crashing. Always check for `None` before usi
 - ❌ Network errors → `None`
 - ✅ HTTP error codes (404, 500) → Response object (check `.status_code`)
 
-> **Try it:** [`Level_2_Services/http_errors.py`](../Demos/Layer_0/zComm_Demo/Level_2_Services/http_errors.py)
+> **Try it:** [`lvl2_services/http_errors.py`](../Demos/Layer_0/zComm_Demo/lvl2_services/http_errors.py)
 
-### <span style="color:#8FBE6D">Detect Local Services</span>
+---
+
+# **zComm - Level 3** (Service Management)
+
+### **i. Detect Local Services**
 
 ```python
 from zCLI import zCLI
@@ -181,9 +261,9 @@ Auto-detect services without OS-specific commands. Safe to run even if service i
 > 
 > See [Installation Guide](INSTALL.md) for complete setup instructions.
 
-> **Try it:** [`Level_2_Services/service_check.py`](../Demos/Layer_0/zComm_Demo/Level_2_Services/service_check.py)
+> **Try it:** [`lvl2_services/service_check.py`](../Demos/Layer_0/zComm_Demo/lvl2_services/service_check.py)
 
-### <span style="color:#8FBE6D">Check Multiple Services</span>
+### **ii. Check Multiple Services**
 
 ```python
 from zCLI import zCLI
@@ -213,9 +293,9 @@ Check your entire development stack with one script. Practical for environment s
 
 **Connection Returns:** `{"host": str, "port": int, "user": str}` if service is running.
 
-> **Try it:** [`Level_2_Services/service_multi.py`](../Demos/Layer_0/zComm_Demo/Level_2_Services/service_multi.py)
+> **Try it:** [`lvl2_services/service_multi.py`](../Demos/Layer_0/zComm_Demo/lvl2_services/service_multi.py)
 
-### <span style="color:#8FBE6D">Start Services Programmatically</span>
+### **iii. Start Services Programmatically**
 
 ```python
 from zCLI import zCLI
@@ -239,7 +319,7 @@ Declare desired state—zComm handles orchestration. No `brew services start`, n
 
 **Available Methods:** `start_service()`, `stop_service()`, `restart_service()`, `service_status()`, `get_service_connection_info()`
 
-> **Try it:** [`Level_3_Lifecycle/service_start.py`](../Demos/Layer_0/zComm_Demo/Level_3_Lifecycle/service_start.py)
+> **Try it:** [`lvl3_lifecycle/service_start.py`](../Demos/Layer_0/zComm_Demo/lvl3_lifecycle/service_start.py)
 
 > **Requirements:** PostgreSQL must be installed with appropriate system permissions.
 > - **macOS:** Homebrew (`brew install postgresql`)
@@ -248,63 +328,43 @@ Declare desired state—zComm handles orchestration. No `brew services start`, n
 
 ---
 
-## Summary
+**🎯 Level 3 Complete!**
 
-You've learned zComm's **<span style="color:#8FBE6D">client-side communication capabilities</span>**:
+You've completed the zComm tutorial journey:
+- ✅ **Level 1**: Network basics (Initialize, Port checking)
+- ✅ **Level 2**: HTTP client (Requests, Error handling)
+- ✅ **Level 3**: Service management (Detection, Multiple services, Lifecycle)
 
-✅ **Network Utilities**
-- Port checking before binding servers
-- Cross-platform, no manual socket management
-
-✅ **Complete HTTP Client**
-- All RESTful methods (GET, POST, PUT, PATCH, DELETE)
-- Query parameters, JSON payloads, custom headers
-- Graceful error handling (returns `None` on failure)
-- No `requests` library needed
-
-✅ **Service Management**
-- Detect running services (PostgreSQL, Redis, MongoDB)
-- Get connection information automatically
-- Start/stop services programmatically
-- Cross-platform service orchestration
-
-✅ **Declarative Pattern**
-- Say WHAT you want, not HOW to do it
-- One line per operation
-- zComm handles complexity internally
-
-**<span style="color:#F8961F">8 micro-step demos</span>** guide you from "Hello zComm" to programmatic service lifecycle management.
-
-## You've Mastered Layer-0 Communication
-
-You now have the complete **<span style="color:#F8961F">client-side communication toolkit</span>**:
-- ✅ WebSocket clients for real-time connections
-- ✅ HTTP requests (GET, POST, PUT, PATCH, DELETE)
-- ✅ Service detection and lifecycle management
-- ✅ Port checking and network utilities
-
-**<span style="color:#8FBE6D">zComm gives you the tools to connect to anything.</span>**
+**You now understand the complete zComm subsystem for client-side communication!**
 
 ---
 
-### Two Paths Forward
+## What's Next?
 
-**<span style="color:#8FBE6D">Path 1: Continue the Layer Journey</span>**
+You've mastered **zComm** (client-side communication). Now you have two paths:
 
-zComm is **<span style="color:#F8961F">Layer 0</span>**—infrastructure that powers everything else. The natural progression continues with **<span style="color:#8FBE6D">Layer 1 subsystems</span>** like zDisplay (rendering), zDialog (user input), and zDispatch (event handling). These build on zComm's foundation.
+### **Path 1: Continue to zBifrost** (WebSocket Server)
 
-**<span style="color:#8FBE6D">Path 2: Advanced Real-Time Communication</span>**
-
-Need bidirectional Terminal ↔ Web communication? **<span style="color:#8FBE6D">zBifrost</span>** is zComm's WebSocket **server** counterpart with authentication, caching, and CRUD operations. It has its own [comprehensive guide](zBifrost_GUIDE.md) because of its distinct client/server architecture.
+Learn **zBifrost** - zComm's WebSocket **server** counterpart for real-time bidirectional Terminal ↔ Web communication:
 
 ```python
 z = zCLI({"zMode": "zBifrost"})
 z.walker.run()  # One-line WebSocket server
 ```
 
-**<span style="color:#F8961F">Note:</span>** zBifrost demos grow alongside the subsystems—showcasing real-time integration with zDisplay, zAuth, zData, and more as complexity increases. It's a **parallel journey** you can explore at any point.
+Features: Authentication, caching, CRUD operations, real-time messaging.
+
+**→ Continue to [zBifrost Guide](zBifrost_GUIDE.md)**
+
+### **Path 2: Continue to Layer 1** (Display & Interaction)
+
+Continue the natural layer progression with **Layer 1 subsystems** - zDisplay (rendering), zAuth (security), zDispatch (events):
+
+**→ Continue to [zDisplay Guide](zDisplay_GUIDE.md)**
+
+> **Note:** Both paths work together. zBifrost showcases the subsystems you'll learn in Layer 1. You're not choosing one over the other - zBifrost is there when you need WebSocket orchestration for production apps.
 
 ---
 
-**<span style="color:#8FBE6D">You're not choosing one over the other.</span>** Layer-1 subsystems are the natural progression, and zBifrost is there when you need WebSocket orchestration for production apps. Both paths work together—zBifrost demos showcase the very subsystems you'll learn next.
+**[← Back to zConfig Guide](zConfig_GUIDE.md) | [Home](../README.md) | [Next: zBifrost Guide →](zBifrost_GUIDE.md)**
 

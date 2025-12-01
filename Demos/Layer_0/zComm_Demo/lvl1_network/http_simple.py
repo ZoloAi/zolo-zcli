@@ -11,7 +11,7 @@ Goal:
     - Clean JSON output
 
 Run:
-    python Demos/Layer_0/zComm_Demo/Level_1_Network/http_simple.py
+    python Demos/Layer_0/zComm_Demo/lvl1_network/http_simple.py
 """
 
 from zCLI import zCLI

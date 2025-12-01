@@ -288,6 +288,11 @@ class zCLI:
         from .subsystems.zData import zData
         self.data = zData(self)
 
+        # Initialize zBifrost WebSocket bridge orchestrator (Layer 2)
+        # Coordinates Terminal↔Web communication using z.comm infrastructure
+        from .subsystems.zBifrost import zBifrost
+        self.bifrost = zBifrost(self)
+
         # Initialize shell and command executor (depends on zUtils, zWizard, zData)
         from .subsystems.zShell import zShell
         self.shell = zShell(self)

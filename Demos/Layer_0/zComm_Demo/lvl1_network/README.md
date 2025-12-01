@@ -19,7 +19,7 @@ Learn core zComm network utilities with simple, focused examples.
 
 **Run:**
 ```bash
-python Demos/Layer_0/zComm_Demo/Level_1_Network/port_check.py
+python Demos/Layer_0/zComm_Demo/lvl1_network/port_check.py
 ```
 
 **Expected Output:**
@@ -48,7 +48,7 @@ Tip: Use z.comm.check_port() before starting servers
 
 **Run:**
 ```bash
-python Demos/Layer_0/zComm_Demo/Level_1_Network/http_simple.py
+python Demos/Layer_0/zComm_Demo/lvl1_network/http_simple.py
 ```
 
 **Expected Output:**
@@ -82,7 +82,7 @@ Tip: No 'requests' library needed - zComm handles it!
 
 **Run:**
 ```bash
-python Demos/Layer_0/zComm_Demo/Level_1_Network/http_methods.py
+python Demos/Layer_0/zComm_Demo/lvl1_network/http_methods.py
 ```
 
 **Expected Output:**

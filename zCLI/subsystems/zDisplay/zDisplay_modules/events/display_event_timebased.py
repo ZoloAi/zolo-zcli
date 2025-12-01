@@ -595,7 +595,7 @@ class TimeBased:
                 try:
                     loop = asyncio.get_running_loop()
                     asyncio.run_coroutine_threadsafe(
-                        zcli.comm.broadcast_websocket(json.dumps(event_data)),
+                        zcli.bifrost.orchestrator.broadcast(json.dumps(event_data)),
                         loop
                     )
                 except RuntimeError:

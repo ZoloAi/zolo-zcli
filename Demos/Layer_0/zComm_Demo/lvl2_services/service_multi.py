@@ -11,7 +11,7 @@ Goal:
     - Clean, scannable output
 
 Run:
-    python3 Demos/Layer_0/zComm_Demo/Level_2_Services/service_multi.py
+    python3 Demos/Layer_0/zComm_Demo/lvl2_services/service_multi.py
 """
 
 from zCLI import zCLI

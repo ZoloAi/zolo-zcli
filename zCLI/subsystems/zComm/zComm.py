@@ -2,16 +2,18 @@
 """
 Communication & Service Management Subsystem for zCLI.
 
-This module provides the primary facade for all communication capabilities in zCLI,
-including HTTP clients, WebSocket servers (zBifrost), and local service management.
-zComm is a Layer 0 subsystem, initialized before zDisplay, providing the communication
-backbone for the entire framework.
+This module provides low-level communication infrastructure for zCLI:
+- HTTP client (GET, POST, PUT, PATCH, DELETE)
+- Service management (PostgreSQL, Redis, MongoDB)  
+- Network utilities (port checking)
+
+zComm is a Layer 0 subsystem, initialized before zDisplay, providing the
+communication backbone for the entire framework.
 
 Architecture:
     zComm follows the Facade pattern, providing a unified interface to multiple
     communication subsystems while delegating implementation to specialized managers:
     
-    - BifrostManager: WebSocket server lifecycle and auto-start
     - HTTPClient: Synchronous HTTP request handling
     - ServiceManager: Local database/cache service management
     - NetworkUtils: Port checking and network utilities
@@ -21,25 +23,12 @@ Layer 0 Design:
     - No zDisplay dependency (uses print_ready_message for console output)
     - Initialized before user-facing subsystems
     - Provides infrastructure for higher-layer subsystems
-    - Auto-starts zBifrost in zBifrost mode (from session["zMode"])
-
-zSession Integration:
-    zComm accesses session state but does not modify it directly. It reads:
-    - session["zMode"]: Determines if Bifrost should auto-start
-    - session (passed to managers): For configuration and state
-
-zAuth Integration:
-    zComm provides communication infrastructure but delegates authentication to:
-    - zBifrost: Handles WebSocket client authentication (three-tier architecture)
-    - Applications: Can implement their own HTTP auth on top of HTTPClient
-    zComm itself is authentication-agnostic at the facade level.
 
 Delegation Pattern:
     All methods are thin wrappers that delegate to specialized managers:
-    - websocket_*: → BifrostManager
     - start_service/stop_service: → ServiceManager
     - check_port: → NetworkUtils
-    - http_post: → HTTPClient
+    - http_post/http_get: → HTTPClient
     
     This separation of concerns allows each manager to be tested and evolved
     independently while maintaining a stable public API.
@@ -48,17 +37,10 @@ Auto-Initialization:
     zComm automatically:
     1. Validates zCLI instance (session, logger required)
     2. Creates all managers
-    3. Auto-starts zBifrost if session["zMode"] == "zBifrost"
-    4. Prints ready message (before zDisplay available)
-    5. Logs ready state
+    3. Prints ready message (before zDisplay available)
+    4. Logs ready state
 
 Public API:
-    zBifrost WebSocket:
-        - websocket (property): Get Bifrost instance
-        - create_websocket(): Create Bifrost server
-        - start_websocket(): Start Bifrost server
-        - broadcast_websocket(): Broadcast to all clients
-    
     HTTP Server:
         - create_http_server(): Create static file server (zServer)
     
@@ -70,7 +52,6 @@ Public API:
         - get_service_connection_info(): Get connection details
     
     Health Checks:
-        - websocket_health_check(): WebSocket server status
         - server_health_check(): HTTP server status
         - health_check_all(): Combined health status
     
@@ -78,7 +59,7 @@ Public API:
         - check_port(): Port availability check
     
     HTTP Client:
-        - http_post(): Make HTTP POST request
+        - http_get(), http_post(), http_put(), http_patch(), http_delete()
 
 Usage:
     ```python
@@ -93,25 +74,24 @@ Usage:
     # Check health
     health = comm.health_check_all()
     
-    # Use WebSocket
-    if comm.websocket:
-        await comm.broadcast_websocket({"event": "update", "data": {...}})
-    
     # Make HTTP requests
     response = comm.http_post("https://api.example.com", data={...})
     ```
 
+Note:
+    For WebSocket orchestration (Terminal↔Web bridge), see zBifrost (Layer 2).
+    zBifrost coordinates display/auth/data subsystems over WebSocket infrastructure.
+
 See Also:
-    - zComm_modules/comm_bifrost.py: BifrostManager implementation
     - zComm_modules/comm_services.py: ServiceManager implementation
     - zComm_modules/comm_http.py: HTTPClient implementation
-    - zComm_modules/bifrost/: Full zBifrost WebSocket bridge
     - Documentation/zComm_GUIDE.md: Complete usage guide
+    - zBifrost (Layer 2): WebSocket orchestration for Terminal↔Web
 """
 
 from zCLI import Any, Dict, Optional
 from zCLI.utils import print_ready_message, validate_zcli_instance
-from .zComm_modules import ServiceManager, BifrostManager, HTTPClient, NetworkUtils
+from .zComm_modules import ServiceManager, HTTPClient, NetworkUtils
 
 # ═══════════════════════════════════════════════════════════
 # Module Constants
@@ -149,10 +129,8 @@ LOG_MSG_SERVICE_CONN_INFO = "Service '%s' connection info: %s"
 # Health Check Messages
 HEALTH_KEY_RUNNING = "running"
 HEALTH_KEY_ERROR = "error"
-HEALTH_KEY_WEBSOCKET = "websocket"
 HEALTH_KEY_HTTP_SERVER = "http_server"
 
-HEALTH_MSG_WS_NOT_INIT = "WebSocket server not initialized"
 HEALTH_MSG_HTTP_NOT_AVAIL = "HTTP server not available"
 
 # HTTP Server Defaults
@@ -169,34 +147,22 @@ class zComm:
     """
     Communication & Service Management Facade for zCLI.
     
-    Provides unified interface to all communication capabilities including HTTP clients,
-    WebSocket servers (zBifrost), and local service management. Delegates to specialized
+    Provides unified interface to low-level communication infrastructure including
+    HTTP client, service management, and network utilities. Delegates to specialized
     managers while maintaining a stable public API.
     
     Architecture:
         Layer 0 subsystem providing communication infrastructure:
-        - BifrostManager: WebSocket lifecycle (auto-starts in zBifrost mode)
         - HTTPClient: Synchronous HTTP requests
         - ServiceManager: Local database/cache services (PostgreSQL, Redis, etc.)
         - NetworkUtils: Port checking and network utilities
-    
-    zSession Awareness:
-        Reads session state but does not modify:
-        - session["zMode"]: Auto-start Bifrost if "zBifrost"
-        - Passes session to managers for configuration
-    
-    zAuth Awareness:
-        Communication infrastructure only; authentication delegated to:
-        - zBifrost: WebSocket client auth (three-tier: zSession, app, dual)
-        - Applications: HTTP auth implemented above this layer
     
     Auto-Initialization:
         On __init__:
         1. Validates zCLI instance (session + logger required)
         2. Creates all managers
-        3. Auto-starts zBifrost if in zBifrost mode
-        4. Prints ready message (Layer 0, no zDisplay yet)
-        5. Logs ready state
+        3. Prints ready message (Layer 0, no zDisplay yet)
+        4. Logs ready state
     
     Attributes:
         zcli: zCLI instance (dependency injection)
@@ -204,17 +170,15 @@ class zComm:
         logger: Reference to zcli.logger
         mycolor: Color code for console output
         services: ServiceManager instance (public API)
-        _bifrost_mgr: BifrostManager instance (private, use properties)
         _http_client: HTTPClient instance (private, use methods)
         _network_utils: NetworkUtils instance (private, use methods)
     
     Public API Groups:
-        - zBifrost WebSocket: websocket, create_websocket, start_websocket, broadcast_websocket
         - HTTP Server: create_http_server
         - Service Management: start_service, stop_service, restart_service, service_status, get_service_connection_info
-        - Health Checks: websocket_health_check, server_health_check, health_check_all
+        - Health Checks: server_health_check, health_check_all
         - Network: check_port
-        - HTTP Client: http_post
+        - HTTP Client: http_get, http_post, http_put, http_patch, http_delete
     
     Example:
         ```python
@@ -225,18 +189,19 @@ class zComm:
         comm.start_service("postgresql")
         status = comm.service_status("postgresql")
         
-        # WebSocket
-        await comm.broadcast_websocket({"event": "update"})
-        
         # HTTP
         response = comm.http_post("https://api.example.com", data={...})
         ```
     
+    Note:
+        For WebSocket orchestration, see zBifrost (Layer 2) which coordinates
+        display/auth/data subsystems over WebSocket infrastructure.
+    
     See Also:
-        - BifrostManager: WebSocket lifecycle management
         - ServiceManager: Service orchestration
         - HTTPClient: HTTP request handling
         - NetworkUtils: Network utilities
+        - zBifrost: WebSocket bridge orchestrator (Layer 2)
     """
 
     # Type hints for instance attributes
@@ -244,7 +209,6 @@ class zComm:
     session: Dict[str, Any]
     logger: Any
     mycolor: str
-    _bifrost_mgr: BifrostManager
     _http_client: HTTPClient
     _network_utils: NetworkUtils
     services: ServiceManager
@@ -253,8 +217,8 @@ class zComm:
         """
         Initialize zComm subsystem with automatic configuration and service setup.
         
-        Validates zCLI instance, creates all managers, auto-starts zBifrost if needed,
-        and logs ready state. This is called automatically by zCLI during initialization.
+        Validates zCLI instance, creates all managers, and logs ready state.
+        This is called automatically by zCLI during initialization.
         
         Args:
             zcli: zCLI instance with session and logger attributes
@@ -263,10 +227,9 @@ class zComm:
             ValueError: If zcli is None or missing required attributes (session, logger)
         
         Side Effects:
-            - Creates BifrostManager, HTTPClient, NetworkUtils, ServiceManager
-            - Auto-starts zBifrost if session["zMode"] == "zBifrost"
+            - Creates HTTPClient, NetworkUtils, ServiceManager
             - Prints ready message to console
-            - Logs initialization to logger.info
+            - Logs initialization to logger
         
         Example:
             ```python
@@ -283,13 +246,9 @@ class zComm:
         self.mycolor = COLOR_ZCOMM
 
         # Initialize modular components
-        self._bifrost_mgr = BifrostManager(zcli, self.logger)
         self._http_client = HTTPClient(self.logger)
         self._network_utils = NetworkUtils(self.logger)
         self.services = ServiceManager(self.logger)
-
-        # Initialize zBifrost server if in zBifrost mode
-        self._bifrost_mgr.auto_start()
 
         # Print styled ready message (before zDisplay is available, deployment-aware)
         is_production = zcli.config.is_production() if hasattr(zcli, 'config') else False
@@ -298,81 +257,6 @@ class zComm:
 
         # Log ready (framework logger for internal init)
         self.logger.framework.debug(MSG_SUBSYSTEM_READY)
-
-    # ═══════════════════════════════════════════════════════════
-    # zBifrost Management - Delegated to BifrostManager
-    # ═══════════════════════════════════════════════════════════
-
-    @property
-    def websocket(self) -> Optional[Any]:
-        """
-        Get zBifrost (WebSocket) server instance.
-        
-        Returns:
-            zBifrost instance if created, None otherwise
-        
-        Example:
-            ```python
-            if comm.websocket:
-                health = comm.websocket.health_check()
-            ```
-        """
-        return self._bifrost_mgr.websocket
-
-    def create_websocket(self, walker: Optional[Any] = None, port: Optional[int] = None, host: Optional[str] = None) -> Any:
-        """
-        Create zBifrost server instance using zCLI configuration.
-        
-        Args:
-            walker: zWalker instance for data operations (optional, uses zcli.walker if None)
-            port: WebSocket port (optional, uses config or default)
-            host: WebSocket host (optional, uses config or default)
-        
-        Returns:
-            zBifrost instance
-        
-        Example:
-            ```python
-            bifrost = comm.create_websocket(walker=my_walker, port=9000)
-            ```
-        """
-        return self._bifrost_mgr.create(walker=walker, port=port, host=host)
-
-    async def start_websocket(self, socket_ready: Any, walker: Optional[Any] = None) -> None:
-        """
-        Start zBifrost server.
-        
-        Args:
-            socket_ready: asyncio.Event to signal when server is ready
-            walker: zWalker instance (optional, uses zcli.walker if None)
-        
-        Example:
-            ```python
-            ready_event = asyncio.Event()
-            await comm.start_websocket(ready_event)
-            await ready_event.wait()  # Wait for server to be ready
-            ```
-        """
-        await self._bifrost_mgr.start(socket_ready, walker=walker)
-
-    async def broadcast_websocket(self, message: Dict[str, Any], sender: Optional[Any] = None) -> None:
-        """
-        Broadcast message to all zBifrost clients.
-        
-        Args:
-            message: Message dict to broadcast
-            sender: WebSocket sender to exclude from broadcast (optional)
-        
-        Example:
-            ```python
-            await comm.broadcast_websocket({
-                "event": "data_updated",
-                "model": "users",
-                "action": "create"
-            })
-            ```
-        """
-        await self._bifrost_mgr.broadcast(message, sender=sender)
 
     # ═══════════════════════════════════════════════════════════
     # HTTP Server Management (Optional Feature)
@@ -585,29 +469,6 @@ class zComm:
     # Health Checks
     # ═══════════════════════════════════════════════════════════
     
-    def websocket_health_check(self) -> Dict[str, Any]:
-        """
-        Get zBifrost (WebSocket) server health status.
-        
-        Returns:
-            Dict with health status including running state, clients count, port, etc.
-            Returns error dict if WebSocket server not initialized
-        
-        Example:
-            ```python
-            health = comm.websocket_health_check()
-            # health = {
-            #     "running": True,
-            #     "clients": 5,
-            #     "port": 9000,
-            #     "host": "0.0.0.0"
-            # }
-            ```
-        """
-        if self.websocket:
-            return self.websocket.health_check()
-        return {HEALTH_KEY_RUNNING: False, HEALTH_KEY_ERROR: HEALTH_MSG_WS_NOT_INIT}
-    
     def server_health_check(self) -> Dict[str, Any]:
         """
         Get HTTP server health status (if available via z.server).
@@ -640,19 +501,17 @@ class zComm:
         Get health status for all communication services.
         
         Returns:
-            Dict with combined health status for WebSocket and HTTP servers
+            Dict with combined health status for HTTP server
         
         Example:
             ```python
             health = comm.health_check_all()
             # health = {
-            #     "websocket": {"running": True, ...},
             #     "http_server": {"running": True, ...}
             # }
             ```
         """
         return {
-            HEALTH_KEY_WEBSOCKET: self.websocket_health_check(),
             HEALTH_KEY_HTTP_SERVER: self.server_health_check()
         }
 
