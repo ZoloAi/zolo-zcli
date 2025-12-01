@@ -33,7 +33,7 @@ KEY_PING_TIMEOUT = "ping_timeout"
 
 # Default Values
 DEFAULT_HOST = "127.0.0.1"
-DEFAULT_PORT = 56891
+DEFAULT_PORT = 8765  # Standard WebSocket development port (matches zComm primitives)
 DEFAULT_REQUIRE_AUTH = True
 DEFAULT_ALLOWED_ORIGINS: List[str] = []
 DEFAULT_MAX_CONNECTIONS = 100

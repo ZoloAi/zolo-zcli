@@ -1065,10 +1065,10 @@ Environment config:
 
 2. **Manual YAML Editing:**
    Edit the files directly in your text editor:
-   - `~/Library/Application Support/zolo-zcli/zConfigs/zConfig.machine.yaml`
-   - `~/Library/Application Support/zolo-zcli/zConfigs/zConfig.environment.yaml`
+- `~/Library/Application Support/zolo-zcli/zConfigs/zConfig.machine.yaml`
+- `~/Library/Application Support/zolo-zcli/zConfigs/zConfig.environment.yaml`
 
-   ⚠️ **Warning:** Only edit the **editable** keys listed above. Modifying locked machine values (like `os`, `python_version`, `architecture`) may cause crashes or unexpected behavior.
+⚠️ **Warning:** Only edit the **editable** keys listed above. Modifying locked machine values (like `os`, `python_version`, `architecture`) may cause crashes or unexpected behavior.
 
 3. **Programmatic API (Advanced):**
    Use the persistence API shown above for scripting or automation scenarios only.

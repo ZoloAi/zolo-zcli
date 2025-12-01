@@ -248,7 +248,7 @@ class zComm:
         # Initialize modular components
         self._http_client = HTTPClient(self.logger)
         self._network_utils = NetworkUtils(self.logger)
-        self._websocket_server = WebSocketServer(self.logger)
+        self._websocket_server = WebSocketServer(self.logger, zcli.config.websocket)
         self.services = ServiceManager(self.logger)
 
         # Print styled ready message (before zDisplay is available, deployment-aware)

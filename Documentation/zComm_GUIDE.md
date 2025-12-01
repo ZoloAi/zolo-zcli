@@ -271,23 +271,31 @@ Remember our apartment building? **HTTP was like knocking on doors** - you knock
 
 Let's create your first WebSocket server - a persistent connection for real-time communication.
 
+`z.comm.websocket.start()` creates a **persistent server** that stays running:
+- **Respects zConfig's 5-layer hierarchy** - defaults come from zConfig if not specified!
+- Or override explicitly: `start(host="...", port=...)` 
+- Keeps connections alive for bidirectional communication
+- Handles multiple clients simultaneously
+- Manages all async complexity internally (no `asyncio` needed!)
+
+Think of it like opening a phone line - waiting for incoming calls. Clients connect, stay connected, and you can exchange messages freely until someone hangs up.
+
+> **zConfig Integration:** The `start()` method follows zCLI's configuration philosophy. If you don't specify `host` or `port`, it pulls from the 5-layer hierarchy (defaults → machine → environment → .zEnv → zSpark). This means you can configure WebSocket settings once in your environment and never repeat them!
+
+
 ```python
-import asyncio
 from zCLI import zCLI
 
-async def run_server():
-    """Start WebSocket server using zCLI/zComm infrastructure."""
-    z = zCLI({
-        "deployment": "Development",
-        "title": "websocket-server",
-        "logger": "INFO",
-        "logger_path": "./logs",
-    })
-    
-    # Start WebSocket server using zComm primitives
-    await z.comm.websocket.start(host="127.0.0.1", port=8765)
+# Initialize zCLI - gets WebSocket infrastructure
+z = zCLI({
+    "deployment": "Production",
+    "title": "websocket-server",
+    "logger": "PROD",
+    "logger_path": "./logs",
+})
 
-asyncio.run(run_server())
+# Start WebSocket server - zCLI handles async internally
+z.comm.websocket.start(host="127.0.0.1", port=8765)
 ```
 
 **What happens when you run this?**
@@ -298,9 +306,6 @@ In traditional Python, keeping a server running creates a problem: **how do you 
 
 **zCLI handles this for you automatically.** Press Ctrl+C, and zCLI gracefully closes all connections, releases the port, and exits cleanly. This applies to all zCLI programs, but it's especially critical for servers where ports must be freed. You'll see cleanup messages - that's zCLI ensuring everything shuts down properly!
 
-> **Note:** We're using WebSockets **imperatively** here - raw infrastructure, step-by-step. This is Layer 0 basics. Later, in **zBifrost (Layer 2)**, you'll see the same WebSocket capabilities used **declaratively** with full orchestration. We're starting with the foundation!  
-> → [**Jump to zBifrost Guide**](zBifrost_GUIDE.md)
-
 **🎯 Try it yourself:**
 
 ```bash
@@ -310,79 +315,111 @@ python3 Demos/Layer_0/zComm_Demo/lvl2_websocket/1_websocket_server.py
 [View demo source →](../Demos/Layer_0/zComm_Demo/lvl2_websocket/1_websocket_server.py)
 
 **What you'll discover:**
-- Create WebSocket server with asyncio
-- Listen for client connections
+- Create WebSocket server with one method call
+- zCLI handles async complexity internally
+- **Safe Ctrl+C shutdown** - zCLI gracefully closes connections and releases ports
 - Persistent connections (unlike HTTP)
 - Foundation for real-time apps
 
+> **Note:** We're using WebSockets **imperatively** here - raw infrastructure, step-by-step. This is Layer 0 basics. Later, in **zBifrost (Layer 2)**, you'll see the same WebSocket capabilities used **declaratively** with full orchestration. We're starting with the foundation!  
+> → [**Jump to zBifrost Guide**](zBifrost_GUIDE.md)
+
 ### **ii. Echo Messages (Bidirectional Communication)**
 
-Now let's send messages back and forth - true bidirectional communication!
+In the previous demo (lvl2i) you started a server with `z.comm.websocket.start()`. Now let's make it **respond** to messages by adding the `handler` parameter.
+
+> **Note:** This is **imperative** usage - you're writing raw Python to handle each message. This is Layer 0 primitives for custom use cases. For **declarative** Terminal↔Web orchestration that coordinates display/auth/data subsystems over WebSocket, see [zBifrost (Layer 2)](zBifrost_GUIDE.md) where you configure behavior rather than code it!
+
+**Server Side (Python - Imperative):**
 
 ```python
-import asyncio
 from zCLI import zCLI
 
+# Define what happens when client sends a message
 async def echo_handler(websocket, message):
     """Echo messages back to the client."""
     echo_msg = f"Echo: {message}"
     await websocket.send(echo_msg)
 
-async def run_server():
-    z = zCLI({"deployment": "Production", "title": "websocket-echo"})
-    
-    # Start with custom handler
-    await z.comm.websocket.start(
-        host="127.0.0.1",
-        port=8765,
-        handler=echo_handler
-    )
+z = zCLI({
+    "deployment": "Production",
+    "title": "websocket-echo",
+    "logger": "INFO",
+    "logger_path": "./logs",
+})
 
-asyncio.run(run_server())
+# Pass the handler to start()
+z.comm.websocket.start(host="127.0.0.1", port=8765, handler=echo_handler)
+```
+
+**Client Side (JavaScript):**
+
+```javascript
+// Connect to server
+const ws = new WebSocket('ws://127.0.0.1:8765');
+
+// Send message to server
+ws.send('Hello from browser!');
+
+// Receive echoed message
+ws.onmessage = (event) => {
+    console.log('Server echoed:', event.data);
+};
 ```
 
 **🎯 Try it yourself:**
 
 ```bash
-# Step 1: Start the server
+# Step 1: Start the Python server
 python3 Demos/Layer_0/zComm_Demo/lvl2_websocket/2_websocket_echo.py
 
-# Step 2: Open the HTML client
+# Step 2: Open the HTML client (includes the JS above)
 # Just double-click: Demos/Layer_0/zComm_Demo/lvl2_websocket/2_client_echo.html
-# (No live server needed - works as a plain HTML file!)
 ```
 
 [View demo source →](../Demos/Layer_0/zComm_Demo/lvl2_websocket/2_websocket_echo.py) | [View client →](../Demos/Layer_0/zComm_Demo/lvl2_websocket/2_client_echo.html)
 
 **What you'll discover:**
-- Receive messages from client
-- Send messages back
-- Real-time bidirectional communication
-- Simple HTML/JS client included!
+- Add `handler` parameter to process incoming messages
+- Use `websocket.send()` to reply to client
+- Connect from JavaScript browser client
+- Complete bidirectional communication (server ↔ client)
 
 ### **iii. Broadcast to Multiple Clients**
 
-One message → all clients. Perfect for chat rooms, live updates, and collaborative apps.
+In Level 2.ii, you used `websocket.send()` to reply to one client. Now let's use `z.comm.websocket.broadcast()` to send to **all** connected clients at once.
+
+**New zCLI Method: `broadcast()`**
+
+Instead of sending to each client individually (imperative loop), zCLI gives you a broadcast primitive:
 
 ```python
-import asyncio
 from zCLI import zCLI
 
-async def run_server():
-    z = zCLI({"deployment": "Production", "title": "websocket-broadcast"})
-    
-    # Custom handler that broadcasts to all clients
-    async def handler(websocket, message):
-        client_addr = websocket.remote_address
-        broadcast_msg = f"{client_addr[0]} says: {message}"
-        
-        # Use zComm broadcast primitive (excludes sender)
-        count = await z.comm.websocket.broadcast(broadcast_msg, exclude=websocket)
-        print(f"Broadcasted to {count} client(s)")
-    
-    await z.comm.websocket.start(host="127.0.0.1", port=8765, handler=handler)
+# Initialize zCLI
+z = zCLI({
+    "deployment": "Production",
+    "title": "websocket-broadcast",
+    "logger": "INFO",
+    "logger_path": "./logs",
+})
 
-asyncio.run(run_server())
+# Define broadcast handler
+async def broadcast_handler(websocket, message):
+    """Broadcast messages to all connected clients."""
+    client_addr = websocket.remote_address
+    broadcast_msg = f"{client_addr[0]} says: {message}"
+    
+    # Use zComm broadcast primitive (excludes sender)
+    count = await z.comm.websocket.broadcast(broadcast_msg, exclude=websocket)
+    print(f"Broadcasted to {count} client(s)")
+
+# Start with broadcast handler - zCLI handles async internally
+z.comm.websocket.start(
+    host="127.0.0.1",
+    port=8765,
+    handler=broadcast_handler
+)
 ```
 
 **🎯 Try it yourself:**
@@ -399,10 +436,10 @@ python3 Demos/Layer_0/zComm_Demo/lvl2_websocket/3_websocket_broadcast.py
 [View demo source →](../Demos/Layer_0/zComm_Demo/lvl2_websocket/3_websocket_broadcast.py) | [View client →](../Demos/Layer_0/zComm_Demo/lvl2_websocket/3_client_broadcast.html)
 
 **What you'll discover:**
-- Track multiple connected clients
-- Broadcast message to all
-- One-to-many communication
-- Real-time synchronization
+- Use `z.comm.websocket.broadcast()` to send to all clients
+- Exclude sender with `exclude=websocket` parameter
+- See message count returned (how many clients received it)
+- zCLI tracks connected clients automatically
 
 > **Note:** This is raw WebSocket infrastructure. For production apps with authentication, caching, and Terminal↔Web orchestration, see [zBifrost Guide](zBifrost_GUIDE.md)!
 
@@ -410,12 +447,12 @@ python3 Demos/Layer_0/zComm_Demo/lvl2_websocket/3_websocket_broadcast.py
 
 **🎯 Level 2 Complete!**
 
-You've learned real-time bidirectional communication:
-- ✅ **WebSocket Server** - Persistent connections
-- ✅ **Echo Messages** - Bidirectional communication
-- ✅ **Broadcast** - One-to-many messaging
+You've learned real-time bidirectional communication using **imperative primitives**:
+- ✅ **WebSocket Server** - Persistent connections with `z.comm.websocket.start()`
+- ✅ **Echo Messages** - Custom handlers to process messages
+- ✅ **Broadcast** - One-to-many messaging with `z.comm.websocket.broadcast()`
 
-**This is the foundation for live, interactive applications!**
+**This is raw infrastructure - the building blocks.** You wrote Python code to handle each message (imperative). As you progress through zCLI, you'll see how **zBifrost (Layer 2)** transforms this into declarative configuration!
 
 ---
 

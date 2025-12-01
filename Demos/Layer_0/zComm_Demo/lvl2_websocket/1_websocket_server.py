@@ -13,45 +13,29 @@ Key Discovery:
   - Safe shutdown with Ctrl+C (zCLI handles cleanup!)
 """
 
-import asyncio
 from zCLI import zCLI
 
-async def run_server():
-    """Start WebSocket server using zCLI/zComm infrastructure."""
-    # Initialize zCLI - gets WebSocket infrastructure
-    z = zCLI({
-        "deployment": "Development",  # Show system messages
-        "title": "websocket-server",
-        "logger": "INFO",
-        "logger_path": "./logs",
-    })
-    
-    print(f"\n{'='*60}")
-    print(f"  WEBSOCKET SERVER - USING ZCLI")
-    print(f"{'='*60}\n")
-    
-    print(f"📍 Using z.comm.websocket (Layer 0 infrastructure)")
-    print(f"   (zBifrost in Layer 2 adds orchestration on top of this)")
-    
-    print(f"\n⏳ Starting WebSocket server at ws://127.0.0.1:8765")
-    print(f"   (Try: Open Chrome DevTools → Console → Run this:)")
-    print(f"   new WebSocket('ws://127.0.0.1:8765')")
-    
-    print(f"\n💡 Unlike HTTP: Connection stays open until client/server closes it")
-    print(f"\n⚠️  Press Ctrl+C to stop (zCLI handles safe shutdown!)\n")
-    
-    try:
-        # Start WebSocket server using zComm primitives
-        await z.comm.websocket.start(host="127.0.0.1", port=8765)
-    except KeyboardInterrupt:
-        print(f"\n\n🔄 zCLI handling shutdown...")
-        await z.comm.websocket.shutdown()
-        print(f"   ✓ All connections closed")
-        print(f"   ✓ Port 8765 released (available for reuse)")
-        print(f"   ✓ Clean shutdown complete!\n")
+# Initialize zCLI - gets WebSocket infrastructure
+z = zCLI({
+    "deployment": "Production",
+    "title": "websocket-server",
+    "logger": "PROD",
+    "logger_path": "./logs",
+})
 
-if __name__ == "__main__":
-    try:
-        asyncio.run(run_server())
-    except KeyboardInterrupt:
-        print(f"\n🛑 Server stopped by Ctrl+C\n")
+print("\n" + "="*60)
+print("  WEBSOCKET SERVER - USING ZCLI")
+print("="*60 + "\n")
+
+print("📍 Using z.comm.websocket (Layer 0 infrastructure)")
+print("   (zBifrost in Layer 2 adds orchestration on top of this)")
+
+print("\n⏳ Starting WebSocket server at ws://127.0.0.1:8765")
+print("   (Try: Open Chrome DevTools → Console → Run this:)")
+print("   new WebSocket('ws://127.0.0.1:8765')")
+
+print("\n💡 Unlike HTTP: Connection stays open until client/server closes it")
+print("\n⚠️  Press Ctrl+C to stop (zCLI handles safe shutdown!)\n")
+
+# Start WebSocket server - zCLI handles async internally
+z.comm.websocket.start(host="127.0.0.1", port=8765)

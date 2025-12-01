@@ -20,9 +20,6 @@ from typing import Set
 # Module Constants
 # ═══════════════════════════════════════════════════════════
 
-DEFAULT_HOST = "127.0.0.1"
-DEFAULT_PORT = 8765
-
 LOG_PREFIX = "[WebSocketServer]"
 LOG_STARTED = f"{LOG_PREFIX} Server started at ws://{{host}}:{{port}}"
 LOG_CLIENT_CONNECTED = f"{LOG_PREFIX} Client connected: {{client_addr}}"
@@ -47,45 +44,85 @@ class WebSocketServer:
     see zBifrost (Layer 2).
     """
     
-    def __init__(self, logger: Any) -> None:
+    def __init__(self, logger: Any, config: Any) -> None:
         """
-        Initialize WebSocket server.
+        Initialize WebSocket server with logger and config.
         
         Args:
             logger: Logger instance (from zCLI)
+            config: WebSocketConfig instance from zConfig (provides host/port defaults)
         """
         self.logger = logger
+        self.config = config  # zConfig WebSocketConfig instance
         self.server: Optional[Any] = None
         self.clients: Set[WebSocketServerProtocol] = set()
         self.handler: Optional[Callable] = None
         self._running = False
     
-    async def start(
+    async def start_async(
         self,
-        host: str = DEFAULT_HOST,
-        port: int = DEFAULT_PORT,
+        host: Optional[str] = None,
+        port: Optional[int] = None,
         handler: Optional[Callable] = None
     ) -> None:
         """
-        Start WebSocket server.
+        Start WebSocket server (async version for advanced usage).
+        
+        Uses zConfig defaults if not specified (respects 5-layer hierarchy).
         
         Args:
-            host: Host address (default: 127.0.0.1)
-            port: Port number (default: 8765)
+            host: Host address (default: from zConfig.websocket.host)
+            port: Port number (default: from zConfig.websocket.port)
             handler: Optional custom message handler
         """
+        # Fall back to zConfig if not explicitly provided
+        actual_host = host if host is not None else self.config.host
+        actual_port = port if port is not None else self.config.port
+        
         self.handler = handler or self._default_handler
         
         try:
-            self.server = await ws_serve(self._handle_client, host, port)
+            self.server = await ws_serve(self._handle_client, actual_host, actual_port)
             self._running = True
-            self.logger.info(LOG_STARTED.format(host=host, port=port))
+            self.logger.info(LOG_STARTED.format(host=actual_host, port=actual_port))
             await self.server.wait_closed()
         except OSError as e:
             self.logger.error(f"{LOG_PREFIX} Failed to start: {e}")
             raise
         finally:
             self._running = False
+    
+    def start(
+        self,
+        host: Optional[str] = None,
+        port: Optional[int] = None,
+        handler: Optional[Callable] = None
+    ) -> None:
+        """
+        Start WebSocket server (blocks until Ctrl+C).
+        
+        Uses zConfig defaults if not specified (respects 5-layer hierarchy).
+        zCLI handles asyncio and graceful shutdown internally.
+        Press Ctrl+C to stop cleanly.
+        
+        Args:
+            host: Host address (default: from zConfig.websocket.host)
+            port: Port number (default: from zConfig.websocket.port)
+            handler: Optional custom message handler
+        """
+        import asyncio
+        
+        async def _run_with_cleanup():
+            """Run server with graceful shutdown handling."""
+            try:
+                await self.start_async(host, port, handler)
+            except KeyboardInterrupt:
+                await self.shutdown()
+        
+        try:
+            asyncio.run(_run_with_cleanup())
+        except KeyboardInterrupt:
+            pass  # Clean exit
     
     async def _handle_client(self, websocket: WebSocketServerProtocol) -> None:
         """

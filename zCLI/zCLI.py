@@ -444,9 +444,8 @@ class zCLI:
             return None
         
         self._shutdown_in_progress = True
-        self.logger.info(SHUTDOWN_SEPARATOR)
-        self.logger.info(LOG_SHUTDOWN_START)
-        self.logger.info(SHUTDOWN_SEPARATOR)
+        print("\n🔄 zCLI: Graceful shutdown initiated...")
+        self.logger.framework.debug(LOG_SHUTDOWN_START)
         
         # Track cleanup success
         cleanup_status = {
@@ -464,7 +463,8 @@ class zCLI:
         ):
             if self.comm and hasattr(self.comm, 'websocket') and self.comm.websocket:
                 if self.comm.websocket._running:  # pylint: disable=protected-access
-                    self.logger.info(SHUTDOWN_MSG_WEBSOCKET_CLOSE)
+                    print("   ✓ Closing WebSocket connections...")
+                    self.logger.framework.debug(SHUTDOWN_MSG_WEBSOCKET_CLOSE)
                     
                     # For async shutdown, we need to handle it properly
                     import asyncio
@@ -504,7 +504,8 @@ class zCLI:
         ):
             if self.server:
                 if self.server._running:  # pylint: disable=protected-access
-                    self.logger.info(SHUTDOWN_MSG_HTTP_STOP)
+                    print("   ✓ Stopping HTTP server...")
+                    self.logger.framework.debug(SHUTDOWN_MSG_HTTP_STOP)
                     self.server.stop()
                     cleanup_status[SHUTDOWN_HTTP_SERVER] = True
                 else:
@@ -522,7 +523,8 @@ class zCLI:
         ):
             if hasattr(self, 'data') and self.data:
                 if hasattr(self.data, 'adapter') and self.data.adapter:
-                    self.logger.info(SHUTDOWN_MSG_DB_CLOSE)
+                    print("   ✓ Closing database connections...")
+                    self.logger.framework.debug(SHUTDOWN_MSG_DB_CLOSE)
                     if hasattr(self.data.adapter, 'disconnect'):
                         self.data.adapter.disconnect()
                     elif hasattr(self.data.adapter, 'close'):
@@ -542,7 +544,8 @@ class zCLI:
             default_return=None
         ):
             if self.logger:
-                self.logger.info(SHUTDOWN_MSG_LOGGER_FLUSH)
+                print("   ✓ Flushing logs...")
+                self.logger.framework.debug(SHUTDOWN_MSG_LOGGER_FLUSH)
                 # Flush all handlers (both app and framework loggers)
                 if hasattr(self.logger, 'logger'):  # LoggerConfig wrapper
                     for handler in self.logger.logger.handlers:
@@ -559,14 +562,17 @@ class zCLI:
         if hasattr(self, 'zTraceback') and self.zTraceback:
             self.zTraceback.uninstall_exception_hook()
         
-        # Final status report
-        self.logger.info(SHUTDOWN_SEPARATOR)
-        self.logger.info(SHUTDOWN_MSG_STATUS_REPORT)
+        # Final status report (detailed status to framework logs only)
+        self.logger.framework.debug(SHUTDOWN_SEPARATOR)
+        self.logger.framework.debug(SHUTDOWN_MSG_STATUS_REPORT)
         for component, status in cleanup_status.items():
             status_str = SHUTDOWN_STATUS_SUCCESS if status else SHUTDOWN_STATUS_FAIL
-            self.logger.info(SHUTDOWN_MSG_COMPONENT_STATUS, status_str, component)
-        self.logger.info(SHUTDOWN_SEPARATOR)
-        self.logger.info(LOG_SHUTDOWN_COMPLETE)
+            self.logger.framework.debug(SHUTDOWN_MSG_COMPONENT_STATUS, status_str, component)
+        self.logger.framework.debug(SHUTDOWN_SEPARATOR)
+        self.logger.framework.debug(LOG_SHUTDOWN_COMPLETE)
+        
+        # User-facing completion message (always visible)
+        print("✓ Graceful shutdown complete\n")
         
         return cleanup_status
     
