@@ -543,9 +543,16 @@ class zCLI:
         ):
             if self.logger:
                 self.logger.info(SHUTDOWN_MSG_LOGGER_FLUSH)
-                # Flush all handlers
-                for handler in self.logger.handlers:
-                    handler.flush()
+                # Flush all handlers (both app and framework loggers)
+                if hasattr(self.logger, 'logger'):  # LoggerConfig wrapper
+                    for handler in self.logger.logger.handlers:
+                        handler.flush()
+                    if hasattr(self.logger, 'framework'):
+                        for handler in self.logger.framework.handlers:
+                            handler.flush()
+                else:  # Direct logger instance (backward compatibility)
+                    for handler in self.logger.handlers:
+                        handler.flush()
                 cleanup_status[SHUTDOWN_LOGGER] = True
         
         # 5. Uninstall exception hook if installed

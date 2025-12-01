@@ -91,7 +91,7 @@ See Also:
 
 from zCLI import Any, Dict, Optional
 from zCLI.utils import print_ready_message, validate_zcli_instance
-from .zComm_modules import ServiceManager, HTTPClient, NetworkUtils
+from .zComm_modules import ServiceManager, HTTPClient, NetworkUtils, WebSocketServer
 
 # ═══════════════════════════════════════════════════════════
 # Module Constants
@@ -248,6 +248,7 @@ class zComm:
         # Initialize modular components
         self._http_client = HTTPClient(self.logger)
         self._network_utils = NetworkUtils(self.logger)
+        self._websocket_server = WebSocketServer(self.logger)
         self.services = ServiceManager(self.logger)
 
         # Print styled ready message (before zDisplay is available, deployment-aware)
@@ -322,6 +323,32 @@ class zComm:
         )
         
         return http_server
+
+    # ═══════════════════════════════════════════════════════════
+    # WebSocket Server (Layer 0 Primitives)
+    # ═══════════════════════════════════════════════════════════
+
+    @property
+    def websocket(self) -> WebSocketServer:
+        """
+        Access WebSocket server instance.
+        
+        Returns:
+            WebSocketServer: WebSocket server primitives
+            
+        Example:
+            ```python
+            # Access WebSocket server
+            ws = z.comm.websocket
+            
+            # Start server
+            await ws.start(host="127.0.0.1", port=8765)
+            
+            # Broadcast message
+            await ws.broadcast("Hello all clients!")
+            ```
+        """
+        return self._websocket_server
 
     # ═══════════════════════════════════════════════════════════
     # Service Management - Delegated to ServiceManager

@@ -19,7 +19,7 @@ After completing the zConfig demos, you're ready to explore zComm - zCLI's commu
 
 **Run:**
 ```bash
-python Demos/Layer_0/zComm_Demo/lvl0_hello/hello_comm.py
+python Demos/Layer_0/zComm_Demo/lvl0_hello/1_hello_comm.py
 ```
 
 **Expected Output:**

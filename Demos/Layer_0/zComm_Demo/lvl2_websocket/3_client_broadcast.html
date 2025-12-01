@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Broadcast Client</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        .instruction {
+            background: #fffacd;
+            padding: 10px;
+            border-left: 4px solid #ffa500;
+            margin-bottom: 20px;
+        }
+        #messages {
+            border: 1px solid #ddd;
+            height: 300px;
+            overflow-y: scroll;
+            padding: 10px;
+            margin: 20px 0;
+            background: #f9f9f9;
+        }
+        .message {
+            margin: 5px 0;
+            padding: 5px;
+        }
+        .sent {
+            color: blue;
+        }
+        .broadcast {
+            color: green;
+            font-weight: bold;
+        }
+        .status {
+            color: orange;
+        }
+        input {
+            width: 70%;
+            padding: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            background: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #218838;
+        }
+    </style>
+</head>
+<body>
+    <h1>WebSocket Broadcast Client</h1>
+    <div class="instruction">
+        💡 <strong>Tip:</strong> Open this page in multiple browser windows to see broadcast in action!
+    </div>
+    <div id="messages"></div>
+    <input type="text" id="messageInput" placeholder="Type a message to broadcast..." />
+    <button onclick="sendMessage()">Broadcast</button>
+
+    <script>
+        const ws = new WebSocket('ws://127.0.0.1:8765');
+        const messagesDiv = document.getElementById('messages');
+        const messageInput = document.getElementById('messageInput');
+
+        function addMessage(text, className) {
+            const div = document.createElement('div');
+            div.className = 'message ' + className;
+            div.textContent = text;
+            messagesDiv.appendChild(div);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        ws.onopen = () => {
+            addMessage('✓ Connected to broadcast server!', 'status');
+        };
+
+        ws.onmessage = (event) => {
+            addMessage('📢 ' + event.data, 'broadcast');
+        };
+
+        ws.onclose = () => {
+            addMessage('✗ Disconnected from server', 'status');
+        };
+
+        function sendMessage() {
+            const message = messageInput.value;
+            if (message && ws.readyState === WebSocket.OPEN) {
+                ws.send(message);
+                addMessage('→ You: ' + message, 'sent');
+                messageInput.value = '';
+            }
+        }
+
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+    </script>
+</body>
+</html>
+

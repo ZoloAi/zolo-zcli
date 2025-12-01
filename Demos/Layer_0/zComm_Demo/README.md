@@ -4,7 +4,7 @@ These examples showcase zComm's core communication features.
 
 ### Level 0: Hello
 
-**`lvl0_hello/hello_comm.py`**
+**`lvl0_hello/1_hello_comm.py`**
 - The simplest possible introduction to zComm
 - Shows zComm auto-initializes with zCLI
 - Checks if a port is available
@@ -12,19 +12,19 @@ These examples showcase zComm's core communication features.
 
 ### Level 1: Network Basics
 
-**`lvl1_network/port_check.py`**
+**`lvl1_network/1_port_check.py`**
 - Check multiple ports for availability
 - Demonstrates iteration with `z.comm.check_port()`
 - Common service ports (HTTP, PostgreSQL, Redis, etc.)
 - Clean, scannable output
 
-**`lvl1_network/http_simple.py`**
+**`lvl1_network/2_http_simple.py`**
 - Make HTTP POST requests to public APIs
 - Uses httpbin.org (no server setup needed)
 - Demonstrates JSON request/response handling
 - No `requests` library required
 
-**`lvl1_network/http_methods.py`**
+**`lvl1_network/3_http_methods.py`**
 - Complete RESTful HTTP client (GET, POST, PUT, PATCH, DELETE)
 - All methods demonstrated with httpbin.org
 - Shows proper request/response handling per method
@@ -32,19 +32,19 @@ These examples showcase zComm's core communication features.
 
 ### Level 2: Services & Error Handling
 
-**`lvl2_services/service_check.py`**
+**`lvl2_services/1_service_check.py`**
 - Detect if PostgreSQL is running
 - Get service connection information
 - Cross-platform service detection
 - No manual port probing or OS commands
 
-**`lvl2_services/service_multi.py`**
+**`lvl2_services/2_service_multi.py`**
 - Check multiple services in one pass
 - PostgreSQL, Redis, MongoDB detection
 - Practical for development environment setup
 - Clean, scannable output with summary
 
-**`lvl2_services/http_errors.py`**
+**`lvl2_services/3_http_errors.py`**
 - HTTP error handling (404, 500, timeouts)
 - Invalid URLs and connection failures
 - Safe error handling without crashes
@@ -52,7 +52,7 @@ These examples showcase zComm's core communication features.
 
 ### Level 3: Service Lifecycle
 
-**`lvl3_lifecycle/service_start.py`**
+**`lvl3_lifecycle/1_service_start.py`**
 - Programmatically start services
 - Check status before/after operations
 - Handle start failures gracefully

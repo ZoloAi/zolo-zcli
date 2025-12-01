@@ -7,6 +7,7 @@ Provides specialized managers for HTTP client, service management, and network u
 
 from .comm_services import ServiceManager
 from .comm_http import HTTPClient
+from .comm_websocket import WebSocketServer
 from .helpers.network_utils import NetworkUtils
 
-__all__ = ['ServiceManager', 'HTTPClient', 'NetworkUtils']
+__all__ = ['ServiceManager', 'HTTPClient', 'WebSocketServer', 'NetworkUtils']
