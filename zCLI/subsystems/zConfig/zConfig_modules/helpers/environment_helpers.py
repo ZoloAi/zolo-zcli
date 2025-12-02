@@ -34,9 +34,10 @@ def create_default_env_config(path: Path, _env_data: Dict[str, Any]) -> None:
   # WebSocket settings hierarchy: zSpark > system env (WEBSOCKET_*) > this file
   websocket:
     host: "127.0.0.1"  # WebSocket bind address (default: localhost for security)
-    port: 56891  # WebSocket port
-    require_auth: true  # require authentication for WebSocket connections
+    port: 8765  # WebSocket port (standard development port)
+    require_auth: false  # authentication is opt-in (set to true for production)
     allowed_origins: []  # list of allowed origins (empty = localhost only)
+    token: ""  # WebSocket authentication token (override via .zEnv or env vars)
     max_connections: 100  # maximum concurrent WebSocket connections
     ping_interval: 20  # ping interval in seconds
     ping_timeout: 10  # ping timeout in seconds

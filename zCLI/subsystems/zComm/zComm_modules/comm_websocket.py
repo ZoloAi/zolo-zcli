@@ -15,6 +15,7 @@ from zCLI import (
     ws_serve, WebSocketServerProtocol
 )
 from typing import Set
+from .comm_websocket_auth import WebSocketAuth
 
 # ═══════════════════════════════════════════════════════════
 # Module Constants
@@ -54,6 +55,7 @@ class WebSocketServer:
         """
         self.logger = logger
         self.config = config  # zConfig WebSocketConfig instance
+        self.auth = WebSocketAuth(config, logger)  # Authentication primitive
         self.server: Optional[Any] = None
         self.clients: Set[WebSocketServerProtocol] = set()
         self.handler: Optional[Callable] = None
@@ -126,12 +128,45 @@ class WebSocketServer:
     
     async def _handle_client(self, websocket: WebSocketServerProtocol) -> None:
         """
-        Handle individual client connection.
+        Handle individual client connection with authentication.
         
         Args:
             websocket: Client WebSocket connection
         """
         client_addr = websocket.remote_address
+        
+        # ═══════════════════════════════════════════════════════
+        # Security Validation (if require_auth enabled)
+        # ═══════════════════════════════════════════════════════
+        if self.config.require_auth:
+            # 1. Check connection limit
+            if not self.auth.check_connection_limit():
+                await websocket.close(code=1008, reason="Maximum connections reached")
+                return
+            
+            # 2. Validate origin (CORS/CSRF protection)
+            if not self.auth.validate_origin(websocket):
+                await websocket.close(code=1008, reason="Invalid origin")
+                return
+            
+            # 3. Validate token
+            token = self.auth.extract_token(websocket)
+            if not token:
+                self.logger.warning(f"{LOG_PREFIX} Missing token from {client_addr}")
+                await websocket.close(code=1008, reason="Authentication required")
+                return
+            
+            if not self.auth.validate_token(token):
+                self.logger.warning(f"{LOG_PREFIX} Invalid token from {client_addr}")
+                await websocket.close(code=1008, reason="Invalid token")
+                return
+            
+            # Register authenticated client
+            self.auth.register_client(websocket, {"token": token, "addr": client_addr})
+        
+        # ═══════════════════════════════════════════════════════
+        # Accept Client Connection
+        # ═══════════════════════════════════════════════════════
         self.clients.add(websocket)
         self.logger.info(LOG_CLIENT_CONNECTED.format(client_addr=client_addr))
         
@@ -143,6 +178,8 @@ class WebSocketServer:
             self.logger.error(f"{LOG_PREFIX} Client error: {e}")
         finally:
             self.clients.discard(websocket)
+            if self.config.require_auth:
+                self.auth.unregister_client(websocket)
             self.logger.info(LOG_CLIENT_DISCONNECTED.format(client_addr=client_addr))
     
     async def _default_handler(

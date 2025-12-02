@@ -1,7 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>WebSocket Broadcast Client</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Broadcast Client (4_websocket_broadcast.py)</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -57,16 +59,19 @@
     </style>
 </head>
 <body>
-    <h1>WebSocket Broadcast Client</h1>
+    <h1>🔒 Secure Broadcast Client</h1>
     <div class="instruction">
-        💡 <strong>Tip:</strong> Open this page in multiple browser windows to see broadcast in action!
+        💡 <strong>Tip:</strong> Open this page in multiple browser windows to see authenticated broadcast in action!
+        <br>Each window authenticates with token: <code>demo_secure_token_123</code>
     </div>
     <div id="messages"></div>
     <input type="text" id="messageInput" placeholder="Type a message to broadcast..." />
     <button onclick="sendMessage()">Broadcast</button>
 
     <script>
-        const ws = new WebSocket('ws://127.0.0.1:8765');
+        // Token from .zEnv file (WEBSOCKET_TOKEN=demo_secure_token_123)
+        const TOKEN = 'demo_secure_token_123';
+        const ws = new WebSocket(`ws://127.0.0.1:8765?token=${TOKEN}`);
         const messagesDiv = document.getElementById('messages');
         const messageInput = document.getElementById('messageInput');
 

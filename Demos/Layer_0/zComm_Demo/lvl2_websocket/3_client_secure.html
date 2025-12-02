@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure WebSocket Client</title>
+    
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         WEBSOCKET CLIENT WITH TOKEN AUTHENTICATION
+         
+         This demonstrates how to connect to a secure WebSocket server.
+         Key concept: Token is passed in URL as ?token=YOUR_TOKEN
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <script>
+        // Global variable to hold the WebSocket connection
+        let ws = null;
+        
+        // ═══════════════════════════════════════════════════════════
+        // CONNECT: Establish WebSocket connection with authentication
+        // ═══════════════════════════════════════════════════════════
+        function connect() {
+            // Get the token value from the input field
+            const token = document.getElementById('tokenInput').value;
+            
+            // Build WebSocket URL with token as query parameter
+            // Format: ws://host:port?token=YOUR_TOKEN
+            const url = `ws://127.0.0.1:8765?token=${token}`;
+            
+            // Create new WebSocket connection (this sends the request to server)
+            ws = new WebSocket(url);
+            
+            // Event: Connection opened successfully
+            // This fires when the server accepts the connection (token was valid)
+            ws.onopen = function() {
+                // Update status display to show we're connected
+                document.getElementById('status').textContent = '✓ Connected and Authenticated';
+                document.getElementById('status').className = 'status authenticated';
+            };
+            
+            // Event: Message received from server
+            // This fires whenever the server sends us a message
+            ws.onmessage = function(event) {
+                // Create a new div to display the message
+                const msg = document.createElement('div');
+                msg.className = 'message received';
+                msg.textContent = 'Server: ' + event.data;  // event.data contains the message
+                
+                // Add the message div to the messages container
+                document.getElementById('messages').appendChild(msg);
+            };
+            
+            // Event: Connection closed
+            // This fires when connection ends (graceful or rejected)
+            ws.onclose = function(event) {
+                // WebSocket close codes tell us WHY it closed
+                // Code 1008 = Policy Violation (server rejected us - bad token!)
+                if (event.code === 1008) {
+                    document.getElementById('status').textContent = '❌ Authentication Failed';
+                    document.getElementById('status').className = 'status disconnected';
+                } else {
+                    // Normal close (we disconnected, or server shutdown)
+                    document.getElementById('status').textContent = 'Disconnected';
+                    document.getElementById('status').className = 'status disconnected';
+                }
+            };
+        }
+        
+        // ═══════════════════════════════════════════════════════════
+        // SEND MESSAGE: Send text to server over WebSocket
+        // ═══════════════════════════════════════════════════════════
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            
+            // Check: Is WebSocket connected AND is there a message to send?
+            // readyState === WebSocket.OPEN means connection is active
+            if (ws && ws.readyState === WebSocket.OPEN && input.value) {
+                // Send the message to the server
+                ws.send(input.value);
+                
+                // Display what we sent in our message log
+                const msg = document.createElement('div');
+                msg.className = 'message sent';
+                msg.textContent = 'You: ' + input.value;
+                document.getElementById('messages').appendChild(msg);
+                
+                // Clear the input field for next message
+                input.value = '';
+            }
+        }
+        
+        // ═══════════════════════════════════════════════════════════
+        // DISCONNECT: Close the WebSocket connection
+        // ═══════════════════════════════════════════════════════════
+        function disconnect() {
+            // Close the connection if it exists
+            // This will trigger ws.onclose event
+            if (ws) ws.close();
+        }
+    </script>
+</head>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     HTML (minimal UI for testing)
+     ═══════════════════════════════════════════════════════════════════════════ -->
+<body>
+    <div class="container">
+        <h1>🔒 Secure WebSocket Client</h1>
+        
+        <div class="note">
+            <p><strong>Token:</strong> <code>demo_secure_token_123</code> (from .zEnv)</p>
+            <p>Try changing the token to see authentication rejection!</p>
+        </div>
+        
+        <div id="status" class="status disconnected">Disconnected</div>
+        
+        <div class="controls">
+            <input type="text" id="tokenInput" value="demo_secure_token_123" placeholder="Token">
+            <button onclick="connect()">Connect</button>
+            <button onclick="disconnect()">Disconnect</button>
+        </div>
+        
+        <div id="messages"></div>
+        
+        <div class="controls">
+            <input type="text" id="messageInput" placeholder="Type a message..." onkeypress="if(event.key==='Enter')sendMessage()">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+</body>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     CSS (styling - not important for WebSocket learning)
+     ═══════════════════════════════════════════════════════════════════════════ -->
+<style>
+    body { font-family: system-ui; max-width: 700px; margin: 40px auto; padding: 20px; background: linear-gradient(135deg, #667eea, #764ba2); }
+    .container { background: white; padding: 25px; border-radius: 10px; }
+    h1 { color: #667eea; margin-top: 0; }
+    .note { background: #fff3cd; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+    .status { padding: 15px; border-radius: 5px; font-weight: bold; margin: 15px 0; }
+    .disconnected { background: #fee; color: #c33; }
+    .authenticated { background: #1b5e20; color: white; font-size: 1.3em; text-align: center; padding: 20px; }
+    .controls { margin: 15px 0; }
+    input[type="text"] { padding: 10px; border: 2px solid #ddd; border-radius: 5px; font-size: 14px; width: 200px; }
+    button { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-left: 5px; }
+    #connectBtn { background: #667eea; color: white; }
+    #disconnectBtn { background: #c33; color: white; }
+    #sendBtn { background: #3c3; color: white; }
+    #messages { height: 200px; overflow-y: auto; border: 2px solid #ddd; padding: 10px; border-radius: 5px; background: #f9f9f9; font-family: monospace; margin: 15px 0; }
+    .message { padding: 5px; margin: 3px 0; border-radius: 3px; }
+    .sent { background: #e3f2fd; color: #1976d2; }
+    .received { background: #f1f8e9; color: #558b2f; }
+    .error { background: #ffebee; color: #c62828; }
+    .info { background: #fff9c4; color: #f57f17; }
+    code { background: #f5f5f5; padding: 2px 6px; border-radius: 3px; }
+</style>
+</html>

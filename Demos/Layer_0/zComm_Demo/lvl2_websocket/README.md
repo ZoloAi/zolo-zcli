@@ -7,7 +7,8 @@
 - Create WebSocket servers
 - Handle client connections
 - Send and receive messages
-- Broadcast to multiple clients
+- **Add authentication and security**
+- Broadcast to multiple authenticated clients
 - Low-level WebSocket infrastructure (separate from zBifrost's orchestration)
 
 ## Demos
@@ -42,22 +43,41 @@ python 2_websocket_echo.py
 - Bidirectional communication
 - Simple request-response pattern
 
-### iii. Broadcast Server (`3_websocket_broadcast.py`)
-**Broadcast to all connected clients**
+### iii. Secure Echo Server (`3_websocket_secure.py`)
+**Add authentication to WebSocket connections**
 
 ```bash
-# Terminal: Start server
-python 3_websocket_broadcast.py
+# Terminal: Start secure server
+python 3_websocket_secure.py
 
-# Browser: Open in MULTIPLE windows (double-click 2-3 times!)
-# 3_client_broadcast.html
+# Browser: Open the secure client
+# 3_client_secure.html
 ```
 
 **What it shows:**
-- Track multiple clients
-- Broadcast message to all
-- One-to-many communication
-- Real-time synchronization
+- Token-based authentication
+- Origin validation (CORS/CSRF protection)
+- Store tokens in `.zEnv` file (never hardcode!)
+- Reject unauthorized connections
+- Get client auth info
+
+### iv. Secure Broadcast Server (`4_websocket_broadcast.py`)
+**Broadcast to all authenticated clients**
+
+```bash
+# Terminal: Start secure broadcast server
+python 4_websocket_broadcast.py
+
+# Browser: Open in MULTIPLE windows (double-click 2-3 times!)
+# 4_client_broadcast.html
+```
+
+**What it shows:**
+- Apply security to multi-client scenarios
+- All clients must authenticate
+- Track authenticated clients
+- Broadcast message to authenticated clients only
+- One-to-many communication with security
 
 ## Key Concepts
 
@@ -72,11 +92,17 @@ python 3_websocket_broadcast.py
 - Real-time data streams
 - Gaming
 
-**zComm vs zBifrost:**
-- **zComm (Layer 0)**: Raw WebSocket infrastructure (what you're learning here)
-- **zBifrost (Layer 2)**: High-level orchestration (display, auth, data coordination)
+**WebSocket Security:**
+- **Token Authentication**: Verify client identity with tokens from `.zEnv`
+- **Origin Validation**: Prevent CORS/CSRF attacks
+- **Connection Limits**: Prevent resource exhaustion
+- **Always use authentication in production!**
 
-> **Next Step:** Once you master raw WebSockets, see [zBifrost Guide](../../../Documentation/zBifrost_GUIDE.md) for production-ready orchestration!
+**zComm vs zBifrost:**
+- **zComm (Layer 0)**: Raw WebSocket infrastructure + basic security (what you're learning here)
+- **zBifrost (Layer 2)**: High-level orchestration + three-tier authentication (display, auth, data coordination)
+
+> **Next Step:** Once you master raw WebSockets, see [zBifrost Guide](../../../Documentation/zBifrost_GUIDE.md) for production-ready orchestration with advanced authentication!
 
 ## Requirements
 

@@ -1,21 +1,27 @@
-# zCLI/subsystems/zComm/zComm_modules/bifrost/bridge_modules/bridge_auth.py
+# zCLI/subsystems/zBifrost/zBifrost_modules/bifrost/server/modules/bridge_auth.py
 """
-Authentication Module - Three-Tier WebSocket Authentication (v1.5.4+)
+Authentication Module - Three-Tier WebSocket Authentication (v1.5.6+)
 
-Handles client authentication and origin validation with support for three
-authentication tiers:
+Orchestrates advanced WebSocket authentication using zComm primitives + zAuth integration.
 
-Layer 1 (zSession): Internal zCLI/Zolo users (no token required)
-Layer 2 (Application): External app users with configurable user models
-Layer 3 (Dual): Both zSession and application authenticated simultaneously
+Layer 0 (zComm): Basic WebSocket auth primitives (origin, token validation, connection limits)
+Layer 2 (zBifrost): Three-tier authentication orchestration:
+    - Layer 1 (zSession): Internal zCLI/Zolo users (no token required)
+    - Layer 2 (Application): External app users with configurable user models
+    - Layer 3 (Dual): Both zSession and application authenticated simultaneously
 
 Features:
 - Multi-app simultaneous authentication support (Scenario B)
 - Concurrent user authentication (Scenario A - already working)
-- Origin validation for CSRF protection
-- Configurable authentication providers
-- Token extraction from query params or headers
+- Delegates basic auth to zComm (origin validation, token extraction)
+- Adds three-tier authentication on top of zComm primitives
+- Integrates with zAuth for application user validation
 - Context-aware authentication results
+
+Architecture:
+    zComm (Layer 0) → Provides basic WebSocket security primitives
+    zAuth (Layer 1) → Provides three-tier authentication logic
+    zBifrost (Layer 2) → Orchestrates both for Walker-based WebSocket communication
 """
 
 from zCLI import Dict, Optional, Any
@@ -186,13 +192,20 @@ class AuthenticationManager:
         """
         Authenticate WebSocket client with three-tier authentication support.
         
+        Architecture:
+            1. Delegate basic auth to zComm (origin validation, token extraction)
+            2. Add three-tier zBifrost/zAuth logic (zSession, Application, Dual)
+        
         Authentication Flow:
+            0. Basic Auth (zComm Layer 0): Origin validation + token extraction
+               - Delegates to walker.zcli.comm.websocket.auth primitives
+            
             1. Check zSession (Layer 1): Internal zCLI connection?
                - If walker.zcli.session["zAuth"]["zSession"]["authenticated"]:
                  Return zSession user (no token required)
             
             2. Check Application Auth (Layer 2): External user with token?
-               - Extract token from query params or headers
+               - Extract token via zComm primitive
                - Extract app_name from query params (for multi-app support)
                - Call walker.zcli.auth.authenticate_app_user(app_name, token, config)
                - Return application user
@@ -241,11 +254,27 @@ class AuthenticationManager:
         # Use provided auth config or instance default
         effective_config = auth_config or self.app_auth_config
         
-        # Extract request path and headers
-        path = self._get_ws_path(ws)
-        headers = self._get_ws_headers(ws)
+        # ═══════════════════════════════════════════════════════════
+        # Step 0: Basic WebSocket Auth (Delegate to zComm Layer 0)
+        # ═══════════════════════════════════════════════════════════
+        comm_auth = walker.zcli.comm.websocket.auth
         
+        # Origin validation (CORS/CSRF protection)
+        if not comm_auth.validate_origin(ws):
+            self.logger.warning(f"{LOG_PREFIX} [{LOG_BLOCK}] {REASON_INVALID_ORIGIN}")
+            await ws.close(code=CLOSE_INVALID_ORIGIN, reason=REASON_INVALID_ORIGIN)
+            return None
+        
+        # Extract token using zComm primitive
+        token = comm_auth.extract_token(ws)
+        
+        # Extract app_name from query params (for multi-app support)
+        path = self._get_ws_path(ws)
+        app_name = self._extract_app_name(path)
+        
+        # ═══════════════════════════════════════════════════════════
         # Step 1: Check zSession authentication (Layer 1 - Internal zCLI)
+        # ═══════════════════════════════════════════════════════════
         zsession_auth = None
         if walker and hasattr(walker, 'zcli') and walker.zcli.session:
             zsession = walker.zcli.session.get("zAuth", {}).get(ZAUTH_KEY_ZSESSION, {})
@@ -262,10 +291,9 @@ class AuthenticationManager:
                     f"{zsession_auth[ZAUTH_KEY_USERNAME]} (role={zsession_auth[ZAUTH_KEY_ROLE]})"
                 )
         
+        # ═══════════════════════════════════════════════════════════
         # Step 2: Check application authentication (Layer 2 - External Users)
-        token = self._extract_token(path, headers)
-        app_name = self._extract_app_name(path)  # For multi-app support
-        
+        # ═══════════════════════════════════════════════════════════
         application_auth = None
         if token:
             # Validate token - either via zAuth (if available) or direct database query
@@ -296,7 +324,9 @@ class AuthenticationManager:
                 if not application_auth:
                     return None
         
+        # ═══════════════════════════════════════════════════════════
         # Step 3: Determine authentication context and return result
+        # ═══════════════════════════════════════════════════════════
         
         # Case 1: Both zSession and application authenticated (Dual-Auth - Layer 3)
         if zsession_auth and application_auth:
@@ -336,37 +366,8 @@ class AuthenticationManager:
         await ws.close(code=CLOSE_AUTH_REQUIRED, reason=REASON_AUTH_REQUIRED)
         return None
     
-    def validate_origin(self, ws: Any) -> bool:
-        """
-        Validate Origin header to prevent CSRF attacks.
-        
-        Args:
-            ws: WebSocket connection
-        
-        Returns:
-            bool: True if origin is valid, False otherwise
-        """
-        if not self.allowed_origins or not self.allowed_origins[0]:
-            # No origins configured → allow localhost/127.0.0.1 only (implicit)
-            return True
-        
-        headers = self._get_ws_headers(ws)
-        origin = headers.get(HEADER_ORIGIN, "")
-        
-        if not origin:
-            remote_addr = getattr(ws, 'remote_address', 'N/A')
-            self.logger.warning(
-                f"{LOG_PREFIX} [{LOG_WARN}] {MSG_NO_ORIGIN} from {remote_addr}"
-            )
-            return False
-        
-        # Check if origin is in allowed list
-        for allowed in self.allowed_origins:
-            if allowed.strip() and origin.startswith(allowed.strip()):
-                return True
-        
-        self.logger.warning(f"{LOG_PREFIX} [{LOG_BLOCK}] Unauthorized origin: {origin}")
-        return False
+    # Note: validate_origin() has been moved to zComm (Layer 0)
+    # Use walker.zcli.comm.websocket.auth.validate_origin(ws) instead
     
     def register_client(self, ws: Any, auth_info: Dict[str, Any]) -> None:
         """
@@ -445,37 +446,8 @@ class AuthenticationManager:
         """
         return getattr(ws, 'request_headers', None) or getattr(ws.request, 'headers', {})
     
-    def _extract_token(self, path: str, headers: Dict[str, str]) -> Optional[str]:
-        """
-        Extract authentication token from query params or headers.
-        
-        Args:
-            path: Request path (may contain query parameters)
-            headers: Request headers
-        
-        Returns:
-            str: Token, or None if not found
-        """
-        token = None
-        
-        # Check query parameters
-        query = path.split("?", 1)
-        if len(query) > 1:
-            try:
-                params = dict(
-                    param.split("=", 1) for param in query[1].split("&") if "=" in param
-                )
-                token = params.get(QUERY_PARAM_TOKEN) or params.get(QUERY_PARAM_API_KEY)
-            except (ValueError, AttributeError):
-                pass  # Invalid query string format
-        
-        # Check Authorization header
-        if not token:
-            auth_header = headers.get(HEADER_AUTHORIZATION, "")
-            if auth_header.startswith(AUTH_BEARER_PREFIX):
-                token = auth_header[len(AUTH_BEARER_PREFIX):]
-        
-        return token
+    # Note: _extract_token() has been moved to zComm (Layer 0)
+    # Use walker.zcli.comm.websocket.auth.extract_token(ws) instead
     
     def _extract_app_name(self, path: str) -> Optional[str]:
         """

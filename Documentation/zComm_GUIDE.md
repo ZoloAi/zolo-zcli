@@ -143,6 +143,8 @@ python3 Demos/Layer_0/zComm_Demo/lvl1_network/1_port_check.py
 - No manual socket probing or cleanup
 - Clean, scannable output
 
+---
+
 ### **ii. HTTP Request (GET)**
 
 After checking ports, let's make HTTP requests - the foundation of API communication.
@@ -199,6 +201,8 @@ python3 Demos/Layer_0/zComm_Demo/lvl1_network/2_http_get.py
 - No external dependencies
 - Built-in JSON parsing with `.json()`
 - Returns `None` on failure (safe, no crashes)
+
+---
 
 ### **iii. All HTTP Methods**
 
@@ -263,9 +267,13 @@ You've learned the core communication fundamentals:
 
 # **zComm - Level 2** (WebSockets)
 
+> **Note:** Throughout Level 2, we're using WebSockets **imperatively** - raw infrastructure, step-by-step. This is Layer 0 basics. Later, in **zBifrost (Layer 2)**, you'll see the same WebSocket capabilities used **declaratively** with full orchestration. We're starting with the foundation!  
+> → [**Jump to zBifrost Guide**](zBifrost_GUIDE.md) (Advanced!)
+
 Remember our apartment building? **HTTP was like knocking on doors** - you knock, get a response, then walk away. But what if you want to have an ongoing conversation?
 
 **WebSockets are like installing a telephone line** - you connect once, then you can talk back and forth as long as you want! Perfect for chat, live updates, and real-time collaboration.
+
 
 ### **i. WebSocket Server Basics**
 
@@ -298,14 +306,6 @@ z = zCLI({
 z.comm.websocket.start(host="127.0.0.1", port=8765)
 ```
 
-**What happens when you run this?**
-
-Unlike HTTP requests (which finish immediately), this WebSocket server **stays running** - it's listening on port 8765, waiting for clients to connect. Think of it like opening a phone line: the server dials in and waits for calls. The connection stays open until you explicitly close it.
-
-In traditional Python, keeping a server running creates a problem: **how do you stop it safely?** Pressing Ctrl+C typically crashes the program immediately, leaving the port "stuck" - try to restart, and you'll get "port already in use" errors. You'd have to manually kill processes or wait for timeouts.
-
-**zCLI handles this for you automatically.** Press Ctrl+C, and zCLI gracefully closes all connections, releases the port, and exits cleanly. This applies to all zCLI programs, but it's especially critical for servers where ports must be freed. You'll see cleanup messages - that's zCLI ensuring everything shuts down properly!
-
 **🎯 Try it yourself:**
 
 ```bash
@@ -314,6 +314,14 @@ python3 Demos/Layer_0/zComm_Demo/lvl2_websocket/1_websocket_server.py
 
 [View demo source →](../Demos/Layer_0/zComm_Demo/lvl2_websocket/1_websocket_server.py)
 
+**What happens when you run this?**
+
+Unlike HTTP requests (which finish immediately), this WebSocket server **stays running** - listening on port 8765, waiting for clients to connect. The connection stays open until you explicitly close it.
+
+In traditional Python, stopping a server safely is tricky: Ctrl+C crashes immediately, leaving the port "stuck" - you'll get "port already in use" errors on restart.
+
+**zCLI handles this automatically.** Press Ctrl+C, and zCLI gracefully closes all connections, releases the port, and exits cleanly. You'll see cleanup messages confirming everything shut down properly.
+
 **What you'll discover:**
 - Create WebSocket server with one method call
 - zCLI handles async complexity internally
@@ -321,14 +329,13 @@ python3 Demos/Layer_0/zComm_Demo/lvl2_websocket/1_websocket_server.py
 - Persistent connections (unlike HTTP)
 - Foundation for real-time apps
 
-> **Note:** We're using WebSockets **imperatively** here - raw infrastructure, step-by-step. This is Layer 0 basics. Later, in **zBifrost (Layer 2)**, you'll see the same WebSocket capabilities used **declaratively** with full orchestration. We're starting with the foundation!  
-> → [**Jump to zBifrost Guide**](zBifrost_GUIDE.md)
+---
 
-### **ii. Echo Messages (Bidirectional Communication)**
+### **ii. Bidirectional Communication**
 
-In the previous demo (lvl2i) you started a server with `z.comm.websocket.start()`. Now let's make it **respond** to messages by adding the `handler` parameter.
+In the previous demo you started a server with `z.comm.websocket.start()`. Now let's make it **respond** to messages by adding the `handler` parameter.
 
-> **Note:** This is **imperative** usage - you're writing raw Python to handle each message. This is Layer 0 primitives for custom use cases. For **declarative** Terminal↔Web orchestration that coordinates display/auth/data subsystems over WebSocket, see [zBifrost (Layer 2)](zBifrost_GUIDE.md) where you configure behavior rather than code it!
+> WebSockets work for any client (backend-to-backend, IoT, etc.), but here we'll use a **browser client** as our use case.
 
 **Server Side (Python - Imperative):**
 
@@ -369,12 +376,16 @@ ws.onmessage = (event) => {
 
 **🎯 Try it yourself:**
 
-```bash
-# Step 1: Start the Python server
-python3 Demos/Layer_0/zComm_Demo/lvl2_websocket/2_websocket_echo.py
+> **Step 1**: Start the Python server:
 
-# Step 2: Open the HTML client (includes the JS above)
-# Just double-click: Demos/Layer_0/zComm_Demo/lvl2_websocket/2_client_echo.html
+```bash
+python3 Demos/Layer_0/zComm_Demo/lvl2_websocket/2_websocket_echo.py
+```
+
+> **Step 2**: Open the HTML client in your browser:
+
+```bash
+# Just double-click 2_client_echo.html in Finder/Explorer
 ```
 
 [View demo source →](../Demos/Layer_0/zComm_Demo/lvl2_websocket/2_websocket_echo.py) | [View client →](../Demos/Layer_0/zComm_Demo/lvl2_websocket/2_client_echo.html)
@@ -385,24 +396,151 @@ python3 Demos/Layer_0/zComm_Demo/lvl2_websocket/2_websocket_echo.py
 - Connect from JavaScript browser client
 - Complete bidirectional communication (server ↔ client)
 
-### **iii. Broadcast to Multiple Clients**
+**About Security:** Did you notice? Any client could connect to your server - no password, no token, nothing. That's because zCLI's WebSocket has `require_auth: false` by default. This makes development easy, but in production you'll want to lock it down—as you'll see in the next section.
 
-In Level 2.ii, you used `websocket.send()` to reply to one client. Now let's use `z.comm.websocket.broadcast()` to send to **all** connected clients at once.
+---
 
-**New zCLI Method: `broadcast()`**
+### **iii. Secure Connections (Authentication)**
 
-Instead of sending to each client individually (imperative loop), zCLI gives you a broadcast primitive:
+In Level 2.ii, any client could connect to our websocket and echo messages. But what if you want to **restrict access to authorized clients** only?
+
+**Security is OFF by default - you turn it ON when ready**
+
+Remember from Level 2.ii, where the connection was open (`require_auth: false`) for easy development. Now let's flip that security switch.
+
+**Enabling Authentication**: Set `require_auth: True` in your zSpark configuration, and for our **browser use case**, we also need to specify `allowed_origins` - this controls **which web pages can connect**.
+
+> **Note**: Backend-to-backend connections don't send origin headers, so they rely on token authentication alone.
 
 ```python
 from zCLI import zCLI
 
-# Initialize zCLI
-z = zCLI({
+zSpark = {
+    "deployment": "Production",
+    "title": "websocket-secure",
+    "logger": "INFO",
+    "logger_path": "./logs",
+    "websocket": {
+        "require_auth": True,  # 🔒 Enable authentication
+        "allowed_origins": [   # 🌐 Which sites can connect?
+            "http://localhost",
+            "http://127.0.0.1",
+            "file://",  # Local HTML files (for this demo)
+        ],
+    }
+}
+
+z = zCLI(zSpark)
+
+async def secure_echo_handler(websocket, message):
+    """Only authenticated clients reach this handler."""
+    await websocket.send(f"[Secure Echo]: {message}")
+
+# Start secured server - requires token to connect
+z.comm.websocket.start(host="127.0.0.1", port=8765, handler=secure_echo_handler)
+```
+
+**Storing Tokens Securely with `.zEnv`**
+
+Never hardcode authentication tokens! Instead, store them in a `.zEnv` file (automatically loaded by zCLI):
+
+```bash
+# .zEnv file in your project directory
+WEBSOCKET_TOKEN=demo_secure_token_123
+```
+
+> **Security Best Practice:** Add `.zEnv` to your `.gitignore` file to prevent committing secrets to version control.
+
+**Client-Side Authentication**
+
+Clients pass the token as a query parameter in the WebSocket URL:
+
+```javascript
+// Get token from user input (in production: from login API)
+const token = document.getElementById('tokenInput').value;
+
+// Build WebSocket URL with token
+const url = `ws://127.0.0.1:8765?token=${token}`;
+
+// Create WebSocket connection
+let ws = new WebSocket(url);
+
+// Connection opened - token was valid!
+ws.onopen = function() {
+    console.log('✓ Connected and authenticated!');
+};
+
+// Connection closed - check if auth failed
+ws.onclose = function(event) {
+    if (event.code === 1008) {
+        // Code 1008 = authentication failed
+        console.log('❌ Authentication failed');
+    }
+};
+```
+
+That's it. Origin validation, token checking, connection limits - all handled by zCLI. You just pass `?token=xxx` in the URL.
+
+**Testing the Secure Demo**
+
+```bash
+# Step 1: Start the secure Python server
+python3 Demos/Layer_0/zComm_Demo/lvl2_websocket/3_websocket_secure.py
+
+# Step 2: Open the secure HTML client
+# Double-click: Demos/Layer_0/zComm_Demo/lvl2_websocket/3_client_secure.html
+
+# Step 3: Test authentication rejection
+# Click "Test Wrong Token" button to see rejection in action
+```
+
+[View demo source →](../Demos/Layer_0/zComm_Demo/lvl2_websocket/3_websocket_secure.py) | [View client →](../Demos/Layer_0/zComm_Demo/lvl2_websocket/3_client_secure.html)
+
+**What you'll discover:**
+- Enable security with `require_auth: True`
+- Store tokens in `.zEnv` (never hardcode!)
+- Validate origin headers (CORS/CSRF protection)
+- Reject unauthorized connections automatically
+- Access client auth info via `z.comm.websocket.auth.get_client_info(websocket)`
+
+**Security Features Implemented:**
+
+| Feature | Purpose | Configuration |
+|---------|---------|---------------|
+| **Token Authentication** | Verify client identity | `WEBSOCKET_TOKEN` in `.zEnv` |
+| **Origin Validation** | Prevent CORS/CSRF attacks | `allowed_origins` in zSpark |
+| **Connection Limits** | Prevent resource exhaustion | `max_connections` in zConfig |
+| **Automatic Rejection** | Close unauthorized connections | WebSocket close code 1008 |
+
+> **Note:** For advanced three-tier authentication (zSession, Application, Dual), see [zBifrost Guide](zBifrost_GUIDE.md).
+
+---
+
+### **iv. Broadcast to Multiple Clients (Secured)**
+
+In Level 2.iii, you secured a single echo connection. Now let's apply security to **multi-client scenarios** using `z.comm.websocket.broadcast()` to send messages to all authenticated clients at once.
+
+**Secure Broadcasting**
+
+Combine authentication (from Level 2.iii) with broadcasting to create secure one-to-many communication:
+
+```python
+from zCLI import zCLI
+
+zSpark = {
     "deployment": "Production",
     "title": "websocket-broadcast",
     "logger": "INFO",
     "logger_path": "./logs",
-})
+    "websocket": {
+        "require_auth": True,  # 🔒 All clients must authenticate
+        "allowed_origins": [
+            "file://",  # Allow local HTML files
+        ],
+    }
+}
+
+z = zCLI(zSpark)
 
 # Define broadcast handler
 async def broadcast_handler(websocket, message):
@@ -425,32 +563,35 @@ z.comm.websocket.start(
 **🎯 Try it yourself:**
 
 ```bash
-# Step 1: Start the server
-python3 Demos/Layer_0/zComm_Demo/lvl2_websocket/3_websocket_broadcast.py
+# Step 1: Start the secure broadcast server
+python3 Demos/Layer_0/zComm_Demo/lvl2_websocket/4_websocket_broadcast.py
 
 # Step 2: Open the HTML client in MULTIPLE windows
-# Double-click 2-3 times: Demos/Layer_0/zComm_Demo/lvl2_websocket/3_client_broadcast.html
-# (Opens multiple browser windows - each is a separate client!)
+# Double-click 2-3 times: Demos/Layer_0/zComm_Demo/lvl2_websocket/4_client_broadcast.html
+# (Each window authenticates independently with the same token)
 ```
 
-[View demo source →](../Demos/Layer_0/zComm_Demo/lvl2_websocket/3_websocket_broadcast.py) | [View client →](../Demos/Layer_0/zComm_Demo/lvl2_websocket/3_client_broadcast.html)
+[View demo source →](../Demos/Layer_0/zComm_Demo/lvl2_websocket/4_websocket_broadcast.py) | [View client →](../Demos/Layer_0/zComm_Demo/lvl2_websocket/4_client_broadcast.html)
 
 **What you'll discover:**
-- Use `z.comm.websocket.broadcast()` to send to all clients
+- Apply security to multi-client broadcasting
+- All clients must authenticate with the same token
+- Use `z.comm.websocket.broadcast()` to send to authenticated clients
 - Exclude sender with `exclude=websocket` parameter
 - See message count returned (how many clients received it)
-- zCLI tracks connected clients automatically
+- zCLI tracks authenticated clients automatically
 
-> **Note:** This is raw WebSocket infrastructure. For production apps with authentication, caching, and Terminal↔Web orchestration, see [zBifrost Guide](zBifrost_GUIDE.md)!
+> **Note:** This is Layer 0 WebSocket infrastructure with basic token authentication. For advanced three-tier authentication (zSession, Application, Dual), caching, and Terminal↔Web orchestration, see [zBifrost Guide](zBifrost_GUIDE.md)!
 
 ---
 
 **🎯 Level 2 Complete!**
 
-You've learned real-time bidirectional communication using **imperative primitives**:
+You've mastered real-time secure bidirectional communication using **imperative primitives**:
 - ✅ **WebSocket Server** - Persistent connections with `z.comm.websocket.start()`
 - ✅ **Echo Messages** - Custom handlers to process messages
-- ✅ **Broadcast** - One-to-many messaging with `z.comm.websocket.broadcast()`
+- ✅ **Secure Connections** - Token authentication and origin validation
+- ✅ **Broadcast** - One-to-many messaging with authentication
 
 **This is raw infrastructure - the building blocks.** You wrote Python code to handle each message (imperative). As you progress through zCLI, you'll see how **zBifrost (Layer 2)** transforms this into declarative configuration!
 

@@ -21,12 +21,14 @@ ENV_VAR_HOST = "WEBSOCKET_HOST"
 ENV_VAR_PORT = "WEBSOCKET_PORT"
 ENV_VAR_REQUIRE_AUTH = "WEBSOCKET_REQUIRE_AUTH"
 ENV_VAR_ALLOWED_ORIGINS = "WEBSOCKET_ALLOWED_ORIGINS"
+ENV_VAR_TOKEN = "WEBSOCKET_TOKEN"
 
 # Config Keys
 KEY_HOST = "host"
 KEY_PORT = "port"
 KEY_REQUIRE_AUTH = "require_auth"
 KEY_ALLOWED_ORIGINS = "allowed_origins"
+KEY_TOKEN = "token"
 KEY_MAX_CONNECTIONS = "max_connections"
 KEY_PING_INTERVAL = "ping_interval"
 KEY_PING_TIMEOUT = "ping_timeout"
@@ -34,8 +36,9 @@ KEY_PING_TIMEOUT = "ping_timeout"
 # Default Values
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8765  # Standard WebSocket development port (matches zComm primitives)
-DEFAULT_REQUIRE_AUTH = True
+DEFAULT_REQUIRE_AUTH = False  # Security is opt-in, not opt-out (better UX for beginners)
 DEFAULT_ALLOWED_ORIGINS: List[str] = []
+DEFAULT_TOKEN = ""  # Empty by default - configure via .zEnv or env vars
 DEFAULT_MAX_CONNECTIONS = 100
 DEFAULT_PING_INTERVAL = 20
 DEFAULT_PING_TIMEOUT = 10
@@ -91,6 +94,7 @@ class WebSocketConfig:
         env_port = os.getenv(ENV_VAR_PORT)
         env_auth = os.getenv(ENV_VAR_REQUIRE_AUTH)
         env_origins = os.getenv(ENV_VAR_ALLOWED_ORIGINS)
+        env_token = os.getenv(ENV_VAR_TOKEN)
 
         if env_host:
             websocket_config[KEY_HOST] = env_host
@@ -112,12 +116,17 @@ class WebSocketConfig:
             websocket_config[KEY_ALLOWED_ORIGINS] = origins_list
             print(f"{LOG_PREFIX} WebSocket origins from env: {origins_list}")
 
+        if env_token:
+            websocket_config[KEY_TOKEN] = env_token
+            print(f"{LOG_PREFIX} WebSocket token from env: {'*' * len(env_token)}")
+
         # 3. Apply defaults for any missing values
         self.config = {
             KEY_HOST: websocket_config.get(KEY_HOST, DEFAULT_HOST),
             KEY_PORT: websocket_config.get(KEY_PORT, DEFAULT_PORT),
             KEY_REQUIRE_AUTH: websocket_config.get(KEY_REQUIRE_AUTH, DEFAULT_REQUIRE_AUTH),
             KEY_ALLOWED_ORIGINS: websocket_config.get(KEY_ALLOWED_ORIGINS, DEFAULT_ALLOWED_ORIGINS),
+            KEY_TOKEN: websocket_config.get(KEY_TOKEN, DEFAULT_TOKEN),
             KEY_MAX_CONNECTIONS: websocket_config.get(KEY_MAX_CONNECTIONS, DEFAULT_MAX_CONNECTIONS),
             KEY_PING_INTERVAL: websocket_config.get(KEY_PING_INTERVAL, DEFAULT_PING_INTERVAL),
             KEY_PING_TIMEOUT: websocket_config.get(KEY_PING_TIMEOUT, DEFAULT_PING_TIMEOUT),
@@ -158,6 +167,11 @@ class WebSocketConfig:
     def allowed_origins(self) -> List[str]:
         """List of allowed origins."""
         return self.config[KEY_ALLOWED_ORIGINS]
+
+    @property
+    def token(self) -> str:
+        """Authentication token (from .zEnv or env vars)."""
+        return self.config[KEY_TOKEN]
 
     @property
     def max_connections(self) -> int:
