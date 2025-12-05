@@ -1,0 +1,43 @@
+[Unit]
+Description=zCloud WebSocket Server (zCLI)
+Documentation=https://github.com/ZoloAi/zolo-zcli
+After=network.target
+
+[Service]
+Type=simple
+User=zcloud
+Group=zcloud
+WorkingDirectory=/opt/zcloud/websocket
+
+# Python environment
+Environment="PATH=/opt/zcloud/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+Environment="PYTHONUNBUFFERED=1"
+
+# zCLI WebSocket server
+ExecStart=/opt/zcloud/venv/bin/python3 /opt/zcloud/websocket/6_websocket_production.py
+
+# Restart policy
+Restart=always
+RestartSec=5
+StartLimitBurst=5
+StartLimitIntervalSec=30
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/log/zcloud
+
+# Resource limits
+LimitNOFILE=65536
+LimitNPROC=4096
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=zcloud-wss
+
+[Install]
+WantedBy=multi-user.target
+

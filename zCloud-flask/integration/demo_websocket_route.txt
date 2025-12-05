@@ -1,0 +1,12 @@
+# Add this route to ~/Projects/zcloud-flask/server.py
+
+# Location: After the /api/posts route (around line 195)
+
+@app.route('/demo/websocket')
+def demo_websocket():
+    """WebSocket demo client page"""
+    return render_template('demo_websocket.html', page='demo')
+
+# Then restart Flask:
+# sudo systemctl restart zcloud-gunicorn
+

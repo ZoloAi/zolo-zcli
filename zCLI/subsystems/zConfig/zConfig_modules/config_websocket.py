@@ -1,7 +1,7 @@
 # zCLI/subsystems/zConfig/zConfig_modules/config_websocket.py
 """WebSocket configuration management as part of zConfig."""
 
-from zCLI import Colors, os, Any, Dict, List
+from zCLI import Colors, os, Any, Dict, List, Optional
 from zCLI.utils import print_ready_message, validate_zcli_instance
 
 # ═══════════════════════════════════════════════════════════
@@ -22,6 +22,9 @@ ENV_VAR_PORT = "WEBSOCKET_PORT"
 ENV_VAR_REQUIRE_AUTH = "WEBSOCKET_REQUIRE_AUTH"
 ENV_VAR_ALLOWED_ORIGINS = "WEBSOCKET_ALLOWED_ORIGINS"
 ENV_VAR_TOKEN = "WEBSOCKET_TOKEN"
+ENV_VAR_SSL_ENABLED = "WEBSOCKET_SSL_ENABLED"
+ENV_VAR_SSL_CERT = "WEBSOCKET_SSL_CERT"
+ENV_VAR_SSL_KEY = "WEBSOCKET_SSL_KEY"
 
 # Config Keys
 KEY_HOST = "host"
@@ -32,6 +35,9 @@ KEY_TOKEN = "token"
 KEY_MAX_CONNECTIONS = "max_connections"
 KEY_PING_INTERVAL = "ping_interval"
 KEY_PING_TIMEOUT = "ping_timeout"
+KEY_SSL_ENABLED = "ssl_enabled"
+KEY_SSL_CERT = "ssl_cert"
+KEY_SSL_KEY = "ssl_key"
 
 # Default Values
 DEFAULT_HOST = "127.0.0.1"
@@ -42,6 +48,9 @@ DEFAULT_TOKEN = ""  # Empty by default - configure via .zEnv or env vars
 DEFAULT_MAX_CONNECTIONS = 100
 DEFAULT_PING_INTERVAL = 20
 DEFAULT_PING_TIMEOUT = 10
+DEFAULT_SSL_ENABLED = False  # SSL disabled by default for easier local development
+DEFAULT_SSL_CERT = None
+DEFAULT_SSL_KEY = None
 
 # String Parsing
 TRUTHY_VALUES = ("true", "1", "yes")
@@ -82,19 +91,15 @@ class WebSocketConfig:
         # Get base config from environment
         websocket_config: Dict[str, Any] = self.environment.get(CONFIG_SECTION_KEY, {})
 
-        # 1. Check zSpark_obj for WebSocket settings (highest priority)
-        if self.zcli.zspark_obj:
-            zspark_ws = self.zcli.zspark_obj.get(CONFIG_SECTION_KEY, {})
-            if zspark_ws:
-                print(f"{LOG_PREFIX} WebSocket settings from zSpark: {list(zspark_ws.keys())}")
-                websocket_config.update(zspark_ws)
-
-        # 2. Check environment variables (second priority)
+        # 1. Check environment variables (Layer 3/4 - .zEnv or system env)
         env_host = os.getenv(ENV_VAR_HOST)
         env_port = os.getenv(ENV_VAR_PORT)
         env_auth = os.getenv(ENV_VAR_REQUIRE_AUTH)
         env_origins = os.getenv(ENV_VAR_ALLOWED_ORIGINS)
         env_token = os.getenv(ENV_VAR_TOKEN)
+        env_ssl_enabled = os.getenv(ENV_VAR_SSL_ENABLED)
+        env_ssl_cert = os.getenv(ENV_VAR_SSL_CERT)
+        env_ssl_key = os.getenv(ENV_VAR_SSL_KEY)
 
         if env_host:
             websocket_config[KEY_HOST] = env_host
@@ -120,6 +125,25 @@ class WebSocketConfig:
             websocket_config[KEY_TOKEN] = env_token
             print(f"{LOG_PREFIX} WebSocket token from env: {'*' * len(env_token)}")
 
+        if env_ssl_enabled:
+            websocket_config[KEY_SSL_ENABLED] = env_ssl_enabled.lower() in TRUTHY_VALUES
+            print(f"{LOG_PREFIX} WebSocket SSL from env: {websocket_config[KEY_SSL_ENABLED]}")
+
+        if env_ssl_cert:
+            websocket_config[KEY_SSL_CERT] = env_ssl_cert
+            print(f"{LOG_PREFIX} WebSocket SSL cert from env: {env_ssl_cert}")
+
+        if env_ssl_key:
+            websocket_config[KEY_SSL_KEY] = env_ssl_key
+            print(f"{LOG_PREFIX} WebSocket SSL key from env: {env_ssl_key}")
+
+        # 2. Check zSpark_obj for WebSocket settings (Layer 5 - highest priority, overrides env)
+        if self.zcli.zspark_obj:
+            zspark_ws = self.zcli.zspark_obj.get(CONFIG_SECTION_KEY, {})
+            if zspark_ws:
+                print(f"{LOG_PREFIX} WebSocket settings from zSpark: {list(zspark_ws.keys())}")
+                websocket_config.update(zspark_ws)  # zSpark overrides everything else
+
         # 3. Apply defaults for any missing values
         self.config = {
             KEY_HOST: websocket_config.get(KEY_HOST, DEFAULT_HOST),
@@ -130,6 +154,9 @@ class WebSocketConfig:
             KEY_MAX_CONNECTIONS: websocket_config.get(KEY_MAX_CONNECTIONS, DEFAULT_MAX_CONNECTIONS),
             KEY_PING_INTERVAL: websocket_config.get(KEY_PING_INTERVAL, DEFAULT_PING_INTERVAL),
             KEY_PING_TIMEOUT: websocket_config.get(KEY_PING_TIMEOUT, DEFAULT_PING_TIMEOUT),
+            KEY_SSL_ENABLED: websocket_config.get(KEY_SSL_ENABLED, DEFAULT_SSL_ENABLED),
+            KEY_SSL_CERT: websocket_config.get(KEY_SSL_CERT, DEFAULT_SSL_CERT),
+            KEY_SSL_KEY: websocket_config.get(KEY_SSL_KEY, DEFAULT_SSL_KEY),
         }
 
     def get(self, key: str, default: Any = None) -> Any:
@@ -172,6 +199,21 @@ class WebSocketConfig:
     def token(self) -> str:
         """Authentication token (from .zEnv or env vars)."""
         return self.config[KEY_TOKEN]
+
+    @property
+    def ssl_enabled(self) -> bool:
+        """Whether SSL/TLS is enabled for WSS connections."""
+        return self.config[KEY_SSL_ENABLED]
+
+    @property
+    def ssl_cert(self) -> Optional[str]:
+        """Path to SSL certificate file."""
+        return self.config[KEY_SSL_CERT]
+
+    @property
+    def ssl_key(self) -> Optional[str]:
+        """Path to SSL private key file."""
+        return self.config[KEY_SSL_KEY]
 
     @property
     def max_connections(self) -> int:

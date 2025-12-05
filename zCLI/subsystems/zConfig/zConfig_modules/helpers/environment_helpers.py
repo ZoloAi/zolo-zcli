@@ -41,6 +41,9 @@ def create_default_env_config(path: Path, _env_data: Dict[str, Any]) -> None:
     max_connections: 100  # maximum concurrent WebSocket connections
     ping_interval: 20  # ping interval in seconds
     ping_timeout: 10  # ping timeout in seconds
+    ssl_enabled: false  # enable SSL/TLS for WSS (WebSocket Secure)
+    ssl_cert: null  # path to SSL certificate file
+    ssl_key: null  # path to SSL private key file
   
   # Security Settings
   security:

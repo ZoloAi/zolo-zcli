@@ -15,6 +15,8 @@ from zCLI import (
     ws_serve, WebSocketServerProtocol
 )
 from typing import Set
+from pathlib import Path
+import ssl
 from .comm_websocket_auth import WebSocketAuth
 
 # ═══════════════════════════════════════════════════════════
@@ -22,7 +24,7 @@ from .comm_websocket_auth import WebSocketAuth
 # ═══════════════════════════════════════════════════════════
 
 LOG_PREFIX = "[WebSocketServer]"
-LOG_STARTED = f"{LOG_PREFIX} Server started at ws://{{host}}:{{port}}"
+LOG_STARTED = f"{LOG_PREFIX} Server started at {{protocol}}://{{host}}:{{port}}"
 LOG_CLIENT_CONNECTED = f"{LOG_PREFIX} Client connected: {{client_addr}}"
 LOG_CLIENT_DISCONNECTED = f"{LOG_PREFIX} Client disconnected: {{client_addr}}"
 LOG_BROADCAST = f"{LOG_PREFIX} Broadcasting to {{count}} client(s)"
@@ -61,6 +63,40 @@ class WebSocketServer:
         self.handler: Optional[Callable] = None
         self._running = False
     
+    def _create_ssl_context(self) -> Optional[ssl.SSLContext]:
+        """
+        Create SSL context from config if SSL is enabled.
+        
+        Returns:
+            ssl.SSLContext if SSL enabled and configured, None otherwise
+        """
+        if not self.config.ssl_enabled:
+            return None
+        
+        if not self.config.ssl_cert or not self.config.ssl_key:
+            self.logger.warning(f"{LOG_PREFIX} SSL enabled but cert/key not provided")
+            return None
+        
+        # Resolve paths (handle ~, relative paths)
+        cert_path = Path(self.config.ssl_cert).expanduser().resolve()
+        key_path = Path(self.config.ssl_key).expanduser().resolve()
+        
+        # Verify files exist
+        if not cert_path.exists():
+            self.logger.error(f"{LOG_PREFIX} SSL cert not found: {cert_path}")
+            return None
+        
+        if not key_path.exists():
+            self.logger.error(f"{LOG_PREFIX} SSL key not found: {key_path}")
+            return None
+        
+        # Create SSL context for server
+        ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        ssl_context.load_cert_chain(str(cert_path), str(key_path))
+        
+        self.logger.info(f"{LOG_PREFIX} SSL enabled with cert: {cert_path}")
+        return ssl_context
+    
     async def start_async(
         self,
         host: Optional[str] = None,
@@ -83,10 +119,19 @@ class WebSocketServer:
         
         self.handler = handler or self._default_handler
         
+        # Create SSL context if enabled
+        ssl_context = self._create_ssl_context()
+        protocol = "wss" if ssl_context else "ws"
+        
         try:
-            self.server = await ws_serve(self._handle_client, actual_host, actual_port)
+            self.server = await ws_serve(
+                self._handle_client, 
+                actual_host, 
+                actual_port,
+                ssl=ssl_context
+            )
             self._running = True
-            self.logger.info(LOG_STARTED.format(host=actual_host, port=actual_port))
+            self.logger.info(LOG_STARTED.format(protocol=protocol, host=actual_host, port=actual_port))
             await self.server.wait_closed()
         except OSError as e:
             self.logger.error(f"{LOG_PREFIX} Failed to start: {e}")

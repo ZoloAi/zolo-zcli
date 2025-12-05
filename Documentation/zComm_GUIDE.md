@@ -145,21 +145,33 @@ python3 Demos/Layer_0/zComm_Demo/lvl1_network/1_port_check.py
 
 ---
 
-### **ii. HTTP Request (GET)**
+### **ii. HTTP/HTTPS Requests (GET)**
 
-After checking ports, let's make HTTP requests - the foundation of API communication.
+Remember our apartment building? Port 80 is HTTP, port 443 is HTTPS. But what's the difference?
 
+**HTTP (Port 80):**
+- Unencrypted conversation - anyone can eavesdrop
+- Like shouting across a room - everyone hears
+- ❌ Never use for passwords, personal data, or production APIs
 
-**Understanding HTTP Requests:**
+**HTTPS (Port 443):**
+- Encrypted with SSL/TLS - private conversation
+- Like whispering in a soundproof room - nobody can listen in
+- ✅ Always use for production, sensitive data, modern web APIs
+- The "S" stands for "Secure"
 
-If ports are apartment numbers, then **HTTP requests are conversations with the services living there**. You knock on apartment 80 (HTTP) or 443 (HTTPS) and talk to whoever answers:
+> **Discovery:** zComm supports both `http://` and `https://` automatically. Just change the URL - no certificates to configure, no extra code needed!
+
+**HTTP Request Methods:**
+
+Whether using HTTP or HTTPS, the conversation types are the same:
 - **GET** → "Can I see what you have?" ***(we are here)***
 - **POST** → "Here's something new for you"
 - **PUT** → "Replace everything with this"
 - **PATCH** → "Update just this one thing"
 - **DELETE** → "Remove this item"
 
-> **Why HTTP?** Every website, every API, every web app—they all speak HTTP. It's the universal language of the internet.
+Let's make a secure HTTPS GET request:
 
 ```python
 from zCLI import zCLI
@@ -173,7 +185,7 @@ zSpark = {
 }
 z = zCLI(zSpark)
 
-# Public API for testing (no auth needed)
+# Notice the https:// - secure, encrypted connection
 url = "https://httpbin.org/get"
 
 # Make GET request with query parameters
@@ -184,7 +196,7 @@ if response:
     print(f"Server received: {data.get('args')}")
 ```
 
-> One line to make HTTP requests. No `requests` library needed.
+> One line to make requests. No `requests` library needed. HTTPS encryption handled automatically.
 
 > **About httpbin.org:** This is a free, public testing service that "echoes" back whatever you send it. Perfect for learning HTTP without needing your own server. Think of it as a practice mirror - you send a message, it bounces back so you can see it worked!
 
@@ -198,7 +210,8 @@ python3 Demos/Layer_0/zComm_Demo/lvl1_network/2_http_get.py
 
 **What you'll discover:**
 - One line: `z.comm.http_get(url, params={...})`
-- No external dependencies
+- Both `http://` and `https://` work identically
+- HTTPS encryption is automatic (no configuration needed)
 - Built-in JSON parsing with `.json()`
 - Returns `None` on failure (safe, no crashes)
 
@@ -516,9 +529,144 @@ python3 Demos/Layer_0/zComm_Demo/lvl2_websocket/3_websocket_secure.py
 
 ---
 
-### **iv. Broadcast to Multiple Clients (Secured)**
+### **iv. Encrypted Connections (WSS - WebSocket Secure)**
 
-In Level 2.iii, you secured a single echo connection. Now let's apply security to **multi-client scenarios** using `z.comm.websocket.broadcast()` to send messages to all authenticated clients at once.
+So far we've used `ws://` (unencrypted WebSocket). Just like HTTP vs HTTPS, production WebSocket connections should use `wss://` (WebSocket Secure) with SSL/TLS encryption.
+
+**Why WSS Matters:**
+- **Encryption** - All data encrypted in transit (like HTTPS)
+- **Industry standard** - Required for production deployments
+- **Browser security** - Modern browsers require WSS for secure contexts
+- **Prevents eavesdropping** - Man-in-the-middle attacks blocked
+
+zCLI makes SSL/TLS simple - it's **opt-in** via zSpark:
+
+**Server Configuration (SSL is opt-in):**
+
+```python
+from zCLI import zCLI
+
+zSpark = {
+    "websocket": {
+        "port": 8766,
+        "require_auth": True,  # Token auth from .zEnv
+        "ssl_enabled": True,  # 🔒 Opt-in to SSL/TLS
+        "ssl_cert": "certs/demo.cert",
+        "ssl_key": "certs/demo.key",
+        "allowed_origins": [
+            "https://localhost",  # Note: https (not http)
+            "https://127.0.0.1",
+            "file://",
+        ],
+    }
+}
+
+z = zCLI(zSpark)
+z.comm.websocket.start(host="127.0.0.1", port=8766, handler=my_handler)
+```
+
+**Why Opt-In?**
+- **Development ease:** `ws://` works without certificates by default
+- **Explicit security:** You consciously enable `wss://` when ready
+- **Same pattern as authentication:** `require_auth: True` is also opt-in
+
+**Production:** Store certificate paths in environment variables or `.zEnv`:
+```bash
+# .zEnv (production)
+WEBSOCKET_TOKEN=your_secure_token
+WEBSOCKET_SSL_CERT=/etc/ssl/certs/yourdomain.crt
+WEBSOCKET_SSL_KEY=/etc/ssl/private/yourdomain.key
+```
+
+Then reference them in zSpark:
+```python
+import os
+zSpark = {
+    "websocket": {
+        "ssl_enabled": True,
+        "ssl_cert": os.getenv("WEBSOCKET_SSL_CERT"),
+        "ssl_key": os.getenv("WEBSOCKET_SSL_KEY"),
+    }
+}
+```
+
+**Client Connection (JavaScript):**
+
+```javascript
+// Use wss:// protocol instead of ws://
+const token = document.getElementById('tokenInput').value;
+const ws = new WebSocket(`wss://127.0.0.1:8766?token=${token}`);
+
+ws.onopen = function() {
+    console.log('✓ Secure connection established (SSL/TLS)');
+};
+```
+
+**Try it yourself:**
+
+```bash
+# Step 1: Start the WSS server
+python3 Demos/Layer_0/zComm_Demo/lvl2_websocket/4_websocket_wss.py
+
+# Step 2: Trust the certificate first (self-signed cert requirement)
+# Open browser and navigate to: https://127.0.0.1:8766
+# Click "Advanced" → "Proceed to 127.0.0.1 (unsafe)"
+# You'll see an error page (expected - you're just teaching browser to trust cert)
+
+# Step 3: Now open the HTML client
+open Demos/Layer_0/zComm_Demo/lvl2_websocket/4_client_wss.html
+```
+
+**Why the Manual Step?**
+
+Self-signed certificates aren't trusted by browsers by default. For WSS connections, you must explicitly trust the certificate **before** the WebSocket can connect. Navigate to `https://127.0.0.1:8766` first, accept the warning, then the HTML client will work.
+
+In production with proper certificates from:
+- **Let's Encrypt** (free, automated, recommended)
+- Your organization's Certificate Authority
+- Commercial SSL providers (DigiCert, Comodo, etc.)
+
+[View demo source →](../Demos/Layer_0/zComm_Demo/lvl2_websocket/4_websocket_wss.py) | [View client →](../Demos/Layer_0/zComm_Demo/lvl2_websocket/4_client_wss.html)
+
+**What you'll discover:**
+- Configure SSL in `.zEnv` - no hardcoded paths!
+- zConfig loads SSL settings via 5-layer hierarchy
+- Client connects with `wss://` instead of `ws://`
+- Connection is encrypted end-to-end (like HTTPS)
+- Industry-standard security for production WebSockets
+
+**zConfig Integration:**
+
+SSL settings follow the 5-layer hierarchy:
+1. **Defaults** - `ssl_enabled: false` (code)
+2. **Machine Config** - System-wide YAML config
+3. **Environment Variables** - `WEBSOCKET_SSL_ENABLED`, `WEBSOCKET_SSL_CERT`, `WEBSOCKET_SSL_KEY`
+4. **`.zEnv` file** - Project-specific (what the demo uses)
+5. **zSpark** - Runtime override
+
+**Production Certificates:**
+
+Never commit SSL certificates to version control! For production:
+- Use `.zEnv` for local development (add to `.gitignore`)
+- Use environment variables in production: `WEBSOCKET_SSL_CERT=/etc/ssl/certs/cert.pem`
+- Store in secure vaults: AWS Secrets Manager, Azure Key Vault, HashiCorp Vault
+- Use Let's Encrypt for free, automated certificates
+
+**WebSocket Security Best Practices:**
+
+| Practice | Development | Production |
+|----------|-------------|------------|
+| **Protocol** | `ws://` OK | `wss://` required |
+| **Certificates** | Self-signed OK | CA-signed required |
+| **Token Storage** | `.zEnv` file | Environment variables + secrets manager |
+| **Origins** | `file://` OK | Whitelist specific domains |
+| **Authentication** | Optional | Always required |
+
+---
+
+### **v. Broadcast to Multiple Clients (Secured)**
+
+In previous demos, you secured connections with authentication (Level 2.iii) and encryption (Level 2.iv). Now let's apply security to **multi-client scenarios** using `z.comm.websocket.broadcast()` to send messages to all authenticated clients at once.
 
 **Secure Broadcasting**
 
@@ -564,14 +712,14 @@ z.comm.websocket.start(
 
 ```bash
 # Step 1: Start the secure broadcast server
-python3 Demos/Layer_0/zComm_Demo/lvl2_websocket/4_websocket_broadcast.py
+python3 Demos/Layer_0/zComm_Demo/lvl2_websocket/5_websocket_broadcast.py
 
 # Step 2: Open the HTML client in MULTIPLE windows
-# Double-click 2-3 times: Demos/Layer_0/zComm_Demo/lvl2_websocket/4_client_broadcast.html
+# Double-click 2-3 times: Demos/Layer_0/zComm_Demo/lvl2_websocket/5_client_broadcast.html
 # (Each window authenticates independently with the same token)
 ```
 
-[View demo source →](../Demos/Layer_0/zComm_Demo/lvl2_websocket/4_websocket_broadcast.py) | [View client →](../Demos/Layer_0/zComm_Demo/lvl2_websocket/4_client_broadcast.html)
+[View demo source →](../Demos/Layer_0/zComm_Demo/lvl2_websocket/5_websocket_broadcast.py) | [View client →](../Demos/Layer_0/zComm_Demo/lvl2_websocket/5_client_broadcast.html)
 
 **What you'll discover:**
 - Apply security to multi-client broadcasting
@@ -590,7 +738,8 @@ python3 Demos/Layer_0/zComm_Demo/lvl2_websocket/4_websocket_broadcast.py
 You've mastered real-time secure bidirectional communication using **imperative primitives**:
 - ✅ **WebSocket Server** - Persistent connections with `z.comm.websocket.start()`
 - ✅ **Echo Messages** - Custom handlers to process messages
-- ✅ **Secure Connections** - Token authentication and origin validation
+- ✅ **Secure Connections** - Token authentication and origin validation  
+- ✅ **Encrypted Connections** - SSL/TLS with WSS protocol (production-ready)
 - ✅ **Broadcast** - One-to-many messaging with authentication
 
 **This is raw infrastructure - the building blocks.** You wrote Python code to handle each message (imperative). As you progress through zCLI, you'll see how **zBifrost (Layer 2)** transforms this into declarative configuration!

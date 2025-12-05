@@ -8,6 +8,7 @@
 - Handle client connections
 - Send and receive messages
 - **Add authentication and security**
+- **Enable SSL/TLS encryption (WSS)**
 - Broadcast to multiple authenticated clients
 - Low-level WebSocket infrastructure (separate from zBifrost's orchestration)
 
@@ -43,23 +44,23 @@ python 2_websocket_echo.py
 - Bidirectional communication
 - Simple request-response pattern
 
-### iii. Secure Echo Server (`3_websocket_secure.py`)
-**Add authentication to WebSocket connections**
+### iii. Secure WebSocket Client (`3_websocket_secure.py`)
+**Connect to production WebSocket server (zolo.media)**
 
 ```bash
-# Terminal: Start secure server
+# Python: Connect to production server
 python 3_websocket_secure.py
 
-# Browser: Open the secure client
+# Browser: Open the HTML client
 # 3_client_secure.html
 ```
 
 **What it shows:**
-- Token-based authentication
-- Origin validation (CORS/CSRF protection)
-- Store tokens in `.zEnv` file (never hardcode!)
-- Reject unauthorized connections
-- Get client auth info
+- Connect to WSS (WebSocket Secure) with real SSL certificates
+- Production infrastructure (Cloudflare Tunnel + Let's Encrypt)
+- Industry-standard WebSocket protocol
+- Both Python and JavaScript clients
+- Real-world secure communication
 
 ### iv. Secure Broadcast Server (`4_websocket_broadcast.py`)
 **Broadcast to all authenticated clients**
@@ -74,9 +75,9 @@ python 4_websocket_broadcast.py
 
 **What it shows:**
 - Apply security to multi-client scenarios
-- All clients must authenticate
+- All clients must authenticate with token
 - Track authenticated clients
-- Broadcast message to authenticated clients only
+- Broadcast messages to all authenticated clients
 - One-to-many communication with security
 
 ## Key Concepts
@@ -96,7 +97,8 @@ python 4_websocket_broadcast.py
 - **Token Authentication**: Verify client identity with tokens from `.zEnv`
 - **Origin Validation**: Prevent CORS/CSRF attacks
 - **Connection Limits**: Prevent resource exhaustion
-- **Always use authentication in production!**
+- **SSL/TLS Encryption**: Use `wss://` (WebSocket Secure) instead of `ws://` in production
+- **Always use authentication AND encryption in production!**
 
 **zComm vs zBifrost:**
 - **zComm (Layer 0)**: Raw WebSocket infrastructure + basic security (what you're learning here)
