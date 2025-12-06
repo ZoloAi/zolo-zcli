@@ -197,4 +197,9 @@ Demos/**/*.db
 Demos/**/*.sqlite
 Demos/**/*.pdf
 
+# Local planning files
+local_planning/
+
+# zCloud files
+zCloud/
 
