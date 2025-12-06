@@ -127,6 +127,19 @@ class BridgeOrchestrator:
                 self.logger.info(f"{LOG_PREFIX} {LOG_DETECTED_ZBIFROST_MODE}")
                 self.create(walker=None)
                 self.logger.debug(f"{LOG_PREFIX} {LOG_INSTANCE_CREATED_ZBIFROST}")
+                
+                # Auto-start the WebSocket server in background thread
+                if self.websocket:
+                    import threading
+                    import asyncio
+                    
+                    def run_websocket():
+                        socket_ready = threading.Event()
+                        asyncio.run(self.websocket.start_socket_server(socket_ready))
+                    
+                    ws_thread = threading.Thread(target=run_websocket, daemon=True, name="zBifrost-WebSocket")
+                    ws_thread.start()
+                    self.logger.info(f"{LOG_PREFIX} WebSocket server started in background thread")
             else:
                 self.logger.framework.debug(f"{LOG_PREFIX} {LOG_DETECTED_TERMINAL_MODE}")
         except (KeyError, AttributeError) as e:

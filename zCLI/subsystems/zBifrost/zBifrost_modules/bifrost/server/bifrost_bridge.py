@@ -27,6 +27,7 @@ from zCLI import (
     Optional, Dict, Any,
     ws_serve, WebSocketServerProtocol, ws_exceptions
 )
+from zCLI.subsystems.zComm.zComm_modules.comm_websocket_auth import WebSocketAuth
 from .modules import (
     CacheManager,
     AuthenticationManager,
@@ -243,7 +244,13 @@ class zBifrost:
 
         # Initialize modular components
         self.cache = CacheManager(logger, default_query_ttl=DEFAULT_QUERY_TTL)
+        
+        # Layer 0: Basic WebSocket auth (origin/token validation)
+        self.ws_auth = WebSocketAuth(zcli.config.websocket, logger) if zcli else None
+        
+        # Layer 2: Three-tier authentication orchestrator
         self.auth = AuthenticationManager(logger, require_auth, allowed_origins)
+        
         self.connection_info = ConnectionInfoManager(logger, self.cache, self.zcli, self.walker)
         self.message_handler = MessageHandler(
             logger, self.cache, self.zcli, self.walker,
@@ -301,8 +308,8 @@ class zBifrost:
 
         self.logger.info(LOG_NEW_CONNECTION.format(remote_addr=remote_addr, path=path))
 
-        # Validate origin
-        if not self.auth.validate_origin(ws):
+        # Validate origin (Layer 0 primitive)
+        if self.ws_auth and not self.ws_auth.validate_origin(ws):
             self.logger.warning(LOG_BLOCK_INVALID_ORIGIN)
             await ws.close(code=WS_CLOSE_INVALID_ORIGIN, reason=ERROR_INVALID_ORIGIN)
             return
