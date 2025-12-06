@@ -238,8 +238,9 @@ class ConfigValidator:
                 )
     
     def _validate_http_server(self) -> None:
-        """Validate http_server configuration"""
-        http_config = self.config.get(KEY_HTTP_SERVER)
+        """Validate zServer configuration (backward compatible with 'http_server' key)"""
+        # Try new 'zServer' key first, fallback to deprecated 'http_server' key
+        http_config = self.config.get("zServer") or self.config.get(KEY_HTTP_SERVER)
         
         if http_config is None:
             return  # Optional

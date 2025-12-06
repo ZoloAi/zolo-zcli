@@ -152,6 +152,52 @@ class LoggerConfig:
         # Normalize and validate
         level = self._normalize_log_level(level)
         return self._validate_log_level(level)
+    def _resolve_logger_path(self, path_str: str) -> Path:
+        """
+        Resolve logger path with zPath notation support.
+        
+        Supports:
+            - @.path → workspace-relative (zPath convention)
+            - ~.path or ~/path → home-relative
+            - ./path → current directory relative
+            - path → absolute or relative
+        
+        Args:
+            path_str: Path string to resolve
+            
+        Returns:
+            Resolved Path object
+        
+        Examples:
+            >>> _resolve_logger_path("@.logs")  # workspace/logs
+            >>> _resolve_logger_path("./logs")  # cwd/logs
+            >>> _resolve_logger_path("~/logs")  # home/logs
+        """
+        path_str = str(path_str).strip()
+        
+        # Handle zPath workspace-relative notation (@.path or @path)
+        if path_str.startswith("@."):
+            # Remove @. prefix
+            relative_path = path_str[2:]
+            # Get workspace directory from config paths
+            if hasattr(self.zcli, 'config') and hasattr(self.zcli.config, 'sys_paths'):
+                workspace = self.zcli.config.sys_paths.workspace_dir
+                if workspace:
+                    return Path(workspace) / relative_path
+            # Fallback to current directory if workspace not available
+            return Path.cwd() / relative_path
+        
+        elif path_str.startswith("@"):
+            # Handle @path (without dot)
+            relative_path = path_str[1:]
+            if hasattr(self.zcli, 'config') and hasattr(self.zcli.config, 'sys_paths'):
+                workspace = self.zcli.config.sys_paths.workspace_dir
+                if workspace:
+                    return Path(workspace) / relative_path
+            return Path.cwd() / relative_path
+        
+        # Handle tilde notation (~.path or ~/path) and regular paths
+        return Path(path_str).expanduser().resolve()
     
     def _get_caller_info(self, record: logging.LogRecord) -> str:
         """
@@ -336,7 +382,8 @@ class LoggerConfig:
         custom_logger_path = self.session_data.get(SESSION_KEY_LOGGER_PATH)
         if custom_logger_path:
             # User specified custom directory - append title-based filename
-            logs_dir = Path(custom_logger_path).expanduser().resolve()
+            # Support zPath notation (@. for workspace-relative, ~. for home)
+            logs_dir = self._resolve_logger_path(custom_logger_path)
             file_path = str(logs_dir / log_filename)
         else:
             # Priority 2: Use system support directory with session title

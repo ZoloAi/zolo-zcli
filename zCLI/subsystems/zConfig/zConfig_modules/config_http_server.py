@@ -1,7 +1,7 @@
 # zCLI/subsystems/zConfig/zConfig_modules/config_http_server.py
 """HTTP Server Configuration Module"""
 
-from zCLI import Any, Dict
+from zCLI import Any, Dict, Optional
 from zCLI.utils import print_ready_message
 
 # ═══════════════════════════════════════════════════════════
@@ -13,33 +13,42 @@ LOG_PREFIX = "[HttpServerConfig]"
 SUBSYSTEM_NAME = "HttpServerConfig"
 READY_MESSAGE = "HttpServerConfig Ready"
 
-# Config Section
-CONFIG_SECTION_KEY = "http_server"
+# Config Section (v1.5.7: Renamed from 'http_server' to match subsystem name)
+CONFIG_SECTION_KEY = "zServer"  # Supports both http.server (Dev) and WSGI/Gunicorn (Prod)
 
 # Config Keys
 KEY_HOST = "host"
 KEY_PORT = "port"
 KEY_SERVE_PATH = "serve_path"
+KEY_ROUTES_FILE = "routes_file"
 KEY_ENABLED = "enabled"
+KEY_ZSHELL = "zShell"  # v1.5.8: Drop into zShell REPL (default: False = silent blocking)
 
 # Default Values
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8080
 DEFAULT_SERVE_PATH = "."
+DEFAULT_ROUTES_FILE = None
 DEFAULT_ENABLED = False
+DEFAULT_ZSHELL = False  # v1.5.8: Default to silent blocking (standard server behavior)
 
 
 class HttpServerConfig:
     """
-    Configuration for zServer HTTP static file server.
+    Configuration for zServer (HTTP + WSGI/Gunicorn deployment).
     
-    Manages HTTP server settings from zSpark configuration with sensible defaults.
+    Manages zServer settings from zSpark configuration with sensible defaults.
+    Supports both Development (http.server) and Production (Gunicorn/WSGI) modes.
+    
+    Configuration Key: 'zServer' (backward compatible with 'http_server')
     
     Attributes:
         host: Server host address
         port: Server port
         serve_path: Directory to serve files from
-        enabled: Whether HTTP server is enabled
+        routes_file: Optional routes configuration file (auto-detected if not specified)
+        enabled: Whether zServer is enabled (if True, server ALWAYS waits)
+        zShell: Whether to drop into zShell REPL (False = silent blocking)
     """
     
     # Type hints for instance attributes
@@ -47,31 +56,42 @@ class HttpServerConfig:
     host: str
     port: int
     serve_path: str
+    routes_file: Optional[str]
     enabled: bool
+    zShell: bool  # v1.5.8: Drop into zShell REPL (default: False)
     
     def __init__(self, zspark_obj: Dict[str, Any], logger: Any) -> None:
         """
-        Initialize HTTP server configuration.
+        Initialize zServer configuration.
         
         Args:
-            zspark_obj: zSpark configuration dictionary
+            zspark_obj: zSpark configuration dictionary (looks for 'zServer' key)
             logger: Logger instance for configuration logging
         """
         self.logger = logger
         
-        # Get HTTP server config from zSpark
+        # Get zServer config from zSpark (v1.5.7: Supports 'zServer' key, backward compatible with 'http_server')
         http_config = zspark_obj.get(CONFIG_SECTION_KEY, {})
+        
+        # Backward compatibility: Check for old 'http_server' key if 'zServer' not found
+        if not http_config and "http_server" in zspark_obj:
+            http_config = zspark_obj.get("http_server", {})
+            self.logger.framework.debug("[HttpServerConfig] Using deprecated 'http_server' key (use 'zServer' instead)")
         
         # Set configuration with defaults
         self.host = http_config.get(KEY_HOST, DEFAULT_HOST)
         self.port = http_config.get(KEY_PORT, DEFAULT_PORT)
         self.serve_path = http_config.get(KEY_SERVE_PATH, DEFAULT_SERVE_PATH)
+        self.routes_file = http_config.get(KEY_ROUTES_FILE, DEFAULT_ROUTES_FILE)
         self.enabled = http_config.get(KEY_ENABLED, DEFAULT_ENABLED)
+        self.zShell = http_config.get(KEY_ZSHELL, DEFAULT_ZSHELL)  # v1.5.8: Interactive mode
         
         # Log configuration
         if self.enabled:
             self.logger.info(f"{LOG_PREFIX} Enabled - {self.host}:{self.port}")
             self.logger.info(f"{LOG_PREFIX} Serve path: {self.serve_path}")
+            if self.routes_file:
+                self.logger.info(f"{LOG_PREFIX} Routes file: {self.routes_file}")
         else:
             self.logger.framework.debug(f"{LOG_PREFIX} HTTP server disabled")
         

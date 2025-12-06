@@ -11,11 +11,12 @@ import os
 class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
     """HTTP request handler with zCLI logger integration + routing (v1.5.5: Flask conventions)"""
     
-    def __init__(self, *args, logger=None, router=None, static_folder="static", template_folder="templates", **kwargs):
+    def __init__(self, *args, logger=None, router=None, static_folder="static", template_folder="templates", serve_path=".", **kwargs):
         self.zcli_logger = logger
         self.router = router  # HTTPRouter instance (optional)
         self.static_folder = static_folder  # Flask convention: static files folder
         self.template_folder = template_folder  # Flask convention: templates folder
+        self.serve_path = serve_path  # Base directory for serving files
         super().__init__(*args, **kwargs)
     
     def log_message(self, format, *args):
@@ -68,6 +69,21 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
         
         # Fallback: Static file serving (backward compatible)
         return super().do_GET()
+    
+    def do_POST(self):
+        """
+        Handle POST requests for forms and APIs (v1.5.7 Phase 1.2).
+        
+        Flow:
+            1. If router exists: Use declarative routing
+            2. Otherwise: Return 405 Method Not Allowed
+        """
+        # Check if router exists (declarative routing mode)
+        if self.router:
+            return self._handle_routed_request()
+        
+        # No router - POST not supported
+        return self.send_error(405, "POST not supported without routing")
     
     def _serve_default_favicon(self):
         """Serve default zolo favicon from zServer static folder"""
@@ -221,6 +237,14 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
             # Serve Jinja2 template (like Flask render_template())
             return self._handle_template_route(route)
         
+        elif route_type == "form":
+            # Handle declarative web form (zDialog pattern - v1.5.7)
+            return self._handle_form_route(route)
+        
+        elif route_type == "json":
+            # Handle declarative JSON response (v1.5.7)
+            return self._handle_json_route(route)
+        
         elif route_type == "dynamic":
             # Serve dynamically generated HTML from zUI
             return self._handle_dynamic_route(route)
@@ -284,8 +308,7 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
             import os
             from jinja2 import Environment, FileSystemLoader, TemplateNotFound
             
-            serve_path = self.router.zcli.server.serve_path
-            templates_dir = os.path.join(serve_path, self.template_folder)
+            templates_dir = os.path.join(self.serve_path, self.template_folder)
             
             # Create Jinja2 environment
             env = Environment(loader=FileSystemLoader(templates_dir))
@@ -352,4 +375,109 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
             if hasattr(self, 'zcli_logger') and self.zcli_logger:
                 self.zcli_logger.error(f"[Handler] Dynamic route error: {e}")
             return self.send_error(500, f"Dynamic rendering failed: {str(e)}")
+    
+    def _handle_form_route(self, route: dict):
+        """
+        Handle form route - declarative web form processing (zDialog pattern).
+        
+        Args:
+            route: Route definition with model, fields, onSubmit, etc.
+        
+        Returns:
+            None: Sends HTTP response (redirect or error)
+        """
+        try:
+            # Only accept POST for forms
+            if self.command != 'POST':
+                return self.send_error(405, "Form routes only accept POST")
+            
+            # Get zcli instance from router
+            if not hasattr(self.router, 'zcli'):
+                return self.send_error(500, "zCLI instance not available")
+            
+            # Read POST body
+            content_length = int(self.headers.get('Content-Length', 0))
+            body = self.rfile.read(content_length)
+            content_type = self.headers.get('Content-Type', '')
+            
+            # Parse form data
+            from .form_utils import parse_form_data, process_form_submission
+            
+            form_data = parse_form_data(body, content_type, self.zcli_logger)
+            
+            # Process form submission
+            success, redirect_url, error_message = process_form_submission(
+                route, form_data, self.router.zcli, self.zcli_logger
+            )
+            
+            if success and redirect_url:
+                # Redirect to success page
+                self.send_response(303)  # See Other (POST-redirect-GET pattern)
+                self.send_header("Location", redirect_url)
+                self.end_headers()
+            elif not success and redirect_url:
+                # Redirect to error page with error message in query param
+                error_url = f"{redirect_url}?error={error_message}" if error_message else redirect_url
+                self.send_response(303)
+                self.send_header("Location", error_url)
+                self.end_headers()
+            elif success:
+                # No redirect specified - send success message
+                self.send_response(200)
+                self.send_header("Content-type", "text/html")
+                response_html = "<h1>Form submitted successfully</h1>"
+                self.send_header("Content-length", len(response_html.encode('utf-8')))
+                self.end_headers()
+                self.wfile.write(response_html.encode('utf-8'))
+            else:
+                # No redirect specified - send error message
+                self.send_response(400)
+                self.send_header("Content-type", "text/html")
+                response_html = f"<h1>Form submission failed</h1><p>{error_message}</p>"
+                self.send_header("Content-length", len(response_html.encode('utf-8')))
+                self.end_headers()
+                self.wfile.write(response_html.encode('utf-8'))
+            
+        except Exception as e:
+            if hasattr(self, 'zcli_logger') and self.zcli_logger:
+                self.zcli_logger.error(f"[Handler] Form route error: {e}")
+            return self.send_error(500, f"Form processing failed: {str(e)}")
+    
+    def _handle_json_route(self, route: dict):
+        """
+        Handle JSON route - declarative JSON response.
+        
+        Args:
+            route: Route definition with data field
+        
+        Returns:
+            None: Sends HTTP JSON response
+        """
+        try:
+            # Get zcli instance from router
+            if not hasattr(self.router, 'zcli'):
+                return self.send_error(500, "zCLI instance not available")
+            
+            # Extract query parameters for placeholder resolution
+            from .form_utils import extract_query_params
+            query_params = extract_query_params(self.path)
+            
+            # Render JSON response
+            from .json_utils import render_json_response
+            
+            body, status_code, headers = render_json_response(
+                route, self.router.zcli, self.zcli_logger, query_params
+            )
+            
+            # Send response
+            self.send_response(status_code)
+            for header_name, header_value in headers.items():
+                self.send_header(header_name, header_value)
+            self.end_headers()
+            self.wfile.write(body)
+            
+        except Exception as e:
+            if hasattr(self, 'zcli_logger') and self.zcli_logger:
+                self.zcli_logger.error(f"[Handler] JSON route error: {e}")
+            return self.send_error(500, f"JSON rendering failed: {str(e)}")
 

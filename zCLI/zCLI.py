@@ -302,22 +302,44 @@ class zCLI:
         from .subsystems.zWalker import zWalker
         self.walker = zWalker(self)  # Modern walker with unified navigation (can use plugins immediately)
 
-        # Initialize HTTP server (optional) - auto-start if enabled in config
-        self.server = None
+        # Initialize zServer (HTTP/WSGI server subsystem) - Layer 1
+        # v1.5.8: Independent subsystem (was factory method in zComm)
+        from .subsystems.zServer import zServer
+        self.server = zServer(
+            logger=self.logger,
+            zcli=self,
+            config=self.config.http_server if hasattr(self.config, 'http_server') else None
+        )
+        
+        # Auto-start if enabled in config
         if hasattr(self.config, 'http_server') and self.config.http_server.enabled:
-            self.server = self.comm.create_http_server(
-                port=self.config.http_server.port,
-                host=self.config.http_server.host,
-                serve_path=self.config.http_server.serve_path
-            )
             self.server.start()
-            self.logger.info(LOG_HTTP_START, self.server.get_url())
+            self.logger.info(LOG_HTTP_START, f"http://{self.server.host}:{self.server.port}")
+            
+            # v1.5.8: Auto-wait if configured (declarative lifecycle management)
+            # Must happen AFTER signal handlers are registered but BEFORE returning to user code
+            # Note: We defer the actual wait() call until after __init__ completes
 
         # Initialize session (sets zMode from zSpark_obj or defaults to Terminal)
         self._init_session()
         
         # Register signal handlers for graceful shutdown
         self._register_signal_handlers()
+        
+        # v1.5.8: Declarative lifecycle - server ALWAYS waits if enabled
+        # This must be the LAST step in __init__ so all subsystems are ready
+        if self.server and hasattr(self.config, 'http_server'):
+            if self.config.http_server.zShell:
+                # Drop into zShell REPL (server runs in background thread)
+                print("\n" + "="*70)
+                print(f"  🌐 Server running: http://{self.server.host}:{self.server.port}")
+                print(f"  💻 Entering zShell REPL (type 'exit' to stop server)")
+                print("="*70 + "\n")
+                self.run_shell()
+            else:
+                # Block silently until interrupted (standard server behavior)
+                self.logger.framework.debug("[zCLI] Server waiting (silent blocking mode)")
+                self.server.wait()
         
         # Note: zAuth database is workspace-relative (@), ensuring each zCLI instance
         # is fully isolated. Auth DB lazy-loads on first save_session() or grant_permission().

@@ -40,10 +40,7 @@ Auto-Initialization:
     3. Prints ready message (before zDisplay available)
     4. Logs ready state
 
-Public API:
-    HTTP Server:
-        - create_http_server(): Create static file server (zServer)
-    
+Public API (Network Primitives):
     Service Management:
         - start_service(): Start local service (postgresql, redis, etc.)
         - stop_service(): Stop local service
@@ -58,8 +55,15 @@ Public API:
     Network Utilities:
         - check_port(): Port availability check
     
-    HTTP Client:
+    HTTP Client (Outgoing Requests):
         - http_get(), http_post(), http_put(), http_patch(), http_delete()
+    
+    WebSocket Primitives:
+        - websocket.start(), websocket.send(), websocket.broadcast()
+
+Note:
+    HTTP Server orchestration (zServer) is now a separate Layer 1 subsystem.
+    Access via z.server, not z.comm.
 
 Usage:
     ```python
@@ -262,67 +266,6 @@ class zComm:
     # ═══════════════════════════════════════════════════════════
     # HTTP Server Management (Optional Feature)
     # ═══════════════════════════════════════════════════════════
-
-    def create_http_server(
-        self, 
-        port: Optional[int] = None, 
-        host: Optional[str] = None, 
-        serve_path: Optional[str] = None,
-        routes_file: Optional[str] = None
-    ) -> Any:
-        """
-        Create HTTP static file server instance (optional feature).
-        
-        Creates a zServer instance for serving static files. Uses zConfig values if
-        available, otherwise falls back to defaults.
-        
-        v1.5.4 Phase 2: Added routes_file parameter for declarative routing.
-        
-        Args:
-            port: HTTP port (default: from config or 8080)
-            host: Host address (default: from config or 127.0.0.1)
-            serve_path: Directory to serve (default: from config or current directory)
-            routes_file: Optional zServer.*.yaml file for declarative routing (v1.5.4 Phase 2)
-        
-        Returns:
-            zServer instance
-        
-        Examples:
-            ```python
-            # Static file serving (backward compatible)
-            server = comm.create_http_server(port=8000, serve_path="./dist")
-            
-            # Declarative routing with RBAC (v1.5.4 Phase 2)
-            server = comm.create_http_server(
-                port=8080,
-                serve_path="./public",
-                routes_file="@.zServer.routes"
-            )
-            ```
-        """
-        from zCLI.subsystems.zServer import zServer
-        
-        # Use config values if available, otherwise use defaults
-        if hasattr(self.zcli, 'config') and hasattr(self.zcli.config, 'http_server'):
-            config = self.zcli.config.http_server
-            port = port or config.port
-            host = host or config.host
-            serve_path = serve_path or config.serve_path
-        else:
-            port = port or DEFAULT_HTTP_PORT
-            host = host or DEFAULT_HTTP_HOST
-            serve_path = serve_path or DEFAULT_HTTP_SERVE_PATH
-        
-        http_server = zServer(
-            self.logger,
-            zcli=self.zcli,
-            port=port,
-            host=host,
-            serve_path=serve_path,
-            routes_file=routes_file  # v1.5.4 Phase 2
-        )
-        
-        return http_server
 
     # ═══════════════════════════════════════════════════════════
     # WebSocket Server (Layer 0 Primitives)
