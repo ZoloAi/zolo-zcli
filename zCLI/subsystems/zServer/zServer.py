@@ -93,6 +93,10 @@ class zServer:
         if routes_file and zcli:
             self._load_routes()
         
+        # Auto-initialize database schemas from models/ folder (v1.5.8: Convention over configuration)
+        if zcli:
+            self._auto_initialize_schemas()
+        
         self.server = None
         self.thread = None
         self._running = False
@@ -171,6 +175,104 @@ class zServer:
         except Exception as e:
             self.logger.error(f"[zServer] Failed to load routes: {e}")
             # Continue without router (fallback to static serving)
+    
+    def _auto_initialize_schemas(self):
+        """
+        Auto-detect and initialize database schemas from models/ folder (v1.5.8).
+        
+        Convention: models/zSchema.*.yaml files are auto-initialized on server start.
+        This follows the same pattern as zServer.*.yaml auto-detection for routes.
+        
+        For each schema found:
+        1. Load schema via zLoader
+        2. Initialize database adapter
+        3. Ensure tables exist (create if missing)
+        
+        Note:
+            - Errors are logged but don't stop server startup
+            - Multiple databases are supported (different Data_Path per schema)
+            - Tables are only created if they don't exist (idempotent)
+        """
+        import glob
+        
+        # Find models folder
+        models_path = os.path.join(self.serve_path, "models")
+        if not os.path.exists(models_path):
+            self.logger.debug("[zServer] No models/ folder found, skipping schema auto-initialization")
+            return
+        
+        # Find all schema files
+        pattern = os.path.join(models_path, "zSchema.*.yaml")
+        schema_files = glob.glob(pattern)
+        
+        if not schema_files:
+            self.logger.debug("[zServer] No zSchema files found in models/")
+            return
+        
+        self.logger.info(f"[zServer] Found {len(schema_files)} schema file(s) in models/")
+        
+        # Initialize each schema
+        for schema_file in schema_files:
+            try:
+                # Extract filename
+                filename = os.path.basename(schema_file)
+                
+                # Load schema directly (avoid zPath interpretation of dots in filename)
+                self.logger.info(f"[zServer] Loading schema: {filename}")
+                
+                # Use zParser directly to avoid zPath dot interpretation
+                from ..zParser.parser_modules import parse_file_content
+                from ..zLoader.loader_modules import load_file_raw
+                
+                # Read raw file content
+                raw_content = load_file_raw(schema_file, self.logger)
+                
+                # Parse content
+                schema = parse_file_content(
+                    raw_content,
+                    self.logger,
+                    file_extension=".yaml",
+                    file_path=schema_file
+                )
+                
+                if not schema or schema == "error":
+                    self.logger.warning(f"[zServer] Failed to load schema: {filename}")
+                    continue
+                
+                # Initialize database adapter
+                self.zcli.data.load_schema(schema)
+                
+                # Get table names from schema (exclude Meta)
+                table_names = [k for k in schema.keys() if k != "Meta"]
+                
+                if not table_names:
+                    self.logger.warning(f"[zServer] No tables found in schema: {filename}")
+                    continue
+                
+                # Ensure each table exists
+                for table_name in table_names:
+                    try:
+                        # Check if table exists (for SQL databases)
+                        if hasattr(self.zcli.data.adapter, 'table_exists'):
+                            if not self.zcli.data.adapter.table_exists(table_name):
+                                self.zcli.data.create_table(table_name)
+                                self.logger.info(f"[zServer] Created table: {table_name}")
+                            else:
+                                self.logger.debug(f"[zServer] Table exists: {table_name}")
+                        else:
+                            # For CSV and other backends, just create (idempotent)
+                            self.zcli.data.create_table(table_name)
+                            self.logger.info(f"[zServer] Initialized table: {table_name}")
+                    
+                    except Exception as table_error:
+                        self.logger.warning(f"[zServer] Failed to create table {table_name}: {table_error}")
+                
+                self.logger.info(f"[zServer] Schema initialized: {filename} ({len(table_names)} table(s))")
+                
+            except Exception as e:
+                self.logger.warning(f"[zServer] Failed to initialize schema {filename}: {e}")
+                import traceback
+                self.logger.debug(traceback.format_exc())
     
     def _get_deployment(self) -> str:
         """
