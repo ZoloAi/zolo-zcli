@@ -11,7 +11,7 @@ from zCLI.utils import print_ready_message
 # Logging
 LOG_PREFIX = "[HttpServerConfig]"
 SUBSYSTEM_NAME = "HttpServerConfig"
-READY_MESSAGE = "HttpServerConfig Ready"
+READY_MESSAGE = "zServer Ready"
 
 # Config Section (v1.5.7: Renamed from 'http_server' to match subsystem name)
 CONFIG_SECTION_KEY = "zServer"  # Supports both http.server (Dev) and WSGI/Gunicorn (Prod)

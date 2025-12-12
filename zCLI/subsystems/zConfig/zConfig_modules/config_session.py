@@ -63,7 +63,7 @@ from .helpers.machine_detectors import _safe_getcwd
 
 # Logging
 LOG_PREFIX = "[SessionConfig]"
-READY_MESSAGE = "SessionConfig Ready"
+READY_MESSAGE = "zSession Ready"
 SUBSYSTEM_NAME = "SessionConfig"
 
 # Colors

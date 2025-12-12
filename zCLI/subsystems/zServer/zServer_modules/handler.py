@@ -379,6 +379,26 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
             # Get context data (variables to pass to template)
             context = route.get("context", {})
             
+            # Get zcli instance from router
+            if not hasattr(self.router, 'zcli'):
+                return self.send_error(500, "zCLI instance not available")
+            
+            # Auto-inject zSession values (zVaFile, zVaFolder, zBlock) into context
+            # so templates can render them without manual Jinja plumbing
+            zcli = self.router.zcli
+            if hasattr(zcli, 'session') and zcli.session:
+                # Only inject if not already present in route context
+                if "zVaFile" not in context:
+                    context["zVaFile"] = zcli.session.get("zVaFile")
+                if "zVaFolder" not in context:
+                    context["zVaFolder"] = zcli.session.get("zVaFolder")
+                if "zBlock" not in context:
+                    context["zBlock"] = zcli.session.get("zBlock")
+                
+                # Debug: log what we got from zSession
+                if self.zcli_logger:
+                    self.zcli_logger.info(f"[Handler] Auto-injected from zSession: zVaFile={context.get('zVaFile')}, zVaFolder={context.get('zVaFolder')}, zBlock={context.get('zBlock')}")
+            
             # zUI support: Convert zVaFile to URL if present (mixed mode)
             zVaFile = route.get("zVaFile")
             if zVaFile:
@@ -386,10 +406,6 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
                 context["zVaFile"] = ui_file_path
                 if self.zcli_logger:
                     self.zcli_logger.debug(f"[Handler] Template with zVaFile: {ui_file_path}")
-            
-            # Get zcli instance from router
-            if not hasattr(self.router, 'zcli'):
-                return self.send_error(500, "zCLI instance not available")
             
             # Get templates directory from serve_path (Flask convention)
             import os
@@ -403,6 +419,25 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
             # Render template
             template = env.get_template(template_name)
             html_content = template.render(**context)
+            
+            # Auto-inject zUI config script before </head> (if zSession values present)
+            # This makes zBifrost/zSession integration automatic for HTML authors
+            zui_config_values = {
+                "zVaFile": context.get("zVaFile"),
+                "zVaFolder": context.get("zVaFolder"),
+                "zBlock": context.get("zBlock")
+            }
+            # Only inject if at least one value is present (not all None)
+            if any(v is not None for v in zui_config_values.values()):
+                import json
+                zui_config_json = json.dumps(zui_config_values, indent=4)
+                zui_config_script = f'\n<!-- zUI Config (auto-injected from zSession) -->\n<script id="zui-config" type="application/json">\n{zui_config_json}\n</script>\n</head>'
+                html_content = html_content.replace('</head>', zui_config_script, 1)
+                if self.zcli_logger:
+                    self.zcli_logger.info(f"[Handler] Auto-injected <script id='zui-config'> into HTML head")
+            else:
+                if self.zcli_logger:
+                    self.zcli_logger.debug(f"[Handler] Skipped zui-config injection (all values None)")
             
             # Send HTML response
             self.send_response(200)
@@ -424,11 +459,13 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
         """
         Handle zWalker route - Execute zVaF blocks server-side using zVaF.html template.
         
-        Supports Jinja2 context variables from route config.
+        Supports hierarchical fallbacks: route → session
+        - zVaFolder: route value OR session default
+        - zVaFile: route value OR session default
+        - zBlock: route value OR session default
         
         Args:
             route: Route definition with optional "context" dict
-                   (zVaFolder, zVaFile, zBlock stored for future use)
         
         Returns:
             None: Sends HTTP response directly
@@ -438,19 +475,37 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
             import os
             from jinja2 import Environment, FileSystemLoader, TemplateNotFound
             
+            # Get zcli instance for session access
+            zcli = self.router.zcli if hasattr(self.router, 'zcli') else None
+            
             # zWalker routes always use zVaF.html (full declarative mode)
             template_name = "zVaF.html"
             
             # Get context data (variables to pass to template)
             context = route.get("context", {})
             
-            # Store zSpark-style parameters in context for future use
-            if "zVaFolder" in route:
-                context["zVaFolder"] = route["zVaFolder"]
-            if "zVaFile" in route:
-                context["zVaFile"] = route["zVaFile"]
-            if "zBlock" in route:
-                context["zBlock"] = route["zBlock"]
+            # Apply hierarchical fallbacks: route → session
+            # Route-level values override session defaults
+            if zcli:
+                zVaFolder = route.get("zVaFolder") or zcli.session.get("zVaFolder")
+                zVaFile = route.get("zVaFile") or zcli.session.get("zVaFile")
+                zBlock = route.get("zBlock") or zcli.session.get("zBlock")
+                
+                if hasattr(self, 'zcli_logger') and self.zcli_logger:
+                    self.zcli_logger.debug(f"[Handler] zWalker resolved - Folder: {zVaFolder}, File: {zVaFile}, Block: {zBlock}")
+            else:
+                # No session available - use route values only
+                zVaFolder = route.get("zVaFolder")
+                zVaFile = route.get("zVaFile")
+                zBlock = route.get("zBlock")
+            
+            # Store resolved values in context for template/future use
+            if zVaFolder:
+                context["zVaFolder"] = zVaFolder
+            if zVaFile:
+                context["zVaFile"] = zVaFile
+            if zBlock:
+                context["zBlock"] = zBlock
             
             # Get templates directory from serve_path
             templates_dir = os.path.join(self.serve_path, self.template_folder)
@@ -461,6 +516,20 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
             # Render template with context (Jinja2 support)
             template = env.get_template(template_name)
             html_content = template.render(**context)
+            
+            # Auto-inject zUI config script before </head> (same as template routes)
+            zui_config_values = {
+                "zVaFile": context.get("zVaFile"),
+                "zVaFolder": context.get("zVaFolder"),
+                "zBlock": context.get("zBlock")
+            }
+            if any(v is not None for v in zui_config_values.values()):
+                import json
+                zui_config_json = json.dumps(zui_config_values, indent=4)
+                zui_config_script = f'\n<!-- zUI Config (auto-injected from zSession) -->\n<script id="zui-config" type="application/json">\n{zui_config_json}\n</script>\n</head>'
+                html_content = html_content.replace('</head>', zui_config_script, 1)
+                if self.zcli_logger:
+                    self.zcli_logger.info(f"[Handler] zWalker route - Auto-injected zui-config: {zui_config_values}")
             
             # Send HTML response
             self.send_response(200)

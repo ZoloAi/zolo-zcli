@@ -54,12 +54,14 @@ class zServer:
         # Extract configuration from config object (preferred) or individual parameters (backward compat)
         if config:
             # New pattern: config object from zConfig
+            self.enabled = config.enabled  # Check if server is enabled
             self.port = config.port
             self.host = config.host
             self.serve_path = config.serve_path
             self.routes_file = config.routes_file  # Kept for backward compatibility
         else:
-            # Backward compatibility: individual parameters
+            # Backward compatibility: individual parameters (assume enabled if instantiated this way)
+            self.enabled = True
             self.port = port if port is not None else 8080
             self.host = host if host is not None else "127.0.0.1"
             serve_path = serve_path if serve_path is not None else "."
@@ -83,37 +85,43 @@ class zServer:
                 # If relative, it will be relative to wherever we are when server starts
                 self.serve_path = str(Path(serve_path))
         
-        # Auto-detect ALL zServer routes files (v1.5.9: Blueprint pattern)
-        # Supports both root folder AND routes/ subfolder
-        if not routes_file:
-            # New pattern: Auto-detect ALL zServer.*.yaml files in both locations
-            self.routes_files = self._auto_detect_routes_files()
+        # ONLY load routes/schemas if zServer is enabled (opt-in subsystem)
+        # This prevents route/schema loading noise in Terminal mode
+        if self.enabled:
+            # Auto-detect ALL zServer routes files (v1.5.9: Blueprint pattern)
+            # Supports both root folder AND routes/ subfolder
+            if not routes_file:
+                # New pattern: Auto-detect ALL zServer.*.yaml files in both locations
+                self.routes_files = self._auto_detect_routes_files()
+            else:
+                # Backward compatibility: Single routes_file provided explicitly
+                # Convert to list format for consistent handling
+                self.routes_files = [routes_file] if routes_file else []
+                if routes_file:
+                    self.logger.info(f"[zServer] Using explicitly provided routes file: {routes_file}")
+            
+            # Load routes if any were provided or auto-detected (v1.5.9: Blueprint pattern)
+            if self.routes_files and zcli:
+                self._load_routes()
+            
+            # Auto-initialize database schemas from models/ folder (v1.5.8: Convention over configuration)
+            if zcli:
+                self._auto_initialize_schemas()
+            
+            self.logger.info(f"[zServer] Initialized - will serve from: {self.serve_path}")
+            self.logger.info(f"[zServer] Static folder: {self.static_folder}/")
+            self.logger.info(f"[zServer] Template folder: {self.template_folder}/")
+            self.logger.info(f"[zServer] UI folder: {self.ui_folder}/")
+            if self.router:
+                self.logger.info(f"[zServer] Declarative routing enabled: {routes_file}")
         else:
-            # Backward compatibility: Single routes_file provided explicitly
-            # Convert to list format for consistent handling
-            self.routes_files = [routes_file] if routes_file else []
-            if routes_file:
-                self.logger.info(f"[zServer] Using explicitly provided routes file: {routes_file}")
-        
-        # Load routes if any were provided or auto-detected (v1.5.9: Blueprint pattern)
-        if self.routes_files and zcli:
-            self._load_routes()
-        
-        # Auto-initialize database schemas from models/ folder (v1.5.8: Convention over configuration)
-        if zcli:
-            self._auto_initialize_schemas()
+            self.routes_files = []
+            self.logger.debug(f"[zServer] Disabled - skipping route/schema loading")
         
         self.server = None
         self.thread = None
         self._running = False
         self.gunicorn_manager = None  # For Production mode
-        
-        self.logger.info(f"[zServer] Initialized - will serve from: {self.serve_path}")
-        self.logger.info(f"[zServer] Static folder: {self.static_folder}/")
-        self.logger.info(f"[zServer] Template folder: {self.template_folder}/")
-        self.logger.info(f"[zServer] UI folder: {self.ui_folder}/")
-        if self.router:
-            self.logger.info(f"[zServer] Declarative routing enabled: {routes_file}")
     
     def _auto_detect_routes_files(self):
         """
@@ -628,7 +636,7 @@ app = zServerWSGIApp(server_config)
         import time
         
         if not self._running and not (self.gunicorn_manager and self.gunicorn_manager.is_running()):
-            self.logger.warning("[zServer] Server is not running, nothing to wait for")
+            self.logger.debug("[zServer] Server is not running, nothing to wait for")
             return
         
         try:

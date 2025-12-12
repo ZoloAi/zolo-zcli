@@ -135,10 +135,18 @@ EVENT_NAME_INFO = "info"
 EVENT_NAME_ZMARKER = "zMarker"
 
 # Color attribute name constants (for getattr on zColors)
+# Legacy (kept for backward compatibility / optional use elsewhere)
 COLOR_RED = "RED"
 COLOR_YELLOW = "YELLOW"
 COLOR_GREEN = "GREEN"
 COLOR_CYAN = "CYAN"
+
+# CSS-aligned semantic signal colors (preferred going forward)
+# (Added in zCLI/utils/colors.py as ANSI truecolor foregrounds)
+COLOR_ERROR = "ZERROR"
+COLOR_WARNING = "ZWARNING"
+COLOR_SUCCESS = "ZSUCCESS"
+COLOR_INFO = "ZINFO"
 COLOR_MAGENTA = "MAGENTA"
 COLOR_RESET = "RESET"
 
@@ -307,8 +315,8 @@ class Signals:
         }):
             return  # GUI event sent successfully
 
-        # Terminal mode - apply red color and compose with BasicOutputs
-        colored = self._colorize(content, COLOR_RED)
+        # Terminal mode - apply semantic error color (CSS-aligned) and compose with BasicOutputs
+        colored = self._colorize(content, COLOR_ERROR)
         self._output_text(colored, indent, break_after=False)
 
     def warning(self, content: str, indent: int = DEFAULT_INDENT) -> None:
@@ -342,8 +350,8 @@ class Signals:
         }):
             return  # GUI event sent successfully
 
-        # Terminal mode - apply yellow color and compose with BasicOutputs
-        colored = self._colorize(content, COLOR_YELLOW)
+        # Terminal mode - apply semantic warning color (CSS-aligned) and compose with BasicOutputs
+        colored = self._colorize(content, COLOR_WARNING)
         self._output_text(colored, indent, break_after=False)
 
     def success(self, content: str, indent: int = DEFAULT_INDENT) -> None:
@@ -377,8 +385,8 @@ class Signals:
         }):
             return  # GUI event sent successfully
 
-        # Terminal mode - apply green color and compose with BasicOutputs
-        colored = self._colorize(content, COLOR_GREEN)
+        # Terminal mode - apply semantic success color (CSS-aligned) and compose with BasicOutputs
+        colored = self._colorize(content, COLOR_SUCCESS)
         self._output_text(colored, indent, break_after=False)
 
     def info(self, content: str, indent: int = DEFAULT_INDENT) -> None:
@@ -412,8 +420,8 @@ class Signals:
         }):
             return  # GUI event sent successfully
 
-        # Terminal mode - apply cyan color and compose with BasicOutputs
-        colored = self._colorize(content, COLOR_CYAN)
+        # Terminal mode - apply semantic info color (CSS-aligned) and compose with BasicOutputs
+        colored = self._colorize(content, COLOR_INFO)
         self._output_text(colored, indent, break_after=False)
 
     # ═══════════════════════════════════════════════════════════════════════════

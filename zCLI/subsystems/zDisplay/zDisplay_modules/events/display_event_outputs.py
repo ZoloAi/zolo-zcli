@@ -274,44 +274,71 @@ class BasicOutputs:
         }):
             return  # GUI event sent successfully
 
-        # Terminal mode - build formatted content and use write_line primitive
+        # Terminal mode - SINGLE-LINE, ASCII-only, width-safe header (never wraps)
+        term_width = self.zPrimitives.get_terminal_columns()
+
+        # Build indentation, but never allow indentation to consume the full line
         indent_str = self._build_indent(indent)
-        total_width = BASE_WIDTH - (indent * INDENT_WIDTH)
+        if len(indent_str) >= term_width:
+            indent_str = indent_str[: max(0, term_width - 1)]
 
-        # Choose character based on style
+        inner_width = term_width - len(indent_str)
+        if inner_width <= 0:
+            self.zPrimitives.line("")  # Nothing safe to render
+            return
+
+        # ASCII separator char by style (allowed: = - _ *)
         if style == DEFAULT_STYLE_FULL:
-            char = CHAR_DOUBLE_LINE
+            sep = "="
         elif style == DEFAULT_STYLE_SINGLE:
-            char = CHAR_SINGLE_LINE
+            sep = "-"
         elif style == DEFAULT_STYLE_WAVE:
-            char = CHAR_WAVE
+            sep = "*"
         else:
-            char = CHAR_SINGLE_LINE  # Default fallback
+            sep = "-"
 
-        # Build line with centered label
-        if label:
-            label_len = len(label) + 2  # Add spaces around label
-            space = total_width - label_len
-            left = space // 2
-            right = space - left
+        title = (label or "").strip()
 
-            # Apply color - resolve string to color code if needed
-            if color and color != DEFAULT_COLOR:
-                # If color is a string (color name), resolve it
-                if isinstance(color, str) and not color.startswith('\033'):
-                    color_code = getattr(self.zColors, color, self.zColors.RESET)
-                else:
-                    color_code = color
-                colored_label = f"{color_code} {label} {self.zColors.RESET}"
+        if not title:
+            line_out = sep * inner_width
+        else:
+            # Prefer " <title> " when possible; otherwise truncate hard to fit.
+            if inner_width >= 3:
+                title_core_max = inner_width - 2
+                title_core = title[:title_core_max]
+                title_fmt_plain = f" {title_core} "
             else:
-                colored_label = f" {label} "
+                title_fmt_plain = title[:inner_width]
 
-            line = f"{char * left}{colored_label}{char * right}"
-        else:
-            line = char * total_width
+            # Optional ANSI color for title (must remain readable without color)
+            title_fmt_out = title_fmt_plain
+            if color and color != DEFAULT_COLOR:
+                try:
+                    if isinstance(color, str) and not color.startswith('\033'):
+                        color_code = getattr(self.zColors, color.upper(), self.zColors.RESET)
+                    else:
+                        color_code = color
+                    reset_code = getattr(self.zColors, "RESET", "")
+                    if inner_width >= 3:
+                        # Color only the title core; keep surrounding spaces uncolored.
+                        title_fmt_out = f" {color_code}{title_core}{reset_code} "
+                    else:
+                        title_fmt_out = f"{color_code}{title_fmt_plain}{reset_code}"
+                except Exception:
+                    title_fmt_out = title_fmt_plain
 
-        # Apply indentation and write using primitive
-        content = f"{indent_str}{line}"
+            remaining = inner_width - len(title_fmt_plain)
+
+            # Center only if we can place at least 1 separator on BOTH sides; else left-align.
+            if remaining >= 2:
+                left = remaining // 2
+                right = remaining - left
+                line_out = (sep * left) + title_fmt_out + (sep * right)
+            else:
+                line_out = title_fmt_out + (sep * max(0, inner_width - len(title_fmt_plain)))
+
+        # Invariant (visual): output must not wrap/exceed detected width.
+        content = f"{indent_str}{line_out}"
         self.zPrimitives.line(content)
 
     def text(

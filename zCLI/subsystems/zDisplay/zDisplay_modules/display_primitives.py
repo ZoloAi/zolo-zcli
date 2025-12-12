@@ -149,7 +149,7 @@ Backward-Compatible Aliases:
         - .read → .read_string
 """
 
-from zCLI import json, time, getpass, asyncio, uuid, Any, Dict, Union, Optional
+from zCLI import json, time, getpass, asyncio, uuid, os, shutil, subprocess, Any, Dict, Union, Optional
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Mode Constants
@@ -203,6 +203,14 @@ KEY_MASKED = "masked"
 DEFAULT_PROMPT = ""
 DEFAULT_FLUSH = True
 
+# ═══════════════════════════════════════════════════════════════════════════
+# Terminal Sizing (Header/Banner Safety)
+# ═══════════════════════════════════════════════════════════════════════════
+
+TERMINAL_COLS_DEFAULT = 80
+TERMINAL_COLS_MIN = 60
+TERMINAL_COLS_MAX = 120
+
 
 class zPrimitives:
     """Primitive I/O operations container for streamlined display operations."""
@@ -242,6 +250,57 @@ class zPrimitives:
             return False
         # Non-interactive modes: anything that's not Terminal or Walker
         return self.display.mode not in (MODE_TERMINAL, MODE_WALKER, MODE_EMPTY)
+
+    def get_terminal_columns(self) -> int:
+        """Detect terminal width (columns) at print time and clamp it.
+        
+        Rules:
+            - Detect dynamically (env COLUMNS, shutil.get_terminal_size, tput cols)
+            - Clamp to [60–120]
+            - Fallback to 80 when detection is unavailable
+        """
+        cols: Optional[int] = None
+
+        # 1) $COLUMNS (fast path)
+        try:
+            env_cols = os.environ.get("COLUMNS", "").strip()
+            if env_cols.isdigit():
+                cols = int(env_cols)
+        except Exception:
+            cols = None
+
+        # 2) Equivalent: shutil.get_terminal_size
+        if not cols:
+            try:
+                cols = int(shutil.get_terminal_size(fallback=(TERMINAL_COLS_DEFAULT, 24)).columns)
+            except Exception:
+                cols = None
+
+        # 3) tput cols (best-effort)
+        if not cols:
+            try:
+                result = subprocess.run(
+                    ["tput", "cols"],
+                    capture_output=True,
+                    text=True,
+                    check=False
+                )
+                out = (result.stdout or "").strip()
+                if out.isdigit():
+                    cols = int(out)
+            except Exception:
+                cols = None
+
+        if not cols or cols <= 0:
+            cols = TERMINAL_COLS_DEFAULT
+
+        # Clamp
+        if cols < TERMINAL_COLS_MIN:
+            cols = TERMINAL_COLS_MIN
+        elif cols > TERMINAL_COLS_MAX:
+            cols = TERMINAL_COLS_MAX
+
+        return cols
 
     # ═══════════════════════════════════════════════════════════════════════════
     # Output Primitives - Terminal + Optional GUI

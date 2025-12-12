@@ -268,7 +268,7 @@ DATA_LABEL_KEY: str = "Data_Label"
 
 # Configuration
 COLOR_ZAUTH: str = "ZAUTH"
-MSG_READY: str = "zAuth Ready (modular architecture)"
+MSG_READY: str = "zAuth Ready"
 SESSION_DURATION_DAYS: int = 7
 
 # Context values (for logout and context management)

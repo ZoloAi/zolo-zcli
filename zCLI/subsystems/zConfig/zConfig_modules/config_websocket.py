@@ -11,7 +11,7 @@ from zCLI.utils import print_ready_message, validate_zcli_instance
 # Logging
 LOG_PREFIX = "[WebSocketConfig]"
 SUBSYSTEM_NAME = "WebSocketConfig"
-READY_MESSAGE = "WebSocketConfig Ready"
+READY_MESSAGE = "zSocket Ready"
 
 # Config Section
 CONFIG_SECTION_KEY = "websocket"

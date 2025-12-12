@@ -564,8 +564,10 @@ class CommandLauncher:
                     self.display.zDeclare(label, color, indent, style)
                 elif event == EVENT_HEADER:
                     content = display_data.get(KEY_CONTENT, DEFAULT_CONTENT)
+                    color = display_data.get(KEY_COLOR, "RESET")
                     indent = display_data.get(KEY_INDENT, DEFAULT_INDENT)
-                    self.display.header(content, indent)
+                    style = display_data.get(KEY_STYLE, "full")
+                    self.display.header(content, color=color, indent=indent, style=style)
                 elif event == EVENT_SUCCESS:
                     content = display_data.get(KEY_CONTENT, DEFAULT_CONTENT)
                     indent = display_data.get(KEY_INDENT, DEFAULT_INDENT)

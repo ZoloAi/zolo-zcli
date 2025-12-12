@@ -8,7 +8,7 @@ from .config_paths import zConfigPaths
 
 # Module constants
 LOG_PREFIX = "[EnvironmentConfig]"
-READY_MESSAGE = "EnvironmentConfig Ready"
+READY_MESSAGE = "zEnv Ready"
 YAML_KEY = "zEnv"
 SUBSYSTEM_NAME = "EnvironmentConfig"
 

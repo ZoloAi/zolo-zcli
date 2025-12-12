@@ -487,8 +487,8 @@ class zWalker(zWizard):
                 self.logger.error(LOG_ERROR_NO_VAFILE)
                 return {DICT_KEY_ERROR: ERROR_NO_VAFILE}
 
-            # Load the YAML file
-            raw_zFile: Optional[Dict[str, Any]] = self.loader.handle(zVaFile)
+            # Load the YAML file (pass None to trigger session-based path resolution with zVaFolder)
+            raw_zFile: Optional[Dict[str, Any]] = self.loader.handle(None)
             if not raw_zFile:
                 self.logger.error(LOG_ERROR_FAILED_LOAD, zVaFile)
                 return {DICT_KEY_ERROR: f"{ERROR_FAILED_LOAD}: {zVaFile}"}

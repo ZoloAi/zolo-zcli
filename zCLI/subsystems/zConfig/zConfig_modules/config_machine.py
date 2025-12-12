@@ -8,7 +8,7 @@ from .config_paths import zConfigPaths
 
 # Module constants
 LOG_PREFIX = "[MachineConfig]"
-READY_MESSAGE = "MachineConfig Ready"
+READY_MESSAGE = "zMachine Ready"
 YAML_KEY = "zMachine"
 SUBSYSTEM_NAME = "MachineConfig"
 

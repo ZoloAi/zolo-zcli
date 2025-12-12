@@ -12,7 +12,7 @@ from .config_session import SESSION_KEY_ZLOGGER
 # Logging
 LOG_PREFIX = "[LoggerConfig]"
 SUBSYSTEM_NAME = "LoggerConfig"
-READY_MESSAGE = "LoggerConfig Ready"
+READY_MESSAGE = "zLogger Ready"
 LOGGER_NAME = "zCLI"
 LOG_FILENAME = "zolo-zcli.log"  # Deprecated, kept for backward compatibility
 LOG_FILENAME_FRAMEWORK = "zcli-framework.log"

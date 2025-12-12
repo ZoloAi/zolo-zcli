@@ -788,7 +788,7 @@ class zWizard:
                 zHat.add(step_key, result)  # Add with key for dual access
 
             commit_transaction(use_transaction, transaction_alias, self.schema_cache, self.logger)
-            self.logger.info("zWizard completed with zHat: %s", zHat)
+            self.logger.debug("zWizard completed with zHat: %s", zHat)
             return zHat
 
         except Exception as e:  # pylint: disable=broad-except

@@ -1,6 +1,15 @@
 # zCLI/utils/colors.py
-"""ANSI color codes for terminal output."""
+"""ANSI color codes for terminal output.
 
+Note:
+    This module is also used BEFORE zDisplay is initialized (Layer 0 init),
+    so any terminal header/banner printing here must be width-safe and must
+    not rely on zDisplay primitives.
+"""
+
+import os
+import shutil
+import subprocess
 from typing import Optional, Dict, Any
 
 # ═══════════════════════════════════════════════════════════
@@ -129,14 +138,95 @@ def print_ready_message(label: str, color: str = "CONFIG", base_width: int = 60,
     if should_suppress_init_prints(log_level):
         return
         
-    color_code = getattr(Colors, color, Colors.RESET)  # Get color code
-    label_len = len(label) + 2  # Label length with spaces
-    space = base_width - label_len  # Calculate remaining space
-    left = space // 2  # Calculate left side padding
-    right = space - left  # Calculate right side padding
-    colored_label = f"{color_code} {label} {Colors.RESET}"  # Style the label
-    line = f"{char * left}{colored_label}{char * right}"  # Create full line
-    print(line)  # Print the styled line
+    # Terminal Header / Banner Rules (pre-zDisplay):
+    # - Design for 80 columns, but never hardcode width
+    # - Detect width at print time (COLUMNS, get_terminal_size, tput cols)
+    # - Clamp width to [60–120]
+    # - Single-line only, ASCII separators only (= - _ *)
+    # - Truncate titles to fit
+    # - Center title if space allows, else left-align
+    # - Output must never wrap or exceed detected width (visual width)
+
+    # Detect width (print time)
+    cols: Optional[int] = None
+    try:
+        env_cols = os.environ.get("COLUMNS", "").strip()
+        if env_cols.isdigit():
+            cols = int(env_cols)
+    except Exception:
+        cols = None
+
+    if not cols:
+        try:
+            cols = int(shutil.get_terminal_size(fallback=(80, 24)).columns)
+        except Exception:
+            cols = None
+
+    if not cols:
+        try:
+            result = subprocess.run(
+                ["tput", "cols"],
+                capture_output=True,
+                text=True,
+                check=False
+            )
+            out = (result.stdout or "").strip()
+            if out.isdigit():
+                cols = int(out)
+        except Exception:
+            cols = None
+
+    if not cols or cols <= 0:
+        cols = 80
+
+    # Clamp to [60–120]
+    if cols < 60:
+        cols = 60
+    elif cols > 120:
+        cols = 120
+
+    # ASCII-only separator selection
+    allowed = {"=", "-", "_", "*"}
+    sep = char if char in allowed else "="
+
+    title = (label or "").strip()
+    if not title:
+        print(sep * cols)
+        return
+
+    # Build title that fits (plain version determines visual width)
+    if cols >= 3:
+        title_core_max = cols - 2
+        title_core = title[:title_core_max]
+        title_plain = f" {title_core} "
+    else:
+        title_core = title[:cols]
+        title_plain = title_core
+
+    remaining = cols - len(title_plain)
+
+    # Optional ANSI color for the title core (must remain readable without color)
+    title_out = title_plain
+    if color and color != "RESET":
+        try:
+            color_code = getattr(Colors, color, Colors.RESET)
+            reset_code = Colors.RESET
+            if cols >= 3:
+                title_out = f" {color_code}{title_core}{reset_code} "
+            else:
+                title_out = f"{color_code}{title_plain}{reset_code}"
+        except Exception:
+            title_out = title_plain
+
+    # Center only if at least 1 separator fits on both sides; else left-align.
+    if remaining >= 2:
+        left = remaining // 2
+        right = remaining - left
+        line_out = (sep * left) + title_out + (sep * right)
+    else:
+        line_out = title_out + (sep * max(0, cols - len(title_plain)))
+
+    print(line_out)
 
 
 class Colors:
@@ -178,3 +268,35 @@ class Colors:
     ERROR      = "\033[97;48;5;124m"        # Dark red bg (Error states)
     WARNING    = "\033[31;48;5;178m"        # Orange bg (Warnings)
     RETURN     = "\033[38;5;214m"           # Orange text (Return values)
+
+    # CSS-aligned semantic colors (foreground, no background)
+    # Mirrors:
+    #   --color-info:    #5CA9FF
+    #   --color-success: #52B788
+    #   --color-warning: #FFB347
+    #   --color-error:   #E63946
+    #
+    # NOTE: Added (do not overwrite existing names) to preserve backward compatibility.
+    # 256-color for broad terminal compatibility (macOS Terminal-safe)
+    zInfo      = "\033[38;5;75m"    # light blue / info
+    # Use 256-color foreground codes for broad terminal compatibility (macOS Terminal-safe)
+    # (Truecolor 38;2;R;G;B may be flattened depending on terminal/theme settings)
+    zSuccess   = "\033[38;5;78m"    # green
+    zWarning   = "\033[38;5;215m"   # orange/yellow
+    zError     = "\033[38;5;203m"   # red
+
+    # Uppercase aliases for consistency with existing callers using ALLCAPS names
+    ZINFO      = zInfo
+    ZSUCCESS   = zSuccess
+    ZWARNING   = zWarning
+    ZERROR     = zError
+
+    # CSS-aligned brand colors (foreground, no background)
+    # Mirrors:
+    #   --color-primary:   #A2D46E (Intention - the heart of zCLI)
+    #   --color-secondary: #9370DB (Validation - structure & elegance)
+    # 256-color for broad terminal compatibility
+    PRIMARY    = "\033[38;5;150m"   # light green (intention)
+    primary    = PRIMARY
+    SECONDARY  = "\033[38;5;98m"    # medium purple (validation)
+    secondary  = SECONDARY

@@ -5,8 +5,9 @@ Level 2: Foundation - Signals
 
 Goal:
     Use signals for color-coded feedback messages.
-    success() = green, error() = red, warning() = yellow,
-    info() = cyan, zMarker() = magenta separator.
+    Signals now use CSS-aligned semantic terminal colors by default:
+    success() = ZSUCCESS, error() = ZERROR, warning() = ZWARNING,
+    info() = ZINFO, zMarker() = MAGENTA separator.
 
 Run:
     python Demos/Layer_1/zDisplay_Demo/output/Level_2_Foundation/signals.py
@@ -23,16 +24,16 @@ def run_demo():
     z.display.header("Level 2C: Signals - Color-Coded Feedback", color="MAGENTA", style="wave")
     z.display.line("")
 
-    # Success (green ✓)
+    # Success (ZSUCCESS ✓)
     z.display.success("Operation completed successfully")
 
-    # Error (red ✗)
+    # Error (ZERROR ✗)
     z.display.error("Connection failed")
 
-    # Warning (yellow ⚠)
+    # Warning (ZWARNING ⚠)
     z.display.warning("Deprecated feature in use")
 
-    # Info (cyan ℹ)
+    # Info (ZINFO ℹ)
     z.display.info("Processing 10 records...")
 
     z.display.line("")
@@ -52,8 +53,8 @@ def run_demo():
 
     z.display.line("")
     z.display.text("Key point: Signals provide semantic feedback.")
-    z.display.text("           success = green, error = red, warning = yellow")
-    z.display.text("           info = cyan, zMarker = workflow separator")
+    z.display.text("           success = ZSUCCESS, error = ZERROR, warning = ZWARNING")
+    z.display.text("           info = ZINFO, zMarker = workflow separator")
     z.display.line("")
 
 
