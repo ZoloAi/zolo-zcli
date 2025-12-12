@@ -57,7 +57,6 @@ zolo --version
 | **Layer 0:**  | **Foundation** |
 | **[zConfig](Documentation/zConfig_GUIDE.md)** | **Self-aware config layer** — **machine → environment → session** hierarchy with **secrets + logging** |
 | **[zComm](Documentation/zComm_GUIDE.md)** | **Communication hub** — **HTTP client**, **service orchestration** (PostgreSQL, Redis), **network utilities** |
-| **[zBifrost](Documentation/zBifrost_GUIDE.md)** | **WebSocket bridge** — **real-time bidirectional** communication (server + **JavaScript client**), enables **Terminal → Web GUI** transformation |
 | | **Layer 1: Core Services** |
 | **[zDisplay](Documentation/zDisplay_GUIDE.md)** | **Render everywhere** — **30+ events** (tables, forms, widgets) adapt to **Terminal or GUI** automatically |
 | **[zAuth](Documentation/zAuth_GUIDE.md)** | **Three-tier auth system** — **bcrypt + SQLite + RBAC**, manage **platform + multi-app users** simultaneously |
@@ -73,9 +72,10 @@ zolo --version
 | **[zWizard](Documentation/zWizard_GUIDE.md)** | **Multi-step orchestrator** — **sequential execution + zHat result passing**, enabling workflows **and** navigation |
 | **[zData](Documentation/zData_GUIDE.md)** | **Database abstraction** — **backend-agnostic declerations** (SQLite ↔ PostgreSQL ↔ CSV), and **auto migration** |
 | | **Layer 3: Orchestration** |
+| **[zBifrost](Documentation/zBifrost_GUIDE.md)** | **WebSocket bridge** — **real-time bidirectional** communication (server + **JavaScript client**), enables **Terminal → Web GUI** transformation |
 | **[zShell](Documentation/zShell_GUIDE.md)** | **Interactive command center** — **18+ commands + wizard canvas**, persistent history, **direct access** to all subsystems |
 | **[zWalker](Documentation/zWalker_GUIDE.md)** | **Declarative UI orchestrator** — **menus + breadcrumb navigation**, coordinates **11 subsystems**, Terminal **and** GUI |
-| **[zServer](Documentation/zServer_GUIDE.md)** | **Static file server** — **serves HTML/CSS/JS**, zero dependencies (built-in **http.server**), pairs with **zBifrost** |
+| **[zServer](Documentation/zServer_GUIDE.md)** | **HTTP file server** — **serves HTML/CSS/JS + declarative routing**, zero dependencies (built-in **http.server**), pairs with **zBifrost** |
 
 ## Uninstall & cleanup
 

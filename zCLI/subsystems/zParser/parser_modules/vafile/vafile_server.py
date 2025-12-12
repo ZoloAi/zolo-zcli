@@ -227,8 +227,12 @@ def parse_server_file(
             route_entry[KEY_DESCRIPTION] = route_data[KEY_DESCRIPTION]
         if KEY_ZVAFILE in route_data:
             route_entry[KEY_ZVAFILE] = route_data[KEY_ZVAFILE]
+        if "zVaFolder" in route_data:  # zWalker folder path
+            route_entry["zVaFolder"] = route_data["zVaFolder"]
         if KEY_ZBLOCK in route_data:
             route_entry[KEY_ZBLOCK] = route_data[KEY_ZBLOCK]
+        if "data" in route_data:  # JSON route data
+            route_entry["data"] = route_data["data"]
         
         routes[route_path] = route_entry
         

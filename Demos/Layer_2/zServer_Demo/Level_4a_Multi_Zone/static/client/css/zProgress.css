@@ -1,193 +1,250 @@
-/* ═══════════════════════════════════════════════════════════════
- * zProgress.css - Progress Bar Widgets for zBifrost
- * ═══════════════════════════════════════════════════════════════
- * Uses zTheme CSS variables for consistency
- */
+/* ============================================
+   zProgress.css - Progress Bars
+   ============================================
+   
+   Bootstrap-inspired progress bars for showing task completion
+   and status indicators.
+   
+   Classes:
+   - .zProgress             : Wrapper container
+   - .zProgress-bar         : Progress fill element
+   - .zProgress-bar-striped : Striped pattern
+   - .zProgress-bar-animated: Animated stripes
+   
+   Background Utilities:
+   - .zBg-success, .zBg-info, .zBg-warning, .zBg-danger
+   
+   Structure:
+   <div class="zProgress">
+     <div class="zProgress-bar" 
+          role="progressbar" 
+          style="width: 75%"
+          aria-valuenow="75" 
+          aria-valuemin="0" 
+          aria-valuemax="100">
+       75%
+     </div>
+   </div>
+*/
 
-/* Progress Bar Container */
+/* ============================================
+   Base Progress Container
+   ============================================ */
+
 .zProgress {
-  width: 100%;
-  margin: 1em 0;
-  padding: 0.5em;
-  background: rgba(255, 251, 203, 0.2); /* --mainBase with opacity */
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: flex;
+    height: 1rem;
+    overflow: hidden;
+    font-size: 0.75rem;
+    background-color: #e9ecef;
+    border-radius: 0.25rem;
 }
 
-/* Progress Label */
-.zProgress-label {
-  font-size: var(--bodyPsize);
-  font-weight: 600;
-  color: var(--grayDark);
-  margin-bottom: 0.5em;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+/* ============================================
+   Progress Bar (Fill Element)
+   ============================================ */
+
+.zProgress-bar {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden;
+    color: #fff;
+    text-align: center;
+    white-space: nowrap;
+    background-color: #0d6efd;
+    transition: width 0.6s ease;
 }
 
-/* Progress Stats (percentage, ETA) */
-.zProgress-stats {
-  font-size: var(--bodySmPsize);
-  color: var(--gray);
-  font-weight: 400;
+@media (prefers-reduced-motion: reduce) {
+    .zProgress-bar {
+        transition: none;
+    }
 }
 
-/* Progress Bar Track (background) */
-.zProgress-track {
-  width: 100%;
-  height: 24px;
-  background: rgba(84, 89, 95, 0.2); /* --gray with opacity */
-  border-radius: 12px;
-  overflow: hidden;
-  position: relative;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+/* ============================================
+   Height Variants
+   ============================================ */
+
+/* Custom heights via inline styles on .zProgress:
+   <div class="zProgress" style="height: 20px;">
+   
+   Or use utility classes for common sizes: */
+
+.zProgress-sm {
+    height: 0.5rem;
+    font-size: 0.65rem;
 }
 
-/* Progress Bar Fill */
-.zProgress-fill {
-  height: 100%;
-  background: var(--mainGrad); /* Default gradient */
-  border-radius: 12px;
-  transition: width 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--grayDark);
-  font-weight: bold;
-  font-size: var(--bodySmPsize);
-  position: relative;
-  overflow: hidden;
+.zProgress-lg {
+    height: 1.5rem;
+    font-size: 0.875rem;
 }
 
-/* Animated shimmer effect */
-.zProgress-fill::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.3),
-    transparent
-  );
-  animation: shimmer 2s infinite;
+/* ============================================
+   Color Variants
+   ============================================ */
+
+.zProgress-bar.zBg-success {
+    background-color: #198754;
 }
 
-@keyframes shimmer {
-  0% {
-    left: -100%;
-  }
-  100% {
-    left: 100%;
-  }
+.zProgress-bar.zBg-info {
+    background-color: #0dcaf0;
 }
 
-/* Color Variants */
-.zProgress-success .zProgress-fill {
-  background: linear-gradient(90deg, #38ef7d, #11998e);
+.zProgress-bar.zBg-warning {
+    background-color: #ffc107;
 }
 
-.zProgress-info .zProgress-fill {
-  background: linear-gradient(90deg, #56ccf2, #2f80ed);
+.zProgress-bar.zBg-danger {
+    background-color: #dc3545;
 }
 
-.zProgress-warning .zProgress-fill {
-  background: var(--orangeGrad);
+/* ============================================
+   Striped Pattern
+   ============================================ */
+
+.zProgress-bar-striped {
+    background-image: linear-gradient(
+        45deg,
+        rgba(255, 255, 255, 0.15) 25%,
+        transparent 25%,
+        transparent 50%,
+        rgba(255, 255, 255, 0.15) 50%,
+        rgba(255, 255, 255, 0.15) 75%,
+        transparent 75%,
+        transparent
+    );
+    background-size: 1rem 1rem;
 }
 
-.zProgress-danger .zProgress-fill {
-  background: linear-gradient(90deg, #eb5757, #ff6b6b);
+/* ============================================
+   Animated Stripes
+   ============================================ */
+
+.zProgress-bar-animated {
+    animation: zProgress-bar-stripes 1s linear infinite;
 }
 
-.zProgress-purple .zProgress-fill {
-  background: var(--purpleGrad);
+@keyframes zProgress-bar-stripes {
+    0% {
+        background-position-x: 1rem;
+    }
 }
 
-.zProgress-blue .zProgress-fill {
-  background: var(--blueGrad);
+@media (prefers-reduced-motion: reduce) {
+    .zProgress-bar-animated {
+        animation: none;
+    }
 }
 
-/* Indeterminate Progress (unknown total) */
-.zProgress-indeterminate .zProgress-track {
-  overflow: hidden;
+/* ============================================
+   Multiple / Stacked Bars
+   ============================================ */
+
+/* Multiple bars stack naturally inside .zProgress
+   Example:
+   <div class="zProgress">
+     <div class="zProgress-bar" style="width: 15%"></div>
+     <div class="zProgress-bar zBg-success" style="width: 30%"></div>
+     <div class="zProgress-bar zBg-info" style="width: 20%"></div>
+   </div>
+*/
+
+/* ============================================
+   Nice-to-Have: Indeterminate State
+   ============================================
+   
+   For operations where progress is unknown.
+   Not in Bootstrap but useful for loading states.
+*/
+
+.zProgress-indeterminate .zProgress-bar {
+    width: 100% !important;
+    background-image: linear-gradient(
+        90deg,
+        transparent 0%,
+        transparent 35%,
+        #0d6efd 50%,
+        transparent 65%,
+        transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: zProgress-indeterminate 1.5s ease-in-out infinite;
 }
 
-.zProgress-indeterminate .zProgress-fill {
-  width: 40% !important;
-  animation: indeterminate 1.5s ease-in-out infinite;
+@keyframes zProgress-indeterminate {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
 }
 
-@keyframes indeterminate {
-  0% {
-    left: -40%;
-  }
-  50% {
-    left: 100%;
-  }
-  100% {
-    left: -40%;
-  }
+/* Indeterminate with colors */
+.zProgress-indeterminate .zProgress-bar.zBg-success {
+    background-image: linear-gradient(
+        90deg,
+        transparent 0%,
+        transparent 35%,
+        #198754 50%,
+        transparent 65%,
+        transparent 100%
+    );
 }
 
-/* Small size variant */
-.zProgress-sm .zProgress-track {
-  height: 16px;
+.zProgress-indeterminate .zProgress-bar.zBg-info {
+    background-image: linear-gradient(
+        90deg,
+        transparent 0%,
+        transparent 35%,
+        #0dcaf0 50%,
+        transparent 65%,
+        transparent 100%
+    );
 }
 
-.zProgress-sm .zProgress-label {
-  font-size: var(--bodySmPsize);
+.zProgress-indeterminate .zProgress-bar.zBg-warning {
+    background-image: linear-gradient(
+        90deg,
+        transparent 0%,
+        transparent 35%,
+        #ffc107 50%,
+        transparent 65%,
+        transparent 100%
+    );
 }
 
-/* Large size variant */
-.zProgress-lg .zProgress-track {
-  height: 32px;
+.zProgress-indeterminate .zProgress-bar.zBg-danger {
+    background-image: linear-gradient(
+        90deg,
+        transparent 0%,
+        transparent 35%,
+        #dc3545 50%,
+        transparent 65%,
+        transparent 100%
+    );
 }
 
-.zProgress-lg .zProgress-label {
-  font-size: var(--h5size);
-}
+/* ============================================
+   Accessibility
+   ============================================ */
 
-/* Striped effect (optional) */
-.zProgress-striped .zProgress-fill {
-  background-image: linear-gradient(
-    45deg,
-    rgba(255, 255, 255, 0.15) 25%,
-    transparent 25%,
-    transparent 50%,
-    rgba(255, 255, 255, 0.15) 50%,
-    rgba(255, 255, 255, 0.15) 75%,
-    transparent 75%,
-    transparent
-  );
-  background-size: 20px 20px;
-  animation: progress-stripes 1s linear infinite;
-}
-
-@keyframes progress-stripes {
-  0% {
-    background-position: 0 0;
-  }
-  100% {
-    background-position: 20px 0;
-  }
-}
-
-/* Fade in animation */
-.zProgress {
-  animation: fadeIn 0.3s ease-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
+/* Ensure progress bars have proper ARIA attributes:
+   - role="progressbar"
+   - aria-valuenow="current value"
+   - aria-valuemin="0"
+   - aria-valuemax="100"
+   
+   Example:
+   <div class="zProgress-bar" 
+        role="progressbar" 
+        aria-valuenow="75" 
+        aria-valuemin="0" 
+        aria-valuemax="100"
+        style="width: 75%">
+     75%
+   </div>
+*/

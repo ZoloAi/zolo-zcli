@@ -23,22 +23,77 @@ export class ThemeLoader {
     this.logger.log('🎨 Loading zTheme from:', themeUrl);
 
     const cssFiles = [
+      // Core Variables & Base Styles
       'css/css_vars.css',
+      'css/zReboot.css',
       'css/zMain.css',
-      'css/zButtons.css',
-      'css/zTables.css',
-      'css/zInputs.css',
-      'css/zContainers.css',
       'css/zTypography.css',
-      'css/zAlerts.css',
-      'css/zModal.css',
-      'css/zNav.css',
-      'css/zPanels.css',
+      
+      // Layout & Structure
+      'css/zContainers.css',
       'css/zSpacing.css',
+      
+      // Components
+      'css/zAccordion.css',
+      'css/zAlerts.css',
+      'css/zBadges.css',
+      'css/zBreadcrumb.css',
+      'css/zButtons.css',
+      'css/zButtonGroup.css',
+      'css/zCards.css',
+      'css/zCarousel.css',
+      'css/zCollapse.css',
+      'css/zDropdown.css',
+      'css/zFigures.css',
+      'css/zForms.css',       // Modern form controls (replaces zInputs.css)
+      'css/zListGroup.css',
+      'css/zModal.css',
+      'css/zOffcanvas.css',
+      'css/zPagination.css',
+      'css/zPopover.css',
+      'css/zScrollspy.css',
+      'css/zToast.css',
+      'css/zTooltip.css',
+      'css/zLinks.css',
+      'css/zRatio.css',
+      'css/zVisually.css',
+      'css/zBackground.css',
+      'css/zBorders.css',
+      'css/zColors.css',
+      'css/zDisplay.css',
+      'css/zFlex.css',
+      'css/zIcons.css',
+      'css/zInteractions.css',
+      'css/zOverflow.css',
+      'css/zPosition.css',
+      'css/zShadows.css',
+      'css/zSizing.css',
+      'css/zText.css',
+      'css/zVerticalAlign.css',
+      'css/zNav.css',
+      'css/zNavbar.css',
+      'css/zPanels.css',
+      'css/zTables.css',
+      'css/zFooter.css',
+      
+      // Widgets
+      'css/zProgress.css',
+      'css/zSpinner.css',
+      
+      // Effects & Utilities
       'css/zEffects.css',
-      'css/zDashboard.css',
-      'css/zProgress.css',     // Week 4.2: Progress bar widgets
-      'css/zSpinner.css'       // Week 4.2: Spinner widgets
+      'css/zMedia.css',
+      'css/zImages.css',
+      
+      // E-commerce (Optional)
+      'css/zShop.css',
+      'css/zAddToCart.css',
+      
+      // Authentication
+      'css/zLogin.css',
+      
+      // Development Tools
+      'css/zDev.css'
     ];
 
     cssFiles.forEach(file => {

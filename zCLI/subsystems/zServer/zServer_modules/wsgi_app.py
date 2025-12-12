@@ -120,6 +120,10 @@ class zServerWSGIApp:
         
         if route_type == 'template':
             return self._handle_template_route(route)
+        elif route_type == 'zWalker':
+            # zWalker: Execute zVaF blocks server-side (Phase 1.2+)
+            # For now, just render the template (full execution comes in Phase 3)
+            return self._handle_template_route(route)
         elif route_type == 'static':
             return self._handle_static_route(route)
         elif route_type == 'content':
@@ -201,7 +205,7 @@ class zServerWSGIApp:
         return ('200 OK', headers, body)
     
     def _handle_dynamic_route(self, route: dict) -> Tuple[str, List[Tuple[str, str]], bytes]:
-        """Handle dynamic zUI route."""
+        """Handle dynamic zWalker route."""
         try:
             from .page_renderer import PageRenderer
             

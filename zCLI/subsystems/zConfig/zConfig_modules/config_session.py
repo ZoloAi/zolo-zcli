@@ -122,6 +122,9 @@ SESSION_KEY_IDE = "ide"
 # zSpark dict keys
 ZSPARK_KEY_TITLE = "title"
 ZSPARK_KEY_ZSPACE = "zSpace"
+ZSPARK_KEY_ZVAFOLDER = "zVaFolder"
+ZSPARK_KEY_ZVAFILE = "zVaFile"
+ZSPARK_KEY_ZBLOCK = "zBlock"
 ZSPARK_KEY_ZTRACEBACK = "zTraceback"
 ZSPARK_KEY_ZMODE = "zMode"
 ZSPARK_KEY_LOGGER = "logger"
@@ -317,9 +320,9 @@ class SessionConfig:
             SESSION_KEY_ZS_ID: self.generate_id(),
             SESSION_KEY_TITLE: session_title,
             SESSION_KEY_ZSPACE: zSpace,
-            SESSION_KEY_ZVAFOLDER: None,
-            SESSION_KEY_ZVAFILE: None,
-            SESSION_KEY_ZBLOCK: None,
+            SESSION_KEY_ZVAFOLDER: self._get_zSpark_value("zVaFolder"),
+            SESSION_KEY_ZVAFILE: self._get_zSpark_value("zVaFile"),
+            SESSION_KEY_ZBLOCK: self._get_zSpark_value("zBlock"),
             SESSION_KEY_ZMODE: self.detect_zMode(),
             SESSION_KEY_ZLOGGER: self._detect_logger_level(),
             SESSION_KEY_LOGGER_PATH: logger_path,

@@ -109,6 +109,50 @@ def render_json_response(
     return body_bytes, status_code, headers
 
 
+def _make_json_safe(obj: Any, max_depth: int = 10, _depth: int = 0) -> Any:
+    """
+    Recursively convert objects to JSON-safe types.
+    
+    Handles:
+        - Dicts and lists (recursive)
+        - Complex objects → string representation
+        - Circular references (max depth limit)
+    
+    Args:
+        obj: Object to make JSON-safe
+        max_depth: Maximum recursion depth
+        _depth: Current depth (internal)
+    
+    Returns:
+        JSON-safe representation of obj
+    """
+    # Depth limit to prevent infinite recursion
+    if _depth > max_depth:
+        return "<max_depth_exceeded>"
+    
+    # Already JSON-safe primitives
+    if obj is None or isinstance(obj, (str, int, float, bool)):
+        return obj
+    
+    # Dict - recursively process values
+    if isinstance(obj, dict):
+        return {
+            str(k): _make_json_safe(v, max_depth, _depth + 1)
+            for k, v in obj.items()
+        }
+    
+    # List/tuple - recursively process items
+    if isinstance(obj, (list, tuple)):
+        return [_make_json_safe(item, max_depth, _depth + 1) for item in obj]
+    
+    # Everything else - convert to string representation
+    try:
+        # Try to get a nice string representation
+        return str(obj)
+    except Exception:
+        return f"<{type(obj).__name__}>"
+
+
 def _resolve_placeholders(
     data: Any,
     zcli: Any,
@@ -120,7 +164,8 @@ def _resolve_placeholders(
     
     Supports:
         - {query.param} - Query parameters
-        - {session.key} - Session values
+        - {session} - Entire session dictionary
+        - {session.key} - Individual session values
         - {config.key} - Config values
         - {timestamp} - Current timestamp
         - {date} - Current date
@@ -166,9 +211,16 @@ def _resolve_placeholders(
                 return query_params.get(param_name, '')
             
             # Session values
+            elif placeholder == 'session':
+                # Return entire session dictionary (safely serialize)
+                if hasattr(zcli, 'session'):
+                    return _make_json_safe(dict(zcli.session))
+                return {}
             elif placeholder.startswith('session.'):
                 session_key = placeholder[8:]  # Remove 'session.'
-                return zcli.session.get(session_key, '')
+                value = zcli.session.get(session_key, '')
+                # If session value is dict/list, return as-is (don't stringify)
+                return value
             
             # Config values
             elif placeholder.startswith('config.'):

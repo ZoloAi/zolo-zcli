@@ -11,11 +11,12 @@ import os
 class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
     """HTTP request handler with zCLI logger integration + routing (v1.5.5: Flask conventions)"""
     
-    def __init__(self, *args, logger=None, router=None, static_folder="static", template_folder="templates", serve_path=".", **kwargs):
+    def __init__(self, *args, logger=None, router=None, static_folder="static", template_folder="templates", ui_folder="UI", serve_path=".", **kwargs):
         self.zcli_logger = logger
         self.router = router  # HTTPRouter instance (optional)
         self.static_folder = static_folder  # Flask convention: static files folder
         self.template_folder = template_folder  # Flask convention: templates folder
+        self.ui_folder = ui_folder  # zUI zVaF files folder
         self.serve_path = serve_path  # Base directory for serving files
         super().__init__(*args, **kwargs)
     
@@ -52,8 +53,9 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
         Flow:
             1. Check for favicon.ico and serve default if not found
             2. Check for /static/* and auto-serve from static_folder
-            3. If router exists: Use declarative routing
-            4. Otherwise: Fallback to static file serving (current behavior)
+            3. Check for /UI/* and auto-serve from ui_folder (zVaF files)
+            4. If router exists: Use declarative routing
+            5. Otherwise: Fallback to static file serving (current behavior)
         """
         # Handle favicon.ico with default zolo favicon
         if self.path == '/favicon.ico':
@@ -62,6 +64,11 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
         # Auto-serve /static/* from static_folder (Flask convention)
         if self.path.startswith('/static/'):
             return self._serve_static_file()
+        
+        # Auto-serve /UI/* from ui_folder (zUI zVaF files) - case-sensitive to match folder
+        ui_prefix = f'/{self.ui_folder}/'
+        if self.path.startswith(ui_prefix) or self.path.lower().startswith(ui_prefix.lower()):
+            return self._serve_ui_file()
         
         # Check if router exists (declarative routing mode)
         if self.router:
@@ -172,6 +179,71 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
                 self.zcli_logger.error(f"[Handler] Error serving static file: {e}")
             return self.send_error(500, f"Error serving file: {str(e)}")
     
+    def _serve_ui_file(self):
+        """
+        Auto-serve zVaF files from /UI/* (zUI convention).
+        
+        Maps /UI/zUI.index.yaml → {serve_path}/UI/zUI.index.yaml
+        """
+        import os
+        import mimetypes
+        from urllib.parse import unquote
+        
+        # Remove /UI/ prefix to get relative path (case-insensitive match)
+        ui_prefix = f'/{self.ui_folder}/'
+        ui_prefix_len = len(ui_prefix)
+        
+        # Handle both exact case and lowercase URLs
+        if self.path.startswith(ui_prefix):
+            relative_path = self.path[ui_prefix_len:]
+        else:
+            # Case-insensitive fallback
+            relative_path = self.path[ui_prefix_len:]
+        
+        # Decode URL encoding (e.g., %20 → space)
+        relative_path = unquote(relative_path)
+        
+        # Build absolute path: {serve_path}/{ui_folder}/{relative_path}
+        file_path = os.path.join(os.getcwd(), self.ui_folder, relative_path)
+        
+        # Security: Prevent directory traversal
+        file_path = os.path.abspath(file_path)
+        ui_root = os.path.abspath(os.path.join(os.getcwd(), self.ui_folder))
+        
+        if not file_path.startswith(ui_root):
+            return self.send_error(403, "Access denied")
+        
+        # Check if file exists
+        if not os.path.exists(file_path):
+            return self.send_error(404, f"UI file not found: {self.path}")
+        
+        # Check if it's a directory (not allowed)
+        if os.path.isdir(file_path):
+            return self.send_error(403, "Directory listing is disabled")
+        
+        # Serve the YAML file
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # Force YAML content type
+            content_type = 'application/x-yaml'
+            
+            self.send_response(200)
+            self.send_header("Content-type", content_type)
+            self.send_header("Content-length", len(content.encode('utf-8')))
+            self.send_header("Cache-Control", "no-cache")  # Don't cache UI files during development
+            self.end_headers()
+            self.wfile.write(content.encode('utf-8'))
+            
+            if self.zcli_logger:
+                self.zcli_logger.debug(f"[Handler] Served UI file: {self.path}")
+            
+        except Exception as e:
+            if hasattr(self, 'zcli_logger') and self.zcli_logger:
+                self.zcli_logger.error(f"[Handler] Error serving UI file: {e}")
+            return self.send_error(500, f"Error serving UI file: {str(e)}")
+    
     def _handle_routed_request(self):
         """Handle request using HTTPRouter with RBAC enforcement"""
         # Match route
@@ -237,6 +309,10 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
             # Serve Jinja2 template (like Flask render_template())
             return self._handle_template_route(route)
         
+        elif route_type == "zWalker":
+            # zWalker: Execute zVaF blocks via zWalker (server-side rendering)
+            return self._handle_zwalker_route(route)
+        
         elif route_type == "form":
             # Handle declarative web form (zDialog pattern - v1.5.7)
             return self._handle_form_route(route)
@@ -286,6 +362,9 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
         """
         Handle template route - render Jinja2 template (like Flask render_template()).
         
+        Now zWalker-aware: If route has zVaFile, it will be converted to URL and injected
+        into template context for client-side loading (mixed mode support).
+        
         Args:
             route: Route definition with "template" field and optional "context" dict
         
@@ -299,6 +378,14 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
             
             # Get context data (variables to pass to template)
             context = route.get("context", {})
+            
+            # zUI support: Convert zVaFile to URL if present (mixed mode)
+            zVaFile = route.get("zVaFile")
+            if zVaFile:
+                ui_file_path = self._convert_zpath_to_url(zVaFile)
+                context["zVaFile"] = ui_file_path
+                if self.zcli_logger:
+                    self.zcli_logger.debug(f"[Handler] Template with zVaFile: {ui_file_path}")
             
             # Get zcli instance from router
             if not hasattr(self.router, 'zcli'):
@@ -333,6 +420,116 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
                 self.zcli_logger.error(f"[Handler] Template rendering error: {e}")
             return self.send_error(500, f"Template rendering failed: {str(e)}")
     
+    def _handle_zwalker_route(self, route: dict):
+        """
+        Handle zWalker route - Execute zVaF blocks server-side using zVaF.html template.
+        
+        Supports Jinja2 context variables from route config.
+        
+        Args:
+            route: Route definition with optional "context" dict
+                   (zVaFolder, zVaFile, zBlock stored for future use)
+        
+        Returns:
+            None: Sends HTTP response directly
+        """
+        try:
+            # Import needed modules
+            import os
+            from jinja2 import Environment, FileSystemLoader, TemplateNotFound
+            
+            # zWalker routes always use zVaF.html (full declarative mode)
+            template_name = "zVaF.html"
+            
+            # Get context data (variables to pass to template)
+            context = route.get("context", {})
+            
+            # Store zSpark-style parameters in context for future use
+            if "zVaFolder" in route:
+                context["zVaFolder"] = route["zVaFolder"]
+            if "zVaFile" in route:
+                context["zVaFile"] = route["zVaFile"]
+            if "zBlock" in route:
+                context["zBlock"] = route["zBlock"]
+            
+            # Get templates directory from serve_path
+            templates_dir = os.path.join(self.serve_path, self.template_folder)
+            
+            # Create Jinja2 environment
+            env = Environment(loader=FileSystemLoader(templates_dir))
+            
+            # Render template with context (Jinja2 support)
+            template = env.get_template(template_name)
+            html_content = template.render(**context)
+            
+            # Send HTML response
+            self.send_response(200)
+            self.send_header("Content-type", "text/html; charset=utf-8")
+            self.send_header("Content-length", len(html_content.encode('utf-8')))
+            self.end_headers()
+            self.wfile.write(html_content.encode('utf-8'))
+            
+            if self.zcli_logger:
+                self.zcli_logger.debug(f"[Handler] Served zWalker route: {self.path}")
+            
+        except TemplateNotFound as e:
+            if hasattr(self, 'zcli_logger') and self.zcli_logger:
+                self.zcli_logger.error(f"[Handler] Template not found: {e}")
+            return self.send_error(404, f"Template not found: {template_name}")
+        except Exception as e:
+            if hasattr(self, 'zcli_logger') and self.zcli_logger:
+                self.zcli_logger.error(f"[Handler] zWalker rendering error: {e}")
+            return self.send_error(500, f"zWalker rendering failed: {str(e)}")
+    
+    def _convert_zpath_to_url(self, zpath: str) -> str:
+        """
+        Convert zCLI zPath to URL path for client-side fetching.
+        
+        Args:
+            zpath: zCLI path, can be:
+                - Absolute: "@.UI.zUI.index.zVaF" (workspace/UI/zUI.index.yaml)
+                - Relative: "zUI.index.zVaF" (assumes UI folder)
+        
+        Returns:
+            str: URL path like "/ui/zUI.index.yaml"
+        
+        Note:
+            The UI folder prefix is stripped since /ui/* already maps to UI/ folder.
+            Dots in filenames are preserved (zUI.index.yaml).
+        """
+        original_path = zpath
+        
+        # Remove @ prefix (absolute path marker)
+        if zpath.startswith("@."):
+            zpath = zpath[2:]
+        elif zpath.startswith("@"):
+            zpath = zpath[1:]
+        
+        # Remove .zVaF suffix if present
+        if zpath.endswith(".zVaF"):
+            zpath = zpath[:-5]
+        
+        # Strip UI folder prefix if present (since /ui/* already maps to UI/)
+        # Handles: "UI.zUI.index" or "UI/zUI.index"
+        if zpath.startswith("UI."):
+            zpath = zpath[3:]  # Remove "UI."
+        elif zpath.startswith("UI/"):
+            zpath = zpath[3:]  # Remove "UI/"
+        
+        # Add .yaml extension if not present
+        if not zpath.endswith(".yaml"):
+            zpath += ".yaml"
+        
+        # Build URL path (dots are preserved as part of filename)
+        # Use actual ui_folder name for URL (case-sensitive)
+        url_path = f"/{self.ui_folder}/{zpath}"
+        
+        # Log conversion for debugging
+        if hasattr(self, 'zcli_logger') and self.zcli_logger:
+            self.zcli_logger.debug(f"[Handler] zPath conversion: {original_path} → {url_path}")
+        
+        return url_path
+    
     def _handle_dynamic_route(self, route: dict):
         """
         Handle dynamic route - render zUI to HTML.
@@ -344,7 +541,7 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
             None: Sends HTTP response directly
         """
         try:
-            # Extract zUI file and block from route
+            # Extract zVaF file and block from route
             zVaFile = route.get("zVaFile", "")
             zBlock = route.get("zBlock", "zVaF")
             

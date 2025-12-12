@@ -1,241 +1,268 @@
-/* ═══════════════════════════════════════════════════════════════
- * zSpinner.css - Loading Spinner Widgets for zBifrost
- * ═══════════════════════════════════════════════════════════════
- * 6 Spinner Styles: dots, line, arc, arrow, bouncingBall, simple
- */
+/* ============================================
+   zSpinner.css - Loading Indicators
+   ============================================
+   
+   Bootstrap-inspired spinners for showing loading states.
+   Built entirely with HTML and CSS, no JavaScript required.
+   
+   Classes:
+   - .zSpinner-border       : Rotating border spinner (default)
+   - .zSpinner-grow         : Pulsing grow spinner
+   - .zSpinner-border-sm    : Small border spinner
+   - .zSpinner-grow-sm      : Small grow spinner
+   
+   Colors:
+   Use text color utilities to customize spinner colors
+   
+   Structure:
+   <div class="zSpinner-border" role="status">
+     <span class="zVisually-hidden">Loading...</span>
+   </div>
+*/
 
-/* Spinner Container */
-.zSpinner {
-  display: flex;
-  align-items: center;
-  gap: 1em;
-  padding: 1em;
-  background: rgba(255, 251, 203, 0.2); /* --mainBase with opacity */
-  border-radius: 8px;
-  margin: 1em 0;
-  animation: fadeIn 0.3s ease-out;
+/* ============================================
+   Base Spinner Styles
+   ============================================ */
+
+.zSpinner-border,
+.zSpinner-grow {
+    display: inline-block;
+    vertical-align: -0.125em;
 }
 
-/* Spinner Label */
-.zSpinner-label {
-  font-size: var(--bodyPsize);
-  font-weight: 600;
-  color: var(--grayDark);
+/* ============================================
+   Border Spinner (Rotating Border)
+   ============================================ */
+
+.zSpinner-border {
+    width: 2rem;
+    height: 2rem;
+    border: 0.25em solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: zSpinner-border-spin 0.75s linear infinite;
 }
 
-/* Spinner Animation Container */
-.zSpinner-animation {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
+@keyframes zSpinner-border-spin {
+    to {
+        transform: rotate(360deg);
+    }
 }
 
-/* ═══════════════════════════════════════════════════════════════
- * Style 1: Dots (⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏)
- * ═══════════════════════════════════════════════════════════════ */
+/* Small Border Spinner */
+.zSpinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+    border-width: 0.2em;
+}
+
+/* ============================================
+   Grow Spinner (Pulsing)
+   ============================================ */
+
+.zSpinner-grow {
+    width: 2rem;
+    height: 2rem;
+    background-color: currentColor;
+    border-radius: 50%;
+    opacity: 0;
+    animation: zSpinner-grow-pulse 0.75s linear infinite;
+}
+
+@keyframes zSpinner-grow-pulse {
+    0% {
+        transform: scale(0);
+        opacity: 1;
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    100% {
+        transform: scale(0);
+        opacity: 1;
+    }
+}
+
+/* Small Grow Spinner */
+.zSpinner-grow-sm {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* ============================================
+   Color Support via currentColor
+   ============================================ */
+
+/* Spinners use currentColor, so they inherit text color.
+   Use text utilities to change colors:
+   
+   <div class="zSpinner-border zText-primary"></div>
+   <div class="zSpinner-border zText-success"></div>
+   <div class="zSpinner-border zText-danger"></div>
+   
+   Or inline styles:
+   <div class="zSpinner-border" style="color: #0d6efd;"></div>
+*/
+
+/* ============================================
+   Accessibility
+   ============================================
+   
+   Note: .zVisually-hidden is now defined in zVisually.css
+   This ensures consistent screen reader utilities across
+   all components.
+*/
+
+/* ============================================
+   Reduced Motion Support
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+    .zSpinner-border,
+    .zSpinner-grow {
+        animation-duration: 1.5s;
+    }
+}
+
+/* ============================================
+   BONUS: Creative Character-Based Spinners
+   ============================================
+   
+   Unique zTheme spinners using Unicode characters.
+   Not in Bootstrap but fun and lightweight!
+*/
+
+/* Dots Spinner (⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏) */
 .zSpinner-dots {
-  font-size: 2em;
-  color: var(--mainGreen);
-  animation: dots 1.2s infinite;
-}
-
-@keyframes dots {
-  0% { content: '⠋'; }
-  10% { content: '⠙'; }
-  20% { content: '⠹'; }
-  30% { content: '⠸'; }
-  40% { content: '⠼'; }
-  50% { content: '⠴'; }
-  60% { content: '⠦'; }
-  70% { content: '⠧'; }
-  80% { content: '⠇'; }
-  90% { content: '⠏'; }
-  100% { content: '⠋'; }
+    display: inline-block;
+    font-size: 2em;
+    line-height: 1;
 }
 
 .zSpinner-dots::after {
-  content: '⠋';
+    content: '⠋';
+    animation: zSpinner-dots-rotate 1.2s steps(10) infinite;
 }
 
-/* ═══════════════════════════════════════════════════════════════
- * Style 2: Line (-\|/)
- * ═══════════════════════════════════════════════════════════════ */
+@keyframes zSpinner-dots-rotate {
+    0% { content: '⠋'; }
+    10% { content: '⠙'; }
+    20% { content: '⠹'; }
+    30% { content: '⠸'; }
+    40% { content: '⠼'; }
+    50% { content: '⠴'; }
+    60% { content: '⠦'; }
+    70% { content: '⠧'; }
+    80% { content: '⠇'; }
+    90% { content: '⠏'; }
+    100% { content: '⠋'; }
+}
+
+/* Line Spinner (-\|/) */
 .zSpinner-line {
-  font-size: 2em;
-  color: var(--mainOrange);
-  font-weight: bold;
+    display: inline-block;
+    font-size: 2em;
+    font-weight: bold;
+    line-height: 1;
 }
 
 .zSpinner-line::after {
-  content: '-';
-  animation: line 0.8s linear infinite;
+    content: '-';
+    animation: zSpinner-line-rotate 0.8s steps(4) infinite;
 }
 
-@keyframes line {
-  0% { content: '-'; }
-  25% { content: '\\'; }
-  50% { content: '|'; }
-  75% { content: '/'; }
-  100% { content: '-'; }
+@keyframes zSpinner-line-rotate {
+    0% { content: '-'; }
+    25% { content: '\\'; }
+    50% { content: '|'; }
+    75% { content: '/'; }
+    100% { content: '-'; }
 }
 
-/* ═══════════════════════════════════════════════════════════════
- * Style 3: Arc (◜◠◝◞◡◟)
- * ═══════════════════════════════════════════════════════════════ */
+/* Arc Spinner (◜◠◝◞◡◟) */
 .zSpinner-arc {
-  font-size: 2em;
-  color: var(--mainBlue);
+    display: inline-block;
+    font-size: 2em;
+    line-height: 1;
 }
 
 .zSpinner-arc::after {
-  content: '◜';
-  animation: arc 1s linear infinite;
+    content: '◜';
+    animation: zSpinner-arc-rotate 1s steps(6) infinite;
 }
 
-@keyframes arc {
-  0% { content: '◜'; }
-  16.6% { content: '◠'; }
-  33.2% { content: '◝'; }
-  49.8% { content: '◞'; }
-  66.4% { content: '◡'; }
-  83% { content: '◟'; }
-  100% { content: '◜'; }
+@keyframes zSpinner-arc-rotate {
+    0% { content: '◜'; }
+    16.6% { content: '◠'; }
+    33.2% { content: '◝'; }
+    49.8% { content: '◞'; }
+    66.4% { content: '◡'; }
+    83% { content: '◟'; }
+    100% { content: '◜'; }
 }
 
-/* ═══════════════════════════════════════════════════════════════
- * Style 4: Arrow (←↖↑↗→↘↓↙)
- * ═══════════════════════════════════════════════════════════════ */
+/* Arrow Spinner (←↖↑↗→↘↓↙) */
 .zSpinner-arrow {
-  font-size: 2em;
-  color: var(--mainPurple);
+    display: inline-block;
+    font-size: 2em;
+    line-height: 1;
 }
 
 .zSpinner-arrow::after {
-  content: '←';
-  animation: arrow 1s linear infinite;
+    content: '←';
+    animation: zSpinner-arrow-rotate 1s steps(8) infinite;
 }
 
-@keyframes arrow {
-  0% { content: '←'; }
-  12.5% { content: '↖'; }
-  25% { content: '↑'; }
-  37.5% { content: '↗'; }
-  50% { content: '→'; }
-  62.5% { content: '↘'; }
-  75% { content: '↓'; }
-  87.5% { content: '↙'; }
-  100% { content: '←'; }
+@keyframes zSpinner-arrow-rotate {
+    0% { content: '←'; }
+    12.5% { content: '↖'; }
+    25% { content: '↑'; }
+    37.5% { content: '↗'; }
+    50% { content: '→'; }
+    62.5% { content: '↘'; }
+    75% { content: '↓'; }
+    87.5% { content: '↙'; }
+    100% { content: '←'; }
 }
 
-/* ═══════════════════════════════════════════════════════════════
- * Style 5: Bouncing Ball (⠁⠂⠄⠂)
- * ═══════════════════════════════════════════════════════════════ */
-.zSpinner-bouncingBall {
-  font-size: 2em;
-  color: var(--mainRed);
+/* Ellipsis Spinner (. .. ...) */
+.zSpinner-ellipsis {
+    display: inline-block;
+    font-size: 2em;
+    letter-spacing: 0.2em;
+    line-height: 1;
 }
 
-.zSpinner-bouncingBall::after {
-  content: '⠁';
-  animation: bouncingBall 0.6s linear infinite;
+.zSpinner-ellipsis::after {
+    content: '.';
+    animation: zSpinner-ellipsis-pulse 1.2s steps(4) infinite;
 }
 
-@keyframes bouncingBall {
-  0% { content: '⠁'; }
-  25% { content: '⠂'; }
-  50% { content: '⠄'; }
-  75% { content: '⠂'; }
-  100% { content: '⠁'; }
+@keyframes zSpinner-ellipsis-pulse {
+    0% { content: '.'; }
+    25% { content: '..'; }
+    50% { content: '...'; }
+    75% { content: ''; }
+    100% { content: '.'; }
 }
 
-/* ═══════════════════════════════════════════════════════════════
- * Style 6: Simple (. .. ... )
- * ═══════════════════════════════════════════════════════════════ */
-.zSpinner-simple {
-  font-size: 2em;
-  color: var(--mainYellow);
-  letter-spacing: 0.2em;
+/* Size variants for character spinners */
+.zSpinner-dots-sm,
+.zSpinner-line-sm,
+.zSpinner-arc-sm,
+.zSpinner-arrow-sm,
+.zSpinner-ellipsis-sm {
+    font-size: 1.25em;
 }
 
-.zSpinner-simple::after {
-  content: '.';
-  animation: simple 1.2s steps(4, end) infinite;
+/* Reduced motion for character spinners */
+@media (prefers-reduced-motion: reduce) {
+    .zSpinner-dots::after,
+    .zSpinner-line::after,
+    .zSpinner-arc::after,
+    .zSpinner-arrow::after,
+    .zSpinner-ellipsis::after {
+        animation-duration: 2s;
+    }
 }
-
-@keyframes simple {
-  0% { content: '.'; }
-  25% { content: '..'; }
-  50% { content: '...'; }
-  75% { content: ''; }
-  100% { content: '.'; }
-}
-
-/* ═══════════════════════════════════════════════════════════════
- * Additional: CSS-only Circle Spinner (fallback)
- * ═══════════════════════════════════════════════════════════════ */
-.zSpinner-circle {
-  width: 40px;
-  height: 40px;
-  border: 4px solid rgba(143, 190, 109, 0.3); /* --mainGreen with opacity */
-  border-top-color: var(--mainGreen);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-/* Size Variants */
-.zSpinner-sm {
-  padding: 0.5em;
-}
-
-.zSpinner-sm .zSpinner-animation {
-  width: 24px;
-  height: 24px;
-  font-size: 0.8em;
-}
-
-.zSpinner-lg {
-  padding: 1.5em;
-}
-
-.zSpinner-lg .zSpinner-animation {
-  width: 60px;
-  height: 60px;
-  font-size: 1.5em;
-}
-
-/* Center aligned variant */
-.zSpinner-center {
-  justify-content: center;
-  text-align: center;
-}
-
-/* Inline variant (no background) */
-.zSpinner-inline {
-  background: none;
-  padding: 0;
-  margin: 0;
-}
-
-/* Fade in animation */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-

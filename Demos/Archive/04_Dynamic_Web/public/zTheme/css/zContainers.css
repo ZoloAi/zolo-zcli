@@ -155,29 +155,11 @@
   background-color: rgba(0, 0, 0, 0.1);
 }
 
-.cardContent {
-  display: flex;
-  flex-direction: row; /* Align items side-by-side */
-  gap: 1rem; /* Space between image and info */
-  align-items: center;
-  justify-content: center;
-
-}
-
-.cardImage {
-  flex: 0 0 auto; /* Set a fixed width for the image */
-  align-items: center;
-  justify-content: center;
-}
-.cardInfo {
-  flex-grow: 1; /* Set a fixed width for the image */
-}
-.cardImage img {
-  width: 100%; /* Make the image responsive */
-  height: auto;
-  border-radius: 10px; /* Rounded corners for the image */
-  object-fit: cover;
-}
+/* Deprecated card classes removed - use zCards.css instead:
+   .cardContent → .zCard + .zCard-horizontal
+   .cardImage → .zCard-img-top, .zCard-img-bottom, .zCard-img-overlay
+   .cardInfo → .zCard-body
+*/
 
 .zTitleWrapper {
   display: flex; /* Use flexbox */

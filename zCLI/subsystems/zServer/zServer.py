@@ -57,17 +57,18 @@ class zServer:
             self.port = config.port
             self.host = config.host
             self.serve_path = config.serve_path
-            self.routes_file = config.routes_file
+            self.routes_file = config.routes_file  # Kept for backward compatibility
         else:
             # Backward compatibility: individual parameters
             self.port = port if port is not None else 8080
             self.host = host if host is not None else "127.0.0.1"
             serve_path = serve_path if serve_path is not None else "."
-            self.routes_file = routes_file
+            self.routes_file = routes_file  # Kept for backward compatibility
         
         self.router = None
         self.static_folder = static_folder if static_folder is not None else "static"
         self.template_folder = template_folder if template_folder is not None else "templates"
+        self.ui_folder = "UI"  # zUI zVaF files folder (convention)
         
         # Resolve serve_path, handling case where path may not exist yet or cwd deleted
         if config:
@@ -82,15 +83,20 @@ class zServer:
                 # If relative, it will be relative to wherever we are when server starts
                 self.serve_path = str(Path(serve_path))
         
-        # Auto-detect zServer routes file if not provided (v1.5.7: Convention over configuration)
+        # Auto-detect ALL zServer routes files (v1.5.9: Blueprint pattern)
+        # Supports both root folder AND routes/ subfolder
         if not routes_file:
-            routes_file = self._auto_detect_routes_file()
+            # New pattern: Auto-detect ALL zServer.*.yaml files in both locations
+            self.routes_files = self._auto_detect_routes_files()
+        else:
+            # Backward compatibility: Single routes_file provided explicitly
+            # Convert to list format for consistent handling
+            self.routes_files = [routes_file] if routes_file else []
             if routes_file:
-                self.routes_file = routes_file
-                self.logger.info(f"[zServer] Auto-detected routes file: {routes_file}")
+                self.logger.info(f"[zServer] Using explicitly provided routes file: {routes_file}")
         
-        # Load routes if provided or auto-detected (v1.5.4 Phase 2)
-        if routes_file and zcli:
+        # Load routes if any were provided or auto-detected (v1.5.9: Blueprint pattern)
+        if self.routes_files and zcli:
             self._load_routes()
         
         # Auto-initialize database schemas from models/ folder (v1.5.8: Convention over configuration)
@@ -105,73 +111,130 @@ class zServer:
         self.logger.info(f"[zServer] Initialized - will serve from: {self.serve_path}")
         self.logger.info(f"[zServer] Static folder: {self.static_folder}/")
         self.logger.info(f"[zServer] Template folder: {self.template_folder}/")
+        self.logger.info(f"[zServer] UI folder: {self.ui_folder}/")
         if self.router:
             self.logger.info(f"[zServer] Declarative routing enabled: {routes_file}")
     
-    def _auto_detect_routes_file(self):
+    def _auto_detect_routes_files(self):
         """
-        Auto-detect zServer routing file in serve_path (v1.5.7: Convention over configuration).
+        Auto-detect ALL zServer routing files in serve_path (v1.5.9: Blueprint pattern).
         
-        Scans serve_path for zServer.*.yaml files following zCLI zVaFile conventions.
-        Convention: zServer zVaFile should be in the same folder as the application entry point.
+        Scans BOTH root folder AND routes/ subfolder for ALL zServer.*.yaml files,
+        following Flask blueprint-style modular routing.
+        
+        Convention:
+            - Root folder: Primary routes (e.g., zServer.routes.yaml)
+            - routes/ folder: Modular blueprints (e.g., zServer.api.yaml, zServer.themes.yaml)
         
         Returns:
-            str: Path to detected routes file, or None if not found
+            list: List of detected routes files (paths relative to serve_path), or empty list
         """
         import glob
         
+        found_files = []
+        
         try:
-            # Look for zServer.*.yaml files in serve_path
-            pattern = os.path.join(self.serve_path, "zServer.*.yaml")
-            matches = glob.glob(pattern)
+            # 1. Look for zServer.*.yaml in ROOT folder
+            root_pattern = os.path.join(self.serve_path, "zServer.*.yaml")
+            root_matches = glob.glob(root_pattern)
             
-            if matches:
-                if len(matches) > 1:
-                    self.logger.warning(f"[zServer] Multiple routes files found: {matches}")
-                    self.logger.warning(f"[zServer] Using first match: {matches[0]}")
+            for match in root_matches:
+                # Store relative path from serve_path
+                rel_path = os.path.basename(match)
+                found_files.append(rel_path)
+                self.logger.framework.debug(f"[zServer] Found routes file (root): {rel_path}")
+            
+            # 2. Look for zServer.*.yaml in ROUTES/ subfolder
+            routes_dir = os.path.join(self.serve_path, "routes")
+            if os.path.isdir(routes_dir):
+                routes_pattern = os.path.join(routes_dir, "zServer.*.yaml")
+                routes_matches = glob.glob(routes_pattern)
                 
-                # Return relative path if possible
-                routes_file = os.path.basename(matches[0])
-                return routes_file
+                for match in routes_matches:
+                    # Store relative path from serve_path (includes "routes/" prefix)
+                    rel_path = os.path.relpath(match, self.serve_path)
+                    found_files.append(rel_path)
+                    self.logger.framework.debug(f"[zServer] Found routes file (routes/): {rel_path}")
             
-            self.logger.framework.debug("[zServer] No zServer.*.yaml file found - static serving only")
-            return None
+            if found_files:
+                self.logger.info(f"[zServer] Detected {len(found_files)} route file(s): {found_files}")
+            else:
+                self.logger.framework.debug("[zServer] No zServer.*.yaml files found - static serving only")
+            
+            return found_files
             
         except Exception as e:
             self.logger.framework.debug(f"[zServer] Auto-detection failed: {e}")
-            return None
+            return []
     
     def _load_routes(self):
         """
-        Load routing configuration from zServer.*.yaml file (v1.5.4 Phase 2).
+        Load routing configuration from ALL zServer.*.yaml files (v1.5.9: Blueprint pattern).
         
-        Uses zParser to load and parse routing file directly (bypassing zLoader's
+        Supports Flask-style blueprints: multiple route files are merged into a single router.
+        Last-loaded file wins for conflicting routes.
+        
+        Uses zParser to load and parse routing files directly (bypassing zLoader's
         zPath decoder to avoid dot interpretation in filenames like zServer.routes.yaml).
         """
+        if not self.routes_files or len(self.routes_files) == 0:
+            self.logger.framework.debug("[zServer] No routes files to load - static serving only")
+            return
+        
         try:
-            # Load file directly using zParser (bypass zLoader's zPath decoder)
-            # This avoids interpreting dots in "zServer.routes.yaml" as path separators
             from ..zParser.parser_modules import parse_file_content
             from ..zLoader.loader_modules import load_file_raw
             
-            # Read raw file content
-            raw_content = load_file_raw(self.routes_file, self.logger)
+            # Merged routes structure (blueprint pattern)
+            merged_data = {
+                "type": "server",
+                "meta": {},
+                "routes": {}
+            }
             
-            # Parse content (zParser will detect zServer in path and parse as server file)
-            routes_data = parse_file_content(
-                raw_content,
-                self.logger,
-                file_extension=".yaml",
-                file_path=self.routes_file
-            )
+            # Load and merge all route files
+            for routes_file in self.routes_files:
+                try:
+                    # Build full path (routes_file is relative to serve_path)
+                    full_path = os.path.join(self.serve_path, routes_file)
+                    
+                    # Read raw file content
+                    raw_content = load_file_raw(full_path, self.logger)
+                    
+                    # Parse content (zParser will detect zServer in path and parse as server file)
+                    routes_data = parse_file_content(
+                        raw_content,
+                        self.logger,
+                        file_extension=".yaml",
+                        file_path=full_path
+                    )
+                    
+                    if routes_data and routes_data.get("type") == "server":
+                        # Merge meta (later files override earlier files)
+                        if "meta" in routes_data:
+                            merged_data["meta"].update(routes_data["meta"])
+                        
+                        # Merge routes (later files override earlier files)
+                        if "routes" in routes_data:
+                            route_count = len(routes_data["routes"])
+                            merged_data["routes"].update(routes_data["routes"])
+                            self.logger.info(f"[zServer] Loaded {route_count} routes from: {routes_file}")
+                    else:
+                        self.logger.warning(f"[zServer] Invalid routes file: {routes_file}")
+                
+                except Exception as e:
+                    self.logger.error(f"[zServer] Failed to load routes from {routes_file}: {e}")
+                    # Continue loading other files
             
-            if routes_data and routes_data.get("type") == "server":
-                # Import router (lazy import to avoid circular dependency)
+            # Create router with merged routes
+            total_routes = len(merged_data["routes"])
+            if total_routes > 0:
                 from .zServer_modules.router import HTTPRouter
-                self.router = HTTPRouter(routes_data, self.zcli, self.logger)
-                self.logger.info(f"[zServer] Loaded routes from: {self.routes_file}")
+                self.router = HTTPRouter(merged_data, self.zcli, self.logger)
+                self.logger.info(f"[zServer] Router initialized with {total_routes} total routes from {len(self.routes_files)} file(s)")
             else:
-                self.logger.warning(f"[zServer] Invalid routes file: {self.routes_file}")
+                self.logger.warning("[zServer] No valid routes found - static serving only")
+            
         except Exception as e:
             self.logger.error(f"[zServer] Failed to load routes: {e}")
             # Continue without router (fallback to static serving)
@@ -375,6 +438,7 @@ class zServer:
                 router=self.router,
                 static_folder=self.static_folder,
                 template_folder=self.template_folder,
+                ui_folder=self.ui_folder,
                 serve_path=self.serve_path
             )
             
@@ -430,7 +494,8 @@ class zServer:
             'serve_path': self.serve_path,
             'static_folder': self.static_folder,
             'template_folder': self.template_folder,
-            'routes_file': self.routes_file,
+            'routes_files': self.routes_files if hasattr(self, 'routes_files') else [],
+            'routes_file': self.routes_file,  # Backward compatibility
         }
         
         wsgi_content = f'''# Auto-generated WSGI module for zServer Production mode
@@ -456,16 +521,21 @@ class WSGIServerConfig:
         self.serve_path = config['serve_path']
         self.static_folder = config['static_folder']
         self.template_folder = config['template_folder']
-        self.routes_file = config['routes_file']
+        self.routes_files = config.get('routes_files', [])
+        self.routes_file = config.get('routes_file')  # Backward compatibility
         self.router = None
         self.logger = None
         
-        # Load routes if routes_file is provided
-        if self.routes_file:
+        # Backward compatibility: Convert single routes_file to list
+        if self.routes_file and not self.routes_files:
+            self.routes_files = [self.routes_file]
+        
+        # Load routes if any routes_files are provided
+        if self.routes_files:
             self._load_routes()
     
     def _load_routes(self):
-        """Load routes from YAML file."""
+        """Load and merge routes from ALL YAML files (v1.5.9: Blueprint pattern)."""
         try:
             import yaml
             from zCLI.subsystems.zServer.zServer_modules.router import HTTPRouter
@@ -474,12 +544,39 @@ class WSGIServerConfig:
             # Create minimal logger for WSGI
             self.logger = ConsoleLogger()
             
-            # Parse YAML file directly
-            with open(self.routes_file, 'r') as f:
-                routes_data = yaml.safe_load(f)
+            # Merged routes structure (blueprint pattern)
+            merged_data = {{
+                "type": "server",
+                "meta": {{}},
+                "routes": {{}}
+            }}
             
-            # Create router (zcli=None since we don't need auth in this minimal setup)
-            self.router = HTTPRouter(routes_data, zcli=None, logger=self.logger)
+            # Load and merge all route files
+            for routes_file in self.routes_files:
+                try:
+                    # Build full path (routes_file is relative to serve_path)
+                    full_path = os.path.join(self.serve_path, routes_file)
+                    
+                    # Parse YAML file directly
+                    with open(full_path, 'r') as f:
+                        routes_data = yaml.safe_load(f)
+                    
+                    if routes_data and routes_data.get("type") == "server":
+                        # Merge meta (later files override earlier files)
+                        if "meta" in routes_data:
+                            merged_data["meta"].update(routes_data["meta"])
+                        
+                        # Merge routes (later files override earlier files)
+                        if "routes" in routes_data:
+                            merged_data["routes"].update(routes_data["routes"])
+                            print(f"[WSGI] Loaded routes from: {{routes_file}}")
+                except Exception as e:
+                    print(f"[WSGI] Failed to load routes from {{routes_file}}: {{e}}")
+            
+            # Create router with merged routes (zcli=None since we don't need auth in this minimal setup)
+            if merged_data["routes"]:
+                self.router = HTTPRouter(merged_data, zcli=None, logger=self.logger)
+                print(f"[WSGI] Router initialized with {{len(merged_data['routes'])}} total routes")
             
         except Exception as e:
             print(f"[WSGI] Failed to load routes: {{e}}")
