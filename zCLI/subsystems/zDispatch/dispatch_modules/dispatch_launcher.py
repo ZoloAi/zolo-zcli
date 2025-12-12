@@ -543,6 +543,42 @@ class CommandLauncher:
         TODO: Week 6.14 (zWizard) - Update wizard.handle() call after refactor
         TODO: Week 6.16 (zData) - Update data.handle_request() call after refactor
         """
+        # ========================================================================
+        # IMPLICIT WIZARD DETECTION
+        # ========================================================================
+        # If dict has multiple non-metadata, non-subsystem keys, treat as wizard steps
+        # This allows cleaner YAML without explicit zWizard: wrapper
+        
+        # Known subsystem command keys
+        subsystem_keys = {KEY_ZDISPLAY, KEY_ZFUNC, KEY_ZDIALOG, KEY_ZLINK, KEY_ZWIZARD, KEY_ZREAD, KEY_ZDATA}
+        
+        # Get content keys (exclude metadata keys starting with _)
+        content_keys = [k for k in zHorizontal.keys() if not k.startswith('_')]
+        
+        # Check if this is a direct subsystem call
+        is_subsystem_call = any(k in zHorizontal for k in subsystem_keys)
+        
+        # Check for CRUD keys (fallback pattern)
+        crud_keys = {'action', 'model', 'table', 'collection'}
+        is_crud_call = any(k in zHorizontal for k in crud_keys)
+        
+        # If multiple content keys and NOT a direct subsystem/CRUD call → implicit wizard
+        if not is_subsystem_call and not is_crud_call and len(content_keys) > 1:
+            self._log_detected("Implicit zWizard (multi-step)")
+            # Call wizard with proper context - use walker if available for proper dispatch routing
+            if walker:
+                zHat = walker.handle(zHorizontal)
+            else:
+                zHat = self.zcli.wizard.handle(zHorizontal)
+            
+            # For implicit wizards (nested sections), return zHat to continue execution
+            # Don't return 'zBack' as that would trigger navigation and create loops
+            # The walker will continue to the next key in the parent block
+            return zHat
+        
+        # ========================================================================
+        # EXPLICIT SUBSYSTEM ROUTING
+        # ========================================================================
         # Route: zDisplay (legacy format)
         if KEY_ZDISPLAY in zHorizontal:
             self._log_detected("zDisplay (wrapped)")

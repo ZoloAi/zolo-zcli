@@ -663,11 +663,12 @@ class Breadcrumbs:
         
         self.logger.debug(LOG_RELOADING_PATH, zPath)
         
-        # Load file using appropriate loader (walker's or zcli's)
+        # Load file using session-based resolution (zSession already updated above)
+        # Pass None to trigger session-based path resolution with zVaFolder + zVaFile
         if walker and hasattr(walker, "loader"):
-            zFile_parsed = walker.loader.handle(zPath)
+            zFile_parsed = walker.loader.handle(None)
         else:
-            zFile_parsed = self.zcli.loader.handle(zPath)
+            zFile_parsed = self.zcli.loader.handle(None)
         
         # Extract active block dict and keys
         active_zBlock_dict = zFile_parsed.get(zSession[SESSION_KEY_ZBLOCK], {})

@@ -590,11 +590,17 @@ class zWalker(zWizard):
         
         # Set initial zBlock - construct full breadcrumb path
         root_zBlock: str = self.zSpark_obj.get(ZSPARK_KEY_BLOCK, ZSPARK_DEFAULT_ROOT)
-        zVaFile: str = self.zSpark_obj.get(ZSPARK_KEY_VAFILE, "")
+        zVaFolder: str = self.session.get("zVaFolder", "")
+        zVaFile: str = self.session.get(SESSION_KEY_VAFILE, "")
         
-        # Construct full breadcrumb path: zVaFile.zBlock
-        # Example: "@.zUI.users_menu" + ".MainMenu" = "@.zUI.users_menu.MainMenu"
-        full_crumb_path: str = f"{zVaFile}.{root_zBlock}" if zVaFile else root_zBlock
+        # Construct full breadcrumb path: zVaFolder.zVaFile.zBlock
+        # Example: "@.UI" + ".zUI.index" + ".zVaF" = "@.UI.zUI.index.zVaF"
+        if zVaFolder and zVaFile:
+            full_crumb_path: str = f"{zVaFolder}.{zVaFile}.{root_zBlock}"
+        elif zVaFile:
+            full_crumb_path: str = f"{zVaFile}.{root_zBlock}"
+        else:
+            full_crumb_path: str = root_zBlock
         
         self.session[SESSION_KEY_CRUMBS][full_crumb_path] = []
         self.session[SESSION_KEY_BLOCK] = root_zBlock
