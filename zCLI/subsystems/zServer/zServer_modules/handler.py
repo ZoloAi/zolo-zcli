@@ -167,7 +167,14 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
             self.send_response(200)
             self.send_header("Content-type", content_type)
             self.send_header("Content-length", len(content))
-            self.send_header("Cache-Control", "public, max-age=3600")  # Cache for 1 hour
+            
+            # Disable caching for JavaScript files during development
+            if file_path.endswith('.js'):
+                self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+                self.send_header("X-Dev-Cache", "disabled")  # Debug header
+            else:
+                self.send_header("Cache-Control", "public, max-age=3600")  # Cache for 1 hour
+            
             self.end_headers()
             self.wfile.write(content)
             
@@ -416,6 +423,10 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
             # Create Jinja2 environment
             env = Environment(loader=FileSystemLoader(templates_dir))
             
+            # Add cache-busting timestamp
+            import time
+            context['timestamp'] = int(time.time() * 1000)
+            
             # Render template
             template = env.get_template(template_name)
             html_content = template.render(**context)
@@ -425,7 +436,8 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
             zui_config_values = {
                 "zVaFile": context.get("zVaFile"),
                 "zVaFolder": context.get("zVaFolder"),
-                "zBlock": context.get("zBlock")
+                "zBlock": context.get("zBlock"),
+                "title": zcli.config.zSpark.get("title") if hasattr(zcli, 'config') and hasattr(zcli.config, 'zSpark') and zcli.config.zSpark else None
             }
             # Only inject if at least one value is present (not all None)
             if any(v is not None for v in zui_config_values.values()):
@@ -513,6 +525,10 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
             # Create Jinja2 environment
             env = Environment(loader=FileSystemLoader(templates_dir))
             
+            # Add cache-busting timestamp
+            import time
+            context['timestamp'] = int(time.time() * 1000)
+            
             # Render template with context (Jinja2 support)
             template = env.get_template(template_name)
             html_content = template.render(**context)
@@ -521,7 +537,8 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
             zui_config_values = {
                 "zVaFile": context.get("zVaFile"),
                 "zVaFolder": context.get("zVaFolder"),
-                "zBlock": context.get("zBlock")
+                "zBlock": context.get("zBlock"),
+                "title": zcli.config.zSpark.get("title") if zcli and hasattr(zcli, 'config') and hasattr(zcli.config, 'zSpark') and zcli.config.zSpark else None
             }
             if any(v is not None for v in zui_config_values.values()):
                 import json

@@ -416,6 +416,13 @@ class ModifierProcessor:
                 walker=walker
             )
 
+            # If menu returns a dict (e.g., {zLink: "..."} from $ delta links),
+            # re-dispatch it through the command launcher to handle navigation
+            if isinstance(result, dict):
+                self.logger.framework.debug(f"[Menu] Returned dict, re-dispatching: {result}")
+                # Re-dispatch the dict result (e.g., zLink navigation)
+                return self.dispatch.launcher.launch(result, context, walker)
+            
             return result
 
         # Priority 2: Bounce modifier (^)

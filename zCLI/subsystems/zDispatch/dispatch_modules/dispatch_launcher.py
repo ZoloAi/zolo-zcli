@@ -356,9 +356,67 @@ class CommandLauncher:
             return self._launch_string(zHorizontal, context, walker)
         elif isinstance(zHorizontal, dict):
             return self._launch_dict(zHorizontal, context, walker)
+        elif isinstance(zHorizontal, list):
+            return self._launch_list(zHorizontal, context, walker)
         
         # Unknown type - return None
         return None
+
+    # ========================================================================
+    # PRIVATE METHODS - List Command Routing (Sequential Execution)
+    # ========================================================================
+
+    def _launch_list(
+        self,
+        zHorizontal: list,
+        context: Optional[Dict[str, Any]],
+        walker: Optional[Any]
+    ) -> Optional[Union[str, Dict[str, Any]]]:
+        """
+        Execute a list of commands sequentially.
+        
+        This enables streamlined YAML where multiple zDisplay events (or other commands)
+        can be listed directly under a key without requiring intermediate named sub-keys.
+        
+        Examples:
+            # YAML Pattern - List of zDisplay events
+            Hero_Section:
+              - zDisplay:
+                  event: header
+                  content: "Zolo"
+              - zDisplay:
+                  event: header
+                  content: "A digital solution"
+              - zDisplay:
+                  event: text
+                  content: "Build intelligent CLI..."
+        
+        Args:
+            zHorizontal: List of commands (dicts, strings, or nested lists)
+            context: Optional context dict
+            walker: Optional walker instance
+        
+        Returns:
+            Result from the last item in the list, or None
+        """
+        if not zHorizontal:
+            return None
+        
+        result = None
+        for item in zHorizontal:
+            # Recursively launch each item (supports dict, str, or nested list)
+            if isinstance(item, dict):
+                result = self._launch_dict(item, context, walker)
+            elif isinstance(item, str):
+                result = self._launch_string(item, context, walker)
+            elif isinstance(item, list):
+                result = self._launch_list(item, context, walker)
+            
+            # Check for navigation signals (stop processing if user wants to go back/exit)
+            if result in ('zBack', 'exit', 'stop', 'error'):
+                return result
+        
+        return result
 
     # ========================================================================
     # PRIVATE METHODS - String Command Routing

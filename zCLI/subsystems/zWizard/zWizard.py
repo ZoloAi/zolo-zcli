@@ -501,7 +501,8 @@ class zWizard:
             - wizard_examples.py: Comprehensive usage patterns
         """
         dispatch_fn = self._get_dispatch_fn(dispatch_fn, context)
-        keys_list = list(items_dict.keys())
+        # Filter out metadata keys (underscore prefix) - they don't execute, only configure
+        keys_list = [k for k in items_dict.keys() if not k.startswith('_')]
         idx = keys_list.index(start_key) if start_key and start_key in keys_list else 0
 
         # Main loop

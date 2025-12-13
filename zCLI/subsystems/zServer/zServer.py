@@ -97,17 +97,20 @@ class zServer:
                 # Backward compatibility: Single routes_file provided explicitly
                 # Convert to list format for consistent handling
                 self.routes_files = [routes_file] if routes_file else []
-                if routes_file:
-                    self.logger.info(f"[zServer] Using explicitly provided routes file: {routes_file}")
-            
-            # Load routes if any were provided or auto-detected (v1.5.9: Blueprint pattern)
-            if self.routes_files and zcli:
-                self._load_routes()
-            
-            # Auto-initialize database schemas from models/ folder (v1.5.8: Convention over configuration)
-            if zcli:
-                self._auto_initialize_schemas()
-            
+        else:
+            # Not enabled - initialize empty routes
+            self.routes_files = []
+            if routes_file:
+                self.logger.info(f"[zServer] Using explicitly provided routes file: {routes_file}")
+        
+        # Load routes if any were provided or auto-detected (v1.5.9: Blueprint pattern)
+        if self.routes_files and zcli:
+            self._load_routes()
+        
+        # Auto-initialize database schemas from models/ folder (v1.5.8: Convention over configuration)
+        if zcli:
+            self._auto_initialize_schemas()
+                    
             self.logger.info(f"[zServer] Initialized - will serve from: {self.serve_path}")
             self.logger.info(f"[zServer] Static folder: {self.static_folder}/")
             self.logger.info(f"[zServer] Template folder: {self.template_folder}/")

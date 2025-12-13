@@ -246,6 +246,10 @@ class MessageHandler:
         if event == ACTION_INTROSPECT:
             return await self._handle_introspect(ws, data)
         
+        # Walker execution (v1.5.8+)
+        if event == "execute_walker" or event == "load_page":
+            return await self._handle_walker_execution(ws, data)
+        
         return False
     
     async def _handle_input_response(self, data: Dict[str, Any]) -> bool:
@@ -393,6 +397,109 @@ class MessageHandler:
             await ws.send(self._build_response(data, error=RESPONSE_MODEL_NOT_FOUND.format(model=model)))
         
         return True
+    
+    async def _handle_walker_execution(self, ws: Any, data: Dict[str, Any]) -> bool:
+        """
+        Execute walker with specified zVaFile/zBlock and stream display events.
+        
+        This handler enables declarative UI rendering from YAML files. When a client
+        requests walker execution, the server loads the YAML file, executes the block
+        via walker, and all display events are automatically streamed to the client.
+        
+        Args:
+            ws: WebSocket connection
+            data: Request data with:
+                - zVaFile (str): YAML file name (e.g., "zUI.index")
+                - zVaFolder (str, optional): YAML folder path (e.g., "@.UI")
+                - zBlock (str, optional): Block name (default: "zVaF")
+                - _requestId (int, optional): Request ID for response correlation
+        
+        Returns:
+            bool: True (always handled)
+        
+        Process:
+            1. Extract zVaFile/zVaFolder/zBlock from request
+            2. Update zCLI session with these values
+            3. Load YAML file via zLoader
+            4. Execute block via walker.zBlock_loop()
+            5. All display events automatically buffered and sent
+            6. Send completion response
+        
+        Example Request:
+            {
+                "event": "execute_walker",
+                "zVaFile": "zUI.index",
+                "zVaFolder": "@.UI",
+                "zBlock": "zVaF",
+                "_requestId": 0
+            }
+        
+        Example Response (success):
+            {
+                "_requestId": 0,
+                "result": "completed"
+            }
+        
+        Example Response (error):
+            {
+                "_requestId": 0,
+                "error": "No zVaFile found for base path: ..."
+            }
+        """
+        self.logger.info("[MessageHandler] Walker execution requested")
+        
+        try:
+            # Extract parameters
+            zVaFile = data.get("zVaFile")
+            zVaFolder = data.get("zVaFolder", "@.UI")  # Default folder
+            zBlock = data.get("zBlock", "zVaF")  # Default block
+            
+            if not zVaFile:
+                await ws.send(self._build_response(data, error="Missing zVaFile parameter"))
+                return True
+            
+            self.logger.info(f"[MessageHandler] Executing walker: {zVaFolder}/{zVaFile}.{zBlock}")
+            
+            # Update session with walker parameters
+            self.zcli.session["zVaFile"] = zVaFile
+            self.zcli.session["zVaFolder"] = zVaFolder
+            self.zcli.session["zBlock"] = zBlock
+            
+            # Update zSpark_obj (walker uses this)
+            self.zcli.zspark_obj["zVaFile"] = zVaFile
+            self.zcli.zspark_obj["zVaFolder"] = zVaFolder
+            self.zcli.zspark_obj["zBlock"] = zBlock
+            
+            # Load YAML file via loader (pass None to trigger session-based path resolution)
+            raw_zFile = await asyncio.to_thread(self.zcli.loader.handle, None)
+            
+            if not raw_zFile:
+                error_msg = f"Failed to load zVaFile: {zVaFolder}/{zVaFile}"
+                self.logger.error(f"[MessageHandler] {error_msg}")
+                await ws.send(self._build_response(data, error=error_msg))
+                return True
+            
+            if zBlock not in raw_zFile:
+                error_msg = f"Block '{zBlock}' not found in {zVaFile}"
+                self.logger.error(f"[MessageHandler] {error_msg}")
+                await ws.send(self._build_response(data, error=error_msg))
+                return True
+            
+            # Execute the block via walker
+            # Note: walker.zBlock_loop() generates display events which are auto-buffered in zBifrost mode
+            block_dict = raw_zFile[zBlock]
+            result = await asyncio.to_thread(self.walker.zBlock_loop, block_dict)
+            
+            # Send completion response
+            await ws.send(self._build_response(data, result="completed"))
+            self.logger.info("[MessageHandler] Walker execution completed successfully")
+            return True
+            
+        except Exception as e:
+            error_msg = f"Walker execution failed: {str(e)}"
+            self.logger.error(f"[MessageHandler] {error_msg}", exc_info=True)
+            await ws.send(self._build_response(data, error=error_msg))
+            return True
     
     def _get_event(self, data: Dict[str, Any]) -> Optional[str]:
         """

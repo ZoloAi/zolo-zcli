@@ -132,11 +132,19 @@ WARN_* : str
     Warning messages for user feedback
 """
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
 # ============================================================================
 # Module Constants
 # ============================================================================
+
+# Session Keys (for same-file navigation)
+SESSION_KEY_VAFOLDER: str = "zVaFolder"
+SESSION_KEY_VAFILE: str = "zVaFile"
+
+# Navigation Prefixes and Commands
+PREFIX_BLOCK_DELTA: str = "$"  # Same-file block navigation prefix
+CMD_EXIT: str = "exit"  # Text command to exit system
 
 # Menu Object Keys (must match MenuBuilder)
 KEY_OPTIONS: str = "options"
@@ -279,13 +287,17 @@ class MenuInteraction:
         self,
         menu_obj: Dict[str, Any],
         display: Any
-    ) -> str:
+    ) -> Union[str, Dict[str, Any]]:
         """
         Get user choice from menu object.
         
         This is a convenience wrapper that extracts options from a menu object
         and delegates to get_choice_from_list(). Primary method called by
         MenuSystem.
+        
+        **Delta Link Support (v1.5.9):**
+        If selected option starts with $ (e.g., "$zAbout"), returns a zLink
+        dict for same-file block navigation instead of a raw string.
         
         Args
         ----
@@ -296,8 +308,9 @@ class MenuInteraction:
         
         Returns
         -------
-        str
-            Selected option string
+        Union[str, Dict[str, Any]]
+            - str: Selected option (regular key navigation)
+            - Dict: zLink dict for same-file navigation ($ prefix)
         
         Examples
         --------
@@ -308,12 +321,23 @@ class MenuInteraction:
                 "title": "Actions"
             }
             selected = interaction.get_choice(menu_obj, display)
+            # Returns: "Edit" (string)
+        
+        Same-file block navigation::
+        
+            menu_obj = {
+                "options": ["$zHome", "$zAbout", "$zFeatures"]
+            }
+            selected = interaction.get_choice(menu_obj, display)
+            # User selects [1]
+            # Returns: {zLink: "@.UI.zUI.index.zAbout"}
         
         Notes
         -----
         - Extracts options list from menu object
         - Delegates validation to get_choice_from_list()
-        - Returns actual option string (not index)
+        - Returns actual option string (not index) or zLink dict
+        - $ prefix triggers same-file navigation via zLink subsystem
         """
         options = menu_obj[KEY_OPTIONS]
         return self.get_choice_from_list(options, display)
@@ -322,13 +346,19 @@ class MenuInteraction:
         self,
         options: List[str],
         display: Any
-    ) -> str:
+    ) -> Union[str, Dict[str, Any]]:
         """
         Get user choice from list of options.
         
         Core single-selection method with comprehensive input validation.
         Loops until valid input is received, providing clear error messages
         for invalid input.
+        
+        **Delta Link Support (v1.5.9):**
+        If selected option starts with $ (e.g., "$zAbout"), it's treated as
+        same-file block navigation. The $ prefix is detected, and the selection
+        is transformed into a zLink dict for navigation via the existing zLink
+        subsystem. No duplicate navigation logic - pure delegation.
         
         Args
         ----
@@ -339,17 +369,27 @@ class MenuInteraction:
         
         Returns
         -------
-        str
-            Selected option string from the list
+        Union[str, Dict[str, Any]]
+            - str: Selected option (regular key navigation)
+            - Dict: zLink dict for same-file block navigation ($ prefix)
+                   Format: {zLink: "@.VaFolder.zVaFile.BlockName"}
         
         Examples
         --------
-        Simple choice::
+        Regular key navigation::
         
-            options = ["Yes", "No", "Cancel"]
+            options = ["settingsKey", "profileKey"]
+            selected = interaction.get_choice_from_list(options, display)
+            # User enters: "0"
+            # Returns: "settingsKey" (looks for key in current block)
+        
+        Same-file block navigation ($ prefix)::
+        
+            options = ["$zSettings", "$zProfile", "$zHome"]
             selected = interaction.get_choice_from_list(options, display)
             # User enters: "1"
-            # Returns: "No"
+            # Returns: {zLink: "@.UI.zUI.index.zProfile"}
+            # → Navigates to zProfile block in same file via zLink subsystem
         
         With validation::
         
@@ -359,25 +399,41 @@ class MenuInteraction:
             # User enters: "5" → Error: "Choice out of range."
             # User enters: "0" → Returns: "Option A"
         
+        Text commands::
+        
+            # User enters: "exit" → Returns: "exit" (triggers system exit)
+            # User enters: "EXIT" → Returns: "exit" (case-insensitive)
+        
         Notes
         -----
-        - Validation: Input must be digit and within range [0, len(options))
+        - Validation: Input must be digit and within range [0, len(options)) OR "exit"
+        - Text Commands: "exit" (case-insensitive) to trigger system exit
         - Error Feedback: Clear messages for format and range errors
         - Logging: All input and errors logged at debug level
         - Loop: Continues until valid input received
+        - Delta Links: $ prefix triggers same-file navigation via zLink
+        - No Duplication: Reuses existing zLink subsystem for navigation
         
         Validation Flow
         ---------------
         1. Read input from display
         2. Log raw input
-        3. Validate digit format
-        4. Validate index range
-        5. Return selected option
+        3. Check for "exit" command
+        4. Validate digit format
+        5. Validate index range
+        6. Check for $ prefix
+        7. Transform to zLink dict if needed
+        8. Return selected option, zLink dict, or "exit"
         """
         # Streamlined input validation loop
         while True:
             choice = display.read_string(PROMPT_DEFAULT)
             self._log_user_input(choice)
+
+            # Check for text command: "exit"
+            if choice.lower() == CMD_EXIT:
+                self.logger.debug(f"Exit command detected: {choice}")
+                return CMD_EXIT  # Return "exit" to trigger system exit
 
             # Validate digit format
             if not self._validate_digit_input(choice, display):
@@ -392,6 +448,13 @@ class MenuInteraction:
 
         selected = options[index]
         self.logger.debug(LOG_SELECTED, selected)
+        
+        # Check for same-file block navigation ($ prefix)
+        if isinstance(selected, str) and selected.startswith(PREFIX_BLOCK_DELTA):
+            # Transform $BlockName → {zLink: "@.VaFolder.zVaFile.BlockName"}
+            # This reuses the existing zLink subsystem for same-file navigation
+            return self._transform_delta_link(selected)
+        
         return selected
 
     def get_multiple_choices(
@@ -736,3 +799,95 @@ class MenuInteraction:
         Ensures consistent error formatting across all validation failures.
         """
         display.error(PREFIX_NEWLINE + message)
+
+    def _transform_delta_link(self, selected: str) -> Dict[str, Any]:
+        """
+        Transform $BlockName into zLink dict for same-file navigation.
+        
+        Detects $ prefix in menu selection and constructs a zLink path to the
+        target block in the SAME file. This enables inline navigation without
+        requiring intermediate keys or zDelta syntax.
+        
+        Architecture:
+            - Delegates to existing zLink subsystem (no duplication)
+            - Constructs full path: @.VaFolder.zVaFile.BlockName
+            - Returns zLink dict for dispatch to handle
+        
+        Args
+        ----
+        selected : str
+            Menu selection with $ prefix (e.g., "$zAbout")
+        
+        Returns
+        -------
+        Dict[str, Any]
+            zLink navigation dict: {zLink: "@.UI.zUI.index.zAbout"}
+        
+        Examples
+        --------
+        Transform block navigation::
+        
+            # Menu: ["$zHome", "$zAbout"]
+            # User selects: [1] $zAbout
+            # Input: "$zAbout"
+            # Output: {zLink: "@.UI.zUI.index.zAbout"}
+        
+        Full flow::
+        
+            1. Menu shows: [0] $zHome, [1] $zAbout
+            2. User enters: 1
+            3. selected = "$zAbout"
+            4. _transform_delta_link("$zAbout")
+            5. Returns: {zLink: "@.UI.zUI.index.zAbout"}
+            6. Dispatch handles via existing zLink subsystem
+            7. Navigates to zAbout block in same file
+        
+        Notes
+        -----
+        - Reuses zLink subsystem (no redundant navigation logic)
+        - Constructs full file path from session
+        - Strips $ prefix before building path
+        - Falls back to empty strings if session values missing
+        
+        Session Keys Used
+        -----------------
+        - zVaFolder: Folder containing current file (e.g., "@.UI")
+        - zVaFile: Current file name (e.g., "zUI.index")
+        
+        Path Construction
+        -----------------
+        Format: @.{VaFolder}.{zVaFile}.{BlockName}
+        Example: @.UI.zUI.index.zAbout
+        
+        Without folder: {zVaFile}.{BlockName}
+        Example: zUI.index.zAbout
+        """
+        # Strip $ prefix to get block name
+        block_name = selected[1:] if selected.startswith(PREFIX_BLOCK_DELTA) else selected
+        
+        # Get current file context from session
+        session = self.zcli.session
+        zVaFolder = session.get(SESSION_KEY_VAFOLDER, "")
+        zVaFile = session.get(SESSION_KEY_VAFILE, "")
+        
+        # Construct zLink path for same-file navigation
+        # Format: @.VaFolder.zVaFile.BlockName
+        if zVaFolder and zVaFile:
+            # Full path with folder
+            if zVaFolder.startswith("@."):
+                # Folder already has @. prefix (e.g., "@.UI")
+                zLink_path = f"{zVaFolder}.{zVaFile}.{block_name}"
+            else:
+                # Add @. prefix to folder
+                zLink_path = f"@.{zVaFolder}.{zVaFile}.{block_name}"
+        elif zVaFile:
+            # Just file + block (no folder)
+            zLink_path = f"{zVaFile}.{block_name}"
+        else:
+            # Fallback: just block name (might fail, but zLink will log error)
+            zLink_path = block_name
+        
+        self.logger.debug(f"[MenuInteraction] Delta link transformed: {selected} → zLink({zLink_path})")
+        
+        # Return zLink dict (dispatch will handle via zLink subsystem)
+        return {"zLink": zLink_path}

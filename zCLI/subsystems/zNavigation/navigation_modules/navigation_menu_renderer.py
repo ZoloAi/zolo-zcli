@@ -296,7 +296,9 @@ class MenuRenderer:
             )
 
         # Create menu pairs for display (enumerate with indices)
-        menu_pairs = list(enumerate(options))
+        # Strip $ prefix from display labels (delta links) for cleaner UX
+        # The underlying option value keeps $ for navigation logic
+        menu_pairs = [(i, opt.lstrip('$') if isinstance(opt, str) else opt) for i, opt in enumerate(options)]
         
         # Show breadcrumbs if available (for Walker context)
         try:

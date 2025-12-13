@@ -133,7 +133,7 @@ LOG_* : str
     Log message templates
 """
 
-from zCLI import Any, Dict, List, Optional
+from zCLI import Any, Dict, List, Optional, Union
 
 from .navigation_menu_builder import MenuBuilder
 from .navigation_menu_renderer import MenuRenderer
@@ -295,13 +295,17 @@ class MenuSystem:
         title: Optional[str] = None,
         allow_back: bool = True,
         walker: Optional[Any] = None
-    ) -> str:
+    ) -> Union[str, Dict[str, Any]]:
         """
         Create and display a menu, return user choice.
         
         Full-featured menu creation with navigation support. Builds menu object,
         renders it via display adapter, and captures user selection. Supports
         "Back" option for navigation and integrates with breadcrumb system.
+        
+        **Delta Link Support (v1.5.9):**
+        If user selects an option with $ prefix (e.g., "$zAbout"), returns a
+        zLink dict for same-file navigation instead of a raw string.
         
         Args
         ----
@@ -316,8 +320,9 @@ class MenuSystem:
         
         Returns
         -------
-        str
-            Selected option string (or NAV_ZBACK if back chosen)
+        Union[str, Dict[str, Any]]
+            - str: Selected option string (or NAV_ZBACK if back chosen)
+            - Dict: zLink dict for same-file navigation ($ prefix)
         
         Examples
         --------
