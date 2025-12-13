@@ -114,7 +114,8 @@ class HTTPRouter:
         self,
         routes: Dict[str, Any],
         zcli: Any,
-        logger: Any
+        logger: Any,
+        serve_path: str = '.'
     ):
         """
         Initialize HTTP router.
@@ -123,26 +124,119 @@ class HTTPRouter:
             routes: Parsed routes data from parse_server_file()
             zcli: zCLI instance (required for auth access)
             logger: Logger instance
+            serve_path: Base path for serving files (for resolving zVaFile paths)
         """
         self.routes = routes
         self.zcli = zcli
         self.logger = logger
+        self.serve_path = serve_path
         
         # Extract metadata
         self.meta = routes.get(KEY_META, {})
         self.route_map = routes.get(KEY_ROUTES, {})
         
-        route_count = len(self.route_map)
-        self.logger.info(LOG_MSG_ROUTER_INIT, route_count)
+        # Auto-discovered routes from zWalker files
+        self.auto_discovered_routes = {}
+        
+        # Discover zBlock routes from walker routes with auto_discover_blocks
+        self._discover_walker_blocks()
+        
+        route_count = len(self.route_map) + len(self.auto_discovered_routes)
+        self.logger.info(f"[HTTPRouter] Initialized with {len(self.route_map)} explicit + {len(self.auto_discovered_routes)} auto-discovered = {route_count} total routes")
+    
+    def _discover_walker_blocks(self):
+        """
+        Auto-discover zBlock routes from zWalker routes with auto_discover_blocks=true.
+        
+        For each walker route with auto_discover_blocks enabled:
+        1. Parse the referenced zVaFile
+        2. Extract all top-level keys (excluding 'meta')
+        3. Create virtual routes: /{zBlock} → walker(zBlock={zBlock})
+        
+        This allows direct navigation to /zAbout, /zFeatures, etc. without
+        requiring explicit route definitions for each block.
+        """
+        self.logger.info(f"[Router] Starting auto-discovery - checking {len(self.route_map)} routes")
+        
+        if not self.route_map:
+            self.logger.info("[Router] No routes to check for auto-discovery")
+            return
+        
+        for route_path, route_config in self.route_map.items():
+            self.logger.info(f"[Router] Checking route: {route_path}, type={route_config.get(KEY_TYPE)}, auto_discover={route_config.get('auto_discover_blocks')}")
+            # Only process zWalker routes with auto_discover_blocks
+            if route_config.get(KEY_TYPE) != ROUTE_TYPE_ZWALKER:
+                continue
+            
+            if not route_config.get('auto_discover_blocks', False):
+                continue
+            
+            # Get zVaFile path for parsing
+            zVaFolder = route_config.get('zVaFolder', '')
+            zVaFile = route_config.get('zVaFile', '')
+            
+            if not zVaFile:
+                self.logger.warning(f"[Router] Cannot auto-discover blocks for {route_path}: no zVaFile specified")
+                continue
+            
+            # Resolve zPath notation (@.UI → UI/)
+            if zVaFolder.startswith('@.'):
+                zVaFolder = zVaFolder[2:]  # Strip @. prefix
+            
+            # Build file path relative to serve_path
+            vafile_path = os.path.join(
+                self.serve_path,
+                zVaFolder,
+                f"{zVaFile}.yaml"
+            )
+            
+            # Parse YAML and extract zBlock keys
+            try:
+                import yaml
+                with open(vafile_path, 'r') as f:
+                    vafile_data = yaml.safe_load(f)
+                
+                if not isinstance(vafile_data, dict):
+                    continue
+                
+                # Extract all top-level keys except 'meta'
+                zBlocks = [key for key in vafile_data.keys() if key != 'meta']
+                
+                self.logger.info(f"[Router] Auto-discovered {len(zBlocks)} zBlocks from {zVaFile}: {zBlocks}")
+                
+                # Create virtual routes for each zBlock
+                for zBlock in zBlocks:
+                    virtual_path = f"/{zBlock}"
+                    
+                    # Skip if explicit route already exists
+                    if virtual_path in self.route_map:
+                        self.logger.debug(f"[Router] Skipping {virtual_path} - explicit route exists")
+                        continue
+                    
+                    # Create virtual route (copy parent route config but override zBlock)
+                    virtual_route = route_config.copy()
+                    virtual_route['zBlock'] = zBlock
+                    virtual_route['_auto_discovered'] = True  # Mark as virtual
+                    
+                    self.auto_discovered_routes[virtual_path] = virtual_route
+                    self.logger.debug(f"[Router] Created virtual route: {virtual_path} → zBlock={zBlock}")
+            
+            except FileNotFoundError:
+                self.logger.warning(f"[Router] zVaFile not found: {vafile_path}")
+            except Exception as e:
+                self.logger.error(f"[Router] Error discovering blocks from {vafile_path}: {e}")
+                import traceback
+                self.logger.error(f"[Router] Traceback: {traceback.format_exc()}")
     
     def match_route(self, path: str) -> Optional[Dict[str, Any]]:
         """
         Match request path to route definition.
         
         Matching Priority:
-            1. Exact match
-            2. Wildcard match (/*)
-            3. Default route (from Meta)
+            1. Exact match (explicit routes)
+            2. Auto-discovered zBlock routes (from zWalker)
+            3. Wildcard match (/*)
+            4. Default route (from Meta)
         
         Args:
             path: HTTP request path (e.g., "/about")
@@ -158,19 +252,25 @@ class HTTPRouter:
             >>> route["_rbac"]
             {"require_role": "admin"}
         """
-        # 1. Exact match
+        # 1. Exact match (explicit routes)
         if path in self.route_map:
             route = self.route_map[path]
             self.logger.debug(LOG_MSG_ROUTE_MATCHED, path, route.get(KEY_FILE, "N/A"))
             return route
         
-        # 2. Wildcard match
+        # 2. Auto-discovered zBlock routes (from zWalker with auto_discover_blocks)
+        if path in self.auto_discovered_routes:
+            route = self.auto_discovered_routes[path]
+            self.logger.debug(LOG_MSG_ROUTE_MATCHED, path, f"auto-discovered zBlock: {route.get('zBlock')}")
+            return route
+        
+        # 3. Wildcard match
         if WILDCARD_PATTERN in self.route_map:
             route = self.route_map[WILDCARD_PATTERN]
             self.logger.debug(LOG_MSG_ROUTE_MATCHED, path, "wildcard")
             return route
         
-        # 3. Default route
+        # 4. Default route
         default_route = self.meta.get(KEY_DEFAULT_ROUTE)
         if default_route:
             route = {KEY_TYPE: ROUTE_TYPE_STATIC, KEY_FILE: default_route}

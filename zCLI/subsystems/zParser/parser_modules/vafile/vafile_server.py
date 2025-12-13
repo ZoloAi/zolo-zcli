@@ -231,6 +231,8 @@ def parse_server_file(
             route_entry["zVaFolder"] = route_data["zVaFolder"]
         if KEY_ZBLOCK in route_data:
             route_entry[KEY_ZBLOCK] = route_data[KEY_ZBLOCK]
+        if "auto_discover_blocks" in route_data:  # Smart Walker Routes (auto-discovery)
+            route_entry["auto_discover_blocks"] = route_data["auto_discover_blocks"]
         if "data" in route_data:  # JSON route data
             route_entry["data"] = route_data["data"]
         

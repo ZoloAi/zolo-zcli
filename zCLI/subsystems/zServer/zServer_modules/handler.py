@@ -72,9 +72,14 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
         
         # Check if router exists (declarative routing mode)
         if self.router:
+            # DEBUG: Log that router exists
+            if hasattr(self, 'zcli_logger') and self.zcli_logger:
+                self.zcli_logger.info(f"[Handler] Router exists, processing route: {self.path}")
             return self._handle_routed_request()
         
         # Fallback: Static file serving (backward compatible)
+        if hasattr(self, 'zcli_logger') and self.zcli_logger:
+            self.zcli_logger.warning(f"[Handler] No router - falling back to static file serving for: {self.path}")
         return super().do_GET()
     
     def do_POST(self):
@@ -253,10 +258,17 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
     
     def _handle_routed_request(self):
         """Handle request using HTTPRouter with RBAC enforcement"""
+        # DEBUG: Log route matching attempt
+        if hasattr(self, 'zcli_logger') and self.zcli_logger:
+            self.zcli_logger.info(f"[Handler] Attempting to match route: {self.path}")
+            self.zcli_logger.info(f"[Handler] Router has {len(self.router.auto_discovered_routes)} auto-discovered routes")
+        
         # Match route
         route = self.router.match_route(self.path)
         if not route:
             # No route found - 404
+            if hasattr(self, 'zcli_logger') and self.zcli_logger:
+                self.zcli_logger.warning(f"[Handler] No route match found for: {self.path}")
             return self.send_error(404, "Route not found")
         
         # Check RBAC

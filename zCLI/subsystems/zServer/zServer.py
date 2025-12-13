@@ -241,7 +241,7 @@ class zServer:
             total_routes = len(merged_data["routes"])
             if total_routes > 0:
                 from .zServer_modules.router import HTTPRouter
-                self.router = HTTPRouter(merged_data, self.zcli, self.logger)
+                self.router = HTTPRouter(merged_data, self.zcli, self.logger, serve_path=self.serve_path)
                 self.logger.info(f"[zServer] Router initialized with {total_routes} total routes from {len(self.routes_files)} file(s)")
             else:
                 self.logger.warning("[zServer] No valid routes found - static serving only")
