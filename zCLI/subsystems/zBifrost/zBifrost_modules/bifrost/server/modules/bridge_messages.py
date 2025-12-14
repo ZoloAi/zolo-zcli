@@ -520,8 +520,9 @@ class MessageHandler:
             buffered_events = self.zcli.display.collect_buffered_events()
             self.logger.info(f"[MessageHandler] Collected {len(buffered_events)} buffered display events")
             
-            for event in buffered_events:
-                self.logger.debug(f"[MessageHandler] Broadcasting event: {event.get('display_event', 'unknown')}")
+            for i, event in enumerate(buffered_events):
+                event_type = event.get('display_event', event.get('event', 'unknown'))
+                self.logger.info(f"[MessageHandler] Broadcasting event {i+1}/{len(buffered_events)}: {event_type}")
                 await ws.send(json.dumps(event))
             
             # Send completion response
