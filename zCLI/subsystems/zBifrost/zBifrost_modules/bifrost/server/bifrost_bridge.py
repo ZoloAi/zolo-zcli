@@ -81,7 +81,7 @@ LOG_BROADCAST_SKIPPED = f"{LOG_PREFIX} [BROADCAST] Skipped client (closed or err
 LOG_LIVE_SOCKET = "[OK] LIVE zSocket loaded"
 LOG_SECURITY = "[SECURITY] Security: Auth={{auth}}, Origins={{origins}}"
 LOG_HANDLER = "[HANDLER] Handler = {{name}}, args = {{args}}"
-LOG_STARTED = f"{LOG_PREFIX} [STARTED] WebSocket server started at ws://{{bind_info}}{{security_note}}"
+LOG_STARTED = f"{LOG_PREFIX} [STARTED] WebSocket server started at {{bind_info}}{{security_note}}"
 LOG_ERROR_PORT_IN_USE = "[ERROR] Port {{port}} already in use. Try restarting the app or killing the stuck process."
 LOG_ERROR_START_FAILED = "[ERROR] Failed to start WebSocket server: {{error}}"
 LOG_SHUTDOWN_NOT_RUNNING = f"{LOG_PREFIX} Server not running, nothing to shutdown"
@@ -542,8 +542,13 @@ class zBifrost:
             args=self.handle_client.__code__.co_varnames
         ))
 
+        # Delegate to Layer 0 (zComm) for SSL context creation (respects zConfig)
+        ssl_context = None
+        if self.zcli and hasattr(self.zcli.comm, 'websocket'):
+            ssl_context = self.zcli.comm.websocket._create_ssl_context()
+        
         try:
-            self.server = await ws_serve(self.handle_client, self.host, self.port)
+            self.server = await ws_serve(self.handle_client, self.host, self.port, ssl=ssl_context)
         except OSError as e:
             if getattr(e, 'errno', None) == ERRNO_ADDRESS_IN_USE:
                 self.logger.error(LOG_ERROR_PORT_IN_USE.format(port=self.port))
@@ -551,7 +556,8 @@ class zBifrost:
                 self.logger.error(LOG_ERROR_START_FAILED.format(error=e))
             return
 
-        bind_info = f"{self.host}:{self.port}"
+        protocol = "wss" if ssl_context else "ws"
+        bind_info = f"{protocol}://{self.host}:{self.port}"
         security_note = SECURITY_LOCALHOST_ONLY if self.host == DEFAULT_HOST else ""
         self.logger.info(LOG_STARTED.format(bind_info=bind_info, security_note=security_note))
         self._running = True

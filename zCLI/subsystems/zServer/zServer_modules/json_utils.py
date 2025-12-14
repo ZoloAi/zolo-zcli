@@ -222,10 +222,18 @@ def _resolve_placeholders(
                 # If session value is dict/list, return as-is (don't stringify)
                 return value
             
-            # Config values
+            # Config values (supports nested dot-notation: config.websocket.ssl_enabled)
             elif placeholder.startswith('config.'):
-                config_key = placeholder[7:]  # Remove 'config.'
-                return getattr(zcli.config, config_key, '')
+                config_path = placeholder[7:]  # Remove 'config.'
+                parts = config_path.split('.')
+                
+                # Navigate nested config attributes
+                value = zcli.config
+                for part in parts:
+                    value = getattr(value, part, None)
+                    if value is None:
+                        return ''
+                return value
             
             # Special values
             elif placeholder == 'timestamp':

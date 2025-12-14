@@ -550,7 +550,12 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
                 "zVaFile": context.get("zVaFile"),
                 "zVaFolder": context.get("zVaFolder"),
                 "zBlock": context.get("zBlock"),
-                "title": zcli.config.zSpark.get("title") if zcli and hasattr(zcli, 'config') and hasattr(zcli.config, 'zSpark') and zcli.config.zSpark else None
+                "title": zcli.config.zSpark.get("title") if zcli and hasattr(zcli, 'config') and hasattr(zcli.config, 'zSpark') and zcli.config.zSpark else None,
+                "websocket": {
+                    "ssl_enabled": zcli.config.websocket.ssl_enabled if zcli and hasattr(zcli, 'config') and hasattr(zcli.config, 'websocket') else False,
+                    "host": zcli.config.websocket.host if zcli and hasattr(zcli, 'config') and hasattr(zcli.config, 'websocket') else "127.0.0.1",
+                    "port": zcli.config.websocket.port if zcli and hasattr(zcli, 'config') and hasattr(zcli.config, 'websocket') else 8765
+                }
             }
             if any(v is not None for v in zui_config_values.values()):
                 import json
