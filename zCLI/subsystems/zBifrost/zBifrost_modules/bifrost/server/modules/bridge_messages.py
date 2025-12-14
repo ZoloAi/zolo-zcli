@@ -250,6 +250,10 @@ class MessageHandler:
         if event == "execute_walker" or event == "load_page":
             return await self._handle_walker_execution(ws, data)
         
+        # Form submission (async form handling)
+        if event == "form_submit":
+            return await self._handle_form_submit(ws, data)
+        
         return False
     
     async def _handle_input_response(self, data: Dict[str, Any]) -> bool:
@@ -446,6 +450,9 @@ class MessageHandler:
                 "error": "No zVaFile found for base path: ..."
             }
         """
+        print(f"\n{'='*80}")
+        print(f"[MessageHandler] 🚀 WALKER EXECUTION REQUESTED")
+        print(f"{'='*80}")
         self.logger.info("[MessageHandler] Walker execution requested")
         
         try:
@@ -487,8 +494,35 @@ class MessageHandler:
             
             # Execute the block via walker
             # Note: walker.zBlock_loop() generates display events which are auto-buffered in zBifrost mode
+            # Use zcli.walker (always available) instead of self.walker (may be None in web server mode)
+            walker = self.walker or self.zcli.walker  # Fallback to zcli.walker if self.walker is None
+            
+            # Initialize breadcrumbs before executing (required for walker_dispatch)
+            # Construct full breadcrumb path: @.{zVaFolder}.{zVaFile}.{zBlock}
+            folder_part = zVaFolder.lstrip('@.')
+            full_crumb_path = f"@.{folder_part}.{zVaFile}.{zBlock}"
+            
+            # Initialize zCrumbs if not present
+            if "zCrumbs" not in self.zcli.session:
+                self.zcli.session["zCrumbs"] = {}
+            
+            # Set breadcrumb for this block
+            self.zcli.session["zCrumbs"][full_crumb_path] = []
+            self.zcli.session["zBlock"] = zBlock
+            
+            self.logger.debug(f"[MessageHandler] Initialized breadcrumb: {full_crumb_path}")
+            
+            # Execute the block
             block_dict = raw_zFile[zBlock]
-            result = await asyncio.to_thread(self.walker.zBlock_loop, block_dict)
+            result = await asyncio.to_thread(walker.zBlock_loop, block_dict)
+            
+            # Collect buffered display events and broadcast them
+            buffered_events = self.zcli.display.collect_buffered_events()
+            self.logger.info(f"[MessageHandler] Collected {len(buffered_events)} buffered display events")
+            
+            for event in buffered_events:
+                self.logger.debug(f"[MessageHandler] Broadcasting event: {event.get('display_event', 'unknown')}")
+                await ws.send(json.dumps(event))
             
             # Send completion response
             await ws.send(self._build_response(data, result="completed"))
@@ -499,6 +533,162 @@ class MessageHandler:
             error_msg = f"Walker execution failed: {str(e)}"
             self.logger.error(f"[MessageHandler] {error_msg}", exc_info=True)
             await ws.send(self._build_response(data, error=error_msg))
+            return True
+    
+    async def _handle_form_submit(self, ws: Any, data: Dict[str, Any]) -> bool:
+        """
+        Handle form submission from Bifrost frontend (async form handling).
+        
+        This handler enables async form submission in Bifrost mode. When a user
+        fills out a zDialog form in the browser and clicks Submit, the frontend
+        sends the form data along with the onSubmit action. This handler validates
+        the data and executes the onSubmit action via zDispatch.
+        
+        Args:
+            ws: WebSocket connection
+            data: Request data with:
+                - data (dict): Form field values {field_name: value, ...}
+                - onSubmit (dict): Submit action to execute (e.g., zData insert)
+                - model (str, optional): Schema model path for validation
+                - dialogId (str, optional): Dialog identifier
+                - _requestId (int, optional): Request ID for response correlation
+        
+        Returns:
+            bool: True (always handled)
+        
+        Process:
+            1. Extract form data and onSubmit action from request
+            2. Validate data against schema (if model specified)
+            3. Execute onSubmit action via zDispatch
+            4. Send success/error response back to frontend
+        
+        Example Request:
+            {
+                "event": "form_submit",
+                "dialogId": "dialog-123",
+                "data": {"name": "Gal", "email": "gal@zolo.media", "password": "secret123"},
+                "onSubmit": {"zData": {"action": "insert", "table": "users", ...}},
+                "model": "@.models.zSchema.contacts",
+                "_requestId": 5
+            }
+        
+        Example Response (success):
+            {
+                "_requestId": 5,
+                "success": true,
+                "message": "✓ Registration successful! Welcome to zCLI."
+            }
+        
+        Example Response (validation error):
+            {
+                "_requestId": 5,
+                "success": false,
+                "message": "Validation failed",
+                "errors": ["Email is required", "Password must be at least 8 characters"]
+            }
+        """
+        self.logger.info("[MessageHandler] Form submission received")
+        
+        try:
+            # Extract form data and onSubmit action
+            form_data = data.get('data', {})
+            on_submit = data.get('onSubmit')
+            model = data.get('model')
+            dialog_id = data.get('dialogId', 'unknown')
+            
+            self.logger.debug(f"[FormSubmit] Dialog ID: {dialog_id}")
+            self.logger.debug(f"[FormSubmit] Fields: {list(form_data.keys())}")
+            self.logger.debug(f"[FormSubmit] Model: {model}")
+            
+            # Validate if model is specified
+            if model and isinstance(model, str) and model.startswith('@'):
+                self.logger.info(f"[FormSubmit] Validating against schema: {model}")
+                
+                try:
+                    # Load schema
+                    schema_dict = self.zcli.loader.handle(model) if hasattr(self.zcli, 'loader') else None
+                    
+                    if schema_dict:
+                        # Extract table name from model path
+                        table_name = model.split('.')[-1]
+                        
+                        # Create validator
+                        from zCLI.subsystems.zData.zData_modules.shared.validator import DataValidator
+                        validator = DataValidator(schema_dict, self.logger)
+                        
+                        # Validate insert data
+                        is_valid, errors = validator.validate_insert(table_name, form_data)
+                        
+                        if not is_valid:
+                            self.logger.warning(f"[FormSubmit] Validation failed: {errors}")
+                            
+                            # Format error messages for frontend
+                            error_messages = [f"{field}: {msg}" for field, msg in errors.items()]
+                            
+                            await ws.send(self._build_response(data,
+                                success=False,
+                                message="Validation failed. Please correct the errors and try again.",
+                                errors=error_messages
+                            ))
+                            return True
+                        
+                        self.logger.info("[FormSubmit] Validation passed")
+                    else:
+                        self.logger.warning(f"[FormSubmit] Schema not found: {model}")
+                
+                except Exception as e:
+                    self.logger.error(f"[FormSubmit] Validation error: {e}", exc_info=True)
+                    # Continue without validation (non-blocking)
+            
+            # Check if onSubmit action exists
+            if not on_submit:
+                self.logger.warning("[FormSubmit] No onSubmit action provided")
+                await ws.send(self._build_response(data,
+                    success=False,
+                    message="Form configuration error: No onSubmit action specified."
+                ))
+                return True
+            
+            # Inject form data into onSubmit action (placeholder replacement)
+            from zCLI.subsystems.zDialog.dialog_modules.dialog_context import inject_placeholders
+            
+            # Create dialog context for placeholder injection
+            dialog_context = {
+                'model': model,
+                'fields': list(form_data.keys()),
+                'zConv': form_data
+            }
+            
+            # Inject zConv placeholders into onSubmit
+            injected_action = inject_placeholders(on_submit, dialog_context, self.logger)
+            
+            self.logger.info(f"[FormSubmit] Executing onSubmit action via zDispatch")
+            
+            # Execute onSubmit via zDispatch
+            # Run in thread to avoid blocking the event loop
+            result = await asyncio.to_thread(
+                self.zcli.dispatch.handle,
+                'zData',  # Assuming most forms submit via zData
+                injected_action.get('zData', injected_action)  # Extract zData if nested
+            )
+            
+            self.logger.info(f"[FormSubmit] Action executed successfully")
+            
+            # Send success response
+            await ws.send(self._build_response(data,
+                success=True,
+                message="✓ Form submitted successfully!"
+            ))
+            return True
+            
+        except Exception as e:
+            error_msg = f"Form submission failed: {str(e)}"
+            self.logger.error(f"[MessageHandler] {error_msg}", exc_info=True)
+            await ws.send(self._build_response(data,
+                success=False,
+                message="An error occurred while submitting the form. Please try again.",
+                errors=[str(e)]
+            ))
             return True
     
     def _get_event(self, data: Dict[str, Any]) -> Optional[str]:

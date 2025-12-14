@@ -149,6 +149,7 @@ COLOR_ZDIALOG = "ZDIALOG"
 # ============================================================================
 
 KEY_ZDIALOG = "zDialog"
+KEY_TITLE = "title"
 KEY_MODEL = "model"
 KEY_FIELDS = "fields"
 KEY_ONSUBMIT = "onSubmit"
@@ -429,6 +430,7 @@ class zDialog:
 
         # Extract dialog configuration
         zDialog_obj = zHorizontal[KEY_ZDIALOG]
+        title = zDialog_obj.get(KEY_TITLE)
         model = zDialog_obj[KEY_MODEL]
         fields = zDialog_obj[KEY_FIELDS]
         on_submit = zDialog_obj.get(KEY_ONSUBMIT)
@@ -442,6 +444,13 @@ class zDialog:
 
         # Create dialog context
         zContext = create_dialog_context(model, fields, self.logger)
+        
+        # Add additional context for Bifrost mode (needed by FormRenderer)
+        if title:
+            zContext[KEY_TITLE] = title
+        if on_submit:
+            zContext[KEY_ONSUBMIT] = on_submit
+        
         self.logger.info(LOG_ZCONTEXT, zContext)
 
         # Check if data is pre-provided (WebSocket/GUI mode)

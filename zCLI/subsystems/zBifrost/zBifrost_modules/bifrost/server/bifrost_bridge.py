@@ -284,6 +284,13 @@ class zBifrost:
 
             # Dispatch events (zDispatch commands)
             EVENT_DISPATCH: self.events['dispatch'].handle_dispatch,
+            
+            # Walker execution events (declarative UI rendering)
+            'execute_walker': self.message_handler._handle_walker_execution,
+            'load_page': self.message_handler._handle_walker_execution,
+            
+            # Form submission events (async form handling)
+            'form_submit': self.message_handler._handle_form_submit,
         }
 
         self.logger.info(LOG_INITIALIZED)
@@ -432,7 +439,8 @@ class zBifrost:
             builtin_events = {
                 EVENT_INPUT_RESPONSE, EVENT_CONNECTION_INFO, EVENT_GET_SCHEMA, 
                 EVENT_CLEAR_CACHE, EVENT_CACHE_STATS, EVENT_SET_CACHE_TTL,
-                EVENT_DISCOVER, EVENT_INTROSPECT, EVENT_DISPATCH
+                EVENT_DISCOVER, EVENT_INTROSPECT, EVENT_DISPATCH,
+                'execute_walker', 'load_page', 'form_submit'  # Walker and form events need responses
             }
             
             if event in builtin_events:

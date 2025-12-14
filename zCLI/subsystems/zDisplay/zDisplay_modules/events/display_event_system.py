@@ -1279,8 +1279,18 @@ class zSystem:
             - Uses zDeclare() for form header/footer
             - Composes zPrimitives.read_string() for input collection
         """
+        print(f"\n{'='*80}")
+        print(f"[zDialog] 📋 ZDIALOG CALLED - Context: {list(context.keys())}")
+        print(f"[zDialog] Fields: {context.get('fields', [])}")
+        print(f"[zDialog] Model: {context.get('model', 'N/A')}")
+        print(f"[zDialog] Has onSubmit: {bool(context.get('onSubmit'))}")
+        print(f"{'='*80}\n")
+        
         # Try Bifrost (GUI) mode first - send clean event
-        if self._try_gui_event(EVENT_ZDIALOG, {KEY_CONTEXT: context}):
+        # Send the context directly (not nested) for easier frontend access
+        gui_sent = self._try_gui_event(EVENT_ZDIALOG, context)
+        print(f"[zDialog] GUI event sent: {gui_sent}")
+        if gui_sent:
             return {}  # GUI event sent successfully, return empty dict
 
         # Terminal mode - simplified form display
