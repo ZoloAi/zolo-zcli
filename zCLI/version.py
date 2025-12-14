@@ -2,8 +2,8 @@
 # ───────────────────────────────────────────────────────────────
 """Version management for zCLI package."""
 
-__version__ = "1.5.6"
-__version_info__ = (1, 5, 6)
+__version__ = "1.5.7"
+__version_info__ = (1, 5, 7)
 
 # Package metadata
 __name__ = "zolo-zcli"
