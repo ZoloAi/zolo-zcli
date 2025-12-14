@@ -261,12 +261,40 @@ def handle_submit(
 # Private Helpers
 # ============================================================================
 
+def _mask_password_in_zfunc_string(zfunc_str: str) -> str:
+    """
+    Mask password arguments in zFunc plugin call strings.
+    
+    Detects &auth.login() calls and masks the password (2nd argument).
+    Example: "&auth.login('email@test.com', 'secret123')" 
+          -> "&auth.login('email@test.com', '********')"
+    
+    Args:
+        zfunc_str: zFunc string like "&auth.login('email', 'pass')"
+    
+    Returns:
+        String with password argument masked
+    """
+    import re
+    
+    # Pattern to match &auth.login() with two string arguments
+    # Captures: function_call, first_arg, second_arg (password)
+    pattern = r"(&auth\.login\(['\"]([^'\"]+)['\"],\s*['\"])([^'\"]+)(['\"])"
+    
+    def mask_password(match):
+        # Reconstruct with masked password
+        return f"{match.group(1)}********{match.group(4)}"
+    
+    return re.sub(pattern, mask_password, zfunc_str)
+
+
 def _mask_passwords_in_dict(data: Any, password_fields: list = None) -> Any:
     """
     Recursively mask password values in dictionaries for secure logging.
     
     Masks any field containing 'password' in its name (case-insensitive)
-    or in the provided password_fields list.
+    or in the provided password_fields list. Also masks passwords in
+    zFunc plugin call strings.
     
     Args:
         data: Data to mask (dict, list, or primitive)
@@ -284,6 +312,9 @@ def _mask_passwords_in_dict(data: Any, password_fields: list = None) -> Any:
             # Check if this is a password field
             if 'password' in str(key).lower() or key in password_fields:
                 masked[key] = '********'
+            # Check if this is a zFunc string that might contain passwords
+            elif key == 'zFunc' and isinstance(value, str) and '&auth.login' in value:
+                masked[key] = _mask_password_in_zfunc_string(value)
             else:
                 # Recursively mask nested structures
                 masked[key] = _mask_passwords_in_dict(value, password_fields)

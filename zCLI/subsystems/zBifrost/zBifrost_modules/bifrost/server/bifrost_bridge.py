@@ -339,7 +339,17 @@ class zBifrost:
         # Handle messages
         try:
             async for message in ws:
-                self.logger.info(LOG_RECEIVED.format(message=message))
+                # Mask passwords in logged messages
+                try:
+                    import json
+                    from zCLI.subsystems.zDialog.dialog_modules.dialog_submit import _mask_passwords_in_dict
+                    msg_dict = json.loads(message)
+                    masked_msg = _mask_passwords_in_dict(msg_dict)
+                    self.logger.info(LOG_RECEIVED.format(message=json.dumps(masked_msg)))
+                except:
+                    # If parsing fails, log as-is
+                    self.logger.info(LOG_RECEIVED.format(message=message))
+                
                 await self.handle_message(ws, message)
 
         except ws_exceptions.ConnectionClosed:

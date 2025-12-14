@@ -595,12 +595,26 @@ class MessageHandler:
             model = data.get('model')
             dialog_id = data.get('dialogId', 'unknown')
             
+            # Mask passwords in form_data for logging
+            from zCLI.subsystems.zDialog.dialog_modules.dialog_submit import _mask_passwords_in_dict
+            masked_form_data = _mask_passwords_in_dict(form_data)
+            
             self.logger.debug(f"[FormSubmit] Dialog ID: {dialog_id}")
             self.logger.debug(f"[FormSubmit] Fields: {list(form_data.keys())}")
+            self.logger.debug(f"[FormSubmit] Data: {masked_form_data}")
             self.logger.debug(f"[FormSubmit] Model: {model}")
             
-            # Validate if model is specified
-            if model and isinstance(model, str) and model.startswith('@'):
+            # Validate if model is specified AND it's an insert operation
+            # Only auto-validate for zData insert operations (registration)
+            # For login/custom operations, let the onSubmit handler validate
+            is_insert_operation = (
+                on_submit and 
+                isinstance(on_submit, dict) and 
+                'zData' in on_submit and 
+                on_submit.get('zData', {}).get('action') == 'insert'
+            )
+            
+            if model and isinstance(model, str) and model.startswith('@') and is_insert_operation:
                 self.logger.info(f"[FormSubmit] Validating against schema: {model}")
                 
                 try:
@@ -638,6 +652,10 @@ class MessageHandler:
                 except Exception as e:
                     self.logger.error(f"[FormSubmit] Validation error: {e}", exc_info=True)
                     # Continue without validation (non-blocking)
+            elif model and not is_insert_operation:
+                self.logger.info("[FormSubmit] Auto-validation skipped (not a zData insert operation) - custom handler will validate")
+            else:
+                self.logger.debug("[FormSubmit] No validation - no model specified")
             
             # Check if onSubmit action exists
             if not on_submit:
@@ -661,24 +679,62 @@ class MessageHandler:
             # Inject zConv placeholders into onSubmit
             injected_action = inject_placeholders(on_submit, dialog_context, self.logger)
             
+            # Mask passwords in injected action for logging
+            masked_action = _mask_passwords_in_dict(injected_action)
+            self.logger.debug(f"[FormSubmit] Injected action: {masked_action}")
+            
             self.logger.info(f"[FormSubmit] Executing onSubmit action via zDispatch")
             
-            # Execute onSubmit via zDispatch
-            # Run in thread to avoid blocking the event loop
-            result = await asyncio.to_thread(
-                self.zcli.dispatch.handle,
-                'zData',  # Assuming most forms submit via zData
-                injected_action.get('zData', injected_action)  # Extract zData if nested
-            )
-            
-            self.logger.info(f"[FormSubmit] Action executed successfully")
-            
-            # Send success response
-            await ws.send(self._build_response(data,
-                success=True,
-                message="✓ Form submitted successfully!"
-            ))
-            return True
+            # Detect action type and execute appropriately
+            if 'zFunc' in injected_action:
+                # Plugin function call
+                self.logger.debug(f"[FormSubmit] Executing zFunc: {injected_action['zFunc']}")
+                
+                # Execute via plugin resolver
+                # Note: zcli is already bound to zparser, only pass the function string and context
+                result = await asyncio.to_thread(
+                    self.zcli.zparser.resolve_plugin_invocation,
+                    injected_action['zFunc'],
+                    context=dialog_context
+                )
+                
+                # Check if result is a dict with success/message (from plugin)
+                if isinstance(result, dict) and 'success' in result:
+                    # Plugin returned structured response for Bifrost
+                    await ws.send(self._build_response(data, **result))
+                    return True
+                else:
+                    # Plugin returned None or simple value (Terminal-style)
+                    await ws.send(self._build_response(data,
+                        success=True,
+                        message="✓ Action completed successfully!"
+                    ))
+                    return True
+                    
+            elif 'zData' in injected_action:
+                # Data operation (insert, update, etc.)
+                result = await asyncio.to_thread(
+                    self.zcli.dispatch.handle,
+                    'zData',
+                    injected_action.get('zData', injected_action)
+                )
+                
+                self.logger.info(f"[FormSubmit] Action executed successfully")
+                
+                # Send success response
+                await ws.send(self._build_response(data,
+                    success=True,
+                    message="✓ Form submitted successfully!"
+                ))
+                return True
+            else:
+                # Unknown action type
+                self.logger.warning(f"[FormSubmit] Unknown action type: {list(injected_action.keys())}")
+                await ws.send(self._build_response(data,
+                    success=False,
+                    message="Form configuration error: Unknown action type."
+                ))
+                return True
             
         except Exception as e:
             error_msg = f"Form submission failed: {str(e)}"

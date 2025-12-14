@@ -471,7 +471,16 @@ class zDialog:
         # ──────────────────────────────────────────────────────────────────
         # AUTO-VALIDATION (Week 5.2): Validate form data against zSchema
         # ──────────────────────────────────────────────────────────────────
-        if model and isinstance(model, str) and model.startswith('@'):
+        # Only auto-validate for zData insert operations (registration)
+        # For login/custom operations, let the onSubmit handler validate
+        is_insert_operation = (
+            on_submit and 
+            isinstance(on_submit, dict) and 
+            'zData' in on_submit and 
+            on_submit['zData'].get('action') == 'insert'
+        )
+        
+        if model and isinstance(model, str) and model.startswith('@') and is_insert_operation:
             self.logger.info(LOG_AUTO_VALIDATION_ENABLED, model)
             
             try:
@@ -531,6 +540,8 @@ class zDialog:
                 # This maintains backward compatibility - forms without valid models still work
                 self.logger.warning(LOG_AUTO_VALIDATION_ERROR, val_err)
         
+        elif model and not is_insert_operation:
+            self.logger.debug("Auto-validation skipped (not a zData insert operation) - custom handler will validate")
         elif model:
             self.logger.debug(LOG_AUTO_VALIDATION_SKIPPED_PREFIX, model)
         else:
@@ -538,9 +549,19 @@ class zDialog:
 
         # Handle submission if onSubmit provided
         try:
-            if on_submit:
+            # In Bifrost mode, if zConv is empty, this is just form display (not submission)
+            # Only execute onSubmit if we have actual form data
+            is_bifrost_display = (
+                self.session.get(SESSION_KEY_ZMODE) == SESSION_VALUE_ZBIFROST and 
+                not zConv  # Empty zConv means form display, not submission
+            )
+            
+            if on_submit and not is_bifrost_display:
                 self.logger.info(LOG_ONSUBMIT_EXECUTE)
                 return handle_submit(on_submit, zContext, self.logger, walker=self.walker)
+            elif is_bifrost_display:
+                self.logger.debug("[zDialog] Bifrost mode - form displayed, onSubmit deferred to form_submit handler")
+                return None  # Return None for walker compatibility (dicts are not hashable nav results)
             
             # No onSubmit - return collected data
             return zConv

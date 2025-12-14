@@ -5,6 +5,34 @@
 from zCLI import inspect
 
 
+def _mask_passwords_in_data(data, mask='********'):
+    """
+    Recursively mask password values in dicts/lists for secure logging.
+    
+    Args:
+        data: Dict, list, or other data structure to mask
+        mask: String to use for masking (default: '********')
+        
+    Returns:
+        Masked copy of the data
+    """
+    if isinstance(data, dict):
+        masked = {}
+        for key, value in data.items():
+            # Check if key contains 'password' (case-insensitive)
+            if isinstance(key, str) and 'password' in key.lower():
+                masked[key] = mask
+            else:
+                masked[key] = _mask_passwords_in_data(value, mask)
+        return masked
+    elif isinstance(data, list):
+        return [_mask_passwords_in_data(item, mask) for item in data]
+    elif isinstance(data, tuple):
+        return tuple(_mask_passwords_in_data(item, mask) for item in data)
+    else:
+        return data
+
+
 class zFunc:
     """Function loading and execution subsystem."""
 
@@ -20,13 +48,16 @@ class zFunc:
 
     def handle(self, zHorizontal, zContext=None):
         """Execute external Python function with given spec and context."""
-        self.display.zDeclare(f"{zHorizontal}", color=self.mycolor, indent=1, style="single")
+        # Mask passwords in display and logs for security
+        masked_horizontal = _mask_passwords_in_data(zHorizontal)
+        self.display.zDeclare(f"{masked_horizontal}", color=self.mycolor, indent=1, style="single")
 
         self.logger.debug("zFunc.handle() invoked:")
-        self.logger.debug("zHorizontal: %s", zHorizontal)
+        self.logger.debug("zHorizontal: %s", masked_horizontal)
 
         if zContext:
-            for k, v in zContext.items():
+            masked_context = _mask_passwords_in_data(zContext)
+            for k, v in masked_context.items():
                 self.logger.debug("  %s: %s", k, v)
         else:
             self.logger.debug("zContext: None")
@@ -42,7 +73,7 @@ class zFunc:
 
             # Step 2: Parse arguments
             args = self._parse_args_with_display(arg_str, zContext)
-            self.logger.debug("Prepared args: %s", args)
+            self.logger.debug("Prepared args: %s", _mask_passwords_in_data(args))
 
             # Merge model if present in context
             if zContext and isinstance(zContext, dict) and "model" in zContext:
@@ -51,7 +82,7 @@ class zFunc:
                     args[0]["model"] = model
                 else:
                     args.insert(0, {"model": model})
-                self.logger.debug("Args after model merge: %s", args)
+                self.logger.debug("Args after model merge: %s", _mask_passwords_in_data(args))
 
             # Step 3: Resolve callable
             func = self._resolve_callable_with_display(func_path, function_name)
@@ -59,7 +90,7 @@ class zFunc:
 
             # Step 4: Execute function with optional session/context injection
             result = self._execute_function(func, args, zContext)
-            self.logger.debug("Execution result: %s", result)
+            self.logger.debug("Execution result: %s", _mask_passwords_in_data(result))
 
             # Step 5: Display result
             self._display_result(result)
