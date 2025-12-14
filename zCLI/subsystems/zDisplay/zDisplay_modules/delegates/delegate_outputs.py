@@ -51,7 +51,8 @@ class DelegateOutputs:
         label: str, 
         color: str = DEFAULT_COLOR_RESET, 
         indent: int = DEFAULT_INDENT, 
-        style: str = DEFAULT_STYLE_FULL
+        style: str = DEFAULT_STYLE_FULL,
+        **kwargs
     ) -> Any:
         """Display formatted section header.
         
@@ -60,12 +61,14 @@ class DelegateOutputs:
             color: Color code (default: RESET)
             indent: Indentation level (default: 0)
             style: Header style - 'full', 'single', 'minimal' (default: full)
+            **kwargs: Additional parameters (e.g., 'class' for custom CSS classes)
             
         Returns:
             Any: Result from handle() method
             
         Example:
             display.header("User Management", color="CYAN", style="full")
+            display.header("Title", color="PRIMARY", class="zTitle-1")
         """
         return self.handle({
             KEY_EVENT: EVENT_HEADER,
@@ -73,6 +76,7 @@ class DelegateOutputs:
             "color": color,
             "indent": indent,
             "style": style,
+            **kwargs  # Pass through additional parameters
         })
 
     def zDeclare(

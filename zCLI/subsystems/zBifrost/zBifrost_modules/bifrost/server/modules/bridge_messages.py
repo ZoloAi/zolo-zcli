@@ -517,13 +517,11 @@ class MessageHandler:
             result = await asyncio.to_thread(walker.zBlock_loop, block_dict)
             
             # Collect buffered display events and broadcast them
+            # Clear buffered events without broadcasting them
+            # In Bifrost mode, the frontend renders directly from YAML (preserving _zClass styling)
+            # Broadcasting buffered events would cause double-rendering
             buffered_events = self.zcli.display.collect_buffered_events()
-            self.logger.info(f"[MessageHandler] Collected {len(buffered_events)} buffered display events")
-            
-            for i, event in enumerate(buffered_events):
-                event_type = event.get('display_event', event.get('event', 'unknown'))
-                self.logger.info(f"[MessageHandler] Broadcasting event {i+1}/{len(buffered_events)}: {event_type}")
-                await ws.send(json.dumps(event))
+            self.logger.info(f"[MessageHandler] Cleared {len(buffered_events)} buffered display events (not broadcasting - frontend renders from YAML)")
             
             # Send completion response
             await ws.send(self._build_response(data, result="completed"))

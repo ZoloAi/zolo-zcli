@@ -236,7 +236,7 @@ class zEvents:
     # Convenience Delegates - BasicOutputs
     # ═══════════════════════════════════════════════════════════════════════════
 
-    def header(self, label: str, color: str = DEFAULT_COLOR, indent: int = 0, style: str = DEFAULT_STYLE_FULL) -> Any:
+    def header(self, label: str, color: str = DEFAULT_COLOR, indent: int = 0, style: str = DEFAULT_STYLE_FULL, **kwargs) -> Any:
         """Display formatted header with styling.
         
         Convenience delegate to BasicOutputs.header for backward compatibility.
@@ -246,11 +246,12 @@ class zEvents:
             color: Color name for styling (default: RESET)
             indent: Indentation level (default: 0)
             style: Header style (default: full)
+            **kwargs: Additional parameters (e.g., 'class' for custom CSS classes)
             
         Returns:
             Any: Result from BasicOutputs.header method
         """
-        return self.BasicOutputs.header(label, color, indent, style)
+        return self.BasicOutputs.header(label, color, indent, style, **kwargs)
 
     def text(
         self, 
