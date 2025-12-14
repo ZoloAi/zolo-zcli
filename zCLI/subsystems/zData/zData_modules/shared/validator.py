@@ -379,6 +379,68 @@ class DataValidator:
             FORMAT_PHONE: self._validate_phone,
         }
 
+    def validate_field(
+        self,
+        table: str,
+        field_name: str,
+        value: Any
+    ) -> Tuple[bool, Optional[Dict[str, str]]]:
+        """
+        Validate a single field value against schema rules.
+        
+        This method allows field-by-field validation for progressive form input.
+        It validates the field using all 5 validation layers.
+        
+        Args:
+            table: Table name to validate against
+            field_name: Name of the field to validate
+            value: Value to validate
+        
+        Returns:
+            Tuple of (is_valid, errors):
+            - is_valid: True if validation passes, False otherwise
+            - errors: None if valid, Dict with {field_name: error_message} if invalid
+        
+        Examples:
+            Valid field:
+                >>> is_valid, errors = validator.validate_field("users", "email", "john@acme.com")
+                >>> # Returns: (True, None)
+            
+            Invalid field:
+                >>> is_valid, errors = validator.validate_field("users", "email", "invalid")
+                >>> # Returns: (False, {"email": "Invalid email address format"})
+        """
+        # Get table schema
+        table_schema = self.schema.get(table)
+        if not table_schema or not isinstance(table_schema, dict):
+            return True, None  # No schema = no validation (graceful)
+        
+        # Get field definition
+        field_def = table_schema.get(field_name)
+        if not field_def or not isinstance(field_def, dict):
+            return True, None  # No field def = no validation
+        
+        # Get rules
+        rules = field_def.get(SCHEMA_KEY_RULES, {})
+        if not rules and not field_def.get(SCHEMA_KEY_REQUIRED, False):
+            return True, None  # No rules and not required = valid
+        
+        # Validate using internal method
+        is_valid, error_msg = self._validate_field(
+            field_name=field_name,
+            value=value,
+            rules=rules,
+            field_def=field_def,
+            table_name=table,
+            full_data={field_name: value}
+        )
+        
+        # Return in same format as validate_insert
+        if is_valid:
+            return True, None
+        else:
+            return False, {field_name: error_msg}
+
     def validate_insert(
         self,
         table: str,

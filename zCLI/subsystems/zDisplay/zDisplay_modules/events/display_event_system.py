@@ -417,6 +417,7 @@ KEY_MENU = "menu"                   # Menu items payload
 KEY_PROMPT = "prompt"               # Menu prompt text
 KEY_RETURN_SELECTION = "return_selection"  # Interactive flag
 KEY_CONTEXT = "context"             # Dialog context payload
+KEY_MODEL = "model"                 # Dialog schema model reference
 KEY_FIELDS = "fields"               # Dialog fields list
 
 # Messages (Terminal Output)
@@ -1290,14 +1291,141 @@ class zSystem:
 
         zConv = {}
 
-        # Simple field collection (full schema validation would need more work)
+        # Get schema and validator for field-by-field validation (if available)
+        model = context.get(KEY_MODEL)
+        validator = None
+        table_name = None
+        logger = self.display.logger if hasattr(self.display, 'logger') else None
+        
+        if logger:
+            logger.debug(f"[zDialog] Field-by-field validation setup - model: {model}")
+        
+        if model and isinstance(model, str) and model.startswith('@') and _zcli:
+            try:
+                if logger:
+                    logger.debug(f"[zDialog] Loading schema from: {model}")
+                
+                # Load schema for validation
+                from zCLI.subsystems.zData.zData_modules.shared.validator import DataValidator
+                schema_dict = _zcli.loader.handle(model) if hasattr(_zcli, 'loader') else None
+                
+                if logger:
+                    logger.debug(f"[zDialog] Schema loaded: {bool(schema_dict)}")
+                
+                if schema_dict:
+                    table_name = model.split('.')[-1]
+                    if logger:
+                        logger.debug(f"[zDialog] Table name extracted: {table_name}")
+                        logger.debug(f"[zDialog] Schema fields: {list(schema_dict.get(table_name, {}).keys())}")
+                    
+                    # Use display's logger if available, otherwise try zcli's
+                    validator_logger = logger or (_zcli.logger if hasattr(_zcli, 'logger') else None)
+                    if validator_logger:
+                        validator = DataValidator(schema_dict, validator_logger)
+                        if logger:
+                            logger.info(f"[zDialog] ✅ Field-by-field validation ENABLED for table: {table_name}")
+                else:
+                    # Schema not found - this is a critical error for forms with model specified
+                    error_msg = f"Schema validation required but schema not found: {model}"
+                    if logger:
+                        logger.error(f"[zDialog] {error_msg}")
+                    if self.Signals:
+                        self.Signals.error(f"✗ {error_msg}", indent=0)
+                        self._output_text("", break_after=False)
+                        self.Signals.error("Form cannot proceed without schema validation.", indent=1)
+                    return {}  # Return empty dict to signal failure
+                        
+            except Exception as e:
+                # If schema loading fails, this is a critical error
+                error_msg = f"Failed to load schema: {e}"
+                if logger:
+                    logger.error(f"[zDialog] {error_msg}")
+                if self.Signals:
+                    self.Signals.error(f"✗ {error_msg}", indent=0)
+                    self._output_text("", break_after=False)
+                    self.Signals.error("Form cannot proceed without schema validation.", indent=1)
+                return {}  # Return empty dict to signal failure
+        else:
+            if logger:
+                if not model:
+                    logger.debug(f"[zDialog] No model specified - validation disabled")
+                elif not model.startswith('@'):
+                    logger.debug(f"[zDialog] Model doesn't start with '@' - validation disabled: {model}")
+                elif not _zcli:
+                    logger.debug(f"[zDialog] No zcli instance - validation disabled")
+        
+        # Field-by-field collection with immediate validation
         for field in fields:
-            content = FORMAT_FIELD_NEWLINE.format(field=field)
-            self._output_text(content, break_after=False)
-            # Use primitive for input
-            prompt = FORMAT_FIELD_PROMPT.format(field=field)
-            value = self.zPrimitives.read_string(prompt)
-            zConv[field] = value
+            # Add newline before each field (except first)
+            if zConv:  # If not the first field
+                self._output_text("", break_after=False)
+            
+            # Extract field name, type, and label
+            if isinstance(field, dict):
+                field_name = field.get('name', field.get('field', 'unknown'))
+                field_type = field.get('type', None)  # None = auto-detect
+                field_label = field.get('label', field_name)  # Use label if provided
+            else:
+                field_name = str(field)
+                field_type = None  # Auto-detect
+                field_label = field_name
+            
+            # Auto-detect password fields if type not specified
+            if field_type is None:
+                # Check if field name contains 'password' (case-insensitive)
+                if 'password' in field_name.lower():
+                    field_type = 'password'
+                else:
+                    field_type = 'text'
+            
+            # Collect field with retry loop for validation
+            while True:
+                # Use appropriate input method based on field type
+                prompt = FORMAT_FIELD_PROMPT.format(field=field_label)
+                if field_type == 'password':
+                    value = self.zPrimitives.read_password(prompt)
+                else:
+                    value = self.zPrimitives.read_string(prompt)
+                
+                if logger:
+                    # Mask password fields in logs for security
+                    log_value = '********' if field_type == 'password' else value
+                    logger.debug(f"[zDialog] Field '{field_name}' input received: '{log_value}' (type: {field_type})")
+                
+                # Validate field immediately if validator available
+                if validator and table_name:
+                    if logger:
+                        logger.debug(f"[zDialog] Validating field '{field_name}' against table '{table_name}'")
+                    
+                    # Create temporary dict with just this field for validation
+                    temp_data = {field_name: value}
+                    is_valid, errors = validator.validate_field(table_name, field_name, value)
+                    
+                    if logger:
+                        logger.debug(f"[zDialog] Validation result for '{field_name}': valid={is_valid}, errors={errors}")
+                    
+                    if not is_valid and field_name in errors:
+                        # Display error and prompt for retry
+                        error_msg = errors[field_name]
+                        if logger:
+                            logger.info(f"[zDialog] ❌ Field '{field_name}' validation failed: {error_msg}")
+                        
+                        if self.Signals:
+                            self.Signals.error(f"✗ {error_msg}", indent=1)
+                            self._output_text("", break_after=False)
+                        # Loop continues - retry this field
+                    else:
+                        # Valid! Save and move to next field
+                        if logger:
+                            logger.info(f"[zDialog] ✅ Field '{field_name}' validation passed")
+                        zConv[field_name] = value
+                        break
+                else:
+                    # No validation - accept value
+                    if logger:
+                        logger.debug(f"[zDialog] No validation for field '{field_name}' - accepting value")
+                    zConv[field_name] = value
+                    break
 
         # Display footer
         self.zDeclare(MSG_FORM_COMPLETE, indent=0)

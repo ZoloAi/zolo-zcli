@@ -244,7 +244,9 @@ def handle_submit(
     walker.display.zDeclare("zSubmit", color=COLOR_ZDIALOG, indent=INDENT_DIALOG, style=STYLE_SINGLE)
 
     logger.debug(DEBUG_SUBMIT_EXPR, submit_expr)
-    logger.debug(DEBUG_CONTEXT_KEYS, list(zContext.keys()), zContext.get(KEY_ZCONV))
+    # Mask passwords in zConv for secure logging
+    masked_zconv = _mask_passwords_in_dict(zContext.get(KEY_ZCONV))
+    logger.debug(DEBUG_CONTEXT_KEYS, list(zContext.keys()), masked_zconv)
 
     # Dict-based submission => zDispatch
     if isinstance(submit_expr, dict):
@@ -258,6 +260,39 @@ def handle_submit(
 # ============================================================================
 # Private Helpers
 # ============================================================================
+
+def _mask_passwords_in_dict(data: Any, password_fields: list = None) -> Any:
+    """
+    Recursively mask password values in dictionaries for secure logging.
+    
+    Masks any field containing 'password' in its name (case-insensitive)
+    or in the provided password_fields list.
+    
+    Args:
+        data: Data to mask (dict, list, or primitive)
+        password_fields: Optional list of field names to mask
+    
+    Returns:
+        Copy of data with passwords masked as '********'
+    """
+    if password_fields is None:
+        password_fields = []
+    
+    if isinstance(data, dict):
+        masked = {}
+        for key, value in data.items():
+            # Check if this is a password field
+            if 'password' in str(key).lower() or key in password_fields:
+                masked[key] = '********'
+            else:
+                # Recursively mask nested structures
+                masked[key] = _mask_passwords_in_dict(value, password_fields)
+        return masked
+    elif isinstance(data, list):
+        return [_mask_passwords_in_dict(item, password_fields) for item in data]
+    else:
+        return data
+
 
 def _handle_dict_submit(
     submit_dict: Dict[str, Any],
@@ -351,7 +386,9 @@ def _handle_dict_submit(
         submit_dict = _inject_model_if_needed(submit_dict, zContext)
 
         # Step 3: Dispatch via zDispatch
-        logger.info(INFO_DISPATCH_DICT, submit_dict)
+        # Mask passwords in submit_dict for secure logging
+        masked_submit = _mask_passwords_in_dict(submit_dict)
+        logger.info(INFO_DISPATCH_DICT, masked_submit)
         result = handle_zDispatch(DISPATCH_CMD_SUBMIT, submit_dict, zcli=walker.zcli, walker=walker)
 
         # Step 4: Display return feedback

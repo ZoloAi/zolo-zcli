@@ -171,17 +171,27 @@ class HTTPRouter:
             if not route_config.get('auto_discover_blocks', False):
                 continue
             
-            # Get zVaFile path for parsing
-            zVaFolder = route_config.get('zVaFolder', '')
-            zVaFile = route_config.get('zVaFile', '')
+            # Get zVaFile path for parsing (with session fallback)
+            zVaFolder = route_config.get('zVaFolder')
+            zVaFile = route_config.get('zVaFile')
+            
+            # Fall back to session defaults if not specified in route
+            if not zVaFolder and self.zcli and self.zcli.session:
+                zVaFolder = self.zcli.session.get('zVaFolder', '')
+            if not zVaFile and self.zcli and self.zcli.session:
+                zVaFile = self.zcli.session.get('zVaFile', '')
             
             if not zVaFile:
-                self.logger.warning(f"[Router] Cannot auto-discover blocks for {route_path}: no zVaFile specified")
+                self.logger.warning(f"[Router] Cannot auto-discover blocks for {route_path}: no zVaFile in route or session")
                 continue
             
+            self.logger.info(f"[Router] Auto-discovering blocks for {route_path} from {zVaFolder}/{zVaFile}")
+            
             # Resolve zPath notation (@.UI → UI/)
-            if zVaFolder.startswith('@.'):
+            if zVaFolder and zVaFolder.startswith('@.'):
                 zVaFolder = zVaFolder[2:]  # Strip @. prefix
+            elif not zVaFolder:
+                zVaFolder = ''  # Default to empty (root level)
             
             # Build file path relative to serve_path
             vafile_path = os.path.join(

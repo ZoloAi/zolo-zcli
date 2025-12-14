@@ -291,8 +291,33 @@ def handle_insert(request: Dict[str, Any], ops: Any) -> bool:
     # Build data dictionary for validation and hooks
     data = dict(zip(fields, values))
 
-    # Phase 3: Execute onBeforeInsert hook (can modify data or abort)
+    # Phase 2.5: Auto-hash password fields (if zHash: bcrypt in schema)
     table_schema = ops.schema.get(table, {})
+    hash_modified = False
+    for field_name, field_value in list(data.items()):
+        field_def = table_schema.get(field_name, {})
+        if isinstance(field_def, dict) and field_def.get('zHash') == 'bcrypt':
+            # Hash the password using zAuth
+            if ops.zcli and hasattr(ops.zcli, 'auth'):
+                try:
+                    ops.logger.info(f"[zData] Auto-hashing field '{field_name}' with bcrypt (plaintext MASKED for security)")
+                    hashed_value = ops.zcli.auth.hash_password(str(field_value))
+                    data[field_name] = hashed_value
+                    hash_modified = True
+                    ops.logger.debug(f"[zData] Field '{field_name}' hashed successfully (hash length: {len(hashed_value)} chars)")
+                except Exception as e:
+                    ops.logger.error(f"[zData] Failed to hash field '{field_name}': {e}")
+                    return False
+            else:
+                ops.logger.error(f"[zData] zHash: bcrypt specified for '{field_name}' but zAuth not available")
+                return False
+    
+    # Rebuild fields/values from potentially modified data
+    if hash_modified:
+        fields = list(data.keys())
+        values = list(data.values())
+
+    # Phase 3: Execute onBeforeInsert hook (can modify data or abort)
     on_before_insert = table_schema.get(HOOK_BEFORE_INSERT)
     if on_before_insert:
         ops.logger.info(LOG_HOOK_BEFORE, HOOK_BEFORE_INSERT, table)

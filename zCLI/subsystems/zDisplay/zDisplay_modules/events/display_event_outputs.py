@@ -231,7 +231,7 @@ class BasicOutputs:
     # Output Methods
     # ═══════════════════════════════════════════════════════════════════════════
 
-    def header(self, label: str, color: str = DEFAULT_COLOR, indent: int = 0, style: str = DEFAULT_STYLE_FULL) -> None:
+    def header(self, label: str, color: str = DEFAULT_COLOR, indent: int = 0, style: str = DEFAULT_STYLE_FULL, **kwargs) -> None:
         """Display formatted section header with styling.
         
         FOUNDATION METHOD - Used by ALL 7 other event packages for displaying
@@ -251,6 +251,8 @@ class BasicOutputs:
                    - "full" → ═══════════════
                    - "single" → ───────────────
                    - "wave" → ~~~~~~~~~~~~~~~
+            **kwargs: Additional parameters (e.g., 'class' for zBifrost CSS classes)
+                      Ignored in Terminal mode, passed through in GUI mode
                    
         Returns:
             None
@@ -258,6 +260,7 @@ class BasicOutputs:
         Example:
             self.BasicOutputs.header("Error", color="RED", style="single")
             self.BasicOutputs.header("Section Title", color="CYAN", indent=1)
+            self.BasicOutputs.header("Title", color="PRIMARY", indent=1, class="zTitle-1")
             
         Note:
             Used by: BasicInputs (prompts), Signals (error/warning headers),
@@ -265,13 +268,17 @@ class BasicOutputs:
                      zSystem (all system UI), zAuth (auth prompts), 
                      TimeBased (progress headers)
         """
-        # Try GUI mode first - send clean event via primitive
-        if self.zPrimitives.send_gui_event(EVENT_NAME_HEADER, {
+        # Build event dict with all parameters
+        event_data = {
             KEY_LABEL: label,
             KEY_COLOR: color,
             KEY_INDENT: indent,
-            KEY_STYLE: style
-        }):
+            KEY_STYLE: style,
+            **kwargs  # Pass through any additional parameters (like 'class')
+        }
+        
+        # Try GUI mode first - send clean event via primitive
+        if self.zPrimitives.send_gui_event(EVENT_NAME_HEADER, event_data):
             return  # GUI event sent successfully
 
         # Terminal mode - SINGLE-LINE, ASCII-only, width-safe header (never wraps)
@@ -347,7 +354,8 @@ class BasicOutputs:
         indent: int = 0, 
         pause: bool = False,  # Preferred API
         break_message: Optional[str] = None,
-        break_after: Optional[bool] = None  # Legacy parameter
+        break_after: Optional[bool] = None,  # Legacy parameter
+        **kwargs  # Additional parameters (e.g., 'class' for CSS classes)
     ) -> None:
         """Display text with optional indentation and pause.
         
@@ -368,6 +376,8 @@ class BasicOutputs:
                           Only used if pause is True
             break_after: Legacy parameter - use 'pause' instead
                          Maintained for backward compatibility
+            **kwargs: Additional parameters (e.g., 'class' for zBifrost CSS classes)
+                      Ignored in Terminal mode, passed through in GUI mode
                           
         Returns:
             None
@@ -376,6 +386,7 @@ class BasicOutputs:
             self.BasicOutputs.text("Operation complete")
             self.BasicOutputs.text("Details...", indent=1, pause=False)
             self.BasicOutputs.text("Warning!", pause=True, break_message="Press Enter to proceed")
+            self.BasicOutputs.text("Styled text", indent=0, class="zLead")
             
         Note:
             Used by: zSystem (zDeclare, zSession, zCrumbs, zMenu),
@@ -384,13 +395,17 @@ class BasicOutputs:
         # Handle backward compatibility: break_after overrides pause if provided
         should_break = break_after if break_after is not None else pause
         
-        # Try GUI mode first - send clean event with break metadata
-        if self.zPrimitives.send_gui_event(EVENT_NAME_TEXT, {
+        # Build event dict with all parameters
+        event_data = {
             KEY_CONTENT: content,
             KEY_INDENT: indent,
             KEY_BREAK: should_break,
-            KEY_BREAK_MESSAGE: break_message
-        }):
+            KEY_BREAK_MESSAGE: break_message,
+            **kwargs  # Pass through any additional parameters (like 'class')
+        }
+        
+        # Try GUI mode first - send clean event with break metadata
+        if self.zPrimitives.send_gui_event(EVENT_NAME_TEXT, event_data):
             return  # GUI event sent successfully
 
         # Terminal mode - output text and optionally pause

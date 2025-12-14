@@ -643,54 +643,29 @@ class CommandLauncher:
             display_data = zHorizontal[KEY_ZDISPLAY]
             
             if isinstance(display_data, dict):
-                # Modern format only - no backward compatibility for old string formats
-                event = display_data.get(KEY_EVENT)
+                # Use display.handle() to pass through ALL parameters automatically
+                # This ensures new parameters like 'class' work without updating this code
+                self.display.handle(display_data)
                 
-                if event == EVENT_TEXT:
-                    content = display_data.get(KEY_CONTENT, DEFAULT_CONTENT)
-                    indent = display_data.get(KEY_INDENT, DEFAULT_INDENT)
-                    self.display.text(content, indent)
-                elif event == EVENT_SYSMSG:
-                    label = display_data.get(KEY_LABEL, DEFAULT_LABEL)
-                    color = display_data.get(KEY_COLOR)
-                    indent = display_data.get(KEY_INDENT, DEFAULT_INDENT)
-                    style = display_data.get(KEY_STYLE)
-                    self.display.zDeclare(label, color, indent, style)
-                elif event == EVENT_HEADER:
-                    content = display_data.get(KEY_CONTENT, DEFAULT_CONTENT)
-                    color = display_data.get(KEY_COLOR, "RESET")
-                    indent = display_data.get(KEY_INDENT, DEFAULT_INDENT)
-                    style = display_data.get(KEY_STYLE, "full")
-                    self.display.header(content, color=color, indent=indent, style=style)
-                elif event == EVENT_SUCCESS:
-                    content = display_data.get(KEY_CONTENT, DEFAULT_CONTENT)
-                    indent = display_data.get(KEY_INDENT, DEFAULT_INDENT)
-                    self.display.success(content, indent)
-                elif event == EVENT_ERROR:
-                    content = display_data.get(KEY_CONTENT, DEFAULT_CONTENT)
-                    indent = display_data.get(KEY_INDENT, DEFAULT_INDENT)
-                    self.display.error(content, indent)
-                elif event == EVENT_WARNING:
-                    content = display_data.get(KEY_CONTENT, DEFAULT_CONTENT)
-                    indent = display_data.get(KEY_INDENT, DEFAULT_INDENT)
-                    self.display.warning(content, indent)
-                elif event == EVENT_INFO:
-                    content = display_data.get(KEY_CONTENT, DEFAULT_CONTENT)
-                    indent = display_data.get(KEY_INDENT, DEFAULT_INDENT)
-                    self.display.info(content, indent)
-                elif event == EVENT_LINE:
-                    # Line events are mapped to text in zDisplay, draw a separator
-                    indent = display_data.get(KEY_INDENT, DEFAULT_INDENT)
-                    self.display.text("─" * 60, indent)
-                elif event == EVENT_LIST:
-                    items = display_data.get('items', [])
-                    indent = display_data.get(KEY_INDENT, DEFAULT_INDENT)
-                    self.display.list(items, indent)
-                else:
-                    # Unknown event - log warning
-                    self.logger.warning(
-                        f"Unknown display event: {event}. Use modern API methods instead."
-                    )
+                # Legacy explicit routing (DEPRECATED - kept for reference only)
+                # event = display_data.get(KEY_EVENT)
+                # if event == EVENT_TEXT:
+                #     content = display_data.get(KEY_CONTENT, DEFAULT_CONTENT)
+                #     indent = display_data.get(KEY_INDENT, DEFAULT_INDENT)
+                #     self.display.text(content, indent)
+                # elif event == EVENT_HEADER:
+                #     content = display_data.get(KEY_CONTENT, DEFAULT_CONTENT)
+                #     color = display_data.get(KEY_COLOR, "RESET")
+                #     indent = display_data.get(KEY_INDENT, DEFAULT_INDENT)
+                #     style = display_data.get(KEY_STYLE, "full")
+                #     self.display.header(content, color=color, indent=indent, style=style)
+                # elif event == EVENT_SUCCESS: ...
+                # elif event == EVENT_ERROR: ...
+                # elif event == EVENT_WARNING: ...
+                # elif event == EVENT_INFO: ...
+                # elif event == EVENT_LINE: ...
+                # elif event == EVENT_LIST: ...
+                # All events now handled by display.handle() above
             return None
 
         # Route: zFunc
