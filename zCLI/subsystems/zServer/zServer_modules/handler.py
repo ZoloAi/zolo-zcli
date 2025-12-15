@@ -46,6 +46,47 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
         self.send_error(403, "Directory listing is disabled")
         return None
     
+    def send_error(self, code, message=None, explain=None):
+        """
+        Override send_error to serve custom zTheme error pages.
+        
+        Looks for templates/{code}.html first, falls back to built-in pages.
+        """
+        try:
+            # Try to serve custom error page from templates/
+            error_page_path = os.path.join(self.serve_path, self.template_folder, f"{code}.html")
+            
+            if os.path.exists(error_page_path):
+                # Serve custom error page
+                with open(error_page_path, 'rb') as f:
+                    content = f.read()
+                
+                self.send_response(code)
+                self.send_header("Content-type", "text/html; charset=utf-8")
+                self.send_header("Content-length", len(content))
+                self.end_headers()
+                self.wfile.write(content)
+                return
+        except Exception as e:
+            if self.zcli_logger:
+                self.zcli_logger.error(f"[Handler] Error serving custom error page: {e}")
+        
+        # Fallback to built-in error pages
+        from .error_pages import get_error_page, has_error_page
+        
+        if has_error_page(code):
+            html = get_error_page(code, message)
+            content = html.encode('utf-8')
+            
+            self.send_response(code)
+            self.send_header("Content-type", "text/html; charset=utf-8")
+            self.send_header("Content-length", len(content))
+            self.end_headers()
+            self.wfile.write(content)
+        else:
+            # Ultimate fallback to Python's default
+            super().send_error(code, message, explain)
+    
     def do_GET(self):
         """
         Handle GET requests with Flask-like conventions (v1.5.5).
@@ -274,14 +315,8 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
         # Check RBAC
         has_access, error_page = self.router.check_access(route)
         if not has_access:
-            # Access denied - serve error page
-            if error_page:
-                # Try to serve error page
-                self.path = f"/{error_page}"
-                return super().do_GET()
-            else:
-                # Fallback to HTTP 403
-                return self.send_error(403, "Access Denied")
+            # Access denied - serve 403 error page (built-in or custom)
+            return self.send_error(403, "Access Denied")
         
         # Access granted - serve based on route type
         route_type = route.get("type", "static")

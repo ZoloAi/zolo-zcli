@@ -149,12 +149,14 @@ class HTTPRouter:
         Auto-discover zBlock routes from zWalker routes with auto_discover_blocks=true.
         
         For each walker route with auto_discover_blocks enabled:
-        1. Parse the referenced zVaFile
-        2. Extract all top-level keys (excluding 'meta')
-        3. Create virtual routes: /{zBlock} → walker(zBlock={zBlock})
+        1. Parse the referenced zVaFile (e.g., zUI.zVaF.yaml)
+        2. Extract all top-level keys (excluding 'meta') from that file
+        3. Scan the entire zVaFolder directory for ALL zUI.*.yaml files
+        4. For each file, extract the first top-level block (excluding 'meta')
+        5. Create virtual routes: /{zBlock} → walker(zBlock={zBlock})
         
-        This allows direct navigation to /zAbout, /zFeatures, etc. without
-        requiring explicit route definitions for each block.
+        This allows direct navigation to /zAbout, /zRegister, /zLogin, etc. without
+        requiring explicit route definitions for each block, matching Terminal mode behavior.
         """
         self.logger.info(f"[Router] Starting auto-discovery - checking {len(self.route_map)} routes")
         
@@ -189,47 +191,100 @@ class HTTPRouter:
             
             # Resolve zPath notation (@.UI → UI/)
             if zVaFolder and zVaFolder.startswith('@.'):
-                zVaFolder = zVaFolder[2:]  # Strip @. prefix
+                zVaFolder_resolved = zVaFolder[2:]  # Strip @. prefix
             elif not zVaFolder:
-                zVaFolder = ''  # Default to empty (root level)
+                zVaFolder_resolved = ''  # Default to empty (root level)
+            else:
+                zVaFolder_resolved = zVaFolder
             
-            # Build file path relative to serve_path
-            vafile_path = os.path.join(
-                self.serve_path,
-                zVaFolder,
-                f"{zVaFile}.yaml"
-            )
+            # Build directory path
+            directory_path = os.path.join(self.serve_path, zVaFolder_resolved)
             
-            # Parse YAML and extract zBlock keys
+            # First: Parse the main zVaFile and extract blocks
+            vafile_path = os.path.join(directory_path, f"{zVaFile}.yaml")
+            
             try:
                 import yaml
+                import glob
+                
+                # Parse main zVaFile
                 with open(vafile_path, 'r') as f:
                     vafile_data = yaml.safe_load(f)
                 
-                if not isinstance(vafile_data, dict):
-                    continue
-                
-                # Extract all top-level keys except 'meta'
-                zBlocks = [key for key in vafile_data.keys() if key != 'meta']
-                
-                self.logger.info(f"[Router] Auto-discovered {len(zBlocks)} zBlocks from {zVaFile}: {zBlocks}")
-                
-                # Create virtual routes for each zBlock
-                for zBlock in zBlocks:
-                    virtual_path = f"/{zBlock}"
+                if isinstance(vafile_data, dict):
+                    # Extract all top-level keys except 'meta'
+                    zBlocks = [key for key in vafile_data.keys() if key != 'meta']
                     
-                    # Skip if explicit route already exists
-                    if virtual_path in self.route_map:
-                        self.logger.debug(f"[Router] Skipping {virtual_path} - explicit route exists")
+                    self.logger.info(f"[Router] Auto-discovered {len(zBlocks)} zBlocks from {zVaFile}: {zBlocks}")
+                    
+                    # Create virtual routes for each zBlock in main file
+                    for zBlock in zBlocks:
+                        virtual_path = f"/{zBlock}"
+                        
+                        # Skip if explicit route already exists
+                        if virtual_path in self.route_map:
+                            self.logger.debug(f"[Router] Skipping {virtual_path} - explicit route exists")
+                            continue
+                        
+                        # Create virtual route (copy parent route config but override zBlock and zVaFile)
+                        virtual_route = route_config.copy()
+                        virtual_route['zBlock'] = zBlock
+                        virtual_route['zVaFile'] = zVaFile
+                        virtual_route['_auto_discovered'] = True  # Mark as virtual
+                        
+                        self.auto_discovered_routes[virtual_path] = virtual_route
+                        self.logger.debug(f"[Router] Created virtual route: {virtual_path} → {zVaFile}.{zBlock}")
+                
+                # Second: Scan entire directory for ALL zUI.*.yaml files
+                self.logger.info(f"[Router] Scanning directory {directory_path} for additional zUI.*.yaml files")
+                pattern = os.path.join(directory_path, "zUI.*.yaml")
+                all_files = glob.glob(pattern)
+                
+                for file_path in all_files:
+                    file_name = os.path.basename(file_path)
+                    file_base = file_name.replace('.yaml', '')  # e.g., "zUI.zAbout" → "zUI.zAbout"
+                    
+                    # Skip the main file we already processed
+                    if file_base == zVaFile:
                         continue
                     
-                    # Create virtual route (copy parent route config but override zBlock)
-                    virtual_route = route_config.copy()
-                    virtual_route['zBlock'] = zBlock
-                    virtual_route['_auto_discovered'] = True  # Mark as virtual
+                    try:
+                        with open(file_path, 'r') as f:
+                            file_data = yaml.safe_load(f)
+                        
+                        if not isinstance(file_data, dict):
+                            continue
+                        
+                        # Extract first top-level block (excluding 'meta')
+                        blocks = [key for key in file_data.keys() if key != 'meta']
+                        
+                        if not blocks:
+                            self.logger.debug(f"[Router] No blocks found in {file_name}")
+                            continue
+                        
+                        # Use the first block as the route
+                        first_block = blocks[0]
+                        virtual_path = f"/{first_block}"
+                        
+                        # Skip if explicit route or already discovered
+                        if virtual_path in self.route_map or virtual_path in self.auto_discovered_routes:
+                            self.logger.debug(f"[Router] Skipping {virtual_path} - already exists")
+                            continue
+                        
+                        # Create virtual route pointing to this specific file
+                        virtual_route = route_config.copy()
+                        virtual_route['zBlock'] = first_block
+                        virtual_route['zVaFile'] = file_base  # e.g., "zUI.zAbout"
+                        virtual_route['_auto_discovered'] = True
+                        
+                        self.auto_discovered_routes[virtual_path] = virtual_route
+                        self.logger.info(f"[Router] Auto-discovered route: {virtual_path} → {file_base}.{first_block}")
                     
-                    self.auto_discovered_routes[virtual_path] = virtual_route
-                    self.logger.debug(f"[Router] Created virtual route: {virtual_path} → zBlock={zBlock}")
+                    except Exception as e:
+                        self.logger.warning(f"[Router] Error parsing {file_name}: {e}")
+                
+                total_discovered = len(self.auto_discovered_routes)
+                self.logger.info(f"[Router] Auto-discovery complete: {total_discovered} total virtual routes")
             
             except FileNotFoundError:
                 self.logger.warning(f"[Router] zVaFile not found: {vafile_path}")
