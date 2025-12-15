@@ -433,6 +433,12 @@ class Breadcrumbs:
             self.logger.debug(LOG_DUPLICATE_SKIP, zKey, zBlock)
             return
 
+        # Skip navbar keys from breadcrumb trail
+        # Navbar is a navigation affordance, not content
+        if "zNavBar" in zKey:
+            self.logger.debug(f"[Breadcrumbs] Skipping navbar key from trail: {zKey}")
+            return
+
         # All good - add the key to the trail
         zBlock_crumbs.append(zKey)
         self.logger.debug(LOG_CURRENT_TRAIL, zBlock_crumbs)

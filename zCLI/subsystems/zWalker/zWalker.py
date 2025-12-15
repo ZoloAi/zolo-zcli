@@ -395,9 +395,6 @@ class zWalker(zWizard):
         # Walker-specific configuration
         self._configure_logger()
         
-        # Store raw zFile for meta navigation access (e.g., meta.zNavBar)
-        self.raw_zFile: Optional[Dict[str, Any]] = None
-        
         # Display ready message using modern zDisplay
         self.display.zDeclare(MSG_WALKER_READY, color=COLOR_MAIN, indent=INDENT_NORMAL, style=STYLE_FULL)
         
@@ -491,13 +488,11 @@ class zWalker(zWizard):
                 return {DICT_KEY_ERROR: ERROR_NO_VAFILE}
 
             # Load the YAML file (pass None to trigger session-based path resolution with zVaFolder)
+            # zLoader handles navbar injection transparently
             raw_zFile: Optional[Dict[str, Any]] = self.loader.handle(None)
             if not raw_zFile:
                 self.logger.error(LOG_ERROR_FAILED_LOAD, zVaFile)
                 return {DICT_KEY_ERROR: f"{ERROR_FAILED_LOAD}: {zVaFile}"}
-
-            # Store raw_zFile for meta navigation access (e.g., meta.zNavBar)
-            self.raw_zFile = raw_zFile
 
             # Get the root zBlock with auto-discovery fallback
             root_zBlock: str = self.zSpark_obj.get(ZSPARK_KEY_BLOCK, ZSPARK_DEFAULT_ROOT)
@@ -852,188 +847,5 @@ class zWalker(zWizard):
             },
             start_key=zKey
         )
-        
-        # [META NAVBAR] Auto-render persistent navigation menu (Terminal mode only)
-        # If meta.zNavBar exists, render it as an anchor menu (no zBack) at the end
-        # of every block. Items are block names (auto-prepend $ for navigation).
-        if self._should_render_meta_navbar():
-            navbar_result = self._render_meta_navbar()
-            if navbar_result:
-                # If navbar returns navigation result (dict or string), handle it
-                return navbar_result
-        
+        # Navbar items already injected by zLoader (no special handling needed)
         return result
-
-    def _should_render_meta_navbar(self) -> bool:
-        """
-        Check if meta.zNavBar should be rendered.
-        
-        Validates:
-        1. Terminal mode (not zBifrost)
-        2. raw_zFile is loaded
-        3. meta.zNavBar resolves to items (via zNavigation)
-        
-        Returns:
-            bool: True if navbar should render, False otherwise
-        
-        Notes:
-            - zBifrost mode uses client-side navigation rendering
-            - Uses zNavigation.resolve_navbar() for global/local navbar resolution
-            - Supports meta.zNavBar: true (global) and meta.zNavBar: ["items"] (local)
-        """
-        # Check Terminal mode (not zBifrost)
-        if self.session.get("zMode") == "zBifrost":
-            return False
-        
-        # Check if raw_zFile is loaded
-        if not self.raw_zFile or not isinstance(self.raw_zFile, dict):
-            return False
-        
-        # Get route metadata from session (injected by zServer handler)
-        route_meta = self.session.get('_router_meta', {})
-        
-        # Use zNavigation to resolve navbar (supports global + local + route fallback)
-        navbar_items = self.zcli.navigation.resolve_navbar(self.raw_zFile, route_meta=route_meta)
-        
-        # Navbar should render if items exist
-        return navbar_items is not None and len(navbar_items) > 0
-
-    def _render_meta_navbar(self) -> Optional[Any]:
-        """
-        Render meta.zNavBar as an anchor menu and handle navigation.
-        
-        Renders the persistent navigation menu at the end of the current block.
-        Auto-prepends $ to each item (all items are block names). Handles the
-        menu result by re-dispatching navigation commands.
-        
-        **Breadcrumb Behavior:**
-        meta.zNavBar navigation resets breadcrumbs for the target block, treating
-        each navbar destination as a fresh "main page" (like website navigation).
-        This prevents breadcrumb accumulation across main sections.
-        
-        **Global Navbar Support:**
-        Uses zNavigation.resolve_navbar() to support:
-        - meta.zNavBar: true → Inject global navbar from .zEnv
-        - meta.zNavBar: ["items"] → Use local override
-        - No meta.zNavBar → No navbar (backward compatible)
-        
-        Returns:
-            Optional[Any]: Navigation result if user selects an item, None otherwise
-        
-        Flow:
-            1. Resolve navbar via zNavigation (global/local)
-            2. Auto-prepend $ to each item
-            3. Render as anchor menu (allow_back=False)
-            4. If result is dict (zLink), clear breadcrumbs and re-dispatch
-            5. If result is string, handle as navigation command
-        
-        Notes:
-            - Anchor menu (no zBack option, like ~* modifier)
-            - Items are always block names ($ auto-prepended)
-            - Re-dispatch ensures proper navigation handling
-            - Breadcrumbs reset for clean main page navigation
-        """
-        # Get route metadata from session (injected by zServer handler)
-        route_meta = self.session.get('_router_meta', {})
-        
-        # Resolve navbar items via zNavigation (supports global + local + route fallback)
-        navbar_items = self.zcli.navigation.resolve_navbar(self.raw_zFile, route_meta=route_meta)
-        
-        if not navbar_items:
-            return None
-        
-        # Auto-prepend $ to each item (all items are block names)
-        navbar_items_with_delta = [f"${item}" if not item.startswith("$") else item for item in navbar_items]
-        
-        self.logger.debug(f"[zWalker] Rendering meta.zNavBar: {navbar_items} -> {navbar_items_with_delta}")
-        
-        # Render as anchor menu (no zBack, like ~* modifier)
-        result = self.navigation.create(
-            navbar_items_with_delta,
-            title=None,
-            allow_back=False,  # Anchor menu (no zBack)
-            walker=self
-        )
-        
-        # Handle navigation result
-        if isinstance(result, dict):
-            # Dict result (e.g., {zLink: "..."} from delta link)
-            # Reset breadcrumbs for clean main page navigation
-            self._reset_breadcrumbs_for_navbar(result)
-            
-            # Re-dispatch through launcher to handle navigation
-            self.logger.debug(f"[zWalker] meta.zNavBar returned dict, re-dispatching: {result}")
-            return self.dispatch.launcher.launch(result, context=None, walker=self)
-        
-        # String result (e.g., "zBack" or block name)
-        # Return it for walker to handle
-        return result
-
-    def _reset_breadcrumbs_for_navbar(self, zLink_dict: Dict[str, Any]) -> None:
-        """
-        Reset breadcrumbs for navbar navigation to target block.
-        
-        When navigating via meta.zNavBar, clear the current block's breadcrumb
-        trail and initialize the target block with an empty trail. This treats
-        each navbar destination as a fresh "main page" (like website navigation),
-        preventing breadcrumb accumulation across sections.
-        
-        Args:
-            zLink_dict: Navigation dict with zLink key, e.g., {zLink: "@.UI.zUI.index.zAbout"}
-        
-        Flow:
-            1. Extract target block name from zLink path
-            2. Clear current block's breadcrumb trail
-            3. Initialize target block's trail as empty list
-        
-        Example:
-            Before: session["zCrumbs"] = {
-                "@.UI.zUI.index.zVaF": ["hero_section", "zTagline", ...]
-            }
-            After: session["zCrumbs"] = {
-                "@.UI.zUI.index.zVaF": [],
-                "@.UI.zUI.index.zAbout": []
-            }
-        
-        Notes:
-            - Only affects meta.zNavBar navigation (main page nav)
-            - Regular zLink navigation preserves breadcrumbs
-            - Target block builds its own trail as it executes
-        """
-        # Extract zLink path
-        zLink_path = zLink_dict.get("zLink", "")
-        if not zLink_path:
-            return
-        
-        # Parse target block from zLink path
-        # Format: "@.UI.zUI.index.zAbout" -> extract "zAbout"
-        # Or: "zUI.index.zAbout" -> extract "zAbout"
-        path_parts = zLink_path.split(".")
-        if len(path_parts) < 1:
-            return
-        
-        target_block_name = path_parts[-1]  # Last part is the block name
-        
-        # Construct full breadcrumb path for target block
-        # Format: "@.VaFolder.zVaFile.BlockName"
-        zVaFolder = self.session.get("zVaFolder", "")
-        zVaFile = self.session.get(SESSION_KEY_VAFILE, "")
-        
-        if zVaFolder and zVaFile:
-            target_crumb_path = f"{zVaFolder}.{zVaFile}.{target_block_name}"
-        elif zVaFile:
-            target_crumb_path = f"{zVaFile}.{target_block_name}"
-        else:
-            target_crumb_path = target_block_name
-        
-        # meta.zNavBar navigation = complete breadcrumb reset
-        # Unlike zLink (inter-file) which preserves multiple blocks,
-        # navbar navigation (intra-file) shows ONLY the target block
-        # This matches website behavior: Home page ≠ About page trail
-        
-        # Replace entire crumbs dict with only the target block
-        self.session[SESSION_KEY_CRUMBS] = {
-            target_crumb_path: []
-        }
-        
-        self.logger.debug(f"[zWalker] Complete breadcrumb reset for navbar navigation: {target_crumb_path}")

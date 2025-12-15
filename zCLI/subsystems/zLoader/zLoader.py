@@ -381,6 +381,10 @@ class zLoader:
         result = self.parse_file_content(zFile_raw, zFile_extension, session=self.zSession, file_path=zFilePath_identified)
         self.logger.debug("zLoader parse result:\n%s", result)
 
+        # Step 5.5: Inject meta.zNavBar as synthetic keys (if present)
+        # This transforms the zVaFile structure BEFORE caching
+        result = self._inject_navbar_if_present(result)
+
         # Step 6: Return result (cache only if not a schema)
         self.display.zDeclare(MSG_RETURN, color=self.mycolor, indent=1, style="~")
 
@@ -393,6 +397,80 @@ class zLoader:
         # Use absolute filepath for cache key (same as get() for consistency)
         cache_key = f"{CACHE_KEY_PREFIX}{zFilePath_identified}"
         return self.cache.set(cache_key, result, cache_type=CACHE_TYPE_SYSTEM, filepath=zFilePath_identified)
+
+    def _inject_navbar_if_present(self, raw_zFile: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Inject meta.zNavBar as synthetic menu keys into all blocks (if present).
+        
+        This transformation happens AFTER parsing and BEFORE caching, ensuring that
+        navbar items appear as natural menu options to downstream subsystems (zWalker,
+        zWizard, zDispatch, zDisplay). The navbar logic is centralized in zNavigation.
+        
+        Parameters
+        ----------
+        raw_zFile : Dict[str, Any]
+            Parsed zVaFile structure (may contain meta.zNavBar)
+        
+        Returns
+        -------
+        Dict[str, Any]
+            Transformed zVaFile with navbar items injected into all blocks
+        
+        Notes
+        -----
+        **Architecture**:
+            - zLoader: Transformation layer (this method)
+            - zNavigation: Resolves navbar items (global, local, route fallback)
+            - zWalker/zWizard: Process navbar items like any other keys
+            - zDispatch: Handles navbar selections
+            - zDisplay: Renders navbar items
+        
+        **Synthetic Key Format**:
+            - Key: _zNavBar_{blockName} (e.g., "_zNavBar_zVaF")
+            - Value: ${blockName} (e.g., "$zVaF" - delta link)
+        """
+        # Safety check
+        if not isinstance(raw_zFile, dict):
+            return raw_zFile
+        
+        # Get route metadata from session (for server-side routes)
+        route_meta = self.zSession.get('_router_meta', {})
+        
+        # Resolve navbar items via zNavigation (handles global, local, route fallback)
+        navbar_items = self.zcli.navigation.resolve_navbar(raw_zFile, route_meta=route_meta)
+        
+        # No navbar to inject
+        if not navbar_items or len(navbar_items) == 0:
+            return raw_zFile
+        
+        self.logger.debug(f"[zLoader] Injecting navbar items into all blocks: {navbar_items}")
+        
+        # Create navbar menu with modifiers
+        # Format: ~zNavBar*: [$zVaF, $zAbout, $zAccount, ...]
+        # ~ = no back modifier (anchor menu)
+        # * = explicit menu marker
+        # Items display cleanly (zDisplay strips $), backend handles delta/zLink
+        navbar_menu_items = [f"${item}" for item in navbar_items]
+        navbar_key = {"~zNavBar*": navbar_menu_items}
+        
+        # Inject into all top-level blocks (skip "meta" and blocks with modifiers like ^)
+        for block_name, block_content in raw_zFile.items():
+            # Skip metadata block
+            if block_name == "meta" or block_name.startswith("_"):
+                continue
+            
+            # Skip blocks with ^ prefix (bounce-back blocks) - they should bounce immediately after content
+            if block_name.startswith("^"):
+                self.logger.debug(f"[zLoader] Skipping navbar injection for bounce-back block: {block_name}")
+                continue
+            
+            # Only inject into dict blocks (not lists or primitives)
+            if isinstance(block_content, dict):
+                # Inject at the end of the block
+                raw_zFile[block_name] = {**block_content, **navbar_key}
+                self.logger.debug(f"[zLoader] Injected navbar menu into block: {block_name}")
+        
+        return raw_zFile
 
     def load_plugin_from_zpath(self, zpath: str) -> Any:
         """

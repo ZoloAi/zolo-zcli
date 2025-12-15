@@ -493,17 +493,22 @@ class Linking:
                 f"[zLink] Block '{selected_zBlock}' not in file, trying auto-discovery..."
             )
             
+            # Strip navigation modifiers (^ ~) from block name for file path
+            # File names don't have modifiers, but blocks inside do
+            # Example: ^zLogin block → zUI.zLogin.yaml file (not zUI.^zLogin.yaml)
+            file_block_name = selected_zBlock.lstrip("^~")
+            
             # Construct fallback zPath: same directory, different file
-            # Example: @.UI.zUI.zVaF → @.UI.zUI.zAbout
+            # Example: @.UI.zUI.zVaF → @.UI.zUI.zLogin (stripped ^)
             if zFile_path.startswith("@"):
                 path_parts = zFile_path.split(".")
-                # Replace last part with selected_zBlock
-                fallback_path_parts = path_parts[:-1] + [selected_zBlock]
+                # Replace last part with file_block_name (without modifiers)
+                fallback_path_parts = path_parts[:-1] + [file_block_name]
                 fallback_zPath = ".".join(fallback_path_parts)
             else:
-                fallback_zPath = f"@.UI.zUI.{selected_zBlock}"
+                fallback_zPath = f"@.UI.zUI.{file_block_name}"
             
-            self.logger.debug(f"[zLink] Trying fallback: {fallback_zPath}")
+            self.logger.debug(f"[zLink] Trying fallback: {fallback_zPath} (stripped modifiers from '{selected_zBlock}')")
             
             try:
                 fallback_zFile = walker.loader.handle(fallback_zPath)
@@ -540,8 +545,42 @@ class Linking:
         # zBack's algorithm will pop from the target trail, and when it empties, move to parent
         self.logger.debug(f"Navigating to target block: {zLink_path}")
 
+        # BLOCK-LEVEL BOUNCE-BACK: Detect ^ modifier on block name
+        # If block name starts with ^, execute and then bounce back
+        should_bounce_back = selected_zBlock.startswith("^")
+        self.logger.debug(f"[zNavigation] Block name: '{selected_zBlock}', should_bounce_back: {should_bounce_back}")
+        
+        if should_bounce_back:
+            self.logger.info(f"[zNavigation] ⬅️  Block-level bounce-back enabled for: {selected_zBlock}")
+        
         # Execute target block
-        return walker.zBlock_loop(active_zBlock_dict, zBlock_keys)
+        result = walker.zBlock_loop(active_zBlock_dict, zBlock_keys)
+        self.logger.debug(f"[zNavigation] Block execution result: {result}, should_bounce_back: {should_bounce_back}")
+        
+        # If block-level bounce-back was flagged, trigger zBack after completion
+        if should_bounce_back:
+            # Skip bounce-back if user already navigated away (zBack, exit, etc.)
+            if isinstance(result, dict) or result in ["zBack", "exit", "stop"]:
+                self.logger.debug(f"[zNavigation] Skipping bounce-back, result: {result}")
+                return result
+            
+            self.logger.info("[zNavigation] ⬅️  Triggering block-level bounce-back!")
+            
+            # handle_zBack() returns (block_dict, block_keys, start_key) tuple
+            # We need to unpack and execute it via zBlock_loop
+            bounce_data = walker.navigation.breadcrumbs.handle_zBack(walker=walker)
+            
+            if isinstance(bounce_data, tuple) and len(bounce_data) == 3:
+                block_dict, block_keys, start_key = bounce_data
+                self.logger.debug(f"[zNavigation] Executing bounce-back to block with keys: {block_keys}")
+                # Execute the bounced-back block
+                return walker.zBlock_loop(block_dict, block_keys, start_key)
+            else:
+                # Unexpected return format, log warning and return as-is
+                self.logger.warning(f"[zNavigation] Unexpected bounce-back result format: {type(bounce_data)}")
+                return bounce_data
+        
+        return result
 
     def parse_zLink_expression(
         self,

@@ -500,6 +500,34 @@ class zWizard:
             - handle(): Higher-level method with transaction support
             - wizard_examples.py: Comprehensive usage patterns
         """
+        # ════════════════════════════════════════════════════════════
+        # BLOCK-LEVEL RBAC: Gate for entire workflow/block
+        # ════════════════════════════════════════════════════════════
+        # Check if the entire block has RBAC requirements (_rbac at block level)
+        # This gate must pass BEFORE entering the loop
+        block_rbac_result = check_rbac_access(
+            key="Block/Workflow",
+            value=items_dict,
+            zcli=self.zcli,
+            walker=self.walker,
+            logger=self.logger,
+            display=self.display
+        )
+        
+        if block_rbac_result == RBAC_ACCESS_DENIED:
+            self.logger.warning("[zWizard] Block-level RBAC denied access")
+            
+            # Terminal mode: Add pause before bounce-back
+            # Check if we're in Terminal mode (not Bifrost)
+            mode = self.zcli.session.get("zMode", "terminal")
+            if mode != "bifrost":
+                # Display pause prompt and wait for Enter
+                if self.display:
+                    self.display.text("Press Enter to continue...", indent=1, break_after=True)
+            
+            # Return SIGNAL_ZBACK to trigger navigation bounce-back
+            return SIGNAL_ZBACK
+        
         dispatch_fn = self._get_dispatch_fn(dispatch_fn, context)
         # Filter out metadata keys (underscore prefix) - they don't execute, only configure
         keys_list = [k for k in items_dict.keys() if not k.startswith('_')]
