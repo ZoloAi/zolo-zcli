@@ -871,15 +871,15 @@ class zWalker(zWizard):
         Validates:
         1. Terminal mode (not zBifrost)
         2. raw_zFile is loaded
-        3. meta.zNavBar exists and is a list
+        3. meta.zNavBar resolves to items (via zNavigation)
         
         Returns:
             bool: True if navbar should render, False otherwise
         
         Notes:
             - zBifrost mode uses client-side navigation rendering
-            - meta.zNavBar must be a list of block names
-            - Empty lists are skipped (no menu to render)
+            - Uses zNavigation.resolve_navbar() for global/local navbar resolution
+            - Supports meta.zNavBar: true (global) and meta.zNavBar: ["items"] (local)
         """
         # Check Terminal mode (not zBifrost)
         if self.session.get("zMode") == "zBifrost":
@@ -889,16 +889,14 @@ class zWalker(zWizard):
         if not self.raw_zFile or not isinstance(self.raw_zFile, dict):
             return False
         
-        # Check if meta.zNavBar exists
-        meta_section = self.raw_zFile.get("meta", {})
-        if not isinstance(meta_section, dict):
-            return False
+        # Get route metadata from session (injected by zServer handler)
+        route_meta = self.session.get('_router_meta', {})
         
-        navbar = meta_section.get("zNavBar")
-        if not navbar or not isinstance(navbar, list) or len(navbar) == 0:
-            return False
+        # Use zNavigation to resolve navbar (supports global + local + route fallback)
+        navbar_items = self.zcli.navigation.resolve_navbar(self.raw_zFile, route_meta=route_meta)
         
-        return True
+        # Navbar should render if items exist
+        return navbar_items is not None and len(navbar_items) > 0
 
     def _render_meta_navbar(self) -> Optional[Any]:
         """
@@ -913,11 +911,17 @@ class zWalker(zWizard):
         each navbar destination as a fresh "main page" (like website navigation).
         This prevents breadcrumb accumulation across main sections.
         
+        **Global Navbar Support:**
+        Uses zNavigation.resolve_navbar() to support:
+        - meta.zNavBar: true → Inject global navbar from .zEnv
+        - meta.zNavBar: ["items"] → Use local override
+        - No meta.zNavBar → No navbar (backward compatible)
+        
         Returns:
             Optional[Any]: Navigation result if user selects an item, None otherwise
         
         Flow:
-            1. Get meta.zNavBar list
+            1. Resolve navbar via zNavigation (global/local)
             2. Auto-prepend $ to each item
             3. Render as anchor menu (allow_back=False)
             4. If result is dict (zLink), clear breadcrumbs and re-dispatch
@@ -929,9 +933,14 @@ class zWalker(zWizard):
             - Re-dispatch ensures proper navigation handling
             - Breadcrumbs reset for clean main page navigation
         """
-        # Get navbar items
-        meta_section = self.raw_zFile.get("meta", {})
-        navbar_items = meta_section.get("zNavBar", [])
+        # Get route metadata from session (injected by zServer handler)
+        route_meta = self.session.get('_router_meta', {})
+        
+        # Resolve navbar items via zNavigation (supports global + local + route fallback)
+        navbar_items = self.zcli.navigation.resolve_navbar(self.raw_zFile, route_meta=route_meta)
+        
+        if not navbar_items:
+            return None
         
         # Auto-prepend $ to each item (all items are block names)
         navbar_items_with_delta = [f"${item}" if not item.startswith("$") else item for item in navbar_items]

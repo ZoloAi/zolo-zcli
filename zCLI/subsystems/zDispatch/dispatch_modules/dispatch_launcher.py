@@ -620,6 +620,16 @@ class CommandLauncher:
         crud_keys = {'action', 'model', 'table', 'collection'}
         is_crud_call = any(k in zHorizontal for k in crud_keys)
         
+        # SPECIAL CASE: Single "Content" key with optional _zClass metadata
+        # Common UI pattern: {_zClass: "...", Content: [events]}
+        # Unwrap and dispatch the Content directly
+        if len(content_keys) == 1 and content_keys[0] == 'Content':
+            self._log_detected("Content wrapper (unwrapping)")
+            content_value = zHorizontal['Content']
+            # Recursively dispatch the unwrapped Content
+            # This handles both lists and nested dicts
+            return self.launch(content_value, context=context, walker=walker)
+        
         # If multiple content keys and NOT a direct subsystem/CRUD call → implicit wizard
         if not is_subsystem_call and not is_crud_call and len(content_keys) > 1:
             self._log_detected("Implicit zWizard (multi-step)")

@@ -289,6 +289,135 @@ class zNavigation:
         )
 
         self.logger.framework.debug(LOG_MSG_READY)
+        
+        # Load global navbar from environment (.zEnv)
+        self._global_navbar = self._load_global_navbar()
+
+    def _load_global_navbar(self) -> Optional[List[str]]:
+        """
+        Load global navigation bar from environment configuration (.zEnv).
+        
+        Reads ZNAVBAR environment variable (comma-separated block names)
+        and returns as a list. If not defined, returns None.
+        
+        Returns:
+            Optional[List[str]]: List of navbar items or None if not configured
+        
+        Examples:
+            .zEnv: ZNAVBAR=zVaF,zAbout,zRegister,zLogin
+            Returns: ["zVaF", "zAbout", "zRegister", "zLogin"]
+        
+        Notes:
+            - Loaded once during initialization
+            - Cached in self._global_navbar
+            - Used by resolve_navbar() for meta.zNavBar: true
+        """
+        import os
+        
+        # Read from environment
+        navbar_env = os.getenv("ZNAVBAR", "").strip()
+        
+        if not navbar_env:
+            self.logger.framework.debug("[zNavigation] No global navbar defined in ZNAVBAR env var")
+            return None
+        
+        # Split by comma and strip whitespace
+        navbar_items = [item.strip() for item in navbar_env.split(",") if item.strip()]
+        
+        if navbar_items:
+            self.logger.framework.info(f"[zNavigation] Loaded global navbar: {navbar_items}")
+            return navbar_items
+        
+        return None
+
+    def resolve_navbar(self, raw_zFile: Dict[str, Any], route_meta: Optional[Dict[str, Any]] = None) -> Optional[List[str]]:
+        """
+        Resolve navigation bar for a given zVaFile based on meta.zNavBar with route fallback.
+        
+        Resolution Logic (Priority Chain):
+            1. If zVaFile meta.zNavBar is a list → return it (highest priority: local override)
+            2. If zVaFile meta.zNavBar: true → return global navbar from .zEnv
+            3. If zVaFile meta.zNavBar is false/missing AND route meta.zNavBar: true → return global navbar (lowest priority: route fallback)
+            4. Otherwise → return None (no navbar)
+        
+        Args:
+            raw_zFile: Parsed YAML dictionary from zVaFile
+            route_meta: Optional route metadata from zServer.routes.yaml (for fallback)
+        
+        Returns:
+            Optional[List[str]]: Resolved navbar items or None
+        
+        Examples:
+            # Priority 1: Local override (custom navbar)
+            zVaFile meta.zNavBar: ["Custom", "Items"]
+            Returns: ["Custom", "Items"]
+            
+            # Priority 2: zVaFile opt-in to global navbar
+            zVaFile meta.zNavBar: true
+            Returns: ["zVaF", "zAbout", "zRegister", "zLogin"] (from .zEnv)
+            
+            # Priority 3: Route fallback (if zVaFile has no navbar)
+            zVaFile meta.zNavBar: missing/false
+            Route meta.zNavBar: true
+            Returns: ["zVaF", "zAbout", "zRegister", "zLogin"] (from .zEnv)
+            
+            # No navbar
+            All meta.zNavBar: false/missing
+            Returns: None
+        
+        Notes:
+            - Local navbar always wins (DRY principle with override)
+            - Route meta provides fallback for files without navbar
+            - zServer routes can enforce navbar for all pages via meta.zNavBar: true
+        """
+        if not raw_zFile or not isinstance(raw_zFile, dict):
+            return None
+        
+        # Get zVaFile meta section
+        meta_section = raw_zFile.get("meta", {})
+        if not isinstance(meta_section, dict):
+            meta_section = {}
+        
+        # Get zNavBar value from zVaFile
+        navbar_value = meta_section.get("zNavBar")
+        
+        # Priority 1: Local override (list of items)
+        if isinstance(navbar_value, list):
+            if len(navbar_value) > 0:
+                self.logger.framework.debug(f"[zNavigation] Using local navbar (priority 1): {navbar_value}")
+                return navbar_value
+            else:
+                self.logger.framework.debug("[zNavigation] Empty local navbar, skipping")
+                return None
+        
+        # Priority 2: zVaFile opt-in to global navbar (true)
+        if navbar_value is True:
+            if self._global_navbar:
+                self.logger.framework.debug(f"[zNavigation] Injecting global navbar from zVaFile (priority 2): {self._global_navbar}")
+                return self._global_navbar
+            else:
+                self.logger.framework.warning("[zNavigation] meta.zNavBar: true but no global navbar defined in .zEnv")
+                return None
+        
+        # Priority 3: Route fallback (if zVaFile has no navbar setting)
+        # Check if route metadata has zNavBar: true
+        if route_meta and isinstance(route_meta, dict):
+            route_navbar_value = route_meta.get("zNavBar")
+            
+            if route_navbar_value is True:
+                if self._global_navbar:
+                    self.logger.framework.debug(f"[zNavigation] Injecting global navbar from route fallback (priority 3): {self._global_navbar}")
+                    return self._global_navbar
+                else:
+                    self.logger.framework.warning("[zNavigation] Route meta.zNavBar: true but no global navbar defined in .zEnv")
+                    return None
+            elif isinstance(route_navbar_value, list) and len(route_navbar_value) > 0:
+                self.logger.framework.debug(f"[zNavigation] Using route navbar fallback (priority 3): {route_navbar_value}")
+                return route_navbar_value
+        
+        # Case 4: No navbar (false, None, or missing everywhere)
+        self.logger.framework.debug("[zNavigation] No navbar configured (zVaFile or route)")
+        return None
 
     # ========================================================================
     # Menu System Methods

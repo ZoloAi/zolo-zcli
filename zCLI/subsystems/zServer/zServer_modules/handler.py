@@ -478,13 +478,39 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
             template = env.get_template(template_name)
             html_content = template.render(**context)
             
+            # Resolve navbar with route metadata fallback (same as zWalker routes)
+            resolved_navbar = None
+            if hasattr(zcli, 'navigation'):
+                # Load the zVaFile to check its meta.zNavBar (if provided in context)
+                zVaFile = context.get("zVaFile")
+                zVaFolder = context.get("zVaFolder")
+                try:
+                    # Construct zPath from zVaFolder/zVaFile (e.g., "@.UI" + "zUI.zAbout" → "@.UI.zUI.zAbout")
+                    if zVaFile and zVaFolder:
+                        # Remove @ prefix and leading dots from folder
+                        folder_parts = zVaFolder.lstrip('@.').split('.')
+                        file_parts = zVaFile.split('.')
+                        # Construct full zPath
+                        zPath = '@.' + '.'.join(folder_parts + file_parts)
+                        raw_zFile = zcli.loader.handle(zPath=zPath)
+                    else:
+                        raw_zFile = None
+                    
+                    # Get router meta for fallback
+                    route_meta = self.router.meta if self.router and hasattr(self.router, 'meta') else {}
+                    # Resolve navbar with priority chain
+                    resolved_navbar = zcli.navigation.resolve_navbar(raw_zFile, route_meta=route_meta) if raw_zFile else None
+                except Exception:
+                    resolved_navbar = None
+            
             # Auto-inject zUI config script before </head> (if zSession values present)
             # This makes zBifrost/zSession integration automatic for HTML authors
             zui_config_values = {
                 "zVaFile": context.get("zVaFile"),
                 "zVaFolder": context.get("zVaFolder"),
                 "zBlock": context.get("zBlock"),
-                "title": zcli.config.zSpark.get("title") if hasattr(zcli, 'config') and hasattr(zcli.config, 'zSpark') and zcli.config.zSpark else None
+                "title": zcli.config.zSpark.get("title") if hasattr(zcli, 'config') and hasattr(zcli.config, 'zSpark') and zcli.config.zSpark else None,
+                "zNavBar": resolved_navbar  # Use resolved navbar (with route fallback)
             }
             # Only inject if at least one value is present (not all None)
             if any(v is not None for v in zui_config_values.values()):
@@ -566,6 +592,25 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
             if zBlock:
                 context["zBlock"] = zBlock
             
+            # Store route metadata in session for zWalker access (navbar fallback)
+            # This allows zWalker to check route-level meta.zNavBar as fallback
+            if zcli and hasattr(zcli, 'session'):
+                # Get router's route metadata (if exists)
+                if self.router and hasattr(self.router, 'route_map'):
+                    # Try to get route metadata from router
+                    matched_route = self.router.route_map.get(self.path)
+                    if not matched_route:
+                        # Try auto-discovered routes
+                        matched_route = self.router.auto_discovered_routes.get(self.path)
+                    
+                    if matched_route:
+                        # Store route metadata for walker access
+                        zcli.session['_route_meta'] = matched_route
+                        
+                # Also inject router meta (global route config) as fallback
+                if self.router and hasattr(self.router, 'meta'):
+                    zcli.session['_router_meta'] = self.router.meta
+            
             # Get templates directory from serve_path
             templates_dir = os.path.join(self.serve_path, self.template_folder)
             
@@ -580,12 +625,38 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
             template = env.get_template(template_name)
             html_content = template.render(**context)
             
+            # Resolve navbar with route metadata fallback
+            resolved_navbar = None
+            if zcli and hasattr(zcli, 'navigation'):
+                # Load the zVaFile to check its meta.zNavBar
+                try:
+                    # Construct zPath from zVaFolder/zVaFile (e.g., "@.UI" + "zUI.zAbout" → "@.UI.zUI.zAbout")
+                    if zVaFile and zVaFolder:
+                        # Remove @ prefix and leading dots from folder
+                        folder_parts = zVaFolder.lstrip('@.').split('.')
+                        file_parts = zVaFile.split('.')
+                        # Construct full zPath
+                        zPath = '@.' + '.'.join(folder_parts + file_parts)
+                        raw_zFile = zcli.loader.handle(zPath=zPath)
+                    else:
+                        raw_zFile = None
+                    
+                    # Get router meta for fallback
+                    route_meta = self.router.meta if self.router and hasattr(self.router, 'meta') else {}
+                    # Resolve navbar with priority chain
+                    resolved_navbar = zcli.navigation.resolve_navbar(raw_zFile, route_meta=route_meta) if raw_zFile else None
+                except Exception as e:
+                    if hasattr(self, 'zcli_logger') and self.zcli_logger:
+                        self.zcli_logger.warning(f"[Handler] Could not resolve navbar: {e}")
+                    resolved_navbar = None
+            
             # Auto-inject zUI config script before </head> (same as template routes)
             zui_config_values = {
                 "zVaFile": context.get("zVaFile"),
                 "zVaFolder": context.get("zVaFolder"),
                 "zBlock": context.get("zBlock"),
                 "title": zcli.config.zSpark.get("title") if zcli and hasattr(zcli, 'config') and hasattr(zcli.config, 'zSpark') and zcli.config.zSpark else None,
+                "zNavBar": resolved_navbar,  # Use resolved navbar (with route fallback)
                 "websocket": {
                     "ssl_enabled": zcli.config.websocket.ssl_enabled if zcli and hasattr(zcli, 'config') and hasattr(zcli.config, 'websocket') else False,
                     "host": zcli.config.websocket.host if zcli and hasattr(zcli, 'config') and hasattr(zcli.config, 'websocket') else "127.0.0.1",
