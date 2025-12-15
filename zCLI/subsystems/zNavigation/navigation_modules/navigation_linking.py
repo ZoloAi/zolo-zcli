@@ -479,8 +479,54 @@ class Linking:
         # Update session to TARGET location
         self._update_session_path(zLink_path, selected_zBlock)
 
-        # Get block dict and keys
-        active_zBlock_dict = zFile_parsed[selected_zBlock]
+        # Get block dict and keys with auto-discovery fallback
+        # FALLBACK CHAIN:
+        # 1. Try finding block in loaded file
+        # 2. If not found, try loading from zUI.{blockName}.yaml
+        if selected_zBlock in zFile_parsed:
+            # Block found in loaded file
+            active_zBlock_dict = zFile_parsed[selected_zBlock]
+            self.logger.debug(f"[zLink] Block '{selected_zBlock}' found in loaded file")
+        else:
+            # AUTO-DISCOVERY: Try loading from separate file
+            self.logger.debug(
+                f"[zLink] Block '{selected_zBlock}' not in file, trying auto-discovery..."
+            )
+            
+            # Construct fallback zPath: same directory, different file
+            # Example: @.UI.zUI.zVaF → @.UI.zUI.zAbout
+            if zFile_path.startswith("@"):
+                path_parts = zFile_path.split(".")
+                # Replace last part with selected_zBlock
+                fallback_path_parts = path_parts[:-1] + [selected_zBlock]
+                fallback_zPath = ".".join(fallback_path_parts)
+            else:
+                fallback_zPath = f"@.UI.zUI.{selected_zBlock}"
+            
+            self.logger.debug(f"[zLink] Trying fallback: {fallback_zPath}")
+            
+            try:
+                fallback_zFile = walker.loader.handle(fallback_zPath)
+                if fallback_zFile and isinstance(fallback_zFile, dict):
+                    # Get first block from fallback file
+                    if selected_zBlock in fallback_zFile:
+                        active_zBlock_dict = fallback_zFile[selected_zBlock]
+                        self.logger.info(
+                            f"✓ [zLink] Auto-discovered block '{selected_zBlock}' from: {fallback_zPath}"
+                        )
+                    else:
+                        raise KeyError(f"Block '{selected_zBlock}' not found in {fallback_zPath}")
+                else:
+                    raise ValueError(f"Failed to load {fallback_zPath}")
+            except Exception as e:
+                self.logger.error(
+                    f"Block '{selected_zBlock}' not found:\n"
+                    f"  - Not in loaded file: {zFile_path}\n"
+                    f"  - Fallback failed: {fallback_zPath}\n"
+                    f"  - Error: {e}"
+                )
+                return STATUS_STOP
+        
         zBlock_keys = list(active_zBlock_dict.keys())
 
         # Validate walker instance

@@ -708,9 +708,10 @@ class CommandLauncher:
             # Extract target block name
             target_block_name = zHorizontal[KEY_ZDELTA]
             
-            # Strip % prefix if present
-            if isinstance(target_block_name, str) and target_block_name.startswith("%"):
-                target_block_name = target_block_name[1:]
+            # Strip $ or % prefix if present (delta navigation markers)
+            if isinstance(target_block_name, str):
+                if target_block_name.startswith(("$", "%")):
+                    target_block_name = target_block_name[1:]
             
             self.logger.framework.debug(f"zDelta navigation to block: {target_block_name}")
             
@@ -727,11 +728,69 @@ class CommandLauncher:
                 return None
             
             # Extract the target block dict from raw_zFile
-            if target_block_name not in raw_zFile:
-                self.logger.error(f"Block '{target_block_name}' not found in UI file '{current_zVaFile}'")
-                return None
+            # FALLBACK CHAIN:
+            # 1. Try finding block in current file
+            # 2. If not found, try loading {blockName}.yaml from same directory
+            target_block_dict = None
             
-            target_block_dict = raw_zFile[target_block_name]
+            if target_block_name in raw_zFile:
+                # Block found in current file
+                target_block_dict = raw_zFile[target_block_name]
+                self.logger.framework.debug(f"zDelta: Block '{target_block_name}' found in current file")
+            else:
+                # FALLBACK: Try loading zUI.{blockName}.yaml from same directory
+                # zCLI fundamental: UI files MUST be named zUI.*.yaml
+                
+                # Construct zPath for fallback file
+                # Example: current = "@.UI.zUI.index" → fallback = "@.UI.zUI.zAbout"
+                # File naming: zUI.zAbout.yaml → zPath = "@.UI.zUI.zAbout"
+                if current_zVaFile.startswith("@"):
+                    # Parse current zPath to get folder
+                    # "@.UI.zUI.index" → ["@", "UI", "zUI", "index"]
+                    path_parts = current_zVaFile.split(".")
+                    
+                    # Replace the last part (filename) with target block name
+                    # File is named zUI.{blockName}.yaml, so zPath ends with {blockName}
+                    # ["@", "UI", "zUI", "index"] → ["@", "UI", "zUI", "zAbout"]
+                    fallback_path_parts = path_parts[:-1] + [target_block_name]
+                    fallback_zPath = ".".join(fallback_path_parts)
+                else:
+                    # Absolute path - construct relative to current file
+                    fallback_zPath = f"@.UI.zUI.{target_block_name}"
+                
+                self.logger.framework.debug(
+                    f"zDelta: Block '{target_block_name}' not in current file, "
+                    f"trying fallback zPath: {fallback_zPath}"
+                )
+                
+                # Try loading the fallback file using zParser/zLoader
+                try:
+                    fallback_zFile = walker.loader.handle(fallback_zPath)
+                except Exception as e:
+                    self.logger.debug(f"zDelta: Fallback failed: {e}")
+                    fallback_zFile = None
+                
+                if fallback_zFile and isinstance(fallback_zFile, dict):
+                    # SUCCESS: Fallback file loaded
+                    # Use the entire file content as the block
+                    target_block_dict = fallback_zFile
+                    self.logger.info(
+                        f"✓ zDelta: Auto-discovered block '{target_block_name}' "
+                        f"from separate file: {fallback_zPath}"
+                    )
+                else:
+                    # FAILED: Neither current file nor fallback file has the block
+                    self.logger.error(
+                        f"Block '{target_block_name}' not found:\n"
+                        f"  - Not in current file: {current_zVaFile}\n"
+                        f"  - Fallback zPath not found: {fallback_zPath}"
+                    )
+                    return None
+            
+            # At this point, target_block_dict should be set
+            if not target_block_dict:
+                self.logger.error(f"Failed to resolve block '{target_block_name}'")
+                return None
             
             # Update session zBlock to reflect the target block
             walker.session["zBlock"] = target_block_name

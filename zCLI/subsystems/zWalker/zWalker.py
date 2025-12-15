@@ -499,17 +499,56 @@ class zWalker(zWizard):
             # Store raw_zFile for meta navigation access (e.g., meta.zNavBar)
             self.raw_zFile = raw_zFile
 
-            # Get the root zBlock
+            # Get the root zBlock with auto-discovery fallback
             root_zBlock: str = self.zSpark_obj.get(ZSPARK_KEY_BLOCK, ZSPARK_DEFAULT_ROOT)
-            if root_zBlock not in raw_zFile:
-                self.logger.error(LOG_ERROR_BLOCK_NOT_FOUND, root_zBlock)
-                return {DICT_KEY_ERROR: f"{ERROR_BLOCK_NOT_FOUND}: '{root_zBlock}'"}
+            
+            # Try finding block in main file, fallback to separate file
+            if root_zBlock in raw_zFile:
+                # Block found in main file
+                root_zBlock_dict = raw_zFile[root_zBlock]
+                self.logger.debug(f"[Walker] Root block '{root_zBlock}' found in main file")
+            else:
+                # AUTO-DISCOVERY: Try loading from zUI.{blockName}.yaml
+                self.logger.debug(
+                    f"[Walker] Root block '{root_zBlock}' not in main file, trying auto-discovery..."
+                )
+                
+                # Construct fallback zPath
+                if zVaFile.startswith("@"):
+                    path_parts = zVaFile.split(".")
+                    fallback_path_parts = path_parts[:-1] + [root_zBlock]
+                    fallback_zPath = ".".join(fallback_path_parts)
+                else:
+                    fallback_zPath = f"@.UI.zUI.{root_zBlock}"
+                
+                self.logger.debug(f"[Walker] Trying fallback: {fallback_zPath}")
+                
+                try:
+                    fallback_zFile = self.loader.handle(fallback_zPath)
+                    if fallback_zFile and isinstance(fallback_zFile, dict):
+                        if root_zBlock in fallback_zFile:
+                            root_zBlock_dict = fallback_zFile[root_zBlock]
+                            self.logger.info(
+                                f"✓ [Walker] Auto-discovered root block '{root_zBlock}' from: {fallback_zPath}"
+                            )
+                        else:
+                            raise KeyError(f"Block '{root_zBlock}' not found in {fallback_zPath}")
+                    else:
+                        raise ValueError(f"Failed to load {fallback_zPath}")
+                except Exception as e:
+                    self.logger.error(
+                        f"Root block '{root_zBlock}' not found:\n"
+                        f"  - Not in main file: {zVaFile}\n"
+                        f"  - Fallback failed: {fallback_zPath}\n"
+                        f"  - Error: {e}"
+                    )
+                    return {DICT_KEY_ERROR: f"{ERROR_BLOCK_NOT_FOUND}: '{root_zBlock}'"}
 
             # Initialize session for walker mode
             self._init_walker_session()
 
             # Start the walker loop
-            return self.zBlock_loop(raw_zFile[root_zBlock])
+            return self.zBlock_loop(root_zBlock_dict)
 
         except Exception as e:
             self.logger.error(LOG_ERROR_EXECUTION, e, exc_info=True)
