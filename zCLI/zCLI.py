@@ -326,21 +326,7 @@ class zCLI:
         # Register signal handlers for graceful shutdown
         self._register_signal_handlers()
         
-        # v1.5.8: Declarative lifecycle - server ALWAYS waits if enabled
-        # This must be the LAST step in __init__ so all subsystems are ready
-        if self.server and hasattr(self.config, 'http_server'):
-            if self.config.http_server.zShell:
-                # Drop into zShell REPL (server runs in background thread)
-                print("\n" + "="*70)
-                print(f"  🌐 Server running: http://{self.server.host}:{self.server.port}")
-                print(f"  💻 Entering zShell REPL (type 'exit' to stop server)")
-                print("="*70 + "\n")
-                self.run_shell()
-            else:
-                # Block silently until interrupted (standard server behavior)
-                self.logger.framework.debug("[zCLI] Server waiting (silent blocking mode)")
-                self.server.wait()
-        
+        # Note: Constructor returns immediately. Call z.run() to start execution.
         # Note: zAuth database is workspace-relative (@), ensuring each zCLI instance
         # is fully isolated. Auth DB lazy-loads on first save_session() or grant_permission().
         # This preserves the "no global state" principle - the secret sauce of zCLI architecture.
@@ -399,10 +385,38 @@ class zCLI:
 
     def run(self) -> Any:
         """
-        Main entry - auto-detects mode from session[zMode].
+        Main entry point - centralized execution for all zCLI modes.
         
-        Terminal → run_shell() | zBifrost → zWalker.run()
+        Decision Priority:
+        1. zServer running + zShell → REPL with HTTP in background
+        2. zServer running (silent) → Block on server.wait()
+        3. zVaFile specified → zWalker (handles Terminal/zBifrost internally)
+        4. zMode: zBifrost → zWalker (WebSocket mode)
+        5. zMode: Terminal (default) → zShell REPL
+        
+        Returns:
+            Any: Result from the executed subsystem (walker, shell, or server)
         """
+        # Priority 1 & 2: zServer lifecycle management
+        if self.server and self.server._running:
+            if hasattr(self.config, 'http_server') and self.config.http_server.zShell:
+                # Interactive mode: REPL with HTTP server in background
+                print("\n" + "="*70)
+                print(f"  🌐 Server: http://{self.server.host}:{self.server.port}")
+                print(f"  💻 Entering zShell REPL (type 'exit' to stop server)")
+                print("="*70 + "\n")
+                return self.run_shell()
+            else:
+                # Silent blocking mode: Just wait for Ctrl+C
+                self.logger.framework.debug("[zCLI] Blocking on zServer (silent mode)")
+                return self.server.wait()
+        
+        # Priority 3: zVaFile specified → Launch walker (auto-detects Terminal/zBifrost)
+        if self.session.get("zVaFile"):
+            self.logger.info("[zCLI] Launching zWalker (zVaFile detected)")
+            return self.walker.run()
+        
+        # Priority 4 & 5: Mode detection for walker vs shell
         zmode = self.session.get(SESSION_KEY_ZMODE, MODE_TERMINAL)
         
         if zmode == MODE_ZBIFROST:
