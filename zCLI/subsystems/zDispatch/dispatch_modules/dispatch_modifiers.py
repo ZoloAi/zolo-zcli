@@ -409,6 +409,17 @@ class ModifierProcessor:
             is_anchor = MOD_TILDE in modifiers
             self.logger.debug(LOG_MSG_MENU_DETECTED, zKey, is_anchor)
 
+            # RBAC filtering for navbar menus (dynamic, re-evaluated on every render)
+            # Check if this is a navbar key (~zNavBar*) and apply RBAC filtering
+            if zKey.startswith("~zNavBar"):
+                self.logger.framework.debug(f"[Dispatch] Applying dynamic RBAC filtering for navbar: {zKey}")
+                # Filter the navbar items based on current authentication state
+                # This extracts clean item names (strings) from mixed list of strings and dicts
+                filtered_items = self.zcli.navigation._filter_navbar_by_rbac(zHorizontal)
+                self.logger.framework.info(f"[Dispatch] Navbar filtered: {len(zHorizontal)} → {len(filtered_items)} items")
+                # Add delta prefix ($) to filtered items for intra-file navigation
+                zHorizontal = [f"${item}" for item in filtered_items]
+
             # Note: Signature verified during Week 6.7.8 refactor - perfect alignment ✅
             result = self.zcli.navigation.create(
                 zHorizontal, 

@@ -706,6 +706,13 @@ class zWizard:
         
         if block_rbac_result in (RBAC_ACCESS_DENIED, RBAC_ACCESS_DENIED_ZGUEST):
             self.logger.warning("[zWizard] Block-level RBAC denied in chunked mode")
+            
+            # Yield a special error chunk so the frontend can display the denial message
+            # The buffered display events contain the formatted RBAC denial message
+            # We yield an empty chunk list with special metadata to signal "RBAC_DENIED"
+            self.logger.info("[zWizard] Yielding RBAC denial chunk with buffered events")
+            yield ([], False, {"_rbac_denied": True, "_signal": "navigate_back"})
+            
             return SIGNAL_ZBACK
         
         dispatch_fn = self._get_dispatch_fn(dispatch_fn, context)

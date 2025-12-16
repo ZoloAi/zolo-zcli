@@ -293,26 +293,35 @@ class zNavigation:
         # Load global navbar from environment (.zEnv)
         self._global_navbar = self._load_global_navbar()
 
-    def _load_global_navbar(self) -> Optional[List[str]]:
+    def _load_global_navbar(self) -> Optional[List[Any]]:
         """
         Load global navigation bar from environment configuration (.zEnv).
         
-        Reads ZNAVBAR environment variable (comma-separated block names)
-        and returns as a list. If not defined, returns None.
+        Supports three formats:
+        1. Legacy: Comma-separated string (e.g., "zVaF,zAbout,zLogin")
+        2. Enhanced JSON: JSON array with RBAC metadata (e.g., [{"item": "zVaF"}, {"item": "^logout", "_rbac": {...}}])
+        3. Enhanced YAML: YAML array (for manual editing, not via .env files)
         
         Returns:
-            Optional[List[str]]: List of navbar items or None if not configured
+            Optional[List[Any]]: List of navbar items (strings or dicts with RBAC) or None
         
         Examples:
-            .zEnv: ZNAVBAR=zVaF,zAbout,zRegister,zLogin
-            Returns: ["zVaF", "zAbout", "zRegister", "zLogin"]
+            Legacy format:
+                ZNAVBAR=zVaF,zAbout,zRegister,zLogin
+                Returns: ["zVaF", "zAbout", "zRegister", "zLogin"]
+            
+            Enhanced JSON format (with RBAC):
+                ZNAVBAR=[{"item": "zVaF"}, {"item": "^logout", "_rbac": {"authenticated": true}}]
+                Transforms to: ["zVaF", {"^logout": {"_rbac": {"authenticated": true}}}]
         
         Notes:
             - Loaded once during initialization
-            - Cached in self._global_navbar
-            - Used by resolve_navbar() for meta.zNavBar: true
+            - Cached in self._global_navbar (unfiltered)
+            - RBAC filtering applied later in resolve_navbar()
+            - JSON format used for .env compatibility (no multiline support in dotenv)
         """
         import os
+        import json
         
         # Read from environment
         navbar_env = os.getenv("ZNAVBAR", "").strip()
@@ -321,14 +330,163 @@ class zNavigation:
             self.logger.framework.debug("[zNavigation] No global navbar defined in ZNAVBAR env var")
             return None
         
-        # Split by comma and strip whitespace
-        navbar_items = [item.strip() for item in navbar_env.split(",") if item.strip()]
+        # Check if it's JSON format (starts with '[')
+        if navbar_env.startswith("["):
+            # Enhanced JSON format: Parse as JSON
+            try:
+                navbar_raw = json.loads(navbar_env)
+                
+                if not isinstance(navbar_raw, list):
+                    self.logger.framework.warning(f"[zNavigation] ZNAVBAR JSON is not an array: {type(navbar_raw)}")
+                    return None
+                
+                # Transform JSON format to internal format
+                # Input: [{"item": "zVaF"}, {"item": "^logout", "_rbac": {...}}]
+                # Output: ["zVaF", {"^logout": {"_rbac": {...}}}]
+                navbar_items = []
+                for entry in navbar_raw:
+                    if not isinstance(entry, dict):
+                        self.logger.framework.warning(f"[zNavigation] Invalid navbar entry (not a dict): {entry}")
+                        continue
+                    
+                    item_name = entry.get("item")
+                    if not item_name:
+                        self.logger.framework.warning(f"[zNavigation] Navbar entry missing 'item' key: {entry}")
+                        continue
+                    
+                    # If entry has _rbac, convert to dict format: {item_name: {_rbac: ...}}
+                    if "_rbac" in entry:
+                        navbar_items.append({item_name: {"_rbac": entry["_rbac"]}})
+                    else:
+                        # Simple string item (public)
+                        navbar_items.append(item_name)
+                
+                if navbar_items:
+                    self.logger.framework.info(f"[zNavigation] Loaded enhanced navbar (JSON) with {len(navbar_items)} items")
+                    return navbar_items
+            
+            except json.JSONDecodeError as e:
+                self.logger.framework.error(f"[zNavigation] Failed to parse ZNAVBAR JSON: {e}")
+                return None
+            except Exception as e:
+                self.logger.framework.error(f"[zNavigation] Error processing ZNAVBAR: {e}")
+                return None
         
-        if navbar_items:
-            self.logger.framework.info(f"[zNavigation] Loaded global navbar: {navbar_items}")
-            return navbar_items
+        else:
+            # Legacy format: Split by comma
+            navbar_items = [item.strip() for item in navbar_env.split(",") if item.strip()]
+            
+            if navbar_items:
+                self.logger.framework.info(f"[zNavigation] Loaded legacy navbar (comma-separated): {navbar_items}")
+                return navbar_items
         
         return None
+
+    def _filter_navbar_by_rbac(self, navbar_items: List[Any]) -> List[str]:
+        """
+        Filter navbar items based on RBAC rules and current user authentication state.
+        
+        This is the "Terminal First" implementation - filtering happens in the backend
+        (zLoader/zNavigation layer) ensuring consistent behavior across Terminal and Bifrost.
+        
+        Filtering Rules:
+            1. String items (no _rbac) → Always visible (public)
+            2. Dict items with _rbac:
+                - zGuest: true → Only visible if NOT authenticated
+                - authenticated: true → Only visible if authenticated
+                - require_role: "role" → Only visible if user has that role
+            3. Invalid items → Filtered out (logged as warnings)
+        
+        Args:
+            navbar_items: Raw navbar items (strings or dicts with RBAC metadata)
+        
+        Returns:
+            List[str]: Filtered list of navbar item names (clean strings)
+        
+        Examples:
+            Input (not authenticated):
+                ["zVaF", {"^logout": {"_rbac": {"authenticated": true}}}, {"^zLogin": {"_rbac": {"zGuest": true}}}]
+            Output:
+                ["zVaF", "^zLogin"]
+            
+            Input (authenticated as zAdmin):
+                ["zVaF", {"zAccount": {"_rbac": {"require_role": "zAdmin"}}}, {"^zLogin": {"_rbac": {"zGuest": true}}}]
+            Output:
+                ["zVaF", "zAccount"]
+        
+        Notes:
+            - Uses zcli.auth.is_authenticated() for auth checks
+            - Uses zcli.auth.has_role() for role checks
+            - Returns clean item names (without _rbac metadata)
+            - Logs filtered items at DEBUG level
+        """
+        if not navbar_items:
+            return []
+        
+        filtered = []
+        is_authenticated = self.zcli.auth.is_authenticated() if hasattr(self.zcli, 'auth') else False
+        
+        for item in navbar_items:
+            # Case 1: Simple string item (no RBAC) - always visible
+            if isinstance(item, str):
+                filtered.append(item)
+                continue
+            
+            # Case 2: Dict item with potential RBAC metadata
+            if isinstance(item, dict):
+                # Extract the item name (key) and metadata (value)
+                if len(item) != 1:
+                    self.logger.framework.warning(f"[zNavigation] Invalid navbar item dict (must have exactly 1 key): {item}")
+                    continue
+                
+                item_name = list(item.keys())[0]
+                item_metadata = item[item_name]
+                
+                # If no metadata or no _rbac, treat as public
+                if not isinstance(item_metadata, dict) or "_rbac" not in item_metadata:
+                    filtered.append(item_name)
+                    continue
+                
+                # Extract RBAC rules
+                rbac_rules = item_metadata.get("_rbac", {})
+                
+                # Check zGuest (guest-only - must NOT be authenticated)
+                if rbac_rules.get("zGuest"):
+                    if not is_authenticated:
+                        filtered.append(item_name)
+                        self.logger.framework.debug(f"[zNavigation] Navbar item '{item_name}' visible (zGuest: user not authenticated)")
+                    else:
+                        self.logger.framework.debug(f"[zNavigation] Navbar item '{item_name}' hidden (zGuest: user is authenticated)")
+                    continue
+                
+                # Check authenticated (must be authenticated)
+                if rbac_rules.get("authenticated"):
+                    if is_authenticated:
+                        filtered.append(item_name)
+                        self.logger.framework.debug(f"[zNavigation] Navbar item '{item_name}' visible (authenticated: true)")
+                    else:
+                        self.logger.framework.debug(f"[zNavigation] Navbar item '{item_name}' hidden (not authenticated)")
+                    continue
+                
+                # Check require_role (must have specific role)
+                required_role = rbac_rules.get("require_role")
+                if required_role:
+                    if is_authenticated and hasattr(self.zcli, 'auth') and self.zcli.auth.has_role(required_role):
+                        filtered.append(item_name)
+                        self.logger.framework.debug(f"[zNavigation] Navbar item '{item_name}' visible (has role: {required_role})")
+                    else:
+                        self.logger.framework.debug(f"[zNavigation] Navbar item '{item_name}' hidden (missing role: {required_role})")
+                    continue
+                
+                # No RBAC rules matched - treat as public
+                filtered.append(item_name)
+                continue
+            
+            # Case 3: Invalid item type
+            self.logger.framework.warning(f"[zNavigation] Invalid navbar item type: {type(item)} ({item})")
+        
+        self.logger.framework.debug(f"[zNavigation] Filtered navbar: {len(navbar_items)} → {len(filtered)} items")
+        return filtered
 
     def resolve_navbar(self, raw_zFile: Dict[str, Any], route_meta: Optional[Dict[str, Any]] = None) -> Optional[List[str]]:
         """
@@ -385,6 +543,7 @@ class zNavigation:
         if isinstance(navbar_value, list):
             if len(navbar_value) > 0:
                 self.logger.framework.debug(f"[zNavigation] Using local navbar (priority 1): {navbar_value}")
+                # Return raw (unfiltered) navbar - filtering happens dynamically in zDispatch
                 return navbar_value
             else:
                 self.logger.framework.debug("[zNavigation] Empty local navbar, skipping")
@@ -394,6 +553,7 @@ class zNavigation:
         if navbar_value is True:
             if self._global_navbar:
                 self.logger.framework.debug(f"[zNavigation] Injecting global navbar from zVaFile (priority 2): {self._global_navbar}")
+                # Return raw (unfiltered) navbar - filtering happens dynamically in zDispatch
                 return self._global_navbar
             else:
                 self.logger.framework.warning("[zNavigation] meta.zNavBar: true but no global navbar defined in .zEnv")
@@ -407,12 +567,14 @@ class zNavigation:
             if route_navbar_value is True:
                 if self._global_navbar:
                     self.logger.framework.debug(f"[zNavigation] Injecting global navbar from route fallback (priority 3): {self._global_navbar}")
+                    # Return raw (unfiltered) navbar - filtering happens dynamically in zDispatch
                     return self._global_navbar
                 else:
                     self.logger.framework.warning("[zNavigation] Route meta.zNavBar: true but no global navbar defined in .zEnv")
                     return None
             elif isinstance(route_navbar_value, list) and len(route_navbar_value) > 0:
                 self.logger.framework.debug(f"[zNavigation] Using route navbar fallback (priority 3): {route_navbar_value}")
+                # Return raw (unfiltered) navbar - filtering happens dynamically in zDispatch
                 return route_navbar_value
         
         # Case 4: No navbar (false, None, or missing everywhere)

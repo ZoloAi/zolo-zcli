@@ -446,11 +446,24 @@ class zLoader:
         self.logger.debug(f"[zLoader] Injecting navbar items into all blocks: {navbar_items}")
         
         # Create navbar menu with modifiers
-        # Format: ~zNavBar*: [$zVaF, $zAbout, $zAccount, ...]
+        # Format: ~zNavBar*: [$zVaF, $zAbout, {zAccount: {_rbac: ...}}, ...]
         # ~ = no back modifier (anchor menu)
         # * = explicit menu marker
         # Items display cleanly (zDisplay strips $), backend handles delta/zLink
-        navbar_menu_items = [f"${item}" for item in navbar_items]
+        # Dict items (with RBAC) are kept as-is for dynamic filtering in zDispatch
+        navbar_menu_items = []
+        for item in navbar_items:
+            if isinstance(item, str):
+                # Simple string item - add delta prefix
+                navbar_menu_items.append(f"${item}")
+            elif isinstance(item, dict):
+                # Dict item with RBAC metadata - keep as-is (no prefix)
+                # Dispatch will filter and extract the key, then add prefix
+                navbar_menu_items.append(item)
+            else:
+                # Unknown type - skip
+                self.logger.warning(f"[zLoader] Unknown navbar item type: {type(item)} ({item})")
+        
         navbar_key = {"~zNavBar*": navbar_menu_items}
         
         # Inject into all top-level blocks (skip "meta" and blocks with modifiers like ^)

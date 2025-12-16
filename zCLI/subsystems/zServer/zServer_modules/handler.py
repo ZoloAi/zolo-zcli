@@ -498,8 +498,15 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
                     
                     # Get router meta for fallback
                     route_meta = self.router.meta if self.router and hasattr(self.router, 'meta') else {}
-                    # Resolve navbar with priority chain
+                    # Resolve navbar with priority chain (returns raw navbar with RBAC metadata)
                     resolved_navbar = zcli.navigation.resolve_navbar(raw_zFile, route_meta=route_meta) if raw_zFile else None
+                    
+                    # 🔒 RBAC Filter: Apply dynamic RBAC filtering for Bifrost (same as Terminal)
+                    # This filters out items the current user can't access before injecting into HTML
+                    if resolved_navbar:
+                        resolved_navbar = zcli.navigation._filter_navbar_by_rbac(resolved_navbar)
+                        if self.zcli_logger:
+                            self.zcli_logger.debug(f"[Handler] RBAC-filtered navbar for Bifrost: {resolved_navbar}")
                 except Exception:
                     resolved_navbar = None
             
@@ -510,7 +517,7 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
                 "zVaFolder": context.get("zVaFolder"),
                 "zBlock": context.get("zBlock"),
                 "title": zcli.config.zSpark.get("title") if hasattr(zcli, 'config') and hasattr(zcli.config, 'zSpark') and zcli.config.zSpark else None,
-                "zNavBar": resolved_navbar  # Use resolved navbar (with route fallback)
+                "zNavBar": resolved_navbar  # Use RBAC-filtered navbar (clean strings only)
             }
             # Only inject if at least one value is present (not all None)
             if any(v is not None for v in zui_config_values.values()):
@@ -643,8 +650,15 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
                     
                     # Get router meta for fallback
                     route_meta = self.router.meta if self.router and hasattr(self.router, 'meta') else {}
-                    # Resolve navbar with priority chain
+                    # Resolve navbar with priority chain (returns raw navbar with RBAC metadata)
                     resolved_navbar = zcli.navigation.resolve_navbar(raw_zFile, route_meta=route_meta) if raw_zFile else None
+                    
+                    # 🔒 RBAC Filter: Apply dynamic RBAC filtering for Bifrost (same as Terminal)
+                    # This filters out items the current user can't access before injecting into HTML
+                    if resolved_navbar:
+                        resolved_navbar = zcli.navigation._filter_navbar_by_rbac(resolved_navbar)
+                        if self.zcli_logger:
+                            self.zcli_logger.debug(f"[Handler] RBAC-filtered navbar for zWalker route: {resolved_navbar}")
                 except Exception as e:
                     if hasattr(self, 'zcli_logger') and self.zcli_logger:
                         self.zcli_logger.warning(f"[Handler] Could not resolve navbar: {e}")
@@ -656,7 +670,7 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
                 "zVaFolder": context.get("zVaFolder"),
                 "zBlock": context.get("zBlock"),
                 "title": zcli.config.zSpark.get("title") if zcli and hasattr(zcli, 'config') and hasattr(zcli.config, 'zSpark') and zcli.config.zSpark else None,
-                "zNavBar": resolved_navbar,  # Use resolved navbar (with route fallback)
+                "zNavBar": resolved_navbar,  # Use RBAC-filtered navbar (clean strings only)
                 "websocket": {
                     "ssl_enabled": zcli.config.websocket.ssl_enabled if zcli and hasattr(zcli, 'config') and hasattr(zcli.config, 'websocket') else False,
                     "host": zcli.config.websocket.host if zcli and hasattr(zcli, 'config') and hasattr(zcli.config, 'websocket') else "127.0.0.1",

@@ -552,9 +552,55 @@ class MessageHandler:
                         chunk_num += 1
                         self.logger.info(f"[MessageHandler] 📦 Chunk {chunk_num}: {chunk_keys} (gate={is_gate})")
                         
+                        # Check for special RBAC denial chunk
+                        if gate_value and isinstance(gate_value, dict) and gate_value.get("_rbac_denied"):
+                            # RBAC was denied - collect and send buffered display events
+                            buffered_events = self.zcli.display.collect_buffered_events()
+                            self.logger.info(f"[MessageHandler] 📛 RBAC denied - sending {len(buffered_events)} buffered events")
+                            
+                            # Extract the denial message from buffered events
+                            denial_messages = []
+                            for event in buffered_events:
+                                if isinstance(event, dict):
+                                    # Extract content from display events
+                                    content = event.get("content") or event.get("label") or str(event)
+                                    denial_messages.append(content)
+                                else:
+                                    denial_messages.append(str(event))
+                            
+                            # Send RBAC denial event to frontend
+                            if denial_messages:
+                                error_msg = {
+                                    "event": "rbac_denied",
+                                    "message": "\n".join(denial_messages),
+                                    "_requestId": data.get("_requestId")
+                                }
+                                await ws.send(json.dumps(error_msg))
+                                self.logger.info("[MessageHandler] ✅ Sent RBAC denial message to frontend")
+                            
+                            # Send navigate_back event
+                            if gate_value.get("_signal") == "navigate_back":
+                                navigate_back_msg = {
+                                    "event": "navigate_back",
+                                    "reason": "rbac_denied",
+                                    "_requestId": data.get("_requestId")
+                                }
+                                await ws.send(json.dumps(navigate_back_msg))
+                                self.logger.info("[MessageHandler] ✅ Sent navigate_back event")
+                            
+                            # Skip normal chunk processing
+                            continue
+                        
                         # Extract YAML data for chunk keys (frontend will render properly)
                         # Filter out internal keys like ~zNavBar* (already rendered separately)
                         chunk_data = {}
+                        
+                        # FIRST: Always include block-level metadata (_zClass, _zStyle, etc.)
+                        for key, value in block_dict.items():
+                            if key.startswith('_'):
+                                chunk_data[key] = value
+                        
+                        # THEN: Add the specific content keys for this chunk
                         for key in chunk_keys:
                             # Skip internal/meta keys (start with ~)
                             if key.startswith('~'):
@@ -937,6 +983,13 @@ class MessageHandler:
                 # Extract YAML data for chunk keys
                 # Filter out internal keys like ~zNavBar* (already rendered separately)
                 chunk_data = {}
+                
+                # FIRST: Always include block-level metadata (_zClass, _zStyle, etc.)
+                for key, value in block_dict.items():
+                    if key.startswith('_'):
+                        chunk_data[key] = value
+                
+                # THEN: Add the specific content keys for this chunk
                 for key in chunk_keys:
                     if key.startswith('~'):  # Skip internal/meta keys
                         continue
