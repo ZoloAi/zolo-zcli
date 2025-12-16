@@ -162,6 +162,10 @@ class MessageHandler:
         self.walker = walker
         self.connection_info = connection_info_manager
         self.auth = auth_manager
+        
+        # Generator resumption: Store paused generators by WebSocket connection
+        # Key: ws id, Value: {generator, block_dict, zBlock, breadcrumb_path, request_id, chunk_num}
+        self._paused_generators = {}
     
     async def handle_message(
         self,
@@ -455,6 +459,12 @@ class MessageHandler:
         print(f"{'='*80}")
         self.logger.info("[MessageHandler] Walker execution requested")
         
+        # Check for shutdown signal (Ctrl+C/SIGTERM)
+        if hasattr(self.zcli, '_shutdown_requested') and self.zcli._shutdown_requested:
+            self.logger.info("[MessageHandler] Shutdown requested, aborting walker execution")
+            await ws.send(self._build_response(data, result="aborted", reason="shutdown"))
+            return True
+        
         try:
             # Extract parameters
             zVaFile = data.get("zVaFile")
@@ -512,21 +522,109 @@ class MessageHandler:
             
             self.logger.debug(f"[MessageHandler] Initialized breadcrumb: {full_crumb_path}")
             
+            # Check for shutdown before executing block
+            if hasattr(self.zcli, '_shutdown_requested') and self.zcli._shutdown_requested:
+                self.logger.info("[MessageHandler] Shutdown requested before block execution, aborting")
+                await ws.send(self._build_response(data, result="aborted", reason="shutdown"))
+                return True
+            
             # Execute the block
             block_dict = raw_zFile[zBlock]
+            
+            # Check if walker execution returns a generator (chunked mode)
             result = await asyncio.to_thread(walker.zBlock_loop, block_dict)
             
-            # Collect buffered display events and broadcast them
-            # Clear buffered events without broadcasting them
-            # In Bifrost mode, the frontend renders directly from YAML (preserving _zClass styling)
-            # Broadcasting buffered events would cause double-rendering
-            buffered_events = self.zcli.display.collect_buffered_events()
-            self.logger.info(f"[MessageHandler] Cleared {len(buffered_events)} buffered display events (not broadcasting - frontend renders from YAML)")
+            # Check if result is a generator (chunked execution mode)
+            import types
+            if isinstance(result, types.GeneratorType):
+                self.logger.info("[MessageHandler] 🎬 Chunked execution mode - consuming generator")
+                
+                # Consume generator and send chunks progressively
+                try:
+                    chunk_num = 0
+                    for chunk_keys, is_gate, gate_value in result:
+                        # Check for shutdown during chunk processing
+                        if hasattr(self.zcli, '_shutdown_requested') and self.zcli._shutdown_requested:
+                            self.logger.info("[MessageHandler] Shutdown requested during chunk processing, aborting")
+                            await ws.send(self._build_response(data, result="aborted", reason="shutdown"))
+                            return True
+                        
+                        chunk_num += 1
+                        self.logger.info(f"[MessageHandler] 📦 Chunk {chunk_num}: {chunk_keys} (gate={is_gate})")
+                        
+                        # Extract YAML data for chunk keys (frontend will render properly)
+                        # Filter out internal keys like ~zNavBar* (already rendered separately)
+                        chunk_data = {}
+                        for key in chunk_keys:
+                            # Skip internal/meta keys (start with ~)
+                            if key.startswith('~'):
+                                continue
+                            if key in block_dict:
+                                chunk_data[key] = block_dict[key]
+                        
+                        # Send chunk to frontend with YAML data (not HTML)
+                        # Frontend will render using its existing _renderItems() pipeline
+                        chunk_msg = {
+                            "event": "render_chunk",
+                            "chunk_num": chunk_num,
+                            "keys": chunk_keys,
+                            "data": chunk_data,  # Send YAML data, not HTML
+                            "is_gate": is_gate,
+                            "_requestId": data.get("_requestId")
+                        }
+                        await ws.send(json.dumps(chunk_msg))
+                        self.logger.info(f"[MessageHandler] ✅ Sent chunk {chunk_num}")
+                        
+                        if is_gate:
+                            # Pause here - stop sending chunks until gate completes
+                            self.logger.info(f"[MessageHandler] ⏸️  Paused at gate - storing generator state")
+                            
+                            # Store generator state for resumption after form submission
+                            ws_id = id(ws)  # Use WebSocket connection ID as key
+                            self._paused_generators[ws_id] = {
+                                'generator': result,  # The generator object itself
+                                'block_dict': block_dict,  # Full block YAML (for rendering remaining chunks)
+                                'zBlock': zBlock,  # Block name (for ^ navigation check)
+                                'breadcrumb_path': full_crumb_path,  # For logging
+                                'request_id': data.get("_requestId"),  # Original walker request ID
+                                'chunk_num': chunk_num  # Current chunk number
+                            }
+                            
+                            self.logger.info(f"[MessageHandler] Stored generator state for ws={ws_id}")
+                            self.logger.info(f"[MessageHandler] Post-gate content will be sent after successful form submission")
+                            break  # Exit loop - don't send post-gate chunks yet
+                    
+                    # Generator completed
+                    self.logger.info("[MessageHandler] Generator exhausted - all chunks sent")
+                    
+                except StopIteration as e:
+                    # Generator finished, get return value
+                    final_result = e.value if hasattr(e, 'value') else None
+                    self.logger.info(f"[MessageHandler] Generator completed with: {final_result}")
+                
+                # Clear buffered display events
+                buffered_events = self.zcli.display.collect_buffered_events()
+                self.logger.info(f"[MessageHandler] Cleared {len(buffered_events)} buffered display events")
+                
+                # Send completion
+                await ws.send(self._build_response(data, result="completed"))
+                return True
             
-            # Send completion response
-            await ws.send(self._build_response(data, result="completed"))
-            self.logger.info("[MessageHandler] Walker execution completed successfully")
-            return True
+            else:
+                # Regular non-chunked execution
+                self.logger.info("[MessageHandler] Standard execution mode (no chunking)")
+                
+                # Collect buffered display events and broadcast them
+                # Clear buffered events without broadcasting them
+                # In Bifrost mode, the frontend renders directly from YAML (preserving _zClass styling)
+                # Broadcasting buffered events would cause double-rendering
+                buffered_events = self.zcli.display.collect_buffered_events()
+                self.logger.info(f"[MessageHandler] Cleared {len(buffered_events)} buffered display events (not broadcasting - frontend renders from YAML)")
+                
+                # Send completion response
+                await ws.send(self._build_response(data, result="completed"))
+                self.logger.info("[MessageHandler] Walker execution completed successfully")
+                return True
             
         except Exception as e:
             error_msg = f"Walker execution failed: {str(e)}"
@@ -702,6 +800,11 @@ class MessageHandler:
                 if isinstance(result, dict) and 'success' in result:
                     # Plugin returned structured response for Bifrost
                     await ws.send(self._build_response(data, **result))
+                    
+                    # Resume generator if action was successful
+                    if result.get('success'):
+                        await self._resume_generator_after_gate(ws, data)
+                    
                     return True
                 else:
                     # Plugin returned None or simple value (Terminal-style)
@@ -709,6 +812,10 @@ class MessageHandler:
                         success=True,
                         message="✓ Action completed successfully!"
                     ))
+                    
+                    # Resume generator after successful form submission
+                    await self._resume_generator_after_gate(ws, data)
+                    
                     return True
             
             elif 'zLogin' in injected_action:
@@ -728,6 +835,11 @@ class MessageHandler:
                 
                 # handle_zLogin always returns a dict with success/message
                 await ws.send(self._build_response(data, **result))
+                
+                # Resume generator if form submission was successful
+                if result.get('success'):
+                    await self._resume_generator_after_gate(ws, data)
+                
                 return True
                     
             elif 'zData' in injected_action:
@@ -745,6 +857,10 @@ class MessageHandler:
                     success=True,
                     message="✓ Form submitted successfully!"
                 ))
+                
+                # Resume generator after successful form submission
+                await self._resume_generator_after_gate(ws, data)
+                
                 return True
             else:
                 # Unknown action type
@@ -764,6 +880,114 @@ class MessageHandler:
                 errors=[str(e)]
             ))
             return True
+    
+    async def _resume_generator_after_gate(self, ws: Any, form_data: Dict[str, Any]) -> None:
+        """
+        Resume a paused generator after successful gate completion (form submission).
+        
+        This method is called after a form submission succeeds (e.g., successful login).
+        It retrieves the stored generator state, resumes iteration, and sends the
+        remaining chunks to the frontend. This bridges Terminal's synchronous execution
+        with Bifrost's asynchronous nature while maintaining proper execution semantics.
+        
+        Architecture:
+            - Terminal: Synchronous gate execution (pause for user input in loop)
+            - Bifrost: Async gate execution (pause generator, resume after WS message)
+            - Both modes: Same execution order and post-gate content rendering
+        
+        Args:
+            ws: WebSocket connection
+            form_data: Original form submission data (for request ID and logging)
+        
+        Process:
+            1. Retrieve stored generator state by WebSocket ID
+            2. Resume generator iteration from paused state
+            3. Send remaining chunks progressively to frontend
+            4. Handle nested gates (pause again if encountered)
+            5. Check for ^ bounce-back modifier and trigger navigation
+            6. Cleanup generator state after completion
+        """
+        ws_id = id(ws)
+        
+        # Check if there's a paused generator for this connection
+        if ws_id not in self._paused_generators:
+            self.logger.debug(f"[GeneratorResume] No paused generator for ws={ws_id}")
+            return
+        
+        # Retrieve stored generator state
+        gen_state = self._paused_generators[ws_id]
+        generator = gen_state['generator']
+        block_dict = gen_state['block_dict']
+        zBlock = gen_state['zBlock']
+        chunk_num = gen_state['chunk_num']
+        
+        self.logger.info(f"[GeneratorResume] 🎬 Resuming generator for block: {zBlock}")
+        
+        try:
+            # Continue consuming generator from where we left off
+            for chunk_keys, is_gate, gate_value in generator:
+                # Check for shutdown during chunk processing
+                if hasattr(self.zcli, '_shutdown_requested') and self.zcli._shutdown_requested:
+                    self.logger.info("[GeneratorResume] Shutdown requested, aborting")
+                    break
+                
+                chunk_num += 1
+                self.logger.info(f"[GeneratorResume] 📦 Chunk {chunk_num}: {chunk_keys} (gate={is_gate})")
+                
+                # Extract YAML data for chunk keys
+                # Filter out internal keys like ~zNavBar* (already rendered separately)
+                chunk_data = {}
+                for key in chunk_keys:
+                    if key.startswith('~'):  # Skip internal/meta keys
+                        continue
+                    if key in block_dict:
+                        chunk_data[key] = block_dict[key]
+                
+                # Send chunk to frontend with YAML data (not HTML)
+                chunk_msg = {
+                    "event": "render_chunk",
+                    "chunk_num": chunk_num,
+                    "keys": chunk_keys,
+                    "data": chunk_data,
+                    "is_gate": is_gate,
+                    "_requestId": gen_state['request_id']  # Use original walker request ID
+                }
+                await ws.send(json.dumps(chunk_msg))
+                self.logger.info(f"[GeneratorResume] ✅ Sent post-gate chunk {chunk_num}")
+                
+                # If another gate is encountered, pause again (nested gates)
+                if is_gate:
+                    self.logger.info(f"[GeneratorResume] Another gate encountered, pausing again")
+                    gen_state['chunk_num'] = chunk_num
+                    return  # Keep generator stored, don't cleanup
+            
+            # Generator completed - all chunks sent
+            self.logger.info(f"[GeneratorResume] ✅ All post-gate chunks sent")
+            
+            # Check for ^ bounce-back modifier in block name
+            if zBlock.startswith('^'):
+                self.logger.info(f"[GeneratorResume] Block has ^ modifier - triggering bounce-back")
+                # Send bounce-back navigation signal to frontend
+                bounce_msg = {
+                    "event": "navigate_back",
+                    "reason": "bounce_back_block_completed",
+                    "_requestId": form_data.get("_requestId")
+                }
+                await ws.send(json.dumps(bounce_msg))
+            
+        except StopIteration as e:
+            # Generator finished naturally
+            final_result = e.value if hasattr(e, 'value') else None
+            self.logger.info(f"[GeneratorResume] Generator completed with: {final_result}")
+        
+        except Exception as e:
+            self.logger.error(f"[GeneratorResume] Error resuming generator: {e}", exc_info=True)
+        
+        finally:
+            # Clean up stored generator
+            if ws_id in self._paused_generators:
+                del self._paused_generators[ws_id]
+                self.logger.debug(f"[GeneratorResume] Cleaned up generator state for ws={ws_id}")
     
     def _get_event(self, data: Dict[str, Any]) -> Optional[str]:
         """

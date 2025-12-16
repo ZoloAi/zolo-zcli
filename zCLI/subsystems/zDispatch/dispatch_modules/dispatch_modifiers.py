@@ -464,11 +464,35 @@ class ModifierProcessor:
             result = self.dispatch.launcher.launch(zHorizontal, context=context, walker=walker)
             self.logger.framework.debug(LOG_MSG_REQUIRED_RESULTS, result)
             
-            # Retry loop until success or user abort
+            # Mode-aware retry handling
+            is_bifrost = self._is_bifrost_mode(context)
+            
+            if is_bifrost:
+                # Bifrost mode: Frontend handles retry UI
+                # Just return result (None = failure shown in browser, True/value = success)
+                # The frontend will re-enable the form for user to retry
+                if not result:
+                    self.logger.info(f"[{MOD_EXCLAMATION}] Bifrost mode - gate failed, frontend will handle retry")
+                else:
+                    self.logger.info(f"[{MOD_EXCLAMATION}] Bifrost mode - gate passed")
+                return result
+            
+            # Terminal mode: Backend handles retry loop with prompts
             while not result:
+                # Check for shutdown signal (Ctrl+C/SIGTERM)
+                if hasattr(self.zcli, '_shutdown_requested') and self.zcli._shutdown_requested:
+                    self.logger.info(f"[{MOD_EXCLAMATION}] Shutdown requested, aborting retry loop for: {zKey}")
+                    return None
+                
                 self.logger.warning(LOG_MSG_REQUIREMENT_NOT_SATISFIED, zKey)
                 if walker:
-                    choice = display.read_string(PROMPT_REQUIRED_CONTINUE).strip().lower()
+                    try:
+                        choice = display.read_string(PROMPT_REQUIRED_CONTINUE).strip().lower()
+                    except (KeyboardInterrupt, EOFError):
+                        # Handle Ctrl+C during input prompt
+                        self.logger.info(f"[{MOD_EXCLAMATION}] Interrupted during retry prompt for: {zKey}")
+                        return None
+                    
                     if choice in [INPUT_STOP, 'n', 'no']:
                         # User declined retry - return None to stop retrying without full exit
                         # This allows ^ (bounce-back) blocks to handle navigation properly
@@ -489,25 +513,25 @@ class ModifierProcessor:
 
     def _is_bifrost_mode(self, context: Optional[Dict[str, Any]]) -> bool:
         """
-        Check if context indicates Bifrost mode execution.
+        Check if we're in Bifrost mode execution.
         
         Args:
-            context: Optional context dict with mode metadata
+            context: Optional context dict (not used, kept for backwards compatibility)
         
         Returns:
-            True if context exists and mode is "zBifrost", False otherwise
+            True if session zMode is "zBifrost", False otherwise
         
         Example:
             if self._is_bifrost_mode(context):
                 # Handle Bifrost-specific behavior
         
         Notes:
-            - TODO: Replace KEY_MODE with SESSION_KEY_ZMODE from zConfig (Week 6.2)
-            - Gracefully handles None context (returns False)
+            - Mode is stored in zcli.session["zMode"], not context
+            - Gracefully handles missing zMode (defaults to False/Terminal)
             - Case-sensitive mode comparison
         """
-        # TODO: Week 6.2 (zConfig) - Replace KEY_MODE with SESSION_KEY_ZMODE
-        return context is not None and context.get(KEY_MODE) == MODE_BIFROST
+        # Check session for mode (not context - mode is session-level, not context-level)
+        return self.zcli.session.get("zMode") == MODE_BIFROST
 
     def _display_modifier(
         self,

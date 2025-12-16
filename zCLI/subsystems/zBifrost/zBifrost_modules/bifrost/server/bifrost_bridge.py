@@ -395,6 +395,12 @@ class zBifrost:
         if auth_info:
             user = auth_info.get(KEY_USER, 'unknown')
             self.logger.info(LOG_USER_DISCONNECTED.format(user=user))
+        
+        # Clean up any paused generators for this connection
+        ws_id = id(ws)
+        if hasattr(self.message_handler, '_paused_generators') and ws_id in self.message_handler._paused_generators:
+            del self.message_handler._paused_generators[ws_id]
+            self.logger.debug(f"[Cleanup] Removed paused generator for disconnected ws={ws_id}")
 
         self.logger.debug(LOG_ACTIVE_CLIENTS.format(count=len(self.clients)))
 

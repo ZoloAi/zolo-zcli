@@ -426,7 +426,8 @@ class zWizard:
         dispatch_fn: Optional[Any] = None, 
         navigation_callbacks: Optional[Dict[str, Any]] = None, 
         context: Optional[Dict[str, Any]] = None, 
-        start_key: Optional[str] = None
+        start_key: Optional[str] = None,
+        ws_callback: Optional[Any] = None
     ) -> Any:
         """
         Core loop engine that iterates through keys, dispatches actions, and handles results.
@@ -434,12 +435,17 @@ class zWizard:
         This is the heart of zWizard - a flexible loop engine that executes ordered steps
         with automatic RBAC enforcement, navigation handling, and error recovery.
         
+        Supports two execution modes:
+        - Terminal: Sequential blocking execution
+        - Bifrost: Chunked progressive execution at ! (gate) boundaries
+        
         Args:
             items_dict: Ordered dictionary of step keys and values
             dispatch_fn: Optional custom dispatch function (defaults to zcli.dispatch)
             navigation_callbacks: Optional callbacks for navigation events
             context: Optional context passed to all dispatch calls
             start_key: Optional key to start from (for resuming workflows)
+            ws_callback: Optional WebSocket callback for Bifrost chunked rendering
         
         Returns:
             Navigation signal (zBack, exit, stop, error) or None for normal completion
@@ -496,6 +502,24 @@ class zWizard:
             - handle(): Higher-level method with transaction support
             - wizard_examples.py: Comprehensive usage patterns
         """
+        # ════════════════════════════════════════════════════════════
+        # MODE DETECTION: Route to appropriate execution strategy
+        # ════════════════════════════════════════════════════════════
+        # Bifrost mode uses chunked execution (progressive rendering at ! gates)
+        # Terminal mode uses sequential blocking execution
+        from zCLI.subsystems.zConfig.zConfig_modules import ZMODE_ZBIFROST
+        mode = self.zcli.session.get("zMode", "Terminal")
+        
+        if mode == ZMODE_ZBIFROST:
+            # Bifrost chunked execution (generator-based progressive rendering)
+            self.logger.debug("[zWizard] Using chunked execution for Bifrost mode")
+            return self._execute_loop_chunked(
+                items_dict, dispatch_fn, navigation_callbacks, context, start_key, ws_callback
+            )
+        
+        # Terminal sequential execution (default)
+        self.logger.debug("[zWizard] Using sequential execution for Terminal mode")
+        
         # ════════════════════════════════════════════════════════════
         # BLOCK-LEVEL RBAC: Gate for entire workflow/block
         # ════════════════════════════════════════════════════════════
@@ -609,6 +633,132 @@ class zWizard:
             idx += 1
 
         return None
+    
+    def _execute_loop_chunked(
+        self,
+        items_dict: Dict[str, Any],
+        dispatch_fn: Optional[Any] = None,
+        navigation_callbacks: Optional[Dict[str, Any]] = None,
+        context: Optional[Dict[str, Any]] = None,
+        start_key: Optional[str] = None,
+        ws_callback: Optional[Any] = None
+    ):
+        """
+        Generator-based chunked execution for Bifrost mode - progressive rendering at ! gates.
+        
+        This generator yields chunks of keys at ! (gate) boundaries, allowing the bridge
+        to send progressive HTML to the frontend via WebSocket. Each chunk is rendered
+        and sent before the next chunk begins execution.
+        
+        Generator Pattern:
+            - Yields: (chunk_keys, is_gate) tuples for bridge to render and send
+            - Receives: Result from gate execution (for ! retry logic)
+            - Returns: Final navigation signal or None
+        
+        Args:
+            items_dict: Ordered dictionary of step keys and values
+            dispatch_fn: Optional custom dispatch function
+            navigation_callbacks: Optional callbacks for navigation events
+            context: Optional context passed to all dispatch calls
+            start_key: Optional key to start from
+            ws_callback: Unused (kept for signature compatibility)
+        
+        Yields:
+            Tuple[List[str], bool, Any]: (chunk_keys, is_gate, gate_value)
+            - chunk_keys: List of keys in this chunk
+            - is_gate: True if chunk ends with ! gate
+            - gate_value: The value dict for the gate (for form rendering)
+        
+        Receives (via send()):
+            Result from gate execution (success/failure for retry logic)
+        
+        Returns:
+            Navigation signal or None for normal completion
+        
+        Security:
+            Only keys up to the gate are sent to frontend - post-gate content
+            is NOT exposed until gate succeeds. This maintains RBAC and prevents
+            data leakage.
+        
+        Example:
+            # Bridge code:
+            gen = wizard._execute_loop_chunked(block_dict, ...)
+            for chunk_keys, is_gate, gate_value in gen:
+                html = render_keys(chunk_keys)
+                await ws.send({'event': 'render_chunk', 'html': html})
+                if is_gate:
+                    result = await wait_for_form_submit()
+                    gen.send(result)  # Resume with result
+        """
+        from zCLI.subsystems.zConfig.zConfig_modules import ZMODE_ZBIFROST
+        
+        self.logger.info("[zWizard] ⚡ Generator-based chunked execution for Bifrost")
+        
+        # Block-level RBAC check
+        block_rbac_result = check_rbac_access(
+            key="Block/Workflow",
+            value=items_dict,
+            zcli=self.zcli,
+            walker=self.walker,
+            logger=self.logger,
+            display=self.display
+        )
+        
+        if block_rbac_result in (RBAC_ACCESS_DENIED, RBAC_ACCESS_DENIED_ZGUEST):
+            self.logger.warning("[zWizard] Block-level RBAC denied in chunked mode")
+            return SIGNAL_ZBACK
+        
+        dispatch_fn = self._get_dispatch_fn(dispatch_fn, context)
+        keys_list = [k for k in items_dict.keys() if not k.startswith('_')]
+        idx = keys_list.index(start_key) if start_key and start_key in keys_list else 0
+        
+        # Chunk accumulator
+        current_chunk = []
+        
+        while idx < len(keys_list):
+            key = keys_list[idx]
+            value = items_dict[key]
+            
+            self.logger.debug(f"[zWizard.chunked] Processing key: {key}")
+            
+            # RBAC check
+            rbac_check_result = check_rbac_access(
+                key, value, self.zcli, self.walker, self.logger, self.display
+            )
+            if rbac_check_result == RBAC_ACCESS_DENIED:
+                idx += 1
+                continue
+            
+            # Add key to current chunk
+            current_chunk.append(key)
+            
+            # Check if this is a gate (! modifier)
+            is_gate = '!' in key
+            
+            if is_gate:
+                # Gate detected - yield chunk for rendering
+                self.logger.info(f"[zWizard.chunked] 🚪 Gate: {key} - yielding chunk of {len(current_chunk)} keys")
+                
+                # Yield chunk to bridge for rendering (frontend will render the form)
+                # Bridge will handle form submission and resume generator
+                yield (current_chunk, True, value)
+                
+                # Start new chunk for post-gate content
+                self.logger.info(f"[zWizard.chunked] ⏸️  Gate yielded - post-gate content will be sent after form submission")
+                current_chunk = []
+                idx += 1
+                
+            else:
+                # Regular key - accumulate and continue
+                # Will be sent in next chunk or at end
+                idx += 1
+        
+        # Yield final chunk if any keys remain
+        if current_chunk:
+            self.logger.info(f"[zWizard.chunked] Final chunk: {current_chunk}")
+            yield (current_chunk, False, None)
+        
+        return None
 
     def _get_dispatch_fn(self, dispatch_fn: Optional[Any], context: Optional[Dict[str, Any]]) -> Any:
         """Get or create dispatch function."""
@@ -635,6 +785,15 @@ class zWizard:
 
     def _handle_navigation_result(self, result: Any, key: str, navigation_callbacks: Optional[Dict[str, Any]]) -> Any:
         """Handle navigation results (zBack, exit, stop, error)."""
+        # Normalize dict-based navigation signals to string signals
+        # Some subsystems return {'exit': 'completed'} or similar structured data
+        # We extract the signal key for hashable navigation handling
+        if isinstance(result, dict) and len(result) == 1:
+            signal_key = list(result.keys())[0]
+            if signal_key in NAVIGATION_SIGNALS:
+                self.logger.debug(f"[zWizard] Normalized dict signal {result} -> '{signal_key}'")
+                result = signal_key
+        
         # Map result types to callback names
         result_map = {
             SIGNAL_ZBACK: CALLBACK_ON_BACK,
