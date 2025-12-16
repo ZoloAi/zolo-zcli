@@ -173,12 +173,51 @@ class ConnectionInfoManager:
             except Exception as e:  # Broad catch intentional: model discovery is optional
                 self.logger.debug(LOG_MODEL_DISCOVERY_ERROR.format(error=e))
 
-        # Add session data if available
+        # Add session data if available (v1.6.0: includes session_hash and auth data)
         if self.zcli and hasattr(self.zcli, 'session'):
             try:
+                session = self.zcli.session
+                
+                # Extract session_hash for frontend cache validation
+                session_hash = session.get('session_hash')
+                
+                # Extract public auth data (for navbar, RBAC display, etc.)
+                zauth_data = session.get('zAuth', {})
+                
+                # Determine active authentication context
+                active_context = zauth_data.get('active_context')
+                active_app = zauth_data.get('active_app')
+                
+                # Extract user info based on active context
+                username = None
+                role = None
+                authenticated = False
+                
+                if active_context == 'zSession':
+                    # User authenticated via zSession (Zolo platform)
+                    zsession = zauth_data.get('zSession', {})
+                    authenticated = zsession.get('authenticated', False)
+                    username = zsession.get('username')
+                    role = zsession.get('role')
+                elif active_context in ['application', 'dual']:
+                    # User authenticated via application
+                    apps = zauth_data.get('applications', {})
+                    if active_app and active_app in apps:
+                        app_data = apps[active_app]
+                        authenticated = app_data.get('authenticated', False)
+                        username = app_data.get('username')
+                        role = app_data.get('role')
+                
+                # Build session info with public data only (security: no tokens/passwords)
                 info[KEY_SESSION] = {
-                    KEY_SESSION_WORKSPACE: getattr(self.zcli.session, 'workspace', None),
-                    KEY_SESSION_MODE: getattr(self.zcli, 'mode', DEFAULT_MODE)
+                    KEY_SESSION_WORKSPACE: getattr(session, 'workspace', session.get('zSpace')),
+                    KEY_SESSION_MODE: getattr(self.zcli, 'mode', DEFAULT_MODE),
+                    'session_hash': session_hash,  # v1.6.0: For cache invalidation
+                    'authenticated': authenticated,
+                    'username': username,
+                    'role': role,
+                    'active_context': active_context,
+                    'active_app': active_app
                 }
             except Exception as e:  # Broad catch intentional: session info is optional
                 self.logger.debug(LOG_SESSION_INFO_ERROR.format(error=e))

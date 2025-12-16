@@ -307,6 +307,7 @@ from zCLI.subsystems.zConfig.zConfig_modules import (
     CONTEXT_APPLICATION,
     CONTEXT_DUAL
 )
+from zCLI.subsystems.zConfig.zConfig_modules.config_session import SessionConfig
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -898,6 +899,10 @@ class Authentication:
             self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_DUAL_MODE] = False
             
             self._log(LOG_LEVEL_INFO, f"{LOG_LOGOUT_ALL_APPS} ({len(apps)} apps)")
+        
+        # v1.6.0: Regenerate session_hash for frontend cache invalidation
+        new_hash = SessionConfig.regenerate_session_hash(self.session)
+        self._log(LOG_LEVEL_DEBUG, f"Session hash regenerated on logout: {new_hash}")
         
         return self._create_status_response(
             STATUS_SUCCESS,

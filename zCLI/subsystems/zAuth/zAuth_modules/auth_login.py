@@ -40,7 +40,7 @@ Auto-Discovery from zSchema:
 import bcrypt
 from typing import Any, Dict, Optional
 
-# Import zConfig session constants
+# Import zConfig session constants and SessionConfig
 from zCLI.subsystems.zConfig.zConfig_modules import (
     SESSION_KEY_ZAUTH,
     SESSION_KEY_ZMODE,
@@ -58,6 +58,7 @@ from zCLI.subsystems.zConfig.zConfig_modules import (
     CONTEXT_ZSESSION,
     CONTEXT_DUAL
 )
+from zCLI.subsystems.zConfig.zConfig_modules.config_session import SessionConfig
 
 # Constants
 LOG_PREFIX = "[zLogin]"
@@ -302,6 +303,10 @@ def handle_zLogin(
     else:
         zcli.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_DUAL_MODE] = False
         logger.debug(f"{LOG_PREFIX} Single-app mode ({app_name})")
+    
+    # v1.6.0: Regenerate session_hash for frontend cache invalidation
+    new_hash = SessionConfig.regenerate_session_hash(zcli.session)
+    logger.debug(f"{LOG_PREFIX} Session hash regenerated: {new_hash}")
     
     # Success! Display message and return
     username = app_session[ZAUTH_KEY_USERNAME]

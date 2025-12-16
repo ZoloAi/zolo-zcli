@@ -242,6 +242,43 @@ def _resolve_placeholders(
             elif placeholder == 'date':
                 return datetime.now().strftime('%Y-%m-%d')
             
+            # RBAC-aware navbar (v1.6.0: Dynamic filtering based on auth state)
+            elif placeholder == 'zNavBar':
+                try:
+                    # Resolve navbar from current route context
+                    if hasattr(zcli, 'navigation'):
+                        # Try to get navbar from session's current zVaFile
+                        zVaFile = zcli.session.get('zVaFile')
+                        zVaFolder = zcli.session.get('zVaFolder')
+                        
+                        if zVaFile and zVaFolder:
+                            # Construct zPath and load the file
+                            folder_parts = zVaFolder.lstrip('@.').split('.')
+                            file_parts = zVaFile.split('.')
+                            zPath = '@.' + '.'.join(folder_parts + file_parts)
+                            raw_zFile = zcli.loader.handle(zPath=zPath)
+                            
+                            # Get router meta for fallback
+                            route_meta = {}
+                            if hasattr(zcli, 'server') and hasattr(zcli.server, 'router'):
+                                route_meta = zcli.server.router.meta if hasattr(zcli.server.router, 'meta') else {}
+                            
+                            # Resolve navbar (returns raw items with RBAC metadata)
+                            raw_navbar = zcli.navigation.resolve_navbar(raw_zFile, route_meta=route_meta)
+                            
+                            # Apply RBAC filtering (returns clean list of accessible item names)
+                            if raw_navbar:
+                                filtered_navbar = zcli.navigation._filter_navbar_by_rbac(raw_navbar)
+                                logger.debug(f"[JSONUtils] RBAC-filtered navbar: {len(raw_navbar)} → {len(filtered_navbar)} items")
+                                return filtered_navbar
+                    
+                    # Fallback: return empty list if navbar can't be resolved
+                    logger.debug("[JSONUtils] Could not resolve zNavBar, returning empty list")
+                    return []
+                except Exception as e:
+                    logger.warning(f"[JSONUtils] Error resolving zNavBar placeholder: {e}")
+                    return []
+            
             # Unknown placeholder - return as-is
             else:
                 logger.warning(f"[JSONUtils] Unknown placeholder: {placeholder}")

@@ -23,6 +23,7 @@ Manages runtime session creation with three-tier authentication architecture:
    - Example: Store owner using zCLI analytics on their store
 
 Session Structure:
+    session["session_hash"] = "a1b2c3d4"  # v1.6.0: Cache invalidation token (regenerates on login/logout)
     session["zAuth"] = {
         "zSession": {
             "authenticated": False,
@@ -118,6 +119,7 @@ SESSION_KEY_ZVARS = "zVars"
 SESSION_KEY_ZSHORTCUTS = "zShortcuts"
 SESSION_KEY_BROWSER = "browser"
 SESSION_KEY_IDE = "ide"
+SESSION_KEY_SESSION_HASH = "session_hash"  # v1.6.0: For frontend cache invalidation
 
 # zSpark dict keys
 ZSPARK_KEY_TITLE = "title"
@@ -218,6 +220,40 @@ class SessionConfig:
         """Generate random session ID with prefix (default: 'zS') -> 'zS_a1b2c3d4'."""
         random_hex = secrets.token_hex(TOKEN_HEX_LENGTH)
         return f"{prefix}_{random_hex}"
+    
+    def _generate_session_hash(self) -> str:
+        """
+        Generate session hash for frontend cache invalidation (v1.6.0).
+        
+        This hash changes on every session creation and should be regenerated
+        on auth state changes (login/logout) to invalidate frontend caches.
+        
+        Returns:
+            8-character hex hash (e.g., 'a1b2c3d4')
+        """
+        return secrets.token_hex(4)  # 4 bytes = 8 hex chars
+    
+    @staticmethod
+    def regenerate_session_hash(session: Dict[str, Any]) -> str:
+        """
+        Regenerate session_hash in existing session (called on login/logout).
+        
+        This is called by zAuth when authentication state changes to invalidate
+        frontend caches. Frontend should detect hash change and clear stale caches.
+        
+        Args:
+            session: zCLI session dict
+        
+        Returns:
+            New session hash (8-character hex)
+        
+        Usage:
+            # In zAuth after login/logout
+            new_hash = SessionConfig.regenerate_session_hash(zcli.session)
+        """
+        new_hash = secrets.token_hex(4)
+        session[SESSION_KEY_SESSION_HASH] = new_hash
+        return new_hash
 
     def _get_zSpark_value(self, key: str, default: Any = None) -> Any:
         """
@@ -330,6 +366,7 @@ class SessionConfig:
             SESSION_KEY_ZMACHINE: machine_config,
             SESSION_KEY_BROWSER: self._get_zSpark_value("browser"),  # Optional override
             SESSION_KEY_IDE: self._get_zSpark_value("ide"),          # Optional override
+            SESSION_KEY_SESSION_HASH: self._generate_session_hash(),  # v1.6.0: Cache invalidation token
             SESSION_KEY_ZAUTH: {
                 # Three-tier authentication structure with multi-app support
                 ZAUTH_KEY_ZSESSION: {
