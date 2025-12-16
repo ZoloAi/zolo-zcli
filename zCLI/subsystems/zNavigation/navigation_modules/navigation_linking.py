@@ -151,6 +151,7 @@ from zCLI.subsystems.zConfig.zConfig_modules.config_session import (
     SESSION_KEY_ZVAFOLDER,
     SESSION_KEY_ZVAFILE,
     SESSION_KEY_ZBLOCK,
+    SESSION_KEY_ZCRUMBS,
 )
 
 # ============================================================================
@@ -550,35 +551,87 @@ class Linking:
         should_bounce_back = selected_zBlock.startswith("^")
         self.logger.debug(f"[zNavigation] Block name: '{selected_zBlock}', should_bounce_back: {should_bounce_back}")
         
+        # BREADCRUMB SNAPSHOT: Save current breadcrumb state before executing bounce-back block
+        breadcrumb_snapshot = None
         if should_bounce_back:
             self.logger.info(f"[zNavigation] ⬅️  Block-level bounce-back enabled for: {selected_zBlock}")
+            
+            # Save a deep copy of the current breadcrumb state
+            import copy
+            breadcrumb_snapshot = copy.deepcopy(walker.zcli.session.get(SESSION_KEY_ZCRUMBS, {}))
+            self.logger.debug(f"[zNavigation] 📸 Saved breadcrumb snapshot: {breadcrumb_snapshot}")
         
         # Execute target block
         result = walker.zBlock_loop(active_zBlock_dict, zBlock_keys)
         self.logger.debug(f"[zNavigation] Block execution result: {result}, should_bounce_back: {should_bounce_back}")
         
-        # If block-level bounce-back was flagged, trigger zBack after completion
+        # If block-level bounce-back was flagged, restore breadcrumb snapshot and continue
         if should_bounce_back:
             # Skip bounce-back if user already navigated away (zBack, exit, etc.)
             if isinstance(result, dict) or result in ["zBack", "exit", "stop"]:
-                self.logger.debug(f"[zNavigation] Skipping bounce-back, result: {result}")
+                self.logger.debug(f"[zNavigation] Skipping bounce-back restoration, result: {result}")
                 return result
             
-            self.logger.info("[zNavigation] ⬅️  Triggering block-level bounce-back!")
+            self.logger.info("[zNavigation] ⬅️  Restoring breadcrumbs from snapshot!")
             
-            # handle_zBack() returns (block_dict, block_keys, start_key) tuple
-            # We need to unpack and execute it via zBlock_loop
-            bounce_data = walker.navigation.breadcrumbs.handle_zBack(walker=walker)
-            
-            if isinstance(bounce_data, tuple) and len(bounce_data) == 3:
-                block_dict, block_keys, start_key = bounce_data
-                self.logger.debug(f"[zNavigation] Executing bounce-back to block with keys: {block_keys}")
-                # Execute the bounced-back block
-                return walker.zBlock_loop(block_dict, block_keys, start_key)
+            # Restore the breadcrumb state to what it was BEFORE entering the ^ block
+            if breadcrumb_snapshot is not None:
+                walker.zcli.session[SESSION_KEY_ZCRUMBS] = breadcrumb_snapshot
+                self.logger.debug(f"[zNavigation] ✅ Restored breadcrumbs: {breadcrumb_snapshot}")
+                
+                # Now we need to continue the walker by re-loading the current block
+                # Get the active crumb from the restored snapshot
+                active_zCrumb = list(breadcrumb_snapshot.keys())[-1] if breadcrumb_snapshot else None
+                
+                if active_zCrumb:
+                    # Parse the active crumb to get file/block info
+                    crumb_parts = active_zCrumb.split(".")
+                    if len(crumb_parts) >= 3:
+                        # Extract path, filename, and block
+                        zVaFolder = ".".join(crumb_parts[:-2])
+                        zVaFile = ".".join(crumb_parts[-2:-1])
+                        zBlock = crumb_parts[-1]
+                        
+                        # Construct zPath and reload file
+                        zPath = f"{zVaFolder}.{zVaFile}"
+                        self.logger.debug(f"[zNavigation] Reloading file for bounce-back: {zPath}")
+                        
+                        # Load the file
+                        raw_zFile = walker.loader.handle(zPath=zPath)
+                        
+                        # Get the block directly from raw_zFile
+                        if zBlock in raw_zFile:
+                            block_dict = raw_zFile[zBlock]
+                            block_keys = list(block_dict.keys())
+                        else:
+                            self.logger.warning(f"[zNavigation] Block '{zBlock}' not found in {zPath}")
+                            return result
+                        
+                        # Get the start key from the restored trail
+                        trail = breadcrumb_snapshot[active_zCrumb]
+                        start_key = trail[-1] if trail else None
+                        
+                        self.logger.debug(f"[zNavigation] Continuing from: {zBlock}, start_key: {start_key}")
+                        
+                        # Re-execute the block to continue the walker
+                        bounce_result = walker.zBlock_loop(block_dict, block_keys, start_key)
+                        
+                        # Convert soft exit dict to signal string
+                        if isinstance(bounce_result, dict) and bounce_result.get("exit") == "completed":
+                            self.logger.debug("[zNavigation] User exited after bounce-back - converting to signal")
+                            return "exit"  # Return signal string, not dict
+                        
+                        # Otherwise, return the result as-is
+                        return bounce_result
+                    else:
+                        self.logger.warning(f"[zNavigation] Invalid crumb format: {active_zCrumb}")
+                        return result
+                else:
+                    self.logger.warning("[zNavigation] No active crumb in restored snapshot!")
+                    return result
             else:
-                # Unexpected return format, log warning and return as-is
-                self.logger.warning(f"[zNavigation] Unexpected bounce-back result format: {type(bounce_data)}")
-                return bounce_data
+                self.logger.warning("[zNavigation] No breadcrumb snapshot to restore!")
+                return result
         
         return result
 

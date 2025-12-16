@@ -18,10 +18,11 @@ Core Responsibilities
 
 RBAC Architecture
 ----------------
-### Three-Level Hierarchy
+### Four-Level Hierarchy
 1. **Public Access**: No `_rbac` metadata = accessible to all users
-2. **Authenticated Access**: `require_auth: true` = logged-in users only
-3. **Authorized Access**: `require_role` or `require_permission` = specific users
+2. **Guest-Only Access**: `zGuest: true` = unauthenticated users only (login/register pages)
+3. **Authenticated Access**: `require_auth: true` = logged-in users only
+4. **Authorized Access**: `require_role` or `require_permission` = specific users
 
 ### Check Order (Short-Circuit)
 1. No `_rbac`? → Access granted (public)
@@ -46,6 +47,7 @@ RBAC Metadata Format
 ```
 
 ### Metadata Fields
+- **zGuest** (bool): Require guest (unauthenticated) - denies authenticated users
 - **require_auth** (bool): Require authentication
 - **require_role** (str | list): Require role(s) - ANY match grants access
 - **require_permission** (str | list): Require permission(s) - ANY match grants access
@@ -80,7 +82,17 @@ Access Denial Flow
 
 Usage Examples
 -------------
-### Example 1: Authentication Only
+### Example 1: Guest-Only Access (Login/Register Pages)
+```yaml
+^zLogin:
+  _rbac:
+    zGuest: true  # Only show if NOT logged in
+  zDialog:
+    title: "User Login"
+    fields: [email, password]
+```
+
+### Example 2: Authentication Only
 ```yaml
 ^Profile:
   _rbac:
@@ -172,7 +184,7 @@ Version: v1.5.4 Phase 1 (Industry-Grade, RBAC from Week 3.3)
 
 from typing import Any, Optional
 
-__all__ = ["check_rbac_access", "display_access_denied"]
+__all__ = ["check_rbac_access", "display_access_denied", "display_access_denied_zguest"]
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -182,12 +194,14 @@ __all__ = ["check_rbac_access", "display_access_denied"]
 # RBAC Access Results
 RBAC_ACCESS_GRANTED: str = "access_granted"
 RBAC_ACCESS_DENIED: str = "access_denied"
+RBAC_ACCESS_DENIED_ZGUEST: str = "access_denied_zguest"  # Friendly redirect (no pause needed)
 
 # RBAC Metadata Keys
 RBAC_KEY: str = "_rbac"
 RBAC_REQUIRE_AUTH: str = "require_auth"
 RBAC_REQUIRE_ROLE: str = "require_role"
 RBAC_REQUIRE_PERMISSION: str = "require_permission"
+RBAC_ZGUEST: str = "zGuest"  # Guest-only access (unauthenticated users)
 
 # Log Messages
 LOG_MSG_NO_AUTH_SUBSYSTEM: str = "[RBAC] No auth subsystem available, denying access"
@@ -198,6 +212,8 @@ LOG_MSG_ACCESS_DENIED: str = "[RBAC] Access denied for '%s': %s"
 MSG_AUTH_REQUIRED: str = "Authentication required"
 MSG_ROLE_REQUIRED: str = "Role required: %s"
 MSG_PERMISSION_REQUIRED: str = "Permission required: %s"
+MSG_ZGUEST_ONLY: str = "You're already logged in!"
+MSG_ZGUEST_REDIRECT: str = "This page is for guests only. Redirecting..."
 MSG_ACCESS_DENIED_HEADER: str = "[ACCESS DENIED] %s"
 MSG_DENIAL_REASON: str = "Reason: %s"
 MSG_DENIAL_TIP: str = "Tip: Check your role/permissions or log in"
@@ -257,6 +273,14 @@ def check_rbac_access(
     if not zcli_instance or not hasattr(zcli_instance, 'auth'):
         logger.warning(LOG_MSG_NO_AUTH_SUBSYSTEM)
         return RBAC_ACCESS_DENIED
+    
+    # Check zGuest (guest-only access - user must NOT be authenticated)
+    if rbac.get(RBAC_ZGUEST):
+        if zcli_instance.auth.is_authenticated():
+            # User is authenticated but this is guest-only
+            # This is a GOOD thing - user is logged in! Just redirect gracefully
+            display_access_denied_zguest(key, MSG_ZGUEST_ONLY, display, logger)
+            return RBAC_ACCESS_DENIED_ZGUEST  # Special return code (no pause needed)
     
     # Check require_auth (must be authenticated)
     if rbac.get(RBAC_REQUIRE_AUTH):
@@ -344,5 +368,54 @@ def display_access_denied(
     
     # Log the denial
     logger.warning(LOG_MSG_ACCESS_DENIED, key, reason)
+
+
+def display_access_denied_zguest(
+    key: str,
+    reason: str,
+    display: Optional[Any],
+    logger: Any
+) -> None:
+    """
+    Display friendly redirect message for zGuest (guest-only) pages.
+    
+    This is NOT an error - it's a feature! User is logged in, which is good.
+    We just redirect them away from login/register pages gracefully.
+    
+    Args:
+        key: zKey name that was denied
+        reason: Reason for denial
+        display: Display instance
+        logger: Logger instance
+    """
+    if display:
+        # Display friendly redirect message (positive tone!)
+        display.handle({
+            KEY_EVENT: EVENT_TEXT,
+            KEY_CONTENT: "",
+            KEY_INDENT: INDENT_LEVEL_0,
+            KEY_BREAK_AFTER: False
+        })
+        display.handle({
+            KEY_EVENT: EVENT_TEXT,
+            KEY_CONTENT: "✓ " + MSG_ZGUEST_ONLY,
+            KEY_INDENT: INDENT_LEVEL_1,
+            KEY_BREAK_AFTER: False
+        })
+        display.handle({
+            KEY_EVENT: EVENT_TEXT,
+            KEY_CONTENT: MSG_ZGUEST_REDIRECT,
+            KEY_INDENT: INDENT_LEVEL_1,
+            KEY_BREAK_AFTER: False
+        })
+        display.handle({
+            KEY_EVENT: EVENT_TEXT,
+            KEY_CONTENT: "",
+            KEY_INDENT: INDENT_LEVEL_0,
+            KEY_BREAK_AFTER: False
+        })
+    
+    # Log as info (not a warning - this is expected behavior!)
+    logger.info(LOG_MSG_ACCESS_DENIED, key, reason)
 
 

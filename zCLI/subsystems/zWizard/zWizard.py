@@ -307,7 +307,7 @@ from .zWizard_modules.wizard_transactions import (
     commit_transaction,
     rollback_transaction,
 )
-from .zWizard_modules.wizard_rbac import check_rbac_access
+from .zWizard_modules.wizard_rbac import check_rbac_access, RBAC_ACCESS_DENIED, RBAC_ACCESS_DENIED_ZGUEST
 from .zWizard_modules.wizard_exceptions import (
     WizardInitializationError,
     ERR_MISSING_INSTANCE
@@ -340,10 +340,6 @@ SIGNAL_STOP: str = "stop"
 SIGNAL_ERROR: str = "error"
 SIGNAL_EMPTY: str = ""
 NAVIGATION_SIGNALS: tuple = (SIGNAL_ZBACK, SIGNAL_EXIT, SIGNAL_STOP, SIGNAL_ERROR, SIGNAL_EMPTY)
-
-# RBAC Results
-RBAC_ACCESS_GRANTED: str = "access_granted"
-RBAC_ACCESS_DENIED: str = "access_denied"
 
 # Context Keys
 CONTEXT_KEY_WIZARD_MODE: str = SESSION_KEY_WIZARD_MODE  # Use zConfig constant
@@ -526,6 +522,12 @@ class zWizard:
                     self.display.text("Press Enter to continue...", indent=1, break_after=True)
             
             # Return SIGNAL_ZBACK to trigger navigation bounce-back
+            return SIGNAL_ZBACK
+        
+        # zGuest redirect (friendly, no pause needed - user is logged in, which is good!)
+        if block_rbac_result == RBAC_ACCESS_DENIED_ZGUEST:
+            self.logger.info("[zWizard] Block-level zGuest redirect (user authenticated)")
+            # No pause - just redirect gracefully
             return SIGNAL_ZBACK
         
         dispatch_fn = self._get_dispatch_fn(dispatch_fn, context)
