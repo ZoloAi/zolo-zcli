@@ -199,14 +199,35 @@ class zConfigPaths:
         return self._dotenv_path
 
     def load_dotenv(self, override: bool = True) -> Optional[Path]:
-        """Load environment variables from resolved dotenv file (.zEnv or .env).
+        """Load environment variables from resolved dotenv file with cascading support.
+        
+        Implements cascading .zEnv loading (v1.5.10):
+        1. Load base .zEnv (shared config)
+        2. Check DEPLOYMENT env var (from .zEnv or zSpark)
+        3. Load .zEnv.{deployment} if it exists (deployment-specific overrides)
+        
+        This allows:
+        - .zEnv → shared config (navbar, common settings)
+        - .zEnv.development → dev overrides (no SSL)
+        - .zEnv.production → prod overrides (SSL + certs)
         
         Args:
             override: Whether to override existing environment variables (default: True)
             
         Returns:
             Path to loaded dotenv file, or None if no file found/loaded
+        
+        Example:
+            # .zEnv (base)
+            ZNAVBAR=[...]
+            
+            # .zEnv.production (overrides)
+            DEPLOYMENT=Production
+            HTTP_SSL_ENABLED=true
+            HTTP_SSL_CERT=/etc/ssl/cert.pem
         """
+        from zCLI import os
+        
         dotenv_path = self.get_dotenv_path()
         if not dotenv_path:
             self._log_info("No dotenv path resolved")
@@ -216,11 +237,37 @@ class zConfigPaths:
             self._log_warning(f"Dotenv file not found at: {dotenv_path}")
             return None
 
+        # Load base .zEnv file
         loaded = load_dotenv(dotenv_path, override=override)
         if loaded:
             self._log_info(f"Loaded environment variables from: {dotenv_path}")
         else:
             self._log_warning(f"Dotenv file present but no variables loaded: {dotenv_path}")
+
+        # Cascading .zEnv support (v1.5.10): Load deployment-specific overrides
+        # Check deployment from environment (now includes .zEnv values) or zSpark
+        deployment = None
+        if self.zSpark:
+            # Check zSpark first (highest priority)
+            for key in ["deployment", "Deployment", "DEPLOYMENT"]:
+                if key in self.zSpark:
+                    deployment = str(self.zSpark[key])
+                    break
+        
+        if not deployment:
+            # Fallback to env var (from .zEnv or system)
+            deployment = os.getenv('DEPLOYMENT')
+        
+        if deployment:
+            # Try to load deployment-specific .zEnv file
+            deployment_env_path = dotenv_path.parent / f".zEnv.{deployment.lower()}"
+            
+            if deployment_env_path.exists():
+                deployment_loaded = load_dotenv(deployment_env_path, override=True)
+                if deployment_loaded:
+                    self._log_info(f"Loaded deployment-specific env: {deployment_env_path.name}")
+                else:
+                    self._log_warning(f"Deployment env file present but no variables loaded: {deployment_env_path.name}")
 
         return dotenv_path
 

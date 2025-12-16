@@ -1,7 +1,7 @@
 # zCLI/subsystems/zConfig/zConfig_modules/config_http_server.py
 """HTTP Server Configuration Module"""
 
-from zCLI import Any, Dict, Optional
+from zCLI import Any, Dict, Optional, os
 from zCLI.utils import print_ready_message
 
 # ═══════════════════════════════════════════════════════════
@@ -31,6 +31,17 @@ DEFAULT_SERVE_PATH = "."
 DEFAULT_ROUTES_FILE = None
 DEFAULT_ENABLED = False
 DEFAULT_ZSHELL = False  # v1.5.8: Default to silent blocking (standard server behavior)
+DEFAULT_SSL_ENABLED = False  # v1.5.10: SSL disabled by default for local development
+DEFAULT_SSL_CERT = None
+DEFAULT_SSL_KEY = None
+
+# Environment Variables
+ENV_VAR_HTTP_SSL_ENABLED = "HTTP_SSL_ENABLED"
+ENV_VAR_HTTP_SSL_CERT = "HTTP_SSL_CERT"
+ENV_VAR_HTTP_SSL_KEY = "HTTP_SSL_KEY"
+
+# Truthy values for boolean environment variables
+TRUTHY_VALUES = {'true', '1', 'yes', 'on'}
 
 
 class HttpServerConfig:
@@ -59,6 +70,9 @@ class HttpServerConfig:
     routes_file: Optional[str]
     enabled: bool
     zShell: bool  # v1.5.8: Drop into zShell REPL (default: False)
+    ssl_enabled: bool  # v1.5.10: HTTPS support
+    ssl_cert: Optional[str]  # v1.5.10: SSL certificate path
+    ssl_key: Optional[str]  # v1.5.10: SSL key path
     
     def __init__(self, zspark_obj: Dict[str, Any], logger: Any) -> None:
         """
@@ -85,6 +99,52 @@ class HttpServerConfig:
         self.routes_file = http_config.get(KEY_ROUTES_FILE, DEFAULT_ROUTES_FILE)
         self.enabled = http_config.get(KEY_ENABLED, DEFAULT_ENABLED)
         self.zShell = http_config.get(KEY_ZSHELL, DEFAULT_ZSHELL)  # v1.5.8: Interactive mode
+        
+        # SSL Configuration (v1.5.10: HTTPS support with deployment-aware defaults)
+        # Environment variables from .zEnv (base or deployment-specific)
+        env_ssl_enabled = os.getenv(ENV_VAR_HTTP_SSL_ENABLED)
+        env_ssl_cert = os.getenv(ENV_VAR_HTTP_SSL_CERT)
+        env_ssl_key = os.getenv(ENV_VAR_HTTP_SSL_KEY)
+        
+        # Check deployment mode from zSpark (determines auto-SSL behavior)
+        deployment = None
+        for key in ["deployment", "Deployment", "DEPLOYMENT"]:
+            if key in zspark_obj:
+                deployment = str(zspark_obj[key])
+                break
+        
+        # If not in zSpark, check env (from .zEnv)
+        if not deployment:
+            deployment = os.getenv('DEPLOYMENT', 'Development')
+        
+        is_production = deployment.lower() == 'production'
+        
+        # Deployment-aware SSL defaults (v1.5.10):
+        # - Explicit env var (HTTP_SSL_ENABLED) → highest priority
+        # - Production + certs present → auto-enable HTTPS
+        # - Development or no certs → disable HTTPS
+        if env_ssl_enabled is not None:
+            # Explicit env var takes precedence
+            self.ssl_enabled = env_ssl_enabled.lower() in TRUTHY_VALUES
+        elif is_production and env_ssl_cert and env_ssl_key:
+            # Production + certs present = auto-enable SSL
+            self.ssl_enabled = True
+            self.logger.framework.debug(
+                f"{LOG_PREFIX} Production mode: SSL auto-enabled (certs detected)"
+            )
+        else:
+            # Development or no certs = disable SSL
+            self.ssl_enabled = DEFAULT_SSL_ENABLED
+        
+        self.ssl_cert = env_ssl_cert if env_ssl_cert else DEFAULT_SSL_CERT
+        self.ssl_key = env_ssl_key if env_ssl_key else DEFAULT_SSL_KEY
+        
+        if self.ssl_enabled:
+            self.logger.framework.debug(f"{LOG_PREFIX} SSL enabled: {self.ssl_enabled}")
+            if self.ssl_cert:
+                self.logger.framework.debug(f"{LOG_PREFIX} SSL cert: {self.ssl_cert}")
+            if self.ssl_key:
+                self.logger.framework.debug(f"{LOG_PREFIX} SSL key: {self.ssl_key}")
         
         # Log configuration
         if self.enabled:

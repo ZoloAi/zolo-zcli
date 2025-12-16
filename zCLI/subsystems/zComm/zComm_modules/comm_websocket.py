@@ -12,12 +12,11 @@ Architecture:
 
 from zCLI import (
     asyncio, Any, Optional, Dict, Callable,
-    ws_serve, WebSocketServerProtocol
+    ws_serve, WebSocketServerProtocol, logging
 )
 from typing import Set
-from pathlib import Path
-import ssl
 from .comm_websocket_auth import WebSocketAuth
+from .comm_ssl import create_ssl_context
 
 # ═══════════════════════════════════════════════════════════
 # Module Constants
@@ -30,6 +29,61 @@ LOG_CLIENT_DISCONNECTED = f"{LOG_PREFIX} Client disconnected: {{client_addr}}"
 LOG_BROADCAST = f"{LOG_PREFIX} Broadcasting to {{count}} client(s)"
 LOG_SHUTDOWN = f"{LOG_PREFIX} Shutting down..."
 LOG_SHUTDOWN_COMPLETE = f"{LOG_PREFIX} Shutdown complete"
+
+
+class WebSocketHandshakeFilter(logging.Filter):
+    """
+    Filter out benign handshake failures from websockets library (v1.5.10).
+    
+    The "zolo way": Graceful handling of noise we can't control.
+    
+    Context:
+        External port probes, health checks, and network tools often connect
+        to WebSocket ports and close immediately without sending HTTP headers.
+        This causes the websockets library to log handshake errors that are
+        actually benign - they're not bugs in our code, just normal network noise.
+    
+    Architecture:
+        - Filters out "line without CRLF" errors (connection closed before sending data)
+        - Filters out "did not receive a valid HTTP request" (invalid HTTP)
+        - Keeps real WebSocket connection issues visible
+        - Applied only to the 'websockets' logger (doesn't affect zCLI logging)
+    
+    Philosophy:
+        We handle what we can (process_request for proper HTTP),
+        and suppress what we can't (TCP connections that close immediately).
+    """
+    
+    def filter(self, record: logging.LogRecord) -> bool:
+        """
+        Filter log record - return False to suppress, True to keep.
+        
+        Args:
+            record: Log record from websockets library
+            
+        Returns:
+            False if this is benign noise, True if it's a real issue
+        """
+        message = record.getMessage()
+        
+        # Suppress "line without CRLF" - connection closed before sending data
+        if "line without CRLF" in message:
+            return False
+        
+        # Suppress "did not receive a valid HTTP request" - port probe / health check
+        if "did not receive a valid HTTP request" in message:
+            return False
+        
+        # Suppress "opening handshake failed" - redundant header for above errors
+        if "opening handshake failed" in message:
+            return False
+        
+        # Suppress "connection closed while reading HTTP request line"
+        if "connection closed while reading HTTP request line" in message:
+            return False
+        
+        # Keep everything else (real WebSocket errors, connection issues, etc.)
+        return True
 
 
 class WebSocketServer:
@@ -62,40 +116,111 @@ class WebSocketServer:
         self.clients: Set[WebSocketServerProtocol] = set()
         self.handler: Optional[Callable] = None
         self._running = False
+        
+        # Configure websockets library logger (v1.5.10: Graceful handshake error handling)
+        # The "zolo way": Filter benign noise (port probes) while keeping real errors visible
+        ws_logger = logging.getLogger('websockets')
+        ws_logger.addFilter(WebSocketHandshakeFilter())
+        ws_logger.setLevel(logging.CRITICAL)  # Only show critical errors, not handshake noise
     
-    def _create_ssl_context(self) -> Optional[ssl.SSLContext]:
+    def _create_ssl_context(self) -> Optional['ssl.SSLContext']:
         """
         Create SSL context from config if SSL is enabled.
+        
+        Delegates to zComm Layer 0 primitive for consistent SSL handling.
         
         Returns:
             ssl.SSLContext if SSL enabled and configured, None otherwise
         """
-        if not self.config.ssl_enabled:
-            return None
+        return create_ssl_context(
+            ssl_enabled=self.config.ssl_enabled,
+            ssl_cert=self.config.ssl_cert,
+            ssl_key=self.config.ssl_key,
+            logger=self.logger,
+            log_prefix=LOG_PREFIX
+        )
+    
+    async def _process_request(self, path: str, request_headers: Any) -> Optional[tuple]:
+        """
+        Process incoming requests before WebSocket handshake (v1.5.10).
         
-        if not self.config.ssl_cert or not self.config.ssl_key:
-            self.logger.warning(f"{LOG_PREFIX} SSL enabled but cert/key not provided")
-            return None
+        Gracefully rejects non-WebSocket connections (health checks, port probes).
+        This prevents handshake errors from cluttering logs - the "zolo way".
         
-        # Resolve paths (handle ~, relative paths)
-        cert_path = Path(self.config.ssl_cert).expanduser().resolve()
-        key_path = Path(self.config.ssl_key).expanduser().resolve()
+        Architecture:
+            - Intercepts connections at the HTTP layer (before WebSocket upgrade)
+            - Validates WebSocket upgrade headers
+            - Returns clean HTTP 400 for invalid requests
+            - Allows valid WebSocket connections to proceed
         
-        # Verify files exist
-        if not cert_path.exists():
-            self.logger.error(f"{LOG_PREFIX} SSL cert not found: {cert_path}")
-            return None
+        Args:
+            path: Request path
+            request_headers: HTTP request headers
+            
+        Returns:
+            None to allow connection, or (status, headers, body) to reject
+            
+        Example rejection:
+            Port probe → HTTP 400 "WebSocket connection required"
+            Valid WS → None (proceed with handshake)
         
-        if not key_path.exists():
-            self.logger.error(f"{LOG_PREFIX} SSL key not found: {key_path}")
-            return None
+        Note:
+            This eliminates "opening handshake failed" noise by handling
+            the root cause (invalid connections) rather than symptoms.
+        """
+        # Check if it looks like a valid WebSocket upgrade request
+        upgrade = request_headers.get("Upgrade", "").lower()
+        connection = request_headers.get("Connection", "").lower()
         
-        # Create SSL context for server
-        ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-        ssl_context.load_cert_chain(str(cert_path), str(key_path))
+        if "websocket" not in upgrade or "upgrade" not in connection:
+            # This is a port probe, health check, or non-WebSocket HTTP request
+            # Reject gracefully with HTTP 400 (no handshake error logged)
+            self.logger.framework.debug(
+                f"{LOG_PREFIX} Rejected non-WebSocket request from {path} "
+                f"(Upgrade: {upgrade or 'none'}, Connection: {connection or 'none'})"
+            )
+            return (400, [], b"WebSocket connection required\n")
         
-        self.logger.info(f"{LOG_PREFIX} SSL enabled with cert: {cert_path}")
-        return ssl_context
+        # Valid WebSocket upgrade request - allow handshake to proceed
+        return None
+    
+    def _custom_exception_handler(self, loop: Any, context: Dict[str, Any]) -> None:
+        """
+        Custom asyncio exception handler for graceful WebSocket error handling (v1.5.10).
+        
+        The "zolo way": Suppress benign handshake failures while logging real issues.
+        
+        Context:
+            The websockets library raises exceptions for port probes and incomplete
+            connections. These get caught by asyncio's default exception handler,
+            which prints full tracebacks. We intercept these to suppress the noise
+            while keeping visibility into actual problems.
+        
+        Args:
+            loop: Asyncio event loop
+            context: Exception context dict with 'message', 'exception', etc.
+        """
+        exception = context.get('exception')
+        message = context.get('message', '')
+        
+        # Suppress benign websocket handshake errors (port probes)
+        if exception:
+            exception_str = str(exception)
+            if any(phrase in exception_str for phrase in [
+                'did not receive a valid HTTP request',
+                'line without CRLF',
+                'connection closed while reading HTTP request line'
+            ]):
+                # This is a port probe or incomplete connection - suppress traceback
+                self.logger.framework.debug(
+                    f"{LOG_PREFIX} Suppressed benign handshake error: {exception_str[:100]}"
+                )
+                return
+        
+        # For all other exceptions, log them properly (real errors)
+        self.logger.error(f"{LOG_PREFIX} Asyncio exception: {message}")
+        if exception:
+            self.logger.error(f"{LOG_PREFIX} Exception details: {exception}")
     
     async def start_async(
         self,
@@ -123,12 +248,17 @@ class WebSocketServer:
         ssl_context = self._create_ssl_context()
         protocol = "wss" if ssl_context else "ws"
         
+        # Set custom exception handler for graceful error handling (v1.5.10)
+        loop = asyncio.get_event_loop()
+        loop.set_exception_handler(self._custom_exception_handler)
+        
         try:
             self.server = await ws_serve(
                 self._handle_client, 
                 actual_host, 
                 actual_port,
-                ssl=ssl_context
+                ssl=ssl_context,
+                process_request=self._process_request  # v1.5.10: Graceful handshake error handling
             )
             self._running = True
             self.logger.info(LOG_STARTED.format(protocol=protocol, host=actual_host, port=actual_port))

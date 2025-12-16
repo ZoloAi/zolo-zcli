@@ -14,6 +14,7 @@ from pathlib import Path
 from functools import partial
 
 from .zServer_modules.handler import LoggingHTTPRequestHandler
+from zCLI.subsystems.zComm.zComm_modules.comm_ssl import create_ssl_context
 
 
 class zServer:
@@ -59,6 +60,10 @@ class zServer:
             self.host = config.host
             self.serve_path = config.serve_path
             self.routes_file = config.routes_file  # Kept for backward compatibility
+            # SSL Configuration (v1.5.10: HTTPS support)
+            self.ssl_enabled = config.ssl_enabled
+            self.ssl_cert = config.ssl_cert
+            self.ssl_key = config.ssl_key
         else:
             # Backward compatibility: individual parameters (assume enabled if instantiated this way)
             self.enabled = True
@@ -66,6 +71,10 @@ class zServer:
             self.host = host if host is not None else "127.0.0.1"
             serve_path = serve_path if serve_path is not None else "."
             self.routes_file = routes_file  # Kept for backward compatibility
+            # SSL disabled by default in backward compat mode
+            self.ssl_enabled = False
+            self.ssl_cert = None
+            self.ssl_key = None
         
         self.router = None
         self.static_folder = static_folder if static_folder is not None else "static"
@@ -359,6 +368,39 @@ class zServer:
             return "Development"
         return self.zcli.config.get_environment("deployment", "Development")
     
+    def _create_ssl_context(self):
+        """
+        Create SSL context from config if SSL is enabled (v1.5.10: HTTPS support).
+        
+        Delegates to zComm Layer 0 SSL primitive for consistent SSL handling
+        across all zCLI servers (HTTP, WebSocket, etc.).
+        
+        Returns:
+            ssl.SSLContext if SSL enabled and configured, None otherwise
+        
+        Architecture:
+            - Uses zComm.comm_ssl.create_ssl_context() primitive
+            - Maintains separation of concerns (SSL = Layer 0)
+            - Consistent with WebSocket server SSL implementation
+        
+        Example:
+            >>> ssl_context = self._create_ssl_context()
+            >>> if ssl_context:
+            >>>     self.server.socket = ssl_context.wrap_socket(...)
+        """
+        # Check if SSL is enabled in config
+        if not hasattr(self, 'ssl_enabled') or not self.ssl_enabled:
+            return None
+        
+        # Delegate to zComm Layer 0 SSL primitive
+        return create_ssl_context(
+            ssl_enabled=self.ssl_enabled,
+            ssl_cert=self.ssl_cert,
+            ssl_key=self.ssl_key,
+            logger=self.logger,
+            log_prefix="[zServer]"
+        )
+    
     def start(self):
         """
         Start HTTP server (deployment-aware).
@@ -455,13 +497,26 @@ class zServer:
             
             # Create HTTP server
             self.server = HTTPServer((self.host, self.port), handler)
+            
+            # Wrap with SSL if enabled (v1.5.10: HTTPS support)
+            ssl_context = self._create_ssl_context()
+            if ssl_context:
+                self.server.socket = ssl_context.wrap_socket(
+                    self.server.socket,
+                    server_side=True
+                )
+                protocol = "https"
+                self.logger.info("[zServer] SSL/TLS encryption enabled (HTTPS)")
+            else:
+                protocol = "http"
+            
             self._running = True
             
             # Start server in background thread
             self.thread = threading.Thread(target=self._run_server, daemon=True)
             self.thread.start()
             
-            self.logger.info(f"[zServer] HTTP server started at http://{self.host}:{self.port}")
+            self.logger.info(f"[zServer] Server started at {protocol}://{self.host}:{self.port}")
             self.logger.info(f"[zServer] Serving files from: {self.serve_path}")
             
         except OSError as e:

@@ -128,10 +128,34 @@ class WebSocketConfig:
             websocket_config[KEY_TOKEN] = env_token
             self.logger.framework.debug(f"{LOG_PREFIX} WebSocket token from env: {'*' * len(env_token)}")
 
-        if env_ssl_enabled:
+        # SSL Configuration with deployment-aware defaults (v1.5.10)
+        # Check deployment mode for auto-SSL behavior
+        deployment = None
+        if self.zcli.zspark_obj:
+            for key in ["deployment", "Deployment", "DEPLOYMENT"]:
+                if key in self.zcli.zspark_obj:
+                    deployment = str(self.zcli.zspark_obj[key])
+                    break
+        
+        # If not in zSpark, check env (from .zEnv)
+        if not deployment:
+            deployment = os.getenv('DEPLOYMENT', 'Development')
+        
+        is_production = deployment.lower() == 'production'
+        
+        # Deployment-aware SSL defaults:
+        # - Explicit env var (WEBSOCKET_SSL_ENABLED) → highest priority
+        # - Production + certs present → auto-enable WSS
+        # - Development or no certs → disable WSS
+        if env_ssl_enabled is not None:
+            # Explicit env var takes precedence
             websocket_config[KEY_SSL_ENABLED] = env_ssl_enabled.lower() in TRUTHY_VALUES
             self.logger.framework.debug(f"{LOG_PREFIX} WebSocket SSL from env: {websocket_config[KEY_SSL_ENABLED]}")
-
+        elif is_production and env_ssl_cert and env_ssl_key:
+            # Production + certs present = auto-enable SSL
+            websocket_config[KEY_SSL_ENABLED] = True
+            self.logger.framework.debug(f"{LOG_PREFIX} Production mode: WSS auto-enabled (certs detected)")
+        
         if env_ssl_cert:
             websocket_config[KEY_SSL_CERT] = env_ssl_cert
             self.logger.framework.debug(f"{LOG_PREFIX} WebSocket SSL cert from env: {env_ssl_cert}")
