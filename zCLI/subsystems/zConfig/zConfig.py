@@ -122,7 +122,7 @@ class zConfig:
             zcli.zTraceback.install_exception_hook()
 
         # Initialize WebSocket configuration (uses environment config)
-        self.websocket = WebSocketConfig(self.environment, zcli)
+        self.websocket = WebSocketConfig(self.environment, zcli, zcli.logger)
 
         # Initialize HTTP Server configuration (optional feature)
         self.http_server = HttpServerConfig(zSpark_obj or {}, zcli.logger)

@@ -1279,17 +1279,20 @@ class zSystem:
             - Uses zDeclare() for form header/footer
             - Composes zPrimitives.read_string() for input collection
         """
-        print(f"\n{'='*80}")
-        print(f"[zDialog] 📋 ZDIALOG CALLED - Context: {list(context.keys())}")
-        print(f"[zDialog] Fields: {context.get('fields', [])}")
-        print(f"[zDialog] Model: {context.get('model', 'N/A')}")
-        print(f"[zDialog] Has onSubmit: {bool(context.get('onSubmit'))}")
-        print(f"{'='*80}\n")
+        # Debug logging (respects PROD log level)
+        if _zcli and hasattr(_zcli, 'logger'):
+            _zcli.logger.debug(f"\n{'='*80}")
+            _zcli.logger.debug(f"[zDialog] 📋 ZDIALOG CALLED - Context: {list(context.keys())}")
+            _zcli.logger.debug(f"[zDialog] Fields: {context.get('fields', [])}")
+            _zcli.logger.debug(f"[zDialog] Model: {context.get('model', 'N/A')}")
+            _zcli.logger.debug(f"[zDialog] Has onSubmit: {bool(context.get('onSubmit'))}")
+            _zcli.logger.debug(f"{'='*80}\n")
         
         # Try Bifrost (GUI) mode first - send clean event
         # Send the context directly (not nested) for easier frontend access
         gui_sent = self._try_gui_event(EVENT_ZDIALOG, context)
-        print(f"[zDialog] GUI event sent: {gui_sent}")
+        if _zcli and hasattr(_zcli, 'logger'):
+            _zcli.logger.debug(f"[zDialog] GUI event sent: {gui_sent}")
         if gui_sent:
             return {}  # GUI event sent successfully, return empty dict
 

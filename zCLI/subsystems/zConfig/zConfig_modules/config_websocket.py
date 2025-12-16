@@ -62,21 +62,24 @@ class WebSocketConfig:
     # Type hints for instance attributes
     environment: Any  # EnvironmentConfig
     zcli: Any  # zCLI instance
+    logger: Any  # Logger instance
     config: Dict[str, Any]
 
-    def __init__(self, environment_config: Any, zcli: Any) -> None:
+    def __init__(self, environment_config: Any, zcli: Any, logger: Any) -> None:
         """
         Initialize WebSocket config with environment config and zcli instance.
         
         Args:
             environment_config: EnvironmentConfig instance with environment settings
             zcli: Main zCLI instance for accessing zSpark and other subsystems
+            logger: Logger instance for configuration logging
         """
         # Validate required parameters
         validate_zcli_instance(zcli, SUBSYSTEM_NAME, require_session=False)
 
         self.environment = environment_config
         self.zcli = zcli
+        self.logger = logger
 
         # Get WebSocket configuration from environment (which uses hierarchy)
         self._load_websocket_config()
@@ -103,45 +106,45 @@ class WebSocketConfig:
 
         if env_host:
             websocket_config[KEY_HOST] = env_host
-            print(f"{LOG_PREFIX} WebSocket host from env: {env_host}")
+            self.logger.framework.debug(f"{LOG_PREFIX} WebSocket host from env: {env_host}")
 
         if env_port:
             try:
                 websocket_config[KEY_PORT] = int(env_port)
-                print(f"{LOG_PREFIX} WebSocket port from env: {env_port}")
+                self.logger.framework.debug(f"{LOG_PREFIX} WebSocket port from env: {env_port}")
             except ValueError:
-                print(f"{Colors.WARNING}{LOG_PREFIX} Invalid {ENV_VAR_PORT}: {env_port}{Colors.RESET}")
+                self.logger.framework.warning(f"{LOG_PREFIX} Invalid {ENV_VAR_PORT}: {env_port}")
 
         if env_auth:
             websocket_config[KEY_REQUIRE_AUTH] = env_auth.lower() in TRUTHY_VALUES
-            print(f"{LOG_PREFIX} WebSocket auth from env: {websocket_config[KEY_REQUIRE_AUTH]}")
+            self.logger.framework.debug(f"{LOG_PREFIX} WebSocket auth from env: {websocket_config[KEY_REQUIRE_AUTH]}")
 
         if env_origins:
             origins_list = [origin.strip() for origin in env_origins.split(ORIGINS_DELIMITER) if origin.strip()]
             websocket_config[KEY_ALLOWED_ORIGINS] = origins_list
-            print(f"{LOG_PREFIX} WebSocket origins from env: {origins_list}")
+            self.logger.framework.debug(f"{LOG_PREFIX} WebSocket origins from env: {origins_list}")
 
         if env_token:
             websocket_config[KEY_TOKEN] = env_token
-            print(f"{LOG_PREFIX} WebSocket token from env: {'*' * len(env_token)}")
+            self.logger.framework.debug(f"{LOG_PREFIX} WebSocket token from env: {'*' * len(env_token)}")
 
         if env_ssl_enabled:
             websocket_config[KEY_SSL_ENABLED] = env_ssl_enabled.lower() in TRUTHY_VALUES
-            print(f"{LOG_PREFIX} WebSocket SSL from env: {websocket_config[KEY_SSL_ENABLED]}")
+            self.logger.framework.debug(f"{LOG_PREFIX} WebSocket SSL from env: {websocket_config[KEY_SSL_ENABLED]}")
 
         if env_ssl_cert:
             websocket_config[KEY_SSL_CERT] = env_ssl_cert
-            print(f"{LOG_PREFIX} WebSocket SSL cert from env: {env_ssl_cert}")
+            self.logger.framework.debug(f"{LOG_PREFIX} WebSocket SSL cert from env: {env_ssl_cert}")
 
         if env_ssl_key:
             websocket_config[KEY_SSL_KEY] = env_ssl_key
-            print(f"{LOG_PREFIX} WebSocket SSL key from env: {env_ssl_key}")
+            self.logger.framework.debug(f"{LOG_PREFIX} WebSocket SSL key from env: {env_ssl_key}")
 
         # 2. Check zSpark_obj for WebSocket settings (Layer 5 - highest priority, overrides env)
         if self.zcli.zspark_obj:
             zspark_ws = self.zcli.zspark_obj.get(CONFIG_SECTION_KEY, {})
             if zspark_ws:
-                print(f"{LOG_PREFIX} WebSocket settings from zSpark: {list(zspark_ws.keys())}")
+                self.logger.framework.debug(f"{LOG_PREFIX} WebSocket settings from zSpark: {list(zspark_ws.keys())}")
                 websocket_config.update(zspark_ws)  # zSpark overrides everything else
 
         # 3. Apply defaults for any missing values
