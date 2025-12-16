@@ -262,6 +262,9 @@ from .auth_session_persistence import SessionPersistence  # SQLite persistent se
 from .auth_authentication import Authentication  # Three-tier auth (zSession, App, Dual)
 from .auth_rbac import RBAC  # Context-aware Role-Based Access Control
 
+# Layer 3: Built-in Actions (zLogin)
+from .auth_login import handle_zLogin  # Built-in declarative login action
+
 # ═══════════════════════════════════════════════════════════════════════════
 # PUBLIC API EXPORTS
 # ═══════════════════════════════════════════════════════════════════════════
@@ -270,5 +273,6 @@ __all__ = [
     'PasswordSecurity',      # Layer 1: bcrypt password hashing and verification
     'SessionPersistence',    # Layer 2: SQLite-based persistent session management
     'Authentication',        # Layer 3: CORE three-tier authentication implementation
-    'RBAC'                   # Layer 3: Context-aware Role-Based Access Control
+    'RBAC',                  # Layer 3: Context-aware Role-Based Access Control
+    'handle_zLogin'          # Layer 3: Built-in declarative login action
 ]

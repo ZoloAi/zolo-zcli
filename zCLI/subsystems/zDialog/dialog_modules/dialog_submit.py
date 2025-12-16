@@ -420,7 +420,8 @@ def _handle_dict_submit(
         # Mask passwords in submit_dict for secure logging
         masked_submit = _mask_passwords_in_dict(submit_dict)
         logger.info(INFO_DISPATCH_DICT, masked_submit)
-        result = handle_zDispatch(DISPATCH_CMD_SUBMIT, submit_dict, zcli=walker.zcli, walker=walker)
+        # Pass zContext as context so zLogin and other actions can access zConv
+        result = handle_zDispatch(DISPATCH_CMD_SUBMIT, submit_dict, zcli=walker.zcli, walker=walker, context=zContext)
 
         # Step 4: Display return feedback
         _display_submit_return(walker)
@@ -492,7 +493,8 @@ def _inject_model_if_needed(
             submit_dict[KEY_ZCRUD][KEY_MODEL] = model
     
     # Case 2: zData exists => don't inject at root (zData should have its own model)
-    # Case 3: Neither => inject at root level
+    # Case 3: zLogin exists => inject at root (zLogin needs model for auto-discovery)
+    # Case 4: Neither => inject at root level
     elif KEY_MODEL not in submit_dict and KEY_ZDATA not in submit_dict:
         submit_dict[KEY_MODEL] = model
     

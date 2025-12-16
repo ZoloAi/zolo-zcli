@@ -710,6 +710,25 @@ class MessageHandler:
                         message="✓ Action completed successfully!"
                     ))
                     return True
+            
+            elif 'zLogin' in injected_action:
+                # Built-in authentication action
+                self.logger.debug(f"[FormSubmit] Executing zLogin: {injected_action['zLogin']}")
+                
+                # Import and execute handle_zLogin
+                from zCLI.subsystems.zAuth.zAuth_modules import handle_zLogin
+                
+                result = await asyncio.to_thread(
+                    handle_zLogin,
+                    app_or_type=injected_action['zLogin'],
+                    zConv=dialog_context.get('zConv', {}),
+                    zContext=dialog_context,
+                    zcli=self.zcli
+                )
+                
+                # handle_zLogin always returns a dict with success/message
+                await ws.send(self._build_response(data, **result))
+                return True
                     
             elif 'zData' in injected_action:
                 # Data operation (insert, update, etc.)

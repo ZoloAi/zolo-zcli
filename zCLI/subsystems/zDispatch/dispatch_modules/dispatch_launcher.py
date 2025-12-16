@@ -143,6 +143,7 @@ KEY_ZREAD = "zRead"
 KEY_ZDATA = "zData"
 KEY_ZDIALOG = "zDialog"
 KEY_ZDISPLAY = "zDisplay"
+KEY_ZLOGIN = "zLogin"
 
 # ============================================================================
 # MODULE CONSTANTS - Context Keys (Session/Mode Detection)
@@ -175,6 +176,7 @@ LABEL_HANDLE_ZREAD_STRING = "[HANDLE] zRead (string)"
 LABEL_HANDLE_ZREAD_DICT = "[HANDLE] zRead (dict)"
 LABEL_HANDLE_ZDATA_DICT = "[HANDLE] zData (dict)"
 LABEL_HANDLE_CRUD_DICT = "[HANDLE] zCRUD (dict)"
+LABEL_HANDLE_ZLOGIN = "[HANDLE] zLogin"
 
 # ============================================================================
 # MODULE CONSTANTS - Display Event Keys (Legacy zDisplay format)
@@ -699,6 +701,46 @@ class CommandLauncher:
             from ...zDialog import handle_zDialog
             self._log_detected("zDialog")
             return handle_zDialog(zHorizontal, zcli=self.zcli, walker=walker, context=context)
+
+        # Route: zLogin (Built-in Authentication Action)
+        if KEY_ZLOGIN in zHorizontal:
+            self._display_handler(LABEL_HANDLE_ZLOGIN, DEFAULT_INDENT_HANDLER)
+            self._log_detected(f"zLogin: {zHorizontal[KEY_ZLOGIN]}")
+            
+            # Get app name from zLogin value (string)
+            app_or_type = zHorizontal[KEY_ZLOGIN]
+            
+            # Get zConv and model from context (set by zDialog)
+            # The context from zDialog submission contains both zConv and model
+            # Context is passed from walker, which gets it from dialog submission
+            zConv = context.get("zConv", {}) if context else {}
+            model = context.get("model") if context else None
+            
+            # If model wasn't in context, check if it was injected into zHorizontal by dialog_submit
+            if not model and "model" in zHorizontal:
+                model = zHorizontal["model"]
+            
+            # Build zContext for zLogin - include model and other dialog context
+            zContext = {
+                "model": model,
+                "fields": context.get("fields", []) if context else [],
+                "zConv": zConv
+            }
+            
+            # Import and call handle_zLogin
+            from zCLI.subsystems.zAuth.zAuth_modules import handle_zLogin
+            
+            self.logger.debug(f"[zLauncher] Calling zLogin with zConv keys: {list(zConv.keys())}, model: {model}")
+            
+            result = handle_zLogin(
+                app_or_type=app_or_type,
+                zConv=zConv,
+                zContext=zContext,
+                zcli=self.zcli
+            )
+            
+            self.logger.debug(f"[zLauncher] zLogin result: {result}")
+            return result
 
         # Route: zLink
         if KEY_ZLINK in zHorizontal:

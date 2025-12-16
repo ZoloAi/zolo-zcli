@@ -948,36 +948,40 @@ class Authentication:
             return self._create_status_response(MSG_NOT_AUTHENTICATED)
     
     def is_authenticated(self) -> bool:
-        """Check if user is currently authenticated in zSession context.
+        """Check if user is currently authenticated in ANY context.
         
         Returns:
-            bool: True if zSession authenticated, False otherwise
+            bool: True if authenticated in zSession OR any application, False otherwise
         
         Context Awareness:
-            - Only checks zSession authentication (Layer 1)
-            - Does NOT check application authentication
-            - For app auth check, use: get_app_user(app_name) is not None
-            - For any auth check, use: get_active_user() is not None
+            - Checks BOTH zSession authentication (Layer 1) AND application authentication (Layer 2)
+            - Returns True if authenticated in ANY context
+            - For specific context checks, use: get_app_user(app_name) or get_credentials()
         
         Example:
-            # Check zSession authentication
-            if zcli.auth.is_authenticated():
-                print("Logged into zCLI/Zolo")
-            
-            # Check application authentication
-            if zcli.auth.get_app_user("store"):
-                print("Logged into store")
-            
             # Check any authentication
-            if zcli.auth.get_active_user():
-                print("Logged in to something")
+            if zcli.auth.is_authenticated():
+                print("User is logged in (zSession or application)")
+            
+            # Check specific application authentication
+            if zcli.auth.get_app_user("store"):
+                print("Logged into store app")
         """
         if not self._check_session():
             return False
         
+        # Check zSession authentication (Layer 1)
         zsession = self.session.get(SESSION_KEY_ZAUTH, {}).get(ZAUTH_KEY_ZSESSION, {})
-        return (zsession.get(ZAUTH_KEY_AUTHENTICATED, False) and 
-                zsession.get(ZAUTH_KEY_USERNAME) is not None)
+        if zsession.get(ZAUTH_KEY_AUTHENTICATED, False) and zsession.get(ZAUTH_KEY_USERNAME) is not None:
+            return True
+        
+        # Check application authentication (Layer 2)
+        applications = self.session.get(SESSION_KEY_ZAUTH, {}).get(ZAUTH_KEY_APPLICATIONS, {})
+        for app_name, app_session in applications.items():
+            if app_session.get(ZAUTH_KEY_AUTHENTICATED, False) and app_session.get(ZAUTH_KEY_ID) is not None:
+                return True
+        
+        return False
     
     def get_credentials(self) -> Optional[Dict[str, Any]]:
         """Get current zSession authentication data.
