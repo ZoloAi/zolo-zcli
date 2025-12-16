@@ -264,7 +264,12 @@ class HTTPRouter:
                         
                         # Use the first block as the route
                         first_block = blocks[0]
-                        virtual_path = f"/{first_block}"
+                        
+                        # Strip navigation modifiers (^, ~) from URL path
+                        # Modifiers are for block behavior, not URL paths
+                        # Example: ^zLogin block → /zLogin route (clean URL)
+                        clean_block_name = first_block.lstrip("^~")
+                        virtual_path = f"/{clean_block_name}"
                         
                         # Skip if explicit route or already discovered
                         if virtual_path in self.route_map or virtual_path in self.auto_discovered_routes:
@@ -278,6 +283,7 @@ class HTTPRouter:
                         virtual_route['_auto_discovered'] = True
                         
                         self.auto_discovered_routes[virtual_path] = virtual_route
+                        # Log shows: clean URL path → file.block (with modifiers preserved)
                         self.logger.info(f"[Router] Auto-discovered route: {virtual_path} → {file_base}.{first_block}")
                     
                     except Exception as e:
