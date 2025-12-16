@@ -186,7 +186,7 @@ LOG_MSG_CANNOT_RESOLVE = "Cannot resolve ^key without walker context"
 # MODULE CONSTANTS - Prompt Text
 # ============================================================================
 
-PROMPT_REQUIRED_CONTINUE = "Continue or stop? (press Enter to continue, 'stop' to abort): "
+PROMPT_REQUIRED_CONTINUE = "Try again? (press Enter to retry, 'n' or 'stop' to go back): "
 
 # ============================================================================
 # MODULE CONSTANTS - User Input
@@ -468,9 +468,12 @@ class ModifierProcessor:
             while not result:
                 self.logger.warning(LOG_MSG_REQUIREMENT_NOT_SATISFIED, zKey)
                 if walker:
-                    choice = display.read_string(PROMPT_REQUIRED_CONTINUE)
-                    if choice == INPUT_STOP:
-                        return INPUT_STOP
+                    choice = display.read_string(PROMPT_REQUIRED_CONTINUE).strip().lower()
+                    if choice in [INPUT_STOP, 'n', 'no']:
+                        # User declined retry - return None to stop retrying without full exit
+                        # This allows ^ (bounce-back) blocks to handle navigation properly
+                        self.logger.framework.debug(f"[{MOD_EXCLAMATION}] User declined retry for: {zKey}")
+                        return None
                 result = self.dispatch.launcher.launch(zHorizontal, context=context, walker=walker)
             
             self.logger.framework.debug(LOG_MSG_REQUIREMENT_SATISFIED, zKey)

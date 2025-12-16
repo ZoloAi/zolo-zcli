@@ -186,7 +186,7 @@ def handle_zLogin(
         if _is_bifrost_mode(zcli):
             return {"success": False, "message": "Invalid login credentials"}
         zcli.display.error("Invalid login credentials")
-        return {"success": False, "message": "Invalid login credentials"}
+        return None  # Return None (falsy) for Terminal retry logic
     
     logger.debug(f"{LOG_PREFIX} Identity field: {identity_field} = {identity_value}")
     
@@ -198,7 +198,7 @@ def handle_zLogin(
         if _is_bifrost_mode(zcli):
             return {"success": False, "message": "Invalid login credentials"}
         zcli.display.error("Invalid login credentials")
-        return {"success": False, "message": "Invalid login credentials"}
+        return None  # Return None (falsy) for Terminal retry logic
     
     # Query user from database
     try:
@@ -214,7 +214,7 @@ def handle_zLogin(
             if _is_bifrost_mode(zcli):
                 return {"success": False, "message": error_msg}
             zcli.display.error(error_msg)
-            return {"success": False, "message": error_msg}
+            return None  # Return None (falsy) for Terminal retry logic
         
         user = result[0]  # First matching record
         logger.debug(f"{LOG_PREFIX} User found: ID={user.get('id')}")
@@ -225,7 +225,7 @@ def handle_zLogin(
         if _is_bifrost_mode(zcli):
             return {"success": False, "message": error_msg}
         zcli.display.error(error_msg)
-        return {"success": False, "message": error_msg}
+        return None  # Return None (falsy) for Terminal retry logic
     
     # Verify password (bcrypt)
     stored_hash = user.get(DEFAULT_PASSWORD_FIELD)
@@ -235,7 +235,7 @@ def handle_zLogin(
         if _is_bifrost_mode(zcli):
             return {"success": False, "message": error_msg}
         zcli.display.error(error_msg)
-        return {"success": False, "message": error_msg}
+        return None  # Return None (falsy) for Terminal retry logic
     
     try:
         # Ensure stored_hash is a string (from CSV it might be str already, but be safe)
@@ -249,7 +249,7 @@ def handle_zLogin(
             if _is_bifrost_mode(zcli):
                 return {"success": False, "message": error_msg}
             zcli.display.error(error_msg)
-            return {"success": False, "message": error_msg}
+            return None  # Return None (falsy) for Terminal retry logic
         
         logger.info(f"{LOG_PREFIX} Password verified successfully for {identity_value}")
         
@@ -259,7 +259,7 @@ def handle_zLogin(
         if _is_bifrost_mode(zcli):
             return {"success": False, "message": error_msg}
         zcli.display.error(error_msg)
-        return {"success": False, "message": error_msg}
+        return None  # Return None (falsy) for Terminal retry logic
     
     # CREATE/UPDATE APP SESSION STRUCTURE
     logger.debug(f"{LOG_PREFIX} Creating session structure for app: {app_name}")
@@ -313,9 +313,9 @@ def handle_zLogin(
     if _is_bifrost_mode(zcli):
         return {"success": True, "message": success_msg, "app": app_name}
     
-    # Terminal mode: Display success message and return None (no navigation change)
+    # Terminal mode: Display success message and return truthy value for ! modifier
     zcli.display.success(success_msg)
-    return None
+    return True  # Return True (truthy) to indicate success for ! modifier retry logic
 
 
 # ============================================================================
