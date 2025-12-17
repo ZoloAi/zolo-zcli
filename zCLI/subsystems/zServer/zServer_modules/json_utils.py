@@ -279,6 +279,38 @@ def _resolve_placeholders(
                     logger.warning(f"[JSONUtils] Error resolving zNavBar placeholder: {e}")
                     return []
             
+            # Dashboard panel metadata (for zDash event)
+            elif placeholder == 'panel_metadata':
+                try:
+                    # Get zPath from query parameters
+                    zPath = query_params.get('zPath', '')
+                    
+                    if not zPath:
+                        logger.warning("[JSONUtils] panel_metadata requested but no zPath provided")
+                        return {}
+                    
+                    # Load the panel file
+                    if hasattr(zcli, 'loader'):
+                        panel_file = zcli.loader.handle(zPath=zPath)
+                        meta = panel_file.get('meta', {})
+                        
+                        # Extract panel-specific metadata
+                        panel_metadata = {
+                            'panel_icon': meta.get('panel_icon', '📄'),
+                            'panel_label': meta.get('panel_label', 'Panel'),
+                            'panel_order': meta.get('panel_order', 999)
+                        }
+                        
+                        logger.debug(f"[JSONUtils] Resolved panel metadata for {zPath}: {panel_metadata}")
+                        return panel_metadata
+                    
+                    logger.warning("[JSONUtils] zLoader not available")
+                    return {}
+                    
+                except Exception as e:
+                    logger.warning(f"[JSONUtils] Error resolving panel_metadata for {zPath}: {e}")
+                    return {}
+            
             # Unknown placeholder - return as-is
             else:
                 logger.warning(f"[JSONUtils] Unknown placeholder: {placeholder}")

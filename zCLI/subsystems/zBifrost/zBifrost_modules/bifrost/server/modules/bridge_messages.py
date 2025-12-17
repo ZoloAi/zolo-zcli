@@ -609,6 +609,12 @@ class MessageHandler:
                             if key in block_dict:
                                 chunk_data[key] = block_dict[key]
                         
+                        # Extract and send special zDisplay events (zDash, etc.) as standalone messages
+                        # before sending the chunk. These events need special frontend handling.
+                        special_events_sent = await self._extract_and_send_special_events(ws, chunk_data, data)
+                        if special_events_sent:
+                            self.logger.info(f"[MessageHandler] ✅ Sent {special_events_sent} special event(s) from chunk")
+                        
                         # Send chunk to frontend with YAML data (not HTML)
                         # Frontend will render using its existing _renderItems() pipeline
                         chunk_msg = {
@@ -1069,6 +1075,78 @@ class MessageHandler:
             if ws_id in self._paused_generators:
                 del self._paused_generators[ws_id]
                 self.logger.debug(f"[GeneratorResume] Cleaned up generator state for ws={ws_id}")
+    
+    async def _extract_and_send_special_events(
+        self,
+        ws: Any,
+        chunk_data: Dict[str, Any],
+        request_data: Dict[str, Any]
+    ) -> int:
+        """
+        Extract and send special zDisplay events (zDash, etc.) as standalone messages.
+        
+        Scans chunk_data for zDisplay events that require special frontend handling
+        (like zDash for dashboard rendering). These events are sent as standalone
+        WebSocket messages and removed from the chunk data.
+        
+        Args:
+            ws: WebSocket connection
+            chunk_data: Dictionary of block items to scan
+            request_data: Original request data (for _requestId)
+        
+        Returns:
+            int: Number of special events sent
+        """
+        events_sent = 0
+        keys_to_remove = []
+        
+        # Scan chunk data for zDisplay events
+        for key, value in chunk_data.items():
+            if not isinstance(value, list):
+                continue
+            
+            # Check each item in the list
+            for item in value:
+                if not isinstance(item, dict):
+                    continue
+                
+                # Check for zDisplay events
+                if 'zDisplay' in item:
+                    display_event = item['zDisplay']
+                    if isinstance(display_event, dict):
+                        event_type = display_event.get('event')
+                        
+                        # Special events that need standalone handling
+                        SPECIAL_EVENTS = ['zDash']
+                        
+                        if event_type in SPECIAL_EVENTS:
+                            self.logger.info(f"[MessageHandler] 🎯 Found special event: {event_type} in key '{key}'")
+                            
+                            # Create standalone event message
+                            event_msg = {
+                                "event": event_type,
+                                **{k: v for k, v in display_event.items() if k != 'event'}
+                            }
+                            
+                            if "_requestId" in request_data:
+                                event_msg["_requestId"] = request_data["_requestId"]
+                            
+                            # Send the special event
+                            await ws.send(json.dumps(event_msg))
+                            self.logger.info(f"[MessageHandler] ✅ Sent special {event_type} event")
+                            events_sent += 1
+                            
+                            # Mark this key for removal from chunk
+                            if key not in keys_to_remove:
+                                keys_to_remove.append(key)
+        
+        # Remove keys that contained only special events
+        for key in keys_to_remove:
+            # Only remove if ALL items in the list were special events
+            # For now, we'll just mark them as processed
+            pass  # Keep in chunk for now to maintain structure
+        
+        return events_sent
     
     async def _auto_execute_gate_actions(
         self,

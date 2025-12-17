@@ -564,12 +564,22 @@ class zPrimitives:
             return False
 
         try:
-            # Create event structure for buffering (capture pattern)
-            event_data = {
-                KEY_DISPLAY_EVENT: event_name,
-                KEY_DATA: data,
-                KEY_TIMESTAMP: time.time()
-            }
+            # Special system events (zDash, etc.) need top-level event key for frontend routing
+            SPECIAL_EVENTS = ['zDash', 'zMenu', 'zDialog']
+            
+            if event_name in SPECIAL_EVENTS:
+                # Create special event structure with top-level 'event' key
+                event_data = {
+                    KEY_EVENT: event_name,  # "event": "zDash" (frontend expects this)
+                    **data  # Spread data into top level
+                }
+            else:
+                # Regular display events use nested structure
+                event_data = {
+                    KEY_DISPLAY_EVENT: event_name,
+                    KEY_DATA: data,
+                    KEY_TIMESTAMP: time.time()
+                }
 
             # Buffer event for collection (backward compatibility with zWalker)
             self.display.buffer_event(event_data)
