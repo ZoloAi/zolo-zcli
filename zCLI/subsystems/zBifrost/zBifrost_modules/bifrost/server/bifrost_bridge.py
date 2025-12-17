@@ -40,6 +40,10 @@ from .modules.events import (
     DiscoveryEvents,
     DispatchEvents
 )
+# Phase 1: Output buffering for handling slow clients
+from .buffered_connection import BufferedConnection
+# Phase 1: Prometheus metrics (optional)
+from .monitoring import get_metrics
 
 # ═══════════════════════════════════════════════════════════
 # Module-Level Constants
@@ -52,6 +56,9 @@ DEFAULT_REQUIRE_AUTH = True
 DEFAULT_ALLOWED_ORIGINS = []
 DEFAULT_QUERY_TTL = 60
 DEFAULT_SHUTDOWN_TIMEOUT = 5.0
+# Phase 1: Buffering configuration
+DEFAULT_USE_BUFFERING = True  # Enable by default for Phase 1
+DEFAULT_BUFFER_SIZE = 1000  # Max messages per client
 
 # Port Validation
 PORT_MIN = 1
@@ -242,6 +249,16 @@ class zBifrost:
         self.clients = set()
         self._running = False  # Track server running state
         self.server = None  # WebSocket server instance
+        
+        # Phase 1: Connection Indexing (O(1) user lookup)
+        # Maps user_id -> set of WebSocket connections (supports multiple tabs/devices)
+        from collections import defaultdict
+        self.user_connections: Dict[str, set] = defaultdict(set)
+        # Reverse lookup: WebSocket -> user_id (for cleanup)
+        self.connection_users: Dict[WebSocketServerProtocol, str] = {}
+        
+        # Phase 1: Metrics (optional, gracefully degrades)
+        self.metrics = get_metrics()
 
         # Initialize modular components
         self.cache = CacheManager(logger, default_query_ttl=DEFAULT_QUERY_TTL)
@@ -331,8 +348,17 @@ class zBifrost:
         # Register client
         self.auth.register_client(ws, auth_info)
         self.clients.add(ws)
-
+        
+        # Phase 1: Index connection by user_id for O(1) lookup
         user = auth_info.get(KEY_USER)
+        if user:
+            self.user_connections[user].add(ws)
+            self.connection_users[ws] = user
+        
+        # Phase 1: Metrics
+        self.metrics.connection_opened()
+        self.metrics.set_active_connections(len(self.clients))
+
         self.logger.info(LOG_CLIENT_AUTHENTICATED.format(user=user, remote_addr=remote_addr))
 
         # Send connection info to client
@@ -394,15 +420,43 @@ class zBifrost:
             self.clients.remove(ws)
 
         auth_info = self.auth.unregister_client(ws)
+        
+        # Phase 1: Remove from connection index
+        if ws in self.connection_users:
+            indexed_user = self.connection_users[ws]
+            del self.connection_users[ws]
+            
+            # Remove from user_connections
+            if indexed_user in self.user_connections:
+                self.user_connections[indexed_user].discard(ws)
+                # Clean up empty sets
+                if not self.user_connections[indexed_user]:
+                    del self.user_connections[indexed_user]
+        
         if auth_info:
             user = auth_info.get(KEY_USER, 'unknown')
             self.logger.info(LOG_USER_DISCONNECTED.format(user=user))
+        
+        # Phase 1: Metrics
+        self.metrics.connection_closed(reason='normal')
+        self.metrics.set_active_connections(len(self.clients))
         
         # Clean up any paused generators for this connection
         ws_id = id(ws)
         if hasattr(self.message_handler, '_paused_generators') and ws_id in self.message_handler._paused_generators:
             del self.message_handler._paused_generators[ws_id]
             self.logger.debug(f"[Cleanup] Removed paused generator for disconnected ws={ws_id}")
+        
+        # Phase 1: Clean up schema cache (closes DB connections)
+        if hasattr(self.message_handler, '_ws_schema_caches') and ws_id in self.message_handler._ws_schema_caches:
+            schema_cache = self.message_handler._ws_schema_caches[ws_id]
+            # Close all cached database connections
+            try:
+                schema_cache.clear()  # This disconnects all cached adapters
+                del self.message_handler._ws_schema_caches[ws_id]
+                self.logger.debug(f"[Phase1] Cleaned up schema cache for ws_id={ws_id} (DB connections closed)")
+            except Exception as e:
+                self.logger.warning(f"[Phase1] Error cleaning schema cache: {e}")
 
         self.logger.debug(LOG_ACTIVE_CLIENTS.format(count=len(self.clients)))
 
@@ -441,6 +495,9 @@ class zBifrost:
             await ws.send(json.dumps(error_response))
             return
 
+        # Phase 1: Metrics - record message received
+        self.metrics.message_received(event_type=event)
+        
         # Route to handler via event map
         handler = self._event_map.get(event)
         if not handler:
@@ -510,7 +567,9 @@ class zBifrost:
 
     async def broadcast(self, message: str, sender: Optional[WebSocketServerProtocol] = None) -> None:
         """
-        Broadcast message to all connected clients except sender.
+        Phase 1: Non-blocking broadcast to all connected clients except sender.
+        
+        Uses asyncio.create_task() to prevent slow clients from blocking fast clients.
         
         Args:
             message: Message string to broadcast
@@ -519,17 +578,63 @@ class zBifrost:
         count = len(self.clients) - (1 if sender else 0)
         self.logger.debug(LOG_BROADCASTING.format(count=count))
 
+        # Phase 1: Create tasks for non-blocking sends
+        tasks = []
         for client in self.clients:
             if client != sender:
-                try:
-                    # Check if connection is open (compatible with all websockets versions)
-                    is_open = getattr(client, 'open', None) or (not getattr(client, 'closed', False))
-                    if is_open:
-                        await client.send(message)
-                        remote_addr = getattr(client, 'remote_address', 'N/A')
-                        self.logger.debug(LOG_SENT.format(remote_addr=remote_addr))
-                except Exception as e:
-                    self.logger.debug(LOG_BROADCAST_SKIPPED.format(error=e))
+                task = asyncio.create_task(self._send_to_client(client, message))
+                tasks.append(task)
+        
+        # Don't await tasks - let them run in background
+        # This prevents slow clients from blocking the broadcast
+        self.logger.debug(f"{LOG_PREFIX} [Phase1] Created {len(tasks)} non-blocking send tasks")
+        
+        # Phase 1: Metrics
+        self.metrics.broadcast_sent()
+    
+    async def _send_to_client(self, client: WebSocketServerProtocol, message: str) -> None:
+        """
+        Phase 1: Helper for non-blocking client sends.
+        
+        Args:
+            client: Client WebSocket connection
+            message: Message to send
+        """
+        try:
+            # Check if connection is open (compatible with all websockets versions)
+            is_open = getattr(client, 'open', None) or (not getattr(client, 'closed', False))
+            if is_open:
+                await client.send(message)
+                remote_addr = getattr(client, 'remote_address', 'N/A')
+                self.logger.debug(LOG_SENT.format(remote_addr=remote_addr))
+        except Exception as e:
+            self.logger.debug(LOG_BROADCAST_SKIPPED.format(error=e))
+
+    async def send_to_user(self, user_id: str, message: str) -> int:
+        """
+        Phase 1: Send message to all connections for a specific user (O(1) lookup + non-blocking).
+        
+        Supports multiple tabs/devices per user. Uses non-blocking sends.
+        
+        Args:
+            user_id: User ID to send message to
+            message: Message string to send
+        
+        Returns:
+            Number of connections message was sent to (queued, not delivered)
+        """
+        if user_id not in self.user_connections:
+            self.logger.debug(f"{LOG_PREFIX} [O(1)] No connections for user: {user_id}")
+            return 0
+        
+        # Phase 1: Non-blocking sends
+        tasks = []
+        for ws in self.user_connections[user_id]:
+            task = asyncio.create_task(self._send_to_client(ws, message))
+            tasks.append(task)
+        
+        self.logger.debug(f"{LOG_PREFIX} [O(1)] Queued message to user '{user_id}' ({len(tasks)} connections)")
+        return len(tasks)
 
     # ═══════════════════════════════════════════════════════════
     # Server Lifecycle
@@ -637,6 +742,9 @@ class zBifrost:
                 # Clear the clients set
                 self.clients.clear()
                 self.auth.authenticated_clients.clear()
+                # Phase 1: Clear connection indices
+                self.user_connections.clear()
+                self.connection_users.clear()
 
             # Close the server
             if self.server:
@@ -682,6 +790,9 @@ class zBifrost:
                 self.logger.info(LOG_SYNC_FORCE_CLOSING.format(count=len(self.clients)))
                 self.clients.clear()
                 self.auth.authenticated_clients.clear()
+                # Phase 1: Clear connection indices
+                self.user_connections.clear()
+                self.connection_users.clear()
 
             # Close server synchronously
             if self.server:

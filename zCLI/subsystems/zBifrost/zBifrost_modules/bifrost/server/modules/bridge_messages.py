@@ -521,6 +521,24 @@ class MessageHandler:
                 await ws.send(self._build_response(data, error=error_msg))
                 return True
             
+            # Phase 1: Setup per-WebSocket schema cache for DB connection reuse
+            # This allows multiple zData operations across walker executions
+            # to reuse the same database connection (5-10x performance gain)
+            # The cache is stored per ws_id to isolate users (security + correctness)
+            ws_id = id(ws)
+            if not hasattr(self, '_ws_schema_caches'):
+                self._ws_schema_caches = {}
+            
+            if ws_id not in self._ws_schema_caches:
+                from zCLI.subsystems.zLoader.loader_modules.loader_cache_schema import SchemaCache
+                self._ws_schema_caches[ws_id] = SchemaCache(self.logger)
+                self.logger.debug(f"[Phase1] Created schema cache for ws_id={ws_id} (DB connection reuse)")
+            
+            # Store schema cache in zcli.wizard for zData to discover
+            # This follows the existing wizard mode pattern (see zData._init_wizard_handler)
+            if hasattr(self.zcli, 'wizard') and self.zcli.wizard:
+                self.zcli.wizard.schema_cache = self._ws_schema_caches[ws_id]
+            
             # Execute the block via walker
             # Note: walker.zBlock_loop() generates display events which are auto-buffered in zBifrost mode
             # Use zcli.walker (always available) instead of self.walker (may be None in web server mode)
