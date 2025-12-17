@@ -542,6 +542,7 @@ class MessageHandler:
                 # Consume generator and send chunks progressively
                 try:
                     chunk_num = 0
+                    paused_at_gate = False  # Track if we paused at a gate
                     for chunk_keys, is_gate, gate_value in result:
                         # Check for shutdown during chunk processing
                         if hasattr(self.zcli, '_shutdown_requested') and self.zcli._shutdown_requested:
@@ -622,7 +623,17 @@ class MessageHandler:
                         self.logger.info(f"[MessageHandler] ✅ Sent chunk {chunk_num}")
                         
                         if is_gate:
-                            # Pause here - stop sending chunks until gate completes
+                            # Check if this gate contains auto-executable actions (zLogout, zLogin, zFunc, etc.)
+                            # These should execute automatically, not wait for user interaction
+                            auto_executable = await self._auto_execute_gate_actions(ws, data, chunk_data, chunk_keys, block_dict)
+                            
+                            if auto_executable:
+                                # Action was executed and generator was resumed - continue to next chunk
+                                self.logger.info(f"[MessageHandler] ✅ Gate action auto-executed, generator resumed")
+                                paused_at_gate = False  # Don't mark as paused since we resumed
+                                continue
+                            
+                            # Pause here - stop sending chunks until gate completes (for forms/dialogs)
                             self.logger.info(f"[MessageHandler] ⏸️  Paused at gate - storing generator state")
                             
                             # Store generator state for resumption after form submission
@@ -638,6 +649,7 @@ class MessageHandler:
                             
                             self.logger.info(f"[MessageHandler] Stored generator state for ws={ws_id}")
                             self.logger.info(f"[MessageHandler] Post-gate content will be sent after successful form submission")
+                            paused_at_gate = True  # Mark that we paused
                             break  # Exit loop - don't send post-gate chunks yet
                     
                     # Generator completed
@@ -652,8 +664,24 @@ class MessageHandler:
                 buffered_events = self.zcli.display.collect_buffered_events()
                 self.logger.info(f"[MessageHandler] Cleared {len(buffered_events)} buffered display events")
                 
-                # Send completion
-                await ws.send(self._build_response(data, result="completed"))
+                # Only handle bounce-back if we didn't pause at a gate
+                # (gate-based bounce-back is handled in _resume_generator_after_gate)
+                if not paused_at_gate:
+                    # Check if block has bounce-back modifier (^)
+                    if zBlock.startswith('^'):
+                        self.logger.info(f"[MessageHandler] Block {zBlock} has ^ modifier - triggering bounce-back")
+                        navigate_back_msg = {
+                            "event": "navigate_back",
+                            "reason": "bounce_back_block_completed",
+                            "_requestId": data.get("_requestId")
+                        }
+                        await ws.send(json.dumps(navigate_back_msg))
+                        self.logger.info("[MessageHandler] ✅ Sent navigate_back event for bounce-back block")
+                        return True  # Don't send completion, just return (matching gate-based pattern)
+                    
+                    # Send completion (only for non-bounce-back blocks)
+                    await ws.send(self._build_response(data, result="completed"))
+                
                 return True
             
             else:
@@ -1041,6 +1069,179 @@ class MessageHandler:
             if ws_id in self._paused_generators:
                 del self._paused_generators[ws_id]
                 self.logger.debug(f"[GeneratorResume] Cleaned up generator state for ws={ws_id}")
+    
+    async def _auto_execute_gate_actions(
+        self,
+        ws: Any,
+        data: Dict[str, Any],
+        chunk_data: Dict[str, Any],
+        chunk_keys: list,
+        block_dict: Dict[str, Any]
+    ) -> bool:
+        """
+        Auto-execute actions in gate blocks (zLogout, zLogin, zFunc, etc.).
+        
+        This method checks if a gate chunk contains auto-executable actions
+        (zLogout, zLogin, zFunc, zLink, etc.) and executes them automatically.
+        This is the "system gate" pattern where actions execute without user
+        interaction, unlike form gates which wait for submission.
+        
+        Args:
+            ws: WebSocket connection
+            data: Original walker execution request
+            chunk_data: Data sent in the chunk (may contain actions)
+            chunk_keys: Keys in this chunk
+            block_dict: Full block YAML dictionary
+            
+        Returns:
+            bool: True if action was auto-executed (generator resumed),
+                  False if this is a form gate (needs user interaction)
+        
+        Auto-Executable Actions:
+            - zLogout: "app_name"
+            - zLogin: "app_name" (though typically in onSubmit)
+            - zFunc: "function_name"
+            - zLink: "link_target"
+            - Any other standalone action
+            
+        Not Auto-Executable:
+            - zDialog: {...} - Needs user form submission
+        """
+        # Check each key in the chunk for executable actions
+        for key in chunk_keys:
+            if key not in block_dict:
+                continue
+            
+            key_value = block_dict[key]
+            
+            # key_value is typically a list of dicts
+            if not isinstance(key_value, list):
+                continue
+            
+            for item in key_value:
+                if not isinstance(item, dict):
+                    continue
+                
+                # Check for auto-executable actions
+                # zDialog is NOT auto-executable (needs form submission)
+                if 'zDialog' in item:
+                    self.logger.debug(f"[GateAction] Found zDialog - needs user interaction, not auto-executing")
+                    return False  # This is a form gate, not auto-executable
+                
+                # Check for zLogout
+                if 'zLogout' in item:
+                    app_name = item['zLogout']
+                    self.logger.info(f"[GateAction] Auto-executing zLogout: {app_name}")
+                    
+                    try:
+                        # Import and execute zLogout via zDispatch
+                        from zCLI.subsystems.zDispatch import handle_zDispatch
+                        
+                        # Build context for zLogout (empty zConv, no model needed)
+                        context = {
+                            "zConv": {},
+                            "model": None,
+                            "mode": "zBifrost"
+                        }
+                        
+                        # Execute zLogout
+                        result = await asyncio.to_thread(
+                            handle_zDispatch,
+                            "zLogout",
+                            item,  # {"zLogout": "zCloud"}
+                            zcli=self.zcli,
+                            walker=self.walker,
+                            context=context
+                        )
+                        
+                        self.logger.info(f"[GateAction] zLogout executed: {result}")
+                        
+                        # Send success message to frontend (if result is dict with success/message)
+                        if isinstance(result, dict) and 'success' in result:
+                            await ws.send(json.dumps({
+                                "success": result.get("success"),
+                                "message": result.get("message", "Logout completed"),
+                                "_requestId": data.get("_requestId")
+                            }))
+                        
+                        # Resume generator to send remaining chunks (post-gate content)
+                        await self._resume_generator_after_gate(ws, data)
+                        
+                        return True  # Action was auto-executed
+                    
+                    except Exception as e:
+                        self.logger.error(f"[GateAction] Failed to auto-execute zLogout: {e}", exc_info=True)
+                        await ws.send(json.dumps({
+                            "success": False,
+                            "message": f"Logout failed: {str(e)}",
+                            "_requestId": data.get("_requestId")
+                        }))
+                        return False
+                
+                # Check for zLogin (typically in onSubmit, but could be standalone)
+                if 'zLogin' in item:
+                    # zLogin typically needs form data, so it's not auto-executable
+                    # unless it's being used in a special way
+                    self.logger.debug(f"[GateAction] Found zLogin - typically needs form data, not auto-executing")
+                    return False
+                
+                # Check for zFunc
+                if 'zFunc' in item:
+                    func_name = item['zFunc']
+                    self.logger.info(f"[GateAction] Auto-executing zFunc: {func_name}")
+                    
+                    try:
+                        # Execute via zParser
+                        context = {"mode": "zBifrost"}
+                        result = await asyncio.to_thread(
+                            self.zcli.zparser.resolve_plugin_invocation,
+                            func_name,
+                            context=context
+                        )
+                        
+                        self.logger.info(f"[GateAction] zFunc executed: {result}")
+                        
+                        # Resume generator
+                        await self._resume_generator_after_gate(ws, data)
+                        
+                        return True
+                    
+                    except Exception as e:
+                        self.logger.error(f"[GateAction] Failed to auto-execute zFunc: {e}", exc_info=True)
+                        return False
+                
+                # Check for zLink (auto-executable for navigation)
+                if 'zLink' in item:
+                    link_target = item['zLink']
+                    self.logger.info(f"[GateAction] Auto-executing zLink: {link_target}")
+                    
+                    try:
+                        # Execute via zDispatch
+                        from zCLI.subsystems.zDispatch import handle_zDispatch
+                        
+                        context = {"mode": "zBifrost"}
+                        result = await asyncio.to_thread(
+                            handle_zDispatch,
+                            "zLink",
+                            item,
+                            zcli=self.zcli,
+                            walker=self.walker,
+                            context=context
+                        )
+                        
+                        self.logger.info(f"[GateAction] zLink executed: {result}")
+                        
+                        # Resume generator
+                        await self._resume_generator_after_gate(ws, data)
+                        
+                        return True
+                    
+                    except Exception as e:
+                        self.logger.error(f"[GateAction] Failed to auto-execute zLink: {e}", exc_info=True)
+                        return False
+        
+        # No auto-executable actions found
+        return False
     
     def _get_event(self, data: Dict[str, Any]) -> Optional[str]:
         """

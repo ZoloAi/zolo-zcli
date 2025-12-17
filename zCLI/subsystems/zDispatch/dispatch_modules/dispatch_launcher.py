@@ -144,6 +144,7 @@ KEY_ZDATA = "zData"
 KEY_ZDIALOG = "zDialog"
 KEY_ZDISPLAY = "zDisplay"
 KEY_ZLOGIN = "zLogin"
+KEY_ZLOGOUT = "zLogout"
 
 # ============================================================================
 # MODULE CONSTANTS - Context Keys (Session/Mode Detection)
@@ -177,6 +178,7 @@ LABEL_HANDLE_ZREAD_DICT = "[HANDLE] zRead (dict)"
 LABEL_HANDLE_ZDATA_DICT = "[HANDLE] zData (dict)"
 LABEL_HANDLE_CRUD_DICT = "[HANDLE] zCRUD (dict)"
 LABEL_HANDLE_ZLOGIN = "[HANDLE] zLogin"
+LABEL_HANDLE_ZLOGOUT = "[HANDLE] zLogout"
 
 # ============================================================================
 # MODULE CONSTANTS - Display Event Keys (Legacy zDisplay format)
@@ -740,6 +742,34 @@ class CommandLauncher:
             )
             
             self.logger.debug(f"[zLauncher] zLogin result: {result}")
+            return result
+
+        # Route: zLogout (Built-in Logout Action)
+        if KEY_ZLOGOUT in zHorizontal:
+            self._display_handler(LABEL_HANDLE_ZLOGOUT, DEFAULT_INDENT_HANDLER)
+            self._log_detected(f"zLogout: {zHorizontal[KEY_ZLOGOUT]}")
+            
+            # Get app name from zLogout value (string)
+            app_name = zHorizontal[KEY_ZLOGOUT]
+            
+            # zLogout doesn't need zConv/model (no form data), but we pass empty dicts
+            # for consistency with handle_zLogout signature
+            zConv = {}
+            zContext = {}
+            
+            # Import and call handle_zLogout
+            from zCLI.subsystems.zAuth.zAuth_modules import handle_zLogout
+            
+            self.logger.debug(f"[zLauncher] Calling zLogout for app: {app_name}")
+            
+            result = handle_zLogout(
+                app_name=app_name,
+                zConv=zConv,
+                zContext=zContext,
+                zcli=self.zcli
+            )
+            
+            self.logger.debug(f"[zLauncher] zLogout result: {result}")
             return result
 
         # Route: zLink
