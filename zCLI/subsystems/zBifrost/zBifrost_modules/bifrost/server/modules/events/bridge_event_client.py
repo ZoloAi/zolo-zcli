@@ -387,3 +387,60 @@ class ClientEvents:
                 CONTEXT_KEY_ROLE: DEFAULT_ROLE,
                 CONTEXT_KEY_AUTH_CONTEXT: DEFAULT_AUTH_CONTEXT
             }
+    
+    async def handle_page_unload(self, ws, data: Dict[str, Any]) -> None:
+        """
+        Handle page unload notification from frontend (lifecycle cleanup).
+        
+        This handler is called when the frontend detects page navigation (e.g., browser
+        back/forward button, or user clicking a different nav item). It cleans up any
+        state associated with the WebSocket connection, such as paused generators.
+        
+        Args:
+            ws: WebSocket connection
+            data: Event data with:
+                - reason (str): Reason for unload (e.g., "navigation")
+                - timestamp (int): Client timestamp
+        
+        Process:
+            1. Log the page unload event with user context
+            2. Clean up any paused generators (via bridge's message_handler)
+            3. No response needed (page is already navigating away)
+        
+        Security:
+            Logs user context for audit trails. Non-critical operation, failures are logged
+            but don't block cleanup.
+        
+        Example:
+            ```python
+            await client_events.handle_page_unload(ws, {
+                "reason": "navigation",
+                "timestamp": 1765985548958
+            })
+            ```
+        """
+        # Extract user context for logging
+        user_context = self._extract_user_context(ws)
+        user_id = user_context.get(CONTEXT_KEY_USER_ID, DEFAULT_USER_ID)
+        app_name = user_context.get(CONTEXT_KEY_APP_NAME, DEFAULT_APP_NAME)
+        
+        reason = data.get('reason', 'unknown')
+        ws_id = id(ws)
+        
+        self.logger.info(
+            f"{LOG_PREFIX} Page unload | User: {user_id} | App: {app_name} | "
+            f"Reason: {reason} | ws={ws_id}"
+        )
+        
+        # Clean up any paused generators for this connection
+        if hasattr(self.bifrost, 'message_handler') and hasattr(self.bifrost.message_handler, '_paused_generators'):
+            if ws_id in self.bifrost.message_handler._paused_generators:
+                gen_state = self.bifrost.message_handler._paused_generators[ws_id]
+                zBlock = gen_state.get('zBlock', 'unknown')
+                self.logger.info(
+                    f"{LOG_PREFIX} Cleaned up paused generator for block: {zBlock} | "
+                    f"User: {user_id} | ws={ws_id}"
+                )
+                del self.bifrost.message_handler._paused_generators[ws_id]
+        
+        # No response needed - page is already navigating away

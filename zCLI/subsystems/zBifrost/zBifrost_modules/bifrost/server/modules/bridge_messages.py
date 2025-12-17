@@ -258,6 +258,10 @@ class MessageHandler:
         if event == "form_submit":
             return await self._handle_form_submit(ws, data)
         
+        # Page unload notification (lifecycle cleanup)
+        if event == "page_unload":
+            return await self._handle_page_unload(ws, data)
+        
         return False
     
     async def _handle_input_response(self, data: Dict[str, Any]) -> bool:
@@ -477,18 +481,33 @@ class MessageHandler:
             
             self.logger.info(f"[MessageHandler] Executing walker: {zVaFolder}/{zVaFile}.{zBlock}")
             
-            # Update session with walker parameters
-            self.zcli.session["zVaFile"] = zVaFile
-            self.zcli.session["zVaFolder"] = zVaFolder
-            self.zcli.session["zBlock"] = zBlock
+            # Check if this is a dashboard panel load (has _renderTarget)
+            # Dashboard panel loads should NOT update session to prevent persistence bugs
+            is_dashboard_panel = "_renderTarget" in data
             
-            # Update zSpark_obj (walker uses this)
+            if is_dashboard_panel:
+                self.logger.debug(f"[MessageHandler] Dashboard panel load detected - not updating session")
+            else:
+                # Update session with walker parameters (only for top-level navigation)
+                self.zcli.session["zVaFile"] = zVaFile
+                self.zcli.session["zVaFolder"] = zVaFolder
+                self.zcli.session["zBlock"] = zBlock
+                self.logger.debug(f"[MessageHandler] Updated session: zVaFolder={zVaFolder}")
+            
+            # Always update zSpark_obj (walker uses this for YAML resolution)
             self.zcli.zspark_obj["zVaFile"] = zVaFile
             self.zcli.zspark_obj["zVaFolder"] = zVaFolder
             self.zcli.zspark_obj["zBlock"] = zBlock
             
-            # Load YAML file via loader (pass None to trigger session-based path resolution)
-            raw_zFile = await asyncio.to_thread(self.zcli.loader.handle, None)
+            # Construct explicit zPath for loader (don't rely on session for dashboard panels)
+            # Format: @.{folder}.{file} (e.g., @.UI.zAccount.zUI.Overview)
+            folder_part = zVaFolder.lstrip('@.')  # Remove leading @.
+            zPath = f"@.{folder_part}.{zVaFile}"
+            
+            self.logger.debug(f"[MessageHandler] Loading YAML from zPath: {zPath}")
+            
+            # Load YAML file via loader with explicit path
+            raw_zFile = await asyncio.to_thread(self.zcli.loader.handle, zPath)
             
             if not raw_zFile:
                 error_msg = f"Failed to load zVaFile: {zVaFolder}/{zVaFile}"
@@ -960,6 +979,43 @@ class MessageHandler:
                 errors=[str(e)]
             ))
             return True
+    
+    async def _handle_page_unload(self, ws: Any, data: Dict[str, Any]) -> bool:
+        """
+        Handle page unload notification from frontend (lifecycle cleanup).
+        
+        This handler is called when the frontend detects page navigation (e.g., browser
+        back/forward button, or user clicking a different nav item). It cleans up any
+        state associated with the WebSocket connection, such as paused generators.
+        
+        Args:
+            ws: WebSocket connection
+            data: Request data with:
+                - reason (str): Reason for unload (e.g., "navigation")
+                - timestamp (int): Client timestamp
+        
+        Returns:
+            bool: True (always handled)
+        
+        Process:
+            1. Log the page unload event
+            2. Clean up any paused generators for this connection
+            3. Acknowledge the unload
+        """
+        reason = data.get('reason', 'unknown')
+        ws_id = id(ws)
+        
+        self.logger.info(f"[PageUnload] Client page unloading (reason: {reason}, ws={ws_id})")
+        
+        # Clean up any paused generators for this connection
+        if ws_id in self._paused_generators:
+            gen_state = self._paused_generators[ws_id]
+            zBlock = gen_state.get('zBlock', 'unknown')
+            self.logger.info(f"[PageUnload] Cleaning up paused generator for block: {zBlock}")
+            del self._paused_generators[ws_id]
+        
+        # No need to send a response - page is already navigating away
+        return True
     
     async def _resume_generator_after_gate(self, ws: Any, form_data: Dict[str, Any]) -> None:
         """

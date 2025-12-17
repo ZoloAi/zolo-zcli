@@ -299,13 +299,17 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
     
     def _handle_routed_request(self):
         """Handle request using HTTPRouter with RBAC enforcement"""
+        # Strip query parameters for route matching
+        from urllib.parse import urlparse
+        clean_path = urlparse(self.path).path
+        
         # DEBUG: Log route matching attempt
         if hasattr(self, 'zcli_logger') and self.zcli_logger:
-            self.zcli_logger.info(f"[Handler] Attempting to match route: {self.path}")
+            self.zcli_logger.info(f"[Handler] Attempting to match route: {clean_path}")
             self.zcli_logger.info(f"[Handler] Router has {len(self.router.auto_discovered_routes)} auto-discovered routes")
         
-        # Match route
-        route = self.router.match_route(self.path)
+        # Match route (without query parameters)
+        route = self.router.match_route(clean_path)
         if not route:
             # No route found - 404
             if hasattr(self, 'zcli_logger') and self.zcli_logger:

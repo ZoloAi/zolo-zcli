@@ -292,7 +292,7 @@ DEFAULT_SPINNER_STYLE = "dots"
 # Progress Bar Characters
 CHAR_FILLED = "█"
 CHAR_EMPTY = "░"
-CHAR_CHECKMARK = "✓"
+CHAR_CHECKMARK = "[OK]"
 CHAR_SPACE = " "
 
 # Box Drawing Characters (Unicode)
@@ -331,7 +331,7 @@ SWIPER_STATUS_MANUAL = "[MANUAL]"
 # Messages
 MSG_SWIPER_FALLBACK = "\nPress Enter to advance, 'q' to quit..."
 MSG_BIFROST_INITIALIZED = "Navigate using touch gestures on the web interface.\n"
-MSG_SWIPER_COMPLETED = "\n✓ {} completed!\n"
+MSG_SWIPER_COMPLETED = "\n[OK] {} completed!\n"
 
 # Spinner Style Names
 STYLE_DOTS = "dots"

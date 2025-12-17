@@ -116,6 +116,7 @@ KEY_USER = "user"
 EVENT_CONNECTION_INFO = "connection_info"
 EVENT_SERVER_SHUTDOWN = "server_shutdown"
 EVENT_INPUT_RESPONSE = "input_response"
+EVENT_PAGE_UNLOAD = "page_unload"
 EVENT_GET_SCHEMA = "get_schema"
 EVENT_CLEAR_CACHE = "clear_cache"
 EVENT_CACHE_STATS = "cache_stats"
@@ -271,6 +272,7 @@ class zBifrost:
             # Client events
             EVENT_INPUT_RESPONSE: self.events['client'].handle_input_response,
             EVENT_CONNECTION_INFO: self.events['client'].handle_connection_info,
+            EVENT_PAGE_UNLOAD: self.events['client'].handle_page_unload,
 
             # Cache events
             EVENT_GET_SCHEMA: self.events['cache'].handle_get_schema,
@@ -453,7 +455,7 @@ class zBifrost:
         try:
             # Check if this is a built-in event that should be awaited inline
             builtin_events = {
-                EVENT_INPUT_RESPONSE, EVENT_CONNECTION_INFO, EVENT_GET_SCHEMA, 
+                EVENT_INPUT_RESPONSE, EVENT_CONNECTION_INFO, EVENT_PAGE_UNLOAD, EVENT_GET_SCHEMA, 
                 EVENT_CLEAR_CACHE, EVENT_CACHE_STATS, EVENT_SET_CACHE_TTL,
                 EVENT_DISCOVER, EVENT_INTROSPECT, EVENT_DISPATCH,
                 'execute_walker', 'load_page', 'form_submit'  # Walker and form events need responses

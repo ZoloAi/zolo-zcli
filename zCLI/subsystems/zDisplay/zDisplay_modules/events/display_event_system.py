@@ -1394,14 +1394,14 @@ class zSystem:
             menu_items = []
             for i, panel_name in enumerate(sidebar, 1):
                 meta = panel_metadata.get(panel_name, {})
-                icon = meta.get('icon', '')
                 label = meta.get('label', panel_name)
                 
                 # Mark current panel
-                current_marker = " (current)" if panel_name == current_panel else ""
+                current_marker = " [current]" if panel_name == current_panel else ""
                 
-                # Format: [1] 🏠 Overview (current)
-                display_text = f"{icon} {label}{current_marker}" if icon else f"{label}{current_marker}"
+                # Format: [1] Overview [current]
+                # Icons are visual only (terminal doesn't support them)
+                display_text = f"{label}{current_marker}"
                 menu_items.append((i, display_text))
             
             # Add "done" option
@@ -1576,7 +1576,7 @@ class zSystem:
                     if logger:
                         logger.error(f"[zDialog] {error_msg}")
                     if self.Signals:
-                        self.Signals.error(f"✗ {error_msg}", indent=0)
+                        self.Signals.error(f"[ERROR] {error_msg}", indent=0)
                         self._output_text("", break_after=False)
                         self.Signals.error("Form cannot proceed without schema validation.", indent=1)
                     return {}  # Return empty dict to signal failure
@@ -1587,7 +1587,7 @@ class zSystem:
                 if logger:
                     logger.error(f"[zDialog] {error_msg}")
                 if self.Signals:
-                    self.Signals.error(f"✗ {error_msg}", indent=0)
+                    self.Signals.error(f"[ERROR] {error_msg}", indent=0)
                     self._output_text("", break_after=False)
                     self.Signals.error("Form cannot proceed without schema validation.", indent=1)
                 return {}  # Return empty dict to signal failure
@@ -1654,10 +1654,10 @@ class zSystem:
                         # Display error and prompt for retry
                         error_msg = errors[field_name]
                         if logger:
-                            logger.info(f"[zDialog] ❌ Field '{field_name}' validation failed: {error_msg}")
+                            logger.info(f"[zDialog] Field '{field_name}' validation failed: {error_msg}")
                         
                         if self.Signals:
-                            self.Signals.error(f"✗ {error_msg}", indent=1)
+                            self.Signals.error(f"[ERROR] {error_msg}", indent=1)
                             self._output_text("", break_after=False)
                         # Loop continues - retry this field
                     else:
