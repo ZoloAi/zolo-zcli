@@ -406,6 +406,7 @@ EVENT_ZSESSION = "zSession"         # Session state display event
 EVENT_ZCONFIG = "zConfig"           # Configuration display event
 EVENT_ZCRUMBS = "zCrumbs"           # Breadcrumb navigation event
 EVENT_ZMENU = "zMenu"               # Menu display/selection event
+EVENT_ZDASH = "zDash"               # Dashboard panel navigation event
 EVENT_ZDIALOG = "zDialog"           # Form dialog event
 
 # Local Dictionary Keys (for GUI events, not session data)
@@ -1219,6 +1220,238 @@ class zSystem:
                 content = FORMAT_MENU_ITEM.format(number=number, option=option)
                 self._output_text(content, break_after=False)
             return None
+
+    def zDash(
+        self,
+        folder: str,
+        sidebar: List[str],
+        default: Optional[str] = None,
+        _zcli: Optional[Any] = None
+    ) -> Optional[str]:
+        """
+        Display dashboard with interactive panel navigation (Terminal or Bifrost mode).
+        
+        Built-in Gate Behavior (Terminal):
+        - Runs in interactive loop until user enters "done"
+        - Allows panel switching between sidebar items
+        - Acts as built-in gate (no need for ! modifier)
+        
+        Terminal-First Approach:
+        - Auto-navigates to default panel on first load
+        - Shows interactive menu after each panel render
+        - "done" command exits dashboard and continues execution
+        
+        Args:
+            folder: Base folder for panel discovery (e.g., "@.UI.zAccount")
+            sidebar: List of panel names (e.g., ["Overview", "Apps", "Billing"])
+            default: Default panel to navigate to (defaults to first in sidebar)
+            _zcli: zCLI instance for zLoader access
+        
+        Returns:
+            Optional[str]: Last panel viewed (Terminal), None (Bifrost)
+        
+        Bifrost Mode:
+            - Sends EVENT_ZDASH event with dashboard structure
+            - Frontend renders sidebar and content panels
+            - Returns None (navigation handled via WebSocket)
+        
+        Terminal Mode:
+            - Discovers panel metadata from folder
+            - Auto-navigates to default panel immediately
+            - Shows menu after panel content
+            - Loops until "done" entered
+            - Panel content rendered by zDispatch
+        
+        Usage:
+            display.handle({
+                "event": "zDash",
+                "folder": "@.UI.zAccount",
+                "sidebar": ["Overview", "Apps", "Billing", "Settings"],
+                "default": "Overview"
+            })
+        
+        Menu Commands:
+            - [1-N]: Switch to panel by number
+            - done: Exit dashboard (satisfies built-in gate)
+        """
+        # Try Bifrost (GUI) mode first - send clean event
+        if self._try_gui_event(EVENT_ZDASH, {
+            "folder": folder,
+            "sidebar": sidebar,
+            "default": default or (sidebar[0] if sidebar else None)
+        }):
+            return None  # GUI event sent successfully
+        
+        # Terminal mode - interactive dashboard loop
+        if not sidebar:
+            if hasattr(self.display, 'logger'):
+                self.display.logger.warning("[zDash] No sidebar items provided")
+            return None
+        
+        # Get zCLI instance (from display parent)
+        if not _zcli:
+            _zcli = getattr(self.display, 'zcli', None)
+        
+        if not _zcli:
+            if hasattr(self.display, 'logger'):
+                self.display.logger.error("[zDash] Cannot navigate without zCLI instance")
+            return None
+        
+        logger = self.display.logger if hasattr(self.display, 'logger') else None
+        
+        # Determine starting panel
+        current_panel = default if default in sidebar else sidebar[0]
+        
+        # Cache panel metadata for menu display
+        panel_metadata = {}
+        for panel_name in sidebar:
+            try:
+                zLink_path = f"{folder}.zUI.{panel_name}"
+                panel_file = _zcli.loader.handle(zPath=zLink_path) if hasattr(_zcli, 'loader') else {}
+                panel_meta = panel_file.get('meta', {})
+                panel_metadata[panel_name] = {
+                    'label': panel_meta.get('panel_label', panel_name),
+                    'icon': panel_meta.get('panel_icon', ''),
+                    'order': panel_meta.get('panel_order', 999)
+                }
+            except Exception:
+                panel_metadata[panel_name] = {
+                    'label': panel_name,
+                    'icon': '',
+                    'order': 999
+                }
+        
+        # Interactive dashboard loop (built-in gate)
+        while True:
+            # 1. Load and render current panel
+            zLink_path = f"{folder}.zUI.{current_panel}"
+            
+            if logger:
+                logger.info(f"[zDash] Navigating to: {current_panel}")
+            
+            try:
+                # Load panel file
+                if not hasattr(_zcli, 'loader'):
+                    if logger:
+                        logger.error("[zDash] zLoader not available")
+                    break
+                
+                panel_file = _zcli.loader.handle(zPath=zLink_path)
+                panel_meta = panel_file.get('meta', {})
+                
+                # Extract panel metadata for logging
+                panel_label = panel_meta.get('panel_label', current_panel)
+                panel_icon = panel_meta.get('panel_icon', '')
+                
+                if logger:
+                    logger.debug(f"[zDash] Loaded panel: {panel_icon} {panel_label}")
+                
+                # Get the first executable block
+                panel_blocks = [k for k in panel_file.keys() if k != 'meta' and not k.startswith('_')]
+                
+                if not panel_blocks:
+                    if logger:
+                        logger.warning(f"[zDash] No executable blocks in panel: {zLink_path}")
+                    break
+                
+                first_block = panel_blocks[0]
+                if logger:
+                    logger.info(f"[zDash] Executing panel block: {first_block}")
+                
+                # Execute the block via zDispatch
+                if not (hasattr(_zcli, 'dispatch') and hasattr(_zcli.dispatch, 'launcher')):
+                    if logger:
+                        logger.error("[zDash] zDispatch not available")
+                    break
+                
+                # Get the block content (dict with Panel_Header, Panel_Content, etc.)
+                panel_block_content = panel_file[first_block]
+                
+                # Iterate through the block's items and execute each one
+                # This ensures Panel_Header, Panel_Content, etc. are all rendered
+                for key, value in panel_block_content.items():
+                    # Skip metadata keys like _rbac, _zClass, etc.
+                    if key.startswith('_'):
+                        continue
+                    
+                    # Execute the content (usually a list of zDisplay events)
+                    if isinstance(value, list):
+                        for item in value:
+                            _zcli.dispatch.launcher.launch(zHorizontal=item)
+                    else:
+                        _zcli.dispatch.launcher.launch(zHorizontal=value)
+                
+            except Exception as e:
+                if logger:
+                    logger.error(f"[zDash] Error loading panel {zLink_path}: {e}")
+                    import traceback
+                    logger.debug(traceback.format_exc())
+                break
+            
+            # 2. Build and show dashboard navigation menu
+            self._output_text("", break_after=False)  # Blank line
+            
+            menu_items = []
+            for i, panel_name in enumerate(sidebar, 1):
+                meta = panel_metadata.get(panel_name, {})
+                icon = meta.get('icon', '')
+                label = meta.get('label', panel_name)
+                
+                # Mark current panel
+                current_marker = " (current)" if panel_name == current_panel else ""
+                
+                # Format: [1] 🏠 Overview (current)
+                display_text = f"{icon} {label}{current_marker}" if icon else f"{label}{current_marker}"
+                menu_items.append((i, display_text))
+            
+            # Add "done" option
+            self._output_text("", break_after=False)
+            self._output_text("Dashboard Menu:", break_after=False)
+            
+            # Display menu items
+            for number, label in menu_items:
+                content = f"  [{number}] {label}"
+                self._output_text(content, break_after=False)
+            
+            # Display "done" option
+            self._output_text("", break_after=False)
+            self._output_text("  [done] Exit Dashboard", break_after=False)
+            self._output_text("", break_after=False)
+            
+            # 3. Get user selection
+            user_input = self.zPrimitives.read_string("> ").strip().lower()
+            
+            if logger:
+                logger.debug(f"[zDash] User input: '{user_input}'")
+            
+            # 4. Handle user choice
+            if user_input == "done":
+                if logger:
+                    logger.info("[zDash] User exited dashboard via 'done' command")
+                break  # Exit loop, gate satisfied
+            
+            # Try to parse as number
+            try:
+                choice_num = int(user_input)
+                if 1 <= choice_num <= len(sidebar):
+                    current_panel = sidebar[choice_num - 1]
+                    if logger:
+                        logger.info(f"[zDash] User selected panel: {current_panel}")
+                    # Loop continues to render new panel
+                else:
+                    if logger:
+                        logger.warning(f"[zDash] Invalid menu choice: {choice_num}")
+                    self._output_text(f"Invalid choice. Please enter 1-{len(sidebar)} or 'done'", break_after=False)
+            except ValueError:
+                if logger:
+                    logger.warning(f"[zDash] Invalid input (not a number or 'done'): {user_input}")
+                self._output_text(f"Invalid input. Please enter 1-{len(sidebar)} or 'done'", break_after=False)
+        
+        # Gate satisfied - execution continues
+        if logger:
+            logger.info("[zDash] Dashboard gate satisfied, continuing execution")
+        
+        return current_panel
 
     def zDialog(
         self, 

@@ -168,6 +168,7 @@ EVENT_ZSESSION = "zSession"
 EVENT_ZCONFIG = "zConfig"
 EVENT_ZCRUMBS = "zCrumbs"
 EVENT_ZMENU = "zMenu"
+EVENT_ZDASH = "zDash"
 EVENT_ZDIALOG = "zDialog"
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -315,6 +316,7 @@ class zDisplay(zDisplayDelegates):
             EVENT_ZCONFIG: self.zEvents.zConfig,
             EVENT_ZCRUMBS: self.zEvents.zCrumbs,
             EVENT_ZMENU: self.zEvents.zMenu,
+            EVENT_ZDASH: self.zEvents.zDash,
             EVENT_ZDIALOG: self.zEvents.zDialog,
 
             # Widget events (progress, spinners)

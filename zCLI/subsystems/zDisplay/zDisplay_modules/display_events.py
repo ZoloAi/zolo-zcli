@@ -547,6 +547,22 @@ class zEvents:
         """
         return self.zSystem.zMenu(menu_items, prompt, return_selection)
 
+    def zDash(self, folder: str, sidebar: List[str], default: Optional[str] = None, _zcli: Optional[Any] = None) -> Any:
+        """Display dashboard with panel navigation.
+        
+        Convenience delegate to zSystem.zDash for backward compatibility.
+        
+        Args:
+            folder: Base folder for panel discovery
+            sidebar: List of panel names
+            default: Default panel to navigate to (optional)
+            _zcli: zCLI instance for context (optional)
+            
+        Returns:
+            Any: Result from zSystem.zDash method
+        """
+        return self.zSystem.zDash(folder, sidebar, default, _zcli)
+
     def zDialog(self, context: str, zcli: Optional[Any] = None, walker: Optional[Any] = None) -> Any:
         """Display interactive dialog system.
         
