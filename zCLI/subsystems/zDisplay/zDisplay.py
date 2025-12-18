@@ -160,6 +160,12 @@ EVENT_JSON_DATA = "json_data"
 EVENT_ZTABLE = "zTable"
 
 # ═══════════════════════════════════════════════════════════════════════════
+# Event Name Constants - Media Events
+# ═══════════════════════════════════════════════════════════════════════════
+
+EVENT_IMAGE = "image"
+
+# ═══════════════════════════════════════════════════════════════════════════
 # Event Name Constants - System Events
 # ═══════════════════════════════════════════════════════════════════════════
 
@@ -309,6 +315,9 @@ class zDisplay(zDisplayDelegates):
             EVENT_JSON: self.zEvents.json_data,
             EVENT_JSON_DATA: self.zEvents.json_data,
             EVENT_ZTABLE: self.zEvents.zTable,
+
+            # Media events
+            EVENT_IMAGE: self.zEvents.image,
 
             # System events
             EVENT_ZDECLARE: self.zEvents.zDeclare,

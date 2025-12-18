@@ -117,6 +117,7 @@ from .events.display_event_data import BasicData
 from .events.display_event_advanced import AdvancedData
 from .events.display_event_system import zSystem
 from .events.display_event_timebased import TimeBased
+from .events.display_event_media import MediaEvents
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -210,6 +211,7 @@ class zEvents:
         self.AdvancedData = AdvancedData(display_instance)
         self.zSystem = zSystem(display_instance)
         self.TimeBased = TimeBased(display_instance)
+        self.MediaEvents = MediaEvents(display_instance)
 
         # Step 2: Set up cross-references (packages can call each other)
         # 
@@ -231,6 +233,8 @@ class zEvents:
         self.zSystem.Signals = self.Signals
         self.zSystem.BasicInputs = self.BasicInputs
         self.TimeBased.BasicOutputs = self.BasicOutputs
+        self.MediaEvents.BasicOutputs = self.BasicOutputs
+        self.MediaEvents.BasicInputs = self.BasicInputs
 
     # ═══════════════════════════════════════════════════════════════════════════
     # Convenience Delegates - BasicOutputs
@@ -657,3 +661,36 @@ class zEvents:
             Any: Result from TimeBased.swiper method
         """
         return self.TimeBased.swiper(slides, label, auto_advance, delay, loop, container)
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Convenience Delegates - MediaEvents
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    def image(
+        self,
+        src: str,
+        alt_text: str = "",
+        caption: str = "",
+        open_prompt: bool = True,
+        indent: int = 0,
+        color: Optional[str] = None,
+        **kwargs
+    ) -> Any:
+        """Display an image event.
+        
+        Convenience delegate to MediaEvents.image for backward compatibility.
+        
+        Args:
+            src: The source URL or path of the image
+            alt_text: Alternative text for the image (accessibility)
+            caption: An optional caption for the image
+            open_prompt: If True (default), displays a button in terminal mode (with action="#").
+                        Set to False to disable the prompt.
+            indent: Indentation level for terminal output
+            color: Color for terminal output text
+            **kwargs: Additional parameters to pass through to the event
+            
+        Returns:
+            Any: Result from MediaEvents.image method
+        """
+        return self.MediaEvents.image(src, alt_text, caption, open_prompt, indent, color, **kwargs)
