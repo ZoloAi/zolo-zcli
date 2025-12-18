@@ -64,6 +64,8 @@ class zServer:
             self.ssl_enabled = config.ssl_enabled
             self.ssl_cert = config.ssl_cert
             self.ssl_key = config.ssl_key
+            # Static Mounts (v1.5.11: Multi-mount support)
+            self.static_mounts = config.static_mounts
         else:
             # Backward compatibility: individual parameters (assume enabled if instantiated this way)
             self.enabled = True
@@ -75,6 +77,8 @@ class zServer:
             self.ssl_enabled = False
             self.ssl_cert = None
             self.ssl_key = None
+            # No static mounts in backward compat mode
+            self.static_mounts = {}
         
         self.router = None
         self.static_folder = static_folder if static_folder is not None else "static"
@@ -124,6 +128,10 @@ class zServer:
             self.logger.info(f"[zServer] Static folder: {self.static_folder}/")
             self.logger.info(f"[zServer] Template folder: {self.template_folder}/")
             self.logger.info(f"[zServer] UI folder: {self.ui_folder}/")
+            if self.static_mounts:
+                self.logger.info(f"[zServer] Custom mounts: {len(self.static_mounts)} registered")
+                for url_prefix, fs_path in self.static_mounts.items():
+                    self.logger.info(f"[zServer]   {url_prefix} → {fs_path}")
             if self.router:
                 self.logger.info(f"[zServer] Declarative routing enabled: {routes_file}")
         else:
@@ -492,7 +500,8 @@ class zServer:
                 static_folder=self.static_folder,
                 template_folder=self.template_folder,
                 ui_folder=self.ui_folder,
-                serve_path=self.serve_path
+                serve_path=self.serve_path,
+                static_mounts=self.static_mounts
             )
             
             # Create HTTP server

@@ -11,13 +11,14 @@ import os
 class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
     """HTTP request handler with zCLI logger integration + routing (v1.5.5: Flask conventions)"""
     
-    def __init__(self, *args, logger=None, router=None, static_folder="static", template_folder="templates", ui_folder="UI", serve_path=".", **kwargs):
+    def __init__(self, *args, logger=None, router=None, static_folder="static", template_folder="templates", ui_folder="UI", serve_path=".", static_mounts=None, **kwargs):
         self.zcli_logger = logger
         self.router = router  # HTTPRouter instance (optional)
         self.static_folder = static_folder  # Flask convention: static files folder
         self.template_folder = template_folder  # Flask convention: templates folder
         self.ui_folder = ui_folder  # zUI zVaF files folder
         self.serve_path = serve_path  # Base directory for serving files
+        self.static_mounts = static_mounts or {}  # Custom mount points: {"/url_prefix/": "/fs_path/"}
         super().__init__(*args, **kwargs)
     
     def log_message(self, format, *args):
@@ -102,6 +103,11 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
         if self.path == '/favicon.ico':
             return self._serve_default_favicon()
         
+        # Check custom static mounts FIRST (user-defined mount points)
+        for url_prefix, fs_path in self.static_mounts.items():
+            if self.path.startswith(url_prefix):
+                return self._serve_mounted_file(url_prefix, fs_path)
+        
         # Auto-serve /static/* from static_folder (Flask convention)
         if self.path.startswith('/static/'):
             return self._serve_static_file()
@@ -183,11 +189,11 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
         relative_path = unquote(relative_path)
         
         # Build absolute path: {serve_path}/{static_folder}/{relative_path}
-        file_path = os.path.join(os.getcwd(), self.static_folder, relative_path)
+        file_path = os.path.join(self.serve_path, self.static_folder, relative_path)
         
         # Security: Prevent directory traversal
         file_path = os.path.abspath(file_path)
-        static_root = os.path.abspath(os.path.join(os.getcwd(), self.static_folder))
+        static_root = os.path.abspath(os.path.join(self.serve_path, self.static_folder))
         
         if not file_path.startswith(static_root):
             return self.send_error(403, "Access denied")
@@ -232,6 +238,90 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
                 self.zcli_logger.error(f"[Handler] Error serving static file: {e}")
             return self.send_error(500, f"Error serving file: {str(e)}")
     
+    def _serve_mounted_file(self, url_prefix, fs_root):
+        """
+        Serve file from a custom mount point (v1.5.11: Multi-mount support).
+        
+        Generic mount handler that serves files from any configured filesystem location.
+        Each mount has its own security boundary (directory traversal protection).
+        
+        Args:
+            url_prefix (str): URL prefix (e.g., "/bifrost/", "/shared/")
+            fs_root (str): Filesystem root path (absolute)
+        
+        Example:
+            url_prefix="/bifrost/", fs_root="/Users/gal/bifrost/"
+            Request: /bifrost/src/client.js
+            Serves: /Users/gal/bifrost/src/client.js
+        
+        Security:
+            - Directory traversal protection per mount
+            - No directory listing
+            - Validates file exists and is readable
+        """
+        import os
+        import mimetypes
+        from urllib.parse import unquote
+        
+        # Remove URL prefix to get relative path within mount
+        relative_path = self.path[len(url_prefix):]
+        
+        # Decode URL encoding (e.g., %20 → space)
+        relative_path = unquote(relative_path)
+        
+        # Build absolute path within mount
+        file_path = os.path.join(fs_root, relative_path)
+        
+        # Security: Prevent directory traversal attacks
+        file_path = os.path.abspath(file_path)
+        mount_root = os.path.abspath(fs_root)
+        
+        if not file_path.startswith(mount_root):
+            if self.zcli_logger:
+                self.zcli_logger.warning(f"[Handler] Directory traversal attempt blocked: {self.path}")
+            return self.send_error(403, "Access denied")
+        
+        # Check if file exists
+        if not os.path.exists(file_path):
+            return self.send_error(404, f"File not found: {self.path}")
+        
+        # Check if it's a directory (not allowed)
+        if os.path.isdir(file_path):
+            return self.send_error(403, "Directory listing is disabled")
+        
+        # Serve the file
+        try:
+            with open(file_path, 'rb') as f:
+                content = f.read()
+            
+            # Guess MIME type
+            content_type, _ = mimetypes.guess_type(file_path)
+            if not content_type:
+                content_type = 'application/octet-stream'
+            
+            # Send response
+            self.send_response(200)
+            self.send_header("Content-type", content_type)
+            self.send_header("Content-length", len(content))
+            
+            # Disable caching for JavaScript files during development
+            if file_path.endswith('.js'):
+                self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+                self.send_header("X-Dev-Cache", "disabled")
+            else:
+                self.send_header("Cache-Control", "public, max-age=3600")
+            
+            self.end_headers()
+            self.wfile.write(content)
+            
+            if self.zcli_logger:
+                self.zcli_logger.debug(f"[Handler] Served from mount {url_prefix}: {self.path}")
+        
+        except Exception as e:
+            if self.zcli_logger:
+                self.zcli_logger.error(f"[Handler] Error serving mounted file {self.path}: {e}")
+            return self.send_error(500, f"Error serving file: {str(e)}")
+    
     def _serve_ui_file(self):
         """
         Auto-serve zVaF files from /UI/* (zUI convention).
@@ -257,11 +347,11 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
         relative_path = unquote(relative_path)
         
         # Build absolute path: {serve_path}/{ui_folder}/{relative_path}
-        file_path = os.path.join(os.getcwd(), self.ui_folder, relative_path)
+        file_path = os.path.join(self.serve_path, self.ui_folder, relative_path)
         
         # Security: Prevent directory traversal
         file_path = os.path.abspath(file_path)
-        ui_root = os.path.abspath(os.path.join(os.getcwd(), self.ui_folder))
+        ui_root = os.path.abspath(os.path.join(self.serve_path, self.ui_folder))
         
         if not file_path.startswith(ui_root):
             return self.send_error(403, "Access denied")

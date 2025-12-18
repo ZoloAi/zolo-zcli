@@ -37,6 +37,7 @@ class zServerWSGIApp:
         self.serve_path = zserver.serve_path
         self.static_folder = zserver.static_folder
         self.template_folder = zserver.template_folder
+        self.static_mounts = zserver.static_mounts  # v1.5.11: Multi-mount support
     
     def __call__(
         self, 
@@ -93,6 +94,11 @@ class zServerWSGIApp:
         Returns:
             Tuple of (status_line, headers, body)
         """
+        # Check custom static mounts FIRST (v1.5.11: User-defined mount points)
+        for url_prefix, fs_path in self.static_mounts.items():
+            if path.startswith(url_prefix):
+                return self._handle_mounted_file(path, url_prefix, fs_path)
+        
         # Handle /static/* files directly (Flask convention)
         if path.startswith('/static/'):
             return self._handle_static_file(path)
@@ -251,6 +257,86 @@ class zServerWSGIApp:
         ]
         
         return (status, headers, body)
+    
+    def _handle_mounted_file(
+        self, 
+        path: str, 
+        url_prefix: str, 
+        fs_root: str
+    ) -> Tuple[str, List[Tuple[str, str]], bytes]:
+        """
+        Handle custom mount point requests (v1.5.11: Multi-mount support).
+        
+        Generic mount handler for WSGI/Production mode.
+        Serves files from any configured filesystem location with security checks.
+        
+        Args:
+            path: Request path (e.g., "/bifrost/src/client.js")
+            url_prefix: Mount URL prefix (e.g., "/bifrost/")
+            fs_root: Filesystem root path (absolute)
+        
+        Returns:
+            Tuple of (status_line, headers, body)
+        
+        Security:
+            - Directory traversal protection
+            - No directory listing
+            - File existence validation
+        """
+        try:
+            import os
+            import mimetypes
+            from urllib.parse import unquote
+            
+            # Remove URL prefix to get relative path within mount
+            relative_path = path[len(url_prefix):]
+            
+            # Decode URL encoding
+            relative_path = unquote(relative_path)
+            
+            # Build absolute path within mount
+            file_path = os.path.join(fs_root, relative_path)
+            
+            # Security: Prevent directory traversal
+            file_path = os.path.abspath(file_path)
+            mount_root = os.path.abspath(fs_root)
+            
+            if not file_path.startswith(mount_root):
+                self.logger.warning(f"[WSGI] Directory traversal attempt blocked: {path}")
+                return self._error_response_tuple(403, "Access denied")
+            
+            # Check if file exists
+            if not os.path.exists(file_path):
+                return self._error_response_tuple(404, f"File not found: {path}")
+            
+            # Check if it's a directory
+            if os.path.isdir(file_path):
+                return self._error_response_tuple(403, "Directory listing is disabled")
+            
+            # Serve the file
+            with open(file_path, 'rb') as f:
+                content = f.read()
+            
+            content_type, _ = mimetypes.guess_type(file_path)
+            if not content_type:
+                content_type = 'application/octet-stream'
+            
+            headers = [
+                ('Content-Type', content_type),
+                ('Content-Length', str(len(content))),
+            ]
+            
+            # Disable caching for JS files during development
+            if file_path.endswith('.js'):
+                headers.append(('Cache-Control', 'no-cache, no-store, must-revalidate'))
+            else:
+                headers.append(('Cache-Control', 'public, max-age=3600'))
+            
+            return ('200 OK', headers, content)
+        
+        except Exception as e:
+            self.logger.error(f"[WSGI] Error serving mounted file {path}: {e}")
+            return self._error_response_tuple(500, f"Error serving file: {str(e)}")
     
     def _handle_static_file(self, path: str) -> Tuple[str, List[Tuple[str, str]], bytes]:
         """Handle /static/* requests (Flask convention)."""

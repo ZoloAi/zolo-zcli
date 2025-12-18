@@ -203,3 +203,7 @@ local_planning/
 # zCloud files
 zCloud/
 
+# BifrostClient is tracked (at workspace root)
+# Note: bifrost/ is NOT ignored - it's tracked for version control
+!bifrost/
+
