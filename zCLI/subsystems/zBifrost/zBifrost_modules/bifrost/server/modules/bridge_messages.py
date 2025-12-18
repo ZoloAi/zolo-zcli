@@ -531,7 +531,7 @@ class MessageHandler:
             
             if ws_id not in self._ws_schema_caches:
                 from zCLI.subsystems.zLoader.loader_modules.loader_cache_schema import SchemaCache
-                self._ws_schema_caches[ws_id] = SchemaCache(self.logger)
+                self._ws_schema_caches[ws_id] = SchemaCache(self.zcli.session, self.logger)
                 self.logger.debug(f"[Phase1] Created schema cache for ws_id={ws_id} (DB connection reuse)")
             
             # Store schema cache in zcli.wizard for zData to discover

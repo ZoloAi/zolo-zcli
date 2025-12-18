@@ -115,6 +115,9 @@ Constants:
 import ast
 from typing import Any, Optional, Dict, Union
 
+# Import ACTION_PLACEHOLDER from zConfig
+from zCLI.subsystems.zConfig.zConfig_modules import ACTION_PLACEHOLDER
+
 # Import zConfig session constants for modernization
 # TODO: Week 6.2 (zConfig) - Use SESSION_KEY_ZMODE instead of "mode" raw string
 # Note: Temporarily using raw "mode" until zConfig constants are finalized
@@ -355,6 +358,11 @@ class CommandLauncher:
             - Mode-specific behavior handled by individual command handlers
         """
         self._display_handler(LABEL_LAUNCHER, DEFAULT_INDENT_LAUNCHER)
+
+        # Early return for placeholder actions (development/testing)
+        if zHorizontal == ACTION_PLACEHOLDER:
+            self.logger.debug(f"[CommandLauncher] Placeholder action detected: '{ACTION_PLACEHOLDER}' - no-op")
+            return None
 
         if isinstance(zHorizontal, str):
             return self._launch_string(zHorizontal, context, walker)

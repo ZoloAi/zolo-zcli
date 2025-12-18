@@ -35,6 +35,8 @@ from .config_session import (
     # zMode values
     ZMODE_TERMINAL,
     ZMODE_ZBIFROST,
+    # Action routing
+    ACTION_PLACEHOLDER,
     # zAuth nested keys (three-tier architecture with multi-app support)
     ZAUTH_KEY_ZSESSION,
     ZAUTH_KEY_APPLICATIONS,  # Plural for multi-app support
@@ -92,6 +94,8 @@ __all__ = [
     "SESSION_KEY_LOGGER_INSTANCE",
     "ZMODE_TERMINAL",
     "ZMODE_ZBIFROST",
+    # Action routing
+    "ACTION_PLACEHOLDER",
     # zAuth constants (three-tier architecture with multi-app support)
     "ZAUTH_KEY_ZSESSION",
     "ZAUTH_KEY_APPLICATIONS",  # Plural for multi-app support

@@ -84,6 +84,9 @@ ZMODE_TERMINAL = "Terminal"
 ZMODE_ZBIFROST = "zBifrost"
 VALID_ZMODES = (ZMODE_TERMINAL, ZMODE_ZBIFROST)
 
+# Action routing
+ACTION_PLACEHOLDER = "#"  # No-op action for development/testing (placeholder for UI development)
+
 # Environment variables
 ENV_VAR_LOGGER = "ZOLO_LOGGER"
 ENV_VAR_PATH = "PATH"
