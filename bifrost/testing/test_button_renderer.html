@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Button Renderer Test - zTheme Only</title>
+  
+  <!-- ✅ ONLY zTheme CSS - with cache-busting timestamp -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/ZoloAi/zTheme@main/dist/ztheme.css">  <!-- ✅ Minimal page style ONLY - NO component overrides! -->
+  <style>
+    body {
+      background: #f8f9fa;
+      min-height: 100vh;
+    }
+    /* Only log styling - NOT for buttons or zTheme components! */
+    .test-log {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      font-family: monospace;
+      font-size: 0.875rem;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .log-info { color: #4ec9b0; }
+    .log-error { color: #f48771; }
+    .log-warn { color: #dcdcaa; }
+  </style>
+</head>
+<body>
+
+<!-- ✅ Use zTheme classes for layout -->
+<div class="zContainer zmy-5">
+  
+  <!-- Header -->
+  <div class="zmb-5">
+    <h1 class="zText-primary zmb-2">🧪 Button Renderer Test</h1>
+    <p class="zLead zText-muted">Testing the new ButtonRenderer with Layer 2 utilities</p>
+  </div>
+
+  <!-- Test Controls -->
+  <div class="zCard zmb-4">
+    <div class="zCard-body">
+      <h2 class="zCard-title zText-success">Test Controls</h2>
+      <!-- ✅ Use zTheme button classes for test controls -->
+      <div class="zD-flex zFlex-wrap zGap-2">
+        <button class="zBtn zBtn-outline-primary" onclick="testBasicButton()">Test Basic Button</button>
+        <button class="zBtn zBtn-outline-success" onclick="testAllColors()">Test All Colors</button>
+        <button class="zBtn zBtn-outline-info" onclick="testAllSizes()">Test All Sizes</button>
+        <button class="zBtn zBtn-outline-warning" onclick="testAllStyles()">Test All Styles</button>
+        <button class="zBtn zBtn-outline-secondary" onclick="clearZone()">Clear Zone</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Render Zone -->
+  <div class="zCard zmb-4">
+    <div class="zCard-body">
+      <h2 class="zCard-title zText-info">Render Zone</h2>
+      <div id="test-zone" class="zP-3 zBg-light zBorder zRounded" style="min-height: 200px;">
+        <!-- Buttons will render here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Console Log -->
+  <div class="zCard">
+    <div class="zCard-body">
+      <h2 class="zCard-title zText-warning">Console Log</h2>
+      <div id="console-log" class="test-log zP-3 zRounded">
+        <div class="log-info">📝 Ready to test...</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+  <script type="module">
+    // Import the button renderer
+    import ButtonRenderer from '../src/rendering/button_renderer.js';
+
+    // Mock logger that logs to our custom console
+    const logger = {
+      log(...args) {
+        console.log(...args);
+        addLog('info', args.join(' '));
+      },
+      error(...args) {
+        console.error(...args);
+        addLog('error', args.join(' '));
+      },
+      warn(...args) {
+        console.warn(...args);
+        addLog('warn', args.join(' '));
+      }
+    };
+
+    // Mock WebSocket client
+    const mockClient = {
+      connection: {
+        send(message) {
+          const data = JSON.parse(message);
+          logger.log(`📤 Sent to server: ${JSON.stringify(data, null, 2)}`);
+        }
+      }
+    };
+
+    // Make client globally available (button renderer checks window.bifrostClient)
+    window.bifrostClient = mockClient;
+
+    // Create renderer instance
+    const renderer = new ButtonRenderer(logger, mockClient);
+    window.renderer = renderer; // Make available to onclick handlers
+
+    // Helper to add log entries
+    function addLog(type, message) {
+      const logDiv = document.getElementById('console-log');
+      const entry = document.createElement('div');
+      entry.className = `log-${type}`;
+      
+      const timestamp = new Date().toLocaleTimeString();
+      const icon = type === 'error' ? '❌' : type === 'warn' ? '⚠️' : '✅';
+      entry.textContent = `[${timestamp}] ${icon} ${message}`;
+      
+      logDiv.appendChild(entry);
+      logDiv.scrollTop = logDiv.scrollHeight; // Auto-scroll
+    }
+
+    // Test functions (available to onclick handlers)
+    window.testBasicButton = function() {
+      logger.log('Testing basic button...');
+      renderer.render({
+        label: 'Click Me!',
+        action: 'test_action',
+        color: 'primary',
+        requestId: 'test-' + Date.now()
+      }, 'test-zone');
+    };
+
+    window.testAllColors = function() {
+      logger.log('Testing all button colors...');
+      const colors = ['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'light', 'dark'];
+      colors.forEach((color, index) => {
+        setTimeout(() => {
+          renderer.render({
+            label: `${color.toUpperCase()} Button`,
+            action: 'test_action',
+            color: color,
+            requestId: `test-${color}-${Date.now()}`
+          }, 'test-zone');
+        }, index * 100); // Stagger rendering
+      });
+    };
+
+    window.testAllSizes = function() {
+      logger.log('Testing all button sizes...');
+      const sizes = [
+        { size: 'sm', label: 'Small Button' },
+        { size: 'md', label: 'Medium Button (default)' },
+        { size: 'lg', label: 'Large Button' }
+      ];
+      sizes.forEach((config, index) => {
+        setTimeout(() => {
+          renderer.render({
+            label: config.label,
+            action: 'test_action',
+            color: 'primary',
+            size: config.size,
+            requestId: `test-size-${index}-${Date.now()}`
+          }, 'test-zone');
+        }, index * 100);
+      });
+    };
+
+    window.testAllStyles = function() {
+      logger.log('Testing all button styles...');
+      const styles = [
+        { style: 'default', label: 'Default (Solid)' },
+        { style: 'outline', label: 'Outline Style' },
+        { style: 'text', label: 'Text Style' }
+      ];
+      styles.forEach((config, index) => {
+        setTimeout(() => {
+          renderer.render({
+            label: config.label,
+            action: 'test_action',
+            color: 'primary',
+            style: config.style,
+            requestId: `test-style-${index}-${Date.now()}`
+          }, 'test-zone');
+        }, index * 100);
+      });
+    };
+
+    window.clearZone = function() {
+      logger.log('Clearing test zone...');
+      document.getElementById('test-zone').innerHTML = '';
+    };
+
+    // Log initialization
+    logger.log('ButtonRenderer initialized successfully');
+    logger.log('Mock WebSocket client ready');
+    logger.log('Ready to test! Click a test button above.');
+  </script>
+</body>
+</html>
+

@@ -1,35 +1,35 @@
 /**
  * ═══════════════════════════════════════════════════════════════
- * Alert Renderer - Signal/Feedback Messages
+ * Text Renderer - Plain Text Display (Simplest Primitive)
  * ═══════════════════════════════════════════════════════════════
  * 
- * Renders alert/signal events from zCLI backend (zSignals subsystem).
- * Provides visual feedback for success, info, warning, and error states.
+ * Renders plain text events from zCLI backend. This is the SIMPLEST
+ * zDisplay event - pure content rendering with NO interactivity.
  * 
- * @module rendering/alert_renderer
+ * @module rendering/text_renderer
  * @layer 3
- * @pattern Strategy (single event family)
+ * @pattern Strategy (single event type)
  * 
  * Philosophy:
- * - "Terminal first" - alerts are visual feedback primitives
- * - Pure rendering (no auto-dismiss, no complex animations)
- * - Semantic colors (success=green, info=blue, warning=orange, error=red)
+ * - "Terminal first" - text is the foundation of all zCLI output
+ * - Pure rendering (no WebSocket, no state, no side effects)
  * - Uses Layer 2 utilities exclusively (no inline logic)
  * 
  * Dependencies:
  * - Layer 2: dom_utils.js, ztheme_utils.js
  * 
  * Exports:
- * - AlertRenderer: Class for rendering alert/signal events
+ * - TextRenderer: Class for rendering text events
  * 
  * Example:
  * ```javascript
- * import { AlertRenderer } from './alert_renderer.js';
+ * import { TextRenderer } from './text_renderer.js';
  * 
- * const renderer = new AlertRenderer(logger);
+ * const renderer = new TextRenderer(logger);
  * renderer.render({
- *   content: 'Operation successful!',
- *   eventType: 'success'
+ *   content: 'Hello, zCLI!',
+ *   color: 'primary',
+ *   indent: 1
  * }, 'zVaF');
  * ```
  */
@@ -38,93 +38,83 @@
 // Imports
 // ─────────────────────────────────────────────────────────────────
 import { createElement, setAttributes } from '../utils/dom_utils.js';
-import { getAlertColorClass } from '../utils/ztheme_utils.js';
+import { getTextColorClass } from '../utils/ztheme_utils.js';
 
 // ─────────────────────────────────────────────────────────────────
-// Alert Renderer Class
+// Text Renderer Class
 // ─────────────────────────────────────────────────────────────────
 
 /**
- * AlertRenderer - Renders signal/alert events
+ * TextRenderer - Renders plain text events
  * 
- * Handles zCLI signal events (error, warning, success, info) which
- * provide visual feedback to users. Maps to zTheme's zSignal components.
- * 
- * Event Mapping:
- * - error   → zSignal-error   (red)
- * - warning → zSignal-warning (orange)
- * - success → zSignal-success (green)
- * - info    → zSignal-info    (blue)
+ * Handles the 'text' zDisplay event, which is the most basic
+ * output primitive in zCLI. Renders a paragraph element with
+ * optional color and indentation.
  */
-export class AlertRenderer {
+export class TextRenderer {
   /**
-   * Create an AlertRenderer instance
+   * Create a TextRenderer instance
    * @param {Object} logger - Logger instance for debugging
    */
   constructor(logger) {
     this.logger = logger || console;
-    this.logger.log('[AlertRenderer] ✅ Initialized');
+    this.logger.log('[TextRenderer] ✅ Initialized');
   }
 
   /**
-   * Render an alert/signal event
+   * Render a text event
    * 
-   * @param {Object} data - Alert event data
-   * @param {string} data.content - Alert message text
-   * @param {string} data.eventType - Event type (error, warning, success, info)
+   * @param {Object} data - Text event data
+   * @param {string} data.content - Text content to display
+   * @param {string} [data.color] - Text color (primary, secondary, info, success, warning, error)
    * @param {number} [data.indent=0] - Indentation level (0 = no indent)
    * @param {string} [data.class] - Custom CSS class (optional)
    * @param {string} zone - Target DOM element ID
-   * @returns {HTMLElement|null} Created alert element or null if failed
+   * @returns {HTMLElement|null} Created paragraph element or null if failed
    * 
    * @example
-   * renderer.render({ content: 'Success!', eventType: 'success' }, 'zVaF');
-   * renderer.render({ content: 'Warning!', eventType: 'warning', indent: 1 }, 'zVaF');
-   * renderer.render({ content: 'Error!', eventType: 'error' }, 'zVaF');
+   * renderer.render({ content: 'Hello!' }, 'zVaF');
+   * renderer.render({ content: 'Success!', color: 'success' }, 'zVaF');
+   * renderer.render({ content: 'Indented', indent: 2 }, 'zVaF');
    */
   render(data, zone) {
-    const { content, eventType, indent = 0, class: customClass } = data;
+    const { content, color, indent = 0, class: customClass } = data;
     
     // Validate required parameters
     if (!content) {
-      this.logger.error('[AlertRenderer] ❌ Missing required parameter: content');
-      return null;
-    }
-    
-    if (!eventType) {
-      this.logger.error('[AlertRenderer] ❌ Missing required parameter: eventType');
+      this.logger.error('[TextRenderer] ❌ Missing required parameter: content');
       return null;
     }
     
     // Get target container
     const container = document.getElementById(zone);
     if (!container) {
-      this.logger.error(`[AlertRenderer] ❌ Zone not found: ${zone}`);
+      this.logger.error(`[TextRenderer] ❌ Zone not found: ${zone}`);
       return null;
     }
 
     // Build CSS classes array
-    const classes = ['zSignal'];
-    
-    // Add alert color class (uses Layer 2 utility)
-    const alertClass = getAlertColorClass(eventType);
-    if (alertClass) {
-      classes.push(alertClass);
-    }
+    const classes = [];
     
     // Add custom class if provided (from YAML)
     if (customClass) {
       classes.push(customClass);
     }
+    
+    // Add color class if provided (uses Layer 2 utility)
+    if (color) {
+      const colorClass = getTextColorClass(color);
+      if (colorClass) {
+        classes.push(colorClass);
+      }
+    }
 
-    // Create alert element (using Layer 2 utility)
-    const alert = createElement('div', classes);
-    alert.textContent = content; // Use textContent for XSS safety
+    // Create paragraph element (using Layer 2 utility)
+    const p = createElement('p', classes);
+    p.textContent = content; // Use textContent for XSS safety
     
     // Apply attributes
-    const attributes = {
-      role: 'alert' // ARIA role for accessibility
-    };
+    const attributes = {};
     
     // Apply indent as inline style (zTheme doesn't have indent utilities)
     // Each indent level = 1rem left margin
@@ -132,20 +122,22 @@ export class AlertRenderer {
       attributes.style = `margin-left: ${indent}rem;`;
     }
     
-    setAttributes(alert, attributes);
+    if (Object.keys(attributes).length > 0) {
+      setAttributes(p, attributes);
+    }
     
     // Append to container
-    container.appendChild(alert);
+    container.appendChild(p);
     
     // Log success
-    this.logger.log(`[AlertRenderer] ✅ Rendered ${eventType} alert (${content.length} chars, indent: ${indent})`);
+    this.logger.log(`[TextRenderer] ✅ Rendered text (${content.length} chars, indent: ${indent})`);
     
-    return alert;
+    return p;
   }
 }
 
 // ─────────────────────────────────────────────────────────────────
 // Default Export
 // ─────────────────────────────────────────────────────────────────
-export default AlertRenderer;
+export default TextRenderer;
 
