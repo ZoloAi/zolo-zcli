@@ -240,7 +240,7 @@ class zEvents:
     # Convenience Delegates - BasicOutputs
     # ═══════════════════════════════════════════════════════════════════════════
 
-    def header(self, label: str, color: str = DEFAULT_COLOR, indent: int = 0, style: str = DEFAULT_STYLE_FULL, **kwargs) -> Any:
+    def header(self, label: str, color: str = DEFAULT_COLOR, indent: int = 0, style: str = DEFAULT_STYLE_FULL, semantic: Optional[str] = None, **kwargs) -> Any:
         """Display formatted header with styling.
         
         Convenience delegate to BasicOutputs.header for backward compatibility.
@@ -250,12 +250,13 @@ class zEvents:
             color: Color name for styling (default: RESET)
             indent: Indentation level (default: 0)
             style: Header style (default: full)
+            semantic: Optional semantic HTML element type (e.g., "strong", "em")
             **kwargs: Additional parameters (e.g., 'class' for custom CSS classes)
             
         Returns:
             Any: Result from BasicOutputs.header method
         """
-        return self.BasicOutputs.header(label, color, indent, style, **kwargs)
+        return self.BasicOutputs.header(label, color, indent, style, semantic=semantic, **kwargs)
 
     def text(
         self, 
@@ -263,7 +264,8 @@ class zEvents:
         indent: int = 0, 
         pause: bool = False, 
         break_message: Optional[str] = None,
-        break_after: Optional[bool] = None
+        break_after: Optional[bool] = None,
+        semantic: Optional[str] = None
     ) -> Any:
         """Display plain text content.
         
@@ -275,6 +277,7 @@ class zEvents:
             pause: Pause for user acknowledgment (default: False)
             break_message: Optional break message
             break_after: Legacy parameter - use 'pause' instead
+            semantic: Optional semantic HTML element type (e.g., "code", "strong", "kbd")
             
         Returns:
             Any: Result from BasicOutputs.text method
@@ -285,7 +288,8 @@ class zEvents:
             indent=indent, 
             pause=pause,
             break_message=break_message,
-            break_after=break_after
+            break_after=break_after,
+            semantic=semantic
         )
     
     def rich_text(

@@ -226,12 +226,127 @@ class BasicOutputs:
             str: Indentation string (2 spaces per level)
         """
         return INDENT_STR * indent
+    
+    def _apply_semantic(self, content: str, semantic: str) -> str:
+        """Apply semantic rendering using primitives (DRY helper).
+        
+        Uses SemanticPrimitives to render content with semantic HTML element styling.
+        This ensures consistent rendering whether using semantic argument or rich_text
+        markdown parsing.
+        
+        Args:
+            content: Text content to render
+            semantic: Semantic type (e.g., "code", "strong", "em", "kbd", etc.)
+            
+        Returns:
+            str: Formatted content with semantic styling applied
+                 Returns original content if semantic type is unknown
+        
+        Example:
+            >>> self._apply_semantic("ls -la", "code")
+            '`ls -la`'
+            >>> self._apply_semantic("Important", "strong")
+            '**Important**'
+        
+        Note:
+            Terminal mode: Applies markdown-style formatting
+            Bifrost mode: Returns raw content (frontend wraps in HTML)
+        """
+        from ..display_semantic_primitives import SemanticPrimitives
+        
+        # Get the renderer for this semantic type
+        renderer = getattr(SemanticPrimitives, f"render_{semantic}", None)
+        if renderer:
+            # Determine mode
+            mode = "terminal" if self.display.mode in ["Terminal", "Walker", ""] else "bifrost"
+            return renderer(content, mode)
+        
+        # Unknown semantic type - return content as-is
+        return content
+    
+    def _parse_markdown(self, content: str) -> str:
+        """Parse markdown syntax using semantic primitives (DRY helper).
+        
+        Parses common markdown inline syntax and applies semantic rendering
+        using SemanticPrimitives. This ensures rich_text markdown parsing
+        uses the SAME rendering logic as the semantic argument.
+        
+        Markdown Syntax Parsed:
+            - `code` → inline code
+            - **strong** → bold/strong emphasis
+            - *em* → italic/emphasis
+            - ==mark== → highlighted text
+            - ~~del~~ → strikethrough/deleted text
+        
+        Args:
+            content: Text with markdown syntax
+            
+        Returns:
+            str: Content with markdown parsed and semantic formatting applied
+        
+        Example:
+            >>> self._parse_markdown("Run `ls -la` to see **all** files")
+            # Terminal: "Run `ls -la` to see **all** files" (markdown as-is currently)
+            # Bifrost: Will parse and wrap in HTML
+        
+        Note:
+            Parsing order matters to prevent conflicts:
+            1. Code (highest priority - don't parse markers inside code)
+            2. Strong (before em to handle ** before *)
+            3. Em
+            4. Mark
+            5. Del
+        """
+        import re
+        from ..display_semantic_primitives import SemanticPrimitives
+        
+        # Determine mode
+        mode = "terminal" if self.display.mode in ["Terminal", "Walker", ""] else "bifrost"
+        
+        # Parse in order: code, strong, em, mark, del (prevent conflicts)
+        
+        # 1. Inline code: `text` (highest priority)
+        content = re.sub(
+            r'`([^`]+)`',
+            lambda m: SemanticPrimitives.render_code(m.group(1), mode),
+            content
+        )
+        
+        # 2. Bold: **text** (before * to prevent conflict)
+        content = re.sub(
+            r'\*\*([^*]+)\*\*',
+            lambda m: SemanticPrimitives.render_strong(m.group(1), mode),
+            content
+        )
+        
+        # 3. Italic: *text*
+        content = re.sub(
+            r'\*([^*]+)\*',
+            lambda m: SemanticPrimitives.render_em(m.group(1), mode),
+            content
+        )
+        
+        # 4. Highlight: ==text==
+        content = re.sub(
+            r'==([^=]+)==',
+            lambda m: SemanticPrimitives.render_mark(m.group(1), mode),
+            content
+        )
+        
+        # 5. Strikethrough: ~~text~~
+        content = re.sub(
+            r'~~([^~]+)~~',
+            lambda m: SemanticPrimitives.render_del(m.group(1), mode),
+            content
+        )
+        
+        return content
 
     # ═══════════════════════════════════════════════════════════════════════════
     # Output Methods
     # ═══════════════════════════════════════════════════════════════════════════
 
-    def header(self, label: str, color: str = DEFAULT_COLOR, indent: int = 0, style: str = DEFAULT_STYLE_FULL, **kwargs) -> None:
+    def header(self, label: str, color: str = DEFAULT_COLOR, indent: int = 0, style: str = DEFAULT_STYLE_FULL, semantic: Optional[str] = None, **kwargs) -> None:
         """Display formatted section header with styling.
         
         FOUNDATION METHOD - Used by ALL 7 other event packages for displaying
@@ -251,6 +366,9 @@ class BasicOutputs:
                    - "full" → ═══════════════
                    - "single" → ───────────────
                    - "wave" → ~~~~~~~~~~~~~~~
+            semantic: Optional semantic HTML element type (e.g., "strong", "em")
+                     Terminal: Applies markdown-style formatting to label
+                     Bifrost: Passed to frontend for HTML wrapping
             **kwargs: Additional parameters (e.g., 'class' for zBifrost CSS classes)
                       Ignored in Terminal mode, passed through in GUI mode
                    
@@ -261,6 +379,7 @@ class BasicOutputs:
             self.BasicOutputs.header("Error", color="RED", style="single")
             self.BasicOutputs.header("Section Title", color="CYAN", indent=1)
             self.BasicOutputs.header("Title", color="PRIMARY", indent=1, class="zTitle-1")
+            self.BasicOutputs.header("Critical Warning", semantic="strong")  # NEW
             
         Note:
             Used by: BasicInputs (prompts), Signals (error/warning headers),
@@ -268,6 +387,10 @@ class BasicOutputs:
                      zSystem (all system UI), zAuth (auth prompts), 
                      TimeBased (progress headers)
         """
+        # Apply semantic rendering if specified (terminal mode only)
+        if semantic and self.display.mode in ["Terminal", "Walker", ""]:
+            label = self._apply_semantic(label, semantic)
+        
         # Build event dict with all parameters
         event_data = {
             KEY_LABEL: label,
@@ -276,6 +399,10 @@ class BasicOutputs:
             KEY_STYLE: style,
             **kwargs  # Pass through any additional parameters (like 'class')
         }
+        
+        # Add semantic to event_data for Bifrost (if provided)
+        if semantic:
+            event_data["semantic"] = semantic
         
         # Try GUI mode first - send clean event via primitive
         if self.zPrimitives.send_gui_event(EVENT_NAME_HEADER, event_data):
@@ -355,6 +482,7 @@ class BasicOutputs:
         pause: bool = False,  # Preferred API
         break_message: Optional[str] = None,
         break_after: Optional[bool] = None,  # Legacy parameter
+        semantic: Optional[str] = None,  # NEW: Semantic HTML element wrapper
         **kwargs  # Additional parameters (e.g., 'class' for CSS classes)
     ) -> None:
         """Display text with optional indentation and pause.
@@ -376,6 +504,9 @@ class BasicOutputs:
                           Only used if pause is True
             break_after: Legacy parameter - use 'pause' instead
                          Maintained for backward compatibility
+            semantic: Optional semantic HTML element type (e.g., "code", "strong", "kbd")
+                     Terminal: Applies markdown-style formatting
+                     Bifrost: Passed to frontend for HTML wrapping
             **kwargs: Additional parameters (e.g., 'class' for zBifrost CSS classes)
                       Ignored in Terminal mode, passed through in GUI mode
                           
@@ -387,6 +518,8 @@ class BasicOutputs:
             self.BasicOutputs.text("Details...", indent=1, pause=False)
             self.BasicOutputs.text("Warning!", pause=True, break_message="Press Enter to proceed")
             self.BasicOutputs.text("Styled text", indent=0, class="zLead")
+            self.BasicOutputs.text("pip install requests", semantic="code")  # NEW
+            self.BasicOutputs.text("Press Enter", semantic="kbd")  # NEW
             
         Note:
             Used by: zSystem (zDeclare, zSession, zCrumbs, zMenu),
@@ -394,6 +527,10 @@ class BasicOutputs:
         """
         # Handle backward compatibility: break_after overrides pause if provided
         should_break = break_after if break_after is not None else pause
+        
+        # Apply semantic rendering if specified (terminal mode only)
+        if semantic and self.display.mode in ["Terminal", "Walker", ""]:
+            content = self._apply_semantic(content, semantic)
         
         # Build event dict with all parameters
         event_data = {
@@ -403,6 +540,10 @@ class BasicOutputs:
             KEY_BREAK_MESSAGE: break_message,
             **kwargs  # Pass through any additional parameters (like 'class')
         }
+        
+        # Add semantic to event_data for Bifrost (if provided)
+        if semantic:
+            event_data["semantic"] = semantic
         
         # Try GUI mode first - send clean event with break metadata
         if self.zPrimitives.send_gui_event(EVENT_NAME_TEXT, event_data):
@@ -453,8 +594,8 @@ class BasicOutputs:
             - [text](url) → <a> hyperlinks
         
         Dual-Mode Behavior:
-            - Terminal: Displays markdown syntax as-is (readable, no parsing yet)
-                       Future: Will parse markdown and apply ANSI codes
+            - Terminal: Parses markdown and displays with semantic formatting
+                       (uses same SemanticPrimitives as semantic argument)
             - Bifrost: Sends markdown with format="markdown" for HTML parsing
         
         Args:
@@ -489,8 +630,8 @@ class BasicOutputs:
             )
         
         Note:
-            Terminal mode currently displays markdown syntax literally.
-            Future enhancement: Parse markdown and apply ANSI formatting codes.
+            Terminal mode parses markdown using SemanticPrimitives.
+            This ensures consistency with semantic argument rendering.
         """
         # Build event dict
         event_data = {
@@ -506,8 +647,9 @@ class BasicOutputs:
         if self.zPrimitives.send_gui_event("rich_text", event_data):
             return  # GUI event sent successfully
         
-        # Terminal mode - display markdown as-is (for now)
-        # Future: Parse markdown and apply ANSI codes
+        # Terminal mode - parse markdown and display
+        # Parse markdown using semantic primitives (DRY - same logic as semantic argument)
+        content = self._parse_markdown(content)
         
         # Apply indentation
         if indent > 0:
