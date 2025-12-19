@@ -17,8 +17,22 @@
  * 5. Backend validates and executes onSubmit
  * 6. Backend sends result back to frontend
  * 
+ * Architecture:
+ * - Uses form_primitives.js for raw HTML element creation
+ * - Uses dom_utils.js for DOM manipulation
+ * - Applies zTheme classes for styling
+ * - Handles WebSocket communication for submission
+ * 
  * @module FormRenderer
  */
+
+import { createElement, setAttributes, clearElement } from '../utils/dom_utils.js';
+import { 
+  createForm, 
+  createInput, 
+  createTextarea, 
+  createLabel 
+} from './primitives/form_primitives.js';
 
 export class FormRenderer {
   constructor(client) {
@@ -35,9 +49,10 @@ export class FormRenderer {
    * @param {Array} eventData.fields - Field definitions
    * @param {Object} eventData.onSubmit - Submit action to execute
    * @param {string} eventData._dialogId - Unique form identifier
+   * @returns {HTMLElement} Form container element
    */
   renderForm(eventData) {
-    console.log('[FormRenderer] 🎨 RENDERING FORM - Called with eventData:', eventData);
+    this.logger.log('[FormRenderer] Rendering form:', eventData.title);
     
     const {
       title = 'Form',
@@ -47,17 +62,6 @@ export class FormRenderer {
       _dialogId
     } = eventData;
 
-    console.log('[FormRenderer] ✅ Extracted form data:', { 
-      title, 
-      model, 
-      fieldsCount: fields.length, 
-      fields,
-      hasOnSubmit: !!onSubmit,
-      _dialogId 
-    });
-
-    this.logger.log('[FormRenderer] Rendering form:', { title, fields: fields.length, _dialogId });
-
     // Store current form context for submission
     this.currentForm = {
       _dialogId,
@@ -66,23 +70,23 @@ export class FormRenderer {
       fields
     };
 
-    // Create form container
-    const formContainer = document.createElement('div');
-    formContainer.className = 'zDialog-container zCard zp-4';
-    formContainer.setAttribute('data-dialog-id', _dialogId);
+    // Create form container using primitives
+    const formContainer = createElement('div', ['zDialog-container', 'zCard', 'zp-4'], {
+      'data-dialog-id': _dialogId
+    });
 
     // Form title
     if (title) {
-      const titleElement = document.createElement('h2');
-      titleElement.className = 'zDialog-title zCard-title zmb-3';
+      const titleElement = createElement('h2', ['zDialog-title', 'zCard-title', 'zmb-3']);
       titleElement.textContent = title;
       formContainer.appendChild(titleElement);
     }
 
-    // Create HTML form element
-    const form = document.createElement('form');
-    form.className = 'zDialog-form'; // Custom class for optional styling (not required by JS)
-    form.setAttribute('data-dialog-id', _dialogId);
+    // Create HTML form element using primitive
+    const form = createForm({
+      class: 'zDialog-form',
+      'data-dialog-id': _dialogId
+    });
 
     // Render fields
     fields.forEach(fieldDef => {
@@ -91,16 +95,14 @@ export class FormRenderer {
     });
 
     // Error display area (hidden by default)
-    // Note: 'zDialog-errors' is required by JS for querySelector, rest are zTheme styling
-    const errorContainer = document.createElement('div');
-    errorContainer.className = 'zDialog-errors zAlert zAlert-danger zmt-3';
+    const errorContainer = createElement('div', ['zDialog-errors', 'zAlert', 'zAlert-danger', 'zmt-3']);
     errorContainer.style.display = 'none';
     form.appendChild(errorContainer);
 
-    // Submit button
-    const submitButton = document.createElement('button');
-    submitButton.type = 'submit';
-    submitButton.className = 'zBtn zBtn-primary zmt-3';
+    // Submit button using primitive
+    const submitButton = createElement('button', ['zBtn', 'zBtn-primary', 'zmt-3'], {
+      type: 'submit'
+    });
     submitButton.textContent = 'Submit';
     form.appendChild(submitButton);
 
@@ -117,6 +119,8 @@ export class FormRenderer {
   /**
    * Create a form field group (label + input)
    * @private
+   * @param {string|Object} fieldDef - Field definition (string or object)
+   * @returns {HTMLElement} Field group element
    */
   _createFieldGroup(fieldDef) {
     // Handle both string and object field definitions
@@ -142,22 +146,21 @@ export class FormRenderer {
     const fieldLabel = typeof fieldDef === 'object' ? (fieldDef.label || fieldName) : fieldName;
     const required = typeof fieldDef === 'object' ? (fieldDef.required !== false) : true;
 
-    const fieldGroup = document.createElement('div');
-    fieldGroup.className = 'zmb-3'; // zTheme margin-bottom spacing
+    // Field group container
+    const fieldGroup = createElement('div', ['zmb-3']);
 
-    // Label
-    const label = document.createElement('label');
-    label.className = 'zLabel'; // zTheme form label
+    // Label using primitive
+    const label = createLabel(fieldName, { class: 'zLabel' });
     label.textContent = this._formatLabel(fieldLabel);
+    
     if (required) {
-      const requiredMark = document.createElement('span');
-      requiredMark.className = 'zText-danger';
+      const requiredMark = createElement('span', ['zText-danger']);
       requiredMark.textContent = ' *';
       label.appendChild(requiredMark);
     }
     fieldGroup.appendChild(label);
 
-    // Input field
+    // Input field using primitive
     const input = this._createInput(fieldName, fieldType, required);
     fieldGroup.appendChild(input);
 
@@ -165,33 +168,47 @@ export class FormRenderer {
   }
 
   /**
-   * Create an input element based on field type
+   * Create an input element based on field type using primitives
    * @private
+   * @param {string} fieldName - Field name
+   * @param {string} fieldType - Field type (text, password, email, textarea, etc.)
+   * @param {boolean} required - Whether field is required
+   * @returns {HTMLElement} Input element
    */
   _createInput(fieldName, fieldType, required) {
     let input;
 
     if (fieldType === 'textarea') {
-      input = document.createElement('textarea');
-      input.rows = 4;
+      // Use textarea primitive
+      input = createTextarea({
+        name: fieldName,
+        class: 'zInput',
+        rows: 4,
+        required: required,
+        placeholder: `Enter ${this._formatLabel(fieldName).toLowerCase()}`
+      });
     } else {
-      input = document.createElement('input');
-      input.type = fieldType === 'password' ? 'password' : 'text';
+      // Use input primitive with appropriate type
+      let inputType = 'text';
       
-      // Apply HTML5 validation attributes based on type
-      if (fieldType === 'email') {
-        input.type = 'email';
+      // Map field types to HTML5 input types
+      if (fieldType === 'password') {
+        inputType = 'password';
+      } else if (fieldType === 'email') {
+        inputType = 'email';
       } else if (fieldType === 'number') {
-        input.type = 'number';
+        inputType = 'number';
       } else if (fieldType === 'tel' || fieldType === 'phone') {
-        input.type = 'tel';
+        inputType = 'tel';
       }
-    }
 
-    input.name = fieldName;
-    input.className = 'zInput'; // zTheme form input
-    input.required = required;
-    input.placeholder = `Enter ${this._formatLabel(fieldName).toLowerCase()}`;
+      input = createInput(inputType, {
+        name: fieldName,
+        class: 'zInput',
+        required: required,
+        placeholder: `Enter ${this._formatLabel(fieldName).toLowerCase()}`
+      });
+    }
 
     return input;
   }
@@ -199,6 +216,8 @@ export class FormRenderer {
   /**
    * Format field name to human-readable label
    * @private
+   * @param {string} fieldName - Field name (snake_case or camelCase)
+   * @returns {string} Formatted label (Title Case)
    */
   _formatLabel(fieldName) {
     // Convert snake_case or camelCase to Title Case
@@ -212,6 +231,8 @@ export class FormRenderer {
   /**
    * Handle form submission
    * @private
+   * @param {HTMLFormElement} formElement - Form element
+   * @param {string} dialogId - Dialog identifier
    */
   async _handleSubmit(formElement, dialogId) {
     this.logger.log('[FormRenderer] Form submit triggered:', dialogId);
@@ -220,7 +241,7 @@ export class FormRenderer {
     const errorContainer = formElement.querySelector('.zDialog-errors');
     if (errorContainer) {
       errorContainer.style.display = 'none';
-      errorContainer.innerHTML = '';
+      clearElement(errorContainer);
     }
 
     // Collect form data
@@ -231,7 +252,6 @@ export class FormRenderer {
     }
 
     this.logger.log('[FormRenderer] Collected form data:', Object.keys(data));
-    this.logger.log('[FormRenderer] 📤 Sending form_submit event to backend');
 
     // Disable submit button during submission
     const submitButton = formElement.querySelector('button[type="submit"]');
@@ -240,7 +260,7 @@ export class FormRenderer {
     submitButton.textContent = 'Submitting...';
 
     try {
-      // Send form submission to backend via proper message handler
+      // Send form submission to backend via WebSocket
       const response = await this.client.send({
         event: 'form_submit',
         dialogId: dialogId,
@@ -275,13 +295,14 @@ export class FormRenderer {
   /**
    * Handle successful form submission
    * @private
+   * @param {HTMLFormElement} formElement - Form element
+   * @param {Object} response - Server response
    */
   _handleSuccess(formElement, response) {
     this.logger.log('[FormRenderer] Form submission successful');
 
     // Display success message
-    const successContainer = document.createElement('div');
-    successContainer.className = 'zAlert zAlert-success zmt-3';
+    const successContainer = createElement('div', ['zAlert', 'zAlert-success', 'zmt-3']);
     successContainer.innerHTML = `
       <strong>Success!</strong> ${response.message || 'Form submitted successfully.'}
     `;
@@ -289,14 +310,14 @@ export class FormRenderer {
     // Replace form with success message
     const formContainer = formElement.closest('.zDialog-container');
     if (formContainer) {
-      formContainer.innerHTML = '';
+      clearElement(formContainer);
       formContainer.appendChild(successContainer);
     }
 
     // Refresh navbar after successful submission (e.g., after login)
     // This ensures RBAC-filtered navbar items are updated
     if (this.client && typeof this.client._fetchAndPopulateNavBar === 'function') {
-      this.logger.log('[FormRenderer] ✅ Form success - refreshing navbar for RBAC update');
+      this.logger.log('[FormRenderer] Refreshing navbar for RBAC update');
       this.client._fetchAndPopulateNavBar().catch(err => {
         this.logger.error('[FormRenderer] Failed to refresh navbar:', err);
       });
@@ -309,6 +330,8 @@ export class FormRenderer {
   /**
    * Handle form submission error
    * @private
+   * @param {HTMLFormElement} formElement - Form element
+   * @param {Object} response - Server error response
    */
   _handleError(formElement, response) {
     this.logger.error('[FormRenderer] Form submission failed:', response);
@@ -317,27 +340,31 @@ export class FormRenderer {
     if (errorContainer) {
       errorContainer.style.display = 'block';
       
-      const errorList = document.createElement('ul');
-      errorList.className = 'zmb-0';
+      const errorList = createElement('ul', ['zmb-0']);
       
       // Display validation errors
       if (response.errors && Array.isArray(response.errors)) {
         response.errors.forEach(error => {
-          const errorItem = document.createElement('li');
+          const errorItem = createElement('li');
           errorItem.textContent = error;
           errorList.appendChild(errorItem);
         });
       } else {
-        const errorItem = document.createElement('li');
+        const errorItem = createElement('li');
         errorItem.textContent = response.message || 'Validation failed. Please check your input.';
         errorList.appendChild(errorItem);
       }
       
-      errorContainer.innerHTML = '<strong>Error:</strong>';
+      clearElement(errorContainer);
+      const errorHeader = createElement('strong');
+      errorHeader.textContent = 'Error:';
+      errorContainer.appendChild(errorHeader);
       errorContainer.appendChild(errorList);
     }
 
     // Scroll to errors
-    errorContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    if (errorContainer) {
+      errorContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
   }
 }

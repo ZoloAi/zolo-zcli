@@ -651,20 +651,33 @@ class BasicInputs:
         self,
         label: str,
         action: Optional[str] = None,
-        color: str = "primary",
-        style: str = "default"
+        color: str = "primary"
     ) -> Union[bool, 'asyncio.Future']:
         """Display a button that requires EXPLICIT confirmation to execute.
         
+        Terminal-First Design:
+        - Terminal: Colored prompt based on semantic meaning of button
+          - danger (red): Alarming for destructive actions
+          - success (green): Encouraging for positive actions
+          - warning (yellow): Cautious for risky actions
+          - primary/info (cyan): Default informational
+          - secondary (plain): Neutral, no emphasis
+        - Bifrost: Renders styled button with same semantic color
+        
         Cross-mode behavior:
-        - Terminal: Prompts "Click [Label]? (y/n): " → MUST type "y" or "yes"
+        - Terminal: Prompts "Click [Label]? (y/n): " with semantic color
         - Bifrost: Renders actual button → click returns True
         
         Args:
             label: Button label text (e.g., "Submit", "Delete", "Save")
             action: Optional action identifier or zVar name to store result
-            color: Button color (primary, success, danger, warning, info)
-            style: Button style (default, outlined, text)
+            color: Button semantic color (primary, success, danger, warning, info, secondary)
+                   - primary: Default action (cyan in terminal, blue button in Bifrost)
+                   - success: Positive action (green in terminal and Bifrost)
+                   - danger: Destructive action (red in terminal and Bifrost) ⚠️
+                   - warning: Cautious action (yellow in terminal and Bifrost)
+                   - info: Informational (cyan in terminal and Bifrost)
+                   - secondary: Neutral (plain in terminal, gray in Bifrost)
             
         Returns:
             bool: True if explicitly confirmed ("y"/"yes"), False otherwise
@@ -676,13 +689,13 @@ class BasicInputs:
         Example (Terminal):
             >>> if z.display.button("Delete File", color="danger"):
             ...     delete_file()
-            Click [Delete File]? (y/n): y
+            Click [Delete File]? (y/n): y  # RED text (alarming!)
                 Delete File clicked!
             [deletes file]
             
         Example (Bifrost):
-            >>> z.display.button("Submit Form", action="form_submit")
-            # Renders: <button class="zoloButton zBtnPrimary">Submit Form</button>
+            >>> z.display.button("Submit Form", action="form_submit", color="primary")
+            # Renders: <button class="zBtn zBtn-primary">Submit Form</button>
             # On click: sends True back to backend
         """
         # Try GUI mode first (Bifrost) - returns Future if successful
@@ -690,21 +703,39 @@ class BasicInputs:
         if not self.zPrimitives._is_gui_mode():
             gui_future = None
         else:
-            gui_future = self._try_gui_mode_button(label, action, color, style)
+            gui_future = self._try_gui_mode_button(label, action, color)
         
         if gui_future is not None:
             return gui_future
         
-        # Terminal mode: y/n confirmation using read_string primitive
+        # Terminal mode: y/n confirmation with semantic color
         try:
-            # Call read_string primitive directly
-            response = self.zPrimitives.read_string(
-                PROMPT_BUTTON_TEMPLATE.format(label=label)
-            ).strip().lower()
+            # Map button color to terminal text color (terminal-first semantic design)
+            color_map = {
+                'danger': self.zColors.ZERROR,      # RED (alarming for destructive actions)
+                'success': self.zColors.ZSUCCESS,   # GREEN (encouraging for positive actions)
+                'warning': self.zColors.ZWARNING,   # YELLOW (cautious for risky actions)
+                'info': self.zColors.ZINFO,         # CYAN (informational)
+                'primary': self.zColors.ZINFO,      # CYAN (default action)
+                'secondary': '',                     # No color (neutral)
+            }
+            
+            # Get terminal color for semantic meaning
+            terminal_color = color_map.get(color, '')
+            prompt_text = PROMPT_BUTTON_TEMPLATE.format(label=label)
+            
+            # Apply semantic color if available (terminal-first visual feedback)
+            if terminal_color:
+                colored_prompt = f"{terminal_color}{prompt_text}{self.zColors.RESET}"
+            else:
+                colored_prompt = prompt_text
+            
+            # Display colored prompt and collect response
+            response = self.zPrimitives.read_string(colored_prompt).strip().lower()
             
             # Log response
             if hasattr(self.BasicOutputs, 'zcli') and hasattr(self.BasicOutputs.zcli, 'logger'):
-                self.BasicOutputs.zcli.logger.info(f"🔘 Button response: '{response}'")
+                self.BasicOutputs.zcli.logger.info(f"🔘 Button response: '{response}' (color: {color})")
             
             # MUST type 'y' or 'yes' - no default, no Enter shortcut
             if response in ('y', 'yes'):
@@ -734,16 +765,14 @@ class BasicInputs:
         self,
         label: str,
         action: Optional[str],
-        color: str,
-        style: str
+        color: str
     ) -> Optional['asyncio.Future']:
         """Try to handle button in GUI mode and return a Future.
         
         Args:
             label: Button label text
             action: Optional action identifier
-            color: Button color
-            style: Button style
+            color: Button semantic color (primary, success, danger, warning, info, secondary)
             
         Returns:
             Optional[asyncio.Future]: Future that resolves to True (clicked) or False (cancelled),
@@ -753,8 +782,7 @@ class BasicInputs:
             EVENT_NAME_BUTTON,
             label,
             action=action,
-            color=color,
-            style=style
+            color=color
         )
 
     def _collect_button_confirmation(self, label: str) -> bool:

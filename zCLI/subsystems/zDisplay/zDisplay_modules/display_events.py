@@ -346,7 +346,7 @@ class zEvents:
         """
         return self.BasicInputs.selection(prompt, options, multi, default, style)
 
-    def button(self, label: str, action: Optional[str] = None, color: str = "primary", style: str = "default") -> bool:
+    def button(self, label: str, action: Optional[str] = None, color: str = "primary") -> bool:
         """Display a button that requires confirmation to execute.
         
         Convenience delegate to BasicInputs.button for cross-mode button rendering.
@@ -354,13 +354,12 @@ class zEvents:
         Args:
             label: Button label text (e.g., "Submit", "Delete", "Save")
             action: Optional action identifier or zVar name
-            color: Button color (primary, success, danger, warning, info)
-            style: Button style (default, outlined, text)
+            color: Button semantic color (primary, success, danger, warning, info, secondary)
             
         Returns:
             bool: True if clicked (y), False if cancelled (n)
         """
-        return self.BasicInputs.button(label, action, color, style)
+        return self.BasicInputs.button(label, action, color)
 
     # ═══════════════════════════════════════════════════════════════════════════
     # Convenience Delegates - Signals

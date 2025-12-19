@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Button Renderer Test - zTheme Only</title>
+  <title>Button Renderer Test - Terminal-First Colors</title>
   
-  <!-- ✅ ONLY zTheme CSS - with cache-busting timestamp -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/ZoloAi/zTheme@main/dist/ztheme.css">  <!-- ✅ Minimal page style ONLY - NO component overrides! -->
+  <!-- zTheme CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/ZoloAi/zTheme@main/dist/ztheme.css">
+  
   <style>
     body {
-      background: #f8f9fa;
+      background: var(--color-light, #f8f9fa);
       min-height: 100vh;
     }
-    /* Only log styling - NOT for buttons or zTheme components! */
     .test-log {
       background: #1e1e1e;
       color: #d4d4d4;
@@ -28,26 +28,27 @@
 </head>
 <body>
 
-<!-- ✅ Use zTheme classes for layout -->
 <div class="zContainer zmy-5">
   
   <!-- Header -->
   <div class="zmb-5">
     <h1 class="zText-primary zmb-2">🧪 Button Renderer Test</h1>
-    <p class="zLead zText-muted">Testing the new ButtonRenderer with Layer 2 utilities</p>
+    <p class="zLead zText-muted">Terminal-First Semantic Colors (Refactored Micro-Step 8)</p>
   </div>
 
   <!-- Test Controls -->
   <div class="zCard zmb-4">
     <div class="zCard-body">
-      <h2 class="zCard-title zText-success">Test Controls</h2>
-      <!-- ✅ Use zTheme button classes for test controls -->
+      <h2 class="zCard-title zText-success">Test Scenarios</h2>
       <div class="zD-flex zFlex-wrap zGap-2">
-        <button class="zBtn zBtn-outline-primary" onclick="testBasicButton()">Test Basic Button</button>
-        <button class="zBtn zBtn-outline-success" onclick="testAllColors()">Test All Colors</button>
-        <button class="zBtn zBtn-outline-info" onclick="testAllSizes()">Test All Sizes</button>
-        <button class="zBtn zBtn-outline-warning" onclick="testAllStyles()">Test All Styles</button>
-        <button class="zBtn zBtn-outline-secondary" onclick="clearZone()">Clear Zone</button>
+        <button class="zBtn zBtn-outline-primary" onclick="testPrimary()">Primary</button>
+        <button class="zBtn zBtn-outline-danger" onclick="testDanger()">Danger</button>
+        <button class="zBtn zBtn-outline-success" onclick="testSuccess()">Success</button>
+        <button class="zBtn zBtn-outline-warning" onclick="testWarning()">Warning</button>
+        <button class="zBtn zBtn-outline-info" onclick="testInfo()">Info</button>
+        <button class="zBtn zBtn-outline-secondary" onclick="testSecondary()">Secondary</button>
+        <button class="zBtn zBtn-secondary" onclick="testAllColors()">All Colors</button>
+        <button class="zBtn zBtn-outline-secondary" onclick="clearZone()">Clear</button>
       </div>
     </div>
   </div>
@@ -126,68 +127,87 @@
     }
 
     // Test functions (available to onclick handlers)
-    window.testBasicButton = function() {
-      logger.log('Testing basic button...');
+    window.testPrimary = function() {
+      logger.log('Testing PRIMARY button (default action - blue)');
       renderer.render({
-        label: 'Click Me!',
-        action: 'test_action',
+        label: 'Submit Form',
+        action: 'submit_action',
         color: 'primary',
-        requestId: 'test-' + Date.now()
+        requestId: 'test-primary-' + Date.now()
+      }, 'test-zone');
+    };
+
+    window.testDanger = function() {
+      logger.log('Testing DANGER button (destructive action - red)');
+      renderer.render({
+        label: 'Delete File',
+        action: 'delete_action',
+        color: 'danger',
+        requestId: 'test-danger-' + Date.now()
+      }, 'test-zone');
+    };
+
+    window.testSuccess = function() {
+      logger.log('Testing SUCCESS button (positive action - green)');
+      renderer.render({
+        label: 'Save Changes',
+        action: 'save_action',
+        color: 'success',
+        requestId: 'test-success-' + Date.now()
+      }, 'test-zone');
+    };
+
+    window.testWarning = function() {
+      logger.log('Testing WARNING button (cautious action - yellow)');
+      renderer.render({
+        label: 'Overwrite Existing',
+        action: 'overwrite_action',
+        color: 'warning',
+        requestId: 'test-warning-' + Date.now()
+      }, 'test-zone');
+    };
+
+    window.testInfo = function() {
+      logger.log('Testing INFO button (informational - cyan)');
+      renderer.render({
+        label: 'Show Details',
+        action: 'info_action',
+        color: 'info',
+        requestId: 'test-info-' + Date.now()
+      }, 'test-zone');
+    };
+
+    window.testSecondary = function() {
+      logger.log('Testing SECONDARY button (neutral - gray)');
+      renderer.render({
+        label: 'Cancel',
+        action: 'cancel_action',
+        color: 'secondary',
+        requestId: 'test-secondary-' + Date.now()
       }, 'test-zone');
     };
 
     window.testAllColors = function() {
-      logger.log('Testing all button colors...');
-      const colors = ['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'light', 'dark'];
-      colors.forEach((color, index) => {
-        setTimeout(() => {
-          renderer.render({
-            label: `${color.toUpperCase()} Button`,
-            action: 'test_action',
-            color: color,
-            requestId: `test-${color}-${Date.now()}`
-          }, 'test-zone');
-        }, index * 100); // Stagger rendering
-      });
-    };
-
-    window.testAllSizes = function() {
-      logger.log('Testing all button sizes...');
-      const sizes = [
-        { size: 'sm', label: 'Small Button' },
-        { size: 'md', label: 'Medium Button (default)' },
-        { size: 'lg', label: 'Large Button' }
+      logger.log('Testing all 6 semantic button colors...');
+      const buttons = [
+        { color: 'primary', label: 'Submit Form', desc: 'Default action (blue)' },
+        { color: 'danger', label: 'Delete File', desc: 'Destructive (red)' },
+        { color: 'success', label: 'Save Changes', desc: 'Positive (green)' },
+        { color: 'warning', label: 'Overwrite', desc: 'Cautious (yellow)' },
+        { color: 'info', label: 'Show Details', desc: 'Informational (cyan)' },
+        { color: 'secondary', label: 'Cancel', desc: 'Neutral (gray)' }
       ];
-      sizes.forEach((config, index) => {
+      
+      buttons.forEach((btn, index) => {
         setTimeout(() => {
+          logger.log(`Rendering ${btn.color.toUpperCase()}: ${btn.desc}`);
           renderer.render({
-            label: config.label,
-            action: 'test_action',
-            color: 'primary',
-            size: config.size,
-            requestId: `test-size-${index}-${Date.now()}`
+            label: btn.label,
+            action: `${btn.color}_action`,
+            color: btn.color,
+            requestId: `test-${btn.color}-${Date.now()}`
           }, 'test-zone');
-        }, index * 100);
-      });
-    };
-
-    window.testAllStyles = function() {
-      logger.log('Testing all button styles...');
-      const styles = [
-        { style: 'default', label: 'Default (Solid)' },
-        { style: 'outline', label: 'Outline Style' },
-        { style: 'text', label: 'Text Style' }
-      ];
-      styles.forEach((config, index) => {
-        setTimeout(() => {
-          renderer.render({
-            label: config.label,
-            action: 'test_action',
-            color: 'primary',
-            style: config.style,
-            requestId: `test-style-${index}-${Date.now()}`
-          }, 'test-zone');
-        }, index * 100);
+        }, index * 150);
       });
     };
 
@@ -197,9 +217,12 @@
     };
 
     // Log initialization
-    logger.log('ButtonRenderer initialized successfully');
-    logger.log('Mock WebSocket client ready');
-    logger.log('Ready to test! Click a test button above.');
+    logger.log('✅ ButtonRenderer initialized (Terminal-First Refactor)');
+    logger.log('✅ Mock WebSocket client ready');
+    logger.log('✅ API: button(label, action, color) - 3 parameters');
+    logger.log('📋 Testing 6 semantic colors: primary, danger, success, warning, info, secondary');
+    logger.log('🎨 Terminal colors match Bifrost button semantics');
+    logger.log('Ready to test! Click a color button above.');
   </script>
 </body>
 </html>

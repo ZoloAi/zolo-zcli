@@ -515,22 +515,20 @@ class zDisplay(zDisplayDelegates):
         self,
         label: str,
         action: Optional[str] = None,
-        color: str = "primary",
-        style: str = "default"
+        color: str = "primary"
     ) -> bool:
         """Convenience method: Display a button that requires confirmation.
         
-        Cross-mode behavior:
-        - Terminal: Prompts "Click [Label]? (y/n): " → returns True/False
-        - Bifrost: Renders actual button → click returns True
+        Terminal-First Design:
+        - Terminal: Colored prompt based on semantic button color
+        - Bifrost: Styled button with same semantic color
         
         Args:
             label: Button label text (e.g., "Submit", "Delete", "Save")
             action: Optional action identifier or zVar name
-            color: Button color (primary, success, danger, warning, info)
-            style: Button style (default, outlined, text)
+            color: Button semantic color (primary, success, danger, warning, info, secondary)
             
         Returns:
             bool: True if clicked (y), False if cancelled (n)
         """
-        return self.zEvents.button(label, action, color, style)
+        return self.zEvents.button(label, action, color)

@@ -105,8 +105,19 @@ export function createButton(type = 'button', attributes = {}) {
     console.warn(`[interactive_primitives] createButton: Invalid type "${type}", defaulting to "button"`);
   }
   
-  // Set type first, then merge with user attributes
-  setAttributes(button, { type: validType, ...attributes });
+  // Extract class attribute separately (needs special handling)
+  const { class: classString, ...otherAttributes } = attributes;
+  
+  // Set type first, then other attributes
+  setAttributes(button, { type: validType, ...otherAttributes });
+  
+  // Handle class separately using classList.add() to avoid overwriting
+  if (classString) {
+    const classes = classString.split(' ').filter(c => c.trim());
+    if (classes.length > 0) {
+      button.classList.add(...classes);
+    }
+  }
   
   return button;
 }
