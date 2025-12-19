@@ -428,3 +428,100 @@ class BasicOutputs:
             # Display message and wait for Enter using primitives
             self.zPrimitives.line(message)
             self.zPrimitives.read_string("")  # Wait for Enter (discard result)
+
+    def rich_text(
+        self,
+        content: str,
+        indent: int = 0,
+        pause: bool = False,
+        break_message: Optional[str] = None,
+        format: str = "markdown",
+        **kwargs
+    ) -> None:
+        """Display rich text with inline formatting (markdown-style).
+        
+        NEW EVENT - Supports inline semantic markup using markdown syntax.
+        This enables mixing bold, italic, code, and other inline styles within
+        a single text block.
+        
+        Markdown Syntax Supported:
+            - `code` → <code> inline code
+            - **bold** → <strong> strong emphasis
+            - *italic* → <em> emphasis
+            - ~~strikethrough~~ → <del> deleted text
+            - ==highlight== → <mark> highlighted text
+            - [text](url) → <a> hyperlinks
+        
+        Dual-Mode Behavior:
+            - Terminal: Displays markdown syntax as-is (readable, no parsing yet)
+                       Future: Will parse markdown and apply ANSI codes
+            - Bifrost: Sends markdown with format="markdown" for HTML parsing
+        
+        Args:
+            content: Text with markdown inline formatting
+            indent: Indentation level (default: 0)
+            pause: Pause for user acknowledgment (default: False)
+            break_message: Custom break message if pause=True
+            format: Format type (default: "markdown")
+            **kwargs: Additional parameters passed to Bifrost
+        
+        Returns:
+            None
+        
+        Examples:
+            # Simple inline code
+            self.BasicOutputs.rich_text("Run `ls -la` to see files")
+            
+            # Multiple styles
+            self.BasicOutputs.rich_text(
+                "**Important:** Use `pip install` for *Python* packages"
+            )
+            
+            # With indentation
+            self.BasicOutputs.rich_text(
+                "See the `config.yaml` file for **settings**",
+                indent=1
+            )
+            
+            # With link
+            self.BasicOutputs.rich_text(
+                "Visit [our docs](https://example.com) for help"
+            )
+        
+        Note:
+            Terminal mode currently displays markdown syntax literally.
+            Future enhancement: Parse markdown and apply ANSI formatting codes.
+        """
+        # Build event dict
+        event_data = {
+            KEY_CONTENT: content,
+            KEY_INDENT: indent,
+            KEY_BREAK: pause,
+            KEY_BREAK_MESSAGE: break_message,
+            "format": format,  # Tell Bifrost this is markdown
+            **kwargs
+        }
+        
+        # Try GUI mode first - send clean event
+        if self.zPrimitives.send_gui_event("rich_text", event_data):
+            return  # GUI event sent successfully
+        
+        # Terminal mode - display markdown as-is (for now)
+        # Future: Parse markdown and apply ANSI codes
+        
+        # Apply indentation
+        if indent > 0:
+            indent_str = self._build_indent(indent)
+            content = f"{indent_str}{content}"
+        
+        # Display text using primitive
+        self.zPrimitives.line(content)
+        
+        # Auto-break if enabled
+        if pause:
+            message = break_message or DEFAULT_BREAK_MESSAGE
+            if indent > 0:
+                indent_str = self._build_indent(indent)
+                message = f"{indent_str}{message}"
+            self.zPrimitives.line(message)
+            self.zPrimitives.read_string("")  # Wait for Enter

@@ -136,6 +136,7 @@ DEFAULT_MODE = "Terminal"
 # ═══════════════════════════════════════════════════════════════════════════
 
 EVENT_TEXT = "text"
+EVENT_RICH_TEXT = "rich_text"
 EVENT_HEADER = "header"
 EVENT_LINE = "line"
 
@@ -302,6 +303,7 @@ class zDisplay(zDisplayDelegates):
         self._event_map = {
             # Output events
             EVENT_TEXT: self.zEvents.text,
+            EVENT_RICH_TEXT: self.zEvents.rich_text,
             EVENT_HEADER: self.zEvents.header,
             EVENT_LINE: self.zEvents.text,
 

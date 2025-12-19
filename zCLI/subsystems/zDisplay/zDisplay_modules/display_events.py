@@ -287,6 +287,39 @@ class zEvents:
             break_message=break_message,
             break_after=break_after
         )
+    
+    def rich_text(
+        self,
+        content: str,
+        indent: int = 0,
+        pause: bool = False,
+        break_message: Optional[str] = None,
+        format: str = "markdown",
+        **kwargs
+    ) -> Any:
+        """Display rich text with inline formatting.
+        
+        Convenience delegate to BasicOutputs.rich_text for inline semantic markup.
+        
+        Args:
+            content: Text with markdown inline formatting
+            indent: Indentation level (default: 0)
+            pause: Pause for user acknowledgment (default: False)
+            break_message: Optional break message
+            format: Format type (default: "markdown")
+            **kwargs: Additional parameters passed through
+            
+        Returns:
+            Any: Result from BasicOutputs.rich_text method
+        """
+        return self.BasicOutputs.rich_text(
+            content,
+            indent=indent,
+            pause=pause,
+            break_message=break_message,
+            format=format,
+            **kwargs
+        )
 
     # ═══════════════════════════════════════════════════════════════════════════
     # Convenience Delegates - BasicInputs
