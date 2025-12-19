@@ -9,8 +9,20 @@
  * - zCard-title/subtitle/text (typography)
  * - Color variants (zCard-primary, zCard-success, etc.)
  * 
+ * ✨ REFACTORED: Uses Layer 0 primitives + Layer 2 utilities
+ * 
+ * @module rendering/card_renderer
+ * @layer 3
+ * @pattern Strategy (card components)
+ * 
  * @see https://github.com/ZoloAi/zTheme/blob/main/src/css/zCards.css
  */
+
+// ─────────────────────────────────────────────────────────────────
+// Imports
+// ─────────────────────────────────────────────────────────────────
+import { createDiv } from './primitives/generic_containers.js';
+import { createHeading, createParagraph } from './primitives/typography_primitives.js';
 
 export default class CardRenderer {
   /**
@@ -54,9 +66,8 @@ export default class CardRenderer {
       return container;
     }
 
-    // Create zCard-body wrapper
-    const cardBody = document.createElement('div');
-    cardBody.className = 'zCard-body';
+    // Create zCard-body wrapper (using primitive)
+    const cardBody = createDiv({ class: 'zCard-body' });
 
     // Move all direct children into the card body
     while (container.firstChild) {
@@ -133,9 +144,8 @@ export default class CardRenderer {
       classes = ''
     } = options;
 
-    // Create card container
-    const card = document.createElement('div');
-    card.className = 'zCard';
+    // Create card container (using primitive)
+    const card = createDiv({ class: 'zCard' });
     
     // Apply variant class
     if (variant) {
@@ -148,48 +158,42 @@ export default class CardRenderer {
       card.classList.add(...classList);
     }
 
-    // Add header if provided
+    // Add header if provided (using primitive)
     if (header) {
-      const headerEl = document.createElement('div');
-      headerEl.className = 'zCard-header';
+      const headerEl = createDiv({ class: 'zCard-header' });
       headerEl.textContent = header;
       card.appendChild(headerEl);
     }
 
-    // Create card body
-    const cardBody = document.createElement('div');
-    cardBody.className = 'zCard-body';
+    // Create card body (using primitive)
+    const cardBody = createDiv({ class: 'zCard-body' });
 
-    // Add title
+    // Add title (using primitive)
     if (title) {
-      const titleEl = document.createElement('h2');
-      titleEl.className = 'zCard-title';
+      const titleEl = createHeading(2, { class: 'zCard-title' });
       titleEl.textContent = title;
       cardBody.appendChild(titleEl);
     }
 
-    // Add subtitle
+    // Add subtitle (using primitive)
     if (subtitle) {
-      const subtitleEl = document.createElement('h6');
-      subtitleEl.className = 'zCard-subtitle zmb-2 zText-muted';
+      const subtitleEl = createHeading(6, { class: 'zCard-subtitle zmb-2 zText-muted' });
       subtitleEl.textContent = subtitle;
       cardBody.appendChild(subtitleEl);
     }
 
-    // Add text content
+    // Add text content (using primitive)
     if (text) {
-      const textEl = document.createElement('p');
-      textEl.className = 'zCard-text';
+      const textEl = createParagraph({ class: 'zCard-text' });
       textEl.textContent = text;
       cardBody.appendChild(textEl);
     }
 
     card.appendChild(cardBody);
 
-    // Add footer if provided
+    // Add footer if provided (using primitive)
     if (footer) {
-      const footerEl = document.createElement('div');
-      footerEl.className = 'zCard-footer zText-muted';
+      const footerEl = createDiv({ class: 'zCard-footer zText-muted' });
       footerEl.textContent = footer;
       card.appendChild(footerEl);
     }

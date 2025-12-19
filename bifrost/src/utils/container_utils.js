@@ -261,12 +261,70 @@ export function applyContainerStyles(element, config = {}) {
 }
 
 // ─────────────────────────────────────────────────────────────────
+// Flex Utility Functions (for programmatic class generation)
+// ─────────────────────────────────────────────────────────────────
+
+/**
+ * Get zTheme flex justify-content class (horizontal alignment)
+ * @param {string} justify - Justify: 'start', 'center', 'end', 'between', 'around', 'evenly'
+ * @returns {string} zTheme justify class
+ */
+export function getFlexJustifyClass(justify = 'start') {
+  const justifyMap = {
+    start: 'zFlex-start',
+    center: 'zFlex-center',
+    end: 'zFlex-end',
+    between: 'zFlex-between',
+    around: 'zFlex-around',
+    evenly: 'zFlex-evenly'
+  };
+  
+  return justifyMap[justify] || 'zFlex-start';
+}
+
+/**
+ * Get zTheme flex align-items class (vertical alignment)
+ * @param {string} align - Align: 'start', 'center', 'end', 'stretch', 'baseline'
+ * @returns {string} zTheme align class
+ */
+export function getFlexAlignClass(align = 'stretch') {
+  const alignMap = {
+    start: 'zFlex-items-start',
+    center: 'zFlex-items-center',
+    end: 'zFlex-items-end',
+    stretch: 'zFlex-items-stretch',
+    baseline: 'zFlex-items-baseline'
+  };
+  
+  return alignMap[align] || 'zFlex-items-stretch';
+}
+
+/**
+ * Get zTheme flex direction class
+ * @param {string} direction - Direction: 'row', 'column', 'row-reverse', 'column-reverse'
+ * @returns {string} zTheme flex direction class
+ */
+export function getFlexDirectionClass(direction = 'row') {
+  const directionMap = {
+    row: 'zFlex-row',
+    column: 'zFlex-column',
+    'row-reverse': 'zFlex-row-reverse',
+    'column-reverse': 'zFlex-column-reverse'
+  };
+  
+  return directionMap[direction] || 'zFlex-row';
+}
+
+// ─────────────────────────────────────────────────────────────────
 // Default Export (for convenience)
 // ─────────────────────────────────────────────────────────────────
 export default {
   createContainer,
   createSection,
   createWrapper,
-  applyContainerStyles
+  applyContainerStyles,
+  getFlexJustifyClass,
+  getFlexAlignClass,
+  getFlexDirectionClass
 };
 

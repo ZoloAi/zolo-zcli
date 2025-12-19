@@ -40,7 +40,7 @@
 // Imports
 // ─────────────────────────────────────────────────────────────────
 import { createButton } from './primitives/interactive_primitives.js';
-import { applyColorScheme, getBackgroundClass } from './color_utils.js';
+import { applyColorScheme, getBackgroundClass } from '../utils/color_utils.js';
 import { 
   createElement, 
   appendChildren,

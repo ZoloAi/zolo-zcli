@@ -44,6 +44,19 @@
 // Imports
 // ─────────────────────────────────────────────────────────────────
 import { createElement, setAttributes, appendChildren } from '../utils/dom_utils.js';
+import { 
+  createTable, 
+  createThead, 
+  createTbody, 
+  createTr, 
+  createTh, 
+  createTd 
+} from './primitives/table_primitives.js';
+import { createDiv, createSpan } from './primitives/generic_containers.js';
+import { createButton } from './primitives/interactive_primitives.js';
+import { createInput } from './primitives/form_primitives.js';
+import { getBackgroundClass, getTextColorClass } from '../utils/color_utils.js';
+import { getPaddingClass, getMarginClass, getGapClass } from '../utils/spacing_utils.js';
 
 // ─────────────────────────────────────────────────────────────────
 // Table Renderer Class
@@ -171,8 +184,8 @@ export class TableRenderer {
       tableClasses.push(customClass);
     }
     
-    // Create table element (using Layer 2 utility)
-    const table = createElement('table', tableClasses);
+    // Create table element (using Layer 0 primitive)
+    const table = createTable({ class: tableClasses.join(' ') });
     
     // Render table head (if show_header is true)
     if (show_header && columns.length > 0) {
@@ -186,7 +199,7 @@ export class TableRenderer {
       table.appendChild(tbody);
     } else {
       // Empty table body (semantic HTML)
-      const tbody = createElement('tbody');
+      const tbody = createTbody();
       table.appendChild(tbody);
       this.logger.warn('[TableRenderer] ⚠️ No rows to display');
     }
@@ -262,11 +275,11 @@ export class TableRenderer {
    * @returns {HTMLElement} thead element
    */
   _renderTableHead(columns) {
-    const thead = createElement('thead');
-    const headerRow = createElement('tr');
+    const thead = createThead();
+    const headerRow = createTr();
     
     columns.forEach(column => {
-      const th = createElement('th');
+      const th = createTh();
       th.textContent = column; // XSS safe
       headerRow.appendChild(th);
     });
@@ -283,16 +296,16 @@ export class TableRenderer {
    * @returns {HTMLElement} tbody element
    */
   _renderTableBody(columns, rows) {
-    const tbody = createElement('tbody');
+    const tbody = createTbody();
     
     rows.forEach(row => {
-      const tr = createElement('tr');
+      const tr = createTr();
       
       // Handle both array and object rows (zData sends objects from SQL queries)
       if (Array.isArray(row)) {
         // Array row: [val1, val2, val3]
         row.forEach(value => {
-          const td = createElement('td');
+          const td = createTd();
           td.textContent = this._formatCellValue(value); // XSS safe
           tr.appendChild(td);
         });
@@ -300,7 +313,7 @@ export class TableRenderer {
         // Object row: {col1: val1, col2: val2, ...}
         // Iterate columns to maintain order
         columns.forEach(column => {
-          const td = createElement('td');
+          const td = createTd();
           const value = row[column];
           td.textContent = this._formatCellValue(value); // XSS safe
           tr.appendChild(td);
@@ -332,6 +345,9 @@ export class TableRenderer {
    * Render interactive navigation controls for paginated tables
    * Creates First/Previous/Next/Last buttons + Jump to page input
    * Buttons send 'table_navigate' events back to server (Terminal first!)
+   * 
+   * ✨ STYLIZED COMPOSITION: Using Layer 0 primitives + Layer 2 utilities
+   * 
    * @private
    * @param {HTMLElement} container - Container to append controls to
    * @param {Object} tableState - Table state (limit, offset, totalRows, etc.)
@@ -346,87 +362,111 @@ export class TableRenderer {
     const canGoNext = currentPage < totalPages;
     
     // ═══════════════════════════════════════════════════════════════
-    // MODERN PROFESSIONAL NAVIGATION BAR
-    // Layout: [Page Info] [Navigation Buttons] [Jump Controls]
+    // MODERN 2-ROW PAGINATION NAVIGATION (Primitives + Utilities)
+    // Row 1: Page Info (centered, full width)
+    // Row 2: Navigation Buttons (flexed, centered)
     // ═══════════════════════════════════════════════════════════════
     
-    // Full-width wrapper with modern styling
-    const navWrapper = createElement('div', ['zMt-3', 'zP-3', 'zBg-white', 'zBorder', 'zRounded', 'zShadow-sm']);
+    // Full-width wrapper (primitive + utilities)
+    const navWrapper = createDiv();
+    navWrapper.classList.add(
+      getMarginClass('top', 3),
+      getPaddingClass('all', 3),
+      getBackgroundClass('white'),
+      'zBorder',
+      'zRounded',
+      'zShadow-sm'
+    );
     
-    // Main flex container - 3 sections with space-between
-    const navContainer = createElement('div', ['zD-flex', 'zAlign-items-center', 'zJustify-content-between', 'zFlex-wrap', 'zGap-3']);
+    // ROW 1: Page Info Container (centered with proper zTheme classes)
+    const pageInfoRow = createDiv();
+    pageInfoRow.classList.add(
+      'zD-flex',
+      'zFlex-center',           // ✅ Correct zTheme centering class
+      'zFlex-items-center',     // ✅ Vertical alignment
+      getMarginClass('bottom', 3)
+    );
+    
+    // Page info text (primitive + utilities)
+    const pageInfo = createSpan();
+    pageInfo.classList.add(getTextColorClass('muted'));
+    pageInfo.style.fontSize = '0.875rem';
+    pageInfo.style.fontWeight = '500';
+    pageInfo.innerHTML = `<span class="zText-dark">Page ${currentPage}</span> of <span class="zText-dark">${totalPages}</span> <span class="zText-muted">(${totalRows} total rows)</span>`;
+    
+    pageInfoRow.appendChild(pageInfo);
+    navWrapper.appendChild(pageInfoRow);
+    
+    // ROW 2: Navigation Controls Container (centered with proper zTheme classes)
+    const navControlsRow = createDiv();
+    navControlsRow.classList.add(
+      'zD-flex',
+      'zFlex-center',           // ✅ Correct zTheme centering class
+      'zFlex-items-center',     // ✅ Vertical alignment
+      'zFlex-wrap',             // ✅ Wrap on small screens
+      getGapClass(3)
+    );
     
     // ─────────────────────────────────────────────────────────────────
-    // LEFT SECTION: Page Info
+    // NAVIGATION BUTTONS (primitives + utilities)
     // ─────────────────────────────────────────────────────────────────
-    const leftSection = createElement('div', ['zD-flex', 'zAlign-items-center', 'zGap-2']);
+    const buttonGroup = createDiv();
+    buttonGroup.classList.add('zBtn-group', 'zBtn-group-sm');
     
-    const pageInfo = createElement('span', ['zText-muted']);
-    setAttributes(pageInfo, { style: 'font-size: 0.875rem; font-weight: 500;' });
-    pageInfo.innerHTML = `<span class="zText-dark">Page ${currentPage}</span> of <span class="zText-dark">${totalPages}</span>`;
-    leftSection.appendChild(pageInfo);
-    
-    // ─────────────────────────────────────────────────────────────────
-    // CENTER SECTION: Navigation Button Group
-    // ─────────────────────────────────────────────────────────────────
-    const centerSection = createElement('div', ['zBtn-group', 'zBtn-group-sm']);
-    
-    // Helper to create navigation button
+    // Helper to create navigation button (using primitives!)
     const createNavButton = (label, command, enabled) => {
-      const classes = ['zBtn', 'zBtn-sm'];
-      if (enabled) {
-        classes.push('zBtn-outline-primary');
-      } else {
-        classes.push('zBtn-outline-secondary');
-        // Disabled state handled by disabled attribute
-      }
-      
-      const btn = createElement('button', classes);
-      btn.innerHTML = label; // Use innerHTML to support Bootstrap Icons
-      btn.disabled = !enabled;
+      const btn = createButton('button');
+      btn.classList.add('zBtn', 'zBtn-sm');
       
       if (enabled) {
+        btn.classList.add('zBtn-outline-primary');
         btn.onclick = () => {
           this.logger.log(`[TableRenderer] 🎯 Navigation: ${command}`);
           this._handleTableNavigation(command, tableState);
         };
+      } else {
+        btn.classList.add('zBtn-outline-secondary');
+        btn.disabled = true;
       }
       
+      btn.innerHTML = label; // Support icons
       return btn;
     };
     
     // Navigation buttons (First/Previous/Next/Last) - Using Bootstrap Icons
-    centerSection.appendChild(createNavButton('<i class="bi bi-skip-start-fill"></i> First', 'first', canGoPrev));
-    centerSection.appendChild(createNavButton('<i class="bi bi-chevron-left"></i> Previous', 'prev', canGoPrev));
-    centerSection.appendChild(createNavButton('Next <i class="bi bi-chevron-right"></i>', 'next', canGoNext));
-    centerSection.appendChild(createNavButton('Last <i class="bi bi-skip-end-fill"></i>', 'last', canGoNext));
+    buttonGroup.appendChild(createNavButton('<i class="bi bi-skip-start-fill"></i> First', 'first', canGoPrev));
+    buttonGroup.appendChild(createNavButton('<i class="bi bi-chevron-left"></i> Prev', 'prev', canGoPrev));
+    buttonGroup.appendChild(createNavButton('Next <i class="bi bi-chevron-right"></i>', 'next', canGoNext));
+    buttonGroup.appendChild(createNavButton('Last <i class="bi bi-skip-end-fill"></i>', 'last', canGoNext));
     
-    // Add sections to nav container
-    navContainer.appendChild(leftSection);
-    navContainer.appendChild(centerSection);
+    navControlsRow.appendChild(buttonGroup);
     
-    // Divider before jump section
-    const divider = createElement('span', ['zBorder-start', 'zBorder-2']);
-    setAttributes(divider, { style: 'height: 24px; margin: 0 0.5rem;' });
-    navContainer.appendChild(divider);
+    // ─────────────────────────────────────────────────────────────────
+    // JUMP TO PAGE (primitives + utilities)
+    // ─────────────────────────────────────────────────────────────────
+    const jumpContainer = createDiv();
+    jumpContainer.classList.add(
+      'zD-flex',
+      'zAlign-items-center',
+      getGapClass(2)
+    );
     
-    // Jump to page container
-    const jumpContainer = createElement('span', ['zD-flex', 'zGap-2', 'zAlign-items-center']);
-    
-    const jumpLabel = createElement('span', ['zText-muted']);
+    const jumpLabel = createSpan();
+    jumpLabel.classList.add(getTextColorClass('muted'));
     jumpLabel.textContent = 'Jump to:';
     jumpContainer.appendChild(jumpLabel);
     
-    const jumpInput = createElement('input', ['zInput', 'zInput-sm']);
-    setAttributes(jumpInput, {
-      type: 'number',
-      min: '1',
-      max: totalPages.toString(),
-      placeholder: '#',
-      style: 'width: 60px; text-align: center;'
-    });
+    const jumpInput = createInput('number');
+    jumpInput.classList.add('zInput', 'zInput-sm');
+    jumpInput.setAttribute('min', '1');
+    jumpInput.setAttribute('max', totalPages.toString());
+    jumpInput.setAttribute('placeholder', '#');
+    jumpInput.style.width = '60px';
+    jumpInput.style.textAlign = 'center';
     
-    const jumpBtn = createNavButton('Go', 'jump', true);
+    const jumpBtn = createButton('button');
+    jumpBtn.classList.add('zBtn', 'zBtn-sm', 'zBtn-primary');
+    jumpBtn.textContent = 'Go';
     jumpBtn.onclick = () => {
       const pageNum = parseInt(jumpInput.value);
       if (pageNum >= 1 && pageNum <= totalPages) {
@@ -447,10 +487,12 @@ export class TableRenderer {
     
     jumpContainer.appendChild(jumpInput);
     jumpContainer.appendChild(jumpBtn);
-    navContainer.appendChild(jumpContainer);
+    navControlsRow.appendChild(jumpContainer);
     
-    // Wrap centered container in full-width wrapper
-    navWrapper.appendChild(navContainer);
+    // Append row 2 to wrapper
+    navWrapper.appendChild(navControlsRow);
+    
+    // Append complete navigation to container
     container.appendChild(navWrapper);
   }
   
