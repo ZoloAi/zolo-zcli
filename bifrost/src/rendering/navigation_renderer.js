@@ -12,8 +12,22 @@
  * - Sidebar navigation
  * - Dropdown menus
  * 
+ * ✨ REFACTORED: Uses Layer 0 primitives
+ * 
+ * @module rendering/navigation_renderer
+ * @layer 3
+ * @pattern Strategy (navigation components)
+ * 
  * @see https://github.com/ZoloAi/zTheme - zTheme Navigation
  */
+
+// ─────────────────────────────────────────────────────────────────
+// Imports
+// ─────────────────────────────────────────────────────────────────
+import { createNav } from './primitives/document_structure_primitives.js';
+import { createList, createListItem } from './primitives/lists_primitives.js';
+import { createLink, createButton } from './primitives/interactive_primitives.js';
+import { createDiv, createSpan } from './primitives/generic_containers.js';
 
 export class NavigationRenderer {
   constructor(logger = null) {
@@ -44,29 +58,28 @@ export class NavigationRenderer {
     // Generate unique ID for collapse target
     const collapseId = `navbar-collapse-${Math.random().toString(36).substr(2, 9)}`;
 
-    // Create nav container with zNavbar component classes
-    const nav = document.createElement('nav');
-    nav.className = `zNavbar zNavbar-${theme} ${className}`;
-    nav.setAttribute('role', 'navigation');
+    // Create nav container with zNavbar component classes (using primitive)
+    const nav = createNav({ 
+      class: `zNavbar zNavbar-${theme} ${className}`,
+      role: 'navigation'
+    });
 
-    // Add brand/logo if provided
+    // Add brand/logo if provided (using primitive)
     if (brand) {
-      const brandLink = document.createElement('a');
-      brandLink.className = 'zNavbar-brand';
-      brandLink.href = '/';  // Brand links to home
+      const brandLink = createLink('/', { class: 'zNavbar-brand' });
       brandLink.textContent = brand;
       nav.appendChild(brandLink);
     }
 
-    // Create mobile hamburger toggle button (zTheme structure)
-    const toggleButton = document.createElement('button');
-    toggleButton.className = 'zNavbar-toggler';
-    toggleButton.type = 'button';
-    toggleButton.setAttribute('data-bs-toggle', 'collapse');
-    toggleButton.setAttribute('data-bs-target', `#${collapseId}`);
-    toggleButton.setAttribute('aria-controls', collapseId);
-    toggleButton.setAttribute('aria-expanded', 'false');
-    toggleButton.setAttribute('aria-label', 'Toggle navigation');
+    // Create mobile hamburger toggle button (using primitive)
+    const toggleButton = createButton('button', {
+      class: 'zNavbar-toggler',
+      'data-bs-toggle': 'collapse',
+      'data-bs-target': `#${collapseId}`,
+      'aria-controls': collapseId,
+      'aria-expanded': 'false',
+      'aria-label': 'Toggle navigation'
+    });
 
     // Add Bootstrap Icon (hamburger menu)
     toggleButton.innerHTML = `
@@ -74,21 +87,20 @@ export class NavigationRenderer {
     `;
     nav.appendChild(toggleButton);
 
-    // Create navbar collapse wrapper (required by zTheme structure)
-    const collapseDiv = document.createElement('div');
-    collapseDiv.className = 'zNavbar-collapse';
-    collapseDiv.id = collapseId;
+    // Create navbar collapse wrapper (using primitive)
+    const collapseDiv = createDiv({ 
+      class: 'zNavbar-collapse',
+      id: collapseId
+    });
 
-    // Create navigation list with zNavbar-nav class
-    const ul = document.createElement('ul');
-    ul.className = 'zNavbar-nav';
+    // Create navigation list (using primitive)
+    const ul = createList(false, { class: 'zNavbar-nav' });
 
     // Create nav items with zNav-item and zNav-link classes
     items.forEach((item, index) => {
-      const li = document.createElement('li');
-      li.className = 'zNav-item';
+      const li = createListItem({ class: 'zNav-item' });
 
-      const a = document.createElement('a');
+      const a = createLink('#');
       
       // Handle item as string or object {label, href}
       let itemLabel, itemHref;
@@ -111,7 +123,7 @@ export class NavigationRenderer {
       
       a.href = itemHref;
       a.textContent = itemLabel;
-      a.className = 'zNav-link';
+      a.classList.add('zNav-link');
       
       // Add active state if specified
       if (activeIndex === index) {
@@ -175,42 +187,41 @@ export class NavigationRenderer {
       className = 'zcli-breadcrumb'
     } = options;
 
-    const nav = document.createElement('nav');
-    nav.className = `${className} zmb-3`;
-    nav.setAttribute('aria-label', 'breadcrumb');
+    const nav = createNav({ 
+      class: `${className} zmb-3`,
+      'aria-label': 'breadcrumb'
+    });
 
-    const ol = document.createElement('ol');
-    ol.className = 'zd-flex zflex-row zalign-items-center zgap-2';
+    const ol = createList(true, { 
+      class: 'zD-flex zFlex-row zFlex-items-center zGap-2'
+    });
     ol.style.listStyle = 'none';
     ol.style.padding = '0';
     ol.style.margin = '0';
 
     trail.forEach((item, index) => {
-      const li = document.createElement('li');
-      li.className = 'breadcrumb-item';
+      const li = createListItem({ class: 'breadcrumb-item' });
       
       if (index === trail.length - 1) {
-        // Last item (current page) - use muted text, bold weight
-        const span = document.createElement('span');
+        // Last item (current page) - use muted text, bold weight (using primitive)
+        const span = createSpan({ 
+          class: 'zText-muted zFw-bold',
+          'aria-current': 'page'
+        });
         span.textContent = item;
-        span.className = 'zText-muted zfont-weight-bold';
-        span.setAttribute('aria-current', 'page');
         li.appendChild(span);
       } else {
-        // Link to parent pages - use primary color
-        const a = document.createElement('a');
-        a.href = '#';
+        // Link to parent pages - use primary color (using primitive)
+        const a = createLink('#', { class: 'zText-primary zText-decoration-none' });
         a.textContent = item;
-        a.className = 'zText-primary ztext-decoration-none';
         li.appendChild(a);
       }
 
       ol.appendChild(li);
 
-      // Add separator (except after last item)
+      // Add separator (except after last item) (using primitive)
       if (index < trail.length - 1) {
-        const sep = document.createElement('span');
-        sep.className = 'breadcrumb-separator zText-muted';
+        const sep = createSpan({ class: 'breadcrumb-separator zText-muted' });
         sep.textContent = ` ${separator} `;
         ol.appendChild(sep);
       }
@@ -236,31 +247,27 @@ export class NavigationRenderer {
       activeIndex = null
     } = options;
 
-    // Sidebar container with zTheme utilities
-    const nav = document.createElement('nav');
-    nav.className = `${className} zBg-light zp-3 zrounded`;
+    // Sidebar container with zTheme utilities (using primitive)
+    const nav = createNav({ class: `${className} zBg-light zP-3 zRounded` });
     nav.style.width = '200px';
 
-    const ul = document.createElement('ul');
-    ul.className = 'zd-flex zflex-column zgap-2';
+    const ul = createList(false, { class: 'zD-flex zFlex-column zGap-2' });
     ul.style.listStyle = 'none';
     ul.style.padding = '0';
     ul.style.margin = '0';
 
     items.forEach((item, index) => {
-      const li = document.createElement('li');
-      li.className = 'sidebar-item';
+      const li = createListItem({ class: 'sidebar-item' });
 
-      const a = document.createElement('a');
-      a.href = '#';
+      const a = createLink('#');
       a.textContent = item;
       
-      // zTheme sidebar link: padding, display block, rounded, transition
-      a.className = `sidebar-link zText-darkgray ztext-decoration-none zp-2 zd-block zrounded ztransition`;
+      // zTheme sidebar link: padding, display block, rounded
+      a.className = `sidebar-link zText-dark zText-decoration-none zP-2 zD-block zRounded`;
 
       // Active state with zTheme classes
       if (activeIndex === index) {
-        a.classList.add('zBg-primary', 'zText-white', 'zfont-weight-bold');
+        a.classList.add('zBg-primary', 'zText-white', 'zFw-bold');
       }
 
       // Hover effect via zTheme classes
