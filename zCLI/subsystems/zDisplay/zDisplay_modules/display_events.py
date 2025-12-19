@@ -752,3 +752,35 @@ class zEvents:
             Any: Result from MediaEvents.audio method
         """
         return self.MediaEvents.audio(src, alt_text, caption, open_prompt, indent, color, **kwargs)
+
+    def picture(
+        self,
+        sources: list,
+        fallback: str,
+        alt_text: str = "",
+        caption: str = "",
+        open_prompt: bool = True,
+        indent: int = 0,
+        color: Optional[str] = None,
+        **kwargs
+    ) -> Any:
+        """Display a picture element (responsive image with source selection).
+        
+        Convenience delegate to MediaEvents.picture for backward compatibility.
+        
+        Args:
+            sources: List of source dicts with 'srcset' and 'media' keys
+                    e.g., [{"srcset": "large.jpg", "media": "(min-width: 1024px)"}]
+            fallback: Fallback image path (required, used as default)
+            alt_text: Alternative text for the picture (accessibility)
+            caption: An optional caption for the picture
+            open_prompt: If True (default), displays interactive selection in terminal mode.
+                        Set to False to disable the prompt.
+            indent: Indentation level for terminal output
+            color: Color for terminal output text
+            **kwargs: Additional parameters to pass through to the event
+            
+        Returns:
+            Any: Result from MediaEvents.picture method
+        """
+        return self.MediaEvents.picture(sources, fallback, alt_text, caption, open_prompt, indent, color, **kwargs)

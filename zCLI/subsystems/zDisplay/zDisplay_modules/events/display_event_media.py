@@ -68,9 +68,11 @@ from zCLI import Any, Dict, Optional
 EVENT_IMAGE = "image"
 EVENT_VIDEO = "video"
 EVENT_AUDIO = "audio"
+EVENT_PICTURE = "picture"
 DEFAULT_IMAGE_ICON = "📷"
 DEFAULT_VIDEO_ICON = "🎬"
 DEFAULT_AUDIO_ICON = "🎵"
+DEFAULT_PICTURE_ICON = "🖼️"
 
 class MediaEvents:
     """Event package for displaying media (e.g., images)."""
@@ -340,6 +342,173 @@ class MediaEvents:
                         self.logger.warning(f"[MediaEvents] Failed to open audio: {src}")
             else:
                 # Add break after last line if no button
+                self.zPrimitives.write_line("")
+
+            return None
+
+    def picture(
+        self,
+        sources: list,
+        fallback: str,
+        alt_text: str = "",
+        caption: str = "",
+        open_prompt: bool = True,
+        indent: int = 0,
+        color: Optional[str] = None,
+        **kwargs
+    ) -> Optional[Dict[str, Any]]:
+        """Display a picture element (responsive image with source selection).
+
+        In Bifrost mode, sends a clean event with sources, fallback, alt_text, and caption.
+        In Terminal mode, displays formatted list of sources with interactive selection.
+
+        Args:
+            sources: List of source dicts with 'srcset' and 'media' keys
+                    e.g., [{"srcset": "large.jpg", "media": "(min-width: 1024px)"}]
+            fallback: Fallback image path (required, used as default)
+            alt_text: Alternative text for the picture (accessibility).
+            caption: An optional caption for the picture.
+            open_prompt: If True (default), displays interactive selection in terminal mode.
+                        Set to False to disable the prompt.
+            indent: Indentation level for terminal output.
+            color: Color for terminal output text.
+            **kwargs: Additional parameters to pass through to the event.
+
+        Returns:
+            Optional[Dict[str, Any]]: The event dictionary if sent to GUI,
+                                     or None for terminal mode.
+                                     
+        Terminal Interaction:
+            User can:
+            - Enter number (1-N) + Enter: Opens that source
+            - Just Enter: Opens fallback (default)
+            - 'done' + Enter: Skips, no open
+        """
+        if not sources and not fallback:
+            self.logger.error("[MediaEvents] picture() requires 'sources' or 'fallback' parameter")
+            return None
+
+        # Base event for both modes
+        base_event = {
+            "type": EVENT_PICTURE,
+            "sources": sources,
+            "fallback": fallback,
+            "alt_text": alt_text,
+            "caption": caption,
+            **kwargs
+        }
+
+        if self.display.mode == "zBifrost":
+            # Bifrost gets clean picture data with all sources
+            return self.zPrimitives.send_gui_event(base_event)
+        else:
+            # Terminal mode: format and display with interactive selection
+            indent_str = "  " * indent
+            display_color = color if color else self.display.mycolor
+
+            # Display icon + alt text header with "Responsive Image" indicator
+            header = f"{indent_str}{DEFAULT_PICTURE_ICON} {alt_text} (Responsive Image)" if alt_text else f"{indent_str}{DEFAULT_PICTURE_ICON} Responsive Image"
+            self.BasicOutputs.text(header, indent=0, color=display_color, break_after=False)
+
+            # Build complete list of all sources including fallback
+            all_sources = list(sources) if sources else []
+            
+            # Display numbered sources
+            self.BasicOutputs.text(f"{indent_str}   Sources:", indent=0, color="muted", break_after=False)
+            for idx, src in enumerate(all_sources, 1):
+                media = src.get('media', 'default')
+                srcset = src.get('srcset')
+                self.BasicOutputs.text(
+                    f"{indent_str}   {idx}. {media}: {srcset}",
+                    indent=0,
+                    color="muted",
+                    break_after=False
+                )
+            
+            # Display fallback as the default option (last in list)
+            fallback_idx = len(all_sources) + 1
+            self.BasicOutputs.text(
+                f"{indent_str}   {fallback_idx}. Fallback: {fallback} [default]",
+                indent=0,
+                color="muted",
+                break_after=False
+            )
+
+            # Display caption (if provided)
+            if caption:
+                caption_line = f"{indent_str}   Caption: {caption}"
+                self.BasicOutputs.text(caption_line, indent=0, color="muted", break_after=False)
+
+            # Interactive selection
+            if open_prompt:
+                # Add spacing before prompt
+                self.zPrimitives.write_line("")
+                
+                # Custom input prompt
+                prompt = f"Select source (1-{fallback_idx}, Enter=fallback, 'done'=skip): "
+                
+                try:
+                    # Use read_string primitive directly (like button does)
+                    choice = self.zPrimitives.read_string(prompt).strip().lower()
+                    
+                    # Parse and handle input
+                    selected_src = None
+                    
+                    if choice == 'done':
+                        # User chose to skip
+                        self.logger.info("[MediaEvents] User skipped picture")
+                        return None
+                    elif choice == '':
+                        # Default to fallback
+                        selected_src = fallback
+                        self.logger.info(f"[MediaEvents] User selected fallback (default): {fallback}")
+                    elif choice.isdigit():
+                        # User selected a specific source
+                        idx = int(choice) - 1
+                        if 0 <= idx < len(all_sources):
+                            # Selected a source from the list
+                            selected_src = all_sources[idx].get('srcset')
+                            media = all_sources[idx].get('media', 'unknown')
+                            self.logger.info(f"[MediaEvents] User selected {media}: {selected_src}")
+                        elif idx == len(all_sources):
+                            # Selected fallback explicitly
+                            selected_src = fallback
+                            self.logger.info(f"[MediaEvents] User selected fallback: {fallback}")
+                        else:
+                            # Invalid index
+                            self.logger.warning(f"[MediaEvents] Invalid choice: {choice} (out of range)")
+                            self.BasicOutputs.text(
+                                f"{indent_str}   Invalid choice. Please enter 1-{fallback_idx}.",
+                                indent=0,
+                                color="warning",
+                                break_after=False
+                            )
+                            return None
+                    else:
+                        # Invalid input
+                        self.logger.warning(f"[MediaEvents] Invalid input: {choice}")
+                        self.BasicOutputs.text(
+                            f"{indent_str}   Invalid input. Please enter a number, press Enter, or type 'done'.",
+                            indent=0,
+                            color="warning",
+                            break_after=False
+                        )
+                        return None
+                    
+                    # Open selected source
+                    if selected_src:
+                        result = self.display.zcli.open.open_image(selected_src)
+                        if result == "zBack":
+                            self.logger.info(f"[MediaEvents] Successfully opened: {selected_src}")
+                        else:
+                            self.logger.warning(f"[MediaEvents] Failed to open: {selected_src}")
+                
+                except KeyboardInterrupt:
+                    # User cancelled
+                    self.logger.info("[MediaEvents] User cancelled picture selection")
+                    return None
+            else:
+                # Add break after last line if no prompt
                 self.zPrimitives.write_line("")
 
             return None
