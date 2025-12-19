@@ -59,7 +59,7 @@
  * ```
  */
 
-import { createElement, setAttributes } from '../utils/dom_utils.js';
+import { createElement, setAttributes } from '../../utils/dom_utils.js';
 
 // ─────────────────────────────────────────────────────────────────
 // Input Element (18 Types)

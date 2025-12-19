@@ -48,7 +48,7 @@
  * ```
  */
 
-import { createElement, setAttributes } from '../utils/dom_utils.js';
+import { createElement, setAttributes } from '../../utils/dom_utils.js';
 
 // ─────────────────────────────────────────────────────────────────
 // Button Element
