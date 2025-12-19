@@ -101,6 +101,28 @@ class zFunc:
             self.logger.error("zFunc execution error: %s", e, exc_info=True)
             raise
 
+    def zNow(self, format_type: str = "datetime", custom_format=None):
+        """
+        Get current date/time formatted per zConfig.
+        
+        Convenience wrapper for the zNow built-in function.
+        
+        Args:
+            format_type: "date", "time", or "datetime" (default: "datetime")
+            custom_format: Override config format (e.g., "yyyy-mm-dd")
+            
+        Returns:
+            Formatted date/time string
+            
+        Examples:
+            >>> zcli.zfunc.zNow()  # "19122025 14:30:00"
+            >>> zcli.zfunc.zNow('date')  # "19122025"
+            >>> zcli.zfunc.zNow('time')  # "14:30:00"
+            >>> zcli.zfunc.zNow(custom_format='yyyy-mm-dd')  # "2025-12-19"
+        """
+        from .zFunc_modules.builtin_functions import zNow
+        return zNow(format_type=format_type, custom_format=custom_format, zcli=self.zcli)
+
     def _parse_args_with_display(self, arg_str, zContext):
         """Parse arguments with display header."""
         self.display.zDeclare("Parse Arguments", color=self.mycolor, indent=1, style="single")

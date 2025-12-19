@@ -226,7 +226,7 @@ import typing
 import uuid
 import webbrowser
 from collections import OrderedDict
-from datetime import datetime
+from datetime import datetime, date, time, timedelta
 from pathlib import Path
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple, Union
 from urllib.parse import urlparse
@@ -312,9 +312,9 @@ __all__: List[str] = [
     "zCLI",
 
     # System modules
-    "asyncio", "datetime", "getpass", "importlib", "inspect", "json", 
+    "asyncio", "datetime", "date", "time", "timedelta", "getpass", "importlib", "inspect", "json", 
     "logging", "os", "platform", "platformdirs", "re", "requests", "secrets",
-    "shutil", "socket", "sqlite3", "subprocess", "sys", "time", "traceback",
+    "shutil", "socket", "sqlite3", "subprocess", "sys", "traceback",
     "typing", "uuid", "webbrowser", "websockets", "ws_serve", "WebSocketServerProtocol",
     "ws_exceptions", "yaml", "OrderedDict", "Path", "urlparse",
 

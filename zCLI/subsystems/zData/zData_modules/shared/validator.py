@@ -377,6 +377,11 @@ class DataValidator:
             FORMAT_EMAIL: self._validate_email,
             FORMAT_URL: self._validate_url,
             FORMAT_PHONE: self._validate_phone,
+            # TODO: Add date/time/datetime format validators
+            # 'date': self._validate_date,
+            # 'time': self._validate_time,
+            # 'datetime': self._validate_datetime,
+            # These should validate against zConfig time format settings
         }
 
     def validate_field(

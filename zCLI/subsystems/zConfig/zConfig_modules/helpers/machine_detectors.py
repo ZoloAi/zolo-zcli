@@ -118,6 +118,11 @@ DEFAULT_WINDOWS_AUDIO_PLAYER = "Music"
 DEFAULT_SHELL = "/bin/sh"
 DEFAULT_TIMEZONE = "system"
 
+# Time/Date Format Defaults
+DEFAULT_TIME_FORMAT = "HH:MM:SS"
+DEFAULT_DATE_FORMAT = "ddmmyyyy"
+DEFAULT_DATETIME_FORMAT = "ddmmyyyy HH:MM:SS"
+
 # YAML template for machine config file
 MACHINE_CONFIG_TEMPLATE = """
 # zolo-zcli Machine Configuration
@@ -154,6 +159,11 @@ zMachine:
   shell: "{shell}"              # bash, zsh, fish, etc.
   lang: "{lang}"
   timezone: "{timezone}"
+  
+  # Time/Date Formatting (customize to your preference!)
+  time_format: "{time_format}"          # HH:MM:SS, HH:MM, etc.
+  date_format: "{date_format}"          # ddmmyyyy, mmddyyyy, yyyy-mm-dd, etc.
+  datetime_format: "{datetime_format}"  # Combined format
 
   # Paths (auto-detected)
   home: "{home}"
@@ -1661,6 +1671,9 @@ def auto_detect_machine(log_level: Optional[str] = None, is_production: bool = F
         "shell": os.getenv("SHELL", DEFAULT_SHELL),
         "lang": os.getenv("LANG", "unknown"),       # System language
         "timezone": os.getenv("TZ", DEFAULT_TIMEZONE),      # Timezone if set
+        "time_format": DEFAULT_TIME_FORMAT,         # Time format default
+        "date_format": DEFAULT_DATE_FORMAT,         # Date format default
+        "datetime_format": DEFAULT_DATETIME_FORMAT, # DateTime format default
         "home": str(Path.home()),                   # User's home directory
 
         # System capabilities

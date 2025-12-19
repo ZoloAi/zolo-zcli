@@ -131,6 +131,12 @@ from .func_args import parse_arguments, split_arguments
 from .func_resolver import resolve_callable
 
 # ============================================================================
+# Tier 1: Foundation - Built-in Functions
+# ============================================================================
+
+from .builtin_functions import zNow
+
+# ============================================================================
 # Public API
 # ============================================================================
 
@@ -138,4 +144,5 @@ __all__ = [
     "parse_arguments",    # Argument parsing with context injection (5 special types)
     "split_arguments",    # Argument string splitting with bracket matching
     "resolve_callable",   # Function resolution and loading via importlib
+    "zNow",               # Built-in: Get current date/time formatted per zConfig
 ]

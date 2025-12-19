@@ -387,6 +387,11 @@ class BasicOutputs:
                      zSystem (all system UI), zAuth (auth prompts), 
                      TimeBased (progress headers)
         """
+        # NEW: Resolve &function calls (e.g., &zNow, &zNow('date'))
+        if "&" in label:
+            from zCLI.subsystems.zParser.parser_modules.parser_functions import resolve_function_call
+            label = resolve_function_call(label, self.display.zcli)
+        
         # Apply semantic rendering if specified (terminal mode only)
         if semantic and self.display.mode in ["Terminal", "Walker", ""]:
             label = self._apply_semantic(label, semantic)
@@ -527,6 +532,11 @@ class BasicOutputs:
         """
         # Handle backward compatibility: break_after overrides pause if provided
         should_break = break_after if break_after is not None else pause
+        
+        # NEW: Resolve &function calls (e.g., &zNow, &zNow('date'))
+        if "&" in content:
+            from zCLI.subsystems.zParser.parser_modules.parser_functions import resolve_function_call
+            content = resolve_function_call(content, self.display.zcli)
         
         # Apply semantic rendering if specified (terminal mode only)
         if semantic and self.display.mode in ["Terminal", "Walker", ""]:
