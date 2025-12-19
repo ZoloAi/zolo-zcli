@@ -505,67 +505,19 @@
           }
         },
         
-        addDarkModeToggle: (navElement) => {
-          if (!navElement) {
-            console.warn('[HookManager] No navbar element provided for dark mode toggle');
-            return;
-          }
-
-          // Check if toggle already exists
-          if (navElement.querySelector('.zTheme-toggle')) {
-            return;
-          }
-
-          // Create toggle button
-          const toggleBtn = document.createElement('button');
-          toggleBtn.className = 'zBtn zBtn-sm zBtn-outline-secondary zTheme-toggle';
-          toggleBtn.setAttribute('aria-label', 'Toggle dark mode');
-          toggleBtn.style.marginLeft = 'auto'; // Push to the right
+        addDarkModeToggle: async (navElement) => {
+          // Use DarkModeToggle widget (extracted for modularity)
+          const { DarkModeToggle } = await import('./widgets/dark_mode_toggle.js');
+          const darkModeWidget = new DarkModeToggle(this.logger);
           
-          // Get current theme
-          const isDark = localStorage.getItem('zTheme-mode') === 'dark';
-          const iconColor = isDark ? 'color: #ffffff;' : '';  // White in dark mode
-          toggleBtn.innerHTML = isDark 
-            ? `<i class="bi bi-sun-fill" style="font-size: 1.2rem; ${iconColor}"></i>` 
-            : `<i class="bi bi-moon-fill" style="font-size: 1.2rem; ${iconColor}"></i>`;
-          
-          // Add click handler
-          toggleBtn.addEventListener('click', () => {
-            const currentTheme = localStorage.getItem('zTheme-mode');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            
-            // Save preference
-            localStorage.setItem('zTheme-mode', newTheme);
-            
+          // Create toggle with theme change callback
+          darkModeWidget.create(navElement, (newTheme) => {
             // Apply theme
             this.hooks._applyDarkMode(newTheme === 'dark');
             
-            // Update button icon with correct color
-            const iconColor = newTheme === 'dark' ? 'color: #ffffff;' : '';
-            toggleBtn.innerHTML = newTheme === 'dark'
-              ? `<i class="bi bi-sun-fill" style="font-size: 1.2rem; ${iconColor}"></i>`
-              : `<i class="bi bi-moon-fill" style="font-size: 1.2rem; ${iconColor}"></i>`;
-            
             // Call onThemeChange hook if registered
             this.hooks.call('onThemeChange', newTheme);
-            
-            this.logger.log(`[HookManager] Theme switched to: ${newTheme}`);
           });
-
-          // Find the navbar-nav ul and append toggle next to it
-          const navCollapse = navElement.querySelector('.zNavbar-collapse');
-          if (navCollapse) {
-            // Create a container for the toggle (follows zTheme navbar structure)
-            const toggleContainer = document.createElement('div');
-            toggleContainer.className = 'zNavbar-nav zms-auto';
-            toggleContainer.appendChild(toggleBtn);
-            navCollapse.appendChild(toggleContainer);
-          } else {
-            // Fallback: just append to navbar
-            navElement.appendChild(toggleBtn);
-          }
-
-          this.logger.log('[HookManager] Added dark mode toggle to navbar');
         }
       };
 
@@ -581,140 +533,36 @@
     /**
      * Register default hooks for widget events
      * 
-     * NOTE: Progress bar and spinner hooks removed as the renderer methods
-     * (renderProgressBar, updateProgress, removeProgress, renderSpinner, removeSpinner)
-     * are not yet implemented. These will be added back in Task 9 when we implement
-     * and test the auto-rendering methods.
-     * 
-     * For now, users can implement these hooks manually if needed.
+     * Registers hooks for progress bars, spinners, and swipers.
+     * These hooks use the new modular renderer architecture.
      */
     _registerDefaultWidgetHooks() {
-      // Placeholder for future widget hooks
-      // Will be implemented in Task 9: Test Auto-Rendering Methods
+      // Widget hooks are now registered in the widget handler (lines ~1900+)
+      // This method is kept for backward compatibility
     }
     
-    _registerCacheHooks() {
-      // v1.6.0: Register hook to populate session from connection_info
-      this.hooks.register('onConnectionInfo', async (data) => {
-        try {
-          if (!this.session) {
-            this.logger.log('[Cache] Session not initialized yet, skipping');
-            return;
-          }
-          
-          const sessionData = data.session;
-          if (!sessionData) {
-            this.logger.log('[Cache] No session data in connection_info');
-            return;
-          }
-          
-          // Get OLD auth state before updating
-          const wasAuthenticated = this.session.isAuthenticated();
-          const oldSessionHash = this.session.getHash();
-          
-          // Populate session with backend data
-          if (sessionData.authenticated && sessionData.session_hash) {
-            await this.session.setPublicData({
-              username: sessionData.username,
-              role: sessionData.role,
-              session_hash: sessionData.session_hash,
-              app: sessionData.active_app
-            });
-            this.logger.log(`[Cache] ✅ Session populated: ${sessionData.username} (${sessionData.role})`);
-          } else {
-            this.logger.log('[Cache] User not authenticated, session remains anonymous');
-          }
-          
-          // Get NEW auth state after updating
-          const isNowAuthenticated = this.session.isAuthenticated();
-          const newSessionHash = this.session.getHash();
-          
-          // v1.6.0: If auth state changed or session_hash changed, fetch fresh navbar (RBAC-aware)
-          if (wasAuthenticated !== isNowAuthenticated || oldSessionHash !== newSessionHash) {
-            console.log('[NavBar] Auth state changed - fetching fresh navbar from API');
-            await this._fetchAndPopulateNavBar();
-            console.log('[NavBar] ✅ Navbar updated after auth change');
-          }
-        } catch (error) {
-          this.logger.error('[Cache] Error populating session:', error);
-        }
-      });
-      
-      // v1.6.0: Offline-first - Handle disconnect + Badge update (combined hook)
-      this.hooks.register('onDisconnected', async (reason) => {
-        try {
-          console.log('[Cache] Connection lost, entering offline mode');
-          
-          // Update badge (v1.6.0: Combined with cache hook to avoid conflicts)
-          this._updateBadgeState('disconnected');
-          
-          // Cache zVaF content for offline access (badge/navbar are dynamic, re-populated on page load)
-          if (this.cache && typeof document !== 'undefined') {
-            const currentPage = window.location.pathname;
-            const contentArea = this._zVaFElement;
-            if (contentArea) {
-              await this.cache.set(currentPage, contentArea.outerHTML, 'rendered');
-              console.log(`[Cache] ✅ Cached content for offline: ${currentPage}`);
-            }
-          }
-          
-          // Disable forms (prevent data loss)
-          this._disableForms();
-          
-        } catch (error) {
-          this.logger.error('[Cache] Error handling disconnect:', error);
-        }
-      });
-      
-      // v1.6.0: Offline-first - Handle reconnect + Badge update (combined hook)
-      this.hooks.register('onConnected', async (data) => {
-        try {
-          console.log('[Cache] Connection restored, exiting offline mode');
-          
-          // Update badge (v1.6.0: Combined with cache hook to avoid conflicts)
-          this._updateBadgeState('connected');
-          
-          // Re-enable forms
-          this._enableForms();
-          
-        } catch (error) {
-          console.error('[Cache] Error handling reconnect:', error);
-        }
-      });
+    async _registerCacheHooks() {
+      // Delegate to CacheManager
+      await this._ensureCacheManager();
+      return this.cacheManager.registerCacheHooks();
     }
     
     /**
      * Disable all forms during offline mode (v1.6.0)
      * @private
      */
-    _disableForms() {
-      if (typeof document === 'undefined') return;
-      
-      const forms = document.querySelectorAll('form');
-      forms.forEach(form => {
-        form.setAttribute('data-offline-disabled', 'true');
-        const inputs = form.querySelectorAll('input, textarea, select, button');
-        inputs.forEach(input => input.disabled = true);
-      });
-      
-      this.logger.log('[Offline] ⚠️  Forms disabled (offline mode)');
+    async _disableForms() {
+      await this._ensureCacheManager();
+      return this.cacheManager.disableForms();
     }
     
     /**
      * Re-enable forms after reconnecting (v1.6.0)
      * @private
      */
-    _enableForms() {
-      if (typeof document === 'undefined') return;
-      
-      const forms = document.querySelectorAll('form[data-offline-disabled]');
-      forms.forEach(form => {
-        form.removeAttribute('data-offline-disabled');
-        const inputs = form.querySelectorAll('input, textarea, select, button');
-        inputs.forEach(input => input.disabled = false);
-      });
-      
-      this.logger.log('[Offline] ✅ Forms re-enabled (online mode)');
+    async _enableForms() {
+      await this._ensureCacheManager();
+      return this.cacheManager.enableForms();
     }
     
     /**
@@ -723,69 +571,17 @@
      * @private
      */
     async _initCacheSystem() {
-      try {
-        // Check if running in browser
-        if (typeof window === 'undefined') {
-          this.logger.log('[Cache] Skipping (not in browser)');
-          return;
-        }
-        
-        this.logger.log('[Cache] Loading cache modules...');
-        
-        // Dynamically load cache modules (maintains single-import philosophy)
-        await this._loadScript(`${this._baseUrl}core/storage_manager.js`);
-        await this._loadScript(`${this._baseUrl}core/session_manager.js`);
-        await this._loadScript(`${this._baseUrl}core/cache_orchestrator.js`);
-        
-        // Verify modules loaded
-        if (typeof window.StorageManager === 'undefined' || 
-            typeof window.SessionManager === 'undefined' || 
-            typeof window.CacheOrchestrator === 'undefined') {
-          this.logger.log('[Cache] Module loading failed, cache disabled');
-          return;
-        }
-        
-        this.logger.log('[Cache] ✅ Cache modules loaded');
-        
-        // Initialize storage
-        this.storage = new window.StorageManager('zBifrost');
-        await this.storage.init();
-        this.logger.log('[Cache] ✅ Storage initialized');
-        
-        // Initialize session
-        this.session = new window.SessionManager(this.storage);
-        await this.session.init();
-        this.logger.log('[Cache] ✅ Session initialized');
-        
-        // Initialize cache orchestrator
-        this.cache = new window.CacheOrchestrator(this.storage, this.session);
-        await this.cache.init();
-        this.logger.log('[Cache] ✅ Cache orchestrator initialized (5 tiers)');
-        
-      } catch (error) {
-        this.logger.error('[Cache] Initialization error:', error);
-        // Non-fatal: cache is optional, BifrostClient will work without it
-      }
+      await this._ensureCacheManager();
+      return this.cacheManager.initCacheSystem();
     }
     
     /**
      * Dynamically load a script (v1.6.0)
      * @private
      */
-    _loadScript(src) {
-      return new Promise((resolve, reject) => {
-        // Check if already loaded
-        if (document.querySelector(`script[src="${src}"]`)) {
-          resolve();
-          return;
-        }
-        
-        const script = document.createElement('script');
-        script.src = src;
-        script.onload = () => resolve();
-        script.onerror = () => reject(new Error(`Failed to load ${src}`));
-        document.head.appendChild(script);
-      });
+    async _loadScript(src) {
+      await this._ensureCacheManager();
+      return this.cacheManager.loadScript(src);
     }
 
     /**
@@ -845,89 +641,9 @@
      * @private
      */
     async _loadDeclarativeUI() {
-      try {
-        this.logger.log('🎨 Loading declarative UI...');
-        
-        // Construct URL from zVaFolder and zVaFile
-        const folder = this.options.zVaFolder || 'UI';
-        const file = this.options.zVaFile;
-        const block = this.options.zBlock || 'zVaF';
-        
-        // Convert zPath (@.UI) to URL path
-        const urlPath = folder.startsWith('@.') ? folder.substring(2) : folder;
-        const yamlUrl = `/${urlPath}/${file}.yaml`;
-        
-        this.logger.log(`📥 Fetching: ${yamlUrl}`);
-        
-        // Fetch YAML file
-        const response = await fetch(yamlUrl);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch ${yamlUrl}: ${response.status} ${response.statusText}`);
-        }
-        
-        const yamlText = await response.text();
-        this.logger.log('✅ YAML fetched, parsing...');
-        
-        // Parse YAML (using js-yaml from CDN)
-        if (typeof jsyaml === 'undefined') {
-          throw new Error('js-yaml library not loaded');
-        }
-        
-        const yamlData = jsyaml.load(yamlText);
-        this.logger.log('✅ YAML parsed:', yamlData);
-        
-        // Check for meta.zNavBar and render it at the top (website-style navigation)
-        if (yamlData.meta && yamlData.meta.zNavBar) {
-          this.logger.log('🔗 Resolving meta.zNavBar...');
-          
-          // Resolve navbar: true → global, array → local override
-          let navbarItems = yamlData.meta.zNavBar;
-          
-          if (navbarItems === true) {
-            // Opt-in to global navbar from zuiConfig
-            console.log('[BifrostClient] 🎯 meta.zNavBar: true, checking zuiConfig...');
-            console.log('[BifrostClient] 🎯 this.zuiConfig:', this.zuiConfig);
-            
-            if (this.zuiConfig && this.zuiConfig.zNavBar) {
-              navbarItems = this.zuiConfig.zNavBar;
-              console.log('[BifrostClient] ✅ Using global navbar from config:', navbarItems);
-              this.logger.log('✅ Using global navbar from config:', navbarItems);
-            } else {
-              console.warn('[BifrostClient] ⚠️ meta.zNavBar: true but no global navbar in zuiConfig');
-              this.logger.warn('[BifrostClient] meta.zNavBar: true but no global navbar in zuiConfig');
-              navbarItems = null;
-            }
-          } else if (Array.isArray(navbarItems)) {
-            console.log('[BifrostClient] ✅ Using local navbar override:', navbarItems);
-            this.logger.log('✅ Using local navbar override:', navbarItems);
-          } else {
-            console.warn('[BifrostClient] ⚠️ Invalid meta.zNavBar value:', navbarItems);
-            this.logger.warn('[BifrostClient] Invalid meta.zNavBar value:', navbarItems);
-            navbarItems = null;
-          }
-          
-          if (navbarItems && Array.isArray(navbarItems)) {
-            await this._renderMetaNavBar(navbarItems);
-          }
-        }
-        
-        // Extract the specified block
-        const blockData = yamlData[block];
-        if (!blockData) {
-          throw new Error(`Block "${block}" not found in ${yamlUrl}`);
-        }
-        
-        this.logger.log(`✅ Rendering block: ${block}`);
-        
-        // Render the block declaratively (preserves _zClass and all styling)
-        await this._renderBlock(blockData);
-        
-        this.logger.log('✅ Declarative UI loaded successfully');
-        
-      } catch (error) {
-        this.logger.error('Failed to load declarative UI:', error);
-        throw error;
-      }
+      // Delegate to DeclarativeUILoader
+      await this._ensureDeclarativeUILoader();
+      return this.declarativeUILoader.loadDeclarativeUI();
     }
 
     /**
@@ -935,44 +651,9 @@
      * @private
      */
     async _renderBlock(blockData) {
-      // Use stored reference (set by _initZVaFElements)
-      const contentElement = this._zVaFElement;
-      if (!contentElement) {
-        throw new Error('zVaF element not initialized');
-      }
-      
-      // Clear existing content
-      contentElement.innerHTML = '';
-      
-      // Check if blockData has block-level metadata (_zClass) for cascading
-      let blockWrapper = contentElement;
-      if (blockData && typeof blockData === 'object' && blockData._zClass) {
-        // Create wrapper div for the entire block with block-level classes
-        const blockLevelDiv = document.createElement('div');
-        const blockName = this.options.zBlock || 'zBlock';
-        
-        // Apply block-level classes
-        const classes = Array.isArray(blockData._zClass)
-          ? blockData._zClass
-          : blockData._zClass.split(',').map(c => c.trim());
-        blockLevelDiv.className = classes.join(' ');
-        blockLevelDiv.setAttribute('data-zblock', blockName);
-        
-        contentElement.appendChild(blockLevelDiv);
-        blockWrapper = blockLevelDiv;  // Children render inside the block wrapper
-        
-        this.logger.log(`[BifrostClient] Created block-level wrapper with classes: ${blockData._zClass}`);
-      }
-      
-      // Recursively render all items (await for navigation renderer loading)
-      await this._renderItems(blockData, blockWrapper);
-      
-      // Enhance block-level zCard if present
-      if (blockWrapper !== contentElement && blockWrapper.classList.contains('zCard')) {
-        const cardRenderer = await this._ensureCardRenderer();
-        cardRenderer.enhanceCard(blockWrapper);
-        this.logger.log('[BifrostClient] Enhanced block-level zCard');
-      }
+      // Delegate to ZDisplayOrchestrator
+      await this._ensureZDisplayOrchestrator();
+      return this.zDisplayOrchestrator.renderBlock(blockData);
     }
 
     /**
@@ -981,80 +662,9 @@
      * @private
      */
     async _renderChunkProgressive(message) {
-      try {
-        console.log('[BifrostClient] 🎬 _renderChunkProgressive called with:', message);
-        const {chunk_num, keys, data, is_gate} = message;
-        
-        console.log(`[BifrostClient] 📦 Rendering chunk #${chunk_num}: ${keys.join(', ')}`);
-        this.logger.log(`[BifrostClient] 📦 Rendering chunk #${chunk_num}: ${keys.join(', ')}`);
-        if (is_gate) {
-          this.logger.log(`[BifrostClient] 🚪 Chunk contains gate - backend will stop if gate fails`);
-        }
-        
-        // Check if we're rendering into a dashboard panel (zDash context)
-        const dashboardPanelContent = document.getElementById('dashboard-panel-content');
-        const contentDiv = dashboardPanelContent || this._zVaFElement;
-        
-        if (!contentDiv) {
-          throw new Error('zVaF element not initialized. Ensure _initZVaFElements() was called.');
-        }
-        
-        // Check if data has block-level metadata (_zClass, _zStyle, etc.)
-        const hasBlockMetadata = data && Object.keys(data).some(k => k.startsWith('_'));
-        
-        // Determine the target container for rendering
-        let targetContainer = contentDiv;
-        
-        // ALWAYS clear loading state on first chunk (regardless of metadata)
-        if (chunk_num === 1) {
-          contentDiv.innerHTML = '';
-          this.logger.log(`[BifrostClient] 📦 Cleared loading state for chunk #1`);
-        }
-        
-        if (hasBlockMetadata && chunk_num === 1) {
-          // First chunk with block metadata: create a wrapper for the entire block
-          const blockWrapper = document.createElement('div');
-          blockWrapper.setAttribute('data-zblock', 'progressive');
-          
-          // Apply block-level metadata to wrapper
-          for (const [key, value] of Object.entries(data)) {
-            if (key === '_zClass' && value) {
-              blockWrapper.className = value;
-            } else if (key === '_zStyle' && value) {
-              blockWrapper.setAttribute('style', value);
-            }
-          }
-          
-          contentDiv.appendChild(blockWrapper);
-          targetContainer = blockWrapper;
-          this.logger.log(`[BifrostClient] 📦 Created block wrapper with metadata for progressive rendering`);
-        } else if (hasBlockMetadata && chunk_num > 1) {
-          // Subsequent chunks: find existing block wrapper
-          const existingWrapper = contentDiv.querySelector('[data-zblock="progressive"]');
-          if (existingWrapper) {
-            targetContainer = existingWrapper;
-            this.logger.log(`[BifrostClient] 📦 Using existing block wrapper for chunk #${chunk_num}`);
-          }
-        }
-        
-        // Render YAML data using existing rendering pipeline
-        // This preserves all styling, forms, zDisplay events, etc.
-        if (data && typeof data === 'object') {
-          await this._renderItems(data, targetContainer);
-          this.logger.log(`[BifrostClient] ✅ Chunk #${chunk_num} rendered from YAML (${keys.length} keys)`);
-        } else {
-          this.logger.warn(`[BifrostClient] ⚠️ Chunk #${chunk_num} has no YAML data to render`);
-        }
-        
-        // If this is a gate chunk, log that we're waiting for backend
-        if (is_gate) {
-          this.logger.log('[BifrostClient] ⏸️  Waiting for gate completion (backend controls flow)');
-        }
-        
-      } catch (error) {
-        this.logger.error('Failed to render chunk:', error);
-        throw error;
-      }
+      // Delegate to ZDisplayOrchestrator
+      await this._ensureZDisplayOrchestrator();
+      return this.zDisplayOrchestrator.renderChunkProgressive(message);
     }
 
     /**
@@ -1062,122 +672,9 @@
      * @private
      */
     async _renderItems(data, parentElement) {
-      if (!data || typeof data !== 'object') {
-        return;
-      }
-      
-      // Check if parent already has block-level metadata applied (data-zblock attribute)
-      const parentIsBlockWrapper = parentElement.hasAttribute && parentElement.hasAttribute('data-zblock');
-      
-      // Extract metadata first (underscore-prefixed keys like _zClass)
-      const metadata = {};
-      for (const [key, value] of Object.entries(data)) {
-        if (key.startsWith('_')) {
-          metadata[key] = value;
-        }
-      }
-      
-      // Iterate through all keys in this level
-      for (const [key, value] of Object.entries(data)) {
-        // Handle metadata keys BEFORE skipping
-        if (key.startsWith('~')) {
-          // Navigation metadata: ~zNavBar*
-          if (key.startsWith('~zNavBar')) {
-            await this._renderNavBar(value, parentElement);
-            continue;
-          }
-          // Other metadata keys - skip for now
-          continue;
-        }
-        
-        // Skip internal metadata keys (underscore prefix)
-        if (key.startsWith('_')) {
-          continue;
-        }
-        
-        this.logger.log(`Rendering item: ${key}`, value);
-        
-        // Check if this value has its own metadata (for nested _zClass support)
-        let itemMetadata = {};
-        
-        // Only apply parent metadata if parent is NOT a block wrapper (avoids double-applying)
-        if (!parentIsBlockWrapper && Object.keys(metadata).length > 0) {
-          itemMetadata = metadata;
-        }
-        
-        // Value's own metadata always takes precedence
-        if (value && typeof value === 'object' && !Array.isArray(value)) {
-          if (value._zClass) {
-            itemMetadata = { _zClass: value._zClass };
-            this.logger.log(`  Found nested metadata for ${key}:`, itemMetadata);
-          }
-        }
-        
-        // Create container wrapper for this zKey (zTheme responsive layout)
-        const containerDiv = this._createContainer(key, itemMetadata);
-        
-        // Give container a data attribute for debugging
-        containerDiv.setAttribute('data-zkey', key);
-        
-        // Handle list/array values (sequential zDisplay events or zDialog forms)
-        if (Array.isArray(value)) {
-          this.logger.log(`✅ Detected list/array for key: ${key}, items: ${value.length}`);
-          // Iterate through list items and render each one
-          for (const item of value) {
-            if (item && item.zDisplay) {
-              this.logger.log(`  ✅ Rendering zDisplay from list item:`, item.zDisplay);
-              const element = await this._renderZDisplayEvent(item.zDisplay);
-              if (element) {
-                this.logger.log(`  ✅ Appended element to container`);
-                containerDiv.appendChild(element);
-              }
-            } else if (item && item.zDialog) {
-              this.logger.log(`  ✅ Rendering zDialog from list item:`, item.zDialog);
-              const formRenderer = await this._ensureFormRenderer();
-              const formElement = formRenderer.renderForm(item.zDialog);
-              if (formElement) {
-                this.logger.log(`  ✅ Appended zDialog form to container`);
-                containerDiv.appendChild(formElement);
-              }
-            } else if (item && typeof item === 'object') {
-              // Nested object in list - recurse
-              await this._renderItems(item, containerDiv);
-            }
-          }
-        }
-        // Check if this has a direct zDisplay event
-        else if (value && value.zDisplay) {
-          const element = await this._renderZDisplayEvent(value.zDisplay);
-          if (element) {
-            containerDiv.appendChild(element);
-          }
-        }
-        // Check if this has a direct zDialog form
-        else if (value && value.zDialog) {
-          this.logger.log(`  ✅ Rendering zDialog from direct value:`, value.zDialog);
-          const formRenderer = await this._ensureFormRenderer();
-          const formElement = formRenderer.renderForm(value.zDialog);
-          if (formElement) {
-            containerDiv.appendChild(formElement);
-          }
-        }
-        // If it's an object with nested keys (implicit wizard), recurse
-        else if (value && typeof value === 'object') {
-          // Nested structure - render children recursively
-          await this._renderItems(value, containerDiv);
-        }
-        
-        // Enhance zCard containers with proper zTheme structure
-        if (containerDiv.children.length > 0) {
-          if (containerDiv.classList.contains('zCard')) {
-            const cardRenderer = await this._ensureCardRenderer();
-            cardRenderer.enhanceCard(containerDiv);
-          }
-          
-          // Append container to parent
-          parentElement.appendChild(containerDiv);
-        }
-      }
+      // Delegate to ZDisplayOrchestrator
+      await this._ensureZDisplayOrchestrator();
+      return this.zDisplayOrchestrator.renderItems(data, parentElement);
     }
 
     /**
@@ -1185,33 +682,10 @@
      * Supports _zClass metadata for customization
      * @private
      */
-    _createContainer(zKey, metadata) {
-      const container = document.createElement('div');
-      
-      // Check for custom classes in metadata
-      if (metadata._zClass !== undefined) {
-        if (metadata._zClass === '' || metadata._zClass === null) {
-          // Empty string or null = no container classes (opt-out)
-          container.className = '';
-        } else if (Array.isArray(metadata._zClass)) {
-          // Array of classes
-          container.className = metadata._zClass.join(' ');
-        } else if (typeof metadata._zClass === 'string') {
-          // String: comma-separated or space-separated classes
-          const classes = metadata._zClass.includes(',') 
-            ? metadata._zClass.split(',').map(c => c.trim())
-            : metadata._zClass.split(' ').filter(c => c.trim());
-          container.className = classes.join(' ');
-        }
-      } else {
-        // Default: zContainer for responsive layout
-        container.className = 'zContainer';
-      }
-      
-      // Add data attribute for debugging/testing
-      container.setAttribute('data-zkey', zKey);
-      
-      return container;
+    async _createContainer(zKey, metadata) {
+      // Delegate to ZDisplayOrchestrator
+      await this._ensureZDisplayOrchestrator();
+      return this.zDisplayOrchestrator.createContainer(zKey, metadata);
     }
 
     /**
@@ -1224,35 +698,9 @@
      * @returns {Promise<string>} Navbar HTML
      */
     async _renderMetaNavBarHTML(items) {
-      console.log('[BifrostClient] 🎯 _renderMetaNavBarHTML called with items:', items);
-      
-      if (!Array.isArray(items) || items.length === 0) {
-        console.warn('[BifrostClient] ⚠️ No navbar items provided');
-        return '';
-      }
-
-      try {
-        // Load navigation renderer
-        const navRenderer = await this._ensureNavigationRenderer();
-        
-        // Render navbar element
-        const navElement = navRenderer.renderNavBar(items, {
-          className: 'zcli-navbar-meta',
-          theme: 'light',
-          href: (item) => {
-            // Strip modifiers (^ for bounce-back, ~ for anchor) from URL
-            const cleanItem = item.replace(/^[\^~]+/, '');
-            return `/${cleanItem}`;
-          },
-          brand: this.options.title
-        });
-        
-        // Return outerHTML (will be set as innerHTML on <zNavBar> element)
-        return navElement ? navElement.outerHTML : '';
-      } catch (error) {
-        console.error('[BifrostClient] Failed to render navbar HTML:', error);
-        return '';
-      }
+      // Delegate to ZDisplayOrchestrator
+      await this._ensureZDisplayOrchestrator();
+      return this.zDisplayOrchestrator.renderMetaNavBarHTML(items);
     }
 
     /**
@@ -1260,34 +708,9 @@
      * @private
      */
     async _renderNavBar(items, parentElement) {
-      if (!Array.isArray(items) || items.length === 0) {
-        this.logger.warn('[BifrostClient] ~zNavBar* has no items or is not an array');
-        return;
-      }
-
-      try {
-        // Load navigation renderer
-        const navRenderer = await this._ensureNavigationRenderer();
-        
-        // Render navbar with zTheme zNavbar component
-        const navElement = navRenderer.renderNavBar(items, {
-          theme: 'light'
-        });
-
-        if (navElement) {
-          parentElement.appendChild(navElement);
-          
-          // Re-initialize zTheme collapse now that navbar is in DOM
-          if (window.zTheme && typeof window.zTheme.initCollapse === 'function') {
-            window.zTheme.initCollapse();
-            this.logger.log('[BifrostClient] Re-initialized zTheme collapse for navbar');
-          }
-          
-          this.logger.log('[BifrostClient] Rendered navigation bar with items:', items);
-        }
-      } catch (error) {
-        this.logger.error('[BifrostClient] Failed to render navigation bar:', error);
-      }
+      // Delegate to ZDisplayOrchestrator
+      await this._ensureZDisplayOrchestrator();
+      return this.zDisplayOrchestrator.renderNavBar(items, parentElement);
     }
 
     /**
@@ -1295,39 +718,9 @@
      * @private
      */
     async _renderZDisplayEvent(eventData) {
-      const event = eventData.event;
-      this.logger.log(`[_renderZDisplayEvent] Rendering event: ${event}`, eventData);
-      let element;
-      
-      switch (event) {
-        case 'text':
-          // Use modular TypographyRenderer for text
-          const textRenderer = await this._ensureTypographyRenderer();
-          element = textRenderer.renderText(eventData);
-          this.logger.log(`[_renderZDisplayEvent] Rendered text element`);
-          break;
-          
-        case 'header':
-          // Use modular TypographyRenderer for headers
-          const headerRenderer = await this._ensureTypographyRenderer();
-          element = headerRenderer.renderHeader(eventData);
-          this.logger.log(`[_renderZDisplayEvent] Rendered header element with level: ${eventData.level || 1}`);
-          break;
-          
-        case 'divider':
-          // Use modular TypographyRenderer for dividers
-          const dividerRenderer = await this._ensureTypographyRenderer();
-          element = dividerRenderer.renderDivider(eventData);
-          break;
-          
-        default:
-          this.logger.warn(`Unknown zDisplay event: ${event}`);
-          element = document.createElement('div');
-          element.textContent = `[${event}] ${eventData.content || ''}`;
-          element.className = 'zDisplay-unknown';
-      }
-      
-      return element;
+      // Delegate to ZDisplayOrchestrator
+      await this._ensureZDisplayOrchestrator();
+      return this.zDisplayOrchestrator.renderZDisplayEvent(eventData);
     }
 
     /**
@@ -1342,223 +735,51 @@
      *   <zNavBar></zNavBar>              ← Dynamic, RBAC-aware
      *   <zVaF>...</zVaF>                 ← Cacheable content area
      */
-    _initZVaFElements() {
-      console.log('[_initZVaFElements] 🔧 Starting initialization...');
-      
-      if (typeof document === 'undefined') {
-        console.warn('[_initZVaFElements] Not in browser environment');
-        return;
-      }
-
-      // Step 1: Find badge element (created by template)
-      const badgeElement = document.querySelector('zBifrostBadge');
-      if (badgeElement) {
-        this._zConnectionBadge = badgeElement;
-        this._populateConnectionBadge();
-        console.log('[_initZVaFElements] ✅ Badge element found and populated');
-      } else {
-        console.error('[_initZVaFElements] ❌ <zBifrostBadge> not found in DOM');
-      }
-
-      // Step 2: Find navbar element (created by template)
-      const navElement = document.querySelector('zNavBar');
-      if (navElement) {
-        this._zNavBarElement = navElement;
-        // Fetch and populate navbar asynchronously (don't block initialization)
-        this._populateNavBar().catch(err => {
-          console.error('[_initZVaFElements] Failed to populate navbar:', err);
-        });
-        console.log('[_initZVaFElements] ✅ NavBar element found, populating...');
-      } else {
-        console.error('[_initZVaFElements] ❌ <zNavBar> not found in DOM');
-      }
-
-      // Step 3: Find zVaF element (content renders directly into it)
-      const zVaFElement = document.querySelector(this.options.targetElement) || 
-                          document.getElementById(this.options.targetElement);
-      if (zVaFElement) {
-        this._zVaFElement = zVaFElement;
-        console.log('[_initZVaFElements] ✅ zVaF element found (content will render here)');
-      } else {
-        console.error(`[_initZVaFElements] ❌ <${this.options.targetElement}> not found in DOM`);
-      }
-
-      console.log('[_initZVaFElements] ✅ All elements initialized (badge will be updated by onConnected hook)');
+    async _initZVaFElements() {
+      await this._ensureZVaFManager();
+      return this.zvafManager.initZVaFElements();
     }
 
     /**
      * Populate connection badge content (v1.6.0: Simplified - element exists, just set content)
      */
-    _populateConnectionBadge() {
-      if (!this._zConnectionBadge) return;
-      
-      // Set initial badge content (will be updated by connection hooks)
-      this._zConnectionBadge.className = 'zConnection zBadge zBadge-connection zBadge-pending';
-      this._zConnectionBadge.innerHTML = `
-        <svg class="zIcon zIcon-sm zBadge-dot" aria-hidden="true">
-          <use xlink:href="#icon-circle-fill"></use>
-        </svg>
-        <span class="zBadge-text">Connecting...</span>
-      `;
-      
-      console.log('[ConnectionBadge] ✅ Badge populated with initial state');
+    async _populateConnectionBadge() {
+      await this._ensureZVaFManager();
+      return this.zvafManager.populateConnectionBadge();
     }
 
     /**
      * Update badge state (v1.6.0: Helper method called from hooks)
      * @param {string} state - 'connecting', 'connected', 'disconnected', 'error'
      */
-    _updateBadgeState(state) {
-      if (!this._zConnectionBadge) {
-        console.warn('[ConnectionBadge] Cannot update - badge element not found');
-        return;
-      }
-
-      const badge = this._zConnectionBadge;
-      const badgeText = badge.querySelector('.zBadge-text');
-      
-      if (!badgeText) {
-        console.warn('[ConnectionBadge] Cannot update - badge text element not found');
-        return;
-      }
-
-      console.log(`[ConnectionBadge] 🔧 Updating badge to: ${state}`);
-
-      // Remove all state classes
-      badge.classList.remove('zBadge-pending', 'zBadge-success', 'zBadge-error');
-
-      // Apply new state
-      switch (state) {
-        case 'connected':
-          badge.classList.add('zBadge-success');
-          badgeText.textContent = 'Connected';
-          console.log('[ConnectionBadge] ✅ Badge updated to Connected');
-          break;
-        case 'disconnected':
-          badge.classList.add('zBadge-pending');
-          badgeText.textContent = 'Disconnected';
-          console.log('[ConnectionBadge] ⚠️ Badge updated to Disconnected');
-          break;
-        case 'error':
-          badge.classList.add('zBadge-error');
-          badgeText.textContent = 'Error';
-          console.log('[ConnectionBadge] ❌ Badge updated to Error');
-          break;
-        case 'connecting':
-        default:
-          badge.classList.add('zBadge-pending');
-          badgeText.textContent = 'Connecting...';
-          console.log('[ConnectionBadge] 🔄 Badge updated to Connecting');
-          break;
-      }
+    async _updateBadgeState(state) {
+      await this._ensureZVaFManager();
+      return this.zvafManager.updateBadgeState(state);
     }
 
     /**
      * Populate navbar from embedded config (v1.6.0: Use zuiConfig from server, fetch fresh on auth change)
      */
     async _populateNavBar() {
-      if (!this._zNavBarElement) return;
-      
-      try {
-        // Use embedded zuiConfig (already RBAC-filtered by backend on page load)
-        if (this.zuiConfig && this.zuiConfig.zNavBar) {
-          const navHTML = await this._renderMetaNavBarHTML(this.zuiConfig.zNavBar);
-          this._zNavBarElement.innerHTML = navHTML;
-          console.log('[NavBar] ✅ NavBar populated from embedded config:', this.zuiConfig.zNavBar);
-          
-          // Enable client-side navigation after navbar is rendered
-          this._enableClientSideNavigation();
-        } else {
-          console.warn('[NavBar] No zNavBar in embedded zuiConfig, navbar will be empty');
-        }
-      } catch (error) {
-        console.error('[NavBar] Failed to populate:', error);
-      }
+      await this._ensureZVaFManager();
+      return this.zvafManager.populateNavBar();
     }
 
     /**
      * Fetch fresh navbar from API and populate (used after auth state changes)
      */
     async _fetchAndPopulateNavBar() {
-      if (!this._zNavBarElement) return;
-      
-      try {
-        // Fetch fresh navbar config from backend (RBAC-filtered!)
-        const response = await fetch('/api/zui/config');
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        
-        const freshConfig = await response.json();
-        console.log('[NavBar] ✅ Fetched fresh config from API:', freshConfig);
-        
-        // Update zuiConfig with fresh navbar
-        if (freshConfig.zNavBar) {
-          this.zuiConfig.zNavBar = freshConfig.zNavBar;
-          
-          // Render navbar HTML and set it on the element
-          const navHTML = await this._renderMetaNavBarHTML(freshConfig.zNavBar);
-          this._zNavBarElement.innerHTML = navHTML;
-          console.log('[NavBar] ✅ NavBar populated with fresh RBAC-filtered items');
-          
-          // Re-enable client-side navigation after navbar is re-rendered
-          this._enableClientSideNavigation();
-        } else {
-          console.warn('[NavBar] No zNavBar in API response, skipping');
-        }
-      } catch (error) {
-        console.error('[NavBar] Failed to fetch from API:', error);
-      }
+      await this._ensureZVaFManager();
+      return this.zvafManager.fetchAndPopulateNavBar();
     }
 
     /**
      * Enable client-side navigation (SPA-style) for navbar links
      * Intercepts clicks to prevent full page reloads and uses WebSocket instead
      */
-    _enableClientSideNavigation() {
-      if (typeof document === 'undefined') return;
-      
-      // Remove any existing listeners to avoid duplicates
-      if (this._navClickHandler) {
-        document.removeEventListener('click', this._navClickHandler, true);
-      }
-      
-      // Create navigation click handler
-      this._navClickHandler = async (e) => {
-        // Find if click target is within a navbar link OR brand link
-        const link = e.target.closest('.zNavbar-nav .zNav-link, .zNavbar-brand');
-        if (!link) return;
-        
-        // Prevent default HTTP navigation
-        e.preventDefault();
-        e.stopPropagation();
-        
-        const href = link.getAttribute('href');
-        if (!href || href === '#') return;
-        
-        console.log('[ClientNav] 🔗 Intercepted navigation to:', href);
-        
-        // Navigate via WebSocket (no page reload!)
-        await this._navigateToRoute(href);
-      };
-      
-      // Use capture phase to ensure we intercept before other handlers
-      document.addEventListener('click', this._navClickHandler, true);
-      
-      // Handle browser back/forward buttons
-      if (!this._popstateHandler) {
-        this._popstateHandler = async (e) => {
-          console.log('[ClientNav] ⏪ Browser back/forward detected');
-          const path = window.location.pathname;
-          
-          // Navigate to the new path via WebSocket
-          await this._navigateToRoute(path, { skipHistory: true });
-        };
-        
-        window.addEventListener('popstate', this._popstateHandler);
-      }
-      
-      console.log('[ClientNav] ✅ Client-side navigation enabled');
+    async _enableClientSideNavigation() {
+      await this._ensureNavigationManager();
+      return this.navigationManager.enableClientSideNavigation();
     }
 
     /**
@@ -1567,90 +788,8 @@
      * @param {Object} options - Navigation options
      */
     async _navigateToRoute(routePath, options = {}) {
-      const { skipHistory = false } = options;
-      
-      // Mark as client-side navigation to prevent beforeunload from triggering
-      this._isClientSideNav = true;
-      
-      try {
-        // Extract route name from path (e.g., '/zAbout' -> 'zAbout')
-        const routeName = routePath.replace(/^\//, '') || 'zVaF';
-        
-        console.log('[ClientNav] 🚀 Navigating to route:', routeName);
-        
-        // Fetch route configuration from backend
-        const response = await fetch('/api/zui/config');
-        if (!response.ok) {
-          throw new Error(`Failed to fetch route config: ${response.status}`);
-        }
-        
-        const config = await response.json();
-        
-        // Determine zBlock, zVaFile, zVaFolder for this route
-        // For now, use simple convention: route name matches zUI file name
-        const zVaFile = `zUI.${routeName}`;
-        const zVaFolder = config.zVaFolder || '@.UI';
-        let zBlock = routeName;
-        
-        // Check if this route has special modifiers (^ for bounce-back)
-        const navBarItem = config.zNavBar?.find(item => {
-          const cleanItem = item.replace(/^[\^~\$]+/, '');
-          return cleanItem === routeName;
-        });
-        
-        if (navBarItem) {
-          // Use the full item with modifiers as zBlock
-          zBlock = navBarItem;
-        }
-        
-        console.log('[ClientNav] 📋 Route config:', { zVaFile, zVaFolder, zBlock });
-        
-        // Clear current content
-        if (this._zVaFElement) {
-          this._zVaFElement.innerHTML = '<div class="zText-center zp-4">Loading...</div>';
-        }
-        
-        // Send walker execution request via WebSocket
-        // NOTE: Walker execution is asynchronous - we don't wait for a response
-        // The backend will send render_chunk events instead of a direct response
-        const walkerRequest = {
-          event: 'execute_walker',
-          zBlock: zBlock,
-          zVaFile: zVaFile,
-          zVaFolder: zVaFolder
-        };
-        
-        console.log('[ClientNav] 📤 Sending walker request (fire-and-forget):', walkerRequest);
-        this.connection.send(JSON.stringify(walkerRequest));
-        
-        // Update browser URL without reload (unless skipHistory is true for popstate)
-        if (!skipHistory) {
-          const newUrl = routePath.startsWith('/') ? routePath : `/${routePath}`;
-          history.pushState({ route: routeName }, '', newUrl);
-          console.log('[ClientNav] ✅ Updated URL to:', newUrl);
-        }
-        
-        console.log('[ClientNav] ✅ Navigation complete');
-      } catch (error) {
-        console.error('[ClientNav] ❌ Navigation failed:', error);
-        
-        // Reset flag on error
-        this._isClientSideNav = false;
-        
-        // Show error in content area
-        if (this._zVaFElement) {
-          this._zVaFElement.innerHTML = `
-            <div class="zAlert zAlert-danger zmt-4">
-              <strong>Navigation Error:</strong> ${error.message}
-            </div>
-          `;
-        }
-      } finally {
-        // Reset flag after navigation attempt (success or fail)
-        setTimeout(() => {
-          this._isClientSideNav = false;
-        }, 100);
-      }
+      await this._ensureNavigationManager();
+      return this.navigationManager.navigateToRoute(routePath, options);
     }
 
 
@@ -1765,6 +904,130 @@
     }
 
     /**
+     * Ensure dashboard renderer module is loaded
+     */
+    async _ensureDashboardRenderer() {
+      if (!this.dashboardRenderer) {
+        const module = await import('./rendering/dashboard_renderer.js');
+        const DashboardRenderer = module.default;
+        this.dashboardRenderer = new DashboardRenderer(this.logger, this);
+        this.logger.log('[BifrostClient] DashboardRenderer loaded and initialized');
+      }
+      return this.dashboardRenderer;
+    }
+
+    /**
+     * Ensure spinner renderer module is loaded
+     */
+    async _ensureSpinnerRenderer() {
+      if (!this.spinnerRenderer) {
+        const module = await import('./rendering/spinner_renderer.js');
+        const SpinnerRenderer = module.default;
+        this.spinnerRenderer = new SpinnerRenderer(this.logger);
+        this.logger.log('[BifrostClient] SpinnerRenderer loaded and initialized');
+      }
+      return this.spinnerRenderer;
+    }
+
+    /**
+     * Ensure progress bar renderer module is loaded
+     */
+    async _ensureProgressBarRenderer() {
+      if (!this.progressBarRenderer) {
+        const module = await import('./rendering/progressbar_renderer.js');
+        const ProgressBarRenderer = module.default;
+        this.progressBarRenderer = new ProgressBarRenderer(this.logger);
+        this.logger.log('[BifrostClient] ProgressBarRenderer loaded and initialized');
+      }
+      return this.progressBarRenderer;
+    }
+
+    /**
+     * Ensure swiper renderer module is loaded
+     */
+    async _ensureSwiperRenderer() {
+      if (!this.swiperRenderer) {
+        const module = await import('./rendering/swiper_renderer.js');
+        const SwiperRenderer = module.default;
+        this.swiperRenderer = new SwiperRenderer(this.logger);
+        this.logger.log('[BifrostClient] SwiperRenderer loaded and initialized');
+      }
+      return this.swiperRenderer;
+    }
+
+    /**
+     * Ensure ZDisplayOrchestrator is loaded
+     */
+    async _ensureZDisplayOrchestrator() {
+      if (!this.zDisplayOrchestrator) {
+        const { ZDisplayOrchestrator } = await import('./rendering/zdisplay_orchestrator.js');
+        this.zDisplayOrchestrator = new ZDisplayOrchestrator(this);
+        this.logger.log('[BifrostClient] ZDisplayOrchestrator loaded and initialized');
+      }
+      return this.zDisplayOrchestrator;
+    }
+
+    /**
+     * Ensure DeclarativeUILoader is loaded
+     */
+    async _ensureDeclarativeUILoader() {
+      if (!this.declarativeUILoader) {
+        const { DeclarativeUILoader } = await import('./rendering/declarative_ui_loader.js');
+        this.declarativeUILoader = new DeclarativeUILoader(this);
+        this.logger.log('[BifrostClient] DeclarativeUILoader loaded and initialized');
+      }
+      return this.declarativeUILoader;
+    }
+
+    /**
+     * Ensure CacheManager is loaded
+     */
+    async _ensureCacheManager() {
+      if (!this.cacheManager) {
+        const { CacheManager } = await import('./managers/cache_manager.js');
+        this.cacheManager = new CacheManager(this);
+        this.logger.log('[BifrostClient] CacheManager loaded and initialized');
+      }
+      return this.cacheManager;
+    }
+
+    /**
+     * Ensure ZVaFManager is loaded
+     */
+    async _ensureZVaFManager() {
+      if (!this.zvafManager) {
+        const { ZVaFManager } = await import('./managers/zvaf_manager.js');
+        this.zvafManager = new ZVaFManager(this);
+        this.logger.log('[BifrostClient] ZVaFManager loaded and initialized');
+      }
+      return this.zvafManager;
+    }
+
+    /**
+     * Ensure NavigationManager is loaded
+     */
+    async _ensureNavigationManager() {
+      if (!this.navigationManager) {
+        const { NavigationManager } = await import('./managers/navigation_manager.js');
+        this.navigationManager = new NavigationManager(this);
+        this.logger.log('[BifrostClient] NavigationManager loaded and initialized');
+      }
+      return this.navigationManager;
+    }
+
+    /**
+     * Ensure WidgetHookManager is loaded
+     */
+    async _ensureWidgetHookManager() {
+      if (!this.widgetHookManager) {
+        const { WidgetHookManager } = await import('./managers/widget_hook_manager.js');
+        this.widgetHookManager = new WidgetHookManager(this);
+        this.logger.log('[BifrostClient] WidgetHookManager loaded and initialized');
+      }
+      return this.widgetHookManager;
+    }
+
+    /**
      * Ensure zDisplay renderer module is loaded
      */
     async _ensureZDisplayRenderer() {
@@ -1780,142 +1043,9 @@
         
         this.logger.log(`[BifrostClient] zDisplay target set to: ${this.zDisplayRenderer.defaultZone}`);
         
-        // Register default onDisplay hook if not already set
-        if (!this.hooks.has('onDisplay')) {
-          this.hooks.register('onDisplay', async (event) => {
-            console.log('[BifrostClient] 📨 onDisplay hook triggered with event:', event);
-            console.log('[BifrostClient] 🔍 Event type check:', {
-              'event.event': event.event,
-              'event.display_event': event.display_event,
-              'event.data': event.data
-            });
-            
-            this.logger.log('[BifrostClient] Auto-rendering zDisplay event:', event);
-            
-            // Check if this is a zDialog event (form)
-            if (event.event === 'zDialog' || event.display_event === 'zDialog') {
-              console.log('[BifrostClient] ✅ DETECTED zDialog event - routing to FormRenderer');
-              this.logger.log('[BifrostClient] Detected zDialog event, routing to FormRenderer');
-              await this._ensureFormRenderer();
-              
-              // Extract form data from event.data (backend sends context as data payload)
-              const formData = event.data || event;
-              console.log('[BifrostClient] 📋 Form data to render:', formData);
-              const formElement = this.formRenderer.renderForm(formData);
-              
-              // Append form to appropriate container
-              // Try to find the last zContainer (for nested forms), otherwise use root
-              const rootZone = document.getElementById(this.zDisplayRenderer.defaultZone);
-              const containers = rootZone ? rootZone.querySelectorAll('.zContainer') : [];
-              const targetZone = containers.length > 0 ? containers[containers.length - 1] : rootZone;
-              
-              console.log('[BifrostClient] 🎯 Target zone:', targetZone ? 'FOUND' : 'NOT FOUND', 
-                          `(${containers.length} containers found, using ${containers.length > 0 ? 'last container' : 'root'})`);
-              if (targetZone) {
-                targetZone.appendChild(formElement);
-                console.log('[BifrostClient] ✅ Form appended to DOM');
-              }
-            } else {
-              console.log('[BifrostClient] ℹ️  Regular zDisplay event - routing to zDisplayRenderer');
-              // Regular zDisplay event
-              this.zDisplayRenderer.render(event);
-            }
-          });
-          this.logger.log('[BifrostClient] Registered default onDisplay hook for auto-rendering');
-        }
-        
-        // Register default onRenderChunk hook for progressive chunk rendering (walker mode)
-        if (!this.hooks.has('onRenderChunk')) {
-          this.hooks.register('onRenderChunk', async (message) => {
-            console.log('[BifrostClient] 📦 onRenderChunk hook triggered:', message);
-            this.logger.log('[BifrostClient] Processing chunk:', message);
-            
-            // Progressive chunk rendering (backend sends chunks via zWizard generator)
-            await this._renderChunkProgressive(message);
-            
-            // v1.6.0: Cache ONLY content area after render completes (debounced)
-            // Badge and navbar are dynamic and should never be cached
-            if (this._cachePageTimeout) {
-              clearTimeout(this._cachePageTimeout);
-            }
-            
-            this._cachePageTimeout = setTimeout(async () => {
-              if (this.cache && typeof document !== 'undefined') {
-                try {
-                  const currentPage = window.location.pathname;
-                  // Cache zVaF content (badge/navbar are dynamic, re-populated on page load)
-                  const contentArea = this._zVaFElement;
-                  if (contentArea) {
-                    await this.cache.set(currentPage, contentArea.outerHTML, 'rendered');
-                    this.logger.log(`[Cache] ✅ Cached content: ${currentPage}`);
-                  } else {
-                    this.logger.warn('[Cache] No zVaF element found, skipping cache');
-                  }
-                } catch (error) {
-                  this.logger.error('[Cache] Error caching content:', error);
-                }
-              }
-            }, 500);
-          });
-          console.log('[BifrostClient] ✅ Registered onRenderChunk hook for progressive rendering');
-          this.logger.log('[BifrostClient] Registered default onRenderChunk hook for progressive rendering');
-        } else {
-          console.log('[BifrostClient] ⚠️ onRenderChunk hook already registered');
-        }
-        
-        // Register default onInput hook if not already set
-        if (!this.hooks.has('onInput')) {
-          this.hooks.register('onInput', (inputRequest) => {
-            this.logger.log('[BifrostClient] Rendering input request:', inputRequest);
-            const inputType = inputRequest.type || inputRequest.data?.type || 'string';
-            
-            // Route to appropriate renderer based on type
-            if (inputType === 'selection') {
-              this.zDisplayRenderer.renderSelectionRequest(inputRequest);
-            } else if (inputType === 'button') {
-              this.zDisplayRenderer.renderButtonRequest(inputRequest);
-            } else {
-              this.zDisplayRenderer.renderInputRequest(inputRequest);
-            }
-          });
-          this.logger.log('[BifrostClient] Registered default onInput hook for input rendering');
-        }
-        
-        // Register default onSpinnerStart hook if not already set
-        if (!this.hooks.has('onSpinnerStart')) {
-          this.hooks.register('onSpinnerStart', (event) => {
-            this.logger.log('[BifrostClient] Spinner start:', event);
-            this.zDisplayRenderer.renderSpinnerStart(event);
-          });
-          this.logger.log('[BifrostClient] Registered default onSpinnerStart hook');
-        }
-        
-        // Register default onSpinnerStop hook if not already set
-        if (!this.hooks.has('onSpinnerStop')) {
-          this.hooks.register('onSpinnerStop', (event) => {
-            this.logger.log('[BifrostClient] Spinner stop:', event);
-            this.zDisplayRenderer.renderSpinnerStop(event);
-          });
-          this.logger.log('[BifrostClient] Registered default onSpinnerStop hook');
-        }
-        
-        // Register default onSwiperInit hook if not already set
-        if (!this.hooks.has('onSwiperInit')) {
-          this.hooks.register('onSwiperInit', (event) => {
-            this.logger.log('[BifrostClient] Swiper init:', event);
-            this.zDisplayRenderer.renderSwiperInit(event);
-          });
-          this.logger.log('[BifrostClient] Registered default onSwiperInit hook');
-        }
-        
-        // Register default onZDash hook if not already set
-        if (!this.hooks.has('onZDash')) {
-          this.hooks.register('onZDash', async (dashConfig) => {
-            this.logger.log('[BifrostClient] 📊 onZDash hook triggered:', dashConfig);
-            await this._renderDashboard(dashConfig);
-          });
-          this.logger.log('[BifrostClient] ✅ Registered onZDash hook for dashboard rendering');
-        }
+        // Delegate all hook registration to WidgetHookManager
+        await this._ensureWidgetHookManager();
+        await this.widgetHookManager.registerAllWidgetHooks();
       }
       return this.zDisplayRenderer;
     }
@@ -2266,161 +1396,10 @@
     // ═══════════════════════════════════════════════════════════
     // Dashboard Rendering (zDash Event)
     // ═══════════════════════════════════════════════════════════
-
-    /**
-     * Render dashboard with sidebar navigation (uses zTheme classes)
-     * @param {Object} config - Dashboard configuration
-     * @param {string} config.folder - Base folder for panel discovery
-     * @param {Array<string>} config.sidebar - List of panel names
-     * @param {string} config.default - Default panel to load
-     */
-    async _renderDashboard(config) {
-      const { folder, sidebar, default: defaultPanel } = config;
-      
-      console.log('[Dashboard] Rendering with config:', config);
-      
-      // Load panel metadata to get icons/labels
-      const panelMeta = await this._loadPanelMetadata(folder, sidebar);
-      
-      // Create dashboard using zTheme vertical navigation classes
-      // Reference: /Users/galnachshon/Projects/zTheme/Manual/ztheme-navs.html (line 240+)
-      const dashboardHTML = `
-        <div class="zContainer">
-          <div class="zVertical-layout">
-            <ul class="zNav zNav-pills zFlex-column zDash-sidebar" role="tablist">
-              ${sidebar.map(panel => {
-                const meta = panelMeta[panel] || { icon: 'bi-file-text', label: panel };
-                // Render Bootstrap Icon if icon class provided
-                const iconHTML = meta.icon ? `<i class="bi ${meta.icon}"></i> ` : '';
-                return `
-                  <li class="zNav-item" role="presentation">
-                    <a href="#" 
-                       data-panel="${panel}" 
-                       class="zNav-link ${panel === defaultPanel ? 'zActive' : ''}"
-                       role="tab"
-                       aria-selected="${panel === defaultPanel ? 'true' : 'false'}">
-                      ${iconHTML}${meta.label}
-                    </a>
-                  </li>
-                `;
-              }).join('')}
-            </ul>
-            <div class="zTab-content" id="dashboard-panel-content">
-              <!-- Panel content loads here -->
-            </div>
-          </div>
-        </div>
-      `;
-      
-      // 🔧 IMPROVED: Preserve existing content from chunk (like ProfileCard)
-      // This allows multiple zKeys to render before special events (e.g., ProfileCard + Dashboard)
-      if (this._zVaFElement) {
-        // Check if there's pre-rendered content (from same chunk render cycle)
-        const existingContent = this._zVaFElement.innerHTML.trim();
-        const hasLoadingSpinner = existingContent.includes('zSpinner');
-        
-        // If there's real content (not just loading state), preserve it
-        if (existingContent && !hasLoadingSpinner) {
-          console.log('[Dashboard] 🎨 Preserving existing content before dashboard');
-          this.logger.log('[Dashboard] Preserving existing content from chunk');
-          // Append dashboard AFTER existing content
-          this._zVaFElement.insertAdjacentHTML('beforeend', dashboardHTML);
-        } else {
-          // No existing content or only spinner, replace normally
-          this._zVaFElement.innerHTML = dashboardHTML;
-        }
-      }
-      
-      // Set up click handlers (scoped to dashboard sidebar only)
-      const links = document.querySelectorAll('.zDash-sidebar .zNav-link');
-      links.forEach(link => {
-        link.addEventListener('click', async (e) => {
-          e.preventDefault();
-          const panelName = link.dataset.panel;
-          
-          // Update active state
-          links.forEach(l => {
-            l.classList.remove('zActive');
-            l.setAttribute('aria-selected', 'false');
-          });
-          link.classList.add('zActive');
-          link.setAttribute('aria-selected', 'true');
-          
-          // Load panel content
-          await this._loadDashboardPanel(folder, panelName);
-        });
-      });
-      
-      // Auto-load default panel
-      await this._loadDashboardPanel(folder, defaultPanel);
-    }
-
-    /**
-     * Load panel metadata (icons, labels) from backend
-     * @param {string} folder - Base folder path
-     * @param {Array<string>} sidebar - Panel names
-     * @returns {Object} Metadata keyed by panel name
-     */
-    async _loadPanelMetadata(folder, sidebar) {
-      const metadata = {};
-      
-      for (const panelName of sidebar) {
-        try {
-          // Request panel metadata from backend
-          const zPath = `${folder}.zUI.${panelName}`;
-          const response = await fetch(`/api/dashboard/panel/meta?zPath=${encodeURIComponent(zPath)}`);
-          const data = await response.json();
-          
-          if (data.success && data.meta) {
-            metadata[panelName] = {
-              icon: data.meta.panel_icon || 'bi-file-text',
-              label: data.meta.panel_label || panelName
-            };
-          }
-        } catch (e) {
-          console.warn(`[Dashboard] Could not load metadata for ${panelName}:`, e);
-          metadata[panelName] = { icon: 'bi-file-text', label: panelName };
-        }
-      }
-      
-      return metadata;
-    }
-
-    /**
-     * Load and render a dashboard panel
-     * @param {string} folder - Base folder path
-     * @param {string} panelName - Panel name to load
-     */
-    async _loadDashboardPanel(folder, panelName) {
-      console.log(`[Dashboard] Loading panel: ${panelName}`);
-      
-      const contentArea = document.getElementById('dashboard-panel-content');
-      if (!contentArea) return;
-      
-      // Show loading state
-      contentArea.innerHTML = '<div class="zSpinner-border" role="status"><span class="zVisually-hidden">Loading...</span></div>';
-      
-      try {
-        // Request walker execution for the panel
-        const requestData = {
-          event: 'execute_walker',
-          zBlock: panelName,
-          zVaFile: `zUI.${panelName}`,
-          zVaFolder: folder,
-          _renderTarget: 'dashboard-panel-content' // Tell backend where to render
-        };
-        
-        // Clear the panel content area to prepare for new chunk rendering
-        contentArea.innerHTML = '';
-        
-        // Send the walker execution request (must be JSON string)
-        await this.connection.send(JSON.stringify(requestData));
-        
-      } catch (error) {
-        console.error(`[Dashboard] Error loading panel ${panelName}:`, error);
-        contentArea.innerHTML = '<div class="zAlert zAlert-danger">Failed to load panel</div>';
-      }
-    }
+    
+    // NOTE: Dashboard rendering has been extracted to dashboard_renderer.js
+    // The onZDash hook now uses the DashboardRenderer class (see _ensureZDisplayRenderer)
+    // Legacy methods below are kept for backward compatibility but should not be used directly
 
     // ═══════════════════════════════════════════════════════════
     // Hook Management

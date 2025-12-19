@@ -315,6 +315,39 @@ export function getFlexDirectionClass(direction = 'row') {
   return directionMap[direction] || 'zFlex-row';
 }
 
+/**
+ * Create a container element for a zKey with metadata support
+ * @param {string} zKey - The zKey identifier
+ * @param {Object} metadata - Metadata object (may contain _zClass)
+ * @returns {Promise<HTMLElement>} Container div
+ */
+export async function createZKeyContainer(zKey, metadata = {}) {
+  const { createDiv } = await import('../rendering/primitives/generic_containers.js');
+  const container = createDiv();
+  
+  // Check for custom classes in metadata
+  if (metadata._zClass !== undefined) {
+    if (metadata._zClass === '' || metadata._zClass === null) {
+      // Empty string or null = no container classes (opt-out)
+      container.className = '';
+    } else {
+      // Apply custom classes
+      const classes = Array.isArray(metadata._zClass)
+        ? metadata._zClass
+        : metadata._zClass.split(',').map(c => c.trim());
+      container.className = classes.join(' ');
+    }
+  } else {
+    // Default: responsive zTheme container
+    container.className = 'zContainer-fluid zp-2';
+  }
+  
+  // Set data attribute for debugging
+  container.setAttribute('data-zkey', zKey);
+  
+  return container;
+}
+
 // ─────────────────────────────────────────────────────────────────
 // Default Export (for convenience)
 // ─────────────────────────────────────────────────────────────────
@@ -325,6 +358,7 @@ export default {
   applyContainerStyles,
   getFlexJustifyClass,
   getFlexAlignClass,
-  getFlexDirectionClass
+  getFlexDirectionClass,
+  createZKeyContainer
 };
 

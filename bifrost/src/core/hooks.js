@@ -4,6 +4,8 @@
  * ═══════════════════════════════════════════════════════════════
  */
 
+import { DarkModeToggle } from '../widgets/dark_mode_toggle.js';
+
 export class HookManager {
   constructor(hooks = {}, logger = null) {
     this.hooks = hooks;
@@ -201,70 +203,17 @@ export class HookManager {
    * @param {HTMLElement} navElement - The navbar element
    */
   addDarkModeToggle(navElement) {
-    if (!navElement) {
-      console.warn('[HookManager] No navbar element provided for dark mode toggle');
-      return;
-    }
-
-    // Check if toggle already exists
-    if (navElement.querySelector('.zTheme-toggle')) {
-      return;
-    }
-
-    // Create toggle button
-    const toggleBtn = document.createElement('button');
-    toggleBtn.className = 'zBtn zBtn-sm zBtn-outline-secondary zTheme-toggle';
-    toggleBtn.setAttribute('aria-label', 'Toggle dark mode');
-    toggleBtn.style.marginLeft = 'auto'; // Push to the right
+    // Use DarkModeToggle widget (extracted for modularity)
+    const darkModeWidget = new DarkModeToggle(this.logger);
     
-    // Get current theme
-    const isDark = localStorage.getItem('zTheme-mode') === 'dark';
-    const iconColor = isDark ? 'color: #ffffff;' : '';  // White in dark mode
-    toggleBtn.innerHTML = isDark 
-      ? `<i class="bi bi-sun-fill" style="font-size: 1.2rem; ${iconColor}"></i>` 
-      : `<i class="bi bi-moon-fill" style="font-size: 1.2rem; ${iconColor}"></i>`;
-    
-    // Add click handler
-    toggleBtn.addEventListener('click', () => {
-      const currentTheme = localStorage.getItem('zTheme-mode');
-      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-      
-      // Save preference
-      localStorage.setItem('zTheme-mode', newTheme);
-      
+    // Create toggle with theme change callback
+    darkModeWidget.create(navElement, (newTheme) => {
       // Apply theme
       this._applyDarkMode(newTheme === 'dark');
       
-      // Update button icon with correct color
-      const iconColor = newTheme === 'dark' ? 'color: #ffffff;' : '';
-      toggleBtn.innerHTML = newTheme === 'dark'
-        ? `<i class="bi bi-sun-fill" style="font-size: 1.2rem; ${iconColor}"></i>`
-        : `<i class="bi bi-moon-fill" style="font-size: 1.2rem; ${iconColor}"></i>`;
-      
       // Call onThemeChange hook if registered
       this.call('onThemeChange', newTheme);
-      
-      if (this.logger) {
-        this.logger.log(`[HookManager] Theme switched to: ${newTheme}`);
-      }
     });
-
-    // Find the navbar-nav ul and append toggle next to it
-    const navCollapse = navElement.querySelector('.zNavbar-collapse');
-    if (navCollapse) {
-      // Create a container for the toggle (follows zTheme navbar structure)
-      const toggleContainer = document.createElement('div');
-      toggleContainer.className = 'zNavbar-nav zms-auto';
-      toggleContainer.appendChild(toggleBtn);
-      navCollapse.appendChild(toggleContainer);
-    } else {
-      // Fallback: just append to navbar
-      navElement.appendChild(toggleBtn);
-    }
-
-    if (this.logger) {
-      this.logger.log('[HookManager] Added dark mode toggle to navbar');
-    }
   }
 }
 
