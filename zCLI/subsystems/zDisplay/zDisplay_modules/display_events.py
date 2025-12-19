@@ -694,3 +694,61 @@ class zEvents:
             Any: Result from MediaEvents.image method
         """
         return self.MediaEvents.image(src, alt_text, caption, open_prompt, indent, color, **kwargs)
+
+    def video(
+        self,
+        src: str,
+        alt_text: str = "",
+        caption: str = "",
+        open_prompt: bool = True,
+        indent: int = 0,
+        color: Optional[str] = None,
+        **kwargs
+    ) -> Any:
+        """Display a video event.
+        
+        Convenience delegate to MediaEvents.video for backward compatibility.
+        
+        Args:
+            src: The source URL or path of the video
+            alt_text: Alternative text for the video (accessibility)
+            caption: An optional caption for the video
+            open_prompt: If True (default), displays a button in terminal mode.
+                        Set to False to disable the prompt.
+            indent: Indentation level for terminal output
+            color: Color for terminal output text
+            **kwargs: Additional parameters to pass through to the event
+            
+        Returns:
+            Any: Result from MediaEvents.video method
+        """
+        return self.MediaEvents.video(src, alt_text, caption, open_prompt, indent, color, **kwargs)
+
+    def audio(
+        self,
+        src: str,
+        alt_text: str = "",
+        caption: str = "",
+        open_prompt: bool = True,
+        indent: int = 0,
+        color: Optional[str] = None,
+        **kwargs
+    ) -> Any:
+        """Display an audio event.
+        
+        Convenience delegate to MediaEvents.audio for backward compatibility.
+        
+        Args:
+            src: The source URL or path of the audio file
+            alt_text: Alternative text for the audio (accessibility)
+            caption: An optional caption for the audio
+            open_prompt: If True (default), displays a button in terminal mode.
+                        Set to False to disable the prompt.
+            indent: Indentation level for terminal output
+            color: Color for terminal output text
+            **kwargs: Additional parameters to pass through to the event
+            
+        Returns:
+            Any: Result from MediaEvents.audio method
+        """
+        return self.MediaEvents.audio(src, alt_text, caption, open_prompt, indent, color, **kwargs)

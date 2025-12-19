@@ -446,6 +446,291 @@ class zOpen:
 
         return result
 
+    def open_image(self, image_path: str) -> str:
+        """
+        Open an image file in the system's default image viewer.
+        
+        Uses zMachine's detected image viewer and platform-specific launch commands.
+        Falls back gracefully if viewer is not available or headless environment.
+        
+        Args:
+            image_path: Path to the image file (relative or absolute)
+            
+        Returns:
+            "zBack" if successfully opened, "stop" if failed
+            
+        Detection Flow:
+            1. Get image_viewer from session[zMachine]
+            2. Get platform-specific launch command
+            3. Resolve image path (absolute)
+            4. Check if file exists
+            5. Launch viewer with subprocess
+            6. Handle errors gracefully
+            
+        Examples:
+            >>> zcli.open.open_image("screenshot.png")
+            # macOS: open -a Preview screenshot.png
+            # Linux: eog screenshot.png
+            # Windows: start screenshot.png
+            
+        Version: v1.5.8 (Phase 3: zOpen Integration)
+        """
+        from zCLI import subprocess
+        from zCLI.subsystems.zConfig.zConfig_modules.helpers import get_image_viewer_launch_command
+        from zCLI.subsystems.zConfig.zConfig_modules.config_session import SESSION_KEY_ZMACHINE
+        
+        # Get image viewer from session
+        zmachine = self.session.get(SESSION_KEY_ZMACHINE, {})
+        viewer_name = zmachine.get("image_viewer", "unknown")
+        
+        # Handle special cases
+        if viewer_name in ("none", "unknown"):
+            self.logger.warning(f"No image viewer available (viewer: {viewer_name})")
+            self.display.warning(
+                "No image viewer detected. Cannot open images in this environment.",
+                indent=1
+            )
+            return RETURN_STOP
+        
+        # Get platform-specific launch command
+        cmd, args = get_image_viewer_launch_command(viewer_name)
+        
+        if cmd is None:
+            self.logger.error(f"Failed to get launch command for viewer: {viewer_name}")
+            self.display.error(
+                f"Image viewer '{viewer_name}' is not supported on this platform.",
+                indent=1
+            )
+            return RETURN_STOP
+        
+        # Resolve absolute path
+        absolute_path = os.path.abspath(os.path.expanduser(image_path))
+        
+        # Check if file exists
+        if not os.path.exists(absolute_path):
+            self.logger.error(f"Image file not found: {absolute_path}")
+            self.display.error(
+                f"Image file not found: {image_path}",
+                indent=1
+            )
+            return RETURN_STOP
+        
+        # Launch image viewer
+        try:
+            full_command = [cmd] + args + [absolute_path]
+            self.logger.info(f"Launching image viewer: {' '.join(full_command)}")
+            
+            subprocess.Popen(
+                full_command,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
+            
+            self.logger.info(f"Successfully opened image in {viewer_name}")
+            self.display.success(
+                f"Opened image in {viewer_name}",
+                indent=1
+            )
+            return RETURN_ZBACK
+            
+        except Exception as e:
+            self.logger.error(f"Failed to open image with {viewer_name}: {e}")
+            self.display.error(
+                f"Failed to open image: {e}",
+                indent=1
+            )
+            return RETURN_STOP
+
+    def open_video(self, video_path: str) -> str:
+        """
+        Open a video file in the system's default video player.
+        
+        Uses zMachine's detected video player and platform-specific launch commands.
+        Falls back gracefully if player is not available or headless environment.
+        
+        Args:
+            video_path: Path to the video file (relative or absolute)
+            
+        Returns:
+            "zBack" if successfully opened, "stop" if failed
+            
+        Detection Flow:
+            1. Get video_player from session[zMachine]
+            2. Get platform-specific launch command
+            3. Resolve video path (absolute)
+            4. Check if file exists
+            5. Launch player with subprocess
+            6. Handle errors gracefully
+            
+        Examples:
+            >>> zcli.open.open_video("movie.mp4")
+            # macOS: open -a "QuickTime Player" movie.mp4
+            # Linux: vlc movie.mp4
+            # Windows: start movie.mp4
+            
+        Version: v1.5.8 (Video Support)
+        """
+        from zCLI import subprocess
+        from zCLI.subsystems.zConfig.zConfig_modules.helpers import get_video_player_launch_command
+        from zCLI.subsystems.zConfig.zConfig_modules.config_session import SESSION_KEY_ZMACHINE
+        
+        # Get video player from session
+        zmachine = self.session.get(SESSION_KEY_ZMACHINE, {})
+        player_name = zmachine.get("video_player", "unknown")
+        
+        # Handle special cases
+        if player_name in ("none", "unknown"):
+            self.logger.warning(f"No video player available (player: {player_name})")
+            self.display.warning(
+                "No video player detected. Cannot play videos in this environment.",
+                indent=1
+            )
+            return RETURN_STOP
+        
+        # Get platform-specific launch command
+        cmd, args = get_video_player_launch_command(player_name)
+        
+        if cmd is None:
+            self.logger.error(f"Failed to get launch command for player: {player_name}")
+            self.display.error(
+                f"Video player '{player_name}' is not supported on this platform.",
+                indent=1
+            )
+            return RETURN_STOP
+        
+        # Resolve absolute path
+        absolute_path = os.path.abspath(os.path.expanduser(video_path))
+        
+        # Check if file exists
+        if not os.path.exists(absolute_path):
+            self.logger.error(f"Video file not found: {absolute_path}")
+            self.display.error(
+                f"Video file not found: {video_path}",
+                indent=1
+            )
+            return RETURN_STOP
+        
+        # Launch video player
+        try:
+            full_command = [cmd] + args + [absolute_path]
+            self.logger.info(f"Launching video player: {' '.join(full_command)}")
+            
+            subprocess.Popen(
+                full_command,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
+            
+            self.logger.info(f"Successfully opened video in {player_name}")
+            self.display.success(
+                f"Opened video in {player_name}",
+                indent=1
+            )
+            return RETURN_ZBACK
+            
+        except Exception as e:
+            self.logger.error(f"Failed to open video with {player_name}: {e}")
+            self.display.error(
+                f"Failed to open video: {e}",
+                indent=1
+            )
+            return RETURN_STOP
+
+    def open_audio(self, audio_path: str) -> str:
+        """
+        Open an audio file in the system's default audio player.
+        
+        Uses zMachine's detected audio player and platform-specific launch commands.
+        Falls back gracefully if player is not available or headless environment.
+        
+        Args:
+            audio_path: Path to the audio file (relative or absolute)
+            
+        Returns:
+            "zBack" if successfully opened, "stop" if failed
+            
+        Detection Flow:
+            1. Get audio_player from session[zMachine]
+            2. Get platform-specific launch command
+            3. Resolve audio path (absolute)
+            4. Check if file exists
+            5. Launch player with subprocess
+            6. Handle errors gracefully
+            
+        Examples:
+            >>> zcli.open.open_audio("song.mp3")
+            # macOS: open -a Music song.mp3
+            # Linux: vlc song.mp3
+            # Windows: start song.mp3
+            
+        Version: v1.5.8 (Audio Support)
+        """
+        from zCLI import subprocess
+        from zCLI.subsystems.zConfig.zConfig_modules.helpers import get_audio_player_launch_command
+        from zCLI.subsystems.zConfig.zConfig_modules.config_session import SESSION_KEY_ZMACHINE
+        
+        # Get audio player from session
+        zmachine = self.session.get(SESSION_KEY_ZMACHINE, {})
+        player_name = zmachine.get("audio_player", "unknown")
+        
+        # Handle special cases
+        if player_name in ("none", "unknown"):
+            self.logger.warning(f"No audio player available (player: {player_name})")
+            self.display.warning(
+                "No audio player detected. Cannot play audio in this environment.",
+                indent=1
+            )
+            return RETURN_STOP
+        
+        # Get platform-specific launch command
+        cmd, args = get_audio_player_launch_command(player_name)
+        
+        if cmd is None:
+            self.logger.error(f"Failed to get launch command for player: {player_name}")
+            self.display.error(
+                f"Audio player '{player_name}' is not supported on this platform.",
+                indent=1
+            )
+            return RETURN_STOP
+        
+        # Resolve absolute path
+        absolute_path = os.path.abspath(os.path.expanduser(audio_path))
+        
+        # Check if file exists
+        if not os.path.exists(absolute_path):
+            self.logger.error(f"Audio file not found: {absolute_path}")
+            self.display.error(
+                f"Audio file not found: {audio_path}",
+                indent=1
+            )
+            return RETURN_STOP
+        
+        # Launch audio player
+        try:
+            full_command = [cmd] + args + [absolute_path]
+            self.logger.info(f"Launching audio player: {' '.join(full_command)}")
+            
+            subprocess.Popen(
+                full_command,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
+            
+            self.logger.info(f"Successfully opened audio in {player_name}")
+            self.display.success(
+                f"Opened audio in {player_name}",
+                indent=1
+            )
+            return RETURN_ZBACK
+            
+        except Exception as e:
+            self.logger.error(f"Failed to open audio with {player_name}: {e}")
+            self.display.error(
+                f"Failed to open audio: {e}",
+                indent=1
+            )
+            return RETURN_STOP
+
 
 # ═══════════════════════════════════════════════════════════════
 # Module Exports

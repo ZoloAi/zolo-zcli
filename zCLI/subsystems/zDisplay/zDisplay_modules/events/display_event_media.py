@@ -66,7 +66,11 @@ from zCLI import Any, Dict, Optional
 # ═══════════════════════════════════════════════════════════════════════════
 
 EVENT_IMAGE = "image"
+EVENT_VIDEO = "video"
+EVENT_AUDIO = "audio"
 DEFAULT_IMAGE_ICON = "📷"
+DEFAULT_VIDEO_ICON = "🎬"
+DEFAULT_AUDIO_ICON = "🎵"
 
 class MediaEvents:
     """Event package for displaying media (e.g., images)."""
@@ -156,11 +160,184 @@ class MediaEvents:
             if open_prompt:
                 # Add spacing before button
                 self.zPrimitives.write_line("")
-                # Use built-in button logic with action="#" (development null)
+                # Use built-in button logic (action="#" is placeholder)
                 confirmed = self.BasicInputs.button("Open image file", action="#", color="info")
                 if confirmed:
-                    # TODO: Phase 2 - Call zOpen.open_image(src) here
+                    # Phase 3: Call zOpen.open_image(src)
                     self.logger.info(f"[MediaEvents] User confirmed open for: {src}")
+                    result = self.display.zcli.open.open_image(src)
+                    if result == "zBack":
+                        self.logger.info(f"[MediaEvents] Successfully opened image: {src}")
+                    else:
+                        self.logger.warning(f"[MediaEvents] Failed to open image: {src}")
+            else:
+                # Add break after last line if no button
+                self.zPrimitives.write_line("")
+
+            return None
+
+    def video(
+        self,
+        src: str,
+        alt_text: str = "",
+        caption: str = "",
+        open_prompt: bool = True,
+        indent: int = 0,
+        color: Optional[str] = None,
+        **kwargs
+    ) -> Optional[Dict[str, Any]]:
+        """Display a video event.
+
+        In Bifrost mode, sends a clean event with src, alt_text, and caption.
+        In Terminal mode, displays formatted text with path, alt_text, caption,
+        and a button (calls zOpen.open_video()).
+
+        Args:
+            src: The source URL or path of the video.
+            alt_text: Alternative text for the video (accessibility).
+            caption: An optional caption for the video.
+            open_prompt: If True (default), displays a button in terminal mode.
+                        Set to False to disable the prompt.
+            indent: Indentation level for terminal output.
+            color: Color for terminal output text.
+            **kwargs: Additional parameters to pass through to the event.
+
+        Returns:
+            Optional[Dict[str, Any]]: The event dictionary if sent to GUI,
+                                     or None for terminal mode.
+        """
+        if not src:
+            self.logger.error("[MediaEvents] video() requires 'src' parameter")
+            return None
+
+        # Base event for both modes
+        base_event = {
+            "type": EVENT_VIDEO,
+            "src": src,
+            "alt_text": alt_text,
+            "caption": caption,
+            **kwargs
+        }
+
+        if self.display.mode == "zBifrost":
+            # Bifrost gets clean video data
+            return self.zPrimitives.send_gui_event(base_event)
+        else:
+            # Terminal mode: format and display locally
+            indent_str = "  " * indent
+            display_color = color if color else self.display.mycolor
+
+            # Display icon + alt text header
+            header = f"{indent_str}{DEFAULT_VIDEO_ICON} {alt_text}" if alt_text else f"{indent_str}{DEFAULT_VIDEO_ICON} Video"
+            self.BasicOutputs.text(header, indent=0, color=display_color, break_after=False)
+
+            # Display path
+            path_line = f"{indent_str}   Path: {src}"
+            self.BasicOutputs.text(path_line, indent=0, color="muted", break_after=False)
+
+            # Display caption (if provided)
+            if caption:
+                caption_line = f"{indent_str}   Caption: {caption}"
+                self.BasicOutputs.text(caption_line, indent=0, color="muted", break_after=False)
+
+            # Display button (if open_prompt enabled)
+            if open_prompt:
+                # Add spacing before button
+                self.zPrimitives.write_line("")
+                # Use built-in button logic
+                confirmed = self.BasicInputs.button("Play video", action="#", color="info")
+                if confirmed:
+                    # Call zOpen.open_video(src)
+                    self.logger.info(f"[MediaEvents] User confirmed play for: {src}")
+                    result = self.display.zcli.open.open_video(src)
+                    if result == "zBack":
+                        self.logger.info(f"[MediaEvents] Successfully opened video: {src}")
+                    else:
+                        self.logger.warning(f"[MediaEvents] Failed to open video: {src}")
+            else:
+                # Add break after last line if no button
+                self.zPrimitives.write_line("")
+
+            return None
+
+    def audio(
+        self,
+        src: str,
+        alt_text: str = "",
+        caption: str = "",
+        open_prompt: bool = True,
+        indent: int = 0,
+        color: Optional[str] = None,
+        **kwargs
+    ) -> Optional[Dict[str, Any]]:
+        """Display an audio event.
+
+        In Bifrost mode, sends a clean event with src, alt_text, and caption.
+        In Terminal mode, displays formatted text with path, alt_text, caption,
+        and a button (calls zOpen.open_audio()).
+
+        Args:
+            src: The source URL or path of the audio file.
+            alt_text: Alternative text for the audio (accessibility).
+            caption: An optional caption for the audio.
+            open_prompt: If True (default), displays a button in terminal mode.
+                        Set to False to disable the prompt.
+            indent: Indentation level for terminal output.
+            color: Color for terminal output text.
+            **kwargs: Additional parameters to pass through to the event.
+
+        Returns:
+            Optional[Dict[str, Any]]: The event dictionary if sent to GUI,
+                                     or None for terminal mode.
+        """
+        if not src:
+            self.logger.error("[MediaEvents] audio() requires 'src' parameter")
+            return None
+
+        # Base event for both modes
+        base_event = {
+            "type": EVENT_AUDIO,
+            "src": src,
+            "alt_text": alt_text,
+            "caption": caption,
+            **kwargs
+        }
+
+        if self.display.mode == "zBifrost":
+            # Bifrost gets clean audio data
+            return self.zPrimitives.send_gui_event(base_event)
+        else:
+            # Terminal mode: format and display locally
+            indent_str = "  " * indent
+            display_color = color if color else self.display.mycolor
+
+            # Display icon + alt text header
+            header = f"{indent_str}{DEFAULT_AUDIO_ICON} {alt_text}" if alt_text else f"{indent_str}{DEFAULT_AUDIO_ICON} Audio"
+            self.BasicOutputs.text(header, indent=0, color=display_color, break_after=False)
+
+            # Display path
+            path_line = f"{indent_str}   Path: {src}"
+            self.BasicOutputs.text(path_line, indent=0, color="muted", break_after=False)
+
+            # Display caption (if provided)
+            if caption:
+                caption_line = f"{indent_str}   Caption: {caption}"
+                self.BasicOutputs.text(caption_line, indent=0, color="muted", break_after=False)
+
+            # Display button (if open_prompt enabled)
+            if open_prompt:
+                # Add spacing before button
+                self.zPrimitives.write_line("")
+                # Use built-in button logic
+                confirmed = self.BasicInputs.button("Play audio", action="#", color="info")
+                if confirmed:
+                    # Call zOpen.open_audio(src)
+                    self.logger.info(f"[MediaEvents] User confirmed play for: {src}")
+                    result = self.display.zcli.open.open_audio(src)
+                    if result == "zBack":
+                        self.logger.info(f"[MediaEvents] Successfully opened audio: {src}")
+                    else:
+                        self.logger.warning(f"[MediaEvents] Failed to open audio: {src}")
             else:
                 # Add break after last line if no button
                 self.zPrimitives.write_line("")

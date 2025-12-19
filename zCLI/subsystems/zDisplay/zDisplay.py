@@ -164,6 +164,8 @@ EVENT_ZTABLE = "zTable"
 # ═══════════════════════════════════════════════════════════════════════════
 
 EVENT_IMAGE = "image"
+EVENT_VIDEO = "video"
+EVENT_AUDIO = "audio"
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Event Name Constants - System Events
@@ -318,6 +320,8 @@ class zDisplay(zDisplayDelegates):
 
             # Media events
             EVENT_IMAGE: self.zEvents.image,
+            EVENT_VIDEO: self.zEvents.video,
+            EVENT_AUDIO: self.zEvents.audio,
 
             # System events
             EVENT_ZDECLARE: self.zEvents.zDeclare,
