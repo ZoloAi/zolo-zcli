@@ -406,7 +406,9 @@ class zDisplay(zDisplayDelegates):
             self.logger.warning(ERR_UNKNOWN_EVENT, event)
             return None
 
-        params = {k: v for k, v in display_obj.items() if k != KEY_EVENT}
+        # Filter out 'event' key AND metadata keys (starting with _)
+        # Metadata keys like _zClass, _id, _rbac are Bifrost-only and should not be passed to Terminal event methods
+        params = {k: v for k, v in display_obj.items() if k != KEY_EVENT and not k.startswith('_')}
 
         try:
             return handler(**params)

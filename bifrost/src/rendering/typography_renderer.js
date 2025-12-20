@@ -13,32 +13,38 @@ export class TypographyRenderer {
 
   /**
    * Render text element
-   * @param {Object} eventData - Event data with content, color, indent, etc.
+   * @param {Object} eventData - Event data with content, color, indent, _id, etc.
    * @returns {HTMLElement}
    */
   renderText(eventData) {
     const classes = this._buildTextClasses(eventData);
-    const p = createParagraph(classes ? { class: classes } : {});
+    const attrs = {};
+    if (classes) attrs.class = classes;
+    if (eventData._id) attrs.id = eventData._id;  // Pass _id to primitive
+    const p = createParagraph(attrs);
     p.textContent = eventData.content || '';
     return p;
   }
 
   /**
    * Render header element
-   * @param {Object} eventData - Event data with label, level, etc.
+   * @param {Object} eventData - Event data with label, level, _id, etc.
    * @returns {HTMLElement}
    */
   renderHeader(eventData) {
     const level = eventData.level || 1;
     const classes = this._buildTextClasses(eventData);
-    const h = createHeading(level, classes ? { class: classes } : {});
+    const attrs = {};
+    if (classes) attrs.class = classes;
+    if (eventData._id) attrs.id = eventData._id;  // Pass _id to primitive
+    const h = createHeading(level, attrs);
     h.textContent = eventData.label || eventData.content || '';
     return h;
   }
 
   /**
    * Render divider element
-   * @param {Object} eventData - Event data
+   * @param {Object} eventData - Event data with color, _id, etc.
    * @returns {HTMLElement}
    */
   renderDivider(eventData) {
@@ -46,6 +52,7 @@ export class TypographyRenderer {
     const classes = ['zDivider'];
     if (eventData.color) classes.push(`zBorder-${eventData.color}`);
     hr.className = classes.join(' ');
+    if (eventData._id) hr.setAttribute('id', eventData._id);  // Divider has no primitive yet
     return hr;
   }
 
@@ -65,6 +72,11 @@ export class TypographyRenderer {
     // Indent: use margin-start (zms) for text indentation
     if (eventData.indent) {
       classes.push(`zms-${eventData.indent}`);
+    }
+    
+    // Custom classes from YAML (_zClass parameter - ignored by terminal)
+    if (eventData._zClass) {
+      classes.push(eventData._zClass);
     }
     
     return classes.length > 0 ? classes.join(' ') : '';

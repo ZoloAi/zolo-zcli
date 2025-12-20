@@ -344,6 +344,8 @@ export async function createZKeyContainer(zKey, metadata = {}) {
   
   // Set data attribute for debugging
   container.setAttribute('data-zkey', zKey);
+  // Set id for DevTools navigation and CSS targeting
+  container.setAttribute('id', zKey);
   
   return container;
 }

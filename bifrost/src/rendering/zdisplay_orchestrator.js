@@ -104,8 +104,10 @@ export class ZDisplayOrchestrator {
       if (hasBlockMetadata && chunk_num === 1) {
         // First chunk with block metadata: create a wrapper for the entire block (using primitive)
         const { createDiv } = await import('./primitives/generic_containers.js');
+        const blockName = message.zBlock || 'progressive';  // Use block name from backend
         const blockWrapper = createDiv({
-          'data-zblock': 'progressive'
+          'data-zblock': 'progressive',
+          'id': blockName  // Set id to block name (e.g., "zAccount")
         });
         
         // Apply block-level metadata to wrapper
@@ -119,7 +121,7 @@ export class ZDisplayOrchestrator {
         
         contentDiv.appendChild(blockWrapper);
         targetContainer = blockWrapper;
-        this.logger.log(`[ZDisplayOrchestrator] 📦 Created block wrapper with metadata for progressive rendering`);
+        this.logger.log(`[ZDisplayOrchestrator] 📦 Created block wrapper "${blockName}" with metadata for progressive rendering`);
       } else if (hasBlockMetadata && chunk_num > 1) {
         // Subsequent chunks: find existing block wrapper
         const existingWrapper = contentDiv.querySelector('[data-zblock="progressive"]');
@@ -211,6 +213,8 @@ export class ZDisplayOrchestrator {
       
       // Give container a data attribute for debugging
       containerDiv.setAttribute('data-zkey', key);
+      // Set id for DevTools navigation and CSS targeting
+      containerDiv.setAttribute('id', key);
       
       // Handle list/array values (sequential zDisplay events or zDialog forms)
       if (Array.isArray(value)) {
@@ -412,6 +416,41 @@ export class ZDisplayOrchestrator {
         // Use modular TypographyRenderer for dividers
         const dividerRenderer = await this.client._ensureTypographyRenderer();
         element = dividerRenderer.renderDivider(eventData);
+        break;
+        
+      case 'button':
+        // Use modular ButtonRenderer for buttons
+        const buttonRenderer = await this.client._ensureButtonRenderer();
+        element = buttonRenderer.render(eventData);
+        this.logger.log(`[renderZDisplayEvent] Rendered button element: ${eventData.label}`);
+        break;
+        
+      case 'zTable':
+        // Use modular TableRenderer for tables
+        const tableRenderer = await this.client._ensureTableRenderer();
+        element = tableRenderer.render(eventData);
+        this.logger.log(`[renderZDisplayEvent] Rendered table element: ${eventData.title || 'untitled'}`);
+        break;
+        
+      case 'list':
+        // Use modular ListRenderer for lists
+        const listRenderer = await this.client._ensureListRenderer();
+        element = listRenderer.render(eventData);
+        this.logger.log(`[renderZDisplayEvent] Rendered list element with ${eventData.items?.length || 0} items`);
+        break;
+        
+      case 'image':
+        // Use modular ImageRenderer for images
+        const imageRenderer = await this.client._ensureImageRenderer();
+        element = imageRenderer.render(eventData);
+        this.logger.log(`[renderZDisplayEvent] Rendered image element: ${eventData.src}`);
+        break;
+        
+      case 'card':
+        // Use modular CardRenderer for cards
+        const cardRenderer = await this.client._ensureCardRenderer();
+        element = cardRenderer.renderCard(eventData);
+        this.logger.log(`[renderZDisplayEvent] Rendered card element`);
         break;
         
       default:

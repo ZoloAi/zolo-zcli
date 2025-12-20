@@ -43,6 +43,11 @@ export function createBlockWrapper(blockData, blockName = 'zBlock', isProgressiv
   // Set data attribute
   blockLevelDiv.setAttribute('data-zblock', isProgressive ? 'progressive' : blockName);
   
+  // Set id for named blocks (not progressive)
+  if (!isProgressive && blockName && blockName !== 'zBlock') {
+    blockLevelDiv.setAttribute('id', blockName);
+  }
+  
   // Apply inline styles if present
   if (blockData._zStyle) {
     blockLevelDiv.setAttribute('style', blockData._zStyle);

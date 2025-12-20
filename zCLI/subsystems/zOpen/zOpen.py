@@ -448,24 +448,30 @@ class zOpen:
 
     def open_image(self, image_path: str) -> str:
         """
-        Open an image file in the system's default image viewer.
+        Open an image file in the system's default image viewer or browser (for URLs).
+        
+        Terminal-First Design:
+        - Detects if image_path is a URL (http/https/www)
+        - URLs → Opens in browser (correct UX for web images)
+        - Local paths → Opens in image viewer app
         
         Uses zMachine's detected image viewer and platform-specific launch commands.
         Falls back gracefully if viewer is not available or headless environment.
         
         Args:
-            image_path: Path to the image file (relative or absolute)
+            image_path: Path to the image file (local path or URL)
             
         Returns:
             "zBack" if successfully opened, "stop" if failed
             
         Detection Flow:
-            1. Get image_viewer from session[zMachine]
-            2. Get platform-specific launch command
-            3. Resolve image path (absolute)
-            4. Check if file exists
-            5. Launch viewer with subprocess
-            6. Handle errors gracefully
+            1. Check if image_path is a URL → open in browser
+            2. Otherwise, get image_viewer from session[zMachine]
+            3. Get platform-specific launch command
+            4. Resolve image path (absolute)
+            5. Check if file exists
+            6. Launch viewer with subprocess
+            7. Handle errors gracefully
             
         Examples:
             >>> zcli.open.open_image("screenshot.png")
@@ -473,8 +479,19 @@ class zOpen:
             # Linux: eog screenshot.png
             # Windows: start screenshot.png
             
-        Version: v1.5.8 (Phase 3: zOpen Integration)
+            >>> zcli.open.open_image("https://picsum.photos/200/300")
+            # Opens in browser (correct for web images)
+            
+        Version: v1.5.9 (URL Detection)
         """
+        # Detect if it's a URL → open in browser
+        parsed = urlparse(image_path)
+        if parsed.scheme in (URL_SCHEME_HTTP, URL_SCHEME_HTTPS) or image_path.startswith(URL_PREFIX_WWW):
+            self.logger.info(f"Detected web image URL: {image_path}")
+            url = image_path if parsed.scheme else f"{URL_SCHEME_HTTPS_DEFAULT}{image_path}"
+            return open_url(url, self.session, self.display, self.logger)
+        
+        # Local file handling (original logic)
         from zCLI import subprocess
         from zCLI.subsystems.zConfig.zConfig_modules.helpers import get_image_viewer_launch_command
         from zCLI.subsystems.zConfig.zConfig_modules.config_session import SESSION_KEY_ZMACHINE

@@ -6,10 +6,11 @@
  * Terminal-First Design (Refactored Micro-Step 8):
  * - Backend sends semantic color (danger, success, warning, etc.)
  * - Terminal displays colored prompts matching semantic meaning
- * - Bifrost renders styled buttons with same semantic colors
+ * - Bifrost renders buttons using zTheme button variants (.zBtn-primary, etc.)
  * 
  * Renders button input events from zCLI backend. Creates interactive
- * button elements with zTheme styling and WebSocket response handling.
+ * button elements with zTheme button component classes and WebSocket
+ * response handling.
  * 
  * @module rendering/button_renderer
  * @layer 3
@@ -18,6 +19,7 @@
  * Dependencies:
  * - Layer 0: primitives/interactive_primitives.js (createButton)
  * - Layer 2: dom_utils.js (createElement, replaceElement)
+ * - zTheme: Button component classes (.zBtn, .zBtn-primary, etc.)
  * 
  * Exports:
  * - ButtonRenderer: Class for rendering button events
@@ -40,12 +42,6 @@
 // Imports
 // ─────────────────────────────────────────────────────────────────
 import { createButton } from './primitives/interactive_primitives.js';
-import { applyColorScheme, getBackgroundClass } from '../utils/color_utils.js';
-import { 
-  createElement, 
-  appendChildren,
-  replaceElement
-} from '../utils/dom_utils.js';
 
 // ─────────────────────────────────────────────────────────────────
 // Main Implementation
@@ -108,100 +104,94 @@ export default class ButtonRenderer {
     const requestId = data.requestId || data.data?.requestId;
     const label = data.label || data.prompt || data.data?.prompt || 'Click Me';
     const action = data.action || data.data?.action || null;
-    const color = data.color || data.data?.color || 'primary';
+    const rawColor = data.color || data.data?.color || 'primary';
+    const color = rawColor.toLowerCase(); // Normalize to lowercase for consistency
     
-    // Resolve target zone
-    const targetZone = zone || data.target || this.defaultZone;
-    const container = document.getElementById(targetZone);
-    
-    if (!container) {
-      this.logger.error(`[ButtonRenderer] Zone not found: ${targetZone}`);
-      return null;
-    }
-
     this.logger.log('[ButtonRenderer] Rendering button:', { requestId, label, action, color });
 
-    // Create button container
-    const buttonContainer = this._createButtonContainer();
-    
-    // Create primary button with semantic color
-    const primaryButton = this._createButton(label, color);
-    this._attachClickHandler(primaryButton, requestId, label, true, buttonContainer);
+    // Create button primitive (just the button, no container)
+    const button = this._createButton(label, color, data._zClass, data._id);
+    this._attachClickHandler(button, requestId, label, true);
     
     // ✅ NO cancel button in Bifrost! (Terminal-first: y/n, GUI: click or ignore)
     // In terminal, button is y/n prompt. In GUI, button is click or don't click.
     // We're asynchronous - user can just ignore the button.
     
-    // Append button to container
-    buttonContainer.appendChild(primaryButton);
-    
-    // Add to page
-    container.appendChild(buttonContainer);
+    // If zone is provided, append to DOM (legacy behavior for direct calls)
+    // If no zone, just return element (orchestrator pattern)
+    if (zone) {
+      const targetZone = zone || data.target || this.defaultZone;
+      const container = document.getElementById(targetZone);
+      
+      if (!container) {
+        this.logger.error(`[ButtonRenderer] Zone not found: ${targetZone}`);
+        return button; // Still return element even if zone not found
+      }
+      
+      // Add to page
+      container.appendChild(button);
+      this.logger.log('[ButtonRenderer] Button rendered and appended to zone');
+    }
     
     this.logger.log('[ButtonRenderer] Button rendered successfully');
-    return buttonContainer;
+    return button;
   }
 
   /**
-   * Create button container element
-   * @private
-   * @returns {HTMLElement} Container div
-   */
-  _createButtonContainer() {
-    // ✅ Use ONLY zTheme classes - NO inline styles!
-    const container = createElement('div', ['zD-flex', 'zFlex-items-center', 'zGap-3', 'zmy-3', 'zp-3']);
-    
-    return container;
-  }
-
-  /**
-   * Create a single button element from primitives + color utilities
+   * Create a single button element from primitives + zTheme button variants
    * 
    * Architecture:
    * - Layer 0.0: createButton() - Raw <button> element
-   * - Layer 0.3: applyColorScheme() - Semantic colors
-   * - Layer 3 (here): Compose primitives + add button styling
+   * - Layer 3 (here): Apply zTheme button variant classes (.zBtn-primary, etc.)
    * 
    * Terminal-First Design:
    * - Uses semantic color from backend (matches terminal prompt color)
-   * - Composes from raw primitives instead of pre-built zTheme components
+   * - Maps to zTheme button variant classes for consistent styling
    * 
    * @private
    * @param {string} label - Button text
    * @param {string} color - Button semantic color (primary, danger, success, warning, info, secondary)
+   * @param {string} [customClass] - Optional custom classes for layout (_zClass from YAML)
+   * @param {string} [customId] - Optional custom id for targeting (_id from YAML)
    * @returns {HTMLElement} Button element
    */
-  _createButton(label, color) {
+  _createButton(label, color, customClass, customId) {
     this.logger.log(`[ButtonRenderer] Creating button "${label}" with color: ${color}`);
     
-    // ✅ Layer 0.0: Create raw button primitive
-    const button = createButton('button', {
-      class: 'zBtn' // Base button styling only (padding, border, etc.)
-    });
+    // ✅ Layer 0.0: Create raw button primitive with attributes
+    const attrs = { class: 'zBtn' }; // Base button styling only (padding, border, etc.)
+    if (customId) attrs.id = customId;  // Pass _id to primitive
+    const button = createButton('button', attrs);
     
     button.textContent = label;
     
-    // ✅ Layer 0.3: Apply semantic color using color utilities
-    // Map zCLI semantic colors to appropriate zTheme background classes
+    // ✅ Apply semantic button variant classes (zTheme button components)
+    // Map zCLI semantic colors to zTheme button variant classes (.zBtn-primary, etc.)
     const colorMap = {
-      'primary': 'primary',     // Green (zCLI brand)
-      'danger': 'error',        // Red (use error, not danger)
-      'success': 'success',     // Green (darker)
-      'warning': 'warning',     // Orange
-      'info': 'info',           // Blue
-      'secondary': 'secondary'  // Purple
+      'primary': 'zBtn-primary',       // Green (zCLI brand)
+      'danger': 'zBtn-danger',         // Red (destructive action)
+      'success': 'zBtn-success',       // Green (positive action)
+      'warning': 'zBtn-warning',       // Orange (cautious action)
+      'info': 'zBtn-info',             // Blue (informational)
+      'secondary': 'zBtn-secondary'    // Purple (secondary action)
     };
     
-    const bgColor = colorMap[color] || 'primary';
-    const bgClass = getBackgroundClass(bgColor);
+    const btnClass = colorMap[color] || 'zBtn-primary';
+    button.classList.add(btnClass);
+    this.logger.log(`[ButtonRenderer] Applied button variant class: ${btnClass}`);
     
-    if (bgClass) {
-      button.classList.add(bgClass);
-      this.logger.log(`[ButtonRenderer] Applied color class: ${bgClass}`);
+    // Apply custom classes if provided (_zClass from YAML - for layout/spacing)
+    if (customClass) {
+      button.className += ` ${customClass}`;
+      this.logger.log(`[ButtonRenderer] Applied custom classes: ${customClass}`);
     }
     
-    // ✅ Proper composition: Primitive + Color Utility = Styled Button
-    // NO pre-built component classes like .zBtn-primary
+    if (customId) {
+      this.logger.log(`[ButtonRenderer] Applied custom id: ${customId}`);
+    }
+    
+    // ✅ Proper composition: Primitive + zTheme Button Variant = Styled Button
+    // Uses semantic button classes (.zBtn-primary) per zTheme conventions
     
     return button;
   }
@@ -213,18 +203,17 @@ export default class ButtonRenderer {
    * @param {string} requestId - Request ID for response
    * @param {string} originalLabel - Original button label
    * @param {boolean} value - Response value (true for primary, false for cancel)
-   * @param {HTMLElement} container - Button container to replace
    */
-  _attachClickHandler(button, requestId, originalLabel, value, container) {
+  _attachClickHandler(button, requestId, originalLabel, value) {
     button.addEventListener('click', () => {
       this.logger.log(`[ButtonRenderer] Button clicked: ${button.textContent} (value: ${value})`);
       
       // Send response to backend via WebSocket
       this._sendResponse(requestId, value);
       
-      // Show confirmation message
-      const confirmation = this._createConfirmation(originalLabel, value);
-      replaceElement(container, confirmation);
+      // Disable button after click to prevent double-submission
+      button.disabled = true;
+      button.textContent = `✓ ${originalLabel}`;
     });
   }
 
@@ -256,25 +245,4 @@ export default class ButtonRenderer {
     }
   }
 
-  /**
-   * Create confirmation message after button click
-   * @private
-   * @param {string} label - Original button label
-   * @param {boolean} value - Response value (true = clicked, false = cancelled)
-   * @returns {HTMLElement} Confirmation paragraph
-   */
-  _createConfirmation(label, value) {
-    // Get appropriate text color class
-    const colorClass = value ? 'zText-success' : 'zText-info';
-    
-    // ✅ Use ONLY zTheme classes - NO inline styles!
-    const confirmation = createElement('p', [colorClass, 'zm-0', 'zpy-2', 'zpx-3', 'zFw-bold']);
-    
-    // Set confirmation text
-    const icon = value ? '✓' : '○';
-    const action = value ? 'clicked' : 'cancelled';
-    confirmation.textContent = `${icon} ${label} ${action}!`;
-    
-    return confirmation;
-  }
 }

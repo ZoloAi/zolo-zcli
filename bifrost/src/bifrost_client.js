@@ -904,6 +904,59 @@
     }
 
     /**
+     * Ensure ButtonRenderer module is loaded
+     */
+    async _ensureButtonRenderer() {
+      if (!this.buttonRenderer) {
+        const module = await import('./rendering/button_renderer.js');
+        const ButtonRenderer = module.default;
+        this.buttonRenderer = new ButtonRenderer(this.logger, this);
+        this.logger.log('[BifrostClient] ButtonRenderer loaded and initialized');
+      }
+      return this.buttonRenderer;
+    }
+
+    /**
+     * Ensure TableRenderer module is loaded
+     */
+    async _ensureTableRenderer() {
+      if (!this.tableRenderer) {
+        const module = await import('./rendering/table_renderer.js');
+        const TableRenderer = module.default;
+        this.tableRenderer = new TableRenderer(this.logger);
+        this.logger.log('[BifrostClient] TableRenderer loaded and initialized');
+      }
+      return this.tableRenderer;
+    }
+
+    /**
+     * Lazy-load the ListRenderer module
+     * @private
+     */
+    async _ensureListRenderer() {
+      if (!this.listRenderer) {
+        const module = await import('./rendering/list_renderer.js');
+        const ListRenderer = module.default;
+        this.listRenderer = new ListRenderer(this);
+        this.logger.log('[BifrostClient] ListRenderer loaded and initialized');
+      }
+      return this.listRenderer;
+    }
+
+    /**
+     * Ensure image renderer module is loaded
+     */
+    async _ensureImageRenderer() {
+      if (!this.imageRenderer) {
+        const module = await import('./rendering/image_renderer.js');
+        const ImageRenderer = module.default;
+        this.imageRenderer = new ImageRenderer(this.logger);
+        this.logger.log('[BifrostClient] ImageRenderer loaded and initialized');
+      }
+      return this.imageRenderer;
+    }
+
+    /**
      * Ensure dashboard renderer module is loaded
      */
     async _ensureDashboardRenderer() {

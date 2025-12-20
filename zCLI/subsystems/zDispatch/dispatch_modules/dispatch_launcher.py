@@ -614,11 +614,8 @@ class CommandLauncher:
         TODO: Week 6.16 (zData) - Update data.handle_request() call after refactor
         """
         # ========================================================================
-        # IMPLICIT WIZARD DETECTION
+        # PRELIMINARY CHECKS
         # ========================================================================
-        # If dict has multiple non-metadata, non-subsystem keys, treat as wizard steps
-        # This allows cleaner YAML without explicit zWizard: wrapper
-        
         # Known subsystem command keys
         subsystem_keys = {KEY_ZDISPLAY, KEY_ZFUNC, KEY_ZDIALOG, KEY_ZLINK, KEY_ZWIZARD, KEY_ZREAD, KEY_ZDATA}
         
@@ -642,7 +639,50 @@ class CommandLauncher:
             # This handles both lists and nested dicts
             return self.launch(content_value, context=context, walker=walker)
         
-        # If multiple content keys and NOT a direct subsystem/CRUD call → implicit wizard
+        # ========================================================================
+        # ORGANIZATIONAL STRUCTURE DETECTION (zCLI Way)
+        # ========================================================================
+        # If dict has only nested dicts/lists (no direct actions), it's organizational
+        # Recurse into it rather than treating as implicit wizard
+        # This enables flexible YAML organization with nested containers
+        
+        if not is_subsystem_call and not is_crud_call and len(content_keys) > 0:
+            # Check if ALL content values are dicts or lists (organizational structure)
+            all_nested = all(
+                isinstance(zHorizontal[k], (dict, list))
+                for k in content_keys
+            )
+            
+            # If purely organizational (no direct actions), recurse into nested structures
+            if all_nested:
+                self.logger.framework.debug(f"[zCLI Recursion] Organizational structure detected ({len(content_keys)} keys), recursing...")
+                
+                result = None
+                for key in content_keys:
+                    value = zHorizontal[key]
+                    self.logger.framework.debug(f"[zCLI Recursion] Processing nested key: {key} (type: {type(value).__name__})")
+                    
+                    # Recursively process nested content
+                    if isinstance(value, dict):
+                        result = self._launch_dict(value, context, walker)
+                    elif isinstance(value, list):
+                        result = self._launch_list(value, context, walker)
+                    
+                    # Check for navigation signals
+                    if result in ('zBack', 'exit', 'stop', 'error'):
+                        self.logger.framework.debug(f"[zCLI Recursion] Navigation signal received: {result}")
+                        return result
+                
+                self.logger.framework.debug(f"[zCLI Recursion] Completed organizational recursion, returning: {result}")
+                return result
+        
+        # ========================================================================
+        # IMPLICIT WIZARD DETECTION
+        # ========================================================================
+        # If dict has multiple non-metadata, non-subsystem keys with mixed types
+        # (not purely organizational), treat as wizard steps
+        
+        # If multiple content keys and NOT purely organizational → implicit wizard
         if not is_subsystem_call and not is_crud_call and len(content_keys) > 1:
             self._log_detected("Implicit zWizard (multi-step)")
             # Call wizard with proper context - use walker if available for proper dispatch routing
@@ -923,7 +963,8 @@ class CommandLauncher:
         if any(key in zHorizontal for key in crud_keys):
             return self._handle_crud_dict(zHorizontal, context)
         
-        # Unknown dict - return None
+        # No recognized keys found - return None
+        self.logger.framework.debug("[zCLI Launcher] No recognized keys found, returning None")
         return None
 
     # ========================================================================

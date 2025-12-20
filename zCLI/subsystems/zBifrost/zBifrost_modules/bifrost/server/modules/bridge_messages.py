@@ -660,6 +660,7 @@ class MessageHandler:
                             "keys": chunk_keys,
                             "data": chunk_data,  # Send YAML data, not HTML
                             "is_gate": is_gate,
+                            "zBlock": zBlock,  # Include block name for id attribute
                             "_requestId": data.get("_requestId")
                         }
                         await ws.send(json.dumps(chunk_msg))
@@ -1111,6 +1112,7 @@ class MessageHandler:
                     "keys": chunk_keys,
                     "data": chunk_data,
                     "is_gate": is_gate,
+                    "zBlock": zBlock,  # Include block name for id attribute
                     "_requestId": gen_state['request_id']  # Use original walker request ID
                 }
                 await ws.send(json.dumps(chunk_msg))

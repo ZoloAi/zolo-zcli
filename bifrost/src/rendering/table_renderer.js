@@ -130,11 +130,14 @@ export class TableRenderer {
       class: customClass 
     } = data;
     
-    // Get target container
-    const container = document.getElementById(zone);
-    if (!container) {
-      this.logger.error(`[TableRenderer] ❌ Zone not found: ${zone}`);
-      return null;
+    // Get target container (optional for orchestrator pattern)
+    let container = null;
+    if (zone) {
+      container = document.getElementById(zone);
+      if (!container) {
+        this.logger.error(`[TableRenderer] ❌ Zone not found: ${zone}`);
+        // Continue anyway - return element for orchestrator to append
+      }
     }
     
     // Validate columns
@@ -227,8 +230,11 @@ export class TableRenderer {
       wrapper.appendChild(footer);
     }
     
-    // Append wrapper to container
-    container.appendChild(wrapper);
+    // Append wrapper to container (if zone was provided - legacy behavior)
+    // If no zone, just return element (orchestrator pattern)
+    if (container) {
+      container.appendChild(wrapper);
+    }
     
     // Log success
     const paginationInfo = limit ? ` (showing ${rows.length} of ${allRows.length} total)` : '';

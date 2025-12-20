@@ -1,155 +1,71 @@
 /**
- * ═══════════════════════════════════════════════════════════════
- * List Renderer - Bullet and Numbered Lists
- * ═══════════════════════════════════════════════════════════════
- * 
- * Renders list events from zCLI backend (BasicData subsystem).
- * Supports bullet lists (ul) and numbered lists (ol).
- * 
- * @module rendering/list_renderer
- * @layer 3
- * @pattern Strategy (single event type)
- * 
- * Philosophy:
- * - "Terminal first" - lists are fundamental data display primitives
- * - Pure rendering (no interactivity, no sorting, no filtering)
- * - Semantic HTML (ul/ol tags)
- * - Uses Layer 2 utilities exclusively (no inline logic)
- * 
- * Dependencies:
- * - Layer 2: dom_utils.js
- * 
- * Exports:
- * - ListRenderer: Class for rendering list events
- * 
- * Example:
- * ```javascript
- * import { ListRenderer } from './list_renderer.js';
- * 
- * const renderer = new ListRenderer(logger);
- * renderer.render({
- *   items: ['Item 1', 'Item 2', 'Item 3'],
- *   style: 'bullet'
- * }, 'zVaF');
- * ```
+ * ListRenderer - Renders list elements (ul/ol) with zTheme styling
+ * Part of the modular bifrost rendering architecture
  */
 
-// ─────────────────────────────────────────────────────────────────
-// Imports
-// ─────────────────────────────────────────────────────────────────
-import { createElement, setAttributes } from '../utils/dom_utils.js';
-
-// ─────────────────────────────────────────────────────────────────
-// List Renderer Class
-// ─────────────────────────────────────────────────────────────────
-
-/**
- * ListRenderer - Renders bullet and numbered lists
- * 
- * Handles the 'list' zDisplay event from BasicData subsystem.
- * Creates semantic HTML lists (ul or ol) based on style parameter.
- * 
- * Style Mapping:
- * - 'bullet' → <ul> (unordered list)
- * - 'number' → <ol> (ordered/numbered list)
- * - Default: bullet
- */
 export class ListRenderer {
-  /**
-   * Create a ListRenderer instance
-   * @param {Object} logger - Logger instance for debugging
-   */
-  constructor(logger) {
-    this.logger = logger || console;
-    this.logger.log('[ListRenderer] ✅ Initialized');
+  constructor(client) {
+    this.client = client;
+    this.logger = client.logger;
   }
 
   /**
-   * Render a list event
-   * 
-   * @param {Object} data - List event data
-   * @param {Array<string|Object>} data.items - List items (strings or objects with 'content' field)
-   * @param {string} [data.style='bullet'] - List style ('bullet' or 'number')
-   * @param {number} [data.indent=0] - Indentation level (0 = no indent)
-   * @param {string} [data.class] - Custom CSS class (optional)
-   * @param {string} zone - Target DOM element ID
-   * @returns {HTMLElement|null} Created list element or null if failed
-   * 
-   * @example
-   * renderer.render({ items: ['A', 'B', 'C'], style: 'bullet' }, 'zVaF');
-   * renderer.render({ items: ['1st', '2nd', '3rd'], style: 'number' }, 'zVaF');
+   * Render a list element (bulleted or numbered)
+   * @param {Object} eventData - zDisplay event data with items array
+   * @returns {HTMLElement} - Rendered list element (ul or ol)
    */
-  render(data, zone) {
-    const { items, style = 'bullet', indent = 0, class: customClass } = data;
+  render(eventData) {
+    this.logger.log(`[ListRenderer] Rendering list with ${eventData.items?.length || 0} items`);
     
-    // Validate required parameters
-    if (!items || !Array.isArray(items)) {
-      this.logger.error('[ListRenderer] ❌ Missing or invalid required parameter: items (must be array)');
-      return null;
+    // Check style: "number" → <ol>, "bullet" → <ul> (default)
+    const style = eventData.style || 'bullet';
+    const listElement = style === 'number' 
+      ? document.createElement('ol') 
+      : document.createElement('ul');
+    
+    // Apply base zTheme class
+    listElement.className = 'zList';
+    
+    // Apply custom classes if provided (from YAML `_zClass` parameter - ignored by terminal)
+    if (eventData._zClass) {
+      listElement.className += ` ${eventData._zClass}`;
     }
     
-    if (items.length === 0) {
-      this.logger.warn('[ListRenderer] ⚠️ Empty items array');
-      // Still render empty list (semantic HTML)
+    // Apply indent using zms (margin-start) classes
+    if (eventData.indent && eventData.indent > 0) {
+      listElement.className += ` zms-${eventData.indent}`;
     }
     
-    // Get target container
-    const container = document.getElementById(zone);
-    if (!container) {
-      this.logger.error(`[ListRenderer] ❌ Zone not found: ${zone}`);
-      return null;
+    // Apply custom id if provided (_id parameter - ignored by terminal)
+    if (eventData._id) {
+      listElement.setAttribute('id', eventData._id);
     }
-
-    // Determine list tag based on style
-    const listTag = style === 'number' ? 'ol' : 'ul';
     
-    // Build CSS classes array
-    const classes = ['zList'];
-    
-    // Add custom class if provided (from YAML)
-    if (customClass) {
-      classes.push(customClass);
-    }
-
-    // Create list element (using Layer 2 utility)
-    const listElement = createElement(listTag, classes);
+    // Check if this is an inline list (for horizontal layout)
+    const isInline = eventData._zClass && eventData._zClass.includes('zList-inline');
     
     // Render list items
+    const items = eventData.items || [];
     items.forEach(item => {
+      const li = document.createElement('li');
+      
+      // Apply zList-inline-item class if this is an inline list
+      if (isInline) {
+        li.className = 'zList-inline-item';
+      }
+      
       // Support both string items and object items with content field
       const content = typeof item === 'string' ? item : (item.content || '');
       
-      const li = createElement('li');
-      li.textContent = content; // Use textContent for XSS safety
+      // Use textContent for security (no HTML injection)
+      li.textContent = content;
       
       listElement.appendChild(li);
     });
     
-    // Apply attributes
-    const attributes = {};
-    
-    // Apply indent as inline style (zTheme doesn't have indent utilities)
-    // Each indent level = 1rem left margin
-    if (indent > 0) {
-      attributes.style = `margin-left: ${indent}rem;`;
-    }
-    
-    if (Object.keys(attributes).length > 0) {
-      setAttributes(listElement, attributes);
-    }
-    
-    // Append to container
-    container.appendChild(listElement);
-    
-    // Log success
-    this.logger.log(`[ListRenderer] ✅ Rendered ${listTag} with ${items.length} items (indent: ${indent})`);
-    
+    this.logger.log(`[ListRenderer] ✅ Rendered ${style} list with ${items.length} items`);
     return listElement;
   }
 }
 
-// ─────────────────────────────────────────────────────────────────
-// Default Export
-// ─────────────────────────────────────────────────────────────────
 export default ListRenderer;
-
