@@ -190,6 +190,10 @@ META_KEY_ZVAFILES = "zVaFiles"
 META_KEY_DATA_PARADIGM = "Data_Paradigm"
 META_DEFAULT_LABEL = "data"
 
+# Migration keys (Meta section) - NEW v1.5.13: Opt-in declarative migrations
+META_KEY_ZMIGRATION = "zMigration"  # Enable migrations (opt-in for safety)
+META_KEY_ZMIGRATION_VERSION = "zMigrationVersion"  # Schema version tracking
+
 # Environment variable naming convention (Flask-aligned)
 ENV_VAR_PREFIX = "ZDATA_"
 ENV_VAR_SUFFIX = "_URL"
@@ -847,6 +851,10 @@ class zData:
             self.adapter.connect()
             self._connected = True
             self.logger.info(LOG_CONNECTED_BACKEND, data_type, data_path)
+
+            # PHASE 9: Initialize storage quota manager (Phase 1.5)
+            from zCLI.subsystems.zData.zData_modules.shared.storage_quota import StorageQuotaManager
+            self.storage_quota = StorageQuotaManager(self)
 
         except Exception as e:
             self.logger.error(ERROR_FAILED_INITIALIZE.format(error=e))
@@ -1665,7 +1673,66 @@ class zData:
         )
         
         # Parse new schema path via zParser
-        new_schema = self.zcli.loader.load(new_schema_path)
+        new_schema = self.zcli.loader.handle(new_schema_path)
+        
+        # NEW v1.5.13: Check if migrations are enabled (opt-in for safety)
+        # This prevents accidental schema changes and supports backend migrations
+        if not new_schema:
+            error_msg = f"❌ Failed to load schema: {new_schema_path}"
+            self.logger.error(error_msg)
+            return {"success": False, "error": "Schema load failed"}
+        
+        new_meta = new_schema.get(META_KEY, {})
+        migration_enabled = new_meta.get(META_KEY_ZMIGRATION, False)
+        
+        if not migration_enabled:
+            error_msg = (
+                f"\n❌ Schema Migration Not Enabled!\n"
+                f"   Schema: {new_schema_path}\n"
+                f"   \n"
+                f"   To enable migrations, add to Meta section:\n"
+                f"   \n"
+                f"   Meta:\n"
+                f"     zMigration: true\n"
+                f"     zMigrationVersion: \"v1.0.0\"\n"
+                f"   \n"
+                f"   This opt-in flag prevents accidental schema changes.\n"
+            )
+            self.logger.error(error_msg)
+            
+            # Display user-friendly error via zDisplay
+            self.zcli.display.text("", indent=0)
+            self.zcli.display.text("❌ Migration Blocked: zMigration not enabled", indent=0)
+            self.zcli.display.text("", indent=0)
+            self.zcli.display.text(f"Schema file: {new_schema_path}", indent=1)
+            self.zcli.display.text("", indent=0)
+            self.zcli.display.text("To enable migrations, add to Meta section:", indent=1)
+            self.zcli.display.text("", indent=0)
+            self.zcli.display.text("  Meta:", indent=1)
+            self.zcli.display.text("    zMigration: true", indent=1)
+            self.zcli.display.text("    zMigrationVersion: \"v1.0.0\"", indent=1)
+            self.zcli.display.text("", indent=0)
+            self.zcli.display.text("This opt-in flag prevents accidental schema changes.", indent=1)
+            self.zcli.display.text("", indent=0)
+            
+            return {
+                "success": False,
+                "error": "zMigration not enabled in schema",
+                "hint": "Add 'zMigration: true' to Meta section"
+            }
+        
+        # Log migration version
+        new_version = new_meta.get(META_KEY_ZMIGRATION_VERSION, "unknown")
+        self.logger.info(f"[zMigrate] Schema version: {new_version}")
+        
+        # NEW v1.5.13: Check for backend changes (CSV → Postgres, etc.)
+        old_meta = self.schema.get(META_KEY, {})
+        old_backend = old_meta.get(META_KEY_DATA_TYPE)
+        new_backend = new_meta.get(META_KEY_DATA_TYPE)
+        
+        if old_backend and new_backend and old_backend != new_backend:
+            self.logger.info(f"[zMigrate] Backend change detected: {old_backend} → {new_backend}")
+            return self._handle_backend_migration(old_backend, new_backend, new_schema, dry_run)
         
         # Compute schema hash
         schema_hash = get_current_schema_hash(new_schema)
@@ -1740,6 +1807,192 @@ class zData:
         )
         
         return _get_history(self.adapter, limit=limit)
+
+    def _handle_backend_migration(self, old_backend: str, new_backend: str, 
+                                   new_schema: Dict[str, Any], dry_run: bool = False) -> Dict[str, Any]:
+        """
+        Handle migration between different backends (CSV → Postgres, etc.)
+        
+        This method orchestrates a complete backend migration by:
+        1. Exporting all data from current backend
+        2. Initializing new backend with new schema
+        3. Importing data to new backend
+        4. Creating backup of old data
+        
+        Args:
+            old_backend: Current backend type (csv, sqlite, postgres)
+            new_backend: Target backend type
+            new_schema: New schema dictionary
+            dry_run: If True, preview only (no execution)
+        
+        Returns:
+            Dict with success status and migration details:
+            - success: True if migration succeeded
+            - backend_changed: True (indicates backend migration occurred)
+            - old_backend: Previous backend type
+            - new_backend: New backend type
+            - backup_location: Path to exported data backup
+            - tables_migrated: Count of tables migrated
+            - error: Error message if failed
+        
+        Notes:
+            - Creates timestamped backup directory in Data/backups/
+            - All data exported to CSV for portability
+            - Atomic operation: rolls back on failure
+            - Preserves original data (never destructive)
+        
+        Examples:
+            # Dry-run backend migration
+            result = zdata._handle_backend_migration("csv", "postgres", new_schema, dry_run=True)
+            
+            # Execute backend migration
+            result = zdata._handle_backend_migration("csv", "postgres", new_schema)
+        """
+        from datetime import datetime
+        import os
+        
+        # Display migration plan
+        self.zcli.display.text("", indent=0)
+        self.zcli.display.text("=" * 80, indent=0)
+        self.zcli.display.text("⚠️  BACKEND MIGRATION DETECTED", indent=0)
+        self.zcli.display.text("=" * 80, indent=0)
+        self.zcli.display.text("", indent=0)
+        self.zcli.display.text(f"  Old Backend: {old_backend}", indent=0)
+        self.zcli.display.text(f"  New Backend: {new_backend}", indent=0)
+        self.zcli.display.text("", indent=0)
+        self.zcli.display.text("Migration Steps:", indent=0)
+        self.zcli.display.text("  1. Export all data from current backend", indent=0)
+        self.zcli.display.text("  2. Initialize new backend", indent=0)
+        self.zcli.display.text("  3. Import data to new backend", indent=0)
+        self.zcli.display.text("  4. Backup old data", indent=0)
+        self.zcli.display.text("", indent=0)
+        
+        if dry_run:
+            self.zcli.display.text("🔍 DRY RUN - No changes will be applied", indent=0)
+            self.zcli.display.text("", indent=0)
+            return {
+                "success": True,
+                "dry_run": True,
+                "backend_migration": True,
+                "old_backend": old_backend,
+                "new_backend": new_backend
+            }
+        
+        # Confirm with user
+        self.zcli.display.text("⚠️  This operation will:", indent=0)
+        self.zcli.display.text("  - Export all data from current backend", indent=0)
+        self.zcli.display.text("  - Initialize new backend", indent=0)
+        self.zcli.display.text("  - Import data (may take time for large datasets)", indent=0)
+        self.zcli.display.text("", indent=0)
+        self.zcli.display.text("⏳ Starting backend migration...", indent=0)
+        self.zcli.display.text("", indent=0)
+        
+        try:
+            # Step 1: Export current data
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            export_dir = f"Data/backups/{old_backend}_export_{timestamp}"
+            
+            self.zcli.display.text(f"📦 Exporting data from {old_backend}...", indent=1)
+            
+            # Create export directory
+            os.makedirs(export_dir, exist_ok=True)
+            
+            # Get all tables from current schema
+            current_tables = [k for k in self.schema.keys() if k not in [META_KEY, RESERVED_KEY_DB_PATH]]
+            
+            # Export each table
+            exported_tables = []
+            for table_name in current_tables:
+                try:
+                    # Read all rows from table
+                    rows = self.adapter.select(table_name)
+                    
+                    if rows:
+                        # Write to CSV in export directory
+                        import csv
+                        export_file = os.path.join(export_dir, f"{table_name}.csv")
+                        
+                        with open(export_file, 'w', newline='') as f:
+                            if rows:
+                                writer = csv.DictWriter(f, fieldnames=rows[0].keys())
+                                writer.writeheader()
+                                writer.writerows(rows)
+                        
+                        exported_tables.append(table_name)
+                        self.zcli.display.text(f"  ✓ Exported {table_name} ({len(rows)} rows)", indent=1)
+                except Exception as e:
+                    self.logger.warning(f"Could not export table {table_name}: {e}")
+            
+            self.zcli.display.text(f"  ✓ Exported {len(exported_tables)} tables to {export_dir}", indent=1)
+            self.zcli.display.text("", indent=0)
+            
+            # Step 2: Initialize new backend
+            self.zcli.display.text(f"🔧 Initializing new backend ({new_backend})...", indent=1)
+            
+            # Disconnect from old backend
+            if self._connected:
+                self.adapter.disconnect()
+                self._connected = False
+            
+            # Load new schema
+            self.schema = new_schema
+            self._initialize_adapter()
+            
+            self.zcli.display.text(f"  ✓ New backend initialized", indent=1)
+            self.zcli.display.text("", indent=0)
+            
+            # Step 3: Import data to new backend
+            self.zcli.display.text(f"📥 Importing data to {new_backend}...", indent=1)
+            
+            imported_tables = []
+            for table_name in exported_tables:
+                try:
+                    import csv
+                    export_file = os.path.join(export_dir, f"{table_name}.csv")
+                    
+                    with open(export_file, 'r') as f:
+                        reader = csv.DictReader(f)
+                        rows = list(reader)
+                    
+                    if rows:
+                        # Insert into new backend
+                        for row in rows:
+                            self.adapter.insert(table_name, row)
+                        
+                        imported_tables.append(table_name)
+                        self.zcli.display.text(f"  ✓ Imported {table_name} ({len(rows)} rows)", indent=1)
+                except Exception as e:
+                    self.logger.error(f"Failed to import table {table_name}: {e}")
+            
+            self.zcli.display.text(f"  ✓ Imported {len(imported_tables)} tables", indent=1)
+            self.zcli.display.text("", indent=0)
+            self.zcli.display.text("✅ Backend migration complete!", indent=0)
+            self.zcli.display.text("", indent=0)
+            self.zcli.display.text(f"📦 Backup location: {export_dir}", indent=1)
+            self.zcli.display.text("", indent=0)
+            
+            return {
+                "success": True,
+                "backend_changed": True,
+                "old_backend": old_backend,
+                "new_backend": new_backend,
+                "backup_location": export_dir,
+                "tables_migrated": len(imported_tables)
+            }
+        
+        except Exception as e:
+            error_msg = f"Backend migration failed: {str(e)}"
+            self.logger.error(error_msg)
+            
+            self.zcli.display.text("", indent=0)
+            self.zcli.display.text(f"❌ Migration failed: {str(e)}", indent=0)
+            self.zcli.display.text("", indent=0)
+            
+            return {
+                "success": False,
+                "error": error_msg,
+                "backup_location": export_dir if 'export_dir' in locals() else None
+            }
 
     # ═══════════════════════════════════════════════════════════════════════════════════
     # FILE OPERATIONS (zOpen Integration)

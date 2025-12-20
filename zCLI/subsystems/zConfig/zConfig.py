@@ -127,6 +127,11 @@ class zConfig:
         # Initialize HTTP Server configuration (optional feature)
         self.http_server = HttpServerConfig(zSpark_obj or {}, zcli.logger)
 
+        # Initialize storage path manager (Phase 1.5: Storage Architecture)
+        from .zConfig_modules.config_storage_paths import StoragePathManager
+        self.paths = self.sys_paths  # Shortcut for convenience
+        self.storage_paths = StoragePathManager(self)
+
         # Print styled ready message (before zDisplay is available, deployment-aware)
         is_production = self.environment.is_production()
         is_testing = self.environment.is_testing()
