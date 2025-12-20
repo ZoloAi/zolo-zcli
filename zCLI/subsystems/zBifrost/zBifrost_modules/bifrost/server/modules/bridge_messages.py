@@ -645,6 +645,8 @@ class MessageHandler:
                                 continue
                             if key in block_dict:
                                 chunk_data[key] = block_dict[key]
+                                # DEBUG: Log what's being sent for this key
+                                self.logger.info(f"[MessageHandler] 🔍 chunk_data[{key}] type: {type(chunk_data[key])}, keys: {list(chunk_data[key].keys()) if isinstance(chunk_data[key], dict) else 'N/A'}")
                         
                         # Extract and send special zDisplay events (zDash, etc.) as standalone messages
                         # before sending the chunk. These events need special frontend handling.
@@ -652,13 +654,21 @@ class MessageHandler:
                         if special_events_sent:
                             self.logger.info(f"[MessageHandler] ✅ Sent {special_events_sent} special event(s) from chunk")
                         
+                        # NEW v1.5.12: Resolve %data.* variables in chunk_data BEFORE sending to frontend
+                        # This enables Flask/Jinja-style data interpolation while keeping DB credentials in .zEnv
+                        # Access context from walker if available (created in zBlock_loop with _resolved_data)
+                        walker_context = getattr(walker, 'block_context', None)
+                        if walker_context and "_resolved_data" in walker_context:
+                            chunk_data = self._resolve_data_variables_recursive(chunk_data, walker_context)
+                            self.logger.info(f"[MessageHandler] ✅ Resolved %data.* variables in chunk data")
+                        
                         # Send chunk to frontend with YAML data (not HTML)
                         # Frontend will render using its existing _renderItems() pipeline
                         chunk_msg = {
                             "event": "render_chunk",
                             "chunk_num": chunk_num,
                             "keys": chunk_keys,
-                            "data": chunk_data,  # Send YAML data, not HTML
+                            "data": chunk_data,  # Send YAML data with resolved variables
                             "is_gate": is_gate,
                             "zBlock": zBlock,  # Include block name for id attribute
                             "_requestId": data.get("_requestId")
@@ -1151,6 +1161,41 @@ class MessageHandler:
             if ws_id in self._paused_generators:
                 del self._paused_generators[ws_id]
                 self.logger.debug(f"[GeneratorResume] Cleaned up generator state for ws={ws_id}")
+    
+    def _resolve_data_variables_recursive(self, data: Any, context: Dict[str, Any]) -> Any:
+        """
+        Recursively resolve %data.* variables in chunk data before sending to frontend.
+        
+        This enables Flask/Jinja-style data interpolation while keeping DB credentials
+        secure in .zEnv. Variables like %data.user.name are resolved from
+        context["_resolved_data"] which was populated by _data block queries.
+        
+        Args:
+            data: The data structure to process (dict, list, or string)
+            context: Execution context containing _resolved_data from queries
+            
+        Returns:
+            The data structure with all %data.* variables resolved
+            
+        Example:
+            data = {"label": "%data.user.name", "items": ["%data.user.email"]}
+            context = {"_resolved_data": {"user": {"name": "Gal", "email": "gal@..."}}}
+            result = {"label": "Gal", "items": ["gal@..."]}
+        """
+        from zCLI.subsystems.zParser.parser_modules.parser_functions import resolve_variables
+        
+        if isinstance(data, dict):
+            # Recursively process dictionary values
+            return {key: self._resolve_data_variables_recursive(value, context) for key, value in data.items()}
+        elif isinstance(data, list):
+            # Recursively process list items
+            return [self._resolve_data_variables_recursive(item, context) for item in data]
+        elif isinstance(data, str) and "%" in data:
+            # Resolve variables in strings
+            return resolve_variables(data, self.zcli, context)
+        else:
+            # Return primitives as-is (int, bool, None, etc.)
+            return data
     
     async def _extract_and_send_special_events(
         self,

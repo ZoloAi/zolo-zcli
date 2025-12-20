@@ -142,9 +142,8 @@ class MediaEvents:
             from zCLI.subsystems.zParser.parser_modules.parser_functions import resolve_variables
             caption = resolve_variables(caption, self.display.zcli, _context)
 
-        # Base event for both modes
+        # Base event for both modes (after variable resolution)
         base_event = {
-            "type": EVENT_IMAGE,
             "src": src,
             "alt_text": alt_text,
             "caption": caption,
@@ -153,7 +152,7 @@ class MediaEvents:
 
         if self.display.mode == "zBifrost":
             # Bifrost gets clean image data
-            return self.zPrimitives.send_gui_event(base_event)
+            return self.zPrimitives.send_gui_event(EVENT_IMAGE, base_event)
         else:
             # Terminal mode: format and display locally
             indent_str = "  " * indent

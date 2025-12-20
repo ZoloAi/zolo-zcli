@@ -134,6 +134,13 @@ export class ZDisplayOrchestrator {
       // Render YAML data using existing rendering pipeline
       // This preserves all styling, forms, zDisplay events, etc.
       if (data && typeof data === 'object') {
+        // DEBUG: Log chunk data structure
+        console.log(`[ZDisplayOrchestrator] 🔍 Chunk data keys:`, Object.keys(data));
+        for (const [key, value] of Object.entries(data)) {
+          if (!key.startsWith('_')) {
+            console.log(`[ZDisplayOrchestrator] 🔍   ${key}:`, typeof value, Array.isArray(value) ? `array[${value.length}]` : (typeof value === 'object' ? `object{${Object.keys(value).join(',')}}` : value));
+          }
+        }
         await this.renderItems(data, targetContainer);
         this.logger.log(`[ZDisplayOrchestrator] ✅ Chunk #${chunk_num} rendered from YAML (${keys.length} keys)`);
       } else {
@@ -158,8 +165,11 @@ export class ZDisplayOrchestrator {
    */
   async renderItems(data, parentElement) {
     if (!data || typeof data !== 'object') {
+      console.log('[ZDisplayOrchestrator] renderItems: No data or not an object');
       return;
     }
+    
+    console.log(`[ZDisplayOrchestrator] 🔄 renderItems called with keys:`, Object.keys(data));
     
     // Check if parent already has block-level metadata applied (data-zblock attribute)
     const parentIsBlockWrapper = parentElement.hasAttribute && parentElement.hasAttribute('data-zblock');
@@ -214,10 +224,12 @@ export class ZDisplayOrchestrator {
       
       // Handle list/array values (sequential zDisplay events or zDialog forms)
       if (Array.isArray(value)) {
+        console.log(`[ZDisplayOrchestrator] ✅ Detected list/array for key: ${key}, items: ${value.length}`);
         this.logger.log(`✅ Detected list/array for key: ${key}, items: ${value.length}`);
         // Iterate through list items and render each one
         for (const item of value) {
           if (item && item.zDisplay) {
+            console.log(`[ZDisplayOrchestrator]   ✅ Rendering zDisplay event:`, item.zDisplay.event);
             this.logger.log(`  ✅ Rendering zDisplay from list item:`, item.zDisplay);
             const element = await this.renderZDisplayEvent(item.zDisplay);
             if (element) {
@@ -256,6 +268,7 @@ export class ZDisplayOrchestrator {
       }
       // If it's an object with nested keys (implicit wizard), recurse
       else if (value && typeof value === 'object') {
+        console.log(`[ZDisplayOrchestrator] 🔄 Recursing into nested object for key: ${key}, nested keys:`, Object.keys(value));
         // Nested structure - render children recursively
         await this.renderItems(value, containerDiv);
       }

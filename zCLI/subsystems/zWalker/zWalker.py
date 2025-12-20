@@ -717,6 +717,10 @@ class zWalker(zWizard):
             else:
                 self.logger.warning("[zWalker] _data block detected but no data was resolved!")
         
+        # Store context in instance for access by zBifrost message handler (v1.5.12)
+        # This enables %data.* variable resolution in chunk data before sending to frontend
+        self.block_context = block_context
+        
         # Custom dispatch function that handles breadcrumb tracking
         def walker_dispatch(key: str, value: Any) -> Any:
             """

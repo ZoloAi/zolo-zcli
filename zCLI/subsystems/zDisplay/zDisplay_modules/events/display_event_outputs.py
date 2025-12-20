@@ -388,6 +388,7 @@ class BasicOutputs:
                      TimeBased (progress headers)
         """
         # NEW: Resolve %variable references (e.g., %session.username, %myvar, %data.user.name)
+        # CRITICAL: Must happen BEFORE sending GUI event!
         if "%" in label:
             from zCLI.subsystems.zParser.parser_modules.parser_functions import resolve_variables
             # Extract context from kwargs if passed (for %data.* resolution)
@@ -403,7 +404,7 @@ class BasicOutputs:
         if semantic and self.display.mode in ["Terminal", "Walker", ""]:
             label = self._apply_semantic(label, semantic)
         
-        # Build event dict with all parameters
+        # Build event dict with all parameters (AFTER variable resolution)
         event_data = {
             KEY_LABEL: label,
             KEY_COLOR: color,
@@ -542,6 +543,7 @@ class BasicOutputs:
         should_break = break_after if break_after is not None else pause
         
         # NEW: Resolve %variable references (e.g., %session.username, %myvar, %data.user.name)
+        # CRITICAL: Must happen BEFORE sending GUI event!
         if "%" in content:
             from zCLI.subsystems.zParser.parser_modules.parser_functions import resolve_variables
             content = resolve_variables(content, self.display.zcli, _context)
@@ -555,7 +557,7 @@ class BasicOutputs:
         if semantic and self.display.mode in ["Terminal", "Walker", ""]:
             content = self._apply_semantic(content, semantic)
         
-        # Build event dict with all parameters
+        # Build event dict with all parameters (AFTER variable resolution)
         event_data = {
             KEY_CONTENT: content,
             KEY_INDENT: indent,
