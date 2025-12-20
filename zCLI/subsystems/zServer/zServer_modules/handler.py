@@ -90,15 +90,37 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
     
     def do_GET(self):
         """
-        Handle GET requests with Flask-like conventions (v1.5.5).
+        Handle GET requests with Flask-like conventions (v1.5.12 - SECURITY ENHANCED).
         
         Flow:
+            0. SECURITY: Block access to sensitive paths (models/, .zEnv, etc.)
             1. Check for favicon.ico and serve default if not found
             2. Check for /static/* and auto-serve from static_folder
             3. Check for /UI/* and auto-serve from ui_folder (zVaF files)
             4. If router exists: Use declarative routing
             5. Otherwise: Fallback to static file serving (current behavior)
         """
+        # SECURITY v1.5.12: Block access to sensitive folders and files
+        # This prevents exposure of database credentials, configuration, and internal files
+        blocked_paths = [
+            '/models/',      # Database schemas (may contain connection info)
+            '/zConfigs/',    # Configuration files
+            '/.zEnv',        # Environment variables (database credentials!)
+            '/.env',         # Alternative env file naming
+            '/.git/',        # Version control
+            '/routes/',      # Server route definitions
+            '/__pycache__/', # Python cache
+            '/zCLI/',        # Framework internals
+        ]
+        
+        # Check if path starts with or contains any blocked path
+        for blocked in blocked_paths:
+            if self.path.startswith(blocked) or blocked in self.path:
+                if hasattr(self, 'zcli_logger') and self.zcli_logger:
+                    self.zcli_logger.warning(f"[SECURITY] Blocked access attempt to: {self.path}")
+                self.send_error(403, "Access Forbidden")
+                return
+        
         # Handle favicon.ico with default zolo favicon
         if self.path == '/favicon.ico':
             return self._serve_default_favicon()
@@ -670,6 +692,15 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
             # Get context data (variables to pass to template)
             context = route.get("context", {})
             
+            # NEW v1.5.12: Resolve _data queries at route level (Flask pattern)
+            # This executes database queries BEFORE rendering, storing results in context
+            if "_data" in route and zcli:
+                resolved_data = self._resolve_route_data(route["_data"], zcli)
+                if resolved_data:
+                    context["_resolved_data"] = resolved_data
+                    if hasattr(self, 'zcli_logger') and self.zcli_logger:
+                        self.zcli_logger.info(f"[Handler] Resolved {len(resolved_data)} data queries for route")
+            
             # Apply hierarchical fallbacks: route → session
             # Route-level values override session defaults
             if zcli:
@@ -994,4 +1025,100 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
             if hasattr(self, 'zcli_logger') and self.zcli_logger:
                 self.zcli_logger.error(f"[Handler] JSON route error: {e}")
             return self.send_error(500, f"JSON rendering failed: {str(e)}")
+    
+    def _resolve_route_data(self, data_block: dict, zcli: any) -> dict:
+        """
+        Execute data queries defined in route _data block (Flask pattern).
+        
+        This is the route-level equivalent of Flask's:
+            @app.route('/account')
+            def account():
+                user = User.query.filter_by(email=session['email']).first()
+                return render_template('account.html', user=user)
+        
+        Args:
+            data_block: _data section from route definition
+            zcli: zCLI instance for data access
+        
+        Returns:
+            Dictionary of query results: {"user": {...}, "stats": [...]}
+        
+        Examples:
+            # In zServer.routes.yaml:
+            routes:
+              "/account":
+                _data:
+                  user: "@.models.zSchema.contacts"  # Model reference
+                  # OR
+                  stats:
+                    zData:  # Explicit query
+                      action: read
+                      model: "@.models.zSchema.user_stats"
+        """
+        results = {}
+        
+        if not zcli:
+            if hasattr(self, 'zcli_logger') and self.zcli_logger:
+                self.zcli_logger.warning("[Handler] No zCLI instance - cannot resolve _data")
+            return results
+        
+        for key, query_def in data_block.items():
+            try:
+                # Handle shorthand: user: "@.models.zSchema.contacts"
+                if isinstance(query_def, str) and query_def.startswith('@.models.'):
+                    # Shorthand model reference - convert to zData request
+                    # Auto-filter by authenticated user ID for security
+                    
+                    # Get authenticated user ID from zAuth (supports 3-layer architecture)
+                    zauth = zcli.session.get('zAuth', {})
+                    active_app = zauth.get('active_app')
+                    
+                    # Try app-specific auth first (applications layer)
+                    if active_app:
+                        app_auth = zauth.get('applications', {}).get(active_app, {})
+                        user_id = app_auth.get('id')
+                    else:
+                        # Fallback to Zolo platform auth (zSession layer - future SSO)
+                        user_id = zauth.get('zSession', {}).get('id')
+                    
+                    query_def = {
+                        "zData": {
+                            "action": "read",
+                            "model": query_def,
+                            "options": {
+                                "where": f"id = {user_id}" if user_id else "1 = 0",  # Security: no ID = no results
+                                "limit": 1
+                            }
+                        }
+                    }
+                
+                # Handle explicit zData block
+                if isinstance(query_def, dict) and "zData" in query_def:
+                    # Execute zData query in SILENT mode (v1.5.12)
+                    # Silent mode: returns rows without displaying, works in any zMode
+                    query_def["zData"]["silent"] = True
+                    
+                    result = zcli.data.handle_request(query_def["zData"])
+                    
+                    # Extract first record if limit=1 (single record query)
+                    if isinstance(result, list) and query_def["zData"].get("options", {}).get("limit") == 1 and len(result) > 0:
+                        results[key] = result[0]  # Return dict instead of list for single record
+                    else:
+                        results[key] = result
+                    
+                    if hasattr(self, 'zcli_logger') and self.zcli_logger:
+                        result_type = type(results[key]).__name__
+                        result_count = len(result) if isinstance(result, list) else 1
+                        self.zcli_logger.debug(f"[Handler] Query '{key}' returned {result_type} ({result_count} records)")
+                else:
+                    if hasattr(self, 'zcli_logger') and self.zcli_logger:
+                        self.zcli_logger.warning(f"[Handler] Invalid _data entry: {key}")
+                    results[key] = None
+                    
+            except Exception as e:
+                if hasattr(self, 'zcli_logger') and self.zcli_logger:
+                    self.zcli_logger.error(f"[Handler] Query '{key}' failed: {e}")
+                results[key] = None
+        
+        return results
 

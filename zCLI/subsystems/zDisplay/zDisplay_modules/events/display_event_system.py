@@ -1226,7 +1226,8 @@ class zSystem:
         folder: str,
         sidebar: List[str],
         default: Optional[str] = None,
-        _zcli: Optional[Any] = None
+        _zcli: Optional[Any] = None,
+        **kwargs  # NEW v1.5.12: Accept _context and other params
     ) -> Optional[str]:
         """
         Display dashboard with interactive panel navigation (Terminal or Bifrost mode).

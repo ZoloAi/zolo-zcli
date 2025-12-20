@@ -69,18 +69,17 @@ export class ImageRenderer {
     
     this.logger.log(`[ImageRenderer] Rendering image: ${src}`);
     
-    // Create container (figure for semantic HTML)
-    const container = document.createElement('figure');
-    if (_zClass) {
-      container.className = _zClass;
-    }
-    if (_id) {
-      container.setAttribute('id', _id);
-    }
-    
-    // Create img element (primitive)
+    // Create img element (THE primitive) - align with zTheme
     const img = document.createElement('img');
     img.src = src;  // Supports ANY URL (picsum, external, etc.) or local path
+    
+    // Apply _zClass and _id directly to img (zTheme pattern)
+    if (_zClass) {
+      img.className = _zClass;
+    }
+    if (_id) {
+      img.setAttribute('id', _id);
+    }
     
     // Add alt text for accessibility
     if (alt_text) {
@@ -89,21 +88,26 @@ export class ImageRenderer {
       img.alt = ''; // Empty alt for decorative images
     }
     
-    // Apply object-fit for consistent sizing (if container has dimensions)
-    img.style.objectFit = 'cover';
+    // DON'T force inline styles - let zTheme/user control via classes
+    // If user wants object-fit, they can add "zObject-fit-cover" to _zClass
     
-    container.appendChild(img);
-    
-    // Optional caption (figcaption for semantic HTML)
+    // Only wrap in <figure> if there's a caption (semantic HTML)
     if (caption) {
-      const captionEl = document.createElement('figcaption');
-      captionEl.textContent = caption;
-      captionEl.className = 'zText-muted zText-center zmt-2';
-      container.appendChild(captionEl);
+      const figure = document.createElement('figure');
+      figure.appendChild(img);
+      
+      const figcaption = document.createElement('figcaption');
+      figcaption.textContent = caption;
+      figcaption.className = 'zText-muted zText-center zmt-2';
+      figure.appendChild(figcaption);
+      
+      this.logger.log('[ImageRenderer] Image with caption rendered');
+      return figure;
     }
     
-    this.logger.log('[ImageRenderer] Image rendered successfully');
-    return container;
+    // No caption = return bare img (primitives-first + zTheme alignment!)
+    this.logger.log('[ImageRenderer] Image rendered');
+    return img;
   }
 
   /**

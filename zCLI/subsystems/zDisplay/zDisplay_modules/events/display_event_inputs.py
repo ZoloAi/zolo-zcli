@@ -651,7 +651,9 @@ class BasicInputs:
         self,
         label: str,
         action: Optional[str] = None,
-        color: str = "primary"
+        color: str = "primary",
+        _context: Optional[dict] = None,  # NEW v1.5.12: Context (not used but accepted for consistency)
+        **kwargs  # Additional parameters (e.g., '_zClass' for CSS classes)
     ) -> Union[bool, 'asyncio.Future']:
         """Display a button that requires EXPLICIT confirmation to execute.
         

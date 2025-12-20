@@ -554,7 +554,61 @@ class zWizard:
             # No pause - just redirect gracefully
             return SIGNAL_ZBACK
         
+        # ════════════════════════════════════════════════════════════
+        # BLOCK-LEVEL DATA RESOLUTION (v1.5.12 - Flask/Jinja Pattern)
+        # ════════════════════════════════════════════════════════════
+        # CRITICAL: Resolve _data BEFORE creating dispatch_fn!
+        # This ensures dispatch_fn captures the enriched context with query results.
+        #
+        # Flow:
+        #   1. Wizard detects _data in block
+        #   2. Resolves queries via zData, populating context["_resolved_data"]
+        #   3. Creates dispatch_fn that captures enriched context
+        #   4. Wizard iterates children, passing enriched context to each
+        #   5. Children can now use %data.user.name in templates
+        #
+        # This mimics Flask's pattern:
+        #   @app.route('/account')
+        #   def account():
+        #       user = User.query.filter_by(email=session['email']).first()
+        #       return render_template('account.html', user=user)
+        #
+        # But in zCLI, it's declarative:
+        #   zAccount:
+        #     _data:
+        #       user: "@.models.zSchema.contacts"
+        #     ProfileCard:
+        #       - zDisplay:
+        #           event: text
+        #           content: "Welcome %data.user.name"
+        
+        if "_data" in items_dict:
+            self.logger.info("[zWizard] Detected _data block, resolving queries before loop execution")
+            # Initialize context if not provided
+            if context is None:
+                context = {}
+            
+            # Call dispatch's _resolve_block_data directly to avoid double-processing
+            # This resolves data queries and populates context["_resolved_data"]
+            # WITHOUT recursing into children (wizard loop handles children)
+            try:
+                resolved_data = self.zcli.dispatch.launcher._resolve_block_data(
+                    items_dict["_data"], 
+                    context
+                )
+                if resolved_data:
+                    if "_resolved_data" not in context:
+                        context["_resolved_data"] = {}
+                    context["_resolved_data"].update(resolved_data)
+                    self.logger.info(f"[zWizard] Resolved {len(resolved_data)} data queries, context enriched")
+                else:
+                    self.logger.warning("[zWizard] _data block present but no data resolved")
+            except Exception as e:
+                self.logger.error(f"[zWizard] Error resolving _data: {e}")
+        
+        # NOW create dispatch_fn with the enriched context
         dispatch_fn = self._get_dispatch_fn(dispatch_fn, context)
+        
         # Filter out metadata keys (underscore prefix) - they don't execute, only configure
         keys_list = [k for k in items_dict.keys() if not k.startswith('_')]
         idx = keys_list.index(start_key) if start_key and start_key in keys_list else 0
@@ -959,6 +1013,41 @@ class zWizard:
             zHat = WizardHat()  # Use dual-access container
             use_transaction = zWizard_obj.get("_transaction", False)
             transaction_alias = None
+            
+            # NEW v1.5.12: Initialize context for entire workflow
+            step_context = {
+                CONTEXT_KEY_WIZARD_MODE: True,
+                CONTEXT_KEY_SCHEMA_CACHE: self.schema_cache,
+                CONTEXT_KEY_ZHAT: zHat  # Pass zHat to context for zFunc access
+            } if self.schema_cache else {CONTEXT_KEY_WIZARD_MODE: True, CONTEXT_KEY_ZHAT: zHat}
+            
+            # NEW v1.5.12: BLOCK-LEVEL DATA RESOLUTION (Flask pattern)
+            # If block has _data, resolve queries BEFORE processing steps
+            # This enables declarative data layer: data queries at block level, 
+            # variable interpolation (%data.*) in step templates
+            if "_data" in zWizard_obj:
+                self.logger.info("[zWizard] Detected _data block, resolving queries...")
+                # Call _resolve_block_data DIRECTLY instead of _launch_dict
+                # (which would recursively execute all children)
+                if self.walker:
+                    # Walker mode: Use walker's dispatch launcher
+                    resolved_data = self.walker.dispatch.launcher._resolve_block_data(
+                        zWizard_obj["_data"], step_context
+                    )
+                else:
+                    # Shell mode: Use zcli's dispatch launcher
+                    resolved_data = self.zcli.dispatch.launcher._resolve_block_data(
+                        zWizard_obj["_data"], step_context
+                    )
+                
+                # Populate context with resolved data
+                if resolved_data:
+                    if "_resolved_data" not in step_context:
+                        step_context["_resolved_data"] = {}
+                    step_context["_resolved_data"].update(resolved_data)
+                    self.logger.info(f"[zWizard] Context enriched with {len(resolved_data)} data queries: {list(resolved_data.keys())}")
+                else:
+                    self.logger.warning("[zWizard] _data block detected but no data was resolved!")
 
             for step_key, step_value in zWizard_obj.items():
                 if step_key.startswith("_"):
@@ -968,12 +1057,8 @@ class zWizard:
                     display.zDeclare(MSG_WIZARD_STEP % step_key, color=SUBSYSTEM_COLOR, indent=INDENT_LEVEL_2, style=STYLE_SINGLE)
 
                 step_value = interpolate_zhat(step_value, zHat, self.logger)
-
-                step_context = {
-                    CONTEXT_KEY_WIZARD_MODE: True,
-                    CONTEXT_KEY_SCHEMA_CACHE: self.schema_cache,
-                    CONTEXT_KEY_ZHAT: zHat  # Pass zHat to context for zFunc access
-                } if self.schema_cache else {CONTEXT_KEY_WIZARD_MODE: True, CONTEXT_KEY_ZHAT: zHat}
+                
+                # Context is now pre-populated with _resolved_data if _data block existed
 
                 if transaction_alias is None:
                     transaction_alias = check_transaction_start(

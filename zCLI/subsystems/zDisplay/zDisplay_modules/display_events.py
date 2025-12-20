@@ -265,7 +265,8 @@ class zEvents:
         pause: bool = False, 
         break_message: Optional[str] = None,
         break_after: Optional[bool] = None,
-        semantic: Optional[str] = None
+        semantic: Optional[str] = None,
+        **kwargs  # NEW v1.5.12: Pass through _context and other params
     ) -> Any:
         """Display plain text content.
         
@@ -289,7 +290,8 @@ class zEvents:
             pause=pause,
             break_message=break_message,
             break_after=break_after,
-            semantic=semantic
+            semantic=semantic,
+            **kwargs  # NEW v1.5.12: Pass through _context
         )
     
     def rich_text(
@@ -346,7 +348,7 @@ class zEvents:
         """
         return self.BasicInputs.selection(prompt, options, multi, default, style)
 
-    def button(self, label: str, action: Optional[str] = None, color: str = "primary") -> bool:
+    def button(self, label: str, action: Optional[str] = None, color: str = "primary", **kwargs) -> bool:
         """Display a button that requires confirmation to execute.
         
         Convenience delegate to BasicInputs.button for cross-mode button rendering.
@@ -355,11 +357,12 @@ class zEvents:
             label: Button label text (e.g., "Submit", "Delete", "Save")
             action: Optional action identifier or zVar name
             color: Button semantic color (primary, success, danger, warning, info, secondary)
+            **kwargs: Additional parameters (e.g., _context)
             
         Returns:
             bool: True if clicked (y), False if cancelled (n)
         """
-        return self.BasicInputs.button(label, action, color)
+        return self.BasicInputs.button(label, action, color, **kwargs)
 
     # ═══════════════════════════════════════════════════════════════════════════
     # Convenience Delegates - Signals
@@ -440,7 +443,7 @@ class zEvents:
     # Convenience Delegates - BasicData
     # ═══════════════════════════════════════════════════════════════════════════
 
-    def list(self, items: List[Any], style: str = DEFAULT_STYLE_BULLET, indent: int = 0) -> Any:
+    def list(self, items: List[Any], style: str = DEFAULT_STYLE_BULLET, indent: int = 0, **kwargs) -> Any:
         """Display list of items with formatting.
         
         Convenience delegate to BasicData.list for backward compatibility.
@@ -448,12 +451,13 @@ class zEvents:
         Args:
             items: List of items to display
             style: List style (default: bullet)
-            indent: Indentation level (default: 0)
+            indent: int = 0 (default: 0)
+            **kwargs: Additional parameters (e.g., _context)
             
         Returns:
             Any: Result from BasicData.list method
         """
-        return self.BasicData.list(items, style, indent)
+        return self.BasicData.list(items, style, indent, **kwargs)
 
     def outline(self, items: List[Any], styles: Optional[List[str]] = None, indent: int = 0) -> Any:
         """Display hierarchical outline with multi-level numbering.
@@ -587,7 +591,7 @@ class zEvents:
         """
         return self.zSystem.zMenu(menu_items, prompt, return_selection)
 
-    def zDash(self, folder: str, sidebar: List[str], default: Optional[str] = None, _zcli: Optional[Any] = None) -> Any:
+    def zDash(self, folder: str, sidebar: List[str], default: Optional[str] = None, _zcli: Optional[Any] = None, **kwargs) -> Any:
         """Display dashboard with panel navigation.
         
         Convenience delegate to zSystem.zDash for backward compatibility.
@@ -597,11 +601,12 @@ class zEvents:
             sidebar: List of panel names
             default: Default panel to navigate to (optional)
             _zcli: zCLI instance for context (optional)
+            **kwargs: Additional parameters (e.g., _context)
             
         Returns:
             Any: Result from zSystem.zDash method
         """
-        return self.zSystem.zDash(folder, sidebar, default, _zcli)
+        return self.zSystem.zDash(folder, sidebar, default, _zcli, **kwargs)
 
     def zDialog(self, context: str, zcli: Optional[Any] = None, walker: Optional[Any] = None) -> Any:
         """Display interactive dialog system.

@@ -102,6 +102,7 @@ class MediaEvents:
         open_prompt: bool = True,
         indent: int = 0,
         color: Optional[str] = None,
+        _context: Optional[dict] = None,  # NEW v1.5.12: Context for %data.* resolution
         **kwargs
     ) -> Optional[Dict[str, Any]]:
         """Display an image event.
@@ -127,6 +128,19 @@ class MediaEvents:
         if not src:
             self.logger.error("[MediaEvents] image() requires 'src' parameter")
             return None
+
+        # NEW: Resolve %variable references in src, alt_text, and caption (v1.5.12)
+        if "%" in src:
+            from zCLI.subsystems.zParser.parser_modules.parser_functions import resolve_variables
+            src = resolve_variables(src, self.display.zcli, _context)
+        
+        if "%" in alt_text:
+            from zCLI.subsystems.zParser.parser_modules.parser_functions import resolve_variables
+            alt_text = resolve_variables(alt_text, self.display.zcli, _context)
+        
+        if "%" in caption:
+            from zCLI.subsystems.zParser.parser_modules.parser_functions import resolve_variables
+            caption = resolve_variables(caption, self.display.zcli, _context)
 
         # Base event for both modes
         base_event = {
@@ -162,8 +176,12 @@ class MediaEvents:
             if open_prompt:
                 # Add spacing before button
                 self.zPrimitives.write_line("")
-                # Use built-in button logic (action="#" is placeholder)
-                confirmed = self.BasicInputs.button("Open image file", action="#", color="info")
+                
+                # Direct prompt (NOT using button event to avoid conflict with UI placeholder buttons)
+                prompt_text = f"{self.zColors.ZINFO}Click [Open image file]? (y/n): {self.zColors.RESET}"
+                response = self.zPrimitives.read_string(prompt_text).strip().lower()
+                
+                confirmed = response in ('y', 'yes')
                 if confirmed:
                     # Phase 3: Call zOpen.open_image(src)
                     self.logger.info(f"[MediaEvents] User confirmed open for: {src}")
@@ -172,6 +190,8 @@ class MediaEvents:
                         self.logger.info(f"[MediaEvents] Successfully opened image: {src}")
                     else:
                         self.logger.warning(f"[MediaEvents] Failed to open image: {src}")
+                else:
+                    self.BasicOutputs.text("  Open image file cancelled.", indent=0, break_after=False)
             else:
                 # Add break after last line if no button
                 self.zPrimitives.write_line("")

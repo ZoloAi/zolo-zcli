@@ -22,12 +22,12 @@ Architecture:
        - Support for CRUD operations and legacy zDisplay format
     
     Command Routing Flow:
-        launch() → Type Detection (str vs dict)
-                ↓
+        launch() -> Type Detection (str vs dict)
+                |
         _launch_string() or _launch_dict()
-                ↓
+                |
         Specific handler (_handle_wizard_string, _handle_read_dict, etc.)
-                ↓
+                |
         Subsystem execution (zFunc, zNavigation, zOpen, zWizard, zData, etc.)
 
 Mode-Specific Behavior:
@@ -40,7 +40,7 @@ Mode-Specific Behavior:
         - Plain strings: Resolve from zUI or return {"message": str}
         - zWizard: Returns zHat (actual result) for API consumption
         - zFunc/zOpen/zLink/zDelta: Returns subsystem result
-        - Supports recursive resolution (zUI key → dict with zFunc)
+        - Supports recursive resolution (zUI key -> dict with zFunc)
 
 Forward Dependencies:
     This module integrates with 8 subsystems that will be refactored in future weeks:
@@ -265,10 +265,10 @@ class CommandLauncher:
         _launch_dict(): Route dict-based commands ({zFunc:, zLink:, etc.})
         _handle_wizard_string(): Parse and execute wizard from string
         _handle_wizard_dict(): Execute wizard from dict
-        _handle_read_string(): Handle zRead string → zData
-        _handle_read_dict(): Handle zRead dict → zData
-        _handle_data_dict(): Handle zData dict → zData
-        _handle_crud_dict(): Handle generic CRUD dict → zData
+        _handle_read_string(): Handle zRead string -> zData
+        _handle_read_dict(): Handle zRead dict -> zData
+        _handle_data_dict(): Handle zData dict -> zData
+        _handle_crud_dict(): Handle generic CRUD dict -> zData
         
         Helper methods (DRY):
         _is_bifrost_mode(): Check if context is in Bifrost mode
@@ -561,8 +561,7 @@ class CommandLauncher:
         context: Optional[Dict[str, Any]],
         walker: Optional[Any]
     ) -> Optional[Union[str, Dict[str, Any]]]:
-        """
-        Handle dict-based launch commands.
+        """Handle dict-based launch commands.
         
         Routes dict commands with the following keys:
         - "zDisplay": Legacy display format (text, sysmsg events)
@@ -640,6 +639,24 @@ class CommandLauncher:
             return self.launch(content_value, context=context, walker=walker)
         
         # ========================================================================
+        # BLOCK-LEVEL DATA RESOLUTION (v1.5.12 - Flask/Jinja Pattern)
+        # ========================================================================
+        # If dict has _data block, resolve queries BEFORE processing children
+        # This is the zCLI equivalent of Flask's route handler pattern
+        
+        if "_data" in zHorizontal and not is_subsystem_call:
+            self.logger.framework.info("[zCLI Data] Detected _data block, resolving queries...")
+            resolved_data = self._resolve_block_data(zHorizontal["_data"], context)
+            if resolved_data:
+                # Store in context for child blocks to access via %data.* syntax
+                if "_resolved_data" not in context:
+                    context["_resolved_data"] = {}
+                context["_resolved_data"].update(resolved_data)
+                self.logger.framework.info(f"[zCLI Data] Resolved {len(resolved_data)} data queries for block")
+            else:
+                self.logger.framework.warning("[zCLI Data] _data block present but no data resolved")
+        
+        # ========================================================================
         # ORGANIZATIONAL STRUCTURE DETECTION (zCLI Way)
         # ========================================================================
         # If dict has only nested dicts/lists (no direct actions), it's organizational
@@ -682,7 +699,7 @@ class CommandLauncher:
         # If dict has multiple non-metadata, non-subsystem keys with mixed types
         # (not purely organizational), treat as wizard steps
         
-        # If multiple content keys and NOT purely organizational → implicit wizard
+        # If multiple content keys and NOT purely organizational -> implicit wizard
         if not is_subsystem_call and not is_crud_call and len(content_keys) > 1:
             self._log_detected("Implicit zWizard (multi-step)")
             # Call wizard with proper context - use walker if available for proper dispatch routing
@@ -705,6 +722,11 @@ class CommandLauncher:
             display_data = zHorizontal[KEY_ZDISPLAY]
             
             if isinstance(display_data, dict):
+                # NEW v1.5.12: Pass context for %data.* variable resolution
+                # This enables templates to reference database query results
+                if context and "_resolved_data" in context:
+                    display_data["_context"] = context
+                
                 # Use display.handle() to pass through ALL parameters automatically
                 # This ensures new parameters like 'class' work without updating this code
                 self.display.handle(display_data)
@@ -872,16 +894,16 @@ class CommandLauncher:
                 # zCLI fundamental: UI files MUST be named zUI.*.yaml
                 
                 # Construct zPath for fallback file
-                # Example: current = "@.UI.zUI.index" → fallback = "@.UI.zUI.zAbout"
-                # File naming: zUI.zAbout.yaml → zPath = "@.UI.zUI.zAbout"
+                # Example: current = "@.UI.zUI.index" -> fallback = "@.UI.zUI.zAbout"
+                # File naming: zUI.zAbout.yaml -> zPath = "@.UI.zUI.zAbout"
                 if current_zVaFile.startswith("@"):
                     # Parse current zPath to get folder
-                    # "@.UI.zUI.index" → ["@", "UI", "zUI", "index"]
+                    # "@.UI.zUI.index" -> ["@", "UI", "zUI", "index"]
                     path_parts = current_zVaFile.split(".")
                     
                     # Replace the last part (filename) with target block name
                     # File is named zUI.{blockName}.yaml, so zPath ends with {blockName}
-                    # ["@", "UI", "zUI", "index"] → ["@", "UI", "zUI", "zAbout"]
+                    # ["@", "UI", "zUI", "index"] -> ["@", "UI", "zUI", "zAbout"]
                     fallback_path_parts = path_parts[:-1] + [target_block_name]
                     fallback_zPath = ".".join(fallback_path_parts)
                 else:
@@ -1142,8 +1164,8 @@ class CommandLauncher:
             # Dispatched as: {"action": "read", "model": "users", "where": {"id": 1}}
         
         Notes:
-            - String payload: {"zRead": "users"} → {"action": "read", "model": "users"}
-            - Dict payload: {"zRead": {...}} → {action: "read", ...}
+            - String payload: {"zRead": "users"} -> {"action": "read", "model": "users"}
+            - Dict payload: {"zRead": {...}} -> {action: "read", ...}
             - Sets default action if not specified
         
         TODO: Week 6.16 (zData) - Verify data.handle_request() signature after refactor
@@ -1184,8 +1206,8 @@ class CommandLauncher:
             result = _handle_data_dict({"zData": {"action": "create", "model": "users", ...}}, context)
         
         Notes:
-            - String payload: {"zData": "users"} → {"action": "read", "model": "users"}
-            - Dict payload: {"zData": {...}} → {action: "read" (default), ...}
+            - String payload: {"zData": "users"} -> {"action": "read", "model": "users"}
+            - Dict payload: {"zData": {...}} -> {action: "read" (default), ...}
             - Sets default action if not specified
         
         TODO: Week 6.16 (zData) - Verify data.handle_request() signature after refactor
@@ -1365,3 +1387,91 @@ class CommandLauncher:
             - Eliminates repeated setdefault calls in handler methods
         """
         req.setdefault(KEY_ACTION, default_action)
+    
+    def _resolve_block_data(self, data_block: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Execute data queries defined in block-level _data (zCLI declarative pattern).
+        
+        This enables Jinja-like templating in YAML where data queries are co-located
+        with UI definitions, but with better security (credentials in .zEnv).
+        
+        Args:
+            data_block: _data section from zUI block
+            context: Current execution context (for accessing session, etc.)
+        
+        Returns:
+            Dictionary of query results: {"user": {...}, "stats": [...]}
+        
+        Examples:
+            # In zUI.zAccount.yaml:
+            zAccount:
+              _data:
+                user: "@.models.zSchema.contacts"  # Shorthand
+                stats:
+                  zData:  # Explicit
+                    action: read
+                    model: "@.models.zSchema.user_stats"
+        
+        Security:
+            - Model paths (@.models.zSchema.contacts) are safe to commit
+            - Actual DB connections (postgresql://...) are in .zEnv
+            - Session-based auto-filtering prevents unauthorized data access
+        """
+        results = {}
+        
+        for key, query_def in data_block.items():
+            try:
+                # Handle shorthand: user: "@.models.zSchema.contacts"
+                if isinstance(query_def, str) and query_def.startswith('@.models.'):
+                    # Shorthand model reference - convert to zData request
+                    # Auto-filter by authenticated user ID for security
+                    
+                    # Get authenticated user ID from zAuth (supports 3-layer architecture)
+                    zauth = self.zcli.session.get('zAuth', {})
+                    active_app = zauth.get('active_app')
+                    
+                    # Try app-specific auth first (applications layer)
+                    if active_app:
+                        app_auth = zauth.get('applications', {}).get(active_app, {})
+                        user_id = app_auth.get('id')
+                    else:
+                        # Fallback to Zolo platform auth (zSession layer - future SSO)
+                        user_id = zauth.get('zSession', {}).get('id')
+                    
+                    query_def = {
+                        "zData": {
+                            "action": "read",
+                            "model": query_def,
+                            "options": {
+                                "where": f"id = {user_id}" if user_id else "1 = 0",  # Security: no ID = no results
+                                "limit": 1
+                            }
+                        }
+                    }
+                
+                # Handle explicit zData block
+                if isinstance(query_def, dict) and "zData" in query_def:
+                    # Execute zData query via subsystem in SILENT mode (v1.5.12)
+                    # Silent mode: returns rows without displaying, works in any zMode
+                    query_def["zData"]["silent"] = True
+                    
+                    result = self.zcli.data.handle_request(query_def["zData"], context)
+                    
+                    # Extract first record if limit=1 (single record query)
+                    if isinstance(result, list) and query_def["zData"].get("options", {}).get("limit") == 1 and len(result) > 0:
+                        results[key] = result[0]  # Return dict instead of list for single record
+                    else:
+                        results[key] = result
+                    
+                    result_type = type(results[key]).__name__
+                    result_count = len(result) if isinstance(result, list) else 1
+                    self.logger.framework.debug(f"[zCLI Data] Query '{key}' returned {result_type} ({result_count} records)")
+                else:
+                    self.logger.framework.warning(f"[zCLI Data] Invalid _data entry: {key}")
+                    results[key] = None
+                    
+            except Exception as e:
+                self.logger.framework.error(f"[zCLI Data] Query '{key}' failed: {e}")
+                results[key] = None
+        
+        return results

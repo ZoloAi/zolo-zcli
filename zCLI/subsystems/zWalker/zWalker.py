@@ -702,6 +702,21 @@ class zWalker(zWizard):
 
         self.display.zDeclare(MSG_WALKER_LOOP, color=COLOR_MAIN, indent=INDENT_NORMAL, style=STYLE_FULL)
         
+        # NEW v1.5.12: BLOCK-LEVEL DATA RESOLUTION (Flask pattern)
+        # If block has _data, resolve queries BEFORE processing block
+        # This enables declarative data layer at Walker level (not just Wizard)
+        block_context = {}
+        if "_data" in active_zBlock_dict:
+            self.logger.info("[zWalker] Detected _data block, resolving queries...")
+            resolved_data = self.dispatch.launcher._resolve_block_data(
+                active_zBlock_dict["_data"], block_context
+            )
+            if resolved_data:
+                block_context["_resolved_data"] = resolved_data
+                self.logger.info(f"[zWalker] Context enriched with {len(resolved_data)} data queries: {list(resolved_data.keys())}")
+            else:
+                self.logger.warning("[zWalker] _data block detected but no data was resolved!")
+        
         # Custom dispatch function that handles breadcrumb tracking
         def walker_dispatch(key: str, value: Any) -> Any:
             """
@@ -747,8 +762,9 @@ class zWalker(zWizard):
                 self.logger.debug(LOG_DEBUG_ZWIZARD_EXECUTE)
                 return self.handle(value)  # zWalker inherits from zWizard
             
-            # Dispatch action with walker context
-            return self.dispatch.handle(key, value, walker=self)
+            # Dispatch action with walker context AND block_context (v1.5.12)
+            # block_context contains _resolved_data from _data block resolution
+            return self.dispatch.handle(key, value, context=block_context, walker=self)
         
         # Navigation callbacks for Walker-specific behavior
         def on_back(result: Any) -> Dict[str, Any]:  # pylint: disable=unused-argument

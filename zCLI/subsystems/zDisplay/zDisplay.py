@@ -408,7 +408,8 @@ class zDisplay(zDisplayDelegates):
 
         # Filter out 'event' key AND metadata keys (starting with _)
         # Metadata keys like _zClass, _id, _rbac are Bifrost-only and should not be passed to Terminal event methods
-        params = {k: v for k, v in display_obj.items() if k != KEY_EVENT and not k.startswith('_')}
+        # EXCEPTION: _context is needed for %data.* variable resolution (v1.5.12)
+        params = {k: v for k, v in display_obj.items() if k != KEY_EVENT and (not k.startswith('_') or k == '_context')}
 
         try:
             return handler(**params)

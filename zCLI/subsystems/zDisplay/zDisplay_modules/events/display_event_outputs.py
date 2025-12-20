@@ -387,6 +387,13 @@ class BasicOutputs:
                      zSystem (all system UI), zAuth (auth prompts), 
                      TimeBased (progress headers)
         """
+        # NEW: Resolve %variable references (e.g., %session.username, %myvar, %data.user.name)
+        if "%" in label:
+            from zCLI.subsystems.zParser.parser_modules.parser_functions import resolve_variables
+            # Extract context from kwargs if passed (for %data.* resolution)
+            context = kwargs.get('_context', {})
+            label = resolve_variables(label, self.display.zcli, context)
+        
         # NEW: Resolve &function calls (e.g., &zNow, &zNow('date'))
         if "&" in label:
             from zCLI.subsystems.zParser.parser_modules.parser_functions import resolve_function_call
@@ -484,10 +491,11 @@ class BasicOutputs:
         self, 
         content: str, 
         indent: int = 0, 
-        pause: bool = False,  # Preferred API
+        pause: bool = False,
         break_message: Optional[str] = None,
-        break_after: Optional[bool] = None,  # Legacy parameter
-        semantic: Optional[str] = None,  # NEW: Semantic HTML element wrapper
+        break_after: Optional[bool] = None,
+        semantic: Optional[str] = None,
+        _context: Optional[dict] = None,  # NEW v1.5.12: Context for %data.* resolution
         **kwargs  # Additional parameters (e.g., 'class' for CSS classes)
     ) -> None:
         """Display text with optional indentation and pause.
@@ -532,6 +540,11 @@ class BasicOutputs:
         """
         # Handle backward compatibility: break_after overrides pause if provided
         should_break = break_after if break_after is not None else pause
+        
+        # NEW: Resolve %variable references (e.g., %session.username, %myvar, %data.user.name)
+        if "%" in content:
+            from zCLI.subsystems.zParser.parser_modules.parser_functions import resolve_variables
+            content = resolve_variables(content, self.display.zcli, _context)
         
         # NEW: Resolve &function calls (e.g., &zNow, &zNow('date'))
         if "&" in content:
@@ -596,12 +609,12 @@ class BasicOutputs:
         a single text block.
         
         Markdown Syntax Supported:
-            - `code` → <code> inline code
-            - **bold** → <strong> strong emphasis
-            - *italic* → <em> emphasis
-            - ~~strikethrough~~ → <del> deleted text
-            - ==highlight== → <mark> highlighted text
-            - [text](url) → <a> hyperlinks
+            - `code` -> <code> inline code
+            - **bold** -> <strong> strong emphasis
+            - *italic* -> <em> emphasis
+            - ~~strikethrough~~ -> <del> deleted text
+            - ==highlight== -> <mark> highlighted text
+            - [text](url) -> <a> hyperlinks
         
         Dual-Mode Behavior:
             - Terminal: Parses markdown and displays with semantic formatting

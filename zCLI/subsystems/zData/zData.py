@@ -168,7 +168,7 @@ See Also:
     - zCLI/subsystems/zData/zData_modules/shared/parsers/: WHERE/value parsers
 """
 
-from zCLI import Any, Dict, List, Optional
+from zCLI import Any, Dict, List, Optional, os
 from zCLI.utils.zExceptions import SchemaNotFoundError, TableNotFoundError
 from .zData_modules.shared.backends.adapter_factory import AdapterFactory
 from .zData_modules.shared.validator import DataValidator
@@ -183,11 +183,16 @@ from .zData_modules.shared.data_operations import DataOperations
 META_KEY = "Meta"
 META_KEY_DATA_TYPE = "Data_Type"
 META_KEY_DATA_PATH = "Data_Path"
+META_KEY_DATA_SOURCE = "Data_Source"  # NEW v1.5.12: Environment variable reference (security best practice)
 META_KEY_DATA_LABEL = "Data_Label"
 META_KEY_SCHEMA_NAME = "Schema_Name"
 META_KEY_ZVAFILES = "zVaFiles"
 META_KEY_DATA_PARADIGM = "Data_Paradigm"
 META_DEFAULT_LABEL = "data"
+
+# Environment variable naming convention (Flask-aligned)
+ENV_VAR_PREFIX = "ZDATA_"
+ENV_VAR_SUFFIX = "_URL"
 
 # Request keys (handle_request parameters)
 REQUEST_KEY_ACTION = "action"
@@ -240,6 +245,12 @@ ERROR_NO_TABLES = "No tables available"
 ERROR_CSV_NOT_SUPPORTED = "CSV operations not supported for this adapter"
 ERROR_MISSING_META_FIELD = "Schema Meta missing required field: '{field}'"
 ERROR_DCL_NOT_SUPPORTED = "{adapter} does not support {operation} operations. DCL is only supported by PostgreSQL and MySQL adapters."
+ERROR_NO_DATA_CONNECTION = "No database connection info found. Use Data_Source (env var) or Data_Path in schema Meta."
+
+# Security warnings (v1.5.12)
+SECURITY_WARNING_DATA_PATH_IN_SCHEMA = "[SECURITY] Data_Path found in schema file. Move credentials to .zEnv using Data_Source pattern!"
+SECURITY_INFO_LOADED_FROM_ENV = "[SECURITY] Loaded Data_Path from environment: {env_var}"
+SECURITY_INFO_AUTO_CONVENTION = "[SECURITY] Auto-loaded connection from .zEnv using convention: {env_var}"
 
 # Log messages
 LOG_ZDATA_READY = "zData Ready"
@@ -492,8 +503,10 @@ class zData:
             - One-shot mode auto-disconnects (no cleanup needed)
             - All exceptions are logged with full traceback
         """
-        # PHASE 1: Announce request
-        self.display.zDeclare(DECLARE_ZDATA_REQUEST, color=COLOR_ZCRUD, indent=1, style=DISPLAY_STYLE_FULL)
+        # PHASE 1: Announce request (skip if silent mode for background data fetching)
+        silent = request.get("silent", False)
+        if not silent:
+            self.display.zDeclare(DECLARE_ZDATA_REQUEST, color=COLOR_ZCRUD, indent=1, style=DISPLAY_STYLE_FULL)
 
         # PHASE 2: Extract wizard mode flag
         wizard_mode = context.get(CONTEXT_KEY_WIZARD_MODE, False) if context else False
@@ -765,12 +778,54 @@ class zData:
         # PHASE 3: Validate required Meta fields
         if META_KEY_DATA_TYPE not in meta:
             raise ValueError(ERROR_MISSING_META_FIELD.format(field=META_KEY_DATA_TYPE))
-        if META_KEY_DATA_PATH not in meta:
-            raise ValueError(ERROR_MISSING_META_FIELD.format(field=META_KEY_DATA_PATH))
+        
+        # PHASE 3.5: SECURITY - Load Data_Path from environment (v1.5.12)
+        # Priority order:
+        #   1. Data_Source: Explicit env var reference (e.g., "ZDATA_CONTACTS_URL")
+        #   2. Convention: Auto-detect from schema name (e.g., zSchema.contacts → ZDATA_CONTACTS_URL)
+        #   3. Data_Path: Direct in schema (DEPRECATED - log security warning)
+        data_path = None
+        data_path_source = None  # Track where data_path came from for logging
+        
+        # Option 1: Check for Data_Source (explicit env var reference)
+        if META_KEY_DATA_SOURCE in meta:
+            env_var_name = meta[META_KEY_DATA_SOURCE]
+            data_path_from_env = os.getenv(env_var_name)
+            
+            if data_path_from_env:
+                data_path = data_path_from_env
+                data_path_source = "env_explicit"
+                self.logger.info(SECURITY_INFO_LOADED_FROM_ENV.format(env_var=env_var_name))
+            else:
+                self.logger.warning(f"[zData] Environment variable not found: {env_var_name}")
+        
+        # Option 2: Try auto-convention (if no Data_Source and no Data_Path yet)
+        if not data_path and META_KEY_DATA_PATH not in meta:
+            # Auto-detect: zSchema.contacts → ZDATA_CONTACTS_URL
+            schema_name = meta.get(META_KEY_SCHEMA_NAME, meta.get(META_KEY_ZVAFILES, ""))
+            if schema_name:
+                # Extract: "zSchema.contacts.yaml" → "contacts"
+                schema_key = schema_name.replace("zSchema.", "").replace(".yaml", "").split("/")[-1]
+                env_var_name = f"{ENV_VAR_PREFIX}{schema_key.upper()}{ENV_VAR_SUFFIX}"
+                data_path_from_env = os.getenv(env_var_name)
+                
+                if data_path_from_env:
+                    data_path = data_path_from_env
+                    data_path_source = "env_convention"
+                    self.logger.info(SECURITY_INFO_AUTO_CONVENTION.format(env_var=env_var_name))
+        
+        # Option 3: Fallback to Data_Path in schema (DEPRECATED)
+        if not data_path:
+            if META_KEY_DATA_PATH in meta:
+                data_path = meta[META_KEY_DATA_PATH]
+                data_path_source = "schema_file"
+                self.logger.warning(SECURITY_WARNING_DATA_PATH_IN_SCHEMA)
+            else:
+                # No connection info found anywhere
+                raise ValueError(ERROR_NO_DATA_CONNECTION)
 
         # PHASE 4: Extract Meta values
         data_type = meta[META_KEY_DATA_TYPE]
-        data_path = meta[META_KEY_DATA_PATH]
         data_label = meta.get(META_KEY_DATA_LABEL, META_DEFAULT_LABEL)
 
         # PHASE 5: Resolve special paths via zParser (handles ~.zMachine.* and @ paths)

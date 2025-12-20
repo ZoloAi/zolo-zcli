@@ -195,12 +195,8 @@ export class ZDisplayOrchestrator {
       // Check if this value has its own metadata (for nested _zClass support)
       let itemMetadata = {};
       
-      // Only apply parent metadata if parent is NOT a block wrapper (avoids double-applying)
-      if (!parentIsBlockWrapper && Object.keys(metadata).length > 0) {
-        itemMetadata = metadata;
-      }
-      
-      // Value's own metadata always takes precedence
+      // Each zKey container should ONLY use its OWN _zClass, never inherit from parent
+      // This ensures ProfilePicture doesn't get ProfileHeader's classes
       if (value && typeof value === 'object' && !Array.isArray(value)) {
         if (value._zClass) {
           itemMetadata = { _zClass: value._zClass };
@@ -291,7 +287,7 @@ export class ZDisplayOrchestrator {
     // Check for custom classes in metadata
     if (metadata._zClass !== undefined) {
       if (metadata._zClass === '' || metadata._zClass === null) {
-        // Empty string or null = no container classes (opt-out)
+        // Empty string or null = no container classes
         container.className = '';
       } else if (Array.isArray(metadata._zClass)) {
         // Array of classes
@@ -304,8 +300,9 @@ export class ZDisplayOrchestrator {
         container.className = classes.join(' ');
       }
     } else {
-      // Default: zContainer for responsive layout
-      container.className = 'zContainer';
+      // Default: NO classes (bare div, following HTML/CSS convention)
+      // Organizational divs should be styled explicitly via _zClass when needed
+      container.className = '';
     }
     
     // Add data attribute for debugging/testing

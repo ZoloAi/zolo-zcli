@@ -383,27 +383,33 @@ def handle_read(request: Dict[str, Any], ops: Any) -> Union[bool, List[Dict[str,
     rows = ops.select(table_arg, fields, where=where, joins=joins, order=order, limit=limit, offset=offset, auto_join=auto_join)
 
     # Phase 6: Display results (mode-aware with AdvancedData pagination)
-    table_display = DISPLAY_SEPARATOR.join(tables) if is_multi_table else tables[0]
-    if rows:
-        # Extract column names from first row (assuming dict rows)
-        columns = list(rows[0].keys()) if rows and isinstance(rows[0], dict) else []
-        # Pass limit and offset to AdvancedData for pagination metadata display
-        ops.zcli.display.zTable(table_display, columns, rows, limit=limit, offset=offset)
-        ops.logger.info(LOG_SUCCESS, len(rows), table_display)
-    else:
-        ops.logger.info(LOG_EMPTY, table_display)
+    # NEW v1.5.12: Support silent mode for background data fetching (_data blocks)
+    silent = request.get("silent", False)
+    
+    if not silent:
+        table_display = DISPLAY_SEPARATOR.join(tables) if is_multi_table else tables[0]
+        if rows:
+            # Extract column names from first row (assuming dict rows)
+            columns = list(rows[0].keys()) if rows and isinstance(rows[0], dict) else []
+            # Pass limit and offset to AdvancedData for pagination metadata display
+            ops.zcli.display.zTable(table_display, columns, rows, limit=limit, offset=offset)
+            ops.logger.info(LOG_SUCCESS, len(rows), table_display)
+        else:
+            ops.logger.info(LOG_EMPTY, table_display)
 
-    # Phase 7: Pagination (pause after displaying results)
-    pause = request.get(KEY_PAUSE, True)  # Default to True
-    # Don't pause in zBifrost mode, when zMode is not Walker/Terminal, or when zTraceback is False
-    zMode = ops.zcli.session.get(SESSION_ZMODE, "")
-    zTraceback = ops.zcli.session.get(SESSION_ZTRACEBACK, True)  # Default to True
-    if pause and zTraceback and zMode in (MODE_WALKER, MODE_TERMINAL, ""):
-        ops.logger.debug(LOG_PAUSE)
-        ops.zcli.display.read_string(DISPLAY_PROMPT)
+        # Phase 7: Pagination (pause after displaying results)
+        pause = request.get(KEY_PAUSE, True)  # Default to True
+        # Don't pause in zBifrost mode, when zMode is not Walker/Terminal, or when zTraceback is False
+        zMode = ops.zcli.session.get(SESSION_ZMODE, "")
+        zTraceback = ops.zcli.session.get(SESSION_ZTRACEBACK, True)  # Default to True
+        if pause and zTraceback and zMode in (MODE_WALKER, MODE_TERMINAL, ""):
+            ops.logger.debug(LOG_PAUSE)
+            ops.zcli.display.read_string(DISPLAY_PROMPT)
 
     # Phase 8: Return results (mode-aware)
-    # Return the actual rows for zBifrost mode, True for terminal display mode
-    if zMode == MODE_ZBIFROST:
+    # NEW v1.5.12: Return rows for silent mode (background data fetching)
+    # Return the actual rows for zBifrost mode or silent mode, True for terminal display mode
+    zMode = ops.zcli.session.get(SESSION_ZMODE, "")
+    if silent or zMode == MODE_ZBIFROST:
         return rows
     return True

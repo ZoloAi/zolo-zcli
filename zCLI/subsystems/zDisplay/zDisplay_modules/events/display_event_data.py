@@ -540,7 +540,7 @@ class BasicData:
     # Public Methods - List & JSON Display
     # ═══════════════════════════════════════════════════════════════════════════
 
-    def list(self, items: Optional[List[Any]], style: str = DEFAULT_STYLE, indent: int = DEFAULT_INDENT) -> None:
+    def list(self, items: Optional[List[Any]], style: str = DEFAULT_STYLE, indent: int = DEFAULT_INDENT, **kwargs) -> None:
         """Display list with bullets or numbers in Terminal/GUI modes.
         
         Foundation method for list display. Implements dual-mode I/O pattern
