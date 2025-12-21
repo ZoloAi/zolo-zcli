@@ -720,6 +720,85 @@ class CSVAdapter(BaseDataAdapter):
             self.logger.debug(LOG_FOUND_TABLES, len(tables), tables)
         return tables
 
+    def introspect_schema(self, table_name: str) -> Dict[str, Any]:
+        """
+        Introspect CSV file to get actual columns and infer types.
+        
+        This method reads the CSV file and uses pandas to infer the schema
+        from the actual data. Critical for declarative migrations where we
+        need to compare database reality vs. YAML target schema.
+        
+        Args:
+            table_name: Name of the table to introspect
+        
+        Returns:
+            Dict[str, Any]: Schema dict in zCLI format:
+            {
+                'column_name': {'type': 'int'|'float'|'str'|'bool'|'datetime'},
+                ...
+            }
+        
+        Example:
+            >>> schema = adapter.introspect_schema("users")
+            >>> # {'id': {'type': 'int'}, 'name': {'type': 'str'}, ...}
+        
+        Notes:
+            - Reads only first 10 rows for performance (type inference)
+            - Uses pandas dtype inference (int64 → int, object → str)
+            - Returns empty dict if table doesn't exist
+            - Does NOT include constraints (pk, unique, etc.) - only columns and types
+            - Used by zData.migrate() to detect schema drift
+        
+        Type Mapping:
+            - int64, int32 → 'int'
+            - float64, float32 → 'float'
+            - bool → 'bool'
+            - datetime64 → 'datetime'
+            - object, string → 'str'
+        """
+        csv_file = self._get_csv_path(table_name)
+        
+        # Return empty schema if table doesn't exist
+        if not csv_file.exists():
+            if self.logger:
+                self.logger.warning(f"Cannot introspect non-existent table: {table_name}")
+            return {}
+        
+        try:
+            # Read just header + 10 rows for type inference (performance optimization)
+            df = pd.read_csv(csv_file, nrows=10)
+            
+            schema = {}
+            for col in df.columns:
+                col_def = {'type': 'str'}  # Default to string
+                
+                # Infer type from pandas dtype
+                dtype_str = str(df[col].dtype)
+                
+                if 'int' in dtype_str:
+                    col_def['type'] = 'int'
+                elif 'float' in dtype_str:
+                    col_def['type'] = 'float'
+                elif 'bool' in dtype_str:
+                    col_def['type'] = 'bool'
+                elif 'datetime' in dtype_str:
+                    col_def['type'] = 'datetime'
+                else:
+                    # object, string, or unknown → str
+                    col_def['type'] = 'str'
+                
+                schema[col] = col_def
+            
+            if self.logger:
+                self.logger.debug(f"Introspected schema for {table_name}: {len(schema)} columns")
+            
+            return schema
+            
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Failed to introspect table {table_name}: {e}")
+            return {}
+
     # ============================================================
     # DML Operations (Data Manipulation)
     # ============================================================

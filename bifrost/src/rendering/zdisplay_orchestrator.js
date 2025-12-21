@@ -462,6 +462,14 @@ export class ZDisplayOrchestrator {
         element = cardRenderer.renderCard(eventData);
         this.logger.log(`[renderZDisplayEvent] Rendered card element`);
         break;
+      
+      case 'zDash':
+        // Dashboard with sidebar navigation
+        const DashboardRenderer = (await import('./dashboard_renderer.js')).default;
+        const dashRenderer = new DashboardRenderer(this.logger, this.client);
+        element = await dashRenderer.render(eventData, targetElement);
+        this.logger.log(`[renderZDisplayEvent] Rendered dashboard element`);
+        break;
         
       default:
         this.logger.warn(`Unknown zDisplay event: ${event}`);

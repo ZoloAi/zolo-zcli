@@ -1275,15 +1275,7 @@ class zSystem:
             - [1-N]: Switch to panel by number
             - done: Exit dashboard (satisfies built-in gate)
         """
-        # Try Bifrost (GUI) mode first - send clean event
-        if self._try_gui_event(EVENT_ZDASH, {
-            "folder": folder,
-            "sidebar": sidebar,
-            "default": default or (sidebar[0] if sidebar else None)
-        }):
-            return None  # GUI event sent successfully
-        
-        # Terminal mode - interactive dashboard loop
+        # Validate sidebar
         if not sidebar:
             if hasattr(self.display, 'logger'):
                 self.display.logger.warning("[zDash] No sidebar items provided")
@@ -1300,29 +1292,76 @@ class zSystem:
         
         logger = self.display.logger if hasattr(self.display, 'logger') else None
         
-        # Determine starting panel
-        current_panel = default if default in sidebar else sidebar[0]
+        # RBAC-FILTERED SIDEBAR: Filter panels based on user's role
+        # Load each panel and check RBAC access before including in sidebar
+        from zCLI.subsystems.zWizard.zWizard_modules.wizard_rbac import check_rbac_access, RBAC_ACCESS_GRANTED
         
-        # Cache panel metadata for menu display
+        accessible_panels = []
         panel_metadata = {}
+        
         for panel_name in sidebar:
             try:
                 zLink_path = f"{folder}.zUI.{panel_name}"
                 panel_file = _zcli.loader.handle(zPath=zLink_path) if hasattr(_zcli, 'loader') else {}
-                panel_meta = panel_file.get('meta', {})
-                panel_metadata[panel_name] = {
-                    'label': panel_meta.get('panel_label', panel_name),
-                    'icon': panel_meta.get('panel_icon', ''),
-                    'order': panel_meta.get('panel_order', 999)
-                }
-            except Exception:
+                
+                # Get the panel's main block (should match panel_name)
+                panel_block = panel_file.get(panel_name, {})
+                
+                # Check RBAC access for this panel
+                rbac_result = check_rbac_access(
+                    key=panel_name,
+                    value=panel_block,
+                    zcli=_zcli,
+                    walker=None,
+                    logger=logger if logger else _zcli.logger,
+                    display=None  # Don't show access denied here (silent filter)
+                )
+                
+                # Only include panel if user has access
+                if rbac_result == RBAC_ACCESS_GRANTED:
+                    accessible_panels.append(panel_name)
+                    
+                    # Cache panel metadata for menu display
+                    panel_meta = panel_file.get('meta', {})
+                    panel_metadata[panel_name] = {
+                        'label': panel_meta.get('panel_label', panel_name),
+                        'icon': panel_meta.get('panel_icon', ''),
+                        'order': panel_meta.get('panel_order', 999)
+                    }
+                elif logger:
+                    logger.debug(f"[zDash RBAC] Panel '{panel_name}' filtered out (access denied)")
+                    
+            except Exception as e:
+                # If panel load fails, include it with default metadata (fail-open for robustness)
+                if logger:
+                    logger.warning(f"[zDash] Failed to load panel '{panel_name}': {e}")
+                accessible_panels.append(panel_name)
                 panel_metadata[panel_name] = {
                     'label': panel_name,
                     'icon': '',
                     'order': 999
                 }
         
-        # Interactive dashboard loop (built-in gate)
+        # Update sidebar to only accessible panels
+        sidebar = accessible_panels
+        
+        if not sidebar:
+            if logger:
+                logger.warning("[zDash] No accessible panels after RBAC filtering")
+            return None
+        
+        # Determine starting panel (must be in filtered sidebar)
+        current_panel = default if default in sidebar else sidebar[0]
+        
+        # Try Bifrost (GUI) mode - send FILTERED sidebar
+        if self._try_gui_event(EVENT_ZDASH, {
+            "folder": folder,
+            "sidebar": sidebar,  # RBAC-filtered sidebar
+            "default": current_panel
+        }):
+            return None  # GUI event sent successfully
+        
+        # Terminal mode - interactive dashboard loop (built-in gate)
         while True:
             # 1. Load and render current panel
             zLink_path = f"{folder}.zUI.{current_panel}"

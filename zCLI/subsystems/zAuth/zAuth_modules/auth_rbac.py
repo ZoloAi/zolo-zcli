@@ -492,36 +492,181 @@ class RBAC:
         if not user_role:
             return False
         
-        # Dual context: Check BOTH roles with OR logic
+        # Dual context: Check BOTH roles with OR logic (with hierarchy support)
         if isinstance(user_role, tuple):
             zsession_role, app_role = user_role
             
             # Check if required_role is a list (any of these roles)
             if isinstance(required_role, list):
-                # OR logic: Either role must match any required role
-                zsession_match = zsession_role in required_role if zsession_role else False
-                app_match = app_role in required_role if app_role else False
+                # OR logic: Either role must qualify for any required role (via hierarchy or exact)
+                zsession_match = any(
+                    self._check_role_hierarchy(zsession_role, req) for req in required_role
+                ) if zsession_role else False
+                app_match = any(
+                    self._check_role_hierarchy(app_role, req) for req in required_role
+                ) if app_role else False
                 return zsession_match or app_match
             
-            # Single required role: Check if either user role matches
+            # Single required role: Check if either user role qualifies (via hierarchy or exact)
             if isinstance(required_role, str):
-                zsession_match = (zsession_role == required_role) if zsession_role else False
-                app_match = (app_role == required_role) if app_role else False
+                zsession_match = self._check_role_hierarchy(zsession_role, required_role) if zsession_role else False
+                app_match = self._check_role_hierarchy(app_role, required_role) if app_role else False
                 if zsession_match or app_match:
                     self._log("debug", f"{LOG_DUAL_ROLE_MATCH}: {required_role}")
                 return zsession_match or app_match
             
             return False
         
-        # Single context: Direct role check
+        # Single context: Hierarchical role check (with fallback to exact match)
         if isinstance(required_role, str):
-            return user_role == required_role
+            return self._check_role_hierarchy(user_role, required_role)
         
-        # Multiple required roles (list): Check if user role is in list
+        # Multiple required roles (list): Check if user qualifies for ANY
         if isinstance(required_role, list):
-            return user_role in required_role
+            return any(self._check_role_hierarchy(user_role, req) for req in required_role)
         
         return False
+    
+    def _check_role_hierarchy(self, user_role_name: str, required_role_name: str) -> bool:
+        """
+        Check if user's role matches required role with optional hierarchical checking.
+        
+        This is an OPT-IN feature: If both roles have a 'level' field in the database,
+        hierarchy is used (user_level >= required_level). Otherwise, falls back to
+        exact name matching for backwards compatibility.
+        
+        Hierarchy Rules:
+            - Higher level = more access (e.g., level 100 > level 10)
+            - User with level 100 can access features requiring level 10
+            - User with level 10 CANNOT access features requiring level 100
+        
+        Exact Match Fallback:
+            - If levels not found for either role → exact name match
+            - If role query fails → exact name match
+            - Maintains backwards compatibility with apps not using levels
+        
+        Args:
+            user_role_name: Name of user's role (e.g., "zAdmin", "Administrator")
+            required_role_name: Name of required role (e.g., "zUser", "Subscriber")
+        
+        Returns:
+            bool: True if user qualifies (via hierarchy or exact match), False otherwise
+        
+        Examples:
+            >>> # With levels (hierarchy mode):
+            >>> self._check_role_hierarchy("zAdmin", "zUser")  # level 100 >= 10 → True
+            >>> self._check_role_hierarchy("zUser", "zAdmin")  # level 10 >= 100 → False
+            
+            >>> # Without levels (exact match mode):
+            >>> self._check_role_hierarchy("admin", "user")  # "admin" == "user" → False
+            >>> self._check_role_hierarchy("admin", "admin")  # "admin" == "admin" → True
+        """
+        try:
+            # Try to get levels for both roles (OPT-IN detection)
+            user_level = self._get_role_level(user_role_name)
+            required_level = self._get_role_level(required_role_name)
+            
+            # HIERARCHY MODE: Both roles have levels defined
+            if user_level is not None and required_level is not None:
+                result = user_level >= required_level
+                if result:
+                    self._log(
+                        "debug",
+                        f"[RBAC Hierarchy] User '{user_role_name}' (level {user_level}) "
+                        f"qualifies for '{required_role_name}' (level {required_level})"
+                    )
+                return result
+            
+            # EXACT MATCH MODE: No levels found (backwards compatible)
+            self._log(
+                "debug",
+                f"[RBAC] No hierarchy for '{user_role_name}' or '{required_role_name}', "
+                f"using exact match"
+            )
+            
+        except Exception as e:
+            # Fail gracefully - log and fall back to exact match
+            self._log(
+                "warning",
+                f"[RBAC] Role hierarchy check failed: {e}, falling back to exact match"
+            )
+        
+        # Fallback to exact name matching
+        return user_role_name == required_role_name
+    
+    def _get_role_level(self, role_name: str) -> Optional[int]:
+        """
+        Get the hierarchical level of a role from the roles table.
+        
+        This method implements the OPT-IN mechanism for hierarchical roles:
+        - Returns int if role has 'level' field in database
+        - Returns None if role not found, level field missing, or query fails
+        
+        The None return triggers exact match mode in _check_role_hierarchy(),
+        making hierarchy completely optional and backwards compatible.
+        
+        Caching Strategy:
+            - Levels are cached in self._role_level_cache
+            - Cache persists for session lifetime
+            - Avoids repeated database queries
+        
+        Args:
+            role_name: Name of the role to look up (e.g., "zAdmin", "zUser")
+        
+        Returns:
+            Optional[int]: Role level (0-100) or None if not found/available
+        
+        Examples:
+            >>> self._get_role_level("zAdmin")  # Returns 100
+            >>> self._get_role_level("zUser")   # Returns 10
+            >>> self._get_role_level("unknown") # Returns None
+        """
+        # Initialize cache on first use
+        if not hasattr(self, '_role_level_cache'):
+            self._role_level_cache = {}
+        
+        # Return cached value if available
+        if role_name in self._role_level_cache:
+            return self._role_level_cache[role_name]
+        
+        # Try to query roles table for level
+        try:
+            # Load roles schema
+            roles_schema = self.zcli.loader.handle('@.models.zSchema.roles')
+            self.zcli.data.load_schema(roles_schema)
+            
+            # Query for this specific role
+            role_data = self.zcli.data.adapter.select(
+                "roles",
+                where={"name": role_name}
+            )
+            
+            # Extract level if found
+            if role_data and len(role_data) > 0:
+                level = role_data[0].get('level')
+                
+                # Cache the result (even if None)
+                self._role_level_cache[role_name] = level
+                
+                if level is not None:
+                    self._log(
+                        "debug",
+                        f"[RBAC] Cached level for role '{role_name}': {level}"
+                    )
+                
+                return level
+                
+        except Exception as e:
+            # Silently fail - this is opt-in, not required
+            # The None return will trigger exact match mode
+            self._log(
+                "debug",
+                f"[RBAC] Could not query level for role '{role_name}': {e}"
+            )
+        
+        # Cache None to avoid repeated failed queries
+        self._role_level_cache[role_name] = None
+        return None
     
     def _is_db_ready(self) -> bool:
         """

@@ -1602,6 +1602,126 @@ class zData:
     # MIGRATION OPERATIONS (Declarative Schema Migrations)
     # ═══════════════════════════════════════════════════════════════════════════════════
 
+    def _convert_zcli_to_diff_format(self, zcli_schema: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Convert zCLI native schema format to schema_diff.py expected format.
+        
+        zCLI Format (native):
+            {'Meta': {...}, 'users': {'id': {...}, 'name': {...}}, ...}
+        
+        Diff Engine Format (expected):
+            {'Tables': {'users': {'Columns': {'id': {...}, 'name': {...}}}, ...}}
+        
+        Args:
+            zcli_schema: Schema in zCLI native format
+        
+        Returns:
+            Schema in diff engine format
+        """
+        if not zcli_schema:
+            return {'Tables': {}}
+        
+        # Extract tables (all keys except 'Meta')
+        tables = {}
+        for key, value in zcli_schema.items():
+            if key == 'Meta':
+                continue
+            # Wrap table columns in 'Columns' key for diff engine
+            tables[key] = {'Columns': value}
+        
+        return {'Tables': tables}
+
+    def _introspect_database_schema(self) -> Dict[str, Any]:
+        """
+        Introspect current database state to get actual schema (database reality).
+        
+        This method queries the actual database/CSV files to determine what columns
+        and tables currently exist, independent of what the YAML schema says.
+        Critical for declarative migrations where we compare reality vs. target.
+        
+        Backend Support:
+            - CSV: Uses pd.read_csv() to get column names and infer types
+            - SQLite: Uses PRAGMA table_info() to get schema
+            - PostgreSQL: Uses information_schema queries
+        
+        Returns:
+            Dict[str, Any]: Schema dict in zCLI format matching self.schema structure:
+            {
+                'Meta': {...},  # Copied from loaded schema
+                'Tables': {
+                    'users': {
+                        'Columns': {
+                            'id': {'type': 'int'},
+                            'name': {'type': 'str'},
+                            ...
+                        }
+                    },
+                    ...
+                }
+            }
+        
+        Notes:
+            - Returns empty dict if adapter not initialized
+            - Falls back to loaded YAML schema if introspection not supported
+            - Used by migrate() to get "old_schema" (current database state)
+            - Does NOT include constraints/hooks (only columns and types)
+        
+        Example:
+            >>> # After loading schema and connecting
+            >>> actual_schema = z.data._introspect_database_schema()
+            >>> # Returns what's ACTUALLY in the database, not what's in YAML
+        """
+        if not self.adapter:
+            self.logger.warning("[zMigrate] No adapter - cannot introspect database")
+            return {}
+        
+        # Check if adapter supports introspection
+        if not hasattr(self.adapter, 'introspect_schema'):
+            # Fallback: Use loaded YAML schema (old behavior for backwards compatibility)
+            self.logger.debug("[zMigrate] Adapter doesn't support introspection - using loaded schema")
+            return self.schema
+        
+        try:
+            # CRITICAL: Only introspect tables that are defined in the loaded schema!
+            # We don't want to detect "extra" tables in the database as candidates for dropping.
+            # This ensures we only compare the schema-defined tables' reality vs. their YAML definition.
+            
+            # zCLI schema format: tables are top-level keys (excluding 'Meta')
+            # Example: {'Meta': {...}, 'users': {...}, 'posts': {...}}
+            tables = [key for key in self.schema.keys() if key != 'Meta'] if self.schema else []
+            
+            self.logger.debug(f"[zMigrate] Introspecting {len(tables)} schema-defined tables: {tables}")
+            
+            # Introspect each table
+            introspected_tables = {}
+            for table_name in tables:
+                try:
+                    table_schema = self.adapter.introspect_schema(table_name)
+                    if table_schema:
+                        # Store as top-level key (zCLI format), NOT nested under 'Tables'
+                        # The table definition is just the columns dict
+                        introspected_tables[table_name] = table_schema
+                        self.logger.debug(f"[zMigrate] Introspected {table_name}: {len(table_schema)} columns")
+                except Exception as e:
+                    self.logger.warning(f"[zMigrate] Failed to introspect {table_name}: {e}")
+                    continue
+            
+            # Build complete schema structure matching zCLI format
+            # Tables are at top level, NOT nested under 'Tables' key
+            introspected_schema = {
+                'Meta': self.schema.get('Meta', {}) if self.schema else {}
+            }
+            # Add each table as a top-level key
+            introspected_schema.update(introspected_tables)
+            
+            self.logger.info(f"[zMigrate] Introspected database: {len(introspected_tables)} tables")
+            return introspected_schema
+            
+        except Exception as e:
+            self.logger.error(f"[zMigrate] Introspection failed: {e}")
+            # Fallback to loaded schema
+            return self.schema
+
     def migrate(self, new_schema_path: str, dry_run: bool = False, 
                 auto_approve: bool = False, schema_version: Optional[str] = None) -> Dict[str, Any]:
         """
@@ -1737,10 +1857,22 @@ class zData:
         # Compute schema hash
         schema_hash = get_current_schema_hash(new_schema)
         
+        # NEW v1.5.14: Introspect actual database state (not YAML)
+        # This compares database REALITY vs. target YAML schema
+        self.logger.info("[zMigrate] Introspecting current database state...")
+        old_schema_zcli = self._introspect_database_schema()
+        
+        # Convert both schemas to diff engine format
+        # schema_diff expects {'Tables': {'users': {'Columns': {...}}}}
+        # but zCLI uses {'Meta': {...}, 'users': {...}}
+        self.logger.debug("[zMigrate] Converting schemas to diff engine format...")
+        old_schema_diff = self._convert_zcli_to_diff_format(old_schema_zcli)
+        new_schema_diff = self._convert_zcli_to_diff_format(new_schema)
+        
         # Build migration request
         request = {
-            "old_schema": self.schema,
-            "new_schema": new_schema,
+            "old_schema": old_schema_diff,  # Database reality (introspected + converted)
+            "new_schema": new_schema_diff,  # Target YAML schema (converted)
             "dry_run": dry_run,
             "auto_approve": auto_approve,
             "schema_version": schema_version or "unknown",

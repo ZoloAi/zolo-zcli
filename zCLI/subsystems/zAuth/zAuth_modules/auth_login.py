@@ -273,11 +273,33 @@ def handle_zLogin(
         zcli.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_APPLICATIONS] = {}
     
     # Build app session data (exclude password!)
+    # v1.5.13: Role lookup for production schema (users → user_roles → roles)
+    user_role = user.get(DEFAULT_ROLE_FIELD)  # Try direct role field first
+    if not user_role:
+        # No direct role field - try production schema lookup
+        try:
+            user_id = int(user.get("id"))
+            # Query user_roles table
+            user_roles_result = zcli.data.select("user_roles", where={"user_id": user_id})
+            if user_roles_result and len(user_roles_result) > 0:
+                role_id = int(user_roles_result[0].get("role_id"))
+                # Query roles table
+                roles_result = zcli.data.select("roles", where={"id": role_id})
+                if roles_result and len(roles_result) > 0:
+                    user_role = roles_result[0].get("name")
+                    logger.debug(f"{LOG_PREFIX} Role lookup: user_id={user_id} → role_id={role_id} → role={user_role}")
+        except Exception as e:
+            logger.debug(f"{LOG_PREFIX} Role lookup failed: {e}, using default")
+    
+    # Fallback to default if still no role
+    if not user_role:
+        user_role = DEFAULT_ROLE
+    
     app_session = {
         ZAUTH_KEY_AUTHENTICATED: True,
         ZAUTH_KEY_ID: user.get("id"),
         ZAUTH_KEY_USERNAME: user.get("name", user.get(identity_field)),
-        ZAUTH_KEY_ROLE: user.get(DEFAULT_ROLE_FIELD, DEFAULT_ROLE)
+        ZAUTH_KEY_ROLE: user_role
     }
     
     # Add all other user fields (except password) for app use
