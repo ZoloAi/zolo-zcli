@@ -182,6 +182,7 @@ from .operations import (
     handle_update,
     handle_delete,
     handle_upsert,
+    handle_aggregate,
     handle_create_table,
     handle_drop,
     handle_head,
@@ -201,6 +202,7 @@ ACTION_READ = "read"
 ACTION_UPDATE = "update"
 ACTION_DELETE = "delete"
 ACTION_UPSERT = "upsert"
+ACTION_AGGREGATE = "aggregate"
 ACTION_CREATE = "create"
 ACTION_DROP = "drop"
 ACTION_HEAD = "head"
@@ -481,13 +483,14 @@ class DataOperations:
         action strings (e.g., "insert", "read") to their corresponding handler
         functions. It handles unknown actions and exceptions gracefully.
         
-        Action Map (10 operations):
+        Action Map (11 operations):
             - "list_tables": self.list_tables() (adapter delegation)
             - "insert": handle_insert(request, self) (CRUD operation)
             - "read": handle_read(request, self) (CRUD operation)
             - "update": handle_update(request, self) (CRUD operation)
             - "delete": handle_delete(request, self) (CRUD operation)
             - "upsert": handle_upsert(request, self) (CRUD operation)
+            - "aggregate": handle_aggregate(request, self) (Aggregation operation)
             - "create": handle_create_table(request, self) (DDL operation)
             - "drop": handle_drop(request, self) (DDL operation)
             - "head": handle_head(request, self) (DDL operation)
@@ -528,7 +531,7 @@ class DataOperations:
             - All errors are logged with traceback for debugging
         """
         # ─────────────────────────────────────────────────────────────────────────
-        # Phase 1: Build Action Map (9 operations)
+        # Phase 1: Build Action Map (11 operations)
         # ─────────────────────────────────────────────────────────────────────────
         action_map = {
             ACTION_LIST_TABLES: lambda: self.list_tables(),
@@ -537,6 +540,7 @@ class DataOperations:
             ACTION_UPDATE: lambda: handle_update(request, self),
             ACTION_DELETE: lambda: handle_delete(request, self),
             ACTION_UPSERT: lambda: handle_upsert(request, self),
+            ACTION_AGGREGATE: lambda: handle_aggregate(request, self),
             ACTION_CREATE: lambda: handle_create_table(request, self),
             ACTION_DROP: lambda: handle_drop(request, self),
             ACTION_HEAD: lambda: handle_head(request, self),

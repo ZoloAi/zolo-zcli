@@ -237,7 +237,7 @@ class BaseDataAdapter(ABC):  # pylint: disable=unnecessary-pass
     
     This ABC ensures all backend implementations (SQLite, PostgreSQL, CSV) provide
     a consistent interface for database-like operations. Subclasses must implement
-    17 abstract methods covering DDL, DML, TCL, and metadata operations.
+    18 abstract methods covering DDL, DML, aggregations, TCL, and metadata operations.
     
     Design Pattern
     -------------
@@ -246,7 +246,7 @@ class BaseDataAdapter(ABC):  # pylint: disable=unnecessary-pass
     - Provides concrete helper methods (directory, connection status)
     - Enforces implementation requirements on subclasses
     
-    Abstract Methods Required (17 total)
+    Abstract Methods Required (18 total)
     -----------------------------------
     **Connection & Metadata (4):**
     - connect(): Establish backend connection
@@ -267,6 +267,9 @@ class BaseDataAdapter(ABC):  # pylint: disable=unnecessary-pass
     - update(): Modify rows
     - delete(): Remove rows
     - upsert(): Insert or update
+    
+    **Aggregations (1):**
+    - aggregate(): Perform aggregation (count, sum, avg, min, max)
     
     **TCL - Transaction Control (3):**
     - begin_transaction(): Start transaction
@@ -844,6 +847,67 @@ class BaseDataAdapter(ABC):  # pylint: disable=unnecessary-pass
             ...     self.cursor.execute(sql, values)
             ...     self.connection.commit()
             ...     return self.cursor.lastrowid
+        """
+
+    @abstractmethod
+    def aggregate(
+        self,
+        table: str,
+        function: str,
+        field: Optional[str] = None,
+        where: Optional[Dict[str, Any]] = None,
+        group_by: Optional[str] = None
+    ) -> Any:
+        """
+        Perform aggregation function on table data.
+        
+        Supported aggregate functions:
+        - count: Count rows (field optional, defaults to *)
+        - sum: Sum numeric field values
+        - avg: Average numeric field values
+        - min: Minimum field value
+        - max: Maximum field value
+        
+        Args:
+            table: Name of table
+            function: Aggregation function (count, sum, avg, min, max)
+            field: Field name to aggregate (required for sum/avg/min/max, optional for count)
+            where: Optional WHERE clause dictionary for filtering
+            group_by: Optional field name to group by
+        
+        Returns:
+            Scalar value (int/float) for simple aggregation
+            Dict for GROUP BY aggregation {group_value: aggregate_value}
+        
+        Implementation Requirements:
+            - Validate function name (count/sum/avg/min/max)
+            - Build backend-specific query (SQL: SELECT COUNT(*), CSV: df.count())
+            - Apply WHERE filtering if provided
+            - Handle GROUP BY if provided
+            - Return scalar for simple aggregation, dict for grouped
+            - Handle empty results gracefully (return 0 for count, None for others)
+        
+        Raises:
+            ValueError: If invalid function or missing required field
+            RuntimeError: If query execution fails
+        
+        Example (SQLite):
+            >>> def aggregate(self, table, function, field=None, where=None, group_by=None):
+            ...     agg_field = field if field else '*'
+            ...     sql = f"SELECT {function.upper()}({agg_field}) FROM {table}"
+            ...     if where:
+            ...         sql += f" WHERE {self._build_where_clause(where)}"
+            ...     result = self.cursor.execute(sql).fetchone()
+            ...     return result[0] if result else 0
+        
+        Example (pandas):
+            >>> def aggregate(self, table, function, field=None, where=None, group_by=None):
+            ...     df = self._load_table(table)
+            ...     if where:
+            ...         df = df[self._create_where_mask(df, where)]
+            ...     if function == 'count':
+            ...         return len(df)
+            ...     return df[field].sum()  # or .mean(), .min(), .max()
         """
 
     # ============================================================

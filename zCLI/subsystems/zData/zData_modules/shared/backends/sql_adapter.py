@@ -757,6 +757,131 @@ class SQLAdapter(BaseDataAdapter):
             self.logger.info(LOG_UPSERT_ROW, table, row_id)
         return row_id
 
+    def aggregate(
+        self,
+        table: str,
+        function: str,
+        field: Optional[str] = None,
+        where: Optional[Dict[str, Any]] = None,
+        group_by: Optional[str] = None
+    ) -> Any:
+        """
+        Perform aggregation function on table data using SQL.
+        
+        Executes SQL aggregate functions (COUNT, SUM, AVG, MIN, MAX) with optional
+        WHERE filtering and GROUP BY grouping. Returns scalar for simple aggregations
+        or dict for grouped aggregations.
+        
+        Supported functions:
+        - count: Count rows (field optional, defaults to *)
+        - sum: Sum numeric field values (field required)
+        - avg: Average numeric field values (field required)
+        - min: Minimum field value (field required)
+        - max: Maximum field value (field required)
+        
+        Args:
+            table: Table name
+            function: Aggregation function (count, sum, avg, min, max)
+            field: Field name to aggregate (required for sum/avg/min/max, optional for count)
+            where: Optional WHERE clause dictionary for filtering
+            group_by: Optional field name to group by
+        
+        Returns:
+            Scalar value (int/float) for simple aggregation
+            Dict {group_value: aggregate_value} for GROUP BY aggregation
+        
+        Raises:
+            ValueError: If invalid function or missing required field
+            RuntimeError: If query execution fails
+        
+        Examples:
+            >>> # Count all users
+            >>> count = adapter.aggregate("users", "count")
+            >>> # 12
+            
+            >>> # Count active users
+            >>> count = adapter.aggregate("users", "count", where={"status": "active"})
+            >>> # 10
+            
+            >>> # Sum storage usage
+            >>> total = adapter.aggregate("user_storage", "sum", field="used_mb")
+            >>> # 34200
+            
+            >>> # Count users by role
+            >>> counts = adapter.aggregate("user_roles", "count", group_by="role_id")
+            >>> # {1: 1, 2: 3, 3: 8}
+        
+        Notes:
+            - Uses parameterized queries for safety
+            - Returns 0 for count on empty result
+            - Returns None for sum/avg/min/max on empty result
+            - GROUP BY returns dict with group values as keys
+        """
+        # Validate function
+        valid_functions = ["count", "sum", "avg", "min", "max"]
+        function_lower = function.lower()
+        if function_lower not in valid_functions:
+            raise ValueError(f"Invalid aggregate function '{function}'. Must be one of: {valid_functions}")
+        
+        # Validate field requirement
+        if function_lower != "count" and not field:
+            raise ValueError(f"Aggregate function '{function}' requires a field name")
+        
+        # Build aggregation expression
+        if function_lower == "count":
+            agg_expr = f"COUNT({field if field else '*'})"
+        else:
+            agg_expr = f"{function_lower.upper()}({field})"
+        
+        # Build SELECT clause
+        if group_by:
+            sql = f"SELECT {group_by}, {agg_expr} FROM {table}"
+        else:
+            sql = f"SELECT {agg_expr} FROM {table}"
+        
+        # Build WHERE clause if provided
+        params = []
+        if where:
+            where_clause, where_params = self._build_where_clause(where)
+            sql += f" WHERE {where_clause}"
+            params.extend(where_params)
+        
+        # Add GROUP BY if provided
+        if group_by:
+            sql += f" GROUP BY {group_by}"
+        
+        if self.logger:
+            self.logger.debug(f"Executing aggregation: {sql} with params: {params}")
+        
+        # Execute query
+        cur = self.get_cursor()
+        try:
+            cur.execute(sql, params)
+            
+            if group_by:
+                # GROUP BY: return dict {group_value: aggregate_value}
+                rows = cur.fetchall()
+                result = {}
+                for row in rows:
+                    group_val = row[0]
+                    agg_val = row[1]
+                    result[group_val] = agg_val
+                if self.logger:
+                    self.logger.info(f"Aggregation {function}({field or '*'}) on {table} grouped by {group_by}: {len(result)} groups")
+                return result
+            else:
+                # Simple aggregation: return scalar
+                row = cur.fetchone()
+                result = row[0] if row and row[0] is not None else (0 if function_lower == "count" else None)
+                if self.logger:
+                    self.logger.info(f"Aggregation {function}({field or '*'}) on {table}: {result}")
+                return result
+                
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Aggregation failed: {e}")
+            raise RuntimeError(f"Aggregation query failed: {e}")
+
     def map_type(self, abstract_type: str) -> str:
         """
         Map abstract schema type to SQL type (public interface).

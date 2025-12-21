@@ -15,6 +15,9 @@ Package Contents
 - **crud_delete.py**: DELETE operations with WHERE safety, no hooks (irreversible by design)
 - **crud_upsert.py**: UPSERT operations with adapter-specific conflict resolution (SQLite: OR REPLACE, PostgreSQL: ON CONFLICT)
 
+**Aggregation Operations (1 handler):**
+- **agg_aggregate.py**: AGGREGATE operations for statistical functions (COUNT, SUM, AVG, MIN, MAX) with WHERE filtering and GROUP BY
+
 **DDL Operations (3 handlers):**
 - **ddl_create.py**: CREATE TABLE operations from schema definitions, bulk creation, idempotent
 - **ddl_head.py**: HEAD operations for schema introspection, displays table structure (columns, types, nullable, defaults)
@@ -105,6 +108,7 @@ from .crud_read import handle_read
 from .crud_update import handle_update
 from .crud_delete import handle_delete
 from .crud_upsert import handle_upsert
+from .agg_aggregate import handle_aggregate
 from .ddl_create import handle_create_table
 from .ddl_drop import handle_drop
 from .ddl_head import handle_head
@@ -122,6 +126,9 @@ __all__ = [
     "handle_update",
     "handle_delete",
     "handle_upsert",
+    
+    # Aggregation operations
+    "handle_aggregate",
     
     # DDL operations
     "handle_create_table",

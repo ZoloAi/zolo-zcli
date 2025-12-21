@@ -1407,19 +1407,34 @@ class zSystem:
                 # Get the block content (dict with Panel_Header, Panel_Content, etc.)
                 panel_block_content = panel_file[first_block]
                 
+                # NEW v1.5.12: Resolve _data block BEFORE rendering panel items
+                # This enables %data.* variable resolution in panel content
+                panel_context = {}
+                if "_data" in panel_block_content:
+                    if logger:
+                        logger.debug(f"[zDash] Resolving _data block for panel: {first_block}")
+                    resolved_data = _zcli.dispatch.launcher._resolve_block_data(
+                        panel_block_content["_data"], panel_context
+                    )
+                    if resolved_data:
+                        panel_context["_resolved_data"] = resolved_data
+                        if logger:
+                            logger.debug(f"[zDash] Context enriched with {len(resolved_data)} data queries: {list(resolved_data.keys())}")
+                
                 # Iterate through the block's items and execute each one
                 # This ensures Panel_Header, Panel_Content, etc. are all rendered
                 for key, value in panel_block_content.items():
-                    # Skip metadata keys like _rbac, _zClass, etc.
+                    # Skip metadata keys like _rbac, _data, _zClass, etc.
                     if key.startswith('_'):
                         continue
                     
                     # Execute the content (usually a list of zDisplay events)
+                    # Pass panel_context so %data.* variables can be resolved
                     if isinstance(value, list):
                         for item in value:
-                            _zcli.dispatch.launcher.launch(zHorizontal=item)
+                            _zcli.dispatch.launcher.launch(zHorizontal=item, context=panel_context)
                     else:
-                        _zcli.dispatch.launcher.launch(zHorizontal=value)
+                        _zcli.dispatch.launcher.launch(zHorizontal=value, context=panel_context)
                 
             except Exception as e:
                 if logger:

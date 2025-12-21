@@ -79,7 +79,14 @@ def resolve_variables(value: str, zcli: Any, context: Any = None) -> str:
                 try:
                     for part in parts:
                         if isinstance(result, dict):
-                            result = result.get(part)
+                            # Try string key first, then integer key if part is numeric
+                            if part in result:
+                                result = result.get(part)
+                            elif part.isdigit() and int(part) in result:
+                                result = result.get(int(part))
+                            else:
+                                # Key not found
+                                return ''
                         elif isinstance(result, list) and part.isdigit():
                             result = result[int(part)]
                         else:

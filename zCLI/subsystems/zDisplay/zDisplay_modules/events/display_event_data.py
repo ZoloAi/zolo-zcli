@@ -616,9 +616,18 @@ class BasicData:
 
         # Terminal mode - format and display list
         # Use _generate_prefix() helper for DRY (reused by outline() method)
+        # Extract _context from kwargs for %data.* variable resolution (v1.5.12)
+        _context = kwargs.get('_context')
+        
         for i, item in enumerate(items, 1):
             prefix = self._generate_prefix(style, i)
             content = f"{prefix}{item}"
+            
+            # NEW v1.5.12: Resolve %variable references in list items
+            if "%" in content and _context:
+                from zCLI.subsystems.zParser.parser_modules.parser_functions import resolve_variables
+                content = resolve_variables(content, self.display.zcli, _context)
+            
             # Compose: use helper instead of direct BasicOutputs call
             self._output_text(content, indent=indent, break_after=False)
 
