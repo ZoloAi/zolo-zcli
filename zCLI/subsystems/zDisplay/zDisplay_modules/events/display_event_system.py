@@ -1428,9 +1428,24 @@ class zSystem:
                     if key.startswith('_'):
                         continue
                     
+                    # Check if key has modifiers (* for menu, ~ for anchor)
+                    # If so, use dispatch.handle() so modifiers are detected and processed
+                    if '*' in key or '~' in key:
+                        # Key has modifier - use dispatch.handle() to detect and process it
+                        # Menu modifiers need zWizard to handle navigation loop
+                        # Pass entire panel_block_content so wizard can navigate between keys
+                        if logger:
+                            logger.debug(f"[zDash] Menu modifier detected: {key}, delegating to zWizard")
+                        _zcli.wizard.execute_loop(
+                            items_dict=panel_block_content,
+                            context=panel_context,
+                            start_key=key
+                        )
+                        # Menu/wizard handles all navigation - break out of zDash loop
+                        break
                     # Execute the content (usually a list of zDisplay events)
                     # Pass panel_context so %data.* variables can be resolved
-                    if isinstance(value, list):
+                    elif isinstance(value, list):
                         for item in value:
                             _zcli.dispatch.launcher.launch(zHorizontal=item, context=panel_context)
                     else:
