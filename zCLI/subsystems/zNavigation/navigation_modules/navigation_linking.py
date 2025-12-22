@@ -464,6 +464,12 @@ class Linking:
         from zCLI.subsystems.zConfig.zConfig_modules.config_session import SESSION_KEY_ZCRUMBS
         # Phase 0.5: Handle enhanced format
         crumbs_dict = walker.session.get(SESSION_KEY_ZCRUMBS, {})
+        
+        # CHECK NAVBAR FLAG: Detect if this navigation is from navbar (for OP_RESET)
+        is_navbar_navigation = crumbs_dict.get("_navbar_navigation", False)
+        if is_navbar_navigation:
+            self.logger.info(f"[zLink] Navbar navigation detected → will trigger OP_RESET")
+        
         # Get trails from enhanced format or use old format
         if 'trails' in crumbs_dict:
             trails = crumbs_dict['trails']
@@ -472,17 +478,22 @@ class Linking:
         
         source_block_path = next(reversed(trails)) if trails else None
         
-        # Use the active source scope (where we're navigating FROM)
-        if source_block_path and source_block_path in trails:
-            # Get the last key in the source scope's trail (the key that triggered this zLink)
-            source_trail = trails[source_block_path]
-            source_zKey = source_trail[-1] if source_trail else None
-            
-            # Record source breadcrumb (ensures parent scope has the calling key)
-            # Note: walker_dispatch already added this, but handle_zCrumbs prevents duplicates
-            if source_zKey:
-                walker.navigation.breadcrumbs.handle_zCrumbs(source_block_path, source_zKey, walker=walker)
-                self.logger.debug(f"Recorded source breadcrumb: {source_block_path}[{source_zKey}]")
+        # NAVBAR NAVIGATION: Skip source breadcrumb recording (will be cleared by RESET anyway)
+        if not is_navbar_navigation:
+            # REGULAR NAVIGATION: Use the active source scope (where we're navigating FROM)
+            if source_block_path and source_block_path in trails:
+                # Get the last key in the source scope's trail (the key that triggered this zLink)
+                source_trail = trails[source_block_path]
+                source_zKey = source_trail[-1] if source_trail else None
+                
+                # Record source breadcrumb (ensures parent scope has the calling key)
+                # Note: walker_dispatch already added this, but handle_zCrumbs prevents duplicates
+                # Session still points to SOURCE at this point, so handle_zCrumbs will use source block
+                if source_zKey:
+                    walker.navigation.breadcrumbs.handle_zCrumbs(source_zKey, walker=walker)
+                    self.logger.debug(f"Recorded source breadcrumb: {source_block_path}[{source_zKey}]")
+        else:
+            self.logger.debug("[zLink] Skipping source breadcrumb (navbar navigation will RESET)")
 
         # Update session to TARGET location
         self._update_session_path(zLink_path, selected_zBlock)

@@ -874,8 +874,8 @@ class MenuInteraction:
         # Format: @.VaFolder.zVaFile.BlockName
         if zVaFolder and zVaFile:
             # Full path with folder
-            if zVaFolder.startswith("@."):
-                # Folder already has @. prefix (e.g., "@.UI")
+            if zVaFolder.startswith("@.") or zVaFolder == "@":
+                # Folder already has @. prefix (e.g., "@.UI") OR is root (@)
                 zLink_path = f"{zVaFolder}.{zVaFile}.{block_name}"
             else:
                 # Add @. prefix to folder

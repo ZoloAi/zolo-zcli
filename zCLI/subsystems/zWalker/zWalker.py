@@ -542,8 +542,64 @@ class zWalker(zWizard):
             # Initialize session for walker mode
             self._init_walker_session()
 
-            # Start the walker loop
-            return self.zBlock_loop(root_zBlock_dict)
+            # SEQUENTIAL BLOCK EXECUTION: Iterate through all blocks
+            # Prepare ordered list of blocks (root first if specified, then others)
+            all_blocks = []
+            
+            # Start with root block if it exists in main file
+            if root_zBlock in raw_zFile:
+                all_blocks.append((root_zBlock, raw_zFile[root_zBlock]))
+                self.logger.debug(f"[Walker] Starting with root block: {root_zBlock}")
+            
+            # Add remaining blocks in order
+            for block_name, block_dict in raw_zFile.items():
+                # Skip metadata blocks and root block (already added)
+                if block_name.startswith('_') or block_name == root_zBlock:
+                    continue
+                all_blocks.append((block_name, block_dict))
+            
+            self.logger.debug(f"[Walker] Sequential execution: {len(all_blocks)} block(s) to process")
+            
+            # Execute blocks sequentially until a stop signal is received
+            for idx, (block_name, block_dict) in enumerate(all_blocks):
+                self.logger.debug(f"[Walker] Executing block {idx+1}/{len(all_blocks)}: {block_name}")
+                
+                # Update active block in session for proper zCrumbs tracking
+                # Build full breadcrumb path for this block
+                zVaFolder = self.session.get("zVaFolder", "")
+                zVaFile = self.session.get(SESSION_KEY_VAFILE, "")
+                
+                if zVaFolder and zVaFile:
+                    full_crumb_path = f"{zVaFolder}.{zVaFile}.{block_name}"
+                elif zVaFile:
+                    full_crumb_path = f"{zVaFile}.{block_name}"
+                else:
+                    full_crumb_path = block_name
+                
+                # ORCHESTRATION: Delegate trail initialization to navigation subsystem
+                # Initialize breadcrumb for this block if not exists (multi-block sequential execution)
+                if SESSION_KEY_CRUMBS in self.session:
+                    self.navigation.breadcrumbs._create_trail_key(full_crumb_path, self.session)
+                
+                # Update active block reference
+                self.session[SESSION_KEY_BLOCK] = block_name
+                self.logger.debug(LOG_DEBUG_BREADCRUMB, full_crumb_path)
+                
+                # Execute the block
+                result = self.zBlock_loop(block_dict)
+                
+                # Check for navigation signals (menu selection, exit, error, etc.)
+                if result and isinstance(result, dict):
+                    if DICT_KEY_EXIT in result or DICT_KEY_ERROR in result:
+                        self.logger.debug(f"[Walker] Block '{block_name}' returned stop signal: {result}")
+                        return result
+                
+                # No stop signal - continue to next block
+                self.logger.debug(f"[Walker] Block '{block_name}' completed, continuing to next block")
+            
+            # All blocks completed successfully
+            self.logger.debug(f"[Walker] All {len(all_blocks)} blocks executed successfully")
+            return {DICT_KEY_EXIT: "completed"}
 
         except Exception as e:
             self.logger.error(LOG_ERROR_EXECUTION, e, exc_info=True)
@@ -642,7 +698,8 @@ class zWalker(zWizard):
         else:
             full_crumb_path: str = root_zBlock
         
-        self.session[SESSION_KEY_CRUMBS][full_crumb_path] = []
+        # ORCHESTRATION: Delegate trail initialization to navigation subsystem
+        self.navigation.breadcrumbs._create_trail_key(full_crumb_path, self.session)
         self.session[SESSION_KEY_BLOCK] = root_zBlock
         
         self.logger.debug(LOG_DEBUG_BREADCRUMB, full_crumb_path)
@@ -762,7 +819,7 @@ class zWalker(zWizard):
                 if not trail or trail[-1] != key:
                     # validate key is really part of the active block
                     if key in active_zBlock_dict:
-                        self.navigation.handle_zCrumbs(active_zBlock, key, walker=self)
+                        self.navigation.handle_zCrumbs(key, walker=self)
                     else:
                         self.logger.warning(LOG_WARNING_INVALID_CRUMB, key, active_zBlock)
                 else:

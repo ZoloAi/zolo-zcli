@@ -454,26 +454,201 @@ class Breadcrumbs:
         
         self.logger.debug(f"[Breadcrumbs] Migration complete: {len(old_trails)} trails preserved")
 
-    def handle_zCrumbs(
-        self,
-        zBlock: str,
-        zKey: str,
-        walker: Optional[Any] = None
-    ) -> None:
+    def _create_panel_key(self, panel_name: str, session: Dict) -> str:
         """
-        Add navigation key to breadcrumb trail.
+        Create a new panel breadcrumb key for dashboard navigation.
         
-        Adds the specified key to the trail for the given block scope. Creates
-        new scopes as needed and prevents duplicate consecutive keys.
+        Panels get their own trail keys (like Delta links) to track internal navigation.
+        Format: {dashboard_path}.{panel_name}
         
         Args
         ----
-        zBlock : str
-            Block scope (full path: e.g., "@.zUI.main.MainMenu")
+        panel_name : str
+            Panel name (e.g., "PanelA", "Settings")
+        session : Dict
+            Current session dict
+        
+        Returns
+        -------
+        str
+            Panel trail key (e.g., "@.zUI.dash_test.zBlock_1.PanelA")
+        
+        Notes
+        -----
+        - Creates empty trail for panel if doesn't exist
+        - Panel content will populate this trail via normal handle_zCrumbs()
+        
+        Examples
+        --------
+        Create panel key::
+        
+            panel_key = self._create_panel_key("Settings", session)
+            # Returns: "@.zUI.account.zAccount.Settings"
+            # Creates: trails["@.zUI.account.zAccount.Settings"] = []
+        """
+        # Get current dashboard path
+        dashboard_path = self._get_active_block_path(session)
+        
+        # Construct panel key: dashboard_path + panel_name
+        panel_key = f"{dashboard_path}.{panel_name}"
+        
+        # Get crumbs dict
+        crumbs_dict = self._get_crumbs_dict(session)
+        
+        # Create empty trail for panel if doesn't exist
+        if panel_key not in crumbs_dict:
+            crumbs_dict[panel_key] = []
+            self.logger.debug(f"[Breadcrumbs] Created panel key: {panel_key}")
+        
+        return panel_key
+    
+    def _clear_other_panel_keys(self, current_panel: str, session: Dict) -> None:
+        """
+        Clear all panel trail keys except the current one.
+        
+        When switching dashboard panels, old panel keys are removed to avoid
+        trail pollution. This implements the "clear on switch" semantic.
+        
+        Args
+        ----
+        current_panel : str
+            Current panel name to preserve (e.g., "PanelB")
+        session : Dict
+            Current session dict
+        
+        Notes
+        -----
+        - Removes all keys matching pattern: {dashboard_path}.{other_panel}
+        - Preserves: {dashboard_path}.{current_panel}
+        - Updates context to reflect cleanup
+        
+        Examples
+        --------
+        Clear old panels::
+        
+            # Before: ['@.zUI.test.zBlock_1', '@.zUI.test.zBlock_1.PanelA', '@.zUI.test.zBlock_1.PanelB']
+            self._clear_other_panel_keys("PanelB", session)
+            # After: ['@.zUI.test.zBlock_1', '@.zUI.test.zBlock_1.PanelB']
+        """
+        # Get current dashboard path
+        dashboard_path = self._get_active_block_path(session)
+        
+        # Construct current panel key to preserve
+        current_panel_key = f"{dashboard_path}.{current_panel}"
+        
+        # Get crumbs dict
+        crumbs_dict = self._get_crumbs_dict(session)
+        
+        # Find and remove all panel keys except current
+        panel_prefix = f"{dashboard_path}."
+        keys_to_remove = []
+        
+        for key in list(crumbs_dict.keys()):
+            # Check if this is a panel key (starts with dashboard_path + .)
+            if key.startswith(panel_prefix) and key != current_panel_key:
+                # This is a different panel's key - mark for removal
+                keys_to_remove.append(key)
+        
+        # Remove old panel keys from trails
+        for key in keys_to_remove:
+            del crumbs_dict[key]
+            self.logger.debug(f"[Breadcrumbs] Cleared panel key from trails: {key}")
+        
+        # Also remove from _depth_map
+        crumbs = session.get(SESSION_KEY_ZCRUMBS, {})
+        if '_depth_map' in crumbs:
+            depth_map = crumbs['_depth_map']
+            for key in keys_to_remove:
+                if key in depth_map:
+                    del depth_map[key]
+                    self.logger.debug(f"[Breadcrumbs] Cleared panel key from _depth_map: {key}")
+        
+        if keys_to_remove:
+            self.logger.info(f"[Breadcrumbs] Cleared {len(keys_to_remove)} old panel key(s) during panel switch")
+
+    def _get_active_block_path(self, session: Dict) -> str:
+        """
+        Construct active block path from current session state.
+        
+        This is THE source of truth for which breadcrumb trail to use.
+        Automatically detects Delta link navigation by reading SESSION_KEY_BLOCK.
+        
+        Args
+        ----
+        session : Dict
+            Current session dict containing path/file/block keys
+        
+        Returns
+        -------
+        str
+            Full block path (e.g., "@.zUI.menu_delta.zBlock_2")
+        
+        Notes
+        -----
+        - Reads SESSION_KEY_VAFOLDER, SESSION_KEY_VAFILE, SESSION_KEY_BLOCK
+        - Delta links update SESSION_KEY_BLOCK, so this naturally creates new trails
+        - Called at the START of handle_zCrumbs to ensure fresh state
+        
+        Examples
+        --------
+        Root folder with block::
+        
+            session = {"zVaFolder": "@", "zVaFile": "zUI.test", "zBlock": "zBlock_1"}
+            path = self._get_active_block_path(session)
+            # Returns: "@.zUI.test.zBlock_1"
+        
+        After Delta link to zBlock_2::
+        
+            session = {"zVaFolder": "@", "zVaFile": "zUI.test", "zBlock": "zBlock_2"}
+            path = self._get_active_block_path(session)
+            # Returns: "@.zUI.test.zBlock_2"  ← NEW trail key!
+        """
+        zVaFolder = session.get(SESSION_KEY_ZVAFOLDER, "@")
+        zVaFile = session.get(SESSION_KEY_ZVAFILE, "")
+        current_zBlock = session.get(SESSION_KEY_ZBLOCK, "")
+        
+        # Construct full path using CURRENT session block
+        # This ensures Delta links create new trails when they update SESSION_KEY_ZBLOCK
+        if zVaFolder and zVaFile:
+            if zVaFolder == "@":
+                # Root folder - use as-is
+                return f"{zVaFolder}.{zVaFile}.{current_zBlock}"
+            elif zVaFolder.startswith("@."):
+                # Already has @. prefix
+                return f"{zVaFolder}.{zVaFile}.{current_zBlock}"
+            else:
+                # Add @. prefix
+                return f"@.{zVaFolder}.{zVaFile}.{current_zBlock}"
+        elif zVaFile:
+            # No folder, just file + block
+            return f"{zVaFile}.{current_zBlock}"
+        else:
+            # Fallback: just block name
+            return current_zBlock
+
+    def handle_zCrumbs(
+        self,
+        zKey: str,
+        walker: Optional[Any] = None,
+        operation: str = "APPEND"
+    ) -> None:
+        """
+        Add or replace navigation key in breadcrumb trail.
+        
+        Automatically determines the active block path from session state,
+        enabling Delta link navigation to create separate trails per block.
+        Supports both APPEND (default) and REPLACE operations.
+        
+        Args
+        ----
         zKey : str
-            Navigation key to add to the trail
+            Navigation key to add/replace in the trail
         walker : Optional[Any], default=None
             Optional walker instance (provides display adapter)
+        operation : str, default="APPEND"
+            Breadcrumb operation: "APPEND" or "REPLACE"
+            - APPEND: Add new key to trail (default, sequential navigation)
+            - REPLACE: Replace last key in trail (dashboard panel switching)
         
         Returns
         -------
@@ -481,38 +656,47 @@ class Breadcrumbs:
         
         Examples
         --------
-        Add breadcrumb to main menu::
+        Add breadcrumb (reads session for block path)::
         
             breadcrumbs.handle_zCrumbs(
-                zBlock="@.zUI.main.MainMenu",
                 zKey="Settings",
                 walker=current_walker
             )
+            # Reads session[SESSION_KEY_VAFOLDER/VAFILE/BLOCK] to determine trail
         
-        Add breadcrumb without walker::
+        Delta link navigation (automatic new trail)::
         
-            breadcrumbs.handle_zCrumbs(
-                zBlock="@.zUI.settings.Network",
-                zKey="Wi-Fi"
-            )
+            # Session before: {zBlock: "zBlock_1"}
+            breadcrumbs.handle_zCrumbs("Menu", walker)
+            # Creates trail: @.zUI.test.zBlock_1: ['Menu']
+            
+            # Delta link updates session: {zBlock: "zBlock_2"}
+            breadcrumbs.handle_zCrumbs("Page", walker)
+            # Creates NEW trail: @.zUI.test.zBlock_2: ['Page']  ← Automatic!
         
         Notes
         -----
+        - **Session-Aware**: Reads SESSION_KEY_VAFOLDER/VAFILE/BLOCK for block path
+        - **Delta Link Support**: Automatically creates new trails when zBlock changes
         - **Duplicate Prevention**: If the last key in the trail already equals zKey,
           the operation is skipped (logged at debug level).
-        - **Scope Creation**: If zBlock doesn't exist in session[SESSION_KEY_ZCRUMBS],
+        - **Scope Creation**: If block path doesn't exist in session[SESSION_KEY_ZCRUMBS],
           it's automatically created with an empty trail.
-        - **Session Mutation**: Directly modifies session[SESSION_KEY_ZCRUMBS][zBlock].
+        - **Session Mutation**: Directly modifies session[SESSION_KEY_ZCRUMBS][block_path].
         
         Algorithm
         ---------
-        1. Display banner (if walker available)
-        2. Log incoming parameters
-        3. Get/create scope in session[SESSION_KEY_ZCRUMBS]
-        4. Check for duplicate key (skip if duplicate)
-        5. Append key to trail
-        6. Log updated trail
+        1. Read session state to determine active block path
+        2. Display banner (if walker available)
+        3. Log incoming parameters
+        4. Get/create scope in session[SESSION_KEY_ZCRUMBS]
+        5. Check for duplicate key (skip if duplicate)
+        6. Append key to trail
+        7. Log updated trail
         """
+        # Get active block path from session (handles Delta links!)
+        zBlock = self._get_active_block_path(self.zcli.session)
+        
         # Get appropriate display adapter
         display = self._get_display(walker)
         
@@ -528,6 +712,15 @@ class Breadcrumbs:
         self.logger.debug(LOG_INCOMING_BLOCK_KEY, zBlock, zKey)
         self.logger.debug(LOG_CURRENT_ZCRUMBS, self.zcli.session[SESSION_KEY_ZCRUMBS])
 
+        # CHECK NAVBAR FLAG: Auto-detect navbar navigation and override operation to RESET
+        zCrumbs = self.zcli.session.get(SESSION_KEY_ZCRUMBS, {})
+        if zCrumbs.get("_navbar_navigation", False):
+            self.logger.info(f"[Breadcrumbs] Navbar navigation detected → auto-switching to OP_RESET")
+            operation = OP_RESET
+            # CLEAR FLAG immediately (only applies to first breadcrumb after navbar click)
+            zCrumbs["_navbar_navigation"] = False
+            self.logger.debug("[Breadcrumbs] Navbar flag cleared after detection")
+
         # Get crumbs dict from session (with validation)
         crumbs_dict = self._get_crumbs_dict(self.zcli.session)
 
@@ -540,45 +733,125 @@ class Breadcrumbs:
         zBlock_crumbs = crumbs_dict[zBlock]
         self.logger.debug(LOG_CURRENT_TRAIL, zBlock_crumbs)
 
-        # Prevent duplicate consecutive zKeys
-        if zBlock_crumbs and zBlock_crumbs[INDEX_LAST_PART] == zKey:
-            self.logger.debug(LOG_DUPLICATE_SKIP, zKey, zBlock)
-            return
-
         # Skip navbar keys from breadcrumb trail
         # Navbar is a navigation affordance, not content
         if "zNavBar" in zKey:
             self.logger.debug(f"[Breadcrumbs] Skipping navbar key from trail: {zKey}")
             return
 
-        # All good - add the key to the trail
-        zBlock_crumbs.append(zKey)
+        # Handle operation type: RESET, POP_TO, REPLACE, or APPEND
+        if operation == OP_RESET:
+            # RESET operation: Clear all trails and start fresh (zNavBar navigation)
+            # Used when clicking navbar items - simulates "starting over" at a new top-level destination
+            self.logger.info(f"[Breadcrumbs] RESET: Clearing all trails for navbar navigation to '{zKey}'")
+            
+            # Get enhanced zCrumbs structure
+            zCrumbs = self.zcli.session.get(SESSION_KEY_ZCRUMBS, {})
+            
+            # Ensure enhanced format
+            self._ensure_enhanced_format(self.zcli.session)
+            zCrumbs = self.zcli.session[SESSION_KEY_ZCRUMBS]
+            
+            # Clear all trails
+            old_trails = list(zCrumbs.get(KEY_TRAILS, {}).keys())
+            zCrumbs[KEY_TRAILS] = {}
+            self.logger.debug(f"[Breadcrumbs] RESET: Cleared {len(old_trails)} trail(s): {old_trails}")
+            
+            # Reset context
+            zCrumbs[KEY_CONTEXT] = {
+                "last_operation": OP_RESET,
+                "last_nav_type": NAV_NAVBAR,
+                "current_file": zBlock,
+                "timestamp": __import__('time').time()
+            }
+            self.logger.debug(f"[Breadcrumbs] RESET: Context reset for navbar navigation")
+            
+            # Reset depth map
+            zCrumbs[KEY_DEPTH_MAP] = {}
+            self.logger.debug(f"[Breadcrumbs] RESET: Depth map cleared")
+            
+            # Create fresh trail for new file with the navigation key
+            zCrumbs[KEY_TRAILS][zBlock] = [zKey]
+            self.logger.info(f"[Breadcrumbs] RESET: Created fresh trail for '{zBlock}': ['{zKey}']")
+            
+            # Update crumbs_dict reference (points to the new trails dict)
+            crumbs_dict = zCrumbs[KEY_TRAILS]
+            zBlock_crumbs = crumbs_dict[zBlock]
+            
+            nav_type = NAV_NAVBAR
+            block_type = TYPE_ROOT
+        elif operation == "POP_TO":
+            # POP_TO operation: Pop trail back to specified key (menu hierarchy)
+            # Used when returning to a parent menu from a child menu/item
+            if zKey in zBlock_crumbs:
+                # Find the target key in trail
+                target_idx = zBlock_crumbs.index(zKey)
+                # Pop everything after the target key
+                popped_keys = zBlock_crumbs[target_idx + 1:]
+                del zBlock_crumbs[target_idx + 1:]
+                self.logger.debug(f"[Breadcrumbs] POP_TO: Popped {popped_keys} → back to '{zKey}'")
+            else:
+                # Target key not in trail - append it instead (first time seeing it)
+                zBlock_crumbs.append(zKey)
+                self.logger.debug(f"[Breadcrumbs] POP_TO target '{zKey}' not in trail → APPEND")
+            nav_type = "menu"
+            block_type = "menu_parent"
+        elif operation == OP_REPLACE:
+            # REPLACE operation: Replace last key in trail (dashboard panel switching)
+            if zBlock_crumbs:
+                # Trail exists - replace last item
+                old_key = zBlock_crumbs[INDEX_LAST_PART]
+                zBlock_crumbs[INDEX_LAST_PART] = zKey
+                self.logger.debug(f"[Breadcrumbs] REPLACE: '{old_key}' → '{zKey}'")
+            else:
+                # Empty trail - append instead (first panel)
+                zBlock_crumbs.append(zKey)
+                self.logger.debug(f"[Breadcrumbs] REPLACE on empty trail → APPEND: '{zKey}'")
+            nav_type = NAV_DASHBOARD
+            block_type = TYPE_PANEL
+        else:
+            # APPEND operation: Add new key to trail (default, sequential navigation)
+            # Prevent duplicate consecutive zKeys
+            if zBlock_crumbs and zBlock_crumbs[INDEX_LAST_PART] == zKey:
+                self.logger.debug(LOG_DUPLICATE_SKIP, zKey, zBlock)
+                return
+            
+            zBlock_crumbs.append(zKey)
+            self.logger.debug(f"[Breadcrumbs] APPEND: '{zKey}'")
+            nav_type = NAV_SEQUENTIAL
+            block_type = TYPE_SEQUENTIAL
+        
         self.logger.debug(LOG_CURRENT_TRAIL, zBlock_crumbs)
         
-        # Phase 0.5: Update context tracking
-        # Infer navigation type (default to sequential, subsystems can override)
-        nav_type = NAV_SEQUENTIAL  # Most common case
-        
-        # Infer depth and block type
-        current_depth = len(zBlock_crumbs) - 1  # 0-based depth
-        block_type = TYPE_SEQUENTIAL  # Default
-        
-        # Update context
-        self._update_context(
-            self.zcli.session,
-            operation=OP_APPEND,
-            nav_type=nav_type,
-            current_file=zBlock
-        )
-        
-        # Update depth map
-        self._update_depth_map(
-            self.zcli.session,
-            file_key=zBlock,
-            block_key=zKey,
-            depth=current_depth,
-            block_type=block_type
-        )
+        # Phase 0.5: Update context tracking (skip for RESET - already handled)
+        if operation != OP_RESET:
+            current_depth = len(zBlock_crumbs) - 1  # 0-based depth
+            
+            # Update context
+            self._update_context(
+                self.zcli.session,
+                operation=operation,  # Use actual operation (APPEND or REPLACE)
+                nav_type=nav_type,
+                current_file=zBlock
+            )
+            
+            # Update depth map
+            self._update_depth_map(
+                self.zcli.session,
+                file_key=zBlock,
+                block_key=zKey,
+                depth=current_depth,
+                block_type=block_type
+            )
+        else:
+            # RESET already handled context and depth map, just add initial depth map entry
+            self._update_depth_map(
+                self.zcli.session,
+                file_key=zBlock,
+                block_key=zKey,
+                depth=0,  # Root level for navbar navigation
+                block_type=TYPE_ROOT
+            )
         
         # Log complete zCrumbs state after all updates for verification
         self.logger.debug(LOG_CURRENT_ZCRUMBS, self.zcli.session[SESSION_KEY_ZCRUMBS])
@@ -1113,3 +1386,39 @@ class Breadcrumbs:
         
         # Pop from trails dict
         return session[SESSION_KEY_ZCRUMBS][KEY_TRAILS].pop(scope, None)
+    
+    def _create_trail_key(
+        self,
+        scope: str,
+        session: Dict[str, Any]
+    ) -> None:
+        """
+        Create a new trail key if it doesn't exist.
+        
+        Args
+        ----
+        scope : str
+            Scope key to create (e.g., "@.zUI.main.MainMenu")
+        session : Dict[str, Any]
+            zSession dict
+        
+        Returns
+        -------
+        None
+        
+        Notes
+        -----
+        DRY Helper: Centralizes trail key creation for zWalker orchestration.
+        Ensures enhanced format and only creates if key doesn't already exist.
+        Used by zWalker for session initialization and multi-block execution.
+        
+        Phase 0.5: Creates empty trail in enhanced format 'trails' dict.
+        """
+        # Ensure enhanced format
+        self._ensure_enhanced_format(session)
+        
+        # Create trail key if it doesn't exist
+        trails = session[SESSION_KEY_ZCRUMBS][KEY_TRAILS]
+        if scope not in trails:
+            trails[scope] = []
+            self.logger.debug(f"[Breadcrumbs] Created new trail key: {scope}")

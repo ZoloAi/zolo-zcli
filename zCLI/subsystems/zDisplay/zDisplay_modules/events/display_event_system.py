@@ -1125,12 +1125,24 @@ class zSystem:
         if not z_crumbs:
             return
 
-        # Build formatted breadcrumb display
-        crumbs_display = {}
-        for scope, trail in z_crumbs.items():
-            # Join trail with " > " separator
-            path = FORMAT_BREADCRUMB_SEPARATOR.join(trail) if trail else ""
-            crumbs_display[scope] = path
+        # Phase 0.5: Use centralized banner method to filter out metadata (_context, _depth_map)
+        # This ensures only user-facing trails are displayed, not internal architecture
+        if hasattr(self.display, 'zcli') and hasattr(self.display.zcli, 'navigation') and hasattr(self.display.zcli.navigation, 'breadcrumbs'):
+            # DRY: Reuse breadcrumbs.zCrumbs_banner() which handles enhanced format correctly
+            crumbs_display = self.display.zcli.navigation.breadcrumbs.zCrumbs_banner()
+        else:
+            # Fallback for systems without navigation subsystem (backward compatible)
+            crumbs_display = {}
+            # Handle enhanced format: check if 'trails' key exists (Phase 0.5+)
+            trails_dict = z_crumbs.get('trails', z_crumbs)
+            for scope, trail in trails_dict.items():
+                # Skip internal metadata keys (_context, _depth_map)
+                if scope.startswith('_'):
+                    continue
+                # Only process actual trail lists
+                if isinstance(trail, list):
+                    path = FORMAT_BREADCRUMB_SEPARATOR.join(trail) if trail else ""
+                    crumbs_display[scope] = path
 
         # Display breadcrumbs using BasicOutputs.text()
         self._output_text("", break_after=False)
@@ -1379,6 +1391,22 @@ class zSystem:
                 panel_file = _zcli.loader.handle(zPath=zLink_path)
                 panel_meta = panel_file.get('meta', {})
                 
+                # BUG FIX: Update session context for delta links to work correctly
+                # When inside a panel file, delta links ($zBlock_2) should resolve relative to the panel file
+                # Save old context to restore later
+                from zCLI.subsystems.zConfig.zConfig_modules.config_session import SESSION_KEY_ZVAFILE, SESSION_KEY_ZVAFOLDER
+                old_vafile = _zcli.session.get(SESSION_KEY_ZVAFILE, "")
+                old_vafolder = _zcli.session.get(SESSION_KEY_ZVAFOLDER, "")
+                
+                # Update session to panel's file context
+                _zcli.session[SESSION_KEY_ZVAFILE] = f"zUI.{current_panel}"
+                _zcli.session[SESSION_KEY_ZVAFOLDER] = folder if folder and folder != "@" else "@"
+                
+                if logger:
+                    logger.debug(f"[zDash] Session context updated for delta links:")
+                    logger.debug(f"[zDash]   VaFolder: {old_vafolder} → {_zcli.session[SESSION_KEY_ZVAFOLDER]}")
+                    logger.debug(f"[zDash]   VaFile: {old_vafile} → {_zcli.session[SESSION_KEY_ZVAFILE]}")
+                
                 # Extract panel metadata for logging
                 panel_label = panel_meta.get('panel_label', current_panel)
                 panel_icon = panel_meta.get('panel_icon', '')
@@ -1397,6 +1425,26 @@ class zSystem:
                 first_block = panel_blocks[0]
                 if logger:
                     logger.info(f"[zDash] Executing panel block: {first_block}")
+                
+                # PATH 4 BREADCRUMB TRACKING: Panels get separate trail keys
+                # Clear old panel keys and create new panel key
+                if hasattr(_zcli, 'navigation') and hasattr(_zcli.navigation, 'breadcrumbs'):
+                    breadcrumbs = _zcli.navigation.breadcrumbs
+                    
+                    # Clear all other panel keys (panel switching)
+                    breadcrumbs._clear_other_panel_keys(current_panel, _zcli.session)
+                    
+                    # Create new panel key (or reuse if exists)
+                    panel_key = breadcrumbs._create_panel_key(current_panel, _zcli.session)
+                    
+                    # Update session to point to panel context (for panel content tracking)
+                    from zCLI.subsystems.zConfig.zConfig_modules.config_session import SESSION_KEY_ZBLOCK
+                    old_block = _zcli.session.get(SESSION_KEY_ZBLOCK, "")
+                    _zcli.session[SESSION_KEY_ZBLOCK] = f"{old_block}.{current_panel}"
+                    
+                    if logger:
+                        logger.debug(f"[zDash] Panel context: {panel_key}")
+                        logger.debug(f"[zDash] Session zBlock updated: {old_block} → {_zcli.session[SESSION_KEY_ZBLOCK]}")
                 
                 # Execute the block via zDispatch
                 if not (hasattr(_zcli, 'dispatch') and hasattr(_zcli.dispatch, 'launcher')):
@@ -1443,13 +1491,27 @@ class zSystem:
                         )
                         # Menu/wizard handles all navigation - break out of zDash loop
                         break
-                    # Execute the content (usually a list of zDisplay events)
-                    # Pass panel_context so %data.* variables can be resolved
-                    elif isinstance(value, list):
+                    
+                    # Track internal panel keys in breadcrumbs (e.g., Panel_Header, Panel_Content)
+                    # This creates the panel's internal trail: ['Panel_Header', 'Panel_Content']
+                    if hasattr(_zcli, 'navigation') and hasattr(_zcli.navigation, 'breadcrumbs'):
+                        _zcli.navigation.breadcrumbs.handle_zCrumbs(key, walker=None)
+                    
+                    # BUG FIX #4: Use dispatch.handle() for all panel content to support zLinks and navigation
+                    # dispatch.handle() properly detects zLinks and passes walker context
+                    # This enables dashboard-in-dashboard and other nested navigation patterns
+                    if isinstance(value, list):
                         for item in value:
-                            _zcli.dispatch.launcher.launch(zHorizontal=item, context=panel_context)
+                            # Check if item is a dict that might contain navigation (zLink, etc.)
+                            if isinstance(item, dict):
+                                # Use dispatch.handle() to support navigation events
+                                _zcli.dispatch.handle(key, item, context=panel_context, walker=self.display.zcli.walker)
+                            else:
+                                # Simple display event, use launcher
+                                _zcli.dispatch.launcher.launch(zHorizontal=item, context=panel_context)
                     else:
-                        _zcli.dispatch.launcher.launch(zHorizontal=value, context=panel_context)
+                        # For non-list values, always use dispatch.handle() to support navigation
+                        _zcli.dispatch.handle(key, value, context=panel_context, walker=self.display.zcli.walker)
                 
             except Exception as e:
                 if logger:
@@ -1457,6 +1519,23 @@ class zSystem:
                     import traceback
                     logger.debug(traceback.format_exc())
                 break
+            finally:
+                # Restore session context to dashboard level after panel execution
+                # This ensures next panel gets correct context
+                from zCLI.subsystems.zConfig.zConfig_modules.config_session import SESSION_KEY_ZBLOCK, SESSION_KEY_ZVAFILE, SESSION_KEY_ZVAFOLDER
+                
+                # Restore zBlock
+                if hasattr(_zcli, 'navigation') and hasattr(_zcli.navigation, 'breadcrumbs'):
+                    if old_block:  # Restore to dashboard block
+                        _zcli.session[SESSION_KEY_ZBLOCK] = old_block
+                        if logger:
+                            logger.debug(f"[zDash] Restored session zBlock: {_zcli.session[SESSION_KEY_ZBLOCK]}")
+                
+                # Restore file context (for delta links)
+                _zcli.session[SESSION_KEY_ZVAFILE] = old_vafile
+                _zcli.session[SESSION_KEY_ZVAFOLDER] = old_vafolder
+                if logger:
+                    logger.debug(f"[zDash] Restored session VaFile: {old_vafile}, VaFolder: {old_vafolder}")
             
             # 2. Build and show dashboard navigation menu
             self._output_text("", break_after=False)  # Blank line

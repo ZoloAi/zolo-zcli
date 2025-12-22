@@ -695,24 +695,25 @@ class zNavigation:
 
     def handle_zCrumbs(
         self,
-        zBlock: str,
         zKey: str,
-        walker: Optional[Any] = None
+        walker: Optional[Any] = None,
+        operation: str = "APPEND"
     ) -> Any:
         """
         Handle breadcrumb trail management.
         
         Delegates to Breadcrumbs for adding navigation crumbs to session,
         enabling "Back" functionality and navigation trail display.
+        Self-aware: reads session state to determine active block path.
         
         Args
         ----
-        zBlock : str
-            Block identifier for breadcrumb
         zKey : str
             Key identifier for breadcrumb
         walker : Optional[Any], default=None
             Optional walker instance for context
+        operation : str, default="APPEND"
+            Breadcrumb operation: "APPEND" or "REPLACE"
         
         Returns
         -------
@@ -730,8 +731,10 @@ class zNavigation:
         - Stores breadcrumb in session (zCrumbs key)
         - Enables zBack functionality
         - Delegates to Breadcrumbs.handle_zCrumbs()
+        - Breadcrumbs reads session state to determine block path
+        - Supports APPEND (default) and REPLACE operations
         """
-        return self.breadcrumbs.handle_zCrumbs(zBlock, zKey, walker=walker)
+        return self.breadcrumbs.handle_zCrumbs(zKey, walker=walker, operation=operation)
 
     def handle_zBack(
         self,
@@ -979,24 +982,24 @@ def handle_zLink(zHorizontal: str, walker: Optional[Any] = None) -> str:
 
 
 def handle_zCrumbs(
-    zBlock: str,
     zKey: str,
-    walker: Optional[Any] = None
+    walker: Optional[Any] = None,
+    operation: str = "APPEND"
 ) -> Any:
     """
     Standalone breadcrumbs handler function for Walker compatibility.
     
-    Provides backward compatibility with legacy Walker code by maintaining
-    the standalone function interface while delegating to the modern facade.
+    Self-aware: reads session state to determine active block path.
+    Delegates to the modern facade for actual breadcrumb handling.
     
     Args
     ----
-    zBlock : str
-        Block identifier for breadcrumb
     zKey : str
         Key identifier for breadcrumb
     walker : Optional[Any], default=None
         Walker instance (required)
+    operation : str, default="APPEND"
+        Breadcrumb operation: "APPEND" or "REPLACE"
     
     Returns
     -------
@@ -1010,18 +1013,19 @@ def handle_zCrumbs(
     
     Examples
     --------
-    Legacy Walker usage::
+    Walker usage::
     
         from zCLI.subsystems.zNavigation import handle_zCrumbs
-        handle_zCrumbs("block", "key", walker)
+        handle_zCrumbs("key", walker)
     
     Notes
     -----
-    - Backward compatibility for Walker integration
     - Delegates to walker.zcli.navigation.handle_zCrumbs()
+    - Breadcrumbs reads session state for block path (Delta link support)
     - Modern code should use facade directly (zcli.navigation.handle_zCrumbs)
+    - Supports APPEND (default) and REPLACE operations
     """
     if not walker:
         raise ValueError(f"handle_zCrumbs {ERROR_MSG_NO_WALKER}")
     
-    return walker.zcli.navigation.handle_zCrumbs(zBlock=zBlock, zKey=zKey, walker=walker)
+    return walker.zcli.navigation.handle_zCrumbs(zKey=zKey, walker=walker, operation=operation)

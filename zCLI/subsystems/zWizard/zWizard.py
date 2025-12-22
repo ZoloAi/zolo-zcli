@@ -646,6 +646,41 @@ class zWizard:
             # Check if result is a key jump (e.g., menu selection)
             if isinstance(result, str) and result in keys_list and result not in NAVIGATION_SIGNALS:
                 self.logger.debug(LOG_MSG_MENU_SELECTED, result)
+                
+                # ════════════════════════════════════════════════════════════
+                # Breadcrumb Tracking for Menu Navigation (Option C: POP Semantics)
+                # ════════════════════════════════════════════════════════════
+                # Track menu navigation in breadcrumbs with hierarchical semantics:
+                # - Child menus/items: APPEND
+                # - Parent menus (with ~*): POP back to parent level
+                
+                if self.zcli and hasattr(self.zcli, 'navigation'):
+                    # Determine if selected key is a parent menu (contains both ~ and *)
+                    is_parent_menu = ('~' in result and '*' in result)
+                    
+                    # Check current position to determine operation
+                    current_idx = keys_list.index(key) if key in keys_list else -1
+                    selected_idx = keys_list.index(result)
+                    
+                    # If going backwards to a parent menu (anchored menu), POP
+                    # If going forward or to a sibling, APPEND
+                    if is_parent_menu and selected_idx < current_idx:
+                        # Returning to parent menu - POP to that level
+                        self.logger.debug(f"[Menu Nav] Returning to parent menu '{result}' - POP operation")
+                        self.zcli.navigation.handle_zCrumbs(
+                            result,
+                            walker=None,  # Breadcrumbs is self-aware
+                            operation='POP_TO'  # Special operation to POP to a specific key
+                        )
+                    else:
+                        # Moving to child or sibling - APPEND
+                        self.logger.debug(f"[Menu Nav] Navigating to '{result}' - APPEND operation")
+                        self.zcli.navigation.handle_zCrumbs(
+                            result,
+                            walker=None,  # Breadcrumbs is self-aware
+                            operation='APPEND'
+                        )
+                
                 idx = keys_list.index(result)
                 continue
 
@@ -829,9 +864,12 @@ class zWizard:
         if self.walker:
             return self.walker.dispatch.handle
 
-        # Use zcli's dispatch instance
+        # Use zcli's dispatch instance with walker context
+        # BUG FIX: Pass walker to dispatch.handle so delta links work in dashboard panels
+        # Use zcli.walker since wizard.walker may be None when wizard is initialized from zcli
         def default_dispatch(key: str, value: Any) -> Any:
-            return self.zcli.dispatch.handle(key, value, context=context)
+            walker = self.walker or (self.zcli.walker if self.zcli and hasattr(self.zcli, 'walker') else None)
+            return self.zcli.dispatch.handle(key, value, context=context, walker=walker)
         return default_dispatch
 
     def _handle_dispatch_error(self, error: Exception, key: str, navigation_callbacks: Optional[Dict[str, Any]]) -> Any:

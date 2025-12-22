@@ -409,6 +409,17 @@ class ModifierProcessor:
             is_anchor = MOD_TILDE in modifiers
             self.logger.debug(LOG_MSG_MENU_DETECTED, zKey, is_anchor)
 
+            # Track menu appearance in breadcrumbs (Option C: POP semantics)
+            # This tracks when a menu is first shown, enabling proper POP behavior later
+            if self.zcli and hasattr(self.zcli, 'navigation') and not zKey.startswith("~zNavBar"):
+                # Skip navbar menus (they handle their own navigation)
+                self.zcli.navigation.handle_zCrumbs(
+                    zKey,
+                    walker=None,  # Breadcrumbs is self-aware
+                    operation='APPEND'
+                )
+                self.logger.debug(f"[Menu] Tracked menu appearance: {zKey}")
+
             # RBAC filtering for navbar menus (dynamic, re-evaluated on every render)
             # Check if this is a navbar key (~zNavBar*) and apply RBAC filtering
             if zKey.startswith("~zNavBar"):
@@ -419,6 +430,13 @@ class ModifierProcessor:
                 self.logger.framework.info(f"[Dispatch] Navbar filtered: {len(zHorizontal)} → {len(filtered_items)} items")
                 # Add delta prefix ($) to filtered items for intra-file navigation
                 zHorizontal = [f"${item}" for item in filtered_items]
+                
+                # SET NAVBAR FLAG: Mark that next navigation is from navbar (for OP_RESET)
+                from zCLI.subsystems.zConfig.zConfig_modules.config_session import SESSION_KEY_ZCRUMBS
+                if SESSION_KEY_ZCRUMBS not in self.zcli.session:
+                    self.zcli.session[SESSION_KEY_ZCRUMBS] = {}
+                self.zcli.session[SESSION_KEY_ZCRUMBS]["_navbar_navigation"] = True
+                self.logger.framework.debug("[Dispatch] Navbar flag set: next navigation will trigger OP_RESET")
 
             # Note: Signature verified during Week 6.7.8 refactor - perfect alignment ✅
             result = self.zcli.navigation.create(
