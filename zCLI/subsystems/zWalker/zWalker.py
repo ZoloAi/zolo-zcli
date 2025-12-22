@@ -742,13 +742,23 @@ class zWalker(zWizard):
                 - Special case: zWizard key executes directly via self.handle()
                 - Validates key is part of active block before tracking
             """
-            active_zBlock: str = next(reversed(self.session[SESSION_KEY_CRUMBS]))
+            # Phase 0.5: Get active block from enhanced format
+            crumbs = self.session[SESSION_KEY_CRUMBS]
+            # Handle both old and enhanced format
+            if 'trails' in crumbs:
+                # Enhanced format
+                trails = crumbs['trails']
+            else:
+                # Old format (shouldn't happen as breadcrumbs auto-migrates)
+                trails = crumbs
+            
+            active_zBlock: str = next(reversed(trails))
             self.logger.debug(LOG_DEBUG_ACTIVE_BLOCK, active_zBlock)
             self.logger.debug(LOG_DEBUG_WALKING_HORIZONTAL, value)
             
             # [BREADCRUMB] Track breadcrumb trail for navigation/history
             if not (isinstance(value, dict) and SPECIAL_KEY_ZWIZARD in value):
-                trail: List[str] = self.session[SESSION_KEY_CRUMBS].get(active_zBlock, [])
+                trail: List[str] = trails.get(active_zBlock, [])
                 if not trail or trail[-1] != key:
                     # validate key is really part of the active block
                     if key in active_zBlock_dict:

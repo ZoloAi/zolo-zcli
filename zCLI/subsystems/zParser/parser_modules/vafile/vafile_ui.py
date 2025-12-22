@@ -334,9 +334,30 @@ def parse_ui_file(
     # Process each zBlock (menu section) using cleaned data
     for zblock_name, zblock_data in data_without_rbac.items():
         if not isinstance(zblock_data, dict):
-            logger.warning(LOG_MSG_SKIPPING_INVALID_ZBLOCK, 
-                         zblock_name, type(zblock_data).__name__)
-            continue
+            # Enhanced error message with clear fix suggestion
+            logger.error(
+                f"\n{'='*60}\n"
+                f"ERROR: Empty or invalid zBlock detected\n"
+                f"{'='*60}\n"
+                f"  File: {file_path}\n"
+                f"  Block: '{zblock_name}'\n"
+                f"  Problem: zBlock is empty (got {type(zblock_data).__name__})\n"
+                f"\n"
+                f"  Current YAML:\n"
+                f"    {zblock_name}:\n"
+                f"\n"
+                f"  Expected YAML:\n"
+                f"    {zblock_name}:\n"
+                f"      Block_Name:\n"
+                f"        - zDisplay:\n"
+                f"            event: text\n"
+                f"            content: 'Your content here'\n"
+                f"\n"
+                f"  Fix: Add at least one sub-block with content under '{zblock_name}'\n"
+                f"{'='*60}"
+            )
+            # Return None to immediately stop processing - this is a fatal error
+            return None
 
         logger.debug(LOG_MSG_PROCESSING_ZBLOCK, zblock_name)
 

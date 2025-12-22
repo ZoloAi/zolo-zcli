@@ -246,6 +246,33 @@ INDEX_FILENAME_START: int = -3  # Filename starts 3 from end
 INDEX_FILENAME_END: int = -1  # Filename ends 1 from end
 INDEX_LAST_PART: int = -1  # Last part is BlockName
 
+# Enhanced Array Keys (Phase 0.5)
+KEY_TRAILS: str = "trails"  # Key for trails dict in enhanced format
+KEY_CONTEXT: str = "_context"  # Key for operation context
+KEY_DEPTH_MAP: str = "_depth_map"  # Key for semantic depth map
+
+# Operation Types (Phase 0.5)
+OP_RESET: str = "RESET"  # zNavBar selection (clear all)
+OP_APPEND: str = "APPEND"  # Add to trail
+OP_REPLACE: str = "REPLACE"  # Swap last element (dashboard panel)
+OP_POP: str = "POP"  # Remove last element (zBack)
+OP_NEW_KEY: str = "NEW_KEY"  # Create new file key (delta link)
+
+# Navigation Types (Phase 0.5)
+NAV_NAVBAR: str = "navbar"  # zNavBar selection
+NAV_DELTA: str = "delta"  # Delta link ($)
+NAV_DASHBOARD: str = "dashboard_panel"  # Dashboard panel selection
+NAV_MENU: str = "menu_select"  # Menu option selection
+NAV_SEQUENTIAL: str = "sequential"  # Sequential block navigation
+NAV_ZLINK: str = "zlink"  # zLink navigation
+
+# Block Types (Phase 0.5 - for depth map)
+TYPE_ROOT: str = "root"  # Root level (depth 0)
+TYPE_PANEL: str = "panel"  # Dashboard panel (depth 1)
+TYPE_MENU: str = "menu"  # Menu level (depth 2)
+TYPE_SELECTION: str = "selection"  # Menu selection (depth 3)
+TYPE_SEQUENTIAL: str = "sequential"  # Sequential block (depth N)
+
 
 # ============================================================================
 # Breadcrumbs Class
@@ -333,14 +360,99 @@ class Breadcrumbs:
         Session Dependencies
         --------------------
         This module relies on zSession having the following keys initialized:
-        - SESSION_KEY_ZCRUMBS: Dict of scopes and trails
+        - SESSION_KEY_ZCRUMBS: Dict of scopes and trails (or enhanced format)
         - SESSION_KEY_ZVAFOLDER: Current file folder
         - SESSION_KEY_ZVAFILE: Current file name
         - SESSION_KEY_ZBLOCK: Current block name
+        
+        Enhanced Format (Phase 0.5)
+        ---------------------------
+        SESSION_KEY_ZCRUMBS now supports enhanced format:
+        {
+            'trails': {scope: [keys...]},
+            '_context': {last_operation, last_nav_type, current_file, timestamp},
+            '_depth_map': {file: {block: {depth, type}}}
+        }
+        Old format (flat dict) is auto-migrated for backward compatibility.
         """
         self.navigation = navigation
         self.zcli = navigation.zcli
         self.logger = navigation.logger
+    
+    def _ensure_enhanced_format(self, session: Dict[str, Any]) -> None:
+        """
+        Ensure session[SESSION_KEY_ZCRUMBS] is in enhanced format.
+        
+        Migrates old format (flat dict) to enhanced format if needed.
+        This provides backward compatibility while enabling new features.
+        
+        Args
+        ----
+        session : Dict[str, Any]
+            zSession dict
+        
+        Notes
+        -----
+        **Old Format:**
+        {
+            "@.zUI.main.Menu": ["Settings", "Profile"]
+        }
+        
+        **Enhanced Format:**
+        {
+            'trails': {"@.zUI.main.Menu": ["Settings", "Profile"]},
+            '_context': {
+                'last_operation': 'APPEND',
+                'last_nav_type': 'sequential',
+                'current_file': '@.zUI.main.Menu',
+                'timestamp': 1703187242.789
+            },
+            '_depth_map': {}
+        }
+        
+        **Migration Rules:**
+        - If crumbs is a dict WITHOUT 'trails' key → old format → migrate
+        - If crumbs has 'trails' key → enhanced format → no migration
+        - Migration preserves all existing trails
+        - Sets default context values
+        - Initializes empty depth map
+        
+        **Idempotent:** Safe to call multiple times (no-op if already enhanced)
+        """
+        import time
+        
+        crumbs = session.get(SESSION_KEY_ZCRUMBS, {})
+        
+        # Check if already in enhanced format
+        if KEY_TRAILS in crumbs:
+            # Already enhanced - no migration needed
+            return
+        
+        # Old format detected - migrate to enhanced format
+        self.logger.debug("[Breadcrumbs] Migrating old crumb format to enhanced format")
+        
+        # Preserve existing trails (entire old dict becomes 'trails')
+        old_trails = crumbs.copy()
+        
+        # Get current file (last scope in trails)
+        current_file = next(reversed(old_trails)) if old_trails else None
+        
+        # Create enhanced structure
+        enhanced = {
+            KEY_TRAILS: old_trails,
+            KEY_CONTEXT: {
+                'last_operation': OP_APPEND,  # Default (unknown during migration)
+                'last_nav_type': NAV_SEQUENTIAL,  # Default
+                'current_file': current_file,
+                'timestamp': time.time()
+            },
+            KEY_DEPTH_MAP: {}
+        }
+        
+        # Replace session crumbs with enhanced format
+        session[SESSION_KEY_ZCRUMBS] = enhanced
+        
+        self.logger.debug(f"[Breadcrumbs] Migration complete: {len(old_trails)} trails preserved")
 
     def handle_zCrumbs(
         self,
@@ -442,6 +554,34 @@ class Breadcrumbs:
         # All good - add the key to the trail
         zBlock_crumbs.append(zKey)
         self.logger.debug(LOG_CURRENT_TRAIL, zBlock_crumbs)
+        
+        # Phase 0.5: Update context tracking
+        # Infer navigation type (default to sequential, subsystems can override)
+        nav_type = NAV_SEQUENTIAL  # Most common case
+        
+        # Infer depth and block type
+        current_depth = len(zBlock_crumbs) - 1  # 0-based depth
+        block_type = TYPE_SEQUENTIAL  # Default
+        
+        # Update context
+        self._update_context(
+            self.zcli.session,
+            operation=OP_APPEND,
+            nav_type=nav_type,
+            current_file=zBlock
+        )
+        
+        # Update depth map
+        self._update_depth_map(
+            self.zcli.session,
+            file_key=zBlock,
+            block_key=zKey,
+            depth=current_depth,
+            block_type=block_type
+        )
+        
+        # Log complete zCrumbs state after all updates for verification
+        self.logger.debug(LOG_CURRENT_ZCRUMBS, self.zcli.session[SESSION_KEY_ZCRUMBS])
 
     def handle_zBack(
         self,
@@ -553,7 +693,8 @@ class Breadcrumbs:
         self.logger.debug(LOG_ACTIVE_BLOCK, active_zBlock)
 
         # Get trail for active scope
-        trail = zSession[SESSION_KEY_ZCRUMBS][active_zCrumb]
+        # Phase 0.5: Access trails from enhanced format
+        trail = self._get_crumbs_dict(zSession)[active_zCrumb]
         self.logger.debug(LOG_TRAIL, trail)
 
         # ============================================================
@@ -563,6 +704,14 @@ class Breadcrumbs:
         if trail:
             trail.pop()
             self.logger.debug(LOG_TRAIL_AFTER_POP, active_zCrumb, trail)
+            
+            # Phase 0.5: Update context for POP operation
+            self._update_context(
+                zSession,
+                operation=OP_POP,
+                nav_type=NAV_SEQUENTIAL,  # zBack is sequential navigation
+                current_file=active_zCrumb
+            )
         else:
             # ========================================================
             # STEP 3: Handle Empty Trail (Scope Transition)
@@ -579,8 +728,8 @@ class Breadcrumbs:
                 active_zCrumb = self._get_active_crumb(zSession)
                 self.logger.debug(LOG_ACTIVE_CRUMB_PARENT, active_zCrumb)
                 
-                # Get parent's trail
-                trail = zSession[SESSION_KEY_ZCRUMBS][active_zCrumb]
+                # Get parent's trail (Phase 0.5: from enhanced format)
+                trail = self._get_crumbs_dict(zSession)[active_zCrumb]
                 self.logger.debug(LOG_PARENT_TRAIL_BEFORE, trail)
                 
                 # Pop the parent's last key (the link that opened the child)
@@ -604,8 +753,8 @@ class Breadcrumbs:
             active_zCrumb = self._get_active_crumb(zSession)
             self.logger.debug(LOG_ACTIVE_CRUMB_PARENT, active_zCrumb)
             
-            # Get parent's trail
-            trail = zSession[SESSION_KEY_ZCRUMBS][active_zCrumb]
+            # Get parent's trail (Phase 0.5: from enhanced format)
+            trail = self._get_crumbs_dict(zSession)[active_zCrumb]
             self.logger.debug(LOG_PARENT_TRAIL_PRE_SECOND, trail)
             
             # Pop parent's last key
@@ -749,9 +898,15 @@ class Breadcrumbs:
         - Output: {"scope1": "key1 > key2", "scope2": ""}
         """
         zCrumbs_zPrint: Dict[str, str] = {}
+        
+        # Phase 0.5: Ensure enhanced format
+        self._ensure_enhanced_format(self.zcli.session)
+        
+        # Get trails from enhanced format
+        trails = self._get_crumbs_dict(self.zcli.session)
 
         # Iterate through all scopes and their trails
-        for zScope, zTrail in self.zcli.session[SESSION_KEY_ZCRUMBS].items():
+        for zScope, zTrail in trails.items():
             # Join trail with separator, or use empty string if trail is empty
             path = SEPARATOR_CRUMB.join(zTrail) if zTrail else SEPARATOR_EMPTY
             zCrumbs_zPrint[zScope] = path
@@ -761,6 +916,95 @@ class Breadcrumbs:
     # ========================================================================
     # Private Helper Methods (DRY)
     # ========================================================================
+    
+    def _update_context(
+        self,
+        session: Dict[str, Any],
+        operation: str,
+        nav_type: str,
+        current_file: str
+    ) -> None:
+        """
+        Update _context in enhanced format.
+        
+        Args
+        ----
+        session : Dict[str, Any]
+            zSession dict
+        operation : str
+            Operation type (APPEND, REPLACE, POP, RESET, NEW_KEY)
+        nav_type : str
+            Navigation type (navbar, delta, dashboard_panel, menu_select, sequential)
+        current_file : str
+            Current file key (scope)
+        
+        Notes
+        -----
+        Phase 0.5: Updates _context metadata for operation tracking.
+        Ensures enhanced format before updating.
+        """
+        import time
+        
+        # Ensure enhanced format
+        self._ensure_enhanced_format(session)
+        
+        # Update context
+        session[SESSION_KEY_ZCRUMBS][KEY_CONTEXT] = {
+            'last_operation': operation,
+            'last_nav_type': nav_type,
+            'current_file': current_file,
+            'timestamp': time.time()
+        }
+        
+        self.logger.debug(
+            f"[Breadcrumbs] Context updated: {operation} via {nav_type} on {current_file}"
+        )
+    
+    def _update_depth_map(
+        self,
+        session: Dict[str, Any],
+        file_key: str,
+        block_key: str,
+        depth: int,
+        block_type: str
+    ) -> None:
+        """
+        Update _depth_map in enhanced format.
+        
+        Args
+        ----
+        session : Dict[str, Any]
+            zSession dict
+        file_key : str
+            File scope key
+        block_key : str
+            Block name within file
+        depth : int
+            Semantic depth (0 = root, 1 = panel, 2 = menu, etc.)
+        block_type : str
+            Block type (root, panel, menu, selection, sequential)
+        
+        Notes
+        -----
+        Phase 0.5: Updates _depth_map for smart zBack navigation.
+        Depth map enables semantic "back to menu" vs "back one step".
+        """
+        # Ensure enhanced format
+        self._ensure_enhanced_format(session)
+        
+        # Initialize file entry if needed
+        if file_key not in session[SESSION_KEY_ZCRUMBS][KEY_DEPTH_MAP]:
+            session[SESSION_KEY_ZCRUMBS][KEY_DEPTH_MAP][file_key] = {}
+        
+        # Update depth for this block
+        session[SESSION_KEY_ZCRUMBS][KEY_DEPTH_MAP][file_key][block_key] = {
+            'depth': depth,
+            'type': block_type
+        }
+        
+        self.logger.debug(
+            f"[Breadcrumbs] Depth map updated: {file_key}.{block_key} → depth {depth} ({block_type})"
+        )
 
     def _get_display(self, walker: Optional[Any]) -> Any:
         """
@@ -794,18 +1038,24 @@ class Breadcrumbs:
         Returns
         -------
         str
-            Active crumb (last key in session[SESSION_KEY_ZCRUMBS])
+            Active crumb (last key in trails dict)
         
         Notes
         -----
         DRY Helper: Eliminates 3 duplications (lines 46, 68, 83 in original)
         Uses next(reversed()) to get last key without modifying the dict.
+        
+        Phase 0.5: Works with enhanced format (gets last key from 'trails').
         """
-        return next(reversed(session[SESSION_KEY_ZCRUMBS]))
+        # Ensure enhanced format
+        self._ensure_enhanced_format(session)
+        
+        # Get last key from trails dict
+        return next(reversed(session[SESSION_KEY_ZCRUMBS][KEY_TRAILS]))
 
     def _get_crumbs_dict(self, session: Dict[str, Any]) -> Dict[str, List[str]]:
         """
-        Get crumbs dict from session with validation.
+        Get crumbs dict (trails) from session with validation.
         
         Args
         ----
@@ -815,14 +1065,21 @@ class Breadcrumbs:
         Returns
         -------
         Dict[str, List[str]]
-            Crumbs dict mapping scopes to trails
+            Trails dict mapping scopes to trails
         
         Notes
         -----
         DRY Helper: Eliminates 15+ duplications of session[SESSION_KEY_ZCRUMBS] access
-        Provides a single point for validation/error handling in the future.
+        **Enhanced Format Support:** Returns 'trails' dict from enhanced format,
+        or the entire dict for old format (backward compatible).
+        
+        Phase 0.5: Ensures migration to enhanced format before returning trails.
         """
-        return session[SESSION_KEY_ZCRUMBS]
+        # Ensure enhanced format (auto-migrates if needed)
+        self._ensure_enhanced_format(session)
+        
+        # Return trails dict from enhanced format
+        return session[SESSION_KEY_ZCRUMBS][KEY_TRAILS]
 
     def _pop_scope(
         self,
@@ -848,5 +1105,11 @@ class Breadcrumbs:
         -----
         DRY Helper: Eliminates 2 duplications (lines 65, 81 in original)
         Uses dict.pop(key, default) to safely remove and return the trail.
+        
+        Phase 0.5: Works with enhanced format (pops from 'trails' dict).
         """
-        return session[SESSION_KEY_ZCRUMBS].pop(scope, None)
+        # Ensure enhanced format
+        self._ensure_enhanced_format(session)
+        
+        # Pop from trails dict
+        return session[SESSION_KEY_ZCRUMBS][KEY_TRAILS].pop(scope, None)

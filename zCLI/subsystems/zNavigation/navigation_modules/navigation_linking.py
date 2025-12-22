@@ -462,13 +462,20 @@ class Linking:
         # ====================================================================
         # Get source location (where we're navigating FROM) before session update
         from zCLI.subsystems.zConfig.zConfig_modules.config_session import SESSION_KEY_ZCRUMBS
+        # Phase 0.5: Handle enhanced format
         crumbs_dict = walker.session.get(SESSION_KEY_ZCRUMBS, {})
-        source_block_path = next(reversed(crumbs_dict)) if crumbs_dict else None
+        # Get trails from enhanced format or use old format
+        if 'trails' in crumbs_dict:
+            trails = crumbs_dict['trails']
+        else:
+            trails = crumbs_dict
+        
+        source_block_path = next(reversed(trails)) if trails else None
         
         # Use the active source scope (where we're navigating FROM)
-        if source_block_path and source_block_path in crumbs_dict:
+        if source_block_path and source_block_path in trails:
             # Get the last key in the source scope's trail (the key that triggered this zLink)
-            source_trail = crumbs_dict[source_block_path]
+            source_trail = trails[source_block_path]
             source_zKey = source_trail[-1] if source_trail else None
             
             # Record source breadcrumb (ensures parent scope has the calling key)

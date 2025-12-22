@@ -485,6 +485,12 @@ def parse_file_content(
                         list(data.keys()) if isinstance(data, dict) else STR_N_A)
             
             parsed_ui = parse_ui_file(data, logger, file_path=file_path, session=session)
+            
+            # If UI parsing failed (returned None), stop immediately - this is a fatal error
+            if parsed_ui is None:
+                return None
+            
+            # Only log structure details if parsing succeeded
             logger.debug(f"{LOG_PREFIX_RBAC} {LOG_MSG_PARSED_UI_TYPE}", type(parsed_ui))
             logger.debug(f"{LOG_PREFIX_RBAC} {LOG_MSG_PARSED_UI_KEYS}", 
                         list(parsed_ui.keys()) if isinstance(parsed_ui, dict) else STR_N_A)

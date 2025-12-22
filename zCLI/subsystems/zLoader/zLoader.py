@@ -375,7 +375,8 @@ class zLoader:
         # Step 4: Load raw file content (PRIORITY 3 - Disk I/O)
         self.logger.debug("[Priority 3] Cache miss - loading from disk")
         zFile_raw = load_file_raw(zFilePath_identified, self.logger, self.display)
-        self.logger.debug("\nzFile Raw: %s", zFile_raw)
+        # Only log raw content if file is very small (< 200 chars) for debugging
+        # Removed: Too noisy for standard DEBUG mode
 
         # Step 5: Parse using zParser (delegates to zParser)
         result = self.parse_file_content(zFile_raw, zFile_extension, session=self.zSession, file_path=zFilePath_identified)
