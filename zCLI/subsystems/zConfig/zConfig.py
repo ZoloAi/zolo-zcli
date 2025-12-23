@@ -17,7 +17,12 @@ from .zConfig_modules import (
     HttpServerConfig,
 )
 from .zConfig_modules.config_resource_limits import ResourceLimits
-from .zConfig_modules.helpers import ensure_user_directories, ensure_app_directory, initialize_system_ui
+from .zConfig_modules.helpers import (
+    ensure_user_directories,
+    ensure_app_directory,
+    initialize_system_ui,
+    initialize_system_migration_schema,
+)
 
 # Module Constants
 SUBSYSTEM_NAME = "zConfig"
@@ -86,6 +91,9 @@ class zConfig:
         
         # Copy system UI file to user zUIs directory (on first run)
         initialize_system_ui(self.sys_paths)
+        
+        # Copy system migration schema to user zSchemas directory (on first run)
+        initialize_system_migration_schema(self.sys_paths)
 
         # Load machine config FIRST (static, per-machine)
         self.machine = MachineConfig(self.sys_paths)

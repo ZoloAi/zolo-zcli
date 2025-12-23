@@ -8,15 +8,16 @@ import shutil
 SOURCE_USER = "user"
 LOG_PREFIX = "[ConfigHelpers]"
 ZUI_CLI_SYS_FILENAME = "zUI.zcli_sys.yaml"
+ZMIGRATION_SCHEMA_FILENAME = "zSchema.zMigration.yaml"
 
 def ensure_user_directories(paths: Any) -> None:
     """
-    Ensure user configuration directories exist (zConfigs, zUIs).
+    Ensure user configuration directories exist (zConfigs, zUIs, zSchemas).
     
-    Creates user_config_dir/zConfigs/ and user_config_dir/zUIs/ directories
-    if they don't already exist. These directories are essential for:
+    Creates user_config_dir subdirectories if they don't already exist:
     - zConfigs: Configuration files (zConfig.machine.yaml, zConfig.environment.yaml)
     - zUIs: User-customized UI definition files
+    - zSchemas: System schema templates (zSchema.zMigration.yaml)
     
     Args:
         paths: zConfigPaths instance
@@ -32,6 +33,9 @@ def ensure_user_directories(paths: Any) -> None:
         
         # Ensure zUIs directory exists
         paths.user_zuis_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Ensure zSchemas directory exists
+        paths.user_zschemas_dir.mkdir(parents=True, exist_ok=True)
         
     except Exception as e:
         print(f"{LOG_PREFIX} Warning: Failed to create user directories: {e}")
@@ -124,6 +128,47 @@ def initialize_system_ui(paths: Any) -> None:
             
     except Exception as e:
         print(f"{LOG_PREFIX} Warning: Failed to initialize system UI: {e}")
+
+def initialize_system_migration_schema(paths: Any) -> None:
+    """
+    Copy system migration schema (zSchema.zMigration.yaml) from package to user zSchemas directory.
+    
+    Copies the system migration schema template used for tracking schema evolution
+    on first run. This template defines the structure for __zmigration_{table_name}
+    tables that record version history, changes, and migration metadata.
+    
+    Args:
+        paths: zConfigPaths instance
+        
+    Notes:
+        - Only copies if file doesn't exist (preserves user customizations)
+        - Source: zCLI/Schemas/zSchema.zMigration.yaml (from installed package)
+        - Target: user_zschemas_dir/zSchema.zMigration.yaml
+        - Used by: `zolo --zMigrate` command to create migration tracking tables
+        - Non-critical operation (silently handles errors)
+    """
+    try:
+        target_file = paths.user_zschemas_dir / ZMIGRATION_SCHEMA_FILENAME
+        
+        # Skip if file already exists (user may have customized)
+        if target_file.exists():
+            return
+        
+        # Get source file from package (zCLI/Schemas/)
+        import zCLI
+        zcli_package_dir = Path(zCLI.__file__).parent
+        source_file = zcli_package_dir / "Schemas" / ZMIGRATION_SCHEMA_FILENAME
+        
+        # Copy file if source exists
+        if source_file.exists():
+            shutil.copy2(source_file, target_file)
+            print(f"{LOG_PREFIX} Initialized migration schema: {ZMIGRATION_SCHEMA_FILENAME}")
+            print(f"{LOG_PREFIX} Location: {target_file}")
+        else:
+            print(f"{LOG_PREFIX} Warning: Source migration schema not found: {source_file}")
+            
+    except Exception as e:
+        print(f"{LOG_PREFIX} Warning: Failed to initialize migration schema: {e}")
 
 def load_config_with_override(
     paths: Any,  # zConfigPaths (avoid circular import)

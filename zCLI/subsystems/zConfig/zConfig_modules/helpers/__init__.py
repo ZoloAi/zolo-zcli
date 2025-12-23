@@ -45,6 +45,7 @@ from .config_helpers import (
     ensure_user_directories,
     ensure_app_directory,
     initialize_system_ui,
+    initialize_system_migration_schema,
     load_config_with_override,
 )
 
@@ -66,5 +67,6 @@ __all__ = [
     "ensure_user_directories",
     "ensure_app_directory",
     "initialize_system_ui",
+    "initialize_system_migration_schema",
     "load_config_with_override",
 ]

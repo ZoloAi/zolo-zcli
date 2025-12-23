@@ -335,6 +335,16 @@ class zConfigPaths:
         return self.user_config_dir / self.ZUIS_DIRNAME
 
     @property
+    def user_zschemas_dir(self) -> Path:
+        """
+        User zSchemas directory for system schema files.
+        
+        Location: user_config_dir/zSchemas/
+        Contains: System schema templates (e.g., zSchema.zMigration.yaml)
+        """
+        return self.user_config_dir / "zSchemas"
+
+    @property
     def user_data_dir(self) -> Path:
         r"""
         User data directory (unified with config for simplicity).
