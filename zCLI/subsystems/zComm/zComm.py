@@ -95,7 +95,7 @@ See Also:
 
 from zCLI import Any, Dict, Optional
 from zCLI.utils import print_ready_message, validate_zcli_instance
-from .zComm_modules import ServiceManager, HTTPClient, NetworkUtils, WebSocketServer
+from .zComm_modules import ServiceManager, HTTPClient, NetworkUtils, WebSocketServer, StorageClient
 
 # ═══════════════════════════════════════════════════════════
 # Module Constants
@@ -254,6 +254,10 @@ class zComm:
         self._network_utils = NetworkUtils(self.logger)
         self._websocket_server = WebSocketServer(self.logger, zcli.config.websocket)
         self.services = ServiceManager(self.logger)
+        
+        # Initialize storage client (Phase 1.3: Storage Manager)
+        from .zComm_modules.comm_storage import StorageClient
+        self.storage = StorageClient(zcli)
 
         # Print styled ready message (before zDisplay is available, deployment-aware)
         is_production = zcli.config.is_production() if hasattr(zcli, 'config') else False

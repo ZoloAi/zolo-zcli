@@ -10,5 +10,6 @@ from .comm_http import HTTPClient
 from .comm_websocket import WebSocketServer
 from .comm_websocket_auth import WebSocketAuth
 from .helpers.network_utils import NetworkUtils
+from .comm_storage import StorageClient
 
-__all__ = ['ServiceManager', 'HTTPClient', 'WebSocketServer', 'WebSocketAuth', 'NetworkUtils']
+__all__ = ['ServiceManager', 'HTTPClient', 'WebSocketServer', 'WebSocketAuth', 'NetworkUtils', 'StorageClient']
