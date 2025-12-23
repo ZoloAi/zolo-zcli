@@ -11,7 +11,7 @@
 1. [Overview](#overview)
 2. [Core Concepts](#core-concepts)
 3. [Architecture: Enhanced Arrays](#architecture-enhanced-arrays)
-4. [Operations](#operations)
+4. [Operations](#operations)    
 5. [Navigation Patterns](#navigation-patterns)
 6. [Display Integration](#display-integration)
 7. [Usage Examples](#usage-examples)

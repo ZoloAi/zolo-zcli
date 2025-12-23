@@ -43,6 +43,7 @@ from .environment_helpers import (
 )
 from .config_helpers import (
     ensure_user_directories,
+    ensure_app_directory,
     initialize_system_ui,
     load_config_with_override,
 )
@@ -63,6 +64,7 @@ __all__ = [
     "get_audio_player_launch_command",
     "create_default_env_config",
     "ensure_user_directories",
+    "ensure_app_directory",
     "initialize_system_ui",
     "load_config_with_override",
 ]

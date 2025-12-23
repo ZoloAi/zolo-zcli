@@ -36,6 +36,55 @@ def ensure_user_directories(paths: Any) -> None:
     except Exception as e:
         print(f"{LOG_PREFIX} Warning: Failed to create user directories: {e}")
 
+def ensure_app_directory(paths: Any, zSpark: Optional[Dict[str, Any]] = None) -> Optional[Path]:
+    """
+    Create app root directory if app_storage is enabled in zSpark.
+    
+    Simple opt-in: Creates Apps/{title}/ root folder.
+    App creates subdirectories as needed.
+    
+    Args:
+        paths: zConfigPaths instance
+        zSpark: zSpark configuration dict
+    
+    Returns:
+        Path: App root directory if created, None if not enabled
+    
+    Example:
+        zSpark = {"title": "zCloud", "app_storage": True}
+        → Creates ~/Library/Application Support/zolo-zcli/Apps/zCloud/
+    
+    Notes:
+        - Only creates directory if app_storage is truthy in zSpark
+        - Requires title key in zSpark to determine app name
+        - Non-critical operation (silently handles errors)
+    """
+    if not zSpark:
+        return None
+    
+    # Check if app storage is enabled
+    app_storage = zSpark.get('app_storage')
+    if not app_storage:
+        return None
+    
+    # Get app name from title (required)
+    app_name = zSpark.get('title')
+    if not app_name:
+        print(f"{LOG_PREFIX} Warning: app_storage enabled but no title specified")
+        return None
+    
+    try:
+        # Create app root: Apps/{title}/
+        app_root = paths.user_data_dir / "Apps" / app_name
+        app_root.mkdir(parents=True, exist_ok=True)
+        
+        print(f"{LOG_PREFIX} App storage initialized: {app_root}")
+        return app_root
+        
+    except Exception as e:
+        print(f"{LOG_PREFIX} Warning: Failed to create app directory: {e}")
+        return None
+
 def initialize_system_ui(paths: Any) -> None:
     """
     Copy system UI file (zUI.zcli_sys.yaml) from package to user zUIs directory.

@@ -17,7 +17,7 @@ from .zConfig_modules import (
     HttpServerConfig,
 )
 from .zConfig_modules.config_resource_limits import ResourceLimits
-from .zConfig_modules.helpers import ensure_user_directories, initialize_system_ui
+from .zConfig_modules.helpers import ensure_user_directories, ensure_app_directory, initialize_system_ui
 
 # Module Constants
 SUBSYSTEM_NAME = "zConfig"
@@ -31,6 +31,7 @@ class zConfig:
     zcli: Any  # zCLI instance
     zSpark: Optional[Dict[str, Any]]
     sys_paths: zConfigPaths
+    app_root: Optional[Any]  # App-specific storage root (Path or None)
     machine: MachineConfig
     environment: EnvironmentConfig
     session: SessionConfig
@@ -79,6 +80,9 @@ class zConfig:
 
         # Ensure user directories exist (zConfigs, zUIs)
         ensure_user_directories(self.sys_paths)
+        
+        # Create app-specific storage directory if enabled in zSpark
+        self.app_root = ensure_app_directory(self.sys_paths, zSpark_obj)
         
         # Copy system UI file to user zUIs directory (on first run)
         initialize_system_ui(self.sys_paths)

@@ -463,6 +463,34 @@ class zConfigPaths:
 
         return config_dir
 
+    def get_app_path(self, app_name: str, subpath: str = "") -> Path:
+        """
+        Get path for app-specific storage.
+        
+        Args:
+            app_name: Application name (e.g., "zCloud")
+            subpath: Optional subpath within app directory (e.g., "storage/users")
+        
+        Returns:
+            Path: ~/Library/Application Support/zolo-zcli/Apps/{app_name}/{subpath}
+        
+        Example:
+            >>> paths.get_app_path("zCloud")
+            Path("~/Library/Application Support/zolo-zcli/Apps/zCloud")
+            
+            >>> paths.get_app_path("zCloud", "storage/users")
+            Path("~/Library/Application Support/zolo-zcli/Apps/zCloud/storage/users")
+        
+        Note:
+            - Does NOT create directories (use ensure_app_directory for that)
+            - Returns path even if directory doesn't exist
+            - Used by app code to construct storage paths
+        """
+        app_root = self.user_data_dir / "Apps" / app_name
+        if subpath:
+            return app_root / subpath
+        return app_root
+
     def get_info(self) -> Dict[str, str]:
         """
         Get path information for debugging.
