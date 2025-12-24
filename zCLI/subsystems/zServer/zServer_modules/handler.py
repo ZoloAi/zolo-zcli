@@ -1178,14 +1178,27 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
             
             # Handle response based on result type
             if isinstance(result, dict):
-                # JSON response
-                import json
-                body = json.dumps(result).encode('utf-8')
-                self.send_response(result.get('status_code', 200))
-                self.send_header('Content-Type', 'application/json')
-                self.send_header('Content-Length', len(body))
-                self.end_headers()
-                self.wfile.write(body)
+                # Check if binary response (Phase 3.2 - media delivery)
+                if '_binary' in result:
+                    # Binary response (images, files, etc.)
+                    binary_data = result['_binary']
+                    mimetype = result.get('_mimetype', 'application/octet-stream')
+                    status_code = result.get('status_code', 200)
+                    
+                    self.send_response(status_code)
+                    self.send_header('Content-Type', mimetype)
+                    self.send_header('Content-Length', len(binary_data))
+                    self.end_headers()
+                    self.wfile.write(binary_data)
+                else:
+                    # JSON response
+                    import json
+                    body = json.dumps(result).encode('utf-8')
+                    self.send_response(result.get('status_code', 200))
+                    self.send_header('Content-Type', 'application/json')
+                    self.send_header('Content-Length', len(body))
+                    self.end_headers()
+                    self.wfile.write(body)
             elif isinstance(result, str):
                 # Plain text response
                 body = result.encode('utf-8')

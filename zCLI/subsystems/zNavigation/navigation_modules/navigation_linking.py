@@ -594,12 +594,23 @@ class Linking:
             
             # Restore the breadcrumb state to what it was BEFORE entering the ^ block
             if breadcrumb_snapshot is not None:
+                # Clear the _navbar_navigation flag before restoration to prevent duplicate RESET
+                if '_navbar_navigation' in breadcrumb_snapshot:
+                    del breadcrumb_snapshot['_navbar_navigation']
+                    self.logger.debug("[zNavigation] Cleared _navbar_navigation flag from snapshot")
+                
                 walker.zcli.session[SESSION_KEY_ZCRUMBS] = breadcrumb_snapshot
                 self.logger.debug(f"[zNavigation] ✅ Restored breadcrumbs: {breadcrumb_snapshot}")
                 
                 # Now we need to continue the walker by re-loading the current block
-                # Get the active crumb from the restored snapshot
-                active_zCrumb = list(breadcrumb_snapshot.keys())[-1] if breadcrumb_snapshot else None
+                # Get the active crumb from the restored snapshot (handle enhanced format with 'trails' wrapper)
+                if 'trails' in breadcrumb_snapshot:
+                    # Enhanced format: trails are inside 'trails' dict
+                    trail_keys = list(breadcrumb_snapshot['trails'].keys())
+                else:
+                    # Legacy format: filter out metadata keys starting with _
+                    trail_keys = [k for k in breadcrumb_snapshot.keys() if not k.startswith('_')]
+                active_zCrumb = trail_keys[-1] if trail_keys else None
                 
                 if active_zCrumb:
                     # Parse the active crumb to get file/block info
@@ -625,8 +636,11 @@ class Linking:
                             self.logger.warning(f"[zNavigation] Block '{zBlock}' not found in {zPath}")
                             return result
                         
-                        # Get the start key from the restored trail
-                        trail = breadcrumb_snapshot[active_zCrumb]
+                        # Get the start key from the restored trail (handle enhanced format with 'trails' wrapper)
+                        if 'trails' in breadcrumb_snapshot:
+                            trail = breadcrumb_snapshot['trails'].get(active_zCrumb, [])
+                        else:
+                            trail = breadcrumb_snapshot.get(active_zCrumb, [])
                         start_key = trail[-1] if trail else None
                         
                         self.logger.debug(f"[zNavigation] Continuing from: {zBlock}, start_key: {start_key}")

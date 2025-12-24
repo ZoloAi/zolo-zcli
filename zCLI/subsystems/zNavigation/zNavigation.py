@@ -394,6 +394,7 @@ class zNavigation:
             2. Dict items with _rbac:
                 - zGuest: true → Only visible if NOT authenticated
                 - authenticated: true → Only visible if authenticated
+                - authenticated: false → Only visible if NOT authenticated (same as zGuest)
                 - require_role: "role" → Only visible if user has that role
             3. Invalid items → Filtered out (logged as warnings)
         
@@ -405,12 +406,12 @@ class zNavigation:
         
         Examples:
             Input (not authenticated):
-                ["zVaF", {"^logout": {"_rbac": {"authenticated": true}}}, {"^zLogin": {"_rbac": {"zGuest": true}}}]
+                ["zVaF", {"^logout": {"_rbac": {"authenticated": true}}}, {"^zLogin": {"_rbac": {"authenticated": false}}}]
             Output:
                 ["zVaF", "^zLogin"]
             
             Input (authenticated as zAdmin):
-                ["zVaF", {"zAccount": {"_rbac": {"require_role": "zAdmin"}}}, {"^zLogin": {"_rbac": {"zGuest": true}}}]
+                ["zVaF", {"zAccount": {"_rbac": {"require_role": "zAdmin"}}}, {"^zLogin": {"_rbac": {"authenticated": false}}}]
             Output:
                 ["zVaF", "zAccount"]
         
@@ -459,13 +460,23 @@ class zNavigation:
                         self.logger.framework.debug(f"[zNavigation] Navbar item '{item_name}' hidden (zGuest: user is authenticated)")
                     continue
                 
-                # Check authenticated (must be authenticated)
-                if rbac_rules.get("authenticated"):
-                    if is_authenticated:
-                        filtered.append(item_name)
-                        self.logger.framework.debug(f"[zNavigation] Navbar item '{item_name}' visible (authenticated: true)")
-                    else:
-                        self.logger.framework.debug(f"[zNavigation] Navbar item '{item_name}' hidden (not authenticated)")
+                # Check authenticated (must be authenticated OR must NOT be authenticated)
+                if "authenticated" in rbac_rules:
+                    auth_required = rbac_rules.get("authenticated")
+                    if auth_required is True:
+                        # authenticated: true - must be authenticated
+                        if is_authenticated:
+                            filtered.append(item_name)
+                            self.logger.framework.debug(f"[zNavigation] Navbar item '{item_name}' visible (authenticated: true)")
+                        else:
+                            self.logger.framework.debug(f"[zNavigation] Navbar item '{item_name}' hidden (not authenticated)")
+                    elif auth_required is False:
+                        # authenticated: false - must NOT be authenticated (guest-only)
+                        if not is_authenticated:
+                            filtered.append(item_name)
+                            self.logger.framework.debug(f"[zNavigation] Navbar item '{item_name}' visible (authenticated: false, user is guest)")
+                        else:
+                            self.logger.framework.debug(f"[zNavigation] Navbar item '{item_name}' hidden (authenticated: false, user is authenticated)")
                     continue
                 
                 # Check require_role (must have specific role)

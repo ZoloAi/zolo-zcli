@@ -1421,8 +1421,50 @@ class CommandLauncher:
         
         for key, query_def in data_block.items():
             try:
+                # Handle declarative dict: user: {model: "@.models.zSchema.users", where: {id: "%session.path"}}
+                if isinstance(query_def, dict) and "model" in query_def:
+                    # Fully declarative format - interpolate session values
+                    model = query_def.get("model")
+                    where_clause = query_def.get("where", {})
+                    
+                    # Interpolate %session.* values in WHERE clause
+                    interpolated_where = {}
+                    for field, value in where_clause.items():
+                        if isinstance(value, str) and value.startswith("%session."):
+                            # Extract session path: %session.zAuth.applications.zCloud.id
+                            session_path = value[9:]  # Remove "%session." prefix
+                            path_parts = session_path.split('.')
+                            
+                            # Navigate session dict
+                            session_value = self.zcli.session
+                            for part in path_parts:
+                                if isinstance(session_value, dict):
+                                    session_value = session_value.get(part)
+                                else:
+                                    session_value = None
+                                    break
+                            
+                            interpolated_where[field] = session_value
+                            self.logger.framework.debug(f"[_data] Interpolated {value} → {session_value}")
+                        else:
+                            interpolated_where[field] = value
+                    
+                    query_def = {
+                        "zData": {
+                            "action": "read",
+                            "model": model,
+                            "options": {
+                                "where": interpolated_where if interpolated_where else {},
+                                "limit": query_def.get("limit", 1)  # Default to single record
+                            }
+                        }
+                    }
+                
                 # Handle shorthand: user: "@.models.zSchema.contacts"
-                if isinstance(query_def, str) and query_def.startswith('@.models.'):
+                # NOTE: This is kept for backward compatibility but hardcodes "id" field
+                elif isinstance(query_def, str) and query_def.startswith('@.models.'):
+                    self.logger.framework.warning(f"[_data] Shorthand syntax '{key}: \"{query_def}\"' uses hardcoded 'id' field. Consider using declarative syntax with explicit WHERE clause.")
+                    
                     # Shorthand model reference - convert to zData request
                     # Auto-filter by authenticated user ID for security
                     
@@ -1443,7 +1485,7 @@ class CommandLauncher:
                             "action": "read",
                             "model": query_def,
                             "options": {
-                                "where": f"id = {user_id}" if user_id else "1 = 0",  # Security: no ID = no results
+                                "where": {"id": user_id} if user_id else {"id": 0},  # Dict format for adapter compatibility
                                 "limit": 1
                             }
                         }

@@ -380,19 +380,26 @@ def extract_where_clause(
         where_str = options.get(KEY_WHERE)
 
     # ─────────────────────────────────────────────────────────────────────────
-    # Phase 2: Quote Stripping - Remove surrounding quotes (shell artifact)
+    # Phase 2: Dict Passthrough - If already a dict, skip string processing
     # ─────────────────────────────────────────────────────────────────────────
-    if where_str:
-        where_str = where_str.strip()
-        # Strip surrounding quotes (single or double)
-        if (where_str.startswith('"') and where_str.endswith('"')) or \
-           (where_str.startswith("'") and where_str.endswith("'")):
-            where_str = where_str[1:-1]
+    if where_str and isinstance(where_str, dict):
+        # WHERE clause is already in dict format (e.g., from auto-query)
+        where = where_str
+    else:
+        # ─────────────────────────────────────────────────────────────────────────
+        # Phase 3: Quote Stripping - Remove surrounding quotes (shell artifact)
+        # ─────────────────────────────────────────────────────────────────────────
+        if where_str:
+            where_str = where_str.strip()
+            # Strip surrounding quotes (single or double)
+            if (where_str.startswith('"') and where_str.endswith('"')) or \
+               (where_str.startswith("'") and where_str.endswith("'")):
+                where_str = where_str[1:-1]
 
-    # ─────────────────────────────────────────────────────────────────────────
-    # Phase 3: Parsing - Convert WHERE string to dictionary
-    # ─────────────────────────────────────────────────────────────────────────
-    where = parse_where_clause(where_str) if where_str else None
+        # ─────────────────────────────────────────────────────────────────────────
+        # Phase 4: Parsing - Convert WHERE string to dictionary
+        # ─────────────────────────────────────────────────────────────────────────
+        where = parse_where_clause(where_str) if where_str else None
 
     # ─────────────────────────────────────────────────────────────────────────
     # Phase 4: Optional Warning - Alert if WHERE clause is missing

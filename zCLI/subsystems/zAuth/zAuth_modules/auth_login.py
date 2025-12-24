@@ -337,6 +337,22 @@ def handle_zLogin(
     
     logger.info(f"{LOG_PREFIX} Authentication successful for {username} in app {app_name}")
     
+    # Clear parsed UI file cache to force navbar re-injection with new RBAC rules
+    # This ensures navbar items are re-evaluated for the newly authenticated user
+    if hasattr(zcli, 'loader') and hasattr(zcli.loader, 'cache') and hasattr(zcli.loader.cache, 'system_cache'):
+        try:
+            # Access the internal OrderedDict cache via _cache property
+            cache_dict = zcli.loader.cache.system_cache._cache
+            cleared = 0
+            for key in list(cache_dict.keys()):
+                if key.startswith('parsed:') and ('.zUI.' in key or '/zUI/' in key or '/UI/' in key):
+                    del cache_dict[key]
+                    cleared += 1
+            if cleared > 0:
+                logger.debug(f"{LOG_PREFIX} Cleared {cleared} cached UI file(s) for RBAC re-evaluation")
+        except Exception as e:
+            logger.debug(f"{LOG_PREFIX} Could not clear UI cache: {e}")
+    
     if _is_bifrost_mode(zcli):
         return {"success": True, "message": success_msg, "app": app_name}
     
