@@ -226,7 +226,9 @@ import typing
 import uuid
 import webbrowser
 from collections import OrderedDict
-from datetime import datetime, date, time, timedelta
+# NOTE: Do NOT import 'time' from datetime - it would overwrite the time module
+# imported above (line 223). If datetime.time type is needed, use datetime.time directly.
+from datetime import datetime, date, timedelta
 from pathlib import Path
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple, Union
 from urllib.parse import urlparse

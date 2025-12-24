@@ -160,6 +160,128 @@ CONFIRM_YES = ["yes", "y"]
 CONFIRM_NO = ["no", "n"]
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# MIGRATION HISTORY RECORDING
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def _record_migration_history(ops: Any, request: Dict[str, Any], diff: Dict[str, Any]) -> None:
+    """
+    Record migration history - per-table for CSV, global for SQL.
+    
+    For CSV backends: Creates separate migration files for each affected table
+                      (e.g., zmigrations/users_zMigration.csv)
+    For SQL backends: Records in global _zdata_migrations table
+    
+    Args:
+        ops: DataOperations instance with adapter
+        request: Migration request with schema_version and schema_hash
+        diff: Migration diff with affected tables
+    """
+    from datetime import datetime
+    
+    # Check adapter type
+    adapter_type = type(ops.adapter).__name__
+    is_csv = 'CSV' in adapter_type
+    
+    if is_csv:
+        # CSV: Per-table migration tracking
+        _record_csv_migration_history(ops, request, diff)
+    else:
+        # SQL: Global migration table
+        _record_sql_migration_history(ops, request, diff)
+
+
+def _record_csv_migration_history(ops: Any, request: Dict[str, Any], diff: Dict[str, Any]) -> None:
+    """
+    Record migration history in per-table CSV files.
+    
+    For each affected table, creates/updates zmigrations/{table}_zMigration.csv
+    with the migration record.
+    """
+    from datetime import datetime
+    import csv
+    from pathlib import Path
+    
+    # Collect all affected tables
+    affected_tables = []
+    affected_tables.extend(diff.get("tables_added", []))
+    affected_tables.extend([t["name"] for t in diff.get("tables_modified", [])])
+    affected_tables.extend(diff.get("tables_dropped", []))
+    
+    if not affected_tables:
+        return
+    
+    # Build migration record
+    schema_version = request.get('schema_version', 'unknown')
+    schema_hash = request.get('schema_hash', '')
+    applied_at = datetime.now().isoformat()
+    
+    # For each affected table, record the migration
+    for table_name in affected_tables:
+        # Use __zmigration_{table} pattern to trigger CSV adapter path resolution
+        migration_table = f"__zmigration_{table_name}"
+        
+        try:
+            # Check if migration table exists
+            if not ops.adapter.table_exists(migration_table):
+                # Create migration table with headers
+                ops.adapter.create_table(migration_table, {
+                    'id': {'type': 'int', 'pk': True, 'auto_increment': True},
+                    'from_version': {'type': 'str'},
+                    'to_version': {'type': 'str'},
+                    'applied_at': {'type': 'datetime'},
+                    'applied_by': {'type': 'str'},
+                    'duration_ms': {'type': 'int'},
+                    'schema_hash': {'type': 'str'},
+                    'changes_summary': {'type': 'str'},
+                    'changes_detail': {'type': 'str'},
+                    'status': {'type': 'str'},
+                    'error_message': {'type': 'str'},
+                    'rollback_possible': {'type': 'bool'},
+                    'backup_location': {'type': 'str'},
+                    'rows_affected': {'type': 'int'},
+                    'columns_added': {'type': 'int'},
+                    'columns_dropped': {'type': 'int'},
+                    'columns_modified': {'type': 'int'},
+                    'is_breaking': {'type': 'bool'},
+                    'migration_hook': {'type': 'str'},
+                    'hook_result': {'type': 'str'}
+                })
+            
+            # Insert migration record
+            ops.adapter.insert(
+                migration_table,
+                ['to_version', 'applied_at', 'schema_hash', 'status', 'duration_ms'],
+                [schema_version, applied_at, schema_hash, 'success', 0]
+            )
+            
+        except Exception as e:
+            if hasattr(ops, 'logger'):
+                ops.logger.warning(f"[zMigrate] Failed to record migration for table {table_name}: {e}")
+
+
+def _record_sql_migration_history(ops: Any, request: Dict[str, Any], diff: Dict[str, Any]) -> None:
+    """
+    Record migration history in global _zdata_migrations table (SQL approach).
+    """
+    from zCLI.subsystems.zData.zData_modules.shared.migration_history import record_migration, ensure_migrations_table
+    
+    ensure_migrations_table(ops.adapter)
+    
+    # Build metrics for recording
+    metrics = {
+        'schema_version': request.get('schema_version', 'unknown'),
+        'schema_hash': request.get('schema_hash', ''),
+        'tables_added': diff[KEY_CHANGE_COUNT].get("tables_added", 0),
+        'tables_dropped': diff[KEY_CHANGE_COUNT].get("tables_dropped", 0),
+        'columns_added': sum(len(t.get("columns_added", [])) for t in diff.get("tables_modified", [])),
+        'columns_dropped': sum(len(t.get("columns_dropped", [])) for t in diff.get("tables_modified", [])),
+        'duration_ms': 0,
+        'status': 'success'
+    }
+    record_migration(ops.adapter, metrics)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # MAIN MIGRATION HANDLER
 # ═══════════════════════════════════════════════════════════════════════════════
 
@@ -282,6 +404,16 @@ def handle_migrate(ops: Any, request: Dict[str, Any], display: Any) -> Dict[str,
     # Phase 4: Execute Migration
     try:
         operations_executed = _execute_migration(ops, diff, display)
+        
+        # Phase 5: Record migration history
+        try:
+            # For CSV backends, record per-table migration history
+            # For SQL backends, record in global _zdata_migrations table
+            _record_migration_history(ops, request, diff)
+        except Exception as e:
+            # Log error but don't fail the migration
+            if hasattr(ops, 'logger'):
+                ops.logger.warning(f"[zMigrate] Failed to record migration history: {e}")
         
         display.text("")  # Blank line
         display.text(MSG_MIGRATION_SUCCESS)

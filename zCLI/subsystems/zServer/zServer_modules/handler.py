@@ -436,6 +436,8 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
         
         # Access granted - serve based on route type
         route_type = route.get("type", "static")
+        if hasattr(self, 'zcli_logger') and self.zcli_logger:
+            self.zcli_logger.info(f"[Handler] Route type: {route_type} for path: {clean_path}")
         
         if route_type == "static":
             # Serve static file directly
@@ -494,6 +496,10 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
         elif route_type == "dynamic":
             # Serve dynamically generated HTML from zUI
             return self._handle_dynamic_route(route)
+        
+        elif route_type == "zFunc":
+            # Call plugin function directly (for file uploads, API endpoints, etc.)
+            return self._handle_zfunc_route(route)
         
         # Unknown route type
         return self.send_error(501, f"Route type '{route_type}' not supported")
@@ -1025,6 +1031,185 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
             if hasattr(self, 'zcli_logger') and self.zcli_logger:
                 self.zcli_logger.error(f"[Handler] JSON route error: {e}")
             return self.send_error(500, f"JSON rendering failed: {str(e)}")
+    
+    def _handle_zfunc_route(self, route: dict):
+        """
+        Handle zFunc route - call plugin function directly (for file uploads, API endpoints).
+        
+        Args:
+            route: Route definition with handler field (&plugin.function)
+        
+        Returns:
+            None: Sends HTTP response based on function return value
+        """
+        if hasattr(self, 'zcli_logger') and self.zcli_logger:
+            self.zcli_logger.info(f"[Handler] _handle_zfunc_route called for: {route.get('handler', 'UNKNOWN')}")
+        
+        try:
+            # Get zcli instance from router
+            if not hasattr(self.router, 'zcli'):
+                if self.zcli_logger:
+                    self.zcli_logger.error("[Handler] No zcli instance on router")
+                return self.send_error(500, "zCLI instance not available")
+            
+            # Get handler reference
+            handler = route.get("handler", "")
+            if self.zcli_logger:
+                self.zcli_logger.info(f"[Handler] Got handler: {handler}")
+            
+            if not handler or not handler.startswith("&"):
+                if self.zcli_logger:
+                    self.zcli_logger.error(f"[Handler] Invalid handler: {handler}")
+                return self.send_error(500, "Invalid handler reference - must start with &")
+            
+            # Parse handler reference: &plugin.function
+            handler_parts = handler[1:].split(".")
+            if len(handler_parts) != 2:
+                if self.zcli_logger:
+                    self.zcli_logger.error(f"[Handler] Invalid handler parts: {handler_parts}")
+                return self.send_error(500, "Invalid handler format - expected &plugin.function")
+            
+            plugin_name, function_name = handler_parts
+            if self.zcli_logger:
+                self.zcli_logger.info(f"[Handler] Loading plugin: {plugin_name}, function: {function_name}")
+            
+            # Get plugin from loader's plugin cache
+            zcli = self.router.zcli
+            if self.zcli_logger:
+                self.zcli_logger.info(f"[Handler] Got zcli from router")
+            
+            if not hasattr(zcli, 'loader') or not hasattr(zcli.loader, 'cache'):
+                if self.zcli_logger:
+                    self.zcli_logger.error("[Handler] Loader subsystem not available")
+                return self.send_error(500, "Loader subsystem not available")
+            
+            # Try to get plugin from cache
+            if self.zcli_logger:
+                self.zcli_logger.info(f"[Handler] Loading plugin: {plugin_name}")
+            
+            plugin = zcli.loader.cache.plugin_cache.get(plugin_name)
+            
+            if not plugin:
+                # Plugin not in cache, try to load it
+                import os
+                # Plugins are relative to the current working directory
+                plugin_path = os.path.join(os.getcwd(), 'plugins', f'{plugin_name}.py')
+                
+                if self.zcli_logger:
+                    self.zcli_logger.info(f"[Handler] Looking for plugin at: {plugin_path}")
+                
+                if not os.path.exists(plugin_path):
+                    if self.zcli_logger:
+                        self.zcli_logger.error(f"[Handler] Plugin file not found: {plugin_path}")
+                    return self.send_error(500, f"Plugin '{plugin_name}' not found")
+                
+                try:
+                    plugin = zcli.loader.cache.plugin_cache.load_and_cache(plugin_path, plugin_name)
+                    if self.zcli_logger:
+                        self.zcli_logger.info(f"[Handler] Plugin loaded from file: {plugin_name}")
+                except Exception as load_err:
+                    if self.zcli_logger:
+                        self.zcli_logger.error(f"[Handler] Failed to load plugin: {load_err}", exc_info=True)
+                    return self.send_error(500, f"Failed to load plugin '{plugin_name}': {str(load_err)}")
+            
+            if not plugin:
+                if self.zcli_logger:
+                    self.zcli_logger.error(f"[Handler] Plugin '{plugin_name}' returned None")
+                return self.send_error(500, f"Plugin '{plugin_name}' not found")
+            
+            if self.zcli_logger:
+                self.zcli_logger.info(f"[Handler] Plugin loaded successfully: {plugin_name}")
+            
+            # Get function from plugin
+            if not hasattr(plugin, function_name):
+                if self.zcli_logger:
+                    self.zcli_logger.error(f"[Handler] Function '{function_name}' not found in plugin '{plugin_name}'")
+                return self.send_error(500, f"Function '{function_name}' not found in plugin '{plugin_name}'")
+            
+            func = getattr(plugin, function_name)
+            
+            # Resolve schema (route-level 'model' overrides meta-level 'schema')
+            schema_ref = route.get('model') or self.router.meta.get('schema')
+            schema_context = None
+            
+            if schema_ref and schema_ref.startswith('@'):
+                # Load schema from zData
+                try:
+                    # Schema reference format: @.zSchema.users
+                    schema_name = schema_ref.split('.')[-1] if '.' in schema_ref else schema_ref[1:]
+                    
+                    # Try to get loaded schema from zServer's schema cache
+                    if hasattr(self.router, 'zcli') and hasattr(self.router.zcli, 'data'):
+                        # Get schema metadata
+                        schema_context = {
+                            'schema_name': schema_name,
+                            'schema_ref': schema_ref,
+                            'table_name': schema_name  # By convention
+                        }
+                        
+                        if self.zcli_logger:
+                            self.zcli_logger.debug(f"[Handler] Resolved schema for route: {schema_ref}")
+                except Exception as e:
+                    if self.zcli_logger:
+                        self.zcli_logger.warning(f"[Handler] Failed to load schema {schema_ref}: {e}")
+            
+            # Build request context
+            request_context = {
+                'method': self.command,
+                'path': self.path,
+                'headers': dict(self.headers),
+                'route': route,
+                'route_params': route.get('_route_params', {}),
+                'schema': schema_context  # Inject schema context
+            }
+            
+            # Read request body for POST/PUT
+            if self.command in ['POST', 'PUT', 'PATCH']:
+                content_length = int(self.headers.get('Content-Length', 0))
+                if content_length > 0:
+                    request_context['body'] = self.rfile.read(content_length)
+                    request_context['content_type'] = self.headers.get('Content-Type', '')
+            
+            # Call function with zcli + request context as kwargs
+            # Plugin signature: def my_function(zcli, **kwargs)
+            if self.zcli_logger:
+                self.zcli_logger.info(f"[Handler] Calling {plugin_name}.{function_name} with context keys: {list(request_context.keys())}")
+            result = func(zcli, **request_context)
+            
+            # Handle response based on result type
+            if isinstance(result, dict):
+                # JSON response
+                import json
+                body = json.dumps(result).encode('utf-8')
+                self.send_response(result.get('status_code', 200))
+                self.send_header('Content-Type', 'application/json')
+                self.send_header('Content-Length', len(body))
+                self.end_headers()
+                self.wfile.write(body)
+            elif isinstance(result, str):
+                # Plain text response
+                body = result.encode('utf-8')
+                self.send_response(200)
+                self.send_header('Content-Type', 'text/plain')
+                self.send_header('Content-Length', len(body))
+                self.end_headers()
+                self.wfile.write(body)
+            elif isinstance(result, bytes):
+                # Binary response
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/octet-stream')
+                self.send_header('Content-Length', len(result))
+                self.end_headers()
+                self.wfile.write(result)
+            else:
+                # Assume success with no body
+                self.send_response(204)
+                self.end_headers()
+            
+        except Exception as e:
+            if hasattr(self, 'zcli_logger') and self.zcli_logger:
+                self.zcli_logger.error(f"[Handler] zFunc route error: {e}", exc_info=True)
+            return self.send_error(500, f"Function execution failed: {str(e)}")
     
     def _resolve_route_data(self, data_block: dict, zcli: any) -> dict:
         """

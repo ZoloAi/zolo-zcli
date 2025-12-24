@@ -17,8 +17,9 @@ import time
 
 def create_migration_table(z: Any, table_name: str) -> bool:
     """
-    Create __zmigration_{table_name} table from system schema template.
+    Create {table_name}_zMigration table from system schema template.
     
+    Migration files are stored in Data/.zmigrations/ subfolder.
     Uses zSchema.zMigration.yaml as template.
     
     Args:
@@ -30,9 +31,9 @@ def create_migration_table(z: Any, table_name: str) -> bool:
     
     Example:
         >>> create_migration_table(z, 'users')
-        True  # Creates __zmigration_users table
+        True  # Creates Data/.zmigrations/users_zMigration.csv
     """
-    migration_table = f"__zmigration_{table_name}"
+    migration_table = f"{table_name}_zMigration"
     
     try:
         # Load the migration schema template
@@ -96,13 +97,19 @@ def record_migration(
     Returns:
         bool: True if recorded successfully
     """
-    migration_table = f"__zmigration_{table_name}"
+    # Use clean naming for migration tracking
+    migration_table = f"{table_name}_zMigration"
     
     try:
-        # For CSV: Create the file with headers if it doesn't exist
+        # For CSV: Create the file in .zmigrations/ subfolder
         # Get the workspace's Data directory
         data_dir = Path(z.config.sys_paths.workspace_dir) / "Data"
-        migration_csv_file = data_dir / f"{migration_table}.csv"
+        migration_dir = data_dir / ".zmigrations"
+        
+        # Ensure .zmigrations directory exists
+        migration_dir.mkdir(exist_ok=True)
+        
+        migration_csv_file = migration_dir / f"{migration_table}.csv"
         
         if not migration_csv_file.exists():
             z.logger.info(f"[zMigration] Creating migration table: {migration_table}")
@@ -131,7 +138,7 @@ Meta:
   Data_Label: "Migration History for {table_name}"
   Data_Source: "@.Data"
   Data_Paradigm: classical
-  Schema_Name: "__zmigration_{table_name}"
+  Schema_Name: "{table_name}_zMigration"
   zMigration: false
 
 {migration_table}:

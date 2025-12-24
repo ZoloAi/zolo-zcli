@@ -305,12 +305,13 @@ class HTTPRouter:
         
         Matching Priority:
             1. Exact match (explicit routes)
-            2. Auto-discovered zBlock routes (from zWalker)
-            3. Wildcard match (/*)
-            4. Default route (from Meta)
+            2. Parametrized match (/:param patterns)
+            3. Auto-discovered zBlock routes (from zWalker)
+            4. Wildcard match (/*)
+            5. Default route (from Meta)
         
         Args:
-            path: HTTP request path (e.g., "/about")
+            path: HTTP request path (e.g., "/about" or "/users/123/avatar")
         
         Returns:
             Optional[Dict[str, Any]]: Route definition or None
@@ -320,8 +321,9 @@ class HTTPRouter:
             >>> route = router.match_route("/admin")
             >>> route["file"]
             "admin.html"
-            >>> route["_rbac"]
-            {"require_role": "admin"}
+            >>> route = router.match_route("/users/123/avatar")
+            >>> route["type"]
+            "zFunc"
         """
         # 1. Exact match (explicit routes)
         if path in self.route_map:
@@ -329,19 +331,27 @@ class HTTPRouter:
             self.logger.debug(LOG_MSG_ROUTE_MATCHED, path, route.get(KEY_FILE, "N/A"))
             return route
         
-        # 2. Auto-discovered zBlock routes (from zWalker with auto_discover_blocks)
+        # 2. Parametrized match (/:param patterns)
+        route, params = self._match_parametrized_route(path)
+        if route:
+            # Store extracted parameters for handler access
+            route['_route_params'] = params
+            self.logger.debug(LOG_MSG_ROUTE_MATCHED, path, f"parametrized: {route.get('handler', 'N/A')}")
+            return route
+        
+        # 3. Auto-discovered zBlock routes (from zWalker with auto_discover_blocks)
         if path in self.auto_discovered_routes:
             route = self.auto_discovered_routes[path]
             self.logger.debug(LOG_MSG_ROUTE_MATCHED, path, f"auto-discovered zBlock: {route.get('zBlock')}")
             return route
         
-        # 3. Wildcard match
+        # 4. Wildcard match
         if WILDCARD_PATTERN in self.route_map:
             route = self.route_map[WILDCARD_PATTERN]
             self.logger.debug(LOG_MSG_ROUTE_MATCHED, path, "wildcard")
             return route
         
-        # 4. Default route
+        # 5. Default route
         default_route = self.meta.get(KEY_DEFAULT_ROUTE)
         if default_route:
             route = {KEY_TYPE: ROUTE_TYPE_STATIC, KEY_FILE: default_route}
@@ -351,6 +361,53 @@ class HTTPRouter:
         # No match
         self.logger.warning(LOG_MSG_NO_MATCH, path)
         return None
+    
+    def _match_parametrized_route(self, path: str) -> Tuple[Optional[Dict[str, Any]], Dict[str, str]]:
+        """
+        Match request path against parametrized route patterns (e.g., /users/:user_id/avatar).
+        
+        Args:
+            path: HTTP request path (e.g., "/users/123/avatar")
+        
+        Returns:
+            Tuple of (route_definition, extracted_parameters)
+        
+        Examples:
+            >>> route, params = self._match_parametrized_route("/users/123/avatar")
+            >>> params
+            {"user_id": "123"}
+        """
+        path_segments = [s for s in path.split('/') if s]  # Split and remove empty strings
+        
+        for route_pattern, route in self.route_map.items():
+            # Skip if not a parametrized route
+            if ':' not in route_pattern:
+                continue
+            
+            pattern_segments = [s for s in route_pattern.split('/') if s]
+            
+            # Must have same number of segments
+            if len(path_segments) != len(pattern_segments):
+                continue
+            
+            # Try to match each segment
+            params = {}
+            match = True
+            
+            for path_seg, pattern_seg in zip(path_segments, pattern_segments):
+                if pattern_seg.startswith(':'):
+                    # Parameter segment - extract value
+                    param_name = pattern_seg[1:]  # Remove ':' prefix
+                    params[param_name] = path_seg
+                elif path_seg != pattern_seg:
+                    # Static segment - must match exactly
+                    match = False
+                    break
+            
+            if match:
+                return route, params
+        
+        return None, {}
     
     def check_access(self, route: Dict[str, Any]) -> Tuple[bool, Optional[str]]:
         """

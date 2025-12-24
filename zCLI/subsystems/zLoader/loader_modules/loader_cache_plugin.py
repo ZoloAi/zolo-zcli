@@ -283,8 +283,8 @@ class PluginCache:
         with detailed error message and hints. This prevents silent overwrites.
 
     **Session Injection Timing**:
-        zcli instance is injected BEFORE exec_module() to allow plugins to use zcli in
-        top-level code (imports, constants, decorators).
+        zcli instance is injected AFTER exec_module() to overwrite any zcli = None
+        placeholder in the plugin. This ensures the zcli instance is available in functions.
 
     **LRU Eviction**:
         Uses OrderedDict with move_to_end() for O(1) LRU tracking. When max_size exceeded,
@@ -579,12 +579,12 @@ class PluginCache:
             - New filename: Loads and caches normally
 
         **Session Injection Timing**:
-            Critical: Injects zcli instance BEFORE exec_module(). This allows plugins to use
-            zcli in top-level code (imports, constants, decorators).
+            Critical: Injects zcli instance AFTER exec_module(). This overwrites any
+            zcli = None placeholder and ensures functions have access to the instance.
 
             ```python
-            module.zcli = self.zcli  # BEFORE exec_module()
-            spec.loader.exec_module(module)
+            spec.loader.exec_module(module)  # Execute first
+            module.zcli = self.zcli  # Inject after (overwrites None)
             ```
 
         **Module Name**:
@@ -623,12 +623,13 @@ class PluginCache:
 
             module = importlib.util.module_from_spec(spec)
             
-            # Inject CLI session BEFORE executing module
-            # This gives plugins access to zcli.logger, zcli.session, zcli.data, etc.
-            module.zcli = self.zcli
-            
-            # Execute module
+            # Execute module first (which may define zcli = None)
             spec.loader.exec_module(module)
+            
+            # Inject CLI session AFTER executing module
+            # This overwrites any zcli = None placeholder in the plugin
+            # and gives plugins access to zcli.logger, zcli.session, zcli.data, etc.
+            module.zcli = self.zcli
             
             self.stats[STAT_KEY_LOADS] += 1
             self.logger.debug(f"{LOG_PREFIX_LOAD} {plugin_name} => {file_path} (session injected)")

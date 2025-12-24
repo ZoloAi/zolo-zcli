@@ -902,6 +902,12 @@ class zWizard:
             SIGNAL_EMPTY: CALLBACK_ON_ERROR
         }
 
+        # Check if result is hashable before lookup (navigation signals are primitives)
+        # Non-signal results (dicts, lists, objects) pass through without navigation
+        if not isinstance(result, (str, int, bool, type(None))):
+            # Result is a complex type (dict, list, etc.) - not a navigation signal
+            return None  # Pass through, not a navigation action
+        
         callback_name = result_map.get(result)
         if callback_name and navigation_callbacks and callback_name in navigation_callbacks:
             args = (result, key) if callback_name == CALLBACK_ON_ERROR else (result,)

@@ -591,7 +591,7 @@ class CSVAdapter(BaseDataAdapter):
                 self.schemas[table_name][field_name] = {SCHEMA_KEY_TYPE: attrs}
 
         df = pd.DataFrame(columns=columns)
-        csv_file = self.base_path / f"{table_name}{CSV_EXTENSION}"
+        csv_file = self._get_csv_path(table_name)
         df.to_csv(csv_file, index=False)
         self.tables[table_name] = df
 
@@ -663,7 +663,7 @@ class CSVAdapter(BaseDataAdapter):
             - Removes from self.schemas
             - Safe to call if table doesn't exist (no error)
         """
-        csv_file = self.base_path / f"{table_name}{CSV_EXTENSION}"
+        csv_file = self._get_csv_path(table_name)
         if csv_file.exists():
             csv_file.unlink()
             if self.logger:
@@ -692,7 +692,7 @@ class CSVAdapter(BaseDataAdapter):
             - Checks file system, not cache
             - Does not verify CSV is valid (just checks file exists)
         """
-        csv_file = self.base_path / f"{table_name}{CSV_EXTENSION}"
+        csv_file = self._get_csv_path(table_name)
         exists = csv_file.exists()
         if self.logger:
             self.logger.debug(LOG_TABLE_EXISTS, table_name, exists)
@@ -1376,7 +1376,28 @@ class CSVAdapter(BaseDataAdapter):
     # ============================================================
 
     def _get_csv_path(self, table_name: str):
-        """Get CSV file path for table."""
+        """
+        Get CSV file path for table.
+        
+        For migration tables, uses zmigrations/ subfolder to keep Data/ directory clean.
+        For regular tables, uses base_path/{table}.csv
+        """
+        # Check if this is a migration table for a specific data table
+        # Pattern: __zmigration_{table_name} → zmigrations/{table_name}_zMigration.csv
+        if table_name.startswith("__zmigration_"):
+            actual_table = table_name.replace("__zmigration_", "")
+            migration_dir = self.base_path / "zmigrations"
+            migration_dir.mkdir(parents=True, exist_ok=True)
+            return migration_dir / f"{actual_table}_zMigration{CSV_EXTENSION}"
+        
+        # For the global _zdata_migrations table, redirect to zmigrations/ as well
+        # This keeps the Data/ directory clean while accepting CSV's file-per-table approach
+        if table_name == "_zdata_migrations":
+            migration_dir = self.base_path / "zmigrations"
+            migration_dir.mkdir(parents=True, exist_ok=True)
+            return migration_dir / f"{table_name}{CSV_EXTENSION}"
+        
+        # Regular tables use base_path
         return self.base_path / f"{table_name}{CSV_EXTENSION}"
 
     def _append_row_to_df(self, df, new_row):
@@ -1503,9 +1524,21 @@ class CSVAdapter(BaseDataAdapter):
                 mask = mask & df[field].isna()
                 continue
 
-            # Handle IN operator (list values)
+            # Handle IN operator (list values) with type coercion
             if isinstance(condition, list):
-                mask = mask & df[field].isin(condition)
+                # Fix: Ensure condition values match column dtype
+                try:
+                    col_dtype = df[field].dtype
+                    if col_dtype == 'object':  # String column
+                        # Convert all list values to strings
+                        coerced_list = [str(v) for v in condition]
+                        mask = mask & df[field].astype(str).isin(coerced_list)
+                    else:
+                        mask = mask & df[field].isin(condition)
+                except (ValueError, TypeError):
+                    # Fallback: convert to strings
+                    coerced_list = [str(v) for v in condition]
+                    mask = mask & df[field].astype(str).isin(coerced_list)
                 continue
 
             # Handle complex operators (dict values)
@@ -1513,13 +1546,25 @@ class CSVAdapter(BaseDataAdapter):
                 mask = self._apply_operator_conditions(df, field, condition, mask)
                 continue
 
-            # Simple equality
-            mask = mask & (df[field] == condition)
+            # Simple equality with type coercion
+            # Fix: CSV stores everything as strings, but WHERE may use ints/floats
+            try:
+                # Try to match the column's dtype
+                col_dtype = df[field].dtype
+                if col_dtype == 'object':  # String column
+                    # Convert condition to string for comparison
+                    mask = mask & (df[field].astype(str) == str(condition))
+                else:
+                    # Numeric column - try to convert condition to same type
+                    mask = mask & (df[field] == condition)
+            except (ValueError, TypeError):
+                # Fallback: convert both to strings and compare
+                mask = mask & (df[field].astype(str) == str(condition))
 
         return mask
 
     def _apply_operator_conditions(self, df, field, condition, mask):
-        """Apply complex operator conditions to mask."""
+        """Apply complex operator conditions to mask with type coercion."""
         for op, value in condition.items():
             op_upper = op.upper()
 
@@ -1529,25 +1574,52 @@ class CSVAdapter(BaseDataAdapter):
                 mask = mask & df[field].astype(str).str.match(pattern, na=False)
                 continue
 
-            # Special case: IN requires list check
+            # Special case: IN requires list check with type coercion
             if op_upper in ("$IN", "IN") and isinstance(value, list):
-                mask = mask & df[field].isin(value)
+                try:
+                    col_dtype = df[field].dtype
+                    if col_dtype == 'object':  # String column
+                        coerced_list = [str(v) for v in value]
+                        mask = mask & df[field].astype(str).isin(coerced_list)
+                    else:
+                        mask = mask & df[field].isin(value)
+                except (ValueError, TypeError):
+                    coerced_list = [str(v) for v in value]
+                    mask = mask & df[field].astype(str).isin(coerced_list)
                 continue
 
-            # Standard operators map
+            # Helper to apply operator with type coercion
+            def apply_op(field, op_func_str, value):
+                try:
+                    col_dtype = df[field].dtype
+                    if col_dtype == 'object':  # String column
+                        # For comparison ops on strings, convert value to string
+                        if op_func_str in ['==', '!=']:
+                            return eval(f"df[field].astype(str) {op_func_str} str(value)")
+                        else:
+                            # For >, <, >=, <= on strings, use lexicographic comparison
+                            return eval(f"df[field].astype(str) {op_func_str} str(value)")
+                    else:
+                        # Numeric column - use as-is
+                        return eval(f"df[field] {op_func_str} value")
+                except (ValueError, TypeError):
+                    # Fallback: string comparison
+                    return eval(f"df[field].astype(str) {op_func_str} str(value)")
+
+            # Standard operators map with type coercion
             op_map = {
-                "$EQ": lambda f, v: df[f] == v,
-                "=": lambda f, v: df[f] == v,
-                "$NE": lambda f, v: df[f] != v,
-                "!=": lambda f, v: df[f] != v,
-                "$GT": lambda f, v: df[f] > v,
-                ">": lambda f, v: df[f] > v,
-                "$GTE": lambda f, v: df[f] >= v,
-                ">=": lambda f, v: df[f] >= v,
-                "$LT": lambda f, v: df[f] < v,
-                "<": lambda f, v: df[f] < v,
-                "$LTE": lambda f, v: df[f] <= v,
-                "<=": lambda f, v: df[f] <= v,
+                "$EQ": lambda f, v: apply_op(f, '==', v),
+                "=": lambda f, v: apply_op(f, '==', v),
+                "$NE": lambda f, v: apply_op(f, '!=', v),
+                "!=": lambda f, v: apply_op(f, '!=', v),
+                "$GT": lambda f, v: apply_op(f, '>', v),
+                ">": lambda f, v: apply_op(f, '>', v),
+                "$GTE": lambda f, v: apply_op(f, '>=', v),
+                ">=": lambda f, v: apply_op(f, '>=', v),
+                "$LT": lambda f, v: apply_op(f, '<', v),
+                "<": lambda f, v: apply_op(f, '<', v),
+                "$LTE": lambda f, v: apply_op(f, '<=', v),
+                "<=": lambda f, v: apply_op(f, '<=', v),
                 "$NULL": lambda f, v: df[f].isna(),
                 "$NOTNULL": lambda f, v: df[f].notna(),
             }
