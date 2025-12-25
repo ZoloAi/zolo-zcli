@@ -643,6 +643,33 @@ class zWizard:
                     return error_result
                 continue
 
+            # ════════════════════════════════════════════════════════════
+            # BIFROST MODE: Check for menu signal
+            # ════════════════════════════════════════════════════════════
+            # If result is a dict with _bifrost_menu flag, it means we
+            # encountered a menu in Bifrost mode. We need to:
+            # 1. Emit the menu event to WebSocket
+            # 2. Stop execution (return None)
+            # 3. Wait for user to make a selection (handled by WebSocket)
+            from zCLI.subsystems.zConfig.zConfig_modules import ZMODE_ZBIFROST
+            mode = self.zcli.session.get("zMode", "Terminal")
+            
+            if isinstance(result, dict) and result.get("_bifrost_menu"):
+                self.logger.debug(f"[zWizard] Bifrost menu signal detected (key: {key}) - emitting menu event")
+                
+                # Extract menu data
+                menu_options = result.get("options", [])
+                menu_title = result.get("title") or key.replace("*", "").replace("~", "").strip()
+                
+                # Store the menu state for later resumption
+                self.logger.debug(f"[zWizard] Menu options: {menu_options}")
+                self.logger.debug(f"[zWizard] Stopping execution at menu '{menu_title}' - frontend will handle interaction")
+                
+                # TODO: Emit menu event via display/bifrost
+                # For now, just stop execution
+                # The frontend should already have rendered up to this point
+                return None  # Stop execution
+
             # Check if result is a key jump (e.g., menu selection)
             if isinstance(result, str) and result in keys_list and result not in NAVIGATION_SIGNALS:
                 self.logger.debug(LOG_MSG_MENU_SELECTED, result)
@@ -805,7 +832,12 @@ class zWizard:
             return SIGNAL_ZBACK
         
         dispatch_fn = self._get_dispatch_fn(dispatch_fn, context)
-        keys_list = [k for k in items_dict.keys() if not k.startswith('_')]
+        # Filter out metadata keys (_) AND navbar keys (frontend renders navbar)
+        # This prevents navbar from interfering with breadcrumb/navigation flow
+        keys_list = [
+            k for k in items_dict.keys() 
+            if not k.startswith('_') and 'zNavBar' not in k and 'navbar' not in k.lower()
+        ]
         idx = keys_list.index(start_key) if start_key and start_key in keys_list else 0
         
         # Chunk accumulator
@@ -822,6 +854,46 @@ class zWizard:
                 key, value, self.zcli, self.walker, self.logger, self.display
             )
             if rbac_check_result == RBAC_ACCESS_DENIED:
+                idx += 1
+                continue
+            
+            # ════════════════════════════════════════════════════════════════
+            # EXECUTE BLOCK LOGIC (v1.5.13 - Menu Support for Bifrost)
+            # ════════════════════════════════════════════════════════════════
+            # Before yielding keys for rendering, execute the block logic.
+            # This allows modifiers (like *) to emit display events (like zMenu)
+            # BEFORE the frontend tries to render them.
+            #
+            # Flow:
+            #   1. Execute dispatch_fn (triggers menu logic, etc.)
+            #   2. Check if result is None AND key has * modifier (menu)
+            #   3. If menu pause, yield current chunk and stop (menu event already emitted)
+            #   4. Otherwise, accumulate key for rendering
+            #
+            # NOTE: Navbar is filtered out of keys_list entirely (see line 876)
+            # so it never reaches this execution loop.
+            
+            try:
+                result = dispatch_fn(key, value)
+                
+                # Check if this is a menu (has * modifier) AND returned None (pause signal)
+                # NOTE: Regular blocks (zDisplay, etc.) also return None, so we MUST check for *
+                is_menu = '*' in key
+                if result is None and is_menu:
+                    self.logger.info(f"[zWizard.chunked] ⏸️  Menu '{key}' returned None - pausing for user interaction")
+                    
+                    # Add current key to chunk (it rendered a menu)
+                    current_chunk.append(key)
+                    
+                    # Yield chunk with pause signal
+                    yield (current_chunk, False, {"_paused": True})
+                    
+                    # Exit generator - wait for frontend to send continuation/selection
+                    return None
+                
+            except Exception as error:
+                self.logger.error(f"[zWizard.chunked] Error executing {key}: {error}")
+                # Continue to next key instead of crashing
                 idx += 1
                 continue
             

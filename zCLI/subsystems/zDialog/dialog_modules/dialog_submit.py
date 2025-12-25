@@ -138,6 +138,72 @@ __all__ = ["handle_submit"]
 
 
 # ============================================================================
+# Helper: Session Interpolation
+# ============================================================================
+
+def _interpolate_session_values(obj: Any, session: Dict[str, Any], logger: Any) -> Any:
+    """
+    Recursively replace %session.* placeholders with actual session values.
+    
+    This function performs session interpolation for zDialog onSubmit expressions,
+    mirroring the logic used in dispatch_launcher.py for _data blocks.
+    
+    Parameters
+    ----------
+    obj : Any
+        The object to process. Can be dict, list, str, or any other type.
+    session : Dict[str, Any]
+        The session dictionary from zcli.session
+    logger : Any
+        Logger instance for debug output
+    
+    Returns
+    -------
+    Any
+        Object with %session.* placeholders resolved
+    
+    Examples
+    --------
+    >>> session = {"zAuth": {"applications": {"zCloud": {"id": 1}}}}
+    >>> where = {"id": "%session.zAuth.applications.zCloud.id"}
+    >>> result = _interpolate_session_values(where, session, logger)
+    >>> # Returns: {"id": 1}
+    """
+    if isinstance(obj, dict):
+        # Recursively process dictionary values
+        return {k: _interpolate_session_values(v, session, logger) for k, v in obj.items()}
+    
+    elif isinstance(obj, list):
+        # Recursively process list items
+        return [_interpolate_session_values(item, session, logger) for item in obj]
+    
+    elif isinstance(obj, str) and obj.startswith("%session."):
+        # Interpolate session path
+        session_path = obj[9:]  # Remove "%session." prefix
+        path_parts = session_path.split('.')
+        
+        # Navigate session dict
+        session_value = session
+        for part in path_parts:
+            if isinstance(session_value, dict):
+                session_value = session_value.get(part)
+            else:
+                session_value = None
+                break
+        
+        if session_value is not None:
+            logger.debug(f"[zDialog] Session interpolation: {obj} → {session_value}")
+        else:
+            logger.warning(f"[zDialog] Failed to interpolate session path: {obj}")
+        
+        return session_value
+    
+    else:
+        # Return unchanged (int, float, bool, None, non-session strings, etc.)
+        return obj
+
+
+# ============================================================================
 # Public API
 # ============================================================================
 
@@ -413,6 +479,9 @@ def _handle_dict_submit(
         # Step 1: Inject placeholders (zConv.* => actual values)
         submit_dict = inject_placeholders(submit_dict, zContext, logger)
     
+        # Step 1.5: Interpolate session values (%session.* => actual session values)
+        submit_dict = _interpolate_session_values(submit_dict, walker.zcli.session, logger)
+        
         # Step 2: Inject model if needed (for zCRUD/zData)
         submit_dict = _inject_model_if_needed(submit_dict, zContext)
 

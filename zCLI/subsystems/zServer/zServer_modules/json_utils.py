@@ -29,6 +29,7 @@ Version: v1.5.7 Phase 1.2
 """
 
 import json
+import math
 from typing import Any, Dict
 from datetime import datetime
 
@@ -54,6 +55,37 @@ LOG_MSG_PLACEHOLDER_RESOLVE = "[JSONUtils] Resolving placeholder: %s"
 # =============================================================================
 # JSON RENDERING FUNCTIONS
 # =============================================================================
+
+def safe_json_dumps(obj: Any, **kwargs) -> str:
+    """
+    Safely serialize Python objects to JSON, handling NaN and Infinity.
+    
+    This is the zCLI framework primitive for JSON serialization. It ensures
+    that all data is JSON-safe before calling json.dumps(), preventing
+    frontend parse errors from invalid JSON like NaN or Infinity.
+    
+    Args:
+        obj: Python object to serialize
+        **kwargs: Additional arguments to pass to json.dumps()
+    
+    Returns:
+        str: JSON string with NaN/Infinity converted to null
+    
+    Examples:
+        >>> data = {"status": float('nan'), "count": 42}
+        >>> safe_json_dumps(data)
+        '{"status": null, "count": 42}'
+        
+        >>> safe_json_dumps({"items": [1, float('inf'), 3]})
+        '{"items": [1, null, 3]}'
+    
+    Note:
+        This function is exported via zCLI.__init__ and should be used
+        throughout the framework instead of json.dumps() directly.
+    """
+    sanitized = _make_json_safe(obj)
+    return json.dumps(sanitized, **kwargs)
+
 
 def render_json_response(
     route: Dict[str, Any],
@@ -96,8 +128,8 @@ def render_json_response(
     # Get status code
     status_code = route.get(KEY_STATUS, DEFAULT_STATUS)
     
-    # Create JSON response
-    json_body = json.dumps(resolved_data, indent=2)
+    # Create JSON response (using safe serialization to handle NaN/Infinity)
+    json_body = safe_json_dumps(resolved_data, indent=2)
     body_bytes = json_body.encode('utf-8')
     
     # Headers
@@ -115,6 +147,7 @@ def _make_json_safe(obj: Any, max_depth: int = 10, _depth: int = 0) -> Any:
     
     Handles:
         - Dicts and lists (recursive)
+        - NaN and Infinity → None (JSON null)
         - Complex objects → string representation
         - Circular references (max depth limit)
     
@@ -125,13 +158,29 @@ def _make_json_safe(obj: Any, max_depth: int = 10, _depth: int = 0) -> Any:
     
     Returns:
         JSON-safe representation of obj
+    
+    Note:
+        NaN and Infinity are NOT valid JSON (they're JavaScript-specific).
+        The JSON spec only allows: null, true, false, numbers, strings, arrays, objects.
+        We convert NaN/Infinity to None (JSON null) as the semantically correct representation
+        of "missing" or "invalid" numeric values.
     """
     # Depth limit to prevent infinite recursion
     if _depth > max_depth:
         return "<max_depth_exceeded>"
     
-    # Already JSON-safe primitives
-    if obj is None or isinstance(obj, (str, int, float, bool)):
+    # None
+    if obj is None:
+        return None
+    
+    # String, int, bool - already JSON-safe
+    if isinstance(obj, (str, int, bool)):
+        return obj
+    
+    # Float - check for NaN/Infinity (NOT valid JSON!)
+    if isinstance(obj, float):
+        if math.isnan(obj) or math.isinf(obj):
+            return None  # Convert to JSON null
         return obj
     
     # Dict - recursively process values

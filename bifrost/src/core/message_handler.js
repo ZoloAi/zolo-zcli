@@ -28,6 +28,28 @@ export class MessageHandler {
   }
 
   /**
+   * Extract session ID from HTTP cookie for session sync
+   * @private
+   * @returns {string|null} Session ID or null if not found
+   */
+  _getSessionIdFromCookie() {
+    // Parse all cookies
+    const cookies = document.cookie.split(';');
+    
+    // Look for 'session' cookie (Flask default) or 'sessionid' (Django)
+    for (let cookie of cookies) {
+      const [name, value] = cookie.trim().split('=');
+      if (name === 'session' || name === 'sessionid') {
+        this.logger.log(`[MessageHandler] 🔐 Found session cookie: ${name}=${value.substring(0, 10)}...`);
+        return value;
+      }
+    }
+    
+    this.logger.log('[MessageHandler] ⚠️  No session cookie found (user not logged in)');
+    return null;
+  }
+
+  /**
    * Validate outgoing message follows protocol
    * @private
    */
@@ -148,6 +170,14 @@ export class MessageHandler {
         return;
       }
 
+      // Menu event (menu navigation in Bifrost mode)
+      if (message.event === 'menu') {
+        console.log('📋 [MessageHandler] ✅ MENU EVENT DETECTED - calling onMenu hook');
+        console.log('📋 [MessageHandler] Menu config:', message);
+        this.hooks.call('onMenu', message);
+        return;
+      }
+
       // RBAC denial event (access denied)
       if (message.event === 'rbac_denied') {
         console.log('🚫 [MessageHandler] ✅ RBAC ACCESS DENIED');
@@ -252,6 +282,9 @@ export class MessageHandler {
       this._handleBroadcast(message);
 
     } catch (error) {
+      console.error('❌❌❌ [MessageHandler] CRITICAL ERROR:', error);
+      console.error('❌❌❌ [MessageHandler] Error stack:', error.stack);
+      console.error('❌❌❌ [MessageHandler] Raw data:', data);
       this.logger.log('❌ Failed to parse message', { data, error });
       this.hooks.call('onError', error);
     }
@@ -263,6 +296,15 @@ export class MessageHandler {
   async send(payload, sendFn, timeout = null) {
     // Validate message follows protocol
     this._validateOutgoingMessage(payload);
+    
+    // Attach session ID from HTTP cookie for session sync (WebSocket/HTTP bridge)
+    // Only attach for walker execution requests, not for form submissions
+    // (forms don't need session sync until AFTER successful login)
+    const sessionId = this._getSessionIdFromCookie();
+    if (sessionId && payload.event === 'execute_walker') {
+      payload._sessionId = sessionId;
+      this.logger.log('[MessageHandler] 🔐 Attached session ID to walker execution');
+    }
     
     const requestId = this.requestId++;
     payload._requestId = requestId;

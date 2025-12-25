@@ -308,8 +308,18 @@ def handle_update(request: Dict[str, Any], ops: Any) -> bool:
     # ============================================================
     # Phase 2: Field/Value Extraction
     # ============================================================
-    fields, values = extract_field_values(request, OP_UPDATE, ops)
-    if not fields:
+    # Check for explicit top-level fields/values first (consistent with UPSERT and documented API)
+    fields = request.get("fields", [])
+    values = request.get("values")
+
+    # If no explicit values, extract from options dict (legacy support)
+    if not values:
+        fields, values = extract_field_values(request, OP_UPDATE, ops)
+        if not fields:
+            return False
+    elif not fields:
+        # Values provided but no fields - error
+        ops.logger.error("Values provided but no fields for UPDATE operation")
         return False
 
     # Build data dictionary for validation and hooks

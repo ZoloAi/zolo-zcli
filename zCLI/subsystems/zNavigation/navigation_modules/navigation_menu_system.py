@@ -385,6 +385,38 @@ class MenuSystem:
         # Build menu object
         menu_obj = self.builder.build(options, title, allow_back)
         
+        # ════════════════════════════════════════════════════════════
+        # BIFROST MODE: Emit zMenu event via zDisplay
+        # ════════════════════════════════════════════════════════════
+        # In Bifrost mode, we emit a zMenu display event that the
+        # frontend will handle. The frontend renders an interactive
+        # menu and sends back the user's selection.
+        from zCLI.subsystems.zConfig.zConfig_modules import ZMODE_ZBIFROST
+        mode = self.zcli.session.get("zMode", "Terminal")
+        
+        if mode == ZMODE_ZBIFROST:
+            self.logger.debug("[MenuSystem] Bifrost mode detected - emitting zMenu event")
+            
+            # Prepare menu data for frontend
+            menu_data = {
+                "options": menu_obj[DICT_KEY_ZHORIZONTAL],
+                "title": title,
+                "allow_back": menu_obj[DICT_KEY_ALLOW_BACK],
+                "metadata": menu_obj.get(DICT_KEY_METADATA, {})
+            }
+            
+            # Emit via zDisplay (uses send_gui_event which handles buffering + broadcast)
+            if hasattr(self.zcli, 'display') and hasattr(self.zcli.display, 'primitives'):
+                self.zcli.display.primitives.send_gui_event('zMenu', menu_data)
+                self.logger.info("[MenuSystem] ✅ zMenu event emitted to Bifrost frontend")
+            
+            # Return None - Bifrost will handle rendering and user interaction
+            # The walker will receive the selection via a separate WebSocket event
+            return None
+        
+        # ════════════════════════════════════════════════════════════
+        # TERMINAL MODE: Render and block for user input
+        # ════════════════════════════════════════════════════════════
         # Render menu
         self.renderer.render(menu_obj, display)
         

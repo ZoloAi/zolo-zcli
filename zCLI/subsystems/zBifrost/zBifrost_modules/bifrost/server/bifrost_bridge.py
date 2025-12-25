@@ -277,11 +277,14 @@ class zBifrost:
         )
 
         # Initialize event handlers (event-driven architecture)
+        from .modules.events.bridge_event_menu import MenuEvents
+        
         self.events = {
             'client': ClientEvents(self, auth_manager=self.auth),
             'cache': CacheEvents(self, auth_manager=self.auth),
             'discovery': DiscoveryEvents(self, auth_manager=self.auth),
-            'dispatch': DispatchEvents(self, auth_manager=self.auth)
+            'dispatch': DispatchEvents(self, auth_manager=self.auth),
+            'menu': MenuEvents(self)
         }
 
         # Event map - single registry for all events (like zDisplay)
@@ -303,6 +306,9 @@ class zBifrost:
 
             # Dispatch events (zDispatch commands)
             EVENT_DISPATCH: self.events['dispatch'].handle_dispatch,
+            
+            # Menu events (menu navigation in Bifrost mode)
+            'menu_selection': self.events['menu'].handle_menu_selection,
             
             # Walker execution events (declarative UI rendering)
             'execute_walker': self.message_handler._handle_walker_execution,
@@ -515,7 +521,8 @@ class zBifrost:
                 EVENT_INPUT_RESPONSE, EVENT_CONNECTION_INFO, EVENT_PAGE_UNLOAD, EVENT_GET_SCHEMA, 
                 EVENT_CLEAR_CACHE, EVENT_CACHE_STATS, EVENT_SET_CACHE_TTL,
                 EVENT_DISCOVER, EVENT_INTROSPECT, EVENT_DISPATCH,
-                'execute_walker', 'load_page', 'form_submit'  # Walker and form events need responses
+                'execute_walker', 'load_page', 'form_submit',  # Walker and form events need responses
+                'menu_selection'  # Menu selection needs immediate response
             }
             
             if event in builtin_events:

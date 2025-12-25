@@ -48,7 +48,7 @@ Example:
     await handler.handle_message(ws, json_message, broadcast_func)
 """
 
-from zCLI import asyncio, json, Dict, Any, Optional, Callable, Awaitable
+from zCLI import asyncio, json, Dict, Any, Optional, Callable, Awaitable, safe_json_dumps
 
 # ═══════════════════════════════════════════════════════════
 # Module Constants
@@ -479,6 +479,30 @@ class MessageHandler:
                 await ws.send(self._build_response(data, error="Missing zVaFile parameter"))
                 return True
             
+            # ═══════════════════════════════════════════════════════════════
+            # HTTP/WebSocket Session Sync (CRITICAL for RBAC)
+            # ═══════════════════════════════════════════════════════════════
+            # WebSockets don't automatically send HTTP cookies. To support RBAC,
+            # we extract the HTTP session ID from the WebSocket message and load
+            # the authenticated session into zcli.session.
+            session_id = data.get("_sessionId")
+            if session_id:
+                try:
+                    # Load HTTP session from session backend
+                    http_session = await self._load_http_session(session_id)
+                    if http_session:
+                        # Inject authenticated session into zcli.session
+                        self.zcli.session.update(http_session)
+                        self.logger.info(f"[MessageHandler] 🔐 Loaded HTTP session (user authenticated)")
+                        self.logger.debug(f"[MessageHandler] Session keys: {list(http_session.keys())}")
+                    else:
+                        self.logger.warning(f"[MessageHandler] ⚠️  Session ID provided but session not found (expired?)")
+                except Exception as e:
+                    self.logger.error(f"[MessageHandler] Error loading HTTP session: {e}")
+                    # Continue anyway - session sync is best-effort
+            else:
+                self.logger.debug(f"[MessageHandler] No session ID provided (user not logged in)")
+            
             self.logger.info(f"[MessageHandler] Executing walker: {zVaFolder}/{zVaFile}.{zBlock}")
             
             # Check if this is a dashboard panel load (has _renderTarget)
@@ -549,12 +573,29 @@ class MessageHandler:
             folder_part = zVaFolder.lstrip('@.')
             full_crumb_path = f"@.{folder_part}.{zVaFile}.{zBlock}"
             
-            # Initialize zCrumbs if not present
+            # Initialize zCrumbs with enhanced format v2.0 (trails + metadata)
+            # This matches the format from zNavigation subsystem (commit d455efd)
             if "zCrumbs" not in self.zcli.session:
-                self.zcli.session["zCrumbs"] = {}
+                self.zcli.session["zCrumbs"] = {
+                    'trails': {},
+                    '_context': {},
+                    '_depth_map': {}
+                }
+                self.logger.debug(f"[MessageHandler] Initialized zCrumbs with enhanced v2.0 format")
             
-            # Set breadcrumb for this block
-            self.zcli.session["zCrumbs"][full_crumb_path] = []
+            # Ensure enhanced format structure exists (auto-migrate from flat format if needed)
+            if 'trails' not in self.zcli.session["zCrumbs"]:
+                self.logger.info(f"[MessageHandler] Migrating zCrumbs from flat to enhanced v2.0 format")
+                # Preserve existing trails (filter out metadata keys starting with _)
+                old_trails = {k: v for k, v in self.zcli.session["zCrumbs"].items() if not k.startswith('_')}
+                self.zcli.session["zCrumbs"] = {
+                    'trails': old_trails,
+                    '_context': {},
+                    '_depth_map': {}
+                }
+            
+            # Set breadcrumb for this block (in trails sub-dict for enhanced format)
+            self.zcli.session["zCrumbs"]['trails'][full_crumb_path] = []
             self.zcli.session["zBlock"] = zBlock
             
             self.logger.debug(f"[MessageHandler] Initialized breadcrumb: {full_crumb_path}")
@@ -613,7 +654,7 @@ class MessageHandler:
                                     "message": "\n".join(denial_messages),
                                     "_requestId": data.get("_requestId")
                                 }
-                                await ws.send(json.dumps(error_msg))
+                                await ws.send(safe_json_dumps(error_msg))
                                 self.logger.info("[MessageHandler] ✅ Sent RBAC denial message to frontend")
                             
                             # Send navigate_back event
@@ -623,7 +664,7 @@ class MessageHandler:
                                     "reason": "rbac_denied",
                                     "_requestId": data.get("_requestId")
                                 }
-                                await ws.send(json.dumps(navigate_back_msg))
+                                await ws.send(safe_json_dumps(navigate_back_msg))
                                 self.logger.info("[MessageHandler] ✅ Sent navigate_back event")
                             
                             # Skip normal chunk processing
@@ -673,7 +714,7 @@ class MessageHandler:
                             "zBlock": zBlock,  # Include block name for id attribute
                             "_requestId": data.get("_requestId")
                         }
-                        await ws.send(json.dumps(chunk_msg))
+                        await ws.send(safe_json_dumps(chunk_msg))
                         self.logger.info(f"[MessageHandler] ✅ Sent chunk {chunk_num}")
                         
                         if is_gate:
@@ -729,7 +770,7 @@ class MessageHandler:
                             "reason": "bounce_back_block_completed",
                             "_requestId": data.get("_requestId")
                         }
-                        await ws.send(json.dumps(navigate_back_msg))
+                        await ws.send(safe_json_dumps(navigate_back_msg))
                         self.logger.info("[MessageHandler] ✅ Sent navigate_back event for bounce-back block")
                         return True  # Don't send completion, just return (matching gate-based pattern)
                     
@@ -1125,7 +1166,7 @@ class MessageHandler:
                     "zBlock": zBlock,  # Include block name for id attribute
                     "_requestId": gen_state['request_id']  # Use original walker request ID
                 }
-                await ws.send(json.dumps(chunk_msg))
+                await ws.send(safe_json_dumps(chunk_msg))
                 self.logger.info(f"[GeneratorResume] ✅ Sent post-gate chunk {chunk_num}")
                 
                 # If another gate is encountered, pause again (nested gates)
@@ -1146,7 +1187,7 @@ class MessageHandler:
                     "reason": "bounce_back_block_completed",
                     "_requestId": form_data.get("_requestId")
                 }
-                await ws.send(json.dumps(bounce_msg))
+                await ws.send(safe_json_dumps(bounce_msg))
             
         except StopIteration as e:
             # Generator finished naturally
@@ -1253,7 +1294,7 @@ class MessageHandler:
                                 event_msg["_requestId"] = request_data["_requestId"]
                             
                             # Send the special event
-                            await ws.send(json.dumps(event_msg))
+                            await ws.send(safe_json_dumps(event_msg))
                             self.logger.info(f"[MessageHandler] ✅ Sent special {event_type} event")
                             events_sent += 1
                             
@@ -1261,11 +1302,12 @@ class MessageHandler:
                             if key not in keys_to_remove:
                                 keys_to_remove.append(key)
         
-        # Remove keys that contained only special events
+        # Remove keys that contained only special events from chunk_data
+        # This prevents double-rendering (once as special event, once in chunk)
         for key in keys_to_remove:
-            # Only remove if ALL items in the list were special events
-            # For now, we'll just mark them as processed
-            pass  # Keep in chunk for now to maintain structure
+            if key in chunk_data:
+                del chunk_data[key]
+                self.logger.info(f"[MessageHandler] 🗑️  Removed '{key}' from chunk (sent as special event)")
         
         return events_sent
     
@@ -1357,7 +1399,7 @@ class MessageHandler:
                         
                         # Send success message to frontend (if result is dict with success/message)
                         if isinstance(result, dict) and 'success' in result:
-                            await ws.send(json.dumps({
+                            await ws.send(safe_json_dumps({
                                 "success": result.get("success"),
                                 "message": result.get("message", "Logout completed"),
                                 "_requestId": data.get("_requestId")
@@ -1370,7 +1412,7 @@ class MessageHandler:
                     
                     except Exception as e:
                         self.logger.error(f"[GateAction] Failed to auto-execute zLogout: {e}", exc_info=True)
-                        await ws.send(json.dumps({
+                        await ws.send(safe_json_dumps({
                             "success": False,
                             "message": f"Logout failed: {str(e)}",
                             "_requestId": data.get("_requestId")
@@ -1458,6 +1500,65 @@ class MessageHandler:
         """
         return data.get(MSG_KEY_EVENT) or data.get(MSG_KEY_ACTION)
     
+    async def _load_http_session(self, session_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Load HTTP session data from session backend for WebSocket/HTTP session sync.
+        
+        This method bridges HTTP sessions (cookies) with WebSocket connections,
+        enabling RBAC to work correctly across both protocols. It loads the
+        authenticated session from Flask's session backend and returns the
+        session data as a dictionary.
+        
+        Args:
+            session_id: HTTP session ID from cookie
+            
+        Returns:
+            Dict with session data (including zAuth context) or None if not found
+            
+        Raises:
+            No exceptions - returns None on any error (fail-safe)
+        """
+        try:
+            # Check if we have a Flask session interface
+            if not hasattr(self.zcli, 'server') or not hasattr(self.zcli.server, 'app'):
+                self.logger.debug("[MessageHandler] No Flask app found, cannot load HTTP session")
+                return None
+            
+            flask_app = self.zcli.server.app
+            
+            # Import Flask session utilities
+            from itsdangerous import URLSafeTimedSerializer, BadSignature
+            from flask.sessions import SecureCookieSessionInterface
+            
+            # Create session interface
+            session_interface = SecureCookieSessionInterface()
+            
+            # Deserialize the session cookie (Flask uses signed cookies)
+            serializer = URLSafeTimedSerializer(
+                flask_app.secret_key,
+                salt='cookie-session',
+                serializer=session_interface.serializer
+            )
+            
+            try:
+                # Decode the session cookie
+                session_data = serializer.loads(session_id)
+                self.logger.info(f"[MessageHandler] ✅ Successfully loaded HTTP session")
+                return dict(session_data)
+            except BadSignature:
+                self.logger.warning(f"[MessageHandler] Invalid or expired session signature")
+                return None
+            except Exception as e:
+                self.logger.error(f"[MessageHandler] Error deserializing session: {e}")
+                return None
+                
+        except ImportError as e:
+            self.logger.warning(f"[MessageHandler] Flask not available for session loading: {e}")
+            return None
+        except Exception as e:
+            self.logger.error(f"[MessageHandler] Unexpected error loading HTTP session: {e}")
+            return None
+    
     def _build_response(self, data: Dict[str, Any], **response_fields) -> str:
         """
         Build JSON response with _requestId echoed from request.
@@ -1475,7 +1576,7 @@ class MessageHandler:
         if "_requestId" in data:
             response["_requestId"] = data["_requestId"]
         
-        return json.dumps(response)
+        return safe_json_dumps(response)
     
     async def _handle_dispatch(
         self,
@@ -1509,7 +1610,7 @@ class MessageHandler:
         
         if not zKey:
             # No command, just broadcast
-            await broadcast_func(json.dumps(data), sender=ws)
+            await broadcast_func(safe_json_dumps(data), sender=ws)
             return True
         
         from zCLI.subsystems.zDispatch import handle_zDispatch
