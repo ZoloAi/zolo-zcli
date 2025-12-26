@@ -20,36 +20,31 @@ export class NavigationManager {
 
   /**
    * Enable client-side navigation (SPA-style routing)
+   * 
+   * ✨ REFACTORED: Global click handler removed in favor of individual link handlers
+   * 
+   * Previously, this method attached a global click handler to intercept ALL navbar links.
+   * Now, individual links (rendered via link_primitives.js) have their own handlers.
+   * This is cleaner, more maintainable, and aligns with primitive-driven architecture.
+   * 
+   * The global handler was causing conflicts (stopPropagation prevented individual handlers).
+   * Individual handlers are the single source of truth for link behavior.
    */
   enableClientSideNavigation() {
     if (typeof document === 'undefined') return;
     
-    // Remove any existing listeners to avoid duplicates
+    // Remove legacy global handler if it exists (cleanup from old implementation)
     if (this.client._navClickHandler) {
       document.removeEventListener('click', this.client._navClickHandler, true);
+      this.client._navClickHandler = null;
+      console.log('[ClientNav] 🗑️  Removed legacy global click handler (now using individual link handlers)');
     }
     
-    // Create navigation click handler
-    this.client._navClickHandler = async (e) => {
-      // Find if click target is within a navbar link OR brand link
-      const link = e.target.closest('.zNavbar-nav .zNav-link, .zNavbar-brand');
-      if (!link) return;
-      
-      // Prevent default HTTP navigation
-      e.preventDefault();
-      e.stopPropagation();
-      
-      const href = link.getAttribute('href');
-      if (!href || href === '#') return;
-      
-      console.log('[ClientNav] 🔗 Intercepted navigation to:', href);
-      
-      // Navigate via WebSocket (no page reload!)
-      await this.navigateToRoute(href);
-    };
+    // ✅ Individual links now handle their own clicks via link_primitives.js
+    // No global handler needed - each link has its own addEventListener('click', ...)
+    // This is the primitive-driven way: each component manages its own behavior
     
-    // Use capture phase to ensure we intercept before other handlers
-    document.addEventListener('click', this.client._navClickHandler, true);
+    console.log('[ClientNav] ✅ Client-side navigation enabled (using individual link handlers)');
     
     // Handle browser back/forward buttons
     if (!this.client._popstateHandler) {

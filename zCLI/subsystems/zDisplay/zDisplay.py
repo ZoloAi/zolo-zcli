@@ -198,6 +198,7 @@ EVENT_SELECTION = "selection"
 EVENT_READ_STRING = "read_string"
 EVENT_READ_PASSWORD = "read_password"
 EVENT_BUTTON = "button"
+EVENT_LINK = "link"
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Event Name Constants - Primitive Events
@@ -347,6 +348,7 @@ class zDisplay(zDisplayDelegates):
             EVENT_READ_STRING: self.zPrimitives.read_string,
             EVENT_READ_PASSWORD: self.zPrimitives.read_password,
             EVENT_BUTTON: self.zEvents.button,
+            EVENT_LINK: self.zEvents.link,
 
             # Primitive events
             EVENT_WRITE_RAW: self.zPrimitives.raw,
@@ -535,3 +537,52 @@ class zDisplay(zDisplayDelegates):
             bool: True if clicked (y), False if cancelled (n)
         """
         return self.zEvents.button(label, action, color)
+
+    def link(
+        self,
+        label: str,
+        href: str,
+        target: str = "_self",
+        **kwargs
+    ) -> Optional[Any]:
+        """Convenience method: Display a semantic link with mode-aware rendering.
+        
+        Terminal-First Design:
+        - Terminal: Auto-navigate for internal links, prompt for external links
+        - Bifrost: Semantic <a> tag with proper target and security attributes
+        
+        Supports:
+        - Internal navigation (delta $, zPath @)
+        - External URLs (http/https) with target control
+        - Anchor links (#section) with smooth scroll
+        - Placeholder links (#) for styled text
+        - Window features for custom popup windows
+        
+        Args:
+            label: Link text to display
+            href: Link destination (internal $/@, external http/https, anchor #, placeholder #)
+            target: Target behavior (_self, _blank, _parent, _top)
+            **kwargs: Additional parameters:
+                - color: Link color theme
+                - rel: Link relationship (auto-added for _blank external)
+                - window: Dict with width, height, features for window.open()
+                - _zClass: CSS classes for styling (e.g., "zBtn zBtn-primary")
+            
+        Returns:
+            Navigation result (for internal links) or None
+            
+        Examples:
+            # Internal navigation
+            zcli.display.link("About", "$zAbout")
+            
+            # External link (new tab)
+            zcli.display.link("GitHub", "https://github.com", target="_blank")
+            
+            # Styled as button
+            zcli.display.link("Docs", "https://docs.site.com", 
+                             _zClass="zBtn zBtn-primary")
+            
+            # Placeholder for mock/design
+            zcli.display.link("Coming Soon", "#", _zClass="zBtn zBtn-secondary")
+        """
+        return self.zEvents.link(label, href, target, **kwargs)

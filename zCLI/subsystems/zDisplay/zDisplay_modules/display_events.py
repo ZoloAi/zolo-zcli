@@ -118,6 +118,7 @@ from .events.display_event_advanced import AdvancedData
 from .events.display_event_system import zSystem
 from .events.display_event_timebased import TimeBased
 from .events.display_event_media import MediaEvents
+from .events.display_event_links import LinkEvents
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -146,30 +147,32 @@ DEFAULT_MENU_PROMPT = "Select an option:"
 # ═══════════════════════════════════════════════════════════════════════════
 
 class zEvents:
-    """Event orchestrator - composes 8 event packages with cross-references.
+    """Event orchestrator - composes 9 event packages with cross-references.
     
     This class implements the composition pattern to orchestrate specialized
     event packages, wiring them together so they can call each other's methods.
-    It also provides 21 convenience delegate methods for backward compatibility.
+    It also provides convenience delegate methods for backward compatibility.
     
     **Architecture Pattern:**
-    - **Composition**: Composes 8 specialized event packages
+    - **Composition**: Composes 9 specialized event packages
     - **Cross-Reference**: Wires packages together for inter-dependencies
     - **Delegation**: Provides backward-compatible convenience methods
     
     **Event Packages:**
     - BasicOutputs: header, text (foundation for all other packages)
-    - BasicInputs: selection (unified single/multi-select)
+    - BasicInputs: selection, button (unified single/multi-select)
     - Signals: error, warning, success, info, zMarker
     - BasicData: list, json_data
     - AdvancedData: zTable (with pagination)
     - zSystem: zDeclare, zSession, zCrumbs, zMenu, zDialog
     - TimeBased: progress_bar, spinner, progress_iterator, indeterminate_progress
+    - MediaEvents: image, video, audio (media rendering)
+    - LinkEvents: link (semantic link rendering with target support)
     
     **Cross-Reference Dependencies:**
-    - BasicOutputs → Used by ALL 6 other packages
+    - BasicOutputs → Used by ALL other packages
     - Signals → Used by AdvancedData, zSystem
-    - BasicInputs → Used by zSystem
+    - BasicInputs → Used by zSystem, MediaEvents
     
     **Layer Position:** Layer 2 (Orchestrator)
     - Built on: primitives (Layer 1)
@@ -203,7 +206,7 @@ class zEvents:
         """
         self.display = display_instance
 
-        # Step 1: Initialize all 8 event packages
+        # Step 1: Initialize all 9 event packages
         self.BasicOutputs = BasicOutputs(display_instance)
         self.BasicInputs = BasicInputs(display_instance)
         self.Signals = Signals(display_instance)
@@ -212,6 +215,7 @@ class zEvents:
         self.zSystem = zSystem(display_instance)
         self.TimeBased = TimeBased(display_instance)
         self.MediaEvents = MediaEvents(display_instance)
+        self.LinkEvents = LinkEvents(display_instance)
 
         # Step 2: Set up cross-references (packages can call each other)
         # 
@@ -235,6 +239,8 @@ class zEvents:
         self.TimeBased.BasicOutputs = self.BasicOutputs
         self.MediaEvents.BasicOutputs = self.BasicOutputs
         self.MediaEvents.BasicInputs = self.BasicInputs
+        self.LinkEvents.BasicOutputs = self.BasicOutputs
+        self.LinkEvents.BasicInputs = self.BasicInputs
 
     # ═══════════════════════════════════════════════════════════════════════════
     # Convenience Delegates - BasicOutputs
@@ -331,22 +337,27 @@ class zEvents:
     # Convenience Delegates - BasicInputs
     # ═══════════════════════════════════════════════════════════════════════════
 
-    def selection(self, prompt: str, options: List[Any], multi: bool = False, default: Optional[Any] = None, style: str = DEFAULT_STYLE_NUMBERED) -> Any:
+    def selection(self, prompt: str, options: List[Any], multi: bool = False, default: Optional[Any] = None, style: str = DEFAULT_STYLE_NUMBERED, action_type: Optional[str] = None) -> Any:
         """Prompt user for selection from options.
         
         Convenience delegate to BasicInputs.selection for backward compatibility.
         
+        NEW v1.6.1: Added action_type parameter for link actions.
+        
         Args:
             prompt: Selection prompt text
-            options: List of options to choose from
+            options: List of options to choose from (strings or link dicts)
             multi: Allow multiple selections (default: False)
             default: Default selection value
             style: Display style (default: numbered)
+            action_type: Action to perform after selection (default: None)
+                         - "link": Execute link action (open URL, navigate)
+                         - None: Return selected value(s) only
             
         Returns:
             Any: Selected option(s) from BasicInputs.selection method
         """
-        return self.BasicInputs.selection(prompt, options, multi, default, style)
+        return self.BasicInputs.selection(prompt, options, multi, default, style, action_type)
 
     def button(self, label: str, action: Optional[str] = None, color: str = "primary", **kwargs) -> bool:
         """Display a button that requires confirmation to execute.
@@ -363,6 +374,55 @@ class zEvents:
             bool: True if clicked (y), False if cancelled (n)
         """
         return self.BasicInputs.button(label, action, color, **kwargs)
+
+    def link(self, label: str, href: str, target: str = "_self", **kwargs) -> Optional[Any]:
+        """Display a semantic link with mode-aware rendering.
+        
+        Convenience delegate to LinkEvents.handle_link for cross-mode link rendering.
+        
+        Terminal Mode:
+        - Internal links: Auto-navigate via zLink
+        - External links: Prompt user, open in browser
+        - Anchor links: Display with icon (no scroll)
+        - Placeholder (#): Display as styled text
+        
+        Bifrost Mode:
+        - Renders as semantic <a> tag with proper target and security attributes
+        - Internal links: Client-side routing
+        - External links: Native browser behavior
+        - Anchor links: Smooth scroll
+        
+        Args:
+            label: Link text to display
+            href: Link destination (internal $/@, external http/https, anchor #)
+            target: Target behavior (_self, _blank, _parent, _top)
+            **kwargs: Additional parameters:
+                - color: Link color theme
+                - rel: Link relationship (auto-added for _blank external)
+                - window: Dict with width, height, features for window.open()
+                - _zClass: CSS classes for styling
+            
+        Returns:
+            Navigation result (for internal links) or None
+            
+        Examples:
+            # Internal navigation
+            display.zEvents.link("About", "$zAbout")
+            
+            # External link (new tab)
+            display.zEvents.link("GitHub", "https://github.com", target="_blank")
+            
+            # Styled as button
+            display.zEvents.link("Docs", "https://docs.site.com", 
+                                _zClass="zBtn zBtn-primary")
+        """
+        link_data = {
+            'label': label,
+            'href': href,
+            'target': target,
+            **kwargs
+        }
+        return self.LinkEvents.handle_link(link_data)
 
     # ═══════════════════════════════════════════════════════════════════════════
     # Convenience Delegates - Signals

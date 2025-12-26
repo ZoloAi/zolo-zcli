@@ -142,9 +142,17 @@ export class ZVaFManager {
     try {
       // Use embedded zuiConfig (already RBAC-filtered by backend on page load)
       if (this.zuiConfig && this.zuiConfig.zNavBar) {
-        const navHTML = await this.client._renderMetaNavBarHTML(this.zuiConfig.zNavBar);
-        this.client._zNavBarElement.innerHTML = navHTML;
-        console.log('[NavBar] ✅ NavBar populated from embedded config:', this.zuiConfig.zNavBar);
+        const navElement = await this.client._renderMetaNavBarHTML(this.zuiConfig.zNavBar);
+        
+        // 🔧 FIX v1.6.1: Append DOM element directly (NOT innerHTML!)
+        // This preserves event listeners attached by link_primitives.js
+        this.client._zNavBarElement.innerHTML = ''; // Clear first
+        if (navElement) {
+          this.client._zNavBarElement.appendChild(navElement);
+          console.log('[NavBar] ✅ NavBar populated from embedded config (DOM element):', this.zuiConfig.zNavBar);
+        } else {
+          console.warn('[NavBar] renderMetaNavBarHTML returned null');
+        }
         
         // Enable client-side navigation after navbar is rendered
         await this.client._enableClientSideNavigation();
@@ -177,10 +185,17 @@ export class ZVaFManager {
         this.zuiConfig.zNavBar = freshConfig.zNavBar;
         this.client.zuiConfig.zNavBar = freshConfig.zNavBar;
         
-        // Render navbar HTML and set it on the element
-        const navHTML = await this.client._renderMetaNavBarHTML(freshConfig.zNavBar);
-        this.client._zNavBarElement.innerHTML = navHTML;
-        console.log('[NavBar] ✅ NavBar populated with fresh RBAC-filtered items');
+        // Render navbar element and append it (preserves event listeners!)
+        const navElement = await this.client._renderMetaNavBarHTML(freshConfig.zNavBar);
+        
+        // 🔧 FIX v1.6.1: Append DOM element directly (NOT innerHTML!)
+        this.client._zNavBarElement.innerHTML = ''; // Clear first
+        if (navElement) {
+          this.client._zNavBarElement.appendChild(navElement);
+          console.log('[NavBar] ✅ NavBar populated with fresh RBAC-filtered items (DOM element)');
+        } else {
+          console.warn('[NavBar] renderMetaNavBarHTML returned null');
+        }
         
         // Re-enable client-side navigation after navbar is re-rendered
         await this.client._enableClientSideNavigation();

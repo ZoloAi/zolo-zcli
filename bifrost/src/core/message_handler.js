@@ -171,8 +171,9 @@ export class MessageHandler {
       }
 
       // Menu event (menu navigation in Bifrost mode)
-      if (message.event === 'menu') {
-        console.log('📋 [MessageHandler] ✅ MENU EVENT DETECTED - calling onMenu hook');
+      // Note: Backend sends 'zMenu' not 'menu' (matches zDash, zDialog pattern)
+      if (message.event === 'zMenu') {
+        console.log('📋 [MessageHandler] ✅ zMENU EVENT DETECTED - calling onMenu hook');
         console.log('📋 [MessageHandler] Menu config:', message);
         this.hooks.call('onMenu', message);
         return;

@@ -142,7 +142,7 @@ choice = basic_inputs.selection("Choose:", ["Option 1", "Option 2"])
 ```
 """
 
-from zCLI import Any, Optional, Union, List
+from zCLI import Any, Optional, Union, List, Dict
 from typing import Set
 
 
@@ -304,9 +304,10 @@ class BasicInputs:
     # Main Selection Method (Refactored)
     # ═══════════════════════════════════════════════════════════════════════════
 
-    def selection(self, prompt: str, options: List[str], multi: bool = DEFAULT_MULTI, 
+    def selection(self, prompt: str, options: List[Union[str, Dict[str, Any]]], multi: bool = DEFAULT_MULTI, 
                   default: Optional[Union[str, List[str]]] = None, 
-                  style: str = DEFAULT_STYLE) -> Union[Optional[str], List[str], 'asyncio.Future']:
+                  style: str = DEFAULT_STYLE,
+                  action_type: Optional[str] = None) -> Union[Optional[str], List[str], 'asyncio.Future']:
         """Display selection prompt and collect user's choice(s).
         
         Foundation method for interactive selection prompts. Implements dual-mode
@@ -314,13 +315,22 @@ class BasicInputs:
         
         Supports both single-select (radio button style) and multi-select (checkbox style).
         
+        **NEW v1.6.1: Link Action Support**
+        Options can now be link dictionaries with action execution after selection:
+        - Extract labels from link configs for display
+        - After selection, execute the link action (open URL, navigate, etc.)
+        - Terminal: numbered list → select → open link
+        - Bifrost: button group → click = select + execute
+        
         **Method Refactoring Note:**
         This method was refactored from 56 lines to ~15 lines by extracting 5 sub-methods
         for better testability and maintainability (single responsibility principle).
         
         Args:
             prompt: Selection prompt text
-            options: List of option strings to choose from
+            options: List of option strings OR link dicts to choose from
+                     - Strings: ["Red", "Green", "Blue"]
+                     - Links: [{"label": "zCLI", "href": "...", "target": "_blank"}, ...]
             multi: Enable multi-select mode (default: False)
                    - False: Returns single selected option (str)
                    - True: Returns list of selected options (List[str])
@@ -329,6 +339,9 @@ class BasicInputs:
                      - Multi-select: List[str] (multiple options)
             style: Display style (default: "numbered")
                    Currently only "numbered" is supported
+            action_type: Action to perform after selection (default: None)
+                         - "link": Execute link action (open URL, navigate)
+                         - None: Return selected value(s) only
                 
         Returns:
             Terminal mode:
@@ -338,7 +351,7 @@ class BasicInputs:
                 asyncio.Future - That will resolve to the selection value(s)
             
         Example:
-            # Single-select
+            # Single-select (strings)
             choice = self.BasicInputs.selection("Select color:", ["Red", "Green", "Blue"])
             
             # Multi-select with default
@@ -349,6 +362,18 @@ class BasicInputs:
                 default=["Feature A"]
             )
             
+            # NEW: Link selection with action
+            self.BasicInputs.selection(
+                "Choose a link:",
+                [
+                    {"label": "zCLI", "href": "https://github.com/...", "target": "_blank"},
+                    {"label": "zTheme", "href": "https://github.com/...", "target": "_blank"}
+                ],
+                action_type="link"
+            )
+            # Terminal: Shows numbered list → user selects → opens link
+            # Bifrost: Shows buttons → click = select + open
+            
             # Bifrost mode (fire-and-forget)
             future = self.BasicInputs.selection("Choose:", options)
             result = await future  # Resolves when user selects
@@ -358,21 +383,36 @@ class BasicInputs:
             Composes with: BasicOutputs.text() for terminal display
             Validates: Input range (1 to len(options)), numeric input, toggle behavior
         """
+        # NEW v1.6.1: Extract labels from link dicts if present
+        display_options, link_configs = self._extract_option_labels(options)
+        
         # Try GUI mode first - returns Future if successful
-        gui_future = self._try_gui_mode_future(prompt, options, multi, default, style)
-        if gui_future is not None:
-            return gui_future
+        # For links in Bifrost, send link configs for button rendering
+        if action_type == "link" and link_configs:
+            gui_future = self._try_gui_mode_links(prompt, link_configs, style)
+            if gui_future is not None:
+                return gui_future
+        else:
+            gui_future = self._try_gui_mode_future(prompt, display_options, multi, default, style)
+            if gui_future is not None:
+                return gui_future
 
         # Terminal mode: Validate options
-        if not self._validate_options(options, multi):
+        if not self._validate_options(display_options, multi):
             return [] if multi else None
 
         # Terminal mode: Display prompt and options
         self._display_prompt(prompt)
-        self._display_options(options, multi, default)
+        self._display_options(display_options, multi, default)
 
         # Terminal mode: Handle selection
-        return self._handle_selection(options, multi, default)
+        result = self._handle_selection(display_options, multi, default)
+        
+        # NEW v1.6.1: Execute link action if specified
+        if action_type == "link" and link_configs and result:
+            self._execute_link_action(result, display_options, link_configs)
+        
+        return result
 
     # ═══════════════════════════════════════════════════════════════════════════
     # Helper Methods - Selection Logic (Extracted from selection() for refactoring)
@@ -787,6 +827,119 @@ class BasicInputs:
             color=color
         )
 
+    # ═══════════════════════════════════════════════════════════════════════════
+    # NEW v1.6.1: Link Selection Helper Methods
+    # ═══════════════════════════════════════════════════════════════════════════
+    
+    def _extract_option_labels(self, options: List[Union[str, Dict[str, Any]]]) -> tuple:
+        """Extract display labels from options (strings or link dicts).
+        
+        Args:
+            options: List of strings or link dictionaries
+            
+        Returns:
+            tuple: (display_options, link_configs)
+                - display_options: List[str] - Labels to show user
+                - link_configs: List[Dict] or None - Link configs if present
+        """
+        if not options:
+            return ([], None)
+        
+        # Check if first item is a dict (link config)
+        if isinstance(options[0], dict):
+            # Extract labels from link dicts
+            labels = [opt.get('label', str(opt)) for opt in options]
+            return (labels, options)
+        else:
+            # Plain strings
+            return (options, None)
+    
+    def _try_gui_mode_links(self, prompt: str, link_configs: List[Dict[str, Any]], 
+                            style: str) -> Optional['asyncio.Future']:
+        """Try to handle link selection in GUI mode (Bifrost).
+        
+        In Bifrost, links render as buttons. Clicking = selecting + executing.
+        
+        Args:
+            prompt: Selection prompt text
+            link_configs: List of link configuration dicts
+            style: Display style (for consistency)
+            
+        Returns:
+            Optional[asyncio.Future]: Future that resolves when link is clicked,
+                                      or None if not in GUI mode
+        """
+        if not self.zPrimitives._is_gui_mode():
+            return None
+        
+        # Send link selection as special GUI event
+        # Frontend will render as button group
+        gui_future = self.zPrimitives._send_input_request(
+            'selection_links',  # Special request type for link selection
+            prompt,
+            links=link_configs,
+            style=style
+        )
+        
+        return gui_future
+    
+    def _execute_link_action(self, selected: str, display_options: List[str], 
+                            link_configs: List[Dict[str, Any]]) -> None:
+        """Execute link action after selection in terminal mode.
+        
+        Finds the selected link config and executes it via zOpen or zNavigation.
+        
+        Args:
+            selected: Selected option string
+            display_options: List of display labels
+            link_configs: List of link configuration dicts
+        """
+        if not selected or not link_configs:
+            return
+        
+        # Find the index of the selected option
+        try:
+            index = display_options.index(selected)
+            link_config = link_configs[index]
+        except (ValueError, IndexError):
+            self.zPrimitives.zColors.error(
+                f"Error: Could not find link config for '{selected}'"
+            )
+            return
+        
+        # Extract link properties
+        href = link_config.get('href', '#')
+        target = link_config.get('target', '_self')
+        label = link_config.get('label', selected)
+        
+        # Execute link based on type
+        if href == '#':
+            # Placeholder link
+            self._output_text(f"'{label}' is a placeholder link (no action)", break_after=False)
+            return
+        
+        # Detect link type and execute via appropriate subsystem
+        if href.startswith('http://') or href.startswith('https://') or href.startswith('www.'):
+            # External URL - use zOpen module to open in browser
+            if hasattr(self.display, 'zcli') and hasattr(self.display.zcli, 'open'):
+                self._output_text(f"Opening '{label}' in browser...", break_after=False)
+                # Import the open_url function from the zOpen module
+                from zCLI.subsystems.zOpen.open_modules.open_urls import open_url
+                open_url(href, self.display.zcli.session, self.display, self.display.zcli.logger)
+            else:
+                self._output_text(f"Link: {href}", break_after=False)
+        elif href.startswith('$') or href.startswith('@'):
+            # Internal navigation - use zNavigation
+            if hasattr(self.display, 'zcli') and hasattr(self.display.zcli, 'navigation'):
+                self._output_text(f"Navigating to '{label}'...", break_after=False)
+                # This would need to be coordinated with zWalker for proper navigation
+                self._output_text(f"Internal navigation: {href}", break_after=False)
+            else:
+                self._output_text(f"Link: {href}", break_after=False)
+        else:
+            # Unknown link type
+            self._output_text(f"Link: {href}", break_after=False)
+    
     def _collect_button_confirmation(self, label: str) -> bool:
         """Collect button click confirmation in terminal mode.
         

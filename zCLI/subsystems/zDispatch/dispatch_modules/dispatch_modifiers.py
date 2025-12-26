@@ -424,9 +424,21 @@ class ModifierProcessor:
             # Check if this is a navbar key (~zNavBar*) and apply RBAC filtering
             if zKey.startswith("~zNavBar"):
                 self.logger.framework.debug(f"[Dispatch] Applying dynamic RBAC filtering for navbar: {zKey}")
+                
+                # Strip existing $ prefixes from zHorizontal before filtering
+                # (zLoader already added them, but we need clean items for RBAC)
+                clean_items = []
+                for item in zHorizontal:
+                    if isinstance(item, str):
+                        # Strip $ prefix if present (from zLoader injection)
+                        clean_items.append(item.lstrip('$'))
+                    else:
+                        # Dict items (with RBAC) - keep as-is
+                        clean_items.append(item)
+                
                 # Filter the navbar items based on current authentication state
                 # This extracts clean item names (strings) from mixed list of strings and dicts
-                filtered_items = self.zcli.navigation._filter_navbar_by_rbac(zHorizontal)
+                filtered_items = self.zcli.navigation._filter_navbar_by_rbac(clean_items)
                 self.logger.framework.info(f"[Dispatch] Navbar filtered: {len(zHorizontal)} → {len(filtered_items)} items")
                 # Add delta prefix ($) to filtered items for intra-file navigation
                 zHorizontal = [f"${item}" for item in filtered_items]

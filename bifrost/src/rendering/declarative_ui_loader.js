@@ -86,13 +86,16 @@ export class DeclarativeUILoader {
         if (navbarItems && Array.isArray(navbarItems)) {
           // Render navbar using ZDisplayOrchestrator
           await this.client._ensureZDisplayOrchestrator();
-          const navHTML = await this.client.zDisplayOrchestrator.renderMetaNavBarHTML(navbarItems);
+          const renderedNavbar = await this.client.zDisplayOrchestrator.renderMetaNavBarHTML(navbarItems);
           
-          // Inject into <zNavBar> element
-          const navElement = document.querySelector('zNavBar');
-          if (navElement) {
-            navElement.innerHTML = navHTML;
-            this.logger.log('[DeclarativeUILoader] ✅ Navbar rendered to page');
+          // 🔧 FIX v1.6.1: Append DOM element directly (NOT innerHTML!)
+          const navContainer = document.querySelector('zNavBar');
+          if (navContainer && renderedNavbar) {
+            navContainer.innerHTML = ''; // Clear first
+            navContainer.appendChild(renderedNavbar);
+            this.logger.log('[DeclarativeUILoader] ✅ Navbar rendered to page (DOM element)');
+          } else if (!renderedNavbar) {
+            this.logger.warn('[DeclarativeUILoader] renderMetaNavBarHTML returned null');
           }
         }
       }

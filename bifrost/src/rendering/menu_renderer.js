@@ -20,7 +20,7 @@ export class MenuRenderer {
   }
 
   /**
-   * Render menu from backend menu event
+   * Render menu from backend menu event (full-page menu)
    * @param {Object} message - Menu event data from backend
    */
   renderMenu(message) {
@@ -55,14 +55,45 @@ export class MenuRenderer {
   }
 
   /**
+   * Render menu inline (within a specific container, e.g., dashboard panel)
+   * @param {Object} menuData - Menu data { menu_key, options, title, allow_back }
+   * @param {HTMLElement} container - Container element to render menu into
+   */
+  renderMenuInline(menuData, container) {
+    console.log('[MenuRenderer] 📋 Rendering inline menu:', menuData);
+    this.logger.log('[MenuRenderer] Rendering inline menu', menuData);
+
+    const { menu_key, options, title, allow_back } = menuData;
+
+    // Create menu HTML
+    const menuHtml = this._createMenuHTML(menu_key || 'Menu', options, title);
+    
+    // Insert into container
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = menuHtml;
+    const menuElement = tempDiv.firstElementChild;
+    
+    if (menuElement && container) {
+      container.appendChild(menuElement);
+      
+      // Attach event handlers
+      this._attachMenuHandlers(menu_key || 'Menu', options, menuElement);
+      
+      console.log('[MenuRenderer] ✅ Inline menu rendered successfully');
+    } else {
+      console.error('[MenuRenderer] ❌ Failed to render inline menu');
+    }
+  }
+
+  /**
    * Create menu HTML with zTheme classes
    * @private
    */
-  _createMenuHTML(menuKey, options) {
-    const menuTitle = menuKey.replace(/[*~]/g, '').trim() || 'Menu';
+  _createMenuHTML(menuKey, options, customTitle = null) {
+    const menuTitle = customTitle || menuKey.replace(/[*~]/g, '').trim() || 'Menu';
 
     return `
-      <div class="zMenu-container zCard zp-4 zmy-4" data-menu="${menuKey}">
+      <div class="zMenu-container zCard zp-4 zmy-4" data-menu="${this._escapeHtml(menuKey)}">
         <h2 class="zCard-title zmb-4">${this._escapeHtml(menuTitle)}</h2>
         <div class="zMenu-options">
           ${options.map((opt, idx) => this._createOptionHTML(opt, idx)).join('')}
@@ -110,15 +141,17 @@ export class MenuRenderer {
    * Attach click and keyboard handlers to menu options
    * @private
    */
-  _attachMenuHandlers(menuKey, options) {
-    const optionButtons = document.querySelectorAll('.zMenu-option button');
+  _attachMenuHandlers(menuKey, options, containerElement = null) {
+    // If container is provided, scope query to it; otherwise use document
+    const root = containerElement || document;
+    const optionButtons = root.querySelectorAll('.zMenu-option button');
 
     optionButtons.forEach((button, idx) => {
       button.addEventListener('click', () => {
         const optionDiv = button.closest('.zMenu-option');
         const selectedKey = optionDiv.dataset.key;
 
-        console.log('[MenuRenderer] Menu selection:', selectedKey);
+        console.log('[MenuRenderer] 🎯 Menu selection:', selectedKey);
         this.logger.log('[MenuRenderer] Menu selection', { menu: menuKey, selected: selectedKey });
 
         // Visual feedback
@@ -141,7 +174,7 @@ export class MenuRenderer {
     };
 
     document.addEventListener('keydown', keydownHandler);
-    this.logger.log('[MenuRenderer] Keyboard navigation enabled (0-9)');
+    this.logger.log('[MenuRenderer] ⌨️  Keyboard navigation enabled (0-9)');
   }
 
   /**

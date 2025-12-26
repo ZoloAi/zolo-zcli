@@ -297,33 +297,86 @@ class zNavigation:
         """
         Load global navigation bar from environment configuration (.zEnv).
         
-        Supports three formats:
-        1. Legacy: Comma-separated string (e.g., "zVaF,zAbout,zLogin")
-        2. Enhanced JSON: JSON array with RBAC metadata (e.g., [{"item": "zVaF"}, {"item": "^logout", "_rbac": {...}}])
-        3. Enhanced YAML: YAML array (for manual editing, not via .env files)
+        Supports multiple formats (priority order):
+        1. YAML dict in .zEnv (recommended - THE zCLI WAY):
+            ZNAVBAR:
+              zVaF:
+              zAccount:
+                _rbac:
+                  require_role: [zAdmin]
+        
+        2. Legacy comma-separated: ZNAVBAR=zVaF,zAbout,zLogin
+        3. Legacy JSON array: ZNAVBAR=[{"item": "zVaF"}, ...]
         
         Returns:
             Optional[List[Any]]: List of navbar items (strings or dicts with RBAC) or None
         
         Examples:
+            YAML dict format (recommended):
+                Input:
+                    ZNAVBAR:
+                      zVaF:
+                      zAccount:
+                        _rbac:
+                          require_role: [zAdmin]
+                Output: ["zVaF", {"zAccount": {"_rbac": {"require_role": ["zAdmin"]}}}]
+            
             Legacy format:
                 ZNAVBAR=zVaF,zAbout,zRegister,zLogin
                 Returns: ["zVaF", "zAbout", "zRegister", "zLogin"]
-            
-            Enhanced JSON format (with RBAC):
-                ZNAVBAR=[{"item": "zVaF"}, {"item": "^logout", "_rbac": {"authenticated": true}}]
-                Transforms to: ["zVaF", {"^logout": {"_rbac": {"authenticated": true}}}]
         
         Notes:
             - Loaded once during initialization
             - Cached in self._global_navbar (unfiltered)
             - RBAC filtering applied later in resolve_navbar()
-            - JSON format used for .env compatibility (no multiline support in dotenv)
+            - YAML dict format allows clean, multi-line configuration
         """
         import os
         import json
+        from pathlib import Path
         
-        # Read from environment
+        # Priority 1: Parse .zEnv as YAML to get ZNAVBAR dict (THE zCLI WAY)
+        env_path = Path(self.zcli.config.paths.workspace_dir) / ".zEnv"
+        
+        if env_path.exists():
+            try:
+                # Use zParser to parse .zEnv as YAML
+                env_data = self.zcli.zparser.parse_file_by_path(str(env_path))
+                
+                if env_data and "ZNAVBAR" in env_data:
+                    navbar_raw = env_data["ZNAVBAR"]
+                    
+                    # Check if it's a dict (new format)
+                    if isinstance(navbar_raw, dict):
+                        # Parse dict format: keys = item names, values = metadata or None
+                        navbar_items = []
+                        
+                        for item_name, item_config in navbar_raw.items():
+                            # If item has _rbac metadata, include it
+                            if item_config and isinstance(item_config, dict) and "_rbac" in item_config:
+                                navbar_items.append({item_name: {"_rbac": item_config["_rbac"]}})
+                            else:
+                                # Simple string item (public, no RBAC)
+                                navbar_items.append(item_name)
+                        
+                        if navbar_items:
+                            self.logger.framework.info(f"[zNavigation] ✅ Loaded navbar from .zEnv YAML dict ({len(navbar_items)} items)")
+                            return navbar_items
+                    
+                    # Check if it's a string (legacy format from os.getenv)
+                    elif isinstance(navbar_raw, str):
+                        # Fall through to legacy parsing below
+                        navbar_env = navbar_raw
+                        self.logger.framework.debug("[zNavigation] ZNAVBAR is a string, trying legacy parsing")
+                    else:
+                        self.logger.framework.warning(f"[zNavigation] ZNAVBAR in .zEnv has unexpected type: {type(navbar_raw)}")
+                        return None
+                
+            except Exception as e:
+                self.logger.framework.warning(f"[zNavigation] Failed to parse .zEnv as YAML: {e}")
+                # Fall through to legacy os.getenv method
+        
+        # Priority 2: Fallback to os.getenv for backward compatibility (legacy formats)
         navbar_env = os.getenv("ZNAVBAR", "").strip()
         
         if not navbar_env:

@@ -452,26 +452,28 @@ class zOpen:
         
         Terminal-First Design:
         - Detects if image_path is a URL (http/https/www)
-        - URLs → Opens in browser (correct UX for web images)
+        - Detects if image_path is a server path (/static/, /media/, etc.)
+        - URLs/server paths → Opens in browser
         - Local paths → Opens in image viewer app
         
         Uses zMachine's detected image viewer and platform-specific launch commands.
         Falls back gracefully if viewer is not available or headless environment.
         
         Args:
-            image_path: Path to the image file (local path or URL)
+            image_path: Path to the image file (local path, URL, or server path)
             
         Returns:
             "zBack" if successfully opened, "stop" if failed
             
         Detection Flow:
             1. Check if image_path is a URL → open in browser
-            2. Otherwise, get image_viewer from session[zMachine]
-            3. Get platform-specific launch command
-            4. Resolve image path (absolute)
-            5. Check if file exists
-            6. Launch viewer with subprocess
-            7. Handle errors gracefully
+            2. Check if image_path is a server path → construct URL and open in browser
+            3. Otherwise, get image_viewer from session[zMachine]
+            4. Get platform-specific launch command
+            5. Resolve image path (absolute)
+            6. Check if file exists
+            7. Launch viewer with subprocess
+            8. Handle errors gracefully
             
         Examples:
             >>> zcli.open.open_image("screenshot.png")
@@ -482,7 +484,10 @@ class zOpen:
             >>> zcli.open.open_image("https://picsum.photos/200/300")
             # Opens in browser (correct for web images)
             
-        Version: v1.5.9 (URL Detection)
+            >>> zcli.open.open_image("/static/brand/logo.png")
+            # Opens http://127.0.0.1:8080/static/brand/logo.png in browser
+            
+        Version: v1.6.0 (Server Path Detection)
         """
         # Detect if it's a URL → open in browser
         parsed = urlparse(image_path)
@@ -490,6 +495,30 @@ class zOpen:
             self.logger.info(f"Detected web image URL: {image_path}")
             url = image_path if parsed.scheme else f"{URL_SCHEME_HTTPS_DEFAULT}{image_path}"
             return open_url(url, self.session, self.display, self.logger)
+        
+        # Detect if it's a server-mounted path (e.g., /static/, /media/, /bifrost/)
+        # Check if zServer is enabled and construct full URL
+        if image_path.startswith('/'):
+            # Get server config from zCLI instance (zServer subsystem)
+            http_config = getattr(self.zcli.config, 'http_server', None)
+            
+            if http_config and http_config.enabled:
+                host = http_config.host
+                port = http_config.port
+                ssl_enabled = getattr(http_config, 'ssl_enabled', False)
+                scheme = 'https' if ssl_enabled else 'http'
+                
+                # Construct full URL
+                server_url = f"{scheme}://{host}:{port}{image_path}"
+                self.logger.info(f"Detected server path: {image_path} → {server_url}")
+                self.display.info(
+                    f"Opening server image: {image_path}",
+                    indent=1
+                )
+                return open_url(server_url, self.session, self.display, self.logger)
+            else:
+                self.logger.warning(f"Server path detected but zServer not enabled: {image_path}")
+                # Fall through to local file handling (will fail if not a real local path)
         
         # Local file handling (original logic)
         from zCLI import subprocess

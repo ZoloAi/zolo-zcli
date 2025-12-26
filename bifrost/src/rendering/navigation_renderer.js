@@ -28,10 +28,12 @@ import { createNav } from './primitives/document_structure_primitives.js';
 import { createList, createListItem } from './primitives/lists_primitives.js';
 import { createLink, createButton } from './primitives/interactive_primitives.js';
 import { createDiv, createSpan } from './primitives/generic_containers.js';
+import { renderLink } from './primitives/link_primitives.js'; // NEW: Use link primitive
 
 export class NavigationRenderer {
-  constructor(logger = null) {
+  constructor(logger = null, client = null) {
     this.logger = logger || console;
+    this.client = client; // NEW: Store client for link rendering
   }
 
   /**
@@ -92,45 +94,82 @@ export class NavigationRenderer {
       class: 'zNavbar-collapse',
       id: collapseId
     });
+    
+    // ✨ FIX: Add manual toggle handler (zTheme doesn't include Bootstrap JS)
+    toggleButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      const isExpanded = toggleButton.getAttribute('aria-expanded') === 'true';
+      
+      // Toggle aria state
+      toggleButton.setAttribute('aria-expanded', !isExpanded);
+      
+      // Toggle visibility (try both 'show' and 'zShow' for compatibility)
+      if (isExpanded) {
+        collapseDiv.classList.remove('show', 'zShow');
+        this.logger.log('[NavigationRenderer] 🍔 Navbar collapsed');
+      } else {
+        collapseDiv.classList.add('show', 'zShow');
+        this.logger.log('[NavigationRenderer] 🍔 Navbar expanded');
+      }
+    });
+    console.log('[NavigationRenderer] ✅ Hamburger toggle handler attached to:', collapseId);
 
     // Create navigation list (using primitive)
     const ul = createList(false, { class: 'zNavbar-nav' });
 
-    // Create nav items with zNav-item and zNav-link classes
+    // ✨ REFACTORED: Use link_primitives.js for ALL navigation links
+    // This ensures consistent behavior between navbar and content links
     items.forEach((item, index) => {
       const li = createListItem({ class: 'zNav-item' });
 
-      const a = createLink('#');
-      
       // Handle item as string or object {label, href}
-      let itemLabel, itemHref;
+      let itemLabel, itemHref, originalItem;
       if (typeof item === 'string') {
         // Strip navigation prefixes for clean display
         // $ (delta link), ^ (bounce-back), ~ (anchor)
         // Example: "$^zLogin" → "zLogin"
+        originalItem = item;
         itemLabel = item.replace(/^[\$\^~]+/, '');
         // Convert delta links ($zBlock) to web routes (/zBlock)
         itemHref = this._convertDeltaLinkToHref(item);
       } else if (typeof item === 'object' && item !== null) {
-        itemLabel = item.label || item.text || '';
-        // Strip navigation prefixes for clean display
-        itemLabel = itemLabel.replace(/^[\$\^~]+/, '');
+        originalItem = item.label || item.text || '';
+        itemLabel = originalItem.replace(/^[\$\^~]+/, '');
         itemHref = item.href || this._convertDeltaLinkToHref(itemLabel);
       } else {
-        itemLabel = String(item);
+        originalItem = String(item);
+        itemLabel = originalItem;
         itemHref = href;
       }
       
-      a.href = itemHref;
-      a.textContent = itemLabel;
-      a.classList.add('zNav-link');
+      // Detect link type for renderLink primitive
+      const linkType = this._detectLinkType(itemHref, originalItem);
       
-      // Add active state if specified
-      if (activeIndex === index) {
-        a.classList.add('active');
+      // Prepare link data for renderLink primitive
+      const linkData = {
+        label: itemLabel,
+        href: itemHref,
+        target: '_self',
+        link_type: linkType,
+        _zClass: `zNav-link${activeIndex === index ? ' active' : ''}`,
+        color: '',
+        window: {}
+      };
+      
+      console.log('[NavigationRenderer] 🎯 Creating navbar link:', linkData);
+      
+      // Use renderLink primitive (single source of truth for all links!)
+      const linkContainer = document.createElement('div');
+      renderLink(linkData, linkContainer, this.client);
+      
+      // Extract the link from the container and add to list item
+      const link = linkContainer.firstChild;
+      if (link) {
+        li.appendChild(link);
+      } else {
+        console.error('[NavigationRenderer] ❌ renderLink returned no link element');
       }
 
-      li.appendChild(a);
       ul.appendChild(li);
     });
 
@@ -169,6 +208,49 @@ export class NavigationRenderer {
     
     // Default: use item as-is (for explicit /path or # links)
     return item.startsWith('/') || item.startsWith('#') ? item : `/${item}`;
+  }
+
+  /**
+   * Detect link type from href and original item.
+   * 
+   * This mirrors the logic in link_primitives.js to ensure consistent
+   * link type detection across navbar and content links.
+   * 
+   * @param {string} href - Converted href (e.g., "/zBlock")
+   * @param {string} originalItem - Original item with prefixes (e.g., "$zBlock")
+   * @returns {string} - Link type: 'delta', 'zpath', 'external', 'anchor', 'placeholder'
+   * @private
+   */
+  _detectLinkType(href, originalItem) {
+    // Check original item for navigation prefixes
+    if (originalItem && typeof originalItem === 'string') {
+      // Delta link ($) - internal navigation
+      if (originalItem.startsWith('$') || originalItem.includes('$')) {
+        return 'delta';
+      }
+      // zPath (@) - absolute path navigation
+      if (originalItem.startsWith('@')) {
+        return 'zpath';
+      }
+    }
+    
+    // Check href for external URLs
+    if (href.startsWith('http://') || href.startsWith('https://') || href.startsWith('www.')) {
+      return 'external';
+    }
+    
+    // Check for anchor links
+    if (href.startsWith('#') && href !== '#') {
+      return 'anchor';
+    }
+    
+    // Placeholder link
+    if (!href || href === '#') {
+      return 'placeholder';
+    }
+    
+    // Default: treat as delta (internal navigation)
+    return 'delta';
   }
 
   /**

@@ -182,6 +182,92 @@ export class ZDisplayOrchestrator {
       }
     }
     
+    // ═══════════════════════════════════════════════════════════════════════
+    // NEW: _zGroup Support - Grouped Rendering for Bifrost
+    // ═══════════════════════════════════════════════════════════════════════
+    // If _zGroup metadata is present, render all children into a single
+    // grouped container (e.g., flex row for buttons, grid for cards)
+    // This allows Terminal to process items sequentially while Bifrost
+    // groups them visually - metadata-driven optimization!
+    // ═══════════════════════════════════════════════════════════════════════
+    if (metadata._zGroup) {
+      console.log(`[ZDisplayOrchestrator] 🎯 _zGroup detected: "${metadata._zGroup}" - rendering as grouped container`);
+      this.logger.log(`🎯 _zGroup detected: "${metadata._zGroup}"`);
+      
+      // Create group container with zTheme classes based on _zGroup type
+      const groupContainer = document.createElement('div');
+      groupContainer.setAttribute('data-zgroup', metadata._zGroup);
+      
+      // Apply zTheme container class based on group type
+      if (metadata._zGroup === 'list-group') {
+        groupContainer.classList.add('zList-group');
+        this.logger.log(`  Applied zTheme class: zList-group`);
+      }
+      
+      // Apply additional _zClass styling if provided (from YAML)
+      if (metadata._zClass) {
+        const classes = metadata._zClass.split(' ').filter(c => c.trim());
+        if (classes.length > 0) {
+          groupContainer.classList.add(...classes);
+          this.logger.log(`  Applied additional _zClass: ${metadata._zClass}`);
+        }
+      }
+      
+      // Iterate through all non-metadata children and render into group
+      for (const [key, value] of Object.entries(data)) {
+        // Skip metadata keys
+        if (key.startsWith('_') || key.startsWith('~')) {
+          continue;
+        }
+        
+        this.logger.log(`  Rendering grouped item: ${key}`);
+        
+        // Handle list/array values (zDisplay events)
+        if (Array.isArray(value)) {
+          for (const item of value) {
+            if (item && item.zDisplay) {
+              // Pass group context to child renderer
+              const element = await this.renderZDisplayEvent(item.zDisplay, metadata._zGroup);
+              if (element) {
+                groupContainer.appendChild(element);
+              }
+            }
+          }
+        }
+        // Handle direct zDisplay event
+        else if (value && value.zDisplay) {
+          // Pass group context to child renderer
+          const element = await this.renderZDisplayEvent(value.zDisplay, metadata._zGroup);
+          if (element) {
+            groupContainer.appendChild(element);
+          }
+        }
+        // Handle nested objects (recurse)
+        else if (value && typeof value === 'object') {
+          const itemDiv = document.createElement('div');
+          itemDiv.setAttribute('data-zkey', key);
+          await this.renderItems(value, itemDiv);
+          if (itemDiv.children.length > 0) {
+            groupContainer.appendChild(itemDiv);
+          }
+        }
+      }
+      
+      // Append group to parent
+      if (groupContainer.children.length > 0) {
+        parentElement.appendChild(groupContainer);
+        console.log(`[ZDisplayOrchestrator] ✅ Grouped container rendered with ${groupContainer.children.length} items`);
+        this.logger.log(`✅ Grouped container rendered with ${groupContainer.children.length} items`);
+      }
+      
+      // Exit early - we've handled all children in the group
+      return;
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // Regular (non-grouped) rendering continues below
+    // ═══════════════════════════════════════════════════════════════════════
+    
     // Iterate through all keys in this level
     for (const [key, value] of Object.entries(data)) {
       // Handle metadata keys BEFORE skipping
@@ -222,31 +308,58 @@ export class ZDisplayOrchestrator {
       // Set id for DevTools navigation and CSS targeting
       containerDiv.setAttribute('id', key);
       
-      // Handle list/array values (sequential zDisplay events or zDialog forms)
+      // Handle list/array values (sequential zDisplay events, zDialog forms, OR menus)
       if (Array.isArray(value)) {
         console.log(`[ZDisplayOrchestrator] ✅ Detected list/array for key: ${key}, items: ${value.length}`);
         this.logger.log(`✅ Detected list/array for key: ${key}, items: ${value.length}`);
-        // Iterate through list items and render each one
-        for (const item of value) {
-          if (item && item.zDisplay) {
-            console.log(`[ZDisplayOrchestrator]   ✅ Rendering zDisplay event:`, item.zDisplay.event);
-            this.logger.log(`  ✅ Rendering zDisplay from list item:`, item.zDisplay);
-            const element = await this.renderZDisplayEvent(item.zDisplay);
-            if (element) {
-              this.logger.log(`  ✅ Appended element to container`);
-              containerDiv.appendChild(element);
+        
+        // Check if this is a menu (has * modifier and array of strings)
+        const isMenu = key.includes('*') && value.every(item => typeof item === 'string');
+        
+        if (isMenu) {
+          console.log(`[ZDisplayOrchestrator] 🎯 Detected MENU: ${key}`);
+          this.logger.log(`🎯 Detected menu with ${value.length} options`);
+          
+          // Load menu renderer and render the menu
+          const menuRenderer = await this.client._ensureMenuRenderer();
+          if (menuRenderer) {
+            // Prepare menu data (matching backend zMenu event format)
+            const menuData = {
+              menu_key: key,
+              options: value,
+              title: key.replace(/[*~^$]/g, '').trim() || 'Menu',
+              allow_back: true
+            };
+            
+            // Render menu into container
+            menuRenderer.renderMenuInline(menuData, containerDiv);
+            this.logger.log(`✅ Menu rendered for ${key}`);
+          } else {
+            console.error(`[ZDisplayOrchestrator] ❌ MenuRenderer not available`);
+          }
+        } else {
+          // Regular list/array - iterate through items
+          for (const item of value) {
+            if (item && item.zDisplay) {
+              console.log(`[ZDisplayOrchestrator]   ✅ Rendering zDisplay event:`, item.zDisplay.event);
+              this.logger.log(`  ✅ Rendering zDisplay from list item:`, item.zDisplay);
+              const element = await this.renderZDisplayEvent(item.zDisplay);
+              if (element) {
+                this.logger.log(`  ✅ Appended element to container`);
+                containerDiv.appendChild(element);
+              }
+            } else if (item && item.zDialog) {
+              this.logger.log(`  ✅ Rendering zDialog from list item:`, item.zDialog);
+              const formRenderer = await this.client._ensureFormRenderer();
+              const formElement = formRenderer.renderForm(item.zDialog);
+              if (formElement) {
+                this.logger.log(`  ✅ Appended zDialog form to container`);
+                containerDiv.appendChild(formElement);
+              }
+            } else if (item && typeof item === 'object') {
+              // Nested object in list - recurse
+              await this.renderItems(item, containerDiv);
             }
-          } else if (item && item.zDialog) {
-            this.logger.log(`  ✅ Rendering zDialog from list item:`, item.zDialog);
-            const formRenderer = await this.client._ensureFormRenderer();
-            const formElement = formRenderer.renderForm(item.zDialog);
-            if (formElement) {
-              this.logger.log(`  ✅ Appended zDialog form to container`);
-              containerDiv.appendChild(formElement);
-            }
-          } else if (item && typeof item === 'object') {
-            // Nested object in list - recurse
-            await this.renderItems(item, containerDiv);
           }
         }
       }
@@ -325,16 +438,16 @@ export class ZDisplayOrchestrator {
   }
 
   /**
-   * Render navbar HTML string (v1.6.0: Returns HTML, doesn't inject into DOM)
+   * Render navbar DOM element (v1.6.1: Returns DOM element to preserve event listeners)
    * @param {Array} items - Navbar items (e.g., ['zVaF', 'zAbout', '^zLogin'])
-   * @returns {Promise<string>} Navbar HTML
+   * @returns {Promise<HTMLElement|null>} Navbar DOM element
    */
   async renderMetaNavBarHTML(items) {
     console.log('[ZDisplayOrchestrator] 🎯 renderMetaNavBarHTML called with items:', items);
     
     if (!Array.isArray(items) || items.length === 0) {
       console.warn('[ZDisplayOrchestrator] ⚠️ No navbar items provided');
-      return '';
+      return null;
     }
 
     try {
@@ -353,11 +466,14 @@ export class ZDisplayOrchestrator {
         brand: this.options.title
       });
       
-      // Return outerHTML (will be set as innerHTML on <zNavBar> element)
-      return navElement ? navElement.outerHTML : '';
+      // 🔧 FIX v1.6.1: Return DOM element directly (NOT outerHTML!)
+      // This preserves event listeners attached by link_primitives.js
+      // The caller (zvaf_manager.js) will append the element instead of setting innerHTML
+      console.log('[ZDisplayOrchestrator] ✅ Returning navbar DOM element (preserves event listeners)');
+      return navElement;
     } catch (error) {
-      console.error('[ZDisplayOrchestrator] Failed to render navbar HTML:', error);
-      return '';
+      console.error('[ZDisplayOrchestrator] Failed to render navbar element:', error);
+      return null;
     }
   }
 
@@ -402,9 +518,12 @@ export class ZDisplayOrchestrator {
    * @param {Object} eventData - Event data with event type and content
    * @returns {Promise<HTMLElement>}
    */
-  async renderZDisplayEvent(eventData) {
+  async renderZDisplayEvent(eventData, groupContext = null) {
     const event = eventData.event;
     this.logger.log(`[renderZDisplayEvent] Rendering event: ${event}`, eventData);
+    if (groupContext) {
+      this.logger.log(`[renderZDisplayEvent] Group context: ${groupContext}`);
+    }
     let element;
     
     switch (event) {
@@ -433,6 +552,17 @@ export class ZDisplayOrchestrator {
         const buttonRenderer = await this.client._ensureButtonRenderer();
         element = buttonRenderer.render(eventData);
         this.logger.log(`[renderZDisplayEvent] Rendered button element: ${eventData.label}`);
+        break;
+        
+      case 'link':
+        // Use modular LinkRenderer for semantic links
+        const { renderLink } = await import('./primitives/link_primitives.js');
+        const linkContainer = document.createElement('div');
+        linkContainer.className = 'zLink-wrapper';
+        // Pass groupContext so link_primitives can apply appropriate zTheme classes
+        renderLink(eventData, linkContainer, this.client, groupContext);
+        element = linkContainer;
+        this.logger.log(`[renderZDisplayEvent] Rendered link element: ${eventData.label}`);
         break;
         
       case 'zTable':

@@ -805,7 +805,7 @@
 
       // Determine module subfolder based on module type
       const coreModules = ['connection', 'hooks', 'logger', 'message_handler', 'error_display'];
-      const renderingModules = ['renderer', 'zdisplay_renderer', 'navigation_renderer', 'form_renderer'];
+      const renderingModules = ['renderer', 'zdisplay_renderer', 'navigation_renderer', 'form_renderer', 'menu_renderer'];
       
       let subfolder = '';
       if (coreModules.includes(moduleName)) {
@@ -872,7 +872,8 @@
     async _ensureNavigationRenderer() {
       if (!this.navigationRenderer) {
         const { NavigationRenderer } = await this._loadModule('navigation_renderer');
-        this.navigationRenderer = new NavigationRenderer(this.logger);
+        // Pass 'this' (BifrostClient) so NavigationRenderer can use link primitives with client context
+        this.navigationRenderer = new NavigationRenderer(this.logger, this);
       }
       return this.navigationRenderer;
     }
@@ -1113,6 +1114,19 @@
         this.logger.log('[BifrostClient] FormRenderer loaded and initialized');
       }
       return this.formRenderer;
+    }
+
+    /**
+     * Lazy-load the MenuRenderer module
+     * @private
+     */
+    async _ensureMenuRenderer() {
+      if (!this.menuRenderer) {
+        const { MenuRenderer } = await this._loadModule('menu_renderer');
+        this.menuRenderer = new MenuRenderer(this);
+        this.logger.log('[BifrostClient] MenuRenderer loaded and initialized');
+      }
+      return this.menuRenderer;
     }
 
 

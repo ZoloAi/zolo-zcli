@@ -178,6 +178,12 @@ DICT_KEY_ZKEY: str = "zKey"
 DICT_KEY_ZHORIZONTAL: str = "zHorizontal"
 DICT_KEY_IS_ANCHOR: str = "is_anchor"
 
+# Dict Keys (for menu object from builder.build())
+DICT_KEY_OPTIONS: str = "options"
+DICT_KEY_ALLOW_BACK: str = "allow_back"
+DICT_KEY_METADATA: str = "metadata"
+DICT_KEY_TITLE: str = "title"
+
 
 # ============================================================================
 # MenuSystem Class
@@ -398,8 +404,9 @@ class MenuSystem:
             self.logger.debug("[MenuSystem] Bifrost mode detected - emitting zMenu event")
             
             # Prepare menu data for frontend
+            # Note: menu_obj from builder.build() uses "options" key, not "zHorizontal"
             menu_data = {
-                "options": menu_obj[DICT_KEY_ZHORIZONTAL],
+                "options": menu_obj[DICT_KEY_OPTIONS],
                 "title": title,
                 "allow_back": menu_obj[DICT_KEY_ALLOW_BACK],
                 "metadata": menu_obj.get(DICT_KEY_METADATA, {})
