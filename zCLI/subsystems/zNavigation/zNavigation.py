@@ -383,8 +383,42 @@ class zNavigation:
             self.logger.framework.debug("[zNavigation] No global navbar defined in ZNAVBAR env var")
             return None
         
-        # Check if it's JSON format (starts with '[')
-        if navbar_env.startswith("["):
+        # Check if it's JSON dict format (starts with '{') - FROM zEnv YAML flattening
+        if navbar_env.startswith("{"):
+            # zEnv flattened dict: Parse as JSON dict
+            try:
+                navbar_raw = json.loads(navbar_env)
+                
+                if not isinstance(navbar_raw, dict):
+                    self.logger.framework.warning(f"[zNavigation] ZNAVBAR JSON is not a dict: {type(navbar_raw)}")
+                    return None
+                
+                # Parse dict format: keys = item names, values = metadata or None
+                # Input: {"zVaF": null, "zAccount": {"_rbac": {"require_role": ["zAdmin"]}}}
+                # Output: ["zVaF", {"zAccount": {"_rbac": {"require_role": ["zAdmin"]}}}]
+                navbar_items = []
+                
+                for item_name, item_config in navbar_raw.items():
+                    # If item has _rbac metadata, include it
+                    if item_config and isinstance(item_config, dict) and "_rbac" in item_config:
+                        navbar_items.append({item_name: {"_rbac": item_config["_rbac"]}})
+                    else:
+                        # Simple string item (public, no RBAC)
+                        navbar_items.append(item_name)
+                
+                if navbar_items:
+                    self.logger.framework.info(f"[zNavigation] ✅ Loaded navbar from zEnv JSON dict ({len(navbar_items)} items)")
+                    return navbar_items
+            
+            except json.JSONDecodeError as e:
+                self.logger.framework.error(f"[zNavigation] Failed to parse ZNAVBAR JSON dict: {e}")
+                return None
+            except Exception as e:
+                self.logger.framework.error(f"[zNavigation] Error processing ZNAVBAR dict: {e}")
+                return None
+        
+        # Check if it's JSON array format (starts with '[') - LEGACY
+        elif navbar_env.startswith("["):
             # Enhanced JSON format: Parse as JSON
             try:
                 navbar_raw = json.loads(navbar_env)

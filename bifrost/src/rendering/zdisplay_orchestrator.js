@@ -226,9 +226,11 @@ export class ZDisplayOrchestrator {
         if (Array.isArray(value)) {
           for (const item of value) {
             if (item && item.zDisplay) {
-              // Pass group context to child renderer
-              const element = await this.renderZDisplayEvent(item.zDisplay, metadata._zGroup);
+              // ✅ SEPARATION OF CONCERNS: Render element without group context
+              const element = await this.renderZDisplayEvent(item.zDisplay);
               if (element) {
+                // Apply group-specific styling AFTER rendering
+                this._applyGroupStyling(element, metadata._zGroup, item.zDisplay);
                 groupContainer.appendChild(element);
               }
             }
@@ -236,9 +238,11 @@ export class ZDisplayOrchestrator {
         }
         // Handle direct zDisplay event
         else if (value && value.zDisplay) {
-          // Pass group context to child renderer
-          const element = await this.renderZDisplayEvent(value.zDisplay, metadata._zGroup);
+          // ✅ SEPARATION OF CONCERNS: Render element without group context
+          const element = await this.renderZDisplayEvent(value.zDisplay);
           if (element) {
+            // Apply group-specific styling AFTER rendering
+            this._applyGroupStyling(element, metadata._zGroup, value.zDisplay);
             groupContainer.appendChild(element);
           }
         }
@@ -518,12 +522,9 @@ export class ZDisplayOrchestrator {
    * @param {Object} eventData - Event data with event type and content
    * @returns {Promise<HTMLElement>}
    */
-  async renderZDisplayEvent(eventData, groupContext = null) {
+  async renderZDisplayEvent(eventData) {
     const event = eventData.event;
     this.logger.log(`[renderZDisplayEvent] Rendering event: ${event}`, eventData);
-    if (groupContext) {
-      this.logger.log(`[renderZDisplayEvent] Group context: ${groupContext}`);
-    }
     let element;
     
     switch (event) {
@@ -557,11 +558,8 @@ export class ZDisplayOrchestrator {
       case 'link':
         // Use modular LinkRenderer for semantic links
         const { renderLink } = await import('./primitives/link_primitives.js');
-        const linkContainer = document.createElement('div');
-        linkContainer.className = 'zLink-wrapper';
-        // Pass groupContext so link_primitives can apply appropriate zTheme classes
-        renderLink(eventData, linkContainer, this.client, groupContext);
-        element = linkContainer;
+        // ✅ SEPARATION OF CONCERNS: Primitive renders element, orchestrator handles grouping
+        element = renderLink(eventData, null, this.client);
         this.logger.log(`[renderZDisplayEvent] Rendered link element: ${eventData.label}`);
         break;
         
@@ -611,6 +609,52 @@ export class ZDisplayOrchestrator {
     }
     
     return element;
+  }
+
+  /**
+   * Apply group-specific styling to an element (Terminal-first pattern)
+   * This is where zTheme group classes are applied based on _zGroup context
+   * Color is auto-inferred from the YAML color parameter (DRY)
+   * 
+   * @param {HTMLElement} element - The rendered element
+   * @param {string} groupType - The type of group (e.g., 'list-group', 'button-group')
+   * @param {Object} eventData - The original event data (for color handling)
+   * @private
+   */
+  _applyGroupStyling(element, groupType, eventData) {
+    if (!element || !groupType) return;
+
+    this.logger.log(`[_applyGroupStyling] Applying group styling: ${groupType}, color: ${eventData.color || 'none'}`);
+
+    // Apply group-specific zTheme classes based on group type and event type
+    switch (groupType) {
+      case 'list-group':
+        // For links, buttons, or any interactive element in a list-group
+        if (eventData.event === 'link' || eventData.event === 'button') {
+          element.classList.add('zList-group-item', 'zList-group-item-action');
+          
+          // 🎨 Terminal-first: Auto-infer color variant from YAML color parameter
+          if (eventData.color) {
+            const colorClass = `zList-group-item-${eventData.color.toLowerCase()}`;
+            element.classList.add(colorClass);
+            this.logger.log(`[_applyGroupStyling] Applied list-group color: ${colorClass}`);
+          }
+        }
+        break;
+
+      case 'button-group':
+        // For future: Button groups (horizontal button toolbar)
+        // element.classList.add('zBtn-group-item');
+        break;
+
+      case 'card-group':
+        // For future: Card groups (masonry/grid layout)
+        // element.classList.add('zCard-group-item');
+        break;
+
+      default:
+        console.warn(`[_applyGroupStyling] Unknown group type: ${groupType}`);
+    }
   }
 }
 

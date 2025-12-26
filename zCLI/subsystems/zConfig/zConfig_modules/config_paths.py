@@ -199,34 +199,79 @@ class zConfigPaths:
         return self._dotenv_path
 
     def load_dotenv(self, override: bool = True) -> Optional[Path]:
-        """Load environment variables from resolved dotenv file with cascading support.
+        """Load environment variables with zEnv (YAML/JSON) priority over dotenv.
         
-        Implements cascading .zEnv loading (v1.5.10):
-        1. Load base .zEnv (shared config)
-        2. Check DEPLOYMENT env var (from .zEnv or zSpark)
-        3. Load .zEnv.{deployment} if it exists (deployment-specific overrides)
+        THE zCLI WAY (v2.0): Priority-based loading:
+        1. Try zEnv.base.yaml + zEnv.{deployment}.yaml (declarative, THE zCLI WAY)
+        2. Fallback to .zEnv + .zEnv.{deployment} (legacy dotenv, backward compat)
         
         This allows:
-        - .zEnv → shared config (navbar, common settings)
-        - .zEnv.development → dev overrides (no SSL)
-        - .zEnv.production → prod overrides (SSL + certs)
+        - zEnv.base.yaml → declarative config (navbar, nested structures)
+        - zEnv.development.yaml → dev overrides (no SSL)
+        - zEnv.production.yaml → prod overrides (SSL + certs)
+        - .zEnv (legacy) → backward compatibility
         
         Args:
             override: Whether to override existing environment variables (default: True)
             
         Returns:
-            Path to loaded dotenv file, or None if no file found/loaded
+            Path to loaded file, or None if no file found/loaded
         
-        Example:
-            # .zEnv (base)
-            ZNAVBAR=[...]
+        Example (THE zCLI WAY):
+            # zEnv.base.yaml
+            ZNAVBAR:
+              zVaF:
+              zAccount:
+                _rbac:
+                  require_role: [zAdmin]
             
-            # .zEnv.production (overrides)
-            DEPLOYMENT=Production
-            HTTP_SSL_ENABLED=true
-            HTTP_SSL_CERT=/etc/ssl/cert.pem
+            # zEnv.production.yaml (overrides)
+            DEPLOYMENT: Production
+            HTTP_SSL_ENABLED: true
+            HTTP_SSL_CERT: /etc/ssl/cert.pem
         """
         from zCLI import os
+        
+        # ═══════════════════════════════════════════════════════════
+        # PRIORITY 1: Try zEnv (YAML/JSON) - THE zCLI WAY
+        # ═══════════════════════════════════════════════════════════
+        
+        # Determine deployment/environment
+        deployment = "development"  # Default
+        if self.zSpark:
+            # Check zSpark first (highest priority)
+            for key in ["deployment", "Deployment", "DEPLOYMENT", "environment", "Environment"]:
+                if key in self.zSpark:
+                    deployment = str(self.zSpark[key]).lower()
+                    break
+        
+        if not deployment or deployment == "development":
+            # Fallback to env var (from system or previous load)
+            env_deployment = os.getenv('DEPLOYMENT') or os.getenv('ZOLO_DEPLOYMENT')
+            if env_deployment:
+                deployment = env_deployment.lower()
+        
+        # Try loading zEnv YAML/JSON files
+        try:
+            from .config_zenv import zEnv
+            
+            workspace_dir = str(self.workspace_dir)
+            zenv_loader = zEnv(workspace_dir, deployment, logger=None)  # Logger not available yet
+            
+            yaml_loaded = zenv_loader.load()
+            
+            if yaml_loaded:
+                # zEnv successfully loaded YAML files
+                self._log_info(f"✅ Loaded zEnv (THE zCLI WAY) for {deployment} environment")
+                # Return a marker path to indicate success (zEnv doesn't return specific path)
+                return self.workspace_dir / f"zEnv.{deployment}.yaml"
+        
+        except Exception as e:
+            self._log_warning(f"⚠️  zEnv loading failed: {e}, falling back to dotenv")
+        
+        # ═══════════════════════════════════════════════════════════
+        # PRIORITY 2: Fallback to dotenv (legacy, backward compat)
+        # ═══════════════════════════════════════════════════════════
         
         dotenv_path = self.get_dotenv_path()
         if not dotenv_path:
@@ -245,22 +290,22 @@ class zConfigPaths:
             self._log_warning(f"Dotenv file present but no variables loaded: {dotenv_path}")
 
         # Cascading .zEnv support (v1.5.10): Load deployment-specific overrides
-        # Check deployment from environment (now includes .zEnv values) or zSpark
-        deployment = None
+        # Re-check deployment from environment (now includes .zEnv values) or zSpark
+        deployment_check = None
         if self.zSpark:
             # Check zSpark first (highest priority)
             for key in ["deployment", "Deployment", "DEPLOYMENT"]:
                 if key in self.zSpark:
-                    deployment = str(self.zSpark[key])
+                    deployment_check = str(self.zSpark[key])
                     break
         
-        if not deployment:
+        if not deployment_check:
             # Fallback to env var (from .zEnv or system)
-            deployment = os.getenv('DEPLOYMENT')
+            deployment_check = os.getenv('DEPLOYMENT')
         
-        if deployment:
+        if deployment_check:
             # Try to load deployment-specific .zEnv file
-            deployment_env_path = dotenv_path.parent / f".zEnv.{deployment.lower()}"
+            deployment_env_path = dotenv_path.parent / f".zEnv.{deployment_check.lower()}"
             
             if deployment_env_path.exists():
                 deployment_loaded = load_dotenv(deployment_env_path, override=True)

@@ -158,12 +158,9 @@ export class NavigationRenderer {
       
       console.log('[NavigationRenderer] 🎯 Creating navbar link:', linkData);
       
-      // Use renderLink primitive (single source of truth for all links!)
-      const linkContainer = document.createElement('div');
-      renderLink(linkData, linkContainer, this.client);
+      // ✅ Use renderLink primitive (now returns element directly)
+      const link = renderLink(linkData, null, this.client);
       
-      // Extract the link from the container and add to list item
-      const link = linkContainer.firstChild;
       if (link) {
         li.appendChild(link);
       } else {

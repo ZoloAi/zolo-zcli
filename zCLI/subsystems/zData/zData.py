@@ -1940,6 +1940,290 @@ class zData:
         
         return _get_history(self.adapter, limit=limit)
 
+    def discover_schemas(self) -> List[Dict[str, Any]]:
+        """
+        Discover all schemas with zMigration enabled from ZDATA_*_URL environment variables.
+        
+        Scans environment for ZDATA_*_URL patterns, loads corresponding schemas via zLoader,
+        filters by zMigration: true, and returns metadata for each schema. This is the
+        foundation for app-wide migration operations.
+        
+        Discovery Process:
+            1. Scan z.config.environment.env for ZDATA_*_URL variables
+            2. Extract table name from env var (ZDATA_USERS_URL → users)
+            3. Construct schema path (@.models.zSchema.users)
+            4. Load schema via z.loader.handle()
+            5. Check Meta.zMigration flag (defaults to True)
+            6. Return list of schema metadata dicts
+        
+        Returns:
+            List[Dict[str, Any]]: List of discovered schemas, each dict contains:
+                - name: Schema name (e.g., "zSchema.users")
+                - env_var: Environment variable name (e.g., "ZDATA_USERS_URL")
+                - data_type: Backend type (csv, sqlite, postgresql)
+                - version: Current zMigrationVersion (e.g., "v1.0.0")
+                - migration_enabled: Whether zMigration is enabled (bool)
+                - schema: Full schema dictionary (for further processing)
+        
+        Examples:
+            >>> schemas = z.data.discover_schemas()
+            >>> for schema in schemas:
+            >>>     if schema['migration_enabled']:
+            >>>         print(f"{schema['name']} v{schema['version']} ({schema['data_type']})")
+            
+            >>> # Filter by backend type
+            >>> csv_schemas = [s for s in z.data.discover_schemas() if s['data_type'] == 'csv']
+            
+            >>> # Get migration-enabled count
+            >>> enabled = [s for s in z.data.discover_schemas() if s['migration_enabled']]
+            >>> print(f"{len(enabled)} schemas ready for migration")
+        
+        Notes:
+            - Automatically uses zConfig.environment.env (includes .zEnv)
+            - Falls back to os.environ if no ZDATA_* vars found in zConfig
+            - Schema loading errors are logged and skipped (not fatal)
+            - Empty list returned if no ZDATA_*_URL variables found
+            - zMigration defaults to True if not specified in schema Meta
+            - Convention: ZDATA_USERS_URL → @.models.zSchema.users.yaml
+        
+        Architecture:
+            This method implements the "Automatic Discovery" feature from zMigration guide,
+            enabling zero-config migration workflows where schemas are discovered from
+            environment without manual registration.
+        """
+        from zCLI import os
+        
+        schemas = []
+        
+        # Get environment from zCLI (includes .zEnv from app directory)
+        env = self.zcli.config.environment.env
+        
+        # Fallback to os.environ if zCLI env doesn't have ZDATA vars
+        if not any(k.startswith('ZDATA_') for k in env.keys()):
+            env = os.environ
+            self.logger.debug("[discover_schemas] Using os.environ as fallback for ZDATA_* vars")
+        
+        # Scan environment for ZDATA_*_URL variables
+        for key, value in env.items():
+            if key.startswith('ZDATA_') and key.endswith('_URL'):
+                # Extract schema name (e.g., ZDATA_USERS_URL → users)
+                schema_name_upper = key[6:-4]  # Remove ZDATA_ prefix and _URL suffix
+                schema_name = schema_name_upper.lower()
+                
+                try:
+                    # Construct schema path following zCLI convention
+                    # ZDATA_USERS_URL → @.models.zSchema.users
+                    schema_path = f"@.models.zSchema.{schema_name}"
+                    
+                    # Load schema via zLoader (handles @ paths, YAML parsing, etc.)
+                    schema = self.zcli.loader.handle(schema_path)
+                    
+                    if schema:
+                        meta = schema.get('Meta', {})
+                        
+                        # Get migration flag (defaults to True per zMigration guide)
+                        migration_enabled = meta.get('zMigration', True)
+                        
+                        schemas.append({
+                            'name': f"zSchema.{schema_name}",
+                            'env_var': key,
+                            'data_type': meta.get('Data_Type', 'unknown'),
+                            'version': meta.get('zMigrationVersion', 'none'),
+                            'migration_enabled': migration_enabled,
+                            'schema': schema
+                        })
+                        
+                        self.logger.debug(
+                            f"[discover_schemas] Discovered: {schema_name} "
+                            f"(v{meta.get('zMigrationVersion', 'none')}, "
+                            f"migration={'enabled' if migration_enabled else 'disabled'})"
+                        )
+                    else:
+                        self.logger.debug(f"[discover_schemas] Schema not found: {schema_path}")
+                        
+                except Exception as e:
+                    # Schema not found or error loading - log and skip
+                    self.logger.debug(f"[discover_schemas] Skipped {key}: {e}")
+        
+        self.logger.info(f"[discover_schemas] Found {len(schemas)} schema(s), "
+                        f"{sum(1 for s in schemas if s['migration_enabled'])} migration-enabled")
+        
+        return schemas
+
+    def migrate_app(self,
+                    app_file: Optional[str] = None,
+                    auto_approve: bool = False,
+                    dry_run: bool = False,
+                    specific_schema: Optional[str] = None,
+                    force_version: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Execute migrations for all schemas in an application.
+        
+        High-level orchestration method for app-wide migrations. Discovers all schemas
+        with zMigration enabled, executes migrations via self.migrate(), aggregates results,
+        and provides summary statistics. This is the primary entry point for the
+        "zolo migrate" CLI command.
+        
+        Migration Workflow:
+            1. Call self.discover_schemas() to find all ZDATA_*_URL schemas
+            2. Filter by zMigration: true (skip disabled schemas)
+            3. Filter by specific_schema if provided
+            4. For each schema:
+                a. Construct schema path (@.models.{schema_name})
+                b. Call self.migrate() with auto_approve/dry_run/version
+                c. Track result (success/failed/up_to_date)
+            5. Aggregate results and return summary dict
+        
+        Args:
+            app_file: Optional app file path (for display/logging only, not used functionally)
+            auto_approve: If True, skip confirmation prompts (for CI/CD)
+            dry_run: If True, preview changes without executing (not yet implemented)
+            specific_schema: If provided, migrate only this schema (e.g., "users")
+            force_version: If provided, force this version for all migrations
+        
+        Returns:
+            Dict[str, Any]: Migration results with keys:
+                - success: Count of migrations that succeeded
+                - failed: Count of migrations that failed
+                - skipped: Count of schemas skipped (zMigration: false)
+                - up_to_date: Count of schemas already up-to-date (no changes)
+                - total: Total schemas processed
+                - schemas: List of per-schema results (each has 'name', 'status', 'result')
+        
+        Examples:
+            >>> # Migrate all schemas with confirmation prompts
+            >>> result = z.data.migrate_app()
+            >>> print(f"Success: {result['success']}, Failed: {result['failed']}")
+            
+            >>> # CI/CD: Auto-approve all migrations
+            >>> result = z.data.migrate_app(auto_approve=True)
+            >>> if result['failed'] > 0:
+            >>>     raise Exception(f"{result['failed']} migrations failed")
+            
+            >>> # Migrate specific schema only
+            >>> result = z.data.migrate_app(specific_schema="users")
+            
+            >>> # Force version for all schemas
+            >>> result = z.data.migrate_app(force_version="v2.0.0")
+        
+        Notes:
+            - Schemas with zMigration: false are counted in 'skipped', not processed
+            - Each schema migration is independent (one failure doesn't stop others)
+            - Results include detailed per-schema information for logging/debugging
+            - app_file parameter is optional, used only for display (not required)
+            - Uses self.migrate() for each schema (single source of truth)
+            - Follows "zolo migrate" command pattern from zMigration guide
+        
+        Architecture:
+            This method implements the app-wide orchestration layer described in the
+            zMigration guide, providing a single entry point for migrating all schemas
+            in an application without manual iteration in CLI layer (main.py).
+        """
+        results = {
+            'success': 0,
+            'failed': 0,
+            'skipped': 0,
+            'up_to_date': 0,
+            'total': 0,
+            'schemas': []
+        }
+        
+        # Discover all schemas from environment
+        discovered_schemas = self.discover_schemas()
+        
+        if not discovered_schemas:
+            self.logger.warning("[migrate_app] No schemas found with ZDATA_*_URL environment variables")
+            return results
+        
+        # Filter by zMigration: true
+        migration_enabled_schemas = [s for s in discovered_schemas if s['migration_enabled']]
+        
+        if not migration_enabled_schemas:
+            results['skipped'] = len(discovered_schemas)
+            results['total'] = len(discovered_schemas)
+            self.logger.info(f"[migrate_app] No schemas enabled for migration (zMigration: false)")
+            return results
+        
+        # Filter by specific_schema if provided
+        if specific_schema:
+            migration_enabled_schemas = [
+                s for s in migration_enabled_schemas 
+                if s['name'].split('.')[-1].lower() == specific_schema.lower()
+            ]
+            if not migration_enabled_schemas:
+                self.logger.warning(f"[migrate_app] Schema '{specific_schema}' not found or not migration-enabled")
+                return results
+        
+        results['total'] = len(migration_enabled_schemas)
+        results['skipped'] = len(discovered_schemas) - len(migration_enabled_schemas)
+        
+        self.logger.info(f"[migrate_app] Migrating {len(migration_enabled_schemas)} schema(s)")
+        
+        # Migrate each schema
+        for schema_info in migration_enabled_schemas:
+            schema_name = schema_info['name']
+            schema_path = f"@.models.{schema_name}"
+            current_version = schema_info['version']
+            
+            # Use force_version if provided, otherwise use schema's current version
+            target_version = force_version if force_version else (current_version if current_version != 'none' else None)
+            
+            self.logger.info(f"[migrate_app] Migrating {schema_name} (v{current_version})")
+            
+            try:
+                # Use zData.migrate() for single-schema migration
+                # This is the Single Source of Truth for migration logic
+                migration_result = self.migrate(
+                    new_schema_path=schema_path,
+                    auto_approve=auto_approve,
+                    schema_version=target_version
+                )
+                
+                # Track results
+                schema_result = {
+                    'name': schema_name,
+                    'version': current_version,
+                    'result': migration_result
+                }
+                
+                if migration_result.get('success'):
+                    ops_executed = migration_result.get('operations_executed', 0)
+                    if ops_executed == 0:
+                        results['up_to_date'] += 1
+                        schema_result['status'] = 'up_to_date'
+                        self.logger.info(f"[migrate_app] {schema_name}: Up to date (no changes)")
+                    else:
+                        results['success'] += 1
+                        schema_result['status'] = 'success'
+                        self.logger.info(f"[migrate_app] {schema_name}: Success ({ops_executed} operation(s))")
+                else:
+                    results['failed'] += 1
+                    schema_result['status'] = 'failed'
+                    error = migration_result.get('error', 'Unknown error')
+                    self.logger.error(f"[migrate_app] {schema_name}: Failed - {error}")
+                
+                results['schemas'].append(schema_result)
+                
+            except Exception as e:
+                results['failed'] += 1
+                schema_result = {
+                    'name': schema_name,
+                    'version': current_version,
+                    'status': 'failed',
+                    'result': {'success': False, 'error': str(e)}
+                }
+                results['schemas'].append(schema_result)
+                self.logger.error(f"[migrate_app] {schema_name}: Exception - {e}", exc_info=True)
+        
+        # Log summary
+        self.logger.info(
+            f"[migrate_app] Complete: {results['success']} success, "
+            f"{results['failed']} failed, {results['up_to_date']} up-to-date, "
+            f"{results['skipped']} skipped"
+        )
+        
+        return results
+
     def _handle_backend_migration(self, old_backend: str, new_backend: str, 
                                    new_schema: Dict[str, Any], dry_run: bool = False) -> Dict[str, Any]:
         """

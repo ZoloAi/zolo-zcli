@@ -129,10 +129,15 @@ ENV/
 env.bak/
 venv.bak/
 
-# zCLI Environment Files (v1.5.12 - SECURITY CRITICAL)
+# zCLI Environment Files (v2.0 - SECURITY CRITICAL)
 # These files contain database credentials and secrets - NEVER commit!
+# Legacy dotenv format:
 .zEnv
 .zEnv.*
+# New declarative format (THE zCLI WAY):
+zEnv.*.yaml
+zEnv.*.yml
+zEnv.*.json
 
 # Spyder project settings
 .spyderproject

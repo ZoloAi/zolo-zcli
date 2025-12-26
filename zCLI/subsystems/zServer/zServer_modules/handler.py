@@ -563,25 +563,53 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
             # so templates can render them without manual Jinja plumbing
             zcli = self.router.zcli
             if hasattr(zcli, 'session') and zcli.session:
+                # Check if this is the root route "/" - if so, use zSpark defaults (not session)
+                from urllib.parse import urlparse
+                clean_path = urlparse(self.path).path
+                is_root_route = (clean_path == "/" or clean_path == "")
+                
                 # Only inject if not already present in route context
                 if "zVaFile" not in context:
-                    context["zVaFile"] = zcli.session.get("zVaFile")
-                if "zVaFolder" not in context:
-                    context["zVaFolder"] = zcli.session.get("zVaFolder")
-                if "zBlock" not in context:
-                    context["zBlock"] = zcli.session.get("zBlock")
+                    if is_root_route and hasattr(zcli, 'spark') and zcli.spark:
+                        # Root route: Use zSpark default (declarative, not stateful)
+                        context["zVaFile"] = zcli.spark.get("zVaFile")
+                    else:
+                        # Other routes: Use session state (allows navigation memory)
+                        context["zVaFile"] = zcli.session.get("zVaFile")
                 
-                # Debug: log what we got from zSession
+                if "zVaFolder" not in context:
+                    if is_root_route and hasattr(zcli, 'spark') and zcli.spark:
+                        context["zVaFolder"] = zcli.spark.get("zVaFolder")
+                    else:
+                        context["zVaFolder"] = zcli.session.get("zVaFolder")
+                
+                if "zBlock" not in context:
+                    if is_root_route and hasattr(zcli, 'spark') and zcli.spark:
+                        # Root route: Use zSpark default block (prevents session bleed)
+                        context["zBlock"] = zcli.spark.get("zBlock")
+                    else:
+                        # Other routes: Use session state
+                        context["zBlock"] = zcli.session.get("zBlock")
+                
+                # Debug: log what we got and from where
                 if self.zcli_logger:
-                    self.zcli_logger.info(f"[Handler] Auto-injected from zSession: zVaFile={context.get('zVaFile')}, zVaFolder={context.get('zVaFolder')}, zBlock={context.get('zBlock')}")
+                    source = "zSpark (root route)" if is_root_route else "zSession"
+                    self.zcli_logger.info(f"[Handler] Auto-injected from {source}: zVaFile={context.get('zVaFile')}, zVaFolder={context.get('zVaFolder')}, zBlock={context.get('zBlock')}")
             
-            # zUI support: Convert zVaFile to URL if present (mixed mode)
+            # Route-level overrides (opt-in): Explicit route config takes precedence
+            # This allows routes to override zSpark/session defaults
             zVaFile = route.get("zVaFile")
             if zVaFile:
                 ui_file_path = self._convert_zpath_to_url(zVaFile)
                 context["zVaFile"] = ui_file_path
                 if self.zcli_logger:
-                    self.zcli_logger.debug(f"[Handler] Template with zVaFile: {ui_file_path}")
+                    self.zcli_logger.debug(f"[Handler] Route override: zVaFile={ui_file_path}")
+            
+            zBlock = route.get("zBlock")
+            if zBlock:
+                context["zBlock"] = zBlock
+                if self.zcli_logger:
+                    self.zcli_logger.debug(f"[Handler] Route override: zBlock={zBlock}")
             
             # Get templates directory from serve_path (Flask convention)
             import os
@@ -707,15 +735,29 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
                     if hasattr(self, 'zcli_logger') and self.zcli_logger:
                         self.zcli_logger.info(f"[Handler] Resolved {len(resolved_data)} data queries for route")
             
-            # Apply hierarchical fallbacks: route → session
-            # Route-level values override session defaults
+            # Apply hierarchical fallbacks: route → zSpark (root) / session (other)
+            # Route-level values override defaults
             if zcli:
-                zVaFolder = route.get("zVaFolder") or zcli.session.get("zVaFolder")
-                zVaFile = route.get("zVaFile") or zcli.session.get("zVaFile")
-                zBlock = route.get("zBlock") or zcli.session.get("zBlock")
+                # Check if this is the root route "/" - if so, use zSpark defaults (not session)
+                from urllib.parse import urlparse
+                clean_path = urlparse(self.path).path
+                is_root_route = (clean_path == "/" or clean_path == "")
+                
+                # Priority: route → zSpark (root) / session (other)
+                if is_root_route and hasattr(zcli, 'spark') and zcli.spark:
+                    # Root route: Use zSpark defaults (declarative, not stateful)
+                    zVaFolder = route.get("zVaFolder") or zcli.spark.get("zVaFolder")
+                    zVaFile = route.get("zVaFile") or zcli.spark.get("zVaFile")
+                    zBlock = route.get("zBlock") or zcli.spark.get("zBlock")
+                else:
+                    # Other routes: Use session state (allows navigation memory)
+                    zVaFolder = route.get("zVaFolder") or zcli.session.get("zVaFolder")
+                    zVaFile = route.get("zVaFile") or zcli.session.get("zVaFile")
+                    zBlock = route.get("zBlock") or zcli.session.get("zBlock")
                 
                 if hasattr(self, 'zcli_logger') and self.zcli_logger:
-                    self.zcli_logger.debug(f"[Handler] zWalker resolved - Folder: {zVaFolder}, File: {zVaFile}, Block: {zBlock}")
+                    source = "zSpark (root)" if is_root_route else "zSession"
+                    self.zcli_logger.debug(f"[Handler] zWalker resolved from {source} - Folder: {zVaFolder}, File: {zVaFile}, Block: {zBlock}")
             else:
                 # No session available - use route values only
                 zVaFolder = route.get("zVaFolder")

@@ -178,7 +178,7 @@ function _detectLinkTypeFromHref(href) {
  *   link_type: 'anchor'
  * }, containerDiv, bifrostClient);
  */
-export function renderLink(linkData, container, client, groupContext = null) {
+export function renderLink(linkData, container, client) {
   const {
     label,
     href,
@@ -205,6 +205,8 @@ export function renderLink(linkData, container, client, groupContext = null) {
     link_type: link_type,
     detectedLinkType: detectedLinkType,
     target,
+    _zClass,  // ✅ Show _zClass for debugging
+    color,    // ✅ Show color for debugging
     hasClient: !!client,
     hasContainer: !!container
   });
@@ -213,29 +215,46 @@ export function renderLink(linkData, container, client, groupContext = null) {
   const link = createElement('a');
   link.textContent = label;
 
-  // Apply zTheme classes based on context (separation of concerns - frontend decides styling)
-  if (groupContext === 'list-group') {
-    // In list-group: apply zTheme list item classes
-    link.classList.add('zList-group-item', 'zList-group-item-action');
-    console.log('[LinkPrimitives] Applied list-group item classes');
-  }
+  // ✅ TERMINAL-FIRST PATTERN: color is the source of truth
+  // Smart class inference based on context:
+  // - If _zClass has 'zBtn' → add zBtn-{color}
+  // - If plain link (no zBtn) → add zText-{color}
+  // - Group styling handled by orchestrator
   
   // Apply custom _zClass if provided (from YAML)
+  let hasButtonClass = false;
   if (_zClass) {
     const classes = _zClass.split(' ').filter(c => c.trim());
     if (classes.length > 0) {
       link.classList.add(...classes);
+      hasButtonClass = classes.some(c => c === 'zBtn' || c.startsWith('zBtn-'));
+      console.log('[LinkPrimitives] ✅ Applied _zClass:', classes, { hasButtonClass });
+    }
+  } else {
+    console.log('[LinkPrimitives] ⚠️  No _zClass provided');
+  }
+  
+  // 🎨 DRY MAGIC: Auto-infer color class based on context (Terminal-first)
+  if (color) {
+    const colorLower = color.toLowerCase();
+    
+    if (hasButtonClass) {
+      // Button context: add zBtn-{color} if not already present
+      const colorClass = `zBtn-${colorLower}`;
+      if (!link.classList.contains(colorClass)) {
+        link.classList.add(colorClass);
+        console.log('[LinkPrimitives] 🎨 Auto-added button color:', colorClass);
+      }
+    } else {
+      // Plain link context: add zText-{color} for text coloring
+      const colorClass = `zText-${colorLower}`;
+      link.classList.add(colorClass);
+      console.log('[LinkPrimitives] 🎨 Auto-added text color:', colorClass);
     }
   }
   
-  // Apply color variant if provided
-  if (color) {
-    if (groupContext === 'list-group') {
-      link.classList.add(`zList-group-item-${color}`);
-    } else {
-      link.classList.add(`zLink-${color}`);
-    }
-  }
+  // Debug: Show final classes applied
+  console.log('[LinkPrimitives] 🎨 Final classList:', Array.from(link.classList));
 
   // Handle different link types using DETECTED type (fallback-safe)
   switch (detectedLinkType) {
@@ -261,8 +280,11 @@ export function renderLink(linkData, container, client, groupContext = null) {
       _setupPlaceholderLink(link);
   }
 
-  // Append to container
-  container.appendChild(link);
+  // Append to container if provided (legacy), otherwise return element
+  if (container) {
+    container.appendChild(link);
+  }
+  return link;  // ✅ Return link element for direct use
 }
 
 // ─────────────────────────────────────────────────────────────────

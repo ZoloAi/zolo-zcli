@@ -203,10 +203,13 @@ get_current_zcli : Thread-safe context access
 
 # Central imports for the entire zCLI system
 # Standard library imports
+import argparse
+import ast
 import asyncio
 import getpass
 import importlib
 import importlib.util
+import contextvars
 import inspect
 import json
 import logging
@@ -215,6 +218,7 @@ import platform
 import re
 import secrets
 import shutil
+import signal
 import socket
 import sqlite3
 import ssl
@@ -317,9 +321,9 @@ __all__: List[str] = [
     "zCLI",
 
     # System modules
-    "asyncio", "datetime", "date", "time", "timedelta", "getpass", "importlib", "inspect", "json", 
+    "argparse", "ast", "asyncio", "contextvars", "datetime", "date", "time", "timedelta", "getpass", "importlib", "inspect", "json", 
     "logging", "os", "platform", "platformdirs", "re", "requests", "secrets",
-    "shutil", "socket", "sqlite3", "subprocess", "sys", "traceback",
+    "shutil", "signal", "socket", "sqlite3", "subprocess", "sys", "traceback",
     "typing", "uuid", "webbrowser", "websockets", "ws_serve", "WebSocketServerProtocol",
     "ws_exceptions", "yaml", "OrderedDict", "Path", "urlparse",
 

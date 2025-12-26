@@ -200,7 +200,7 @@
         debug: options.debug || false,
         token: options.token || null,
         hooks: options.hooks || {},
-        zThemeCDN: options.zThemeCDN || 'https://cdn.jsdelivr.net/gh/ZoloAi/zTheme@c687707/dist', // CDN base URL (commit hash bypasses cache)
+        zThemeCDN: options.zThemeCDN || 'https://cdn.jsdelivr.net/gh/ZoloAi/zTheme@main/dist', // CDN base URL (commit hash bypasses cache)
         // Full declarative mode - auto-read from page config, fallback to explicit options
         zVaFile: zVaFile,   // YAML file to load
         zVaFolder: zVaFolder, // Folder path
@@ -599,13 +599,19 @@
       
       const cdnBase = this.options.zThemeCDN;
       
+      // Show which version/URL is being loaded
+      console.log(`[BifrostClient] 🎨 Loading zTheme from CDN: ${cdnBase}`);
+      
       // Check if CSS already loaded
       if (!document.querySelector(`link[href="${cdnBase}/ztheme.css"]`)) {
         const link = document.createElement('link');
         link.rel = 'stylesheet';
         link.href = `${cdnBase}/ztheme.css`;
         document.head.appendChild(link);
+        console.log(`[BifrostClient] ✅ zTheme CSS loaded: ${cdnBase}/ztheme.css`);
         this.logger.log('✅ zTheme CSS loaded from CDN');
+      } else {
+        console.log(`[BifrostClient] ℹ️  zTheme CSS already loaded from: ${cdnBase}/ztheme.css`);
       }
       
       // Check if JS already loaded
@@ -613,7 +619,10 @@
         const script = document.createElement('script');
         script.src = `${cdnBase}/ztheme.js`;
         document.head.appendChild(script);
+        console.log(`[BifrostClient] ✅ zTheme JS loaded: ${cdnBase}/ztheme.js`);
         this.logger.log('✅ zTheme JS loaded from CDN');
+      } else {
+        console.log(`[BifrostClient] ℹ️  zTheme JS already loaded from: ${cdnBase}/ztheme.js`);
       }
     }
 

@@ -752,18 +752,8 @@ class BasicInputs:
         
         # Terminal mode: y/n confirmation with semantic color
         try:
-            # Map button color to terminal text color (terminal-first semantic design)
-            color_map = {
-                'danger': self.zColors.ZERROR,      # RED (alarming for destructive actions)
-                'success': self.zColors.ZSUCCESS,   # GREEN (encouraging for positive actions)
-                'warning': self.zColors.ZWARNING,   # YELLOW (cautious for risky actions)
-                'info': self.zColors.ZINFO,         # CYAN (informational)
-                'primary': self.zColors.ZINFO,      # CYAN (default action)
-                'secondary': '',                     # No color (neutral)
-            }
-            
-            # Get terminal color for semantic meaning
-            terminal_color = color_map.get(color, '')
+            # Use centralized color mapping from colors.py (single source of truth)
+            terminal_color = self.zColors.get_semantic_color(color)
             prompt_text = PROMPT_BUTTON_TEMPLATE.format(label=label)
             
             # Apply semantic color if available (terminal-first visual feedback)

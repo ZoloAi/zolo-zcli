@@ -177,7 +177,9 @@ class MediaEvents:
                 self.zPrimitives.write_line("")
                 
                 # Direct prompt (NOT using button event to avoid conflict with UI placeholder buttons)
-                prompt_text = f"{self.zColors.ZINFO}Click [Open image file]? (y/n): {self.zColors.RESET}"
+                # Use centralized color mapping (INFO = cyan for informational prompts)
+                prompt_color = self.zColors.get_semantic_color('INFO')
+                prompt_text = f"{prompt_color}Click [Open image file]? (y/n): {self.zColors.RESET}"
                 response = self.zPrimitives.read_string(prompt_text).strip().lower()
                 
                 confirmed = response in ('y', 'yes')

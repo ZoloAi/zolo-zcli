@@ -14,14 +14,10 @@ Graceful shutdown via SIGINT/SIGTERM handlers (reverse initialization order).
 """
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# IMPORTS
+# IMPORTS (Centralized from zCLI/__init__.py per IMPORT_CENTRALIZATION_RULES.md)
 # ═══════════════════════════════════════════════════════════════════════════════
 
-import logging
-import signal
-import sys
-import contextvars
-from typing import Any, Dict, Optional
+from zCLI import Any, Dict, Optional, contextvars, logging, signal, sys
 from zCLI.utils.zTraceback import ExceptionContext
 
 # ═══════════════════════════════════════════════════════════════════════════════

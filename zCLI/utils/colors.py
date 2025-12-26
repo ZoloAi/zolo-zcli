@@ -300,3 +300,40 @@ class Colors:
     primary    = PRIMARY
     SECONDARY  = "\033[38;5;98m"    # medium purple (validation)
     secondary  = SECONDARY
+    DEFAULT    = RESET
+    default    = DEFAULT
+
+    @classmethod
+    def get_semantic_color(cls, color_name: str) -> str:
+        """
+        Get ANSI color code for a semantic color name.
+        
+        This is the single source of truth for Terminal-first color mapping,
+        used by all zDisplay events (links, buttons, headers, text, etc.)
+        
+        Args:
+            color_name: Semantic color name (PRIMARY, SUCCESS, DANGER, etc.)
+                       Case-insensitive.
+        
+        Returns:
+            ANSI color code string, or empty string for no color
+        
+        Examples:
+            >>> Colors.get_semantic_color('PRIMARY')
+            '\033[38;5;75m'  # Cyan (ZINFO)
+            >>> Colors.get_semantic_color('success')
+            '\033[38;5;78m'  # Green (ZSUCCESS)
+            >>> Colors.get_semantic_color('MUTED')
+            ''  # No color (plain text)
+        """
+        color_map = {
+            'PRIMARY': cls.ZINFO,      # Cyan (encouraging for default actions)
+            'SECONDARY': cls.SECONDARY,  # Purple (secondary/validation actions)
+            'SUCCESS': cls.ZSUCCESS,   # Green (encouraging for positive actions)
+            'DANGER': cls.ZERROR,      # Red (alarming for destructive actions)
+            'WARNING': cls.ZWARNING,   # Yellow (cautious for risky actions)
+            'INFO': cls.ZINFO,         # Cyan (informational)
+            'DEFAULT': '',             # Plain text (no color)
+            'MUTED': '',               # Plain text (neutral)
+        }
+        return color_map.get(color_name.upper(), color_map.get('PRIMARY', ''))

@@ -85,6 +85,7 @@ class LinkEvents:
         self.zcli = display.zcli
         self.logger = display.logger
         self.primitives = display.zPrimitives
+        self.zColors = display.zColors  # For Terminal color support
         # Cross-references (set by zEvents)
         self.BasicOutputs = None  # Will be wired by zEvents.__init__
         self.BasicInputs = None   # Will be wired by zEvents.__init__
@@ -174,8 +175,13 @@ class LinkEvents:
         """
         Render link in Terminal mode using button-style y/n prompts.
         
-        Consistent with button primitive pattern for ALL link types:
-        - Display: [{label}]
+        Terminal-First Design:
+        - Color is the source of truth (semantic intent)
+        - ANSI colors applied based on color parameter
+        - Consistent with button primitive pattern for ALL link types
+        
+        Display Pattern:
+        - Display: [{label}] with semantic color
         - Prompt: Click [{label}]? (y/n):
         - Action: Based on link type and user response
         
@@ -189,20 +195,28 @@ class LinkEvents:
         href = link_data.get('href', '#')
         label = link_data.get('label', href)
         target = link_data.get('target', DEFAULT_TARGET)
-        color = link_data.get('color', '')
+        color = link_data.get('color', 'PRIMARY')
         
-        # STEP 1: Display the link label (button-style)
+        # STEP 1: Display the link label (button-style, plain text)
         self.BasicOutputs.text(
-            f"  [{label}]",  # Button-style brackets
+            f"  [{label}]",
             indent=1,
-            color=color or "PRIMARY"
+            break_after=False
         )
         
-        # STEP 2: Prompt with y/n (EXACT button pattern - reusing primitives!)
+        # STEP 2: Prompt with y/n - Apply SEMANTIC COLOR to prompt (Terminal-first pattern)
+        # Use centralized color mapping from colors.py (single source of truth)
+        terminal_color = self.zColors.get_semantic_color(color)
         prompt_text = PROMPT_LINK_TEMPLATE.format(label=label)
         
+        # Apply semantic color to PROMPT (not label) - terminal-first visual feedback
+        if terminal_color:
+            colored_prompt = f"{terminal_color}{prompt_text}{self.zColors.RESET}"
+        else:
+            colored_prompt = prompt_text
+        
         try:
-            response = self.primitives.read_string(prompt_text).strip().lower()
+            response = self.primitives.read_string(colored_prompt).strip().lower()
             
             # STEP 3: Handle response based on link type
             if response not in ('y', 'yes'):
