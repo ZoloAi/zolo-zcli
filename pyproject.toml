@@ -11,16 +11,16 @@ authors = [
 ]
 readme = "README.md"
 license = "MIT"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: System :: Shells",
     "Topic :: Software Development :: Frameworks",
@@ -100,4 +100,20 @@ zCLI = [
 # Dynamically read the version string from the attribute
 # zCLI/version.py -> __version__ (exported via zCLI.version.__version__)
 version = {attr = "zCLI.version.__version__"}
+
+[tool.uv]
+# uv configuration for modern Python package management
+# See: https://docs.astral.sh/uv/
+
+# Prefer Python 3.11+ for best performance and features
+python-preference = "managed"  # Let uv manage Python installations
+
+[dependency-groups]
+# Development dependencies (new uv format)
+# Replaces deprecated [tool.uv.dev-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "pylint>=2.0",
+]
 
