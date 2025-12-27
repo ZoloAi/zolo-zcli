@@ -220,51 +220,51 @@ class zCLI:
         # ─────────────────────────────────────────────────────────────
         # Initialize zConfig FIRST (provides machine config, environment config, session, logger, and traceback)
         # After this call, self.session, self.logger, and self.zTraceback are ready to use
-        from .subsystems.zConfig import zConfig
+        from .L1_Foundation.a_zConfig import zConfig
         self.config = zConfig(zcli=self, zSpark_obj=zSpark_obj)
 
         # Initialize zComm (Communication infrastructure for zBifrost and zData)
-        from .subsystems.zComm import zComm
+        from .L1_Foundation.b_zComm import zComm
         self.comm = zComm(self)
 
         # ─────────────────────────────────────────────────────────────
         # Layer 1: Core Subsystems
         # ─────────────────────────────────────────────────────────────
         # Initialize display subsystem
-        from .subsystems.zDisplay import zDisplay
+        from .L2_Core.c_zDisplay import zDisplay
         self.display = zDisplay(self)
         self.mycolor = "MAIN"
 
         # Initialize authentication subsystem
-        from .subsystems.zAuth import zAuth
+        from .L2_Core.d_zAuth import zAuth
         self.auth = zAuth(self)
 
         # Initialize dispatch subsystem
-        from .subsystems.zDispatch import zDispatch
+        from .L2_Core.e_zDispatch import zDispatch
         self.dispatch = zDispatch(self)
 
         # Initialize navigation subsystem
-        from .subsystems.zNavigation import zNavigation
+        from .L2_Core.f_zNavigation import zNavigation
         self.navigation = zNavigation(self)
 
         # Initialize parser subsystem
-        from .subsystems.zParser import zParser
+        from .L2_Core.g_zParser import zParser
         self.zparser = zParser(self)
 
         # Initialize loader subsystem
-        from .subsystems.zLoader import zLoader
+        from .L2_Core.h_zLoader import zLoader
         self.loader = zLoader(self)
 
         # Initialize function subsystem
-        from .subsystems.zFunc import zFunc
+        from .L2_Core.i_zFunc import zFunc
         self.zfunc = zFunc(self)
 
         # Initialize dialog subsystem
-        from .subsystems.zDialog import zDialog
+        from .L2_Core.j_zDialog import zDialog
         self.dialog = zDialog(self)
 
         # Initialize open subsystem
-        from .subsystems.zOpen import zOpen
+        from .L2_Core.k_zOpen import zOpen
         self.open = zOpen(self)
 
 
@@ -272,35 +272,35 @@ class zCLI:
         # Layer 2: Core Abstraction
         # ─────────────────────────────────────────────────────────────
         # Initialize utility subsystem (provides plugin system for other subsystems)
-        from .subsystems.zUtils import zUtils
+        from .L3_Abstraction.l_zUtils import zUtils
         self.utils = zUtils(self)    # Plugin system - available to all Layer 2+ subsystems
         self._load_plugins()         # Load plugins immediately after plugin system is ready
 
         # Initialize wizard subsystem (loop engine - no upper dependencies)
-        from .subsystems.zWizard import zWizard
+        from .L3_Abstraction.m_zWizard import zWizard
         self.wizard = zWizard(self)
 
         # Initialize data subsystem (may use zWizard for interactive operations)
-        from .subsystems.zData import zData
+        from .L3_Abstraction.n_zData import zData
         self.data = zData(self)
 
         # Initialize zBifrost WebSocket bridge orchestrator (Layer 2)
         # Coordinates Terminal↔Web communication using z.comm infrastructure
-        from .subsystems.zBifrost import zBifrost
+        from .L3_Abstraction.o_zBifrost import zBifrost
         self.bifrost = zBifrost(self)
 
         # Initialize shell and command executor (depends on zUtils, zWizard, zData)
-        from .subsystems.zShell import zShell
+        from .L3_Abstraction.p_zShell import zShell
         self.shell = zShell(self)
 
         # Layer 3: Orchestration
         # Initialize walker subsystem
-        from .subsystems.zWalker import zWalker
+        from .L4_Orchestration.q_zWalker import zWalker
         self.walker = zWalker(self)  # Modern walker with unified navigation (can use plugins immediately)
 
         # Initialize zServer (HTTP/WSGI server subsystem) - Layer 1
         # v1.5.8: Independent subsystem (was factory method in zComm)
-        from .subsystems.zServer import zServer
+        from .L4_Orchestration.r_zServer import zServer
         self.server = zServer(
             logger=self.logger,
             zcli=self,
