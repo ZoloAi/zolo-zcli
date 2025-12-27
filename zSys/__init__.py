@@ -21,6 +21,7 @@ Modules:
     - cache_utils: Cache management utilities
     - bootstrap_logger: Pre-boot logging with buffer injection
     - logger: Minimal console logger (WSGI workers)
+    - logger_formats: Unified logging format (single source of truth)
     - installation_utils: Portable installation type detection
     - cli_handlers: CLI command handler functions
     - uninstall: Package removal utilities
@@ -28,6 +29,7 @@ Modules:
 Usage:
     from zSys import BootstrapLogger, colors, validation, exceptions
     from zSys.installation_utils import detect_installation_type
+    from zSys.logger_formats import UnifiedFormatter, format_log_message
     from zSys import cli_handlers
 """
 
@@ -37,6 +39,11 @@ from .colors import Colors
 from .validation import validate_zcli_instance
 from .installation_utils import detect_installation_type
 from . import cli_handlers
+from .logger_formats import (
+    UnifiedFormatter,
+    format_log_message,
+    format_bootstrap_verbose,
+)
 from .zExceptions import (
     # Base exceptions
     zCLIException,
@@ -71,6 +78,10 @@ __all__ = [
     "detect_installation_type",
     # CLI Handlers
     "cli_handlers",
+    # Logger Formats (unified)
+    "UnifiedFormatter",
+    "format_log_message",
+    "format_bootstrap_verbose",
     # Exceptions
     "zCLIException",
     "ConfigurationError",

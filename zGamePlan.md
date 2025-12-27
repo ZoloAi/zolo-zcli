@@ -1791,14 +1791,140 @@ These are **optional refinements** from the original audit. The core issues are 
 
 ---
 
+### ✅ 0.6.7: Unified Logging System ⭐ **COMPLETE**
+
+**Problem**: Three different logging systems with inconsistent formats:
+- Bootstrap logger: Custom format with colors
+- Framework logger: Detailed format with custom `FileNameFormatter`
+- App logger: Simple format with custom formatter
+- ConsoleLogger: Basic `[LEVEL] message` format
+
+**Inspiration**: Israel Levin's [mkma](https://github.com/israellevin/mkma/blob/master/initramfs_init.sh) logging pattern
+```bash
+_log() {
+    level=$1
+    shift
+    message="$(date) [mkma.sh init]: $*"
+    echo "<$level>$message" > /dev/kmsg
+}
+```
+
+**Key Pattern**: Single `_log()` function = single source of truth for format
+
+---
+
+#### Implementation
+
+**Created**: `zSys/logger_formats.py` - Single Source of Truth
+
+```python
+def format_log_message(
+    timestamp: datetime,
+    level: str,
+    context: str,
+    message: str,
+    include_details: bool = False,
+    filename: Optional[str] = None,
+    lineno: Optional[int] = None
+) -> str:
+    """
+    Single format function for ALL zCLI logging.
+    
+    Format: TIMESTAMP [CONTEXT] LEVEL: MESSAGE
+    Format (detailed): TIMESTAMP [CONTEXT] LEVEL [FILE:LINE]: MESSAGE
+    """
+```
+
+**Updated**:
+1. ✅ `bootstrap_logger.py` - Uses `format_log_message()` and `format_bootstrap_verbose()`
+2. ✅ `config_logger.py` - Uses `UnifiedFormatter` (replaced `FileNameFormatter`)
+3. ✅ `logger.py` (ConsoleLogger) - Enhanced to use `format_log_message()`
+
+---
+
+#### Results - Consistent Output Everywhere
+
+**Bootstrap Logger** (console, --verbose):
+```
+[18:14:55] [Bootstrap] zolo-zcli entry point started
+[18:14:55] [Bootstrap] Python: 3.12.4
+```
+
+**Framework Logger** (file: zcli-framework.log):
+```
+2025-12-27 18:15:40 [Framework] DEBUG [zCLI.py:359]: Session initialized
+2025-12-27 18:15:40 [Framework] INFO [bootstrap_logger.py:110]: Pre-boot log injection
+```
+
+**App Logger** (file: zolo.log):
+```
+2025-12-27 18:15:40 [App] DEBUG [config_logger.py:508]: No models/ folder found
+2025-12-27 18:15:40 [App] INFO [config_logger.py:519]: Initialized
+```
+
+**ConsoleLogger** (WSGI workers):
+```
+2025-12-27 18:16:00 [WSGI] INFO: Server started
+2025-12-27 18:16:00 [WSGI] ERROR: Connection failed
+```
+
+---
+
+#### Benefits (Israel's Pattern Applied)
+
+1. ✅ **Single Source of Truth** - One `format_log_message()` function
+2. ✅ **Consistency** - All logs use same format: `TIMESTAMP [CONTEXT] LEVEL: MESSAGE`
+3. ✅ **Machine-Parseable** - Easy to grep/awk/parse
+4. ✅ **Context Clear** - `[Bootstrap]`, `[Framework]`, `[App]`, `[WSGI]` immediately visible
+5. ✅ **Simple** - No complex formatter classes, just a function
+6. ✅ **Maintainable** - Change format once, affects all loggers
+
+---
+
+#### Code Quality Impact
+
+**Before** (3 different formats):
+- `bootstrap_logger.py`: Custom color formatting (170 lines)
+- `config_logger.py`: `FileNameFormatter` class + format strings (665 lines)
+- `logger.py`: Basic `[LEVEL] message` (39 lines)
+
+**After** (1 unified format):
+- `logger_formats.py`: Single format function + `UnifiedFormatter` class (196 lines)
+- `bootstrap_logger.py`: Calls `format_log_message()` (simplified)
+- `config_logger.py`: Uses `UnifiedFormatter` (removed 50+ lines of formatter logic)
+- `logger.py`: Enhanced to use `format_log_message()` (better output)
+
+**Net Result**: More consistent, more maintainable, easier to understand
+
+---
+
+#### Files Changed
+- ✅ Created: `zSys/logger_formats.py` (196 lines)
+- ✅ Updated: `zSys/bootstrap_logger.py` (now uses unified format)
+- ✅ Updated: `zSys/logger.py` (ConsoleLogger enhanced)
+- ✅ Updated: `zCLI/L1_Foundation/a_zConfig/zConfig_modules/config_logger.py` (uses UnifiedFormatter)
+- ✅ Updated: `zSys/__init__.py` (exports new logger_formats module)
+
+**Testing**:
+- ✅ `zolo --verbose` - Bootstrap logger works with unified format
+- ✅ `zolo config --verbose` - Framework logger uses unified format
+- ✅ Framework log file (`zcli-framework.log`) - Consistent format
+- ✅ App log file (`zolo.log`) - Consistent format
+- ✅ ConsoleLogger - Tested with python3 script
+
+**Time Spent**: ~1.5 hours | **Impact**: High (architectural improvement)
+
+---
+
 ### 📊 Phase 0.6 Progress Summary
 
-**Completed** (4 major improvements):
+**Completed** (6 major improvements):
 - ✅ Info banner on `zolo` (no shell auto-launch)
 - ✅ Simplified installation type display ("editable", "uv", "standard")
 - ✅ Removed `zShell` standalone command (consolidated entry points)
 - ✅ Simplified `config` command (removed 33+ lines, now read-only)
 - ✅ Production mode for config (clean output, no verbose logs)
+- ✅ **Unified Logging System** (centralized format, Israel's mkma-inspired pattern)
 
 **Remaining** (Optional polish items):
 - 🟡 Optional 0.6.5: Additional Quick Fixes (~10 min) - **OPTIONAL**
@@ -1806,7 +1932,7 @@ These are **optional refinements** from the original audit. The core issues are 
 - 🟡 Optional 0.6.7: Error Handling Standardization (~20 min) - **OPTIONAL**
 - 🟡 Optional 0.6.8: Parser Extraction (~20 min) - **OPTIONAL**
 
-**Time Spent**: ~40 min | **Remaining** (if pursuing polish): ~1-1.5 hours
+**Time Spent**: ~2 hours | **Remaining** (if pursuing polish): ~1-1.5 hours
 
 **Status**: ✅ **CORE OBJECTIVES ACHIEVED** - Remaining items are optional refinements
 
@@ -1852,10 +1978,12 @@ Only pursue if you want extra refinement:
 - ✅ Installation type display simplified
 - ✅ Duplicate entry points removed (`zShell` consolidated)
 - ✅ Config command simplified (read-only, clean output)
+- ✅ **Unified logging system** (single source of truth, mkma-inspired)
 - ✅ Testing: `zolo --help` works ✓
 - ✅ Testing: `zolo` works ✓
 - ✅ Testing: `zolo shell` works ✓
 - ✅ Testing: `zolo config` works ✓ (clean output)
+- ✅ Testing: All loggers use consistent format ✓
 
 **Optional Refinements** (Not Critical):
 - 🟡 Handler signature consistency (optional polish)
@@ -1867,7 +1995,7 @@ Only pursue if you want extra refinement:
 
 **Result**: ✅ **PHASE 0.6 CORE OBJECTIVES COMPLETE**
 
-**Time Spent**: 40 minutes | **Estimated for Optional Polish**: 1-1.5 hours (if desired)
+**Time Spent**: ~2 hours | **Estimated for Optional Polish**: 1-1.5 hours (if desired)
 
 ---
 

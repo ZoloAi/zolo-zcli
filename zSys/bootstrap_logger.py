@@ -6,6 +6,8 @@ Buffers log messages before zCLI framework is initialized, then injects
 them into zcli-framework.log once the framework logger is available.
 
 Supports --verbose flag for CLI commands to display bootstrap process.
+
+Uses unified logging format from logger_formats.py for consistency.
 """
 
 import logging
@@ -13,6 +15,9 @@ import sys
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Any, Optional
+
+# Import unified format functions
+from .logger_formats import format_log_message, format_bootstrap_verbose
 
 
 class BootstrapLogger:
@@ -151,23 +156,13 @@ class BootstrapLogger:
         self.buffer.clear()
     
     def _print_verbose_message(self, entry: Dict[str, Any]):
-        """Print log entry to stdout in verbose mode."""
-        timestamp = entry['timestamp'].strftime("%H:%M:%S")
-        level = entry['level']
-        message = entry['message']
-        
-        # Color codes for levels
-        colors = {
-            'DEBUG': '\033[90m',    # Gray
-            'INFO': '\033[36m',     # Cyan
-            'WARNING': '\033[33m',  # Yellow
-            'ERROR': '\033[31m',    # Red
-            'CRITICAL': '\033[91m', # Bright Red
-        }
-        reset = '\033[0m'
-        
-        color = colors.get(level, '')
-        print(f"{color}[{timestamp}] [Bootstrap] {message}{reset}")
+        """Print log entry to stdout in verbose mode using unified format."""
+        formatted = format_bootstrap_verbose(
+            timestamp=entry['timestamp'],
+            level=entry['level'],
+            message=entry['message']
+        )
+        print(formatted)
     
     def emergency_dump(self, exception: Optional[Exception] = None):
         """
@@ -187,12 +182,16 @@ class BootstrapLogger:
         
         print(f"\nPre-boot log buffer ({len(self.buffer)} messages):\n", file=sys.stderr)
         
-        # Dump buffered messages
+        # Dump buffered messages using unified format
         for entry in self.buffer:
-            timestamp = entry['timestamp'].strftime("%Y-%m-%d %H:%M:%S")
-            level = entry['level']
-            message = entry['message']
-            print(f"[{timestamp}] [{level}] {message}", file=sys.stderr)
+            formatted = format_log_message(
+                timestamp=entry['timestamp'],
+                level=entry['level'],
+                context="Bootstrap",
+                message=entry['message'],
+                include_details=False
+            )
+            print(formatted, file=sys.stderr)
         
         print("\n" + "=" * 70, file=sys.stderr)
         
@@ -214,11 +213,16 @@ class BootstrapLogger:
                 f.write("Pre-boot Log Buffer:\n")
                 f.write("-" * 70 + "\n\n")
                 
+                # Use unified format for consistency
                 for entry in self.buffer:
-                    timestamp = entry['timestamp'].strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
-                    level = entry['level']
-                    message = entry['message']
-                    f.write(f"[{timestamp}] [{level}] {message}\n")
+                    formatted = format_log_message(
+                        timestamp=entry['timestamp'],
+                        level=entry['level'],
+                        context="Bootstrap",
+                        message=entry['message'],
+                        include_details=False
+                    )
+                    f.write(formatted + "\n")
             
             print(f"\n💾 Bootstrap log saved to: {temp_file}", file=sys.stderr)
         except Exception as e:

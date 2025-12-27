@@ -1,8 +1,14 @@
 # zCLI/subsystems/zConfig/zConfig_modules/config_logger.py
-"""Logger configuration and management as part of zConfig."""
+"""
+Logger configuration and management as part of zConfig.
+
+Uses unified logging format from zSys.logger_formats for consistency
+across all logging systems (bootstrap, framework, app).
+"""
 
 from zCLI import Colors, logging, os, Path, Any, Dict, Optional
 from zCLI.utils import print_ready_message, validate_zcli_instance
+from zSys.logger_formats import UnifiedFormatter
 from .config_session import SESSION_KEY_ZLOGGER
 
 # ═══════════════════════════════════════════════════════════
@@ -54,24 +60,6 @@ PATH_SUBSYSTEMS_MARKER = "zCLI/subsystems/"
 PATH_ZCLI_MARKER = "zCLI/"
 PATH_SUBSYSTEMS_DIR = "subsystems"
 PYTHON_EXTENSION = ".py"
-
-class FileNameFormatter(logging.Formatter):
-    """Custom formatter that shows the actual file name instead of logger name."""
-    
-    logger_config: Any  # LoggerConfig instance
-    
-    def __init__(self, logger_config: Any, fmt: Optional[str] = None, datefmt: Optional[str] = None) -> None:
-        self.logger_config = logger_config
-        super().__init__(fmt, datefmt)
-    
-    def format(self, record: logging.LogRecord) -> str:
-        # Get the caller file information
-        caller_name = self.logger_config._get_caller_info(record)
-        
-        # Replace the name field with the caller information
-        record.name = caller_name
-        
-        return super().format(record)
 
 class LoggerConfig:
     """Manages dual logging configuration: framework (internal) and app (user) logs."""
@@ -293,36 +281,10 @@ class LoggerConfig:
         # Clear existing handlers to avoid duplicates
         self._framework_logger.handlers.clear()
         
-        # Setup formatters
-        if log_format == FORMAT_JSON:
-            console_formatter = FileNameFormatter(
-                self,
-                '{"level":"%(levelname)s","name":"%(name)s","message":"%(message)s"}'
-            )
-            file_formatter = FileNameFormatter(
-                self,
-                '{"time":"%(asctime)s","level":"%(levelname)s","name":"%(name)s","file":"%(filename)s","line":%(lineno)d,"message":"%(message)s"}'
-            )
-        elif log_format == FORMAT_SIMPLE:
-            console_formatter = FileNameFormatter(
-                self,
-                '%(levelname)s: %(message)s'
-            )
-            file_formatter = FileNameFormatter(
-                self,
-                '%(asctime)s - %(levelname)s: %(message)s',
-                datefmt='%Y-%m-%d %H:%M:%S'
-            )
-        else:  # FORMAT_DETAILED
-            console_formatter = FileNameFormatter(
-                self,
-                '%(name)s - %(levelname)s - %(message)s'
-            )
-            file_formatter = FileNameFormatter(
-                self,
-                '%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s',
-                datefmt='%Y-%m-%d %H:%M:%S'
-            )
+        # Use unified formatter from zSys (consistent with bootstrap logger)
+        # Framework logger always uses detailed format with file/line info
+        console_formatter = UnifiedFormatter("Framework", include_details=False)
+        file_formatter = UnifiedFormatter("Framework", include_details=True)
 
         # Console handler for framework logs: DISABLED by default (framework logs are transparent)
         # Framework logs go to file only (zcli-framework.log)
@@ -416,36 +378,10 @@ class LoggerConfig:
         # Clear existing handlers to avoid duplicates
         self._app_logger.handlers.clear()
         
-        # Setup formatters based on format setting
-        if log_format == FORMAT_JSON:
-            console_formatter = FileNameFormatter(
-                self,
-                '{"level":"%(levelname)s","name":"%(name)s","message":"%(message)s"}'
-            )
-            file_formatter = FileNameFormatter(
-                self,
-                '{"time":"%(asctime)s","level":"%(levelname)s","name":"%(name)s","file":"%(filename)s","line":%(lineno)d,"message":"%(message)s"}'
-            )
-        elif log_format == FORMAT_SIMPLE:
-            console_formatter = FileNameFormatter(
-                self,
-                '%(levelname)s: %(message)s'
-            )
-            file_formatter = FileNameFormatter(
-                self,
-                '%(asctime)s - %(levelname)s: %(message)s',
-                datefmt='%Y-%m-%d %H:%M:%S'
-            )
-        else:  # FORMAT_DETAILED
-            console_formatter = FileNameFormatter(
-                self,
-                '%(name)s - %(levelname)s - %(message)s'
-            )
-            file_formatter = FileNameFormatter(
-                self,
-                '%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s',
-                datefmt='%Y-%m-%d %H:%M:%S'
-            )
+        # Use unified formatter from zSys (consistent with bootstrap and framework)
+        # App logger uses simple format (no file/line for console readability)
+        console_formatter = UnifiedFormatter("App", include_details=False)
+        file_formatter = UnifiedFormatter("App", include_details=True)
 
         # Console handler (disabled in PROD mode for silent operation)
         if app_log_level != LOG_LEVEL_PROD:
