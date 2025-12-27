@@ -12,16 +12,14 @@ Architecture:
 
 from zCLI import ssl, Path, Optional, Any
 
-# ═══════════════════════════════════════════════════════════
 # Module Constants
-# ═══════════════════════════════════════════════════════════
 
-LOG_PREFIX = "[SSL]"
-LOG_ENABLED = f"{LOG_PREFIX} SSL enabled with cert: {{cert_path}}"
-LOG_CERT_NOT_PROVIDED = f"{LOG_PREFIX} SSL enabled but cert/key not provided"
-LOG_CERT_NOT_FOUND = f"{LOG_PREFIX} SSL cert not found: {{cert_path}}"
-LOG_KEY_NOT_FOUND = f"{LOG_PREFIX} SSL key not found: {{key_path}}"
-LOG_CONTEXT_FAILED = f"{LOG_PREFIX} Failed to create SSL context: {{error}}"
+_LOG_PREFIX = "[SSL]"
+_LOG_ENABLED = f"{_LOG_PREFIX} SSL enabled with cert: {{cert_path}}"
+_LOG_CERT_NOT_PROVIDED = f"{_LOG_PREFIX} SSL enabled but cert/key not provided"
+_LOG_CERT_NOT_FOUND = f"{_LOG_PREFIX} SSL cert not found: {{cert_path}}"
+_LOG_KEY_NOT_FOUND = f"{_LOG_PREFIX} SSL key not found: {{key_path}}"
+_LOG_CONTEXT_FAILED = f"{_LOG_PREFIX} Failed to create SSL context: {{error}}"
 
 
 def create_ssl_context(
@@ -29,7 +27,7 @@ def create_ssl_context(
     ssl_cert: Optional[str],
     ssl_key: Optional[str],
     logger: Any,
-    log_prefix: str = LOG_PREFIX
+    log_prefix: str = _LOG_PREFIX
 ) -> Optional[ssl.SSLContext]:
     """
     Create SSL context for server-side TLS encryption (Layer 0 primitive).

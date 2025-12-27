@@ -7,25 +7,16 @@ and other low-level network operations needed by zComm services.
 """
 
 from zCLI import Any, socket
+from ..constants import PORT_MIN, PORT_MAX, DEFAULT_HOST, DEFAULT_TIMEOUT_SECONDS
 
-# ═══════════════════════════════════════════════════════════════════
 # Module Constants
-# ═══════════════════════════════════════════════════════════════════
 
 # Logging
-LOG_PREFIX = "[NetworkUtils]"
-
-# Network Configuration
-DEFAULT_HOST = "localhost"
-DEFAULT_TIMEOUT_SECONDS = 1
-
-# Port Validation
-PORT_MIN = 1
-PORT_MAX = 65535
+_LOG_PREFIX = "[NetworkUtils]"
 
 # Error Messages
-ERROR_INVALID_PORT = "Port must be between {min} and {max}, got: {port}"
-ERROR_PORT_CHECK_FAILED = "Failed to check port {port}"
+_ERROR_INVALID_PORT = "Port must be between {min} and {max}, got: {port}"
+_ERROR_PORT_CHECK_FAILED = "Failed to check port {port}"
 
 
 class NetworkUtils:
@@ -69,15 +60,15 @@ class NetworkUtils:
         """
         # Validate port range
         if not isinstance(port, int) or port < PORT_MIN or port > PORT_MAX:
-            error_msg = ERROR_INVALID_PORT.format(
+            error_msg = _ERROR_INVALID_PORT.format(
                 min=PORT_MIN,
                 max=PORT_MAX,
                 port=port
             )
-            self.logger.error(f"{LOG_PREFIX} {error_msg}")
+            self.logger.error(f"{_LOG_PREFIX} {error_msg}")
             raise ValueError(error_msg)
 
-        self.logger.debug(f"{LOG_PREFIX} Checking port availability: {port} on {host}")
+        self.logger.debug(f"{_LOG_PREFIX} Checking port availability: {port} on {host}")
 
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -88,14 +79,14 @@ class NetworkUtils:
             is_available = result != 0  # True if available, False if in use
 
             if is_available:
-                self.logger.debug(f"{LOG_PREFIX} Port {port} is available")
+                self.logger.debug(f"{_LOG_PREFIX} Port {port} is available")
             else:
-                self.logger.debug(f"{LOG_PREFIX} Port {port} is in use")
+                self.logger.debug(f"{_LOG_PREFIX} Port {port} is in use")
 
             return is_available
 
         except (socket.error, OSError) as e:
             # Specific socket/OS errors
-            error_msg = ERROR_PORT_CHECK_FAILED.format(port=port)
-            self.logger.error(f"{LOG_PREFIX} {error_msg}: {e}")
+            error_msg = _ERROR_PORT_CHECK_FAILED.format(port=port)
+            self.logger.error(f"{_LOG_PREFIX} {error_msg}: {e}")
             return False

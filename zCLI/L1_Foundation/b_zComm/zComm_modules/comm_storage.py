@@ -23,17 +23,17 @@ Usage:
 
 from pathlib import Path
 from typing import Optional, Union, BinaryIO, Any
+from .constants import (
+    STORAGE_DEFAULT_BACKEND,
+    STORAGE_SUPPORTED_BACKENDS,
+    STORAGE_CONFIG_KEY_BACKEND,
+    STORAGE_CONFIG_KEY_LOCAL_ROOT,
+    STORAGE_CONFIG_KEY_S3_BUCKET,
+    STORAGE_CONFIG_KEY_S3_REGION
+)
 
 # Module Constants
-LOG_PREFIX = "[StorageClient]"
-DEFAULT_BACKEND = "local"
-SUPPORTED_BACKENDS = ["local", "s3", "azure", "gcs"]
-
-# Config Keys (matches zConfig hierarchy)
-CONFIG_KEY_BACKEND = "storage_backend"
-CONFIG_KEY_LOCAL_ROOT = "storage_local_root"
-CONFIG_KEY_S3_BUCKET = "storage_s3_bucket"
-CONFIG_KEY_S3_REGION = "storage_s3_region"
+_LOG_PREFIX = "[StorageClient]"
 
 
 class StorageClient:
@@ -54,12 +54,12 @@ class StorageClient:
         self.logger = zcli.logger
         
         # Get backend from config hierarchy (auto-cascades through all 5 layers!)
-        backend = self._get_config(CONFIG_KEY_BACKEND, DEFAULT_BACKEND)
+        backend = self._get_config(STORAGE_CONFIG_KEY_BACKEND, STORAGE_DEFAULT_BACKEND)
         
         # Validate backend
-        if backend not in SUPPORTED_BACKENDS:
+        if backend not in STORAGE_SUPPORTED_BACKENDS:
             self.logger.warning(
-                f"{LOG_PREFIX} Unknown backend '{backend}', falling back to 'local'"
+                f"{_LOG_PREFIX} Unknown backend '{backend}', falling back to 'local'"
             )
             backend = "local"
         
@@ -67,7 +67,7 @@ class StorageClient:
         self.backend = backend
         self.adapter = self._create_adapter(backend)
         
-        self.logger.framework.info(f"{LOG_PREFIX} Initialized with backend: {backend}")
+        self.logger.framework.info(f"{_LOG_PREFIX} Initialized with backend: {backend}")
     
     def _get_config(self, key: str, default: Any = None) -> Any:
         """
@@ -207,7 +207,7 @@ class LocalAdapter(StorageAdapter):
         self.get_config = get_config
         
         # Get root from config (Layer 4: .zEnv, Layer 5: zSpark)
-        root_path = self.get_config(CONFIG_KEY_LOCAL_ROOT)
+        root_path = self.get_config(STORAGE_CONFIG_KEY_LOCAL_ROOT)
         
         if root_path:
             self.root = Path(root_path)
@@ -218,7 +218,7 @@ class LocalAdapter(StorageAdapter):
             # Fallback: current directory
             self.root = Path.cwd() / "storage"
         
-        self.logger.framework.debug(f"{LOG_PREFIX} LocalAdapter root: {self.root}")
+        self.logger.framework.debug(f"{_LOG_PREFIX} LocalAdapter root: {self.root}")
     
     def put(self, key: str, data: Union[bytes, BinaryIO]) -> str:
         """Save file to local filesystem."""
@@ -230,7 +230,7 @@ class LocalAdapter(StorageAdapter):
         else:
             file_path.write_bytes(data.read())
         
-        self.logger.framework.debug(f"{LOG_PREFIX} Saved: {file_path}")
+        self.logger.framework.debug(f"{_LOG_PREFIX} Saved: {file_path}")
         return str(file_path)
     
     def get(self, key: str) -> bytes:
@@ -245,7 +245,7 @@ class LocalAdapter(StorageAdapter):
         file_path = self.root / key
         if file_path.exists():
             file_path.unlink()
-            self.logger.framework.debug(f"{LOG_PREFIX} Deleted: {file_path}")
+            self.logger.framework.debug(f"{_LOG_PREFIX} Deleted: {file_path}")
             return True
         return False
     
@@ -281,12 +281,12 @@ class S3Adapter(StorageAdapter):
             self.ClientError = ClientError
             self.NoCredentialsError = NoCredentialsError
         except ImportError:
-            self.logger.error(f"{LOG_PREFIX} boto3 not installed! Run: pip install boto3")
+            self.logger.error(f"{_LOG_PREFIX} boto3 not installed! Run: pip install boto3")
             raise ImportError("boto3 is required for S3 storage. Install with: pip install boto3")
         
         # Get S3 configuration from zConfig hierarchy
-        self.bucket = self.get_config(CONFIG_KEY_S3_BUCKET)
-        self.region = self.get_config(CONFIG_KEY_S3_REGION, 'us-east-1')
+        self.bucket = self.get_config(STORAGE_CONFIG_KEY_S3_BUCKET)
+        self.region = self.get_config(STORAGE_CONFIG_KEY_S3_REGION, 'us-east-1')
         
         if not self.bucket:
             raise ValueError("STORAGE_S3_BUCKET must be configured in .zEnv for S3 backend")
@@ -299,21 +299,21 @@ class S3Adapter(StorageAdapter):
             self.client.head_bucket(Bucket=self.bucket)
             
             self.logger.framework.info(
-                f"{LOG_PREFIX} S3Adapter initialized: s3://{self.bucket} (region: {self.region})"
+                f"{_LOG_PREFIX} S3Adapter initialized: s3://{self.bucket} (region: {self.region})"
             )
         except self.NoCredentialsError:
             self.logger.error(
-                f"{LOG_PREFIX} AWS credentials not found! Set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY in .zEnv"
+                f"{_LOG_PREFIX} AWS credentials not found! Set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY in .zEnv"
             )
             raise
         except self.ClientError as e:
             error_code = e.response['Error']['Code']
             if error_code == '404':
-                self.logger.error(f"{LOG_PREFIX} S3 bucket '{self.bucket}' does not exist!")
+                self.logger.error(f"{_LOG_PREFIX} S3 bucket '{self.bucket}' does not exist!")
             elif error_code == '403':
-                self.logger.error(f"{LOG_PREFIX} Access denied to bucket '{self.bucket}'. Check IAM permissions.")
+                self.logger.error(f"{_LOG_PREFIX} Access denied to bucket '{self.bucket}'. Check IAM permissions.")
             else:
-                self.logger.error(f"{LOG_PREFIX} S3 error: {e}")
+                self.logger.error(f"{_LOG_PREFIX} S3 error: {e}")
             raise
     
     def put(self, key: str, data: Union[bytes, BinaryIO]) -> str:
@@ -330,11 +330,11 @@ class S3Adapter(StorageAdapter):
                 Body=data
             )
             
-            self.logger.framework.debug(f"{LOG_PREFIX} Uploaded: s3://{self.bucket}/{key}")
+            self.logger.framework.debug(f"{_LOG_PREFIX} Uploaded: s3://{self.bucket}/{key}")
             return f"s3://{self.bucket}/{key}"
             
         except self.ClientError as e:
-            self.logger.error(f"{LOG_PREFIX} Failed to upload {key}: {e}")
+            self.logger.error(f"{_LOG_PREFIX} Failed to upload {key}: {e}")
             raise
     
     def get(self, key: str) -> bytes:
@@ -343,7 +343,7 @@ class S3Adapter(StorageAdapter):
             response = self.client.get_object(Bucket=self.bucket, Key=key)
             data = response['Body'].read()
             
-            self.logger.framework.debug(f"{LOG_PREFIX} Downloaded: s3://{self.bucket}/{key}")
+            self.logger.framework.debug(f"{_LOG_PREFIX} Downloaded: s3://{self.bucket}/{key}")
             return data
             
         except self.ClientError as e:
@@ -351,7 +351,7 @@ class S3Adapter(StorageAdapter):
             if error_code == 'NoSuchKey':
                 raise FileNotFoundError(f"File not found in S3: {key}")
             else:
-                self.logger.error(f"{LOG_PREFIX} Failed to download {key}: {e}")
+                self.logger.error(f"{_LOG_PREFIX} Failed to download {key}: {e}")
                 raise
     
     def delete(self, key: str) -> bool:
@@ -359,11 +359,11 @@ class S3Adapter(StorageAdapter):
         try:
             self.client.delete_object(Bucket=self.bucket, Key=key)
             
-            self.logger.framework.debug(f"{LOG_PREFIX} Deleted: s3://{self.bucket}/{key}")
+            self.logger.framework.debug(f"{_LOG_PREFIX} Deleted: s3://{self.bucket}/{key}")
             return True
             
         except self.ClientError as e:
-            self.logger.error(f"{LOG_PREFIX} Failed to delete {key}: {e}")
+            self.logger.error(f"{_LOG_PREFIX} Failed to delete {key}: {e}")
             return False
     
     def exists(self, key: str) -> bool:
@@ -376,7 +376,7 @@ class S3Adapter(StorageAdapter):
             if error_code == '404':
                 return False
             else:
-                self.logger.error(f"{LOG_PREFIX} Error checking existence of {key}: {e}")
+                self.logger.error(f"{_LOG_PREFIX} Error checking existence of {key}: {e}")
                 raise
     
     def get_url(self, key: str, expires_in: int = 3600) -> str:
@@ -398,12 +398,12 @@ class S3Adapter(StorageAdapter):
             )
             
             self.logger.framework.debug(
-                f"{LOG_PREFIX} Generated presigned URL for {key} (expires in {expires_in}s)"
+                f"{_LOG_PREFIX} Generated presigned URL for {key} (expires in {expires_in}s)"
             )
             return url
             
         except self.ClientError as e:
-            self.logger.error(f"{LOG_PREFIX} Failed to generate presigned URL for {key}: {e}")
+            self.logger.error(f"{_LOG_PREFIX} Failed to generate presigned URL for {key}: {e}")
             raise
 
 
@@ -412,7 +412,7 @@ class AzureBlobAdapter(StorageAdapter):
     
     def __init__(self, zcli: Any, get_config: callable):
         self.logger = zcli.logger
-        self.logger.framework.warning(f"{LOG_PREFIX} AzureBlobAdapter not yet implemented!")
+        self.logger.framework.warning(f"{_LOG_PREFIX} AzureBlobAdapter not yet implemented!")
     
     def put(self, key: str, data: Union[bytes, BinaryIO]) -> str:
         raise NotImplementedError("Azure support coming later")
@@ -435,7 +435,7 @@ class GCSAdapter(StorageAdapter):
     
     def __init__(self, zcli: Any, get_config: callable):
         self.logger = zcli.logger
-        self.logger.framework.warning(f"{LOG_PREFIX} GCSAdapter not yet implemented!")
+        self.logger.framework.warning(f"{_LOG_PREFIX} GCSAdapter not yet implemented!")
     
     def put(self, key: str, data: Union[bytes, BinaryIO]) -> str:
         raise NotImplementedError("GCS support coming later")

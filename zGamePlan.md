@@ -4,7 +4,7 @@
 
 **Strategy**: Bottom-up audit (Layer 0 → 4)
 
-**Status**: ✅ Phase 1 Complete | 🟡 Phase 2 Starting
+**Status**: ✅ Phase 1 Complete | 🟡 Phase 2 In Progress (zComm cleanup needed)
 
 ---
 
@@ -12,7 +12,7 @@
 
 - [Phase 0: Entry Point & Root](#phase-0-entry-point--root) ✅ **COMPLETE**
 - [Phase 1: zSys Layer](#phase-1-zsys-layer) ✅ **COMPLETE**
-- [Phase 2: L1_Foundation](#phase-2-l1_foundation) 🟡 **STARTING**
+- [Phase 2: L1_Foundation](#phase-2-l1_foundation) 🟡 **IN PROGRESS**
 - [Phase 3: L2_Core](#phase-3-l2_core) 🔴 Not Started
 - [Phase 4: L3_Abstraction](#phase-4-l3_abstraction) 🔴 Not Started
 - [Phase 5: L4_Orchestration](#phase-5-l4_orchestration) 🔴 Not Started
@@ -377,13 +377,13 @@ zolo ~/projects/app/init.py      # Absolute paths
 
 ---
 
-## Phase 2: L1_Foundation 🟡 **STARTING**
+## Phase 2: L1_Foundation 🟡 **IN PROGRESS**
 
-**Goal**: Audit and clean foundation layer subsystems
+**Goal**: Audit and clean foundation layer subsystems for **aesthetic consistency and human readability**
 
 **Subsystems**: 2 subsystems (zConfig, zComm)
 
-**Status**: 🟡 In Progress (zConfig: Step 4 ready, zComm: Not started)
+**Status**: 🟡 **In Progress** - zConfig cleaned (4 steps), zComm audited (needs aesthetic alignment)
 
 ---
 
@@ -833,27 +833,136 @@ Safe to privatize: 100%
 
 ---
 
-### 2.2: zComm Audit 🔴
+### 2.2: zComm Audit 🟡
 
 **Location**: `zCLI/L1_Foundation/b_zComm/`
 
-**Purpose**: WebSocket/HTTP client infrastructure
+**Purpose**: Communication & service management (HTTP, WebSocket, services)
 
-**Modules**:
-- `zComm.py` - Main facade
-- `comm_http.py` - HTTP client
-- `comm_websocket.py` - WebSocket client  
-- `comm_ssl.py` - SSL/TLS utilities
-- `comm_auth.py` - Authentication helpers
+**Status**: 🟡 In Progress - Functionally excellent, needs aesthetic alignment
 
-**Audit Goals**:
-- Review client architecture (separation from zServer)
-- Check for unused code
-- Verify error handling
-- Ensure proper Layer 1 positioning
-- Test client operations
+---
 
-**Status**: 🔴 Not started
+#### 📊 Quick Facts
+
+- **Size**: ~3,500 lines across 15 files
+- **Status**: ✅ Functionally excellent, ⚠️ Aesthetically inconsistent with zConfig
+- **Issues**: 169 constants scattered, 8 heavy decorators, no privatization
+
+---
+
+#### 📝 Refactoring Plan (Match zConfig Standards)
+
+**Step 1**: ✅ Extract constants to `constants.py` (COMPLETE)
+**Step 2**: ✅ Simplify decorators (remove `═══`) (COMPLETE)
+**Step 3**: ✅ Privatize internal constants (`_` prefix) (COMPLETE)
+**Step 4**: 🔴 Clean TODO comments
+
+**Next**: Step 4 - Clean TODO comments
+
+---
+
+#### ✅ Step 1 Complete: Extract Constants
+
+**Status**: ✅ Implemented & Tested
+
+**Changes Made**:
+1. Created `zComm_modules/constants.py` (67 lines)
+   - Service identifiers (SERVICE_POSTGRESQL)
+   - Network config (PORT_MIN, PORT_MAX, DEFAULT_HOST, timeouts)
+   - HTTP config (HTTP_DEFAULT_TIMEOUT)
+   - WebSocket codes & reasons (WS_CLOSE_CODE_*, WS_REASON_*)
+   - Storage config (STORAGE_DEFAULT_BACKEND, STORAGE_CONFIG_KEY_*)
+   - PostgreSQL defaults (POSTGRESQL_DEFAULT_*)
+   - Status & connection keys (STATUS_KEY_*, CONN_KEY_*)
+
+2. Updated `zComm_modules/__init__.py`:
+   - Imports all public constants from constants.py
+   - Exports via __all__ for external use
+
+3. Updated 6 module files to import from constants:
+   - comm_services.py: SERVICE_POSTGRESQL, STATUS_KEY_ERROR
+   - comm_http.py: HTTP_DEFAULT_TIMEOUT
+   - comm_websocket_auth.py: WS_CLOSE_CODE_*, WS_REASON_*
+   - comm_storage.py: STORAGE_* constants
+   - network_utils.py: PORT_MIN, PORT_MAX, DEFAULT_HOST, DEFAULT_TIMEOUT_SECONDS
+   - postgresql_service.py: POSTGRESQL_*, STATUS_KEY_*, CONN_KEY_*
+
+**Result**:
+- ✅ All 18 subsystems loaded successfully
+- ✅ Constants centralized and discoverable
+- ✅ Consistent with zConfig pattern
+- ✅ Zero external breakage
+
+**Files Changed**:
+- `constants.py` (NEW, 67 lines)
+- `__init__.py` (updated exports)
+- 6 module files (updated imports)
+
+---
+
+#### ✅ Step 2 Complete: Simplify Decorators
+
+**Status**: ✅ Implemented & Tested
+
+**Changes Made**:
+- Removed heavy `═══════════` decorators from 8 files
+- Replaced with simple `# Module Constants`
+- Consistent with zConfig Step 3
+
+**Files Updated**:
+1. comm_http.py
+2. comm_services.py
+3. comm_ssl.py
+4. comm_storage.py
+5. comm_websocket.py
+6. comm_websocket_auth.py
+7. helpers/network_utils.py
+8. services/postgresql_service.py
+
+**Result**:
+- ✅ 16 lines of visual clutter removed (2 per file)
+- ✅ All 18 subsystems loaded successfully
+- ✅ Consistent style with zConfig
+
+---
+
+#### ✅ Step 3 Complete: Privatize Internal Constants
+
+**Status**: ✅ Implemented & Tested
+
+**Approach**: Careful file-by-file privatization, testing after each (learned from zConfig Step 4)
+
+**Changes Made**:
+- Privatized 109 internal constants across 8 files
+- Used `_` prefix for all LOG_*, ERROR_*, and internal constants
+- Tested after each file to catch issues early
+
+**Files Updated** (smallest to largest):
+1. comm_storage.py (1 constant)
+2. helpers/network_utils.py (3 constants)
+3. comm_ssl.py (6 constants)
+4. comm_websocket.py (7 constants)
+5. comm_http.py (8 constants)
+6. comm_websocket_auth.py (9 constants)
+7. comm_services.py (25 constants)
+8. services/postgresql_service.py (50 constants)
+
+**Result**:
+- ✅ **109 constants privatized** (all internal LOG_*, ERROR_*, etc.)
+- ✅ **Zero external breakage** (all constants were internal-only)
+- ✅ **All 18 subsystems loaded successfully** after each file
+- ✅ **Industry-standard** (PEP 8 compliant)
+- ✅ **Careful approach** prevented double-underscore issues from zConfig
+
+**Benefits**:
+- ✅ Encapsulation: Implementation details clearly marked
+- ✅ Flexibility: Can refactor without breaking external code
+- ✅ Clarity: Public API (in constants.py) vs internal is obvious
+- ✅ IDE Support: Tools dim/hide private members
+- ✅ Maintainability: Future-proof and professional
+
+---
 
 ---
 
@@ -909,14 +1018,14 @@ Safe to privatize: 100%
 
 **Result**: zSys has ZERO framework dependencies, pure Layer 0 utilities
 
-**Phase 2**: 🟡 Starting - L1_Foundation (zConfig, zComm)
-- 🔴 2.1: zConfig audit
-- 🔴 2.2: zComm audit
+**Phase 2**: 🟡 **In Progress** - L1_Foundation (zConfig, zComm)
+- ✅ 2.1: zConfig audit & cleanup (4 steps complete: constants extraction, detector split, dynamic display, constant privatization)
+- 🟡 2.2: zComm audit complete, refactoring needed (4 steps: extract constants, simplify decorators, privatize constants, clean TODOs)
 
-**Next**: Begin Phase 2.1 (zConfig audit)
+**Next**: Complete Phase 2.2 (zComm aesthetic cleanup), then Phase 3 (L2_Core audit)
 
 ---
 
 *Last Updated: 2025-12-27*
-*Version: 2.9*
-*Current Focus: Phase 1 ✅ COMPLETE! Starting Phase 2 (L1_Foundation).*
+*Version: 3.1*
+*Current Focus: Phase 2.2 (zComm aesthetic cleanup) - Aligning with zConfig's clean conventions.*

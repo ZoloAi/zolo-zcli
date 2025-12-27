@@ -9,112 +9,93 @@ operations and connection information retrieval.
 
 from zCLI import subprocess, socket, platform, Path, Any, Dict, Optional, List
 
-# ═══════════════════════════════════════════════════════════════════
 # Module Constants
-# ═══════════════════════════════════════════════════════════════════
 
 # Logging
-LOG_PREFIX = "[PostgreSQLService]"
+_LOG_PREFIX = "[PostgreSQLService]"
 
 # OS Type Identifiers
-OS_DARWIN = "Darwin"
-OS_LINUX = "Linux"
-OS_WINDOWS = "Windows"
+_OS_DARWIN = "Darwin"
+_OS_LINUX = "Linux"
+_OS_WINDOWS = "Windows"
 
 # Timeouts (seconds)
-SOCKET_TIMEOUT = 1
-SUBPROCESS_TIMEOUT = 10
-COMMAND_CHECK_TIMEOUT = 5
+_SOCKET_TIMEOUT = 1
+_SUBPROCESS_TIMEOUT = 10
+_COMMAND_CHECK_TIMEOUT = 5
 
 # Port Configuration
-PORT_MIN = 1
-PORT_MAX = 65535
 
 # Default Configuration
-DEFAULT_PORT = 5432
-DEFAULT_USER = "postgres"
-DEFAULT_DATABASE = "postgres"
-DEFAULT_HOST = "localhost"
 
 # Status Dict Keys
-STATUS_KEY_SERVICE = "service"
-STATUS_KEY_RUNNING = "running"
-STATUS_KEY_PORT = "port"
-STATUS_KEY_OS = "os"
-STATUS_KEY_CONNECTION_INFO = "connection_info"
-STATUS_KEY_MESSAGE = "message"
 
 # Connection Info Keys
-CONN_KEY_HOST = "host"
-CONN_KEY_PORT = "port"
-CONN_KEY_USER = "user"
-CONN_KEY_DATABASE = "database"
-CONN_KEY_CONNECTION_STRING = "connection_string"
 
 # Service Identifiers
-SERVICE_NAME_POSTGRES = "postgresql"
+_SERVICE_NAME_POSTGRES = "postgresql"
 SERVICE_NAME_POSTGRES_14 = "postgresql@14"
 
 # Commands
-CMD_BREW = "brew"
-CMD_SYSTEMCTL = "systemctl"
-CMD_PG_CTL = "pg_ctl"
-CMD_WHICH = "which"
-CMD_WHERE = "where"
-CMD_SUDO = "sudo"
-CMD_NET = "net"
+_CMD_BREW = "brew"
+_CMD_SYSTEMCTL = "systemctl"
+_CMD_PG_CTL = "pg_ctl"
+_CMD_WHICH = "which"
+_CMD_WHERE = "where"
+_CMD_SUDO = "sudo"
+_CMD_NET = "net"
 
 # Brew Commands
-BREW_SERVICES = "services"
-BREW_START = "start"
-BREW_STOP = "stop"
+_BREW_SERVICES = "services"
+_BREW_START = "start"
+_BREW_STOP = "stop"
 
 # PostgreSQL Data Directory Paths
 PG_DATA_PATH_HOMEBREW_14 = "/usr/local/var/postgresql@14"
-PG_DATA_PATH_HOMEBREW = "/usr/local/var/postgres"
-PG_DATA_PATH_LINUX = "/var/lib/postgresql/data"
-PG_DATA_PATH_USER_HOME = ".postgres"
-PG_VERSION_FILE = "PG_VERSION"
+_PG_DATA_PATH_HOMEBREW = "/usr/local/var/postgres"
+_PG_DATA_PATH_LINUX = "/var/lib/postgresql/data"
+_PG_DATA_PATH_USER_HOME = ".postgres"
+_PG_VERSION_FILE = "PG_VERSION"
 
 # Log Messages - Status
-LOG_ALREADY_RUNNING = "PostgreSQL is already running on port {port}"
-LOG_NOT_RUNNING = "PostgreSQL is not running"
-LOG_STARTING = "Starting PostgreSQL service..."
-LOG_STOPPING = "Stopping PostgreSQL service..."
-LOG_CHECK_PORT_ERROR = "Error checking PostgreSQL port: {error}"
+_LOG_ALREADY_RUNNING = "PostgreSQL is already running on port {port}"
+_LOG_NOT_RUNNING = "PostgreSQL is not running"
+_LOG_STARTING = "Starting PostgreSQL service..."
+_LOG_STOPPING = "Stopping PostgreSQL service..."
+_LOG_CHECK_PORT_ERROR = "Error checking PostgreSQL port: {error}"
 
 # Log Messages - Success
-LOG_SUCCESS_STARTED_BREW = "[OK] PostgreSQL started via Homebrew"
-LOG_SUCCESS_STARTED_SYSTEMD = "[OK] PostgreSQL started via systemd"
-LOG_SUCCESS_STARTED_PG_CTL = "[OK] PostgreSQL started with pg_ctl"
-LOG_SUCCESS_STARTED_WINDOWS = "[OK] PostgreSQL started via Windows service"
-LOG_SUCCESS_STOPPED = "[OK] PostgreSQL stopped"
+_LOG_SUCCESS_STARTED_BREW = "[OK] PostgreSQL started via Homebrew"
+_LOG_SUCCESS_STARTED_SYSTEMD = "[OK] PostgreSQL started via systemd"
+_LOG_SUCCESS_STARTED_PG_CTL = "[OK] PostgreSQL started with pg_ctl"
+_LOG_SUCCESS_STARTED_WINDOWS = "[OK] PostgreSQL started via Windows service"
+_LOG_SUCCESS_STOPPED = "[OK] PostgreSQL stopped"
 
 # Error Messages - Start
-ERROR_UNSUPPORTED_OS = "Unsupported operating system: {os}"
-ERROR_START_BREW = "Failed to start PostgreSQL via brew: {error}"
-ERROR_START_SYSTEMD = "Failed to start PostgreSQL via systemd: {error}"
-ERROR_START_WINDOWS = "Failed to start PostgreSQL on Windows: {error}"
-ERROR_START_PG_CTL = "Failed to start PostgreSQL with pg_ctl: {error}"
-ERROR_NO_DATA_DIR = "Could not find PostgreSQL data directory"
-ERROR_INSTALL_BREW = "[ERROR] Could not start PostgreSQL. Install with: brew install postgresql"
-ERROR_INSTALL_LINUX = "[ERROR] Could not start PostgreSQL"
+_ERROR_UNSUPPORTED_OS = "Unsupported operating system: {os}"
+_ERROR_START_BREW = "Failed to start PostgreSQL via brew: {error}"
+_ERROR_START_SYSTEMD = "Failed to start PostgreSQL via systemd: {error}"
+_ERROR_START_WINDOWS = "Failed to start PostgreSQL on Windows: {error}"
+_ERROR_START_PG_CTL = "Failed to start PostgreSQL with pg_ctl: {error}"
+_ERROR_NO_DATA_DIR = "Could not find PostgreSQL data directory"
+_ERROR_INSTALL_BREW = "[ERROR] Could not start PostgreSQL. Install with: brew install postgresql"
+_ERROR_INSTALL_LINUX = "[ERROR] Could not start PostgreSQL"
 
 # Error Messages - Stop
-ERROR_STOP_BREW = "Failed to stop PostgreSQL: {error}"
-ERROR_STOP_SYSTEMD = "Failed to stop PostgreSQL: {error}"
-ERROR_STOP_WINDOWS = "Failed to stop PostgreSQL: {error}"
+_ERROR_STOP_BREW = "Failed to stop PostgreSQL: {error}"
+_ERROR_STOP_SYSTEMD = "Failed to stop PostgreSQL: {error}"
+_ERROR_STOP_WINDOWS = "Failed to stop PostgreSQL: {error}"
 
 # Error Messages - Validation
-ERROR_INVALID_PORT = "Port must be between {min} and {max}, got: {port}"
-ERROR_LOGGER_NONE = "Logger cannot be None"
+_ERROR_INVALID_PORT = "Port must be between {min} and {max}, got: {port}"
+_ERROR_LOGGER_NONE = "Logger cannot be None"
 
 # Installation Messages
-MSG_NOT_DETECTED = "PostgreSQL not detected. Install with: {command}"
-INSTALL_CMD_MACOS = "brew install postgresql"
-INSTALL_CMD_LINUX = "sudo apt-get install postgresql  # or: sudo yum install postgresql-server"
-INSTALL_CMD_WINDOWS = "Download from: https://www.postgresql.org/download/windows/"
-INSTALL_CMD_DEFAULT = "See: https://www.postgresql.org/download/"
+_MSG_NOT_DETECTED = "PostgreSQL not detected. Install with: {command}"
+_INSTALL_CMD_MACOS = "brew install postgresql"
+_INSTALL_CMD_LINUX = "sudo apt-get install postgresql  # or: sudo yum install postgresql-server"
+_INSTALL_CMD_WINDOWS = "Download from: https://www.postgresql.org/download/windows/"
+_INSTALL_CMD_DEFAULT = "See: https://www.postgresql.org/download/"
 
 
 class PostgreSQLService:
@@ -140,7 +121,7 @@ class PostgreSQLService:
             ValueError: If logger is None
         """
         if logger is None:
-            raise ValueError(ERROR_LOGGER_NONE)
+            raise ValueError(_ERROR_LOGGER_NONE)
             
         self.logger = logger
         self.os_type = platform.system()  # 'Darwin', 'Linux', 'Windows'
@@ -157,20 +138,20 @@ class PostgreSQLService:
         """
         # Check if already running
         if self.is_running():
-            self.logger.info(f"{LOG_PREFIX} {LOG_ALREADY_RUNNING.format(port=DEFAULT_PORT)}")
+            self.logger.info(f"{_LOG_PREFIX} {_LOG_ALREADY_RUNNING.format(port=POSTGRESQL_DEFAULT_PORT)}")
             return True
 
-        self.logger.info(f"{LOG_PREFIX} {LOG_STARTING}")
+        self.logger.info(f"{_LOG_PREFIX} {_LOG_STARTING}")
 
         # Try different start methods based on OS
-        if self.os_type == OS_DARWIN:  # macOS
+        if self.os_type == _OS_DARWIN:  # macOS
             return self._start_macos()
-        elif self.os_type == OS_LINUX:
+        elif self.os_type == _OS_LINUX:
             return self._start_linux()
-        elif self.os_type == OS_WINDOWS:
+        elif self.os_type == _OS_WINDOWS:
             return self._start_windows()
         else:
-            self.logger.error(f"{LOG_PREFIX} {ERROR_UNSUPPORTED_OS.format(os=self.os_type)}")
+            self.logger.error(f"{_LOG_PREFIX} {_ERROR_UNSUPPORTED_OS.format(os=self.os_type)}")
             return False
 
     def stop(self) -> bool:
@@ -181,16 +162,16 @@ class PostgreSQLService:
             True if stopped successfully, False otherwise
         """
         if not self.is_running():
-            self.logger.info(f"{LOG_PREFIX} {LOG_NOT_RUNNING}")
+            self.logger.info(f"{_LOG_PREFIX} {_LOG_NOT_RUNNING}")
             return True
 
-        self.logger.info(f"{LOG_PREFIX} {LOG_STOPPING}")
+        self.logger.info(f"{_LOG_PREFIX} {_LOG_STOPPING}")
 
-        if self.os_type == OS_DARWIN:
+        if self.os_type == _OS_DARWIN:
             return self._stop_macos()
-        elif self.os_type == OS_LINUX:
+        elif self.os_type == _OS_LINUX:
             return self._stop_linux()
-        elif self.os_type == OS_WINDOWS:
+        elif self.os_type == _OS_WINDOWS:
             return self._stop_windows()
 
         return False
@@ -208,22 +189,22 @@ class PostgreSQLService:
         Raises:
             ValueError: If port outside valid range
         """
-        check_port = port if port is not None else DEFAULT_PORT
+        check_port = port if port is not None else POSTGRESQL_DEFAULT_PORT
 
         # Validate port range
         if not isinstance(check_port, int) or check_port < PORT_MIN or check_port > PORT_MAX:
-            raise ValueError(ERROR_INVALID_PORT.format(
+            raise ValueError(_ERROR_INVALID_PORT.format(
                 min=PORT_MIN, max=PORT_MAX, port=check_port
             ))
 
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(SOCKET_TIMEOUT)
-            result = sock.connect_ex((DEFAULT_HOST, check_port))
+            sock.settimeout(_SOCKET_TIMEOUT)
+            result = sock.connect_ex((POSTGRESQL_DEFAULT_HOST, check_port))
             sock.close()
             return result == 0  # 0 means port is in use (PostgreSQL running)
         except (socket.error, OSError) as e:
-            self.logger.debug(f"{LOG_PREFIX} {LOG_CHECK_PORT_ERROR.format(error=e)}")
+            self.logger.debug(f"{_LOG_PREFIX} {_LOG_CHECK_PORT_ERROR.format(error=e)}")
             return False
 
     def status(self) -> Dict[str, Any]:
@@ -237,9 +218,9 @@ class PostgreSQLService:
         running = self.is_running()
 
         status_info = {
-            STATUS_KEY_SERVICE: SERVICE_NAME_POSTGRES,
+            STATUS_KEY_SERVICE: _SERVICE_NAME_POSTGRES,
             STATUS_KEY_RUNNING: running,
-            STATUS_KEY_PORT: DEFAULT_PORT,
+            STATUS_KEY_PORT: POSTGRESQL_DEFAULT_PORT,
             STATUS_KEY_OS: self.os_type
         }
 
@@ -247,7 +228,7 @@ class PostgreSQLService:
             status_info[STATUS_KEY_CONNECTION_INFO] = self.get_connection_info()
         else:
             install_cmd = self._get_install_command()
-            status_info[STATUS_KEY_MESSAGE] = MSG_NOT_DETECTED.format(command=install_cmd)
+            status_info[STATUS_KEY_MESSAGE] = _MSG_NOT_DETECTED.format(command=install_cmd)
 
         return status_info
 
@@ -259,12 +240,12 @@ class PostgreSQLService:
             Dict with 'host', 'port', 'user', 'database', 'connection_string'
         """
         return {
-            CONN_KEY_HOST: DEFAULT_HOST,
-            CONN_KEY_PORT: DEFAULT_PORT,
-            CONN_KEY_USER: DEFAULT_USER,
-            CONN_KEY_DATABASE: DEFAULT_DATABASE,
+            CONN_KEY_HOST: POSTGRESQL_DEFAULT_HOST,
+            CONN_KEY_PORT: POSTGRESQL_DEFAULT_PORT,
+            CONN_KEY_USER: POSTGRESQL_DEFAULT_USER,
+            CONN_KEY_DATABASE: POSTGRESQL_DEFAULT_DATABASE,
             CONN_KEY_CONNECTION_STRING: (
-                f"postgresql://{DEFAULT_USER}@{DEFAULT_HOST}:{DEFAULT_PORT}/{DEFAULT_DATABASE}"
+                f"postgresql://{POSTGRESQL_DEFAULT_USER}@{POSTGRESQL_DEFAULT_HOST}:{POSTGRESQL_DEFAULT_PORT}/{POSTGRESQL_DEFAULT_DATABASE}"
             )
         }
 
@@ -280,28 +261,28 @@ class PostgreSQLService:
             True if started, False otherwise
         """
         # Try Homebrew first
-        if self._has_command(CMD_BREW):
+        if self._has_command(_CMD_BREW):
             # Try versioned PostgreSQL first
             if self._run_command(
-                [CMD_BREW, BREW_SERVICES, BREW_START, SERVICE_NAME_POSTGRES_14],
-                LOG_SUCCESS_STARTED_BREW,
-                ERROR_START_BREW
+                [_CMD_BREW, _BREW_SERVICES, _BREW_START, SERVICE_NAME_POSTGRES_14],
+                _LOG_SUCCESS_STARTED_BREW,
+                _ERROR_START_BREW
             ):
                 return True
 
             # Try without version
             if self._run_command(
-                [CMD_BREW, BREW_SERVICES, BREW_START, SERVICE_NAME_POSTGRES],
-                LOG_SUCCESS_STARTED_BREW,
-                ERROR_START_BREW
+                [_CMD_BREW, _BREW_SERVICES, _BREW_START, _SERVICE_NAME_POSTGRES],
+                _LOG_SUCCESS_STARTED_BREW,
+                _ERROR_START_BREW
             ):
                 return True
 
         # Try pg_ctl
-        if self._has_command(CMD_PG_CTL):
+        if self._has_command(_CMD_PG_CTL):
             return self._start_with_pg_ctl()
 
-        self.logger.error(f"{LOG_PREFIX} {ERROR_INSTALL_BREW}")
+        self.logger.error(f"{_LOG_PREFIX} {_ERROR_INSTALL_BREW}")
         return False
 
     def _start_linux(self) -> bool:
@@ -312,19 +293,19 @@ class PostgreSQLService:
             True if started, False otherwise
         """
         # Try systemd
-        if self._has_command(CMD_SYSTEMCTL):
+        if self._has_command(_CMD_SYSTEMCTL):
             if self._run_command(
-                [CMD_SUDO, CMD_SYSTEMCTL, BREW_START, SERVICE_NAME_POSTGRES],
-                LOG_SUCCESS_STARTED_SYSTEMD,
-                ERROR_START_SYSTEMD
+                [_CMD_SUDO, _CMD_SYSTEMCTL, _BREW_START, _SERVICE_NAME_POSTGRES],
+                _LOG_SUCCESS_STARTED_SYSTEMD,
+                _ERROR_START_SYSTEMD
             ):
                 return True
 
         # Try pg_ctl
-        if self._has_command(CMD_PG_CTL):
+        if self._has_command(_CMD_PG_CTL):
             return self._start_with_pg_ctl()
 
-        self.logger.error(f"{LOG_PREFIX} {ERROR_INSTALL_LINUX}")
+        self.logger.error(f"{_LOG_PREFIX} {_ERROR_INSTALL_LINUX}")
         return False
 
     def _start_windows(self) -> bool:
@@ -335,9 +316,9 @@ class PostgreSQLService:
             True if started, False otherwise
         """
         return self._run_command(
-            [CMD_NET, BREW_START, SERVICE_NAME_POSTGRES],
-            LOG_SUCCESS_STARTED_WINDOWS,
-            ERROR_START_WINDOWS
+            [_CMD_NET, _BREW_START, _SERVICE_NAME_POSTGRES],
+            _LOG_SUCCESS_STARTED_WINDOWS,
+            _ERROR_START_WINDOWS
         )
 
     def _start_with_pg_ctl(self) -> bool:
@@ -350,13 +331,13 @@ class PostgreSQLService:
         # Find data directory
         data_dir = self._find_postgres_data_dir()
         if not data_dir:
-            self.logger.error(f"{LOG_PREFIX} {ERROR_NO_DATA_DIR}")
+            self.logger.error(f"{_LOG_PREFIX} {_ERROR_NO_DATA_DIR}")
             return False
 
         return self._run_command(
-            [CMD_PG_CTL, "-D", str(data_dir), BREW_START],
-            LOG_SUCCESS_STARTED_PG_CTL,
-            ERROR_START_PG_CTL
+            [_CMD_PG_CTL, "-D", str(data_dir), _BREW_START],
+            _LOG_SUCCESS_STARTED_PG_CTL,
+            _ERROR_START_PG_CTL
         )
 
     # ═══════════════════════════════════════════════════════════════════
@@ -370,11 +351,11 @@ class PostgreSQLService:
         Returns:
             True if stopped, False otherwise
         """
-        if self._has_command(CMD_BREW):
+        if self._has_command(_CMD_BREW):
             return self._run_command(
-                [CMD_BREW, BREW_SERVICES, BREW_STOP, SERVICE_NAME_POSTGRES],
-                LOG_SUCCESS_STOPPED,
-                ERROR_STOP_BREW,
+                [_CMD_BREW, _BREW_SERVICES, _BREW_STOP, _SERVICE_NAME_POSTGRES],
+                _LOG_SUCCESS_STOPPED,
+                _ERROR_STOP_BREW,
                 log_on_error=True
             )
         return False
@@ -386,11 +367,11 @@ class PostgreSQLService:
         Returns:
             True if stopped, False otherwise
         """
-        if self._has_command(CMD_SYSTEMCTL):
+        if self._has_command(_CMD_SYSTEMCTL):
             return self._run_command(
-                [CMD_SUDO, CMD_SYSTEMCTL, BREW_STOP, SERVICE_NAME_POSTGRES],
-                LOG_SUCCESS_STOPPED,
-                ERROR_STOP_SYSTEMD,
+                [_CMD_SUDO, _CMD_SYSTEMCTL, _BREW_STOP, _SERVICE_NAME_POSTGRES],
+                _LOG_SUCCESS_STOPPED,
+                _ERROR_STOP_SYSTEMD,
                 log_on_error=True
             )
         return False
@@ -403,9 +384,9 @@ class PostgreSQLService:
             True if stopped, False otherwise
         """
         return self._run_command(
-            [CMD_NET, BREW_STOP, SERVICE_NAME_POSTGRES],
-            LOG_SUCCESS_STOPPED,
-            ERROR_STOP_WINDOWS,
+            [_CMD_NET, _BREW_STOP, _SERVICE_NAME_POSTGRES],
+            _LOG_SUCCESS_STOPPED,
+            _ERROR_STOP_WINDOWS,
             log_on_error=True
         )
 
@@ -418,7 +399,7 @@ class PostgreSQLService:
         cmd: List[str],
         success_msg: str,
         error_msg_template: str,
-        timeout: int = SUBPROCESS_TIMEOUT,
+        timeout: int = _SUBPROCESS_TIMEOUT,
         log_on_error: bool = False
     ) -> bool:
         """
@@ -443,18 +424,18 @@ class PostgreSQLService:
                 check=False
             )
             if result.returncode == 0:
-                self.logger.info(f"{LOG_PREFIX} {success_msg}")
+                self.logger.info(f"{_LOG_PREFIX} {success_msg}")
                 return True
             return False
         except subprocess.TimeoutExpired:
             if log_on_error:
                 error_msg = error_msg_template.format(error=f"Timeout after {timeout}s")
-                self.logger.error(f"{LOG_PREFIX} {error_msg}")
+                self.logger.error(f"{_LOG_PREFIX} {error_msg}")
             return False
         except (subprocess.SubprocessError, OSError) as e:
             if log_on_error:
                 error_msg = error_msg_template.format(error=str(e))
-                self.logger.error(f"{LOG_PREFIX} {error_msg}")
+                self.logger.error(f"{_LOG_PREFIX} {error_msg}")
             return False
 
     def _has_command(self, command: str) -> bool:
@@ -468,11 +449,11 @@ class PostgreSQLService:
             True if available, False otherwise
         """
         try:
-            check_cmd = CMD_WHERE if self.os_type == OS_WINDOWS else CMD_WHICH
+            check_cmd = _CMD_WHERE if self.os_type == _OS_WINDOWS else _CMD_WHICH
             result = subprocess.run(
                 [check_cmd, command],
                 capture_output=True,
-                timeout=COMMAND_CHECK_TIMEOUT,
+                timeout=_COMMAND_CHECK_TIMEOUT,
                 check=False
             )
             return result.returncode == 0
@@ -488,14 +469,14 @@ class PostgreSQLService:
         """
         common_paths = [
             Path(PG_DATA_PATH_HOMEBREW_14),
-            Path(PG_DATA_PATH_HOMEBREW),
-            Path(PG_DATA_PATH_LINUX),
-            Path.home() / PG_DATA_PATH_USER_HOME,
+            Path(_PG_DATA_PATH_HOMEBREW),
+            Path(_PG_DATA_PATH_LINUX),
+            Path.home() / _PG_DATA_PATH_USER_HOME,
         ]
 
         for path in common_paths:
             try:
-                if path.exists() and (path / PG_VERSION_FILE).exists():
+                if path.exists() and (path / _PG_VERSION_FILE).exists():
                     return path
             except (OSError, PermissionError):
                 continue
@@ -509,10 +490,10 @@ class PostgreSQLService:
         Returns:
             Installation command or URL
         """
-        if self.os_type == OS_DARWIN:
-            return INSTALL_CMD_MACOS
-        elif self.os_type == OS_LINUX:
-            return INSTALL_CMD_LINUX
-        elif self.os_type == OS_WINDOWS:
-            return INSTALL_CMD_WINDOWS
-        return INSTALL_CMD_DEFAULT
+        if self.os_type == _OS_DARWIN:
+            return _INSTALL_CMD_MACOS
+        elif self.os_type == _OS_LINUX:
+            return _INSTALL_CMD_LINUX
+        elif self.os_type == _OS_WINDOWS:
+            return _INSTALL_CMD_WINDOWS
+        return _INSTALL_CMD_DEFAULT

@@ -18,17 +18,15 @@ from typing import Set
 from .comm_websocket_auth import WebSocketAuth
 from .comm_ssl import create_ssl_context
 
-# ═══════════════════════════════════════════════════════════
 # Module Constants
-# ═══════════════════════════════════════════════════════════
 
-LOG_PREFIX = "[WebSocketServer]"
-LOG_STARTED = f"{LOG_PREFIX} Server started at {{protocol}}://{{host}}:{{port}}"
-LOG_CLIENT_CONNECTED = f"{LOG_PREFIX} Client connected: {{client_addr}}"
-LOG_CLIENT_DISCONNECTED = f"{LOG_PREFIX} Client disconnected: {{client_addr}}"
-LOG_BROADCAST = f"{LOG_PREFIX} Broadcasting to {{count}} client(s)"
-LOG_SHUTDOWN = f"{LOG_PREFIX} Shutting down..."
-LOG_SHUTDOWN_COMPLETE = f"{LOG_PREFIX} Shutdown complete"
+_LOG_PREFIX = "[WebSocketServer]"
+_LOG_STARTED = f"{_LOG_PREFIX} Server started at {{protocol}}://{{host}}:{{port}}"
+_LOG_CLIENT_CONNECTED = f"{_LOG_PREFIX} Client connected: {{client_addr}}"
+_LOG_CLIENT_DISCONNECTED = f"{_LOG_PREFIX} Client disconnected: {{client_addr}}"
+_LOG_BROADCAST = f"{_LOG_PREFIX} Broadcasting to {{count}} client(s)"
+_LOG_SHUTDOWN = f"{_LOG_PREFIX} Shutting down..."
+_LOG_SHUTDOWN_COMPLETE = f"{_LOG_PREFIX} Shutdown complete"
 
 
 class WebSocketHandshakeFilter(logging.Filter):
@@ -137,7 +135,7 @@ class WebSocketServer:
             ssl_cert=self.config.ssl_cert,
             ssl_key=self.config.ssl_key,
             logger=self.logger,
-            log_prefix=LOG_PREFIX
+            log_prefix=_LOG_PREFIX
         )
     
     async def _process_request(self, path: str, request_headers: Any) -> Optional[tuple]:
@@ -176,7 +174,7 @@ class WebSocketServer:
             # This is a port probe, health check, or non-WebSocket HTTP request
             # Reject gracefully with HTTP 400 (no handshake error logged)
             self.logger.framework.debug(
-                f"{LOG_PREFIX} Rejected non-WebSocket request from {path} "
+                f"{_LOG_PREFIX} Rejected non-WebSocket request from {path} "
                 f"(Upgrade: {upgrade or 'none'}, Connection: {connection or 'none'})"
             )
             return (400, [], b"WebSocket connection required\n")
@@ -213,14 +211,14 @@ class WebSocketServer:
             ]):
                 # This is a port probe or incomplete connection - suppress traceback
                 self.logger.framework.debug(
-                    f"{LOG_PREFIX} Suppressed benign handshake error: {exception_str[:100]}"
+                    f"{_LOG_PREFIX} Suppressed benign handshake error: {exception_str[:100]}"
                 )
                 return
         
         # For all other exceptions, log them properly (real errors)
-        self.logger.error(f"{LOG_PREFIX} Asyncio exception: {message}")
+        self.logger.error(f"{_LOG_PREFIX} Asyncio exception: {message}")
         if exception:
-            self.logger.error(f"{LOG_PREFIX} Exception details: {exception}")
+            self.logger.error(f"{_LOG_PREFIX} Exception details: {exception}")
     
     async def start_async(
         self,
@@ -261,10 +259,10 @@ class WebSocketServer:
                 process_request=self._process_request  # v1.5.10: Graceful handshake error handling
             )
             self._running = True
-            self.logger.info(LOG_STARTED.format(protocol=protocol, host=actual_host, port=actual_port))
+            self.logger.info(_LOG_STARTED.format(protocol=protocol, host=actual_host, port=actual_port))
             await self.server.wait_closed()
         except OSError as e:
-            self.logger.error(f"{LOG_PREFIX} Failed to start: {e}")
+            self.logger.error(f"{_LOG_PREFIX} Failed to start: {e}")
             raise
         finally:
             self._running = False
@@ -327,12 +325,12 @@ class WebSocketServer:
             # 3. Validate token
             token = self.auth.extract_token(websocket)
             if not token:
-                self.logger.warning(f"{LOG_PREFIX} Missing token from {client_addr}")
+                self.logger.warning(f"{_LOG_PREFIX} Missing token from {client_addr}")
                 await websocket.close(code=1008, reason="Authentication required")
                 return
             
             if not self.auth.validate_token(token):
-                self.logger.warning(f"{LOG_PREFIX} Invalid token from {client_addr}")
+                self.logger.warning(f"{_LOG_PREFIX} Invalid token from {client_addr}")
                 await websocket.close(code=1008, reason="Invalid token")
                 return
             
@@ -343,19 +341,19 @@ class WebSocketServer:
         # Accept Client Connection
         # ═══════════════════════════════════════════════════════
         self.clients.add(websocket)
-        self.logger.info(LOG_CLIENT_CONNECTED.format(client_addr=client_addr))
+        self.logger.info(_LOG_CLIENT_CONNECTED.format(client_addr=client_addr))
         
         try:
             async for message in websocket:
                 if self.handler:
                     await self.handler(websocket, message)
         except Exception as e:
-            self.logger.error(f"{LOG_PREFIX} Client error: {e}")
+            self.logger.error(f"{_LOG_PREFIX} Client error: {e}")
         finally:
             self.clients.discard(websocket)
             if self.config.require_auth:
                 self.auth.unregister_client(websocket)
-            self.logger.info(LOG_CLIENT_DISCONNECTED.format(client_addr=client_addr))
+            self.logger.info(_LOG_CLIENT_DISCONNECTED.format(client_addr=client_addr))
     
     async def _default_handler(
         self,
@@ -386,7 +384,7 @@ class WebSocketServer:
             await client.send(message)
             return True
         except Exception as e:
-            self.logger.error(f"{LOG_PREFIX} Send failed: {e}")
+            self.logger.error(f"{_LOG_PREFIX} Send failed: {e}")
             return False
     
     async def broadcast(self, message: str, exclude: Optional[WebSocketServerProtocol] = None) -> int:
@@ -417,13 +415,13 @@ class WebSocketServer:
         self.clients.difference_update(disconnected)
         
         if sent_count > 0:
-            self.logger.debug(LOG_BROADCAST.format(count=sent_count))
+            self.logger.debug(_LOG_BROADCAST.format(count=sent_count))
         
         return sent_count
     
     async def shutdown(self) -> None:
         """Gracefully shutdown server and close all connections."""
-        self.logger.info(LOG_SHUTDOWN)
+        self.logger.info(_LOG_SHUTDOWN)
         
         # Close all client connections
         for client in list(self.clients):
@@ -440,7 +438,7 @@ class WebSocketServer:
             await self.server.wait_closed()
         
         self._running = False
-        self.logger.info(LOG_SHUTDOWN_COMPLETE)
+        self.logger.info(_LOG_SHUTDOWN_COMPLETE)
     
     @property
     def is_running(self) -> bool:

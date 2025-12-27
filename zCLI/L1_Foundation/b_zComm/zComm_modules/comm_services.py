@@ -21,53 +21,48 @@ Example:
 
 from zCLI import Any, Dict, Optional
 from .services.postgresql_service import PostgreSQLService
+from .constants import SERVICE_POSTGRESQL, STATUS_KEY_ERROR
 
-# ═══════════════════════════════════════════════════════════════════
 # Module Constants
-# ═══════════════════════════════════════════════════════════════════
 
 # Logging
-LOG_PREFIX = "[ServiceManager]"
+_LOG_PREFIX = "[ServiceManager]"
 
-# Service Identifiers
-SERVICE_POSTGRESQL = "postgresql"
-# TODO: Add SERVICE_REDIS = "redis"
-# TODO: Add SERVICE_MONGODB = "mongodb"
+# Future service identifiers:
+# SERVICE_REDIS = "redis"
+# SERVICE_MONGODB = "mongodb"
 
 # Log Messages - Initialization
-LOG_INIT = "Initializing ServiceManager"
-LOG_INIT_COMPLETE = "ServiceManager initialized with {count} services"
-LOG_REGISTERING = "Registering available services"
-LOG_REGISTERED_SERVICE = "Registered {service} service"
-LOG_REGISTRATION_COMPLETE = "Service registration completed"
+_LOG_INIT = "Initializing ServiceManager"
+_LOG_INIT_COMPLETE = "ServiceManager initialized with {count} services"
+_LOG_REGISTERING = "Registering available services"
+_LOG_REGISTERED_SERVICE = "Registered {service} service"
+_LOG_REGISTRATION_COMPLETE = "Service registration completed"
 
 # Log Messages - Service Operations
-LOG_STARTING_SERVICE = "Starting service: {service}"
-LOG_SERVICE_STARTED = "Service '{service}' started successfully"
-LOG_STOPPING_SERVICE = "Stopping service: {service}"
-LOG_SERVICE_STOPPED = "Service '{service}' stopped successfully"
-LOG_RESTARTING_SERVICE = "Restarting service: {service}"
-LOG_SERVICE_RESTARTED = "Service '{service}' restarted successfully"
+_LOG_STARTING_SERVICE = "Starting service: {service}"
+_LOG_SERVICE_STARTED = "Service '{service}' started successfully"
+_LOG_STOPPING_SERVICE = "Stopping service: {service}"
+_LOG_SERVICE_STOPPED = "Service '{service}' stopped successfully"
+_LOG_RESTARTING_SERVICE = "Restarting service: {service}"
+_LOG_SERVICE_RESTARTED = "Service '{service}' restarted successfully"
 
 # Log Messages - Status & Info
-LOG_STATUS_SINGLE = "Getting status for service: {service}"
-LOG_STATUS_ALL = "Getting status for all services"
-LOG_STATUS_RESULT = "Service '{service}' status: {status}"
-LOG_STATUS_ALL_RESULT = "All services status: {status}"
-LOG_CONNECTION_INFO = "Getting connection info for service: {service}"
-LOG_CONNECTION_INFO_RESULT = "Service '{service}' connection info: {info}"
+_LOG_STATUS_SINGLE = "Getting status for service: {service}"
+_LOG_STATUS_ALL = "Getting status for all services"
+_LOG_STATUS_RESULT = "Service '{service}' status: {status}"
+_LOG_STATUS_ALL_RESULT = "All services status: {status}"
+_LOG_CONNECTION_INFO = "Getting connection info for service: {service}"
+_LOG_CONNECTION_INFO_RESULT = "Service '{service}' connection info: {info}"
 
 # Error Messages
-ERROR_UNKNOWN_SERVICE = "Unknown service: {service}"
-ERROR_START_FAILED = "Failed to start service '{service}'"
-ERROR_STOP_FAILED = "Failed to stop service '{service}'"
-ERROR_STOP_FAILED_RESTART = "Failed to stop service '{service}' during restart"
-ERROR_RESTART_FAILED = "Failed to restart service '{service}'"
-ERROR_INVALID_SERVICE_NAME = "Invalid service name: {service}"
-ERROR_SERVICE_NAME_EMPTY = "Service name cannot be empty or None"
-
-# Status Dict Keys
-STATUS_KEY_ERROR = "error"
+_ERROR_UNKNOWN_SERVICE = "Unknown service: {service}"
+_ERROR_START_FAILED = "Failed to start service '{service}'"
+_ERROR_STOP_FAILED = "Failed to stop service '{service}'"
+_ERROR_STOP_FAILED_RESTART = "Failed to stop service '{service}' during restart"
+_ERROR_RESTART_FAILED = "Failed to restart service '{service}'"
+_ERROR_INVALID_SERVICE_NAME = "Invalid service name: {service}"
+_ERROR_SERVICE_NAME_EMPTY = "Service name cannot be empty or None"
 
 
 class ServiceManager:
@@ -115,10 +110,10 @@ class ServiceManager:
         self.logger = logger
         self.services: Dict[str, Any] = {}
 
-        self.logger.framework.debug(f"{LOG_PREFIX} {LOG_INIT}")
+        self.logger.framework.debug(f"{_LOG_PREFIX} {_LOG_INIT}")
         self._register_services()
         self.logger.framework.debug(
-            f"{LOG_PREFIX} {LOG_INIT_COMPLETE.format(count=len(self.services))}"
+            f"{_LOG_PREFIX} {_LOG_INIT_COMPLETE.format(count=len(self.services))}"
         )
 
     def _register_services(self) -> None:
@@ -129,23 +124,23 @@ class ServiceManager:
         implement the common service interface: start(), stop(), status(),
         and get_connection_info().
         """
-        self.logger.framework.debug(f"{LOG_PREFIX} {LOG_REGISTERING}")
+        self.logger.framework.debug(f"{_LOG_PREFIX} {_LOG_REGISTERING}")
 
         # Register PostgreSQL
         self.services[SERVICE_POSTGRESQL] = PostgreSQLService(self.logger)
         self.logger.framework.debug(
-            f"{LOG_PREFIX} {LOG_REGISTERED_SERVICE.format(service='PostgreSQL')}"
+            f"{_LOG_PREFIX} {_LOG_REGISTERED_SERVICE.format(service='PostgreSQL')}"
         )
 
         # TODO: Add Redis service support
         # self.services[SERVICE_REDIS] = RedisService(self.logger)
-        # self.logger.framework.debug(f"{LOG_PREFIX} {LOG_REGISTERED_SERVICE.format(service='Redis')}")
+        # self.logger.framework.debug(f"{_LOG_PREFIX} {_LOG_REGISTERED_SERVICE.format(service='Redis')}")
 
         # TODO: Add MongoDB service support
         # self.services[SERVICE_MONGODB] = MongoDBService(self.logger)
-        # self.logger.framework.debug(f"{LOG_PREFIX} {LOG_REGISTERED_SERVICE.format(service='MongoDB')}")
+        # self.logger.framework.debug(f"{_LOG_PREFIX} {_LOG_REGISTERED_SERVICE.format(service='MongoDB')}")
 
-        self.logger.framework.debug(f"{LOG_PREFIX} {LOG_REGISTRATION_COMPLETE}")
+        self.logger.framework.debug(f"{_LOG_PREFIX} {_LOG_REGISTRATION_COMPLETE}")
 
     def _validate_service_name(self, service_name: Any) -> None:
         """
@@ -158,18 +153,18 @@ class ServiceManager:
             ValueError: If service_name is invalid (None, empty, not a string, whitespace-only)
         """
         if service_name is None or service_name == "":
-            error_msg = ERROR_SERVICE_NAME_EMPTY
-            self.logger.error(f"{LOG_PREFIX} {error_msg}")
+            error_msg = _ERROR_SERVICE_NAME_EMPTY
+            self.logger.error(f"{_LOG_PREFIX} {error_msg}")
             raise ValueError(error_msg)
 
         if not isinstance(service_name, str):
-            error_msg = ERROR_INVALID_SERVICE_NAME.format(service=service_name)
-            self.logger.error(f"{LOG_PREFIX} {error_msg}")
+            error_msg = _ERROR_INVALID_SERVICE_NAME.format(service=service_name)
+            self.logger.error(f"{_LOG_PREFIX} {error_msg}")
             raise ValueError(error_msg)
 
         if service_name.strip() == "":
-            error_msg = ERROR_SERVICE_NAME_EMPTY
-            self.logger.error(f"{LOG_PREFIX} {error_msg}")
+            error_msg = _ERROR_SERVICE_NAME_EMPTY
+            self.logger.error(f"{_LOG_PREFIX} {error_msg}")
             raise ValueError(error_msg)
 
     def _get_service(self, service_name: str) -> Optional[Any]:
@@ -186,8 +181,8 @@ class ServiceManager:
             Logs error if service is not found
         """
         if service_name not in self.services:
-            error_msg = ERROR_UNKNOWN_SERVICE.format(service=service_name)
-            self.logger.error(f"{LOG_PREFIX} {error_msg}")
+            error_msg = _ERROR_UNKNOWN_SERVICE.format(service=service_name)
+            self.logger.error(f"{_LOG_PREFIX} {error_msg}")
             return None
         return self.services[service_name]
 
@@ -202,24 +197,24 @@ class ServiceManager:
         """
         if success:
             if action == "started":
-                msg = LOG_SERVICE_STARTED.format(service=service_name)
+                msg = _LOG_SERVICE_STARTED.format(service=service_name)
             elif action == "stopped":
-                msg = LOG_SERVICE_STOPPED.format(service=service_name)
+                msg = _LOG_SERVICE_STOPPED.format(service=service_name)
             elif action == "restarted":
-                msg = LOG_SERVICE_RESTARTED.format(service=service_name)
+                msg = _LOG_SERVICE_RESTARTED.format(service=service_name)
             else:
                 msg = f"Service '{service_name}' {action} successfully"
-            self.logger.info(f"{LOG_PREFIX} {msg}")
+            self.logger.info(f"{_LOG_PREFIX} {msg}")
         else:
             if action == "started":
-                msg = ERROR_START_FAILED.format(service=service_name)
+                msg = _ERROR_START_FAILED.format(service=service_name)
             elif action == "stopped":
-                msg = ERROR_STOP_FAILED.format(service=service_name)
+                msg = _ERROR_STOP_FAILED.format(service=service_name)
             elif action == "restarted":
-                msg = ERROR_RESTART_FAILED.format(service=service_name)
+                msg = _ERROR_RESTART_FAILED.format(service=service_name)
             else:
                 msg = f"Failed to {action} service '{service_name}'"
-            self.logger.error(f"{LOG_PREFIX} {msg}")
+            self.logger.error(f"{_LOG_PREFIX} {msg}")
 
     def start(self, service_name: str, **kwargs: Any) -> bool:
         """
@@ -240,7 +235,7 @@ class ServiceManager:
             True
         """
         self._validate_service_name(service_name)
-        self.logger.info(f"{LOG_PREFIX} {LOG_STARTING_SERVICE.format(service=service_name)}")
+        self.logger.info(f"{_LOG_PREFIX} {_LOG_STARTING_SERVICE.format(service=service_name)}")
 
         service = self._get_service(service_name)
         if service is None:
@@ -268,7 +263,7 @@ class ServiceManager:
             True
         """
         self._validate_service_name(service_name)
-        self.logger.info(f"{LOG_PREFIX} {LOG_STOPPING_SERVICE.format(service=service_name)}")
+        self.logger.info(f"{_LOG_PREFIX} {_LOG_STOPPING_SERVICE.format(service=service_name)}")
 
         service = self._get_service(service_name)
         if service is None:
@@ -296,12 +291,12 @@ class ServiceManager:
             True
         """
         self._validate_service_name(service_name)
-        self.logger.info(f"{LOG_PREFIX} {LOG_RESTARTING_SERVICE.format(service=service_name)}")
+        self.logger.info(f"{_LOG_PREFIX} {_LOG_RESTARTING_SERVICE.format(service=service_name)}")
 
         stop_result = self.stop(service_name)
         if not stop_result:
-            error_msg = ERROR_STOP_FAILED_RESTART.format(service=service_name)
-            self.logger.error(f"{LOG_PREFIX} {error_msg}")
+            error_msg = _ERROR_STOP_FAILED_RESTART.format(service=service_name)
+            self.logger.error(f"{_LOG_PREFIX} {error_msg}")
             return False
 
         start_result = self.start(service_name)
@@ -338,29 +333,29 @@ class ServiceManager:
         if service_name:
             self._validate_service_name(service_name)
             self.logger.debug(
-                f"{LOG_PREFIX} {LOG_STATUS_SINGLE.format(service=service_name)}"
+                f"{_LOG_PREFIX} {_LOG_STATUS_SINGLE.format(service=service_name)}"
             )
             
             service = self._get_service(service_name)
             if service is None:
                 return {
-                    STATUS_KEY_ERROR: ERROR_UNKNOWN_SERVICE.format(service=service_name)
+                    STATUS_KEY_ERROR: _ERROR_UNKNOWN_SERVICE.format(service=service_name)
                 }
                 
             status = service.status()
             self.logger.debug(
-                f"{LOG_PREFIX} {LOG_STATUS_RESULT.format(service=service_name, status=status)}"
+                f"{_LOG_PREFIX} {_LOG_STATUS_RESULT.format(service=service_name, status=status)}"
             )
             return status
 
         # Return status for all services
-        self.logger.debug(f"{LOG_PREFIX} {LOG_STATUS_ALL}")
+        self.logger.debug(f"{_LOG_PREFIX} {_LOG_STATUS_ALL}")
         status = {
             name: service.status()
             for name, service in self.services.items()
         }
         self.logger.debug(
-            f"{LOG_PREFIX} {LOG_STATUS_ALL_RESULT.format(status=status)}"
+            f"{_LOG_PREFIX} {_LOG_STATUS_ALL_RESULT.format(status=status)}"
         )
         return status
 
@@ -383,7 +378,7 @@ class ServiceManager:
         """
         self._validate_service_name(service_name)
         self.logger.debug(
-            f"{LOG_PREFIX} {LOG_CONNECTION_INFO.format(service=service_name)}"
+            f"{_LOG_PREFIX} {_LOG_CONNECTION_INFO.format(service=service_name)}"
         )
 
         service = self._get_service(service_name)
@@ -392,6 +387,6 @@ class ServiceManager:
 
         info = service.get_connection_info()
         self.logger.debug(
-            f"{LOG_PREFIX} {LOG_CONNECTION_INFO_RESULT.format(service=service_name, info=info)}"
+            f"{_LOG_PREFIX} {_LOG_CONNECTION_INFO_RESULT.format(service=service_name, info=info)}"
         )
         return info

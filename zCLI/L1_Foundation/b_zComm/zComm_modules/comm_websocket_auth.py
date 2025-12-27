@@ -15,32 +15,28 @@ For three-tier authentication (zSession, Application, Dual), see zBifrost (Layer
 from zCLI import Any, Optional, Dict
 from zCLI import WebSocketServerProtocol
 from urllib.parse import urlparse, parse_qs
+from .constants import (
+    WS_CLOSE_CODE_POLICY_VIOLATION,
+    WS_CLOSE_CODE_INTERNAL_ERROR,
+    WS_REASON_INVALID_ORIGIN,
+    WS_REASON_AUTH_REQUIRED,
+    WS_REASON_INVALID_TOKEN,
+    WS_REASON_MAX_CONNECTIONS
+)
 
-# ═══════════════════════════════════════════════════════════
 # Module Constants
-# ═══════════════════════════════════════════════════════════
 
-LOG_PREFIX = "[WebSocketAuth]"
-
-# WebSocket Close Codes (RFC 6455)
-CLOSE_CODE_POLICY_VIOLATION = 1008
-CLOSE_CODE_INTERNAL_ERROR = 1011
-
-# Close Reasons
-REASON_INVALID_ORIGIN = "Invalid origin"
-REASON_AUTH_REQUIRED = "Authentication required"
-REASON_INVALID_TOKEN = "Invalid token"
-REASON_MAX_CONNECTIONS = "Maximum connections reached"
+_LOG_PREFIX = "[WebSocketAuth]"
 
 # Log Messages
-LOG_ORIGIN_VALID = f"{LOG_PREFIX} Origin validated: {{origin}}"
-LOG_ORIGIN_INVALID = f"{LOG_PREFIX} Origin rejected: {{origin}}"
-LOG_TOKEN_VALID = f"{LOG_PREFIX} Token validated for {{addr}}"
-LOG_TOKEN_INVALID = f"{LOG_PREFIX} Invalid token from {{addr}}"
-LOG_TOKEN_MISSING = f"{LOG_PREFIX} Missing token from {{addr}}"
-LOG_CONNECTION_LIMIT = f"{LOG_PREFIX} Connection limit reached ({{current}}/{{max}})"
-LOG_CLIENT_REGISTERED = f"{LOG_PREFIX} Client registered: {{addr}}"
-LOG_CLIENT_UNREGISTERED = f"{LOG_PREFIX} Client unregistered: {{addr}}"
+_LOG_ORIGIN_VALID = f"{_LOG_PREFIX} Origin validated: {{origin}}"
+_LOG_ORIGIN_INVALID = f"{_LOG_PREFIX} Origin rejected: {{origin}}"
+_LOG_TOKEN_VALID = f"{_LOG_PREFIX} Token validated for {{addr}}"
+_LOG_TOKEN_INVALID = f"{_LOG_PREFIX} Invalid token from {{addr}}"
+_LOG_TOKEN_MISSING = f"{_LOG_PREFIX} Missing token from {{addr}}"
+_LOG_CONNECTION_LIMIT = f"{_LOG_PREFIX} Connection limit reached ({{current}}/{{max}})"
+_LOG_CLIENT_REGISTERED = f"{_LOG_PREFIX} Client registered: {{addr}}"
+_LOG_CLIENT_UNREGISTERED = f"{_LOG_PREFIX} Client unregistered: {{addr}}"
 
 
 class WebSocketAuth:
@@ -113,31 +109,31 @@ class WebSocketAuth:
         
         # No Origin header - allow (some WebSocket clients don't send it)
         if not origin_header:
-            self.logger.framework.debug(f"{LOG_PREFIX} No Origin header, allowing connection")
+            self.logger.framework.debug(f"{_LOG_PREFIX} No Origin header, allowing connection")
             return True
         
         # Empty allowed_origins = localhost only
         if not allowed_origins:
             is_local = any(local in origin_header for local in ['localhost', '127.0.0.1', 'file://'])
             if is_local:
-                self.logger.framework.debug(LOG_ORIGIN_VALID.format(origin=origin_header))
+                self.logger.framework.debug(_LOG_ORIGIN_VALID.format(origin=origin_header))
                 return True
             else:
-                self.logger.warning(LOG_ORIGIN_INVALID.format(origin=origin_header))
+                self.logger.warning(_LOG_ORIGIN_INVALID.format(origin=origin_header))
                 return False
         
         # Check against whitelist
         # Note: Browsers send "null" (string) for file:// origins, so accept both
         if origin_header in allowed_origins:
-            self.logger.framework.debug(LOG_ORIGIN_VALID.format(origin=origin_header))
+            self.logger.framework.debug(_LOG_ORIGIN_VALID.format(origin=origin_header))
             return True
         
         # Accept "null" origin if "file://" is in allowed_origins (local HTML files)
         if origin_header == "null" and "file://" in allowed_origins:
-            self.logger.framework.debug(f"{LOG_PREFIX} Accepting 'null' origin (file:// allowed)")
+            self.logger.framework.debug(f"{_LOG_PREFIX} Accepting 'null' origin (file:// allowed)")
             return True
         
-        self.logger.warning(LOG_ORIGIN_INVALID.format(origin=origin_header))
+        self.logger.warning(_LOG_ORIGIN_INVALID.format(origin=origin_header))
         return False
     
     def extract_token(self, websocket: WebSocketServerProtocol) -> Optional[str]:
@@ -200,7 +196,7 @@ class WebSocketAuth:
         
         # No token configured - reject all
         if not expected_token:
-            self.logger.warning(f"{LOG_PREFIX} Token validation requested but no WEBSOCKET_TOKEN configured")
+            self.logger.warning(f"{_LOG_PREFIX} Token validation requested but no WEBSOCKET_TOKEN configured")
             return False
         
         # Compare tokens
@@ -217,7 +213,7 @@ class WebSocketAuth:
         current_count = len(self.authenticated_clients)
         
         if current_count >= max_connections:
-            self.logger.warning(LOG_CONNECTION_LIMIT.format(
+            self.logger.warning(_LOG_CONNECTION_LIMIT.format(
                 current=current_count,
                 max=max_connections
             ))
@@ -235,7 +231,7 @@ class WebSocketAuth:
         """
         self.authenticated_clients[websocket] = auth_info
         client_addr = auth_info.get('addr', 'unknown')
-        self.logger.framework.debug(LOG_CLIENT_REGISTERED.format(addr=client_addr))
+        self.logger.framework.debug(_LOG_CLIENT_REGISTERED.format(addr=client_addr))
     
     def unregister_client(self, websocket: WebSocketServerProtocol) -> None:
         """
@@ -247,7 +243,7 @@ class WebSocketAuth:
         if websocket in self.authenticated_clients:
             auth_info = self.authenticated_clients.pop(websocket)
             client_addr = auth_info.get('addr', 'unknown')
-            self.logger.framework.debug(LOG_CLIENT_UNREGISTERED.format(addr=client_addr))
+            self.logger.framework.debug(_LOG_CLIENT_UNREGISTERED.format(addr=client_addr))
     
     def get_client_info(self, websocket: WebSocketServerProtocol) -> Optional[Dict[str, Any]]:
         """
