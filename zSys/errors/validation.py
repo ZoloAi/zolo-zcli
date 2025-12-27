@@ -1,5 +1,5 @@
-# zCLI/utils/validation.py
-"""Validation utilities for zCLI subsystems."""
+# zSys/errors/validation.py
+"""Runtime validation utilities for zCLI subsystems."""
 
 def validate_zcli_instance(zcli, subsystem_name, require_session=True):
     """Validate zCLI instance is properly initialized (catches init order issues early)."""

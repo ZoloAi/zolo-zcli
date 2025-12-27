@@ -1,12 +1,12 @@
-# zSys/logger.py
+# zSys/logger/console.py
 """
 Minimal logger utilities for standalone contexts (like WSGI workers).
 
-Uses unified logging format from logger_formats.py for consistency.
+Uses unified logging format from formats.py for consistency.
 """
 
 from datetime import datetime
-from .logger_formats import format_log_message
+from .formats import format_log_message
 
 
 class ConsoleLogger:
@@ -18,12 +18,14 @@ class ConsoleLogger:
     consistency across all logging outputs.
     
     Features:
-        - Uses unified format from logger_formats.py
+        - Uses unified format from formats.py
         - Console output only (no file logging)
         - String formatting support (msg % args)
         - Lightweight (no Python logging module required)
     
     Usage:
+        from zSys.logger import ConsoleLogger
+        
         logger = ConsoleLogger(context="WSGI")
         logger.info("Server started on port %d", 8000)
         logger.error("Connection failed: %s", error)

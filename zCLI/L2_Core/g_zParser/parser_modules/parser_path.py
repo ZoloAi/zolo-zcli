@@ -168,7 +168,7 @@ See Also
 
 from pathlib import Path
 from zCLI import os, Any, Dict, List, Optional, Tuple, Union
-from zSys import zMachinePathError
+from zSys.errors import zMachinePathError
 
 # ============================================================================
 # MODULE CONSTANTS

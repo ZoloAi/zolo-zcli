@@ -66,7 +66,7 @@ class zConfigPaths:
         # Validate OS type
         if self.os_type not in self.VALID_OS_TYPES:
             # Import inline to avoid circular dependency
-            from zSys import UnsupportedOSError
+            from zSys.errors import UnsupportedOSError
             self._log_error(f"Unsupported OS type '{self.os_type}'")
             self._log_warning(f"Supported OS types: {', '.join(self.VALID_OS_TYPES)}")
             self._log_warning("Please report this issue or add support for your OS")

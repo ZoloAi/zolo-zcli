@@ -1,21 +1,74 @@
-# zSys/cli_handlers.py
+# cli_commands.py
 """
-CLI command handlers (Layer 0 - System Foundation).
+CLI command handlers for zolo entry point.
 
-Provides handler functions for all zolo CLI commands. These handlers are called
-from main.py after argument parsing and bootstrap logger initialization.
+This module provides handler functions for all `zolo` CLI commands. These handlers
+are called from main.py after argument parsing and bootstrap logger initialization.
 
-Each handler is responsible for:
-- Initializing zCLI with appropriate zSpark configuration
-- Flushing bootstrap logs to framework logger
-- Executing the command logic (delegation to subsystems)
-- Returning appropriate exit codes
+Architecture Context
+--------------------
+**Location**: Root level (paired with main.py entry point)
+**Purpose**: CLI command orchestration and zCLI initialization
+**Layer**: Entry point layer (above all zCLI layers)
+
+This module bridges the gap between the CLI entry point (main.py) and the zCLI
+framework. It handles:
+- zCLI initialization with appropriate zSpark configurations
+- Bootstrap log flushing to framework logger
+- Command delegation to subsystems
+- Exit code management
+
+Handler Responsibilities
+------------------------
+Each handler function follows this pattern:
+1. Log command initiation (via boot_logger)
+2. Initialize zCLI with command-specific zSpark configuration
+3. Flush bootstrap logs to framework logger (with optional verbose stdout)
+4. Delegate to appropriate zCLI subsystem
+5. Return appropriate exit code (if applicable)
+
+Available Handlers
+------------------
+- display_info(): Show version and installation info (no zCLI init)
+- handle_shell_command(): Launch interactive zShell
+- handle_config_command(): Display machine/environment config (read-only)
+- handle_ztests_command(): Run declarative test suite
+- handle_migrate_command(): Execute schema migrations
+- handle_uninstall_command(): Interactive uninstall wizard
+
+Usage from main.py
+------------------
+```python
+from cli_commands import handle_shell_command, display_info
+# ... argparse setup ...
+if args.command == "shell":
+    handle_shell_command(boot_logger, zCLI, verbose=args.verbose)
+```
+
+Dependencies
+------------
+- zSys.BootstrapLogger: Pre-boot logging (injected from main.py)
+- zCLI: Framework class (injected from main.py)
+- pathlib.Path: File path operations (injected from main.py)
+
+See Also
+--------
+- main.py: CLI entry point and argument parsing
+- zSys/logger/bootstrap.py: BootstrapLogger implementation
+- zCLI/zCLI.py: Main framework class
+
+Version History
+---------------
+- v1.5.9: Moved from zSys/ to root level (architectural correction)
+- v1.5.8: Original implementation in zSys/cli_handlers.py
 """
 
 from pathlib import Path
+import subprocess
+import os
 
 
-def display_info(boot_logger, zcli_package, get_version, get_package_info, detect_installation_type):
+def display_info(boot_logger, zcli_package, get_version, get_package_info, detect_install_type):
     """
     Display zolo-zcli information banner.
     
@@ -24,12 +77,12 @@ def display_info(boot_logger, zcli_package, get_version, get_package_info, detec
         zcli_package: Imported zCLI package
         get_version: Function to get package version
         get_package_info: Function to get package info dict
-        detect_installation_type: Function to detect install type
+        detect_install_type: Function to detect install type
     """
     boot_logger.debug("Displaying info banner")
     
     # Get simple installation type for banner (using portable detection)
-    install_type = detect_installation_type(zcli_package, detailed=False)
+    install_type = detect_install_type(zcli_package, detailed=False)
     
     pkg_info = get_package_info()
     
@@ -181,4 +234,86 @@ def handle_uninstall_command(boot_logger, zCLI, Path, zcli_package, verbose: boo
     boot_logger.flush_to_framework(uninstall_cli.logger.framework, verbose=verbose)
     
     uninstall_cli.walker.run()
+
+
+def handle_script_command(boot_logger, sys, Path, script_path: str, verbose: bool = False):
+    """
+    Execute a Python script using the current Python interpreter.
+    
+    This handler runs Python files directly through the zolo CLI, solving
+    the "python vs python3" ambiguity by using sys.executable (the same
+    interpreter that's running zolo).
+    
+    Benefits:
+        - Consistent UX: `zolo script.py` instead of `python script.py`
+        - Solves python/python3 ambiguity (uses same interpreter as zolo)
+        - Works with any Python script in any directory
+        - Bootstrap logging captures execution context
+    
+    Args:
+        boot_logger: BootstrapLogger instance
+        sys: sys module (for sys.executable)
+        Path: pathlib.Path class
+        script_path: Path to Python script (e.g., "zTest.py")
+        verbose: If True, show bootstrap logs on stdout
+    
+    Returns:
+        int: Exit code from script execution (0 = success, non-zero = error)
+    
+    Examples:
+        >>> # From zCloud directory
+        >>> zolo zTest.py
+        # Executes using sys.executable, runs in script's directory
+        
+        >>> # With verbose logging
+        >>> zolo zTest.py --verbose
+        # Shows bootstrap process before execution
+        
+        >>> # From any directory
+        >>> zolo ./scripts/setup.py
+        >>> zolo ~/projects/app/initialize.py
+    """
+    boot_logger.info("Executing Python script: %s", script_path)
+    
+    # Validate file exists
+    script = Path(script_path).resolve()
+    if not script.exists():
+        boot_logger.error("Script not found: %s", script_path)
+        if verbose:
+            boot_logger.print_buffered_logs()
+        print(f"\n❌ Error: Script not found: {script_path}\n")
+        return 1
+    
+    # Validate it's a .py file
+    if script.suffix != ".py":
+        boot_logger.error("Not a Python file: %s (suffix: %s)", script_path, script.suffix)
+        if verbose:
+            boot_logger.print_buffered_logs()
+        print(f"\n❌ Error: File must be a .py file: {script_path}\n")
+        return 1
+    
+    # Log execution details
+    boot_logger.debug("Using interpreter: %s", sys.executable)
+    boot_logger.debug("Script directory: %s", script.parent)
+    boot_logger.debug("Resolved path: %s", script.absolute())
+    
+    # Show bootstrap logs if verbose
+    if verbose:
+        boot_logger.print_buffered_logs()
+    
+    # Execute using sys.executable (solves python vs python3)
+    try:
+        result = subprocess.run(
+            [sys.executable, str(script.absolute())],
+            cwd=str(script.parent),  # Run in script's directory
+            env=os.environ.copy()
+        )
+        
+        boot_logger.info("Script exited with code: %s", result.returncode)
+        return result.returncode
+        
+    except Exception as e:
+        boot_logger.error("Failed to execute script: %s", str(e))
+        print(f"\n❌ Error executing script: {e}\n")
+        return 1
 

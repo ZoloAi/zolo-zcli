@@ -264,7 +264,7 @@ def execute_shortcut(zcli: Any, parsed: Dict[str, Any]) -> Dict[str, Any]:
     # Check for 'cache' subcommand (interactive shortcut creation from cache)
     if args and args[0] == "cache":
         zcli.logger.info("Launching interactive shortcut creation from cache...")
-        from zSys import create_shortcut_from_cache
+        from zCLI.L2_Core.h_zLoader.loader_modules.cache_utils import create_shortcut_from_cache
         result = create_shortcut_from_cache(zcli)
         return result
     

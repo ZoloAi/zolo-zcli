@@ -56,121 +56,92 @@ Session Structure:
 
 from zCLI import secrets, Any, Dict, Optional
 from zCLI.utils import print_ready_message, validate_zcli_instance
-from .helpers.machine_detectors import _safe_getcwd
+from .helpers.detectors.shared import _safe_getcwd
 
-# ═══════════════════════════════════════════════════════════
-# Module Constants
-# ═══════════════════════════════════════════════════════════
+# Import all public constants from centralized constants module
+from .constants import (
+    # zMode values
+    ZMODE_TERMINAL,
+    ZMODE_ZBIFROST,
+    # Action routing
+    ACTION_PLACEHOLDER,
+    # Session keys
+    SESSION_KEY_ZS_ID,
+    SESSION_KEY_TITLE,
+    SESSION_KEY_ZSPACE,
+    SESSION_KEY_ZVAFOLDER,
+    SESSION_KEY_ZVAFILE,
+    SESSION_KEY_ZBLOCK,
+    SESSION_KEY_ZMODE,
+    SESSION_KEY_ZLOGGER,
+    SESSION_KEY_LOGGER_PATH,
+    SESSION_KEY_ZTRACEBACK,
+    SESSION_KEY_ZMACHINE,
+    SESSION_KEY_ZAUTH,
+    SESSION_KEY_ZCRUMBS,
+    SESSION_KEY_ZCACHE,
+    SESSION_KEY_WIZARD_MODE,
+    SESSION_KEY_ZSPARK,
+    SESSION_KEY_VIRTUAL_ENV,
+    SESSION_KEY_SYSTEM_ENV,
+    SESSION_KEY_LOGGER_INSTANCE,
+    SESSION_KEY_ZVARS,
+    SESSION_KEY_ZSHORTCUTS,
+    SESSION_KEY_BROWSER,
+    SESSION_KEY_IDE,
+    SESSION_KEY_SESSION_HASH,
+    # zSpark keys
+    ZSPARK_KEY_TITLE,
+    ZSPARK_KEY_ZSPACE,
+    ZSPARK_KEY_ZVAFOLDER,
+    ZSPARK_KEY_ZVAFILE,
+    ZSPARK_KEY_ZBLOCK,
+    ZSPARK_KEY_ZTRACEBACK,
+    ZSPARK_KEY_ZMODE,
+    ZSPARK_KEY_LOGGER,
+    ZSPARK_KEY_LOGGER_PATH,
+    # zAuth keys
+    ZAUTH_KEY_ZSESSION,
+    ZAUTH_KEY_APPLICATIONS,
+    ZAUTH_KEY_ACTIVE_APP,
+    ZAUTH_KEY_ACTIVE_CONTEXT,
+    ZAUTH_KEY_DUAL_MODE,
+    ZAUTH_KEY_AUTHENTICATED,
+    ZAUTH_KEY_ID,
+    ZAUTH_KEY_USERNAME,
+    ZAUTH_KEY_ROLE,
+    ZAUTH_KEY_API_KEY,
+    CONTEXT_ZSESSION,
+    CONTEXT_APPLICATION,
+    CONTEXT_DUAL,
+    # zCache keys
+    ZCACHE_KEY_SYSTEM,
+    ZCACHE_KEY_PINNED,
+    ZCACHE_KEY_SCHEMA,
+    ZCACHE_KEY_PLUGIN,
+    # Wizard keys
+    WIZARD_KEY_ACTIVE,
+    WIZARD_KEY_LINES,
+    WIZARD_KEY_FORMAT,
+    WIZARD_KEY_TRANSACTION,
+)
 
-# Logging
-LOG_PREFIX = "[SessionConfig]"
-READY_MESSAGE = "zSession Ready"
-SUBSYSTEM_NAME = "SessionConfig"
+# Module-specific constants (internal use only)
+_LOG_PREFIX = "[SessionConfig]"
+_READY_MESSAGE = "zSession Ready"
+_SUBSYSTEM_NAME = "SessionConfig"
+_COLOR_MAIN = "MAIN"
+_COLOR_CONFIG = "CONFIG"
+_DEFAULT_SESSION_PREFIX = "zS"
+_TOKEN_HEX_LENGTH = 4
+_DEFAULT_ZTRACEBACK = False
+_DEFAULT_LOG_LEVEL = "INFO"
+_VALID_ZMODES = (ZMODE_TERMINAL, ZMODE_ZBIFROST)
+_ENV_VAR_LOGGER = "ZOLO_LOGGER"
+_ENV_VAR_PATH = "PATH"
+_CONFIG_KEY_LOGGING = "logging"
+_CONFIG_KEY_LEVEL = "level"
 
-# Colors
-COLOR_MAIN = "MAIN"
-COLOR_CONFIG = "CONFIG"
-
-# Session ID generation
-DEFAULT_SESSION_PREFIX = "zS"
-TOKEN_HEX_LENGTH = 4
-
-# Default values
-DEFAULT_ZTRACEBACK = False  # Opt-in: Set zTraceback: True in zSpark to enable automatic exception handling
-DEFAULT_LOG_LEVEL = "INFO"
-
-# zMode values
-ZMODE_TERMINAL = "Terminal"
-ZMODE_ZBIFROST = "zBifrost"
-VALID_ZMODES = (ZMODE_TERMINAL, ZMODE_ZBIFROST)
-
-# Action routing
-ACTION_PLACEHOLDER = "#"  # No-op action for development/testing (placeholder for UI development)
-
-# Environment variables
-ENV_VAR_LOGGER = "ZOLO_LOGGER"
-ENV_VAR_PATH = "PATH"
-
-# Config keys
-CONFIG_KEY_LOGGING = "logging"
-CONFIG_KEY_LEVEL = "level"
-
-# ═══════════════════════════════════════════════════════════
-# Session Dict Keys (for external consumption)
-# ═══════════════════════════════════════════════════════════
-
-SESSION_KEY_ZS_ID = "zS_id"
-SESSION_KEY_TITLE = "title"
-SESSION_KEY_ZSPACE = "zSpace"
-SESSION_KEY_ZVAFOLDER = "zVaFolder"
-SESSION_KEY_ZVAFILE = "zVaFile"
-SESSION_KEY_ZBLOCK = "zBlock"
-SESSION_KEY_ZMODE = "zMode"
-SESSION_KEY_ZLOGGER = "zLogger"
-SESSION_KEY_LOGGER_PATH = "logger_path"
-SESSION_KEY_ZTRACEBACK = "zTraceback"
-SESSION_KEY_ZMACHINE = "zMachine"
-SESSION_KEY_ZAUTH = "zAuth"
-SESSION_KEY_ZCRUMBS = "zCrumbs"
-SESSION_KEY_ZCACHE = "zCache"
-SESSION_KEY_WIZARD_MODE = "wizard_mode"
-SESSION_KEY_ZSPARK = "zSpark"
-SESSION_KEY_VIRTUAL_ENV = "virtual_env"
-SESSION_KEY_SYSTEM_ENV = "system_env"
-SESSION_KEY_LOGGER_INSTANCE = "logger_instance"
-SESSION_KEY_ZVARS = "zVars"
-SESSION_KEY_ZSHORTCUTS = "zShortcuts"
-SESSION_KEY_BROWSER = "browser"
-SESSION_KEY_IDE = "ide"
-SESSION_KEY_SESSION_HASH = "session_hash"  # v1.6.0: For frontend cache invalidation
-
-# zSpark dict keys
-ZSPARK_KEY_TITLE = "title"
-ZSPARK_KEY_ZSPACE = "zSpace"
-ZSPARK_KEY_ZVAFOLDER = "zVaFolder"
-ZSPARK_KEY_ZVAFILE = "zVaFile"
-ZSPARK_KEY_ZBLOCK = "zBlock"
-ZSPARK_KEY_ZTRACEBACK = "zTraceback"
-ZSPARK_KEY_ZMODE = "zMode"
-ZSPARK_KEY_LOGGER = "logger"
-ZSPARK_KEY_LOGGER_PATH = "logger_path"
-
-# zAuth nested keys (Three-Tier Architecture)
-# Top-level context keys
-ZAUTH_KEY_ZSESSION = "zSession"
-ZAUTH_KEY_APPLICATIONS = "applications"  # Plural for multi-app support!
-ZAUTH_KEY_ACTIVE_APP = "active_app"      # Tracks which app is focused
-ZAUTH_KEY_ACTIVE_CONTEXT = "active_context"
-ZAUTH_KEY_DUAL_MODE = "dual_mode"
-
-# User info keys (used in both zSession and application contexts)
-ZAUTH_KEY_AUTHENTICATED = "authenticated"
-ZAUTH_KEY_ID = "id"
-ZAUTH_KEY_USERNAME = "username"
-ZAUTH_KEY_ROLE = "role"
-ZAUTH_KEY_API_KEY = "api_key"  # Changed from "API_Key" for consistency
-
-# Context values
-CONTEXT_ZSESSION = "zSession"
-CONTEXT_APPLICATION = "application"
-CONTEXT_DUAL = "dual"
-
-# zCache nested keys
-ZCACHE_KEY_SYSTEM = "system_cache"
-ZCACHE_KEY_PINNED = "pinned_cache"
-ZCACHE_KEY_SCHEMA = "schema_cache"
-ZCACHE_KEY_PLUGIN = "plugin_cache"
-
-# wizard_mode nested keys
-WIZARD_KEY_ACTIVE = "active"
-WIZARD_KEY_LINES = "lines"
-WIZARD_KEY_FORMAT = "format"
-WIZARD_KEY_TRANSACTION = "transaction"
-
-
-# ═══════════════════════════════════════════════════════════
-# SessionConfig Class
-# ═══════════════════════════════════════════════════════════
 
 class SessionConfig:
     """
@@ -201,27 +172,27 @@ class SessionConfig:
         Raises:
             ValueError: If zconfig is None (required for logger initialization)
         """
-        validate_zcli_instance(zcli, SUBSYSTEM_NAME, require_session=False)
+        validate_zcli_instance(zcli, _SUBSYSTEM_NAME, require_session=False)
         if zconfig is None:
-            raise ValueError(f"{SUBSYSTEM_NAME} requires a zConfig instance")
+            raise ValueError(f"{_SUBSYSTEM_NAME} requires a zConfig instance")
 
         self.machine = machine_config
         self.environment = environment_config
         self.zcli = zcli
         self.zSpark = zSpark_obj
         self.zconfig = zconfig
-        self.mycolor = COLOR_MAIN
+        self.mycolor = _COLOR_MAIN
 
         # Extract log level for log-aware printing
         from zCLI.utils import get_log_level_from_zspark
         self._log_level = get_log_level_from_zspark(zSpark_obj)
 
         # Print ready message (deployment-aware)
-        print_ready_message(READY_MESSAGE, color=COLOR_CONFIG, is_production=self.environment.is_production(), is_testing=self.environment.is_testing())
+        print_ready_message(_READY_MESSAGE, color=_COLOR_CONFIG, is_production=self.environment.is_production(), is_testing=self.environment.is_testing())
 
-    def generate_id(self, prefix: str = DEFAULT_SESSION_PREFIX) -> str:
+    def generate_id(self, prefix: str = _DEFAULT_SESSION_PREFIX) -> str:
         """Generate random session ID with prefix (default: 'zS') -> 'zS_a1b2c3d4'."""
-        random_hex = secrets.token_hex(TOKEN_HEX_LENGTH)
+        random_hex = secrets.token_hex(_TOKEN_HEX_LENGTH)
         return f"{prefix}_{random_hex}"
     
     def _generate_session_hash(self) -> str:
@@ -340,13 +311,13 @@ class SessionConfig:
         # Environment detection priority: zSpark > virtual environment > system environment
         zSpark_value = self.zSpark
         virtual_env = self.environment.get_venv_path() if self.environment.is_in_venv() else None
-        system_env = self.environment.get_env_var(ENV_VAR_PATH)
+        system_env = self.environment.get_env_var(_ENV_VAR_PATH)
 
         # Determine zSpace: zSpark > getcwd (safe version handles deleted directories)
         zSpace = self._get_zSpark_value(ZSPARK_KEY_ZSPACE) or _safe_getcwd()
 
         # Determine zTraceback: zSpark > default (True)
-        zTraceback = self._get_zSpark_value(ZSPARK_KEY_ZTRACEBACK, DEFAULT_ZTRACEBACK)
+        zTraceback = self._get_zSpark_value(ZSPARK_KEY_ZTRACEBACK, _DEFAULT_ZTRACEBACK)
 
         # Determine session title for log file naming
         session_title = self._detect_session_title()
@@ -422,7 +393,7 @@ class SessionConfig:
         """
         # Check zSpark for explicit zMode setting (highest priority)
         zMode = self._get_zSpark_value(ZSPARK_KEY_ZMODE)
-        if zMode and zMode in VALID_ZMODES:
+        if zMode and zMode in _VALID_ZMODES:
             return zMode
 
         # Default to Terminal if no valid zMode specified
@@ -444,7 +415,6 @@ class SessionConfig:
         Returns:
             Logger level string (e.g., "INFO", "DEBUG", "WARNING", "ERROR", "CRITICAL", "PROD")
         """
-        from zCLI.utils import print_if_not_prod
         import warnings
         
         # Track if logger was explicitly set (for smart Production defaults)
@@ -458,43 +428,43 @@ class SessionConfig:
             
             # Only print if not in Production (deployment-aware)
             if not self.environment.is_production():
-                print(f"{LOG_PREFIX} Logger level from zSpark: {level}")
+                print(f"{_LOG_PREFIX} Logger level from zSpark: {level}")
             
             return level
 
         # 2. Check virtual environment variable (if in venv) - EXPLICIT override
         if self.environment.is_in_venv():
-            venv_logger = self.environment.get_env_var(ENV_VAR_LOGGER)
+            venv_logger = self.environment.get_env_var(_ENV_VAR_LOGGER)
             if venv_logger:
                 explicit_logger = True
                 level = str(venv_logger).upper()
                 
                 # Only print if not in Production
                 if not self.environment.is_production():
-                    print(f"{LOG_PREFIX} Logger level from virtual env: {level}")
+                    print(f"{_LOG_PREFIX} Logger level from virtual env: {level}")
                 return level
 
         # 3. Check system environment variable - EXPLICIT override
-        system_logger = self.environment.get_env_var(ENV_VAR_LOGGER)
+        system_logger = self.environment.get_env_var(_ENV_VAR_LOGGER)
         if system_logger:
             explicit_logger = True
             level = str(system_logger).upper()
             
             # Only print if not in Production
             if not self.environment.is_production():
-                print(f"{LOG_PREFIX} Logger level from system env: {level}")
+                print(f"{_LOG_PREFIX} Logger level from system env: {level}")
             return level
 
         # 4. Check zConfig.zEnvironment.yaml file (NOT explicit if Production)
-        logging_config = self.environment.get(CONFIG_KEY_LOGGING, {})
+        logging_config = self.environment.get(_CONFIG_KEY_LOGGING, {})
         if isinstance(logging_config, dict):
             # Check new nested app config structure first
             app_config = logging_config.get("app", {})
-            level = app_config.get(CONFIG_KEY_LEVEL, None) if isinstance(app_config, dict) else None
+            level = app_config.get(_CONFIG_KEY_LEVEL, None) if isinstance(app_config, dict) else None
             
             # Backward compatibility: fall back to old logging.level format
             if not level:
-                level = logging_config.get(CONFIG_KEY_LEVEL, None)
+                level = logging_config.get(_CONFIG_KEY_LEVEL, None)
                 if level and not self.environment.is_production():
                     warnings.warn(
                         "logging.level is deprecated. Use logging.app.level instead.",
@@ -508,11 +478,11 @@ class SessionConfig:
                 if self.environment.is_production() and str(level).upper() == "INFO" and not explicit_logger:
                     level = "ERROR"
                     if not self.environment.is_production():
-                        print(f"{LOG_PREFIX} Production mode: Logger defaulting to ERROR (override with explicit logger setting)")
+                        print(f"{_LOG_PREFIX} Production mode: Logger defaulting to ERROR (override with explicit logger setting)")
                 else:
                     # Only print if not in Production
                     if not self.environment.is_production():
-                        print(f"{LOG_PREFIX} Logger level from zEnvironment config: {level}")
+                        print(f"{_LOG_PREFIX} Logger level from zEnvironment config: {level}")
                 
                 return level
 
@@ -522,8 +492,8 @@ class SessionConfig:
             default = "ERROR"
             # Silent in Production, no need to print
         else:
-            default = DEFAULT_LOG_LEVEL
-            print(f"{LOG_PREFIX} Logger level defaulting to: {default}")
+            default = _DEFAULT_LOG_LEVEL
+            print(f"{_LOG_PREFIX} Logger level defaulting to: {default}")
         
         return default
     
@@ -539,7 +509,7 @@ class SessionConfig:
         if logger_path:
             # Only print if not in Production
             if not self.environment.is_production():
-                print(f"{LOG_PREFIX} Logger path from zSpark: {logger_path}")
+                print(f"{_LOG_PREFIX} Logger path from zSpark: {logger_path}")
             return str(logger_path)
         
         # No custom path specified, return None (use default system path)

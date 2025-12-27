@@ -4,8 +4,8 @@ Helper modules for zConfig functionality.
 
 This package provides utility functions that support zConfig's hierarchical configuration system:
 
-1. **machine_detectors.py** - Auto-detection of machine capabilities and user preferences
-   - Detects browser, IDE, terminal, shell, and system specifications
+1. **detectors/** - Auto-detection of machine capabilities and user preferences
+   - Organized by category: browser, IDE, media apps, hardware, system
    - Creates machine-specific configuration files with detected values
    - Provides fallback detection for cross-platform compatibility
 
@@ -23,7 +23,7 @@ These helpers separate detection/creation logic from configuration data manageme
 enabling clean architecture, testability, and reusability across zConfig subsystems.
 """
 
-from .machine_detectors import (
+from .detectors import (
     detect_browser,
     detect_ide,
     detect_image_viewer,

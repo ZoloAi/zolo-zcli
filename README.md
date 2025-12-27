@@ -2,9 +2,9 @@
 
 ## **Declare once—run everywhere.**
 
-**zCLI** is a declarative cross-platform **Python framework**, where structure guides logic.
+**zCLI** is not just a Command Line Interface, but a **Context Layer Interface**—a declarative cross-platform **Python framework** where context flows through layers to determine how your application manifests.
 
-It lets developers declare their app's structure once and run it anywhere, **Terminal** or **Web**, using the same code! **Turning ideas into working tools faster** while **zCLI** handles the heavy lifting.
+Write once, adapt to any context: **user role**, **deployment environment**, **device**, or **runtime mode** (**Terminal** or **Web**). **zCLI** handles the heavy lifting, turning ideas into working tools faster.
 
 ---
 
@@ -71,7 +71,7 @@ uv pip install git+https://github.com/ZoloAi/zolo-zcli.git
 
 ## 🏗️ Architecture
 
-**zCLI v1.5+** follows a **5-layer architecture** inspired by "*Linux From Scratch*"—each subsystem stands alone, tested independently, then composed into higher abstractions.
+**zCLI v1.5+** (Context Layer Interface) follows a **5-layer architecture** inspired by "*Linux From Scratch*"—each subsystem stands alone, tested independently, then composed into higher abstractions.
 
 ```
 Layer 0: System Foundation (/zSys/)    - Pre-boot utilities (shared by CLI & framework)
@@ -132,7 +132,7 @@ MIT License with Ethical Use Clause
 
 Copyright (c) 2024 Gal Nachshon
 
-**Trademarks:** "Zolo" and "zCLI" are trademarks of Gal Nachshon.
+**Trademarks:** "Zolo" and "zCLI" (Context Layer Interface) are trademarks of Gal Nachshon.
 
 See [LICENSE](LICENSE) for details.
 

@@ -16,40 +16,40 @@ from zCLI import Path, Dict, List, Any
 # Module Constants
 
 # Logging and Messages
-_LOG_PREFIX = "[CONFIG VALIDATION]"
+__LOG_PREFIX = "[CONFIG VALIDATION]"
 
 # Valid Configuration Values
-_VALID_MODES = ["Terminal", "zBifrost"]
+__VALID_MODES = ["Terminal", "zBifrost"]
 
 # Configuration Keys
-_KEY_ZSPACE = "zSpace"
-_KEY_ZMODE = "zMode"
-_KEY_WEBSOCKET = "websocket"
-_KEY_HTTP_SERVER = "http_server"
-_KEY_PLUGINS = "plugins"
-_KEY_PORT = "port"
-_KEY_HOST = "host"
-_KEY_REQUIRE_AUTH = "require_auth"
-_KEY_ALLOWED_ORIGINS = "allowed_origins"
-_KEY_SERVE_PATH = "serve_path"
-_KEY_ENABLED = "enabled"
+__KEY_ZSPACE = "zSpace"
+__KEY_ZMODE = "zMode"
+__KEY_WEBSOCKET = "websocket"
+__KEY_HTTP_SERVER = "http_server"
+__KEY_PLUGINS = "plugins"
+__KEY_PORT = "port"
+__KEY_HOST = "host"
+__KEY_REQUIRE_AUTH = "require_auth"
+__KEY_ALLOWED_ORIGINS = "allowed_origins"
+__KEY_SERVE_PATH = "serve_path"
+__KEY_ENABLED = "enabled"
 
 # Port Validation
-_PORT_MIN = 1
-_PORT_MAX = 65535
+__PORT_MIN = 1
+__PORT_MAX = 65535
 
 # Error Message Templates
-_ERROR_HEADER = "\n❌ Invalid zSpark configuration:\n\n"
-_ERROR_FOOTER = "\n💡 Fix the above issues and try again.\n"
-_ERROR_TYPE_MISMATCH = "{key}: Must be {expected_type}, got {actual_type}"
-_ERROR_TYPE_MISMATCH_HINT = "{key}: Must be {expected_type}, got {actual_type} (hint: use {value} not '{value}')"
-_ERROR_PATH_NOT_EXISTS = "{key}: Path '{path}' does not exist"
-_ERROR_NOT_DIRECTORY = "{key}: '{path}' is not a directory"
-_ERROR_INVALID_MODE = "zMode: Must be one of {valid_modes}, got '{mode}' (case-sensitive)"
-_ERROR_PORT_RANGE = "{prefix}.port: Must be {min}-{max}, got {port}"
-_ERROR_PORT_CONFLICT = "Port conflict: websocket and http_server both configured to use port {port}. They must use different ports."
-_ERROR_LIST_ITEMS_TYPE = "{key}: All items must be {expected_type}"
-_ERROR_INVALID_TYPE_OPTIONS = "{key}: Must be {option1} or {option2}, got {actual_type}"
+__ERROR_HEADER = "\n❌ Invalid zSpark configuration:\n\n"
+__ERROR_FOOTER = "\n💡 Fix the above issues and try again.\n"
+__ERROR_TYPE_MISMATCH = "{key}: Must be {expected_type}, got {actual_type}"
+___ERROR_TYPE_MISMATCH_HINT = "{key}: Must be {expected_type}, got {actual_type} (hint: use {value} not '{value}')"
+__ERROR_PATH_NOT_EXISTS = "{key}: Path '{path}' does not exist"
+__ERROR_NOT_DIRECTORY = "{key}: '{path}' is not a directory"
+__ERROR_INVALID_MODE = "zMode: Must be one of {valid_modes}, got '{mode}' (case-sensitive)"
+__ERROR_PORT_RANGE = "{prefix}.port: Must be {min}-{max}, got {port}"
+__ERROR_PORT_CONFLICT = "Port conflict: websocket and http_server both configured to use port {port}. They must use different ports."
+__ERROR_LIST_ITEMS_TYPE = "{key}: All items must be {expected_type}"
+__ERROR_INVALID_TYPE_OPTIONS = "{key}: Must be {option1} or {option2}, got {actual_type}"
 
 
 class ConfigValidationError(Exception):
@@ -308,7 +308,7 @@ class ConfigValidator:
         # Must be integer
         if not isinstance(port, int):
             self.errors.append(
-                _ERROR_TYPE_MISMATCH_HINT.format(
+                __ERROR_TYPE_MISMATCH_HINT.format(
                     key=f"{prefix}.{_KEY_PORT}",
                     expected_type="integer",
                     actual_type=type(port).__name__,

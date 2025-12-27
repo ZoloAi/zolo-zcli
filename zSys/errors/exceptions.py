@@ -1,4 +1,7 @@
-"""zCLI custom exceptions with actionable error messages (Week 4.3 - Layer 1).
+"""
+zSys/errors/exceptions.py
+
+zCLI custom exceptions with actionable error messages (Week 4.3 - Layer 1).
 
 Auto-registration with zTraceback (Week 6.1.1 - Industry-Grade):
 All zCLIException instances automatically register with zTraceback for interactive error handling.

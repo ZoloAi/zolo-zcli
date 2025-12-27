@@ -73,8 +73,8 @@ include = ["zCLI*", "zSys*", "logger*", "zTestSuite*", "zTestRunner*"]
 
 [tool.setuptools]
 # Also ship single-file modules alongside packages
-# (main.py and version.py at the repo root as top-level modules)
-py-modules = ["main", "version"]
+# (main.py, version.py, and cli_commands.py at the repo root as top-level modules)
+py-modules = ["main", "version", "cli_commands"]
 
 [tool.setuptools.package-data]
 # Include non-Python files in packages

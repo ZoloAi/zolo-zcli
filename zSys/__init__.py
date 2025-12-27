@@ -14,90 +14,42 @@ Architecture:
     - Pure utility functions and classes
 
 Modules:
-    - colors: Terminal color formatting
-    - validation: Defensive runtime checks
-    - exceptions: Base exception classes  
-    - traceback: Error formatting and display
-    - cache_utils: Cache management utilities
-    - bootstrap_logger: Pre-boot logging with buffer injection
-    - logger: Minimal console logger (WSGI workers)
-    - logger_formats: Unified logging format (single source of truth)
-    - installation_utils: Portable installation type detection
-    - cli_handlers: CLI command handler functions
-    - uninstall: Package removal utilities
+    - logger/: Unified logging system (bootstrap, console, formats)
+    - install/: Installation detection and removal utilities
+    - formatting/: Terminal colors and output utilities
+    - errors/: Error handling (validation, exceptions, traceback)
 
 Usage:
-    from zSys import BootstrapLogger, colors, validation, exceptions
-    from zSys.installation_utils import detect_installation_type
-    from zSys.logger_formats import UnifiedFormatter, format_log_message
-    from zSys import cli_handlers
+    from zSys.logger import BootstrapLogger, ConsoleLogger, UnifiedFormatter
+    from zSys.install import detect_installation_type, cli_uninstall_complete
+    from zSys.formatting import Colors, print_ready_message
+    from zSys.errors import zCLIException, zTraceback, validate_zcli_instance
 """
 
 # Export all public APIs
-from .bootstrap_logger import BootstrapLogger
-from .colors import Colors
-from .validation import validate_zcli_instance
-from .installation_utils import detect_installation_type
-from . import cli_handlers
-from .logger_formats import (
+from .logger import (
+    BootstrapLogger,
+    ConsoleLogger,
     UnifiedFormatter,
     format_log_message,
     format_bootstrap_verbose,
 )
-from .zExceptions import (
-    # Base exceptions
-    zCLIException,
-    # Config exceptions
-    ConfigurationError,
-    # Data exceptions
-    DatabaseNotInitializedError,
-    SchemaNotFoundError,
-    TableNotFoundError,
-    ValidationError,
-    # System exceptions
-    UnsupportedOSError,
-    # Parser exceptions
-    zMachinePathError,
-)
-from .zTraceback import zTraceback, ExceptionContext
-from .cache_utils import (
-    create_shortcut_from_cache,
-    get_cached_files,
-    get_cached_files_count,
-    clear_system_cache,
-)
+from . import install
+from . import formatting
+from . import errors
 
 __all__ = [
-    # Bootstrap Logger
+    # Logger (unified)
     "BootstrapLogger",
-    # Colors
-    "Colors",
-    # Validation
-    "validate_zcli_instance",
-    # Installation Detection
-    "detect_installation_type",
-    # CLI Handlers
-    "cli_handlers",
-    # Logger Formats (unified)
+    "ConsoleLogger",
     "UnifiedFormatter",
     "format_log_message",
     "format_bootstrap_verbose",
-    # Exceptions
-    "zCLIException",
-    "ConfigurationError",
-    "DatabaseNotInitializedError",
-    "SchemaNotFoundError",
-    "TableNotFoundError",
-    "ValidationError",
-    "UnsupportedOSError",
-    "zMachinePathError",
-    # Traceback
-    "zTraceback",
-    "ExceptionContext",
-    # Cache utilities
-    "create_shortcut_from_cache",
-    "get_cached_files",
-    "get_cached_files_count",
-    "clear_system_cache",
+    # Installation subsystem
+    "install",
+    # Formatting subsystem
+    "formatting",
+    # Error handling subsystem
+    "errors",
 ]
 

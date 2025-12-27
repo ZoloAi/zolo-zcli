@@ -126,7 +126,7 @@ class zConfig:
 
         # Initialize centralized traceback utility
         # Import inline to avoid circular dependency (zTraceback imports zConfig types)
-        from zSys import zTraceback
+        from zSys.errors import zTraceback
         zcli.zTraceback = zTraceback(logger=zcli.logger, zcli=zcli)
 
         # Install automatic exception handler if zTraceback is enabled

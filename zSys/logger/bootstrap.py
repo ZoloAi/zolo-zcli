@@ -1,4 +1,4 @@
-# zSys/bootstrap_logger.py
+# zSys/logger/bootstrap.py
 """
 Bootstrap logger for pre-boot logging (Layer 0).
 
@@ -7,7 +7,7 @@ them into zcli-framework.log once the framework logger is available.
 
 Supports --verbose flag for CLI commands to display bootstrap process.
 
-Uses unified logging format from logger_formats.py for consistency.
+Uses unified logging format from formats.py for consistency.
 """
 
 import logging
@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import List, Dict, Any, Optional
 
 # Import unified format functions
-from .logger_formats import format_log_message, format_bootstrap_verbose
+from .formats import format_log_message, format_bootstrap_verbose
 
 
 class BootstrapLogger:
@@ -33,7 +33,7 @@ class BootstrapLogger:
     
     Usage:
         # In main.py (ALWAYS use from first line)
-        from zSys import BootstrapLogger
+        from zSys.logger import BootstrapLogger
         
         boot_logger = BootstrapLogger()
         boot_logger.info("Starting zolo-zcli...")
@@ -195,8 +195,8 @@ class BootstrapLogger:
         
         print("\n" + "=" * 70, file=sys.stderr)
         
-        # Save to temp file as fallback
-        temp_file = Path.home() / ".zolo-zcli-bootstrap-error.log"
+        # Save to temp file in current working directory as fallback
+        temp_file = Path.cwd() / ".zolo-zcli-bootstrap-error.log"
         try:
             with open(temp_file, 'w') as f:
                 f.write("=" * 70 + "\n")

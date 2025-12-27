@@ -1,4 +1,4 @@
-# zCLI/utils/zTraceback.py
+# zSys/errors/traceback.py
 """Centralized traceback utilities with enhanced error handling and interactive UI support."""
 
 import traceback

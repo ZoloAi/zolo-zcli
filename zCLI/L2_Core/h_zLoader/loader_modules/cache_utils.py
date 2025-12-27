@@ -1,10 +1,64 @@
-# zSys/cache_utils.py
+# zCLI/L2_Core/h_zLoader/loader_modules/cache_utils.py
 
 """
-Cache utility functions for zCLI.
+Cache utility functions for zLoader subsystem.
 
-Provides helper functions to inspect and interact with zCLI's
-three-tier cache system (pinned, system, disk).
+This module provides user-facing utilities to inspect and manage zLoader's
+multi-tier cache system (pinned, system, schema, plugin). These utilities are
+designed for interactive use (via zShell func commands) and programmatic access.
+
+Purpose
+-------
+The cache_utils module serves as user-facing utilities (Tier 6) in the zLoader
+architecture, providing inspection and management functions for all cache tiers.
+It complements the internal cache implementations (Tier 2) by offering high-level
+tools for cache visibility and control.
+
+Architecture
+------------
+**Tier 6 - User Utilities (Cache Inspection & Management)**
+    - Position: User-facing layer above facade
+    - Dependencies: Requires initialized zcli instance
+    - Used By: zShell func commands, Python scripts
+    - Purpose: Cache inspection + management + shortcut creation
+
+**6-Tier Architecture**:
+    - Tier 1: Foundation (loader_io.py - Raw file I/O)
+    - Tier 2: Cache Implementations (System, Pinned, Schema, Plugin)
+    - Tier 3: Cache Orchestrator (CacheOrchestrator - Unified cache router)
+    - Tier 4: Package Aggregator (loader_modules/__init__.py)
+    - Tier 5: Facade (zLoader.py - Public interface to zCLI)
+    - Tier 6: User Utilities ← THIS MODULE
+
+Key Functions
+-------------
+1. **get_cached_files()**: List all cached files from system and pinned caches
+2. **get_cached_files_count()**: Get cache statistics by tier
+3. **clear_system_cache()**: Clear system cache (Tier 2)
+4. **create_shortcut_from_cache()**: Interactive wizard for shortcut creation
+
+Layer Position
+--------------
+Layer 2, Position 8 (zLoader - Tier 6 User Utilities)
+
+External Usage
+--------------
+**Used By**:
+    - zCLI/L3_Abstraction/p_zShell/shell_modules/commands/shell_cmd_shortcut.py
+      Usage: from zCLI.utils import create_shortcut_from_cache
+      Purpose: shortcut cache command (interactive shortcut creation)
+
+See Also
+--------
+- cache_orchestrator.py: Underlying cache router (Tier 3)
+- loader_cache_system.py: System cache implementation
+- loader_cache_pinned.py: Pinned cache implementation
+- zLoader.py: zLoader facade that manages these caches
+
+Version History
+---------------
+- v1.5.9: Moved from zSys to zLoader (proper architectural placement)
+- v1.5.8: Original implementation in zSys
 """
 
 from typing import Any, List, Dict

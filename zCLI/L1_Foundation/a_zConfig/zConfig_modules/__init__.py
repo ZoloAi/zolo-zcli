@@ -11,9 +11,18 @@ from .config_machine import MachineConfig
 from .config_environment import EnvironmentConfig
 from .config_persistence import ConfigPersistence
 from .config_logger import LoggerConfig
-from .config_session import (
-    SessionConfig,
-    # Session dict keys (for consumers)
+from .config_session import SessionConfig
+from .config_websocket import WebSocketConfig
+from .config_http_server import HttpServerConfig
+
+# Import all public constants from centralized constants module
+from .constants import (
+    # zMode values
+    ZMODE_TERMINAL,
+    ZMODE_ZBIFROST,
+    # Action routing
+    ACTION_PLACEHOLDER,
+    # Session keys
     SESSION_KEY_ZS_ID,
     SESSION_KEY_TITLE,
     SESSION_KEY_ZSPACE,
@@ -32,15 +41,10 @@ from .config_session import (
     SESSION_KEY_VIRTUAL_ENV,
     SESSION_KEY_SYSTEM_ENV,
     SESSION_KEY_LOGGER_INSTANCE,
-    # zMode values
-    ZMODE_TERMINAL,
-    ZMODE_ZBIFROST,
-    # Action routing
-    ACTION_PLACEHOLDER,
-    # zAuth nested keys (three-tier architecture with multi-app support)
+    # zAuth keys (three-tier architecture)
     ZAUTH_KEY_ZSESSION,
-    ZAUTH_KEY_APPLICATIONS,  # Plural for multi-app support
-    ZAUTH_KEY_ACTIVE_APP,    # Tracks focused app
+    ZAUTH_KEY_APPLICATIONS,
+    ZAUTH_KEY_ACTIVE_APP,
     ZAUTH_KEY_ACTIVE_CONTEXT,
     ZAUTH_KEY_DUAL_MODE,
     ZAUTH_KEY_AUTHENTICATED,
@@ -51,17 +55,16 @@ from .config_session import (
     CONTEXT_ZSESSION,
     CONTEXT_APPLICATION,
     CONTEXT_DUAL,
-    # zCache nested keys
+    # zCache keys
     ZCACHE_KEY_SYSTEM,
     ZCACHE_KEY_PINNED,
     ZCACHE_KEY_SCHEMA,
+    # Wizard keys
     WIZARD_KEY_ACTIVE,
     WIZARD_KEY_LINES,
     WIZARD_KEY_FORMAT,
     WIZARD_KEY_TRANSACTION,
 )
-from .config_websocket import WebSocketConfig
-from .config_http_server import HttpServerConfig
 
 __all__ = [
     "ConfigValidator",

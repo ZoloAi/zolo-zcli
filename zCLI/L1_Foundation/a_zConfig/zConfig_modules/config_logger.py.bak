@@ -14,13 +14,13 @@ from .config_session import SESSION_KEY_ZLOGGER
 # Module Constants
 
 # Logging
-_LOG_PREFIX = "[LoggerConfig]"
-_SUBSYSTEM_NAME = "LoggerConfig"
-_READY_MESSAGE = "zLogger Ready"
-_LOGGER_NAME = "zCLI"
+__LOG_PREFIX = "[LoggerConfig]"
+__SUBSYSTEM_NAME = "LoggerConfig"
+__READY_MESSAGE = "zLogger Ready"
+__LOGGER_NAME = "zCLI"
 _LOG_FILENAME = "zolo-zcli.log"  # Deprecated, kept for backward compatibility
-_LOG_FILENAME_FRAMEWORK = "zcli-framework.log"
-_LOG_FILENAME_APP = "zcli-app.log"
+__LOG_FILENAME_FRAMEWORK = "zcli-framework.log"
+__LOG_FILENAME_APP = "zcli-app.log"
 
 # Log Levels
 _LOG_LEVEL_DEBUG = "DEBUG"
@@ -29,33 +29,34 @@ _LOG_LEVEL_WARNING = "WARNING"
 _LOG_LEVEL_ERROR = "ERROR"
 _LOG_LEVEL_CRITICAL = "CRITICAL"
 # Import from zSys.logger (single source of truth)
-from zSys.logger import LOG_LEVEL_PROD as _LOG_LEVEL_PROD
+from zSys.logger import LOG_LEVEL_PROD
+_LOG_LEVEL_PROD = LOG_LEVEL_PROD  # Internal reference
 _VALID_LOG_LEVELS = (_LOG_LEVEL_DEBUG, _LOG_LEVEL_INFO, _LOG_LEVEL_WARNING, _LOG_LEVEL_ERROR, _LOG_LEVEL_CRITICAL, _LOG_LEVEL_PROD)
 _DEFAULT_LOG_LEVEL = _LOG_LEVEL_INFO
 
 # Config Keys
-_CONFIG_KEY_LOGGING = "logging"
-_CONFIG_KEY_APP = "app"
-_CONFIG_KEY_FRAMEWORK = "framework"
-_CONFIG_KEY_FILE_ENABLED = "file_enabled"
-_CONFIG_KEY_FORMAT = "format"
-_CONFIG_KEY_FILE_PATH = "file_path"
-_CONFIG_KEY_LEVEL = "level"
+__CONFIG_KEY_LOGGING = "logging"
+__CONFIG_KEY_APP = "app"
+__CONFIG_KEY_FRAMEWORK = "framework"
+__CONFIG_KEY_FILE_ENABLED = "file_enabled"
+__CONFIG_KEY_FORMAT = "format"
+__CONFIG_KEY_FILE_PATH = "file_path"
+__CONFIG_KEY_LEVEL = "level"
 
 # Format Types
-_FORMAT_JSON = "json"
-_FORMAT_SIMPLE = "simple"
-_FORMAT_DETAILED = "detailed"
-_DEFAULT_FORMAT = _FORMAT_DETAILED
+__FORMAT_JSON = "json"
+__FORMAT_SIMPLE = "simple"
+__FORMAT_DETAILED = "detailed"
+_DEFAULT_FORMAT = __FORMAT_DETAILED
 
 # Default Values
-_DEFAULT_FILE_ENABLED = True
+__DEFAULT_FILE_ENABLED = True
 
 # Path Markers (for caller info detection)
-_PATH_SUBSYSTEMS_MARKER = "zCLI/subsystems/"
-_PATH_ZCLI_MARKER = "zCLI/"
-_PATH_SUBSYSTEMS_DIR = "subsystems"
-_PYTHON_EXTENSION = ".py"
+__PATH_SUBSYSTEMS_MARKER = "zCLI/subsystems/"
+__PATH_ZCLI_MARKER = "zCLI/"
+__PATH_SUBSYSTEMS_DIR = "subsystems"
+__PYTHON_EXTENSION = ".py"
 
 class LoggerConfig:
     """Manages dual logging configuration: framework (internal) and app (user) logs."""
@@ -245,10 +246,10 @@ class LoggerConfig:
         # Get logging configuration for format only
         logging_config = self.environment.get(_CONFIG_KEY_LOGGING, {})
         framework_config = logging_config.get(_CONFIG_KEY_FRAMEWORK, {})
-        log_format = framework_config.get(_CONFIG_KEY_FORMAT, _DEFAULT_FORMAT)
+        log_format = framework_config.get(_CONFIG_KEY_FORMAT, DEFAULT_FORMAT)
         
         # Framework logger fixed to DEBUG level
-        framework_level = _LOG_LEVEL_DEBUG
+        framework_level = LOG_LEVEL_DEBUG
         
         # Check deployment mode for console output
         is_production = self.environment.is_production()
@@ -327,7 +328,7 @@ class LoggerConfig:
         
         # File logging always enabled in Production, otherwise configurable
         file_enabled = is_production or app_config.get(_CONFIG_KEY_FILE_ENABLED, _DEFAULT_FILE_ENABLED)
-        log_format = app_config.get(_CONFIG_KEY_FORMAT, _DEFAULT_FORMAT)
+        log_format = app_config.get(_CONFIG_KEY_FORMAT, DEFAULT_FORMAT)
         
         # Get log file path - check zSpark first, then fall back to system default
         from .config_session import SESSION_KEY_TITLE, SESSION_KEY_LOGGER_PATH
@@ -367,7 +368,7 @@ class LoggerConfig:
         
         # Create application logger
         # In PROD mode, set logger to DEBUG to capture everything, but disable console
-        effective_log_level = _LOG_LEVEL_DEBUG if app_log_level == _LOG_LEVEL_PROD else app_log_level
+        effective_log_level = LOG_LEVEL_DEBUG if app_log_level == _LOG_LEVEL_PROD else app_log_level
         self._app_logger = logging.getLogger("zCLI.app")
         self._app_logger.setLevel(getattr(logging, effective_log_level))
         
@@ -395,7 +396,7 @@ class LoggerConfig:
 
                 # Create file handler
                 # In PROD mode, use DEBUG for file (capture everything) while console is silent
-                file_log_level = _LOG_LEVEL_DEBUG if app_log_level == _LOG_LEVEL_PROD else app_log_level
+                file_log_level = LOG_LEVEL_DEBUG if app_log_level == _LOG_LEVEL_PROD else app_log_level
                 file_handler = logging.FileHandler(str(log_file))
                 file_handler.setLevel(getattr(logging, file_log_level))
                 file_handler.setFormatter(file_formatter)
@@ -450,7 +451,7 @@ class LoggerConfig:
         if level == _LOG_LEVEL_PROD:
             print(f"{Colors.WARNING}{_LOG_PREFIX} 'PROD' log level is deprecated. "
                   f"Use deployment: 'Production' instead. Defaulting to INFO.{Colors.RESET}")
-            level = _LOG_LEVEL_INFO
+            level = LOG_LEVEL_INFO
         
         if level in _VALID_LOG_LEVELS:
             self._logger.setLevel(getattr(logging, level))

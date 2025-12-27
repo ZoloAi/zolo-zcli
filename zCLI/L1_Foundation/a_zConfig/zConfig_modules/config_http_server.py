@@ -4,24 +4,22 @@
 from zCLI import Any, Dict, Optional, os
 from zCLI.utils import print_ready_message
 
-# ═══════════════════════════════════════════════════════════
 # Module Constants
-# ═══════════════════════════════════════════════════════════
 
 # Logging
-LOG_PREFIX = "[HttpServerConfig]"
-SUBSYSTEM_NAME = "HttpServerConfig"
-READY_MESSAGE = "zServer Ready"
+_LOG_PREFIX = "[HttpServerConfig]"
+_SUBSYSTEM_NAME = "HttpServerConfig"
+_READY_MESSAGE = "zServer Ready"
 
 # Config Section (v1.5.7: Renamed from 'http_server' to match subsystem name)
-CONFIG_SECTION_KEY = "zServer"  # Supports both http.server (Dev) and WSGI/Gunicorn (Prod)
+_CONFIG_SECTION_KEY = "zServer"  # Supports both http.server (Dev) and WSGI/Gunicorn (Prod)
 
 # Config Keys
-KEY_HOST = "host"
-KEY_PORT = "port"
-KEY_SERVE_PATH = "serve_path"
-KEY_ROUTES_FILE = "routes_file"
-KEY_ENABLED = "enabled"
+_KEY_HOST = "host"
+_KEY_PORT = "port"
+_KEY_SERVE_PATH = "serve_path"
+_KEY_ROUTES_FILE = "routes_file"
+_KEY_ENABLED = "enabled"
 KEY_ZSHELL = "zShell"  # v1.5.8: Drop into zShell REPL (default: False = silent blocking)
 
 # Default Values
@@ -87,7 +85,7 @@ class HttpServerConfig:
         self.logger = logger
         
         # Get zServer config from zSpark (v1.5.7: Supports 'zServer' key, backward compatible with 'http_server')
-        http_config = zspark_obj.get(CONFIG_SECTION_KEY, {})
+        http_config = zspark_obj.get(_CONFIG_SECTION_KEY, {})
         
         # Backward compatibility: Check for old 'http_server' key if 'zServer' not found
         if not http_config and "http_server" in zspark_obj:
@@ -95,11 +93,11 @@ class HttpServerConfig:
             self.logger.framework.debug("[HttpServerConfig] Using deprecated 'http_server' key (use 'zServer' instead)")
         
         # Set configuration with defaults
-        self.host = http_config.get(KEY_HOST, DEFAULT_HOST)
-        self.port = http_config.get(KEY_PORT, DEFAULT_PORT)
-        self.serve_path = http_config.get(KEY_SERVE_PATH, DEFAULT_SERVE_PATH)
-        self.routes_file = http_config.get(KEY_ROUTES_FILE, DEFAULT_ROUTES_FILE)
-        self.enabled = http_config.get(KEY_ENABLED, DEFAULT_ENABLED)
+        self.host = http_config.get(_KEY_HOST, DEFAULT_HOST)
+        self.port = http_config.get(_KEY_PORT, DEFAULT_PORT)
+        self.serve_path = http_config.get(_KEY_SERVE_PATH, DEFAULT_SERVE_PATH)
+        self.routes_file = http_config.get(_KEY_ROUTES_FILE, DEFAULT_ROUTES_FILE)
+        self.enabled = http_config.get(_KEY_ENABLED, DEFAULT_ENABLED)
         self.zShell = http_config.get(KEY_ZSHELL, DEFAULT_ZSHELL)  # v1.5.8: Interactive mode
         
         # SSL Configuration (v1.5.10: HTTPS support with deployment-aware defaults)
@@ -132,7 +130,7 @@ class HttpServerConfig:
             # Production + certs present = auto-enable SSL
             self.ssl_enabled = True
             self.logger.framework.debug(
-                f"{LOG_PREFIX} Production mode: SSL auto-enabled (certs detected)"
+                f"{_LOG_PREFIX} Production mode: SSL auto-enabled (certs detected)"
             )
         else:
             # Development or no certs = disable SSL
@@ -142,11 +140,11 @@ class HttpServerConfig:
         self.ssl_key = env_ssl_key if env_ssl_key else DEFAULT_SSL_KEY
         
         if self.ssl_enabled:
-            self.logger.framework.debug(f"{LOG_PREFIX} SSL enabled: {self.ssl_enabled}")
+            self.logger.framework.debug(f"{_LOG_PREFIX} SSL enabled: {self.ssl_enabled}")
             if self.ssl_cert:
-                self.logger.framework.debug(f"{LOG_PREFIX} SSL cert: {self.ssl_cert}")
+                self.logger.framework.debug(f"{_LOG_PREFIX} SSL cert: {self.ssl_cert}")
             if self.ssl_key:
-                self.logger.framework.debug(f"{LOG_PREFIX} SSL key: {self.ssl_key}")
+                self.logger.framework.debug(f"{_LOG_PREFIX} SSL key: {self.ssl_key}")
         
         # Static Mounts Configuration (v1.5.11: Multi-mount support)
         # Allows serving files from multiple directories at custom URL prefixes
@@ -157,12 +155,12 @@ class HttpServerConfig:
         
         # Log configuration
         if self.enabled:
-            self.logger.info(f"{LOG_PREFIX} Enabled - {self.host}:{self.port}")
-            self.logger.info(f"{LOG_PREFIX} Serve path: {self.serve_path}")
+            self.logger.info(f"{_LOG_PREFIX} Enabled - {self.host}:{self.port}")
+            self.logger.info(f"{_LOG_PREFIX} Serve path: {self.serve_path}")
             if self.routes_file:
-                self.logger.info(f"{LOG_PREFIX} Routes file: {self.routes_file}")
+                self.logger.info(f"{_LOG_PREFIX} Routes file: {self.routes_file}")
         else:
-            self.logger.framework.debug(f"{LOG_PREFIX} HTTP server disabled")
+            self.logger.framework.debug(f"{_LOG_PREFIX} HTTP server disabled")
         
         # Check production mode for banner suppression (zSpark Layer 5)
         is_production = False
@@ -178,7 +176,7 @@ class HttpServerConfig:
         if zspark_obj and isinstance(zspark_obj, dict):
             deployment = str(zspark_obj.get('deployment', '')).lower()
             is_testing = deployment in ['testing', 'info']
-        print_ready_message(READY_MESSAGE, color="CONFIG", is_production=is_production, is_testing=is_testing)
+        print_ready_message(_READY_MESSAGE, color="CONFIG", is_production=is_production, is_testing=is_testing)
     
     def _parse_static_mounts(self, mounts_config: Any) -> Dict[str, str]:
         """
@@ -206,12 +204,12 @@ class HttpServerConfig:
             try:
                 mounts_config = json.loads(mounts_config)
             except json.JSONDecodeError:
-                self.logger.warning(f"{LOG_PREFIX} Invalid ZSERVER_MOUNTS format (not valid JSON), ignoring")
+                self.logger.warning(f"{_LOG_PREFIX} Invalid ZSERVER_MOUNTS format (not valid JSON), ignoring")
                 return {}
         
         if not isinstance(mounts_config, dict):
             if mounts_config:  # Only warn if non-empty
-                self.logger.warning(f"{LOG_PREFIX} ZSERVER_MOUNTS must be a dict, got {type(mounts_config)}")
+                self.logger.warning(f"{_LOG_PREFIX} ZSERVER_MOUNTS must be a dict, got {type(mounts_config)}")
             return {}
         
         validated = {}
@@ -219,7 +217,7 @@ class HttpServerConfig:
             # Validate URL prefix format
             if not url_prefix.startswith('/') or not url_prefix.endswith('/'):
                 self.logger.warning(
-                    f"{LOG_PREFIX} Invalid mount prefix '{url_prefix}' "
+                    f"{_LOG_PREFIX} Invalid mount prefix '{url_prefix}' "
                     "(must start and end with /), skipping"
                 )
                 continue
@@ -231,16 +229,16 @@ class HttpServerConfig:
                 # Check if path exists (warn but allow - might be created later)
                 if not Path(resolved_path).exists():
                     self.logger.warning(
-                        f"{LOG_PREFIX} Mount path does not exist: {fs_path} "
+                        f"{_LOG_PREFIX} Mount path does not exist: {fs_path} "
                         "(will serve 404 until created)"
                     )
                 
                 validated[url_prefix] = resolved_path
-                self.logger.info(f"{LOG_PREFIX} Registered mount: {url_prefix} → {resolved_path}")
+                self.logger.info(f"{_LOG_PREFIX} Registered mount: {url_prefix} → {resolved_path}")
             
             except Exception as e:
                 self.logger.error(
-                    f"{LOG_PREFIX} Error resolving mount path '{fs_path}': {e}, skipping"
+                    f"{_LOG_PREFIX} Error resolving mount path '{fs_path}': {e}, skipping"
                 )
                 continue
         

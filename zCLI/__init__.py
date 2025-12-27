@@ -303,7 +303,7 @@ MODERNIZATION_VERSION: str = "1.5.4+"
 MODERNIZATION_DATE: str = "2025-01-07"
 
 # Import utilities from zSys (Layer 0 - System Foundation)
-from zSys import Colors
+from zSys.formatting import Colors
 
 # Import JSON utilities (framework primitives for safe serialization)
 from .L4_Orchestration.r_zServer.zServer_modules.json_utils import safe_json_dumps

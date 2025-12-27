@@ -34,7 +34,12 @@ Architecture
 
 Public API Exports
 ------------------
-This module exports 6 components organized by tier:
+This module exports 10 components organized by tier:
+
+**Tier 6 - User Utilities**:
+    - cache_utils: User-facing cache inspection and management utilities. Provides
+      get_cached_files(), get_cached_files_count(), clear_system_cache(), and
+      create_shortcut_from_cache() for interactive and programmatic cache control.
 
 **Tier 3 - Cache Orchestrator**:
     - CacheOrchestrator: Unified cache router for all cache operations. Routes requests
@@ -76,6 +81,13 @@ Usage Patterns
         >>> from zCLI.L2_Core.h_zLoader.loader_modules import load_file_raw
         >>> content = load_file_raw("/path/to/file.yaml")
 
+**User Utilities API (Cache Management)**:
+    Use cache_utils module for cache inspection and management:
+        >>> from zCLI.L2_Core.h_zLoader.loader_modules import cache_utils
+        >>> files = cache_utils.get_cached_files(zcli)
+        >>> stats = cache_utils.get_cached_files_count(zcli)
+        >>> cache_utils.clear_system_cache(zcli)
+
 External Usage
 --------------
 **Used By**:
@@ -92,6 +104,7 @@ See Also
 
 Version History
 ---------------
+- v1.5.9: Added cache_utils (Tier 6) for user-facing cache management utilities
 - v1.5.4: Industry-grade upgrade (comprehensive docs, import organization,
           __all__ inline comments, usage guidance, architecture context)
 - v1.5.3: Original implementation (6 exports: orchestrator + 4 caches + load_file_raw)
@@ -113,6 +126,9 @@ from .loader_cache_plugin import PluginCache
 # Tier 1: Foundation I/O
 from .loader_io import load_file_raw
 
+# Tier 6: User Utilities
+from . import cache_utils
+
 # ============================================================================
 # PUBLIC API EXPORTS
 # ============================================================================
@@ -124,4 +140,5 @@ __all__ = [
     "SchemaCache",        # Tier 2: DB connection cache (ADVANCED API)
     "PluginCache",        # Tier 2: Plugin module cache (ADVANCED API)
     "load_file_raw",      # Tier 1: Raw file I/O (FOUNDATION API)
+    "cache_utils",        # Tier 6: User-facing cache utilities (USER API)
 ]

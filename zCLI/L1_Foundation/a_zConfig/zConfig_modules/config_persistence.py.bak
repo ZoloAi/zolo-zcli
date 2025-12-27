@@ -7,8 +7,8 @@ from .config_session import SESSION_KEY_ZMACHINE
 # Module Constants
 
 # Display Markers
-_MARKER_EDITABLE = "[EDIT] "
-_MARKER_LOCKED = "[LOCK] "
+__MARKER_EDITABLE = "[EDIT] "
+__MARKER_LOCKED = "[LOCK] "
 
 # Category Names
 _CATEGORY_IDENTITY = "Identity (Auto-detected)"
@@ -16,13 +16,13 @@ _CATEGORY_USER_PREFS = "User Preferences (Editable)"
 _CATEGORY_SYSTEM_INFO = "System Info (Auto-detected)"
 
 # Valid Configuration Values
-_VALID_DEPLOYMENTS = ["Development", "Testing", "Production"]
-_DEPRECATED_DEPLOYMENTS = ["Debug", "Info"]  # Mapped to Development/Testing
-_VALID_ROLES = ["development", "production", "testing", "staging"]
-_VALID_LOG_LEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+__VALID_DEPLOYMENTS = ["Development", "Testing", "Production"]
+__DEPRECATED_DEPLOYMENTS = ["Debug", "Info"]  # Mapped to Development/Testing
+__VALID_ROLES = ["development", "production", "testing", "staging"]
+__VALID_LOG_LEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
 # Machine Config Keys (Editable)
-_EDITABLE_MACHINE_KEYS = [
+__EDITABLE_MACHINE_KEYS = [
     # User tool preferences
     "browser", "ide", "terminal", "shell",
     "image_viewer", "video_player", "audio_player",
@@ -39,7 +39,7 @@ _MACHINE_KEYS_USER_PREFS = ["browser", "ide", "terminal", "shell"]
 _MACHINE_KEYS_SYSTEM_INFO = ["cpu_cores", "memory_gb", "os_version", "os_name"]
 
 # Environment Config Keys (Editable)
-_EDITABLE_ENVIRONMENT_KEYS = [
+__EDITABLE_ENVIRONMENT_KEYS = [
     # Basic environment settings
     "deployment", "role", "datacenter", "cluster", "node_id",
     # Network settings
@@ -53,31 +53,31 @@ _EDITABLE_ENVIRONMENT_KEYS = [
 ]
 
 # Error Messages
-_ERROR_INVALID_KEY = "Invalid {config_type} config key: {key}"
-_ERROR_EDITABLE_KEYS = "Editable keys: {keys}"
-_ERROR_FAILED_TO_SAVE = "Failed to save {config_type} config"
-_ERROR_MUST_BE_POSITIVE = "{key} must be positive"
-_ERROR_MUST_BE_NUMBER = "{key} must be a number"
-_ERROR_INVALID_DEPLOYMENT = "Invalid deployment: {value}. Must be one of: {valid_values}"
-_ERROR_INVALID_ROLE = "Invalid role: {value}. Must be one of: {valid_values}"
-_ERROR_INVALID_LOG_LEVEL = "Invalid log level: {value}. Must be one of: {valid_values}"
-_ERROR_RESET_REQUIRES_CONFIRMATION = "Full reset requires explicit confirmation"
-_ERROR_RESET_USE_KEY = "Use: config machine --reset [key] to reset specific key"
-_ERROR_RESET_NOT_IMPLEMENTED = "{config_type} config reset not yet implemented"
+__ERROR_INVALID_KEY = "Invalid {config_type} config key: {key}"
+__ERROR_EDITABLE_KEYS = "Editable keys: {keys}"
+__ERROR_FAILED_TO_SAVE = "Failed to save {config_type} config"
+__ERROR_MUST_BE_POSITIVE = "{key} must be positive"
+__ERROR_MUST_BE_NUMBER = "{key} must be a number"
+__ERROR_INVALID_DEPLOYMENT = "Invalid deployment: {value}. Must be one of: {valid_values}"
+__ERROR_INVALID_ROLE = "Invalid role: {value}. Must be one of: {valid_values}"
+__ERROR_INVALID_LOG_LEVEL = "Invalid log level: {value}. Must be one of: {valid_values}"
+__ERROR_RESET_REQUIRES_CONFIRMATION = "Full reset requires explicit confirmation"
+__ERROR_RESET_USE_KEY = "Use: config machine --reset [key] to reset specific key"
+__ERROR_RESET_NOT_IMPLEMENTED = "{config_type} config reset not yet implemented"
 
 # Success Messages
-_SUCCESS_UPDATED = "Updated {config_type} config: {key}"
-_SUCCESS_RESET = "Reset {config_type} config: {key}"
-_SUCCESS_CHANGE_DETAIL = "{old_value} → {new_value}"
-__SUCCESS_RESET_DETAIL = "{old_value} → {new_value} (auto-detected)"
-_SUCCESS_SAVED_TO = "Saved to: {file_path}"
+__SUCCESS_UPDATED = "Updated {config_type} config: {key}"
+__SUCCESS_RESET = "Reset {config_type} config: {key}"
+__SUCCESS_CHANGE_DETAIL = "{old_value} → {new_value}"
+___SUCCESS_RESET_DETAIL = "{old_value} → {new_value} (auto-detected)"
+__SUCCESS_SAVED_TO = "Saved to: {file_path}"
 
 # Display Headers
-_HEADER_SEPARATOR = "=" * 70
-_HEADER_MACHINE_CONFIG = "Machine Configuration"
-_HEADER_ENVIRONMENT_CONFIG = "Environment Configuration"
-_HEADER_ZC_ENV_SETTINGS = "zCLI Environment Settings:"
-_HEADER_CONFIG_FILE = "Config file: {file_path}"
+__HEADER_SEPARATOR = "=" * 70
+__HEADER_MACHINE_CONFIG = "Machine Configuration"
+__HEADER_ENVIRONMENT_CONFIG = "Environment Configuration"
+__HEADER_ZC_ENV_SETTINGS = "zCLI Environment Settings:"
+__HEADER_CONFIG_FILE = "Config file: {file_path}"
 
 
 class ConfigPersistence:
@@ -258,7 +258,7 @@ class ConfigPersistence:
             if success:
                 self._handle_success(
                     _SUCCESS_RESET.format(config_type="machine", key=key),
-                    _SUCCESS_RESET_DETAIL.format(old_value=current_value, new_value=default_value),
+                    __SUCCESS_RESET_DETAIL.format(old_value=current_value, new_value=default_value),
                     str(user_config_path)
                 )
             else:

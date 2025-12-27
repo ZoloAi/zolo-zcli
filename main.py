@@ -1,6 +1,8 @@
 """CLI entry point for the zolo-zcli package."""
 
-from zSys import BootstrapLogger, detect_installation_type, cli_handlers
+from zSys.logger import BootstrapLogger
+from zSys.install import detect_installation_type
+import cli_commands
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # BOOTSTRAP LOGGER - ALWAYS FIRST
@@ -41,6 +43,9 @@ def main() -> None:
         
         subparsers = parser.add_subparsers(dest="command", help="Available commands")
         
+        # Note: Positional script argument handled manually after parsing
+        # (argparse doesn't support optional positional with subparsers well)
+        
         # Shell subcommand
         shell_parser = subparsers.add_parser("shell", help="Start interactive zCLI shell")
         shell_parser.add_argument("--config", help="Path to custom config file (optional)")
@@ -77,29 +82,51 @@ def main() -> None:
                                      help="Show bootstrap process and detailed initialization")
 
         boot_logger.debug("Parsing arguments...")
-        args = parser.parse_args()
+        
+        # Special handling for direct .py file execution
+        # Check if first arg (after flags) is a .py file
+        script_file = None
+        import sys as sys_module
+        argv = sys_module.argv[1:]  # Skip program name
+        
+        # Filter out flags to find positional args
+        positional_args = [arg for arg in argv if not arg.startswith('-')]
+        
+        if positional_args and positional_args[0].endswith('.py'):
+            # First positional arg is a .py file - treat as script execution
+            script_file = positional_args[0]
+            boot_logger.debug("Detected script file: %s", script_file)
+            # Parse remaining args (excluding the script file)
+            filtered_argv = [arg for arg in argv if arg != script_file]
+            args = parser.parse_args(filtered_argv)
+        else:
+            # Normal command parsing
+            args = parser.parse_args()
         
         # Get verbose flag (default False if not present - for info banner case)
         verbose = getattr(args, 'verbose', False)
-        boot_logger.debug("Command: %s, Verbose: %s", args.command or "info", verbose)
+        boot_logger.debug("Command: %s, Script: %s, Verbose: %s", args.command or "info", script_file, verbose)
 
-        # Route to handlers (with verbose flag) - all handlers in zSys/cli_handlers.py
-        if args.command == "shell":
-            cli_handlers.handle_shell_command(boot_logger, zCLI, verbose=verbose)
+        # Route to handlers (with verbose flag) - all handlers in cli_commands.py
+        if script_file:
+            # Direct Python script execution (e.g., zolo zTest.py)
+            return cli_commands.handle_script_command(boot_logger, sys, Path, script_file, verbose=verbose)
+        elif args.command == "shell":
+            cli_commands.handle_shell_command(boot_logger, zCLI, verbose=verbose)
         elif args.command == "config":
-            cli_handlers.handle_config_command(boot_logger, zCLI, verbose=verbose)
+            cli_commands.handle_config_command(boot_logger, zCLI, verbose=verbose)
         elif args.command == "ztests":
-            return cli_handlers.handle_ztests_command(boot_logger, zCLI, Path, zcli_package, verbose=verbose)
+            return cli_commands.handle_ztests_command(boot_logger, zCLI, Path, zcli_package, verbose=verbose)
         elif args.command == "migrate":
-            return cli_handlers.handle_migrate_command(boot_logger, zCLI, Path, args, verbose=verbose)
+            return cli_commands.handle_migrate_command(boot_logger, zCLI, Path, args, verbose=verbose)
         elif args.command == "uninstall":
-            cli_handlers.handle_uninstall_command(boot_logger, zCLI, Path, zcli_package, verbose=verbose)
+            cli_commands.handle_uninstall_command(boot_logger, zCLI, Path, zcli_package, verbose=verbose)
         else:
             # Default: show info banner (no zCLI init needed)
             # If verbose, print bootstrap logs to stdout (no framework logger available)
             if verbose:
                 boot_logger.print_buffered_logs()
-            cli_handlers.display_info(boot_logger, zcli_package, get_version, get_package_info, detect_installation_type)
+            cli_commands.display_info(boot_logger, zcli_package, get_version, get_package_info, detect_installation_type)
     
     except KeyboardInterrupt:
         boot_logger.info("Interrupted by user (Ctrl+C)")

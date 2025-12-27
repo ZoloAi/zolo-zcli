@@ -1,4 +1,4 @@
-# zSys/installation_utils.py
+# zSys/install/detection.py
 """
 Installation detection utilities (Layer 0 - System Foundation).
 
