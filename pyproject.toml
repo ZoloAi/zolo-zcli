@@ -56,7 +56,6 @@ dev = [
 
 [project.scripts]
 zolo = "main:main"
-zShell = "main:shell_main"
 zTests = "main:ztests_main"
 
 [project.urls]
@@ -73,9 +72,9 @@ where = ["."]
 include = ["zCLI*", "zSys*", "logger*", "zTestSuite*", "zTestRunner*"]
 
 [tool.setuptools]
-# Also ship a single-file module alongside packages
-# (this includes main.py at the repo root as a top-level module named "main")
-py-modules = ["main"]
+# Also ship single-file modules alongside packages
+# (main.py and version.py at the repo root as top-level modules)
+py-modules = ["main", "version"]
 
 [tool.setuptools.package-data]
 # Include non-Python files in packages
@@ -98,8 +97,8 @@ zCLI = [
 
 [tool.setuptools.dynamic]
 # Dynamically read the version string from the attribute
-# zCLI/version.py -> __version__ (exported via zCLI.version.__version__)
-version = {attr = "zCLI.version.__version__"}
+# version.py (root) -> __version__
+version = {attr = "version.__version__"}
 
 [tool.uv]
 # uv configuration for modern Python package management

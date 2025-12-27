@@ -19,14 +19,16 @@ Modules:
     - exceptions: Base exception classes  
     - traceback: Error formatting and display
     - cache_utils: Cache management utilities
-    - logger: Pre-boot logging
+    - bootstrap_logger: Pre-boot logging with buffer injection
+    - logger: Minimal console logger (WSGI workers)
     - uninstall: Package removal utilities
 
 Usage:
-    from zSys import colors, validation, exceptions
+    from zSys import BootstrapLogger, colors, validation, exceptions
 """
 
 # Export all public APIs
+from .bootstrap_logger import BootstrapLogger
 from .colors import Colors
 from .validation import validate_zcli_instance
 from .zExceptions import (
@@ -53,6 +55,8 @@ from .cache_utils import (
 )
 
 __all__ = [
+    # Bootstrap Logger
+    "BootstrapLogger",
     # Colors
     "Colors",
     # Validation

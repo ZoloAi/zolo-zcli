@@ -2224,6 +2224,140 @@ class zData:
         
         return results
 
+    def cli_migrate(self,
+                    app_file: Optional[str] = None,
+                    auto_approve: bool = False,
+                    dry_run: bool = False,
+                    specific_schema: Optional[str] = None,
+                    force_version: Optional[str] = None) -> int:
+        """
+        CLI entry point for migrations - provides full user experience with display.
+        
+        This is a wrapper around migrate_app() that adds:
+        - Display banners and headers
+        - Schema discovery display with status
+        - Migration results formatting
+        - User-friendly output formatting
+        
+        Designed for `zolo migrate` CLI command, delegating to this method keeps
+        all migration UX logic in zData (single source of truth) rather than
+        scattered in main.py.
+        
+        Args:
+            app_file: Optional app file path (for display only)
+            auto_approve: If True, skip confirmation prompts (for CI/CD)
+            dry_run: If True, preview changes without executing
+            specific_schema: If provided, migrate only this schema (e.g., "users")
+            force_version: If provided, force this version for all migrations
+        
+        Returns:
+            int: Exit code (0 = success, 1 = error)
+        
+        Examples:
+            >>> # From main.py CLI handler
+            >>> z = zCLI({'zMode': 'Terminal'})
+            >>> exit_code = z.data.cli_migrate(app_file="app.py", auto_approve=False)
+            
+            >>> # Programmatic use
+            >>> z = zCLI()
+            >>> exit_code = z.data.cli_migrate(specific_schema="users", dry_run=True)
+        
+        Notes:
+            - Returns exit code (0/1) suitable for CLI, unlike migrate_app() which returns dict
+            - Handles all display formatting internally (no display logic in main.py)
+            - Delegates actual migration work to migrate_app()
+        """
+        from pathlib import Path
+        
+        # Display banner
+        self.display.text("\n" + "=" * 70)
+        self.display.text("🔄 zMigration: Schema Evolution System")
+        self.display.text("=" * 70)
+        if app_file:
+            app_path = Path(app_file).resolve()
+            self.display.text(f"   App: {app_path.name}")
+            self.display.text(f"   Directory: {app_path.parent}")
+        self.display.text("=" * 70 + "\n")
+        
+        self.display.text("1️⃣ Initializing zCLI...")
+        self.display.text("   ✅ zCLI initialized\n")
+        
+        # Discover schemas
+        self.display.text("2️⃣ Discovering schemas...")
+        schemas_discovered = self.discover_schemas()
+        
+        if not schemas_discovered:
+            self.display.text("   ⚠️  No schemas found with ZDATA_*_URL environment variables")
+            self.display.text("\n💡 Tip: Add ZDATA_USERS_URL=@.Data to your .zEnv file")
+            self.display.text("=" * 70 + "\n")
+            return 0
+        
+        # Display discovered schemas
+        migration_enabled = [s for s in schemas_discovered if s['migration_enabled']]
+        self.display.text(f"   ✅ Found {len(schemas_discovered)} schema(s), {len(migration_enabled)} migration-enabled\n")
+        
+        self.display.text("📊 Discovered Schemas:")
+        self.display.text("-" * 70)
+        for schema_info in schemas_discovered:
+            status_icon = "✓" if schema_info['migration_enabled'] else "✗"
+            status_text = "enabled" if schema_info['migration_enabled'] else "disabled"
+            self.display.text(f"   {status_icon} {schema_info['name']}")
+            self.display.text(f"      Data Type: {schema_info['data_type']}")
+            self.display.text(f"      Version: {schema_info['version']}")
+            self.display.text(f"      zMigration: {status_text}")
+            if not schema_info['migration_enabled']:
+                self.display.text("      → SKIPPED")
+            self.display.text("")
+        
+        self.display.text("=" * 70)
+        self.display.text("✅ Schema Discovery Complete")
+        self.display.text("=" * 70 + "\n")
+        
+        if not migration_enabled:
+            self.display.text("   No schemas enabled for migration (zMigration: false)\n")
+            return 0
+        
+        # Execute migrations (delegate to migrate_app)
+        self.display.text("3️⃣ Applying Migrations...")
+        self.display.text(f"   📌 {len(migration_enabled)} schema(s) ready\n")
+        self.display.text("=" * 70 + "\n")
+        
+        result = self.migrate_app(
+            app_file=app_file,
+            auto_approve=auto_approve,
+            dry_run=dry_run,
+            specific_schema=specific_schema,
+            force_version=force_version
+        )
+        
+        # Display results summary
+        self.display.text("\n" + "=" * 70)
+        self.display.text("📊 Migration Results")
+        self.display.text("=" * 70 + "\n")
+        
+        if result['success']:
+            self.display.text(f"   ✅ {result['success']} migration(s) applied successfully")
+        if result['up_to_date']:
+            self.display.text(f"   ℹ️  {result['up_to_date']} schema(s) already up to date")
+        if result['failed']:
+            self.display.text(f"   ❌ {result['failed']} migration(s) failed")
+        if result['skipped']:
+            self.display.text(f"   ⏭️  {result['skipped']} schema(s) skipped")
+        
+        self.display.text("\n" + "=" * 70)
+        
+        total_processed = result['success'] + result['up_to_date']
+        if result['failed'] == 0 and total_processed > 0:
+            self.display.text("✅ All schemas processed successfully!")
+        elif result['failed'] > 0:
+            self.display.text("⚠️  Some migrations failed. Check logs for details.")
+        else:
+            self.display.text("ℹ️  No migrations were applied.")
+        
+        self.display.text("=" * 70 + "\n")
+        
+        return 0 if result['failed'] == 0 else 1
+
     def _handle_backend_migration(self, old_backend: str, new_backend: str, 
                                    new_schema: Dict[str, Any], dry_run: bool = False) -> Dict[str, Any]:
         """

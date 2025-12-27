@@ -19,7 +19,7 @@ Integration:
 """
 
 from zCLI import Optional, Dict, List, Any
-from zCLI.version import __version__
+from version import __version__
 
 # ═══════════════════════════════════════════════════════════
 # Module-Level Constants
