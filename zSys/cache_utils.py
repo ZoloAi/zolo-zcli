@@ -1,4 +1,4 @@
-# zCLI/utils/cache_utils.py
+# zSys/cache_utils.py
 
 """
 Cache utility functions for zCLI.
@@ -7,7 +7,7 @@ Provides helper functions to inspect and interact with zCLI's
 three-tier cache system (pinned, system, disk).
 """
 
-from zCLI import Any, List, Dict
+from typing import Any, List, Dict
 
 
 def get_cached_files(zcli: Any) -> List[str]:

@@ -4,53 +4,84 @@
 
 **zCLI** is a declarative cross-platform **Python framework**, where structure guides logic.
 
-It lets developers declare their app’s structure once and run it anywhere, **Terminal** or **Web**, using the same code! **Turning ideas into working tools faster** while **zCLI** handles the heavy lifting.
+It lets developers declare their app's structure once and run it anywhere, **Terminal** or **Web**, using the same code! **Turning ideas into working tools faster** while **zCLI** handles the heavy lifting.
 
-## New to **Zolo**?
+---
+
+## 🚀 Quick Start
+
+```bash
+# Install zCLI
+pip install git+https://github.com/ZoloAi/zolo-zcli.git
+
+# Verify installation
+zolo --version
+
+# Start interactive shell
+zolo shell
+```
+
+**That's it!** You're ready to build declarative applications.
+
+---
+
+## 📚 New to **Zolo**?
 
 Start with **[The zPhilosophy](Documentation/zPhilosophy.md)**.  
 It introduces the core concepts of **zCLI** and smoothly leads into the layer-by-layer guides with ready-made demos.
 
 ### Requirements
 
-To get started, you only need **Python 3.8+** and **Git** installed on your system.
+- **Python 3.8+** 
+- **Git**
 
 > Need help installing requirements on **Windows** or **macOS**?  
-> See [**zInstall Guide**](Documentation/zInstall_GUIDE.md).
+> See [**zInstall Guide**](Documentation/zInstall_GUIDE.md) for detailed instructions.
 
-## Installation
+---
 
-Pick the installation that fits your needs bests:
+## 📦 Installation Options
 
-- **Basic** (SQLite only) - Perfect for day-to-day development
-- **PostgreSQL** or **CSV** - Add when you need those backends
-- **Full install** (all backends) - Great for learning zCLI and running all demos
+Pick the installation that fits your needs:
 
+| Package | Use Case | Install Command |
+|---------|----------|-----------------|
+| **Basic** | SQLite only (fastest) | `pip install git+https://github.com/ZoloAi/zolo-zcli.git` |
+| **CSV** | Basic + CSV/Pandas | `pip install "zolo-zcli[csv] @ git+https://github.com/ZoloAi/zolo-zcli.git"` |
+| **PostgreSQL** | Basic + PostgreSQL | `pip install "zolo-zcli[postgresql] @ git+https://github.com/ZoloAi/zolo-zcli.git"` |
+| **Full** | All backends | `pip install "zolo-zcli[all] @ git+https://github.com/ZoloAi/zolo-zcli.git"` |
+
+### Alternative: UV (10-100x Faster)
+
+For contributors or power users, [UV](https://github.com/astral-sh/uv) provides lightning-fast dependency management:
 
 ```bash
-# Basic (SQLite only)
-pip install git+https://github.com/ZoloAi/zolo-zcli.git
+# One-off execution (no install!)
+uvx zolo-zcli shell
 
-# With PostgreSQL
-pip install "zolo-zcli[postgresql] @ git+https://github.com/ZoloAi/zolo-zcli.git"
-
-# With CSV support
-pip install "zolo-zcli[csv] @ git+https://github.com/ZoloAi/zolo-zcli.git"
-
-# Full install (all backends)
-pip install "zolo-zcli[all] @ git+https://github.com/ZoloAi/zolo-zcli.git"
-
-# Verify
-zolo --version
+# Or install with UV
+uv pip install git+https://github.com/ZoloAi/zolo-zcli.git
 ```
 
-> New to **`pip install`**? Need a specific **zVersion**?  
->  See [**zInstall**](Documentation/zInstall_GUIDE.md) for more details.
+> **More options**: Editable install, specific versions, troubleshooting  
+> See [**zInstall Guide**](Documentation/zInstall_GUIDE.md) for complete instructions.
 
 
-## The zArchitecture
+---
 
-**zCLI** is built on a **layered, bottom-up architecture** inspired by "*Linux From Scratch*"—each subsystem stands alone, tested independently, then composed into higher abstractions.
+## 🏗️ Architecture
+
+**zCLI v1.5+** follows a **5-layer architecture** inspired by "*Linux From Scratch*"—each subsystem stands alone, tested independently, then composed into higher abstractions.
+
+```
+Layer 0: System Foundation (/zSys/)    - Pre-boot utilities (shared by CLI & framework)
+Layer 1: Core Infrastructure           - Config, Display, Parsing, Loading
+Layer 2: Business Logic                - Data, Auth, Functions, Dialogs
+Layer 3: Abstraction & Integration     - Dispatch, Navigation, Wizards
+Layer 4: Orchestration                 - CLI, Walker, Shell, Bifrost, Server
+```
+
+### Subsystems by Layer
 
 | Subsystem | Purpose |
 |-----------|---------|
@@ -104,6 +135,15 @@ Copyright (c) 2024 Gal Nachshon
 **Trademarks:** "Zolo" and "zCLI" are trademarks of Gal Nachshon.
 
 See [LICENSE](LICENSE) for details.
+
+---
+
+## 📖 Documentation
+
+- **[zPhilosophy](Documentation/zPhilosophy.md)** - Core concepts and design principles
+- **[Installation Guide](Documentation/zInstall_GUIDE.md)** - Detailed setup instructions (pip, UV, editable)
+- **[AI Agent Guide](Documentation/AI_AGENT_GUIDE.md)** - Reference for AI coding assistants
+- **[Subsystem Guides](Documentation/)** - Complete documentation for all 20+ subsystems
 
 ---
 

@@ -169,7 +169,7 @@ See Also:
 """
 
 from zCLI import Any, Dict, List, Optional, os
-from zCLI.utils.zExceptions import SchemaNotFoundError, TableNotFoundError
+from zSys import SchemaNotFoundError, TableNotFoundError
 from .zData_modules.shared.backends.adapter_factory import AdapterFactory
 from .zData_modules.shared.validator import DataValidator
 from .zData_modules.shared.data_operations import DataOperations

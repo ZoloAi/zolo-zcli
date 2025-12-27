@@ -70,7 +70,7 @@ Repository = "https://github.com/ZoloAi/zolo-zcli"
 # - where: start searching from the project root directory
 # - include: only include packages whose names match these patterns
 where = ["."]
-include = ["zCLI*", "logger*", "zTestSuite*", "zTestRunner*"]
+include = ["zCLI*", "zSys*", "logger*", "zTestSuite*", "zTestRunner*"]
 
 [tool.setuptools]
 # Also ship a single-file module alongside packages

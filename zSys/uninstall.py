@@ -3,7 +3,9 @@
 
 """zCLI uninstall utilities - Walker UI only, no backward compatibility."""
 
-from zCLI import sys, shutil, subprocess
+import sys
+import shutil
+import subprocess
 
 # Constants
 PACKAGE_NAME = "zolo-zcli"

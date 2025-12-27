@@ -129,7 +129,7 @@ Example 4: Display validation errors
 """
 
 from zCLI import Any, Dict, Optional, Tuple
-from zCLI.utils.zExceptions import DatabaseNotInitializedError
+from zSys import DatabaseNotInitializedError
 from ..parsers import parse_where_clause, parse_value
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -587,7 +587,7 @@ def display_validation_errors(
     # ─────────────────────────────────────────────────────────────────────────
     # Phase 1: Import - Get ValidationError exception
     # ─────────────────────────────────────────────────────────────────────────
-    from zCLI.utils.zExceptions import ValidationError
+    from zSys import ValidationError
     
     # ─────────────────────────────────────────────────────────────────────────
     # Phase 2: Log Summary - Record validation failure

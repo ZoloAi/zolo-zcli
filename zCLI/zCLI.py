@@ -18,7 +18,7 @@ Graceful shutdown via SIGINT/SIGTERM handlers (reverse initialization order).
 # ═══════════════════════════════════════════════════════════════════════════════
 
 from zCLI import Any, Dict, Optional, contextvars, logging, signal, sys
-from zCLI.utils.zTraceback import ExceptionContext
+from zSys import ExceptionContext
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # MODULE CONSTANTS

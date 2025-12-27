@@ -189,6 +189,136 @@ pip install -e .
 
 Now any edits to the `zCLI/` source folder take effect immediately.
 
+---
+
+### 3e. UV workflow (modern package management)
+
+**What is UV?**
+
+[UV](https://github.com/astral-sh/uv) is an ultra-fast Python package manager from Astral (makers of `ruff`). It's 10-100x faster than pip and provides:
+- Lightning-fast dependency resolution
+- Reproducible builds via lock files
+- Better conflict handling
+- Zero-install execution (`uvx`)
+
+**When to use UV:**
+- **Developers**: Faster development workflow, especially with large dependency trees
+- **CI/CD**: Dramatically faster build times
+- **Users**: One-off execution without installation (`uvx`)
+
+**Installing UV:**
+
+```bash
+# Method 1: Official installer (recommended)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Method 2: Via pip
+pip install uv
+
+# Method 3: Via Homebrew (macOS)
+brew install uv
+```
+
+After installation, restart your terminal or run:
+```bash
+export PATH="$HOME/.cargo/bin:$PATH"
+```
+
+**Using UV as a user (no setup required):**
+
+```bash
+# One-off execution (no install needed!)
+uvx zolo-zcli shell
+uvx zolo-zcli migrate app.py
+uvx zolo-zcli --version
+
+# Traditional install via UV
+uv pip install git+https://github.com/ZoloAi/zolo-zcli.git
+
+# With optional dependencies
+uv pip install "zolo-zcli[all] @ git+https://github.com/ZoloAi/zolo-zcli.git"
+```
+
+**Quick comparison:**
+
+| Operation | pip | uv |
+|-----------|-----|-----|
+| Install dependencies | ~30-60s | ~3-5s ⚡ |
+| Lock file support | ❌ | ✅ `uv.lock` |
+| Reproducible builds | ⚠️ Drift possible | ✅ Guaranteed |
+| Zero-install execution | ❌ | ✅ `uvx` |
+
+---
+
+### 3f. UV + Editable install (contributors)
+
+**For contributors using UV** - the fastest development workflow:
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/ZoloAi/zolo-zcli.git
+cd zolo-zcli
+
+# 2. Install dependencies from lock file (uses uv.lock)
+uv sync --all-extras
+
+# 3. Your changes take effect immediately (editable mode)
+uv run zolo --version
+uv run zolo shell
+```
+
+**Common UV commands for development:**
+
+```bash
+# Install dependencies from lock file
+uv sync
+
+# Install with all extras (csv, postgresql, etc.)
+uv sync --all-extras
+
+# Add a new dependency
+uv add requests
+
+# Add a development dependency
+uv add --dev pytest
+
+# Update all dependencies
+uv lock --upgrade
+uv sync
+
+# Run commands
+uv run zolo shell
+uv run pytest
+```
+
+**Why UV for development:**
+- ⚡ **10-100x faster** than pip for dependency installation
+- 🔒 **Reproducible** - `uv.lock` ensures identical environments
+- 🚀 **Hot reload** - Changes immediately reflected (editable install)
+- 🎯 **Better DX** - Smarter conflict resolution, clearer error messages
+
+**Automated setup script:**
+
+If you prefer automation, use the included setup script:
+
+```bash
+cd zolo-zcli
+./setup-uv.sh
+```
+
+This script will:
+- Verify UV is installed
+- Install Python 3.11 if needed (via UV)
+- Generate/update `uv.lock` file
+- Install all dependencies
+- Verify the installation
+
+**Resources:**
+- UV Documentation: https://docs.astral.sh/uv/
+- UV GitHub: https://github.com/astral-sh/uv
+
+---
+
 ## 4. Verify Installation
 
 After installation completes, **test that zCLI is working** by running these commands in your terminal:
