@@ -563,12 +563,20 @@ class zWalker(zWizard):
             # DELEGATION: zDisplay handles message formatting and output
             self.display.zDeclare(MSG_WALKER_LOOP, color=COLOR_MAIN, indent=INDENT_NORMAL, style=STYLE_FULL)
 
-            # DELEGATION: zWizard.execute_loop handles ALL block iteration + _data resolution
+            # Get block name from zSpark (if specified)
+            # DELEGATION: zWizard.execute_loop handles block extraction internally
+            block_name: Optional[str] = self.zSpark_obj.get(ZSPARK_KEY_BLOCK)
+
+            # DELEGATION: zWizard.execute_loop handles ALL:
+            # - Block extraction (if block_name provided)
+            # - Block iteration + _data resolution
+            # - RBAC enforcement
             # NO dispatch_fn provided - zWizard automatically uses walker.dispatch.handle
             # (Single Source of Truth: zDispatch for ALL command routing)
             return self.execute_loop(
                 items_dict=raw_zFile,
-                navigation_callbacks=self._create_navigation_callbacks()
+                navigation_callbacks=self._create_navigation_callbacks(),
+                block_name=block_name
             )
 
         except Exception as e:
@@ -617,7 +625,7 @@ class zWalker(zWizard):
             # DELEGATION STEP 1: zNavigation.handle_zBack pops breadcrumb + loads file
             # (returns: block_dict, block_keys, start_key)
             block_dict, _, start_key = self.navigation.handle_zBack(
-                show_banner=False,
+                show_banner=False, 
                 walker=self
             )
             # DELEGATION STEP 2: zWizard.execute_loop re-executes with new context
@@ -654,8 +662,8 @@ class zWalker(zWizard):
         
         return {
             "on_continue": on_continue,  # Track breadcrumbs after each step
-            CALLBACK_ON_BACK: on_back,
-            CALLBACK_ON_EXIT: on_exit,
-            CALLBACK_ON_STOP: on_stop,
-            CALLBACK_ON_ERROR: on_error
+                CALLBACK_ON_BACK: on_back,
+                CALLBACK_ON_EXIT: on_exit,
+                CALLBACK_ON_STOP: on_stop,
+                CALLBACK_ON_ERROR: on_error
         }

@@ -89,10 +89,13 @@ class zEnv:
         Priority order:
         1. zEnv.base.yaml (base configuration)
         2. zEnv.{environment}.yaml (environment-specific overrides)
-        3. Fallback to dotenv if YAML files not found
         
         Returns:
-            bool: True if any YAML files were loaded, False if fell back to dotenv
+            bool: True if any YAML files were loaded, False if no YAML files found
+            
+        Note:
+            Does NOT fall back to dotenv - that's handled by config_paths.load_dotenv()
+            This ensures YAML files always take precedence when they exist.
         """
         yaml_loaded = False
         
@@ -116,13 +119,10 @@ class zEnv:
             yaml_loaded = True
             self._log(f"✅ Loaded {self.environment} config from {env_file.name}")
         
-        # Priority 3: Fallback to dotenv (backward compatibility)
         if not yaml_loaded:
-            self._log("⚠️  No zEnv YAML files found, falling back to dotenv")
-            self._fallback_to_dotenv()
-            return False
+            self._log("ℹ️  No zEnv YAML files found in workspace")
         
-        return True
+        return yaml_loaded
     
     def _load_file(self, file_path: Path) -> Optional[Dict[str, Any]]:
         """
@@ -189,31 +189,6 @@ class zEnv:
                 os.environ[key] = str(value)
                 self._log(f"  {key}: {value}")
     
-    def _fallback_to_dotenv(self) -> None:
-        """
-        Fallback to traditional dotenv loading (backward compatibility).
-        
-        Loads .zEnv and .zEnv.{environment} files using python-dotenv.
-        """
-        try:
-            from dotenv import load_dotenv
-            
-            # Load base .zEnv
-            base_dotenv = self.workspace_dir / ".zEnv"
-            if base_dotenv.exists():
-                load_dotenv(base_dotenv)
-                self._log(f"✅ Loaded legacy dotenv: {base_dotenv.name}")
-            
-            # Load environment-specific .zEnv.{environment}
-            env_dotenv = self.workspace_dir / f".zEnv.{self.environment}"
-            if env_dotenv.exists():
-                load_dotenv(env_dotenv, override=True)
-                self._log(f"✅ Loaded legacy dotenv: {env_dotenv.name}")
-        
-        except ImportError:
-            self._log("⚠️  python-dotenv not installed, skipping dotenv fallback")
-        except Exception as e:
-            self._log(f"❌ Failed to load dotenv: {e}")
     
     def _log(self, message: str) -> None:
         """

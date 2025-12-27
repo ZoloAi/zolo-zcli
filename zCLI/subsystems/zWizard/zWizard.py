@@ -427,7 +427,8 @@ class zWizard:
         navigation_callbacks: Optional[Dict[str, Any]] = None, 
         context: Optional[Dict[str, Any]] = None, 
         start_key: Optional[str] = None,
-        ws_callback: Optional[Any] = None
+        ws_callback: Optional[Any] = None,
+        block_name: Optional[str] = None
     ) -> Any:
         """
         Core loop engine that iterates through keys, dispatches actions, and handles results.
@@ -440,12 +441,13 @@ class zWizard:
         - Bifrost: Chunked progressive execution at ! (gate) boundaries
         
         Args:
-            items_dict: Ordered dictionary of step keys and values
+            items_dict: Ordered dictionary of step keys and values (or file structure if block_name provided)
             dispatch_fn: Optional custom dispatch function (defaults to zcli.dispatch)
             navigation_callbacks: Optional callbacks for navigation events
             context: Optional context passed to all dispatch calls
             start_key: Optional key to start from (for resuming workflows)
             ws_callback: Optional WebSocket callback for Bifrost chunked rendering
+            block_name: Optional block name to extract from items_dict before processing
         
         Returns:
             Navigation signal (zBack, exit, stop, error) or None for normal completion
@@ -502,6 +504,19 @@ class zWizard:
             - handle(): Higher-level method with transaction support
             - wizard_examples.py: Comprehensive usage patterns
         """
+        # ════════════════════════════════════════════════════════════
+        # BLOCK EXTRACTION: Extract specific block if requested
+        # ════════════════════════════════════════════════════════════
+        # If block_name is provided, extract that specific block from items_dict
+        # This allows orchestrators (like zWalker) to process file-level structures
+        # without needing to implement extraction logic themselves
+        if block_name:
+            if block_name in items_dict:
+                self.logger.debug(f"[zWizard] Extracting block: {block_name}")
+                items_dict = items_dict[block_name]
+            else:
+                self.logger.warning(f"[zWizard] Block '{block_name}' not found, processing all keys")
+        
         # ════════════════════════════════════════════════════════════
         # MODE DETECTION: Route to appropriate execution strategy
         # ════════════════════════════════════════════════════════════
@@ -832,11 +847,11 @@ class zWizard:
             return SIGNAL_ZBACK
         
         dispatch_fn = self._get_dispatch_fn(dispatch_fn, context)
-        # Filter out metadata keys (_) AND navbar keys (frontend renders navbar)
-        # This prevents navbar from interfering with breadcrumb/navigation flow
+        # Filter out metadata keys (_)
+        # Note: Navbar keys (~zNavBar*) are now processed normally (not filtered)
         keys_list = [
             k for k in items_dict.keys() 
-            if not k.startswith('_') and 'zNavBar' not in k and 'navbar' not in k.lower()
+            if not k.startswith('_')
         ]
         idx = keys_list.index(start_key) if start_key and start_key in keys_list else 0
         

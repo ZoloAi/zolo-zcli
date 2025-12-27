@@ -199,17 +199,20 @@ class zConfigPaths:
         return self._dotenv_path
 
     def load_dotenv(self, override: bool = True) -> Optional[Path]:
-        """Load environment variables with zEnv (YAML/JSON) priority over dotenv.
+        """Load environment variables with STRICT zEnv YAML priority over dotenv.
         
-        THE zCLI WAY (v2.0): Priority-based loading:
+        THE zCLI WAY (v2.0): Priority-based loading with YAML-first guarantee:
         1. Try zEnv.base.yaml + zEnv.{deployment}.yaml (declarative, THE zCLI WAY)
-        2. Fallback to .zEnv + .zEnv.{deployment} (legacy dotenv, backward compat)
+        2. Fallback to .zEnv + .zEnv.{deployment} ONLY if NO YAML files exist
+        
+        IMPORTANT: If ANY zEnv.*.yaml files exist (even if empty/malformed), 
+        dotenv fallback is SKIPPED. This ensures YAML always takes precedence.
         
         This allows:
         - zEnv.base.yaml → declarative config (navbar, nested structures)
         - zEnv.development.yaml → dev overrides (no SSL)
         - zEnv.production.yaml → prod overrides (SSL + certs)
-        - .zEnv (legacy) → backward compatibility
+        - .zEnv (legacy) → backward compatibility (only if no YAML files)
         
         Args:
             override: Whether to override existing environment variables (default: True)
@@ -251,6 +254,11 @@ class zConfigPaths:
             if env_deployment:
                 deployment = env_deployment.lower()
         
+        # Check if YAML files exist (even if we can't load them, we skip dotenv fallback)
+        base_yaml = self.workspace_dir / "zEnv.base.yaml"
+        env_yaml = self.workspace_dir / f"zEnv.{deployment}.yaml"
+        yaml_files_exist = base_yaml.exists() or env_yaml.exists()
+        
         # Try loading zEnv YAML/JSON files
         try:
             from .config_zenv import zEnv
@@ -265,12 +273,23 @@ class zConfigPaths:
                 self._log_info(f"✅ Loaded zEnv (THE zCLI WAY) for {deployment} environment")
                 # Return a marker path to indicate success (zEnv doesn't return specific path)
                 return self.workspace_dir / f"zEnv.{deployment}.yaml"
+            elif yaml_files_exist:
+                # YAML files exist but failed to load - still skip dotenv fallback
+                self._log_warning(f"⚠️  zEnv YAML files exist but failed to load, skipping dotenv fallback")
+                return None
         
         except Exception as e:
-            self._log_warning(f"⚠️  zEnv loading failed: {e}, falling back to dotenv")
+            if yaml_files_exist:
+                # YAML files exist but loading threw exception - still skip dotenv fallback
+                self._log_warning(f"⚠️  zEnv loading error: {e}, but YAML files exist - skipping dotenv fallback")
+                return None
+            else:
+                # No YAML files exist - safe to fall back to dotenv
+                self._log_info(f"⚠️  zEnv loading failed: {e}, falling back to dotenv")
         
         # ═══════════════════════════════════════════════════════════
         # PRIORITY 2: Fallback to dotenv (legacy, backward compat)
+        # Only reached if NO YAML files exist in workspace
         # ═══════════════════════════════════════════════════════════
         
         dotenv_path = self.get_dotenv_path()
