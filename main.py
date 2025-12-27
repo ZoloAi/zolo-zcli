@@ -1,6 +1,6 @@
 """CLI entry point for the zolo-zcli package."""
 
-from zSys import BootstrapLogger
+from zSys import BootstrapLogger, detect_installation_type, cli_handlers
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # BOOTSTRAP LOGGER - ALWAYS FIRST
@@ -14,167 +14,14 @@ boot_logger.info("zolo-zcli entry point started")
 # Now safe to import zCLI (bootstrap logger will catch any import errors)
 # Use centralized imports from zCLI package
 import zCLI as zcli_package
-from zCLI import argparse, os, sys, Path, zCLI
+from zCLI import argparse, sys, Path, zCLI
 from version import get_version, get_package_info
 
 boot_logger.debug("Python: %s", sys.version.split()[0])
 
-
-def detect_installation_type(detailed: bool = False):
-    """
-    Detect zCLI installation type in a portable way.
-    
-    Args:
-        detailed: If True, return detailed path info; if False, return simple type string
-    
-    Returns:
-        str: Installation type ("editable", "standard", "uv", etc.)
-    """
-    try:
-        zcli_path = Path(zcli_package.__file__).resolve()
-        
-        # Check if in site-packages (standard install)
-        is_site_packages = 'site-packages' in str(zcli_path)
-        
-        # Check for virtual environment
-        venv_path = os.getenv('VIRTUAL_ENV')
-        in_venv = venv_path is not None
-        
-        # Determine installation type
-        if not is_site_packages:
-            # Editable install (pip install -e .)
-            if detailed:
-                return f"editable (pip -e) at {zcli_path.parent}"
-            return "editable"
-        
-        elif in_venv:
-            # Check if uv environment
-            if 'uv' in venv_path.lower():
-                if detailed:
-                    return f"uv environment at {venv_path}"
-                return "uv"
-            else:
-                if detailed:
-                    return f"venv at {venv_path}"
-                return "venv"
-        
-        else:
-            # Standard system-wide install
-            if detailed:
-                return f"standard (site-packages) at {zcli_path.parent}"
-            return "standard"
-            
-    except Exception as e:
-        if detailed:
-            return f"unknown (detection failed: {e})"
-        return "unknown"
-
-
 # Log installation type with details
-boot_logger.debug("Installation: %s", detect_installation_type(detailed=True))
+boot_logger.debug("Installation: %s", detect_installation_type(zcli_package, detailed=True))
 boot_logger.debug("Core zCLI imports completed")
-
-
-def display_info():
-    """Display zolo-zcli information banner."""
-    boot_logger.debug("Displaying info banner")
-    
-    # Get simple installation type for banner (using portable detection)
-    install_type = detect_installation_type(detailed=False)
-    
-    pkg_info = get_package_info()
-    
-    print(f"\n{pkg_info['name']} {get_version()} ({install_type})")
-    print("A declarative based Framework")
-    print(f"By {pkg_info['author']}")
-    print("License: MIT\n")
-
-
-def handle_shell_command(verbose: bool = False):
-    """Handle shell command."""
-    boot_logger.info("Launching zShell...")
-    cli = zCLI()
-    boot_logger.flush_to_framework(cli.logger.framework, verbose=verbose)
-    cli.run_shell()
-
-
-def handle_config_command(verbose: bool = False):
-    """Handle config command - display only (read-only)."""
-    boot_logger.info("Loading config display...")
-    cli = zCLI({'zMode': 'Terminal', 'logger': 'PROD', 'deployment': 'Production'})
-    boot_logger.flush_to_framework(cli.logger.framework, verbose=verbose)
-    
-    cli.config.persistence.show_machine_config()
-    cli.config.persistence.show_environment_config()
-
-
-def handle_ztests_command(verbose: bool = False):
-    """Handle zTests command (declarative test runner)."""
-    boot_logger.info("Launching zTestRunner...")
-    
-    main_file = Path(__file__).resolve()
-    project_root = main_file.parent
-    test_runner_dir = project_root / "zTestRunner"
-    
-    if not test_runner_dir.exists():
-        boot_logger.error("zTestRunner directory not found: %s", test_runner_dir)
-        temp_cli = zCLI({'zMode': 'Terminal'})
-        boot_logger.flush_to_framework(temp_cli.logger.framework, verbose=verbose)
-        temp_cli.display.text(f"Error: zTestRunner directory not found at {test_runner_dir}")
-        return 1
-    
-    boot_logger.debug("zTestRunner directory: %s", test_runner_dir)
-    test_cli = zCLI({
-        "zSpace": str(test_runner_dir.absolute()),
-        "zMode": "Terminal"
-    })
-    boot_logger.flush_to_framework(test_cli.logger.framework, verbose=verbose)
-    
-    test_cli.zspark_obj["zVaFile"] = "@.zUI.test_menu"
-    test_cli.zspark_obj["zBlock"] = "zVaF"
-    test_cli.walker.run()
-
-
-def handle_migrate_command(args, verbose: bool = False):
-    """Handle schema migration command - thin CLI wrapper."""
-    boot_logger.info("Preparing migration: %s", args.app_file)
-    
-    app_file = args.app_file
-    if not Path(app_file).exists():
-        boot_logger.error("App file not found: %s", app_file)
-        temp_z = zCLI({'zMode': 'Terminal', 'logger': 'PROD', 'deployment': 'Production'})
-        boot_logger.flush_to_framework(temp_z.logger.framework, verbose=verbose)
-        temp_z.display.text(f"❌ Error: App file not found: {app_file}")
-        return 1
-    
-    boot_logger.debug("Initializing zCLI for migration...")
-    z = zCLI({'zMode': 'Terminal'})
-    boot_logger.flush_to_framework(z.logger.framework, verbose=verbose)
-    
-    return z.data.cli_migrate(
-        app_file=str(Path(app_file).resolve()),
-        auto_approve=getattr(args, 'auto_approve', False),
-        dry_run=getattr(args, 'dry_run', False),
-        specific_schema=getattr(args, 'schema', None),
-        force_version=getattr(args, 'version', None)
-    )
-
-
-def handle_uninstall_command(verbose: bool = False):
-    """Handle uninstall command with interactive menu."""
-    boot_logger.info("Launching uninstall wizard...")
-    
-    zcli_package_dir = Path(zcli_package.__file__).parent
-    boot_logger.debug("zCLI package directory: %s", zcli_package_dir)
-    
-    uninstall_cli = zCLI({
-        "zWorkspace": str(zcli_package_dir),
-        "zVaFile": "@.UI.zUI.zcli_sys",
-        "zBlock": "Uninstall"
-    })
-    boot_logger.flush_to_framework(uninstall_cli.logger.framework, verbose=verbose)
-    
-    uninstall_cli.walker.run()
 
 
 def main() -> None:
@@ -236,23 +83,23 @@ def main() -> None:
         verbose = getattr(args, 'verbose', False)
         boot_logger.debug("Command: %s, Verbose: %s", args.command or "info", verbose)
 
-        # Route to handlers (with verbose flag)
+        # Route to handlers (with verbose flag) - all handlers in zSys/cli_handlers.py
         if args.command == "shell":
-            handle_shell_command(verbose=verbose)
+            cli_handlers.handle_shell_command(boot_logger, zCLI, verbose=verbose)
         elif args.command == "config":
-            handle_config_command(verbose=verbose)
+            cli_handlers.handle_config_command(boot_logger, zCLI, verbose=verbose)
         elif args.command == "ztests":
-            return handle_ztests_command(verbose=verbose)
+            return cli_handlers.handle_ztests_command(boot_logger, zCLI, Path, zcli_package, verbose=verbose)
         elif args.command == "migrate":
-            return handle_migrate_command(args, verbose=verbose)
+            return cli_handlers.handle_migrate_command(boot_logger, zCLI, Path, args, verbose=verbose)
         elif args.command == "uninstall":
-            return handle_uninstall_command(verbose=verbose)
+            cli_handlers.handle_uninstall_command(boot_logger, zCLI, Path, zcli_package, verbose=verbose)
         else:
             # Default: show info banner (no zCLI init needed)
             # If verbose, print bootstrap logs to stdout (no framework logger available)
             if verbose:
                 boot_logger.print_buffered_logs()
-            display_info()
+            cli_handlers.display_info(boot_logger, zcli_package, get_version, get_package_info, detect_installation_type)
     
     except KeyboardInterrupt:
         boot_logger.info("Interrupted by user (Ctrl+C)")

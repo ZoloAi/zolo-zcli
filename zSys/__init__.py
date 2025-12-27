@@ -21,16 +21,22 @@ Modules:
     - cache_utils: Cache management utilities
     - bootstrap_logger: Pre-boot logging with buffer injection
     - logger: Minimal console logger (WSGI workers)
+    - installation_utils: Portable installation type detection
+    - cli_handlers: CLI command handler functions
     - uninstall: Package removal utilities
 
 Usage:
     from zSys import BootstrapLogger, colors, validation, exceptions
+    from zSys.installation_utils import detect_installation_type
+    from zSys import cli_handlers
 """
 
 # Export all public APIs
 from .bootstrap_logger import BootstrapLogger
 from .colors import Colors
 from .validation import validate_zcli_instance
+from .installation_utils import detect_installation_type
+from . import cli_handlers
 from .zExceptions import (
     # Base exceptions
     zCLIException,
@@ -61,6 +67,10 @@ __all__ = [
     "Colors",
     # Validation
     "validate_zcli_instance",
+    # Installation Detection
+    "detect_installation_type",
+    # CLI Handlers
+    "cli_handlers",
     # Exceptions
     "zCLIException",
     "ConfigurationError",
