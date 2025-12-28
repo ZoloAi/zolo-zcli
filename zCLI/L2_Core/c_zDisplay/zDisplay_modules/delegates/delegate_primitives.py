@@ -32,11 +32,11 @@ Grade: A+ (Type hints, constants, comprehensive docs)
 from zCLI import Any, Dict
 from ..display_constants import (
     _KEY_EVENT,
-    EVENT_WRITE_RAW,
-    EVENT_WRITE_LINE,
-    EVENT_WRITE_BLOCK,
-    EVENT_READ_STRING,
-    EVENT_READ_PASSWORD,
+    _EVENT_WRITE_RAW,
+    _EVENT_WRITE_LINE,
+    _EVENT_WRITE_BLOCK,
+    _EVENT_READ_STRING,
+    _EVENT_READ_PASSWORD,
 )
 
 
@@ -47,9 +47,7 @@ class DelegatePrimitives:
     and event processing, going directly to Terminal or GUI I/O.
     """
 
-    # ═══════════════════════════════════════════════════════════════════════════
     # Primitive Output Delegates (Preferred API)
-    # ═══════════════════════════════════════════════════════════════════════════
 
     def raw(self, content: str) -> Any:
         """Write raw content without processing.
@@ -65,7 +63,7 @@ class DelegatePrimitives:
             display.raw("... ")
             display.raw("Done\\n")
         """
-        return self.handle({_KEY_EVENT: EVENT_WRITE_RAW, "content": content})
+        return self.handle({_KEY_EVENT: _EVENT_WRITE_RAW, "content": content})
 
     def line(self, content: str) -> Any:
         """Write content with automatic newline.
@@ -79,7 +77,7 @@ class DelegatePrimitives:
         Example:
             display.line("Processing complete")
         """
-        return self.handle({_KEY_EVENT: EVENT_WRITE_LINE, "content": content})
+        return self.handle({_KEY_EVENT: _EVENT_WRITE_LINE, "content": content})
 
     def block(self, content: str) -> Any:
         """Write content as a formatted block.
@@ -90,11 +88,9 @@ class DelegatePrimitives:
         Returns:
             Any: Result from handle() method
         """
-        return self.handle({_KEY_EVENT: EVENT_WRITE_BLOCK, "content": content})
+        return self.handle({_KEY_EVENT: _EVENT_WRITE_BLOCK, "content": content})
 
-    # ═══════════════════════════════════════════════════════════════════════════
     # Backward-Compatible Aliases (Legacy Support)
-    # ═══════════════════════════════════════════════════════════════════════════
 
     def write_raw(self, content: str) -> Any:
         """Backward-compatible alias for raw().
@@ -135,9 +131,7 @@ class DelegatePrimitives:
         """
         return self.block(content)
 
-    # ═══════════════════════════════════════════════════════════════════════════
     # Primitive Input Delegates
-    # ═══════════════════════════════════════════════════════════════════════════
 
     def read_string(self, prompt: str = "") -> Any:
         """Read string input from user.
@@ -151,7 +145,7 @@ class DelegatePrimitives:
         Example:
             name = display.read_string("Enter your name: ")
         """
-        return self.handle({_KEY_EVENT: EVENT_READ_STRING, "prompt": prompt})
+        return self.handle({_KEY_EVENT: _EVENT_READ_STRING, "prompt": prompt})
 
     def read_password(self, prompt: str = "") -> Any:
         """Read password input (masked during entry).
@@ -165,7 +159,7 @@ class DelegatePrimitives:
         Example:
             password = display.read_password("Enter password: ")
         """
-        return self.handle({_KEY_EVENT: EVENT_READ_PASSWORD, "prompt": prompt})
+        return self.handle({_KEY_EVENT: _EVENT_READ_PASSWORD, "prompt": prompt})
 
     def read_primitive(self, obj: Dict[str, Any]) -> Any:
         """Read string primitive with obj parameter.
@@ -177,7 +171,7 @@ class DelegatePrimitives:
             Any: User input string from handle() method
         """
         prompt = obj.get("prompt", "")
-        return self.handle({_KEY_EVENT: EVENT_READ_STRING, "prompt": prompt})
+        return self.handle({_KEY_EVENT: _EVENT_READ_STRING, "prompt": prompt})
 
     def read_password_primitive(self, obj: Dict[str, Any]) -> Any:
         """Read password primitive with obj parameter.
@@ -189,5 +183,5 @@ class DelegatePrimitives:
             Any: User input string (masked during entry)
         """
         prompt = obj.get("prompt", "")
-        return self.handle({_KEY_EVENT: EVENT_READ_PASSWORD, "prompt": prompt})
+        return self.handle({_KEY_EVENT: _EVENT_READ_PASSWORD, "prompt": prompt})
 

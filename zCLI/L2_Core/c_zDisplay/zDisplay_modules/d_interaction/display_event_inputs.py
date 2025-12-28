@@ -145,56 +145,42 @@ choice = basic_inputs.selection("Choose:", ["Option 1", "Option 2"])
 from zCLI import Any, Optional, Union, List, Dict
 from typing import Set
 
-# Module Constants
-
-# Event name constant
-EVENT_NAME_SELECTION = "selection"
-EVENT_NAME_BUTTON = "button"
-
-# Marker string constants
-MARKER_CHECKED = "[CHECKED]"
-MARKER_UNCHECKED = "[UNCHECKED]"
-MARKER_SELECTED = "[SELECTED]"
-MARKER_UNSELECTED = "[UNSELECTED]"
-
-# Dict key constants (for GUI events)
-KEY_PROMPT = "prompt"
-KEY_OPTIONS = "options"
-KEY_MULTI = "multi"
-KEY_DEFAULT = "default"
-KEY_STYLE = "style"
-KEY_LABEL = "label"
-KEY_ACTION = "action"
-KEY_COLOR = "color"
-
-# Message constants
-MSG_INVALID_NUMBER = "Please enter a valid number"
-MSG_RANGE_ERROR_TEMPLATE = "Please enter a number between 1 and {max_num}"
-MSG_INVALID_INPUT_TEMPLATE = "Invalid: {input}"
-MSG_INVALID_RANGE_TEMPLATE = "Invalid: {input} (must be 1-{max_num})"
-MSG_MULTI_SELECT_INSTRUCTIONS = "Enter numbers separated by spaces (e.g., '1 3 5'), or 'done':"
-MSG_ADDED_TEMPLATE = "Added: {option}"
-MSG_REMOVED_TEMPLATE = "Removed: {option}"
-MSG_BUTTON_CLICKED = "{label} clicked!"
-MSG_BUTTON_CANCELLED = "{label} cancelled."
-
-# Prompt constants
-PROMPT_INPUT = "> "
-PROMPT_SINGLE_SELECT_TEMPLATE = "Enter choice (1-{max_num}){default_hint}: "
-PROMPT_BUTTON_TEMPLATE = "Click [{label}]? (y/n): "
-
-# Command constants (for multi-select)
-CMD_DONE = "done"
-CMD_DONE_SHORT = "d"
-CMD_EMPTY = ""
-
-# Default value constants
-DEFAULT_MULTI = False
-DEFAULT_STYLE = "numbered"
-DEFAULT_INDENT = 0
-
-# Option numbering offset
-OPTION_INDEX_OFFSET = 1  # Display numbering starts at 1, but list indices start at 0
+# Import constants from centralized module
+from ..display_constants import (
+    _EVENT_NAME_SELECTION,
+    _EVENT_NAME_BUTTON,
+    _MARKER_CHECKED,
+    _MARKER_UNCHECKED,
+    _MARKER_SELECTED,
+    _MARKER_UNSELECTED,
+    _KEY_PROMPT,
+    _KEY_OPTIONS,
+    _KEY_MULTI,
+    _KEY_DEFAULT,
+    _KEY_STYLE,
+    _KEY_LABEL,
+    _KEY_ACTION,
+    _KEY_COLOR,
+    _MSG_INVALID_NUMBER,
+    _MSG_RANGE_ERROR_TEMPLATE,
+    _MSG_INVALID_INPUT_TEMPLATE,
+    _MSG_INVALID_RANGE_TEMPLATE,
+    _MSG_MULTI_SELECT_INSTRUCTIONS,
+    _MSG_ADDED_TEMPLATE,
+    _MSG_REMOVED_TEMPLATE,
+    _MSG_BUTTON_CLICKED,
+    _MSG_BUTTON_CANCELLED,
+    _PROMPT_INPUT,
+    _PROMPT_SINGLE_SELECT_TEMPLATE,
+    _PROMPT_BUTTON_TEMPLATE,
+    _CMD_DONE,
+    _CMD_DONE_SHORT,
+    _CMD_EMPTY,
+    DEFAULT_MULTI,
+    DEFAULT_STYLE,
+    DEFAULT_INDENT,
+    _OPTION_INDEX_OFFSET,
+)
 
 # BasicInputs Class
 
@@ -248,9 +234,7 @@ class BasicInputs:
         # Get reference to BasicOutputs for composition
         self.BasicOutputs = None  # Will be set after zEvents initialization
 
-    # ═══════════════════════════════════════════════════════════════════════════
     # Helper Methods - Output & Messaging
-    # ═══════════════════════════════════════════════════════════════════════════
 
     def _output_text(self, content: str, break_after: bool = False, indent: int = DEFAULT_INDENT) -> None:
         """Output text via BasicOutputs with fallback (DRY helper).
@@ -280,7 +264,7 @@ class BasicInputs:
         Returns:
             str: Formatted range error message
         """
-        return MSG_RANGE_ERROR_TEMPLATE.format(max_num=max_num)
+        return _MSG_RANGE_ERROR_TEMPLATE.format(max_num=max_num)
 
     def _build_single_select_prompt(self, max_num: int, default_hint: str) -> str:
         """Build single-select prompt (message builder helper).
@@ -292,11 +276,9 @@ class BasicInputs:
         Returns:
             str: Formatted single-select prompt
         """
-        return PROMPT_SINGLE_SELECT_TEMPLATE.format(max_num=max_num, default_hint=default_hint)
+        return _PROMPT_SINGLE_SELECT_TEMPLATE.format(max_num=max_num, default_hint=default_hint)
 
-    # ═══════════════════════════════════════════════════════════════════════════
     # Main Selection Method (Refactored)
-    # ═══════════════════════════════════════════════════════════════════════════
 
     def selection(self, prompt: str, options: List[Union[str, Dict[str, Any]]], multi: bool = DEFAULT_MULTI, 
                   default: Optional[Union[str, List[str]]] = None, 
@@ -408,9 +390,7 @@ class BasicInputs:
         
         return result
 
-    # ═══════════════════════════════════════════════════════════════════════════
     # Helper Methods - Selection Logic (Extracted from selection() for refactoring)
-    # ═══════════════════════════════════════════════════════════════════════════
 
     def _try_gui_mode_future(self, prompt: str, options: List[str], multi: bool, 
                              default: Optional[Union[str, List[str]]], style: str) -> Optional['asyncio.Future']:
@@ -514,13 +494,13 @@ class BasicInputs:
             # Multi-select: show checkboxes
             default_set = set(default) if isinstance(default, list) else set()
             for i, option in enumerate(options):
-                marker = MARKER_CHECKED if option in default_set else MARKER_UNCHECKED
-                self._output_text(f"  {i + OPTION_INDEX_OFFSET}. {marker} {option}", break_after=False)
+                marker = _MARKER_CHECKED if option in default_set else _MARKER_UNCHECKED
+                self._output_text(f"  {i + _OPTION_INDEX_OFFSET}. {marker} {option}", break_after=False)
         else:
             # Single-select: show radio buttons
             for i, option in enumerate(options):
-                marker = MARKER_SELECTED if option == default else MARKER_UNSELECTED
-                self._output_text(f"  {i + OPTION_INDEX_OFFSET}. {marker} {option}", break_after=False)
+                marker = _MARKER_SELECTED if option == default else _MARKER_UNSELECTED
+                self._output_text(f"  {i + _OPTION_INDEX_OFFSET}. {marker} {option}", break_after=False)
 
     def _handle_selection(self, options: List[str], multi: bool, 
                          default: Optional[Union[str, List[str]]]) -> Optional[Union[str, List[str]]]:
@@ -541,9 +521,7 @@ class BasicInputs:
         else:
             return self._collect_single_selection(options, default)
 
-    # ═══════════════════════════════════════════════════════════════════════════
     # Collection Methods - Single & Multi Select
-    # ═══════════════════════════════════════════════════════════════════════════
 
     def _collect_single_selection(self, options: List[str], default: Optional[str]) -> Optional[str]:
         """Collect single selection from user with validation.
@@ -562,9 +540,9 @@ class BasicInputs:
             Cancel: KeyboardInterrupt returns None
         """
         # Build default hint
-        default_hint = CMD_EMPTY
+        default_hint = _CMD_EMPTY
         if default is not None and default in options:
-            default_index = options.index(default) + OPTION_INDEX_OFFSET
+            default_index = options.index(default) + _OPTION_INDEX_OFFSET
             default_hint = f" [{default_index}]"
 
         # Get selection with validation loop
@@ -579,7 +557,7 @@ class BasicInputs:
                     return default
 
                 # Validate and return
-                choice_index = int(selection) - OPTION_INDEX_OFFSET
+                choice_index = int(selection) - _OPTION_INDEX_OFFSET
                 if 0 <= choice_index < len(options):
                     return options[choice_index]
                 
@@ -588,7 +566,7 @@ class BasicInputs:
                     break_after=False
                 )
             except ValueError:
-                self._output_text(MSG_INVALID_NUMBER, break_after=False)
+                self._output_text(_MSG_INVALID_NUMBER, break_after=False)
             except KeyboardInterrupt:
                 return None
 
@@ -609,15 +587,15 @@ class BasicInputs:
             Validation: Parse multiple numbers, range checking
             Feedback: "Added: X" or "Removed: X" messages
         """
-        self._output_text(MSG_MULTI_SELECT_INSTRUCTIONS, break_after=False)
+        self._output_text(_MSG_MULTI_SELECT_INSTRUCTIONS, break_after=False)
 
         selected = set(default_set) if default_set else set()
 
         while True:
             try:
-                user_input = self.zPrimitives.read_string(PROMPT_INPUT).strip().lower()
+                user_input = self.zPrimitives.read_string(_PROMPT_INPUT).strip().lower()
 
-                if user_input in (CMD_DONE, CMD_DONE_SHORT, CMD_EMPTY):
+                if user_input in (_CMD_DONE, _CMD_DONE_SHORT, _CMD_EMPTY):
                     break
 
                 # Parse numbers
@@ -646,40 +624,38 @@ class BasicInputs:
             Invalid input: Clear error messages with valid range
         """
         try:
-            idx = int(num_str) - OPTION_INDEX_OFFSET
+            idx = int(num_str) - _OPTION_INDEX_OFFSET
             if 0 <= idx < len(options):
                 option = options[idx]
                 # Toggle selection
                 if option in selected:
                     selected.remove(option)
                     self._output_text(
-                        MSG_REMOVED_TEMPLATE.format(option=option),
+                        _MSG_REMOVED_TEMPLATE.format(option=option),
                         break_after=False,
                         indent=1
                     )
                 else:
                     selected.add(option)
                     self._output_text(
-                        MSG_ADDED_TEMPLATE.format(option=option),
+                        _MSG_ADDED_TEMPLATE.format(option=option),
                         break_after=False,
                         indent=1
                     )
             else:
                 self._output_text(
-                    MSG_INVALID_RANGE_TEMPLATE.format(input=num_str, max_num=len(options)),
+                    _MSG_INVALID_RANGE_TEMPLATE.format(input=num_str, max_num=len(options)),
                     break_after=False,
                     indent=1
                 )
         except ValueError:
             self._output_text(
-                MSG_INVALID_INPUT_TEMPLATE.format(input=num_str),
+                _MSG_INVALID_INPUT_TEMPLATE.format(input=num_str),
                 break_after=False,
                 indent=1
             )
 
-    # ═══════════════════════════════════════════════════════════════════════════
     # Button - Single Action Confirmation
-    # ═══════════════════════════════════════════════════════════════════════════
 
     def button(
         self,
@@ -748,7 +724,7 @@ class BasicInputs:
         try:
             # Use centralized color mapping from colors.py (single source of truth)
             terminal_color = self.zColors.get_semantic_color(color)
-            prompt_text = PROMPT_BUTTON_TEMPLATE.format(label=label)
+            prompt_text = _PROMPT_BUTTON_TEMPLATE.format(label=label)
             
             # Apply semantic color if available (terminal-first visual feedback)
             if terminal_color:
@@ -766,14 +742,14 @@ class BasicInputs:
             # MUST type 'y' or 'yes' - no default, no Enter shortcut
             if response in ('y', 'yes'):
                 self._output_text(
-                    MSG_BUTTON_CLICKED.format(label=label),
+                    _MSG_BUTTON_CLICKED.format(label=label),
                     break_after=False,
                     indent=1
                 )
                 return True
             else:
                 self._output_text(
-                    MSG_BUTTON_CANCELLED.format(label=label),
+                    _MSG_BUTTON_CANCELLED.format(label=label),
                     break_after=False,
                     indent=1
                 )
@@ -781,7 +757,7 @@ class BasicInputs:
                 
         except KeyboardInterrupt:
             self._output_text(
-                MSG_BUTTON_CANCELLED.format(label=label),
+                _MSG_BUTTON_CANCELLED.format(label=label),
                 break_after=False,
                 indent=1
             )
@@ -805,15 +781,13 @@ class BasicInputs:
                                       or None if GUI request fails (use terminal fallback)
         """
         return self.zPrimitives._send_input_request(
-            EVENT_NAME_BUTTON,
+            _EVENT_NAME_BUTTON,
             label,
             action=action,
             color=color
         )
 
-    # ═══════════════════════════════════════════════════════════════════════════
     # NEW v1.6.1: Link Selection Helper Methods
-    # ═══════════════════════════════════════════════════════════════════════════
     
     def _extract_option_labels(self, options: List[Union[str, Dict[str, Any]]]) -> tuple:
         """Extract display labels from options (strings or link dicts).
@@ -939,20 +913,20 @@ class BasicInputs:
         """
         try:
             response = self.zPrimitives.read_string(
-                PROMPT_BUTTON_TEMPLATE.format(label=label)
+                _PROMPT_BUTTON_TEMPLATE.format(label=label)
             ).strip().lower()
             
             # MUST type 'y' or 'yes' - no default, no Enter shortcut
             if response in ('y', 'yes'):
                 self._output_text(
-                    MSG_BUTTON_CLICKED.format(label=label),
+                    _MSG_BUTTON_CLICKED.format(label=label),
                     break_after=False,
                     indent=1
                 )
                 return True
             else:
                 self._output_text(
-                    MSG_BUTTON_CANCELLED.format(label=label),
+                    _MSG_BUTTON_CANCELLED.format(label=label),
                     break_after=False,
                     indent=1
                 )
@@ -960,7 +934,7 @@ class BasicInputs:
                 
         except KeyboardInterrupt:
             self._output_text(
-                MSG_BUTTON_CANCELLED.format(label=label),
+                _MSG_BUTTON_CANCELLED.format(label=label),
                 break_after=False,
                 indent=1
             )

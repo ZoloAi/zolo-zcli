@@ -61,16 +61,17 @@ This ensures terminal users get full metadata even if they can't view the image 
 
 from zCLI import Any, Dict, Optional
 
-# Module Constants
-
-EVENT_IMAGE = "image"
-EVENT_VIDEO = "video"
-EVENT_AUDIO = "audio"
-EVENT_PICTURE = "picture"
-DEFAULT_IMAGE_ICON = "📷"
-DEFAULT_VIDEO_ICON = "🎬"
-DEFAULT_AUDIO_ICON = "🎵"
-DEFAULT_PICTURE_ICON = "🖼️"
+# Import constants from centralized module
+from ..display_constants import (
+    _EVENT_IMAGE,
+    _EVENT_VIDEO,
+    _EVENT_AUDIO,
+    _EVENT_PICTURE,
+    _DEFAULT_IMAGE_ICON,
+    _DEFAULT_VIDEO_ICON,
+    _DEFAULT_AUDIO_ICON,
+    _DEFAULT_PICTURE_ICON,
+)
 
 class MediaEvents:
     """Event package for displaying media (e.g., images)."""
@@ -150,14 +151,14 @@ class MediaEvents:
 
         if self.display.mode == "zBifrost":
             # Bifrost gets clean image data
-            return self.zPrimitives.send_gui_event(EVENT_IMAGE, base_event)
+            return self.zPrimitives.send_gui_event(_EVENT_IMAGE, base_event)
         else:
             # Terminal mode: format and display locally
             indent_str = "  " * indent
             display_color = color if color else self.display.mycolor
 
             # Display icon + alt text header
-            header = f"{indent_str}{DEFAULT_IMAGE_ICON} {alt_text}" if alt_text else f"{indent_str}{DEFAULT_IMAGE_ICON} Image"
+            header = f"{indent_str}{_DEFAULT_IMAGE_ICON} {alt_text}" if alt_text else f"{indent_str}{_DEFAULT_IMAGE_ICON} Image"
             self.BasicOutputs.text(header, indent=0, color=display_color, break_after=False)
 
             # Display path
@@ -233,7 +234,7 @@ class MediaEvents:
 
         # Base event for both modes
         base_event = {
-            "type": EVENT_VIDEO,
+            "type": _EVENT_VIDEO,
             "src": src,
             "alt_text": alt_text,
             "caption": caption,
@@ -249,7 +250,7 @@ class MediaEvents:
             display_color = color if color else self.display.mycolor
 
             # Display icon + alt text header
-            header = f"{indent_str}{DEFAULT_VIDEO_ICON} {alt_text}" if alt_text else f"{indent_str}{DEFAULT_VIDEO_ICON} Video"
+            header = f"{indent_str}{_DEFAULT_VIDEO_ICON} {alt_text}" if alt_text else f"{indent_str}{_DEFAULT_VIDEO_ICON} Video"
             self.BasicOutputs.text(header, indent=0, color=display_color, break_after=False)
 
             # Display path
@@ -317,7 +318,7 @@ class MediaEvents:
 
         # Base event for both modes
         base_event = {
-            "type": EVENT_AUDIO,
+            "type": _EVENT_AUDIO,
             "src": src,
             "alt_text": alt_text,
             "caption": caption,
@@ -333,7 +334,7 @@ class MediaEvents:
             display_color = color if color else self.display.mycolor
 
             # Display icon + alt text header
-            header = f"{indent_str}{DEFAULT_AUDIO_ICON} {alt_text}" if alt_text else f"{indent_str}{DEFAULT_AUDIO_ICON} Audio"
+            header = f"{indent_str}{_DEFAULT_AUDIO_ICON} {alt_text}" if alt_text else f"{indent_str}{_DEFAULT_AUDIO_ICON} Audio"
             self.BasicOutputs.text(header, indent=0, color=display_color, break_after=False)
 
             # Display path
@@ -409,7 +410,7 @@ class MediaEvents:
 
         # Base event for both modes
         base_event = {
-            "type": EVENT_PICTURE,
+            "type": _EVENT_PICTURE,
             "sources": sources,
             "fallback": fallback,
             "alt_text": alt_text,
@@ -426,7 +427,7 @@ class MediaEvents:
             display_color = color if color else self.display.mycolor
 
             # Display icon + alt text header with "Responsive Image" indicator
-            header = f"{indent_str}{DEFAULT_PICTURE_ICON} {alt_text} (Responsive Image)" if alt_text else f"{indent_str}{DEFAULT_PICTURE_ICON} Responsive Image"
+            header = f"{indent_str}{_DEFAULT_PICTURE_ICON} {alt_text} (Responsive Image)" if alt_text else f"{indent_str}{_DEFAULT_PICTURE_ICON} Responsive Image"
             self.BasicOutputs.text(header, indent=0, color=display_color, break_after=False)
 
             # Build complete list of all sources including fallback

@@ -313,49 +313,39 @@ ops.zcli.display.zEvents.BasicData.json_data(schema_meta, color=True)
 
 from zCLI import json, re, Any, Optional, Union, List, Dict
 
-# Module Constants
+# Import DRY helpers from primitives
+from ..b_primitives.display_rendering_helpers import apply_indent_to_lines
 
-# Event name constants
-EVENT_NAME_LIST = "list"
-EVENT_NAME_JSON = "json"
-EVENT_NAME_OUTLINE = "outline"
+# Import constants from centralized module
+from ..display_constants import (
+    _EVENT_NAME_LIST,
+    _EVENT_NAME_JSON,
+    _EVENT_NAME_OUTLINE,
+    STYLE_BULLET,
+    STYLE_NUMBER,
+    STYLE_LETTER,
+    STYLE_ROMAN,
+    _KEY_ITEMS,
+    _KEY_STYLE,
+    _KEY_STYLES,
+    _KEY_INDENT,
+    _KEY_DATA,
+    _KEY_INDENT_SIZE,
+    DEFAULT_INDENT,
+    DEFAULT_INDENT_SIZE,
+    DEFAULT_COLOR_ENABLED,
+    _JSON_ENSURE_ASCII,
+    _INDENT_STRING,
+    COLOR_ATTR_CYAN,
+    COLOR_ATTR_GREEN,
+    COLOR_ATTR_YELLOW,
+    COLOR_ATTR_MAGENTA,
+    COLOR_ATTR_RESET,
+)
 
-# Style constants
-STYLE_BULLET = "bullet"
-STYLE_NUMBER = "number"
-STYLE_LETTER = "letter"  # a, b, c...
-STYLE_ROMAN = "roman"    # i, ii, iii...
-
-# Marker constant
-MARKER_BULLET: str = "- "
-
-# Dict key constants (for GUI events)
-KEY_ITEMS = "items"
-KEY_STYLE = "style"
-KEY_STYLES = "styles"  # For outline (multiple styles per level)
-KEY_INDENT = "indent"
-KEY_DATA = "data"
-KEY_INDENT_SIZE = "indent_size"
-
-# Default value constants
+# Local constants
+MARKER_BULLET: str = "- "  # Specific to this module
 DEFAULT_STYLE = STYLE_BULLET
-DEFAULT_INDENT = 0
-DEFAULT_INDENT_SIZE = 2
-DEFAULT_COLOR = False
-
-# JSON serialization constant
-JSON_ENSURE_ASCII = False
-
-# Indentation constant
-INDENT_STRING = "  "  # Two spaces per indent level
-
-# Color reference constants (from zColors, used in _colorize_json)
-# Note: These are accessed dynamically via self.zColors at runtime
-COLOR_ATTR_CYAN = "CYAN"
-COLOR_ATTR_GREEN = "GREEN"
-COLOR_ATTR_YELLOW = "YELLOW"
-COLOR_ATTR_MAGENTA = "MAGENTA"
-COLOR_ATTR_RESET = "RESET"
 
 # BasicData Class
 
@@ -410,9 +400,7 @@ class BasicData:
         # Get reference to BasicOutputs for composition
         self.BasicOutputs = None  # Will be set after zEvents initialization
 
-    # ═══════════════════════════════════════════════════════════════════════════
     # Helper Methods - Output & GUI Event Handling (DRY Fixes)
-    # ═══════════════════════════════════════════════════════════════════════════
 
     def _output_text(self, content: str, indent: int = DEFAULT_INDENT, break_after: bool = False) -> None:
         """Output text via BasicOutputs with fallback (DRY helper).
@@ -447,7 +435,7 @@ class BasicData:
             This helper eliminates 2 duplicate indent calculation patterns
             (lines 42, 66-68 in original).
         """
-        return INDENT_STRING * indent
+        return _INDENT_STRING * indent
 
     def _send_gui_event(self, event_name: str, event_data: Dict[str, Any]) -> bool:
         """Send GUI event via primitives (DRY helper).
@@ -465,9 +453,7 @@ class BasicData:
         """
         return self.zPrimitives.send_gui_event(event_name, event_data)
 
-    # ═══════════════════════════════════════════════════════════════════════════
     # Helper Methods - Prefix Generation & Number Conversion
-    # ═══════════════════════════════════════════════════════════════════════════
 
     def _generate_prefix(self, style: str, number: int) -> str:
         """Generate list prefix based on style and number.
@@ -530,9 +516,7 @@ class BasicData:
                 num -= value * count
         return result
 
-    # ═══════════════════════════════════════════════════════════════════════════
     # Public Methods - List & JSON Display
-    # ═══════════════════════════════════════════════════════════════════════════
 
     def list(self, items: Optional[List[Any]], style: str = DEFAULT_STYLE, indent: int = DEFAULT_INDENT, **kwargs) -> None:
         """Display list with bullets or numbers in Terminal/GUI modes.
@@ -601,10 +585,10 @@ class BasicData:
             return
 
         # Try GUI mode first - send clean event
-        if self._send_gui_event(EVENT_NAME_LIST, {
-            KEY_ITEMS: items,
-            KEY_STYLE: style,
-            KEY_INDENT: indent
+        if self._send_gui_event(_EVENT_NAME_LIST, {
+            _KEY_ITEMS: items,
+            _KEY_STYLE: style,
+            _KEY_INDENT: indent
         }):
             return  # GUI event sent successfully
 
@@ -628,110 +612,55 @@ class BasicData:
     def json_data(self, data: Optional[Union[Dict[str, Any], List[Any], Any]], 
                   indent_size: int = DEFAULT_INDENT_SIZE, 
                   indent: int = DEFAULT_INDENT, 
-                  color: bool = DEFAULT_COLOR) -> None:
+                  color: bool = DEFAULT_COLOR_ENABLED) -> None:
         """Display JSON with pretty formatting and optional syntax coloring.
         
-        Foundation method for JSON display. Implements dual-mode I/O pattern
-        and composes with BasicOutputs for terminal display.
-        
-        Features professional JSON display with:
-        - Pretty printing (configurable indentation)
-        - Base indentation (for nested display)
-        - Syntax coloring (optional, terminal only)
-          - Cyan: JSON keys
-          - Green: String values
-          - Yellow: Numeric values
-          - Magenta: Booleans and null
+        Foundation method for JSON display with dual-mode I/O pattern.
         
         Args:
-            data: Data to serialize as JSON (dict, list, or any JSON-serializable type)
-            indent_size: JSON indentation size (default: 2 spaces)
-            indent: Base indentation level for entire output (default: 0)
-            color: Enable syntax coloring for terminal display (default: False)
-        
-        Returns:
-            None
-            
-        Example:
-            # Simple JSON display
-            data = {"name": "John", "age": 30, "active": True}
-            self.BasicData.json_data(data, indent_size=2)
-            # Output:
-            #   {
-            #     "name": "John",
-            #     "age": 30,
-            #     "active": true
-            #   }
-            
-            # With syntax coloring
-            self.BasicData.json_data(data, color=True)
-            # Output (with colors):
-            #   {
-            #     "name": "John",    (keys in cyan, values in green)
-            #     "age": 30,         (number in yellow)
-            #     "active": true     (boolean in magenta)
-            #   }
-            
-            # Nested display
-            self.BasicData.json_data(nested_data, indent=2, color=True)
-            # Output indented by 4 spaces (2 levels)
-            
-        zDialog Integration (Week 6.5):
-            # Form data preview before submission
-            self.json_data(form_data, color=True, indent_size=2)
-            
-            # Schema/model structure display
-            self.json_data(model_schema, color=True)
-            
-        zData Integration (Week 6.6):
-            # Query results in JSON format
-            if request.get("format") == "json":
-                self.json_data(rows, color=True, indent_size=2)
-            
-            # Schema Meta display
-            schema_meta = ops.schema.get("Meta", {})
-            self.json_data(schema_meta, color=True)
-            
-            # Validation errors (structured)
-            self.json_data(validation_errors, color=True)
-        
-        Note:
-            Used by: display_delegates, zAuth, Documentation
-            Composes with: BasicOutputs.text() for terminal display
-            Error handling: Serialization errors are caught and displayed
+            data: Data to serialize as JSON
+            indent_size: JSON indentation size (default: 2)
+            indent: Base indentation level (default: 0)
+            color: Enable syntax coloring for terminal (default: False)
         """
-        # Handle None data
         if data is None:
             return
 
-        # Try GUI mode first - send clean event with raw data
-        if self._send_gui_event(EVENT_NAME_JSON, {
-            KEY_DATA: data,
-            KEY_INDENT_SIZE: indent_size,
-            KEY_INDENT: indent
-        }):
-            return  # GUI event sent successfully
+        # Try GUI mode first
+        if self._try_json_gui_mode(data, indent_size, indent):
+            return
 
-        # Terminal mode - serialize and format JSON
-        # Serialize to JSON
-        try:
-            json_str = json.dumps(data, indent=indent_size, ensure_ascii=JSON_ENSURE_ASCII)
-        except (TypeError, ValueError) as e:
-            json_str = f"<Error serializing JSON: {e}>"
+        # Terminal mode - format and display JSON
+        self._render_json_terminal(data, indent_size, indent, color)
 
-        # Apply base indentation to each line
-        if indent > 0:
-            indent_str = self._build_indent(indent)
-            lines = json_str.split('\n')
-            json_str = '\n'.join(f"{indent_str}{line}" for line in lines)
+    def _try_json_gui_mode(self, data: Any, indent_size: int, indent: int) -> bool:
+        """Try to send JSON as GUI event, return True if successful."""
+        return self._send_gui_event(_EVENT_NAME_JSON, {
+            _KEY_DATA: data,
+            _KEY_INDENT_SIZE: indent_size,
+            _KEY_INDENT: indent
+        })
 
-        # Apply syntax coloring if requested (terminal only)
+    def _render_json_terminal(self, data: Any, indent_size: int, indent: int, color: bool) -> None:
+        """Render JSON for terminal mode with formatting and optional colors."""
+        json_str = self._serialize_json(data, indent_size)
+        json_str = self._apply_json_indentation(json_str, indent)
+        
         if color:
             json_str = self._colorize_json(json_str)
-
-        # Compose: use helper instead of direct BasicOutputs call
-        # Note: json_str already has indentation applied, so pass indent=0
+        
         self._output_text(json_str, indent=0, break_after=False)
+
+    def _serialize_json(self, data: Any, indent_size: int) -> str:
+        """Serialize data to JSON string with error handling."""
+        try:
+            return json.dumps(data, indent=indent_size, ensure_ascii=_JSON_ENSURE_ASCII)
+        except (TypeError, ValueError) as e:
+            return f"<Error serializing JSON: {e}>"
+
+    def _apply_json_indentation(self, json_str: str, indent: int) -> str:
+        """Apply base indentation to each line of JSON string."""
+        return apply_indent_to_lines(json_str, indent)
 
     def outline(
         self, 
@@ -818,10 +747,10 @@ class BasicData:
             styles = [STYLE_NUMBER, STYLE_LETTER, STYLE_ROMAN, STYLE_BULLET]
         
         # Try GUI mode first - send clean event (dual-mode pattern)
-        if self._send_gui_event(EVENT_NAME_OUTLINE, {
-            KEY_ITEMS: items,
-            KEY_STYLES: styles,
-            KEY_INDENT: indent
+        if self._send_gui_event(_EVENT_NAME_OUTLINE, {
+            _KEY_ITEMS: items,
+            _KEY_STYLES: styles,
+            _KEY_INDENT: indent
         }):
             return  # GUI event sent successfully
         
@@ -890,9 +819,7 @@ class BasicData:
             for k in child_keys:
                 del counters[k]
 
-    # ═══════════════════════════════════════════════════════════════════════════
     # Helper Methods - JSON Syntax Coloring
-    # ═══════════════════════════════════════════════════════════════════════════
 
     def _colorize_json(self, json_str: str) -> str:
         """Apply syntax coloring to JSON string with 4-color scheme.

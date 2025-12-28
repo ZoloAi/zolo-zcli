@@ -128,43 +128,36 @@ basic_outputs.header("Error", color="RED", style="single")
 ```
 """
 
-from zCLI import Any, Optional
+from zCLI import Any, Optional, Tuple
 
-# Module Constants
+# Import DRY helpers from primitives
+from ..b_primitives.display_rendering_helpers import wrap_with_color, apply_indent_to_lines
 
-# Style constants
+# Import constants from centralized module
+from ..display_constants import (
+    DEFAULT_COLOR,  # PUBLIC
+    _CHAR_DOUBLE_LINE,
+    _CHAR_SINGLE_LINE,
+    _CHAR_WAVE,
+    _INDENT_WIDTH,
+    _BASE_WIDTH,
+    _EVENT_NAME_HEADER,
+    _EVENT_NAME_TEXT,
+    DEFAULT_BREAK_MESSAGE,  # PUBLIC
+    _KEY_LABEL,
+    _KEY_COLOR,
+    _KEY_INDENT,
+    _KEY_STYLE,
+    _KEY_CONTENT,
+    _KEY_BREAK,
+    _KEY_BREAK_MESSAGE,
+    _INDENT_STR,
+)
+
+# Module-specific style constants (public API for external use)
 DEFAULT_STYLE_FULL = "full"
 DEFAULT_STYLE_SINGLE = "single"
 DEFAULT_STYLE_WAVE = "wave"
-DEFAULT_COLOR = "RESET"
-
-# Character constants (for terminal rendering)
-CHAR_DOUBLE_LINE = "═"
-CHAR_SINGLE_LINE = "─"
-CHAR_WAVE = "~"
-
-# Layout constants
-INDENT_WIDTH = 2  # 2 spaces per indent level
-BASE_WIDTH = 60   # Base width for headers
-
-# Event name constants
-EVENT_NAME_HEADER = "header"
-EVENT_NAME_TEXT = "text"
-
-# Message constants
-DEFAULT_BREAK_MESSAGE = "Press Enter to continue..."
-
-# Dict key constants (for GUI events)
-KEY_LABEL = "label"
-KEY_COLOR = "color"
-KEY_INDENT = "indent"
-KEY_STYLE = "style"
-KEY_CONTENT = "content"
-KEY_BREAK = "break"
-KEY_BREAK_MESSAGE = "break_message"
-
-# Indentation string
-INDENT_STR = "  "
 
 # BasicOutputs Class
 
@@ -206,9 +199,7 @@ class BasicOutputs:
         self.zPrimitives = display_instance.zPrimitives
         self.zColors = display_instance.zColors
 
-    # ═══════════════════════════════════════════════════════════════════════════
     # Helper Methods
-    # ═══════════════════════════════════════════════════════════════════════════
 
     def _build_indent(self, indent: int) -> str:
         """Build indentation string (DRY helper).
@@ -219,7 +210,7 @@ class BasicOutputs:
         Returns:
             str: Indentation string (2 spaces per level)
         """
-        return INDENT_STR * indent
+        return _INDENT_STR * indent
     
     def _apply_semantic(self, content: str, semantic: str) -> str:
         """Apply semantic rendering using primitives (DRY helper).
@@ -336,9 +327,7 @@ class BasicOutputs:
         
         return content
 
-    # ═══════════════════════════════════════════════════════════════════════════
     # Output Methods
-    # ═══════════════════════════════════════════════════════════════════════════
 
     def header(self, label: str, color: str = DEFAULT_COLOR, indent: int = 0, style: str = DEFAULT_STYLE_FULL, semantic: Optional[str] = None, **kwargs) -> None:
         """Display formatted section header with styling.
@@ -346,141 +335,143 @@ class BasicOutputs:
         FOUNDATION METHOD - Used by ALL 7 other event packages for displaying
         section headers with consistent styling.
         
-        Implements dual-mode I/O pattern:
-        1. GUI Mode: Send clean JSON event via send_gui_event()
-        2. Terminal Mode: Build formatted text with colors and styled lines
-        
         Args:
             label: Header text to display
-            color: Color name for styling (default: RESET)
-                   Examples: "RED", "GREEN", "CYAN", "MAGENTA"
-            indent: Indentation level (default: 0)
-                    Each level = 2 spaces
-            style: Header line style (default: "full")
-                   - "full" → ═══════════════
-                   - "single" → ───────────────
-                   - "wave" → ~~~~~~~~~~~~~~~
-            semantic: Optional semantic HTML element type (e.g., "strong", "em")
-                     Terminal: Applies markdown-style formatting to label
-                     Bifrost: Passed to frontend for HTML wrapping
-            **kwargs: Additional parameters (e.g., 'class' for zBifrost CSS classes)
-                      Ignored in Terminal mode, passed through in GUI mode
-                   
-        Returns:
-            None
-            
-        Example:
-            self.BasicOutputs.header("Error", color="RED", style="single")
-            self.BasicOutputs.header("Section Title", color="CYAN", indent=1)
-            self.BasicOutputs.header("Title", color="PRIMARY", indent=1, class="zTitle-1")
-            self.BasicOutputs.header("Critical Warning", semantic="strong")  # NEW
-            
-        Note:
-            Used by: BasicInputs (prompts), Signals (error/warning headers),
-                     BasicData (list/json headers), AdvancedData (table titles),
-                     zSystem (all system UI), zAuth (auth prompts), 
-                     TimeBased (progress headers)
+            color: Color name for styling
+            indent: Indentation level
+            style: Header line style ("full", "single", "wave")
+            semantic: Optional semantic HTML element type
+            **kwargs: Additional parameters for GUI mode
         """
-        # NEW: Resolve %variable references (e.g., %session.username, %myvar, %data.user.name)
-        # CRITICAL: Must happen BEFORE sending GUI event!
+        # Resolve dynamic content
+        label = self._resolve_header_label(label, semantic, kwargs)
+        
+        # Try GUI mode first
+        if self._try_header_gui_mode(label, color, indent, style, semantic, kwargs):
+            return
+        
+        # Terminal mode - render formatted header
+        self._render_header_terminal(label, color, indent, style)
+
+    def _resolve_header_label(self, label: str, semantic: Optional[str], kwargs: dict) -> str:
+        """Resolve %variables, &functions, and semantic formatting in label."""
+        # Resolve %variable references
         if "%" in label:
             from zCLI.L2_Core.g_zParser.parser_modules.parser_functions import resolve_variables
-            # Extract context from kwargs if passed (for %data.* resolution)
             context = kwargs.get('_context', {})
             label = resolve_variables(label, self.display.zcli, context)
         
-        # NEW: Resolve &function calls (e.g., &zNow, &zNow('date'))
+        # Resolve &function calls
         if "&" in label:
             from zCLI.L2_Core.g_zParser.parser_modules.parser_functions import resolve_function_call
             label = resolve_function_call(label, self.display.zcli)
         
-        # Apply semantic rendering if specified (terminal mode only)
+        # Apply semantic rendering for terminal mode
         if semantic and self.display.mode in ["Terminal", "Walker", ""]:
             label = self._apply_semantic(label, semantic)
         
-        # Build event dict with all parameters (AFTER variable resolution)
+        return label
+
+    def _try_header_gui_mode(self, label: str, color: str, indent: int, style: str, 
+                             semantic: Optional[str], kwargs: dict) -> bool:
+        """Try to send header as GUI event, return True if successful."""
         event_data = {
-            KEY_LABEL: label,
-            KEY_COLOR: color,
-            KEY_INDENT: indent,
-            KEY_STYLE: style,
-            **kwargs  # Pass through any additional parameters (like 'class')
+            _KEY_LABEL: label,
+            _KEY_COLOR: color,
+            _KEY_INDENT: indent,
+            _KEY_STYLE: style,
+            **kwargs
         }
         
-        # Add semantic to event_data for Bifrost (if provided)
         if semantic:
             event_data["semantic"] = semantic
         
-        # Try GUI mode first - send clean event via primitive
-        if self.zPrimitives.send_gui_event(EVENT_NAME_HEADER, event_data):
-            return  # GUI event sent successfully
+        return self.zPrimitives.send_gui_event(_EVENT_NAME_HEADER, event_data)
 
-        # Terminal mode - SINGLE-LINE, ASCII-only, width-safe header (never wraps)
+    def _render_header_terminal(self, label: str, color: str, indent: int, style: str) -> None:
+        """Render header for terminal mode with width-safe formatting."""
         term_width = self.zPrimitives.get_terminal_columns()
+        indent_str, inner_width = self._calculate_header_dimensions(indent, term_width)
+        
+        if inner_width <= 0:
+            self.zPrimitives.line("")
+            return
+        
+        sep = self._get_header_separator(style)
+        line_out = self._build_header_line(label, color, inner_width, sep)
+        
+        content = f"{indent_str}{line_out}"
+        self.zPrimitives.line(content)
 
-        # Build indentation, but never allow indentation to consume the full line
+    def _calculate_header_dimensions(self, indent: int, term_width: int) -> Tuple[str, int]:
+        """Calculate indent string and inner width for header."""
         indent_str = self._build_indent(indent)
         if len(indent_str) >= term_width:
             indent_str = indent_str[: max(0, term_width - 1)]
-
+        
         inner_width = term_width - len(indent_str)
-        if inner_width <= 0:
-            self.zPrimitives.line("")  # Nothing safe to render
-            return
+        return indent_str, inner_width
 
-        # ASCII separator char by style (allowed: = - _ *)
+    def _get_header_separator(self, style: str) -> str:
+        """Get separator character based on style."""
         if style == DEFAULT_STYLE_FULL:
-            sep = "="
+            return "="
         elif style == DEFAULT_STYLE_SINGLE:
-            sep = "-"
+            return "-"
         elif style == DEFAULT_STYLE_WAVE:
-            sep = "*"
+            return "*"
         else:
-            sep = "-"
+            return "-"
 
+    def _build_header_line(self, label: str, color: str, inner_width: int, sep: str) -> str:
+        """Build the header line with title, color, and separators."""
         title = (label or "").strip()
-
+        
         if not title:
-            line_out = sep * inner_width
+            return sep * inner_width
+        
+        # Format title with appropriate width
+        title_plain = self._format_header_title(title, inner_width)
+        title_colored = self._apply_header_color(title, title_plain, color, inner_width)
+        
+        # Center the title with separators
+        remaining = inner_width - len(title_plain)
+        if remaining >= 2:
+            left = remaining // 2
+            right = remaining - left
+            return (sep * left) + title_colored + (sep * right)
         else:
-            # Prefer " <title> " when possible; otherwise truncate hard to fit.
+            return title_colored + (sep * max(0, remaining))
+
+    def _format_header_title(self, title: str, inner_width: int) -> str:
+        """Format title text to fit within available width."""
+        if inner_width >= 3:
+            title_core_max = inner_width - 2
+            title_core = title[:title_core_max]
+            return f" {title_core} "
+        else:
+            return title[:inner_width]
+
+    def _apply_header_color(self, title: str, title_plain: str, color: str, inner_width: int) -> str:
+        """Apply color formatting to header title."""
+        if not color or color == DEFAULT_COLOR:
+            return title_plain
+        
+        try:
+            if isinstance(color, str) and not color.startswith('\033'):
+                color_code = getattr(self.zColors, color.upper(), self.zColors.RESET)
+            else:
+                color_code = color
+            
+            reset_code = getattr(self.zColors, "RESET", "")
+            title_core = title[:(inner_width - 2)] if inner_width >= 3 else title[:inner_width]
+            
             if inner_width >= 3:
-                title_core_max = inner_width - 2
-                title_core = title[:title_core_max]
-                title_fmt_plain = f" {title_core} "
+                return f" {color_code}{title_core}{reset_code} "
             else:
-                title_fmt_plain = title[:inner_width]
-
-            # Optional ANSI color for title (must remain readable without color)
-            title_fmt_out = title_fmt_plain
-            if color and color != DEFAULT_COLOR:
-                try:
-                    if isinstance(color, str) and not color.startswith('\033'):
-                        color_code = getattr(self.zColors, color.upper(), self.zColors.RESET)
-                    else:
-                        color_code = color
-                    reset_code = getattr(self.zColors, "RESET", "")
-                    if inner_width >= 3:
-                        # Color only the title core; keep surrounding spaces uncolored.
-                        title_fmt_out = f" {color_code}{title_core}{reset_code} "
-                    else:
-                        title_fmt_out = f"{color_code}{title_fmt_plain}{reset_code}"
-                except Exception:
-                    title_fmt_out = title_fmt_plain
-
-            remaining = inner_width - len(title_fmt_plain)
-
-            # Center only if we can place at least 1 separator on BOTH sides; else left-align.
-            if remaining >= 2:
-                left = remaining // 2
-                right = remaining - left
-                line_out = (sep * left) + title_fmt_out + (sep * right)
-            else:
-                line_out = title_fmt_out + (sep * max(0, inner_width - len(title_fmt_plain)))
-
-        # Invariant (visual): output must not wrap/exceed detected width.
-        content = f"{indent_str}{line_out}"
-        self.zPrimitives.line(content)
+                return f"{color_code}{title_plain}{reset_code}"
+        except Exception:
+            return title_plain
 
     def text(
         self, 
@@ -553,10 +544,10 @@ class BasicOutputs:
         
         # Build event dict with all parameters (AFTER variable resolution)
         event_data = {
-            KEY_CONTENT: content,
-            KEY_INDENT: indent,
-            KEY_BREAK: should_break,
-            KEY_BREAK_MESSAGE: break_message,
+            _KEY_CONTENT: content,
+            _KEY_INDENT: indent,
+            _KEY_BREAK: should_break,
+            _KEY_BREAK_MESSAGE: break_message,
             **kwargs  # Pass through any additional parameters (like 'class')
         }
         
@@ -565,7 +556,7 @@ class BasicOutputs:
             event_data["semantic"] = semantic
         
         # Try GUI mode first - send clean event with break metadata
-        if self.zPrimitives.send_gui_event(EVENT_NAME_TEXT, event_data):
+        if self.zPrimitives.send_gui_event(_EVENT_NAME_TEXT, event_data):
             return  # GUI event sent successfully
 
         # Terminal mode - output text and optionally pause
@@ -654,10 +645,10 @@ class BasicOutputs:
         """
         # Build event dict
         event_data = {
-            KEY_CONTENT: content,
-            KEY_INDENT: indent,
-            KEY_BREAK: pause,
-            KEY_BREAK_MESSAGE: break_message,
+            _KEY_CONTENT: content,
+            _KEY_INDENT: indent,
+            _KEY_BREAK: pause,
+            _KEY_BREAK_MESSAGE: break_message,
             "format": format,  # Tell Bifrost this is markdown
             **kwargs
         }

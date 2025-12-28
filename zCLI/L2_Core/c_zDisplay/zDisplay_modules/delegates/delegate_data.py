@@ -23,11 +23,11 @@ Grade: A+ (Type hints, constants, comprehensive docs)
 from zCLI import Any, List, Dict, Optional
 from ..display_constants import (
     _KEY_EVENT,
-    EVENT_LIST,
-    EVENT_JSON,
-    EVENT_JSON_DATA,
-    EVENT_OUTLINE,
-    EVENT_ZTABLE,
+    _EVENT_LIST,
+    _EVENT_JSON,
+    _EVENT_JSON_DATA,
+    _EVENT_OUTLINE,
+    _EVENT_ZTABLE,
 )
 
 # Module-specific constants
@@ -43,9 +43,7 @@ class DelegateData:
     and tables with appropriate formatting for the current display mode.
     """
 
-    # ═══════════════════════════════════════════════════════════════════════════
     # Data Display Delegates
-    # ═══════════════════════════════════════════════════════════════════════════
 
     def list(
         self, 
@@ -71,7 +69,7 @@ class DelegateData:
             display.list(["[DIR] folder/"], style="none")
         """
         return self.handle({
-            _KEY_EVENT: EVENT_LIST,
+            _KEY_EVENT: _EVENT_LIST,
             "items": items,
             "style": style,
             "indent": indent,
@@ -106,7 +104,7 @@ class DelegateData:
             ])
         """
         return self.handle({
-            _KEY_EVENT: EVENT_OUTLINE,
+            _KEY_EVENT: _EVENT_OUTLINE,
             "items": items,
             "styles": styles,
             "indent": indent,
@@ -134,7 +132,7 @@ class DelegateData:
             display.json_data({"name": "Alice", "age": 30}, indent_size=4)
         """
         return self.handle({
-            _KEY_EVENT: EVENT_JSON_DATA,
+            _KEY_EVENT: _EVENT_JSON_DATA,
             "data": data,
             "indent_size": indent_size,
             "indent": indent,
@@ -163,7 +161,7 @@ class DelegateData:
             display.json({"status": "ok", "count": 42})
         """
         return self.handle({
-            _KEY_EVENT: EVENT_JSON,
+            _KEY_EVENT: _EVENT_JSON,
             "data": data,
             "indent_size": indent_size,
             "indent": indent,
@@ -206,7 +204,7 @@ class DelegateData:
             )
         """
         return self.handle({
-            _KEY_EVENT: EVENT_ZTABLE,
+            _KEY_EVENT: _EVENT_ZTABLE,
             "title": title,
             "columns": columns,
             "rows": rows,

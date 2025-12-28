@@ -7,9 +7,7 @@ enabling comprehensive introspection and display of zCLI's internal state across
 Terminal and Bifrost (GUI) modes. It serves as the UI presentation layer for core
 zCLI concepts: zSession, zMachine, zAuth, zCrumbs, zMenu, and zDialog.
 
-═══════════════════════════════════════════════════════════════════════════
 ARCHITECTURE: System-Level UI Integration
-═══════════════════════════════════════════════════════════════════════════
 
 zSystem is unique among zDisplay event packages as it operates at the **system level**,
 directly interacting with zCLI's core state management structures. Unlike other event
@@ -32,9 +30,7 @@ Example:
     )
 
 
-═══════════════════════════════════════════════════════════════════════════
 ZSESSION INTEGRATION (19 Core Session Keys)
-═══════════════════════════════════════════════════════════════════════════
 
 zSession is the central state dictionary that persists throughout a zCLI session.
 zSystem uses **standardized SESSION_KEY_* constants** from zConfig to ensure safe,
@@ -71,9 +67,7 @@ Usage Example:
     mode = session.get(SESSION_KEY_ZMODE)
 
 
-═══════════════════════════════════════════════════════════════════════════
 ZAUTH INTEGRATION (Three-Tier Authentication Model)
-═══════════════════════════════════════════════════════════════════════════
 
 zAuth v1.5.4+ supports a **three-tier authentication architecture** that zSystem must
 correctly display. zSystem uses **standardized ZAUTH_KEY_* constants** from zConfig.
@@ -125,38 +119,34 @@ Display Integration:
     - Dual-mode indicator (if both contexts active)
 
 
-═══════════════════════════════════════════════════════════════════════════
 ZMACHINE INTEGRATION (Machine Configuration)
-═══════════════════════════════════════════════════════════════════════════
 
 zMachine contains the machine and environment configuration where zCLI is running.
 zSystem displays this structured information in organized sections.
 
 zMachine Fields (10+ keys):
     Identity & Deployment:
-        ZMACHINE_KEY_OS               - "os" - Operating system
-        ZMACHINE_KEY_HOSTNAME         - "hostname" - Machine hostname
-        ZMACHINE_KEY_ARCHITECTURE     - "architecture" - CPU architecture
-        ZMACHINE_KEY_PYTHON_VERSION   - "python_version" - Python version
-        ZMACHINE_KEY_DEPLOYMENT       - "deployment" - Deployment mode (dev/prod)
-        ZMACHINE_KEY_ROLE             - "role" - Machine role
+        _ZMACHINE_KEY_OS               - "os" - Operating system
+        _ZMACHINE_KEY_HOSTNAME         - "hostname" - Machine hostname
+        _ZMACHINE_KEY_ARCHITECTURE     - "architecture" - CPU architecture
+        _ZMACHINE_KEY_PYTHON_VERSION   - "python_version" - Python version
+        _ZMACHINE_KEY_DEPLOYMENT       - "deployment" - Deployment mode (dev/prod)
+        _ZMACHINE_KEY_ROLE             - "role" - Machine role
     
     Tool Preferences:
-        ZMACHINE_KEY_BROWSER          - "browser" - Preferred browser
-        ZMACHINE_KEY_IDE              - "ide" - Preferred IDE
-        ZMACHINE_KEY_SHELL            - "shell" - Preferred shell
+        _ZMACHINE_KEY_BROWSER          - "browser" - Preferred browser
+        _ZMACHINE_KEY_IDE              - "ide" - Preferred IDE
+        _ZMACHINE_KEY_SHELL            - "shell" - Preferred shell
     
     System Capabilities:
-        ZMACHINE_KEY_CPU_CORES        - "cpu_cores" - Number of CPU cores
-        ZMACHINE_KEY_MEMORY_GB        - "memory_gb" - RAM in GB
+        _ZMACHINE_KEY_CPU_CORES        - "cpu_cores" - Number of CPU cores
+        _ZMACHINE_KEY_MEMORY_GB        - "memory_gb" - RAM in GB
     
     zCLI Version:
-        ZMACHINE_KEY_ZCLI_VERSION     - "zcli_version" - zCLI version number
+        _ZMACHINE_KEY_ZCLI_VERSION     - "zcli_version" - zCLI version number
 
 
-═══════════════════════════════════════════════════════════════════════════
 SYSTEM METHODS PROVIDED
-═══════════════════════════════════════════════════════════════════════════
 
 Core System Displays:
     zSession():     Display complete session state (zS_id, zMode, zMachine, zAuth, etc.)
@@ -176,9 +166,7 @@ Helper Methods (Private):
     _should_show_sysmsg():  Check logging level for system message display
 
 
-═══════════════════════════════════════════════════════════════════════════
 DUAL-MODE I/O PATTERN
-═══════════════════════════════════════════════════════════════════════════
 
 All public methods follow the GUI-first, Terminal-fallback pattern established by
 zDisplay's dual-mode architecture:
@@ -190,16 +178,14 @@ zDisplay's dual-mode architecture:
 
 Example Flow:
     zSession(session_data)
-    ├─ GUI Mode:      Send EVENT_ZSESSION to Bifrost
+    ├─ GUI Mode:      Send _EVENT_ZSESSION to Bifrost
     │                 → Frontend shows interactive session viewer
     │                 → Return immediately
     └─ Terminal Mode: Use zDeclare() + _display_field() + _display_zmachine() + _display_zauth()
                       → Display formatted session in terminal
 
 
-═══════════════════════════════════════════════════════════════════════════
 COMPOSITION PATTERN
-═══════════════════════════════════════════════════════════════════════════
 
 zSystem depends on three sibling event packages via composition (most dependencies
 of any event package):
@@ -223,9 +209,7 @@ Cross-Reference:
     No other packages depend on zSystem (leaf node in dependency graph)
 
 
-═══════════════════════════════════════════════════════════════════════════
 LOGGING INTEGRATION (_should_show_sysmsg)
-═══════════════════════════════════════════════════════════════════════════
 
 System messages (zDeclare) are conditionally displayed based on logging level and
 deployment mode. This prevents verbose system messages in production environments.
@@ -233,7 +217,7 @@ deployment mode. This prevents verbose system messages in production environment
 Check Priority:
     1. Logger method:      zcli.logger.should_show_sysmsg() (if available)
     2. Debug flag:         session.get("debug") (legacy fallback)
-    3. Deployment mode:    session[SESSION_KEY_ZMACHINE][ZMACHINE_KEY_DEPLOYMENT]
+    3. Deployment mode:    session[SESSION_KEY_ZMACHINE][_ZMACHINE_KEY_DEPLOYMENT]
                           - "dev" → show messages (default)
                           - "prod" → hide messages
 
@@ -244,9 +228,7 @@ Usage:
         # Display system message
 
 
-═══════════════════════════════════════════════════════════════════════════
 ZDIALOG INTEGRATION (Week 6.5 Preparation)
-═══════════════════════════════════════════════════════════════════════════
 
 Current Implementation (Simple):
     - Basic field collection (text input only)
@@ -258,9 +240,7 @@ Note: For advanced form features (schema validation, field types, validation fee
       use zcli.dialog.handle() from the zDialog subsystem (L2_Core.j_zDialog).
 
 
-═══════════════════════════════════════════════════════════════════════════
 USAGE EXAMPLES
-═══════════════════════════════════════════════════════════════════════════
 
 1. Display Complete Session State:
     ```python
@@ -319,17 +299,13 @@ USAGE EXAMPLES
     ```
 
 
-═══════════════════════════════════════════════════════════════════════════
 THREAD SAFETY
-═══════════════════════════════════════════════════════════════════════════
 
 Instance is thread-safe (read-only access to parent display and session).
 All state is stored in zCLI session dict, not in zSystem.
 
 
-═══════════════════════════════════════════════════════════════════════════
 MODULE CONSTANTS
-═══════════════════════════════════════════════════════════════════════════
 
 See below for 60+ module-level constants defining event names, dict keys,
 messages, colors, styles, zMachine keys, and default values.
@@ -384,124 +360,157 @@ from zCLI.L1_Foundation.a_zConfig.zConfig_modules import (
     CONTEXT_DUAL                    # "dual"
 )
 
-# Module Constants
+# Import Tier 0 infrastructure helpers
+from ..a_infrastructure.display_event_helpers import try_gui_event
 
-# Event Names (Bifrost WebSocket Events)
-EVENT_ZSESSION = "zSession"         # Session state display event
-EVENT_ZCONFIG = "zConfig"           # Configuration display event
-EVENT_ZCRUMBS = "zCrumbs"           # Breadcrumb navigation event
-EVENT_ZMENU = "zMenu"               # Menu display/selection event
-EVENT_ZDASH = "zDash"               # Dashboard panel navigation event
-EVENT_ZDIALOG = "zDialog"           # Form dialog event
+# Import constants from centralized module
+from ..display_constants import (
+    # Event Names (Internal)
+    _EVENT_ZSESSION,
+    _EVENT_ZCONFIG,
+    _EVENT_ZCRUMBS,
+    _EVENT_ZMENU,
+    _EVENT_ZDASH,
+    _EVENT_ZDIALOG,
+    # JSON Keys (Internal)
+    _KEY_SESSION,
+    _KEY_BREAK,
+    _KEY_BREAK_MESSAGE,
+    _KEY_CRUMBS,
+    _KEY_MENU,
+    _KEY_PROMPT,
+    _KEY_RETURN_SELECTION,
+    _KEY_CONTEXT,
+    _KEY_MODEL,
+    _KEY_FIELDS,
+    # Messages (Internal)
+    _MSG_NO_SESSION,
+    _MSG_VIEW_ZSESSION,
+    _MSG_ZCRUMBS_HEADER,
+    _MSG_DEFAULT_MENU_PROMPT,
+    _MSG_FORM_INPUT,
+    _MSG_FORM_COMPLETE,
+    _MSG_PRESS_ENTER,
+    _MSG_TOOL_PREFERENCES,
+    _MSG_SYSTEM,
+    _MSG_ZMACHINE_SECTION,
+    _MSG_ZAUTH_SECTION,
+    _MSG_ACTIVE_CONTEXT,
+    _MSG_DUAL_MODE_INDICATOR,
+    _MSG_AUTHENTICATED_APPS,
+    # Colors (PUBLIC API)
+    COLOR_MAIN,
+    COLOR_GREEN,
+    COLOR_YELLOW,
+    COLOR_CYAN,
+    COLOR_RESET,
+    # Styles (PUBLIC API)
+    STYLE_FULL,
+    STYLE_SINGLE,
+    STYLE_WAVE,
+    STYLE_NUMBERED,
+    # Public Defaults
+    DEFAULT_INDENT,
+    DEFAULT_STYLE,
+    # Internal Constants
+    _DEFAULT_DEPLOYMENT,
+    _ZMACHINE_KEY_OS,
+    _ZMACHINE_KEY_HOSTNAME,
+    _ZMACHINE_KEY_ARCHITECTURE,
+    _ZMACHINE_KEY_PYTHON_VERSION,
+    _ZMACHINE_KEY_DEPLOYMENT,
+    _ZMACHINE_KEY_ROLE,
+    _ZMACHINE_KEY_BROWSER,
+    _ZMACHINE_KEY_IDE,
+    _ZMACHINE_KEY_SHELL,
+    _ZMACHINE_KEY_CPU_CORES,
+    _ZMACHINE_KEY_MEMORY_GB,
+    _ZMACHINE_KEY_ZCLI_VERSION,
+    _ZMACHINE_IDENTITY_FIELDS,
+    _ZMACHINE_TOOL_FIELDS,
+    _ZMACHINE_SYSTEM_FIELDS,
+    _FORMAT_BREADCRUMB_SEPARATOR,
+    _FORMAT_CRUMB_SCOPE,
+    _FORMAT_MENU_ITEM,
+    _FORMAT_FIELD_PROMPT,
+    _FORMAT_FIELD_NEWLINE,
+    _FORMAT_FIELD_LABEL_INDENT,
+    _FORMAT_TOOL_FIELD_INDENT,
+    _LABEL_ZSESSION_ID,
+    _LABEL_ZMODE,
+    _LABEL_ZCLI_VERSION,
+    _DEPLOYMENT_MODE_DEV,
+    _DEPLOYMENT_MODE_PROD,
+)
 
-# Local Dictionary Keys (for GUI events, not session data)
-KEY_SESSION = "session"             # Session data payload
-KEY_BREAK = "break"                 # Break after display flag
-KEY_BREAK_MESSAGE = "break_message" # Break message text
-KEY_CRUMBS = "crumbs"               # Crumbs data payload
-KEY_MENU = "menu"                   # Menu items payload
-KEY_PROMPT = "prompt"               # Menu prompt text
-KEY_RETURN_SELECTION = "return_selection"  # Interactive flag
-KEY_CONTEXT = "context"             # Dialog context payload
-KEY_MODEL = "model"                 # Dialog schema model reference
-KEY_FIELDS = "fields"               # Dialog fields list
+# Local constants (aliasing for backward compat within this module)
+_EVENT_ZSESSION = _EVENT_ZSESSION
+_EVENT_ZCONFIG = _EVENT_ZCONFIG
+_EVENT_ZCRUMBS = _EVENT_ZCRUMBS
+_EVENT_ZMENU = _EVENT_ZMENU
+_EVENT_ZDASH = _EVENT_ZDASH
+_EVENT_ZDIALOG = _EVENT_ZDIALOG
+_KEY_SESSION = _KEY_SESSION
+_KEY_BREAK = _KEY_BREAK
+_KEY_BREAK_MESSAGE = _KEY_BREAK_MESSAGE
+_KEY_CRUMBS = _KEY_CRUMBS
+_KEY_MENU = _KEY_MENU
+_KEY_PROMPT = _KEY_PROMPT
+_KEY_RETURN_SELECTION = _KEY_RETURN_SELECTION
+_KEY_CONTEXT = _KEY_CONTEXT
+_KEY_MODEL = _KEY_MODEL
+_KEY_FIELDS = _KEY_FIELDS
+_MSG_NO_SESSION = _MSG_NO_SESSION
+_MSG_VIEW_ZSESSION = _MSG_VIEW_ZSESSION
+_MSG_ZCRUMBS_HEADER = _MSG_ZCRUMBS_HEADER
+DEFAULT_MENU_PROMPT = _MSG_DEFAULT_MENU_PROMPT
+_MSG_FORM_INPUT = _MSG_FORM_INPUT
+_MSG_FORM_COMPLETE = _MSG_FORM_COMPLETE
+_MSG_PRESS_ENTER = _MSG_PRESS_ENTER
+_MSG_TOOL_PREFERENCES = _MSG_TOOL_PREFERENCES
+_MSG_SYSTEM = _MSG_SYSTEM
+_MSG_ZMACHINE_SECTION = _MSG_ZMACHINE_SECTION
+_MSG_ZAUTH_SECTION = _MSG_ZAUTH_SECTION
+_MSG_ACTIVE_CONTEXT = _MSG_ACTIVE_CONTEXT
+_MSG_DUAL_MODE_INDICATOR = _MSG_DUAL_MODE_INDICATOR
+_MSG_AUTHENTICATED_APPS = _MSG_AUTHENTICATED_APPS
+_DEFAULT_DEPLOYMENT = _DEFAULT_DEPLOYMENT
+_ZMACHINE_KEY_OS = _ZMACHINE_KEY_OS
+_ZMACHINE_KEY_HOSTNAME = _ZMACHINE_KEY_HOSTNAME
+_ZMACHINE_KEY_ARCHITECTURE = _ZMACHINE_KEY_ARCHITECTURE
+_ZMACHINE_KEY_PYTHON_VERSION = _ZMACHINE_KEY_PYTHON_VERSION
+_ZMACHINE_KEY_DEPLOYMENT = _ZMACHINE_KEY_DEPLOYMENT
+_ZMACHINE_KEY_ROLE = _ZMACHINE_KEY_ROLE
+_ZMACHINE_KEY_BROWSER = _ZMACHINE_KEY_BROWSER
+_ZMACHINE_KEY_IDE = _ZMACHINE_KEY_IDE
+_ZMACHINE_KEY_SHELL = _ZMACHINE_KEY_SHELL
+_ZMACHINE_KEY_CPU_CORES = _ZMACHINE_KEY_CPU_CORES
+_ZMACHINE_KEY_MEMORY_GB = _ZMACHINE_KEY_MEMORY_GB
+_ZMACHINE_KEY_ZCLI_VERSION = _ZMACHINE_KEY_ZCLI_VERSION
+_ZMACHINE_IDENTITY_FIELDS = _ZMACHINE_IDENTITY_FIELDS
+_ZMACHINE_TOOL_FIELDS = _ZMACHINE_TOOL_FIELDS
+_ZMACHINE_SYSTEM_FIELDS = _ZMACHINE_SYSTEM_FIELDS
+_FORMAT_BREADCRUMB_SEPARATOR = _FORMAT_BREADCRUMB_SEPARATOR
+_FORMAT_CRUMB_SCOPE = _FORMAT_CRUMB_SCOPE
+_FORMAT_MENU_ITEM = _FORMAT_MENU_ITEM
+_FORMAT_FIELD_PROMPT = _FORMAT_FIELD_PROMPT
+_FORMAT_FIELD_NEWLINE = _FORMAT_FIELD_NEWLINE
+_FORMAT_FIELD_LABEL_INDENT = _FORMAT_FIELD_LABEL_INDENT
+_FORMAT_TOOL_FIELD_INDENT = _FORMAT_TOOL_FIELD_INDENT
+_LABEL_ZSESSION_ID = _LABEL_ZSESSION_ID
+_LABEL_ZMODE = _LABEL_ZMODE
+_LABEL_ZCLI_VERSION = _LABEL_ZCLI_VERSION
+_DEPLOYMENT_MODE_DEV = _DEPLOYMENT_MODE_DEV
+_DEPLOYMENT_MODE_PROD = _DEPLOYMENT_MODE_PROD
+DEFAULT_BREAK_MESSAGE = _MSG_PRESS_ENTER
 
-# Messages (Terminal Output)
-MSG_NO_SESSION = "No session available"                # No session data
-MSG_VIEW_ZSESSION = "View zSession"                    # Session header
-MSG_ZCRUMBS_HEADER = "zCrumbs:"                        # Breadcrumbs header
-MSG_DEFAULT_MENU_PROMPT = "Select an option:"          # Default menu prompt
-MSG_FORM_INPUT = "Form Input"                          # Form start header
-MSG_FORM_COMPLETE = "Form Complete"                    # Form end header
-MSG_PRESS_ENTER = "Press Enter to continue..."         # Default break message
-MSG_TOOL_PREFERENCES = "Tool Preferences"              # zMachine subsection
-MSG_SYSTEM = "System"                                  # zMachine subsection
-MSG_ZMACHINE_SECTION = "zMachine"                      # zMachine section title
-MSG_ZAUTH_SECTION = "zAuth"                            # zAuth section title
-MSG_ACTIVE_CONTEXT = "Active Context"                  # zAuth context label
-MSG_DUAL_MODE_INDICATOR = "[DUAL AUTH]"                # Dual-mode badge
-MSG_AUTHENTICATED_APPS = "Authenticated Apps"          # Multi-app label
-
-# Colors (Terminal Display)
-COLOR_MAIN = "MAIN"                 # Main header color
-COLOR_GREEN = "GREEN"               # Section title color
-COLOR_YELLOW = "YELLOW"             # Field label color
-COLOR_CYAN = "CYAN"                 # Subsection color
-COLOR_RESET = "RESET"               # Reset to default
-
-# Styles (Header Rendering)
-STYLE_FULL = "full"                 # Full-width header (indent 0)
-STYLE_SINGLE = "single"             # Single-line header (indent 1)
-STYLE_WAVE = "wave"                 # Wave-style header (indent 2+)
-STYLE_NUMBERED = "numbered"         # Numbered menu style
-
-# Defaults
-DEFAULT_INDENT = 0                  # Default indentation level
-DEFAULT_STYLE = None                # Auto-select style based on indent
-DEFAULT_MENU_PROMPT = MSG_DEFAULT_MENU_PROMPT  # Default menu prompt
-DEFAULT_BREAK_MESSAGE = MSG_PRESS_ENTER        # Default break message
-DEFAULT_DEPLOYMENT = "dev"          # Default deployment mode
-
-# zMachine Dictionary Keys (zMachine Structure)
-ZMACHINE_KEY_OS = "os"                           # Operating system
-ZMACHINE_KEY_HOSTNAME = "hostname"               # Machine hostname
-ZMACHINE_KEY_ARCHITECTURE = "architecture"       # CPU architecture
-ZMACHINE_KEY_PYTHON_VERSION = "python_version"   # Python version
-ZMACHINE_KEY_DEPLOYMENT = "deployment"           # Deployment mode (dev/prod)
-ZMACHINE_KEY_ROLE = "role"                       # Machine role
-ZMACHINE_KEY_BROWSER = "browser"                 # Preferred browser
-ZMACHINE_KEY_IDE = "ide"                         # Preferred IDE
-ZMACHINE_KEY_SHELL = "shell"                     # Preferred shell
-ZMACHINE_KEY_CPU_CORES = "cpu_cores"             # Number of CPU cores
-ZMACHINE_KEY_MEMORY_GB = "memory_gb"             # RAM in GB
-ZMACHINE_KEY_ZCLI_VERSION = "zcli_version"       # zCLI version
-
-# zMachine Field Lists (for iteration)
-ZMACHINE_IDENTITY_FIELDS = [
-    ZMACHINE_KEY_OS,
-    ZMACHINE_KEY_HOSTNAME,
-    ZMACHINE_KEY_ARCHITECTURE,
-    ZMACHINE_KEY_PYTHON_VERSION,
-    ZMACHINE_KEY_DEPLOYMENT,
-    ZMACHINE_KEY_ROLE
-]
-
-ZMACHINE_TOOL_FIELDS = [
-    ZMACHINE_KEY_BROWSER,
-    ZMACHINE_KEY_IDE,
-    ZMACHINE_KEY_SHELL
-]
-
-ZMACHINE_SYSTEM_FIELDS = [
-    ZMACHINE_KEY_CPU_CORES,
-    ZMACHINE_KEY_MEMORY_GB
-]
-
-# Session Field Lists (for iteration)
+# Session Field Lists (defined here as it references SESSION_KEY_* from zConfig)
 SESSION_WORKSPACE_FIELDS = [
     SESSION_KEY_ZSPACE,
     SESSION_KEY_ZVAFOLDER,
     SESSION_KEY_ZVAFILE,
     SESSION_KEY_ZBLOCK
 ]
-
-# Formatting Constants
-FORMAT_BREADCRUMB_SEPARATOR = " > "              # Breadcrumb path separator
-FORMAT_CRUMB_SCOPE = "  {scope}[{path}]"        # Crumb scope format
-FORMAT_MENU_ITEM = "  [{number}] {option}"      # Menu item format
-FORMAT_FIELD_PROMPT = "{field}: "                # Field input prompt
-FORMAT_FIELD_NEWLINE = "\n{field}:"              # Field newline format
-FORMAT_FIELD_LABEL_INDENT = "  {field}"          # Indented field label
-FORMAT_TOOL_FIELD_INDENT = "    {field}"         # Tool field indent
-
-# Display Labels
-LABEL_ZSESSION_ID = "zSession_ID"                # zSession ID display label
-LABEL_ZMODE = "zMode"                            # zMode display label
-LABEL_ZCLI_VERSION = "  zcli_version"            # zCLI version label
-
-# Deployment Mode Values
-DEPLOYMENT_MODE_DEV = "dev"                      # Development mode
-DEPLOYMENT_MODE_PROD = "prod"                    # Production mode
 
 # zSystem Class
 
@@ -608,27 +617,29 @@ class zSystem:
         self.BasicInputs = None  # Will be set after zEvents initialization
 
 
-    # ═══════════════════════════════════════════════════════════════════════
     # HELPER METHODS (Private - DRY Refactoring)
-    # ═══════════════════════════════════════════════════════════════════════
 
     def _try_gui_event(self, event_name: str, data: Dict[str, Any]) -> bool:
         """
         Try to send GUI event to Bifrost mode (DRY helper).
         
+        DEPRECATED: This method now delegates to Tier 0 infrastructure helper.
+        Use try_gui_event(display, event_name, data) directly for new code.
+        
         Args:
-            event_name: WebSocket event name (e.g., EVENT_ZSESSION)
+            event_name: WebSocket event name (e.g., _EVENT_ZSESSION)
             data: Event data dictionary to send to frontend
         
         Returns:
             bool: True if GUI mode succeeded (message sent), False if Terminal mode
         
         Usage:
-            if self._try_gui_event(EVENT_ZSESSION, {KEY_SESSION: session_data}):
+            if self._try_gui_event(_EVENT_ZSESSION, {_KEY_SESSION: session_data}):
                 return  # GUI handled it
             # Fall back to Terminal mode
         """
-        return self.zPrimitives.send_gui_event(event_name, data)
+        # Delegate to Tier 0 infrastructure helper
+        return try_gui_event(self.display, event_name, data)
 
     def _output_text(
         self, 
@@ -648,7 +659,7 @@ class zSystem:
             None
         
         Usage:
-            self._output_text(MSG_NO_SESSION, break_after=False)
+            self._output_text(_MSG_NO_SESSION, break_after=False)
         """
         if self.BasicOutputs:
             self.BasicOutputs.text(content, indent=indent, break_after=break_after)
@@ -669,9 +680,7 @@ class zSystem:
         return getattr(self.zColors, color_name, self.zColors.RESET)
 
 
-    # ═══════════════════════════════════════════════════════════════════════
     # PUBLIC METHODS (System Display Events)
-    # ═══════════════════════════════════════════════════════════════════════
 
     def zDeclare(
         self, 
@@ -840,7 +849,7 @@ class zSystem:
             None
         
         Bifrost Mode:
-            - Sends EVENT_ZSESSION event with full session data
+            - Sends _EVENT_ZSESSION event with full session data
             - Frontend displays interactive session viewer
             - Returns immediately
         
@@ -875,24 +884,24 @@ class zSystem:
             - Handles missing session data gracefully
         """
         # Try Bifrost (GUI) mode first - send clean event
-        if self._try_gui_event(EVENT_ZSESSION, {
-            KEY_SESSION: session_data,
-            KEY_BREAK: break_after,
-            KEY_BREAK_MESSAGE: break_message
+        if self._try_gui_event(_EVENT_ZSESSION, {
+            _KEY_SESSION: session_data,
+            _KEY_BREAK: break_after,
+            _KEY_BREAK_MESSAGE: break_message
         }):
             return  # GUI event sent successfully
 
         # Terminal mode - display session using composed events
         if not session_data:
-            self._output_text(MSG_NO_SESSION, break_after=False)
+            self._output_text(_MSG_NO_SESSION, break_after=False)
             return
 
         # Header
-        self.zDeclare(MSG_VIEW_ZSESSION, color=COLOR_MAIN, indent=0)
+        self.zDeclare(_MSG_VIEW_ZSESSION, color=COLOR_MAIN, indent=0)
 
         # Core session fields
-        self._display_field(LABEL_ZSESSION_ID, session_data.get(SESSION_KEY_ZS_ID))
-        self._display_field(LABEL_ZMODE, session_data.get(SESSION_KEY_ZMODE))
+        self._display_field(_LABEL_ZSESSION_ID, session_data.get(SESSION_KEY_ZS_ID))
+        self._display_field(_LABEL_ZMODE, session_data.get(SESSION_KEY_ZMODE))
 
         # zMachine section
         zMachine = session_data.get(SESSION_KEY_ZMACHINE, {})
@@ -960,7 +969,7 @@ class zSystem:
             None
         
         Bifrost Mode:
-            - Sends EVENT_ZCONFIG event with config data
+            - Sends _EVENT_ZCONFIG event with config data
             - Frontend displays interactive config viewer
             - Returns immediately
         
@@ -991,10 +1000,10 @@ class zSystem:
             - Handles missing values gracefully
         """
         # Try Bifrost (GUI) mode first - send clean event
-        if self._try_gui_event(EVENT_ZCONFIG, {
+        if self._try_gui_event(_EVENT_ZCONFIG, {
             "config": config_data,
-            KEY_BREAK: break_after,
-            KEY_BREAK_MESSAGE: break_message
+            _KEY_BREAK: break_after,
+            _KEY_BREAK_MESSAGE: break_message
         }):
             return  # GUI event sent successfully
 
@@ -1070,7 +1079,7 @@ class zSystem:
             None
         
         Bifrost Mode:
-            - Sends EVENT_ZCRUMBS event with crumbs data
+            - Sends _EVENT_ZCRUMBS event with crumbs data
             - Frontend displays interactive breadcrumb UI
             - Returns immediately
         
@@ -1100,7 +1109,7 @@ class zSystem:
         # Try Bifrost (GUI) mode first - send clean event
         z_crumbs = session_data.get(SESSION_KEY_ZCRUMBS, {}) if session_data else {}
 
-        if self._try_gui_event(EVENT_ZCRUMBS, {KEY_CRUMBS: z_crumbs}):
+        if self._try_gui_event(_EVENT_ZCRUMBS, {_KEY_CRUMBS: z_crumbs}):
             return  # GUI event sent successfully
 
         # Terminal mode - display breadcrumbs using composed events
@@ -1123,14 +1132,14 @@ class zSystem:
                     continue
                 # Only process actual trail lists
                 if isinstance(trail, list):
-                    path = FORMAT_BREADCRUMB_SEPARATOR.join(trail) if trail else ""
+                    path = _FORMAT_BREADCRUMB_SEPARATOR.join(trail) if trail else ""
                     crumbs_display[scope] = path
 
         # Display breadcrumbs using BasicOutputs.text()
         self._output_text("", break_after=False)
-        self._output_text(MSG_ZCRUMBS_HEADER, break_after=False)
+        self._output_text(_MSG_ZCRUMBS_HEADER, break_after=False)
         for scope, path in crumbs_display.items():
-            content = FORMAT_CRUMB_SCOPE.format(scope=scope, path=path)
+            content = _FORMAT_CRUMB_SCOPE.format(scope=scope, path=path)
             self._output_text(content, break_after=False)
 
     def zMenu(
@@ -1157,7 +1166,7 @@ class zSystem:
                 - Selected label(s) if interactive Terminal mode
         
         Bifrost Mode:
-            - Sends EVENT_ZMENU event with menu data
+            - Sends _EVENT_ZMENU event with menu data
             - Frontend displays interactive menu UI
             - Returns None (selection handled via WebSocket callback)
         
@@ -1185,10 +1194,10 @@ class zSystem:
             - Composes BasicInputs.selection() for actual selection logic
         """
         # Try Bifrost (GUI) mode first - send clean event
-        if self._try_gui_event(EVENT_ZMENU, {
-            KEY_MENU: menu_items,
-            KEY_PROMPT: prompt,
-            KEY_RETURN_SELECTION: return_selection
+        if self._try_gui_event(_EVENT_ZMENU, {
+            _KEY_MENU: menu_items,
+            _KEY_PROMPT: prompt,
+            _KEY_RETURN_SELECTION: return_selection
         }):
             return None  # GUI event sent successfully
 
@@ -1210,8 +1219,8 @@ class zSystem:
         else:
             # Display-only mode: just show the menu
             self._output_text("", break_after=False)  # Blank line
-            for number, option in menu_items:
-                content = FORMAT_MENU_ITEM.format(number=number, option=option)
+            for number, label in menu_items:
+                content = _FORMAT_MENU_ITEM.format(index=number, label=label)
                 self._output_text(content, break_after=False)
             return None
 
@@ -1246,7 +1255,7 @@ class zSystem:
             Optional[str]: Last panel viewed (Terminal), None (Bifrost)
         
         Bifrost Mode:
-            - Sends EVENT_ZDASH event with dashboard structure
+            - Sends _EVENT_ZDASH event with dashboard structure
             - Frontend renders sidebar and content panels
             - Returns None (navigation handled via WebSocket)
         
@@ -1348,7 +1357,7 @@ class zSystem:
         current_panel = default if default in sidebar else sidebar[0]
         
         # Try Bifrost (GUI) mode - send FILTERED sidebar
-        if self._try_gui_event(EVENT_ZDASH, {
+        if self._try_gui_event(_EVENT_ZDASH, {
             "folder": folder,
             "sidebar": sidebar,  # RBAC-filtered sidebar
             "default": current_panel
@@ -1598,7 +1607,7 @@ class zSystem:
         
         Args:
             context: Form context dict containing:
-                    - KEY_FIELDS: List of field names to collect
+                    - _KEY_FIELDS: List of field names to collect
                     - Additional schema/validation data (future)
             _zcli: zCLI instance for logging integration
             _walker: zWalker instance for navigation (reserved for future use)
@@ -1608,7 +1617,7 @@ class zSystem:
                            Empty dict {} if GUI mode (async collection)
         
         Bifrost Mode:
-            - Sends EVENT_ZDIALOG event with form context
+            - Sends _EVENT_ZDIALOG event with form context
             - Frontend displays interactive form UI
             - Returns empty dict (data sent back via WebSocket)
         
@@ -1620,7 +1629,7 @@ class zSystem:
         
         Usage:
             # Simple field collection (current)
-            context = {KEY_FIELDS: ["username", "email", "role"]}
+            context = {_KEY_FIELDS: ["username", "email", "role"]}
             data = display.zEvents.zSystem.zDialog(context)
             # Returns: {"username": "admin", "email": "a@b.com", "role": "admin"}
             
@@ -1644,22 +1653,22 @@ class zSystem:
         
         # Try Bifrost (GUI) mode first - send clean event
         # Send the context directly (not nested) for easier frontend access
-        gui_sent = self._try_gui_event(EVENT_ZDIALOG, context)
+        gui_sent = self._try_gui_event(_EVENT_ZDIALOG, context)
         if _zcli and hasattr(_zcli, 'logger'):
             _zcli.logger.debug(f"[zDialog] GUI event sent: {gui_sent}")
         if gui_sent:
             return {}  # GUI event sent successfully, return empty dict
 
         # Terminal mode - simplified form display
-        fields = context.get(KEY_FIELDS, [])
+        fields = context.get(_KEY_FIELDS, [])
 
         # Display header using zDeclare
-        self.zDeclare(MSG_FORM_INPUT, indent=0)
+        self.zDeclare(_MSG_FORM_INPUT, indent=0)
 
         zConv = {}
 
         # Get schema and validator for field-by-field validation (if available)
-        model = context.get(KEY_MODEL)
+        model = context.get(_KEY_MODEL)
         validator = None
         table_name = None
         logger = self.display.logger if hasattr(self.display, 'logger') else None
@@ -1748,7 +1757,7 @@ class zSystem:
             # Collect field with retry loop for validation
             while True:
                 # Use appropriate input method based on field type
-                prompt = FORMAT_FIELD_PROMPT.format(field=field_label)
+                prompt = _FORMAT_FIELD_PROMPT.format(field=field_label)
                 if field_type == 'password':
                     value = self.zPrimitives.read_password(prompt)
                 else:
@@ -1795,14 +1804,12 @@ class zSystem:
                     break
 
         # Display footer
-        self.zDeclare(MSG_FORM_COMPLETE, indent=0)
+        self.zDeclare(_MSG_FORM_COMPLETE, indent=0)
 
         return zConv
 
 
-    # ═══════════════════════════════════════════════════════════════════════
     # ZSESSION DISPLAY HELPERS (Private)
-    # ═══════════════════════════════════════════════════════════════════════
 
     def _display_field(
         self, 
@@ -1913,47 +1920,45 @@ class zSystem:
             return
 
         self._output_text("", break_after=False)
-        self._display_section(MSG_ZMACHINE_SECTION, color=COLOR_GREEN)
+        self._display_section(_MSG_ZMACHINE_SECTION, color=COLOR_GREEN)
 
         # Identity & Deployment
-        for field_key in ZMACHINE_IDENTITY_FIELDS:
+        for field_key in _ZMACHINE_IDENTITY_FIELDS:
             if zMachine.get(field_key):
-                label = FORMAT_FIELD_LABEL_INDENT.format(field=field_key)
+                label = _FORMAT_FIELD_LABEL_INDENT.format(field=field_key)
                 self._display_field(label, zMachine.get(field_key), color=COLOR_YELLOW)
 
         # Tool Preferences
-        has_tools = any(zMachine.get(tool) for tool in ZMACHINE_TOOL_FIELDS)
+        has_tools = any(zMachine.get(tool) for tool in _ZMACHINE_TOOL_FIELDS)
         if has_tools:
             self._output_text("", break_after=False)
-            self._display_section(FORMAT_FIELD_LABEL_INDENT.format(field=MSG_TOOL_PREFERENCES), color=COLOR_CYAN)
-            for tool_key in ZMACHINE_TOOL_FIELDS:
+            self._display_section(_FORMAT_FIELD_LABEL_INDENT.format(field=_MSG_TOOL_PREFERENCES), color=COLOR_CYAN)
+            for tool_key in _ZMACHINE_TOOL_FIELDS:
                 if zMachine.get(tool_key):
-                    label = FORMAT_TOOL_FIELD_INDENT.format(field=tool_key)
+                    label = _FORMAT_TOOL_FIELD_INDENT.format(field=tool_key)
                     self._display_field(label, zMachine.get(tool_key), color=COLOR_RESET)
 
         # System Capabilities
-        has_system = any(zMachine.get(field) for field in ZMACHINE_SYSTEM_FIELDS)
+        has_system = any(zMachine.get(field) for field in _ZMACHINE_SYSTEM_FIELDS)
         if has_system:
             self._output_text("", break_after=False)
-            self._display_section(FORMAT_FIELD_LABEL_INDENT.format(field=MSG_SYSTEM), color=COLOR_CYAN)
-            for field_key in ZMACHINE_SYSTEM_FIELDS:
+            self._display_section(_FORMAT_FIELD_LABEL_INDENT.format(field=_MSG_SYSTEM), color=COLOR_CYAN)
+            for field_key in _ZMACHINE_SYSTEM_FIELDS:
                 if zMachine.get(field_key):
-                    label = FORMAT_TOOL_FIELD_INDENT.format(field=field_key)
+                    label = _FORMAT_TOOL_FIELD_INDENT.format(field=field_key)
                     self._display_field(label, zMachine.get(field_key), color=COLOR_RESET)
 
         # zcli version
-        if zMachine.get(ZMACHINE_KEY_ZCLI_VERSION):
+        if zMachine.get(_ZMACHINE_KEY_ZCLI_VERSION):
             self._output_text("", break_after=False)
             self._display_field(
-                LABEL_ZCLI_VERSION, 
-                zMachine.get(ZMACHINE_KEY_ZCLI_VERSION), 
+                _LABEL_ZCLI_VERSION, 
+                zMachine.get(_ZMACHINE_KEY_ZCLI_VERSION), 
                 color=COLOR_YELLOW
             )
 
 
-    # ═══════════════════════════════════════════════════════════════════════
     # ZAUTH DISPLAY HELPERS (Private - Three-Tier Model Aware)
-    # ═══════════════════════════════════════════════════════════════════════
 
     def _display_zauth(self, zAuth: Dict[str, Any]) -> None:
         """
@@ -1968,134 +1973,104 @@ class zSystem:
         1. Active Context (zSession/application/dual)
         2. Dual-mode indicator (if dual_mode = True)
         3. Current authentication (from active context)
-           - ID, Username, Role
         4. All authenticated apps (if multiple apps, Layer 2)
         5. Active app indicator (if in application/dual context)
         
         Args:
             zAuth: zAuth dictionary from session[SESSION_KEY_ZAUTH]
-        
-        Returns:
-            None
-        
-        Structure Examples:
-        
-            Layer 1 (zSession Auth):
-                zAuth:
-                  Active Context: zSession
-                  ID: 12345
-                  Username: admin
-                  Role: admin
-            
-            Layer 2 (Application Auth - Single App):
-                zAuth:
-                  Active Context: application
-                  Active App: ecommerce_store
-                  ID: 67890
-                  Username: customer_john
-                  Role: customer
-            
-            Layer 2 (Multi-App):
-                zAuth:
-                  Active Context: application
-                  Active App: ecommerce_store
-                  Authenticated Apps:
-                    - ecommerce_store (ACTIVE)
-                    - analytics_dashboard
-                  ID: 67890
-                  Username: customer_john
-                  Role: customer
-            
-            Layer 3 (Dual-Auth):
-                zAuth:
-                  Active Context: dual [DUAL AUTH]
-                  Active App: ecommerce_store
-                  ID: 12345 (zSession) + 67890 (ecommerce_store)
-                  Username: admin (zSession) + store_owner (ecommerce_store)
-                  Role: admin (zSession) + owner (ecommerce_store)
-        
-        Notes:
-            - Uses ZAUTH_KEY_* constants for all field access
-            - Displays active_context first for clarity
-            - Shows dual-mode badge if ZAUTH_KEY_DUAL_MODE = True
-            - Lists all authenticated apps if multiple (multi-app support)
-            - Shows active app with indicator
-            - Adapts display based on active context
         """
         if not self.BasicOutputs or not zAuth:
             return
 
         self._output_text("", break_after=False)
-        self._display_section(MSG_ZAUTH_SECTION, color=COLOR_GREEN)
+        self._display_section(_MSG_ZAUTH_SECTION, color=COLOR_GREEN)
 
-        # Display active context first (critical for three-tier understanding)
+        # Orchestrate display in logical order
+        active_context = self._render_zauth_active_context(zAuth)
+        if not active_context:
+            return  # Not authenticated
+        
+        active_app = self._render_zauth_active_app(zAuth)
+        self._render_zauth_authenticated_apps(zAuth, active_app)
+        self._render_zauth_current_user(zAuth, active_context, active_app)
+
+    def _render_zauth_active_context(self, zAuth: Dict[str, Any]) -> Optional[str]:
+        """Render active context with dual-mode indicator, return context or None if not authenticated."""
         active_context = zAuth.get(ZAUTH_KEY_ACTIVE_CONTEXT)
         
-        # Handle case where no active context set (not authenticated)
         if not active_context:
-            zsession_auth = zAuth.get(ZAUTH_KEY_ZSESSION, {})
-            is_authenticated = zsession_auth.get(ZAUTH_KEY_AUTHENTICATED, False)
-            
-            if not is_authenticated:
-                # Show "Not authenticated" status and exit
-                label = FORMAT_FIELD_LABEL_INDENT.format(field="Status")
-                self._display_field(label, "Not authenticated", color=COLOR_YELLOW)
-                return
-            else:
-                # Authenticated but no context set - default to zSession
-                active_context = CONTEXT_ZSESSION
+            if not self._check_zauth_authentication(zAuth):
+                return None
+            active_context = CONTEXT_ZSESSION
         
-        if active_context:
-            context_label = FORMAT_FIELD_LABEL_INDENT.format(field=MSG_ACTIVE_CONTEXT)
-            
-            # Add dual-mode indicator if dual_mode = True
-            dual_mode = zAuth.get(ZAUTH_KEY_DUAL_MODE, False)
-            context_display = f"{active_context} {MSG_DUAL_MODE_INDICATOR}" if dual_mode else active_context
-            
-            self._display_field(context_label, context_display, color=COLOR_YELLOW)
+        # Display context with dual-mode indicator
+        context_label = _FORMAT_FIELD_LABEL_INDENT.format(field=_MSG_ACTIVE_CONTEXT)
+        dual_mode = zAuth.get(ZAUTH_KEY_DUAL_MODE, False)
+        context_display = f"{active_context} {_MSG_DUAL_MODE_INDICATOR}" if dual_mode else active_context
+        self._display_field(context_label, context_display, color=COLOR_YELLOW)
+        
+        return active_context
 
-        # Display active app if in application or dual context
+    def _check_zauth_authentication(self, zAuth: Dict[str, Any]) -> bool:
+        """Check if user is authenticated, display status if not."""
+        zsession_auth = zAuth.get(ZAUTH_KEY_ZSESSION, {})
+        is_authenticated = zsession_auth.get(ZAUTH_KEY_AUTHENTICATED, False)
+        
+        if not is_authenticated:
+            label = _FORMAT_FIELD_LABEL_INDENT.format(field="Status")
+            self._display_field(label, "Not authenticated", color=COLOR_YELLOW)
+            return False
+        return True
+
+    def _render_zauth_active_app(self, zAuth: Dict[str, Any]) -> Optional[str]:
+        """Render active app if in application or dual context, return app name."""
         active_app = zAuth.get(ZAUTH_KEY_ACTIVE_APP)
         if active_app:
-            label = FORMAT_FIELD_LABEL_INDENT.format(field="Active App")
+            label = _FORMAT_FIELD_LABEL_INDENT.format(field="Active App")
             self._display_field(label, active_app, color=COLOR_YELLOW)
+        return active_app
 
-        # Display authenticated apps list if multiple apps (Layer 2 multi-app support)
+    def _render_zauth_authenticated_apps(self, zAuth: Dict[str, Any], active_app: Optional[str]) -> None:
+        """Render list of authenticated apps if multiple (Layer 2 multi-app support)."""
         applications = zAuth.get(ZAUTH_KEY_APPLICATIONS, {})
-        if isinstance(applications, dict) and len(applications) > 1:
-            self._output_text("", break_after=False)
-            label = FORMAT_FIELD_LABEL_INDENT.format(field=MSG_AUTHENTICATED_APPS)
-            self._display_section(label, color=COLOR_CYAN)
-            for app_name in applications.keys():
-                # Mark active app
-                app_display = f"{app_name} (ACTIVE)" if app_name == active_app else app_name
-                app_label = FORMAT_TOOL_FIELD_INDENT.format(field="-")
-                self._display_field(app_label, app_display, color=COLOR_RESET)
-
-        # Display current authentication data (from active context)
-        # Note: In zAuth v1.5.4+, the correct key is ZAUTH_KEY_ID ("id"), NOT "zAuth_id"
+        if not isinstance(applications, dict) or len(applications) <= 1:
+            return
         
-        # Get data from active context
-        auth_data = {}
-        if active_context == CONTEXT_ZSESSION:
-            auth_data = zAuth.get(ZAUTH_KEY_ZSESSION, {})
-        elif active_context == CONTEXT_APPLICATION and active_app:
-            auth_data = applications.get(active_app, {})
-        elif active_context == CONTEXT_DUAL:
-            # For dual context, show both (future enhancement)
-            # Current: show from active app
-            if active_app:
-                auth_data = applications.get(active_app, {})
+        self._output_text("", break_after=False)
+        label = _FORMAT_FIELD_LABEL_INDENT.format(field=_MSG_AUTHENTICATED_APPS)
+        self._display_section(label, color=COLOR_CYAN)
+        
+        for app_name in applications.keys():
+            app_display = f"{app_name} (ACTIVE)" if app_name == active_app else app_name
+            app_label = _FORMAT_TOOL_FIELD_INDENT.format(field="-")
+            self._display_field(app_label, app_display, color=COLOR_RESET)
 
-        # Display auth fields (use correct ZAUTH_KEY_* constants)
+    def _render_zauth_current_user(self, zAuth: Dict[str, Any], active_context: str, active_app: Optional[str]) -> None:
+        """Render current authentication data (ID, Username, Role) from active context."""
+        auth_data = self._get_zauth_active_data(zAuth, active_context, active_app)
+        
         for field_key, field_label in [
             (ZAUTH_KEY_ID, "ID"),
             (ZAUTH_KEY_USERNAME, "Username"),
             (ZAUTH_KEY_ROLE, "Role")
         ]:
             if auth_data.get(field_key):
-                label = FORMAT_FIELD_LABEL_INDENT.format(field=field_label)
+                label = _FORMAT_FIELD_LABEL_INDENT.format(field=field_label)
                 self._display_field(label, auth_data.get(field_key), color=COLOR_YELLOW)
+
+    def _get_zauth_active_data(self, zAuth: Dict[str, Any], active_context: str, active_app: Optional[str]) -> Dict[str, Any]:
+        """Get authentication data from active context."""
+        applications = zAuth.get(ZAUTH_KEY_APPLICATIONS, {})
+        
+        if active_context == CONTEXT_ZSESSION:
+            return zAuth.get(ZAUTH_KEY_ZSESSION, {})
+        elif active_context == CONTEXT_APPLICATION and active_app:
+            return applications.get(active_app, {})
+        elif active_context == CONTEXT_DUAL and active_app:
+            # For dual context, show from active app (future: show both)
+            return applications.get(active_app, {})
+        
+        return {}
 
     def _display_zcache(self, zCache: Dict[str, Any]) -> None:
         """
@@ -2140,7 +2115,7 @@ class zSystem:
         ]:
             cache_data = zCache.get(cache_key, {})
             item_count = len(cache_data) if isinstance(cache_data, dict) else 0
-            label = FORMAT_FIELD_LABEL_INDENT.format(field=cache_label)
+            label = _FORMAT_FIELD_LABEL_INDENT.format(field=cache_label)
             value = f"{item_count} items" if item_count != 1 else "1 item"
             self._display_field(label, value, color=COLOR_RESET)
 
@@ -2189,20 +2164,18 @@ class zSystem:
 
         # Display zVars count
         zvars_count = len(zvars) if isinstance(zvars, dict) else 0
-        zvars_label = FORMAT_FIELD_LABEL_INDENT.format(field="zVars")
+        zvars_label = _FORMAT_FIELD_LABEL_INDENT.format(field="zVars")
         zvars_value = f"{zvars_count} defined" if zvars_count > 0 else "none"
         self._display_field(zvars_label, zvars_value, color=COLOR_RESET)
 
         # Display zShortcuts count
         shortcuts_count = len(zshortcuts) if isinstance(zshortcuts, dict) else 0
-        shortcuts_label = FORMAT_FIELD_LABEL_INDENT.format(field="zShortcuts")
+        shortcuts_label = _FORMAT_FIELD_LABEL_INDENT.format(field="zShortcuts")
         shortcuts_value = f"{shortcuts_count} defined" if shortcuts_count > 0 else "none"
         self._display_field(shortcuts_label, shortcuts_value, color=COLOR_RESET)
 
 
-    # ═══════════════════════════════════════════════════════════════════════
     # SYSTEM INTEGRATION HELPERS (Private - Logging)
-    # ═══════════════════════════════════════════════════════════════════════
 
     def _should_show_sysmsg(self) -> bool:
         """

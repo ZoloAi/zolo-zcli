@@ -122,51 +122,35 @@ signals.error("Critical error")
 
 from zCLI import Any, Optional
 
-# Module Constants
-
-# Event name constants
-EVENT_NAME_ERROR = "error"
-EVENT_NAME_WARNING = "warning"
-EVENT_NAME_SUCCESS = "success"
-EVENT_NAME_INFO = "info"
-EVENT_NAME_ZMARKER = "zMarker"
-
-# Color attribute name constants (for getattr on zColors)
-# Legacy (kept for backward compatibility / optional use elsewhere)
-COLOR_RED = "RED"
-COLOR_YELLOW = "YELLOW"
-COLOR_GREEN = "GREEN"
-COLOR_CYAN = "CYAN"
-
-# CSS-aligned semantic signal colors (preferred going forward)
-# (Added in zCLI/utils/colors.py as ANSI truecolor foregrounds)
-COLOR_ERROR = "ZERROR"
-COLOR_WARNING = "ZWARNING"
-COLOR_SUCCESS = "ZSUCCESS"
-COLOR_INFO = "ZINFO"
-COLOR_MAGENTA = "MAGENTA"
-COLOR_RESET = "RESET"
-
-# Dict key constants (for GUI events)
-KEY_CONTENT = "content"
-KEY_INDENT = "indent"
-KEY_LABEL = "label"
-KEY_COLOR = "color"
-
-# Default value constants
-DEFAULT_INDENT = 0
-DEFAULT_MARKER_LABEL = "Marker"
-DEFAULT_MARKER_COLOR = "MAGENTA"
-
-# Marker line constants
-MARKER_LINE_CHAR = "="
-MARKER_LINE_WIDTH = 60
-
-# Empty line constant
-EMPTY_LINE = ""
-
-# Indentation string
-INDENT_STR = "  "
+# Import constants from centralized module
+from ..display_constants import (
+    _EVENT_NAME_ERROR,
+    _EVENT_NAME_WARNING,
+    _EVENT_NAME_SUCCESS,
+    _EVENT_NAME_INFO,
+    _EVENT_NAME_ZMARKER,
+    COLOR_RED,
+    COLOR_YELLOW,
+    COLOR_GREEN,
+    COLOR_CYAN,
+    COLOR_ERROR,
+    COLOR_WARNING,
+    COLOR_SUCCESS,
+    COLOR_INFO,
+    COLOR_MAGENTA,
+    COLOR_RESET,
+    _KEY_CONTENT,
+    _KEY_INDENT,
+    _KEY_LABEL,
+    _KEY_COLOR,
+    DEFAULT_INDENT,
+    _DEFAULT_MARKER_LABEL,
+    _DEFAULT_MARKER_COLOR,
+    _MARKER_LINE_CHAR,
+    _MARKER_LINE_WIDTH,
+    _EMPTY_LINE,
+    _INDENT_STR,
+)
 
 # Signals Class
 
@@ -220,9 +204,7 @@ class Signals:
         # Get reference to BasicOutputs for composition
         self.BasicOutputs = None  # Will be set after zEvents initialization
 
-    # ═══════════════════════════════════════════════════════════════════════════
     # Helper Methods
-    # ═══════════════════════════════════════════════════════════════════════════
 
     def _colorize(self, content: str, color_attr: str) -> str:
         """Apply semantic color to content (DRY helper).
@@ -272,11 +254,9 @@ class Signals:
         Note:
             This helper eliminates duplicate indent calculations in fallback logic.
         """
-        return INDENT_STR * indent
+        return _INDENT_STR * indent
 
-    # ═══════════════════════════════════════════════════════════════════════════
     # Feedback Signal Methods
-    # ═══════════════════════════════════════════════════════════════════════════
 
     def error(self, content: str, indent: int = DEFAULT_INDENT) -> None:
         """Display error message with red color (semantic feedback).
@@ -303,9 +283,9 @@ class Signals:
             Composes with: BasicOutputs.text() for terminal output
         """
         # Try GUI mode first - send clean event
-        if self.zPrimitives.send_gui_event(EVENT_NAME_ERROR, {
-            KEY_CONTENT: content,
-            KEY_INDENT: indent
+        if self.zPrimitives.send_gui_event(_EVENT_NAME_ERROR, {
+            _KEY_CONTENT: content,
+            _KEY_INDENT: indent
         }):
             return  # GUI event sent successfully
 
@@ -338,9 +318,9 @@ class Signals:
             Composes with: BasicOutputs.text() for terminal output
         """
         # Try GUI mode first - send clean event
-        if self.zPrimitives.send_gui_event(EVENT_NAME_WARNING, {
-            KEY_CONTENT: content,
-            KEY_INDENT: indent
+        if self.zPrimitives.send_gui_event(_EVENT_NAME_WARNING, {
+            _KEY_CONTENT: content,
+            _KEY_INDENT: indent
         }):
             return  # GUI event sent successfully
 
@@ -373,9 +353,9 @@ class Signals:
             Composes with: BasicOutputs.text() for terminal output
         """
         # Try GUI mode first - send clean event
-        if self.zPrimitives.send_gui_event(EVENT_NAME_SUCCESS, {
-            KEY_CONTENT: content,
-            KEY_INDENT: indent
+        if self.zPrimitives.send_gui_event(_EVENT_NAME_SUCCESS, {
+            _KEY_CONTENT: content,
+            _KEY_INDENT: indent
         }):
             return  # GUI event sent successfully
 
@@ -408,9 +388,9 @@ class Signals:
             Composes with: BasicOutputs.text() for terminal output
         """
         # Try GUI mode first - send clean event
-        if self.zPrimitives.send_gui_event(EVENT_NAME_INFO, {
-            KEY_CONTENT: content,
-            KEY_INDENT: indent
+        if self.zPrimitives.send_gui_event(_EVENT_NAME_INFO, {
+            _KEY_CONTENT: content,
+            _KEY_INDENT: indent
         }):
             return  # GUI event sent successfully
 
@@ -418,11 +398,9 @@ class Signals:
         colored = self._colorize(content, COLOR_INFO)
         self._output_text(colored, indent, break_after=False)
 
-    # ═══════════════════════════════════════════════════════════════════════════
     # Flow Control Methods
-    # ═══════════════════════════════════════════════════════════════════════════
 
-    def zMarker(self, label: str = DEFAULT_MARKER_LABEL, color: str = DEFAULT_MARKER_COLOR, indent: int = DEFAULT_INDENT) -> None:
+    def zMarker(self, label: str = _DEFAULT_MARKER_LABEL, color: str = _DEFAULT_MARKER_COLOR, indent: int = DEFAULT_INDENT) -> None:
         """Display visual workflow marker (flow control signal).
         
         Flow control method for visual workflow stage separators. Creates
@@ -452,10 +430,10 @@ class Signals:
             Terminal Output: Blank line, marker line, colored label, marker line, blank line
         """
         # Try GUI mode first - send clean event
-        if self.zPrimitives.send_gui_event(EVENT_NAME_ZMARKER, {
-            KEY_LABEL: label,
-            KEY_COLOR: color,
-            KEY_INDENT: indent
+        if self.zPrimitives.send_gui_event(_EVENT_NAME_ZMARKER, {
+            _KEY_LABEL: label,
+            _KEY_COLOR: color,
+            _KEY_INDENT: indent
         }):
             return  # GUI event sent successfully
 
@@ -464,21 +442,21 @@ class Signals:
         color_code = getattr(self.zColors, color.upper(), self.zColors.MAGENTA)
 
         # Create marker line and colored label
-        marker_line = MARKER_LINE_CHAR * MARKER_LINE_WIDTH
+        marker_line = _MARKER_LINE_CHAR * _MARKER_LINE_WIDTH
         colored_label = f"{color_code}{label}{self.zColors.RESET}"
 
         # Compose: use BasicOutputs.text() for all lines
         if self.BasicOutputs:
-            self.BasicOutputs.text(EMPTY_LINE, indent=indent, break_after=False)  # Blank line before
+            self.BasicOutputs.text(_EMPTY_LINE, indent=indent, break_after=False)  # Blank line before
             self.BasicOutputs.text(marker_line, indent=indent, break_after=False)
             self.BasicOutputs.text(colored_label, indent=indent, break_after=False)
             self.BasicOutputs.text(marker_line, indent=indent, break_after=False)
-            self.BasicOutputs.text(EMPTY_LINE, indent=indent, break_after=False)  # Blank line after
+            self.BasicOutputs.text(_EMPTY_LINE, indent=indent, break_after=False)  # Blank line after
         else:
             # Fallback if BasicOutputs not set (initialization race condition)
             indent_str = self._build_indent(indent)
-            self.zPrimitives.line(EMPTY_LINE)
+            self.zPrimitives.line(_EMPTY_LINE)
             self.zPrimitives.line(f"{indent_str}{marker_line}")
             self.zPrimitives.line(f"{indent_str}{colored_label}")
             self.zPrimitives.line(f"{indent_str}{marker_line}")
-            self.zPrimitives.line(EMPTY_LINE)
+            self.zPrimitives.line(_EMPTY_LINE)

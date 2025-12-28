@@ -2,9 +2,7 @@
 """
 AdvancedData Event Package - Database Query Results with Pagination & Formatting.
 
-═══════════════════════════════════════════════════════════════════════════════
                               ARCHITECTURE OVERVIEW
-═══════════════════════════════════════════════════════════════════════════════
 
 This module provides advanced data display capabilities for zCLI, specifically
 designed for database query results from the zData subsystem. It consists of
@@ -23,9 +21,7 @@ two main components:
    - Primary consumer: zData subsystem (query result display)
 
 
-═══════════════════════════════════════════════════════════════════════════════
                            WHY "ADVANCED" DATA?
-═══════════════════════════════════════════════════════════════════════════════
 
 AdvancedData is "advanced" compared to BasicData because it handles:
   • Tabular data (rows + columns) vs. simple lists/JSON
@@ -38,9 +34,7 @@ Comparison:
   AdvancedData: display.zTable(title, columns, rows, limit=20, offset=0)
 
 
-═══════════════════════════════════════════════════════════════════════════════
                            PAGINATION ALGORITHM
-═══════════════════════════════════════════════════════════════════════════════
 
 The Pagination helper supports 3 modes:
 
@@ -60,9 +54,7 @@ The Pagination helper supports 3 modes:
   - Use Case: Standard query result pagination
 
 
-═══════════════════════════════════════════════════════════════════════════════
                          TERMINAL VS. BIFROST RENDERING
-═══════════════════════════════════════════════════════════════════════════════
 
 **Terminal Mode (ASCII Table):**
   - Formatted table with box characters (─ separator)
@@ -78,9 +70,7 @@ The Pagination helper supports 3 modes:
   - Bifrost handles pagination UI
 
 
-═══════════════════════════════════════════════════════════════════════════════
                          ZDATA SUBSYSTEM INTEGRATION
-═══════════════════════════════════════════════════════════════════════════════
 
 **Primary Use Case: Database Query Results**
 
@@ -111,9 +101,7 @@ AdvancedData is the display layer for zData's query execution. Typical workflow:
   • Wide queries: 20+ columns (horizontal scrolling issues in Terminal)
 
 
-═══════════════════════════════════════════════════════════════════════════════
                   WEEK 6.6 INTEGRATION ROADMAP (FUTURE ENHANCEMENTS)
-═══════════════════════════════════════════════════════════════════════════════
 
 ⚠️  The following enhancements should be implemented in Week 6.6 (zData refactor),
     NOT in Week 6.4. This module's Week 6.4 scope is industry-grade refactoring
@@ -178,9 +166,7 @@ AdvancedData is the display layer for zData's query execution. Typical workflow:
     )
 
 
-═══════════════════════════════════════════════════════════════════════════════
                               COMPOSITION PATTERN
-═══════════════════════════════════════════════════════════════════════════════
 
 AdvancedData composes with two other event packages (set by zEvents after init):
 
@@ -197,9 +183,7 @@ AdvancedData composes with two other event packages (set by zEvents after init):
 This composition ensures AdvancedData doesn't duplicate formatting/coloring logic.
 
 
-═══════════════════════════════════════════════════════════════════════════════
                               LAYER POSITION
-═══════════════════════════════════════════════════════════════════════════════
 
 Layer 1 (zDisplay):
   zDisplay.py → display_events.py → display_event_advanced.py (AdvancedData)
@@ -209,9 +193,7 @@ Layer 1 (zDisplay):
                      Delegates to: display_primitives.py (I/O)
 
 
-═══════════════════════════════════════════════════════════════════════════════
                               THREAD SAFETY
-═══════════════════════════════════════════════════════════════════════════════
 
 AdvancedData is thread-safe when used through zDisplay singleton:
   - No mutable class-level state
@@ -220,9 +202,7 @@ AdvancedData is thread-safe when used through zDisplay singleton:
   - Composition references (BasicOutputs, Signals) set once during initialization
 
 
-═══════════════════════════════════════════════════════════════════════════════
                                  USAGE EXAMPLES
-═══════════════════════════════════════════════════════════════════════════════
 
 **Example 1: Simple Query Results (No Pagination)**
 
@@ -239,11 +219,8 @@ AdvancedData is thread-safe when used through zDisplay singleton:
 
     # Terminal output:
     # 
-    # ═══════════════════════════════════════════════
     #  Recent Users (showing 1-2 of 2)
-    # ═══════════════════════════════════════════════
     #  id             username       email
-    #  ─────────────────────────────────────────────
     #  1              alice          alice@example...
     #  2              bob            bob@example.com
 
@@ -262,11 +239,8 @@ AdvancedData is thread-safe when used through zDisplay singleton:
 
     # Terminal output:
     # 
-    # ═══════════════════════════════════════════════
     #  Orders (showing 41-60 of 127)
-    # ═══════════════════════════════════════════════
     #  id             customer       total          status
-    #  ─────────────────────────────────────────────
     #  41             Alice          $125.50        shipped
     #  ...
     #  60             Zara           $89.99         pending
@@ -274,9 +248,7 @@ AdvancedData is thread-safe when used through zDisplay singleton:
     #  ℹ  ... 67 more rows
 
 
-═══════════════════════════════════════════════════════════════════════════════
                              MODULE CONSTANTS
-═══════════════════════════════════════════════════════════════════════════════
 """
 
 from typing import Any, Optional, List, Dict, Union
@@ -284,11 +256,11 @@ from typing import Any, Optional, List, Dict, Union
 # Module Constants
 
 # Event name
-EVENT_ZTABLE: str = "zTable"
+_EVENT_ZTABLE: str = "zTable"
 
 # Pagination metadata dictionary keys
-KEY_ITEMS: str = "items"
-KEY_TOTAL: str = "total"
+_KEY_ITEMS: str = "items"
+_KEY_TOTAL: str = "total"
 KEY_SHOWING_START: str = "showing_start"
 KEY_SHOWING_END: str = "showing_end"
 KEY_HAS_MORE: str = "has_more"
@@ -328,7 +300,7 @@ NAV_INVALID_PAGE: str = "Invalid page. Enter 1-{total_pages}"
 
 # Characters
 CHAR_SEPARATOR: str = "─"
-CHAR_SPACE: str = " "
+_CHAR_SPACE: str = " "
 
 # Pagination algorithm constants
 PAGINATION_OFFSET_BASE: int = 1  # 1-based indexing for showing_start/showing_end
@@ -472,8 +444,8 @@ class Pagination:
         # Handle empty data
         if not data:
             return {
-                KEY_ITEMS: [],
-                KEY_TOTAL: 0,
+                _KEY_ITEMS: [],
+                _KEY_TOTAL: 0,
                 KEY_SHOWING_START: 0,
                 KEY_SHOWING_END: 0,
                 KEY_HAS_MORE: False
@@ -484,8 +456,8 @@ class Pagination:
         # Mode 1: No limit - show all
         if limit is None:
             return {
-                KEY_ITEMS: data,
-                KEY_TOTAL: total,
+                _KEY_ITEMS: data,
+                _KEY_TOTAL: total,
                 KEY_SHOWING_START: PAGINATION_OFFSET_BASE,
                 KEY_SHOWING_END: total,
                 KEY_HAS_MORE: False
@@ -499,8 +471,8 @@ class Pagination:
             has_more = abs(limit) < total
             
             return {
-                KEY_ITEMS: items,
-                KEY_TOTAL: total,
+                _KEY_ITEMS: items,
+                _KEY_TOTAL: total,
                 KEY_SHOWING_START: showing_start,
                 KEY_SHOWING_END: showing_end,
                 KEY_HAS_MORE: has_more
@@ -516,8 +488,8 @@ class Pagination:
         has_more = end_idx < total
         
         return {
-            KEY_ITEMS: items,
-            KEY_TOTAL: total,
+            _KEY_ITEMS: items,
+            _KEY_TOTAL: total,
             KEY_SHOWING_START: showing_start,
             KEY_SHOWING_END: showing_end,
             KEY_HAS_MORE: has_more
@@ -669,11 +641,8 @@ class AdvancedData:
         **Terminal Output Example:**
         
             
-            ═══════════════════════════════════════════════════════════════
              User List (showing 1-5 of 127)
-            ═══════════════════════════════════════════════════════════════
              id             username       email          created_at
-             ───────────────────────────────────────────────────────────────
              1              alice          alice@examp... 2025-01-15
              2              bob            bob@example... 2025-01-16
              3              charlie        charlie@exa... 2025-01-17
@@ -779,7 +748,7 @@ class AdvancedData:
             - Add editable parameter for Bifrost cell editing
         """
         # Try Bifrost mode first - send clean event
-        if self.zPrimitives.send_gui_event(EVENT_ZTABLE, {
+        if self.zPrimitives.send_gui_event(_EVENT_ZTABLE, {
             KEY_TITLE: title,
             KEY_COLUMNS: columns,
             KEY_ROWS: rows,
@@ -799,7 +768,7 @@ class AdvancedData:
         
         # Paginate rows using Pagination helper
         page_info = self.pagination.paginate(rows, limit, offset)
-        paginated_rows = page_info[KEY_ITEMS]
+        paginated_rows = page_info[_KEY_ITEMS]
         
         # Render initial page
         self._render_table_page(title, columns, page_info, paginated_rows, show_header)
@@ -856,14 +825,12 @@ class AdvancedData:
                 # Calculate new offset and re-display table
                 current_offset = (current_page - 1) * page_size
                 page_info = self.pagination.paginate(rows, limit, current_offset)
-                paginated_rows = page_info[KEY_ITEMS]
+                paginated_rows = page_info[_KEY_ITEMS]
                 
                 # Re-display table
                 self._render_table_page(title, columns, page_info, paginated_rows, show_header)
     
-    # ═══════════════════════════════════════════════════════════════════════
     #                           HELPER METHODS
-    # ═══════════════════════════════════════════════════════════════════════
     
     def _render_table_page(
         self,
@@ -902,7 +869,7 @@ class AdvancedData:
                     title=title,
                     start=page_info[KEY_SHOWING_START],
                     end=page_info[KEY_SHOWING_END],
-                    total=page_info[KEY_TOTAL]
+                    total=page_info[_KEY_TOTAL]
                 ),
                 color=DEFAULT_HEADER_COLOR,
                 style=DEFAULT_TABLE_STYLE
@@ -924,7 +891,7 @@ class AdvancedData:
         
         # Display pagination footer
         if page_info[KEY_HAS_MORE]:
-            remaining_count = page_info[KEY_TOTAL] - page_info[KEY_SHOWING_END]
+            remaining_count = page_info[_KEY_TOTAL] - page_info[KEY_SHOWING_END]
             self._signal_info(
                 MSG_MORE_ROWS.format(count=remaining_count),
                 indent=1
@@ -1045,7 +1012,7 @@ class AdvancedData:
             formatted_cells.append(value.ljust(DEFAULT_COL_WIDTH))
         
         # Join cells with space separator
-        return CHAR_SPACE.join(formatted_cells)
+        return _CHAR_SPACE.join(formatted_cells)
     
     def _output_text(self, content: str, indent: int = 0, break_after: bool = True) -> None:
         """

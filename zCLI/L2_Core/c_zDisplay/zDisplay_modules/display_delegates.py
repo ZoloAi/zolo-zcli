@@ -126,39 +126,39 @@ from .delegates import (
 # The parent zDisplay.py imports this module, so we cannot import back.
 # These MUST stay in sync with the constants defined in zDisplay.py.
 
-KEY_EVENT = "event"
+_KEY_EVENT = "event"
 
 # Primitive Event Names
-EVENT_WRITE_RAW = "write_raw"
-EVENT_WRITE_LINE = "write_line"
-EVENT_WRITE_BLOCK = "write_block"
-EVENT_READ_STRING = "read_string"
-EVENT_READ_PASSWORD = "read_password"
+_EVENT_WRITE_RAW = "write_raw"
+_EVENT_WRITE_LINE = "write_line"
+_EVENT_WRITE_BLOCK = "write_block"
+_EVENT_READ_STRING = "read_string"
+_EVENT_READ_PASSWORD = "read_password"
 
 # Output Event Names
-EVENT_HEADER = "header"
-EVENT_ZDECLARE = "zDeclare"
-EVENT_TEXT = "text"
+_EVENT_HEADER = "header"
+_EVENT_ZDECLARE = "zDeclare"
+_EVENT_TEXT = "text"
 
 # Signal Event Names
-EVENT_ERROR = "error"
-EVENT_WARNING = "warning"
-EVENT_SUCCESS = "success"
-EVENT_INFO = "info"
-EVENT_ZMARKER = "zMarker"
+_EVENT_ERROR = "error"
+_EVENT_WARNING = "warning"
+_EVENT_SUCCESS = "success"
+_EVENT_INFO = "info"
+_EVENT_ZMARKER = "zMarker"
 
 # Data Event Names
-EVENT_LIST = "list"
-EVENT_JSON = "json"
-EVENT_JSON_DATA = "json_data"
-EVENT_ZTABLE = "zTable"
+_EVENT_LIST = "list"
+_EVENT_JSON = "json"
+_EVENT_JSON_DATA = "json_data"
+_EVENT_ZTABLE = "zTable"
 
 # System Event Names
-EVENT_ZSESSION = "zSession"
-EVENT_ZCRUMBS = "zCrumbs"
-EVENT_ZMENU = "zMenu"
-EVENT_SELECTION = "selection"
-EVENT_ZDIALOG = "zDialog"
+_EVENT_ZSESSION = "zSession"
+_EVENT_ZCRUMBS = "zCrumbs"
+_EVENT_ZMENU = "zMenu"
+_EVENT_SELECTION = "selection"
+_EVENT_ZDIALOG = "zDialog"
 
 # Module Constants - Default Values
 
@@ -172,7 +172,7 @@ DEFAULT_STYLE_BULLET = "bullet"
 DEFAULT_STYLE_NUMBERED = "numbered"
 
 # Prompt/Label Defaults
-DEFAULT_MARKER_LABEL = "Marker"
+_DEFAULT_MARKER_LABEL = "Marker"
 DEFAULT_MENU_PROMPT = "Select an option:"
 
 # Numeric Defaults

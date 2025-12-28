@@ -110,15 +110,15 @@ convenience delegate methods.
 
 from zCLI import Any, Optional, List, Dict
 
-from .events.display_event_outputs import BasicOutputs
-from .events.display_event_inputs import BasicInputs
-from .events.display_event_signals import Signals
-from .events.display_event_data import BasicData
-from .events.display_event_advanced import AdvancedData
-from .events.display_event_system import zSystem
-from .events.display_event_timebased import TimeBased
-from .events.display_event_media import MediaEvents
-from .events.display_event_links import LinkEvents
+from .c_basic.display_event_outputs import BasicOutputs
+from .c_basic.display_event_signals import Signals
+from .d_interaction.display_event_inputs import BasicInputs
+from .d_interaction.display_event_data import BasicData
+from .d_interaction.display_event_media import MediaEvents
+from .d_interaction.display_event_links import LinkEvents
+from .e_advanced.display_event_advanced import AdvancedData
+from .e_advanced.display_event_timebased import TimeBased
+from .f_orchestration.display_event_system import zSystem
 
 # Module Constants
 
@@ -130,10 +130,10 @@ DEFAULT_STYLE_BULLET = "bullet"
 DEFAULT_STYLE_DOTS = "dots"
 
 # Label constants
-DEFAULT_MARKER_LABEL = "Marker"
-DEFAULT_MARKER_COLOR = "MAGENTA"
-DEFAULT_LABEL_PROCESSING = "Processing"
-DEFAULT_LABEL_LOADING = "Loading"
+_DEFAULT_MARKER_LABEL = "Marker"
+_DEFAULT_MARKER_COLOR = "MAGENTA"
+_DEFAULT_LABEL_PROCESSING = "Processing"
+_DEFAULT_LABEL_LOADING = "Loading"
 
 # Prompt constants
 DEFAULT_MENU_PROMPT = "Select an option:"
@@ -236,9 +236,7 @@ class zEvents:
         self.LinkEvents.BasicOutputs = self.BasicOutputs
         self.LinkEvents.BasicInputs = self.BasicInputs
 
-    # ═══════════════════════════════════════════════════════════════════════════
     # Convenience Delegates - BasicOutputs
-    # ═══════════════════════════════════════════════════════════════════════════
 
     def header(self, label: str, color: str = DEFAULT_COLOR, indent: int = 0, style: str = DEFAULT_STYLE_FULL, semantic: Optional[str] = None, **kwargs) -> Any:
         """Display formatted header with styling.
@@ -327,9 +325,7 @@ class zEvents:
             **kwargs
         )
 
-    # ═══════════════════════════════════════════════════════════════════════════
     # Convenience Delegates - BasicInputs
-    # ═══════════════════════════════════════════════════════════════════════════
 
     def selection(self, prompt: str, options: List[Any], multi: bool = False, default: Optional[Any] = None, style: str = DEFAULT_STYLE_NUMBERED, action_type: Optional[str] = None) -> Any:
         """Prompt user for selection from options.
@@ -418,9 +414,7 @@ class zEvents:
         }
         return self.LinkEvents.handle_link(link_data)
 
-    # ═══════════════════════════════════════════════════════════════════════════
     # Convenience Delegates - Signals
-    # ═══════════════════════════════════════════════════════════════════════════
 
     def error(self, content: str, indent: int = 0) -> Any:
         """Display error message with ERROR styling.
@@ -478,7 +472,7 @@ class zEvents:
         """
         return self.Signals.info(content, indent)
 
-    def zMarker(self, label: str = DEFAULT_MARKER_LABEL, color: str = DEFAULT_MARKER_COLOR, indent: int = 0) -> Any:
+    def zMarker(self, label: str = _DEFAULT_MARKER_LABEL, color: str = _DEFAULT_MARKER_COLOR, indent: int = 0) -> Any:
         """Display visual marker for debugging/tracking.
         
         Convenience delegate to Signals.zMarker for backward compatibility.
@@ -493,9 +487,7 @@ class zEvents:
         """
         return self.Signals.zMarker(label, color, indent)
 
-    # ═══════════════════════════════════════════════════════════════════════════
     # Convenience Delegates - BasicData
-    # ═══════════════════════════════════════════════════════════════════════════
 
     def list(self, items: List[Any], style: str = DEFAULT_STYLE_BULLET, indent: int = 0, **kwargs) -> Any:
         """Display list of items with formatting.
@@ -544,9 +536,7 @@ class zEvents:
         """
         return self.BasicData.json_data(data, indent_size, indent, color)
 
-    # ═══════════════════════════════════════════════════════════════════════════
     # Convenience Delegates - AdvancedData
-    # ═══════════════════════════════════════════════════════════════════════════
 
     def zTable(self, title: str, columns: List[str], rows: List[List[Any]], limit: Optional[int] = None, offset: int = 0, show_header: bool = True, interactive: bool = False) -> Any:
         """Display data in table format with pagination support.
@@ -567,9 +557,7 @@ class zEvents:
         """
         return self.AdvancedData.zTable(title, columns, rows, limit, offset, show_header, interactive)
 
-    # ═══════════════════════════════════════════════════════════════════════════
     # Convenience Delegates - zSystem
-    # ═══════════════════════════════════════════════════════════════════════════
 
     def zDeclare(self, label: str, color: Optional[str] = None, indent: int = 0, style: Optional[str] = None) -> Any:
         """Display system declaration message.
@@ -677,11 +665,9 @@ class zEvents:
         """
         return self.zSystem.zDialog(context, zcli, walker)
 
-    # ═══════════════════════════════════════════════════════════════════════════
     # Convenience Delegates - TimeBased
-    # ═══════════════════════════════════════════════════════════════════════════
 
-    def progress_bar(self, current: int, total: Optional[int] = None, label: str = DEFAULT_LABEL_PROCESSING, **kwargs: Any) -> Any:
+    def progress_bar(self, current: int, total: Optional[int] = None, label: str = _DEFAULT_LABEL_PROCESSING, **kwargs: Any) -> Any:
         """Display progress bar with current/total status.
         
         Convenience delegate to TimeBased.progress_bar for backward compatibility.
@@ -697,7 +683,7 @@ class zEvents:
         """
         return self.TimeBased.progress_bar(current, total, label, **kwargs)
 
-    def spinner(self, label: str = DEFAULT_LABEL_LOADING, style: str = DEFAULT_STYLE_DOTS) -> Any:
+    def spinner(self, label: str = _DEFAULT_LABEL_LOADING, style: str = DEFAULT_STYLE_DOTS) -> Any:
         """Display animated spinner for loading indication.
         
         Convenience delegate to TimeBased.spinner for backward compatibility.
@@ -711,7 +697,7 @@ class zEvents:
         """
         return self.TimeBased.spinner(label, style)
 
-    def progress_iterator(self, iterable: Any, label: str = DEFAULT_LABEL_PROCESSING, **kwargs: Any) -> Any:
+    def progress_iterator(self, iterable: Any, label: str = _DEFAULT_LABEL_PROCESSING, **kwargs: Any) -> Any:
         """Iterate with progress indication.
         
         Convenience delegate to TimeBased.progress_iterator for backward compatibility.
@@ -726,7 +712,7 @@ class zEvents:
         """
         return self.TimeBased.progress_iterator(iterable, label, **kwargs)
 
-    def indeterminate_progress(self, label: str = DEFAULT_LABEL_PROCESSING) -> Any:
+    def indeterminate_progress(self, label: str = _DEFAULT_LABEL_PROCESSING) -> Any:
         """Display indeterminate progress indicator.
         
         Convenience delegate to TimeBased.indeterminate_progress for backward compatibility.
@@ -757,9 +743,7 @@ class zEvents:
         """
         return self.TimeBased.swiper(slides, label, auto_advance, delay, loop, container)
 
-    # ═══════════════════════════════════════════════════════════════════════════
     # Convenience Delegates - MediaEvents
-    # ═══════════════════════════════════════════════════════════════════════════
 
     def image(
         self,

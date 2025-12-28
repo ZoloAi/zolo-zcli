@@ -150,23 +150,18 @@ Backward-Compatible Aliases:
 """
 
 from zCLI import json, time, getpass, asyncio, uuid, os, shutil, subprocess, Any, Dict, Union, Optional
-from .display_constants import (
-    # Modes (PUBLIC API)
+from ..display_constants import (
     MODE_TERMINAL,
     MODE_WALKER,
     MODE_EMPTY,
-    # Event Types (Internal)
     _EVENT_TYPE_OUTPUT,
     _EVENT_TYPE_INPUT_REQUEST,
     _EVENT_TYPE_ZDISPLAY,
-    # Write Types (Internal)
     _WRITE_TYPE_RAW,
     _WRITE_TYPE_LINE,
     _WRITE_TYPE_BLOCK,
-    # Input Types (Internal)
     _INPUT_TYPE_STRING,
     _INPUT_TYPE_PASSWORD,
-    # JSON Keys (Internal - already private)
     _KEY_EVENT,
     _KEY_TYPE,
     _KEY_CONTENT,
@@ -182,6 +177,9 @@ from .display_constants import (
     _TERMINAL_COLS_MIN,
     _TERMINAL_COLS_MAX,
 )
+
+# Import Tier 0 infrastructure helpers
+from ..a_infrastructure.display_event_helpers import is_bifrost_mode
 
 
 class zPrimitives:
@@ -206,6 +204,9 @@ class zPrimitives:
     def _is_gui_mode(self) -> bool:
         """Check if running in zBifrost (non-interactive WebSocket) mode.
         
+        DEPRECATED: This method now delegates to Tier 0 infrastructure helper.
+        Use is_bifrost_mode(display) directly for new code.
+        
         This is THE mode detection method used throughout zDisplay. It determines
         whether output should be sent via WebSocket in addition to terminal.
         
@@ -217,11 +218,10 @@ class zPrimitives:
             - Terminal modes: MODE_TERMINAL, MODE_WALKER, MODE_EMPTY
             - Bifrost modes: Everything else (e.g., "zBifrost", "WebSocket")
             - Mode comes from session[SESSION_KEY_ZMODE] set by zConfig
+            - Delegates to: events.display_event_helpers.is_bifrost_mode()
         """
-        if not self.display or not hasattr(self.display, 'mode'):
-            return False
-        # Non-interactive modes: anything that's not Terminal or Walker
-        return self.display.mode not in (MODE_TERMINAL, MODE_WALKER, MODE_EMPTY)
+        # Delegate to Tier 0 infrastructure helper
+        return is_bifrost_mode(self.display)
 
     def get_terminal_columns(self) -> int:
         """Detect terminal width (columns) at print time and clamp it.

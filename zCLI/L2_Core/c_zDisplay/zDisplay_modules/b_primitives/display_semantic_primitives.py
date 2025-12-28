@@ -77,9 +77,7 @@ class SemanticPrimitives:
     All methods are static - no instance state needed.
     """
     
-    # ═══════════════════════════════════════════════════════════════════════════
     # Inline Formatting Semantics
-    # ═══════════════════════════════════════════════════════════════════════════
     
     @staticmethod
     def render_code(content: str, mode: str = "terminal") -> str:
@@ -176,9 +174,7 @@ class SemanticPrimitives:
             return f"~~{content}~~"
         return content
     
-    # ═══════════════════════════════════════════════════════════════════════════
     # Structural Semantics
-    # ═══════════════════════════════════════════════════════════════════════════
     
     @staticmethod
     def render_blockquote(content: str, mode: str = "terminal") -> str:
@@ -219,9 +215,7 @@ class SemanticPrimitives:
         # Preformatted text - preserve as-is in both modes
         return content
     
-    # ═══════════════════════════════════════════════════════════════════════════
     # Interactive/Metadata Semantics
-    # ═══════════════════════════════════════════════════════════════════════════
     
     @staticmethod
     def render_kbd(content: str, mode: str = "terminal") -> str:
@@ -318,9 +312,7 @@ class SemanticPrimitives:
         # datetime attribute is Bifrost-only feature
         return content
     
-    # ═══════════════════════════════════════════════════════════════════════════
     # Typography Semantics
-    # ═══════════════════════════════════════════════════════════════════════════
     
     @staticmethod
     def render_small(content: str, mode: str = "terminal") -> str:

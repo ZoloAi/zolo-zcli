@@ -21,9 +21,9 @@ Grade: A+ (Type hints, constants, comprehensive docs)
 from zCLI import Any, Optional
 from ..display_constants import (
     _KEY_EVENT,
-    EVENT_HEADER,
-    EVENT_ZDECLARE,
-    EVENT_TEXT,
+    _EVENT_HEADER,
+    _EVENT_ZDECLARE,
+    _EVENT_TEXT,
 )
 
 # Module-specific constants
@@ -39,9 +39,7 @@ class DelegateOutputs:
     like headers, colored text, and zCLI declarations.
     """
 
-    # ═══════════════════════════════════════════════════════════════════════════
     # Output Formatting Delegates
-    # ═══════════════════════════════════════════════════════════════════════════
 
     def header(
         self, 
@@ -68,7 +66,7 @@ class DelegateOutputs:
             display.header("Title", color="PRIMARY", class="zTitle-1")
         """
         return self.handle({
-            _KEY_EVENT: EVENT_HEADER,
+            _KEY_EVENT: _EVENT_HEADER,
             "label": label,
             "color": color,
             "indent": indent,
@@ -98,7 +96,7 @@ class DelegateOutputs:
             display.zDeclare("[CONFIG] Loading schema", color="YELLOW")
         """
         return self.handle({
-            _KEY_EVENT: EVENT_ZDECLARE,
+            _KEY_EVENT: _EVENT_ZDECLARE,
             "label": label,
             "color": color,
             "indent": indent,
@@ -136,7 +134,7 @@ class DelegateOutputs:
         should_break = break_after if break_after is not None else pause
         
         return self.handle({
-            _KEY_EVENT: EVENT_TEXT,
+            _KEY_EVENT: _EVENT_TEXT,
             "content": content,
             "indent": indent,
             "break_after": should_break,  # Keep internal key for now

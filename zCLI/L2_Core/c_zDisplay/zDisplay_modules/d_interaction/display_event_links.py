@@ -31,30 +31,28 @@ Architecture Position:
 Version: v1.6.0 (Link Event Support)
 """
 
-from typing import Dict, Any, Optional
+# Centralized imports from zCLI
+from zCLI import Dict, Any, Optional
 
-# Event type constant
-EVENT_LINK = "link"
+# Import DRY helpers from primitives
+from ..b_primitives.display_rendering_helpers import wrap_with_color
 
-# Target constants
-TARGET_SELF = "_self"
-TARGET_BLANK = "_blank"
-TARGET_PARENT = "_parent"
-TARGET_TOP = "_top"
-DEFAULT_TARGET = TARGET_SELF
-
-# Link type detection constants
-LINK_TYPE_INTERNAL_DELTA = "delta"  # $zAbout
-LINK_TYPE_INTERNAL_ZPATH = "zpath"  # @.UI.zUI.zAbout
-LINK_TYPE_EXTERNAL = "external"  # https://...
-LINK_TYPE_ANCHOR = "anchor"  # #section
-LINK_TYPE_PLACEHOLDER = "placeholder"  # # (empty anchor)
-
-# Button-style prompt constant (reused from button primitive for consistency)
-PROMPT_LINK_TEMPLATE = "Click [{label}]? (y/n): "
-
-# Log prefix
-LOG_PREFIX = "[LinkEvents]"
+# Import constants from centralized module
+from ..display_constants import (
+    _EVENT_LINK,
+    TARGET_SELF,
+    TARGET_BLANK,
+    TARGET_PARENT,
+    TARGET_TOP,
+    DEFAULT_TARGET,
+    _LINK_TYPE_INTERNAL_DELTA,
+    _LINK_TYPE_INTERNAL_ZPATH,
+    _LINK_TYPE_EXTERNAL,
+    _LINK_TYPE_ANCHOR,
+    _LINK_TYPE_PLACEHOLDER,
+    _PROMPT_LINK_TEMPLATE,
+    _LOG_PREFIX,
+)
 
 
 class LinkEvents:
@@ -158,32 +156,21 @@ class LinkEvents:
             _detect_link_type("#") → "placeholder"
         """
         if not href or href == '#':
-            return LINK_TYPE_PLACEHOLDER
+            return _LINK_TYPE_PLACEHOLDER
         elif href.startswith('$'):
-            return LINK_TYPE_INTERNAL_DELTA
+            return _LINK_TYPE_INTERNAL_DELTA
         elif href.startswith('@'):
-            return LINK_TYPE_INTERNAL_ZPATH
+            return _LINK_TYPE_INTERNAL_ZPATH
         elif href.startswith(('http://', 'https://')):
-            return LINK_TYPE_EXTERNAL
+            return _LINK_TYPE_EXTERNAL
         elif href.startswith('#'):
-            return LINK_TYPE_ANCHOR
+            return _LINK_TYPE_ANCHOR
         else:
             # Assume internal delta if unclear
-            return LINK_TYPE_INTERNAL_DELTA
+            return _LINK_TYPE_INTERNAL_DELTA
     
     def _render_terminal(self, link_data: Dict[str, Any], link_type: str) -> Optional[Any]:
-        """
-        Render link in Terminal mode using button-style y/n prompts.
-        
-        Terminal-First Design:
-        - Color is the source of truth (semantic intent)
-        - ANSI colors applied based on color parameter
-        - Consistent with button primitive pattern for ALL link types
-        
-        Display Pattern:
-        - Display: [{label}] with semantic color
-        - Prompt: Click [{label}]? (y/n):
-        - Action: Based on link type and user response
+        """Render link in Terminal mode using button-style y/n prompts.
         
         Args:
             link_data: Link configuration dict
@@ -197,115 +184,81 @@ class LinkEvents:
         target = link_data.get('target', DEFAULT_TARGET)
         color = link_data.get('color', 'PRIMARY')
         
-        # STEP 1: Display the link label (button-style, plain text)
-        self.BasicOutputs.text(
-            f"  [{label}]",
-            indent=1,
-            break_after=False
-        )
-        
-        # STEP 2: Prompt with y/n - Apply SEMANTIC COLOR to prompt (Terminal-first pattern)
-        # Use centralized color mapping from colors.py (single source of truth)
-        terminal_color = self.zColors.get_semantic_color(color)
-        prompt_text = PROMPT_LINK_TEMPLATE.format(label=label)
-        
-        # Apply semantic color to PROMPT (not label) - terminal-first visual feedback
-        if terminal_color:
-            colored_prompt = f"{terminal_color}{prompt_text}{self.zColors.RESET}"
-        else:
-            colored_prompt = prompt_text
+        # Display link and get user confirmation
+        self._display_link_label(label)
         
         try:
-            response = self.primitives.read_string(colored_prompt).strip().lower()
+            response = self._prompt_link_confirmation(label, color)
             
-            # STEP 3: Handle response based on link type
             if response not in ('y', 'yes'):
-                # User cancelled
-                self.BasicOutputs.text(
-                    f"  {label} cancelled.",
-                    indent=1,
-                    break_after=False
-                )
-                self.logger.debug(f"{LOG_PREFIX} Link cancelled by user: {label}")
-                return "stop"
+                return self._handle_link_cancel(label)
             
-            # User confirmed - proceed based on link type
-            if link_type == LINK_TYPE_PLACEHOLDER:
-                # Placeholder - just acknowledge, no action
-                self.BasicOutputs.text(
-                    f"  {label} is a placeholder (no action).",
-                    indent=1,
-                    break_after=False
-                )
-                self.logger.debug(f"{LOG_PREFIX} Placeholder link clicked (no action): {label}")
-                return None
-            
-            elif link_type == LINK_TYPE_INTERNAL_DELTA:
-                # Delta link - navigate
-                self.BasicOutputs.text(
-                    f"  Navigating to {label}...",
-                    indent=1,
-                    break_after=False
-                )
-                self.logger.info(f"{LOG_PREFIX} Delta navigation confirmed: {href}")
-                return {"zLink": href}
-            
-            elif link_type == LINK_TYPE_INTERNAL_ZPATH:
-                # zPath link - navigate
-                self.BasicOutputs.text(
-                    f"  Navigating to {label}...",
-                    indent=1,
-                    break_after=False
-                )
-                self.logger.info(f"{LOG_PREFIX} zPath navigation confirmed: {href}")
-                return {"zLink": href}
-            
-            elif link_type == LINK_TYPE_EXTERNAL:
-                # External link - show URL then open
-                self.BasicOutputs.text(
-                    f"     → {href}",  # Show URL for transparency
-                    indent=1,
-                    color="MUTED"
-                )
-                self.BasicOutputs.text(
-                    f"  Opening {label} in browser...",
-                    indent=1,
-                    break_after=False
-                )
-                self.logger.info(f"{LOG_PREFIX} External link confirmed: {href}")
-                
-                # Handle target for external links
-                if target == TARGET_BLANK:
-                    self.logger.info(f"{LOG_PREFIX} Opening in new window/tab (target: _blank)")
-                
-                # Open via zOpen subsystem (reusing primitive)
-                return self.zcli.open.handle(f"zOpen({href})")
-            
-            elif link_type == LINK_TYPE_ANCHOR:
-                # Anchor link - acknowledge but no scroll action (Terminal limitation)
-                self.BasicOutputs.text(
-                    f"     ⚓ {href}",  # Show anchor target
-                    indent=1,
-                    color="MUTED"
-                )
-                self.BasicOutputs.text(
-                    f"  {label} is an anchor link (Terminal has no scroll).",
-                    indent=1,
-                    break_after=False
-                )
-                self.logger.debug(f"{LOG_PREFIX} Anchor link (Terminal limitation): {href}")
-                return None
-            
-            return None
+            # Handle confirmed link based on type
+            return self._execute_link_action(link_type, href, label, target)
             
         except KeyboardInterrupt:
-            self.BasicOutputs.text(
-                f"  {label} cancelled.",
-                indent=1,
-                break_after=False
-            )
-            self.logger.debug(f"{LOG_PREFIX} Link cancelled (KeyboardInterrupt): {label}")
-            return "stop"
+            return self._handle_link_cancel(label)
+
+    def _display_link_label(self, label: str) -> None:
+        """Display the link label in button-style format."""
+        self.BasicOutputs.text(f"  [{label}]", indent=1, break_after=False)
+
+    def _prompt_link_confirmation(self, label: str, color: str) -> str:
+        """Prompt user to confirm link click with colored prompt."""
+        prompt_text = _PROMPT_LINK_TEMPLATE.format(label=label)
+        colored_prompt = wrap_with_color(prompt_text, color, self.zColors)
+        return self.primitives.read_string(colored_prompt).strip().lower()
+
+    def _handle_link_cancel(self, label: str) -> str:
+        """Handle link cancellation (user declined or interrupted)."""
+        self.BasicOutputs.text(f"  {label} cancelled.", indent=1, break_after=False)
+        self.logger.debug(f"{_LOG_PREFIX} Link cancelled: {label}")
+        return "stop"
+
+    def _execute_link_action(self, link_type: str, href: str, label: str, target: str) -> Optional[Any]:
+        """Execute the appropriate action based on link type."""
+        if link_type == _LINK_TYPE_PLACEHOLDER:
+            return self._handle_placeholder_link(label)
+        elif link_type == _LINK_TYPE_INTERNAL_DELTA:
+            return self._handle_internal_link(href, label, "Delta")
+        elif link_type == _LINK_TYPE_INTERNAL_ZPATH:
+            return self._handle_internal_link(href, label, "zPath")
+        elif link_type == _LINK_TYPE_EXTERNAL:
+            return self._handle_external_link(href, label, target)
+        elif link_type == _LINK_TYPE_ANCHOR:
+            return self._handle_anchor_link(href, label)
+        
+        return None
+
+    def _handle_placeholder_link(self, label: str) -> None:
+        """Handle placeholder link (no action)."""
+        self.BasicOutputs.text(f"  {label} is a placeholder (no action).", indent=1, break_after=False)
+        self.logger.debug(f"{_LOG_PREFIX} Placeholder link clicked (no action): {label}")
+        return None
+
+    def _handle_internal_link(self, href: str, label: str, link_subtype: str) -> Dict[str, str]:
+        """Handle internal navigation link (Delta or zPath)."""
+        self.BasicOutputs.text(f"  Navigating to {label}...", indent=1, break_after=False)
+        self.logger.info(f"{_LOG_PREFIX} {link_subtype} navigation confirmed: {href}")
+        return {"zLink": href}
+
+    def _handle_external_link(self, href: str, label: str, target: str) -> Any:
+        """Handle external URL link."""
+        self.BasicOutputs.text(f"     → {href}", indent=1, color="MUTED")
+        self.BasicOutputs.text(f"  Opening {label} in browser...", indent=1, break_after=False)
+        self.logger.info(f"{_LOG_PREFIX} External link confirmed: {href}")
+        
+        if target == TARGET_BLANK:
+            self.logger.info(f"{_LOG_PREFIX} Opening in new window/tab (target: _blank)")
+        
+        return self.zcli.open.handle(f"zOpen({href})")
+
+    def _handle_anchor_link(self, href: str, label: str) -> None:
+        """Handle anchor link (Terminal limitation)."""
+        self.BasicOutputs.text(f"     ⚓ {href}", indent=1, color="MUTED")
+        self.BasicOutputs.text(f"  {label} is an anchor link (Terminal has no scroll).", indent=1, break_after=False)
+        self.logger.debug(f"{_LOG_PREFIX} Anchor link (Terminal limitation): {href}")
+        return None
     
     def _render_bifrost(self, link_data: Dict[str, Any], link_type: str) -> None:
         """
@@ -325,7 +278,7 @@ class LinkEvents:
         """
         # Emit link event to frontend with all metadata
         event_data = {
-            'event': EVENT_LINK,
+            'event': _EVENT_LINK,
             'label': link_data.get('label', ''),
             'href': link_data.get('href', '#'),
             'target': link_data.get('target', DEFAULT_TARGET),
@@ -337,13 +290,13 @@ class LinkEvents:
         }
         
         # Auto-add security for external _blank links
-        if (link_type == LINK_TYPE_EXTERNAL and 
+        if (link_type == _LINK_TYPE_EXTERNAL and 
             event_data['target'] == TARGET_BLANK and 
             not event_data['rel']):
             event_data['rel'] = 'noopener noreferrer'
-            self.logger.debug(f"{LOG_PREFIX} Auto-added rel='noopener noreferrer' for external _blank link")
+            self.logger.debug(f"{_LOG_PREFIX} Auto-added rel='noopener noreferrer' for external _blank link")
         
         # Send to frontend via primitives
         self.primitives.send_gui_event('link', event_data)
-        self.logger.info(f"{LOG_PREFIX} Link event sent to Bifrost: {link_data.get('label')}")
+        self.logger.info(f"{_LOG_PREFIX} Link event sent to Bifrost: {link_data.get('label')}")
 

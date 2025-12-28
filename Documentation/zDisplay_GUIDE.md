@@ -19,6 +19,54 @@
 
 > **Need GUI rendering?** All these display methods also work in Browser mode. See [zBifrost Guide](zBifrost_GUIDE.md) for real-time Terminal ↔ Web rendering.
 
+## Best Practices & Import Patterns
+
+### <span style="color:#8FBE6D">Centralized Imports</span>
+
+zCLI provides a **unified import namespace** for all standard library modules and typing helpers. Instead of importing directly from `typing`, `asyncio`, `json`, etc., use the centralized pattern:
+
+**✅ Recommended (Centralized):**
+```python
+from zCLI import zCLI, Any, Dict, Optional, asyncio, json, uuid
+```
+
+**❌ Avoid (Direct Imports):**
+```python
+import asyncio
+import json
+import uuid
+from typing import Any, Dict, Optional
+```
+
+**Why Centralized Imports?**
+- **Single source of truth** - All imports defined in `zCLI/__init__.py`
+- **Consistency** - All modules use the same pattern
+- **Future-proof** - Easy to add polyfills or compatibility layers
+- **Type safety** - Centralized typing helpers ensure consistency
+- **Cleaner code** - One import line instead of multiple
+
+**Available Centralized Imports:**
+- **Standard Library**: `asyncio`, `json`, `logging`, `os`, `re`, `sys`, `traceback`, `uuid`, `datetime`, `Path`, and more
+- **Typing Helpers**: `Any`, `Callable`, `Dict`, `List`, `Optional`, `Tuple`, `Union`
+- **Third-Party**: `yaml`, `requests`, `websockets`
+- **Utils**: `Colors`, `safe_json_dumps`
+
+**Example:**
+```python
+from zCLI import zCLI, Dict, List, json
+
+z = zCLI()
+
+# Use centralized imports throughout your code
+data: Dict[str, List[str]] = {"users": ["alice", "bob"]}
+json_str = json.dumps(data)
+z.display.text(f"Data: {json_str}", color="CYAN")
+```
+
+> **Note:** This pattern is used internally by all zDisplay modules for consistency and maintainability.
+
+---
+
 ## zDisplay Tutorials
 
 ### <span style="color:#8FBE6D">Level 1A: raw() - No Newline</span>

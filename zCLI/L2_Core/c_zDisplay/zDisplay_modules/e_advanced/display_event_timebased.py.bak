@@ -236,108 +236,89 @@ import uuid
 from contextlib import contextmanager
 from typing import Any, Optional, List, Dict, Callable, Iterator
 
-# Module Constants
+# Import Tier 0 infrastructure helpers
+from ...a_infrastructure.display_event_helpers import is_bifrost_mode, emit_websocket_event
 
-# Mode Constants
-MODE_BIFROST = "zBifrost"
-
-# WebSocket Event Names
-EVENT_PROGRESS_BAR = "progress_bar"
-EVENT_PROGRESS_COMPLETE = "progress_complete"
-EVENT_SPINNER_START = "spinner_start"
-EVENT_SPINNER_STOP = "spinner_stop"
-EVENT_SWIPER_INIT = "swiper_init"
-EVENT_SWIPER_UPDATE = "swiper_update"
-EVENT_SWIPER_COMPLETE = "swiper_complete"
-
-# WebSocket Event Dictionary Keys
-KEY_EVENT = "event"
-KEY_PROGRESS_ID = "progressId"
-KEY_CURRENT = "current"
-KEY_TOTAL = "total"
-KEY_LABEL = "label"
-KEY_SHOW_PERCENTAGE = "showPercentage"
-KEY_SHOW_ETA = "showETA"
-KEY_ETA = "eta"
-KEY_COLOR = "color"
-KEY_CONTAINER = "container"
-KEY_SPINNER_ID = "spinnerId"
-KEY_STYLE = "style"
-KEY_SWIPER_ID = "swiperId"
-KEY_SLIDES = "slides"
-KEY_CURRENT_SLIDE = "currentSlide"
-KEY_TOTAL_SLIDES = "totalSlides"
-KEY_AUTO_ADVANCE = "autoAdvance"
-KEY_DELAY = "delay"
-KEY_LOOP = "loop"
-
-# Default Values
-DEFAULT_LABEL_PROCESSING = "Processing"
-DEFAULT_LABEL_LOADING = "Loading"
-DEFAULT_LABEL_SLIDES = "Slides"
-DEFAULT_CONTAINER = "#app"
-DEFAULT_WIDTH = 50
-DEFAULT_SWIPER_DELAY = 3
-DEFAULT_SHOW_PERCENTAGE = True
-DEFAULT_SHOW_ETA = False
-DEFAULT_AUTO_ADVANCE = True
-DEFAULT_LOOP = False
-DEFAULT_SWIPER_WIDTH = 80
-DEFAULT_THREAD_JOIN_TIMEOUT = 0.5
-DEFAULT_ANIMATION_DELAY = 0.1
-DEFAULT_SPINNER_STYLE = "dots"
-
-# Progress Bar Characters
-CHAR_FILLED = "█"
-CHAR_EMPTY = "░"
-CHAR_CHECKMARK = "[OK]"
-CHAR_SPACE = " "
-
-# Box Drawing Characters (Unicode)
-BOX_TOP_LEFT = "╔"
-BOX_TOP_RIGHT = "╗"
-BOX_BOTTOM_LEFT = "╚"
-BOX_BOTTOM_RIGHT = "╝"
-BOX_HORIZONTAL = "═"
-BOX_VERTICAL = "║"
-BOX_LEFT_T = "╠"
-BOX_RIGHT_T = "╣"
-
-# ANSI Escape Sequences
-ANSI_CLEAR_SCREEN = "\033[2J"
-ANSI_HOME = "\033[H"
-ANSI_CLEAR_LINE = "\033[2K"  # Clear entire line
-ANSI_CURSOR_UP = "\033[1A"  # Move cursor up one line
-ANSI_CARRIAGE_RETURN = "\r"
-
-# Swiper Navigation Commands
-SWIPER_CMD_PREV = "p"
-SWIPER_CMD_NEXT = "n"
-SWIPER_CMD_PAUSE = "p"
-SWIPER_CMD_QUIT = "q"
-
-# Swiper Escape Sequences
-ESC_KEY = "\x1b"
-ARROW_RIGHT = "[C"
-ARROW_LEFT = "[D"
-
-# Swiper Status Messages
-SWIPER_STATUS_PAUSED = "[PAUSED - Press P to Resume]"
-SWIPER_STATUS_AUTO = "[AUTO-ADVANCE: {}s]"
-SWIPER_STATUS_MANUAL = "[MANUAL]"
-
-# Messages
-MSG_SWIPER_FALLBACK = "\nPress Enter to advance, 'q' to quit..."
-MSG_BIFROST_INITIALIZED = "Navigate using touch gestures on the web interface.\n"
-MSG_SWIPER_COMPLETED = "\n[OK] {} completed!\n"
-
-# Spinner Style Names
-STYLE_DOTS = "dots"
-STYLE_LINE = "line"
-STYLE_ARC = "arc"
-STYLE_ARROW = "arrow"
-STYLE_BOUNCING_BALL = "bouncingBall"
-STYLE_SIMPLE = "simple"
+# Import constants from centralized module
+from ..display_constants import (
+    MODE_BIFROST,
+    EVENT_PROGRESS_BAR,
+    EVENT_PROGRESS_COMPLETE,
+    EVENT_SPINNER_START,
+    EVENT_SPINNER_STOP,
+    EVENT_SWIPER_INIT,
+    EVENT_SWIPER_UPDATE,
+    EVENT_SWIPER_COMPLETE,
+    KEY_EVENT,
+    KEY_PROGRESS_ID,
+    KEY_CURRENT,
+    KEY_TOTAL,
+    KEY_LABEL,
+    KEY_SHOW_PERCENTAGE,
+    KEY_SHOW_ETA,
+    KEY_ETA,
+    KEY_COLOR,
+    KEY_CONTAINER,
+    KEY_SPINNER_ID,
+    KEY_STYLE,
+    KEY_SWIPER_ID,
+    KEY_SLIDES,
+    KEY_CURRENT_SLIDE,
+    KEY_TOTAL_SLIDES,
+    KEY_AUTO_ADVANCE,
+    KEY_DELAY,
+    KEY_LOOP,
+    DEFAULT_LABEL_PROCESSING,
+    DEFAULT_LABEL_LOADING,
+    DEFAULT_LABEL_SLIDES,
+    DEFAULT_CONTAINER,
+    DEFAULT_WIDTH,
+    DEFAULT_SWIPER_DELAY,
+    DEFAULT_SHOW_PERCENTAGE,
+    DEFAULT_SHOW_ETA,
+    DEFAULT_AUTO_ADVANCE,
+    DEFAULT_LOOP,
+    DEFAULT_SWIPER_WIDTH,
+    DEFAULT_THREAD_JOIN_TIMEOUT,
+    DEFAULT_ANIMATION_DELAY,
+    DEFAULT_SPINNER_STYLE,
+    CHAR_FILLED,
+    CHAR_EMPTY,
+    CHAR_CHECKMARK,
+    CHAR_SPACE,
+    BOX_TOP_LEFT,
+    BOX_TOP_RIGHT,
+    BOX_BOTTOM_LEFT,
+    BOX_BOTTOM_RIGHT,
+    BOX_HORIZONTAL,
+    BOX_VERTICAL,
+    BOX_LEFT_T,
+    BOX_RIGHT_T,
+    ANSI_CLEAR_SCREEN,
+    ANSI_HOME,
+    ANSI_CLEAR_LINE,
+    ANSI_CURSOR_UP,
+    ANSI_CARRIAGE_RETURN,
+    SWIPER_CMD_PREV,
+    SWIPER_CMD_NEXT,
+    SWIPER_CMD_PAUSE,
+    SWIPER_CMD_QUIT,
+    ESC_KEY,
+    ARROW_RIGHT,
+    ARROW_LEFT,
+    SWIPER_STATUS_PAUSED,
+    SWIPER_STATUS_AUTO,
+    SWIPER_STATUS_MANUAL,
+    MSG_SWIPER_FALLBACK,
+    MSG_BIFROST_INITIALIZED,
+    MSG_SWIPER_COMPLETED,
+    STYLE_DOTS,
+    STYLE_LINE,
+    STYLE_ARC,
+    STYLE_ARROW,
+    STYLE_BOUNCING_BALL,
+    STYLE_SIMPLE,
+)
 
 
 class TimeBased:
@@ -544,20 +525,26 @@ class TimeBased:
         """
         Check if running in zBifrost (WebSocket) mode.
         
+        DEPRECATED: This method now delegates to Tier 0 infrastructure helper.
+        Use is_bifrost_mode(display) directly for new code.
+        
         Returns:
-            bool: True if display.mode == "zBifrost", False otherwise
+            bool: True if in Bifrost/GUI mode, False if in Terminal mode
         
         Notes:
             - Gracefully handles missing display or mode attribute
             - Used to determine Terminal vs. Bifrost rendering path
+            - Delegates to: display_event_helpers.is_bifrost_mode()
         """
-        if not self.display or not hasattr(self.display, 'mode'):
-            return False
-        return self.display.mode == MODE_BIFROST
+        # Delegate to Tier 0 infrastructure helper
+        return is_bifrost_mode(self.display)
     
     def _emit_websocket_event(self, event_data: Dict[str, Any]) -> None:
         """
         Emit a WebSocket event for zBifrost mode.
+        
+        DEPRECATED: This method now delegates to Tier 0 infrastructure helper.
+        Use emit_websocket_event(display, event_data) directly for new code.
         
         Args:
             event_data: Event dictionary with 'event' key and payload
@@ -566,10 +553,11 @@ class TimeBased:
             None
         
         Notes:
-            - Only sends if in Bifrost mode (_is_bifrost_mode() == True)
+            - Only sends if in Bifrost mode
             - Uses zComm.broadcast_websocket() for async event loop
             - Thread-safe: asyncio.run_coroutine_threadsafe()
             - Graceful failure: Silent return if no event loop or zComm missing
+            - Delegates to: display_event_helpers.emit_websocket_event()
         
         Example event_data:
             {
@@ -580,28 +568,8 @@ class TimeBased:
                 "label": "Processing Files"
             }
         """
-        if not self._is_bifrost_mode():
-            return
-        
-        try:
-            zcli = self.display.zcli
-            if not zcli or not hasattr(zcli, 'comm'):
-                return
-            
-            # Send via zComm's WebSocket broadcast
-            if hasattr(zcli.comm, 'broadcast_websocket'):
-                try:
-                    loop = asyncio.get_running_loop()
-                    asyncio.run_coroutine_threadsafe(
-                        zcli.bifrost.orchestrator.broadcast(json.dumps(event_data)),
-                        loop
-                    )
-                except RuntimeError:
-                    # No running event loop - skip broadcast
-                    pass
-        except Exception:
-            # Silently fail in case of WebSocket issues
-            pass
+        # Delegate to Tier 0 infrastructure helper
+        emit_websocket_event(self.display, event_data)
     
     def _format_time(self, seconds: float) -> str:
         """
