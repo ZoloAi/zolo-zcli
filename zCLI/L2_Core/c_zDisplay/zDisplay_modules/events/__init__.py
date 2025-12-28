@@ -179,35 +179,23 @@ __version__ = "1.5.4"
 __author__ = "zCLI Team"
 __description__ = "zDisplay Event Packages - Modular UI Event Architecture"
 
-
-# ═══════════════════════════════════════════════════════════════════════════
-# TIER 1 - FOUNDATION (No Dependencies)
-# ═══════════════════════════════════════════════════════════════════════════
+# Tier 1 - Foundation (No Dependencies)
 
 from . import display_event_outputs      # BasicOutputs - header(), text() [FOUNDATION]
 
-
-# ═══════════════════════════════════════════════════════════════════════════
-# TIER 2 - COMPLEX (Compose BasicOutputs)
-# ═══════════════════════════════════════════════════════════════════════════
+# Tier 2 - Complex (Compose BasicOutputs)
 
 from . import display_event_signals      # Signals - error(), warning(), success(), info(), zMarker()
 from . import display_event_inputs       # BasicInputs - selection() for interactive choices
 from . import display_event_data         # BasicData - list(), json_data() for structured data
 
-
-# ═══════════════════════════════════════════════════════════════════════════
-# TIER 3 - LEAF (Compose Multiple Packages)
-# ═══════════════════════════════════════════════════════════════════════════
+# Tier 3 - Leaf (Compose Multiple Packages)
 
 from . import display_event_timebased    # TimeBased - progress_bar(), spinner(), swiper()
 from . import display_event_advanced     # AdvancedData - zTable() with pagination
 from . import display_event_system       # zSystem - zSession(), zCrumbs(), zMenu(), zDialog(), zDeclare()
 
-
-# ═══════════════════════════════════════════════════════════════════════════
-# PUBLIC EXPORTS
-# ═══════════════════════════════════════════════════════════════════════════
+# Public Exports
 
 __all__ = [
     'display_event_outputs',      # Tier 1 - Foundation (header, text)

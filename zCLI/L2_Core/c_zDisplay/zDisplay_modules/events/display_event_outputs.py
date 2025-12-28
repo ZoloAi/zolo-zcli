@@ -130,10 +130,7 @@ basic_outputs.header("Error", color="RED", style="single")
 
 from zCLI import Any, Optional
 
-
-# ═══════════════════════════════════════════════════════════════════════════
 # Module Constants
-# ═══════════════════════════════════════════════════════════════════════════
 
 # Style constants
 DEFAULT_STYLE_FULL = "full"
@@ -169,10 +166,7 @@ KEY_BREAK_MESSAGE = "break_message"
 # Indentation string
 INDENT_STR = "  "
 
-
-# ═══════════════════════════════════════════════════════════════════════════
 # BasicOutputs Class
-# ═══════════════════════════════════════════════════════════════════════════
 
 class BasicOutputs:
     """Foundation event package providing fundamental output methods.

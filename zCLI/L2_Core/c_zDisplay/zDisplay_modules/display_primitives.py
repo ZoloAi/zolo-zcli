@@ -150,66 +150,33 @@ Backward-Compatible Aliases:
 """
 
 from zCLI import json, time, getpass, asyncio, uuid, os, shutil, subprocess, Any, Dict, Union, Optional
-
-# ═══════════════════════════════════════════════════════════════════════════
-# Mode Constants
-# ═══════════════════════════════════════════════════════════════════════════
-
-MODE_TERMINAL = "Terminal"
-MODE_WALKER = "Walker"
-MODE_EMPTY = ""
-
-# ═══════════════════════════════════════════════════════════════════════════
-# Event Type Constants
-# ═══════════════════════════════════════════════════════════════════════════
-
-EVENT_TYPE_OUTPUT = "output"
-EVENT_TYPE_INPUT_REQUEST = "input_request"
-EVENT_TYPE_ZDISPLAY = "zdisplay"
-
-# ═══════════════════════════════════════════════════════════════════════════
-# Write Type Constants
-# ═══════════════════════════════════════════════════════════════════════════
-
-WRITE_TYPE_RAW = "raw"
-WRITE_TYPE_LINE = "line"
-WRITE_TYPE_BLOCK = "block"
-
-# ═══════════════════════════════════════════════════════════════════════════
-# Input Type Constants
-# ═══════════════════════════════════════════════════════════════════════════
-
-INPUT_TYPE_STRING = "string"
-INPUT_TYPE_PASSWORD = "password"
-
-# ═══════════════════════════════════════════════════════════════════════════
-# JSON Key Constants
-# ═══════════════════════════════════════════════════════════════════════════
-
-KEY_EVENT = "event"
-KEY_TYPE = "type"
-KEY_CONTENT = "content"
-KEY_TIMESTAMP = "timestamp"
-KEY_REQUEST_ID = "requestId"
-KEY_PROMPT = "prompt"
-KEY_DISPLAY_EVENT = "display_event"
-KEY_DATA = "data"
-KEY_MASKED = "masked"
-
-# ═══════════════════════════════════════════════════════════════════════════
-# Default Constants
-# ═══════════════════════════════════════════════════════════════════════════
-
-DEFAULT_PROMPT = ""
-DEFAULT_FLUSH = True
-
-# ═══════════════════════════════════════════════════════════════════════════
-# Terminal Sizing (Header/Banner Safety)
-# ═══════════════════════════════════════════════════════════════════════════
-
-TERMINAL_COLS_DEFAULT = 80
-TERMINAL_COLS_MIN = 60
-TERMINAL_COLS_MAX = 120
+from .display_constants import (
+    MODE_TERMINAL,
+    MODE_WALKER,
+    MODE_EMPTY,
+    EVENT_TYPE_OUTPUT,
+    EVENT_TYPE_INPUT_REQUEST,
+    EVENT_TYPE_ZDISPLAY,
+    WRITE_TYPE_RAW,
+    WRITE_TYPE_LINE,
+    WRITE_TYPE_BLOCK,
+    INPUT_TYPE_STRING,
+    INPUT_TYPE_PASSWORD,
+    _KEY_EVENT,
+    _KEY_TYPE,
+    _KEY_CONTENT,
+    _KEY_TIMESTAMP,
+    _KEY_REQUEST_ID,
+    _KEY_PROMPT,
+    _KEY_DISPLAY_EVENT,
+    _KEY_DATA,
+    _KEY_MASKED,
+    _DEFAULT_PROMPT,
+    _DEFAULT_FLUSH,
+    _TERMINAL_COLS_DEFAULT,
+    _TERMINAL_COLS_MIN,
+    _TERMINAL_COLS_MAX,
+)
 
 
 class zPrimitives:
@@ -272,7 +239,7 @@ class zPrimitives:
         # 2) Equivalent: shutil.get_terminal_size
         if not cols:
             try:
-                cols = int(shutil.get_terminal_size(fallback=(TERMINAL_COLS_DEFAULT, 24)).columns)
+                cols = int(shutil.get_terminal_size(fallback=(_TERMINAL_COLS_DEFAULT, 24)).columns)
             except Exception:
                 cols = None
 
@@ -292,13 +259,13 @@ class zPrimitives:
                 cols = None
 
         if not cols or cols <= 0:
-            cols = TERMINAL_COLS_DEFAULT
+            cols = _TERMINAL_COLS_DEFAULT
 
         # Clamp
-        if cols < TERMINAL_COLS_MIN:
-            cols = TERMINAL_COLS_MIN
-        elif cols > TERMINAL_COLS_MAX:
-            cols = TERMINAL_COLS_MAX
+        if cols < _TERMINAL_COLS_MIN:
+            cols = _TERMINAL_COLS_MIN
+        elif cols > _TERMINAL_COLS_MAX:
+            cols = _TERMINAL_COLS_MAX
 
         return cols
 
@@ -306,7 +273,7 @@ class zPrimitives:
     # Output Primitives - Terminal + Optional GUI
     # ═══════════════════════════════════════════════════════════════════════════
 
-    def raw(self, content: str, flush: bool = DEFAULT_FLUSH) -> None:
+    def raw(self, content: str, flush: bool = _DEFAULT_FLUSH) -> None:
         """Write raw content with no formatting or newline.
         
         Dual-mode behavior:
@@ -410,10 +377,10 @@ class zPrimitives:
 
             # Create JSON event (same structure as WebSocket output adapter)
             event_data = {
-                KEY_EVENT: EVENT_TYPE_OUTPUT,
-                KEY_TYPE: write_type,
-                KEY_CONTENT: content,
-                KEY_TIMESTAMP: time.time()
+                _KEY_EVENT: EVENT_TYPE_OUTPUT,
+                _KEY_TYPE: write_type,
+                _KEY_CONTENT: content,
+                _KEY_TIMESTAMP: time.time()
             }
 
             # Broadcast to all connected WebSocket clients
@@ -440,7 +407,7 @@ class zPrimitives:
         """
         return str(uuid.uuid4())
 
-    def _send_input_request(self, request_type: str, prompt: str = DEFAULT_PROMPT, **kwargs) -> Optional['asyncio.Future']:
+    def _send_input_request(self, request_type: str, prompt: str = _DEFAULT_PROMPT, **kwargs) -> Optional['asyncio.Future']:
         """Common GUI input primitive - sends input request via bifrost/WebSocket.
         
         Creates an asyncio.Future that will be resolved when the GUI client responds.
@@ -473,11 +440,11 @@ class zPrimitives:
         try:
             # Create input request event (same structure as WebSocketInput)
             request_event = {
-                KEY_EVENT: EVENT_TYPE_INPUT_REQUEST,
-                KEY_REQUEST_ID: request_id,
-                KEY_TYPE: request_type,
-                KEY_PROMPT: prompt,
-                KEY_TIMESTAMP: time.time(),
+                _KEY_EVENT: EVENT_TYPE_INPUT_REQUEST,
+                _KEY_REQUEST_ID: request_id,
+                _KEY_TYPE: request_type,
+                _KEY_PROMPT: prompt,
+                _KEY_TIMESTAMP: time.time(),
                 **kwargs
             }
 
@@ -570,15 +537,15 @@ class zPrimitives:
             if event_name in SPECIAL_EVENTS:
                 # Create special event structure with top-level 'event' key
                 event_data = {
-                    KEY_EVENT: event_name,  # "event": "zDash" (frontend expects this)
+                    _KEY_EVENT: event_name,  # "event": "zDash" (frontend expects this)
                     **data  # Spread data into top level
                 }
             else:
                 # Regular display events use nested structure
                 event_data = {
-                    KEY_DISPLAY_EVENT: event_name,
-                    KEY_DATA: data,
-                    KEY_TIMESTAMP: time.time()
+                    _KEY_DISPLAY_EVENT: event_name,
+                    _KEY_DATA: data,
+                    _KEY_TIMESTAMP: time.time()
                 }
 
             # Buffer event for collection (backward compatibility with zWalker)
@@ -609,7 +576,7 @@ class zPrimitives:
     # Input Primitives - Terminal OR GUI (Dual Return Types)
     # ═══════════════════════════════════════════════════════════════════════════
 
-    def read_string(self, prompt: str = DEFAULT_PROMPT) -> Union[str, 'asyncio.Future']:
+    def read_string(self, prompt: str = _DEFAULT_PROMPT) -> Union[str, 'asyncio.Future']:
         """Read string input - terminal (synchronous) or GUI (async future).
         
         Critical dual-mode method with different return types based on mode:
@@ -653,7 +620,7 @@ class zPrimitives:
 
         return gui_future
 
-    def read_password(self, prompt: str = DEFAULT_PROMPT) -> Union[str, 'asyncio.Future']:
+    def read_password(self, prompt: str = _DEFAULT_PROMPT) -> Union[str, 'asyncio.Future']:
         """Read password input - terminal (synchronous) or GUI (async future).
         
         Critical dual-mode method with different return types based on mode:

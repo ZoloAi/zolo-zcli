@@ -281,9 +281,7 @@ AdvancedData is thread-safe when used through zDisplay singleton:
 
 from typing import Any, Optional, List, Dict, Union
 
-# ═══════════════════════════════════════════════════════════════════════════
-#                           MODULE CONSTANTS
-# ═══════════════════════════════════════════════════════════════════════════
+# Module Constants
 
 # Event name
 EVENT_ZTABLE: str = "zTable"
@@ -335,10 +333,7 @@ CHAR_SPACE: str = " "
 # Pagination algorithm constants
 PAGINATION_OFFSET_BASE: int = 1  # 1-based indexing for showing_start/showing_end
 
-
-# ═══════════════════════════════════════════════════════════════════════════
-#                            HELPER CLASS: PAGINATION
-# ═══════════════════════════════════════════════════════════════════════════
+# Helper Class: Pagination
 
 
 class Pagination:
@@ -529,10 +524,7 @@ class Pagination:
         }
 
 
-# ═══════════════════════════════════════════════════════════════════════════
-#                      MAIN CLASS: ADVANCEDDATA
-# ═══════════════════════════════════════════════════════════════════════════
-
+# Main Class: AdvancedData
 
 class AdvancedData:
     """

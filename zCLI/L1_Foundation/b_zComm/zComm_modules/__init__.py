@@ -13,7 +13,7 @@ from .helpers.network_utils import NetworkUtils
 from .comm_storage import StorageClient
 
 # Export public constants
-from .constants import (
+from .comm_constants import (
     # Service Identifiers
     SERVICE_POSTGRESQL,
     # Network Configuration

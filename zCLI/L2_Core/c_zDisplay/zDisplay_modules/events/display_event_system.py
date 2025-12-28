@@ -254,20 +254,8 @@ Current Implementation (Simple):
     - No field type support (checkbox, select, etc.)
     - No validation feedback
 
-Week 6.5 Integration TODO:
-    1. Integrate with zDialog subsystem (zCLI.subsystems.zDialog)
-    2. Add full schema validation support
-    3. Support field types: text, password, checkbox, select, number, email, etc.
-    4. Add real-time validation feedback
-    5. Integrate BasicData for validation error display (bullet list)
-    6. Integrate BasicData for form preview (JSON display)
-    7. Add zcli and walker parameter handling (currently TODO)
-    8. Support nested field structures
-    9. Support conditional field display
-    10. Add form state management
-
-Note: zDialog() parameters (zcli, walker) are documented but not yet implemented.
-      Full implementation requires Week 6.5 zDialog subsystem refactor.
+Note: For advanced form features (schema validation, field types, validation feedback),
+      use zcli.dialog.handle() from the zDialog subsystem (L2_Core.j_zDialog).
 
 
 ═══════════════════════════════════════════════════════════════════════════
@@ -396,10 +384,7 @@ from zCLI.L1_Foundation.a_zConfig.zConfig_modules import (
     CONTEXT_DUAL                    # "dual"
 )
 
-
-# ═══════════════════════════════════════════════════════════════════════════
-# MODULE CONSTANTS
-# ═══════════════════════════════════════════════════════════════════════════
+# Module Constants
 
 # Event Names (Bifrost WebSocket Events)
 EVENT_ZSESSION = "zSession"         # Session state display event
@@ -518,10 +503,7 @@ LABEL_ZCLI_VERSION = "  zcli_version"            # zCLI version label
 DEPLOYMENT_MODE_DEV = "dev"                      # Development mode
 DEPLOYMENT_MODE_PROD = "prod"                    # Production mode
 
-
-# ═══════════════════════════════════════════════════════════════════════════
-# ZSYSTEM CLASS
-# ═══════════════════════════════════════════════════════════════════════════
+# zSystem Class
 
 class zSystem:
     """
@@ -1618,8 +1600,8 @@ class zSystem:
             context: Form context dict containing:
                     - KEY_FIELDS: List of field names to collect
                     - Additional schema/validation data (future)
-            _zcli: zCLI instance for advanced integration (TODO: not yet implemented)
-            _walker: zWalker instance for navigation (TODO: not yet implemented)
+            _zcli: zCLI instance for logging integration
+            _walker: zWalker instance for navigation (reserved for future use)
         
         Returns:
             Dict[str, Any]: Collected form data {field_name: value, ...}
@@ -1641,23 +1623,13 @@ class zSystem:
             context = {KEY_FIELDS: ["username", "email", "role"]}
             data = display.zEvents.zSystem.zDialog(context)
             # Returns: {"username": "admin", "email": "a@b.com", "role": "admin"}
-        
-        Week 6.5 Integration TODO:
-            1. Add full schema validation support
-            2. Support field types: text, password, checkbox, select, number, email
-            3. Add real-time validation feedback
-            4. Integrate BasicData for validation errors (bullet list)
-            5. Integrate BasicData for form preview (JSON display)
-            6. Implement zcli parameter handling (access to auth, session, etc.)
-            7. Implement walker parameter handling (navigation integration)
-            8. Support nested field structures
-            9. Support conditional field display
-            10. Add form state management
+            
+            # For advanced form features, use zcli.dialog.handle() instead:
+            # result = zcli.dialog.handle({"zDialog": {"model": "@.zSchema.users", "fields": [...]}})
         
         Notes:
-            - zcli and walker parameters documented but not yet implemented
-            - Current implementation: Simple text input only
-            - Full implementation requires Week 6.5 zDialog subsystem refactor
+            - Simple text input only (by design)
+            - For schema validation and advanced features, use zcli.dialog.handle()
             - Uses zDeclare() for form header/footer
             - Composes zPrimitives.read_string() for input collection
         """

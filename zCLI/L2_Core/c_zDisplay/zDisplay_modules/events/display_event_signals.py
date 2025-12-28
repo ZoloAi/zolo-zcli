@@ -122,10 +122,7 @@ signals.error("Critical error")
 
 from zCLI import Any, Optional
 
-
-# ═══════════════════════════════════════════════════════════════════════════
 # Module Constants
-# ═══════════════════════════════════════════════════════════════════════════
 
 # Event name constants
 EVENT_NAME_ERROR = "error"
@@ -171,10 +168,7 @@ EMPTY_LINE = ""
 # Indentation string
 INDENT_STR = "  "
 
-
-# ═══════════════════════════════════════════════════════════════════════════
 # Signals Class
-# ═══════════════════════════════════════════════════════════════════════════
 
 class Signals:
     """Colored feedback signals for user notifications.

@@ -959,11 +959,8 @@ class CommandLauncher:
             
             self.logger.framework.debug(f"zDelta: Created new breadcrumb scope: {full_crumb_path}")
             
-            # Get block keys
-            zBlock_keys = list(target_block_dict.keys())
-            
-            # Navigate to the target block using walker's zBlock_loop
-            result = walker.zBlock_loop(target_block_dict, zBlock_keys)
+            # Navigate to the target block using walker's execute_loop
+            result = walker.execute_loop(items_dict=target_block_dict)
             return result
 
         # Route: zWizard

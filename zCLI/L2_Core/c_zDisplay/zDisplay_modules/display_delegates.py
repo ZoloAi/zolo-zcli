@@ -121,9 +121,7 @@ from .delegates import (
     DelegateSystem
 )
 
-# ═══════════════════════════════════════════════════════════════════════════
 # Module Constants - Event Keys and Names
-# ═══════════════════════════════════════════════════════════════════════════
 # Note: These constants are defined here to avoid circular imports.
 # The parent zDisplay.py imports this module, so we cannot import back.
 # These MUST stay in sync with the constants defined in zDisplay.py.
@@ -162,9 +160,7 @@ EVENT_ZMENU = "zMenu"
 EVENT_SELECTION = "selection"
 EVENT_ZDIALOG = "zDialog"
 
-# ═══════════════════════════════════════════════════════════════════════════
 # Module Constants - Default Values
-# ═══════════════════════════════════════════════════════════════════════════
 
 # Color Defaults
 DEFAULT_COLOR_RESET = "RESET"
@@ -183,10 +179,7 @@ DEFAULT_MENU_PROMPT = "Select an option:"
 DEFAULT_INDENT = 0
 DEFAULT_INDENT_SIZE = 2
 
-
-# ═══════════════════════════════════════════════════════════════════════════
-# Main Delegate Class - Composition of All Categories
-# ═══════════════════════════════════════════════════════════════════════════
+# Main Delegate Class
 
 class zDisplayDelegates(
     DelegatePrimitives,

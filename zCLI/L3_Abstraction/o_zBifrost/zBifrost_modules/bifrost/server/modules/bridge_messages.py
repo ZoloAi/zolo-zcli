@@ -610,7 +610,7 @@ class MessageHandler:
             block_dict = raw_zFile[zBlock]
             
             # Check if walker execution returns a generator (chunked mode)
-            result = await asyncio.to_thread(walker.zBlock_loop, block_dict)
+            result = await asyncio.to_thread(walker.execute_loop, block_dict)
             
             # Check if result is a generator (chunked execution mode)
             import types

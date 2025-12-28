@@ -949,13 +949,17 @@ class zWizard:
             return dispatch_fn
 
         if self.walker:
-            return self.walker.dispatch.handle
+            # FIX: Wrap the dispatch method to include walker parameter
+            # Returning method reference directly (self.walker.dispatch.handle) loses walker context
+            # when called as dispatch_fn(key, value) - walker defaults to None
+            def walker_dispatch(key: str, value: Any) -> Any:
+                return self.walker.dispatch.handle(key, value, context=context, walker=self.walker)
+            return walker_dispatch
 
+        # Fallback for standalone wizard instances (zcli.wizard)
         # Use zcli's dispatch instance with walker context
-        # BUG FIX: Pass walker to dispatch.handle so delta links work in dashboard panels
-        # Use zcli.walker since wizard.walker may be None when wizard is initialized from zcli
         def default_dispatch(key: str, value: Any) -> Any:
-            walker = self.walker or (self.zcli.walker if self.zcli and hasattr(self.zcli, 'walker') else None)
+            walker = self.zcli.walker if self.zcli and hasattr(self.zcli, 'walker') else None
             return self.zcli.dispatch.handle(key, value, context=context, walker=walker)
         return default_dispatch
 

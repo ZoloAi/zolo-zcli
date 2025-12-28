@@ -120,10 +120,7 @@ from .events.display_event_timebased import TimeBased
 from .events.display_event_media import MediaEvents
 from .events.display_event_links import LinkEvents
 
-
-# ═══════════════════════════════════════════════════════════════════════════
 # Module Constants
-# ═══════════════════════════════════════════════════════════════════════════
 
 # Style constants
 DEFAULT_COLOR = "RESET"
@@ -141,10 +138,7 @@ DEFAULT_LABEL_LOADING = "Loading"
 # Prompt constants
 DEFAULT_MENU_PROMPT = "Select an option:"
 
-
-# ═══════════════════════════════════════════════════════════════════════════
 # Event Orchestrator Class
-# ═══════════════════════════════════════════════════════════════════════════
 
 class zEvents:
     """Event orchestrator - composes 9 event packages with cross-references.

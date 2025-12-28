@@ -8,7 +8,7 @@ by the caller (e.g., zAuth subsystem).
 """
 
 from zCLI import Any, Dict, Optional, requests
-from .constants import HTTP_DEFAULT_TIMEOUT
+from .comm_constants import HTTP_DEFAULT_TIMEOUT
 
 # Module Constants
 

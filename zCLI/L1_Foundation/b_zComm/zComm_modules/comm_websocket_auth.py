@@ -15,7 +15,7 @@ For three-tier authentication (zSession, Application, Dual), see zBifrost (Layer
 from zCLI import Any, Optional, Dict
 from zCLI import WebSocketServerProtocol
 from urllib.parse import urlparse, parse_qs
-from .constants import (
+from .comm_constants import (
     WS_CLOSE_CODE_POLICY_VIOLATION,
     WS_CLOSE_CODE_INTERNAL_ERROR,
     WS_REASON_INVALID_ORIGIN,

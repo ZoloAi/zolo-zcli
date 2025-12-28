@@ -13,5 +13,6 @@ Architecture:
 """
 
 from .zDisplay import zDisplay
+from .zDisplay_modules.display_constants import *
 
 __all__ = ['zDisplay']

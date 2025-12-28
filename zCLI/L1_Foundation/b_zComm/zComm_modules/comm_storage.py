@@ -23,7 +23,7 @@ Usage:
 
 from pathlib import Path
 from typing import Optional, Union, BinaryIO, Any
-from .constants import (
+from .comm_constants import (
     STORAGE_DEFAULT_BACKEND,
     STORAGE_SUPPORTED_BACKENDS,
     STORAGE_CONFIG_KEY_BACKEND,

@@ -22,19 +22,16 @@ Grade: A+ (Type hints, constants, comprehensive docs)
 """
 
 from zCLI import Any
+from ..display_constants import (
+    _KEY_EVENT,
+    EVENT_ERROR,
+    EVENT_WARNING,
+    EVENT_SUCCESS,
+    EVENT_INFO,
+    EVENT_ZMARKER,
+)
 
-# ═══════════════════════════════════════════════════════════════════════════
-# Local Constants - To Avoid Circular Imports
-# ═══════════════════════════════════════════════════════════════════════════
-# Note: These constants are duplicated to avoid circular imports with parent.
-# KEEP IN SYNC with display_delegates.py!
-
-KEY_EVENT = "event"
-EVENT_ERROR = "error"
-EVENT_WARNING = "warning"
-EVENT_SUCCESS = "success"
-EVENT_INFO = "info"
-EVENT_ZMARKER = "zMarker"
+# Module-specific constants
 DEFAULT_INDENT = 0
 DEFAULT_MARKER_LABEL = "Marker"
 DEFAULT_COLOR_MAGENTA = "MAGENTA"
@@ -66,7 +63,7 @@ class DelegateSignals:
             display.error("Connection failed", indent=2)
         """
         return self.handle({
-            KEY_EVENT: EVENT_ERROR,
+            _KEY_EVENT: EVENT_ERROR,
             "content": content,
             "indent": indent,
         })
@@ -85,7 +82,7 @@ class DelegateSignals:
             display.warning("Cache is full, consider clearing")
         """
         return self.handle({
-            KEY_EVENT: EVENT_WARNING,
+            _KEY_EVENT: EVENT_WARNING,
             "content": content,
             "indent": indent,
         })
@@ -105,7 +102,7 @@ class DelegateSignals:
             display.success("Operation completed", indent=1)
         """
         return self.handle({
-            KEY_EVENT: EVENT_SUCCESS,
+            _KEY_EVENT: EVENT_SUCCESS,
             "content": content,
             "indent": indent,
         })
@@ -124,7 +121,7 @@ class DelegateSignals:
             display.info("Processing 10 records...")
         """
         return self.handle({
-            KEY_EVENT: EVENT_INFO,
+            _KEY_EVENT: EVENT_INFO,
             "content": content,
             "indent": indent,
         })
@@ -149,7 +146,7 @@ class DelegateSignals:
             display.zMarker("Checkpoint 1", color="CYAN")
         """
         return self.handle({
-            KEY_EVENT: EVENT_ZMARKER,
+            _KEY_EVENT: EVENT_ZMARKER,
             "label": label,
             "color": color,
             "indent": indent,

@@ -21,7 +21,7 @@ Example:
 
 from zCLI import Any, Dict, Optional
 from .services.postgresql_service import PostgreSQLService
-from .constants import SERVICE_POSTGRESQL, STATUS_KEY_ERROR
+from .comm_constants import SERVICE_POSTGRESQL, STATUS_KEY_ERROR
 
 # Module Constants
 

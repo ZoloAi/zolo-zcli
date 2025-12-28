@@ -19,17 +19,14 @@ Grade: A+ (Type hints, constants, comprehensive docs)
 """
 
 from zCLI import Any, Optional
+from ..display_constants import (
+    _KEY_EVENT,
+    EVENT_HEADER,
+    EVENT_ZDECLARE,
+    EVENT_TEXT,
+)
 
-# ═══════════════════════════════════════════════════════════════════════════
-# Local Constants - To Avoid Circular Imports
-# ═══════════════════════════════════════════════════════════════════════════
-# Note: These constants are duplicated to avoid circular imports with parent.
-# KEEP IN SYNC with display_delegates.py!
-
-KEY_EVENT = "event"
-EVENT_HEADER = "header"
-EVENT_ZDECLARE = "zDeclare"
-EVENT_TEXT = "text"
+# Module-specific constants
 DEFAULT_COLOR_RESET = "RESET"
 DEFAULT_STYLE_FULL = "full"
 DEFAULT_INDENT = 0
@@ -71,7 +68,7 @@ class DelegateOutputs:
             display.header("Title", color="PRIMARY", class="zTitle-1")
         """
         return self.handle({
-            KEY_EVENT: EVENT_HEADER,
+            _KEY_EVENT: EVENT_HEADER,
             "label": label,
             "color": color,
             "indent": indent,
@@ -101,7 +98,7 @@ class DelegateOutputs:
             display.zDeclare("[CONFIG] Loading schema", color="YELLOW")
         """
         return self.handle({
-            KEY_EVENT: EVENT_ZDECLARE,
+            _KEY_EVENT: EVENT_ZDECLARE,
             "label": label,
             "color": color,
             "indent": indent,
@@ -139,7 +136,7 @@ class DelegateOutputs:
         should_break = break_after if break_after is not None else pause
         
         return self.handle({
-            KEY_EVENT: EVENT_TEXT,
+            _KEY_EVENT: EVENT_TEXT,
             "content": content,
             "indent": indent,
             "break_after": should_break,  # Keep internal key for now

@@ -30,19 +30,14 @@ Grade: A+ (Type hints, constants, comprehensive docs)
 """
 
 from zCLI import Any, Dict
-
-# ═══════════════════════════════════════════════════════════════════════════
-# Local Constants - To Avoid Circular Imports
-# ═══════════════════════════════════════════════════════════════════════════
-# Note: These constants are duplicated to avoid circular imports with parent.
-# KEEP IN SYNC with display_delegates.py!
-
-KEY_EVENT = "event"
-EVENT_WRITE_RAW = "write_raw"
-EVENT_WRITE_LINE = "write_line"
-EVENT_WRITE_BLOCK = "write_block"
-EVENT_READ_STRING = "read_string"
-EVENT_READ_PASSWORD = "read_password"
+from ..display_constants import (
+    _KEY_EVENT,
+    EVENT_WRITE_RAW,
+    EVENT_WRITE_LINE,
+    EVENT_WRITE_BLOCK,
+    EVENT_READ_STRING,
+    EVENT_READ_PASSWORD,
+)
 
 
 class DelegatePrimitives:
@@ -70,7 +65,7 @@ class DelegatePrimitives:
             display.raw("... ")
             display.raw("Done\\n")
         """
-        return self.handle({KEY_EVENT: EVENT_WRITE_RAW, "content": content})
+        return self.handle({_KEY_EVENT: EVENT_WRITE_RAW, "content": content})
 
     def line(self, content: str) -> Any:
         """Write content with automatic newline.
@@ -84,7 +79,7 @@ class DelegatePrimitives:
         Example:
             display.line("Processing complete")
         """
-        return self.handle({KEY_EVENT: EVENT_WRITE_LINE, "content": content})
+        return self.handle({_KEY_EVENT: EVENT_WRITE_LINE, "content": content})
 
     def block(self, content: str) -> Any:
         """Write content as a formatted block.
@@ -95,7 +90,7 @@ class DelegatePrimitives:
         Returns:
             Any: Result from handle() method
         """
-        return self.handle({KEY_EVENT: EVENT_WRITE_BLOCK, "content": content})
+        return self.handle({_KEY_EVENT: EVENT_WRITE_BLOCK, "content": content})
 
     # ═══════════════════════════════════════════════════════════════════════════
     # Backward-Compatible Aliases (Legacy Support)
@@ -156,7 +151,7 @@ class DelegatePrimitives:
         Example:
             name = display.read_string("Enter your name: ")
         """
-        return self.handle({KEY_EVENT: EVENT_READ_STRING, "prompt": prompt})
+        return self.handle({_KEY_EVENT: EVENT_READ_STRING, "prompt": prompt})
 
     def read_password(self, prompt: str = "") -> Any:
         """Read password input (masked during entry).
@@ -170,7 +165,7 @@ class DelegatePrimitives:
         Example:
             password = display.read_password("Enter password: ")
         """
-        return self.handle({KEY_EVENT: EVENT_READ_PASSWORD, "prompt": prompt})
+        return self.handle({_KEY_EVENT: EVENT_READ_PASSWORD, "prompt": prompt})
 
     def read_primitive(self, obj: Dict[str, Any]) -> Any:
         """Read string primitive with obj parameter.
@@ -182,7 +177,7 @@ class DelegatePrimitives:
             Any: User input string from handle() method
         """
         prompt = obj.get("prompt", "")
-        return self.handle({KEY_EVENT: EVENT_READ_STRING, "prompt": prompt})
+        return self.handle({_KEY_EVENT: EVENT_READ_STRING, "prompt": prompt})
 
     def read_password_primitive(self, obj: Dict[str, Any]) -> Any:
         """Read password primitive with obj parameter.
@@ -194,5 +189,5 @@ class DelegatePrimitives:
             Any: User input string (masked during entry)
         """
         prompt = obj.get("prompt", "")
-        return self.handle({KEY_EVENT: EVENT_READ_PASSWORD, "prompt": prompt})
+        return self.handle({_KEY_EVENT: EVENT_READ_PASSWORD, "prompt": prompt})
 

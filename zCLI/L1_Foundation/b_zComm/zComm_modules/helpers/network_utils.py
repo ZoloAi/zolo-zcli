@@ -7,7 +7,7 @@ and other low-level network operations needed by zComm services.
 """
 
 from zCLI import Any, socket
-from ..constants import PORT_MIN, PORT_MAX, DEFAULT_HOST, DEFAULT_TIMEOUT_SECONDS
+from ..comm_constants import PORT_MIN, PORT_MAX, DEFAULT_HOST, DEFAULT_TIMEOUT_SECONDS
 
 # Module Constants
 

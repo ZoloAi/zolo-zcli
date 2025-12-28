@@ -59,7 +59,7 @@ from zCLI.utils import print_ready_message, validate_zcli_instance
 from .helpers.detectors.shared import _safe_getcwd
 
 # Import all public constants from centralized constants module
-from .constants import (
+from .config_constants import (
     # zMode values
     ZMODE_TERMINAL,
     ZMODE_ZBIFROST,

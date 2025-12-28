@@ -61,9 +61,7 @@ This ensures terminal users get full metadata even if they can't view the image 
 
 from zCLI import Any, Dict, Optional
 
-# ═══════════════════════════════════════════════════════════════════════════
 # Module Constants
-# ═══════════════════════════════════════════════════════════════════════════
 
 EVENT_IMAGE = "image"
 EVENT_VIDEO = "video"

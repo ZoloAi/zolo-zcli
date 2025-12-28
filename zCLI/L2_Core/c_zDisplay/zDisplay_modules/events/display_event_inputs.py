@@ -145,10 +145,7 @@ choice = basic_inputs.selection("Choose:", ["Option 1", "Option 2"])
 from zCLI import Any, Optional, Union, List, Dict
 from typing import Set
 
-
-# ═══════════════════════════════════════════════════════════════════════════
 # Module Constants
-# ═══════════════════════════════════════════════════════════════════════════
 
 # Event name constant
 EVENT_NAME_SELECTION = "selection"
@@ -199,10 +196,7 @@ DEFAULT_INDENT = 0
 # Option numbering offset
 OPTION_INDEX_OFFSET = 1  # Display numbering starts at 1, but list indices start at 0
 
-
-# ═══════════════════════════════════════════════════════════════════════════
 # BasicInputs Class
-# ═══════════════════════════════════════════════════════════════════════════
 
 class BasicInputs:
     """Interactive selection prompts with validation.

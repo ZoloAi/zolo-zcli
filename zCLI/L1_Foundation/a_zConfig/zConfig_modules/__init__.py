@@ -16,7 +16,7 @@ from .config_websocket import WebSocketConfig
 from .config_http_server import HttpServerConfig
 
 # Import all public constants from centralized constants module
-from .constants import (
+from .config_constants import (
     # zMode values
     ZMODE_TERMINAL,
     ZMODE_ZBIFROST,

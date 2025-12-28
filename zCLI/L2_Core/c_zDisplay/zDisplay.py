@@ -121,107 +121,54 @@ from zCLI.L1_Foundation.a_zConfig.zConfig_modules import SESSION_KEY_ZMODE
 from .zDisplay_modules.display_primitives import zPrimitives
 from .zDisplay_modules.display_events import zEvents
 from .zDisplay_modules.display_delegates import zDisplayDelegates
-
-# ═══════════════════════════════════════════════════════════════════════════
-# Module Constants
-# ═══════════════════════════════════════════════════════════════════════════
-
-SUBSYSTEM_NAME = "zDisplay"
-READY_MESSAGE = "ZDISPLAY Ready"
-DEFAULT_COLOR = "ZDISPLAY"
-DEFAULT_MODE = "Terminal"
-
-# ═══════════════════════════════════════════════════════════════════════════
-# Event Name Constants - Output Events
-# ═══════════════════════════════════════════════════════════════════════════
-
-EVENT_TEXT = "text"
-EVENT_RICH_TEXT = "rich_text"
-EVENT_HEADER = "header"
-EVENT_LINE = "line"
-
-# ═══════════════════════════════════════════════════════════════════════════
-# Event Name Constants - Signal Events
-# ═══════════════════════════════════════════════════════════════════════════
-
-EVENT_ERROR = "error"
-EVENT_WARNING = "warning"
-EVENT_SUCCESS = "success"
-EVENT_INFO = "info"
-EVENT_ZMARKER = "zMarker"
-
-# ═══════════════════════════════════════════════════════════════════════════
-# Event Name Constants - Data Events
-# ═══════════════════════════════════════════════════════════════════════════
-
-EVENT_LIST = "list"
-EVENT_OUTLINE = "outline"
-EVENT_JSON = "json"
-EVENT_JSON_DATA = "json_data"
-EVENT_ZTABLE = "zTable"
-
-# ═══════════════════════════════════════════════════════════════════════════
-# Event Name Constants - Media Events
-# ═══════════════════════════════════════════════════════════════════════════
-
-EVENT_IMAGE = "image"
-EVENT_VIDEO = "video"
-EVENT_AUDIO = "audio"
-EVENT_PICTURE = "picture"
-
-# ═══════════════════════════════════════════════════════════════════════════
-# Event Name Constants - System Events
-# ═══════════════════════════════════════════════════════════════════════════
-
-EVENT_ZDECLARE = "zDeclare"
-EVENT_ZSESSION = "zSession"
-EVENT_ZCONFIG = "zConfig"
-EVENT_ZCRUMBS = "zCrumbs"
-EVENT_ZMENU = "zMenu"
-EVENT_ZDASH = "zDash"
-EVENT_ZDIALOG = "zDialog"
-
-# ═══════════════════════════════════════════════════════════════════════════
-# Event Name Constants - Widget Events
-# ═══════════════════════════════════════════════════════════════════════════
-
-EVENT_PROGRESS_BAR = "progress_bar"
-EVENT_SPINNER = "spinner"
-EVENT_PROGRESS_ITERATOR = "progress_iterator"
-EVENT_INDETERMINATE_PROGRESS = "indeterminate_progress"
-
-# ═══════════════════════════════════════════════════════════════════════════
-# Event Name Constants - Input Events
-# ═══════════════════════════════════════════════════════════════════════════
-
-EVENT_SELECTION = "selection"
-EVENT_READ_STRING = "read_string"
-EVENT_READ_PASSWORD = "read_password"
-EVENT_BUTTON = "button"
-EVENT_LINK = "link"
-
-# ═══════════════════════════════════════════════════════════════════════════
-# Event Name Constants - Primitive Events
-# ═══════════════════════════════════════════════════════════════════════════
-
-EVENT_WRITE_RAW = "write_raw"
-EVENT_WRITE_LINE = "write_line"
-EVENT_WRITE_BLOCK = "write_block"
-
-# ═══════════════════════════════════════════════════════════════════════════
-# Error Messages
-# ═══════════════════════════════════════════════════════════════════════════
-
-ERR_INVALID_OBJ = "zDisplay.handle() requires dict, got %s"
-ERR_MISSING_EVENT = "zDisplay event missing 'event' key"
-ERR_UNKNOWN_EVENT = "Unknown zDisplay event: %s"
-ERR_INVALID_PARAMS = "Invalid parameters for event '%s': %s"
-
-# ═══════════════════════════════════════════════════════════════════════════
-# Handler Keys
-# ═══════════════════════════════════════════════════════════════════════════
-
-KEY_EVENT = "event"
+from .zDisplay_modules.display_constants import (
+    SUBSYSTEM_NAME,
+    READY_MESSAGE,
+    DEFAULT_COLOR,
+    DEFAULT_MODE,
+    EVENT_TEXT,
+    EVENT_RICH_TEXT,
+    EVENT_HEADER,
+    EVENT_LINE,
+    EVENT_ERROR,
+    EVENT_WARNING,
+    EVENT_SUCCESS,
+    EVENT_INFO,
+    EVENT_ZMARKER,
+    EVENT_LIST,
+    EVENT_OUTLINE,
+    EVENT_JSON,
+    EVENT_JSON_DATA,
+    EVENT_ZTABLE,
+    EVENT_IMAGE,
+    EVENT_VIDEO,
+    EVENT_AUDIO,
+    EVENT_PICTURE,
+    EVENT_ZDECLARE,
+    EVENT_ZSESSION,
+    EVENT_ZCONFIG,
+    EVENT_ZCRUMBS,
+    EVENT_ZMENU,
+    EVENT_ZDASH,
+    EVENT_ZDIALOG,
+    EVENT_PROGRESS_BAR,
+    EVENT_SPINNER,
+    EVENT_PROGRESS_ITERATOR,
+    EVENT_INDETERMINATE_PROGRESS,
+    EVENT_SELECTION,
+    EVENT_READ_STRING,
+    EVENT_READ_PASSWORD,
+    EVENT_BUTTON,
+    EVENT_LINK,
+    EVENT_WRITE_RAW,
+    EVENT_WRITE_LINE,
+    EVENT_WRITE_BLOCK,
+    _ERR_INVALID_OBJ,
+    _ERR_MISSING_EVENT,
+    _ERR_UNKNOWN_EVENT,
+    _ERR_INVALID_PARAMS,
+    _KEY_EVENT,
+)
 
 
 class zDisplay(zDisplayDelegates):
@@ -358,7 +305,7 @@ class zDisplay(zDisplayDelegates):
 
         # Initialize ready message using modern handler
         self.handle({
-            KEY_EVENT: EVENT_ZDECLARE,
+            _KEY_EVENT: EVENT_ZDECLARE,
             "label": READY_MESSAGE,
             "color": self.mycolor,
             "indent": 0,
@@ -395,28 +342,28 @@ class zDisplay(zDisplayDelegates):
             - Never raises exceptions (returns None on error)
         """
         if not isinstance(display_obj, dict):
-            self.logger.warning(ERR_INVALID_OBJ, type(display_obj))
+            self.logger.warning(_ERR_INVALID_OBJ, type(display_obj))
             return None
 
-        event = display_obj.get(KEY_EVENT)
+        event = display_obj.get(_KEY_EVENT)
         if not event:
-            self.logger.warning(ERR_MISSING_EVENT)
+            self.logger.warning(_ERR_MISSING_EVENT)
             return None
 
         handler = self._event_map.get(event)
         if not handler:
-            self.logger.warning(ERR_UNKNOWN_EVENT, event)
+            self.logger.warning(_ERR_UNKNOWN_EVENT, event)
             return None
 
         # Filter out 'event' key AND metadata keys (starting with _)
         # Metadata keys like _zClass, _id, _rbac are Bifrost-only and should not be passed to Terminal event methods
         # EXCEPTION: _context is needed for %data.* variable resolution (v1.5.12)
-        params = {k: v for k, v in display_obj.items() if k != KEY_EVENT and (not k.startswith('_') or k == '_context')}
+        params = {k: v for k, v in display_obj.items() if k != _KEY_EVENT and (not k.startswith('_') or k == '_context')}
 
         try:
             return handler(**params)
         except TypeError as error:
-            self.logger.error(ERR_INVALID_PARAMS, event, error)
+            self.logger.error(_ERR_INVALID_PARAMS, event, error)
             return None
 
     # ═══════════════════════════════════════════════════════════════════════════

@@ -313,10 +313,7 @@ ops.zcli.display.zEvents.BasicData.json_data(schema_meta, color=True)
 
 from zCLI import json, re, Any, Optional, Union, List, Dict
 
-
-# ═══════════════════════════════════════════════════════════════════════════
 # Module Constants
-# ═══════════════════════════════════════════════════════════════════════════
 
 # Event name constants
 EVENT_NAME_LIST = "list"
@@ -360,10 +357,7 @@ COLOR_ATTR_YELLOW = "YELLOW"
 COLOR_ATTR_MAGENTA = "MAGENTA"
 COLOR_ATTR_RESET = "RESET"
 
-
-# ═══════════════════════════════════════════════════════════════════════════
 # BasicData Class
-# ═══════════════════════════════════════════════════════════════════════════
 
 class BasicData:
     """Structured data display with zDialog/zData integration potential.

@@ -580,7 +580,7 @@ class Linking:
             self.logger.debug(f"[zNavigation] 📸 Saved breadcrumb snapshot: {breadcrumb_snapshot}")
         
         # Execute target block
-        result = walker.zBlock_loop(active_zBlock_dict, zBlock_keys)
+        result = walker.execute_loop(items_dict=active_zBlock_dict)
         self.logger.debug(f"[zNavigation] Block execution result: {result}, should_bounce_back: {should_bounce_back}")
         
         # If block-level bounce-back was flagged, restore breadcrumb snapshot and continue
@@ -646,7 +646,7 @@ class Linking:
                         self.logger.debug(f"[zNavigation] Continuing from: {zBlock}, start_key: {start_key}")
                         
                         # Re-execute the block to continue the walker
-                        bounce_result = walker.zBlock_loop(block_dict, block_keys, start_key)
+                        bounce_result = walker.execute_loop(items_dict=block_dict, start_key=start_key)
                         
                         # Convert soft exit dict to signal string
                         if isinstance(bounce_result, dict) and bounce_result.get("exit") == "completed":

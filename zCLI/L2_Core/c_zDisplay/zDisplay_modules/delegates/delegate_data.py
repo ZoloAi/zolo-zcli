@@ -21,19 +21,16 @@ Grade: A+ (Type hints, constants, comprehensive docs)
 """
 
 from zCLI import Any, List, Dict, Optional
+from ..display_constants import (
+    _KEY_EVENT,
+    EVENT_LIST,
+    EVENT_JSON,
+    EVENT_JSON_DATA,
+    EVENT_OUTLINE,
+    EVENT_ZTABLE,
+)
 
-# ═══════════════════════════════════════════════════════════════════════════
-# Local Constants - To Avoid Circular Imports
-# ═══════════════════════════════════════════════════════════════════════════
-# Note: These constants are duplicated to avoid circular imports with parent.
-# KEEP IN SYNC with display_delegates.py!
-
-KEY_EVENT = "event"
-EVENT_LIST = "list"
-EVENT_JSON = "json"
-EVENT_JSON_DATA = "json_data"
-EVENT_OUTLINE = "outline"
-EVENT_ZTABLE = "zTable"
+# Module-specific constants
 DEFAULT_STYLE_BULLET = "bullet"
 DEFAULT_INDENT = 0
 DEFAULT_INDENT_SIZE = 2
@@ -74,7 +71,7 @@ class DelegateData:
             display.list(["[DIR] folder/"], style="none")
         """
         return self.handle({
-            KEY_EVENT: EVENT_LIST,
+            _KEY_EVENT: EVENT_LIST,
             "items": items,
             "style": style,
             "indent": indent,
@@ -109,7 +106,7 @@ class DelegateData:
             ])
         """
         return self.handle({
-            KEY_EVENT: EVENT_OUTLINE,
+            _KEY_EVENT: EVENT_OUTLINE,
             "items": items,
             "styles": styles,
             "indent": indent,
@@ -137,7 +134,7 @@ class DelegateData:
             display.json_data({"name": "Alice", "age": 30}, indent_size=4)
         """
         return self.handle({
-            KEY_EVENT: EVENT_JSON_DATA,
+            _KEY_EVENT: EVENT_JSON_DATA,
             "data": data,
             "indent_size": indent_size,
             "indent": indent,
@@ -166,7 +163,7 @@ class DelegateData:
             display.json({"status": "ok", "count": 42})
         """
         return self.handle({
-            KEY_EVENT: EVENT_JSON,
+            _KEY_EVENT: EVENT_JSON,
             "data": data,
             "indent_size": indent_size,
             "indent": indent,
@@ -209,7 +206,7 @@ class DelegateData:
             )
         """
         return self.handle({
-            KEY_EVENT: EVENT_ZTABLE,
+            _KEY_EVENT: EVENT_ZTABLE,
             "title": title,
             "columns": columns,
             "rows": rows,

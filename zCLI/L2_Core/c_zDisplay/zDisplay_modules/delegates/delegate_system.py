@@ -22,20 +22,17 @@ Grade: A+ (Type hints, constants, comprehensive docs)
 """
 
 from zCLI import Any, Optional, List, Dict
+from ..display_constants import (
+    _KEY_EVENT,
+    EVENT_ZSESSION,
+    EVENT_ZCONFIG,
+    EVENT_ZCRUMBS,
+    EVENT_ZMENU,
+    EVENT_SELECTION,
+    EVENT_ZDIALOG,
+)
 
-# ═══════════════════════════════════════════════════════════════════════════
-# Local Constants - To Avoid Circular Imports
-# ═══════════════════════════════════════════════════════════════════════════
-# Note: These constants are duplicated to avoid circular imports with parent.
-# KEEP IN SYNC with display_delegates.py!
-
-KEY_EVENT = "event"
-EVENT_ZSESSION = "zSession"
-EVENT_ZCONFIG = "zConfig"
-EVENT_ZCRUMBS = "zCrumbs"
-EVENT_ZMENU = "zMenu"
-EVENT_SELECTION = "selection"
-EVENT_ZDIALOG = "zDialog"
+# Module-specific constants
 DEFAULT_MENU_PROMPT = "Select an option:"
 DEFAULT_STYLE_NUMBERED = "numbered"
 
@@ -71,7 +68,7 @@ class DelegateSystem:
             display.zSession(zcli.session)
         """
         return self.handle({
-            KEY_EVENT: EVENT_ZSESSION,
+            _KEY_EVENT: EVENT_ZSESSION,
             "session_data": session_data,
             "break_after": break_after,
             "break_message": break_message,
@@ -94,7 +91,7 @@ class DelegateSystem:
             Any: Result from handle() method
         """
         return self.handle({
-            KEY_EVENT: EVENT_ZCONFIG,
+            _KEY_EVENT: EVENT_ZCONFIG,
             "config_data": config_data,
             "break_after": break_after,
             "break_message": break_message,
@@ -113,7 +110,7 @@ class DelegateSystem:
             display.zCrumbs(zcli.session)
         """
         return self.handle({
-            KEY_EVENT: EVENT_ZCRUMBS,
+            _KEY_EVENT: EVENT_ZCRUMBS,
             "session_data": session_data,
         })
 
@@ -141,7 +138,7 @@ class DelegateSystem:
             )
         """
         return self.handle({
-            KEY_EVENT: EVENT_ZMENU,
+            _KEY_EVENT: EVENT_ZMENU,
             "menu_items": menu_items,
             "prompt": prompt,
             "return_selection": return_selection,
@@ -175,7 +172,7 @@ class DelegateSystem:
             )
         """
         return self.handle({
-            KEY_EVENT: EVENT_SELECTION,
+            _KEY_EVENT: EVENT_SELECTION,
             "prompt": prompt,
             "options": options,
             "multi": multi,
@@ -203,7 +200,7 @@ class DelegateSystem:
             result = display.zDialog(dialog_context, zcli=zcli)
         """
         return self.handle({
-            KEY_EVENT: EVENT_ZDIALOG,
+            _KEY_EVENT: EVENT_ZDIALOG,
             "context": context,
             "zcli": zcli,
             "walker": walker,
