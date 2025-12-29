@@ -72,6 +72,9 @@ __description__ = "Command dispatch and routing components for zCLI subsystem"
 # COMPONENT IMPORTS (Tier 1 - Foundation)
 # ============================================================================
 
+# Layer 0: Constants (Foundation)
+from .dispatch_constants import *  # Centralized constants for all dispatch modules
+
 # Tier 1: Foundation Components (no internal dependencies)
 from .dispatch_launcher import CommandLauncher      # Command execution & routing
 from .dispatch_modifiers import ModifierProcessor  # Modifier detection & processing

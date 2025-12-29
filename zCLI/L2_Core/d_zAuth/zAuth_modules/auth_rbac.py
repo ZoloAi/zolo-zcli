@@ -833,11 +833,11 @@ class RBAC:
         # Log active context for debugging
         active_context = self._get_active_context()
         if active_context == CONTEXT_ZSESSION:
-            self._log("debug", LOG_CONTEXT_ZSESSION)
+            self._log("debug", _LOG_CONTEXT_ZSESSION)
         elif active_context == CONTEXT_APPLICATION:
-            self._log("debug", LOG_CONTEXT_APPLICATION)
+            self._log("debug", _LOG_CONTEXT_APPLICATION)
         elif active_context == CONTEXT_DUAL:
-            self._log("debug", LOG_CONTEXT_DUAL)
+            self._log("debug", _LOG_CONTEXT_DUAL)
         
         # Check role match (handles single/list required_role and dual-mode OR logic)
         if self._check_role_match(user_role, required_role):

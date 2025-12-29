@@ -91,12 +91,12 @@ Usage Examples:
 
 Thread Safety:
     - Relies on thread-safe logger and display instances from zCLI
-    - Mode detection reads from context dict (passed as parameter)
+    - Mode detection reads from session (zcli.session[SESSION_KEY_ZMODE])
     - No internal state mutation during processing
 
 Integration with zSession:
-    - Mode detection: Uses SESSION_KEY_ZMODE from context
-    - Context passing: All handlers accept optional context parameter
+    - Mode detection: Uses SESSION_KEY_ZMODE from session (canonical source)
+    - Context passing: All handlers accept optional context parameter for request data
     - Session access: Via self.zcli.session (centralized session management)
 
 zAuth Integration:
@@ -109,105 +109,67 @@ Constants:
     and reduce the risk of typos. See module-level constants below for complete list.
 """
 
-from typing import Any, Optional, Dict, List, Union
+from zCLI import Any, Optional, Dict, List, Union
 
-# Import zConfig session constants for modernization
-# TODO: Week 6.2 (zConfig) - Use SESSION_KEY_ZMODE instead of "mode" raw string
-# Note: Temporarily using raw "mode" until zConfig constants are finalized
-# from zCLI.L1_Foundation.a_zConfig.config_modules.config_constants import SESSION_KEY_ZMODE
+# Import SESSION_KEY_ZMODE from zConfig for mode detection
+from zCLI.L1_Foundation.a_zConfig.zConfig_modules import SESSION_KEY_ZMODE
 
-# ============================================================================
-# MODULE CONSTANTS - Modifier Symbols
-# ============================================================================
+# Import all dispatch constants from centralized location
+from .dispatch_constants import (
+    # Modifiers
+    MOD_CARET,
+    MOD_TILDE,
+    MOD_ASTERISK,
+    MOD_EXCLAMATION,
+    PREFIX_MODIFIERS,
+    SUFFIX_MODIFIERS,
+    ALL_MODIFIERS,
+    # Dict Keys - Context & Session (KEY_MODE removed - using SESSION_KEY_ZMODE)
+    KEY_ZVAFILE,
+    KEY_ZBLOCK,
+    # Modes & Navigation
+    MODE_BIFROST,
+    NAV_ZBACK,
+    # Display Labels (INTERNAL)
+    _LABEL_PROCESS_MODIFIERS,
+    _LABEL_ZBOUNCE,
+    _LABEL_ZREQUIRED,
+    _LABEL_ZREQUIRED_RETURN,
+    # Log Messages (INTERNAL)
+    _LOG_PREFIX_MODIFIERS,
+    _LOG_MSG_PARSING_PREFIX,
+    _LOG_MSG_PARSING_SUFFIX,
+    _LOG_MSG_PRE_MODIFIERS,
+    _LOG_MSG_SUF_MODIFIERS,
+    _LOG_MSG_RESOLVED,
+    _LOG_MSG_MENU_DETECTED,
+    _LOG_MSG_ZBOUNCE_RESULT,
+    _LOG_MSG_ZBOUNCE_CONTEXT,
+    _LOG_MSG_ZBOUNCE_MODE_CHECK,
+    _LOG_MSG_BIFROST_DETECTED,
+    _LOG_MSG_REQUIRED_STEP,
+    _LOG_MSG_REQUIRED_RESULTS,
+    _LOG_MSG_REQUIREMENT_NOT_SATISFIED,
+    _LOG_MSG_REQUIREMENT_SATISFIED,
+    _LOG_MSG_LOOKING_UP_KEY,
+    _LOG_MSG_RESOLVED_KEY,
+    _LOG_MSG_COULD_NOT_LOAD,
+    _LOG_MSG_NO_ZVAFILE,
+    _LOG_MSG_CANNOT_RESOLVE,
+    # Prompts & Input (INTERNAL)
+    _PROMPT_REQUIRED_CONTINUE,
+    _INPUT_STOP,
+    # Defaults (INTERNAL)
+    _DEFAULT_ZBLOCK,
+    _DEFAULT_INDENT_PROCESS,
+    _DEFAULT_INDENT_MODIFIER,
+    # Styles (INTERNAL)
+    _STYLE_SINGLE,
+    _STYLE_WAVY,
+)
 
-MOD_CARET = "^"           # Bounce back: Execute action → return to menu
-MOD_TILDE = "~"           # Anchor: Disable back navigation (used with *)
-MOD_ASTERISK = "*"        # Menu: Create menu from horizontal data
-MOD_EXCLAMATION = "!"     # Required: Retry until success
-
-# ============================================================================
-# MODULE CONSTANTS - Modifier Sets
-# ============================================================================
-
-PREFIX_MODIFIERS = [MOD_CARET, MOD_TILDE]
-SUFFIX_MODIFIERS = [MOD_EXCLAMATION, MOD_ASTERISK]
-ALL_MODIFIERS = PREFIX_MODIFIERS + SUFFIX_MODIFIERS
-
-# ============================================================================
-# MODULE CONSTANTS - Context Keys (Session/Mode Detection)
-# ============================================================================
-
-KEY_MODE = "mode"  # TODO: Replace with SESSION_KEY_ZMODE from zConfig
-KEY_ZVAFILE = "zVaFile"
-KEY_ZBLOCK = "zBlock"
-
-# ============================================================================
-# MODULE CONSTANTS - Mode Values
-# ============================================================================
-
-MODE_BIFROST = "zBifrost"
-NAV_ZBACK = "zBack"
-
-# ============================================================================
-# MODULE CONSTANTS - Display Labels (zDeclare messages)
-# ============================================================================
-
-LABEL_PROCESS_MODIFIERS = "Process Modifiers"
-LABEL_ZBOUNCE = "zBounce (execute then back)"
-LABEL_ZREQUIRED = "zRequired"
-LABEL_ZREQUIRED_RETURN = "zRequired Return"
-
-# ============================================================================
-# MODULE CONSTANTS - Log Prefixes
-# ============================================================================
-
-LOG_PREFIX_MODIFIERS = "[MODIFIERS]"
-LOG_MSG_PARSING_PREFIX = "Parsing prefix modifiers for key: %s"
-LOG_MSG_PARSING_SUFFIX = "Parsing suffix modifiers for key: %s"
-LOG_MSG_PRE_MODIFIERS = "pre_modifiers: %s"
-LOG_MSG_SUF_MODIFIERS = "suf_modifiers: %s"
-LOG_MSG_RESOLVED = "Resolved modifiers: %s on key: %s"
-LOG_MSG_MENU_DETECTED = "* Modifier detected for %s - invoking menu (anchor=%s)"
-LOG_MSG_ZBOUNCE_RESULT = "zBounce action result: %s"
-LOG_MSG_ZBOUNCE_CONTEXT = "zBounce context: %s"
-LOG_MSG_ZBOUNCE_MODE_CHECK = "zBounce mode check: context=%s, mode=%s"
-LOG_MSG_BIFROST_DETECTED = "zBifrost mode detected - returning actual result"
-LOG_MSG_REQUIRED_STEP = "Required step: %s"
-LOG_MSG_REQUIRED_RESULTS = "zRequired results: %s"
-LOG_MSG_REQUIREMENT_NOT_SATISFIED = "Requirement '%s' not satisfied. Retrying..."
-LOG_MSG_REQUIREMENT_SATISFIED = "Requirement '%s' satisfied."
-LOG_MSG_LOOKING_UP_KEY = f"{LOG_PREFIX_MODIFIERS} Looking up key: '%s' in block_dict keys: %s"
-LOG_MSG_RESOLVED_KEY = f"{LOG_PREFIX_MODIFIERS} Resolved ^key '%s' to horizontal value: %s"
-LOG_MSG_COULD_NOT_LOAD = "Could not load UI block %s from %s"
-LOG_MSG_NO_ZVAFILE = "No zVaFile in zspark_obj"
-LOG_MSG_CANNOT_RESOLVE = "Cannot resolve ^key without walker context"
-
-# ============================================================================
-# MODULE CONSTANTS - Prompt Text
-# ============================================================================
-
-PROMPT_REQUIRED_CONTINUE = "Try again? (press Enter to retry, 'n' or 'stop' to go back): "
-
-# ============================================================================
-# MODULE CONSTANTS - User Input
-# ============================================================================
-
-INPUT_STOP = "stop"
-
-# ============================================================================
-# MODULE CONSTANTS - Default Values
-# ============================================================================
-
-DEFAULT_ZBLOCK = "root"
-DEFAULT_INDENT_PROCESS = 2
-DEFAULT_INDENT_MODIFIER = 3
-
-# ============================================================================
-# MODULE CONSTANTS - Style Values
-# ============================================================================
-
-STYLE_SINGLE = "single"
-STYLE_WAVY = "~"
+# Import shared dispatch helpers
+from .dispatch_helpers import is_bifrost_mode
 
 
 class ModifierProcessor:
@@ -229,14 +191,16 @@ class ModifierProcessor:
         process(): Execute modifier-specific behavior
         
         Helper methods (DRY):
-        _is_bifrost_mode(): Check if context is in Bifrost mode
         _display_modifier(): Display modifier label with consistent styling
         _resolve_ui_key(): Resolve ^key from zUI file
+        
+        Shared utilities (from dispatch_helpers):
+        is_bifrost_mode(): Check if session is in Bifrost mode (no self, uses session dict)
     
     Integration:
-        - zConfig: Uses session constants (TODO: SESSION_KEY_ZMODE)
+        - zConfig: Uses SESSION_KEY_ZMODE from session for mode detection
         - zDisplay: UI output via zDeclare() and read_string()
-        - zSession: Mode detection via context dict
+        - zSession: Mode detection via session[SESSION_KEY_ZMODE]
         - Forward dependencies: 3 subsystems (see module docstring)
     """
     
@@ -291,9 +255,9 @@ class ModifierProcessor:
             - Detection is order-independent
             - Uses module-level PREFIX_MODIFIERS constant
         """
-        self.logger.framework.debug(LOG_MSG_PARSING_PREFIX, zKey)
+        self.logger.framework.debug(_LOG_MSG_PARSING_PREFIX, zKey)
         pre_modifiers = [sym for sym in PREFIX_MODIFIERS if zKey.startswith(sym)]
-        self.logger.framework.debug(LOG_MSG_PRE_MODIFIERS, pre_modifiers)
+        self.logger.framework.debug(_LOG_MSG_PRE_MODIFIERS, pre_modifiers)
         return pre_modifiers
 
     def check_suffix(self, zKey: str) -> List[str]:
@@ -324,9 +288,9 @@ class ModifierProcessor:
             - Detection is order-independent
             - Uses module-level SUFFIX_MODIFIERS constant
         """
-        self.logger.framework.debug(LOG_MSG_PARSING_SUFFIX, zKey)
+        self.logger.framework.debug(_LOG_MSG_PARSING_SUFFIX, zKey)
         suf_modifiers = [sym for sym in SUFFIX_MODIFIERS if zKey.endswith(sym)]
-        self.logger.framework.debug(LOG_MSG_SUF_MODIFIERS, suf_modifiers)
+        self.logger.framework.debug(_LOG_MSG_SUF_MODIFIERS, suf_modifiers)
         return suf_modifiers
 
     # ========================================================================
@@ -342,244 +306,318 @@ class ModifierProcessor:
         walker: Optional[Any] = None
     ) -> Optional[Union[str, Any]]:
         """
-        Process modifiers and execute appropriate behavior.
+        Process modifiers and execute appropriate behavior (ORCHESTRATOR).
         
-        Handles all four modifier types with mode-specific behavior:
-        - * (menu): Create menu via zNavigation.create()
-        - ^ (bounce): Execute action → return "zBack" (Terminal) or result (Bifrost)
-        - ! (required): Retry loop until success, user can abort
-        - No modifiers: Pass through to launcher
+        Routes modifier processing to focused handlers. This method has been
+        decomposed from 211 lines into a clean orchestrator + 4 helpers.
+        
+        Modifier priority:
+        1. * (menu): Create menu via zNavigation
+        2. ^ (bounce): Execute action → return based on mode
+        3. ! (required): Retry loop until success
+        4. No modifiers: Pass through to launcher
         
         Args:
-            modifiers: List of detected modifier symbols (from check_prefix/check_suffix)
-            zKey: Original key with modifiers (for logging/resolution)
-            zHorizontal: Command/data to execute (str, dict, or other format)
-            context: Optional context dict with mode and session metadata
-            walker: Optional walker instance for navigation and display
+            modifiers: List of detected modifier symbols
+            zKey: Original key with modifiers
+            zHorizontal: Command/data to execute
+            context: Optional context dict
+            walker: Optional walker instance
         
         Returns:
-            Modifier-specific result:
-            - * modifier: Menu navigation result (from zNavigation.create)
-            - ^ modifier: "zBack" (Terminal) or action result (Bifrost)
-            - ! modifier: Action result (after successful retry)
-            - No modifiers: Action result (from launcher)
-            - None: If execution fails or is aborted
+            Modifier-specific result (varies by modifier type)
         
         Examples:
-            # Menu modifier (*)
             result = process(["*"], "menu*", menu_dict, context, walker)
-            # Creates menu and returns navigation result
-            
-            # Bounce modifier (^)
             result = process(["^"], "^save", {"zFunc": "save"}, context, walker)
-            # Terminal: Returns "zBack" after executing save
-            # Bifrost: Returns save result directly
-            
-            # Anchor + Menu (~*)
-            result = process(["~", "*"], "~menu*", menu_dict, context, walker)
-            # Creates anchored menu (no back button)
-            
-            # Required modifier (!)
             result = process(["!"], "validate!", {"zFunc": "validate"}, context, walker)
-            # Retries until validate returns True (or user types "stop")
-            
-            # No modifiers
-            result = process([], "action", {"zFunc": "action"}, context, walker)
-            # Direct pass-through to launcher
         
         Notes:
-            - Uses walker.display if available, otherwise zcli.display
-            - Mode detection via context[KEY_MODE] (TODO: Use SESSION_KEY_ZMODE)
-            - Priority order: * (menu) > ^ (bounce) > ! (required) > pass-through
-            - Modifier combinations: ~* is common, others are rare
-        
-        TODO: Week 6.7 (zNavigation) - Verify navigation.create() signature after refactor
-        TODO: Week 6.9 (zLoader) - Verify loader.handle() signature after refactor
+            - Decomposed from 211 lines → 45 lines (79% reduction)
+            - 4 processing helpers extracted for focused logic
+            - Mode-specific behavior handled in helpers
+            - Maintains backward compatibility with all modifier types
         """
         # Use walker's display if available, otherwise use zCLI's display
         display = walker.display if walker else self.zcli.display
 
-        self._display_modifier(display, LABEL_PROCESS_MODIFIERS, DEFAULT_INDENT_PROCESS)
-
-        self.logger.framework.debug(LOG_MSG_RESOLVED, modifiers, zKey)
+        self._display_modifier(display, _LABEL_PROCESS_MODIFIERS, _DEFAULT_INDENT_PROCESS)
+        self.logger.framework.debug(_LOG_MSG_RESOLVED, modifiers, zKey)
 
         # Priority 1: Menu modifier (*)
         if MOD_ASTERISK in modifiers:
-            # Menu modifier - create menu via zNavigation
-            is_anchor = MOD_TILDE in modifiers
-            self.logger.debug(LOG_MSG_MENU_DETECTED, zKey, is_anchor)
-
-            # Track menu appearance in breadcrumbs (Option C: POP semantics)
-            # This tracks when a menu is first shown, enabling proper POP behavior later
-            if self.zcli and hasattr(self.zcli, 'navigation') and not zKey.startswith("~zNavBar"):
-                # Skip navbar menus (they handle their own navigation)
-                self.zcli.navigation.handle_zCrumbs(
-                    zKey,
-                    walker=None,  # Breadcrumbs is self-aware
-                    operation='APPEND'
-                )
-                self.logger.debug(f"[Menu] Tracked menu appearance: {zKey}")
-
-            # RBAC filtering for navbar menus (dynamic, re-evaluated on every render)
-            # Check if this is a navbar key (~zNavBar*) and apply RBAC filtering
-            if zKey.startswith("~zNavBar"):
-                self.logger.framework.debug(f"[Dispatch] Applying dynamic RBAC filtering for navbar: {zKey}")
-                
-                # Strip existing $ prefixes from zHorizontal before filtering
-                # (zLoader already added them, but we need clean items for RBAC)
-                clean_items = []
-                for item in zHorizontal:
-                    if isinstance(item, str):
-                        # Strip $ prefix if present (from zLoader injection)
-                        clean_items.append(item.lstrip('$'))
-                    else:
-                        # Dict items (with RBAC) - keep as-is
-                        clean_items.append(item)
-                
-                # Filter the navbar items based on current authentication state
-                # This extracts clean item names (strings) from mixed list of strings and dicts
-                filtered_items = self.zcli.navigation._filter_navbar_by_rbac(clean_items)
-                self.logger.framework.info(f"[Dispatch] Navbar filtered: {len(zHorizontal)} → {len(filtered_items)} items")
-                # Add delta prefix ($) to filtered items for intra-file navigation
-                zHorizontal = [f"${item}" for item in filtered_items]
-                
-                # SET NAVBAR FLAG: Mark that next navigation is from navbar (for OP_RESET)
-                from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZCRUMBS
-                if SESSION_KEY_ZCRUMBS not in self.zcli.session:
-                    self.zcli.session[SESSION_KEY_ZCRUMBS] = {}
-                self.zcli.session[SESSION_KEY_ZCRUMBS]["_navbar_navigation"] = True
-                self.logger.framework.debug("[Dispatch] Navbar flag set: next navigation will trigger OP_RESET")
-
-            # Note: Signature verified during Week 6.7.8 refactor - perfect alignment ✅
-            result = self.zcli.navigation.create(
-                zHorizontal, 
-                allow_back=not is_anchor, 
-                walker=walker
-            )
-
-            # If menu returns a dict (e.g., {zLink: "..."} from $ delta links),
-            # re-dispatch it through the command launcher to handle navigation
-            if isinstance(result, dict):
-                self.logger.framework.debug(f"[Menu] Returned dict, re-dispatching: {result}")
-                # Re-dispatch the dict result (e.g., zLink navigation)
-                return self.dispatch.launcher.launch(result, context, walker)
-            
-            return result
+            return self._process_menu_modifier(modifiers, zKey, zHorizontal, walker)
 
         # Priority 2: Bounce modifier (^)
         if MOD_CARET in modifiers:
-            # Execute action first, then return to previous menu
-            self._display_modifier(display, LABEL_ZBOUNCE, DEFAULT_INDENT_MODIFIER)
-            
-            # If zHorizontal is still the key with prefix, we need to look it up in walker's UI
-            if isinstance(zHorizontal, str) and zHorizontal.startswith(MOD_CARET):
-                zHorizontal = self._resolve_ui_key(zHorizontal, walker)
-            
-            # Execute the action
-            result = self.dispatch.launcher.launch(zHorizontal, context=context, walker=walker)
-            self.logger.framework.debug(LOG_MSG_ZBOUNCE_RESULT, result)
-            
-            # DEBUG: Log context to diagnose mode detection
-            self.logger.framework.debug(LOG_MSG_ZBOUNCE_CONTEXT, context)
-            self.logger.framework.debug(
-                LOG_MSG_ZBOUNCE_MODE_CHECK, 
-                context is not None, 
-                context.get(KEY_MODE) if context else None
-            )
-            
-            # Mode-specific return behavior
-            if self._is_bifrost_mode(context):
-                # Bifrost: Return actual result for API consumption
-                self.logger.framework.debug(LOG_MSG_BIFROST_DETECTED)
-                return result
-            
-            # Terminal/Walker: Return zBack for navigation
-            return NAV_ZBACK
+            return self._process_bounce_modifier(zKey, zHorizontal, context, walker, display)
 
         # Priority 3: Required modifier (!)
         if MOD_EXCLAMATION in modifiers:
-            self._display_modifier(display, LABEL_ZREQUIRED, DEFAULT_INDENT_MODIFIER)
-            self.logger.framework.debug(LOG_MSG_REQUIRED_STEP, zKey)
-            
-            # Execute action and enter retry loop if needed
-            result = self.dispatch.launcher.launch(zHorizontal, context=context, walker=walker)
-            self.logger.framework.debug(LOG_MSG_REQUIRED_RESULTS, result)
-            
-            # Mode-aware retry handling
-            is_bifrost = self._is_bifrost_mode(context)
-            
-            if is_bifrost:
-                # Bifrost mode: Frontend handles retry UI
-                # Just return result (None = failure shown in browser, True/value = success)
-                # The frontend will re-enable the form for user to retry
-                if not result:
-                    self.logger.info(f"[{MOD_EXCLAMATION}] Bifrost mode - gate failed, frontend will handle retry")
-                else:
-                    self.logger.info(f"[{MOD_EXCLAMATION}] Bifrost mode - gate passed")
-                return result
-            
-            # Terminal mode: Backend handles retry loop with prompts
-            while not result:
-                # Check for shutdown signal (Ctrl+C/SIGTERM)
-                if hasattr(self.zcli, '_shutdown_requested') and self.zcli._shutdown_requested:
-                    self.logger.info(f"[{MOD_EXCLAMATION}] Shutdown requested, aborting retry loop for: {zKey}")
-                    return None
-                
-                self.logger.warning(LOG_MSG_REQUIREMENT_NOT_SATISFIED, zKey)
-                if walker:
-                    try:
-                        choice = display.read_string(PROMPT_REQUIRED_CONTINUE).strip().lower()
-                    except (KeyboardInterrupt, EOFError):
-                        # Handle Ctrl+C during input prompt
-                        self.logger.info(f"[{MOD_EXCLAMATION}] Interrupted during retry prompt for: {zKey}")
-                        return None
-                    
-                    if choice in [INPUT_STOP, 'n', 'no']:
-                        # User declined retry - return None to stop retrying without full exit
-                        # This allows ^ (bounce-back) blocks to handle navigation properly
-                        self.logger.framework.debug(f"[{MOD_EXCLAMATION}] User declined retry for: {zKey}")
-                        return None
-                result = self.dispatch.launcher.launch(zHorizontal, context=context, walker=walker)
-            
-            self.logger.framework.debug(LOG_MSG_REQUIREMENT_SATISFIED, zKey)
-            self._display_modifier(display, LABEL_ZREQUIRED_RETURN, DEFAULT_INDENT_MODIFIER, style=STYLE_WAVY)
-            return result
+            return self._process_required_modifier(zKey, zHorizontal, context, walker, display)
 
         # No modifiers: Pass through to launcher
         return self.dispatch.launcher.launch(zHorizontal, context=context, walker=walker)
 
     # ========================================================================
-    # HELPER METHODS - DRY Refactoring
+    # MODIFIER PROCESSING HELPERS - Decomposed from process()
     # ========================================================================
 
-    def _is_bifrost_mode(self, context: Optional[Dict[str, Any]]) -> bool:
+    def _process_menu_modifier(
+        self,
+        modifiers: List[str],
+        zKey: str,
+        zHorizontal: Any,
+        walker: Optional[Any]
+    ) -> Optional[Union[str, Any]]:
         """
-        Check if we're in Bifrost mode execution.
+        Process menu modifier (*) - creates menu via zNavigation.
         
         Args:
-            context: Optional context dict (not used, kept for backwards compatibility)
+            modifiers: List of detected modifier symbols
+            zKey: Original key with modifiers
+            zHorizontal: Menu items (list or dict)
+            walker: Optional walker instance
         
         Returns:
-            True if session zMode is "zBifrost", False otherwise
-        
-        Example:
-            if self._is_bifrost_mode(context):
-                # Handle Bifrost-specific behavior
+            Menu navigation result
         
         Notes:
-            - Mode is stored in zcli.session["zMode"], not context
-            - Gracefully handles missing zMode (defaults to False/Terminal)
-            - Case-sensitive mode comparison
+            - Checks for anchor (~) modifier to disable back button
+            - Tracks menu appearance in breadcrumbs (POP semantics)
+            - Applies RBAC filtering for navbar menus
+            - Re-dispatches dict results (e.g., zLink navigation)
         """
-        # Check session for mode (not context - mode is session-level, not context-level)
-        return self.zcli.session.get("zMode") == MODE_BIFROST
+        is_anchor = MOD_TILDE in modifiers
+        self.logger.debug(_LOG_MSG_MENU_DETECTED, zKey, is_anchor)
+
+        # Track menu appearance in breadcrumbs
+        if self.zcli and hasattr(self.zcli, 'navigation') and not zKey.startswith("~zNavBar"):
+            self.zcli.navigation.handle_zCrumbs(
+                zKey,
+                walker=None,
+                operation='APPEND'
+            )
+            self.logger.debug(f"[Menu] Tracked menu appearance: {zKey}")
+
+        # Apply RBAC filtering for navbar menus
+        if zKey.startswith("~zNavBar"):
+            zHorizontal = self._apply_navbar_rbac_filtering(zKey, zHorizontal)
+
+        # Create menu via zNavigation
+        result = self.zcli.navigation.create(
+            zHorizontal, 
+            allow_back=not is_anchor, 
+            walker=walker
+        )
+
+        # Re-dispatch dict results (e.g., zLink navigation)
+        if isinstance(result, dict):
+            self.logger.framework.debug(f"[Menu] Returned dict, re-dispatching: {result}")
+            return self.dispatch.launcher.launch(result, None, walker)
+        
+        return result
+
+    def _apply_navbar_rbac_filtering(
+        self,
+        zKey: str,
+        zHorizontal: List[Any]
+    ) -> List[str]:
+        """
+        Apply RBAC filtering to navbar menu items.
+        
+        Filters navbar items based on current authentication state,
+        re-evaluated dynamically on every render.
+        
+        Args:
+            zKey: Navbar key (starts with ~zNavBar)
+            zHorizontal: Raw navbar items (may have $ prefixes)
+        
+        Returns:
+            Filtered navbar items with $ prefixes restored
+        
+        Notes:
+            - Strips $ prefixes before RBAC filtering
+            - Re-adds $ prefixes after filtering (for delta navigation)
+            - Sets navbar navigation flag in session for OP_RESET
+        """
+        self.logger.framework.debug(
+            f"[Dispatch] Applying dynamic RBAC filtering for navbar: {zKey}"
+        )
+        
+        # Strip existing $ prefixes from zHorizontal before filtering
+        clean_items = []
+        for item in zHorizontal:
+            if isinstance(item, str):
+                clean_items.append(item.lstrip('$'))
+            else:
+                clean_items.append(item)
+        
+        # Filter the navbar items based on current authentication state
+        filtered_items = self.zcli.navigation._filter_navbar_by_rbac(clean_items)
+        self.logger.framework.info(
+            f"[Dispatch] Navbar filtered: {len(zHorizontal)} → {len(filtered_items)} items"
+        )
+        
+        # Add delta prefix ($) to filtered items for intra-file navigation
+        filtered_with_prefix = [f"${item}" for item in filtered_items]
+        
+        # SET NAVBAR FLAG: Mark that next navigation is from navbar
+        from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZCRUMBS
+        if SESSION_KEY_ZCRUMBS not in self.zcli.session:
+            self.zcli.session[SESSION_KEY_ZCRUMBS] = {}
+        self.zcli.session[SESSION_KEY_ZCRUMBS]["_navbar_navigation"] = True
+        self.logger.framework.debug(
+            "[Dispatch] Navbar flag set: next navigation will trigger OP_RESET"
+        )
+        
+        return filtered_with_prefix
+
+    def _process_bounce_modifier(
+        self,
+        zKey: str,
+        zHorizontal: Any,
+        context: Optional[Dict[str, Any]],
+        walker: Optional[Any],
+        display: Any
+    ) -> Union[str, Any]:
+        """
+        Process bounce modifier (^) - executes action then returns.
+        
+        Args:
+            zKey: Original key with modifiers
+            zHorizontal: Command to execute
+            context: Optional context dict
+            walker: Optional walker instance
+            display: Display instance for output
+        
+        Returns:
+            - Terminal mode: "zBack" (for navigation)
+            - Bifrost mode: Action result (for API consumption)
+        
+        Notes:
+            - Resolves ^key from UI file if needed
+            - Mode-specific return behavior
+            - Logs mode detection for debugging
+        """
+        self._display_modifier(display, _LABEL_ZBOUNCE, _DEFAULT_INDENT_MODIFIER)
+        
+        # Resolve ^key from UI file if needed
+        if isinstance(zHorizontal, str) and zHorizontal.startswith(MOD_CARET):
+            zHorizontal = self._resolve_ui_key(zHorizontal, walker)
+        
+        # Execute the action
+        result = self.dispatch.launcher.launch(zHorizontal, context=context, walker=walker)
+        self.logger.framework.debug(_LOG_MSG_ZBOUNCE_RESULT, result)
+        
+        # Debug logging for mode detection
+        self.logger.framework.debug(_LOG_MSG_ZBOUNCE_CONTEXT, context)
+        self.logger.framework.debug(
+            _LOG_MSG_ZBOUNCE_MODE_CHECK, 
+            True,
+            self.zcli.session.get(SESSION_KEY_ZMODE)
+        )
+        
+        # Mode-specific return behavior
+        if is_bifrost_mode(self.zcli.session):
+            self.logger.framework.debug(_LOG_MSG_BIFROST_DETECTED)
+            return result
+        
+        # Terminal/Walker: Return zBack for navigation
+        return NAV_ZBACK
+
+    def _process_required_modifier(
+        self,
+        zKey: str,
+        zHorizontal: Any,
+        context: Optional[Dict[str, Any]],
+        walker: Optional[Any],
+        display: Any
+    ) -> Optional[Any]:
+        """
+        Process required modifier (!) - retry loop until success.
+        
+        Args:
+            zKey: Original key with modifiers
+            zHorizontal: Command to execute
+            context: Optional context dict
+            walker: Optional walker instance
+            display: Display instance for prompts
+        
+        Returns:
+            Action result after successful execution, or None if aborted
+        
+        Notes:
+            - Bifrost mode: Frontend handles retry UI
+            - Terminal mode: Backend retry loop with prompts
+            - User can abort with "stop", "n", or "no"
+            - Handles Ctrl+C and shutdown signals gracefully
+        """
+        self._display_modifier(display, _LABEL_ZREQUIRED, _DEFAULT_INDENT_MODIFIER)
+        self.logger.framework.debug(_LOG_MSG_REQUIRED_STEP, zKey)
+        
+        # Execute action
+        result = self.dispatch.launcher.launch(zHorizontal, context=context, walker=walker)
+        self.logger.framework.debug(_LOG_MSG_REQUIRED_RESULTS, result)
+        
+        # Mode-aware retry handling
+        is_bifrost = is_bifrost_mode(self.zcli.session)
+        
+        if is_bifrost:
+            # Bifrost mode: Frontend handles retry UI
+            if not result:
+                self.logger.info(
+                    f"[{MOD_EXCLAMATION}] Bifrost mode - gate failed, frontend will handle retry"
+                )
+            else:
+                self.logger.info(f"[{MOD_EXCLAMATION}] Bifrost mode - gate passed")
+            return result
+        
+        # Terminal mode: Backend retry loop
+        while not result:
+            # Check for shutdown signal
+            if hasattr(self.zcli, '_shutdown_requested') and self.zcli._shutdown_requested:
+                self.logger.info(
+                    f"[{MOD_EXCLAMATION}] Shutdown requested, aborting retry loop for: {zKey}"
+                )
+                return None
+            
+            self.logger.warning(_LOG_MSG_REQUIREMENT_NOT_SATISFIED, zKey)
+            if walker:
+                try:
+                    choice = display.read_string(_PROMPT_REQUIRED_CONTINUE).strip().lower()
+                except (KeyboardInterrupt, EOFError):
+                    self.logger.info(
+                        f"[{MOD_EXCLAMATION}] Interrupted during retry prompt for: {zKey}"
+                    )
+                    return None
+                
+                if choice in [_INPUT_STOP, 'n', 'no']:
+                    self.logger.framework.debug(
+                        f"[{MOD_EXCLAMATION}] User declined retry for: {zKey}"
+                    )
+                    return None
+            result = self.dispatch.launcher.launch(zHorizontal, context=context, walker=walker)
+        
+        self.logger.framework.debug(_LOG_MSG_REQUIREMENT_SATISFIED, zKey)
+        self._display_modifier(
+            display, 
+            _LABEL_ZREQUIRED_RETURN, 
+            _DEFAULT_INDENT_MODIFIER, 
+            style=_STYLE_WAVY
+        )
+        return result
+
+    # ========================================================================
+    # HELPER METHODS - DRY Refactoring
+    # ========================================================================
 
     def _display_modifier(
         self,
         display: Any,
         label: str,
         indent: int,
-        style: str = STYLE_SINGLE
+        style: str = _STYLE_SINGLE
     ) -> None:
         """
         Display modifier label with consistent styling.
@@ -591,12 +629,12 @@ class ModifierProcessor:
             style: Display style (default: "single")
         
         Example:
-            self._display_modifier(display, LABEL_ZBOUNCE, 3)
+            self._display_modifier(display, _LABEL_ZBOUNCE, 3)
         
         Notes:
             - Uses parent dispatch color for consistency
             - Avoids repeated zDeclare calls with identical styling
-            - Default style is STYLE_SINGLE ("single")
+            - Default style is _STYLE_SINGLE ("single")
         """
         display.zDeclare(
             label,
@@ -632,34 +670,31 @@ class ModifierProcessor:
             - Loads zUI file via zLoader (Week 6.9)
             - Strips ^ prefix before lookup
             - Gracefully handles missing files/blocks/keys
-        
-        TODO: Week 6.9 (zLoader) - Verify loader.handle() signature after refactor
         """
         if walker:
             # Load the UI file to get the block dictionary
             zVaFile = self.zcli.zspark_obj.get(KEY_ZVAFILE)
-            zBlock = self.zcli.zspark_obj.get(KEY_ZBLOCK, DEFAULT_ZBLOCK)
+            zBlock = self.zcli.zspark_obj.get(KEY_ZBLOCK, _DEFAULT_ZBLOCK)
             
             if zVaFile:
-                # TODO: Week 6.9 (zLoader) - Verify loader.handle() signature after refactor
                 raw_zFile = self.zcli.loader.handle(zVaFile)
                 if raw_zFile and zBlock in raw_zFile:
                     block_dict = raw_zFile[zBlock]
                     
                     # Strip the ^ prefix to look up the actual key in the UI dict
                     lookup_key = zHorizontal[1:] if zHorizontal.startswith(MOD_CARET) else zHorizontal
-                    self.logger.warning(LOG_MSG_LOOKING_UP_KEY, lookup_key, list(block_dict.keys()))
+                    self.logger.warning(_LOG_MSG_LOOKING_UP_KEY, lookup_key, list(block_dict.keys()))
                     
                     # Resolve key or return original if not found
                     resolved = block_dict.get(lookup_key, zHorizontal)
-                    self.logger.warning(LOG_MSG_RESOLVED_KEY, lookup_key, resolved)
+                    self.logger.warning(_LOG_MSG_RESOLVED_KEY, lookup_key, resolved)
                     return resolved
                 else:
-                    self.logger.warning(LOG_MSG_COULD_NOT_LOAD, zBlock, zVaFile)
+                    self.logger.warning(_LOG_MSG_COULD_NOT_LOAD, zBlock, zVaFile)
             else:
-                self.logger.warning(LOG_MSG_NO_ZVAFILE)
+                self.logger.warning(_LOG_MSG_NO_ZVAFILE)
         else:
-            self.logger.warning(LOG_MSG_CANNOT_RESOLVE)
+            self.logger.warning(_LOG_MSG_CANNOT_RESOLVE)
         
         # Return original if resolution fails
         return zHorizontal

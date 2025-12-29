@@ -1433,7 +1433,8 @@ class MessageHandler:
                     
                     try:
                         # Execute via zParser
-                        context = {"mode": "zBifrost"}
+                        # Note: Mode is in session, context for request-scoped data only
+                        context = {}
                         result = await asyncio.to_thread(
                             self.zcli.zparser.resolve_plugin_invocation,
                             func_name,
@@ -1460,7 +1461,8 @@ class MessageHandler:
                         # Execute via zDispatch
                         from zCLI.L2_Core.e_zDispatch import handle_zDispatch
                         
-                        context = {"mode": "zBifrost"}
+                        # Note: Mode is in session, context for request-scoped data only
+                        context = {}
                         result = await asyncio.to_thread(
                             handle_zDispatch,
                             "zLink",
@@ -1637,7 +1639,8 @@ class MessageHandler:
         self.logger.debug(f"{LOG_PREFIX} {LOG_DISPATCH} {zKey}")
         
         try:
-            context = {"websocket_data": data, "mode": "zBifrost"}
+            # Note: Mode is in session, context for request-scoped data only
+            context = {"websocket_data": data}
             
             result = await asyncio.to_thread(
                 handle_zDispatch, zKey, zHorizontal,

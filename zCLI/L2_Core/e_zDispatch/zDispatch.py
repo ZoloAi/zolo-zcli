@@ -80,54 +80,38 @@ Constants:
     and reduce the risk of typos.
 """
 
-from typing import Any, Optional, Dict
+from zCLI import Any, Optional, Dict
+
+# Import SESSION_KEY_ZMODE from zConfig for mode detection
+from zCLI.L1_Foundation.a_zConfig.zConfig_modules import SESSION_KEY_ZMODE, ZMODE_ZBIFROST
 
 from .dispatch_modules.dispatch_modifiers import ModifierProcessor
 from .dispatch_modules.dispatch_launcher import CommandLauncher
 
-# ============================================================================
-# MODULE CONSTANTS - Subsystem Identity
-# ============================================================================
-
-SUBSYSTEM_NAME = "zDispatch"
-SUBSYSTEM_COLOR = "DISPATCH"
-
-# ============================================================================
-# MODULE CONSTANTS - Display Messages
-# ============================================================================
-
-MSG_READY = "zDispatch Ready"
-MSG_HANDLE = "handle zDispatch"
-
-# ============================================================================
-# MODULE CONSTANTS - Log Messages
-# ============================================================================
-
-LOG_PREFIX = "[zDispatch]"
-LOG_MSG_READY = f"{LOG_PREFIX} Command dispatch subsystem ready"
-LOG_MSG_HORIZONTAL = "zHorizontal: %s"
-LOG_MSG_HANDLE_KEY = "handle zDispatch for key: %s"
-LOG_MSG_PREFIX_MODS = "Prefix modifiers: %s"
-LOG_MSG_SUFFIX_MODS = "Suffix modifiers: %s"
-LOG_MSG_DETECTED_MODS = "Detected modifiers for %s: %s"
-LOG_MSG_MODIFIER_RESULT = "Modifier evaluation result: %s"
-LOG_MSG_DISPATCH_RESULT = "dispatch result: %s"
-LOG_MSG_COMPLETED = "Modifier evaluation completed for key: %s"
-
-# ============================================================================
-# MODULE CONSTANTS - Error Messages
-# ============================================================================
-
-ERR_NO_ZCLI = "zDispatch requires a zCLI instance"
-ERR_NO_ZCLI_OR_WALKER = "handle_zDispatch requires either zcli or walker parameter"
-
-# ============================================================================
-# MODULE CONSTANTS - Display Styles & Layout
-# ============================================================================
-
-STYLE_FULL = "full"
-INDENT_ROOT = 0
-INDENT_HANDLE = 1
+# Import all constants from centralized location
+from .dispatch_modules.dispatch_constants import (
+    # Public constants
+    SUBSYSTEM_NAME,
+    SUBSYSTEM_COLOR,
+    ERR_NO_ZCLI,
+    ERR_NO_ZCLI_OR_WALKER,
+    # Internal constants
+    _MSG_READY,
+    _MSG_HANDLE,
+    _LOG_PREFIX,
+    _LOG_MSG_READY,
+    _LOG_MSG_HORIZONTAL,
+    _LOG_MSG_HANDLE_KEY,
+    _LOG_MSG_PREFIX_MODS,
+    _LOG_MSG_SUFFIX_MODS,
+    _LOG_MSG_DETECTED_MODS,
+    _LOG_MSG_MODIFIER_RESULT,
+    _LOG_MSG_DISPATCH_RESULT,
+    _LOG_MSG_COMPLETED,
+    _STYLE_FULL,
+    _INDENT_ROOT,
+    _INDENT_HANDLE,
+)
 
 
 class zDispatch:
@@ -211,9 +195,9 @@ class zDispatch:
         self.launcher = CommandLauncher(self)
 
         # Display ready message using zDisplay
-        self._display_message(self.zcli.display, MSG_READY, INDENT_ROOT)
+        self._display_message(self.zcli.display, _MSG_READY, _INDENT_ROOT)
 
-        self.logger.framework.debug(LOG_MSG_READY)
+        self.logger.framework.debug(_LOG_MSG_READY)
 
     # ========================================================================
     # PUBLIC METHODS - Main Entry Point
@@ -289,31 +273,31 @@ class zDispatch:
         # Get appropriate display instance (walker or zCLI)
         display = self._get_display(walker)
 
-        self._display_message(display, MSG_HANDLE, INDENT_HANDLE)
+        self._display_message(display, _MSG_HANDLE, _INDENT_HANDLE)
 
-        self.logger.framework.debug(LOG_MSG_HORIZONTAL, zHorizontal)
-        self.logger.framework.debug(LOG_MSG_HANDLE_KEY, zKey)
+        self.logger.framework.debug(_LOG_MSG_HORIZONTAL, zHorizontal)
+        self.logger.framework.debug(_LOG_MSG_HANDLE_KEY, zKey)
 
         # Detect modifiers (prefix + suffix)
         prefix_mods = self.modifiers.check_prefix(zKey)
         suffix_mods = self.modifiers.check_suffix(zKey)
         zModifiers = prefix_mods + suffix_mods
 
-        self.logger.framework.debug(LOG_MSG_PREFIX_MODS, prefix_mods)
-        self.logger.framework.debug(LOG_MSG_SUFFIX_MODS, suffix_mods)
-        self.logger.framework.debug(LOG_MSG_DETECTED_MODS, zKey, zModifiers)
+        self.logger.framework.debug(_LOG_MSG_PREFIX_MODS, prefix_mods)
+        self.logger.framework.debug(_LOG_MSG_SUFFIX_MODS, suffix_mods)
+        self.logger.framework.debug(_LOG_MSG_DETECTED_MODS, zKey, zModifiers)
 
         # Route to appropriate handler (Facade orchestration)
         if zModifiers:
             # Route to ModifierProcessor
             result = self.modifiers.process(zModifiers, zKey, zHorizontal, context=context, walker=walker)
-            self.logger.framework.debug(LOG_MSG_MODIFIER_RESULT, result)
+            self.logger.framework.debug(_LOG_MSG_MODIFIER_RESULT, result)
         else:
             # Route to CommandLauncher
             result = self.launcher.launch(zHorizontal, context=context, walker=walker)
-            self.logger.framework.debug(LOG_MSG_DISPATCH_RESULT, result)
+            self.logger.framework.debug(_LOG_MSG_DISPATCH_RESULT, result)
 
-        self.logger.framework.debug(LOG_MSG_COMPLETED, zKey)
+        self.logger.framework.debug(_LOG_MSG_COMPLETED, zKey)
         return result
 
     # ========================================================================
@@ -350,14 +334,14 @@ class zDispatch:
             indent: Indentation level (spaces)
         
         Example:
-            self._display_message(display, MSG_READY, INDENT_ROOT)
+            self._display_message(display, _MSG_READY, _INDENT_ROOT)
         
         Notes:
             - Uses subsystem color (self.mycolor) for consistency
-            - Uses STYLE_FULL for all dispatch messages
+            - Uses _STYLE_FULL for all dispatch messages
             - Avoids repeated zDeclare calls with identical styling
         """
-        display.zDeclare(message, color=self.mycolor, indent=indent, style=STYLE_FULL)
+        display.zDeclare(message, color=self.mycolor, indent=indent, style=_STYLE_FULL)
 
 
 # ============================================================================
@@ -401,13 +385,15 @@ def handle_zDispatch(
         # With modifiers
         result = handle_zDispatch("^save", {"zFunc": "save"}, zcli=zcli)
         
-        # With context for mode detection
+        # With context for request-scoped data
         result = handle_zDispatch(
             "action",
             cmd,
             zcli=zcli,
-            context={"mode": "zBifrost"}
+            context={"websocket_data": data}
         )
+        
+        # Note: Mode is detected from session[SESSION_KEY_ZMODE], not context
     
     Notes:
         - Walker parameter takes precedence over zcli parameter
@@ -430,7 +416,8 @@ def handle_zDispatch(
         raise ValueError(ERR_NO_ZCLI_OR_WALKER)
 
     # Check if we're in zBifrost mode (event capture mode)
-    is_bifrost = context and context.get('mode') == 'zBifrost'
+    # Mode is now sourced from session (canonical source)
+    is_bifrost = zcli_instance.session.get(SESSION_KEY_ZMODE) == ZMODE_ZBIFROST
     
     # Clear event buffer before execution (for clean capture)
     if is_bifrost and hasattr(zcli_instance.display, 'clear_event_buffer'):

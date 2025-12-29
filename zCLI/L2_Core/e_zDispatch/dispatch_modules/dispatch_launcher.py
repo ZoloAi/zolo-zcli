@@ -112,138 +112,98 @@ Constants:
     and reduce the risk of typos. See module-level constants below for complete list.
 """
 
-import ast
-from typing import Any, Optional, Dict, Union
+from zCLI import ast, Any, Optional, Dict, Union, List
 
-# Import ACTION_PLACEHOLDER from zConfig
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules import ACTION_PLACEHOLDER
+# Import ACTION_PLACEHOLDER and SESSION_KEY_ZMODE from zConfig
+from zCLI.L1_Foundation.a_zConfig.zConfig_modules import ACTION_PLACEHOLDER, SESSION_KEY_ZMODE
 
-# Import zConfig session constants for modernization
-# TODO: Week 6.2 (zConfig) - Use SESSION_KEY_ZMODE instead of "mode" raw string
-# Note: Temporarily using raw "mode" until zConfig constants are finalized
-# from zCLI.L1_Foundation.a_zConfig.config_modules.config_constants import SESSION_KEY_ZMODE
+# Import all dispatch constants from centralized location
+from .dispatch_constants import (
+    # Command Prefixes
+    CMD_PREFIX_ZFUNC,
+    CMD_PREFIX_ZLINK,
+    CMD_PREFIX_ZOPEN,
+    CMD_PREFIX_ZWIZARD,
+    CMD_PREFIX_ZREAD,
+    # Dict Keys - Subsystem Commands
+    KEY_ZFUNC,
+    KEY_ZLINK,
+    KEY_ZDELTA,
+    KEY_ZOPEN,
+    KEY_ZWIZARD,
+    KEY_ZREAD,
+    KEY_ZDATA,
+    KEY_ZDIALOG,
+    KEY_ZDISPLAY,
+    KEY_ZLOGIN,
+    KEY_ZLOGOUT,
+    # Dict Keys - Context & Session (KEY_MODE removed - using SESSION_KEY_ZMODE)
+    KEY_ZVAFILE,
+    KEY_ZBLOCK,
+    # Mode Values
+    MODE_BIFROST,
+    MODE_TERMINAL,
+    MODE_WALKER,
+    # Display Labels (INTERNAL)
+    _LABEL_LAUNCHER,
+    _LABEL_HANDLE_ZFUNC,
+    _LABEL_HANDLE_ZFUNC_DICT,
+    _LABEL_HANDLE_ZLINK,
+    _LABEL_HANDLE_ZDELTA,
+    _LABEL_HANDLE_ZOPEN,
+    _LABEL_HANDLE_ZWIZARD,
+    _LABEL_HANDLE_ZREAD_STRING,
+    _LABEL_HANDLE_ZREAD_DICT,
+    _LABEL_HANDLE_ZDATA_DICT,
+    _LABEL_HANDLE_CRUD_DICT,
+    _LABEL_HANDLE_ZLOGIN,
+    _LABEL_HANDLE_ZLOGOUT,
+    # Display Event Keys (INTERNAL)
+    _EVENT_TEXT,
+    _EVENT_SYSMSG,
+    _EVENT_HEADER,
+    _EVENT_SUCCESS,
+    _EVENT_ERROR,
+    _EVENT_WARNING,
+    _EVENT_INFO,
+    _EVENT_LINE,
+    _EVENT_LIST,
+    # Data Keys
+    KEY_ACTION,
+    KEY_MODEL,
+    KEY_TABLE,
+    KEY_TABLES,
+    KEY_FIELDS,
+    KEY_VALUES,
+    KEY_FILTERS,
+    KEY_WHERE,
+    KEY_ORDER_BY,
+    KEY_LIMIT,
+    KEY_OFFSET,
+    KEY_CONTENT,
+    KEY_INDENT,
+    KEY_EVENT,
+    KEY_LABEL,
+    KEY_COLOR,
+    KEY_STYLE,
+    KEY_MESSAGE,
+    # Default Values (INTERNAL)
+    _DEFAULT_ACTION_READ,
+    _DEFAULT_ZBLOCK,
+    _DEFAULT_CONTENT,
+    _DEFAULT_INDENT,
+    _DEFAULT_INDENT_LAUNCHER,
+    _DEFAULT_INDENT_HANDLER,
+    _DEFAULT_STYLE_SINGLE,
+    _DEFAULT_LABEL,
+    # Navigation
+    NAV_ZBACK,
+    # Plugins
+    PLUGIN_PREFIX,
+)
 
-# ============================================================================
-# MODULE CONSTANTS - Command Prefixes (String Format)
-# ============================================================================
-
-CMD_PREFIX_ZFUNC = "zFunc("
-CMD_PREFIX_ZLINK = "zLink("
-CMD_PREFIX_ZOPEN = "zOpen("
-CMD_PREFIX_ZWIZARD = "zWizard("
-CMD_PREFIX_ZREAD = "zRead("
-
-# ============================================================================
-# MODULE CONSTANTS - Dict Keys (Dict Format)
-# ============================================================================
-
-KEY_ZFUNC = "zFunc"
-KEY_ZLINK = "zLink"
-KEY_ZDELTA = "zDelta"
-KEY_ZOPEN = "zOpen"
-KEY_ZWIZARD = "zWizard"
-KEY_ZREAD = "zRead"
-KEY_ZDATA = "zData"
-KEY_ZDIALOG = "zDialog"
-KEY_ZDISPLAY = "zDisplay"
-KEY_ZLOGIN = "zLogin"
-KEY_ZLOGOUT = "zLogout"
-
-# ============================================================================
-# MODULE CONSTANTS - Context Keys (Session/Mode Detection)
-# ============================================================================
-
-KEY_MODE = "mode"  # TODO: Replace with SESSION_KEY_ZMODE from zConfig
-KEY_ZVAFILE = "zVaFile"
-KEY_ZBLOCK = "zBlock"
-
-# ============================================================================
-# MODULE CONSTANTS - Mode Values
-# ============================================================================
-
-MODE_BIFROST = "zBifrost"
-MODE_TERMINAL = "Terminal"
-MODE_WALKER = "Walker"
-
-# ============================================================================
-# MODULE CONSTANTS - Display Labels (zDeclare messages)
-# ============================================================================
-
-LABEL_LAUNCHER = "zLauncher"
-LABEL_HANDLE_ZFUNC = "[HANDLE] zFunc"
-LABEL_HANDLE_ZFUNC_DICT = "[HANDLE] zFunc (dict)"
-LABEL_HANDLE_ZLINK = "[HANDLE] zLink"
-LABEL_HANDLE_ZDELTA = "[HANDLE] zDelta"
-LABEL_HANDLE_ZOPEN = "[HANDLE] zOpen"
-LABEL_HANDLE_ZWIZARD = "[HANDLE] zWizard"
-LABEL_HANDLE_ZREAD_STRING = "[HANDLE] zRead (string)"
-LABEL_HANDLE_ZREAD_DICT = "[HANDLE] zRead (dict)"
-LABEL_HANDLE_ZDATA_DICT = "[HANDLE] zData (dict)"
-LABEL_HANDLE_CRUD_DICT = "[HANDLE] zCRUD (dict)"
-LABEL_HANDLE_ZLOGIN = "[HANDLE] zLogin"
-LABEL_HANDLE_ZLOGOUT = "[HANDLE] zLogout"
-
-# ============================================================================
-# MODULE CONSTANTS - Display Event Keys (Legacy zDisplay format)
-# ============================================================================
-
-EVENT_TEXT = "text"
-EVENT_SYSMSG = "sysmsg"
-EVENT_HEADER = "header"
-EVENT_SUCCESS = "success"
-EVENT_ERROR = "error"
-EVENT_WARNING = "warning"
-EVENT_INFO = "info"
-EVENT_LINE = "line"
-EVENT_LIST = "list"
-
-# ============================================================================
-# MODULE CONSTANTS - Data Keys (Common dict keys)
-# ============================================================================
-
-KEY_ACTION = "action"
-KEY_MODEL = "model"
-KEY_TABLE = "table"
-KEY_TABLES = "tables"
-KEY_FIELDS = "fields"
-KEY_VALUES = "values"
-KEY_FILTERS = "filters"
-KEY_WHERE = "where"
-KEY_ORDER_BY = "order_by"
-KEY_LIMIT = "limit"
-KEY_OFFSET = "offset"
-KEY_CONTENT = "content"
-KEY_INDENT = "indent"
-KEY_EVENT = "event"
-KEY_LABEL = "label"
-KEY_COLOR = "color"
-KEY_STYLE = "style"
-KEY_MESSAGE = "message"
-
-# ============================================================================
-# MODULE CONSTANTS - Default Values
-# ============================================================================
-
-DEFAULT_ACTION_READ = "read"
-DEFAULT_ZBLOCK = "root"
-DEFAULT_CONTENT = ""
-DEFAULT_INDENT = 0
-DEFAULT_INDENT_LAUNCHER = 4
-DEFAULT_INDENT_HANDLER = 5
-DEFAULT_STYLE_SINGLE = "single"
-DEFAULT_LABEL = ""
-
-# ============================================================================
-# MODULE CONSTANTS - Navigation
-# ============================================================================
-
-NAV_ZBACK = "zBack"
-
-# ============================================================================
-# MODULE CONSTANTS - Plugin Detection
-# ============================================================================
-
-PLUGIN_PREFIX = "&"
+# Import shared dispatch helpers
+from .dispatch_helpers import is_bifrost_mode
 
 
 class CommandLauncher:
@@ -271,11 +231,13 @@ class CommandLauncher:
         _handle_crud_dict(): Handle generic CRUD dict -> zData
         
         Helper methods (DRY):
-        _is_bifrost_mode(): Check if context is in Bifrost mode
         _display_handler(): Display handler label with consistent styling
         _log_detected(): Log detected command with consistent format
         _check_walker(): Validate walker instance for zLink commands
         _set_default_action(): Set default action for data requests
+        
+        Shared utilities (from dispatch_helpers):
+        is_bifrost_mode(): Check if session is in Bifrost mode (no self, uses session dict)
     
     Integration:
         - zConfig: Uses session constants (TODO: SESSION_KEY_ZMODE)
@@ -357,7 +319,7 @@ class CommandLauncher:
             - Unknown command types (not str or dict) return None
             - Mode-specific behavior handled by individual command handlers
         """
-        self._display_handler(LABEL_LAUNCHER, DEFAULT_INDENT_LAUNCHER)
+        self._display_handler(_LABEL_LAUNCHER, _DEFAULT_INDENT_LAUNCHER)
 
         # Early return for placeholder actions (development/testing)
         if zHorizontal == ACTION_PLACEHOLDER:
@@ -441,115 +403,126 @@ class CommandLauncher:
         walker: Optional[Any]
     ) -> Optional[Union[str, Dict[str, Any]]]:
         """
-        Handle string-based launch commands.
+        Handle string-based launch commands (ORCHESTRATOR).
         
-        Routes string commands with the following prefixes:
-        - "zFunc(...)": Function execution
-        - "zLink(...)": Navigation link
-        - "zOpen(...)": File/URL opening
-        - "zWizard(...)": Multi-step workflow
-        - "zRead(...)": Data read operation
+        Routes string commands based on prefix or mode-specific handling.
+        This method has been streamlined for better maintainability.
+        
+        Command prefixes:
+        - zFunc(...): Function execution
+        - zLink(...): Navigation link
+        - zOpen(...): File/URL opening
+        - zWizard(...): Multi-step workflow
+        - zRead(...): Data read operation
         
         Plain strings (no prefix):
-        - Terminal mode: Return None (no navigation)
-        - Bifrost mode: Resolve from zUI file or return {"message": str}
+        - Terminal: Return None (display-only)
+        - Bifrost: Resolve from zUI or return {"message": str}
         
         Args:
             zHorizontal: String command to execute
-            context: Optional context dict with mode and session metadata
-            walker: Optional walker instance for navigation commands
+            context: Optional context dict
+            walker: Optional walker instance
         
         Returns:
-            Command execution result, or None if command is unhandled.
-            Return type varies by command (see launch() docstring).
+            Command execution result or None
         
         Examples:
-            # Function call
             result = _launch_string("zFunc(calculate)", context, walker)
-            
-            # Navigation
             result = _launch_string("zLink(menu:users)", context, walker)
-            
-            # Plain string in Bifrost mode (zUI resolution)
-            result = _launch_string("submit_button", {"mode": "zBifrost"}, walker)
-            # Returns: {"message": "submit_button"} or resolved dict from zUI
+            result = _launch_string("submit_button", bifrost_context, walker)
         
         Notes:
-            - zLink and zWizard require walker instance
-            - Bifrost mode enables recursive zUI resolution
-            - Plain strings in Terminal mode return None (display-only)
-        
-        TODO: Week 6.10 (zFunc) - Update zfunc.handle() call after refactor
-        TODO: Week 6.7 (zNavigation) - Update handle_zLink() call after refactor
-        TODO: Week 6.12 (zOpen) - Update open.handle() call after refactor
-        TODO: Week 6.14 (zWizard) - Update wizard.handle() call after refactor
-        TODO: Week 6.9 (zLoader) - Update loader.handle() call after refactor
+            - Refactored from 106 lines → 40 lines (62% reduction)
+            - Bifrost plain string resolution extracted to helper
+            - Walker validation for navigation commands
+            - Mode-specific plain string handling
         """
-        # Route: zFunc()
+        # Prefix-based routing (5 command types)
         if zHorizontal.startswith(CMD_PREFIX_ZFUNC):
             self._log_detected("zFunc request")
-            self._display_handler(LABEL_HANDLE_ZFUNC, DEFAULT_INDENT_HANDLER)
-            # TODO: Week 6.10 (zFunc) - Verify zfunc.handle() signature after refactor
+            self._display_handler(_LABEL_HANDLE_ZFUNC, _DEFAULT_INDENT_HANDLER)
             return self.zcli.zfunc.handle(zHorizontal)
 
-        # Route: zLink()
         if zHorizontal.startswith(CMD_PREFIX_ZLINK):
             if not self._check_walker(walker, "zLink"):
                 return None
             self._log_detected("zLink request")
-            self._display_handler(LABEL_HANDLE_ZLINK, DEFAULT_INDENT_LAUNCHER)
-            # TODO: Week 6.7 (zNavigation) - Verify handle_zLink() signature after refactor
+            self._display_handler(_LABEL_HANDLE_ZLINK, _DEFAULT_INDENT_LAUNCHER)
             return self.zcli.navigation.handle_zLink(zHorizontal, walker=walker)
 
-        # Route: zOpen()
         if zHorizontal.startswith(CMD_PREFIX_ZOPEN):
             self._log_detected("zOpen request")
-            self._display_handler(LABEL_HANDLE_ZOPEN, DEFAULT_INDENT_LAUNCHER)
-            # TODO: Week 6.12 (zOpen) - Verify open.handle() signature after refactor
+            self._display_handler(_LABEL_HANDLE_ZOPEN, _DEFAULT_INDENT_LAUNCHER)
             return self.zcli.open.handle(zHorizontal)
 
-        # Route: zWizard()
         if zHorizontal.startswith(CMD_PREFIX_ZWIZARD):
             return self._handle_wizard_string(zHorizontal, walker, context)
 
-        # Route: zRead()
         if zHorizontal.startswith(CMD_PREFIX_ZREAD):
             return self._handle_read_string(zHorizontal, context)
 
         # Plain string - mode-specific handling
-        if self._is_bifrost_mode(context):
-            # Bifrost mode: Attempt to resolve from zUI file
-            zVaFile = self.zcli.zspark_obj.get(KEY_ZVAFILE)
-            zBlock = self.zcli.zspark_obj.get(KEY_ZBLOCK, DEFAULT_ZBLOCK)
-            
-            if zVaFile and zBlock:
-                try:
-                    # TODO: Week 6.9 (zLoader) - Verify loader.handle() signature after refactor
-                    raw_zFile = self.zcli.loader.handle(zVaFile)
-                    if raw_zFile and zBlock in raw_zFile:
-                        block_dict = raw_zFile[zBlock]
-                        
-                        # Look up the key in the block
-                        if zHorizontal in block_dict:
-                            resolved_value = block_dict[zHorizontal]
-                            self.logger.framework.debug(
-                                f"[{MODE_BIFROST}] Resolved key '{zHorizontal}' from zUI to: {resolved_value}"
-                            )
-                            # Recursively launch with the resolved value (could be dict with zFunc)
-                            return self.launch(resolved_value, context=context, walker=walker)
-                        else:
-                            self.logger.framework.debug(
-                                f"[{MODE_BIFROST}] Key '{zHorizontal}' not found in zUI block '{zBlock}'"
-                            )
-                except Exception as e:
-                    self.logger.warning(f"[{MODE_BIFROST}] Error resolving key from zUI: {e}")
-            
-            # If we couldn't resolve it, return as display message
-            self.logger.framework.debug(f"Plain string in {MODE_BIFROST} mode - returning as message")
-            return {KEY_MESSAGE: zHorizontal}
+        if is_bifrost_mode(self.zcli.session):
+            return self._resolve_plain_string_in_bifrost(zHorizontal, context, walker)
         
-        # Terminal mode: Plain strings are displayed but return None for navigation
+        # Terminal mode: Plain strings are displayed but return None
         return None
+
+    # ========================================================================
+    # STRING ROUTING HELPERS - Decomposed from _launch_string()
+    # ========================================================================
+
+    def _resolve_plain_string_in_bifrost(
+        self,
+        zHorizontal: str,
+        context: Optional[Dict[str, Any]],
+        walker: Optional[Any]
+    ) -> Union[Dict[str, Any], Any]:
+        """
+        Resolve plain string in Bifrost mode (attempts zUI resolution).
+        
+        Args:
+            zHorizontal: Plain string key
+            context: Context dict
+            walker: Optional walker instance
+        
+        Returns:
+            Resolved value (recursively launched) or {"message": str}
+        
+        Notes:
+            - Attempts to resolve key from current zUI block
+            - Recursively launches resolved value (could be dict with zFunc)
+            - Falls back to {"message": str} if resolution fails
+            - Error handling for missing zUI context
+        """
+        zVaFile = self.zcli.zspark_obj.get(KEY_ZVAFILE)
+        zBlock = self.zcli.zspark_obj.get(KEY_ZBLOCK, _DEFAULT_ZBLOCK)
+        
+        if zVaFile and zBlock:
+            try:
+                raw_zFile = self.zcli.loader.handle(zVaFile)
+                if raw_zFile and zBlock in raw_zFile:
+                    block_dict = raw_zFile[zBlock]
+                    
+                    # Look up the key in the block
+                    if zHorizontal in block_dict:
+                        resolved_value = block_dict[zHorizontal]
+                        self.logger.framework.debug(
+                            f"[{MODE_BIFROST}] Resolved key '{zHorizontal}' from zUI to: {resolved_value}"
+                        )
+                        # Recursively launch with the resolved value
+                        return self.launch(resolved_value, context=context, walker=walker)
+                    else:
+                        self.logger.framework.debug(
+                            f"[{MODE_BIFROST}] Key '{zHorizontal}' not found in zUI block '{zBlock}'"
+                        )
+            except Exception as e:
+                self.logger.warning(f"[{MODE_BIFROST}] Error resolving key from zUI: {e}")
+        
+        # If we couldn't resolve it, return as display message
+        self.logger.framework.debug(f"Plain string in {MODE_BIFROST} mode - returning as message")
+        return {KEY_MESSAGE: zHorizontal}
 
     # ========================================================================
     # PRIVATE METHODS - Dict Command Routing
@@ -561,17 +534,18 @@ class CommandLauncher:
         context: Optional[Dict[str, Any]],
         walker: Optional[Any]
     ) -> Optional[Union[str, Dict[str, Any]]]:
-        """Handle dict-based launch commands.
+        """Handle dict-based launch commands (ORCHESTRATOR).
         
-        Routes dict commands with the following keys:
-        - "zDisplay": Legacy display format (text, sysmsg events)
-        - "zFunc": Function execution
-        - "zDialog": Interactive form/dialog
-        - "zLink": Navigation link
-        - "zWizard": Multi-step workflow
-        - "zRead": Data read operation
-        - "zData": Generic data operation
-        - CRUD keys: Generic CRUD operation (action, model, table, etc.)
+        Routes dict commands to appropriate subsystem handlers. This method
+        has been decomposed into focused helpers for maintainability.
+        
+        Routing priority:
+        1. Content wrapper unwrapping (single "Content" key)
+        2. Block-level data resolution (_data block)
+        3. Organizational structure detection (nested dicts/lists)
+        4. Implicit wizard detection (multiple content keys)
+        5. Explicit subsystem routing (zFunc, zDialog, zLink, etc.)
+        6. CRUD fallback (action/model/table keys)
         
         Args:
             zHorizontal: Dict command to execute
@@ -583,406 +557,96 @@ class CommandLauncher:
             Return type varies by command (see launch() docstring).
         
         Examples:
-            # Function call
             result = _launch_dict({"zFunc": "calculate"}, context, walker)
-            
-            # Plugin invocation
-            result = _launch_dict({"zFunc": "&my_plugin"}, context, walker)
-            
-            # Dialog
             result = _launch_dict({"zDialog": {"fields": [...]}}, context, walker)
-            
-            # Data operation
-            result = _launch_dict({"zRead": {"model": "users"}}, context, walker)
-            
-            # Generic CRUD
             result = _launch_dict({"action": "read", "model": "users"}, context, walker)
-            
-            # Legacy display format
-            result = _launch_dict({"zDisplay": {"event": "text", "content": "Hello"}}, context, walker)
         
         Notes:
-            - Plugin invocations: Detect "&" prefix in zFunc value
-            - CRUD detection: Fallback for dicts with action/model/table keys
-            - Legacy zDisplay: Backward compatibility only (modern API preferred)
-        
-        TODO: Week 6.10 (zFunc) - Update zfunc.handle() call after refactor
-        TODO: Week 6.8 (zParser) - Update resolve_plugin_invocation() call after refactor
-        TODO: Week 6.7 (zNavigation) - Update handle_zLink() call after refactor
-        TODO: Week 6.14 (zWizard) - Update wizard.handle() call after refactor
-        TODO: Week 6.16 (zData) - Update data.handle_request() call after refactor
+            - Decomposed from 423 lines → 60 lines (86% reduction)
+            - 14 routing helpers extracted for focused logic
+            - Maintains backward compatibility with all command formats
         """
         # ========================================================================
         # PRELIMINARY CHECKS
         # ========================================================================
-        # Known subsystem command keys
         subsystem_keys = {KEY_ZDISPLAY, KEY_ZFUNC, KEY_ZDIALOG, KEY_ZLINK, KEY_ZWIZARD, KEY_ZREAD, KEY_ZDATA}
-        
-        # Get content keys (exclude metadata keys starting with _)
         content_keys = [k for k in zHorizontal.keys() if not k.startswith('_')]
-        
-        # Check if this is a direct subsystem call
         is_subsystem_call = any(k in zHorizontal for k in subsystem_keys)
-        
-        # Check for CRUD keys (fallback pattern)
         crud_keys = {'action', 'model', 'table', 'collection'}
         is_crud_call = any(k in zHorizontal for k in crud_keys)
         
-        # SPECIAL CASE: Single "Content" key with optional _zClass metadata
-        # Common UI pattern: {_zClass: "...", Content: [events]}
-        # Unwrap and dispatch the Content directly
-        if len(content_keys) == 1 and content_keys[0] == 'Content':
-            self._log_detected("Content wrapper (unwrapping)")
-            content_value = zHorizontal['Content']
-            # Recursively dispatch the unwrapped Content
-            # This handles both lists and nested dicts
-            return self.launch(content_value, context=context, walker=walker)
+        # ========================================================================
+        # CONTENT WRAPPER UNWRAPPING
+        # ========================================================================
+        result = self._unwrap_content_wrapper(zHorizontal, content_keys, context, walker)
+        if result is not None or (len(content_keys) == 1 and content_keys[0] == 'Content'):
+            return result
         
         # ========================================================================
-        # BLOCK-LEVEL DATA RESOLUTION (v1.5.12 - Flask/Jinja Pattern)
+        # BLOCK-LEVEL DATA RESOLUTION
         # ========================================================================
-        # If dict has _data block, resolve queries BEFORE processing children
-        # This is the zCLI equivalent of Flask's route handler pattern
-        
-        if "_data" in zHorizontal and not is_subsystem_call:
-            self.logger.framework.info("[zCLI Data] Detected _data block, resolving queries...")
-            resolved_data = self._resolve_block_data(zHorizontal["_data"], context)
-            if resolved_data:
-                # Store in context for child blocks to access via %data.* syntax
-                if "_resolved_data" not in context:
-                    context["_resolved_data"] = {}
-                context["_resolved_data"].update(resolved_data)
-                self.logger.framework.info(f"[zCLI Data] Resolved {len(resolved_data)} data queries for block")
-            else:
-                self.logger.framework.warning("[zCLI Data] _data block present but no data resolved")
+        if context is not None:  # Only resolve if context exists
+            self._resolve_data_block_if_present(zHorizontal, is_subsystem_call, context)
         
         # ========================================================================
-        # ORGANIZATIONAL STRUCTURE DETECTION (zCLI Way)
+        # ORGANIZATIONAL STRUCTURE DETECTION (mutually exclusive with wizard)
         # ========================================================================
-        # If dict has only nested dicts/lists (no direct actions), it's organizational
-        # Recurse into it rather than treating as implicit wizard
-        # This enables flexible YAML organization with nested containers
-        
         if not is_subsystem_call and not is_crud_call and len(content_keys) > 0:
-            # Check if ALL content values are dicts or lists (organizational structure)
+            result = self._handle_organizational_structure(zHorizontal, content_keys, context, walker)
+            # If organizational structure was detected and processed, return immediately
+            # (even if result is None) to prevent fallthrough to implicit wizard
+            if result is not None:
+                return result
+            
+            # Check if organizational structure was detected (all keys are nested)
             all_nested = all(
                 isinstance(zHorizontal[k], (dict, list))
                 for k in content_keys
             )
-            
-            # If purely organizational (no direct actions), recurse into nested structures
             if all_nested:
-                self.logger.framework.debug(f"[zCLI Recursion] Organizational structure detected ({len(content_keys)} keys), recursing...")
-                
-                result = None
-                for key in content_keys:
-                    value = zHorizontal[key]
-                    self.logger.framework.debug(f"[zCLI Recursion] Processing nested key: {key} (type: {type(value).__name__})")
-                    
-                    # Recursively process nested content
-                    if isinstance(value, dict):
-                        result = self._launch_dict(value, context, walker)
-                    elif isinstance(value, list):
-                        result = self._launch_list(value, context, walker)
-                    
-                    # Check for navigation signals
-                    if result in ('zBack', 'exit', 'stop', 'error'):
-                        self.logger.framework.debug(f"[zCLI Recursion] Navigation signal received: {result}")
-                        return result
-                
-                self.logger.framework.debug(f"[zCLI Recursion] Completed organizational recursion, returning: {result}")
+                # Organizational structure was processed, don't fall through to wizard
                 return result
         
         # ========================================================================
         # IMPLICIT WIZARD DETECTION
         # ========================================================================
-        # If dict has multiple non-metadata, non-subsystem keys with mixed types
-        # (not purely organizational), treat as wizard steps
-        
-        # If multiple content keys and NOT purely organizational -> implicit wizard
         if not is_subsystem_call and not is_crud_call and len(content_keys) > 1:
-            self._log_detected("Implicit zWizard (multi-step)")
-            # Call wizard with proper context - use walker if available for proper dispatch routing
-            if walker:
-                zHat = walker.handle(zHorizontal)
-            else:
-                zHat = self.zcli.wizard.handle(zHorizontal)
-            
-            # For implicit wizards (nested sections), return zHat to continue execution
-            # Don't return 'zBack' as that would trigger navigation and create loops
-            # The walker will continue to the next key in the parent block
-            return zHat
+            return self._handle_implicit_wizard(zHorizontal, walker)
         
         # ========================================================================
         # EXPLICIT SUBSYSTEM ROUTING
         # ========================================================================
-        # Route: zDisplay (legacy format)
         if KEY_ZDISPLAY in zHorizontal:
-            self._log_detected("zDisplay (wrapped)")
-            display_data = zHorizontal[KEY_ZDISPLAY]
-            
-            if isinstance(display_data, dict):
-                # NEW v1.5.12: Pass context for %data.* variable resolution
-                # This enables templates to reference database query results
-                if context and "_resolved_data" in context:
-                    display_data["_context"] = context
-                
-                # Use display.handle() to pass through ALL parameters automatically
-                # This ensures new parameters like 'class' work without updating this code
-                self.display.handle(display_data)
-                
-                # Legacy explicit routing (DEPRECATED - kept for reference only)
-                # event = display_data.get(KEY_EVENT)
-                # if event == EVENT_TEXT:
-                #     content = display_data.get(KEY_CONTENT, DEFAULT_CONTENT)
-                #     indent = display_data.get(KEY_INDENT, DEFAULT_INDENT)
-                #     self.display.text(content, indent)
-                # elif event == EVENT_HEADER:
-                #     content = display_data.get(KEY_CONTENT, DEFAULT_CONTENT)
-                #     color = display_data.get(KEY_COLOR, "RESET")
-                #     indent = display_data.get(KEY_INDENT, DEFAULT_INDENT)
-                #     style = display_data.get(KEY_STYLE, "full")
-                #     self.display.header(content, color=color, indent=indent, style=style)
-                # elif event == EVENT_SUCCESS: ...
-                # elif event == EVENT_ERROR: ...
-                # elif event == EVENT_WARNING: ...
-                # elif event == EVENT_INFO: ...
-                # elif event == EVENT_LINE: ...
-                # elif event == EVENT_LIST: ...
-                # All events now handled by display.handle() above
-            return None
-
-        # Route: zFunc
+            return self._route_zdisplay(zHorizontal, context)
         if KEY_ZFUNC in zHorizontal:
-            self._log_detected("zFunc (dict)")
-            self._display_handler(LABEL_HANDLE_ZFUNC_DICT, DEFAULT_INDENT_HANDLER)
-            func_spec = zHorizontal[KEY_ZFUNC]
-            
-            # Check if it's a plugin invocation (starts with &)
-            if isinstance(func_spec, str) and func_spec.startswith(PLUGIN_PREFIX):
-                self._log_detected(f"plugin invocation in zFunc: {func_spec}")
-                # Route plugin invocations through parser with context support
-                return self.zcli.zparser.resolve_plugin_invocation(func_spec, context=context)
-            
-            # Non-plugin zFunc calls
-            return self.zcli.zfunc.handle(func_spec, zContext=context)
-
-        # Route: zDialog
+            return self._route_zfunc(zHorizontal, context)
         if KEY_ZDIALOG in zHorizontal:
-            # ✅ Week 6.11 (zDialog) - handle_zDialog() signature verified and compatible
-            from ...j_zDialog import handle_zDialog
-            self._log_detected("zDialog")
-            return handle_zDialog(zHorizontal, zcli=self.zcli, walker=walker, context=context)
-
-        # Route: zLogin (Built-in Authentication Action)
+            return self._route_zdialog(zHorizontal, context, walker)
         if KEY_ZLOGIN in zHorizontal:
-            self._display_handler(LABEL_HANDLE_ZLOGIN, DEFAULT_INDENT_HANDLER)
-            self._log_detected(f"zLogin: {zHorizontal[KEY_ZLOGIN]}")
-            
-            # Get app name from zLogin value (string)
-            app_or_type = zHorizontal[KEY_ZLOGIN]
-            
-            # Get zConv and model from context (set by zDialog)
-            # The context from zDialog submission contains both zConv and model
-            # Context is passed from walker, which gets it from dialog submission
-            zConv = context.get("zConv", {}) if context else {}
-            model = context.get("model") if context else None
-            
-            # If model wasn't in context, check if it was injected into zHorizontal by dialog_submit
-            if not model and "model" in zHorizontal:
-                model = zHorizontal["model"]
-            
-            # Build zContext for zLogin - include model and other dialog context
-            zContext = {
-                "model": model,
-                "fields": context.get("fields", []) if context else [],
-                "zConv": zConv
-            }
-            
-            # Import and call handle_zLogin
-            from zCLI.L2_Core.d_zAuth.zAuth_modules import handle_zLogin
-            
-            self.logger.debug(f"[zLauncher] Calling zLogin with zConv keys: {list(zConv.keys())}, model: {model}")
-            
-            result = handle_zLogin(
-                app_or_type=app_or_type,
-                zConv=zConv,
-                zContext=zContext,
-                zcli=self.zcli
-            )
-            
-            self.logger.debug(f"[zLauncher] zLogin result: {result}")
-            return result
-
-        # Route: zLogout (Built-in Logout Action)
+            return self._route_zlogin(zHorizontal, context)
         if KEY_ZLOGOUT in zHorizontal:
-            self._display_handler(LABEL_HANDLE_ZLOGOUT, DEFAULT_INDENT_HANDLER)
-            self._log_detected(f"zLogout: {zHorizontal[KEY_ZLOGOUT]}")
-            
-            # Get app name from zLogout value (string)
-            app_name = zHorizontal[KEY_ZLOGOUT]
-            
-            # zLogout doesn't need zConv/model (no form data), but we pass empty dicts
-            # for consistency with handle_zLogout signature
-            zConv = {}
-            zContext = {}
-            
-            # Import and call handle_zLogout
-            from zCLI.L2_Core.d_zAuth.zAuth_modules import handle_zLogout
-            
-            self.logger.debug(f"[zLauncher] Calling zLogout for app: {app_name}")
-            
-            result = handle_zLogout(
-                app_name=app_name,
-                zConv=zConv,
-                zContext=zContext,
-                zcli=self.zcli
-            )
-            
-            self.logger.debug(f"[zLauncher] zLogout result: {result}")
-            return result
-
-        # Route: zLink
+            return self._route_zlogout(zHorizontal)
         if KEY_ZLINK in zHorizontal:
-            if not self._check_walker(walker, "zLink"):
-                return None
-            self._log_detected("zLink")
-            # TODO: Week 6.7 (zNavigation) - Verify handle_zLink() signature after refactor
-            return self.zcli.navigation.handle_zLink(zHorizontal, walker=walker)
-
-        # Route: zDelta (intra-file block navigation)
+            return self._route_zlink(zHorizontal, walker)
         if KEY_ZDELTA in zHorizontal:
-            if not self._check_walker(walker, "zDelta"):
-                return None
-            self._log_detected("zDelta")
-            self._display_handler(LABEL_HANDLE_ZDELTA, DEFAULT_INDENT_HANDLER)
-            
-            # Extract target block name
-            target_block_name = zHorizontal[KEY_ZDELTA]
-            
-            # Strip $ or % prefix if present (delta navigation markers)
-            if isinstance(target_block_name, str):
-                if target_block_name.startswith(("$", "%")):
-                    target_block_name = target_block_name[1:]
-            
-            self.logger.framework.debug(f"zDelta navigation to block: {target_block_name}")
-            
-            # Get current zVaFile from session
-            current_zVaFile = walker.session.get("zVaFile") or walker.zSpark_obj.get("zVaFile")
-            if not current_zVaFile:
-                self.logger.error("No zVaFile in session or zspark_obj")
-                return None
-            
-            # Reload the UI file (walker doesn't store it as an instance attribute)
-            raw_zFile = walker.loader.handle(current_zVaFile)
-            if not raw_zFile:
-                self.logger.error(f"Failed to load UI file: {current_zVaFile}")
-                return None
-            
-            # Extract the target block dict from raw_zFile
-            # FALLBACK CHAIN:
-            # 1. Try finding block in current file
-            # 2. If not found, try loading {blockName}.yaml from same directory
-            target_block_dict = None
-            
-            if target_block_name in raw_zFile:
-                # Block found in current file
-                target_block_dict = raw_zFile[target_block_name]
-                self.logger.framework.debug(f"zDelta: Block '{target_block_name}' found in current file")
-            else:
-                # FALLBACK: Try loading zUI.{blockName}.yaml from same directory
-                # zCLI fundamental: UI files MUST be named zUI.*.yaml
-                
-                # Construct zPath for fallback file
-                # Example: current = "@.UI.zUI.index" -> fallback = "@.UI.zUI.zAbout"
-                # File naming: zUI.zAbout.yaml -> zPath = "@.UI.zUI.zAbout"
-                if current_zVaFile.startswith("@"):
-                    # Parse current zPath to get folder
-                    # "@.UI.zUI.index" -> ["@", "UI", "zUI", "index"]
-                    path_parts = current_zVaFile.split(".")
-                    
-                    # Replace the last part (filename) with target block name
-                    # File is named zUI.{blockName}.yaml, so zPath ends with {blockName}
-                    # ["@", "UI", "zUI", "index"] -> ["@", "UI", "zUI", "zAbout"]
-                    fallback_path_parts = path_parts[:-1] + [target_block_name]
-                    fallback_zPath = ".".join(fallback_path_parts)
-                else:
-                    # Absolute path - construct relative to current file
-                    fallback_zPath = f"@.UI.zUI.{target_block_name}"
-                
-                self.logger.framework.debug(
-                    f"zDelta: Block '{target_block_name}' not in current file, "
-                    f"trying fallback zPath: {fallback_zPath}"
-                )
-                
-                # Try loading the fallback file using zParser/zLoader
-                try:
-                    fallback_zFile = walker.loader.handle(fallback_zPath)
-                except Exception as e:
-                    self.logger.debug(f"zDelta: Fallback failed: {e}")
-                    fallback_zFile = None
-                
-                if fallback_zFile and isinstance(fallback_zFile, dict):
-                    # SUCCESS: Fallback file loaded
-                    # Use the entire file content as the block
-                    target_block_dict = fallback_zFile
-                    self.logger.info(
-                        f"✓ zDelta: Auto-discovered block '{target_block_name}' "
-                        f"from separate file: {fallback_zPath}"
-                    )
-                else:
-                    # FAILED: Neither current file nor fallback file has the block
-                    self.logger.error(
-                        f"Block '{target_block_name}' not found:\n"
-                        f"  - Not in current file: {current_zVaFile}\n"
-                        f"  - Fallback zPath not found: {fallback_zPath}"
-                    )
-                    return None
-            
-            # At this point, target_block_dict should be set
-            if not target_block_dict:
-                self.logger.error(f"Failed to resolve block '{target_block_name}'")
-                return None
-            
-            # Update session zBlock to reflect the target block
-            walker.session["zBlock"] = target_block_name
-            
-            # Initialize new breadcrumb scope for target block (creates new node in zCrumbs)
-            # Construct full breadcrumb path: zVaFile.zBlock
-            zVaFile = walker.session.get("zVaFile") or current_zVaFile
-            full_crumb_path = f"{zVaFile}.{target_block_name}" if zVaFile else target_block_name
-            
-            # Initialize empty breadcrumb trail for the new scope
-            if "zCrumbs" not in walker.session:
-                walker.session["zCrumbs"] = {}
-            walker.session["zCrumbs"][full_crumb_path] = []
-            
-            self.logger.framework.debug(f"zDelta: Created new breadcrumb scope: {full_crumb_path}")
-            
-            # Navigate to the target block using walker's execute_loop
-            result = walker.execute_loop(items_dict=target_block_dict)
-            return result
-
-        # Route: zWizard
+            return self._route_zdelta(zHorizontal, walker)
         if KEY_ZWIZARD in zHorizontal:
             return self._handle_wizard_dict(zHorizontal, walker, context)
-
-        # Route: zRead
         if KEY_ZREAD in zHorizontal:
             return self._handle_read_dict(zHorizontal, context)
-
-        # Route: zData
         if KEY_ZDATA in zHorizontal:
             return self._handle_data_dict(zHorizontal, context)
-
-        # Check if it looks like a CRUD operation (has action, table, model, etc.)
-        crud_keys = {
+        
+        # ========================================================================
+        # CRUD FALLBACK
+        # ========================================================================
+        crud_detection_keys = {
             KEY_ACTION, KEY_TABLE, KEY_MODEL, KEY_FIELDS, KEY_VALUES, KEY_WHERE
         }
-        if any(key in zHorizontal for key in crud_keys):
+        if any(key in zHorizontal for key in crud_detection_keys):
             return self._handle_crud_dict(zHorizontal, context)
         
-        # No recognized keys found - return None
+        # No recognized keys found
         self.logger.framework.debug("[zCLI Launcher] No recognized keys found, returning None")
         return None
 
@@ -1019,11 +683,9 @@ class CommandLauncher:
             - Uses ast.literal_eval() for safe payload parsing
             - Walker extends wizard, so walker.handle() is preferred over wizard.handle()
             - Mode-specific returns enable proper Terminal vs. API behavior
-        
-        TODO: Week 6.14 (zWizard) - Verify wizard.handle() signature after refactor
         """
         self._log_detected("zWizard request")
-        self._display_handler(LABEL_HANDLE_ZWIZARD, DEFAULT_INDENT_LAUNCHER)
+        self._display_handler(_LABEL_HANDLE_ZWIZARD, _DEFAULT_INDENT_LAUNCHER)
         
         # Extract and parse payload
         inner = zHorizontal[len(CMD_PREFIX_ZWIZARD):-1].strip()
@@ -1031,14 +693,13 @@ class CommandLauncher:
             wizard_obj = ast.literal_eval(inner)
             
             # Use modern OOP API - walker extends wizard, so it has handle()
-            # TODO: Week 6.14 (zWizard) - Verify wizard.handle() signature after refactor
             if walker:
                 zHat = walker.handle(wizard_obj)
             else:
                 zHat = self.zcli.wizard.handle(wizard_obj)
             
             # Mode-specific return behavior
-            if self._is_bifrost_mode(context):
+            if is_bifrost_mode(self.zcli.session):
                 # Bifrost: Return zHat for API consumption
                 return zHat
             
@@ -1076,20 +737,17 @@ class CommandLauncher:
             - No parsing needed (already dict format)
             - Walker extends wizard, so walker.handle() is preferred
             - Mode-specific returns enable proper Terminal vs. API behavior
-        
-        TODO: Week 6.14 (zWizard) - Verify wizard.handle() signature after refactor
         """
         self._log_detected("zWizard (dict)")
         
         # Use modern OOP API - walker extends wizard, so it has handle()
-        # TODO: Week 6.14 (zWizard) - Verify wizard.handle() signature after refactor
         if walker:
             zHat = walker.handle(zHorizontal[KEY_ZWIZARD])
         else:
             zHat = self.zcli.wizard.handle(zHorizontal[KEY_ZWIZARD])
         
         # Mode-specific return behavior
-        if self._is_bifrost_mode(context):
+        if is_bifrost_mode(self.zcli.session):
             # Bifrost: Return zHat for API consumption
             return zHat
         
@@ -1122,20 +780,17 @@ class CommandLauncher:
             - Empty payload: {"action": "read"} (no model specified)
             - Non-empty payload: {"action": "read", "model": "..."}
             - Dispatched to zData.handle_request()
-        
-        TODO: Week 6.16 (zData) - Verify data.handle_request() signature after refactor
         """
         self._log_detected("zRead request (string)")
-        self._display_handler(LABEL_HANDLE_ZREAD_STRING, DEFAULT_INDENT_LAUNCHER)
+        self._display_handler(_LABEL_HANDLE_ZREAD_STRING, _DEFAULT_INDENT_LAUNCHER)
         
         # Extract and build request
         inner = zHorizontal[len(CMD_PREFIX_ZREAD):-1].strip()
-        req = {KEY_ACTION: DEFAULT_ACTION_READ}
+        req = {KEY_ACTION: _DEFAULT_ACTION_READ}
         if inner:
             req[KEY_MODEL] = inner
         
         self.logger.framework.debug(f"Dispatching zRead (string) with request: {req}")
-        # TODO: Week 6.16 (zData) - Verify data.handle_request() signature after refactor
         return self.zcli.data.handle_request(req, context=context)
 
     def _handle_read_dict(
@@ -1164,21 +819,18 @@ class CommandLauncher:
             - String payload: {"zRead": "users"} -> {"action": "read", "model": "users"}
             - Dict payload: {"zRead": {...}} -> {action: "read", ...}
             - Sets default action if not specified
-        
-        TODO: Week 6.16 (zData) - Verify data.handle_request() signature after refactor
         """
         self._log_detected("zRead (dict)")
-        self._display_handler(LABEL_HANDLE_ZREAD_DICT, DEFAULT_INDENT_LAUNCHER)
+        self._display_handler(_LABEL_HANDLE_ZREAD_DICT, _DEFAULT_INDENT_LAUNCHER)
         
         # Extract and normalize request
         req = zHorizontal.get(KEY_ZREAD) or {}
         if isinstance(req, str):
             req = {KEY_MODEL: req}
         
-        self._set_default_action(req, DEFAULT_ACTION_READ)
+        self._set_default_action(req, _DEFAULT_ACTION_READ)
         
         self.logger.framework.debug(f"Dispatching zRead (dict) with request: {req}")
-        # TODO: Week 6.16 (zData) - Verify data.handle_request() signature after refactor
         return self.zcli.data.handle_request(req, context=context)
 
     def _handle_data_dict(
@@ -1206,21 +858,18 @@ class CommandLauncher:
             - String payload: {"zData": "users"} -> {"action": "read", "model": "users"}
             - Dict payload: {"zData": {...}} -> {action: "read" (default), ...}
             - Sets default action if not specified
-        
-        TODO: Week 6.16 (zData) - Verify data.handle_request() signature after refactor
         """
         self._log_detected("zData (dict)")
-        self._display_handler(LABEL_HANDLE_ZDATA_DICT, DEFAULT_INDENT_LAUNCHER)
+        self._display_handler(_LABEL_HANDLE_ZDATA_DICT, _DEFAULT_INDENT_LAUNCHER)
         
         # Extract and normalize request
         req = zHorizontal.get(KEY_ZDATA) or {}
         if isinstance(req, str):
             req = {KEY_MODEL: req}
         
-        self._set_default_action(req, DEFAULT_ACTION_READ)
+        self._set_default_action(req, _DEFAULT_ACTION_READ)
         
         self.logger.framework.debug(f"Dispatching zData (dict) with request: {req}")
-        # TODO: Week 6.16 (zData) - Verify data.handle_request() signature after refactor
         return self.zcli.data.handle_request(req, context=context)
 
     def _handle_crud_dict(
@@ -1251,8 +900,6 @@ class CommandLauncher:
             - Detects CRUD keys: action, model, tables, fields, values, filters, where, order_by, limit, offset
             - Sets default action to "read" if not specified
             - Creates a copy to avoid mutating original dict
-        
-        TODO: Week 6.16 (zData) - Verify data.handle_request() signature after refactor
         """
         # CRUD key detection
         maybe_crud = {
@@ -1263,41 +910,557 @@ class CommandLauncher:
         # Validate: Must have at least one CRUD key AND "model" key
         if any(k in zHorizontal for k in maybe_crud) and KEY_MODEL in zHorizontal:
             req = dict(zHorizontal)  # Create copy to avoid mutation
-            self._set_default_action(req, DEFAULT_ACTION_READ)
+            self._set_default_action(req, _DEFAULT_ACTION_READ)
             
             self._log_detected(f"generic CRUD dict => {req}")
-            self._display_handler(LABEL_HANDLE_CRUD_DICT, DEFAULT_INDENT_LAUNCHER)
+            self._display_handler(_LABEL_HANDLE_CRUD_DICT, _DEFAULT_INDENT_LAUNCHER)
             
-            # TODO: Week 6.16 (zData) - Verify data.handle_request() signature after refactor
             return self.zcli.data.handle_request(req, context=context)
         
         return None
 
     # ========================================================================
-    # HELPER METHODS - DRY Refactoring
+    # DICT ROUTING HELPERS - Decomposed from _launch_dict()
     # ========================================================================
 
-    def _is_bifrost_mode(self, context: Optional[Dict[str, Any]]) -> bool:
+    def _unwrap_content_wrapper(
+        self,
+        zHorizontal: Dict[str, Any],
+        content_keys: List[str],
+        context: Optional[Dict[str, Any]],
+        walker: Optional[Any]
+    ) -> Optional[Union[str, Dict[str, Any]]]:
         """
-        Check if context indicates Bifrost mode execution.
+        Unwrap single "Content" key pattern.
+        
+        Common UI pattern: {_zClass: "...", Content: [events]}
+        Unwraps and dispatches the Content directly.
         
         Args:
-            context: Optional context dict with mode metadata
+            zHorizontal: Dict command
+            content_keys: List of non-metadata keys
+            context: Optional context dict
+            walker: Optional walker instance
         
         Returns:
-            True if context exists and mode is "zBifrost", False otherwise
+            Recursively dispatched result, or None if not a Content wrapper
+        """
+        if len(content_keys) == 1 and content_keys[0] == 'Content':
+            self._log_detected("Content wrapper (unwrapping)")
+            content_value = zHorizontal['Content']
+            return self.launch(content_value, context=context, walker=walker)
+        return None
+
+    def _resolve_data_block_if_present(
+        self,
+        zHorizontal: Dict[str, Any],
+        is_subsystem_call: bool,
+        context: Optional[Dict[str, Any]]
+    ) -> None:
+        """
+        Resolve block-level _data queries if present (Flask/Jinja pattern).
         
-        Example:
-            if self._is_bifrost_mode(context):
-                # Handle Bifrost-specific behavior
+        If dict has _data block, resolves queries BEFORE processing children.
+        Stores results in context["_resolved_data"] for child blocks to access.
+        
+        Args:
+            zHorizontal: Dict command
+            is_subsystem_call: Whether this is a direct subsystem call
+            context: Context dict to store resolved data
         
         Notes:
-            - TODO: Replace KEY_MODE with SESSION_KEY_ZMODE from zConfig (Week 6.2)
-            - Gracefully handles None context (returns False)
-            - Case-sensitive mode comparison
+            - Modifies context in-place (adds/updates "_resolved_data")
+            - Only resolves if NOT a subsystem call
+            - Logs resolution results
         """
-        # TODO: Week 6.2 (zConfig) - Replace KEY_MODE with SESSION_KEY_ZMODE
-        return context is not None and context.get(KEY_MODE) == MODE_BIFROST
+        if "_data" in zHorizontal and not is_subsystem_call:
+            self.logger.framework.info("[zCLI Data] Detected _data block, resolving queries...")
+            resolved_data = self._resolve_block_data(zHorizontal["_data"], context)
+            if resolved_data:
+                if "_resolved_data" not in context:
+                    context["_resolved_data"] = {}
+                context["_resolved_data"].update(resolved_data)
+                self.logger.framework.info(f"[zCLI Data] Resolved {len(resolved_data)} data queries for block")
+            else:
+                self.logger.framework.warning("[zCLI Data] _data block present but no data resolved")
+
+    def _handle_organizational_structure(
+        self,
+        zHorizontal: Dict[str, Any],
+        content_keys: List[str],
+        context: Optional[Dict[str, Any]],
+        walker: Optional[Any]
+    ) -> Optional[Union[str, Dict[str, Any]]]:
+        """
+        Handle organizational structure (nested dicts/lists with no direct actions).
+        
+        If dict has only nested dicts/lists, it's organizational - recurse into it
+        rather than treating as implicit wizard. Enables flexible YAML organization.
+        
+        Args:
+            zHorizontal: Dict command
+            content_keys: List of non-metadata keys
+            context: Optional context dict
+            walker: Optional walker instance
+        
+        Returns:
+            Recursion result, or None if not organizational structure
+        """
+        # Check if ALL content values are dicts or lists
+        all_nested = all(
+            isinstance(zHorizontal[k], (dict, list))
+            for k in content_keys
+        )
+        
+        if all_nested:
+            self.logger.framework.debug(
+                f"[zCLI Recursion] Organizational structure detected "
+                f"({len(content_keys)} keys), recursing..."
+            )
+            
+            result = None
+            for key in content_keys:
+                value = zHorizontal[key]
+                self.logger.framework.debug(
+                    f"[zCLI Recursion] Processing nested key: {key} "
+                    f"(type: {type(value).__name__})"
+                )
+                
+                # Recursively process nested content
+                if isinstance(value, dict):
+                    result = self._launch_dict(value, context, walker)
+                elif isinstance(value, list):
+                    result = self._launch_list(value, context, walker)
+                
+                # Check for navigation signals
+                if result in ('zBack', 'exit', 'stop', 'error'):
+                    self.logger.framework.debug(
+                        f"[zCLI Recursion] Navigation signal received: {result}"
+                    )
+                    return result
+            
+            self.logger.framework.debug(
+                f"[zCLI Recursion] Completed organizational recursion, returning: {result}"
+            )
+            return result
+        
+        return None
+
+    def _handle_implicit_wizard(
+        self,
+        zHorizontal: Dict[str, Any],
+        walker: Optional[Any]
+    ) -> Optional[Union[str, Any]]:
+        """
+        Handle implicit wizard (multiple non-metadata, non-subsystem keys).
+        
+        If dict has multiple content keys and NOT purely organizational,
+        treats as wizard steps.
+        
+        Args:
+            zHorizontal: Dict command
+            walker: Optional walker instance
+        
+        Returns:
+            Wizard execution result (zHat)
+        """
+        self._log_detected("Implicit zWizard (multi-step)")
+        
+        # Call wizard with proper context - use walker if available
+        if walker:
+            zHat = walker.handle(zHorizontal)
+        else:
+            zHat = self.zcli.wizard.handle(zHorizontal)
+        
+        # For implicit wizards (nested sections), return zHat to continue execution
+        # Don't return 'zBack' as that would trigger navigation and create loops
+        return zHat
+
+    def _route_zdisplay(
+        self,
+        zHorizontal: Dict[str, Any],
+        context: Optional[Dict[str, Any]]
+    ) -> None:
+        """
+        Route zDisplay command (legacy format).
+        
+        Args:
+            zHorizontal: Dict containing KEY_ZDISPLAY
+            context: Optional context dict
+        
+        Returns:
+            Always returns None (display operations don't return values)
+        """
+        self._log_detected("zDisplay (wrapped)")
+        display_data = zHorizontal[KEY_ZDISPLAY]
+        
+        if isinstance(display_data, dict):
+            # Pass context for %data.* variable resolution
+            if context and "_resolved_data" in context:
+                display_data["_context"] = context
+            
+            # Use display.handle() to pass through ALL parameters automatically
+            self.display.handle(display_data)
+        
+        return None
+
+    def _route_zfunc(
+        self,
+        zHorizontal: Dict[str, Any],
+        context: Optional[Dict[str, Any]]
+    ) -> Optional[Any]:
+        """
+        Route zFunc command (function execution or plugin invocation).
+        
+        Args:
+            zHorizontal: Dict containing KEY_ZFUNC
+            context: Optional context dict
+        
+        Returns:
+            Function/plugin execution result
+        """
+        self._log_detected("zFunc (dict)")
+        self._display_handler(_LABEL_HANDLE_ZFUNC_DICT, _DEFAULT_INDENT_HANDLER)
+        func_spec = zHorizontal[KEY_ZFUNC]
+        
+        # Check if it's a plugin invocation (starts with &)
+        if isinstance(func_spec, str) and func_spec.startswith(PLUGIN_PREFIX):
+            self._log_detected(f"plugin invocation in zFunc: {func_spec}")
+            return self.zcli.zparser.resolve_plugin_invocation(func_spec, context=context)
+        
+        # Non-plugin zFunc calls
+        return self.zcli.zfunc.handle(func_spec, zContext=context)
+
+    def _route_zdialog(
+        self,
+        zHorizontal: Dict[str, Any],
+        context: Optional[Dict[str, Any]],
+        walker: Optional[Any]
+    ) -> Optional[Any]:
+        """
+        Route zDialog command (interactive form/dialog).
+        
+        Args:
+            zHorizontal: Dict containing KEY_ZDIALOG
+            context: Optional context dict
+            walker: Optional walker instance
+        
+        Returns:
+            Dialog execution result
+        """
+        from ...j_zDialog import handle_zDialog
+        self._log_detected("zDialog")
+        return handle_zDialog(zHorizontal, zcli=self.zcli, walker=walker, context=context)
+
+    def _route_zlogin(
+        self,
+        zHorizontal: Dict[str, Any],
+        context: Optional[Dict[str, Any]]
+    ) -> Optional[Any]:
+        """
+        Route zLogin command (built-in authentication action).
+        
+        Args:
+            zHorizontal: Dict containing KEY_ZLOGIN
+            context: Optional context dict (contains zConv, model from zDialog)
+        
+        Returns:
+            Login result
+        """
+        self._display_handler(_LABEL_HANDLE_ZLOGIN, _DEFAULT_INDENT_HANDLER)
+        self._log_detected(f"zLogin: {zHorizontal[KEY_ZLOGIN]}")
+        
+        # Get app name from zLogin value (string)
+        app_or_type = zHorizontal[KEY_ZLOGIN]
+        
+        # Get zConv and model from context (set by zDialog)
+        zConv = context.get("zConv", {}) if context else {}
+        model = context.get("model") if context else None
+        
+        # If model wasn't in context, check if it was injected into zHorizontal
+        if not model and "model" in zHorizontal:
+            model = zHorizontal["model"]
+        
+        # Build zContext for zLogin
+        zContext = {
+            "model": model,
+            "fields": context.get("fields", []) if context else [],
+            "zConv": zConv
+        }
+        
+        # Import and call handle_zLogin
+        from zCLI.L2_Core.d_zAuth.zAuth_modules import handle_zLogin
+        
+        self.logger.debug(
+            f"[zLauncher] Calling zLogin with zConv keys: {list(zConv.keys())}, "
+            f"model: {model}"
+        )
+        
+        result = handle_zLogin(
+            app_or_type=app_or_type,
+            zConv=zConv,
+            zContext=zContext,
+            zcli=self.zcli
+        )
+        
+        self.logger.debug(f"[zLauncher] zLogin result: {result}")
+        return result
+
+    def _route_zlogout(
+        self,
+        zHorizontal: Dict[str, Any]
+    ) -> Optional[Any]:
+        """
+        Route zLogout command (built-in logout action).
+        
+        Args:
+            zHorizontal: Dict containing KEY_ZLOGOUT
+        
+        Returns:
+            Logout result
+        """
+        self._display_handler(_LABEL_HANDLE_ZLOGOUT, _DEFAULT_INDENT_HANDLER)
+        self._log_detected(f"zLogout: {zHorizontal[KEY_ZLOGOUT]}")
+        
+        # Get app name from zLogout value (string)
+        app_name = zHorizontal[KEY_ZLOGOUT]
+        
+        # zLogout doesn't need zConv/model, pass empty dicts for consistency
+        zConv = {}
+        zContext = {}
+        
+        # Import and call handle_zLogout
+        from zCLI.L2_Core.d_zAuth.zAuth_modules import handle_zLogout
+        
+        self.logger.debug(f"[zLauncher] Calling zLogout for app: {app_name}")
+        
+        result = handle_zLogout(
+            app_name=app_name,
+            zConv=zConv,
+            zContext=zContext,
+            zcli=self.zcli
+        )
+        
+        self.logger.debug(f"[zLauncher] zLogout result: {result}")
+        return result
+
+    def _route_zlink(
+        self,
+        zHorizontal: Dict[str, Any],
+        walker: Optional[Any]
+    ) -> Optional[Any]:
+        """
+        Route zLink command (navigation link).
+        
+        Args:
+            zHorizontal: Dict containing KEY_ZLINK
+            walker: Walker instance (required for navigation)
+        
+        Returns:
+            Navigation result, or None if walker not available
+        """
+        if not self._check_walker(walker, "zLink"):
+            return None
+        self._log_detected("zLink")
+        return self.zcli.navigation.handle_zLink(zHorizontal, walker=walker)
+
+    def _route_zdelta(
+        self,
+        zHorizontal: Dict[str, Any],
+        walker: Optional[Any]
+    ) -> Optional[Any]:
+        """
+        Route zDelta command (intra-file block navigation).
+        
+        Handles navigation to a different block within the same UI file or
+        auto-discovers blocks from separate files (fallback pattern).
+        
+        Args:
+            zHorizontal: Dict containing KEY_ZDELTA
+            walker: Walker instance (required for navigation)
+        
+        Returns:
+            Navigation result, or None if walker not available or block not found
+        
+        Notes:
+            - Strips $ or % prefix from target block name
+            - Fallback: If block not in current file, tries loading zUI.{blockName}.yaml
+            - Creates new breadcrumb scope for target block
+            - Updates session zBlock to reflect navigation
+        """
+        if not self._check_walker(walker, "zDelta"):
+            return None
+        
+        self._log_detected("zDelta")
+        self._display_handler(_LABEL_HANDLE_ZDELTA, _DEFAULT_INDENT_HANDLER)
+        
+        # Extract target block name
+        target_block_name = zHorizontal[KEY_ZDELTA]
+        
+        # Strip $ or % prefix if present (delta navigation markers)
+        if isinstance(target_block_name, str):
+            if target_block_name.startswith(("$", "%")):
+                target_block_name = target_block_name[1:]
+        
+        self.logger.framework.debug(f"zDelta navigation to block: {target_block_name}")
+        
+        # Get current zVaFile from session
+        current_zVaFile = walker.session.get("zVaFile") or walker.zSpark_obj.get("zVaFile")
+        if not current_zVaFile:
+            self.logger.error("No zVaFile in session or zspark_obj")
+            return None
+        
+        # Reload the UI file
+        raw_zFile = walker.loader.handle(current_zVaFile)
+        if not raw_zFile:
+            self.logger.error(f"Failed to load UI file: {current_zVaFile}")
+            return None
+        
+        # Extract the target block dict - with fallback chain
+        target_block_dict = self._resolve_delta_target_block(
+            target_block_name,
+            raw_zFile,
+            current_zVaFile,
+            walker
+        )
+        
+        if not target_block_dict:
+            self.logger.error(f"Failed to resolve block '{target_block_name}'")
+            return None
+        
+        # Update session and create breadcrumb scope
+        walker.session["zBlock"] = target_block_name
+        self._initialize_delta_breadcrumb_scope(target_block_name, current_zVaFile, walker)
+        
+        # Navigate to the target block
+        result = walker.execute_loop(items_dict=target_block_dict)
+        return result
+
+    def _resolve_delta_target_block(
+        self,
+        target_block_name: str,
+        raw_zFile: Dict[str, Any],
+        current_zVaFile: str,
+        walker: Any
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Resolve target block for zDelta navigation with fallback.
+        
+        FALLBACK CHAIN:
+        1. Try finding block in current file
+        2. If not found, try loading {blockName}.yaml from same directory
+        
+        Args:
+            target_block_name: Name of target block
+            raw_zFile: Current UI file content
+            current_zVaFile: Current zVaFile path
+            walker: Walker instance
+        
+        Returns:
+            Target block dict, or None if not found
+        """
+        # Try current file first
+        if target_block_name in raw_zFile:
+            self.logger.framework.debug(
+                f"zDelta: Block '{target_block_name}' found in current file"
+            )
+            return raw_zFile[target_block_name]
+        
+        # FALLBACK: Try loading zUI.{blockName}.yaml from same directory
+        fallback_zPath = self._construct_fallback_zpath(target_block_name, current_zVaFile)
+        
+        self.logger.framework.debug(
+            f"zDelta: Block '{target_block_name}' not in current file, "
+            f"trying fallback zPath: {fallback_zPath}"
+        )
+        
+        # Try loading the fallback file
+        try:
+            fallback_zFile = walker.loader.handle(fallback_zPath)
+        except Exception as e:
+            self.logger.debug(f"zDelta: Fallback failed: {e}")
+            fallback_zFile = None
+        
+        if fallback_zFile and isinstance(fallback_zFile, dict):
+            # SUCCESS: Fallback file loaded
+            self.logger.info(
+                f"✓ zDelta: Auto-discovered block '{target_block_name}' "
+                f"from separate file: {fallback_zPath}"
+            )
+            return fallback_zFile
+        else:
+            # FAILED: Neither current file nor fallback file has the block
+            self.logger.error(
+                f"Block '{target_block_name}' not found:\n"
+                f"  - Not in current file: {current_zVaFile}\n"
+                f"  - Fallback zPath not found: {fallback_zPath}"
+            )
+            return None
+
+    def _construct_fallback_zpath(
+        self,
+        target_block_name: str,
+        current_zVaFile: str
+    ) -> str:
+        """
+        Construct fallback zPath for zDelta auto-discovery.
+        
+        File naming: zUI.{blockName}.yaml -> zPath = "@.UI.zUI.{blockName}"
+        
+        Args:
+            target_block_name: Name of target block
+            current_zVaFile: Current zVaFile path
+        
+        Returns:
+            Fallback zPath string
+        
+        Example:
+            current = "@.UI.zUI.index" -> fallback = "@.UI.zUI.zAbout"
+        """
+        if current_zVaFile.startswith("@"):
+            # Parse current zPath to get folder
+            path_parts = current_zVaFile.split(".")
+            # Replace the last part with target block name
+            fallback_path_parts = path_parts[:-1] + [target_block_name]
+            return ".".join(fallback_path_parts)
+        else:
+            # Absolute path - construct relative to current file
+            return f"@.UI.zUI.{target_block_name}"
+
+    def _initialize_delta_breadcrumb_scope(
+        self,
+        target_block_name: str,
+        current_zVaFile: str,
+        walker: Any
+    ) -> None:
+        """
+        Initialize new breadcrumb scope for zDelta target block.
+        
+        Creates new node in zCrumbs with full breadcrumb path: zVaFile.zBlock
+        
+        Args:
+            target_block_name: Name of target block
+            current_zVaFile: Current zVaFile path
+            walker: Walker instance (modifies walker.session in-place)
+        
+        Notes:
+            - Modifies walker.session["zCrumbs"] in-place
+            - Creates empty breadcrumb trail for new scope
+        """
+        # Construct full breadcrumb path
+        zVaFile = walker.session.get("zVaFile") or current_zVaFile
+        full_crumb_path = f"{zVaFile}.{target_block_name}" if zVaFile else target_block_name
+        
+        # Initialize empty breadcrumb trail for the new scope
+        if "zCrumbs" not in walker.session:
+            walker.session["zCrumbs"] = {}
+        walker.session["zCrumbs"][full_crumb_path] = []
+        
+        self.logger.framework.debug(f"zDelta: Created new breadcrumb scope: {full_crumb_path}")
+
+    # ========================================================================
+    # HELPER METHODS - DRY Refactoring
+    # ========================================================================
 
     def _display_handler(self, label: str, indent: int) -> None:
         """
@@ -1319,7 +1482,7 @@ class CommandLauncher:
             label,
             color=self.dispatch.mycolor,
             indent=indent,
-            style=DEFAULT_STYLE_SINGLE
+            style=_DEFAULT_STYLE_SINGLE
         )
 
     def _log_detected(self, message: str) -> None:
@@ -1385,126 +1548,69 @@ class CommandLauncher:
         """
         req.setdefault(KEY_ACTION, default_action)
     
-    def _resolve_block_data(self, data_block: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, Any]:
+    def _resolve_block_data(
+        self,
+        data_block: Dict[str, Any],
+        context: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """
-        Execute data queries defined in block-level _data (zCLI declarative pattern).
+        Execute data queries defined in block-level _data (ORCHESTRATOR).
         
-        This enables Jinja-like templating in YAML where data queries are co-located
-        with UI definitions, but with better security (credentials in .zEnv).
+        This method has been decomposed from 129 lines into a clean orchestrator
+        + 4 focused helpers for query processing.
+        
+        Supports 3 query formats:
+        1. Declarative dict: {model: "...", where: {...}, limit: 1}
+        2. Shorthand string: "@.models.zSchema.contacts"
+        3. Explicit zData: {zData: {action: "read", model: "..."}}
         
         Args:
             data_block: _data section from zUI block
-            context: Current execution context (for accessing session, etc.)
+            context: Current execution context
         
         Returns:
             Dictionary of query results: {"user": {...}, "stats": [...]}
         
         Examples:
-            # In zUI.zAccount.yaml:
-            zAccount:
-              _data:
-                user: "@.models.zSchema.contacts"  # Shorthand
-                stats:
-                  zData:  # Explicit
-                    action: read
-                    model: "@.models.zSchema.user_stats"
+            # Declarative format (recommended)
+            _data:
+              user:
+                model: "@.models.zSchema.users"
+                where: {id: "%session.zAuth.applications.zCloud.id"}
+                limit: 1
+            
+            # Shorthand format (backward compatibility)
+            _data:
+              user: "@.models.zSchema.contacts"
+            
+            # Explicit zData format
+            _data:
+              stats:
+                zData:
+                  action: read
+                  model: "@.models.zSchema.user_stats"
         
-        Security:
-            - Model paths (@.models.zSchema.contacts) are safe to commit
-            - Actual DB connections (postgresql://...) are in .zEnv
-            - Session-based auto-filtering prevents unauthorized data access
+        Notes:
+            - Decomposed from 129 lines → 45 lines (65% reduction)
+            - 4 data resolution helpers extracted
+            - Session-based auto-filtering for security
+            - Supports %session.* interpolation in WHERE clauses
         """
         results = {}
         
         for key, query_def in data_block.items():
             try:
-                # Handle declarative dict: user: {model: "@.models.zSchema.users", where: {id: "%session.path"}}
+                # Format 1: Declarative dict
                 if isinstance(query_def, dict) and "model" in query_def:
-                    # Fully declarative format - interpolate session values
-                    model = query_def.get("model")
-                    where_clause = query_def.get("where", {})
-                    
-                    # Interpolate %session.* values in WHERE clause
-                    interpolated_where = {}
-                    for field, value in where_clause.items():
-                        if isinstance(value, str) and value.startswith("%session."):
-                            # Extract session path: %session.zAuth.applications.zCloud.id
-                            session_path = value[9:]  # Remove "%session." prefix
-                            path_parts = session_path.split('.')
-                            
-                            # Navigate session dict
-                            session_value = self.zcli.session
-                            for part in path_parts:
-                                if isinstance(session_value, dict):
-                                    session_value = session_value.get(part)
-                                else:
-                                    session_value = None
-                                    break
-                            
-                            interpolated_where[field] = session_value
-                            self.logger.framework.debug(f"[_data] Interpolated {value} → {session_value}")
-                        else:
-                            interpolated_where[field] = value
-                    
-                    query_def = {
-                        "zData": {
-                            "action": "read",
-                            "model": model,
-                            "options": {
-                                "where": interpolated_where if interpolated_where else {},
-                                "limit": query_def.get("limit", 1)  # Default to single record
-                            }
-                        }
-                    }
+                    query_def = self._build_declarative_query(query_def)
                 
-                # Handle shorthand: user: "@.models.zSchema.contacts"
-                # NOTE: This is kept for backward compatibility but hardcodes "id" field
+                # Format 2: Shorthand string
                 elif isinstance(query_def, str) and query_def.startswith('@.models.'):
-                    self.logger.framework.warning(f"[_data] Shorthand syntax '{key}: \"{query_def}\"' uses hardcoded 'id' field. Consider using declarative syntax with explicit WHERE clause.")
-                    
-                    # Shorthand model reference - convert to zData request
-                    # Auto-filter by authenticated user ID for security
-                    
-                    # Get authenticated user ID from zAuth (supports 3-layer architecture)
-                    zauth = self.zcli.session.get('zAuth', {})
-                    active_app = zauth.get('active_app')
-                    
-                    # Try app-specific auth first (applications layer)
-                    if active_app:
-                        app_auth = zauth.get('applications', {}).get(active_app, {})
-                        user_id = app_auth.get('id')
-                    else:
-                        # Fallback to Zolo platform auth (zSession layer - future SSO)
-                        user_id = zauth.get('zSession', {}).get('id')
-                    
-                    query_def = {
-                        "zData": {
-                            "action": "read",
-                            "model": query_def,
-                            "options": {
-                                "where": {"id": user_id} if user_id else {"id": 0},  # Dict format for adapter compatibility
-                                "limit": 1
-                            }
-                        }
-                    }
+                    query_def = self._build_shorthand_query(key, query_def)
                 
-                # Handle explicit zData block
+                # Format 3: Explicit zData block
                 if isinstance(query_def, dict) and "zData" in query_def:
-                    # Execute zData query via subsystem in SILENT mode (v1.5.12)
-                    # Silent mode: returns rows without displaying, works in any zMode
-                    query_def["zData"]["silent"] = True
-                    
-                    result = self.zcli.data.handle_request(query_def["zData"], context)
-                    
-                    # Extract first record if limit=1 (single record query)
-                    if isinstance(result, list) and query_def["zData"].get("options", {}).get("limit") == 1 and len(result) > 0:
-                        results[key] = result[0]  # Return dict instead of list for single record
-                    else:
-                        results[key] = result
-                    
-                    result_type = type(results[key]).__name__
-                    result_count = len(result) if isinstance(result, list) else 1
-                    self.logger.framework.debug(f"[zCLI Data] Query '{key}' returned {result_type} ({result_count} records)")
+                    results[key] = self._execute_data_query(key, query_def, context)
                 else:
                     self.logger.framework.warning(f"[zCLI Data] Invalid _data entry: {key}")
                     results[key] = None
@@ -1514,3 +1620,190 @@ class CommandLauncher:
                 results[key] = None
         
         return results
+
+    # ========================================================================
+    # DATA RESOLUTION HELPERS - Decomposed from _resolve_block_data()
+    # ========================================================================
+
+    def _interpolate_session_values(
+        self,
+        where_clause: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Interpolate %session.* values in WHERE clause.
+        
+        Args:
+            where_clause: WHERE clause dict (may contain %session.* values)
+        
+        Returns:
+            WHERE clause with interpolated session values
+        
+        Example:
+            where = {"id": "%session.zAuth.applications.zCloud.id"}
+            result = _interpolate_session_values(where)
+            # Returns: {"id": 123}  (actual user ID from session)
+        
+        Notes:
+            - Navigates session dict using dot notation
+            - Returns None if path doesn't exist
+            - Logs interpolation for debugging
+        """
+        interpolated = {}
+        for field, value in where_clause.items():
+            if isinstance(value, str) and value.startswith("%session."):
+                # Extract session path: %session.zAuth.applications.zCloud.id
+                session_path = value[9:]  # Remove "%session." prefix
+                path_parts = session_path.split('.')
+                
+                # Navigate session dict
+                session_value = self.zcli.session
+                for part in path_parts:
+                    if isinstance(session_value, dict):
+                        session_value = session_value.get(part)
+                    else:
+                        session_value = None
+                        break
+                
+                interpolated[field] = session_value
+                self.logger.framework.debug(
+                    f"[_data] Interpolated {value} → {session_value}"
+                )
+            else:
+                interpolated[field] = value
+        
+        return interpolated
+
+    def _build_declarative_query(
+        self,
+        query_def: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Build zData query from declarative dict format.
+        
+        Args:
+            query_def: Declarative query (model + where + limit)
+        
+        Returns:
+            zData query dict
+        
+        Example:
+            query = {"model": "@.models.zSchema.users", "where": {"id": 123}, "limit": 1}
+            result = _build_declarative_query(query)
+            # Returns: {"zData": {"action": "read", "model": "...", "options": {...}}}
+        
+        Notes:
+            - Interpolates %session.* values in WHERE clause
+            - Defaults to limit=1 for single record queries
+            - WHERE clause is optional
+        """
+        model = query_def.get("model")
+        where_clause = query_def.get("where", {})
+        
+        # Interpolate %session.* values in WHERE clause
+        interpolated_where = self._interpolate_session_values(where_clause)
+        
+        return {
+            "zData": {
+                "action": "read",
+                "model": model,
+                "options": {
+                    "where": interpolated_where if interpolated_where else {},
+                    "limit": query_def.get("limit", 1)
+                }
+            }
+        }
+
+    def _build_shorthand_query(
+        self,
+        key: str,
+        model_path: str
+    ) -> Dict[str, Any]:
+        """
+        Build zData query from shorthand string format.
+        
+        Shorthand: user: "@.models.zSchema.contacts"
+        Auto-filters by authenticated user ID for security.
+        
+        Args:
+            key: Query key (for logging)
+            model_path: Model path string (@.models.*)
+        
+        Returns:
+            zData query dict with auth filtering
+        
+        Notes:
+            - Backward compatibility (hardcodes 'id' field)
+            - Warns about hardcoded field
+            - Auto-filters by authenticated user ID
+            - Supports 3-layer auth architecture
+        """
+        self.logger.framework.warning(
+            f"[_data] Shorthand syntax '{key}: \"{model_path}\"' uses hardcoded 'id' field. "
+            f"Consider using declarative syntax with explicit WHERE clause."
+        )
+        
+        # Get authenticated user ID from zAuth
+        zauth = self.zcli.session.get('zAuth', {})
+        active_app = zauth.get('active_app')
+        
+        # Try app-specific auth first
+        if active_app:
+            app_auth = zauth.get('applications', {}).get(active_app, {})
+            user_id = app_auth.get('id')
+        else:
+            # Fallback to Zolo platform auth
+            user_id = zauth.get('zSession', {}).get('id')
+        
+        return {
+            "zData": {
+                "action": "read",
+                "model": model_path,
+                "options": {
+                    "where": {"id": user_id} if user_id else {"id": 0},
+                    "limit": 1
+                }
+            }
+        }
+
+    def _execute_data_query(
+        self,
+        key: str,
+        query_def: Dict[str, Any],
+        context: Dict[str, Any]
+    ) -> Any:
+        """
+        Execute zData query and extract result.
+        
+        Args:
+            key: Query key (for logging)
+            query_def: zData query dict
+            context: Execution context
+        
+        Returns:
+            Query result (dict for single record, list for multiple)
+        
+        Notes:
+            - Sets silent=True to suppress display output
+            - Works in any zMode (Terminal, Bifrost)
+            - Extracts first record for limit=1 queries
+            - Logs result type and count
+        """
+        # Execute zData query in SILENT mode
+        query_def["zData"]["silent"] = True
+        result = self.zcli.data.handle_request(query_def["zData"], context)
+        
+        # Extract first record if limit=1
+        limit = query_def["zData"].get("options", {}).get("limit")
+        if isinstance(result, list) and limit == 1 and len(result) > 0:
+            final_result = result[0]  # Return dict instead of list
+        else:
+            final_result = result
+        
+        # Log result
+        result_type = type(final_result).__name__
+        result_count = len(result) if isinstance(result, list) else 1
+        self.logger.framework.debug(
+            f"[zCLI Data] Query '{key}' returned {result_type} ({result_count} records)"
+        )
+        
+        return final_result

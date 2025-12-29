@@ -321,7 +321,7 @@ class Navigation:
         
             result = nav.navigate_to(
                 "user_profile",
-                context={"user_id": 123, "mode": "edit"}
+                context={"user_id": 123, "edit_mode": True}
             )
         
         Navigate multiple times (history builds up)::
