@@ -38,9 +38,8 @@ Auto-Discovery from zSchema:
 """
 
 import bcrypt
-from typing import Any, Dict, Optional
 
-# Import zConfig session constants and SessionConfig
+from zCLI import Any, Dict, Optional
 from zCLI.L1_Foundation.a_zConfig.zConfig_modules import (
     SESSION_KEY_ZAUTH,
     SESSION_KEY_ZMODE,
@@ -61,12 +60,20 @@ from zCLI.L1_Foundation.a_zConfig.zConfig_modules import (
 from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import SessionConfig
 
 # Constants
-LOG_PREFIX = "[zLogin]"
-DEFAULT_IDENTITY_FIELDS = ["email", "username"]
-DEFAULT_PASSWORD_FIELD = "password"
-DEFAULT_ROLE_FIELD = "role"
-DEFAULT_ROLE = "zUser"
-RESERVED_ZOLO_KEYWORD = "zolo"
+# Import centralized constants
+from .auth_constants import (
+    # Public constants
+    DEFAULT_IDENTITY_FIELDS,
+    DEFAULT_PASSWORD_FIELD,
+    DEFAULT_ROLE_FIELD,
+    DEFAULT_ROLE,
+    RESERVED_ZOLO_KEYWORD,
+    # Internal constants (private)
+    _LOG_PREFIX_LOGIN,
+)
+
+# Module uses _LOG_PREFIX_LOGIN as LOG_PREFIX for compatibility
+LOG_PREFIX = _LOG_PREFIX_LOGIN
 
 
 def handle_zLogin(

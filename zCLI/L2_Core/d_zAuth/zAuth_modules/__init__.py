@@ -1,18 +1,14 @@
 """
 zAuth Modules Package - Modular Three-Tier Authentication System (v1.5.4+)
 
-═══════════════════════════════════════════════════════════════════════════════
 PACKAGE OVERVIEW
-═══════════════════════════════════════════════════════════════════════════════
 
 This package contains the four core modules that implement zCLI's sophisticated
 three-tier authentication system. Each module is designed with clear separation
 of concerns and follows the Facade pattern, exposing clean APIs while hiding
 implementation complexity.
 
-═══════════════════════════════════════════════════════════════════════════════
 MODULE ARCHITECTURE
-═══════════════════════════════════════════════════════════════════════════════
 
 The package follows a dependency hierarchy:
 
@@ -39,9 +35,7 @@ The package follows a dependency hierarchy:
         └── Dependencies: zConfig (for session/auth constants)
         └── Used by: zAuth.py (facade), zWizard (for access control)
 
-═══════════════════════════════════════════════════════════════════════════════
 MODULE DESCRIPTIONS
-═══════════════════════════════════════════════════════════════════════════════
 
 **auth_password_security.py** (PasswordSecurity class):
     Purpose:
@@ -132,9 +126,7 @@ MODULE DESCRIPTIONS
         - revoke_permission(user_id: str, permission: str) -> bool
         - ensure_permissions_db() -> bool
 
-═══════════════════════════════════════════════════════════════════════════════
 THREE-TIER AUTHENTICATION MODEL
-═══════════════════════════════════════════════════════════════════════════════
 
 This package implements zCLI's three-tier authentication model:
 
@@ -155,9 +147,7 @@ This package implements zCLI's three-tier authentication model:
     - RBAC uses OR logic: Either context can grant access
     - Session key: session[SESSION_KEY_ZAUTH][ZAUTH_KEY_DUAL_MODE] = True
 
-═══════════════════════════════════════════════════════════════════════════════
 INTEGRATION WITH ZCLI SUBSYSTEMS
-═══════════════════════════════════════════════════════════════════════════════
 
 **zConfig (config_session.py):**
     - Provides all session/auth constants:
@@ -184,9 +174,7 @@ INTEGRATION WITH ZCLI SUBSYSTEMS
     - Access control for all zVaF menu items
     - Supports require_auth, require_role, require_permission directives
 
-═══════════════════════════════════════════════════════════════════════════════
 USAGE EXAMPLE
-═══════════════════════════════════════════════════════════════════════════════
 
     from zCLI.L2_Core.d_zAuth.zAuth_modules import (
         PasswordSecurity,
@@ -226,9 +214,7 @@ USAGE EXAMPLE
     if rbac.has_permission("data.delete"):
         print("User can delete data")
 
-═══════════════════════════════════════════════════════════════════════════════
 THREAD SAFETY
-═══════════════════════════════════════════════════════════════════════════════
 
 All modules operate on the zCLI session object, which is NOT thread-safe by design.
 Each zCLI instance maintains a single session dictionary.
@@ -236,21 +222,27 @@ Each zCLI instance maintains a single session dictionary.
 For multi-threaded applications:
 - Each thread should use its own zCLI instance
 - Multi-app authentication within a SINGLE session is fully supported and isolated
-
-═══════════════════════════════════════════════════════════════════════════════
 """
 
-# ═══════════════════════════════════════════════════════════════════════════
-# PACKAGE METADATA
-# ═══════════════════════════════════════════════════════════════════════════
-
+# Package Metadata
 __version__ = "1.5.4"
 __author__ = "Zolo"
 __description__ = "Modular three-tier authentication system for zCLI framework"
 
-# ═══════════════════════════════════════════════════════════════════════════
-# MODULE IMPORTS (Dependency Order)
-# ═══════════════════════════════════════════════════════════════════════════
+# Module Imports (Dependency Order)
+
+# Layer 0: Constants (Foundation)
+from .auth_constants import *  # Centralized constants for all auth modules
+
+# Layer 0.5: Session Access Helpers (DRY utilities)
+from .auth_helpers import (
+    get_auth_data,
+    get_zsession_data,
+    get_applications_data,
+    get_active_context,
+    get_active_app,
+    get_dual_mode_enabled,
+)
 
 # Layer 1: Foundation (Password Security)
 from .auth_password_security import PasswordSecurity  # bcrypt hashing/verification
@@ -266,10 +258,7 @@ from .auth_rbac import RBAC  # Context-aware Role-Based Access Control
 from .auth_login import handle_zLogin    # Built-in declarative login action
 from .auth_logout import handle_zLogout  # Built-in declarative logout action
 
-# ═══════════════════════════════════════════════════════════════════════════
-# PUBLIC API EXPORTS
-# ═══════════════════════════════════════════════════════════════════════════
-
+# Public API Exports
 __all__ = [
     'PasswordSecurity',      # Layer 1: bcrypt password hashing and verification
     'SessionPersistence',    # Layer 2: SQLite-based persistent session management

@@ -1,9 +1,7 @@
 """
 Authentication Module - CORE three-tier authentication and session management (v1.5.4+)
 
-═══════════════════════════════════════════════════════════════════════════════
 ARCHITECTURE OVERVIEW
-═══════════════════════════════════════════════════════════════════════════════
 
 This is the CORE authentication module for the zCLI framework, implementing a
 sophisticated three-tier authentication model that supports:
@@ -15,9 +13,7 @@ sophisticated three-tier authentication model that supports:
 The module provides a unified API for authentication operations across all three
 tiers while maintaining complete isolation between authentication contexts.
 
-═══════════════════════════════════════════════════════════════════════════════
 THREE-TIER AUTHENTICATION MODEL
-═══════════════════════════════════════════════════════════════════════════════
 
 **Layer 1 - zSession Authentication (Internal Users):**
     Purpose:
@@ -110,9 +106,7 @@ THREE-TIER AUTHENTICATION MODEL
         - Developer debugging their application (zCLI dev + app user)
         - Admin managing application settings (zCLI admin + app admin)
 
-═══════════════════════════════════════════════════════════════════════════════
 CONTEXT MANAGEMENT
-═══════════════════════════════════════════════════════════════════════════════
 
 The module maintains the following session keys for context management:
 
@@ -136,9 +130,7 @@ Context Switching:
     - Switching apps: zcli.auth.switch_app("analytics_dashboard")
     - Context automatically updates on login/logout operations
 
-═══════════════════════════════════════════════════════════════════════════════
 METHOD CATEGORIZATION
-═══════════════════════════════════════════════════════════════════════════════
 
 **Layer 1 Methods (zSession Authentication):**
     - login(username, password, server_url, persist) → Dict
@@ -199,9 +191,7 @@ INTEGRATION WITH OTHER MODULES
     - authenticate_remote() uses zComm.http_post() for API communication
     - Secure HTTPS communication with Zolo authentication server
 
-═══════════════════════════════════════════════════════════════════════════════
 USAGE EXAMPLES
-═══════════════════════════════════════════════════════════════════════════════
 
 **Example 1: zSession Authentication (Internal User)**
     # Developer authenticates to zCLI
@@ -276,9 +266,7 @@ USAGE EXAMPLES
     # Logout from everything
     zcli.auth.logout("all")
 
-═══════════════════════════════════════════════════════════════════════════════
 THREAD SAFETY & CONCURRENT AUTHENTICATION
-═══════════════════════════════════════════════════════════════════════════════
 
 This module operates on the zCLI session object, which is NOT thread-safe by design.
 Each zCLI instance maintains a single session dictionary. For multi-threaded
@@ -286,11 +274,9 @@ applications, each thread should use its own zCLI instance.
 
 Multi-app authentication within a SINGLE session is fully supported and isolated
 by app_name keys in the applications dictionary.
-
-═══════════════════════════════════════════════════════════════════════════════
 """
 
-from zCLI import os, Dict, Optional, Any
+from zCLI import os, Dict, Optional, Any, Tuple
 from zCLI.L1_Foundation.a_zConfig.zConfig_modules import (
     SESSION_KEY_ZAUTH,         # CRITICAL: Session key for all auth data
     ZAUTH_KEY_ZSESSION,
@@ -314,107 +300,96 @@ from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import SessionC
 # MODULE CONSTANTS
 # ═══════════════════════════════════════════════════════════════════════════════
 
-# Status Response Constants
-STATUS_SUCCESS: str = "success"
-STATUS_FAIL: str = "fail"
-STATUS_ERROR: str = "error"
-STATUS_PENDING: str = "pending"
+# Import centralized constants
+from .auth_constants import (
+    # Public constants
+    STATUS_SUCCESS,
+    STATUS_FAIL,
+    STATUS_ERROR,
+    STATUS_PENDING,
+    KEY_STATUS,
+    KEY_REASON,
+    KEY_CREDENTIALS,
+    KEY_USER,
+    KEY_CONTEXT,
+    KEY_CLEARED,
+    KEY_PERSIST,
+    KEY_DELETE_PERSISTENT,
+    KEY_PASSWORD,
+    KEY_APP_NAME,
+    KEY_USERNAME,
+    KEY_SERVER_URL,
+    TABLE_SESSIONS,
+    FIELD_USERNAME,
+    FIELD_PASSWORD,
+    FIELD_ROLE,
+    FIELD_API_KEY,
+    DEFAULT_SERVER_URL,
+    DEFAULT_USER_MODEL,
+    DEFAULT_ID_FIELD,
+    DEFAULT_USERNAME_FIELD,
+    DEFAULT_ROLE_FIELD,
+    DEFAULT_API_KEY_FIELD,
+    DEFAULT_PERSIST,
+    DEFAULT_DELETE_PERSISTENT,
+    ENV_USE_REMOTE_API,
+    ENV_API_URL,
+    ENV_TRUE,
+    HTTP_MODE_KEY,
+    HTTP_MODE_TERMINAL,
+    HTTP_DATA_KEY,
+    PLACEHOLDER_USER_ID,
+    PLACEHOLDER_ROLE,
+    # Internal constants (private)
+    _LOG_PREFIX_AUTH,
+    _LOG_LEVEL_INFO,
+    _LOG_LEVEL_WARNING,
+    _LOG_LEVEL_ERROR,
+    _LOG_LEVEL_DEBUG,
+    _LOG_REMOTE_AUTH,
+    _LOG_REMOTE_SUCCESS,
+    _LOG_REMOTE_FAIL,
+    _LOG_AUTH_FAILED,
+    _LOG_LOGOUT_ZSESSION,
+    _LOG_LOGOUT_APP,
+    _LOG_LOGOUT_ALL_APPS,
+    _LOG_APP_AUTH_SUCCESS,
+    _LOG_APP_SWITCH,
+    _LOG_APP_SWITCH_FAIL,
+    _LOG_CONTEXT_SET,
+    _LOG_CONTEXT_INVALID,
+    _LOG_CONTEXT_NO_ZSESSION,
+    _LOG_CONTEXT_NO_APP,
+    _LOG_CONTEXT_NO_DUAL,
+    _LOG_SESSION_DELETE,
+    _LOG_SESSION_DELETE_FAIL,
+    _LOG_APP_AUTH_ERROR,
+    _LOG_CONTEXT_UPDATED,
+    _LOG_DUAL_MODE_ACTIVATED,
+    _ERR_NO_SESSION,
+    _ERR_INVALID_CREDS,
+    _ERR_CONNECTION_FAILED,
+    _ERR_APP_NAME_REQUIRED,
+    _ERR_APP_NOT_AUTH,
+    _ERR_INVALID_CONTEXT,
+    _ERR_NO_ACTIVE_APP,
+    _MSG_AWAITING_GUI,
+    _MSG_NOT_AUTHENTICATED,
+)
 
-# Response Dictionary Keys
-KEY_STATUS: str = "status"
-KEY_REASON: str = "reason"
-KEY_CREDENTIALS: str = "credentials"
-KEY_USER: str = "user"
-KEY_CONTEXT: str = "context"
-KEY_CLEARED: str = "cleared"
-KEY_PERSIST: str = "persist"
-KEY_DELETE_PERSISTENT: str = "delete_persistent"
-KEY_PASSWORD: str = "password"
-KEY_APP_NAME: str = "app_name"
-KEY_USERNAME: str = "username"
-KEY_SERVER_URL: str = "server_url"
+# Session Access Helpers (DRY utilities)
+from .auth_helpers import (
+    get_auth_data,
+    get_zsession_data,
+    get_applications_data,
+    get_active_context,
+)
 
-# Database Constants
-TABLE_SESSIONS: str = "sessions"
-
-# Field Names (for compatibility with user models)
-FIELD_USERNAME: str = "username"
-FIELD_PASSWORD: str = "password"
-FIELD_ROLE: str = "role"
-FIELD_API_KEY: str = "api_key"
-
-# Log Prefix
-LOG_PREFIX: str = "[Authentication]"
-
-# Log Level Constants
-LOG_LEVEL_INFO: str = "info"
-LOG_LEVEL_WARNING: str = "warning"
-LOG_LEVEL_ERROR: str = "error"
-LOG_LEVEL_DEBUG: str = "debug"
-
-# Log Messages (20 specific messages)
-LOG_REMOTE_AUTH: str = f"{LOG_PREFIX} Authenticating with remote server"
-LOG_REMOTE_SUCCESS: str = f"{LOG_PREFIX} Remote authentication successful"
-LOG_REMOTE_FAIL: str = f"{LOG_PREFIX} Remote authentication failed"
-LOG_AUTH_FAILED: str = f"{LOG_PREFIX} Authentication failed: Invalid credentials"
-LOG_LOGOUT_ZSESSION: str = f"{LOG_PREFIX} Logged out from zSession"
-LOG_LOGOUT_APP: str = f"{LOG_PREFIX} Logged out from application"
-LOG_LOGOUT_ALL_APPS: str = f"{LOG_PREFIX} Logged out from all applications"
-LOG_APP_AUTH_SUCCESS: str = f"{LOG_PREFIX} Application user authenticated"
-LOG_APP_SWITCH: str = f"{LOG_PREFIX} Switched to application"
-LOG_APP_SWITCH_FAIL: str = f"{LOG_PREFIX} Cannot switch to application: Not authenticated"
-LOG_CONTEXT_SET: str = f"{LOG_PREFIX} Active context set to"
-LOG_CONTEXT_INVALID: str = f"{LOG_PREFIX} Invalid context"
-LOG_CONTEXT_NO_ZSESSION: str = f"{LOG_PREFIX} Cannot set zSession context: Not authenticated"
-LOG_CONTEXT_NO_APP: str = f"{LOG_PREFIX} Cannot set application context: No active app"
-LOG_CONTEXT_NO_DUAL: str = f"{LOG_PREFIX} Cannot set dual context: Requires both zSession and application auth"
-LOG_SESSION_DELETE: str = f"{LOG_PREFIX} Deleted persistent session for"
-LOG_SESSION_DELETE_FAIL: str = f"{LOG_PREFIX} Could not delete session"
-LOG_APP_AUTH_ERROR: str = f"{LOG_PREFIX} Application authentication failed"
-LOG_CONTEXT_UPDATED: str = f"{LOG_PREFIX} Active context updated"
-LOG_DUAL_MODE_ACTIVATED: str = f"{LOG_PREFIX} Dual mode activated"
-
-# Error Messages
-ERR_NO_SESSION: str = "No session available"
-ERR_INVALID_CREDS: str = "Invalid credentials"
-ERR_CONNECTION_FAILED: str = "Connection failed"
-ERR_APP_NAME_REQUIRED: str = "app_name required for application logout"
-ERR_APP_NOT_AUTH: str = "Not authenticated to"
-ERR_INVALID_CONTEXT: str = "Invalid context"
-ERR_NO_ACTIVE_APP: str = "No active app"
-
-# User Messages
-MSG_AWAITING_GUI: str = "Awaiting GUI response"
-MSG_NOT_AUTHENTICATED: str = "not_authenticated"
-
-# Default Values
-DEFAULT_SERVER_URL: str = "http://localhost:5000"
-DEFAULT_USER_MODEL: str = "@.zCloud.schemas.schema.zIndex.zUsers"
-DEFAULT_ID_FIELD: str = "id"
-DEFAULT_USERNAME_FIELD: str = "username"
-DEFAULT_ROLE_FIELD: str = "role"
-DEFAULT_API_KEY_FIELD: str = "api_key"
-DEFAULT_PERSIST: bool = True
-DEFAULT_DELETE_PERSISTENT: bool = True
-
-# Environment Variable Keys
-ENV_USE_REMOTE_API: str = "ZOLO_USE_REMOTE_API"
-ENV_API_URL: str = "ZOLO_API_URL"
-ENV_TRUE: str = "true"
-
-# HTTP/API Constants
-HTTP_MODE_KEY: str = "mode"
-HTTP_MODE_TERMINAL: str = "Terminal"
-HTTP_DATA_KEY: str = "data"
-
-# Placeholder Values (for TODO: zData integration)
-PLACEHOLDER_USER_ID: int = 12345
-PLACEHOLDER_ROLE: str = "user"
+# Module uses _LOG_PREFIX_AUTH as LOG_PREFIX for compatibility
+LOG_PREFIX = _LOG_PREFIX_AUTH
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# AUTHENTICATION CLASS - CORE THREE-TIER MODEL
-# ═══════════════════════════════════════════════════════════════════════════════
+# Authentication Class - Core Three-Tier Model
 
 class Authentication:
     """
@@ -597,9 +572,9 @@ class Authentication:
         if not self._check_session():
             return
         
-        zsession_auth = self.session.get(SESSION_KEY_ZAUTH, {}).get(ZAUTH_KEY_ZSESSION, {}).get(ZAUTH_KEY_AUTHENTICATED, False)
+        zsession_auth = get_zsession_data(self.session).get(ZAUTH_KEY_AUTHENTICATED, False)
         active_app = self.session.get(SESSION_KEY_ZAUTH, {}).get(ZAUTH_KEY_ACTIVE_APP)
-        apps = self.session.get(SESSION_KEY_ZAUTH, {}).get(ZAUTH_KEY_APPLICATIONS, {})
+        apps = get_applications_data(self.session)
         app_auth = active_app and active_app in apps
         
         if zsession_auth and app_auth:
@@ -680,58 +655,108 @@ class Authentication:
             - API keys are generated by authentication server
             - HTTPS communication with remote server
         """
-        # Prompt for credentials if not provided using generic zDisplay primitives
-        if not username or not password:
-            # Try GUI mode first - send login form request
-            if self.zcli.display.zPrimitives.send_gui_event("auth_login_prompt", {
-                "username": username,
-                "password": password,
-                "fields": ["username", "password"]
-            }):
-                # GUI mode - credentials will be sent via bifrost
-                return self._create_status_response(STATUS_PENDING, reason=MSG_AWAITING_GUI)
-            
-            # Terminal mode - interactive prompts
-            if not username:
-                username = self.zcli.display.zPrimitives.read_string("Username: ")
-            if not password:
-                password = self.zcli.display.zPrimitives.read_password("Password: ")
+        # Get credentials (prompt if not provided)
+        username, password, pending_response = self._get_login_credentials(username, password)
+        if pending_response:
+            return pending_response
         
         # Try remote authentication
         if os.getenv(ENV_USE_REMOTE_API, "false").lower() == ENV_TRUE:
             result = self.authenticate_remote(username, password, server_url)
             if result.get(KEY_STATUS) == STATUS_SUCCESS:
-                # Update session with auth result (zSession context)
-                credentials = result.get(KEY_CREDENTIALS)
-                if credentials and self.session:
-                    self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_ZSESSION].update({
-                        ZAUTH_KEY_AUTHENTICATED: True,
-                        ZAUTH_KEY_ID: credentials.get("user_id"),
-                        ZAUTH_KEY_USERNAME: credentials.get(KEY_USERNAME),
-                        ZAUTH_KEY_ROLE: credentials.get(FIELD_ROLE),
-                        ZAUTH_KEY_API_KEY: credentials.get(FIELD_API_KEY)
-                    })
-                    # Set active context to zSession (or dual if app also authenticated)
-                    self._update_active_context()
-                    
-                    # Display success using generic zDisplay events
-                    username = credentials.get(KEY_USERNAME)
-                    role = credentials.get(FIELD_ROLE)
-                    user_id = credentials.get("user_id")
-                    api_key = credentials.get(FIELD_API_KEY)
-                    
-                    self.zcli.display.success(f"[OK] Logged in as: {username} ({role})")
-                    self.zcli.display.text(f"     User ID: {user_id}", indent=0, pause=False)
-                    if api_key:
-                        truncated_key = api_key[:20] + "..." if len(api_key) > 20 else api_key
-                        self.zcli.display.text(f"     API Key: {truncated_key}", indent=0, pause=False)
-                    
-                    # Return with persist flag for caller to handle
-                    result[KEY_PERSIST] = persist
-                    result[KEY_PASSWORD] = password  # For hashing by caller
-                return result
+                return self._handle_successful_login(result, persist, password)
         
-        # Authentication failed - use generic zDisplay events
+        # Authentication failed
+        return self._handle_failed_login()
+    
+    def _get_login_credentials(
+        self,
+        username: Optional[str],
+        password: Optional[str]
+    ) -> Tuple[Optional[str], Optional[str], Optional[Dict[str, Any]]]:
+        """Get login credentials, prompting if not provided. Returns (username, password, pending_response)."""
+        if username and password:
+            return username, password, None
+        
+        # Try GUI mode first
+        pending_response = self._try_gui_login_prompt(username, password)
+        if pending_response:
+            return None, None, pending_response
+        
+        # Terminal mode - interactive prompts
+        if not username:
+            username = self.zcli.display.zPrimitives.read_string("Username: ")
+        if not password:
+            password = self.zcli.display.zPrimitives.read_password("Password: ")
+        
+        return username, password, None
+    
+    def _try_gui_login_prompt(
+        self,
+        username: Optional[str],
+        password: Optional[str]
+    ) -> Optional[Dict[str, Any]]:
+        """Try to send GUI login prompt. Returns pending response if GUI mode, None otherwise."""
+        if self.zcli.display.zPrimitives.send_gui_event("auth_login_prompt", {
+            "username": username,
+            "password": password,
+            "fields": ["username", "password"]
+        }):
+            return self._create_status_response(STATUS_PENDING, reason=MSG_AWAITING_GUI)
+        return None
+    
+    def _handle_successful_login(
+        self,
+        result: Dict[str, Any],
+        persist: bool,
+        password: str
+    ) -> Dict[str, Any]:
+        """Handle successful remote authentication."""
+        credentials = result.get(KEY_CREDENTIALS)
+        if not credentials or not self.session:
+            return result
+        
+        # Update session with auth result
+        self._update_zsession_with_credentials(credentials)
+        
+        # Update active context
+        self._update_active_context()
+        
+        # Display success
+        self._display_login_success(credentials)
+        
+        # Add persist info for caller
+        result[KEY_PERSIST] = persist
+        result[KEY_PASSWORD] = password
+        
+        return result
+    
+    def _update_zsession_with_credentials(self, credentials: Dict[str, Any]) -> None:
+        """Update zSession in session dict with credentials."""
+        get_zsession_data(self.session).update({
+            ZAUTH_KEY_AUTHENTICATED: True,
+            ZAUTH_KEY_ID: credentials.get("user_id"),
+            ZAUTH_KEY_USERNAME: credentials.get(KEY_USERNAME),
+            ZAUTH_KEY_ROLE: credentials.get(FIELD_ROLE),
+            ZAUTH_KEY_API_KEY: credentials.get(FIELD_API_KEY)
+        })
+    
+    def _display_login_success(self, credentials: Dict[str, Any]) -> None:
+        """Display successful login message."""
+        username = credentials.get(KEY_USERNAME)
+        role = credentials.get(FIELD_ROLE)
+        user_id = credentials.get("user_id")
+        api_key = credentials.get(FIELD_API_KEY)
+        
+        self.zcli.display.success(f"[OK] Logged in as: {username} ({role})")
+        self.zcli.display.text(f"     User ID: {user_id}", indent=0, pause=False)
+        
+        if api_key:
+            truncated_key = api_key[:20] + "..." if len(api_key) > 20 else api_key
+            self.zcli.display.text(f"     API Key: {truncated_key}", indent=0, pause=False)
+    
+    def _handle_failed_login(self) -> Dict[str, Any]:
+        """Handle failed authentication."""
         self._log(LOG_LEVEL_WARNING, LOG_AUTH_FAILED)
         self.zcli.display.error(f"[FAIL] Authentication failed: {ERR_INVALID_CREDS}")
         return self._create_status_response(STATUS_FAIL, reason=ERR_INVALID_CREDS)
@@ -799,108 +824,34 @@ class Authentication:
             - If delete_persistent=False:
               → Session remains in DB for future automatic login
         """
+        # Validate session
         if not self._check_session():
             return self._create_status_response(STATUS_ERROR, reason=ERR_NO_SESSION)
         
+        # Initialize tracking
         cleared = []
-        
-        # Check if user is logged in before any logout operations
         is_logged_in = self.is_authenticated()
         
-        # Logout from zSession
+        # Handle zSession logout
         if context in [CONTEXT_ZSESSION, "all"]:
-            username = self.session.get(SESSION_KEY_ZAUTH, {}).get(ZAUTH_KEY_ZSESSION, {}).get(ZAUTH_KEY_USERNAME)
-            
-            self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_ZSESSION] = {
-                ZAUTH_KEY_AUTHENTICATED: False,
-                ZAUTH_KEY_ID: None,
-                ZAUTH_KEY_USERNAME: None,
-                ZAUTH_KEY_ROLE: None,
-                ZAUTH_KEY_API_KEY: None
-            }
-            
-            # Clear active context if it was zSession
-            if self.session[SESSION_KEY_ZAUTH].get(ZAUTH_KEY_ACTIVE_CONTEXT) == CONTEXT_ZSESSION:
-                self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_ACTIVE_CONTEXT] = None
-            
-            # If dual mode, switch to application context if apps exist
-            if self.session[SESSION_KEY_ZAUTH].get(ZAUTH_KEY_DUAL_MODE):
-                apps = self.session[SESSION_KEY_ZAUTH].get(ZAUTH_KEY_APPLICATIONS, {})
-                if apps:
-                    self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_ACTIVE_CONTEXT] = CONTEXT_APPLICATION
-                    self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_DUAL_MODE] = False
-                else:
-                    self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_ACTIVE_CONTEXT] = None
-                    self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_DUAL_MODE] = False
-            
-            cleared.append(f"{CONTEXT_ZSESSION} ({username})")
-            
-            # Delete persistent session if requested
-            if delete_persistent and username:
-                try:
-                    if hasattr(self.zcli, HTTP_DATA_KEY) and self.zcli.data.handler:
-                        self.zcli.data.delete(
-                            table=TABLE_SESSIONS,
-                            where=f"{FIELD_USERNAME} = '{username}'"
-                        )
-                        self._log(LOG_LEVEL_DEBUG, f"{LOG_SESSION_DELETE}: {username}")
-                except Exception as e:
-                    self._log(LOG_LEVEL_DEBUG, f"{LOG_SESSION_DELETE_FAIL}: {e}")
-            
-        # Display using generic zDisplay events
-        if is_logged_in:
-            self.zcli.display.success("[OK] Logged out successfully")
+            username = self._logout_zsession(cleared, delete_persistent)
         else:
-            self.zcli.display.warning("[WARN] Not currently logged in")
+            username = None
         
-        # Logout from specific application
+        # Display feedback
+        self._display_logout_feedback(is_logged_in)
+        
+        # Handle application logout
         if context == CONTEXT_APPLICATION:
-            if not app_name:
-                return self._create_status_response(STATUS_ERROR, reason=ERR_APP_NAME_REQUIRED)
-            
-            apps = self.session[SESSION_KEY_ZAUTH].get(ZAUTH_KEY_APPLICATIONS, {})
-            if app_name in apps:
-                app_username = apps[app_name].get(ZAUTH_KEY_USERNAME)
-                del self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_APPLICATIONS][app_name]
-                cleared.append(f"{CONTEXT_APPLICATION}/{app_name} ({app_username})")
-                
-                # If this was the active app, clear it
-                if self.session[SESSION_KEY_ZAUTH].get(ZAUTH_KEY_ACTIVE_APP) == app_name:
-                    self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_ACTIVE_APP] = None
-                    
-                    # If no more apps, clear application context
-                    if not self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_APPLICATIONS]:
-                        if self.session[SESSION_KEY_ZAUTH].get(ZAUTH_KEY_ACTIVE_CONTEXT) == CONTEXT_APPLICATION:
-                            self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_ACTIVE_CONTEXT] = None
-                        self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_DUAL_MODE] = False
-                
-                self._log(LOG_LEVEL_INFO, f"{LOG_LOGOUT_APP}: {app_name}")
-            else:
-                return self._create_status_response(STATUS_ERROR, reason=f"{ERR_APP_NOT_AUTH} {app_name}")
+            error_response = self._logout_application(app_name, cleared)
+            if error_response:
+                return error_response
         
-        # Logout from all applications
+        # Handle all apps logout
         if context in ["all_apps", "all"]:
-            apps = self.session[SESSION_KEY_ZAUTH].get(ZAUTH_KEY_APPLICATIONS, {})
-            for app_name_iter, app_data in apps.items():
-                app_username = app_data.get(ZAUTH_KEY_USERNAME)
-                cleared.append(f"{CONTEXT_APPLICATION}/{app_name_iter} ({app_username})")
-            
-            self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_APPLICATIONS] = {}
-            self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_ACTIVE_APP] = None
-            
-            # Update context
-            if self.session[SESSION_KEY_ZAUTH].get(ZAUTH_KEY_ACTIVE_CONTEXT) in [CONTEXT_APPLICATION, CONTEXT_DUAL]:
-                # If zSession still authenticated, switch to it
-                if self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_ZSESSION].get(ZAUTH_KEY_AUTHENTICATED):
-                    self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_ACTIVE_CONTEXT] = CONTEXT_ZSESSION
-                else:
-                    self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_ACTIVE_CONTEXT] = None
-            
-            self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_DUAL_MODE] = False
-            
-            self._log(LOG_LEVEL_INFO, f"{LOG_LOGOUT_ALL_APPS} ({len(apps)} apps)")
+            self._logout_all_applications(cleared)
         
-        # v1.6.0: Regenerate session_hash for frontend cache invalidation
+        # Regenerate session hash
         new_hash = SessionConfig.regenerate_session_hash(self.session)
         self._log(LOG_LEVEL_DEBUG, f"Session hash regenerated on logout: {new_hash}")
         
@@ -910,6 +861,127 @@ class Authentication:
             cleared=cleared,
             delete_persistent=delete_persistent if context in [CONTEXT_ZSESSION, "all"] else False
         )
+    
+    def _logout_zsession(self, cleared: list, delete_persistent: bool) -> Optional[str]:
+        """Logout from zSession and update context."""
+        username = get_zsession_data(self.session).get(ZAUTH_KEY_USERNAME)
+        
+        # Clear zSession data
+        self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_ZSESSION] = {
+            ZAUTH_KEY_AUTHENTICATED: False,
+            ZAUTH_KEY_ID: None,
+            ZAUTH_KEY_USERNAME: None,
+            ZAUTH_KEY_ROLE: None,
+            ZAUTH_KEY_API_KEY: None
+        }
+        
+        # Update context
+        self._update_context_after_zsession_logout()
+        
+        # Track cleared
+        cleared.append(f"{CONTEXT_ZSESSION} ({username})")
+        
+        # Delete persistent session if requested
+        if delete_persistent and username:
+            self._delete_persistent_session(username)
+        
+        return username
+    
+    def _update_context_after_zsession_logout(self) -> None:
+        """Update active context after zSession logout."""
+        # Clear active context if it was zSession
+        if self.session[SESSION_KEY_ZAUTH].get(ZAUTH_KEY_ACTIVE_CONTEXT) == CONTEXT_ZSESSION:
+            self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_ACTIVE_CONTEXT] = None
+        
+        # If dual mode, switch to application context if apps exist
+        if self.session[SESSION_KEY_ZAUTH].get(ZAUTH_KEY_DUAL_MODE):
+            apps = self.session[SESSION_KEY_ZAUTH].get(ZAUTH_KEY_APPLICATIONS, {})
+            if apps:
+                self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_ACTIVE_CONTEXT] = CONTEXT_APPLICATION
+                self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_DUAL_MODE] = False
+            else:
+                self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_ACTIVE_CONTEXT] = None
+                self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_DUAL_MODE] = False
+    
+    def _delete_persistent_session(self, username: str) -> None:
+        """Delete persistent session from SQLite database."""
+        try:
+            if hasattr(self.zcli, HTTP_DATA_KEY) and self.zcli.data.handler:
+                self.zcli.data.delete(
+                    table=TABLE_SESSIONS,
+                    where=f"{FIELD_USERNAME} = '{username}'"
+                )
+                self._log(LOG_LEVEL_DEBUG, f"{LOG_SESSION_DELETE}: {username}")
+        except Exception as e:
+            self._log(LOG_LEVEL_DEBUG, f"{LOG_SESSION_DELETE_FAIL}: {e}")
+    
+    def _display_logout_feedback(self, is_logged_in: bool) -> None:
+        """Display logout feedback to user."""
+        if is_logged_in:
+            self.zcli.display.success("[OK] Logged out successfully")
+        else:
+            self.zcli.display.warning("[WARN] Not currently logged in")
+    
+    def _logout_application(self, app_name: Optional[str], cleared: list) -> Optional[Dict[str, Any]]:
+        """Logout from specific application. Returns error response if fails, None if success."""
+        if not app_name:
+            return self._create_status_response(STATUS_ERROR, reason=ERR_APP_NAME_REQUIRED)
+        
+        apps = self.session[SESSION_KEY_ZAUTH].get(ZAUTH_KEY_APPLICATIONS, {})
+        if app_name not in apps:
+            return self._create_status_response(STATUS_ERROR, reason=f"{ERR_APP_NOT_AUTH} {app_name}")
+        
+        # Remove app from session
+        app_username = apps[app_name].get(ZAUTH_KEY_USERNAME)
+        del get_applications_data(self.session)[app_name]
+        cleared.append(f"{CONTEXT_APPLICATION}/{app_name} ({app_username})")
+        
+        # Update active app and context
+        self._update_context_after_app_logout(app_name)
+        
+        self._log(LOG_LEVEL_INFO, f"{LOG_LOGOUT_APP}: {app_name}")
+        return None
+    
+    def _update_context_after_app_logout(self, app_name: str) -> None:
+        """Update active app and context after logging out of an application."""
+        # If this was the active app, clear it
+        if self.session[SESSION_KEY_ZAUTH].get(ZAUTH_KEY_ACTIVE_APP) == app_name:
+            self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_ACTIVE_APP] = None
+            
+            # If no more apps, clear application context
+            if not get_applications_data(self.session):
+                if self.session[SESSION_KEY_ZAUTH].get(ZAUTH_KEY_ACTIVE_CONTEXT) == CONTEXT_APPLICATION:
+                    self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_ACTIVE_CONTEXT] = None
+                self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_DUAL_MODE] = False
+    
+    def _logout_all_applications(self, cleared: list) -> None:
+        """Logout from all applications."""
+        apps = self.session[SESSION_KEY_ZAUTH].get(ZAUTH_KEY_APPLICATIONS, {})
+        
+        # Track all cleared apps
+        for app_name_iter, app_data in apps.items():
+            app_username = app_data.get(ZAUTH_KEY_USERNAME)
+            cleared.append(f"{CONTEXT_APPLICATION}/{app_name_iter} ({app_username})")
+        
+        # Clear all apps
+        self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_APPLICATIONS] = {}
+        self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_ACTIVE_APP] = None
+        
+        # Update context
+        self._update_context_after_all_apps_logout()
+        
+        self._log(LOG_LEVEL_INFO, f"{LOG_LOGOUT_ALL_APPS} ({len(apps)} apps)")
+    
+    def _update_context_after_all_apps_logout(self) -> None:
+        """Update context after logging out of all applications."""
+        if self.session[SESSION_KEY_ZAUTH].get(ZAUTH_KEY_ACTIVE_CONTEXT) in [CONTEXT_APPLICATION, CONTEXT_DUAL]:
+            # If zSession still authenticated, switch to it
+            if get_zsession_data(self.session).get(ZAUTH_KEY_AUTHENTICATED):
+                self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_ACTIVE_CONTEXT] = CONTEXT_ZSESSION
+            else:
+                self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_ACTIVE_CONTEXT] = None
+        
+        self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_DUAL_MODE] = False
     
     def status(self) -> Dict[str, Any]:
         """Show current zSession authentication status.
@@ -937,7 +1009,7 @@ class Authentication:
         """
         if self.is_authenticated():
             # Get zSession auth data (primary authentication context)
-            auth_data = self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_ZSESSION]
+            auth_data = get_zsession_data(self.session)
             # Display using generic zDisplay events
             self.zcli.display.header("[*] Authentication Status")
             self.zcli.display.text(f"Username:   {auth_data.get(ZAUTH_KEY_USERNAME)}", indent=1, pause=False)
@@ -976,12 +1048,12 @@ class Authentication:
             return False
         
         # Check zSession authentication (Layer 1)
-        zsession = self.session.get(SESSION_KEY_ZAUTH, {}).get(ZAUTH_KEY_ZSESSION, {})
+        zsession = get_zsession_data(self.session)
         if zsession.get(ZAUTH_KEY_AUTHENTICATED, False) and zsession.get(ZAUTH_KEY_USERNAME) is not None:
             return True
         
         # Check application authentication (Layer 2)
-        applications = self.session.get(SESSION_KEY_ZAUTH, {}).get(ZAUTH_KEY_APPLICATIONS, {})
+        applications = get_applications_data(self.session)
         for app_name, app_session in applications.items():
             if app_session.get(ZAUTH_KEY_AUTHENTICATED, False) and app_session.get(ZAUTH_KEY_ID) is not None:
                 return True
@@ -1014,7 +1086,7 @@ class Authentication:
                 print(f"API Key: {creds[ZAUTH_KEY_API_KEY]}")
         """
         if self.is_authenticated():
-            return self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_ZSESSION]
+            return get_zsession_data(self.session)
         return None
     
     # ═══════════════════════════════════════════════════════════════════════════
@@ -1057,6 +1129,7 @@ class Authentication:
         
         Integration:
             - zData: TODO - Query application user database (not yet implemented)
+              NOTE: Consider migrating to zCloud plugin for Zolo security (app-layer logic)
             - Currently uses placeholder data for development
         
         Example:
@@ -1087,62 +1160,30 @@ class Authentication:
         TODO:
             - Integrate with zData to query application user database
             - Validate token against user_model
+            - NOTE: Consider migrating to zCloud plugin (app-layer logic vs. core framework)
             - Currently uses placeholder data
         """
         if not self._check_session():
             return self._create_status_response(STATUS_ERROR, reason=ERR_NO_SESSION)
         
-        # Default configuration
-        default_config = {
-            "user_model": DEFAULT_USER_MODEL,
-            DEFAULT_ID_FIELD: DEFAULT_ID_FIELD,
-            DEFAULT_USERNAME_FIELD: DEFAULT_USERNAME_FIELD,
-            DEFAULT_ROLE_FIELD: DEFAULT_ROLE_FIELD,
-            DEFAULT_API_KEY_FIELD: DEFAULT_API_KEY_FIELD
-        }
-        
-        # Merge with provided config
-        auth_config = {**default_config, **(config or {})}  # pylint: disable=unused-variable  # For future zData integration
+        # Configure authentication settings
+        auth_config = self._configure_app_auth(config)
         
         try:
-            # TODO: Query application user database using zData  # pylint: disable=fixme
-            # For now, this is a placeholder that would be implemented with actual zData integration
-            # user_data = self.zcli.data.query(
-            #     auth_config["user_model"],
-            #     where={auth_config[DEFAULT_API_KEY_FIELD]: token}
-            # )
+            # Authenticate user (currently placeholder, TODO: integrate zData)
+            user_data = self._authenticate_app_user_data(app_name, token, auth_config)
             
-            # Placeholder: Simulate successful authentication
-            # In production, this would validate token against the user model
-            user_data = {
-                ZAUTH_KEY_AUTHENTICATED: True,
-                ZAUTH_KEY_ID: PLACEHOLDER_USER_ID,  # Would come from database
-                ZAUTH_KEY_USERNAME: f"user_from_{app_name}",  # Would come from database
-                ZAUTH_KEY_ROLE: PLACEHOLDER_ROLE,  # Would come from database
-                ZAUTH_KEY_API_KEY: token
-            }
+            # Store authentication and update context
+            self._store_app_authentication(app_name, user_data)
             
-            # Store authentication in applications dict
-            self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_APPLICATIONS][app_name] = user_data
-            
-            # Set active app
-            self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_ACTIVE_APP] = app_name
-            
-            # Update active context using helper
-            self._update_active_context()
-            
-            self._log(
-                LOG_LEVEL_INFO,
-                f"{LOG_APP_AUTH_SUCCESS}: {app_name} "
-                f"(username={user_data[ZAUTH_KEY_USERNAME]}, "
-                f"context={self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_ACTIVE_CONTEXT]})"
-            )
+            # Log success
+            self._log_app_auth_success(app_name, user_data)
             
             return self._create_status_response(
                 STATUS_SUCCESS,
                 app_name=app_name,
                 user=user_data,
-                context=self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_ACTIVE_CONTEXT]
+                context=get_active_context(self.session)
             )
             
         except Exception as e:
@@ -1152,6 +1193,58 @@ class Authentication:
                 app_name=app_name,
                 reason=str(e)
             )
+    
+    def _configure_app_auth(self, config: Optional[Dict[str, str]]) -> Dict[str, str]:
+        """Configure authentication settings with defaults."""
+        default_config = {
+            "user_model": DEFAULT_USER_MODEL,
+            DEFAULT_ID_FIELD: DEFAULT_ID_FIELD,
+            DEFAULT_USERNAME_FIELD: DEFAULT_USERNAME_FIELD,
+            DEFAULT_ROLE_FIELD: DEFAULT_ROLE_FIELD,
+            DEFAULT_API_KEY_FIELD: DEFAULT_API_KEY_FIELD
+        }
+        return {**default_config, **(config or {})}
+    
+    def _authenticate_app_user_data(
+        self,
+        app_name: str,
+        token: str,
+        auth_config: Dict[str, str]  # pylint: disable=unused-argument
+    ) -> Dict[str, Any]:
+        """Authenticate app user and return user data (currently placeholder).
+        
+        TODO: Query application user database using zData
+        NOTE: Consider migrating to zCloud plugin (app-layer logic vs. core framework)
+        """
+        # Placeholder: Simulate successful authentication
+        # In production, this would validate token against the user model
+        return {
+            ZAUTH_KEY_AUTHENTICATED: True,
+            ZAUTH_KEY_ID: PLACEHOLDER_USER_ID,  # Would come from database
+            ZAUTH_KEY_USERNAME: f"user_from_{app_name}",  # Would come from database
+            ZAUTH_KEY_ROLE: PLACEHOLDER_ROLE,  # Would come from database
+            ZAUTH_KEY_API_KEY: token
+        }
+    
+    def _store_app_authentication(self, app_name: str, user_data: Dict[str, Any]) -> None:
+        """Store app authentication in session and update context."""
+        # Store authentication in applications dict
+        get_applications_data(self.session)[app_name] = user_data
+        
+        # Set active app
+        self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_ACTIVE_APP] = app_name
+        
+        # Update active context
+        self._update_active_context()
+    
+    def _log_app_auth_success(self, app_name: str, user_data: Dict[str, Any]) -> None:
+        """Log successful application authentication."""
+        self._log(
+            LOG_LEVEL_INFO,
+            f"{LOG_APP_AUTH_SUCCESS}: {app_name} "
+            f"(username={user_data[ZAUTH_KEY_USERNAME]}, "
+            f"context={get_active_context(self.session)})"
+        )
     
     def switch_app(self, app_name: str) -> bool:
         """Switch focus to a different authenticated application.
@@ -1282,7 +1375,7 @@ class Authentication:
         
         # Validate that requested context has authenticated user
         if context == CONTEXT_ZSESSION:
-            if not self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_ZSESSION].get(ZAUTH_KEY_AUTHENTICATED):
+            if not get_zsession_data(self.session).get(ZAUTH_KEY_AUTHENTICATED):
                 self._log(LOG_LEVEL_WARNING, LOG_CONTEXT_NO_ZSESSION)
                 return False
         
@@ -1298,7 +1391,7 @@ class Authentication:
         
         elif context == CONTEXT_DUAL:
             # Dual mode requires both zSession and application authenticated
-            zsession_auth = self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_ZSESSION].get(ZAUTH_KEY_AUTHENTICATED)
+            zsession_auth = get_zsession_data(self.session).get(ZAUTH_KEY_AUTHENTICATED)
             active_app = self.session[SESSION_KEY_ZAUTH].get(ZAUTH_KEY_ACTIVE_APP)
             apps = self.session[SESSION_KEY_ZAUTH].get(ZAUTH_KEY_APPLICATIONS, {})
             
@@ -1369,19 +1462,19 @@ class Authentication:
             return None
         
         if active_context == CONTEXT_ZSESSION:
-            return self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_ZSESSION]
+            return get_zsession_data(self.session)
         
         elif active_context == CONTEXT_APPLICATION:
             active_app = self.session[SESSION_KEY_ZAUTH].get(ZAUTH_KEY_ACTIVE_APP)
             if active_app:
-                return self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_APPLICATIONS].get(active_app)
+                return get_applications_data(self.session).get(active_app)
             return None
         
         elif active_context == CONTEXT_DUAL:
             active_app = self.session[SESSION_KEY_ZAUTH].get(ZAUTH_KEY_ACTIVE_APP)
             return {
-                "zSession": self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_ZSESSION],
-                "application": self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_APPLICATIONS].get(active_app) if active_app else None
+                "zSession": get_zsession_data(self.session),
+                "application": get_applications_data(self.session).get(active_app) if active_app else None
             }
         
         return None
@@ -1438,67 +1531,99 @@ class Authentication:
             - ZOLO_API_URL: Default server URL if not provided
             - Defaults to http://localhost:5000 if not set
         """
-        # Get server URL from environment or default
-        if not server_url:
-            server_url = os.getenv(ENV_API_URL, DEFAULT_SERVER_URL)
+        # Get server URL
+        server_url = self._get_server_url(server_url)
         
-        # Authenticate via Flask API
+        # Log authentication attempt
         self._log(LOG_LEVEL_INFO, f"{LOG_REMOTE_AUTH}: {server_url}")
         
         try:
-            # Use zComm for pure HTTP communication
-            response = self.zcli.comm.http_post(
-                f"{server_url}/zAuth",
-                data={KEY_USERNAME: username, KEY_PASSWORD: password, HTTP_MODE_KEY: HTTP_MODE_TERMINAL}
-            )
-            
+            # Send authentication request
+            response = self._send_auth_request(username, password, server_url)
             if not response:
                 return self._create_status_response(STATUS_FAIL, reason=ERR_CONNECTION_FAILED)
-                
+            
+            # Parse response
             result = response.json()
             
+            # Handle success
             if result and result.get(KEY_STATUS) == STATUS_SUCCESS:
-                user = result.get(KEY_USER, {})
-                
-                # Prepare credentials for session (no persistence)
-                credentials = {
-                    KEY_USERNAME: user.get(KEY_USERNAME),
-                    FIELD_API_KEY: user.get(FIELD_API_KEY),
-                    FIELD_ROLE: user.get(FIELD_ROLE),
-                    "user_id": user.get("id"),
-                    KEY_SERVER_URL: server_url
-                }
-                
-                self._log(
-                    LOG_LEVEL_INFO,
-                    f"{LOG_REMOTE_SUCCESS}: {credentials[KEY_USERNAME]} (role={credentials[FIELD_ROLE]})"
-                )
-                
-                # Display success message using modern zDisplay events
-                self.zcli.display.zEvents.BasicOutputs.text("")
-                self.zcli.display.zEvents.Signals.success(
-                    f"Logged in as: {credentials[KEY_USERNAME]} ({credentials[FIELD_ROLE]})"
-                )
-                self.zcli.display.zEvents.BasicOutputs.text(
-                    f"API Key: {credentials[FIELD_API_KEY][:20]}...",
-                    indent=1
-                )
-                self.zcli.display.zEvents.BasicOutputs.text(
-                    f"Server: {server_url}",
-                    indent=1
-                )
-                
-                return self._create_status_response(STATUS_SUCCESS, credentials=credentials)
+                return self._handle_remote_auth_success(result, server_url)
             
-            self._log(LOG_LEVEL_WARNING, LOG_REMOTE_FAIL)
-            self.zcli.display.zEvents.BasicOutputs.text("")
-            self.zcli.display.zEvents.Signals.error(f"Authentication failed: {ERR_INVALID_CREDS}")
-            self.zcli.display.zEvents.BasicOutputs.text("")
-            return self._create_status_response(STATUS_FAIL, reason=ERR_INVALID_CREDS)
+            # Handle failure
+            return self._handle_remote_auth_failure()
         
         except Exception as e:
-            self._log(LOG_LEVEL_ERROR, f"{LOG_APP_AUTH_ERROR}: {e}")
-            self.zcli.display.zEvents.BasicOutputs.text("")
-            self.zcli.display.zEvents.Signals.error(f"Error connecting to remote server: {e}")
-            self.zcli.display.zEvents.BasicOutputs.text("")
-            return self._create_status_response(STATUS_ERROR, reason=str(e))
+            return self._handle_remote_auth_error(e)
+    
+    def _get_server_url(self, server_url: Optional[str]) -> str:
+        """Get server URL from parameter, environment, or default."""
+        if server_url:
+            return server_url
+        return os.getenv(ENV_API_URL, DEFAULT_SERVER_URL)
+    
+    def _send_auth_request(self, username: str, password: str, server_url: str):
+        """Send HTTP POST request to authentication server."""
+        return self.zcli.comm.http_post(
+            f"{server_url}/zAuth",
+            data={KEY_USERNAME: username, KEY_PASSWORD: password, HTTP_MODE_KEY: HTTP_MODE_TERMINAL}
+        )
+    
+    def _handle_remote_auth_success(self, result: Dict[str, Any], server_url: str) -> Dict[str, Any]:
+        """Handle successful remote authentication."""
+        user = result.get(KEY_USER, {})
+        
+        # Prepare credentials
+        credentials = self._prepare_credentials(user, server_url)
+        
+        # Log success
+        self._log(
+            LOG_LEVEL_INFO,
+            f"{LOG_REMOTE_SUCCESS}: {credentials[KEY_USERNAME]} (role={credentials[FIELD_ROLE]})"
+        )
+        
+        # Display success
+        self._display_remote_auth_success(credentials, server_url)
+        
+        return self._create_status_response(STATUS_SUCCESS, credentials=credentials)
+    
+    def _prepare_credentials(self, user: Dict[str, Any], server_url: str) -> Dict[str, Any]:
+        """Prepare credentials dict from user data."""
+        return {
+            KEY_USERNAME: user.get(KEY_USERNAME),
+            FIELD_API_KEY: user.get(FIELD_API_KEY),
+            FIELD_ROLE: user.get(FIELD_ROLE),
+            "user_id": user.get("id"),
+            KEY_SERVER_URL: server_url
+        }
+    
+    def _display_remote_auth_success(self, credentials: Dict[str, Any], server_url: str) -> None:
+        """Display remote authentication success message."""
+        self.zcli.display.zEvents.BasicOutputs.text("")
+        self.zcli.display.zEvents.Signals.success(
+            f"Logged in as: {credentials[KEY_USERNAME]} ({credentials[FIELD_ROLE]})"
+        )
+        self.zcli.display.zEvents.BasicOutputs.text(
+            f"API Key: {credentials[FIELD_API_KEY][:20]}...",
+            indent=1
+        )
+        self.zcli.display.zEvents.BasicOutputs.text(
+            f"Server: {server_url}",
+            indent=1
+        )
+    
+    def _handle_remote_auth_failure(self) -> Dict[str, Any]:
+        """Handle remote authentication failure."""
+        self._log(LOG_LEVEL_WARNING, LOG_REMOTE_FAIL)
+        self.zcli.display.zEvents.BasicOutputs.text("")
+        self.zcli.display.zEvents.Signals.error(f"Authentication failed: {ERR_INVALID_CREDS}")
+        self.zcli.display.zEvents.BasicOutputs.text("")
+        return self._create_status_response(STATUS_FAIL, reason=ERR_INVALID_CREDS)
+    
+    def _handle_remote_auth_error(self, error: Exception) -> Dict[str, Any]:
+        """Handle remote authentication error."""
+        self._log(LOG_LEVEL_ERROR, f"{LOG_APP_AUTH_ERROR}: {error}")
+        self.zcli.display.zEvents.BasicOutputs.text("")
+        self.zcli.display.zEvents.Signals.error(f"Error connecting to remote server: {error}")
+        self.zcli.display.zEvents.BasicOutputs.text("")
+        return self._create_status_response(STATUS_ERROR, reason=str(error))

@@ -141,16 +141,12 @@ See MODULE CONSTANTS section below for all 38 defined constants:
     - Database: DB_LABEL_AUTH, TABLE_PERMISSIONS, TABLE_SESSIONS
     - Field Names: FIELD_USER_ID, FIELD_PERMISSION, FIELD_GRANTED_BY, FIELD_GRANTED_AT
     - Schema: SCHEMA_META_KEY, SCHEMA_LABEL_KEY, SCHEMA_FILE_NAME
-    - Queries: QUERY_LIMIT_ONE, QUERY_LEN_ZERO
-    - Logging: LOG_PREFIX, LOG_NOT_AUTHENTICATED, LOG_NO_ROLE, etc. (20+ messages)
+    - Queries: QUERY_LIMIT_ONE, _QUERY_LEN_ZERO
+    - Logging: LOG_PREFIX, _LOG_NOT_AUTHENTICATED, _LOG_NO_ROLE, etc. (20+ messages)
     - Defaults: DEFAULT_GRANTED_BY
 """
 
-from datetime import datetime
-from pathlib import Path
-from typing import Optional, Any, Dict, Union, Tuple, List
-
-# Import zConfig constants for session structure and three-tier authentication
+from zCLI import datetime, Path, Optional, Any, Dict, Union, Tuple, List
 from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import (
     # Session structure
     SESSION_KEY_ZAUTH,
@@ -161,7 +157,7 @@ from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import (
     ZAUTH_KEY_ACTIVE_CONTEXT,
     ZAUTH_KEY_ACTIVE_APP,
     
-    # User data keys (note: ZAUTH_KEY_ID not ZAUTH_KEY_ID)
+    # User data keys
     ZAUTH_KEY_ROLE,
     ZAUTH_KEY_ID,
     ZAUTH_KEY_USERNAME,
@@ -178,59 +174,64 @@ from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import (
 # MODULE CONSTANTS
 # =============================================================================
 
-# Database Configuration
-DB_LABEL_AUTH = "auth"
-TABLE_PERMISSIONS = "user_permissions"
-TABLE_SESSIONS = "sessions"
+# Import centralized constants
+from .auth_constants import (
+    # Public constants
+    DB_LABEL_AUTH,
+    TABLE_PERMISSIONS,
+    TABLE_SESSIONS,
+    FIELD_USER_ID,
+    FIELD_PERMISSION,
+    FIELD_GRANTED_BY,
+    FIELD_GRANTED_AT,
+    SCHEMAS_DIR,
+    SCHEMA_META_KEY,
+    SCHEMA_LABEL_KEY,
+    SCHEMA_FILE_NAME,
+    QUERY_LIMIT_ONE,
+    DEFAULT_GRANTED_BY,
+    # Internal constants (private)
+    _QUERY_LEN_ZERO,
+    _LOG_PREFIX_RBAC,
+    _LOG_NOT_AUTHENTICATED,
+    _LOG_NO_ROLE,
+    _LOG_INVALID_ROLE_TYPE,
+    _LOG_NO_USER_ID,
+    _LOG_PERMISSION_CHECK_FAILED,
+    _LOG_PERMISSION_GRANTED,
+    _LOG_PERMISSION_ALREADY_GRANTED,
+    _LOG_PERMISSION_REVOKED,
+    _LOG_INVALID_PERMISSION_TYPE,
+    _LOG_PERMISSION_ERROR,
+    _LOG_GRANT_ERROR,
+    _LOG_REVOKE_ERROR,
+    _LOG_DB_INIT,
+    _LOG_TABLE_CREATED,
+    _LOG_SESSIONS_TABLE_CREATED,
+    _LOG_SCHEMA_LOADED,
+    _LOG_SCHEMA_NOT_FOUND,
+    _LOG_SCHEMA_PARSE_FAILED,
+    _LOG_HANDLER_FAILED,
+    _LOG_WRONG_SCHEMA,
+    _LOG_DB_ERROR,
+    _LOG_CONTEXT_ZSESSION,
+    _LOG_CONTEXT_APPLICATION,
+    _LOG_CONTEXT_DUAL,
+    _LOG_DUAL_ROLE_MATCH,
+    _LOG_NO_ACTIVE_APP,
+    _LOG_UNKNOWN_CONTEXT,
+)
 
-# Field Names (user_permissions table)
-FIELD_USER_ID = "user_id"
-FIELD_PERMISSION = "permission"
-FIELD_GRANTED_BY = "granted_by"
-FIELD_GRANTED_AT = "granted_at"
+# Session Access Helpers (DRY utilities)
+from .auth_helpers import (
+    get_auth_data,
+    get_zsession_data,
+    get_applications_data,
+    get_active_context,
+)
 
-# Schema Keys
-SCHEMAS_DIR = "Schemas"  # Centralized schemas directory (v1.5.4+)
-SCHEMA_META_KEY = "Meta"
-SCHEMA_LABEL_KEY = "Data_Label"
-SCHEMA_FILE_NAME = "zSchema.auth.yaml"
-
-# Query Parameters
-QUERY_LIMIT_ONE = 1
-QUERY_LEN_ZERO = 0
-
-# Defaults
-DEFAULT_GRANTED_BY = "system"
-
-# Logging Messages
-LOG_PREFIX = "[RBAC]"
-LOG_NOT_AUTHENTICATED = "User not authenticated, role check failed"
-LOG_NO_ROLE = "User has no role assigned"
-LOG_INVALID_ROLE_TYPE = "Invalid role type"
-LOG_NO_USER_ID = "No user_id in session"
-LOG_PERMISSION_CHECK_FAILED = "User not authenticated, permission check failed"
-LOG_PERMISSION_GRANTED = "Granted permission"
-LOG_PERMISSION_ALREADY_GRANTED = "Permission already granted to user"
-LOG_PERMISSION_REVOKED = "Revoked permission"
-LOG_INVALID_PERMISSION_TYPE = "Invalid permission type"
-LOG_PERMISSION_ERROR = "Error checking permission"
-LOG_GRANT_ERROR = "Error granting permission"
-LOG_REVOKE_ERROR = "Error revoking permission"
-LOG_DB_INIT = "Auth database initialized (sessions + permissions)"
-LOG_TABLE_CREATED = "User permissions table created"
-LOG_SESSIONS_TABLE_CREATED = "Sessions table created"
-LOG_SCHEMA_LOADED = "Auth schema loaded"
-LOG_SCHEMA_NOT_FOUND = "Auth schema not found"
-LOG_SCHEMA_PARSE_FAILED = "Failed to parse auth schema"
-LOG_HANDLER_FAILED = "Failed to create data handler after loading schema"
-LOG_WRONG_SCHEMA = "Wrong schema loaded"
-LOG_DB_ERROR = "Error initializing permissions database"
-LOG_CONTEXT_ZSESSION = "Checking role in zSession context"
-LOG_CONTEXT_APPLICATION = "Checking role in application context"
-LOG_CONTEXT_DUAL = "Checking role in dual context (OR logic)"
-LOG_DUAL_ROLE_MATCH = "Role matched in dual context"
-LOG_NO_ACTIVE_APP = "No active application in session"
-LOG_UNKNOWN_CONTEXT = "Unknown active context"
+# Module uses _LOG_PREFIX_RBAC as LOG_PREFIX for compatibility
+LOG_PREFIX = _LOG_PREFIX_RBAC
 
 
 # =============================================================================
@@ -373,7 +374,7 @@ class RBAC:
             return None
         
         active_context = self._get_active_context()
-        auth_data = self.session.get(SESSION_KEY_ZAUTH, {})
+        auth_data = get_auth_data(self.session)
         
         if active_context == CONTEXT_ZSESSION:
             # Layer 1: Check zSession role
@@ -433,7 +434,7 @@ class RBAC:
             return None
         
         active_context = self._get_active_context()
-        auth_data = self.session.get(SESSION_KEY_ZAUTH, {})
+        auth_data = get_auth_data(self.session)
         
         if active_context == CONTEXT_ZSESSION:
             # Layer 1: Check zSession user ID
@@ -737,7 +738,7 @@ class RBAC:
             return False
         
         active_context = self._get_active_context()
-        auth_data = self.session.get(SESSION_KEY_ZAUTH, {})
+        auth_data = get_auth_data(self.session)
         
         if active_context == CONTEXT_ZSESSION:
             # Layer 1: Check zSession authentication
@@ -819,14 +820,14 @@ class RBAC:
         
         # Check if user is authenticated first (context-aware)
         if not self._is_authenticated():
-            self._log("debug", LOG_NOT_AUTHENTICATED)
+            self._log("debug", _LOG_NOT_AUTHENTICATED)
             return False
         
         # Get user's current role(s) from active context
         user_role = self._get_current_role()
         
         if not user_role:
-            self._log("debug", LOG_NO_ROLE)
+            self._log("debug", _LOG_NO_ROLE)
             return False
         
         # Log active context for debugging
@@ -844,7 +845,7 @@ class RBAC:
         
         # Invalid role type check
         if not isinstance(required_role, (str, list)):
-            self._log("warning", f"{LOG_INVALID_ROLE_TYPE}: {type(required_role)}")
+            self._log("warning", f"{_LOG_INVALID_ROLE_TYPE}: {type(required_role)}")
         
         return False
     
@@ -891,12 +892,10 @@ class RBAC:
             >>> # Permission "users.delete" granted to user_id="456"
             >>> rbac.has_permission("users.delete")  # True (eCommerce user has it)
         """
-        # Check if user is authenticated first (context-aware)
-        if not self._is_authenticated():
-            self._log("debug", LOG_PERMISSION_CHECK_FAILED)
+        # Validate authentication and get user ID
+        if not self._validate_permission_check():
             return False
         
-        # Get user ID(s) from active context
         user_id = self._get_current_user_id()
         if not user_id:
             self._log("debug", LOG_NO_USER_ID)
@@ -906,87 +905,106 @@ class RBAC:
             # Ensure permissions database is loaded
             self.ensure_permissions_db()
             
-            # Dual context: Check permissions for BOTH user IDs (OR logic)
+            # Handle dual context (tuple of two user IDs)
             if isinstance(user_id, tuple):
-                zsession_id, app_id = user_id
-                
-                # Single permission check (str)
-                if isinstance(required_permission, str):
-                    # Check zSession user
-                    if zsession_id:
-                        results = self.zcli.data.select(
-                            table=TABLE_PERMISSIONS,
-                            where=f"{FIELD_USER_ID} = '{zsession_id}' AND {FIELD_PERMISSION} = '{required_permission}'",
-                            limit=QUERY_LIMIT_ONE
-                        )
-                        if results and len(results) > QUERY_LEN_ZERO:
-                            return True
-                    
-                    # Check app user
-                    if app_id:
-                        results = self.zcli.data.select(
-                            table=TABLE_PERMISSIONS,
-                            where=f"{FIELD_USER_ID} = '{app_id}' AND {FIELD_PERMISSION} = '{required_permission}'",
-                            limit=QUERY_LIMIT_ONE
-                        )
-                        if results and len(results) > QUERY_LEN_ZERO:
-                            return True
-                    
-                    return False
-                
-                # Multiple permissions check (list) - OR logic
-                if isinstance(required_permission, list):
-                    for perm in required_permission:
-                        # Check zSession user
-                        if zsession_id:
-                            results = self.zcli.data.select(
-                                table=TABLE_PERMISSIONS,
-                                where=f"{FIELD_USER_ID} = '{zsession_id}' AND {FIELD_PERMISSION} = '{perm}'",
-                                limit=QUERY_LIMIT_ONE
-                            )
-                            if results and len(results) > QUERY_LEN_ZERO:
-                                return True
-                        
-                        # Check app user
-                        if app_id:
-                            results = self.zcli.data.select(
-                                table=TABLE_PERMISSIONS,
-                                where=f"{FIELD_USER_ID} = '{app_id}' AND {FIELD_PERMISSION} = '{perm}'",
-                                limit=QUERY_LIMIT_ONE
-                            )
-                            if results and len(results) > QUERY_LEN_ZERO:
-                                return True
-                    
-                    return False
+                return self._check_permission_dual_context(user_id, required_permission)
             
-            # Single context: Standard permission check
-            # Single permission check (str)
-            if isinstance(required_permission, str):
-                results = self.zcli.data.select(
-                    table=TABLE_PERMISSIONS,
-                    where=f"{FIELD_USER_ID} = '{user_id}' AND {FIELD_PERMISSION} = '{required_permission}'",
-                    limit=QUERY_LIMIT_ONE
-                )
-                return len(results) > QUERY_LEN_ZERO if results else False
-            
-            # Multiple permissions check (list) - OR logic
-            if isinstance(required_permission, list):
-                for perm in required_permission:
-                    results = self.zcli.data.select(
-                        table=TABLE_PERMISSIONS,
-                        where=f"{FIELD_USER_ID} = '{user_id}' AND {FIELD_PERMISSION} = '{perm}'",
-                        limit=QUERY_LIMIT_ONE
-                    )
-                    if results and len(results) > QUERY_LEN_ZERO:
-                        return True
-                return False
-            
-            self._log("warning", f"{LOG_INVALID_PERMISSION_TYPE}: {type(required_permission)}")
-            return False
+            # Handle single context (single user ID)
+            return self._check_permission_single_context(user_id, required_permission)
             
         except Exception as e:
             self._log("error", f"{LOG_PERMISSION_ERROR}: {e}")
             return False
+    
+    def _validate_permission_check(self) -> bool:
+        """Validate user is authenticated before permission check."""
+        if not self._is_authenticated():
+            self._log("debug", LOG_PERMISSION_CHECK_FAILED)
+            return False
+        return True
+    
+    def _check_permission_dual_context(
+        self,
+        user_ids: Tuple[Optional[str], Optional[str]],
+        required_permission: Union[str, List[str]]
+    ) -> bool:
+        """Check permissions for dual context (OR logic across two user IDs)."""
+        zsession_id, app_id = user_ids
+        
+        # Single permission check
+        if isinstance(required_permission, str):
+            return self._check_single_permission_dual(zsession_id, app_id, required_permission)
+        
+        # Multiple permissions check (OR logic)
+        if isinstance(required_permission, list):
+            return self._check_multiple_permissions_dual(zsession_id, app_id, required_permission)
+        
+        self._log("warning", f"{LOG_INVALID_PERMISSION_TYPE}: {type(required_permission)}")
+        return False
+    
+    def _check_single_permission_dual(
+        self,
+        zsession_id: Optional[str],
+        app_id: Optional[str],
+        permission: str
+    ) -> bool:
+        """Check single permission across both user IDs in dual context."""
+        # Check zSession user
+        if zsession_id and self._user_has_permission(zsession_id, permission):
+            return True
+        
+        # Check app user
+        if app_id and self._user_has_permission(app_id, permission):
+            return True
+        
+        return False
+    
+    def _check_multiple_permissions_dual(
+        self,
+        zsession_id: Optional[str],
+        app_id: Optional[str],
+        permissions: List[str]
+    ) -> bool:
+        """Check multiple permissions across both user IDs in dual context (OR logic)."""
+        for perm in permissions:
+            # Check zSession user
+            if zsession_id and self._user_has_permission(zsession_id, perm):
+                return True
+            
+            # Check app user
+            if app_id and self._user_has_permission(app_id, perm):
+                return True
+        
+        return False
+    
+    def _check_permission_single_context(
+        self,
+        user_id: str,
+        required_permission: Union[str, List[str]]
+    ) -> bool:
+        """Check permissions for single context."""
+        # Single permission check
+        if isinstance(required_permission, str):
+            return self._user_has_permission(user_id, required_permission)
+        
+        # Multiple permissions check (OR logic)
+        if isinstance(required_permission, list):
+            for perm in required_permission:
+                if self._user_has_permission(user_id, perm):
+                    return True
+            return False
+        
+        self._log("warning", f"{LOG_INVALID_PERMISSION_TYPE}: {type(required_permission)}")
+        return False
+    
+    def _user_has_permission(self, user_id: str, permission: str) -> bool:
+        """Query database to check if user has specific permission."""
+        results = self.zcli.data.select(
+            table=TABLE_PERMISSIONS,
+            where=f"{FIELD_USER_ID} = '{user_id}' AND {FIELD_PERMISSION} = '{permission}'",
+            limit=QUERY_LIMIT_ONE
+        )
+        return results and len(results) > _QUERY_LEN_ZERO
     
     # =========================================================================
     # ADMIN OPERATIONS - PERMISSION MANAGEMENT
@@ -1042,13 +1060,13 @@ class RBAC:
                 limit=QUERY_LIMIT_ONE
             )
             
-            if existing and len(existing) > QUERY_LEN_ZERO:
+            if existing and len(existing) > _QUERY_LEN_ZERO:
                 self._log("info", f"{LOG_PERMISSION_ALREADY_GRANTED} '{user_id}': {permission}")
                 return True
             
             # Get current admin's username if not provided (context-aware)
             if not granted_by:
-                auth_data = self.session.get(SESSION_KEY_ZAUTH, {})
+                auth_data = get_auth_data(self.session)
                 active_context = self._get_active_context()
                 
                 # In dual context, use zSession username (admin operations are zSession-level)

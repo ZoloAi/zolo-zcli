@@ -5,9 +5,7 @@ This module provides cryptographically secure password hashing and verification
 using the bcrypt algorithm. It is intentionally isolated from zCLI dependencies
 to ensure maximum testability, reusability, and security auditing.
 
-═══════════════════════════════════════════════════════════════════════════════
 ARCHITECTURE - Pure Security Module
-═══════════════════════════════════════════════════════════════════════════════
 
 Isolation Strategy:
     - No zCLI dependencies (only bcrypt and standard library)
@@ -21,9 +19,7 @@ Design Pattern:
     - Explicit error handling with graceful degradation
     - Industry-standard bcrypt implementation
 
-═══════════════════════════════════════════════════════════════════════════════
 BCRYPT ALGORITHM - Adaptive Hash Function
-═══════════════════════════════════════════════════════════════════════════════
 
 Algorithm: Blowfish cipher + Eksblowfish key schedule
     - Based on the Blowfish cipher (Bruce Schneier, 1993)
@@ -56,9 +52,7 @@ Hash Format: $2b$12$<22-char-salt><31-char-hash>
     - Salt: 22 characters base64-encoded (128 bits)
     - Hash: 31 characters base64-encoded (184 bits)
 
-═══════════════════════════════════════════════════════════════════════════════
 PERFORMANCE CHARACTERISTICS
-═══════════════════════════════════════════════════════════════════════════════
 
 Hash Time (12 rounds):
     - Modern CPU (2020+): ~0.3 seconds per hash
@@ -77,9 +71,7 @@ Memory Usage:
     - No memory-hard properties (unlike Argon2)
     - Suitable for constrained environments
 
-═══════════════════════════════════════════════════════════════════════════════
 BCRYPT LIMITATIONS
-═══════════════════════════════════════════════════════════════════════════════
 
 72-Byte Password Limit:
     - bcrypt truncates passwords to 72 bytes
@@ -92,9 +84,7 @@ Recommendation:
     - Current implementation: truncate and log warning
     - Future consideration: SHA-256 pre-hash for long passwords
 
-═══════════════════════════════════════════════════════════════════════════════
 THREAD SAFETY
-═══════════════════════════════════════════════════════════════════════════════
 
 Thread Safety: YES (with caveats)
     - bcrypt operations are thread-safe
@@ -106,9 +96,7 @@ Concurrency Considerations:
     - bcrypt releases GIL during computation
     - Suitable for async/await patterns (use run_in_executor)
 
-═══════════════════════════════════════════════════════════════════════════════
 USAGE EXAMPLES
-═══════════════════════════════════════════════════════════════════════════════
 
 Basic Usage:
     >>> from zCLI.L2_Core.d_zAuth.zAuth_modules.auth_password_security import PasswordSecurity
@@ -158,34 +146,30 @@ Performance Testing:
 """
 
 import bcrypt
-from typing import Optional, Any
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Module Constants
-# ═══════════════════════════════════════════════════════════════════════════════
+from zCLI import Optional, Any
 
-# bcrypt Configuration
-BCRYPT_ROUNDS = 12  # Cost factor (2^12 = 4,096 iterations)
-BCRYPT_MAX_PASSWORD_BYTES = 72  # bcrypt algorithm limit (truncates at 72 bytes)
-BCRYPT_PREFIX = "$2b$"  # bcrypt version identifier
-SALT_LENGTH = 22  # bcrypt salt length (base64 characters)
-HASH_TIME_SECONDS = 0.3  # Estimated time per hash at 12 rounds
+# Import centralized constants
+from .auth_constants import (
+    # Public constants
+    BCRYPT_ROUNDS,
+    BCRYPT_MAX_PASSWORD_BYTES,
+    BCRYPT_PREFIX,
+    # Internal constants (private)
+    _SALT_LENGTH,
+    _HASH_TIME_SECONDS,
+    _ENCODING_UTF8,
+    _LOG_PREFIX_PASSWORD,
+    _LOG_TRUNCATION_WARNING,
+    _LOG_VERIFICATION_ERROR,
+    _ERR_EMPTY_PASSWORD,
+)
 
-# Text Encoding
-ENCODING_UTF8 = "utf-8"  # Standard encoding for password bytes
-
-# Logging
-LOG_PREFIX = "[PasswordSecurity]"
-LOG_TRUNCATION_WARNING = "Password > 72 bytes, truncating (bcrypt limit)"
-LOG_VERIFICATION_ERROR = "Password verification error"
-
-# Error Messages
-ERR_EMPTY_PASSWORD = "Password cannot be empty"
+# Module uses _LOG_PREFIX_PASSWORD as LOG_PREFIX for compatibility
+LOG_PREFIX = _LOG_PREFIX_PASSWORD
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
 # Password Security Class
-# ═══════════════════════════════════════════════════════════════════════════════
 
 class PasswordSecurity:
     """

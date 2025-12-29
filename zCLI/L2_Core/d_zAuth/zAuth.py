@@ -2,9 +2,7 @@
 """
 zAuth Subsystem - Three-Tier Authentication Facade (v1.5.4+)
 
-═══════════════════════════════════════════════════════════════════════════════
 ARCHITECTURE OVERVIEW
-═══════════════════════════════════════════════════════════════════════════════
 
 This module implements the **Facade Pattern** for zCLI's authentication subsystem.
 It orchestrates four modular components to provide a unified, developer-friendly API
@@ -16,9 +14,7 @@ The facade coordinates:
 3. Authentication - Three-tier authentication logic (zSession, Application, Dual)
 4. RBAC - Context-aware Role-Based Access Control
 
-═══════════════════════════════════════════════════════════════════════════════
 THREE-TIER AUTHENTICATION MODEL
-═══════════════════════════════════════════════════════════════════════════════
 
 **Tier 1 - zSession Authentication (Internal Users):**
     Authenticates zCLI/Zolo platform users for premium features, plugins, cloud.
@@ -68,9 +64,7 @@ THREE-TIER AUTHENTICATION MODEL
         session[SESSION_KEY_ZAUTH][ZAUTH_KEY_ACTIVE_CONTEXT] = "dual"
         session[SESSION_KEY_ZAUTH][ZAUTH_KEY_DUAL_MODE] = True
 
-═══════════════════════════════════════════════════════════════════════════════
 DELEGATION MAPPING (Facade → Modules)
-═══════════════════════════════════════════════════════════════════════════════
 
 Password Security Methods:
     hash_password(plain_password)         → password_security.hash_password()
@@ -98,9 +92,7 @@ RBAC Methods (Context-Aware):
     grant_permission(user_id, perm, by)    → rbac.grant_permission()
     revoke_permission(user_id, perm)       → rbac.revoke_permission()
 
-═══════════════════════════════════════════════════════════════════════════════
 MODULE RESPONSIBILITIES
-═══════════════════════════════════════════════════════════════════════════════
 
 **PasswordSecurity (auth_password_security.py):**
     - bcrypt password hashing (12 rounds, 2^12 = 4096 iterations)
@@ -128,9 +120,7 @@ MODULE RESPONSIBILITIES
     - Dual-mode uses OR logic (either context can grant access)
     - Persistent permissions in SQLite (unified auth DB)
 
-═══════════════════════════════════════════════════════════════════════════════
 INTEGRATION WITH ZCLI SUBSYSTEMS
-═══════════════════════════════════════════════════════════════════════════════
 
 **zConfig (config_session.py):**
     Provides all session/auth constants:
@@ -214,9 +204,7 @@ Dual-Mode Authentication (Tier 3):
     # Logout from all contexts
     zcli.auth.logout(context="all")
 
-═══════════════════════════════════════════════════════════════════════════════
 THREAD SAFETY
-═══════════════════════════════════════════════════════════════════════════════
 
 All methods operate on the zCLI session object, which is NOT thread-safe by design.
 Each zCLI instance maintains a single session dictionary.
@@ -224,21 +212,14 @@ Each zCLI instance maintains a single session dictionary.
 For multi-threaded applications:
 - Each thread should use its own zCLI instance
 - Multi-app authentication within a SINGLE session is fully supported and isolated
-
-═══════════════════════════════════════════════════════════════════════════════
 """
 
-from typing import Any, Optional, Dict, Union, List
-
-# zConfig imports (session constants)
+from zCLI import Any, Optional, Dict, Union, List
 from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZAUTH
 
-# Local imports (modular components)
 from .zAuth_modules import PasswordSecurity, SessionPersistence, Authentication, RBAC
 
-# ═══════════════════════════════════════════════════════════════════════════
-# MODULE CONSTANTS
-# ═══════════════════════════════════════════════════════════════════════════
+# Module Constants
 
 # Logging
 LOG_PREFIX: str = "[zAuth]"

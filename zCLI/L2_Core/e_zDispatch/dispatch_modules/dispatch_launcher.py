@@ -770,7 +770,7 @@ class CommandLauncher:
         # Route: zDialog
         if KEY_ZDIALOG in zHorizontal:
             # ✅ Week 6.11 (zDialog) - handle_zDialog() signature verified and compatible
-            from ...zDialog import handle_zDialog
+            from ...j_zDialog import handle_zDialog
             self._log_detected("zDialog")
             return handle_zDialog(zHorizontal, zcli=self.zcli, walker=walker, context=context)
 

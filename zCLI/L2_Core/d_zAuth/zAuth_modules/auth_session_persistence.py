@@ -6,9 +6,7 @@ This module provides persistent session storage using SQLite, enabling
 deeply with zCLI's declarative zData subsystem and three-tier authentication
 architecture.
 
-═══════════════════════════════════════════════════════════════════════════════
 ARCHITECTURE - Session Persistence Layer
-═══════════════════════════════════════════════════════════════════════════════
 
 Design Pattern:
     - SQLite-backed persistent storage (unified auth database)
@@ -28,9 +26,7 @@ Storage Location:
     - Unified auth database: sessions + permissions tables
     - Schema: zSchema.auth.yaml (declarative YAML)
 
-═══════════════════════════════════════════════════════════════════════════════
 DATABASE STRUCTURE - Unified Auth Database
-═══════════════════════════════════════════════════════════════════════════════
 
 Database Label: "auth"
     - Shared between SessionPersistence and RBAC modules
@@ -52,9 +48,7 @@ Table: user_permissions
     - Managed by RBAC module (auth_rbac.py)
     - Shared database for unified auth operations
 
-═══════════════════════════════════════════════════════════════════════════════
 SECURITY MODEL
-═══════════════════════════════════════════════════════════════════════════════
 
 Token Generation:
     - Uses secrets.token_urlsafe(32) for cryptographically secure tokens
@@ -76,9 +70,7 @@ Single Session Per User:
     - Prevents session accumulation
     - Last login wins (invalidates previous sessions)
 
-═══════════════════════════════════════════════════════════════════════════════
 THREE-TIER AUTHENTICATION INTEGRATION
-═══════════════════════════════════════════════════════════════════════════════
 
 Session Persistence Scope:
     - PERSISTS:     zSession context only (Layer 1)
@@ -102,9 +94,7 @@ Integration with zAuth:
     - Respects three-tier authentication model
     - Coordinates with RBAC via shared database
 
-═══════════════════════════════════════════════════════════════════════════════
 ZCLI INTEGRATION - Declarative zData Operations
-═══════════════════════════════════════════════════════════════════════════════
 
 zData Integration:
     - NO raw SQL queries (fully declarative)
@@ -160,9 +150,7 @@ Cleanup Expired Sessions:
     >>> deleted = session_mgr.cleanup_expired()
     >>> print(f"Cleaned up {deleted} expired sessions")
 
-═══════════════════════════════════════════════════════════════════════════════
 ERROR HANDLING & LOGGING
-═══════════════════════════════════════════════════════════════════════════════
 
 Graceful Degradation:
     - Database unavailable: Continue without persistence
@@ -182,11 +170,7 @@ Error Recovery:
     - Provides context for debugging (operation, reason)
 """
 
-import secrets
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Optional, Any, Dict
-
+from zCLI import secrets, datetime, timedelta, Path, Optional, Any, Dict
 from zCLI.L1_Foundation.a_zConfig.zConfig_modules import (
     ZAUTH_KEY_ZSESSION,
     ZAUTH_KEY_AUTHENTICATED,
@@ -203,74 +187,67 @@ from zCLI.L1_Foundation.a_zConfig.zConfig_modules import (
 # Module Constants
 # ═══════════════════════════════════════════════════════════════════════════════
 
-# Session Configuration
-DEFAULT_SESSION_DURATION_DAYS = 7  # Session expiration period (7 days)
-TOKEN_LENGTH = 32  # URL-safe token length (bytes)
+# Import centralized constants
+from .auth_constants import (
+    # Public constants
+    DEFAULT_SESSION_DURATION_DAYS,
+    DB_LABEL_AUTH,
+    TABLE_SESSIONS,
+    TABLE_PERMISSIONS,
+    FIELD_SESSION_ID,
+    FIELD_USER_ID,
+    FIELD_USERNAME,
+    FIELD_ROLE,
+    FIELD_PASSWORD_HASH,
+    FIELD_TOKEN,
+    FIELD_CREATED_AT,
+    FIELD_EXPIRES_AT,
+    FIELD_LAST_ACCESSED,
+    QUERY_LIMIT_ONE,
+    ORDER_BY_LAST_ACCESSED,
+    SCHEMAS_DIR,
+    SCHEMA_FILE_NAME,
+    SCHEMA_META_KEY,
+    SCHEMA_LABEL_KEY,
+    # Internal constants (private)
+    _TOKEN_LENGTH,
+    _SESSION_KEY_SESSION_ID,
+    _LOG_PREFIX_PERSISTENCE,
+    _LOG_DB_INIT,
+    _LOG_TABLE_CREATED_SESSIONS,
+    _LOG_TABLE_CREATED_PERMISSIONS,
+    _LOG_SCHEMA_NOT_FOUND,
+    _LOG_SCHEMA_PARSE_FAILED,
+    _LOG_HANDLER_FAILED,
+    _LOG_WRONG_SCHEMA,
+    _LOG_SESSION_RESTORED,
+    _LOG_SESSION_SAVED,
+    _LOG_SESSIONS_CLEANED,
+    _LOG_NO_SESSION,
+    _LOG_NO_EXPIRED_SESSIONS,
+    _LOG_DB_NOT_LOADED_SKIP,
+    _LOG_DB_NOT_LOADED_ATTEMPT,
+    _LOG_DB_NOT_LOADED_WARNING,
+    _LOG_NO_EXISTING_SESSIONS,
+    _LOG_ERROR_INIT_DB,
+    _LOG_ERROR_LOAD_SESSION,
+    _LOG_ERROR_SAVE_SESSION,
+    _LOG_ERROR_CLEANUP,
+)
 
-# Database Configuration
-DB_LABEL_AUTH = "auth"  # Unified auth database label
-TABLE_SESSIONS = "sessions"  # Sessions table name
-TABLE_PERMISSIONS = "user_permissions"  # Permissions table name (RBAC)
+# Session Access Helpers (DRY utilities)
+from .auth_helpers import (
+    get_auth_data,
+    get_zsession_data,
+    get_applications_data,
+    get_active_context,
+)
 
-# Database Field Names (sessions table)
-FIELD_SESSION_ID = "session_id"
-FIELD_USER_ID = "user_id"
-FIELD_USERNAME = "username"
-FIELD_ROLE = "role"
-FIELD_PASSWORD_HASH = "password_hash"
-FIELD_TOKEN = "token"
-FIELD_CREATED_AT = "created_at"
-FIELD_EXPIRES_AT = "expires_at"
-FIELD_LAST_ACCESSED = "last_accessed"
-
-# Query Configuration
-QUERY_LIMIT_ONE = 1  # Limit for single-record queries
-ORDER_BY_LAST_ACCESSED = "last_accessed DESC"  # Order by most recent access
-
-# Schema Configuration
-SCHEMAS_DIR = "Schemas"  # Centralized schemas directory (v1.5.4+)
-SCHEMA_FILE_NAME = "zSchema.auth.yaml"  # Auth schema file name
-SCHEMA_META_KEY = "Meta"  # Schema metadata key
-SCHEMA_LABEL_KEY = "Data_Label"  # Database label key in schema
-
-# Logging Prefix
-LOG_PREFIX = "[SessionPersistence]"
-
-# Log Messages - Initialization
-LOG_DB_INIT = "Auth database initialized (sessions + permissions)"
-LOG_TABLE_CREATED_SESSIONS = "Sessions table created"
-LOG_TABLE_CREATED_PERMISSIONS = "User permissions table created"
-LOG_SCHEMA_NOT_FOUND = "Auth schema not found"
-LOG_SCHEMA_PARSE_FAILED = "Failed to parse auth schema"
-LOG_HANDLER_FAILED = "Failed to create data handler after loading schema"
-LOG_WRONG_SCHEMA = "Wrong schema loaded"
-
-# Log Messages - Session Operations
-LOG_SESSION_RESTORED = "Restored persistent session for user"
-LOG_SESSION_SAVED = "Persistent session saved for user"
-LOG_SESSIONS_CLEANED = "Cleaned up expired session(s)"
-LOG_NO_SESSION = "No valid persistent session found"
-LOG_NO_EXPIRED_SESSIONS = "No expired sessions to clean up"
-
-# Log Messages - Database Status
-LOG_DB_NOT_LOADED_SKIP = "Sessions database not loaded, skipping"
-LOG_DB_NOT_LOADED_ATTEMPT = "Auth DB not loaded, attempting to initialize..."
-LOG_DB_NOT_LOADED_WARNING = "Auth database not loaded, cannot persist session"
-LOG_NO_EXISTING_SESSIONS = "No existing sessions to delete"
-
-# Log Messages - Errors
-LOG_ERROR_INIT_DB = "Error initializing sessions database"
-LOG_ERROR_LOAD_SESSION = "Error loading persistent session"
-LOG_ERROR_SAVE_SESSION = "Error saving persistent session"
-LOG_ERROR_CLEANUP = "Error cleaning up expired sessions"
-
-# Session Storage Keys
-SESSION_KEY_SESSION_ID = "session_id"  # Key for storing session_id in session
+# Module uses _LOG_PREFIX_PERSISTENCE as LOG_PREFIX for compatibility
+LOG_PREFIX = _LOG_PREFIX_PERSISTENCE
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
 # Session Persistence Class
-# ═══════════════════════════════════════════════════════════════════════════════
 
 class SessionPersistence:
     """
@@ -666,7 +643,7 @@ class SessionPersistence:
             # Restore session to in-memory state (zSession context)
             session_data = results[0]
             
-            self.session[SESSION_KEY_ZAUTH][ZAUTH_KEY_ZSESSION].update({
+            get_zsession_data(self.session).update({
                 ZAUTH_KEY_AUTHENTICATED: True,
                 ZAUTH_KEY_ID: session_data.get(FIELD_USER_ID),
                 ZAUTH_KEY_USERNAME: session_data.get(FIELD_USERNAME),
@@ -746,70 +723,117 @@ class SessionPersistence:
             - Insert failure: Log error, return None
         """
         try:
-            # Ensure database is loaded (lazy initialization)
+            # Validate database is ready
             if not self._ensure_db_loaded():
                 self._log("warning", LOG_DB_NOT_LOADED_WARNING)
                 return None
             
-            # Generate unique session ID and API token (cryptographically secure)
-            session_id = secrets.token_urlsafe(TOKEN_LENGTH)
-            token = secrets.token_urlsafe(TOKEN_LENGTH)
+            # Generate session data
+            session_data = self._generate_session_data(username, user_id)
             
-            # Calculate expiration (session_duration_days from now)
-            expires_at = (datetime.now() + timedelta(days=self.session_duration_days)).isoformat()
-            created_at = self._get_current_timestamp()
-            last_accessed = created_at
+            # Delete existing sessions for user
+            self._delete_existing_sessions(username)
             
-            # Use user_id or fall back to username
-            if not user_id:
-                user_id = username
-            
-            # Delete any existing sessions for this user (single session per user)
-            try:
-                self.zcli.data.delete(
-                    table=TABLE_SESSIONS,
-                    where=f"{FIELD_USERNAME} = '{username}'"
-                )
-            except Exception as e:
-                self._log("debug", f"{LOG_NO_EXISTING_SESSIONS}: {e}")
-            
-            # Insert new session record (declarative zData operation)
-            self.zcli.data.insert(
-                table=TABLE_SESSIONS,
-                fields=[
-                    FIELD_SESSION_ID,
-                    FIELD_USER_ID,
-                    FIELD_USERNAME,
-                    FIELD_ROLE,
-                    FIELD_PASSWORD_HASH,
-                    FIELD_TOKEN,
-                    FIELD_CREATED_AT,
-                    FIELD_EXPIRES_AT,
-                    FIELD_LAST_ACCESSED
-                ],
-                values=[
-                    session_id,
-                    user_id,
-                    username,
-                    role,
-                    password_hash,
-                    token,
-                    created_at,
-                    expires_at,
-                    last_accessed
-                ]
+            # Insert new session record
+            self._insert_session_record(
+                session_data['session_id'],
+                session_data['user_id'],
+                username,
+                role,
+                password_hash,
+                session_data['token'],
+                session_data['created_at'],
+                session_data['expires_at'],
+                session_data['last_accessed']
             )
             
-            # Update in-memory session with session_id
-            self.session[SESSION_KEY_ZAUTH][SESSION_KEY_SESSION_ID] = session_id
+            # Update in-memory session
+            self._update_session_id(session_data['session_id'])
             
-            self._log("info", f"{LOG_SESSION_SAVED}: {username} (expires: {expires_at})")
+            # Log success
+            self._log("info", f"{LOG_SESSION_SAVED}: {username} (expires: {session_data['expires_at']})")
             
-            return session_id
+            return session_data['session_id']
             
         except Exception as e:
             self._log("error", f"{LOG_ERROR_SAVE_SESSION}: {e}")
             return None
+    
+    def _generate_session_data(self, username: str, user_id: Optional[str]) -> Dict[str, str]:
+        """Generate session data with secure tokens and timestamps."""
+        # Generate unique session ID and API token (cryptographically secure)
+        session_id = secrets.token_urlsafe(TOKEN_LENGTH)
+        token = secrets.token_urlsafe(TOKEN_LENGTH)
+        
+        # Calculate expiration and timestamps
+        expires_at = (datetime.now() + timedelta(days=self.session_duration_days)).isoformat()
+        created_at = self._get_current_timestamp()
+        last_accessed = created_at
+        
+        # Use user_id or fall back to username
+        effective_user_id = user_id if user_id else username
+        
+        return {
+            'session_id': session_id,
+            'token': token,
+            'user_id': effective_user_id,
+            'created_at': created_at,
+            'expires_at': expires_at,
+            'last_accessed': last_accessed
+        }
+    
+    def _delete_existing_sessions(self, username: str) -> None:
+        """Delete any existing sessions for user (single session policy)."""
+        try:
+            self.zcli.data.delete(
+                table=TABLE_SESSIONS,
+                where=f"{FIELD_USERNAME} = '{username}'"
+            )
+        except Exception as e:
+            self._log("debug", f"{LOG_NO_EXISTING_SESSIONS}: {e}")
+    
+    def _insert_session_record(
+        self,
+        session_id: str,
+        user_id: str,
+        username: str,
+        role: str,
+        password_hash: str,
+        token: str,
+        created_at: str,
+        expires_at: str,
+        last_accessed: str
+    ) -> None:
+        """Insert new session record into database."""
+        self.zcli.data.insert(
+            table=TABLE_SESSIONS,
+            fields=[
+                FIELD_SESSION_ID,
+                FIELD_USER_ID,
+                FIELD_USERNAME,
+                FIELD_ROLE,
+                FIELD_PASSWORD_HASH,
+                FIELD_TOKEN,
+                FIELD_CREATED_AT,
+                FIELD_EXPIRES_AT,
+                FIELD_LAST_ACCESSED
+            ],
+            values=[
+                session_id,
+                user_id,
+                username,
+                role,
+                password_hash,
+                token,
+                created_at,
+                expires_at,
+                last_accessed
+            ]
+        )
+    
+    def _update_session_id(self, session_id: str) -> None:
+        """Update in-memory session with session_id."""
+        self.session[SESSION_KEY_ZAUTH][SESSION_KEY_SESSION_ID] = session_id
     
     def cleanup_expired(self) -> int:
         """Remove expired sessions from database (housekeeping).
