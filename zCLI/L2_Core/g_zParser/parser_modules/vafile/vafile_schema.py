@@ -26,16 +26,17 @@ from . import (
     extract_schema_metadata
 )
 
-# Schema-specific constants
-ERROR_MSG_SCHEMA_EMPTY: str = "Schema file cannot be empty"
-ERROR_MSG_NO_TABLES: str = "Schema file must contain at least one table definition"
-ERROR_MSG_NO_FIELD_DEFS: str = "Table '%s' has no field definitions"
-ERROR_MSG_NO_FIELD_TYPE: str = "Field '%s' in table '%s' missing 'type' attribute"
-ERROR_MSG_INVALID_FIELD_TYPE: str = "Invalid field definition for '%s' in table '%s': expected dict or string"
-ERROR_MSG_UI_KEYS_IN_SCHEMA: str = "Schema file contains UI-specific keys that may be misplaced: %s"
-ERROR_MSG_INVALID_FIELD_FORMAT: str = "Invalid field definition format"
-
-RESERVED_SCHEMA_KEYS = ["zFunc", "zLink", "zDialog", "zMenu", "zWizard"]
+# Import schema-specific constants from centralized module
+from ..parser_constants import (
+    _ERROR_MSG_SCHEMA_EMPTY as ERROR_MSG_SCHEMA_EMPTY,
+    _ERROR_MSG_NO_TABLES as ERROR_MSG_NO_TABLES,
+    _ERROR_MSG_NO_FIELD_DEFS as ERROR_MSG_NO_FIELD_DEFS,
+    _ERROR_MSG_NO_FIELD_TYPE as ERROR_MSG_NO_FIELD_TYPE,
+    _ERROR_MSG_INVALID_FIELD_TYPE as ERROR_MSG_INVALID_FIELD_TYPE,
+    _ERROR_MSG_UI_KEYS_IN_SCHEMA as ERROR_MSG_UI_KEYS_IN_SCHEMA,
+    _ERROR_MSG_INVALID_FIELD_FORMAT as ERROR_MSG_INVALID_FIELD_FORMAT,
+    RESERVED_SCHEMA_KEYS,  # PUBLIC constant - no privatization needed
+)
 
 
 # SCHEMA FILE PROCESSING

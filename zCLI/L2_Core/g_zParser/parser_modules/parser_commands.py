@@ -142,36 +142,38 @@ from zCLI import Any, Dict, List
 # MODULE CONSTANTS
 # ============================================================================
 
+# Import command types from centralized constants (private - internal use only)
+from .parser_constants import (
+    _CMD_TYPE_DATA as CMD_TYPE_DATA,
+    _CMD_TYPE_FUNC as CMD_TYPE_FUNC,
+    _CMD_TYPE_UTILS as CMD_TYPE_UTILS,
+    _CMD_TYPE_SESSION as CMD_TYPE_SESSION,
+    _CMD_TYPE_WALKER as CMD_TYPE_WALKER,
+    _CMD_TYPE_OPEN as CMD_TYPE_OPEN,
+    _CMD_TYPE_TEST as CMD_TYPE_TEST,
+    _CMD_TYPE_AUTH as CMD_TYPE_AUTH,
+    _CMD_TYPE_EXPORT as CMD_TYPE_EXPORT,
+    _CMD_TYPE_CONFIG as CMD_TYPE_CONFIG,
+    _CMD_TYPE_CONFIG_PERSISTENCE as CMD_TYPE_CONFIG_PERSISTENCE,
+    _CMD_TYPE_LOAD as CMD_TYPE_LOAD,
+    _CMD_TYPE_COMM as CMD_TYPE_COMM,
+    _CMD_TYPE_WIZARD as CMD_TYPE_WIZARD,
+    _CMD_TYPE_PLUGIN as CMD_TYPE_PLUGIN,
+    _CMD_TYPE_LS as CMD_TYPE_LS,
+    _CMD_TYPE_CD as CMD_TYPE_CD,
+    _CMD_TYPE_CWD as CMD_TYPE_CWD,
+    _CMD_TYPE_PWD as CMD_TYPE_PWD,
+    _CMD_TYPE_SHORTCUT as CMD_TYPE_SHORTCUT,
+    _CMD_TYPE_WHERE as CMD_TYPE_WHERE,
+    _CMD_TYPE_HELP as CMD_TYPE_HELP,
+)
+
 # Dict Keys (for return structures)
 DICT_KEY_ERROR: str = "error"
 DICT_KEY_TYPE: str = "type"
 DICT_KEY_ACTION: str = "action"
 DICT_KEY_ARGS: str = "args"
 DICT_KEY_OPTIONS: str = "options"
-
-# Command Types (20 total)
-CMD_TYPE_DATA: str = "data"
-CMD_TYPE_FUNC: str = "func"
-CMD_TYPE_UTILS: str = "utils"
-CMD_TYPE_SESSION: str = "session"
-CMD_TYPE_WALKER: str = "walker"
-CMD_TYPE_OPEN: str = "open"
-CMD_TYPE_TEST: str = "test"
-CMD_TYPE_AUTH: str = "auth"
-CMD_TYPE_EXPORT: str = "export"
-CMD_TYPE_CONFIG: str = "config"
-CMD_TYPE_CONFIG_PERSISTENCE: str = "config_persistence"
-CMD_TYPE_LOAD: str = "load"
-CMD_TYPE_COMM: str = "comm"
-CMD_TYPE_WIZARD: str = "wizard"
-CMD_TYPE_PLUGIN: str = "plugin"
-CMD_TYPE_LS: str = "ls"
-CMD_TYPE_CD: str = "cd"
-CMD_TYPE_CWD: str = "cwd"
-CMD_TYPE_PWD: str = "pwd"
-CMD_TYPE_SHORTCUT: str = "shortcut"
-CMD_TYPE_WHERE: str = "where"
-CMD_TYPE_HELP: str = "help"
 
 # Data Actions
 ACTION_DATA_READ: str = "read"

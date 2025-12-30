@@ -63,55 +63,45 @@ Integration:
 Version: v1.5.4 Phase 2
 """
 
-from typing import Any, Dict, Optional
+from zCLI import Any, Dict, Optional
 
 # =============================================================================
 # MODULE CONSTANTS
 # =============================================================================
 
-# File type identifier
-FILE_TYPE_SERVER = "server"
-
-# Top-level keys
-KEY_META = "Meta"
-KEY_ROUTES = "routes"
-
-# Meta keys
-KEY_BASE_PATH = "base_path"
-KEY_DEFAULT_ROUTE = "default_route"
-KEY_ERROR_PAGES = "error_pages"
-
-# Route keys
-KEY_TYPE = "type"
-KEY_FILE = "file"
-KEY_CONTENT = "content"  # For inline HTML content (v1.5.4 Phase 2)
-KEY_TEMPLATE = "template"  # For Jinja2 templates (v1.5.4 Phase 2)
-KEY_CONTEXT = "context"  # For template variables (v1.5.4 Phase 2)
-KEY_HANDLER = "handler"
-KEY_TARGET = "target"
-KEY_STATUS = "status"
-KEY_DESCRIPTION = "description"
-KEY_RBAC = "_rbac"
-KEY_ZVAFILE = "zVaFile"  # For dynamic routes (v1.5.4 Phase 3)
-KEY_ZBLOCK = "zBlock"    # For dynamic routes (v1.5.4 Phase 3)
-
-# Route types
-ROUTE_TYPE_STATIC = "static"
-ROUTE_TYPE_CONTENT = "content"  # For inline HTML content (v1.5.4 Phase 2)
-ROUTE_TYPE_TEMPLATE = "template"  # For Jinja2 templates (v1.5.4 Phase 2)
-ROUTE_TYPE_DYNAMIC = "dynamic"
-ROUTE_TYPE_REDIRECT = "redirect"
-
-# Default values
-DEFAULT_BASE_PATH = "."
-DEFAULT_DEFAULT_ROUTE = "index.html"
-DEFAULT_ERROR_PAGES = {403: "403.html", 404: "404.html"}
-
-# Log messages
-LOG_MSG_PARSING_SERVER = "[vafile_server] Parsing server routing file"
-LOG_MSG_FOUND_ROUTES = "[vafile_server] Found %d routes"
-LOG_MSG_ROUTE_WITH_RBAC = "[vafile_server] Route '%s' has RBAC: %s"
-LOG_MSG_NO_ROUTES = "[vafile_server] No routes defined"
+# Import constants from centralized module (private - internal use only)
+from ..parser_constants import (
+    _FILE_TYPE_SERVER as FILE_TYPE_SERVER,
+    _KEY_META as KEY_META,
+    _KEY_ROUTES as KEY_ROUTES,
+    _KEY_BASE_PATH as KEY_BASE_PATH,
+    _KEY_DEFAULT_ROUTE as KEY_DEFAULT_ROUTE,
+    _KEY_ERROR_PAGES as KEY_ERROR_PAGES,
+    _KEY_TYPE as KEY_TYPE,
+    _KEY_FILE as KEY_FILE,
+    _KEY_CONTENT as KEY_CONTENT,
+    _KEY_TEMPLATE as KEY_TEMPLATE,
+    _KEY_CONTEXT as KEY_CONTEXT,
+    _KEY_HANDLER as KEY_HANDLER,
+    _KEY_TARGET as KEY_TARGET,
+    _KEY_STATUS as KEY_STATUS,
+    _KEY_DESCRIPTION as KEY_DESCRIPTION,
+    _KEY_RBAC as KEY_RBAC,
+    _KEY_ZVAFILE as KEY_ZVAFILE,
+    _KEY_ZBLOCK as KEY_ZBLOCK,
+    _ROUTE_TYPE_STATIC as ROUTE_TYPE_STATIC,
+    _ROUTE_TYPE_CONTENT as ROUTE_TYPE_CONTENT,
+    _ROUTE_TYPE_TEMPLATE as ROUTE_TYPE_TEMPLATE,
+    _ROUTE_TYPE_DYNAMIC as ROUTE_TYPE_DYNAMIC,
+    _ROUTE_TYPE_REDIRECT as ROUTE_TYPE_REDIRECT,
+    _DEFAULT_BASE_PATH as DEFAULT_BASE_PATH,
+    _DEFAULT_DEFAULT_ROUTE as DEFAULT_DEFAULT_ROUTE,
+    _DEFAULT_ERROR_PAGES as DEFAULT_ERROR_PAGES,
+    _LOG_MSG_PARSING_SERVER as LOG_MSG_PARSING_SERVER,
+    _LOG_MSG_FOUND_ROUTES as LOG_MSG_FOUND_ROUTES,
+    _LOG_MSG_ROUTE_WITH_RBAC as LOG_MSG_ROUTE_WITH_RBAC,
+    _LOG_MSG_NO_ROUTES as LOG_MSG_NO_ROUTES,
+)
 
 
 # =============================================================================
