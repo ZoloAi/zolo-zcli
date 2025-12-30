@@ -134,23 +134,15 @@ from .navigation_modules.navigation_menu_system import MenuSystem
 from .navigation_modules.navigation_breadcrumbs import Breadcrumbs
 from .navigation_modules.navigation_state import Navigation
 from .navigation_modules.navigation_linking import Linking
-
-# ============================================================================
-# Module Constants
-# ============================================================================
-
-# Display Settings
-COLOR_MENU: str = "MENU"  # Backward compatibility with legacy MENU color
-DISPLAY_MSG_READY: str = "zNavigation Ready"
-DISPLAY_INDENT_INIT: int = 0
-DISPLAY_STYLE_INIT: str = "full"
-
-# Error Messages
-ERROR_MSG_NO_ZCLI: str = "zNavigation requires a zCLI instance"
-ERROR_MSG_NO_WALKER: str = "requires walker parameter"
-
-# Log Messages
-LOG_MSG_READY: str = "[zNavigation] Unified navigation system ready"
+from .navigation_modules.navigation_constants import (
+    COLOR_MENU,
+    _DISPLAY_MSG_READY,
+    _DISPLAY_INDENT_INIT,
+    _DISPLAY_STYLE_INIT,
+    _ERROR_MSG_NO_ZCLI,
+    _ERROR_MSG_NO_WALKER,
+    _LOG_MSG_READY,
+)
 
 
 # ============================================================================
@@ -267,7 +259,7 @@ class zNavigation:
         6. Log initialization
         """
         if zcli is None:
-            raise ValueError(ERROR_MSG_NO_ZCLI)
+            raise ValueError(_ERROR_MSG_NO_ZCLI)
 
         self.zcli = zcli
         self.session = zcli.session
@@ -282,13 +274,13 @@ class zNavigation:
 
         # Display ready message using modern zDisplay
         self.zcli.display.zDeclare(
-            DISPLAY_MSG_READY,
+            _DISPLAY_MSG_READY,
             color=self.mycolor,
-            indent=DISPLAY_INDENT_INIT,
-            style=DISPLAY_STYLE_INIT
+            indent=_DISPLAY_INDENT_INIT,
+            style=_DISPLAY_STYLE_INIT
         )
 
-        self.logger.framework.debug(LOG_MSG_READY)
+        self.logger.framework.debug(_LOG_MSG_READY)
         
         # Load global navbar from environment (.zEnv)
         self._global_navbar = self._load_global_navbar()
@@ -1065,7 +1057,7 @@ def handle_zLink(zHorizontal: str, walker: Optional[Any] = None) -> str:
     - Modern code should use facade directly (zcli.navigation.handle_zLink)
     """
     if not walker:
-        raise ValueError(f"handle_zLink {ERROR_MSG_NO_WALKER}")
+        raise ValueError(f"handle_zLink {_ERROR_MSG_NO_WALKER}")
     
     return walker.zcli.navigation.handle_zLink(zHorizontal=zHorizontal, walker=walker)
 
@@ -1115,6 +1107,6 @@ def handle_zCrumbs(
     - Supports APPEND (default) and REPLACE operations
     """
     if not walker:
-        raise ValueError(f"handle_zCrumbs {ERROR_MSG_NO_WALKER}")
+        raise ValueError(f"handle_zCrumbs {_ERROR_MSG_NO_WALKER}")
     
     return walker.zcli.navigation.handle_zCrumbs(zKey=zKey, walker=walker, operation=operation)

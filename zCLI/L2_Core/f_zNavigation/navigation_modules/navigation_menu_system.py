@@ -138,41 +138,23 @@ from zCLI import Any, Dict, List, Optional, Union
 from .navigation_menu_builder import MenuBuilder
 from .navigation_menu_renderer import MenuRenderer
 from .navigation_menu_interaction import MenuInteraction
-
-# ============================================================================
-# Module Constants
-# ============================================================================
-
-# Display Messages
-DISPLAY_MSG_CREATE: str = "zNavigation Menu Create"
-DISPLAY_MSG_SELECT: str = "zNavigation Menu Select"
-DISPLAY_MSG_HANDLE: str = "Handle zNavigation Menu"
-DISPLAY_MSG_RETURN: str = "zNavigation Menu return"
-
-# Display Styles
-DISPLAY_STYLE_FULL: str = "full"
-DISPLAY_STYLE_SINGLE: str = "single"
-DISPLAY_STYLE_TILDE: str = "~"
-
-# Display Indents
-DISPLAY_INDENT_MENU: int = 1
-
-# Navigation Values
-NAV_ZBACK: str = "zBack"
-
-# Log Messages
-LOG_ZMENU_OBJECT: str = (
-    "\nzMENU Object:"
-    "\n. zBlock      : %s"
-    "\n. zKey        : %s"
-    "\n. zHorizontal : %s"
-    "\n. is_anchor   : %s"
+from .navigation_constants import (
+    _DISPLAY_MSG_CREATE,
+    _DISPLAY_MSG_SELECT,
+    _DISPLAY_MSG_HANDLE,
+    _DISPLAY_MSG_RETURN,
+    _DISPLAY_STYLE_FULL,
+    _DISPLAY_STYLE_SINGLE,
+    _DISPLAY_STYLE_TILDE,
+    _DISPLAY_INDENT_MENU,
+    NAV_ZBACK,
+    _LOG_ZMENU_OBJECT,
+    _LOG_ANCHOR_ACTIVE,
+    _LOG_MENU_OPTIONS,
+    _LOG_MENU_SELECTED,
 )
-LOG_ANCHOR_ACTIVE: str = "Anchor mode active - injecting zBack into menu."
-LOG_MENU_OPTIONS: str = "zMenu options:\n%s"
-LOG_MENU_SELECTED: str = "Menu selected: %s"
 
-# Dict Keys (for legacy handle method)
+# Dict Keys (for legacy handle method - not in constants as they're legacy-specific)
 DICT_KEY_ZBLOCK: str = "zBlock"
 DICT_KEY_ZKEY: str = "zKey"
 DICT_KEY_ZHORIZONTAL: str = "zHorizontal"
@@ -382,10 +364,10 @@ class MenuSystem:
         
         # Display declaration
         display.zDeclare(
-            DISPLAY_MSG_CREATE,
+            _DISPLAY_MSG_CREATE,
             color=self.navigation.mycolor,
-            indent=DISPLAY_INDENT_MENU,
-            style=DISPLAY_STYLE_FULL
+            indent=_DISPLAY_INDENT_MENU,
+            style=_DISPLAY_STYLE_FULL
         )
 
         # Build menu object
@@ -505,10 +487,10 @@ class MenuSystem:
         
         # Display declaration
         display.zDeclare(
-            DISPLAY_MSG_SELECT,
+            _DISPLAY_MSG_SELECT,
             color=self.navigation.mycolor,
-            indent=DISPLAY_INDENT_MENU,
-            style=DISPLAY_STYLE_SINGLE
+            indent=_DISPLAY_INDENT_MENU,
+            style=_DISPLAY_STYLE_SINGLE
         )
 
         # Build simple menu (no back option)
@@ -610,15 +592,15 @@ class MenuSystem:
         
         # Display declaration
         display.zDeclare(
-            DISPLAY_MSG_HANDLE,
+            _DISPLAY_MSG_HANDLE,
             color=self.navigation.mycolor,
-            indent=DISPLAY_INDENT_MENU,
-            style=DISPLAY_STYLE_FULL
+            indent=_DISPLAY_INDENT_MENU,
+            style=_DISPLAY_STYLE_FULL
         )
 
         # Log zMenu object details
         self.logger.debug(
-            LOG_ZMENU_OBJECT,
+            _LOG_ZMENU_OBJECT,
             zMenu_obj.get(DICT_KEY_ZBLOCK),
             zMenu_obj.get(DICT_KEY_ZKEY),
             zMenu_obj.get(DICT_KEY_ZHORIZONTAL),
@@ -628,10 +610,10 @@ class MenuSystem:
         # Handle anchor mode logic
         options = zMenu_obj[DICT_KEY_ZHORIZONTAL]
         if not zMenu_obj[DICT_KEY_IS_ANCHOR]:
-            self.logger.debug(LOG_ANCHOR_ACTIVE)
+            self.logger.debug(_LOG_ANCHOR_ACTIVE)
             options = options + [NAV_ZBACK]
 
-        self.logger.debug(LOG_MENU_OPTIONS, options)
+        self.logger.debug(_LOG_MENU_OPTIONS, options)
 
         # Create menu pairs for display
         menu_pairs = list(enumerate(options))
@@ -643,13 +625,13 @@ class MenuSystem:
         
         # Display return banner
         display.zDeclare(
-            DISPLAY_MSG_RETURN,
+            _DISPLAY_MSG_RETURN,
             color=self.navigation.mycolor,
-            indent=DISPLAY_INDENT_MENU,
-            style=DISPLAY_STYLE_TILDE
+            indent=_DISPLAY_INDENT_MENU,
+            style=_DISPLAY_STYLE_TILDE
         )
         
-        self.logger.debug(LOG_MENU_SELECTED, choice)
+        self.logger.debug(_LOG_MENU_SELECTED, choice)
         return choice
 
     # ========================================================================

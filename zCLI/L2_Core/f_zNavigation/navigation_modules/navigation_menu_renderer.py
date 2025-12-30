@@ -109,34 +109,25 @@ LOG_* : str
     Logging message templates
 """
 
-from typing import Any, Optional, Dict, List
+from zCLI import Any, Optional, Dict, List
 
-# ============================================================================
-# Module Constants
-# ============================================================================
-
-# Menu Object Keys (must match MenuBuilder)
-KEY_OPTIONS: str = "options"
-KEY_TITLE: str = "title"
-KEY_ALLOW_BACK: str = "allow_back"
-
-# Default Values
-DEFAULT_ALLOW_BACK: bool = True
-DEFAULT_INDENT: int = 0
-DEFAULT_STYLE_FULL: str = "full"
-DEFAULT_STYLE_SINGLE: str = "single"
-DEFAULT_PROMPT: str = "Select option"
-
-# Templates
-TEMPLATE_SIMPLE_ITEM: str = "  [{index}] {option}"
-TEMPLATE_COMPACT_ITEM: str = "{index}:{option}"
-SEPARATOR_COMPACT: str = " | "
-
-# Log Messages
-LOG_RENDERED_MENU: str = "Rendered full menu with %d options"
-LOG_RENDERED_SIMPLE: str = "Rendered simple menu with %d options"
-LOG_RENDERED_COMPACT: str = "Rendered compact menu with %d options"
-LOG_BREADCRUMB_FAILED: str = "Breadcrumb display not available: %s"
+from .navigation_constants import (
+    KEY_OPTIONS,
+    KEY_TITLE,
+    KEY_ALLOW_BACK,
+    _DEFAULT_ALLOW_BACK,
+    _DEFAULT_INDENT,
+    _DEFAULT_STYLE_FULL,
+    _DEFAULT_STYLE_SINGLE,
+    _DEFAULT_PROMPT,
+    _TEMPLATE_SIMPLE_ITEM,
+    _TEMPLATE_COMPACT_ITEM,
+    _SEPARATOR_COMPACT,
+    _LOG_RENDERED_MENU,
+    _LOG_RENDERED_SIMPLE,
+    _LOG_RENDERED_COMPACT,
+    _LOG_BREADCRUMB_FAILED,
+)
 
 
 # ============================================================================
@@ -284,15 +275,15 @@ class MenuRenderer:
         # Extract menu object properties
         options = menu_obj[KEY_OPTIONS]
         title = menu_obj.get(KEY_TITLE)
-        allow_back = menu_obj.get(KEY_ALLOW_BACK, DEFAULT_ALLOW_BACK)
+        allow_back = menu_obj.get(KEY_ALLOW_BACK, _DEFAULT_ALLOW_BACK)
 
         # Show title if provided
         if title:
             display.zDeclare(
                 title,
                 color=self.menu.navigation.mycolor,
-                indent=DEFAULT_INDENT,
-                style=DEFAULT_STYLE_FULL
+                indent=_DEFAULT_INDENT,
+                style=_DEFAULT_STYLE_FULL
             )
 
         # Create menu pairs for display (enumerate with indices)
@@ -305,7 +296,7 @@ class MenuRenderer:
             display.zCrumbs(self.zcli.session)
         except AttributeError as e:
             # Log if zCrumbs method not available
-            self.logger.debug(LOG_BREADCRUMB_FAILED, e)
+            self.logger.debug(_LOG_BREADCRUMB_FAILED, e)
 
         # Render menu using modern zDisplay method
         display.zMenu(menu_pairs)
@@ -317,7 +308,7 @@ class MenuRenderer:
         self,
         options: List[str],
         display: Any,
-        prompt: str = DEFAULT_PROMPT
+        prompt: str = _DEFAULT_PROMPT
     ) -> None:
         """
         Render simple menu without complex formatting.
@@ -375,13 +366,13 @@ class MenuRenderer:
         display.zDeclare(
             prompt,
             color=self.menu.navigation.mycolor,
-            indent=DEFAULT_INDENT,
-            style=DEFAULT_STYLE_SINGLE
+            indent=_DEFAULT_INDENT,
+            style=_DEFAULT_STYLE_SINGLE
         )
 
         # Simple numbered list
         for i, option in enumerate(options):
-            formatted_item = TEMPLATE_SIMPLE_ITEM.format(index=i, option=option)
+            formatted_item = _TEMPLATE_SIMPLE_ITEM.format(index=i, option=option)
             display.text(formatted_item)
 
         # Log rendering operation
@@ -448,10 +439,10 @@ class MenuRenderer:
         """
         # Show options in compact format
         formatted_items = [
-            TEMPLATE_COMPACT_ITEM.format(index=i, option=opt)
+            _TEMPLATE_COMPACT_ITEM.format(index=i, option=opt)
             for i, opt in enumerate(options)
         ]
-        option_text = SEPARATOR_COMPACT.join(formatted_items)
+        option_text = _SEPARATOR_COMPACT.join(formatted_items)
         display.text(option_text)
 
         # Log rendering operation
@@ -484,8 +475,8 @@ class MenuRenderer:
         Logs at debug level with format: "Rendered {strategy} menu with N options"
         """
         if strategy == "full":
-            self.logger.debug(LOG_RENDERED_MENU, option_count)
+            self.logger.debug(_LOG_RENDERED_MENU, option_count)
         elif strategy == "simple":
-            self.logger.debug(LOG_RENDERED_SIMPLE, option_count)
+            self.logger.debug(_LOG_RENDERED_SIMPLE, option_count)
         elif strategy == "compact":
-            self.logger.debug(LOG_RENDERED_COMPACT, option_count)
+            self.logger.debug(_LOG_RENDERED_COMPACT, option_count)

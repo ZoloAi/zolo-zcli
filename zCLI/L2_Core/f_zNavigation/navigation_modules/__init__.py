@@ -153,6 +153,7 @@ See Also
 
 from zCLI import List
 
+from .navigation_constants import *  # noqa: F403, F401
 from .navigation_menu_system import MenuSystem
 from .navigation_breadcrumbs import Breadcrumbs
 from .navigation_state import Navigation

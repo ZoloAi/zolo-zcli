@@ -18,7 +18,7 @@ primary session keys for navigation state:
    - Used to track "where we are now"
 
 2. **Navigation History** (session[SESSION_KEY_NAVIGATION_HISTORY])
-   - Stores a list of previous locations (up to HISTORY_MAX_SIZE items)
+   - Stores a list of previous locations (up to _HISTORY_MAX_SIZE items)
    - FIFO (First In, First Out) overflow strategy
    - Used for backward navigation via go_back()
 
@@ -44,7 +44,7 @@ History Management
 ------------------
 The navigation history automatically manages its size to prevent unbounded growth:
 
-- **Size Limit**: HISTORY_MAX_SIZE (50 items by default)
+- **Size Limit**: _HISTORY_MAX_SIZE (50 items by default)
 - **Overflow Strategy**: FIFO - when limit is reached, oldest item (index 0) is removed
 - **Storage**: List of location dicts in session
 - **Separate from Current**: Current location is stored separately, not in history
@@ -146,42 +146,29 @@ MSG_* : str
     Message strings for results and logging
 HISTORY_* : int
     History management constants (size limits)
-TIMESTAMP_FORMAT : str
+_TIMESTAMP_FORMAT : str
     Timestamp format string
 """
 
 from zCLI import time, Any, Dict, List, Optional
 
-# ============================================================================
-# Module Constants
-# ============================================================================
-
-# Session Keys (Module-specific - not in zConfig)
-SESSION_KEY_CURRENT_LOCATION: str = "current_location"
-SESSION_KEY_NAVIGATION_HISTORY: str = "navigation_history"
-
-# Dict Keys (Location/Result Objects)
-DICT_KEY_TARGET: str = "target"
-DICT_KEY_CONTEXT: str = "context"
-DICT_KEY_TIMESTAMP: str = "timestamp"
-DICT_KEY_STATUS: str = "status"
-DICT_KEY_MESSAGE: str = "message"
-
-# Status Values
-STATUS_NAVIGATED: str = "navigated"
-STATUS_ERROR: str = "error"
-
-# Messages
-MSG_NO_HISTORY: str = "No navigation history"
-MSG_HISTORY_CLEARED: str = "Navigation history cleared"
-LOG_NAVIGATING_TO: str = "Navigating to: %s"
-
-# History Management
-HISTORY_MAX_SIZE: int = 50  # Keep last 50 navigation points
-HISTORY_FIRST_INDEX: int = 0  # Index for FIFO overflow
-
-# Timestamp Format
-TIMESTAMP_FORMAT: str = "%Y-%m-%d %H:%M:%S"
+from .navigation_constants import (
+    SESSION_KEY_CURRENT_LOCATION,
+    SESSION_KEY_NAVIGATION_HISTORY,
+    _DICT_KEY_TARGET,
+    _DICT_KEY_CONTEXT,
+    _DICT_KEY_TIMESTAMP,
+    _DICT_KEY_STATUS,
+    _DICT_KEY_MESSAGE,
+    STATUS_NAVIGATED,
+    STATUS_ERROR,
+    _MSG_NO_HISTORY,
+    _MSG_HISTORY_CLEARED,
+    _LOG_NAVIGATING_TO,
+    _HISTORY_MAX_SIZE,
+    _HISTORY_FIRST_INDEX,
+    _TIMESTAMP_FORMAT,
+)
 
 
 # ============================================================================
@@ -278,7 +265,7 @@ class Navigation:
         --------------------
         This module manages the following session keys:
         - SESSION_KEY_CURRENT_LOCATION: Dict with target, context, timestamp
-        - SESSION_KEY_NAVIGATION_HISTORY: List of location dicts (up to HISTORY_MAX_SIZE)
+        - SESSION_KEY_NAVIGATION_HISTORY: List of location dicts (up to _HISTORY_MAX_SIZE)
         """
         self.navigation = navigation
         self.zcli = navigation.zcli
@@ -336,7 +323,7 @@ class Navigation:
         -----
         - **History Update**: Current location (if exists) is added to history before navigation
         - **Session Mutation**: Updates session[SESSION_KEY_CURRENT_LOCATION]
-        - **Automatic Overflow**: History is automatically limited to HISTORY_MAX_SIZE items
+        - **Automatic Overflow**: History is automatically limited to _HISTORY_MAX_SIZE items
         - **Timestamp**: New location is timestamped automatically
         
         Navigation Flow
@@ -347,7 +334,7 @@ class Navigation:
         4. Set new location as current (with timestamp and context)
         5. Return success result
         """
-        self.logger.debug(LOG_NAVIGATING_TO, target)
+        self.logger.debug(_LOG_NAVIGATING_TO, target)
         
         # Store current location in history before navigating
         current = self.get_current_location()
@@ -358,8 +345,8 @@ class Navigation:
         self._set_current_location(target, context)
         
         return {
-            DICT_KEY_STATUS: STATUS_NAVIGATED,
-            DICT_KEY_TARGET: target
+            _DICT_KEY_STATUS: STATUS_NAVIGATED,
+            _DICT_KEY_TARGET: target
         }
 
     def go_back(self) -> Dict[str, Any]:
@@ -394,8 +381,8 @@ class Navigation:
         Handle error::
         
             result = nav.go_back()
-            if result[DICT_KEY_STATUS] == STATUS_ERROR:
-                print(f"Cannot go back: {result[DICT_KEY_MESSAGE]}")
+            if result[_DICT_KEY_STATUS] == STATUS_ERROR:
+                print(f"Cannot go back: {result[_DICT_KEY_MESSAGE]}")
         
         Notes
         -----
@@ -419,8 +406,8 @@ class Navigation:
         # Check if history is empty
         if not history:
             return {
-                DICT_KEY_STATUS: STATUS_ERROR,
-                DICT_KEY_MESSAGE: MSG_NO_HISTORY
+                _DICT_KEY_STATUS: STATUS_ERROR,
+                _DICT_KEY_MESSAGE: _MSG_NO_HISTORY
             }
         
         # Pop last location from history
@@ -429,8 +416,8 @@ class Navigation:
         
         # Navigate to previous location
         return self.navigate_to(
-            previous[DICT_KEY_TARGET],
-            previous.get(DICT_KEY_CONTEXT)
+            previous[_DICT_KEY_TARGET],
+            previous.get(_DICT_KEY_CONTEXT)
         )
 
     def get_current_location(self) -> Dict[str, Any]:
@@ -499,7 +486,7 @@ class Navigation:
         Check history size::
         
             history = nav.get_navigation_history()
-            if len(history) >= HISTORY_MAX_SIZE:
+            if len(history) >= _HISTORY_MAX_SIZE:
                 print("History is at maximum size")
         
         Notes
@@ -507,7 +494,7 @@ class Navigation:
         - **Read-Only**: Does not modify session state
         - **Default Value**: Returns empty list [] if key doesn't exist in session
         - **Order**: Items are in chronological order (oldest first, newest last)
-        - **Size Limit**: Maximum HISTORY_MAX_SIZE items (managed by _add_to_history)
+        - **Size Limit**: Maximum _HISTORY_MAX_SIZE items (managed by _add_to_history)
         """
         return self.zcli.session.get(SESSION_KEY_NAVIGATION_HISTORY, [])
 
@@ -543,7 +530,7 @@ class Navigation:
         - **Use Case**: Useful for starting fresh navigation or managing memory
         """
         self.zcli.session[SESSION_KEY_NAVIGATION_HISTORY] = []
-        self.logger.info(MSG_HISTORY_CLEARED)
+        self.logger.info(_MSG_HISTORY_CLEARED)
 
     # ========================================================================
     # Private Helper Methods
@@ -568,12 +555,12 @@ class Navigation:
         ---------
         1. Get current history from session
         2. Append new location
-        3. If history exceeds HISTORY_MAX_SIZE, remove oldest (index 0)
+        3. If history exceeds _HISTORY_MAX_SIZE, remove oldest (index 0)
         4. Update session with modified history
         
         Overflow Strategy
         -----------------
-        FIFO (First In, First Out): When history reaches HISTORY_MAX_SIZE items,
+        FIFO (First In, First Out): When history reaches _HISTORY_MAX_SIZE items,
         the oldest item (at index 0) is removed before adding the new item.
         """
         # Get history using helper
@@ -583,8 +570,8 @@ class Navigation:
         history.append(location)
         
         # Enforce size limit with FIFO overflow
-        if len(history) > HISTORY_MAX_SIZE:
-            history.pop(HISTORY_FIRST_INDEX)
+        if len(history) > _HISTORY_MAX_SIZE:
+            history.pop(_HISTORY_FIRST_INDEX)
         
         # Update session with modified history
         self.zcli.session[SESSION_KEY_NAVIGATION_HISTORY] = history
@@ -614,9 +601,9 @@ class Navigation:
         - Updates session[SESSION_KEY_CURRENT_LOCATION]
         """
         location = {
-            DICT_KEY_TARGET: target,
-            DICT_KEY_CONTEXT: context,
-            DICT_KEY_TIMESTAMP: self._get_timestamp()
+            _DICT_KEY_TARGET: target,
+            _DICT_KEY_CONTEXT: context,
+            _DICT_KEY_TIMESTAMP: self._get_timestamp()
         }
         self.zcli.session[SESSION_KEY_CURRENT_LOCATION] = location
 
@@ -627,7 +614,7 @@ class Navigation:
         Returns
         -------
         str
-            Current timestamp in TIMESTAMP_FORMAT (YYYY-MM-DD HH:MM:SS)
+            Current timestamp in _TIMESTAMP_FORMAT (YYYY-MM-DD HH:MM:SS)
         
         Examples
         --------
@@ -638,9 +625,9 @@ class Navigation:
         
         Notes
         -----
-        Uses time.strftime() with TIMESTAMP_FORMAT constant.
+        Uses time.strftime() with _TIMESTAMP_FORMAT constant.
         """
-        return time.strftime(TIMESTAMP_FORMAT)
+        return time.strftime(_TIMESTAMP_FORMAT)
 
     def _get_history(self) -> List[Dict[str, Any]]:
         """

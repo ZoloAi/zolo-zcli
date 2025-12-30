@@ -144,7 +144,7 @@ PATH_* : str
     Path parsing constants
 """
 
-from zCLI import Any, Dict, Tuple
+from zCLI import Any, Dict, List, Optional, Tuple
 from zCLI.L2_Core.g_zParser.parser_modules.parser_utils import zExpr_eval
 from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import (
     SESSION_KEY_ZAUTH,
@@ -154,64 +154,50 @@ from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import (
     SESSION_KEY_ZCRUMBS,
 )
 
-# ============================================================================
-# Module Constants
-# ============================================================================
-
-# Display Settings
-DISPLAY_COLOR_ZLINK: str = "ZLINK"
-DISPLAY_STYLE_FULL: str = "full"
-DISPLAY_STYLE_SINGLE: str = "single"
-DISPLAY_INDENT_HANDLE: int = 1
-DISPLAY_INDENT_PARSE: int = 2
-DISPLAY_INDENT_AUTH: int = 2
-
-# Display Messages
-DISPLAY_MSG_HANDLE: str = "Handle zLink"
-DISPLAY_MSG_PARSE: str = "zLink Parsing"
-DISPLAY_MSG_AUTH: str = "zLink Auth"
-
-# Status Values
-STATUS_STOP: str = "stop"
-
-# Messages
-MSG_PERMISSION_DENIED: str = "Permission denied for this section."
-MSG_NO_WALKER: str = "[ERROR] No walker instance provided to zLink."
-
-# Log Messages
-LOG_INCOMING_REQUEST: str = "incoming zLink request: %s"
-LOG_ZLINK_PATH: str = "zLink_path: %s"
-LOG_REQUIRED_PERMS: str = "required_perms: %s"
-LOG_ZFILE_PARSED: str = "zFile_parsed: %s"
-LOG_RAW_EXPRESSION: str = "Raw zLink expression: %s"
-LOG_STRIPPED_INNER: str = "Stripped inner contents: %s"
-LOG_PATH_PART: str = "Path part: %s"
-LOG_PERMS_PART_RAW: str = "Permissions part (raw): %s"
-LOG_PARSED_PERMS: str = "Parsed required permissions: %s"
-LOG_WARN_NON_DICT: str = "strict_eval returned non-dict permissions. Defaulting to empty."
-LOG_NO_PERMS_BLOCK: str = "[INFO] No permission block found. Path: %s"
-LOG_ZAUTH_USER: str = "zAuth user: %s"
-LOG_REQUIRED_PERMS_CHECK: str = "Required permissions: %s"
-LOG_NO_PERMS_REQUIRED: str = "No permissions required - allowing access."
-LOG_CHECK_PERM_KEY: str = "Checking permission key: %s | expected=%s, actual=%s"
-LOG_WARN_PERM_DENIED: str = "Permission denied. Required %s=%s, but got %s"
-LOG_ALL_PERMS_MATCHED: str = "All required permissions matched."
-
-# Parsing Literals
-PARSE_PREFIX_ZLINK: str = "zLink("
-PARSE_SUFFIX_RPAREN: str = ")"
-PARSE_PERMS_SEPARATOR: str = ", {"
-PARSE_BRACE_OPEN: str = "{"
-PARSE_BRACE_CLOSE: str = "}"
-
-# Path Parsing
-PATH_SEPARATOR: str = "."
-PATH_INDEX_LAST: int = -1
-PATH_INDEX_BLOCK: int = -1
-PATH_INDEX_FILENAME_START: int = -2
-PATH_PARTS_MIN: int = 2
-PATH_PARTS_BASE_OFFSET: int = -2
-PATH_DEFAULT_BASE: str = ""
+from .navigation_helpers import reload_current_file
+from .navigation_constants import (
+    DISPLAY_COLOR_ZLINK,
+    _DISPLAY_STYLE_FULL,
+    _DISPLAY_STYLE_SINGLE,
+    _DISPLAY_INDENT_HANDLE,
+    _DISPLAY_INDENT_PARSE,
+    _DISPLAY_INDENT_AUTH,
+    _DISPLAY_MSG_HANDLE_ZLINK,
+    _DISPLAY_MSG_PARSE,
+    _DISPLAY_MSG_AUTH,
+    STATUS_STOP,
+    _MSG_PERMISSION_DENIED,
+    _MSG_NO_WALKER,
+    _LOG_INCOMING_REQUEST,
+    _LOG_ZLINK_PATH,
+    _LOG_REQUIRED_PERMS,
+    _LOG_ZFILE_PARSED,
+    _LOG_RAW_EXPRESSION,
+    _LOG_STRIPPED_INNER,
+    _LOG_PATH_PART,
+    _LOG_PERMS_PART_RAW,
+    _LOG_PARSED_PERMS,
+    _LOG_WARN_NON_DICT,
+    _LOG_NO_PERMS_BLOCK,
+    _LOG_ZAUTH_USER,
+    _LOG_REQUIRED_PERMS_CHECK,
+    _LOG_NO_PERMS_REQUIRED,
+    _LOG_CHECK_PERM_KEY,
+    _LOG_WARN_PERM_DENIED,
+    _LOG_ALL_PERMS_MATCHED,
+    _PARSE_PREFIX_ZLINK,
+    _PARSE_SUFFIX_RPAREN,
+    _PARSE_PERMS_SEPARATOR,
+    _PARSE_BRACE_OPEN,
+    _PARSE_BRACE_CLOSE,
+    _PATH_SEPARATOR,
+    _PATH_INDEX_LAST,
+    _PATH_INDEX_BLOCK,
+    _PATH_INDEX_FILENAME_START,
+    _PATH_PARTS_MIN,
+    _PATH_PARTS_BASE_OFFSET,
+    _PATH_DEFAULT_BASE,
+)
 
 
 # ============================================================================
@@ -314,6 +300,367 @@ class Linking:
         self.logger = navigation.logger
         self.zSession = self.zcli.session  # Store for convenience
 
+    # ========================================================================
+    # Private Helper Methods (extracted from handle() for decomposition)
+    # ========================================================================
+
+    def _handle_http_route_detection(
+        self,
+        walker: Any,
+        zLink_path: str
+    ) -> Optional[Any]:
+        """
+        Handle HTTP route detection for Web mode.
+        
+        Detects if zLink is an HTTP route (starts with "/") and handles it
+        appropriately for Web mode (return redirect metadata) or Terminal mode
+        (show warning and stop).
+        
+        Args:
+            walker: zWalker instance with session and display
+            zLink_path: Parsed zLink path
+        
+        Returns:
+            - Redirect metadata dict if Web mode HTTP route
+            - STATUS_STOP if Terminal mode HTTP route (invalid)
+            - None if not an HTTP route (continue normal processing)
+        """
+        # HTTP ROUTE DETECTION (v1.5.4 Phase 3 - Demo 4)
+        if not zLink_path.startswith("/"):
+            return None  # Not an HTTP route, continue normal processing
+        
+        self.logger.info(f"[zLink] HTTP route detected: {zLink_path}")
+        
+        # Get display mode from session
+        from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZMODE
+        mode = walker.session.get(SESSION_KEY_ZMODE, "Terminal")
+        
+        if mode == "Web":
+            # WEB MODE: Return metadata for HTML link rendering
+            self.logger.debug(f"[zLink] Web mode - returning redirect metadata")
+            return {
+                "type": "http_redirect",
+                "url": zLink_path,
+                "mode": "web"
+            }
+        else:
+            # TERMINAL MODE: HTTP routes don't make sense here
+            self.logger.warning(f"[zLink] HTTP route '{zLink_path}' in Terminal mode - skipping navigation")
+            walker.display.handle({
+                "event": "warning",
+                "content": f"HTTP route '{zLink_path}' cannot be navigated in Terminal mode",
+                "indent": 1
+            })
+            return STATUS_STOP
+
+    def _capture_source_breadcrumb(
+        self,
+        walker: Any,
+        is_navbar_navigation: bool
+    ) -> None:
+        """
+        Capture SOURCE context breadcrumb BEFORE navigation.
+        
+        Records the source location (where we're navigating FROM) by adding
+        a breadcrumb for the calling key. Skips this if navbar navigation
+        (will be cleared by OP_RESET anyway).
+        
+        Args:
+            walker: zWalker instance with session and navigation
+            is_navbar_navigation: Whether this is a navbar navigation (skip recording)
+        """
+        from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZCRUMBS
+        
+        # Get crumbs dict (handle enhanced format)
+        crumbs_dict = walker.session.get(SESSION_KEY_ZCRUMBS, {})
+        
+        # Get trails from enhanced format or use old format
+        if 'trails' in crumbs_dict:
+            trails = crumbs_dict['trails']
+        else:
+            trails = crumbs_dict
+        
+        source_block_path = next(reversed(trails)) if trails else None
+        
+        # NAVBAR NAVIGATION: Skip source breadcrumb recording
+        if is_navbar_navigation:
+            self.logger.debug("[zLink] Skipping source breadcrumb (navbar navigation will RESET)")
+            return
+        
+        # REGULAR NAVIGATION: Record source breadcrumb
+        if source_block_path and source_block_path in trails:
+            source_trail = trails[source_block_path]
+            source_zKey = source_trail[-1] if source_trail else None
+            
+            if source_zKey:
+                walker.navigation.breadcrumbs.handle_zCrumbs(source_zKey, walker=walker)
+                self.logger.debug(f"Recorded source breadcrumb: {source_block_path}[{source_zKey}]")
+
+    def _get_or_discover_block(
+        self,
+        walker: Any,
+        zFile_parsed: Dict[str, Any],
+        selected_zBlock: str,
+        zFile_path: str
+    ) -> Tuple[Dict[str, Any], List[str]]:
+        """
+        Get block from loaded file or auto-discover from separate file.
+        
+        Implements fallback chain:
+        1. Try finding block in loaded file
+        2. If not found, try loading from zUI.{blockName}.yaml
+        
+        Strips navigation modifiers (^ ~) from block name for file path
+        since file names don't have modifiers.
+        
+        Args:
+            walker: zWalker instance with loader
+            zFile_parsed: Loaded file content
+            selected_zBlock: Target block name (may have modifiers)
+            zFile_path: Original file path
+        
+        Returns:
+            Tuple of (block_dict, block_keys)
+        
+        Raises:
+            Returns STATUS_STOP on failure (logs error)
+        """
+        # Try finding block in loaded file
+        if selected_zBlock in zFile_parsed:
+            active_zBlock_dict = zFile_parsed[selected_zBlock]
+            self.logger.debug(f"[zLink] Block '{selected_zBlock}' found in loaded file")
+            return active_zBlock_dict, list(active_zBlock_dict.keys())
+        
+        # AUTO-DISCOVERY: Try loading from separate file
+        self.logger.debug(f"[zLink] Block '{selected_zBlock}' not in file, trying auto-discovery...")
+        
+        # Strip navigation modifiers from block name for file path
+        file_block_name = selected_zBlock.lstrip("^~")
+        
+        # Construct fallback zPath
+        if zFile_path.startswith("@"):
+            path_parts = zFile_path.split(".")
+            fallback_path_parts = path_parts[:-1] + [file_block_name]
+            fallback_zPath = ".".join(fallback_path_parts)
+        else:
+            fallback_zPath = f"@.UI.zUI.{file_block_name}"
+        
+        self.logger.debug(f"[zLink] Trying fallback: {fallback_zPath} (stripped modifiers from '{selected_zBlock}')")
+        
+        try:
+            fallback_zFile = walker.loader.handle(fallback_zPath)
+            if fallback_zFile and isinstance(fallback_zFile, dict):
+                if selected_zBlock in fallback_zFile:
+                    active_zBlock_dict = fallback_zFile[selected_zBlock]
+                    self.logger.info(f"✓ [zLink] Auto-discovered block '{selected_zBlock}' from: {fallback_zPath}")
+                    return active_zBlock_dict, list(active_zBlock_dict.keys())
+                else:
+                    raise KeyError(f"Block '{selected_zBlock}' not found in {fallback_zPath}")
+            else:
+                raise ValueError(f"Failed to load {fallback_zPath}")
+        except Exception as e:
+            self.logger.error(
+                f"Block '{selected_zBlock}' not found:\n"
+                f"  - Not in loaded file: {zFile_path}\n"
+                f"  - Fallback failed: {fallback_zPath}\n"
+                f"  - Error: {e}"
+            )
+            raise  # Re-raise to be caught by caller
+
+    def _setup_bounce_back_snapshot(
+        self,
+        walker: Any,
+        selected_zBlock: str,
+        source_folder: str,
+        source_file: str,
+        source_block: str
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Setup bounce-back snapshot if block has ^ modifier.
+        
+        Detects if block name starts with ^ (bounce-back modifier) and
+        saves a deep copy of current breadcrumb state for later restoration.
+        Also stores the source location to enable bounce-back even with no history.
+        
+        Args:
+            walker: zWalker instance with session
+            selected_zBlock: Target block name (may have ^ prefix)
+            source_folder: Source folder path before navigation
+            source_file: Source file name before navigation
+            source_block: Source block name before navigation
+        
+        Returns:
+            Deep copy of breadcrumb state with source location if bounce-back enabled, None otherwise
+        """
+        should_bounce_back = selected_zBlock.startswith("^")
+        self.logger.debug(f"[zNavigation] Block name: '{selected_zBlock}', should_bounce_back: {should_bounce_back}")
+        
+        if not should_bounce_back:
+            return None
+        
+        self.logger.info(f"[zNavigation] ⬅️  Block-level bounce-back enabled for: {selected_zBlock}")
+        
+        # Save deep copy of current breadcrumb state
+        import copy
+        from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZCRUMBS
+        breadcrumb_snapshot = copy.deepcopy(walker.zcli.session.get(SESSION_KEY_ZCRUMBS, {}))
+        
+        # Store source location for bounce-back (needed when there's no history)
+        breadcrumb_snapshot['_bounce_back_source'] = {
+            'folder': source_folder,
+            'file': source_file,
+            'block': source_block
+        }
+        
+        self.logger.debug(f"[zNavigation] 📸 Saved breadcrumb snapshot with source: {source_folder}.{source_file}.{source_block}")
+        
+        return breadcrumb_snapshot
+
+    def _restore_bounce_back(
+        self,
+        walker: Any,
+        result: Any,
+        breadcrumb_snapshot: Optional[Dict[str, Any]]
+    ) -> Any:
+        """
+        Restore breadcrumb state after bounce-back block execution.
+        
+        Restores the saved breadcrumb snapshot and continues walker execution
+        from the original location. Skips restoration if user already navigated
+        away (zBack, exit, etc.).
+        
+        Args:
+            walker: zWalker instance with session and loader
+            result: Result from block execution
+            breadcrumb_snapshot: Saved breadcrumb state (None = skip restoration)
+        
+        Returns:
+            Result from continued walker execution, or original result
+        """
+        if breadcrumb_snapshot is None:
+            self.logger.warning("[zNavigation] No breadcrumb snapshot to restore!")
+            return result
+        
+        # Skip bounce-back if user already navigated away
+        if isinstance(result, dict) or result in ["zBack", "exit", "stop"]:
+            self.logger.debug(f"[zNavigation] Skipping bounce-back restoration, result: {result}")
+            return result
+        
+        self.logger.info("[zNavigation] ⬅️  Restoring breadcrumbs from snapshot!")
+        
+        # Clear _navbar_navigation flag before restoration
+        if '_navbar_navigation' in breadcrumb_snapshot:
+            del breadcrumb_snapshot['_navbar_navigation']
+            self.logger.debug("[zNavigation] Cleared _navbar_navigation flag from snapshot")
+        
+        # Restore breadcrumb state
+        from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZCRUMBS
+        walker.zcli.session[SESSION_KEY_ZCRUMBS] = breadcrumb_snapshot
+        self.logger.debug(f"[zNavigation] ✅ Restored breadcrumbs: {breadcrumb_snapshot}")
+        
+        # Get active crumb from restored snapshot
+        if 'trails' in breadcrumb_snapshot:
+            trail_keys = list(breadcrumb_snapshot['trails'].keys())
+        else:
+            trail_keys = [k for k in breadcrumb_snapshot.keys() if not k.startswith('_')]
+        
+        active_zCrumb = trail_keys[-1] if trail_keys else None
+        
+        # If no history, use the source location stored in snapshot
+        if not active_zCrumb:
+            # Extract source location from snapshot
+            source_info = breadcrumb_snapshot.get('_bounce_back_source', {})
+            source_folder = source_info.get('folder', '')
+            source_file = source_info.get('file', '')
+            source_block = source_info.get('block', '')
+            
+            if not source_file:
+                # No history and no source info - this shouldn't happen but handle gracefully
+                self.logger.warning("[zNavigation] No history to restore and no source info - bounce-back complete")
+                return result
+            
+            # Navbar/root navigation - bounce back to source location
+            self.logger.info(f"[zNavigation] ⬅️  No history, bouncing back to source: {source_folder}.{source_file}.{source_block}")
+            
+            # Build source zPath
+            if source_folder:
+                zPath = f"{source_folder}.{source_file}"
+            else:
+                zPath = f"@.{source_file}"
+            
+            # Update session to source location
+            from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import (
+                SESSION_KEY_ZVAFOLDER,
+                SESSION_KEY_ZVAFILE,
+                SESSION_KEY_ZBLOCK
+            )
+            walker.zcli.session[SESSION_KEY_ZVAFOLDER] = source_folder
+            walker.zcli.session[SESSION_KEY_ZVAFILE] = source_file
+            walker.zcli.session[SESSION_KEY_ZBLOCK] = source_block
+            
+            # Load source file
+            self.logger.debug(f"[zNavigation] Reloading source file: {zPath}")
+            zFile_parsed = reload_current_file(walker)
+            
+            # Get source block
+            source_zBlock_dict = zFile_parsed.get(source_block, {})
+            source_zBlock_keys = list(source_zBlock_dict.keys())
+            
+            if not source_zBlock_keys:
+                self.logger.warning(f"[zNavigation] Source block '{source_block}' has no keys - cannot continue")
+                return result
+            
+            # Continue execution from source block
+            self.logger.info(f"[zNavigation] ⏯  Continuing execution in source block: {source_block}")
+            result = walker.execute_loop(items_dict=source_zBlock_dict)
+            return result
+        
+        # Parse active crumb to get file/block info
+        crumb_parts = active_zCrumb.split(".")
+        if len(crumb_parts) < 3:
+            self.logger.warning(f"[zNavigation] Invalid crumb format: {active_zCrumb}")
+            return result
+        
+        # Extract path, filename, and block
+        zVaFolder = ".".join(crumb_parts[:-2])
+        zVaFile = ".".join(crumb_parts[-2:-1])
+        zBlock = crumb_parts[-1]
+        
+        # Construct zPath and reload file
+        zPath = f"{zVaFolder}.{zVaFile}"
+        self.logger.debug(f"[zNavigation] Reloading file for bounce-back: {zPath}")
+        
+        # Load file and get block
+        raw_zFile = walker.loader.handle(zPath=zPath)
+        if zBlock not in raw_zFile:
+            self.logger.warning(f"[zNavigation] Block '{zBlock}' not found in {zPath}")
+            return result
+        
+        block_dict = raw_zFile[zBlock]
+        
+        # Get start key from restored trail
+        if 'trails' in breadcrumb_snapshot:
+            trail = breadcrumb_snapshot['trails'].get(active_zCrumb, [])
+        else:
+            trail = breadcrumb_snapshot.get(active_zCrumb, [])
+        start_key = trail[-1] if trail else None
+        
+        self.logger.debug(f"[zNavigation] Continuing from: {zBlock}, start_key: {start_key}")
+        
+        # Re-execute block to continue walker
+        bounce_result = walker.execute_loop(items_dict=block_dict, start_key=start_key)
+        
+        # Convert soft exit dict to signal string
+        if isinstance(bounce_result, dict) and bounce_result.get("exit") == "completed":
+            self.logger.debug("[zNavigation] User exited after bounce-back - converting to signal")
+            return "exit"
+        
+        return bounce_result
+
+    # ========================================================================
+    # Public API
+    # ========================================================================
+
     def handle(self, walker: Any, zHorizontal: str) -> str:
         """
         Handle zLink navigation request.
@@ -381,16 +728,20 @@ class Linking:
         11. Execute target block (walker.zBlock_loop)
         12. Return result
         """
+        # ====================================================================
+        # ORCHESTRATOR: Simplified handle() method using extracted helpers
+        # ====================================================================
+        
         # Display declaration
         walker.display.zDeclare(
-            DISPLAY_MSG_HANDLE,
+            _DISPLAY_MSG_HANDLE_ZLINK,
             color=DISPLAY_COLOR_ZLINK,
-            indent=DISPLAY_INDENT_HANDLE,
-            style=DISPLAY_STYLE_FULL
+            indent=_DISPLAY_INDENT_HANDLE,
+            style=_DISPLAY_STYLE_FULL
         )
 
         # Log incoming request
-        self.logger.debug(LOG_INCOMING_REQUEST, zHorizontal)
+        self.logger.debug(_LOG_INCOMING_REQUEST, zHorizontal)
         
         # Extract zLink value from dictionary
         if isinstance(zHorizontal, dict):
@@ -398,272 +749,84 @@ class Linking:
         else:
             zLink_expr = zHorizontal
         
-        # Parse zLink expression
+        # Parse zLink expression (path + permissions)
         zLink_path, required_perms = self.parse_zLink_expression(walker, zLink_expr)
-
-        # Log parsed values
-        self.logger.debug(LOG_ZLINK_PATH, zLink_path)
-        self.logger.debug(LOG_REQUIRED_PERMS, required_perms)
+        self.logger.debug(_LOG_ZLINK_PATH, zLink_path)
+        self.logger.debug(_LOG_REQUIRED_PERMS, required_perms)
         
-        # ====================================================================
-        # HTTP ROUTE DETECTION (v1.5.4 Phase 3 - Demo 4)
-        # ====================================================================
-        # Detect if zLink is an HTTP route (starts with "/")
-        # This enables dual-mode behavior: Terminal (file paths) vs Web (HTTP routes)
-        if zLink_path.startswith("/"):
-            self.logger.info(f"[zLink] HTTP route detected: {zLink_path}")
-            
-            # Get display mode from session
-            from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZMODE
-            mode = walker.session.get(SESSION_KEY_ZMODE, "Terminal")
-            
-            if mode == "Web":
-                # WEB MODE: Return metadata for HTML link rendering
-                # The page renderer will convert this to <a href="/route">
-                self.logger.debug(f"[zLink] Web mode - returning redirect metadata")
-                return {
-                    "type": "http_redirect",
-                    "url": zLink_path,
-                    "mode": "web"
-                }
-            else:
-                # TERMINAL MODE: HTTP routes don't make sense in terminal
-                # User likely mixed Web and Terminal zUI patterns
-                self.logger.warning(f"[zLink] HTTP route '{zLink_path}' in Terminal mode - skipping navigation")
-                walker.display.handle({
-                    "event": "warning",
-                    "content": f"HTTP route '{zLink_path}' cannot be navigated in Terminal mode",
-                    "indent": 1
-                })
-                return STATUS_STOP
+        # HTTP ROUTE DETECTION: Handle Web mode routes early
+        http_result = self._handle_http_route_detection(walker, zLink_path)
+        if http_result is not None:
+            return http_result  # Either redirect metadata or STATUS_STOP
         
-        # ====================================================================
-        # FILE-BASED NAVIGATION (Original logic - Terminal/Bifrost mode)
-        # ====================================================================
-
+        # FILE-BASED NAVIGATION: Continue with normal flow
+        
         # Check permissions if required
         if required_perms and not self.check_zLink_permissions(walker, required_perms):
-            print(MSG_PERMISSION_DENIED)
+            print(_MSG_PERMISSION_DENIED)
             return STATUS_STOP
 
-        # Extract target block name from path (last element)
-        path_parts = zLink_path.split(PATH_SEPARATOR)
-        selected_zBlock = path_parts[PATH_INDEX_BLOCK]
+        # Extract target block name and file path
+        path_parts = zLink_path.split(_PATH_SEPARATOR)
+        selected_zBlock = path_parts[_PATH_INDEX_BLOCK]
+        zFile_path = _PATH_SEPARATOR.join(path_parts[:-1])
         
-        # Extract file path (everything except the last element = block name)
-        zFile_path = PATH_SEPARATOR.join(path_parts[:-1])
-        
-        # Load target file (without block name)
+        # Load target file
         zFile_parsed = walker.loader.handle(zFile_path)
-        self.logger.debug(LOG_ZFILE_PARSED, zFile_parsed)
+        self.logger.debug(_LOG_ZFILE_PARSED, zFile_parsed)
 
-        # ====================================================================
-        # BREADCRUMB FIX: Capture SOURCE context BEFORE navigation
-        # ====================================================================
-        # Get source location (where we're navigating FROM) before session update
-        from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZCRUMBS
-        # Phase 0.5: Handle enhanced format
+        # BREADCRUMB FIX: Capture SOURCE context before navigation
+        from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import (
+            SESSION_KEY_ZCRUMBS,
+            SESSION_KEY_ZBLOCK,
+            SESSION_KEY_ZVAFILE,
+            SESSION_KEY_ZVAFOLDER
+        )
         crumbs_dict = walker.session.get(SESSION_KEY_ZCRUMBS, {})
-        
-        # CHECK NAVBAR FLAG: Detect if this navigation is from navbar (for OP_RESET)
         is_navbar_navigation = crumbs_dict.get("_navbar_navigation", False)
+        
+        # Store source location BEFORE navigation (needed for bounce-back)
+        source_folder = walker.session.get(SESSION_KEY_ZVAFOLDER, '')
+        source_file = walker.session.get(SESSION_KEY_ZVAFILE, '')
+        source_block = walker.session.get(SESSION_KEY_ZBLOCK, '')
+        
         if is_navbar_navigation:
             self.logger.info(f"[zLink] Navbar navigation detected → will trigger OP_RESET")
         
-        # Get trails from enhanced format or use old format
-        if 'trails' in crumbs_dict:
-            trails = crumbs_dict['trails']
-        else:
-            trails = crumbs_dict
-        
-        source_block_path = next(reversed(trails)) if trails else None
-        
-        # NAVBAR NAVIGATION: Skip source breadcrumb recording (will be cleared by RESET anyway)
-        if not is_navbar_navigation:
-            # REGULAR NAVIGATION: Use the active source scope (where we're navigating FROM)
-            if source_block_path and source_block_path in trails:
-                # Get the last key in the source scope's trail (the key that triggered this zLink)
-                source_trail = trails[source_block_path]
-                source_zKey = source_trail[-1] if source_trail else None
-                
-                # Record source breadcrumb (ensures parent scope has the calling key)
-                # Note: walker_dispatch already added this, but handle_zCrumbs prevents duplicates
-                # Session still points to SOURCE at this point, so handle_zCrumbs will use source block
-                if source_zKey:
-                    walker.navigation.breadcrumbs.handle_zCrumbs(source_zKey, walker=walker)
-                    self.logger.debug(f"Recorded source breadcrumb: {source_block_path}[{source_zKey}]")
-        else:
-            self.logger.debug("[zLink] Skipping source breadcrumb (navbar navigation will RESET)")
+        self._capture_source_breadcrumb(walker, is_navbar_navigation)
 
         # Update session to TARGET location
         self._update_session_path(zLink_path, selected_zBlock)
 
-        # Get block dict and keys with auto-discovery fallback
-        # FALLBACK CHAIN:
-        # 1. Try finding block in loaded file
-        # 2. If not found, try loading from zUI.{blockName}.yaml
-        if selected_zBlock in zFile_parsed:
-            # Block found in loaded file
-            active_zBlock_dict = zFile_parsed[selected_zBlock]
-            self.logger.debug(f"[zLink] Block '{selected_zBlock}' found in loaded file")
-        else:
-            # AUTO-DISCOVERY: Try loading from separate file
-            self.logger.debug(
-                f"[zLink] Block '{selected_zBlock}' not in file, trying auto-discovery..."
+        # Get block dict with auto-discovery fallback
+        try:
+            active_zBlock_dict, zBlock_keys = self._get_or_discover_block(
+                walker, zFile_parsed, selected_zBlock, zFile_path
             )
-            
-            # Strip navigation modifiers (^ ~) from block name for file path
-            # File names don't have modifiers, but blocks inside do
-            # Example: ^zLogin block → zUI.zLogin.yaml file (not zUI.^zLogin.yaml)
-            file_block_name = selected_zBlock.lstrip("^~")
-            
-            # Construct fallback zPath: same directory, different file
-            # Example: @.UI.zUI.zVaF → @.UI.zUI.zLogin (stripped ^)
-            if zFile_path.startswith("@"):
-                path_parts = zFile_path.split(".")
-                # Replace last part with file_block_name (without modifiers)
-                fallback_path_parts = path_parts[:-1] + [file_block_name]
-                fallback_zPath = ".".join(fallback_path_parts)
-            else:
-                fallback_zPath = f"@.UI.zUI.{file_block_name}"
-            
-            self.logger.debug(f"[zLink] Trying fallback: {fallback_zPath} (stripped modifiers from '{selected_zBlock}')")
-            
-            try:
-                fallback_zFile = walker.loader.handle(fallback_zPath)
-                if fallback_zFile and isinstance(fallback_zFile, dict):
-                    # Get first block from fallback file
-                    if selected_zBlock in fallback_zFile:
-                        active_zBlock_dict = fallback_zFile[selected_zBlock]
-                        self.logger.info(
-                            f"✓ [zLink] Auto-discovered block '{selected_zBlock}' from: {fallback_zPath}"
-                        )
-                    else:
-                        raise KeyError(f"Block '{selected_zBlock}' not found in {fallback_zPath}")
-                else:
-                    raise ValueError(f"Failed to load {fallback_zPath}")
-            except Exception as e:
-                self.logger.error(
-                    f"Block '{selected_zBlock}' not found:\n"
-                    f"  - Not in loaded file: {zFile_path}\n"
-                    f"  - Fallback failed: {fallback_zPath}\n"
-                    f"  - Error: {e}"
-                )
-                return STATUS_STOP
-        
-        zBlock_keys = list(active_zBlock_dict.keys())
+        except Exception:
+            return STATUS_STOP
 
         # Validate walker instance
         if walker is None:
-            self.logger.error(MSG_NO_WALKER)
+            self.logger.error(_MSG_NO_WALKER)
             return STATUS_STOP
 
-        # DO NOT initialize target breadcrumb scope here - let walker_dispatch handle it naturally
-        # The key insight: walker_dispatch will create and populate the target scope as keys execute
-        # When the target block completes and zBack is called, the target trail will have items
-        # zBack's algorithm will pop from the target trail, and when it empties, move to parent
+        # DO NOT initialize target breadcrumb scope - let walker_dispatch handle it
         self.logger.debug(f"Navigating to target block: {zLink_path}")
 
-        # BLOCK-LEVEL BOUNCE-BACK: Detect ^ modifier on block name
-        # If block name starts with ^, execute and then bounce back
-        should_bounce_back = selected_zBlock.startswith("^")
-        self.logger.debug(f"[zNavigation] Block name: '{selected_zBlock}', should_bounce_back: {should_bounce_back}")
-        
-        # BREADCRUMB SNAPSHOT: Save current breadcrumb state before executing bounce-back block
-        breadcrumb_snapshot = None
-        if should_bounce_back:
-            self.logger.info(f"[zNavigation] ⬅️  Block-level bounce-back enabled for: {selected_zBlock}")
-            
-            # Save a deep copy of the current breadcrumb state
-            import copy
-            breadcrumb_snapshot = copy.deepcopy(walker.zcli.session.get(SESSION_KEY_ZCRUMBS, {}))
-            self.logger.debug(f"[zNavigation] 📸 Saved breadcrumb snapshot: {breadcrumb_snapshot}")
+        # BLOCK-LEVEL BOUNCE-BACK: Setup snapshot if ^ modifier present
+        breadcrumb_snapshot = self._setup_bounce_back_snapshot(
+            walker, selected_zBlock, source_folder, source_file, source_block
+        )
+        should_bounce_back = breadcrumb_snapshot is not None
         
         # Execute target block
         result = walker.execute_loop(items_dict=active_zBlock_dict)
         self.logger.debug(f"[zNavigation] Block execution result: {result}, should_bounce_back: {should_bounce_back}")
         
-        # If block-level bounce-back was flagged, restore breadcrumb snapshot and continue
+        # BOUNCE-BACK RESTORATION: Restore snapshot and continue if flagged
         if should_bounce_back:
-            # Skip bounce-back if user already navigated away (zBack, exit, etc.)
-            if isinstance(result, dict) or result in ["zBack", "exit", "stop"]:
-                self.logger.debug(f"[zNavigation] Skipping bounce-back restoration, result: {result}")
-                return result
-            
-            self.logger.info("[zNavigation] ⬅️  Restoring breadcrumbs from snapshot!")
-            
-            # Restore the breadcrumb state to what it was BEFORE entering the ^ block
-            if breadcrumb_snapshot is not None:
-                # Clear the _navbar_navigation flag before restoration to prevent duplicate RESET
-                if '_navbar_navigation' in breadcrumb_snapshot:
-                    del breadcrumb_snapshot['_navbar_navigation']
-                    self.logger.debug("[zNavigation] Cleared _navbar_navigation flag from snapshot")
-                
-                walker.zcli.session[SESSION_KEY_ZCRUMBS] = breadcrumb_snapshot
-                self.logger.debug(f"[zNavigation] ✅ Restored breadcrumbs: {breadcrumb_snapshot}")
-                
-                # Now we need to continue the walker by re-loading the current block
-                # Get the active crumb from the restored snapshot (handle enhanced format with 'trails' wrapper)
-                if 'trails' in breadcrumb_snapshot:
-                    # Enhanced format: trails are inside 'trails' dict
-                    trail_keys = list(breadcrumb_snapshot['trails'].keys())
-                else:
-                    # Legacy format: filter out metadata keys starting with _
-                    trail_keys = [k for k in breadcrumb_snapshot.keys() if not k.startswith('_')]
-                active_zCrumb = trail_keys[-1] if trail_keys else None
-                
-                if active_zCrumb:
-                    # Parse the active crumb to get file/block info
-                    crumb_parts = active_zCrumb.split(".")
-                    if len(crumb_parts) >= 3:
-                        # Extract path, filename, and block
-                        zVaFolder = ".".join(crumb_parts[:-2])
-                        zVaFile = ".".join(crumb_parts[-2:-1])
-                        zBlock = crumb_parts[-1]
-                        
-                        # Construct zPath and reload file
-                        zPath = f"{zVaFolder}.{zVaFile}"
-                        self.logger.debug(f"[zNavigation] Reloading file for bounce-back: {zPath}")
-                        
-                        # Load the file
-                        raw_zFile = walker.loader.handle(zPath=zPath)
-                        
-                        # Get the block directly from raw_zFile
-                        if zBlock in raw_zFile:
-                            block_dict = raw_zFile[zBlock]
-                            block_keys = list(block_dict.keys())
-                        else:
-                            self.logger.warning(f"[zNavigation] Block '{zBlock}' not found in {zPath}")
-                            return result
-                        
-                        # Get the start key from the restored trail (handle enhanced format with 'trails' wrapper)
-                        if 'trails' in breadcrumb_snapshot:
-                            trail = breadcrumb_snapshot['trails'].get(active_zCrumb, [])
-                        else:
-                            trail = breadcrumb_snapshot.get(active_zCrumb, [])
-                        start_key = trail[-1] if trail else None
-                        
-                        self.logger.debug(f"[zNavigation] Continuing from: {zBlock}, start_key: {start_key}")
-                        
-                        # Re-execute the block to continue the walker
-                        bounce_result = walker.execute_loop(items_dict=block_dict, start_key=start_key)
-                        
-                        # Convert soft exit dict to signal string
-                        if isinstance(bounce_result, dict) and bounce_result.get("exit") == "completed":
-                            self.logger.debug("[zNavigation] User exited after bounce-back - converting to signal")
-                            return "exit"  # Return signal string, not dict
-                        
-                        # Otherwise, return the result as-is
-                        return bounce_result
-                    else:
-                        self.logger.warning(f"[zNavigation] Invalid crumb format: {active_zCrumb}")
-                        return result
-                else:
-                    self.logger.warning("[zNavigation] No active crumb in restored snapshot!")
-                    return result
-            else:
-                self.logger.warning("[zNavigation] No breadcrumb snapshot to restore!")
-                return result
+            result = self._restore_bounce_back(walker, result, breadcrumb_snapshot)
         
         return result
 
@@ -751,56 +914,56 @@ class Linking:
         """
         # Display declaration
         walker.display.zDeclare(
-            DISPLAY_MSG_PARSE,
+            _DISPLAY_MSG_PARSE,
             color=DISPLAY_COLOR_ZLINK,
-            indent=DISPLAY_INDENT_PARSE,
-            style=DISPLAY_STYLE_SINGLE
+            indent=_DISPLAY_INDENT_PARSE,
+            style=_DISPLAY_STYLE_SINGLE
         )
 
         # Log raw expression
-        self.logger.info(LOG_RAW_EXPRESSION, expr)
+        self.logger.info(_LOG_RAW_EXPRESSION, expr)
 
         # Check if expression has "zLink(" wrapper (imperative) or is raw path (declarative YAML)
-        if expr.startswith(PARSE_PREFIX_ZLINK) and expr.endswith(PARSE_SUFFIX_RPAREN):
+        if expr.startswith(_PARSE_PREFIX_ZLINK) and expr.endswith(_PARSE_SUFFIX_RPAREN):
             # Imperative format: zLink(@.path) → strip wrapper
-            inner = expr[len(PARSE_PREFIX_ZLINK):-1].strip()
+            inner = expr[len(_PARSE_PREFIX_ZLINK):-1].strip()
         else:
             # Declarative YAML format: already a raw path → use as-is
             inner = expr.strip()
         
-        self.logger.info(LOG_STRIPPED_INNER, inner)
+        self.logger.info(_LOG_STRIPPED_INNER, inner)
 
         # Check if permissions are specified
-        if PARSE_PERMS_SEPARATOR in inner:
+        if _PARSE_PERMS_SEPARATOR in inner:
             # Split path and permissions
-            path_str, perms_str = inner.rsplit(PARSE_PERMS_SEPARATOR, 1)
+            path_str, perms_str = inner.rsplit(_PARSE_PERMS_SEPARATOR, 1)
             zLink_path = path_str.strip()
             
             # Reconstruct permission dict string
             perms_str = (
-                PARSE_BRACE_OPEN +
-                perms_str.strip().rstrip(PARSE_BRACE_CLOSE) +
-                PARSE_BRACE_CLOSE
+                _PARSE_BRACE_OPEN +
+                perms_str.strip().rstrip(_PARSE_BRACE_CLOSE) +
+                _PARSE_BRACE_CLOSE
             )
             
             # Log parts
-            self.logger.info(LOG_PATH_PART, zLink_path)
-            self.logger.info(LOG_PERMS_PART_RAW, perms_str)
+            self.logger.info(_LOG_PATH_PART, zLink_path)
+            self.logger.info(_LOG_PERMS_PART_RAW, perms_str)
 
             # Parse permissions with zExpr_eval
             required = zExpr_eval(perms_str, self.logger)
             
             # Validate result is dict
             if not isinstance(required, dict):
-                self.logger.warning(LOG_WARN_NON_DICT)
+                self.logger.warning(_LOG_WARN_NON_DICT)
                 required = {}
             else:
-                self.logger.info(LOG_PARSED_PERMS, required)
+                self.logger.info(_LOG_PARSED_PERMS, required)
         else:
             # No permissions specified
             zLink_path = inner
             required = {}
-            self.logger.debug(LOG_NO_PERMS_BLOCK, zLink_path)
+            self.logger.debug(_LOG_NO_PERMS_BLOCK, zLink_path)
         
         return zLink_path, required
 
@@ -887,35 +1050,35 @@ class Linking:
         """
         # Display declaration
         walker.display.zDeclare(
-            DISPLAY_MSG_AUTH,
+            _DISPLAY_MSG_AUTH,
             color=DISPLAY_COLOR_ZLINK,
-            indent=DISPLAY_INDENT_AUTH,
-            style=DISPLAY_STYLE_SINGLE
+            indent=_DISPLAY_INDENT_AUTH,
+            style=_DISPLAY_STYLE_SINGLE
         )
 
         # Get user auth data from session
         user = self.zSession.get(SESSION_KEY_ZAUTH, {})
         
         # Log user and required permissions
-        self.logger.debug(LOG_ZAUTH_USER, user)
-        self.logger.debug(LOG_REQUIRED_PERMS_CHECK, required)
+        self.logger.debug(_LOG_ZAUTH_USER, user)
+        self.logger.debug(_LOG_REQUIRED_PERMS_CHECK, required)
 
         # If no permissions required, allow access
         if not required:
-            self.logger.debug(LOG_NO_PERMS_REQUIRED)
+            self.logger.debug(_LOG_NO_PERMS_REQUIRED)
             return True
 
         # Check each required permission
         for key, expected in required.items():
             actual = user.get(key)
-            self.logger.debug(LOG_CHECK_PERM_KEY, key, expected, actual)
+            self.logger.debug(_LOG_CHECK_PERM_KEY, key, expected, actual)
             
             if actual != expected:
-                self.logger.warning(LOG_WARN_PERM_DENIED, key, expected, actual)
+                self.logger.warning(_LOG_WARN_PERM_DENIED, key, expected, actual)
                 return False
 
         # All permissions matched
-        self.logger.debug(LOG_ALL_PERMS_MATCHED)
+        self.logger.debug(_LOG_ALL_PERMS_MATCHED)
         return True
 
     # ========================================================================
@@ -963,20 +1126,20 @@ class Linking:
         5. Set zBlock to selected_zBlock
         """
         # Extract path to file (without block name)
-        path_to_file = zLink_path.rsplit(PATH_SEPARATOR, 1)[0]
-        parts = path_to_file.split(PATH_SEPARATOR)
+        path_to_file = zLink_path.rsplit(_PATH_SEPARATOR, 1)[0]
+        parts = path_to_file.split(_PATH_SEPARATOR)
         
         # Parse path components
-        if len(parts) >= PATH_PARTS_MIN:
-            base_path_parts = parts[:PATH_PARTS_BASE_OFFSET]
+        if len(parts) >= _PATH_PARTS_MIN:
+            base_path_parts = parts[:_PATH_PARTS_BASE_OFFSET]
             self.zSession[SESSION_KEY_ZVAFOLDER] = (
-                PATH_SEPARATOR.join(base_path_parts) if base_path_parts else PATH_DEFAULT_BASE
+                _PATH_SEPARATOR.join(base_path_parts) if base_path_parts else _PATH_DEFAULT_BASE
             )
-            self.zSession[SESSION_KEY_ZVAFILE] = PATH_SEPARATOR.join(
-                parts[PATH_INDEX_FILENAME_START:]
+            self.zSession[SESSION_KEY_ZVAFILE] = _PATH_SEPARATOR.join(
+                parts[_PATH_INDEX_FILENAME_START:]
             )
         else:
-            self.zSession[SESSION_KEY_ZVAFOLDER] = PATH_DEFAULT_BASE
+            self.zSession[SESSION_KEY_ZVAFOLDER] = _PATH_DEFAULT_BASE
             self.zSession[SESSION_KEY_ZVAFILE] = path_to_file
         
         # Set block name

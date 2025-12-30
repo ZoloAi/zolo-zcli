@@ -180,98 +180,68 @@ from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import (
     SESSION_KEY_ZBLOCK
 )
 
-# ============================================================================
-# Module Constants
-# ============================================================================
-
-# Display Colors
-COLOR_ZCRUMB: str = "ZCRUMB"
-
-# Display Styles
-STYLE_FULL: str = "full"
-
-# Display Indents
-INDENT_ZCRUMBS: int = 2
-INDENT_ZBACK: int = 1
-
-# Separators
-SEPARATOR_CRUMB: str = " > "
-SEPARATOR_DOT: str = "."
-SEPARATOR_EMPTY: str = ""
-
-# Path Prefixes
-PREFIX_DEFAULT_PATH: str = "@."
-
-# Display Messages
-MSG_HANDLE_ZCRUMBS: str = "Handle zNavigation Breadcrumbs"
-MSG_HANDLE_ZBACK: str = "zBack"
-
-# Log Messages (Debug)
-LOG_INCOMING_BLOCK_KEY: str = "\nIncoming zBlock: %s,\nand zKey: %s"
-LOG_CURRENT_ZCRUMBS: str = "\nCurrent zCrumbs: %s"
-LOG_CURRENT_TRAIL: str = "\nCurrent zTrail: %s"
-LOG_DUPLICATE_SKIP: str = "Breadcrumb '%s' already exists at the end of scope '%s' - skipping."
-LOG_ACTIVE_CRUMB: str = "active_zCrumb: %s"
-LOG_ORIGINAL_CRUMB: str = "original_zCrumb: %s"
-LOG_ACTIVE_BLOCK: str = "active_zBlock: %s"
-LOG_TRAIL: str = "trail: %s"
-LOG_TRAIL_AFTER_POP: str = "Trail after pop in '%s': %s"
-LOG_POPPED_SCOPE: str = "Popped empty zCrumb scope: %s => %s"
-LOG_ACTIVE_CRUMB_PARENT: str = "active_zCrumb (parent): %s"
-LOG_PARENT_TRAIL_BEFORE: str = "parent trail before pop: %s"
-LOG_PARENT_TRAIL_AFTER: str = "parent trail after pop: %s"
-LOG_ROOT_EMPTY: str = "Root scope reached with empty trail; nothing to pop."
-LOG_POST_POP_EMPTY: str = "Post-pop empty scope removed: %s => %s"
-LOG_PARENT_TRAIL_PRE_SECOND: str = "parent trail (pre second pop): %s"
-LOG_PARENT_TRAIL_POST_SECOND: str = "parent trail (post second pop): %s"
-LOG_ROOT_CLEARED: str = "Root scope reached; crumb cleared but scope preserved."
-LOG_ACTIVE_PARTS: str = "Active zCrumb parts: %s (count: %d)"
-LOG_PARSED_SESSION: str = "Parsed session: path=%s, filename=%s, block=%s"
-LOG_RELOADING_PATH: str = "Reloading file with zPath: %s"
-
-# Log Messages (Warnings)
-LOG_WARN_INVALID_KEY: str = "Resolved zKey %r not valid for block %r"
-
-# Log Messages (Errors)
-LOG_ERR_INVALID_CRUMB: str = "Invalid active_zCrumb format: %s (needs at least 3 parts)"
-
-# Error Messages
-ERR_EMPTY_FILENAME: str = "Cannot reload file: zVaFile is empty in session"
-ERR_NO_KEYS_AFTER_BACK: str = "No keys in active zBlock after zBack; cannot resume."
-
-# Crumb Parsing Constants (Magic Numbers)
-CRUMB_PARTS_MIN: int = 3  # Minimum parts in a valid crumb: filename.middle.BlockName
-INDEX_PARTS_FROM_END: int = -3  # Start of filename in parts list
-INDEX_FILENAME_START: int = -3  # Filename starts 3 from end
-INDEX_FILENAME_END: int = -1  # Filename ends 1 from end
-INDEX_LAST_PART: int = -1  # Last part is BlockName
-
-# Enhanced Array Keys (Phase 0.5)
-KEY_TRAILS: str = "trails"  # Key for trails dict in enhanced format
-KEY_CONTEXT: str = "_context"  # Key for operation context
-KEY_DEPTH_MAP: str = "_depth_map"  # Key for semantic depth map
-
-# Operation Types (Phase 0.5)
-OP_RESET: str = "RESET"  # zNavBar selection (clear all)
-OP_APPEND: str = "APPEND"  # Add to trail
-OP_REPLACE: str = "REPLACE"  # Swap last element (dashboard panel)
-OP_POP: str = "POP"  # Remove last element (zBack)
-OP_NEW_KEY: str = "NEW_KEY"  # Create new file key (delta link)
-
-# Navigation Types (Phase 0.5)
-NAV_NAVBAR: str = "navbar"  # zNavBar selection
-NAV_DELTA: str = "delta"  # Delta link ($)
-NAV_DASHBOARD: str = "dashboard_panel"  # Dashboard panel selection
-NAV_MENU: str = "menu_select"  # Menu option selection
-NAV_SEQUENTIAL: str = "sequential"  # Sequential block navigation
-NAV_ZLINK: str = "zlink"  # zLink navigation
-
-# Block Types (Phase 0.5 - for depth map)
-TYPE_ROOT: str = "root"  # Root level (depth 0)
-TYPE_PANEL: str = "panel"  # Dashboard panel (depth 1)
-TYPE_MENU: str = "menu"  # Menu level (depth 2)
-TYPE_SELECTION: str = "selection"  # Menu selection (depth 3)
-TYPE_SEQUENTIAL: str = "sequential"  # Sequential block (depth N)
+from .navigation_helpers import reload_current_file
+from .navigation_constants import (
+    COLOR_ZCRUMB,
+    _STYLE_FULL,
+    _INDENT_ZCRUMBS,
+    _INDENT_ZBACK,
+    _SEPARATOR_CRUMB,
+    _SEPARATOR_DOT,
+    _SEPARATOR_EMPTY,
+    _PREFIX_DEFAULT_PATH,
+    _MSG_HANDLE_ZCRUMBS,
+    _MSG_HANDLE_ZBACK,
+    _LOG_INCOMING_BLOCK_KEY,
+    _LOG_CURRENT_ZCRUMBS,
+    _LOG_CURRENT_TRAIL,
+    _LOG_DUPLICATE_SKIP,
+    _LOG_ACTIVE_CRUMB,
+    _LOG_ORIGINAL_CRUMB,
+    _LOG_ACTIVE_BLOCK,
+    _LOG_TRAIL,
+    _LOG_TRAIL_AFTER_POP,
+    _LOG_POPPED_SCOPE,
+    _LOG_ACTIVE_CRUMB_PARENT,
+    _LOG_PARENT_TRAIL_BEFORE,
+    _LOG_PARENT_TRAIL_AFTER,
+    _LOG_ROOT_EMPTY,
+    _LOG_POST_POP_EMPTY,
+    _LOG_PARENT_TRAIL_PRE_SECOND,
+    _LOG_PARENT_TRAIL_POST_SECOND,
+    _LOG_ROOT_CLEARED,
+    _LOG_ACTIVE_PARTS,
+    _LOG_PARSED_SESSION,
+    _LOG_RELOADING_PATH,
+    _LOG_WARN_INVALID_KEY,
+    _LOG_ERR_INVALID_CRUMB,
+    _ERR_EMPTY_FILENAME,
+    _ERR_NO_KEYS_AFTER_BACK,
+    _CRUMB_PARTS_MIN,
+    _INDEX_PARTS_FROM_END,
+    _INDEX_FILENAME_START,
+    _INDEX_FILENAME_END,
+    _INDEX_LAST_PART,
+    _KEY_TRAILS,
+    _KEY_CONTEXT,
+    _KEY_DEPTH_MAP,
+    OP_RESET,
+    OP_APPEND,
+    OP_REPLACE,
+    OP_POP,
+    OP_NEW_KEY,
+    NAV_NAVBAR,
+    NAV_DELTA,
+    NAV_DASHBOARD,
+    NAV_MENU,
+    NAV_SEQUENTIAL,
+    NAV_ZLINK,
+    TYPE_ROOT,
+    TYPE_PANEL,
+    TYPE_MENU,
+    TYPE_SELECTION,
+    TYPE_SEQUENTIAL,
+)
 
 
 # ============================================================================
@@ -424,29 +394,29 @@ class Breadcrumbs:
         crumbs = session.get(SESSION_KEY_ZCRUMBS, {})
         
         # Check if already in enhanced format
-        if KEY_TRAILS in crumbs:
+        if _KEY_TRAILS in crumbs:
             # Already enhanced - no migration needed
             return
         
         # Old format detected - migrate to enhanced format
         self.logger.debug("[Breadcrumbs] Migrating old crumb format to enhanced format")
         
-        # Preserve existing trails (entire old dict becomes 'trails')
-        old_trails = crumbs.copy()
+        # Preserve existing trails (filter out metadata keys starting with '_')
+        old_trails = {k: v for k, v in crumbs.items() if not k.startswith('_')}
         
         # Get current file (last scope in trails)
         current_file = next(reversed(old_trails)) if old_trails else None
         
         # Create enhanced structure
         enhanced = {
-            KEY_TRAILS: old_trails,
-            KEY_CONTEXT: {
+            _KEY_TRAILS: old_trails,
+            _KEY_CONTEXT: {
                 'last_operation': OP_APPEND,  # Default (unknown during migration)
                 'last_nav_type': NAV_SEQUENTIAL,  # Default
                 'current_file': current_file,
                 'timestamp': time.time()
             },
-            KEY_DEPTH_MAP: {}
+            _KEY_DEPTH_MAP: {}
         }
         
         # Replace session crumbs with enhanced format
@@ -626,6 +596,139 @@ class Breadcrumbs:
             # Fallback: just block name
             return current_zBlock
 
+    # ========================================================================
+    # Private Helpers for handle_zCrumbs (extracted for decomposition)
+    # ========================================================================
+
+    def _handle_reset_operation(
+        self,
+        zSession: Dict[str, Any],
+        zBlock: str,
+        zKey: str
+    ) -> Tuple[Dict[str, Any], List[str], str, str]:
+        """Handle RESET operation for navbar navigation."""
+        self.logger.info(f"[Breadcrumbs] RESET: Clearing all trails for navbar navigation to '{zKey}'")
+        
+        # Ensure enhanced format
+        self._ensure_enhanced_format(zSession)
+        zCrumbs = zSession[SESSION_KEY_ZCRUMBS]
+        
+        # Clear all trails
+        old_trails = list(zCrumbs.get(_KEY_TRAILS, {}).keys())
+        zCrumbs[_KEY_TRAILS] = {}
+        self.logger.debug(f"[Breadcrumbs] RESET: Cleared {len(old_trails)} trail(s): {old_trails}")
+        
+        # Reset context
+        zCrumbs[_KEY_CONTEXT] = {
+            "last_operation": OP_RESET,
+            "last_nav_type": NAV_NAVBAR,
+            "current_file": zBlock,
+            "timestamp": __import__('time').time()
+        }
+        
+        # Reset depth map
+        zCrumbs[_KEY_DEPTH_MAP] = {}
+        
+        # Create fresh trail
+        zCrumbs[_KEY_TRAILS][zBlock] = [zKey]
+        self.logger.info(f"[Breadcrumbs] RESET: Created fresh trail for '{zBlock}': ['{zKey}']")
+        
+        # Return updated crumbs_dict and trail
+        crumbs_dict = zCrumbs[_KEY_TRAILS]
+        zBlock_crumbs = crumbs_dict[zBlock]
+        
+        return crumbs_dict, zBlock_crumbs, NAV_NAVBAR, TYPE_ROOT
+
+    def _handle_pop_to_operation(
+        self,
+        zBlock_crumbs: List[str],
+        zKey: str
+    ) -> Tuple[str, str]:
+        """Handle POP_TO operation for menu hierarchy."""
+        if zKey in zBlock_crumbs:
+            target_idx = zBlock_crumbs.index(zKey)
+            popped_keys = zBlock_crumbs[target_idx + 1:]
+            del zBlock_crumbs[target_idx + 1:]
+            self.logger.debug(f"[Breadcrumbs] POP_TO: Popped {popped_keys} → back to '{zKey}'")
+        else:
+            zBlock_crumbs.append(zKey)
+            self.logger.debug(f"[Breadcrumbs] POP_TO target '{zKey}' not in trail → APPEND")
+        
+        return "menu", "menu_parent"
+
+    def _handle_replace_operation(
+        self,
+        zBlock_crumbs: List[str],
+        zKey: str
+    ) -> Tuple[str, str]:
+        """Handle REPLACE operation for dashboard panel switching."""
+        if zBlock_crumbs:
+            old_key = zBlock_crumbs[_INDEX_LAST_PART]
+            zBlock_crumbs[_INDEX_LAST_PART] = zKey
+            self.logger.debug(f"[Breadcrumbs] REPLACE: '{old_key}' → '{zKey}'")
+        else:
+            zBlock_crumbs.append(zKey)
+            self.logger.debug(f"[Breadcrumbs] REPLACE on empty trail → APPEND: '{zKey}'")
+        
+        return NAV_DASHBOARD, TYPE_PANEL
+
+    def _handle_append_operation(
+        self,
+        zBlock_crumbs: List[str],
+        zKey: str,
+        zBlock: str
+    ) -> Tuple[str, str, bool]:
+        """Handle APPEND operation for sequential navigation."""
+        # Prevent duplicate consecutive keys
+        if zBlock_crumbs and zBlock_crumbs[_INDEX_LAST_PART] == zKey:
+            self.logger.debug(_LOG_DUPLICATE_SKIP, zKey, zBlock)
+            return NAV_SEQUENTIAL, TYPE_SEQUENTIAL, True  # Skip flag
+        
+        zBlock_crumbs.append(zKey)
+        self.logger.debug(f"[Breadcrumbs] APPEND: '{zKey}'")
+        
+        return NAV_SEQUENTIAL, TYPE_SEQUENTIAL, False  # No skip
+
+    def _update_context_and_depth(
+        self,
+        zSession: Dict[str, Any],
+        operation: str,
+        nav_type: str,
+        block_type: str,
+        zBlock: str,
+        zKey: str,
+        zBlock_crumbs: List[str]
+    ) -> None:
+        """Update context tracking and depth map."""
+        if operation == OP_RESET:
+            # RESET already handled context and depth map
+            self._update_depth_map(
+                zSession,
+                file_key=zBlock,
+                block_key=zKey,
+                depth=0,
+                block_type=TYPE_ROOT
+            )
+        else:
+            current_depth = len(zBlock_crumbs) - 1
+            
+            self._update_context(
+                zSession,
+                operation=operation,
+                nav_type=nav_type,
+                current_file=zBlock
+            )
+            
+            self._update_depth_map(
+                zSession,
+                file_key=zBlock,
+                block_key=zKey,
+                depth=current_depth,
+                block_type=block_type
+            )
+
+
+
     def handle_zCrumbs(
         self,
         zKey: str,
@@ -694,167 +797,196 @@ class Breadcrumbs:
         6. Append key to trail
         7. Log updated trail
         """
-        # Get active block path from session (handles Delta links!)
-        zBlock = self._get_active_block_path(self.zcli.session)
+        # Get active block path from session (handles Delta links!)        zBlock = self._get_active_block_path(self.zcli.session)                # Get appropriate display adapter        display = self._get_display(walker)                # Display operation banner        display.zDeclare(            _MSG_HANDLE_ZCRUMBS,            color=COLOR_ZCRUMB,            indent=_INDENT_ZCRUMBS,            style=_STYLE_FULL        )        # Log incoming parameters        self.logger.debug(_LOG_INCOMING_BLOCK_KEY, zBlock, zKey)        self.logger.debug(_LOG_CURRENT_ZCRUMBS, self.zcli.session[SESSION_KEY_ZCRUMBS])        # CHECK NAVBAR FLAG: Auto-detect navbar navigation        zCrumbs = self.zcli.session.get(SESSION_KEY_ZCRUMBS, {})        if zCrumbs.get("_navbar_navigation", False):            self.logger.info(f"[Breadcrumbs] Navbar navigation detected → auto-switching to OP_RESET")            operation = OP_RESET            zCrumbs["_navbar_navigation"] = False            self.logger.debug("[Breadcrumbs] Navbar flag cleared after detection")        # Get crumbs dict from session        crumbs_dict = self._get_crumbs_dict(self.zcli.session)        # Create scope if it doesn't exist        if zBlock not in crumbs_dict:            crumbs_dict[zBlock] = []            self.logger.debug(_LOG_CURRENT_ZCRUMBS, crumbs_dict)        # Get trail for this block        zBlock_crumbs = crumbs_dict[zBlock]        self.logger.debug(_LOG_CURRENT_TRAIL, zBlock_crumbs)        # Skip navbar keys from breadcrumb trail        if "zNavBar" in zKey:            self.logger.debug(f"[Breadcrumbs] Skipping navbar key from trail: {zKey}")            return        # ====================================================================        # ORCHESTRATOR: Handle operation types using extracted helpers        # ====================================================================                # Handle operation: RESET, POP_TO, REPLACE, or APPEND        if operation == OP_RESET:            crumbs_dict, zBlock_crumbs, nav_type, block_type = self._handle_reset_operation(                self.zcli.session, zBlock, zKey            )        elif operation == "POP_TO":            nav_type, block_type = self._handle_pop_to_operation(zBlock_crumbs, zKey)        elif operation == OP_REPLACE:            nav_type, block_type = self._handle_replace_operation(zBlock_crumbs, zKey)        else:  # APPEND (default)            nav_type, block_type, should_skip = self._handle_append_operation(                zBlock_crumbs, zKey, zBlock            )            if should_skip:                return  # Duplicate key, skip                self.logger.debug(_LOG_CURRENT_TRAIL, zBlock_crumbs)                # Update context tracking and depth map        self._update_context_and_depth(            self.zcli.session, operation, nav_type, block_type,            zBlock, zKey, zBlock_crumbs        )                # Log complete state        self.logger.debug(_LOG_CURRENT_ZCRUMBS, self.zcli.session[SESSION_KEY_ZCRUMBS])
+
+    def _handle_trail_pop_and_scope_transition(
+        self,
+        zSession: Dict[str, Any],
+        active_zCrumb: str,
+        original_zCrumb: str,
+        trail: List[str]
+    ) -> Tuple[str, List[str]]:
+        """
+        Handle trail popping and scope transitions for zBack navigation.
         
-        # Get appropriate display adapter
-        display = self._get_display(walker)
+        Implements Steps 2-4 of handle_zBack algorithm:
+        - Step 2: Pop from current trail
+        - Step 3: Handle empty trail (scope transition)
+        - Step 4: Cascade empty scope removal
         
-        # Display operation banner
-        display.zDeclare(
-            MSG_HANDLE_ZCRUMBS,
-            color=COLOR_ZCRUMB,
-            indent=INDENT_ZCRUMBS,
-            style=STYLE_FULL
-        )
-
-        # Log incoming parameters
-        self.logger.debug(LOG_INCOMING_BLOCK_KEY, zBlock, zKey)
-        self.logger.debug(LOG_CURRENT_ZCRUMBS, self.zcli.session[SESSION_KEY_ZCRUMBS])
-
-        # CHECK NAVBAR FLAG: Auto-detect navbar navigation and override operation to RESET
-        zCrumbs = self.zcli.session.get(SESSION_KEY_ZCRUMBS, {})
-        if zCrumbs.get("_navbar_navigation", False):
-            self.logger.info(f"[Breadcrumbs] Navbar navigation detected → auto-switching to OP_RESET")
-            operation = OP_RESET
-            # CLEAR FLAG immediately (only applies to first breadcrumb after navbar click)
-            zCrumbs["_navbar_navigation"] = False
-            self.logger.debug("[Breadcrumbs] Navbar flag cleared after detection")
-
-        # Get crumbs dict from session (with validation)
-        crumbs_dict = self._get_crumbs_dict(self.zcli.session)
-
-        # Create scope if it doesn't exist
-        if zBlock not in crumbs_dict:
-            crumbs_dict[zBlock] = []
-            self.logger.debug(LOG_CURRENT_ZCRUMBS, crumbs_dict)
-
-        # Get trail for this block
-        zBlock_crumbs = crumbs_dict[zBlock]
-        self.logger.debug(LOG_CURRENT_TRAIL, zBlock_crumbs)
-
-        # Skip navbar keys from breadcrumb trail
-        # Navbar is a navigation affordance, not content
-        if "zNavBar" in zKey:
-            self.logger.debug(f"[Breadcrumbs] Skipping navbar key from trail: {zKey}")
-            return
-
-        # Handle operation type: RESET, POP_TO, REPLACE, or APPEND
-        if operation == OP_RESET:
-            # RESET operation: Clear all trails and start fresh (zNavBar navigation)
-            # Used when clicking navbar items - simulates "starting over" at a new top-level destination
-            self.logger.info(f"[Breadcrumbs] RESET: Clearing all trails for navbar navigation to '{zKey}'")
-            
-            # Get enhanced zCrumbs structure
-            zCrumbs = self.zcli.session.get(SESSION_KEY_ZCRUMBS, {})
-            
-            # Ensure enhanced format
-            self._ensure_enhanced_format(self.zcli.session)
-            zCrumbs = self.zcli.session[SESSION_KEY_ZCRUMBS]
-            
-            # Clear all trails
-            old_trails = list(zCrumbs.get(KEY_TRAILS, {}).keys())
-            zCrumbs[KEY_TRAILS] = {}
-            self.logger.debug(f"[Breadcrumbs] RESET: Cleared {len(old_trails)} trail(s): {old_trails}")
-            
-            # Reset context
-            zCrumbs[KEY_CONTEXT] = {
-                "last_operation": OP_RESET,
-                "last_nav_type": NAV_NAVBAR,
-                "current_file": zBlock,
-                "timestamp": __import__('time').time()
-            }
-            self.logger.debug(f"[Breadcrumbs] RESET: Context reset for navbar navigation")
-            
-            # Reset depth map
-            zCrumbs[KEY_DEPTH_MAP] = {}
-            self.logger.debug(f"[Breadcrumbs] RESET: Depth map cleared")
-            
-            # Create fresh trail for new file with the navigation key
-            zCrumbs[KEY_TRAILS][zBlock] = [zKey]
-            self.logger.info(f"[Breadcrumbs] RESET: Created fresh trail for '{zBlock}': ['{zKey}']")
-            
-            # Update crumbs_dict reference (points to the new trails dict)
-            crumbs_dict = zCrumbs[KEY_TRAILS]
-            zBlock_crumbs = crumbs_dict[zBlock]
-            
-            nav_type = NAV_NAVBAR
-            block_type = TYPE_ROOT
-        elif operation == "POP_TO":
-            # POP_TO operation: Pop trail back to specified key (menu hierarchy)
-            # Used when returning to a parent menu from a child menu/item
-            if zKey in zBlock_crumbs:
-                # Find the target key in trail
-                target_idx = zBlock_crumbs.index(zKey)
-                # Pop everything after the target key
-                popped_keys = zBlock_crumbs[target_idx + 1:]
-                del zBlock_crumbs[target_idx + 1:]
-                self.logger.debug(f"[Breadcrumbs] POP_TO: Popped {popped_keys} → back to '{zKey}'")
-            else:
-                # Target key not in trail - append it instead (first time seeing it)
-                zBlock_crumbs.append(zKey)
-                self.logger.debug(f"[Breadcrumbs] POP_TO target '{zKey}' not in trail → APPEND")
-            nav_type = "menu"
-            block_type = "menu_parent"
-        elif operation == OP_REPLACE:
-            # REPLACE operation: Replace last key in trail (dashboard panel switching)
-            if zBlock_crumbs:
-                # Trail exists - replace last item
-                old_key = zBlock_crumbs[INDEX_LAST_PART]
-                zBlock_crumbs[INDEX_LAST_PART] = zKey
-                self.logger.debug(f"[Breadcrumbs] REPLACE: '{old_key}' → '{zKey}'")
-            else:
-                # Empty trail - append instead (first panel)
-                zBlock_crumbs.append(zKey)
-                self.logger.debug(f"[Breadcrumbs] REPLACE on empty trail → APPEND: '{zKey}'")
-            nav_type = NAV_DASHBOARD
-            block_type = TYPE_PANEL
-        else:
-            # APPEND operation: Add new key to trail (default, sequential navigation)
-            # Prevent duplicate consecutive zKeys
-            if zBlock_crumbs and zBlock_crumbs[INDEX_LAST_PART] == zKey:
-                self.logger.debug(LOG_DUPLICATE_SKIP, zKey, zBlock)
-                return
-            
-            zBlock_crumbs.append(zKey)
-            self.logger.debug(f"[Breadcrumbs] APPEND: '{zKey}'")
-            nav_type = NAV_SEQUENTIAL
-            block_type = TYPE_SEQUENTIAL
+        Args:
+            zSession: Session dict
+            active_zCrumb: Current active crumb
+            original_zCrumb: Root crumb
+            trail: Current trail
         
-        self.logger.debug(LOG_CURRENT_TRAIL, zBlock_crumbs)
-        
-        # Phase 0.5: Update context tracking (skip for RESET - already handled)
-        if operation != OP_RESET:
-            current_depth = len(zBlock_crumbs) - 1  # 0-based depth
+        Returns:
+            Tuple of (updated_active_zCrumb, updated_trail)
+        """
+        # STEP 2: Pop from Current Trail
+        if trail:
+            trail.pop()
+            self.logger.debug(_LOG_TRAIL_AFTER_POP, active_zCrumb, trail)
             
-            # Update context
+            # Phase 0.5: Update context for POP operation
             self._update_context(
-                self.zcli.session,
-                operation=operation,  # Use actual operation (APPEND or REPLACE)
-                nav_type=nav_type,
-                current_file=zBlock
-            )
-            
-            # Update depth map
-            self._update_depth_map(
-                self.zcli.session,
-                file_key=zBlock,
-                block_key=zKey,
-                depth=current_depth,
-                block_type=block_type
+                zSession,
+                operation=OP_POP,
+                nav_type=NAV_SEQUENTIAL,
+                current_file=active_zCrumb
             )
         else:
-            # RESET already handled context and depth map, just add initial depth map entry
-            self._update_depth_map(
-                self.zcli.session,
-                file_key=zBlock,
-                block_key=zKey,
-                depth=0,  # Root level for navbar navigation
-                block_type=TYPE_ROOT
-            )
+            # STEP 3: Handle Empty Trail (Scope Transition)
+            if active_zCrumb != original_zCrumb:
+                # Not at root - can move to parent
+                popped_scope = self._pop_scope(zSession, active_zCrumb)
+                self.logger.debug(_LOG_POPPED_SCOPE, active_zCrumb, popped_scope)
+                
+                # Move to parent scope
+                active_zCrumb = self._get_active_crumb(zSession)
+                self.logger.debug(_LOG_ACTIVE_CRUMB_PARENT, active_zCrumb)
+                
+                # Get parent's trail
+                trail = self._get_crumbs_dict(zSession)[active_zCrumb]
+                self.logger.debug(_LOG_PARENT_TRAIL_BEFORE, trail)
+                
+                # Pop the parent's last key
+                if trail:
+                    trail.pop()
+                    self.logger.debug(_LOG_PARENT_TRAIL_AFTER, trail)
+            else:
+                # At root with empty trail - nothing to pop
+                self.logger.debug(_LOG_ROOT_EMPTY)
+
+        # STEP 4: Cascade Empty Scope Removal
+        if not trail and active_zCrumb != original_zCrumb:
+            # Current scope is now empty and not root - remove it
+            popped_scope = self._pop_scope(zSession, active_zCrumb)
+            self.logger.debug(_LOG_POST_POP_EMPTY, active_zCrumb, popped_scope)
+            
+            # Move to parent scope
+            active_zCrumb = self._get_active_crumb(zSession)
+            self.logger.debug(_LOG_ACTIVE_CRUMB_PARENT, active_zCrumb)
+            
+            # Get parent's trail
+            trail = self._get_crumbs_dict(zSession)[active_zCrumb]
+            self.logger.debug(_LOG_PARENT_TRAIL_PRE_SECOND, trail)
+            
+            # Pop parent's last key
+            if trail:
+                trail.pop()
+                self.logger.debug(_LOG_PARENT_TRAIL_POST_SECOND, trail)
         
-        # Log complete zCrumbs state after all updates for verification
-        self.logger.debug(LOG_CURRENT_ZCRUMBS, self.zcli.session[SESSION_KEY_ZCRUMBS])
+        return active_zCrumb, trail
+
+    def _parse_crumb_and_update_session(
+        self,
+        zSession: Dict[str, Any],
+        active_zCrumb: str,
+        trail: List[str]
+    ) -> Optional[str]:
+        """
+        Parse active crumb and update session with file context.
+        
+        Implements Step 5 of handle_zBack algorithm:
+        - Parse crumb to extract folder, file, block
+        - Update session keys
+        - Return resolved zBack key (where to resume)
+        
+        Args:
+            zSession: Session dict
+            active_zCrumb: Current active crumb
+            trail: Current trail
+        
+        Returns:
+            Resolved zBack key (where to resume), or None
+        """
+        # Parse crumb parts
+        parts = active_zCrumb.split(_SEPARATOR_DOT)
+        self.logger.debug(_LOG_ACTIVE_PARTS, parts, len(parts))
+        
+        if len(parts) >= _CRUMB_PARTS_MIN:
+            # Extract: base_path.zUI.filename.BlockName
+            base_path_parts = parts[:_INDEX_PARTS_FROM_END]
+            zSession[SESSION_KEY_ZVAFOLDER] = _SEPARATOR_DOT.join(base_path_parts) if base_path_parts else _SEPARATOR_EMPTY
+            zSession[SESSION_KEY_ZVAFILE] = _SEPARATOR_DOT.join(parts[_INDEX_FILENAME_START:_INDEX_FILENAME_END])
+            zSession[SESSION_KEY_ZBLOCK] = parts[_INDEX_LAST_PART]
+            self.logger.debug(
+                _LOG_PARSED_SESSION,
+                zSession[SESSION_KEY_ZVAFOLDER],
+                zSession[SESSION_KEY_ZVAFILE],
+                zSession[SESSION_KEY_ZBLOCK]
+            )
+        else:
+            # Invalid crumb format
+            self.logger.error(_LOG_ERR_INVALID_CRUMB, active_zCrumb)
+        
+        # Return resolved zBack key
+        return trail[_INDEX_LAST_PART] if trail else None
+
+    def _reload_file_after_back(
+        self,
+        zSession: Dict[str, Any],
+        resolved_zBack_key: Optional[str],
+        walker: Optional[Any]
+    ) -> Tuple[Dict[str, Any], List[str], Optional[str]]:
+        """
+        Reload file after zBack navigation and prepare return context.
+        
+        Implements Steps 6-8 of handle_zBack algorithm:
+        - Step 6: Reload file using loader
+        - Step 7: Validate block and keys
+        - Step 8: Return navigation context
+        
+        Args:
+            zSession: Session dict
+            resolved_zBack_key: Key to resume from (or None)
+            walker: Walker instance (optional)
+        
+        Returns:
+            Tuple of (block_dict, block_keys, start_key)
+        """
+        # Reload file
+        zVaFolder = zSession.get(SESSION_KEY_ZVAFOLDER, _SEPARATOR_EMPTY)
+        zVaFile = zSession.get(SESSION_KEY_ZVAFILE, _SEPARATOR_EMPTY)
+        
+        if not zVaFile:
+            self.logger.error(_ERR_EMPTY_FILENAME)
+            return {}, [], None
+        
+        # Build zPath
+        if zVaFolder:
+            zPath = f"{zVaFolder}{_SEPARATOR_DOT}{zVaFile}"
+        else:
+            zPath = f"{_PREFIX_DEFAULT_PATH}{zVaFile}"
+        
+        self.logger.debug(_LOG_RELOADING_PATH, zPath)
+        
+        # Load file
+        zFile_parsed = reload_current_file(walker)
+        
+        # Extract block dict and keys
+        active_zBlock_dict = zFile_parsed.get(zSession[SESSION_KEY_ZBLOCK], {})
+        zBlock_keys = list(active_zBlock_dict.keys())
+
+        # Validate
+        if not zBlock_keys:
+            self.logger.error(_ERR_NO_KEYS_AFTER_BACK)
+            return active_zBlock_dict, [], None
+
+        # Normalize start key
+        if resolved_zBack_key and resolved_zBack_key in zBlock_keys:
+            start_key = resolved_zBack_key
+        else:
+            if resolved_zBack_key:
+                self.logger.warning(
+                    _LOG_WARN_INVALID_KEY,
+                    resolved_zBack_key,
+                    zSession[SESSION_KEY_ZBLOCK]
+                )
+            start_key = None
+
+        return active_zBlock_dict, zBlock_keys, start_key
 
     def handle_zBack(
         self,
@@ -938,195 +1070,7 @@ class Breadcrumbs:
         - Modifies: zSession (4 keys: zCrumbs, zVaFolder, zVaFile, zBlock)
         - Called by: MenuSystem, zWalker
         """
-        # Get appropriate display adapter
-        display = self._get_display(walker)
-        
-        # Display operation banner
-        display.zDeclare(
-            MSG_HANDLE_ZBACK,
-            color=COLOR_ZCRUMB,
-            indent=INDENT_ZBACK,
-            style=STYLE_FULL
-        )
-
-        zSession = self.zcli.session
-        
-        # ============================================================
-        # STEP 1: Get Active Scope (Most Recent)
-        # ============================================================
-        active_zCrumb = self._get_active_crumb(zSession)
-        self.logger.debug(LOG_ACTIVE_CRUMB, active_zCrumb)
-
-        # Get original (root) crumb for comparison
-        original_zCrumb = next(iter(zSession[SESSION_KEY_ZCRUMBS]))
-        self.logger.debug(LOG_ORIGINAL_CRUMB, original_zCrumb)
-
-        # Extract block name from active crumb (last part after splitting by ".")
-        active_zBlock = active_zCrumb.split(SEPARATOR_DOT)[INDEX_LAST_PART]
-        self.logger.debug(LOG_ACTIVE_BLOCK, active_zBlock)
-
-        # Get trail for active scope
-        # Phase 0.5: Access trails from enhanced format
-        trail = self._get_crumbs_dict(zSession)[active_zCrumb]
-        self.logger.debug(LOG_TRAIL, trail)
-
-        # ============================================================
-        # STEP 2: Pop from Current Trail
-        # ============================================================
-        # If trail has items, pop the last key (move back one step)
-        if trail:
-            trail.pop()
-            self.logger.debug(LOG_TRAIL_AFTER_POP, active_zCrumb, trail)
-            
-            # Phase 0.5: Update context for POP operation
-            self._update_context(
-                zSession,
-                operation=OP_POP,
-                nav_type=NAV_SEQUENTIAL,  # zBack is sequential navigation
-                current_file=active_zCrumb
-            )
-        else:
-            # ========================================================
-            # STEP 3: Handle Empty Trail (Scope Transition)
-            # ========================================================
-            # Trail is empty - need to move to parent scope
-            if active_zCrumb != original_zCrumb:
-                # Not at root - can move to parent
-                
-                # Remove the empty child scope
-                popped_scope = self._pop_scope(zSession, active_zCrumb)
-                self.logger.debug(LOG_POPPED_SCOPE, active_zCrumb, popped_scope)
-                
-                # Move to parent scope (now the last scope in session)
-                active_zCrumb = self._get_active_crumb(zSession)
-                self.logger.debug(LOG_ACTIVE_CRUMB_PARENT, active_zCrumb)
-                
-                # Get parent's trail (Phase 0.5: from enhanced format)
-                trail = self._get_crumbs_dict(zSession)[active_zCrumb]
-                self.logger.debug(LOG_PARENT_TRAIL_BEFORE, trail)
-                
-                # Pop the parent's last key (the link that opened the child)
-                if trail:
-                    trail.pop()
-                    self.logger.debug(LOG_PARENT_TRAIL_AFTER, trail)
-            else:
-                # At root with empty trail - nothing to pop
-                self.logger.debug(LOG_ROOT_EMPTY)
-
-        # ============================================================
-        # STEP 4: Cascade Empty Scope Removal
-        # ============================================================
-        # If after popping, the current scope became empty (and not root), remove it and pop parent
-        if not trail and active_zCrumb != original_zCrumb:
-            # Current scope is now empty and not root - remove it
-            popped_scope = self._pop_scope(zSession, active_zCrumb)
-            self.logger.debug(LOG_POST_POP_EMPTY, active_zCrumb, popped_scope)
-            
-            # Move to parent scope
-            active_zCrumb = self._get_active_crumb(zSession)
-            self.logger.debug(LOG_ACTIVE_CRUMB_PARENT, active_zCrumb)
-            
-            # Get parent's trail (Phase 0.5: from enhanced format)
-            trail = self._get_crumbs_dict(zSession)[active_zCrumb]
-            self.logger.debug(LOG_PARENT_TRAIL_PRE_SECOND, trail)
-            
-            # Pop parent's last key
-            if trail:
-                trail.pop()
-                self.logger.debug(LOG_PARENT_TRAIL_POST_SECOND, trail)
-        
-        # Show breadcrumbs banner if requested (and walker available)
-        if show_banner and walker:
-            display.zCrumbs(self.zcli.session)
-
-        # Log if we've reached root with empty trail
-        if trail == [] and active_zCrumb == original_zCrumb:
-            self.logger.debug(LOG_ROOT_CLEARED)
-
-        # ============================================================
-        # STEP 5: Parse Active Crumb for File Context
-        # ============================================================
-        # Update session context to reflect the new active crumb
-        # so subsequent loads reference the correct file and block.
-        parts = active_zCrumb.split(SEPARATOR_DOT)
-        self.logger.debug(LOG_ACTIVE_PARTS, parts, len(parts))
-        
-        if len(parts) >= CRUMB_PARTS_MIN:
-            # Extract: base_path.zUI.filename.BlockName
-            # Example: "@.zUI.users_menu.MainMenu" => ["@", "zUI", "users_menu", "MainMenu"]
-            base_path_parts = parts[:INDEX_PARTS_FROM_END]
-            zSession[SESSION_KEY_ZVAFOLDER] = SEPARATOR_DOT.join(base_path_parts) if base_path_parts else SEPARATOR_EMPTY
-            zSession[SESSION_KEY_ZVAFILE] = SEPARATOR_DOT.join(parts[INDEX_FILENAME_START:INDEX_FILENAME_END])
-            zSession[SESSION_KEY_ZBLOCK] = parts[INDEX_LAST_PART]
-            self.logger.debug(
-                LOG_PARSED_SESSION,
-                zSession[SESSION_KEY_ZVAFOLDER],
-                zSession[SESSION_KEY_ZVAFILE],
-                zSession[SESSION_KEY_ZBLOCK]
-            )
-        else:
-            # Invalid crumb format
-            self.logger.error(LOG_ERR_INVALID_CRUMB, active_zCrumb)
-
-        # Determine the resolved zBack key (where to resume)
-        resolved_zBack_key = trail[INDEX_LAST_PART] if trail else None
-        
-        # ============================================================
-        # STEP 6: Reload File
-        # ============================================================
-        # Reload current file based on updated zSession
-        # Construct zPath from session values
-        zVaFolder = zSession.get(SESSION_KEY_ZVAFOLDER, SEPARATOR_EMPTY)
-        zVaFile = zSession.get(SESSION_KEY_ZVAFILE, SEPARATOR_EMPTY)
-        
-        if not zVaFile:
-            self.logger.error(ERR_EMPTY_FILENAME)
-            return {}, [], None
-        
-        # Build zPath based on whether we have a base path
-        if zVaFolder:
-            zPath = f"{zVaFolder}{SEPARATOR_DOT}{zVaFile}"
-        else:
-            zPath = f"{PREFIX_DEFAULT_PATH}{zVaFile}"
-        
-        self.logger.debug(LOG_RELOADING_PATH, zPath)
-        
-        # Load file using session-based resolution (zSession already updated above)
-        # Pass None to trigger session-based path resolution with zVaFolder + zVaFile
-        if walker and hasattr(walker, "loader"):
-            zFile_parsed = walker.loader.handle(None)
-        else:
-            zFile_parsed = self.zcli.loader.handle(None)
-        
-        # Extract active block dict and keys
-        active_zBlock_dict = zFile_parsed.get(zSession[SESSION_KEY_ZBLOCK], {})
-        zBlock_keys = list(active_zBlock_dict.keys())
-
-        # ============================================================
-        # STEP 7: Validate and Return Context
-        # ============================================================
-        if not zBlock_keys:
-            self.logger.error(ERR_NO_KEYS_AFTER_BACK)
-            return active_zBlock_dict, [], None
-
-        # Normalize start key: only use it if it exists; otherwise start from first (None)
-        if resolved_zBack_key and resolved_zBack_key in zBlock_keys:
-            start_key = resolved_zBack_key
-        else:
-            if resolved_zBack_key:
-                self.logger.warning(
-                    LOG_WARN_INVALID_KEY,
-                    resolved_zBack_key,
-                    zSession[SESSION_KEY_ZBLOCK]
-                )
-            # Do not force default to first key; let caller decide start (None)
-            start_key = None
-
-        # ============================================================
-        # STEP 8: Return Navigation Context
-        # ============================================================
-        return active_zBlock_dict, zBlock_keys, start_key
-
+        # Get appropriate display adapter        display = self._get_display(walker)                # Display operation banner        display.zDeclare(            _MSG_HANDLE_ZBACK,            color=COLOR_ZCRUMB,            indent=_INDENT_ZBACK,            style=_STYLE_FULL        )        zSession = self.zcli.session                # ============================================================        # ORCHESTRATOR: Simplified handle_zBack using extracted helpers        # ============================================================                # STEP 1: Get Active Scope (Most Recent)        active_zCrumb = self._get_active_crumb(zSession)        self.logger.debug(_LOG_ACTIVE_CRUMB, active_zCrumb)        # Get original (root) crumb for comparison        original_zCrumb = next(iter(zSession[SESSION_KEY_ZCRUMBS]))        self.logger.debug(_LOG_ORIGINAL_CRUMB, original_zCrumb)        # Extract block name from active crumb        active_zBlock = active_zCrumb.split(_SEPARATOR_DOT)[_INDEX_LAST_PART]        self.logger.debug(_LOG_ACTIVE_BLOCK, active_zBlock)        # Get trail for active scope (Phase 0.5: from enhanced format)        trail = self._get_crumbs_dict(zSession)[active_zCrumb]        self.logger.debug(_LOG_TRAIL, trail)        # STEPS 2-4: Handle Trail Popping and Scope Transitions        active_zCrumb, trail = self._handle_trail_pop_and_scope_transition(            zSession, active_zCrumb, original_zCrumb, trail        )                # Show breadcrumbs banner if requested (and walker available)        if show_banner and walker:            display.zCrumbs(self.zcli.session)        # Log if we've reached root with empty trail        if trail == [] and active_zCrumb == original_zCrumb:            self.logger.debug(_LOG_ROOT_CLEARED)        # STEP 5: Parse Active Crumb and Update Session        resolved_zBack_key = self._parse_crumb_and_update_session(zSession, active_zCrumb, trail)                # STEPS 6-8: Reload File, Validate, and Return Context        return self._reload_file_after_back(zSession, resolved_zBack_key, walker)
     def zCrumbs_banner(self) -> Dict[str, str]:
         """
         Format breadcrumbs for display.
@@ -1160,7 +1104,7 @@ class Breadcrumbs:
         
         Notes
         -----
-        - **Separator**: Trails are joined with " > " (SEPARATOR_CRUMB)
+        - **Separator**: Trails are joined with " > " (_SEPARATOR_CRUMB)
         - **Empty Trails**: Represented as empty strings (not None)
         - **Read-Only**: Does not modify session state
         - **Display Integration**: Typically called by zDisplay.zCrumbs() for UI output
@@ -1180,8 +1124,17 @@ class Breadcrumbs:
 
         # Iterate through all scopes and their trails
         for zScope, zTrail in trails.items():
+            # Skip metadata keys (defensive programming)
+            if zScope.startswith('_'):
+                continue
+            
+            # Skip non-list values (defensive programming - should not happen after migration fix)
+            if not isinstance(zTrail, list):
+                self.logger.warning(f"[zCrumbs_banner] Skipping non-list trail: {zScope} = {type(zTrail)}")
+                continue
+            
             # Join trail with separator, or use empty string if trail is empty
-            path = SEPARATOR_CRUMB.join(zTrail) if zTrail else SEPARATOR_EMPTY
+            path = _SEPARATOR_CRUMB.join(zTrail) if zTrail else _SEPARATOR_EMPTY
             zCrumbs_zPrint[zScope] = path
         
         return zCrumbs_zPrint
@@ -1222,7 +1175,7 @@ class Breadcrumbs:
         self._ensure_enhanced_format(session)
         
         # Update context
-        session[SESSION_KEY_ZCRUMBS][KEY_CONTEXT] = {
+        session[SESSION_KEY_ZCRUMBS][_KEY_CONTEXT] = {
             'last_operation': operation,
             'last_nav_type': nav_type,
             'current_file': current_file,
@@ -1266,11 +1219,11 @@ class Breadcrumbs:
         self._ensure_enhanced_format(session)
         
         # Initialize file entry if needed
-        if file_key not in session[SESSION_KEY_ZCRUMBS][KEY_DEPTH_MAP]:
-            session[SESSION_KEY_ZCRUMBS][KEY_DEPTH_MAP][file_key] = {}
+        if file_key not in session[SESSION_KEY_ZCRUMBS][_KEY_DEPTH_MAP]:
+            session[SESSION_KEY_ZCRUMBS][_KEY_DEPTH_MAP][file_key] = {}
         
         # Update depth for this block
-        session[SESSION_KEY_ZCRUMBS][KEY_DEPTH_MAP][file_key][block_key] = {
+        session[SESSION_KEY_ZCRUMBS][_KEY_DEPTH_MAP][file_key][block_key] = {
             'depth': depth,
             'type': block_type
         }
@@ -1324,7 +1277,7 @@ class Breadcrumbs:
         self._ensure_enhanced_format(session)
         
         # Get last key from trails dict
-        return next(reversed(session[SESSION_KEY_ZCRUMBS][KEY_TRAILS]))
+        return next(reversed(session[SESSION_KEY_ZCRUMBS][_KEY_TRAILS]))
 
     def _get_crumbs_dict(self, session: Dict[str, Any]) -> Dict[str, List[str]]:
         """
@@ -1352,7 +1305,7 @@ class Breadcrumbs:
         self._ensure_enhanced_format(session)
         
         # Return trails dict from enhanced format
-        return session[SESSION_KEY_ZCRUMBS][KEY_TRAILS]
+        return session[SESSION_KEY_ZCRUMBS][_KEY_TRAILS]
 
     def _pop_scope(
         self,
@@ -1385,7 +1338,7 @@ class Breadcrumbs:
         self._ensure_enhanced_format(session)
         
         # Pop from trails dict
-        return session[SESSION_KEY_ZCRUMBS][KEY_TRAILS].pop(scope, None)
+        return session[SESSION_KEY_ZCRUMBS][_KEY_TRAILS].pop(scope, None)
     
     def _create_trail_key(
         self,
@@ -1418,7 +1371,7 @@ class Breadcrumbs:
         self._ensure_enhanced_format(session)
         
         # Create trail key if it doesn't exist
-        trails = session[SESSION_KEY_ZCRUMBS][KEY_TRAILS]
+        trails = session[SESSION_KEY_ZCRUMBS][_KEY_TRAILS]
         if scope not in trails:
             trails[scope] = []
             self.logger.debug(f"[Breadcrumbs] Created new trail key: {scope}")

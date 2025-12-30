@@ -48,8 +48,7 @@ MenuRenderer and MenuInteraction to process menus uniformly.
 
 Forward Dependencies
 --------------------
-- zFunc (Week 6.10): build_from_function() uses zcli.zfunc.handle()
-  TODO: Verify signature after zFunc refactoring (Week 6.10)
+- zFunc: build_from_function() uses zcli.zfunc.handle()
 
 Layer Position
 --------------
@@ -99,46 +98,32 @@ LOG_* : str
     Logging message templates
 TEMPLATE_* : str
     String templates for dynamic content
-TIMESTAMP_FORMAT : str
+_TIMESTAMP_FORMAT : str
     ISO-style timestamp format for metadata
 """
 
-import time
-from typing import Any, Optional, Dict, List, Union, Callable
+from zCLI import time, Any, Optional, Dict, List, Union, Callable
 
-# ============================================================================
-# Module Constants
-# ============================================================================
-
-# Navigation Constants
-NAV_ZBACK: str = "zBack"
-CREATOR_ZMENU: str = "zMenu"
-
-# Menu Object Keys
-KEY_OPTIONS: str = "options"
-KEY_TITLE: str = "title"
-KEY_ALLOW_BACK: str = "allow_back"
-KEY_METADATA: str = "metadata"
-KEY_CREATED_BY: str = "created_by"
-KEY_TIMESTAMP: str = "timestamp"
-
-# Error Messages
-ERR_DYNAMIC_MENU: str = "Error loading menu"
-ERR_FUNCTION_MENU: str = "Function error"
-TITLE_ERROR: str = "Error"
-TITLE_FUNC_ERROR_TEMPLATE: str = "Error calling {func_name}"
-
-# Result Templates
-TEMPLATE_RESULTS_FROM: str = "Results from {func_name}"
-TEMPLATE_ERROR_CALLING: str = "Error calling {func_name}"
-
-# Log Messages
-LOG_BUILT_MENU: str = "Built menu object: %s"
-LOG_FAILED_DYNAMIC: str = "Failed to build dynamic menu: %s"
-LOG_FAILED_FUNCTION: str = "Failed to build menu from function %s: %s"
-
-# Time Format
-TIMESTAMP_FORMAT: str = "%Y-%m-%d %H:%M:%S"
+from .navigation_constants import (
+    NAV_ZBACK,
+    CREATOR_ZMENU,
+    KEY_OPTIONS,
+    KEY_TITLE,
+    KEY_ALLOW_BACK,
+    KEY_METADATA,
+    KEY_CREATED_BY,
+    KEY_TIMESTAMP,
+    _ERR_DYNAMIC_MENU,
+    _ERR_FUNCTION_MENU,
+    _TITLE_ERROR,
+    _TITLE_FUNC_ERROR_TEMPLATE,
+    _TEMPLATE_RESULTS_FROM,
+    _TEMPLATE_ERROR_CALLING,
+    _LOG_BUILT_MENU,
+    _LOG_FAILED_DYNAMIC,
+    _LOG_FAILED_FUNCTION,
+    _TIMESTAMP_FORMAT,
+)
 
 
 # ============================================================================
@@ -305,7 +290,7 @@ class MenuBuilder:
             }
         }
 
-        self.logger.debug(LOG_BUILT_MENU, menu_obj)
+        self.logger.debug(_LOG_BUILT_MENU, menu_obj)
         return menu_obj
 
     def build_dynamic(
@@ -393,8 +378,8 @@ class MenuBuilder:
             return self.build(options, title, allow_back)
 
         except Exception as e:
-            self.logger.error(LOG_FAILED_DYNAMIC, e)
-            return self._build_error_menu(ERR_DYNAMIC_MENU, TITLE_ERROR)
+            self.logger.error(_LOG_FAILED_DYNAMIC, e)
+            return self._build_error_menu(_ERR_DYNAMIC_MENU, _TITLE_ERROR)
 
     def build_from_function(
         self,
@@ -446,18 +431,15 @@ class MenuBuilder:
         
         Forward Dependency
         ------------------
-        TODO [Week 6.10]: Verify zFunc signature after refactoring
-        Current format: f"zFunc({func_name}, {args}, {kwargs})"
-        This may need updating to match new zFunc API
+        Uses zcli.zfunc.handle() with standard zFunc string format.
+        Format: f"zFunc({func_name}, {args}, {kwargs})"
         
         Error Handling
         --------------
         On execution failure, returns error menu with function name in title.
         """
         try:
-            # TODO [Week 6.10]: Update after zFunc refactoring
-            # Current implementation uses string format, may need API changes
-            # Call function through zFunc
+            # Call function through zFunc (standard string format)
             result = self.zcli.zfunc.handle(f"zFunc({func_name}, {args}, {kwargs})")
             
             # Convert result to menu options
@@ -467,13 +449,13 @@ class MenuBuilder:
                 options = [str(result)]
 
             # Build menu with function name in title
-            title = TEMPLATE_RESULTS_FROM.format(func_name=func_name)
+            title = _TEMPLATE_RESULTS_FROM.format(func_name=func_name)
             return self.build(options, title, allow_back=True)
 
         except Exception as e:
-            self.logger.error(LOG_FAILED_FUNCTION, func_name, e)
-            title = TEMPLATE_ERROR_CALLING.format(func_name=func_name)
-            return self._build_error_menu(ERR_FUNCTION_MENU, title)
+            self.logger.error(_LOG_FAILED_FUNCTION, func_name, e)
+            title = _TEMPLATE_ERROR_CALLING.format(func_name=func_name)
+            return self._build_error_menu(_ERR_FUNCTION_MENU, title)
 
     # ========================================================================
     # Private Helper Methods
@@ -564,4 +546,4 @@ class MenuBuilder:
         Used for tracking menu creation time in metadata. This can be useful
         for debugging, logging, or implementing menu caching strategies.
         """
-        return time.strftime(TIMESTAMP_FORMAT)
+        return time.strftime(_TIMESTAMP_FORMAT)

@@ -132,58 +132,37 @@ WARN_* : str
     Warning messages for user feedback
 """
 
-from typing import Any, Dict, List, Union
+from zCLI import Any, Dict, List, Union
 
-# ============================================================================
-# Module Constants
-# ============================================================================
-
-# Session Keys (for same-file navigation)
-SESSION_KEY_VAFOLDER: str = "zVaFolder"
-SESSION_KEY_VAFILE: str = "zVaFile"
-
-# Navigation Prefixes and Commands
-PREFIX_BLOCK_DELTA: str = "$"  # Same-file block navigation prefix
-CMD_EXIT: str = "exit"  # Text command to exit system
-
-# Menu Object Keys (must match MenuBuilder)
-KEY_OPTIONS: str = "options"
-
-# Prompts
-PROMPT_DEFAULT: str = "> "
-PROMPT_MULTIPLE_DEFAULT: str = "Select options (comma-separated)"
-PROMPT_SEARCH_DEFAULT: str = "Search"
-
-# Prefixes
-PREFIX_NEWLINE: str = "\n"
-PREFIX_SEARCH: str = "/"
-
-# Separators
-SEPARATOR_COMMA: str = ","
-SEPARATOR_SPACE: str = " "
-
-# Error Messages
-ERR_INVALID_DIGIT: str = "Invalid input - enter a number."
-ERR_OUT_OF_RANGE: str = "Choice out of range."
-ERR_INVALID_COMMA: str = "Invalid input - enter comma-separated numbers."
-ERR_INVALID_SEARCH: str = "Invalid input - enter a number or /search"
-TEMPLATE_INVALID_INDICES: str = "Invalid indices: {invalid_indices}"
-
-# Templates
-TEMPLATE_FILTERED_COUNT: str = "Filtered to {count} options:"
-TEMPLATE_OPTION_ITEM: str = "  [{index}] {option}"
-TEMPLATE_SEARCH_PROMPT: str = "\n{search_prompt} (enter number or /term to filter):"
-
-# Log Messages
-LOG_RAW_INPUT: str = "User raw input: '%s'"
-LOG_INVALID_DIGIT: str = "Input is not a valid digit."
-LOG_OUT_OF_RANGE: str = "Input index %s is out of range."
-LOG_SELECTED: str = "Selected: %s"
-LOG_SELECTED_MULTIPLE: str = "Selected multiple: %s"
-LOG_SELECTED_SEARCH: str = "Selected with search: %s"
-
-# Warning Messages
-WARN_NO_MATCHES: str = "No matches found."
+from .navigation_constants import (
+    SESSION_KEY_VAFOLDER,
+    SESSION_KEY_VAFILE,
+    _PREFIX_BLOCK_DELTA,
+    _CMD_EXIT,
+    KEY_OPTIONS,
+    _PROMPT_DEFAULT,
+    _PROMPT_MULTIPLE_DEFAULT,
+    _PROMPT_SEARCH_DEFAULT,
+    _PREFIX_NEWLINE,
+    _PREFIX_SEARCH,
+    _SEPARATOR_COMMA,
+    _SEPARATOR_SPACE,
+    _ERR_INVALID_DIGIT,
+    _ERR_OUT_OF_RANGE,
+    _ERR_INVALID_COMMA,
+    _ERR_INVALID_SEARCH,
+    _TEMPLATE_INVALID_INDICES,
+    _TEMPLATE_FILTERED_COUNT,
+    _TEMPLATE_OPTION_ITEM,
+    _TEMPLATE_SEARCH_PROMPT,
+    _LOG_RAW_INPUT,
+    _LOG_INVALID_DIGIT,
+    _LOG_OUT_OF_RANGE,
+    _LOG_SELECTED,
+    _LOG_SELECTED_MULTIPLE,
+    _LOG_SELECTED_SEARCH,
+    _WARN_NO_MATCHES,
+)
 
 
 # ============================================================================
@@ -427,13 +406,13 @@ class MenuInteraction:
         """
         # Streamlined input validation loop
         while True:
-            choice = display.read_string(PROMPT_DEFAULT)
+            choice = display.read_string(_PROMPT_DEFAULT)
             self._log_user_input(choice)
 
             # Check for text command: "exit"
-            if choice.lower() == CMD_EXIT:
+            if choice.lower() == _CMD_EXIT:
                 self.logger.debug(f"Exit command detected: {choice}")
-                return CMD_EXIT  # Return "exit" to trigger system exit
+                return _CMD_EXIT  # Return "exit" to trigger system exit
 
             # Validate digit format
             if not self._validate_digit_input(choice, display):
@@ -447,10 +426,10 @@ class MenuInteraction:
             break  # Valid input
 
         selected = options[index]
-        self.logger.debug(LOG_SELECTED, selected)
+        self.logger.debug(_LOG_SELECTED, selected)
         
         # Check for same-file block navigation ($ prefix)
-        if isinstance(selected, str) and selected.startswith(PREFIX_BLOCK_DELTA):
+        if isinstance(selected, str) and selected.startswith(_PREFIX_BLOCK_DELTA):
             # Transform $BlockName → {zLink: "@.VaFolder.zVaFile.BlockName"}
             # This reuses the existing zLink subsystem for same-file navigation
             return self._transform_delta_link(selected)
@@ -461,7 +440,7 @@ class MenuInteraction:
         self,
         options: List[str],
         display: Any,
-        prompt: str = PROMPT_MULTIPLE_DEFAULT
+        prompt: str = _PROMPT_MULTIPLE_DEFAULT
     ) -> List[str]:
         """
         Get multiple choices from menu.
@@ -524,12 +503,12 @@ class MenuInteraction:
         display.text(prompt)
 
         while True:
-            choice = display.read_string(PROMPT_DEFAULT)
+            choice = display.read_string(_PROMPT_DEFAULT)
             self._log_user_input(choice)
 
             try:
                 # Parse comma-separated choices
-                indices = [int(x.strip()) for x in choice.split(SEPARATOR_COMMA)]
+                indices = [int(x.strip()) for x in choice.split(_SEPARATOR_COMMA)]
                 
                 # Validate all indices
                 invalid_indices = [
@@ -537,25 +516,25 @@ class MenuInteraction:
                     if i < 0 or i >= len(options)
                 ]
                 if invalid_indices:
-                    error_msg = TEMPLATE_INVALID_INDICES.format(
+                    error_msg = _TEMPLATE_INVALID_INDICES.format(
                         invalid_indices=invalid_indices
                     )
                     self._show_error(display, error_msg)
                     continue
 
                 selected = [options[i] for i in indices]
-                self.logger.debug(LOG_SELECTED_MULTIPLE, selected)
+                self.logger.debug(_LOG_SELECTED_MULTIPLE, selected)
                 return selected
 
             except ValueError:
-                self._show_error(display, ERR_INVALID_COMMA)
+                self._show_error(display, _ERR_INVALID_COMMA)
                 continue
 
     def get_choice_with_search(
         self,
         options: List[str],
         display: Any,
-        search_prompt: str = PROMPT_SEARCH_DEFAULT
+        search_prompt: str = _PROMPT_SEARCH_DEFAULT
     ) -> str:
         """
         Get choice with interactive search functionality.
@@ -630,24 +609,24 @@ class MenuInteraction:
         - Invalid: Error message and retry
         """
         filtered_options = options.copy()
-        prompt_text = TEMPLATE_SEARCH_PROMPT.format(search_prompt=search_prompt)
+        prompt_text = _TEMPLATE_SEARCH_PROMPT.format(search_prompt=search_prompt)
         display.text(prompt_text)
         
         while True:
             # Show current filtered options
             if len(filtered_options) != len(options):
-                count_text = TEMPLATE_FILTERED_COUNT.format(
+                count_text = _TEMPLATE_FILTERED_COUNT.format(
                     count=len(filtered_options)
                 )
-                display.text(PREFIX_NEWLINE + count_text)
+                display.text(_PREFIX_NEWLINE + count_text)
             
             for i, option in enumerate(filtered_options):
                 display.text(self._format_option_item(i, option))
 
             # Get search or selection
-            choice = display.read_string(PROMPT_DEFAULT)
+            choice = display.read_string(_PROMPT_DEFAULT)
             
-            if choice.startswith(PREFIX_SEARCH):
+            if choice.startswith(_PREFIX_SEARCH):
                 # Search mode
                 search_term = choice[1:].lower()
                 filtered_options = [
@@ -656,7 +635,7 @@ class MenuInteraction:
                 ]
                 
                 if not filtered_options:
-                    display.warning(WARN_NO_MATCHES)
+                    display.warning(_WARN_NO_MATCHES)
                     filtered_options = options.copy()
                 
                 continue
@@ -665,7 +644,7 @@ class MenuInteraction:
             self._log_user_input(choice)
             
             if not self._validate_digit_input(choice, display):
-                self._show_error(display, ERR_INVALID_SEARCH)
+                self._show_error(display, _ERR_INVALID_SEARCH)
                 continue
 
             index = int(choice)
@@ -673,7 +652,7 @@ class MenuInteraction:
                 continue
 
             selected = filtered_options[index]
-            self.logger.debug(LOG_SELECTED_SEARCH, selected)
+            self.logger.debug(_LOG_SELECTED_SEARCH, selected)
             return selected
 
     # ========================================================================
@@ -705,8 +684,8 @@ class MenuInteraction:
         DRY Helper: Eliminates 2 duplications (lines 44, 138 in original)
         """
         if not choice.isdigit():
-            self.logger.debug(LOG_INVALID_DIGIT)
-            self._show_error(display, ERR_INVALID_DIGIT)
+            self.logger.debug(_LOG_INVALID_DIGIT)
+            self._show_error(display, _ERR_INVALID_DIGIT)
             return False
         return True
 
@@ -738,8 +717,8 @@ class MenuInteraction:
         DRY Helper: Eliminates 3 duplications (lines 50, 84, 143 in original)
         """
         if index < 0 or index >= len(options):
-            self.logger.debug(LOG_OUT_OF_RANGE, index)
-            self._show_error(display, ERR_OUT_OF_RANGE)
+            self.logger.debug(_LOG_OUT_OF_RANGE, index)
+            self._show_error(display, _ERR_OUT_OF_RANGE)
             return False
         return True
 
@@ -757,7 +736,7 @@ class MenuInteraction:
         DRY Helper: Eliminates 3 duplications (lines 42, 77, 148 in original)
         Logs at debug level for troubleshooting user interactions.
         """
-        self.logger.debug(LOG_RAW_INPUT, choice)
+        self.logger.debug(_LOG_RAW_INPUT, choice)
 
     def _format_option_item(self, index: int, option: str) -> str:
         """
@@ -780,7 +759,7 @@ class MenuInteraction:
         DRY Helper: Eliminates 2 duplications (lines 118, implicit)
         Provides consistent formatting across all display methods.
         """
-        return TEMPLATE_OPTION_ITEM.format(index=index, option=option)
+        return _TEMPLATE_OPTION_ITEM.format(index=index, option=option)
 
     def _show_error(self, display: Any, message: str) -> None:
         """
@@ -798,7 +777,7 @@ class MenuInteraction:
         DRY Helper: Eliminates 5 duplications of display.error() with newline
         Ensures consistent error formatting across all validation failures.
         """
-        display.error(PREFIX_NEWLINE + message)
+        display.error(_PREFIX_NEWLINE + message)
 
     def _transform_delta_link(self, selected: str) -> Dict[str, Any]:
         """
@@ -863,7 +842,7 @@ class MenuInteraction:
         Example: zUI.index.zAbout
         """
         # Strip $ prefix to get block name
-        block_name = selected[1:] if selected.startswith(PREFIX_BLOCK_DELTA) else selected
+        block_name = selected[1:] if selected.startswith(_PREFIX_BLOCK_DELTA) else selected
         
         # Get current file context from session
         session = self.zcli.session
