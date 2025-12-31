@@ -137,83 +137,85 @@ Version History
 from zCLI import Any, Dict, Optional
 from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZMODE
 from .dialog_modules import create_dialog_context, handle_submit
+from .dialog_modules.dialog_constants import (
+    COLOR_ZDIALOG,
+    KEY_DATA,
+    KEY_FIELDS,
+    KEY_MODEL,
+    KEY_ONSUBMIT,
+    KEY_TITLE,
+    KEY_WEBSOCKET_DATA,
+    KEY_ZCONV,
+    KEY_ZDIALOG,
+    _ERROR_INVALID_TYPE_DIALOG,
+    _ERROR_INVALID_ZCLI,
+    _ERROR_NO_ZCLI,
+    _ERROR_NO_ZCLI_OR_WALKER,
+    _EVENT_VALIDATION_ERROR,
+    _LOG_AUTO_VALIDATION_ENABLED,
+    _LOG_AUTO_VALIDATION_ERROR,
+    _LOG_AUTO_VALIDATION_FAILED,
+    _LOG_AUTO_VALIDATION_PASSED,
+    _LOG_AUTO_VALIDATION_SKIPPED_NO_MODEL,
+    _LOG_AUTO_VALIDATION_SKIPPED_PREFIX,
+    _LOG_MODEL_FIELDS_SUBMIT,
+    _LOG_ONSUBMIT_EXECUTE,
+    _LOG_ONSUBMIT_FAILED,
+    _LOG_RECEIVED_ZHORIZONTAL,
+    _LOG_WEBSOCKET_BROADCAST_FAILED,
+    _LOG_WEBSOCKET_DATA,
+    _LOG_ZCONTEXT,
+    _MSG_ZDIALOG,
+    _MSG_ZDIALOG_READY,
+    _MSG_ZDIALOG_RETURN_VALIDATION_FAILED,
+    _SCHEMA_PATH_SEPARATOR,
+    _SESSION_VALUE_ZBIFROST,
+)
 
 # ============================================================================
 # MODULE CONSTANTS - Display Colors
 # ============================================================================
 
-COLOR_ZDIALOG = "ZDIALOG"
 
 # ============================================================================
 # MODULE CONSTANTS - Dictionary Keys (zHorizontal Structure)
 # ============================================================================
 
-KEY_ZDIALOG = "zDialog"
-KEY_TITLE = "title"
-KEY_MODEL = "model"
-KEY_FIELDS = "fields"
-KEY_ONSUBMIT = "onSubmit"
 
 # ============================================================================
 # MODULE CONSTANTS - Context Keys (WebSocket Data)
 # ============================================================================
 
-KEY_WEBSOCKET_DATA = "websocket_data"
-KEY_DATA = "data"
-KEY_ZCONV = "zConv"
 
 # ============================================================================
 # MODULE CONSTANTS - WebSocket Events
 # ============================================================================
 
-EVENT_VALIDATION_ERROR = "validation_error"
 
 # ============================================================================
 # MODULE CONSTANTS - Session Keys
 # ============================================================================
 
-SESSION_VALUE_ZBIFROST = "zBifrost"
 
 # ============================================================================
 # MODULE CONSTANTS - Error Messages
 # ============================================================================
 
-ERROR_NO_ZCLI = "zDialog requires a zCLI instance"
-ERROR_INVALID_ZCLI = "Invalid zCLI instance: missing 'session' attribute"
-ERROR_INVALID_TYPE = "Unsupported zDialog expression type: {type_name}"
-ERROR_NO_ZCLI_OR_WALKER = "handle_zDialog requires either zcli or walker with zcli attribute"
 
 # ============================================================================
 # MODULE CONSTANTS - Display Messages
 # ============================================================================
 
-MSG_ZDIALOG_READY = "zDialog Ready"
-MSG_ZDIALOG = "zDialog"
-MSG_ZDIALOG_RETURN_VALIDATION_FAILED = "zDialog Return (validation failed)"
 
 # ============================================================================
 # MODULE CONSTANTS - Logging Messages
 # ============================================================================
 
-LOG_RECEIVED_ZHORIZONTAL = "\nReceived zHorizontal: %s"
-LOG_MODEL_FIELDS_SUBMIT = "\n   |-- model: %s\n   |-- fields: %s\n   |-- on_submit: %s"
-LOG_ZCONTEXT = "\nzContext: %s"
-LOG_WEBSOCKET_DATA = "Using pre-provided data from WebSocket: %s"
-LOG_AUTO_VALIDATION_ENABLED = "Auto-validation enabled (model: %s)"
-LOG_AUTO_VALIDATION_FAILED = "Auto-validation failed with %d error(s)"
-LOG_AUTO_VALIDATION_PASSED = "[OK] Auto-validation passed for %s"
-LOG_AUTO_VALIDATION_ERROR = "Auto-validation error (proceeding anyway): %s"
-LOG_AUTO_VALIDATION_SKIPPED_PREFIX = "Auto-validation skipped (model doesn't start with '@'): %s"
-LOG_AUTO_VALIDATION_SKIPPED_NO_MODEL = "Auto-validation skipped (no model specified)"
-LOG_ONSUBMIT_EXECUTE = "Found onSubmit => Executing via handle_submit()"
-LOG_ONSUBMIT_FAILED = "zDialog onSubmit failed: %s"
-LOG_WEBSOCKET_BROADCAST_FAILED = "Failed to broadcast validation errors via WebSocket: %s"
 
 # ============================================================================
 # MODULE CONSTANTS - zData Integration (Schema Extraction)
 # ============================================================================
 
-SCHEMA_PATH_SEPARATOR = "."
 
 
 class zDialog:
@@ -289,10 +291,10 @@ class zDialog:
         - May be removed in future versions (prefer zcli-only initialization)
         """
         if zcli is None:
-            raise ValueError(ERROR_NO_ZCLI)
+            raise ValueError(_ERROR_NO_ZCLI)
 
         if not hasattr(zcli, 'session'):
-            raise ValueError(ERROR_INVALID_ZCLI)
+            raise ValueError(_ERROR_INVALID_ZCLI)
 
         # Modern architecture: zCLI instance provides all dependencies
         self.zcli = zcli
@@ -304,7 +306,7 @@ class zDialog:
         # Keep walker for legacy compatibility
         self.walker = walker
         self.mycolor = COLOR_ZDIALOG
-        self.display.zDeclare(MSG_ZDIALOG_READY, color=self.mycolor, indent=0, style="full")
+        self.display.zDeclare(_MSG_ZDIALOG_READY, color=self.mycolor, indent=0, style="full")
 
     def handle(self, zHorizontal: Dict[str, Any], context: Optional[Dict[str, Any]] = None) -> Optional[Any]:
         """
@@ -411,20 +413,21 @@ class zDialog:
         - onSubmit is always dict-based (string-based removed in v1.5.4)
         - Placeholders (zConv.*, model) injected automatically by handle_submit()
         
-        Technical Debt
-        --------------
-        - Direct imports from zData.zData_modules.shared (lines 91, 101)
-          TODO: Replace with zcli.zdata facade when zData is refactored
-        - ValidationOps mock class (lines 104-110)
-          TODO: Extract to module-level helper or refactor when zData is modernized
+        Technical Notes
+        ---------------
+        - Direct imports from zData.zData_modules.shared (DataValidator, display_validation_errors)
+          are intentional for lightweight validation without database connection overhead.
+          This pattern is used consistently across zDialog, zBifrost, and zDisplay subsystems.
+          zData.load_schema() creates full database connections, which is unnecessary for
+          form validation-only use cases
         """
-        self.display.zDeclare(MSG_ZDIALOG, color=self.mycolor, indent=1, style="single")
+        self.display.zDeclare(_MSG_ZDIALOG, color=self.mycolor, indent=1, style="single")
 
-        self.logger.info(LOG_RECEIVED_ZHORIZONTAL, zHorizontal)
+        self.logger.info(_LOG_RECEIVED_ZHORIZONTAL, zHorizontal)
 
         # Validate input
         if not isinstance(zHorizontal, dict):
-            msg = ERROR_INVALID_TYPE.format(type_name=type(zHorizontal))
+            msg = _ERROR_INVALID_TYPE_DIALOG.format(type_name=type(zHorizontal))
             self.logger.error(msg)
             raise TypeError(msg)
 
@@ -436,7 +439,7 @@ class zDialog:
         on_submit = zDialog_obj.get(KEY_ONSUBMIT)
 
         self.logger.info(
-            LOG_MODEL_FIELDS_SUBMIT,
+            _LOG_MODEL_FIELDS_SUBMIT,
             model,
             fields,
             on_submit
@@ -451,14 +454,14 @@ class zDialog:
         if on_submit:
             zContext[KEY_ONSUBMIT] = on_submit
         
-        self.logger.info(LOG_ZCONTEXT, zContext)
+        self.logger.info(_LOG_ZCONTEXT, zContext)
 
         # Check if data is pre-provided (WebSocket/GUI mode)
         if context and KEY_WEBSOCKET_DATA in context:
             ws_data = context[KEY_WEBSOCKET_DATA]
             if KEY_DATA in ws_data:
                 zConv = ws_data[KEY_DATA]
-                self.logger.info(LOG_WEBSOCKET_DATA, zConv)
+                self.logger.info(_LOG_WEBSOCKET_DATA, zConv)
             else:
                 zConv = {}
         else:
@@ -481,18 +484,16 @@ class zDialog:
         )
         
         if model and isinstance(model, str) and model.startswith('@') and is_insert_operation:
-            self.logger.info(LOG_AUTO_VALIDATION_ENABLED, model)
+            self.logger.info(_LOG_AUTO_VALIDATION_ENABLED, model)
             
             try:
-                # Load schema from model path
-                # TODO: Replace with zcli.zdata.load_schema() when zData is refactored
+                # Load schema from model path (zLoader handles file loading)
                 schema_dict = self.zcli.loader.handle(model)
                 
                 # Extract table name from model path (e.g., '@.zSchema.users' → 'users')
-                table_name = model.split(SCHEMA_PATH_SEPARATOR)[-1]
+                table_name = model.split(_SCHEMA_PATH_SEPARATOR)[-1]
                 
-                # Create DataValidator instance
-                # TODO: Replace with zcli.zdata.create_validator() when zData is refactored
+                # Create lightweight validator (no database connection needed)
                 from zCLI.L3_Abstraction.n_zData.zData_modules.shared.validator import DataValidator
                 validator = DataValidator(schema_dict, self.logger)
                 
@@ -500,64 +501,53 @@ class zDialog:
                 is_valid, errors = validator.validate_insert(table_name, zConv)
                 
                 if not is_valid:
-                    self.logger.warning(LOG_AUTO_VALIDATION_FAILED, len(errors))
+                    self.logger.warning(_LOG_AUTO_VALIDATION_FAILED, len(errors))
                     
-                    # Display validation errors
-                    # TODO: Replace with zcli.zdata.display_validation_errors() when zData is refactored
+                    # Display validation errors (zDialog has required interface: zcli, logger, display)
                     from zCLI.L3_Abstraction.n_zData.zData_modules.shared.operations.helpers import display_validation_errors
-                    
-                    # Create a mock ops object with required attributes for display_validation_errors
-                    # TODO: Refactor when zData is modernized - extract to module-level helper
-                    class ValidationOps:
-                        def __init__(self, zcli):
-                            self.zcli = zcli
-                            self.logger = zcli.logger
-                            self.display = zcli.display
-                    
-                    ops = ValidationOps(self.zcli)
-                    display_validation_errors(table_name, errors, ops)
+                    display_validation_errors(table_name, errors, self)
                     
                     # For zBifrost mode, also emit WebSocket event
-                    if self.session.get(SESSION_KEY_ZMODE) == SESSION_VALUE_ZBIFROST:
+                    if self.session.get(SESSION_KEY_ZMODE) == _SESSION_VALUE_ZBIFROST:
                         try:
                             self.zcli.comm.websocket.broadcast({
-                                'event': EVENT_VALIDATION_ERROR,
+                                'event': _EVENT_VALIDATION_ERROR,
                                 'table': table_name,
                                 'errors': errors,
                                 'fields': list(errors.keys())
                             })
                         except Exception as ws_err:
-                            self.logger.warning(LOG_WEBSOCKET_BROADCAST_FAILED, ws_err)
+                            self.logger.warning(_LOG_WEBSOCKET_BROADCAST_FAILED, ws_err)
                     
                     # Don't proceed to onSubmit - return None to indicate validation failure
-                    self.display.zDeclare(MSG_ZDIALOG_RETURN_VALIDATION_FAILED, color=self.mycolor, indent=1, style="~")
+                    self.display.zDeclare(_MSG_ZDIALOG_RETURN_VALIDATION_FAILED, color=self.mycolor, indent=1, style="~")
                     return None
                 
-                self.logger.info(LOG_AUTO_VALIDATION_PASSED, table_name)
+                self.logger.info(_LOG_AUTO_VALIDATION_PASSED, table_name)
                 
             except Exception as val_err:
                 # If auto-validation fails (schema not found, etc.), log warning but proceed
                 # This maintains backward compatibility - forms without valid models still work
-                self.logger.warning(LOG_AUTO_VALIDATION_ERROR, val_err)
+                self.logger.warning(_LOG_AUTO_VALIDATION_ERROR, val_err)
         
         elif model and not is_insert_operation:
             self.logger.debug("Auto-validation skipped (not a zData insert operation) - custom handler will validate")
         elif model:
-            self.logger.debug(LOG_AUTO_VALIDATION_SKIPPED_PREFIX, model)
+            self.logger.debug(_LOG_AUTO_VALIDATION_SKIPPED_PREFIX, model)
         else:
-            self.logger.debug(LOG_AUTO_VALIDATION_SKIPPED_NO_MODEL)
+            self.logger.debug(_LOG_AUTO_VALIDATION_SKIPPED_NO_MODEL)
 
         # Handle submission if onSubmit provided
         try:
             # In Bifrost mode, if zConv is empty, this is just form display (not submission)
             # Only execute onSubmit if we have actual form data
             is_bifrost_display = (
-                self.session.get(SESSION_KEY_ZMODE) == SESSION_VALUE_ZBIFROST and 
+                self.session.get(SESSION_KEY_ZMODE) == _SESSION_VALUE_ZBIFROST and 
                 not zConv  # Empty zConv means form display, not submission
             )
             
             if on_submit and not is_bifrost_display:
-                self.logger.info(LOG_ONSUBMIT_EXECUTE)
+                self.logger.info(_LOG_ONSUBMIT_EXECUTE)
                 return handle_submit(on_submit, zContext, self.logger, walker=self.walker)
             elif is_bifrost_display:
                 self.logger.debug("[zDialog] Bifrost mode - form displayed, onSubmit deferred to form_submit handler")
@@ -567,7 +557,7 @@ class zDialog:
             return zConv
             
         except Exception as e:
-            self.logger.error(LOG_ONSUBMIT_FAILED, e, exc_info=True)
+            self.logger.error(_LOG_ONSUBMIT_FAILED, e, exc_info=True)
             raise
 
 
@@ -656,7 +646,7 @@ def handle_zDialog(
     if walker and hasattr(walker, 'zcli'):
         return zDialog(walker.zcli, walker=walker).handle(zHorizontal, context=context)
     
-    raise ValueError(ERROR_NO_ZCLI_OR_WALKER)
+    raise ValueError(_ERROR_NO_ZCLI_OR_WALKER)
 
 
 # ============================================================================

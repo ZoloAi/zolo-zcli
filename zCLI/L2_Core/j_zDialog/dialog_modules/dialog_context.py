@@ -86,37 +86,39 @@ Version History
 
 import re
 from zCLI import Any, Dict, List, Optional, Union
+from .dialog_constants import (
+    KEY_FIELDS,
+    KEY_MODEL,
+    KEY_ZCONV,
+    _BRACKET_CLOSE,
+    _BRACKET_OPEN,
+    _DEBUG_CONTEXT_CREATED,
+    _DOT_SEPARATOR,
+    _ERROR_PARSE_EMBEDDED_FAILED,
+    _ERROR_PARSE_PLACEHOLDER_FAILED,
+    _EXPECTED_DOT_NOTATION_PARTS,
+    _PLACEHOLDER_FULL,
+    _PLACEHOLDER_PREFIX,
+    _QUOTE_CHARS,
+    _REGEX_ZCONV_DOT_NOTATION,
+    _WARNING_FIELD_NOT_FOUND,
+)
 
 # ============================================================================
 # Module-Level Constants
 # ============================================================================
 
 # Context Dictionary Keys
-KEY_MODEL = "model"
-KEY_FIELDS = "fields"
-KEY_ZCONV = "zConv"
 
 # Placeholder Constants
-PLACEHOLDER_PREFIX = "zConv"
-PLACEHOLDER_FULL = "zConv"
 
 # Parsing Characters
-DOT_SEPARATOR = "."
-BRACKET_OPEN = "["
-BRACKET_CLOSE = "]"
-QUOTE_CHARS = "'\""
 
 # Regex Pattern
-REGEX_ZCONV_DOT_NOTATION = r'zConv\.(\w+)'  # noqa: W605
 
 # Magic Numbers
-EXPECTED_DOT_NOTATION_PARTS = 2
 
 # Debug/Error/Warning Messages
-DEBUG_CONTEXT_CREATED = "Created dialog context: %s"
-ERROR_PARSE_PLACEHOLDER_FAILED = "Failed to parse placeholder '%s': %s"
-ERROR_PARSE_EMBEDDED_FAILED = "Failed to parse placeholder in '%s': %s"
-WARNING_FIELD_NOT_FOUND = "Field '%s' not found in zConv data"
 
 # Module Public API
 __all__ = ["create_dialog_context", "inject_placeholders"]
@@ -207,7 +209,7 @@ def create_dialog_context(
     if zConv is not None:
         context[KEY_ZCONV] = zConv
     
-    logger.debug(DEBUG_CONTEXT_CREATED, context)
+    logger.debug(_DEBUG_CONTEXT_CREATED, context)
     return context
 
 
@@ -336,36 +338,36 @@ def inject_placeholders(
     zconv_data = zContext.get(KEY_ZCONV, {})
     
     # Type 1: Full zConv placeholder - "zConv" => return entire dict
-    if obj == PLACEHOLDER_FULL:
+    if obj == _PLACEHOLDER_FULL:
         return zContext.get(KEY_ZCONV)
     
     # Type 2 & 3: Single placeholder (dot or bracket notation)
-    if obj.startswith(PLACEHOLDER_PREFIX):
+    if obj.startswith(_PLACEHOLDER_PREFIX):
         try:
             # Type 2: Dot notation - "zConv.field"
-            if DOT_SEPARATOR in obj and len(obj.split(DOT_SEPARATOR)) == EXPECTED_DOT_NOTATION_PARTS:
-                parts = obj.split(DOT_SEPARATOR, 1)
-                if parts[0] == PLACEHOLDER_PREFIX:
+            if _DOT_SEPARATOR in obj and len(obj.split(_DOT_SEPARATOR)) == _EXPECTED_DOT_NOTATION_PARTS:
+                parts = obj.split(_DOT_SEPARATOR, 1)
+                if parts[0] == _PLACEHOLDER_PREFIX:
                     return zconv_data.get(parts[1])
             
             # Type 3: Bracket notation - "zConv['field']" or 'zConv["field"]'
-            if BRACKET_OPEN in obj and BRACKET_CLOSE in obj:
-                start = obj.index(BRACKET_OPEN) + 1
-                end = obj.index(BRACKET_CLOSE)
-                field = obj[start:end].strip(QUOTE_CHARS)
+            if _BRACKET_OPEN in obj and _BRACKET_CLOSE in obj:
+                start = obj.index(_BRACKET_OPEN) + 1
+                end = obj.index(_BRACKET_CLOSE)
+                field = obj[start:end].strip(_QUOTE_CHARS)
                 return zconv_data.get(field)
                 
         except (ValueError, KeyError, IndexError) as e:
-            logger.error(ERROR_PARSE_PLACEHOLDER_FAILED, obj, e)
+            logger.error(_ERROR_PARSE_PLACEHOLDER_FAILED, obj, e)
             return obj
     
     # Type 4 & 5: Embedded placeholders - "WHERE id = zConv.user_id"
-    if PLACEHOLDER_PREFIX in obj:
+    if _PLACEHOLDER_PREFIX in obj:
         try:
             result = obj
             
             # Type 5: Use regex to find all zConv.field_name patterns
-            matches = re.findall(REGEX_ZCONV_DOT_NOTATION, result)
+            matches = re.findall(_REGEX_ZCONV_DOT_NOTATION, result)
             
             for field in matches:
                 value = zconv_data.get(field)
@@ -377,14 +379,14 @@ def inject_placeholders(
                         replacement = str(value)  # True numbers, no quotes
                     else:
                         replacement = f"'{value}'"  # Text strings, add quotes
-                    result = result.replace(f"{PLACEHOLDER_PREFIX}{DOT_SEPARATOR}{field}", replacement)
+                    result = result.replace(f"{_PLACEHOLDER_PREFIX}{_DOT_SEPARATOR}{field}", replacement)
                 else:
-                    logger.warning(WARNING_FIELD_NOT_FOUND, field)
+                    logger.warning(_WARNING_FIELD_NOT_FOUND, field)
             
             return result
             
         except (ValueError, KeyError, IndexError) as e:
-            logger.error(ERROR_PARSE_EMBEDDED_FAILED, obj, e)
+            logger.error(_ERROR_PARSE_EMBEDDED_FAILED, obj, e)
             return obj
     
     # No placeholders found - return original string

@@ -64,57 +64,59 @@ from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import (
 
 # Import platform-specific browser launch command helper from zConfig
 from zCLI.L1_Foundation.a_zConfig.zConfig_modules.helpers import get_browser_launch_command
+from .open_constants import (
+    COLOR_ERROR,
+    COLOR_INFO,
+    COLOR_SUCCESS,
+    RETURN_STOP,
+    RETURN_ZBACK,
+    URL_SCHEMES_SUPPORTED,
+    URL_SCHEME_HTTP,
+    URL_SCHEME_HTTPS,
+    ZMACHINE_KEY_BROWSER,
+    _BROWSERS_SKIP,
+    _ERR_BROWSER_FAILED_URL,
+    _ERR_URL_OPEN_FAILED,
+    _INDENT_URL_INFO,
+    _LOG_BROWSER_ERROR,
+    _LOG_BROWSER_FAILED,
+    _LOG_OPENING_URL,
+    _LOG_SUCCESS_DEFAULT,
+    _LOG_SUCCESS_SPECIFIC,
+    _LOG_USING_BROWSER,
+    _MSG_BROWSER_ERROR,
+    _MSG_BROWSER_FAILED_URL,
+    _MSG_OPENED_BROWSER_URL,
+    _MSG_OPENED_DEFAULT,
+    _MSG_URL_INFO_TITLE,
+    _MSG_URL_MANUAL,
+    _STYLE_SECTION,
+    _STYLE_SINGLE,
+)
 
 # ═══════════════════════════════════════════════════════════════
 # Module-Level Constants
 # ═══════════════════════════════════════════════════════════════
 
 # URL Schemes
-URL_SCHEME_HTTP = "http"
-URL_SCHEME_HTTPS = "https"
-URL_SCHEMES_SUPPORTED = (URL_SCHEME_HTTP, URL_SCHEME_HTTPS)
 
 # Return Codes (zCLI standard)
-RETURN_ZBACK = "zBack"    # Success, return to previous screen
-RETURN_STOP = "stop"       # Failure, stop execution
 
 # Session Keys (zMachine sub-keys)
-ZMACHINE_KEY_BROWSER = "browser"
 
 # Browsers to skip (use system default instead)
-BROWSERS_SKIP = ("unknown",)
 
 # Display Colors
-COLOR_SUCCESS = "GREEN"
-COLOR_ERROR = "RED"
-COLOR_INFO = "INFO"
 
 # Display Styles
-STYLE_SINGLE = "single"
-STYLE_SECTION = "~"
 
 # Display Messages
-MSG_OPENED_BROWSER = "Opened URL in {browser}"
-MSG_OPENED_DEFAULT = "Opened URL in default browser"
-MSG_BROWSER_FAILED = "Browser failed to open URL"
-MSG_BROWSER_ERROR = "Browser error: {error}"
-MSG_URL_INFO_TITLE = "URL Information"
-MSG_URL_MANUAL = "Unable to open in browser. Please copy and paste into your browser."
 
 # Error Messages
-ERR_BROWSER_FAILED = "Browser failed to open URL"
-ERR_URL_OPEN_FAILED = "Unable to open URL. Displaying information instead."
 
 # Log Messages
-LOG_OPENING_URL = "Opening URL: %s"
-LOG_USING_BROWSER = "Using browser: %s"
-LOG_SUCCESS_SPECIFIC = "Successfully opened URL in %s"
-LOG_SUCCESS_DEFAULT = "Successfully opened URL in system default browser"
-LOG_BROWSER_FAILED = "Browser failed to open URL"
-LOG_BROWSER_ERROR = "Browser error: %s"
 
 # Display Indents
-INDENT_URL_INFO = 1
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -198,7 +200,7 @@ def open_url(
 
     Version: v1.5.4
     """
-    logger.info(LOG_OPENING_URL, url)
+    logger.info(_LOG_OPENING_URL, url)
 
     # Enhanced display: Show URL info as JSON
     parsed = urlparse(url)
@@ -208,13 +210,13 @@ def open_url(
         "domain": parsed.netloc,
         "path": parsed.path
     }
-    display.json_data(url_info, color=True, indent=INDENT_URL_INFO)
+    display.json_data(url_info, color=True, indent=_INDENT_URL_INFO)
 
     # Get browser preference (priority: session["browser"] → session["zMachine"]["browser"])
     browser = session.get(SESSION_KEY_BROWSER) or session.get(SESSION_KEY_ZMACHINE, {}).get(ZMACHINE_KEY_BROWSER)
 
     if browser:
-        logger.info(LOG_USING_BROWSER, browser)
+        logger.info(_LOG_USING_BROWSER, browser)
 
     # Try to open with user's preferred browser or default
     return _open_url_browser(url, browser, display, logger)
@@ -273,7 +275,7 @@ def _open_url_browser(
     """
     try:
         # Try to use specific browser if available
-        if browser and browser not in BROWSERS_SKIP:
+        if browser and browser not in _BROWSERS_SKIP:
             # Get platform-specific launch command from zConfig
             cmd, args = get_browser_launch_command(browser)
             
@@ -282,12 +284,12 @@ def _open_url_browser(
                     # Build full command: cmd + args + [url]
                     full_cmd = [cmd] + args + [url]
                     subprocess.run(full_cmd, check=False, timeout=5)
-                    logger.info(LOG_SUCCESS_SPECIFIC, browser)
+                    logger.info(_LOG_SUCCESS_SPECIFIC, browser)
                     display.zDeclare(
-                        MSG_OPENED_BROWSER.format(browser=browser),
+                        _MSG_OPENED_BROWSER_URL.format(browser=browser),
                         color=COLOR_SUCCESS,
-                        indent=INDENT_URL_INFO,
-                        style=STYLE_SINGLE
+                        indent=_INDENT_URL_INFO,
+                        style=_STYLE_SINGLE
                     )
                     return RETURN_ZBACK
                 except Exception as e:
@@ -296,31 +298,31 @@ def _open_url_browser(
         # Fallback to system default browser (webbrowser module)
         success = webbrowser.open(url)
         if success:
-            logger.info(LOG_SUCCESS_DEFAULT)
+            logger.info(_LOG_SUCCESS_DEFAULT)
             display.zDeclare(
-                MSG_OPENED_DEFAULT,
+                _MSG_OPENED_DEFAULT,
                 color=COLOR_SUCCESS,
-                indent=INDENT_URL_INFO,
-                style=STYLE_SINGLE
+                indent=_INDENT_URL_INFO,
+                style=_STYLE_SINGLE
             )
             return RETURN_ZBACK
         else:
-            logger.warning(LOG_BROWSER_FAILED)
+            logger.warning(_LOG_BROWSER_FAILED)
             display.zDeclare(
-                MSG_BROWSER_FAILED,
+                _MSG_BROWSER_FAILED_URL,
                 color=COLOR_ERROR,
-                indent=INDENT_URL_INFO,
-                style=STYLE_SINGLE
+                indent=_INDENT_URL_INFO,
+                style=_STYLE_SINGLE
             )
             return _display_url_fallback(url, display, logger)
 
     except Exception as e:
-        logger.warning(LOG_BROWSER_ERROR, e)
+        logger.warning(_LOG_BROWSER_ERROR, e)
         display.zDeclare(
-            MSG_BROWSER_ERROR.format(error=str(e)),
+            _MSG_BROWSER_ERROR.format(error=str(e)),
             color=COLOR_ERROR,
-            indent=INDENT_URL_INFO,
-            style=STYLE_SINGLE
+            indent=_INDENT_URL_INFO,
+            style=_STYLE_SINGLE
         )
         return _display_url_fallback(url, display, logger)
 
@@ -359,16 +361,16 @@ def _display_url_fallback(
 
     Version: v1.5.4
     """
-    logger.warning(ERR_URL_OPEN_FAILED)
+    logger.warning(_ERR_URL_OPEN_FAILED)
 
     display.zDeclare(
-        MSG_URL_INFO_TITLE,
+        _MSG_URL_INFO_TITLE,
         color=COLOR_INFO,
-        indent=INDENT_URL_INFO,
-        style=STYLE_SECTION
+        indent=_INDENT_URL_INFO,
+        style=_STYLE_SECTION
     )
     display.write_line(f"URL: {url}")
-    display.write_line(MSG_URL_MANUAL)
+    display.write_line(_MSG_URL_MANUAL)
 
     return RETURN_ZBACK
 

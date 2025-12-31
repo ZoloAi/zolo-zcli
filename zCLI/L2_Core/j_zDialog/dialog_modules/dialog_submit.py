@@ -95,43 +95,45 @@ from zCLI import Any, Dict, Optional
 from zCLI.L2_Core.e_zDispatch import handle_zDispatch
 
 from .dialog_context import inject_placeholders, KEY_MODEL, KEY_ZCONV
+from .dialog_constants import (
+    COLOR_DISPATCH,
+    COLOR_ZDIALOG,
+    KEY_ZCRUD,
+    KEY_ZDATA,
+    _DEBUG_CONTEXT_KEYS,
+    _DEBUG_DICT_PAYLOAD,
+    _DEBUG_SUBMIT_EXPR,
+    _DEBUG_SUBMIT_RESULT,
+    _DISPATCH_CMD_SUBMIT,
+    _ERROR_DISPATCH_FAILED,
+    _ERROR_INVALID_TYPE_SUBMIT,
+    _ERROR_NO_WALKER,
+    _INDENT_DIALOG,
+    _INDENT_SUBMIT,
+    _INFO_DISPATCH_DICT,
+    _STYLE_SINGLE,
+    _STYLE_TILDE,
+)
 
 # ============================================================================
 # Module-Level Constants
 # ============================================================================
 
 # Dict Keys (imported from dialog_context: KEY_MODEL, KEY_ZCONV)
-KEY_ZCRUD = "zCRUD"
-KEY_ZDATA = "zData"
 
 # Dispatch Command
-DISPATCH_CMD_SUBMIT = "submit"
 
 # Display Colors
-COLOR_ZDIALOG = "ZDIALOG"
-COLOR_DISPATCH = "DISPATCH"
 
 # Display Styles
-STYLE_SINGLE = "single"
-STYLE_TILDE = "~"
 
 # Indent Levels
-INDENT_DIALOG = 2
-INDENT_SUBMIT = 3
 
 # Debug Messages
-DEBUG_SUBMIT_EXPR = "zSubmit_expr: %s"
-DEBUG_CONTEXT_KEYS = "zContext keys: %s | zConv: %s"
-DEBUG_DICT_PAYLOAD = "zSubmit detected dict payload; preparing for zLaunch"
-DEBUG_SUBMIT_RESULT = "zSubmit result: %s"
 
 # Info Messages
-INFO_DISPATCH_DICT = "Dispatching dict onSubmit via zDispatch: %s"
 
 # Error Messages
-ERROR_NO_WALKER = "handle_submit requires a walker instance"
-ERROR_INVALID_TYPE = "zSubmit expression must be a dict, got: %s"
-ERROR_DISPATCH_FAILED = "zDispatch failed for submission: %s"
 
 # Module Public API
 __all__ = ["handle_submit"]
@@ -305,21 +307,21 @@ def handle_submit(
     - Walker is required (not optional despite type hint - ValueError if None)
     """
     if walker is None:
-        raise ValueError(ERROR_NO_WALKER)
+        raise ValueError(_ERROR_NO_WALKER)
     
-    walker.display.zDeclare("zSubmit", color=COLOR_ZDIALOG, indent=INDENT_DIALOG, style=STYLE_SINGLE)
+    walker.display.zDeclare("zSubmit", color=COLOR_ZDIALOG, indent=_INDENT_DIALOG, style=_STYLE_SINGLE)
 
-    logger.debug(DEBUG_SUBMIT_EXPR, submit_expr)
+    logger.debug(_DEBUG_SUBMIT_EXPR, submit_expr)
     # Mask passwords in zConv for secure logging
     masked_zconv = _mask_passwords_in_dict(zContext.get(KEY_ZCONV))
-    logger.debug(DEBUG_CONTEXT_KEYS, list(zContext.keys()), masked_zconv)
+    logger.debug(_DEBUG_CONTEXT_KEYS, list(zContext.keys()), masked_zconv)
 
     # Dict-based submission => zDispatch
     if isinstance(submit_expr, dict):
         return _handle_dict_submit(submit_expr, zContext, logger, walker)
     
     # Invalid type: Log error and return False
-    logger.error(ERROR_INVALID_TYPE, type(submit_expr))
+    logger.error(_ERROR_INVALID_TYPE_SUBMIT, type(submit_expr))
     return False
 
 
@@ -473,7 +475,7 @@ def _handle_dict_submit(
     - Errors during dispatch are caught and logged
     - Visual feedback is displayed via walker.display.zDeclare()
     """
-    logger.debug(DEBUG_DICT_PAYLOAD)
+    logger.debug(_DEBUG_DICT_PAYLOAD)
 
     try:
         # Step 1: Inject placeholders (zConv.* => actual values)
@@ -488,9 +490,9 @@ def _handle_dict_submit(
         # Step 3: Dispatch via zDispatch
         # Mask passwords in submit_dict for secure logging
         masked_submit = _mask_passwords_in_dict(submit_dict)
-        logger.info(INFO_DISPATCH_DICT, masked_submit)
+        logger.info(_INFO_DISPATCH_DICT, masked_submit)
         # Pass zContext as context so zLogin and other actions can access zConv
-        result = handle_zDispatch(DISPATCH_CMD_SUBMIT, submit_dict, zcli=walker.zcli, walker=walker, context=zContext)
+        result = handle_zDispatch(_DISPATCH_CMD_SUBMIT, submit_dict, zcli=walker.zcli, walker=walker, context=zContext)
 
         # Step 4: Display return feedback
         _display_submit_return(walker)
@@ -498,7 +500,7 @@ def _handle_dict_submit(
         return result
 
     except (ImportError, AttributeError, RuntimeError) as e:
-        logger.error(ERROR_DISPATCH_FAILED, e)
+        logger.error(_ERROR_DISPATCH_FAILED, e)
         _display_submit_return(walker)
         return False
 
@@ -587,8 +589,8 @@ def _display_submit_return(walker: Any) -> None:
     Notes
     -----
     - Extracted to avoid duplication in _handle_dict_submit and _handle_string_submit
-    - Uses STYLE_TILDE ("~") to indicate return/closing
-    - Indent levels: INDENT_SUBMIT (3) for zSubmit, INDENT_DIALOG (2) for zDialog
+    - Uses _STYLE_TILDE ("~") to indicate return/closing
+    - Indent levels: _INDENT_SUBMIT (3) for zSubmit, _INDENT_DIALOG (2) for zDialog
     """
-    walker.display.zDeclare("zSubmit Return", color=COLOR_ZDIALOG, indent=INDENT_SUBMIT, style=STYLE_TILDE)
-    walker.display.zDeclare("zDialog Return", color=COLOR_ZDIALOG, indent=INDENT_DIALOG, style=STYLE_TILDE)
+    walker.display.zDeclare("zSubmit Return", color=COLOR_ZDIALOG, indent=_INDENT_SUBMIT, style=_STYLE_TILDE)
+    walker.display.zDeclare("zDialog Return", color=COLOR_ZDIALOG, indent=_INDENT_DIALOG, style=_STYLE_TILDE)

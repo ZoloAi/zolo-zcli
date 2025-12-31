@@ -61,7 +61,7 @@ Version History
 - v1.5.8: Original implementation in zSys
 """
 
-from typing import Any, List, Dict
+from zCLI import Any, List, Dict
 
 
 def get_cached_files(zcli: Any) -> List[str]:

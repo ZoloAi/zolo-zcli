@@ -73,14 +73,63 @@ from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import (
 
 # Import platform-specific IDE launch command helper from zConfig
 from zCLI.L1_Foundation.a_zConfig.zConfig_modules.helpers import get_ide_launch_command
+from .open_constants import (
+    COLOR_ERROR,
+    COLOR_INFO,
+    COLOR_SUCCESS,
+    EXTENSIONS_HTML,
+    EXTENSIONS_TEXT,
+    RETURN_STOP,
+    RETURN_ZBACK,
+    ZMACHINE_KEY_IDE,
+    _AVAILABLE_IDES,
+    _CONTENT_TRUNCATE_LIMIT,
+    _DEFAULT_IDE,
+    _DIALOG_FIELD_ACTION,
+    _DIALOG_FIELD_IDE,
+    _ERR_BROWSER_ERROR,
+    _ERR_BROWSER_FAILED,
+    _ERR_DIALOG_FAILED,
+    _ERR_FILE_NOT_FOUND,
+    _ERR_IDE_FAILED,
+    _ERR_READ_FAILED,
+    _ERR_UNSUPPORTED_TYPE,
+    _FILE_ACTIONS,
+    _FILE_ACTION_CANCEL,
+    _FILE_ACTION_CREATE,
+    _FILE_ENCODING,
+    _IDE_UNKNOWN,
+    _INDENT_FILE_INFO,
+    _LOG_CREATED_FILE,
+    _LOG_DISPLAYING_CONTENT,
+    _LOG_FILE_NOT_FOUND,
+    _LOG_IDE_SELECTION_FAILED,
+    _LOG_OPENING_HTML,
+    _LOG_OPENING_TEXT,
+    _LOG_PROMPTING_USER,
+    _LOG_RESOLVED_PATH,
+    _LOG_SUCCESS_HTML,
+    _LOG_SUCCESS_IDE,
+    _LOG_USING_IDE,
+    _MSG_BROWSER_ERROR,
+    _MSG_BROWSER_FAILED,
+    _MSG_CONTENT_TRUNCATED,
+    _MSG_CREATED_FILE,
+    _MSG_FAILED_IDE,
+    _MSG_FILE_CONTENT_TITLE,
+    _MSG_OPENED_BROWSER,
+    _MSG_OPENED_IDE,
+    _MSG_UNSUPPORTED_TYPE,
+    _OS_WINDOWS,
+    _STYLE_SECTION,
+    _STYLE_SINGLE,
+)
 
 # ═══════════════════════════════════════════════════════════════
 # Module-Level Constants
 # ═══════════════════════════════════════════════════════════════
 
 # File Extensions (Supported Types)
-EXTENSIONS_HTML = ('.html', '.htm')
-EXTENSIONS_TEXT = ('.txt', '.md', '.py', '.js', '.json', '.yaml', '.yml')
 
 # Future Extensions (Documented for Expansion)
 # EXTENSIONS_DOCUMENTS = ('.pdf', '.docx', '.xlsx', '.pptx')
@@ -90,81 +139,34 @@ EXTENSIONS_TEXT = ('.txt', '.md', '.py', '.js', '.json', '.yaml', '.yml')
 # EXTENSIONS_MEDIA_VIDEO = ('.mp4', '.avi', '.mkv')
 
 # Return Codes (zCLI standard)
-RETURN_ZBACK = "zBack"    # Success, return to previous screen
-RETURN_STOP = "stop"       # Failure, stop execution
 
 # Session Keys (zMachine sub-keys)
-ZMACHINE_KEY_IDE = "ide"
 
 # Default IDE (fallback if not configured)
-DEFAULT_IDE = "nano"
-IDE_UNKNOWN = "unknown"
 
 # Available IDEs (for zDialog selection prompt)
-AVAILABLE_IDES = ["cursor", "code", "nano", "vim"]
 
 # File Creation Options (zDialog prompt)
-FILE_ACTION_CREATE = "Create file"
-FILE_ACTION_CANCEL = "Cancel"
-FILE_ACTIONS = [FILE_ACTION_CREATE, FILE_ACTION_CANCEL]
 
 # Content Display Limits
-CONTENT_TRUNCATE_LIMIT = 1000  # Characters to show before truncation
 
 # Display Colors
-COLOR_SUCCESS = "GREEN"
-COLOR_ERROR = "RED"
-COLOR_INFO = "INFO"
 
 # Display Styles
-STYLE_SINGLE = "single"
-STYLE_SECTION = "~"
 
 # Display Indents
-INDENT_FILE_INFO = 1
 
 # Display Messages
-MSG_CREATED_FILE = "Created {path}"
-MSG_OPENED_BROWSER = "Opened {filename} in browser"
-MSG_OPENED_IDE = "Opened {filename} in {ide}"
-MSG_BROWSER_FAILED = "Browser failed to open HTML file"
-MSG_BROWSER_ERROR = "Browser error: {error}"
-MSG_FAILED_IDE = "Failed to open with {ide}: {error}"
-MSG_FILE_CONTENT_TITLE = "File Content: {filename}"
-MSG_CONTENT_TRUNCATED = "\n[Content truncated - showing first {limit} of {total} characters]"
-MSG_UNSUPPORTED_TYPE = "Unsupported file type: {ext}"
 
 # Error Messages
-ERR_FILE_NOT_FOUND = "File not found: %s"
-ERR_DIALOG_FAILED = "Dialog fallback failed: %s"
-ERR_BROWSER_FAILED = "Browser failed to open HTML file"
-ERR_BROWSER_ERROR = "Browser error: %s"
-ERR_IDE_FAILED = "Failed to open with IDE %s: %s"
-ERR_READ_FAILED = "Failed to read file: %s"
-ERR_UNSUPPORTED_TYPE = "Unsupported file type: %s"
 
 # Log Messages
-LOG_RESOLVED_PATH = "Resolved path: %s"
-LOG_FILE_NOT_FOUND = "File not found: %s"
-LOG_PROMPTING_USER = "Prompting user for action on missing file"
-LOG_CREATED_FILE = "Created file: %s"
-LOG_OPENING_HTML = "Opening HTML file: %s"
-LOG_SUCCESS_HTML = "Successfully opened HTML file in browser"
-LOG_OPENING_TEXT = "Opening text file: %s"
-LOG_USING_IDE = "Using IDE: %s"
-LOG_SUCCESS_IDE = "Successfully opened file with %s"
-LOG_IDE_SELECTION_FAILED = "IDE selection dialog failed: %s"
-LOG_DISPLAYING_CONTENT = "Displaying text file content"
 
 # File Encoding
-FILE_ENCODING = 'utf-8'
 
 # zDialog Field Names
-DIALOG_FIELD_ACTION = "action"
-DIALOG_FIELD_IDE = "ide"
 
 # OS Platform Identifier
-OS_WINDOWS = 'nt'
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -279,7 +281,7 @@ def open_file(
 
     Version: v1.5.4
     """
-    logger.debug(LOG_RESOLVED_PATH, path)
+    logger.debug(_LOG_RESOLVED_PATH, path)
 
     # Enhanced display: Show file info as JSON (if file exists)
     if os.path.exists(path):
@@ -289,46 +291,46 @@ def open_file(
             "size": f"{os.path.getsize(path)} bytes",
             "type": os.path.splitext(path)[1]
         }
-        display.json_data(file_info, color=True, indent=INDENT_FILE_INFO)
+        display.json_data(file_info, color=True, indent=_INDENT_FILE_INFO)
 
     # Check if file exists
     if not os.path.exists(path):
-        logger.error(ERR_FILE_NOT_FOUND, path)
+        logger.error(_ERR_FILE_NOT_FOUND, path)
 
         # zDialog fallback: Offer to create file or cancel (defensive check)
         if dialog:
-            logger.info(LOG_PROMPTING_USER)
+            logger.info(_LOG_PROMPTING_USER)
 
             try:
                 result = dialog.handle({
                     "zDialog": {
                         "model": None,
                         "fields": [{
-                            "name": DIALOG_FIELD_ACTION,
+                            "name": _DIALOG_FIELD_ACTION,
                             "type": "enum",
-                            "options": FILE_ACTIONS
+                            "options": _FILE_ACTIONS
                         }]
                     }
                 })
 
-                if result.get(DIALOG_FIELD_ACTION) == FILE_ACTION_CREATE:
+                if result.get(_DIALOG_FIELD_ACTION) == _FILE_ACTION_CREATE:
                     # Create empty file
                     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
-                    with open(path, 'w', encoding=FILE_ENCODING) as f:
+                    with open(path, 'w', encoding=_FILE_ENCODING) as f:
                         f.write("")
-                    logger.info(LOG_CREATED_FILE, path)
+                    logger.info(_LOG_CREATED_FILE, path)
                     display.zDeclare(
-                        MSG_CREATED_FILE.format(path=path),
+                        _MSG_CREATED_FILE.format(path=path),
                         color=COLOR_SUCCESS,
-                        indent=INDENT_FILE_INFO,
-                        style=STYLE_SINGLE
+                        indent=_INDENT_FILE_INFO,
+                        style=_STYLE_SINGLE
                     )
                     # Continue with opening the newly created file
                 else:
                     return RETURN_STOP
 
             except Exception as e:
-                logger.warning(ERR_DIALOG_FAILED, e)
+                logger.warning(_ERR_DIALOG_FAILED, e)
                 return RETURN_STOP
         else:
             # No dialog available, can't create file
@@ -344,12 +346,12 @@ def open_file(
         return _open_text(path, session, display, dialog, logger)
 
     # Unsupported file type
-    logger.warning(ERR_UNSUPPORTED_TYPE, ext)
+    logger.warning(_ERR_UNSUPPORTED_TYPE, ext)
     display.zDeclare(
-        MSG_UNSUPPORTED_TYPE.format(ext=ext),
+        _MSG_UNSUPPORTED_TYPE.format(ext=ext),
         color=COLOR_ERROR,
-        indent=INDENT_FILE_INFO,
-        style=STYLE_SINGLE
+        indent=_INDENT_FILE_INFO,
+        style=_STYLE_SINGLE
     )
     return RETURN_STOP
 
@@ -393,36 +395,36 @@ def _open_html(
     Version: v1.5.4
     """
     url = f"file://{path}"
-    logger.info(LOG_OPENING_HTML, url)
+    logger.info(_LOG_OPENING_HTML, url)
 
     try:
         success = webbrowser.open(url)
         if success:
-            logger.info(LOG_SUCCESS_HTML)
+            logger.info(_LOG_SUCCESS_HTML)
             display.zDeclare(
-                MSG_OPENED_BROWSER.format(filename=os.path.basename(path)),
+                _MSG_OPENED_BROWSER.format(filename=os.path.basename(path)),
                 color=COLOR_SUCCESS,
-                indent=INDENT_FILE_INFO,
-                style=STYLE_SINGLE
+                indent=_INDENT_FILE_INFO,
+                style=_STYLE_SINGLE
             )
             return RETURN_ZBACK
 
-        logger.warning(ERR_BROWSER_FAILED)
+        logger.warning(_ERR_BROWSER_FAILED)
         display.zDeclare(
-            MSG_BROWSER_FAILED,
+            _MSG_BROWSER_FAILED,
             color=COLOR_ERROR,
-            indent=INDENT_FILE_INFO,
-            style=STYLE_SINGLE
+            indent=_INDENT_FILE_INFO,
+            style=_STYLE_SINGLE
         )
         return RETURN_STOP
 
     except Exception as e:
-        logger.warning(ERR_BROWSER_ERROR, e)
+        logger.warning(_ERR_BROWSER_ERROR, e)
         display.zDeclare(
-            MSG_BROWSER_ERROR.format(error=str(e)),
+            _MSG_BROWSER_ERROR.format(error=str(e)),
             color=COLOR_ERROR,
-            indent=INDENT_FILE_INFO,
-            style=STYLE_SINGLE
+            indent=_INDENT_FILE_INFO,
+            style=_STYLE_SINGLE
         )
         return RETURN_STOP
 
@@ -453,7 +455,7 @@ def _open_text(
     IDE Selection Logic:
         1. Get IDE from session[SESSION_KEY_ZMACHINE][ZMACHINE_KEY_IDE]
         2. If IDE is "unknown" and dialog available:
-            - Prompt user to select from AVAILABLE_IDES
+            - Prompt user to select from _AVAILABLE_IDES
         3. Default to "nano" if not configured
 
     IDE Launch:
@@ -480,29 +482,29 @@ def _open_text(
 
     Version: v1.5.4
     """
-    logger.info(LOG_OPENING_TEXT, path)
+    logger.info(_LOG_OPENING_TEXT, path)
 
     # Get IDE preference (priority: session["ide"] → session["zMachine"]["ide"] → default)
-    editor = session.get(SESSION_KEY_IDE) or session.get(SESSION_KEY_ZMACHINE, {}).get(ZMACHINE_KEY_IDE, DEFAULT_IDE)
+    editor = session.get(SESSION_KEY_IDE) or session.get(SESSION_KEY_ZMACHINE, {}).get(ZMACHINE_KEY_IDE, _DEFAULT_IDE)
 
-    logger.info(LOG_USING_IDE, editor)
+    logger.info(_LOG_USING_IDE, editor)
 
     # zDialog: Optionally ask for IDE if unknown (defensive check)
-    if dialog and editor == IDE_UNKNOWN:
+    if dialog and editor == _IDE_UNKNOWN:
         try:
             result = dialog.handle({
                 "zDialog": {
                     "model": None,
                     "fields": [{
-                        "name": DIALOG_FIELD_IDE,
+                        "name": _DIALOG_FIELD_IDE,
                         "type": "enum",
-                        "options": AVAILABLE_IDES
+                        "options": _AVAILABLE_IDES
                     }]
                 }
             })
-            editor = result.get(DIALOG_FIELD_IDE, DEFAULT_IDE)
+            editor = result.get(_DIALOG_FIELD_IDE, _DEFAULT_IDE)
         except Exception as e:
-            logger.warning(LOG_IDE_SELECTION_FAILED, e)
+            logger.warning(_LOG_IDE_SELECTION_FAILED, e)
 
     # Try to open with IDE using platform-specific launch command
     try:
@@ -513,34 +515,34 @@ def _open_text(
             # Build full command: cmd + args + [path]
             full_cmd = [cmd] + args + [path]
             subprocess.run(full_cmd, check=False, timeout=10)
-            logger.info(LOG_SUCCESS_IDE, editor)
-        elif os.name == OS_WINDOWS:
+            logger.info(_LOG_SUCCESS_IDE, editor)
+        elif os.name == _OS_WINDOWS:
             # Windows fallback: try os.startfile for unknown IDEs
             try:
                 os.startfile(path)  # type: ignore
-                logger.info(LOG_SUCCESS_IDE, "startfile")
+                logger.info(_LOG_SUCCESS_IDE, "startfile")
             except AttributeError:
                 subprocess.run([editor, path], check=False, timeout=10)
-                logger.info(LOG_SUCCESS_IDE, editor)
+                logger.info(_LOG_SUCCESS_IDE, editor)
         else:
             # Unix/macOS fallback: try direct command for unknown IDEs
             subprocess.run([editor, path], check=False, timeout=10)
-            logger.info(LOG_SUCCESS_IDE, editor)
+            logger.info(_LOG_SUCCESS_IDE, editor)
         display.zDeclare(
-            MSG_OPENED_IDE.format(filename=os.path.basename(path), ide=editor),
+            _MSG_OPENED_IDE.format(filename=os.path.basename(path), ide=editor),
             color=COLOR_SUCCESS,
-            indent=INDENT_FILE_INFO,
-            style=STYLE_SINGLE
+            indent=_INDENT_FILE_INFO,
+            style=_STYLE_SINGLE
         )
         return RETURN_ZBACK
 
     except Exception as e:
-        logger.warning(ERR_IDE_FAILED, editor, e)
+        logger.warning(_ERR_IDE_FAILED, editor, e)
         display.zDeclare(
-            MSG_FAILED_IDE.format(ide=editor, error=str(e)),
+            _MSG_FAILED_IDE.format(ide=editor, error=str(e)),
             color=COLOR_ERROR,
-            indent=INDENT_FILE_INFO,
-            style=STYLE_SINGLE
+            indent=_INDENT_FILE_INFO,
+            style=_STYLE_SINGLE
         )
 
         # Fallback: Display file content
@@ -569,7 +571,7 @@ def _display_file_content(
     Content Display:
         - Uses display.zDeclare() for section title
         - Uses display.write_block() for content
-        - Truncates after CONTENT_TRUNCATE_LIMIT characters (1000)
+        - Truncates after _CONTENT_TRUNCATE_LIMIT characters (1000)
         - Shows truncation notice if content exceeds limit
 
     Truncation Logic:
@@ -594,25 +596,25 @@ def _display_file_content(
 
     Version: v1.5.4
     """
-    logger.info(LOG_DISPLAYING_CONTENT)
+    logger.info(_LOG_DISPLAYING_CONTENT)
 
     try:
-        with open(path, 'r', encoding=FILE_ENCODING) as f:
+        with open(path, 'r', encoding=_FILE_ENCODING) as f:
             content = f.read()
 
         display.zDeclare(
-            MSG_FILE_CONTENT_TITLE.format(filename=os.path.basename(path)),
+            _MSG_FILE_CONTENT_TITLE.format(filename=os.path.basename(path)),
             color=COLOR_INFO,
-            indent=INDENT_FILE_INFO,
-            style=STYLE_SECTION
+            indent=_INDENT_FILE_INFO,
+            style=_STYLE_SECTION
         )
 
         # Display content using display.write_block() with truncation
-        if len(content) > CONTENT_TRUNCATE_LIMIT:
-            display.write_block(content[:CONTENT_TRUNCATE_LIMIT] + "...")
+        if len(content) > _CONTENT_TRUNCATE_LIMIT:
+            display.write_block(content[:_CONTENT_TRUNCATE_LIMIT] + "...")
             display.write_line(
-                MSG_CONTENT_TRUNCATED.format(
-                    limit=CONTENT_TRUNCATE_LIMIT,
+                _MSG_CONTENT_TRUNCATED.format(
+                    limit=_CONTENT_TRUNCATE_LIMIT,
                     total=len(content)
                 )
             )
@@ -622,7 +624,7 @@ def _display_file_content(
         return RETURN_ZBACK
 
     except Exception as e:
-        logger.error(ERR_READ_FAILED, e)
+        logger.error(_ERR_READ_FAILED, e)
         return RETURN_STOP
 
 

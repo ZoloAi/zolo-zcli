@@ -111,72 +111,70 @@ Version History:
     - v1.5.4: Extracted logic to open_modules (paths, URLs, files)
     - v1.5.4: Added industry-grade documentation and type hints
     - v1.5.4: Modernized session key access (SESSION_KEY_* constants)
-
-TODO: Week 6.6 (zDispatch) Integration:
-    - dispatch_launcher.py (Line 403): Verify open.handle() signature after refactor ✓
-    - dispatch_launcher.py (Line 427): Update open.handle() call after refactor ✓
-    - Current signature: handle(zHorizontal: str | dict) → str
-    - Status: COMPATIBLE - No changes needed
+    - v1.5.4: Verified zDispatch integration - handle() signature compatible
 
 Author: zCLI Development Team
 """
 
-from zCLI import os, urlparse, Any
+from zCLI import os, urlparse, Any, subprocess
+from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZMACHINE
 
 # Import from foundation modules (Tier 1)
 from .open_modules import resolve_zpath, open_url, open_file
+from .open_modules.open_constants import (
+    COLOR_INFO,
+    COLOR_ZOPEN,
+    DICT_KEY_ON_FAIL,
+    DICT_KEY_ON_SUCCESS,
+    DICT_KEY_PATH,
+    DICT_KEY_ZOPEN,
+    RETURN_STOP,
+    RETURN_ZBACK,
+    URL_PREFIX_WWW,
+    URL_SCHEME_HTTP,
+    URL_SCHEME_HTTPS,
+    URL_SCHEME_HTTPS_DEFAULT,
+    ZPATH_SYMBOL_ABSOLUTE,
+    ZPATH_SYMBOL_WORKSPACE,
+    _CMD_PREFIX,
+    _INDENT_HANDLE,
+    _INDENT_HOOK,
+    _INDENT_INIT,
+    _LOG_EXEC_FAIL_HOOK,
+    _LOG_EXEC_SUCCESS_HOOK,
+    _LOG_INCOMING_REQUEST,
+    _LOG_PARSED_PATH,
+    _MSG_HANDLE_ZOPEN,
+    _MSG_HOOK_FAIL,
+    _MSG_HOOK_SUCCESS,
+    _MSG_ZOPEN_READY,
+    _STYLE_FULL,
+    _STYLE_SINGLE,
+)
 
 # ═══════════════════════════════════════════════════════════════
 # Module-Level Constants
 # ═══════════════════════════════════════════════════════════════
 
 # Command Prefix
-CMD_PREFIX = "zOpen("
 
 # Dict Keys
-DICT_KEY_ZOPEN = "zOpen"
-DICT_KEY_PATH = "path"
-DICT_KEY_ON_SUCCESS = "onSuccess"
-DICT_KEY_ON_FAIL = "onFail"
 
 # URL Schemes (for detection)
-URL_SCHEME_HTTP = "http"
-URL_SCHEME_HTTPS = "https"
-URL_PREFIX_WWW = "www."
-URL_SCHEME_HTTPS_DEFAULT = "https://"
 
 # zPath Symbols (for detection)
-ZPATH_SYMBOL_WORKSPACE = "@"
-ZPATH_SYMBOL_ABSOLUTE = "~"
 
 # Return Codes (zCLI standard)
-RETURN_ZBACK = "zBack"
-RETURN_STOP = "stop"
 
 # Display Colors
-COLOR_ZOPEN = "ZOPEN"
-COLOR_INFO = "INFO"
 
 # Display Styles
-STYLE_FULL = "full"
-STYLE_SINGLE = "single"
 
 # Display Messages
-MSG_ZOPEN_READY = "zOpen Ready"
-MSG_HANDLE_ZOPEN = "Handle zOpen"
-MSG_HOOK_SUCCESS = "[HOOK] onSuccess"
-MSG_HOOK_FAIL = "[HOOK] onFail"
 
 # Display Indents
-INDENT_INIT = 0
-INDENT_HANDLE = 1
-INDENT_HOOK = 2
 
 # Log Messages
-LOG_INCOMING_REQUEST = "Incoming zOpen request: %s"
-LOG_PARSED_PATH = "Parsed path: %s"
-LOG_EXEC_SUCCESS_HOOK = "Executing onSuccess hook: %s"
-LOG_EXEC_FAIL_HOOK = "Executing onFail hook: %s"
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -272,10 +270,10 @@ class zOpen:
 
         # Display initialization message
         self.display.zDeclare(
-            MSG_ZOPEN_READY,
+            _MSG_ZOPEN_READY,
             color=self.mycolor,
-            indent=INDENT_INIT,
-            style=STYLE_FULL
+            indent=_INDENT_INIT,
+            style=_STYLE_FULL
         )
 
     def handle(self, zHorizontal: str | dict[str, Any]) -> str:
@@ -376,14 +374,14 @@ class zOpen:
         """
         # Display handle message and breadcrumbs
         self.display.zDeclare(
-            MSG_HANDLE_ZOPEN,
+            _MSG_HANDLE_ZOPEN,
             color=self.mycolor,
-            indent=INDENT_HANDLE,
-            style=STYLE_FULL
+            indent=_INDENT_HANDLE,
+            style=_STYLE_FULL
         )
         self.display.zCrumbs(self.session)
 
-        self.logger.debug(LOG_INCOMING_REQUEST, zHorizontal)
+        self.logger.debug(_LOG_INCOMING_REQUEST, zHorizontal)
 
         # Parse input - support both string and dict formats
         if isinstance(zHorizontal, dict):
@@ -394,11 +392,11 @@ class zOpen:
             on_fail = zopen_obj.get(DICT_KEY_ON_FAIL)
         else:
             # String format: "zOpen(path)"
-            raw_path = zHorizontal[len(CMD_PREFIX):-1].strip().strip('"').strip("'")
+            raw_path = zHorizontal[len(_CMD_PREFIX):-1].strip().strip('"').strip("'")
             on_success = None
             on_fail = None
 
-        self.logger.debug(LOG_PARSED_PATH, raw_path)
+        self.logger.debug(_LOG_PARSED_PATH, raw_path)
 
         # Determine type and route to appropriate handler
         parsed = urlparse(raw_path)
@@ -425,26 +423,114 @@ class zOpen:
 
         # Execute hooks based on result
         if result == RETURN_ZBACK and on_success:
-            self.logger.info(LOG_EXEC_SUCCESS_HOOK, on_success)
+            self.logger.info(_LOG_EXEC_SUCCESS_HOOK, on_success)
             self.display.zDeclare(
-                MSG_HOOK_SUCCESS,
+                _MSG_HOOK_SUCCESS,
                 color=self.mycolor,
-                indent=INDENT_HOOK,
-                style=STYLE_SINGLE
+                indent=_INDENT_HOOK,
+                style=_STYLE_SINGLE
             )
             return self.zfunc.handle(on_success)
 
         if result == RETURN_STOP and on_fail:
-            self.logger.info(LOG_EXEC_FAIL_HOOK, on_fail)
+            self.logger.info(_LOG_EXEC_FAIL_HOOK, on_fail)
             self.display.zDeclare(
-                MSG_HOOK_FAIL,
+                _MSG_HOOK_FAIL,
                 color=self.mycolor,
-                indent=INDENT_HOOK,
-                style=STYLE_SINGLE
+                indent=_INDENT_HOOK,
+                style=_STYLE_SINGLE
             )
             return self.zfunc.handle(on_fail)
 
         return result
+
+    def _launch_media_player(
+        self,
+        media_path: str,
+        player_type: str,
+        get_launch_cmd_func,
+        media_type_display: str
+    ) -> str:
+        """
+        Internal helper to launch media players with common error handling.
+        
+        Consolidates shared logic for open_image/video/audio methods, eliminating
+        ~250 lines of duplication across 3 methods.
+        
+        Args:
+            media_path: Path to the media file (relative or absolute)
+            player_type: Key in zMachine dict ("image_viewer", "video_player", "audio_player")
+            get_launch_cmd_func: Function to get platform-specific launch command
+            media_type_display: Display name for media type ("image", "video", "audio")
+            
+        Returns:
+            "zBack" if successfully opened, "stop" if failed
+            
+        Version: v1.6.1 (DRY Refactoring - extracted from open_image/video/audio)
+        """
+        # Get player/viewer from session
+        zmachine = self.session.get(SESSION_KEY_ZMACHINE, {})
+        player_name = zmachine.get(player_type, "unknown")
+        
+        # Handle special cases
+        if player_name in ("none", "unknown"):
+            self.logger.warning(f"No {media_type_display} player available (player: {player_name})")
+            self.display.warning(
+                f"No {media_type_display} {'viewer' if media_type_display == 'image' else 'player'} detected. "
+                f"Cannot {'open' if media_type_display == 'image' else 'play'} {media_type_display}s in this environment.",
+                indent=1
+            )
+            return RETURN_STOP
+        
+        # Get platform-specific launch command
+        cmd, args = get_launch_cmd_func(player_name)
+        
+        if cmd is None:
+            self.logger.error(f"Failed to get launch command for {media_type_display} player: {player_name}")
+            self.display.error(
+                f"{media_type_display.capitalize()} {'viewer' if media_type_display == 'image' else 'player'} "
+                f"'{player_name}' is not supported on this platform.",
+                indent=1
+            )
+            return RETURN_STOP
+        
+        # Resolve absolute path
+        absolute_path = os.path.abspath(os.path.expanduser(media_path))
+        
+        # Check if file exists
+        if not os.path.exists(absolute_path):
+            self.logger.error(f"{media_type_display.capitalize()} file not found: {absolute_path}")
+            self.display.error(
+                f"{media_type_display.capitalize()} file not found: {media_path}",
+                indent=1
+            )
+            return RETURN_STOP
+        
+        # Launch media player
+        try:
+            full_command = [cmd] + args + [absolute_path]
+            self.logger.info(f"Launching {media_type_display} player: {' '.join(full_command)}")
+            
+            subprocess.Popen(
+                full_command,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
+            
+            self.logger.info(f"Successfully opened {media_type_display} in {player_name}")
+            self.display.success(
+                f"Opened {media_type_display} in {player_name}",
+                indent=1
+            )
+            return RETURN_ZBACK
+            
+        except Exception as e:
+            self.logger.error(f"Failed to open {media_type_display} with {player_name}: {e}")
+            self.display.error(
+                f"Failed to open {media_type_display}: {e}",
+                indent=1
+            )
+            return RETURN_STOP
 
     def open_image(self, image_path: str) -> str:
         """
@@ -520,72 +606,14 @@ class zOpen:
                 self.logger.warning(f"Server path detected but zServer not enabled: {image_path}")
                 # Fall through to local file handling (will fail if not a real local path)
         
-        # Local file handling (original logic)
-        from zCLI import subprocess
+        # Local file handling (consolidated via helper)
         from zCLI.L1_Foundation.a_zConfig.zConfig_modules.helpers import get_image_viewer_launch_command
-        from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZMACHINE
-        
-        # Get image viewer from session
-        zmachine = self.session.get(SESSION_KEY_ZMACHINE, {})
-        viewer_name = zmachine.get("image_viewer", "unknown")
-        
-        # Handle special cases
-        if viewer_name in ("none", "unknown"):
-            self.logger.warning(f"No image viewer available (viewer: {viewer_name})")
-            self.display.warning(
-                "No image viewer detected. Cannot open images in this environment.",
-                indent=1
-            )
-            return RETURN_STOP
-        
-        # Get platform-specific launch command
-        cmd, args = get_image_viewer_launch_command(viewer_name)
-        
-        if cmd is None:
-            self.logger.error(f"Failed to get launch command for viewer: {viewer_name}")
-            self.display.error(
-                f"Image viewer '{viewer_name}' is not supported on this platform.",
-                indent=1
-            )
-            return RETURN_STOP
-        
-        # Resolve absolute path
-        absolute_path = os.path.abspath(os.path.expanduser(image_path))
-        
-        # Check if file exists
-        if not os.path.exists(absolute_path):
-            self.logger.error(f"Image file not found: {absolute_path}")
-            self.display.error(
-                f"Image file not found: {image_path}",
-                indent=1
-            )
-            return RETURN_STOP
-        
-        # Launch image viewer
-        try:
-            full_command = [cmd] + args + [absolute_path]
-            self.logger.info(f"Launching image viewer: {' '.join(full_command)}")
-            
-            subprocess.Popen(
-                full_command,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL
-            )
-            
-            self.logger.info(f"Successfully opened image in {viewer_name}")
-            self.display.success(
-                f"Opened image in {viewer_name}",
-                indent=1
-            )
-            return RETURN_ZBACK
-            
-        except Exception as e:
-            self.logger.error(f"Failed to open image with {viewer_name}: {e}")
-            self.display.error(
-                f"Failed to open image: {e}",
-                indent=1
-            )
-            return RETURN_STOP
+        return self._launch_media_player(
+            image_path,
+            "image_viewer",
+            get_image_viewer_launch_command,
+            "image"
+        )
 
     def open_video(self, video_path: str) -> str:
         """
@@ -616,71 +644,13 @@ class zOpen:
             
         Version: v1.5.8 (Video Support)
         """
-        from zCLI import subprocess
         from zCLI.L1_Foundation.a_zConfig.zConfig_modules.helpers import get_video_player_launch_command
-        from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZMACHINE
-        
-        # Get video player from session
-        zmachine = self.session.get(SESSION_KEY_ZMACHINE, {})
-        player_name = zmachine.get("video_player", "unknown")
-        
-        # Handle special cases
-        if player_name in ("none", "unknown"):
-            self.logger.warning(f"No video player available (player: {player_name})")
-            self.display.warning(
-                "No video player detected. Cannot play videos in this environment.",
-                indent=1
-            )
-            return RETURN_STOP
-        
-        # Get platform-specific launch command
-        cmd, args = get_video_player_launch_command(player_name)
-        
-        if cmd is None:
-            self.logger.error(f"Failed to get launch command for player: {player_name}")
-            self.display.error(
-                f"Video player '{player_name}' is not supported on this platform.",
-                indent=1
-            )
-            return RETURN_STOP
-        
-        # Resolve absolute path
-        absolute_path = os.path.abspath(os.path.expanduser(video_path))
-        
-        # Check if file exists
-        if not os.path.exists(absolute_path):
-            self.logger.error(f"Video file not found: {absolute_path}")
-            self.display.error(
-                f"Video file not found: {video_path}",
-                indent=1
-            )
-            return RETURN_STOP
-        
-        # Launch video player
-        try:
-            full_command = [cmd] + args + [absolute_path]
-            self.logger.info(f"Launching video player: {' '.join(full_command)}")
-            
-            subprocess.Popen(
-                full_command,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL
-            )
-            
-            self.logger.info(f"Successfully opened video in {player_name}")
-            self.display.success(
-                f"Opened video in {player_name}",
-                indent=1
-            )
-            return RETURN_ZBACK
-            
-        except Exception as e:
-            self.logger.error(f"Failed to open video with {player_name}: {e}")
-            self.display.error(
-                f"Failed to open video: {e}",
-                indent=1
-            )
-            return RETURN_STOP
+        return self._launch_media_player(
+            video_path,
+            "video_player",
+            get_video_player_launch_command,
+            "video"
+        )
 
     def open_audio(self, audio_path: str) -> str:
         """
@@ -711,71 +681,13 @@ class zOpen:
             
         Version: v1.5.8 (Audio Support)
         """
-        from zCLI import subprocess
         from zCLI.L1_Foundation.a_zConfig.zConfig_modules.helpers import get_audio_player_launch_command
-        from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZMACHINE
-        
-        # Get audio player from session
-        zmachine = self.session.get(SESSION_KEY_ZMACHINE, {})
-        player_name = zmachine.get("audio_player", "unknown")
-        
-        # Handle special cases
-        if player_name in ("none", "unknown"):
-            self.logger.warning(f"No audio player available (player: {player_name})")
-            self.display.warning(
-                "No audio player detected. Cannot play audio in this environment.",
-                indent=1
-            )
-            return RETURN_STOP
-        
-        # Get platform-specific launch command
-        cmd, args = get_audio_player_launch_command(player_name)
-        
-        if cmd is None:
-            self.logger.error(f"Failed to get launch command for player: {player_name}")
-            self.display.error(
-                f"Audio player '{player_name}' is not supported on this platform.",
-                indent=1
-            )
-            return RETURN_STOP
-        
-        # Resolve absolute path
-        absolute_path = os.path.abspath(os.path.expanduser(audio_path))
-        
-        # Check if file exists
-        if not os.path.exists(absolute_path):
-            self.logger.error(f"Audio file not found: {absolute_path}")
-            self.display.error(
-                f"Audio file not found: {audio_path}",
-                indent=1
-            )
-            return RETURN_STOP
-        
-        # Launch audio player
-        try:
-            full_command = [cmd] + args + [absolute_path]
-            self.logger.info(f"Launching audio player: {' '.join(full_command)}")
-            
-            subprocess.Popen(
-                full_command,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL
-            )
-            
-            self.logger.info(f"Successfully opened audio in {player_name}")
-            self.display.success(
-                f"Opened audio in {player_name}",
-                indent=1
-            )
-            return RETURN_ZBACK
-            
-        except Exception as e:
-            self.logger.error(f"Failed to open audio with {player_name}: {e}")
-            self.display.error(
-                f"Failed to open audio: {e}",
-                indent=1
-            )
-            return RETURN_STOP
+        return self._launch_media_player(
+            audio_path,
+            "audio_player",
+            get_audio_player_launch_command,
+            "audio"
+        )
 
 
 # ═══════════════════════════════════════════════════════════════

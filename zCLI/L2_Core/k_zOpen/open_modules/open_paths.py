@@ -54,29 +54,31 @@ from zCLI import os, Optional, Any
 
 # Import centralized session constants
 from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZSPACE
+from .open_constants import (
+    ZPATH_SEPARATOR,
+    ZPATH_SYMBOL_ABSOLUTE,
+    ZPATH_SYMBOL_WORKSPACE,
+    _ERR_INVALID_ZPATH,
+    _ERR_NO_WORKSPACE,
+    _ERR_RESOLUTION_FAILED,
+    _LOG_INVALID_FORMAT,
+    _LOG_RESOLVED_SUCCESS,
+    _LOG_RESOLVING_ZPATH,
+    _LOG_WORKSPACE_MISSING,
+    _ZPATH_MIN_PARTS,
+)
 
 # ═══════════════════════════════════════════════════════════════
 # Module-Level Constants
 # ═══════════════════════════════════════════════════════════════
 
 # zPath Symbols
-ZPATH_SYMBOL_WORKSPACE = "@"  # Workspace-relative path
-ZPATH_SYMBOL_ABSOLUTE = "~"   # Absolute path from root
-ZPATH_SEPARATOR = "."          # zPath component separator
 
 # Minimum zPath Components (symbol + name + extension)
-ZPATH_MIN_PARTS = 2
 
 # Error Messages
-ERR_NO_WORKSPACE = "No workspace set for relative path"
-ERR_INVALID_ZPATH = "Invalid zPath format"
-ERR_RESOLUTION_FAILED = "Failed to resolve zPath"
 
 # Log Messages
-LOG_RESOLVING_ZPATH = "Resolving zPath: %s"
-LOG_RESOLVED_SUCCESS = "Resolved zPath '%s' to: %s"
-LOG_INVALID_FORMAT = "Invalid zPath format: %s"
-LOG_WORKSPACE_MISSING = "Workspace context missing for path: %s"
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -153,7 +155,7 @@ def resolve_zpath(
 
     Version: v1.5.4
     """
-    logger.debug(LOG_RESOLVING_ZPATH, zpath)
+    logger.debug(_LOG_RESOLVING_ZPATH, zpath)
 
     # Clean the zPath (remove leading dots)
     zpath_cleaned = zpath.lstrip(ZPATH_SEPARATOR)
@@ -164,7 +166,7 @@ def resolve_zpath(
         # Workspace-relative path
         base = session.get(SESSION_KEY_ZSPACE) or ""
         if not base:
-            logger.error(ERR_NO_WORKSPACE + ": %s", zpath)
+            logger.error(_ERR_NO_WORKSPACE + ": %s", zpath)
             return None
         parts = parts[1:]  # Remove symbol from parts
 
@@ -178,8 +180,8 @@ def resolve_zpath(
         base = ""
 
     # Validate minimum parts count (name + extension)
-    if len(parts) < ZPATH_MIN_PARTS:
-        logger.error(ERR_INVALID_ZPATH + ": %s", zpath)
+    if len(parts) < _ZPATH_MIN_PARTS:
+        logger.error(_ERR_INVALID_ZPATH + ": %s", zpath)
         return None
 
     # Reconstruct filesystem path from components
@@ -190,11 +192,11 @@ def resolve_zpath(
 
         # Build absolute path
         resolved_path = os.path.abspath(os.path.join(base, *dirs, file_name))
-        logger.debug(LOG_RESOLVED_SUCCESS, zpath, resolved_path)
+        logger.debug(_LOG_RESOLVED_SUCCESS, zpath, resolved_path)
         return resolved_path
 
     except Exception as e:
-        logger.error(ERR_RESOLUTION_FAILED + " '%s': %s", zpath, e)
+        logger.error(_ERR_RESOLUTION_FAILED + " '%s': %s", zpath, e)
         return None
 
 
@@ -243,7 +245,7 @@ def validate_zpath(zpath: str) -> bool:
 
     # Check minimum parts count (symbol + name + extension)
     # After removing symbol, should have at least 2 parts remaining
-    return len(parts) >= (ZPATH_MIN_PARTS + 1)
+    return len(parts) >= (_ZPATH_MIN_PARTS + 1)
 
 
 # ═══════════════════════════════════════════════════════════════
