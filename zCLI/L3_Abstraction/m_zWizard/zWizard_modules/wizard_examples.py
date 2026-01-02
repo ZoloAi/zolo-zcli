@@ -22,7 +22,7 @@ Week: 6.14
 Version: v1.5.4 Phase 3 (Polish)
 """
 
-from typing import Any
+from zCLI import Any
 
 
 # ═══════════════════════════════════════════════════════════════════════════

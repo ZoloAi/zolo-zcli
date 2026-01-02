@@ -183,6 +183,11 @@ LOG_VALIDATION_SUMMARY = "[FAIL] Validation summary: %d field(s) failed for tabl
 VALUE_PLACEHOLDER = "<provided value>"  # Placeholder for ValidationError when actual value unavailable
 
 # ────────────────────────────────────────────────────────────────────────────
+# Success Messages
+# ────────────────────────────────────────────────────────────────────────────
+MSG_SUCCESS = "✓ %s"  # Generic success message template
+
+# ────────────────────────────────────────────────────────────────────────────
 # Public API
 # ────────────────────────────────────────────────────────────────────────────
 __all__ = [
@@ -190,6 +195,8 @@ __all__ = [
     "extract_where_clause",
     "extract_field_values",
     "display_validation_errors",
+    "execute_hook_if_defined",
+    "display_success_message",
 ]
 
 
@@ -616,3 +623,69 @@ def display_validation_errors(
     # Phase 4: Log Details - Record validation summary for debugging
     # ─────────────────────────────────────────────────────────────────────────
     ops.logger.debug(LOG_VALIDATION_SUMMARY, len(errors), table)
+
+def execute_hook_if_defined(
+    adapter: Any,
+    hook_name: str,
+    *args,
+    **kwargs
+) -> None:
+    """
+    Execute adapter hook method if it exists (DRY helper).
+    
+    Eliminates 4 occurrences of "if hasattr(adapter, hook_name)" checks across
+    CRUD operations by providing a centralized hook execution pattern.
+    
+    Args:
+        adapter: Backend adapter instance
+        hook_name: Name of the hook method to execute (e.g., "after_insert")
+        *args: Positional arguments to pass to the hook
+        **kwargs: Keyword arguments to pass to the hook
+    
+    Examples:
+        >>> # Instead of:
+        >>> if hasattr(adapter, "after_insert"):
+        >>>     adapter.after_insert(table, row_id)
+        >>> 
+        >>> # Use:
+        >>> execute_hook_if_defined(adapter, "after_insert", table, row_id)
+    
+    Notes:
+        - No-op if hook doesn't exist (safe to call)
+        - Uses getattr with hasattr for safe method lookup
+        - Supports both args and kwargs forwarding
+    """
+    if hasattr(adapter, hook_name):
+        hook = getattr(adapter, hook_name)
+        hook(*args, **kwargs)
+
+def display_success_message(
+    message: str,
+    ops: Any
+) -> None:
+    """
+    Display success message in mode-agnostic way (DRY helper).
+    
+    Eliminates 11 occurrences of "ops.display.success()" or "ops.zcli.display.success()"
+    checks across CRUD operations by providing a centralized success display pattern.
+    
+    Args:
+        message: Success message to display
+        ops: Operations context with display
+    
+    Examples:
+        >>> # Instead of:
+        >>> ops.display.success(f"✓ Inserted row into {table} with ID: {row_id}")
+        >>> 
+        >>> # Use:
+        >>> display_success_message(f"Inserted row into {table} with ID: {row_id}", ops)
+    
+    Notes:
+        - Uses ops.display.success() for mode-agnostic output
+        - Automatically prefixes message with checkmark (✓) if not present
+        - Works in Terminal, Walker, and Bifrost modes
+    """
+    # Add checkmark prefix if not present
+    if not message.startswith("✓"):
+        message = MSG_SUCCESS % message
+    ops.display.success(message)

@@ -466,20 +466,17 @@ def _prompt_for_confirmation(diff: Dict[str, Any], display: Any) -> bool:
         display.text("   Data will be permanently lost if you proceed.")
         display.text("")  # Blank line
     
-    # Prompt for confirmation
-    # Note: In Terminal mode, this would use input(). In Bifrost, this would use zDialog.
-    # For now, we'll use a simple approach that works in both modes.
+    # Prompt for confirmation using display.button() (mode-agnostic)
+    # Color selection based on destructiveness of changes
+    button_color = "danger" if diff.get("has_destructive_changes") else "warning"
     
-    # TODO: Integrate with zDialog for interactive confirmation in Bifrost mode
-    # For Phase 4.2 implementation, we'll use a simplified approach
-    
-    display.text(MSG_CONFIRM_PROMPT)
-    
-    # In a real implementation, we'd get user input here
-    # For now, return True (auto-confirm) to allow testing
-    # This will be enhanced in Phase 4.5 with proper input handling
-    
-    return True  # Placeholder - will be enhanced with proper input handling
+    # display.button() works in both Terminal and Bifrost modes:
+    # - Terminal: Prompts "Click [Apply Migration]? (y/n):" with semantic color (red/yellow)
+    # - Bifrost: Renders clickable button with semantic color
+    # - Returns True if confirmed ("y"/"yes" or button click), False otherwise
+    # TODO: Fine-tune UI/UX - Consider improving prompt text and visual flow
+    #       Current implementation works but could be more polished for clarity
+    return display.button("Apply Migration? (y/n)", color=button_color)
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # MIGRATION EXECUTION

@@ -11,7 +11,7 @@ Provides functions for:
 
 import hashlib
 import yaml
-from typing import Dict, List, Any, Optional, Tuple
+from zCLI import Dict, List, Any, Optional, Tuple
 from pathlib import Path
 
 

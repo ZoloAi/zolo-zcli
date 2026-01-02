@@ -155,7 +155,7 @@ Integration Points
 - Schema cache maintains database connections across wizard steps
 - Same connection used for all operations within a transaction
 - Improves performance and ensures transaction isolation
-- Context key: `CONTEXT_KEY_SCHEMA_CACHE`
+- Context key: `_CONTEXT_KEY_SCHEMA_CACHE`
 
 ### Integration with zData Subsystem
 **Data Operations:**
@@ -235,24 +235,24 @@ Constants Reference
 ### Subsystem Identity
 - SUBSYSTEM_NAME: "zWizard"
 - SUBSYSTEM_COLOR: "ZWIZARD"
-- MSG_READY: "zWizard Ready"
+- _MSG_READY: "zWizard Ready"
 
 ### Navigation Signals
-- SIGNAL_ZBACK, SIGNAL_EXIT, SIGNAL_STOP, SIGNAL_ERROR, SIGNAL_EMPTY
+- _SIGNAL_ZBACK, _SIGNAL_EXIT, _SIGNAL_STOP, _SIGNAL_ERROR, _SIGNAL_EMPTY
 - NAVIGATION_SIGNALS: Tuple of all signals
 
 ### Context Keys
-- CONTEXT_KEY_WIZARD_MODE: Session key for wizard mode flag
-- CONTEXT_KEY_SCHEMA_CACHE: Key for schema cache in context
-- CONTEXT_KEY_ZHAT: Key for WizardHat instance
+- _CONTEXT_KEY_WIZARD_MODE: Session key for wizard mode flag
+- _CONTEXT_KEY_SCHEMA_CACHE: Key for schema cache in context
+- _CONTEXT_KEY_ZHAT: Key for WizardHat instance
 
 ### Callbacks
-- CALLBACK_ON_BACK, CALLBACK_ON_EXIT, CALLBACK_ON_STOP, CALLBACK_ON_ERROR
+- _CALLBACK_ON_BACK, _CALLBACK_ON_EXIT, _CALLBACK_ON_STOP, _CALLBACK_ON_ERROR
 
 ### Display
-- MSG_HANDLE_WIZARD, MSG_WIZARD_STEP, MSG_ZKEY_DISPLAY, MSG_DISPATCH_ERROR
-- STYLE_FULL, STYLE_SINGLE, COLOR_MAIN, COLOR_ERROR
-- INDENT_LEVEL_0, INDENT_LEVEL_1, INDENT_LEVEL_2
+- _MSG_HANDLE_WIZARD, _MSG_WIZARD_STEP, _MSG_ZKEY_DISPLAY, _MSG_DISPATCH_ERROR
+- _STYLE_FULL, _STYLE_SINGLE, _COLOR_MAIN, _COLOR_ERROR
+- _INDENT_LEVEL_0, _INDENT_LEVEL_1, _INDENT_LEVEL_2
 
 Usage Examples
 -------------
@@ -298,7 +298,7 @@ Notes
 - Uses UI Adapter pattern (returns None, outputs via zDisplay)
 """
 
-from typing import Any, Dict, Optional
+from zCLI import Any, Dict, Optional
 
 from .zWizard_modules.wizard_hat import WizardHat
 from .zWizard_modules.wizard_interpolation import interpolate_zhat
@@ -321,58 +321,57 @@ from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_
 # PUBLIC API
 # ═══════════════════════════════════════════════════════════════════════════
 
-__all__ = ["zWizard"]
+__all__ = [
+    "zWizard",
+    # Public Constants
+    "SUBSYSTEM_NAME",
+    "SUBSYSTEM_COLOR",
+    "NAVIGATION_SIGNALS",
+]
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# MODULE CONSTANTS
+# ═══════════════════════════════════════════════════════════════════════════
+# IMPORTS - CONSTANTS
 # ═══════════════════════════════════════════════════════════════════════════
 
-# Subsystem Identity
-SUBSYSTEM_NAME: str = "zWizard"
-SUBSYSTEM_COLOR: str = "ZWIZARD"
-MSG_READY: str = "zWizard Ready"
+# Public Constants (exported from wizard_modules)
+from .zWizard_modules import (
+    SUBSYSTEM_NAME,
+    SUBSYSTEM_COLOR,
+    NAVIGATION_SIGNALS,
+)
 
-# Navigation Signals
-SIGNAL_ZBACK: str = "zBack"
-SIGNAL_EXIT: str = "exit"
-SIGNAL_STOP: str = "stop"
-SIGNAL_ERROR: str = "error"
-SIGNAL_EMPTY: str = ""
-NAVIGATION_SIGNALS: tuple = (SIGNAL_ZBACK, SIGNAL_EXIT, SIGNAL_STOP, SIGNAL_ERROR, SIGNAL_EMPTY)
-
-# Context Keys
-CONTEXT_KEY_WIZARD_MODE: str = SESSION_KEY_WIZARD_MODE  # Use zConfig constant
-CONTEXT_KEY_SCHEMA_CACHE: str = "schema_cache"
-CONTEXT_KEY_ZHAT: str = "zHat"
-
-# Navigation Callback Keys
-CALLBACK_ON_BACK: str = "on_back"
-CALLBACK_ON_EXIT: str = "on_exit"
-CALLBACK_ON_STOP: str = "on_stop"
-CALLBACK_ON_ERROR: str = "on_error"
-
-# Display Messages
-MSG_HANDLE_WIZARD: str = "Handle zWizard"
-MSG_WIZARD_STEP: str = "zWizard step: %s"
-MSG_ZKEY_DISPLAY: str = "zKey: %s"
-MSG_DISPATCH_ERROR: str = "Dispatch error for: %s"
-
-# Display Styles
-STYLE_FULL: str = "full"
-STYLE_SINGLE: str = "single"
-COLOR_MAIN: str = "MAIN"
-COLOR_ERROR: str = "ERROR"
-
-# Log Messages
-LOG_MSG_PROCESSING_KEY: str = "Processing key: %s"
-LOG_MSG_MENU_SELECTED: str = "Menu selected key: %s - jumping to it"
-LOG_MSG_DISPATCH_ERROR: str = "Error for key '%s': %s"
-
-# Display Indentation Levels
-INDENT_LEVEL_0: int = 0
-INDENT_LEVEL_1: int = 1
-INDENT_LEVEL_2: int = 2
+# Internal Constants (direct import for internal use)
+from .zWizard_modules.wizard_constants import (
+    _MSG_READY,
+    _SIGNAL_ZBACK,
+    _SIGNAL_EXIT,
+    _SIGNAL_STOP,
+    _SIGNAL_ERROR,
+    _SIGNAL_EMPTY,
+    _CONTEXT_KEY_WIZARD_MODE,
+    _CONTEXT_KEY_SCHEMA_CACHE,
+    _CONTEXT_KEY_ZHAT,
+    _CALLBACK_ON_BACK,
+    _CALLBACK_ON_EXIT,
+    _CALLBACK_ON_STOP,
+    _CALLBACK_ON_ERROR,
+    _MSG_HANDLE_WIZARD,
+    _MSG_WIZARD_STEP,
+    _MSG_ZKEY_DISPLAY,
+    _MSG_DISPATCH_ERROR,
+    _STYLE_FULL,
+    _STYLE_SINGLE,
+    _COLOR_MAIN,
+    _COLOR_ERROR,
+    _LOG_MSG_PROCESSING_KEY,
+    _LOG_MSG_MENU_SELECTED,
+    _LOG_MSG_DISPATCH_ERROR,
+    _INDENT_LEVEL_0,
+    _INDENT_LEVEL_1,
+    _INDENT_LEVEL_2,
+)
 
 
 class zWizard:
@@ -418,7 +417,7 @@ class zWizard:
 
         # Display ready message (only for direct zWizard instances, not subclasses like zWalker)
         if self.display and self.__class__.__name__ == "zWizard":
-            self.display.zDeclare(MSG_READY, color=SUBSYSTEM_COLOR, indent=0, style="full")
+            self.display.zDeclare(_MSG_READY, color=SUBSYSTEM_COLOR, indent=0, style="full")
 
     def execute_loop(
         self, 
@@ -540,34 +539,9 @@ class zWizard:
         # ════════════════════════════════════════════════════════════
         # Check if the entire block has RBAC requirements (_rbac at block level)
         # This gate must pass BEFORE entering the loop
-        block_rbac_result = check_rbac_access(
-            key="Block/Workflow",
-            value=items_dict,
-            zcli=self.zcli,
-            walker=self.walker,
-            logger=self.logger,
-            display=self.display
-        )
-        
-        if block_rbac_result == RBAC_ACCESS_DENIED:
-            self.logger.warning("[zWizard] Block-level RBAC denied access")
-            
-            # Terminal mode: Add pause before bounce-back
-            # Check if we're in Terminal mode (not Bifrost)
-            mode = self.zcli.session.get("zMode", "terminal")
-            if mode != "bifrost":
-                # Display pause prompt and wait for Enter
-                if self.display:
-                    self.display.text("Press Enter to continue...", indent=1, break_after=True)
-            
-            # Return SIGNAL_ZBACK to trigger navigation bounce-back
-            return SIGNAL_ZBACK
-        
-        # zGuest redirect (friendly, no pause needed - user is logged in, which is good!)
-        if block_rbac_result == RBAC_ACCESS_DENIED_ZGUEST:
-            self.logger.info("[zWizard] Block-level zGuest redirect (user authenticated)")
-            # No pause - just redirect gracefully
-            return SIGNAL_ZBACK
+        rbac_signal = self._check_block_rbac(items_dict)
+        if rbac_signal is not None:
+            return rbac_signal
         
         # ════════════════════════════════════════════════════════════
         # BLOCK-LEVEL DATA RESOLUTION (v1.5.12 - Flask/Jinja Pattern)
@@ -625,7 +599,7 @@ class zWizard:
         dispatch_fn = self._get_dispatch_fn(dispatch_fn, context)
         
         # Filter out metadata keys (underscore prefix) - they don't execute, only configure
-        keys_list = [k for k in items_dict.keys() if not k.startswith('_')]
+        keys_list = self._filter_keys(items_dict)
         idx = keys_list.index(start_key) if start_key and start_key in keys_list else 0
 
         # Main loop
@@ -633,9 +607,9 @@ class zWizard:
             key = keys_list[idx]
             value = items_dict[key]
 
-            self.logger.debug(LOG_MSG_PROCESSING_KEY, key)
+            self.logger.debug(_LOG_MSG_PROCESSING_KEY, key)
             if self.display:
-                self.display.zDeclare(MSG_ZKEY_DISPLAY % key, color=COLOR_MAIN, indent=INDENT_LEVEL_2, style=STYLE_SINGLE)
+                self.display.zDeclare(_MSG_ZKEY_DISPLAY % key, color=_COLOR_MAIN, indent=_INDENT_LEVEL_2, style=_STYLE_SINGLE)
 
             # ════════════════════════════════════════════════════════════
             # RBAC Enforcement (v1.5.4 Week 3.3)
@@ -658,36 +632,9 @@ class zWizard:
                     return error_result
                 continue
 
-            # ════════════════════════════════════════════════════════════
-            # BIFROST MODE: Check for menu signal
-            # ════════════════════════════════════════════════════════════
-            # If result is a dict with _bifrost_menu flag, it means we
-            # encountered a menu in Bifrost mode. We need to:
-            # 1. Emit the menu event to WebSocket
-            # 2. Stop execution (return None)
-            # 3. Wait for user to make a selection (handled by WebSocket)
-            from zCLI.L1_Foundation.a_zConfig.zConfig_modules import ZMODE_ZBIFROST
-            mode = self.zcli.session.get("zMode", "Terminal")
-            
-            if isinstance(result, dict) and result.get("_bifrost_menu"):
-                self.logger.debug(f"[zWizard] Bifrost menu signal detected (key: {key}) - emitting menu event")
-                
-                # Extract menu data
-                menu_options = result.get("options", [])
-                menu_title = result.get("title") or key.replace("*", "").replace("~", "").strip()
-                
-                # Store the menu state for later resumption
-                self.logger.debug(f"[zWizard] Menu options: {menu_options}")
-                self.logger.debug(f"[zWizard] Stopping execution at menu '{menu_title}' - frontend will handle interaction")
-                
-                # TODO: Emit menu event via display/bifrost
-                # For now, just stop execution
-                # The frontend should already have rendered up to this point
-                return None  # Stop execution
-
             # Check if result is a key jump (e.g., menu selection)
             if isinstance(result, str) and result in keys_list and result not in NAVIGATION_SIGNALS:
-                self.logger.debug(LOG_MSG_MENU_SELECTED, result)
+                self.logger.debug(_LOG_MSG_MENU_SELECTED, result)
                 
                 # ════════════════════════════════════════════════════════════
                 # Breadcrumb Tracking for Menu Navigation (Option C: POP Semantics)
@@ -826,33 +773,19 @@ class zWizard:
         self.logger.info("[zWizard] ⚡ Generator-based chunked execution for Bifrost")
         
         # Block-level RBAC check
-        block_rbac_result = check_rbac_access(
-            key="Block/Workflow",
-            value=items_dict,
-            zcli=self.zcli,
-            walker=self.walker,
-            logger=self.logger,
-            display=self.display
-        )
-        
-        if block_rbac_result in (RBAC_ACCESS_DENIED, RBAC_ACCESS_DENIED_ZGUEST):
-            self.logger.warning("[zWizard] Block-level RBAC denied in chunked mode")
-            
+        rbac_signal = self._check_block_rbac(items_dict)
+        if rbac_signal is not None:
             # Yield a special error chunk so the frontend can display the denial message
             # The buffered display events contain the formatted RBAC denial message
             # We yield an empty chunk list with special metadata to signal "RBAC_DENIED"
             self.logger.info("[zWizard] Yielding RBAC denial chunk with buffered events")
             yield ([], False, {"_rbac_denied": True, "_signal": "navigate_back"})
-            
-            return SIGNAL_ZBACK
+            return rbac_signal
         
         dispatch_fn = self._get_dispatch_fn(dispatch_fn, context)
         # Filter out metadata keys (_)
         # Note: Navbar keys (~zNavBar*) are now processed normally (not filtered)
-        keys_list = [
-            k for k in items_dict.keys() 
-            if not k.startswith('_')
-        ]
+        keys_list = self._filter_keys(items_dict)
         idx = keys_list.index(start_key) if start_key and start_key in keys_list else 0
         
         # Chunk accumulator
@@ -965,12 +898,12 @@ class zWizard:
 
     def _handle_dispatch_error(self, error: Exception, key: str, navigation_callbacks: Optional[Dict[str, Any]]) -> Any:
         """Handle dispatch errors."""
-        self.logger.error(LOG_MSG_DISPATCH_ERROR, key, error, exc_info=True)
+        self.logger.error(LOG__MSG_DISPATCH_ERROR, key, error, exc_info=True)
         if self.display:
-            self.display.zDeclare(MSG_DISPATCH_ERROR % key, color=COLOR_ERROR, indent=INDENT_LEVEL_1, style=STYLE_FULL)
+            self.display.zDeclare(_MSG_DISPATCH_ERROR % key, color=_COLOR_ERROR, indent=_INDENT_LEVEL_1, style=_STYLE_FULL)
 
-        if navigation_callbacks and CALLBACK_ON_ERROR in navigation_callbacks:
-            return navigation_callbacks[CALLBACK_ON_ERROR](error, key)
+        if navigation_callbacks and _CALLBACK_ON_ERROR in navigation_callbacks:
+            return navigation_callbacks[_CALLBACK_ON_ERROR](error, key)
         return None
 
     def _handle_navigation_result(self, result: Any, key: str, navigation_callbacks: Optional[Dict[str, Any]]) -> Any:
@@ -986,11 +919,11 @@ class zWizard:
         
         # Map result types to callback names
         result_map = {
-            SIGNAL_ZBACK: CALLBACK_ON_BACK,
-            SIGNAL_EXIT: CALLBACK_ON_EXIT,
-            SIGNAL_STOP: CALLBACK_ON_STOP,
-            SIGNAL_ERROR: CALLBACK_ON_ERROR,
-            SIGNAL_EMPTY: CALLBACK_ON_ERROR
+            _SIGNAL_ZBACK: _CALLBACK_ON_BACK,
+            _SIGNAL_EXIT: _CALLBACK_ON_EXIT,
+            _SIGNAL_STOP: _CALLBACK_ON_STOP,
+            _SIGNAL_ERROR: _CALLBACK_ON_ERROR,
+            _SIGNAL_EMPTY: _CALLBACK_ON_ERROR
         }
 
         # Check if result is hashable before lookup (navigation signals are primitives)
@@ -1001,7 +934,7 @@ class zWizard:
         
         callback_name = result_map.get(result)
         if callback_name and navigation_callbacks and callback_name in navigation_callbacks:
-            args = (result, key) if callback_name == CALLBACK_ON_ERROR else (result,)
+            args = (result, key) if callback_name == _CALLBACK_ON_ERROR else (result,)
             return navigation_callbacks[callback_name](*args)
 
         return result if result in result_map else None
@@ -1014,6 +947,65 @@ class zWizard:
             return self.walker.display
         return None
 
+    def _check_block_rbac(self, items_dict: Dict[str, Any]) -> Optional[str]:
+        """
+        Check block-level RBAC and return navigation signal if denied.
+        
+        Args:
+            items_dict: Block dictionary to check RBAC for
+        
+        Returns:
+            Navigation signal (_SIGNAL_ZBACK) if access denied, None if granted
+        
+        Notes:
+            - Checks RBAC requirements at the block/workflow level
+            - Displays access denied message with pause (Terminal mode)
+            - Returns _SIGNAL_ZBACK for bounce-back navigation
+            - Returns None for granted access (continue execution)
+        """
+        rbac_result = check_rbac_access(
+            key="Block/Workflow",
+            value=items_dict,
+            zcli=self.zcli,
+            walker=self.walker,
+            logger=self.logger,
+            display=self.display
+        )
+        
+        if rbac_result == RBAC_ACCESS_DENIED:
+            self.logger.warning("[zWizard] Block-level RBAC denied access")
+            
+            # Terminal mode: Add pause before bounce-back
+            mode = self.zcli.session.get("zMode", "terminal")
+            if mode != "bifrost":
+                if self.display:
+                    self.display.text("Press Enter to continue...", indent=1, break_after=True)
+            
+            return _SIGNAL_ZBACK
+        
+        # zGuest redirect (friendly, no pause - user is logged in)
+        if rbac_result == RBAC_ACCESS_DENIED_ZGUEST:
+            self.logger.info("[zWizard] Block-level zGuest redirect (user authenticated)")
+            return _SIGNAL_ZBACK
+        
+        return None
+
+    def _filter_keys(self, items_dict: Dict[str, Any]) -> list:
+        """
+        Filter metadata keys (underscore prefix) from items dictionary.
+        
+        Args:
+            items_dict: Dictionary of wizard steps/items
+        
+        Returns:
+            List of keys excluding metadata keys (those starting with '_')
+        
+        Notes:
+            - Metadata keys like _data, _rbac, _transaction configure behavior
+            - They don't execute as steps, only configure the workflow
+            - This ensures only actionable keys are processed in the loop
+        """
+        return [k for k in items_dict.keys() if not k.startswith('_')]
 
     def _execute_step(self, step_key: str, step_value: Any, step_context: Dict[str, Any]) -> Any:
         """Execute a single wizard step."""
@@ -1142,7 +1134,7 @@ class zWizard:
         """
         display = self._get_display()
         if display:
-            display.zDeclare(MSG_HANDLE_WIZARD, color=SUBSYSTEM_COLOR, indent=INDENT_LEVEL_1, style=STYLE_FULL)
+            display.zDeclare(_MSG_HANDLE_WIZARD, color=SUBSYSTEM_COLOR, indent=_INDENT_LEVEL_1, style=_STYLE_FULL)
 
         try:
             zHat = WizardHat()  # Use dual-access container
@@ -1151,10 +1143,10 @@ class zWizard:
             
             # NEW v1.5.12: Initialize context for entire workflow
             step_context = {
-                CONTEXT_KEY_WIZARD_MODE: True,
-                CONTEXT_KEY_SCHEMA_CACHE: self.schema_cache,
-                CONTEXT_KEY_ZHAT: zHat  # Pass zHat to context for zFunc access
-            } if self.schema_cache else {CONTEXT_KEY_WIZARD_MODE: True, CONTEXT_KEY_ZHAT: zHat}
+                _CONTEXT_KEY_WIZARD_MODE: True,
+                _CONTEXT_KEY_SCHEMA_CACHE: self.schema_cache,
+                _CONTEXT_KEY_ZHAT: zHat  # Pass zHat to context for zFunc access
+            } if self.schema_cache else {_CONTEXT_KEY_WIZARD_MODE: True, _CONTEXT_KEY_ZHAT: zHat}
             
             # NEW v1.5.12: BLOCK-LEVEL DATA RESOLUTION (Flask pattern)
             # If block has _data, resolve queries BEFORE processing steps
@@ -1189,7 +1181,7 @@ class zWizard:
                     continue
 
                 if display:
-                    display.zDeclare(MSG_WIZARD_STEP % step_key, color=SUBSYSTEM_COLOR, indent=INDENT_LEVEL_2, style=STYLE_SINGLE)
+                    display.zDeclare(_MSG_WIZARD_STEP % step_key, color=SUBSYSTEM_COLOR, indent=_INDENT_LEVEL_2, style=_STYLE_SINGLE)
 
                 step_value = interpolate_zhat(step_value, zHat, self.logger)
                 

@@ -157,10 +157,10 @@ Error Handling
 Constants Reference
 -------------------
 - RBAC_ACCESS_GRANTED, RBAC_ACCESS_DENIED: Return values
-- RBAC_KEY: Dict key for RBAC metadata (_rbac)
-- RBAC_REQUIRE_AUTH, RBAC_REQUIRE_ROLE, RBAC_REQUIRE_PERMISSION: RBAC fields
+- _RBAC_KEY: Dict key for RBAC metadata (_rbac)
+- _RBAC_REQUIRE_AUTH, _RBAC_REQUIRE_ROLE, _RBAC_REQUIRE_PERMISSION: RBAC fields
 - LOG_MSG_*: Log messages for various scenarios
-- MSG_AUTH_REQUIRED, MSG_ROLE_REQUIRED, MSG_PERMISSION_REQUIRED: Display messages
+- _MSG_AUTH_REQUIRED, _MSG_ROLE_REQUIRED, _MSG_PERMISSION_REQUIRED: Display messages
 - EVENT_*: Display event types
 
 Dependencies
@@ -182,59 +182,54 @@ Week: 6.14
 Version: v1.5.4 Phase 1 (Industry-Grade, RBAC from Week 3.3)
 """
 
-from typing import Any, Optional
+from zCLI import Any, Optional
 
-__all__ = ["check_rbac_access", "display_access_denied", "display_access_denied_zguest"]
+# Import constants from centralized file
+from .wizard_constants import (
+    # Public constants
+    RBAC_ACCESS_GRANTED,
+    RBAC_ACCESS_DENIED,
+    RBAC_ACCESS_DENIED_ZGUEST,
+    # Internal constants
+    _RBAC_KEY,
+    _RBAC_REQUIRE_AUTH,
+    _RBAC_REQUIRE_ROLE,
+    _RBAC_REQUIRE_PERMISSION,
+    _RBAC_ZGUEST,
+    _LOG_MSG_NO_AUTH_SUBSYSTEM,
+    _LOG_MSG_ACCESS_GRANTED,
+    _LOG_MSG_ACCESS_DENIED,
+    _MSG_AUTH_REQUIRED,
+    _MSG_ROLE_REQUIRED,
+    _MSG_PERMISSION_REQUIRED,
+    _MSG_ZGUEST_ONLY,
+    _MSG_ZGUEST_REDIRECT,
+    _MSG_ACCESS_DENIED_HEADER,
+    _MSG_DENIAL_REASON,
+    _MSG_DENIAL_TIP,
+    _EVENT_TEXT,
+    _EVENT_ERROR,
+    _KEY_EVENT,
+    _KEY_CONTENT,
+    _KEY_INDENT,
+    _KEY_BREAK_AFTER,
+    _INDENT_LEVEL_0,
+    _INDENT_LEVEL_1,
+    _FORMAT_ONE_OF,
+    _RBAC_ERROR_COLOR,
+    _RBAC_INDENT_LEVEL,
+)
 
-
-# ═══════════════════════════════════════════════════════════════════════════
-# MODULE CONSTANTS
-# ═══════════════════════════════════════════════════════════════════════════
-
-# RBAC Access Results
-RBAC_ACCESS_GRANTED: str = "access_granted"
-RBAC_ACCESS_DENIED: str = "access_denied"
-RBAC_ACCESS_DENIED_ZGUEST: str = "access_denied_zguest"  # Friendly redirect (no pause needed)
-
-# RBAC Metadata Keys
-RBAC_KEY: str = "_rbac"
-RBAC_REQUIRE_AUTH: str = "require_auth"
-RBAC_REQUIRE_ROLE: str = "require_role"
-RBAC_REQUIRE_PERMISSION: str = "require_permission"
-RBAC_ZGUEST: str = "zGuest"  # Guest-only access (unauthenticated users)
-
-# Log Messages
-LOG_MSG_NO_AUTH_SUBSYSTEM: str = "[RBAC] No auth subsystem available, denying access"
-LOG_MSG_ACCESS_GRANTED: str = "[RBAC] Access granted for %s"
-LOG_MSG_ACCESS_DENIED: str = "[RBAC] Access denied for '%s': %s"
-
-# Display Messages
-MSG_AUTH_REQUIRED: str = "Authentication required"
-MSG_ROLE_REQUIRED: str = "Role required: %s"
-MSG_PERMISSION_REQUIRED: str = "Permission required: %s"
-MSG_ZGUEST_ONLY: str = "You're already logged in!"
-MSG_ZGUEST_REDIRECT: str = "This page is for guests only. Redirecting..."
-MSG_ACCESS_DENIED_HEADER: str = "[ACCESS DENIED] %s"
-MSG_DENIAL_REASON: str = "Reason: %s"
-MSG_DENIAL_TIP: str = "Tip: Check your role/permissions or log in"
-
-# Display Event Types
-EVENT_TEXT: str = "text"
-EVENT_ERROR: str = "error"
-
-# Display Event Keys
-KEY_EVENT: str = "event"
-KEY_CONTENT: str = "content"
-KEY_INDENT: str = "indent"
-KEY_BREAK_AFTER: str = "break_after"
-
-# Indentation Levels
-INDENT_LEVEL_0: int = 0
-INDENT_LEVEL_1: int = 1
-INDENT_LEVEL_2: int = 2
-
-# Formatting
-FORMAT_ONE_OF: str = "one of %s"
+__all__ = [
+    # Public Functions
+    "check_rbac_access",
+    "display_access_denied",
+    "display_access_denied_zguest",
+    # Public Constants (re-export)
+    "RBAC_ACCESS_GRANTED",
+    "RBAC_ACCESS_DENIED",
+    "RBAC_ACCESS_DENIED_ZGUEST",
+]
 
 
 def check_rbac_access(
@@ -262,7 +257,7 @@ def check_rbac_access(
     # Extract RBAC metadata (if it exists)
     rbac = None
     if isinstance(value, dict):
-        rbac = value.get(RBAC_KEY)
+        rbac = value.get(_RBAC_KEY)
     
     # No RBAC requirements = public access
     if not rbac:
@@ -271,51 +266,51 @@ def check_rbac_access(
     # Get zCLI instance (from walker or direct)
     zcli_instance = walker.zcli if walker else zcli
     if not zcli_instance or not hasattr(zcli_instance, 'auth'):
-        logger.warning(LOG_MSG_NO_AUTH_SUBSYSTEM)
+        logger.warning(_LOG_MSG_NO_AUTH_SUBSYSTEM)
         return RBAC_ACCESS_DENIED
     
     # Check zGuest (guest-only access - user must NOT be authenticated)
-    if rbac.get(RBAC_ZGUEST):
+    if rbac.get(_RBAC_ZGUEST):
         if zcli_instance.auth.is_authenticated():
             # User is authenticated but this is guest-only
             # This is a GOOD thing - user is logged in! Just redirect gracefully
-            display_access_denied_zguest(key, MSG_ZGUEST_ONLY, display, logger)
+            display_access_denied_zguest(key, _MSG_ZGUEST_ONLY, display, logger)
             return RBAC_ACCESS_DENIED_ZGUEST  # Special return code (no pause needed)
     
     # Check require_auth (must be authenticated)
-    if rbac.get(RBAC_REQUIRE_AUTH):
+    if rbac.get(_RBAC_REQUIRE_AUTH):
         if not zcli_instance.auth.is_authenticated():
-            display_access_denied(key, MSG_AUTH_REQUIRED, display, logger)
+            display_access_denied(key, _MSG_AUTH_REQUIRED, display, logger)
             return RBAC_ACCESS_DENIED
     
     # Check require_role (implies authentication)
-    required_role = rbac.get(RBAC_REQUIRE_ROLE)
+    required_role = rbac.get(_RBAC_REQUIRE_ROLE)
     if required_role is not None:
         # Role requirement implies authentication
         if not zcli_instance.auth.is_authenticated():
-            display_access_denied(key, MSG_AUTH_REQUIRED, display, logger)
+            display_access_denied(key, _MSG_AUTH_REQUIRED, display, logger)
             return RBAC_ACCESS_DENIED
         
         if not zcli_instance.auth.has_role(required_role):
-            role_str = required_role if isinstance(required_role, str) else (FORMAT_ONE_OF % required_role)
-            display_access_denied(key, MSG_ROLE_REQUIRED % role_str, display, logger)
+            role_str = required_role if isinstance(required_role, str) else (_FORMAT_ONE_OF % required_role)
+            display_access_denied(key, _MSG_ROLE_REQUIRED % role_str, display, logger)
             return RBAC_ACCESS_DENIED
     
     # Check require_permission (implies authentication)
-    required_permission = rbac.get(RBAC_REQUIRE_PERMISSION)
+    required_permission = rbac.get(_RBAC_REQUIRE_PERMISSION)
     if required_permission:
         # Permission requirement implies authentication
         if not zcli_instance.auth.is_authenticated():
-            display_access_denied(key, MSG_AUTH_REQUIRED, display, logger)
+            display_access_denied(key, _MSG_AUTH_REQUIRED, display, logger)
             return RBAC_ACCESS_DENIED
         
         if not zcli_instance.auth.has_permission(required_permission):
-            perm_str = required_permission if isinstance(required_permission, str) else (FORMAT_ONE_OF % required_permission)
-            display_access_denied(key, MSG_PERMISSION_REQUIRED % perm_str, display, logger)
+            perm_str = required_permission if isinstance(required_permission, str) else (_FORMAT_ONE_OF % required_permission)
+            display_access_denied(key, _MSG_PERMISSION_REQUIRED % perm_str, display, logger)
             return RBAC_ACCESS_DENIED
     
     # All checks passed
-    logger.debug(LOG_MSG_ACCESS_GRANTED, key)
+    logger.debug(_LOG_MSG_ACCESS_GRANTED, key)
     return RBAC_ACCESS_GRANTED
 
 
@@ -337,37 +332,37 @@ def display_access_denied(
     if display:
         # Display clear access denied message (no break to avoid input prompt in tests)
         display.handle({
-            KEY_EVENT: EVENT_TEXT,
-            KEY_CONTENT: "",
-            KEY_INDENT: INDENT_LEVEL_0,
-            KEY_BREAK_AFTER: False
+            _KEY_EVENT: _EVENT_TEXT,
+            _KEY_CONTENT: "",
+            _KEY_INDENT: _INDENT_LEVEL_0,
+            _KEY_BREAK_AFTER: False
         })
         display.handle({
-            KEY_EVENT: EVENT_ERROR,
-            KEY_CONTENT: MSG_ACCESS_DENIED_HEADER % key,
-            KEY_INDENT: INDENT_LEVEL_1
+            _KEY_EVENT: _EVENT_ERROR,
+            _KEY_CONTENT: _MSG_ACCESS_DENIED_HEADER % key,
+            _KEY_INDENT: _INDENT_LEVEL_1
         })
         display.handle({
-            KEY_EVENT: EVENT_TEXT,
-            KEY_CONTENT: MSG_DENIAL_REASON % reason,
-            KEY_INDENT: INDENT_LEVEL_2,
-            KEY_BREAK_AFTER: False
+            _KEY_EVENT: _EVENT_TEXT,
+            _KEY_CONTENT: _MSG_DENIAL_REASON % reason,
+            _KEY_INDENT: _INDENT_LEVEL_2,
+            _KEY_BREAK_AFTER: False
         })
         display.handle({
-            KEY_EVENT: EVENT_TEXT,
-            KEY_CONTENT: MSG_DENIAL_TIP,
-            KEY_INDENT: INDENT_LEVEL_2,
-            KEY_BREAK_AFTER: False
+            _KEY_EVENT: _EVENT_TEXT,
+            _KEY_CONTENT: _MSG_DENIAL_TIP,
+            _KEY_INDENT: _INDENT_LEVEL_2,
+            _KEY_BREAK_AFTER: False
         })
         display.handle({
-            KEY_EVENT: EVENT_TEXT,
-            KEY_CONTENT: "",
-            KEY_INDENT: INDENT_LEVEL_0,
-            KEY_BREAK_AFTER: False
+            _KEY_EVENT: _EVENT_TEXT,
+            _KEY_CONTENT: "",
+            _KEY_INDENT: _INDENT_LEVEL_0,
+            _KEY_BREAK_AFTER: False
         })
     
     # Log the denial
-    logger.warning(LOG_MSG_ACCESS_DENIED, key, reason)
+    logger.warning(_LOG_MSG_ACCESS_DENIED, key, reason)
 
 
 def display_access_denied_zguest(
@@ -391,31 +386,31 @@ def display_access_denied_zguest(
     if display:
         # Display friendly redirect message (positive tone!)
         display.handle({
-            KEY_EVENT: EVENT_TEXT,
-            KEY_CONTENT: "",
-            KEY_INDENT: INDENT_LEVEL_0,
-            KEY_BREAK_AFTER: False
+            _KEY_EVENT: _EVENT_TEXT,
+            _KEY_CONTENT: "",
+            _KEY_INDENT: _INDENT_LEVEL_0,
+            _KEY_BREAK_AFTER: False
         })
         display.handle({
-            KEY_EVENT: EVENT_TEXT,
-            KEY_CONTENT: "✓ " + MSG_ZGUEST_ONLY,
-            KEY_INDENT: INDENT_LEVEL_1,
-            KEY_BREAK_AFTER: False
+            _KEY_EVENT: _EVENT_TEXT,
+            _KEY_CONTENT: "✓ " + _MSG_ZGUEST_ONLY,
+            _KEY_INDENT: _INDENT_LEVEL_1,
+            _KEY_BREAK_AFTER: False
         })
         display.handle({
-            KEY_EVENT: EVENT_TEXT,
-            KEY_CONTENT: MSG_ZGUEST_REDIRECT,
-            KEY_INDENT: INDENT_LEVEL_1,
-            KEY_BREAK_AFTER: False
+            _KEY_EVENT: _EVENT_TEXT,
+            _KEY_CONTENT: _MSG_ZGUEST_REDIRECT,
+            _KEY_INDENT: _INDENT_LEVEL_1,
+            _KEY_BREAK_AFTER: False
         })
         display.handle({
-            KEY_EVENT: EVENT_TEXT,
-            KEY_CONTENT: "",
-            KEY_INDENT: INDENT_LEVEL_0,
-            KEY_BREAK_AFTER: False
+            _KEY_EVENT: _EVENT_TEXT,
+            _KEY_CONTENT: "",
+            _KEY_INDENT: _INDENT_LEVEL_0,
+            _KEY_BREAK_AFTER: False
         })
     
     # Log as info (not a warning - this is expected behavior!)
-    logger.info(LOG_MSG_ACCESS_DENIED, key, reason)
+    logger.info(_LOG_MSG_ACCESS_DENIED, key, reason)
 
 

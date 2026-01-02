@@ -48,22 +48,17 @@ Week: 6.14
 Version: v1.5.4 Phase 1 (Industry-Grade)
 """
 
-from typing import Any, Union
+from zCLI import Any, Union
+
+# Import constants from centralized file
+from .wizard_constants import (
+    _ERR_KEY_NOT_FOUND,
+    _ERR_INVALID_KEY_TYPE,
+    _PRIVATE_LIST_KEY,
+    _PRIVATE_DICT_KEY,
+)
 
 __all__ = ["WizardHat"]
-
-
-# ═══════════════════════════════════════════════════════════════════════════
-# MODULE CONSTANTS
-# ═══════════════════════════════════════════════════════════════════════════
-
-# Error Messages
-ERR_KEY_NOT_FOUND: str = "zHat key not found: %s"
-ERR_INVALID_KEY_TYPE: str = "Invalid zHat key type: %s"
-
-# Container Keys
-PRIVATE_LIST_KEY: str = "_list"
-PRIVATE_DICT_KEY: str = "_dict"
 
 
 class WizardHat:
@@ -117,9 +112,9 @@ class WizardHat:
             return self._list[key]
         elif isinstance(key, str):
             if key not in self._dict:
-                raise KeyError(ERR_KEY_NOT_FOUND % key)
+                raise KeyError(_ERR_KEY_NOT_FOUND % key)
             return self._dict[key]
-        raise KeyError(ERR_INVALID_KEY_TYPE % type(key))
+        raise KeyError(_ERR_INVALID_KEY_TYPE % type(key))
     
     def __len__(self) -> int:
         """Return number of results."""
@@ -154,7 +149,7 @@ class WizardHat:
         if name in self._dict:
             return self._dict[name]
         
-        raise AttributeError(ERR_KEY_NOT_FOUND % name)
+        raise AttributeError(_ERR_KEY_NOT_FOUND % name)
     
     def __repr__(self) -> str:
         """String representation for debugging."""

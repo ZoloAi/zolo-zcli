@@ -149,27 +149,20 @@ Week: 6.14
 Version: v1.5.4 Phase 1 (Industry-Grade)
 """
 
-from typing import Any, Optional
+from zCLI import Any, Optional
+
+# Import constants from centralized file
+from .wizard_constants import (
+    _LOG_TXN_ENABLED,
+    _LOG_TXN_COMMITTED,
+    _LOG_TXN_ROLLBACK,
+    _KEY_ZDATA,
+    _KEY_MODEL,
+    _PREFIX_TXN_MODEL,
+    _PREFIX_INDEX,
+)
 
 __all__ = ["check_transaction_start", "commit_transaction", "rollback_transaction"]
-
-
-# ═══════════════════════════════════════════════════════════════════════════
-# MODULE CONSTANTS
-# ═══════════════════════════════════════════════════════════════════════════
-
-# Log Messages
-LOG_TXN_ENABLED: str = "[TXN] Transaction mode enabled for $%s"
-LOG_TXN_COMMITTED: str = "[OK] Transaction committed for $%s"
-LOG_TXN_ROLLBACK: str = "[ERROR] Error in zWizard, rolling back transaction for $%s: %s"
-
-# Dictionary Keys
-KEY_ZDATA: str = "zData"
-KEY_MODEL: str = "model"
-
-# Model Prefix
-PREFIX_TXN_MODEL: str = "$"
-PREFIX_INDEX: int = 1  # Index to strip $ prefix
 
 
 def check_transaction_start(
@@ -195,11 +188,11 @@ def check_transaction_start(
     if not (use_transaction and transaction_alias is None and schema_cache):
         return None
 
-    if isinstance(step_value, dict) and KEY_ZDATA in step_value:
-        model = step_value[KEY_ZDATA].get(KEY_MODEL)
-        if model and model.startswith(PREFIX_TXN_MODEL):
-            alias = model[PREFIX_INDEX:]  # Remove $ prefix
-            logger.info(LOG_TXN_ENABLED, alias)
+    if isinstance(step_value, dict) and _KEY_ZDATA in step_value:
+        model = step_value[_KEY_ZDATA].get(_KEY_MODEL)
+        if model and model.startswith(_PREFIX_TXN_MODEL):
+            alias = model[_PREFIX_INDEX:]  # Remove $ prefix
+            logger.info(_LOG_TXN_ENABLED, alias)
             return alias
     return None
 
@@ -221,7 +214,7 @@ def commit_transaction(
     """
     if use_transaction and transaction_alias and schema_cache:
         schema_cache.commit_transaction(transaction_alias)
-        logger.info(LOG_TXN_COMMITTED, transaction_alias)
+        logger.info(_LOG_TXN_COMMITTED, transaction_alias)
 
 
 def rollback_transaction(
@@ -242,7 +235,7 @@ def rollback_transaction(
         error: The exception that triggered the rollback
     """
     if use_transaction and transaction_alias and schema_cache:
-        logger.error(LOG_TXN_ROLLBACK, transaction_alias, error)
+        logger.error(_LOG_TXN_ROLLBACK, transaction_alias, error)
         schema_cache.rollback_transaction(transaction_alias)
 
 

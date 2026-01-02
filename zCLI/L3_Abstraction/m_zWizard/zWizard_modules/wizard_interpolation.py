@@ -96,29 +96,18 @@ Week: 6.14
 Version: v1.5.4 Phase 1 (Industry-Grade)
 """
 
-from typing import Any
+from zCLI import Any
 from zCLI import re
 
+# Import constants from centralized file
+from .wizard_constants import (
+    _ZHAT_PATTERN,
+    _ZHAT_FALLBACK,
+    _LOG_MSG_KEY_NOT_FOUND,
+    _STR_QUOTE_CHARS,
+)
+
 __all__ = ["interpolate_zhat"]
-
-
-# ═══════════════════════════════════════════════════════════════════════════
-# MODULE CONSTANTS
-# ═══════════════════════════════════════════════════════════════════════════
-
-# Interpolation Pattern
-# Matches: zHat[numeric] OR zHat["key"] OR zHat['key'] OR zHat[key]
-# Group 1 captures: digits OR quoted string OR unquoted word
-ZHAT_PATTERN: str = r"zHat\[(['\"]?\w+['\"]?)\]"
-
-# Fallback Values
-ZHAT_FALLBACK: str = "None"
-
-# Log Messages
-LOG_MSG_KEY_NOT_FOUND: str = "zHat key not found during interpolation: %s"
-
-# String Processing
-STR_QUOTE_CHARS: str = "'\""
 
 
 def interpolate_zhat(step_value: Any, zHat: Any, logger: Any) -> Any:
@@ -151,21 +140,21 @@ def interpolate_zhat(step_value: Any, zHat: Any, logger: Any) -> Any:
             # Handle numeric index (backward compatible)
             if key.isdigit():
                 idx = int(key)
-                return repr(zHat[idx]) if idx < len(zHat) else ZHAT_FALLBACK
+                return repr(zHat[idx]) if idx < len(zHat) else _ZHAT_FALLBACK
             
             # Handle string key (remove quotes if present)
-            key_clean = key.strip(STR_QUOTE_CHARS)
+            key_clean = key.strip(_STR_QUOTE_CHARS)
             
             # Check if key exists in zHat
             if key_clean in zHat:
                 return repr(zHat[key_clean])
             
             # Key not found - return None
-            logger.warning(LOG_MSG_KEY_NOT_FOUND, key_clean)
-            return ZHAT_FALLBACK
+            logger.warning(_LOG_MSG_KEY_NOT_FOUND, key_clean)
+            return _ZHAT_FALLBACK
         
         # Use constant pattern for regex substitution
-        return re.sub(ZHAT_PATTERN, repl, step_value)
+        return re.sub(_ZHAT_PATTERN, repl, step_value)
     
     # Handle dicts (recursive case)
     elif isinstance(step_value, dict):

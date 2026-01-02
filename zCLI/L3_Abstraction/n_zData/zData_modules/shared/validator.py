@@ -33,6 +33,9 @@ of the data. Validation stops at the first failure (fail-fast):
 - email: RFC-compliant email validation
 - url: HTTP/HTTPS URL validation
 - phone: International phone number validation
+- date: Date format validation (uses zConfig date_format)
+- time: Time format validation (uses zConfig time_format)
+- datetime: Datetime format validation (uses zConfig datetime_format)
 
 **Layer 5: Plugin Validators**
 - Custom business logic via zCLI plugin system
@@ -48,7 +51,7 @@ Supported Schema Rules
 - min: Minimum numeric value
 - max: Maximum numeric value
 - pattern: Regex pattern (with optional pattern_message)
-- format: Built-in format validator (email, url, phone)
+- format: Built-in format validator (email, url, phone, date, time, datetime)
 - validator: Plugin validator (&plugin.function syntax)
 - error_message: Custom error message (overrides default)
 
@@ -180,6 +183,9 @@ RULE_KEY_ERROR_MESSAGE = "error_message"
 FORMAT_EMAIL = "email"
 FORMAT_URL = "url"
 FORMAT_PHONE = "phone"
+FORMAT_DATE = "date"
+FORMAT_TIME = "time"
+FORMAT_DATETIME = "datetime"
 
 # ============================================================
 # Module Constants - Regex Patterns
@@ -229,6 +235,9 @@ ERR_INVALID_FORMAT = "Invalid format for {field_name}"
 ERR_EMAIL_FORMAT = "Invalid email address format"
 ERR_URL_FORMAT = "Invalid URL format"
 ERR_PHONE_FORMAT = "Invalid phone number format"
+ERR_DATE_FORMAT = "Invalid date format"
+ERR_TIME_FORMAT = "Invalid time format"
+ERR_DATETIME_FORMAT = "Invalid datetime format"
 
 # Plugin validator errors
 ERR_PLUGIN_INVALID_RETURN = "Plugin validator error: invalid return format"
@@ -377,12 +386,17 @@ class DataValidator:
             FORMAT_EMAIL: self._validate_email,
             FORMAT_URL: self._validate_url,
             FORMAT_PHONE: self._validate_phone,
-            # TODO: Add date/time/datetime format validators
-            # 'date': self._validate_date,
-            # 'time': self._validate_time,
-            # 'datetime': self._validate_datetime,
-            # These should validate against zConfig time format settings
+            FORMAT_DATE: self._validate_date,
+            FORMAT_TIME: self._validate_time,
+            FORMAT_DATETIME: self._validate_datetime,
         }
+        
+        # TODO: Architecture Review - Consider centralizing ALL zData parsing logic to zParser
+        #       Current state: zData has its own parsers/ directory (value_parser, where_parser)
+        #       Proposal: Evaluate moving format validators and value parsing to zParser subsystem
+        #       Rationale: Parsing is semantically zParser territory, but zData needs domain-specific validation
+        #       Decision: Keep in zData for v1.5.14 (consistent with email/url/phone), revisit in v1.6.0
+        #       Reference: This architectural question raised during Step 4.3.2d cleanup (2026-01-01)
 
     def validate_field(
         self,
@@ -1007,6 +1021,69 @@ class DataValidator:
         if re.match(PATTERN_PHONE, cleaned):
             return True, None
         return False, ERR_PHONE_FORMAT
+
+    def _validate_date(self, value: str) -> Tuple[bool, Optional[str]]:
+        """Validate date format against zConfig settings."""
+        from datetime import datetime
+        
+        date_format = "yyyy-mm-dd"  # Default
+        if self.zcli:
+            date_format = self.zcli.config.get('date_format', date_format)
+        
+        format_map = {
+            "ddmmyyyy": "%d%m%Y", "mmddyyyy": "%m%d%Y", "yyyy-mm-dd": "%Y-%m-%d",
+            "dd/mm/yyyy": "%d/%m/%Y", "mm/dd/yyyy": "%m/%d/%Y",
+            "dd-mm-yyyy": "%d-%m-%Y", "mm-dd-yyyy": "%m-%d-%Y",
+        }
+        strptime_format = format_map.get(date_format, "%Y-%m-%d")
+        
+        try:
+            datetime.strptime(value, strptime_format)
+            return True, None
+        except ValueError:
+            return False, f"{ERR_DATE_FORMAT} (expected: {date_format})"
+
+    def _validate_time(self, value: str) -> Tuple[bool, Optional[str]]:
+        """Validate time format against zConfig settings."""
+        from datetime import datetime
+        
+        time_format = "HH:MM:SS"  # Default
+        if self.zcli:
+            time_format = self.zcli.config.get('time_format', time_format)
+        
+        format_map = {
+            "HH:MM:SS": "%H:%M:%S", "HH:MM": "%H:%M",
+            "hh:mm:ss": "%I:%M:%S", "hh:mm": "%I:%M",
+        }
+        strptime_format = format_map.get(time_format, "%H:%M:%S")
+        
+        try:
+            datetime.strptime(value, strptime_format)
+            return True, None
+        except ValueError:
+            return False, f"{ERR_TIME_FORMAT} (expected: {time_format})"
+
+    def _validate_datetime(self, value: str) -> Tuple[bool, Optional[str]]:
+        """Validate datetime format against zConfig settings."""
+        from datetime import datetime
+        
+        datetime_format = "yyyy-mm-dd HH:MM:SS"  # Default
+        if self.zcli:
+            datetime_format = self.zcli.config.get('datetime_format', datetime_format)
+        
+        format_map = {
+            "ddmmyyyy HH:MM:SS": "%d%m%Y %H:%M:%S", "mmddyyyy HH:MM:SS": "%m%d%Y %H:%M:%S",
+            "yyyy-mm-dd HH:MM:SS": "%Y-%m-%d %H:%M:%S",
+            "dd/mm/yyyy HH:MM:SS": "%d/%m/%Y %H:%M:%S", "mm/dd/yyyy HH:MM:SS": "%m/%d/%Y %H:%M:%S",
+            "dd-mm-yyyy HH:MM:SS": "%d-%m-%Y %H:%M:%S", "mm-dd-yyyy HH:MM:SS": "%m-%d-%Y %H:%M:%S",
+        }
+        strptime_format = format_map.get(datetime_format, "%Y-%m-%d %H:%M:%S")
+        
+        try:
+            datetime.strptime(value, strptime_format)
+            return True, None
+        except ValueError:
+            return False, f"{ERR_DATETIME_FORMAT} (expected: {datetime_format})"
 
     def _check_plugin_validator(
         self,

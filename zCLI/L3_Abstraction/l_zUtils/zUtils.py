@@ -263,70 +263,57 @@ Version History
 - v1.5.3: Original implementation (89 lines, basic plugin loading)
 """
 
-import importlib
-import importlib.util
-import os
-import time
-from typing import Any, Dict, List, Optional, Union
-from pathlib import Path
+from zCLI import importlib, os, time, Any, Dict, List, Optional, Union, Path
 
 # ============================================================================
 # MODULE CONSTANTS
 # ============================================================================
 
-# Subsystem Metadata
-SUBSYSTEM_NAME: str = "zUtils"
-SUBSYSTEM_COLOR: str = "ZUTILS"
+# ============================================================================
+# IMPORTS - CONSTANTS
+# ============================================================================
 
-# Display Messages
-MSG_READY: str = "zUtils Ready"
+# Public Constants (exported from utils_modules)
+from .utils_modules import (
+    SUBSYSTEM_NAME,
+    SUBSYSTEM_COLOR,
+    DEFAULT_PLUGINS_DICT,
+)
 
-# Log Messages
-LOG_MSG_LOADING: str = "Loading plugins"
-LOG_MSG_LOADED_FILE: str = "Loaded plugin from file: %s (session injected)"
-LOG_MSG_LOADED_MODULE: str = "Loaded plugin from module: %s (session injected)"
-LOG_MSG_EXPOSED_COUNT: str = "Exposed %d callables from plugin: %s"
-LOG_MSG_LOAD_START: str = "Loading plugin: %s"
-LOG_MSG_LOAD_SUCCESS: str = "Successfully loaded plugin: %s"
-LOG_MSG_CACHED_TO_LOADER: str = "Plugin cached in zLoader.plugin_cache: %s"
-LOG_MSG_USING_ALL: str = "Plugin %s uses __all__, exposing %d functions"
-
-# Warning Messages
-WARN_MSG_LOAD_FAILED: str = "Failed to load plugin '%s': %s"
-WARN_MSG_NO_MODULE: str = "Plugin module could not be loaded: %s"
-WARN_MSG_COLLISION: str = "Method collision skipped for plugin '%s': %s already exists"
-WARN_MSG_NO_ALL: str = "Plugin %s has no __all__, exposing all public callables (security risk)"
-WARN_MSG_NOT_IN_ALL: str = "Function '%s' in plugin %s not in __all__, skipping exposure"
-
-# Error Messages
-ERROR_MSG_IMPORT_FAILED: str = "Import failed for plugin: {path}"
-ERROR_MSG_SPEC_FAILED: str = "Failed to create module spec for: {path}"
-ERROR_MSG_EXEC_FAILED: str = "Failed to execute plugin module: {path}"
-ERROR_MSG_INVALID_PATH: str = "Invalid plugin path: {path}"
-ERROR_MSG_LOADER_UNAVAILABLE: str = "zLoader unavailable, cannot cache plugin: {path}"
-ERROR_MSG_COLLISION: str = "Plugin collision: '{name}' already loaded from {existing_path}"
-
-# Plugin Loading Constants
-ATTR_PREFIX_PRIVATE: str = "_"
-ATTR_NAME_ZCLI: str = "zcli"
-ATTR_NAME_ALL: str = "__all__"
-
-# Cache Constants
-CACHE_TYPE_PLUGIN: str = "plugin"
-
-# Default Values
-DEFAULT_PLUGINS_DICT: Dict[str, Any] = {}
-
-# Stats Constants (Phase 3)
-STATS_KEY_TOTAL_LOADS: str = "total_loads"
-STATS_KEY_COLLISIONS: str = "collisions"
-STATS_KEY_RELOADS: str = "reloads"
-STATS_KEY_PLUGINS_LOADED: str = "plugins_loaded"
-
-# Mtime Constants (Phase 3)
-MTIME_CHECK_INTERVAL: float = 1.0  # seconds between mtime checks
-MTIME_CACHE_KEY: str = "mtime"
-PATH_CACHE_KEY: str = "path"
+# Internal Constants (direct import for internal use)
+from .utils_modules.utils_constants import (
+    _MSG_READY,
+    _LOG_MSG_LOADING,
+    _LOG_MSG_LOADED_FILE,
+    _LOG_MSG_LOADED_MODULE,
+    _LOG_MSG_EXPOSED_COUNT,
+    _LOG_MSG_LOAD_START,
+    _LOG_MSG_LOAD_SUCCESS,
+    _LOG_MSG_CACHED_TO_LOADER,
+    _LOG_MSG_USING_ALL,
+    _WARN_MSG_LOAD_FAILED,
+    _WARN_MSG_NO_MODULE,
+    _WARN_MSG_COLLISION,
+    _WARN_MSG_NO_ALL,
+    _WARN_MSG_NOT_IN_ALL,
+    _ERROR_MSG_IMPORT_FAILED,
+    _ERROR_MSG_SPEC_FAILED,
+    _ERROR_MSG_EXEC_FAILED,
+    _ERROR_MSG_INVALID_PATH,
+    _ERROR_MSG_LOADER_UNAVAILABLE,
+    _ERROR_MSG_COLLISION,
+    _ATTR_PREFIX_PRIVATE,
+    _ATTR_NAME_ZCLI,
+    _ATTR_NAME_ALL,
+    _CACHE_TYPE_PLUGIN,
+    _STATS_KEY_TOTAL_LOADS,
+    _STATS_KEY_COLLISIONS,
+    _STATS_KEY_RELOADS,
+    _STATS_KEY_PLUGINS_LOADED,
+    _MTIME_CHECK_INTERVAL,
+    _MTIME_CACHE_KEY,
+    _PATH_CACHE_KEY,
+)
 
 
 # ============================================================================
@@ -404,10 +391,10 @@ class zUtils:
 
         # Phase 3: Initialize stats tracking
         self._stats: Dict[str, int] = {
-            STATS_KEY_TOTAL_LOADS: 0,
-            STATS_KEY_COLLISIONS: 0,
-            STATS_KEY_RELOADS: 0,
-            STATS_KEY_PLUGINS_LOADED: 0,
+            _STATS_KEY_TOTAL_LOADS: 0,
+            _STATS_KEY_COLLISIONS: 0,
+            _STATS_KEY_RELOADS: 0,
+            _STATS_KEY_PLUGINS_LOADED: 0,
         }
 
         # Phase 3: Initialize mtime cache for auto-reload
@@ -415,7 +402,7 @@ class zUtils:
         self._mtime_cache: Dict[str, Dict[str, Any]] = {}
 
         # Display ready message
-        self.display.zDeclare(MSG_READY, color=self.mycolor, indent=0, style="full")
+        self.display.zDeclare(_MSG_READY, color=self.mycolor, indent=0, style="full")
 
     def load_plugins(self, plugin_paths: Optional[Union[List[str], str]]) -> Dict[str, Any]:
         """
@@ -512,68 +499,120 @@ class zUtils:
         loaded_plugins: Dict[str, Any] = {}
         
         # Use progress iterator for plugin loading
-        for path in self.display.progress_iterator(plugin_paths, LOG_MSG_LOADING):
+        for path in self.display.progress_iterator(plugin_paths, _LOG_MSG_LOADING):
             try:
-                self.logger.debug(LOG_MSG_LOAD_START, path)
-
-                # Extract module name from path
-                module_name = self._extract_module_name(path)
-
-                # Phase 3: Collision detection
-                existing_info = self._check_collision(module_name, path)
-                if existing_info:
-                    self._stats[STATS_KEY_COLLISIONS] += 1
-                    error_msg = ERROR_MSG_COLLISION.format(
-                        name=module_name,
-                        existing_path=existing_info
-                    )
-                    self.logger.error(error_msg)
-                    raise ValueError(error_msg)
-
-                # Load module and cache in zLoader.plugin_cache
-                if self._is_file_path(path):
-                    module = self._load_and_cache_from_file(path, module_name)
-                else:
-                    module = self._load_and_cache_from_module(path)
-
-                # Skip if module failed to load
-                if not module:
-                    self.logger.warning(WARN_MSG_NO_MODULE, path)
-                    continue
-
-                # Store in result dict (by module name)
-                loaded_plugins[module_name] = module
-
-                # Phase 3: Update stats
-                self._stats[STATS_KEY_TOTAL_LOADS] += 1
-                self._stats[STATS_KEY_PLUGINS_LOADED] += 1
-
-                # Phase 3: Track mtime for auto-reload
-                if self._is_file_path(path):
-                    self._track_mtime(module_name, path)
-
-                # Expose callables as methods (with security check)
-                exposed_count = self._expose_callables_secure(module, path, module_name)
-
-                if exposed_count > 0:
-                    self.logger.debug(LOG_MSG_EXPOSED_COUNT, exposed_count, path)
-
-                self.logger.debug(LOG_MSG_LOAD_SUCCESS, path)
+                # Load single plugin (delegated to helper)
+                result = self._load_single_plugin(path)
+                
+                # Store in result dict if successful
+                if result:
+                    module_name, module = result
+                    loaded_plugins[module_name] = module
 
             except ImportError as e:
-                self.logger.warning(WARN_MSG_LOAD_FAILED, path, f"ImportError: {e}")
+                self.logger.warning(_WARN_MSG_LOAD_FAILED, path, f"ImportError: {e}")
             except AttributeError as e:
-                self.logger.warning(WARN_MSG_LOAD_FAILED, path, f"AttributeError: {e}")
+                self.logger.warning(_WARN_MSG_LOAD_FAILED, path, f"AttributeError: {e}")
             except PermissionError as e:
-                self.logger.warning(WARN_MSG_LOAD_FAILED, path, f"PermissionError: {e}")
+                self.logger.warning(_WARN_MSG_LOAD_FAILED, path, f"PermissionError: {e}")
             except Exception as e:
-                self.logger.warning(WARN_MSG_LOAD_FAILED, path, e)
+                self.logger.warning(_WARN_MSG_LOAD_FAILED, path, e)
 
         return loaded_plugins
 
     # ========================================================================
     # HELPER FUNCTIONS
     # ========================================================================
+
+    def _load_single_plugin(self, path: str) -> Optional[tuple]:
+        """
+        Load a single plugin and return its name and module.
+
+        Helper method extracted from load_plugins() to reduce complexity.
+        Handles the complete loading process for one plugin including collision
+        detection, loading, caching, stats tracking, mtime tracking, and method exposure.
+
+        Parameters
+        ----------
+        path : str
+            Plugin path (file path or module import path)
+
+        Returns
+        -------
+        Optional[tuple]
+            Tuple of (module_name, module) if successful, None if failed
+
+        Raises
+        ------
+        ValueError
+            If plugin collision detected (same name, different path)
+        ImportError
+            If module loading fails
+        AttributeError
+            If zLoader unavailable
+        PermissionError
+            If file access denied
+        Exception
+            For any other loading errors
+
+        Notes
+        -----
+        This method performs the following steps:
+            1. Extract module name from path
+            2. Check for name collisions
+            3. Load module (file path vs import path)
+            4. Validate module loaded successfully
+            5. Update stats (total_loads, plugins_loaded)
+            6. Track mtime for auto-reload (file paths only)
+            7. Expose callables as methods
+            8. Log success
+
+        All exceptions are propagated to caller for centralized error handling.
+        """
+        self.logger.debug(_LOG_MSG_LOAD_START, path)
+
+        # Extract module name from path
+        module_name = self._extract_module_name(path)
+
+        # Phase 3: Collision detection
+        existing_info = self._check_collision(module_name, path)
+        if existing_info:
+            self._stats[_STATS_KEY_COLLISIONS] += 1
+            error_msg = _ERROR_MSG_COLLISION.format(
+                name=module_name,
+                existing_path=existing_info
+            )
+            self.logger.error(error_msg)
+            raise ValueError(error_msg)
+
+        # Load module and cache in zLoader.plugin_cache
+        if self._is_file_path(path):
+            module = self._load_and_cache_from_file(path, module_name)
+        else:
+            module = self._load_and_cache_from_module(path)
+
+        # Skip if module failed to load
+        if not module:
+            self.logger.warning(_WARN_MSG_NO_MODULE, path)
+            return None
+
+        # Phase 3: Update stats
+        self._stats[_STATS_KEY_TOTAL_LOADS] += 1
+        self._stats[_STATS_KEY_PLUGINS_LOADED] += 1
+
+        # Phase 3: Track mtime for auto-reload
+        if self._is_file_path(path):
+            self._track_mtime(module_name, path)
+
+        # Expose callables as methods (with security check)
+        exposed_count = self._expose_callables_secure(module, path, module_name)
+
+        if exposed_count > 0:
+            self.logger.debug(_LOG_MSG_EXPOSED_COUNT, exposed_count, path)
+
+        self.logger.debug(_LOG_MSG_LOAD_SUCCESS, path)
+
+        return (module_name, module)
 
     def _extract_module_name(self, path: str) -> str:
         """
@@ -635,13 +674,13 @@ class zUtils:
         """
         # Check if zLoader available
         if not hasattr(self.zcli, 'loader') or not hasattr(self.zcli.loader, 'cache'):
-            self.logger.error(ERROR_MSG_LOADER_UNAVAILABLE.format(path=path))
-            raise AttributeError(ERROR_MSG_LOADER_UNAVAILABLE.format(path=path))
+            self.logger.error(_ERROR_MSG_LOADER_UNAVAILABLE.format(path=path))
+            raise AttributeError(_ERROR_MSG_LOADER_UNAVAILABLE.format(path=path))
 
         # Delegate to zLoader.plugin_cache
         module = self.zcli.loader.cache.plugin_cache.load_and_cache(path, module_name)
 
-        self.logger.debug(LOG_MSG_CACHED_TO_LOADER, module_name)
+        self.logger.debug(_LOG_MSG_CACHED_TO_LOADER, module_name)
         return module
 
     def _load_and_cache_from_module(self, path: str) -> Optional[Any]:
@@ -668,9 +707,63 @@ class zUtils:
         """
         mod = importlib.import_module(path)
         # Inject session (for import-based plugins)
-        setattr(mod, ATTR_NAME_ZCLI, self.zcli)
-        self.logger.debug(LOG_MSG_LOADED_MODULE, path)
+        setattr(mod, _ATTR_NAME_ZCLI, self.zcli)
+        self.logger.debug(_LOG_MSG_LOADED_MODULE, path)
         return mod
+
+    def _expose_single_callable(
+        self,
+        attr_name: str,
+        module: Any,
+        path: str
+    ) -> bool:
+        """
+        Expose a single callable from a plugin module as a method.
+
+        Helper method to eliminate duplication in _expose_callables_secure().
+        Handles the common logic for exposing a callable: getting the attribute,
+        checking if it's callable, checking for collisions, and exposing it.
+
+        Parameters
+        ----------
+        attr_name : str
+            Name of the attribute to expose
+        module : Any
+            Plugin module containing the attribute
+        path : str
+            Plugin path (for logging collisions)
+
+        Returns
+        -------
+        bool
+            True if callable was exposed, False if skipped
+
+        Notes
+        -----
+        Skips exposure if:
+            - Attribute doesn't exist on module
+            - Attribute is not callable
+            - Attribute name collides with existing zUtils attribute
+        """
+        # Check if attribute exists
+        if not hasattr(module, attr_name):
+            return False
+
+        # Get attribute
+        func = getattr(module, attr_name)
+
+        # Only expose callables
+        if not callable(func):
+            return False
+
+        # Skip if name collision
+        if hasattr(self, attr_name):
+            self.logger.debug(_WARN_MSG_COLLISION, path, attr_name)
+            return False
+
+        # Expose as method
+        setattr(self, attr_name, func)
+        return True
 
     def _expose_callables_secure(self, module: Any, path: str, module_name: str) -> int:
         """
@@ -718,55 +811,32 @@ class zUtils:
         exposed_count = 0
 
         # Check if module defines __all__ (secure approach)
-        if hasattr(module, ATTR_NAME_ALL):
-            all_exports = getattr(module, ATTR_NAME_ALL)
-            self.logger.debug(LOG_MSG_USING_ALL, module_name, len(all_exports))
+        if hasattr(module, _ATTR_NAME_ALL):
+            all_exports = getattr(module, _ATTR_NAME_ALL)
+            self.logger.debug(_LOG_MSG_USING_ALL, module_name, len(all_exports))
 
             # Only expose functions listed in __all__
             for attr_name in all_exports:
                 if not hasattr(module, attr_name):
-                    self.logger.warning(WARN_MSG_NOT_IN_ALL, attr_name, module_name)
+                    self.logger.warning(_WARN_MSG_NOT_IN_ALL, attr_name, module_name)
                     continue
 
-                func = getattr(module, attr_name)
-
-                # Only expose callables
-                if not callable(func):
-                    continue
-
-                # Skip if name collision
-                if hasattr(self, attr_name):
-                    self.logger.debug(WARN_MSG_COLLISION, path, attr_name)
-                    continue
-
-                # Expose as method
-                setattr(self, attr_name, func)
-                exposed_count += 1
+                # Delegate to helper (DRY)
+                if self._expose_single_callable(attr_name, module, path):
+                    exposed_count += 1
 
         else:
             # No __all__ defined - fallback to all public callables (backward compat)
-            self.logger.warning(WARN_MSG_NO_ALL, module_name)
+            self.logger.warning(_WARN_MSG_NO_ALL, module_name)
 
             for attr_name in dir(module):
                 # Skip private attributes
-                if attr_name.startswith(ATTR_PREFIX_PRIVATE):
+                if attr_name.startswith(_ATTR_PREFIX_PRIVATE):
                     continue
 
-                # Get attribute
-                func = getattr(module, attr_name)
-
-                # Only expose callables
-                if not callable(func):
-                    continue
-
-                # Skip if name collision
-                if hasattr(self, attr_name):
-                    self.logger.debug(WARN_MSG_COLLISION, path, attr_name)
-                    continue
-
-                # Expose as method
-                setattr(self, attr_name, func)
-                exposed_count += 1
+                # Delegate to helper (DRY)
+                if self._expose_single_callable(attr_name, module, path):
+                    exposed_count += 1
 
         return exposed_count
 
@@ -792,13 +862,13 @@ class zUtils:
         """
         # Check if already in mtime cache
         if module_name in self._mtime_cache:
-            existing_path = self._mtime_cache[module_name].get(PATH_CACHE_KEY)
+            existing_path = self._mtime_cache[module_name].get(_PATH_CACHE_KEY)
             if existing_path and existing_path != path:
                 return existing_path
 
         # Check if already in zLoader.plugin_cache
         if hasattr(self.zcli, 'loader') and hasattr(self.zcli.loader, 'cache'):
-            existing_module = self.zcli.loader.cache.get(module_name, cache_type=CACHE_TYPE_PLUGIN)
+            existing_module = self.zcli.loader.cache.get(module_name, cache_type=_CACHE_TYPE_PLUGIN)
             if existing_module:
                 # Try to get path from loader cache
                 plugin_list = self.zcli.loader.cache.plugin_cache.list_plugins()
@@ -828,8 +898,8 @@ class zUtils:
         if os.path.exists(path):
             mtime = os.path.getmtime(path)
             self._mtime_cache[module_name] = {
-                MTIME_CACHE_KEY: mtime,
-                PATH_CACHE_KEY: path,
+                _MTIME_CACHE_KEY: mtime,
+                _PATH_CACHE_KEY: path,
                 "last_check": time.time()
             }
 
@@ -849,7 +919,7 @@ class zUtils:
 
         Notes
         -----
-        Uses MTIME_CHECK_INTERVAL to throttle filesystem checks.
+        Uses _MTIME_CHECK_INTERVAL to throttle filesystem checks.
         Only reloads if file modification time changed.
         """
         # Check if module is tracked
@@ -861,20 +931,20 @@ class zUtils:
         last_check = cache_entry.get("last_check", 0)
 
         # Throttle checks using interval
-        if current_time - last_check < MTIME_CHECK_INTERVAL:
+        if current_time - last_check < _MTIME_CHECK_INTERVAL:
             return False
 
         # Update last check time
         cache_entry["last_check"] = current_time
 
         # Check if file still exists
-        path = cache_entry.get(PATH_CACHE_KEY)
+        path = cache_entry.get(_PATH_CACHE_KEY)
         if not path or not os.path.exists(path):
             return False
 
         # Check if mtime changed
         current_mtime = os.path.getmtime(path)
-        cached_mtime = cache_entry.get(MTIME_CACHE_KEY, 0)
+        cached_mtime = cache_entry.get(_MTIME_CACHE_KEY, 0)
 
         if current_mtime > cached_mtime:
             # File changed, reload
@@ -885,11 +955,11 @@ class zUtils:
                     module = self.zcli.loader.cache.plugin_cache.load_and_cache(path, module_name)
                     if module:
                         # Update mtime cache
-                        cache_entry[MTIME_CACHE_KEY] = current_mtime
+                        cache_entry[_MTIME_CACHE_KEY] = current_mtime
                         # Re-expose callables
                         self._expose_callables_secure(module, path, module_name)
                         # Update stats
-                        self._stats[STATS_KEY_RELOADS] += 1
+                        self._stats[_STATS_KEY_RELOADS] += 1
                         self.logger.info(f"Plugin reloaded successfully: {module_name}")
                         return True
             except Exception as e:
@@ -987,7 +1057,7 @@ class zUtils:
             name = plugin_info.get("name")
             if name:
                 # Get module from cache
-                module = self.zcli.loader.cache.get(name, cache_type=CACHE_TYPE_PLUGIN)
+                module = self.zcli.loader.cache.get(name, cache_type=_CACHE_TYPE_PLUGIN)
                 if module:
                     plugins_dict[name] = module
 

@@ -75,7 +75,7 @@ Integration Points:
     zDisplay:
         - Mode-agnostic output (Terminal, Walker, Bifrost)
         - zDeclare for operation announcements
-        - AdvancedData integration for table display (Week 6.4 TODO)
+        - Table display via display.zTable() (AdvancedData for SQL/CSV results)
     
     zFunc:
         - Hook execution (onBeforeInsert, onAfterInsert, etc.)

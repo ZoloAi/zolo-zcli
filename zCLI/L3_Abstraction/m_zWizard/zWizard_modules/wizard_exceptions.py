@@ -162,35 +162,33 @@ Week: 6.14
 Version: v1.5.4 Phase 1 (Industry-Grade)
 """
 
+# Import constants from centralized file
+from .wizard_constants import (
+    # Public constant
+    ERR_MISSING_INSTANCE,
+    # Internal constants
+    _ERR_MISSING_DISPLAY,
+    _ERR_MISSING_LOGGER,
+    _ERR_INVALID_CONFIG,
+    _ERR_STEP_FAILED,
+    _ERR_DISPATCH_FAILED,
+    _ERR_INVALID_STEP,
+    _ERR_TRANSACTION_FAILED,
+    _ERR_NOT_AUTHENTICATED,
+    _ERR_MISSING_ROLE,
+    _ERR_MISSING_PERMISSION,
+    _ERR_ACCESS_DENIED,
+)
+
 __all__ = [
+    # Exception Classes
     "zWizardError",
     "WizardInitializationError",
     "WizardExecutionError",
     "WizardRBACError",
+    # Public Constants (re-export)
+    "ERR_MISSING_INSTANCE",
 ]
-
-
-# ═══════════════════════════════════════════════════════════════════════════
-# COMMON ERROR MESSAGES (Module Constants)
-# ═══════════════════════════════════════════════════════════════════════════
-
-# Initialization Errors
-ERR_MISSING_INSTANCE: str = "zWizard requires either zcli or walker instance"
-ERR_MISSING_DISPLAY: str = "Display subsystem required but not available"
-ERR_MISSING_LOGGER: str = "Logger instance required but not available"
-ERR_INVALID_CONFIG: str = "Invalid wizard configuration: %s"
-
-# Execution Errors
-ERR_STEP_FAILED: str = "Step '%s' failed: %s"
-ERR_DISPATCH_FAILED: str = "Failed to dispatch step '%s': %s"
-ERR_INVALID_STEP: str = "Invalid step structure for key '%s': %s"
-ERR_TRANSACTION_FAILED: str = "Transaction failed for '%s': %s"
-
-# RBAC Errors
-ERR_NOT_AUTHENTICATED: str = "Authentication required for '%s'"
-ERR_MISSING_ROLE: str = "Role required for '%s': %s"
-ERR_MISSING_PERMISSION: str = "Permission required for '%s': %s"
-ERR_ACCESS_DENIED: str = "Access denied for '%s': %s"
 
 
 class zWizardError(Exception):

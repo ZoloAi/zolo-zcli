@@ -205,6 +205,7 @@ LOG_UPSERTED = "Upserted row into %s with ID: %s"
 LOG_TRANSACTION_STARTED = "Transaction started"
 LOG_TRANSACTION_COMMITTED = "Transaction committed"
 LOG_TRANSACTION_ROLLED_BACK = "Transaction rolled back"
+LOG_ALTER_TABLE_SQLITE = "Altering SQLite table: %s"
 
 # ============================================================
 # Public API
@@ -313,12 +314,10 @@ class SQLiteAdapter(SQLAdapter):
             self.connection = sqlite3.connect(str(self.db_path), isolation_level=ISOLATION_DEFERRED)
             self.connection.row_factory = sqlite3.Row  # Enable dict-like access
             self.connection.execute(PRAGMA_FOREIGN_KEYS)  # Enable FK support
-            if self.logger:
-                self.logger.info(LOG_CONNECTED, self.db_path)
+            self._log('info', LOG_CONNECTED, self.db_path)
             return self.connection
         except Exception as e:  # pylint: disable=broad-except
-            if self.logger:
-                self.logger.error(ERR_CONNECTION_FAILED, e)
+            self._log('error', ERR_CONNECTION_FAILED, e)
             raise
 
     def disconnect(self) -> None:
@@ -347,11 +346,9 @@ class SQLiteAdapter(SQLAdapter):
                     self.cursor = None
                 self.connection.close()
                 self.connection = None
-                if self.logger:
-                    self.logger.info(LOG_DISCONNECTED, self.db_path)
+                self._log('info', LOG_DISCONNECTED, self.db_path)
             except Exception as e:  # pylint: disable=broad-except
-                if self.logger:
-                    self.logger.error(ERR_DISCONNECT_FAILED, e)
+                self._log('error', ERR_DISCONNECT_FAILED, e)
 
     def get_cursor(self) -> Any:
         """
@@ -439,6 +436,130 @@ class SQLiteAdapter(SQLAdapter):
             - Workaround: Create new table, copy data, drop old, rename new
         """
         return False
+
+    def _supports_modify_column(self) -> bool:
+        """
+        Check if MODIFY COLUMN is supported (always False for SQLite).
+        
+        Returns:
+            False: SQLite does not support MODIFY COLUMN
+        
+        Notes:
+            - SQLite has very limited ALTER TABLE support
+            - MODIFY COLUMN not supported in any SQLite version
+            - Workaround: Recreate table with new schema
+        """
+        return False
+
+    def alter_table(self, table_name: str, changes: Dict[str, Any]) -> None:
+        """
+        Alter SQLite table structure.
+        
+        Due to SQLite's limited ALTER TABLE support, this method implements a
+        table recreation strategy for DROP COLUMN and MODIFY COLUMN operations.
+        ADD COLUMN is handled natively.
+        
+        Args:
+            table_name: Name of table to alter
+            changes: Dict with 'add_columns', 'drop_columns', 'modify_columns' keys
+        
+        Notes:
+            - ADD COLUMN: Native support (uses parent class)
+            - DROP COLUMN: Requires table recreation
+            - MODIFY COLUMN: Requires table recreation
+        """
+        self._log('info', LOG_ALTER_TABLE_SQLITE, table_name)
+        
+        # Handle ADD COLUMN natively (if present and no other changes)
+        if changes.get("add_columns") and not changes.get("drop_columns") and not changes.get("modify_columns"):
+            super().alter_table(table_name, changes)
+            return
+        
+        # For DROP COLUMN or MODIFY COLUMN, use table recreation strategy
+        self._recreate_table_with_changes(table_name, changes)
+
+    def _recreate_table_with_changes(self, table_name: str, changes: Dict[str, Any]) -> None:
+        """
+        Recreate table with schema changes (SQLite workaround).
+        
+        Process:
+        1. Get current schema
+        2. Create temporary table with new schema
+        3. Copy data (excluding dropped columns)
+        4. Drop original table
+        5. Rename temporary table
+        
+        Args:
+            table_name: Name of table to modify
+            changes: Dict with 'add_columns', 'drop_columns', 'modify_columns'
+        
+        Notes:
+            - Preserves data integrity
+            - Handles all schema changes atomically
+            - Uses transaction for safety
+        """
+        cur = self.get_cursor()
+        
+        # Get current table schema
+        cur.execute(f"PRAGMA table_info({table_name})")
+        current_columns = cur.fetchall()
+        
+        # Build new schema
+        new_columns = []
+        drop_set = set(changes.get("drop_columns", []))
+        modify_dict = changes.get("modify_columns", {})
+        
+        for col in current_columns:
+            col_name = col[1]
+            if col_name not in drop_set:
+                if col_name in modify_dict:
+                    # Use modified definition
+                    col_def = self._build_column_definition(col_name, modify_dict[col_name])
+                    new_columns.append(col_def)
+                else:
+                    # Keep existing definition
+                    col_type = col[2]
+                    col_notnull = col[3]
+                    col_default = col[4]
+                    col_pk = col[5]
+                    
+                    col_def = f"{col_name} {col_type}"
+                    if col_pk:
+                        col_def += " PRIMARY KEY"
+                    if col_notnull and not col_pk:
+                        col_def += " NOT NULL"
+                    if col_default is not None:
+                        col_def += f" DEFAULT {col_default}"
+                    new_columns.append(col_def)
+        
+        # Add new columns if present
+        if "add_columns" in changes:
+            for col_name, col_spec in changes["add_columns"].items():
+                col_def = self._build_column_definition(col_name, col_spec)
+                new_columns.append(col_def)
+        
+        # Create temporary table
+        temp_table = f"{table_name}_temp_migration"
+        create_sql = f"CREATE TABLE {temp_table} ({', '.join(new_columns)})"
+        
+        self._log('info', "Creating temporary table: %s", create_sql)
+        cur.execute(create_sql)
+        
+        # Copy data (exclude dropped columns)
+        copy_columns = [col[1] for col in current_columns if col[1] not in drop_set]
+        if copy_columns:
+            copy_sql = f"INSERT INTO {temp_table} ({', '.join(copy_columns)}) SELECT {', '.join(copy_columns)} FROM {table_name}"
+            self._log('info', "Copying data: %s", copy_sql)
+            cur.execute(copy_sql)
+        
+        # Drop original table
+        cur.execute(f"DROP TABLE {table_name}")
+        
+        # Rename temporary table
+        cur.execute(f"ALTER TABLE {temp_table} RENAME TO {table_name}")
+        
+        self.connection.commit()
+        self._log('info', "Table recreation complete: %s", table_name)
     
     # ============================================================
     # DDL Operations (Table Metadata)
@@ -464,8 +585,7 @@ class SQLiteAdapter(SQLAdapter):
         cur.execute(SQL_SELECT_MASTER, (table_name,))
         result = cur.fetchone()
         exists = result is not None
-        if self.logger:
-            self.logger.debug(LOG_TABLE_EXISTS, table_name, exists)
+        self._log('debug', LOG_TABLE_EXISTS, table_name, exists)
         return exists
 
     def list_tables(self) -> List[str]:
@@ -482,8 +602,7 @@ class SQLiteAdapter(SQLAdapter):
         cur = self.get_cursor()
         cur.execute(SQL_LIST_TABLES)
         tables = [row[0] for row in cur.fetchall()]
-        if self.logger:
-            self.logger.debug(LOG_FOUND_TABLES, len(tables), tables)
+        self._log('debug', LOG_FOUND_TABLES, len(tables), tables)
         return tables
     
     # ============================================================
@@ -602,14 +721,12 @@ class SQLiteAdapter(SQLAdapter):
             # Default to REPLACE behavior
             sql = f"INSERT OR REPLACE INTO {table} ({', '.join(fields)}) VALUES ({placeholders})"
 
-        if self.logger:
-            self.logger.debug("Executing UPSERT: %s with values: %s", sql, values)
+        self._log('debug', "Executing UPSERT: %s with values: %s", sql, values)
         cur.execute(sql, values)
         # Don't commit - SQLite in autocommit mode with explicit transaction control
 
         row_id = cur.lastrowid
-        if self.logger:
-            self.logger.info(LOG_UPSERTED, table, row_id)
+        self._log('info', LOG_UPSERTED, table, row_id)
         return row_id
     
     # ============================================================
@@ -646,8 +763,7 @@ class SQLiteAdapter(SQLAdapter):
             - json → TEXT (serialized JSON string)
         """
         if not isinstance(abstract_type, str):
-            if self.logger:
-                self.logger.debug(ERR_TYPE_NOT_STRING, abstract_type)
+            self._log('debug', ERR_TYPE_NOT_STRING, abstract_type)
             return "TEXT"
 
         normalized = abstract_type.strip().rstrip("!?").lower()
@@ -700,8 +816,7 @@ class SQLiteAdapter(SQLAdapter):
         if self.connection:
             try:
                 self.connection.execute(SQL_BEGIN)
-                if self.logger:
-                    self.logger.debug(LOG_TRANSACTION_STARTED)
+                self._log('debug', LOG_TRANSACTION_STARTED)
             except sqlite3.OperationalError as e:
                 if ERR_TRANSACTION_ACTIVE not in str(e).lower():
                     raise
@@ -728,8 +843,7 @@ class SQLiteAdapter(SQLAdapter):
         if self.connection:
             try:
                 self.connection.execute(SQL_COMMIT)
-                if self.logger:
-                    self.logger.debug(LOG_TRANSACTION_COMMITTED)
+                self._log('debug', LOG_TRANSACTION_COMMITTED)
             except sqlite3.OperationalError as e:
                 if ERR_NO_TRANSACTION not in str(e).lower():
                     raise
@@ -760,8 +874,7 @@ class SQLiteAdapter(SQLAdapter):
         if self.connection:
             try:
                 self.connection.execute(SQL_ROLLBACK)
-                if self.logger:
-                    self.logger.debug(LOG_TRANSACTION_ROLLED_BACK)
+                self._log('debug', LOG_TRANSACTION_ROLLED_BACK)
             except sqlite3.OperationalError as e:
                 if ERR_NO_TRANSACTION not in str(e).lower():
                     raise

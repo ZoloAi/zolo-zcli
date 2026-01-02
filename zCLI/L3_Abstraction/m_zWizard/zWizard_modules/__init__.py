@@ -57,6 +57,18 @@ Architecture:
 Version: v1.5.4 Week 6.14 Phase 3 (Polish)
 """
 
+# Layer 0: Constants (Public API)
+from .wizard_constants import (
+    SUBSYSTEM_NAME,
+    SUBSYSTEM_COLOR,
+    NAVIGATION_SIGNALS,
+    RBAC_ACCESS_GRANTED,
+    RBAC_ACCESS_DENIED,
+    RBAC_ACCESS_DENIED_ZGUEST,
+    ERR_MISSING_INSTANCE,
+)
+
+# Layer 1: Core Components
 from .wizard_hat import WizardHat
 from .wizard_interpolation import interpolate_zhat
 from .wizard_transactions import (
@@ -73,6 +85,15 @@ from .wizard_exceptions import (
 )
 
 __all__ = [
+    # Public Constants
+    "SUBSYSTEM_NAME",
+    "SUBSYSTEM_COLOR",
+    "NAVIGATION_SIGNALS",
+    "RBAC_ACCESS_GRANTED",
+    "RBAC_ACCESS_DENIED",
+    "RBAC_ACCESS_DENIED_ZGUEST",
+    "ERR_MISSING_INSTANCE",
+    # Classes & Functions
     "WizardHat",
     "interpolate_zhat",
     "check_transaction_start",
