@@ -136,61 +136,61 @@ from zCLI import Any, Dict
 # Module Constants - Operation Name
 # ============================================================
 
-OP_INSERT = "INSERT"
+_OP_INSERT = "INSERT"
 
 # ============================================================
 # Module Constants - Request Keys
 # ============================================================
 
-KEY_FIELDS = "fields"
-KEY_VALUES = "values"
-KEY_DATA = "data"
-KEY_TABLE = "table"
-KEY_SCHEMA = "schema"
-KEY_ROW_ID = "row_id"
+_KEY_FIELDS = "fields"
+_KEY_VALUES = "values"
+_KEY_DATA = "data"
+_KEY_TABLE = "table"
+_KEY_SCHEMA = "schema"
+_KEY_ROW_ID = "row_id"
 
 # ============================================================
 # Module Constants - Hook Names
 # ============================================================
 
-HOOK_BEFORE_INSERT = "onBeforeInsert"
-HOOK_AFTER_INSERT = "onAfterInsert"
+_HOOK_BEFORE_INSERT = "onBeforeInsert"
+_HOOK_AFTER_INSERT = "onAfterInsert"
 
 # ============================================================
 # Module Constants - zConv Key
 # ============================================================
 
-ZCONV_KEY = "zConv"
+_ZCONV_KEY = "zConv"
 
 # ============================================================
 # Module Constants - Log Messages
 # ============================================================
 
-LOG_EXTRACT_TABLE = "Extracting table from request for %s operation"
-LOG_EXTRACT_FIELDS = "Extracting fields/values from request"
-LOG_BUILD_DATA = "Building data dictionary from fields/values"
-LOG_HOOK_BEFORE = "Executing %s hook for %s"
-LOG_HOOK_AFTER = "Executing %s hook for %s"
-LOG_VALIDATE = "Validating data for %s operation on table %s"
-LOG_INSERT = "Executing insert operation on table %s"
-LOG_SUCCESS = "[OK] Inserted row with ID: %s"
-LOG_HOOK_ABORT = "%s hook returned False, aborting %s operation"
-LOG_HOOK_MODIFY = "%s hook returned dict, updating data"
-LOG_VALIDATION_ERROR = "Validation failed for table %s"
-LOG_INSERT_ERROR = "Insert operation failed for table %s"
+_LOG_EXTRACT_TABLE = "Extracting table from request for %s operation"
+_LOG_EXTRACT_FIELDS = "Extracting fields/values from request"
+_LOG_BUILD_DATA = "Building data dictionary from fields/values"
+_LOG_HOOK_BEFORE = "Executing %s hook for %s"
+_LOG_HOOK_AFTER = "Executing %s hook for %s"
+_LOG_VALIDATE = "Validating data for %s operation on table %s"
+_LOG_INSERT = "Executing insert operation on table %s"
+_LOG_SUCCESS = "[OK] Inserted row with ID: %s"
+_LOG_HOOK_ABORT = "%s hook returned False, aborting %s operation"
+_LOG_HOOK_MODIFY = "%s hook returned dict, updating data"
+_LOG_VALIDATION_ERROR = "Validation failed for table %s"
+_LOG_INSERT_ERROR = "Insert operation failed for table %s"
 
 # ============================================================
 # Module Constants - Error Messages
 # ============================================================
 
-ERR_NO_TABLE = "No table specified for INSERT operation"
-ERR_NO_FIELDS = "No fields specified for INSERT operation"
-ERR_HOOK_ABORT = "onBeforeInsert hook aborted operation"
-ERR_VALIDATION_FAILED = "Validation failed"
-ERR_INSERT_FAILED = "Insert operation failed"
-ERR_NO_DATA = "No data provided for INSERT operation"
-ERR_INVALID_DATA = "Invalid data format"
-ERR_HOOK_ERROR = "Hook execution error"
+_ERR_NO_TABLE = "No table specified for INSERT operation"
+_ERR_NO_FIELDS = "No fields specified for INSERT operation"
+_ERR_HOOK_ABORT = "onBeforeInsert hook aborted operation"
+_ERR_VALIDATION_FAILED = "Validation failed"
+_ERR_INSERT_FAILED = "Insert operation failed"
+_ERR_NO_DATA = "No data provided for INSERT operation"
+_ERR_INVALID_DATA = "Invalid data format"
+_ERR_HOOK_ERROR = "Hook execution error"
 
 # ============================================================
 # Imports - Helper Functions
@@ -269,22 +269,22 @@ def handle_insert(request: Dict[str, Any], ops: Any) -> bool:
         - zConv key used to pass data in hook context
     """
     # Phase 1: Extract and validate table name
-    table = extract_table_from_request(request, OP_INSERT, ops, check_exists=True)
+    table = extract_table_from_request(request, _OP_INSERT, ops, check_exists=True)
     if not table:
         return False
 
     # Phase 2: Extract field/value pairs from request
-    fields = request.get(KEY_FIELDS, [])
-    values = request.get(KEY_VALUES)
+    fields = request.get(_KEY_FIELDS, [])
+    values = request.get(_KEY_VALUES)
     
     # Check if data dictionary is provided (from zDialog/zData)
-    data_dict = request.get(KEY_DATA)
+    data_dict = request.get(_KEY_DATA)
     if data_dict and isinstance(data_dict, dict):
         fields = list(data_dict.keys())
         values = list(data_dict.values())
     # If no explicit values, extract from command-line options
     elif not values:
-        fields, values = extract_field_values(request, OP_INSERT, ops)
+        fields, values = extract_field_values(request, _OP_INSERT, ops)
         if not fields:
             return False
 
@@ -318,16 +318,16 @@ def handle_insert(request: Dict[str, Any], ops: Any) -> bool:
         values = list(data.values())
 
     # Phase 3: Execute onBeforeInsert hook (can modify data or abort)
-    on_before_insert = table_schema.get(HOOK_BEFORE_INSERT)
+    on_before_insert = table_schema.get(_HOOK_BEFORE_INSERT)
     if on_before_insert:
-        ops.logger.info(LOG_HOOK_BEFORE, HOOK_BEFORE_INSERT, table)
-        hook_result = ops.execute_hook(on_before_insert, {ZCONV_KEY: data, KEY_TABLE: table})
+        ops.logger.info(_LOG_HOOK_BEFORE, _HOOK_BEFORE_INSERT, table)
+        hook_result = ops.execute_hook(on_before_insert, {_ZCONV_KEY: data, _KEY_TABLE: table})
         if hook_result is False:
-            ops.logger.error(LOG_HOOK_ABORT, HOOK_BEFORE_INSERT, OP_INSERT)
+            ops.logger.error(_LOG_HOOK_ABORT, _HOOK_BEFORE_INSERT, _OP_INSERT)
             return False
         # If hook returns a dict, use it to update data
         if isinstance(hook_result, dict):
-            ops.logger.debug(LOG_HOOK_MODIFY, HOOK_BEFORE_INSERT)
+            ops.logger.debug(_LOG_HOOK_MODIFY, _HOOK_BEFORE_INSERT)
             data.update(hook_result)
             fields = list(data.keys())
             values = list(data.values())
@@ -335,19 +335,19 @@ def handle_insert(request: Dict[str, Any], ops: Any) -> bool:
     # Phase 4: Validate data before inserting
     is_valid, errors = ops.validator.validate_insert(table, data)
     if not is_valid:
-        ops.logger.error(LOG_VALIDATION_ERROR, table)
+        ops.logger.error(_LOG_VALIDATION_ERROR, table)
         display_validation_errors(table, errors, ops)
         return False
 
     # Phase 5: Execute insert using operations' insert method
     row_id = ops.insert(table, fields, values)
-    ops.logger.info(LOG_SUCCESS, row_id)
+    ops.logger.info(_LOG_SUCCESS, row_id)
 
     # Phase 6: Execute onAfterInsert hook (for side effects)
-    on_after_insert = table_schema.get(HOOK_AFTER_INSERT)
+    on_after_insert = table_schema.get(_HOOK_AFTER_INSERT)
     if on_after_insert:
-        ops.logger.info(LOG_HOOK_AFTER, HOOK_AFTER_INSERT, table)
-        context = {ZCONV_KEY: data, KEY_TABLE: table, KEY_ROW_ID: row_id}
+        ops.logger.info(_LOG_HOOK_AFTER, _HOOK_AFTER_INSERT, table)
+        context = {_ZCONV_KEY: data, _KEY_TABLE: table, _KEY_ROW_ID: row_id}
         ops.execute_hook(on_after_insert, context)
 
     return True

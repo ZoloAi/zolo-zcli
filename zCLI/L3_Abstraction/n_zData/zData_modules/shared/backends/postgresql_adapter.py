@@ -197,37 +197,37 @@ except ImportError:
 # Module Constants - Connection Parameters
 # ============================================================
 
-CONN_HOST = "host"
-CONN_PORT = "port"
-CONN_USER = "user"
-CONN_PASSWORD = "password"
-CONN_DATABASE = "database"
-CONN_AUTOCOMMIT = "autocommit"
+_CONN_HOST = "host"
+_CONN_PORT = "port"
+_CONN_USER = "user"
+_CONN_PASSWORD = "password"
+_CONN_DATABASE = "database"
+_CONN_AUTOCOMMIT = "autocommit"
 
 # ============================================================
 # Module Constants - Default Values
 # ============================================================
 
-DEFAULT_HOST = "localhost"
-DEFAULT_PORT = 5432
-DEFAULT_DATABASE = "postgres"  # Default DB for initial connection
-META_KEY_HOST = "Data_Host"
-META_KEY_PORT = "Data_Port"
-META_KEY_USER = "Data_User"
-META_KEY_PASSWORD = "Data_Password"
+_DEFAULT_HOST = "localhost"
+_DEFAULT_PORT = 5432
+_DEFAULT_DATABASE = "postgres"  # Default DB for initial connection
+_META_KEY_HOST = "Data_Host"
+_META_KEY_PORT = "Data_Port"
+_META_KEY_USER = "Data_User"
+_META_KEY_PASSWORD = "Data_Password"
 
 # ============================================================
 # Module Constants - SQL Queries
 # ============================================================
 
-SQL_CHECK_DB_EXISTS = "SELECT 1 FROM pg_database WHERE datname = %s"
-SQL_CREATE_DATABASE = "CREATE DATABASE {}"
-SQL_TABLE_EXISTS = """SELECT EXISTS (
+_SQL_CHECK_DB_EXISTS = "SELECT 1 FROM pg_database WHERE datname = %s"
+_SQL_CREATE_DATABASE = "CREATE DATABASE {}"
+_SQL_TABLE_EXISTS = """SELECT EXISTS (
     SELECT FROM information_schema.tables 
     WHERE table_schema = 'public'
     AND table_name = %s
 )"""
-SQL_LIST_TABLES = """SELECT table_name FROM information_schema.tables
+_SQL_LIST_TABLES = """SELECT table_name FROM information_schema.tables
 WHERE table_schema = 'public'
 ORDER BY table_name"""
 
@@ -235,60 +235,60 @@ ORDER BY table_name"""
 # Module Constants - PostgreSQL Types
 # ============================================================
 
-TYPE_SERIAL = "SERIAL"
-TYPE_BIGSERIAL = "BIGSERIAL"
-TYPE_RETURNING = "RETURNING"
-SCHEMA_PUBLIC = "public"
+_TYPE_SERIAL = "SERIAL"
+_TYPE_BIGSERIAL = "BIGSERIAL"
+_TYPE_RETURNING = "RETURNING"
+_SCHEMA_PUBLIC = "public"
 
 # ============================================================
 # Module Constants - Schema Keys
 # ============================================================
 
-SCHEMA_KEY_PRIMARY_KEY = "primary_key"
-SCHEMA_KEY_INDEXES = "indexes"
-SCHEMA_KEY_TYPE = "type"
-SCHEMA_KEY_PK = "pk"
-SCHEMA_KEY_UNIQUE = "unique"
-SCHEMA_KEY_REQUIRED = "required"
-SCHEMA_KEY_FK = "fk"
+_SCHEMA_KEY_PRIMARY_KEY = "primary_key"
+_SCHEMA_KEY_INDEXES = "indexes"
+_SCHEMA_KEY_TYPE = "type"
+_SCHEMA_KEY_PK = "pk"
+_SCHEMA_KEY_UNIQUE = "unique"
+_SCHEMA_KEY_REQUIRED = "required"
+_SCHEMA_KEY_FK = "fk"
 
 # ============================================================
 # Module Constants - Info File Keys
 # ============================================================
 
-INFO_KEY_DATABASE = "database"
-INFO_KEY_TABLES = "tables"
-INFO_KEY_CREATED_AT = "created_at"
-INFO_KEY_UPDATED_AT = "updated_at"
-INFO_FILE_SUFFIX = "_info.yaml"
+_INFO_KEY_DATABASE = "database"
+_INFO_KEY_TABLES = "tables"
+_INFO_KEY_CREATED_AT = "created_at"
+_INFO_KEY_UPDATED_AT = "updated_at"
+_INFO_FILE_SUFFIX = "_info.yaml"
 
 # ============================================================
 # Module Constants - Error Messages
 # ============================================================
 
-ERR_PSYCOPG2_MISSING = "psycopg2 is required for PostgreSQL adapter.\nInstall with: pip install zolo-zcli[postgresql]"
-ERR_CONNECTION_FAILED = "PostgreSQL connection failed: %s"
-ERR_DISCONNECT_FAILED = "Error closing PostgreSQL connection: %s"
-ERR_DB_CREATE_FAILED = "Failed to create database %s: %s"
-ERR_TABLE_CREATE_FAILED = "Failed to create table %s: %s"
-ERR_UPSERT_FAILED = "UPSERT failed for table %s: %s"
+_ERR_PSYCOPG2_MISSING = "psycopg2 is required for PostgreSQL adapter.\nInstall with: pip install zolo-zcli[postgresql]"
+_ERR_CONNECTION_FAILED = "PostgreSQL connection failed: %s"
+_ERR_DISCONNECT_FAILED = "Error closing PostgreSQL connection: %s"
+_ERR_DB_CREATE_FAILED = "Failed to create database %s: %s"
+_ERR_TABLE_CREATE_FAILED = "Failed to create table %s: %s"
+_ERR_UPSERT_FAILED = "UPSERT failed for table %s: %s"
 
 # ============================================================
 # Module Constants - Log Messages
 # ============================================================
 
-LOG_CONNECTING_SERVER = "Connecting to PostgreSQL server at %s:%s"
-LOG_CREATING_DB = "Creating database: %s"
-LOG_DB_CREATED = "[OK] Created database: %s"
-LOG_DB_EXISTS = "Database already exists: %s"
-LOG_CONNECTED = "Connected to PostgreSQL database: %s"
-LOG_DISCONNECTED = "Disconnected from PostgreSQL: %s"
-LOG_USER_FALLBACK = "No Data_User specified, using system user: %s"
-LOG_CONFIG_DEBUG = "PostgreSQL config - database: %s, host: %s, port: %s, user: %s"
-LOG_TABLE_EXISTS = "Table '%s' exists: %s"
-LOG_FOUND_TABLES = "Found %d tables: %s"
-LOG_COMPOSITE_PK = "Composite primary key detected: %s"
-LOG_ADD_COMPOSITE_PK = "Adding composite PRIMARY KEY (%s)"
+_LOG_CONNECTING_SERVER = "Connecting to PostgreSQL server at %s:%s"
+_LOG_CREATING_DB = "Creating database: %s"
+_LOG_DB_CREATED = "[OK] Created database: %s"
+_LOG_DB_EXISTS = "Database already exists: %s"
+_LOG_CONNECTED = "Connected to PostgreSQL database: %s"
+_LOG_DISCONNECTED = "Disconnected from PostgreSQL: %s"
+_LOG_USER_FALLBACK = "No Data_User specified, using system user: %s"
+_LOG_CONFIG_DEBUG = "PostgreSQL config - database: %s, host: %s, port: %s, user: %s"
+_LOG_TABLE_EXISTS = "Table '%s' exists: %s"
+_LOG_FOUND_TABLES = "Found %d tables: %s"
+_LOG_COMPOSITE_PK = "Composite primary key detected: %s"
+_LOG_ADD_COMPOSITE_PK = "Adding composite PRIMARY KEY (%s)"
 
 # ============================================================
 # Public API
@@ -431,7 +431,7 @@ class PostgreSQLAdapter(SQLAdapter):
 
         # Connection parameters from Meta
         meta = config.get("meta", {})
-        self.host = meta.get(META_KEY_HOST, DEFAULT_HOST)
+        self.host = meta.get(_META_KEY_HOST, _DEFAULT_HOST)
         self.port = meta.get(META_KEY_PORT, DEFAULT_PORT)
 
         # Smart user detection: try specified user, fallback to system user
@@ -483,10 +483,10 @@ class PostgreSQLAdapter(SQLAdapter):
         """
         try:
             # Step 1: Connect to default 'postgres' database to create our database
-            self._log('info', LOG_CONNECTING_SERVER, self.host, self.port)
+            self._log('info', _LOG_CONNECTING_SERVER, self.host, self.port)
 
             conn_params = {
-                CONN_HOST: self.host,
+                _CONN_HOST: self.host,
                 CONN_PORT: self.port,
                 CONN_USER: self.user,
                 CONN_DATABASE: DEFAULT_DATABASE  # Default database always exists
@@ -500,7 +500,7 @@ class PostgreSQLAdapter(SQLAdapter):
             temp_cursor = temp_conn.cursor()
 
             # Step 2: Check if our database exists
-            temp_cursor.execute(SQL_CHECK_DB_EXISTS, (self.database_name,))
+            temp_cursor.execute(_SQL_CHECK_DB_EXISTS, (self.database_name,))
 
             if not temp_cursor.fetchone():
                 # Database doesn't exist - create it
@@ -523,7 +523,7 @@ class PostgreSQLAdapter(SQLAdapter):
             self.connection = psycopg2.connect(**conn_params)
             self.connection.autocommit = False  # Normal transaction mode
 
-            self._log('info', LOG_CONNECTED, self.database_name)
+            self._log('info', _LOG_CONNECTED, self.database_name)
 
             # Write project info file to Data_path
             self._write_project_info()
@@ -531,7 +531,7 @@ class PostgreSQLAdapter(SQLAdapter):
             return self.connection
 
         except Exception as e:  # pylint: disable=broad-except
-            self._log('error', ERR_CONNECTION_FAILED, e)
+            self._log('error', _ERR_CONNECTION_FAILED, e)
             raise
 
     def disconnect(self) -> None:

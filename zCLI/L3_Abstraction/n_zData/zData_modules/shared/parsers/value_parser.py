@@ -88,39 +88,39 @@ from zCLI import Union
 # ============================================================
 
 # True boolean literals (case-insensitive comparison)
-BOOL_TRUE_VALUES = ("true", "yes", "1")
+_BOOL_TRUE_VALUES = ("true", "yes", "1")
 
 # False boolean literals (case-insensitive comparison)
-BOOL_FALSE_VALUES = ("false", "no", "0")
+_BOOL_FALSE_VALUES = ("false", "no", "0")
 
 # ============================================================
 # Module Constants - Null Values
 # ============================================================
 
 # Null/None literals (case-insensitive comparison)
-NULL_VALUES = ("null", "none")
+_NULL_VALUES = ("null", "none")
 
 # ============================================================
 # Module Constants - String Processing
 # ============================================================
 
 # Quote characters for string detection
-QUOTE_DOUBLE = '"'
-QUOTE_SINGLE = "'"
-QUOTE_CHARS = (QUOTE_DOUBLE, QUOTE_SINGLE)
+_QUOTE_DOUBLE = '"'
+_QUOTE_SINGLE = "'"
+_QUOTE_CHARS = (_QUOTE_DOUBLE, _QUOTE_SINGLE)
 
 # Decimal point character for float detection
-DECIMAL_POINT = "."
+_DECIMAL_POINT = "."
 
 # ============================================================
 # Module Constants - Type Names (for logging/debugging)
 # ============================================================
 
-TYPE_NAME_BOOL = "bool"
-TYPE_NAME_NULL = "null"
-TYPE_NAME_INT = "int"
-TYPE_NAME_FLOAT = "float"
-TYPE_NAME_STRING = "str"
+_TYPE_NAME_BOOL = "bool"
+_TYPE_NAME_NULL = "null"
+_TYPE_NAME_INT = "int"
+_TYPE_NAME_FLOAT = "float"
+_TYPE_NAME_STRING = "str"
 
 # ============================================================
 # Public API
@@ -211,21 +211,21 @@ def parse_value(value_str: str) -> Union[int, float, bool, str, None]:
     lower = value_str.lower()
 
     # Check for boolean/null first (fastest - exact match)
-    if lower in BOOL_TRUE_VALUES:
+    if lower in _BOOL_TRUE_VALUES:
         return True
-    if lower in BOOL_FALSE_VALUES:
+    if lower in _BOOL_FALSE_VALUES:
         return False
-    if lower in NULL_VALUES:
+    if lower in _NULL_VALUES:
         return None
 
     # Try numeric conversion (int if no decimal, else float)
     try:
-        return int(value_str) if DECIMAL_POINT not in value_str else float(value_str)
+        return int(value_str) if _DECIMAL_POINT not in value_str else float(value_str)
     except ValueError:
         pass
 
     # Return as string (remove quotes if present and matching)
-    if (value_str.startswith(QUOTE_CHARS) and value_str.endswith(QUOTE_CHARS)):
+    if (value_str.startswith(_QUOTE_CHARS) and value_str.endswith(_QUOTE_CHARS)):
         return value_str[1:-1]
 
     return value_str

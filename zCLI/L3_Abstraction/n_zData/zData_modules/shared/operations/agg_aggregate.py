@@ -136,27 +136,27 @@ from zCLI import Dict, List, Optional, Any
 # ============================================================
 
 # Request keys
-KEY_TABLE = "table"
-KEY_FUNCTION = "function"
-KEY_FIELD = "field"
-KEY_WHERE = "where"
-KEY_GROUP_BY = "group_by"
+_KEY_TABLE = "table"
+_KEY_FUNCTION = "function"
+_KEY_FIELD = "field"
+_KEY_WHERE = "where"
+_KEY_GROUP_BY = "group_by"
 
 # Error messages
-ERR_NO_TABLE = "AGGREGATE requires 'table' key"
-ERR_NO_FUNCTION = "AGGREGATE requires 'function' key"
-ERR_INVALID_FUNCTION = "Invalid aggregate function. Must be: count, sum, avg, min, max"
-ERR_MISSING_FIELD = "Aggregate function '{function}' requires 'field' key"
+_ERR_NO_TABLE = "AGGREGATE requires 'table' key"
+_ERR_NO_FUNCTION = "AGGREGATE requires 'function' key"
+_ERR_INVALID_FUNCTION = "Invalid aggregate function. Must be: count, sum, avg, min, max"
+_ERR_MISSING_FIELD = "Aggregate function '{function}' requires 'field' key"
 
 # Log messages
-LOG_AGGREGATE_START = "Executing AGGREGATE %s(%s) on table '%s'"
-LOG_AGGREGATE_WHERE = "  WHERE: %s"
-LOG_AGGREGATE_GROUP = "  GROUP BY: %s"
-LOG_AGGREGATE_SUCCESS = "AGGREGATE completed: %s"
-LOG_AGGREGATE_FAIL = "AGGREGATE failed: %s"
+_LOG_AGGREGATE_START = "Executing AGGREGATE %s(%s) on table '%s'"
+_LOG_AGGREGATE_WHERE = "  WHERE: %s"
+_LOG_AGGREGATE_GROUP = "  GROUP BY: %s"
+_LOG_AGGREGATE_SUCCESS = "AGGREGATE completed: %s"
+_LOG_AGGREGATE_FAIL = "AGGREGATE failed: %s"
 
 # Valid functions
-VALID_FUNCTIONS = ["count", "sum", "avg", "min", "max"]
+_VALID_FUNCTIONS = ["count", "sum", "avg", "min", "max"]
 
 # ============================================================
 # Public API
@@ -210,41 +210,41 @@ def handle_aggregate(request: Dict[str, Any], ops: Any) -> Any:
     # ═══════════════════════════════════════════════════════════
     
     # Validate table
-    if KEY_TABLE not in request:
+    if _KEY_TABLE not in request:
         if logger:
-            logger.error(ERR_NO_TABLE)
+            logger.error(_ERR_NO_TABLE)
         if display:
-            display.error(ERR_NO_TABLE)
+            display.error(_ERR_NO_TABLE)
         return "error"
     
-    table = request[KEY_TABLE]
+    table = request[_KEY_TABLE]
     
     # Validate function
-    if KEY_FUNCTION not in request:
+    if _KEY_FUNCTION not in request:
         if logger:
-            logger.error(ERR_NO_FUNCTION)
+            logger.error(_ERR_NO_FUNCTION)
         if display:
-            display.error(ERR_NO_FUNCTION)
+            display.error(_ERR_NO_FUNCTION)
         return "error"
     
-    function = request[KEY_FUNCTION]
+    function = request[_KEY_FUNCTION]
     function_lower = function.lower()
     
-    if function_lower not in VALID_FUNCTIONS:
+    if function_lower not in _VALID_FUNCTIONS:
         if logger:
-            logger.error(ERR_INVALID_FUNCTION)
+            logger.error(_ERR_INVALID_FUNCTION)
         if display:
-            display.error(ERR_INVALID_FUNCTION)
+            display.error(_ERR_INVALID_FUNCTION)
         return "error"
     
     # Extract optional parameters
-    field = request.get(KEY_FIELD)
-    where = request.get(KEY_WHERE)
-    group_by = request.get(KEY_GROUP_BY)
+    field = request.get(_KEY_FIELD)
+    where = request.get(_KEY_WHERE)
+    group_by = request.get(_KEY_GROUP_BY)
     
     # Validate field requirement
     if function_lower != "count" and not field:
-        err_msg = ERR_MISSING_FIELD.format(function=function)
+        err_msg = _ERR_MISSING_FIELD.format(function=function)
         if logger:
             logger.error(err_msg)
         if display:
@@ -256,11 +256,11 @@ def handle_aggregate(request: Dict[str, Any], ops: Any) -> Any:
     # ═══════════════════════════════════════════════════════════
     
     if logger:
-        logger.info(LOG_AGGREGATE_START, function, field or "*", table)
+        logger.info(_LOG_AGGREGATE_START, function, field or "*", table)
         if where:
-            logger.info(LOG_AGGREGATE_WHERE, where)
+            logger.info(_LOG_AGGREGATE_WHERE, where)
         if group_by:
-            logger.info(LOG_AGGREGATE_GROUP, group_by)
+            logger.info(_LOG_AGGREGATE_GROUP, group_by)
     
     # ═══════════════════════════════════════════════════════════
     # 3. EXECUTE AGGREGATION
@@ -276,13 +276,13 @@ def handle_aggregate(request: Dict[str, Any], ops: Any) -> Any:
         )
         
         if logger:
-            logger.info(LOG_AGGREGATE_SUCCESS, result)
+            logger.info(_LOG_AGGREGATE_SUCCESS, result)
         
         return result
         
     except Exception as e:
         if logger:
-            logger.error(LOG_AGGREGATE_FAIL, str(e), exc_info=True)
+            logger.error(_LOG_AGGREGATE_FAIL, str(e), exc_info=True)
         if display:
             display.error(f"Aggregation failed: {str(e)}")
         return "error"

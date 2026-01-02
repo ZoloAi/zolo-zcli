@@ -149,63 +149,63 @@ from .sql_adapter import SQLAdapter
 # Module Constants - PRAGMA Commands
 # ============================================================
 
-PRAGMA_FOREIGN_KEYS = "PRAGMA foreign_keys = ON"
-PRAGMA_JOURNAL_MODE_WAL = "PRAGMA journal_mode = WAL"
-PRAGMA_JOURNAL_MODE_DELETE = "PRAGMA journal_mode = DELETE"
-PRAGMA_SYNCHRONOUS_FULL = "PRAGMA synchronous = FULL"
-PRAGMA_SYNCHRONOUS_NORMAL = "PRAGMA synchronous = NORMAL"
-PRAGMA_SYNCHRONOUS_OFF = "PRAGMA synchronous = OFF"
+_PRAGMA_FOREIGN_KEYS = "PRAGMA foreign_keys = ON"
+_PRAGMA_JOURNAL_MODE_WAL = "PRAGMA journal_mode = WAL"
+_PRAGMA_JOURNAL_MODE_DELETE = "PRAGMA journal_mode = DELETE"
+_PRAGMA_SYNCHRONOUS_FULL = "PRAGMA synchronous = FULL"
+_PRAGMA_SYNCHRONOUS_NORMAL = "PRAGMA synchronous = NORMAL"
+_PRAGMA_SYNCHRONOUS_OFF = "PRAGMA synchronous = OFF"
 
 # ============================================================
 # Module Constants - Isolation Levels
 # ============================================================
 
-ISOLATION_DEFERRED = "DEFERRED"
-ISOLATION_IMMEDIATE = "IMMEDIATE"
-ISOLATION_EXCLUSIVE = "EXCLUSIVE"
+_ISOLATION_DEFERRED = "DEFERRED"
+_ISOLATION_IMMEDIATE = "IMMEDIATE"
+_ISOLATION_EXCLUSIVE = "EXCLUSIVE"
 
 # ============================================================
 # Module Constants - SQL Keywords
 # ============================================================
 
-SQL_BEGIN = "BEGIN"
-SQL_COMMIT = "COMMIT"
-SQL_ROLLBACK = "ROLLBACK"
-SQL_SELECT_MASTER = "SELECT name FROM sqlite_master WHERE type='table' AND name=?"
-SQL_LIST_TABLES = "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
+_SQL_BEGIN = "BEGIN"
+_SQL_COMMIT = "COMMIT"
+_SQL_ROLLBACK = "ROLLBACK"
+_SQL_SELECT_MASTER = "SELECT name FROM sqlite_master WHERE type='table' AND name=?"
+_SQL_LIST_TABLES = "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
 
 # ============================================================
 # Module Constants - Connection Options
 # ============================================================
 
-CONN_CHECK_SAME_THREAD = "check_same_thread"
-CONN_TIMEOUT = "timeout"
-DEFAULT_TIMEOUT = 5.0  # seconds
+_CONN_CHECK_SAME_THREAD = "check_same_thread"
+_CONN_TIMEOUT = "timeout"
+_DEFAULT_TIMEOUT = 5.0  # seconds
 
 # ============================================================
 # Module Constants - Error Messages
 # ============================================================
 
-ERR_CONNECTION_FAILED = "SQLite connection failed: %s"
-ERR_DISCONNECT_FAILED = "Error closing SQLite connection: %s"
-ERR_TRANSACTION_ACTIVE = "transaction already active"
-ERR_NO_TRANSACTION = "no transaction is active"
-ERR_REQUIRES_DEFAULT = "SQLite ALTER TABLE ADD COLUMN requires DEFAULT for NOT NULL columns"
-ERR_TYPE_NOT_STRING = "Non-string type received (%r); defaulting to TEXT."
+_ERR_CONNECTION_FAILED = "SQLite connection failed: %s"
+_ERR_DISCONNECT_FAILED = "Error closing SQLite connection: %s"
+_ERR_TRANSACTION_ACTIVE = "transaction already active"
+_ERR_NO_TRANSACTION = "no transaction is active"
+_ERR_REQUIRES_DEFAULT = "SQLite ALTER TABLE ADD COLUMN requires DEFAULT for NOT NULL columns"
+_ERR_TYPE_NOT_STRING = "Non-string type received (%r); defaulting to TEXT."
 
 # ============================================================
 # Module Constants - Log Messages
 # ============================================================
 
-LOG_CONNECTED = "Connected to SQLite: %s"
-LOG_DISCONNECTED = "Disconnected from SQLite: %s"
-LOG_TABLE_EXISTS = "Table '%s' exists: %s"
-LOG_FOUND_TABLES = "Found %d tables: %s"
-LOG_UPSERTED = "Upserted row into %s with ID: %s"
-LOG_TRANSACTION_STARTED = "Transaction started"
-LOG_TRANSACTION_COMMITTED = "Transaction committed"
-LOG_TRANSACTION_ROLLED_BACK = "Transaction rolled back"
-LOG_ALTER_TABLE_SQLITE = "Altering SQLite table: %s"
+_LOG_CONNECTED = "Connected to SQLite: %s"
+_LOG_DISCONNECTED = "Disconnected from SQLite: %s"
+_LOG_TABLE_EXISTS = "Table '%s' exists: %s"
+_LOG_FOUND_TABLES = "Found %d tables: %s"
+_LOG_UPSERTED = "Upserted row into %s with ID: %s"
+_LOG_TRANSACTION_STARTED = "Transaction started"
+_LOG_TRANSACTION_COMMITTED = "Transaction committed"
+_LOG_TRANSACTION_ROLLED_BACK = "Transaction rolled back"
+_LOG_ALTER_TABLE_SQLITE = "Altering SQLite table: %s"
 
 # ============================================================
 # Public API
@@ -311,13 +311,13 @@ class SQLiteAdapter(SQLAdapter):
 
             # Convert Path to string for sqlite3.connect()
             # Use isolation_level='DEFERRED' for proper transaction support
-            self.connection = sqlite3.connect(str(self.db_path), isolation_level=ISOLATION_DEFERRED)
+            self.connection = sqlite3.connect(str(self.db_path), isolation_level=_ISOLATION_DEFERRED)
             self.connection.row_factory = sqlite3.Row  # Enable dict-like access
-            self.connection.execute(PRAGMA_FOREIGN_KEYS)  # Enable FK support
-            self._log('info', LOG_CONNECTED, self.db_path)
+            self.connection.execute(_PRAGMA_FOREIGN_KEYS)  # Enable FK support
+            self._log('info', _LOG_CONNECTED, self.db_path)
             return self.connection
         except Exception as e:  # pylint: disable=broad-except
-            self._log('error', ERR_CONNECTION_FAILED, e)
+            self._log('error', _ERR_CONNECTION_FAILED, e)
             raise
 
     def disconnect(self) -> None:
@@ -346,9 +346,9 @@ class SQLiteAdapter(SQLAdapter):
                     self.cursor = None
                 self.connection.close()
                 self.connection = None
-                self._log('info', LOG_DISCONNECTED, self.db_path)
+                self._log('info', _LOG_DISCONNECTED, self.db_path)
             except Exception as e:  # pylint: disable=broad-except
-                self._log('error', ERR_DISCONNECT_FAILED, e)
+                self._log('error', _ERR_DISCONNECT_FAILED, e)
 
     def get_cursor(self) -> Any:
         """
@@ -468,7 +468,7 @@ class SQLiteAdapter(SQLAdapter):
             - DROP COLUMN: Requires table recreation
             - MODIFY COLUMN: Requires table recreation
         """
-        self._log('info', LOG_ALTER_TABLE_SQLITE, table_name)
+        self._log('info', _LOG_ALTER_TABLE_SQLITE, table_name)
         
         # Handle ADD COLUMN natively (if present and no other changes)
         if changes.get("add_columns") and not changes.get("drop_columns") and not changes.get("modify_columns"):
@@ -582,10 +582,10 @@ class SQLiteAdapter(SQLAdapter):
             ...     print("Table found")
         """
         cur = self.get_cursor()
-        cur.execute(SQL_SELECT_MASTER, (table_name,))
+        cur.execute(_SQL_SELECT_MASTER, (table_name,))
         result = cur.fetchone()
         exists = result is not None
-        self._log('debug', LOG_TABLE_EXISTS, table_name, exists)
+        self._log('debug', _LOG_TABLE_EXISTS, table_name, exists)
         return exists
 
     def list_tables(self) -> List[str]:
@@ -600,9 +600,9 @@ class SQLiteAdapter(SQLAdapter):
             >>> # ['auth_sessions', 'users', 'user_roles']
         """
         cur = self.get_cursor()
-        cur.execute(SQL_LIST_TABLES)
+        cur.execute(_SQL_LIST_TABLES)
         tables = [row[0] for row in cur.fetchall()]
-        self._log('debug', LOG_FOUND_TABLES, len(tables), tables)
+        self._log('debug', _LOG_FOUND_TABLES, len(tables), tables)
         return tables
     
     # ============================================================
@@ -726,7 +726,7 @@ class SQLiteAdapter(SQLAdapter):
         # Don't commit - SQLite in autocommit mode with explicit transaction control
 
         row_id = cur.lastrowid
-        self._log('info', LOG_UPSERTED, table, row_id)
+        self._log('info', _LOG_UPSERTED, table, row_id)
         return row_id
     
     # ============================================================
@@ -763,7 +763,7 @@ class SQLiteAdapter(SQLAdapter):
             - json → TEXT (serialized JSON string)
         """
         if not isinstance(abstract_type, str):
-            self._log('debug', ERR_TYPE_NOT_STRING, abstract_type)
+            self._log('debug', _ERR_TYPE_NOT_STRING, abstract_type)
             return "TEXT"
 
         normalized = abstract_type.strip().rstrip("!?").lower()
@@ -815,10 +815,10 @@ class SQLiteAdapter(SQLAdapter):
         """
         if self.connection:
             try:
-                self.connection.execute(SQL_BEGIN)
-                self._log('debug', LOG_TRANSACTION_STARTED)
+                self.connection.execute(_SQL_BEGIN)
+                self._log('debug', _LOG_TRANSACTION_STARTED)
             except sqlite3.OperationalError as e:
-                if ERR_TRANSACTION_ACTIVE not in str(e).lower():
+                if _ERR_TRANSACTION_ACTIVE not in str(e).lower():
                     raise
 
     def commit(self) -> None:
@@ -842,10 +842,10 @@ class SQLiteAdapter(SQLAdapter):
         """
         if self.connection:
             try:
-                self.connection.execute(SQL_COMMIT)
-                self._log('debug', LOG_TRANSACTION_COMMITTED)
+                self.connection.execute(_SQL_COMMIT)
+                self._log('debug', _LOG_TRANSACTION_COMMITTED)
             except sqlite3.OperationalError as e:
-                if ERR_NO_TRANSACTION not in str(e).lower():
+                if _ERR_NO_TRANSACTION not in str(e).lower():
                     raise
 
     def rollback(self) -> None:
@@ -873,10 +873,10 @@ class SQLiteAdapter(SQLAdapter):
         """
         if self.connection:
             try:
-                self.connection.execute(SQL_ROLLBACK)
-                self._log('debug', LOG_TRANSACTION_ROLLED_BACK)
+                self.connection.execute(_SQL_ROLLBACK)
+                self._log('debug', _LOG_TRANSACTION_ROLLED_BACK)
             except sqlite3.OperationalError as e:
-                if ERR_NO_TRANSACTION not in str(e).lower():
+                if _ERR_NO_TRANSACTION not in str(e).lower():
                     raise
 
     # _get_placeholders() returns "?, ?, ?" (default)

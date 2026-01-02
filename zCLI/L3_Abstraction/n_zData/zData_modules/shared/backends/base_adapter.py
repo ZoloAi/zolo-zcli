@@ -158,72 +158,72 @@ from zCLI import Dict, List, Optional, Any, Path, Callable
 # ============================================================
 
 # Configuration keys
-CONFIG_KEY_PATH = "path"
-CONFIG_KEY_LABEL = "label"
-CONFIG_KEY_META = "meta"
-CONFIG_KEY_BACKEND = "backend"
-CONFIG_KEY_OPTIONS = "options"
+_CONFIG_KEY_PATH = "path"
+_CONFIG_KEY_LABEL = "label"
+_CONFIG_KEY_META = "meta"
+_CONFIG_KEY_BACKEND = "backend"
+_CONFIG_KEY_OPTIONS = "options"
 
 # Configuration defaults
-DEFAULT_PATH = "."
-DEFAULT_LABEL = "data"
+_DEFAULT_PATH = "."
+_DEFAULT_LABEL = "data"
 
 # ============================================================
 # Module Constants - Connection States
 # ============================================================
 
-STATE_DISCONNECTED = "disconnected"
-STATE_CONNECTED = "connected"
-STATE_ERROR = "error"
+_STATE_DISCONNECTED = "disconnected"
+_STATE_CONNECTED = "connected"
+_STATE_ERROR = "error"
 
 # ============================================================
 # Module Constants - Adapter Types
 # ============================================================
 
-ADAPTER_TYPE_SQLITE = "sqlite"
-ADAPTER_TYPE_POSTGRESQL = "postgresql"
-ADAPTER_TYPE_CSV = "csv"
+_ADAPTER_TYPE_SQLITE = "sqlite"
+_ADAPTER_TYPE_POSTGRESQL = "postgresql"
+_ADAPTER_TYPE_CSV = "csv"
 
 # ============================================================
 # Module Constants - Info Keys
 # ============================================================
 
-INFO_KEY_ADAPTER = "adapter"
-INFO_KEY_CONNECTED = "connected"
-INFO_KEY_PATH = "path"
-INFO_KEY_BACKEND = "backend"
-INFO_KEY_STATE = "state"
+_INFO_KEY_ADAPTER = "adapter"
+_INFO_KEY_CONNECTED = "connected"
+_INFO_KEY_PATH = "path"
+_INFO_KEY_BACKEND = "backend"
+_INFO_KEY_STATE = "state"
 
 # ============================================================
 # Module Constants - Error Messages
 # ============================================================
 
-ERR_NOT_CONNECTED = "Adapter not connected to backend"
-ERR_ALREADY_CONNECTED = "Adapter already connected"
-ERR_CONNECTION_FAILED = "Failed to connect to backend: {error}"
-ERR_TABLE_NOT_FOUND = "Table '{table}' does not exist"
-ERR_TABLE_EXISTS = "Table '{table}' already exists"
-ERR_OPERATION_FAILED = "Operation failed: {operation}"
-ERR_TRANSACTION_FAILED = "Transaction operation failed: {operation}"
-ERR_INVALID_CONFIG = "Invalid adapter configuration: {error}"
+_ERR_NOT_CONNECTED = "Adapter not connected to backend"
+_ERR_ALREADY_CONNECTED = "Adapter already connected"
+_ERR_CONNECTION_FAILED = "Failed to connect to backend: {error}"
+_ERR_TABLE_NOT_FOUND = "Table '{table}' does not exist"
+_ERR_TABLE_EXISTS = "Table '{table}' already exists"
+_ERR_OPERATION_FAILED = "Operation failed: {operation}"
+_ERR_TRANSACTION_FAILED = "Transaction operation failed: {operation}"
+_ERR_INVALID_CONFIG = "Invalid adapter configuration: {error}"
 
 # ============================================================
 # Module Constants - Log Messages
 # ============================================================
 
-LOG_INIT_ADAPTER = "Initializing %s adapter with config: %s"
-LOG_BASE_PATH = "Base path: %s, Data label: %s"
-LOG_DIRECTORY_CREATED = "Ensured directory exists: %s"
-LOG_CONNECTED = "Connected to %s backend: %s"
-LOG_DISCONNECTED = "Disconnected from %s backend"
-LOG_CONNECTION_INFO = "Connection info: adapter=%s, connected=%s, path=%s"
-LOG_TABLE_CREATED = "Created table: %s"
-LOG_TABLE_DROPPED = "Dropped table: %s"
-LOG_TABLE_ALTERED = "Altered table: %s"
-LOG_OPERATION_COMPLETE = "Operation complete: %s"
-LOG_TRANSACTION_BEGIN = "Transaction started"
-LOG_TRANSACTION_COMMIT = "Transaction committed"
-LOG_TRANSACTION_ROLLBACK = "Transaction rolled back"
+_LOG_INIT_ADAPTER = "Initializing %s adapter with config: %s"
+_LOG_BASE_PATH = "Base path: %s, Data label: %s"
+_LOG_DIRECTORY_CREATED = "Ensured directory exists: %s"
+_LOG_CONNECTED = "Connected to %s backend: %s"
+_LOG_DISCONNECTED = "Disconnected from %s backend"
+_LOG_CONNECTION_INFO = "Connection info: adapter=%s, connected=%s, path=%s"
+_LOG_TABLE_CREATED = "Created table: %s"
+_LOG_TABLE_DROPPED = "Dropped table: %s"
+_LOG_TABLE_ALTERED = "Altered table: %s"
+_LOG_OPERATION_COMPLETE = "Operation complete: %s"
+_LOG_TRANSACTION_BEGIN = "Transaction started"
+_LOG_TRANSACTION_COMMIT = "Transaction committed"
+_LOG_TRANSACTION_ROLLBACK = "Transaction rolled back"
 
 # ============================================================
 # Public API
@@ -370,16 +370,16 @@ class BaseDataAdapter(ABC):  # pylint: disable=unnecessary-pass
         self.config = config
         self.connection = None
         self.cursor = None
-        self.base_path = Path(config.get(CONFIG_KEY_PATH, DEFAULT_PATH))
-        self.data_label = config.get(CONFIG_KEY_LABEL, DEFAULT_LABEL)
+        self.base_path = Path(config.get(_CONFIG_KEY_PATH, _DEFAULT_PATH))
+        self.data_label = config.get(_CONFIG_KEY_LABEL, _DEFAULT_LABEL)
         self.logger = logger
 
         if self.logger:
             self.logger.debug(
-                LOG_INIT_ADAPTER,
+                _LOG_INIT_ADAPTER,
                 self.__class__.__name__, config
             )
-            self.logger.debug(LOG_BASE_PATH, self.base_path, self.data_label)
+            self.logger.debug(_LOG_BASE_PATH, self.base_path, self.data_label)
     
     # ============================================================
     # DRY Helper Methods (Reduce Duplication Across Adapters)
@@ -1144,9 +1144,9 @@ class BaseDataAdapter(ABC):  # pylint: disable=unnecessary-pass
             - Returns current state snapshot
         """
         return {
-            INFO_KEY_ADAPTER: self.__class__.__name__,
-            INFO_KEY_CONNECTED: self.is_connected(),
-            INFO_KEY_PATH: self.config.get(CONFIG_KEY_PATH),
-            INFO_KEY_BACKEND: self.config.get(CONFIG_KEY_BACKEND),
-            INFO_KEY_STATE: STATE_CONNECTED if self.is_connected() else STATE_DISCONNECTED,
+            _INFO_KEY_ADAPTER: self.__class__.__name__,
+            _INFO_KEY_CONNECTED: self.is_connected(),
+            _INFO_KEY_PATH: self.config.get(_CONFIG_KEY_PATH),
+            _INFO_KEY_BACKEND: self.config.get(_CONFIG_KEY_BACKEND),
+            _INFO_KEY_STATE: _STATE_CONNECTED if self.is_connected() else _STATE_DISCONNECTED,
         }

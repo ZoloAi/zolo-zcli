@@ -278,48 +278,48 @@ from zCLI import Any, Dict, List
 # Module Constants - Operation Name
 # ============================================================
 
-OP_DROP_TABLE = "DROP_TABLE"
+_OP_DROP_TABLE = "DROP_TABLE"
 
 # ============================================================
 # Module Constants - Request Keys
 # ============================================================
 
-KEY_TABLES = "tables"
+_KEY_TABLES = "tables"
 
 # ============================================================
 # Module Constants - Log Messages
 # ============================================================
 
-LOG_NO_TABLES = "No tables specified for DROP operation"
-LOG_CHECK_EXISTS = "Checking if table exists: %s"
-LOG_TABLE_NOT_EXISTS = "Table '%s' does not exist, skipping"
-LOG_DROP_TABLE = "Dropping table: %s"
-LOG_DROP_SUCCESS = "[OK] Dropped table: %s"
-LOG_BATCH_DROP = "Batch dropping %d tables"
-LOG_PARTIAL_SUCCESS = "Partial success: dropped %d of %d tables"
-LOG_SUCCESS = "[OK] Dropped %d table(s): %s"
+_LOG_NO_TABLES = "No tables specified for DROP operation"
+_LOG_CHECK_EXISTS = "Checking if table exists: %s"
+_LOG_TABLE_NOT_EXISTS = "Table '%s' does not exist, skipping"
+_LOG_DROP_TABLE = "Dropping table: %s"
+_LOG_DROP_SUCCESS = "[OK] Dropped table: %s"
+_LOG_BATCH_DROP = "Batch dropping %d tables"
+_LOG_PARTIAL_SUCCESS = "Partial success: dropped %d of %d tables"
+_LOG_SUCCESS = "[OK] Dropped %d table(s): %s"
 
 # ============================================================
 # Module Constants - Error Messages
 # ============================================================
 
-ERR_NO_TABLES = "No table specified for DROP"
-ERR_NO_TABLES_DROPPED = "No tables were dropped"
-ERR_DROP_FAILED = "Failed to drop table: %s"
-ERR_INVALID_TABLE = "Invalid table name: %s"
-ERR_CASCADE_ERROR = "CASCADE delete may affect dependent tables"
-ERR_ADAPTER_ERROR = "Adapter error during DROP: %s"
+_ERR_NO_TABLES = "No table specified for DROP"
+_ERR_NO_TABLES_DROPPED = "No tables were dropped"
+_ERR_DROP_FAILED = "Failed to drop table: %s"
+_ERR_INVALID_TABLE = "Invalid table name: %s"
+_ERR_CASCADE_ERROR = "CASCADE delete may affect dependent tables"
+_ERR_ADAPTER_ERROR = "Adapter error during DROP: %s"
 
 # ============================================================
 # Module Constants - Safety Warnings
 # ============================================================
 
-WARN_IRREVERSIBLE = "⚠️ DROP TABLE is IRREVERSIBLE - data will be lost permanently"
-WARN_DATA_LOSS = "⚠️ ALL table data will be deleted (no recovery without backup)"
-WARN_CASCADE = "⚠️ CASCADE may delete data in dependent tables"
-WARN_BACKUP = "⚠️ ALWAYS backup before DROP operations"
-WARN_TRANSACTION = "⚠️ DDL may not be transactional (adapter-specific)"
-WARN_SCHEMA_INTEGRITY = "⚠️ Dropping tables can break application (missing tables → errors)"
+_WARN_IRREVERSIBLE = "⚠️ DROP TABLE is IRREVERSIBLE - data will be lost permanently"
+_WARN_DATA_LOSS = "⚠️ ALL table data will be deleted (no recovery without backup)"
+_WARN_CASCADE = "⚠️ CASCADE may delete data in dependent tables"
+_WARN_BACKUP = "⚠️ ALWAYS backup before DROP operations"
+_WARN_TRANSACTION = "⚠️ DDL may not be transactional (adapter-specific)"
+_WARN_SCHEMA_INTEGRITY = "⚠️ Dropping tables can break application (missing tables → errors)"
 
 # ============================================================
 # Public API
@@ -412,10 +412,10 @@ def handle_drop(request: Dict[str, Any], ops: Any) -> bool:
     # ============================================================
     # Phase 1: Validate Tables List (Empty Check)
     # ============================================================
-    tables: List[str] = request.get(KEY_TABLES, [])
+    tables: List[str] = request.get(_KEY_TABLES, [])
 
     if not tables:
-        ops.logger.error(ERR_NO_TABLES)
+        ops.logger.error(_ERR_NO_TABLES)
         return False
 
     # ============================================================
@@ -426,23 +426,23 @@ def handle_drop(request: Dict[str, Any], ops: Any) -> bool:
     for table in tables:
         # Check if table exists (graceful skip for non-existent)
         if not ops.adapter.table_exists(table):
-            ops.logger.warning(LOG_TABLE_NOT_EXISTS, table)
+            ops.logger.warning(_LOG_TABLE_NOT_EXISTS, table)
             continue
 
         # ⚠️ IRREVERSIBLE: Drop the table (PERMANENT deletion)
         ops.adapter.drop_table(table)
         dropped.append(table)
-        ops.logger.info(LOG_DROP_SUCCESS, table)
+        ops.logger.info(_LOG_DROP_SUCCESS, table)
 
     # ============================================================
     # Phase 3: Check If Any Tables Were Dropped
     # ============================================================
     if not dropped:
-        ops.logger.error(ERR_NO_TABLES_DROPPED)
+        ops.logger.error(_ERR_NO_TABLES_DROPPED)
         return False
 
     # ============================================================
     # Phase 4: Log Success (Partial or Complete)
     # ============================================================
-    ops.logger.info(LOG_SUCCESS, len(dropped), ", ".join(dropped))
+    ops.logger.info(_LOG_SUCCESS, len(dropped), ", ".join(dropped))
     return True

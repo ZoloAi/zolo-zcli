@@ -185,50 +185,50 @@ from zCLI import Any, Dict
 # Module Constants - Operation Name
 # ============================================================
 
-OP_UPSERT = "UPSERT"
+_OP_UPSERT = "UPSERT"
 
 # ============================================================
 # Module Constants - Request Keys
 # ============================================================
 
-KEY_FIELDS = "fields"
-KEY_VALUES = "values"
-KEY_TABLE = "table"
-KEY_CONFLICT_FIELDS = "conflict_fields"
-KEY_OPTIONS = "options"
+_KEY_FIELDS = "fields"
+_KEY_VALUES = "values"
+_KEY_TABLE = "table"
+_KEY_CONFLICT_FIELDS = "conflict_fields"
+_KEY_OPTIONS = "options"
 
 # ============================================================
 # Module Constants - Conflict Strategies
 # ============================================================
 
-CONFLICT_REPLACE = "REPLACE"  # SQLite: INSERT OR REPLACE
-CONFLICT_UPDATE = "UPDATE"    # PostgreSQL: ON CONFLICT DO UPDATE
-CONFLICT_MERGE = "MERGE"      # CSV: DataFrame merge
+_CONFLICT_REPLACE = "REPLACE"  # SQLite: INSERT OR REPLACE
+_CONFLICT_UPDATE = "UPDATE"    # PostgreSQL: ON CONFLICT DO UPDATE
+_CONFLICT_MERGE = "MERGE"      # CSV: DataFrame merge
 
 # ============================================================
 # Module Constants - Log Messages
 # ============================================================
 
-LOG_EXTRACT_TABLE = "Extracting table from request for %s operation"
-LOG_EXTRACT_FIELDS = "Extracting fields/values from request"
-LOG_EXTRACT_CONFLICT = "Extracting conflict_fields from request"
-LOG_UPSERT = "Executing upsert operation on table %s"
-LOG_SUCCESS = "[OK] Upserted row with ID: %s"
-LOG_INSERT_PATH = "UPSERT taking INSERT path (row doesn't exist)"
-LOG_UPDATE_PATH = "UPSERT taking UPDATE path (row exists)"
-LOG_DEFAULT_CONFLICT = "Using default conflict_fields: first field"
+_LOG_EXTRACT_TABLE = "Extracting table from request for %s operation"
+_LOG_EXTRACT_FIELDS = "Extracting fields/values from request"
+_LOG_EXTRACT_CONFLICT = "Extracting conflict_fields from request"
+_LOG_UPSERT = "Executing upsert operation on table %s"
+_LOG_SUCCESS = "[OK] Upserted row with ID: %s"
+_LOG_INSERT_PATH = "UPSERT taking INSERT path (row doesn't exist)"
+_LOG_UPDATE_PATH = "UPSERT taking UPDATE path (row exists)"
+_LOG_DEFAULT_CONFLICT = "Using default conflict_fields: first field"
 
 # ============================================================
 # Module Constants - Error Messages
 # ============================================================
 
-ERR_NO_TABLE = "No table specified for UPSERT operation"
-ERR_NO_FIELDS = "No fields specified for UPSERT operation"
-ERR_UPSERT_FAILED = "Upsert operation failed"
-ERR_VALIDATION_FAILED = "Validation failed"
-ERR_NO_CONFLICT_FIELDS = "No conflict_fields specified and no fields available"
-ERR_INVALID_DATA = "Invalid data format"
-ERR_ADAPTER_NOT_SUPPORT = "Adapter does not support UPSERT operation"
+_ERR_NO_TABLE = "No table specified for UPSERT operation"
+_ERR_NO_FIELDS = "No fields specified for UPSERT operation"
+_ERR_UPSERT_FAILED = "Upsert operation failed"
+_ERR_VALIDATION_FAILED = "Validation failed"
+_ERR_NO_CONFLICT_FIELDS = "No conflict_fields specified and no fields available"
+_ERR_INVALID_DATA = "Invalid data format"
+_ERR_ADAPTER_NOT_SUPPORT = "Adapter does not support UPSERT operation"
 
 # ============================================================
 # Imports - Helper Functions
@@ -313,31 +313,31 @@ def handle_upsert(request: Dict[str, Any], ops: Any) -> bool:
     # ============================================================
     # Phase 1: Table Extraction (no existence check)
     # ============================================================
-    table = extract_table_from_request(request, OP_UPSERT, ops, check_exists=False)
+    table = extract_table_from_request(request, _OP_UPSERT, ops, check_exists=False)
     if not table:
         return False
 
     # ============================================================
     # Phase 2: Field/Value Extraction (explicit or from options)
     # ============================================================
-    fields = request.get(KEY_FIELDS, [])
-    values = request.get(KEY_VALUES)
+    fields = request.get(_KEY_FIELDS, [])
+    values = request.get(_KEY_VALUES)
 
     # If no explicit values, extract from options
     if not values:
-        fields, values = extract_field_values(request, OP_UPSERT, ops)
+        fields, values = extract_field_values(request, _OP_UPSERT, ops)
         if not fields:
             return False
 
     # ============================================================
     # Phase 3: Conflict Fields Resolution (smart default)
     # ============================================================
-    conflict_fields = request.get(KEY_CONFLICT_FIELDS, [fields[0]] if fields else [])
+    conflict_fields = request.get(_KEY_CONFLICT_FIELDS, [fields[0]] if fields else [])
 
     # ============================================================
     # Phase 4: Upsert Execution (adapter decides INSERT vs UPDATE)
     # ============================================================
     row_id = ops.upsert(table, fields, values, conflict_fields)
-    ops.logger.info(LOG_SUCCESS, row_id)
+    ops.logger.info(_LOG_SUCCESS, row_id)
     
     return True

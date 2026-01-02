@@ -150,61 +150,61 @@ from zCLI import Any, Dict
 # Module Constants - Operation Name
 # ============================================================
 
-OP_UPDATE = "UPDATE"
+_OP_UPDATE = "UPDATE"
 
 # ============================================================
 # Module Constants - Request Keys
 # ============================================================
 
-KEY_FIELDS = "fields"
-KEY_VALUES = "values"
-KEY_TABLE = "table"
-KEY_WHERE = "where"
-KEY_SCHEMA = "schema"
-KEY_COUNT = "count"
+_KEY_FIELDS = "fields"
+_KEY_VALUES = "values"
+_KEY_TABLE = "table"
+_KEY_WHERE = "where"
+_KEY_SCHEMA = "schema"
+_KEY_COUNT = "count"
 
 # ============================================================
 # Module Constants - Hook Names
 # ============================================================
 
-HOOK_BEFORE_UPDATE = "onBeforeUpdate"
-HOOK_AFTER_UPDATE = "onAfterUpdate"
+_HOOK_BEFORE_UPDATE = "onBeforeUpdate"
+_HOOK_AFTER_UPDATE = "onAfterUpdate"
 
 # ============================================================
 # Module Constants - zConv Key
 # ============================================================
 
-ZCONV_KEY = "zConv"
+_ZCONV_KEY = "zConv"
 
 # ============================================================
 # Module Constants - Log Messages
 # ============================================================
 
-LOG_EXTRACT_TABLE = "Extracting table from request for %s operation"
-LOG_EXTRACT_FIELDS = "Extracting fields/values from request"
-LOG_EXTRACT_WHERE = "Extracting WHERE clause from request"
-LOG_HOOK_BEFORE = "Executing %s hook for %s"
-LOG_HOOK_AFTER = "Executing %s hook for %s"
-LOG_VALIDATE = "Validating data for %s operation on table %s"
-LOG_UPDATE = "Executing update operation on table %s"
-LOG_SUCCESS = "[OK] Updated %d row(s) in %s"
-LOG_HOOK_ABORT = "%s hook returned False, aborting %s operation"
-LOG_HOOK_MODIFY = "%s hook returned dict, updating data"
-LOG_VALIDATION_ERROR = "Validation failed for table %s"
-LOG_NO_ROWS = "No rows affected by UPDATE (WHERE clause matched nothing)"
+_LOG_EXTRACT_TABLE = "Extracting table from request for %s operation"
+_LOG_EXTRACT_FIELDS = "Extracting fields/values from request"
+_LOG_EXTRACT_WHERE = "Extracting WHERE clause from request"
+_LOG_HOOK_BEFORE = "Executing %s hook for %s"
+_LOG_HOOK_AFTER = "Executing %s hook for %s"
+_LOG_VALIDATE = "Validating data for %s operation on table %s"
+_LOG_UPDATE = "Executing update operation on table %s"
+_LOG_SUCCESS = "[OK] Updated %d row(s) in %s"
+_LOG_HOOK_ABORT = "%s hook returned False, aborting %s operation"
+_LOG_HOOK_MODIFY = "%s hook returned dict, updating data"
+_LOG_VALIDATION_ERROR = "Validation failed for table %s"
+_LOG_NO_ROWS = "No rows affected by UPDATE (WHERE clause matched nothing)"
 
 # ============================================================
 # Module Constants - Error Messages
 # ============================================================
 
-ERR_NO_TABLE = "No table specified for UPDATE operation"
-ERR_NO_FIELDS = "No fields specified for UPDATE operation"
-ERR_HOOK_ABORT = "onBeforeUpdate hook aborted operation"
-ERR_VALIDATION_FAILED = "Validation failed"
-ERR_UPDATE_FAILED = "Update operation failed"
-ERR_NO_WHERE = "No WHERE clause provided (will update ALL rows)"
-ERR_INVALID_DATA = "Invalid data format"
-ERR_HOOK_ERROR = "Hook execution error"
+_ERR_NO_TABLE = "No table specified for UPDATE operation"
+_ERR_NO_FIELDS = "No fields specified for UPDATE operation"
+_ERR_HOOK_ABORT = "onBeforeUpdate hook aborted operation"
+_ERR_VALIDATION_FAILED = "Validation failed"
+_ERR_UPDATE_FAILED = "Update operation failed"
+_ERR_NO_WHERE = "No WHERE clause provided (will update ALL rows)"
+_ERR_INVALID_DATA = "Invalid data format"
+_ERR_HOOK_ERROR = "Hook execution error"
 
 # ============================================================
 # Imports - Helper Functions
@@ -301,7 +301,7 @@ def handle_update(request: Dict[str, Any], ops: Any) -> bool:
     # ============================================================
     # Phase 1: Table Extraction
     # ============================================================
-    table = extract_table_from_request(request, OP_UPDATE, ops, check_exists=True)
+    table = extract_table_from_request(request, _OP_UPDATE, ops, check_exists=True)
     if not table:
         return False
 
@@ -314,7 +314,7 @@ def handle_update(request: Dict[str, Any], ops: Any) -> bool:
 
     # If no explicit values, extract from options dict (legacy support)
     if not values:
-        fields, values = extract_field_values(request, OP_UPDATE, ops)
+        fields, values = extract_field_values(request, _OP_UPDATE, ops)
         if not fields:
             return False
     elif not fields:
@@ -334,20 +334,20 @@ def handle_update(request: Dict[str, Any], ops: Any) -> bool:
     # Phase 4: onBeforeUpdate Hook (data modification/abortion)
     # ============================================================
     table_schema = ops.schema.get(table, {})
-    on_before_update = table_schema.get(HOOK_BEFORE_UPDATE)
+    on_before_update = table_schema.get(_HOOK_BEFORE_UPDATE)
     if on_before_update:
-        ops.logger.info(LOG_HOOK_BEFORE, HOOK_BEFORE_UPDATE, table)
+        ops.logger.info(_LOG_HOOK_BEFORE, _HOOK_BEFORE_UPDATE, table)
         hook_result = ops.execute_hook(on_before_update, {
-            ZCONV_KEY: data,
-            KEY_TABLE: table,
-            KEY_WHERE: where
+            _ZCONV_KEY: data,
+            _KEY_TABLE: table,
+            _KEY_WHERE: where
         })
         if hook_result is False:
-            ops.logger.error(LOG_HOOK_ABORT, HOOK_BEFORE_UPDATE, OP_UPDATE)
+            ops.logger.error(_LOG_HOOK_ABORT, _HOOK_BEFORE_UPDATE, _OP_UPDATE)
             return False
         # If hook returns a dict, use it to update data
         if isinstance(hook_result, dict):
-            ops.logger.info(LOG_HOOK_MODIFY, HOOK_BEFORE_UPDATE)
+            ops.logger.info(_LOG_HOOK_MODIFY, _HOOK_BEFORE_UPDATE)
             data.update(hook_result)
             fields = list(data.keys())
             values = list(data.values())
@@ -357,7 +357,7 @@ def handle_update(request: Dict[str, Any], ops: Any) -> bool:
     # ============================================================
     is_valid, errors = ops.validator.validate_update(table, data)
     if not is_valid:
-        ops.logger.error(LOG_VALIDATION_ERROR, table)
+        ops.logger.error(_LOG_VALIDATION_ERROR, table)
         display_validation_errors(table, errors, ops)
         return False
 
@@ -365,19 +365,19 @@ def handle_update(request: Dict[str, Any], ops: Any) -> bool:
     # Phase 6: Update Execution
     # ============================================================
     count = ops.update(table, fields, values, where)
-    ops.logger.info(LOG_SUCCESS, count, table)
+    ops.logger.info(_LOG_SUCCESS, count, table)
 
     # ============================================================
     # Phase 7: onAfterUpdate Hook (side effects)
     # ============================================================
-    on_after_update = table_schema.get(HOOK_AFTER_UPDATE)
+    on_after_update = table_schema.get(_HOOK_AFTER_UPDATE)
     if on_after_update:
-        ops.logger.info(LOG_HOOK_AFTER, HOOK_AFTER_UPDATE, table)
+        ops.logger.info(_LOG_HOOK_AFTER, _HOOK_AFTER_UPDATE, table)
         context = {
-            ZCONV_KEY: data,
-            KEY_TABLE: table,
-            KEY_WHERE: where,
-            KEY_COUNT: count
+            _ZCONV_KEY: data,
+            _KEY_TABLE: table,
+            _KEY_WHERE: where,
+            _KEY_COUNT: count
         }
         ops.execute_hook(on_after_update, context)
 

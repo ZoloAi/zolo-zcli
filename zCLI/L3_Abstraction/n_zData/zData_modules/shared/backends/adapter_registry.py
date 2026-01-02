@@ -103,37 +103,37 @@ from .adapter_factory import AdapterFactory
 # Module Constants - Adapter Names
 # ============================================================
 
-ADAPTER_SQLITE = "sqlite"
-ADAPTER_CSV = "csv"
-ADAPTER_POSTGRESQL = "postgresql"
+_ADAPTER_SQLITE = "sqlite"
+_ADAPTER_CSV = "csv"
+_ADAPTER_POSTGRESQL = "postgresql"
 
 # ============================================================
 # Module Constants - Logger
 # ============================================================
 
-LOG_PREFIX = "[OK]"
+_LOG_PREFIX = "[OK]"
 
 # ============================================================
 # Module Constants - Log Messages
 # ============================================================
 
-LOG_REGISTERED = "[OK] Registered %s adapter"
-LOG_REGISTERED_CUSTOM = "Registered custom adapter: %s"
-LOG_AUTO_REGISTRATION_START = "Auto-registering built-in adapters"
-LOG_SQLITE_REGISTERED = "[OK] Registered SQLite adapter"
-LOG_CSV_REGISTERED = "[OK] Registered CSV adapter"
-LOG_POSTGRESQL_REGISTERED = "[OK] Registered PostgreSQL adapter"
+_LOG_REGISTERED = "[OK] Registered %s adapter"
+_LOG_REGISTERED_CUSTOM = "Registered custom adapter: %s"
+_LOG_AUTO_REGISTRATION_START = "Auto-registering built-in adapters"
+_LOG_SQLITE_REGISTERED = "[OK] Registered SQLite adapter"
+_LOG_CSV_REGISTERED = "[OK] Registered CSV adapter"
+_LOG_POSTGRESQL_REGISTERED = "[OK] Registered PostgreSQL adapter"
 
 # ============================================================
 # Module Constants - Error Messages
 # ============================================================
 
-ERR_IMPORT_FAILED = "Failed to register %s adapter: %s"
-ERR_SQLITE_IMPORT = "Failed to register SQLite adapter: %s"
-ERR_CSV_IMPORT = "Failed to register CSV adapter (pandas not installed): %s"
-ERR_POSTGRESQL_IMPORT = "PostgreSQL adapter not available (psycopg2 not installed): %s"
-ERR_PANDAS_MISSING = "pandas not installed"
-ERR_PSYCOPG2_MISSING = "psycopg2 not installed"
+_ERR_IMPORT_FAILED = "Failed to register %s adapter: %s"
+_ERR_SQLITE_IMPORT = "Failed to register SQLite adapter: %s"
+_ERR_CSV_IMPORT = "Failed to register CSV adapter (pandas not installed): %s"
+_ERR_POSTGRESQL_IMPORT = "PostgreSQL adapter not available (psycopg2 not installed): %s"
+_ERR_PANDAS_MISSING = "pandas not installed"
+_ERR_PSYCOPG2_MISSING = "psycopg2 not installed"
 
 # ============================================================
 # Module Logger
@@ -181,30 +181,30 @@ def register_builtin_adapters() -> None:
     """
     try:
         from .sqlite_adapter import SQLiteAdapter
-        AdapterFactory.register_adapter(ADAPTER_SQLITE, SQLiteAdapter)
+        AdapterFactory.register_adapter(_ADAPTER_SQLITE, SQLiteAdapter)
         if logger:
-            logger.debug(LOG_SQLITE_REGISTERED)
+            logger.debug(_LOG_SQLITE_REGISTERED)
     except ImportError as e:
         if logger:
-            logger.warning(ERR_SQLITE_IMPORT, e)
+            logger.warning(_ERR_SQLITE_IMPORT, e)
 
     try:
         from .csv_adapter import CSVAdapter
-        AdapterFactory.register_adapter(ADAPTER_CSV, CSVAdapter)
+        AdapterFactory.register_adapter(_ADAPTER_CSV, CSVAdapter)
         if logger:
-            logger.debug(LOG_CSV_REGISTERED)
+            logger.debug(_LOG_CSV_REGISTERED)
     except ImportError as e:
         if logger:
-            logger.warning(ERR_CSV_IMPORT, e)
+            logger.warning(_ERR_CSV_IMPORT, e)
 
     try:
         from .postgresql_adapter import PostgreSQLAdapter
-        AdapterFactory.register_adapter(ADAPTER_POSTGRESQL, PostgreSQLAdapter)
+        AdapterFactory.register_adapter(_ADAPTER_POSTGRESQL, PostgreSQLAdapter)
         if logger:
-            logger.debug(LOG_POSTGRESQL_REGISTERED)
+            logger.debug(_LOG_POSTGRESQL_REGISTERED)
     except ImportError as e:
         if logger:
-            logger.warning(ERR_POSTGRESQL_IMPORT, e)
+            logger.warning(_ERR_POSTGRESQL_IMPORT, e)
 
 def register_custom_adapter(data_type: str, adapter_class: Any) -> None:
     """
@@ -240,7 +240,7 @@ def register_custom_adapter(data_type: str, adapter_class: Any) -> None:
     """
     AdapterFactory.register_adapter(data_type, adapter_class)
     if logger:
-        logger.info(LOG_REGISTERED_CUSTOM, data_type)
+        logger.info(_LOG_REGISTERED_CUSTOM, data_type)
 
 # ============================================================
 # Auto-Registration

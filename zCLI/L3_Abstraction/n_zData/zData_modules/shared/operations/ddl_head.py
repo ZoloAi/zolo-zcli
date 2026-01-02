@@ -194,74 +194,74 @@ except ImportError:
 # Module Constants - Operation Name
 # ============================================================
 
-OP_HEAD = "HEAD"
+_OP_HEAD = "HEAD"
 
 # ============================================================
 # Module Constants - Schema Keys
 # ============================================================
 
-KEY_NAME = "name"
-KEY_TYPE = "type"
-KEY_REQUIRED = "required"
-KEY_PK = "pk"
-KEY_DEFAULT = "default"
+_KEY_NAME = "name"
+_KEY_TYPE = "type"
+_KEY_REQUIRED = "required"
+_KEY_PK = "pk"
+_KEY_DEFAULT = "default"
 
 # ============================================================
 # Module Constants - Metadata Keys (Not Columns)
 # ============================================================
 
-META_PRIMARY_KEY = "primary_key"
-META_INDEXES = "indexes"
+_META_PRIMARY_KEY = "primary_key"
+_META_INDEXES = "indexes"
 
 # ============================================================
 # Module Constants - Display Format
 # ============================================================
 
-FMT_SCHEMA_HEADER = "Schema: %s"
-FMT_COL_NAME_WIDTH = 20
-TAG_PK = " [PK]"
-TAG_REQUIRED = " [REQUIRED]"
-TAG_DEFAULT = " [DEFAULT: %s]"
+_FMT_SCHEMA_HEADER = "Schema: %s"
+_FMT_COL_NAME_WIDTH = 20
+_TAG_PK = " [PK]"
+_TAG_REQUIRED = " [REQUIRED]"
+_TAG_DEFAULT = " [DEFAULT: %s]"
 
 # ============================================================
 # Module Constants - Default Values
 # ============================================================
 
-DEFAULT_TYPE = "str"
-DEFAULT_REQUIRED = False
-DEFAULT_PK = False
+_DEFAULT_TYPE = "str"
+_DEFAULT_REQUIRED = False
+_DEFAULT_PK = False
 
 # ============================================================
 # Module Constants - Display Settings
 # ============================================================
 
-DISPLAY_COLOR_INFO = "INFO"
-DISPLAY_INDENT_HEADER = 0
-DISPLAY_INDENT_COLUMN = 1
-DISPLAY_STYLE_FULL = "full"
+_DISPLAY_COLOR_INFO = "INFO"
+_DISPLAY_INDENT_HEADER = 0
+_DISPLAY_INDENT_COLUMN = 1
+_DISPLAY_STYLE_FULL = "full"
 
 # ============================================================
 # Module Constants - Log Messages
 # ============================================================
 
-LOG_EXTRACT_TABLE = "Extracting table name from request"
-LOG_GET_SCHEMA = "Getting schema for table: %s"
-LOG_FILTER_METADATA = "Filtering metadata keys (primary_key, indexes)"
-LOG_DICT_ATTRS = "Processing dict attrs for field: %s"
-LOG_STRING_ATTRS = "Processing string attrs for field: %s"
-LOG_DISPLAY_SCHEMA = "Displaying schema for table: %s"
-LOG_COLUMN_COUNT = "Found %d columns in table: %s"
-LOG_SUCCESS = "[OK] HEAD %s: %d columns"
+_LOG_EXTRACT_TABLE = "Extracting table name from request"
+_LOG_GET_SCHEMA = "Getting schema for table: %s"
+_LOG_FILTER_METADATA = "Filtering metadata keys (primary_key, indexes)"
+_LOG_DICT_ATTRS = "Processing dict attrs for field: %s"
+_LOG_STRING_ATTRS = "Processing string attrs for field: %s"
+_LOG_DISPLAY_SCHEMA = "Displaying schema for table: %s"
+_LOG_COLUMN_COUNT = "Found %d columns in table: %s"
+_LOG_SUCCESS = "[OK] HEAD %s: %d columns"
 
 # ============================================================
 # Module Constants - Error Messages
 # ============================================================
 
-ERR_NO_TABLE = "No table specified for HEAD"
-ERR_TABLE_NOT_FOUND = "Table not found: %s"
-ERR_NO_SCHEMA = "No schema found for table '%s'"
-ERR_EMPTY_SCHEMA = "Empty schema for table: %s"
-ERR_INVALID_ATTRS = "Invalid attrs format for field: %s"
+_ERR_NO_TABLE = "No table specified for HEAD"
+_ERR_TABLE_NOT_FOUND = "Table not found: %s"
+_ERR_NO_SCHEMA = "No schema found for table '%s'"
+_ERR_EMPTY_SCHEMA = "Empty schema for table: %s"
+_ERR_INVALID_ATTRS = "Invalid attrs format for field: %s"
 
 # ============================================================
 # Public API
@@ -339,7 +339,7 @@ def handle_head(request: Dict[str, Any], ops: Any) -> bool:
     # ============================================================
     # Phase 1: Extract and Validate Table Name
     # ============================================================
-    table = extract_table_from_request(request, OP_HEAD, ops, check_exists=True)
+    table = extract_table_from_request(request, _OP_HEAD, ops, check_exists=True)
     if not table:
         return False
 
@@ -350,7 +350,7 @@ def handle_head(request: Dict[str, Any], ops: Any) -> bool:
     table_schema = ops.schema.get(table, {})
 
     if not table_schema:
-        ops.logger.error(ERR_NO_SCHEMA, table)
+        ops.logger.error(_ERR_NO_SCHEMA, table)
         return False
 
     # ============================================================
@@ -360,26 +360,26 @@ def handle_head(request: Dict[str, Any], ops: Any) -> bool:
     columns: List[Dict[str, Any]] = []
     for field_name, attrs in table_schema.items():
         # Filter metadata keys (not columns)
-        if field_name in [META_PRIMARY_KEY, META_INDEXES]:
+        if field_name in [_META_PRIMARY_KEY, _META_INDEXES]:
             continue
 
         # Handle dict format (detailed: type/required/pk/default)
         if isinstance(attrs, dict):
             col_info = {
-                KEY_NAME: field_name,
-                KEY_TYPE: attrs.get(KEY_TYPE, DEFAULT_TYPE),
-                KEY_REQUIRED: attrs.get(KEY_REQUIRED, DEFAULT_REQUIRED),
-                KEY_PK: attrs.get(KEY_PK, DEFAULT_PK),
-                KEY_DEFAULT: attrs.get(KEY_DEFAULT)
+                _KEY_NAME: field_name,
+                _KEY_TYPE: attrs.get(_KEY_TYPE, _DEFAULT_TYPE),
+                _KEY_REQUIRED: attrs.get(_KEY_REQUIRED, _DEFAULT_REQUIRED),
+                _KEY_PK: attrs.get(_KEY_PK, _DEFAULT_PK),
+                _KEY_DEFAULT: attrs.get(_KEY_DEFAULT)
             }
             columns.append(col_info)
         # Handle string format (simple: type only)
         elif isinstance(attrs, str):
             columns.append({
-                KEY_NAME: field_name,
-                KEY_TYPE: attrs,
-                KEY_REQUIRED: DEFAULT_REQUIRED,
-                KEY_PK: DEFAULT_PK
+                _KEY_NAME: field_name,
+                _KEY_TYPE: attrs,
+                _KEY_REQUIRED: _DEFAULT_REQUIRED,
+                _KEY_PK: _DEFAULT_PK
             })
 
     # ============================================================
@@ -389,24 +389,24 @@ def handle_head(request: Dict[str, Any], ops: Any) -> bool:
     rows = []
     for col in columns:
         # Build column type with tags
-        col_type = col[KEY_TYPE]
-        if col.get(KEY_PK):
-            col_type += TAG_PK
-        if col.get(KEY_REQUIRED):
-            col_type += TAG_REQUIRED
+        col_type = col[_KEY_TYPE]
+        if col.get(_KEY_PK):
+            col_type += _TAG_PK
+        if col.get(_KEY_REQUIRED):
+            col_type += _TAG_REQUIRED
         
         # Build nullable display
-        nullable = "No" if col.get(KEY_REQUIRED) else "Yes"
+        nullable = "No" if col.get(_KEY_REQUIRED) else "Yes"
         
         # Build default value display
-        default = col.get(KEY_DEFAULT)
+        default = col.get(_KEY_DEFAULT)
         if default is not None:
             default_display = str(default)
         else:
             default_display = "(none)"
         
         rows.append({
-            "Column": col[KEY_NAME],
+            "Column": col[_KEY_NAME],
             "Type": col_type,
             "Nullable": nullable,
             "Default": default_display
@@ -417,11 +417,11 @@ def handle_head(request: Dict[str, Any], ops: Any) -> bool:
     # ============================================================
     # Use AdvancedData.zTable() for consistent tabular display
     ops.zcli.display.zTable(
-        title=FMT_SCHEMA_HEADER % table,
+        title=_FMT_SCHEMA_HEADER % table,
         columns=["Column", "Type", "Nullable", "Default"],
         rows=rows,
         show_header=True
     )
 
-    ops.logger.info(LOG_SUCCESS, table, len(columns))
+    ops.logger.info(_LOG_SUCCESS, table, len(columns))
     return True

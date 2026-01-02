@@ -133,37 +133,37 @@ except ImportError:
 # ============================================================
 
 # Logical operator keywords
-KEYWORD_OR = " OR "
-KEYWORD_OR_UPPER = "OR"
+_KEYWORD_OR = " OR "
+_KEYWORD_OR_UPPER = "OR"
 
 # NULL check keywords
-KEYWORD_IS_NOT_NULL = " IS NOT NULL"
-KEYWORD_IS_NULL = " IS NULL"
+_KEYWORD_IS_NOT_NULL = " IS NOT NULL"
+_KEYWORD_IS_NULL = " IS NULL"
 
 # Special operator keywords
-KEYWORD_IN = " IN "
-KEYWORD_LIKE = " LIKE "
+_KEYWORD_IN = " IN "
+_KEYWORD_LIKE = " LIKE "
 
 # ============================================================
 # Module Constants - Comparison Operators
 # ============================================================
 
 # Comparison operator symbols (order matters - check longer first!)
-OPERATOR_GTE = ">="
-OPERATOR_LTE = "<="
-OPERATOR_NE = "!="
-OPERATOR_GT = ">"
-OPERATOR_LT = "<"
-OPERATOR_EQ = "="
+_OPERATOR_GTE = ">="
+_OPERATOR_LTE = "<="
+_OPERATOR_NE = "!="
+_OPERATOR_GT = ">"
+_OPERATOR_LT = "<"
+_OPERATOR_EQ = "="
 
 # All comparison operators in order (longest first to avoid partial matches)
-COMPARISON_OPERATORS = [
-    OPERATOR_GTE,
-    OPERATOR_LTE,
-    OPERATOR_NE,
-    OPERATOR_GT,
-    OPERATOR_LT,
-    OPERATOR_EQ,
+_COMPARISON_OPERATORS = [
+    _OPERATOR_GTE,
+    _OPERATOR_LTE,
+    _OPERATOR_NE,
+    _OPERATOR_GT,
+    _OPERATOR_LT,
+    _OPERATOR_EQ,
 ]
 
 # ============================================================
@@ -171,23 +171,23 @@ COMPARISON_OPERATORS = [
 # ============================================================
 
 # Operator keys for dictionary output (MongoDB-style $ prefix)
-KEY_OR = "$or"
-KEY_LIKE = "$like"
-KEY_NOTNULL = "$notnull"
-KEY_GTE = "$gte"
-KEY_LTE = "$lte"
-KEY_NE = "$ne"
-KEY_GT = "$gt"
-KEY_LT = "$lt"
+_KEY_OR = "$or"
+_KEY_LIKE = "$like"
+_KEY_NOTNULL = "$notnull"
+_KEY_GTE = "$gte"
+_KEY_LTE = "$lte"
+_KEY_NE = "$ne"
+_KEY_GT = "$gt"
+_KEY_LT = "$lt"
 
 # Mapping from SQL operators to output keys
-OPERATOR_KEY_MAP = {
-    OPERATOR_GTE: KEY_GTE,
-    OPERATOR_LTE: KEY_LTE,
-    OPERATOR_NE: KEY_NE,
-    OPERATOR_GT: KEY_GT,
-    OPERATOR_LT: KEY_LT,
-    OPERATOR_EQ: None,  # Equality has no key (direct value)
+_OPERATOR_KEY_MAP = {
+    _OPERATOR_GTE: _KEY_GTE,
+    _OPERATOR_LTE: _KEY_LTE,
+    _OPERATOR_NE: _KEY_NE,
+    _OPERATOR_GT: _KEY_GT,
+    _OPERATOR_LT: _KEY_LT,
+    _OPERATOR_EQ: None,  # Equality has no key (direct value)
 }
 
 # ============================================================
@@ -195,14 +195,14 @@ OPERATOR_KEY_MAP = {
 # ============================================================
 
 # Pattern for splitting OR conditions (case-insensitive)
-PATTERN_OR_SPLIT = r'\s+OR\s+'
+_PATTERN_OR_SPLIT = r'\s+OR\s+'
 
 # ============================================================
 # Module Constants - Delimiters
 # ============================================================
 
 # Delimiter for IN operator value lists
-DELIMITER_IN_VALUES = ","
+_DELIMITER_IN_VALUES = ","
 
 # ============================================================
 # Public API
@@ -287,7 +287,7 @@ def parse_where_clause(where_str: Optional[str]) -> Optional[Dict[str, Any]]:
     condition = where_str.strip()
 
     # Handle OR conditions (case-insensitive detection)
-    if KEYWORD_OR in condition.upper():
+    if _KEYWORD_OR in condition.upper():
         return parse_or_where(condition)
 
     # Parse single condition
@@ -347,13 +347,13 @@ def parse_or_where(where_str: str) -> Optional[Dict[str, Any]]:
         - parse_single_where(): Parses individual conditions
     """
     # Split by OR (case-insensitive)
-    or_parts = re.split(PATTERN_OR_SPLIT, where_str, flags=re.IGNORECASE)
+    or_parts = re.split(_PATTERN_OR_SPLIT, where_str, flags=re.IGNORECASE)
 
     or_conditions = []
     for part in or_parts:
         part = part.strip()
         # Only parse non-empty parts that don't contain nested OR
-        if part and KEYWORD_OR not in part.upper():
+        if part and _KEYWORD_OR not in part.upper():
             # Parse each part (avoiding infinite recursion)
             parsed = parse_single_where(part)
             if parsed:
@@ -367,7 +367,7 @@ def parse_or_where(where_str: str) -> Optional[Dict[str, Any]]:
         return or_conditions[0]
 
     # Multiple conditions - wrap in $or
-    return {KEY_OR: or_conditions}
+    return {_KEY_OR: or_conditions}
 
 def parse_single_where(condition: str) -> Optional[Dict[str, Any]]:
     """
@@ -450,32 +450,32 @@ def parse_single_where(condition: str) -> Optional[Dict[str, Any]]:
     upper = condition.upper()
 
     # Handle IS NOT NULL (check before IS NULL to avoid partial match)
-    if KEYWORD_IS_NOT_NULL in upper:
-        field = upper.replace(KEYWORD_IS_NOT_NULL, "").strip()
-        return {field.lower(): {KEY_NOTNULL: True}}
+    if _KEYWORD_IS_NOT_NULL in upper:
+        field = upper.replace(_KEYWORD_IS_NOT_NULL, "").strip()
+        return {field.lower(): {_KEY_NOTNULL: True}}
     
     # Handle IS NULL
-    if KEYWORD_IS_NULL in upper:
-        field = upper.replace(KEYWORD_IS_NULL, "").strip()
+    if _KEYWORD_IS_NULL in upper:
+        field = upper.replace(_KEYWORD_IS_NULL, "").strip()
         return {field.lower(): None}
 
     # Handle IN operator
-    if KEYWORD_IN in upper:
-        parts = condition.split(KEYWORD_IN, 1)
+    if _KEYWORD_IN in upper:
+        parts = condition.split(_KEYWORD_IN, 1)
         if len(parts) == 2:
             field = parts[0].strip()
             # Split by comma and parse each value
             values = [
                 parse_value(v.strip()) 
-                for v in parts[1].strip().split(DELIMITER_IN_VALUES)
+                for v in parts[1].strip().split(_DELIMITER_IN_VALUES)
             ]
             return {field: values}
 
     # Handle LIKE operator
-    if KEYWORD_LIKE in upper:
-        parts = condition.split(KEYWORD_LIKE, 1)
+    if _KEYWORD_LIKE in upper:
+        parts = condition.split(_KEYWORD_LIKE, 1)
         if len(parts) == 2:
-            return {parts[0].strip(): {KEY_LIKE: parts[1].strip()}}
+            return {parts[0].strip(): {_KEY_LIKE: parts[1].strip()}}
 
     # Parse comparison operators (=, !=, >, <, >=, <=)
     result = _parse_comparison(condition)
@@ -538,18 +538,18 @@ def _parse_comparison(condition: str) -> Optional[Dict[str, Any]]:
     See Also:
         - parse_single_where(): Calls this for comparison parsing
         - parse_value(): Type conversion for values
-        - COMPARISON_OPERATORS: List of operators checked
-        - OPERATOR_KEY_MAP: Mapping from operators to output keys
+        - _COMPARISON_OPERATORS: List of operators checked
+        - _OPERATOR_KEY_MAP: Mapping from operators to output keys
     """
     # Check operators in order (longest first to avoid partial matches)
-    for operator in COMPARISON_OPERATORS:
+    for operator in _COMPARISON_OPERATORS:
         if operator in condition:
             # Split on first occurrence only
             field, value = condition.split(operator, 1)
             parsed_value = parse_value(value.strip())
             
             # Get operator key from map (None for equality)
-            op_key = OPERATOR_KEY_MAP[operator]
+            op_key = _OPERATOR_KEY_MAP[operator]
             
             # Format: {"field": {"$op": value}} or {"field": value}
             if op_key:

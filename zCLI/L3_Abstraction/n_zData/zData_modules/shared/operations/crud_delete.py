@@ -145,48 +145,48 @@ from zCLI import Any, Dict
 # Module Constants - Operation Name
 # ============================================================
 
-OP_DELETE = "DELETE"
+_OP_DELETE = "DELETE"
 
 # ============================================================
 # Module Constants - Request Keys
 # ============================================================
 
-KEY_TABLE = "table"
-KEY_WHERE = "where"
-KEY_COUNT = "count"
+_KEY_TABLE = "table"
+_KEY_WHERE = "where"
+_KEY_COUNT = "count"
 
 # ============================================================
 # Module Constants - Log Messages
 # ============================================================
 
-LOG_EXTRACT_TABLE = "Extracting table from request for %s operation"
-LOG_EXTRACT_WHERE = "Extracting WHERE clause from request"
-LOG_DELETE = "Executing delete operation on table %s"
-LOG_SUCCESS = "[OK] Deleted %d row(s) from %s"
-LOG_NO_ROWS = "No rows affected by DELETE (WHERE clause matched nothing)"
-LOG_WARNING_NO_WHERE = "[CRITICAL WARNING] No WHERE clause - will delete ALL rows"
-LOG_CASCADE = "Foreign key cascade may delete related rows in other tables"
-LOG_PERMANENT = "DELETE is permanent and irreversible"
+_LOG_EXTRACT_TABLE = "Extracting table from request for %s operation"
+_LOG_EXTRACT_WHERE = "Extracting WHERE clause from request"
+_LOG_DELETE = "Executing delete operation on table %s"
+_LOG_SUCCESS = "[OK] Deleted %d row(s) from %s"
+_LOG_NO_ROWS = "No rows affected by DELETE (WHERE clause matched nothing)"
+_LOG_WARNING_NO_WHERE = "[CRITICAL WARNING] No WHERE clause - will delete ALL rows"
+_LOG_CASCADE = "Foreign key cascade may delete related rows in other tables"
+_LOG_PERMANENT = "DELETE is permanent and irreversible"
 
 # ============================================================
 # Module Constants - Error Messages
 # ============================================================
 
-ERR_NO_TABLE = "No table specified for DELETE operation"
-ERR_DELETE_FAILED = "Delete operation failed"
-ERR_NO_WHERE = "No WHERE clause provided (will delete ALL rows)"
-ERR_TABLE_NOT_EXIST = "Table does not exist"
-ERR_CASCADE_FAILED = "Cascade delete failed on related tables"
+_ERR_NO_TABLE = "No table specified for DELETE operation"
+_ERR_DELETE_FAILED = "Delete operation failed"
+_ERR_NO_WHERE = "No WHERE clause provided (will delete ALL rows)"
+_ERR_TABLE_NOT_EXIST = "Table does not exist"
+_ERR_CASCADE_FAILED = "Cascade delete failed on related tables"
 
 # ============================================================
 # Module Constants - Safety Warnings
 # ============================================================
 
-WARN_NO_WHERE = "DELETE without WHERE clause will delete ALL rows"
-WARN_IRREVERSIBLE = "DELETE is permanent and cannot be undone without backups"
-WARN_CASCADE = "Foreign key constraints may cascade delete to related tables"
-WARN_TEST_SELECT = "Test WHERE clause with SELECT before DELETE"
-WARN_BACKUP = "Create backup before large DELETE operations"
+_WARN_NO_WHERE = "DELETE without WHERE clause will delete ALL rows"
+_WARN_IRREVERSIBLE = "DELETE is permanent and cannot be undone without backups"
+_WARN_CASCADE = "Foreign key constraints may cascade delete to related tables"
+_WARN_TEST_SELECT = "Test WHERE clause with SELECT before DELETE"
+_WARN_BACKUP = "Create backup before large DELETE operations"
 
 # ============================================================
 # Imports - Helper Functions
@@ -264,7 +264,7 @@ def handle_delete(request: Dict[str, Any], ops: Any) -> bool:
     # ============================================================
     # Phase 1: Table Extraction
     # ============================================================
-    table = extract_table_from_request(request, OP_DELETE, ops, check_exists=True)
+    table = extract_table_from_request(request, _OP_DELETE, ops, check_exists=True)
     if not table:
         return False
 
@@ -277,7 +277,7 @@ def handle_delete(request: Dict[str, Any], ops: Any) -> bool:
     # Phase 3: Delete Execution (PERMANENT and IRREVERSIBLE)
     # ============================================================
     count = ops.delete(table, where)
-    ops.logger.info(LOG_SUCCESS, count, table)
+    ops.logger.info(_LOG_SUCCESS, count, table)
 
     # Return True if at least one row was deleted (count > 0)
     return count > 0

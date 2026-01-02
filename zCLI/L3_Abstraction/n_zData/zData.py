@@ -180,117 +180,117 @@ from .zData_modules.shared.data_operations import DataOperations
 # ═══════════════════════════════════════════════════════════════════════════════════════
 
 # Schema keys (Meta section)
-META_KEY = "Meta"
-META_KEY_DATA_TYPE = "Data_Type"
-META_KEY_DATA_PATH = "Data_Path"
-META_KEY_DATA_SOURCE = "Data_Source"  # NEW v1.5.12: Environment variable reference (security best practice)
-META_KEY_DATA_LABEL = "Data_Label"
-META_KEY_SCHEMA_NAME = "Schema_Name"
-META_KEY_ZVAFILES = "zVaFiles"
-META_KEY_DATA_PARADIGM = "Data_Paradigm"
-META_DEFAULT_LABEL = "data"
+_META_KEY = "Meta"
+_META_KEY_DATA_TYPE = "Data_Type"
+_META_KEY_DATA_PATH = "Data_Path"
+_META_KEY_DATA_SOURCE = "Data_Source"  # NEW v1.5.12: Environment variable reference (security best practice)
+_META_KEY_DATA_LABEL = "Data_Label"
+_META_KEY_SCHEMA_NAME = "Schema_Name"
+_META_KEY_ZVAFILES = "zVaFiles"
+_META_KEY_DATA_PARADIGM = "Data_Paradigm"
+_META_DEFAULT_LABEL = "data"
 
 # Migration keys (Meta section) - NEW v1.5.13: Opt-in declarative migrations
-META_KEY_ZMIGRATION = "zMigration"  # Enable migrations (opt-in for safety)
-META_KEY_ZMIGRATION_VERSION = "zMigrationVersion"  # Schema version tracking
+_META_KEY_ZMIGRATION = "zMigration"  # Enable migrations (opt-in for safety)
+_META_KEY_ZMIGRATION_VERSION = "zMigrationVersion"  # Schema version tracking
 
 # Environment variable naming convention (Flask-aligned)
-ENV_VAR_PREFIX = "ZDATA_"
-ENV_VAR_SUFFIX = "_URL"
+_ENV_VAR_PREFIX = "ZDATA_"
+_ENV_VAR_SUFFIX = "_URL"
 
 # Request keys (handle_request parameters)
-REQUEST_KEY_ACTION = "action"
-REQUEST_KEY_MODEL = "model"
-REQUEST_KEY_OPTIONS = "options"
-REQUEST_KEY_TABLES = "tables"
+_REQUEST_KEY_ACTION = "action"
+_REQUEST_KEY_MODEL = "model"
+_REQUEST_KEY_OPTIONS = "options"
+_REQUEST_KEY_TABLES = "tables"
 
 # Option keys (request options)
-OPTION_KEY_SCHEMA_CACHED = "_schema_cached"
-OPTION_KEY_ALIAS_NAME = "_alias_name"
-OPTION_KEY_TABLES = "tables"
-OPTION_VALUE_ALL_TABLES = "all"
+_OPTION_KEY_SCHEMA_CACHED = "_schema_cached"
+_OPTION_KEY_ALIAS_NAME = "_alias_name"
+_OPTION_KEY_TABLES = "tables"
+_OPTION_VALUE_ALL_TABLES = "all"
 
 # Context keys (handle_request context parameter)
-CONTEXT_KEY_WIZARD_MODE = "wizard_mode"
-CONTEXT_KEY_SCHEMA_CACHE = "schema_cache"
+_CONTEXT_KEY_WIZARD_MODE = "wizard_mode"
+_CONTEXT_KEY_SCHEMA_CACHE = "schema_cache"
 
 # Reserved schema keys (excluded from table lists)
-RESERVED_KEY_META = "Meta"
-RESERVED_KEY_DB_PATH = "db_path"
+_RESERVED_KEY_META = "Meta"
+_RESERVED_KEY_DB_PATH = "db_path"
 
 # Return values
-RESULT_ERROR = "error"
-RESULT_SUCCESS = "success"
+_RESULT_ERROR = "error"
+_RESULT_SUCCESS = "success"
 
 # zDisplay color codes
-COLOR_ZDATA = "ZDATA"
-COLOR_ZCRUD = "ZCRUD"
-DISPLAY_STYLE_FULL = "full"
+_COLOR_ZDATA = "ZDATA"
+_COLOR_ZCRUD = "ZCRUD"
+_DISPLAY_STYLE_FULL = "full"
 
 # zDeclare messages
-DECLARE_ZDATA_READY = "zData Ready"
-DECLARE_ZDATA_REQUEST = "zData Request"
+_DECLARE_ZDATA_READY = "zData Ready"
+_DECLARE_ZDATA_REQUEST = "zData Request"
 
 # Error messages
-ERROR_NO_ZCLI_INSTANCE = "zData requires a zCLI instance"
-ERROR_NO_SESSION_ATTR = "Invalid zCLI instance: missing 'session' attribute"
-ERROR_NO_ADAPTER = "No adapter initialized"
-ERROR_NO_SCHEMA = "Cannot initialize adapter without schema"
-ERROR_FAILED_CONNECT = "Failed to connect to backend"
-ERROR_FAILED_INITIALIZE = "Failed to initialize adapter: {error}"
-ERROR_NO_HANDLER = "No handler initialized"
-ERROR_HANDLER_NO_ADAPTER = "Handler does not have an adapter"
-ERROR_NO_SCHEMA_PROVIDED = "No schema provided (model path or cached schema required)"
-ERROR_SCHEMA_LOAD_FAILED = "Failed to load schema from: {path}"
-ERROR_NO_CACHED_SCHEMA = "No cached schema for first-time connection: ${alias}"
-ERROR_NO_ZOPEN = "zOpen not available"
-ERROR_NO_SCHEMA_PATH = "No schema path available"
-ERROR_NO_TABLES = "No tables available"
-ERROR_CSV_NOT_SUPPORTED = "CSV operations not supported for this adapter"
-ERROR_MISSING_META_FIELD = "Schema Meta missing required field: '{field}'"
-ERROR_DCL_NOT_SUPPORTED = "{adapter} does not support {operation} operations. DCL is only supported by PostgreSQL and MySQL adapters."
-ERROR_NO_DATA_CONNECTION = "No database connection info found. Use Data_Source (env var) or Data_Path in schema Meta."
+_ERROR_NO_ZCLI_INSTANCE = "zData requires a zCLI instance"
+_ERROR_NO_SESSION_ATTR = "Invalid zCLI instance: missing 'session' attribute"
+_ERROR_NO_ADAPTER = "No adapter initialized"
+_ERROR_NO_SCHEMA = "Cannot initialize adapter without schema"
+_ERROR_FAILED_CONNECT = "Failed to connect to backend"
+_ERROR_FAILED_INITIALIZE = "Failed to initialize adapter: {error}"
+_ERROR_NO_HANDLER = "No handler initialized"
+_ERROR_HANDLER_NO_ADAPTER = "Handler does not have an adapter"
+_ERROR_NO_SCHEMA_PROVIDED = "No schema provided (model path or cached schema required)"
+_ERROR_SCHEMA_LOAD_FAILED = "Failed to load schema from: {path}"
+_ERROR_NO_CACHED_SCHEMA = "No cached schema for first-time connection: ${alias}"
+_ERROR_NO_ZOPEN = "zOpen not available"
+_ERROR_NO_SCHEMA_PATH = "No schema path available"
+_ERROR_NO_TABLES = "No tables available"
+_ERROR_CSV_NOT_SUPPORTED = "CSV operations not supported for this adapter"
+_ERROR_MISSING_META_FIELD = "Schema Meta missing required field: '{field}'"
+_ERROR_DCL_NOT_SUPPORTED = "{adapter} does not support {operation} operations. DCL is only supported by PostgreSQL and MySQL adapters."
+_ERROR_NO_DATA_CONNECTION = "No database connection info found. Use Data_Source (env var) or Data_Path in schema Meta."
 
 # Security warnings (v1.5.12)
-SECURITY_WARNING_DATA_PATH_IN_SCHEMA = "[SECURITY] Data_Path found in schema file. Move credentials to .zEnv using Data_Source pattern!"
-SECURITY_INFO_LOADED_FROM_ENV = "[SECURITY] Loaded Data_Path from environment: {env_var}"
-SECURITY_INFO_AUTO_CONVENTION = "[SECURITY] Auto-loaded connection from .zEnv using convention: {env_var}"
+_SECURITY_WARNING_DATA_PATH_IN_SCHEMA = "[SECURITY] Data_Path found in schema file. Move credentials to .zEnv using Data_Source pattern!"
+_SECURITY_INFO_LOADED_FROM_ENV = "[SECURITY] Loaded Data_Path from environment: {env_var}"
+_SECURITY_INFO_AUTO_CONVENTION = "[SECURITY] Auto-loaded connection from .zEnv using convention: {env_var}"
 
 # Log messages
-LOG_ZDATA_READY = "zData Ready"
-LOG_LOADING_SCHEMA = "Loading schema from: %s"
-LOG_INITIALIZING_ADAPTER = "Initializing %s adapter for: %s (label: %s)"
-LOG_CONNECTED_BACKEND = "[OK] Connected to %s backend: %s"
-LOG_DISCONNECTED = "Disconnected from backend"
-LOG_DISCONNECTED_ONE_SHOT = "Disconnected (one-shot mode)"
-LOG_CONNECTION_KEPT_ALIVE = "Connection kept alive (wizard mode)"
-LOG_USING_CACHED_SCHEMA = "Using cached schema from alias: $%s"
-LOG_REUSING_CONNECTION = "[REUSE] Reusing connection for $%s"
-LOG_LOADING_FROM_PINNED = "[LOAD] Loading schema from pinned_cache: $%s"
-LOG_CREATED_PERSISTENT = "[CONNECT] Created persistent connection for $%s"
-LOG_ERROR_EXECUTING_REQUEST = "Error executing request: %s"
+_LOG_ZDATA_READY = "zData Ready"
+_LOG_LOADING_SCHEMA = "Loading schema from: %s"
+_LOG_INITIALIZING_ADAPTER = "Initializing %s adapter for: %s (label: %s)"
+_LOG_CONNECTED_BACKEND = "[OK] Connected to %s backend: %s"
+_LOG_DISCONNECTED = "Disconnected from backend"
+_LOG_DISCONNECTED_ONE_SHOT = "Disconnected (one-shot mode)"
+_LOG_CONNECTION_KEPT_ALIVE = "Connection kept alive (wizard mode)"
+_LOG_USING_CACHED_SCHEMA = "Using cached schema from alias: $%s"
+_LOG_REUSING_CONNECTION = "[REUSE] Reusing connection for $%s"
+_LOG_LOADING_FROM_PINNED = "[LOAD] Loading schema from pinned_cache: $%s"
+_LOG_CREATED_PERSISTENT = "[CONNECT] Created persistent connection for $%s"
+_LOG_ERROR_EXECUTING_REQUEST = "Error executing request: %s"
 
 # Log hints
-HINT_USE_LOAD_COMMAND = "Hint: Use 'load @data.%s' or provide model path directly"
+_HINT_USE_LOAD_COMMAND = "Hint: Use 'load @data.%s' or provide model path directly"
 
 # Debug log messages (for DDL/DCL/TCL operations)
-DEBUG_CREATING_TABLE = "Creating table: %s"
-DEBUG_DROPPING_TABLE = "Dropping table: %s"
-DEBUG_ALTERING_TABLE = "Altering table: %s"
-DEBUG_GRANTING = "Granting %s on %s to %s"
-DEBUG_REVOKING = "Revoking %s on %s from %s"
-DEBUG_LISTING_PRIVILEGES = "Listing privileges (table=%s, user=%s)"
-DEBUG_BEGIN_TRANSACTION = "Beginning transaction"
-DEBUG_COMMIT_TRANSACTION = "Committing transaction"
-DEBUG_ROLLBACK_TRANSACTION = "Rolling back transaction"
+_DEBUG_CREATING_TABLE = "Creating table: %s"
+_DEBUG_DROPPING_TABLE = "Dropping table: %s"
+_DEBUG_ALTERING_TABLE = "Altering table: %s"
+_DEBUG_GRANTING = "Granting %s on %s to %s"
+_DEBUG_REVOKING = "Revoking %s on %s from %s"
+_DEBUG_LISTING_PRIVILEGES = "Listing privileges (table=%s, user=%s)"
+_DEBUG_BEGIN_TRANSACTION = "Beginning transaction"
+_DEBUG_COMMIT_TRANSACTION = "Committing transaction"
+_DEBUG_ROLLBACK_TRANSACTION = "Rolling back transaction"
 
 # File operation log messages
-LOG_OPENING_SCHEMA = "Opening schema file: %s"
-LOG_OPENING_CSV = "Opening CSV file: %s"
+_LOG_OPENING_SCHEMA = "Opening schema file: %s"
+_LOG_OPENING_CSV = "Opening CSV file: %s"
 
 # Misc constants
-SCHEMA_PATH_SEPARATOR = "."
-SCHEMA_NAME_FALLBACK = "unknown"
+_SCHEMA_PATH_SEPARATOR = "."
+_SCHEMA_NAME_FALLBACK = "unknown"
 
 
 # ═══════════════════════════════════════════════════════════════════════════════════════
@@ -410,10 +410,10 @@ class zData:
         """
         # PHASE 1: Validate zCLI instance
         if zcli is None:
-            raise ValueError(ERROR_NO_ZCLI_INSTANCE)
+            raise ValueError(_ERROR_NO_ZCLI_INSTANCE)
 
         if not hasattr(zcli, 'session'):
-            raise ValueError(ERROR_NO_SESSION_ATTR)
+            raise ValueError(_ERROR_NO_SESSION_ATTR)
 
         # PHASE 2: Store zCLI instance and subsystem references
         self.zcli = zcli
@@ -430,10 +430,10 @@ class zData:
         self._connected: bool = False
 
         # PHASE 4: Display configuration
-        self.mycolor = COLOR_ZDATA
+        self.mycolor = _COLOR_ZDATA
 
         # PHASE 5: Announce readiness
-        self.display.zDeclare(DECLARE_ZDATA_READY, color=self.mycolor, indent=0, style=DISPLAY_STYLE_FULL)
+        self.display.zDeclare(_DECLARE_ZDATA_READY, color=self.mycolor, indent=0, style=_DISPLAY_STYLE_FULL)
 
     # ═══════════════════════════════════════════════════════════════════════════════════
     # MAIN ENTRY POINT
@@ -510,42 +510,42 @@ class zData:
         # PHASE 1: Announce request (skip if silent mode for background data fetching)
         silent = request.get("silent", False)
         if not silent:
-            self.display.zDeclare(DECLARE_ZDATA_REQUEST, color=COLOR_ZCRUD, indent=1, style=DISPLAY_STYLE_FULL)
+            self.display.zDeclare(_DECLARE_ZDATA_REQUEST, color=_COLOR_ZCRUD, indent=1, style=_DISPLAY_STYLE_FULL)
 
         # PHASE 2: Extract wizard mode flag
-        wizard_mode = context.get(CONTEXT_KEY_WIZARD_MODE, False) if context else False
+        wizard_mode = context.get(_CONTEXT_KEY_WIZARD_MODE, False) if context else False
 
         # PHASE 3: Initialize schema and adapter
         if not self._initialize_handler(request, context):
-            return RESULT_ERROR
+            return _RESULT_ERROR
 
         # PHASE 4: Validate connection
         if not self.is_connected():
-            self.logger.error(ERROR_FAILED_CONNECT)
-            return RESULT_ERROR
+            self.logger.error(_ERROR_FAILED_CONNECT)
+            return _RESULT_ERROR
 
         # PHASE 5: Preprocess request (parse tables option)
         self._preprocess_request(request)
 
         # PHASE 6: Ensure tables exist (for operations that require tables)
-        action = request.get(REQUEST_KEY_ACTION)
-        tables = request.get(REQUEST_KEY_TABLES, [])
+        action = request.get(_REQUEST_KEY_ACTION)
+        tables = request.get(_REQUEST_KEY_TABLES, [])
         if not self.operations.ensure_tables_for_action(action, tables):
-            return RESULT_ERROR
+            return _RESULT_ERROR
 
         # PHASE 7: Delegate to operation handlers
         try:
             result = self.operations.route_action(action, request)
         except Exception as e:  # pylint: disable=broad-except
-            self.logger.error(LOG_ERROR_EXECUTING_REQUEST, e, exc_info=True)
-            result = RESULT_ERROR
+            self.logger.error(_LOG_ERROR_EXECUTING_REQUEST, e, exc_info=True)
+            result = _RESULT_ERROR
         finally:
             # PHASE 8: Manage connection lifecycle
             if not wizard_mode:
                 self.disconnect()
-                self.logger.debug(LOG_DISCONNECTED_ONE_SHOT)
+                self.logger.debug(_LOG_DISCONNECTED_ONE_SHOT)
             else:
-                self.logger.debug(LOG_CONNECTION_KEPT_ALIVE)
+                self.logger.debug(_LOG_CONNECTION_KEPT_ALIVE)
 
         return result
 
@@ -575,13 +575,13 @@ class zData:
             - Model path triggers full schema load and adapter init
         """
         # PHASE 1: Extract context parameters
-        schema_cache = context.get(CONTEXT_KEY_SCHEMA_CACHE) if context else None
-        wizard_mode = context.get(CONTEXT_KEY_WIZARD_MODE, False) if context else False
+        schema_cache = context.get(_CONTEXT_KEY_SCHEMA_CACHE) if context else None
+        wizard_mode = context.get(_CONTEXT_KEY_WIZARD_MODE, False) if context else False
 
         # PHASE 2: Extract request options
-        options = request.get(REQUEST_KEY_OPTIONS, {})
-        cached_schema = options.get(OPTION_KEY_SCHEMA_CACHED)
-        alias_name = options.get(OPTION_KEY_ALIAS_NAME)
+        options = request.get(_REQUEST_KEY_OPTIONS, {})
+        cached_schema = options.get(_OPTION_KEY_SCHEMA_CACHED)
+        alias_name = options.get(_OPTION_KEY_ALIAS_NAME)
 
         # PHASE 3: Wizard mode with connection reuse
         if wizard_mode and schema_cache and alias_name:
@@ -589,12 +589,12 @@ class zData:
 
         # PHASE 4: One-shot mode with cached schema (from pinned_cache)
         if cached_schema and alias_name:
-            self.logger.info(LOG_USING_CACHED_SCHEMA, alias_name)
+            self.logger.info(_LOG_USING_CACHED_SCHEMA, alias_name)
             self.load_schema(cached_schema)
             return True
 
         # PHASE 5: Load schema from model path (default)
-        return self._init_from_model(request.get(REQUEST_KEY_MODEL))
+        return self._init_from_model(request.get(_REQUEST_KEY_MODEL))
 
     def _init_wizard_handler(self, schema_cache: Any, alias_name: str, cached_schema: Optional[Dict[str, Any]]) -> bool:
         """
@@ -627,20 +627,20 @@ class zData:
             self.operations = existing_handler.operations
             self.schema = existing_handler.schema
             self._connected = existing_handler._connected  # pylint: disable=protected-access
-            self.logger.info(LOG_REUSING_CONNECTION, alias_name)
+            self.logger.info(_LOG_REUSING_CONNECTION, alias_name)
             return True
 
         # PHASE 2: First use in wizard - create and store connection
         if not cached_schema:
-            self.logger.error(ERROR_NO_CACHED_SCHEMA.format(alias=alias_name))
-            self.logger.error(HINT_USE_LOAD_COMMAND, alias_name)
+            self.logger.error(_ERROR_NO_CACHED_SCHEMA.format(alias=alias_name))
+            self.logger.error(_HINT_USE_LOAD_COMMAND, alias_name)
             return False
 
         # PHASE 3: Load schema and store new connection
-        self.logger.info(LOG_LOADING_FROM_PINNED, alias_name)
+        self.logger.info(_LOG_LOADING_FROM_PINNED, alias_name)
         self.load_schema(cached_schema)
         schema_cache.set_connection(alias_name, self)
-        self.logger.info(LOG_CREATED_PERSISTENT, alias_name)
+        self.logger.info(_LOG_CREATED_PERSISTENT, alias_name)
         return True
 
     def _init_from_model(self, model_path: Optional[str]) -> bool:
@@ -670,14 +670,14 @@ class zData:
             return False
 
         # PHASE 2: Load schema via zLoader
-        self.logger.info(LOG_LOADING_SCHEMA, model_path)
+        self.logger.info(_LOG_LOADING_SCHEMA, model_path)
         schema = self.loader.handle(model_path)
 
         # PHASE 3: Validate schema load
-        if schema == RESULT_ERROR or not schema:
-            self.logger.error(ERROR_SCHEMA_LOAD_FAILED.format(path=model_path))
+        if schema == _RESULT_ERROR or not schema:
+            self.logger.error(_ERROR_SCHEMA_LOAD_FAILED.format(path=model_path))
             # Extract schema name from zPath (e.g., '@.zSchema.users' -> 'users')
-            schema_name = model_path.split(SCHEMA_PATH_SEPARATOR)[-1] if model_path else SCHEMA_NAME_FALLBACK
+            schema_name = model_path.split(_SCHEMA_PATH_SEPARATOR)[-1] if model_path else _SCHEMA_NAME_FALLBACK
             raise SchemaNotFoundError(
                 schema_name=schema_name,
                 context_type="python",
@@ -741,7 +741,7 @@ class zData:
         self._initialize_adapter()
 
         # PHASE 3: Initialize validator with schema tables (exclude Meta)
-        schema_tables = {k: v for k, v in schema.items() if k != RESERVED_KEY_META}
+        schema_tables = {k: v for k, v in schema.items() if k != _RESERVED_KEY_META}
         self.validator = DataValidator(schema_tables, logger=self.logger, zcli=self.zcli)
 
         # PHASE 4: Initialize operations facade (uses self.adapter/validator/schema)
@@ -773,15 +773,15 @@ class zData:
         """
         # PHASE 1: Validate schema
         if not self.schema:
-            self.logger.error(ERROR_NO_SCHEMA)
+            self.logger.error(_ERROR_NO_SCHEMA)
             return
 
         # PHASE 2: Extract connection config from schema Meta
-        meta = self.schema.get(META_KEY, {})
+        meta = self.schema.get(_META_KEY, {})
 
         # PHASE 3: Validate required Meta fields
-        if META_KEY_DATA_TYPE not in meta:
-            raise ValueError(ERROR_MISSING_META_FIELD.format(field=META_KEY_DATA_TYPE))
+        if _META_KEY_DATA_TYPE not in meta:
+            raise ValueError(_ERROR_MISSING_META_FIELD.format(field=_META_KEY_DATA_TYPE))
         
         # PHASE 3.5: SECURITY - Load Data_Path from environment (v1.5.12)
         # Priority order:
@@ -792,49 +792,49 @@ class zData:
         data_path_source = None  # Track where data_path came from for logging
         
         # Option 1: Check for Data_Source (explicit env var reference)
-        if META_KEY_DATA_SOURCE in meta:
-            env_var_name = meta[META_KEY_DATA_SOURCE]
+        if _META_KEY_DATA_SOURCE in meta:
+            env_var_name = meta[_META_KEY_DATA_SOURCE]
             data_path_from_env = os.getenv(env_var_name)
             
             if data_path_from_env:
                 data_path = data_path_from_env
                 data_path_source = "env_explicit"
-                self.logger.info(SECURITY_INFO_LOADED_FROM_ENV.format(env_var=env_var_name))
+                self.logger.info(_SECURITY_INFO_LOADED_FROM_ENV.format(env_var=env_var_name))
             else:
                 self.logger.warning(f"[zData] Environment variable not found: {env_var_name}")
         
         # Option 2: Try auto-convention (if no Data_Source and no Data_Path yet)
-        if not data_path and META_KEY_DATA_PATH not in meta:
+        if not data_path and _META_KEY_DATA_PATH not in meta:
             # Auto-detect: zSchema.contacts → ZDATA_CONTACTS_URL
-            schema_name = meta.get(META_KEY_SCHEMA_NAME, meta.get(META_KEY_ZVAFILES, ""))
+            schema_name = meta.get(_META_KEY_SCHEMA_NAME, meta.get(_META_KEY_ZVAFILES, ""))
             if schema_name:
                 # Extract: "zSchema.contacts.yaml" → "contacts"
                 schema_key = schema_name.replace("zSchema.", "").replace(".yaml", "").split("/")[-1]
-                env_var_name = f"{ENV_VAR_PREFIX}{schema_key.upper()}{ENV_VAR_SUFFIX}"
+                env_var_name = f"{_ENV_VAR_PREFIX}{schema_key.upper()}{_ENV_VAR_SUFFIX}"
                 data_path_from_env = os.getenv(env_var_name)
                 
                 if data_path_from_env:
                     data_path = data_path_from_env
                     data_path_source = "env_convention"
-                    self.logger.info(SECURITY_INFO_AUTO_CONVENTION.format(env_var=env_var_name))
+                    self.logger.info(_SECURITY_INFO_AUTO_CONVENTION.format(env_var=env_var_name))
         
         # Option 3: Fallback to Data_Path in schema (DEPRECATED)
         if not data_path:
-            if META_KEY_DATA_PATH in meta:
-                data_path = meta[META_KEY_DATA_PATH]
+            if _META_KEY_DATA_PATH in meta:
+                data_path = meta[_META_KEY_DATA_PATH]
                 data_path_source = "schema_file"
-                self.logger.warning(SECURITY_WARNING_DATA_PATH_IN_SCHEMA)
+                self.logger.warning(_SECURITY_WARNING_DATA_PATH_IN_SCHEMA)
             else:
                 # No connection info found anywhere
-                raise ValueError(ERROR_NO_DATA_CONNECTION)
+                raise ValueError(_ERROR_NO_DATA_CONNECTION)
 
         # PHASE 4: Extract Meta values
-        data_type = meta[META_KEY_DATA_TYPE]
-        data_label = meta.get(META_KEY_DATA_LABEL, META_DEFAULT_LABEL)
+        data_type = meta[_META_KEY_DATA_TYPE]
+        data_label = meta.get(_META_KEY_DATA_LABEL, _META_DEFAULT_LABEL)
 
         # PHASE 5: Resolve special paths via zParser (handles ~.zMachine.* and @ paths)
         data_path = self.zcli.zparser.resolve_data_path(data_path)
-        self.logger.info(LOG_INITIALIZING_ADAPTER, data_type, data_path, data_label)
+        self.logger.info(_LOG_INITIALIZING_ADAPTER, data_type, data_path, data_label)
 
         # PHASE 6: Set logger for factory
         AdapterFactory.set_logger(self.logger)
@@ -850,14 +850,14 @@ class zData:
             # PHASE 8: Connect
             self.adapter.connect()
             self._connected = True
-            self.logger.info(LOG_CONNECTED_BACKEND, data_type, data_path)
+            self.logger.info(_LOG_CONNECTED_BACKEND, data_type, data_path)
 
             # PHASE 9: Initialize storage quota manager (Phase 1.5)
             from zCLI.L3_Abstraction.n_zData.zData_modules.shared.storage_quota import StorageQuotaManager
             self.storage_quota = StorageQuotaManager(self)
 
         except Exception as e:
-            self.logger.error(ERROR_FAILED_INITIALIZE.format(error=e))
+            self.logger.error(_ERROR_FAILED_INITIALIZE.format(error=e))
             raise
 
     def _preprocess_request(self, request: Dict[str, Any]) -> None:
@@ -892,19 +892,19 @@ class zData:
             - Comma-separated strings are split and stripped
         """
         # PHASE 1: Extract tables option
-        tables_option = request.get(REQUEST_KEY_OPTIONS, {}).get(OPTION_KEY_TABLES)
+        tables_option = request.get(_REQUEST_KEY_OPTIONS, {}).get(_OPTION_KEY_TABLES)
 
         # PHASE 2: Parse tables option
         if tables_option and isinstance(tables_option, str):
-            if tables_option.lower() == OPTION_VALUE_ALL_TABLES:
+            if tables_option.lower() == _OPTION_VALUE_ALL_TABLES:
                 # Expand "all" to all tables (excluding reserved keys)
-                request[REQUEST_KEY_TABLES] = [
+                request[_REQUEST_KEY_TABLES] = [
                     k for k in self.schema.keys()
-                    if k not in (RESERVED_KEY_META, RESERVED_KEY_DB_PATH)
+                    if k not in (_RESERVED_KEY_META, _RESERVED_KEY_DB_PATH)
                 ]
             else:
                 # Split comma-separated list
-                request[REQUEST_KEY_TABLES] = [t.strip() for t in tables_option.split(",")]
+                request[_REQUEST_KEY_TABLES] = [t.strip() for t in tables_option.split(",")]
 
     # ═══════════════════════════════════════════════════════════════════════════════════
     # CONNECTION MANAGEMENT
@@ -959,7 +959,7 @@ class zData:
         if self.adapter:
             self.adapter.disconnect()
             self._connected = False
-            self.logger.info(LOG_DISCONNECTED)
+            self.logger.info(_LOG_DISCONNECTED)
 
     def get_connection_info(self) -> Dict[str, Any]:
         """
@@ -1024,7 +1024,7 @@ class zData:
             - Use handle_request() for validation and hooks
         """
         if not self.adapter:
-            raise RuntimeError(ERROR_NO_ADAPTER)
+            raise RuntimeError(_ERROR_NO_ADAPTER)
         return self.adapter.insert(table, fields, values)
 
     def select(self, table: str, fields: Optional[List[str]] = None, **kwargs: Any) -> List[Dict[str, Any]]:
@@ -1067,7 +1067,7 @@ class zData:
             - Use handle_request() for complex queries with validation
         """
         if not self.adapter:
-            raise RuntimeError(ERROR_NO_ADAPTER)
+            raise RuntimeError(_ERROR_NO_ADAPTER)
         return self.adapter.select(table, fields, **kwargs)
 
     def update(self, table: str, fields: List[str], values: List[Any], where: Any) -> Any:
@@ -1104,7 +1104,7 @@ class zData:
             - Use handle_request() for validation and hooks
         """
         if not self.adapter:
-            raise RuntimeError(ERROR_NO_ADAPTER)
+            raise RuntimeError(_ERROR_NO_ADAPTER)
         return self.adapter.update(table, fields, values, where)
 
     def delete(self, table: str, where: Any) -> Any:
@@ -1140,7 +1140,7 @@ class zData:
             - Use handle_request() for validation and safety checks
         """
         if not self.adapter:
-            raise RuntimeError(ERROR_NO_ADAPTER)
+            raise RuntimeError(_ERROR_NO_ADAPTER)
         return self.adapter.delete(table, where)
 
     def upsert(self, table: str, fields: List[str], values: List[Any], conflict_fields: List[str]) -> Any:
@@ -1180,7 +1180,7 @@ class zData:
             - Use handle_request() for validation and hooks
         """
         if not self.adapter:
-            raise RuntimeError(ERROR_NO_ADAPTER)
+            raise RuntimeError(_ERROR_NO_ADAPTER)
         return self.adapter.upsert(table, fields, values, conflict_fields)
 
     def list_tables(self) -> List[str]:
@@ -1207,7 +1207,7 @@ class zData:
             - CSV adapter returns list of CSV files
         """
         if not self.adapter:
-            raise RuntimeError(ERROR_NO_ADAPTER)
+            raise RuntimeError(_ERROR_NO_ADAPTER)
         return self.adapter.list_tables()
 
     # ═══════════════════════════════════════════════════════════════════════════════════
@@ -1252,17 +1252,17 @@ class zData:
             - Use handle_request() for validation and idempotent creation
         """
         if not self.adapter:
-            raise RuntimeError(ERROR_NO_ADAPTER)
+            raise RuntimeError(_ERROR_NO_ADAPTER)
         
         # If schema not provided, get from loaded schema
         if schema is None:
             if not self.schema or table_name not in self.schema:
                 # Extract schema name if available (e.g., from Meta section)
-                schema_name = self.schema.get(META_KEY, {}).get(META_KEY_SCHEMA_NAME) if self.schema else None
+                schema_name = self.schema.get(_META_KEY, {}).get(_META_KEY_SCHEMA_NAME) if self.schema else None
                 raise TableNotFoundError(table_name, schema_name=schema_name)
             schema = self.schema[table_name]
         
-        self.logger.debug(DEBUG_CREATING_TABLE, table_name)
+        self.logger.debug(_DEBUG_CREATING_TABLE, table_name)
         return self.adapter.create_table(table_name, schema)
 
     def drop_table(self, table_name: str) -> Any:
@@ -1294,9 +1294,9 @@ class zData:
             - Use handle_request() for validation and safety checks
         """
         if not self.adapter:
-            raise RuntimeError(ERROR_NO_ADAPTER)
+            raise RuntimeError(_ERROR_NO_ADAPTER)
         
-        self.logger.debug(DEBUG_DROPPING_TABLE, table_name)
+        self.logger.debug(_DEBUG_DROPPING_TABLE, table_name)
         return self.adapter.drop_table(table_name)
 
     def alter_table(self, table_name: str, changes: Dict[str, Any]) -> Any:
@@ -1333,9 +1333,9 @@ class zData:
             - Dropping columns may affect dependent objects (views, indexes)
         """
         if not self.adapter:
-            raise RuntimeError(ERROR_NO_ADAPTER)
+            raise RuntimeError(_ERROR_NO_ADAPTER)
         
-        self.logger.debug(DEBUG_ALTERING_TABLE, table_name)
+        self.logger.debug(_DEBUG_ALTERING_TABLE, table_name)
         return self.adapter.alter_table(table_name, changes)
 
     def table_exists(self, table_name: str) -> bool:
@@ -1365,7 +1365,7 @@ class zData:
             - Check is case-sensitive or case-insensitive depending on adapter
         """
         if not self.adapter:
-            raise RuntimeError(ERROR_NO_ADAPTER)
+            raise RuntimeError(_ERROR_NO_ADAPTER)
         
         return self.adapter.table_exists(table_name)
 
@@ -1403,16 +1403,16 @@ class zData:
             - Requires appropriate database permissions
         """
         if not self.adapter:
-            raise RuntimeError(ERROR_NO_ADAPTER)
+            raise RuntimeError(_ERROR_NO_ADAPTER)
         
         # Check if adapter supports DCL
         if not hasattr(self.adapter, 'grant'):
             adapter_type = self.adapter.__class__.__name__
             raise NotImplementedError(
-                ERROR_DCL_NOT_SUPPORTED.format(adapter=adapter_type, operation="GRANT")
+                _ERROR_DCL_NOT_SUPPORTED.format(adapter=adapter_type, operation="GRANT")
             )
         
-        self.logger.debug(DEBUG_GRANTING, privileges, table_name, user)
+        self.logger.debug(_DEBUG_GRANTING, privileges, table_name, user)
         return self.adapter.grant(privileges, table_name, user)
 
     def revoke(self, privileges: str, table_name: str, user: str) -> Any:
@@ -1445,16 +1445,16 @@ class zData:
             - Requires appropriate database permissions
         """
         if not self.adapter:
-            raise RuntimeError(ERROR_NO_ADAPTER)
+            raise RuntimeError(_ERROR_NO_ADAPTER)
         
         # Check if adapter supports DCL
         if not hasattr(self.adapter, 'revoke'):
             adapter_type = self.adapter.__class__.__name__
             raise NotImplementedError(
-                ERROR_DCL_NOT_SUPPORTED.format(adapter=adapter_type, operation="REVOKE")
+                _ERROR_DCL_NOT_SUPPORTED.format(adapter=adapter_type, operation="REVOKE")
             )
         
-        self.logger.debug(DEBUG_REVOKING, privileges, table_name, user)
+        self.logger.debug(_DEBUG_REVOKING, privileges, table_name, user)
         return self.adapter.revoke(privileges, table_name, user)
 
     def list_privileges(self, table_name: Optional[str] = None, user: Optional[str] = None) -> List[Dict[str, Any]]:
@@ -1489,16 +1489,16 @@ class zData:
             - Requires appropriate database permissions
         """
         if not self.adapter:
-            raise RuntimeError(ERROR_NO_ADAPTER)
+            raise RuntimeError(_ERROR_NO_ADAPTER)
         
         # Check if adapter supports DCL
         if not hasattr(self.adapter, 'list_privileges'):
             adapter_type = self.adapter.__class__.__name__
             raise NotImplementedError(
-                ERROR_DCL_NOT_SUPPORTED.format(adapter=adapter_type, operation="privilege listing")
+                _ERROR_DCL_NOT_SUPPORTED.format(adapter=adapter_type, operation="privilege listing")
             )
         
-        self.logger.debug(DEBUG_LISTING_PRIVILEGES, table_name, user)
+        self.logger.debug(_DEBUG_LISTING_PRIVILEGES, table_name, user)
         return self.adapter.list_privileges(table_name, user)
 
     # ═══════════════════════════════════════════════════════════════════════════════════
@@ -1535,8 +1535,8 @@ class zData:
             - Transactions are not nested
         """
         if not self.adapter:
-            raise RuntimeError(ERROR_NO_ADAPTER)
-        self.logger.debug(DEBUG_BEGIN_TRANSACTION)
+            raise RuntimeError(_ERROR_NO_ADAPTER)
+        self.logger.debug(_DEBUG_BEGIN_TRANSACTION)
         return self.adapter.begin_transaction()
 
     def commit(self) -> Any:
@@ -1562,8 +1562,8 @@ class zData:
             - Must be called after begin_transaction()
         """
         if not self.adapter:
-            raise RuntimeError(ERROR_NO_ADAPTER)
-        self.logger.debug(DEBUG_COMMIT_TRANSACTION)
+            raise RuntimeError(_ERROR_NO_ADAPTER)
+        self.logger.debug(_DEBUG_COMMIT_TRANSACTION)
         return self.adapter.commit()
 
     def rollback(self) -> Any:
@@ -1594,8 +1594,8 @@ class zData:
             - Use in exception handlers for error recovery
         """
         if not self.adapter:
-            raise RuntimeError(ERROR_NO_ADAPTER)
-        self.logger.debug(DEBUG_ROLLBACK_TRANSACTION)
+            raise RuntimeError(_ERROR_NO_ADAPTER)
+        self.logger.debug(_DEBUG_ROLLBACK_TRANSACTION)
         return self.adapter.rollback()
 
     # ═══════════════════════════════════════════════════════════════════════════════════
@@ -1783,7 +1783,7 @@ class zData:
             - Schema must be loaded before calling migrate()
         """
         if not self.adapter:
-            raise RuntimeError(ERROR_NO_ADAPTER)
+            raise RuntimeError(_ERROR_NO_ADAPTER)
         if not self.schema:
             raise RuntimeError("No schema loaded. Call load_schema() first.")
         
@@ -1802,8 +1802,8 @@ class zData:
             self.logger.error(error_msg)
             return {"success": False, "error": "Schema load failed"}
         
-        new_meta = new_schema.get(META_KEY, {})
-        migration_enabled = new_meta.get(META_KEY_ZMIGRATION, False)
+        new_meta = new_schema.get(_META_KEY, {})
+        migration_enabled = new_meta.get(_META_KEY_ZMIGRATION, False)
         
         if not migration_enabled:
             error_msg = (
@@ -1846,9 +1846,9 @@ class zData:
         self.logger.info(f"[zMigrate] Schema version: {new_version}")
         
         # NEW v1.5.13: Check for backend changes (CSV → Postgres, etc.)
-        old_meta = self.schema.get(META_KEY, {})
-        old_backend = old_meta.get(META_KEY_DATA_TYPE)
-        new_backend = new_meta.get(META_KEY_DATA_TYPE)
+        old_meta = self.schema.get(_META_KEY, {})
+        old_backend = old_meta.get(_META_KEY_DATA_TYPE)
+        new_backend = new_meta.get(_META_KEY_DATA_TYPE)
         
         if old_backend and new_backend and old_backend != new_backend:
             self.logger.info(f"[zMigrate] Backend change detected: {old_backend} → {new_backend}")
@@ -1932,7 +1932,7 @@ class zData:
             - Shows both successful and failed migrations
         """
         if not self.adapter:
-            raise RuntimeError(ERROR_NO_ADAPTER)
+            raise RuntimeError(_ERROR_NO_ADAPTER)
         
         from zCLI.L3_Abstraction.n_zData.zData_modules.shared.migration_history import (
             get_migration_history as _get_history
@@ -2448,7 +2448,7 @@ class zData:
             os.makedirs(export_dir, exist_ok=True)
             
             # Get all tables from current schema
-            current_tables = [k for k in self.schema.keys() if k not in [META_KEY, RESERVED_KEY_DB_PATH]]
+            current_tables = [k for k in self.schema.keys() if k not in [_META_KEY, _RESERVED_KEY_DB_PATH]]
             
             # Export each table
             exported_tables = []
@@ -2575,19 +2575,19 @@ class zData:
             - Editor is configured in zSession or zMachine
         """
         if not self.open:
-            self.logger.warning(ERROR_NO_ZOPEN)
-            return RESULT_ERROR
+            self.logger.warning(_ERROR_NO_ZOPEN)
+            return _RESULT_ERROR
 
         # Use current schema's path if not specified
         if not schema_path and self.schema:
-            meta = self.schema.get(META_KEY, {})
-            schema_path = meta.get(META_KEY_ZVAFILES)
+            meta = self.schema.get(_META_KEY, {})
+            schema_path = meta.get(_META_KEY_ZVAFILES)
 
         if not schema_path:
-            self.logger.error(ERROR_NO_SCHEMA_PATH)
-            return RESULT_ERROR
+            self.logger.error(_ERROR_NO_SCHEMA_PATH)
+            return _RESULT_ERROR
 
-        self.logger.info(LOG_OPENING_SCHEMA, schema_path)
+        self.logger.info(_LOG_OPENING_SCHEMA, schema_path)
         return self.open.handle({"zOpen": {"path": schema_path}})
 
     def open_csv(self, table_name: Optional[str] = None) -> Any:
@@ -2618,12 +2618,12 @@ class zData:
             - CSV path is determined by adapter
         """
         if not self.open:
-            self.logger.warning(ERROR_NO_ZOPEN)
-            return RESULT_ERROR
+            self.logger.warning(_ERROR_NO_ZOPEN)
+            return _RESULT_ERROR
 
         if not self.adapter:
-            self.logger.error(ERROR_NO_ADAPTER)
-            return RESULT_ERROR
+            self.logger.error(_ERROR_NO_ADAPTER)
+            return _RESULT_ERROR
 
         # Get CSV path from adapter
         if hasattr(self.adapter, '_get_csv_path'):
@@ -2631,13 +2631,13 @@ class zData:
                 # List available tables
                 tables = self.list_tables()
                 if not tables:
-                    self.logger.error(ERROR_NO_TABLES)
-                    return RESULT_ERROR
+                    self.logger.error(_ERROR_NO_TABLES)
+                    return _RESULT_ERROR
                 table_name = tables[0]  # Default to first table
 
             csv_path = str(self.adapter._get_csv_path(table_name))  # pylint: disable=protected-access
-            self.logger.info(LOG_OPENING_CSV, csv_path)
+            self.logger.info(_LOG_OPENING_CSV, csv_path)
             return self.open.handle({"zOpen": {"path": csv_path}})
 
-        self.logger.error(ERROR_CSV_NOT_SUPPORTED)
-        return RESULT_ERROR
+        self.logger.error(_ERROR_CSV_NOT_SUPPORTED)
+        return _RESULT_ERROR

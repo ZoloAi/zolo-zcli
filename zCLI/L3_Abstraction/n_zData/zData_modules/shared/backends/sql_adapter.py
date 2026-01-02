@@ -155,126 +155,126 @@ from .base_adapter import BaseDataAdapter
 # Module Constants - SQL Keywords
 # ============================================================
 
-SQL_SELECT = "SELECT"
-SQL_INSERT = "INSERT"
-SQL_UPDATE = "UPDATE"
-SQL_DELETE = "DELETE"
-SQL_CREATE = "CREATE"
-SQL_ALTER = "ALTER"
-SQL_DROP = "DROP"
-SQL_WHERE = "WHERE"
-SQL_ORDER = "ORDER BY"
-SQL_LIMIT = "LIMIT"
-SQL_JOIN = "JOIN"
-SQL_INNER_JOIN = "INNER JOIN"
-SQL_LEFT_JOIN = "LEFT JOIN"
-SQL_FROM = "FROM"
-SQL_INTO = "INTO"
-SQL_VALUES = "VALUES"
+_SQL_SELECT = "SELECT"
+_SQL_INSERT = "INSERT"
+_SQL_UPDATE = "UPDATE"
+_SQL_DELETE = "DELETE"
+_SQL_CREATE = "CREATE"
+_SQL_ALTER = "ALTER"
+_SQL_DROP = "DROP"
+_SQL_WHERE = "WHERE"
+_SQL_ORDER = "ORDER BY"
+_SQL_LIMIT = "LIMIT"
+_SQL_JOIN = "JOIN"
+_SQL_INNER_JOIN = "INNER JOIN"
+_SQL_LEFT_JOIN = "LEFT JOIN"
+_SQL_FROM = "FROM"
+_SQL_INTO = "INTO"
+_SQL_VALUES = "VALUES"
 
 # ============================================================
 # Module Constants - SQL Operators
 # ============================================================
 
-OP_EQ = "="
-OP_GT = ">"
-OP_LT = "<"
-OP_GTE = ">="
-OP_LTE = "<="
-OP_LIKE = "LIKE"
-OP_IN = "IN"
-OP_IS_NULL = "IS NULL"
-OP_IS_NOT_NULL = "IS NOT NULL"
-OP_AND = "AND"
-OP_OR = "OR"
+_OP_EQ = "="
+_OP_GT = ">"
+_OP_LT = "<"
+_OP_GTE = ">="
+_OP_LTE = "<="
+_OP_LIKE = "LIKE"
+_OP_IN = "IN"
+_OP_IS_NULL = "IS NULL"
+_OP_IS_NOT_NULL = "IS NOT NULL"
+_OP_AND = "AND"
+_OP_OR = "OR"
 
 # Operator suffixes for WHERE clause parsing
-SUFFIX_GT = "__gt"
-SUFFIX_LT = "__lt"
-SUFFIX_GTE = "__gte"
-SUFFIX_LTE = "__lte"
-SUFFIX_LIKE = "__like"
-SUFFIX_IN = "__in"
-SUFFIX_IS_NULL = "__is_null"
-SUFFIX_IS_NOT_NULL = "__is_not_null"
+_SUFFIX_GT = "__gt"
+_SUFFIX_LT = "__lt"
+_SUFFIX_GTE = "__gte"
+_SUFFIX_LTE = "__lte"
+_SUFFIX_LIKE = "__like"
+_SUFFIX_IN = "__in"
+_SUFFIX_IS_NULL = "__is_null"
+_SUFFIX_IS_NOT_NULL = "__is_not_null"
 
 # ============================================================
 # Module Constants - Constraints
 # ============================================================
 
-CONSTRAINT_PRIMARY_KEY = "PRIMARY KEY"
-CONSTRAINT_FOREIGN_KEY = "FOREIGN KEY"
-CONSTRAINT_UNIQUE = "UNIQUE"
-CONSTRAINT_NOT_NULL = "NOT NULL"
-CONSTRAINT_DEFAULT = "DEFAULT"
+_CONSTRAINT_PRIMARY_KEY = "PRIMARY KEY"
+_CONSTRAINT_FOREIGN_KEY = "FOREIGN KEY"
+_CONSTRAINT_UNIQUE = "UNIQUE"
+_CONSTRAINT_NOT_NULL = "NOT NULL"
+_CONSTRAINT_DEFAULT = "DEFAULT"
 
 # ============================================================
 # Module Constants - Join Types
 # ============================================================
 
-JOIN_INNER = "INNER"
-JOIN_LEFT = "LEFT"
-JOIN_RIGHT = "RIGHT"
-JOIN_FULL = "FULL"
+_JOIN_INNER = "INNER"
+_JOIN_LEFT = "LEFT"
+_JOIN_RIGHT = "RIGHT"
+_JOIN_FULL = "FULL"
 
 # ============================================================
 # Module Constants - Index Types
 # ============================================================
 
-INDEX_SIMPLE = "simple"
-INDEX_UNIQUE = "unique"
-INDEX_COMPOSITE = "composite"
+_INDEX_SIMPLE = "simple"
+_INDEX_UNIQUE = "unique"
+_INDEX_COMPOSITE = "composite"
 
 # ============================================================
 # Module Constants - Schema Keys
 # ============================================================
 
-SCHEMA_KEY_PRIMARY_KEY = "primary_key"
-SCHEMA_KEY_INDEXES = "indexes"
-SCHEMA_KEY_TYPE = "type"
-SCHEMA_KEY_PK = "pk"
-SCHEMA_KEY_UNIQUE = "unique"
-SCHEMA_KEY_REQUIRED = "required"
-SCHEMA_KEY_FK = "fk"
-SCHEMA_KEY_DEFAULT = "default"
+_SCHEMA_KEY_PRIMARY_KEY = "primary_key"
+_SCHEMA_KEY_INDEXES = "indexes"
+_SCHEMA_KEY_TYPE = "type"
+_SCHEMA_KEY_PK = "pk"
+_SCHEMA_KEY_UNIQUE = "unique"
+_SCHEMA_KEY_REQUIRED = "required"
+_SCHEMA_KEY_FK = "fk"
+_SCHEMA_KEY_DEFAULT = "default"
 
 # ============================================================
 # Module Constants - WHERE Keys
 # ============================================================
 
-WHERE_KEY_OR = "or"
+_WHERE_KEY_OR = "or"
 
 # ============================================================
 # Module Constants - Error Messages
 # ============================================================
 
-ERR_TABLE_NOT_FOUND = "Table '{table}' does not exist"
-ERR_COLUMN_NOT_FOUND = "Column '{column}' not found in table '{table}'"
-ERR_FK_INVALID = "Invalid foreign key format: {fk}"
-ERR_JOIN_MISSING_ON = "JOIN requires 'on' clause"
-ERR_DROP_COLUMN_UNSUPPORTED = "DROP COLUMN not supported by this SQL dialect"
-ERR_UPSERT_MISSING_CONFLICT = "UPSERT requires conflict_fields"
+_ERR_TABLE_NOT_FOUND = "Table '{table}' does not exist"
+_ERR_COLUMN_NOT_FOUND = "Column '{column}' not found in table '{table}'"
+_ERR_FK_INVALID = "Invalid foreign key format: {fk}"
+_ERR_JOIN_MISSING_ON = "JOIN requires 'on' clause"
+_ERR_DROP_COLUMN_UNSUPPORTED = "DROP COLUMN not supported by this SQL dialect"
+_ERR_UPSERT_MISSING_CONFLICT = "UPSERT requires conflict_fields"
 
 # ============================================================
 # Module Constants - Log Messages
 # ============================================================
 
-LOG_CREATE_TABLE = "Creating table: %s"
-LOG_TABLE_CREATED = "Table created: %s"
-LOG_DROP_TABLE = "Dropping table: %s"
-LOG_ALTER_TABLE = "Executing ALTER TABLE: %s"
-LOG_ALTER_COMPLETE = "Altered table (%s): %s"
-LOG_INSERT_ROW = "Inserted row into %s with ID: %s"
-LOG_SELECT_ROWS = "Selected %d rows from %s"
-LOG_UPDATE_ROWS = "Updated %d rows in %s"
-LOG_DELETE_ROWS = "Deleted %d rows from %s"
-LOG_UPSERT_ROW = "Upserted row into %s with ID: %s"
-LOG_CREATE_INDEX = "Creating index: %s"
-LOG_JOIN_MULTI_TABLE = "[JOIN] Multi-table query: %s"
-LOG_JOIN_AUTO_FORWARD = "  Auto-detected (forward): %s"
-LOG_JOIN_AUTO_REVERSE = "  Auto-detected (reverse): %s"
-LOG_COMPOSITE_PK = "Composite primary key detected: %s"
-LOG_ADD_COMPOSITE_PK = "Adding composite PRIMARY KEY (%s)"
+_LOG_CREATE_TABLE = "Creating table: %s"
+_LOG_TABLE_CREATED = "Table created: %s"
+_LOG_DROP_TABLE = "Dropping table: %s"
+_LOG_ALTER_TABLE = "Executing ALTER TABLE: %s"
+_LOG_ALTER_COMPLETE = "Altered table (%s): %s"
+_LOG_INSERT_ROW = "Inserted row into %s with ID: %s"
+_LOG_SELECT_ROWS = "Selected %d rows from %s"
+_LOG_UPDATE_ROWS = "Updated %d rows in %s"
+_LOG_DELETE_ROWS = "Deleted %d rows from %s"
+_LOG_UPSERT_ROW = "Upserted row into %s with ID: %s"
+_LOG_CREATE_INDEX = "Creating index: %s"
+_LOG_JOIN_MULTI_TABLE = "[JOIN] Multi-table query: %s"
+_LOG_JOIN_AUTO_FORWARD = "  Auto-detected (forward): %s"
+_LOG_JOIN_AUTO_REVERSE = "  Auto-detected (reverse): %s"
+_LOG_COMPOSITE_PK = "Composite primary key detected: %s"
+_LOG_ADD_COMPOSITE_PK = "Adding composite PRIMARY KEY (%s)"
 
 # ============================================================
 # Public API
@@ -414,7 +414,7 @@ class SQLAdapter(BaseDataAdapter):
 
     def create_table(self, table_name: str, schema: Dict[str, Any]) -> None:
         """Create table with given schema."""
-        self._log('info', LOG_CREATE_TABLE, table_name)
+        self._log('info', _LOG_CREATE_TABLE, table_name)
 
         cur = self.get_cursor()
         field_defs = []
@@ -422,15 +422,15 @@ class SQLAdapter(BaseDataAdapter):
 
         # Check for composite primary key
         composite_pk = None
-        if SCHEMA_KEY_PRIMARY_KEY in schema:
-            pk_value = schema[SCHEMA_KEY_PRIMARY_KEY]
+        if _SCHEMA_KEY_PRIMARY_KEY in schema:
+            pk_value = schema[_SCHEMA_KEY_PRIMARY_KEY]
             if isinstance(pk_value, list) and len(pk_value) > 0:
                 composite_pk = pk_value
                 self._log('info', LOG_COMPOSITE_PK, composite_pk)
 
         # Process each field
         for field_name, attrs in schema.items():
-            if field_name in [SCHEMA_KEY_PRIMARY_KEY, SCHEMA_KEY_INDEXES]:
+            if field_name in [_SCHEMA_KEY_PRIMARY_KEY, _SCHEMA_KEY_INDEXES]:
                 continue
 
             if not isinstance(attrs, dict):
@@ -441,8 +441,8 @@ class SQLAdapter(BaseDataAdapter):
             column = f"{field_name} {field_type}"
 
             # Only add column-level PRIMARY KEY if no composite PK
-            if attrs.get(SCHEMA_KEY_PK) and not composite_pk:
-                column += f" {CONSTRAINT_PRIMARY_KEY}"
+            if attrs.get(_SCHEMA_KEY_PK) and not composite_pk:
+                column += f" {_CONSTRAINT_PRIMARY_KEY}"
             if attrs.get(SCHEMA_KEY_UNIQUE):
                 column += f" {CONSTRAINT_UNIQUE}"
             if attrs.get(SCHEMA_KEY_REQUIRED) is True:
@@ -460,7 +460,7 @@ class SQLAdapter(BaseDataAdapter):
         table_constraints = []
         if composite_pk:
             pk_columns = ", ".join(composite_pk)
-            table_constraints.append(f"{CONSTRAINT_PRIMARY_KEY} ({pk_columns})")
+            table_constraints.append(f"{_CONSTRAINT_PRIMARY_KEY} ({pk_columns})")
             self._log('info', LOG_ADD_COMPOSITE_PK, pk_columns)
 
         # Build and execute DDL
@@ -677,7 +677,7 @@ class SQLAdapter(BaseDataAdapter):
         # Build WHERE clause
         if where:
             where_clause, where_params = self._build_where_clause(where)
-            sql += f" {SQL_WHERE} {where_clause}"
+            sql += f" {_SQL_WHERE} {where_clause}"
             params.extend(where_params)
 
         self._log('debug', "Executing DELETE: %s with params: %s", sql, params)
@@ -735,7 +735,7 @@ class SQLAdapter(BaseDataAdapter):
         # Build INSERT clause
         placeholders = self._get_placeholders(len(fields))
         field_list = ", ".join(fields)
-        sql = f"{SQL_INSERT} {SQL_INTO} {table} ({field_list}) {SQL_VALUES} ({placeholders})"
+        sql = f"{_SQL_INSERT} {_SQL_INTO} {table} ({field_list}) {_SQL_VALUES} ({placeholders})"
         
         # Build ON CONFLICT clause (SQLite 3.24+ syntax)
         conflict_list = ", ".join(conflict_fields)

@@ -139,53 +139,53 @@ from ..parsers import parse_where_clause, parse_value
 # ────────────────────────────────────────────────────────────────────────────
 # Request Keys
 # ────────────────────────────────────────────────────────────────────────────
-KEY_TABLES = "tables"
-KEY_TABLE = "table"
-KEY_MODEL = "model"
-KEY_WHERE = "where"
-KEY_OPTIONS = "options"
-KEY_LIMIT = "limit"
-KEY_ORDER = "order"
-KEY_OFFSET = "offset"
-KEY_JOINS = "joins"
-KEY_META = "Meta"
-KEY_SCHEMA_NAME = "Schema_Name"
+_KEY_TABLES = "tables"
+_KEY_TABLE = "table"
+_KEY_MODEL = "model"
+_KEY_WHERE = "where"
+_KEY_OPTIONS = "options"
+_KEY_LIMIT = "limit"
+_KEY_ORDER = "order"
+_KEY_OFFSET = "offset"
+_KEY_JOINS = "joins"
+_KEY_META = "Meta"
+_KEY_SCHEMA_NAME = "Schema_Name"
 
 # ────────────────────────────────────────────────────────────────────────────
 # Reserved Options (Filtered from Field Extraction)
 # ────────────────────────────────────────────────────────────────────────────
-RESERVED_MODEL = "model"
-RESERVED_LIMIT = "limit"
-RESERVED_WHERE = "where"
-RESERVED_ORDER = "order"
-RESERVED_OFFSET = "offset"
-RESERVED_TABLES = "tables"
-RESERVED_JOINS = "joins"
+_RESERVED_MODEL = "model"
+_RESERVED_LIMIT = "limit"
+_RESERVED_WHERE = "where"
+_RESERVED_ORDER = "order"
+_RESERVED_OFFSET = "offset"
+_RESERVED_TABLES = "tables"
+_RESERVED_JOINS = "joins"
 
 # ────────────────────────────────────────────────────────────────────────────
 # Error Messages
 # ────────────────────────────────────────────────────────────────────────────
-ERR_NO_TABLE = "No table specified for %s"
-ERR_TABLE_NOT_EXISTS = "Table '%s' does not exist. Please run 'Setup Database' first to create tables."
-ERR_TABLE_NOT_EXISTS_LOG = "[FAIL] Table '%s' does not exist"
-ERR_NO_FIELDS = "No fields provided for %s. Use --field_name value syntax"
-ERR_VALIDATION_FAILED_LOG = "[FAIL] Validation failed for table '%s' with %d error(s)"
+_ERR_NO_TABLE = "No table specified for %s"
+_ERR_TABLE_NOT_EXISTS = "Table '%s' does not exist. Please run 'Setup Database' first to create tables."
+_ERR_TABLE_NOT_EXISTS_LOG = "[FAIL] Table '%s' does not exist"
+_ERR_NO_FIELDS = "No fields provided for %s. Use --field_name value syntax"
+_ERR_VALIDATION_FAILED_LOG = "[FAIL] Validation failed for table '%s' with %d error(s)"
 
 # ────────────────────────────────────────────────────────────────────────────
 # Log Messages
 # ────────────────────────────────────────────────────────────────────────────
-LOG_WARN_NO_WHERE = "[WARN] No WHERE clause - operation will affect ALL rows!"
-LOG_VALIDATION_SUMMARY = "[FAIL] Validation summary: %d field(s) failed for table '%s'"
+_LOG_WARN_NO_WHERE = "[WARN] No WHERE clause - operation will affect ALL rows!"
+_LOG_VALIDATION_SUMMARY = "[FAIL] Validation summary: %d field(s) failed for table '%s'"
 
 # ────────────────────────────────────────────────────────────────────────────
 # Special Values
 # ────────────────────────────────────────────────────────────────────────────
-VALUE_PLACEHOLDER = "<provided value>"  # Placeholder for ValidationError when actual value unavailable
+_VALUE_PLACEHOLDER = "<provided value>"  # Placeholder for ValidationError when actual value unavailable
 
 # ────────────────────────────────────────────────────────────────────────────
 # Success Messages
 # ────────────────────────────────────────────────────────────────────────────
-MSG_SUCCESS = "✓ %s"  # Generic success message template
+_MSG_SUCCESS = "✓ %s"  # Generic success message template
 
 # ────────────────────────────────────────────────────────────────────────────
 # Public API
@@ -267,11 +267,11 @@ def extract_table_from_request(
     # ─────────────────────────────────────────────────────────────────────────
     
     # Tier 1: Check "tables" key (list of table names - preferred)
-    tables = request.get(KEY_TABLES, [])
+    tables = request.get(_KEY_TABLES, [])
     
     # Tier 2: Check singular "table" parameter (alternate format)
     if not tables:
-        table_param = request.get(KEY_TABLE)
+        table_param = request.get(_KEY_TABLE)
         if table_param:
             if isinstance(table_param, str):
                 tables = [table_param]
@@ -280,7 +280,7 @@ def extract_table_from_request(
     
     # Tier 3: Fallback to extracting from model path (legacy format)
     if not tables:
-        model = request.get(KEY_MODEL)
+        model = request.get(_KEY_MODEL)
         if isinstance(model, str):
             # Extract last segment: "schema.table" → "table"
             tables = [model.split(".")[-1]]
@@ -289,7 +289,7 @@ def extract_table_from_request(
     # Phase 2: Validation - Ensure table was extracted
     # ─────────────────────────────────────────────────────────────────────────
     if not tables:
-        ops.logger.error(ERR_NO_TABLE, operation_name)
+        ops.logger.error(_ERR_NO_TABLE, operation_name)
         return None
 
     table = tables[0]  # Use first table if multiple provided
@@ -298,10 +298,10 @@ def extract_table_from_request(
     # Phase 3: Existence Check - Verify table exists in database (if requested)
     # ─────────────────────────────────────────────────────────────────────────
     if check_exists and not ops.adapter.table_exists(table):
-        ops.logger.error(ERR_TABLE_NOT_EXISTS_LOG, table)
+        ops.logger.error(_ERR_TABLE_NOT_EXISTS_LOG, table)
         
         # Display user-friendly error first (mode-agnostic via zDisplay)
-        ops.display.error(ERR_TABLE_NOT_EXISTS % table)
+        ops.display.error(_ERR_TABLE_NOT_EXISTS % table)
         
         # Then raise actionable exception with hints
         raise DatabaseNotInitializedError(operation=operation_name, table=table)
@@ -379,12 +379,12 @@ def extract_where_clause(
     # ─────────────────────────────────────────────────────────────────────────
     
     # Source 1: Check top-level "where" key (YAML-based requests - preferred)
-    where_str = request.get(KEY_WHERE)
+    where_str = request.get(_KEY_WHERE)
     
     # Source 2: Check options "where" key (shell command requests - fallback)
     if not where_str:
-        options = request.get(KEY_OPTIONS, {})
-        where_str = options.get(KEY_WHERE)
+        options = request.get(_KEY_OPTIONS, {})
+        where_str = options.get(_KEY_WHERE)
 
     # ─────────────────────────────────────────────────────────────────────────
     # Phase 2: Dict Passthrough - If already a dict, skip string processing
@@ -412,7 +412,7 @@ def extract_where_clause(
     # Phase 4: Optional Warning - Alert if WHERE clause is missing
     # ─────────────────────────────────────────────────────────────────────────
     if warn_if_missing and not where:
-        ops.logger.warning(LOG_WARN_NO_WHERE)
+        ops.logger.warning(_LOG_WARN_NO_WHERE)
 
     return where
 
@@ -490,19 +490,19 @@ def extract_field_values(
     # ─────────────────────────────────────────────────────────────────────────
     # Phase 1: Extract Options - Get options dictionary from request
     # ─────────────────────────────────────────────────────────────────────────
-    options = request.get(KEY_OPTIONS, {})
+    options = request.get(_KEY_OPTIONS, {})
 
     # ─────────────────────────────────────────────────────────────────────────
     # Phase 2: Reserved Options Filtering - Build reserved options set
     # ─────────────────────────────────────────────────────────────────────────
     reserved_options = {
-        RESERVED_MODEL,
-        RESERVED_LIMIT,
-        RESERVED_WHERE,
-        RESERVED_ORDER,
-        RESERVED_OFFSET,
-        RESERVED_TABLES,
-        RESERVED_JOINS
+        _RESERVED_MODEL,
+        _RESERVED_LIMIT,
+        _RESERVED_WHERE,
+        _RESERVED_ORDER,
+        _RESERVED_OFFSET,
+        _RESERVED_TABLES,
+        _RESERVED_JOINS
     }
 
     # ─────────────────────────────────────────────────────────────────────────
@@ -514,7 +514,7 @@ def extract_field_values(
     # Phase 4: Validation - Ensure at least one field provided
     # ─────────────────────────────────────────────────────────────────────────
     if not fields_dict:
-        ops.logger.error(ERR_NO_FIELDS, operation_name)
+        ops.logger.error(_ERR_NO_FIELDS, operation_name)
         return None, None
 
     # ─────────────────────────────────────────────────────────────────────────
@@ -599,7 +599,7 @@ def display_validation_errors(
     # ─────────────────────────────────────────────────────────────────────────
     # Phase 2: Log Summary - Record validation failure
     # ─────────────────────────────────────────────────────────────────────────
-    ops.logger.error(ERR_VALIDATION_FAILED_LOG, table, len(errors))
+    ops.logger.error(_ERR_VALIDATION_FAILED_LOG, table, len(errors))
 
     # ─────────────────────────────────────────────────────────────────────────
     # Phase 3: Display Errors - Show each error with actionable hints
@@ -609,7 +609,7 @@ def display_validation_errors(
             # Raise ValidationError to get actionable hints
             raise ValidationError(
                 field=field,
-                value=VALUE_PLACEHOLDER,  # Actual value not available here
+                value=_VALUE_PLACEHOLDER,  # Actual value not available here
                 constraint=message,
                 schema_name=table
             )
@@ -622,7 +622,7 @@ def display_validation_errors(
     # ─────────────────────────────────────────────────────────────────────────
     # Phase 4: Log Details - Record validation summary for debugging
     # ─────────────────────────────────────────────────────────────────────────
-    ops.logger.debug(LOG_VALIDATION_SUMMARY, len(errors), table)
+    ops.logger.debug(_LOG_VALIDATION_SUMMARY, len(errors), table)
 
 def execute_hook_if_defined(
     adapter: Any,
@@ -687,5 +687,5 @@ def display_success_message(
     """
     # Add checkmark prefix if not present
     if not message.startswith("✓"):
-        message = MSG_SUCCESS % message
+        message = _MSG_SUCCESS % message
     ops.display.success(message)

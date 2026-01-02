@@ -111,53 +111,53 @@ from .ddl_drop import handle_drop
 # ═══════════════════════════════════════════════════════════════════════════════
 
 # Request Keys
-KEY_OLD_SCHEMA = "old_schema"
-KEY_NEW_SCHEMA = "new_schema"
-KEY_DRY_RUN = "dry_run"
-KEY_AUTO_APPROVE = "auto_approve"
-KEY_SCHEMA_VERSION = "schema_version"
+_KEY_OLD_SCHEMA = "old_schema"
+_KEY_NEW_SCHEMA = "new_schema"
+_KEY_DRY_RUN = "dry_run"
+_KEY_AUTO_APPROVE = "auto_approve"
+_KEY_SCHEMA_VERSION = "schema_version"
 
 # Response Keys
-KEY_SUCCESS = "success"
-KEY_DIFF = "diff"
-KEY_OPERATIONS_EXECUTED = "operations_executed"
-KEY_ERROR = "error"
+_KEY_SUCCESS = "success"
+_KEY_DIFF = "diff"
+_KEY_OPERATIONS_EXECUTED = "operations_executed"
+_KEY_ERROR = "error"
 
 # Migration Phases
-PHASE_LOAD_SCHEMAS = "Loading Schemas"
-PHASE_COMPUTE_DIFF = "Computing Diff"
-PHASE_DISPLAY_PREVIEW = "Displaying Preview"
-PHASE_CONFIRM = "Awaiting Confirmation"
-PHASE_BEGIN_TRANSACTION = "Beginning Transaction"
-PHASE_CREATE_TABLES = "Creating Tables"
-PHASE_ALTER_COLUMNS = "Altering Columns"
-PHASE_DROP_TABLES = "Dropping Tables"
-PHASE_RECORD_HISTORY = "Recording History"
-PHASE_COMMIT = "Committing Transaction"
-PHASE_ROLLBACK = "Rolling Back Transaction"
+_PHASE_LOAD_SCHEMAS = "Loading Schemas"
+_PHASE_COMPUTE_DIFF = "Computing Diff"
+_PHASE_DISPLAY_PREVIEW = "Displaying Preview"
+_PHASE_CONFIRM = "Awaiting Confirmation"
+_PHASE_BEGIN_TRANSACTION = "Beginning Transaction"
+_PHASE_CREATE_TABLES = "Creating Tables"
+_PHASE_ALTER_COLUMNS = "Altering Columns"
+_PHASE_DROP_TABLES = "Dropping Tables"
+_PHASE_RECORD_HISTORY = "Recording History"
+_PHASE_COMMIT = "Committing Transaction"
+_PHASE_ROLLBACK = "Rolling Back Transaction"
 
 # Display Messages
-MSG_MIGRATION_START = "🔄 Starting migration..."
-MSG_DRY_RUN_MODE = "🔍 DRY-RUN MODE: Preview only, no changes will be applied"
-MSG_NO_CHANGES = "✅ No schema changes detected - database is up to date"
-MSG_PREVIEW_HEADER = "📋 Migration Preview:"
-MSG_CONFIRM_PROMPT = "⚠️  Apply these changes? (yes/no): "
-MSG_MIGRATION_CANCELLED = "❌ Migration cancelled by user"
-MSG_MIGRATION_SUCCESS = "✅ Migration completed successfully!"
-MSG_MIGRATION_FAILED = "❌ Migration failed: {error}"
-MSG_OPERATIONS_COUNT = "Executed {count} operation(s)"
+_MSG_MIGRATION_START = "🔄 Starting migration..."
+_MSG_DRY_RUN_MODE = "🔍 DRY-RUN MODE: Preview only, no changes will be applied"
+_MSG_NO_CHANGES = "✅ No schema changes detected - database is up to date"
+_MSG_PREVIEW_HEADER = "📋 Migration Preview:"
+_MSG_CONFIRM_PROMPT = "⚠️  Apply these changes? (yes/no): "
+_MSG_MIGRATION_CANCELLED = "❌ Migration cancelled by user"
+_MSG_MIGRATION_SUCCESS = "✅ Migration completed successfully!"
+_MSG_MIGRATION_FAILED = "❌ Migration failed: {error}"
+_MSG_OPERATIONS_COUNT = "Executed {count} operation(s)"
 
 # Error Messages
-ERROR_NO_OLD_SCHEMA = "No old_schema provided in request"
-ERROR_NO_NEW_SCHEMA = "No new_schema provided in request"
-ERROR_TRANSACTION_FAILED = "Transaction failed: {error}"
-ERROR_CREATE_TABLE_FAILED = "Failed to create table '{table}': {error}"
-ERROR_ALTER_TABLE_FAILED = "Failed to alter table '{table}': {error}"
-ERROR_DROP_TABLE_FAILED = "Failed to drop table '{table}': {error}"
+_ERROR_NO_OLD_SCHEMA = "No old_schema provided in request"
+_ERROR_NO_NEW_SCHEMA = "No new_schema provided in request"
+_ERROR_TRANSACTION_FAILED = "Transaction failed: {error}"
+_ERROR_CREATE_TABLE_FAILED = "Failed to create table '{table}': {error}"
+_ERROR_ALTER_TABLE_FAILED = "Failed to alter table '{table}': {error}"
+_ERROR_DROP_TABLE_FAILED = "Failed to drop table '{table}': {error}"
 
 # Confirmation Responses
-CONFIRM_YES = ["yes", "y"]
-CONFIRM_NO = ["no", "n"]
+_CONFIRM_YES = ["yes", "y"]
+_CONFIRM_NO = ["no", "n"]
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # MIGRATION HISTORY RECORDING
@@ -342,42 +342,42 @@ def handle_migrate(ops: Any, request: Dict[str, Any], display: Any) -> Dict[str,
         - Destructive changes: Always prompt for confirmation (even with auto_approve)
     """
     # Display start message
-    display.header(MSG_MIGRATION_START)
+    display.header(_MSG_MIGRATION_START)
     
     # Extract request parameters
-    old_schema = request.get(KEY_OLD_SCHEMA)
-    new_schema = request.get(KEY_NEW_SCHEMA)
-    dry_run = request.get(KEY_DRY_RUN, False)
-    auto_approve = request.get(KEY_AUTO_APPROVE, False)
+    old_schema = request.get(_KEY_OLD_SCHEMA)
+    new_schema = request.get(_KEY_NEW_SCHEMA)
+    dry_run = request.get(_KEY_DRY_RUN, False)
+    auto_approve = request.get(_KEY_AUTO_APPROVE, False)
     
     # Validate request
     if not old_schema:
-        raise KeyError(ERROR_NO_OLD_SCHEMA)
+        raise KeyError(_ERROR_NO_OLD_SCHEMA)
     if not new_schema:
-        raise KeyError(ERROR_NO_NEW_SCHEMA)
+        raise KeyError(_ERROR_NO_NEW_SCHEMA)
     
     # Show dry-run notice
     if dry_run:
-        display.text(MSG_DRY_RUN_MODE)
+        display.text(_MSG_DRY_RUN_MODE)
         display.text("")  # Blank line
     
     # Phase 1: Compute Diff
-    display.text(f"⚙️  {PHASE_COMPUTE_DIFF}...")
+    display.text(f"⚙️  {_PHASE_COMPUTE_DIFF}...")
     diff = diff_schemas(old_schema, new_schema)
     
     # Check if any changes detected
     if diff[KEY_CHANGE_COUNT]["tables_added"] == 0 and \
        diff[KEY_CHANGE_COUNT]["tables_dropped"] == 0 and \
        diff[KEY_CHANGE_COUNT]["tables_modified"] == 0:
-        display.text(MSG_NO_CHANGES)
+        display.text(_MSG_NO_CHANGES)
         return {
-            KEY_SUCCESS: True,
-            KEY_DIFF: diff,
-            KEY_OPERATIONS_EXECUTED: 0
+            _KEY_SUCCESS: True,
+            _KEY_DIFF: diff,
+            _KEY_OPERATIONS_EXECUTED: 0
         }
     
     # Phase 2: Display Preview
-    display.header(MSG_PREVIEW_HEADER)
+    display.header(_MSG_PREVIEW_HEADER)
     report = format_diff_report(diff)
     display.text(report)
     display.text("")  # Blank line
@@ -385,20 +385,20 @@ def handle_migrate(ops: Any, request: Dict[str, Any], display: Any) -> Dict[str,
     # If dry-run, stop here
     if dry_run:
         return {
-            KEY_SUCCESS: True,
-            KEY_DIFF: diff,
-            KEY_OPERATIONS_EXECUTED: 0  # None executed in dry-run
+            _KEY_SUCCESS: True,
+            _KEY_DIFF: diff,
+            _KEY_OPERATIONS_EXECUTED: 0  # None executed in dry-run
         }
     
     # Phase 3: Confirmation
     if not auto_approve:
         if not _prompt_for_confirmation(diff, display):
-            display.text(MSG_MIGRATION_CANCELLED)
+            display.text(_MSG_MIGRATION_CANCELLED)
             return {
-                KEY_SUCCESS: False,
-                KEY_DIFF: diff,
-                KEY_OPERATIONS_EXECUTED: 0,
-                KEY_ERROR: "User cancelled migration"
+                _KEY_SUCCESS: False,
+                _KEY_DIFF: diff,
+                _KEY_OPERATIONS_EXECUTED: 0,
+                _KEY_ERROR: "User cancelled migration"
             }
     
     # Phase 4: Execute Migration
@@ -416,25 +416,25 @@ def handle_migrate(ops: Any, request: Dict[str, Any], display: Any) -> Dict[str,
                 ops.logger.warning(f"[zMigrate] Failed to record migration history: {e}")
         
         display.text("")  # Blank line
-        display.text(MSG_MIGRATION_SUCCESS)
-        display.text(MSG_OPERATIONS_COUNT.format(count=operations_executed))
+        display.text(_MSG_MIGRATION_SUCCESS)
+        display.text(_MSG_OPERATIONS_COUNT.format(count=operations_executed))
         
         return {
-            KEY_SUCCESS: True,
-            KEY_DIFF: diff,
-            KEY_OPERATIONS_EXECUTED: operations_executed
+            _KEY_SUCCESS: True,
+            _KEY_DIFF: diff,
+            _KEY_OPERATIONS_EXECUTED: operations_executed
         }
     
     except Exception as e:
         error_msg = str(e)
         display.text("")  # Blank line
-        display.text(MSG_MIGRATION_FAILED.format(error=error_msg))
+        display.text(_MSG_MIGRATION_FAILED.format(error=error_msg))
         
         return {
-            KEY_SUCCESS: False,
-            KEY_DIFF: diff,
-            KEY_OPERATIONS_EXECUTED: 0,
-            KEY_ERROR: error_msg
+            _KEY_SUCCESS: False,
+            _KEY_DIFF: diff,
+            _KEY_OPERATIONS_EXECUTED: 0,
+            _KEY_ERROR: error_msg
         }
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -513,34 +513,34 @@ def _execute_migration(ops: Any, diff: Dict[str, Any], display: Any) -> int:
     operations_count = 0
     
     # Begin transaction
-    display.text(f"🔄 {PHASE_BEGIN_TRANSACTION}...")
+    display.text(f"🔄 {_PHASE_BEGIN_TRANSACTION}...")
     ops.adapter.begin_transaction()
     
     try:
         # Phase 1: Create new tables
         if diff["tables_added"]:
-            display.text(f"➕ {PHASE_CREATE_TABLES} ({len(diff['tables_added'])} tables)...")
+            display.text(f"➕ {_PHASE_CREATE_TABLES} ({len(diff['tables_added'])} tables)...")
             operations_count += _execute_table_creations(ops, diff["tables_added"], display)
         
         # Phase 2: Modify existing tables
         if diff["tables_modified"]:
-            display.text(f"🔧 {PHASE_ALTER_COLUMNS} ({len(diff['tables_modified'])} tables)...")
+            display.text(f"🔧 {_PHASE_ALTER_COLUMNS} ({len(diff['tables_modified'])} tables)...")
             operations_count += _execute_table_modifications(ops, diff["tables_modified"], display)
         
         # Phase 3: Drop tables
         if diff["tables_dropped"]:
-            display.text(f"🗑️  {PHASE_DROP_TABLES} ({len(diff['tables_dropped'])} tables)...")
+            display.text(f"🗑️  {_PHASE_DROP_TABLES} ({len(diff['tables_dropped'])} tables)...")
             operations_count += _execute_table_drops(ops, diff["tables_dropped"], display)
         
         # Commit transaction
-        display.text(f"✅ {PHASE_COMMIT}...")
+        display.text(f"✅ {_PHASE_COMMIT}...")
         ops.adapter.commit()
         
         return operations_count
     
     except Exception:
         # Rollback on any error
-        display.text(f"❌ {PHASE_ROLLBACK}...")
+        display.text(f"❌ {_PHASE_ROLLBACK}...")
         ops.adapter.rollback()
         raise
 
@@ -571,7 +571,7 @@ def _execute_table_creations(ops: Any, tables_added: List[str], display: Any) ->
             handle_create_table(create_request, ops)
             count += 1
         except Exception as e:
-            raise RuntimeError(ERROR_CREATE_TABLE_FAILED.format(table=table_name, error=str(e))) from e
+            raise RuntimeError(_ERROR_CREATE_TABLE_FAILED.format(table=table_name, error=str(e))) from e
     
     return count
 
@@ -624,7 +624,7 @@ def _execute_table_modifications(ops: Any, tables_modified: Dict[str, Any], disp
                 ops.adapter.alter_table(table_name, alter_changes)
         
         except Exception as e:
-            raise RuntimeError(ERROR_ALTER_TABLE_FAILED.format(table=table_name, error=str(e))) from e
+            raise RuntimeError(_ERROR_ALTER_TABLE_FAILED.format(table=table_name, error=str(e))) from e
     
     return count
 
@@ -651,7 +651,7 @@ def _execute_table_drops(ops: Any, tables_dropped: List[str], display: Any) -> i
             handle_drop(drop_request, ops)
             count += 1
         except Exception as e:
-            raise RuntimeError(ERROR_DROP_TABLE_FAILED.format(table=table_name, error=str(e))) from e
+            raise RuntimeError(_ERROR_DROP_TABLE_FAILED.format(table=table_name, error=str(e))) from e
     
     return count
 

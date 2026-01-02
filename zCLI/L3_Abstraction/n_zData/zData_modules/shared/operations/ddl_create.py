@@ -142,45 +142,45 @@ from zCLI import Any, Dict
 # Module Constants - Operation Name
 # ============================================================
 
-OP_CREATE_TABLE = "CREATE_TABLE"
+_OP_CREATE_TABLE = "CREATE_TABLE"
 
 # ============================================================
 # Module Constants - Request Keys
 # ============================================================
 
-KEY_TABLES = "tables"
-KEY_SCHEMA = "schema"
+_KEY_TABLES = "tables"
+_KEY_SCHEMA = "schema"
 
 # ============================================================
 # Module Constants - Reserved Schema Keys
 # ============================================================
 
-RESERVED_META = "Meta"
-RESERVED_DB_PATH = "db_path"
+_RESERVED_META = "Meta"
+_RESERVED_DB_PATH = "db_path"
 
 # ============================================================
 # Module Constants - Log Messages
 # ============================================================
 
-LOG_NO_TABLES = "No specific tables requested - created all %d tables from schema"
-LOG_BULK_CREATE = "Bulk create: extracting all tables from schema"
-LOG_CREATE_TABLE = "Creating table: %s"
-LOG_SUCCESS = "[OK] Created %d table structure(s): %s"
-LOG_SINGLE_TABLE = "Creating single table from schema"
-LOG_MULTIPLE_TABLES = "Creating %d tables from schema"
-LOG_SCHEMA_FILTERED = "Filtered %d reserved keys from schema"
-LOG_IDEMPOTENT = "Idempotent call - tables may already exist"
+_LOG_NO_TABLES = "No specific tables requested - created all %d tables from schema"
+_LOG_BULK_CREATE = "Bulk create: extracting all tables from schema"
+_LOG_CREATE_TABLE = "Creating table: %s"
+_LOG_SUCCESS = "[OK] Created %d table structure(s): %s"
+_LOG_SINGLE_TABLE = "Creating single table from schema"
+_LOG_MULTIPLE_TABLES = "Creating %d tables from schema"
+_LOG_SCHEMA_FILTERED = "Filtered %d reserved keys from schema"
+_LOG_IDEMPOTENT = "Idempotent call - tables may already exist"
 
 # ============================================================
 # Module Constants - Error Messages
 # ============================================================
 
-ERR_NO_SCHEMA = "No schema available for table creation"
-ERR_CREATE_FAILED = "Table creation failed"
-ERR_INVALID_TABLE = "Invalid table name"
-ERR_TABLE_EXISTS = "Table already exists"
-ERR_SCHEMA_ERROR = "Schema parsing error"
-ERR_ADAPTER_ERROR = "Adapter error during table creation"
+_ERR_NO_SCHEMA = "No schema available for table creation"
+_ERR_CREATE_FAILED = "Table creation failed"
+_ERR_INVALID_TABLE = "Invalid table name"
+_ERR_TABLE_EXISTS = "Table already exists"
+_ERR_SCHEMA_ERROR = "Schema parsing error"
+_ERR_ADAPTER_ERROR = "Adapter error during table creation"
 
 # ============================================================
 # Public API
@@ -247,21 +247,21 @@ def handle_create_table(request: Dict[str, Any], ops: Any) -> bool:
     # ============================================================
     # Phase 1: Extract Tables (selective or bulk)
     # ============================================================
-    tables = request.get(KEY_TABLES, [])
+    tables = request.get(_KEY_TABLES, [])
 
     # ============================================================
     # Phase 2: Filter Reserved Keys (bulk create only)
     # ============================================================
     # If no tables specified, get all tables from schema (create all)
     if not tables:
-        tables = [k for k in ops.schema.keys() if k not in (RESERVED_META, RESERVED_DB_PATH)]
-        ops.logger.info(LOG_NO_TABLES, len(tables))
+        tables = [k for k in ops.schema.keys() if k not in (_RESERVED_META, _RESERVED_DB_PATH)]
+        ops.logger.info(_LOG_NO_TABLES, len(tables))
 
     # ============================================================
     # Phase 3: Delegate to Adapter (actual creation)
     # ============================================================
     # Tables were already created by ensure_tables (adapter layer)
     # Handler coordinates, adapter executes
-    ops.logger.info(LOG_SUCCESS, len(tables), ", ".join(tables))
+    ops.logger.info(_LOG_SUCCESS, len(tables), ", ".join(tables))
     
     return True

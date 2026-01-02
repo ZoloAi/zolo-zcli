@@ -171,74 +171,74 @@ from zCLI import Any, Dict, List, Union
 # Module Constants - Operation Name
 # ============================================================
 
-OP_READ = "READ"
+_OP_READ = "READ"
 
 # ============================================================
 # Module Constants - Request Keys
 # ============================================================
 
-KEY_TABLES = "tables"
-KEY_TABLE = "table"
-KEY_MODEL = "model"
-KEY_FIELDS = "fields"
-KEY_WHERE = "where"
-KEY_ORDER = "order"
-KEY_LIMIT = "limit"
-KEY_OFFSET = "offset"
-KEY_JOINS = "joins"
-KEY_AUTO_JOIN = "auto_join"
-KEY_PAUSE = "pause"
+_KEY_TABLES = "tables"
+_KEY_TABLE = "table"
+_KEY_MODEL = "model"
+_KEY_FIELDS = "fields"
+_KEY_WHERE = "where"
+_KEY_ORDER = "order"
+_KEY_LIMIT = "limit"
+_KEY_OFFSET = "offset"
+_KEY_JOINS = "joins"
+_KEY_AUTO_JOIN = "auto_join"
+_KEY_PAUSE = "pause"
 
 # Pagination limits
-DEFAULT_LIMIT = 100  # Reasonable default page size
-MAX_LIMIT = 1000     # Prevent excessive queries
+_DEFAULT_LIMIT = 100  # Reasonable default page size
+_MAX_LIMIT = 1000     # Prevent excessive queries
 
 # ============================================================
 # Module Constants - Session Keys
 # ============================================================
 
-SESSION_ZMODE = "zMode"
-SESSION_ZTRACEBACK = "zTraceback"
+_SESSION_ZMODE = "zMode"
+_SESSION_ZTRACEBACK = "zTraceback"
 
 # ============================================================
 # Module Constants - Mode Names
 # ============================================================
 
-MODE_WALKER = "Walker"
-MODE_TERMINAL = "Terminal"
-MODE_ZBIFROST = "zBifrost"
+_MODE_WALKER = "Walker"
+_MODE_TERMINAL = "Terminal"
+_MODE_ZBIFROST = "zBifrost"
 
 # ============================================================
 # Module Constants - Display Keys
 # ============================================================
 
-DISPLAY_SEPARATOR = " + "
-DISPLAY_PROMPT = "Press Enter to continue..."
+_DISPLAY_SEPARATOR = " + "
+_DISPLAY_PROMPT = "Press Enter to continue..."
 
 # ============================================================
 # Module Constants - Log Messages
 # ============================================================
 
-LOG_NO_TABLE = "No table specified for %s operation"
-LOG_VALIDATE_TABLES = "Validating table existence: %s"
-LOG_MULTI_TABLE = "Multi-table query detected: %s"
-LOG_SINGLE_TABLE = "Single-table query: %s"
-LOG_EXECUTE_SELECT = "Executing SELECT on %s"
-LOG_DISPLAY_RESULTS = "Displaying %d row(s) from %s"
-LOG_SUCCESS = "[OK] Read %d row(s) from %s"
-LOG_EMPTY = "[OK] Read 0 rows from %s (table is empty or no matches)"
-LOG_TABLE_NOT_EXIST = "[FAIL] Table '%s' does not exist"
-LOG_PAUSE = "Pausing for user interaction"
+_LOG_NO_TABLE = "No table specified for %s operation"
+_LOG_VALIDATE_TABLES = "Validating table existence: %s"
+_LOG_MULTI_TABLE = "Multi-table query detected: %s"
+_LOG_SINGLE_TABLE = "Single-table query: %s"
+_LOG_EXECUTE_SELECT = "Executing SELECT on %s"
+_LOG_DISPLAY_RESULTS = "Displaying %d row(s) from %s"
+_LOG_SUCCESS = "[OK] Read %d row(s) from %s"
+_LOG_EMPTY = "[OK] Read 0 rows from %s (table is empty or no matches)"
+_LOG_TABLE_NOT_EXIST = "[FAIL] Table '%s' does not exist"
+_LOG_PAUSE = "Pausing for user interaction"
 
 # ============================================================
 # Module Constants - Error Messages
 # ============================================================
 
-ERR_NO_TABLE = "No table specified"
-ERR_TABLE_NOT_EXIST = "Table does not exist"
-ERR_INVALID_TABLE = "Invalid table name"
-ERR_SELECT_FAILED = "SELECT operation failed"
-ERR_DISPLAY_FAILED = "Display operation failed"
+_ERR_NO_TABLE = "No table specified"
+_ERR_TABLE_NOT_EXIST = "Table does not exist"
+_ERR_INVALID_TABLE = "Invalid table name"
+_ERR_SELECT_FAILED = "SELECT operation failed"
+_ERR_DISPLAY_FAILED = "Display operation failed"
 
 # ============================================================
 # Imports - Helper Functions
@@ -319,11 +319,11 @@ def handle_read(request: Dict[str, Any], ops: Any) -> Union[bool, List[Dict[str,
         - Pagination only in Terminal/Walker with zTraceback=True
     """
     # Phase 1: Extract table(s) from request (may be single or comma-separated list)
-    tables = request.get(KEY_TABLES, [])
+    tables = request.get(_KEY_TABLES, [])
     
     # Check singular "table" parameter
     if not tables:
-        table_param = request.get(KEY_TABLE)
+        table_param = request.get(_KEY_TABLE)
         if table_param:
             if isinstance(table_param, str):
                 if "," in table_param:
@@ -335,7 +335,7 @@ def handle_read(request: Dict[str, Any], ops: Any) -> Union[bool, List[Dict[str,
     
     # Fallback to extracting from model path
     if not tables:
-        model = request.get(KEY_MODEL)
+        model = request.get(_KEY_MODEL)
         if isinstance(model, str):
             # Check if model has comma (multi-table)
             table_name = model.split(".")[-1]
@@ -345,41 +345,41 @@ def handle_read(request: Dict[str, Any], ops: Any) -> Union[bool, List[Dict[str,
                 tables = [table_name]
 
     if not tables:
-        ops.logger.error(LOG_NO_TABLE, OP_READ)
+        ops.logger.error(_LOG_NO_TABLE, _OP_READ)
         return False
 
     # Phase 2: Validate all tables exist
     for tbl in tables:
         if not ops.adapter.table_exists(tbl):
-            ops.logger.error(LOG_TABLE_NOT_EXIST, tbl)
+            ops.logger.error(_LOG_TABLE_NOT_EXIST, tbl)
             return False
 
     # Phase 3: Determine if multi-table query
     is_multi_table = len(tables) > 1
     if is_multi_table:
-        ops.logger.debug(LOG_MULTI_TABLE, ", ".join(tables))
+        ops.logger.debug(_LOG_MULTI_TABLE, ", ".join(tables))
     else:
-        ops.logger.debug(LOG_SINGLE_TABLE, tables[0])
+        ops.logger.debug(_LOG_SINGLE_TABLE, tables[0])
 
     # Phase 4: Parse query options
-    fields = request.get(KEY_FIELDS)
-    order = request.get(KEY_ORDER)
-    limit = request.get(KEY_LIMIT)
-    offset = request.get(KEY_OFFSET, 0)  # Default to 0 (no offset)
+    fields = request.get(_KEY_FIELDS)
+    order = request.get(_KEY_ORDER)
+    limit = request.get(_KEY_LIMIT)
+    offset = request.get(_KEY_OFFSET, 0)  # Default to 0 (no offset)
     where = extract_where_clause(request, ops, warn_if_missing=False)
     
     # Validate limit against MAX_LIMIT
-    if limit and limit > MAX_LIMIT:
-        ops.logger.warning(f"Limit {limit} exceeds MAX_LIMIT {MAX_LIMIT}, capping to {MAX_LIMIT}")
-        limit = MAX_LIMIT
+    if limit and limit > _MAX_LIMIT:
+        ops.logger.warning(f"Limit {limit} exceeds _MAX_LIMIT {_MAX_LIMIT}, capping to {_MAX_LIMIT}")
+        limit = _MAX_LIMIT
 
     # Extract JOIN options
-    joins = request.get(KEY_JOINS)  # Manual join definitions
-    auto_join = request.get(KEY_AUTO_JOIN, False)  # Auto-detect from FK
+    joins = request.get(_KEY_JOINS)  # Manual join definitions
+    auto_join = request.get(_KEY_AUTO_JOIN, False)  # Auto-detect from FK
 
     # Phase 5: Execute SELECT (single or multi-table)
     table_arg = tables[0] if len(tables) == 1 else tables
-    ops.logger.debug(LOG_EXECUTE_SELECT, table_arg)
+    ops.logger.debug(_LOG_EXECUTE_SELECT, table_arg)
     rows = ops.select(table_arg, fields, where=where, joins=joins, order=order, limit=limit, offset=offset, auto_join=auto_join)
 
     # Phase 6: Display results (mode-aware with AdvancedData pagination)
@@ -387,29 +387,29 @@ def handle_read(request: Dict[str, Any], ops: Any) -> Union[bool, List[Dict[str,
     silent = request.get("silent", False)
     
     if not silent:
-        table_display = DISPLAY_SEPARATOR.join(tables) if is_multi_table else tables[0]
+        table_display = _DISPLAY_SEPARATOR.join(tables) if is_multi_table else tables[0]
         if rows:
             # Extract column names from first row (assuming dict rows)
             columns = list(rows[0].keys()) if rows and isinstance(rows[0], dict) else []
             # Pass limit and offset to AdvancedData for pagination metadata display
             ops.zcli.display.zTable(table_display, columns, rows, limit=limit, offset=offset)
-            ops.logger.info(LOG_SUCCESS, len(rows), table_display)
+            ops.logger.info(_LOG_SUCCESS, len(rows), table_display)
         else:
-            ops.logger.info(LOG_EMPTY, table_display)
+            ops.logger.info(_LOG_EMPTY, table_display)
 
         # Phase 7: Pagination (pause after displaying results)
-        pause = request.get(KEY_PAUSE, True)  # Default to True
+        pause = request.get(_KEY_PAUSE, True)  # Default to True
         # Don't pause in zBifrost mode, when zMode is not Walker/Terminal, or when zTraceback is False
-        zMode = ops.zcli.session.get(SESSION_ZMODE, "")
-        zTraceback = ops.zcli.session.get(SESSION_ZTRACEBACK, True)  # Default to True
-        if pause and zTraceback and zMode in (MODE_WALKER, MODE_TERMINAL, ""):
-            ops.logger.debug(LOG_PAUSE)
-            ops.zcli.display.read_string(DISPLAY_PROMPT)
+        zMode = ops.zcli.session.get(_SESSION_ZMODE, "")
+        zTraceback = ops.zcli.session.get(_SESSION_ZTRACEBACK, True)  # Default to True
+        if pause and zTraceback and zMode in (_MODE_WALKER, _MODE_TERMINAL, ""):
+            ops.logger.debug(_LOG_PAUSE)
+            ops.zcli.display.read_string(_DISPLAY_PROMPT)
 
     # Phase 8: Return results (mode-aware)
     # NEW v1.5.12: Return rows for silent mode (background data fetching)
     # Return the actual rows for zBifrost mode or silent mode, True for terminal display mode
-    zMode = ops.zcli.session.get(SESSION_ZMODE, "")
-    if silent or zMode == MODE_ZBIFROST:
+    zMode = ops.zcli.session.get(_SESSION_ZMODE, "")
+    if silent or zMode == _MODE_ZBIFROST:
         return rows
     return True

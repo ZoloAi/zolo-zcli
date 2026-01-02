@@ -112,31 +112,31 @@ from zCLI import Any, Dict, List
 # Module Constants - Error Messages
 # ============================================================
 
-ERR_UNSUPPORTED_TYPE = "Unsupported data type: %s. Available types: %s"
-ERR_NO_ADAPTERS = "No adapters registered"
-ERR_ADAPTER_NOT_FOUND = "Adapter not found for data type: %s"
-ERR_INVALID_CONFIG = "Invalid configuration provided"
-ERR_ADAPTER_CLASS_INVALID = "Adapter class must inherit from BaseDataAdapter"
+_ERR_UNSUPPORTED_TYPE = "Unsupported data type: %s. Available types: %s"
+_ERR_NO_ADAPTERS = "No adapters registered"
+_ERR_ADAPTER_NOT_FOUND = "Adapter not found for data type: %s"
+_ERR_INVALID_CONFIG = "Invalid configuration provided"
+_ERR_ADAPTER_CLASS_INVALID = "Adapter class must inherit from BaseDataAdapter"
 
 # ============================================================
 # Module Constants - Log Messages
 # ============================================================
 
-LOG_SET_LOGGER = "Logger set for AdapterFactory"
-LOG_ADAPTER_REGISTERED = "Registered adapter for data type: %s"
-LOG_CREATING_ADAPTER = "Creating adapter for data type: %s"
-LOG_ADAPTER_CREATED = "Created %s adapter"
-LOG_LIST_ADAPTERS = "Listing %d registered adapters"
-LOG_CHECK_SUPPORT = "Checking support for data type: %s"
-LOG_SUPPORTED = "Data type '%s' is supported"
-LOG_NOT_SUPPORTED = "Data type '%s' is not supported"
+_LOG_SET_LOGGER = "Logger set for AdapterFactory"
+_LOG_ADAPTER_REGISTERED = "Registered adapter for data type: %s"
+_LOG_CREATING_ADAPTER = "Creating adapter for data type: %s"
+_LOG_ADAPTER_CREATED = "Created %s adapter"
+_LOG_LIST_ADAPTERS = "Listing %d registered adapters"
+_LOG_CHECK_SUPPORT = "Checking support for data type: %s"
+_LOG_SUPPORTED = "Data type '%s' is supported"
+_LOG_NOT_SUPPORTED = "Data type '%s' is not supported"
 
 # ============================================================
 # Module Constants - Format Strings
 # ============================================================
 
-FMT_UNSUPPORTED_TYPE = "Unsupported data type: {data_type}"
-FMT_AVAILABLE_TYPES = "Available types: {types}"
+_FMT_UNSUPPORTED_TYPE = "Unsupported data type: {data_type}"
+_FMT_AVAILABLE_TYPES = "Available types: {types}"
 
 # ============================================================
 # Public API
@@ -249,7 +249,7 @@ class AdapterFactory:
         """
         cls._logger = logger
         if cls._logger:
-            cls._logger.debug(LOG_SET_LOGGER)
+            cls._logger.debug(_LOG_SET_LOGGER)
 
     @classmethod
     def register_adapter(cls, data_type: str, adapter_class: Any) -> None:
@@ -284,7 +284,7 @@ class AdapterFactory:
         """
         cls._adapters[data_type.lower()] = adapter_class
         if cls._logger:
-            cls._logger.info(LOG_ADAPTER_REGISTERED, data_type)
+            cls._logger.info(_LOG_ADAPTER_REGISTERED, data_type)
 
     @classmethod
     def create_adapter(cls, data_type: str, config: Dict[str, Any]) -> Any:
@@ -318,17 +318,17 @@ class AdapterFactory:
             - Adapter must be registered first via register_adapter()
         """
         if cls._logger:
-            cls._logger.debug(LOG_CREATING_ADAPTER, data_type)
+            cls._logger.debug(_LOG_CREATING_ADAPTER, data_type)
 
         adapter_class = cls._adapters.get(data_type.lower())
 
         if not adapter_class:
             available = ", ".join(cls._adapters.keys())
-            raise ValueError(ERR_UNSUPPORTED_TYPE % (data_type, available))
+            raise ValueError(_ERR_UNSUPPORTED_TYPE % (data_type, available))
 
         adapter = adapter_class(config, logger=cls._logger)
         if cls._logger:
-            cls._logger.info(LOG_ADAPTER_CREATED, adapter.__class__.__name__)
+            cls._logger.info(_LOG_ADAPTER_CREATED, adapter.__class__.__name__)
         return adapter
 
     @classmethod
@@ -353,7 +353,7 @@ class AdapterFactory:
             - Built-in adapters: ["sqlite", "csv", "postgresql"]
         """
         if cls._logger:
-            cls._logger.debug(LOG_LIST_ADAPTERS, len(cls._adapters))
+            cls._logger.debug(_LOG_LIST_ADAPTERS, len(cls._adapters))
         return list(cls._adapters.keys())
 
     @classmethod
@@ -384,7 +384,7 @@ class AdapterFactory:
         supported = data_type.lower() in cls._adapters
         if cls._logger:
             if supported:
-                cls._logger.debug(LOG_SUPPORTED, data_type)
+                cls._logger.debug(_LOG_SUPPORTED, data_type)
             else:
-                cls._logger.debug(LOG_NOT_SUPPORTED, data_type)
+                cls._logger.debug(_LOG_NOT_SUPPORTED, data_type)
         return supported

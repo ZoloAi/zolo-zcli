@@ -194,82 +194,82 @@ except ImportError:
 # Module Constants - File Extensions
 # ============================================================
 
-CSV_EXTENSION = ".csv"
-CSV_GLOB_PATTERN = "*.csv"
+_CSV_EXTENSION = ".csv"
+_CSV_GLOB_PATTERN = "*.csv"
 
 # ============================================================
 # Module Constants - Schema Keys
 # ============================================================
 
-SCHEMA_KEY_PRIMARY_KEY = "primary_key"
-SCHEMA_KEY_INDEXES = "indexes"
-SCHEMA_KEY_TYPE = "type"
-SCHEMA_KEY_PK = "pk"
-SCHEMA_KEY_UNIQUE = "unique"
-SCHEMA_KEY_REQUIRED = "required"
-SCHEMA_KEY_DEFAULT = "default"
+_SCHEMA_KEY_PRIMARY_KEY = "primary_key"
+_SCHEMA_KEY_INDEXES = "indexes"
+_SCHEMA_KEY_TYPE = "type"
+_SCHEMA_KEY_PK = "pk"
+_SCHEMA_KEY_UNIQUE = "unique"
+_SCHEMA_KEY_REQUIRED = "required"
+_SCHEMA_KEY_DEFAULT = "default"
 
 # ============================================================
 # Module Constants - WHERE Operators
 # ============================================================
 
-OP_SUFFIX_GT = "__gt"
-OP_SUFFIX_LT = "__lt"
-OP_SUFFIX_GTE = "__gte"
-OP_SUFFIX_LTE = "__lte"
-OP_SUFFIX_LIKE = "__like"
-OP_SUFFIX_IN = "__in"
-OP_SUFFIX_IS_NULL = "__is_null"
-OP_SUFFIX_IS_NOT_NULL = "__is_not_null"
-WHERE_KEY_OR = "or"
+_OP_SUFFIX_GT = "__gt"
+_OP_SUFFIX_LT = "__lt"
+_OP_SUFFIX_GTE = "__gte"
+_OP_SUFFIX_LTE = "__lte"
+_OP_SUFFIX_LIKE = "__like"
+_OP_SUFFIX_IN = "__in"
+_OP_SUFFIX_IS_NULL = "__is_null"
+_OP_SUFFIX_IS_NOT_NULL = "__is_not_null"
+_WHERE_KEY_OR = "or"
 
 # ============================================================
 # Module Constants - Merge Strategies
 # ============================================================
 
-MERGE_INNER = "inner"
-MERGE_LEFT = "left"
-MERGE_RIGHT = "right"
-MERGE_OUTER = "outer"
+_MERGE_INNER = "inner"
+_MERGE_LEFT = "left"
+_MERGE_RIGHT = "right"
+_MERGE_OUTER = "outer"
 
 # ============================================================
 # Module Constants - Column Keys
 # ============================================================
 
-COL_INDEX = "index"
-COL_DEFAULT = "default"
-COL_TYPE = "type"
+_COL_INDEX = "index"
+_COL_DEFAULT = "default"
+_COL_TYPE = "type"
 
 # ============================================================
 # Module Constants - Error Messages
 # ============================================================
 
-ERR_PANDAS_MISSING = "pandas is required for CSV adapter. Install with: pip install pandas"
-ERR_TABLE_NOT_FOUND = "CSV table '%s' not found: %s"
-ERR_DIR_CREATE_FAILED = "Failed to create CSV directory: %s"
-ERR_TABLE_LOAD_FAILED = "Failed to load CSV table '%s': %s"
-ERR_TABLE_SAVE_FAILED = "Failed to save CSV table '%s': %s"
-ERR_JOIN_FAILED = "Failed to join tables: %s"
-ERR_WHERE_FILTER_FAILED = "Failed to apply WHERE filter: %s"
-ERR_TYPE_COERCION_FAILED = "Failed to apply type coercion for table '%s': %s"
+_ERR_PANDAS_MISSING = "pandas is required for CSV adapter. Install with: pip install pandas"
+_ERR_TABLE_NOT_FOUND = "CSV table '%s' not found: %s"
+_ERR_DIR_CREATE_FAILED = "Failed to create CSV directory: %s"
+_ERR_TABLE_LOAD_FAILED = "Failed to load CSV table '%s': %s"
+_ERR_TABLE_SAVE_FAILED = "Failed to save CSV table '%s': %s"
+_ERR_JOIN_FAILED = "Failed to join tables: %s"
+_ERR_WHERE_FILTER_FAILED = "Failed to apply WHERE filter: %s"
+_ERR_TYPE_COERCION_FAILED = "Failed to apply type coercion for table '%s': %s"
 
 # ============================================================
 # Module Constants - Log Messages
 # ============================================================
 
-LOG_CONNECTED = "Connected to CSV backend: %s"
-LOG_DISCONNECTED = "Disconnected from CSV backend: %s"
-LOG_TABLE_CREATED = "CSV table created: %s"
-LOG_TABLE_LOADED = "Loaded CSV table: %s (%d rows)"
-LOG_TABLE_SAVED = "Saved CSV table: %s (%d rows)"
-LOG_TABLE_DROPPED = "Dropped CSV table: %s"
-LOG_TABLE_ALTERED = "Altered CSV table: %s"
-LOG_COLUMN_ADDED = "Added column '%s' to table '%s'"
-LOG_COLUMN_DROPPED = "Dropped column '%s' from table '%s'"
-LOG_ROW_INSERTED = "Inserted row into CSV table %s (row %d)"
-LOG_JOIN_MULTI_TABLE = "[JOIN] Multi-table CSV query: %s"
-LOG_TABLE_EXISTS = "CSV table '%s' exists: %s"
-LOG_FOUND_TABLES = "Found %d CSV tables: %s"
+_LOG_CONNECTED = "Connected to CSV backend: %s"
+_LOG_DISCONNECTED = "Disconnected from CSV backend: %s"
+_LOG_TABLE_CREATED = "CSV table created: %s"
+_LOG_TABLE_LOADED = "Loaded CSV table: %s (%d rows)"
+_LOG_TABLE_SAVED = "Saved CSV table: %s (%d rows)"
+_LOG_TABLE_DROPPED = "Dropped CSV table: %s"
+_LOG_TABLE_ALTERED = "Altered CSV table: %s"
+_LOG_COLUMN_ADDED = "Added column '%s' to table '%s'"
+_LOG_COLUMN_DROPPED = "Dropped column '%s' from table '%s'"
+_LOG_ROW_INSERTED = "Inserted row into CSV table %s (row %d)"
+_LOG_JOIN_MULTI_TABLE = "[JOIN] Multi-table CSV query: %s"
+_LOG_TABLE_EXISTS = "CSV table '%s' exists: %s"
+_LOG_FOUND_TABLES = "Found %d CSV tables: %s"
 
 # ============================================================
 # Public API
@@ -481,7 +481,7 @@ class CSVAdapter(BaseDataAdapter):
         """
         try:
             self._ensure_directory()
-            self._log('info', LOG_CONNECTED, self.base_path)
+            self._log('info', _LOG_CONNECTED, self.base_path)
             self.connection = True
             return True
         except Exception as e:
@@ -576,7 +576,7 @@ class CSVAdapter(BaseDataAdapter):
         self.schemas[table_name] = {}
 
         for field_name, attrs in schema.items():
-            if field_name in [SCHEMA_KEY_PRIMARY_KEY, SCHEMA_KEY_INDEXES]:
+            if field_name in [_SCHEMA_KEY_PRIMARY_KEY, _SCHEMA_KEY_INDEXES]:
                 continue
 
             if isinstance(attrs, dict):
@@ -584,14 +584,14 @@ class CSVAdapter(BaseDataAdapter):
                 self.schemas[table_name][field_name] = attrs
             elif isinstance(attrs, str):
                 columns.append(field_name)
-                self.schemas[table_name][field_name] = {SCHEMA_KEY_TYPE: attrs}
+                self.schemas[table_name][field_name] = {_SCHEMA_KEY_TYPE: attrs}
 
         df = pd.DataFrame(columns=columns)
         csv_file = self._get_csv_path(table_name)
         df.to_csv(csv_file, index=False)
         self.tables[table_name] = df
 
-        self._log('info', LOG_TABLE_CREATED, csv_file)
+        self._log('info', _LOG_TABLE_CREATED, csv_file)
 
     def alter_table(self, table_name: str, changes: Dict[str, Any]) -> None:
         """
@@ -704,7 +704,7 @@ class CSVAdapter(BaseDataAdapter):
             - Returns table names (stem), not full paths
             - Sorted alphabetically
         """
-        csv_files = list(self.base_path.glob(CSV_GLOB_PATTERN))
+        csv_files = list(self.base_path.glob(_CSV_GLOB_PATTERN))
         tables = [f.stem for f in csv_files]
         self._log('debug', LOG_FOUND_TABLES, len(tables), tables)
         return tables
@@ -1357,17 +1357,17 @@ class CSVAdapter(BaseDataAdapter):
             actual_table = table_name.replace("__zmigration_", "")
             migration_dir = self.base_path / "zmigrations"
             migration_dir.mkdir(parents=True, exist_ok=True)
-            return migration_dir / f"{actual_table}_zMigration{CSV_EXTENSION}"
+            return migration_dir / f"{actual_table}_zMigration{_CSV_EXTENSION}"
         
         # For the global _zdata_migrations table, redirect to zmigrations/ as well
         # This keeps the Data/ directory clean while accepting CSV's file-per-table approach
         if table_name == "_zdata_migrations":
             migration_dir = self.base_path / "zmigrations"
             migration_dir.mkdir(parents=True, exist_ok=True)
-            return migration_dir / f"{table_name}{CSV_EXTENSION}"
+            return migration_dir / f"{table_name}{_CSV_EXTENSION}"
         
         # Regular tables use base_path
-        return self.base_path / f"{table_name}{CSV_EXTENSION}"
+        return self.base_path / f"{table_name}{_CSV_EXTENSION}"
 
     def _append_row_to_df(self, df, new_row):
         """Safely append row to DataFrame (avoids FutureWarning)."""
