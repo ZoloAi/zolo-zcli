@@ -25,9 +25,9 @@ Usage:
 # Optional Prometheus dependency (graceful degradation)
 try:
     from prometheus_client import Counter, Gauge, Histogram, generate_latest, CONTENT_TYPE_LATEST
-    PROMETHEUS_AVAILABLE = True
+    _PROMETHEUS_AVAILABLE = True
 except ImportError:
-    PROMETHEUS_AVAILABLE = False
+    _PROMETHEUS_AVAILABLE = False
 
 
 class BifrostMetrics:
@@ -45,7 +45,7 @@ class BifrostMetrics:
         Args:
             enabled: Whether to enable metrics (default: True if prometheus available)
         """
-        self.enabled = enabled and PROMETHEUS_AVAILABLE
+        self.enabled = enabled and _PROMETHEUS_AVAILABLE
         
         if not self.enabled:
             return

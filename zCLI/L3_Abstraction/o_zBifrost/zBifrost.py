@@ -46,10 +46,10 @@ from zCLI import Any, Optional
 from .zBifrost_modules.bridge_orchestrator import BridgeOrchestrator
 
 # Module Constants
-LOG_PREFIX = "[zBifrost]"
-LOG_INIT = "zBifrost orchestrator initialized (Layer 2)"
-LOG_AUTO_START = "Auto-starting WebSocket bridge (zMode: zBifrost)"
-LOG_READY = "zBifrost WebSocket bridge ready"
+_LOG_PREFIX = "[zBifrost]"
+_LOG_INIT = "zBifrost orchestrator initialized (Layer 2)"
+_LOG_AUTO_START = "Auto-starting WebSocket bridge (zMode: zBifrost)"
+_LOG_READY = "zBifrost WebSocket bridge ready"
 
 class zBifrost:
     """
@@ -86,7 +86,7 @@ class zBifrost:
         self.zcli = zcli
         self.logger = zcli.logger
         
-        self.logger.framework.debug(f"{LOG_PREFIX} {LOG_INIT}")
+        self.logger.framework.debug(f"{_LOG_PREFIX} {_LOG_INIT}")
         
         # Initialize orchestrator with all required subsystems
         self.orchestrator = BridgeOrchestrator(
@@ -98,7 +98,7 @@ class zBifrost:
         # Auto-start if in zBifrost mode
         self._auto_start()
         
-        self.logger.framework.debug(f"{LOG_PREFIX} {LOG_READY}")
+        self.logger.framework.debug(f"{_LOG_PREFIX} {_LOG_READY}")
     
     def _auto_start(self) -> None:
         """
@@ -109,7 +109,7 @@ class zBifrost:
         """
         zmode = self.zcli.session.get('zMode', 'Terminal')
         if zmode == 'zBifrost':
-            self.logger.framework.debug(f"{LOG_PREFIX} {LOG_AUTO_START}")
+            self.logger.framework.debug(f"{_LOG_PREFIX} {_LOG_AUTO_START}")
             self.orchestrator.auto_start()
     
     @property
@@ -139,16 +139,16 @@ class zBifrost:
         Uses asyncio to run the async shutdown method.
         """
         if self.orchestrator.websocket:
-            self.logger.info(f"{LOG_PREFIX} Stopping WebSocket bridge")
+            self.logger.info(f"{_LOG_PREFIX} Stopping WebSocket bridge")
             import asyncio
             try:
                 # Run async shutdown in sync context
                 asyncio.run(self.orchestrator.websocket.shutdown())
-                self.logger.info(f"{LOG_PREFIX} WebSocket bridge stopped successfully")
+                self.logger.info(f"{_LOG_PREFIX} WebSocket bridge stopped successfully")
             except Exception as e:
-                self.logger.error(f"{LOG_PREFIX} Error stopping WebSocket bridge: {e}")
+                self.logger.error(f"{_LOG_PREFIX} Error stopping WebSocket bridge: {e}")
         else:
-            self.logger.warning(f"{LOG_PREFIX} Cannot stop - WebSocket bridge not running")
+            self.logger.warning(f"{_LOG_PREFIX} Cannot stop - WebSocket bridge not running")
     
     def broadcast(self, message: dict, sender: str = "system") -> None:
         """

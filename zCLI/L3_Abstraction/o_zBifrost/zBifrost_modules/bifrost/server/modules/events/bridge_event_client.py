@@ -60,34 +60,34 @@ from .base_event_handler import BaseEventHandler
 # ═══════════════════════════════════════════════════════════
 
 # Data Keys (incoming event data)
-KEY_REQUEST_ID = "requestId"
-KEY_VALUE = "value"
+_KEY_REQUEST_ID = "requestId"
+_KEY_VALUE = "value"
 
 # Event Names
-EVENT_CONNECTION_INFO = "connection_info"
+_EVENT_CONNECTION_INFO = "connection_info"
 
 # Message Keys (outgoing messages)
-MSG_KEY_EVENT = "event"
-MSG_KEY_DATA = "data"
+_MSG_KEY_EVENT = "event"
+_MSG_KEY_DATA = "data"
 
 # Log Prefixes
-LOG_PREFIX = "[ClientEvents]"
-LOG_PREFIX_INPUT = "[ClientEvents:Input]"
-LOG_PREFIX_CONNECTION = "[ClientEvents:Connection]"
+_LOG_PREFIX = "[ClientEvents]"
+_LOG_PREFIX_INPUT = "[ClientEvents:Input]"
+_LOG_PREFIX_CONNECTION = "[ClientEvents:Connection]"
 
 # Error Messages
-ERR_NO_REQUEST_ID = "Missing requestId in input response"
-ERR_NO_ZCLI = "zCLI instance not available"
-ERR_NO_DISPLAY = "zDisplay subsystem not available"
-ERR_NO_PRIMITIVES = "zDisplay.zPrimitives not available"
-ERR_SEND_FAILED = "Failed to send connection info"
-ERR_ROUTE_FAILED = "Failed to route input response"
+_ERR_NO_REQUEST_ID = "Missing requestId in input response"
+_ERR_NO_ZCLI = "zCLI instance not available"
+_ERR_NO_DISPLAY = "zDisplay subsystem not available"
+_ERR_NO_PRIMITIVES = "zDisplay.zPrimitives not available"
+_ERR_SEND_FAILED = "Failed to send connection info"
+_ERR_ROUTE_FAILED = "Failed to route input response"
 
 # Note: User Context Keys and Default Values now inherited from BaseEventHandler.
 # Module-level constants kept for convenience (match base class values exactly).
 from .base_event_handler import (
-    CONTEXT_KEY_USER_ID, CONTEXT_KEY_APP_NAME, CONTEXT_KEY_ROLE, CONTEXT_KEY_AUTH_CONTEXT,
-    DEFAULT_USER_ID, DEFAULT_APP_NAME, DEFAULT_ROLE, DEFAULT_AUTH_CONTEXT
+    _CONTEXT_KEY_USER_ID, _CONTEXT_KEY_APP_NAME, _CONTEXT_KEY_ROLE, _CONTEXT_KEY_AUTH_CONTEXT,
+    _DEFAULT_USER_ID, _DEFAULT_APP_NAME, _DEFAULT_ROLE, _DEFAULT_AUTH_CONTEXT
 )
 
 
@@ -174,51 +174,51 @@ class ClientEvents(BaseEventHandler):
             })
             ```
         """
-        self.logger.info(f"{LOG_PREFIX_INPUT} 🔵 handle_input_response CALLED! Data: {data}")
+        self.logger.info(f"{_LOG_PREFIX_INPUT} 🔵 handle_input_response CALLED! Data: {data}")
         
         # Extract user context for logging and future authorization
         user_context = self._extract_user_context(ws)
-        user_id = user_context.get(CONTEXT_KEY_USER_ID, DEFAULT_USER_ID)
-        app_name = user_context.get(CONTEXT_KEY_APP_NAME, DEFAULT_APP_NAME)
-        role = user_context.get(CONTEXT_KEY_ROLE, DEFAULT_ROLE)
-        auth_context = user_context.get(CONTEXT_KEY_AUTH_CONTEXT, DEFAULT_AUTH_CONTEXT)
+        user_id = user_context.get(_CONTEXT_KEY_USER_ID, _DEFAULT_USER_ID)
+        app_name = user_context.get(_CONTEXT_KEY_APP_NAME, _DEFAULT_APP_NAME)
+        role = user_context.get(_CONTEXT_KEY_ROLE, _DEFAULT_ROLE)
+        auth_context = user_context.get(_CONTEXT_KEY_AUTH_CONTEXT, _DEFAULT_AUTH_CONTEXT)
         
         self.logger.debug(
-            f"{LOG_PREFIX_INPUT} User: {user_id} | App: {app_name} | "
+            f"{_LOG_PREFIX_INPUT} User: {user_id} | App: {app_name} | "
             f"Role: {role} | Context: {auth_context}"
         )
         
         # Validate input data
-        request_id = data.get(KEY_REQUEST_ID)
+        request_id = data.get(_KEY_REQUEST_ID)
         if not request_id:
-            self.logger.warning(f"{LOG_PREFIX_INPUT} {ERR_NO_REQUEST_ID}")
+            self.logger.warning(f"{_LOG_PREFIX_INPUT} {_ERR_NO_REQUEST_ID}")
             return
         
-        value = data.get(KEY_VALUE)
+        value = data.get(_KEY_VALUE)
         
         # Validate zCLI availability
         if not self.zcli:
-            self.logger.warning(f"{LOG_PREFIX_INPUT} {ERR_NO_ZCLI}")
+            self.logger.warning(f"{_LOG_PREFIX_INPUT} {_ERR_NO_ZCLI}")
             return
         
         if not hasattr(self.zcli, 'display'):
-            self.logger.warning(f"{LOG_PREFIX_INPUT} {ERR_NO_DISPLAY}")
+            self.logger.warning(f"{_LOG_PREFIX_INPUT} {_ERR_NO_DISPLAY}")
             return
         
         if not hasattr(self.zcli.display, 'zPrimitives'):
-            self.logger.warning(f"{LOG_PREFIX_INPUT} {ERR_NO_PRIMITIVES}")
+            self.logger.warning(f"{_LOG_PREFIX_INPUT} {_ERR_NO_PRIMITIVES}")
             return
         
         # Route input response to zDisplay
         try:
             self.zcli.display.zPrimitives.handle_input_response(request_id, value)
             self.logger.debug(
-                f"{LOG_PREFIX_INPUT} Routed: {request_id} | "
+                f"{_LOG_PREFIX_INPUT} Routed: {request_id} | "
                 f"User: {user_id} | Value: {value}"
             )
         except Exception as e:
             self.logger.error(
-                f"{LOG_PREFIX_INPUT} {ERR_ROUTE_FAILED}: {request_id} | "
+                f"{_LOG_PREFIX_INPUT} {_ERR_ROUTE_FAILED}: {request_id} | "
                 f"Error: {str(e)}"
             )
     
@@ -267,13 +267,13 @@ class ClientEvents(BaseEventHandler):
         """
         # Extract user context for logging and future authorization
         user_context = self._extract_user_context(ws)
-        user_id = user_context.get(CONTEXT_KEY_USER_ID, DEFAULT_USER_ID)
-        app_name = user_context.get(CONTEXT_KEY_APP_NAME, DEFAULT_APP_NAME)
-        role = user_context.get(CONTEXT_KEY_ROLE, DEFAULT_ROLE)
-        auth_context = user_context.get(CONTEXT_KEY_AUTH_CONTEXT, DEFAULT_AUTH_CONTEXT)
+        user_id = user_context.get(_CONTEXT_KEY_USER_ID, _DEFAULT_USER_ID)
+        app_name = user_context.get(_CONTEXT_KEY_APP_NAME, _DEFAULT_APP_NAME)
+        role = user_context.get(_CONTEXT_KEY_ROLE, _DEFAULT_ROLE)
+        auth_context = user_context.get(_CONTEXT_KEY_AUTH_CONTEXT, _DEFAULT_AUTH_CONTEXT)
         
         self.logger.debug(
-            f"{LOG_PREFIX_CONNECTION} Request | User: {user_id} | App: {app_name} | "
+            f"{_LOG_PREFIX_CONNECTION} Request | User: {user_id} | App: {app_name} | "
             f"Role: {role} | Context: {auth_context}"
         )
         
@@ -283,17 +283,17 @@ class ClientEvents(BaseEventHandler):
             
             # Send to client
             await ws.send(json.dumps({
-                MSG_KEY_EVENT: EVENT_CONNECTION_INFO,
-                MSG_KEY_DATA: connection_info
+                _MSG_KEY_EVENT: _EVENT_CONNECTION_INFO,
+                _MSG_KEY_DATA: connection_info
             }))
             
             self.logger.debug(
-                f"{LOG_PREFIX_CONNECTION} Sent to {user_id} | "
+                f"{_LOG_PREFIX_CONNECTION} Sent to {user_id} | "
                 f"App: {app_name} | Models: {len(connection_info.get('models', []))}"
             )
         except Exception as e:
             self.logger.error(
-                f"{LOG_PREFIX_CONNECTION} {ERR_SEND_FAILED} | "
+                f"{_LOG_PREFIX_CONNECTION} {_ERR_SEND_FAILED} | "
                 f"User: {user_id} | Error: {str(e)}"
             )
     
@@ -332,14 +332,14 @@ class ClientEvents(BaseEventHandler):
         """
         # Extract user context for logging
         user_context = self._extract_user_context(ws)
-        user_id = user_context.get(CONTEXT_KEY_USER_ID, DEFAULT_USER_ID)
-        app_name = user_context.get(CONTEXT_KEY_APP_NAME, DEFAULT_APP_NAME)
+        user_id = user_context.get(_CONTEXT_KEY_USER_ID, _DEFAULT_USER_ID)
+        app_name = user_context.get(_CONTEXT_KEY_APP_NAME, _DEFAULT_APP_NAME)
         
         reason = data.get('reason', 'unknown')
         ws_id = id(ws)
         
         self.logger.info(
-            f"{LOG_PREFIX} Page unload | User: {user_id} | App: {app_name} | "
+            f"{_LOG_PREFIX} Page unload | User: {user_id} | App: {app_name} | "
             f"Reason: {reason} | ws={ws_id}"
         )
         
@@ -349,7 +349,7 @@ class ClientEvents(BaseEventHandler):
                 gen_state = self.bifrost.message_handler._paused_generators[ws_id]
                 zBlock = gen_state.get('zBlock', 'unknown')
                 self.logger.info(
-                    f"{LOG_PREFIX} Cleaned up paused generator for block: {zBlock} | "
+                    f"{_LOG_PREFIX} Cleaned up paused generator for block: {zBlock} | "
                     f"User: {user_id} | ws={ws_id}"
                 )
                 del self.bifrost.message_handler._paused_generators[ws_id]

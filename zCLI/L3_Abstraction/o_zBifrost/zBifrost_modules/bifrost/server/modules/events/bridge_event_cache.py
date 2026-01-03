@@ -64,57 +64,57 @@ Notes:
 
 from zCLI import json, Dict, Any, Optional
 from .base_event_handler import BaseEventHandler
-from ..bridge_auth import CONTEXT_ZSESSION, CONTEXT_APPLICATION, CONTEXT_DUAL
+from ..bridge_auth import _CONTEXT_ZSESSION, _CONTEXT_APPLICATION, _CONTEXT_DUAL
 
 # ═══════════════════════════════════════════════════════════
 # Module Constants
 # ═══════════════════════════════════════════════════════════
 
 # Data Keys (incoming event data)
-KEY_MODEL = "model"
-KEY_TTL = "ttl"
-KEY_SCOPE = "scope"  # For future: "user", "app", or "all"
+_KEY_MODEL = "model"
+_KEY_TTL = "ttl"
+_KEY_SCOPE = "scope"  # For future: "user", "app", or "all"
 
 # Response Keys (outgoing messages)
-KEY_ERROR = "error"
-KEY_RESULT = "result"
-KEY_STATS = "stats"
+_KEY_ERROR = "error"
+_KEY_RESULT = "result"
+_KEY_STATS = "stats"
 
 # Cache Stats Keys
-KEY_QUERY_CACHE = "query_cache"
+_KEY_QUERY_CACHE = "query_cache"
 
 # Log Prefixes
-LOG_PREFIX = "[CacheEvents]"
-LOG_PREFIX_SCHEMA = "[CacheEvents:Schema]"
-LOG_PREFIX_CLEAR = "[CacheEvents:Clear]"
-LOG_PREFIX_STATS = "[CacheEvents:Stats]"
-LOG_PREFIX_TTL = "[CacheEvents:TTL]"
+_LOG_PREFIX = "[CacheEvents]"
+_LOG_PREFIX_SCHEMA = "[CacheEvents:Schema]"
+_LOG_PREFIX_CLEAR = "[CacheEvents:Clear]"
+_LOG_PREFIX_STATS = "[CacheEvents:Stats]"
+_LOG_PREFIX_TTL = "[CacheEvents:TTL]"
 
 # Error Messages
-ERR_NO_MODEL = "Missing model parameter"
-ERR_SCHEMA_NOT_FOUND = "Schema not found"
-ERR_INVALID_TTL = "Invalid TTL value"
-ERR_TTL_TOO_LARGE = "TTL exceeds maximum"
-ERR_SEND_FAILED = "Failed to send response"
-ERR_CACHE_OP_FAILED = "Cache operation failed"
+_ERR_NO_MODEL = "Missing model parameter"
+_ERR_SCHEMA_NOT_FOUND = "Schema not found"
+_ERR_INVALID_TTL = "Invalid TTL value"
+_ERR_TTL_TOO_LARGE = "TTL exceeds maximum"
+_ERR_SEND_FAILED = "Failed to send response"
+_ERR_CACHE_OP_FAILED = "Cache operation failed"
 
 # Success Messages
-MSG_CACHE_CLEARED = "Cache cleared successfully"
-MSG_TTL_SET = "Query cache TTL set"
-MSG_STATS_SENT = "Cache statistics sent"
-MSG_SCHEMA_SENT = "Schema sent"
+_MSG_CACHE_CLEARED = "Cache cleared successfully"
+_MSG_TTL_SET = "Query cache TTL set"
+_MSG_STATS_SENT = "Cache statistics sent"
+_MSG_SCHEMA_SENT = "Schema sent"
 
 # Default/Max Values
-DEFAULT_TTL = 60
-MIN_TTL = 1
-MAX_TTL = 3600  # 1 hour max
+_DEFAULT_TTL = 60
+_MIN_TTL = 1
+_MAX_TTL = 3600  # 1 hour max
 
 # Note: User Context Keys and Default Values now inherited from BaseEventHandler.
 # Module-level constants kept for convenience (match base class values exactly).
-# These allow direct usage as `CONTEXT_KEY_USER_ID` instead of `self.CONTEXT_KEY_USER_ID`.
+# These allow direct usage as `_CONTEXT_KEY_USER_ID` instead of `self._CONTEXT_KEY_USER_ID`.
 from .base_event_handler import (
-    CONTEXT_KEY_USER_ID, CONTEXT_KEY_APP_NAME, CONTEXT_KEY_ROLE, CONTEXT_KEY_AUTH_CONTEXT,
-    DEFAULT_USER_ID, DEFAULT_APP_NAME, DEFAULT_ROLE, DEFAULT_AUTH_CONTEXT
+    _CONTEXT_KEY_USER_ID, _CONTEXT_KEY_APP_NAME, _CONTEXT_KEY_ROLE, _CONTEXT_KEY_AUTH_CONTEXT,
+    _DEFAULT_USER_ID, _DEFAULT_APP_NAME, _DEFAULT_ROLE, _DEFAULT_AUTH_CONTEXT
 )
 
 
@@ -211,23 +211,23 @@ class CacheEvents(BaseEventHandler):
         """
         # Extract user context for logging
         user_context = self._extract_user_context(ws)
-        user_id = user_context.get(CONTEXT_KEY_USER_ID, DEFAULT_USER_ID)
-        app_name = user_context.get(CONTEXT_KEY_APP_NAME, DEFAULT_APP_NAME)
-        role = user_context.get(CONTEXT_KEY_ROLE, DEFAULT_ROLE)
-        auth_context = user_context.get(CONTEXT_KEY_AUTH_CONTEXT, DEFAULT_AUTH_CONTEXT)
+        user_id = user_context.get(_CONTEXT_KEY_USER_ID, _DEFAULT_USER_ID)
+        app_name = user_context.get(_CONTEXT_KEY_APP_NAME, _DEFAULT_APP_NAME)
+        role = user_context.get(_CONTEXT_KEY_ROLE, _DEFAULT_ROLE)
+        auth_context = user_context.get(_CONTEXT_KEY_AUTH_CONTEXT, _DEFAULT_AUTH_CONTEXT)
         
         self.logger.debug(
-            f"{LOG_PREFIX_SCHEMA} Request | User: {user_id} | App: {app_name} | "
+            f"{_LOG_PREFIX_SCHEMA} Request | User: {user_id} | App: {app_name} | "
             f"Role: {role} | Context: {auth_context}"
         )
         
         # Validate model parameter
-        model = data.get(KEY_MODEL)
+        model = data.get(_KEY_MODEL)
         if not model:
             try:
-                await ws.send(json.dumps({KEY_ERROR: ERR_NO_MODEL}))
+                await ws.send(json.dumps({_KEY_ERROR: _ERR_NO_MODEL}))
             except Exception as e:
-                self.logger.error(f"{LOG_PREFIX_SCHEMA} {ERR_SEND_FAILED}: {str(e)}")
+                self.logger.error(f"{_LOG_PREFIX_SCHEMA} {_ERR_SEND_FAILED}: {str(e)}")
             return
         
         try:
@@ -235,26 +235,26 @@ class CacheEvents(BaseEventHandler):
             schema = self.connection_info.get_schema(model)
             
             if schema:
-                await ws.send(json.dumps({KEY_RESULT: schema}))
+                await ws.send(json.dumps({_KEY_RESULT: schema}))
                 self.logger.debug(
-                    f"{LOG_PREFIX_SCHEMA} {MSG_SCHEMA_SENT}: {model} | "
+                    f"{_LOG_PREFIX_SCHEMA} {_MSG_SCHEMA_SENT}: {model} | "
                     f"User: {user_id}"
                 )
             else:
-                await ws.send(json.dumps({KEY_ERROR: f"{ERR_SCHEMA_NOT_FOUND}: {model}"}))
+                await ws.send(json.dumps({_KEY_ERROR: f"{_ERR_SCHEMA_NOT_FOUND}: {model}"}))
                 self.logger.warning(
-                    f"{LOG_PREFIX_SCHEMA} {ERR_SCHEMA_NOT_FOUND}: {model} | "
+                    f"{_LOG_PREFIX_SCHEMA} {_ERR_SCHEMA_NOT_FOUND}: {model} | "
                     f"User: {user_id}"
                 )
         except Exception as e:
             self.logger.error(
-                f"{LOG_PREFIX_SCHEMA} {ERR_CACHE_OP_FAILED} | "
+                f"{_LOG_PREFIX_SCHEMA} {_ERR_CACHE_OP_FAILED} | "
                 f"Model: {model} | User: {user_id} | Error: {str(e)}"
             )
             try:
-                await ws.send(json.dumps({KEY_ERROR: f"{ERR_CACHE_OP_FAILED}: {str(e)}"}))
+                await ws.send(json.dumps({_KEY_ERROR: f"{_ERR_CACHE_OP_FAILED}: {str(e)}"}))
             except Exception as send_err:
-                self.logger.error(f"{LOG_PREFIX_SCHEMA} {ERR_SEND_FAILED}: {str(send_err)}")
+                self.logger.error(f"{_LOG_PREFIX_SCHEMA} {_ERR_SEND_FAILED}: {str(send_err)}")
 
     async def handle_clear_cache(self, ws, data: Dict[str, Any]) -> None:  # pylint: disable=unused-argument
         """
@@ -298,13 +298,13 @@ class CacheEvents(BaseEventHandler):
         """
         # Extract user context for logging and scoping
         user_context = self._extract_user_context(ws)
-        user_id = user_context.get(CONTEXT_KEY_USER_ID, DEFAULT_USER_ID)
-        app_name = user_context.get(CONTEXT_KEY_APP_NAME, DEFAULT_APP_NAME)
-        role = user_context.get(CONTEXT_KEY_ROLE, DEFAULT_ROLE)
-        auth_context = user_context.get(CONTEXT_KEY_AUTH_CONTEXT, DEFAULT_AUTH_CONTEXT)
+        user_id = user_context.get(_CONTEXT_KEY_USER_ID, _DEFAULT_USER_ID)
+        app_name = user_context.get(_CONTEXT_KEY_APP_NAME, _DEFAULT_APP_NAME)
+        role = user_context.get(_CONTEXT_KEY_ROLE, _DEFAULT_ROLE)
+        auth_context = user_context.get(_CONTEXT_KEY_AUTH_CONTEXT, _DEFAULT_AUTH_CONTEXT)
         
         self.logger.debug(
-            f"{LOG_PREFIX_CLEAR} Request | User: {user_id} | App: {app_name} | "
+            f"{_LOG_PREFIX_CLEAR} Request | User: {user_id} | App: {app_name} | "
             f"Role: {role} | Context: {auth_context}"
         )
         
@@ -313,11 +313,11 @@ class CacheEvents(BaseEventHandler):
             cleared_count = 0
             scope_msg = "all"
             
-            if auth_context == CONTEXT_APPLICATION and app_name != DEFAULT_APP_NAME:
+            if auth_context == _CONTEXT_APPLICATION and app_name != _DEFAULT_APP_NAME:
                 # Clear app-specific cache
                 cleared_count = self.cache.clear_app_cache(app_name)
                 scope_msg = f"app '{app_name}'"
-            elif auth_context in (CONTEXT_ZSESSION, CONTEXT_DUAL) and user_id != DEFAULT_USER_ID:
+            elif auth_context in (_CONTEXT_ZSESSION, _CONTEXT_DUAL) and user_id != _DEFAULT_USER_ID:
                 # Clear user-specific cache
                 cleared_count = self.cache.clear_user_cache(user_id)
                 scope_msg = f"user '{user_id}'"
@@ -331,23 +331,23 @@ class CacheEvents(BaseEventHandler):
             
             # Send response
             await ws.send(json.dumps({
-                KEY_RESULT: f"{MSG_CACHE_CLEARED} ({scope_msg})",
-                KEY_STATS: stats
+                _KEY_RESULT: f"{_MSG_CACHE_CLEARED} ({scope_msg})",
+                _KEY_STATS: stats
             }))
             
             self.logger.info(
-                f"{LOG_PREFIX_CLEAR} Cleared {scope_msg} | "
+                f"{_LOG_PREFIX_CLEAR} Cleared {scope_msg} | "
                 f"Entries: {cleared_count} | User: {user_id} | App: {app_name}"
             )
         except Exception as e:
             self.logger.error(
-                f"{LOG_PREFIX_CLEAR} {ERR_CACHE_OP_FAILED} | "
+                f"{_LOG_PREFIX_CLEAR} {_ERR_CACHE_OP_FAILED} | "
                 f"User: {user_id} | Error: {str(e)}"
             )
             try:
-                await ws.send(json.dumps({KEY_ERROR: f"{ERR_CACHE_OP_FAILED}: {str(e)}"}))
+                await ws.send(json.dumps({_KEY_ERROR: f"{_ERR_CACHE_OP_FAILED}: {str(e)}"}))
             except Exception as send_err:
-                self.logger.error(f"{LOG_PREFIX_CLEAR} {ERR_SEND_FAILED}: {str(send_err)}")
+                self.logger.error(f"{_LOG_PREFIX_CLEAR} {_ERR_SEND_FAILED}: {str(send_err)}")
 
     async def handle_cache_stats(self, ws, data: Dict[str, Any]) -> None:  # pylint: disable=unused-argument
         """
@@ -384,13 +384,13 @@ class CacheEvents(BaseEventHandler):
         """
         # Extract user context for logging
         user_context = self._extract_user_context(ws)
-        user_id = user_context.get(CONTEXT_KEY_USER_ID, DEFAULT_USER_ID)
-        app_name = user_context.get(CONTEXT_KEY_APP_NAME, DEFAULT_APP_NAME)
-        role = user_context.get(CONTEXT_KEY_ROLE, DEFAULT_ROLE)
-        auth_context = user_context.get(CONTEXT_KEY_AUTH_CONTEXT, DEFAULT_AUTH_CONTEXT)
+        user_id = user_context.get(_CONTEXT_KEY_USER_ID, _DEFAULT_USER_ID)
+        app_name = user_context.get(_CONTEXT_KEY_APP_NAME, _DEFAULT_APP_NAME)
+        role = user_context.get(_CONTEXT_KEY_ROLE, _DEFAULT_ROLE)
+        auth_context = user_context.get(_CONTEXT_KEY_AUTH_CONTEXT, _DEFAULT_AUTH_CONTEXT)
         
         self.logger.debug(
-            f"{LOG_PREFIX_STATS} Request | User: {user_id} | App: {app_name} | "
+            f"{_LOG_PREFIX_STATS} Request | User: {user_id} | App: {app_name} | "
             f"Role: {role} | Context: {auth_context}"
         )
         
@@ -400,24 +400,24 @@ class CacheEvents(BaseEventHandler):
             
             # Format response
             stats = {
-                KEY_QUERY_CACHE: all_stats.get(KEY_QUERY_CACHE, {})
+                _KEY_QUERY_CACHE: all_stats.get(_KEY_QUERY_CACHE, {})
             }
             
-            await ws.send(json.dumps({KEY_RESULT: stats}))
+            await ws.send(json.dumps({_KEY_RESULT: stats}))
             
             self.logger.debug(
-                f"{LOG_PREFIX_STATS} {MSG_STATS_SENT} | "
-                f"User: {user_id} | Hits: {stats[KEY_QUERY_CACHE].get('hits', 0)}"
+                f"{_LOG_PREFIX_STATS} {_MSG_STATS_SENT} | "
+                f"User: {user_id} | Hits: {stats[_KEY_QUERY_CACHE].get('hits', 0)}"
             )
         except Exception as e:
             self.logger.error(
-                f"{LOG_PREFIX_STATS} {ERR_CACHE_OP_FAILED} | "
+                f"{_LOG_PREFIX_STATS} {_ERR_CACHE_OP_FAILED} | "
                 f"User: {user_id} | Error: {str(e)}"
             )
             try:
-                await ws.send(json.dumps({KEY_ERROR: f"{ERR_CACHE_OP_FAILED}: {str(e)}"}))
+                await ws.send(json.dumps({_KEY_ERROR: f"{_ERR_CACHE_OP_FAILED}: {str(e)}"}))
             except Exception as send_err:
-                self.logger.error(f"{LOG_PREFIX_STATS} {ERR_SEND_FAILED}: {str(send_err)}")
+                self.logger.error(f"{_LOG_PREFIX_STATS} {_ERR_SEND_FAILED}: {str(send_err)}")
 
     async def handle_set_cache_ttl(self, ws, data: Dict[str, Any]) -> None:
         """
@@ -460,76 +460,76 @@ class CacheEvents(BaseEventHandler):
         """
         # Extract user context for logging
         user_context = self._extract_user_context(ws)
-        user_id = user_context.get(CONTEXT_KEY_USER_ID, DEFAULT_USER_ID)
-        app_name = user_context.get(CONTEXT_KEY_APP_NAME, DEFAULT_APP_NAME)
-        role = user_context.get(CONTEXT_KEY_ROLE, DEFAULT_ROLE)
-        auth_context = user_context.get(CONTEXT_KEY_AUTH_CONTEXT, DEFAULT_AUTH_CONTEXT)
+        user_id = user_context.get(_CONTEXT_KEY_USER_ID, _DEFAULT_USER_ID)
+        app_name = user_context.get(_CONTEXT_KEY_APP_NAME, _DEFAULT_APP_NAME)
+        role = user_context.get(_CONTEXT_KEY_ROLE, _DEFAULT_ROLE)
+        auth_context = user_context.get(_CONTEXT_KEY_AUTH_CONTEXT, _DEFAULT_AUTH_CONTEXT)
         
         self.logger.debug(
-            f"{LOG_PREFIX_TTL} Request | User: {user_id} | App: {app_name} | "
+            f"{_LOG_PREFIX_TTL} Request | User: {user_id} | App: {app_name} | "
             f"Role: {role} | Context: {auth_context}"
         )
         
         # Get and validate TTL parameter
-        ttl = data.get(KEY_TTL, DEFAULT_TTL)
+        ttl = data.get(_KEY_TTL, _DEFAULT_TTL)
         
         try:
             ttl = int(ttl)
         except (TypeError, ValueError):
-            error_msg = f"{ERR_INVALID_TTL}: must be positive integer"
+            error_msg = f"{_ERR_INVALID_TTL}: must be positive integer"
             self.logger.warning(
-                f"{LOG_PREFIX_TTL} {error_msg} | "
+                f"{_LOG_PREFIX_TTL} {error_msg} | "
                 f"Provided: {ttl} | User: {user_id}"
             )
             try:
-                await ws.send(json.dumps({KEY_ERROR: error_msg}))
+                await ws.send(json.dumps({_KEY_ERROR: error_msg}))
             except Exception as send_err:
-                self.logger.error(f"{LOG_PREFIX_TTL} {ERR_SEND_FAILED}: {str(send_err)}")
+                self.logger.error(f"{_LOG_PREFIX_TTL} {_ERR_SEND_FAILED}: {str(send_err)}")
             return
         
         # Validate range
-        if ttl < MIN_TTL:
-            error_msg = f"{ERR_INVALID_TTL}: must be >= {MIN_TTL}"
+        if ttl < _MIN_TTL:
+            error_msg = f"{_ERR_INVALID_TTL}: must be >= {_MIN_TTL}"
             self.logger.warning(
-                f"{LOG_PREFIX_TTL} {error_msg} | "
+                f"{_LOG_PREFIX_TTL} {error_msg} | "
                 f"Provided: {ttl} | User: {user_id}"
             )
             try:
-                await ws.send(json.dumps({KEY_ERROR: error_msg}))
+                await ws.send(json.dumps({_KEY_ERROR: error_msg}))
             except Exception as send_err:
-                self.logger.error(f"{LOG_PREFIX_TTL} {ERR_SEND_FAILED}: {str(send_err)}")
+                self.logger.error(f"{_LOG_PREFIX_TTL} {_ERR_SEND_FAILED}: {str(send_err)}")
             return
         
-        if ttl > MAX_TTL:
-            error_msg = f"{ERR_TTL_TOO_LARGE}: max {MAX_TTL}s"
+        if ttl > _MAX_TTL:
+            error_msg = f"{_ERR_TTL_TOO_LARGE}: max {_MAX_TTL}s"
             self.logger.warning(
-                f"{LOG_PREFIX_TTL} {error_msg} | "
+                f"{_LOG_PREFIX_TTL} {error_msg} | "
                 f"Provided: {ttl} | User: {user_id}"
             )
             try:
-                await ws.send(json.dumps({KEY_ERROR: error_msg}))
+                await ws.send(json.dumps({_KEY_ERROR: error_msg}))
             except Exception as send_err:
-                self.logger.error(f"{LOG_PREFIX_TTL} {ERR_SEND_FAILED}: {str(send_err)}")
+                self.logger.error(f"{_LOG_PREFIX_TTL} {_ERR_SEND_FAILED}: {str(send_err)}")
             return
         
         try:
             # Apply TTL to cache
             self.cache.set_query_ttl(ttl)
             
-            await ws.send(json.dumps({KEY_RESULT: f"{MSG_TTL_SET} to {ttl}s"}))
+            await ws.send(json.dumps({_KEY_RESULT: f"{_MSG_TTL_SET} to {ttl}s"}))
             
             self.logger.info(
-                f"{LOG_PREFIX_TTL} {MSG_TTL_SET} to {ttl}s | "
+                f"{_LOG_PREFIX_TTL} {_MSG_TTL_SET} to {ttl}s | "
                 f"User: {user_id} | App: {app_name}"
             )
         except Exception as e:
             self.logger.error(
-                f"{LOG_PREFIX_TTL} {ERR_CACHE_OP_FAILED} | "
+                f"{_LOG_PREFIX_TTL} {_ERR_CACHE_OP_FAILED} | "
                 f"TTL: {ttl} | User: {user_id} | Error: {str(e)}"
             )
             try:
-                await ws.send(json.dumps({KEY_ERROR: f"{ERR_CACHE_OP_FAILED}: {str(e)}"}))
+                await ws.send(json.dumps({_KEY_ERROR: f"{_ERR_CACHE_OP_FAILED}: {str(e)}"}))
             except Exception as send_err:
-                self.logger.error(f"{LOG_PREFIX_TTL} {ERR_SEND_FAILED}: {str(send_err)}")
+                self.logger.error(f"{_LOG_PREFIX_TTL} {_ERR_SEND_FAILED}: {str(send_err)}")
     
     # Note: _extract_user_context() method removed - now inherited from BaseEventHandler

@@ -63,27 +63,27 @@ from .base_event_handler import BaseEventHandler
 # ═══════════════════════════════════════════════════════════
 
 # Data Keys (incoming event data)
-KEY_MODEL = "model"
+_KEY_MODEL = "model"
 
 # Log Prefixes
-LOG_PREFIX = "[DiscoveryEvents]"
-LOG_PREFIX_DISCOVER = "[DiscoveryEvents:Discover]"
-LOG_PREFIX_INTROSPECT = "[DiscoveryEvents:Introspect]"
+_LOG_PREFIX = "[DiscoveryEvents]"
+_LOG_PREFIX_DISCOVER = "[DiscoveryEvents:Discover]"
+_LOG_PREFIX_INTROSPECT = "[DiscoveryEvents:Introspect]"
 
 # Error Messages
-ERR_DISCOVERY_FAILED = "Discovery operation failed"
-ERR_INTROSPECT_FAILED = "Introspection operation failed"
-ERR_SEND_FAILED = "Failed to send response"
+_ERR_DISCOVERY_FAILED = "Discovery operation failed"
+_ERR_INTROSPECT_FAILED = "Introspection operation failed"
+_ERR_SEND_FAILED = "Failed to send response"
 
 # Success Messages
-MSG_DISCOVERY_SENT = "Discovery info sent"
-MSG_INTROSPECT_SENT = "Introspection sent"
+_MSG_DISCOVERY_SENT = "Discovery info sent"
+_MSG_INTROSPECT_SENT = "Introspection sent"
 
 # Note: User Context Keys and Default Values now inherited from BaseEventHandler.
 # Module-level constants kept for convenience (match base class values exactly).
 from .base_event_handler import (
-    CONTEXT_KEY_USER_ID, CONTEXT_KEY_APP_NAME, CONTEXT_KEY_ROLE, CONTEXT_KEY_AUTH_CONTEXT,
-    DEFAULT_USER_ID, DEFAULT_APP_NAME, DEFAULT_ROLE, DEFAULT_AUTH_CONTEXT
+    _CONTEXT_KEY_USER_ID, _CONTEXT_KEY_APP_NAME, _CONTEXT_KEY_ROLE, _CONTEXT_KEY_AUTH_CONTEXT,
+    _DEFAULT_USER_ID, _DEFAULT_APP_NAME, _DEFAULT_ROLE, _DEFAULT_AUTH_CONTEXT
 )
 
 
@@ -181,13 +181,13 @@ class DiscoveryEvents(BaseEventHandler):
         """
         # Extract user context for logging
         user_context = self._extract_user_context(ws)
-        user_id = user_context.get(CONTEXT_KEY_USER_ID, DEFAULT_USER_ID)
-        app_name = user_context.get(CONTEXT_KEY_APP_NAME, DEFAULT_APP_NAME)
-        role = user_context.get(CONTEXT_KEY_ROLE, DEFAULT_ROLE)
-        auth_context = user_context.get(CONTEXT_KEY_AUTH_CONTEXT, DEFAULT_AUTH_CONTEXT)
+        user_id = user_context.get(_CONTEXT_KEY_USER_ID, _DEFAULT_USER_ID)
+        app_name = user_context.get(_CONTEXT_KEY_APP_NAME, _DEFAULT_APP_NAME)
+        role = user_context.get(_CONTEXT_KEY_ROLE, _DEFAULT_ROLE)
+        auth_context = user_context.get(_CONTEXT_KEY_AUTH_CONTEXT, _DEFAULT_AUTH_CONTEXT)
         
         self.logger.debug(
-            f"{LOG_PREFIX_DISCOVER} Request | User: {user_id} | App: {app_name} | "
+            f"{_LOG_PREFIX_DISCOVER} Request | User: {user_id} | App: {app_name} | "
             f"Role: {role} | Context: {auth_context}"
         )
         
@@ -200,19 +200,19 @@ class DiscoveryEvents(BaseEventHandler):
             
             model_count = len(discovery_info.get("models", []))
             self.logger.debug(
-                f"{LOG_PREFIX_DISCOVER} {MSG_DISCOVERY_SENT} | "
+                f"{_LOG_PREFIX_DISCOVER} {_MSG_DISCOVERY_SENT} | "
                 f"User: {user_id} | Models: {model_count}"
             )
         except Exception as e:
             self.logger.error(
-                f"{LOG_PREFIX_DISCOVER} {ERR_DISCOVERY_FAILED} | "
+                f"{_LOG_PREFIX_DISCOVER} {_ERR_DISCOVERY_FAILED} | "
                 f"User: {user_id} | Error: {str(e)}"
             )
             try:
-                await ws.send(json.dumps({"error": f"{ERR_DISCOVERY_FAILED}: {str(e)}"}))
+                await ws.send(json.dumps({"error": f"{_ERR_DISCOVERY_FAILED}: {str(e)}"}))
             except Exception as send_err:
                 self.logger.error(
-                    f"{LOG_PREFIX_DISCOVER} {ERR_SEND_FAILED}: {str(send_err)}"
+                    f"{_LOG_PREFIX_DISCOVER} {_ERR_SEND_FAILED}: {str(send_err)}"
                 )
 
     async def handle_introspect(self, ws, data: Dict[str, Any]) -> None:
@@ -276,16 +276,16 @@ class DiscoveryEvents(BaseEventHandler):
         """
         # Extract user context for logging
         user_context = self._extract_user_context(ws)
-        user_id = user_context.get(CONTEXT_KEY_USER_ID, DEFAULT_USER_ID)
-        app_name = user_context.get(CONTEXT_KEY_APP_NAME, DEFAULT_APP_NAME)
-        role = user_context.get(CONTEXT_KEY_ROLE, DEFAULT_ROLE)
-        auth_context = user_context.get(CONTEXT_KEY_AUTH_CONTEXT, DEFAULT_AUTH_CONTEXT)
+        user_id = user_context.get(_CONTEXT_KEY_USER_ID, _DEFAULT_USER_ID)
+        app_name = user_context.get(_CONTEXT_KEY_APP_NAME, _DEFAULT_APP_NAME)
+        role = user_context.get(_CONTEXT_KEY_ROLE, _DEFAULT_ROLE)
+        auth_context = user_context.get(_CONTEXT_KEY_AUTH_CONTEXT, _DEFAULT_AUTH_CONTEXT)
         
         # Get model parameter (optional)
-        model = data.get(KEY_MODEL)
+        model = data.get(_KEY_MODEL)
         
         self.logger.debug(
-            f"{LOG_PREFIX_INTROSPECT} Request | User: {user_id} | App: {app_name} | "
+            f"{_LOG_PREFIX_INTROSPECT} Request | User: {user_id} | App: {app_name} | "
             f"Role: {role} | Context: {auth_context} | Model: {model or 'all'}"
         )
         
@@ -297,19 +297,19 @@ class DiscoveryEvents(BaseEventHandler):
             await ws.send(json.dumps(introspection))
             
             self.logger.debug(
-                f"{LOG_PREFIX_INTROSPECT} {MSG_INTROSPECT_SENT} | "
+                f"{_LOG_PREFIX_INTROSPECT} {_MSG_INTROSPECT_SENT} | "
                 f"User: {user_id} | Model: {model or 'all'}"
             )
         except Exception as e:
             self.logger.error(
-                f"{LOG_PREFIX_INTROSPECT} {ERR_INTROSPECT_FAILED} | "
+                f"{_LOG_PREFIX_INTROSPECT} {_ERR_INTROSPECT_FAILED} | "
                 f"User: {user_id} | Model: {model or 'all'} | Error: {str(e)}"
             )
             try:
-                await ws.send(json.dumps({"error": f"{ERR_INTROSPECT_FAILED}: {str(e)}"}))
+                await ws.send(json.dumps({"error": f"{_ERR_INTROSPECT_FAILED}: {str(e)}"}))
             except Exception as send_err:
                 self.logger.error(
-                    f"{LOG_PREFIX_INTROSPECT} {ERR_SEND_FAILED}: {str(send_err)}"
+                    f"{_LOG_PREFIX_INTROSPECT} {_ERR_SEND_FAILED}: {str(send_err)}"
                 )
     
     # Note: _extract_user_context() method removed - now inherited from BaseEventHandler

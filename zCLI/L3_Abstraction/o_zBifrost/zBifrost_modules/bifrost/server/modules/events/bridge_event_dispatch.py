@@ -89,58 +89,58 @@ from .base_event_handler import BaseEventHandler
 # ═══════════════════════════════════════════════════════════
 
 # Data Keys (incoming event data)
-KEY_ZKEY = "zKey"
-KEY_CMD = "cmd"  # Alternative to zKey
-KEY_ZHORIZONTAL = "zHorizontal"
-KEY_ACTION = "action"
-KEY_CACHE_TTL = "cache_ttl"
-KEY_NO_CACHE = "no_cache"
-KEY_REQUEST_ID = "_requestId"
+_KEY_ZKEY = "zKey"
+_KEY_CMD = "cmd"  # Alternative to zKey
+_KEY_ZHORIZONTAL = "zHorizontal"
+_KEY_ACTION = "action"
+_KEY_CACHE_TTL = "cache_ttl"
+_KEY_NO_CACHE = "no_cache"
+_KEY_REQUEST_ID = "_requestId"
 
 # Response Keys (outgoing messages)
-KEY_RESULT = "result"
-KEY_ERROR = "error"
-KEY_CACHED = "_cached"
+_KEY_RESULT = "result"
+_KEY_ERROR = "error"
+_KEY_CACHED = "_cached"
 
 # Action Types
-ACTION_READ = "read"
+_ACTION_READ = "read"
 
 # Command Prefixes (for cache detection)
-CMD_PREFIX_LIST = "^List"
-CMD_PREFIX_GET = "^Get"
-CMD_PREFIX_SEARCH = "^Search"
+_CMD_PREFIX_LIST = "^List"
+_CMD_PREFIX_GET = "^Get"
+_CMD_PREFIX_SEARCH = "^Search"
 
 # zDispatch Context Keys
-CONTEXT_KEY_WEBSOCKET_DATA = "websocket_data"
-CONTEXT_KEY_MODE = "mode"
+_CONTEXT_KEY_WEBSOCKET_DATA = "websocket_data"
+_CONTEXT_KEY_MODE = "mode"
 
 # Mode Values
-MODE_ZBIFROST = "zBifrost"
+_MODE_ZBIFROST = "zBifrost"
 
 # Log Prefixes
-LOG_PREFIX = "[DispatchEvents]"
-LOG_PREFIX_DISPATCH = "[DispatchEvents:Dispatch]"
-LOG_PREFIX_CACHE_HIT = "[DispatchEvents:CacheHit]"
-LOG_PREFIX_CACHE_MISS = "[DispatchEvents:CacheMiss]"
-LOG_PREFIX_EXECUTE = "[DispatchEvents:Execute]"
+_LOG_PREFIX = "[DispatchEvents]"
+_LOG_PREFIX_DISPATCH = "[DispatchEvents:Dispatch]"
+_LOG_PREFIX_CACHE_HIT = "[DispatchEvents:CacheHit]"
+_LOG_PREFIX_CACHE_MISS = "[DispatchEvents:CacheMiss]"
+_LOG_PREFIX_EXECUTE = "[DispatchEvents:Execute]"
 
 # Error Messages
-ERR_NO_ZKEY = "Missing zKey parameter"
-ERR_DISPATCH_FAILED = "Command execution failed"
-ERR_SEND_FAILED = "Failed to send response"
-ERR_BROADCAST_FAILED = "Failed to broadcast response"
+_ERR_NO_ZKEY = "Missing zKey parameter"
+_ERR_DISPATCH_FAILED = "Command execution failed"
+_ERR_SEND_FAILED = "Failed to send response"
+_ERR_BROADCAST_FAILED = "Failed to broadcast response"
 
 # Success Messages
-MSG_CACHE_HIT = "Cache hit"
-MSG_CACHE_MISS = "Cache miss - executing"
-MSG_COMMAND_EXECUTED = "Command executed"
-MSG_RESULT_SENT = "Result sent"
+_MSG_CACHE_HIT = "Cache hit"
+_MSG_CACHE_MISS = "Cache miss - executing"
+_MSG_COMMAND_EXECUTED = "Command executed"
+_MSG_RESULT_SENT = "Result sent"
 
 # Note: User Context Keys and Default Values now inherited from BaseEventHandler.
 # Module-level constants kept for convenience (match base class values exactly).
 from .base_event_handler import (
-    CONTEXT_KEY_USER_ID, CONTEXT_KEY_APP_NAME, CONTEXT_KEY_ROLE, CONTEXT_KEY_AUTH_CONTEXT,
-    DEFAULT_USER_ID, DEFAULT_APP_NAME, DEFAULT_ROLE, DEFAULT_AUTH_CONTEXT
+    _CONTEXT_KEY_USER_ID, _CONTEXT_KEY_APP_NAME, _CONTEXT_KEY_ROLE, _CONTEXT_KEY_AUTH_CONTEXT,
+    _DEFAULT_USER_ID, _DEFAULT_APP_NAME, _DEFAULT_ROLE, _DEFAULT_AUTH_CONTEXT
 )
 
 
@@ -266,35 +266,35 @@ class DispatchEvents(BaseEventHandler):
         """
         # Extract user context for logging and cache isolation
         user_context = self._extract_user_context(ws)
-        user_id = user_context.get(CONTEXT_KEY_USER_ID, DEFAULT_USER_ID)
-        app_name = user_context.get(CONTEXT_KEY_APP_NAME, DEFAULT_APP_NAME)
-        role = user_context.get(CONTEXT_KEY_ROLE, DEFAULT_ROLE)
-        auth_context = user_context.get(CONTEXT_KEY_AUTH_CONTEXT, DEFAULT_AUTH_CONTEXT)
+        user_id = user_context.get(_CONTEXT_KEY_USER_ID, _DEFAULT_USER_ID)
+        app_name = user_context.get(_CONTEXT_KEY_APP_NAME, _DEFAULT_APP_NAME)
+        role = user_context.get(_CONTEXT_KEY_ROLE, _DEFAULT_ROLE)
+        auth_context = user_context.get(_CONTEXT_KEY_AUTH_CONTEXT, _DEFAULT_AUTH_CONTEXT)
         
         # Get and validate zKey
-        zKey = data.get(KEY_ZKEY) or data.get(KEY_CMD)
-        zHorizontal = data.get(KEY_ZHORIZONTAL) or zKey
+        zKey = data.get(_KEY_ZKEY) or data.get(_KEY_CMD)
+        zHorizontal = data.get(_KEY_ZHORIZONTAL) or zKey
         
         if not zKey:
             self.logger.warning(
-                f"{LOG_PREFIX_DISPATCH} {ERR_NO_ZKEY} | "
+                f"{_LOG_PREFIX_DISPATCH} {_ERR_NO_ZKEY} | "
                 f"User: {user_id} | App: {app_name}"
             )
             try:
-                await ws.send(json.dumps({KEY_ERROR: ERR_NO_ZKEY}))
+                await ws.send(json.dumps({_KEY_ERROR: _ERR_NO_ZKEY}))
             except Exception as send_err:
-                self.logger.error(f"{LOG_PREFIX_DISPATCH} {ERR_SEND_FAILED}: {str(send_err)}")
+                self.logger.error(f"{_LOG_PREFIX_DISPATCH} {_ERR_SEND_FAILED}: {str(send_err)}")
             return
         
         self.logger.debug(
-            f"{LOG_PREFIX_DISPATCH} Request | User: {user_id} | App: {app_name} | "
+            f"{_LOG_PREFIX_DISPATCH} Request | User: {user_id} | App: {app_name} | "
             f"Role: {role} | Context: {auth_context} | Command: {zKey}"
         )
         
         # Check cache behavior
         is_cacheable = self._is_cacheable_operation(data, zKey)
-        cache_ttl = data.get(KEY_CACHE_TTL, None)
-        disable_cache = data.get(KEY_NO_CACHE, False)
+        cache_ttl = data.get(_KEY_CACHE_TTL, None)
+        disable_cache = data.get(_KEY_NO_CACHE, False)
         
         # Try cache for read operations
         if is_cacheable and not disable_cache:
@@ -304,13 +304,13 @@ class DispatchEvents(BaseEventHandler):
             if cached_result is not None:
                 # Cache hit!
                 self.logger.debug(
-                    f"{LOG_PREFIX_CACHE_HIT} {MSG_CACHE_HIT} | "
+                    f"{_LOG_PREFIX_CACHE_HIT} {_MSG_CACHE_HIT} | "
                     f"Command: {zKey} | User: {user_id}"
                 )
                 
-                response = {KEY_RESULT: cached_result, KEY_CACHED: True}
-                if KEY_REQUEST_ID in data:
-                    response[KEY_REQUEST_ID] = data[KEY_REQUEST_ID]
+                response = {_KEY_RESULT: cached_result, _KEY_CACHED: True}
+                if _KEY_REQUEST_ID in data:
+                    response[_KEY_REQUEST_ID] = data[_KEY_REQUEST_ID]
                 
                 payload = json.dumps(response)
                 
@@ -318,12 +318,12 @@ class DispatchEvents(BaseEventHandler):
                     await ws.send(payload)
                     await self.bifrost.broadcast(payload, sender=ws)
                     self.logger.debug(
-                        f"{LOG_PREFIX_CACHE_HIT} {MSG_RESULT_SENT} | "
+                        f"{_LOG_PREFIX_CACHE_HIT} {_MSG_RESULT_SENT} | "
                         f"Command: {zKey} | User: {user_id}"
                     )
                 except Exception as e:
                     self.logger.error(
-                        f"{LOG_PREFIX_CACHE_HIT} Send/broadcast failed | "
+                        f"{_LOG_PREFIX_CACHE_HIT} Send/broadcast failed | "
                         f"Command: {zKey} | User: {user_id} | Error: {str(e)}"
                     )
                 return
@@ -331,12 +331,12 @@ class DispatchEvents(BaseEventHandler):
         # Cache miss or not cacheable - execute command
         if is_cacheable and not disable_cache:
             self.logger.debug(
-                f"{LOG_PREFIX_CACHE_MISS} {MSG_CACHE_MISS} | "
+                f"{_LOG_PREFIX_CACHE_MISS} {_MSG_CACHE_MISS} | "
                 f"Command: {zKey} | User: {user_id}"
             )
         else:
             self.logger.debug(
-                f"{LOG_PREFIX_EXECUTE} Non-cacheable command | "
+                f"{_LOG_PREFIX_EXECUTE} Non-cacheable command | "
                 f"Command: {zKey} | User: {user_id}"
             )
         
@@ -345,8 +345,8 @@ class DispatchEvents(BaseEventHandler):
             from zCLI.L2_Core.e_zDispatch import handle_zDispatch
             
             context = {
-                CONTEXT_KEY_WEBSOCKET_DATA: data,
-                CONTEXT_KEY_MODE: MODE_ZBIFROST
+                _CONTEXT_KEY_WEBSOCKET_DATA: data,
+                _CONTEXT_KEY_MODE: _MODE_ZBIFROST
             }
             
             result = await asyncio.to_thread(
@@ -363,7 +363,7 @@ class DispatchEvents(BaseEventHandler):
                 actual_result = result['result']
                 buffered_events = result['events']
                 self.logger.debug(
-                    f"{LOG_PREFIX_EXECUTE} Captured {len(buffered_events)} display events | "
+                    f"{_LOG_PREFIX_EXECUTE} Captured {len(buffered_events)} display events | "
                     f"Command: {zKey} | User: {user_id}"
                 )
             
@@ -372,30 +372,30 @@ class DispatchEvents(BaseEventHandler):
                 cache_key = self.cache.generate_cache_key(data, user_context)
                 self.cache.cache_query(cache_key, actual_result, ttl=cache_ttl, user_context=user_context)
                 self.logger.debug(
-                    f"{LOG_PREFIX_EXECUTE} Result cached | "
+                    f"{_LOG_PREFIX_EXECUTE} Result cached | "
                     f"Command: {zKey} | User: {user_id}"
                 )
             
             # Build response
-            response = {KEY_RESULT: actual_result}
-            if KEY_REQUEST_ID in data:
-                response[KEY_REQUEST_ID] = data[KEY_REQUEST_ID]
+            response = {_KEY_RESULT: actual_result}
+            if _KEY_REQUEST_ID in data:
+                response[_KEY_REQUEST_ID] = data[_KEY_REQUEST_ID]
             
             payload = json.dumps(response)
             
             self.logger.debug(
-                f"{LOG_PREFIX_EXECUTE} {MSG_COMMAND_EXECUTED} | "
+                f"{_LOG_PREFIX_EXECUTE} {_MSG_COMMAND_EXECUTED} | "
                 f"Command: {zKey} | User: {user_id}"
             )
         
         except Exception as exc:
             self.logger.error(
-                f"{LOG_PREFIX_EXECUTE} {ERR_DISPATCH_FAILED} | "
+                f"{_LOG_PREFIX_EXECUTE} {_ERR_DISPATCH_FAILED} | "
                 f"Command: {zKey} | User: {user_id} | Error: {str(exc)}"
             )
-            response = {KEY_ERROR: f"{ERR_DISPATCH_FAILED}: {str(exc)}"}
-            if KEY_REQUEST_ID in data:
-                response[KEY_REQUEST_ID] = data[KEY_REQUEST_ID]
+            response = {_KEY_ERROR: f"{_ERR_DISPATCH_FAILED}: {str(exc)}"}
+            if _KEY_REQUEST_ID in data:
+                response[_KEY_REQUEST_ID] = data[_KEY_REQUEST_ID]
             payload = json.dumps(response)
         
         # Send result back and broadcast
@@ -403,7 +403,7 @@ class DispatchEvents(BaseEventHandler):
             await ws.send(payload)
         except Exception as send_err:
             self.logger.error(
-                f"{LOG_PREFIX_EXECUTE} {ERR_SEND_FAILED} | "
+                f"{_LOG_PREFIX_EXECUTE} {_ERR_SEND_FAILED} | "
                 f"Command: {zKey} | User: {user_id} | Error: {str(send_err)}"
             )
         
@@ -411,7 +411,7 @@ class DispatchEvents(BaseEventHandler):
             await self.bifrost.broadcast(payload, sender=ws)
         except Exception as broadcast_err:
             self.logger.error(
-                f"{LOG_PREFIX_EXECUTE} {ERR_BROADCAST_FAILED} | "
+                f"{_LOG_PREFIX_EXECUTE} {_ERR_BROADCAST_FAILED} | "
                 f"Command: {zKey} | User: {user_id} | Error: {str(broadcast_err)}"
             )
         
@@ -425,12 +425,12 @@ class DispatchEvents(BaseEventHandler):
                     })
                     await ws.send(event_payload)
                     self.logger.debug(
-                        f"{LOG_PREFIX_EXECUTE} Sent display event: {event.get('display_event')} | "
+                        f"{_LOG_PREFIX_EXECUTE} Sent display event: {event.get('display_event')} | "
                         f"Command: {zKey}"
                     )
                 except Exception as event_err:
                     self.logger.error(
-                        f"{LOG_PREFIX_EXECUTE} Failed to send display event | "
+                        f"{_LOG_PREFIX_EXECUTE} Failed to send display event | "
                         f"Command: {zKey} | Error: {str(event_err)}"
                     )
     
@@ -464,10 +464,10 @@ class DispatchEvents(BaseEventHandler):
             ```
         """
         return (
-            data.get(KEY_ACTION) == ACTION_READ or
-            zKey.startswith(CMD_PREFIX_LIST) or
-            zKey.startswith(CMD_PREFIX_GET) or
-            zKey.startswith(CMD_PREFIX_SEARCH)
+            data.get(_KEY_ACTION) == _ACTION_READ or
+            zKey.startswith(_CMD_PREFIX_LIST) or
+            zKey.startswith(_CMD_PREFIX_GET) or
+            zKey.startswith(_CMD_PREFIX_SEARCH)
         )
     
     # Note: _extract_user_context() method removed - now inherited from BaseEventHandler

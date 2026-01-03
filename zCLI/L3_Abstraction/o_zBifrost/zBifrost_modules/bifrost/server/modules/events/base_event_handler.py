@@ -33,7 +33,7 @@ Usage:
         async def handle_my_event(self, ws, data):
             # Extract user context using inherited method
             user_context = self._extract_user_context(ws)
-            user_id = user_context[self.CONTEXT_KEY_USER_ID]
+            user_id = user_context[self._CONTEXT_KEY_USER_ID]
             # ... handle event
     ```
 """
@@ -42,29 +42,29 @@ from zCLI import Dict, Any, Optional, Callable
 
 # Import authentication context constants from bridge_auth (shared auth constants)
 try:
-    from ..bridge_auth import CONTEXT_ZSESSION, CONTEXT_APPLICATION, CONTEXT_DUAL, CONTEXT_NONE
+    from ..bridge_auth import _CONTEXT_ZSESSION, _CONTEXT_APPLICATION, _CONTEXT_DUAL, _CONTEXT_NONE
 except ImportError:
     # Fallback if relative import fails (shouldn't happen in normal usage)
-    CONTEXT_ZSESSION = "zSession"
-    CONTEXT_APPLICATION = "application"
-    CONTEXT_DUAL = "dual"
-    CONTEXT_NONE = "none"
+    _CONTEXT_ZSESSION = "zSession"
+    _CONTEXT_APPLICATION = "application"
+    _CONTEXT_DUAL = "dual"
+    _CONTEXT_NONE = "none"
 
 # ═══════════════════════════════════════════════════════════
 # Shared Constants - User Context
 # ═══════════════════════════════════════════════════════════
 
 # User Context Keys (for logging and cache isolation)
-CONTEXT_KEY_USER_ID = "user_id"
-CONTEXT_KEY_APP_NAME = "app_name"
-CONTEXT_KEY_ROLE = "role"
-CONTEXT_KEY_AUTH_CONTEXT = "auth_context"
+_CONTEXT_KEY_USER_ID = "user_id"
+_CONTEXT_KEY_APP_NAME = "app_name"
+_CONTEXT_KEY_ROLE = "role"
+_CONTEXT_KEY_AUTH_CONTEXT = "auth_context"
 
 # Default Values (safe fallbacks when auth info unavailable)
-DEFAULT_USER_ID = "anonymous"
-DEFAULT_APP_NAME = "unknown"
-DEFAULT_ROLE = "guest"
-DEFAULT_AUTH_CONTEXT = "none"
+_DEFAULT_USER_ID = "anonymous"
+_DEFAULT_APP_NAME = "unknown"
+_DEFAULT_ROLE = "guest"
+_DEFAULT_AUTH_CONTEXT = "none"
 
 
 # ═══════════════════════════════════════════════════════════
@@ -84,14 +84,14 @@ class BaseEventHandler:
         bifrost: zBifrost instance (provides logger, zcli, cache, etc.)
         logger: Logger instance from bifrost
         auth: AuthenticationManager instance for user context extraction
-        CONTEXT_KEY_USER_ID: Constant for user_id key
-        CONTEXT_KEY_APP_NAME: Constant for app_name key
-        CONTEXT_KEY_ROLE: Constant for role key
-        CONTEXT_KEY_AUTH_CONTEXT: Constant for auth_context key
-        DEFAULT_USER_ID: Default user ID when not authenticated
-        DEFAULT_APP_NAME: Default app name when not available
-        DEFAULT_ROLE: Default role when not assigned
-        DEFAULT_AUTH_CONTEXT: Default auth context when not authenticated
+        _CONTEXT_KEY_USER_ID: Constant for user_id key
+        _CONTEXT_KEY_APP_NAME: Constant for app_name key
+        _CONTEXT_KEY_ROLE: Constant for role key
+        _CONTEXT_KEY_AUTH_CONTEXT: Constant for auth_context key
+        _DEFAULT_USER_ID: Default user ID when not authenticated
+        _DEFAULT_APP_NAME: Default app name when not available
+        _DEFAULT_ROLE: Default role when not assigned
+        _DEFAULT_AUTH_CONTEXT: Default auth context when not authenticated
     
     Methods:
         _extract_user_context(ws): Extract authentication context from WebSocket
@@ -107,14 +107,14 @@ class BaseEventHandler:
     """
     
     # Expose constants as class attributes for easy access in subclasses
-    CONTEXT_KEY_USER_ID = CONTEXT_KEY_USER_ID
-    CONTEXT_KEY_APP_NAME = CONTEXT_KEY_APP_NAME
-    CONTEXT_KEY_ROLE = CONTEXT_KEY_ROLE
-    CONTEXT_KEY_AUTH_CONTEXT = CONTEXT_KEY_AUTH_CONTEXT
-    DEFAULT_USER_ID = DEFAULT_USER_ID
-    DEFAULT_APP_NAME = DEFAULT_APP_NAME
-    DEFAULT_ROLE = DEFAULT_ROLE
-    DEFAULT_AUTH_CONTEXT = DEFAULT_AUTH_CONTEXT
+    _CONTEXT_KEY_USER_ID = _CONTEXT_KEY_USER_ID
+    _CONTEXT_KEY_APP_NAME = _CONTEXT_KEY_APP_NAME
+    _CONTEXT_KEY_ROLE = _CONTEXT_KEY_ROLE
+    _CONTEXT_KEY_AUTH_CONTEXT = _CONTEXT_KEY_AUTH_CONTEXT
+    _DEFAULT_USER_ID = _DEFAULT_USER_ID
+    _DEFAULT_APP_NAME = _DEFAULT_APP_NAME
+    _DEFAULT_ROLE = _DEFAULT_ROLE
+    _DEFAULT_AUTH_CONTEXT = _DEFAULT_AUTH_CONTEXT
     
     def __init__(self, bifrost: Any, auth_manager: Optional[Any] = None) -> None:
         """
@@ -174,8 +174,8 @@ class BaseEventHandler:
             ```python
             # In an event handler
             context = self._extract_user_context(ws)
-            user_id = context[self.CONTEXT_KEY_USER_ID]
-            app_name = context[self.CONTEXT_KEY_APP_NAME]
+            user_id = context[self._CONTEXT_KEY_USER_ID]
+            app_name = context[self._CONTEXT_KEY_APP_NAME]
             
             self.logger.info(f"User: {user_id} | App: {app_name}")
             ```
@@ -186,62 +186,62 @@ class BaseEventHandler:
         # No auth manager available - return safe defaults
         if not self.auth:
             return {
-                self.CONTEXT_KEY_USER_ID: self.DEFAULT_USER_ID,
-                self.CONTEXT_KEY_APP_NAME: self.DEFAULT_APP_NAME,
-                self.CONTEXT_KEY_ROLE: self.DEFAULT_ROLE,
-                self.CONTEXT_KEY_AUTH_CONTEXT: self.DEFAULT_AUTH_CONTEXT
+                self._CONTEXT_KEY_USER_ID: self._DEFAULT_USER_ID,
+                self._CONTEXT_KEY_APP_NAME: self._DEFAULT_APP_NAME,
+                self._CONTEXT_KEY_ROLE: self._DEFAULT_ROLE,
+                self._CONTEXT_KEY_AUTH_CONTEXT: self._DEFAULT_AUTH_CONTEXT
             }
         
         # Get auth info from auth manager
         auth_info = self.auth.get_client_info(ws)
         if not auth_info:
             return {
-                self.CONTEXT_KEY_USER_ID: self.DEFAULT_USER_ID,
-                self.CONTEXT_KEY_APP_NAME: self.DEFAULT_APP_NAME,
-                self.CONTEXT_KEY_ROLE: self.DEFAULT_ROLE,
-                self.CONTEXT_KEY_AUTH_CONTEXT: self.DEFAULT_AUTH_CONTEXT
+                self._CONTEXT_KEY_USER_ID: self._DEFAULT_USER_ID,
+                self._CONTEXT_KEY_APP_NAME: self._DEFAULT_APP_NAME,
+                self._CONTEXT_KEY_ROLE: self._DEFAULT_ROLE,
+                self._CONTEXT_KEY_AUTH_CONTEXT: self._DEFAULT_AUTH_CONTEXT
             }
         
-        context = auth_info.get("context", self.DEFAULT_AUTH_CONTEXT)
+        context = auth_info.get("context", self._DEFAULT_AUTH_CONTEXT)
         
         # Handle dual authentication (both zSession and application)
         # Prefer application context for consistency
-        if context == CONTEXT_DUAL:
+        if context == _CONTEXT_DUAL:
             app_user = auth_info.get("app_user", {})
             return {
-                self.CONTEXT_KEY_USER_ID: app_user.get("username", app_user.get("id", self.DEFAULT_USER_ID)),
-                self.CONTEXT_KEY_APP_NAME: app_user.get("app_name", self.DEFAULT_APP_NAME),
-                self.CONTEXT_KEY_ROLE: app_user.get("role", self.DEFAULT_ROLE),
-                self.CONTEXT_KEY_AUTH_CONTEXT: CONTEXT_DUAL
+                self._CONTEXT_KEY_USER_ID: app_user.get("username", app_user.get("id", self._DEFAULT_USER_ID)),
+                self._CONTEXT_KEY_APP_NAME: app_user.get("app_name", self._DEFAULT_APP_NAME),
+                self._CONTEXT_KEY_ROLE: app_user.get("role", self._DEFAULT_ROLE),
+                self._CONTEXT_KEY_AUTH_CONTEXT: _CONTEXT_DUAL
             }
         
         # Handle application-only authentication
-        elif context == CONTEXT_APPLICATION:
+        elif context == _CONTEXT_APPLICATION:
             app_user = auth_info.get("app_user", {})
             return {
-                self.CONTEXT_KEY_USER_ID: app_user.get("username", app_user.get("id", self.DEFAULT_USER_ID)),
-                self.CONTEXT_KEY_APP_NAME: app_user.get("app_name", self.DEFAULT_APP_NAME),
-                self.CONTEXT_KEY_ROLE: app_user.get("role", self.DEFAULT_ROLE),
-                self.CONTEXT_KEY_AUTH_CONTEXT: CONTEXT_APPLICATION
+                self._CONTEXT_KEY_USER_ID: app_user.get("username", app_user.get("id", self._DEFAULT_USER_ID)),
+                self._CONTEXT_KEY_APP_NAME: app_user.get("app_name", self._DEFAULT_APP_NAME),
+                self._CONTEXT_KEY_ROLE: app_user.get("role", self._DEFAULT_ROLE),
+                self._CONTEXT_KEY_AUTH_CONTEXT: _CONTEXT_APPLICATION
             }
         
         # Handle zSession-only authentication
-        elif context == CONTEXT_ZSESSION:
+        elif context == _CONTEXT_ZSESSION:
             zsession_user = auth_info.get("zsession_user", {})
             return {
-                self.CONTEXT_KEY_USER_ID: zsession_user.get("username", self.DEFAULT_USER_ID),
-                self.CONTEXT_KEY_APP_NAME: "zCLI",
-                self.CONTEXT_KEY_ROLE: zsession_user.get("role", self.DEFAULT_ROLE),
-                self.CONTEXT_KEY_AUTH_CONTEXT: CONTEXT_ZSESSION
+                self._CONTEXT_KEY_USER_ID: zsession_user.get("username", self._DEFAULT_USER_ID),
+                self._CONTEXT_KEY_APP_NAME: "zCLI",
+                self._CONTEXT_KEY_ROLE: zsession_user.get("role", self._DEFAULT_ROLE),
+                self._CONTEXT_KEY_AUTH_CONTEXT: _CONTEXT_ZSESSION
             }
         
         # Unknown or unauthenticated context
         else:
             return {
-                self.CONTEXT_KEY_USER_ID: self.DEFAULT_USER_ID,
-                self.CONTEXT_KEY_APP_NAME: self.DEFAULT_APP_NAME,
-                self.CONTEXT_KEY_ROLE: self.DEFAULT_ROLE,
-                self.CONTEXT_KEY_AUTH_CONTEXT: self.DEFAULT_AUTH_CONTEXT
+                self._CONTEXT_KEY_USER_ID: self._DEFAULT_USER_ID,
+                self._CONTEXT_KEY_APP_NAME: self._DEFAULT_APP_NAME,
+                self._CONTEXT_KEY_ROLE: self._DEFAULT_ROLE,
+                self._CONTEXT_KEY_AUTH_CONTEXT: self._DEFAULT_AUTH_CONTEXT
             }
     
     async def _safe_send(

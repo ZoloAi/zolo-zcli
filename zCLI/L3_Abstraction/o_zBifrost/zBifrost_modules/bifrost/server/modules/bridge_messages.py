@@ -49,7 +49,7 @@ Example:
 """
 
 from zCLI import asyncio, json, Dict, Any, Optional, Callable, Awaitable, safe_json_dumps
-from .bridge_auth import CONTEXT_ZSESSION, CONTEXT_APPLICATION, CONTEXT_DUAL
+from .bridge_auth import _CONTEXT_ZSESSION, _CONTEXT_APPLICATION, _CONTEXT_DUAL
 
 # ═══════════════════════════════════════════════════════════
 # Module Constants
@@ -1280,9 +1280,9 @@ class MessageHandler:
                         event_type = display_event.get('event')
                         
                         # Special events that need standalone handling
-                        SPECIAL_EVENTS = ['zDash']
+                        _SPECIAL_EVENTS = ['zDash']
                         
-                        if event_type in SPECIAL_EVENTS:
+                        if event_type in _SPECIAL_EVENTS:
                             self.logger.info(f"[MessageHandler] 🎯 Found special event: {event_type} in key '{key}'")
                             
                             # Create standalone event message
@@ -1733,12 +1733,12 @@ class MessageHandler:
         app_name = auth_info.get("app_name", "default")
         
         # Determine which user data to use based on context
-        if auth_context == CONTEXT_DUAL:
+        if auth_context == _CONTEXT_DUAL:
             # Dual mode: Prefer application context for cache key
             user_data = auth_info.get("application") or auth_info.get("zSession")
-        elif auth_context == CONTEXT_APPLICATION:
+        elif auth_context == _CONTEXT_APPLICATION:
             user_data = auth_info.get("application")
-        elif auth_context == CONTEXT_ZSESSION:
+        elif auth_context == _CONTEXT_ZSESSION:
             user_data = auth_info.get("zSession")
         else:
             user_data = None

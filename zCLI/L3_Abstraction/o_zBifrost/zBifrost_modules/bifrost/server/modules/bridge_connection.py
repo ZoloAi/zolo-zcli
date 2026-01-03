@@ -26,69 +26,69 @@ from version import __version__
 # ═══════════════════════════════════════════════════════════
 
 # Log Prefix
-LOG_PREFIX = "[ConnectionInfo]"
+_LOG_PREFIX = "[ConnectionInfo]"
 
 # Connection Info Dict Keys
-KEY_SERVER_VERSION = "server_version"
-KEY_FEATURES = "features"
-KEY_CACHE_STATS = "cache_stats"
-KEY_AVAILABLE_MODELS = "available_models"
-KEY_SESSION = "session"
+_KEY_SERVER_VERSION = "server_version"
+_KEY_FEATURES = "features"
+_KEY_CACHE_STATS = "cache_stats"
+_KEY_AVAILABLE_MODELS = "available_models"
+_KEY_SESSION = "session"
 
 # Session Dict Keys
-KEY_SESSION_WORKSPACE = "workspace"
-KEY_SESSION_MODE = "mode"
+_KEY_SESSION_WORKSPACE = "workspace"
+_KEY_SESSION_MODE = "mode"
 
 # Default Mode
-DEFAULT_MODE = "Terminal"
+_DEFAULT_MODE = "Terminal"
 
 # Feature List
-FEATURE_SCHEMA_CACHE = "schema_cache"
-FEATURE_QUERY_CACHE = "query_cache"
-FEATURE_CONNECTION_INFO = "connection_info"
-FEATURE_REALTIME_SYNC = "realtime_sync"
+_FEATURE_SCHEMA_CACHE = "schema_cache"
+_FEATURE_QUERY_CACHE = "query_cache"
+_FEATURE_CONNECTION_INFO = "connection_info"
+_FEATURE_REALTIME_SYNC = "realtime_sync"
 
-FEATURES = [
-    FEATURE_SCHEMA_CACHE,
-    FEATURE_QUERY_CACHE,
-    FEATURE_CONNECTION_INFO,
-    FEATURE_REALTIME_SYNC
+_FEATURES = [
+    _FEATURE_SCHEMA_CACHE,
+    _FEATURE_QUERY_CACHE,
+    _FEATURE_CONNECTION_INFO,
+    _FEATURE_REALTIME_SYNC
 ]
 
 # Model Dict Keys
-KEY_MODEL_NAME = "name"
-KEY_MODEL_TYPE = "type"
-KEY_MODEL_OPERATIONS = "operations"
-KEY_MODEL_SCHEMA = "schema"
-KEY_MODEL_FIELDS = "fields"
-KEY_MODEL_CACHEABLE = "cacheable"
+_KEY_MODEL_NAME = "name"
+_KEY_MODEL_TYPE = "type"
+_KEY_MODEL_OPERATIONS = "operations"
+_KEY_MODEL_SCHEMA = "schema"
+_KEY_MODEL_FIELDS = "fields"
+_KEY_MODEL_CACHEABLE = "cacheable"
 
 # Model Types
-MODEL_TYPE_TABLE = "table"
-MODEL_TYPE_SCHEMA = "schema"
+_MODEL_TYPE_TABLE = "table"
+_MODEL_TYPE_SCHEMA = "schema"
 
 # CRUD Operations
-OPERATION_CREATE = "create"
-OPERATION_READ = "read"
-OPERATION_UPDATE = "update"
-OPERATION_DELETE = "delete"
+_OPERATION_CREATE = "create"
+_OPERATION_READ = "read"
+_OPERATION_UPDATE = "update"
+_OPERATION_DELETE = "delete"
 
-CRUD_OPERATIONS = [
-    OPERATION_CREATE,
-    OPERATION_READ,
-    OPERATION_UPDATE,
-    OPERATION_DELETE
+_CRUD_OPERATIONS = [
+    _OPERATION_CREATE,
+    _OPERATION_READ,
+    _OPERATION_UPDATE,
+    _OPERATION_DELETE
 ]
 
 # Log Messages
-LOG_MODEL_DISCOVERY_ERROR = f"{LOG_PREFIX} Could not discover models: {{error}}"
-LOG_SESSION_INFO_ERROR = f"{LOG_PREFIX} Could not get session info: {{error}}"
-LOG_MODEL_DISCOVERY_GENERAL_ERROR = f"{LOG_PREFIX} Model discovery error: {{error}}"
-LOG_INTROSPECT_FAILED = f"{LOG_PREFIX} Failed to introspect {{model_name}}: {{error}}"
+_LOG_MODEL_DISCOVERY_ERROR = f"{_LOG_PREFIX} Could not discover models: {{error}}"
+_LOG_SESSION_INFO_ERROR = f"{_LOG_PREFIX} Could not get session info: {{error}}"
+_LOG_MODEL_DISCOVERY_GENERAL_ERROR = f"{_LOG_PREFIX} Model discovery error: {{error}}"
+_LOG_INTROSPECT_FAILED = f"{_LOG_PREFIX} Failed to introspect {{model_name}}: {{error}}"
 
 # Error Messages
-ERROR_LOGGER_REQUIRED = "logger parameter is required and cannot be None"
-ERROR_MODEL_NAME_REQUIRED = "model_name must be a non-empty string"
+_ERROR_LOGGER_REQUIRED = "logger parameter is required and cannot be None"
+_ERROR_MODEL_NAME_REQUIRED = "model_name must be a non-empty string"
 
 
 class ConnectionInfoManager:
@@ -135,7 +135,7 @@ class ConnectionInfoManager:
         """
         # Input validation
         if logger is None:
-            raise ValueError(ERROR_LOGGER_REQUIRED)
+            raise ValueError(_ERROR_LOGGER_REQUIRED)
 
         self.logger = logger
         self.cache = cache_manager
@@ -161,17 +161,17 @@ class ConnectionInfoManager:
             AttributeError: If cache_manager missing get_all_stats method
         """
         info = {
-            KEY_SERVER_VERSION: __version__,
-            KEY_FEATURES: FEATURES,
-            KEY_CACHE_STATS: self.cache.get_all_stats()
+            _KEY_SERVER_VERSION: __version__,
+            _KEY_FEATURES: _FEATURES,
+            _KEY_CACHE_STATS: self.cache.get_all_stats()
         }
 
         # Add available models if zData is available
         if self.walker and hasattr(self.walker, 'data'):
             try:
-                info[KEY_AVAILABLE_MODELS] = self._discover_models()
+                info[_KEY_AVAILABLE_MODELS] = self._discover_models()
             except Exception as e:  # Broad catch intentional: model discovery is optional
-                self.logger.debug(LOG_MODEL_DISCOVERY_ERROR.format(error=e))
+                self.logger.debug(_LOG_MODEL_DISCOVERY_ERROR.format(error=e))
 
         # Add session data if available (v1.6.0: includes session_hash and auth data)
         if self.zcli and hasattr(self.zcli, 'session'):
@@ -209,9 +209,9 @@ class ConnectionInfoManager:
                         role = app_data.get('role')
                 
                 # Build session info with public data only (security: no tokens/passwords)
-                info[KEY_SESSION] = {
-                    KEY_SESSION_WORKSPACE: getattr(session, 'workspace', session.get('zSpace')),
-                    KEY_SESSION_MODE: getattr(self.zcli, 'mode', DEFAULT_MODE),
+                info[_KEY_SESSION] = {
+                    _KEY_SESSION_WORKSPACE: getattr(session, 'workspace', session.get('zSpace')),
+                    _KEY_SESSION_MODE: getattr(self.zcli, 'mode', _DEFAULT_MODE),
                     'session_hash': session_hash,  # v1.6.0: For cache invalidation
                     'authenticated': authenticated,
                     'username': username,
@@ -220,7 +220,7 @@ class ConnectionInfoManager:
                     'active_app': active_app
                 }
             except Exception as e:  # Broad catch intentional: session info is optional
-                self.logger.debug(LOG_SESSION_INFO_ERROR.format(error=e))
+                self.logger.debug(_LOG_SESSION_INFO_ERROR.format(error=e))
 
         return info
 
@@ -252,9 +252,9 @@ class ConnectionInfoManager:
                     tables = self.walker.data.list_tables()
                     for table in tables:
                         models.append({
-                            KEY_MODEL_NAME: table,
-                            KEY_MODEL_TYPE: MODEL_TYPE_TABLE,
-                            KEY_MODEL_OPERATIONS: CRUD_OPERATIONS
+                            _KEY_MODEL_NAME: table,
+                            _KEY_MODEL_TYPE: _MODEL_TYPE_TABLE,
+                            _KEY_MODEL_OPERATIONS: _CRUD_OPERATIONS
                         })
 
                 # Check if we can get schema info
@@ -262,16 +262,16 @@ class ConnectionInfoManager:
                     schemas = self.walker.data.get_all_schemas()
                     for schema_name, schema_data in schemas.items():
                         models.append({
-                            KEY_MODEL_NAME: schema_name,
-                            KEY_MODEL_TYPE: MODEL_TYPE_SCHEMA,
-                            KEY_MODEL_FIELDS: list(
-                                schema_data.get(KEY_MODEL_FIELDS, {}).keys()
+                            _KEY_MODEL_NAME: schema_name,
+                            _KEY_MODEL_TYPE: _MODEL_TYPE_SCHEMA,
+                            _KEY_MODEL_FIELDS: list(
+                                schema_data.get(_KEY_MODEL_FIELDS, {}).keys()
                             ) if isinstance(schema_data, dict) else [],
-                            KEY_MODEL_OPERATIONS: CRUD_OPERATIONS
+                            _KEY_MODEL_OPERATIONS: _CRUD_OPERATIONS
                         })
 
         except (AttributeError, TypeError, KeyError) as e:
-            self.logger.debug(LOG_MODEL_DISCOVERY_GENERAL_ERROR.format(error=e))
+            self.logger.debug(_LOG_MODEL_DISCOVERY_GENERAL_ERROR.format(error=e))
 
         return models
 
@@ -296,19 +296,19 @@ class ConnectionInfoManager:
         """
         # Input validation
         if not model_name or not isinstance(model_name, str):
-            raise ValueError(ERROR_MODEL_NAME_REQUIRED)
+            raise ValueError(_ERROR_MODEL_NAME_REQUIRED)
 
         try:
             if self.walker and hasattr(self.walker, 'data'):
                 schema = self.walker.data.get_schema(model_name)
                 if schema:
                     return {
-                        KEY_MODEL_NAME: model_name,
-                        KEY_MODEL_SCHEMA: schema,
-                        KEY_MODEL_OPERATIONS: CRUD_OPERATIONS,
-                        KEY_MODEL_CACHEABLE: True
+                        _KEY_MODEL_NAME: model_name,
+                        _KEY_MODEL_SCHEMA: schema,
+                        _KEY_MODEL_OPERATIONS: _CRUD_OPERATIONS,
+                        _KEY_MODEL_CACHEABLE: True
                     }
         except (AttributeError, TypeError, KeyError) as e:
-            self.logger.warning(LOG_INTROSPECT_FAILED.format(model_name=model_name, error=e))
+            self.logger.warning(_LOG_INTROSPECT_FAILED.format(model_name=model_name, error=e))
 
         return None

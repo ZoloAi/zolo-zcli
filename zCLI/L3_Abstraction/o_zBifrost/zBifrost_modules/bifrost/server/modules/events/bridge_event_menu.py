@@ -46,27 +46,27 @@ from zCLI import json, Dict, Any, Optional
 # ═══════════════════════════════════════════════════════════
 
 # Data Keys (incoming event data)
-KEY_MENU_KEY = "menu_key"
-KEY_SELECTED = "selected"
+_KEY_MENU_KEY = "menu_key"
+_KEY_SELECTED = "selected"
 
 # Event Names
-EVENT_MENU_SELECTION = "menu_selection"
+_EVENT_MENU_SELECTION = "menu_selection"
 
 # Message Keys (outgoing messages)
-MSG_KEY_EVENT = "event"
-MSG_KEY_DATA = "data"
-MSG_KEY_ERROR = "error"
+_MSG_KEY_EVENT = "event"
+_MSG_KEY_DATA = "data"
+_MSG_KEY_ERROR = "error"
 
 # Log Prefixes
-LOG_PREFIX = "[MenuEvents]"
-LOG_PREFIX_SELECTION = "[MenuEvents:Selection]"
+_LOG_PREFIX = "[MenuEvents]"
+_LOG_PREFIX_SELECTION = "[MenuEvents:Selection]"
 
 # Error Messages
-ERR_NO_MENU_KEY = "Missing menu_key in selection"
-ERR_NO_SELECTED = "Missing selected option in selection"
-ERR_NO_WALKER_STATE = "No paused walker state found for session"
-ERR_INVALID_SELECTION = "Invalid menu selection"
-ERR_RESUME_FAILED = "Failed to resume walker execution"
+_ERR_NO_MENU_KEY = "Missing menu_key in selection"
+_ERR_NO_SELECTED = "Missing selected option in selection"
+_ERR_NO_WALKER_STATE = "No paused walker state found for session"
+_ERR_INVALID_SELECTION = "Invalid menu selection"
+_ERR_RESUME_FAILED = "Failed to resume walker execution"
 
 
 # ═══════════════════════════════════════════════════════════
@@ -122,20 +122,20 @@ class MenuEvents:
                 "selected": "Change_Password"
             }
         """
-        self.logger.info(f"{LOG_PREFIX_SELECTION} Received menu selection")
+        self.logger.info(f"{_LOG_PREFIX_SELECTION} Received menu selection")
         
         # Validate required fields
-        menu_key = data.get(KEY_MENU_KEY)
-        selected = data.get(KEY_SELECTED)
+        menu_key = data.get(_KEY_MENU_KEY)
+        selected = data.get(_KEY_SELECTED)
         
         if not menu_key:
-            self.logger.error(f"{LOG_PREFIX_SELECTION} {ERR_NO_MENU_KEY}")
-            await self._send_error(ws, ERR_NO_MENU_KEY)
+            self.logger.error(f"{_LOG_PREFIX_SELECTION} {_ERR_NO_MENU_KEY}")
+            await self._send_error(ws, _ERR_NO_MENU_KEY)
             return
         
         if not selected:
-            self.logger.error(f"{LOG_PREFIX_SELECTION} {ERR_NO_SELECTED}")
-            await self._send_error(ws, ERR_NO_SELECTED)
+            self.logger.error(f"{_LOG_PREFIX_SELECTION} {_ERR_NO_SELECTED}")
+            await self._send_error(ws, _ERR_NO_SELECTED)
             return
         
         # Get Bifrost session ID from WebSocket connection
@@ -143,22 +143,22 @@ class MenuEvents:
         full_session_id = ws.full_session_id  # Format: zS_xxxxxxxx:zB_xxxxxxxx
         
         self.logger.debug(
-            f"{LOG_PREFIX_SELECTION} Session: {full_session_id}, "
+            f"{_LOG_PREFIX_SELECTION} Session: {full_session_id}, "
             f"Menu: {menu_key}, Selected: {selected}"
         )
         
         # Retrieve paused walker state
         if session_id not in self.paused_walkers:
             self.logger.error(
-                f"{LOG_PREFIX_SELECTION} {ERR_NO_WALKER_STATE} "
+                f"{_LOG_PREFIX_SELECTION} {_ERR_NO_WALKER_STATE} "
                 f"(session: {full_session_id})"
             )
-            await self._send_error(ws, ERR_NO_WALKER_STATE)
+            await self._send_error(ws, _ERR_NO_WALKER_STATE)
             return
         
         walker_state = self.paused_walkers.pop(session_id)
         self.logger.debug(
-            f"{LOG_PREFIX_SELECTION} Retrieved walker state for session: {full_session_id}"
+            f"{_LOG_PREFIX_SELECTION} Retrieved walker state for session: {full_session_id}"
         )
         
         # Update breadcrumbs
@@ -178,9 +178,9 @@ class MenuEvents:
                     operation='APPEND'
                 )
                 
-                self.logger.debug(f"{LOG_PREFIX_SELECTION} Breadcrumbs updated: {menu_key} > {selected}")
+                self.logger.debug(f"{_LOG_PREFIX_SELECTION} Breadcrumbs updated: {menu_key} > {selected}")
             except Exception as e:
-                self.logger.warning(f"{LOG_PREFIX_SELECTION} Failed to update breadcrumbs: {e}")
+                self.logger.warning(f"{_LOG_PREFIX_SELECTION} Failed to update breadcrumbs: {e}")
         
         # Resume walker execution at selected block
         try:
@@ -193,8 +193,8 @@ class MenuEvents:
             # when it processes the menu_selection event
             
             response = {
-                MSG_KEY_EVENT: "menu_selected",
-                MSG_KEY_DATA: {
+                _MSG_KEY_EVENT: "menu_selected",
+                _MSG_KEY_DATA: {
                     "menu_key": menu_key,
                     "selected": selected,
                     "success": True
@@ -202,14 +202,14 @@ class MenuEvents:
             }
             
             await ws.send(json.dumps(response))
-            self.logger.info(f"{LOG_PREFIX_SELECTION} Menu selection processed successfully")
+            self.logger.info(f"{_LOG_PREFIX_SELECTION} Menu selection processed successfully")
             
             # Broadcast the selection to all clients (for multi-client sync)
             await self.bifrost.broadcast(json.dumps(response), sender=ws)
             
         except Exception as e:
-            self.logger.error(f"{LOG_PREFIX_SELECTION} {ERR_RESUME_FAILED}: {e}")
-            await self._send_error(ws, f"{ERR_RESUME_FAILED}: {str(e)}")
+            self.logger.error(f"{_LOG_PREFIX_SELECTION} {_ERR_RESUME_FAILED}: {e}")
+            await self._send_error(ws, f"{_ERR_RESUME_FAILED}: {str(e)}")
     
     def store_walker_state(self, session_id: str, walker_state: Dict[str, Any]) -> None:
         """
@@ -220,7 +220,7 @@ class MenuEvents:
             walker_state: Walker state dict with menu context
         """
         self.paused_walkers[session_id] = walker_state
-        self.logger.debug(f"{LOG_PREFIX} Stored walker state for session: {session_id}")
+        self.logger.debug(f"{_LOG_PREFIX} Stored walker state for session: {session_id}")
     
     async def _send_error(self, ws: Any, error_message: str) -> None:
         """
@@ -232,10 +232,10 @@ class MenuEvents:
         """
         try:
             error_response = {
-                MSG_KEY_EVENT: "error",
-                MSG_KEY_ERROR: error_message
+                _MSG_KEY_EVENT: "error",
+                _MSG_KEY_ERROR: error_message
             }
             await ws.send(json.dumps(error_response))
         except Exception as e:
-            self.logger.error(f"{LOG_PREFIX} Failed to send error: {e}")
+            self.logger.error(f"{_LOG_PREFIX} Failed to send error: {e}")
 

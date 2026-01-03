@@ -31,10 +31,7 @@ from zCLI.L1_Foundation.a_zConfig.zConfig_modules import (
     ZAUTH_KEY_ID,
     ZAUTH_KEY_USERNAME,
     ZAUTH_KEY_ROLE,
-    ZAUTH_KEY_API_KEY,
-    CONTEXT_ZSESSION,
-    CONTEXT_APPLICATION,
-    CONTEXT_DUAL
+    ZAUTH_KEY_API_KEY
 )
 
 # ═══════════════════════════════════════════════════════════
@@ -42,64 +39,64 @@ from zCLI.L1_Foundation.a_zConfig.zConfig_modules import (
 # ═══════════════════════════════════════════════════════════
 
 # Logging
-LOG_PREFIX = "[AuthManager]"
-LOG_AUTH_SUCCESS = "Authenticated"
-LOG_AUTH_FAIL = "Authentication failed"
-LOG_ZSESSION_AUTH = "Internal zCLI connection authenticated via session"
-LOG_APP_AUTH = "Application user authenticated"
-LOG_DUAL_AUTH = "Dual authentication (zSession + Application)"
-LOG_BLOCK = "BLOCK"
-LOG_WARN = "WARN"
-LOG_OK = "OK"
-LOG_ERROR = "ERROR"
+_LOG_PREFIX = "[AuthManager]"
+_LOG_AUTH_SUCCESS = "Authenticated"
+_LOG_AUTH_FAIL = "Authentication failed"
+_LOG_ZSESSION_AUTH = "Internal zCLI connection authenticated via session"
+_LOG_APP_AUTH = "Application user authenticated"
+_LOG_DUAL_AUTH = "Dual authentication (zSession + Application)"
+_LOG_BLOCK = "BLOCK"
+_LOG_WARN = "WARN"
+_LOG_OK = "OK"
+_LOG_ERROR = "ERROR"
 
 # WebSocket Close Codes
-CLOSE_AUTH_REQUIRED = 1008  # Policy Violation
-CLOSE_INVALID_TOKEN = 1008  # Policy Violation
-CLOSE_AUTH_ERROR = 1011     # Internal Error
-CLOSE_INVALID_ORIGIN = 1008 # Policy Violation
+_CLOSE_AUTH_REQUIRED = 1008  # Policy Violation
+_CLOSE_INVALID_TOKEN = 1008  # Policy Violation
+_CLOSE_AUTH_ERROR = 1011     # Internal Error
+_CLOSE_INVALID_ORIGIN = 1008 # Policy Violation
 
 # Close Reasons
-REASON_AUTH_REQUIRED = "Authentication required"
-REASON_INVALID_TOKEN = "Invalid token"
-REASON_AUTH_ERROR = "Authentication error"
-REASON_CONFIG_ERROR = "Server configuration error"
-REASON_INVALID_ORIGIN = "Invalid origin"
+_REASON_AUTH_REQUIRED = "Authentication required"
+_REASON_INVALID_TOKEN = "Invalid token"
+_REASON_AUTH_ERROR = "Authentication error"
+_REASON_CONFIG_ERROR = "Server configuration error"
+_REASON_INVALID_ORIGIN = "Invalid origin"
 
 # Authentication Context Values (Three-Tier Authentication)
-CONTEXT_ZSESSION = "zSession"      # Layer 1: Internal zCLI users
-CONTEXT_APPLICATION = "application"  # Layer 2: External app users
-CONTEXT_DUAL = "dual"               # Layer 3: Both zSession + Application
-CONTEXT_NONE = "none"               # No authentication
-CONTEXT_GUEST = "guest"             # Guest access
-USER_ANONYMOUS = "anonymous"
-ROLE_GUEST = "guest"
+_CONTEXT_ZSESSION = "zSession"      # Layer 1: Internal zCLI users
+_CONTEXT_APPLICATION = "application"  # Layer 2: External app users
+_CONTEXT_DUAL = "dual"               # Layer 3: Both zSession + Application
+_CONTEXT_NONE = "none"               # No authentication
+_CONTEXT_GUEST = "guest"             # Guest access
+_USER_ANONYMOUS = "anonymous"
+_ROLE_GUEST = "guest"
 
 # Default Auth Config
-DEFAULT_USER_MODEL = "@.zCloud.schemas.schema.zIndex.zUsers"
-DEFAULT_ID_FIELD = "id"
-DEFAULT_USERNAME_FIELD = "username"
-DEFAULT_ROLE_FIELD = "role"
-DEFAULT_API_KEY_FIELD = "api_key"
+_DEFAULT_USER_MODEL = "@.zCloud.schemas.schema.zIndex.zUsers"
+_DEFAULT_ID_FIELD = "id"
+_DEFAULT_USERNAME_FIELD = "username"
+_DEFAULT_ROLE_FIELD = "role"
+_DEFAULT_API_KEY_FIELD = "api_key"
 
 # Query Parameters
-QUERY_PARAM_TOKEN = "token"
-QUERY_PARAM_API_KEY = "api_key"
-QUERY_PARAM_APP_NAME = "app_name"  # For multi-app support
+_QUERY_PARAM_TOKEN = "token"
+_QUERY_PARAM_API_KEY = "api_key"
+_QUERY_PARAM_APP_NAME = "app_name"  # For multi-app support
 
 # Header Names
-HEADER_ORIGIN = "Origin"
-HEADER_AUTHORIZATION = "Authorization"
-AUTH_BEARER_PREFIX = "Bearer "
+_HEADER_ORIGIN = "Origin"
+_HEADER_AUTHORIZATION = "Authorization"
+_AUTH_BEARER_PREFIX = "Bearer "
 
 # Data Action
-DATA_ACTION_READ = "read"
+_DATA_ACTION_READ = "read"
 
 # Messages
-MSG_NO_WALKER = "Cannot validate: No walker available"
-MSG_NO_ORIGIN = "Connection without Origin header"
-MSG_NO_TOKEN = "No authentication token provided"
-MSG_INVALID_TOKEN = "Invalid authentication token"
+_MSG_NO_WALKER = "Cannot validate: No walker available"
+_MSG_NO_ORIGIN = "Connection without Origin header"
+_MSG_NO_TOKEN = "No authentication token provided"
+_MSG_INVALID_TOKEN = "Invalid authentication token"
 
 
 # ═══════════════════════════════════════════════════════════
@@ -172,11 +169,11 @@ class AuthenticationManager:
         
         # Application auth configuration
         self.app_auth_config = app_auth_config or {
-            "user_model": DEFAULT_USER_MODEL,
-            "id_field": DEFAULT_ID_FIELD,
-            "username_field": DEFAULT_USERNAME_FIELD,
-            "role_field": DEFAULT_ROLE_FIELD,
-            "api_key_field": DEFAULT_API_KEY_FIELD
+            "user_model": _DEFAULT_USER_MODEL,
+            "id_field": _DEFAULT_ID_FIELD,
+            "username_field": _DEFAULT_USERNAME_FIELD,
+            "role_field": _DEFAULT_ROLE_FIELD,
+            "api_key_field": _DEFAULT_API_KEY_FIELD
         }
         
         # Tracks authenticated clients: ws -> auth_info
@@ -247,12 +244,12 @@ class AuthenticationManager:
             → Returns: {"context": "dual", "zSession": {...}, "application": {...}}
         """
         if not self.require_auth:
-            self.logger.debug(f"{LOG_PREFIX} Authentication disabled by config")
+            self.logger.debug(f"{_LOG_PREFIX} Authentication disabled by config")
             return {
                 "authenticated": True,
-                "context": CONTEXT_GUEST,
-                "user": USER_ANONYMOUS,
-                "role": ROLE_GUEST
+                "context": _CONTEXT_GUEST,
+                "user": _USER_ANONYMOUS,
+                "role": _ROLE_GUEST
             }
         
         # Use provided auth config or instance default
@@ -265,8 +262,8 @@ class AuthenticationManager:
         
         # Origin validation (CORS/CSRF protection)
         if not comm_auth.validate_origin(ws):
-            self.logger.warning(f"{LOG_PREFIX} [{LOG_BLOCK}] {REASON_INVALID_ORIGIN}")
-            await ws.close(code=CLOSE_INVALID_ORIGIN, reason=REASON_INVALID_ORIGIN)
+            self.logger.warning(f"{_LOG_PREFIX} [{_LOG_BLOCK}] {_REASON_INVALID_ORIGIN}")
+            await ws.close(code=_CLOSE_INVALID_ORIGIN, reason=_REASON_INVALID_ORIGIN)
             return None
         
         # Extract token using zComm primitive
@@ -291,7 +288,7 @@ class AuthenticationManager:
                     ZAUTH_KEY_API_KEY: zsession.get(ZAUTH_KEY_API_KEY)
                 }
                 self.logger.info(
-                    f"{LOG_PREFIX} [{LOG_OK}] {LOG_ZSESSION_AUTH}: "
+                    f"{_LOG_PREFIX} [{_LOG_OK}] {_LOG_ZSESSION_AUTH}: "
                     f"{zsession_auth[ZAUTH_KEY_USERNAME]} (role={zsession_auth[ZAUTH_KEY_ROLE]})"
                 )
         
@@ -312,15 +309,15 @@ class AuthenticationManager:
                 if auth_result and auth_result.get("status") == "success":
                     application_auth = auth_result.get("user", {})
                     self.logger.info(
-                        f"{LOG_PREFIX} [{LOG_OK}] {LOG_APP_AUTH}: "
+                        f"{_LOG_PREFIX} [{_LOG_OK}] {_LOG_APP_AUTH}: "
                         f"{application_auth.get(ZAUTH_KEY_USERNAME)} "
                         f"(app={auth_result.get('app_name')}, "
                         f"role={application_auth.get(ZAUTH_KEY_ROLE)})"
                     )
                 else:
                     # Authentication failed
-                    self.logger.warning(f"{LOG_PREFIX} [{LOG_BLOCK}] {MSG_INVALID_TOKEN}")
-                    await ws.close(code=CLOSE_INVALID_TOKEN, reason=REASON_INVALID_TOKEN)
+                    self.logger.warning(f"{_LOG_PREFIX} [{_LOG_BLOCK}] {_MSG_INVALID_TOKEN}")
+                    await ws.close(code=_CLOSE_INVALID_TOKEN, reason=_REASON_INVALID_TOKEN)
                     return None
             else:
                 # Fallback to direct database validation (legacy)
@@ -334,10 +331,10 @@ class AuthenticationManager:
         
         # Case 1: Both zSession and application authenticated (Dual-Auth - Layer 3)
         if zsession_auth and application_auth:
-            self.logger.info(f"{LOG_PREFIX} [{LOG_OK}] {LOG_DUAL_AUTH}")
+            self.logger.info(f"{_LOG_PREFIX} [{_LOG_OK}] {_LOG_DUAL_AUTH}")
             return {
                 "authenticated": True,
-                "context": CONTEXT_DUAL,
+                "context": _CONTEXT_DUAL,
                 "zSession": zsession_auth,
                 "application": application_auth,
                 "app_name": app_name or "default_app",
@@ -348,7 +345,7 @@ class AuthenticationManager:
         if zsession_auth:
             return {
                 "authenticated": True,
-                "context": CONTEXT_ZSESSION,
+                "context": _CONTEXT_ZSESSION,
                 "zSession": zsession_auth,
                 "application": None,
                 "dual_mode": False
@@ -358,7 +355,7 @@ class AuthenticationManager:
         if application_auth:
             return {
                 "authenticated": True,
-                "context": CONTEXT_APPLICATION,
+                "context": _CONTEXT_APPLICATION,
                 "zSession": None,
                 "application": application_auth,
                 "app_name": app_name or "default_app",
@@ -366,8 +363,8 @@ class AuthenticationManager:
             }
         
         # Case 4: No authentication provided but required
-        self.logger.warning(f"{LOG_PREFIX} [{LOG_BLOCK}] {MSG_NO_TOKEN}")
-        await ws.close(code=CLOSE_AUTH_REQUIRED, reason=REASON_AUTH_REQUIRED)
+        self.logger.warning(f"{_LOG_PREFIX} [{_LOG_BLOCK}] {_MSG_NO_TOKEN}")
+        await ws.close(code=_CLOSE_AUTH_REQUIRED, reason=_REASON_AUTH_REQUIRED)
         return None
     
     # Note: validate_origin() has been moved to zComm (Layer 0)
@@ -469,7 +466,7 @@ class AuthenticationManager:
                 params = dict(
                     param.split("=", 1) for param in query[1].split("&") if "=" in param
                 )
-                return params.get(QUERY_PARAM_APP_NAME)
+                return params.get(_QUERY_PARAM_APP_NAME)
             except (ValueError, AttributeError):
                 pass
         return None
@@ -497,13 +494,13 @@ class AuthenticationManager:
         """
         try:
             if not walker:
-                self.logger.error(f"{LOG_PREFIX} {MSG_NO_WALKER}")
-                await ws.close(code=CLOSE_AUTH_ERROR, reason=REASON_CONFIG_ERROR)
+                self.logger.error(f"{_LOG_PREFIX} {_MSG_NO_WALKER}")
+                await ws.close(code=_CLOSE_AUTH_ERROR, reason=_REASON_CONFIG_ERROR)
                 return None
             
             # Query user database using provided configuration
             result = walker.data.handle_request({
-                "action": DATA_ACTION_READ,
+                "action": _DATA_ACTION_READ,
                 "model": config["user_model"],
                 "fields": [
                     config["id_field"],
@@ -517,7 +514,7 @@ class AuthenticationManager:
             if result and len(result) > 0:
                 user = result[0]
                 self.logger.info(
-                    f"{LOG_PREFIX} [{LOG_OK}] {LOG_AUTH_SUCCESS}: "
+                    f"{_LOG_PREFIX} [{_LOG_OK}] {_LOG_AUTH_SUCCESS}: "
                     f"{user.get(config['username_field'])} "
                     f"(role={user.get(config['role_field'])})"
                 )
@@ -531,11 +528,11 @@ class AuthenticationManager:
                     ZAUTH_KEY_API_KEY: token
                 }
             
-            self.logger.warning(f"{LOG_PREFIX} [{LOG_BLOCK}] {MSG_INVALID_TOKEN}")
-            await ws.close(code=CLOSE_INVALID_TOKEN, reason=REASON_INVALID_TOKEN)
+            self.logger.warning(f"{_LOG_PREFIX} [{_LOG_BLOCK}] {_MSG_INVALID_TOKEN}")
+            await ws.close(code=_CLOSE_INVALID_TOKEN, reason=_REASON_INVALID_TOKEN)
             return None
         
         except Exception as e:
-            self.logger.error(f"{LOG_PREFIX} [{LOG_ERROR}] {LOG_AUTH_FAIL}: {e}")
-            await ws.close(code=CLOSE_AUTH_ERROR, reason=REASON_AUTH_ERROR)
+            self.logger.error(f"{_LOG_PREFIX} [{_LOG_ERROR}] {_LOG_AUTH_FAIL}: {e}")
+            await ws.close(code=_CLOSE_AUTH_ERROR, reason=_REASON_AUTH_ERROR)
             return None

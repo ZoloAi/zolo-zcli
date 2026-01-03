@@ -25,50 +25,50 @@ from .bifrost.server.bifrost_bridge import zBifrost
 # Module Constants
 # ═══════════════════════════════════════════════════════════════════
 
-LOG_PREFIX = "[zBifrost]"
+_LOG_PREFIX = "[zBifrost]"
 
 # Default Configuration
-DEFAULT_HOST = "127.0.0.1"
-DEFAULT_PORT = 56891
-MSG_PREVIEW_LENGTH = 100
-MSG_TRUNCATION_SUFFIX = "..."
+_DEFAULT_HOST = "127.0.0.1"
+_DEFAULT_PORT = 56891
+_MSG_PREVIEW_LENGTH = 100
+_MSG_TRUNCATION_SUFFIX = "..."
 
 # Port Validation
-PORT_MIN = 1
-PORT_MAX = 65535
+_PORT_MIN = 1
+_PORT_MAX = 65535
 
 # Log Messages - Auto-start
-LOG_DETECTED_ZBIFROST_MODE = "zBifrost mode detected - initializing WebSocket bridge"
-LOG_INSTANCE_CREATED_ZBIFROST = "WebSocket bridge instance created for zBifrost mode"
-LOG_DETECTED_TERMINAL_MODE = "Terminal mode detected - WebSocket bridge will be created when needed"
+_LOG_DETECTED_ZBIFROST_MODE = "zBifrost mode detected - initializing WebSocket bridge"
+_LOG_INSTANCE_CREATED_ZBIFROST = "WebSocket bridge instance created for zBifrost mode"
+_LOG_DETECTED_TERMINAL_MODE = "Terminal mode detected - WebSocket bridge will be created when needed"
 
 # Log Messages - Create
-LOG_CREATING_FROM_CONFIG = "Creating WebSocket bridge from zCLI config: %s:%d"
-LOG_CREATING_WITH_DEFAULTS = "Creating WebSocket bridge with defaults: %s:%d"
-LOG_CONFIG_DEBUG = "Bridge config - walker=%s, port=%d, host=%s"
-LOG_INSTANCE_CREATED_SUCCESS = "WebSocket bridge instance created successfully"
+_LOG_CREATING_FROM_CONFIG = "Creating WebSocket bridge from zCLI config: %s:%d"
+_LOG_CREATING_WITH_DEFAULTS = "Creating WebSocket bridge with defaults: %s:%d"
+_LOG_CONFIG_DEBUG = "Bridge config - walker=%s, port=%d, host=%s"
+_LOG_INSTANCE_CREATED_SUCCESS = "WebSocket bridge instance created successfully"
 
 # Log Messages - Start
-LOG_STARTING_SERVER = "Starting WebSocket bridge..."
-LOG_CREATING_INSTANCE = "Creating bridge instance with current configuration"
-LOG_CALLING_START = "Calling start_socket_server with socket_ready callback"
-LOG_STARTED_SUCCESS = "WebSocket bridge started successfully"
+_LOG_STARTING_SERVER = "Starting WebSocket bridge..."
+_LOG_CREATING_INSTANCE = "Creating bridge instance with current configuration"
+_LOG_CALLING_START = "Calling start_socket_server with socket_ready callback"
+_LOG_STARTED_SUCCESS = "WebSocket bridge started successfully"
 
 # Log Messages - Broadcast
-LOG_BROADCASTING = "Broadcasting message from sender: %s"
-LOG_MESSAGE_CONTENT = "Message content: %s"
-LOG_BROADCAST_COMPLETED = "Broadcast completed"
+_LOG_BROADCASTING = "Broadcasting message from sender: %s"
+_LOG_MESSAGE_CONTENT = "Message content: %s"
+_LOG_BROADCAST_COMPLETED = "Broadcast completed"
 
 # Warning Messages
-WARN_AUTO_START_FAILED = "Failed to auto-start WebSocket bridge: %s"
-WARN_NO_WEBSOCKET_INSTANCE = "Cannot broadcast - no WebSocket bridge instance available"
+_WARN_AUTO_START_FAILED = "Failed to auto-start WebSocket bridge: %s"
+_WARN_NO_WEBSOCKET_INSTANCE = "Cannot broadcast - no WebSocket bridge instance available"
 
 # Error Messages
-ERROR_ZCLI_NONE = "zcli parameter cannot be None"
-ERROR_LOGGER_NONE = "logger parameter cannot be None"
-ERROR_SESSION_NONE = "session parameter cannot be None"
-ERROR_SOCKET_READY_REQUIRED = "socket_ready event is required"
-ERROR_INVALID_PORT = "Port must be an integer between {min} and {max}, got: {port}"
+_ERROR_ZCLI_NONE = "zcli parameter cannot be None"
+_ERROR_LOGGER_NONE = "logger parameter cannot be None"
+_ERROR_SESSION_NONE = "session parameter cannot be None"
+_ERROR_SOCKET_READY_REQUIRED = "socket_ready event is required"
+_ERROR_INVALID_PORT = "Port must be an integer between {min} and {max}, got: {port}"
 
 class BridgeOrchestrator:
     """
@@ -97,11 +97,11 @@ class BridgeOrchestrator:
             ValueError: If zcli, logger, or session is None
         """
         if zcli is None:
-            raise ValueError(ERROR_ZCLI_NONE)
+            raise ValueError(_ERROR_ZCLI_NONE)
         if logger is None:
-            raise ValueError(ERROR_LOGGER_NONE)
+            raise ValueError(_ERROR_LOGGER_NONE)
         if session is None:
-            raise ValueError(ERROR_SESSION_NONE)
+            raise ValueError(_ERROR_SESSION_NONE)
 
         self.zcli = zcli
         self.logger = logger
@@ -124,9 +124,9 @@ class BridgeOrchestrator:
             is_zbifrost_mode = zmode == ZMODE_ZBIFROST
 
             if is_zbifrost_mode:
-                self.logger.info(f"{LOG_PREFIX} {LOG_DETECTED_ZBIFROST_MODE}")
+                self.logger.info(f"{_LOG_PREFIX} {_LOG_DETECTED_ZBIFROST_MODE}")
                 self.create(walker=None)
-                self.logger.debug(f"{LOG_PREFIX} {LOG_INSTANCE_CREATED_ZBIFROST}")
+                self.logger.debug(f"{_LOG_PREFIX} {_LOG_INSTANCE_CREATED_ZBIFROST}")
                 
                 # Auto-start the WebSocket server in background thread
                 if self.websocket:
@@ -139,11 +139,11 @@ class BridgeOrchestrator:
                     
                     ws_thread = threading.Thread(target=run_websocket, daemon=True, name="zBifrost-WebSocket")
                     ws_thread.start()
-                    self.logger.info(f"{LOG_PREFIX} WebSocket server started in background thread")
+                    self.logger.info(f"{_LOG_PREFIX} WebSocket server started in background thread")
             else:
-                self.logger.framework.debug(f"{LOG_PREFIX} {LOG_DETECTED_TERMINAL_MODE}")
+                self.logger.framework.debug(f"{_LOG_PREFIX} {_LOG_DETECTED_TERMINAL_MODE}")
         except (KeyError, AttributeError) as e:
-            self.logger.warning(f"{LOG_PREFIX} {WARN_AUTO_START_FAILED}", e)
+            self.logger.warning(f"{_LOG_PREFIX} {_WARN_AUTO_START_FAILED}", e)
 
     def create(
         self,
@@ -167,21 +167,21 @@ class BridgeOrchestrator:
         """
         # Validate port if provided
         if port is not None:
-            if not isinstance(port, int) or port < PORT_MIN or port > PORT_MAX:
-                raise ValueError(ERROR_INVALID_PORT.format(min=PORT_MIN, max=PORT_MAX, port=port))
+            if not isinstance(port, int) or port < _PORT_MIN or port > _PORT_MAX:
+                raise ValueError(_ERROR_INVALID_PORT.format(min=_PORT_MIN, max=_PORT_MAX, port=port))
 
         # Use zCLI config if available, otherwise use provided parameters or defaults
         try:
             config_host = host or self.zcli.config.websocket.host
             config_port = port or self.zcli.config.websocket.port
-            self.logger.info(f"{LOG_PREFIX} {LOG_CREATING_FROM_CONFIG}", config_host, config_port)
+            self.logger.info(f"{_LOG_PREFIX} {_LOG_CREATING_FROM_CONFIG}", config_host, config_port)
         except (AttributeError, KeyError):
-            config_host = host or DEFAULT_HOST
-            config_port = port or DEFAULT_PORT
-            self.logger.info(f"{LOG_PREFIX} {LOG_CREATING_WITH_DEFAULTS}", config_host, config_port)
+            config_host = host or _DEFAULT_HOST
+            config_port = port or _DEFAULT_PORT
+            self.logger.info(f"{_LOG_PREFIX} {_LOG_CREATING_WITH_DEFAULTS}", config_host, config_port)
 
         self.logger.debug(
-            f"{LOG_PREFIX} {LOG_CONFIG_DEBUG}",
+            f"{_LOG_PREFIX} {_LOG_CONFIG_DEBUG}",
             walker is not None,
             config_port,
             config_host
@@ -195,7 +195,7 @@ class BridgeOrchestrator:
             host=config_host
         )
 
-        self.logger.info(f"{LOG_PREFIX} {LOG_INSTANCE_CREATED_SUCCESS}")
+        self.logger.info(f"{_LOG_PREFIX} {_LOG_INSTANCE_CREATED_SUCCESS}")
         return self.websocket
 
     async def start(self, socket_ready: Any, walker: Optional[Any] = None) -> None:
@@ -210,17 +210,17 @@ class BridgeOrchestrator:
             ValueError: If socket_ready is None
         """
         if socket_ready is None:
-            raise ValueError(ERROR_SOCKET_READY_REQUIRED)
+            raise ValueError(_ERROR_SOCKET_READY_REQUIRED)
 
-        self.logger.info(f"{LOG_PREFIX} {LOG_STARTING_SERVER}")
+        self.logger.info(f"{_LOG_PREFIX} {_LOG_STARTING_SERVER}")
 
         # Always create a new instance to ensure we have the latest config
-        self.logger.debug(f"{LOG_PREFIX} {LOG_CREATING_INSTANCE}")
+        self.logger.debug(f"{_LOG_PREFIX} {_LOG_CREATING_INSTANCE}")
         self.websocket = self.create(walker=walker)
 
-        self.logger.debug(f"{LOG_PREFIX} {LOG_CALLING_START}")
+        self.logger.debug(f"{_LOG_PREFIX} {_LOG_CALLING_START}")
         await self.websocket.start_socket_server(socket_ready)
-        self.logger.info(f"{LOG_PREFIX} {LOG_STARTED_SUCCESS}")
+        self.logger.info(f"{_LOG_PREFIX} {_LOG_STARTED_SUCCESS}")
 
     async def broadcast(self, message: Any, sender: Optional[str] = None) -> None:
         """
@@ -231,14 +231,14 @@ class BridgeOrchestrator:
             sender: Optional sender identifier
         """
         if self.websocket:
-            self.logger.debug(f"{LOG_PREFIX} {LOG_BROADCASTING}", sender)
+            self.logger.debug(f"{_LOG_PREFIX} {_LOG_BROADCASTING}", sender)
             msg_str = str(message)
-            if len(msg_str) > MSG_PREVIEW_LENGTH:
-                msg_preview = msg_str[:MSG_PREVIEW_LENGTH] + MSG_TRUNCATION_SUFFIX
+            if len(msg_str) > _MSG_PREVIEW_LENGTH:
+                msg_preview = msg_str[:_MSG_PREVIEW_LENGTH] + _MSG_TRUNCATION_SUFFIX
             else:
                 msg_preview = msg_str
-            self.logger.debug(f"{LOG_PREFIX} {LOG_MESSAGE_CONTENT}", msg_preview)
+            self.logger.debug(f"{_LOG_PREFIX} {_LOG_MESSAGE_CONTENT}", msg_preview)
             await self.websocket.broadcast(message, sender=sender)
-            self.logger.debug(f"{LOG_PREFIX} {LOG_BROADCAST_COMPLETED}")
+            self.logger.debug(f"{_LOG_PREFIX} {_LOG_BROADCAST_COMPLETED}")
         else:
-            self.logger.warning(f"{LOG_PREFIX} {WARN_NO_WEBSOCKET_INSTANCE}")
+            self.logger.warning(f"{_LOG_PREFIX} {_WARN_NO_WEBSOCKET_INSTANCE}")
