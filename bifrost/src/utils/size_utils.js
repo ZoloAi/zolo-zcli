@@ -1,9 +1,9 @@
 /**
  * Size Utilities - Generate and apply zTheme size classes
- * 
+ *
  * "Off-road" utility module created during Bifrost refactoring
  * Complements spacing_utils.js and color_utils.js
- * 
+ *
  * zTheme doesn't have comprehensive size utilities built-in,
  * so we provide programmatic sizing for common patterns:
  * - Width/Height (responsive and fixed)
@@ -11,7 +11,7 @@
  * - Aspect ratios
  * - Icon sizes
  * - Spinner sizes
- * 
+ *
  * Layer: Utility (Layer 0.4)
  * Dependencies: None (pure utility functions)
  * Used by: All renderers that need programmatic sizing
@@ -215,10 +215,18 @@ export function applyAspectRatio(element, ratio) {
  * @returns {HTMLElement} Element with sizing applied
  */
 export function applySizing(element, config) {
-  if (config.width !== undefined) applyWidth(element, config.width);
-  if (config.height !== undefined) applyHeight(element, config.height);
-  if (config.minWidth !== undefined) applyMinWidth(element, config.minWidth);
-  if (config.maxWidth !== undefined) applyMaxWidth(element, config.maxWidth);
+  if (config.width !== undefined) {
+    applyWidth(element, config.width);
+  }
+  if (config.height !== undefined) {
+    applyHeight(element, config.height);
+  }
+  if (config.minWidth !== undefined) {
+    applyMinWidth(element, config.minWidth);
+  }
+  if (config.maxWidth !== undefined) {
+    applyMaxWidth(element, config.maxWidth);
+  }
   if (config.minHeight !== undefined) {
     const value = SIZE_SCALE[config.minHeight] || PERCENT_SIZES[config.minHeight] || config.minHeight;
     element.style.minHeight = value;
@@ -227,8 +235,10 @@ export function applySizing(element, config) {
     const value = SIZE_SCALE[config.maxHeight] || PERCENT_SIZES[config.maxHeight] || config.maxHeight;
     element.style.maxHeight = value;
   }
-  if (config.aspectRatio !== undefined) applyAspectRatio(element, config.aspectRatio);
-  
+  if (config.aspectRatio !== undefined) {
+    applyAspectRatio(element, config.aspectRatio);
+  }
+
   return element;
 }
 

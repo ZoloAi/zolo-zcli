@@ -31,6 +31,8 @@
   },
   "globals": {
     "define": "readonly",
-    "module": "readonly"
+    "module": "readonly",
+    "require": "readonly",
+    "jsyaml": "readonly"
   }
 }

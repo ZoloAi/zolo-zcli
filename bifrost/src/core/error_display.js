@@ -11,10 +11,10 @@ export class ErrorDisplay {
     this.maxErrors = options.maxErrors || 5; // Max errors to show
     this.autoDismiss = options.autoDismiss || 10000; // Auto-dismiss after 10s
     this.position = options.position || 'top-right'; // top-right, top-left, bottom-right, bottom-left
-    
+
     this.errors = [];
     this.container = null;
-    
+
     if (this.autoCreate) {
       this._createContainer();
     }
@@ -27,12 +27,12 @@ export class ErrorDisplay {
   _createContainer() {
     // Check if container already exists
     this.container = document.getElementById(this.containerId);
-    
+
     if (!this.container) {
       this.container = document.createElement('div');
       this.container.id = this.containerId;
       this.container.className = 'bifrost-error-container';
-      
+
       // Position styles
       const positions = {
         'top-right': 'top: 1rem; right: 1rem;',
@@ -40,7 +40,7 @@ export class ErrorDisplay {
         'bottom-right': 'bottom: 1rem; right: 1rem;',
         'bottom-left': 'bottom: 1rem; left: 1rem;'
       };
-      
+
       this.container.style.cssText = `
         position: fixed;
         ${positions[this.position] || positions['top-right']}
@@ -48,7 +48,7 @@ export class ErrorDisplay {
         max-width: 400px;
         pointer-events: none;
       `;
-      
+
       document.body.appendChild(this.container);
     }
   }
@@ -60,7 +60,7 @@ export class ErrorDisplay {
     if (!this.container) {
       this._createContainer();
     }
-    
+
     // Create error element
     const errorEl = document.createElement('div');
     errorEl.className = 'bifrost-error';
@@ -77,7 +77,7 @@ export class ErrorDisplay {
       font-size: 0.875rem;
       line-height: 1.5;
     `;
-    
+
     // Error title
     const title = document.createElement('div');
     title.style.cssText = `
@@ -101,12 +101,12 @@ export class ErrorDisplay {
         line-height: 1;
       " title="Dismiss">×</button>
     `;
-    
+
     // Error message
     const message = document.createElement('div');
     message.style.cssText = 'color: #600; margin-bottom: 0.5rem;';
     message.textContent = errorInfo.message || 'An error occurred';
-    
+
     // Error details (collapsible)
     const details = document.createElement('details');
     details.style.cssText = 'color: #800; font-size: 0.75rem; margin-top: 0.5rem;';
@@ -123,19 +123,19 @@ export class ErrorDisplay {
         word-wrap: break-word;
       ">${this._formatStack(errorInfo)}</pre>
     `;
-    
+
     errorEl.appendChild(title);
     errorEl.appendChild(message);
     errorEl.appendChild(details);
-    
+
     // Add dismiss handler
     const dismissBtn = title.querySelector('button');
     dismissBtn.onclick = () => this._dismissError(errorEl);
-    
+
     // Add to container
     this.container.appendChild(errorEl);
     this.errors.push(errorEl);
-    
+
     // Remove oldest error if we exceed max
     if (this.errors.length > this.maxErrors) {
       const oldest = this.errors.shift();
@@ -143,12 +143,12 @@ export class ErrorDisplay {
         oldest.remove();
       }
     }
-    
+
     // Auto-dismiss after timeout
     if (this.autoDismiss) {
       setTimeout(() => this._dismissError(errorEl), this.autoDismiss);
     }
-    
+
     // Add slide-in animation
     this._addAnimationStyles();
   }
@@ -158,11 +158,13 @@ export class ErrorDisplay {
    * @private
    */
   _dismissError(errorEl) {
-    if (!errorEl || !errorEl.parentNode) return;
-    
+    if (!errorEl || !errorEl.parentNode) {
+      return;
+    }
+
     // Fade out animation
     errorEl.style.animation = 'fadeOut 0.3s ease-out';
-    
+
     setTimeout(() => {
       if (errorEl.parentNode) {
         errorEl.remove();
@@ -210,8 +212,10 @@ export class ErrorDisplay {
    * @private
    */
   _addAnimationStyles() {
-    if (document.getElementById('bifrost-error-styles')) return;
-    
+    if (document.getElementById('bifrost-error-styles')) {
+      return;
+    }
+
     const style = document.createElement('style');
     style.id = 'bifrost-error-styles';
     style.textContent = `

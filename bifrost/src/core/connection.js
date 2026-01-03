@@ -10,7 +10,7 @@ export class BifrostConnection {
     this.options = options;
     this.logger = logger;
     this.hooks = hooks;
-    
+
     this.ws = null;
     this.connected = false;
     this.reconnectAttempt = 0;
@@ -24,8 +24,8 @@ export class BifrostConnection {
       this.logger.log('Attempting to connect...', this.url);
       this.hooks.call('onConnecting', this.url);
 
-      const connectUrl = this.options.token 
-        ? `${this.url}?token=${this.options.token}` 
+      const connectUrl = this.options.token
+        ? `${this.url}?token=${this.options.token}`
         : this.url;
 
       try {
@@ -35,13 +35,13 @@ export class BifrostConnection {
           this.connected = true;
           this.reconnectAttempt = 0;
           this.logger.log('✅ Connected to server');
-          
+
           const info = {
             url: this.ws.url,
             protocol: this.ws.protocol,
             readyState: this.ws.readyState
           };
-          
+
           this.hooks.call('onConnected', info);
           resolve();
         };
@@ -130,9 +130,9 @@ export class BifrostConnection {
   _scheduleReconnect() {
     this.reconnectAttempt++;
     const delay = this.options.reconnectDelay;
-    
+
     this.logger.log(`🔄 Reconnecting in ${delay}ms (attempt ${this.reconnectAttempt})...`);
-    
+
     setTimeout(() => {
       this.logger.log('🔄 Reconnecting...');
       this.connect().catch(err => {

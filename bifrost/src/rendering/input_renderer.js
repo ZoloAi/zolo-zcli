@@ -1,19 +1,19 @@
 /**
  * InputRenderer - Interactive Input Rendering for zDisplay in Bifrost Mode
- * 
+ *
  * This renderer handles individual interactive inputs that the backend sends one at a time
  * (similar to Terminal mode prompts but rendered as GUI elements).
- * 
+ *
  * Input Types:
  * - Basic: text, password, email, number, tel, url
  * - Choice: selection (radio/checkbox), range, color
  * - Date/Time: date, time, datetime-local, month, week
  * - File: file (single/multiple)
- * 
+ *
  * Selection Modes:
  * - GUI mode (default): Radio buttons (single) or checkboxes (multi)
  * - Terminal mode (opt-in): Number input like "1 3 5" (terminal_style: true)
- * 
+ *
  * Flow:
  * 1. Backend sends input_request event with type and prompt
  * 2. InputRenderer displays appropriate input UI
@@ -21,18 +21,18 @@
  * 4. InputRenderer validates input (frontend validation)
  * 5. InputRenderer sends input_response WebSocket message
  * 6. Backend receives response and resolves Future
- * 
+ *
  * Architecture:
  * - Uses form_primitives.js for raw HTML element creation
  * - Uses dom_utils.js for DOM manipulation
  * - Uses validation_utils.js for frontend validation
  * - Applies zTheme classes for styling
  * - Handles WebSocket communication for responses
- * 
+ *
  * @module InputRenderer
  */
 
-import { createElement, setAttributes, clearElement } from '../utils/dom_utils.js';
+import { createElement } from '../utils/dom_utils.js';
 import { createInput, createLabel } from './primitives/form_primitives.js';
 import { validateRequired } from '../utils/validation_utils.js';
 
@@ -68,25 +68,25 @@ export class InputRenderer {
       return null;
     }
 
-    const { 
-      type = 'text', 
-      requestId, 
-      prompt, 
-      options, 
-      multi, 
+    const {
+      type = 'text',
+      requestId,
+      prompt,
+      options,
+      multi,
       terminal_style = false,
       default: defaultValue,
       min,
       max,
       step
     } = inputRequest;
-    
+
     this.logger.log(`[InputRenderer] Rendering ${type} input:`, { requestId, prompt });
 
     // Route to appropriate renderer based on type
     let inputElement;
     if (type === 'selection') {
-      inputElement = terminal_style 
+      inputElement = terminal_style
         ? this._renderSelectionTerminal(requestId, prompt, options, multi, defaultValue)
         : this._renderSelectionGUI(requestId, prompt, options, multi, defaultValue);
     } else if (type === 'password') {
@@ -106,7 +106,7 @@ export class InputRenderer {
 
     // Append to zone
     container.appendChild(inputElement);
-    
+
     // Auto-focus the first input field
     const input = inputElement.querySelector('input, select, textarea');
     if (input) {
@@ -238,7 +238,7 @@ export class InputRenderer {
 
     options.forEach((option, index) => {
       const optionDiv = createElement('div', ['zForm-check', 'zmb-2']);
-      
+
       const input = createInput(multi ? 'checkbox' : 'radio', {
         id: `option-${requestId}-${index}`,
         name: multi ? `option-${requestId}` : `selection-${requestId}`,
@@ -250,7 +250,7 @@ export class InputRenderer {
         input.checked = true;
       }
 
-      const label = createLabel({ 
+      const label = createLabel({
         for: `option-${requestId}-${index}`,
         class: 'zForm-check-label'
       });
@@ -280,9 +280,9 @@ export class InputRenderer {
       const result = multi ? selected : selected[0];
       this.logger.log('[InputRenderer] Selection submitted:', { requestId, result });
       this._sendResponse(requestId, result);
-      
-      const confirmationText = multi 
-        ? `✓ Selected: ${selected.join(', ')}` 
+
+      const confirmationText = multi
+        ? `✓ Selected: ${selected.join(', ')}`
         : `✓ Selected: ${result}`;
       this._replaceWithConfirmation(container, confirmationText);
     };
@@ -308,7 +308,7 @@ export class InputRenderer {
     title.textContent = prompt;
 
     const optionsList = createElement('div', ['zmb-3']);
-    
+
     options.forEach((option, index) => {
       const optionDiv = createElement('div', ['zp-2', 'zmb-1', 'zBorder', 'zRounded']);
       optionDiv.textContent = `${index + 1}. ${option}`;
@@ -316,8 +316,8 @@ export class InputRenderer {
     });
 
     const instructions = createElement('p', ['zText-muted', 'zmb-2']);
-    instructions.textContent = multi 
-      ? 'Enter numbers separated by spaces (e.g., "1 3 5"):' 
+    instructions.textContent = multi
+      ? 'Enter numbers separated by spaces (e.g., "1 3 5"):'
       : `Enter choice (1-${options.length}):`;
 
     const input = createInput('text', {
@@ -334,7 +334,9 @@ export class InputRenderer {
         input.value = defaultIndices.join(' ');
       } else {
         const defaultIndex = options.indexOf(defaultValue) + 1;
-        if (defaultIndex > 0) input.value = String(defaultIndex);
+        if (defaultIndex > 0) {
+          input.value = String(defaultIndex);
+        }
       }
     }
 
@@ -364,9 +366,9 @@ export class InputRenderer {
 
       this.logger.log('[InputRenderer] Terminal-style selection submitted:', { requestId, result });
       this._sendResponse(requestId, result);
-      
-      const confirmationText = multi 
-        ? `✓ Selected: ${result.join(', ')}` 
+
+      const confirmationText = multi
+        ? `✓ Selected: ${result.join(', ')}`
         : `✓ Selected: ${result}`;
       this._replaceWithConfirmation(container, confirmationText);
     };

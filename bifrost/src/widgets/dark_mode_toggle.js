@@ -2,14 +2,14 @@
  * ═══════════════════════════════════════════════════════════════
  * Dark Mode Toggle Widget
  * ═══════════════════════════════════════════════════════════════
- * 
+ *
  * A reusable widget for creating theme switcher buttons.
  * Supports zTheme dark/light modes with localStorage persistence.
- * 
+ *
  * @module widgets/dark_mode_toggle
  * @version 1.0.0
  * @author Gal Nachshon
- * 
+ *
  * ───────────────────────────────────────────────────────────────
  * Architecture:
  * - Uses primitives for DOM creation (createButton, createDiv)
@@ -63,30 +63,30 @@ export class DarkModeToggle {
       'aria-label': 'Toggle dark mode',
       style: 'margin-left: auto;' // Push to the right
     });
-    
+
     // Get current theme and set icon
     const isDark = localStorage.getItem('zTheme-mode') === 'dark';
     this._updateIcon(toggleBtn, isDark);
-    
+
     // Add click handler
     toggleBtn.addEventListener('click', () => {
       const currentTheme = localStorage.getItem('zTheme-mode');
       const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-      
+
       // Save preference
       localStorage.setItem('zTheme-mode', newTheme);
-      
+
       // Apply theme to document
       this._applyTheme(newTheme === 'dark');
-      
+
       // Update icon
       this._updateIcon(toggleBtn, newTheme === 'dark');
-      
+
       // Call callback
       if (onThemeChange) {
         onThemeChange(newTheme);
       }
-      
+
       if (this.logger) {
         this.logger.log(`[DarkModeToggle] Theme switched to: ${newTheme}`);
       }
@@ -94,11 +94,11 @@ export class DarkModeToggle {
 
     // Attach to navbar
     this._attachToNavbar(navElement, toggleBtn);
-    
+
     if (this.logger) {
       this.logger.log('[DarkModeToggle] Added to navbar');
     }
-    
+
     return toggleBtn;
   }
 
@@ -110,8 +110,8 @@ export class DarkModeToggle {
    */
   _updateIcon(button, isDark) {
     const iconColor = isDark ? 'color: #ffffff;' : '';  // White in dark mode
-    button.innerHTML = isDark 
-      ? `<i class="bi bi-sun-fill" style="font-size: 1.2rem; ${iconColor}"></i>` 
+    button.innerHTML = isDark
+      ? `<i class="bi bi-sun-fill" style="font-size: 1.2rem; ${iconColor}"></i>`
       : `<i class="bi bi-moon-fill" style="font-size: 1.2rem; ${iconColor}"></i>`;
   }
 

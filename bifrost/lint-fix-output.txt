@@ -1,0 +1,111 @@
+
+> bifrost-client@1.5.5 lint:fix
+> eslint src/ --ext .js --fix
+
+
+/Users/galnachshon/Projects/zolo-zcli/bifrost/src/bifrost_client.js
+  282:48  warning  'e' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+/Users/galnachshon/Projects/zolo-zcli/bifrost/src/core/cache_orchestrator.js
+  133:42  warning  'data' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+/Users/galnachshon/Projects/zolo-zcli/bifrost/src/core/caches/pinned_cache.js
+  8:30  error  'require' is not defined  no-undef
+
+/Users/galnachshon/Projects/zolo-zcli/bifrost/src/core/caches/plugin_cache.js
+  8:30  error  'require' is not defined  no-undef
+
+/Users/galnachshon/Projects/zolo-zcli/bifrost/src/core/caches/rendered_cache.js
+  8:30  error  'require' is not defined  no-undef
+
+/Users/galnachshon/Projects/zolo-zcli/bifrost/src/core/caches/session_cache.js
+  8:30  error  'require' is not defined  no-undef
+
+/Users/galnachshon/Projects/zolo-zcli/bifrost/src/core/caches/system_cache.js
+  8:30  error  'require' is not defined  no-undef
+
+/Users/galnachshon/Projects/zolo-zcli/bifrost/src/core/storage_manager.js
+  332:36  warning  'reject' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+  355:36  warning  'reject' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+/Users/galnachshon/Projects/zolo-zcli/bifrost/src/managers/cache_manager.js
+  144:50  warning  'reason' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+  170:47  warning  'data' is defined but never used. Allowed unused args must match /^_/u    no-unused-vars
+
+/Users/galnachshon/Projects/zolo-zcli/bifrost/src/managers/navigation_manager.js
+   53:45  warning  'e' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+  100:46  error    Unnecessary escape character: \$                                     no-useless-escape
+
+/Users/galnachshon/Projects/zolo-zcli/bifrost/src/rendering/card_renderer.js
+  114:5  warning  Closing curly brace does not appear on the same line as the subsequent block  brace-style
+
+/Users/galnachshon/Projects/zolo-zcli/bifrost/src/rendering/declarative_ui_loader.js
+  53:24  error  'jsyaml' is not defined  no-undef
+
+/Users/galnachshon/Projects/zolo-zcli/bifrost/src/rendering/form_renderer.js
+  29:25  warning  'setAttributes' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+/Users/galnachshon/Projects/zolo-zcli/bifrost/src/rendering/input_renderer.js
+  35:25  warning  'setAttributes' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  35:40  warning  'clearElement' is defined but never used. Allowed unused vars must match /^_/u   no-unused-vars
+
+/Users/galnachshon/Projects/zolo-zcli/bifrost/src/rendering/menu_renderer.js
+   30:45  warning  'current_file' is assigned a value but never used. Allowed unused vars must match /^_/u   no-unused-vars
+   30:59  warning  'current_block' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+   66:39  warning  'allow_back' is assigned a value but never used. Allowed unused vars must match /^_/u     no-unused-vars
+  131:47  warning  'scope' is defined but never used. Allowed unused args must match /^_/u                   no-unused-vars
+  149:36  warning  'idx' is defined but never used. Allowed unused args must match /^_/u                     no-unused-vars
+
+/Users/galnachshon/Projects/zolo-zcli/bifrost/src/rendering/navigation_renderer.js
+  132:37  error  Unnecessary escape character: \$  no-useless-escape
+  132:39  error  Unnecessary escape character: \^  no-useless-escape
+  137:45  error  Unnecessary escape character: \$  no-useless-escape
+  137:47  error  Unnecessary escape character: \^  no-useless-escape
+  198:40  error  Unnecessary escape character: \$  no-useless-escape
+  198:42  error  Unnecessary escape character: \^  no-useless-escape
+
+/Users/galnachshon/Projects/zolo-zcli/bifrost/src/rendering/primitives/link_primitives.js
+   66:25  warning  'setAttributes' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  379:37  warning  'e' is defined but never used. Allowed unused args must match /^_/u              no-unused-vars
+
+/Users/galnachshon/Projects/zolo-zcli/bifrost/src/rendering/progressbar_renderer.js
+  308:17  warning  'progressId' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+/Users/galnachshon/Projects/zolo-zcli/bifrost/src/rendering/renderer.js
+  15:32  warning  'options' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+/Users/galnachshon/Projects/zolo-zcli/bifrost/src/rendering/swiper_renderer.js
+   43:22  warning  'createListItem' is defined but never used. Allowed unused vars must match /^_/u        no-unused-vars
+   77:7   warning  'totalSlides' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  513:11  error    Unexpected lexical declaration in case block                                            no-case-declarations
+
+/Users/galnachshon/Projects/zolo-zcli/bifrost/src/rendering/table_renderer.js
+  46:40  warning  'appendChildren' is defined but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+/Users/galnachshon/Projects/zolo-zcli/bifrost/src/rendering/zdisplay_orchestrator.js
+  175:11  warning  'parentIsBlockWrapper' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+  238:9   warning  Closing curly brace does not appear on the same line as the subsequent block                     brace-style
+  248:9   warning  Closing curly brace does not appear on the same line as the subsequent block                     brace-style
+  369:7   warning  Closing curly brace does not appear on the same line as the subsequent block                     brace-style
+  376:7   warning  Closing curly brace does not appear on the same line as the subsequent block                     brace-style
+  385:7   warning  Closing curly brace does not appear on the same line as the subsequent block                     brace-style
+  533:9   error    Unexpected lexical declaration in case block                                                     no-case-declarations
+  540:9   error    Unexpected lexical declaration in case block                                                     no-case-declarations
+  547:9   error    Unexpected lexical declaration in case block                                                     no-case-declarations
+  553:9   error    Unexpected lexical declaration in case block                                                     no-case-declarations
+  560:9   error    Unexpected lexical declaration in case block                                                     no-case-declarations
+  568:9   error    Unexpected lexical declaration in case block                                                     no-case-declarations
+  575:9   error    Unexpected lexical declaration in case block                                                     no-case-declarations
+  582:9   error    Unexpected lexical declaration in case block                                                     no-case-declarations
+  589:9   error    Unexpected lexical declaration in case block                                                     no-case-declarations
+  596:9   error    Unexpected lexical declaration in case block                                                     no-case-declarations
+  597:9   error    Unexpected lexical declaration in case block                                                     no-case-declarations
+  598:56  error    'targetElement' is not defined                                                                   no-undef
+  604:9   error    Unexpected lexical declaration in case block                                                     no-case-declarations
+
+/Users/galnachshon/Projects/zolo-zcli/bifrost/src/utils/validation_utils.js
+  193:43  error  Unnecessary escape character: \[  no-useless-escape
+  193:60  error  Unnecessary escape character: \/  no-useless-escape
+
+✖ 58 problems (29 errors, 29 warnings)
+

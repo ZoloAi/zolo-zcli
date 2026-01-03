@@ -1,13 +1,13 @@
 /**
  * SwiperRenderer - Render interactive content carousels/slideshows
- * 
+ *
  * Terminal-first implementation matching backend zDisplay.swiper()
- * 
+ *
  * Backend Events (from display_event_timebased.py):
  * - swiper_init: Initialize swiper with slides
  * - swiper_update: Update current slide
  * - swiper_complete: Finish swiper
- * 
+ *
  * Terminal Paradigm:
  * - Box-drawing UI: ╔═══╗║╠╣╚═══╝ for beautiful bordered display
  * - Arrow keys: ◀▶ for navigation (via termios + select)
@@ -16,14 +16,14 @@
  * - Quit: 'q' key
  * - Auto-advance: Background thread cycles through slides every N seconds
  * - Loop mode: Optional wrap around to start
- * 
+ *
  * Bifrost Paradigm:
  * - WebSocket events trigger initialization and updates
  * - Touch gestures: Swipe left/right for navigation
  * - Auto-advance: CSS animations + JavaScript intervals
  * - Indicators: Dots showing position (1/N, 2/N, etc.)
  * - zTheme carousel: Full CSS transitions and responsive design
- * 
+ *
  * Features:
  * - Slide/fade/vertical transitions (zTheme variants)
  * - Auto-advance with configurable delay
@@ -33,14 +33,14 @@
  * - Pause on hover
  * - Caption support
  * - Multiple concurrent swipers
- * 
+ *
  * @see https://github.com/ZoloAi/zTheme/blob/main/Manual/ztheme-carousel.html
  */
 
 import { createDiv } from './primitives/generic_containers.js';
 import { createButton } from './primitives/interactive_primitives.js';
 import { createSpan } from './primitives/generic_containers.js';
-import { createList, createListItem } from './primitives/lists_primitives.js';
+import { createList } from './primitives/lists_primitives.js';
 
 export default class SwiperRenderer {
   /**
@@ -74,7 +74,7 @@ export default class SwiperRenderer {
       label = 'Slides',
       slides = [],
       currentSlide = 0,
-      totalSlides,
+      _totalSlides,
       autoAdvance = true,
       delay = 3,
       loop = false,
@@ -339,24 +339,34 @@ export default class SwiperRenderer {
    */
   _goToSlide(swiperId, targetIndex) {
     const swiperData = this._activeSwipers.get(swiperId);
-    if (!swiperData) return;
+    if (!swiperData) {
+      return;
+    }
 
     const { element, currentSlide, totalSlides } = swiperData;
 
     // Validate index
-    if (targetIndex < 0 || targetIndex >= totalSlides) return;
-    if (targetIndex === currentSlide) return;
+    if (targetIndex < 0 || targetIndex >= totalSlides) {
+      return;
+    }
+    if (targetIndex === currentSlide) {
+      return;
+    }
 
     // Find carousel element
     const carousel = element.querySelector(`[data-swiper-id="${swiperId}"]`);
-    if (!carousel) return;
+    if (!carousel) {
+      return;
+    }
 
     // Get all slides
     const slides = carousel.querySelectorAll('.zCarousel-item');
     const currentSlideEl = slides[currentSlide];
     const targetSlideEl = slides[targetIndex];
 
-    if (!currentSlideEl || !targetSlideEl) return;
+    if (!currentSlideEl || !targetSlideEl) {
+      return;
+    }
 
     // Apply transition classes (zTheme CSS handles animations)
     currentSlideEl.classList.remove('zActive');
@@ -381,7 +391,9 @@ export default class SwiperRenderer {
    */
   _prevSlide(swiperId) {
     const swiperData = this._activeSwipers.get(swiperId);
-    if (!swiperData) return;
+    if (!swiperData) {
+      return;
+    }
 
     const { currentSlide, totalSlides, loop } = swiperData;
     let targetIndex = currentSlide - 1;
@@ -403,7 +415,9 @@ export default class SwiperRenderer {
    */
   _nextSlide(swiperId) {
     const swiperData = this._activeSwipers.get(swiperId);
-    if (!swiperData) return;
+    if (!swiperData) {
+      return;
+    }
 
     const { currentSlide, totalSlides, loop } = swiperData;
     let targetIndex = currentSlide + 1;
@@ -425,7 +439,9 @@ export default class SwiperRenderer {
    */
   _startAutoAdvance(swiperId) {
     const swiperData = this._activeSwipers.get(swiperId);
-    if (!swiperData) return;
+    if (!swiperData) {
+      return;
+    }
 
     const { delay } = swiperData;
 
@@ -448,7 +464,9 @@ export default class SwiperRenderer {
    */
   _stopAutoAdvance(swiperId) {
     const swiperData = this._activeSwipers.get(swiperId);
-    if (!swiperData) return;
+    if (!swiperData) {
+      return;
+    }
 
     if (swiperData.intervalId) {
       clearInterval(swiperData.intervalId);
@@ -463,7 +481,9 @@ export default class SwiperRenderer {
    */
   _addKeyboardNav(swiperId) {
     const swiperData = this._activeSwipers.get(swiperId);
-    if (!swiperData) return;
+    if (!swiperData) {
+      return;
+    }
 
     const keyHandler = (e) => {
       // Only handle if this swiper is still active
@@ -489,12 +509,13 @@ export default class SwiperRenderer {
         case '6':
         case '7':
         case '8':
-        case '9':
+        case '9': {
           const targetIndex = parseInt(e.key, 10) - 1;
           if (targetIndex < swiperData.totalSlides) {
             this._goToSlide(swiperId, targetIndex);
           }
           break;
+        }
         case 'p':
         case 'P':
           // Toggle pause

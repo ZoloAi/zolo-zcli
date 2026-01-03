@@ -441,7 +441,47 @@ async function fetchPanelMetadata(folder, sidebar) {
 }
 ```
 
-### **Pattern 4: Error Messages**
+### **Pattern 4: Error Boundaries for Renderers**
+
+```javascript
+// ✅ GOOD - Wrap renderer methods with error boundaries
+import { withErrorBoundary } from '../utils/error_boundary.js';
+
+export class TextRenderer {
+  constructor(logger) {
+    this.logger = logger || console;
+    
+    // Wrap render method with error boundary
+    const originalRender = this.render.bind(this);
+    this.render = withErrorBoundary(originalRender, {
+      component: 'TextRenderer',
+      logger: this.logger
+    });
+  }
+  
+  render(data, zone) {
+    // If this throws, error boundary catches it
+    // and displays graceful fallback UI
+    const element = document.createElement('p');
+    element.textContent = data.content;
+    return element;
+  }
+}
+```
+
+**Benefits:**
+- One renderer error doesn't break entire UI
+- Users see error message instead of blank screen
+- Stack traces available in collapsible details
+- Consistent error UX across all renderers
+
+**When to Use:**
+- ✅ All renderer classes (Layer 3)
+- ✅ Complex rendering logic
+- ✅ User-facing components
+- ❌ Simple utility functions (use try-catch instead)
+
+### **Pattern 5: Error Messages**
 
 ```javascript
 // ✅ GOOD - Descriptive error with context

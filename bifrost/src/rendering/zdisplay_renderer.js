@@ -2,10 +2,10 @@
  * ═══════════════════════════════════════════════════════════════
  * zDisplay Event Renderer - Convert zDisplay Events to HTML
  * ═══════════════════════════════════════════════════════════════
- * 
+ *
  * Renders zDisplay events from the Python backend into HTML elements.
  * Supports: header, text, list, error, warning, success, info
- * 
+ *
  * Special indent behavior:
  * - indent 0: Flush (clear the zone)
  * - indent 1: h1
@@ -33,10 +33,10 @@ export class ZDisplayRenderer {
       // New: {display_event: 'success', data: {content: '...', indent: 0}}
       const eventType = event.display_event || event.event;
       const eventData = event.data || event;  // Use data if present, otherwise use event itself
-      
+
       const zone = targetZone || eventData.target || this.defaultZone;
       const container = document.getElementById(zone);
-      
+
       if (!container) {
         this.logger.error(`[ZDisplayRenderer] Target zone not found: ${zone}`);
         return null;
@@ -51,7 +51,7 @@ export class ZDisplayRenderer {
 
       // Route to appropriate renderer based on event type
       let element = null;
-      
+
       switch (eventType) {
         case 'header':
           element = this._renderHeader(eventData);
@@ -98,11 +98,11 @@ export class ZDisplayRenderer {
         if (eventType === 'table' || eventType === 'zTable') {
           const isInteractive = element.getAttribute('data-interactive') === 'true';
           const tableId = element.getAttribute('data-table-id');
-          
+
           if (isInteractive && tableId) {
             // Find existing interactive table with same ID
             const existingTable = container.querySelector(`[data-table-id="${tableId}"][data-interactive="true"]`);
-            
+
             if (existingTable) {
               // Replace existing table
               existingTable.replaceWith(element);
@@ -111,7 +111,7 @@ export class ZDisplayRenderer {
             }
           }
         }
-        
+
         // Default: append element
         container.appendChild(element);
         this.logger.log(`[ZDisplayRenderer] Rendered ${eventType} to ${zone}`);
@@ -140,38 +140,38 @@ export class ZDisplayRenderer {
    */
   _renderHeader(event) {
     const indent = event.indent !== undefined ? event.indent : 1;
-    
+
     // Python sends 'label' field for headers (not 'content')
     const content = event.label || event.content || '';
     const color = event.color || null;
     const customClass = event.class || null;  // New: Accept custom CSS classes from YAML
-    
+
     // indent=0 → HERO header (special centered title)
     if (indent === 0) {
       const hero = document.createElement('div');
       hero.className = 'zHero';
-      
+
       // Apply custom classes if provided
       if (customClass) {
         hero.className += ` ${customClass}`;
       }
-      
+
       hero.innerHTML = this._sanitizeHTML(content);
       return hero;
     }
-    
+
     // indent=1-6 → h1-h6 (semantic HTML headers)
     const level = Math.min(indent, 6);
     const tag = `h${level}`;
-    
+
     const header = document.createElement(tag);
     header.innerHTML = this._sanitizeHTML(content);
-    
+
     // Apply custom classes if provided (from YAML `class` parameter)
     if (customClass) {
       header.className = customClass;
     }
-    
+
     // Pure zTheme - all styling handled by zTypography.css (h1-h6 rules)
     // No inline styles needed! 🎨
     // Apply color classes (case-insensitive for PRIMARY/SECONDARY)
@@ -191,7 +191,7 @@ export class ZDisplayRenderer {
         header.classList.add('zText-error');
       }
     }
-    
+
     return header;
   }
 
@@ -202,21 +202,21 @@ export class ZDisplayRenderer {
   _renderText(event) {
     const p = document.createElement('p');
     p.innerHTML = this._sanitizeHTML(event.content);
-    
+
     // Apply custom classes if provided (from YAML `class` parameter)
     const customClass = event.class || null;
     if (customClass) {
       p.className = customClass;
     }
-    
+
     // Minimal inline styling (margin-bottom for spacing)
     p.style.marginBottom = '0.5rem';
-    
+
     // Apply indent as left margin (1rem per indent level)
     if (event.indent && event.indent > 0) {
       p.style.marginLeft = `${event.indent}rem`;
     }
-    
+
     // Apply color classes (case-insensitive)
     const color = event.color;
     if (color) {
@@ -235,7 +235,7 @@ export class ZDisplayRenderer {
         p.classList.add('zText-error');
       }
     }
-    
+
     return p;
   }
 
@@ -247,35 +247,35 @@ export class ZDisplayRenderer {
   _renderList(event) {
     // Check style: "number" → <ol>, "bullet" → <ul> (default)
     const style = event.style || 'bullet';
-    const listElement = style === 'number' 
-      ? document.createElement('ol') 
+    const listElement = style === 'number'
+      ? document.createElement('ol')
       : document.createElement('ul');
-    
+
     listElement.className = 'zList';
-    
+
     // Apply custom classes if provided (from YAML `class` parameter)
     const customClass = event.class || null;
     if (customClass) {
       listElement.className += ` ${customClass}`;
     }
-    
+
     // Apply indent as left margin (minimal inline style for dynamic indentation)
     if (event.indent && event.indent > 0) {
       listElement.style.marginLeft = `${event.indent}rem`;
     }
-    
+
     // Render list items
     const items = event.items || [];
     items.forEach(item => {
       const li = document.createElement('li');
-      
+
       // Support both string items and object items with content field
       const content = typeof item === 'string' ? item : (item.content || '');
       li.innerHTML = this._sanitizeHTML(content);
-      
+
       listElement.appendChild(li);
     });
-    
+
     return listElement;
   }
 
@@ -288,28 +288,28 @@ export class ZDisplayRenderer {
     const items = event.items || [];
     const styles = event.styles || ['number', 'letter', 'roman', 'bullet'];
     const baseIndent = event.indent || 0;
-    
+
     // Create container for the outline
     const container = document.createElement('div');
     container.className = 'zOutline';
-    
+
     // Apply custom classes if provided (from YAML `class` parameter)
     const customClass = event.class || null;
     if (customClass) {
       container.className += ` ${customClass}`;
     }
-    
+
     // Apply base indent
     if (baseIndent > 0) {
       container.style.marginLeft = `${baseIndent}rem`;
     }
-    
+
     // Render items recursively
     const listElement = this._renderOutlineItems(items, styles, 0);
     if (listElement) {
       container.appendChild(listElement);
     }
-    
+
     return container;
   }
 
@@ -321,10 +321,10 @@ export class ZDisplayRenderer {
     if (!items || items.length === 0) {
       return null;
     }
-    
+
     // Determine style for this level
     const style = level < styles.length ? styles[level] : 'bullet';
-    
+
     // Create list element based on style
     let listElement;
     if (style === 'bullet') {
@@ -333,7 +333,7 @@ export class ZDisplayRenderer {
     } else {
       listElement = document.createElement('ol');
       listElement.className = 'zList';
-      
+
       // Set list-style-type for different numbering styles
       if (style === 'letter') {
         listElement.style.listStyleType = 'lower-alpha';  // a, b, c
@@ -342,11 +342,11 @@ export class ZDisplayRenderer {
       }
       // 'number' uses default decimal (1, 2, 3)
     }
-    
+
     // Render each item
     items.forEach(item => {
       const li = document.createElement('li');
-      
+
       // Extract content and children
       let content, children;
       if (typeof item === 'string') {
@@ -359,12 +359,12 @@ export class ZDisplayRenderer {
         content = String(item);
         children = null;
       }
-      
+
       // Create text node for this item's content
       const contentSpan = document.createElement('span');
       contentSpan.innerHTML = this._sanitizeHTML(content);
       li.appendChild(contentSpan);
-      
+
       // Recursively render children if they exist
       if (children && children.length > 0) {
         const childList = this._renderOutlineItems(children, styles, level + 1);
@@ -372,10 +372,10 @@ export class ZDisplayRenderer {
           li.appendChild(childList);
         }
       }
-      
+
       listElement.appendChild(li);
     });
-    
+
     return listElement;
   }
 
@@ -396,41 +396,41 @@ export class ZDisplayRenderer {
     const limit = event.limit;  // Can be null/undefined (show all)
     const offset = event.offset || 0;
     const interactive = event.interactive || false;  // Enable navigation controls
-    
+
     // Apply pagination if limit is specified
     let rows = allRows;
     let hasMore = false;
     let moreCount = 0;
-    
+
     if (limit !== null && limit !== undefined && limit > 0) {
       // Slice rows: from offset to offset+limit
       rows = allRows.slice(offset, offset + limit);
       hasMore = (offset + limit) < allRows.length;
       moreCount = allRows.length - (offset + limit);
     }
-    
+
     // Create container wrapper
     const container = document.createElement('div');
     container.style.marginBottom = '1.5rem';
-    
+
     // For interactive tables, add a data attribute for replacement logic
     if (interactive) {
       container.setAttribute('data-table-id', title || 'table');
       container.setAttribute('data-interactive', 'true');
-      
+
       // Add smooth fade-in animation for page transitions
       container.style.animation = 'fadeIn 0.3s ease-in';
     }
-    
+
     // Apply indent as left margin (minimal inline style for dynamic indentation)
     if (event.indent && event.indent > 0) {
       container.style.marginLeft = `${event.indent}rem`;
     }
-    
+
     // Add title with pagination info if provided
     if (title) {
       const titleElement = document.createElement('h4');
-      
+
       // Show pagination range in title if limited
       if (limit !== null && limit !== undefined && limit > 0 && allRows.length > 0) {
         const showingStart = offset + 1;
@@ -439,42 +439,42 @@ export class ZDisplayRenderer {
       } else {
         titleElement.textContent = title;
       }
-      
+
       titleElement.style.marginBottom = '0.75rem';
       titleElement.style.color = 'var(--color-darkgray)';
       container.appendChild(titleElement);
     }
-    
+
     // Create table wrapper for responsiveness
     const tableWrapper = document.createElement('div');
     tableWrapper.className = 'zTable-responsive';
-    
+
     // Create table
     const table = document.createElement('table');
     table.className = 'zTable zTable-striped zTable-hover zTable-bordered';
-    
+
     // Create thead with columns
     if (columns.length > 0) {
       const thead = document.createElement('thead');
       const headerRow = document.createElement('tr');
-      
+
       columns.forEach(column => {
         const th = document.createElement('th');
         th.textContent = column;
         headerRow.appendChild(th);
       });
-      
+
       thead.appendChild(headerRow);
       table.appendChild(thead);
     }
-    
+
     // Create tbody with (paginated) rows
     if (rows.length > 0) {
       const tbody = document.createElement('tbody');
-      
+
       rows.forEach(row => {
         const tr = document.createElement('tr');
-        
+
         // Handle both array and object rows
         if (Array.isArray(row)) {
           // Array row: [val1, val2, val3]
@@ -492,16 +492,16 @@ export class ZDisplayRenderer {
             tr.appendChild(td);
           });
         }
-        
+
         tbody.appendChild(tr);
       });
-      
+
       table.appendChild(tbody);
     }
-    
+
     tableWrapper.appendChild(table);
     container.appendChild(tableWrapper);
-    
+
     // Footer: Interactive navigation OR simple "... N more rows" message
     if (interactive && limit && limit > 0) {
       // Interactive mode: Render navigation buttons
@@ -518,10 +518,10 @@ export class ZDisplayRenderer {
       footer.textContent = `... ${moreCount} more rows`;
       container.appendChild(footer);
     }
-    
+
     return container;
   }
-  
+
   /**
    * Render interactive navigation controls for paginated tables
    * Creates buttons that send navigation commands back to the server
@@ -529,13 +529,13 @@ export class ZDisplayRenderer {
    */
   _renderNavigationControls(container, tableState) {
     const { limit, offset, totalRows } = tableState;
-    
+
     // Calculate pagination metadata
     const totalPages = Math.ceil(totalRows / limit);
     const currentPage = Math.floor(offset / limit) + 1;
     const canGoPrev = currentPage > 1;
     const canGoNext = currentPage < totalPages;
-    
+
     // Create navigation container
     const navContainer = document.createElement('div');
     navContainer.style.marginTop = '1rem';
@@ -543,7 +543,7 @@ export class ZDisplayRenderer {
     navContainer.style.gap = '0.5rem';
     navContainer.style.alignItems = 'center';
     navContainer.style.justifyContent = 'center';
-    
+
     // Page info display
     const pageInfo = document.createElement('span');
     pageInfo.style.marginRight = '1rem';
@@ -551,14 +551,14 @@ export class ZDisplayRenderer {
     pageInfo.style.fontWeight = '500';
     pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
     navContainer.appendChild(pageInfo);
-    
+
     // Helper to create navigation button
     const createNavButton = (label, command, enabled) => {
       const btn = document.createElement('button');
-      btn.className = 'zoloButton ' + (enabled ? 'zBtnSecondary' : 'zBtnDisabled');
+      btn.className = `zoloButton ${  enabled ? 'zBtnSecondary' : 'zBtnDisabled'}`;
       btn.textContent = label;
       btn.disabled = !enabled;
-      
+
       if (enabled) {
         btn.onclick = () => {
           // Send navigation command back to server
@@ -574,28 +574,28 @@ export class ZDisplayRenderer {
           }
         };
       }
-      
+
       return btn;
     };
-    
+
     // Navigation buttons
     navContainer.appendChild(createNavButton('⏮ First', 'f', canGoPrev));
     navContainer.appendChild(createNavButton('◀ Previous', 'p', canGoPrev));
     navContainer.appendChild(createNavButton('Next ▶', 'n', canGoNext));
     navContainer.appendChild(createNavButton('Last ⏭', 'l', canGoNext));
-    
+
     // Jump to page input
     const jumpContainer = document.createElement('span');
     jumpContainer.style.marginLeft = '1rem';
     jumpContainer.style.display = 'flex';
     jumpContainer.style.gap = '0.5rem';
     jumpContainer.style.alignItems = 'center';
-    
+
     const jumpLabel = document.createElement('span');
     jumpLabel.style.color = 'var(--color-darkgray)';
     jumpLabel.textContent = 'Jump to:';
     jumpContainer.appendChild(jumpLabel);
-    
+
     const jumpInput = document.createElement('input');
     jumpInput.type = 'number';
     jumpInput.min = '1';
@@ -606,7 +606,7 @@ export class ZDisplayRenderer {
     jumpInput.style.border = '1px solid var(--color-gray)';
     jumpInput.style.borderRadius = '4px';
     jumpInput.style.textAlign = 'center';
-    
+
     const jumpBtn = createNavButton('Go', 'jump', true);
     jumpBtn.onclick = () => {
       const pageNum = parseInt(jumpInput.value);
@@ -624,17 +624,17 @@ export class ZDisplayRenderer {
         jumpInput.value = '';
       }
     };
-    
+
     jumpInput.onkeypress = (e) => {
       if (e.key === 'Enter') {
         jumpBtn.click();
       }
     };
-    
+
     jumpContainer.appendChild(jumpInput);
     jumpContainer.appendChild(jumpBtn);
     navContainer.appendChild(jumpContainer);
-    
+
     container.appendChild(navContainer);
   }
 
@@ -647,8 +647,8 @@ export class ZDisplayRenderer {
       return '<span style="color: var(--color-gray);">—</span>';
     }
     if (typeof value === 'boolean') {
-      return value 
-        ? '<span style="color: var(--color-success);">✓</span>' 
+      return value
+        ? '<span style="color: var(--color-success);">✓</span>'
         : '<span style="color: var(--color-error);">✗</span>';
     }
     return String(value);
@@ -661,16 +661,16 @@ export class ZDisplayRenderer {
   _renderJSON(event) {
     // Extract JSON data
     const data = event.data || event.content || {};
-    
+
     // Create container
     const container = document.createElement('div');
     container.style.marginBottom = '1rem';
-    
+
     // Apply indent as left margin
     if (event.indent && event.indent > 0) {
       container.style.marginLeft = `${event.indent}rem`;
     }
-    
+
     // Create pre element for JSON
     const pre = document.createElement('pre');
     pre.style.backgroundColor = 'var(--color-base)';
@@ -681,14 +681,14 @@ export class ZDisplayRenderer {
     pre.style.fontFamily = 'monospace';
     pre.style.fontSize = '0.9em';
     pre.style.color = 'var(--color-darkgray)';
-    
+
     // Pretty-print JSON
     try {
       pre.textContent = JSON.stringify(data, null, 2);
     } catch (e) {
       pre.textContent = String(data);
     }
-    
+
     container.appendChild(pre);
     return container;
   }
@@ -707,32 +707,32 @@ export class ZDisplayRenderer {
     const showPercentage = event.showPercentage !== false;  // Default true
     const color = event.color || 'default';
     const progressId = event.progressId || `progress-${Date.now()}`;
-    
+
     // Check if progress bar already exists (update existing)
     const existingProgress = document.querySelector(`[data-progress-id="${progressId}"]`);
     if (existingProgress) {
       // Update existing progress bar
       const fillElement = existingProgress.querySelector('.zProgress-fill');
       const statsElement = existingProgress.querySelector('.zProgress-stats');
-      
+
       if (fillElement) {
         fillElement.style.width = `${percentage}%`;
       }
       if (statsElement && showPercentage) {
         statsElement.textContent = `${percentage}%`;
       }
-      
+
       // Keep progress bar visible even when complete (for demo purposes)
       // TODO: Add option to auto-remove on complete if needed
-      
+
       return null;  // Don't append, we updated existing
     }
-    
+
     // Create new progress bar using zTheme classes
     const container = document.createElement('div');
     container.className = 'zProgress';
     container.setAttribute('data-progress-id', progressId);
-    
+
     // Apply color variant
     const colorMap = {
       GREEN: 'success',
@@ -743,41 +743,41 @@ export class ZDisplayRenderer {
     };
     const variant = colorMap[color] || 'info';
     container.classList.add(`zProgress-${variant}`);
-    
+
     // Apply indent as left margin
     if (event.indent && event.indent > 0) {
       container.style.marginLeft = `${event.indent}rem`;
     }
-    
+
     // Progress label and stats
     const labelDiv = document.createElement('div');
     labelDiv.className = 'zProgress-label';
-    
+
     const labelText = document.createElement('span');
     labelText.textContent = label;
     labelDiv.appendChild(labelText);
-    
+
     if (showPercentage) {
       const statsSpan = document.createElement('span');
       statsSpan.className = 'zProgress-stats';
       statsSpan.textContent = `${percentage}%`;
       labelDiv.appendChild(statsSpan);
     }
-    
+
     container.appendChild(labelDiv);
-    
+
     // Progress track (background)
     const track = document.createElement('div');
     track.className = 'zProgress-track';
-    
+
     // Progress fill (animated bar)
     const fill = document.createElement('div');
     fill.className = 'zProgress-fill';
     fill.style.width = `${percentage}%`;
-    
+
     track.appendChild(fill);
     container.appendChild(track);
-    
+
     return container;
   }
 
@@ -792,21 +792,21 @@ export class ZDisplayRenderer {
     const style = event.style || event.data?.style || 'dots';
     const zone = targetZone || this.defaultZone;
     const container = document.getElementById(zone);
-    
+
     if (!container) {
       this.logger.error(`[ZDisplayRenderer] Cannot render spinner - zone not found: ${zone}`);
       return;
     }
-    
+
     // Create spinner using zTheme classes
     const spinnerDiv = document.createElement('div');
     spinnerDiv.className = 'zSpinner';
     spinnerDiv.setAttribute('data-spinner-id', spinnerId);
-    
+
     // Spinner animation
     const animationDiv = document.createElement('div');
     animationDiv.className = 'zSpinner-animation';
-    
+
     // Map backend style names to CSS class names
     const styleMap = {
       dots: 'zSpinner-dots',
@@ -817,20 +817,20 @@ export class ZDisplayRenderer {
       simple: 'zSpinner-simple',
       circle: 'zSpinner-circle'
     };
-    
+
     const spinnerClass = styleMap[style] || 'zSpinner-dots';
     const spinnerIcon = document.createElement('div');
     spinnerIcon.className = spinnerClass;
     animationDiv.appendChild(spinnerIcon);
-    
+
     // Label
     const labelSpan = document.createElement('span');
     labelSpan.className = 'zSpinner-label';
     labelSpan.textContent = label;
-    
+
     spinnerDiv.appendChild(animationDiv);
     spinnerDiv.appendChild(labelSpan);
-    
+
     container.appendChild(spinnerDiv);
     this.logger.log(`[ZDisplayRenderer] Spinner started: ${spinnerId}`);
   }
@@ -841,29 +841,29 @@ export class ZDisplayRenderer {
    */
   renderSpinnerStop(event) {
     const spinnerId = event.spinnerId || event.data?.spinnerId;
-    
+
     if (!spinnerId) {
       this.logger.warn('[ZDisplayRenderer] Cannot stop spinner - no spinnerId provided');
       return;
     }
-    
+
     const spinner = document.querySelector(`[data-spinner-id="${spinnerId}"]`);
-    
+
     if (spinner) {
       // Replace spinner with success checkmark
       spinner.style.transition = 'opacity 0.3s ease';
       spinner.style.opacity = '0';
-      
+
       setTimeout(() => {
         const label = spinner.querySelector('.zSpinner-label');
         const labelText = label ? label.textContent : '';
-        
+
         // Create success message
         const successDiv = document.createElement('p');
         successDiv.style.marginBottom = '0.5rem';
         successDiv.style.color = 'var(--mainGreen, #8FBE6D)';
         successDiv.innerHTML = `✓ ${labelText}`;
-        
+
         spinner.replaceWith(successDiv);
         this.logger.log(`[ZDisplayRenderer] Spinner stopped: ${spinnerId}`);
       }, 300);
@@ -878,7 +878,7 @@ export class ZDisplayRenderer {
    */
   _renderAlert(event, type) {
     const signal = document.createElement('div');
-    
+
     // Map type to zSignal classes (Bootstrap compatibility layer)
     const classMap = {
       danger: 'error',    // danger → zSignal-error
@@ -886,18 +886,18 @@ export class ZDisplayRenderer {
       success: 'success', // success → zSignal-success
       info: 'info'        // info → zSignal-info
     };
-    
+
     const signalType = classMap[type] || 'info';
     signal.className = `zSignal zSignal-${signalType}`;
-    
+
     // Apply custom classes if provided (from YAML `class` parameter)
     const customClass = event.class || null;
     if (customClass) {
       signal.className += ` ${customClass}`;
     }
-    
+
     signal.setAttribute('role', 'alert');
-    
+
     // Add icon based on type
     const icons = {
       danger: '⚠️',
@@ -905,14 +905,14 @@ export class ZDisplayRenderer {
       success: '✅',
       info: 'ℹ️'
     };
-    
+
     const icon = icons[type] || '';
     const content = this._sanitizeHTML(event.content);
-    
+
     // Create content wrapper
     const contentDiv = document.createElement('div');
     contentDiv.innerHTML = icon ? `<strong style="margin-right: 0.5rem;">${icon}</strong>${content}` : content;
-    
+
     // Create close button (dismissible like Bootstrap)
     const closeBtn = document.createElement('button');
     closeBtn.className = 'close';
@@ -922,16 +922,16 @@ export class ZDisplayRenderer {
       signal.style.animation = 'fadeOut 0.3s ease-out';
       setTimeout(() => signal.remove(), 300);
     };
-    
+
     // Append content and close button
     signal.appendChild(contentDiv);
     signal.appendChild(closeBtn);
-    
+
     // Apply indent as left margin (minimal inline style for dynamic indentation)
     if (event.indent && event.indent > 0) {
       signal.style.marginLeft = `${event.indent}rem`;
     }
-    
+
     // Auto-dismiss after 5 seconds with fade-out animation
     setTimeout(() => {
       if (signal.parentElement) {  // Only fade if still in DOM (not manually closed)
@@ -939,7 +939,7 @@ export class ZDisplayRenderer {
         setTimeout(() => signal.remove(), 500);
       }
     }, 5000);
-    
+
     return signal;
   }
 
@@ -948,20 +948,22 @@ export class ZDisplayRenderer {
    * @private
    */
   _sanitizeHTML(html) {
-    if (!html) return '';
-    
+    if (!html) {
+      return '';
+    }
+
     // Allow common safe tags: <strong>, <em>, <code>, <a>, <br>
     // This is a basic sanitizer - for production, consider using DOMPurify
     const allowedTags = ['strong', 'em', 'code', 'a', 'br', 'span'];
-    
+
     // Create a temporary div to parse HTML
     const temp = document.createElement('div');
     temp.innerHTML = html;
-    
+
     // Remove script tags and event handlers
     const scripts = temp.querySelectorAll('script');
     scripts.forEach(script => script.remove());
-    
+
     // Remove event handler attributes (onclick, onerror, etc.)
     const allElements = temp.querySelectorAll('*');
     allElements.forEach(el => {
@@ -970,7 +972,7 @@ export class ZDisplayRenderer {
           el.removeAttribute(attr.name);
         }
       });
-      
+
       // Remove elements not in allowed list (except text nodes)
       if (!allowedTags.includes(el.tagName.toLowerCase())) {
         // Keep the text content but remove the tag
@@ -979,7 +981,7 @@ export class ZDisplayRenderer {
         el.parentNode.replaceChild(textNode, el);
       }
     });
-    
+
     return temp.innerHTML;
   }
 
@@ -993,7 +995,7 @@ export class ZDisplayRenderer {
       this.logger.error('[ZDisplayRenderer] renderBatch expects an array');
       return;
     }
-    
+
     events.forEach(event => {
       try {
         this.render(event, targetZone);
@@ -1011,7 +1013,7 @@ export class ZDisplayRenderer {
   clear(targetZone = null) {
     const zone = targetZone || this.defaultZone;
     const container = document.getElementById(zone);
-    
+
     if (container) {
       this._flush(container);
       this.logger.log(`[ZDisplayRenderer] Cleared zone: ${zone}`);
@@ -1028,20 +1030,20 @@ export class ZDisplayRenderer {
   renderInputRequest(inputRequest, targetZone = null) {
     const zone = targetZone || this.defaultZone;
     const container = document.getElementById(zone);
-    
+
     if (!container) {
       this.logger.error(`[ZDisplayRenderer] Cannot render input - zone not found: ${zone}`);
       return;
     }
-    
+
     // Extract input details
     const requestId = inputRequest.requestId || inputRequest.data?.requestId;
     const inputType = inputRequest.type || inputRequest.data?.type || 'string';
     const prompt = inputRequest.prompt || inputRequest.data?.prompt || 'Enter input:';
     const masked = inputRequest.masked || inputRequest.data?.masked || (inputType === 'password');
-    
+
     this.logger.log('[ZDisplayRenderer] Rendering input form:', { requestId, inputType, prompt, masked });
-    
+
     // Create form container
     const form = document.createElement('form');
     form.className = 'zInputForm';
@@ -1052,7 +1054,7 @@ export class ZDisplayRenderer {
       border-radius: 8px;
       background-color: var(--color-base, #fff);
     `;
-    
+
     // Create label
     const label = document.createElement('label');
     label.textContent = prompt;
@@ -1062,7 +1064,7 @@ export class ZDisplayRenderer {
       font-weight: bold;
       color: var(--color-darkgray, #333);
     `;
-    
+
     // Create input field
     const input = document.createElement('input');
     input.type = masked ? 'password' : 'text';
@@ -1076,7 +1078,7 @@ export class ZDisplayRenderer {
       border-radius: 4px;
       font-size: 1rem;
     `;
-    
+
     // Create submit button
     const submitBtn = document.createElement('button');
     submitBtn.type = 'submit';
@@ -1086,14 +1088,14 @@ export class ZDisplayRenderer {
       padding: 0.5rem 1.5rem;
       cursor: pointer;
     `;
-    
+
     // Handle form submission
     form.addEventListener('submit', (e) => {
       e.preventDefault();
       const value = input.value.trim();
-      
+
       this.logger.log('[ZDisplayRenderer] Input submitted:', { requestId, value: masked ? '***' : value });
-      
+
       // Send input_response back to server (one-way, no response expected)
       if (window.bifrostClient && window.bifrostClient.connection) {
         try {
@@ -1111,7 +1113,7 @@ export class ZDisplayRenderer {
       } else {
         this.logger.error('[ZDisplayRenderer] Cannot send input response - bifrostClient not found on window');
       }
-      
+
       // Replace form with confirmation message
       const confirmation = document.createElement('p');
       confirmation.style.cssText = `
@@ -1122,24 +1124,24 @@ export class ZDisplayRenderer {
         border-radius: 4px;
         color: var(--color-success-dark, #155724);
       `;
-      confirmation.textContent = masked 
-        ? `✓ Password submitted (${value.length} characters)` 
+      confirmation.textContent = masked
+        ? `✓ Password submitted (${value.length} characters)`
         : `✓ Submitted: ${value}`;
-      
+
       form.replaceWith(confirmation);
     });
-    
+
     // Assemble form
     form.appendChild(label);
     form.appendChild(input);
     form.appendChild(submitBtn);
-    
+
     // Add to container
     container.appendChild(form);
-    
+
     // Focus input
     input.focus();
-    
+
     this.logger.log('[ZDisplayRenderer] Input form rendered');
   }
 
@@ -1151,21 +1153,21 @@ export class ZDisplayRenderer {
   renderSelectionRequest(selectionRequest, targetZone = null) {
     const zone = targetZone || this.defaultZone;
     const container = document.getElementById(zone);
-    
+
     if (!container) {
       this.logger.error(`[ZDisplayRenderer] Cannot render selection - zone not found: ${zone}`);
       return;
     }
-    
+
     // Extract selection details
     const requestId = selectionRequest.requestId || selectionRequest.data?.requestId;
     const prompt = selectionRequest.prompt || selectionRequest.data?.prompt || 'Select:';
     const options = selectionRequest.options || selectionRequest.data?.options || [];
     const multi = selectionRequest.multi || selectionRequest.data?.multi || false;
     const defaultVal = selectionRequest.default || selectionRequest.data?.default;
-    
+
     this.logger.log('[ZDisplayRenderer] Rendering selection form:', { requestId, prompt, options, multi });
-    
+
     // Create form container
     const form = document.createElement('form');
     form.className = 'zSelectionForm';
@@ -1176,7 +1178,7 @@ export class ZDisplayRenderer {
       border-radius: 8px;
       background-color: var(--color-base, #fff);
     `;
-    
+
     // Create label
     const label = document.createElement('label');
     label.textContent = prompt;
@@ -1187,7 +1189,7 @@ export class ZDisplayRenderer {
       color: var(--color-darkgray, #333);
     `;
     form.appendChild(label);
-    
+
     // Create options container
     const optionsContainer = document.createElement('div');
     optionsContainer.style.cssText = `
@@ -1195,11 +1197,11 @@ export class ZDisplayRenderer {
       max-height: 300px;
       overflow-y: auto;
     `;
-    
+
     // Create option elements
     const inputType = multi ? 'checkbox' : 'radio';
     const inputName = `selection_${requestId}`;
-    
+
     options.forEach((option, index) => {
       const optionDiv = document.createElement('div');
       optionDiv.style.cssText = `
@@ -1212,7 +1214,7 @@ export class ZDisplayRenderer {
       `;
       optionDiv.onmouseover = () => optionDiv.style.backgroundColor = 'var(--color-lightgray, #f8f9fa)';
       optionDiv.onmouseout = () => optionDiv.style.backgroundColor = 'transparent';
-      
+
       const input = document.createElement('input');
       input.type = inputType;
       input.name = inputName;
@@ -1222,7 +1224,7 @@ export class ZDisplayRenderer {
         margin-right: 0.5rem;
         cursor: pointer;
       `;
-      
+
       // Set default selection
       if (defaultVal) {
         if (multi && Array.isArray(defaultVal)) {
@@ -1231,7 +1233,7 @@ export class ZDisplayRenderer {
           input.checked = true;
         }
       }
-      
+
       const optionLabel = document.createElement('label');
       optionLabel.htmlFor = input.id;
       optionLabel.textContent = option;
@@ -1239,16 +1241,16 @@ export class ZDisplayRenderer {
         cursor: pointer;
         flex: 1;
       `;
-      
+
       optionDiv.appendChild(input);
       optionDiv.appendChild(optionLabel);
       optionDiv.onclick = () => input.checked = !input.checked;
-      
+
       optionsContainer.appendChild(optionDiv);
     });
-    
+
     form.appendChild(optionsContainer);
-    
+
     // Create submit button
     const submitBtn = document.createElement('button');
     submitBtn.type = 'submit';
@@ -1259,20 +1261,20 @@ export class ZDisplayRenderer {
       cursor: pointer;
     `;
     form.appendChild(submitBtn);
-    
+
     // Handle form submission
     form.addEventListener('submit', (e) => {
       e.preventDefault();
-      
+
       // Get selected values
       const selectedInputs = form.querySelectorAll(`input[name="${inputName}"]:checked`);
       const selectedValues = Array.from(selectedInputs).map(input => input.value);
-      
+
       // Return appropriate format
       const value = multi ? selectedValues : (selectedValues[0] || null);
-      
+
       this.logger.log('[ZDisplayRenderer] Selection submitted:', { requestId, value });
-      
+
       // Send selection_response back to server (one-way)
       if (window.bifrostClient && window.bifrostClient.connection) {
         try {
@@ -1290,7 +1292,7 @@ export class ZDisplayRenderer {
       } else {
         this.logger.error('[ZDisplayRenderer] Cannot send selection response - bifrostClient not found');
       }
-      
+
       // Replace form with confirmation message
       const confirmation = document.createElement('p');
       confirmation.style.cssText = `
@@ -1301,7 +1303,7 @@ export class ZDisplayRenderer {
         border-radius: 4px;
         color: var(--color-success-dark, #155724);
       `;
-      
+
       if (multi) {
         confirmation.textContent = selectedValues.length > 0
           ? `✓ Selected: ${selectedValues.join(', ')}`
@@ -1309,34 +1311,34 @@ export class ZDisplayRenderer {
       } else {
         confirmation.textContent = value ? `✓ Selected: ${value}` : '✓ No selection made';
       }
-      
+
       form.replaceWith(confirmation);
     });
-    
+
     // Add to container
     container.appendChild(form);
-    
+
     this.logger.log('[ZDisplayRenderer] Selection form rendered');
   }
 
   renderButtonRequest(buttonRequest, targetZone = null) {
     const zone = targetZone || this.defaultZone;
     const container = document.getElementById(zone);
-    
+
     if (!container) {
       this.logger.error(`[ZDisplayRenderer] Cannot render button - zone not found: ${zone}`);
       return;
     }
-    
+
     // Extract button details
     const requestId = buttonRequest.requestId || buttonRequest.data?.requestId;
     const label = buttonRequest.prompt || buttonRequest.data?.prompt || 'Click Me';
     const action = buttonRequest.action || buttonRequest.data?.action || null;
     const color = buttonRequest.color || buttonRequest.data?.color || 'primary';
     const style = buttonRequest.style || buttonRequest.data?.style || 'default';
-    
+
     this.logger.log('[ZDisplayRenderer] Rendering button:', { requestId, label, action, color, style });
-    
+
     // Create button container
     const buttonContainer = document.createElement('div');
     buttonContainer.className = 'zButtonContainer';
@@ -1347,12 +1349,12 @@ export class ZDisplayRenderer {
       align-items: center;
       gap: 1rem;
     `;
-    
+
     // Create the button with zTheme classes
     const button = document.createElement('button');
     button.type = 'button';
     button.textContent = label;
-    
+
     // Apply zTheme button classes based on color
     const colorClass = {
       'primary': 'zBtnPrimary',
@@ -1362,7 +1364,7 @@ export class ZDisplayRenderer {
       'info': 'zBtnInfo',
       'secondary': 'zBtnSecondary'
     }[color] || 'zBtnPrimary';
-    
+
     button.className = `zoloButton ${colorClass}`;
     button.style.cssText = `
       padding: 0.5rem 1.5rem;
@@ -1370,7 +1372,7 @@ export class ZDisplayRenderer {
       cursor: pointer;
       transition: transform 0.1s ease;
     `;
-    
+
     // Add hover effect
     button.addEventListener('mouseenter', () => {
       button.style.transform = 'scale(1.02)';
@@ -1378,11 +1380,11 @@ export class ZDisplayRenderer {
     button.addEventListener('mouseleave', () => {
       button.style.transform = 'scale(1)';
     });
-    
+
     // Handle button click
     button.addEventListener('click', () => {
       this.logger.log('[ZDisplayRenderer] Button clicked:', label);
-      
+
       // Send response back to server (True = clicked)
       if (window.bifrostClient && window.bifrostClient.connection) {
         window.bifrostClient.connection.send(JSON.stringify({
@@ -1392,7 +1394,7 @@ export class ZDisplayRenderer {
         }));
         this.logger.log('[ZDisplayRenderer] Button response sent');
       }
-      
+
       // Replace button with confirmation
       const confirmation = document.createElement('p');
       confirmation.style.cssText = `
@@ -1402,10 +1404,10 @@ export class ZDisplayRenderer {
         font-weight: 500;
       `;
       confirmation.textContent = `✓ ${label} clicked!`;
-      
+
       buttonContainer.replaceWith(confirmation);
     });
-    
+
     // Add cancel button (optional - for explicit "No" response)
     const cancelBtn = document.createElement('button');
     cancelBtn.type = 'button';
@@ -1417,17 +1419,17 @@ export class ZDisplayRenderer {
       cursor: pointer;
       transition: transform 0.1s ease;
     `;
-    
+
     cancelBtn.addEventListener('mouseenter', () => {
       cancelBtn.style.transform = 'scale(1.02)';
     });
     cancelBtn.addEventListener('mouseleave', () => {
       cancelBtn.style.transform = 'scale(1)';
     });
-    
+
     cancelBtn.addEventListener('click', () => {
       this.logger.log('[ZDisplayRenderer] Button cancelled:', label);
-      
+
       // Send response back to server (False = cancelled)
       if (window.bifrostClient && window.bifrostClient.connection) {
         window.bifrostClient.connection.send(JSON.stringify({
@@ -1437,7 +1439,7 @@ export class ZDisplayRenderer {
         }));
         this.logger.log('[ZDisplayRenderer] Button cancel response sent');
       }
-      
+
       // Replace button with confirmation
       const confirmation = document.createElement('p');
       confirmation.style.cssText = `
@@ -1447,29 +1449,29 @@ export class ZDisplayRenderer {
         font-weight: 500;
       `;
       confirmation.textContent = `○ ${label} cancelled`;
-      
+
       buttonContainer.replaceWith(confirmation);
     });
-    
+
     // Add buttons to container
     buttonContainer.appendChild(button);
     buttonContainer.appendChild(cancelBtn);
-    
+
     // Add to page
     container.appendChild(buttonContainer);
-    
+
     this.logger.log('[ZDisplayRenderer] Button rendered');
   }
 
   renderSwiperInit(swiperEvent) {
     const zone = this.defaultZone;
     const container = document.getElementById(zone);
-    
+
     if (!container) {
       this.logger.error(`[ZDisplayRenderer] Cannot render swiper - zone not found: ${zone}`);
       return;
     }
-    
+
     // Extract swiper data
     const swiperId = swiperEvent.swiperId || `swiper-${Date.now()}`;
     const label = swiperEvent.label || 'Swiper';
@@ -1479,9 +1481,9 @@ export class ZDisplayRenderer {
     const autoAdvance = swiperEvent.autoAdvance !== false;
     const delay = swiperEvent.delay || 3;
     const loop = swiperEvent.loop !== false;
-    
+
     this.logger.log('[ZDisplayRenderer] Rendering swiper:', { swiperId, label, totalSlides });
-    
+
     // Create swiper container
     const swiperContainer = document.createElement('div');
     swiperContainer.className = 'zSwiper';
@@ -1493,7 +1495,7 @@ export class ZDisplayRenderer {
       border-radius: 8px;
       background-color: var(--color-base);
     `;
-    
+
     // Swiper label
     if (label) {
       const labelElement = document.createElement('h4');
@@ -1505,7 +1507,7 @@ export class ZDisplayRenderer {
       `;
       swiperContainer.appendChild(labelElement);
     }
-    
+
     // Slide content container
     const slideContent = document.createElement('div');
     slideContent.className = 'zSwiper-content';
@@ -1520,7 +1522,7 @@ export class ZDisplayRenderer {
     `;
     slideContent.textContent = slides[currentSlide] || 'No content';
     swiperContainer.appendChild(slideContent);
-    
+
     // Navigation controls
     const navContainer = document.createElement('div');
     navContainer.style.cssText = `
@@ -1529,7 +1531,7 @@ export class ZDisplayRenderer {
       align-items: center;
       margin-top: 1rem;
     `;
-    
+
     // Previous button
     const prevBtn = document.createElement('button');
     prevBtn.textContent = '◀ Previous';
@@ -1539,7 +1541,7 @@ export class ZDisplayRenderer {
       const newSlide = currentSlide > 0 ? currentSlide - 1 : (loop ? totalSlides - 1 : 0);
       this._updateSwiper(swiperId, slides, newSlide, totalSlides);
     };
-    
+
     // Slide indicator
     const indicator = document.createElement('span');
     indicator.className = 'zSwiper-indicator';
@@ -1548,7 +1550,7 @@ export class ZDisplayRenderer {
       color: var(--color-darkgray);
       font-weight: 500;
     `;
-    
+
     // Next button
     const nextBtn = document.createElement('button');
     nextBtn.textContent = 'Next ▶';
@@ -1558,12 +1560,12 @@ export class ZDisplayRenderer {
       const newSlide = currentSlide < totalSlides - 1 ? currentSlide + 1 : (loop ? 0 : currentSlide);
       this._updateSwiper(swiperId, slides, newSlide, totalSlides);
     };
-    
+
     navContainer.appendChild(prevBtn);
     navContainer.appendChild(indicator);
     navContainer.appendChild(nextBtn);
     swiperContainer.appendChild(navContainer);
-    
+
     // Auto-advance
     if (autoAdvance) {
       const autoAdvanceInterval = setInterval(() => {
@@ -1578,31 +1580,33 @@ export class ZDisplayRenderer {
         this._updateSwiper(swiperId, slides, newSlide, totalSlides);
       }, delay * 1000);
     }
-    
+
     // Add to container
     container.appendChild(swiperContainer);
-    
+
     this.logger.log('[ZDisplayRenderer] Swiper rendered');
   }
 
   _updateSwiper(swiperId, slides, newSlideIndex, totalSlides) {
     const swiperContainer = document.querySelector(`[data-swiper-id="${swiperId}"]`);
-    if (!swiperContainer) return;
-    
+    if (!swiperContainer) {
+      return;
+    }
+
     const slideContent = swiperContainer.querySelector('.zSwiper-content');
     const indicator = swiperContainer.querySelector('.zSwiper-indicator');
     const prevBtn = swiperContainer.querySelectorAll('button')[0];
     const nextBtn = swiperContainer.querySelectorAll('button')[1];
-    
+
     // Update content
     slideContent.textContent = slides[newSlideIndex] || 'No content';
     indicator.textContent = `${newSlideIndex + 1} / ${totalSlides}`;
-    
+
     // Update button states (if not looping)
     const loop = prevBtn.disabled === false && newSlideIndex === 0;
     prevBtn.disabled = !loop && newSlideIndex === 0;
     nextBtn.disabled = !loop && newSlideIndex === totalSlides - 1;
-    
+
     this.logger.log('[ZDisplayRenderer] Swiper updated to slide:', newSlideIndex + 1);
   }
 }

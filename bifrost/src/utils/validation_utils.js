@@ -1,13 +1,13 @@
 /**
  * Validation Utilities for Bifrost Forms and Inputs
- * 
+ *
  * Provides reusable validation functions for frontend input validation.
  * These complement backend validation by providing immediate UX feedback.
- * 
+ *
  * Validation Philosophy:
  * - Frontend: UX feedback, basic checks (required, format, range)
  * - Backend: Security, business logic, data integrity
- * 
+ *
  * @module validation_utils
  */
 
@@ -34,15 +34,15 @@ export function validateRequired(value, fieldName = 'Field') {
  */
 export function validateEmail(email) {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  
+
   if (!email || email.trim() === '') {
     return { valid: false, message: 'Email is required' };
   }
-  
+
   if (!emailRegex.test(email)) {
     return { valid: false, message: 'Please enter a valid email address' };
   }
-  
+
   return { valid: true, message: '' };
 }
 
@@ -90,11 +90,11 @@ export function validateNumeric(value, fieldName = 'Field') {
   if (!value || value.trim() === '') {
     return { valid: false, message: `${fieldName} is required` };
   }
-  
+
   if (isNaN(value)) {
     return { valid: false, message: `${fieldName} must be a number` };
   }
-  
+
   return { valid: true, message: '' };
 }
 
@@ -108,18 +108,18 @@ export function validateNumeric(value, fieldName = 'Field') {
  */
 export function validateRange(value, min, max, fieldName = 'Field') {
   const num = parseFloat(value);
-  
+
   if (isNaN(num)) {
     return { valid: false, message: `${fieldName} must be a number` };
   }
-  
+
   if (num < min || num > max) {
     return {
       valid: false,
       message: `${fieldName} must be between ${min} and ${max}`
     };
   }
-  
+
   return { valid: true, message: '' };
 }
 
@@ -132,7 +132,7 @@ export function validateURL(url) {
   if (!url || url.trim() === '') {
     return { valid: false, message: 'URL is required' };
   }
-  
+
   try {
     new URL(url);
     return { valid: true, message: '' };
@@ -160,43 +160,43 @@ export function validatePassword(password, options = {}) {
     requireNumber = false,
     requireSpecial = false
   } = options;
-  
+
   if (!password || password.trim() === '') {
     return { valid: false, message: 'Password is required' };
   }
-  
+
   if (password.length < minLength) {
     return {
       valid: false,
       message: `Password must be at least ${minLength} characters`
     };
   }
-  
+
   if (requireUppercase && !/[A-Z]/.test(password)) {
     return {
       valid: false,
       message: 'Password must contain at least one uppercase letter'
     };
   }
-  
+
   if (requireLowercase && !/[a-z]/.test(password)) {
     return {
       valid: false,
       message: 'Password must contain at least one lowercase letter'
     };
   }
-  
+
   if (requireNumber && !/\d/.test(password)) {
     return { valid: false, message: 'Password must contain at least one number' };
   }
-  
-  if (requireSpecial && !/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+
+  if (requireSpecial && !/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) {
     return {
       valid: false,
       message: 'Password must contain at least one special character'
     };
   }
-  
+
   return { valid: true, message: '' };
 }
 
@@ -212,14 +212,14 @@ export function validatePattern(value, pattern, fieldName = 'Field', patternDesc
   if (!value || value.trim() === '') {
     return { valid: false, message: `${fieldName} is required` };
   }
-  
+
   if (!pattern.test(value)) {
     return {
       valid: false,
       message: `${fieldName} must match ${patternDescription}`
     };
   }
-  
+
   return { valid: true, message: '' };
 }
 

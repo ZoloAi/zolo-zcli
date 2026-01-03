@@ -1,12 +1,12 @@
 /**
  * MenuRenderer - Handles menu rendering and interaction in Bifrost mode
- * 
+ *
  * This module provides:
  * - Menu HTML rendering with zTheme classes
  * - Click event handlers for menu options
  * - Keyboard navigation support
  * - WebSocket communication for menu selection
- * 
+ *
  * Integrates with:
  * - zDisplay (via zdisplay_orchestrator.js)
  * - BifrostClient (for WebSocket messaging)
@@ -27,7 +27,7 @@ export class MenuRenderer {
     this.logger.log('[MenuRenderer] 📋 Rendering menu:', message);
     this.logger.log('[MenuRenderer] Rendering menu', message);
 
-    const { menu_key, options, breadcrumbs, current_file, current_block } = message;
+    const { menu_key, options, breadcrumbs, _current_file, _current_block } = message;
 
     // Get the zVaF content element
     const contentElement = this.client._zVaFElement;
@@ -63,22 +63,22 @@ export class MenuRenderer {
     this.logger.log('[MenuRenderer] 📋 Rendering inline menu:', menuData);
     this.logger.log('[MenuRenderer] Rendering inline menu', menuData);
 
-    const { menu_key, options, title, allow_back } = menuData;
+    const { menu_key, options, title, _allow_back } = menuData;
 
     // Create menu HTML
     const menuHtml = this._createMenuHTML(menu_key || 'Menu', options, title);
-    
+
     // Insert into container
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = menuHtml;
     const menuElement = tempDiv.firstElementChild;
-    
+
     if (menuElement && container) {
       container.appendChild(menuElement);
-      
+
       // Attach event handlers
       this._attachMenuHandlers(menu_key || 'Menu', options, menuElement);
-      
+
       this.logger.log('[MenuRenderer] ✅ Inline menu rendered successfully');
     } else {
       this.logger.error('[MenuRenderer] ❌ Failed to render inline menu');
@@ -128,7 +128,7 @@ export class MenuRenderer {
     const breadcrumbsHtml = `
       <nav aria-label="breadcrumb" class="zmb-3">
         <ol class="breadcrumb">
-          ${Object.entries(breadcrumbs).map(([scope, trail]) => `
+          ${Object.entries(breadcrumbs).map(([_scope, trail]) => `
             <li class="breadcrumb-item active">${this._escapeHtml(trail)}</li>
           `).join('')}
         </ol>
@@ -146,7 +146,7 @@ export class MenuRenderer {
     const root = containerElement || document;
     const optionButtons = root.querySelectorAll('.zMenu-option button');
 
-    optionButtons.forEach((button, idx) => {
+    optionButtons.forEach((button, _idx) => {
       button.addEventListener('click', () => {
         const optionDiv = button.closest('.zMenu-option');
         const selectedKey = optionDiv.dataset.key;

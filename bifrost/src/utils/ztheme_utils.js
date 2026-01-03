@@ -2,17 +2,17 @@
  * ═══════════════════════════════════════════════════════════════
  * zTheme Utilities - zCLI to zTheme Class Mappings
  * ═══════════════════════════════════════════════════════════════
- * 
+ *
  * Pure functions for mapping zCLI color/style names to zTheme CSS classes.
  * Uses lookup tables for O(1) performance and consistency.
- * 
+ *
  * @module utils/ztheme_utils
  * @layer 2
  * @pattern Pure Functions
- * 
+ *
  * Dependencies:
  * - Layer 0: None (pure JavaScript)
- * 
+ *
  * Exports:
  * - getButtonColorClass: Map zCLI color to zTheme button class
  * - getButtonSizeClass: Map size to zTheme button size class
@@ -22,11 +22,11 @@
  * - getTextColorClass: Map zCLI color to zTheme text color class
  * - isValidZThemeClass: Validate if string is valid zTheme class
  * - indentToHeaderTag: Convert indent level to HTML header tag
- * 
+ *
  * Example:
  * ```javascript
  * import { getButtonColorClass, getButtonSizeClass } from './ztheme_utils.js';
- * 
+ *
  * const colorClass = getButtonColorClass('primary');  // 'zBtnPrimary'
  * const sizeClass = getButtonSizeClass('lg');          // 'zBtn-lg'
  * ```
@@ -107,10 +107,10 @@ const TEXT_COLOR_MAP = {
 
 /**
  * Get zTheme button color class from zCLI color name
- * 
+ *
  * @param {string} zColor - zCLI color name (primary, danger, success, etc)
  * @returns {string} zTheme button class (zBtn-primary, zBtn-danger, etc)
- * 
+ *
  * @example
  * getButtonColorClass('primary')   // 'zBtn-primary'
  * getButtonColorClass('DANGER')    // 'zBtn-danger' (case-insensitive)
@@ -124,10 +124,10 @@ export function getButtonColorClass(zColor) {
 
 /**
  * Get zTheme button size class
- * 
+ *
  * @param {string} size - Size (sm, md, lg)
  * @returns {string} zTheme size class (zBtn-sm, zBtn-lg, or empty string for md)
- * 
+ *
  * @example
  * getButtonSizeClass('sm')   // 'zBtn-sm'
  * getButtonSizeClass('md')   // '' (default, no class needed)
@@ -136,7 +136,7 @@ export function getButtonColorClass(zColor) {
  */
 export function getButtonSizeClass(size) {
   const normalized = size?.toLowerCase() || 'md';
-  
+
   const SIZE_MAP = {
     'sm': 'zBtn-sm',
     'small': 'zBtn-sm',
@@ -145,41 +145,41 @@ export function getButtonSizeClass(size) {
     'lg': 'zBtn-lg',
     'large': 'zBtn-lg'
   };
-  
+
   return SIZE_MAP[normalized] || '';
 }
 
 /**
  * Get zTheme button style variant class
- * 
+ *
  * NOTE: For outline buttons, use getButtonOutlineClass() instead.
  * This only handles non-color-specific styles.
- * 
+ *
  * @param {string} style - Style variant (default, link)
  * @returns {string} zTheme style class or empty for default
- * 
+ *
  * @example
  * getButtonStyleClass('default')   // '' (no class needed)
  * getButtonStyleClass('link')      // 'zBtn-link'
  */
 export function getButtonStyleClass(style) {
   const normalized = style?.toLowerCase() || 'default';
-  
+
   const STYLE_MAP = {
     'default': '',
     'solid': '',
     'link': 'zBtn-link'
   };
-  
+
   return STYLE_MAP[normalized] || '';
 }
 
 /**
  * Get zTheme outline button class (color-specific)
- * 
+ *
  * @param {string} zColor - zCLI color name
  * @returns {string} zTheme outline button class (e.g., 'zBtn-outline-primary')
- * 
+ *
  * @example
  * getButtonOutlineClass('primary')  // 'zBtn-outline-primary'
  * getButtonOutlineClass('danger')   // 'zBtn-outline-danger'
@@ -195,13 +195,13 @@ export function getButtonOutlineClass(zColor) {
 
 /**
  * Get zTheme signal color class from zCLI event type
- * 
+ *
  * Returns ONLY the color-specific class (e.g., 'zSignal-success').
  * The base 'zSignal' class should be added separately by the renderer.
- * 
+ *
  * @param {string} eventType - zCLI event type (error, warning, success, info)
  * @returns {string} zTheme signal color class (e.g., 'zSignal-success')
- * 
+ *
  * @example
  * getAlertColorClass('error')    // 'zSignal-error'
  * getAlertColorClass('warning')  // 'zSignal-warning'
@@ -219,10 +219,10 @@ export function getAlertColorClass(eventType) {
 
 /**
  * Get zTheme badge color classes from zCLI color
- * 
+ *
  * @param {string} zColor - zCLI color name
  * @returns {string} zTheme badge classes (e.g., 'zBadge zBgPrimary')
- * 
+ *
  * @example
  * getBadgeColorClass('primary')  // 'zBadge zBgPrimary'
  * getBadgeColorClass('danger')   // 'zBadge zBgDanger'
@@ -238,10 +238,10 @@ export function getBadgeColorClass(zColor) {
 
 /**
  * Get zTheme text color class from zCLI color
- * 
+ *
  * @param {string} zColor - zCLI color name
  * @returns {string} zTheme text color class (e.g., 'zText-primary')
- * 
+ *
  * @example
  * getTextColorClass('primary')  // 'zText-primary'
  * getTextColorClass('danger')   // 'zText-danger'
@@ -258,13 +258,13 @@ export function getTextColorClass(zColor) {
 
 /**
  * Convert indent level to HTML header tag
- * 
+ *
  * NOTE: indent 0 is reserved for special cases (flush/hero layouts).
  * This function maps indent 1-6 directly to h1-h6 semantic HTML tags.
- * 
+ *
  * @param {number} indent - Indent level (1-6, where 1=h1, 6=h6)
  * @returns {string} HTML tag name ('h1' through 'h6')
- * 
+ *
  * @example
  * indentToHeaderTag(1)   // 'h1'
  * indentToHeaderTag(2)   // 'h2'
@@ -283,10 +283,10 @@ export function indentToHeaderTag(indent) {
 
 /**
  * Validate if a string is a valid zTheme class name
- * 
+ *
  * @param {string} className - Class name to validate
  * @returns {boolean} True if valid zTheme class
- * 
+ *
  * @example
  * isValidZThemeClass('zBtn')           // true
  * isValidZThemeClass('zBtnPrimary')    // true
@@ -298,7 +298,7 @@ export function isValidZThemeClass(className) {
   if (!className || typeof className !== 'string') {
     return false;
   }
-  
+
   // zTheme classes start with 'z' followed by uppercase letter
   return /^z[A-Z]/.test(className);
 }

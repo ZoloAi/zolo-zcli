@@ -2,19 +2,19 @@
  * ═══════════════════════════════════════════════════════════════
  * Card Renderer - zTheme Card Components
  * ═══════════════════════════════════════════════════════════════
- * 
+ *
  * Renders card/panel components aligned with zTheme card system:
  * - zCard (basic cards with proper body wrapper)
  * - zCard-header/footer (optional sections)
  * - zCard-title/subtitle/text (typography)
  * - Color variants (zCard-primary, zCard-success, etc.)
- * 
+ *
  * ✨ REFACTORED: Uses Layer 0 primitives + Layer 2 utilities
- * 
+ *
  * @module rendering/card_renderer
  * @layer 3
  * @pattern Strategy (card components)
- * 
+ *
  * @see https://github.com/ZoloAi/zTheme/blob/main/src/css/zCards.css
  */
 
@@ -36,13 +36,13 @@ export default class CardRenderer {
 
   /**
    * Enhance a container with proper zCard structure
-   * 
+   *
    * Transforms:
    *   <div class="zCard">
    *     <h2>Title</h2>
    *     <p>Content</p>
    *   </div>
-   * 
+   *
    * Into:
    *   <div class="zCard">
    *     <div class="zCard-body">
@@ -50,7 +50,7 @@ export default class CardRenderer {
    *       <p class="zCard-text">Content</p>
    *     </div>
    *   </div>
-   * 
+   *
    * @param {HTMLElement} container - Container element with zCard class
    * @returns {HTMLElement} Enhanced card element
    */
@@ -72,12 +72,12 @@ export default class CardRenderer {
     // Move all direct children into the card body
     while (container.firstChild) {
       const child = container.firstChild;
-      
+
       // Apply zCard typography classes based on element type
       if (child.nodeType === Node.ELEMENT_NODE) {
         this._applyCardTypography(child);
       }
-      
+
       cardBody.appendChild(child);
     }
 
@@ -95,7 +95,7 @@ export default class CardRenderer {
    */
   _applyCardTypography(element) {
     const tagName = element.tagName.toLowerCase();
-    
+
     // Apply zCard-title to first heading (h1-h6)
     if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tagName)) {
       // Check if this is the first heading in the card
@@ -111,10 +111,8 @@ export default class CardRenderer {
           this.logger.log(`[CardRenderer] Applied zCard-subtitle to ${tagName}`);
         }
       }
-    }
-    
-    // Apply zCard-text to paragraphs
-    else if (tagName === 'p') {
+    } else if (tagName === 'p') {
+      // Apply zCard-text to paragraphs
       element.classList.add('zCard-text');
       this.logger.log('[CardRenderer] Applied zCard-text to paragraph');
     }
@@ -122,7 +120,7 @@ export default class CardRenderer {
 
   /**
    * Create a complete card from scratch
-   * 
+   *
    * @param {Object} options - Card configuration
    * @param {string} [options.title] - Card title
    * @param {string} [options.subtitle] - Card subtitle
@@ -146,12 +144,12 @@ export default class CardRenderer {
 
     // Create card container (using primitive)
     const card = createDiv({ class: 'zCard' });
-    
+
     // Apply variant class
     if (variant) {
       card.classList.add(`zCard-${variant}`);
     }
-    
+
     // Apply additional classes
     if (classes) {
       const classList = classes.split(' ').filter(c => c.trim());
@@ -199,7 +197,7 @@ export default class CardRenderer {
     }
 
     this.logger.log('[CardRenderer] Created card:', {title, variant, hasHeader: !!header, hasFooter: !!footer});
-    
+
     return card;
   }
 
@@ -209,8 +207,10 @@ export default class CardRenderer {
    * @returns {string|null} Card variant class or null
    */
   getCardVariant(color) {
-    if (!color) return null;
-    
+    if (!color) {
+      return null;
+    }
+
     const variantMap = {
       'PRIMARY': 'primary',
       'SECONDARY': 'secondary',
@@ -221,7 +221,7 @@ export default class CardRenderer {
       'LIGHT': 'light',
       'DARK': 'dark'
     };
-    
+
     return variantMap[color.toUpperCase()] || null;
   }
 }

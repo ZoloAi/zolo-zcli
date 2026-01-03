@@ -1,23 +1,23 @@
 /**
  * ProgressBarRenderer - Render progress bars with percentage and ETA
- * 
+ *
  * Terminal-first implementation matching backend zDisplay.progress_bar()
- * 
+ *
  * Backend Events (from display_event_timebased.py):
  * - progress_bar: Update progress
  * - progress_complete: Finish progress
- * 
+ *
  * Terminal Paradigm:
  * - Carriage return (\r) updates: Overwrites same line for smooth updates
  * - ETA calculation: Based on elapsed time and remaining work
  * - Visual bars: ████████░░░░ 80% (2m 30s remaining)
- * 
+ *
  * Bifrost Paradigm:
  * - WebSocket events trigger updates
  * - CSS transitions for smooth width changes
  * - Multiple progress bars can be active simultaneously
  * - Striped/animated variants for indeterminate or processing states
- * 
+ *
  * Features:
  * - Determinate progress (0-100%)
  * - Percentage display (show_percentage)
@@ -26,7 +26,7 @@
  * - Striped/animated variants
  * - Height variants (using size_utils)
  * - Auto-removal on completion
- * 
+ *
  * @see https://github.com/ZoloAi/zTheme/blob/main/Manual/ztheme-progress.html
  */
 
@@ -34,6 +34,7 @@ import { createDiv } from './primitives/generic_containers.js';
 import { createSpan } from './primitives/generic_containers.js';
 import { getBackgroundClass } from '../utils/color_utils.js';
 import { applyHeight } from '../utils/size_utils.js';
+import { withErrorBoundary } from '../utils/error_boundary.js';
 
 export default class ProgressBarRenderer {
   /**
@@ -42,6 +43,15 @@ export default class ProgressBarRenderer {
   constructor(logger) {
     this.logger = logger;
     this._activeProgressBars = new Map(); // Track active progress bars by progressId
+
+    // Wrap render method with error boundary
+    if (typeof this.render === 'function') {
+      const originalRender = this.render.bind(this);
+      this.render = withErrorBoundary(originalRender, {
+        component: 'ProgressBarRenderer',
+        logger: this.logger
+      });
+    }
   }
 
   /**
@@ -305,7 +315,7 @@ export default class ProgressBarRenderer {
   clearAll() {
     this.logger.log('[ProgressBarRenderer] Clearing all progress bars');
 
-    for (const [progressId, data] of this._activeProgressBars) {
+    for (const [_progressId, data] of this._activeProgressBars) {
       if (data.element.parentNode) {
         data.element.parentNode.removeChild(data.element);
       }

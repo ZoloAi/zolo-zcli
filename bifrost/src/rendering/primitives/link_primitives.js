@@ -2,57 +2,57 @@
  * ═══════════════════════════════════════════════════════════════
  * Link Primitives - Semantic Link Rendering with Target Support
  * ═══════════════════════════════════════════════════════════════
- * 
+ *
  * Renders semantic HTML links with proper href, target, and security
  * attributes for zDisplay link events.
- * 
+ *
  * @module rendering/link_primitives
  * @layer 1.0 (Event-aware primitive renderer)
  * @pattern Factory + Event Handler Pattern
- * 
+ *
  * Philosophy:
  * - Semantic HTML (use <a> for navigation, not <button>)
  * - Security-first (auto-add rel="noopener noreferrer" for _blank)
  * - Target support (_blank, _self, _parent, _top, custom window.open())
  * - Mode-aware (handles internal vs external vs anchor links)
- * 
+ *
  * Link Types:
  * - Internal Delta: $zAbout → Client-side routing
  * - Internal zPath: @.UI.zUI.zAbout → Client-side routing
  * - External: https://example.com → Native browser navigation
  * - Anchor: #section → Smooth scroll to element
  * - Placeholder: # → No navigation (styled text)
- * 
+ *
  * Target Behavior:
  * - _self: Navigate in current tab (default)
  * - _blank: Open in new tab/window (auto-add security)
  * - _parent: Navigate parent frame
  * - _top: Navigate top-level frame
  * - Custom window: Use window.open() with features
- * 
+ *
  * Security:
  * - External _blank links: Auto-add rel="noopener noreferrer"
  * - Prevents window.opener exploitation (Tabnabbing attack)
  * - User can override via explicit rel parameter
- * 
+ *
  * Dependencies:
  * - utils/dom_utils.js (createElement, setAttributes)
  * - bifrost_client.js (for client-side navigation)
- * 
+ *
  * Exports:
  * - renderLink(linkData, container, client) → void
- * 
+ *
  * Example:
  * ```javascript
  * import { renderLink } from './link_primitives.js';
- * 
+ *
  * // Internal link
  * renderLink({
  *   label: 'About',
  *   href: '$zAbout',
  *   target: '_self'
  * }, container, bifrostClient);
- * 
+ *
  * // External link (new tab)
  * renderLink({
  *   label: 'GitHub',
@@ -63,7 +63,7 @@
  * ```
  */
 
-import { createElement, setAttributes } from '../../utils/dom_utils.js';
+import { createElement } from '../../utils/dom_utils.js';
 
 // Link type constants (must match backend)
 const LINK_TYPE_INTERNAL_DELTA = 'delta';
@@ -82,11 +82,11 @@ const TARGET_SELF = '_self';
 
 /**
  * Detect link type from href when backend doesn't provide it.
- * 
+ *
  * This is a fallback mechanism to ensure robust link rendering even
  * when the backend omits the link_type field. It mirrors the backend's
  * detection logic in display_event_links.py.
- * 
+ *
  * @param {string} href - Link destination
  * @returns {string} Detected link type constant
  * @private
@@ -95,32 +95,32 @@ function _detectLinkTypeFromHref(href) {
   if (!href || href === '#') {
     return LINK_TYPE_PLACEHOLDER;
   }
-  
+
   // External URLs (http, https, www)
   if (href.startsWith('http://') || href.startsWith('https://') || href.startsWith('www.')) {
     return LINK_TYPE_EXTERNAL;
   }
-  
+
   // Anchor links (#section)
   if (href.startsWith('#') && href !== '#') {
     return LINK_TYPE_ANCHOR;
   }
-  
+
   // Internal delta links ($zBlock)
   if (href.startsWith('$') || href.includes('$')) {
     return LINK_TYPE_INTERNAL_DELTA;
   }
-  
+
   // Internal zPath links (@.UI.zUI.zBlock)
   if (href.startsWith('@')) {
     return LINK_TYPE_INTERNAL_ZPATH;
   }
-  
+
   // Default: treat web routes (/path) as internal delta
   if (href.startsWith('/')) {
     return LINK_TYPE_INTERNAL_DELTA;
   }
-  
+
   // Fallback: placeholder
   return LINK_TYPE_PLACEHOLDER;
 }
@@ -131,13 +131,13 @@ function _detectLinkTypeFromHref(href) {
 
 /**
  * Render a semantic link with mode-aware behavior and target support.
- * 
+ *
  * Handles internal navigation (client-side routing), external links
  * (native browser), anchor links (smooth scroll), and placeholder links
  * (styled text only).
- * 
+ *
  * Security: Auto-adds rel="noopener noreferrer" for external _blank links.
- * 
+ *
  * @param {Object} linkData - Link configuration from backend
  * @param {string} linkData.label - Link text to display
  * @param {string} linkData.href - Link destination
@@ -149,7 +149,7 @@ function _detectLinkTypeFromHref(href) {
  * @param {Object} [linkData.window] - Window.open() features
  * @param {HTMLElement} container - DOM element to append link to
  * @param {Object} client - BifrostClient instance for navigation
- * 
+ *
  * @example
  * // Internal navigation
  * renderLink({
@@ -158,7 +158,7 @@ function _detectLinkTypeFromHref(href) {
  *   target: '_self',
  *   link_type: 'delta'
  * }, containerDiv, bifrostClient);
- * 
+ *
  * @example
  * // External link with new tab
  * renderLink({
@@ -168,7 +168,7 @@ function _detectLinkTypeFromHref(href) {
  *   link_type: 'external',
  *   _zClass: 'zBtn zBtn-primary'
  * }, containerDiv, bifrostClient);
- * 
+ *
  * @example
  * // Anchor link (smooth scroll)
  * renderLink({
@@ -199,9 +199,9 @@ export function renderLink(linkData, container, client) {
   }
 
   // Debug: Log incoming link data with detected type
-  console.log('[LinkPrimitives] 🎨 renderLink called:', { 
-    label, 
-    href, 
+  console.log('[LinkPrimitives] 🎨 renderLink called:', {
+    label,
+    href,
     link_type: link_type,
     detectedLinkType: detectedLinkType,
     target,
@@ -220,7 +220,7 @@ export function renderLink(linkData, container, client) {
   // - If _zClass has 'zBtn' → add zBtn-{color}
   // - If plain link (no zBtn) → add zText-{color}
   // - Group styling handled by orchestrator
-  
+
   // Apply custom _zClass if provided (from YAML)
   let hasButtonClass = false;
   if (_zClass) {
@@ -233,11 +233,11 @@ export function renderLink(linkData, container, client) {
   } else {
     console.log('[LinkPrimitives] ⚠️  No _zClass provided');
   }
-  
+
   // 🎨 DRY MAGIC: Auto-infer color class based on context (Terminal-first)
   if (color) {
     const colorLower = color.toLowerCase();
-    
+
     if (hasButtonClass) {
       // Button context: add zBtn-{color} if not already present
       const colorClass = `zBtn-${colorLower}`;
@@ -252,7 +252,7 @@ export function renderLink(linkData, container, client) {
       console.log('[LinkPrimitives] 🎨 Auto-added text color:', colorClass);
     }
   }
-  
+
   // Debug: Show final classes applied
   console.log('[LinkPrimitives] 🎨 Final classList:', Array.from(link.classList));
 
@@ -293,10 +293,10 @@ export function renderLink(linkData, container, client) {
 
 /**
  * Setup internal link for client-side routing.
- * 
+ *
  * Prevents default browser navigation and uses BifrostClient.navigate()
  * for SPA-style routing. Supports opening in new tab via window.open().
- * 
+ *
  * @private
  * @param {HTMLAnchorElement} link - Link element to configure
  * @param {string} href - Internal path (delta or zPath)
@@ -306,10 +306,10 @@ export function renderLink(linkData, container, client) {
  */
 function _setupInternalLink(link, href, target, windowFeatures, client) {
   link.href = '#'; // Prevent default navigation
-  
+
   // Debug: Verify click handler setup
   console.log('[LinkPrimitives] 🔗 Setting up internal link:', { href, target, hasClient: !!client });
-  
+
   link.addEventListener('click', (e) => {
     e.preventDefault();
     console.log('[LinkPrimitives] 👆 Link clicked:', href);
@@ -342,10 +342,10 @@ function _setupInternalLink(link, href, target, windowFeatures, client) {
 
 /**
  * Setup external link with proper security and target attributes.
- * 
+ *
  * Auto-adds rel="noopener noreferrer" for _blank to prevent window.opener
  * exploitation (Tabnabbing attack).
- * 
+ *
  * @private
  * @param {HTMLAnchorElement} link - Link element to configure
  * @param {string} href - External URL
@@ -376,7 +376,7 @@ function _setupExternalLink(link, href, target, rel, windowFeatures) {
     });
   } else {
     // Add click log for standard external links too
-    link.addEventListener('click', (e) => {
+    link.addEventListener('click', (_e) => {
       console.log('[LinkPrimitives] 👆 External link clicked (native):', href);
       // No preventDefault - let browser handle normally
     });
@@ -389,10 +389,10 @@ function _setupExternalLink(link, href, target, rel, windowFeatures) {
 
 /**
  * Setup anchor link for smooth scrolling to target element.
- * 
+ *
  * Uses scrollIntoView with smooth behavior for better UX.
  * Warns if target element not found.
- * 
+ *
  * @private
  * @param {HTMLAnchorElement} link - Link element to configure
  * @param {string} href - Anchor hash (e.g., "#features")
@@ -416,19 +416,19 @@ function _setupAnchorLink(link, href) {
 
 /**
  * Setup placeholder link (no navigation action).
- * 
+ *
  * Used for design/mock purposes or "coming soon" links.
  * Prevents default click behavior.
- * 
+ *
  * @private
  * @param {HTMLAnchorElement} link - Link element to configure
  */
 function _setupPlaceholderLink(link) {
   link.href = '#';
-  
+
   // Debug: Verify placeholder link setup
   console.log('[LinkPrimitives] 📍 Setting up placeholder link:', link.textContent);
-  
+
   link.addEventListener('click', (e) => {
     e.preventDefault();
     console.log('[LinkPrimitives] 👆 Placeholder link clicked (no action):', link.textContent);
@@ -442,10 +442,10 @@ function _setupPlaceholderLink(link) {
 
 /**
  * Open URL in new window with custom features.
- * 
+ *
  * Centers the window on screen and applies custom width, height, and
  * window features (menubar, toolbar, etc.).
- * 
+ *
  * @private
  * @param {string} url - URL to open
  * @param {Object} features - Window features
@@ -470,7 +470,7 @@ function _openInNewWindow(url, features = {}, client = null) {
   let fullUrl = url;
   if (client && (url.startsWith('$') || url.startsWith('@'))) {
     // Convert internal path to full URL (same origin)
-    fullUrl = window.location.origin + '/' + url.substring(1);
+    fullUrl = `${window.location.origin  }/${  url.substring(1)}`;
   }
 
   // Open new window

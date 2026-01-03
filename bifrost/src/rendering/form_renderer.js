@@ -1,14 +1,14 @@
 /**
  * FormRenderer - Async Form Rendering for zDialog in Bifrost Mode
- * 
+ *
  * This renderer handles the display and submission of zDialog forms in the browser.
  * Unlike Terminal mode (which collects input field-by-field), Bifrost displays the
  * entire form at once with all fields visible.
- * 
+ *
  * Key Differences from Terminal:
  * - Terminal: Blocking, field-by-field, synchronous
  * - Bifrost: Non-blocking, all-at-once, asynchronous
- * 
+ *
  * Flow:
  * 1. Backend sends zDialog event with form context
  * 2. FormRenderer displays full HTML form
@@ -16,22 +16,23 @@
  * 4. FormRenderer sends form_submit WebSocket message
  * 5. Backend validates and executes onSubmit
  * 6. Backend sends result back to frontend
- * 
+ *
  * Architecture:
  * - Uses form_primitives.js for raw HTML element creation
  * - Uses dom_utils.js for DOM manipulation
  * - Applies zTheme classes for styling
  * - Handles WebSocket communication for submission
- * 
+ *
  * @module FormRenderer
  */
 
-import { createElement, setAttributes, clearElement } from '../utils/dom_utils.js';
-import { 
-  createForm, 
-  createInput, 
-  createTextarea, 
-  createLabel 
+import { createElement, clearElement } from '../utils/dom_utils.js';
+import { withErrorBoundary } from '../utils/error_boundary.js';
+import {
+  createForm,
+  createInput,
+  createTextarea,
+  createLabel
 } from './primitives/form_primitives.js';
 
 export class FormRenderer {
@@ -39,6 +40,13 @@ export class FormRenderer {
     this.client = client;
     this.logger = client.logger;
     this.currentForm = null;
+
+    // Wrap render method with error boundary
+    const originalRender = this.render.bind(this);
+    this.render = withErrorBoundary(originalRender, {
+      component: 'FormRenderer',
+      logger: this.logger
+    });
   }
 
   /**
@@ -53,7 +61,7 @@ export class FormRenderer {
    */
   renderForm(eventData) {
     this.logger.log('[FormRenderer] Rendering form:', eventData.title);
-    
+
     const {
       title = 'Form',
       model,
@@ -125,7 +133,7 @@ export class FormRenderer {
   _createFieldGroup(fieldDef) {
     // Handle both string and object field definitions
     const fieldName = typeof fieldDef === 'string' ? fieldDef : fieldDef.name;
-    
+
     // Auto-detect field type from field name if not explicitly provided
     let fieldType = 'text';
     if (typeof fieldDef === 'object' && fieldDef.type) {
@@ -142,7 +150,7 @@ export class FormRenderer {
         fieldType = 'tel';
       }
     }
-    
+
     const fieldLabel = typeof fieldDef === 'object' ? (fieldDef.label || fieldName) : fieldName;
     const required = typeof fieldDef === 'object' ? (fieldDef.required !== false) : true;
 
@@ -152,7 +160,7 @@ export class FormRenderer {
     // Label using primitive
     const label = createLabel(fieldName, { class: 'zLabel' });
     label.textContent = this._formatLabel(fieldLabel);
-    
+
     if (required) {
       const requiredMark = createElement('span', ['zText-danger']);
       requiredMark.textContent = ' *';
@@ -190,7 +198,7 @@ export class FormRenderer {
     } else {
       // Use input primitive with appropriate type
       let inputType = 'text';
-      
+
       // Map field types to HTML5 input types
       if (fieldType === 'password') {
         inputType = 'password';
@@ -339,9 +347,9 @@ export class FormRenderer {
     const errorContainer = formElement.querySelector('.zDialog-errors');
     if (errorContainer) {
       errorContainer.style.display = 'block';
-      
+
       const errorList = createElement('ul', ['zmb-0']);
-      
+
       // Display validation errors
       if (response.errors && Array.isArray(response.errors)) {
         response.errors.forEach(error => {
@@ -354,7 +362,7 @@ export class FormRenderer {
         errorItem.textContent = response.message || 'Validation failed. Please check your input.';
         errorList.appendChild(errorItem);
       }
-      
+
       clearElement(errorContainer);
       const errorHeader = createElement('strong');
       errorHeader.textContent = 'Error:';

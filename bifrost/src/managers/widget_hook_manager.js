@@ -1,6 +1,6 @@
 /**
  * WidgetHookManager - Registers all default widget hooks
- * 
+ *
  * Responsibilities:
  * - Register onDisplay hook (auto-rendering)
  * - Register onRenderChunk hook (progressive rendering)
@@ -9,7 +9,7 @@
  * - Register onSpinnerStart/onSpinnerStop hooks
  * - Register onSwiperInit/onSwiperUpdate/onSwiperComplete hooks
  * - Register onZDash hook (dashboard rendering)
- * 
+ *
  * Extracted from bifrost_client.js (Phase 3.4)
  */
 
@@ -41,20 +41,20 @@ export class WidgetHookManager {
       this.hooks.register('onDisplay', async (event) => {
         this.logger.log('[WidgetHookManager] 📨 onDisplay hook triggered with event:', event);
         this.logger.log('[WidgetHookManager] Auto-rendering zDisplay event:', event);
-        
+
         // Check if this is a zDialog event (form)
         if (event.event === 'zDialog' || event.display_event === 'zDialog') {
           this.logger.log('[WidgetHookManager] ✅ DETECTED zDialog event - routing to FormRenderer');
           await this.client._ensureFormRenderer();
-          
+
           const formData = event.data || event;
           const formElement = this.client.formRenderer.renderForm(formData);
-          
+
           // Append form to appropriate container
           const rootZone = document.getElementById(this.client.zDisplayRenderer.defaultZone);
           const containers = rootZone ? rootZone.querySelectorAll('.zContainer') : [];
           const targetZone = containers.length > 0 ? containers[containers.length - 1] : rootZone;
-          
+
           if (targetZone) {
             targetZone.appendChild(formElement);
             this.logger.log('[WidgetHookManager] ✅ Form appended to DOM');
@@ -76,14 +76,14 @@ export class WidgetHookManager {
       this.hooks.register('onRenderChunk', async (message) => {
         this.logger.log('[WidgetHookManager] 📦 onRenderChunk hook triggered:', message);
         this.logger.log('[WidgetHookManager] Processing chunk:', message);
-        
+
         await this.client._renderChunkProgressive(message);
-        
+
         // Cache page after render (debounced)
         if (this.client._cachePageTimeout) {
           clearTimeout(this.client._cachePageTimeout);
         }
-        
+
         this.client._cachePageTimeout = setTimeout(async () => {
           if (this.client.cache && typeof document !== 'undefined') {
             try {
@@ -111,7 +111,7 @@ export class WidgetHookManager {
       this.hooks.register('onInput', (inputRequest) => {
         this.logger.log('[WidgetHookManager] Rendering input request:', inputRequest);
         const inputType = inputRequest.type || inputRequest.data?.type || 'string';
-        
+
         if (inputType === 'selection') {
           this.client.zDisplayRenderer.renderSelectionRequest(inputRequest);
         } else if (inputType === 'button') {
@@ -136,7 +136,7 @@ export class WidgetHookManager {
       });
       this.logger.log('[WidgetHookManager] Registered onProgressBar hook');
     }
-    
+
     if (!this.hooks.has('onProgressComplete')) {
       this.hooks.register('onProgressComplete', async (event) => {
         this.logger.log('[WidgetHookManager] Progress complete:', event);
@@ -159,7 +159,7 @@ export class WidgetHookManager {
       });
       this.logger.log('[WidgetHookManager] Registered onSpinnerStart hook');
     }
-    
+
     if (!this.hooks.has('onSpinnerStop')) {
       this.hooks.register('onSpinnerStop', async (event) => {
         this.logger.log('[WidgetHookManager] Spinner stop:', event);

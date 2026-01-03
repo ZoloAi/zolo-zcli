@@ -12,9 +12,11 @@ export class Renderer {
   /**
    * Render data as a table with zTheme styling
    */
-  renderTable(data, container, options = {}) {
+  renderTable(data, container, _options = {}) {
     const element = this._getElement(container);
-    if (!element) return;
+    if (!element) {
+      return;
+    }
 
     if (!Array.isArray(data) || data.length === 0) {
       element.innerHTML = '<p class="zEmpty">No data to display</p>';
@@ -23,7 +25,7 @@ export class Renderer {
 
     const columns = Object.keys(data[0]);
     let html = '<table class="zTable zTable-striped zTable-hover">';
-    
+
     // Table header
     html += '<thead><tr>';
     columns.forEach(col => {
@@ -51,7 +53,9 @@ export class Renderer {
    */
   renderMenu(items, container) {
     const element = this._getElement(container);
-    if (!element) return;
+    if (!element) {
+      return;
+    }
 
     let html = '<div class="zMenu">';
     items.forEach((item, index) => {
@@ -82,14 +86,16 @@ export class Renderer {
    */
   renderForm(fields, container, onSubmit) {
     const element = this._getElement(container);
-    if (!element) return;
+    if (!element) {
+      return;
+    }
 
     let html = '<form class="zForm">';
-    
+
     fields.forEach(field => {
       html += '<div class="zForm-group">';
       html += `<label for="${field.name}">${field.label}</label>`;
-      
+
       if (field.type === 'textarea') {
         html += `<textarea id="${field.name}" name="${field.name}" 
                   class="zInput" ${field.required ? 'required' : ''}
@@ -100,7 +106,7 @@ export class Renderer {
                  ${field.required ? 'required' : ''}
                  placeholder="${field.placeholder || ''}">`;
       }
-      
+
       html += '</div>';
     });
 
@@ -128,7 +134,9 @@ export class Renderer {
    */
   renderMessage(text, type = 'info', container, duration = 5000) {
     const element = this._getElement(container);
-    if (!element) return;
+    if (!element) {
+      return;
+    }
 
     const typeClass = {
       'success': 'zAlert-success',
@@ -160,7 +168,9 @@ export class Renderer {
    */
   renderProgressBar(progressId, current, total, options = {}, container) {
     const element = this._getElement(container);
-    if (!element) return;
+    if (!element) {
+      return;
+    }
 
     const {
       label = 'Processing',
@@ -177,19 +187,25 @@ export class Renderer {
 
     // Build classes
     const classes = ['zProgress'];
-    if (color) classes.push(`zProgress-${color}`);
-    if (size) classes.push(`zProgress-${size}`);
-    if (isIndeterminate) classes.push('zProgress-indeterminate');
+    if (color) {
+      classes.push(`zProgress-${color}`);
+    }
+    if (size) {
+      classes.push(`zProgress-${size}`);
+    }
+    if (isIndeterminate) {
+      classes.push('zProgress-indeterminate');
+    }
 
     // Check if progress bar already exists
     let progressDiv = element.querySelector(`[data-progress-id="${progressId}"]`);
-    
+
     if (!progressDiv) {
       // Create new progress bar
       progressDiv = document.createElement('div');
       progressDiv.className = classes.join(' ');
       progressDiv.setAttribute('data-progress-id', progressId);
-      
+
       let html = '<div class="zProgress-label">';
       html += `<span>${this._escapeHtml(label)}</span>`;
       html += '<span class="zProgress-stats"></span>';
@@ -197,7 +213,7 @@ export class Renderer {
       html += '<div class="zProgress-track">';
       html += '<div class="zProgress-fill"></div>';
       html += '</div>';
-      
+
       progressDiv.innerHTML = html;
       element.appendChild(progressDiv);
     } else {
@@ -236,7 +252,9 @@ export class Renderer {
    */
   updateProgress(progressId, current, options = {}, container) {
     const element = this._getElement(container);
-    if (!element) return;
+    if (!element) {
+      return;
+    }
 
     const progressDiv = element.querySelector(`[data-progress-id="${progressId}"]`);
     if (!progressDiv) {
@@ -247,12 +265,12 @@ export class Renderer {
     // Get total from data attribute or calculate from width
     const fillEl = progressDiv.querySelector('.zProgress-fill');
     const isIndeterminate = progressDiv.classList.contains('zProgress-indeterminate');
-    
+
     if (!isIndeterminate) {
       // Try to extract total from current percentage
       const currentWidth = parseFloat(fillEl.style.width) || 0;
       const total = currentWidth > 0 ? Math.round((current * 100) / currentWidth) : 100;
-      
+
       const percentage = Math.round((current / total) * 100);
       fillEl.style.width = `${percentage}%`;
 
@@ -275,7 +293,9 @@ export class Renderer {
    */
   removeProgress(progressId, container) {
     const element = this._getElement(container);
-    if (!element) return;
+    if (!element) {
+      return;
+    }
 
     const progressDiv = element.querySelector(`[data-progress-id="${progressId}"]`);
     if (progressDiv) {
@@ -294,7 +314,9 @@ export class Renderer {
    */
   renderSpinner(spinnerId, label, style = 'dots', options = {}, container) {
     const element = this._getElement(container);
-    if (!element) return;
+    if (!element) {
+      return;
+    }
 
     const {
       size = '',
@@ -304,31 +326,37 @@ export class Renderer {
 
     // Build classes
     const classes = ['zSpinner'];
-    if (size) classes.push(`zSpinner-${size}`);
-    if (center) classes.push('zSpinner-center');
-    if (inline) classes.push('zSpinner-inline');
+    if (size) {
+      classes.push(`zSpinner-${size}`);
+    }
+    if (center) {
+      classes.push('zSpinner-center');
+    }
+    if (inline) {
+      classes.push('zSpinner-inline');
+    }
 
     // Check if spinner already exists
     let spinnerDiv = element.querySelector(`[data-spinner-id="${spinnerId}"]`);
-    
+
     if (!spinnerDiv) {
       // Create new spinner
       spinnerDiv = document.createElement('div');
       spinnerDiv.className = classes.join(' ');
       spinnerDiv.setAttribute('data-spinner-id', spinnerId);
-      
+
       let html = '';
       if (label) {
         html += `<div class="zSpinner-label">${this._escapeHtml(label)}</div>`;
       }
-      
+
       // Add animation based on style
       if (style === 'circle') {
         html += '<div class="zSpinner-animation"><div class="zSpinner-circle"></div></div>';
       } else {
         html += `<div class="zSpinner-animation zSpinner-${style}"></div>`;
       }
-      
+
       spinnerDiv.innerHTML = html;
       element.appendChild(spinnerDiv);
     }
@@ -343,7 +371,9 @@ export class Renderer {
    */
   removeSpinner(spinnerId, container) {
     const element = this._getElement(container);
-    if (!element) return;
+    if (!element) {
+      return;
+    }
 
     const spinnerDiv = element.querySelector(`[data-spinner-id="${spinnerId}"]`);
     if (spinnerDiv) {
@@ -357,8 +387,8 @@ export class Renderer {
    * @private
    */
   _getElement(container) {
-    const element = typeof container === 'string' 
-      ? document.querySelector(container) 
+    const element = typeof container === 'string'
+      ? document.querySelector(container)
       : container;
 
     if (!element) {
@@ -383,7 +413,9 @@ export class Renderer {
    * @private
    */
   _escapeHtml(text) {
-    if (text === null || text === undefined) return '';
+    if (text === null || text === undefined) {
+      return '';
+    }
     const map = {
       '&': '&amp;',
       '<': '&lt;',

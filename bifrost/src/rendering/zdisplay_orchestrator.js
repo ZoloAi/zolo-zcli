@@ -1,6 +1,6 @@
 /**
  * ZDisplayOrchestrator - Central orchestrator for all declarative rendering
- * 
+ *
  * Handles:
  * - YAML → DOM rendering
  * - Progressive chunk rendering
@@ -8,7 +8,7 @@
  * - Recursive item rendering
  * - zDisplay event routing
  * - Navbar rendering
- * 
+ *
  * Extracted from bifrost_client.js (Phase 2.1)
  */
 
@@ -29,10 +29,10 @@ export class ZDisplayOrchestrator {
     if (!contentElement) {
       throw new Error('zVaF element not initialized');
     }
-    
+
     // Clear existing content
     contentElement.innerHTML = '';
-    
+
     // Check if blockData has block-level metadata (_zClass) for cascading
     let blockWrapper = contentElement;
     if (blockData && typeof blockData === 'object' && blockData._zClass) {
@@ -40,23 +40,23 @@ export class ZDisplayOrchestrator {
       const { createDiv } = await import('./primitives/generic_containers.js');
       const blockLevelDiv = createDiv();
       const blockName = this.options.zBlock || 'zBlock';
-      
+
       // Apply block-level classes
       const classes = Array.isArray(blockData._zClass)
         ? blockData._zClass
         : blockData._zClass.split(',').map(c => c.trim());
       blockLevelDiv.className = classes.join(' ');
       blockLevelDiv.setAttribute('data-zblock', blockName);
-      
+
       contentElement.appendChild(blockLevelDiv);
       blockWrapper = blockLevelDiv;  // Children render inside the block wrapper
-      
+
       this.logger.log(`[ZDisplayOrchestrator] Created block-level wrapper with classes: ${blockData._zClass}`);
     }
-    
+
     // Recursively render all items (await for navigation renderer loading)
     await this.renderItems(blockData, blockWrapper);
-    
+
     // Enhance block-level zCard if present
     if (blockWrapper !== contentElement && blockWrapper.classList.contains('zCard')) {
       const cardRenderer = await this.client._ensureCardRenderer();
@@ -74,33 +74,33 @@ export class ZDisplayOrchestrator {
     try {
       this.logger.log('[ZDisplayOrchestrator] 🎬 renderChunkProgressive called with:', message);
       const {chunk_num, keys, data, is_gate} = message;
-      
+
       this.logger.log(`[ZDisplayOrchestrator] 📦 Rendering chunk #${chunk_num}: ${keys.join(', ')}`);
       this.logger.log(`[ZDisplayOrchestrator] 📦 Rendering chunk #${chunk_num}: ${keys.join(', ')}`);
       if (is_gate) {
-        this.logger.log(`[ZDisplayOrchestrator] 🚪 Chunk contains gate - backend will stop if gate fails`);
+        this.logger.log('[ZDisplayOrchestrator] 🚪 Chunk contains gate - backend will stop if gate fails');
       }
-      
+
       // Check if we're rendering into a dashboard panel (zDash context)
       const dashboardPanelContent = document.getElementById('dashboard-panel-content');
       const contentDiv = dashboardPanelContent || this.client._zVaFElement;
-      
+
       if (!contentDiv) {
         throw new Error('zVaF element not initialized. Ensure _initZVaFElements() was called.');
       }
-      
+
       // Check if data has block-level metadata (_zClass, _zStyle, etc.)
       const hasBlockMetadata = data && Object.keys(data).some(k => k.startsWith('_'));
-      
+
       // Determine the target container for rendering
       let targetContainer = contentDiv;
-      
+
       // ALWAYS clear loading state on first chunk (regardless of metadata)
       if (chunk_num === 1) {
         contentDiv.innerHTML = '';
-        this.logger.log(`[ZDisplayOrchestrator] 📦 Cleared loading state for chunk #1`);
+        this.logger.log('[ZDisplayOrchestrator] 📦 Cleared loading state for chunk #1');
       }
-      
+
       if (hasBlockMetadata && chunk_num === 1) {
         // First chunk with block metadata: create a wrapper for the entire block (using primitive)
         const { createDiv } = await import('./primitives/generic_containers.js');
@@ -109,7 +109,7 @@ export class ZDisplayOrchestrator {
           'data-zblock': 'progressive',
           'id': blockName  // Set id to block name (e.g., "zAccount")
         });
-        
+
         // Apply block-level metadata to wrapper
         for (const [key, value] of Object.entries(data)) {
           if (key === '_zClass' && value) {
@@ -118,7 +118,7 @@ export class ZDisplayOrchestrator {
             blockWrapper.setAttribute('style', value);
           }
         }
-        
+
         contentDiv.appendChild(blockWrapper);
         targetContainer = blockWrapper;
         this.logger.log(`[ZDisplayOrchestrator] 📦 Created block wrapper "${blockName}" with metadata for progressive rendering`);
@@ -130,12 +130,12 @@ export class ZDisplayOrchestrator {
           this.logger.log(`[ZDisplayOrchestrator] 📦 Using existing block wrapper for chunk #${chunk_num}`);
         }
       }
-      
+
       // Render YAML data using existing rendering pipeline
       // This preserves all styling, forms, zDisplay events, etc.
       if (data && typeof data === 'object') {
         // DEBUG: Log chunk data structure
-        this.logger.log(`[ZDisplayOrchestrator] 🔍 Chunk data keys:`, Object.keys(data));
+        this.logger.log('[ZDisplayOrchestrator] 🔍 Chunk data keys:', Object.keys(data));
         for (const [key, value] of Object.entries(data)) {
           if (!key.startsWith('_')) {
             this.logger.log(`[ZDisplayOrchestrator] 🔍   ${key}:`, typeof value, Array.isArray(value) ? `array[${value.length}]` : (typeof value === 'object' ? `object{${Object.keys(value).join(',')}}` : value));
@@ -146,12 +146,12 @@ export class ZDisplayOrchestrator {
       } else {
         this.logger.warn(`[ZDisplayOrchestrator] ⚠️ Chunk #${chunk_num} has no YAML data to render`);
       }
-      
+
       // If this is a gate chunk, log that we're waiting for backend
       if (is_gate) {
         this.logger.log('[ZDisplayOrchestrator] ⏸️  Waiting for gate completion (backend controls flow)');
       }
-      
+
     } catch (error) {
       this.logger.error('Failed to render chunk:', error);
       throw error;
@@ -168,12 +168,12 @@ export class ZDisplayOrchestrator {
       this.logger.log('[ZDisplayOrchestrator] renderItems: No data or not an object');
       return;
     }
-    
-    this.logger.log(`[ZDisplayOrchestrator] 🔄 renderItems called with keys:`, Object.keys(data));
-    
+
+    this.logger.log('[ZDisplayOrchestrator] 🔄 renderItems called with keys:', Object.keys(data));
+
     // Check if parent already has block-level metadata applied (data-zblock attribute)
-    const parentIsBlockWrapper = parentElement.hasAttribute && parentElement.hasAttribute('data-zblock');
-    
+    const _parentIsBlockWrapper = parentElement.hasAttribute && parentElement.hasAttribute('data-zblock');
+
     // Extract metadata first (underscore-prefixed keys like _zClass)
     const metadata = {};
     for (const [key, value] of Object.entries(data)) {
@@ -181,7 +181,7 @@ export class ZDisplayOrchestrator {
         metadata[key] = value;
       }
     }
-    
+
     // ═══════════════════════════════════════════════════════════════════════
     // NEW: _zGroup Support - Grouped Rendering for Bifrost
     // ═══════════════════════════════════════════════════════════════════════
@@ -193,17 +193,17 @@ export class ZDisplayOrchestrator {
     if (metadata._zGroup) {
       this.logger.log(`[ZDisplayOrchestrator] 🎯 _zGroup detected: "${metadata._zGroup}" - rendering as grouped container`);
       this.logger.log(`🎯 _zGroup detected: "${metadata._zGroup}"`);
-      
+
       // Create group container with zTheme classes based on _zGroup type
       const groupContainer = document.createElement('div');
       groupContainer.setAttribute('data-zgroup', metadata._zGroup);
-      
+
       // Apply zTheme container class based on group type
       if (metadata._zGroup === 'list-group') {
         groupContainer.classList.add('zList-group');
-        this.logger.log(`  Applied zTheme class: zList-group`);
+        this.logger.log('  Applied zTheme class: zList-group');
       }
-      
+
       // Apply additional _zClass styling if provided (from YAML)
       if (metadata._zClass) {
         const classes = metadata._zClass.split(' ').filter(c => c.trim());
@@ -212,16 +212,16 @@ export class ZDisplayOrchestrator {
           this.logger.log(`  Applied additional _zClass: ${metadata._zClass}`);
         }
       }
-      
+
       // Iterate through all non-metadata children and render into group
       for (const [key, value] of Object.entries(data)) {
         // Skip metadata keys
         if (key.startsWith('_') || key.startsWith('~')) {
           continue;
         }
-        
+
         this.logger.log(`  Rendering grouped item: ${key}`);
-        
+
         // Handle list/array values (zDisplay events)
         if (Array.isArray(value)) {
           for (const item of value) {
@@ -235,9 +235,8 @@ export class ZDisplayOrchestrator {
               }
             }
           }
-        }
-        // Handle direct zDisplay event
-        else if (value && value.zDisplay) {
+        } else if (value && value.zDisplay) {
+          // Handle direct zDisplay event
           // ✅ SEPARATION OF CONCERNS: Render element without group context
           const element = await this.renderZDisplayEvent(value.zDisplay);
           if (element) {
@@ -245,9 +244,8 @@ export class ZDisplayOrchestrator {
             this._applyGroupStyling(element, metadata._zGroup, value.zDisplay);
             groupContainer.appendChild(element);
           }
-        }
-        // Handle nested objects (recurse)
-        else if (value && typeof value === 'object') {
+        } else if (value && typeof value === 'object') {
+          // Handle nested objects (recurse)
           const itemDiv = document.createElement('div');
           itemDiv.setAttribute('data-zkey', key);
           await this.renderItems(value, itemDiv);
@@ -256,22 +254,22 @@ export class ZDisplayOrchestrator {
           }
         }
       }
-      
+
       // Append group to parent
       if (groupContainer.children.length > 0) {
         parentElement.appendChild(groupContainer);
         this.logger.log(`[ZDisplayOrchestrator] ✅ Grouped container rendered with ${groupContainer.children.length} items`);
         this.logger.log(`✅ Grouped container rendered with ${groupContainer.children.length} items`);
       }
-      
+
       // Exit early - we've handled all children in the group
       return;
     }
-    
+
     // ═══════════════════════════════════════════════════════════════════════
     // Regular (non-grouped) rendering continues below
     // ═══════════════════════════════════════════════════════════════════════
-    
+
     // Iterate through all keys in this level
     for (const [key, value] of Object.entries(data)) {
       // Handle metadata keys BEFORE skipping
@@ -284,17 +282,17 @@ export class ZDisplayOrchestrator {
         // Other metadata keys - skip for now
         continue;
       }
-      
+
       // Skip internal metadata keys (underscore prefix)
       if (key.startsWith('_')) {
         continue;
       }
-      
+
       this.logger.log(`Rendering item: ${key}`, value);
-      
+
       // Check if this value has its own metadata (for nested _zClass support)
       let itemMetadata = {};
-      
+
       // Each zKey container should ONLY use its OWN _zClass, never inherit from parent
       // This ensures ProfilePicture doesn't get ProfileHeader's classes
       if (value && typeof value === 'object' && !Array.isArray(value)) {
@@ -303,27 +301,27 @@ export class ZDisplayOrchestrator {
           this.logger.log(`  Found nested metadata for ${key}:`, itemMetadata);
         }
       }
-      
+
       // Create container wrapper for this zKey (zTheme responsive layout)
       const containerDiv = await this.createContainer(key, itemMetadata);
-      
+
       // Give container a data attribute for debugging
       containerDiv.setAttribute('data-zkey', key);
       // Set id for DevTools navigation and CSS targeting
       containerDiv.setAttribute('id', key);
-      
+
       // Handle list/array values (sequential zDisplay events, zDialog forms, OR menus)
       if (Array.isArray(value)) {
         this.logger.log(`[ZDisplayOrchestrator] ✅ Detected list/array for key: ${key}, items: ${value.length}`);
         this.logger.log(`✅ Detected list/array for key: ${key}, items: ${value.length}`);
-        
+
         // Check if this is a menu (has * modifier and array of strings)
         const isMenu = key.includes('*') && value.every(item => typeof item === 'string');
-        
+
         if (isMenu) {
           this.logger.log(`[ZDisplayOrchestrator] 🎯 Detected MENU: ${key}`);
           this.logger.log(`🎯 Detected menu with ${value.length} options`);
-          
+
           // Load menu renderer and render the menu
           const menuRenderer = await this.client._ensureMenuRenderer();
           if (menuRenderer) {
@@ -334,30 +332,30 @@ export class ZDisplayOrchestrator {
               title: key.replace(/[*~^$]/g, '').trim() || 'Menu',
               allow_back: true
             };
-            
+
             // Render menu into container
             menuRenderer.renderMenuInline(menuData, containerDiv);
             this.logger.log(`✅ Menu rendered for ${key}`);
           } else {
-            this.logger.error(`[ZDisplayOrchestrator] ❌ MenuRenderer not available`);
+            this.logger.error('[ZDisplayOrchestrator] ❌ MenuRenderer not available');
           }
         } else {
           // Regular list/array - iterate through items
           for (const item of value) {
             if (item && item.zDisplay) {
-              this.logger.log(`[ZDisplayOrchestrator]   ✅ Rendering zDisplay event:`, item.zDisplay.event);
-              this.logger.log(`  ✅ Rendering zDisplay from list item:`, item.zDisplay);
+              this.logger.log('[ZDisplayOrchestrator]   ✅ Rendering zDisplay event:', item.zDisplay.event);
+              this.logger.log('  ✅ Rendering zDisplay from list item:', item.zDisplay);
               const element = await this.renderZDisplayEvent(item.zDisplay);
               if (element) {
-                this.logger.log(`  ✅ Appended element to container`);
+                this.logger.log('  ✅ Appended element to container');
                 containerDiv.appendChild(element);
               }
             } else if (item && item.zDialog) {
-              this.logger.log(`  ✅ Rendering zDialog from list item:`, item.zDialog);
+              this.logger.log('  ✅ Rendering zDialog from list item:', item.zDialog);
               const formRenderer = await this.client._ensureFormRenderer();
               const formElement = formRenderer.renderForm(item.zDialog);
               if (formElement) {
-                this.logger.log(`  ✅ Appended zDialog form to container`);
+                this.logger.log('  ✅ Appended zDialog form to container');
                 containerDiv.appendChild(formElement);
               }
             } else if (item && typeof item === 'object') {
@@ -366,37 +364,34 @@ export class ZDisplayOrchestrator {
             }
           }
         }
-      }
-      // Check if this has a direct zDisplay event
-      else if (value && value.zDisplay) {
+      } else if (value && value.zDisplay) {
+        // Check if this has a direct zDisplay event
         const element = await this.renderZDisplayEvent(value.zDisplay);
         if (element) {
           containerDiv.appendChild(element);
         }
-      }
-      // Check if this has a direct zDialog form
-      else if (value && value.zDialog) {
-        this.logger.log(`  ✅ Rendering zDialog from direct value:`, value.zDialog);
+      } else if (value && value.zDialog) {
+        // Check if this has a direct zDialog form
+        this.logger.log('  ✅ Rendering zDialog from direct value:', value.zDialog);
         const formRenderer = await this.client._ensureFormRenderer();
         const formElement = formRenderer.renderForm(value.zDialog);
         if (formElement) {
           containerDiv.appendChild(formElement);
         }
-      }
-      // If it's an object with nested keys (implicit wizard), recurse
-      else if (value && typeof value === 'object') {
+      } else if (value && typeof value === 'object') {
+        // If it's an object with nested keys (implicit wizard), recurse
         this.logger.log(`[ZDisplayOrchestrator] 🔄 Recursing into nested object for key: ${key}, nested keys:`, Object.keys(value));
         // Nested structure - render children recursively
         await this.renderItems(value, containerDiv);
       }
-      
+
       // Enhance zCard containers with proper zTheme structure
       if (containerDiv.children.length > 0) {
         if (containerDiv.classList.contains('zCard')) {
           const cardRenderer = await this.client._ensureCardRenderer();
           cardRenderer.enhanceCard(containerDiv);
         }
-        
+
         // Append container to parent
         parentElement.appendChild(containerDiv);
       }
@@ -413,7 +408,7 @@ export class ZDisplayOrchestrator {
   async createContainer(zKey, metadata) {
     const { createDiv } = await import('./primitives/generic_containers.js');
     const container = createDiv();
-    
+
     // Check for custom classes in metadata
     if (metadata._zClass !== undefined) {
       if (metadata._zClass === '' || metadata._zClass === null) {
@@ -424,7 +419,7 @@ export class ZDisplayOrchestrator {
         container.className = metadata._zClass.join(' ');
       } else if (typeof metadata._zClass === 'string') {
         // String: comma-separated or space-separated classes
-        const classes = metadata._zClass.includes(',') 
+        const classes = metadata._zClass.includes(',')
           ? metadata._zClass.split(',').map(c => c.trim())
           : metadata._zClass.split(' ').filter(c => c.trim());
         container.className = classes.join(' ');
@@ -434,10 +429,10 @@ export class ZDisplayOrchestrator {
       // Organizational divs should be styled explicitly via _zClass when needed
       container.className = '';
     }
-    
+
     // Add data attribute for debugging/testing
     container.setAttribute('data-zkey', zKey);
-    
+
     return container;
   }
 
@@ -448,7 +443,7 @@ export class ZDisplayOrchestrator {
    */
   async renderMetaNavBarHTML(items) {
     this.logger.log('[ZDisplayOrchestrator] 🎯 renderMetaNavBarHTML called with items:', items);
-    
+
     if (!Array.isArray(items) || items.length === 0) {
       this.logger.warn('[ZDisplayOrchestrator] ⚠️ No navbar items provided');
       return null;
@@ -457,7 +452,7 @@ export class ZDisplayOrchestrator {
     try {
       // Load navigation renderer
       const navRenderer = await this.client._ensureNavigationRenderer();
-      
+
       // Render navbar element
       const navElement = navRenderer.renderNavBar(items, {
         className: 'zcli-navbar-meta',
@@ -469,7 +464,7 @@ export class ZDisplayOrchestrator {
         },
         brand: this.options.title
       });
-      
+
       // 🔧 FIX v1.6.1: Return DOM element directly (NOT outerHTML!)
       // This preserves event listeners attached by link_primitives.js
       // The caller (zvaf_manager.js) will append the element instead of setting innerHTML
@@ -495,7 +490,7 @@ export class ZDisplayOrchestrator {
     try {
       // Load navigation renderer
       const navRenderer = await this.client._ensureNavigationRenderer();
-      
+
       // Render navbar with zTheme zNavbar component
       const navElement = navRenderer.renderNavBar(items, {
         theme: 'light'
@@ -503,13 +498,13 @@ export class ZDisplayOrchestrator {
 
       if (navElement) {
         parentElement.appendChild(navElement);
-        
+
         // Re-initialize zTheme collapse now that navbar is in DOM
         if (window.zTheme && typeof window.zTheme.initCollapse === 'function') {
           window.zTheme.initCollapse();
           this.logger.log('[ZDisplayOrchestrator] Re-initialized zTheme collapse for navbar');
         }
-        
+
         this.logger.log('[ZDisplayOrchestrator] Rendered navigation bar with items:', items);
       }
     } catch (error) {
@@ -526,88 +521,99 @@ export class ZDisplayOrchestrator {
     const event = eventData.event;
     this.logger.log(`[renderZDisplayEvent] Rendering event: ${event}`, eventData);
     let element;
-    
+
     switch (event) {
-      case 'text':
+      case 'text': {
         // Use modular TypographyRenderer for text
         const textRenderer = await this.client._ensureTypographyRenderer();
         element = textRenderer.renderText(eventData);
-        this.logger.log(`[renderZDisplayEvent] Rendered text element`);
+        this.logger.log('[renderZDisplayEvent] Rendered text element');
         break;
-        
-      case 'header':
+      }
+
+      case 'header': {
         // Use modular TypographyRenderer for headers
         const headerRenderer = await this.client._ensureTypographyRenderer();
         element = headerRenderer.renderHeader(eventData);
         this.logger.log(`[renderZDisplayEvent] Rendered header element with level: ${eventData.level || 1}`);
         break;
-        
-      case 'divider':
+      }
+
+      case 'divider': {
         // Use modular TypographyRenderer for dividers
         const dividerRenderer = await this.client._ensureTypographyRenderer();
         element = dividerRenderer.renderDivider(eventData);
         break;
-        
-      case 'button':
+      }
+
+      case 'button': {
         // Use modular ButtonRenderer for buttons
         const buttonRenderer = await this.client._ensureButtonRenderer();
         element = buttonRenderer.render(eventData);
         this.logger.log(`[renderZDisplayEvent] Rendered button element: ${eventData.label}`);
         break;
-        
-      case 'link':
+      }
+
+      case 'link': {
         // Use modular LinkRenderer for semantic links
         const { renderLink } = await import('./primitives/link_primitives.js');
         // ✅ SEPARATION OF CONCERNS: Primitive renders element, orchestrator handles grouping
         element = renderLink(eventData, null, this.client);
         this.logger.log(`[renderZDisplayEvent] Rendered link element: ${eventData.label}`);
         break;
-        
-      case 'zTable':
+      }
+
+      case 'zTable': {
         // Use modular TableRenderer for tables
         const tableRenderer = await this.client._ensureTableRenderer();
         element = tableRenderer.render(eventData);
         this.logger.log(`[renderZDisplayEvent] Rendered table element: ${eventData.title || 'untitled'}`);
         break;
-        
-      case 'list':
+      }
+
+      case 'list': {
         // Use modular ListRenderer for lists
         const listRenderer = await this.client._ensureListRenderer();
         element = listRenderer.render(eventData);
         this.logger.log(`[renderZDisplayEvent] Rendered list element with ${eventData.items?.length || 0} items`);
         break;
-        
-      case 'image':
+      }
+
+      case 'image': {
         // Use modular ImageRenderer for images
         const imageRenderer = await this.client._ensureImageRenderer();
         element = imageRenderer.render(eventData);
         this.logger.log(`[renderZDisplayEvent] Rendered image element: ${eventData.src}`);
         break;
-        
-      case 'card':
+      }
+
+      case 'card': {
         // Use modular CardRenderer for cards
         const cardRenderer = await this.client._ensureCardRenderer();
         element = cardRenderer.renderCard(eventData);
-        this.logger.log(`[renderZDisplayEvent] Rendered card element`);
+        this.logger.log('[renderZDisplayEvent] Rendered card element');
         break;
-      
-      case 'zDash':
+      }
+
+      case 'zDash': {
         // Dashboard with sidebar navigation
         const DashboardRenderer = (await import('./dashboard_renderer.js')).default;
         const dashRenderer = new DashboardRenderer(this.logger, this.client);
-        element = await dashRenderer.render(eventData, targetElement);
-        this.logger.log(`[renderZDisplayEvent] Rendered dashboard element`);
+        element = await dashRenderer.render(eventData, this.targetElement || null);
+        this.logger.log('[renderZDisplayEvent] Rendered dashboard element');
         break;
-        
-      default:
+      }
+
+      default: {
         this.logger.warn(`Unknown zDisplay event: ${event}`);
         const { createDiv } = await import('./primitives/generic_containers.js');
         element = createDiv({
           class: 'zDisplay-unknown'
         });
         element.textContent = `[${event}] ${eventData.content || ''}`;
+      }
     }
-    
+
     return element;
   }
 
@@ -615,14 +621,16 @@ export class ZDisplayOrchestrator {
    * Apply group-specific styling to an element (Terminal-first pattern)
    * This is where zTheme group classes are applied based on _zGroup context
    * Color is auto-inferred from the YAML color parameter (DRY)
-   * 
+   *
    * @param {HTMLElement} element - The rendered element
    * @param {string} groupType - The type of group (e.g., 'list-group', 'button-group')
    * @param {Object} eventData - The original event data (for color handling)
    * @private
    */
   _applyGroupStyling(element, groupType, eventData) {
-    if (!element || !groupType) return;
+    if (!element || !groupType) {
+      return;
+    }
 
     this.logger.log(`[_applyGroupStyling] Applying group styling: ${groupType}, color: ${eventData.color || 'none'}`);
 
@@ -632,7 +640,7 @@ export class ZDisplayOrchestrator {
         // For links, buttons, or any interactive element in a list-group
         if (eventData.event === 'link' || eventData.event === 'button') {
           element.classList.add('zList-group-item', 'zList-group-item-action');
-          
+
           // 🎨 Terminal-first: Auto-infer color variant from YAML color parameter
           if (eventData.color) {
             const colorClass = `zList-group-item-${eventData.color.toLowerCase()}`;

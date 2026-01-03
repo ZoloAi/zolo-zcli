@@ -22,8 +22,8 @@
 ┌─────────────────────────────────────────────────────────────┐
 │  Layer 5: FEATURE MANAGERS (managers/)                      │
 │  Role: Domain-specific business logic                       │
-│  Files: dashboard_manager.js, navigation_manager.js,        │
-│         theme_manager.js, initialization_manager.js         │
+│  Files: cache_manager.js, navigation_manager.js,            │
+│         widget_hook_manager.js, zvaf_manager.js             │
 │  Pattern: Manager pattern (one manager per domain)          │
 │  Imports: Core (Layer 1), Utilities (Layer 2)              │
 │  Exports: Manager classes                                   │
@@ -51,7 +51,9 @@
 ┌─────────────────────────────────────────────────────────────┐
 │  Layer 2: UTILITIES (utils/)                                │
 │  Role: Reusable helpers, zero business logic                │
-│  Files: dom_utils.js, ztheme_utils.js, validation_utils.js │
+│  Files: dom_utils.js, ztheme_utils.js, error_boundary.js,  │
+│         color_utils.js, size_utils.js, spacing_utils.js,   │
+│         container_utils.js, block_utils.js, validation.js  │
 │  Pattern: Pure functions (stateless)                        │
 │  Imports: NONE (only Layer 0 - Browser APIs)               │
 │  Exports: Pure functions                                    │
@@ -143,9 +145,15 @@ class StorageManager {
 
 | File | Purpose | Exports |
 |------|---------|---------|
-| `dom_utils.js` | DOM manipulation helpers | 10 pure functions |
-| `ztheme_utils.js` | zTheme class mappings | 8 pure functions |
-| `validation_utils.js` | Input validation | 6 pure functions |
+| `dom_utils.js` | DOM manipulation helpers | 10+ pure functions |
+| `ztheme_utils.js` | zTheme class mappings | 8+ pure functions |
+| `validation_utils.js` | Input validation | 6+ pure functions |
+| `error_boundary.js` | Error boundary wrappers | `withErrorBoundary`, `createErrorFallback` |
+| `color_utils.js` | Color class utilities | Color mapping functions |
+| `size_utils.js` | Size class utilities | Size mapping functions |
+| `spacing_utils.js` | Spacing class utilities | Spacing mapping functions |
+| `container_utils.js` | Container class utilities | Container helpers |
+| `block_utils.js` | Block element utilities | Block element helpers |
 
 **Key Principles:**
 - ✅ Pure functions ONLY (same input → same output)
@@ -247,10 +255,10 @@ class ButtonRenderer {
 
 | File | Purpose | Domain |
 |------|---------|--------|
-| `dashboard_manager.js` | Dashboard + panels | zDash feature |
+| `cache_manager.js` | Cache tier orchestration | Caching strategy |
 | `navigation_manager.js` | Client-side routing | SPA navigation |
-| `theme_manager.js` | Dark/light mode | Theme switching |
-| `initialization_manager.js` | App bootstrap | Startup logic |
+| `widget_hook_manager.js` | Widget lifecycle hooks | Widget integration |
+| `zvaf_manager.js` | zVaF element management | zVaF framework |
 
 **Key Principles:**
 - ✅ ONE domain per manager
@@ -262,22 +270,23 @@ class ButtonRenderer {
 **Example:**
 ```javascript
 // ✅ GOOD - Manager orchestrates
-class DashboardManager {
-  async renderDashboard(config) {
-    // Business logic: Should we load from cache?
-    const cached = await this.cache.get(config.folder);
-    if (cached) return this._renderCached(cached);
+class CacheManager {
+  async initCacheSystem(storage) {
+    // Business logic: Initialize storage
+    this.storage = new StorageManager(storage);
+    await this.storage.init();
     
-    // Business logic: Fetch metadata
-    const meta = await this._fetchPanelMeta(config);
+    // Business logic: Set up cache tiers
+    this.systemCache = new SystemCache(this.storage);
+    this.pinnedCache = new PinnedCache(this.storage);
+    this.sessionCache = new SessionCache(null); // In-memory
     
-    // Delegate rendering to Layer 3
-    const dashboard = this.renderer.renderDashboard(meta);
-    
-    // Business logic: Update cache
-    await this.cache.set(config.folder, meta);
-    
-    return dashboard;
+    // Delegate cache operations to appropriate tiers
+    return {
+      system: this.systemCache,
+      pinned: this.pinnedCache,
+      session: this.sessionCache
+    };
   }
 }
 ```
@@ -310,10 +319,10 @@ class BifrostClient {
     
     // 3. Lazy-load Layer 5 (managers)
     this.managers = {
-      dashboard: null,
+      cache: null,
       navigation: null,
-      theme: null,
-      initialization: null
+      widgetHook: null,
+      zvaf: null
     };
     
     // 4. Register hooks
@@ -329,11 +338,11 @@ class BifrostClient {
   disconnect() { /* Delegate to connection */ }
   
   // Private - delegate to managers
-  async _renderDashboard(config) {
-    if (!this.managers.dashboard) {
-      this.managers.dashboard = new DashboardManager(this);
+  async _initCacheSystem() {
+    if (!this.managers.cache) {
+      this.managers.cache = new CacheManager(this);
     }
-    return this.managers.dashboard.renderDashboard(config);
+    return this.managers.cache.initCacheSystem(this.storage);
   }
 }
 ```
@@ -366,19 +375,19 @@ Layer 6 ──→ Layer 5 ──→ Layer 4 ──→ Layer 3 ──→ Layer 2 
 
 ```javascript
 // ✅ GOOD - Upper imports lower
-// managers/dashboard_manager.js
-import { createElement } from '../utils/dom_utils.js';
-import { ButtonRenderer } from '../rendering/button_renderer.js';
+// managers/cache_manager.js
+import { StorageManager } from '../core/storage_manager.js';
+import { SystemCache } from '../core/caches/system_cache.js';
 
 // ❌ BAD - Lower imports upper
 // rendering/button_renderer.js
-import { DashboardManager } from '../managers/dashboard_manager.js';
+import { CacheManager } from '../managers/cache_manager.js';
 
 // ❌ BAD - Circular dependency
-// managers/dashboard_manager.js
+// managers/cache_manager.js
 import { NavigationManager } from './navigation_manager.js';
 // managers/navigation_manager.js
-import { DashboardManager } from './dashboard_manager.js';
+import { CacheManager } from './cache_manager.js';
 ```
 
 ---

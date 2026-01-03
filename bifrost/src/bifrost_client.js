@@ -2,18 +2,18 @@
  * ═══════════════════════════════════════════════════════════════
  * BifrostClient - Production JavaScript Client for zBifrost
  * ═══════════════════════════════════════════════════════════════
- * 
+ *
  * A production-ready WebSocket client for zCLI's zBifrost bridge.
  * Modular architecture with lazy loading and automatic zTheme integration.
- * 
+ *
  * @version 1.5.5
  * @author Gal Nachshon
  * @license MIT
- * 
+ *
  * ───────────────────────────────────────────────────────────────
  * Quick Start
  * ───────────────────────────────────────────────────────────────
- * 
+ *
  * // Swiper-Style Elegance (One declaration, everything happens automatically):
  * const client = new BifrostClient('ws://localhost:8765', {
  *   autoConnect: true,        // Auto-connect on instantiation
@@ -22,7 +22,7 @@
  *   autoRequest: 'show_hello',// Auto-send on connect
  *   onConnected: (info) => this.logger.log('✅ Connected!', info)
  * });
- * 
+ *
  * // Traditional (More control):
  * const client = new BifrostClient('ws://localhost:8765', {
  *   zTheme: true,
@@ -36,23 +36,23 @@
  * await client.connect();
  * client.send({event: 'my_event'});
  * const users = await client.read('users');
- * 
+ *
  * ───────────────────────────────────────────────────────────────
  * Lazy Loading Architecture
  * ───────────────────────────────────────────────────────────────
- * 
+ *
  * Modules are loaded dynamically only when needed:
  * - Logger/Hooks: Loaded immediately (lightweight)
  * - Connection: Loaded on connect()
  * - MessageHandler: Loaded on connect()
  * - Renderer: Loaded on first renderTable/renderMenu/etc call
  * - ThemeLoader: Loaded on connect() if zTheme enabled
- * 
+ *
  * Benefits:
  * - CDN-friendly (no import resolution at load time)
  * - Progressive loading (only load what you use)
  * - Stays modular (source files remain separate)
- * 
+ *
  * ───────────────────────────────────────────────────────────────
  */
 
@@ -68,7 +68,7 @@
     // Browser globals
     root.BifrostClient = factory();
   }
-}(typeof self !== 'undefined' ? self : this, function() {
+}(typeof self !== 'undefined' ? self : this, () => {
   'use strict';
 
   /**
@@ -120,7 +120,7 @@
           }
         }
       }
-      
+
       // Auto-construct WebSocket URL from backend config (respects .zEnv SSL settings)
       if (!url) {
         const wsConfig = zuiConfigEarly.websocket || {};
@@ -131,7 +131,7 @@
         // Logger not initialized yet - use console directly
         console.log(`[BifrostClient] Auto-constructed WebSocket URL from backend config: ${url} (SSL: ${wsConfig.ssl_enabled})`);
       }
-      
+
       // Validate URL
       if (typeof url !== 'string' || url.trim() === '') {
         throw new Error('BifrostClient: URL must be a non-empty string');
@@ -168,18 +168,18 @@
           }
         }
       }
-      
+
       // Store zuiConfig on instance for later access (e.g., navbar resolution)
       this.zuiConfig = zuiConfig;
 
       // Determine autoRequest based on zui-config
       let autoRequest = options.autoRequest || null;
-      
+
       // If zBlock is specified (from zui-config or options), auto-generate walker execution request
       const zBlock = options.zBlock || zuiConfig.zBlock || null;
       const zVaFile = options.zVaFile || zuiConfig.zVaFile || null;
       const zVaFolder = options.zVaFolder || zuiConfig.zVaFolder || null;
-      
+
       if (zBlock && !autoRequest) {
         autoRequest = {
           event: 'execute_walker',
@@ -214,10 +214,10 @@
       // Module cache (lazy loaded)
       this._modules = {};
       this._baseUrl = getBaseUrl();
-      
+
       // Pre-initialize lightweight modules synchronously (MUST BE FIRST - initializes logger)
       this._initLightweightModules();
-      
+
       // v1.6.0: Initialize cache system (async, must complete before connect)
       this.cache = null;
       this.session = null;
@@ -238,19 +238,19 @@
         zVaFolder: this.options.zVaFolder,
         zBlock: this.options.zBlock
       });
-      
+
       // Load zTheme from CDN if enabled
       if (this.options.zTheme) {
         this._loadZThemeCDN();
       }
-      
+
       // Bootstrap Icons are ALWAYS loaded (unchangeable default for zBifrost)
       this._loadBootstrapIcons();
-      
+
       // v1.6.0: Initialize zVaF elements (now synchronous - elements exist in HTML)
       // Just populate content, don't create structure
       this._initZVaFElements();
-      
+
       // Auto-load declarative UI if zVaFile is provided
       // SKIP for walker-based pages (progressive chunk rendering from backend)
       const isWalkerMode = autoRequest && autoRequest.event === 'execute_walker';
@@ -262,7 +262,7 @@
         this.logger.log('🎬 Walker mode detected - waiting for progressive chunks from backend');
         // v1.6.0: Navbar is now fetched by _initZVaFElements (no need for redundant call)
       }
-      
+
       // Auto-connect if requested (Swiper-style elegance!)
       // v1.6.0: Wait for cache initialization before connecting (zVaF elements are now sync)
       if (this.options.autoConnect) {
@@ -274,19 +274,19 @@
           });
         });
       }
-      
+
       // Part 2: Browser lifecycle awareness - cleanup on page unload
       // Track if we're doing client-side navigation (to avoid false page_unload events)
       this._isClientSideNav = false;
-      
-      window.addEventListener('beforeunload', (e) => {
+
+      window.addEventListener('beforeunload', (_e) => {
         // Only send page_unload if this is a real page unload (not client-side nav)
         if (this._isClientSideNav) {
           this.logger.log('[BifrostClient] Client-side navigation detected - skipping page_unload');
           this._isClientSideNav = false;
           return;
         }
-        
+
         this.logger.log('[BifrostClient] 🔄 Page unloading (leaving site) - notifying backend');
         // Send cleanup notification (best effort - may not complete if page closes quickly)
         if (this.connection && this.connection.isConnected()) {
@@ -319,6 +319,18 @@
         error: (message, ...args) => {
           // Always show errors, regardless of debug mode
           console.error(`[BifrostClient ERROR] ${message}`, ...args);
+
+          // Also show in ErrorDisplay for user-facing errors (if initialized)
+          if (this.errorDisplay && this.options.showErrors !== false) {
+            // Extract error object if present in args
+            const errorObj = args.find(arg => arg instanceof Error);
+            this.errorDisplay.show({
+              title: 'Error',
+              message: message,
+              error: errorObj || new Error(message),
+              timestamp: new Date().toISOString()
+            });
+          }
         },
         warn: (message, ...args) => {
           if (this.logger.debug) {
@@ -349,10 +361,10 @@
             } catch (error) {
               // Log to console
               this.logger.error(`[BifrostClient] Error in ${hookName} hook:`, error);
-              
+
               // Log via logger
               this.logger.error(`Error in ${hookName} hook:`, error);
-              
+
               // Display in UI if error handler is set
               if (this.hooks.errorHandler) {
                 try {
@@ -367,7 +379,7 @@
                   this.logger.error('[BifrostClient] Error handler itself failed:', displayError);
                 }
               }
-              
+
               // Call onError hook if it exists and isn't the one that failed
               if (hookName !== 'onError' && this.hooks.hooks.onError) {
                 try {
@@ -394,7 +406,7 @@
           delete this.hooks.hooks[hookName];
         },
         list: () => Object.keys(this.hooks.hooks),
-        
+
         // Dark mode utilities
         initBuiltInHooks: () => {
           // Initialize dark mode from localStorage
@@ -403,15 +415,15 @@
             this.hooks._applyDarkMode(true);
           }
         },
-        
+
         _applyDarkMode: (isDark) => {
           const body = document.body;
           const navbars = document.querySelectorAll('.zNavbar');
           const togglers = document.querySelectorAll('.zNavbar-toggler');
-          
+
           this.logger.log(`[DarkMode] Applying ${isDark ? 'DARK' : 'LIGHT'} mode`);
           this.logger.log(`[DarkMode] Found ${navbars.length} navbar(s), ${togglers.length} toggler(s)`);
-          
+
           if (isDark) {
             // Apply dark background to body
             body.classList.add('zBg-dark');
@@ -439,7 +451,7 @@
             navbars.forEach(nav => {
               nav.classList.remove('zNavbar-light');
               nav.classList.add('zNavbar-dark');
-              this.logger.log(`[DarkMode] Navbar classes:`, nav.className);
+              this.logger.log('[DarkMode] Navbar classes:', nav.className);
             });
             // Apply dark mode to hamburger icon (makes it white)
             togglers.forEach((toggler, idx) => {
@@ -454,17 +466,17 @@
               this.logger.log(`[DarkMode] Toggler ${idx} icon color (after):`, computedColor);
               this.logger.log(`[DarkMode] Toggler ${idx} icon element:`, icon);
             });
-            
+
             // Apply dark mode to theme toggle button icon (sun icon should be white)
             const themeToggleBtn = document.querySelector('.zTheme-toggle');
             if (themeToggleBtn) {
               const icon = themeToggleBtn.querySelector('i.bi');
               if (icon) {
                 icon.style.color = '#ffffff';  // Direct color value instead of CSS var
-                this.logger.log(`[DarkMode] Theme toggle icon color set to white`);
+                this.logger.log('[DarkMode] Theme toggle icon color set to white');
               }
             } else {
-              this.logger.log(`[DarkMode] Theme toggle button not found yet`);
+              this.logger.log('[DarkMode] Theme toggle button not found yet');
             }
           } else {
             // Remove dark background from body
@@ -481,7 +493,7 @@
             navbars.forEach(nav => {
               nav.classList.remove('zNavbar-dark');
               nav.classList.add('zNavbar-light');
-              this.logger.log(`[DarkMode] Navbar classes:`, nav.className);
+              this.logger.log('[DarkMode] Navbar classes:', nav.className);
             });
             // Remove dark mode from hamburger icon
             togglers.forEach((toggler, idx) => {
@@ -495,29 +507,29 @@
               this.logger.log(`[DarkMode] Toggler ${idx} classes:`, toggler.className);
               this.logger.log(`[DarkMode] Toggler ${idx} icon color (after):`, computedColor);
             });
-            
+
             // Clear theme toggle button icon color
             const themeToggleBtn = document.querySelector('.zTheme-toggle');
             if (themeToggleBtn) {
               const icon = themeToggleBtn.querySelector('i.bi');
               if (icon) {
                 icon.style.color = '';
-                this.logger.log(`[DarkMode] Theme toggle icon color cleared`);
+                this.logger.log('[DarkMode] Theme toggle icon color cleared');
               }
             }
           }
         },
-        
+
         addDarkModeToggle: async (navElement) => {
           // Use DarkModeToggle widget (extracted for modularity)
           const { DarkModeToggle } = await import('./widgets/dark_mode_toggle.js');
           const darkModeWidget = new DarkModeToggle(this.logger);
-          
+
           // Create toggle with theme change callback
           darkModeWidget.create(navElement, (newTheme) => {
             // Apply theme
             this.hooks._applyDarkMode(newTheme === 'dark');
-            
+
             // Call onThemeChange hook if registered
             this.hooks.call('onThemeChange', newTheme);
           });
@@ -535,7 +547,7 @@
 
     /**
      * Register default hooks for widget events
-     * 
+     *
      * Registers hooks for progress bars, spinners, and swipers.
      * These hooks use the new modular renderer architecture.
      */
@@ -543,13 +555,13 @@
       // Widget hooks are now registered in the widget handler (lines ~1900+)
       // This method is kept for backward compatibility
     }
-    
+
     async _registerCacheHooks() {
       // Delegate to CacheManager
       await this._ensureCacheManager();
       return this.cacheManager.registerCacheHooks();
     }
-    
+
     /**
      * Disable all forms during offline mode (v1.6.0)
      * @private
@@ -558,7 +570,7 @@
       await this._ensureCacheManager();
       return this.cacheManager.disableForms();
     }
-    
+
     /**
      * Re-enable forms after reconnecting (v1.6.0)
      * @private
@@ -567,7 +579,7 @@
       await this._ensureCacheManager();
       return this.cacheManager.enableForms();
     }
-    
+
     /**
      * Initialize cache system (v1.6.0)
      * Loads StorageManager, SessionManager, and CacheOrchestrator
@@ -577,7 +589,7 @@
       await this._ensureCacheManager();
       return this.cacheManager.initCacheSystem();
     }
-    
+
     /**
      * Dynamically load a script (v1.6.0)
      * @private
@@ -589,7 +601,7 @@
 
     /**
      * Initialize zVaF elements (connection badges, dynamic content)
-     * 
+     *
      * DECLARATIVE APPROACH: The zVaF element is an empty canvas.
      * This method populates it entirely, including connection badge and content area.
      */
@@ -598,13 +610,15 @@
      * @private
      */
     _loadZThemeCDN() {
-      if (typeof document === 'undefined') return;
-      
+      if (typeof document === 'undefined') {
+        return;
+      }
+
       const cdnBase = this.options.zThemeCDN;
-      
+
       // Show which version/URL is being loaded
       this.logger.log(`[BifrostClient] 🎨 Loading zTheme from CDN: ${cdnBase}`);
-      
+
       // Check if CSS already loaded
       if (!document.querySelector(`link[href="${cdnBase}/ztheme.css"]`)) {
         const link = document.createElement('link');
@@ -616,7 +630,7 @@
       } else {
         this.logger.log(`[BifrostClient] ℹ️  zTheme CSS already loaded from: ${cdnBase}/ztheme.css`);
       }
-      
+
       // Check if JS already loaded
       if (!document.querySelector(`script[src="${cdnBase}/ztheme.js"]`)) {
         const script = document.createElement('script');
@@ -634,10 +648,12 @@
      * @private
      */
     _loadBootstrapIcons() {
-      if (typeof document === 'undefined') return;
-      
+      if (typeof document === 'undefined') {
+        return;
+      }
+
       const bootstrapIconsCDN = 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css';
-      
+
       // Check if Bootstrap Icons already loaded
       if (!document.querySelector(`link[href="${bootstrapIconsCDN}"]`)) {
         const link = document.createElement('link');
@@ -741,7 +757,7 @@
      */
     /**
      * Initialize zVaF elements (v1.6.0: Simplified - elements exist in HTML, just populate)
-     * 
+     *
      * HTML structure (declared in zVaF.html):
      *   <zBifrostBadge></zBifrostBadge>  ← Dynamic, always fresh
      *   <zNavBar></zNavBar>              ← Dynamic, RBAC-aware
@@ -818,7 +834,7 @@
       // Determine module subfolder based on module type
       const coreModules = ['connection', 'hooks', 'logger', 'message_handler', 'error_display'];
       const renderingModules = ['renderer', 'zdisplay_renderer', 'navigation_renderer', 'form_renderer', 'menu_renderer'];
-      
+
       let subfolder = '';
       if (coreModules.includes(moduleName)) {
         subfolder = 'core/';
@@ -1100,15 +1116,15 @@
       if (!this.zDisplayRenderer) {
         const { ZDisplayRenderer } = await this._loadModule('zdisplay_renderer');
         this.zDisplayRenderer = new ZDisplayRenderer(this.logger);
-        
+
         // Pass client reference for interactive features (navigation buttons, etc.)
         this.zDisplayRenderer.client = this;
-        
+
         // Set target element - render directly into zVaF (no nested wrapper)
         this.zDisplayRenderer.defaultZone = this.options.targetElement;
-        
+
         this.logger.log(`[BifrostClient] zDisplay target set to: ${this.zDisplayRenderer.defaultZone}`);
-        
+
         // Delegate all hook registration to WidgetHookManager
         await this._ensureWidgetHookManager();
         await this.widgetHookManager.registerAllWidgetHooks();
@@ -1150,8 +1166,10 @@
      * Initialize error display (if not disabled)
      */
     async _ensureErrorDisplay() {
-      if (this.options.showErrors === false) return; // Allow disabling
-      
+      if (this.options.showErrors === false) {
+        return;
+      } // Allow disabling
+
       if (!this.errorDisplay) {
         const { ErrorDisplay } = await this._loadModule('error_display');
         this.errorDisplay = new ErrorDisplay({
@@ -1159,12 +1177,12 @@
           maxErrors: this.options.maxErrors || 5,
           autoDismiss: this.options.autoDismiss || 10000
         });
-        
+
         // Set error handler for hooks
         this.hooks.errorHandler = (errorInfo) => {
           this.errorDisplay.show(errorInfo);
         };
-        
+
         this.logger.log('Error display initialized');
       }
       return this.errorDisplay;
@@ -1185,12 +1203,12 @@
     async connect() {
       // Skip module loading for file:// protocol (ES6 imports not supported)
       const isFileProtocol = this._isFileProtocol();
-      
+
       if (isFileProtocol) {
         this.logger.log('[BifrostClient] Running on file:// protocol - skipping module loading');
         this.logger.log('[BifrostClient] Error display and auto-rendering disabled (use HTTP server to enable)');
       }
-      
+
       // Initialize error display (for visual error boundaries) - skip on file://
       if (!isFileProtocol && this.options.showErrors !== false) {
         try {
@@ -1199,7 +1217,7 @@
           this.logger.warn('[BifrostClient] Error display failed to load:', error.message);
         }
       }
-      
+
       // Initialize zDisplay renderer (for auto-rendering zDisplay events) - skip on file://
       if (!isFileProtocol) {
         try {
@@ -1208,25 +1226,25 @@
           this.logger.warn('[BifrostClient] zDisplay renderer failed to load:', error.message);
         }
       }
-      
+
       // Load theme BEFORE connecting to prevent FOUC (Flash of Unstyled Content)
       // Load required modules
       await this._ensureConnection();
       await this._ensureMessageHandler();
-      
+
       await this.connection.connect();
-      
+
       // Set up message handler
       this.connection.onMessage((event) => {
         this.messageHandler.handleMessage(event.data);
       });
-      
+
       // Auto-send request if specified (Swiper-style elegance!)
       if (this.options.autoRequest) {
         const request = typeof this.options.autoRequest === 'string'
           ? { event: this.options.autoRequest }
           : this.options.autoRequest;
-        
+
         // For execute_walker requests, use fire-and-forget (chunks come asynchronously)
         // For other requests, use send() to wait for response
         if (request.event === 'execute_walker') {
@@ -1272,7 +1290,7 @@
       }
 
       await this._ensureMessageHandler();
-      
+
       return this.messageHandler.send(
         payload,
         (msg) => this.connection.send(msg),
@@ -1297,7 +1315,7 @@
         requestId: requestId,
         value: value
       });
-      
+
       this.connection.send(message);
     }
 
@@ -1334,11 +1352,21 @@
         model: model
       };
 
-      if (filters) payload.where = filters;
-      if (options.fields) payload.fields = options.fields;
-      if (options.order_by) payload.order_by = options.order_by;
-      if (options.limit !== undefined) payload.limit = options.limit;
-      if (options.offset !== undefined) payload.offset = options.offset;
+      if (filters) {
+        payload.where = filters;
+      }
+      if (options.fields) {
+        payload.fields = options.fields;
+      }
+      if (options.order_by) {
+        payload.order_by = options.order_by;
+      }
+      if (options.limit !== undefined) {
+        payload.limit = options.limit;
+      }
+      if (options.offset !== undefined) {
+        payload.offset = options.offset;
+      }
 
       return this.send(payload);
     }
@@ -1475,7 +1503,7 @@
     // ═══════════════════════════════════════════════════════════
     // Dashboard Rendering (zDash Event)
     // ═══════════════════════════════════════════════════════════
-    
+
     // NOTE: Dashboard rendering has been extracted to dashboard_renderer.js
     // The onZDash hook now uses the DashboardRenderer class (see _ensureZDisplayRenderer)
     // Legacy methods below are kept for backward compatibility but should not be used directly

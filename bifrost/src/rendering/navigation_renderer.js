@@ -2,7 +2,7 @@
  * ═══════════════════════════════════════════════════════════════
  * Navigation Renderer - zTheme Navigation Components
  * ═══════════════════════════════════════════════════════════════
- * 
+ *
  * Renders navigation components aligned with zTheme:
  * - zNav (navigation bars)
  * - zNavbar (top navigation)
@@ -11,13 +11,13 @@
  * - zPagination (page navigation)
  * - Sidebar navigation
  * - Dropdown menus
- * 
+ *
  * ✨ REFACTORED: Uses Layer 0 primitives
- * 
+ *
  * @module rendering/navigation_renderer
  * @layer 3
  * @pattern Strategy (navigation components)
- * 
+ *
  * @see https://github.com/ZoloAi/zTheme - zTheme Navigation
  */
 
@@ -29,11 +29,23 @@ import { createList, createListItem } from './primitives/lists_primitives.js';
 import { createLink, createButton } from './primitives/interactive_primitives.js';
 import { createDiv, createSpan } from './primitives/generic_containers.js';
 import { renderLink } from './primitives/link_primitives.js'; // NEW: Use link primitive
+import { withErrorBoundary } from '../utils/error_boundary.js';
 
 export class NavigationRenderer {
   constructor(logger = null, client = null) {
     this.logger = logger || console;
     this.client = client; // NEW: Store client for link rendering
+
+    // Wrap renderNavBar method with error boundary
+    // Note: We wrap it after the class is fully initialized
+    const proto = Object.getPrototypeOf(this);
+    if (proto.renderNavBar) {
+      const originalRenderNavBar = proto.renderNavBar.bind(this);
+      this.renderNavBar = withErrorBoundary(originalRenderNavBar, {
+        component: 'NavigationRenderer.renderNavBar',
+        logger: this.logger
+      });
+    }
   }
 
   /**
@@ -61,7 +73,7 @@ export class NavigationRenderer {
     const collapseId = `navbar-collapse-${Math.random().toString(36).substr(2, 9)}`;
 
     // Create nav container with zNavbar component classes (using primitive)
-    const nav = createNav({ 
+    const nav = createNav({
       class: `zNavbar zNavbar-${theme} ${className}`,
       role: 'navigation'
     });
@@ -90,19 +102,19 @@ export class NavigationRenderer {
     nav.appendChild(toggleButton);
 
     // Create navbar collapse wrapper (using primitive)
-    const collapseDiv = createDiv({ 
+    const collapseDiv = createDiv({
       class: 'zNavbar-collapse',
       id: collapseId
     });
-    
+
     // ✨ FIX: Add manual toggle handler (zTheme doesn't include Bootstrap JS)
     toggleButton.addEventListener('click', (e) => {
       e.preventDefault();
       const isExpanded = toggleButton.getAttribute('aria-expanded') === 'true';
-      
+
       // Toggle aria state
       toggleButton.setAttribute('aria-expanded', !isExpanded);
-      
+
       // Toggle visibility (try both 'show' and 'zShow' for compatibility)
       if (isExpanded) {
         collapseDiv.classList.remove('show', 'zShow');
@@ -129,22 +141,22 @@ export class NavigationRenderer {
         // $ (delta link), ^ (bounce-back), ~ (anchor)
         // Example: "$^zLogin" → "zLogin"
         originalItem = item;
-        itemLabel = item.replace(/^[\$\^~]+/, '');
+        itemLabel = item.replace(/^[$^~]+/, '');
         // Convert delta links ($zBlock) to web routes (/zBlock)
         itemHref = this._convertDeltaLinkToHref(item);
       } else if (typeof item === 'object' && item !== null) {
         originalItem = item.label || item.text || '';
-        itemLabel = originalItem.replace(/^[\$\^~]+/, '');
+        itemLabel = originalItem.replace(/^[$^~]+/, '');
         itemHref = item.href || this._convertDeltaLinkToHref(itemLabel);
       } else {
         originalItem = String(item);
         itemLabel = originalItem;
         itemHref = href;
       }
-      
+
       // Detect link type for renderLink primitive
       const linkType = this._detectLinkType(itemHref, originalItem);
-      
+
       // Prepare link data for renderLink primitive
       const linkData = {
         label: itemLabel,
@@ -155,12 +167,12 @@ export class NavigationRenderer {
         color: '',
         window: {}
       };
-      
+
       this.logger.log('[NavigationRenderer] 🎯 Creating navbar link:', linkData);
-      
+
       // ✅ Use renderLink primitive (now returns element directly)
       const link = renderLink(linkData, null, this.client);
-      
+
       if (link) {
         li.appendChild(link);
       } else {
@@ -173,17 +185,17 @@ export class NavigationRenderer {
     // Assemble: ul -> collapseDiv -> nav
     collapseDiv.appendChild(ul);
     nav.appendChild(collapseDiv);
-    
+
     return nav;
   }
 
   /**
    * Convert delta link notation ($zBlock) to web route (/zBlock)
-   * 
+   *
    * Delta links ($) are used in YAML for intra-file navigation.
    * Navigation modifiers (^, ~) are stripped for clean URLs.
    * In Bifrost mode, these are converted to web routes for proper navigation.
-   * 
+   *
    * @param {string} item - Item text (may contain $^zBlock notation with modifiers)
    * @returns {string} - Web-friendly href
    * @private
@@ -192,27 +204,27 @@ export class NavigationRenderer {
     if (typeof item !== 'string') {
       return '#';
     }
-    
+
     // Strip all navigation prefixes: $ (delta), ^ (bounce-back), ~ (anchor)
     // Example: "$^zLogin" → "zLogin" → "/zLogin"
-    const cleanBlock = item.replace(/^[\$\^~]+/, '');
-    
+    const cleanBlock = item.replace(/^[$^~]+/, '');
+
     // Check if original item had $ (delta link) or other navigation prefixes
     if (item !== cleanBlock) {
       // Had navigation prefixes - convert to web route
       return `/${cleanBlock}`;
     }
-    
+
     // Default: use item as-is (for explicit /path or # links)
     return item.startsWith('/') || item.startsWith('#') ? item : `/${item}`;
   }
 
   /**
    * Detect link type from href and original item.
-   * 
+   *
    * This mirrors the logic in link_primitives.js to ensure consistent
    * link type detection across navbar and content links.
-   * 
+   *
    * @param {string} href - Converted href (e.g., "/zBlock")
    * @param {string} originalItem - Original item with prefixes (e.g., "$zBlock")
    * @returns {string} - Link type: 'delta', 'zpath', 'external', 'anchor', 'placeholder'
@@ -230,22 +242,22 @@ export class NavigationRenderer {
         return 'zpath';
       }
     }
-    
+
     // Check href for external URLs
     if (href.startsWith('http://') || href.startsWith('https://') || href.startsWith('www.')) {
       return 'external';
     }
-    
+
     // Check for anchor links
     if (href.startsWith('#') && href !== '#') {
       return 'anchor';
     }
-    
+
     // Placeholder link
     if (!href || href === '#') {
       return 'placeholder';
     }
-    
+
     // Default: treat as delta (internal navigation)
     return 'delta';
   }
@@ -266,12 +278,12 @@ export class NavigationRenderer {
       className = 'zcli-breadcrumb'
     } = options;
 
-    const nav = createNav({ 
+    const nav = createNav({
       class: `${className} zmb-3`,
       'aria-label': 'breadcrumb'
     });
 
-    const ol = createList(true, { 
+    const ol = createList(true, {
       class: 'zD-flex zFlex-row zFlex-items-center zGap-2'
     });
     ol.style.listStyle = 'none';
@@ -280,10 +292,10 @@ export class NavigationRenderer {
 
     trail.forEach((item, index) => {
       const li = createListItem({ class: 'breadcrumb-item' });
-      
+
       if (index === trail.length - 1) {
         // Last item (current page) - use muted text, bold weight (using primitive)
-        const span = createSpan({ 
+        const span = createSpan({
           class: 'zText-muted zFw-bold',
           'aria-current': 'page'
         });
@@ -340,9 +352,9 @@ export class NavigationRenderer {
 
       const a = createLink('#');
       a.textContent = item;
-      
+
       // zTheme sidebar link: padding, display block, rounded
-      a.className = `sidebar-link zText-dark zText-decoration-none zP-2 zD-block zRounded`;
+      a.className = 'sidebar-link zText-dark zText-decoration-none zP-2 zD-block zRounded';
 
       // Active state with zTheme classes
       if (activeIndex === index) {

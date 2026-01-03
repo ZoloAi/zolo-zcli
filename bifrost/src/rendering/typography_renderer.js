@@ -1,6 +1,6 @@
 /**
  * TypographyRenderer - Renders text, headers, and dividers
- * 
+ *
  * Uses typography primitives for DOM creation
  */
 
@@ -19,8 +19,12 @@ export class TypographyRenderer {
   renderText(eventData) {
     const classes = this._buildTextClasses(eventData);
     const attrs = {};
-    if (classes) attrs.class = classes;
-    if (eventData._id) attrs.id = eventData._id;  // Pass _id to primitive
+    if (classes) {
+      attrs.class = classes;
+    }
+    if (eventData._id) {
+      attrs.id = eventData._id;
+    }  // Pass _id to primitive
     const p = createParagraph(attrs);
     p.textContent = eventData.content || '';
     return p;
@@ -35,8 +39,12 @@ export class TypographyRenderer {
     const level = eventData.level || 1;
     const classes = this._buildTextClasses(eventData);
     const attrs = {};
-    if (classes) attrs.class = classes;
-    if (eventData._id) attrs.id = eventData._id;  // Pass _id to primitive
+    if (classes) {
+      attrs.class = classes;
+    }
+    if (eventData._id) {
+      attrs.id = eventData._id;
+    }  // Pass _id to primitive
     const h = createHeading(level, attrs);
     h.textContent = eventData.label || eventData.content || '';
     return h;
@@ -50,9 +58,13 @@ export class TypographyRenderer {
   renderDivider(eventData) {
     const hr = document.createElement('hr');
     const classes = ['zDivider'];
-    if (eventData.color) classes.push(`zBorder-${eventData.color}`);
+    if (eventData.color) {
+      classes.push(`zBorder-${eventData.color}`);
+    }
     hr.className = classes.join(' ');
-    if (eventData._id) hr.setAttribute('id', eventData._id);  // Divider has no primitive yet
+    if (eventData._id) {
+      hr.setAttribute('id', eventData._id);
+    }  // Divider has no primitive yet
     return hr;
   }
 
@@ -62,23 +74,23 @@ export class TypographyRenderer {
    */
   _buildTextClasses(eventData) {
     const classes = [];
-    
+
     // Color: normalize to lowercase for zTheme consistency
     if (eventData.color) {
       const color = eventData.color.toLowerCase();
       classes.push(`zText-${color}`);
     }
-    
+
     // Indent: use margin-start (zms) for text indentation
     if (eventData.indent) {
       classes.push(`zms-${eventData.indent}`);
     }
-    
+
     // Custom classes from YAML (_zClass parameter - ignored by terminal)
     if (eventData._zClass) {
       classes.push(eventData._zClass);
     }
-    
+
     return classes.length > 0 ? classes.join(' ') : '';
   }
 }

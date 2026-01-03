@@ -1,13 +1,13 @@
 /**
  * ZVaFManager - Manages zVaF elements (badge, navbar, content area)
- * 
+ *
  * Responsibilities:
  * - Initialize zVaF elements (zBifrostBadge, zNavBar, zVaF)
  * - Populate connection badge
  * - Update badge state (connecting, connected, disconnected, error)
  * - Populate navbar from embedded config or API
  * - Fetch fresh navbar after auth state changes
- * 
+ *
  * Extracted from bifrost_client.js (Phase 3.2)
  */
 
@@ -24,7 +24,7 @@ export class ZVaFManager {
    */
   initZVaFElements() {
     this.logger.log('[ZVaFManager] 🔧 Starting initialization...');
-    
+
     if (typeof document === 'undefined') {
       this.logger.warn('[ZVaFManager] Not in browser environment');
       return;
@@ -54,7 +54,7 @@ export class ZVaFManager {
     }
 
     // Step 3: Find zVaF element (content renders directly into it)
-    const zVaFElement = document.querySelector(this.options.targetElement) || 
+    const zVaFElement = document.querySelector(this.options.targetElement) ||
                         document.getElementById(this.options.targetElement);
     if (zVaFElement) {
       this.client._zVaFElement = zVaFElement;
@@ -70,8 +70,10 @@ export class ZVaFManager {
    * Populate connection badge content (v1.6.0: Simplified - element exists, just set content)
    */
   populateConnectionBadge() {
-    if (!this.client._zConnectionBadge) return;
-    
+    if (!this.client._zConnectionBadge) {
+      return;
+    }
+
     // Set initial badge content (will be updated by connection hooks)
     this.client._zConnectionBadge.className = 'zConnection zBadge zBadge-connection zBadge-pending';
     this.client._zConnectionBadge.innerHTML = `
@@ -80,7 +82,7 @@ export class ZVaFManager {
       </svg>
       <span class="zBadge-text">Connecting...</span>
     `;
-    
+
     this.logger.log('[ConnectionBadge] ✅ Badge populated with initial state');
   }
 
@@ -96,7 +98,7 @@ export class ZVaFManager {
 
     const badge = this.client._zConnectionBadge;
     const badgeText = badge.querySelector('.zBadge-text');
-    
+
     if (!badgeText) {
       this.logger.warn('[ConnectionBadge] Cannot update - badge text element not found');
       return;
@@ -137,13 +139,15 @@ export class ZVaFManager {
    * Populate navbar from embedded config (v1.6.0: Use zuiConfig from server, fetch fresh on auth change)
    */
   async populateNavBar() {
-    if (!this.client._zNavBarElement) return;
-    
+    if (!this.client._zNavBarElement) {
+      return;
+    }
+
     try {
       // Use embedded zuiConfig (already RBAC-filtered by backend on page load)
       if (this.zuiConfig && this.zuiConfig.zNavBar) {
         const navElement = await this.client._renderMetaNavBarHTML(this.zuiConfig.zNavBar);
-        
+
         // 🔧 FIX v1.6.1: Append DOM element directly (NOT innerHTML!)
         // This preserves event listeners attached by link_primitives.js
         this.client._zNavBarElement.innerHTML = ''; // Clear first
@@ -153,7 +157,7 @@ export class ZVaFManager {
         } else {
           this.logger.warn('[NavBar] renderMetaNavBarHTML returned null');
         }
-        
+
         // Enable client-side navigation after navbar is rendered
         await this.client._enableClientSideNavigation();
       } else {
@@ -168,26 +172,28 @@ export class ZVaFManager {
    * Fetch fresh navbar from API and populate (used after auth state changes)
    */
   async fetchAndPopulateNavBar() {
-    if (!this.client._zNavBarElement) return;
-    
+    if (!this.client._zNavBarElement) {
+      return;
+    }
+
     try {
       // Fetch fresh navbar config from backend (RBAC-filtered!)
       const response = await fetch('/api/zui/config');
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
-      
+
       const freshConfig = await response.json();
       this.logger.log('[NavBar] ✅ Fetched fresh config from API:', freshConfig);
-      
+
       // Update zuiConfig with fresh navbar
       if (freshConfig.zNavBar) {
         this.zuiConfig.zNavBar = freshConfig.zNavBar;
         this.client.zuiConfig.zNavBar = freshConfig.zNavBar;
-        
+
         // Render navbar element and append it (preserves event listeners!)
         const navElement = await this.client._renderMetaNavBarHTML(freshConfig.zNavBar);
-        
+
         // 🔧 FIX v1.6.1: Append DOM element directly (NOT innerHTML!)
         this.client._zNavBarElement.innerHTML = ''; // Clear first
         if (navElement) {
@@ -196,7 +202,7 @@ export class ZVaFManager {
         } else {
           this.logger.warn('[NavBar] renderMetaNavBarHTML returned null');
         }
-        
+
         // Re-enable client-side navigation after navbar is re-rendered
         await this.client._enableClientSideNavigation();
       } else {

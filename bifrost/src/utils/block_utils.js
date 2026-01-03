@@ -2,14 +2,14 @@
  * ═══════════════════════════════════════════════════════════════
  * Block Wrapper Utilities
  * ═══════════════════════════════════════════════════════════════
- * 
+ *
  * Helper functions for creating and managing zBlock wrappers with metadata.
  * Supports both static and progressive rendering patterns.
- * 
+ *
  * @module utils/block_utils
  * @version 1.0.0
  * @author Gal Nachshon
- * 
+ *
  * ───────────────────────────────────────────────────────────────
  * Architecture:
  * - Uses primitives for DOM creation (createDiv)
@@ -18,7 +18,7 @@
  * ───────────────────────────────────────────────────────────────
  */
 
-import { createDiv } from '../rendering/primitives/generic_containers.js';
+import { createDiv } from './dom_utils.js';
 
 /**
  * Create a block wrapper with metadata
@@ -33,26 +33,26 @@ export function createBlockWrapper(blockData, blockName = 'zBlock', isProgressiv
   }
 
   const blockLevelDiv = createDiv();
-  
+
   // Apply block-level classes
   const classes = Array.isArray(blockData._zClass)
     ? blockData._zClass
     : blockData._zClass.split(',').map(c => c.trim());
   blockLevelDiv.className = classes.join(' ');
-  
+
   // Set data attribute
   blockLevelDiv.setAttribute('data-zblock', isProgressive ? 'progressive' : blockName);
-  
+
   // Set id for named blocks (not progressive)
   if (!isProgressive && blockName && blockName !== 'zBlock') {
     blockLevelDiv.setAttribute('id', blockName);
   }
-  
+
   // Apply inline styles if present
   if (blockData._zStyle) {
     blockLevelDiv.setAttribute('style', blockData._zStyle);
   }
-  
+
   return blockLevelDiv;
 }
 
@@ -62,12 +62,14 @@ export function createBlockWrapper(blockData, blockName = 'zBlock', isProgressiv
  * @param {Object} metadata - Metadata object (may contain _zClass, _zStyle)
  */
 export function applyBlockMetadata(wrapper, metadata) {
-  if (!wrapper || !metadata) return;
-  
+  if (!wrapper || !metadata) {
+    return;
+  }
+
   if (metadata._zClass) {
     wrapper.className = metadata._zClass;
   }
-  
+
   if (metadata._zStyle) {
     wrapper.setAttribute('style', metadata._zStyle);
   }
@@ -79,7 +81,9 @@ export function applyBlockMetadata(wrapper, metadata) {
  * @returns {HTMLElement|null} Existing wrapper, or null
  */
 export function findProgressiveBlockWrapper(container) {
-  if (!container) return null;
+  if (!container) {
+    return null;
+  }
   return container.querySelector('[data-zblock="progressive"]');
 }
 
@@ -89,8 +93,8 @@ export function findProgressiveBlockWrapper(container) {
  * @returns {boolean} True if has metadata
  */
 export function hasBlockMetadata(blockData) {
-  return blockData && 
-         typeof blockData === 'object' && 
+  return blockData &&
+         typeof blockData === 'object' &&
          (blockData._zClass || blockData._zStyle);
 }
 

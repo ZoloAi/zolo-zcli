@@ -1,35 +1,35 @@
 /**
  * SpinnerRenderer - Render loading spinners
- * 
+ *
  * Terminal-first implementation matching backend zDisplay.spinner()
- * 
+ *
  * Backend Events (from display_event_timebased.py):
  * - spinner_start: { event, spinnerId, label, style, container }
  * - spinner_stop: { event, spinnerId }
- * 
+ *
  * Spinner Styles (matching terminal):
  * - dots: ⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏
  * - line: - \ | /
  * - arc: ◜ ◠ ◝ ◞ ◡ ◟
  * - bouncingBall: ( ●    ) (  ●   ) (   ●  ) (    ● )
  * - simple: . .. ...
- * 
+ *
  * Terminal Paradigm:
  * - Context manager: with display.spinner("Loading"): do_work()
  * - Background thread animates frames
  * - Auto-cleanup with checkmark on completion
- * 
+ *
  * Bifrost Paradigm:
  * - WebSocket events trigger start/stop
  * - CSS animations handle visual feedback
  * - Multiple spinners can be active simultaneously
- * 
+ *
  * Features:
  * - Size variants (sm, md, lg)
  * - Color variants (primary, secondary, success, danger, warning, info)
  * - CSS animations (no JavaScript required after rendering)
  * - Auto-cleanup on stop
- * 
+ *
  * @see https://github.com/ZoloAi/zTheme/blob/main/Manual/ztheme-spinners.html
  */
 
@@ -225,7 +225,7 @@ export default class SpinnerRenderer {
    */
   stopAll(success = true) {
     this.logger.log('[SpinnerRenderer] Stopping all spinners');
-    
+
     for (const [spinnerId, _data] of this._activeSpinners) {
       this.stop({ spinnerId, success });
     }

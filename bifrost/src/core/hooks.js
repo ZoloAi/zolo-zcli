@@ -32,13 +32,13 @@ export class HookManager {
     const body = document.body;
     const navbars = document.querySelectorAll('.zNavbar');
     const togglers = document.querySelectorAll('.zNavbar-toggler');
-    
+
     if (isDark) {
       // Apply dark background to body
       body.classList.add('zBg-dark');
       body.style.backgroundColor = 'var(--color-dark)';
       // DON'T set body text color - let it cascade properly
-      
+
       // Apply white text ONLY to elements outside cards
       const contentArea = document.getElementById('zVaF-content');
       if (contentArea) {
@@ -55,7 +55,7 @@ export class HookManager {
           }
         });
       }
-      
+
       navbars.forEach(nav => {
         nav.classList.remove('zNavbar-light');
         nav.classList.add('zNavbar-dark');
@@ -69,7 +69,7 @@ export class HookManager {
           icon.style.color = '#ffffff';  // Direct color value instead of CSS var
         }
       });
-      
+
       // Apply dark mode to theme toggle button icon (sun icon should be white)
       const themeToggleBtn = document.querySelector('.zTheme-toggle');
       if (themeToggleBtn) {
@@ -82,7 +82,7 @@ export class HookManager {
       // Remove dark background from body
       body.classList.remove('zBg-dark');
       body.style.backgroundColor = '';
-      
+
       // Remove white text from all elements
       const contentArea = document.getElementById('zVaF-content');
       if (contentArea) {
@@ -90,7 +90,7 @@ export class HookManager {
           el.classList.remove('zText-light');
         });
       }
-      
+
       navbars.forEach(nav => {
         nav.classList.remove('zNavbar-dark');
         nav.classList.add('zNavbar-light');
@@ -104,7 +104,7 @@ export class HookManager {
           icon.style.color = '';
         }
       });
-      
+
       // Clear theme toggle button icon color
       const themeToggleBtn = document.querySelector('.zTheme-toggle');
       if (themeToggleBtn) {
@@ -134,12 +134,12 @@ export class HookManager {
       } catch (error) {
         // Log to console
         this.logger.error(`[BifrostClient] Error in ${hookName} hook:`, error);
-        
+
         // Log via logger if available
         if (this.logger) {
           this.logger.error(`Error in ${hookName} hook:`, error);
         }
-        
+
         // Display in UI if error handler is set
         if (this.errorHandler) {
           try {
@@ -154,7 +154,7 @@ export class HookManager {
             this.logger.error('[BifrostClient] Error handler itself failed:', displayError);
           }
         }
-        
+
         // Call onError hook if it exists and isn't the one that failed
         if (hookName !== 'onError' && this.hooks.onError) {
           try {
@@ -205,12 +205,12 @@ export class HookManager {
   addDarkModeToggle(navElement) {
     // Use DarkModeToggle widget (extracted for modularity)
     const darkModeWidget = new DarkModeToggle(this.logger);
-    
+
     // Create toggle with theme change callback
     darkModeWidget.create(navElement, (newTheme) => {
       // Apply theme
       this._applyDarkMode(newTheme === 'dark');
-      
+
       // Call onThemeChange hook if registered
       this.call('onThemeChange', newTheme);
     });
