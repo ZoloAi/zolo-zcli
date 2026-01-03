@@ -53,6 +53,7 @@ Module Structure:
 """
 
 from zCLI import json, Dict, Any, Optional
+from .base_event_handler import BaseEventHandler
 
 # ═══════════════════════════════════════════════════════════
 # Module Constants
@@ -82,24 +83,19 @@ ERR_NO_PRIMITIVES = "zDisplay.zPrimitives not available"
 ERR_SEND_FAILED = "Failed to send connection info"
 ERR_ROUTE_FAILED = "Failed to route input response"
 
-# User Context Keys (for logging)
-CONTEXT_KEY_USER_ID = "user_id"
-CONTEXT_KEY_APP_NAME = "app_name"
-CONTEXT_KEY_ROLE = "role"
-CONTEXT_KEY_AUTH_CONTEXT = "auth_context"
-
-# Default Values
-DEFAULT_USER_ID = "anonymous"
-DEFAULT_APP_NAME = "unknown"
-DEFAULT_ROLE = "guest"
-DEFAULT_AUTH_CONTEXT = "none"
+# Note: User Context Keys and Default Values now inherited from BaseEventHandler.
+# Module-level constants kept for convenience (match base class values exactly).
+from .base_event_handler import (
+    CONTEXT_KEY_USER_ID, CONTEXT_KEY_APP_NAME, CONTEXT_KEY_ROLE, CONTEXT_KEY_AUTH_CONTEXT,
+    DEFAULT_USER_ID, DEFAULT_APP_NAME, DEFAULT_ROLE, DEFAULT_AUTH_CONTEXT
+)
 
 
 # ═══════════════════════════════════════════════════════════
 # ClientEvents Class
 # ═══════════════════════════════════════════════════════════
 
-class ClientEvents:
+class ClientEvents(BaseEventHandler):
     """
     Handles client-side events for the zBifrost WebSocket bridge.
     
@@ -139,10 +135,8 @@ class ClientEvents:
             client_events = ClientEvents(bifrost, auth_manager=auth_manager)
             ```
         """
-        self.bifrost = bifrost
-        self.logger = bifrost.logger
+        super().__init__(bifrost, auth_manager)
         self.zcli = bifrost.zcli
-        self.auth = auth_manager
     
     async def handle_input_response(self, ws, data: Dict[str, Any]) -> None:
         """
@@ -303,90 +297,7 @@ class ClientEvents:
                 f"User: {user_id} | Error: {str(e)}"
             )
     
-    def _extract_user_context(self, ws) -> Dict[str, str]:
-        """
-        Extract user authentication context from WebSocket connection.
-        
-        Retrieves user context from AuthenticationManager for logging and
-        future authorization. Handles zSession, application, and dual contexts,
-        preferring application context when both are present (dual mode).
-        
-        Args:
-            ws: WebSocket connection
-        
-        Returns:
-            Dict containing:
-                - user_id: User identifier (username or app user ID)
-                - app_name: Application name (for app context)
-                - role: User role (admin, user, guest, etc.)
-                - auth_context: Authentication type (zSession, application, dual, none)
-        
-        Security:
-            Returns safe defaults (anonymous/unknown/guest/none) if no auth
-            info is available, ensuring the system remains operational.
-        
-        Example:
-            ```python
-            context = self._extract_user_context(ws)
-            # context = {
-            #     "user_id": "admin",
-            #     "app_name": "ecommerce",
-            #     "role": "admin",
-            #     "auth_context": "dual"
-            # }
-            ```
-        """
-        if not self.auth:
-            return {
-                CONTEXT_KEY_USER_ID: DEFAULT_USER_ID,
-                CONTEXT_KEY_APP_NAME: DEFAULT_APP_NAME,
-                CONTEXT_KEY_ROLE: DEFAULT_ROLE,
-                CONTEXT_KEY_AUTH_CONTEXT: DEFAULT_AUTH_CONTEXT
-            }
-        
-        auth_info = self.auth.get_client_info(ws)
-        if not auth_info:
-            return {
-                CONTEXT_KEY_USER_ID: DEFAULT_USER_ID,
-                CONTEXT_KEY_APP_NAME: DEFAULT_APP_NAME,
-                CONTEXT_KEY_ROLE: DEFAULT_ROLE,
-                CONTEXT_KEY_AUTH_CONTEXT: DEFAULT_AUTH_CONTEXT
-            }
-        
-        context = auth_info.get("context", DEFAULT_AUTH_CONTEXT)
-        
-        # Prefer application context in dual mode for client events
-        if context == "dual":
-            app_user = auth_info.get("app_user", {})
-            return {
-                CONTEXT_KEY_USER_ID: app_user.get("username", app_user.get("id", DEFAULT_USER_ID)),
-                CONTEXT_KEY_APP_NAME: app_user.get("app_name", DEFAULT_APP_NAME),
-                CONTEXT_KEY_ROLE: app_user.get("role", DEFAULT_ROLE),
-                CONTEXT_KEY_AUTH_CONTEXT: "dual"
-            }
-        elif context == "application":
-            app_user = auth_info.get("app_user", {})
-            return {
-                CONTEXT_KEY_USER_ID: app_user.get("username", app_user.get("id", DEFAULT_USER_ID)),
-                CONTEXT_KEY_APP_NAME: app_user.get("app_name", DEFAULT_APP_NAME),
-                CONTEXT_KEY_ROLE: app_user.get("role", DEFAULT_ROLE),
-                CONTEXT_KEY_AUTH_CONTEXT: "application"
-            }
-        elif context == "zSession":
-            zsession_user = auth_info.get("zsession_user", {})
-            return {
-                CONTEXT_KEY_USER_ID: zsession_user.get("username", DEFAULT_USER_ID),
-                CONTEXT_KEY_APP_NAME: "zCLI",
-                CONTEXT_KEY_ROLE: zsession_user.get("role", DEFAULT_ROLE),
-                CONTEXT_KEY_AUTH_CONTEXT: "zSession"
-            }
-        else:
-            return {
-                CONTEXT_KEY_USER_ID: DEFAULT_USER_ID,
-                CONTEXT_KEY_APP_NAME: DEFAULT_APP_NAME,
-                CONTEXT_KEY_ROLE: DEFAULT_ROLE,
-                CONTEXT_KEY_AUTH_CONTEXT: DEFAULT_AUTH_CONTEXT
-            }
+    # Note: _extract_user_context() method removed - now inherited from BaseEventHandler
     
     async def handle_page_unload(self, ws, data: Dict[str, Any]) -> None:
         """

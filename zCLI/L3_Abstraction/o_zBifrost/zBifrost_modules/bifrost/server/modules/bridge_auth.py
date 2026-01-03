@@ -66,8 +66,12 @@ REASON_AUTH_ERROR = "Authentication error"
 REASON_CONFIG_ERROR = "Server configuration error"
 REASON_INVALID_ORIGIN = "Invalid origin"
 
-# Authentication Context Values
-CONTEXT_GUEST = "guest"
+# Authentication Context Values (Three-Tier Authentication)
+CONTEXT_ZSESSION = "zSession"      # Layer 1: Internal zCLI users
+CONTEXT_APPLICATION = "application"  # Layer 2: External app users
+CONTEXT_DUAL = "dual"               # Layer 3: Both zSession + Application
+CONTEXT_NONE = "none"               # No authentication
+CONTEXT_GUEST = "guest"             # Guest access
 USER_ANONYMOUS = "anonymous"
 ROLE_GUEST = "guest"
 

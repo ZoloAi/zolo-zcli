@@ -132,10 +132,23 @@ class zBifrost:
         self.orchestrator.start(socket_ready=socket_ready)
     
     def stop(self) -> None:
-        """Stop WebSocket bridge."""
+        """
+        Stop WebSocket bridge gracefully.
+        
+        Closes all client connections and shuts down the server.
+        Uses asyncio to run the async shutdown method.
+        """
         if self.orchestrator.websocket:
-            # TODO: Implement stop logic in orchestrator
             self.logger.info(f"{LOG_PREFIX} Stopping WebSocket bridge")
+            import asyncio
+            try:
+                # Run async shutdown in sync context
+                asyncio.run(self.orchestrator.websocket.shutdown())
+                self.logger.info(f"{LOG_PREFIX} WebSocket bridge stopped successfully")
+            except Exception as e:
+                self.logger.error(f"{LOG_PREFIX} Error stopping WebSocket bridge: {e}")
+        else:
+            self.logger.warning(f"{LOG_PREFIX} Cannot stop - WebSocket bridge not running")
     
     def broadcast(self, message: dict, sender: str = "system") -> None:
         """
@@ -154,17 +167,30 @@ class zBifrost:
         Returns:
             Dict with:
                 - running: bool (is server running)
+                - host: str (server host address)
+                - port: int (server port)
+                - url: str|None (WebSocket URL, None if not running)
                 - clients: int (number of connected clients)
-                - uptime: float (seconds since start)
-                - host: str
-                - port: int
+                - authenticated_clients: int (number of authenticated clients)
+                - require_auth: bool (whether authentication is required)
+                - uptime: float (seconds since server start, 0.0 if not running)
+        
+        Note:
+            If WebSocket bridge is not initialized, returns minimal status dict.
         """
-        # TODO: Implement comprehensive health check in orchestrator
-        return {
-            "running": self.orchestrator.websocket is not None,
-            "clients": 0,  # TODO: Get actual client count
-            "uptime": 0.0,  # TODO: Calculate uptime
-            "host": getattr(self.orchestrator.websocket, 'host', 'N/A') if self.orchestrator.websocket else 'N/A',
-            "port": getattr(self.orchestrator.websocket, 'port', 0) if self.orchestrator.websocket else 0
-        }
+        if self.orchestrator.websocket:
+            # Delegate to WebSocket bridge's comprehensive health check
+            return self.orchestrator.websocket.health_check()
+        else:
+            # Return minimal status if bridge not initialized
+            return {
+                "running": False,
+                "host": "N/A",
+                "port": 0,
+                "url": None,
+                "clients": 0,
+                "authenticated_clients": 0,
+                "require_auth": False,
+                "uptime": 0.0
+            }
 

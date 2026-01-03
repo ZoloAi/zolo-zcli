@@ -23,7 +23,7 @@ Key Responsibilities:
 """
 
 from zCLI import (
-    asyncio, json,
+    asyncio, json, time,
     Optional, Dict, Any,
     ws_serve, WebSocketServerProtocol, ws_exceptions
 )
@@ -140,6 +140,7 @@ HEALTH_URL = "url"
 HEALTH_CLIENTS = "clients"
 HEALTH_AUTHENTICATED_CLIENTS = "authenticated_clients"
 HEALTH_REQUIRE_AUTH = "require_auth"
+HEALTH_UPTIME = "uptime"
 
 # Error/Reason Messages
 ERROR_INVALID_ORIGIN = "Invalid origin"
@@ -248,6 +249,7 @@ class zBifrost:
 
         self.clients = set()
         self._running = False  # Track server running state
+        self._start_time = None  # Track server start time for uptime calculation
         self.server = None  # WebSocket server instance
         
         # Phase 1: Connection Indexing (O(1) user lookup)
@@ -350,6 +352,29 @@ class zBifrost:
         auth_info = await self.auth.authenticate_client(ws, self.walker)
         if not auth_info:
             return  # Connection closed in authenticate_client
+
+        # Generate Bifrost session ID (hierarchical: zS_xxx:zB_xxx)
+        import secrets
+        bifrost_session_id = f"zB_{secrets.token_hex(4)}"  # 8-char hex (matches zS_ format)
+        zspark_id = self.zcli.session.get("zS_id", "zS_unknown") if self.zcli else "zS_unknown"
+        full_session_id = f"{zspark_id}:{bifrost_session_id}"
+        
+        # Attach to WebSocket connection
+        ws.session_id = bifrost_session_id
+        ws.zspark_id = zspark_id
+        ws.full_session_id = full_session_id
+        
+        # Store session metadata in auth_info for persistence
+        auth_info["bifrost_session"] = {
+            "session_id": bifrost_session_id,
+            "zspark_id": zspark_id,
+            "full_id": full_session_id,
+            "created_at": time.time(),
+            "persistent": auth_info.get("context") != "guest"
+        }
+        
+        user = auth_info.get(KEY_USER, "anonymous")
+        self.logger.info(f"{LOG_PREFIX} Generated session: {full_session_id} for user: {user}")
 
         # Register client
         self.auth.register_client(ws, auth_info)
@@ -557,7 +582,13 @@ class zBifrost:
                 - clients (int): Number of connected clients
                 - authenticated_clients (int): Number of authenticated clients
                 - require_auth (bool): Whether authentication is required
+                - uptime (float): Seconds since server start (0.0 if not running)
         """
+        # Calculate uptime if server is running
+        uptime = 0.0
+        if self._running and self._start_time is not None:
+            uptime = time.time() - self._start_time
+        
         return {
             HEALTH_RUNNING: self._running,
             HEALTH_HOST: self.host,
@@ -565,7 +596,8 @@ class zBifrost:
             HEALTH_URL: f"ws://{self.host}:{self.port}" if self._running else None,
             HEALTH_CLIENTS: len(self.clients),
             HEALTH_AUTHENTICATED_CLIENTS: len(self.auth.authenticated_clients),
-            HEALTH_REQUIRE_AUTH: self.auth.require_auth
+            HEALTH_REQUIRE_AUTH: self.auth.require_auth,
+            HEALTH_UPTIME: uptime
         }
 
     # ═══════════════════════════════════════════════════════════
@@ -681,9 +713,11 @@ class zBifrost:
         security_note = SECURITY_LOCALHOST_ONLY if self.host == DEFAULT_HOST else ""
         self.logger.info(LOG_STARTED.format(bind_info=bind_info, security_note=security_note))
         self._running = True
+        self._start_time = time.time()  # Record server start time for uptime tracking
         socket_ready.set()
         await self.server.wait_closed()
         self._running = False
+        self._start_time = None  # Clear start time when server stops
 
     def _log_with_traceback(self, e: Exception, message: str, context: Optional[Dict[str, Any]] = None) -> None:
         """
@@ -774,6 +808,7 @@ class zBifrost:
         finally:
             # Always mark as not running after shutdown attempt
             self._running = False
+            self._start_time = None  # Clear start time on shutdown
             self.logger.info(LOG_SHUTDOWN_COMPLETE)
 
     def _sync_shutdown(self) -> None:

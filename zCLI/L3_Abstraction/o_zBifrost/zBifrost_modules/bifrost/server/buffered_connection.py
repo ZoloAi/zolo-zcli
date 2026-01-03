@@ -20,9 +20,8 @@ Usage:
     await buffered_ws.close()  # Drains queue before closing
 """
 
-from zCLI import asyncio, Optional, Any
+from zCLI import asyncio, json, Optional, Any
 from websockets.server import WebSocketServerProtocol
-import json
 
 
 class BufferedConnection:

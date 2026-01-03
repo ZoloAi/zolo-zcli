@@ -207,6 +207,7 @@ import argparse
 import ast
 import asyncio
 import getpass
+import hashlib
 import importlib
 import importlib.util
 import contextvars
@@ -321,7 +322,7 @@ __all__: List[str] = [
     "zCLI",
 
     # System modules
-    "argparse", "ast", "asyncio", "contextvars", "datetime", "date", "time", "timedelta", "getpass", "importlib", "inspect", "json", 
+    "argparse", "ast", "asyncio", "contextvars", "datetime", "date", "time", "timedelta", "getpass", "hashlib", "importlib", "inspect", "json", 
     "logging", "os", "platform", "platformdirs", "re", "requests", "secrets",
     "shutil", "signal", "socket", "sqlite3", "subprocess", "sys", "traceback",
     "typing", "uuid", "webbrowser", "websockets", "ws_serve", "WebSocketServerProtocol",

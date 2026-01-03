@@ -138,20 +138,28 @@ class MenuEvents:
             await self._send_error(ws, ERR_NO_SELECTED)
             return
         
-        self.logger.debug(f"{LOG_PREFIX_SELECTION} Menu: {menu_key}, Selected: {selected}")
+        # Get Bifrost session ID from WebSocket connection
+        session_id = ws.session_id  # Format: zB_xxxxxxxx
+        full_session_id = ws.full_session_id  # Format: zS_xxxxxxxx:zB_xxxxxxxx
         
-        # TODO: Get session_id from WebSocket connection
-        # For now, use a placeholder - this should be extracted from ws context
-        session_id = getattr(ws, 'session_id', 'default_session')
+        self.logger.debug(
+            f"{LOG_PREFIX_SELECTION} Session: {full_session_id}, "
+            f"Menu: {menu_key}, Selected: {selected}"
+        )
         
         # Retrieve paused walker state
         if session_id not in self.paused_walkers:
-            self.logger.error(f"{LOG_PREFIX_SELECTION} {ERR_NO_WALKER_STATE} (session: {session_id})")
+            self.logger.error(
+                f"{LOG_PREFIX_SELECTION} {ERR_NO_WALKER_STATE} "
+                f"(session: {full_session_id})"
+            )
             await self._send_error(ws, ERR_NO_WALKER_STATE)
             return
         
         walker_state = self.paused_walkers.pop(session_id)
-        self.logger.debug(f"{LOG_PREFIX_SELECTION} Retrieved walker state for session: {session_id}")
+        self.logger.debug(
+            f"{LOG_PREFIX_SELECTION} Retrieved walker state for session: {full_session_id}"
+        )
         
         # Update breadcrumbs
         if self.zcli and hasattr(self.zcli, 'navigation'):

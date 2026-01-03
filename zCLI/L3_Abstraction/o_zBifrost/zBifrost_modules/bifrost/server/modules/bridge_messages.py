@@ -49,6 +49,7 @@ Example:
 """
 
 from zCLI import asyncio, json, Dict, Any, Optional, Callable, Awaitable, safe_json_dumps
+from .bridge_auth import CONTEXT_ZSESSION, CONTEXT_APPLICATION, CONTEXT_DUAL
 
 # ═══════════════════════════════════════════════════════════
 # Module Constants
@@ -1622,7 +1623,9 @@ class MessageHandler:
         cache_ttl = data.get(MSG_KEY_CACHE_TTL, None)
         disable_cache = data.get(MSG_KEY_NO_CACHE, False)
         
-        # Try cache for read operations
+        # Extract user context for caching (needed for both cache lookup and storage)
+        user_context = None
+        cache_key = None
         if is_cacheable and not disable_cache:
             user_context = self._extract_user_context(ws)
             cache_key = self.cache.generate_cache_key(data, user_context)
@@ -1648,8 +1651,8 @@ class MessageHandler:
             )
             
             # Cache result if cacheable
-            if is_cacheable and not disable_cache:
-                self.cache.cache_query(cache_key, result, ttl=cache_ttl)
+            if is_cacheable and not disable_cache and cache_key:
+                self.cache.cache_query(cache_key, result, ttl=cache_ttl, user_context=user_context)
             
             payload = self._build_response(data, result=result)
         
@@ -1730,12 +1733,12 @@ class MessageHandler:
         app_name = auth_info.get("app_name", "default")
         
         # Determine which user data to use based on context
-        if auth_context == "dual":
+        if auth_context == CONTEXT_DUAL:
             # Dual mode: Prefer application context for cache key
             user_data = auth_info.get("application") or auth_info.get("zSession")
-        elif auth_context == "application":
+        elif auth_context == CONTEXT_APPLICATION:
             user_data = auth_info.get("application")
-        elif auth_context == "zSession":
+        elif auth_context == CONTEXT_ZSESSION:
             user_data = auth_info.get("zSession")
         else:
             user_data = None
