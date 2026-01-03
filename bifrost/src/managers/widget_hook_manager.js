@@ -39,12 +39,12 @@ export class WidgetHookManager {
   async registerDisplayHook() {
     if (!this.hooks.has('onDisplay')) {
       this.hooks.register('onDisplay', async (event) => {
-        console.log('[WidgetHookManager] 📨 onDisplay hook triggered with event:', event);
+        this.logger.log('[WidgetHookManager] 📨 onDisplay hook triggered with event:', event);
         this.logger.log('[WidgetHookManager] Auto-rendering zDisplay event:', event);
         
         // Check if this is a zDialog event (form)
         if (event.event === 'zDialog' || event.display_event === 'zDialog') {
-          console.log('[WidgetHookManager] ✅ DETECTED zDialog event - routing to FormRenderer');
+          this.logger.log('[WidgetHookManager] ✅ DETECTED zDialog event - routing to FormRenderer');
           await this.client._ensureFormRenderer();
           
           const formData = event.data || event;
@@ -57,7 +57,7 @@ export class WidgetHookManager {
           
           if (targetZone) {
             targetZone.appendChild(formElement);
-            console.log('[WidgetHookManager] ✅ Form appended to DOM');
+            this.logger.log('[WidgetHookManager] ✅ Form appended to DOM');
           }
         } else {
           // Regular zDisplay event
@@ -74,7 +74,7 @@ export class WidgetHookManager {
   async registerRenderChunkHook() {
     if (!this.hooks.has('onRenderChunk')) {
       this.hooks.register('onRenderChunk', async (message) => {
-        console.log('[WidgetHookManager] 📦 onRenderChunk hook triggered:', message);
+        this.logger.log('[WidgetHookManager] 📦 onRenderChunk hook triggered:', message);
         this.logger.log('[WidgetHookManager] Processing chunk:', message);
         
         await this.client._renderChunkProgressive(message);

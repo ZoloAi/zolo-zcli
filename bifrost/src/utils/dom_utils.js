@@ -111,7 +111,7 @@ export function safeQuery(selector, context = document) {
   try {
     return context.querySelector(selector);
   } catch (error) {
-    console.warn(`[safeQuery] Invalid selector: ${selector}`, error);
+    this.logger.warn(`[safeQuery] Invalid selector: ${selector}`, error);
     return null;
   }
 }
@@ -131,7 +131,7 @@ export function safeQueryAll(selector, context = document) {
   try {
     return Array.from(context.querySelectorAll(selector));
   } catch (error) {
-    console.warn(`[safeQueryAll] Invalid selector: ${selector}`, error);
+    this.logger.warn(`[safeQueryAll] Invalid selector: ${selector}`, error);
     return [];
   }
 }

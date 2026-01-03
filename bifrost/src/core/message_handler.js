@@ -80,10 +80,10 @@ export class MessageHandler {
   handleMessage(data) {
     try {
       const message = JSON.parse(data);
-      console.log('📨 [MessageHandler] Received message:', message);
-      console.log('📨 [MessageHandler] Message keys:', Object.keys(message));
-      console.log('📨 [MessageHandler] display_event:', message.display_event);
-      console.log('📨 [MessageHandler] event:', message.event);
+      this.logger.log('📨 [MessageHandler] Received message:', message);
+      this.logger.log('📨 [MessageHandler] Message keys:', Object.keys(message));
+      this.logger.log('📨 [MessageHandler] display_event:', message.display_event);
+      this.logger.log('📨 [MessageHandler] event:', message.event);
       
       this.logger.log('📨 Received message', message);
 
@@ -93,15 +93,15 @@ export class MessageHandler {
       // Progressive chunk rendering (zWizard chunked execution for Bifrost)
       // MUST be checked BEFORE response correlation (chunks have _requestId but are NOT responses)
       if (message.event === 'render_chunk') {
-        console.log('📦 [MessageHandler] ✅ CHUNK EVENT DETECTED - calling onRenderChunk hook');
-        console.log('📦 [MessageHandler] Chunk message:', message);
+        this.logger.log('📦 [MessageHandler] ✅ CHUNK EVENT DETECTED - calling onRenderChunk hook');
+        this.logger.log('📦 [MessageHandler] Chunk message:', message);
         this.hooks.call('onRenderChunk', message);
         return;
       }
 
       // Connection info event (session data from backend) - v1.6.0
       if (message.event === 'connection_info') {
-        console.log('🔗 [MessageHandler] ✅ CONNECTION_INFO DETECTED - calling onConnectionInfo hook');
+        this.logger.log('🔗 [MessageHandler] ✅ CONNECTION_INFO DETECTED - calling onConnectionInfo hook');
         this.hooks.call('onConnectionInfo', message.data);
         // Also trigger onConnected for backward compatibility
         this.hooks.call('onConnected', message.data);
@@ -110,25 +110,25 @@ export class MessageHandler {
 
       // Navigate back event (^ bounce-back after block completion)
       if (message.event === 'navigate_back') {
-        console.log('↩️ [MessageHandler] ✅ NAVIGATE_BACK EVENT - triggering browser back');
-        console.log('↩️ [MessageHandler] Reason:', message.reason);
+        this.logger.log('↩️ [MessageHandler] ✅ NAVIGATE_BACK EVENT - triggering browser back');
+        this.logger.log('↩️ [MessageHandler] Reason:', message.reason);
         
         // For bounce-back completions (e.g., after login/logout), always navigate to home via client-side nav
         // This avoids double-back issues and ensures correct block loading
         if (message.reason === 'bounce_back_block_completed') {
-          console.log('↩️ [MessageHandler] Bounce-back - navigating to home via client-side nav');
+          this.logger.log('↩️ [MessageHandler] Bounce-back - navigating to home via client-side nav');
           if (this.client && typeof this.client._navigateToRoute === 'function') {
             // Navigate to home
             this.client._navigateToRoute('/').then(() => {
               // Refresh NavBar after navigation (for RBAC updates after login/logout)
               if (typeof this.client._fetchAndPopulateNavBar === 'function') {
-                console.log('↩️ [MessageHandler] ✅ Refreshing NavBar after bounce-back');
+                this.logger.log('↩️ [MessageHandler] ✅ Refreshing NavBar after bounce-back');
                 this.client._fetchAndPopulateNavBar().catch(err => {
-                  console.error('↩️ [MessageHandler] Failed to refresh NavBar:', err);
+                  this.logger.error('↩️ [MessageHandler] Failed to refresh NavBar:', err);
                 });
               }
             }).catch(err => {
-              console.error('↩️ [MessageHandler] Navigation failed:', err);
+              this.logger.error('↩️ [MessageHandler] Navigation failed:', err);
             });
           } else {
             // Fallback: use window.location (will cause reload)
@@ -143,10 +143,10 @@ export class MessageHandler {
                                 (window.history.length > 1 && document.referrer.includes(window.location.hostname));
           
           if (hasAppHistory) {
-            console.log('↩️ [MessageHandler] RBAC denied - using history.back()');
+            this.logger.log('↩️ [MessageHandler] RBAC denied - using history.back()');
             window.history.back();
           } else {
-            console.log('↩️ [MessageHandler] RBAC denied, no history - navigating to home');
+            this.logger.log('↩️ [MessageHandler] RBAC denied, no history - navigating to home');
             if (this.client && typeof this.client._navigateToRoute === 'function') {
               this.client._navigateToRoute('/');
             } else {
@@ -157,15 +157,15 @@ export class MessageHandler {
         }
         
         // Default: attempt history.back() for other navigate_back reasons
-        console.log('↩️ [MessageHandler] Other reason - using history.back()');
+        this.logger.log('↩️ [MessageHandler] Other reason - using history.back()');
         window.history.back();
         return;
       }
 
       // Dashboard event (zDash display event for sidebar navigation)
       if (message.event === 'zDash') {
-        console.log('📊 [MessageHandler] ✅ ZDASH EVENT DETECTED - calling onZDash hook');
-        console.log('📊 [MessageHandler] Dashboard config:', message);
+        this.logger.log('📊 [MessageHandler] ✅ ZDASH EVENT DETECTED - calling onZDash hook');
+        this.logger.log('📊 [MessageHandler] Dashboard config:', message);
         this.hooks.call('onZDash', message);
         return;
       }
@@ -173,15 +173,15 @@ export class MessageHandler {
       // Menu event (menu navigation in Bifrost mode)
       // Note: Backend sends 'zMenu' not 'menu' (matches zDash, zDialog pattern)
       if (message.event === 'zMenu') {
-        console.log('📋 [MessageHandler] ✅ zMENU EVENT DETECTED - calling onMenu hook');
-        console.log('📋 [MessageHandler] Menu config:', message);
+        this.logger.log('📋 [MessageHandler] ✅ zMENU EVENT DETECTED - calling onMenu hook');
+        this.logger.log('📋 [MessageHandler] Menu config:', message);
         this.hooks.call('onMenu', message);
         return;
       }
 
       // RBAC denial event (access denied)
       if (message.event === 'rbac_denied') {
-        console.log('🚫 [MessageHandler] ✅ RBAC ACCESS DENIED');
+        this.logger.log('🚫 [MessageHandler] ✅ RBAC ACCESS DENIED');
         this.logger.log('🚫 RBAC Access Denied:', message.message);
         
         // Display the denial message
@@ -233,8 +233,8 @@ export class MessageHandler {
       // - New: {display_event: 'success', data: {...}}
       // - Progress: {event: 'progress_bar', ...} → treated as display event
       if (message.event === 'display' || message.type === 'display' || message.display_event) {
-        console.log('📨 [MessageHandler] ✅ DISPLAY EVENT DETECTED - calling onDisplay hook');
-        console.log('📨 [MessageHandler] display_event value:', message.display_event);
+        this.logger.log('📨 [MessageHandler] ✅ DISPLAY EVENT DETECTED - calling onDisplay hook');
+        this.logger.log('📨 [MessageHandler] display_event value:', message.display_event);
         this.hooks.call('onDisplay', message);  // Pass full message with display_event
         return;
       }
@@ -283,9 +283,9 @@ export class MessageHandler {
       this._handleBroadcast(message);
 
     } catch (error) {
-      console.error('❌❌❌ [MessageHandler] CRITICAL ERROR:', error);
-      console.error('❌❌❌ [MessageHandler] Error stack:', error.stack);
-      console.error('❌❌❌ [MessageHandler] Raw data:', data);
+      this.logger.error('❌❌❌ [MessageHandler] CRITICAL ERROR:', error);
+      this.logger.error('❌❌❌ [MessageHandler] Error stack:', error.stack);
+      this.logger.error('❌❌❌ [MessageHandler] Raw data:', data);
       this.logger.log('❌ Failed to parse message', { data, error });
       this.hooks.call('onError', error);
     }

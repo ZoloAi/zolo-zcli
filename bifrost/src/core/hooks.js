@@ -133,7 +133,7 @@ export class HookManager {
         return hook(...args);
       } catch (error) {
         // Log to console
-        console.error(`[BifrostClient] Error in ${hookName} hook:`, error);
+        this.logger.error(`[BifrostClient] Error in ${hookName} hook:`, error);
         
         // Log via logger if available
         if (this.logger) {
@@ -151,7 +151,7 @@ export class HookManager {
               stack: error.stack
             });
           } catch (displayError) {
-            console.error('[BifrostClient] Error handler itself failed:', displayError);
+            this.logger.error('[BifrostClient] Error handler itself failed:', displayError);
           }
         }
         
@@ -160,7 +160,7 @@ export class HookManager {
           try {
             this.hooks.onError(error);
           } catch (onErrorError) {
-            console.error('[BifrostClient] onError hook failed:', onErrorError);
+            this.logger.error('[BifrostClient] onError hook failed:', onErrorError);
           }
         }
       }

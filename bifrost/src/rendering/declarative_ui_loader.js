@@ -62,23 +62,23 @@ export class DeclarativeUILoader {
         
         if (navbarItems === true) {
           // Opt-in to global navbar from zuiConfig
-          console.log('[DeclarativeUILoader] 🎯 meta.zNavBar: true, checking zuiConfig...');
-          console.log('[DeclarativeUILoader] 🎯 this.zuiConfig:', this.zuiConfig);
+          this.logger.log('[DeclarativeUILoader] 🎯 meta.zNavBar: true, checking zuiConfig...');
+          this.logger.log('[DeclarativeUILoader] 🎯 this.zuiConfig:', this.zuiConfig);
           
           if (this.zuiConfig && this.zuiConfig.zNavBar) {
             navbarItems = this.zuiConfig.zNavBar;
-            console.log('[DeclarativeUILoader] ✅ Using global navbar from config:', navbarItems);
+            this.logger.log('[DeclarativeUILoader] ✅ Using global navbar from config:', navbarItems);
             this.logger.log('✅ Using global navbar from config:', navbarItems);
           } else {
-            console.warn('[DeclarativeUILoader] ⚠️ meta.zNavBar: true but no global navbar in zuiConfig');
+            this.logger.warn('[DeclarativeUILoader] ⚠️ meta.zNavBar: true but no global navbar in zuiConfig');
             this.logger.warn('[DeclarativeUILoader] meta.zNavBar: true but no global navbar in zuiConfig');
             navbarItems = null;
           }
         } else if (Array.isArray(navbarItems)) {
-          console.log('[DeclarativeUILoader] ✅ Using local navbar override:', navbarItems);
+          this.logger.log('[DeclarativeUILoader] ✅ Using local navbar override:', navbarItems);
           this.logger.log('✅ Using local navbar override:', navbarItems);
         } else {
-          console.warn('[DeclarativeUILoader] ⚠️ Invalid meta.zNavBar value:', navbarItems);
+          this.logger.warn('[DeclarativeUILoader] ⚠️ Invalid meta.zNavBar value:', navbarItems);
           this.logger.warn('[DeclarativeUILoader] Invalid meta.zNavBar value:', navbarItems);
           navbarItems = null;
         }

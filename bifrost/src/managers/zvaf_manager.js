@@ -23,10 +23,10 @@ export class ZVaFManager {
    * Initialize zVaF elements (v1.6.0: Simplified - elements exist in HTML, just populate)
    */
   initZVaFElements() {
-    console.log('[ZVaFManager] 🔧 Starting initialization...');
+    this.logger.log('[ZVaFManager] 🔧 Starting initialization...');
     
     if (typeof document === 'undefined') {
-      console.warn('[ZVaFManager] Not in browser environment');
+      this.logger.warn('[ZVaFManager] Not in browser environment');
       return;
     }
 
@@ -35,9 +35,9 @@ export class ZVaFManager {
     if (badgeElement) {
       this.client._zConnectionBadge = badgeElement;
       this.populateConnectionBadge();
-      console.log('[ZVaFManager] ✅ Badge element found and populated');
+      this.logger.log('[ZVaFManager] ✅ Badge element found and populated');
     } else {
-      console.error('[ZVaFManager] ❌ <zBifrostBadge> not found in DOM');
+      this.logger.error('[ZVaFManager] ❌ <zBifrostBadge> not found in DOM');
     }
 
     // Step 2: Find navbar element (created by template)
@@ -46,11 +46,11 @@ export class ZVaFManager {
       this.client._zNavBarElement = navElement;
       // Fetch and populate navbar asynchronously (don't block initialization)
       this.populateNavBar().catch(err => {
-        console.error('[ZVaFManager] Failed to populate navbar:', err);
+        this.logger.error('[ZVaFManager] Failed to populate navbar:', err);
       });
-      console.log('[ZVaFManager] ✅ NavBar element found, populating...');
+      this.logger.log('[ZVaFManager] ✅ NavBar element found, populating...');
     } else {
-      console.error('[ZVaFManager] ❌ <zNavBar> not found in DOM');
+      this.logger.error('[ZVaFManager] ❌ <zNavBar> not found in DOM');
     }
 
     // Step 3: Find zVaF element (content renders directly into it)
@@ -58,12 +58,12 @@ export class ZVaFManager {
                         document.getElementById(this.options.targetElement);
     if (zVaFElement) {
       this.client._zVaFElement = zVaFElement;
-      console.log('[ZVaFManager] ✅ zVaF element found (content will render here)');
+      this.logger.log('[ZVaFManager] ✅ zVaF element found (content will render here)');
     } else {
-      console.error(`[ZVaFManager] ❌ <${this.options.targetElement}> not found in DOM`);
+      this.logger.error(`[ZVaFManager] ❌ <${this.options.targetElement}> not found in DOM`);
     }
 
-    console.log('[ZVaFManager] ✅ All elements initialized (badge will be updated by onConnected hook)');
+    this.logger.log('[ZVaFManager] ✅ All elements initialized (badge will be updated by onConnected hook)');
   }
 
   /**
@@ -81,7 +81,7 @@ export class ZVaFManager {
       <span class="zBadge-text">Connecting...</span>
     `;
     
-    console.log('[ConnectionBadge] ✅ Badge populated with initial state');
+    this.logger.log('[ConnectionBadge] ✅ Badge populated with initial state');
   }
 
   /**
@@ -90,7 +90,7 @@ export class ZVaFManager {
    */
   updateBadgeState(state) {
     if (!this.client._zConnectionBadge) {
-      console.warn('[ConnectionBadge] Cannot update - badge element not found');
+      this.logger.warn('[ConnectionBadge] Cannot update - badge element not found');
       return;
     }
 
@@ -98,11 +98,11 @@ export class ZVaFManager {
     const badgeText = badge.querySelector('.zBadge-text');
     
     if (!badgeText) {
-      console.warn('[ConnectionBadge] Cannot update - badge text element not found');
+      this.logger.warn('[ConnectionBadge] Cannot update - badge text element not found');
       return;
     }
 
-    console.log(`[ConnectionBadge] 🔧 Updating badge to: ${state}`);
+    this.logger.log(`[ConnectionBadge] 🔧 Updating badge to: ${state}`);
 
     // Remove all state classes
     badge.classList.remove('zBadge-pending', 'zBadge-success', 'zBadge-error');
@@ -112,23 +112,23 @@ export class ZVaFManager {
       case 'connected':
         badge.classList.add('zBadge-success');
         badgeText.textContent = 'Connected';
-        console.log('[ConnectionBadge] ✅ Badge updated to Connected');
+        this.logger.log('[ConnectionBadge] ✅ Badge updated to Connected');
         break;
       case 'disconnected':
         badge.classList.add('zBadge-pending');
         badgeText.textContent = 'Disconnected';
-        console.log('[ConnectionBadge] ⚠️ Badge updated to Disconnected');
+        this.logger.log('[ConnectionBadge] ⚠️ Badge updated to Disconnected');
         break;
       case 'error':
         badge.classList.add('zBadge-error');
         badgeText.textContent = 'Error';
-        console.log('[ConnectionBadge] ❌ Badge updated to Error');
+        this.logger.log('[ConnectionBadge] ❌ Badge updated to Error');
         break;
       case 'connecting':
       default:
         badge.classList.add('zBadge-pending');
         badgeText.textContent = 'Connecting...';
-        console.log('[ConnectionBadge] 🔄 Badge updated to Connecting');
+        this.logger.log('[ConnectionBadge] 🔄 Badge updated to Connecting');
         break;
     }
   }
@@ -149,18 +149,18 @@ export class ZVaFManager {
         this.client._zNavBarElement.innerHTML = ''; // Clear first
         if (navElement) {
           this.client._zNavBarElement.appendChild(navElement);
-          console.log('[NavBar] ✅ NavBar populated from embedded config (DOM element):', this.zuiConfig.zNavBar);
+          this.logger.log('[NavBar] ✅ NavBar populated from embedded config (DOM element):', this.zuiConfig.zNavBar);
         } else {
-          console.warn('[NavBar] renderMetaNavBarHTML returned null');
+          this.logger.warn('[NavBar] renderMetaNavBarHTML returned null');
         }
         
         // Enable client-side navigation after navbar is rendered
         await this.client._enableClientSideNavigation();
       } else {
-        console.warn('[NavBar] No zNavBar in embedded zuiConfig, navbar will be empty');
+        this.logger.warn('[NavBar] No zNavBar in embedded zuiConfig, navbar will be empty');
       }
     } catch (error) {
-      console.error('[NavBar] Failed to populate:', error);
+      this.logger.error('[NavBar] Failed to populate:', error);
     }
   }
 
@@ -178,7 +178,7 @@ export class ZVaFManager {
       }
       
       const freshConfig = await response.json();
-      console.log('[NavBar] ✅ Fetched fresh config from API:', freshConfig);
+      this.logger.log('[NavBar] ✅ Fetched fresh config from API:', freshConfig);
       
       // Update zuiConfig with fresh navbar
       if (freshConfig.zNavBar) {
@@ -192,18 +192,18 @@ export class ZVaFManager {
         this.client._zNavBarElement.innerHTML = ''; // Clear first
         if (navElement) {
           this.client._zNavBarElement.appendChild(navElement);
-          console.log('[NavBar] ✅ NavBar populated with fresh RBAC-filtered items (DOM element)');
+          this.logger.log('[NavBar] ✅ NavBar populated with fresh RBAC-filtered items (DOM element)');
         } else {
-          console.warn('[NavBar] renderMetaNavBarHTML returned null');
+          this.logger.warn('[NavBar] renderMetaNavBarHTML returned null');
         }
         
         // Re-enable client-side navigation after navbar is re-rendered
         await this.client._enableClientSideNavigation();
       } else {
-        console.warn('[NavBar] No zNavBar in API response, skipping');
+        this.logger.warn('[NavBar] No zNavBar in API response, skipping');
       }
     } catch (error) {
-      console.error('[NavBar] Failed to fetch from API:', error);
+      this.logger.error('[NavBar] Failed to fetch from API:', error);
     }
   }
 }

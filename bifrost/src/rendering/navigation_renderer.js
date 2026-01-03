@@ -112,7 +112,7 @@ export class NavigationRenderer {
         this.logger.log('[NavigationRenderer] 🍔 Navbar expanded');
       }
     });
-    console.log('[NavigationRenderer] ✅ Hamburger toggle handler attached to:', collapseId);
+    this.logger.log('[NavigationRenderer] ✅ Hamburger toggle handler attached to:', collapseId);
 
     // Create navigation list (using primitive)
     const ul = createList(false, { class: 'zNavbar-nav' });
@@ -156,7 +156,7 @@ export class NavigationRenderer {
         window: {}
       };
       
-      console.log('[NavigationRenderer] 🎯 Creating navbar link:', linkData);
+      this.logger.log('[NavigationRenderer] 🎯 Creating navbar link:', linkData);
       
       // ✅ Use renderLink primitive (now returns element directly)
       const link = renderLink(linkData, null, this.client);
@@ -164,7 +164,7 @@ export class NavigationRenderer {
       if (link) {
         li.appendChild(link);
       } else {
-        console.error('[NavigationRenderer] ❌ renderLink returned no link element');
+        this.logger.error('[NavigationRenderer] ❌ renderLink returned no link element');
       }
 
       ul.appendChild(li);

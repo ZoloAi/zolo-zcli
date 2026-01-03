@@ -24,7 +24,7 @@ export class MenuRenderer {
    * @param {Object} message - Menu event data from backend
    */
   renderMenu(message) {
-    console.log('[MenuRenderer] 📋 Rendering menu:', message);
+    this.logger.log('[MenuRenderer] 📋 Rendering menu:', message);
     this.logger.log('[MenuRenderer] Rendering menu', message);
 
     const { menu_key, options, breadcrumbs, current_file, current_block } = message;
@@ -32,7 +32,7 @@ export class MenuRenderer {
     // Get the zVaF content element
     const contentElement = this.client._zVaFElement;
     if (!contentElement) {
-      console.error('[MenuRenderer] ❌ zVaF element not found');
+      this.logger.error('[MenuRenderer] ❌ zVaF element not found');
       return;
     }
 
@@ -51,7 +51,7 @@ export class MenuRenderer {
     // Attach event handlers
     this._attachMenuHandlers(menu_key, options);
 
-    console.log('[MenuRenderer] ✅ Menu rendered successfully');
+    this.logger.log('[MenuRenderer] ✅ Menu rendered successfully');
   }
 
   /**
@@ -60,7 +60,7 @@ export class MenuRenderer {
    * @param {HTMLElement} container - Container element to render menu into
    */
   renderMenuInline(menuData, container) {
-    console.log('[MenuRenderer] 📋 Rendering inline menu:', menuData);
+    this.logger.log('[MenuRenderer] 📋 Rendering inline menu:', menuData);
     this.logger.log('[MenuRenderer] Rendering inline menu', menuData);
 
     const { menu_key, options, title, allow_back } = menuData;
@@ -79,9 +79,9 @@ export class MenuRenderer {
       // Attach event handlers
       this._attachMenuHandlers(menu_key || 'Menu', options, menuElement);
       
-      console.log('[MenuRenderer] ✅ Inline menu rendered successfully');
+      this.logger.log('[MenuRenderer] ✅ Inline menu rendered successfully');
     } else {
-      console.error('[MenuRenderer] ❌ Failed to render inline menu');
+      this.logger.error('[MenuRenderer] ❌ Failed to render inline menu');
     }
   }
 
@@ -151,7 +151,7 @@ export class MenuRenderer {
         const optionDiv = button.closest('.zMenu-option');
         const selectedKey = optionDiv.dataset.key;
 
-        console.log('[MenuRenderer] 🎯 Menu selection:', selectedKey);
+        this.logger.log('[MenuRenderer] 🎯 Menu selection:', selectedKey);
         this.logger.log('[MenuRenderer] Menu selection', { menu: menuKey, selected: selectedKey });
 
         // Visual feedback
@@ -188,7 +188,7 @@ export class MenuRenderer {
       selected: selected
     };
 
-    console.log('[MenuRenderer] 📤 Sending menu selection to backend:', message);
+    this.logger.log('[MenuRenderer] 📤 Sending menu selection to backend:', message);
     this.client.send(message);
   }
 

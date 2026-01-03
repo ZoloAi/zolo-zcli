@@ -1,0 +1,6 @@
+node_modules/
+package-lock.json
+eslint-report.txt
+eslint-violations.txt
+*.log
+.DS_Store

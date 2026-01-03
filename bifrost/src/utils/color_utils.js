@@ -239,7 +239,7 @@ export function applyColorScheme(element, config = {}) {
  * 
  * @example
  * const colors = getAvailableColors();
- * console.log(colors.backgrounds);  // ['primary', 'secondary', ...]
+ * this.logger.log(colors.backgrounds);  // ['primary', 'secondary', ...]
  */
 export function getAvailableColors() {
   return {

@@ -20,17 +20,17 @@
  *   zTheme: true,             // Enable zTheme CSS & rendering
  *   // targetElement: 'zVaF', // Optional: default is 'zVaF' (zView and Function)
  *   autoRequest: 'show_hello',// Auto-send on connect
- *   onConnected: (info) => console.log('✅ Connected!', info)
+ *   onConnected: (info) => this.logger.log('✅ Connected!', info)
  * });
  * 
  * // Traditional (More control):
  * const client = new BifrostClient('ws://localhost:8765', {
  *   zTheme: true,
  *   hooks: {
- *     onConnected: (info) => console.log('Connected!'),
- *     onDisconnected: (reason) => console.log('Disconnected:', reason),
- *     onMessage: (msg) => console.log('Message:', msg),
- *     onError: (error) => console.error('Error:', error)
+ *     onConnected: (info) => this.logger.log('Connected!'),
+ *     onDisconnected: (reason) => this.logger.log('Disconnected:', reason),
+ *     onMessage: (msg) => this.logger.log('Message:', msg),
+ *     onError: (error) => this.logger.error('Error:', error)
  *   }
  * });
  * await client.connect();
@@ -115,6 +115,7 @@
           try {
             zuiConfigEarly = JSON.parse(zuiConfigEl.textContent);
           } catch (e) {
+            // Logger not initialized yet - use console directly
             console.warn('[BifrostClient] Failed to parse zui-config:', e);
           }
         }
@@ -127,6 +128,7 @@
         const wsHost = wsConfig.host || '127.0.0.1';
         const wsPort = wsConfig.port || 8765;
         url = `${protocol}//${wsHost}:${wsPort}`;
+        // Logger not initialized yet - use console directly
         console.log(`[BifrostClient] Auto-constructed WebSocket URL from backend config: ${url} (SSL: ${wsConfig.ssl_enabled})`);
       }
       
@@ -159,10 +161,10 @@
           try {
             zuiConfig = JSON.parse(zuiConfigEl.textContent);
             if (this.logger) {
-              console.log('[BifrostClient] Auto-loaded zUI config from page:', zuiConfig);
+              this.logger.log('[BifrostClient] Auto-loaded zUI config from page:', zuiConfig);
             }
           } catch (e) {
-            console.warn('[BifrostClient] Failed to parse zui-config:', e);
+            this.logger.warn('[BifrostClient] Failed to parse zui-config:', e);
           }
         }
       }
@@ -185,6 +187,7 @@
           zVaFile: zVaFile,
           zVaFolder: zVaFolder
         };
+        // Logger not initialized yet - use console directly
         console.log('[BifrostClient] 🚀 Auto-generated walker execution request from zui-config:', autoRequest);
       }
 
@@ -264,7 +267,7 @@
       // v1.6.0: Wait for cache initialization before connecting (zVaF elements are now sync)
       if (this.options.autoConnect) {
         this._cacheReady.finally(() => {
-          console.log('[BifrostClient] ✅ Cache ready - connecting...');
+          this.logger.log('[BifrostClient] ✅ Cache ready - connecting...');
           this.connect().catch(err => {
             this.logger.error('Auto-connect failed:', err);
             this.hooks.call('onError', { type: 'autoconnect_failed', error: err });
@@ -279,12 +282,12 @@
       window.addEventListener('beforeunload', (e) => {
         // Only send page_unload if this is a real page unload (not client-side nav)
         if (this._isClientSideNav) {
-          console.log('[BifrostClient] Client-side navigation detected - skipping page_unload');
+          this.logger.log('[BifrostClient] Client-side navigation detected - skipping page_unload');
           this._isClientSideNav = false;
           return;
         }
         
-        console.log('[BifrostClient] 🔄 Page unloading (leaving site) - notifying backend');
+        this.logger.log('[BifrostClient] 🔄 Page unloading (leaving site) - notifying backend');
         // Send cleanup notification (best effort - may not complete if page closes quickly)
         if (this.connection && this.connection.isConnected()) {
           try {
@@ -295,7 +298,7 @@
             }));
           } catch (err) {
             // Ignore errors during unload (connection might already be closing)
-            console.warn('[BifrostClient] Could not send page_unload message:', err);
+            this.logger.warn('[BifrostClient] Could not send page_unload message:', err);
           }
         }
       });
@@ -339,13 +342,13 @@
         errorHandler: null, // Set by _initErrorDisplay()
         call: (hookName, ...args) => {
           const hook = this.hooks.hooks[hookName];
-          console.log(`[Hooks] 🎣 Calling hook: ${hookName}, exists: ${typeof hook === 'function'}`);
+          this.logger.log(`[Hooks] 🎣 Calling hook: ${hookName}, exists: ${typeof hook === 'function'}`);
           if (typeof hook === 'function') {
             try {
               return hook(...args);
             } catch (error) {
               // Log to console
-              console.error(`[BifrostClient] Error in ${hookName} hook:`, error);
+              this.logger.error(`[BifrostClient] Error in ${hookName} hook:`, error);
               
               // Log via logger
               this.logger.error(`Error in ${hookName} hook:`, error);
@@ -361,7 +364,7 @@
                     stack: error.stack
                   });
                 } catch (displayError) {
-                  console.error('[BifrostClient] Error handler itself failed:', displayError);
+                  this.logger.error('[BifrostClient] Error handler itself failed:', displayError);
                 }
               }
               
@@ -370,7 +373,7 @@
                 try {
                   this.hooks.hooks.onError(error);
                 } catch (onErrorError) {
-                  console.error('[BifrostClient] onError hook failed:', onErrorError);
+                  this.logger.error('[BifrostClient] onError hook failed:', onErrorError);
                 }
               }
             }
@@ -382,9 +385,9 @@
         register: (hookName, fn) => {
           if (typeof fn === 'function') {
             this.hooks.hooks[hookName] = fn;
-            console.log(`[Hooks] ✅ Registered hook: ${hookName}`);
+            this.logger.log(`[Hooks] ✅ Registered hook: ${hookName}`);
           } else {
-            console.error(`[Hooks] ❌ Failed to register hook ${hookName}: not a function`);
+            this.logger.error(`[Hooks] ❌ Failed to register hook ${hookName}: not a function`);
           }
         },
         unregister: (hookName) => {
@@ -406,8 +409,8 @@
           const navbars = document.querySelectorAll('.zNavbar');
           const togglers = document.querySelectorAll('.zNavbar-toggler');
           
-          console.log(`[DarkMode] Applying ${isDark ? 'DARK' : 'LIGHT'} mode`);
-          console.log(`[DarkMode] Found ${navbars.length} navbar(s), ${togglers.length} toggler(s)`);
+          this.logger.log(`[DarkMode] Applying ${isDark ? 'DARK' : 'LIGHT'} mode`);
+          this.logger.log(`[DarkMode] Found ${navbars.length} navbar(s), ${togglers.length} toggler(s)`);
           
           if (isDark) {
             // Apply dark background to body
@@ -436,7 +439,7 @@
             navbars.forEach(nav => {
               nav.classList.remove('zNavbar-light');
               nav.classList.add('zNavbar-dark');
-              console.log(`[DarkMode] Navbar classes:`, nav.className);
+              this.logger.log(`[DarkMode] Navbar classes:`, nav.className);
             });
             // Apply dark mode to hamburger icon (makes it white)
             togglers.forEach((toggler, idx) => {
@@ -447,9 +450,9 @@
                 icon.style.color = '#ffffff';  // Direct color value instead of CSS var
               }
               const computedColor = icon ? window.getComputedStyle(icon).color : 'not found';
-              console.log(`[DarkMode] Toggler ${idx} classes:`, toggler.className);
-              console.log(`[DarkMode] Toggler ${idx} icon color (after):`, computedColor);
-              console.log(`[DarkMode] Toggler ${idx} icon element:`, icon);
+              this.logger.log(`[DarkMode] Toggler ${idx} classes:`, toggler.className);
+              this.logger.log(`[DarkMode] Toggler ${idx} icon color (after):`, computedColor);
+              this.logger.log(`[DarkMode] Toggler ${idx} icon element:`, icon);
             });
             
             // Apply dark mode to theme toggle button icon (sun icon should be white)
@@ -458,10 +461,10 @@
               const icon = themeToggleBtn.querySelector('i.bi');
               if (icon) {
                 icon.style.color = '#ffffff';  // Direct color value instead of CSS var
-                console.log(`[DarkMode] Theme toggle icon color set to white`);
+                this.logger.log(`[DarkMode] Theme toggle icon color set to white`);
               }
             } else {
-              console.log(`[DarkMode] Theme toggle button not found yet`);
+              this.logger.log(`[DarkMode] Theme toggle button not found yet`);
             }
           } else {
             // Remove dark background from body
@@ -478,7 +481,7 @@
             navbars.forEach(nav => {
               nav.classList.remove('zNavbar-dark');
               nav.classList.add('zNavbar-light');
-              console.log(`[DarkMode] Navbar classes:`, nav.className);
+              this.logger.log(`[DarkMode] Navbar classes:`, nav.className);
             });
             // Remove dark mode from hamburger icon
             togglers.forEach((toggler, idx) => {
@@ -489,8 +492,8 @@
                 icon.style.color = '';
               }
               const computedColor = icon ? window.getComputedStyle(icon).color : 'not found';
-              console.log(`[DarkMode] Toggler ${idx} classes:`, toggler.className);
-              console.log(`[DarkMode] Toggler ${idx} icon color (after):`, computedColor);
+              this.logger.log(`[DarkMode] Toggler ${idx} classes:`, toggler.className);
+              this.logger.log(`[DarkMode] Toggler ${idx} icon color (after):`, computedColor);
             });
             
             // Clear theme toggle button icon color
@@ -499,7 +502,7 @@
               const icon = themeToggleBtn.querySelector('i.bi');
               if (icon) {
                 icon.style.color = '';
-                console.log(`[DarkMode] Theme toggle icon color cleared`);
+                this.logger.log(`[DarkMode] Theme toggle icon color cleared`);
               }
             }
           }
@@ -600,7 +603,7 @@
       const cdnBase = this.options.zThemeCDN;
       
       // Show which version/URL is being loaded
-      console.log(`[BifrostClient] 🎨 Loading zTheme from CDN: ${cdnBase}`);
+      this.logger.log(`[BifrostClient] 🎨 Loading zTheme from CDN: ${cdnBase}`);
       
       // Check if CSS already loaded
       if (!document.querySelector(`link[href="${cdnBase}/ztheme.css"]`)) {
@@ -608,10 +611,10 @@
         link.rel = 'stylesheet';
         link.href = `${cdnBase}/ztheme.css`;
         document.head.appendChild(link);
-        console.log(`[BifrostClient] ✅ zTheme CSS loaded: ${cdnBase}/ztheme.css`);
+        this.logger.log(`[BifrostClient] ✅ zTheme CSS loaded: ${cdnBase}/ztheme.css`);
         this.logger.log('✅ zTheme CSS loaded from CDN');
       } else {
-        console.log(`[BifrostClient] ℹ️  zTheme CSS already loaded from: ${cdnBase}/ztheme.css`);
+        this.logger.log(`[BifrostClient] ℹ️  zTheme CSS already loaded from: ${cdnBase}/ztheme.css`);
       }
       
       // Check if JS already loaded
@@ -619,10 +622,10 @@
         const script = document.createElement('script');
         script.src = `${cdnBase}/ztheme.js`;
         document.head.appendChild(script);
-        console.log(`[BifrostClient] ✅ zTheme JS loaded: ${cdnBase}/ztheme.js`);
+        this.logger.log(`[BifrostClient] ✅ zTheme JS loaded: ${cdnBase}/ztheme.js`);
         this.logger.log('✅ zTheme JS loaded from CDN');
       } else {
-        console.log(`[BifrostClient] ℹ️  zTheme JS already loaded from: ${cdnBase}/ztheme.js`);
+        this.logger.log(`[BifrostClient] ℹ️  zTheme JS already loaded from: ${cdnBase}/ztheme.js`);
       }
     }
 

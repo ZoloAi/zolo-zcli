@@ -72,10 +72,10 @@ export class ZDisplayOrchestrator {
    */
   async renderChunkProgressive(message) {
     try {
-      console.log('[ZDisplayOrchestrator] 🎬 renderChunkProgressive called with:', message);
+      this.logger.log('[ZDisplayOrchestrator] 🎬 renderChunkProgressive called with:', message);
       const {chunk_num, keys, data, is_gate} = message;
       
-      console.log(`[ZDisplayOrchestrator] 📦 Rendering chunk #${chunk_num}: ${keys.join(', ')}`);
+      this.logger.log(`[ZDisplayOrchestrator] 📦 Rendering chunk #${chunk_num}: ${keys.join(', ')}`);
       this.logger.log(`[ZDisplayOrchestrator] 📦 Rendering chunk #${chunk_num}: ${keys.join(', ')}`);
       if (is_gate) {
         this.logger.log(`[ZDisplayOrchestrator] 🚪 Chunk contains gate - backend will stop if gate fails`);
@@ -135,10 +135,10 @@ export class ZDisplayOrchestrator {
       // This preserves all styling, forms, zDisplay events, etc.
       if (data && typeof data === 'object') {
         // DEBUG: Log chunk data structure
-        console.log(`[ZDisplayOrchestrator] 🔍 Chunk data keys:`, Object.keys(data));
+        this.logger.log(`[ZDisplayOrchestrator] 🔍 Chunk data keys:`, Object.keys(data));
         for (const [key, value] of Object.entries(data)) {
           if (!key.startsWith('_')) {
-            console.log(`[ZDisplayOrchestrator] 🔍   ${key}:`, typeof value, Array.isArray(value) ? `array[${value.length}]` : (typeof value === 'object' ? `object{${Object.keys(value).join(',')}}` : value));
+            this.logger.log(`[ZDisplayOrchestrator] 🔍   ${key}:`, typeof value, Array.isArray(value) ? `array[${value.length}]` : (typeof value === 'object' ? `object{${Object.keys(value).join(',')}}` : value));
           }
         }
         await this.renderItems(data, targetContainer);
@@ -165,11 +165,11 @@ export class ZDisplayOrchestrator {
    */
   async renderItems(data, parentElement) {
     if (!data || typeof data !== 'object') {
-      console.log('[ZDisplayOrchestrator] renderItems: No data or not an object');
+      this.logger.log('[ZDisplayOrchestrator] renderItems: No data or not an object');
       return;
     }
     
-    console.log(`[ZDisplayOrchestrator] 🔄 renderItems called with keys:`, Object.keys(data));
+    this.logger.log(`[ZDisplayOrchestrator] 🔄 renderItems called with keys:`, Object.keys(data));
     
     // Check if parent already has block-level metadata applied (data-zblock attribute)
     const parentIsBlockWrapper = parentElement.hasAttribute && parentElement.hasAttribute('data-zblock');
@@ -191,7 +191,7 @@ export class ZDisplayOrchestrator {
     // groups them visually - metadata-driven optimization!
     // ═══════════════════════════════════════════════════════════════════════
     if (metadata._zGroup) {
-      console.log(`[ZDisplayOrchestrator] 🎯 _zGroup detected: "${metadata._zGroup}" - rendering as grouped container`);
+      this.logger.log(`[ZDisplayOrchestrator] 🎯 _zGroup detected: "${metadata._zGroup}" - rendering as grouped container`);
       this.logger.log(`🎯 _zGroup detected: "${metadata._zGroup}"`);
       
       // Create group container with zTheme classes based on _zGroup type
@@ -260,7 +260,7 @@ export class ZDisplayOrchestrator {
       // Append group to parent
       if (groupContainer.children.length > 0) {
         parentElement.appendChild(groupContainer);
-        console.log(`[ZDisplayOrchestrator] ✅ Grouped container rendered with ${groupContainer.children.length} items`);
+        this.logger.log(`[ZDisplayOrchestrator] ✅ Grouped container rendered with ${groupContainer.children.length} items`);
         this.logger.log(`✅ Grouped container rendered with ${groupContainer.children.length} items`);
       }
       
@@ -314,14 +314,14 @@ export class ZDisplayOrchestrator {
       
       // Handle list/array values (sequential zDisplay events, zDialog forms, OR menus)
       if (Array.isArray(value)) {
-        console.log(`[ZDisplayOrchestrator] ✅ Detected list/array for key: ${key}, items: ${value.length}`);
+        this.logger.log(`[ZDisplayOrchestrator] ✅ Detected list/array for key: ${key}, items: ${value.length}`);
         this.logger.log(`✅ Detected list/array for key: ${key}, items: ${value.length}`);
         
         // Check if this is a menu (has * modifier and array of strings)
         const isMenu = key.includes('*') && value.every(item => typeof item === 'string');
         
         if (isMenu) {
-          console.log(`[ZDisplayOrchestrator] 🎯 Detected MENU: ${key}`);
+          this.logger.log(`[ZDisplayOrchestrator] 🎯 Detected MENU: ${key}`);
           this.logger.log(`🎯 Detected menu with ${value.length} options`);
           
           // Load menu renderer and render the menu
@@ -339,13 +339,13 @@ export class ZDisplayOrchestrator {
             menuRenderer.renderMenuInline(menuData, containerDiv);
             this.logger.log(`✅ Menu rendered for ${key}`);
           } else {
-            console.error(`[ZDisplayOrchestrator] ❌ MenuRenderer not available`);
+            this.logger.error(`[ZDisplayOrchestrator] ❌ MenuRenderer not available`);
           }
         } else {
           // Regular list/array - iterate through items
           for (const item of value) {
             if (item && item.zDisplay) {
-              console.log(`[ZDisplayOrchestrator]   ✅ Rendering zDisplay event:`, item.zDisplay.event);
+              this.logger.log(`[ZDisplayOrchestrator]   ✅ Rendering zDisplay event:`, item.zDisplay.event);
               this.logger.log(`  ✅ Rendering zDisplay from list item:`, item.zDisplay);
               const element = await this.renderZDisplayEvent(item.zDisplay);
               if (element) {
@@ -385,7 +385,7 @@ export class ZDisplayOrchestrator {
       }
       // If it's an object with nested keys (implicit wizard), recurse
       else if (value && typeof value === 'object') {
-        console.log(`[ZDisplayOrchestrator] 🔄 Recursing into nested object for key: ${key}, nested keys:`, Object.keys(value));
+        this.logger.log(`[ZDisplayOrchestrator] 🔄 Recursing into nested object for key: ${key}, nested keys:`, Object.keys(value));
         // Nested structure - render children recursively
         await this.renderItems(value, containerDiv);
       }
@@ -447,10 +447,10 @@ export class ZDisplayOrchestrator {
    * @returns {Promise<HTMLElement|null>} Navbar DOM element
    */
   async renderMetaNavBarHTML(items) {
-    console.log('[ZDisplayOrchestrator] 🎯 renderMetaNavBarHTML called with items:', items);
+    this.logger.log('[ZDisplayOrchestrator] 🎯 renderMetaNavBarHTML called with items:', items);
     
     if (!Array.isArray(items) || items.length === 0) {
-      console.warn('[ZDisplayOrchestrator] ⚠️ No navbar items provided');
+      this.logger.warn('[ZDisplayOrchestrator] ⚠️ No navbar items provided');
       return null;
     }
 
@@ -473,10 +473,10 @@ export class ZDisplayOrchestrator {
       // 🔧 FIX v1.6.1: Return DOM element directly (NOT outerHTML!)
       // This preserves event listeners attached by link_primitives.js
       // The caller (zvaf_manager.js) will append the element instead of setting innerHTML
-      console.log('[ZDisplayOrchestrator] ✅ Returning navbar DOM element (preserves event listeners)');
+      this.logger.log('[ZDisplayOrchestrator] ✅ Returning navbar DOM element (preserves event listeners)');
       return navElement;
     } catch (error) {
-      console.error('[ZDisplayOrchestrator] Failed to render navbar element:', error);
+      this.logger.error('[ZDisplayOrchestrator] Failed to render navbar element:', error);
       return null;
     }
   }
@@ -653,7 +653,7 @@ export class ZDisplayOrchestrator {
         break;
 
       default:
-        console.warn(`[_applyGroupStyling] Unknown group type: ${groupType}`);
+        this.logger.warn(`[_applyGroupStyling] Unknown group type: ${groupType}`);
     }
   }
 }

@@ -37,19 +37,19 @@ export class NavigationManager {
     if (this.client._navClickHandler) {
       document.removeEventListener('click', this.client._navClickHandler, true);
       this.client._navClickHandler = null;
-      console.log('[ClientNav] 🗑️  Removed legacy global click handler (now using individual link handlers)');
+      this.logger.log('[ClientNav] 🗑️  Removed legacy global click handler (now using individual link handlers)');
     }
     
     // ✅ Individual links now handle their own clicks via link_primitives.js
     // No global handler needed - each link has its own addEventListener('click', ...)
     // This is the primitive-driven way: each component manages its own behavior
     
-    console.log('[ClientNav] ✅ Client-side navigation enabled (using individual link handlers)');
+    this.logger.log('[ClientNav] ✅ Client-side navigation enabled (using individual link handlers)');
     
     // Handle browser back/forward buttons
     if (!this.client._popstateHandler) {
       this.client._popstateHandler = async (e) => {
-        console.log('[ClientNav] ⏪ Browser back/forward detected');
+        this.logger.log('[ClientNav] ⏪ Browser back/forward detected');
         const path = window.location.pathname;
         
         // Navigate to the new path via WebSocket
@@ -59,7 +59,7 @@ export class NavigationManager {
       window.addEventListener('popstate', this.client._popstateHandler);
     }
     
-    console.log('[ClientNav] ✅ Client-side navigation enabled');
+    this.logger.log('[ClientNav] ✅ Client-side navigation enabled');
   }
 
   /**
@@ -77,7 +77,7 @@ export class NavigationManager {
       // Extract route name from path (e.g., '/zAbout' -> 'zAbout')
       const routeName = routePath.replace(/^\//, '') || 'zVaF';
       
-      console.log('[ClientNav] 🚀 Navigating to route:', routeName);
+      this.logger.log('[ClientNav] 🚀 Navigating to route:', routeName);
       
       // Fetch route configuration from backend
       const response = await fetch('/api/zui/config');
@@ -104,7 +104,7 @@ export class NavigationManager {
         zBlock = navBarItem;
       }
       
-      console.log('[ClientNav] 📋 Route config:', { zVaFile, zVaFolder, zBlock });
+      this.logger.log('[ClientNav] 📋 Route config:', { zVaFile, zVaFolder, zBlock });
       
       // Clear current content
       if (this.client._zVaFElement) {
@@ -121,19 +121,19 @@ export class NavigationManager {
         zVaFolder: zVaFolder
       };
       
-      console.log('[ClientNav] 📤 Sending walker request (fire-and-forget):', walkerRequest);
+      this.logger.log('[ClientNav] 📤 Sending walker request (fire-and-forget):', walkerRequest);
       this.client.connection.send(JSON.stringify(walkerRequest));
       
       // Update browser URL without reload (unless skipHistory is true for popstate)
       if (!skipHistory) {
         const newUrl = routePath.startsWith('/') ? routePath : `/${routePath}`;
         history.pushState({ route: routeName }, '', newUrl);
-        console.log('[ClientNav] ✅ Updated URL to:', newUrl);
+        this.logger.log('[ClientNav] ✅ Updated URL to:', newUrl);
       }
       
-      console.log('[ClientNav] ✅ Navigation complete');
+      this.logger.log('[ClientNav] ✅ Navigation complete');
     } catch (error) {
-      console.error('[ClientNav] ❌ Navigation failed:', error);
+      this.logger.error('[ClientNav] ❌ Navigation failed:', error);
       
       // Reset flag on error
       this.client._isClientSideNav = false;

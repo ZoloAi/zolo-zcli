@@ -131,9 +131,9 @@ export class CacheManager {
         
         // v1.6.0: If auth state changed or session_hash changed, fetch fresh navbar (RBAC-aware)
         if (wasAuthenticated !== isNowAuthenticated || oldSessionHash !== newSessionHash) {
-          console.log('[NavBar] Auth state changed - fetching fresh navbar from API');
+          this.logger.log('[NavBar] Auth state changed - fetching fresh navbar from API');
           await this.client._fetchAndPopulateNavBar();
-          console.log('[NavBar] ✅ Navbar updated after auth change');
+          this.logger.log('[NavBar] ✅ Navbar updated after auth change');
         }
       } catch (error) {
         this.logger.error('[Cache] Error populating session:', error);
@@ -143,7 +143,7 @@ export class CacheManager {
     // v1.6.0: Offline-first - Handle disconnect + Badge update (combined hook)
     this.hooks.register('onDisconnected', async (reason) => {
       try {
-        console.log('[Cache] Connection lost, entering offline mode');
+        this.logger.log('[Cache] Connection lost, entering offline mode');
         
         // Update badge (v1.6.0: Combined with cache hook to avoid conflicts)
         await this.client._updateBadgeState('disconnected');
@@ -154,7 +154,7 @@ export class CacheManager {
           const contentArea = this.client._zVaFElement;
           if (contentArea) {
             await this.client.cache.set(currentPage, contentArea.outerHTML, 'rendered');
-            console.log(`[Cache] ✅ Cached content for offline: ${currentPage}`);
+            this.logger.log(`[Cache] ✅ Cached content for offline: ${currentPage}`);
           }
         }
         
@@ -169,7 +169,7 @@ export class CacheManager {
     // v1.6.0: Offline-first - Handle reconnect + Badge update (combined hook)
     this.hooks.register('onConnected', async (data) => {
       try {
-        console.log('[Cache] Connection restored, exiting offline mode');
+        this.logger.log('[Cache] Connection restored, exiting offline mode');
         
         // Update badge (v1.6.0: Combined with cache hook to avoid conflicts)
         await this.client._updateBadgeState('connected');
@@ -178,7 +178,7 @@ export class CacheManager {
         this.enableForms();
         
       } catch (error) {
-        console.error('[Cache] Error handling reconnect:', error);
+        this.logger.error('[Cache] Error handling reconnect:', error);
       }
     });
   }
