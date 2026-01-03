@@ -531,6 +531,14 @@ export class ZDisplayOrchestrator {
         break;
       }
 
+      case 'rich_text': {
+        // Use TextRenderer for rich text with markdown parsing
+        const textRenderer = await this.client._ensureTextRenderer();
+        element = textRenderer.renderRichText(eventData);
+        this.logger.log('[renderZDisplayEvent] Rendered rich_text element with markdown');
+        break;
+      }
+
       case 'header': {
         // Use modular TypographyRenderer for headers
         const headerRenderer = await this.client._ensureTypographyRenderer();

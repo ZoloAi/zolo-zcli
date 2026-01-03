@@ -225,3 +225,5 @@ zCloud/
 # Note: bifrost/ is NOT ignored - it's tracked for version control
 !bifrost/
 
+# zTheme is tracked (at workspace root, like bifrost)
+!zTheme/

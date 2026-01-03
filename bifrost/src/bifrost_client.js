@@ -920,6 +920,19 @@
     }
 
     /**
+     * Ensure TextRenderer module is loaded
+     */
+    async _ensureTextRenderer() {
+      if (!this.textRenderer) {
+        const module = await import('./rendering/text_renderer.js');
+        const TextRenderer = module.default;
+        this.textRenderer = new TextRenderer(this.logger);
+        this.logger.log('[BifrostClient] TextRenderer loaded and initialized');
+      }
+      return this.textRenderer;
+    }
+
+    /**
      * Ensure CardRenderer module is loaded
      */
     async _ensureCardRenderer() {
