@@ -65,7 +65,7 @@ class zServer:
             self.ssl_cert = config.ssl_cert
             self.ssl_key = config.ssl_key
             # Static Mounts (v1.5.11: Multi-mount support)
-            self.static_mounts = config.static_mounts
+            self.static_mounts = config.static_mounts.copy() if config.static_mounts else {}
         else:
             # Backward compatibility: individual parameters (assume enabled if instantiated this way)
             self.enabled = True
@@ -85,6 +85,7 @@ class zServer:
         self.template_folder = template_folder if template_folder is not None else "templates"
         self.ui_folder = "UI"  # zUI zVaF files folder (convention)
         
+        
         # Resolve serve_path, handling case where path may not exist yet or cwd deleted
         if config:
             # Config object already has resolved path
@@ -97,6 +98,32 @@ class zServer:
                 # Path doesn't exist or cwd deleted (common in test cleanup) - use path as-is
                 # If relative, it will be relative to wherever we are when server starts
                 self.serve_path = str(Path(serve_path))
+        
+        # Auto-mount bifrost client folder for /bifrost/ URL access (v1.5.13)
+        if "/bifrost/" not in self.static_mounts:
+            import os
+            # Try common locations: {cwd}/bifrost
+            bifrost_path = os.path.join(str(Path.cwd()), "bifrost")
+            if os.path.isdir(bifrost_path):
+                self.static_mounts["/bifrost/"] = bifrost_path
+                self.logger.info(f"[zServer] Auto-mounted bifrost: /bifrost/ → {bifrost_path}")
+        
+        # Auto-mount plugins folder for JavaScript plugin access (v1.5.13)
+        # This enables _zScripts metadata to reference plugins via /plugins/plugin_name.js
+        if "/plugins/" not in self.static_mounts:
+            import os
+            # Try common locations: {serve_path}/plugins, zCloud/plugins, {cwd}/plugins
+            potential_plugin_paths = [
+                os.path.join(self.serve_path, "plugins"),
+                os.path.join(str(Path.cwd()), "zCloud", "plugins"),
+                os.path.join(str(Path.cwd()), "plugins")
+            ]
+            
+            for plugin_path in potential_plugin_paths:
+                if os.path.isdir(plugin_path):
+                    self.static_mounts["/plugins/"] = plugin_path
+                    self.logger.info(f"[zServer] Auto-mounted plugins: /plugins/ → {plugin_path}")
+                    break
         
         # ONLY load routes/schemas if zServer is enabled (opt-in subsystem)
         # This prevents route/schema loading noise in Terminal mode

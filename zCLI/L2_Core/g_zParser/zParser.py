@@ -638,13 +638,24 @@ class zParser:
             path_part = zFunc_raw
             arg_str = None
 
-        # Parse path components: @utils.myfile.my_function
+        # Parse path components: @utils.myfile.my_function OR @utils.myfile.js.my_function
         path_parts = path_part.split(".")
         function_name = path_parts[-1]  # "my_function"
-        file_name = path_parts[-2]      # "myfile"
-        path_prefix = path_parts[:-2]   # ["@utils"] or ["utils"]
+        
+        # Check if second-to-last part is a file extension (.js, .py, etc.)
+        file_extension = None
+        if len(path_parts) >= 3 and path_parts[-2] in ['js', 'py', 'mjs']:
+            # Format: @.file.js.function → file_name="file", extension="js"
+            file_extension = f".{path_parts[-2]}"
+            file_name = path_parts[-3]
+            path_prefix = path_parts[:-3]
+        else:
+            # Format: @.file.function → file_name="file", default to .py
+            file_name = path_parts[-2]
+            path_prefix = path_parts[:-2]
         
         self.logger.debug("file_name: %s", file_name)
+        self.logger.debug("file_extension: %s", file_extension)
         self.logger.debug("function_name: %s", function_name)
         self.logger.debug("path_prefix: %s", path_prefix)
 
@@ -667,7 +678,12 @@ class zParser:
         
         # Use the class method - no cross-module imports needed!
         base_path = self.resolve_symbol_path(symbol, symbol_parts)
-        func_path = os.path.join(base_path, f"{file_name}{FILE_EXT_PY}")
+        
+        # Add appropriate file extension
+        if file_extension:
+            func_path = os.path.join(base_path, f"{file_name}{file_extension}")
+        else:
+            func_path = os.path.join(base_path, f"{file_name}{FILE_EXT_PY}")
         
         self.logger.debug("Resolved func_path: %s", func_path)
 

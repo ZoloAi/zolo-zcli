@@ -587,7 +587,11 @@ class zUtils:
 
         # Load module and cache in zLoader.plugin_cache
         if self._is_file_path(path):
-            module = self._load_and_cache_from_file(path, module_name)
+            # Check if JavaScript file
+            if path.endswith('.js'):
+                module = self._register_js_plugin(path, module_name)
+            else:
+                module = self._load_and_cache_from_file(path, module_name)
         else:
             module = self._load_and_cache_from_module(path)
 
@@ -645,9 +649,9 @@ class zUtils:
         Returns
         -------
         bool
-            True if path is absolute file path ending with .py, False otherwise
+            True if path is absolute file path ending with .py or .js, False otherwise
         """
-        return isinstance(path, str) and path.endswith('.py') and os.path.isabs(path)
+        return isinstance(path, str) and (path.endswith('.py') or path.endswith('.js')) and os.path.isabs(path)
 
     def _load_and_cache_from_file(self, path: str, module_name: str) -> Optional[Any]:
         """
@@ -682,6 +686,57 @@ class zUtils:
 
         self.logger.debug(_LOG_MSG_CACHED_TO_LOADER, module_name)
         return module
+
+    def _register_js_plugin(self, path: str, module_name: str) -> Optional[Any]:
+        """
+        Register a JavaScript plugin as a callable proxy module.
+        
+        JavaScript plugins can't be imported into Python like Python plugins.
+        Instead, we create a proxy module that stores the path and allows
+        functions to be called via the zFunc JS executor.
+        
+        Parameters
+        ----------
+        path : str
+            Absolute path to .js plugin file
+        module_name : str
+            Module name for registration
+        
+        Returns
+        -------
+        Optional[Any]
+            Proxy module object with __js_plugin_path__ attribute
+        
+        Notes
+        -----
+        JavaScript plugins work differently from Python plugins:
+        - They are not actually "imported" into Python
+        - Instead, a proxy module is created that stores the file path
+        - Functions are called via Node.js subprocess when invoked through zFunc
+        - Use syntax: @.plugin_name.js.function_name(args) in zFunc
+        
+        Example
+        -------
+        >>> # Register JS plugin
+        >>> zcli.utils.load_plugins(["/path/to/calculator.js"])
+        >>> # Use via zFunc path (recommended)
+        >>> result = zcli.zfunc.handle("@.calculator.js.add(5, 3)")
+        """
+        from types import SimpleNamespace
+        
+        # Create a proxy module namespace
+        proxy_module = SimpleNamespace()
+        proxy_module.__name__ = module_name
+        proxy_module.__file__ = path
+        proxy_module.__js_plugin_path__ = path
+        proxy_module.zcli = self.zcli
+        
+        # Store in plugin cache (same as Python plugins for consistency)
+        if hasattr(self.zcli, 'loader') and hasattr(self.zcli.loader, 'cache'):
+            self.zcli.loader.cache.plugin_cache._cache[module_name] = proxy_module
+            self.logger.debug(f"Registered JavaScript plugin: {module_name} -> {path}")
+        
+        return proxy_module
 
     def _load_and_cache_from_module(self, path: str) -> Optional[Any]:
         """

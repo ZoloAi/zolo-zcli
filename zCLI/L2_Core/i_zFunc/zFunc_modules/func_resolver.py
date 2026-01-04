@@ -212,7 +212,16 @@ def resolve_callable(
         if not os.path.exists(file_path):
             raise FileNotFoundError(ERROR_MSG_FILE_NOT_FOUND.format(file_path=file_path))
 
-        # Load module from file
+        # Check if this is a JavaScript file - route to JS executor
+        if file_path.endswith('.js'):
+            from .func_js_executor import execute_js_function
+            # Return a wrapper function that executes the JS function
+            def js_wrapper(*args):
+                return execute_js_function(file_path, func_name, list(args), logger_instance)
+            logger_instance.debug("Resolved JavaScript function: %s > %s", file_path, func_name)
+            return js_wrapper
+
+        # Load Python module from file
         module_name = os.path.splitext(os.path.basename(file_path))[0]
         spec = importlib.util.spec_from_file_location(module_name, file_path)
         

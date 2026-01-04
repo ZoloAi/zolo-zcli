@@ -247,6 +247,9 @@
       // Bootstrap Icons are ALWAYS loaded (unchangeable default for zBifrost)
       this._loadBootstrapIcons();
 
+      // Load _zScripts from YAML metadata (plugin scripts)
+      this._loadZScripts();
+
       // v1.6.0: Initialize zVaF elements (now synchronous - elements exist in HTML)
       // Just populate content, don't create structure
       this._initZVaFElements();
@@ -641,6 +644,52 @@
       } else {
         this.logger.log(`[BifrostClient] ℹ️  zTheme JS already loaded from: ${cdnBase}/ztheme.js`);
       }
+    }
+
+    /**
+     * Load _zScripts from YAML metadata (plugin scripts)
+     * @private
+     */
+    _loadZScripts() {
+      if (typeof document === 'undefined') {
+        return;
+      }
+
+      // Extract _zScripts from zuiConfig.meta (v1.5.13: Server passes meta section from YAML)
+      const zScripts = this.zuiConfig?.meta?._zScripts || [];
+      
+      if (!Array.isArray(zScripts) || zScripts.length === 0) {
+        this.logger.log('[BifrostClient] No _zScripts found in YAML metadata');
+        return;
+      }
+
+      this.logger.log(`[BifrostClient] 📜 Loading ${zScripts.length} _zScripts from YAML metadata`);
+
+      zScripts.forEach(scriptRef => {
+        // Resolve plugin reference: &.plugin_name → /plugins/plugin_name.js
+        let scriptUrl = scriptRef;
+        if (scriptRef.startsWith('&.')) {
+          const pluginName = scriptRef.substring(2);
+          scriptUrl = `/plugins/${pluginName}.js`;
+          this.logger.log(`[BifrostClient] Resolving plugin: ${scriptRef} → ${scriptUrl}`);
+        }
+
+        // Check if script already loaded
+        if (!document.querySelector(`script[src="${scriptUrl}"]`)) {
+          const script = document.createElement('script');
+          script.src = scriptUrl;
+          script.async = true;
+          script.onload = () => {
+            this.logger.log(`[BifrostClient] ✅ Loaded _zScript: ${scriptUrl}`);
+          };
+          script.onerror = () => {
+            this.logger.error(`[BifrostClient] ❌ Failed to load _zScript: ${scriptUrl}`);
+          };
+          document.head.appendChild(script);
+        } else {
+          this.logger.log(`[BifrostClient] ℹ️  _zScript already loaded: ${scriptUrl}`);
+        }
+      });
     }
 
     /**
