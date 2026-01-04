@@ -324,7 +324,7 @@ def execute_wizard_step(
             # zFunc operation
             func_expr = step_value[STEP_KEY_ZFUNC]
             try:
-                return zcli.funcs.handle(func_expr)
+                return zcli.zfunc.handle(func_expr, zContext=context)
             except Exception as e:  # pylint: disable=broad-except
                 logger.error("%s: %s", ERROR_MSG_FUNC_HANDLE, e)
                 return None

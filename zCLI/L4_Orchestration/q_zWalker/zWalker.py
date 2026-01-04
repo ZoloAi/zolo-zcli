@@ -624,10 +624,19 @@ class zWalker(zWizard):
             """Handle zBack - PURE DELEGATION chain to zNavigation + zWizard."""
             # DELEGATION STEP 1: zNavigation.handle_zBack pops breadcrumb + loads file
             # (returns: block_dict, block_keys, start_key)
-            block_dict, _, start_key = self.navigation.handle_zBack(
+            back_result = self.navigation.handle_zBack(
                 show_banner=False, 
                 walker=self
             )
+            
+            # Handle case where there's nowhere to go back to (standalone wizard)
+            if back_result is None or (isinstance(back_result, tuple) and not back_result[0]):
+                self.logger.debug("No parent context to navigate back to - treating as exit")
+                return on_exit(result)
+            
+            # Unpack the tuple
+            block_dict, _, start_key = back_result
+            
             # DELEGATION STEP 2: zWizard.execute_loop re-executes with new context
             # NO dispatch_fn - zDispatch is Single Source of Truth
             return self.execute_loop(

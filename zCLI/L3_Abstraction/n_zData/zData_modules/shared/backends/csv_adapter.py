@@ -485,7 +485,7 @@ class CSVAdapter(BaseDataAdapter):
             self.connection = True
             return True
         except Exception as e:
-            self._log('error', ERR_DIR_CREATE_FAILED, e)
+            self._log('error', _ERR_DIR_CREATE_FAILED, e)
             raise
 
     def disconnect(self) -> None:

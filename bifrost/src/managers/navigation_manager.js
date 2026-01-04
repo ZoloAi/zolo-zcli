@@ -77,9 +77,9 @@ export class NavigationManager {
 
     try {
       // Extract route name from path (e.g., '/zAbout' -> 'zAbout')
-      const routeName = routePath.replace(/^\//, '') || 'zVaF';
+      const cleanPath = routePath.replace(/^\//, '') || 'zVaF';
 
-      this.logger.log('[ClientNav] 🚀 Navigating to route:', routeName);
+      this.logger.log('[ClientNav] 🚀 Navigating to route:', cleanPath);
 
       // Fetch route configuration from backend
       const response = await fetch('/api/zui/config');
@@ -89,14 +89,39 @@ export class NavigationManager {
 
       const config = await response.json();
 
-      // Determine zBlock, zVaFile, zVaFolder for this route
-      // For now, use simple convention: route name matches zUI file name
-      const zVaFile = `zUI.${routeName}`;
-      const zVaFolder = config.zVaFolder || '@.UI';
-      let zBlock = routeName;
+      // Parse route path to determine zBlock, zVaFile, zVaFolder
+      // Supports both flat and nested routes:
+      // - /zAbout → zUI.zAbout / @.UI / zAbout
+      // - /zProducts/zCLI → zUI.zCLI / @.UI.zProducts / zCLI_Details
+      const pathParts = cleanPath.split('/');
+      let zVaFile, zVaFolder, zBlock, routeName;
+
+      if (pathParts.length === 1) {
+        // Flat route: /zAbout
+        routeName = pathParts[0];
+        zVaFile = `zUI.${routeName}`;
+        zVaFolder = config.zVaFolder || '@.UI';
+        zBlock = routeName;
+      } else {
+        // Nested route: /zProducts/zCLI
+        const parentFolder = pathParts.slice(0, -1).join('.'); // e.g., "zProducts"
+        const pageName = pathParts[pathParts.length - 1]; // e.g., "zCLI"
+        routeName = pageName;
+        
+        zVaFile = `zUI.${pageName}`;
+        zVaFolder = `@.UI.${parentFolder}`;
+        zBlock = `${pageName}_Details`; // Convention: nested blocks have _Details suffix
+        
+        this.logger.log('[ClientNav] 📁 Nested route detected:', { parentFolder, pageName });
+      }
 
       // Check if this route has special modifiers (^ for bounce-back)
+      // Skip hierarchical items (objects with _sub_items)
       const navBarItem = config.zNavBar?.find(item => {
+        // Skip non-string items (hierarchical objects)
+        if (typeof item !== 'string') {
+          return false;
+        }
         const cleanItem = item.replace(/^[^~$]+/, '');
         return cleanItem === routeName;
       });
@@ -125,6 +150,10 @@ export class NavigationManager {
 
       this.logger.log('[ClientNav] 📤 Sending walker request (fire-and-forget):', walkerRequest);
       this.client.connection.send(JSON.stringify(walkerRequest));
+
+      // Scroll to top for SPA navigation (mimic full page reload UX)
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      this.logger.log('[ClientNav] ⬆️  Scrolled to top');
 
       // Update browser URL without reload (unless skipHistory is true for popstate)
       if (!skipHistory) {

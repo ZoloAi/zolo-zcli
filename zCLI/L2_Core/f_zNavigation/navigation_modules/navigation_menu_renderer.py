@@ -289,7 +289,29 @@ class MenuRenderer:
         # Create menu pairs for display (enumerate with indices)
         # Strip $ prefix from display labels (delta links) for cleaner UX
         # The underlying option value keeps $ for navigation logic
-        menu_pairs = [(i, opt.lstrip('$') if isinstance(opt, str) else opt) for i, opt in enumerate(options)]
+        # Format sub-items: "zProducts (zCLI, zBifrost, zTheme, zTrivia)"
+        menu_pairs = []
+        for i, opt in enumerate(options):
+            if isinstance(opt, dict) and len(opt) == 1:
+                # Dict with metadata: {"$zProducts": {"_sub_items": ["zCLI", "zBifrost", ...]}}
+                item_name = list(opt.keys())[0]
+                item_data = opt[item_name]
+                
+                # Extract display name (strip $ prefix)
+                display_name = item_name.lstrip('$')
+                
+                # Check for sub-items in metadata
+                if isinstance(item_data, dict) and "_sub_items" in item_data:
+                    sub_items = item_data["_sub_items"]
+                    display_text = f"{display_name} ({', '.join(sub_items)})"
+                else:
+                    display_text = display_name
+                
+                menu_pairs.append((i, display_text))
+            elif isinstance(opt, str):
+                menu_pairs.append((i, opt.lstrip('$')))
+            else:
+                menu_pairs.append((i, str(opt)))
         
         # Show breadcrumbs if available (for Walker context)
         try:

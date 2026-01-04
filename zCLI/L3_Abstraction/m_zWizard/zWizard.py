@@ -886,6 +886,10 @@ class zWizard:
             # Returning method reference directly (self.walker.dispatch.handle) loses walker context
             # when called as dispatch_fn(key, value) - walker defaults to None
             def walker_dispatch(key: str, value: Any) -> Any:
+                # SPECIAL CASE: If key is "zWizard", wrap value back into {zWizard: value}
+                # so dispatcher can properly route to _handle_wizard_dict
+                if key == "zWizard":
+                    return self.walker.dispatch.handle(key, {"zWizard": value}, context=context, walker=self.walker)
                 return self.walker.dispatch.handle(key, value, context=context, walker=self.walker)
             return walker_dispatch
 
@@ -893,12 +897,16 @@ class zWizard:
         # Use zcli's dispatch instance with walker context
         def default_dispatch(key: str, value: Any) -> Any:
             walker = self.zcli.walker if self.zcli and hasattr(self.zcli, 'walker') else None
+            # SPECIAL CASE: If key is "zWizard", wrap value back into {zWizard: value}
+            # so dispatcher can properly route to _handle_wizard_dict
+            if key == "zWizard":
+                return self.zcli.dispatch.handle(key, {"zWizard": value}, context=context, walker=walker)
             return self.zcli.dispatch.handle(key, value, context=context, walker=walker)
         return default_dispatch
 
     def _handle_dispatch_error(self, error: Exception, key: str, navigation_callbacks: Optional[Dict[str, Any]]) -> Any:
         """Handle dispatch errors."""
-        self.logger.error(LOG__MSG_DISPATCH_ERROR, key, error, exc_info=True)
+        self.logger.error(_LOG_MSG_DISPATCH_ERROR, key, error, exc_info=True)
         if self.display:
             self.display.zDeclare(_MSG_DISPATCH_ERROR % key, color=_COLOR_ERROR, indent=_INDENT_LEVEL_1, style=_STYLE_FULL)
 
@@ -1009,6 +1017,11 @@ class zWizard:
 
     def _execute_step(self, step_key: str, step_value: Any, step_context: Dict[str, Any]) -> Any:
         """Execute a single wizard step."""
+        # DEBUG: Log step context to diagnose zHat passing
+        self.logger.debug(f"[_execute_step] step_key: {step_key}, context keys: {step_context.keys() if step_context else 'None'}")
+        if step_context and "zHat" in step_context:
+            self.logger.debug(f"[_execute_step] zHat in context: {step_context['zHat']}")
+        
         if self.walker:
             # Use walker's dispatch instance
             return self.walker.dispatch.handle(step_key, step_value, context=step_context)

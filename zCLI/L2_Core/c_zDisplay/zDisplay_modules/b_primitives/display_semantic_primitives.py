@@ -23,7 +23,7 @@ Design Philosophy:
     - display.rich_text("Run `code`") → renders as Run `code`
     - BOTH use SemanticPrimitives.render_code() - NO DUPLICATION!
 
-Semantic Elements Supported (15 total):
+Semantic Elements Supported (16 total):
     Inline Formatting:
         - code: Inline code
         - strong: Strong emphasis/bold
@@ -34,6 +34,7 @@ Semantic Elements Supported (15 total):
     Structural:
         - blockquote: Block quotation
         - pre: Preformatted text
+        - code_block: Multi-line code blocks with optional language
     
     Interactive/Metadata:
         - kbd: Keyboard input
@@ -214,6 +215,49 @@ class SemanticPrimitives:
         """
         # Preformatted text - preserve as-is in both modes
         return content
+    
+    @staticmethod
+    def render_code_block(content: str, language: str = "", mode: str = "terminal") -> str:
+        """
+        Render code block semantic (multi-line code with optional language).
+        
+        Terminal: 
+            ┌─ [language] ────
+            │ code line 1
+            │ code line 2
+            └─────────────────
+        
+        Bifrost: ```language\ncontent\n``` (markdown preserved for frontend parsing)
+        
+        Args:
+            content: Code content to render
+            language: Optional language identifier (e.g., "python", "html", "css")
+            mode: "terminal" or "bifrost"
+            
+        Returns:
+            str: Formatted code block
+        """
+        if mode == "terminal":
+            # Terminal: Render with box-drawing characters for visual separation
+            lines = content.split('\n')
+            
+            # Build header with optional language
+            lang_label = f" [{language}] " if language else " "
+            header = f"┌─{lang_label}{'─' * (60 - len(lang_label))}"
+            
+            # Indent each line with box character
+            body_lines = [f"│ {line}" for line in lines]
+            
+            # Footer
+            footer = "└" + "─" * 60
+            
+            # Combine all parts
+            return '\n'.join([header] + body_lines + [footer])
+        
+        # Bifrost: Preserve markdown triple-backtick syntax (frontend will parse)
+        if language:
+            return f"```{language}\n{content}\n```"
+        return f"```\n{content}\n```"
     
     # Interactive/Metadata Semantics
     

@@ -303,7 +303,7 @@ _MSG_VIEW_ZSESSION = "View session details with: zcli.display.zSession()"
 _MSG_ZCRUMBS_HEADER = "Navigation Breadcrumbs"
 _MSG_DEFAULT_MENU_PROMPT = "Select an option:"
 _MSG_INVALID_NUMBER = "Invalid number"
-_MSG_RANGE_ERROR_TEMPLATE = "Number must be between {max_num} and {max_num}"
+_MSG_RANGE_ERROR_TEMPLATE = "Number must be between 1 and {max_num}"
 _MSG_INVALID_INPUT_TEMPLATE = "Invalid input: {input}"
 _MSG_INVALID_RANGE_TEMPLATE = "Invalid range: {range}"
 _MSG_MULTI_SELECT_INSTRUCTIONS = "Use numbers separated by spaces (e.g., '1 3 5') or 'all'"
@@ -327,7 +327,7 @@ _MSG_AUTHENTICATED_APPS = "Authenticated Apps"
 
 # Prompts (Internal)
 _PROMPT_INPUT = "Input: "
-_PROMPT_SINGLE_SELECT_TEMPLATE = "Select ({min}-{max}): "
+_PROMPT_SINGLE_SELECT_TEMPLATE = "Select (1-{max_num}){default_hint}: "
 _PROMPT_BUTTON_TEMPLATE = "[{label}] "
 _PROMPT_LINK_TEMPLATE = "Navigate to: {label} [Press Enter]"
 

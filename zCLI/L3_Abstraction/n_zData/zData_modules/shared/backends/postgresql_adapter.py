@@ -511,7 +511,7 @@ class PostgreSQLAdapter(SQLAdapter):
                         sql.Identifier(self.database_name)
                     )
                 )
-                self._log('info', LOG_DB_CREATED, self.database_name)
+                self._log('info', _LOG_DB_CREATED, self.database_name)
             else:
                 self._log('debug', LOG_DB_EXISTS, self.database_name)
 
@@ -562,7 +562,7 @@ class PostgreSQLAdapter(SQLAdapter):
                 self.connection = None
                 self._log('info', LOG_DISCONNECTED, self.database_name)
             except Exception as e:  # pylint: disable=broad-except
-                self._log('error', ERR_DISCONNECT_FAILED, e)
+                self._log('error', _ERR_DISCONNECT_FAILED, e)
 
     def get_cursor(self) -> Any:
         """

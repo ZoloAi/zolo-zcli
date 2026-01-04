@@ -20,10 +20,11 @@ export class ListRenderer {
 
   /**
    * Render a list element (bulleted or numbered)
+   * Supports both plain text items and nested zDisplay events
    * @param {Object} eventData - zDisplay event data with items array
-   * @returns {HTMLElement} - Rendered list element (ul or ol)
+   * @returns {Promise<HTMLElement>} - Rendered list element (ul or ol)
    */
-  render(eventData) {
+  async render(eventData) {
     this.logger.log(`[ListRenderer] Rendering list with ${eventData.items?.length || 0} items`);
 
     // Check style: "number" → <ol>, "bullet" → <ul> (default)
@@ -53,9 +54,9 @@ export class ListRenderer {
     // Check if this is an inline list (for horizontal layout)
     const isInline = eventData._zClass && eventData._zClass.includes('zList-inline');
 
-    // Render list items
+    // Render list items (async to support nested zDisplay events)
     const items = eventData.items || [];
-    items.forEach(item => {
+    for (const item of items) {
       const li = document.createElement('li');
 
       // Apply zList-inline-item class if this is an inline list
@@ -63,14 +64,31 @@ export class ListRenderer {
         li.className = 'zList-inline-item';
       }
 
-      // Support both string items and object items with content field
-      const content = typeof item === 'string' ? item : (item.content || '');
-
-      // Use textContent for security (no HTML injection)
-      li.textContent = content;
+      // Check if item contains a nested zDisplay event
+      if (item && typeof item === 'object' && item.zDisplay) {
+        this.logger.log('[ListRenderer] Rendering nested zDisplay event in list item');
+        
+        // Recursively render the nested zDisplay event
+        try {
+          const nestedElement = await this.client.zDisplayOrchestrator.renderZDisplayEvent(item.zDisplay);
+          if (nestedElement) {
+            li.appendChild(nestedElement);
+          } else {
+            this.logger.warn('[ListRenderer] Nested zDisplay returned null, using fallback');
+            li.textContent = JSON.stringify(item);
+          }
+        } catch (error) {
+          this.logger.error('[ListRenderer] Error rendering nested zDisplay:', error);
+          li.textContent = `[Error: ${error.message}]`;
+        }
+      } else {
+        // Plain text item (original behavior)
+        const content = typeof item === 'string' ? item : (item.content || '');
+        li.textContent = content;
+      }
 
       listElement.appendChild(li);
-    });
+    }
 
     this.logger.log(`[ListRenderer] ✅ Rendered ${style} list with ${items.length} items`);
     return listElement;

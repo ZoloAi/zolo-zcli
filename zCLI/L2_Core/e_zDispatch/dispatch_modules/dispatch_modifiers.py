@@ -460,7 +460,20 @@ class ModifierProcessor:
         )
         
         # Add delta prefix ($) to filtered items for intra-file navigation
-        filtered_with_prefix = [f"${item}" for item in filtered_items]
+        # Keep dict items (with _sub_items metadata) as dicts, but prefix the key
+        filtered_with_prefix = []
+        for item in filtered_items:
+            if isinstance(item, str):
+                # Simple string item - add $ prefix
+                filtered_with_prefix.append(f"${item}")
+            elif isinstance(item, dict):
+                # Dict item with metadata (_sub_items, _rbac) - prefix the key but keep as dict
+                item_name = list(item.keys())[0]
+                item_data = item[item_name]
+                filtered_with_prefix.append({f"${item_name}": item_data})
+            else:
+                # Unknown type - keep as-is
+                filtered_with_prefix.append(item)
         
         # SET NAVBAR FLAG: Mark that next navigation is from navbar
         from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZCRUMBS

@@ -13,7 +13,7 @@ export class TypographyRenderer {
 
   /**
    * Render text element
-   * @param {Object} eventData - Event data with content, color, indent, _id, etc.
+   * @param {Object} eventData - Event data with content, color, indent, zId, etc.
    * @returns {HTMLElement}
    */
   renderText(eventData) {
@@ -22,9 +22,10 @@ export class TypographyRenderer {
     if (classes) {
       attrs.class = classes;
     }
-    if (eventData._id) {
-      attrs.id = eventData._id;
-    }  // Pass _id to primitive
+    // Support both zId (universal) and _id (legacy Bifrost-only)
+    if (eventData.zId || eventData._id) {
+      attrs.id = eventData.zId || eventData._id;
+    }
     const p = createParagraph(attrs);
     p.textContent = eventData.content || '';
     return p;
@@ -32,7 +33,7 @@ export class TypographyRenderer {
 
   /**
    * Render header element
-   * @param {Object} eventData - Event data with label, level, _id, etc.
+   * @param {Object} eventData - Event data with label, level, zId, etc.
    * @returns {HTMLElement}
    */
   renderHeader(eventData) {
@@ -42,9 +43,10 @@ export class TypographyRenderer {
     if (classes) {
       attrs.class = classes;
     }
-    if (eventData._id) {
-      attrs.id = eventData._id;
-    }  // Pass _id to primitive
+    // Support both zId (universal) and _id (legacy Bifrost-only)
+    if (eventData.zId || eventData._id) {
+      attrs.id = eventData.zId || eventData._id;
+    }
     const h = createHeading(level, attrs);
     h.textContent = eventData.label || eventData.content || '';
     return h;
@@ -52,7 +54,7 @@ export class TypographyRenderer {
 
   /**
    * Render divider element
-   * @param {Object} eventData - Event data with color, _id, etc.
+   * @param {Object} eventData - Event data with color, zId, etc.
    * @returns {HTMLElement}
    */
   renderDivider(eventData) {
@@ -62,9 +64,10 @@ export class TypographyRenderer {
       classes.push(`zBorder-${eventData.color}`);
     }
     hr.className = classes.join(' ');
-    if (eventData._id) {
-      hr.setAttribute('id', eventData._id);
-    }  // Divider has no primitive yet
+    // Support both zId (universal) and _id (legacy Bifrost-only)
+    if (eventData.zId || eventData._id) {
+      hr.setAttribute('id', eventData.zId || eventData._id);
+    }
     return hr;
   }
 

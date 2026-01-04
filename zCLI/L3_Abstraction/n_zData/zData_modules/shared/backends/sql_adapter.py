@@ -470,7 +470,7 @@ class SQLAdapter(BaseDataAdapter):
         self._log('info', "Executing DDL: %s", ddl)
         cur.execute(ddl)
         self.connection.commit()
-        self._log('info', LOG_TABLE_CREATED, table_name)
+        self._log('info', _LOG_TABLE_CREATED, table_name)
 
         # Create indexes if specified
         if SCHEMA_KEY_INDEXES in schema:

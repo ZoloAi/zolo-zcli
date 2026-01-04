@@ -740,11 +740,22 @@ class CommandLauncher:
         """
         self._log_detected("zWizard (dict)")
         
+        # DEBUG: Log wizard handling
+        self.logger.debug("=" * 80)
+        self.logger.debug("[_handle_wizard_dict] ENTRY POINT")
+        self.logger.debug(f"  Walker: {walker is not None}")
+        self.logger.debug(f"  zWizard keys: {list(zHorizontal[KEY_ZWIZARD].keys())}")
+        self.logger.debug("=" * 80)
+        
         # Use modern OOP API - walker extends wizard, so it has handle()
         if walker:
+            self.logger.debug("[_handle_wizard_dict] Calling walker.handle()")
             zHat = walker.handle(zHorizontal[KEY_ZWIZARD])
+            self.logger.debug(f"[_handle_wizard_dict] walker.handle() returned: {type(zHat)}")
         else:
+            self.logger.debug("[_handle_wizard_dict] Calling zcli.wizard.handle()")
             zHat = self.zcli.wizard.handle(zHorizontal[KEY_ZWIZARD])
+            self.logger.debug(f"[_handle_wizard_dict] zcli.wizard.handle() returned: {type(zHat)}")
         
         # Mode-specific return behavior
         if is_bifrost_mode(self.zcli.session):
@@ -1080,7 +1091,7 @@ class CommandLauncher:
         self,
         zHorizontal: Dict[str, Any],
         context: Optional[Dict[str, Any]]
-    ) -> None:
+    ) -> Any:
         """
         Route zDisplay command (legacy format).
         
@@ -1089,7 +1100,7 @@ class CommandLauncher:
             context: Optional context dict
         
         Returns:
-            Always returns None (display operations don't return values)
+            Result from display event (e.g. user input for read_string/selection, None for display-only events)
         """
         self._log_detected("zDisplay (wrapped)")
         display_data = zHorizontal[KEY_ZDISPLAY]
@@ -1099,8 +1110,8 @@ class CommandLauncher:
             if context and "_resolved_data" in context:
                 display_data["_context"] = context
             
-            # Use display.handle() to pass through ALL parameters automatically
-            self.display.handle(display_data)
+            # Use display.handle() to pass through ALL parameters automatically and return result
+            return self.display.handle(display_data)
         
         return None
 
@@ -1122,6 +1133,11 @@ class CommandLauncher:
         self._log_detected("zFunc (dict)")
         self._display_handler(_LABEL_HANDLE_ZFUNC_DICT, _DEFAULT_INDENT_HANDLER)
         func_spec = zHorizontal[KEY_ZFUNC]
+        
+        # DEBUG: Log context to diagnose zHat passing
+        self.logger.debug(f"[_route_zfunc] context type: {type(context)}, keys: {context.keys() if context else 'None'}")
+        if context and "zHat" in context:
+            self.logger.debug(f"[_route_zfunc] zHat found in context: {context['zHat']}")
         
         # Check if it's a plugin invocation (starts with &)
         if isinstance(func_spec, str) and func_spec.startswith(PLUGIN_PREFIX):

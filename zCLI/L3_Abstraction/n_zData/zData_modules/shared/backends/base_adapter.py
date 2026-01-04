@@ -1097,7 +1097,7 @@ class BaseDataAdapter(ABC):  # pylint: disable=unnecessary-pass
         target_path = Path(path) if path else self.base_path
         target_path.mkdir(parents=True, exist_ok=True)
         if self.logger:
-            self.logger.debug(LOG_DIRECTORY_CREATED, target_path)
+            self.logger.debug(_LOG_DIRECTORY_CREATED, target_path)
 
     def is_connected(self) -> bool:
         """

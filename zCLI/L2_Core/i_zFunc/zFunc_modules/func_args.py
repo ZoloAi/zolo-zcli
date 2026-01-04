@@ -306,6 +306,32 @@ def parse_arguments(
                 parsed_args.append(zhat_value)
                 logger_instance.debug(DEBUG_MSG_INJECTED_ZHAT, zhat_value)
                 
+            # Special argument type 2b: zHat[index] or zHat[key] (wizard result access)
+            elif is_dict_context and arg.startswith("zHat[") and arg.endswith("]"):
+                # Extract index/key from brackets: "zHat[0]" -> "0", "zHat[step1]" -> "step1"
+                index_or_key = arg[5:-1]  # Remove "zHat[" and "]"
+                zhat_obj = zContext.get(ARG_ZHAT)
+                
+                if zhat_obj is not None:
+                    try:
+                        # Try as integer index first
+                        idx = int(index_or_key)
+                        value = zhat_obj[idx]
+                        logger_instance.debug("Resolved zHat[%s] => %s", index_or_key, value)
+                    except (ValueError, KeyError, IndexError, TypeError):
+                        # Try as string key (remove quotes if present)
+                        key = index_or_key.strip("\"'")
+                        try:
+                            value = zhat_obj[key]
+                            logger_instance.debug("Resolved zHat['%s'] => %s", key, value)
+                        except (KeyError, TypeError):
+                            value = None
+                            logger_instance.warning("zHat[%s] not found in context", index_or_key)
+                    parsed_args.append(value)
+                else:
+                    parsed_args.append(None)
+                    logger_instance.warning("zHat not found in context for %s", arg)
+                
             # Special argument type 3: zConv (dialog data from zDialog)
             elif arg == ARG_ZCONV:
                 zconv_value = zContext.get(ARG_ZCONV) if is_dict_context else None

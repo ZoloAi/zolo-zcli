@@ -134,7 +134,88 @@ export class NavigationRenderer {
     items.forEach((item, index) => {
       const li = createListItem({ class: 'zNav-item' });
 
-      // Handle item as string or object {label, href}
+      // Check if this is a hierarchical item with _sub_items
+      if (typeof item === 'object' && item !== null && !item.label && !item.href) {
+        // Dict format: {"zProducts": {"_sub_items": ["zCLI", "zBifrost", ...]}}
+        const itemName = Object.keys(item)[0];
+        const itemData = item[itemName];
+        
+        if (itemData && typeof itemData === 'object' && itemData._sub_items && Array.isArray(itemData._sub_items)) {
+          // This is a hierarchical menu item - render using zTheme's zDropdown component
+          li.classList.add('zDropdown'); // zTheme dropdown container
+          
+          const parentLabel = itemName.replace(/^[$^~]+/, '');
+          const parentHref = this._convertDeltaLinkToHref(itemName);
+          
+          // Create dropdown toggle link (zTheme adds caret automatically via ::after)
+          const dropdownLink = createLink(parentHref, {
+            class: `zNav-link zDropdown-toggle${activeIndex === index ? ' active' : ''}`,
+            'data-toggle': 'dropdown',
+            'aria-haspopup': 'true',
+            'aria-expanded': 'false'
+          });
+          dropdownLink.textContent = parentLabel;
+          
+          // Create dropdown menu using zTheme classes
+          const dropdownMenu = createDiv({ class: 'zDropdown-menu' });
+          
+          // Add sub-items using zTheme's zDropdown-item class
+          itemData._sub_items.forEach(subItem => {
+            const subHref = `${parentHref}/${subItem}`;
+            const subLink = createLink(subHref, { class: 'zDropdown-item' });
+            subLink.textContent = subItem;
+            
+            // Add click handler for internal navigation
+            subLink.addEventListener('click', (e) => {
+              e.preventDefault();
+              // Close dropdown after selection
+              dropdownMenu.classList.remove('zShow');
+              dropdownLink.setAttribute('aria-expanded', 'false');
+              
+              if (this.client && this.client.navigationManager) {
+                this.client.navigationManager.navigateToRoute(subHref);
+              } else {
+                window.location.href = subHref;
+              }
+            });
+            
+            dropdownMenu.appendChild(subLink);
+          });
+          
+          // Toggle dropdown on click (zTheme pattern)
+          dropdownLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            const isOpen = dropdownMenu.classList.contains('zShow');
+            
+            // Close all other dropdowns
+            document.querySelectorAll('.zDropdown-menu.zShow').forEach(menu => {
+              if (menu !== dropdownMenu) {
+                menu.classList.remove('zShow');
+                const toggle = menu.previousElementSibling;
+                if (toggle) toggle.setAttribute('aria-expanded', 'false');
+              }
+            });
+            
+            // Toggle this dropdown
+            if (isOpen) {
+              dropdownMenu.classList.remove('zShow');
+              dropdownLink.setAttribute('aria-expanded', 'false');
+            } else {
+              dropdownMenu.classList.add('zShow');
+              dropdownLink.setAttribute('aria-expanded', 'true');
+            }
+          });
+          
+          li.appendChild(dropdownLink);
+          li.appendChild(dropdownMenu);
+          ul.appendChild(li);
+          
+          this.logger.log(`[NavigationRenderer] 🔽 Created zTheme dropdown for ${parentLabel} with ${itemData._sub_items.length} sub-items`);
+          return; // Continue to next item
+        }
+      }
+
+      // Handle simple item as string or object {label, href}
       let itemLabel, itemHref, originalItem;
       if (typeof item === 'string') {
         // Strip navigation prefixes for clean display
@@ -185,6 +266,26 @@ export class NavigationRenderer {
     // Assemble: ul -> collapseDiv -> nav
     collapseDiv.appendChild(ul);
     nav.appendChild(collapseDiv);
+
+    // Close dropdowns when clicking outside (zTheme pattern)
+    const closeDropdowns = (e) => {
+      if (!nav.contains(e.target)) {
+        nav.querySelectorAll('.zDropdown-menu.zShow').forEach(menu => {
+          menu.classList.remove('zShow');
+          const toggle = menu.previousElementSibling;
+          if (toggle) {
+            toggle.setAttribute('aria-expanded', 'false');
+          }
+        });
+      }
+    };
+    
+    // Use setTimeout to avoid immediate triggering
+    setTimeout(() => {
+      document.addEventListener('click', closeDropdowns);
+    }, 100);
+
+    this.logger.log('[NavigationRenderer] ✅ Rendered navbar with', items.length, 'items (using zTheme classes)');
 
     return nav;
   }

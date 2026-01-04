@@ -235,59 +235,90 @@ class HTTPRouter:
                         self.auto_discovered_routes[virtual_path] = virtual_route
                         self.logger.debug(f"[Router] Created virtual route: {virtual_path} → {zVaFile}.{zBlock}")
                 
-                # Second: Scan entire directory for ALL zUI.*.yaml files
-                self.logger.info(f"[Router] Scanning directory {directory_path} for additional zUI.*.yaml files")
-                pattern = os.path.join(directory_path, "zUI.*.yaml")
-                all_files = glob.glob(pattern)
+                # Second: Recursively scan directory tree for ALL zUI.*.yaml files
+                # Directory structure mirrors URL structure (Terminal-first principle)
+                # Folders starting with _ are ignored (e.g., _panels/ for zDash content)
+                self.logger.info(f"[Router] Scanning directory tree {directory_path} (recursive) for additional zUI.*.yaml files")
                 
-                for file_path in all_files:
-                    file_name = os.path.basename(file_path)
-                    file_base = file_name.replace('.yaml', '')  # e.g., "zUI.zAbout" → "zUI.zAbout"
+                # Walk directory tree
+                for root, dirs, files in os.walk(directory_path):
+                    # Filter out directories starting with _ (in-place modification)
+                    # This excludes _panels/, _components/, etc. from route discovery
+                    dirs[:] = [d for d in dirs if not d.startswith('_')]
                     
-                    # Skip the main file we already processed
-                    if file_base == zVaFile:
-                        continue
-                    
-                    try:
-                        with open(file_path, 'r') as f:
-                            file_data = yaml.safe_load(f)
-                        
-                        if not isinstance(file_data, dict):
+                    for file_name in files:
+                        # Only process zUI.*.yaml files
+                        if not file_name.startswith('zUI.') or not file_name.endswith('.yaml'):
                             continue
                         
-                        # Extract first top-level block (excluding 'meta')
-                        blocks = [key for key in file_data.keys() if key != 'meta']
+                        file_base = file_name.replace('.yaml', '')  # e.g., "zUI.zCLI"
                         
-                        if not blocks:
-                            self.logger.debug(f"[Router] No blocks found in {file_name}")
+                        # Skip the main file we already processed
+                        if file_base == zVaFile and root == directory_path:
                             continue
                         
-                        # Use the first block as the route
-                        first_block = blocks[0]
+                        try:
+                            file_path = os.path.join(root, file_name)
+                            with open(file_path, 'r') as f:
+                                file_data = yaml.safe_load(f)
+                            
+                            if not isinstance(file_data, dict):
+                                continue
+                            
+                            # Extract first top-level block (excluding 'meta')
+                            blocks = [key for key in file_data.keys() if key != 'meta']
+                            
+                            if not blocks:
+                                self.logger.debug(f"[Router] No blocks found in {file_name}")
+                                continue
+                            
+                            # Use the first block as the route
+                            first_block = blocks[0]
+                            
+                            # Extract route name from filename, not block name
+                            # e.g., zUI.zCLI.yaml → zCLI (for URL /zProducts/zCLI)
+                            if file_base.startswith('zUI.'):
+                                route_name = file_base[len('zUI.'):]  # Strip zUI. prefix
+                            else:
+                                route_name = file_base
+                            
+                            # Compute URL path from directory structure
+                            # e.g., UI/zProducts/zUI.zCLI.yaml → /zProducts/zCLI
+                            rel_path = os.path.relpath(root, directory_path)
+                            
+                            if rel_path == '.':
+                                # Top-level file: /zAbout
+                                virtual_path = f"/{route_name}"
+                            else:
+                                # Nested file: /zProducts/zCLI
+                                virtual_path = f"/{rel_path}/{route_name}"
+                            
+                            # Skip if explicit route or already discovered
+                            if virtual_path in self.route_map or virtual_path in self.auto_discovered_routes:
+                                self.logger.debug(f"[Router] Skipping {virtual_path} - already exists")
+                                continue
+                            
+                            # Compute zVaFolder (zPath notation with directory structure)
+                            # e.g., UI/zProducts → @.UI.zProducts
+                            if rel_path == '.':
+                                zVaFolder_computed = zVaFolder
+                            else:
+                                # Replace OS path separators with dots for zPath notation
+                                zpath_suffix = rel_path.replace(os.sep, '.')
+                                zVaFolder_computed = f"{zVaFolder}.{zpath_suffix}"
+                            
+                            # Create virtual route
+                            virtual_route = route_config.copy()
+                            virtual_route['zBlock'] = first_block
+                            virtual_route['zVaFile'] = file_base
+                            virtual_route['zVaFolder'] = zVaFolder_computed
+                            virtual_route['_auto_discovered'] = True
+                            
+                            self.auto_discovered_routes[virtual_path] = virtual_route
+                            self.logger.info(f"[Router] Auto-discovered route: {virtual_path} → {zVaFolder_computed}/{file_base}.{first_block}")
                         
-                        # Strip navigation modifiers (^, ~) from URL path
-                        # Modifiers are for block behavior, not URL paths
-                        # Example: ^zLogin block → /zLogin route (clean URL)
-                        clean_block_name = first_block.lstrip("^~")
-                        virtual_path = f"/{clean_block_name}"
-                        
-                        # Skip if explicit route or already discovered
-                        if virtual_path in self.route_map or virtual_path in self.auto_discovered_routes:
-                            self.logger.debug(f"[Router] Skipping {virtual_path} - already exists")
-                            continue
-                        
-                        # Create virtual route pointing to this specific file
-                        virtual_route = route_config.copy()
-                        virtual_route['zBlock'] = first_block
-                        virtual_route['zVaFile'] = file_base  # e.g., "zUI.zAbout"
-                        virtual_route['_auto_discovered'] = True
-                        
-                        self.auto_discovered_routes[virtual_path] = virtual_route
-                        # Log shows: clean URL path → file.block (with modifiers preserved)
-                        self.logger.info(f"[Router] Auto-discovered route: {virtual_path} → {file_base}.{first_block}")
-                    
-                    except Exception as e:
-                        self.logger.warning(f"[Router] Error parsing {file_name}: {e}")
+                        except Exception as e:
+                            self.logger.warning(f"[Router] Error parsing {file_name}: {e}")
                 
                 total_discovered = len(self.auto_discovered_routes)
                 self.logger.info(f"[Router] Auto-discovery complete: {total_discovered} total virtual routes")

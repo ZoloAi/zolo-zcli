@@ -139,6 +139,7 @@ from .navigation_constants import (
     SESSION_KEY_VAFILE,
     _PREFIX_BLOCK_DELTA,
     _CMD_EXIT,
+    NAV_ZBACK,
     KEY_OPTIONS,
     _PROMPT_DEFAULT,
     _PROMPT_MULTIPLE_DEFAULT,
@@ -427,6 +428,46 @@ class MenuInteraction:
 
         selected = options[index]
         self.logger.debug(_LOG_SELECTED, selected)
+        
+        # Check for hierarchical menu (dict with _sub_items metadata)
+        if isinstance(selected, dict) and len(selected) == 1:
+            item_name = list(selected.keys())[0]
+            item_data = selected[item_name]
+            
+            # Check if this item has sub-items
+            if isinstance(item_data, dict) and "_sub_items" in item_data:
+                sub_items = item_data["_sub_items"]
+                
+                # User selected a parent item with sub-items - show sub-menu
+                display_name = item_name.lstrip('$')  # Strip $ for display
+                self.logger.debug(f"[MenuInteraction] Sub-menu triggered for '{display_name}' with {len(sub_items)} items")
+                
+                # Use the menu system to create and display the sub-menu
+                # allow_back=True will automatically add zBack option
+                sub_choice = self.menu.zcli.navigation.create(
+                    options=sub_items,
+                    title=f"Sub-menu for {display_name}",
+                    allow_back=True,
+                    walker=None
+                )
+                
+                # If user selected "zBack", return to parent menu (recursive call)
+                if sub_choice == NAV_ZBACK:
+                    self.logger.debug("[MenuInteraction] zBack selected in sub-menu, returning to parent")
+                    # Re-show parent menu by recursing
+                    return self.get_choice_from_list(options, display)
+                
+                # Construct proper zLink for hierarchical navigation
+                # Terminal: Navigate to UI/zProducts/zUI.zCLI.yaml → zCLI_Details block
+                # Pattern: @.UI.{parent_name}.zUI.{sub_choice}.{sub_choice}_Details
+                parent_name = display_name
+                block_name = f"{sub_choice}_Details"
+                zlink_path = f"@.UI.{parent_name}.zUI.{sub_choice}.{block_name}"
+                
+                self.logger.debug(f"[MenuInteraction] Hierarchical navigation: {sub_choice} → {zlink_path}")
+                
+                # Return zLink dict for navigation
+                return {"zLink": zlink_path}
         
         # Check for same-file block navigation ($ prefix)
         if isinstance(selected, str) and selected.startswith(_PREFIX_BLOCK_DELTA):

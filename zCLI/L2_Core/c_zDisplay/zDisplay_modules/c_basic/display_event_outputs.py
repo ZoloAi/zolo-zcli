@@ -257,6 +257,7 @@ class BasicOutputs:
         uses the SAME rendering logic as the semantic argument.
         
         Markdown Syntax Parsed:
+            - ```code blocks``` → multi-line code blocks
             - `code` → inline code
             - **strong** → bold/strong emphasis
             - *em* → italic/emphasis
@@ -276,49 +277,58 @@ class BasicOutputs:
         
         Note:
             Parsing order matters to prevent conflicts:
-            1. Code (highest priority - don't parse markers inside code)
-            2. Strong (before em to handle ** before *)
-            3. Em
-            4. Mark
-            5. Del
+            1. Code blocks (highest priority - multi-line before inline)
+            2. Inline code (don't parse markers inside code)
+            3. Strong (before em to handle ** before *)
+            4. Em
+            5. Mark
+            6. Del
         """
         import re
-        from ..display_semantic_primitives import SemanticPrimitives
+        from ..b_primitives.display_semantic_primitives import SemanticPrimitives
         
         # Determine mode
         mode = "terminal" if self.display.mode in ["Terminal", "Walker", ""] else "bifrost"
         
-        # Parse in order: code, strong, em, mark, del (prevent conflicts)
+        # Parse in order: code blocks, inline code, strong, em, mark, del (prevent conflicts)
         
-        # 1. Inline code: `text` (highest priority)
+        # 1. Code blocks: ```language\ncode\n``` (highest priority - must be before inline code)
+        content = re.sub(
+            r'```(\w*)\n?(.*?)\n?```',
+            lambda m: SemanticPrimitives.render_code_block(m.group(2), m.group(1), mode),
+            content,
+            flags=re.DOTALL
+        )
+        
+        # 2. Inline code: `text`
         content = re.sub(
             r'`([^`]+)`',
             lambda m: SemanticPrimitives.render_code(m.group(1), mode),
             content
         )
         
-        # 2. Bold: **text** (before * to prevent conflict)
+        # 3. Bold: **text** (before * to prevent conflict)
         content = re.sub(
             r'\*\*([^*]+)\*\*',
             lambda m: SemanticPrimitives.render_strong(m.group(1), mode),
             content
         )
         
-        # 3. Italic: *text*
+        # 4. Italic: *text*
         content = re.sub(
             r'\*([^*]+)\*',
             lambda m: SemanticPrimitives.render_em(m.group(1), mode),
             content
         )
         
-        # 4. Highlight: ==text==
+        # 5. Highlight: ==text==
         content = re.sub(
             r'==([^=]+)==',
             lambda m: SemanticPrimitives.render_mark(m.group(1), mode),
             content
         )
         
-        # 5. Strikethrough: ~~text~~
+        # 6. Strikethrough: ~~text~~
         content = re.sub(
             r'~~([^~]+)~~',
             lambda m: SemanticPrimitives.render_del(m.group(1), mode),

@@ -121,10 +121,26 @@ export class TextRenderer {
   _parseMarkdown(text) {
     let html = text;
 
+    // Code blocks: ```language\ncode\n``` -> <pre><code>code</code></pre>
+    // Must be processed BEFORE inline code to avoid conflicts
+    html = html.replace(/```(\w*)\n?([\s\S]*?)```/g, (match, language, code) => {
+      // Escape HTML in code
+      const escapedCode = code
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+      
+      // Apply language class if specified
+      const langClass = language ? ` language-${language}` : '';
+      return `<pre class="zBg-dark zText-light zp-3 zRounded zOverflow-auto"><code class="zFont-mono${langClass}">${escapedCode}</code></pre>`;
+    });
+
     // Links: [text](url) -> <a href="url">text</a>
     html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
 
-    // Code: `code` -> <code>code</code>
+    // Inline Code: `code` -> <code>code</code> (after code blocks to avoid conflicts)
     html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
 
     // Bold: **text** -> <strong>text</strong>
@@ -148,8 +164,8 @@ export class TextRenderer {
     // Line breaks: double-space + newline -> <br> (markdown standard, but YAML may strip)
     html = html.replace(/ {2}\n/g, '<br>');
 
-    // Remove remaining single newlines (for text wrapping)
-    html = html.replace(/\n/g, ' ');
+    // Remove remaining single newlines (for text wrapping, but NOT within <pre> tags)
+    html = html.replace(/\n(?![^<]*<\/pre>)/g, ' ');
 
     return html;
   }
@@ -183,7 +199,9 @@ export class TextRenderer {
 
     // Add custom class if provided (from YAML)
     if (_zClass) {
-      classes.push(_zClass);
+      // Split space-separated classes (e.g., "zText-center zmt-3 zmb-4")
+      const customClasses = _zClass.split(/\s+/).filter(c => c);
+      classes.push(...customClasses);
     }
 
     // Add color class if provided (uses Layer 2 utility)
@@ -260,7 +278,9 @@ export class TextRenderer {
 
     // Add custom class if provided (from YAML)
     if (customClass) {
-      classes.push(customClass);
+      // Split space-separated classes (e.g., "zText-center zmt-3 zmb-4")
+      const customClasses = customClass.split(/\s+/).filter(c => c);
+      classes.push(...customClasses);
     }
 
     // Add color class if provided (uses Layer 2 utility)

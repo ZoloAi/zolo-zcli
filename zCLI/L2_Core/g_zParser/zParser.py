@@ -612,15 +612,26 @@ class zParser:
             function_name = os.path.splitext(os.path.basename(func_path))[0]
             return func_path, arg_str, function_name
 
-        # Handle string format: "zFunc(path.to.file.function_name, args)"
-        zFunc_raw = zFunc_spec[len("zFunc("):-1].strip()
+        # Handle string format: "zFunc(path.to.file.function_name, args)" OR "@.path.to.function(args)"
+        if zFunc_spec.startswith("zFunc("):
+            zFunc_raw = zFunc_spec[len("zFunc("):-1].strip()
+        else:
+            # Direct function call format: "@.path.to.function(args)"
+            zFunc_raw = zFunc_spec
         
         self.logger.debug("Parsing zFunc spec: %s", zFunc_raw)
         if zContext:
             self.logger.debug("Context model: %s", zContext.get("model"))
 
-        # Split path and arguments
-        if "," in zFunc_raw:
+        # Split path and arguments using parentheses for function calls
+        if "(" in zFunc_raw and zFunc_raw.endswith(")"):
+            # Extract function path and arguments: "path.to.func(arg1, arg2)" -> "path.to.func", "arg1, arg2"
+            open_paren_idx = zFunc_raw.index("(")
+            path_part = zFunc_raw[:open_paren_idx].strip()
+            arg_str = zFunc_raw[open_paren_idx+1:-1].strip()  # Remove parentheses
+            if not arg_str:  # Empty parentheses
+                arg_str = None
+        elif "," in zFunc_raw:
             path_part, arg_str = zFunc_raw.split(",", 1)
             arg_str = arg_str.strip()
         else:

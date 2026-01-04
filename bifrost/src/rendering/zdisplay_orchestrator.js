@@ -293,11 +293,15 @@ export class ZDisplayOrchestrator {
       // Check if this value has its own metadata (for nested _zClass support)
       let itemMetadata = {};
 
-      // Each zKey container should ONLY use its OWN _zClass, never inherit from parent
+      // Each zKey container should ONLY use its OWN _zClass/_zStyle/zId, never inherit from parent
       // This ensures ProfilePicture doesn't get ProfileHeader's classes
       if (value && typeof value === 'object' && !Array.isArray(value)) {
-        if (value._zClass) {
-          itemMetadata = { _zClass: value._zClass };
+        if (value._zClass || value._zStyle || value.zId) {
+          itemMetadata = {
+            _zClass: value._zClass,
+            _zStyle: value._zStyle,
+            zId: value.zId
+          };
           this.logger.log(`  Found nested metadata for ${key}:`, itemMetadata);
         }
       }
@@ -307,8 +311,10 @@ export class ZDisplayOrchestrator {
 
       // Give container a data attribute for debugging
       containerDiv.setAttribute('data-zkey', key);
-      // Set id for DevTools navigation and CSS targeting
-      containerDiv.setAttribute('id', key);
+      // Set id for DevTools navigation and CSS targeting (unless custom zId provided)
+      if (!itemMetadata.zId) {
+        containerDiv.setAttribute('id', key);
+      }
 
       // Handle list/array values (sequential zDisplay events, zDialog forms, OR menus)
       if (Array.isArray(value)) {
@@ -400,9 +406,9 @@ export class ZDisplayOrchestrator {
 
   /**
    * Create container wrapper for a zKey with zTheme responsive classes
-   * Supports _zClass metadata for customization
+   * Supports _zClass, _zStyle, and zId metadata for customization
    * @param {string} zKey - Key name for debugging
-   * @param {Object} metadata - Metadata object with _zClass
+   * @param {Object} metadata - Metadata object with _zClass, _zStyle, zId
    * @returns {HTMLElement}
    */
   async createContainer(zKey, metadata) {
@@ -428,6 +434,16 @@ export class ZDisplayOrchestrator {
       // Default: NO classes (bare div, following HTML/CSS convention)
       // Organizational divs should be styled explicitly via _zClass when needed
       container.className = '';
+    }
+
+    // Apply inline styles if provided
+    if (metadata._zStyle !== undefined && metadata._zStyle !== '' && metadata._zStyle !== null) {
+      container.setAttribute('style', metadata._zStyle);
+    }
+
+    // Apply custom ID if provided (no underscore = passed to both Bifrost & Terminal)
+    if (metadata.zId !== undefined && metadata.zId !== '' && metadata.zId !== null) {
+      container.setAttribute('id', metadata.zId);
     }
 
     // Add data attribute for debugging/testing
