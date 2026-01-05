@@ -644,13 +644,13 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
                         zPath = '@.' + '.'.join(folder_parts + file_parts)
                         raw_zFile = zcli.loader.handle(zPath=zPath)
                         
-                        # Extract meta section from YAML for client-side features (v1.5.13: _zScripts support)
+                        # Extract zMeta section from YAML for client-side features (v1.5.13: _zScripts support)
                         if raw_zFile and isinstance(raw_zFile, dict):
-                            meta_section = raw_zFile.get("meta", {})
+                            meta_section = raw_zFile.get("zMeta", {})
                             if isinstance(meta_section, dict):
                                 context["zVaFile_meta"] = meta_section
                                 if self.zcli_logger:
-                                    self.zcli_logger.info(f"[Handler] Extracted YAML meta for client: {list(meta_section.keys())}")
+                                    self.zcli_logger.info(f"[Handler] Extracted YAML zMeta for client: {list(meta_section.keys())}")
                             else:
                                 context["zVaFile_meta"] = {}
                         else:
@@ -680,7 +680,7 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
                 "zBlock": context.get("zBlock"),
                 "title": zcli.config.zSpark.get("title") if hasattr(zcli, 'config') and hasattr(zcli.config, 'zSpark') and zcli.config.zSpark else None,
                 "zNavBar": resolved_navbar,  # Use RBAC-filtered navbar (clean strings only)
-                "meta": context.get("zVaFile_meta", {})  # v1.5.13: Include YAML metadata for client features (_zScripts, etc)
+                "zMeta": context.get("zVaFile_meta", {})  # v1.5.13: Include YAML metadata for client features (_zScripts, etc)
             }
             # Only inject if at least one value is present (not all None)
             if any(v is not None for v in zui_config_values.values()):
@@ -832,13 +832,13 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
                         zPath = '@.' + '.'.join(folder_parts + file_parts)
                         raw_zFile = zcli.loader.handle(zPath=zPath)
                         
-                        # Extract meta section from YAML for client-side features (v1.5.13: _zScripts support)
+                        # Extract zMeta section from YAML for client-side features (v1.5.13: _zScripts support)
                         if raw_zFile and isinstance(raw_zFile, dict):
-                            meta_section = raw_zFile.get("meta", {})
+                            meta_section = raw_zFile.get("zMeta", {})
                             if isinstance(meta_section, dict):
                                 context["zVaFile_meta"] = meta_section
                                 if self.zcli_logger:
-                                    self.zcli_logger.info(f"[Handler] Extracted YAML meta for client: {list(meta_section.keys())}")
+                                    self.zcli_logger.info(f"[Handler] Extracted YAML zMeta for client: {list(meta_section.keys())}")
                             else:
                                 context["zVaFile_meta"] = {}
                         else:
@@ -869,7 +869,7 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
                 "zBlock": context.get("zBlock"),
                 "title": zcli.config.zSpark.get("title") if zcli and hasattr(zcli, 'config') and hasattr(zcli.config, 'zSpark') and zcli.config.zSpark else None,
                 "zNavBar": resolved_navbar,  # Use RBAC-filtered navbar (clean strings only)
-                "meta": context.get("zVaFile_meta", {}),  # v1.5.13: Include YAML metadata for client features (_zScripts, etc)
+                "zMeta": context.get("zVaFile_meta", {}),  # v1.5.13: Include YAML metadata for client features (_zScripts, etc)
                 "websocket": {
                     "ssl_enabled": zcli.config.websocket.ssl_enabled if zcli and hasattr(zcli, 'config') and hasattr(zcli.config, 'websocket') else False,
                     "host": zcli.config.websocket.host if zcli and hasattr(zcli, 'config') and hasattr(zcli.config, 'websocket') else "127.0.0.1",

@@ -50,7 +50,10 @@ from ..display_constants import (
     _LINK_TYPE_EXTERNAL,
     _LINK_TYPE_ANCHOR,
     _LINK_TYPE_PLACEHOLDER,
-    _PROMPT_LINK_TEMPLATE,
+    _PROMPT_LINK_INTERNAL,
+    _PROMPT_LINK_EXTERNAL,
+    _PROMPT_LINK_PLACEHOLDER,
+    _PROMPT_LINK_ANCHOR,
     _LOG_PREFIX,
 )
 
@@ -170,50 +173,75 @@ class LinkEvents:
             return _LINK_TYPE_INTERNAL_DELTA
     
     def _render_terminal(self, link_data: Dict[str, Any], link_type: str) -> Optional[Any]:
-        """Render link in Terminal mode using button-style y/n prompts.
+        """Render link in Terminal mode with interactive y/n prompt.
+        
+        Displays link with button-style interaction, prompting user with (y/n).
+        Default behavior is 'n' (no action) if user just presses Enter.
         
         Args:
             link_data: Link configuration dict
             link_type: Detected link type
         
         Returns:
-            Navigation dict (for internal links) or None
+            Navigation dict (for internal links) or action result
         """
         href = link_data.get('href', '#')
         label = link_data.get('label', href)
         target = link_data.get('target', DEFAULT_TARGET)
         color = link_data.get('color', 'PRIMARY')
         
-        # Display link and get user confirmation
+        # Display link label
         self._display_link_label(label)
         
         try:
-            response = self._prompt_link_confirmation(label, color)
+            response = self._prompt_link_confirmation(label, color, link_type)
             
-            if response not in ('y', 'yes'):
+            # Default to 'n' if empty response (just pressed Enter)
+            if not response or response not in ('y', 'yes'):
                 return self._handle_link_cancel(label)
             
             # Handle confirmed link based on type
             return self._execute_link_action(link_type, href, label, target)
             
-        except KeyboardInterrupt:
+        except (KeyboardInterrupt, EOFError):
             return self._handle_link_cancel(label)
 
     def _display_link_label(self, label: str) -> None:
         """Display the link label in button-style format."""
         self.BasicOutputs.text(f"  [{label}]", indent=1, break_after=False)
 
-    def _prompt_link_confirmation(self, label: str, color: str) -> str:
-        """Prompt user to confirm link click with colored prompt."""
-        prompt_text = _PROMPT_LINK_TEMPLATE.format(label=label)
+    def _prompt_link_confirmation(self, label: str, color: str, link_type: str) -> str:
+        """Prompt user to confirm link click with colored prompt.
+        
+        Uses contextual prompts based on link type:
+        - Internal links: "Navigate to: {label}? (y/n): "
+        - External links: "Open {label} in browser? (y/n): "
+        - Placeholder: "Click {label}? (y/n): "
+        - Anchor: "{label}? (y/n): "
+        """
+        # Select appropriate prompt based on link type
+        if link_type in (_LINK_TYPE_INTERNAL_DELTA, _LINK_TYPE_INTERNAL_ZPATH):
+            prompt_template = _PROMPT_LINK_INTERNAL
+        elif link_type == _LINK_TYPE_EXTERNAL:
+            prompt_template = _PROMPT_LINK_EXTERNAL
+        elif link_type == _LINK_TYPE_PLACEHOLDER:
+            prompt_template = _PROMPT_LINK_PLACEHOLDER
+        elif link_type == _LINK_TYPE_ANCHOR:
+            prompt_template = _PROMPT_LINK_ANCHOR
+        else:
+            # Fallback to internal prompt
+            prompt_template = _PROMPT_LINK_INTERNAL
+        
+        prompt_text = prompt_template.format(label=label)
         colored_prompt = wrap_with_color(prompt_text, color, self.zColors)
         return self.primitives.read_string(colored_prompt).strip().lower()
 
-    def _handle_link_cancel(self, label: str) -> str:
+    def _handle_link_cancel(self, label: str) -> None:
         """Handle link cancellation (user declined or interrupted)."""
         self.BasicOutputs.text(f"  {label} cancelled.", indent=1, break_after=False)
         self.logger.debug(f"{_LOG_PREFIX} Link cancelled: {label}")
-        return "stop"
+        # Return None instead of "stop" to continue with remaining wizard steps
+        return None
 
     def _execute_link_action(self, link_type: str, href: str, label: str, target: str) -> Optional[Any]:
         """Execute the appropriate action based on link type."""
@@ -242,8 +270,8 @@ class LinkEvents:
         self.logger.info(f"{_LOG_PREFIX} {link_subtype} navigation confirmed: {href}")
         return {"zLink": href}
 
-    def _handle_external_link(self, href: str, label: str, target: str) -> Any:
-        """Handle external URL link."""
+    def _handle_external_link(self, href: str, label: str, target: str) -> None:
+        """Handle external URL link and continue wizard."""
         self.BasicOutputs.text(f"     → {href}", indent=1, color="MUTED")
         self.BasicOutputs.text(f"  Opening {label} in browser...", indent=1, break_after=False)
         self.logger.info(f"{_LOG_PREFIX} External link confirmed: {href}")
@@ -251,7 +279,9 @@ class LinkEvents:
         if target == TARGET_BLANK:
             self.logger.info(f"{_LOG_PREFIX} Opening in new window/tab (target: _blank)")
         
-        return self.zcli.open.handle(f"zOpen({href})")
+        # Open in browser but return None to continue wizard
+        self.zcli.open.handle(f"zOpen({href})")
+        return None
 
     def _handle_anchor_link(self, href: str, label: str) -> None:
         """Handle anchor link (Terminal limitation)."""

@@ -546,14 +546,14 @@ class MessageHandler:
                 await ws.send(self._build_response(data, error=error_msg))
                 return True
             
-            # Extract meta section from YAML for client-side features (v1.5.13: _zScripts support)
-            meta_section = raw_zFile.get("meta", {})
+            # Extract zMeta section from YAML for client-side features (v1.5.13: _zScripts support)
+            meta_section = raw_zFile.get("zMeta", {})
             if isinstance(meta_section, dict):
                 self.zcli.session["zVaFile_meta"] = meta_section
-                self.logger.debug(f"[MessageHandler] Stored zVaFile meta in session: {list(meta_section.keys())}")
+                self.logger.debug(f"[MessageHandler] Stored zVaFile zMeta in session: {list(meta_section.keys())}")
             else:
                 self.zcli.session["zVaFile_meta"] = {}
-                self.logger.debug(f"[MessageHandler] No meta section found in zVaFile")
+                self.logger.debug(f"[MessageHandler] No zMeta section found in zVaFile")
             
             # Phase 1: Setup per-WebSocket schema cache for DB connection reuse
             # This allows multiple zData operations across walker executions

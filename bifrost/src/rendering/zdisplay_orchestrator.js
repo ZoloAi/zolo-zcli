@@ -183,6 +183,116 @@ export class ZDisplayOrchestrator {
     }
 
     // ═══════════════════════════════════════════════════════════════════════
+    // SHORTHAND SYNTAX EXPANSION (zH1-zH6, zText, zUL, zOL, zTable, zMD, zImage, zURL)
+    // ═══════════════════════════════════════════════════════════════════════
+    // Transform shorthand syntax into full zDisplay format before rendering
+    // Examples: 
+    //   {zH2: {label: "Title"}} → {zDisplay: {event: "header", indent: 2, label: "Title"}}
+    //   {zText: {content: "..."}} → {zDisplay: {event: "text", content: "..."}}
+    //   {zUL: {items: [...]}} → {zDisplay: {event: "list", style: "bullet", items: [...]}}
+    //   {zOL: {items: [...]}} → {zDisplay: {event: "list", style: "number", items: [...]}}
+    //   {zTable: {columns: [...], rows: [...]}} → {zDisplay: {event: "zTable", ...}}
+    //   {zMD: {content: "..."}} → {zDisplay: {event: "rich_text", content: "..."}}
+    //   {zImage: {src: "...", alt_text: "..."}} → {zDisplay: {event: "image", src: "...", alt_text: "..."}}
+    //   {zURL: {label: "...", href: "..."}} → {zDisplay: {event: "zURL", label: "...", href: "..."}}
+    // ═══════════════════════════════════════════════════════════════════════
+    for (const [key, value] of Object.entries(data)) {
+      if (key.startsWith('zH') && key.length === 3 && /^[1-6]$/.test(key[2])) {
+        const indent = parseInt(key[2], 10);
+        if (value && typeof value === 'object' && !Array.isArray(value)) {
+          // Transform shorthand to full zDisplay format
+          data[key] = {
+            zDisplay: {
+              event: 'header',
+              indent: indent,
+              ...value
+            }
+          };
+          this.logger.log(`[ZDisplayOrchestrator] ✨ Expanded ${key} shorthand to zDisplay header (indent: ${indent})`);
+        }
+      } else if (key === 'zText') {
+        if (value && typeof value === 'object' && !Array.isArray(value)) {
+          // Transform shorthand to full zDisplay format
+          data[key] = {
+            zDisplay: {
+              event: 'text',
+              ...value
+            }
+          };
+          this.logger.log(`[ZDisplayOrchestrator] ✨ Expanded zText shorthand to zDisplay text`);
+        }
+      } else if (key === 'zUL') {
+        if (value && typeof value === 'object' && !Array.isArray(value)) {
+          // Transform shorthand to full zDisplay format (unordered/bullet list)
+          data[key] = {
+            zDisplay: {
+              event: 'list',
+              style: 'bullet',
+              ...value
+            }
+          };
+          this.logger.log(`[ZDisplayOrchestrator] ✨ Expanded zUL shorthand to zDisplay list (bullet)`);
+        }
+      } else if (key === 'zOL') {
+        if (value && typeof value === 'object' && !Array.isArray(value)) {
+          // Transform shorthand to full zDisplay format (ordered/numbered list)
+          data[key] = {
+            zDisplay: {
+              event: 'list',
+              style: 'number',
+              ...value
+            }
+          };
+          this.logger.log(`[ZDisplayOrchestrator] ✨ Expanded zOL shorthand to zDisplay list (number)`);
+        }
+      } else if (key === 'zTable') {
+        if (value && typeof value === 'object' && !Array.isArray(value)) {
+          // Transform shorthand to full zDisplay format (table)
+          data[key] = {
+            zDisplay: {
+              event: 'zTable',
+              ...value
+            }
+          };
+          this.logger.log(`[ZDisplayOrchestrator] ✨ Expanded zTable shorthand to zDisplay zTable`);
+        }
+      } else if (key === 'zMD') {
+        if (value && typeof value === 'object' && !Array.isArray(value)) {
+          // Transform shorthand to full zDisplay format (rich_text/markdown)
+          data[key] = {
+            zDisplay: {
+              event: 'rich_text',
+              ...value
+            }
+          };
+          this.logger.log(`[ZDisplayOrchestrator] ✨ Expanded zMD shorthand to zDisplay rich_text`);
+        }
+      } else if (key === 'zImage') {
+        if (value && typeof value === 'object' && !Array.isArray(value)) {
+          // Transform shorthand to full zDisplay format (image)
+          data[key] = {
+            zDisplay: {
+              event: 'image',
+              ...value
+            }
+          };
+          this.logger.log(`[ZDisplayOrchestrator] ✨ Expanded zImage shorthand to zDisplay image`);
+        }
+      } else if (key === 'zURL') {
+        if (value && typeof value === 'object' && !Array.isArray(value)) {
+          // Transform shorthand to full zDisplay format (link/URL)
+          data[key] = {
+            zDisplay: {
+              event: 'zURL',
+              ...value
+            }
+          };
+          this.logger.log(`[ZDisplayOrchestrator] ✨ Expanded zURL shorthand to zDisplay zURL`);
+        }
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
     // NEW: _zGroup Support - Grouped Rendering for Bifrost
     // ═══════════════════════════════════════════════════════════════════════
     // If _zGroup metadata is present, render all children into a single
@@ -578,12 +688,13 @@ export class ZDisplayOrchestrator {
         break;
       }
 
-      case 'link': {
+      case 'zURL': {
         // Use modular LinkRenderer for semantic links
+        // Renamed from 'link' to distinguish from zLink (inter-file navigation)
         const { renderLink } = await import('./primitives/link_primitives.js');
         // ✅ SEPARATION OF CONCERNS: Primitive renders element, orchestrator handles grouping
         element = renderLink(eventData, null, this.client);
-        this.logger.log(`[renderZDisplayEvent] Rendered link element: ${eventData.label}`);
+        this.logger.log(`[renderZDisplayEvent] Rendered zURL element: ${eventData.label}`);
         break;
       }
 
@@ -662,7 +773,7 @@ export class ZDisplayOrchestrator {
     switch (groupType) {
       case 'list-group':
         // For links, buttons, or any interactive element in a list-group
-        if (eventData.event === 'link' || eventData.event === 'button') {
+        if (eventData.event === 'zURL' || eventData.event === 'button') {
           element.classList.add('zList-group-item', 'zList-group-item-action');
 
           // 🎨 Terminal-first: Auto-infer color variant from YAML color parameter

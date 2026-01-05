@@ -612,6 +612,46 @@ class zWizard:
                 self.display.zDeclare(_MSG_ZKEY_DISPLAY % key, color=_COLOR_MAIN, indent=_INDENT_LEVEL_2, style=_STYLE_SINGLE)
 
             # ════════════════════════════════════════════════════════════
+            # SHORTHAND SYNTAX EXPANSION (zH1-zH6, zText, zImage, etc.)
+            # ════════════════════════════════════════════════════════════
+            # Expand shorthand display events BEFORE dispatch
+            if isinstance(value, dict):
+                if key == 'zImage':
+                    value = {'zDisplay': {'event': 'image', **value}}
+                elif key == 'zURL':
+                    value = {'zDisplay': {'event': 'zURL', **value}}
+                elif key.startswith('zH') and len(key) == 3 and key[2].isdigit():
+                    indent_level = int(key[2])
+                    if 1 <= indent_level <= 6:
+                        value = {'zDisplay': {'event': 'header', 'indent': indent_level, **value}}
+                elif key == 'zText':
+                    value = {'zDisplay': {'event': 'text', **value}}
+                elif key == 'zUL':
+                    # Check for plural shorthand first (zURLs, zTexts, etc.)
+                    if isinstance(value, dict):
+                        plural_shorthands = ['zURLs', 'zTexts', 'zH1s', 'zH2s', 'zH3s', 'zH4s', 'zH5s', 'zH6s', 'zImages', 'zMDs']
+                        has_plural = any(ps in value for ps in plural_shorthands)
+                        if has_plural:
+                            # Don't wrap - let dispatch_launcher handle the plural expansion
+                            pass
+                        else:
+                            value = {'zDisplay': {'event': 'list', 'style': 'bullet', **value}}
+                elif key == 'zOL':
+                    # Check for plural shorthand first (zURLs, zTexts, etc.)
+                    if isinstance(value, dict):
+                        plural_shorthands = ['zURLs', 'zTexts', 'zH1s', 'zH2s', 'zH3s', 'zH4s', 'zH5s', 'zH6s', 'zImages', 'zMDs']
+                        has_plural = any(ps in value for ps in plural_shorthands)
+                        if has_plural:
+                            # Don't wrap - let dispatch_launcher handle the plural expansion
+                            pass
+                        else:
+                            value = {'zDisplay': {'event': 'list', 'style': 'number', **value}}
+                elif key == 'zTable':
+                    value = {'zDisplay': {'event': 'zTable', **value}}
+                elif key == 'zMD':
+                    value = {'zDisplay': {'event': 'rich_text', **value}}
+
+            # ════════════════════════════════════════════════════════════
             # RBAC Enforcement (v1.5.4 Week 3.3)
             # ════════════════════════════════════════════════════════════
             # Check if this item has RBAC requirements

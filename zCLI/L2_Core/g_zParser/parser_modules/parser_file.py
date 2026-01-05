@@ -12,7 +12,7 @@ Key Features:
     - **Format Auto-Detection**: Automatically detects JSON vs YAML from content
     - **RBAC Transformation**: Applies RBAC directive extraction for UI files
     - **zWalker Compatibility**: Transforms parsed UI structure for zWalker consumption
-    - **Multi-Format Support**: Handles .json, .yaml, .yml, and expression strings
+    - **Multi-Format Support**: Handles .json, .yaml, .yml, .zolo, and expression strings
     - **Robust Error Handling**: Comprehensive exception handling with logging
 
 Architecture:
@@ -151,6 +151,7 @@ from zCLI import os, json, yaml, Any, Dict, List, Optional, Union
 FILE_EXT_JSON: str = ".json"
 FILE_EXT_YAML: str = ".yaml"
 FILE_EXT_YML: str = ".yml"
+FILE_EXT_ZOLO: str = ".zolo"
 
 # Log Prefixes
 LOG_PREFIX_PARSE: str = "[parse_file_content]"
@@ -217,6 +218,28 @@ DEFAULT_FORMAT: str = FILE_EXT_YAML
 STR_N_A: str = "N/A"
 CHAR_SINGLE_QUOTE: str = "'"
 CHAR_DOUBLE_QUOTE: str = '"'
+
+
+# ============================================================================
+# STANDALONE ZOLO LIBRARY INTEGRATION
+# ============================================================================
+# 
+# The .zolo format is now handled by a standalone library (just like YAML).
+# zCLI is file-format agnostic and simply imports external parsers.
+# 
+# For .zolo files: import zolo (standalone library)
+# For .yaml files: import yaml (PyYAML library)
+# For .json files: import json (Python stdlib)
+# 
+# No parsing logic lives in zCLI - it's delegated to the libraries.
+# ============================================================================
+
+try:
+    import zolo
+    ZOLO_AVAILABLE = True
+except ImportError:
+    ZOLO_AVAILABLE = False
+    # Fallback: zolo library not installed, .zolo files will be treated as YAML
 
 
 # ============================================================================
@@ -473,9 +496,9 @@ def parse_file_content(
     
     # Route to appropriate parser
     if file_extension == FILE_EXT_JSON:
-        return parse_json(raw_content, logger)
-    elif file_extension in [FILE_EXT_YAML, FILE_EXT_YML] or "yaml" in file_extension.lower():
-        data = parse_yaml(raw_content, logger)
+        return parse_json(raw_content, logger, file_extension)
+    elif file_extension in [FILE_EXT_YAML, FILE_EXT_YML, FILE_EXT_ZOLO] or "yaml" in file_extension.lower():
+        data = parse_yaml(raw_content, logger, file_extension)
         
         # Apply UI-specific parsing (RBAC extraction) if this is a UI file
         if is_ui_file and data:
@@ -522,7 +545,8 @@ def parse_file_content(
 
 def parse_yaml(
     raw_content: Union[str, bytes],
-    logger: Any
+    logger: Any,
+    file_extension: Optional[str] = None
 ) -> Optional[Union[Dict[str, Any], List[Any], str, int, float, bool]]:
     """
     Parse YAML content into Python objects with robust error handling.
@@ -530,9 +554,14 @@ def parse_yaml(
     Uses yaml.safe_load() for secure parsing (prevents code execution).
     Handles all YAML data types: scalars, sequences, mappings.
     
+    File-Format Agnostic Processing:
+        - .zolo files: Delegated to standalone zolo library (string-first + type hints)
+        - .yaml files: Standard YAML parsing via PyYAML (native types)
+    
     Args:
         raw_content: Raw YAML content (string or bytes)
         logger: Logger instance for diagnostic output
+        file_extension: File extension (.zolo, .yaml) to determine which library to use
     
     Returns:
         Optional[Union[Dict, List, str, int, float, bool]]: Parsed YAML object, or None on error
@@ -545,21 +574,26 @@ def parse_yaml(
         No exceptions raised - all errors logged and return None
     
     Examples:
-        >>> parse_yaml("key: value", logger)
-        {"key": "value"}
+        >>> # .yaml file (standard YAML parsing)
+        >>> parse_yaml("port: 8080", logger, ".yaml")
+        {"port": 8080}  # int (YAML native)
         
-        >>> parse_yaml("- item1\\n- item2", logger)
-        ["item1", "item2"]
+        >>> # .zolo file (delegated to zolo library)
+        >>> parse_yaml("port: 8080", logger, ".zolo")
+        {"port": "8080"}  # str (zolo string-first)
         
-        >>> parse_yaml("invalid: yaml: {", logger)  # Parse error
-        None
+        >>> # .zolo file with type hint (delegated to zolo library)
+        >>> parse_yaml("port(int): 8080", logger, ".zolo")
+        {"port": 8080}  # int (zolo type hint)
     
     Error Handling:
         - yaml.YAMLError: Malformed YAML syntax
         - Exception: Unexpected errors (broad catch for safety)
     
     Notes:
-        - Uses safe_load() (no code execution risk)
+        - File-format agnostic: Uses appropriate library based on extension
+        - .zolo files: Uses standalone zolo library (if available)
+        - .yaml files: Uses PyYAML (yaml.safe_load)
         - Logs success with type/keys info
         - Returns None on any parse error
     
@@ -570,14 +604,25 @@ def parse_yaml(
         Thread-safe (no shared state)
     
     See Also:
-        - parse_file_content: Calls this for YAML files
+        - parse_file_content: Calls this for YAML/Zolo files
         - parse_json: JSON equivalent
+        - zolo library: Standalone .zolo parser (external)
     """
     try:
-        parsed = yaml.safe_load(raw_content)
-        logger.debug(LOG_MSG_YAML_PARSED,
-                    type(parsed).__name__,
-                    list(parsed.keys()) if isinstance(parsed, dict) else STR_N_A)
+        # File-format agnostic: Use appropriate library
+        if file_extension == '.zolo' and ZOLO_AVAILABLE:
+            # Use standalone zolo library for .zolo files
+            parsed = zolo.loads(raw_content, file_extension=file_extension)
+            logger.debug(LOG_MSG_YAML_PARSED,
+                        type(parsed).__name__,
+                        list(parsed.keys()) if isinstance(parsed, dict) else STR_N_A)
+        else:
+            # Use PyYAML for .yaml files (or .zolo if zolo not installed)
+            parsed = yaml.safe_load(raw_content)
+            logger.debug(LOG_MSG_YAML_PARSED,
+                        type(parsed).__name__,
+                        list(parsed.keys()) if isinstance(parsed, dict) else STR_N_A)
+        
         return parsed
     except yaml.YAMLError as e:
         logger.error(LOG_MSG_YAML_PARSE_ERROR, e)
@@ -589,7 +634,8 @@ def parse_yaml(
 
 def parse_json(
     raw_content: Union[str, bytes],
-    logger: Any
+    logger: Any,
+    file_extension: Optional[str] = None  # pylint: disable=unused-argument
 ) -> Optional[Union[Dict[str, Any], List[Any], str, int, float, bool]]:
     """
     Parse JSON content into Python objects with robust error handling.
@@ -600,6 +646,7 @@ def parse_json(
     Args:
         raw_content: Raw JSON content (string or bytes)
         logger: Logger instance for diagnostic output
+        file_extension: File extension (.json) - currently unused, for API consistency
     
     Returns:
         Optional[Union[Dict, List, str, int, float, bool]]: Parsed JSON object, or None on error
@@ -626,6 +673,7 @@ def parse_json(
         - Exception: Unexpected errors (broad catch for safety)
     
     Notes:
+        - Standard JSON parsing (no format-specific processing)
         - Logs success with type/keys info
         - Returns None on any parse error
     
@@ -637,13 +685,15 @@ def parse_json(
     
     See Also:
         - parse_file_content: Calls this for JSON files
-        - parse_yaml: YAML equivalent
+        - parse_yaml: YAML/Zolo equivalent
     """
     try:
+        # Use standard JSON parsing (no format-specific processing)
         parsed = json.loads(raw_content)
         logger.debug(LOG_MSG_JSON_PARSED,
                     type(parsed).__name__,
                     list(parsed.keys()) if isinstance(parsed, dict) else STR_N_A)
+        
         return parsed
     except json.JSONDecodeError as e:
         logger.error(LOG_MSG_JSON_PARSE_ERROR, e)

@@ -638,8 +638,8 @@ class zNavigation:
         if not raw_zFile or not isinstance(raw_zFile, dict):
             return None
         
-        # Get zVaFile meta section
-        meta_section = raw_zFile.get("meta", {})
+        # Get zVaFile zMeta section
+        meta_section = raw_zFile.get("zMeta", {})
         if not isinstance(meta_section, dict):
             meta_section = {}
         

@@ -38,7 +38,7 @@ Key Design Decisions:
         * @ (at): Workspace-relative path
         * ~ (tilde): Absolute path from root
         * (none): Relative path from workspace
-    - **zVaFile Detection**: Auto-detects file extensions (.json, .yaml, .yml)
+    - **zVaFile Detection**: Auto-detects file extensions (.zolo, .json, .yaml, .yml)
       for zUI, zSchema, and zConfig files.
     - **zMachine Paths**: Special syntax for referencing user data directory:
         * zMachine.* → Direct reference
@@ -221,7 +221,9 @@ FILE_TYPE_ZOTHER: str = "zOther"
 ZVAFILE_EXT_JSON: str = ".json"
 ZVAFILE_EXT_YAML: str = ".yaml"
 ZVAFILE_EXT_YML: str = ".yml"
+ZVAFILE_EXT_ZOLO: str = ".zolo"
 ZVAFILE_EXTENSIONS: List[str] = [
+    ZVAFILE_EXT_ZOLO,    # Try .zolo first (new DRY format)
     ZVAFILE_EXT_JSON,
     ZVAFILE_EXT_YAML,
     ZVAFILE_EXT_YML
@@ -291,7 +293,7 @@ LOG_MSG_FILE_TYPE_OTHER: str = "File Type: zOther (extension provided)"
 LOG_MSG_ZFILE_EXTENSION: str = "zFile extension: %s"
 
 # Error Messages
-ERROR_MSG_NO_ZVAFILE_FOUND: str = "No zVaFile found for base path: {} (tried .json/.yaml/.yml)"
+ERROR_MSG_NO_ZVAFILE_FOUND: str = "No zVaFile found for base path: {} (tried .zolo/.json/.yaml/.yml)"
 ERROR_MSG_FILE_NOT_FOUND: str = "File not found: {}"
 
 # Thresholds and Limits
@@ -924,7 +926,7 @@ def identify_zFile(
         Purpose: Shell command file identification
     
     Notes:
-        - zVaFiles: Tries extensions in order (.json, .yaml, .yml)
+        - zVaFiles: Tries extensions in order (.zolo, .json, .yaml, .yml)
         - Regular files: Extension already in filename
         - Validates file existence for all types
         - Logs file type and extension for debugging

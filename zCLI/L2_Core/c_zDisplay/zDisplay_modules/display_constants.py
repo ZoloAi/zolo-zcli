@@ -107,7 +107,7 @@ _EVENT_NAME_BUTTON = "button"
 _EVENT_READ_STRING = "read_string"
 _EVENT_READ_PASSWORD = "read_password"
 _EVENT_BUTTON = "button"
-_EVENT_LINK = "link"
+_EVENT_LINK = "zURL"  # Renamed from "link" to distinguish from zLink (inter-file navigation)
 
 # Event Names - Primitive Events (Internal)
 _EVENT_WRITE_RAW = "write_raw"
@@ -329,7 +329,10 @@ _MSG_AUTHENTICATED_APPS = "Authenticated Apps"
 _PROMPT_INPUT = "Input: "
 _PROMPT_SINGLE_SELECT_TEMPLATE = "Select (1-{max_num}){default_hint}: "
 _PROMPT_BUTTON_TEMPLATE = "[{label}] "
-_PROMPT_LINK_TEMPLATE = "Navigate to: {label} [Press Enter]"
+_PROMPT_LINK_INTERNAL = "Navigate to: {label}? (y/n): "
+_PROMPT_LINK_EXTERNAL = "Open {label} in browser? (y/n): "
+_PROMPT_LINK_PLACEHOLDER = "Click {label}? (y/n): "
+_PROMPT_LINK_ANCHOR = "{label}? (y/n): "
 
 # Commands (Internal)
 _CMD_DONE = "done"

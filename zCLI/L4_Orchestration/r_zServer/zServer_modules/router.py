@@ -150,9 +150,9 @@ class HTTPRouter:
         
         For each walker route with auto_discover_blocks enabled:
         1. Parse the referenced zVaFile (e.g., zUI.zVaF.yaml)
-        2. Extract all top-level keys (excluding 'meta') from that file
+        2. Extract all top-level keys (excluding 'zMeta') from that file
         3. Scan the entire zVaFolder directory for ALL zUI.*.yaml files
-        4. For each file, extract the first top-level block (excluding 'meta')
+        4. For each file, extract the first top-level block (excluding 'zMeta')
         5. Create virtual routes: /{zBlock} → walker(zBlock={zBlock})
         
         This allows direct navigation to /zAbout, /zRegister, /zLogin, etc. without
@@ -212,8 +212,8 @@ class HTTPRouter:
                     vafile_data = yaml.safe_load(f)
                 
                 if isinstance(vafile_data, dict):
-                    # Extract all top-level keys except 'meta'
-                    zBlocks = [key for key in vafile_data.keys() if key != 'meta']
+                    # Extract all top-level keys except 'zMeta'
+                    zBlocks = [key for key in vafile_data.keys() if key != 'zMeta']
                     
                     self.logger.info(f"[Router] Auto-discovered {len(zBlocks)} zBlocks from {zVaFile}: {zBlocks}")
                     
@@ -265,8 +265,8 @@ class HTTPRouter:
                             if not isinstance(file_data, dict):
                                 continue
                             
-                            # Extract first top-level block (excluding 'meta')
-                            blocks = [key for key in file_data.keys() if key != 'meta']
+                            # Extract first top-level block (excluding 'zMeta')
+                            blocks = [key for key in file_data.keys() if key != 'zMeta']
                             
                             if not blocks:
                                 self.logger.debug(f"[Router] No blocks found in {file_name}")
