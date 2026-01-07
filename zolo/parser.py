@@ -503,15 +503,17 @@ def _strip_comments_and_prepare_lines_with_tokens(content: str, emitter: TokenEm
     lines = content.splitlines()
     
     # Phase 1: Identify full-line comments (these should be ignored for inline comment processing)
+    # Only treat top-level (indent=0) lines starting with # as full-line comments
+    # Indented lines starting with # might be part of (str) multi-line values
     full_line_comment_lines = set()
     for line_num, line in enumerate(lines):
         stripped = line.lstrip()
-        # A line is a full-line comment if it starts with # (but not #>)
-        if stripped.startswith('#') and not stripped.startswith('#>'):
+        indent = len(line) - len(stripped)
+        # A line is a full-line comment if it starts with # (but not #>) AND is at indent=0
+        if indent == 0 and stripped.startswith('#') and not stripped.startswith('#>'):
             full_line_comment_lines.add(line_num)
             # Emit token for this full-line comment
-            indent_len = len(line) - len(stripped)
-            emitter.emit(line_num, indent_len, len(stripped), TokenType.COMMENT)
+            emitter.emit(line_num, 0, len(stripped), TokenType.COMMENT)
     
     # Phase 2: Find and emit all #> ... <# comments (including multi-line)
     # Only search in content that's NOT part of full-line comments
@@ -708,25 +710,72 @@ def _parse_lines_with_tokens(lines: list[str], line_mapping: dict, emitter: Toke
                     emitter.emit(original_line_num, key_start, len(key), TokenType.NESTED_KEY)
                 has_str_hint = False
             
-            # Emit value tokens if value is present
-            if value:
-                value_start = colon_pos + 1
-                # Skip whitespace after colon
-                while value_start < len(line) and line[value_start] == ' ':
-                    value_start += 1
-                _emit_value_tokens(value, original_line_num, value_start, emitter)
-            
-            # Store structured line info
-            structured_lines.append({
-                'indent': indent,
-                'key': key,
-                'value': value,
-                'line': line,
-                'line_number': original_line_num,
-                'is_multiline': False
-            })
-            i += 1
-            line_number += 1
+            # Handle (str) multi-line values
+            if has_str_hint:
+                # Emit value token for first line if present
+                if value:
+                    value_start = colon_pos + 1
+                    # Skip whitespace after colon
+                    while value_start < len(line) and line[value_start] == ' ':
+                        value_start += 1
+                    # For (str) values, always emit as STRING (even if it starts with #)
+                    emitter.emit(original_line_num, value_start, len(value), TokenType.STRING)
+                
+                # Collect and emit tokens for continuation lines
+                lines_consumed = 0
+                for j in range(i + 1, len(lines)):
+                    cont_line = lines[j]
+                    cont_original_line = line_mapping.get(j, j)
+                    cont_indent = len(cont_line) - len(cont_line.lstrip())
+                    cont_stripped = cont_line.strip()
+                    
+                    # Stop if line is at same or less indent than parent (unless empty)
+                    if cont_stripped and cont_indent <= indent:
+                        break
+                    
+                    # Stop if this looks like a new key
+                    if cont_stripped and ':' in cont_stripped and cont_indent <= indent:
+                        break
+                    
+                    # Emit STRING token for this continuation line
+                    if cont_stripped:
+                        # Find where content starts (after indentation)
+                        content_start = len(cont_line) - len(cont_line.lstrip())
+                        emitter.emit(cont_original_line, content_start, len(cont_stripped), TokenType.STRING)
+                    
+                    lines_consumed += 1
+                
+                # Store structured line info
+                structured_lines.append({
+                    'indent': indent,
+                    'key': key,
+                    'value': value,
+                    'line': line,
+                    'line_number': original_line_num,
+                    'is_multiline': True
+                })
+                i += lines_consumed + 1
+                line_number += lines_consumed + 1
+            else:
+                # Regular value (not multi-line)
+                if value:
+                    value_start = colon_pos + 1
+                    # Skip whitespace after colon
+                    while value_start < len(line) and line[value_start] == ' ':
+                        value_start += 1
+                    _emit_value_tokens(value, original_line_num, value_start, emitter)
+                
+                # Store structured line info
+                structured_lines.append({
+                    'indent': indent,
+                    'key': key,
+                    'value': value,
+                    'line': line,
+                    'line_number': original_line_num,
+                    'is_multiline': False
+                })
+                i += 1
+                line_number += 1
         else:
             i += 1
             line_number += 1
