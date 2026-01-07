@@ -1234,8 +1234,13 @@ def _emit_value_tokens(value: str, line: int, start_pos: int, emitter: TokenEmit
         return
     
     # String (default)
-    # Check for escape sequences or brackets within the string
-    if '\\' in value or '[' in value or ']' in value or '{' in value or '}' in value:
+    # Check for VALID escape sequences or brackets within the string
+    # Only enter escape processing for known escapes: \n \t \r \\ \" \' \u
+    # This allows Windows paths like C:\Windows to work naturally
+    has_valid_escape = any(seq in value for seq in ['\\n', '\\t', '\\r', '\\\\', '\\"', "\\'", '\\u'])
+    has_brackets = any(c in value for c in '[]{}')
+    
+    if has_valid_escape or has_brackets:
         _emit_string_with_escapes(value, line, start_pos, emitter)
     else:
         emitter.emit(line, start_pos, len(value), TokenType.STRING)
@@ -1269,8 +1274,10 @@ def _emit_string_with_escapes(value: str, line: int, start_pos: int, emitter: To
                 pos += 6
                 last_emit = pos
             else:
-                # Unknown escape, treat as string
-                pos += 1
+                # Unknown escape (like \W, \S, \d) - treat as literal string
+                # Don't split the token - just move past both characters
+                # They'll be included in the final string emission
+                pos += 2  # Skip both backslash and next char
         # Handle brackets/braces - emit them individually with specific types
         elif value[pos] in '[]{}':
             # Emit string before bracket/brace
