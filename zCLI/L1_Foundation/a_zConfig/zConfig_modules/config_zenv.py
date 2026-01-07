@@ -39,14 +39,14 @@ Example:
 ZNAVBAR:
   zVaF:
   zAccount:
-    _rbac:
+    zRBAC:
       require_role: [zAdmin]
 
 AWS_SECRET_KEY: secret123  # No quotes needed (string-first default)
 DEBUG(bool): true          # Explicit type hint
 
 After loading:
-os.getenv("ZNAVBAR")  # '{"zVaF": null, "zAccount": {"_rbac": {"require_role": ["zAdmin"]}}}'
+os.getenv("ZNAVBAR")  # '{"zVaF": null, "zAccount": {"zRBAC": {"require_role": ["zAdmin"]}}}'
 os.getenv("AWS_SECRET_KEY")  # "secret123"
 os.getenv("DEBUG")  # "true"
 
@@ -58,7 +58,7 @@ Security:
 - Audit trail via OS logging
 """
 
-from zCLI import os, sys, yaml, json, Path, Any, Dict, Optional, List
+from zCLI import os, sys, yaml, json, Path, Any, Dict, Optional, List, Union
 from pathlib import Path
 
 # Module constants
@@ -172,16 +172,20 @@ class zEnv:
                 return candidate
         return None
     
-    def _load_file(self, file_path: Path) -> Optional[Dict[str, Any]]:
+    def _load_file(self, file_path: Union[str, Path]) -> Optional[Dict[str, Any]]:
         """
         Load and parse a YAML, JSON, or ZOLO file.
         
         Args:
-            file_path: Path to the file to load
+            file_path: Path to the file to load (string or Path object)
         
         Returns:
             Dict containing parsed data, or None if file doesn't exist or parse failed
         """
+        # Convert string to Path if needed
+        if isinstance(file_path, str):
+            file_path = Path(file_path)
+        
         if not file_path.exists():
             return None
         

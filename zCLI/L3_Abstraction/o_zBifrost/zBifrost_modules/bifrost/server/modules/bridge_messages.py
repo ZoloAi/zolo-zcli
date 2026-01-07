@@ -642,7 +642,7 @@ class MessageHandler:
                         self.logger.info(f"[MessageHandler] 📦 Chunk {chunk_num}: {chunk_keys} (gate={is_gate})")
                         
                         # Check for special RBAC denial chunk
-                        if gate_value and isinstance(gate_value, dict) and gate_value.get("_rbac_denied"):
+                        if gate_value and isinstance(gate_value, dict) and gate_value.get("zRBAC_denied"):
                             # RBAC was denied - collect and send buffered display events
                             buffered_events = self.zcli.display.collect_buffered_events()
                             self.logger.info(f"[MessageHandler] 📛 RBAC denied - sending {len(buffered_events)} buffered events")
@@ -712,6 +712,10 @@ class MessageHandler:
                         if walker_context and "_resolved_data" in walker_context:
                             chunk_data = self._resolve_data_variables_recursive(chunk_data, walker_context)
                             self.logger.info(f"[MessageHandler] ✅ Resolved %data.* variables in chunk data")
+                        
+                        # NEW v1.5.15: Resolve zPath references in chunk_data BEFORE sending to frontend
+                        # This enables declarative path resolution for Bifrost mode (@ and ~ paths → web URLs)
+                        chunk_data = self._resolve_zpath_references(chunk_data, self.zcli)
                         
                         # Send chunk to frontend with YAML data (not HTML)
                         # Frontend will render using its existing _renderItems() pipeline
@@ -1246,6 +1250,68 @@ class MessageHandler:
             return resolve_variables(data, self.zcli, context)
         else:
             # Return primitives as-is (int, bool, None, etc.)
+            return data
+    
+    def _resolve_zpath_references(self, data: Any, zcli: Any) -> Any:
+        """
+        Recursively resolve zPath references (@, ~) in chunk data before sending to Bifrost.
+        
+        Converts workspace-relative (@) and home-relative (~) paths to web-relative URLs
+        for serving via zServer. This enables the declarative zPath approach where the
+        same path definition works in both Terminal (absolute filesystem) and Bifrost (web URL) modes.
+        
+        Args:
+            data: The data structure to process (dict, list, or string)
+            zcli: zCLI instance for accessing zparser and zserver
+            
+        Returns:
+            The data structure with all zPath references resolved to web URLs
+            
+        Example:
+            data = {"src": "@.static.brand.logo.png"}
+            result = {"src": "/static/brand/logo.png"}  # Ready for zServer
+        """
+        from pathlib import Path
+        
+        if isinstance(data, dict):
+            # Recursively process dictionary values
+            return {key: self._resolve_zpath_references(value, zcli) for key, value in data.items()}
+        elif isinstance(data, list):
+            # Recursively process list items
+            return [self._resolve_zpath_references(item, zcli) for item in data]
+        elif isinstance(data, str) and data.startswith(("@", "~")):
+            # Resolve zPath to web-relative URL
+            try:
+                # Step 1: Resolve zPath to absolute filesystem path
+                resolved_path = zcli.zparser.resolve_data_path(data)
+                self.logger.debug(f"[zPath] Resolved: {data} → {resolved_path}")
+                
+                # Step 2: Convert to web-relative URL for zServer
+                zserver = getattr(zcli, 'server', None)
+                if zserver:
+                    serve_path = Path(zserver.serve_path).resolve()
+                    resolved_path_obj = Path(resolved_path)
+                    
+                    if resolved_path_obj.is_relative_to(serve_path):
+                        # Convert to URL path relative to serve_path
+                        rel_path = resolved_path_obj.relative_to(serve_path)
+                        web_path = "/" + str(rel_path).replace("\\", "/")
+                        self.logger.debug(f"[zPath] Converted to web path: {web_path}")
+                        return web_path
+                    else:
+                        # Path outside serve_path - keep absolute (fallback)
+                        self.logger.warning(f"[zPath] Path outside serve_path: {resolved_path}")
+                        return resolved_path
+                else:
+                    # No zServer - keep absolute path (shouldn't happen in Bifrost)
+                    self.logger.warning(f"[zPath] No zServer found: {data}")
+                    return resolved_path
+            except Exception as e:
+                # Error resolving - return original
+                self.logger.error(f"[zPath] Error resolving {data}: {e}")
+                return data
+        else:
+            # Return primitives and non-zPath strings as-is
             return data
     
     async def _extract_and_send_special_events(

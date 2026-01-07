@@ -384,13 +384,92 @@ class zParser:
             else:
                 workspace = Path(workspace)
 
+            # Split on dots, but preserve file extensions
             path_parts = data_path[1:].strip(".").split(".")
+            
+            # Check if last part looks like a file extension (2-5 chars, alphanumeric)
+            if len(path_parts) > 1 and 2 <= len(path_parts[-1]) <= 5 and path_parts[-1].isalnum():
+                # Last part is likely a file extension - rejoin it with previous part
+                file_extension = path_parts.pop()
+                if path_parts:
+                    path_parts[-1] = f"{path_parts[-1]}.{file_extension}"
+            
             resolved = str(workspace / "/".join(path_parts))
             self.logger.debug("Resolved @ path: %s => %s", data_path, resolved)
             return resolved
 
         # No special prefix, return as-is
         return data_path
+
+    def absolute_path_to_web_path(self, absolute_path: str) -> str:
+        """
+        Convert absolute filesystem path to web-relative path for zServer.
+        
+        This method checks if zServer is running and converts absolute filesystem paths
+        that are under the server's serve_path to web-relative URLs.
+        
+        Args:
+            absolute_path: Absolute filesystem path (e.g., '/Users/.../zCloud/static/logo.png')
+        
+        Returns:
+            str: Web-relative path (e.g., '/static/logo.png') if under serve_path,
+                 otherwise returns the original absolute_path
+        
+        Examples:
+            >>> # Assuming zServer is serving from /Users/.../zCloud
+            >>> parser.absolute_path_to_web_path('/Users/.../zCloud/static/logo.png')
+            '/static/logo.png'
+            
+            >>> # Path outside serve_path remains unchanged
+            >>> parser.absolute_path_to_web_path('/tmp/other.png')
+            '/tmp/other.png'
+        
+        Integration:
+            - Used by zOpen to convert filesystem paths to web URLs
+            - Used by zDisplay in Bifrost mode for media events
+            - Respects zServer's serve_path configuration
+        
+        Notes:
+            Returns original path if:
+            - zServer is not enabled
+            - Path is not under serve_path
+            - serve_path is not configured
+        
+        Version: v1.5.15
+        """
+        from pathlib import Path
+        
+        # Check if zServer is available and enabled
+        zserver = getattr(self.zcli, 'server', None)
+        if not zserver:
+            self.logger.debug("[zParser] zServer not available - returning absolute path")
+            return absolute_path
+        
+        # Get serve_path from zServer
+        serve_path = getattr(zserver, 'serve_path', None)
+        if not serve_path:
+            self.logger.debug("[zParser] zServer serve_path not configured - returning absolute path")
+            return absolute_path
+        
+        # Convert to Path objects and resolve
+        serve_path_obj = Path(serve_path).resolve()
+        absolute_path_obj = Path(absolute_path).resolve()
+        
+        try:
+            # Check if absolute_path is relative to serve_path
+            if absolute_path_obj.is_relative_to(serve_path_obj):
+                # Get relative path
+                rel_path = absolute_path_obj.relative_to(serve_path_obj)
+                # Convert to web path (forward slashes, leading /)
+                web_path = "/" + str(rel_path).replace("\\", "/")
+                self.logger.debug("[zParser] Converted filesystem path to web path: %s → %s", absolute_path, web_path)
+                return web_path
+            else:
+                self.logger.debug("[zParser] Path %s is outside serve_path %s - returning absolute path", absolute_path, serve_path)
+                return absolute_path
+        except (ValueError, AttributeError) as e:
+            self.logger.warning("[zParser] Error converting path %s: %s - returning absolute path", absolute_path, e)
+            return absolute_path
 
     # ═══════════════════════════════════════════════════════════
     # Plugin Invocation (& modifier)

@@ -306,9 +306,9 @@ class zNavigation:
                     ZNAVBAR:
                       zVaF:
                       zAccount:
-                        _rbac:
+                        zRBAC:
                           require_role: [zAdmin]
-                Output: ["zVaF", {"zAccount": {"_rbac": {"require_role": ["zAdmin"]}}}]
+                Output: ["zVaF", {"zAccount": {"zRBAC": {"require_role": ["zAdmin"]}}}]
             
             Legacy format:
                 ZNAVBAR=zVaF,zAbout,zRegister,zLogin
@@ -387,8 +387,8 @@ class zNavigation:
                     return None
                 
                 # Transform JSON format to internal format
-                # Input: [{"item": "zVaF"}, {"item": "^logout", "_rbac": {...}}]
-                # Output: ["zVaF", {"^logout": {"_rbac": {...}}}]
+                # Input: [{"item": "zVaF"}, {"item": "^logout", "zRBAC": {...}}]
+                # Output: ["zVaF", {"^logout": {"zRBAC": {...}}}]
                 navbar_items = []
                 for entry in navbar_raw:
                     if not isinstance(entry, dict):
@@ -400,9 +400,9 @@ class zNavigation:
                         self.logger.framework.warning(f"[zNavigation] Navbar entry missing 'item' key: {entry}")
                         continue
                     
-                    # If entry has _rbac, convert to dict format: {item_name: {_rbac: ...}}
-                    if "_rbac" in entry:
-                        navbar_items.append({item_name: {"_rbac": entry["_rbac"]}})
+                    # If entry has zRBAC, convert to dict format: {item_name: {zRBAC: ...}}
+                    if "zRBAC" in entry:
+                        navbar_items.append({item_name: {"zRBAC": entry["zRBAC"]}})
                     else:
                         # Simple string item (public)
                         navbar_items.append(item_name)
@@ -434,24 +434,24 @@ class zNavigation:
         
         Args:
             navbar_raw: Dict with item names as keys and optional metadata as values
-                Example: {"zVaF": None, "zAccount": {"_rbac": {"require_role": ["zAdmin"]}}}
-                Example with sub-items: {"zProducts": {"_sub_items": ["zCLI", "zBifrost"]}}
+                Example: {"zVaF": None, "zAccount": {"zRBAC": {"require_role": ["zAdmin"]}}}
+                Example with sub-items: {"zProducts": {"zSub": ["zCLI", "zBifrost"]}}
         
         Returns:
             List of navbar items (strings or dicts with RBAC and/or sub-items)
-                Example: ["zVaF", {"zAccount": {"_rbac": {"require_role": ["zAdmin"]}}}]
-                Example with sub-items: [{"zProducts": {"_sub_items": ["zCLI", "zBifrost"]}}]
+                Example: ["zVaF", {"zAccount": {"zRBAC": {"require_role": ["zAdmin"]}}}]
+                Example with sub-items: [{"zProducts": {"zSub": ["zCLI", "zBifrost"]}}]
         """
         navbar_items = []
         
         for item_name, item_config in navbar_raw.items():
-            # If item has metadata (_rbac or _sub_items), include it
+            # If item has metadata (zRBAC or zSub), include it
             if item_config and isinstance(item_config, dict):
                 metadata = {}
-                if "_rbac" in item_config:
-                    metadata["_rbac"] = item_config["_rbac"]
-                if "_sub_items" in item_config:
-                    metadata["_sub_items"] = item_config["_sub_items"]
+                if "zRBAC" in item_config:
+                    metadata["zRBAC"] = item_config["zRBAC"]
+                if "zSub" in item_config:
+                    metadata["zSub"] = item_config["zSub"]
                 
                 if metadata:
                     navbar_items.append({item_name: metadata})
@@ -464,7 +464,7 @@ class zNavigation:
         
         return navbar_items
 
-    def _filter_navbar_by_rbac(self, navbar_items: List[Any]) -> List[Union[str, Dict[str, Any]]]:
+    def _filter_navbar_byzRBAC(self, navbar_items: List[Any]) -> List[Union[str, Dict[str, Any]]]:
         """
         Filter navbar items based on RBAC rules and current user authentication state.
         
@@ -472,42 +472,42 @@ class zNavigation:
         (zLoader/zNavigation layer) ensuring consistent behavior across Terminal and Bifrost.
         
         Filtering Rules:
-            1. String items (no _rbac) → Always visible (public)
-            2. Dict items with _rbac:
+            1. String items (no zRBAC) → Always visible (public)
+            2. Dict items with zRBAC:
                 - zGuest: true → Only visible if NOT authenticated
                 - authenticated: true → Only visible if authenticated
                 - authenticated: false → Only visible if NOT authenticated (same as zGuest)
                 - require_role: "role" → Only visible if user has that role
-            3. Dict items with _sub_items → Preserved in output for hierarchical navigation
+            3. Dict items with zSub → Preserved in output for hierarchical navigation
             4. Invalid items → Filtered out (logged as warnings)
         
         Args:
             navbar_items: Raw navbar items (strings or dicts with RBAC metadata and/or sub-items)
         
         Returns:
-            List[Union[str, Dict]]: Filtered list of navbar items (strings or dicts with _sub_items)
+            List[Union[str, Dict]]: Filtered list of navbar items (strings or dicts with zSub)
         
         Examples:
             Input (not authenticated):
-                ["zVaF", {"^logout": {"_rbac": {"authenticated": true}}}, {"^zLogin": {"_rbac": {"authenticated": false}}}]
+                ["zVaF", {"^logout": {"zRBAC": {"authenticated": true}}}, {"^zLogin": {"zRBAC": {"authenticated": false}}}]
             Output:
                 ["zVaF", "^zLogin"]
             
             Input with sub-items:
-                ["zVaF", {"zProducts": {"_sub_items": ["zCLI", "zBifrost"]}}]
+                ["zVaF", {"zProducts": {"zSub": ["zCLI", "zBifrost"]}}]
             Output:
-                ["zVaF", {"zProducts": {"_sub_items": ["zCLI", "zBifrost"]}}]
+                ["zVaF", {"zProducts": {"zSub": ["zCLI", "zBifrost"]}}]
             
             Input (authenticated as zAdmin):
-                ["zVaF", {"zAccount": {"_rbac": {"require_role": "zAdmin"}}}, {"^zLogin": {"_rbac": {"authenticated": false}}}]
+                ["zVaF", {"zAccount": {"zRBAC": {"require_role": "zAdmin"}}}, {"^zLogin": {"zRBAC": {"authenticated": false}}}]
             Output:
                 ["zVaF", "zAccount"]
         
         Notes:
             - Uses zcli.auth.is_authenticated() for auth checks
-            - Preserves _sub_items metadata for hierarchical menus
+            - Preserves zSub metadata for hierarchical menus
             - Uses zcli.auth.has_role() for role checks
-            - Returns clean item names (without _rbac metadata)
+            - Returns clean item names (without zRBAC metadata)
             - Logs filtered items at DEBUG level
         """
         if not navbar_items:
@@ -533,24 +533,24 @@ class zNavigation:
                 item_metadata = item[item_name]
                 
                 # Extract sub-items if present
-                sub_items = item_metadata.get("_sub_items") if isinstance(item_metadata, dict) else None
+                sub_items = item_metadata.get("zSub") if isinstance(item_metadata, dict) else None
                 
-                # If no metadata or no _rbac, treat as public
-                if not isinstance(item_metadata, dict) or "_rbac" not in item_metadata:
+                # If no metadata or no zRBAC, treat as public
+                if not isinstance(item_metadata, dict) or "zRBAC" not in item_metadata:
                     # If has sub-items, include them in output (preserve metadata wrapper)
                     if sub_items:
-                        filtered.append({item_name: {"_sub_items": sub_items}})
+                        filtered.append({item_name: {"zSub": sub_items}})
                     else:
                         filtered.append(item_name)
                     continue
                 
                 # Extract RBAC rules
-                rbac_rules = item_metadata.get("_rbac", {})
+                rbac_rules = item_metadata.get("zRBAC", {})
                 
                 # Check zGuest (guest-only - must NOT be authenticated)
                 if rbac_rules.get("zGuest"):
                     if not is_authenticated:
-                        filtered.append({item_name: {"_sub_items": sub_items}} if sub_items else item_name)
+                        filtered.append({item_name: {"zSub": sub_items}} if sub_items else item_name)
                         self.logger.framework.debug(f"[zNavigation] Navbar item '{item_name}' visible (zGuest: user not authenticated)")
                     else:
                         self.logger.framework.debug(f"[zNavigation] Navbar item '{item_name}' hidden (zGuest: user is authenticated)")
@@ -562,14 +562,14 @@ class zNavigation:
                     if auth_required is True:
                         # authenticated: true - must be authenticated
                         if is_authenticated:
-                            filtered.append({item_name: {"_sub_items": sub_items}} if sub_items else item_name)
+                            filtered.append({item_name: {"zSub": sub_items}} if sub_items else item_name)
                             self.logger.framework.debug(f"[zNavigation] Navbar item '{item_name}' visible (authenticated: true)")
                         else:
                             self.logger.framework.debug(f"[zNavigation] Navbar item '{item_name}' hidden (not authenticated)")
                     elif auth_required is False:
                         # authenticated: false - must NOT be authenticated (guest-only)
                         if not is_authenticated:
-                            filtered.append({item_name: {"_sub_items": sub_items}} if sub_items else item_name)
+                            filtered.append({item_name: {"zSub": sub_items}} if sub_items else item_name)
                             self.logger.framework.debug(f"[zNavigation] Navbar item '{item_name}' visible (authenticated: false, user is guest)")
                         else:
                             self.logger.framework.debug(f"[zNavigation] Navbar item '{item_name}' hidden (authenticated: false, user is authenticated)")
@@ -579,14 +579,14 @@ class zNavigation:
                 required_role = rbac_rules.get("require_role")
                 if required_role:
                     if is_authenticated and hasattr(self.zcli, 'auth') and self.zcli.auth.has_role(required_role):
-                        filtered.append({item_name: {"_sub_items": sub_items}} if sub_items else item_name)
+                        filtered.append({item_name: {"zSub": sub_items}} if sub_items else item_name)
                         self.logger.framework.debug(f"[zNavigation] Navbar item '{item_name}' visible (has role: {required_role})")
                     else:
                         self.logger.framework.debug(f"[zNavigation] Navbar item '{item_name}' hidden (missing role: {required_role})")
                     continue
                 
                 # No RBAC rules matched - treat as public
-                filtered.append({item_name: {"_sub_items": sub_items}} if sub_items else item_name)
+                filtered.append({item_name: {"zSub": sub_items}} if sub_items else item_name)
                 continue
             
             # Case 3: Invalid item type
@@ -646,6 +646,10 @@ class zNavigation:
         # Get zNavBar value from zVaFile
         navbar_value = meta_section.get("zNavBar")
         
+        # Normalize string 'true'/'false' to boolean (for .zolo file compatibility)
+        if isinstance(navbar_value, str):
+            navbar_value = navbar_value.lower() == 'true'
+        
         # Priority 1: Local override (list of items)
         if isinstance(navbar_value, list):
             if len(navbar_value) > 0:
@@ -670,6 +674,10 @@ class zNavigation:
         # Check if route metadata has zNavBar: true
         if route_meta and isinstance(route_meta, dict):
             route_navbar_value = route_meta.get("zNavBar")
+            
+            # Normalize string 'true'/'false' to boolean (for .zolo file compatibility)
+            if isinstance(route_navbar_value, str):
+                route_navbar_value = route_navbar_value.lower() == 'true'
             
             if route_navbar_value is True:
                 if self._global_navbar:

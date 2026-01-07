@@ -582,28 +582,36 @@ class zOpen:
             url = image_path if parsed.scheme else f"{URL_SCHEME_HTTPS_DEFAULT}{image_path}"
             return open_url(url, self.session, self.display, self.logger)
         
-        # Detect if it's a server-mounted path (e.g., /static/, /media/, /bifrost/)
-        # Check if zServer is enabled and construct full URL
+        # Detect if it's an absolute filesystem path that should be served by zServer
+        # Use zParser to convert absolute path to web-relative path
         if image_path.startswith('/'):
             # Get server config from zCLI instance (zServer subsystem)
             http_config = getattr(self.zcli.config, 'http_server', None)
             
             if http_config and http_config.enabled:
-                host = http_config.host
-                port = http_config.port
-                ssl_enabled = getattr(http_config, 'ssl_enabled', False)
-                scheme = 'https' if ssl_enabled else 'http'
+                # Use zParser to convert absolute filesystem path to web-relative path
+                web_path = self.zcli.zparser.absolute_path_to_web_path(image_path)
                 
-                # Construct full URL
-                server_url = f"{scheme}://{host}:{port}{image_path}"
-                self.logger.info(f"Detected server path: {image_path} → {server_url}")
-                self.display.info(
-                    f"Opening server image: {image_path}",
-                    indent=1
-                )
-                return open_url(server_url, self.session, self.display, self.logger)
+                # If zParser converted the path (it's under serve_path), construct URL
+                if web_path != image_path or web_path.startswith('/') and not web_path.startswith('/Users') and not web_path.startswith('/home'):
+                    host = http_config.host
+                    port = http_config.port
+                    ssl_enabled = getattr(http_config, 'ssl_enabled', False)
+                    scheme = 'https' if ssl_enabled else 'http'
+                    
+                    # Construct full URL
+                    server_url = f"{scheme}://{host}:{port}{web_path}"
+                    self.logger.info(f"Detected server path: {image_path} → {server_url}")
+                    self.display.info(
+                        f"Opening server image: {image_path}",
+                        indent=1
+                    )
+                    return open_url(server_url, self.session, self.display, self.logger)
+                else:
+                    self.logger.warning(f"Path not under zServer serve_path: {image_path}")
+                    # Fall through to local file handling
             else:
-                self.logger.warning(f"Server path detected but zServer not enabled: {image_path}")
+                self.logger.warning(f"Absolute path detected but zServer not enabled: {image_path}")
                 # Fall through to local file handling (will fail if not a real local path)
         
         # Local file handling (consolidated via helper)

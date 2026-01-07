@@ -14,6 +14,12 @@ class TokenType(Enum):
     COMMENT = "comment"
     ROOT_KEY = "rootKey"
     NESTED_KEY = "nestedKey"
+    ZMETA_KEY = "zmetaKey"  # Special key for zMeta in zUI files
+    BIFROST_KEY = "bifrostKey"  # Underscore-prefixed keys: _zClass, etc.
+    UI_ELEMENT_KEY = "uiElementKey"  # z-prefixed UI keys: zImage, zNavBar, zUL, zSub, etc.
+    ZCONFIG_KEY = "zconfigKey"  # Uppercase Z-prefixed config keys in zEnv files: ZNAVBAR, ZDATA_*, etc.
+    ZRBAC_KEY = "zrbacKey"  # zRBAC access control metadata key (tomato color)
+    ZRBAC_OPTION_KEY = "zrbacOptionKey"  # zRBAC nested option keys: zGuest, authenticated, require_role, etc. (purple)
     TYPE_HINT = "typeHint"
     NUMBER = "number"
     STRING = "string"
@@ -30,6 +36,7 @@ class TokenType(Enum):
     TIMESTAMP_STRING = "timestampString"
     TIME_STRING = "timeString"
     RATIO_STRING = "ratioString"
+    ZPATH_VALUE = "zpathValue"  # zPath data references: @.static.brand.logo.png, ~.config.settings (cyan)
 
 
 @dataclass
@@ -109,8 +116,18 @@ class SemanticToken:
 
 
 @dataclass
+class Diagnostic:
+    """Diagnostic message (error, warning, etc.) for LSP."""
+    range: Range
+    message: str
+    severity: int = 1  # 1=Error, 2=Warning, 3=Info, 4=Hint
+    source: str = "zolo-lsp"
+
+
+@dataclass
 class ParseResult:
     """Result of parsing a .zolo file with both data and tokens."""
     data: any  # Parsed data structure
     tokens: List[SemanticToken]  # Semantic tokens for LSP
-    errors: List[str] = field(default_factory=list)  # Parse errors
+    errors: List[str] = field(default_factory=list)  # Parse errors (deprecated, use diagnostics)
+    diagnostics: List[Diagnostic] = field(default_factory=list)  # Structured diagnostics

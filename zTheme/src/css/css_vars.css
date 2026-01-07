@@ -22,46 +22,106 @@
   /* Highlight Colors */
   --color-highlight: #ffeb3b; /* Marker yellow for text highlighting */
 
-  /* .zolo Syntax Colors (Semantic) */
-  --zolo-comment:       #6F6F62; /* Comments # and #> <# */
-  --zolo-typehint:      #4EC9B0; /* Type hints (int), (bool), (str), (float) */
-  --zolo-boolean:       #569CD6; /* Boolean values: true, false */
-  --zolo-number:        #FFB347; /* Numbers: integers and floats (orange) */
-  --zolo-string:        #9370DB; /* String values (purple) */
-  --zolo-null:          #569CD6; /* null value (blue) */
-  --zolo-key-root:      #CE9178; /* Root-level keys (salmon) */
-  --zolo-key-nested:    #5CA9FF; /* Nested keys (blue) */
-  --zolo-zblock:        #A2D46E; /* zBlocks: zMeta, zVaF, ^zLogin (primary green) */
-  --zolo-special-key:   #FFB347; /* Special z-keys: zNavBar, zImage, zUL (warning orange) */
-  --zolo-metadata:      #9370DB; /* Metadata keys: _zClass, _rbac (secondary purple) */
-  --zolo-version:       #9370DB; /* Version strings: 1.0.0, 2.1.* (purple) */
-  --zolo-timestamp:     #9370DB; /* ISO timestamps: 2024-01-06T14:30:00 (purple) */
-  --zolo-time:          #9370DB; /* Time values: 14:30:00 (purple) */
-  --zolo-ratio:         #9370DB; /* Ratio values: 16:9, 4:3 (purple) */
-  --zolo-bracket:       #FFD700; /* Brackets and braces: [], {} (gold) */
-  --zolo-operator:      #CCCCCC; /* Operators: :, comma (light gray) */
-  --zolo-typehint-paren: #CCCCCC; /* Type hint parentheses: () (light gray) */
-  --zolo-escape:        #C9636A; /* Escape sequences: \n, \t, \uXXXX (muted red) */
+  /* ========================================================================== */
+  /* TEMPORARY: zCLI LSP Development Colors (based on zSys/formatting/colors.py) */
+  /* TODO: Move to separate LSP documentation once semantic tokenizer is complete */
+  /* ========================================================================== */
   
-  /* Additional .zolo Color Options */
-  --zolo-green:         #A2D46E; /* Primary green */
-  --zolo-purple:        #9370DB; /* Secondary purple */
-  --zolo-blue:          #5CA9FF; /* Info blue */
-  --zolo-teal:          #52B788; /* Success green */
-  --zolo-orange:        #FFB347; /* Warning orange */
-  --zolo-red:           #E63946; /* Error red */
-  --zolo-gray:          #6F6F62; /* Earth gray */
-  --zolo-darkgray:      #3A3A32; /* Deep gray */
-  --zolo-cream:         #FFFCDC; /* Base cream */
-  --zolo-cyan:          #4EC9B0; /* Cyan/aqua */
-  --zolo-skyblue:       #569CD6; /* Sky blue */
-  --zolo-sage:          #B5CEA8; /* Sage green */
-  --zolo-terracotta:    #CE9178; /* Terracotta/salmon */
-  --zolo-gold:          #FFD700; /* Gold */
-  --zolo-silver:        #D4D4D4; /* Silver/light gray */
-  --zolo-white:         #FFFFFF; /* Pure white */
-  --zolo-yellow:        #F1E65C; /* Bright yellow */
-  --zolo-magenta:       #D946EF; /* Magenta/pink */
+  /* .zolo File Syntax (LSP Semantic Tokens) */
+  --lsp-comment:        #6F6F62; /* Comments: # and #> <# */
+  --lsp-typehint:       #4EC9B0; /* Type hints: (int), (bool), (str), (float) */
+  --lsp-boolean:        #87D787; /* Boolean: true, false (ANSI 120 - light green) */
+  --lsp-number:         #FFB347; /* Numbers: integers and floats */
+  --lsp-string:         #FFFCDC; /* String values (light cream/yellow) */
+  --lsp-null:           #87AFFF; /* null value (ANSI 111 - sky blue) */
+  --lsp-key-root:       #CE9178; /* Root-level keys (salmon) */
+  --lsp-key-nested:     #E8CBA8; /* Nested keys (pale gold/caramel - warm gradient) */
+  
+  /* zCLI Subsystem Colors (from colors.py - Terminal ANSI → Hex) */
+  --zcli-zData:         #875F00; /* ANSI 94 - Brown (CRUD operations) */
+  --zcli-zFunc:         #FF0000; /* ANSI 196 - Red (Function execution) */
+  --zcli-zDialog:       #FF00FF; /* ANSI 201 - Magenta (Dialogs) */
+  --zcli-zWizard:       #5F00FF; /* ANSI 57 - Purple bg (Wizards) */
+  --zcli-zDisplay:      #875FD7; /* ANSI 98 - Medium purple (Display) */
+  --zcli-zParser:       #FFFFD7; /* ANSI 230 - Cream (Parsing) */
+  --zcli-zConfig:       #5F875F; /* ANSI 65 - Dim green (Configuration) */
+  --zcli-zOpen:         #005FFF; /* ANSI 27 - Deep blue (File/URL opening) */
+  --zcli-zComm:         #0087FF; /* ANSI 33 - Bright blue (Communication) */
+  --zcli-zAuth:         #AF5F00; /* ANSI 130 - Orange-brown (Authentication) */
+  --zcli-external:      #FFFF00; /* ANSI 226 - Yellow (External API) */
+  --zcli-bifrost:      #4A90D9; /* ANSI 226 - Yellow (Bifrost) */
+
+  /* Walker/UI Navigation Colors (from colors.py) */
+  --zcli-walker-main:   #87FFD7; /* ANSI 120 - Light green (Main walker) */
+  --zcli-walker-sub:    #FFD7AF; /* ANSI 223 - Light yellow (Sub menus) */
+  --zcli-walker-menu:   #BCBCBC; /* ANSI 250 - Gray (Menu rendering) */
+  --zcli-dispatch:      #FFAF5F; /* ANSI 215 - Peach (Dispatch) */
+  --zcli-zLink:         #875FD7; /* ANSI 99 - Purple (Link navigation) */
+  --zcli-zCrumb:        #AFFF00; /* ANSI 154 - Bright green (Breadcrumbs) */
+  --zcli-loader:        #00D787; /* ANSI 42 - Cyan (File loading) */
+  --zcli-subloader:     #FFAF00; /* ANSI 214 - Orange (Sub-loading) */
+  
+  /* Status & Semantic Colors (Terminal-first design) */
+  --zcli-error:         #FF5F5F; /* ANSI 203 - Red (Error states) */
+  --zcli-warning:       #FFAF5F; /* ANSI 215 - Orange (Warnings) */
+  --zcli-success:       #5FD787; /* ANSI 78 - Green (Success) */
+  --zcli-info:          #5FAFFF; /* ANSI 75 - Light blue (Info) */
+  --zcli-return:        #FFAF00; /* ANSI 214 - Orange (Return values) */
+  
+  /* zUI File Special Keys (LSP context-aware) */
+  --lsp-zmeta:          #A2D46E; /* zMeta + component name in zUI files */
+  --lsp-bifrost:        #4A90D9; /* Bifrost keys: _zClass, _zTitle (underscore-prefixed, nested only) */
+  --lsp-ui-element:     #FFAF5F; /* z-prefixed UI keys: zNavBar, zImage, zUL, zSub */
+  --lsp-zconfig:        #A2D46E; /* Z-prefixed config keys in zEnv files: ZNAVBAR, ZDATA_* */
+  --lsp-rbac:           #E74C3C; /* zRBAC access control key (tomato, nested only) */
+  --lsp-rbac-option:    #A78BFA; /* zCLI option keys + dispatcher modifiers (lavender purple, zUI/zEnv only):
+                                     - zImage/zUL/zOL options: src, alt_text, caption, label, href, text
+                                     - zRBAC options: zGuest, authenticated, require_role, require_auth, require_permission
+                                     - Dispatcher modifiers: ^ (bounce), ~ (anchor), * (menu), ! (required) */
+  --lsp-modifier:       #FFAF00; /* Modifiers: ~Root*, ^, *, ! */
+  --lsp-path:           #00D7AF; /* Paths: @., ~/, / */
+  --lsp-zpath:          #00CED1; /* zPath data references: @.static.brand.logo.png, ~.config (dark cyan) */
+  
+  /* Structural Punctuation */
+  --lsp-bracket:        #FFD700; /* Brackets: [], {} */
+  --lsp-operator:       #BCBCBC; /* Operators: :, comma */
+  --lsp-escape:         #D75F5F; /* Escape sequences: \n, \t, \uXXXX */
+  
+  /* Additional LSP Colors (not in zTheme palette) */
+  --lsp-random-1:       #FF1493; /* Deep Pink - vibrant pink (not in palette) */
+  --lsp-random-2:       #00CED1; /* Dark Turquoise - bright teal (not in palette) */
+  --lsp-random-3:       #ADFF2F; /* Green Yellow - lime (not in palette) */
+  --lsp-random-4:       #FF6347; /* Tomato - coral red (not in palette) */
+  --lsp-random-5:       #8A2BE2; /* Blue Violet - bright purple (replaced dark Indigo) */
+  --lsp-random-6:       #FF8C00; /* Dark Orange - vibrant orange (replaced pale Lavender) */
+  --lsp-random-7:       #00FF7F; /* Spring Green - saturated green (replaced pale Mint) */
+  --lsp-random-8:       #FF69B4; /* Hot Pink - bright pink (not in palette) */
+  --lsp-random-9:       #FFD700; /* Gold - bright yellow (currently used but listing) */
+  --lsp-random-10:      #20B2AA; /* Light Sea Green - muted teal (not in palette) */
+  
+  /* ========================================================================== */
+  /* END TEMPORARY LSP COLORS - Remove after LSP completion */
+  /* ========================================================================== */
+  
+  /* Additional zTheme Color Palette (for theme components) */
+  --ztheme-green:       #A2D46E; /* Primary green */
+  --ztheme-purple:      #9370DB; /* Secondary purple */
+  --ztheme-blue:        #5CA9FF; /* Info blue */
+  --ztheme-teal:        #52B788; /* Success green */
+  --ztheme-orange:      #FFB347; /* Warning orange */
+  --ztheme-red:         #E63946; /* Error red */
+  --ztheme-gray:        #6F6F62; /* Earth gray */
+  --ztheme-darkgray:    #3A3A32; /* Deep gray */
+  --ztheme-cream:       #FFFCDC; /* Base cream */
+  --ztheme-cyan:        #4EC9B0; /* Cyan/aqua */
+  --ztheme-skyblue:     #569CD6; /* Sky blue */
+  --ztheme-sage:        #B5CEA8; /* Sage green */
+  --ztheme-terracotta:  #CE9178; /* Terracotta/salmon */
+  --ztheme-gold:        #FFD700; /* Gold */
+  --ztheme-silver:      #D4D4D4; /* Silver/light gray */
+  --ztheme-white:       #FFFFFF; /* Pure white */
+  --ztheme-yellow:      #F1E65C; /* Bright yellow */
+  --ztheme-magenta:     #D946EF; /* Magenta/pink */
 
   /* Layout Measurements */
   --zNavbar-height: 3.75rem;   /* Default zNavbar height for offset helpers */
