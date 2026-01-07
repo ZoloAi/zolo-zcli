@@ -17,7 +17,7 @@ TYPE_BOOL = "bool"
 TYPE_STR = "str"
 TYPE_LIST = "list"
 TYPE_DICT = "dict"
-TYPE_NULL = "null"
+# TYPE_NULL removed - null now auto-detects (RFC 8259 primitive)
 TYPE_RAW = "raw"
 TYPE_DATE = "date"
 TYPE_TIME = "time"
@@ -32,7 +32,7 @@ SUPPORTED_TYPES = [
     TYPE_STR,
     TYPE_LIST,
     TYPE_DICT,
-    TYPE_NULL,
+    # TYPE_NULL removed - null is now an auto-detected primitive
     TYPE_RAW,
     TYPE_DATE,
     TYPE_TIME,

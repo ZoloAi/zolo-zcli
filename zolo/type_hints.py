@@ -10,7 +10,7 @@ from typing import Any, Optional, Pattern
 
 from .constants import (
     TYPE_INT, TYPE_FLOAT, TYPE_BOOL, TYPE_STR,
-    TYPE_LIST, TYPE_DICT, TYPE_NULL, TYPE_RAW,
+    TYPE_LIST, TYPE_DICT, TYPE_RAW,
     TYPE_DATE, TYPE_TIME, TYPE_URL, TYPE_PATH,
     SUPPORTED_TYPES, BOOL_TRUE_VALUES
 )
@@ -134,8 +134,7 @@ def convert_value_by_type(value: Any, type_hint: str, key: str) -> Any:
                 f"Cannot convert key '{key}' to dict: value is {type(value).__name__}"
             )
         
-        elif type_hint == TYPE_NULL:
-            return None
+        # TYPE_NULL removed - null now auto-detects as an RFC 8259 primitive
         
         elif type_hint in (TYPE_RAW, TYPE_DATE, TYPE_TIME, TYPE_URL, TYPE_PATH):
             # These are string types with semantic meaning
