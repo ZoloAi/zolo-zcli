@@ -1257,27 +1257,28 @@ def _emit_string_with_escapes(value: str, line: int, start_pos: int, emitter: To
     while pos < len(value):
         # Handle escape sequences
         if value[pos] == '\\' and pos + 1 < len(value):
-            # Emit string before escape
-            if pos > last_emit:
-                emitter.emit(line, start_pos + last_emit, pos - last_emit, TokenType.STRING)
-            
-            # Check what kind of escape
+            # Check what kind of escape FIRST, before emitting
             next_char = value[pos + 1]
+            
             if next_char in 'ntr\\\'"':
-                # Known escape
+                # Known escape - emit string before it, then emit the escape
+                if pos > last_emit:
+                    emitter.emit(line, start_pos + last_emit, pos - last_emit, TokenType.STRING)
                 emitter.emit(line, start_pos + pos, 2, TokenType.ESCAPE_SEQUENCE)
                 pos += 2
                 last_emit = pos
             elif next_char == 'u' and pos + 5 < len(value):
-                # Unicode escape \uXXXX
+                # Unicode escape \uXXXX - emit string before it, then emit the escape
+                if pos > last_emit:
+                    emitter.emit(line, start_pos + last_emit, pos - last_emit, TokenType.STRING)
                 emitter.emit(line, start_pos + pos, 6, TokenType.ESCAPE_SEQUENCE)
                 pos += 6
                 last_emit = pos
             else:
                 # Unknown escape (like \W, \S, \d) - treat as literal string
-                # Don't split the token - just move past both characters
-                # They'll be included in the final string emission
-                pos += 2  # Skip both backslash and next char
+                # DON'T emit anything, just skip the backslash
+                # The backslash and next char will be included in the final STRING token
+                pos += 1  # Only skip the backslash, next char will be part of string
         # Handle brackets/braces - emit them individually with specific types
         elif value[pos] in '[]{}':
             # Emit string before bracket/brace

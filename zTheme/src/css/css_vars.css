@@ -22,6 +22,47 @@
   /* Highlight Colors */
   --color-highlight: #ffeb3b; /* Marker yellow for text highlighting */
 
+  /* .zolo Syntax Colors (Semantic) */
+  --zolo-comment:       #6F6F62; /* Comments # and #> <# */
+  --zolo-typehint:      #4EC9B0; /* Type hints (int), (bool), (str), (float) */
+  --zolo-boolean:       #569CD6; /* Boolean values: true, false */
+  --zolo-number:        #FFB347; /* Numbers: integers and floats (orange) */
+  --zolo-string:        #9370DB; /* String values (purple) */
+  --zolo-null:          #569CD6; /* null value (blue) */
+  --zolo-key-root:      #CE9178; /* Root-level keys (salmon) */
+  --zolo-key-nested:    #5CA9FF; /* Nested keys (blue) */
+  --zolo-zblock:        #A2D46E; /* zBlocks: zMeta, zVaF, ^zLogin (primary green) */
+  --zolo-special-key:   #FFB347; /* Special z-keys: zNavBar, zImage, zUL (warning orange) */
+  --zolo-metadata:      #9370DB; /* Metadata keys: _zClass, _rbac (secondary purple) */
+  --zolo-version:       #9370DB; /* Version strings: 1.0.0, 2.1.* (purple) */
+  --zolo-timestamp:     #9370DB; /* ISO timestamps: 2024-01-06T14:30:00 (purple) */
+  --zolo-time:          #9370DB; /* Time values: 14:30:00 (purple) */
+  --zolo-ratio:         #9370DB; /* Ratio values: 16:9, 4:3 (purple) */
+  --zolo-bracket:       #FFD700; /* Brackets and braces: [], {} (gold) */
+  --zolo-operator:      #CCCCCC; /* Operators: :, comma (light gray) */
+  --zolo-typehint-paren: #CCCCCC; /* Type hint parentheses: () (light gray) */
+  --zolo-escape:        #C9636A; /* Escape sequences: \n, \t, \uXXXX (muted red) */
+  
+  /* Additional .zolo Color Options */
+  --zolo-green:         #A2D46E; /* Primary green */
+  --zolo-purple:        #9370DB; /* Secondary purple */
+  --zolo-blue:          #5CA9FF; /* Info blue */
+  --zolo-teal:          #52B788; /* Success green */
+  --zolo-orange:        #FFB347; /* Warning orange */
+  --zolo-red:           #E63946; /* Error red */
+  --zolo-gray:          #6F6F62; /* Earth gray */
+  --zolo-darkgray:      #3A3A32; /* Deep gray */
+  --zolo-cream:         #FFFCDC; /* Base cream */
+  --zolo-cyan:          #4EC9B0; /* Cyan/aqua */
+  --zolo-skyblue:       #569CD6; /* Sky blue */
+  --zolo-sage:          #B5CEA8; /* Sage green */
+  --zolo-terracotta:    #CE9178; /* Terracotta/salmon */
+  --zolo-gold:          #FFD700; /* Gold */
+  --zolo-silver:        #D4D4D4; /* Silver/light gray */
+  --zolo-white:         #FFFFFF; /* Pure white */
+  --zolo-yellow:        #F1E65C; /* Bright yellow */
+  --zolo-magenta:       #D946EF; /* Magenta/pink */
+
   /* Layout Measurements */
   --zNavbar-height: 3.75rem;   /* Default zNavbar height for offset helpers */
 

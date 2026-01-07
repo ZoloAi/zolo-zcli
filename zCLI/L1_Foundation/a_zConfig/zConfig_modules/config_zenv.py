@@ -2,44 +2,48 @@
 """
 zEnv - Declarative Environment Configuration Loader
 
-THE zCLI WAY: Replace traditional .env files with YAML/JSON declarative configs.
+THE zCLI WAY: Replace traditional .env files with declarative config files.
 
 This module provides a secure, declarative alternative to python-dotenv while
-maintaining backward compatibility. It parses zEnv.*.yaml/json files and injects
-values into os.environ (just like dotenv), ensuring security and standard practices.
+maintaining backward compatibility. It parses zEnv config files (.zolo, .yaml, .json)
+and injects values into os.environ (just like dotenv), ensuring security and standard practices.
 
 Key Features:
-- Parse YAML/JSON declarative config files
+- Parse ZOLO/YAML/JSON declarative config files
+- Auto-detect file format (.zolo preferred, .yaml fallback)
 - Flatten nested structures to JSON strings for complex values
 - Priority-based loading (base → environment-specific)
 - Secure: Values injected into os.environ (process-isolated)
-- Backward compatible: Falls back to dotenv if YAML files not found
+- Backward compatible: Falls back to dotenv if no config files found
 
 File Format:
 -----------
-zEnv.base.yaml         - Base configuration (shared across all environments)
-zEnv.development.yaml  - Development-specific overrides
-zEnv.production.yaml   - Production-specific overrides
-zEnv.testing.yaml      - Testing-specific overrides
+zEnv.base.zolo         - Base configuration (preferred - string-first, type hints)
+zEnv.base.yaml         - Base configuration (fallback)
+zEnv.development.zolo  - Development-specific overrides
+zEnv.production.zolo   - Production-specific overrides
+zEnv.testing.zolo      - Testing-specific overrides
 
 Priority Order:
 --------------
-1. zEnv.{environment}.yaml  (highest priority - environment-specific)
-2. zEnv.base.yaml           (base configuration)
-3. .zEnv.{environment}      (legacy dotenv fallback)
-4. .zEnv                    (legacy dotenv base)
+1. zEnv.{environment}.zolo (highest priority - environment-specific, preferred)
+2. zEnv.{environment}.yaml (fallback if .zolo not found)
+3. zEnv.base.zolo          (base configuration, preferred)
+4. zEnv.base.yaml          (fallback if .zolo not found)
+5. .zEnv.{environment}     (legacy dotenv fallback)
+6. .zEnv                   (legacy dotenv base)
 
 Example:
 --------
-# zEnv.base.yaml
+# zEnv.base.zolo
 ZNAVBAR:
   zVaF:
   zAccount:
     _rbac:
       require_role: [zAdmin]
 
-AWS_SECRET_KEY: "secret123"
-DEBUG: true
+AWS_SECRET_KEY: secret123  # No quotes needed (string-first default)
+DEBUG(bool): true          # Explicit type hint
 
 After loading:
 os.getenv("ZNAVBAR")  # '{"zVaF": null, "zAccount": {"_rbac": {"require_role": ["zAdmin"]}}}'
@@ -59,6 +63,14 @@ from pathlib import Path
 
 # Module constants
 LOG_PREFIX = "[zEnv]"
+
+# zEnv file extensions (priority order - consistent with zParser)
+ZENV_EXT_ZOLO = ".zolo"
+ZENV_EXT_YAML = ".yaml"
+ZENV_EXTENSIONS = [
+    ZENV_EXT_ZOLO,    # Try .zolo first (new DRY format)
+    ZENV_EXT_YAML      # Fall back to .yaml
+]
 
 class zEnv:
     """
@@ -84,49 +96,85 @@ class zEnv:
         
     def load(self) -> bool:
         """
-        Load environment configuration from YAML/JSON files into os.environ.
+        Load environment configuration from config files into os.environ.
         
+        Auto-detects file format (.zolo preferred, .yaml fallback).
         Priority order:
-        1. zEnv.base.yaml (base configuration)
-        2. zEnv.{environment}.yaml (environment-specific overrides)
+        1. zEnv.base.{zolo|yaml} (base configuration)
+        2. zEnv.{environment}.{zolo|yaml} (environment-specific overrides)
         
         Returns:
-            bool: True if any YAML files were loaded, False if no YAML files found
+            bool: True if any config files were loaded, False if no files found
             
         Note:
             Does NOT fall back to dotenv - that's handled by config_paths.load_dotenv()
-            This ensures YAML files always take precedence when they exist.
+            This ensures declarative files always take precedence when they exist.
         """
-        yaml_loaded = False
+        # Find files with auto-detection
+        base_file = self._find_file_with_extension("zEnv.base")
+        env_file = self._find_file_with_extension(f"zEnv.{self.environment}")
         
-        # Priority 1: Load base configuration
-        base_file = self.workspace_dir / "zEnv.base.yaml"
-        base_config = self._load_file(base_file)
+        # Delegate to load_files()
+        return self.load_files(base_file, env_file)
+    
+    def load_files(self, base_file: Optional[Path], env_file: Optional[Path]) -> bool:
+        """
+        Load specified config files into os.environ.
         
-        if base_config:
-            self._inject_to_environ(base_config)
-            self._loaded_files.append(str(base_file))
-            yaml_loaded = True
-            self._log(f"✅ Loaded base config from {base_file.name}")
+        This is the execution layer - it loads whatever files it's told to load.
+        File detection happens in config_paths.py (the decision layer).
         
-        # Priority 2: Load environment-specific configuration (overrides base)
-        env_file = self.workspace_dir / f"zEnv.{self.environment}.yaml"
-        env_config = self._load_file(env_file)
+        Args:
+            base_file: Path to base config file (or None)
+            env_file: Path to environment config file (or None)
         
-        if env_config:
-            self._inject_to_environ(env_config)
-            self._loaded_files.append(str(env_file))
-            yaml_loaded = True
-            self._log(f"✅ Loaded {self.environment} config from {env_file.name}")
+        Returns:
+            bool: True if any files were loaded successfully
+        """
+        any_loaded = False
         
-        if not yaml_loaded:
-            self._log("ℹ️  No zEnv YAML files found in workspace")
+        # Load base configuration
+        if base_file:
+            base_config = self._load_file(base_file)
+            if base_config:
+                self._inject_to_environ(base_config)
+                self._loaded_files.append(str(base_file))
+                any_loaded = True
+                self._log(f"✅ Loaded base config from {base_file.name}")
         
-        return yaml_loaded
+        # Load environment-specific configuration (overrides base)
+        if env_file:
+            env_config = self._load_file(env_file)
+            if env_config:
+                self._inject_to_environ(env_config)
+                self._loaded_files.append(str(env_file))
+                any_loaded = True
+                self._log(f"✅ Loaded {self.environment} config from {env_file.name}")
+        
+        if not any_loaded:
+            self._log("ℹ️  No zEnv config files found in workspace")
+        
+        return any_loaded
+    
+    def _find_file_with_extension(self, base_name: str) -> Optional[Path]:
+        """
+        Find a file by trying extensions in priority order.
+        
+        Args:
+            base_name: Base filename without extension (e.g., "zEnv.base")
+        
+        Returns:
+            Path to file if found, None otherwise
+        """
+        for ext in ZENV_EXTENSIONS:
+            candidate = self.workspace_dir / f"{base_name}{ext}"
+            if candidate.exists():
+                return candidate
+        return None
     
     def _load_file(self, file_path: Path) -> Optional[Dict[str, Any]]:
         """
-        Load and parse a YAML or JSON file.
+        Load and parse a YAML, JSON, or ZOLO file.
         
         Args:
             file_path: Path to the file to load
@@ -141,7 +189,35 @@ class zEnv:
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
             
-            # Try YAML first (supports both YAML and JSON)
+            # Check file extension
+            file_extension = file_path.suffix
+            
+            # For .zolo files, use the standalone zolo library (like PyYAML for .yaml)
+            if file_extension == ZENV_EXT_ZOLO:
+                try:
+                    import zolo
+                    data = zolo.loads(content, file_extension=file_extension)
+                    if data is None:
+                        self._log(f"⚠️  {file_path.name} is empty")
+                        return None
+                    return data
+                except ImportError:
+                    self._log(f"⚠️  zolo library not installed, falling back to YAML parser for {file_path.name}")
+                    # Fallback to YAML if zolo not installed
+                    try:
+                        data = yaml.safe_load(content)
+                        if data is None:
+                            self._log(f"⚠️  {file_path.name} is empty")
+                            return None
+                        return data
+                    except yaml.YAMLError as e:
+                        self._log(f"❌ Failed to parse {file_path.name}: {e}")
+                        return None
+                except Exception as e:
+                    self._log(f"❌ Failed to parse .zolo file {file_path.name}: {e}")
+                    return None
+            
+            # For .yaml and .json files, try YAML first (supports both)
             try:
                 data = yaml.safe_load(content)
                 if data is None:

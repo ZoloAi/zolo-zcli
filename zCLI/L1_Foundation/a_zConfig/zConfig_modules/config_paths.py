@@ -18,6 +18,9 @@ class zConfigPaths:
     ZMACHINE_USER_FILENAME = "zConfig.machine.yaml"  # User-level machine config
     ZENVIRONMENT_FILENAME = "zConfig.environment.yaml"  # User-level environment config
     ZCONFIG_DEFAULTS_FILENAME = "zConfig.defaults.yaml"
+    
+    # zEnv file extensions (priority order - consistent with zParser and config_zenv)
+    ZENV_EXTENSIONS = [".zolo", ".yaml"]
 
     # Dotenv key aliases for zSpark configuration
     DOTENV_KEY_ALIASES = (
@@ -198,21 +201,53 @@ class zConfigPaths:
         """
         return self._dotenv_path
 
+    def _find_zenv_files(self, deployment: str) -> Tuple[Optional[Path], Optional[Path]]:
+        """
+        Find zEnv config files with extension auto-detection.
+        
+        This is the decision layer - it discovers which files exist.
+        File loading is delegated to config_zenv.py (the execution layer).
+        
+        Args:
+            deployment: Deployment environment (development, production, testing)
+        
+        Returns:
+            tuple: (base_file_path, env_file_path) or (None, None)
+        """
+        base_file = None
+        env_file = None
+        
+        # Find base file (try extensions in priority order)
+        for ext in self.ZENV_EXTENSIONS:
+            candidate = self.workspace_dir / f"zEnv.base{ext}"
+            if candidate.exists():
+                base_file = candidate
+                break
+        
+        # Find environment file (try extensions in priority order)
+        for ext in self.ZENV_EXTENSIONS:
+            candidate = self.workspace_dir / f"zEnv.{deployment}{ext}"
+            if candidate.exists():
+                env_file = candidate
+                break
+        
+        return base_file, env_file
+    
     def load_dotenv(self, override: bool = True) -> Optional[Path]:
-        """Load environment variables with STRICT zEnv YAML priority over dotenv.
+        """Load environment variables with STRICT zEnv priority over dotenv.
         
-        THE zCLI WAY (v2.0): Priority-based loading with YAML-first guarantee:
-        1. Try zEnv.base.yaml + zEnv.{deployment}.yaml (declarative, THE zCLI WAY)
-        2. Fallback to .zEnv + .zEnv.{deployment} ONLY if NO YAML files exist
+        THE zCLI WAY (v2.0): Priority-based loading with declarative-first guarantee:
+        1. Try zEnv.base.{zolo|yaml} + zEnv.{deployment}.{zolo|yaml} (declarative, THE zCLI WAY)
+        2. Fallback to .zEnv + .zEnv.{deployment} ONLY if NO config files exist
         
-        IMPORTANT: If ANY zEnv.*.yaml files exist (even if empty/malformed), 
-        dotenv fallback is SKIPPED. This ensures YAML always takes precedence.
+        IMPORTANT: If ANY zEnv config files exist (even if empty/malformed), 
+        dotenv fallback is SKIPPED. This ensures declarative files always take precedence.
         
         This allows:
-        - zEnv.base.yaml → declarative config (navbar, nested structures)
-        - zEnv.development.yaml → dev overrides (no SSL)
-        - zEnv.production.yaml → prod overrides (SSL + certs)
-        - .zEnv (legacy) → backward compatibility (only if no YAML files)
+        - zEnv.base.zolo → declarative config (string-first, type hints, navbar, nested structures)
+        - zEnv.development.zolo → dev overrides (no SSL)
+        - zEnv.production.zolo → prod overrides (SSL + certs)
+        - .zEnv (legacy) → backward compatibility (only if no config files)
         
         Args:
             override: Whether to override existing environment variables (default: True)
@@ -221,22 +256,22 @@ class zConfigPaths:
             Path to loaded file, or None if no file found/loaded
         
         Example (THE zCLI WAY):
-            # zEnv.base.yaml
+            # zEnv.base.zolo
             ZNAVBAR:
               zVaF:
               zAccount:
                 _rbac:
                   require_role: [zAdmin]
             
-            # zEnv.production.yaml (overrides)
+            # zEnv.production.zolo (overrides)
             DEPLOYMENT: Production
-            HTTP_SSL_ENABLED: true
+            HTTP_SSL_ENABLED(bool): true
             HTTP_SSL_CERT: /etc/ssl/cert.pem
         """
         from zCLI import os
         
         # ═══════════════════════════════════════════════════════════
-        # PRIORITY 1: Try zEnv (YAML/JSON) - THE zCLI WAY
+        # PRIORITY 1: Try zEnv (ZOLO/YAML/JSON) - THE zCLI WAY
         # ═══════════════════════════════════════════════════════════
         
         # Determine deployment/environment
@@ -254,38 +289,32 @@ class zConfigPaths:
             if env_deployment:
                 deployment = env_deployment.lower()
         
-        # Check if YAML files exist (even if we can't load them, we skip dotenv fallback)
-        base_yaml = self.workspace_dir / "zEnv.base.yaml"
-        env_yaml = self.workspace_dir / f"zEnv.{deployment}.yaml"
-        yaml_files_exist = base_yaml.exists() or env_yaml.exists()
+        # Find config files (decision layer - discovers which files exist)
+        base_file, env_file = self._find_zenv_files(deployment)
+        config_files_exist = base_file is not None or env_file is not None
         
-        # Try loading zEnv YAML/JSON files
-        try:
-            from .config_zenv import zEnv
+        # Try loading zEnv config files
+        if config_files_exist:
+            try:
+                from .config_zenv import zEnv
+                
+                workspace_dir = str(self.workspace_dir)
+                zenv_loader = zEnv(workspace_dir, deployment, logger=None)  # Logger not available yet
+                
+                # Pass found files directly to loader (execution layer)
+                loaded = zenv_loader.load_files(base_file, env_file)
+                
+                if loaded:
+                    self._log_info(f"✅ Loaded zEnv (THE zCLI WAY) for {deployment} environment")
+                    # Return whichever file was found (prefer env-specific)
+                    return env_file if env_file else base_file
+                else:
+                    self._log_warning(f"⚠️  zEnv files exist but failed to load, skipping dotenv fallback")
+                    return None
             
-            workspace_dir = str(self.workspace_dir)
-            zenv_loader = zEnv(workspace_dir, deployment, logger=None)  # Logger not available yet
-            
-            yaml_loaded = zenv_loader.load()
-            
-            if yaml_loaded:
-                # zEnv successfully loaded YAML files
-                self._log_info(f"✅ Loaded zEnv (THE zCLI WAY) for {deployment} environment")
-                # Return a marker path to indicate success (zEnv doesn't return specific path)
-                return self.workspace_dir / f"zEnv.{deployment}.yaml"
-            elif yaml_files_exist:
-                # YAML files exist but failed to load - still skip dotenv fallback
-                self._log_warning(f"⚠️  zEnv YAML files exist but failed to load, skipping dotenv fallback")
+            except Exception as e:
+                self._log_warning(f"⚠️  zEnv loading error: {e}, but config files exist - skipping dotenv fallback")
                 return None
-        
-        except Exception as e:
-            if yaml_files_exist:
-                # YAML files exist but loading threw exception - still skip dotenv fallback
-                self._log_warning(f"⚠️  zEnv loading error: {e}, but YAML files exist - skipping dotenv fallback")
-                return None
-            else:
-                # No YAML files exist - safe to fall back to dotenv
-                self._log_info(f"⚠️  zEnv loading failed: {e}, falling back to dotenv")
         
         # ═══════════════════════════════════════════════════════════
         # PRIORITY 2: Fallback to dotenv (legacy, backward compat)
