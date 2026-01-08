@@ -955,7 +955,14 @@ class zWizard:
         return None
 
     def _handle_navigation_result(self, result: Any, key: str, navigation_callbacks: Optional[Dict[str, Any]]) -> Any:
-        """Handle navigation results (zBack, exit, stop, error)."""
+        """Handle navigation results (zBack, exit, stop, error, zLink)."""
+        
+        # Check for zLink navigation (must come before other dict checks)
+        if isinstance(result, dict) and 'zLink' in result:
+            # Route through dispatch to navigation subsystem
+            # This will handle the navigation and return the signal to stop the current loop
+            return self.dispatch.handle('zLink', result, walker=self.walker)
+        
         # Normalize dict-based navigation signals to string signals
         # Some subsystems return {'exit': 'completed'} or similar structured data
         # We extract the signal key for hashable navigation handling

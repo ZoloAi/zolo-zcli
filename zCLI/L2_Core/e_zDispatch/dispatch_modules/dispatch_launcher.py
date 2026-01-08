@@ -382,7 +382,6 @@ class CommandLauncher:
             # Recursively launch each item (supports dict, str, or nested list)
             if isinstance(item, dict):
                 result = self._launch_dict(item, context, walker)
-                self.logger.framework.debug(f"[zCLI _launch_list] Item {i+1} result: {result}")
             elif isinstance(item, str):
                 result = self._launch_string(item, context, walker)
             elif isinstance(item, list):
@@ -391,6 +390,10 @@ class CommandLauncher:
             # Check for navigation signals (stop processing if user wants to go back/exit)
             if result in ('zBack', 'exit', 'stop', 'error'):
                 self.logger.framework.warning(f"[zCLI _launch_list] Stopping at item {i+1} due to signal: {result}")
+                return result
+            
+            # Check for zLink navigation (stop processing and return to trigger navigation)
+            if isinstance(result, dict) and 'zLink' in result:
                 return result
         
         return result
@@ -1812,11 +1815,12 @@ class CommandLauncher:
                 elif isinstance(value, list):
                     result = self._launch_list(value, context, walker)
                 
-                # Check for navigation signals
+                # Check for navigation signals (string signals AND zLink dicts)
                 if result in ('zBack', 'exit', 'stop', 'error'):
-                    self.logger.framework.debug(
-                        f"[zCLI Recursion] Navigation signal received: {result}"
-                    )
+                    return result
+                
+                # Check for zLink navigation (stop processing and return to trigger navigation)
+                if isinstance(result, dict) and 'zLink' in result:
                     return result
             
             self.logger.framework.debug(
@@ -1883,7 +1887,6 @@ class CommandLauncher:
             
             # Use display.handle() to pass through ALL parameters automatically and return result
             result = self.display.handle(display_data)
-            self.logger.framework.debug(f"[_route_zdisplay] display.handle() returned: {result}")
             return result
         else:
             self.logger.framework.warning(f"[_route_zdisplay] display_data is not a dict! Type: {type(display_data)}")

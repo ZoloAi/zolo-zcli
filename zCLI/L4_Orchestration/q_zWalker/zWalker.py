@@ -671,8 +671,8 @@ class zWalker(zWizard):
         
         return {
             "on_continue": on_continue,  # Track breadcrumbs after each step
-                CALLBACK_ON_BACK: on_back,
-                CALLBACK_ON_EXIT: on_exit,
-                CALLBACK_ON_STOP: on_stop,
-                CALLBACK_ON_ERROR: on_error
+            CALLBACK_ON_BACK: on_back,
+            CALLBACK_ON_EXIT: on_exit,
+            CALLBACK_ON_STOP: on_stop,
+            CALLBACK_ON_ERROR: on_error
         }
