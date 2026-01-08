@@ -1,7 +1,11 @@
 # zCLI/subsystems/zConfig/zConfig_modules/config_paths.py
 """Cross-platform configuration path resolution with platformdirs."""
 
+import logging
 from zCLI import platform, Path, Colors, platformdirs, load_dotenv, Any, Dict, List, Optional, Tuple
+
+# Module-level logger
+logger = logging.getLogger(__name__)
 
 class zConfigPaths:
     """Cross-platform path resolver for zolo-zcli configuration using native OS conventions."""
@@ -75,16 +79,16 @@ class zConfigPaths:
             self._log_warning("Please report this issue or add support for your OS")
             raise UnsupportedOSError(self.os_type, self.VALID_OS_TYPES)
 
-        self._log_info(f"Initialized for OS: {self.os_type}")
+        logger.debug("[zConfigPaths] Initialized for OS: %s", self.os_type)
 
         # Detect workspace and dotenv path early for reuse across modules
         self.workspace_dir = self._detect_workspace_dir()
         self._dotenv_path = self._detect_dotenv_file()
 
         if self.workspace_dir:
-            self._log_info(f"Workspace directory: {self.workspace_dir}")
+            logger.debug("[zConfigPaths] Workspace directory: %s", self.workspace_dir)
         if self._dotenv_path:
-            self._log_info(f"Dotenv path resolved: {self._dotenv_path}")
+            logger.debug("[zConfigPaths] Dotenv path resolved: %s", self._dotenv_path)
 
     # ═══════════════════════════════════════════════════════════
     # Logging Helpers (DRY) - Deployment-aware
@@ -115,18 +119,18 @@ class zConfigPaths:
         return False
 
     def _log_info(self, message: str) -> None:
-        """Print info message (suppressed in Production deployment)."""
+        """Log info message (suppressed in Production deployment)."""
         if not self._is_production:
-            print(f"[zConfigPaths] {message}")
+            logger.info("[zConfigPaths] %s", message)
 
     def _log_warning(self, message: str) -> None:
-        """Print warning message (suppressed in Production deployment)."""
+        """Log warning message (suppressed in Production deployment)."""
         if not self._is_production:
-            print(f"{Colors.WARNING}[zConfigPaths] {message}{Colors.RESET}")
+            logger.warning("[zConfigPaths] %s", message)
 
     def _log_error(self, message: str) -> None:
-        """Print error message (always shown, even in Production)."""
-        print(f"{Colors.ERROR}[zConfigPaths] ERROR: {message}{Colors.RESET}")
+        """Log error message (always shown, even in Production)."""
+        logger.error("[zConfigPaths] ERROR: %s", message)
 
     # ═══════════════════════════════════════════════════════════
     # Workspace & dotenv detection helpers

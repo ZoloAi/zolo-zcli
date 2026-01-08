@@ -1,10 +1,14 @@
 # zCLI/L1_Foundation/a_zConfig/zConfig_modules/helpers/detectors/system.py
 """Main orchestrator for machine detection and configuration file generation."""
 
+import logging
 import sys
 from zCLI import os, platform, socket, Path
 from typing import Dict, Any, Optional
 from importlib.metadata import distribution, PackageNotFoundError
+
+# Module-level logger
+logger = logging.getLogger(__name__)
 
 from .shared import (
     _log_config, _log_error, _safe_getcwd,
@@ -212,7 +216,7 @@ def create_user_machine_config(path: Path, machine: Dict[str, Any]) -> None:
 def auto_detect_machine(log_level: Optional[str] = None, is_production: bool = False) -> Dict[str, Any]:
     """Auto-detect machine identity, Python runtime, tools, and capabilities."""
     if not is_production:
-        print("[MachineConfig] Auto-detecting machine information...")
+        logger.debug("[MachineConfig] Auto-detecting machine information...")
 
     # Detect zCLI installation info
     zcli_info = detect_zcli_install_info()
@@ -297,20 +301,20 @@ def auto_detect_machine(log_level: Optional[str] = None, is_production: bool = F
     }
 
     if not is_production:
-        print(f"[MachineConfig] Identity: {machine['hostname']} ({machine['username']}) on {machine['os_name']}")
+        logger.debug("[MachineConfig] Identity: %s (%s) on %s", machine['hostname'], machine['username'], machine['os_name'])
         cpu_info = f"{machine['cpu_physical']} physical, {machine['cpu_logical']} logical"
         if machine['cpu_performance'] and machine['cpu_efficiency']:
             cpu_info += f" ({machine['cpu_performance']} P-cores, {machine['cpu_efficiency']} E-cores)"
-        print(f"[MachineConfig] CPU: {machine['processor']}, {cpu_info} cores")
-        print(f"[MachineConfig] RAM: {machine['memory_gb']}GB")
+        logger.debug("[MachineConfig] CPU: %s, %s cores", machine['processor'], cpu_info)
+        logger.debug("[MachineConfig] RAM: %sGB", machine['memory_gb'])
         if machine['gpu_available']:
             gpu_mem = f", {machine['gpu_memory_gb']}GB" if machine['gpu_memory_gb'] else ""
             gpu_compute = f", {', '.join(machine['gpu_compute'])}" if machine['gpu_compute'] else ""
-            print(f"[MachineConfig] GPU: {machine['gpu_type']}{gpu_mem}{gpu_compute}")
+            logger.debug("[MachineConfig] GPU: %s%s%s", machine['gpu_type'], gpu_mem, gpu_compute)
         if machine['network_primary']:
             network_ip = machine['network_ip_local'] or "no IP"
-            print(f"[MachineConfig] Network: {machine['network_primary']} ({network_ip})")
-        print(f"[MachineConfig] Python: {machine['python_impl']} {machine['python_version']} on {machine['architecture']}")
+            logger.debug("[MachineConfig] Network: %s (%s)", machine['network_primary'], network_ip)
+        logger.debug("[MachineConfig] Python: %s %s on %s", machine['python_impl'], machine['python_version'], machine['architecture'])
 
     return machine
 

@@ -1,8 +1,12 @@
 # zCLI/subsystems/zConfig/zConfig_modules/helpers/config_helpers.py
 """Shared helper functions for configuration loading across zConfig subsystems."""
 
+import logging
 from zCLI import yaml, Path, Dict, Any, Callable, Optional
 import shutil
+
+# Module-level logger
+logger = logging.getLogger(__name__)
 
 # Module constants
 SOURCE_USER = "user"
@@ -38,7 +42,7 @@ def ensure_user_directories(paths: Any) -> None:
         paths.user_zschemas_dir.mkdir(parents=True, exist_ok=True)
         
     except Exception as e:
-        print(f"{LOG_PREFIX} Warning: Failed to create user directories: {e}")
+        logger.warning("%s Failed to create user directories: %s", LOG_PREFIX, e)
 
 def ensure_app_directory(paths: Any, zSpark: Optional[Dict[str, Any]] = None) -> Optional[Path]:
     """
@@ -74,7 +78,7 @@ def ensure_app_directory(paths: Any, zSpark: Optional[Dict[str, Any]] = None) ->
     # Get app name from title (required)
     app_name = zSpark.get('title')
     if not app_name:
-        print(f"{LOG_PREFIX} Warning: app_storage enabled but no title specified")
+        logger.warning("%s app_storage enabled but no title specified", LOG_PREFIX)
         return None
     
     try:
@@ -82,11 +86,11 @@ def ensure_app_directory(paths: Any, zSpark: Optional[Dict[str, Any]] = None) ->
         app_root = paths.user_data_dir / "Apps" / app_name
         app_root.mkdir(parents=True, exist_ok=True)
         
-        print(f"{LOG_PREFIX} App storage initialized: {app_root}")
+        logger.info("%s App storage initialized: %s", LOG_PREFIX, app_root)
         return app_root
         
     except Exception as e:
-        print(f"{LOG_PREFIX} Warning: Failed to create app directory: {e}")
+        logger.warning("%s Failed to create app directory: %s", LOG_PREFIX, e)
         return None
 
 def initialize_system_ui(paths: Any) -> None:
@@ -121,13 +125,13 @@ def initialize_system_ui(paths: Any) -> None:
         # Copy file if source exists
         if source_file.exists():
             shutil.copy2(source_file, target_file)
-            print(f"{LOG_PREFIX} Initialized system UI: {ZUI_CLI_SYS_FILENAME}")
-            print(f"{LOG_PREFIX} Location: {target_file}")
+            logger.debug("%s Initialized system UI: %s", LOG_PREFIX, ZUI_CLI_SYS_FILENAME)
+            logger.debug("%s Location: %s", LOG_PREFIX, target_file)
         else:
-            print(f"{LOG_PREFIX} Warning: Source UI file not found: {source_file}")
+            logger.warning("%s Source UI file not found: %s", LOG_PREFIX, source_file)
             
     except Exception as e:
-        print(f"{LOG_PREFIX} Warning: Failed to initialize system UI: {e}")
+        logger.warning("%s Failed to initialize system UI: %s", LOG_PREFIX, e)
 
 def initialize_system_migration_schema(paths: Any) -> None:
     """
@@ -162,13 +166,13 @@ def initialize_system_migration_schema(paths: Any) -> None:
         # Copy file if source exists
         if source_file.exists():
             shutil.copy2(source_file, target_file)
-            print(f"{LOG_PREFIX} Initialized migration schema: {ZMIGRATION_SCHEMA_FILENAME}")
-            print(f"{LOG_PREFIX} Location: {target_file}")
+            logger.debug("%s Initialized migration schema: %s", LOG_PREFIX, ZMIGRATION_SCHEMA_FILENAME)
+            logger.debug("%s Location: %s", LOG_PREFIX, target_file)
         else:
-            print(f"{LOG_PREFIX} Warning: Source migration schema not found: {source_file}")
+            logger.warning("%s Source migration schema not found: %s", LOG_PREFIX, source_file)
             
     except Exception as e:
-        print(f"{LOG_PREFIX} Warning: Failed to initialize migration schema: {e}")
+        logger.warning("%s Failed to initialize migration schema: %s", LOG_PREFIX, e)
 
 def load_config_with_override(
     paths: Any,  # zConfigPaths (avoid circular import)
@@ -206,8 +210,8 @@ def _load_and_override(
             if data and yaml_key in data:
                 data_dict.update(data[yaml_key])
                 if not is_production:
-                    print(f"[{subsystem_name}] Overriding with {source} settings from: {path}")
+                    logger.info("[%s] Overriding with %s settings from: %s", subsystem_name, source, path)
 
     except Exception as e:
         if not is_production:
-            print(f"[{subsystem_name}] Failed to load {source} config: {e}")
+            logger.warning("[%s] Failed to load %s config: %s", subsystem_name, source, e)
