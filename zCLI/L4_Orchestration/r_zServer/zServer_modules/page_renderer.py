@@ -190,7 +190,7 @@ class PageRenderer:
             return f'<a href="{http_route}" class="btn btn-primary">Navigate</a>'
         
         elif key.startswith("_"):
-            # Skip internal keys (e.g., _rbac)
+            # Skip internal keys (e.g., zRBAC)
             return ""
         
         else:

@@ -20,7 +20,7 @@ Route Matching Priority:
 
 RBAC Integration:
     Uses zcli.auth.has_role() and zcli.auth.is_authenticated()
-    to enforce route-level access control defined in _rbac metadata.
+    to enforce route-level access control defined in zRBAC metadata.
 
 Examples:
     >>> router = HTTPRouter(routes_data, zcli, logger)
@@ -36,6 +36,9 @@ import os
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
+# Import zVaFile extension constants for auto-discovery
+from zCLI.L2_Core.g_zParser.parser_modules.parser_path import ZVAFILE_EXTENSIONS
+
 # =============================================================================
 # MODULE CONSTANTS
 # =============================================================================
@@ -48,7 +51,7 @@ KEY_DEFAULT_ROUTE = "default_route"
 KEY_ERROR_PAGES = "error_pages"
 KEY_TYPE = "type"
 KEY_FILE = "file"
-KEY_RBAC = "_rbac"
+KEY_RBAC = "zRBAC"
 
 # RBAC keys
 RBAC_KEY_REQUIRE_AUTH = "require_auth"
@@ -201,15 +204,38 @@ class HTTPRouter:
             directory_path = os.path.join(self.serve_path, zVaFolder_resolved)
             
             # First: Parse the main zVaFile and extract blocks
-            vafile_path = os.path.join(directory_path, f"{zVaFile}.yaml")
+            # Try all supported extensions: .zolo, .json, .yaml, .yml
+            vafile_path = None
+            vafile_ext = None
+            for ext in ['.zolo', '.json', '.yaml', '.yml']:
+                candidate = os.path.join(directory_path, f"{zVaFile}{ext}")
+                if os.path.exists(candidate):
+                    vafile_path = candidate
+                    vafile_ext = ext
+                    break
+            
+            if not vafile_path:
+                self.logger.warning(f"[Router] zVaFile not found: {zVaFile} (tried .zolo/.json/.yaml/.yml)")
+                continue
             
             try:
                 import yaml
+                import json
                 import glob
+                import zolo
                 
-                # Parse main zVaFile
-                with open(vafile_path, 'r') as f:
-                    vafile_data = yaml.safe_load(f)
+                # Parse main zVaFile based on extension
+                vafile_data = None
+                with open(vafile_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                    
+                if vafile_ext in ['.yaml', '.yml']:
+                    vafile_data = yaml.safe_load(content)
+                elif vafile_ext == '.json':
+                    vafile_data = json.loads(content)
+                elif vafile_ext == '.zolo':
+                    # Use zolo library to load .zolo files
+                    vafile_data = zolo.loads(content, file_extension=vafile_ext)
                 
                 if isinstance(vafile_data, dict):
                     # Extract all top-level keys except 'zMeta'
@@ -235,10 +261,10 @@ class HTTPRouter:
                         self.auto_discovered_routes[virtual_path] = virtual_route
                         self.logger.debug(f"[Router] Created virtual route: {virtual_path} → {zVaFile}.{zBlock}")
                 
-                # Second: Recursively scan directory tree for ALL zUI.*.yaml files
+                # Second: Recursively scan directory tree for ALL zUI.* files
                 # Directory structure mirrors URL structure (Terminal-first principle)
                 # Folders starting with _ are ignored (e.g., _panels/ for zDash content)
-                self.logger.info(f"[Router] Scanning directory tree {directory_path} (recursive) for additional zUI.*.yaml files")
+                self.logger.info(f"[Router] Scanning directory tree {directory_path} (recursive) for additional zUI.* files (.zolo/.json/.yaml/.yml)")
                 
                 # Walk directory tree
                 for root, dirs, files in os.walk(directory_path):
@@ -247,11 +273,21 @@ class HTTPRouter:
                     dirs[:] = [d for d in dirs if not d.startswith('_')]
                     
                     for file_name in files:
-                        # Only process zUI.*.yaml files
-                        if not file_name.startswith('zUI.') or not file_name.endswith('.yaml'):
+                        # Only process zUI.* files with supported extensions
+                        if not file_name.startswith('zUI.'):
                             continue
                         
-                        file_base = file_name.replace('.yaml', '')  # e.g., "zUI.zCLI"
+                        # Check if file has a supported extension
+                        file_ext = None
+                        for ext in ['.zolo', '.json', '.yaml', '.yml']:
+                            if file_name.endswith(ext):
+                                file_ext = ext
+                                break
+                        
+                        if not file_ext:
+                            continue
+                        
+                        file_base = file_name.replace(file_ext, '')  # e.g., "zUI.zCLI"
                         
                         # Skip the main file we already processed
                         if file_base == zVaFile and root == directory_path:
@@ -259,8 +295,19 @@ class HTTPRouter:
                         
                         try:
                             file_path = os.path.join(root, file_name)
-                            with open(file_path, 'r') as f:
-                                file_data = yaml.safe_load(f)
+                            
+                            # Parse file based on extension
+                            file_data = None
+                            with open(file_path, 'r', encoding='utf-8') as f:
+                                content = f.read()
+                                
+                            if file_ext in ['.yaml', '.yml']:
+                                file_data = yaml.safe_load(content)
+                            elif file_ext == '.json':
+                                file_data = json.loads(content)
+                            elif file_ext == '.zolo':
+                                # Use zolo library to load .zolo files
+                                file_data = zolo.loads(content, file_extension=file_ext)
                             
                             if not isinstance(file_data, dict):
                                 continue
@@ -444,7 +491,7 @@ class HTTPRouter:
         """
         Check RBAC for route.
         
-        Enforces access control based on _rbac metadata in route definition.
+        Enforces access control based on zRBAC metadata in route definition.
         Uses zcli.auth to check authentication and roles.
         
         Args:

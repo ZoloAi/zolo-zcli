@@ -260,7 +260,7 @@ class zConfigPaths:
             ZNAVBAR:
               zVaF:
               zAccount:
-                _rbac:
+                zRBAC:
                   require_role: [zAdmin]
             
             # zEnv.production.zolo (overrides)

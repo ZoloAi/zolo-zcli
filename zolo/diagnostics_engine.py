@@ -13,7 +13,7 @@ from zolo.exceptions import ZoloParseError
 from zolo.lsp_types import ParseResult, Position, Range
 
 
-def get_diagnostics(content: str) -> List[lsp_types.Diagnostic]:
+def get_diagnostics(content: str, filename: str = None) -> List[lsp_types.Diagnostic]:
     """
     Parse .zolo content and return diagnostics.
     
@@ -21,6 +21,7 @@ def get_diagnostics(content: str) -> List[lsp_types.Diagnostic]:
     
     Args:
         content: Raw .zolo file content
+        filename: Optional filename for context-aware diagnostics
     
     Returns:
         List of LSP diagnostics
@@ -34,14 +35,33 @@ def get_diagnostics(content: str) -> List[lsp_types.Diagnostic]:
     diagnostics = []
     
     try:
-        # Parse content
-        result = tokenize(content)
+        # Parse content with filename for context-aware validation
+        result = tokenize(content, filename=filename)
         
-        # Convert parse errors to diagnostics
+        # Convert parse errors to diagnostics (legacy string-based errors)
         for error in result.errors:
             diagnostic = _error_to_diagnostic(error, content)
             if diagnostic:
                 diagnostics.append(diagnostic)
+        
+        # Add structured diagnostics from parser (new validation errors)
+        for diag in result.diagnostics:
+            lsp_diagnostic = lsp_types.Diagnostic(
+                range=lsp_types.Range(
+                    start=lsp_types.Position(
+                        line=diag.range.start.line,
+                        character=diag.range.start.character
+                    ),
+                    end=lsp_types.Position(
+                        line=diag.range.end.line,
+                        character=diag.range.end.character
+                    )
+                ),
+                message=diag.message,
+                severity=diag.severity,  # 1=Error, 2=Warning, 3=Info, 4=Hint
+                source=diag.source
+            )
+            diagnostics.append(lsp_diagnostic)
     
     except ZoloParseError as e:
         # Handle parse errors that weren't caught by tokenize()
@@ -184,18 +204,19 @@ def validate_document(content: str) -> List[lsp_types.Diagnostic]:
     return diagnostics
 
 
-def get_all_diagnostics(content: str, include_style: bool = True) -> List[lsp_types.Diagnostic]:
+def get_all_diagnostics(content: str, include_style: bool = True, filename: str = None) -> List[lsp_types.Diagnostic]:
     """
     Get all diagnostics for a document (errors + optional style warnings).
     
     Args:
         content: Raw .zolo file content
         include_style: Whether to include style/linter warnings
+        filename: Optional filename for context-aware diagnostics
     
     Returns:
         Combined list of all diagnostics
     """
-    diagnostics = get_diagnostics(content)
+    diagnostics = get_diagnostics(content, filename=filename)
     
     if include_style:
         diagnostics.extend(validate_document(content))

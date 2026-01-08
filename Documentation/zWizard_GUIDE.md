@@ -46,7 +46,7 @@ zWizard (Core Loop Engine + 6 Modules)
     ├── wizard_hat.py           → WizardHat (triple-access results container)
     ├── wizard_interpolation.py → zHat[0] string interpolation
     ├── wizard_transactions.py  → BEGIN/COMMIT/ROLLBACK lifecycle
-    ├── wizard_rbac.py          → Permission checking (future)
+    ├── wizardzRBAC.py          → Permission checking (future)
     ├── wizard_exceptions.py    → Custom exception hierarchy
     └── __init__.py             → Module exports
 

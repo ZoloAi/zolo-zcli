@@ -87,16 +87,16 @@ def test_facade_initialization(zcli=None, context=None):
     has_password_sec = hasattr(zcli.auth, 'password_security')
     has_session_pers = hasattr(zcli.auth, 'session_persistence')
     has_authentication = hasattr(zcli.auth, 'authentication')
-    has_rbac = hasattr(zcli.auth, 'rbac')
+    haszRBAC = hasattr(zcli.auth, 'rbac')
     
-    if has_password_sec and has_session_pers and has_authentication and has_rbac:
+    if has_password_sec and has_session_pers and has_authentication and haszRBAC:
         return _store_result(zcli, "Facade: Initialization", "PASSED", "All 4 modules present")
     
     missing = []
     if not has_password_sec: missing.append("password_security")
     if not has_session_pers: missing.append("session_persistence")
     if not has_authentication: missing.append("authentication")
-    if not has_rbac: missing.append("rbac")
+    if not haszRBAC: missing.append("rbac")
     
     return _store_result(zcli, "Facade: Initialization", "FAILED", f"Missing: {', '.join(missing)}")
 
@@ -1160,7 +1160,7 @@ def test_dual_mode_flag(zcli=None, context=None):
 
 
 # G. RBAC Tests (9 tests) - Simplified
-def test_rbac_has_role_single(zcli=None, context=None):
+def testzRBAC_has_role_single(zcli=None, context=None):
     if not zcli or not zcli.auth:
         return _store_result(None, "RBAC: has_role Single", "ERROR", "No auth")
     
@@ -1183,7 +1183,7 @@ def test_rbac_has_role_single(zcli=None, context=None):
     except Exception as e:
         return _store_result(zcli, "RBAC: has_role Single", "ERROR", f"Exception: {str(e)}")
 
-def test_rbac_has_role_multiple(zcli=None, context=None):
+def testzRBAC_has_role_multiple(zcli=None, context=None):
     """Test RBAC with multiple roles (OR logic)."""
     if not zcli or not zcli.auth:
         return _store_result(None, "RBAC: has_role Multiple", "ERROR", "No auth")
@@ -1205,7 +1205,7 @@ def test_rbac_has_role_multiple(zcli=None, context=None):
         return _store_result(zcli, "RBAC: has_role Multiple", "ERROR", f"Exception: {str(e)}")
 
 
-def test_rbac_context_aware_zsession(zcli=None, context=None):
+def testzRBAC_context_aware_zsession(zcli=None, context=None):
     """Test RBAC in zSession context."""
     if not zcli or not zcli.auth:
         return _store_result(None, "RBAC: Context zSession", "ERROR", "No auth")
@@ -1227,7 +1227,7 @@ def test_rbac_context_aware_zsession(zcli=None, context=None):
         return _store_result(zcli, "RBAC: Context zSession", "ERROR", f"Exception: {str(e)}")
 
 
-def test_rbac_context_aware_application(zcli=None, context=None):
+def testzRBAC_context_aware_application(zcli=None, context=None):
     """Test RBAC in Application context."""
     if not zcli or not zcli.auth:
         return _store_result(None, "RBAC: Context Application", "ERROR", "No auth")
@@ -1250,7 +1250,7 @@ def test_rbac_context_aware_application(zcli=None, context=None):
         return _store_result(zcli, "RBAC: Context Application", "ERROR", f"Exception: {str(e)}")
 
 
-def test_rbac_dual_mode_or_logic(zcli=None, context=None):
+def testzRBAC_dual_mode_or_logic(zcli=None, context=None):
     """Test RBAC OR logic in dual-mode."""
     if not zcli or not zcli.auth:
         return _store_result(None, "RBAC: Dual OR Logic", "ERROR", "No auth")
@@ -1282,7 +1282,7 @@ def test_rbac_dual_mode_or_logic(zcli=None, context=None):
         return _store_result(zcli, "RBAC: Dual OR Logic", "ERROR", f"Exception: {str(e)}")
 
 
-def test_rbac_has_permission(zcli=None, context=None):
+def testzRBAC_has_permission(zcli=None, context=None):
     """Test permission checking."""
     if not zcli or not zcli.auth:
         return _store_result(None, "RBAC: has_permission", "ERROR", "No auth")
@@ -1300,7 +1300,7 @@ def test_rbac_has_permission(zcli=None, context=None):
         return _store_result(zcli, "RBAC: has_permission", "ERROR", f"Exception: {str(e)}")
 
 
-def test_rbac_unauthenticated(zcli=None, context=None):
+def testzRBAC_unauthenticated(zcli=None, context=None):
     """Test RBAC returns False when not authenticated."""
     if not zcli or not zcli.auth:
         return _store_result(None, "RBAC: Unauthenticated", "ERROR", "No auth")
@@ -1318,7 +1318,7 @@ def test_rbac_unauthenticated(zcli=None, context=None):
         return _store_result(zcli, "RBAC: Unauthenticated", "ERROR", f"Exception: {str(e)}")
 
 
-def test_rbac_role_inheritance(zcli=None, context=None):
+def testzRBAC_role_inheritance(zcli=None, context=None):
     """Test role inheritance concept (admin includes user)."""
     if not zcli or not zcli.auth:
         return _store_result(None, "RBAC: Role Inheritance", "ERROR", "No auth")
@@ -1340,7 +1340,7 @@ def test_rbac_role_inheritance(zcli=None, context=None):
         return _store_result(zcli, "RBAC: Role Inheritance", "ERROR", f"Exception: {str(e)}")
 
 
-def test_rbac_permission_methods(zcli=None, context=None):
+def testzRBAC_permission_methods(zcli=None, context=None):
     """Test permission management methods exist."""
     if not zcli or not zcli.auth:
         return _store_result(None, "RBAC: Permission Methods", "ERROR", "No auth")
@@ -1525,7 +1525,7 @@ def test_context_invalid_context(zcli=None, context=None):
 
 
 # I. Integration Tests - Workflow Tests (6 tests)
-def test_integration_login_rbac_workflow(zcli=None, context=None):
+def test_integration_loginzRBAC_workflow(zcli=None, context=None):
     """Test complete login → RBAC check workflow."""
     if not zcli or not zcli.auth:
         return _store_result(None, "Integration: Login + RBAC", "ERROR", "No auth")

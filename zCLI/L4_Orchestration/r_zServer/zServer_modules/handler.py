@@ -666,7 +666,7 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
                     # 🔒 RBAC Filter: Apply dynamic RBAC filtering for Bifrost (same as Terminal)
                     # This filters out items the current user can't access before injecting into HTML
                     if resolved_navbar:
-                        resolved_navbar = zcli.navigation._filter_navbar_by_rbac(resolved_navbar)
+                        resolved_navbar = zcli.navigation._filter_navbar_byzRBAC(resolved_navbar)
                         if self.zcli_logger:
                             self.zcli_logger.debug(f"[Handler] RBAC-filtered navbar for Bifrost: {resolved_navbar}")
                 except Exception:
@@ -854,7 +854,7 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
                     # 🔒 RBAC Filter: Apply dynamic RBAC filtering for Bifrost (same as Terminal)
                     # This filters out items the current user can't access before injecting into HTML
                     if resolved_navbar:
-                        resolved_navbar = zcli.navigation._filter_navbar_by_rbac(resolved_navbar)
+                        resolved_navbar = zcli.navigation._filter_navbar_byzRBAC(resolved_navbar)
                         if self.zcli_logger:
                             self.zcli_logger.debug(f"[Handler] RBAC-filtered navbar for zWalker route: {resolved_navbar}")
                 except Exception as e:

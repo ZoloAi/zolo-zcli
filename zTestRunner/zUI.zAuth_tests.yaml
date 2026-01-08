@@ -159,35 +159,35 @@ zVaF:
       zFunc: "&zauth_tests.test_dual_mode_flag()"
     
     # ===============================================================
-    # G. RBAC Tests (9 tests) - auth_rbac.py
+    # G. RBAC Tests (9 tests) - authzRBAC.py
     # ===============================================================
     
-    "test_44_rbac_has_role_single":
-      zFunc: "&zauth_tests.test_rbac_has_role_single()"
+    "test_44zRBAC_has_role_single":
+      zFunc: "&zauth_tests.testzRBAC_has_role_single()"
     
-    "test_45_rbac_has_role_multiple":
-      zFunc: "&zauth_tests.test_rbac_has_role_multiple()"
+    "test_45zRBAC_has_role_multiple":
+      zFunc: "&zauth_tests.testzRBAC_has_role_multiple()"
     
-    "test_46_rbac_context_aware_zsession":
-      zFunc: "&zauth_tests.test_rbac_context_aware_zsession()"
+    "test_46zRBAC_context_aware_zsession":
+      zFunc: "&zauth_tests.testzRBAC_context_aware_zsession()"
     
-    "test_47_rbac_context_aware_application":
-      zFunc: "&zauth_tests.test_rbac_context_aware_application()"
+    "test_47zRBAC_context_aware_application":
+      zFunc: "&zauth_tests.testzRBAC_context_aware_application()"
     
-    "test_48_rbac_dual_mode_or_logic":
-      zFunc: "&zauth_tests.test_rbac_dual_mode_or_logic()"
+    "test_48zRBAC_dual_mode_or_logic":
+      zFunc: "&zauth_tests.testzRBAC_dual_mode_or_logic()"
     
-    "test_49_rbac_has_permission":
-      zFunc: "&zauth_tests.test_rbac_has_permission()"
+    "test_49zRBAC_has_permission":
+      zFunc: "&zauth_tests.testzRBAC_has_permission()"
     
-    "test_50_rbac_unauthenticated":
-      zFunc: "&zauth_tests.test_rbac_unauthenticated()"
+    "test_50zRBAC_unauthenticated":
+      zFunc: "&zauth_tests.testzRBAC_unauthenticated()"
     
-    "test_51_rbac_role_inheritance":
-      zFunc: "&zauth_tests.test_rbac_role_inheritance()"
+    "test_51zRBAC_role_inheritance":
+      zFunc: "&zauth_tests.testzRBAC_role_inheritance()"
     
-    "test_52_rbac_permission_methods":
-      zFunc: "&zauth_tests.test_rbac_permission_methods()"
+    "test_52zRBAC_permission_methods":
+      zFunc: "&zauth_tests.testzRBAC_permission_methods()"
     
     # ===============================================================
     # H. Context Management Tests (6 tests)
@@ -215,8 +215,8 @@ zVaF:
     # I. Integration Tests - Workflow Tests (6 tests)
     # ===============================================================
     
-    "test_59_integration_login_rbac_workflow":
-      zFunc: "&zauth_tests.test_integration_login_rbac_workflow()"
+    "test_59_integration_loginzRBAC_workflow":
+      zFunc: "&zauth_tests.test_integration_loginzRBAC_workflow()"
     
     "test_60_integration_multi_app_workflow":
       zFunc: "&zauth_tests.test_integration_multi_app_workflow()"

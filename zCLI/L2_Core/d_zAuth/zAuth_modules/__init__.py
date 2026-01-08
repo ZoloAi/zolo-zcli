@@ -30,7 +30,7 @@ The package follows a dependency hierarchy:
         └── Dependencies: auth_password_security (indirectly), zConfig, zDisplay, zComm
         └── Used by: zAuth.py (facade)
 
-        auth_rbac.py
+        authzRBAC.py
         └── Provides: Context-aware Role-Based Access Control
         └── Dependencies: zConfig (for session/auth constants)
         └── Used by: zAuth.py (facade), zWizard (for access control)
@@ -105,7 +105,7 @@ MODULE DESCRIPTIONS
         Remote:
             - authenticate_remote(username, password, server_url) -> Dict
 
-**auth_rbac.py** (RBAC class):
+**authzRBAC.py** (RBAC class):
     Purpose:
         - Context-aware Role-Based Access Control
         - Supports all three authentication tiers (zSession, Application, Dual)
@@ -170,7 +170,7 @@ INTEGRATION WITH ZCLI SUBSYSTEMS
     - No raw SQL - all operations go through zData subsystem
 
 **zWizard (wizard.py):**
-    - RBAC integration: _check_rbac_access() queries auth_rbac
+    - RBAC integration: _checkzRBAC_access() queries authzRBAC
     - Access control for all zVaF menu items
     - Supports require_auth, require_role, require_permission directives
 

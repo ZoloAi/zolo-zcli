@@ -141,7 +141,47 @@ class MediaEvents:
             from zCLI.L2_Core.g_zParser.parser_modules.parser_functions import resolve_variables
             caption = resolve_variables(caption, self.display.zcli, _context)
 
-        # Base event for both modes (after variable resolution)
+        # NEW: Resolve zPath references in src (v1.5.15: @ and ~ workspace/home paths)
+        # The beauty of zPath: declarative approach that resolves based on execution context
+        if src.startswith(("@", "~")):
+            from pathlib import Path
+            
+            # Step 1: Resolve zPath to absolute filesystem path
+            resolved_path = self.display.zcli.zparser.resolve_data_path(src)
+            self.logger.debug(f"[MediaEvents] Resolved zPath: {src} → {resolved_path}")
+            
+            # Step 2: Convert based on execution mode
+            if self.display.mode == "zBifrost":
+                # Bifrost mode: Convert to web-relative URL for zServer
+                zserver = getattr(self.display.zcli, 'server', None)
+                if zserver:
+                    serve_path = Path(zserver.serve_path).resolve()
+                    resolved_path_obj = Path(resolved_path)
+                    
+                    try:
+                        if resolved_path_obj.is_relative_to(serve_path):
+                            # Convert to URL path relative to serve_path
+                            rel_path = resolved_path_obj.relative_to(serve_path)
+                            src = "/" + str(rel_path).replace("\\", "/")
+                            self.logger.debug(f"[MediaEvents] Bifrost mode - web path: {src}")
+                        else:
+                            # Path is outside serve_path - keep as absolute for fallback
+                            src = str(resolved_path_obj)
+                            self.logger.warning(f"[MediaEvents] Path outside serve_path: {src}")
+                    except (ValueError, AttributeError) as e:
+                        # Fallback to absolute path
+                        src = str(resolved_path_obj)
+                        self.logger.warning(f"[MediaEvents] Error converting path: {e}")
+                else:
+                    # No zServer - keep absolute path (shouldn't happen in Bifrost mode)
+                    src = resolved_path
+                    self.logger.warning(f"[MediaEvents] Bifrost mode but no zServer: {src}")
+            else:
+                # Terminal mode: Use absolute filesystem path for local file access
+                src = resolved_path
+                self.logger.debug(f"[MediaEvents] Terminal mode - absolute path: {src}")
+
+        # Base event for both modes (after variable and zPath resolution)
         base_event = {
             "src": src,
             "alt_text": alt_text,
@@ -193,7 +233,7 @@ class MediaEvents:
                 else:
                     self.BasicOutputs.text("  Open image file cancelled.", indent=0, break_after=False)
             else:
-                # Add break after last line if no button
+                # Add break after last line if no open prompt
                 self.zPrimitives.write_line("")
 
             return None

@@ -293,8 +293,8 @@ zVaF:
     "test_84_real_zlink_session_updates":
       zFunc: "&znavigation_tests.test_real_zlink_session_updates()"
     
-    "test_85_real_zlink_rbac":
-      zFunc: "&znavigation_tests.test_real_zlink_rbac_integration()"
+    "test_85_real_zlinkzRBAC":
+      zFunc: "&znavigation_tests.test_real_zlinkzRBAC_integration()"
     
     "test_86_real_zlink_breadcrumbs":
       zFunc: "&znavigation_tests.test_real_zlink_breadcrumb_integration()"

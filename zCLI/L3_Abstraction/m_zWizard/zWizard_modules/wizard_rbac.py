@@ -6,7 +6,7 @@ Wizard RBAC - Role-Based Access Control for Wizard Steps
 
 Enforces RBAC (Role-Based Access Control) at the zKey level during wizard and
 walker execution. Each step can declare authentication and authorization
-requirements via `_rbac` metadata.
+requirements via `zRBAC` metadata.
 
 Core Responsibilities
 --------------------
@@ -19,13 +19,13 @@ Core Responsibilities
 RBAC Architecture
 ----------------
 ### Four-Level Hierarchy
-1. **Public Access**: No `_rbac` metadata = accessible to all users
+1. **Public Access**: No `zRBAC` metadata = accessible to all users
 2. **Guest-Only Access**: `zGuest: true` = unauthenticated users only (login/register pages)
 3. **Authenticated Access**: `require_auth: true` = logged-in users only
 4. **Authorized Access**: `require_role` or `require_permission` = specific users
 
 ### Check Order (Short-Circuit)
-1. No `_rbac`? → Access granted (public)
+1. No `zRBAC`? → Access granted (public)
 2. No auth subsystem? → Access denied (fail-safe)
 3. `require_auth` + not authenticated? → Access denied
 4. `require_role` + no role? → Access denied
@@ -37,7 +37,7 @@ RBAC Metadata Format
 ### In zUI YAML Files
 ```yaml
 ^Admin_Feature:
-  _rbac:
+  zRBAC:
     require_auth: true                    # Must be logged in
     require_role: "admin"                 # Must have "admin" role
     require_permission: "manage_users"    # Must have permission
@@ -54,7 +54,7 @@ RBAC Metadata Format
 
 ### Multiple Roles/Permissions (OR Logic)
 ```yaml
-_rbac:
+zRBAC:
   require_role: ["admin", "moderator"]  # admin OR moderator
   require_permission: ["read", "write"] # read OR write
 ```
@@ -85,7 +85,7 @@ Usage Examples
 ### Example 1: Guest-Only Access (Login/Register Pages)
 ```yaml
 ^zLogin:
-  _rbac:
+  zRBAC:
     zGuest: true  # Only show if NOT logged in
   zDialog:
     title: "User Login"
@@ -95,7 +95,7 @@ Usage Examples
 ### Example 2: Authentication Only
 ```yaml
 ^Profile:
-  _rbac:
+  zRBAC:
     require_auth: true
   zDisplay:
     event: text
@@ -105,7 +105,7 @@ Usage Examples
 ### Example 2: Role Requirement
 ```yaml
 ^Admin_Panel:
-  _rbac:
+  zRBAC:
     require_role: "admin"  # Implies authentication
   zDisplay:
     event: text
@@ -115,7 +115,7 @@ Usage Examples
 ### Example 3: Permission Requirement
 ```yaml
 ^Delete_User:
-  _rbac:
+  zRBAC:
     require_permission: "users.delete"
   zData:
     operation: delete
@@ -126,7 +126,7 @@ Usage Examples
 ### Example 4: Multiple Requirements
 ```yaml
 ^Sensitive_Data:
-  _rbac:
+  zRBAC:
     require_auth: true
     require_role: ["admin", "auditor"]
     require_permission: ["data.read", "data.export"]
@@ -157,7 +157,7 @@ Error Handling
 Constants Reference
 -------------------
 - RBAC_ACCESS_GRANTED, RBAC_ACCESS_DENIED: Return values
-- _RBAC_KEY: Dict key for RBAC metadata (_rbac)
+- _RBAC_KEY: Dict key for RBAC metadata (zRBAC)
 - _RBAC_REQUIRE_AUTH, _RBAC_REQUIRE_ROLE, _RBAC_REQUIRE_PERMISSION: RBAC fields
 - LOG_MSG_*: Log messages for various scenarios
 - _MSG_AUTH_REQUIRED, _MSG_ROLE_REQUIRED, _MSG_PERMISSION_REQUIRED: Display messages
@@ -222,7 +222,7 @@ from .wizard_constants import (
 
 __all__ = [
     # Public Functions
-    "check_rbac_access",
+    "checkzRBAC_access",
     "display_access_denied",
     "display_access_denied_zguest",
     # Public Constants (re-export)
@@ -232,7 +232,7 @@ __all__ = [
 ]
 
 
-def check_rbac_access(
+def checkzRBAC_access(
     key: str,
     value: Any,
     zcli: Optional[Any],
@@ -245,7 +245,7 @@ def check_rbac_access(
     
     Args:
         key: zKey name (e.g., "^Delete User")
-        value: zKey value (parsed item with potential _rbac metadata)
+        value: zKey value (parsed item with potential zRBAC metadata)
         zcli: zCLI instance (if direct mode)
         walker: zWalker instance (if walker mode)
         logger: Logger instance

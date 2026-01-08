@@ -447,7 +447,7 @@ class zLoader:
         self.logger.debug(f"[zLoader] Injecting navbar items into all blocks: {navbar_items}")
         
         # Create navbar menu with modifiers
-        # Format: ~zNavBar*: [$zVaF, $zAbout, {zAccount: {_rbac: ...}}, ...]
+        # Format: ~zNavBar*: [$zVaF, $zAbout, {zAccount: {zRBAC: ...}}, ...]
         # ~ = no back modifier (anchor menu)
         # * = explicit menu marker
         # Items display cleanly (zDisplay strips $), backend handles delta/zLink

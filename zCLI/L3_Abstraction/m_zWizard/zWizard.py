@@ -94,7 +94,7 @@ navigation_callbacks = {
 RBAC Integration
 ---------------
 Each step can have RBAC requirements enforced automatically:
-- **Check**: Uses `wizard_rbac.check_rbac_access()`
+- **Check**: Uses `wizard_rbac.checkzRBAC_access()`
 - **Denial**: Skips step and continues to next
 - **Logging**: Logs access denials for audit trail
 - **Display**: Shows access denied message if display available
@@ -184,8 +184,8 @@ create_profile:
 
 ### Integration with zAuth (RBAC)
 **Access Control:**
-- Each wizard step can declare `_rbac` metadata
-- zWizard calls `check_rbac_access()` before executing each step
+- Each wizard step can declare `zRBAC` metadata
+- zWizard calls `checkzRBAC_access()` before executing each step
 - Authentication check: `zcli.auth.is_authenticated()`
 - Role check: `zcli.auth.has_role(required_role)`
 - Permission check: `zcli.auth.has_permission(required_permission)`
@@ -307,7 +307,7 @@ from .zWizard_modules.wizard_transactions import (
     commit_transaction,
     rollback_transaction,
 )
-from .zWizard_modules.wizard_rbac import check_rbac_access, RBAC_ACCESS_DENIED, RBAC_ACCESS_DENIED_ZGUEST
+from .zWizard_modules.wizard_rbac import checkzRBAC_access, RBAC_ACCESS_DENIED, RBAC_ACCESS_DENIED_ZGUEST
 from .zWizard_modules.wizard_exceptions import (
     WizardInitializationError,
     ERR_MISSING_INSTANCE
@@ -496,7 +496,7 @@ class zWizard:
             - Returns "error": Error occurred (if callback returns it)
         
         RBAC:
-            Steps with `_rbac` metadata are checked before execution.
+            Steps with `zRBAC` metadata are checked before execution.
             Denied steps are skipped automatically and logged.
         
         See Also:
@@ -537,9 +537,9 @@ class zWizard:
         # ════════════════════════════════════════════════════════════
         # BLOCK-LEVEL RBAC: Gate for entire workflow/block
         # ════════════════════════════════════════════════════════════
-        # Check if the entire block has RBAC requirements (_rbac at block level)
+        # Check if the entire block has RBAC requirements (zRBAC at block level)
         # This gate must pass BEFORE entering the loop
-        rbac_signal = self._check_block_rbac(items_dict)
+        rbac_signal = self._check_blockzRBAC(items_dict)
         if rbac_signal is not None:
             return rbac_signal
         
@@ -655,7 +655,7 @@ class zWizard:
             # RBAC Enforcement (v1.5.4 Week 3.3)
             # ════════════════════════════════════════════════════════════
             # Check if this item has RBAC requirements
-            rbac_check_result = check_rbac_access(
+            rbac_check_result = checkzRBAC_access(
                 key, value, self.zcli, self.walker, self.logger, self.display
             )
             if rbac_check_result == RBAC_ACCESS_DENIED:
@@ -813,13 +813,13 @@ class zWizard:
         self.logger.info("[zWizard] ⚡ Generator-based chunked execution for Bifrost")
         
         # Block-level RBAC check
-        rbac_signal = self._check_block_rbac(items_dict)
+        rbac_signal = self._check_blockzRBAC(items_dict)
         if rbac_signal is not None:
             # Yield a special error chunk so the frontend can display the denial message
             # The buffered display events contain the formatted RBAC denial message
             # We yield an empty chunk list with special metadata to signal "RBAC_DENIED"
             self.logger.info("[zWizard] Yielding RBAC denial chunk with buffered events")
-            yield ([], False, {"_rbac_denied": True, "_signal": "navigate_back"})
+            yield ([], False, {"zRBAC_denied": True, "_signal": "navigate_back"})
             return rbac_signal
         
         dispatch_fn = self._get_dispatch_fn(dispatch_fn, context)
@@ -838,7 +838,7 @@ class zWizard:
             self.logger.debug(f"[zWizard.chunked] Processing key: {key}")
             
             # RBAC check
-            rbac_check_result = check_rbac_access(
+            rbac_check_result = checkzRBAC_access(
                 key, value, self.zcli, self.walker, self.logger, self.display
             )
             if rbac_check_result == RBAC_ACCESS_DENIED:
@@ -995,7 +995,7 @@ class zWizard:
             return self.walker.display
         return None
 
-    def _check_block_rbac(self, items_dict: Dict[str, Any]) -> Optional[str]:
+    def _check_blockzRBAC(self, items_dict: Dict[str, Any]) -> Optional[str]:
         """
         Check block-level RBAC and return navigation signal if denied.
         
@@ -1011,7 +1011,7 @@ class zWizard:
             - Returns _SIGNAL_ZBACK for bounce-back navigation
             - Returns None for granted access (continue execution)
         """
-        rbac_result = check_rbac_access(
+        rbac_result = checkzRBAC_access(
             key="Block/Workflow",
             value=items_dict,
             zcli=self.zcli,
@@ -1049,7 +1049,7 @@ class zWizard:
             List of keys excluding metadata keys (those starting with '_')
         
         Notes:
-            - Metadata keys like _data, _rbac, _transaction configure behavior
+            - Metadata keys like _data, zRBAC, _transaction configure behavior
             - They don't execute as steps, only configure the workflow
             - This ensures only actionable keys are processed in the loop
         """

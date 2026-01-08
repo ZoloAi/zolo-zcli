@@ -81,7 +81,7 @@ _KEY_HANDLER = "handler"
 _KEY_TARGET = "target"
 _KEY_STATUS = "status"
 _KEY_DESCRIPTION = "description"
-_KEY_RBAC = "_rbac"
+_KEY_RBAC = "zRBAC"
 _KEY_ZVAFILE = "zVaFile"  # For dynamic routes (v1.5.4 Phase 3)
 _KEY_ZBLOCK = "zBlock"    # For dynamic routes (v1.5.4 Phase 3)
 

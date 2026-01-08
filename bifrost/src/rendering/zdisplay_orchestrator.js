@@ -159,6 +159,59 @@ export class ZDisplayOrchestrator {
   }
 
   /**
+   * Extract plural shorthands (zURLs, zTexts, zImages, etc.) and transform to items array
+   * @param {Object} value - The zUL/zOL value object
+   * @param {string} listStyle - 'bullet' or 'number' (for logging)
+   * @returns {{items: Array, otherProps: Object}} - Transformed items and remaining properties
+   * @private
+   */
+  _extractPluralShorthands(value, listStyle) {
+    const items = [];
+    const otherProps = {};
+    
+    // Map plural shorthand keys to their singular event types
+    const pluralMap = {
+      'zURLs': 'zURL',
+      'zTexts': 'zText',
+      'zImages': 'zImage',
+      'zH1s': 'zH1',
+      'zH2s': 'zH2',
+      'zH3s': 'zH3',
+      'zH4s': 'zH4',
+      'zH5s': 'zH5',
+      'zH6s': 'zH6',
+      'zMDs': 'zMD'
+    };
+    
+    // Iterate through value properties
+    for (const [key, val] of Object.entries(value)) {
+      if (pluralMap[key] && val && typeof val === 'object' && !Array.isArray(val)) {
+        // Found a plural shorthand (e.g., zURLs)
+        const singularEvent = pluralMap[key];
+        
+        // Transform each nested object into a zDisplay item
+        for (const [itemKey, itemProps] of Object.entries(val)) {
+          if (itemProps && typeof itemProps === 'object') {
+            items.push({
+              zDisplay: {
+                event: singularEvent,
+                ...itemProps
+              }
+            });
+          }
+        }
+        
+        this.logger.log(`[ZDisplayOrchestrator] 🔄 Transformed ${key} into ${items.length} ${singularEvent} items`);
+      } else {
+        // Not a plural shorthand, copy to otherProps (e.g., _zClass, indent)
+        otherProps[key] = val;
+      }
+    }
+    
+    return { items, otherProps };
+  }
+
+  /**
    * Recursively render YAML items (handles nested structures like implicit wizards)
    * @param {Object} data - YAML data to render
    * @param {HTMLElement} parentElement - Parent element to render into
@@ -223,27 +276,35 @@ export class ZDisplayOrchestrator {
         }
       } else if (key === 'zUL') {
         if (value && typeof value === 'object' && !Array.isArray(value)) {
+          // Check for plural shorthands and transform them
+          const { items, otherProps } = this._extractPluralShorthands(value, 'bullet');
+          
           // Transform shorthand to full zDisplay format (unordered/bullet list)
           data[key] = {
             zDisplay: {
               event: 'list',
               style: 'bullet',
-              ...value
+              ...otherProps,
+              ...(items.length > 0 && { items })  // Only add items if plural shorthand found
             }
           };
-          this.logger.log(`[ZDisplayOrchestrator] ✨ Expanded zUL shorthand to zDisplay list (bullet)`);
+          this.logger.log(`[ZDisplayOrchestrator] ✨ Expanded zUL shorthand to zDisplay list (bullet)${items.length > 0 ? ` with ${items.length} items from plural shorthand` : ''}`);
         }
       } else if (key === 'zOL') {
         if (value && typeof value === 'object' && !Array.isArray(value)) {
+          // Check for plural shorthands and transform them
+          const { items, otherProps } = this._extractPluralShorthands(value, 'number');
+          
           // Transform shorthand to full zDisplay format (ordered/numbered list)
           data[key] = {
             zDisplay: {
               event: 'list',
               style: 'number',
-              ...value
+              ...otherProps,
+              ...(items.length > 0 && { items })  // Only add items if plural shorthand found
             }
           };
-          this.logger.log(`[ZDisplayOrchestrator] ✨ Expanded zOL shorthand to zDisplay list (number)`);
+          this.logger.log(`[ZDisplayOrchestrator] ✨ Expanded zOL shorthand to zDisplay list (number)${items.length > 0 ? ` with ${items.length} items from plural shorthand` : ''}`);
         }
       } else if (key === 'zTable') {
         if (value && typeof value === 'object' && !Array.isArray(value)) {

@@ -402,7 +402,7 @@ class ModifierProcessor:
 
         # Apply RBAC filtering for navbar menus
         if zKey.startswith("~zNavBar"):
-            zHorizontal = self._apply_navbar_rbac_filtering(zKey, zHorizontal)
+            zHorizontal = self._apply_navbarzRBAC_filtering(zKey, zHorizontal)
 
         # Create menu via zNavigation
         result = self.zcli.navigation.create(
@@ -418,7 +418,7 @@ class ModifierProcessor:
         
         return result
 
-    def _apply_navbar_rbac_filtering(
+    def _apply_navbarzRBAC_filtering(
         self,
         zKey: str,
         zHorizontal: List[Any]
@@ -454,20 +454,20 @@ class ModifierProcessor:
                 clean_items.append(item)
         
         # Filter the navbar items based on current authentication state
-        filtered_items = self.zcli.navigation._filter_navbar_by_rbac(clean_items)
+        filtered_items = self.zcli.navigation._filter_navbar_byzRBAC(clean_items)
         self.logger.framework.info(
             f"[Dispatch] Navbar filtered: {len(zHorizontal)} → {len(filtered_items)} items"
         )
         
         # Add delta prefix ($) to filtered items for intra-file navigation
-        # Keep dict items (with _sub_items metadata) as dicts, but prefix the key
+        # Keep dict items (with zSub metadata) as dicts, but prefix the key
         filtered_with_prefix = []
         for item in filtered_items:
             if isinstance(item, str):
                 # Simple string item - add $ prefix
                 filtered_with_prefix.append(f"${item}")
             elif isinstance(item, dict):
-                # Dict item with metadata (_sub_items, _rbac) - prefix the key but keep as dict
+                # Dict item with metadata (zSub, zRBAC) - prefix the key but keep as dict
                 item_name = list(item.keys())[0]
                 item_data = item[item_name]
                 filtered_with_prefix.append({f"${item_name}": item_data})

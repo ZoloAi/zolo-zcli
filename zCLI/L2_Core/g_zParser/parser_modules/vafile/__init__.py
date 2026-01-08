@@ -12,7 +12,7 @@ Public API (for external usage):
     - parse_schema_file: Schema file parser
     - parse_config_file: Config file parser
     - parse_generic_file: Generic fallback parser
-    - extract_rbac_directives: RBAC extraction (v1.5.4 Week 3.3)
+    - extractzRBAC_directives: RBAC extraction (v1.5.4 Week 3.3)
     - validate_zva_structure: Structure validation
 
 Package Structure:
@@ -74,10 +74,10 @@ LOG_MSG_PARSING_ZBLOCK: str = "[INFO] Parsing zBlock: %s"
 LOG_MSG_PROCESSING_ZBLOCK_ITEMS: str = "[RBAC] Processing zBlock '%s' with %d items"
 LOG_MSG_PROCESSING_ITEM: str = "[RBAC] Processing item: '%s'"
 LOG_MSG_FOUND_CONSTRUCT: str = "[DEBUG] Found %s construct: %s"
-LOG_MSG_PUBLIC_ACCESS: str = "[RBAC] Public access for '%s' (no _rbac specified)"
+LOG_MSG_PUBLIC_ACCESS: str = "[RBAC] Public access for '%s' (no zRBAC specified)"
 LOG_MSG_PARSING_UI_ITEM: str = "[DEBUG] Parsing UI item: %s (type: %s)"
 LOG_MSG_FILE_RBAC_FOUND: str = "[RBAC] File-level directives found: %s"
-LOG_MSG_INLINE_RBAC_FOUND: str = "Found inline _rbac for '%s': %s"
+LOG_MSG_INLINE_RBAC_FOUND: str = "Found inline zRBAC for '%s': %s"
 LOG_MSG_INLINE_RBAC_APPLIED: str = "[RBAC] Applied inline RBAC to '%s': %s"
 LOG_MSG_VALIDATING_SCHEMA: str = "🔍 Validating schema file structure"
 LOG_MSG_PARSING_SCHEMA: str = "[SCHEMA] Parsing schema file"
@@ -95,8 +95,8 @@ LOG_MSG_PARSING_GENERIC: str = "[INFO] Parsing generic zVaFile"
 
 # Dict Keys
 DICT_KEY_METADATA: str = "_metadata"
-DICT_KEY_RBAC: str = "_rbac"
-DICT_KEY_FILE_RBAC: str = "_file_rbac"
+DICT_KEY_RBAC: str = "zRBAC"
+DICT_KEY_FILE_RBAC: str = "_filezRBAC"
 DICT_KEY_ERROR: str = "error"
 DICT_KEY_ERRORS: str = "errors"
 DICT_KEY_WARNINGS: str = "warnings"
@@ -186,7 +186,7 @@ METADATA_KEY_DATA_TYPE: str = "data_type"
 # RBAC DIRECTIVE EXTRACTION (v1.5.4 Week 3.3)
 # ============================================================================
 
-def extract_rbac_directives(
+def extractzRBAC_directives(
     data: Dict[str, Any],
     logger: Any,
     scope: str = SCOPE_FILE
@@ -197,7 +197,7 @@ def extract_rbac_directives(
     See original parser_vafile.py for complete documentation.
     """
     rbac_directives: Dict[str, Any] = {}
-    data_without_rbac: Dict[str, Any] = {}
+    data_withoutzRBAC: Dict[str, Any] = {}
     
     for key, value in data.items():
         if key.startswith(RBAC_PREFIX_REQUIRE):
@@ -205,9 +205,9 @@ def extract_rbac_directives(
             rbac_directives[directive_name] = value
             logger.debug(LOG_MSG_DIRECTIVE_EXTRACTED, scope, directive_name, value)
         else:
-            data_without_rbac[key] = value
+            data_withoutzRBAC[key] = value
     
-    return rbac_directives if rbac_directives else None, data_without_rbac
+    return rbac_directives if rbac_directives else None, data_withoutzRBAC
 
 
 # ============================================================================
@@ -373,7 +373,7 @@ __all__ = [
     'parse_zva_file',
     'validate_zva_structure',
     'extract_zva_metadata',
-    'extract_rbac_directives',
+    'extractzRBAC_directives',
     
     # Type-specific parsers
     'parse_ui_file',

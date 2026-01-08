@@ -293,7 +293,7 @@ class MenuRenderer:
         menu_pairs = []
         for i, opt in enumerate(options):
             if isinstance(opt, dict) and len(opt) == 1:
-                # Dict with metadata: {"$zProducts": {"_sub_items": ["zCLI", "zBifrost", ...]}}
+                # Dict with metadata: {"$zProducts": {"zSub": ["zCLI", "zBifrost", ...]}}
                 item_name = list(opt.keys())[0]
                 item_data = opt[item_name]
                 
@@ -301,8 +301,8 @@ class MenuRenderer:
                 display_name = item_name.lstrip('$')
                 
                 # Check for sub-items in metadata
-                if isinstance(item_data, dict) and "_sub_items" in item_data:
-                    sub_items = item_data["_sub_items"]
+                if isinstance(item_data, dict) and "zSub" in item_data:
+                    sub_items = item_data["zSub"]
                     display_text = f"{display_name} ({', '.join(sub_items)})"
                 else:
                     display_text = display_name

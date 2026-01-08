@@ -29,7 +29,7 @@ Exported Components:
 - check_transaction_start(): Detect transaction start
 - commit_transaction(): Commit active transaction
 - rollback_transaction(): Rollback on error
-- check_rbac_access(): Enforce RBAC before step execution
+- checkzRBAC_access(): Enforce RBAC before step execution
 - display_access_denied(): Display access denial messages
 
 Usage:
@@ -76,7 +76,7 @@ from .wizard_transactions import (
     commit_transaction,
     rollback_transaction,
 )
-from .wizard_rbac import check_rbac_access, display_access_denied
+from .wizard_rbac import checkzRBAC_access, display_access_denied
 from .wizard_exceptions import (
     zWizardError,
     WizardInitializationError,
@@ -99,7 +99,7 @@ __all__ = [
     "check_transaction_start",
     "commit_transaction",
     "rollback_transaction",
-    "check_rbac_access",
+    "checkzRBAC_access",
     "display_access_denied",
     "zWizardError",
     "WizardInitializationError",

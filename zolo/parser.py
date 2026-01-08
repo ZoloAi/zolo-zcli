@@ -63,6 +63,18 @@ class TokenEmitter:
         # Track zImage blocks to color nested option keys (src, alt_text, caption, etc.)
         self.zimage_blocks: List[Tuple[int, int]] = []  # [(indent_level, line_number), ...]
         
+        # Track zText blocks to color nested option keys (content, indent, etc.)
+        self.ztext_blocks: List[Tuple[int, int]] = []  # [(indent_level, line_number), ...]
+        
+        # Track zMD blocks to color nested option keys (content, indent, pause, etc.)
+        self.zmd_blocks: List[Tuple[int, int]] = []  # [(indent_level, line_number), ...]
+        
+        # Track zURL blocks to color nested option keys (label, href, target, etc.)
+        self.zurl_blocks: List[Tuple[int, int]] = []  # [(indent_level, line_number), ...]
+        
+        # Track header blocks (zH1-zH6) to color nested option keys (label, color, style, etc.)
+        self.header_blocks: List[Tuple[int, int]] = []  # [(indent_level, line_number), ...]
+        
         # Track plural shorthand blocks to color nested option keys 2+ levels deep
         # (zURLs, zTexts, zImages, etc. with user-defined item keys in between)
         self.plural_shorthand_blocks: List[Tuple[int, int, str]] = []  # [(indent_level, line_number, shorthand_name), ...]
@@ -98,6 +110,62 @@ class TokenEmitter:
     def is_in_zimage_block(self, current_indent: int) -> bool:
         """Check if we're currently inside a zImage block at the given indentation level."""
         return any(indent < current_indent for indent, _ in self.zimage_blocks)
+    
+    def enter_ztext_block(self, indent: int, line: int):
+        """Mark that we're entering a zText block at the given indentation level."""
+        self.ztext_blocks.append((indent, line))
+    
+    def update_ztext_blocks(self, current_indent: int, current_line: int):
+        """Update zText block tracking based on current indentation level.
+        Exit blocks that have lower or equal indentation than current."""
+        # Remove blocks with indent >= current_indent (we've exited them)
+        self.ztext_blocks = [(indent, line) for indent, line in self.ztext_blocks if indent < current_indent]
+    
+    def is_in_ztext_block(self, current_indent: int) -> bool:
+        """Check if we're currently inside a zText block at the given indentation level."""
+        return any(indent < current_indent for indent, _ in self.ztext_blocks)
+    
+    def enter_zmd_block(self, indent: int, line: int):
+        """Mark that we're entering a zMD block at the given indentation level."""
+        self.zmd_blocks.append((indent, line))
+    
+    def update_zmd_blocks(self, current_indent: int, current_line: int):
+        """Update zMD block tracking based on current indentation level.
+        Exit blocks that have lower or equal indentation than current."""
+        # Remove blocks with indent >= current_indent (we've exited them)
+        self.zmd_blocks = [(indent, line) for indent, line in self.zmd_blocks if indent < current_indent]
+    
+    def is_in_zmd_block(self, current_indent: int) -> bool:
+        """Check if we're currently inside a zMD block at the given indentation level."""
+        return any(indent < current_indent for indent, _ in self.zmd_blocks)
+    
+    def enter_zurl_block(self, indent: int, line: int):
+        """Mark that we're entering a zURL block at the given indentation level."""
+        self.zurl_blocks.append((indent, line))
+    
+    def update_zurl_blocks(self, current_indent: int, current_line: int):
+        """Update zURL block tracking based on current indentation level.
+        Exit blocks that have lower or equal indentation than current."""
+        # Remove blocks with indent >= current_indent (we've exited them)
+        self.zurl_blocks = [(indent, line) for indent, line in self.zurl_blocks if indent < current_indent]
+    
+    def is_in_zurl_block(self, current_indent: int) -> bool:
+        """Check if we're currently inside a zURL block at the given indentation level."""
+        return any(indent < current_indent for indent, _ in self.zurl_blocks)
+    
+    def enter_header_block(self, indent: int, line: int):
+        """Mark that we're entering a header block (zH1-zH6) at the given indentation level."""
+        self.header_blocks.append((indent, line))
+    
+    def update_header_blocks(self, current_indent: int, current_line: int):
+        """Update header block tracking based on current indentation level.
+        Exit blocks that have lower or equal indentation than current."""
+        # Remove blocks with indent >= current_indent (we've exited them)
+        self.header_blocks = [(indent, line) for indent, line in self.header_blocks if indent < current_indent]
+    
+    def is_in_header_block(self, current_indent: int) -> bool:
+        """Check if we're currently inside a header block (zH1-zH6) at the given indentation level."""
+        return any(indent < current_indent for indent, _ in self.header_blocks)
     
     def enter_plural_shorthand_block(self, indent: int, line: int, shorthand_name: str):
         """Mark that we're entering a plural shorthand block (zURLs, zTexts, etc.)."""
@@ -569,7 +637,7 @@ def _strip_comments_and_prepare_lines(content: str) -> list[str]:
     Phase 1, Step 1.1: Strip comments from .zolo content.
     
     Rules:
-    - Full-line comments: # at line start (or after whitespace only)
+    - Full-line comments: # at line start (after optional whitespace at any indent level)
     - Inline comments: #> ... <# (paired delimiters)
     - Multi-line comments supported with #> ... <#
     - Unpaired #> or <# are treated as literal text
@@ -586,6 +654,9 @@ def _strip_comments_and_prepare_lines(content: str) -> list[str]:
     Examples:
         >>> _strip_comments_and_prepare_lines("# Full line comment\\nkey: value")
         ['key: value']
+        
+        >>> _strip_comments_and_prepare_lines("section:\\n    # Indented comment\\n    key: value")
+        ['section:', '    key: value']
         
         >>> _strip_comments_and_prepare_lines("key: value #> comment <#")
         ['key: value']
@@ -645,17 +716,17 @@ def _strip_comments_and_prepare_lines_with_tokens(content: str, emitter: TokenEm
     lines = content.splitlines()
     
     # Phase 1: Identify full-line comments (these should be ignored for inline comment processing)
-    # Only treat top-level (indent=0) lines starting with # as full-line comments
-    # Indented lines starting with # might be part of (str) multi-line values
+    # Full-line comments can appear at any indentation level
+    # A line is a full-line comment if it starts with # (after optional whitespace) but not #>
     full_line_comment_lines = set()
     for line_num, line in enumerate(lines):
         stripped = line.lstrip()
         indent = len(line) - len(stripped)
-        # A line is a full-line comment if it starts with # (but not #>) AND is at indent=0
-        if indent == 0 and stripped.startswith('#') and not stripped.startswith('#>'):
+        # A line is a full-line comment if it starts with # (but not #>)
+        if stripped.startswith('#') and not stripped.startswith('#>'):
             full_line_comment_lines.add(line_num)
-            # Emit token for this full-line comment
-            emitter.emit(line_num, 0, len(stripped), TokenType.COMMENT)
+            # Emit token for this full-line comment (starting from first # character)
+            emitter.emit(line_num, indent, len(stripped), TokenType.COMMENT)
     
     # Phase 2: Find and emit all #> ... <# comments (including multi-line)
     # Only search in content that's NOT part of full-line comments
@@ -909,6 +980,10 @@ def _parse_lines_with_tokens(lines: list[str], line_mapping: dict, emitter: Toke
                     # Update block tracking (exit blocks we've left based on indentation)
                     emitter.update_zrbac_blocks(indent, original_line_num)
                     emitter.update_zimage_blocks(indent, original_line_num)
+                    emitter.update_ztext_blocks(indent, original_line_num)
+                    emitter.update_zmd_blocks(indent, original_line_num)
+                    emitter.update_zurl_blocks(indent, original_line_num)
+                    emitter.update_header_blocks(indent, original_line_num)
                     
                     # Split modifiers from clean_key (key without type hint)
                     prefix_mods, core_key, suffix_mods = emitter.split_modifiers(clean_key)
@@ -944,6 +1019,54 @@ def _parse_lines_with_tokens(lines: list[str], line_mapping: dict, emitter: Toke
                             emitter.emit(original_line_num, current_pos, len(core_key), TokenType.ZRBAC_OPTION_KEY)
                         else:
                             emitter.emit(original_line_num, current_pos, len(core_key), TokenType.NESTED_KEY)
+                    # Check for zText key (GOLD in zUI files) and enter block
+                    elif core_key == 'zText' and emitter.is_zui_file:
+                        emitter.emit(original_line_num, current_pos, len(core_key), TokenType.UI_ELEMENT_KEY)
+                        # Mark that we're entering a zText block
+                        emitter.enter_ztext_block(indent, original_line_num)
+                    # Check for zText option keys (PURPLE in zUI files only, excluding Bifrost keys)
+                    elif emitter.is_in_ztext_block(indent) and emitter.is_zui_file and not core_key.startswith('_'):
+                        ZTEXT_OPTIONS = {'content', 'indent', 'color', 'break_after'}
+                        if core_key in ZTEXT_OPTIONS:
+                            emitter.emit(original_line_num, current_pos, len(core_key), TokenType.ZRBAC_OPTION_KEY)
+                        else:
+                            emitter.emit(original_line_num, current_pos, len(core_key), TokenType.NESTED_KEY)
+                    # Check for zMD key (GOLD in zUI files) and enter block
+                    elif core_key == 'zMD' and emitter.is_zui_file:
+                        emitter.emit(original_line_num, current_pos, len(core_key), TokenType.UI_ELEMENT_KEY)
+                        # Mark that we're entering a zMD block
+                        emitter.enter_zmd_block(indent, original_line_num)
+                    # Check for zMD option keys (PURPLE in zUI files only, excluding Bifrost keys)
+                    elif emitter.is_in_zmd_block(indent) and emitter.is_zui_file and not core_key.startswith('_'):
+                        ZMD_OPTIONS = {'content', 'indent', 'pause', 'break_message', 'format'}
+                        if core_key in ZMD_OPTIONS:
+                            emitter.emit(original_line_num, current_pos, len(core_key), TokenType.ZRBAC_OPTION_KEY)
+                        else:
+                            emitter.emit(original_line_num, current_pos, len(core_key), TokenType.NESTED_KEY)
+                    # Check for zURL key (GOLD in zUI files) and enter block
+                    elif core_key == 'zURL' and emitter.is_zui_file:
+                        emitter.emit(original_line_num, current_pos, len(core_key), TokenType.UI_ELEMENT_KEY)
+                        # Mark that we're entering a zURL block
+                        emitter.enter_zurl_block(indent, original_line_num)
+                    # Check for zURL option keys (PURPLE in zUI files only, excluding Bifrost keys)
+                    elif emitter.is_in_zurl_block(indent) and emitter.is_zui_file and not core_key.startswith('_'):
+                        ZURL_OPTIONS = {'label', 'href', 'target', 'color', 'rel', 'window'}
+                        if core_key in ZURL_OPTIONS:
+                            emitter.emit(original_line_num, current_pos, len(core_key), TokenType.ZRBAC_OPTION_KEY)
+                        else:
+                            emitter.emit(original_line_num, current_pos, len(core_key), TokenType.NESTED_KEY)
+                    # Check for zH1-zH6 keys (GOLD in zUI files) and enter block
+                    elif core_key in {'zH1', 'zH2', 'zH3', 'zH4', 'zH5', 'zH6'} and emitter.is_zui_file:
+                        emitter.emit(original_line_num, current_pos, len(core_key), TokenType.UI_ELEMENT_KEY)
+                        # Mark that we're entering a header block
+                        emitter.enter_header_block(indent, original_line_num)
+                    # Check for header option keys (PURPLE in zUI files only, excluding Bifrost keys)
+                    elif emitter.is_in_header_block(indent) and emitter.is_zui_file and not core_key.startswith('_'):
+                        HEADER_OPTIONS = {'label', 'color', 'style', 'semantic', 'indent'}
+                        if core_key in HEADER_OPTIONS:
+                            emitter.emit(original_line_num, current_pos, len(core_key), TokenType.ZRBAC_OPTION_KEY)
+                        else:
+                            emitter.emit(original_line_num, current_pos, len(core_key), TokenType.NESTED_KEY)
                     # Check for plural shorthand option keys (PURPLE in zUI files, 2+ levels deep, excluding Bifrost)
                     elif not core_key.startswith('_') and emitter.is_zui_file:
                         plural_context = emitter.get_plural_shorthand_context(indent)
@@ -975,8 +1098,8 @@ def _parse_lines_with_tokens(lines: list[str], line_mapping: dict, emitter: Toke
                             # Check for zSub key (GOLD in both zUI and zEnv files)
                             elif core_key == 'zSub':
                                 emitter.emit(original_line_num, current_pos, len(core_key), TokenType.UI_ELEMENT_KEY)
-                            # Check for z-prefixed UI elements (zImage, zNavBar, etc.) in zUI files
-                            elif core_key.startswith('z') and core_key[1:2].isupper():
+                            # Check for specific shorthand display event keys (strict whitelist)
+                            elif core_key in {'zNavBar', 'zImage', 'zUL', 'zOL', 'zURL', 'zURLs', 'zText', 'zMD', 'zH1', 'zH2', 'zH3', 'zH4', 'zH5', 'zH6'}:
                                 emitter.emit(original_line_num, current_pos, len(core_key), TokenType.UI_ELEMENT_KEY)
                             else:
                                 emitter.emit(original_line_num, current_pos, len(core_key), TokenType.NESTED_KEY)
@@ -986,8 +1109,8 @@ def _parse_lines_with_tokens(lines: list[str], line_mapping: dict, emitter: Toke
                     # Check for underscore-prefixed keys (Bifrost keys)
                     elif core_key.startswith('_'):
                         emitter.emit(original_line_num, current_pos, len(core_key), TokenType.BIFROST_KEY)
-                    # Check for z-prefixed UI elements (zImage, zNavBar, etc.) in zUI files
-                    elif emitter.is_zui_file and core_key.startswith('z') and core_key[1:2].isupper():
+                    # Check for specific shorthand display event keys (strict whitelist)
+                    elif emitter.is_zui_file and core_key in {'zNavBar', 'zImage', 'zUL', 'zOL', 'zURL', 'zURLs', 'zText', 'zMD'}:
                         emitter.emit(original_line_num, current_pos, len(core_key), TokenType.UI_ELEMENT_KEY)
                     else:
                         emitter.emit(original_line_num, current_pos, len(core_key), TokenType.NESTED_KEY)
@@ -1081,6 +1204,10 @@ def _parse_lines_with_tokens(lines: list[str], line_mapping: dict, emitter: Toke
                     # Update block tracking (exit blocks we've left based on indentation)
                     emitter.update_zrbac_blocks(indent, original_line_num)
                     emitter.update_zimage_blocks(indent, original_line_num)
+                    emitter.update_ztext_blocks(indent, original_line_num)
+                    emitter.update_zmd_blocks(indent, original_line_num)
+                    emitter.update_zurl_blocks(indent, original_line_num)
+                    emitter.update_header_blocks(indent, original_line_num)
                     emitter.update_plural_shorthand_blocks(indent, original_line_num)
                     
                     # Split modifiers from key name
@@ -1117,6 +1244,54 @@ def _parse_lines_with_tokens(lines: list[str], line_mapping: dict, emitter: Toke
                             emitter.emit(original_line_num, current_pos, len(core_key), TokenType.ZRBAC_OPTION_KEY)
                         else:
                             emitter.emit(original_line_num, current_pos, len(core_key), TokenType.NESTED_KEY)
+                    # Check for zText key (GOLD in zUI files) and enter block
+                    elif core_key == 'zText' and emitter.is_zui_file:
+                        emitter.emit(original_line_num, current_pos, len(core_key), TokenType.UI_ELEMENT_KEY)
+                        # Mark that we're entering a zText block
+                        emitter.enter_ztext_block(indent, original_line_num)
+                    # Check for zText option keys (PURPLE in zUI files only, excluding Bifrost keys)
+                    elif emitter.is_in_ztext_block(indent) and emitter.is_zui_file and not core_key.startswith('_'):
+                        ZTEXT_OPTIONS = {'content', 'indent', 'color', 'break_after'}
+                        if core_key in ZTEXT_OPTIONS:
+                            emitter.emit(original_line_num, current_pos, len(core_key), TokenType.ZRBAC_OPTION_KEY)
+                        else:
+                            emitter.emit(original_line_num, current_pos, len(core_key), TokenType.NESTED_KEY)
+                    # Check for zMD key (GOLD in zUI files) and enter block
+                    elif core_key == 'zMD' and emitter.is_zui_file:
+                        emitter.emit(original_line_num, current_pos, len(core_key), TokenType.UI_ELEMENT_KEY)
+                        # Mark that we're entering a zMD block
+                        emitter.enter_zmd_block(indent, original_line_num)
+                    # Check for zMD option keys (PURPLE in zUI files only, excluding Bifrost keys)
+                    elif emitter.is_in_zmd_block(indent) and emitter.is_zui_file and not core_key.startswith('_'):
+                        ZMD_OPTIONS = {'content', 'indent', 'pause', 'break_message', 'format'}
+                        if core_key in ZMD_OPTIONS:
+                            emitter.emit(original_line_num, current_pos, len(core_key), TokenType.ZRBAC_OPTION_KEY)
+                        else:
+                            emitter.emit(original_line_num, current_pos, len(core_key), TokenType.NESTED_KEY)
+                    # Check for zURL key (GOLD in zUI files) and enter block
+                    elif core_key == 'zURL' and emitter.is_zui_file:
+                        emitter.emit(original_line_num, current_pos, len(core_key), TokenType.UI_ELEMENT_KEY)
+                        # Mark that we're entering a zURL block
+                        emitter.enter_zurl_block(indent, original_line_num)
+                    # Check for zURL option keys (PURPLE in zUI files only, excluding Bifrost keys)
+                    elif emitter.is_in_zurl_block(indent) and emitter.is_zui_file and not core_key.startswith('_'):
+                        ZURL_OPTIONS = {'label', 'href', 'target', 'color', 'rel', 'window'}
+                        if core_key in ZURL_OPTIONS:
+                            emitter.emit(original_line_num, current_pos, len(core_key), TokenType.ZRBAC_OPTION_KEY)
+                        else:
+                            emitter.emit(original_line_num, current_pos, len(core_key), TokenType.NESTED_KEY)
+                    # Check for zH1-zH6 keys (GOLD in zUI files) and enter block
+                    elif core_key in {'zH1', 'zH2', 'zH3', 'zH4', 'zH5', 'zH6'} and emitter.is_zui_file:
+                        emitter.emit(original_line_num, current_pos, len(core_key), TokenType.UI_ELEMENT_KEY)
+                        # Mark that we're entering a header block
+                        emitter.enter_header_block(indent, original_line_num)
+                    # Check for header option keys (PURPLE in zUI files only, excluding Bifrost keys)
+                    elif emitter.is_in_header_block(indent) and emitter.is_zui_file and not core_key.startswith('_'):
+                        HEADER_OPTIONS = {'label', 'color', 'style', 'semantic', 'indent'}
+                        if core_key in HEADER_OPTIONS:
+                            emitter.emit(original_line_num, current_pos, len(core_key), TokenType.ZRBAC_OPTION_KEY)
+                        else:
+                            emitter.emit(original_line_num, current_pos, len(core_key), TokenType.NESTED_KEY)
                     # Check for plural shorthand option keys (PURPLE in zUI files, 2+ levels deep, excluding Bifrost)
                     elif not core_key.startswith('_') and emitter.is_zui_file:
                         plural_context = emitter.get_plural_shorthand_context(indent)
@@ -1148,8 +1323,8 @@ def _parse_lines_with_tokens(lines: list[str], line_mapping: dict, emitter: Toke
                             # Check for zSub key (GOLD in both zUI and zEnv files)
                             elif core_key == 'zSub':
                                 emitter.emit(original_line_num, current_pos, len(core_key), TokenType.UI_ELEMENT_KEY)
-                            # Check for z-prefixed UI elements (zImage, zNavBar, etc.) in zUI files
-                            elif core_key.startswith('z') and core_key[1:2].isupper():
+                            # Check for specific shorthand display event keys (strict whitelist)
+                            elif core_key in {'zNavBar', 'zImage', 'zUL', 'zOL', 'zURL', 'zURLs', 'zText', 'zMD', 'zH1', 'zH2', 'zH3', 'zH4', 'zH5', 'zH6'}:
                                 emitter.emit(original_line_num, current_pos, len(core_key), TokenType.UI_ELEMENT_KEY)
                             else:
                                 emitter.emit(original_line_num, current_pos, len(core_key), TokenType.NESTED_KEY)
@@ -1159,8 +1334,8 @@ def _parse_lines_with_tokens(lines: list[str], line_mapping: dict, emitter: Toke
                     # Check for underscore-prefixed keys (Bifrost keys)
                     elif core_key.startswith('_'):
                         emitter.emit(original_line_num, current_pos, len(core_key), TokenType.BIFROST_KEY)
-                    # Check for z-prefixed UI elements (zImage, zNavBar, etc.) in zUI files
-                    elif emitter.is_zui_file and core_key.startswith('z') and core_key[1:2].isupper():
+                    # Check for specific shorthand display event keys (strict whitelist)
+                    elif emitter.is_zui_file and core_key in {'zNavBar', 'zImage', 'zUL', 'zOL', 'zURL', 'zURLs', 'zText', 'zMD'}:
                         emitter.emit(original_line_num, current_pos, len(core_key), TokenType.UI_ELEMENT_KEY)
                     else:
                         emitter.emit(original_line_num, current_pos, len(core_key), TokenType.NESTED_KEY)

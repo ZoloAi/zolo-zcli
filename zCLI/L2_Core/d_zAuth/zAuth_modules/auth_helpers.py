@@ -2,7 +2,7 @@
 Authentication Helper Utilities - Shared DRY utilities for session access
 
 This module provides centralized helper functions to eliminate duplication in
-session data access patterns across auth_authentication.py, auth_rbac.py, and
+session data access patterns across auth_authentication.py, authzRBAC.py, and
 auth_session_persistence.py.
 
 Purpose:

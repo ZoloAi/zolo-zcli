@@ -113,7 +113,7 @@ MODULE RESPONSIBILITIES
     - Local and remote authentication (via zComm HTTP)
     - Integration with zDisplay for all UI feedback
 
-**RBAC (auth_rbac.py):**
+**RBAC (authzRBAC.py):**
     - Context-aware Role-Based Access Control
     - Supports all three authentication tiers
     - Dynamic role/permission checks based on active_context

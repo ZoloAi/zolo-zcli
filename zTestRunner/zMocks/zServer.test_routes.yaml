@@ -27,7 +27,7 @@ routes:
     type: static
     file: "admin.html"
     description: "Admin panel"
-    _rbac:
+    zRBAC:
       require_role: "admin"
   
   # Exact route - RBAC protected (auth required)
@@ -35,7 +35,7 @@ routes:
     type: static
     file: "dashboard.html"
     description: "User dashboard"
-    _rbac:
+    zRBAC:
       require_auth: true
   
   # Wildcard fallback - public access

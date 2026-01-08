@@ -31,15 +31,15 @@ RBAC Transformation (zUI Files):
     When a UI file is detected (via "zUI" in path or "/UI/" in path), the module:
     1. Delegates to vafile.parse_ui_file() for RBAC extraction
     2. Transforms the structured format to zWalker-compatible format
-    3. Merges _rbac metadata into items for dispatch consumption
+    3. Merges zRBAC metadata into items for dispatch consumption
     
     Transformation Flow:
-        Input (from vafile):  {zblocks: {block: {items: {item: {data, _rbac}}}}}
-        Output (for zWalker): {block: {item: {data + _rbac merged}}}
+        Input (from vafile):  {zblocks: {block: {items: {item: {data, zRBAC}}}}}
+        Output (for zWalker): {block: {item: {data + zRBAC merged}}}
     
     This transformation is CRITICAL for zLoader (line 63) which loads UI files
-    for the zWalker navigation system. The _rbac metadata must be properly merged
-    so that auth_rbac.py can check permissions during command dispatch.
+    for the zWalker navigation system. The zRBAC metadata must be properly merged
+    so that authzRBAC.py can check permissions during command dispatch.
 
 UI File Detection:
     A file is considered a UI file if:
@@ -59,7 +59,7 @@ External Usage (6 Files - CRITICAL):
        - Loads UI files for zWalker
        - Relies on RBAC transformation for navigation
     
-    3. **auth_rbac.py**:
+    3. **authzRBAC.py**:
        - Loads RBAC policy files
        - parse_file_content(raw_content, logger, ".yaml")
     
@@ -137,7 +137,7 @@ Version History:
 See Also:
     - vafile package: UI/Schema/Config parsing (Week 6.8.6)
     - zLoader: UI file loading for zWalker
-    - auth_rbac: RBAC permission checking
+    - authzRBAC: RBAC permission checking
     - zParser: Main parsing facade
 """
 
@@ -165,7 +165,7 @@ FILE_MARKER_UI_PATH: str = "/UI/"
 DICT_KEY_ZBLOCKS: str = "zblocks"
 DICT_KEY_ITEMS: str = "items"
 DICT_KEY_DATA: str = "data"
-DICT_KEY_RBAC: str = "_rbac"
+DICT_KEY_RBAC: str = "zRBAC"
 DICT_KEY_VALUE: str = "_value"
 
 # Content Detection Markers
@@ -186,8 +186,8 @@ LOG_MSG_PARSED_UI_KEYS: str = "Parsed UI keys: %s"
 LOG_MSG_TRANSFORMING_ZBLOCKS: str = "Transforming zblocks: %s"
 LOG_MSG_PROCESSING_ZBLOCK: str = "Processing zblock: %s"
 LOG_MSG_FOUND_ITEMS: str = "Found %d items in %s"
-LOG_MSG_ATTACHED_RBAC: str = "Attached _rbac to %s"
-LOG_MSG_WRAPPED_RBAC: str = "Wrapped %s with _rbac"
+LOG_MSG_ATTACHED_RBAC: str = "Attached zRBAC to %s"
+LOG_MSG_WRAPPED_RBAC: str = "Wrapped %s with zRBAC"
 LOG_MSG_TRANSFORM_COMPLETE: str = "Transformation complete, returning %d zblocks"
 LOG_MSG_FINAL_RESULT_KEYS: str = "Final result keys: %s"
 LOG_MSG_NO_ZBLOCKS_STRUCTURE: str = "Parsed UI doesn't have expected 'zblocks' structure!"
@@ -238,8 +238,23 @@ try:
     import zolo
     ZOLO_AVAILABLE = True
 except ImportError:
-    ZOLO_AVAILABLE = False
+    # Try adding project root to sys.path (for development installations)
+    import sys
+    import os
+    # Go up from parser_file.py: ../../../.. to reach project root
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../..'))
+    if project_root not in sys.path:
+        sys.path.insert(0, project_root)
+        try:
+            import zolo
+            ZOLO_AVAILABLE = True
+        except ImportError:
+            ZOLO_AVAILABLE = False
+    else:
+        ZOLO_AVAILABLE = False
     # Fallback: zolo library not installed, .zolo files will be treated as YAML
+except Exception:
+    ZOLO_AVAILABLE = False
 
 
 # ============================================================================
@@ -257,14 +272,14 @@ def _transform_parsed_ui_for_walker(
     returned by vafile.parse_ui_file() into the flat format expected by zWalker.
     
     Transformation:
-        Input:  {zblocks: {block: {items: {item: {data: {...}, _rbac: {...}}}}}}
-        Output: {block: {item: {... data merged with _rbac ...}}}
+        Input:  {zblocks: {block: {items: {item: {data: {...}, zRBAC: {...}}}}}}
+        Output: {block: {item: {... data merged with zRBAC ...}}}
     
     The transformation ensures that:
-    1. _rbac metadata is properly merged into item data
-    2. Non-dict values are wrapped with {_value: value, _rbac: {...}}
+    1. zRBAC metadata is properly merged into item data
+    2. Non-dict values are wrapped with {_value: value, zRBAC: {...}}
     3. zWalker receives a flat structure it can navigate
-    4. auth_rbac.py can access _rbac during dispatch
+    4. authzRBAC.py can access zRBAC during dispatch
     
     Args:
         parsed_ui: Structured UI data from vafile.parse_ui_file()
@@ -276,7 +291,7 @@ def _transform_parsed_ui_for_walker(
     Process:
         1. Extract zblocks from parsed_ui
         2. For each zblock, extract items
-        3. For each item, merge _rbac into data
+        3. For each item, merge zRBAC into data
         4. Handle both dict and non-dict values
         5. Return flat {block: {item: data}} structure
     
@@ -285,32 +300,32 @@ def _transform_parsed_ui_for_walker(
         ...     "zblocks": {
         ...         "Menu": {
         ...             "items": {
-        ...                 "Add": {"data": {"zFunc": "add"}, "_rbac": {"require_role": "user"}},
-        ...                 "Delete": {"data": {"zFunc": "delete"}, "_rbac": {"require_role": "admin"}}
+        ...                 "Add": {"data": {"zFunc": "add"}, "zRBAC": {"require_role": "user"}},
+        ...                 "Delete": {"data": {"zFunc": "delete"}, "zRBAC": {"require_role": "admin"}}
         ...             }
         ...         }
         ...     }
         ... }
         >>> result = _transform_parsed_ui_for_walker(parsed_ui, logger)
         >>> result
-        {"Menu": {"Add": {"zFunc": "add", "_rbac": {...}}, "Delete": {"zFunc": "delete", "_rbac": {...}}}}
+        {"Menu": {"Add": {"zFunc": "add", "zRBAC": {...}}, "Delete": {"zFunc": "delete", "zRBAC": {...}}}}
     
     Notes:
         - This function is performance-critical (called for every UI file load)
         - Complexity is O(n) where n = total UI items across all zblocks
-        - Handles edge cases: missing data key, non-dict values, missing _rbac
+        - Handles edge cases: missing data key, non-dict values, missing zRBAC
         - Logs transformation steps for debugging
     
     External Dependencies:
         - Used exclusively by parse_file_content() (line ~75)
         - Result consumed by zLoader.py (line 63) for zWalker
-        - _rbac metadata used by auth_rbac.py during dispatch
+        - zRBAC metadata used by authzRBAC.py during dispatch
     
     See Also:
         - parse_file_content: Calls this helper for UI files
         - vafile.parse_ui_file: Produces the input structure
         - zLoader: Consumes the output structure
-        - auth_rbac: Uses _rbac metadata for permission checks
+        - authzRBAC: Uses zRBAC metadata for permission checks
     """
     if not isinstance(parsed_ui, dict) or DICT_KEY_ZBLOCKS not in parsed_ui:
         logger.warning(LOG_MSG_NO_ZBLOCKS_STRUCTURE)
@@ -329,16 +344,16 @@ def _transform_parsed_ui_for_walker(
         logger.debug(LOG_MSG_FOUND_ITEMS, len(zblock_data[DICT_KEY_ITEMS]), zblock_name)
         
         for item_name, item_data in zblock_data[DICT_KEY_ITEMS].items():
-            # Merge _rbac into the data for dispatch
+            # Merge zRBAC into the data for dispatch
             if isinstance(item_data, dict):
                 value = item_data.get(DICT_KEY_DATA, item_data)
                 
-                # If value is dict, add _rbac to it; otherwise wrap it
+                # If value is dict, add zRBAC to it; otherwise wrap it
                 if isinstance(value, dict) and DICT_KEY_RBAC in item_data:
                     value[DICT_KEY_RBAC] = item_data[DICT_KEY_RBAC]
                     logger.debug(LOG_MSG_ATTACHED_RBAC, item_name)
                 elif DICT_KEY_RBAC in item_data:
-                    # Wrap non-dict values with _rbac metadata
+                    # Wrap non-dict values with zRBAC metadata
                     value = {DICT_KEY_VALUE: value, DICT_KEY_RBAC: item_data[DICT_KEY_RBAC]}
                     logger.debug(LOG_MSG_WRAPPED_RBAC, item_name)
                 
@@ -407,7 +422,7 @@ def parse_file_content(
         For UI files, the function:
         1. Delegates to vafile.parse_ui_file() for RBAC extraction
         2. Calls _transform_parsed_ui_for_walker() to flatten structure
-        3. Returns zWalker-compatible format with _rbac merged
+        3. Returns zWalker-compatible format with zRBAC merged
     
     Examples:
         >>> # Parse YAML file
@@ -439,7 +454,7 @@ def parse_file_content(
     External Usage (6 Files):
         1. zParser.py (line 150): parse_file_content(raw_content, self.logger, file_extension, session, file_path)
         2. zLoader.py (line 63): self.parse_file_content(zFile_raw, zFile_extension, session, file_path)
-        3. auth_rbac.py: parse_file_content(raw_content, logger, ".yaml")
+        3. authzRBAC.py: parse_file_content(raw_content, logger, ".yaml")
         4. auth_session_persistence.py: parse_file_content(raw_content, logger)
         5. func_args.py: parse_file_content(raw_content, logger, ".yaml")
         6. load_executor.py: parse_file_content(raw_content, logger, ext)

@@ -872,7 +872,7 @@ zCLI/subsystems/zAuth/
     ├── auth_password_security.py   (bcrypt hashing, 12 rounds)
     ├── auth_session_persistence.py (SQLite persistence, 7-day expiry)
     ├── auth_authentication.py      (Three-tier auth logic - CORE)
-    └── auth_rbac.py               (Context-aware RBAC)
+    └── authzRBAC.py               (Context-aware RBAC)
 ```
 
 ### Three-Tier Authentication
@@ -3065,7 +3065,7 @@ zCLI/subsystems/zWizard/
     ├── wizard_hat.py           (WizardHat - triple-access results)
     ├── wizard_interpolation.py (zHat[0] string interpolation)
     ├── wizard_transactions.py  (BEGIN/COMMIT/ROLLBACK lifecycle)
-    ├── wizard_rbac.py          (Permission checking - future)
+    ├── wizardzRBAC.py          (Permission checking - future)
     ├── wizard_exceptions.py    (Custom exception hierarchy)
     └── __init__.py             (Module exports)
 ```
@@ -4283,8 +4283,8 @@ server.start()
 
 ## RBAC Directives (v1.5.4 Week 3.3)
 
-**Default**: PUBLIC ACCESS (no `_rbac` = no restrictions)  
-**Only add `_rbac` when you need to RESTRICT access**
+**Default**: PUBLIC ACCESS (no `zRBAC` = no restrictions)  
+**Only add `zRBAC` when you need to RESTRICT access**
 
 ### ✅ Valid RBAC Patterns (Inline)
 
@@ -4292,7 +4292,7 @@ server.start()
 zVaF:
   ~Root*: ["^Login", "^View Data", "^Edit Data", "^Admin Panel"]
   
-  # Public access (no _rbac specified)
+  # Public access (no zRBAC specified)
   "^Login":
     zDisplay:
       event: text
@@ -4300,7 +4300,7 @@ zVaF:
   
   # Requires authentication (any role)
   "^View Data":
-    _rbac:
+    zRBAC:
       require_auth: true
     zDisplay:
       event: text
@@ -4308,7 +4308,7 @@ zVaF:
   
   # Specific role (auth implied)
   "^Edit Data":
-    _rbac:
+    zRBAC:
       require_role: "user"
     zDisplay:
       event: text
@@ -4316,7 +4316,7 @@ zVaF:
   
   # Multiple roles + permission (auth implied)
   "^Admin Panel":
-    _rbac:
+    zRBAC:
       require_role: ["admin", "moderator"]
       require_permission: "admin.access"
     zDisplay:
@@ -4328,38 +4328,38 @@ zVaF:
 
 **Authentication Only**:
 ```yaml
-_rbac:
+zRBAC:
   require_auth: true  # User must be logged in (any role)
 ```
 
 **Single Role** (auth implied):
 ```yaml
-_rbac:
+zRBAC:
   require_role: "admin"  # User must have "admin" role
 ```
 
 **Multiple Roles** (OR logic, auth implied):
 ```yaml
-_rbac:
+zRBAC:
   require_role: ["admin", "moderator"]  # User must have ANY of these roles
 ```
 
 **Permission Required** (auth implied):
 ```yaml
-_rbac:
+zRBAC:
   require_permission: "users.delete"  # User must have this permission
 ```
 
 **Combined** (AND logic, auth implied):
 ```yaml
-_rbac:
+zRBAC:
   require_role: "admin"
   require_permission: "data.delete"  # User must have BOTH role AND permission
 ```
 
 ### Key Design Principles
 
-1. **Default is PUBLIC** - No `_rbac` = accessible to everyone
+1. **Default is PUBLIC** - No `zRBAC` = accessible to everyone
 2. **Inline per item** - RBAC is defined directly in each zKey's dict
 3. **Auth is implied** - `require_role` or `require_permission` automatically requires authentication
 4. **Clean syntax** - Only add restrictions where needed, not on every item
@@ -4368,7 +4368,7 @@ _rbac:
 
 - **Enforcement**: Checked in `zWizard.execute_loop()` before dispatch
 - **Access denied**: User sees clear message with reason, item is skipped
-- **No conflict with `!` suffix**: `_rbac` is a dict key, not a YAML directive
+- **No conflict with `!` suffix**: `zRBAC` is a dict key, not a YAML directive
 - **Logging**: All access denials are logged for audit trail
 
 ---

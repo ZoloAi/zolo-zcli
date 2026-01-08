@@ -31,7 +31,7 @@ routes:
     type: zFunc                              # Route type
     method: POST                              # HTTP method
     handler: "&file_operations.upload_avatar" # Plugin function reference
-    _rbac:
+    zRBAC:
       public: true                            # RBAC config
     context:
       max_size_mb: 5                          # Route-specific config
@@ -213,7 +213,7 @@ zFunc routes fully support zAuth RBAC:
 "/api/users/:user_id/avatar":
   type: zFunc
   handler: "&file_operations.upload_avatar"
-  _rbac:
+  zRBAC:
     require_auth: true              # Must be logged in
     require_role: "user"            # Must have 'user' role
     require_permission: "upload"    # Must have 'upload' permission
@@ -260,7 +260,7 @@ routes:
     type: zFunc
     method: POST
     handler: "&file_operations.upload_avatar"
-    _rbac:
+    zRBAC:
       public: true
     context:
       max_size_mb: 5
@@ -338,7 +338,7 @@ def upload_avatar(request_context):
 - Don't hardcode table names - use `request_context['schema']`
 - Don't use `datetime.now()` - use `zcli.zfunc.zNow()`
 - Don't return 200 for errors - use appropriate status codes
-- Don't bypass RBAC - use `_rbac` configuration
+- Don't bypass RBAC - use `zRBAC` configuration
 - Don't duplicate route definitions - use parametrized routes
 
 ---

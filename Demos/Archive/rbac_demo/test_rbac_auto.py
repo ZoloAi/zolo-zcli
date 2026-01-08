@@ -4,7 +4,7 @@
 from pathlib import Path
 from zCLI import zCLI
 
-def test_rbac_enforcement():
+def testzRBAC_enforcement():
     """Test RBAC enforcement without user interaction."""
     
     # Initialize zCLI
@@ -27,7 +27,7 @@ def test_rbac_enforcement():
         print("\n✅ zVaF block loaded successfully")
         zblock = ui_data["zVaF"]
         
-        # Check specific keys for _rbac metadata
+        # Check specific keys for zRBAC metadata
         test_cases = [
             ("^Login", None, "Should have no RBAC (public)"),
             ("^Public Info", None, "Should have no RBAC (public override)"),
@@ -37,29 +37,29 @@ def test_rbac_enforcement():
             ("^Delete Data", {"require_role": "admin", "require_permission": "data.delete"}, "Should require admin + permission"),
         ]
         
-        for key, expected_rbac, description in test_cases:
+        for key, expectedzRBAC, description in test_cases:
             if key in zblock:
                 value = zblock[key]
-                actual_rbac = value.get("_rbac") if isinstance(value, dict) else None
+                actualzRBAC = value.get("zRBAC") if isinstance(value, dict) else None
                 
-                if expected_rbac is None:
-                    if actual_rbac is None or (isinstance(actual_rbac, dict) and actual_rbac.get("require_role") is None):
+                if expectedzRBAC is None:
+                    if actualzRBAC is None or (isinstance(actualzRBAC, dict) and actualzRBAC.get("require_role") is None):
                         print(f"\n✅ {key}: {description}")
-                        print(f"   RBAC: {actual_rbac}")
+                        print(f"   RBAC: {actualzRBAC}")
                     else:
-                        print(f"\n❌ {key}: Expected no RBAC, got {actual_rbac}")
+                        print(f"\n❌ {key}: Expected no RBAC, got {actualzRBAC}")
                 else:
-                    if actual_rbac:
-                        matches = all(actual_rbac.get(k) == v for k, v in expected_rbac.items())
+                    if actualzRBAC:
+                        matches = all(actualzRBAC.get(k) == v for k, v in expectedzRBAC.items())
                         if matches:
                             print(f"\n✅ {key}: {description}")
-                            print(f"   RBAC: {actual_rbac}")
+                            print(f"   RBAC: {actualzRBAC}")
                         else:
                             print(f"\n❌ {key}: RBAC mismatch")
-                            print(f"   Expected: {expected_rbac}")
-                            print(f"   Got: {actual_rbac}")
+                            print(f"   Expected: {expectedzRBAC}")
+                            print(f"   Got: {actualzRBAC}")
                     else:
-                        print(f"\n❌ {key}: Expected RBAC {expected_rbac}, got None")
+                        print(f"\n❌ {key}: Expected RBAC {expectedzRBAC}, got None")
             else:
                 print(f"\n❌ {key}: Key not found in zblock")
         
@@ -73,7 +73,7 @@ def test_rbac_enforcement():
         print("\n--- Test 1: Anonymous User ---")
         
         # Should deny access to ^View Dashboard
-        if z.wizard._check_rbac_access("^View Dashboard", zblock.get("^View Dashboard")) == "access_denied":
+        if z.wizard._checkzRBAC_access("^View Dashboard", zblock.get("^View Dashboard")) == "access_denied":
             print("✅ ^View Dashboard: Correctly denied (requires auth)")
         else:
             print("❌ ^View Dashboard: Should have been denied!")
@@ -88,13 +88,13 @@ def test_rbac_enforcement():
         print("\n--- Test 2: User Role ---")
         
         # Should grant access to ^Edit Settings
-        if z.wizard._check_rbac_access("^Edit Settings", zblock.get("^Edit Settings")) == "access_granted":
+        if z.wizard._checkzRBAC_access("^Edit Settings", zblock.get("^Edit Settings")) == "access_granted":
             print("✅ ^Edit Settings: Correctly granted (has 'user' role)")
         else:
             print("❌ ^Edit Settings: Should have been granted!")
         
         # Should deny access to ^Moderator Panel
-        if z.wizard._check_rbac_access("^Moderator Panel", zblock.get("^Moderator Panel")) == "access_denied":
+        if z.wizard._checkzRBAC_access("^Moderator Panel", zblock.get("^Moderator Panel")) == "access_denied":
             print("✅ ^Moderator Panel: Correctly denied (needs admin/moderator)")
         else:
             print("❌ ^Moderator Panel: Should have been denied!")
@@ -109,13 +109,13 @@ def test_rbac_enforcement():
         print("\n--- Test 3: Admin Role (No Permissions) ---")
         
         # Should grant access to ^Moderator Panel
-        if z.wizard._check_rbac_access("^Moderator Panel", zblock.get("^Moderator Panel")) == "access_granted":
+        if z.wizard._checkzRBAC_access("^Moderator Panel", zblock.get("^Moderator Panel")) == "access_granted":
             print("✅ ^Moderator Panel: Correctly granted (has 'admin' role)")
         else:
             print("❌ ^Moderator Panel: Should have been granted!")
         
         # Should deny access to ^Delete Data (needs permission)
-        if z.wizard._check_rbac_access("^Delete Data", zblock.get("^Delete Data")) == "access_denied":
+        if z.wizard._checkzRBAC_access("^Delete Data", zblock.get("^Delete Data")) == "access_denied":
             print("✅ ^Delete Data: Correctly denied (needs data.delete permission)")
         else:
             print("❌ ^Delete Data: Should have been denied!")
@@ -127,5 +127,5 @@ def test_rbac_enforcement():
         print("\n❌ Failed to load zVaF block")
 
 if __name__ == "__main__":
-    test_rbac_enforcement()
+    testzRBAC_enforcement()
 

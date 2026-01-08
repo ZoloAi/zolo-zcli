@@ -429,14 +429,14 @@ class MenuInteraction:
         selected = options[index]
         self.logger.debug(_LOG_SELECTED, selected)
         
-        # Check for hierarchical menu (dict with _sub_items metadata)
+        # Check for hierarchical menu (dict with zSub metadata)
         if isinstance(selected, dict) and len(selected) == 1:
             item_name = list(selected.keys())[0]
             item_data = selected[item_name]
             
             # Check if this item has sub-items
-            if isinstance(item_data, dict) and "_sub_items" in item_data:
-                sub_items = item_data["_sub_items"]
+            if isinstance(item_data, dict) and "zSub" in item_data:
+                sub_items = item_data["zSub"]
                 
                 # User selected a parent item with sub-items - show sub-menu
                 display_name = item_name.lstrip('$')  # Strip $ for display

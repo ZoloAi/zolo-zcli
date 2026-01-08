@@ -57,7 +57,12 @@ class ZoloLanguageServer(LanguageServer):
         # Simple cache - in production, should check document version
         if uri not in self.parse_cache:
             try:
-                result = tokenize(content)
+                # Extract filename from URI for context-aware tokenization
+                from urllib.parse import urlparse, unquote
+                parsed_uri = urlparse(uri)
+                filename = Path(unquote(parsed_uri.path)).name if parsed_uri.path else None
+                
+                result = tokenize(content, filename=filename)
                 self.parse_cache[uri] = result
             except Exception as e:
                 logger.error(f"Parse error for {uri}: {e}")
@@ -333,8 +338,13 @@ async def publish_diagnostics(uri: str, parse_result: ParseResult):
     document = zolo_server.workspace.get_text_document(uri)
     content = document.source
     
+    # Extract filename from URI for context-aware diagnostics
+    from urllib.parse import urlparse, unquote
+    parsed_uri = urlparse(uri)
+    filename = Path(unquote(parsed_uri.path)).name if parsed_uri.path else None
+    
     # Get diagnostics from engine (includes parsing and validation)
-    diagnostics = get_all_diagnostics(content, include_style=True)
+    diagnostics = get_all_diagnostics(content, include_style=True, filename=filename)
     
     zolo_server.text_document_publish_diagnostics(
         lsp_types.PublishDiagnosticsParams(uri=uri, diagnostics=diagnostics)

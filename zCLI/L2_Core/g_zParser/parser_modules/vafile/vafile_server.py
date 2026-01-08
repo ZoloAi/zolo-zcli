@@ -21,7 +21,7 @@ Structure:
                 "type": "static|dynamic|redirect",
                 "file": "page.html",
                 "description": "...",
-                "_rbac": {require_role: "admin"} or None
+                "zRBAC": {require_role: "admin"} or None
             }
         }
     }
@@ -32,7 +32,7 @@ Route Types:
     - redirect: HTTP redirect (future)
 
 RBAC Integration:
-    Routes can have inline _rbac metadata (same as zUI):
+    Routes can have inline zRBAC metadata (same as zUI):
     - require_auth: true
     - require_role: "admin" or ["admin", "moderator"]
     - require_permission: "resource.action"
@@ -45,14 +45,14 @@ Examples:
     ...         "/admin": {
     ...             "type": "static",
     ...             "file": "admin.html",
-    ...             "_rbac": {"require_role": "admin"}
+    ...             "zRBAC": {"require_role": "admin"}
     ...         }
     ...     }
     ... }
     >>> result = parse_server_file(data, logger)
     >>> result["type"]
     "server"
-    >>> result["routes"]["/admin"]["_rbac"]
+    >>> result["routes"]["/admin"]["zRBAC"]
     {"require_role": "admin"}
 
 Integration:
@@ -141,7 +141,7 @@ def parse_server_file(
                         "type": str,
                         "file": str,
                         "description": str,
-                        "_rbac": dict or None
+                        "zRBAC": dict or None
                     }
                 }
             }
@@ -166,7 +166,7 @@ def parse_server_file(
     
     Notes:
         - Missing Meta uses defaults
-        - Routes without _rbac are public
+        - Routes without zRBAC are public
         - RBAC metadata is preserved for router.py
         - Session parameter reserved for future session-aware parsing
     """

@@ -1,7 +1,7 @@
 # zUI.rbac_test.yaml - RBAC Testing Demo (v1.5.4 Week 3.3)
 # Terminal mode demo - proper zCLI syntax with INLINE RBAC
-# Default: PUBLIC ACCESS (no _rbac = no restrictions)
-# Only add _rbac when you need to RESTRICT access
+# Default: PUBLIC ACCESS (no zRBAC = no restrictions)
+# Only add zRBAC when you need to RESTRICT access
 
 zVaF:
   ~Root*: ["^Login", "^Public Info", "^View Dashboard", "^Edit Settings", "^Moderator Panel", "^Delete Data", "^Admin Only", "stop"]
@@ -22,7 +22,7 @@ zVaF:
   
   # Requires authentication (any role)
   "^View Dashboard":
-    _rbac:
+    zRBAC:
       require_auth: true
     zDisplay:
       event: text
@@ -31,7 +31,7 @@ zVaF:
   
   # Requires specific role (auth implied)
   "^Edit Settings":
-    _rbac:
+    zRBAC:
       require_role: "user"
     zDisplay:
       event: text
@@ -40,7 +40,7 @@ zVaF:
   
   # Multiple roles (OR logic) - auth implied
   "^Moderator Panel":
-    _rbac:
+    zRBAC:
       require_role: ["admin", "moderator"]
     zDisplay:
       event: text
@@ -49,7 +49,7 @@ zVaF:
   
   # Role + Permission (AND logic) - auth implied
   "^Delete Data":
-    _rbac:
+    zRBAC:
       require_role: "admin"
       require_permission: "data.delete"
     zDisplay:
@@ -59,7 +59,7 @@ zVaF:
   
   # Super admin only - auth implied
   "^Admin Only":
-    _rbac:
+    zRBAC:
       require_role: "admin"
       require_permission: "system.shutdown"
     zDisplay:

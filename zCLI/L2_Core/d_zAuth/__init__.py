@@ -69,7 +69,7 @@ ARCHITECTURE
        - Local and remote authentication (via zComm)
        - 100% SESSION_KEY_ZAUTH modernization
     
-    4. auth_rbac.py (RBAC)
+    4. authzRBAC.py (RBAC)
        - Context-aware Role-Based Access Control
        - Supports all three authentication tiers
        - Dynamic role/permission checks based on active_context
@@ -85,7 +85,7 @@ ARCHITECTURE
         ├── auth_password_security.py      # Layer 1: Password hashing
         ├── auth_session_persistence.py    # Layer 2: Session storage
         ├── auth_authentication.py         # Layer 3: CORE auth logic
-        └── auth_rbac.py                   # Layer 3: RBAC
+        └── authzRBAC.py                   # Layer 3: RBAC
     
     Schema Location (v1.5.4+):
         zCLI/Schemas/zSchema.auth.yaml    # Centralized schemas directory
@@ -150,7 +150,7 @@ INTEGRATION WITH ZCLI SUBSYSTEMS
     - No raw SQL - all operations go through zData subsystem
 
 **zWizard (wizard.py):**
-    - RBAC integration: _check_rbac_access() queries auth_rbac
+    - RBAC integration: _checkzRBAC_access() queries authzRBAC
     - Access control for all zVaF menu items
     - Supports require_auth, require_role, require_permission directives
 

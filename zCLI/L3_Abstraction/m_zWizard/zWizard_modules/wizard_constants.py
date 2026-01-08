@@ -105,7 +105,7 @@ _INDENT_LEVEL_2: int = 2
 # ------------------------------------------------------------------------------
 
 # RBAC Keys
-_RBAC_KEY: str = "_rbac"
+_RBAC_KEY: str = "zRBAC"
 _RBAC_REQUIRE_AUTH: str = "require_auth"
 _RBAC_REQUIRE_ROLE: str = "require_role"
 _RBAC_REQUIRE_PERMISSION: str = "require_permission"

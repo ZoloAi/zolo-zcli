@@ -153,14 +153,14 @@ zVaF:
     "test_40_route_matching_default":
       zFunc: "&zserver_tests.test_40_route_matching_default()"
     
-    "test_41_rbac_public_access":
-      zFunc: "&zserver_tests.test_41_rbac_public_access()"
+    "test_41zRBAC_public_access":
+      zFunc: "&zserver_tests.test_41zRBAC_public_access()"
     
-    "test_42_rbac_role_required":
-      zFunc: "&zserver_tests.test_42_rbac_role_required()"
+    "test_42zRBAC_role_required":
+      zFunc: "&zserver_tests.test_42zRBAC_role_required()"
     
-    "test_43_rbac_error_page_redirect":
-      zFunc: "&zserver_tests.test_43_rbac_error_page_redirect()"
+    "test_43zRBAC_error_page_redirect":
+      zFunc: "&zserver_tests.test_43zRBAC_error_page_redirect()"
     
     "test_44_router_file_resolution":
       zFunc: "&zserver_tests.test_44_router_file_resolution()"

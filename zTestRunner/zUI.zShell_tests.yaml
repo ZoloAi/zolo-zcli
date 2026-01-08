@@ -339,8 +339,8 @@ zVaF:
     "test_97_integration_zconfig_session":
       zFunc: "&zshell_tests.test_97_integration_zconfig_session()"
 
-    "test_98_integration_zauth_rbac":
-      zFunc: "&zshell_tests.test_98_integration_zauth_rbac()"
+    "test_98_integration_zauthzRBAC":
+      zFunc: "&zshell_tests.test_98_integration_zauthzRBAC()"
 
     "test_99_integration_zdisplay_modes":
       zFunc: "&zshell_tests.test_99_integration_zdisplay_modes()"

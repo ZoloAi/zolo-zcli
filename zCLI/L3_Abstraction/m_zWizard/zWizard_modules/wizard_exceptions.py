@@ -69,7 +69,7 @@ Exception Types
   - User not authenticated (requires login)
   - Missing required role
   - Missing required permission
-- **When to Raise**: During RBAC checks in `check_rbac_access()`
+- **When to Raise**: During RBAC checks in `checkzRBAC_access()`
 - **Note**: Currently, RBAC failures return "access_denied" rather than raising
 - **Example**:
   ```python

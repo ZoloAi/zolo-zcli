@@ -116,7 +116,7 @@ export class NavigationManager {
       }
 
       // Check if this route has special modifiers (^ for bounce-back)
-      // Skip hierarchical items (objects with _sub_items)
+      // Skip hierarchical items (objects with zSub)
       const navBarItem = config.zNavBar?.find(item => {
         // Skip non-string items (hierarchical objects)
         if (typeof item !== 'string') {

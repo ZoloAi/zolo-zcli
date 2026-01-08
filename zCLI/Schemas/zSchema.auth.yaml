@@ -13,7 +13,7 @@
 #
 # LOADED BY:
 #   - auth_session_persistence.py (SessionPersistence module)
-#   - auth_rbac.py (RBAC module)
+#   - authzRBAC.py (RBAC module)
 #   - Both modules use lazy initialization (database created on demand)
 #
 # GIT SECURITY MODEL:

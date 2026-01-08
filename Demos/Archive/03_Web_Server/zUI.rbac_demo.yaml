@@ -14,7 +14,7 @@ zVaF:
   
   # Requires zTester role - WILL BE DENIED
   "^Secure Page (zTester)":
-    _rbac:
+    zRBAC:
       require_role: "zTester"
     zDisplay:
       event: text

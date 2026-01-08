@@ -317,7 +317,7 @@ def _resolve_placeholders(
                             
                             # Apply RBAC filtering (returns clean list of accessible item names)
                             if raw_navbar:
-                                filtered_navbar = zcli.navigation._filter_navbar_by_rbac(raw_navbar)
+                                filtered_navbar = zcli.navigation._filter_navbar_byzRBAC(raw_navbar)
                                 logger.debug(f"[JSONUtils] RBAC-filtered navbar: {len(raw_navbar)} → {len(filtered_navbar)} items")
                                 return filtered_navbar
                     

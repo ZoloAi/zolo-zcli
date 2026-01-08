@@ -100,19 +100,19 @@ def example_walker_mode_menu(walker: Any) -> None:
             "label": "User Management",
             "description": "Create, edit, delete users",
             "action": "user_menu",
-            "_rbac": {"require_role": "admin"}  # Protected by RBAC
+            "zRBAC": {"require_role": "admin"}  # Protected by RBAC
         },
         "settings": {
             "label": "System Settings",
             "description": "Configure system parameters",
             "action": "settings_menu",
-            "_rbac": {"require_permission": "system.configure"}
+            "zRBAC": {"require_permission": "system.configure"}
         },
         "reports": {
             "label": "View Reports",
             "description": "Analytics and reporting",
             "action": "reports_menu",
-            "_rbac": {"require_auth": True}  # Any authenticated user
+            "zRBAC": {"require_auth": True}  # Any authenticated user
         },
         "exit": {
             "label": "Exit",
@@ -226,7 +226,7 @@ def example_transactional_wizard(zcli: Any) -> None:
 # EXAMPLE 4: RBAC-PROTECTED WIZARD - ROLE-BASED ACCESS CONTROL
 # ═══════════════════════════════════════════════════════════════════════════
 
-def example_rbac_protected_wizard(zcli: Any) -> None:
+def examplezRBAC_protected_wizard(zcli: Any) -> None:
     """
     Example 4: Wizard with role-based access control on specific steps.
     
@@ -239,21 +239,21 @@ def example_rbac_protected_wizard(zcli: Any) -> None:
     ----------------
     ```yaml
     view_dashboard:
-      _rbac:
+      zRBAC:
         require_auth: true  # Any logged-in user
       zDisplay:
         event: text
         content: "Welcome to dashboard"
     
     manage_users:
-      _rbac:
+      zRBAC:
         require_role: "admin"  # Admin only
       zDisplay:
         event: text
         content: "User management panel"
     
     delete_data:
-      _rbac:
+      zRBAC:
         require_permission: "data.delete"  # Specific permission
       zData:
         model: "users"
@@ -267,7 +267,7 @@ def example_rbac_protected_wizard(zcli: Any) -> None:
     
     workflow_items = {
         "view_dashboard": {
-            "_rbac": {
+            "zRBAC": {
                 "require_auth": True  # Any authenticated user
             },
             "type": "zDisplay",
@@ -275,7 +275,7 @@ def example_rbac_protected_wizard(zcli: Any) -> None:
         },
         
         "manage_users": {
-            "_rbac": {
+            "zRBAC": {
                 "require_role": "admin"  # Admin role required
             },
             "type": "zDisplay",
@@ -283,7 +283,7 @@ def example_rbac_protected_wizard(zcli: Any) -> None:
         },
         
         "delete_data": {
-            "_rbac": {
+            "zRBAC": {
                 "require_permission": "data.delete"  # Specific permission
             },
             "type": "zData",
@@ -524,7 +524,7 @@ def example_custom_dispatch(zcli: Any) -> None:
 # Best Practices:
 # ---------------
 # 1. **Use Transactions**: Enable `_transaction: true` for multi-step data operations
-# 2. **RBAC Everything**: Protect sensitive steps with `_rbac` metadata
+# 2. **RBAC Everything**: Protect sensitive steps with `zRBAC` metadata
 # 3. **zHat Interpolation**: Reference previous results for dynamic workflows
 # 4. **Error Callbacks**: Provide custom error handlers for graceful recovery
 # 5. **WizardHat Access**: Use attribute access (zHat.step_name) for cleaner code

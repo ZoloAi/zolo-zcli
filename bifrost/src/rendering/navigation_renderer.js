@@ -134,13 +134,13 @@ export class NavigationRenderer {
     items.forEach((item, index) => {
       const li = createListItem({ class: 'zNav-item' });
 
-      // Check if this is a hierarchical item with _sub_items
+      // Check if this is a hierarchical item with zSub
       if (typeof item === 'object' && item !== null && !item.label && !item.href) {
-        // Dict format: {"zProducts": {"_sub_items": ["zCLI", "zBifrost", ...]}}
+        // Dict format: {"zProducts": {"zSub": ["zCLI", "zBifrost", ...]}}
         const itemName = Object.keys(item)[0];
         const itemData = item[itemName];
         
-        if (itemData && typeof itemData === 'object' && itemData._sub_items && Array.isArray(itemData._sub_items)) {
+        if (itemData && typeof itemData === 'object' && itemData.zSub && Array.isArray(itemData.zSub)) {
           // This is a hierarchical menu item - render using zTheme's zDropdown component
           li.classList.add('zDropdown'); // zTheme dropdown container
           
@@ -160,7 +160,7 @@ export class NavigationRenderer {
           const dropdownMenu = createDiv({ class: 'zDropdown-menu' });
           
           // Add sub-items using zTheme's zDropdown-item class
-          itemData._sub_items.forEach(subItem => {
+          itemData.zSub.forEach(subItem => {
             const subHref = `${parentHref}/${subItem}`;
             const subLink = createLink(subHref, { class: 'zDropdown-item' });
             subLink.textContent = subItem;
@@ -210,7 +210,7 @@ export class NavigationRenderer {
           li.appendChild(dropdownMenu);
           ul.appendChild(li);
           
-          this.logger.log(`[NavigationRenderer] 🔽 Created zTheme dropdown for ${parentLabel} with ${itemData._sub_items.length} sub-items`);
+          this.logger.log(`[NavigationRenderer] 🔽 Created zTheme dropdown for ${parentLabel} with ${itemData.zSub.length} sub-items`);
           return; // Continue to next item
         }
       }

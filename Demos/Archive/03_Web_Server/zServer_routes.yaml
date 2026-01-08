@@ -47,6 +47,6 @@ routes:
     type: static
     file: "secure_page.html"
     description: "Secure content - zTester role required"
-    _rbac:
+    zRBAC:
       require_role: "zTester"
 

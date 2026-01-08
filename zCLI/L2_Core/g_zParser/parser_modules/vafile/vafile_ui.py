@@ -26,7 +26,7 @@ from . import (
     SCOPE_FILE,
     METADATA_KEY_TYPE, METADATA_KEY_ZBLOCK_COUNT, METADATA_KEY_CONSTRUCT_COUNTS,
     METADATA_KEY_TOTAL_ITEMS,
-    extract_rbac_directives,
+    extractzRBAC_directives,
     extract_ui_metadata
 )
 
@@ -269,11 +269,11 @@ def parse_ui_file(
                         "type": "zblock",
                         "items": {...},
                         "constructs": {...},
-                        "_file_rbac": {...} or None
+                        "_filezRBAC": {...} or None
                     }
                 },
                 "metadata": {...},
-                "_rbac": {...} or None  # File-level RBAC (if exists)
+                "zRBAC": {...} or None  # File-level RBAC (if exists)
             }
     
     Examples:
@@ -282,18 +282,18 @@ def parse_ui_file(
         ...     "Main Menu": {
         ...         "Add User": {"zFunc": "add_user"},
         ...         "Delete User": {
-        ...             "_rbac": {"require_role": "admin"},
+        ...             "zRBAC": {"require_role": "admin"},
         ...             "zFunc": "delete_user"
         ...         }
         ...     }
         ... }
         >>> logger = get_logger()
         >>> result = parse_ui_file(data, logger, file_path="zUI.users.yaml")
-        >>> result["_rbac"]
+        >>> result["zRBAC"]
         {"require_role": "user"}
-        >>> result["zblocks"]["Main Menu"]["items"]["Add User"]["_rbac"]
+        >>> result["zblocks"]["Main Menu"]["items"]["Add User"]["zRBAC"]
         None  # Inherits from file-level
-        >>> result["zblocks"]["Main Menu"]["items"]["Delete User"]["_rbac"]
+        >>> result["zblocks"]["Main Menu"]["items"]["Delete User"]["zRBAC"]
         {"require_role": "admin"}  # Inline RBAC overrides
     
     External Usage:
@@ -305,16 +305,16 @@ def parse_ui_file(
     Notes:
         - Signature stability is CRITICAL for external usage
         - File-level RBAC applies to all items (unless overridden)
-        - Inline _rbac in items overrides file-level RBAC
+        - Inline zRBAC in items overrides file-level RBAC
         - Default behavior: PUBLIC ACCESS (no RBAC = accessible to all)
         - zBlocks must be dictionaries (validated)
         - Metadata includes zBlock count, construct counts, total items
     
     See Also:
-        - extract_rbac_directives: Extracts file-level RBAC
+        - extractzRBAC_directives: Extracts file-level RBAC
         - parse_ui_zblock: Parses individual zBlocks
         - parser_file.py: External usage
-        - auth_rbac.py: Verifies RBAC during execution
+        - authzRBAC.py: Verifies RBAC during execution
     """
     logger.framework.debug(LOG_MSG_PARSING_UI)
 
@@ -326,13 +326,13 @@ def parse_ui_file(
     }
 
     # Extract file-level RBAC directives (v1.5.4 Week 3.3)
-    file_rbac, data_without_rbac = extract_rbac_directives(data, logger, scope=SCOPE_FILE)
-    if file_rbac:
-        parsed_ui[DICT_KEY_RBAC] = file_rbac
-        logger.framework.debug(LOG_MSG_FILE_RBAC_FOUND, file_rbac)
+    filezRBAC, data_withoutzRBAC = extractzRBAC_directives(data, logger, scope=SCOPE_FILE)
+    if filezRBAC:
+        parsed_ui[DICT_KEY_RBAC] = filezRBAC
+        logger.framework.debug(LOG_MSG_FILE_RBAC_FOUND, filezRBAC)
 
     # Process each zBlock (menu section) using cleaned data
-    for zblock_name, zblock_data in data_without_rbac.items():
+    for zblock_name, zblock_data in data_withoutzRBAC.items():
         if not isinstance(zblock_data, dict):
             # Enhanced error message with clear fix suggestion
             logger.error(
@@ -362,7 +362,7 @@ def parse_ui_file(
         logger.debug(LOG_MSG_PROCESSING_ZBLOCK, zblock_name)
 
         # Parse zBlock content (with file-level RBAC passed down)
-        parsed_zblock = parse_ui_zblock(zblock_name, zblock_data, logger, session, file_rbac=file_rbac)
+        parsed_zblock = parse_ui_zblock(zblock_name, zblock_data, logger, session, filezRBAC=filezRBAC)
         parsed_ui[DICT_KEY_ZBLOCKS][zblock_name] = parsed_zblock
 
     # Extract UI metadata
@@ -377,7 +377,7 @@ def parse_ui_zblock(
     zblock_data: Dict[str, Any],
     logger: Any,
     session: Optional[Dict[str, Any]] = None,
-    file_rbac: Optional[Dict[str, Any]] = None
+    filezRBAC: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """
     Parse individual UI zBlock with validation and RBAC directives (v1.5.4 Week 3.3).
@@ -387,7 +387,7 @@ def parse_ui_zblock(
     
     RBAC Processing:
         - File-level RBAC is inherited by all items (unless overridden)
-        - Inline _rbac in an item overrides file-level RBAC
+        - Inline zRBAC in an item overrides file-level RBAC
         - If no RBAC is specified, the item is PUBLIC (default behavior)
     
     Args:
@@ -395,7 +395,7 @@ def parse_ui_zblock(
         zblock_data: Dictionary of items in the zBlock
         logger: Logger instance for diagnostic output
         session: Optional session dict (reserved for future use)
-        file_rbac: Optional file-level RBAC directives (inherited from parent)
+        filezRBAC: Optional file-level RBAC directives (inherited from parent)
     
     Returns:
         Dict[str, Any]: Parsed zBlock structure with format:
@@ -410,28 +410,28 @@ def parse_ui_zblock(
                     "zLink": [list of item names],
                     ...
                 },
-                "_file_rbac": {...} or None
+                "_filezRBAC": {...} or None
             }
     
     Examples:
         >>> zblock_data = {
         ...     "Add User": {"zFunc": "add_user"},
         ...     "Delete User": {
-        ...         "_rbac": {"require_role": "admin"},
+        ...         "zRBAC": {"require_role": "admin"},
         ...         "zFunc": "delete_user"
         ...     }
         ... }
-        >>> file_rbac = {"require_role": "user"}
+        >>> filezRBAC = {"require_role": "user"}
         >>> logger = get_logger()
-        >>> result = parse_ui_zblock("Admin", zblock_data, logger, file_rbac=file_rbac)
-        >>> result["_file_rbac"]
+        >>> result = parse_ui_zblock("Admin", zblock_data, logger, filezRBAC=filezRBAC)
+        >>> result["_filezRBAC"]
         {"require_role": "user"}
         >>> "Add User" in result["items"]
         True
     
     Notes:
         - All items in zBlock are processed
-        - Inline _rbac is extracted and stored separately
+        - Inline zRBAC is extracted and stored separately
         - UI construct type is identified for each dict item
         - Construct lists track which items use which constructs
     
@@ -457,8 +457,8 @@ def parse_ui_zblock(
     }
 
     # Store file-level RBAC (inherited from parent)
-    if file_rbac:
-        parsed_zblock[DICT_KEY_FILE_RBAC] = file_rbac
+    if filezRBAC:
+        parsed_zblock[DICT_KEY_FILE_RBAC] = filezRBAC
 
     # Process each item in the zBlock
     # RBAC is now INLINE in the item data (v1.5.4 Week 3.3)
@@ -470,11 +470,11 @@ def parse_ui_zblock(
         # zKeys can be strings (zFunc, zLink), lists (menus), or dicts (zWizard, zDialog)
         # Accept all types - validation happens in dispatch
 
-        # Check if item already has inline _rbac
-        inline_rbac = None
+        # Check if item already has inline zRBAC
+        inlinezRBAC = None
         if isinstance(item_data, dict) and DICT_KEY_RBAC in item_data:
-            inline_rbac = item_data.pop(DICT_KEY_RBAC)  # Extract and remove from data
-            logger.framework.debug(LOG_MSG_INLINE_RBAC_FOUND, item_name, inline_rbac)
+            inlinezRBAC = item_data.pop(DICT_KEY_RBAC)  # Extract and remove from data
+            logger.framework.debug(LOG_MSG_INLINE_RBAC_FOUND, item_name, inlinezRBAC)
 
         # Identify UI construct type (only for dict items)
         construct_type = None
@@ -489,10 +489,10 @@ def parse_ui_zblock(
         
         # Apply RBAC: Default is PUBLIC ACCESS (no restrictions)
         # Only apply RBAC if explicitly specified
-        if inline_rbac is not None:
+        if inlinezRBAC is not None:
             # Item has explicit inline RBAC - use it
-            parsed_item[DICT_KEY_RBAC] = inline_rbac
-            logger.framework.debug(LOG_MSG_INLINE_RBAC_APPLIED, item_name, inline_rbac)
+            parsed_item[DICT_KEY_RBAC] = inlinezRBAC
+            logger.framework.debug(LOG_MSG_INLINE_RBAC_APPLIED, item_name, inlinezRBAC)
         else:
             # No inline RBAC = public access (default behavior)
             logger.debug(LOG_MSG_PUBLIC_ACCESS, item_name)

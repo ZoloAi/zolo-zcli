@@ -8,7 +8,7 @@ This demo tests the declarative RBAC system with `!` prefix directives.
 cd Demos/rbac_demo
 
 # Test 1: Anonymous user (not logged in)
-python test_rbac.py
+python testzRBAC.py
 
 # Test 2: User role
 python test_user.py
@@ -19,7 +19,7 @@ python test_admin.py
 
 ## RBAC Patterns Demonstrated
 
-**Default**: PUBLIC ACCESS (no `_rbac` = no restrictions)
+**Default**: PUBLIC ACCESS (no `zRBAC` = no restrictions)
 
 ### Public Access (No RBAC)
 ```yaml
@@ -32,7 +32,7 @@ python test_admin.py
 ### Authentication Required
 ```yaml
 "^View Dashboard":
-  _rbac:
+  zRBAC:
     require_auth: true
   zDisplay:
     event: text
@@ -42,7 +42,7 @@ python test_admin.py
 ### Specific Role (auth implied)
 ```yaml
 "^Edit Settings":
-  _rbac:
+  zRBAC:
     require_role: "user"
   zDisplay:
     event: text
@@ -52,7 +52,7 @@ python test_admin.py
 ### Multiple Roles (OR Logic, auth implied)
 ```yaml
 "^Moderator Panel":
-  _rbac:
+  zRBAC:
     require_role: ["admin", "moderator"]
   zDisplay:
     event: text
@@ -62,7 +62,7 @@ python test_admin.py
 ### Role + Permission (AND Logic, auth implied)
 ```yaml
 "^Delete Data":
-  _rbac:
+  zRBAC:
     require_role: "admin"
     require_permission: "data.delete"
   zDisplay:
@@ -108,7 +108,7 @@ z.auth.grant_permission("admin001", "system.shutdown")
 ## Files
 
 - `zUI.rbac_test.yaml` - Test UI with RBAC directives (uses proper zDisplay events)
-- `test_rbac.py` - Test as anonymous user
+- `testzRBAC.py` - Test as anonymous user
 - `test_user.py` - Test as regular user
 - `test_admin.py` - Test as admin (no permissions)
 

@@ -173,7 +173,7 @@ INTEGRATION WITH OTHER MODULES
     - login() returns persist flag for SessionPersistence to handle
     - logout() can delete persistent sessions from SQLite database
 
-**auth_rbac.py:**
+**authzRBAC.py:**
     - RBAC module queries active_context to determine authorization
     - Context-aware role/permission checks across all three tiers
     - Dual-mode uses OR logic (either context can grant access)
@@ -439,7 +439,7 @@ class Authentication:
     **Integration:**
         - auth_password_security: Password hashing (bcrypt)
         - auth_session_persistence: SQLite persistent sessions
-        - auth_rbac: Context-aware role/permission checks
+        - authzRBAC: Context-aware role/permission checks
         - zConfig: Session structure constants
         - zDisplay: Authentication UI events
         - zComm: Remote API authentication
@@ -1361,7 +1361,7 @@ class Authentication:
             # Now: RBAC uses OR logic (either context can grant access)
         
         Integration:
-            - auth_rbac: RBAC module queries active_context for role/permission checks
+            - authzRBAC: RBAC module queries active_context for role/permission checks
             - Dual-mode: RBAC uses OR logic (either zSession OR app can grant access)
         """
         if not self._check_session():

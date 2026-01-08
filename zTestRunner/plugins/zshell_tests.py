@@ -148,7 +148,7 @@ __all__ = [
     "test_95_integration_zdata_wizard",
     "test_96_integration_zfunc_plugin",
     "test_97_integration_zconfig_session",
-    "test_98_integration_zauth_rbac",
+    "test_98_integration_zauthzRBAC",
     "test_99_integration_zdisplay_modes",
     "test_100_integration_walker_shell",
     # Display
@@ -1321,7 +1321,7 @@ def test_96_integration_zfunc_plugin(zcli: Optional[Any] = None, context: Option
 def test_97_integration_zconfig_session(zcli: Optional[Any] = None, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     return _store_result(zcli, "Integration: zConfig + Session", "PASSED", "Test placeholder - to be implemented")
 
-def test_98_integration_zauth_rbac(zcli: Optional[Any] = None, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+def test_98_integration_zauthzRBAC(zcli: Optional[Any] = None, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     return _store_result(zcli, "Integration: zAuth + RBAC", "PASSED", "Test placeholder - to be implemented")
 
 def test_99_integration_zdisplay_modes(zcli: Optional[Any] = None, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:

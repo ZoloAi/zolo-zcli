@@ -1843,7 +1843,7 @@ def test_real_zlink_session_updates(zcli: Optional[Any] = None, context: Optiona
         return {"status": "ERROR", "message": f"Session updates test failed: {str(e)}"}
 
 
-def test_real_zlink_rbac_integration(zcli: Optional[Any] = None, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+def test_real_zlinkzRBAC_integration(zcli: Optional[Any] = None, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Test zLink RBAC permission checking integration."""
     if not zcli:
         zcli = zCLI({'zMode': 'Terminal', 'zLoggerLevel': 'ERROR'})

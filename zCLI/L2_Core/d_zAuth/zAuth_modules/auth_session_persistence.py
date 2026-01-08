@@ -45,7 +45,7 @@ Table: sessions
         - last_accessed: Timestamp of last access (updated on restore)
 
 Table: user_permissions
-    - Managed by RBAC module (auth_rbac.py)
+    - Managed by RBAC module (authzRBAC.py)
     - Shared database for unified auth operations
 
 SECURITY MODEL
@@ -307,7 +307,7 @@ class SessionPersistence:
     
     Integration:
         - Used by auth_authentication.py for login/logout
-        - Shares database with auth_rbac.py (permissions)
+        - Shares database with authzRBAC.py (permissions)
         - Respects SESSION_KEY_ZAUTH from zConfig
         - Coordinates with three-tier authentication model
     

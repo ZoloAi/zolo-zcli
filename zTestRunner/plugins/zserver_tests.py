@@ -1164,7 +1164,7 @@ def test_40_route_matching_default(zcli: Optional[Any] = None, context: Optional
         return _store_result(zcli, "Routing: Default Fallback", "ERROR", f"Exception: {str(e)}")
 
 
-def test_41_rbac_public_access(zcli: Optional[Any] = None, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+def test_41zRBAC_public_access(zcli: Optional[Any] = None, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Test: Public access (no RBAC)"""
     try:
         from zCLI.subsystems.zServer.zServer_modules.router import HTTPRouter
@@ -1197,7 +1197,7 @@ def test_41_rbac_public_access(zcli: Optional[Any] = None, context: Optional[Dic
         return _store_result(zcli, "RBAC: Public Access", "ERROR", f"Exception: {str(e)}")
 
 
-def test_42_rbac_role_required(zcli: Optional[Any] = None, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+def test_42zRBAC_role_required(zcli: Optional[Any] = None, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Test: Role required RBAC"""
     try:
         from zCLI.subsystems.zServer.zServer_modules.router import HTTPRouter
@@ -1213,7 +1213,7 @@ def test_42_rbac_role_required(zcli: Optional[Any] = None, context: Optional[Dic
                 "/admin": {
                     "type": "static",
                     "file": "admin.html",
-                    "_rbac": {"require_role": "admin"}
+                    "zRBAC": {"require_role": "admin"}
                 }
             }
         }
@@ -1239,7 +1239,7 @@ def test_42_rbac_role_required(zcli: Optional[Any] = None, context: Optional[Dic
         return _store_result(zcli, "RBAC: Role Required", "ERROR", f"Exception: {str(e)}")
 
 
-def test_43_rbac_error_page_redirect(zcli: Optional[Any] = None, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+def test_43zRBAC_error_page_redirect(zcli: Optional[Any] = None, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Test: RBAC error page redirect"""
     try:
         from zCLI.subsystems.zServer.zServer_modules.router import HTTPRouter
@@ -1255,7 +1255,7 @@ def test_43_rbac_error_page_redirect(zcli: Optional[Any] = None, context: Option
                 "/dashboard": {
                     "type": "static",
                     "file": "dashboard.html",
-                    "_rbac": {"require_auth": True}
+                    "zRBAC": {"require_auth": True}
                 }
             }
         }

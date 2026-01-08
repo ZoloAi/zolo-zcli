@@ -353,7 +353,7 @@ zAuth/
     ├── auth_password_security.py   # bcrypt hashing/verification
     ├── auth_session_persistence.py # SQLite session storage
     ├── auth_authentication.py      # Three-tier auth logic (CORE)
-    └── auth_rbac.py               # Context-aware RBAC
+    └── authzRBAC.py               # Context-aware RBAC
 ```
 
 **Facade Pattern:**

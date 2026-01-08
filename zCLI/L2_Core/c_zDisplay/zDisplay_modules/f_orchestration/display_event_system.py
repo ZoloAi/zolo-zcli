@@ -1297,7 +1297,7 @@ class zSystem:
         
         # RBAC-FILTERED SIDEBAR: Filter panels based on user's role
         # Load each panel and check RBAC access before including in sidebar
-        from zCLI.L3_Abstraction.m_zWizard.zWizard_modules.wizard_rbac import check_rbac_access, RBAC_ACCESS_GRANTED
+        from zCLI.L3_Abstraction.m_zWizard.zWizard_modules.wizardzRBAC import checkzRBAC_access, RBAC_ACCESS_GRANTED
         
         accessible_panels = []
         panel_metadata = {}
@@ -1311,7 +1311,7 @@ class zSystem:
                 panel_block = panel_file.get(panel_name, {})
                 
                 # Check RBAC access for this panel
-                rbac_result = check_rbac_access(
+                rbac_result = checkzRBAC_access(
                     key=panel_name,
                     value=panel_block,
                     zcli=_zcli,
@@ -1463,7 +1463,7 @@ class zSystem:
                 # Iterate through the block's items and execute each one
                 # This ensures Panel_Header, Panel_Content, etc. are all rendered
                 for key, value in panel_block_content.items():
-                    # Skip metadata keys like _rbac, _data, _zClass, etc.
+                    # Skip metadata keys like zRBAC, _data, _zClass, etc.
                     if key.startswith('_'):
                         continue
                     
