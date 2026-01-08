@@ -1722,8 +1722,16 @@ def _build_nested_dict(structured_lines: list[dict], start_idx: int, current_ind
         match = TYPE_HINT_PATTERN.match(key)
         clean_key = match.group(1) if match else key
         
+        # UI event shorthands are exempt from duplicate key checks
+        # These represent sequential UI elements, not dictionary keys
+        is_ui_event_shorthand = (
+            clean_key in ['zText', 'zImage', 'zMD', 'zURL', 'zUL', 'zOL', 'zTable'] or
+            (clean_key.startswith('zH') and len(clean_key) == 3 and clean_key[2].isdigit())
+        )
+        
         # Check for duplicate keys (STRICT MODE - Phase 4.7)
-        if clean_key in seen_keys:
+        # Exempt UI event shorthands (they represent sequences, not dict keys)
+        if not is_ui_event_shorthand and clean_key in seen_keys:
             first_line, first_key = seen_keys[clean_key]
             raise ZoloParseError(
                 f"Duplicate key '{clean_key}' found at line {line_number}.\n"
@@ -1732,6 +1740,7 @@ def _build_nested_dict(structured_lines: list[dict], start_idx: int, current_ind
                 f"Hint: Did you mean to use a different key name?"
             )
         
+        # Track seen keys (even UI shorthands, for consistency)
         seen_keys[clean_key] = (line_number, key)
         
         # Check if next line is a child (more indented)
@@ -1746,7 +1755,20 @@ def _build_nested_dict(structured_lines: list[dict], start_idx: int, current_ind
         if has_children:
             # Recursively parse children
             child_dict = _build_nested_dict(structured_lines, i + 1, child_indent)
-            result[key] = child_dict
+            
+            # Override Python dict behavior: Use suffix for duplicate UI event keys
+            # This preserves both the values AND their interleaved position
+            if is_ui_event_shorthand and key in result:
+                # Key already exists - add numeric suffix to preserve order
+                counter = 2
+                suffixed_key = f"{key}__dup{counter}"
+                while suffixed_key in result:
+                    counter += 1
+                    suffixed_key = f"{key}__dup{counter}"
+                result[suffixed_key] = child_dict
+            else:
+                # Normal case - set/overwrite key
+                result[key] = child_dict
             
             # Skip all child lines (find next line at current indent or less)
             i += 1
@@ -1756,10 +1778,23 @@ def _build_nested_dict(structured_lines: list[dict], start_idx: int, current_ind
             # Leaf node - detect value type or use multi-line string
             if line_info.get('is_multiline', False):
                 # Multi-line string is already processed, use as-is
-                result[key] = value
+                typed_value = value
             else:
                 # Detect value type (including \n escape sequences)
                 typed_value = _detect_value_type(value) if value else ''
+            
+            # Override Python dict behavior: Use suffix for duplicate UI event keys
+            # This preserves both the values AND their interleaved position
+            if is_ui_event_shorthand and key in result:
+                # Key already exists - add numeric suffix to preserve order
+                counter = 2
+                suffixed_key = f"{key}__dup{counter}"
+                while suffixed_key in result:
+                    counter += 1
+                    suffixed_key = f"{key}__dup{counter}"
+                result[suffixed_key] = typed_value
+            else:
+                # Normal case - set/overwrite key
                 result[key] = typed_value
             i += 1
     

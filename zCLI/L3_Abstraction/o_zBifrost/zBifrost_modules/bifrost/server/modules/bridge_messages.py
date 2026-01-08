@@ -695,9 +695,17 @@ class MessageHandler:
                             if key.startswith('~'):
                                 continue
                             if key in block_dict:
+                                # v1.5.17: Send raw structure - dispatcher is mode-aware
+                                # Terminal mode: Dispatcher expands shorthands during execution
+                                # Bifrost mode: Dispatcher skips expansion, sends raw to client
                                 chunk_data[key] = block_dict[key]
                                 # DEBUG: Log what's being sent for this key
                                 self.logger.info(f"[MessageHandler] 🔍 chunk_data[{key}] type: {type(chunk_data[key])}, keys: {list(chunk_data[key].keys()) if isinstance(chunk_data[key], dict) else 'N/A'}")
+                        
+                        # NOTE: We send suffixed keys as-is to Bifrost (e.g., zText__dup2)
+                        # The Bifrost client will strip the __dup{N} suffix when determining 
+                        # which renderer to use, allowing duplicate UI events to render correctly
+                        self.logger.info(f"[MessageHandler] ✅ Sending chunk data with suffixed keys to Bifrost")
                         
                         # Extract and send special zDisplay events (zDash, etc.) as standalone messages
                         # before sending the chunk. These events need special frontend handling.

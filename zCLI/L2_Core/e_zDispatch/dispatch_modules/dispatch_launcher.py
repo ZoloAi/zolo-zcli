@@ -377,10 +377,12 @@ class CommandLauncher:
             return None
         
         result = None
-        for item in zHorizontal:
+        for i, item in enumerate(zHorizontal):
+            self.logger.framework.debug(f"[zCLI _launch_list] Processing item {i+1}/{len(zHorizontal)}: {type(item)}")
             # Recursively launch each item (supports dict, str, or nested list)
             if isinstance(item, dict):
                 result = self._launch_dict(item, context, walker)
+                self.logger.framework.debug(f"[zCLI _launch_list] Item {i+1} result: {result}")
             elif isinstance(item, str):
                 result = self._launch_string(item, context, walker)
             elif isinstance(item, list):
@@ -388,6 +390,7 @@ class CommandLauncher:
             
             # Check for navigation signals (stop processing if user wants to go back/exit)
             if result in ('zBack', 'exit', 'stop', 'error'):
+                self.logger.framework.warning(f"[zCLI _launch_list] Stopping at item {i+1} due to signal: {result}")
                 return result
         
         return result
@@ -646,418 +649,439 @@ class CommandLauncher:
                     zHorizontal = expanded_wizard
                     is_subsystem_call = False
         
-        # SECOND: Pre-check - Skip shorthand loop if multiple UI event keys (implicit sequence)
-        non_meta_keys = [k for k in zHorizontal.keys() if not k.startswith('_')]
-        ui_event_count = 0
-        for key in non_meta_keys:
-            if key.startswith('zH') and len(key) == 3 and key[2].isdigit():
-                ui_event_count += 1
-            elif key in ['zText', 'zMD', 'zImage', 'zURL']:
-                ui_event_count += 1
+        # SECOND & THIRD: Shorthand expansion (Terminal mode only)
+        # In Bifrost mode, skip shorthand expansion - let raw structure pass through to client
+        if not is_bifrost_mode(self.zcli.session):
+            # SECOND: Pre-check - Skip shorthand loop if multiple UI event keys (implicit sequence)
+            non_meta_keys = [k for k in zHorizontal.keys() if not k.startswith('_')]
+            ui_event_count = 0
+            for key in non_meta_keys:
+                if key.startswith('zH') and len(key) == 3 and key[2].isdigit():
+                    ui_event_count += 1
+                elif key in ['zText', 'zMD', 'zImage', 'zURL']:
+                    ui_event_count += 1
         
-        # Skip shorthand loop if ALL keys are UI events (let organizational handler process as sequence)
-        skip_shorthand_loop = (ui_event_count >= 2 and ui_event_count == len(non_meta_keys))
+            # Skip shorthand loop if ALL keys are UI events (let organizational handler process as sequence)
+            skip_shorthand_loop = (ui_event_count >= 2 and ui_event_count == len(non_meta_keys))
         
-        # THIRD: Check for regular shorthand keys (zUL, zOL, zImage, zText, etc.)
-        for key in list(zHorizontal.keys()):
-            # Skip UI event keys if implicit sequence detected (let it fall through to organizational handler)
-            if skip_shorthand_loop:
-                is_ui_event = (
-                    (key.startswith('zH') and len(key) == 3 and key[2].isdigit()) or
-                    key in ['zText', 'zMD', 'zImage', 'zURL']
-                )
-                if is_ui_event:
-                    continue
+            # THIRD: Check for regular shorthand keys (zUL, zOL, zImage, zText, etc.)
+            for key in list(zHorizontal.keys()):
+                # Skip UI event keys if implicit sequence detected (let it fall through to organizational handler)
+                if skip_shorthand_loop:
+                    # Strip __dup{N} suffix when checking (LSP duplicate key handling)
+                    clean_key_check = key.split('__dup')[0] if '__dup' in key else key
+                    is_ui_event = (
+                        (clean_key_check.startswith('zH') and len(clean_key_check) == 3 and clean_key_check[2].isdigit()) or
+                        clean_key_check in ['zText', 'zMD', 'zImage', 'zURL']
+                    )
+                    if is_ui_event:
+                        continue
             
-            # Check if there are non-UI-event siblings (organizational containers)
-            # If yes, expand in-place to preserve them
-            has_organizational_siblings = False
-            for sibling_key in non_meta_keys:
-                if sibling_key == key:
-                    continue
-                is_sibling_ui_event = (
-                    (sibling_key.startswith('zH') and len(sibling_key) == 3 and sibling_key[2].isdigit()) or
-                    sibling_key in ['zText', 'zMD', 'zImage', 'zURL', 'zUL', 'zOL', 'zTable']
-                )
-                if not is_sibling_ui_event:
-                    has_organizational_siblings = True
-                    break
+                # Check if there are non-UI-event siblings (organizational containers)
+                # If yes, expand in-place to preserve them
+                # ALSO check if ALL keys are UI events (pure implicit sequence)
+                has_organizational_siblings = False
+                all_siblings_are_ui_events = True
+                for sibling_key in non_meta_keys:
+                    # Strip __dup{N} suffix when checking (LSP duplicate key handling)
+                    clean_sibling_key = sibling_key.split('__dup')[0] if '__dup' in sibling_key else sibling_key
+                    is_sibling_ui_event = (
+                        (clean_sibling_key.startswith('zH') and len(clean_sibling_key) == 3 and clean_sibling_key[2].isdigit()) or
+                        clean_sibling_key in ['zText', 'zMD', 'zImage', 'zURL', 'zUL', 'zOL', 'zTable']
+                    )
+                    if not is_sibling_ui_event:
+                        has_organizational_siblings = True
+                        all_siblings_are_ui_events = False
+                        break
+                
+                # If ALL siblings are UI events (pure implicit sequence), SKIP early expansion
+                # Let _handle_organizational_structure handle the full sequence
+                if all_siblings_are_ui_events and len(non_meta_keys) >= 2:
+                    continue  # Skip this key, don't expand it here
             
-            if key.startswith('zH') and len(key) == 3 and key[2].isdigit():
-                indent_level = int(key[2])
-                if 1 <= indent_level <= 6:
-                    # Extract the header parameters
-                    header_params = zHorizontal[key]
-                    if isinstance(header_params, dict):
+                # Strip __dup{N} suffix when checking (LSP duplicate key handling)
+                clean_key = key.split('__dup')[0] if '__dup' in key else key
+                
+                if clean_key.startswith('zH') and len(clean_key) == 3 and clean_key[2].isdigit():
+                    indent_level = int(clean_key[2])
+                    if 1 <= indent_level <= 6:
+                        # Extract the header parameters
+                        header_params = zHorizontal[key]
+                        if isinstance(header_params, dict):
+                            if has_organizational_siblings:
+                                # Expand in-place to preserve organizational siblings
+                                zHorizontal[key] = {
+                                    KEY_ZDISPLAY: {
+                                        'event': 'header',
+                                        'indent': indent_level,
+                                        **header_params
+                                    }
+                                }
+                                # Continue to next key (don't break)
+                            else:
+                                # Replace entire dict (single UI event, no siblings)
+                                zHorizontal = {
+                                    KEY_ZDISPLAY: {
+                                        'event': 'header',
+                                        'indent': indent_level,
+                                        **header_params
+                                    }
+                                }
+                                # Mark as subsystem call to skip other detection
+                                is_subsystem_call = True
+                                break
+                elif clean_key == 'zText':
+                    # Extract the text parameters
+                    # Handle both regular and suffixed keys (LSP duplicate strategy)
+                    text_params = zHorizontal[key]
+                    if isinstance(text_params, dict):
                         if has_organizational_siblings:
                             # Expand in-place to preserve organizational siblings
                             zHorizontal[key] = {
                                 KEY_ZDISPLAY: {
-                                    'event': 'header',
-                                    'indent': indent_level,
-                                    **header_params
+                                    'event': 'text',
+                                    **text_params
                                 }
                             }
-                            # Continue to next key (don't break)
+                            # Continue to next key
                         else:
                             # Replace entire dict (single UI event, no siblings)
                             zHorizontal = {
                                 KEY_ZDISPLAY: {
-                                    'event': 'header',
-                                    'indent': indent_level,
-                                    **header_params
+                                    'event': 'text',
+                                    **text_params
                                 }
                             }
                             # Mark as subsystem call to skip other detection
                             is_subsystem_call = True
                             break
-            elif key == 'zText':
-                # Extract the text parameters
-                text_params = zHorizontal[key]
-                if isinstance(text_params, dict):
-                    if has_organizational_siblings:
-                        # Expand in-place to preserve organizational siblings
-                        zHorizontal[key] = {
-                            KEY_ZDISPLAY: {
-                                'event': 'text',
-                                **text_params
-                            }
-                        }
-                        # Continue to next key
-                    else:
-                        # Replace entire dict (single UI event, no siblings)
-                        zHorizontal = {
-                            KEY_ZDISPLAY: {
-                                'event': 'text',
-                                **text_params
-                            }
-                        }
-                        # Mark as subsystem call to skip other detection
-                        is_subsystem_call = True
-                        break
-            elif key == 'zUL':
-                # Unordered list (bullet style)
-                list_params = zHorizontal[key]
-                if isinstance(list_params, dict):
-                    # NEW: Check for plural shorthand (zURLs, zTexts, zH1s-zH6s, zImages, zMDs)
-                    # This is more DRY than items list for homogeneous lists
-                    plural_shorthands = ['zURLs', 'zTexts', 'zH1s', 'zH2s', 'zH3s', 'zH4s', 'zH5s', 'zH6s', 'zImages', 'zMDs']
-                    found_plural = None
-                    for plural_key in plural_shorthands:
-                        if plural_key in list_params:
-                            found_plural = plural_key
-                            break
+                elif clean_key == 'zUL':
+                    # Unordered list (bullet style)
+                    list_params = zHorizontal[key]
+                    if isinstance(list_params, dict):
+                        # NEW: Check for plural shorthand (zURLs, zTexts, zH1s-zH6s, zImages, zMDs)
+                        # This is more DRY than items list for homogeneous lists
+                        plural_shorthands = ['zURLs', 'zTexts', 'zH1s', 'zH2s', 'zH3s', 'zH4s', 'zH5s', 'zH6s', 'zImages', 'zMDs']
+                        found_plural = None
+                        for plural_key in plural_shorthands:
+                            if plural_key in list_params:
+                                found_plural = plural_key
+                                break
                     
-                    if found_plural:
-                        # Plural shorthand detected: expand to implicit wizard with semantic keys
-                        plural_items = list_params[found_plural]
-                        if isinstance(plural_items, dict):
-                            expanded_wizard = {}
-                            singular_event = None
+                        if found_plural:
+                            # Plural shorthand detected: expand to implicit wizard with semantic keys
+                            plural_items = list_params[found_plural]
+                            if isinstance(plural_items, dict):
+                                expanded_wizard = {}
+                                singular_event = None
                             
-                            # Determine event type from plural key
-                            if found_plural == 'zURLs':
-                                singular_event = 'zURL'
-                            elif found_plural == 'zTexts':
-                                singular_event = 'text'
-                            elif found_plural == 'zImages':
-                                singular_event = 'image'
-                            elif found_plural == 'zMDs':
-                                singular_event = 'rich_text'
-                            elif found_plural.startswith('zH') and found_plural.endswith('s'):
-                                # zH1s, zH2s, etc.
-                                indent_level = int(found_plural[2])
-                                if 1 <= indent_level <= 6:
-                                    singular_event = ('header', indent_level)
-                            
-                            if singular_event:
-                                for item_key, item_params in plural_items.items():
-                                    if isinstance(item_params, dict):
-                                        if isinstance(singular_event, tuple):
-                                            # Header event with indent level
-                                            event_type, indent = singular_event
-                                            expanded_wizard[item_key] = {KEY_ZDISPLAY: {'event': event_type, 'indent': indent, **item_params}}
-                                        else:
-                                            expanded_wizard[item_key] = {KEY_ZDISPLAY: {'event': singular_event, **item_params}}
-                                
-                                if expanded_wizard:
-                                    # Apply _zClass to each item if present
-                                    if '_zClass' in list_params:
-                                        for item_key in expanded_wizard:
-                                            if KEY_ZDISPLAY in expanded_wizard[item_key]:
-                                                expanded_wizard[item_key][KEY_ZDISPLAY]['_zClass'] = list_params['_zClass']
-                                    
-                                    zHorizontal = expanded_wizard
-                                    # Will be treated as implicit wizard (multiple keys)
-                                    is_subsystem_call = False
-                                    break
-                    
-                    # Check if items contain shorthands (zURL, zImage, etc.)
-                    items = list_params.get('items', [])
-                    has_shorthands = any(
-                        isinstance(item, dict) and len(item) == 1 and 
-                        list(item.keys())[0] in ['zURL', 'zImage', 'zText', 'zH1', 'zH2', 'zH3', 'zH4', 'zH5', 'zH6']
-                        for item in items if isinstance(item, dict)
-                    )
-                    
-                    if has_shorthands:
-                        # Items contain shorthands: expand to implicit wizard
-                        expanded_wizard = {}
-                        for idx, item in enumerate(items):
-                            if isinstance(item, dict) and len(item) == 1:
-                                shorthand_key = list(item.keys())[0]
-                                shorthand_value = item[shorthand_key]
-                                if shorthand_key == 'zURL':
-                                    expanded_wizard[f"item_{idx}"] = {KEY_ZDISPLAY: {'event': 'zURL', **shorthand_value}}
-                                elif shorthand_key == 'zImage':
-                                    expanded_wizard[f"item_{idx}"] = {KEY_ZDISPLAY: {'event': 'image', **shorthand_value}}
-                                elif shorthand_key == 'zText':
-                                    expanded_wizard[f"item_{idx}"] = {KEY_ZDISPLAY: {'event': 'text', **shorthand_value}}
-                                elif shorthand_key.startswith('zH') and len(shorthand_key) == 3 and shorthand_key[2].isdigit():
-                                    indent_level = int(shorthand_key[2])
+                                # Determine event type from plural key
+                                if found_plural == 'zURLs':
+                                    singular_event = 'zURL'
+                                elif found_plural == 'zTexts':
+                                    singular_event = 'text'
+                                elif found_plural == 'zImages':
+                                    singular_event = 'image'
+                                elif found_plural == 'zMDs':
+                                    singular_event = 'rich_text'
+                                elif found_plural.startswith('zH') and found_plural.endswith('s'):
+                                    # zH1s, zH2s, etc.
+                                    indent_level = int(found_plural[2])
                                     if 1 <= indent_level <= 6:
-                                        expanded_wizard[f"item_{idx}"] = {KEY_ZDISPLAY: {'event': 'header', 'indent': indent_level, **shorthand_value}}
-                        
-                        if expanded_wizard:
-                            # Store _zClass in wizard context for styling (if needed)
-                            if '_zClass' in list_params:
-                                for item_key in expanded_wizard:
-                                    # Apply _zClass to each item's zDisplay
-                                    if KEY_ZDISPLAY in expanded_wizard[item_key]:
-                                        expanded_wizard[item_key][KEY_ZDISPLAY]['_zClass'] = list_params['_zClass']
+                                        singular_event = ('header', indent_level)
                             
-                            zHorizontal = expanded_wizard
-                            # Will be treated as implicit wizard (multiple keys)
-                            is_subsystem_call = False
-                            break
-                    else:
-                        # Items are simple text: use normal list display
-                        zHorizontal = {
-                            KEY_ZDISPLAY: {
-                                'event': 'list',
-                                'style': 'bullet',
-                                **list_params
-                            }
-                        }
-                        # Mark as subsystem call to skip other detection
-                        is_subsystem_call = True
-                        break
-            elif key == 'zOL':
-                # Ordered list (numbered style)
-                list_params = zHorizontal[key]
-                if isinstance(list_params, dict):
-                    # NEW: Check for plural shorthand (zURLs, zTexts, zH1s-zH6s, zImages, zMDs)
-                    # This is more DRY than items list for homogeneous lists
-                    plural_shorthands = ['zURLs', 'zTexts', 'zH1s', 'zH2s', 'zH3s', 'zH4s', 'zH5s', 'zH6s', 'zImages', 'zMDs']
-                    found_plural = None
-                    for plural_key in plural_shorthands:
-                        if plural_key in list_params:
-                            found_plural = plural_key
-                            break
-                    
-                    if found_plural:
-                        # Plural shorthand detected: expand to implicit wizard with semantic keys
-                        plural_items = list_params[found_plural]
-                        if isinstance(plural_items, dict):
-                            expanded_wizard = {}
-                            singular_event = None
-                            
-                            # Determine event type from plural key
-                            if found_plural == 'zURLs':
-                                singular_event = 'zURL'
-                            elif found_plural == 'zTexts':
-                                singular_event = 'text'
-                            elif found_plural == 'zImages':
-                                singular_event = 'image'
-                            elif found_plural == 'zMDs':
-                                singular_event = 'rich_text'
-                            elif found_plural.startswith('zH') and found_plural.endswith('s'):
-                                # zH1s, zH2s, etc.
-                                indent_level = int(found_plural[2])
-                                if 1 <= indent_level <= 6:
-                                    singular_event = ('header', indent_level)
-                            
-                            if singular_event:
-                                for item_key, item_params in plural_items.items():
-                                    if isinstance(item_params, dict):
-                                        if isinstance(singular_event, tuple):
-                                            # Header event with indent level
-                                            event_type, indent = singular_event
-                                            expanded_wizard[item_key] = {KEY_ZDISPLAY: {'event': event_type, 'indent': indent, **item_params}}
-                                        else:
-                                            expanded_wizard[item_key] = {KEY_ZDISPLAY: {'event': singular_event, **item_params}}
+                                if singular_event:
+                                    for item_key, item_params in plural_items.items():
+                                        if isinstance(item_params, dict):
+                                            if isinstance(singular_event, tuple):
+                                                # Header event with indent level
+                                                event_type, indent = singular_event
+                                                expanded_wizard[item_key] = {KEY_ZDISPLAY: {'event': event_type, 'indent': indent, **item_params}}
+                                            else:
+                                                expanded_wizard[item_key] = {KEY_ZDISPLAY: {'event': singular_event, **item_params}}
                                 
-                                if expanded_wizard:
-                                    # Apply _zClass to each item if present
-                                    if '_zClass' in list_params:
-                                        for item_key in expanded_wizard:
-                                            if KEY_ZDISPLAY in expanded_wizard[item_key]:
-                                                expanded_wizard[item_key][KEY_ZDISPLAY]['_zClass'] = list_params['_zClass']
+                                    if expanded_wizard:
+                                        # Apply _zClass to each item if present
+                                        if '_zClass' in list_params:
+                                            for item_key in expanded_wizard:
+                                                if KEY_ZDISPLAY in expanded_wizard[item_key]:
+                                                    expanded_wizard[item_key][KEY_ZDISPLAY]['_zClass'] = list_params['_zClass']
                                     
-                                    zHorizontal = expanded_wizard
-                                    # Will be treated as implicit wizard (multiple keys)
-                                    is_subsystem_call = False
-                                    break
+                                        zHorizontal = expanded_wizard
+                                        # Will be treated as implicit wizard (multiple keys)
+                                        is_subsystem_call = False
+                                        break
                     
-                    # Check if items contain shorthands (zURL, zImage, etc.)
-                    items = list_params.get('items', [])
-                    has_shorthands = any(
-                        isinstance(item, dict) and len(item) == 1 and 
-                        list(item.keys())[0] in ['zURL', 'zImage', 'zText', 'zH1', 'zH2', 'zH3', 'zH4', 'zH5', 'zH6']
-                        for item in items if isinstance(item, dict)
-                    )
+                        # Check if items contain shorthands (zURL, zImage, etc.)
+                        items = list_params.get('items', [])
+                        has_shorthands = any(
+                            isinstance(item, dict) and len(item) == 1 and 
+                            list(item.keys())[0] in ['zURL', 'zImage', 'zText', 'zH1', 'zH2', 'zH3', 'zH4', 'zH5', 'zH6']
+                            for item in items if isinstance(item, dict)
+                        )
                     
-                    if has_shorthands:
-                        # Items contain shorthands: expand to implicit wizard
-                        expanded_wizard = {}
-                        for idx, item in enumerate(items):
-                            if isinstance(item, dict) and len(item) == 1:
-                                shorthand_key = list(item.keys())[0]
-                                shorthand_value = item[shorthand_key]
-                                if shorthand_key == 'zURL':
-                                    expanded_wizard[f"item_{idx}"] = {KEY_ZDISPLAY: {'event': 'zURL', **shorthand_value}}
-                                elif shorthand_key == 'zImage':
-                                    expanded_wizard[f"item_{idx}"] = {KEY_ZDISPLAY: {'event': 'image', **shorthand_value}}
-                                elif shorthand_key == 'zText':
-                                    expanded_wizard[f"item_{idx}"] = {KEY_ZDISPLAY: {'event': 'text', **shorthand_value}}
-                                elif shorthand_key.startswith('zH') and len(shorthand_key) == 3 and shorthand_key[2].isdigit():
-                                    indent_level = int(shorthand_key[2])
-                                    if 1 <= indent_level <= 6:
-                                        expanded_wizard[f"item_{idx}"] = {KEY_ZDISPLAY: {'event': 'header', 'indent': indent_level, **shorthand_value}}
+                        if has_shorthands:
+                            # Items contain shorthands: expand to implicit wizard
+                            expanded_wizard = {}
+                            for idx, item in enumerate(items):
+                                if isinstance(item, dict) and len(item) == 1:
+                                    shorthand_key = list(item.keys())[0]
+                                    shorthand_value = item[shorthand_key]
+                                    if shorthand_key == 'zURL':
+                                        expanded_wizard[f"item_{idx}"] = {KEY_ZDISPLAY: {'event': 'zURL', **shorthand_value}}
+                                    elif shorthand_key == 'zImage':
+                                        expanded_wizard[f"item_{idx}"] = {KEY_ZDISPLAY: {'event': 'image', **shorthand_value}}
+                                    elif shorthand_key == 'zText':
+                                        expanded_wizard[f"item_{idx}"] = {KEY_ZDISPLAY: {'event': 'text', **shorthand_value}}
+                                    elif shorthand_key.startswith('zH') and len(shorthand_key) == 3 and shorthand_key[2].isdigit():
+                                        indent_level = int(shorthand_key[2])
+                                        if 1 <= indent_level <= 6:
+                                            expanded_wizard[f"item_{idx}"] = {KEY_ZDISPLAY: {'event': 'header', 'indent': indent_level, **shorthand_value}}
                         
-                        if expanded_wizard:
-                            # Store _zClass in wizard context for styling (if needed)
-                            if '_zClass' in list_params:
-                                for item_key in expanded_wizard:
-                                    # Apply _zClass to each item's zDisplay
-                                    if KEY_ZDISPLAY in expanded_wizard[item_key]:
-                                        expanded_wizard[item_key][KEY_ZDISPLAY]['_zClass'] = list_params['_zClass']
+                            if expanded_wizard:
+                                # Store _zClass in wizard context for styling (if needed)
+                                if '_zClass' in list_params:
+                                    for item_key in expanded_wizard:
+                                        # Apply _zClass to each item's zDisplay
+                                        if KEY_ZDISPLAY in expanded_wizard[item_key]:
+                                            expanded_wizard[item_key][KEY_ZDISPLAY]['_zClass'] = list_params['_zClass']
                             
-                            zHorizontal = expanded_wizard
-                            # Will be treated as implicit wizard (multiple keys)
-                            is_subsystem_call = False
+                                zHorizontal = expanded_wizard
+                                # Will be treated as implicit wizard (multiple keys)
+                                is_subsystem_call = False
+                                break
+                        else:
+                            # Items are simple text: use normal list display
+                            zHorizontal = {
+                                KEY_ZDISPLAY: {
+                                    'event': 'list',
+                                    'style': 'bullet',
+                                    **list_params
+                                }
+                            }
+                            # Mark as subsystem call to skip other detection
+                            is_subsystem_call = True
                             break
-                    else:
-                        # Items are simple text: use normal list display
+                elif clean_key == 'zOL':
+                    # Ordered list (numbered style)
+                    list_params = zHorizontal[key]
+                    if isinstance(list_params, dict):
+                        # NEW: Check for plural shorthand (zURLs, zTexts, zH1s-zH6s, zImages, zMDs)
+                        # This is more DRY than items list for homogeneous lists
+                        plural_shorthands = ['zURLs', 'zTexts', 'zH1s', 'zH2s', 'zH3s', 'zH4s', 'zH5s', 'zH6s', 'zImages', 'zMDs']
+                        found_plural = None
+                        for plural_key in plural_shorthands:
+                            if plural_key in list_params:
+                                found_plural = plural_key
+                                break
+                    
+                        if found_plural:
+                            # Plural shorthand detected: expand to implicit wizard with semantic keys
+                            plural_items = list_params[found_plural]
+                            if isinstance(plural_items, dict):
+                                expanded_wizard = {}
+                                singular_event = None
+                            
+                                # Determine event type from plural key
+                                if found_plural == 'zURLs':
+                                    singular_event = 'zURL'
+                                elif found_plural == 'zTexts':
+                                    singular_event = 'text'
+                                elif found_plural == 'zImages':
+                                    singular_event = 'image'
+                                elif found_plural == 'zMDs':
+                                    singular_event = 'rich_text'
+                                elif found_plural.startswith('zH') and found_plural.endswith('s'):
+                                    # zH1s, zH2s, etc.
+                                    indent_level = int(found_plural[2])
+                                    if 1 <= indent_level <= 6:
+                                        singular_event = ('header', indent_level)
+                            
+                                if singular_event:
+                                    for item_key, item_params in plural_items.items():
+                                        if isinstance(item_params, dict):
+                                            if isinstance(singular_event, tuple):
+                                                # Header event with indent level
+                                                event_type, indent = singular_event
+                                                expanded_wizard[item_key] = {KEY_ZDISPLAY: {'event': event_type, 'indent': indent, **item_params}}
+                                            else:
+                                                expanded_wizard[item_key] = {KEY_ZDISPLAY: {'event': singular_event, **item_params}}
+                                
+                                    if expanded_wizard:
+                                        # Apply _zClass to each item if present
+                                        if '_zClass' in list_params:
+                                            for item_key in expanded_wizard:
+                                                if KEY_ZDISPLAY in expanded_wizard[item_key]:
+                                                    expanded_wizard[item_key][KEY_ZDISPLAY]['_zClass'] = list_params['_zClass']
+                                    
+                                        zHorizontal = expanded_wizard
+                                        # Will be treated as implicit wizard (multiple keys)
+                                        is_subsystem_call = False
+                                        break
+                    
+                        # Check if items contain shorthands (zURL, zImage, etc.)
+                        items = list_params.get('items', [])
+                        has_shorthands = any(
+                            isinstance(item, dict) and len(item) == 1 and 
+                            list(item.keys())[0] in ['zURL', 'zImage', 'zText', 'zH1', 'zH2', 'zH3', 'zH4', 'zH5', 'zH6']
+                            for item in items if isinstance(item, dict)
+                        )
+                    
+                        if has_shorthands:
+                            # Items contain shorthands: expand to implicit wizard
+                            expanded_wizard = {}
+                            for idx, item in enumerate(items):
+                                if isinstance(item, dict) and len(item) == 1:
+                                    shorthand_key = list(item.keys())[0]
+                                    shorthand_value = item[shorthand_key]
+                                    if shorthand_key == 'zURL':
+                                        expanded_wizard[f"item_{idx}"] = {KEY_ZDISPLAY: {'event': 'zURL', **shorthand_value}}
+                                    elif shorthand_key == 'zImage':
+                                        expanded_wizard[f"item_{idx}"] = {KEY_ZDISPLAY: {'event': 'image', **shorthand_value}}
+                                    elif shorthand_key == 'zText':
+                                        expanded_wizard[f"item_{idx}"] = {KEY_ZDISPLAY: {'event': 'text', **shorthand_value}}
+                                    elif shorthand_key.startswith('zH') and len(shorthand_key) == 3 and shorthand_key[2].isdigit():
+                                        indent_level = int(shorthand_key[2])
+                                        if 1 <= indent_level <= 6:
+                                            expanded_wizard[f"item_{idx}"] = {KEY_ZDISPLAY: {'event': 'header', 'indent': indent_level, **shorthand_value}}
+                        
+                            if expanded_wizard:
+                                # Store _zClass in wizard context for styling (if needed)
+                                if '_zClass' in list_params:
+                                    for item_key in expanded_wizard:
+                                        # Apply _zClass to each item's zDisplay
+                                        if KEY_ZDISPLAY in expanded_wizard[item_key]:
+                                            expanded_wizard[item_key][KEY_ZDISPLAY]['_zClass'] = list_params['_zClass']
+                            
+                                zHorizontal = expanded_wizard
+                                # Will be treated as implicit wizard (multiple keys)
+                                is_subsystem_call = False
+                                break
+                        else:
+                            # Items are simple text: use normal list display
+                            zHorizontal = {
+                                KEY_ZDISPLAY: {
+                                    'event': 'list',
+                                    'style': 'number',
+                                    **list_params
+                                }
+                            }
+                            # Mark as subsystem call to skip other detection
+                            is_subsystem_call = True
+                            break
+                elif clean_key == 'zTable':
+                    # Table display
+                    table_params = zHorizontal[key]
+                    if isinstance(table_params, dict):
+                        # Transform to full zDisplay format
                         zHorizontal = {
                             KEY_ZDISPLAY: {
-                                'event': 'list',
-                                'style': 'number',
-                                **list_params
+                                'event': 'zTable',
+                                **table_params
                             }
                         }
                         # Mark as subsystem call to skip other detection
                         is_subsystem_call = True
                         break
-            elif key == 'zTable':
-                # Table display
-                table_params = zHorizontal[key]
-                if isinstance(table_params, dict):
-                    # Transform to full zDisplay format
-                    zHorizontal = {
-                        KEY_ZDISPLAY: {
-                            'event': 'zTable',
-                            **table_params
-                        }
-                    }
-                    # Mark as subsystem call to skip other detection
-                    is_subsystem_call = True
-                    break
-            elif key == 'zMD':
-                # Rich text / Markdown
-                md_params = zHorizontal[key]
-                if isinstance(md_params, dict):
-                    if has_organizational_siblings:
-                        # Expand in-place to preserve organizational siblings
-                        zHorizontal[key] = {
-                            KEY_ZDISPLAY: {
-                                'event': 'rich_text',
-                                **md_params
-                            }
-                        }
-                        # Continue to next key
-                    else:
-                        # Replace entire dict (single UI event, no siblings)
-                        zHorizontal = {
-                            KEY_ZDISPLAY: {
-                                'event': 'rich_text',
-                                **md_params
-                            }
-                        }
-                        # Mark as subsystem call to skip other detection
-                        is_subsystem_call = True
-                        break
-            elif key == 'zImage':
-                # Image display
-                image_params = zHorizontal[key]
-                if isinstance(image_params, dict):
-                    if has_organizational_siblings:
-                        # Expand in-place to preserve organizational siblings
-                        zHorizontal[key] = {
-                            KEY_ZDISPLAY: {
-                                'event': 'image',
-                                **image_params
-                            }
-                        }
-                        # Continue to next key
-                    else:
-                        # Replace entire dict (single UI event, no siblings)
-                        zHorizontal = {
-                            KEY_ZDISPLAY: {
-                                'event': 'image',
-                                **image_params
-                            }
-                        }
-                        # Mark as subsystem call to skip other detection
-                        is_subsystem_call = True
-                        break
-            elif key == 'zURL':
-                # URL/Link display
-                url_params = zHorizontal[key]
-                if isinstance(url_params, dict):
-                    # Single link: {zURL: {label: ..., href: ...}}
-                    if has_organizational_siblings:
-                        # Expand in-place to preserve organizational siblings
-                        zHorizontal[key] = {
-                            KEY_ZDISPLAY: {
-                                'event': 'zURL',
-                                **url_params
-                            }
-                        }
-                        # Continue to next key
-                    else:
-                        # Replace entire dict (single UI event, no siblings)
-                        zHorizontal = {
-                            KEY_ZDISPLAY: {
-                                'event': 'zURL',
-                                **url_params
-                            }
-                        }
-                        # Mark as subsystem call to skip other detection
-                        is_subsystem_call = True
-                        break
-                elif isinstance(url_params, list):
-                    # Multiple links: {zURL: [{label: ..., href: ...}, {...}]}
-                    # This becomes an implicit wizard with multiple steps
-                    expanded_links = {}
-                    for idx, link_params in enumerate(url_params):
-                        if isinstance(link_params, dict):
-                            expanded_links[f"zURL_{idx}"] = [{KEY_ZDISPLAY: {'event': 'zURL', **link_params}}]
-                    if expanded_links:
+                elif clean_key == 'zMD':
+                    # Rich text / Markdown
+                    md_params = zHorizontal[key]
+                    if isinstance(md_params, dict):
                         if has_organizational_siblings:
-                            # Expand in-place
-                            zHorizontal[key] = expanded_links
+                            # Expand in-place to preserve organizational siblings
+                            zHorizontal[key] = {
+                                KEY_ZDISPLAY: {
+                                    'event': 'rich_text',
+                                    **md_params
+                                }
+                            }
                             # Continue to next key
                         else:
-                            # Replace entire dict
-                            zHorizontal = expanded_links
-                            # Will be treated as implicit wizard (multiple keys)
-                            is_subsystem_call = False
+                            # Replace entire dict (single UI event, no siblings)
+                            zHorizontal = {
+                                KEY_ZDISPLAY: {
+                                    'event': 'rich_text',
+                                    **md_params
+                                }
+                            }
+                            # Mark as subsystem call to skip other detection
+                            is_subsystem_call = True
                             break
+                elif clean_key == 'zImage':
+                    # Image display
+                    image_params = zHorizontal[key]
+                    if isinstance(image_params, dict):
+                        if has_organizational_siblings:
+                            # Expand in-place to preserve organizational siblings
+                            zHorizontal[key] = {
+                                KEY_ZDISPLAY: {
+                                    'event': 'image',
+                                    **image_params
+                                }
+                            }
+                            # Continue to next key
+                        else:
+                            # Replace entire dict (single UI event, no siblings)
+                            zHorizontal = {
+                                KEY_ZDISPLAY: {
+                                    'event': 'image',
+                                    **image_params
+                                }
+                            }
+                            # Mark as subsystem call to skip other detection
+                            is_subsystem_call = True
+                            break
+                elif clean_key == 'zURL':
+                    # URL/Link display
+                    url_params = zHorizontal[key]
+                    if isinstance(url_params, dict):
+                        # Single link: {zURL: {label: ..., href: ...}}
+                        if has_organizational_siblings:
+                            # Expand in-place to preserve organizational siblings
+                            zHorizontal[key] = {
+                                KEY_ZDISPLAY: {
+                                    'event': 'zURL',
+                                    **url_params
+                                }
+                            }
+                            # Continue to next key
+                        else:
+                            # Replace entire dict (single UI event, no siblings)
+                            zHorizontal = {
+                                KEY_ZDISPLAY: {
+                                    'event': 'zURL',
+                                    **url_params
+                                }
+                            }
+                            # Mark as subsystem call to skip other detection
+                            is_subsystem_call = True
+                            break
+                    elif isinstance(url_params, list):
+                        # Multiple links: {zURL: [{label: ..., href: ...}, {...}]}
+                        # This becomes an implicit wizard with multiple steps
+                        expanded_links = {}
+                        for idx, link_params in enumerate(url_params):
+                            if isinstance(link_params, dict):
+                                expanded_links[f"zURL_{idx}"] = [{KEY_ZDISPLAY: {'event': 'zURL', **link_params}}]
+                        if expanded_links:
+                            if has_organizational_siblings:
+                                # Expand in-place
+                                zHorizontal[key] = expanded_links
+                                # Continue to next key
+                            else:
+                                # Replace entire dict
+                                zHorizontal = expanded_links
+                                # Will be treated as implicit wizard (multiple keys)
+                                is_subsystem_call = False
+                                break
         
-        # Recalculate content_keys and subsystem check after shorthand expansion
+            # Recalculate content_keys and subsystem check after shorthand expansion (Terminal mode)
+            content_keys = [k for k in zHorizontal.keys() if not k.startswith('_')]
+            is_subsystem_call = any(k in zHorizontal for k in subsystem_keys) or is_subsystem_call
+        # End of Terminal mode shorthand expansion
+        
+        # Ensure content_keys is always up-to-date (for both Terminal and Bifrost modes)
         content_keys = [k for k in zHorizontal.keys() if not k.startswith('_')]
-        is_subsystem_call = any(k in zHorizontal for k in subsystem_keys) or is_subsystem_call
         
         # ========================================================================
         # ORGANIZATIONAL STRUCTURE DETECTION (mutually exclusive with wizard)
@@ -1526,7 +1550,19 @@ class CommandLauncher:
         
         Returns:
             Recursion result, or None if not organizational structure
+        
+        Notes:
+            - In Bifrost mode: Skip expansion/execution, pass through raw structure
+            - In Terminal mode: Expand shorthands and recurse into nested structures
         """
+        # Bifrost mode: Don't expand or execute - just pass through raw structure
+        # The Bifrost client will handle rendering based on shorthand key names
+        if is_bifrost_mode(self.zcli.session):
+            # In Bifrost mode, organizational structures are passed through unchanged
+            # The wizard will collect them for chunked delivery to the client
+            return None
+        
+        # Terminal mode: Continue with shorthand expansion and execution
         # First, check for shorthand syntax in content_keys BEFORE other processing
         # This handles cases like {_zClass: "...", zImage: {...}} where mixed types exist
         # NOTE: This is a fallback for edge cases - primary expansion happens in zWizard
@@ -1537,7 +1573,10 @@ class CommandLauncher:
                 expanded_items = []
                 for item in value:
                     if isinstance(item, dict):
-                        if key == 'zImage':
+                        # Skip if already expanded (has zDisplay wrapper)
+                        if KEY_ZDISPLAY in item:
+                            expanded_items.append(item)
+                        elif key == 'zImage':
                             expanded_items.append({KEY_ZDISPLAY: {'event': 'image', **item}})
                         elif key == 'zURL':
                             expanded_items.append({KEY_ZDISPLAY: {'event': 'zURL', **item}})
@@ -1630,12 +1669,34 @@ class CommandLauncher:
         
         # SURGICAL FIX: Check if ALL keys are UI event shorthands (implicit sequence)
         # If yes, process sequentially instead of recursively
+        # FIRST: Expand any list values for UI event keys (from LSP duplicate handling)
+        # ALSO: Strip __dup{N} suffix from duplicate keys (LSP suffix strategy)
         ui_event_keys = []
         for key in content_keys:
-            if key.startswith('zH') and len(key) == 3 and key[2].isdigit():
+            # Strip __dup{N} suffix if present (from LSP duplicate key handling)
+            clean_key = key.split('__dup')[0] if '__dup' in key else key
+            
+            if clean_key.startswith('zH') and len(clean_key) == 3 and clean_key[2].isdigit():
                 ui_event_keys.append(key)
-            elif key in ['zText', 'zMD', 'zImage', 'zURL']:
+                # Expand using clean_key logic
+                val = zHorizontal[key]
+                if isinstance(val, dict) and KEY_ZDISPLAY not in val:
+                    indent_level = int(clean_key[2])
+                    if 1 <= indent_level <= 6:
+                        zHorizontal[key] = {KEY_ZDISPLAY: {'event': 'header', 'indent': indent_level, **val}}
+            elif clean_key in ['zText', 'zMD', 'zImage', 'zURL']:
                 ui_event_keys.append(key)
+                # Expand using clean_key logic
+                val = zHorizontal[key]
+                if isinstance(val, dict) and KEY_ZDISPLAY not in val:
+                    if clean_key == 'zText':
+                        zHorizontal[key] = {KEY_ZDISPLAY: {'event': 'text', **val}}
+                    elif clean_key == 'zMD':
+                        zHorizontal[key] = {KEY_ZDISPLAY: {'event': 'rich_text', **val}}
+                    elif clean_key == 'zImage':
+                        zHorizontal[key] = {KEY_ZDISPLAY: {'event': 'image', **val}}
+                    elif clean_key == 'zURL':
+                        zHorizontal[key] = {KEY_ZDISPLAY: {'event': 'zURL', **val}}
         
         # If ALL content keys are UI events, treat as implicit sequence
         if len(ui_event_keys) == len(content_keys) and len(ui_event_keys) >= 2:
@@ -1644,7 +1705,7 @@ class CommandLauncher:
             for key in content_keys:
                 val = zHorizontal[key]
                 if isinstance(val, dict) and KEY_ZDISPLAY in val:
-                    # Already expanded by above logic
+                    # Single UI event - already expanded by above logic
                     implicit_sequence.append(val)
             
             if implicit_sequence:
@@ -1814,12 +1875,18 @@ class CommandLauncher:
         display_data = zHorizontal[KEY_ZDISPLAY]
         
         if isinstance(display_data, dict):
+            self.logger.framework.debug(f"[_route_zdisplay] display_data keys: {list(display_data.keys())}")
+            self.logger.framework.debug(f"[_route_zdisplay] event: {display_data.get('event', 'MISSING')}")
             # Pass context for %data.* variable resolution
             if context and "_resolved_data" in context:
                 display_data["_context"] = context
             
             # Use display.handle() to pass through ALL parameters automatically and return result
-            return self.display.handle(display_data)
+            result = self.display.handle(display_data)
+            self.logger.framework.debug(f"[_route_zdisplay] display.handle() returned: {result}")
+            return result
+        else:
+            self.logger.framework.warning(f"[_route_zdisplay] display_data is not a dict! Type: {type(display_data)}")
         
         return None
 

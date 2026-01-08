@@ -248,10 +248,15 @@ export class ZDisplayOrchestrator {
     //   {zMD: {content: "..."}} → {zDisplay: {event: "rich_text", content: "..."}}
     //   {zImage: {src: "...", alt_text: "..."}} → {zDisplay: {event: "image", src: "...", alt_text: "..."}}
     //   {zURL: {label: "...", href: "..."}} → {zDisplay: {event: "zURL", label: "...", href: "..."}}
+    // NOTE: Keys may have __dup{N} suffix from LSP parser to preserve duplicate UI events
+    //   {zText__dup2: {content: "..."}} → Strip suffix before matching shorthand patterns
     // ═══════════════════════════════════════════════════════════════════════
     for (const [key, value] of Object.entries(data)) {
-      if (key.startsWith('zH') && key.length === 3 && /^[1-6]$/.test(key[2])) {
-        const indent = parseInt(key[2], 10);
+      // Strip __dup{N} suffix for shorthand matching (LSP duplicate key handling)
+      const cleanKey = key.includes('__dup') ? key.split('__dup')[0] : key;
+      
+      if (cleanKey.startsWith('zH') && cleanKey.length === 3 && /^[1-6]$/.test(cleanKey[2])) {
+        const indent = parseInt(cleanKey[2], 10);
         if (value && typeof value === 'object' && !Array.isArray(value)) {
           // Transform shorthand to full zDisplay format
           data[key] = {
@@ -263,7 +268,7 @@ export class ZDisplayOrchestrator {
           };
           this.logger.log(`[ZDisplayOrchestrator] ✨ Expanded ${key} shorthand to zDisplay header (indent: ${indent})`);
         }
-      } else if (key === 'zText') {
+      } else if (cleanKey === 'zText') {
         if (value && typeof value === 'object' && !Array.isArray(value)) {
           // Transform shorthand to full zDisplay format
           data[key] = {
@@ -272,9 +277,9 @@ export class ZDisplayOrchestrator {
               ...value
             }
           };
-          this.logger.log(`[ZDisplayOrchestrator] ✨ Expanded zText shorthand to zDisplay text`);
+          this.logger.log(`[ZDisplayOrchestrator] ✨ Expanded ${key} (${cleanKey}) shorthand to zDisplay text`);
         }
-      } else if (key === 'zUL') {
+      } else if (cleanKey === 'zUL') {
         if (value && typeof value === 'object' && !Array.isArray(value)) {
           // Check for plural shorthands and transform them
           const { items, otherProps } = this._extractPluralShorthands(value, 'bullet');
@@ -290,7 +295,7 @@ export class ZDisplayOrchestrator {
           };
           this.logger.log(`[ZDisplayOrchestrator] ✨ Expanded zUL shorthand to zDisplay list (bullet)${items.length > 0 ? ` with ${items.length} items from plural shorthand` : ''}`);
         }
-      } else if (key === 'zOL') {
+      } else if (cleanKey === 'zOL') {
         if (value && typeof value === 'object' && !Array.isArray(value)) {
           // Check for plural shorthands and transform them
           const { items, otherProps } = this._extractPluralShorthands(value, 'number');
@@ -306,7 +311,7 @@ export class ZDisplayOrchestrator {
           };
           this.logger.log(`[ZDisplayOrchestrator] ✨ Expanded zOL shorthand to zDisplay list (number)${items.length > 0 ? ` with ${items.length} items from plural shorthand` : ''}`);
         }
-      } else if (key === 'zTable') {
+      } else if (cleanKey === 'zTable') {
         if (value && typeof value === 'object' && !Array.isArray(value)) {
           // Transform shorthand to full zDisplay format (table)
           data[key] = {
@@ -317,7 +322,7 @@ export class ZDisplayOrchestrator {
           };
           this.logger.log(`[ZDisplayOrchestrator] ✨ Expanded zTable shorthand to zDisplay zTable`);
         }
-      } else if (key === 'zMD') {
+      } else if (cleanKey === 'zMD') {
         if (value && typeof value === 'object' && !Array.isArray(value)) {
           // Transform shorthand to full zDisplay format (rich_text/markdown)
           data[key] = {
@@ -328,7 +333,7 @@ export class ZDisplayOrchestrator {
           };
           this.logger.log(`[ZDisplayOrchestrator] ✨ Expanded zMD shorthand to zDisplay rich_text`);
         }
-      } else if (key === 'zImage') {
+      } else if (cleanKey === 'zImage') {
         if (value && typeof value === 'object' && !Array.isArray(value)) {
           // Transform shorthand to full zDisplay format (image)
           data[key] = {
@@ -337,9 +342,9 @@ export class ZDisplayOrchestrator {
               ...value
             }
           };
-          this.logger.log(`[ZDisplayOrchestrator] ✨ Expanded zImage shorthand to zDisplay image`);
+          this.logger.log(`[ZDisplayOrchestrator] ✨ Expanded ${key} (${cleanKey}) shorthand to zDisplay image`);
         }
-      } else if (key === 'zURL') {
+      } else if (cleanKey === 'zURL') {
         if (value && typeof value === 'object' && !Array.isArray(value)) {
           // Transform shorthand to full zDisplay format (link/URL)
           data[key] = {
@@ -348,7 +353,7 @@ export class ZDisplayOrchestrator {
               ...value
             }
           };
-          this.logger.log(`[ZDisplayOrchestrator] ✨ Expanded zURL shorthand to zDisplay zURL`);
+          this.logger.log(`[ZDisplayOrchestrator] ✨ Expanded ${key} (${cleanKey}) shorthand to zDisplay zURL`);
         }
       }
     }
