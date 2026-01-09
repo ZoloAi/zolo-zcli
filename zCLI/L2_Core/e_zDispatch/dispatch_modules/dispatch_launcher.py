@@ -661,7 +661,7 @@ class CommandLauncher:
             for key in non_meta_keys:
                 if key.startswith('zH') and len(key) == 3 and key[2].isdigit():
                     ui_event_count += 1
-                elif key in ['zText', 'zMD', 'zImage', 'zURL']:
+                elif key in ['zText', 'zMD', 'zImage', 'zURL', 'zCrumbs']:
                     ui_event_count += 1
         
             # Skip shorthand loop if ALL keys are UI events (let organizational handler process as sequence)
@@ -675,7 +675,7 @@ class CommandLauncher:
                     clean_key_check = key.split('__dup')[0] if '__dup' in key else key
                     is_ui_event = (
                         (clean_key_check.startswith('zH') and len(clean_key_check) == 3 and clean_key_check[2].isdigit()) or
-                        clean_key_check in ['zText', 'zMD', 'zImage', 'zURL']
+                        clean_key_check in ['zText', 'zMD', 'zImage', 'zURL', 'zCrumbs']
                     )
                     if is_ui_event:
                         continue
@@ -690,7 +690,7 @@ class CommandLauncher:
                     clean_sibling_key = sibling_key.split('__dup')[0] if '__dup' in sibling_key else sibling_key
                     is_sibling_ui_event = (
                         (clean_sibling_key.startswith('zH') and len(clean_sibling_key) == 3 and clean_sibling_key[2].isdigit()) or
-                        clean_sibling_key in ['zText', 'zMD', 'zImage', 'zURL', 'zUL', 'zOL', 'zTable']
+                        clean_sibling_key in ['zText', 'zMD', 'zImage', 'zURL', 'zUL', 'zOL', 'zTable', 'zCrumbs']
                     )
                     if not is_sibling_ui_event:
                         has_organizational_siblings = True
@@ -1077,6 +1077,33 @@ class CommandLauncher:
                                 # Will be treated as implicit wizard (multiple keys)
                                 is_subsystem_call = False
                                 break
+                elif clean_key == 'zCrumbs':
+                    # Breadcrumb display (boolean flag or dict)
+                    # When zCrumbs: true, trigger the zCrumbs event to display breadcrumbs
+                    crumbs_value = zHorizontal[key]
+                    if crumbs_value is True or (isinstance(crumbs_value, str) and crumbs_value.lower() == 'true'):
+                        # Expand to zDisplay event with session_data parameter
+                        # The zCrumbs event handler expects session_data with breadcrumb trails
+                        if has_organizational_siblings:
+                            # Expand in-place to preserve organizational siblings
+                            zHorizontal[key] = {
+                                KEY_ZDISPLAY: {
+                                    'event': 'zCrumbs',
+                                    'session_data': self.zcli.session
+                                }
+                            }
+                            # Continue to next key
+                        else:
+                            # Replace entire dict (single UI event, no siblings)
+                            zHorizontal = {
+                                KEY_ZDISPLAY: {
+                                    'event': 'zCrumbs',
+                                    'session_data': self.zcli.session
+                                }
+                            }
+                            # Mark as subsystem call to skip other detection
+                            is_subsystem_call = True
+                            break
         
             # Recalculate content_keys and subsystem check after shorthand expansion (Terminal mode)
             content_keys = [k for k in zHorizontal.keys() if not k.startswith('_')]

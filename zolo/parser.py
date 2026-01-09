@@ -49,6 +49,7 @@ class TokenEmitter:
         self.filename = filename
         self.is_zui_file = filename and Path(filename).name.startswith('zUI.') if filename else False
         self.is_zenv_file = filename and Path(filename).name.startswith('zEnv.') if filename else False
+        self.is_zspark_file = filename and Path(filename).name.startswith('zSpark.') if filename else False
         
         # Extract component name from zUI files (e.g., "zVaF" from "zUI.zVaF.zolo")
         self.zui_component_name = None
@@ -56,6 +57,13 @@ class TokenEmitter:
             name = Path(filename).stem  # "zUI.zVaF"
             if name.startswith('zUI.'):
                 self.zui_component_name = name[4:]  # Extract "zVaF"
+        
+        # Extract component name from zSpark files (e.g., "zCloud" from "zSpark.zCloud.zolo")
+        self.zspark_component_name = None
+        if self.is_zspark_file and filename:
+            name = Path(filename).stem  # "zSpark.zCloud"
+            if name.startswith('zSpark.'):
+                self.zspark_component_name = name[7:]  # Extract "zCloud"
         
         # Track zRBAC blocks to color nested option keys (zGuest, authenticated, require_role, etc.)
         self.zrbac_blocks: List[Tuple[int, int]] = []  # [(indent_level, line_number), ...]
@@ -203,7 +211,7 @@ class TokenEmitter:
     def split_modifiers(self, key: str) -> tuple:
         """Split key into prefix modifiers, core name, and suffix modifiers.
         
-        Dispatcher modifiers in zUI.*.zolo and zEnv.*.zolo files:
+        Dispatcher modifiers in zUI.*.zolo, zEnv.*.zolo, and zSpark.*.zolo files:
         - PREFIX: ^ (bounce), ~ (anchor)
         - SUFFIX: * (menu), ! (required)
         
@@ -218,8 +226,8 @@ class TokenEmitter:
             ~ZNAVBAR* → ("~", "ZNAVBAR", "*")
             menu*! → ("", "menu", "*!")
         """
-        # Only split modifiers in zUI and zEnv files
-        if not (self.is_zui_file or self.is_zenv_file):
+        # Only split modifiers in zUI, zEnv, and zSpark files
+        if not (self.is_zui_file or self.is_zenv_file or self.is_zspark_file):
             return ("", key, "")
         
         # Define modifier characters
@@ -919,6 +927,9 @@ def _parse_lines_with_tokens(lines: list[str], line_mapping: dict, emitter: Toke
                     # Special handling for zMeta and component name in zUI files
                     if emitter.is_zui_file and (core_key == 'zMeta' or core_key == emitter.zui_component_name):
                         emitter.emit(original_line_num, current_pos, len(core_key), TokenType.ZMETA_KEY)
+                    # Special handling for zSpark key and component name in zSpark files (GREEN)
+                    elif emitter.is_zspark_file and (core_key == 'zSpark' or core_key == emitter.zspark_component_name):
+                        emitter.emit(original_line_num, current_pos, len(core_key), TokenType.ZCONFIG_KEY)
                     # Special handling for uppercase Z-prefixed config keys in zEnv files (GREEN)
                     elif emitter.is_zenv_file and core_key.isupper() and core_key.startswith('Z'):
                         emitter.emit(original_line_num, current_pos, len(core_key), TokenType.ZCONFIG_KEY)
@@ -1143,6 +1154,9 @@ def _parse_lines_with_tokens(lines: list[str], line_mapping: dict, emitter: Toke
                     # Special handling for zMeta and component name in zUI files
                     if emitter.is_zui_file and (core_key == 'zMeta' or core_key == emitter.zui_component_name):
                         emitter.emit(original_line_num, current_pos, len(core_key), TokenType.ZMETA_KEY)
+                    # Special handling for zSpark key and component name in zSpark files (GREEN)
+                    elif emitter.is_zspark_file and (core_key == 'zSpark' or core_key == emitter.zspark_component_name):
+                        emitter.emit(original_line_num, current_pos, len(core_key), TokenType.ZCONFIG_KEY)
                     # Special handling for uppercase Z-prefixed config keys in zEnv files (GREEN)
                     elif emitter.is_zenv_file and core_key.isupper() and core_key.startswith('Z'):
                         emitter.emit(original_line_num, current_pos, len(core_key), TokenType.ZCONFIG_KEY)

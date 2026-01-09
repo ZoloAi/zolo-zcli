@@ -68,7 +68,7 @@ class Colors:
     ZSUCCESS   = zSuccess
     ZWARNING   = zWarning
     ZERROR     = zError
-
+    INFO       = zInfo
     # CSS-aligned brand colors (foreground, no background)
     # Mirrors:
     #   --color-primary:   #A2D46E (Intention - the heart of zCLI)

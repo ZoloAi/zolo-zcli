@@ -83,22 +83,41 @@ def main() -> None:
 
         boot_logger.debug("Parsing arguments...")
         
-        # Special handling for direct .py file execution
-        # Check if first arg (after flags) is a .py file
+        # Special handling for direct .py file execution OR zSpark.*.zolo execution
+        # Check if first arg (after flags) is a .py file or matches zSpark.*.zolo pattern
         script_file = None
+        zspark_file = None
         import sys as sys_module
         argv = sys_module.argv[1:]  # Skip program name
         
         # Filter out flags to find positional args
         positional_args = [arg for arg in argv if not arg.startswith('-')]
         
-        if positional_args and positional_args[0].endswith('.py'):
-            # First positional arg is a .py file - treat as script execution
-            script_file = positional_args[0]
-            boot_logger.debug("Detected script file: %s", script_file)
-            # Parse remaining args (excluding the script file)
-            filtered_argv = [arg for arg in argv if arg != script_file]
-            args = parser.parse_args(filtered_argv)
+        if positional_args:
+            first_arg = positional_args[0]
+            
+            # Python script execution (e.g., zolo zTest.py)
+            if first_arg.endswith('.py'):
+                script_file = first_arg
+                boot_logger.debug("Detected Python script: %s", script_file)
+                filtered_argv = [arg for arg in argv if arg != first_arg]
+                args = parser.parse_args(filtered_argv)
+            
+            # zSpark.*.zolo execution (e.g., zolo zCloud → zSpark.zCloud.zolo)
+            elif '.' not in first_arg:
+                # Check if zSpark.{app_name}.zolo exists in CWD
+                potential_zspark = Path.cwd() / f"zSpark.{first_arg}.zolo"
+                if potential_zspark.exists():
+                    zspark_file = str(potential_zspark)
+                    boot_logger.debug("Detected zSpark file: %s", zspark_file)
+                    filtered_argv = [arg for arg in argv if arg != first_arg]
+                    args = parser.parse_args(filtered_argv)
+                else:
+                    # Not a zSpark file - normal command parsing
+                    args = parser.parse_args()
+            else:
+                # Normal command parsing
+                args = parser.parse_args()
         else:
             # Normal command parsing
             args = parser.parse_args()
@@ -111,6 +130,9 @@ def main() -> None:
         if script_file:
             # Direct Python script execution (e.g., zolo zTest.py)
             return cli_commands.handle_script_command(boot_logger, sys, Path, script_file, verbose=verbose)
+        elif zspark_file:
+            # zSpark.*.zolo execution (e.g., zolo zCloud)
+            return cli_commands.handle_zspark_command(boot_logger, zCLI, Path, zspark_file, verbose=verbose)
         elif args.command == "shell":
             cli_commands.handle_shell_command(boot_logger, zCLI, verbose=verbose)
         elif args.command == "config":
